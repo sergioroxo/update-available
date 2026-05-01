@@ -16,8 +16,39 @@ import click
 import typer
 
 from ..models.document import AnalysisResult, IntakeResult, PreprocessResult
+from ..models.triage import TriageResult
+from ..models.enrichment import EnrichmentResult
 
 console = Console()
+
+
+def checkpoint_triage(triage: TriageResult, suggested_llm: str) -> str:
+    """Checkpoint 0.5 — show triage recommendation, return the LLM to use.
+    Researcher can override by typing a different --llm value."""
+    _COMPLEXITY_COLOR = {"simple": "green", "moderate": "yellow", "complex": "red"}
+    table = Table(show_header=False, box=None, padding=(0, 1))
+    table.add_row("Doc type hint:", triage.doc_type_hint)
+    table.add_row("Languages:", ", ".join(triage.languages))
+    table.add_row(
+        "Complexity:",
+        Text(triage.complexity, style=_COMPLEXITY_COLOR.get(triage.complexity, "white")),
+    )
+    if triage.estimated_tokens:
+        table.add_row("Est. tokens:", f"~{triage.estimated_tokens:,}")
+    table.add_row(
+        "Recommended model:",
+        Text(triage.recommended_llm, style="bold cyan"),
+    )
+    if triage.routing_reason:
+        table.add_row("Reason:", triage.routing_reason)
+
+    console.print(Panel(table, title="[bold]TRIAGE RESULT[/bold]"))
+
+    override = typer.prompt(
+        f"Use model [{triage.recommended_llm}] or type another (Enter=accept)",
+        default="",
+    ).strip()
+    return override if override else triage.recommended_llm
 
 
 def checkpoint_intake(intake: IntakeResult) -> bool:
@@ -246,6 +277,59 @@ def _edit_analysis_json(result: AnalysisResult, doc_id: str) -> Optional[Analysi
         return result
     finally:
         Path(tmp_path).unlink(missing_ok=True)
+
+
+def checkpoint_enrichment(result: EnrichmentResult, doc_id: str) -> bool:
+    """Checkpoint 3.5 — show enrichment proposal counts, ask researcher to proceed.
+    Returns True to write enrichment.json and queue Sanity updates."""
+    table = Table(show_header=False, box=None, padding=(0, 1))
+    table.add_row("Doc ID:", doc_id)
+    table.add_row("Model:", result.enrichment_model)
+    table.add_row("Lexicon proposals:", str(len(result.lexicon_proposals)))
+    table.add_row("Entity proposals:", str(len(result.entity_proposals)))
+    table.add_row("Ingestion queue:", str(len(result.ingestion_queue)))
+    table.add_row("Corpus connections:", str(len(result.corpus_connections)))
+    table.add_row("Practice descriptions:", str(len(result.practice_descriptions)))
+    table.add_row("Statistical claims:", str(len(result.statistical_claims)))
+
+    console.print(Panel(table, title="[bold]ENRICHMENT — Checkpoint 3.5[/bold]"))
+
+    if result.lexicon_proposals:
+        term_table = Table("Term", "Cluster", "Action", show_header=True)
+        for p in result.lexicon_proposals[:10]:
+            term_table.add_row(
+                p.term, p.proposed_cluster, p.action
+            )
+        if len(result.lexicon_proposals) > 10:
+            term_table.add_row(
+                f"... and {len(result.lexicon_proposals) - 10} more", "", ""
+            )
+        console.print(term_table)
+
+    action = typer.prompt(
+        "Action [Enter=save / e=edit-json / s=skip-enrichment]",
+        default="",
+    ).strip().lower()
+    if action in ("s", "skip"):
+        return False
+    if action in ("e", "edit"):
+        return _edit_enrichment_json(result, doc_id)
+    return True
+
+
+def _edit_enrichment_json(result: EnrichmentResult, doc_id: str) -> bool:
+    import json, subprocess, os, tempfile
+    data = json.loads(result.model_dump_json(indent=2))
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as f:
+        json.dump(data, f, indent=2)
+        tmp_path = f.name
+
+    editor = os.environ.get("EDITOR", "nano")
+    subprocess.call([editor, tmp_path])
+    Path(tmp_path).unlink(missing_ok=True)
+    return True  # always save after editing
 
 
 def _open_in_editor(result: PreprocessResult) -> None:

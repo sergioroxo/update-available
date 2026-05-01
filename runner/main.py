@@ -18,7 +18,7 @@ from rich.panel import Panel
 
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
-from .pipeline import intake, preprocess, analyze, review, upload
+from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload
 
 app = typer.Typer(name="runner", add_completion=False)
 console = Console()
@@ -32,9 +32,28 @@ def ingest(
     batch: Optional[str] = typer.Option(None, help="Assign to existing batch ID"),
     max_chars: Optional[int] = typer.Option(None, "--max-chars", help="Truncation limit in characters (overrides .env). Use 0 for no truncation."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Auto-approve all checkpoints (no interactive prompts)"),
+    run_triage: bool = typer.Option(False, "--triage", help="Run fast pre-screen triage to recommend which model to use"),
+    run_enrich: bool = typer.Option(False, "--enrich", help="Run Stage 3c enrichment pass after upload (lexicon + entity proposals)"),
 ):
     """Full ingestion pipeline: intake → preprocess → embed → classify → review → upload."""
     config = load_config(llm=llm)
+
+    # Stage 0.5 — Triage (optional): fast pre-screen to recommend analysis model
+    if run_triage and not yes:
+        # We need a text snippet first — do a quick fetch/preview before full preprocess
+        import httpx as _httpx
+        snippet = ""
+        try:
+            if source.startswith("http"):
+                snippet = _httpx.get(source, timeout=15, follow_redirects=True).text[:3000]
+            else:
+                from pathlib import Path as _Path
+                snippet = _Path(source).read_text(errors="ignore")[:3000]
+        except Exception:
+            pass
+        if snippet:
+            triage_result = triage.run(snippet, config)
+            llm = review.checkpoint_triage(triage_result, llm)
 
     # Deduplication check — offer update-in-place or new document
     _force_doc_id: str | None = None
@@ -108,6 +127,77 @@ def ingest(
             f"Upload later with: [bold]python -m runner upload {intake_result.doc_id}[/bold]",
             title="Saved locally",
         ))
+
+    # Stage 3c — Enrichment (optional, runs after upload)
+    if run_enrich:
+        console.print("\n[dim]Running Stage 3c enrichment pass...[/dim]")
+        enrich_llm = "litelm" if llm.startswith("litelm") else llm
+        try:
+            enrichment_result = enrich.run(
+                intake_result.doc_id, preprocess_result, final_analysis,
+                config=config, llm=enrich_llm,
+            )
+            if yes or review.checkpoint_enrichment(enrichment_result, intake_result.doc_id):
+                saved = enrich.save(intake_result.doc_id, enrichment_result, config)
+                console.print(f"[green]Enrichment saved → {saved}[/green]")
+        except Exception as exc:
+            console.print(Panel(f"[red]Enrichment failed: {exc}[/red]", title="Stage 3c error"))
+
+
+@app.command(name="enrich")
+def enrich_doc(
+    doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
+    llm: str = typer.Option("litelm", help="LLM for enrichment: litelm | claude | local"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Auto-save without review"),
+):
+    """Run Stage 3c enrichment on a previously ingested document."""
+    import json as _json
+    config = load_config(llm=llm)
+    doc_dir = config.corpus_dir / doc_id
+
+    # Load saved analysis + preprocess results
+    analysis_path = doc_dir / "analysis.json"
+    preprocess_path = doc_dir / "preprocess.json"
+    if not analysis_path.exists():
+        console.print(f"[red]No analysis.json found for {doc_id}[/red]")
+        raise typer.Exit(1)
+
+    from .models.document import AnalysisResult, PreprocessResult
+    analysis = AnalysisResult.model_validate(_json.loads(analysis_path.read_text()))
+
+    if preprocess_path.exists():
+        from dataclasses import asdict
+        raw_pre = _json.loads(preprocess_path.read_text())
+        # Reconstruct minimal PreprocessResult from saved JSON
+        preprocess = PreprocessResult(
+            doc_id=doc_id,
+            tool_used=raw_pre.get("tool_used", "unknown"),
+            quality=raw_pre.get("quality", "medium"),
+            text=raw_pre.get("text", ""),
+            title=raw_pre.get("title", ""),
+            author=raw_pre.get("author", ""),
+            date_published=raw_pre.get("date_published", ""),
+            hostname=raw_pre.get("hostname", ""),
+        )
+    else:
+        # Minimal stub — text won't be available but enrichment can still run on metadata
+        console.print("[yellow]preprocess.json not found — enrichment will have no document text[/yellow]")
+        preprocess = PreprocessResult(
+            doc_id=doc_id, tool_used="unknown", quality="low", text=""
+        )
+
+    console.print(f"[dim]Running enrichment on {doc_id} with {llm}...[/dim]")
+    try:
+        enrichment_result = enrich.run(doc_id, preprocess, analysis, config=config, llm=llm)
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Enrichment failed"))
+        raise typer.Exit(1)
+
+    if yes or review.checkpoint_enrichment(enrichment_result, doc_id):
+        saved = enrich.save(doc_id, enrichment_result, config)
+        console.print(f"[green]Enrichment saved → {saved}[/green]")
+    else:
+        console.print("[yellow]Enrichment skipped.[/yellow]")
 
 
 @app.command()

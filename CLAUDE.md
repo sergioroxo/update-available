@@ -137,11 +137,11 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 - [ ] JSON export to GitHub per batch
 
 ### Streamlit Web UI (Phase 0.5 parallel)
-- [ ] `runner/app.py` — Streamlit wrapper around same pipeline functions
-- [ ] Markdown preview tab
-- [ ] Candidate term approval forms
-- [ ] JSON diff viewer (Claude vs local LLM)
-- [ ] RAM / processing time monitor (to evaluate heavy models — resolves Q23)
+- [x] `runner/app.py` — Streamlit: Document List, Pending Upload, Model Routing spec sheet, Triage Tool
+- [ ] Markdown preview tab (open extracted.md inline)
+- [ ] Candidate term approval forms (approve/reject from enrichment.json)
+- [ ] JSON diff viewer (Claude vs local LLM — `--llm both`)
+- [ ] RAM / processing time monitor (resolves Q23)
 
 ### Deferred
 - [ ] Vercel app (Phase 1–2)
@@ -173,6 +173,16 @@ python3 -m runner ingest https://example.org --llm openrouter    # free OpenRout
 python3 -m runner status                    # show locally saved, not yet uploaded
 python3 -m runner upload-doc <doc_id>       # push a saved document to Sanity + Supabase
 python3 -m runner export batch-07           # export batch JSON to exports/batch-07/
+python3 -m runner enrich <doc_id>           # Stage 3c enrichment on existing doc (lexicon + entities)
+python3 -m runner verify                    # check Sanity + Supabase records directly
+
+# Flags
+python3 -m runner ingest <url> --triage     # Stage 0.5 pre-screen: recommends which --llm to use
+python3 -m runner ingest <url> --enrich     # also run Stage 3c after upload
+python3 -m runner ingest <url> --llm both   # Claude + local, shows diff at Checkpoint 3
+
+# Streamlit UI
+cd runner && streamlit run app.py           # open at http://localhost:8501
 ```
 
 ---
