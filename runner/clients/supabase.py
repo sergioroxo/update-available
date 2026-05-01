@@ -21,14 +21,13 @@ def upsert_embedding(
     analysis: AnalysisResult,
     config: Config,
 ) -> None:
-    """Insert or update a row in document_embeddings."""
+    """Insert or update a row in document_embeddings.
+    Only doc_id + embedding are written — the table exists purely for vector
+    similarity search. All classification metadata lives in Sanity."""
     client = _client(config)
     client.table("document_embeddings").upsert({
-        "doc_id":   doc_id,
+        "doc_id":    doc_id,
         "embedding": vector,
-        "doc_type":  analysis.type,
-        "scope":     analysis.scope,
-        "country":   analysis.country,
     }).execute()
 
 
