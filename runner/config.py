@@ -27,6 +27,14 @@ class Config:
     openrouter_api_key: str
     openrouter_model: str
 
+    # LiteLLM proxy (Mac Studio M2 Ultra via Tailscale)
+    litelm_base_url: str
+    litelm_api_key: str
+    litelm_analysis_model: str         # (--llm litelm)       default: core-qwen
+    litelm_analysis_model_heavy: str   # (--llm litelm-heavy) default: core-gemma
+    litelm_analysis_model_reasoning: str # (--llm litelm-reasoning) default: review-qwen
+    litelm_embedding_model: str        # used when --llm litelm*
+
     # Truncation limits (chars). Claude default is conservative due to API cost.
     # Local models have large context windows so LOCAL_TRUNCATION_LIMIT can be
     # set much higher (e.g. 200000) for full SRT / book ingestion.
@@ -46,6 +54,7 @@ def load_config(llm: str | None = None) -> Config:
                        "SANITY_WRITE_TOKEN", "SUPABASE_URL", "SUPABASE_SERVICE_KEY"]
     needs_claude     = llm in ("claude", "prefer-claude", "both")
     needs_openrouter = llm == "openrouter"
+    needs_litelm     = llm is not None and llm.startswith("litelm")
 
     missing = []
     for key in always_required:
@@ -55,6 +64,8 @@ def load_config(llm: str | None = None) -> Config:
         missing.append("ANTHROPIC_API_KEY")
     if needs_openrouter and not os.getenv("OPENROUTER_API_KEY"):
         missing.append("OPENROUTER_API_KEY")
+    if needs_litelm and not os.getenv("LITELM_BASE_URL"):
+        missing.append("LITELM_BASE_URL")
 
     if missing:
         raise EnvironmentError(
@@ -84,6 +95,12 @@ def load_config(llm: str | None = None) -> Config:
         claude_model=os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6"),
         openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""),
         openrouter_model=os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
+        litelm_base_url=os.getenv("LITELM_BASE_URL", ""),
+        litelm_api_key=os.getenv("LITELM_API_KEY", ""),
+        litelm_analysis_model=os.getenv("LITELM_ANALYSIS_MODEL", "core-qwen"),
+        litelm_analysis_model_heavy=os.getenv("LITELM_ANALYSIS_MODEL_HEAVY", "core-gemma"),
+        litelm_analysis_model_reasoning=os.getenv("LITELM_ANALYSIS_MODEL_REASONING", "review-qwen"),
+        litelm_embedding_model=os.getenv("LITELM_EMBEDDING_MODEL", "research-embedding"),
         truncation_limit=int(os.getenv("TRUNCATION_LIMIT", "24000")),
-        truncation_limit_local=int(os.getenv("TRUNCATION_LIMIT_LOCAL", "120000")),
+        truncation_limit_local=int(os.getenv("TRUNCATION_LIMIT_LOCAL", "200000")),
     )

@@ -51,6 +51,21 @@ def run(text: str, config: Config) -> list[float]:
     return _call(config.ollama_base_url, config.embedding_model, text)
 
 
+def run_litelm(text: str, config: Config) -> list[float]:
+    """Generate embedding via LiteLLM proxy (OpenAI-compatible /v1/embeddings)."""
+    response = httpx.post(
+        f"{config.litelm_base_url}/v1/embeddings",
+        headers={
+            "Authorization": f"Bearer {config.litelm_api_key}",
+            "Content-Type": "application/json",
+        },
+        json={"model": config.litelm_embedding_model, "input": text},
+        timeout=_TIMEOUT,
+    )
+    response.raise_for_status()
+    return response.json()["data"][0]["embedding"]
+
+
 def test_dimension(ollama_base_url: str, model: str) -> int:
     """Embed a short test string and return the vector dimension.
     Called by `runner embed-test` to resolve Q22.

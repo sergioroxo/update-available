@@ -59,6 +59,12 @@ def run(
         return _analyze_with_ollama(preprocess, config, config.local_analysis_model_heavy)
     if llm == "local-reasoning":
         return _analyze_with_ollama(preprocess, config, config.local_analysis_model_reasoning)
+    if llm == "litelm":
+        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model)
+    if llm == "litelm-heavy":
+        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_heavy)
+    if llm == "litelm-reasoning":
+        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_reasoning)
     if llm == "openrouter":
         return _analyze_with_openrouter(preprocess, config)
     if llm == "both":
@@ -131,6 +137,32 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
         raise ValueError(
             f"Ollama returned empty response. Message keys: {list(msg.keys())}"
         )
+    return _validate_response(raw_json)
+
+
+def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: str) -> AnalysisResult:
+    import httpx
+    system_prompt = _build_system_prompt_with_lexicon(config)
+    user_message  = _build_user_message(preprocess)
+
+    response = httpx.post(
+        f"{config.litelm_base_url}/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {config.litelm_api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_message},
+            ],
+            "temperature": 0.1,
+        },
+        timeout=600,
+    )
+    response.raise_for_status()
+    raw_json = response.json()["choices"][0]["message"]["content"]
     return _validate_response(raw_json)
 
 
