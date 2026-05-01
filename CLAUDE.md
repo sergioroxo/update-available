@@ -22,33 +22,44 @@ Key docs:
 ### Embedding
 | Task | Model | Notes |
 |---|---|---|
-| Embeddings | `qwen3-embedding:8b` via Ollama | Pinned 8b — run embed-test to confirm dimension |
+| Embeddings (local) | `qwen3-embedding:8b` via Ollama | Pinned 8b — 4096d confirmed |
+| Embeddings (remote) | `research-embedding` via LiteLLM | Same model on Mac Studio — used when `--llm litelm*` |
 
-### Analysis — Three-tier local strategy (Codex recommendation)
+### Analysis — MacBook (fallback / offline)
 
 | Tier | Model | `--llm` flag | Use when |
 |---|---|---|---|
-| Default | `qwen3.5:9b` | `local` | Everyday processing; best multilingual + JSON reliability |
-| Heavy | `gemma-4-26B-A4B-it` | `local-heavy` | Long books, long SRTs, interpretive fields (tactic/harm/flags/summary/assets) |
-| Reasoning | `Ministral-3-14B-Reasoning-2512` | `local-reasoning` | Ambiguous docs; evidence justification; confidence scoring |
-| Primary | Claude API (`claude-sonnet-4-6`) | `claude` | Gold standard; required for Tier 1 final classification |
+| Default | `qwen3.5:9b` | `local` | Offline / Mac Studio unavailable |
+| Heavy | `gemma-4-26B-A4B-it` | `local-heavy` | Long docs offline (check RAM first — Q23) |
+| Reasoning | `Ministral-3-14B-Reasoning-2512` | `local-reasoning` | Ambiguous docs offline |
+| Primary | Claude API (`claude-sonnet-4-6`) | `claude` | Gold standard; Tier 1 final classification |
 
-**Deployment strategy (Codex):**
-- `qwen3.5:9b` as default local model — quality/speed/RAM balance
-- `gemma-4-26B-A4B-it` only for the hardest/longest documents (risk: 24 GB RAM pressure)
-- `Ministral-3-14B-Reasoning-2512` as reasoning comparison when a document is especially ambiguous
+### Analysis — Mac Studio M2 Ultra 64 GB (preferred for all ingestion)
 
-> Run `ollama list` to verify exact model names installed on your machine.
-> Update `LOCAL_ANALYSIS_MODEL`, `LOCAL_ANALYSIS_MODEL_HEAVY`, `LOCAL_ANALYSIS_MODEL_REASONING` in `runner/.env` to match.
+LiteLLM proxy at `LITELM_BASE_URL` (Tailscale). All `--llm litelm*` flags route here for both analysis AND embedding.
+
+| Role | LiteLLM model name | Actual Ollama model | `--llm` flag |
+|---|---|---|---|
+| Default analysis | `core-qwen` | `qwen3.6:35b-a3b` (35B MoE, 3B active) | `litelm` |
+| Heavy / long docs | `core-gemma` | `gemma4:31b-it` | `litelm-heavy` |
+| Second opinion | `review-qwen` | `qwen3.6:27b` | `litelm-reasoning` |
+| Second opinion (alt) | `review-gemma` | `gemma4:26b-a4b-it` | — |
+| Fast triage | `triage` | `gemma4:e4b-it` | — |
+| Enrichment (Stage 3c) | `lexicon-llm` | `qwen3.6:35b-a3b` | auto |
+| Structured extraction | `coder` | `qwen3-coder:30b-a3b-instruct` | — |
+| Embeddings | `research-embedding` | `qwen3-embedding:8b` | auto with `litelm*` |
+
+**Mac Studio setup:** `01_project_docs/MAC_STUDIO_SERVER_SETUP.md`
+**LiteLLM config fix required:** add `max_tokens: 8192` to each chat model's `litellm_params` — without it Ollama uses its default ~2048 token output limit, truncating JSON responses.
 
 ### Other tools
-| Task | Tool |
-|---|---|
-| Transcription | `faster-whisper` (local) |
-| OCR | Tesseract |
-| Phase 2 semantic map | UMAP + HDBSCAN + BERTopic |
-
-Long transcripts (SRT, books >40k chars) default to `--llm local-heavy`.
+| Task | Tool | Runs on |
+|---|---|---|
+| Web scraping | Trafilatura | MacBook (HTTP fetch, no GPU needed) |
+| PDF parsing | Docling | MacBook |
+| Transcription | `faster-whisper` | MacBook (move to Mac Studio for long recordings) |
+| OCR | Tesseract | MacBook |
+| Phase 2 semantic map | UMAP + HDBSCAN + BERTopic | TBD |
 
 ---
 
