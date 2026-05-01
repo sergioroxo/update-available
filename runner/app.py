@@ -13,7 +13,14 @@ Pages:
 from __future__ import annotations
 import json
 import os
+import sys
 from pathlib import Path
+
+# Ensure the project root (parent of runner/) is on sys.path so that
+# `runner.*` package imports work regardless of launch directory.
+_project_root = Path(__file__).resolve().parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
 
 import streamlit as st
 
@@ -26,11 +33,7 @@ def _load_config_safe():
         from runner.config import load_config
         return load_config()
     except Exception:
-        try:
-            from config import load_config
-            return load_config()
-        except Exception:
-            return None
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -427,12 +430,7 @@ def page_triage_tool():
 
         with st.spinner("Running triage..."):
             try:
-                # Import here to avoid circular issues when running outside package
-                try:
-                    from runner.pipeline.triage import run as triage_run
-                except ImportError:
-                    from pipeline.triage import run as triage_run
-
+                from runner.pipeline.triage import run as triage_run
                 result = triage_run(text, config)
             except Exception as exc:
                 st.error(f"Triage failed: {exc}")
