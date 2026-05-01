@@ -158,6 +158,7 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
                 {"role": "user",   "content": user_message},
             ],
             "temperature": 0.1,
+            "max_tokens": 8192,
         },
         timeout=600,
     )
