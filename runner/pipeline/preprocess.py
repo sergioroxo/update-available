@@ -3,23 +3,25 @@ Stage 2 — Document preprocessing.
 
 Routing:
   PDF / EPUB / DOCX  → Docling (primary)  → Unstructured (fallback)
-  URL / HTML         → Trafilatura
+  URL / HTML         → Trafilatura (saves source.html + SHA-256)
   Video / Audio      → yt-dlp subtitles → faster-whisper fallback
   SRT                → strip timestamps, clean text
 
-Writes extracted.md and extracted.txt to the local corpus directory.
+Writes extracted.md, extracted.txt, source.html (URLs), and preprocess.json
+to the local corpus directory.
 """
 from __future__ import annotations
+import hashlib
+import json as _json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 from ..config import Config
 from ..models.document import IntakeResult, PreprocessResult
 
-# Fallback constants — overridden by config or --max-chars CLI flag
-_DEFAULT_LIMIT = 24_000
-_HEAD_RATIO    = 0.67   # 2/3 of limit from the front
-_TAIL_RATIO    = 0.25   # 1/4 of limit from the end
+_HEAD_RATIO = 0.67
+_TAIL_RATIO = 0.25
 
 
 def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> PreprocessResult:
@@ -39,17 +41,51 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
 
     result.doc_id = intake.doc_id
 
-    # Determine effective limit: CLI flag > env var > default
-    limit = max_chars if max_chars is not None else config.truncation_limit
-    text, truncated = _maybe_truncate(result.text, limit)
-    result.text = text
-    result.truncated = truncated
+    # Apply truncation only when a limit is specified.
+    # URL sources should use the large-model limit (set by main.py based on source_type).
+    if max_chars is not None:
+        text, truncated = _maybe_truncate(result.text, max_chars)
+        result.text = text
+        result.truncated = truncated
+
     result.char_count = len(result.text)
 
     if intake.local_dir:
         _save_artifacts(result, intake.local_dir)
+        _save_preprocess_json(result, intake, intake.local_dir)
+        # Update intake.json with HTML hash if captured
+        sha256 = getattr(result, "source_html_sha256", "")
+        if sha256:
+            from . import intake as _intake_mod
+            _intake_mod.update_intake_sha256(intake.doc_id, sha256, config)
 
     return result
+
+
+def _save_preprocess_json(result: PreprocessResult, intake: IntakeResult, doc_dir: Path) -> None:
+    """Save preprocessing metadata (not the text body — that's in extracted.txt)."""
+    data = {
+        "doc_id":            result.doc_id,
+        "tool_used":         result.tool_used,
+        "quality":           result.quality,
+        "char_count":        result.char_count,
+        "truncated":         result.truncated,
+        "language_detected": result.language_detected,
+        "title":             result.title,
+        "author":            result.author,
+        "date_published":    result.date_published,
+        "sitename":          result.sitename,
+        "description":       result.description,
+        "hostname":          result.hostname,
+        "original_filename":  intake.original_filename,
+        "source_url":         intake.source_url,
+        "source_html_sha256": getattr(result, "source_html_sha256", ""),
+        "preprocessed_at":    datetime.now(timezone.utc).isoformat(),
+        "outbound_link_count": len(result.outbound_links),
+    }
+    (doc_dir / "preprocess.json").write_text(
+        _json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def _preprocess_url(url: str) -> PreprocessResult:
@@ -62,8 +98,11 @@ def _preprocess_url(url: str) -> PreprocessResult:
     if not downloaded:
         raise ValueError(f"trafilatura: could not fetch {url}")
 
+    # SHA-256 of raw HTML at capture time
+    raw_html = downloaded if isinstance(downloaded, str) else downloaded.decode("utf-8", errors="replace")
+    sha256 = hashlib.sha256(raw_html.encode("utf-8", errors="replace")).hexdigest()
+
     # JSON output gives us structured metadata alongside the text
-    import json as _json
     json_str = trafilatura.extract(
         downloaded,
         output_format="json",
@@ -77,7 +116,7 @@ def _preprocess_url(url: str) -> PreprocessResult:
     # Full page intelligence extraction
     intel = _extract_page_intelligence(downloaded, base_url=url)
 
-    return PreprocessResult(
+    result = PreprocessResult(
         doc_id="",
         tool_used="trafilatura",
         quality=_rate_quality(text, "trafilatura"),
@@ -91,7 +130,11 @@ def _preprocess_url(url: str) -> PreprocessResult:
         hostname=metadata.get("hostname", ""),
         outbound_links=intel.outbound_links,
         page_intel=intel,
+        _raw_html=raw_html,
     )
+    # Attach SHA-256 as a dynamic attribute so _save_preprocess_json can access it
+    result.source_html_sha256 = sha256  # type: ignore[attr-defined]
+    return result
 
 
 def _preprocess_pdf(path: Path) -> PreprocessResult:
@@ -429,3 +472,5 @@ def _save_artifacts(result: PreprocessResult, doc_dir: Path) -> None:
     if result.markdown:
         (doc_dir / "extracted.md").write_text(result.markdown, encoding="utf-8")
     (doc_dir / "extracted.txt").write_text(result.text, encoding="utf-8")
+    if result._raw_html:
+        (doc_dir / "source.html").write_text(result._raw_html, encoding="utf-8", errors="replace")

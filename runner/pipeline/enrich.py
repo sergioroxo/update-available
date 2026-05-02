@@ -52,12 +52,18 @@ def run(
     analysis: AnalysisResult,
     config: Config,
     llm: str = "litelm",
+    enrich_model: str | None = None,   # override the LiteLLM model name (e.g. "core-gemma")
 ) -> EnrichmentResult:
-    """Run Stage 3c enrichment and return an EnrichmentResult."""
+    """Run Stage 3c enrichment and return an EnrichmentResult.
+
+    enrich_model overrides the default 'lexicon-llm' alias — useful when you
+    want a second opinion from a different model (e.g. 'core-gemma' for Gemma4).
+    """
     system_prompt = _build_system_prompt(config, analysis)
     user_message  = _build_user_message(doc_id, preprocess)
 
     raw: str | None = None
+    model_used = enrich_model or config.litelm_enrichment_model  # default: "lexicon-llm"
 
     if llm == "claude":
         raw = _call_claude(system_prompt, user_message, config)
@@ -65,36 +71,78 @@ def run(
         raw = _call_ollama(system_prompt, user_message, config,
                            config.local_analysis_model)
     else:
-        # litelm* or default: try lexicon-llm on Mac Studio
+        # litelm* or default: use configured enrichment model on Mac Studio
         if config.litelm_base_url:
             try:
-                raw = _call_litelm(system_prompt, user_message, config)
-            except Exception as exc:
+                raw = _call_litelm(system_prompt, user_message, config, model=model_used)
+            except Exception:
                 if llm.startswith("litelm"):
                     raise  # user explicitly asked for litelm — don't hide the error
-                # fallback path: try local
         if raw is None:
             raw = _call_ollama(system_prompt, user_message, config,
                                config.local_analysis_model)
 
-    return _validate_response(doc_id, raw, llm)
+    return _validate_response(doc_id, raw, model_used)
+
+
+def run_second_opinion(
+    doc_id: str,
+    preprocess: PreprocessResult,
+    analysis: AnalysisResult,
+    config: Config,
+) -> EnrichmentResult:
+    """Run enrichment with the alternate model (litelm_enrichment_model_alt).
+    Useful for comparing results or when the primary model's output is suspect.
+    The result is saved as enrichment_alt_{timestamp}.json, never as enrichment.json."""
+    return run(
+        doc_id, preprocess, analysis, config,
+        llm="litelm",
+        enrich_model=config.litelm_enrichment_model_alt,
+    )
 
 
 def save(doc_id: str, result: EnrichmentResult, config: Config) -> Path:
-    """Write enrichment.json to the document's corpus directory."""
+    """Write enrichment.json, archiving any previous version first.
+
+    Previous enrichment.json is renamed to enrichment_{timestamp}.json so that
+    researcher decisions (approved/rejected flags) are never silently lost.
+    """
+    from datetime import datetime, timezone
     doc_dir = config.corpus_dir / doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
     out = doc_dir / "enrichment.json"
+
+    if out.exists():
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        out.rename(doc_dir / f"enrichment_{ts}.json")
+
+    out.write_text(result.model_dump_json(indent=2), encoding="utf-8")
+    return out
+
+
+def save_alt(doc_id: str, result: EnrichmentResult, config: Config) -> Path:
+    """Save a second-opinion enrichment run without touching enrichment.json."""
+    from datetime import datetime, timezone
+    doc_dir = config.corpus_dir / doc_id
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    out = doc_dir / f"enrichment_alt_{ts}.json"
     out.write_text(result.model_dump_json(indent=2), encoding="utf-8")
     return out
 
 
 def load(doc_id: str, config: Config) -> EnrichmentResult | None:
-    """Load a previously saved enrichment.json, or None if not found."""
+    """Load the current enrichment.json, or None if not found."""
     path = config.corpus_dir / doc_id / "enrichment.json"
     if not path.exists():
         return None
     return EnrichmentResult.model_validate(json.loads(path.read_text()))
+
+
+def list_history(doc_id: str, config: Config) -> list[Path]:
+    """Return all archived enrichment files for a document, oldest first."""
+    doc_dir = config.corpus_dir / doc_id
+    return sorted(doc_dir.glob("enrichment_*.json"))
 
 
 # ---------------------------------------------------------------------------
@@ -189,7 +237,10 @@ def _summarise_analysis(analysis: AnalysisResult) -> str:
 # LLM backends
 # ---------------------------------------------------------------------------
 
-def _call_litelm(system_prompt: str, user_message: str, config: Config) -> str:
+def _call_litelm(
+    system_prompt: str, user_message: str, config: Config,
+    model: str = "lexicon-llm",
+) -> str:
     import httpx
     response = httpx.post(
         f"{config.litelm_base_url}/v1/chat/completions",
@@ -198,7 +249,7 @@ def _call_litelm(system_prompt: str, user_message: str, config: Config) -> str:
             "Content-Type": "application/json",
         },
         json={
-            "model": "lexicon-llm",
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user",   "content": user_message},

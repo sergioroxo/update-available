@@ -263,6 +263,11 @@ class IntakeResult:
     language: Optional[str]               # ISO 639-1, None if unknown at intake
     archive_url: Optional[str] = None     # Wayback Machine URL once archived
     local_dir: Optional[Path] = None      # ~/survivingsogice/corpus/{doc_id}/
+    # Provenance for local files
+    source_url: Optional[str] = None      # where this file was obtained (URL to track later)
+    original_filename: str = ""           # original filename before renaming to doc_id
+    # Integrity
+    source_html_sha256: str = ""          # SHA-256 of raw HTML at capture time (URL sources)
 
 
 @dataclass
@@ -285,6 +290,8 @@ class PreprocessResult:
     hostname: str = ""                     # bare domain, e.g. christianconcern.com
     outbound_links: list[dict] = field(default_factory=list)   # [{url, anchor_text, domain}]
     page_intel: Optional["PageIntelligence"] = None
+    # Internal: raw HTML for source.html snapshot (not serialised to JSON)
+    _raw_html: str = field(default="", repr=False, compare=False)
 
 
 @dataclass

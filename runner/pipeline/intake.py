@@ -3,10 +3,12 @@ Stage 1 — Source intake.
 
 Detects source type (URL / PDF / video / SRT / EPUB), generates a stable doc_id,
 checks the Wayback Machine for URL sources, assigns tier and batch,
-creates the local corpus directory.
+creates the local corpus directory, and writes intake.json.
 """
 from __future__ import annotations
+import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 import uuid
@@ -29,11 +31,18 @@ def run(
     batch: Optional[str],
     config: Config,
     force_doc_id: Optional[str] = None,
+    source_url: Optional[str] = None,   # provenance URL for local-file ingests
 ) -> IntakeResult:
-    doc_id      = force_doc_id or _generate_doc_id()
-    source_type = _detect_source_type(source)
+    doc_id        = force_doc_id or _generate_doc_id()
+    source_type   = _detect_source_type(source)
     assigned_tier = tier if tier is not None else _auto_assign_tier(source_type)
-    batch_id    = batch or "unassigned"
+    batch_id      = batch or "unassigned"
+
+    # For local files, record the original filename
+    original_filename = (
+        "" if source_type == "url"
+        else Path(source).name
+    )
 
     archive_url = None
     if source_type == "url":
@@ -41,7 +50,7 @@ def run(
 
     local_dir = _create_local_dir(doc_id, config)
 
-    return IntakeResult(
+    result = IntakeResult(
         doc_id=doc_id,
         source=source,
         source_type=source_type,
@@ -51,7 +60,44 @@ def run(
         language=None,
         archive_url=archive_url,
         local_dir=local_dir,
+        source_url=source_url,
+        original_filename=original_filename,
     )
+
+    _save_intake_json(result, local_dir)
+    return result
+
+
+def _save_intake_json(result: IntakeResult, local_dir: Path) -> None:
+    """Write intake.json — the authoritative provenance record for this document."""
+    data = {
+        "doc_id":            result.doc_id,
+        "source":            result.source,
+        "source_type":       result.source_type,
+        "declared_type":     result.declared_type,
+        "tier":              result.tier,
+        "batch_id":          result.batch_id,
+        "language":          result.language,
+        "archive_url":       result.archive_url,
+        "local_dir":         str(result.local_dir),
+        "source_url":        result.source_url,
+        "original_filename": result.original_filename,
+        "source_html_sha256": result.source_html_sha256,
+        "ingested_at":       datetime.now(timezone.utc).isoformat(),
+    }
+    (local_dir / "intake.json").write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def update_intake_sha256(doc_id: str, sha256: str, config: Config) -> None:
+    """Called by preprocess to record the HTML hash after fetching."""
+    intake_path = config.corpus_dir / doc_id / "intake.json"
+    if not intake_path.exists():
+        return
+    data = json.loads(intake_path.read_text(encoding="utf-8"))
+    data["source_html_sha256"] = sha256
+    intake_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def _detect_source_type(source: str) -> str:
