@@ -13,8 +13,12 @@ from __future__ import annotations
 import json
 import re
 
-from ..config import Config
-from ..models.triage import TriageResult
+try:
+    from runner.config import Config
+    from runner.models.triage import TriageResult
+except ImportError:
+    from ..config import Config          # type: ignore[no-redef]
+    from ..models.triage import TriageResult  # type: ignore[no-redef]
 
 _SNIPPET_CHARS = 3_000
 
