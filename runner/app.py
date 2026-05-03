@@ -154,8 +154,28 @@ def page_dashboard():
     )
 
     if stats["pending"]:
-        st.warning(f"{stats['pending']} document(s) are saved locally but not uploaded yet.")
-        st.code("python -m runner status", language="bash")
+        st.warning(f"{stats['pending']} document(s) are saved locally but not uploaded yet. Go to Pending Upload.")
+
+    # ── Setup checklist ───────────────────────────────────────────────────
+    st.subheader("Setup status")
+    checks = []
+    checks.append(("Sanity credentials", bool(config.sanity_project_id and config.sanity_write_token)))
+    checks.append(("Supabase credentials", bool(config.supabase_url and config.supabase_service_key)))
+    checks.append(("LiteLLM proxy URL", bool(config.litelm_base_url)))
+    checks.append(("Anthropic API key", bool(config.anthropic_api_key)))
+
+    litelm_ok = _service_status(config.litelm_base_url) == "online" if config.litelm_base_url else False
+    ollama_ok  = _service_status(config.ollama_base_url) == "online"
+    checks.append(("Ollama reachable (embedding)", ollama_ok))
+    checks.append(("LiteLLM reachable (analysis)", litelm_ok))
+
+    all_ok = all(ok for _, ok in checks)
+    cols = st.columns(3)
+    for i, (label, ok) in enumerate(checks):
+        cols[i % 3].markdown(f"{'✅' if ok else '❌'} {label}")
+
+    if not all_ok:
+        st.caption("Run `python3 -m runner doctor` in the terminal for detailed fix instructions.")
 
 
 def _corpus_stats(corpus_dir: Path) -> dict[str, int]:
@@ -768,6 +788,55 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
             if analysis_path.exists():
                 st.json(json.loads(analysis_path.read_text()))
 
+        # ── Actions ───────────────────────────────────────────────────────
+        st.divider()
+        act_cols = st.columns([1, 2, 1])
+
+        with act_cols[0]:
+            if not doc["uploaded"]:
+                if st.button("⬆ Upload to Sanity", key=f"upload_{doc['doc_id']}", type="primary"):
+                    with st.spinner("Uploading…"):
+                        r = __import__("subprocess").run(
+                            ["python3", "-m", "runner", "upload-doc", doc["doc_id"]],
+                            capture_output=True, text=True, cwd=_project_root,
+                        )
+                    if r.returncode == 0:
+                        st.success("Uploaded.")
+                    else:
+                        st.error(r.stderr[-600:] or r.stdout[-600:])
+                    st.rerun()
+            else:
+                st.caption("☁️ Uploaded to Sanity")
+
+        with act_cols[1]:
+            llm_opts = ["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local"]
+            ra_llm = st.selectbox("Model", llm_opts, key=f"ra_llm_{doc['doc_id']}", label_visibility="collapsed")
+            if st.button("🔄 Reanalyze", key=f"reanalyze_{doc['doc_id']}"):
+                with st.spinner(f"Re-running analysis with {ra_llm}…"):
+                    r = __import__("subprocess").run(
+                        ["python3", "-m", "runner", "reanalyze", doc["doc_id"],
+                         "--llm", ra_llm, "--yes"],
+                        capture_output=True, text=True, cwd=_project_root,
+                    )
+                if r.returncode == 0:
+                    st.success("Analysis updated.")
+                else:
+                    st.error(r.stderr[-600:] or r.stdout[-600:])
+                st.rerun()
+
+        with act_cols[2]:
+            if st.button("✨ Re-enrich", key=f"reenrich_{doc['doc_id']}"):
+                with st.spinner("Running enrichment…"):
+                    r = __import__("subprocess").run(
+                        ["python3", "-m", "runner", "enrich", doc["doc_id"], "--yes"],
+                        capture_output=True, text=True, cwd=_project_root,
+                    )
+                if r.returncode == 0:
+                    st.success("Enrichment saved.")
+                else:
+                    st.error(r.stderr[-600:] or r.stdout[-600:])
+                st.rerun()
+
 
 # ---------------------------------------------------------------------------
 # Pending Upload
@@ -806,10 +875,41 @@ def page_pending_upload():
 
     st.warning(f"{len(pending)} document(s) saved locally but not yet uploaded to Sanity.")
 
+    if st.button("⬆ Upload all to Sanity", type="primary"):
+        progress = st.progress(0)
+        errors = []
+        for i, p in enumerate(pending):
+            with st.spinner(f"Uploading {p['doc_id']}…"):
+                r = __import__("subprocess").run(
+                    ["python3", "-m", "runner", "upload-doc", p["doc_id"]],
+                    capture_output=True, text=True, cwd=_project_root,
+                )
+                if r.returncode != 0:
+                    errors.append((p["doc_id"], r.stderr[-300:] or r.stdout[-300:]))
+            progress.progress((i + 1) / len(pending))
+        if errors:
+            for doc_id, msg in errors:
+                st.error(f"{doc_id}: {msg}")
+        else:
+            st.success(f"Uploaded {len(pending)} document(s).")
+        st.rerun()
+
+    st.divider()
     for p in pending:
-        col1, col2 = st.columns([3, 1])
+        col1, col2, col3 = st.columns([3, 1, 1])
         col1.write(f"**{p['doc_id']}** — {p['type']}")
-        col2.code(f"python -m runner upload-doc {p['doc_id']}")
+        if col2.button("Upload", key=f"pu_{p['doc_id']}"):
+            with st.spinner("Uploading…"):
+                r = __import__("subprocess").run(
+                    ["python3", "-m", "runner", "upload-doc", p["doc_id"]],
+                    capture_output=True, text=True, cwd=_project_root,
+                )
+            if r.returncode == 0:
+                st.success(f"{p['doc_id']} uploaded.")
+            else:
+                st.error(r.stderr[-400:] or r.stdout[-400:])
+            st.rerun()
+        col3.code(p["doc_id"], language=None)
 
 
 # ---------------------------------------------------------------------------
