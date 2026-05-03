@@ -118,7 +118,12 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 - [x] OpenRouter LLM option (`--llm openrouter`)
 - [x] Confidence score auto-derivation when LLM omits overall_score
 - [x] Source deduplication warning before intake
-- [ ] **Three-tier local model routing** (`--llm local-heavy`, `--llm local-reasoning`)
+- [x] **Three-tier local model routing** (`--llm local-heavy`, `--llm local-reasoning`, `--llm litelm*`)
+- [x] Testimony consent gate (Checkpoint 3.5 + upload block)
+- [x] Prompt caching for Claude API (static system prompt cached via `cache_control: ephemeral`)
+- [x] `runner push-enrichment <doc_id>` — CLI push of approved enrichment proposals to Sanity
+- [x] `runner queue [doc_id]` — show ingestion candidates from enrichment.json
+- [x] `runner doctor` — pre-flight check before first ingest
 - [ ] **End-to-end test**: one URL ingested + uploaded to Sanity + Supabase ← **next milestone**
 
 ### Phase 0.5 — Pilot Batch
@@ -137,10 +142,9 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 - [ ] JSON export to GitHub per batch
 
 ### Streamlit Web UI (Phase 0.5 parallel)
-- [x] `runner/app.py` — Streamlit: Document List, Pending Upload, Model Routing spec sheet, Triage Tool
-- [ ] Markdown preview tab (open extracted.md inline)
-- [ ] Candidate term approval forms (approve/reject from enrichment.json)
-- [ ] JSON diff viewer (Claude vs local LLM — `--llm both`)
+- [x] `runner/app.py` — Dashboard, Ingest Workbench, Document List, Pending Upload, Lexicon, Tag Registry, Testimony Review, Activity Log, Model Routing, Triage Tool
+- [x] Candidate term + entity approval forms (approve/reject from enrichment.json, push to Sanity)
+- [x] JSON diff viewer (`--llm both` comparison via `_show_diff` in review.py + Streamlit)
 - [ ] RAM / processing time monitor (resolves Q23)
 
 ### Deferred
@@ -158,6 +162,9 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 cd runner && pip3 install -r requirements.txt
 cp .env.example .env  # fill in API keys
 
+# Pre-flight check — run this before first ingest
+python3 -m runner doctor
+
 # Verify Ollama embedding (do before first ingest)
 python3 -m runner embed-test
 
@@ -171,10 +178,14 @@ python3 -m runner ingest document.pdf --llm both                 # Claude + loca
 python3 -m runner ingest https://example.org --llm openrouter    # free OpenRouter model
 
 python3 -m runner status                    # show locally saved, not yet uploaded
+python3 -m runner status <doc_id>           # detailed pipeline trace for one document
 python3 -m runner upload-doc <doc_id>       # push a saved document to Sanity + Supabase
 python3 -m runner export batch-07           # export batch JSON to exports/batch-07/
 python3 -m runner enrich <doc_id>           # Stage 3c enrichment on existing doc (lexicon + entities)
+python3 -m runner push-enrichment <doc_id>  # push approved enrichment proposals to Sanity
+python3 -m runner queue                     # show all ingestion candidates from enrichment results
 python3 -m runner verify                    # check Sanity + Supabase records directly
+python3 -m runner migrate-supabase --confirm  # recreate document_embeddings with vector(4096)
 
 # Flags
 python3 -m runner ingest <url> --triage     # Stage 0.5 pre-screen: recommends which --llm to use

@@ -414,5 +414,176 @@ def embed_test():
     ))
 
 
+@app.command(name="doctor")
+def doctor():
+    """Pre-flight check — verify every prerequisite before the first ingest.
+
+    Checks: .env file, required credentials, Ollama reachability + model,
+    embedding dimension, Sanity API, Supabase table schema.
+    Run this before your first 'runner ingest' to catch missing config early.
+    """
+    import os
+    from dotenv import load_dotenv
+    from rich.table import Table as RichTable
+
+    load_dotenv()
+
+    checks: list[tuple[str, bool, str]] = []   # (label, ok, detail)
+
+    def ok(label: str, detail: str = "") -> None:
+        checks.append((label, True, detail))
+
+    def fail(label: str, detail: str = "") -> None:
+        checks.append((label, False, detail))
+
+    # ── .env file ──────────────────────────────────────────────────────────
+    env_path = None
+    for candidate in [".env", "runner/.env"]:
+        if os.path.exists(candidate):
+            env_path = candidate
+            break
+    if env_path:
+        ok(".env file", env_path)
+    else:
+        fail(".env file", "Not found. Copy runner/.env.example to runner/.env and fill in keys.")
+
+    # ── Required credentials ──────────────────────────────────────────────
+    required = {
+        "ANTHROPIC_API_KEY":   "Anthropic API (Claude classification)",
+        "SANITY_PROJECT_ID":   "Sanity project",
+        "SANITY_DATASET":      "Sanity dataset",
+        "SANITY_WRITE_TOKEN":  "Sanity write token",
+        "SUPABASE_URL":        "Supabase project URL",
+        "SUPABASE_SERVICE_KEY": "Supabase service role key",
+    }
+    for key, description in required.items():
+        val = os.getenv(key, "")
+        placeholder = val in ("", "sk-ant-...", "https://<project>.supabase.co", "sk-local-research-key-change-this")
+        if val and not placeholder:
+            ok(key, description)
+        else:
+            fail(key, f"Missing or placeholder — {description}")
+
+    ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    embedding_model = os.getenv("EMBEDDING_MODEL", "qwen3-embedding:8b")
+    analysis_model  = os.getenv("LOCAL_ANALYSIS_MODEL", "qwen3.5:9b")
+
+    # ── Ollama reachability + installed models ────────────────────────────
+    installed_models: set[str] = set()
+    try:
+        import httpx as _httpx
+        r = _httpx.get(f"{ollama_base_url}/api/tags", timeout=5)
+        r.raise_for_status()
+        installed_models = {m["name"] for m in r.json().get("models", [])}
+        ok("Ollama", f"Running at {ollama_base_url}, {len(installed_models)} model(s)")
+    except Exception as exc:
+        fail("Ollama", f"Not reachable at {ollama_base_url}: {exc}\nRun: ollama serve")
+
+    # Embedding model installed?
+    emb_tag = embedding_model if ":" in embedding_model else f"{embedding_model}:latest"
+    if installed_models:
+        if any(m.startswith(embedding_model.split(":")[0]) for m in installed_models):
+            ok("Embedding model", embedding_model)
+        else:
+            fail("Embedding model", f"{embedding_model} not found in Ollama.\nRun: ollama pull {embedding_model}")
+
+    # Analysis model installed?
+    if installed_models:
+        if any(m.startswith(analysis_model.split(":")[0]) for m in installed_models):
+            ok("Analysis model (local)", analysis_model)
+        else:
+            fail("Analysis model (local)", f"{analysis_model} not found.\nRun: ollama pull {analysis_model}\n(Only needed for --llm local; Claude is the default)")
+
+    # ── Embedding dimension ───────────────────────────────────────────────
+    if installed_models and any(m.startswith(embedding_model.split(":")[0]) for m in installed_models):
+        try:
+            dim = embed.test_dimension(ollama_base_url, embedding_model)
+            if dim == 4096:
+                ok("Embedding dimension", f"{dim}d ✓ matches vector(4096) in Supabase")
+            else:
+                fail("Embedding dimension", f"{dim}d — expected 4096. Run migrate-supabase if the table was created with a different dimension.")
+        except Exception as exc:
+            fail("Embedding dimension", f"Could not test: {exc}")
+
+    # ── Sanity API ────────────────────────────────────────────────────────
+    sanity_id    = os.getenv("SANITY_PROJECT_ID", "")
+    sanity_ds    = os.getenv("SANITY_DATASET", "production")
+    sanity_token = os.getenv("SANITY_WRITE_TOKEN", "")
+    if sanity_id and sanity_token and "placeholder" not in sanity_token:
+        try:
+            import httpx as _httpx
+            r = _httpx.get(
+                f"https://{sanity_id}.api.sanity.io/v2024-01-01/data/query/{sanity_ds}",
+                params={"query": '*[_type == "sogiceDocument"][0..0]{ _id }'},
+                headers={"Authorization": f"Bearer {sanity_token}"},
+                timeout=10,
+            )
+            r.raise_for_status()
+            ok("Sanity API", f"project={sanity_id} dataset={sanity_ds}")
+        except Exception as exc:
+            fail("Sanity API", f"Query failed: {exc}")
+
+    # ── Supabase + document_embeddings table ──────────────────────────────
+    supa_url = os.getenv("SUPABASE_URL", "")
+    supa_key = os.getenv("SUPABASE_SERVICE_KEY", "")
+    if supa_url and supa_key and "project" not in supa_url:
+        try:
+            from supabase import create_client as _sb
+            sb = _sb(supa_url, supa_key)
+            sb.table("document_embeddings").select("doc_id").limit(1).execute()
+            ok("Supabase document_embeddings", "Table exists and is reachable")
+        except Exception as exc:
+            err = str(exc)
+            if "does not exist" in err or "42P01" in err:
+                fail("Supabase document_embeddings", "Table not found. Run: python -m runner migrate-supabase --confirm")
+            else:
+                fail("Supabase document_embeddings", f"Query failed: {err[:120]}")
+
+    # ── Prompt files ──────────────────────────────────────────────────────
+    from pathlib import Path as _Path
+    import re as _re
+    for prompt_file in ["02_working_tools/Claude_Ingestion_Prompt.md",
+                        "02_working_tools/ENRICHMENT_PROMPT_v1.0.md"]:
+        p = _Path(prompt_file)
+        if not p.exists():
+            fail(f"Prompt file: {p.name}", "File not found — pipeline will crash at analysis stage")
+            continue
+        raw = p.read_text()
+        if _re.search(r"## SYSTEM PROMPT\s*\n```\n", raw):
+            ok(f"Prompt file: {p.name}", "Parseable")
+        else:
+            fail(f"Prompt file: {p.name}", "Cannot parse — '## SYSTEM PROMPT\\n```' section not found")
+
+    # ── Print results ─────────────────────────────────────────────────────
+    table = RichTable(title="Pre-flight Check", show_lines=False)
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Detail", overflow="fold")
+    for label, passed, detail in checks:
+        table.add_row(
+            label,
+            "[green]✓[/green]" if passed else "[red]✗[/red]",
+            detail,
+        )
+    console.print(table)
+
+    failures = [label for label, passed, _ in checks if not passed]
+    if not failures:
+        console.print(Panel(
+            "[bold green]All checks passed.[/bold green]\n\n"
+            "You're ready to ingest. Start with:\n"
+            "  [bold]python -m runner ingest https://example.org/document[/bold]\n"
+            "Or open the Streamlit workbench:\n"
+            "  [bold]cd runner && streamlit run app.py[/bold]",
+            title="Ready ✓",
+        ))
+    else:
+        console.print(Panel(
+            f"[red]{len(failures)} check(s) failed.[/red] Fix the items marked ✗ above before ingesting.",
+            title="[red]Not ready[/red]",
+        ))
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":
     app()
