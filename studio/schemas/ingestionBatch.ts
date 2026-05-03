@@ -21,7 +21,7 @@ export default {
     {
       name: 'createdBy',
       type: 'string',
-      options: { list: ['researcher', 'intern'] },
+      options: { list: ['researcher'] },
     },
     { name: 'notes', type: 'text', rows: 3 },
     {

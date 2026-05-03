@@ -51,7 +51,7 @@ export default {
       name: 'approvedBy',
       title: 'Approved By',
       type: 'string',
-      options: { list: ['researcher', 'intern'] },
+      options: { list: ['researcher'] },
     },
     { name: 'approvedAt', title: 'Approved At', type: 'datetime' },
     {

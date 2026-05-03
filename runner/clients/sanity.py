@@ -2,10 +2,12 @@
 Sanity Content API client (httpx, REST mutations).
 
 Reference: https://www.sanity.io/docs/http-mutations
-Writes use the /mutate endpoint with a createOrReplace transaction.
+Writes use the /mutate endpoint.
 """
 from __future__ import annotations
 from datetime import datetime, timezone
+import json
+import re
 
 import httpx
 
@@ -29,7 +31,7 @@ def fetch_lexicon_terms(config: Config) -> list[dict]:
     """GROQ: all draft + validated lexicon entries with term, cluster, function."""
     query = (
         '*[_type == "lexiconEntry" && status in ["draft","validated"]]'
-        '{ term, proposedCluster, function }'
+        '{ _id, term, proposedCluster, function, multilingualVariants }'
     )
     url = (
         f"https://{config.sanity_project_id}.api.sanity.io"
@@ -39,6 +41,217 @@ def fetch_lexicon_terms(config: Config) -> list[dict]:
     r = httpx.get(url, params={"query": query}, headers=headers, timeout=10)
     r.raise_for_status()
     return r.json().get("result", [])
+
+
+def write_lexicon_draft_from_proposal(
+    proposal: dict,
+    doc_id: str,
+    config: Config,
+    approved_by: str = "researcher",
+) -> str:
+    """Create or replace a draft lexiconEntry from a reviewed enrichment proposal."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    term = (proposal.get("term") or "").strip()
+    if not term:
+        raise ValueError("Cannot write lexicon entry without a term")
+
+    sanity_id = proposal.get("existing_entry_id") or f"lexicon-{_slugify(term)}"
+    quote = _short_excerpt(proposal.get("exact_quote", ""))
+    language = proposal.get("language") or "unknown"
+
+    doc = {
+        "_id": sanity_id,
+        "_type": "lexiconEntry",
+        "term": term,
+        "status": "draft",
+        "proposedCluster": _clean_unknown(proposal.get("proposed_cluster")),
+        "function": _clean_unknown(proposal.get("function")),
+        "draftDefinition": proposal.get("definition_as_used", ""),
+        "accessibleDefinition": proposal.get("accessible_definition", ""),
+        "approvedBy": approved_by,
+        "approvedAt": now_iso,
+        "approvedFromDocument": {
+            "_type": "reference",
+            "_ref": f"doc-{doc_id}",
+        },
+        "evidenceDossier": [
+            {
+                "_key": f"evidence-{_slugify(doc_id)}-0",
+                "documentRef": {
+                    "_type": "reference",
+                    "_ref": f"doc-{doc_id}",
+                },
+                "excerpt": quote,
+                "language": language,
+                "stanceProfile": _stance_profile(proposal.get("register", "")),
+                "confidence": 0.75,
+                "extractedBy": "human",
+            }
+        ] if quote else [],
+        "frequency": 1,
+        "languagesSeen": [language] if language and language != "unknown" else [],
+        "firstSeen": now_iso,
+        "lastSeen": now_iso,
+        "lastReanalyzed": now_iso,
+    }
+    if proposal.get("variants"):
+        doc["multilingualVariants"] = [
+            {
+                "_key": f"variant-{i}",
+                "variantTerm": v.get("variant_term", ""),
+                "language": v.get("language", "unknown"),
+                "attestationTier": v.get("attestation_tier", "tier-3-inferred"),
+                "sourceNote": v.get("source_note", ""),
+            }
+            for i, v in enumerate(proposal.get("variants", []))
+            if v.get("variant_term")
+        ]
+
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for lexicon write:\n{result}")
+
+
+def write_entity_from_proposal(
+    proposal: dict,
+    doc_id: str,
+    config: Config,
+) -> str:
+    """Create or replace an organization/person record from a reviewed proposal."""
+    name = (proposal.get("name") or "").strip()
+    if not name:
+        raise ValueError("Cannot write entity without a name")
+
+    entity_type = proposal.get("entity_type", "organization")
+    if entity_type not in {"organization", "person"}:
+        entity_type = "organization"
+
+    sanity_id = proposal.get("existing_entity_id") or f"{entity_type}-{_slugify(name)}"
+    description = proposal.get("self_description") or proposal.get("evidence_quote", "")
+
+    if entity_type == "person":
+        doc = {
+            "_id": sanity_id,
+            "_type": "person",
+            "name": name,
+            "role": _person_role(proposal.get("role_in_sogice", "")),
+            "countryOfOperation": _first_or_empty(proposal.get("geographic_scope", [])),
+            "description": description,
+            "sourceDocuments": [{"_type": "reference", "_ref": f"doc-{doc_id}"}],
+            "registryStatus": "confirmed",
+        }
+        if proposal.get("affiliated_orgs"):
+            doc["contestedFigureNote"] = "Affiliated orgs mentioned: " + ", ".join(proposal.get("affiliated_orgs", []))
+    else:
+        doc = {
+            "_id": sanity_id,
+            "_type": "organization",
+            "name": name,
+            "type": _organization_type(proposal),
+            "country": _first_or_empty(proposal.get("geographic_scope", [])),
+            "description": description,
+            "visibility": "research_contextualized",
+            "sourceDocuments": [{"_type": "reference", "_ref": f"doc-{doc_id}"}],
+            "registryStatus": "confirmed",
+        }
+
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for entity write:\n{result}")
+
+
+def write_seed_lexicon_entry(entry: dict, config: Config) -> str:
+    """Create or replace a lexiconEntry imported from the seed lexicon."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    term = (entry.get("term") or "").strip()
+    if not term:
+        raise ValueError("Cannot write seed lexicon entry without a term")
+
+    status = entry.get("status") or entry.get("recommended_status") or "draft"
+    if status not in {"candidate", "draft", "validated", "rejected"}:
+        status = "draft"
+
+    source_bits = [
+        "Seed import from SOGICE_Lexicon_v2.0.md.",
+        f"Recommended status: {entry.get('recommended_status', 'draft')}.",
+    ]
+    if entry.get("source_url"):
+        source_bits.append(f"Source URL: {entry['source_url']}")
+    if entry.get("source_note"):
+        source_bits.append(f"Source note: {entry['source_note']}")
+    if entry.get("related"):
+        source_bits.append(f"Related terms from seed: {entry['related']}")
+    if entry.get("expansion"):
+        source_bits.append(f"Seed expansion/name: {entry['expansion']}")
+
+    doc = {
+        "_id": entry.get("sanity_id") or f"lexicon-{_slugify(term)}",
+        "_type": "lexiconEntry",
+        "term": term,
+        "status": status,
+        "proposedCluster": _clean_unknown(entry.get("proposed_cluster")),
+        "function": _clean_unknown(entry.get("function")),
+        "draftDefinition": entry.get("draft_definition") or entry.get("definition") or "",
+        "accessibleDefinition": entry.get("accessible_definition") or "",
+        "approvedBy": "researcher",
+        "approvedAt": now_iso,
+        "evidenceDossier": [],
+        "frequency": int(entry.get("frequency") or 0),
+        "languagesSeen": entry.get("languages_seen") or ([entry.get("language")] if entry.get("language") else []),
+        "lastReanalyzed": now_iso,
+        "validationHistory": [
+            {
+                "_key": "seed-import-0",
+                "runDate": now_iso,
+                "model": "seed-lexicon-import",
+                "recommendation": "confirm" if status == "validated" else "revise",
+                "reasoning": " ".join(bit for bit in source_bits if bit),
+                "resolvedByResearcher": status in {"draft", "validated"},
+            }
+        ],
+    }
+
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for seed lexicon write:\n{result}")
+
+
+def write_seed_lexicon_variant(variant: dict, config: Config) -> str:
+    """Append a multilingual variant to an existing lexiconEntry."""
+    canonical_id = variant.get("canonical_id") or f"lexicon-{_slugify(variant.get('canonical_term', ''))}"
+    variant_term = (variant.get("variant_term") or "").strip()
+    if not canonical_id or not variant_term:
+        raise ValueError("Cannot write multilingual variant without canonical_id and variant_term")
+
+    item = {
+        "_key": f"variant-{_slugify(variant_term)}-{variant.get('language', 'unknown')}",
+        "variantTerm": variant_term,
+        "language": variant.get("language", "unknown"),
+        "attestationTier": variant.get("attestation_tier", "tier-3-inferred"),
+        "sourceNote": variant.get("source_note", ""),
+    }
+    result = _mutate(
+        [
+            {
+                "patch": {
+                    "id": canonical_id,
+                    "setIfMissing": {"multilingualVariants": []},
+                    "insert": {"after": "multilingualVariants[-1]", "items": [item]},
+                }
+            }
+        ],
+        config,
+    )
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for variant write:\n{result}")
 
 
 def _build_sanity_document(pkg: DocumentPackage) -> dict:
@@ -53,10 +266,25 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         "preprocessingTool":    prep.tool_used,
         "preprocessingQuality": prep.quality,
     }
-    if intake.source_type == "url":
-        meta["sourceUrl"] = intake.source
+    source_url = intake.source if intake.source_type == "url" else intake.source_url
+    if source_url:
+        meta["sourceUrl"] = source_url
     if intake.archive_url:
         meta["archiveUrl"] = intake.archive_url
+    if analysis.testimony_flag and intake.testimony_consent:
+        meta["testimonyConsent"] = intake.testimony_consent
+
+    provenance: dict = {
+        "accessedVia": "direct",
+        "chainNotes": _provenance_notes(pkg),
+    }
+    if source_url:
+        provenance["originalUrl"] = source_url
+    if intake.archive_url:
+        provenance["waybackUrl"] = intake.archive_url
+    html_hash = prep.source_html_sha256 or intake.source_html_sha256
+    if html_hash:
+        provenance["htmlSnapshotHash"] = html_hash
 
     doc: dict = {
         "_type": "sogiceDocument",
@@ -67,6 +295,7 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         "tierAssignedBy": "auto",
 
         "meta": meta,
+        "provenance": provenance,
 
         "classification": {
             "type":             analysis.type,
@@ -115,6 +344,7 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         },
 
         "content": {
+            "title":            prep.title,
             "summary":          analysis.summary,
             "wordCount":        len(prep.text.split()),
         },
@@ -154,7 +384,7 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
 
         "aiMetadata": {
             "primaryModel":    pkg.llm_used,
-            "primaryProvider": "anthropic" if "claude" in pkg.llm_used else "local",
+            "primaryProvider": _provider_for_llm(pkg.llm_used),
             "ontologyVersion": "v3.0",
             "processingDate":  now_iso,
             "inputLengthChars": prep.char_count,
@@ -172,11 +402,123 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
             "status": "not_validated",
         },
     }
+    testimony_review = _load_testimony_review(pkg.local_dir)
+    if testimony_review:
+        doc["testimonyReview"] = testimony_review
 
     if prep.language_detected:
         doc["content"]["languageDetected"] = prep.language_detected
 
     return doc
+
+
+def _slugify(value: str) -> str:
+    value = value.strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    return value.strip("-") or "untitled"
+
+
+def _short_excerpt(value: str, max_words: int = 15) -> str:
+    words = value.strip().split()
+    return " ".join(words[:max_words])
+
+
+def _clean_unknown(value: str | None) -> str:
+    value = (value or "").strip()
+    return "" if value == "Unknown" else value
+
+
+def _stance_profile(register: str) -> str:
+    if register in {"promotional", "defensive", "euphemistic", "conspiratorial", "testimonial"}:
+        return "promotional"
+    if register == "legal":
+        return "legal_administrative"
+    if register == "clinical":
+        return "research_clinical"
+    return "critical_advocacy" if register == "neutral" else "promotional"
+
+
+def _first_or_empty(value: list | str | None) -> str:
+    if isinstance(value, list):
+        return str(value[0]) if value else ""
+    return value or ""
+
+
+def _organization_type(proposal: dict) -> str:
+    text = " ".join(
+        str(x).lower()
+        for x in [
+            proposal.get("self_description", ""),
+            proposal.get("evidence_quote", ""),
+            " ".join(proposal.get("activities_stated", [])),
+        ]
+    )
+    if "church" in text:
+        return "church"
+    if "legal" in text or "law" in text:
+        return "legal"
+    if "therapy" in text or "counselling" in text or "counseling" in text:
+        return "therapy_practice"
+    if "media" in text or "news" in text:
+        return "media"
+    if "ministry" in text or "pastoral" in text:
+        return "ministry"
+    if "network" in text:
+        return "network_node"
+    return "advocacy"
+
+
+def _person_role(value: str) -> str:
+    text = value.lower()
+    for role in ("founder", "leader", "influencer", "therapist", "pastor", "survivor", "researcher", "politician"):
+        if role in text:
+            return role
+    return "other"
+
+
+def _load_testimony_review(doc_dir) -> dict:
+    path = doc_dir / "testimony_review.json"
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    consent_map = {
+        "confirmed": "obtained",
+        "unclear": "pending",
+        "withdrawn": "withdrawn",
+    }
+    return {
+        "consentStatus": consent_map.get(data.get("consent_status"), data.get("consent_status", "pending")),
+        "consentSource": data.get("consent_source", "unknown"),
+        "reviewedBy": data.get("reviewed_by", "researcher"),
+        "reviewedAt": data.get("reviewed_at", ""),
+        "publicDisplay": bool(data.get("public_display", False)),
+        "publicExcerpt": data.get("public_excerpt", ""),
+        "notes": data.get("notes", ""),
+    }
+
+
+def _provenance_notes(pkg: DocumentPackage) -> str:
+    intake = pkg.intake
+    notes = [
+        f"Wayback status: {intake.wayback_status or 'unknown'}",
+        f"Wayback checked at: {intake.wayback_checked_at or 'unknown'}",
+    ]
+    if intake.wayback_error:
+        notes.append(f"Wayback error: {intake.wayback_error}")
+    html_path = pkg.local_dir / "source.html"
+    if html_path.exists():
+        notes.append(f"Local HTML snapshot: {html_path}")
+    html_hash = pkg.preprocess.source_html_sha256 or intake.source_html_sha256
+    if html_hash:
+        notes.append(f"source.html sha256: {html_hash}")
+    if intake.original_filename:
+        notes.append(f"Original filename: {intake.original_filename}")
+    if intake.local_copy_path:
+        notes.append(f"Local source copy: {intake.local_copy_path}")
+    return " | ".join(notes)
 
 
 def _build_referenced_urls(prep) -> list[dict]:
@@ -216,6 +558,16 @@ def _build_referenced_urls(prep) -> list[dict]:
         _add(lnk["url"], lnk.get("anchor_text", ""), lnk.get("domain", ""), "outbound")
 
     return entries
+
+
+def _provider_for_llm(llm_used: str) -> str:
+    if "claude" in llm_used:
+        return "anthropic"
+    if llm_used.startswith("litelm"):
+        return "litelm"
+    if llm_used == "openrouter":
+        return "openrouter"
+    return "local"
 
 
 def _mutate(mutations: list[dict], config: Config) -> dict:

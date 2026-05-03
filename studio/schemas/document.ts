@@ -68,6 +68,12 @@ export default {
           type: 'string',
           options: { list: ['high', 'medium', 'low', 'blocked'] },
         },
+        {
+          name: 'testimonyConsent',
+          title: 'Testimony Consent',
+          type: 'string',
+          options: { list: ['confirmed', 'pending', 'refused'] },
+        },
       ],
     },
     {
@@ -78,7 +84,8 @@ export default {
         { name: 'originalUrl', type: 'url' },
         { name: 'accessedVia', type: 'string' },
         { name: 'waybackUrl', type: 'url' },
-        { name: 'htmlSnapshotRef', type: 'file' },
+        { name: 'htmlSnapshotUrl', type: 'url' },
+        { name: 'htmlSnapshotHash', type: 'string' },
         { name: 'chainNotes', type: 'text', rows: 2 },
       ],
     },
@@ -436,7 +443,7 @@ export default {
           title: 'Human Review',
           type: 'object',
           fields: [
-            { name: 'reviewedBy', type: 'string', options: { list: ['researcher', 'intern'] } },
+            { name: 'reviewedBy', type: 'string', options: { list: ['researcher'] } },
             { name: 'reviewedAt', type: 'datetime' },
             { name: 'changesMade', type: 'boolean' },
           ],
@@ -474,6 +481,35 @@ export default {
 
     { name: 'testimonyFlag', title: 'Testimony Flag', type: 'boolean', initialValue: false },
     { name: 'needsReview', title: 'Needs Review', type: 'boolean', initialValue: false },
+    {
+      name: 'testimonyReview',
+      title: 'Testimony Review',
+      type: 'object',
+      fields: [
+        {
+          name: 'consentStatus',
+          title: 'Consent Status',
+          type: 'string',
+          options: { list: ['obtained', 'pending', 'not_required', 'refused', 'unclear', 'withdrawn'] },
+        },
+        {
+          name: 'consentSource',
+          title: 'Consent Source',
+          type: 'string',
+          options: { list: ['direct', 'assumed', 'proxy', 'unknown'] },
+        },
+        {
+          name: 'reviewedBy',
+          title: 'Reviewed By',
+          type: 'string',
+          options: { list: ['researcher'] },
+        },
+        { name: 'reviewedAt', title: 'Reviewed At', type: 'datetime' },
+        { name: 'publicDisplay', title: 'Public Display', type: 'boolean' },
+        { name: 'publicExcerpt', title: 'Public Excerpt', type: 'text', rows: 5 },
+        { name: 'notes', title: 'Notes', type: 'text', rows: 3 },
+      ],
+    },
   ],
 
   preview: {

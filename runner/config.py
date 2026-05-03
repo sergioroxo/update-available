@@ -34,6 +34,8 @@ class Config:
     litelm_analysis_model_heavy: str   # (--llm litelm-heavy) default: core-gemma
     litelm_analysis_model_reasoning: str # (--llm litelm-reasoning) default: review-qwen
     litelm_embedding_model: str        # used when --llm litelm*
+    litelm_enrichment_model: str       # Stage 3c lexicon/enrichment model
+    litelm_enrichment_model_alt: str   # optional second-opinion enrichment model
 
     # Truncation limits (chars). Claude default is conservative due to API cost.
     # Local models have large context windows so LOCAL_TRUNCATION_LIMIT can be
@@ -101,6 +103,8 @@ def load_config(llm: str | None = None) -> Config:
         litelm_analysis_model_heavy=os.getenv("LITELM_ANALYSIS_MODEL_HEAVY", "core-gemma"),
         litelm_analysis_model_reasoning=os.getenv("LITELM_ANALYSIS_MODEL_REASONING", "review-qwen"),
         litelm_embedding_model=os.getenv("LITELM_EMBEDDING_MODEL", "research-embedding"),
+        litelm_enrichment_model=os.getenv("LITELM_ENRICHMENT_MODEL", "lexicon-llm"),
+        litelm_enrichment_model_alt=os.getenv("LITELM_ENRICHMENT_MODEL_ALT", "core-gemma"),
         truncation_limit=int(os.getenv("TRUNCATION_LIMIT", "24000")),
         truncation_limit_local=int(os.getenv("TRUNCATION_LIMIT_LOCAL", "200000")),
     )

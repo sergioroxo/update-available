@@ -10,6 +10,8 @@ Routing:
 Writes extracted.md and extracted.txt to the local corpus directory.
 """
 from __future__ import annotations
+import hashlib
+import json
 import re
 from pathlib import Path
 
@@ -24,7 +26,9 @@ _TAIL_RATIO    = 0.25   # 1/4 of limit from the end
 
 def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> PreprocessResult:
     st = intake.source_type
-    if st == "url" or st == "html":
+    if st == "url":
+        result = _preprocess_url(intake.source, snapshot_dir=intake.local_dir)
+    elif st == "html":
         result = _preprocess_url(intake.source)
     elif st == "pdf":
         result = _preprocess_pdf(Path(intake.source))
@@ -47,12 +51,14 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
     result.char_count = len(result.text)
 
     if intake.local_dir:
+        if result.source_html_sha256:
+            _update_intake_html_hash(intake.local_dir, result.source_html_sha256)
         _save_artifacts(result, intake.local_dir)
 
     return result
 
 
-def _preprocess_url(url: str) -> PreprocessResult:
+def _preprocess_url(url: str, snapshot_dir: Path | None = None) -> PreprocessResult:
     try:
         import trafilatura
     except ImportError:
@@ -61,6 +67,7 @@ def _preprocess_url(url: str) -> PreprocessResult:
     downloaded = trafilatura.fetch_url(url)
     if not downloaded:
         raise ValueError(f"trafilatura: could not fetch {url}")
+    snapshot_meta = _save_html_snapshot(downloaded, url, snapshot_dir) if snapshot_dir else {}
 
     # JSON output gives us structured metadata alongside the text
     import json as _json
@@ -91,7 +98,37 @@ def _preprocess_url(url: str) -> PreprocessResult:
         hostname=metadata.get("hostname", ""),
         outbound_links=intel.outbound_links,
         page_intel=intel,
+        source_html_path=snapshot_meta.get("path", ""),
+        source_html_sha256=snapshot_meta.get("sha256", ""),
     )
+
+
+def _save_html_snapshot(html: str | bytes, source_url: str, doc_dir: Path) -> dict:
+    """Store the fetched HTML exactly as preprocessing saw it."""
+    from datetime import datetime, timezone
+
+    if isinstance(html, str):
+        html_text = html
+        html_bytes = html.encode("utf-8", errors="replace")
+    else:
+        html_bytes = html
+        html_text = html.decode("utf-8", errors="replace")
+    sha256 = hashlib.sha256(html_bytes).hexdigest()
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    snapshot = doc_dir / "source.html"
+    snapshot.write_text(html_text, encoding="utf-8", errors="replace")
+    meta = {
+        "source_url": source_url,
+        "path": str(snapshot),
+        "captured_at": datetime.now(timezone.utc).isoformat(),
+        "bytes": len(html_bytes),
+        "sha256": sha256,
+    }
+    (doc_dir / "html_snapshot.json").write_text(
+        json.dumps(meta, indent=2),
+        encoding="utf-8",
+    )
+    return meta
 
 
 def _preprocess_pdf(path: Path) -> PreprocessResult:
@@ -228,7 +265,9 @@ def _rate_quality(text: str, tool: str) -> str:
     return "high"
 
 
-def _maybe_truncate(text: str, limit: int = _DEFAULT_LIMIT) -> tuple[str, bool]:
+def _maybe_truncate(text: str, limit: int | None = _DEFAULT_LIMIT) -> tuple[str, bool]:
+    if limit is None or limit <= 0:
+        return text, False
     if len(text) <= limit:
         return text, False
     head_size = int(limit * _HEAD_RATIO)
@@ -429,3 +468,46 @@ def _save_artifacts(result: PreprocessResult, doc_dir: Path) -> None:
     if result.markdown:
         (doc_dir / "extracted.md").write_text(result.markdown, encoding="utf-8")
     (doc_dir / "extracted.txt").write_text(result.text, encoding="utf-8")
+    (doc_dir / "preprocess.json").write_text(
+        json.dumps(_preprocess_metadata(result), indent=2),
+        encoding="utf-8",
+    )
+
+
+def _preprocess_metadata(result: PreprocessResult) -> dict:
+    """Metadata-only JSON. Full text lives in extracted.txt as the source of truth."""
+    page_intel = None
+    if result.page_intel:
+        page_intel = result.page_intel.__dict__
+    return {
+        "doc_id": result.doc_id,
+        "tool_used": result.tool_used,
+        "quality": result.quality,
+        "ocr_images": result.ocr_images,
+        "char_count": result.char_count,
+        "truncated": result.truncated,
+        "language_detected": result.language_detected,
+        "title": result.title,
+        "author": result.author,
+        "date_published": result.date_published,
+        "sitename": result.sitename,
+        "description": result.description,
+        "hostname": result.hostname,
+        "outbound_links": result.outbound_links,
+        "outbound_link_count": len(result.outbound_links),
+        "page_intel": page_intel,
+        "source_html_path": result.source_html_path,
+        "source_html_sha256": result.source_html_sha256,
+    }
+
+
+def _update_intake_html_hash(doc_dir: Path, sha256: str) -> None:
+    intake_path = doc_dir / "intake.json"
+    if not intake_path.exists():
+        return
+    try:
+        data = json.loads(intake_path.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    data["source_html_sha256"] = sha256
+    intake_path.write_text(json.dumps(data, indent=2), encoding="utf-8")

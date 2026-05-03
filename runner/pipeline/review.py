@@ -18,6 +18,8 @@ import typer
 from ..models.document import AnalysisResult, IntakeResult, PreprocessResult
 from ..models.triage import TriageResult
 from ..models.enrichment import EnrichmentResult
+from ..config import Config
+from . import intake as intake_pipeline
 
 console = Console()
 
@@ -63,6 +65,10 @@ def checkpoint_intake(intake: IntakeResult) -> bool:
         table.add_row("Language:", intake.language)
     if intake.archive_url:
         table.add_row("Archive URL:", intake.archive_url)
+    if intake.wayback_status:
+        table.add_row("Wayback:", intake.wayback_status)
+    if intake.wayback_error:
+        table.add_row("Wayback error:", intake.wayback_error)
 
     console.print(Panel(table, title="[bold]SOURCE INTAKE[/bold]"))
     return typer.confirm("Proceed with preprocessing?", default=True)
@@ -168,6 +174,13 @@ def checkpoint_analysis(
             Panel("\n".join(f"• {r}" for r in result.confidence.reasons),
                   title="[yellow]Confidence notes[/yellow]")
         )
+    if result.normalisation_warnings:
+        console.print(
+            Panel(
+                "\n".join(f"• {warning}" for warning in result.normalisation_warnings),
+                title="[yellow]Model output corrections[/yellow]",
+            )
+        )
 
     action = typer.prompt(
         "Action [Enter=accept / e=edit-json / a=abort]",
@@ -203,6 +216,41 @@ def checkpoint_upload(doc_id: str, result: AnalysisResult) -> bool:
         default="",
     ).strip().lower()
     return action not in ("l", "local-only", "a", "abort", "review-again")
+
+
+def checkpoint_testimony_consent(
+    doc_id: str,
+    result: AnalysisResult,
+    config: Config,
+) -> str:
+    """Ethics checkpoint for testimony-flagged documents.
+
+    Returns one of: confirmed, pending, refused, not_required.
+    """
+    if not result.testimony_flag:
+        return "not_required"
+
+    console.print(Panel(
+        "[bold yellow]TESTIMONY FLAG[/bold yellow]\n\n"
+        "[bold]c[/bold] = confirmed — subject has given consent → proceed to upload\n"
+        "[bold]p[/bold] = pending   — not yet obtained → save locally only, do not upload\n"
+        "[bold]r[/bold] = refused   → suppress: do not save or upload",
+        title="[bold yellow]⚠ TESTIMONY FLAG[/bold yellow]",
+    ))
+    while True:
+        action = typer.prompt("Consent status [c/p/r]", default="p").strip().lower()
+        if action in ("c", "confirmed"):
+            intake_pipeline.update_intake_consent(doc_id, "confirmed", config)
+            return "confirmed"
+        if action in ("p", "pending"):
+            intake_pipeline.update_intake_consent(doc_id, "pending", config)
+            return "pending"
+        if action in ("r", "refused"):
+            console.print(
+                "[red]Consent refused. Suppressing document: no local analysis package or upload will be written.[/red]"
+            )
+            return "refused"
+        console.print("[yellow]Choose c, p, or r.[/yellow]")
 
 
 # ---------------------------------------------------------------------------

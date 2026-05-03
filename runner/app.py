@@ -5,20 +5,38 @@ Run with:
   cd runner && streamlit run app.py
 
 Pages:
+  Dashboard        — local/server status and corpus counters
+  Ingest Workbench — run intake, extraction, analysis, JSON review, upload
   Document List    — browse locally saved documents with Sanity status
   Pending Upload   — docs saved locally but not yet pushed to Sanity
+  Lexicon          — inspect Sanity lexicon entries
+  Tag Registry     — inspect/edit local tag vocabulary used for enrichment hints
+  Activity Log     — inspect local document audit trails
+  Guide            — workflow guide and troubleshooting
   Model Routing    — spec sheet: which model for which document type
   Triage Tool      — paste a snippet and get a model recommendation
 """
 from __future__ import annotations
 import json
 import os
+import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
-# Ensure the project root (parent of runner/) is on sys.path so that
-# `runner.*` package imports work regardless of launch directory.
+# Streamlit puts the script directory (`runner/`) on sys.path. If that remains
+# there, modules like `pipeline.triage` can be imported outside the `runner`
+# package, breaking their relative imports. Keep only the project root.
+_runner_dir = Path(__file__).resolve().parent
 _project_root = Path(__file__).resolve().parent.parent
+_legacy_vocab_dir = Path(
+    "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/"
+    "SurvivingSOGICE/SurvivingSOGICE_Tagger/Old_Artifact_Bakcup"
+)
+sys.path[:] = [
+    p for p in sys.path
+    if Path(p or os.getcwd()).resolve() != _runner_dir
+]
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
@@ -54,7 +72,19 @@ def main():
 
     page = st.sidebar.radio(
         "Navigate",
-        ["Document List", "Pending Upload", "Model Routing", "Triage Tool"],
+        [
+            "Dashboard",
+            "Ingest Workbench",
+            "Document List",
+            "Pending Upload",
+            "Lexicon",
+            "Tag Registry",
+            "Testimony Review",
+            "Activity Log",
+            "Guide",
+            "Model Routing",
+            "Triage Tool",
+        ],
         label_visibility="collapsed",
     )
 
@@ -66,14 +96,532 @@ def main():
         "python -m runner enrich <doc_id>\n```"
     )
 
-    if page == "Document List":
+    if page == "Dashboard":
+        page_dashboard()
+    elif page == "Ingest Workbench":
+        page_ingest_workbench()
+    elif page == "Document List":
         page_document_list()
     elif page == "Pending Upload":
         page_pending_upload()
+    elif page == "Lexicon":
+        page_lexicon()
+    elif page == "Tag Registry":
+        page_tag_registry()
+    elif page == "Testimony Review":
+        page_testimony_review()
+    elif page == "Activity Log":
+        page_activity_log()
+    elif page == "Guide":
+        page_guide()
     elif page == "Model Routing":
         page_model_routing()
     elif page == "Triage Tool":
         page_triage_tool()
+
+
+# ---------------------------------------------------------------------------
+# Dashboard
+# ---------------------------------------------------------------------------
+
+def page_dashboard():
+    st.title("Dashboard")
+
+    config = _load_config_safe()
+    if not config:
+        st.error("Could not load config. Check runner/.env.")
+        return
+
+    stats = _corpus_stats(config.corpus_dir)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Local documents", stats["total"])
+    c2.metric("Uploaded", stats["uploaded"])
+    c3.metric("Pending upload", stats["pending"])
+    c4.metric("Enriched", stats["enriched"])
+
+    st.subheader("Services")
+    s1, s2, s3, s4 = st.columns(4)
+    s1.metric("Ollama", _service_status(config.ollama_base_url))
+    s2.metric("LiteLLM", _service_status(config.litelm_base_url) if config.litelm_base_url else "not set")
+    s3.metric("Sanity", "configured" if config.sanity_project_id and config.sanity_write_token else "missing")
+    s4.metric("Supabase", "configured" if config.supabase_url and config.supabase_service_key else "missing")
+
+    st.subheader("How this app fits")
+    st.info(
+        "This Streamlit app is the researcher cockpit: use Ingest Workbench to run "
+        "the pipeline, edit JSON, upload records, inspect terms, and troubleshoot "
+        "local/Sanity/Supabase state."
+    )
+
+    if stats["pending"]:
+        st.warning(f"{stats['pending']} document(s) are saved locally but not uploaded yet.")
+        st.code("python -m runner status", language="bash")
+
+
+def _corpus_stats(corpus_dir: Path) -> dict[str, int]:
+    stats = {"total": 0, "uploaded": 0, "pending": 0, "enriched": 0}
+    if not corpus_dir.exists():
+        return stats
+    for doc_dir in corpus_dir.iterdir():
+        if not doc_dir.is_dir() or not (doc_dir / "analysis.json").exists():
+            continue
+        stats["total"] += 1
+        if (doc_dir / "sanity_record.json").exists():
+            stats["uploaded"] += 1
+        else:
+            stats["pending"] += 1
+        if (doc_dir / "enrichment.json").exists():
+            stats["enriched"] += 1
+    return stats
+
+
+def _service_status(base_url: str) -> str:
+    if not base_url:
+        return "not set"
+    try:
+        import httpx
+        response = httpx.get(base_url, timeout=2)
+        return "online" if response.status_code < 500 else "error"
+    except Exception:
+        return "offline"
+
+
+# ---------------------------------------------------------------------------
+# Ingest Workbench
+# ---------------------------------------------------------------------------
+
+def page_ingest_workbench():
+    st.title("Ingest Workbench")
+
+    config = _load_config_safe()
+    if not config:
+        st.error("Could not load config. Check runner/.env.")
+        return
+
+    _init_ingest_state()
+
+    with st.sidebar:
+        if st.button("Reset Workbench"):
+            st.session_state.ingest = _blank_ingest_state()
+            st.rerun()
+
+    source = st.text_input("Source URL or local file path", value=st.session_state.ingest["source"])
+    st.session_state.ingest["source"] = source
+    provenance_url = st.text_input(
+        "Original/source URL for local files",
+        value=st.session_state.ingest.get("source_url", ""),
+        placeholder="Optional, but useful when a PDF/file came from the web",
+    )
+    st.session_state.ingest["source_url"] = provenance_url
+
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c1:
+        llm = st.selectbox(
+            "Analysis model",
+            ["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local", "local-heavy", "local-reasoning", "openrouter", "both"],
+            index=["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local", "local-heavy", "local-reasoning", "openrouter", "both"].index(st.session_state.ingest["llm"]),
+        )
+        st.session_state.ingest["llm"] = llm
+    with c2:
+        tier = st.selectbox("Tier", ["auto", "1", "2", "3"], index=0)
+        _render_tier_help()
+    with c3:
+        batch = st.text_input("Batch", value=st.session_state.ingest["batch"], placeholder="unassigned")
+        st.session_state.ingest["batch"] = batch
+
+    c4, c5 = st.columns([1, 1])
+    with c4:
+        max_chars = st.number_input("Max chars (0 = no truncation)", min_value=0, value=0, step=1000)
+    with c5:
+        run_enrich = st.checkbox("Run enrichment after analysis", value=st.session_state.ingest["run_enrich"])
+        st.session_state.ingest["run_enrich"] = run_enrich
+        enrich_options = list(dict.fromkeys([config.litelm_enrichment_model, config.litelm_enrichment_model_alt, "lexicon-llm", "core-gemma"]))
+        enrich_model = st.selectbox(
+            "Enrichment model",
+            enrich_options,
+            index=0,
+        )
+        st.session_state.ingest["enrich_model"] = enrich_model
+        st.caption("Enrichment creates proposals. It does not change the live lexicon until you approve them.")
+
+    st.divider()
+    gate = _proposal_gate_status(config.corpus_dir)
+    if gate["blocked"]:
+        st.warning(
+            "There are unresolved enrichment proposals. You can keep ingesting, but process the queue when ready so future analysis gets the best lexicon/registry context."
+        )
+        st.write(
+            f"Unresolved lexicon: {gate['unresolved_lexicon']} | "
+            f"approved lexicon not pushed: {gate['approved_unpushed_lexicon']} | "
+            f"unresolved entities: {gate['unresolved_entities']} | "
+            f"approved entities not pushed: {gate['approved_unpushed_entities']}"
+        )
+        st.caption("Open Lexicon → Local Proposals to approve/reject proposals and push approved records.")
+    _render_stage_progress()
+
+    if st.button("1. Intake Source", type="primary", disabled=not source.strip()):
+        _workbench_intake(config, source, tier, batch, provenance_url)
+
+    intake_result = st.session_state.ingest.get("intake")
+    if intake_result:
+        st.subheader("Intake")
+        st.json(_intake_to_dict(intake_result))
+        if st.button("2. Extract Text"):
+            effective_max = _effective_max_chars(max_chars, llm, config)
+            _workbench_preprocess(config, effective_max)
+
+    preprocess_result = st.session_state.ingest.get("preprocess")
+    if preprocess_result:
+        _render_preprocess_review(preprocess_result)
+        if st.button("3. Analyze Document"):
+            _workbench_analyze(config, llm)
+
+    analysis = st.session_state.ingest.get("analysis")
+    if analysis:
+        _render_analysis_editor(config, llm)
+
+    with st.expander("What happens to the lexicon and registry during this run?"):
+        st.markdown(
+            """
+- **Before analysis:** the runner fetches current draft + validated lexicon terms from Sanity and injects them into the prompt so the model does not re-propose known terms.
+- **During analysis:** candidate terms and suggested actors are written into the document JSON for review.
+- **During enrichment:** the runner fetches the current lexicon and entity registry again, scans the document for local tag-registry matches, then proposes additions, variants, evidence, entities, linked documents, practices, and statistical claims.
+- **After enrichment:** proposals are saved to local `enrichment.json`. They are non-blocking queue work; process them when ready so later analysis gets better context.
+"""
+        )
+
+
+def _render_tier_help() -> None:
+    with st.expander("What is Tier?"):
+        st.markdown(
+            """
+**Tier is the trust and publication rigor level.**
+
+- **Tier 1 — Exploratory:** early pattern discovery, social posts, quick finds, internal exploration.
+- **Tier 2 — Reviewed:** standard research material, organization pages, reports, testimony, network building.
+- **Tier 3 — Published:** court judgments, legislation, landmark documents, public archive candidates. Requires strongest validation before publication.
+
+Use **auto** when unsure. For a Christian Concern article or organization page, Tier 1 or 2 is normal; use Tier 2 when it is likely to matter for research writing or network evidence.
+"""
+        )
+
+
+def _blank_ingest_state() -> dict:
+    return {
+        "source": "",
+        "source_url": "",
+        "llm": "litelm",
+        "batch": "",
+        "run_enrich": False,
+        "enrich_model": "",
+        "intake": None,
+        "preprocess": None,
+        "embedding": None,
+        "analysis": None,
+        "analysis_json": "",
+        "analysis_valid": False,
+        "enrichment": None,
+        "uploaded": False,
+    }
+
+
+def _init_ingest_state() -> None:
+    if "ingest" not in st.session_state:
+        st.session_state.ingest = _blank_ingest_state()
+
+
+def _render_stage_progress() -> None:
+    state = st.session_state.ingest
+    cols = st.columns(5)
+    steps = [
+        ("Intake", state.get("intake") is not None),
+        ("Extract", state.get("preprocess") is not None),
+        ("Analyze", state.get("analysis") is not None),
+        ("Validate JSON", state.get("analysis_valid")),
+        ("Upload", state.get("uploaded")),
+    ]
+    for col, (label, done) in zip(cols, steps):
+        col.metric(label, "done" if done else "pending")
+
+
+def _workbench_intake(config, source: str, tier: str, batch: str, source_url: str = "") -> None:
+    from runner.pipeline import intake
+
+    with st.spinner("Creating intake record..."):
+        try:
+            tier_value = None if tier == "auto" else int(tier)
+            result = intake.run(
+                source.strip(),
+                tier=tier_value,
+                batch=batch.strip() or None,
+                config=config,
+                source_url=source_url.strip(),
+            )
+        except Exception as exc:
+            st.error(f"Intake failed: {exc}")
+            return
+    st.session_state.ingest.update({
+        "intake": result,
+        "preprocess": None,
+        "embedding": None,
+        "analysis": None,
+        "analysis_json": "",
+        "analysis_valid": False,
+        "enrichment": None,
+        "uploaded": False,
+    })
+    st.success(f"Created doc_id {result.doc_id}")
+
+
+def _effective_max_chars(max_chars: int, llm: str, config) -> int | None:
+    if max_chars == 0:
+        return None
+    if max_chars:
+        return max_chars
+    if llm in ("local", "local-heavy", "local-reasoning", "prefer-local", "litelm", "litelm-heavy", "litelm-reasoning"):
+        return config.truncation_limit_local
+    return config.truncation_limit
+
+
+def _workbench_preprocess(config, max_chars: int | None) -> None:
+    from runner.pipeline import preprocess
+
+    with st.spinner("Extracting readable text..."):
+        try:
+            result = preprocess.run(st.session_state.ingest["intake"], config=config, max_chars=max_chars)
+        except Exception as exc:
+            st.error(f"Preprocessing failed: {exc}")
+            return
+    if result.source_html_sha256:
+        st.session_state.ingest["intake"].source_html_sha256 = result.source_html_sha256
+    st.session_state.ingest.update({
+        "preprocess": result,
+        "embedding": None,
+        "analysis": None,
+        "analysis_json": "",
+        "analysis_valid": False,
+        "enrichment": None,
+        "uploaded": False,
+    })
+    st.success(f"Extracted {result.char_count:,} chars with {result.tool_used}")
+
+
+def _workbench_analyze(config, llm: str) -> None:
+    from runner.pipeline import analyze, embed
+
+    preprocess_result = st.session_state.ingest["preprocess"]
+    with st.spinner("Generating embedding and running analysis..."):
+        try:
+            if llm.startswith("litelm"):
+                embedding_vector = embed.run_litelm(preprocess_result.text, config=config)
+            else:
+                embedding_vector = embed.run(preprocess_result.text, config=config)
+            result = analyze.run(preprocess_result, llm=llm, config=config)
+        except Exception as exc:
+            st.error(f"Analysis failed: {exc}")
+            return
+    st.session_state.ingest.update({
+        "embedding": embedding_vector,
+        "analysis": result,
+        "analysis_json": result.model_dump_json(indent=2),
+        "analysis_valid": True,
+        "enrichment": None,
+        "uploaded": False,
+    })
+    st.success("Analysis complete. Review and edit the JSON before saving or uploading.")
+
+
+def _render_preprocess_review(result) -> None:
+    st.subheader("Extracted Text Review")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Tool", result.tool_used)
+    c2.metric("Quality", result.quality)
+    c3.metric("Chars", f"{result.char_count:,}")
+    c4.metric("Truncated", "yes" if result.truncated else "no")
+
+    meta = {
+        "title": result.title,
+        "author": result.author,
+        "date_published": result.date_published,
+        "site": result.sitename,
+        "domain": result.hostname,
+        "language": result.language_detected,
+        "source_html_path": result.source_html_path,
+        "source_html_sha256": result.source_html_sha256,
+    }
+    st.json({k: v for k, v in meta.items() if v})
+    st.text_area("Extracted text", result.text, height=300)
+
+    if result.page_intel:
+        with st.expander("Page intelligence"):
+            st.json(result.page_intel.__dict__)
+
+
+def _render_analysis_editor(config, llm: str) -> None:
+    from runner.models.document import AnalysisResult
+    from runner.pipeline import enrich, upload
+
+    st.subheader("Analysis JSON")
+    analysis_text = st.text_area(
+        "Edit classification JSON",
+        value=st.session_state.ingest["analysis_json"],
+        height=520,
+        key="analysis_json_editor",
+    )
+    st.session_state.ingest["analysis_json"] = analysis_text
+
+    c1, c2, c3, c4 = st.columns(4)
+    testimony_blocked = _testimony_requires_review(
+        st.session_state.ingest["intake"].doc_id,
+        st.session_state.ingest.get("analysis"),
+        config,
+    )
+    if testimony_blocked:
+        st.warning(
+            "This document is flagged for testimony. Upload is blocked until Testimony Review records consent status."
+        )
+    with c1:
+        if st.button("Validate JSON"):
+            try:
+                parsed = AnalysisResult.model_validate(json.loads(analysis_text))
+                st.session_state.ingest["analysis"] = parsed
+                st.session_state.ingest["analysis_json"] = parsed.model_dump_json(indent=2)
+                st.session_state.ingest["analysis_valid"] = True
+                st.success("JSON is valid.")
+            except Exception as exc:
+                st.session_state.ingest["analysis_valid"] = False
+                st.error(f"Invalid analysis JSON: {exc}")
+    with c2:
+        if st.button("Save Locally", disabled=not st.session_state.ingest.get("analysis_valid")):
+            try:
+                final = AnalysisResult.model_validate(json.loads(st.session_state.ingest["analysis_json"]))
+                saved = upload.save_locally(
+                    st.session_state.ingest["intake"],
+                    st.session_state.ingest["preprocess"],
+                    st.session_state.ingest["embedding"] or [],
+                    final,
+                    config=config,
+                    llm_used=llm,
+                )
+                st.success(f"Saved locally: {saved}")
+            except Exception as exc:
+                st.error(f"Save failed: {exc}")
+    with c3:
+        if st.button("Upload", disabled=(not st.session_state.ingest.get("analysis_valid") or testimony_blocked)):
+            try:
+                final = AnalysisResult.model_validate(json.loads(st.session_state.ingest["analysis_json"]))
+                upload.run(
+                    st.session_state.ingest["intake"],
+                    st.session_state.ingest["preprocess"],
+                    st.session_state.ingest["embedding"] or [],
+                    final,
+                    config=config,
+                    llm_used=llm,
+                )
+                st.session_state.ingest["uploaded"] = True
+                st.success("Uploaded to Sanity and Supabase.")
+            except Exception as exc:
+                st.error(f"Upload failed: {exc}")
+    with c4:
+        if st.button("Run Enrichment", disabled=not st.session_state.ingest.get("analysis_valid")):
+            try:
+                final = AnalysisResult.model_validate(json.loads(st.session_state.ingest["analysis_json"]))
+                enrich_llm = "litelm" if llm.startswith("litelm") else llm
+                result = enrich.run(
+                    st.session_state.ingest["intake"].doc_id,
+                    st.session_state.ingest["preprocess"],
+                    final,
+                    config=config,
+                    llm=enrich_llm,
+                    model=st.session_state.ingest.get("enrich_model") or None,
+                )
+                enrich.save(st.session_state.ingest["intake"].doc_id, result, config)
+                st.session_state.ingest["enrichment"] = result
+                st.session_state.pop("lexicon_terms", None)
+                st.session_state.pop("entity_registry", None)
+                st.success("Enrichment saved.")
+            except Exception as exc:
+                st.error(f"Enrichment failed: {exc}")
+
+    analysis = st.session_state.ingest.get("analysis")
+    if analysis:
+        _render_analysis_summary(analysis)
+    enrichment_result = st.session_state.ingest.get("enrichment")
+    if enrichment_result:
+        _render_enrichment_result(enrichment_result)
+
+
+def _render_analysis_summary(analysis) -> None:
+    st.subheader("Readable Review")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Type", analysis.type)
+    c2.metric("Format", analysis.format)
+    c3.metric("Scope", analysis.scope)
+    c4.metric("Confidence", f"{analysis.confidence.overall_score:.2f} ({analysis.confidence.status})")
+    st.write(analysis.summary)
+    if getattr(analysis, "normalisation_warnings", None):
+        with st.expander("Model output corrections", expanded=True):
+            st.warning(
+                "The validator corrected these model-output quirks before saving. Review them if the classification looks surprising."
+            )
+            for warning in analysis.normalisation_warnings:
+                st.write(f"- {warning}")
+    if analysis.tactic:
+        st.write("**Tactics:**", ", ".join(analysis.tactic))
+    if analysis.term:
+        st.write("**Existing terms used promotionally:**", ", ".join(analysis.term))
+    if analysis.candidate_terms:
+        st.write("**Candidate terms:**")
+        st.dataframe([t.model_dump() for t in analysis.candidate_terms], use_container_width=True)
+    if analysis.suggested_actors:
+        st.write("**Suggested actors:**")
+        st.dataframe([a.model_dump() for a in analysis.suggested_actors], use_container_width=True)
+
+
+def _render_enrichment_result(result) -> None:
+    st.subheader("Enrichment")
+    st.caption(
+        "These are review proposals saved locally. They become live Sanity lexicon/entity changes only after an approval workflow writes them."
+    )
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Lexicon proposals", len(result.lexicon_proposals))
+    c2.metric("Entity proposals", len(result.entity_proposals))
+    c3.metric("Ingestion queue", len(result.ingestion_queue))
+    c4.metric("Connections", len(result.corpus_connections))
+    if result.lexicon_proposals:
+        st.write("**Lexicon proposals:**")
+        st.dataframe([p.model_dump(by_alias=True) for p in result.lexicon_proposals], use_container_width=True)
+    if result.entity_proposals:
+        st.write("**Entity proposals:**")
+        st.dataframe([p.model_dump() for p in result.entity_proposals], use_container_width=True)
+    if result.ingestion_queue:
+        st.write("**Documents to ingest next:**")
+        st.dataframe([p.model_dump() for p in result.ingestion_queue], use_container_width=True)
+    if result.practice_descriptions:
+        st.write("**Practice descriptions:**")
+        st.dataframe([p.model_dump() for p in result.practice_descriptions], use_container_width=True)
+    if result.statistical_claims:
+        st.write("**Statistical claims:**")
+        st.dataframe([p.model_dump() for p in result.statistical_claims], use_container_width=True)
+
+
+def _intake_to_dict(intake_result) -> dict:
+    return {
+        "doc_id": intake_result.doc_id,
+        "source": intake_result.source,
+        "source_type": intake_result.source_type,
+        "tier": intake_result.tier,
+        "batch_id": intake_result.batch_id,
+        "archive_url": intake_result.archive_url,
+        "wayback_status": intake_result.wayback_status,
+        "wayback_checked_at": intake_result.wayback_checked_at,
+        "wayback_error": intake_result.wayback_error,
+        "source_url": intake_result.source_url,
+        "original_filename": intake_result.original_filename,
+        "local_copy_path": intake_result.local_copy_path,
+        "source_html_sha256": intake_result.source_html_sha256,
+        "local_dir": str(intake_result.local_dir) if intake_result.local_dir else "",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -149,7 +697,7 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             except Exception:
                 pass
 
-        uploaded = (doc_dir / ".uploaded").exists()
+        uploaded = (doc_dir / "sanity_record.json").exists()
         has_enrichment = (doc_dir / "enrichment.json").exists()
 
         docs.append({
@@ -242,7 +790,7 @@ def page_pending_upload():
     for doc_dir in sorted(corpus_dir.iterdir()):
         if not doc_dir.is_dir():
             continue
-        if (doc_dir / ".uploaded").exists():
+        if (doc_dir / "sanity_record.json").exists():
             continue
         if not (doc_dir / "analysis.json").exists():
             continue
@@ -261,7 +809,1669 @@ def page_pending_upload():
     for p in pending:
         col1, col2 = st.columns([3, 1])
         col1.write(f"**{p['doc_id']}** — {p['type']}")
-        col2.code(f"python -m runner upload {p['doc_id']}")
+        col2.code(f"python -m runner upload-doc {p['doc_id']}")
+
+
+# ---------------------------------------------------------------------------
+# Lexicon
+# ---------------------------------------------------------------------------
+
+def page_lexicon():
+    st.title("Lexicon")
+
+    config = _load_config_safe()
+    if not config:
+        st.error("Could not load config. Check runner/.env.")
+        return
+
+    st.info(
+        "Analysis and enrichment fetch current Sanity lexicon/registry data at run time. "
+        "Local proposals are saved after enrichment; approval-to-Sanity is intentionally separate."
+    )
+
+    tabs = st.tabs([
+        "Sanity Lexicon",
+        "Entity Registry",
+        "Local Proposals",
+        "Seed Import Preview",
+        "Variant Import Preview",
+        "Legacy Vocabulary Preview",
+        "Sanity Schema Files",
+        "Seed Docs",
+    ])
+
+    with tabs[0]:
+        if st.button("Refresh Lexicon"):
+            st.session_state.pop("lexicon_terms", None)
+        if "lexicon_terms" not in st.session_state:
+            try:
+                from runner.clients.sanity import fetch_lexicon_terms
+                st.session_state.lexicon_terms = fetch_lexicon_terms(config)
+            except Exception as exc:
+                st.error(f"Could not fetch lexicon from Sanity: {exc}")
+                st.session_state.lexicon_terms = []
+        terms = st.session_state.lexicon_terms
+        st.caption(f"{len(terms)} draft/validated terms")
+        if terms:
+            st.dataframe(terms, use_container_width=True, hide_index=True)
+
+    with tabs[1]:
+        if st.button("Refresh Registry"):
+            st.session_state.pop("entity_registry", None)
+        if "entity_registry" not in st.session_state:
+            try:
+                from runner.pipeline.enrich import _fetch_entity_registry
+                st.session_state.entity_registry = _fetch_entity_registry(config)
+            except Exception as exc:
+                st.error(f"Could not fetch entity registry from Sanity: {exc}")
+                st.session_state.entity_registry = []
+        entities = st.session_state.entity_registry
+        st.caption(f"{len(entities)} organizations/persons")
+        if entities:
+            st.dataframe(entities, use_container_width=True, hide_index=True)
+
+    with tabs[2]:
+        _render_local_proposal_queue(config)
+
+    with tabs[3]:
+        _render_seed_lexicon_import(config)
+
+    with tabs[4]:
+        _render_variant_import(config)
+
+    with tabs[5]:
+        _render_legacy_vocabulary_import(config)
+
+    with tabs[6]:
+        schema_files = {
+            "Document schema": _project_root / "studio" / "schemas" / "document.ts",
+            "Lexicon entry schema": _project_root / "studio" / "schemas" / "lexiconEntry.ts",
+            "Organization schema": _project_root / "studio" / "schemas" / "organization.ts",
+            "Person schema": _project_root / "studio" / "schemas" / "person.ts",
+            "Schema index": _project_root / "studio" / "schemas" / "index.ts",
+        }
+        selected = st.selectbox("Schema file", list(schema_files.keys()))
+        _show_text_file(schema_files[selected], language="typescript")
+
+    with tabs[7]:
+        st.info(
+            "Seed lexicon import policy: entries with clear definition and source evidence can become validated; "
+            "entries without source URL/evidence should enter Sanity as draft so new ingestions can collect validating evidence and regional variants."
+        )
+        seed_files = {
+            "Lexicon seed document": _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.0.md",
+            "Entity registry seed document": _project_root / "00_infrastructure" / "Entity_Registry_v1.1.md",
+            "Sanity schema reference": _project_root / "00_infrastructure" / "SANITY_SCHEMA_v1.0.md",
+            "Ontology": _project_root / "00_infrastructure" / "SOGICE_Ontology_v3.0.md",
+            "Legacy vocabulary document": _legacy_vocab_dir / "sogice_vocabulary_doc_2026-04-03.txt",
+            "Legacy vocabulary CSV": _legacy_vocab_dir / "sogice_vocabulary_2026-04-03.csv",
+            "Legacy glossary JSON": _legacy_vocab_dir / "sogice_glossary_2026-04-03.json",
+        }
+        selected = st.selectbox("Reference file", list(seed_files.keys()))
+        _show_text_file(seed_files[selected], language="markdown")
+
+
+def _local_enrichment_proposals(corpus_dir: Path) -> list[dict]:
+    rows: list[dict] = []
+    if not corpus_dir.exists():
+        return rows
+    for enrich_path in corpus_dir.glob("*/enrichment.json"):
+        try:
+            data = json.loads(enrich_path.read_text())
+        except Exception:
+            continue
+        doc_id = enrich_path.parent.name
+        for item in data.get("lexicon_proposals", []):
+            rows.append({
+                "doc_id": doc_id,
+                "term": item.get("term", ""),
+                "action": item.get("action", ""),
+                "cluster": item.get("proposed_cluster", ""),
+                "function": item.get("function", ""),
+                "approved": item.get("approved", False),
+                "rejected": item.get("rejected", False),
+            })
+    return rows
+
+
+# ---------------------------------------------------------------------------
+# Tag Registry
+# ---------------------------------------------------------------------------
+
+def page_tag_registry():
+    st.title("Tag Registry")
+    st.info(
+        "This is the broader tag vocabulary used as enrichment signal material: actors, networks, practices, tactics, harms, evidence types, formats, countries, and terms. "
+        "Edits are saved locally as researcher overrides; they do not change Sanity schema."
+    )
+    try:
+        from runner.pipeline.tag_registry import OVERRIDES_PATH, load_tag_registry, save_tag_override
+    except Exception as exc:
+        st.error(f"Could not load tag registry: {exc}")
+        return
+
+    if st.button("Reload Tag Registry"):
+        st.session_state.pop("tag_registry_rows", None)
+    if "tag_registry_rows" not in st.session_state:
+        st.session_state.tag_registry_rows = load_tag_registry()
+    rows = st.session_state.tag_registry_rows
+    if not rows:
+        st.warning("No tag registry rows found.")
+        return
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Tags", len(rows))
+    c2.metric("Categories", len({row["category"] for row in rows}))
+    c3.metric("Active", sum(1 for row in rows if row.get("active", True)))
+    c4.metric("With connections", sum(1 for row in rows if row.get("connections")))
+
+    categories = sorted({row["category"] for row in rows})
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        selected_categories = st.multiselect("Category", categories, default=categories[:])
+    with col2:
+        search = st.text_input("Search tags / definitions / connections")
+
+    filtered = rows
+    if selected_categories:
+        filtered = [row for row in filtered if row["category"] in selected_categories]
+    if search.strip():
+        needle = search.lower().strip()
+        filtered = [
+            row for row in filtered
+            if needle in row["tag"].lower()
+            or needle in row.get("definition", "").lower()
+            or needle in row.get("connections", "").lower()
+        ]
+
+    st.caption(f"Showing {len(filtered)} of {len(rows)} tags. Local overrides: {OVERRIDES_PATH}")
+    st.dataframe(
+        [
+            {
+                "category": row["category"],
+                "tag": row["tag"],
+                "active": row.get("active", True),
+                "occurrences": row.get("occurrences", 0),
+                "cluster": row.get("concept_cluster", ""),
+                "definition": row.get("definition", ""),
+            }
+            for row in filtered
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    tag_options = [f"{row['category']} · {row['tag']}" for row in filtered]
+    if not tag_options:
+        return
+    selected_label = st.selectbox("Edit tag", tag_options)
+    selected_row = filtered[tag_options.index(selected_label)]
+    _render_tag_editor(selected_row, save_tag_override)
+
+
+def _render_tag_editor(row: dict, save_tag_override) -> None:
+    key = row["key"]
+    with st.expander(f"Edit {row['category']} · {row['tag']}", expanded=True):
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            active = st.checkbox("Active for enrichment matching", value=row.get("active", True), key=f"tag_{key}_active")
+            tag = st.text_input("Tag label", value=row.get("tag", ""), key=f"tag_{key}_label")
+            concept_cluster = st.text_input("Concept cluster / grouping", value=row.get("concept_cluster", ""), key=f"tag_{key}_cluster")
+        with c2:
+            occurrences = st.number_input(
+                "Occurrences",
+                min_value=0,
+                value=int(row.get("occurrences", 0) or 0),
+                step=1,
+                key=f"tag_{key}_occurrences",
+            )
+            st.text_input("Category", value=row.get("category", ""), disabled=True, key=f"tag_{key}_category")
+        definition = st.text_area("Definition", value=row.get("definition", ""), height=110, key=f"tag_{key}_definition")
+        connections = st.text_area("Connections from archive", value=row.get("connections", ""), height=120, key=f"tag_{key}_connections")
+        researcher_note = st.text_area("Researcher note", value=row.get("researcher_note", ""), height=80, key=f"tag_{key}_note")
+        if st.button("Save Tag Override", key=f"tag_{key}_save"):
+            updates = {
+                "active": active,
+                "tag": tag,
+                "concept_cluster": concept_cluster,
+                "occurrences": occurrences,
+                "definition": definition,
+                "connections": connections,
+                "researcher_note": researcher_note,
+            }
+            save_tag_override(key, updates)
+            row.update(updates)
+            st.success("Saved local tag override.")
+
+
+def _render_seed_lexicon_import(config) -> None:
+    st.info(
+        "Preview the local Markdown lexicon before it enters Sanity. "
+        "Validated is recommended only when an entry has a definition plus explicit source evidence; otherwise it imports as draft."
+    )
+    seed_path = _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.0.md"
+    if not seed_path.exists():
+        st.error(f"Seed lexicon file not found: {seed_path}")
+        return
+
+    if st.button("Reload seed lexicon preview"):
+        st.session_state.pop("seed_lexicon_rows", None)
+
+    if "seed_lexicon_rows" not in st.session_state:
+        st.session_state.seed_lexicon_rows = _parse_seed_lexicon(seed_path)
+
+    rows = st.session_state.seed_lexicon_rows
+    if not rows:
+        st.warning("No lexicon entries were parsed from the seed document.")
+        return
+
+    draft_count = sum(1 for row in rows if row.get("recommended_status") == "draft")
+    validated_count = sum(1 for row in rows if row.get("recommended_status") == "validated")
+    pushed_count = sum(1 for row in rows if row.get("pushed_to_sanity"))
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Parsed entries", len(rows))
+    c2.metric("Recommended draft", draft_count)
+    c3.metric("Recommended validated", validated_count)
+    c4.metric("Pushed this session", pushed_count)
+
+    filter_status = st.selectbox("Status filter", ["All", "draft", "validated", "pushed"])
+    visible_rows = rows
+    if filter_status == "pushed":
+        visible_rows = [row for row in rows if row.get("pushed_to_sanity")]
+    elif filter_status != "All":
+        visible_rows = [row for row in rows if row.get("status") == filter_status]
+
+    st.caption("Use the table for batch selection/status changes, then use the detail editor for definitions and notes.")
+    table_rows = [
+        {
+            "import_entry": row.get("import_entry", False),
+            "term": row["term"],
+            "status": row.get("status", "draft"),
+            "recommended_status": row.get("recommended_status", "draft"),
+            "cluster": row.get("proposed_cluster", ""),
+            "function": row.get("function", ""),
+            "has_source": bool(row.get("source_url") or row.get("source_note")),
+            "pushed_to_sanity": row.get("pushed_to_sanity", False),
+        }
+        for row in visible_rows
+    ]
+    edited_rows = st.data_editor(
+        table_rows,
+        use_container_width=True,
+        hide_index=True,
+        disabled=["term", "recommended_status", "cluster", "function", "has_source", "pushed_to_sanity"],
+        column_config={
+            "import_entry": st.column_config.CheckboxColumn("Import"),
+            "status": st.column_config.SelectboxColumn("Status", options=["draft", "validated"]),
+        },
+        key="seed_lexicon_editor",
+    )
+    _merge_seed_table_edits(rows, edited_rows)
+
+    selected_terms = [row["term"] for row in rows]
+    selected_term = st.selectbox("Detailed edit", selected_terms)
+    selected_index = selected_terms.index(selected_term)
+    _render_seed_entry_editor(rows, selected_index)
+
+    selected_for_import = [
+        row for row in rows
+        if row.get("import_entry") and not row.get("pushed_to_sanity")
+    ]
+    checklist_errors = _selected_lexicon_checklist_errors(selected_for_import)
+    st.caption(f"{len(selected_for_import)} selected entry/entries. Checklist issues: {len(checklist_errors)}.")
+    if checklist_errors:
+        with st.expander("Checklist issues before push", expanded=True):
+            st.write("\n".join(checklist_errors[:30]))
+    if st.button("Push selected seed entries to Sanity", type="primary", disabled=(not selected_for_import or bool(checklist_errors))):
+        pushed = 0
+        errors: list[str] = []
+        for row in selected_for_import:
+            try:
+                from runner.clients.sanity import write_seed_lexicon_entry
+                sanity_id = write_seed_lexicon_entry(row, config)
+                row["pushed_to_sanity"] = True
+                row["sanity_id"] = sanity_id
+                row["import_entry"] = False
+                pushed += 1
+            except Exception as exc:
+                errors.append(f"{row.get('term', '?')}: {exc}")
+        st.session_state.pop("lexicon_terms", None)
+        if pushed:
+            st.success(f"Pushed {pushed} seed lexicon entr{'y' if pushed == 1 else 'ies'} to Sanity.")
+        if errors:
+            st.error("\n".join(errors))
+
+
+def _render_variant_import(config) -> None:
+    st.info(
+        "Attach translated/regional terms to their canonical lexicon entry. "
+        "These variants stay searchable in Sanity and are injected into analysis/enrichment prompts."
+    )
+    seed_path = _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.0.md"
+    if st.button("Reload variant preview"):
+        st.session_state.pop("seed_variant_rows", None)
+        st.session_state.pop("lexicon_terms", None)
+
+    if "seed_variant_rows" not in st.session_state:
+        st.session_state.seed_variant_rows = _parse_multilingual_variants(seed_path)
+    if "lexicon_terms" not in st.session_state:
+        try:
+            from runner.clients.sanity import fetch_lexicon_terms
+            st.session_state.lexicon_terms = fetch_lexicon_terms(config)
+        except Exception as exc:
+            st.error(f"Could not fetch canonical lexicon terms from Sanity: {exc}")
+            st.session_state.lexicon_terms = []
+
+    rows = st.session_state.seed_variant_rows
+    terms = st.session_state.lexicon_terms
+    term_ids = {term.get("term", ""): term.get("_id", "") for term in terms}
+    for row in rows:
+        row["canonical_id"] = term_ids.get(row["canonical_term"], row.get("canonical_id", ""))
+        row["canonical_in_sanity"] = bool(row["canonical_id"])
+
+    missing = sorted({row["canonical_term"] for row in rows if not row["canonical_in_sanity"]})
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Variant rows", len(rows))
+    c2.metric("Canonical terms found", len({row["canonical_term"] for row in rows if row["canonical_in_sanity"]}))
+    c3.metric("Canonical terms missing", len(missing))
+    if missing:
+        st.warning(
+            "Import the canonical seed terms first for: " + ", ".join(missing[:12])
+            + ("..." if len(missing) > 12 else "")
+        )
+
+    edited_rows = st.data_editor(
+        [
+            {
+                "import_variant": row.get("import_variant", False),
+                "canonical_term": row["canonical_term"],
+                "variant_term": row["variant_term"],
+                "language": row["language"],
+                "attestation_tier": row["attestation_tier"],
+                "canonical_in_sanity": row["canonical_in_sanity"],
+                "pushed_to_sanity": row.get("pushed_to_sanity", False),
+            }
+            for row in rows
+        ],
+        use_container_width=True,
+        hide_index=True,
+        disabled=["canonical_term", "variant_term", "language", "canonical_in_sanity", "pushed_to_sanity"],
+        column_config={
+            "import_variant": st.column_config.CheckboxColumn("Import"),
+            "attestation_tier": st.column_config.SelectboxColumn(
+                "Attestation",
+                options=["tier-1-legal", "tier-2-ngo-academic", "tier-3-inferred"],
+            ),
+        },
+        key="seed_variant_editor",
+    )
+    _merge_variant_table_edits(rows, edited_rows)
+
+    selected = [
+        row for row in rows
+        if row.get("import_variant")
+        and row.get("canonical_in_sanity")
+        and not row.get("pushed_to_sanity")
+    ]
+    st.caption(f"{len(selected)} selected variant(s) ready to attach.")
+    if st.button("Push selected variants to Sanity", type="primary", disabled=not selected):
+        pushed = 0
+        errors: list[str] = []
+        for row in selected:
+            try:
+                from runner.clients.sanity import write_seed_lexicon_variant
+                sanity_id = write_seed_lexicon_variant(row, config)
+                row["pushed_to_sanity"] = True
+                row["sanity_id"] = sanity_id
+                row["import_variant"] = False
+                pushed += 1
+            except Exception as exc:
+                errors.append(f"{row.get('canonical_term')} / {row.get('variant_term')}: {exc}")
+        st.session_state.pop("lexicon_terms", None)
+        if pushed:
+            st.success(f"Attached {pushed} multilingual variant(s) to Sanity lexicon entries.")
+        if errors:
+            st.error("\n".join(errors))
+
+
+def _merge_variant_table_edits(rows: list[dict], edited_rows: list[dict]) -> None:
+    by_key = {(row["canonical_term"], row["variant_term"], row["language"]): row for row in rows}
+    for edited in edited_rows:
+        row = by_key.get((edited.get("canonical_term"), edited.get("variant_term"), edited.get("language")))
+        if not row:
+            continue
+        row["import_variant"] = bool(edited.get("import_variant"))
+        row["attestation_tier"] = edited.get("attestation_tier") or row["attestation_tier"]
+
+
+def _parse_multilingual_variants(path: Path) -> list[dict]:
+    rows: list[dict] = []
+    language_codes = {
+        "Norwegian": "no",
+        "Italian": "it",
+        "French": "fr",
+        "German": "de",
+        "Spanish": "es",
+        "Polish": "pl",
+        "Finnish": "fi",
+        "Swedish": "sv",
+        "Hungarian": "hu",
+        "Greek": "el",
+        "Maltese": "mt",
+    }
+    table_lines = [
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith("|")
+    ]
+    if not table_lines:
+        return rows
+
+    header: list[str] = []
+    for line in table_lines:
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if cells and cells[0] == "English":
+            header = cells
+            continue
+        if not header or not cells or cells[0] in {"---", "Tier"} or set(cells[0]) == {"-"}:
+            continue
+        if len(cells) != len(header):
+            continue
+        canonical = cells[0]
+        if canonical in {"Gender Ideology", "Reparative Therapy", "Conversion Therapy", "Conversion Practices", "Pastoral Support", "Watchful Waiting", "Self-determination", "Same-sex attraction"}:
+            for lang_name, cell in zip(header[1:], cells[1:]):
+                variant = cell.strip()
+                if not variant or variant == "—":
+                    continue
+                rows.append({
+                    "import_variant": False,
+                    "canonical_term": canonical,
+                    "canonical_id": "",
+                    "canonical_in_sanity": False,
+                    "variant_term": _clean_variant_cell(variant),
+                    "language": language_codes.get(lang_name, "unknown"),
+                    "attestation_tier": _attestation_tier_for_variant(lang_name, variant),
+                    "source_note": f"SOGICE_Lexicon_v2.0 multilingual quick reference: {lang_name}.",
+                    "pushed_to_sanity": False,
+                })
+    return rows
+
+
+def _clean_variant_cell(value: str) -> str:
+    return re.sub(r"\s*\(T[123]\)\s*", "", value).strip()
+
+
+def _attestation_tier_for_variant(language_name: str, value: str) -> str:
+    if "(T1)" in value:
+        return "tier-1-legal"
+    if "(T2)" in value:
+        return "tier-2-ngo-academic"
+    if language_name == "Hungarian":
+        return "tier-3-inferred"
+    return "tier-2-ngo-academic"
+
+
+def _render_legacy_vocabulary_import(config) -> None:
+    st.info(
+        "Review the April 2026 legacy glossary before importing. "
+        "Rows that already exist in the current seed lexicon are shown for comparison but are not pushed as new canonical entries."
+    )
+    if st.button("Reload legacy vocabulary"):
+        st.session_state.pop("legacy_vocab_rows", None)
+
+    if "legacy_vocab_rows" not in st.session_state:
+        st.session_state.legacy_vocab_rows = _parse_legacy_vocabulary()
+
+    rows = st.session_state.legacy_vocab_rows
+    if not rows:
+        st.warning("No legacy vocabulary rows were loaded. Check the OneDrive backup paths.")
+        return
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Legacy terms", len(rows))
+    c2.metric("New vs current seed", sum(1 for row in rows if not row.get("exists_in_seed")))
+    c3.metric("Already in seed", sum(1 for row in rows if row.get("exists_in_seed")))
+    c4.metric("With source URLs", sum(1 for row in rows if row.get("source_url")))
+
+    filter_mode = st.selectbox(
+        "Filter",
+        ["New only", "All", "Already in current seed", "With source URL", "Non-English"],
+        key="legacy_filter",
+    )
+    visible = rows
+    if filter_mode == "New only":
+        visible = [row for row in rows if not row.get("exists_in_seed")]
+    elif filter_mode == "Already in current seed":
+        visible = [row for row in rows if row.get("exists_in_seed")]
+    elif filter_mode == "With source URL":
+        visible = [row for row in rows if row.get("source_url")]
+    elif filter_mode == "Non-English":
+        visible = [row for row in rows if row.get("language") not in {"", "en", "unknown"}]
+
+    edited_rows = st.data_editor(
+        [
+            {
+                "import_entry": row.get("import_entry", False),
+                "term": row["term"],
+                "status": row.get("status", "draft"),
+                "language": row.get("language", "unknown"),
+                "cluster": row.get("proposed_cluster", ""),
+                "function": row.get("function", ""),
+                "occurrences": row.get("occurrence_count", 0),
+                "has_source": bool(row.get("source_url")),
+                "exists_in_seed": row.get("exists_in_seed", False),
+                "pushed_to_sanity": row.get("pushed_to_sanity", False),
+            }
+            for row in visible
+        ],
+        use_container_width=True,
+        hide_index=True,
+        disabled=["term", "language", "cluster", "function", "occurrences", "has_source", "exists_in_seed", "pushed_to_sanity"],
+        column_config={
+            "import_entry": st.column_config.CheckboxColumn("Import"),
+            "status": st.column_config.SelectboxColumn("Status", options=["draft", "validated"]),
+        },
+        key="legacy_vocab_editor",
+    )
+    _merge_legacy_table_edits(rows, edited_rows)
+
+    terms = [row["term"] for row in rows]
+    selected_term = st.selectbox("Detailed legacy term review", terms, key="legacy_detail_select")
+    selected_index = terms.index(selected_term)
+    _render_legacy_entry_editor(rows, selected_index)
+
+    selected = [
+        row for row in rows
+        if row.get("import_entry")
+        and not row.get("exists_in_seed")
+        and not row.get("pushed_to_sanity")
+    ]
+    skipped_existing = sum(1 for row in rows if row.get("import_entry") and row.get("exists_in_seed"))
+    if skipped_existing:
+        st.warning(f"{skipped_existing} selected row(s) already exist in the current seed lexicon and will be skipped.")
+    checklist_errors = _selected_lexicon_checklist_errors(selected)
+    st.caption(f"{len(selected)} legacy term(s) selected. Checklist issues: {len(checklist_errors)}.")
+    if checklist_errors:
+        with st.expander("Checklist issues before push", expanded=True):
+            st.write("\n".join(checklist_errors[:30]))
+    if st.button("Push selected legacy terms to Sanity", type="primary", disabled=(not selected or bool(checklist_errors))):
+        pushed = 0
+        errors: list[str] = []
+        for row in selected:
+            try:
+                from runner.clients.sanity import write_seed_lexicon_entry
+                sanity_id = write_seed_lexicon_entry(row, config)
+                row["pushed_to_sanity"] = True
+                row["sanity_id"] = sanity_id
+                row["import_entry"] = False
+                pushed += 1
+            except Exception as exc:
+                errors.append(f"{row.get('term', '?')}: {exc}")
+        st.session_state.pop("lexicon_terms", None)
+        if pushed:
+            st.success(f"Pushed {pushed} legacy term(s) to Sanity.")
+        if errors:
+            st.error("\n".join(errors))
+
+
+def _render_legacy_entry_editor(rows: list[dict], index: int) -> None:
+    row = dict(rows[index])
+    prefix = f"legacy_{index}"
+    with st.expander(f"Edit legacy term: {row['term']}", expanded=False):
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            row["term"] = st.text_input("Term", value=row.get("term", ""), key=f"{prefix}_term")
+            row["language"] = st.text_input("Language", value=row.get("language", "unknown"), key=f"{prefix}_language")
+            row["status"] = st.selectbox(
+                "Import status",
+                ["draft", "validated"],
+                index=_option_index(["draft", "validated"], row.get("status", "draft")),
+                key=f"{prefix}_status",
+            )
+            row["proposed_cluster"] = st.text_input("Cluster", value=row.get("proposed_cluster", ""), key=f"{prefix}_cluster")
+            row["function"] = st.text_input("Function", value=row.get("function", ""), key=f"{prefix}_function")
+        with c2:
+            row["source_url"] = st.text_input("Source URL", value=row.get("source_url", ""), key=f"{prefix}_source")
+            row["occurrence_count"] = st.number_input(
+                "Occurrence count",
+                min_value=0,
+                value=int(row.get("occurrence_count", 0) or 0),
+                step=1,
+                key=f"{prefix}_occurrences",
+            )
+            st.checkbox("Already exists in current seed", value=row.get("exists_in_seed", False), disabled=True, key=f"{prefix}_exists")
+        row["draft_definition"] = st.text_area("Definition", value=row.get("draft_definition", ""), height=130, key=f"{prefix}_definition")
+        row["accessible_definition"] = st.text_area(
+            "Accessible definition",
+            value=row.get("accessible_definition", ""),
+            height=80,
+            key=f"{prefix}_accessible",
+        )
+        row["source_note"] = st.text_area("Source/provenance note", value=row.get("source_note", ""), height=100, key=f"{prefix}_note")
+        if st.button("Save legacy edits", key=f"{prefix}_save"):
+            rows[index] = row
+            st.success("Saved edits in the preview session.")
+
+
+def _merge_legacy_table_edits(rows: list[dict], edited_rows: list[dict]) -> None:
+    by_term = {row["term"]: row for row in rows}
+    for edited in edited_rows:
+        row = by_term.get(edited.get("term"))
+        if not row:
+            continue
+        row["import_entry"] = bool(edited.get("import_entry"))
+        row["status"] = edited.get("status") or row.get("status", "draft")
+
+
+def _parse_legacy_vocabulary() -> list[dict]:
+    glossary_path = _legacy_vocab_dir / "sogice_glossary_2026-04-03.json"
+    csv_path = _legacy_vocab_dir / "sogice_vocabulary_2026-04-03.csv"
+    if not glossary_path.exists():
+        return []
+
+    current_seed = {
+        _term_key(row["term"])
+        for row in _parse_seed_lexicon(_project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.0.md")
+    }
+    csv_terms = _legacy_csv_terms(csv_path)
+
+    data = json.loads(glossary_path.read_text(encoding="utf-8"))
+    rows: list[dict] = []
+    seen: set[str] = set()
+    for entry in data.get("entries", []):
+        term = (entry.get("term") or "").strip()
+        if not term:
+            continue
+        key = _term_key(term)
+        if key in seen:
+            continue
+        seen.add(key)
+        csv_meta = csv_terms.get(key, {})
+        source_urls = entry.get("source_urls") or []
+        source_url = entry.get("source_url") or (source_urls[0] if source_urls else "")
+        definition = entry.get("draft_definition") or csv_meta.get("definition", "")
+        context_quote = entry.get("context_quote", "")
+        source_note_parts = [
+            "Legacy vocabulary import from April 3, 2026.",
+            f"Review status: {entry.get('review_status', 'pending')}.",
+        ]
+        if context_quote:
+            source_note_parts.append(f"Context quote: {context_quote}")
+        if source_urls:
+            source_note_parts.append("Source URLs: " + " | ".join(source_urls))
+        if csv_meta.get("connections"):
+            source_note_parts.append("CSV connections: " + csv_meta["connections"])
+
+        rows.append({
+            "import_entry": False,
+            "term": term,
+            "expansion": entry.get("suggests_new_tag", ""),
+            "status": "draft",
+            "recommended_status": "draft",
+            "recommendation_reason": "legacy glossary entries were pending review; import as draft unless manually validated",
+            "language": entry.get("language") or "unknown",
+            "proposed_cluster": _map_legacy_cluster(entry.get("concept_cluster", "")),
+            "function": _map_legacy_function(entry.get("proposed_category", "")),
+            "draft_definition": definition,
+            "accessible_definition": _plain_first_sentence(definition) if definition else "",
+            "source_url": source_url,
+            "source_note": " ".join(source_note_parts),
+            "related": "",
+            "occurrence_count": int(entry.get("occurrence_count") or csv_meta.get("occurrences") or 0),
+            "frequency": int(entry.get("occurrence_count") or csv_meta.get("occurrences") or 0),
+            "exists_in_seed": key in current_seed,
+            "pushed_to_sanity": False,
+        })
+    return rows
+
+
+def _legacy_csv_terms(path: Path) -> dict[str, dict]:
+    if not path.exists():
+        return {}
+    import csv
+    terms: dict[str, dict] = {}
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("Category") not in {"Term", "Term (discovered)"}:
+                continue
+            term = (row.get("Tag") or "").replace("Term:", "", 1).strip()
+            if not term:
+                continue
+            terms[_term_key(term)] = {
+                "definition": row.get("Definition", ""),
+                "connections": row.get("Connections from Archive", ""),
+                "occurrences": row.get("Occurrences", "0"),
+            }
+    return terms
+
+
+def _term_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+
+
+def _map_legacy_cluster(value: str) -> str:
+    text = (value or "").lower()
+    if "ssa" in text:
+        return "SSA-Rhetoric"
+    if "pastoral" in text:
+        return "Pastoral-Coercion"
+    if "pseudo" in text or "clinical" in text or "patholog" in text or "method" in text:
+        return "Pseudo-Science"
+    if "policy" in text or "rights" in text or "legal" in text:
+        return "Policy-Resistance"
+    if "anti-trans" in text or "detrans" in text or "social-contagion" in text:
+        return "Anti-Trans/ROGD"
+    if "anti-gender" in text or "political" in text:
+        return "Anti-Gender"
+    if "non-sogice" in text or "ethics" in text or "scientific" in text:
+        return "Non-SOGICE"
+    return ""
+
+
+def _map_legacy_function(value: str) -> str:
+    text = (value or "").lower()
+    if "slur" in text or "hate" in text:
+        return "Slur"
+    if "euphemism" in text:
+        return "Euphemism"
+    if "conspiracy" in text:
+        return "Conspiracy"
+    if "pseudo" in text:
+        return "Pseudo-Diagnostic"
+    if "identity" in text:
+        return "Identity-Policing"
+    if "pastoral" in text:
+        return "Pastoral Rhetoric"
+    if "recruitment" in text:
+        return "Recruitment Frame"
+    if "slogan" in text or "policy" in text or "political" in text:
+        return "Political Slogan"
+    return ""
+
+
+def _render_seed_entry_editor(rows: list[dict], index: int) -> None:
+    row = dict(rows[index])
+    prefix = f"seed_{index}"
+    with st.expander(f"Edit {row['term']}", expanded=True):
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            row["term"] = st.text_input("Term", value=row.get("term", ""), key=f"{prefix}_term")
+            row["status"] = st.selectbox(
+                "Import status",
+                ["draft", "validated"],
+                index=_option_index(["draft", "validated"], row.get("status", "draft")),
+                key=f"{prefix}_status",
+            )
+            row["proposed_cluster"] = st.text_input("Cluster", value=row.get("proposed_cluster", ""), key=f"{prefix}_cluster")
+            row["function"] = st.text_input("Function", value=row.get("function", ""), key=f"{prefix}_function")
+        with c2:
+            row["source_url"] = st.text_input("Source URL", value=row.get("source_url", ""), key=f"{prefix}_source_url")
+            row["source_note"] = st.text_area("Source note / provenance", value=row.get("source_note", ""), height=90, key=f"{prefix}_source_note")
+            row["related"] = st.text_input("Related terms from seed", value=row.get("related", ""), key=f"{prefix}_related")
+
+        row["draft_definition"] = st.text_area(
+            "Academic definition",
+            value=row.get("draft_definition", ""),
+            height=150,
+            key=f"{prefix}_definition",
+        )
+        row["accessible_definition"] = st.text_area(
+            "Accessible definition",
+            value=row.get("accessible_definition", ""),
+            height=90,
+            key=f"{prefix}_accessible",
+        )
+        st.caption(f"Recommended by parser: {row.get('recommended_status', 'draft')} · {row.get('recommendation_reason', '')}")
+        if st.button("Save seed entry edits", key=f"{prefix}_save"):
+            rows[index] = row
+            st.success("Saved edits in the preview session.")
+
+
+def _merge_seed_table_edits(rows: list[dict], edited_rows: list[dict]) -> None:
+    by_term = {row["term"]: row for row in rows}
+    for edited in edited_rows:
+        row = by_term.get(edited.get("term"))
+        if not row:
+            continue
+        row["import_entry"] = bool(edited.get("import_entry"))
+        row["status"] = edited.get("status") or row.get("status", "draft")
+
+
+def _selected_lexicon_checklist_errors(rows: list[dict]) -> list[str]:
+    errors: list[str] = []
+    for row in rows:
+        issues = _lexicon_import_issues(row)
+        if issues:
+            errors.append(f"{row.get('term', '(missing term)')}: " + "; ".join(issues))
+    return errors
+
+
+def _lexicon_import_issues(row: dict) -> list[str]:
+    issues: list[str] = []
+    if not (row.get("term") or "").strip():
+        issues.append("missing term")
+    if not (row.get("proposed_cluster") or "").strip():
+        issues.append("missing cluster")
+    if not (row.get("function") or "").strip():
+        issues.append("missing function")
+    if not (row.get("draft_definition") or row.get("definition") or "").strip():
+        issues.append("missing definition")
+    if not (row.get("accessible_definition") or "").strip():
+        issues.append("missing accessible definition")
+    if row.get("status") == "validated" and not (row.get("source_url") or row.get("source_note")):
+        issues.append("validated entries need source evidence")
+    return issues
+
+
+def _parse_seed_lexicon(path: Path) -> list[dict]:
+    text = path.read_text(encoding="utf-8")
+    entries: list[dict] = []
+    current_heading: tuple[str, str] | None = None
+    current_lines: list[str] = []
+    heading_re = re.compile(r"^\*\*(.+?)\*\*(?:\s*\((.*?)\))?\s*$")
+    inline_re = re.compile(r"^\*\*(.+?)\*\*\s+—\s+(.+)$")
+
+    def flush() -> None:
+        if not current_heading:
+            return
+        entry = _parse_seed_entry(current_heading[0], current_heading[1], current_lines)
+        if entry:
+            entries.append(entry)
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        inline_match = inline_re.match(stripped)
+        heading_match = heading_re.match(stripped)
+        if inline_match:
+            flush()
+            current_heading = None
+            current_lines = []
+            entry = _parse_inline_seed_entry(inline_match.group(1).strip(), inline_match.group(2).strip())
+            if entry:
+                entries.append(entry)
+        elif heading_match:
+            flush()
+            current_heading = (heading_match.group(1).strip(), (heading_match.group(2) or "").strip())
+            current_lines = []
+        elif current_heading:
+            current_lines.append(line.rstrip())
+    flush()
+    return entries
+
+
+def _parse_inline_seed_entry(term: str, remainder: str) -> dict | None:
+    if "|" not in remainder:
+        return None
+    cluster_part, rest = remainder.split("|", 1)
+    function_part, _, definition_part = rest.partition(".")
+    definition = definition_part.strip()
+    function_raw = function_part.strip()
+    proposed_cluster = _normalize_seed_option(
+        cluster_part,
+        [
+            "SSA-Rhetoric", "Pastoral-Coercion", "Pseudo-Science",
+            "Policy-Resistance", "Anti-Trans/ROGD", "Anti-Gender",
+            "Pro-Trans-SOGICE", "Non-SOGICE",
+        ],
+    )
+    function = _normalize_seed_option(
+        function_raw,
+        [
+            "Slur", "Euphemism", "Conspiracy", "Pseudo-Diagnostic",
+            "Identity-Policing", "Moral-Purity Frame", "Political Slogan",
+            "Recruitment Frame", "Pastoral Rhetoric", "Disinformation Narrative",
+            "Promotional Recruitment", "Testimonial Marketing",
+        ],
+    )
+    if not function and any(word in function_raw.lower() for word in ["pejorative", "dehumanizing", "troll"]):
+        function = "Slur"
+    if not proposed_cluster or not definition:
+        return None
+
+    definition = (
+        'Mandatory framing: "This term appears in the SurvivingSOGICE corpus as a slur or harmful term used against LGBTQ+ people. '
+        'It is documented here for research completeness. Documentation does not constitute endorsement." '
+        + definition
+    )
+    return {
+        "import_entry": False,
+        "term": term,
+        "expansion": "",
+        "status": "draft",
+        "recommended_status": "draft",
+        "recommendation_reason": "inline harmful/reference term; requires corpus evidence before validation",
+        "proposed_cluster": proposed_cluster,
+        "function": function,
+        "draft_definition": definition,
+        "accessible_definition": _plain_first_sentence(definition),
+        "source_url": "",
+        "source_note": "Seed lexicon inline harmful/reference terminology section.",
+        "related": "",
+        "pushed_to_sanity": False,
+    }
+
+
+def _parse_seed_entry(term: str, expansion: str, lines: list[str]) -> dict | None:
+    cluster_line = _first_prefixed_line(lines, "- Cluster:")
+    definition = _first_prefixed_value(lines, "- Definition:")
+    if not cluster_line or not definition:
+        return None
+
+    source_note = _first_prefixed_line(lines, "- Source:")
+    related = _first_prefixed_value(lines, "- Related:")
+    source_url = ""
+    for line in lines:
+        url_match = re.search(r"https?://\S+", line)
+        if url_match:
+            source_url = url_match.group(0).rstrip(".,)")
+            break
+
+    proposed_cluster = _normalize_seed_option(
+        cluster_line.split("Cluster:", 1)[1].split("|", 1)[0],
+        [
+            "SSA-Rhetoric", "Pastoral-Coercion", "Pseudo-Science",
+            "Policy-Resistance", "Anti-Trans/ROGD", "Anti-Gender",
+            "Pro-Trans-SOGICE", "Non-SOGICE",
+        ],
+    )
+    function_value = cluster_line.split("Function:", 1)[1] if "Function:" in cluster_line else ""
+    function = _normalize_seed_option(
+        function_value,
+        [
+            "Slur", "Euphemism", "Conspiracy", "Pseudo-Diagnostic",
+            "Identity-Policing", "Moral-Purity Frame", "Political Slogan",
+            "Recruitment Frame", "Pastoral Rhetoric", "Disinformation Narrative",
+            "Promotional Recruitment", "Testimonial Marketing",
+        ],
+    )
+
+    has_source_evidence = bool(source_url or source_note)
+    recommended_status = "validated" if definition and has_source_evidence else "draft"
+    reason = "definition plus source evidence" if recommended_status == "validated" else "needs source evidence from ingested documents"
+    accessible_definition = _plain_first_sentence(definition)
+
+    return {
+        "import_entry": False,
+        "term": term,
+        "expansion": expansion,
+        "status": recommended_status,
+        "recommended_status": recommended_status,
+        "recommendation_reason": reason,
+        "proposed_cluster": proposed_cluster,
+        "function": function,
+        "draft_definition": definition,
+        "accessible_definition": accessible_definition,
+        "source_url": source_url,
+        "source_note": source_note.replace("- Source:", "", 1).strip() if source_note else "",
+        "related": related,
+        "pushed_to_sanity": False,
+    }
+
+
+def _first_prefixed_line(lines: list[str], prefix: str) -> str:
+    for line in lines:
+        if line.strip().startswith(prefix):
+            return line.strip()
+    return ""
+
+
+def _first_prefixed_value(lines: list[str], prefix: str) -> str:
+    line = _first_prefixed_line(lines, prefix)
+    return line.replace(prefix, "", 1).strip() if line else ""
+
+
+def _normalize_seed_option(value: str, allowed: list[str]) -> str:
+    cleaned = re.sub(r"\([^)]*\)", "", value).replace("Candidate — corpus validation required", "")
+    pieces = [piece.strip() for piece in re.split(r"/|\|", cleaned) if piece.strip()]
+    for piece in pieces:
+        if piece in allowed:
+            return piece
+    for option in allowed:
+        if option.lower() in cleaned.lower():
+            return option
+    return ""
+
+
+def _plain_first_sentence(value: str, max_chars: int = 240) -> str:
+    cleaned = re.sub(r"\*\*|`|→", "", value).strip()
+    parts = re.split(r"(?<=[.!?])\s+", cleaned)
+    first = parts[0] if parts else cleaned
+    if len(first) <= max_chars:
+        return first
+    return first[: max_chars - 1].rstrip() + "…"
+
+
+def _render_local_proposal_queue(config) -> None:
+    lexicon_records = _local_enrichment_proposal_records(config.corpus_dir, "lexicon_proposals")
+    entity_records = _local_enrichment_proposal_records(config.corpus_dir, "entity_proposals")
+    queue_tabs = st.tabs(["Lexicon Queue", "Entity Queue", "Gate Status"])
+
+    with queue_tabs[0]:
+        _render_lexicon_queue(config, lexicon_records)
+    with queue_tabs[1]:
+        _render_entity_queue(config, entity_records)
+    with queue_tabs[2]:
+        st.json(_proposal_gate_status(config.corpus_dir))
+
+
+def _render_lexicon_queue(config, records: list[dict]) -> None:
+    st.caption(f"{len(records)} local lexicon proposal(s)")
+    if not records:
+        st.info("No local lexicon proposals found yet.")
+        return
+    st.dataframe([
+        {
+            "doc_id": record["doc_id"],
+            "index": record["index"],
+            "term": record["item"].get("term", ""),
+            "action": record["item"].get("action", ""),
+            "cluster": record["item"].get("proposed_cluster", ""),
+            "function": record["item"].get("function", ""),
+            "approved": record["item"].get("approved", False),
+            "rejected": record["item"].get("rejected", False),
+            "pushed_to_sanity": record["item"].get("pushed_to_sanity", False),
+        }
+        for record in records
+    ], use_container_width=True, hide_index=True)
+    if st.button("Push approved drafts to Sanity"):
+        pushed = 0
+        errors: list[str] = []
+        for record in records:
+            item = record["item"]
+            if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                continue
+            issues = _lexicon_import_issues({
+                "term": item.get("term", ""),
+                "proposed_cluster": item.get("proposed_cluster", ""),
+                "function": item.get("function", ""),
+                "draft_definition": item.get("definition_as_used", ""),
+                "accessible_definition": item.get("accessible_definition", ""),
+                "status": "draft",
+            })
+            if issues:
+                errors.append(f"{record['doc_id']} / {item.get('term', '?')}: " + "; ".join(issues))
+                continue
+            try:
+                from runner.clients.sanity import write_lexicon_draft_from_proposal
+                sanity_id = write_lexicon_draft_from_proposal(item, record["doc_id"], config)
+                item["pushed_to_sanity"] = True
+                item["sanity_id"] = sanity_id
+                item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity as draft.").strip()
+                _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
+                pushed += 1
+            except Exception as exc:
+                errors.append(f"{record['doc_id']} / {item.get('term', '?')}: {exc}")
+        st.session_state.pop("lexicon_terms", None)
+        if pushed:
+            st.success(f"Pushed {pushed} approved draft term(s) to Sanity.")
+        if errors:
+            st.error("\n".join(errors))
+
+    st.subheader("Review Proposals")
+    for record in records:
+        item = record["item"]
+        label = f"{record['doc_id']} · {item.get('term', '(missing term)')}"
+        with st.expander(label):
+            _render_single_proposal_editor(record)
+
+
+def _render_entity_queue(config, records: list[dict]) -> None:
+    st.caption(f"{len(records)} local entity proposal(s)")
+    if not records:
+        st.info("No local entity proposals found yet.")
+        return
+    st.dataframe([
+        {
+            "doc_id": record["doc_id"],
+            "index": record["index"],
+            "name": record["item"].get("name", ""),
+            "entity_type": record["item"].get("entity_type", ""),
+            "action": record["item"].get("action", ""),
+            "approved": record["item"].get("approved", False),
+            "rejected": record["item"].get("rejected", False),
+            "pushed_to_sanity": record["item"].get("pushed_to_sanity", False),
+        }
+        for record in records
+    ], use_container_width=True, hide_index=True)
+
+    if st.button("Push approved entities to Sanity"):
+        pushed = 0
+        errors: list[str] = []
+        for record in records:
+            item = record["item"]
+            if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                continue
+            try:
+                from runner.clients.sanity import write_entity_from_proposal
+                sanity_id = write_entity_from_proposal(item, record["doc_id"], config)
+                item["pushed_to_sanity"] = True
+                item["sanity_id"] = sanity_id
+                item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity registry.").strip()
+                _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
+                pushed += 1
+            except Exception as exc:
+                errors.append(f"{record['doc_id']} / {item.get('name', '?')}: {exc}")
+        st.session_state.pop("entity_registry", None)
+        if pushed:
+            st.success(f"Pushed {pushed} approved entit(ies) to Sanity.")
+        if errors:
+            st.error("\n".join(errors))
+
+    st.subheader("Review Entities")
+    for record in records:
+        item = record["item"]
+        label = f"{record['doc_id']} · {item.get('name', '(missing name)')}"
+        with st.expander(label):
+            _render_single_entity_editor(record)
+
+
+def _render_single_proposal_editor(record: dict) -> None:
+    item = dict(record["item"])
+    prefix = f"proposal_{record['doc_id']}_{record['index']}"
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        item["term"] = st.text_input("Term", value=item.get("term", ""), key=f"{prefix}_term")
+        item["language"] = st.text_input("Language", value=item.get("language", "en"), key=f"{prefix}_language")
+        item["action"] = st.selectbox(
+            "Action",
+            ["add_new", "add_variant", "add_evidence", "add_definition", "merge_into"],
+            index=_option_index(["add_new", "add_variant", "add_evidence", "add_definition", "merge_into"], item.get("action", "add_new")),
+            key=f"{prefix}_action",
+        )
+        item["proposed_cluster"] = st.text_input("Cluster", value=item.get("proposed_cluster", ""), key=f"{prefix}_cluster")
+        item["function"] = st.text_input("Function", value=item.get("function", ""), key=f"{prefix}_function")
+    with c2:
+        item["definition_as_used"] = st.text_area(
+            "Definition as used",
+            value=item.get("definition_as_used", ""),
+            height=120,
+            key=f"{prefix}_definition",
+        )
+        item["accessible_definition"] = st.text_area(
+            "Accessible definition",
+            value=item.get("accessible_definition", ""),
+            height=80,
+            key=f"{prefix}_accessible",
+        )
+
+    item["exact_quote"] = st.text_area("Origin quote", value=item.get("exact_quote", ""), height=100, key=f"{prefix}_quote")
+    item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
+    st.caption(f"Origin: {record['path']} · proposal index {record['index']}")
+
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        if st.button("Save Edits", key=f"{prefix}_save"):
+            _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
+            st.success("Saved proposal edits.")
+    with b2:
+        if st.button("Approve as Draft", key=f"{prefix}_approve"):
+            item["approved"] = True
+            item["rejected"] = False
+            _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
+            st.success("Approved locally. Push approved drafts to Sanity when ready.")
+    with b3:
+        if st.button("Reject", key=f"{prefix}_reject"):
+            item["approved"] = False
+            item["rejected"] = True
+            _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
+            st.success("Rejected locally.")
+
+
+def _render_single_entity_editor(record: dict) -> None:
+    item = dict(record["item"])
+    prefix = f"entity_{record['doc_id']}_{record['index']}"
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        item["name"] = st.text_input("Name", value=item.get("name", ""), key=f"{prefix}_name")
+        item["entity_type"] = st.selectbox(
+            "Entity type",
+            ["organization", "person"],
+            index=_option_index(["organization", "person"], item.get("entity_type", "organization")),
+            key=f"{prefix}_type",
+        )
+        item["action"] = st.selectbox(
+            "Action",
+            ["add_new", "enrich_existing"],
+            index=_option_index(["add_new", "enrich_existing"], item.get("action", "add_new")),
+            key=f"{prefix}_action",
+        )
+    with c2:
+        item["self_description"] = st.text_area(
+            "Self-description",
+            value=item.get("self_description", ""),
+            height=100,
+            key=f"{prefix}_description",
+        )
+        item["role_in_sogice"] = st.text_input("Role in SOGICE", value=item.get("role_in_sogice", ""), key=f"{prefix}_role")
+
+    item["evidence_quote"] = st.text_area("Evidence quote", value=item.get("evidence_quote", ""), height=100, key=f"{prefix}_quote")
+    item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
+    if item.get("network_connections"):
+        st.write("**Network connections:**")
+        st.dataframe(item["network_connections"], use_container_width=True)
+    if item.get("key_individuals"):
+        st.write("**Key individuals:**")
+        st.dataframe(item["key_individuals"], use_container_width=True)
+
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        if st.button("Save Entity Edits", key=f"{prefix}_save"):
+            _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
+            st.success("Saved entity edits.")
+    with b2:
+        if st.button("Approve Entity", key=f"{prefix}_approve"):
+            item["approved"] = True
+            item["rejected"] = False
+            _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
+            st.success("Approved locally. Push approved entities to Sanity when ready.")
+    with b3:
+        if st.button("Reject Entity", key=f"{prefix}_reject"):
+            item["approved"] = False
+            item["rejected"] = True
+            _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
+            st.success("Rejected locally.")
+
+
+def _local_enrichment_proposal_records(corpus_dir: Path, key: str = "lexicon_proposals") -> list[dict]:
+    records: list[dict] = []
+    if not corpus_dir.exists():
+        return records
+    for enrich_path in sorted(corpus_dir.glob("*/enrichment.json")):
+        try:
+            data = json.loads(enrich_path.read_text())
+        except Exception:
+            continue
+        for index, item in enumerate(data.get(key, [])):
+            records.append({
+                "path": enrich_path,
+                "doc_id": enrich_path.parent.name,
+                "index": index,
+                "item": item,
+            })
+    return records
+
+
+def _update_enrichment_proposal(path: Path, key: str, index: int, item: dict) -> None:
+    data = json.loads(path.read_text())
+    proposals = data.setdefault(key, [])
+    if index >= len(proposals):
+        raise IndexError(f"Proposal index {index} no longer exists in {path}")
+    proposals[index] = item
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _proposal_gate_status(corpus_dir: Path) -> dict:
+    lexicon = _local_enrichment_proposal_records(corpus_dir, "lexicon_proposals")
+    entities = _local_enrichment_proposal_records(corpus_dir, "entity_proposals")
+
+    def unresolved(records: list[dict]) -> int:
+        return sum(
+            1 for record in records
+            if not record["item"].get("approved")
+            and not record["item"].get("rejected")
+        )
+
+    def approved_unpushed(records: list[dict]) -> int:
+        return sum(
+            1 for record in records
+            if record["item"].get("approved")
+            and not record["item"].get("rejected")
+            and not record["item"].get("pushed_to_sanity")
+        )
+
+    status = {
+        "unresolved_lexicon": unresolved(lexicon),
+        "approved_unpushed_lexicon": approved_unpushed(lexicon),
+        "unresolved_entities": unresolved(entities),
+        "approved_unpushed_entities": approved_unpushed(entities),
+    }
+    status["blocked"] = any(status.values())
+    return status
+
+
+def _option_index(options: list[str], value: str) -> int:
+    try:
+        return options.index(value)
+    except ValueError:
+        return 0
+
+
+# ---------------------------------------------------------------------------
+# Activity Log
+# ---------------------------------------------------------------------------
+
+def page_testimony_review():
+    st.title("Testimony Review")
+
+    config = _load_config_safe()
+    if not config:
+        st.error("Could not load config. Check runner/.env.")
+        return
+
+    rows = _testimony_review_rows(config.corpus_dir)
+    if not rows:
+        st.info("No testimony-flagged documents or testimony excerpts found locally.")
+        return
+
+    st.info(
+        "Testimony defaults to consentStatus=unclear and publicDisplay=false. "
+        "Upload is blocked for testimony-flagged workbench documents until a review exists."
+    )
+    st.dataframe(rows, use_container_width=True, hide_index=True)
+
+    selected = st.selectbox("Review document", [row["doc_id"] for row in rows])
+    doc_dir = config.corpus_dir / selected
+    analysis = _load_json_if_exists(doc_dir / "analysis.json") or {}
+    existing = _load_json_if_exists(_testimony_review_path(config, selected)) or {}
+
+    st.subheader(selected)
+    st.write(analysis.get("summary", ""))
+    assets = [
+        asset for asset in analysis.get("extractable_assets", [])
+        if asset.get("asset_type") == "testimony_excerpt"
+    ]
+    if assets:
+        st.write("**Testimony excerpts detected:**")
+        st.dataframe(assets, use_container_width=True)
+
+    consent = st.selectbox(
+        "Consent status",
+        ["unclear", "confirmed", "withdrawn"],
+        index=_option_index(["unclear", "confirmed", "withdrawn"], existing.get("consent_status", "unclear")),
+    )
+    public_display = st.checkbox("Allow public display", value=bool(existing.get("public_display", False)))
+    public_excerpt = st.text_area("Public excerpt (optional, max 200 words)", value=existing.get("public_excerpt", ""), height=120)
+    notes = st.text_area("Researcher notes", value=existing.get("notes", ""), height=120)
+
+    if public_display and consent != "confirmed":
+        st.error("Public display requires confirmed consent.")
+
+    if st.button("Save Testimony Review", disabled=(public_display and consent != "confirmed")):
+        payload = {
+            "doc_id": selected,
+            "consent_status": consent,
+            "consent_source": existing.get("consent_source", "unknown"),
+            "public_display": public_display,
+            "public_excerpt": public_excerpt,
+            "notes": notes,
+            "reviewed": True,
+            "reviewed_by": "researcher",
+            "reviewed_at": datetime.now(timezone.utc).isoformat(),
+        }
+        _testimony_review_path(config, selected).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        st.success("Saved testimony review.")
+
+
+def _testimony_review_rows(corpus_dir: Path) -> list[dict]:
+    rows: list[dict] = []
+    if not corpus_dir.exists():
+        return rows
+    for doc_dir in sorted(corpus_dir.iterdir()):
+        analysis = _load_json_if_exists(doc_dir / "analysis.json")
+        if not analysis:
+            continue
+        assets = analysis.get("extractable_assets", [])
+        testimony_assets = [
+            asset for asset in assets
+            if asset.get("asset_type") == "testimony_excerpt"
+        ]
+        if not analysis.get("testimony_flag") and not testimony_assets:
+            continue
+        review = _load_json_if_exists(doc_dir / "testimony_review.json") or {}
+        rows.append({
+            "doc_id": doc_dir.name,
+            "type": analysis.get("type", "?"),
+            "testimony_flag": analysis.get("testimony_flag", False),
+            "testimony_excerpts": len(testimony_assets),
+            "consent_status": review.get("consent_status", "unreviewed"),
+            "public_display": review.get("public_display", False),
+            "reviewed": review.get("reviewed", False),
+        })
+    return rows
+
+
+def _testimony_review_path(config, doc_id: str) -> Path:
+    return config.corpus_dir / doc_id / "testimony_review.json"
+
+
+def _testimony_requires_review(doc_id: str, analysis, config) -> bool:
+    if not analysis:
+        return False
+    if not getattr(analysis, "testimony_flag", False):
+        return False
+    path = _testimony_review_path(config, doc_id)
+    data = _load_json_if_exists(path)
+    return not bool(data and data.get("reviewed"))
+
+
+def _load_json_if_exists(path: Path) -> dict | None:
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return None
+
+
+def page_activity_log():
+    st.title("Activity Log")
+
+    config = _load_config_safe()
+    if not config:
+        st.error("Could not load config. Check runner/.env.")
+        return
+
+    docs = _activity_rows(config.corpus_dir)
+    if not docs:
+        st.info("No local activity yet.")
+        return
+
+    st.dataframe(docs, use_container_width=True, hide_index=True)
+
+    selected = st.selectbox("Inspect document", [row["doc_id"] for row in docs])
+    doc_dir = config.corpus_dir / selected
+    tabs = st.tabs(["Audit", "Intake", "Wayback", "HTML Snapshot", "Analysis", "Enrichment", "Sanity Record"])
+    with tabs[0]:
+        audit = doc_dir / "audit.log"
+        st.code(audit.read_text() if audit.exists() else "No audit.log", language="text")
+    with tabs[1]:
+        _show_json_file(doc_dir / "intake.json")
+    with tabs[2]:
+        _show_json_file(doc_dir / "wayback.json")
+    with tabs[3]:
+        html_path = doc_dir / "source.html"
+        if html_path.exists():
+            st.caption(str(html_path))
+            st.download_button(
+                "Download HTML snapshot",
+                data=html_path.read_text(encoding="utf-8", errors="replace"),
+                file_name=f"{selected}-source.html",
+                mime="text/html",
+            )
+            st.code(html_path.read_text(encoding="utf-8", errors="replace")[:20_000], language="html")
+        else:
+            st.info("No local HTML snapshot found for this document.")
+    with tabs[4]:
+        _show_json_file(doc_dir / "analysis.json")
+    with tabs[5]:
+        _show_json_file(doc_dir / "enrichment.json")
+    with tabs[6]:
+        _show_json_file(doc_dir / "sanity_record.json")
+
+
+def _activity_rows(corpus_dir: Path) -> list[dict]:
+    rows: list[dict] = []
+    if not corpus_dir.exists():
+        return rows
+    for doc_dir in sorted(corpus_dir.iterdir()):
+        if not doc_dir.is_dir():
+            continue
+        analysis_path = doc_dir / "analysis.json"
+        if not analysis_path.exists():
+            continue
+        try:
+            analysis = json.loads(analysis_path.read_text())
+        except Exception:
+            analysis = {}
+        rows.append({
+            "doc_id": doc_dir.name,
+            "type": analysis.get("type", "?"),
+            "scope": analysis.get("scope", "?"),
+            "uploaded": (doc_dir / "sanity_record.json").exists(),
+            "enriched": (doc_dir / "enrichment.json").exists(),
+            "audit_events": _audit_event_count(doc_dir / "audit.log"),
+        })
+    return rows
+
+
+def _audit_event_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    return len([line for line in path.read_text().splitlines() if line.strip()])
+
+
+def _show_json_file(path: Path) -> None:
+    if not path.exists():
+        st.info(f"{path.name} does not exist.")
+        return
+    try:
+        st.json(json.loads(path.read_text()))
+    except Exception:
+        st.code(path.read_text(), language="text")
+
+
+def _show_text_file(path: Path, language: str = "text") -> None:
+    if not path.exists():
+        st.info(f"{path} does not exist.")
+        return
+    st.caption(str(path))
+    st.code(path.read_text(encoding="utf-8"), language=language)
+
+
+# ---------------------------------------------------------------------------
+# Guide
+# ---------------------------------------------------------------------------
+
+def page_guide():
+    st.title("Guide")
+
+    st.markdown(
+        """
+### What this app does
+
+The app is the ingestion cockpit. A document moves through five stages:
+
+1. **Intake** creates a document ID, detects source type, creates the local folder, and captures archive metadata when possible.
+2. **Extract** turns a URL, PDF, transcript, or file into readable text for review. URL ingests also keep a local `source.html` snapshot.
+3. **Analyze** sends the extracted text to the selected model and returns structured JSON.
+4. **Review** is where you edit and validate the JSON before it becomes part of the archive.
+5. **Upload / Enrich** writes approved records to Sanity/Supabase and optionally proposes lexicon/entity updates.
+6. **Resolve proposals** approves or rejects enrichment findings. This queue is non-blocking, but approved terms/entities should be pushed to Sanity when ready so future runs use the updated living lexicon and registry.
+
+### Which page to use
+
+- **Ingest Workbench**: run a new document through the pipeline.
+- **Document List**: browse local analyses and enrichment counts.
+- **Pending Upload**: find documents saved locally but not sent to Sanity.
+- **Lexicon**: inspect current terms, registry entities, approve/reject local proposals, preview seed lexicon imports, and push approved drafts/entities to Sanity.
+- **Tag Registry**: inspect/edit local tags used as enrichment connection hints.
+- **Testimony Review**: handle testimony flags, consent status, public-display decisions, and researcher notes.
+- **Activity Log**: see what happened for each document, including Wayback metadata and local HTML snapshots.
+- **Model Routing**: decide which model to use.
+- **Triage Tool**: quick routing only; it is not a substitute for ingestion.
+
+### Model choice
+
+- Use `litelm` for normal web pages and most articles.
+- Use `litelm-heavy` for long PDFs, books, transcripts, or reports.
+- Use `litelm-reasoning` when relevance is ambiguous.
+- Use `claude` for legal/court/high-stakes final classification.
+- Use `local` only when the Mac Studio or APIs are unavailable.
+
+### Troubleshooting
+
+- If extraction is under 500 characters, the source may be blocked or mostly boilerplate. Paste text manually or download the source as a file.
+- If analysis fails, check the service status on Dashboard and confirm the required API key for the selected model is in `runner/.env`.
+- If upload fails, check Sanity/Supabase credentials and use Activity Log to verify the local `analysis.json` was saved.
+- If JSON validation fails, fix the specific field named in the error. Most failures are invalid controlled-vocabulary values or malformed arrays.
+- If the enrichment queue is growing, open Lexicon → Local Proposals. Approve/reject proposals and push approved term/entity records when you are ready.
+- If the starting lexicon needs to be loaded, open Lexicon → Seed Import Preview. Review the draft/validated recommendation, edit definitions if needed, select rows, and push them to Sanity.
+- If translations/regional terms need to be attached, open Lexicon → Variant Import Preview. Canonical terms must exist in Sanity before variants can attach.
+- If older tagger vocabulary needs review, open Lexicon → Legacy Vocabulary Preview. It imports pending April 2026 glossary entries as draft and skips rows already present in the current seed lexicon.
+- If broader tags need review, open Tag Registry. These tags are matched against document text during enrichment to suggest possible actors, networks, practices, tactics, harms, and evidence links.
+- If testimony upload is blocked, open Testimony Review and record consent status. Public display is allowed only with confirmed consent.
+"""
+    )
+
+
+# ---------------------------------------------------------------------------
+# Start Ingest
+# ---------------------------------------------------------------------------
+
+def page_start_ingest():
+    st.title("Start Ingest")
+
+    source = st.text_input("Source URL or local file path")
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        llm = st.selectbox(
+            "Analysis model",
+            [
+                "litelm",
+                "litelm-heavy",
+                "litelm-reasoning",
+                "claude",
+                "local",
+                "local-heavy",
+                "local-reasoning",
+                "openrouter",
+            ],
+        )
+    with col2:
+        batch = st.text_input("Batch ID", placeholder="optional")
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        run_triage = st.checkbox("Run triage first")
+    with c2:
+        run_enrich = st.checkbox("Run enrichment")
+    with c3:
+        auto_yes = st.checkbox("Auto-approve checkpoints")
+
+    parts = ["python -m runner ingest"]
+    parts.append(f'"{source}"' if source else '"<url-or-file>"')
+    parts.extend(["--llm", llm])
+    if batch.strip():
+        parts.extend(["--batch", batch.strip()])
+    if run_triage:
+        parts.append("--triage")
+    if run_enrich:
+        parts.append("--enrich")
+    if auto_yes:
+        parts.append("--yes")
+
+    st.subheader("Command")
+    st.code(" ".join(parts), language="bash")
+
+    if auto_yes:
+        st.warning(
+            "`--yes` skips the human review checkpoints and uploads automatically. "
+            "Use it only for low-risk tests or documents you are comfortable accepting as-is."
+        )
+    else:
+        st.info(
+            "Run this in the terminal from the project root. The runner will pause at "
+            "review checkpoints so you can approve, edit, upload, or save locally."
+        )
+
+    st.subheader("What will happen")
+    st.markdown(
+        "- Intake creates a document ID and local corpus folder.\n"
+        "- Preprocessing extracts readable text and saves artifacts.\n"
+        "- The selected model returns structured classification JSON.\n"
+        "- You review the result before upload unless `--yes` is enabled.\n"
+        "- Uploaded records go to Sanity and Supabase; local artifacts remain in the corpus folder."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -416,10 +2626,14 @@ def page_triage_tool():
         if not text and input_url:
             with st.spinner("Fetching URL..."):
                 try:
-                    import httpx
-                    resp = httpx.get(input_url, timeout=15, follow_redirects=True)
-                    text = resp.text[:3000]
-                    st.caption(f"Fetched {len(text)} chars from {input_url}")
+                    from runner.pipeline.triage import extract_snippet
+                    text, note = extract_snippet(input_url)
+                    st.caption(f"{note} from {input_url}")
+                    if len(text.strip()) < 500:
+                        st.warning(
+                            "Only a very short snippet was extracted. The recommendation may be weak; "
+                            "paste the article text directly if the page blocks extraction."
+                        )
                 except Exception as exc:
                     st.error(f"Could not fetch URL: {exc}")
                     return
@@ -451,8 +2665,9 @@ def page_triage_tool():
 
         st.divider()
         st.markdown("**Suggested CLI command:**")
+        source_arg = input_url.strip() if input_url.strip() else "<url_or_file>"
         st.code(
-            f"python -m runner ingest <url_or_file> --llm {result.recommended_llm}",
+            f"python -m runner ingest {source_arg} --llm {result.recommended_llm}",
             language="bash",
         )
 

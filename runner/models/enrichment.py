@@ -59,7 +59,7 @@ class TermRelationship(BaseModel):
 
 class LexiconProposal(BaseModel):
     """Proposal to create a new lexicon entry or enrich an existing one."""
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     action: Literal["add_new", "add_variant", "add_evidence", "add_definition", "merge_into"]
 
@@ -96,7 +96,7 @@ class LexiconProposal(BaseModel):
     # Evidence from this document
     exact_quote: str                       # the sentence(s) where the term appears
     definition_as_used: str = ""           # how the document defines or uses it
-    register: Literal[
+    usage_register: Literal[
         "promotional",      # they actively advocate for this term/practice
         "defensive",        # justifying or defending it against criticism
         "euphemistic",      # rebranding something harmful with neutral language
@@ -105,7 +105,7 @@ class LexiconProposal(BaseModel):
         "conspiratorial",   # framing opponents as a coordinated threat
         "testimonial",      # personal narrative used to legitimise the term
         "neutral",          # descriptive, no clear stance
-    ] = "promotional"
+    ] = Field(default="promotional", alias="register")
 
     # Cross-language variants found in this document
     variants: list[TermVariant] = Field(default_factory=list)
@@ -272,6 +272,7 @@ class EnrichmentResult(BaseModel):
     doc_id: str
     enrichment_model: str = ""           # which model ran this pass
     enrichment_prompt_version: str = "enrichment-v1.0"
+    run_type: Literal["main", "alt"] = "main"
 
     lexicon_proposals: list[LexiconProposal] = Field(default_factory=list)
     entity_proposals: list[EntityProposal] = Field(default_factory=list)

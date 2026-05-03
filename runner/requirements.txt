@@ -38,3 +38,6 @@ pandas>=2.0
 
 # Utilities
 python-slugify>=8.0
+
+# Testing
+pytest>=8.0

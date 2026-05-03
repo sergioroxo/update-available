@@ -12,9 +12,14 @@ Model routing:
 from __future__ import annotations
 import json
 import re
+from pathlib import Path
 
-from ..config import Config
-from ..models.triage import TriageResult
+try:
+    from runner.config import Config
+    from runner.models.triage import TriageResult
+except ImportError:
+    from ..config import Config
+    from ..models.triage import TriageResult
 
 _SNIPPET_CHARS = 3_000
 
@@ -44,6 +49,43 @@ Routing rules:
 - litelm         : everything else — promotional web content, NGO articles, press releases
 - local          : only if litelm unavailable and document is short/simple
 """
+
+
+def extract_snippet(source: str, max_chars: int = _SNIPPET_CHARS) -> tuple[str, str]:
+    """Extract a triage snippet from a URL or local file.
+
+    URL triage should see readable article text, not raw HTML or a short bot
+    response. Prefer the same Trafilatura path used by preprocessing, then fall
+    back to a direct HTTP body only as a last resort.
+    """
+    if source.startswith(("http://", "https://")):
+        try:
+            from runner.pipeline.preprocess import _preprocess_url
+        except ImportError:
+            from .preprocess import _preprocess_url
+
+        try:
+            result = _preprocess_url(source)
+            if result.text.strip():
+                return result.text[:max_chars], (
+                    f"Extracted {len(result.text)} chars with {result.tool_used}"
+                    f" (quality: {result.quality})"
+                )
+        except Exception as exc:
+            fallback_note = f"Trafilatura extraction failed: {exc}"
+        else:
+            fallback_note = "Trafilatura extraction returned no readable text"
+
+        try:
+            import httpx
+            response = httpx.get(source, timeout=15, follow_redirects=True)
+            text = response.text.strip()
+            return text[:max_chars], f"{fallback_note}; fetched {len(text)} raw HTML chars"
+        except Exception as exc:
+            raise RuntimeError(f"{fallback_note}; direct fetch failed: {exc}") from exc
+
+    text = Path(source).read_text(encoding="utf-8", errors="ignore")
+    return text[:max_chars], f"Read {len(text)} chars from local file"
 
 
 def run(text: str, config: Config) -> TriageResult:

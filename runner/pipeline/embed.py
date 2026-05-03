@@ -1,11 +1,11 @@
 """
 Stage 3a — Embedding generation.
 
-Uses qwen3-embedding:4b via Ollama by default (direct REST call, no library
+Uses qwen3-embedding:8b via Ollama by default (direct REST call, no library
 version dependency). Writes embedding.json to the local corpus directory.
 
 IMPORTANT: Run `python -m runner embed-test` before Phase 0-B to verify the
-output dimension of qwen3-embedding:4b. Record the result in CLAUDE.md (Q22).
+output dimension of qwen3-embedding:8b. Record the result in CLAUDE.md (Q22).
 The Supabase vector column dimension must match exactly.
 
 Ollama API note: Ollama 0.4+ uses POST /api/embed (input=, returns embeddings[])

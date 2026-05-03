@@ -16,13 +16,20 @@ LLM routing:
   fallback        → tries litelm then local
 """
 from __future__ import annotations
+from datetime import datetime
 import json
 import re
+import shutil
 from pathlib import Path
 
-from ..config import Config
-from ..models.document import AnalysisResult, PreprocessResult
-from ..models.enrichment import EnrichmentResult
+try:
+    from runner.config import Config
+    from runner.models.document import AnalysisResult, PreprocessResult
+    from runner.models.enrichment import EnrichmentResult
+except ImportError:
+    from ..config import Config
+    from ..models.document import AnalysisResult, PreprocessResult
+    from ..models.enrichment import EnrichmentResult
 
 PROMPT_VERSION = "enrichment-v1.0"
 
@@ -52,6 +59,7 @@ def run(
     analysis: AnalysisResult,
     config: Config,
     llm: str = "litelm",
+    model: str | None = None,
 ) -> EnrichmentResult:
     """Run Stage 3c enrichment and return an EnrichmentResult."""
     system_prompt = _build_system_prompt(config, analysis)
@@ -68,7 +76,7 @@ def run(
         # litelm* or default: try lexicon-llm on Mac Studio
         if config.litelm_base_url:
             try:
-                raw = _call_litelm(system_prompt, user_message, config)
+                raw = _call_litelm(system_prompt, user_message, config, model or config.litelm_enrichment_model)
             except Exception as exc:
                 if llm.startswith("litelm"):
                     raise  # user explicitly asked for litelm — don't hide the error
@@ -85,8 +93,44 @@ def save(doc_id: str, result: EnrichmentResult, config: Config) -> Path:
     doc_dir = config.corpus_dir / doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
     out = doc_dir / "enrichment.json"
-    out.write_text(result.model_dump_json(indent=2), encoding="utf-8")
+    if out.exists():
+        archive = doc_dir / f"enrichment_{_timestamp()}.json"
+        shutil.copy2(out, archive)
+    result.run_type = "main"
+    out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
     return out
+
+
+def save_alt(doc_id: str, result: EnrichmentResult, config: Config, label: str = "alt") -> Path:
+    """Write a comparison enrichment result without touching enrichment.json."""
+    doc_dir = config.corpus_dir / doc_id
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    result.run_type = "alt"
+    out = doc_dir / f"enrichment_{label}_{_timestamp()}.json"
+    out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
+    return out
+
+
+def list_history(doc_id: str, config: Config) -> list[dict]:
+    """Return archived main runs and second opinions with their inferred file type."""
+    doc_dir = config.corpus_dir / doc_id
+    history: list[dict] = []
+    for path in sorted(doc_dir.glob("enrichment_*.json")):
+        if path.name == "enrichment.json":
+            continue
+        run_type = "alt" if path.name.startswith("enrichment_alt_") else "main_archive"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            run_type = data.get("run_type") or run_type
+            model = data.get("enrichment_model", "")
+        except Exception:
+            model = ""
+        history.append({"path": path, "filename": path.name, "run_type": run_type, "model": model})
+    return history
+
+
+def _timestamp() -> str:
+    return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
 
 def load(doc_id: str, config: Config) -> EnrichmentResult | None:
@@ -111,8 +155,7 @@ def _build_system_prompt(config: Config, analysis: AnalysisResult) -> str:
         terms = _fetch_lexicon_entries(config)
         lexicon_block = (
             "\n".join(
-                f"- {t['term']} (cluster={t.get('proposedCluster','?')}, "
-                f"function={t.get('function','?')})"
+                _format_lexicon_prompt_line(t)
                 for t in terms
             ) or "(none yet)"
         )
@@ -152,8 +195,25 @@ def _build_user_message(doc_id: str, preprocess: PreprocessResult) -> str:
     if preprocess.hostname:
         lines.append(f"SOURCE: {preprocess.hostname}")
 
+    tag_block = ""
+    try:
+        from runner.pipeline.tag_registry import detect_tag_matches, format_matches_for_prompt
+    except ImportError:
+        from .tag_registry import detect_tag_matches, format_matches_for_prompt
+    try:
+        tag_block = format_matches_for_prompt(detect_tag_matches(preprocess.text))
+    except Exception:
+        tag_block = ""
+
+    tag_section = (
+        "\n\nTAG REGISTRY MATCHES FOUND IN TEXT (use as connection hints, not proof):\n"
+        + tag_block
+        if tag_block else ""
+    )
+
     return (
         "\n".join(lines)
+        + tag_section
         + "\n\n---\n\nDOCUMENT TEXT:\n"
         + preprocess.text
         + "\n\n---\n\n"
@@ -189,7 +249,7 @@ def _summarise_analysis(analysis: AnalysisResult) -> str:
 # LLM backends
 # ---------------------------------------------------------------------------
 
-def _call_litelm(system_prompt: str, user_message: str, config: Config) -> str:
+def _call_litelm(system_prompt: str, user_message: str, config: Config, model: str) -> str:
     import httpx
     response = httpx.post(
         f"{config.litelm_base_url}/v1/chat/completions",
@@ -198,7 +258,7 @@ def _call_litelm(system_prompt: str, user_message: str, config: Config) -> str:
             "Content-Type": "application/json",
         },
         json={
-            "model": "lexicon-llm",
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user",   "content": user_message},
@@ -262,7 +322,7 @@ def _fetch_lexicon_entries(config: Config) -> list[dict]:
     import httpx
     query = (
         '*[_type == "lexiconEntry" && status in ["draft","validated"]]'
-        '{ term, proposedCluster, function }'
+        '{ term, proposedCluster, function, multilingualVariants }'
     )
     url = (
         f"https://{config.sanity_project_id}.api.sanity.io"
@@ -276,6 +336,20 @@ def _fetch_lexicon_entries(config: Config) -> list[dict]:
     )
     r.raise_for_status()
     return r.json().get("result", [])
+
+
+def _format_lexicon_prompt_line(term: dict) -> str:
+    variants = term.get("multilingualVariants") or []
+    variant_text = ", ".join(
+        f"{v.get('variantTerm')}[{v.get('language', 'unknown')}]"
+        for v in variants[:12]
+        if v.get("variantTerm")
+    )
+    suffix = f"; variants: {variant_text}" if variant_text else ""
+    return (
+        f"- {term['term']} (cluster={term.get('proposedCluster','?')}, "
+        f"function={term.get('function','?')}{suffix})"
+    )
 
 
 def _fetch_entity_registry(config: Config) -> list[dict]:
