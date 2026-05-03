@@ -1,0 +1,75 @@
+# LiteLLM proxy config — Mac Studio M2 Ultra
+#
+# Deploy to: ~/sogice/litellm_config.yaml  (on the Mac Studio)
+# Start:     litellm --config ~/sogice/litellm_config.yaml --port 4000
+#
+# CRITICAL: max_tokens must be set on every chat model.
+# Without it, Ollama uses its default ~2048 token limit, which truncates
+# structured JSON responses mid-object and causes Pydantic parse failures.
+#
+# Verify model names match exactly with: ollama list
+
+model_list:
+
+  # ── Default analysis (--llm litelm) ─────────────────────────────────────
+  - model_name: core-qwen
+    litellm_params:
+      model: ollama_chat/qwen3.6:35b-a3b
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  # ── Heavy / long docs (--llm litelm-heavy) ──────────────────────────────
+  - model_name: core-gemma
+    litellm_params:
+      model: ollama_chat/gemma4:31b-it
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  # ── Reasoning / ambiguous (--llm litelm-reasoning) ──────────────────────
+  - model_name: review-qwen
+    litellm_params:
+      model: ollama_chat/qwen3.6:27b
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  # ── Second-opinion enrichment (--second-opinion) ────────────────────────
+  - model_name: review-gemma
+    litellm_params:
+      model: ollama_chat/gemma4:26b-a4b-it
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  # ── Fast pre-screen (--triage) ───────────────────────────────────────────
+  - model_name: triage
+    litellm_params:
+      model: ollama_chat/gemma4:e4b-it
+      api_base: http://localhost:11434
+      max_tokens: 4096
+
+  # ── Stage 3c enrichment (same weights as core-qwen) ─────────────────────
+  - model_name: lexicon-llm
+    litellm_params:
+      model: ollama_chat/qwen3.6:35b-a3b
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  # ── Structured extraction ────────────────────────────────────────────────
+  - model_name: coder
+    litellm_params:
+      model: ollama_chat/qwen3-coder:30b-a3b-instruct
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  # ── Embeddings (used automatically with --llm litelm*) ──────────────────
+  - model_name: research-embedding
+    litellm_params:
+      model: ollama/qwen3-embedding:8b
+      api_base: http://localhost:11434
+      # No max_tokens for embedding models
+
+litellm_settings:
+  drop_params: true      # silently drop unsupported params (e.g. stream_options)
+  request_timeout: 300   # 5 min — long docs can be slow on first model load
+
+general_settings:
+  master_key: sk-local-research-key-change-this   # CHANGE THIS — must match LITELM_API_KEY in runner/.env
