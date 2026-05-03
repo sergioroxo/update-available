@@ -263,6 +263,78 @@ def upload_doc(
     upload.upload_saved(doc_id, config)
 
 
+@app.command(name="push-enrichment")
+def push_enrichment(
+    doc_id: str = typer.Argument(..., help="doc_id of a document with an enrichment.json"),
+):
+    """Push all approved (not yet sent) lexicon/entity proposals from enrichment.json to Sanity."""
+    config = load_config()
+    try:
+        result = enrich.push_approved_to_sanity(doc_id, config)
+    except FileNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+
+    if result["lexicon"] or result["entities"]:
+        console.print(
+            f"[green]Pushed {result['lexicon']} lexicon entr{'y' if result['lexicon'] == 1 else 'ies'} "
+            f"and {result['entities']} entit{'y' if result['entities'] == 1 else 'ies'} to Sanity.[/green]"
+        )
+    else:
+        console.print("[yellow]Nothing to push — no approved-not-yet-pushed proposals found.[/yellow]")
+
+    if result["errors"]:
+        for err in result["errors"]:
+            console.print(f"[red]  Error: {err}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command(name="queue")
+def show_queue(
+    doc_id: Optional[str] = typer.Argument(None, help="Show ingestion queue for one doc_id, or all if omitted"),
+):
+    """Show URLs queued for ingestion from enrichment.json results."""
+    from rich.table import Table as RichTable
+    config = load_config()
+
+    def _show_for_doc(did: str) -> int:
+        result = enrich.load(did, config)
+        if not result or not result.ingestion_queue:
+            return 0
+        for item in result.ingestion_queue:
+            table.add_row(
+                did,
+                item.url,
+                item.title[:60] if item.title else "",
+                item.source_type,
+                item.priority,
+                "yes" if item.already_in_corpus else "no",
+            )
+        return len(result.ingestion_queue)
+
+    table = RichTable(title="Ingestion Queue")
+    table.add_column("doc_id", style="dim")
+    table.add_column("url", overflow="fold")
+    table.add_column("title")
+    table.add_column("type")
+    table.add_column("priority")
+    table.add_column("in corpus")
+
+    total = 0
+    if doc_id:
+        total = _show_for_doc(doc_id)
+    else:
+        for doc_dir in sorted(config.corpus_dir.iterdir()):
+            if doc_dir.is_dir() and (doc_dir / "enrichment.json").exists():
+                total += _show_for_doc(doc_dir.name)
+
+    if total == 0:
+        console.print("[green]No queued ingestion candidates.[/green]")
+        return
+    console.print(table)
+    console.print(f"[dim]Total: {total} candidates. Ingest with: python -m runner ingest <url>[/dim]")
+
+
 @app.command(name="export")
 def export_batch(
     batch_id: str = typer.Argument(..., help="Batch ID to export"),

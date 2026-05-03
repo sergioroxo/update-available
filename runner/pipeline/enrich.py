@@ -129,6 +129,68 @@ def list_history(doc_id: str, config: Config) -> list[dict]:
     return history
 
 
+def push_approved_to_sanity(doc_id: str, config: Config) -> dict:
+    """Push all approved (not yet pushed) lexicon/entity proposals to Sanity.
+
+    Marks each pushed item with pushed_to_sanity=True and its sanity_id, then
+    saves enrichment.json back so the state persists across sessions.
+
+    Returns {"lexicon": n_pushed_lexicon, "entities": n_pushed_entities, "errors": [...]}
+    """
+    try:
+        from runner.clients.sanity import write_lexicon_draft_from_proposal, write_entity_from_proposal
+    except ImportError:
+        from ..clients.sanity import write_lexicon_draft_from_proposal, write_entity_from_proposal
+
+    result = load(doc_id, config)
+    if result is None:
+        raise FileNotFoundError(f"No enrichment.json found for {doc_id}")
+
+    pushed_lexicon = 0
+    pushed_entities = 0
+    errors: list[str] = []
+
+    for prop in result.lexicon_proposals:
+        if not prop.approved or prop.rejected or prop.pushed_to_sanity:
+            continue
+        try:
+            sanity_id = write_lexicon_draft_from_proposal(prop.model_dump(by_alias=True), doc_id, config)
+            prop.pushed_to_sanity = True
+            prop.sanity_id = sanity_id
+            pushed_lexicon += 1
+        except Exception as exc:
+            errors.append(f"lexicon/{prop.term}: {exc}")
+
+    for prop in result.entity_proposals:
+        if not prop.approved or prop.rejected or prop.pushed_to_sanity:
+            continue
+        try:
+            sanity_id = write_entity_from_proposal(prop.model_dump(), doc_id, config)
+            prop.pushed_to_sanity = True
+            prop.sanity_id = sanity_id
+            pushed_entities += 1
+        except Exception as exc:
+            errors.append(f"entity/{prop.name}: {exc}")
+
+    # Persist updated state
+    out = config.corpus_dir / doc_id / "enrichment.json"
+    out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
+
+    return {"lexicon": pushed_lexicon, "entities": pushed_entities, "errors": errors}
+
+
+def pending_push_counts(doc_id: str, config: Config) -> dict:
+    """Return counts of approved-not-pushed proposals without modifying anything."""
+    result = load(doc_id, config)
+    if result is None:
+        return {"lexicon": 0, "entities": 0, "queue": 0}
+    return {
+        "lexicon": sum(1 for p in result.lexicon_proposals if p.approved and not p.rejected and not p.pushed_to_sanity),
+        "entities": sum(1 for p in result.entity_proposals if p.approved and not p.rejected and not p.pushed_to_sanity),
+        "queue": len(result.ingestion_queue),
+    }
+
+
 def _timestamp() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 

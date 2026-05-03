@@ -354,6 +354,12 @@ def checkpoint_enrichment(result: EnrichmentResult, doc_id: str) -> bool:
             )
         console.print(term_table)
 
+    if result.ingestion_queue:
+        console.print(
+            f"[dim]Ingestion queue: {len(result.ingestion_queue)} URL(s). "
+            f"Review with: python -m runner queue {doc_id}[/dim]"
+        )
+
     action = typer.prompt(
         "Action [Enter=save / e=edit-json / s=skip-enrichment]",
         default="",

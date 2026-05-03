@@ -367,7 +367,7 @@ def _validate_response(raw_json: str) -> AnalysisResult:
 def _merge_for_review(claude: AnalysisResult, local: AnalysisResult) -> AnalysisResult:
     """When --llm both is used, return Claude's result but store local result
     in a private attribute so review.py can show a diff at Checkpoint 3."""
-    claude._local_comparison = local  # type: ignore[attr-defined]
+    object.__setattr__(claude, "_local_comparison", local)
     return claude
 
 

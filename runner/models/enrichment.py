@@ -126,6 +126,8 @@ class LexiconProposal(BaseModel):
     # Researcher decision (set at Checkpoint 3.5)
     approved: bool = False
     rejected: bool = False
+    pushed_to_sanity: bool = False
+    sanity_id: Optional[str] = None
     researcher_note: str = ""
 
 
@@ -189,6 +191,8 @@ class EntityProposal(BaseModel):
     # Researcher decision
     approved: bool = False
     rejected: bool = False
+    pushed_to_sanity: bool = False
+    sanity_id: Optional[str] = None
     researcher_note: str = ""
 
 

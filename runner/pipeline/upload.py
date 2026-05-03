@@ -98,10 +98,12 @@ def save_locally(
         json.dumps(_preprocess_metadata(preprocess), indent=2),
         encoding="utf-8",
     )
+    from datetime import datetime, timezone
     (doc_dir / "metadata.json").write_text(
         json.dumps({
             "llm_used": llm_used,
             "embedding_model": config.embedding_model,
+            "saved_at": datetime.now(timezone.utc).isoformat(),
         }, indent=2),
         encoding="utf-8",
     )
@@ -480,7 +482,11 @@ def upload_saved(doc_id: str, config: Config) -> None:
 
 
 def export_batch(batch_id: str, config: Config) -> None:
-    """Export all documents in a batch as JSON to exports/{batch_id}/."""
+    """Export all documents in a batch as JSONL to exports/{batch_id}/.
+
+    Each line is a self-contained record merging analysis + provenance fields
+    so the export is useful without the local corpus directory.
+    """
     export_dir = config.exports_dir / batch_id
     export_dir.mkdir(parents=True, exist_ok=True)
 
@@ -491,12 +497,36 @@ def export_batch(batch_id: str, config: Config) -> None:
         intake_path = doc_dir / "intake.json"
         if not intake_path.exists():
             continue
-        intake_data = json.loads(intake_path.read_text())
+        intake_data = _read_json(intake_path)
         if intake_data.get("batch_id") != batch_id:
             continue
         analysis_path = doc_dir / "analysis.json"
-        if analysis_path.exists():
-            docs.append(json.loads(analysis_path.read_text()))
+        if not analysis_path.exists():
+            continue
+        preprocess_meta = _read_json(doc_dir / "preprocess.json")
+        sanity_record   = _read_json(doc_dir / "sanity_record.json")
+        metadata        = _read_json(doc_dir / "metadata.json")
+
+        doc = json.loads(analysis_path.read_text())
+        doc["_export"] = {
+            "doc_id":           doc_dir.name,
+            "batch_id":         batch_id,
+            "source":           intake_data.get("source", ""),
+            "source_url":       intake_data.get("source_url", ""),
+            "archive_url":      intake_data.get("archive_url", ""),
+            "source_type":      intake_data.get("source_type", ""),
+            "tier":             intake_data.get("tier", ""),
+            "ingested_at":      intake_data.get("ingested_at", ""),
+            "title":            preprocess_meta.get("title", ""),
+            "author":           preprocess_meta.get("author", ""),
+            "date_published":   preprocess_meta.get("date_published", ""),
+            "char_count":       preprocess_meta.get("char_count", 0),
+            "tool_used":        preprocess_meta.get("tool_used", ""),
+            "llm_used":         metadata.get("llm_used", ""),
+            "sanity_id":        sanity_record.get("sanity_id", ""),
+            "uploaded":         bool(sanity_record),
+        }
+        docs.append(doc)
 
     if not docs:
         console.print(f"[yellow]No documents found for batch: {batch_id}[/yellow]")
@@ -505,7 +535,7 @@ def export_batch(batch_id: str, config: Config) -> None:
     out_path = export_dir / f"{batch_id}.jsonl"
     with out_path.open("w", encoding="utf-8") as f:
         for doc in docs:
-            f.write(json.dumps(doc) + "\n")
+            f.write(json.dumps(doc, ensure_ascii=False) + "\n")
 
     console.print(f"[green]Exported {len(docs)} documents → {out_path}[/green]")
 
