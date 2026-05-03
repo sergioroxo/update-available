@@ -76,17 +76,9 @@ def save_locally(
         }, indent=2),
         encoding="utf-8",
     )
-    (doc_dir / "intake.json").write_text(
-        json.dumps({
-            "doc_id":     intake.doc_id,
-            "source":     intake.source,
-            "source_type": intake.source_type,
-            "tier":       intake.tier,
-            "batch_id":   intake.batch_id,
-            "archive_url": intake.archive_url,
-        }, indent=2),
-        encoding="utf-8",
-    )
+    # intake.json is written by intake.run() and patched by preprocess.run() —
+    # do not overwrite it here; that would drop source_url, original_filename,
+    # source_html_sha256, and ingested_at which were set earlier in the pipeline.
     _write_audit_event(doc_dir, "saved_locally")
     return doc_dir
 

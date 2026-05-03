@@ -271,7 +271,7 @@ def _rate_quality(text: str, tool: str) -> str:
     return "high"
 
 
-def _maybe_truncate(text: str, limit: int = _DEFAULT_LIMIT) -> tuple[str, bool]:
+def _maybe_truncate(text: str, limit: int) -> tuple[str, bool]:
     if len(text) <= limit:
         return text, False
     head_size = int(limit * _HEAD_RATIO)

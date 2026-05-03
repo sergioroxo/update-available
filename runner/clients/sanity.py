@@ -115,6 +115,7 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         },
 
         "content": {
+            "title":            prep.title,
             "summary":          analysis.summary,
             "wordCount":        len(prep.text.split()),
         },
@@ -175,6 +176,17 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
 
     if prep.language_detected:
         doc["content"]["languageDetected"] = prep.language_detected
+
+    # Provenance block — only set url fields that have values (Sanity rejects null urls)
+    provenance: dict = {}
+    if intake.source_type == "url":
+        provenance["originalUrl"] = intake.source
+    elif intake.source_url:
+        provenance["originalUrl"] = intake.source_url
+    if intake.archive_url:
+        provenance["waybackUrl"] = intake.archive_url
+    if provenance:
+        doc["provenance"] = provenance
 
     return doc
 
