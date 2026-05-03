@@ -16,13 +16,20 @@ LLM routing:
   fallback        → tries litelm then local
 """
 from __future__ import annotations
+from datetime import datetime
 import json
 import re
+import shutil
 from pathlib import Path
 
-from ..config import Config
-from ..models.document import AnalysisResult, PreprocessResult
-from ..models.enrichment import EnrichmentResult
+try:
+    from runner.config import Config
+    from runner.models.document import AnalysisResult, PreprocessResult
+    from runner.models.enrichment import EnrichmentResult
+except ImportError:
+    from ..config import Config
+    from ..models.document import AnalysisResult, PreprocessResult
+    from ..models.enrichment import EnrichmentResult
 
 PROMPT_VERSION = "enrichment-v1.0"
 
@@ -52,18 +59,13 @@ def run(
     analysis: AnalysisResult,
     config: Config,
     llm: str = "litelm",
-    enrich_model: str | None = None,   # override the LiteLLM model name (e.g. "core-gemma")
+    model: str | None = None,
 ) -> EnrichmentResult:
-    """Run Stage 3c enrichment and return an EnrichmentResult.
-
-    enrich_model overrides the default 'lexicon-llm' alias — useful when you
-    want a second opinion from a different model (e.g. 'core-gemma' for Gemma4).
-    """
+    """Run Stage 3c enrichment and return an EnrichmentResult."""
     system_prompt = _build_system_prompt(config, analysis)
     user_message  = _build_user_message(doc_id, preprocess)
 
     raw: str | None = None
-    model_used = enrich_model or config.litelm_enrichment_model  # default: "lexicon-llm"
 
     if llm == "claude":
         raw = _call_claude(system_prompt, user_message, config)
@@ -71,78 +73,72 @@ def run(
         raw = _call_ollama(system_prompt, user_message, config,
                            config.local_analysis_model)
     else:
-        # litelm* or default: use configured enrichment model on Mac Studio
+        # litelm* or default: try lexicon-llm on Mac Studio
         if config.litelm_base_url:
             try:
-                raw = _call_litelm(system_prompt, user_message, config, model=model_used)
-            except Exception:
+                raw = _call_litelm(system_prompt, user_message, config, model or config.litelm_enrichment_model)
+            except Exception as exc:
                 if llm.startswith("litelm"):
                     raise  # user explicitly asked for litelm — don't hide the error
+                # fallback path: try local
         if raw is None:
             raw = _call_ollama(system_prompt, user_message, config,
                                config.local_analysis_model)
 
-    return _validate_response(doc_id, raw, model_used)
-
-
-def run_second_opinion(
-    doc_id: str,
-    preprocess: PreprocessResult,
-    analysis: AnalysisResult,
-    config: Config,
-) -> EnrichmentResult:
-    """Run enrichment with the alternate model (litelm_enrichment_model_alt).
-    Useful for comparing results or when the primary model's output is suspect.
-    The result is saved as enrichment_alt_{timestamp}.json, never as enrichment.json."""
-    return run(
-        doc_id, preprocess, analysis, config,
-        llm="litelm",
-        enrich_model=config.litelm_enrichment_model_alt,
-    )
+    return _validate_response(doc_id, raw, llm)
 
 
 def save(doc_id: str, result: EnrichmentResult, config: Config) -> Path:
-    """Write enrichment.json, archiving any previous version first.
-
-    Previous enrichment.json is renamed to enrichment_{timestamp}.json so that
-    researcher decisions (approved/rejected flags) are never silently lost.
-    """
-    from datetime import datetime, timezone
+    """Write enrichment.json to the document's corpus directory."""
     doc_dir = config.corpus_dir / doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
     out = doc_dir / "enrichment.json"
-
     if out.exists():
-        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        out.rename(doc_dir / f"enrichment_{ts}.json")
-
-    out.write_text(result.model_dump_json(indent=2), encoding="utf-8")
+        archive = doc_dir / f"enrichment_{_timestamp()}.json"
+        shutil.copy2(out, archive)
+    result.run_type = "main"
+    out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
     return out
 
 
-def save_alt(doc_id: str, result: EnrichmentResult, config: Config) -> Path:
-    """Save a second-opinion enrichment run without touching enrichment.json."""
-    from datetime import datetime, timezone
+def save_alt(doc_id: str, result: EnrichmentResult, config: Config, label: str = "alt") -> Path:
+    """Write a comparison enrichment result without touching enrichment.json."""
     doc_dir = config.corpus_dir / doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    out = doc_dir / f"enrichment_alt_{ts}.json"
-    out.write_text(result.model_dump_json(indent=2), encoding="utf-8")
+    result.run_type = "alt"
+    out = doc_dir / f"enrichment_{label}_{_timestamp()}.json"
+    out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
     return out
+
+
+def list_history(doc_id: str, config: Config) -> list[dict]:
+    """Return archived main runs and second opinions with their inferred file type."""
+    doc_dir = config.corpus_dir / doc_id
+    history: list[dict] = []
+    for path in sorted(doc_dir.glob("enrichment_*.json")):
+        if path.name == "enrichment.json":
+            continue
+        run_type = "alt" if path.name.startswith("enrichment_alt_") else "main_archive"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            run_type = data.get("run_type") or run_type
+            model = data.get("enrichment_model", "")
+        except Exception:
+            model = ""
+        history.append({"path": path, "filename": path.name, "run_type": run_type, "model": model})
+    return history
+
+
+def _timestamp() -> str:
+    return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
 
 def load(doc_id: str, config: Config) -> EnrichmentResult | None:
-    """Load the current enrichment.json, or None if not found."""
+    """Load a previously saved enrichment.json, or None if not found."""
     path = config.corpus_dir / doc_id / "enrichment.json"
     if not path.exists():
         return None
     return EnrichmentResult.model_validate(json.loads(path.read_text()))
-
-
-def list_history(doc_id: str, config: Config) -> list[Path]:
-    """Return all archived enrichment files for a document, oldest first."""
-    doc_dir = config.corpus_dir / doc_id
-    return sorted(doc_dir.glob("enrichment_*.json"))
 
 
 # ---------------------------------------------------------------------------
@@ -159,8 +155,7 @@ def _build_system_prompt(config: Config, analysis: AnalysisResult) -> str:
         terms = _fetch_lexicon_entries(config)
         lexicon_block = (
             "\n".join(
-                f"- {t['term']} (cluster={t.get('proposedCluster','?')}, "
-                f"function={t.get('function','?')})"
+                _format_lexicon_prompt_line(t)
                 for t in terms
             ) or "(none yet)"
         )
@@ -200,8 +195,25 @@ def _build_user_message(doc_id: str, preprocess: PreprocessResult) -> str:
     if preprocess.hostname:
         lines.append(f"SOURCE: {preprocess.hostname}")
 
+    tag_block = ""
+    try:
+        from runner.pipeline.tag_registry import detect_tag_matches, format_matches_for_prompt
+    except ImportError:
+        from .tag_registry import detect_tag_matches, format_matches_for_prompt
+    try:
+        tag_block = format_matches_for_prompt(detect_tag_matches(preprocess.text))
+    except Exception:
+        tag_block = ""
+
+    tag_section = (
+        "\n\nTAG REGISTRY MATCHES FOUND IN TEXT (use as connection hints, not proof):\n"
+        + tag_block
+        if tag_block else ""
+    )
+
     return (
         "\n".join(lines)
+        + tag_section
         + "\n\n---\n\nDOCUMENT TEXT:\n"
         + preprocess.text
         + "\n\n---\n\n"
@@ -237,10 +249,7 @@ def _summarise_analysis(analysis: AnalysisResult) -> str:
 # LLM backends
 # ---------------------------------------------------------------------------
 
-def _call_litelm(
-    system_prompt: str, user_message: str, config: Config,
-    model: str = "lexicon-llm",
-) -> str:
+def _call_litelm(system_prompt: str, user_message: str, config: Config, model: str) -> str:
     import httpx
     response = httpx.post(
         f"{config.litelm_base_url}/v1/chat/completions",
@@ -313,7 +322,7 @@ def _fetch_lexicon_entries(config: Config) -> list[dict]:
     import httpx
     query = (
         '*[_type == "lexiconEntry" && status in ["draft","validated"]]'
-        '{ term, proposedCluster, function }'
+        '{ term, proposedCluster, function, multilingualVariants }'
     )
     url = (
         f"https://{config.sanity_project_id}.api.sanity.io"
@@ -327,6 +336,20 @@ def _fetch_lexicon_entries(config: Config) -> list[dict]:
     )
     r.raise_for_status()
     return r.json().get("result", [])
+
+
+def _format_lexicon_prompt_line(term: dict) -> str:
+    variants = term.get("multilingualVariants") or []
+    variant_text = ", ".join(
+        f"{v.get('variantTerm')}[{v.get('language', 'unknown')}]"
+        for v in variants[:12]
+        if v.get("variantTerm")
+    )
+    suffix = f"; variants: {variant_text}" if variant_text else ""
+    return (
+        f"- {term['term']} (cluster={term.get('proposedCluster','?')}, "
+        f"function={term.get('function','?')}{suffix})"
+    )
 
 
 def _fetch_entity_registry(config: Config) -> list[dict]:

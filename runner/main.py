@@ -7,7 +7,7 @@ Usage:
   python -m runner ingest recording.mp4 --llm local
   python -m runner ingest document.pdf --llm both
   python -m runner status
-  python -m runner upload <doc_id>
+  python -m runner upload-doc <doc_id>
   python -m runner export batch-07
   python -m runner embed-test
 """
@@ -30,36 +30,25 @@ def ingest(
     llm: str = typer.Option("claude", help="LLM: claude | local | local-heavy | local-reasoning | litelm | litelm-heavy | litelm-reasoning | openrouter | both | prefer-local | prefer-claude"),
     tier: Optional[int] = typer.Option(None, help="Override auto-assigned tier (1|2|3)"),
     batch: Optional[str] = typer.Option(None, help="Assign to existing batch ID"),
-    max_chars: Optional[int] = typer.Option(None, "--max-chars", help="Truncation limit (chars). Use 0 for no limit."),
+    source_url: Optional[str] = typer.Option(None, "--source-url", help="Original/provenance URL for a local file"),
+    max_chars: Optional[int] = typer.Option(None, "--max-chars", help="Truncation limit in characters (overrides .env). Use 0 for no truncation."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Auto-approve all checkpoints (no interactive prompts)"),
     run_triage: bool = typer.Option(False, "--triage", help="Run fast pre-screen triage to recommend which model to use"),
-    run_enrich: bool = typer.Option(False, "--enrich", help="Run Stage 3c enrichment pass after upload"),
-    enrich_model: Optional[str] = typer.Option(None, "--enrich-model", help="Override enrichment LiteLLM model name (e.g. core-gemma for Gemma4 second opinion)"),
-    source_url: Optional[str] = typer.Option(None, "--source-url", help="For local files: URL where this document was obtained (for provenance tracking)"),
+    run_enrich: bool = typer.Option(False, "--enrich", help="Run Stage 3c enrichment pass after upload (lexicon + entity proposals)"),
+    enrich_model: Optional[str] = typer.Option(None, "--enrich-model", help="LiteLLM model alias for enrichment, e.g. lexicon-llm or core-gemma"),
+    second_opinion: bool = typer.Option(False, "--second-opinion", help="Also run alternate enrichment model and save a comparison file"),
 ):
     """Full ingestion pipeline: intake → preprocess → embed → classify → review → upload."""
     config = load_config(llm=llm)
 
-    # For local files: prompt for source URL if not given via flag
-    if not source.startswith("http") and source_url is None and not yes:
-        prompted = typer.prompt(
-            "Where was this file obtained? (URL for provenance tracking, Enter to skip)",
-            default="",
-        ).strip()
-        source_url = prompted or None
-
     # Stage 0.5 — Triage (optional): fast pre-screen to recommend analysis model
     if run_triage and not yes:
-        import httpx as _httpx
         snippet = ""
         try:
-            if source.startswith("http"):
-                snippet = _httpx.get(source, timeout=15, follow_redirects=True).text[:3000]
-            else:
-                from pathlib import Path as _Path
-                snippet = _Path(source).read_text(errors="ignore")[:3000]
-        except Exception:
-            pass
+            snippet, note = triage.extract_snippet(source)
+            console.print(f"[dim]{note}[/dim]")
+        except Exception as exc:
+            console.print(f"[yellow]Triage snippet extraction failed: {exc}[/yellow]")
         if snippet:
             triage_result = triage.run(snippet, config)
             llm = review.checkpoint_triage(triage_result, llm)
@@ -92,18 +81,29 @@ def ingest(
             # "n" falls through to generate a new doc_id as normal
 
     # Stage 1 — Intake
-    intake_result = intake.run(source, tier=tier, batch=batch, config=config,
-                               force_doc_id=_force_doc_id, source_url=source_url)
+    if source_url is None and not source.startswith(("http://", "https://")) and not yes:
+        source_url = typer.prompt(
+            "Where was this local file obtained? Paste URL or leave blank",
+            default="",
+            show_default=False,
+        ).strip()
+    intake_result = intake.run(
+        source,
+        tier=tier,
+        batch=batch,
+        config=config,
+        force_doc_id=_force_doc_id,
+        source_url=source_url or "",
+    )
     if not yes and not review.checkpoint_intake(intake_result):
         raise typer.Exit()
 
     # Stage 2 — Preprocessing
-    # URL sources always use the large-model limit (trafilatura output is compact).
-    # PDFs/video use the LLM-specific limit.
+    # max_chars=0 means no truncation; None means pick from config by LLM mode
     if max_chars is not None:
         effective_max = None if max_chars == 0 else max_chars
     elif intake_result.source_type == "url":
-        effective_max = config.truncation_limit_local  # webpages: no meaningful truncation
+        effective_max = None
     elif llm in ("local", "local-heavy", "local-reasoning", "prefer-local",
                  "litelm", "litelm-heavy", "litelm-reasoning"):
         effective_max = config.truncation_limit_local
@@ -128,34 +128,63 @@ def ingest(
     if final_analysis is None:
         raise typer.Exit()
 
-    # Stage 5 — Upload confirmation (Checkpoint 4)
-    confirmed = yes or review.checkpoint_upload(intake_result.doc_id, final_analysis)
-    if confirmed:
-        upload.run(intake_result, preprocess_result, embedding_vector, final_analysis, config=config)
-    else:
-        saved_path = upload.save_locally(intake_result, preprocess_result, embedding_vector, final_analysis, config=config)
+    # Stage 5 — Testimony consent gate + upload confirmation (Checkpoint 4)
+    consent_status = review.checkpoint_testimony_consent(
+        intake_result.doc_id, final_analysis, config
+    )
+    if consent_status == "refused":
+        raise typer.Exit()
+    if consent_status in {"confirmed", "pending"}:
+        intake_result.testimony_consent = consent_status
+    if consent_status == "pending":
+        saved_path = upload.save_locally(
+            intake_result, preprocess_result, embedding_vector, final_analysis,
+            config=config, llm_used=llm,
+        )
         console.print(Panel(
             f"Saved locally at [bold]{saved_path}[/bold]\n\n"
-            f"Upload later with: [bold]python -m runner upload {intake_result.doc_id}[/bold]",
+            "Testimony consent is pending. Upload is blocked until consent is confirmed.",
+            title="Saved locally — consent pending",
+        ))
+        confirmed = False
+    else:
+        confirmed = yes or review.checkpoint_upload(intake_result.doc_id, final_analysis)
+    if confirmed:
+        upload.run(
+            intake_result, preprocess_result, embedding_vector, final_analysis,
+            config=config, llm_used=llm,
+        )
+    elif consent_status != "pending":
+        saved_path = upload.save_locally(
+            intake_result, preprocess_result, embedding_vector, final_analysis,
+            config=config, llm_used=llm,
+        )
+        console.print(Panel(
+            f"Saved locally at [bold]{saved_path}[/bold]\n\n"
+            f"Upload later with: [bold]python -m runner upload-doc {intake_result.doc_id}[/bold]",
             title="Saved locally",
         ))
 
     # Stage 3c — Enrichment (optional, runs after upload)
-    if run_enrich:
+    if run_enrich and confirmed:
+        console.print("\n[dim]Running Stage 3c enrichment pass...[/dim]")
         enrich_llm = "litelm" if llm.startswith("litelm") else llm
-        model_label = enrich_model or config.litelm_enrichment_model
-        console.print(f"\n[dim]Running Stage 3c enrichment ({model_label})...[/dim]")
         try:
             enrichment_result = enrich.run(
                 intake_result.doc_id, preprocess_result, final_analysis,
-                config=config, llm=enrich_llm, enrich_model=enrich_model,
+                config=config, llm=enrich_llm, model=enrich_model,
             )
             if yes or review.checkpoint_enrichment(enrichment_result, intake_result.doc_id):
                 saved = enrich.save(intake_result.doc_id, enrichment_result, config)
                 console.print(f"[green]Enrichment saved → {saved}[/green]")
-                history = enrich.list_history(intake_result.doc_id, config)
-                if history:
-                    console.print(f"[dim]Previous enrichments archived: {len(history)} file(s)[/dim]")
+            if second_opinion and enrich_llm.startswith("litelm"):
+                alt_model = config.litelm_enrichment_model_alt
+                alt = enrich.run(
+                    intake_result.doc_id, preprocess_result, final_analysis,
+                    config=config, llm=enrich_llm, model=alt_model,
+                )
+                alt_saved = enrich.save_alt(intake_result.doc_id, alt, config, label=alt_model.replace("/", "-"))
+                console.print(f"[green]Second-opinion enrichment saved → {alt_saved}[/green]")
         except Exception as exc:
             console.print(Panel(f"[red]Enrichment failed: {exc}[/red]", title="Stage 3c error"))
 
@@ -164,65 +193,39 @@ def ingest(
 def enrich_doc(
     doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
     llm: str = typer.Option("litelm", help="LLM for enrichment: litelm | claude | local"),
-    enrich_model: Optional[str] = typer.Option(None, "--enrich-model", help="Override LiteLLM model name (e.g. core-gemma for Gemma4)"),
-    second_opinion: bool = typer.Option(False, "--second-opinion", help="Run alternate model for comparison"),
+    model: Optional[str] = typer.Option(None, "--model", help="LiteLLM model alias for enrichment"),
+    second_opinion: bool = typer.Option(False, "--second-opinion", help="Save alternate model result separately"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Auto-save without review"),
 ):
-    """Run Stage 3c enrichment on a previously ingested document.
-
-    Re-running archives the previous enrichment.json before writing a new one —
-    existing researcher decisions are never overwritten.
-    """
+    """Run Stage 3c enrichment on a previously ingested document."""
     import json as _json
-    from pathlib import Path as _Path
     config = load_config(llm=llm)
     doc_dir = config.corpus_dir / doc_id
 
+    # Load saved analysis + preprocess results
     analysis_path = doc_dir / "analysis.json"
+    preprocess_path = doc_dir / "preprocess.json"
     if not analysis_path.exists():
         console.print(f"[red]No analysis.json found for {doc_id}[/red]")
         raise typer.Exit(1)
 
     from .models.document import AnalysisResult, PreprocessResult
-
     analysis = AnalysisResult.model_validate(_json.loads(analysis_path.read_text()))
 
-    # Load preprocess metadata + full text from extracted.txt
-    preprocess_path = doc_dir / "preprocess.json"
-    text_path       = doc_dir / "extracted.txt"
-
-    text = text_path.read_text(encoding="utf-8") if text_path.exists() else ""
-    if not text:
-        console.print("[yellow]extracted.txt not found — enrichment will run without document text[/yellow]")
-
-    raw_pre: dict = {}
     if preprocess_path.exists():
-        raw_pre = _json.loads(preprocess_path.read_text())
-
-    preprocess = PreprocessResult(
-        doc_id=doc_id,
-        tool_used=raw_pre.get("tool_used", "unknown"),
-        quality=raw_pre.get("quality", "medium"),
-        text=text,
-        title=raw_pre.get("title", ""),
-        author=raw_pre.get("author", ""),
-        date_published=raw_pre.get("date_published", ""),
-        sitename=raw_pre.get("sitename", ""),
-        hostname=raw_pre.get("hostname", ""),
-    )
-
-    model_label = enrich_model or config.litelm_enrichment_model
-    console.print(f"[dim]Running enrichment on {doc_id} with {llm} / {model_label}...[/dim]")
-
-    existing = enrich.list_history(doc_id, config)
-    if existing or (doc_dir / "enrichment.json").exists():
-        total = len(existing) + (1 if (doc_dir / "enrichment.json").exists() else 0)
-        console.print(f"[dim]{total} previous enrichment run(s) will be archived.[/dim]")
-
-    try:
-        enrichment_result = enrich.run(
-            doc_id, preprocess, analysis, config=config, llm=llm, enrich_model=enrich_model,
+        preprocess = upload._load_preprocess(preprocess_path)
+    else:
+        extracted_path = doc_dir / "extracted.txt"
+        text = extracted_path.read_text(encoding="utf-8") if extracted_path.exists() else ""
+        if not text:
+            console.print("[yellow]preprocess.json not found — enrichment will have no document text[/yellow]")
+        preprocess = PreprocessResult(
+            doc_id=doc_id, tool_used="unknown", quality="low", text=text
         )
+
+    console.print(f"[dim]Running enrichment on {doc_id} with {llm}...[/dim]")
+    try:
+        enrichment_result = enrich.run(doc_id, preprocess, analysis, config=config, llm=llm, model=model)
     except Exception as exc:
         console.print(Panel(f"[red]{exc}[/red]", title="Enrichment failed"))
         raise typer.Exit(1)
@@ -230,25 +233,25 @@ def enrich_doc(
     if yes or review.checkpoint_enrichment(enrichment_result, doc_id):
         saved = enrich.save(doc_id, enrichment_result, config)
         console.print(f"[green]Enrichment saved → {saved}[/green]")
+        if second_opinion and llm.startswith("litelm"):
+            alt_model = config.litelm_enrichment_model_alt
+            alt = enrich.run(doc_id, preprocess, analysis, config=config, llm=llm, model=alt_model)
+            alt_saved = enrich.save_alt(doc_id, alt, config, label=alt_model.replace("/", "-"))
+            console.print(f"[green]Second-opinion enrichment saved → {alt_saved}[/green]")
     else:
         console.print("[yellow]Enrichment skipped.[/yellow]")
 
-    # Second-opinion run (separate file, never overwrites enrichment.json)
-    if second_opinion:
-        console.print(f"[dim]Running second-opinion enrichment ({config.litelm_enrichment_model_alt})...[/dim]")
-        try:
-            alt_result = enrich.run_second_opinion(doc_id, preprocess, analysis, config)
-            alt_path = enrich.save_alt(doc_id, alt_result, config)
-            console.print(f"[green]Second opinion saved → {alt_path}[/green]")
-        except Exception as exc:
-            console.print(f"[yellow]Second-opinion enrichment failed: {exc}[/yellow]")
-
 
 @app.command()
-def status():
-    """List documents saved locally that have not yet been uploaded to Sanity."""
+def status(
+    doc_id: Optional[str] = typer.Argument(None, help="Optional doc_id for a detailed pipeline trace"),
+):
+    """List pending documents, or show a detailed status trace for one document."""
     config = load_config()
-    upload.list_pending(config)
+    if doc_id:
+        upload.print_document_status(doc_id, config)
+    else:
+        upload.list_pending(config)
 
 
 @app.command()
@@ -276,6 +279,32 @@ def verify(
     """Query Sanity and Supabase directly and print what is actually stored there."""
     config = load_config()
     upload.verify_uploads(limit, config)
+
+
+@app.command(name="migrate-supabase")
+def migrate_supabase(
+    confirm: bool = typer.Option(False, "--confirm", help="Execute the migration without prompting"),
+):
+    """Recreate document_embeddings with vector(4096). Drops existing embeddings."""
+    from .clients import supabase as supabase_client
+
+    config = load_config()
+    sql = supabase_client.MIGRATE_DOCUMENT_EMBEDDINGS_SQL
+    console.print(Panel(sql, title="Supabase migration SQL"))
+    if not confirm and not typer.confirm(
+        "This drops all existing document embeddings. Continue?",
+        default=False,
+    ):
+        console.print("[yellow]Migration cancelled.[/yellow]")
+        return
+    try:
+        supabase_client.migrate_document_embeddings(config)
+    except RuntimeError as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Migration failed"))
+        raise typer.Exit(1)
+    console.print(
+        "[yellow]Migration complete. Existing embeddings were dropped; re-run ingestion/upload or re-embed documents.[/yellow]"
+    )
 
 
 @app.command(name="embed-test")

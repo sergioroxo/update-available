@@ -8,10 +8,12 @@ env/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
 
 # Environment
 .env
 *.env.local
+runner/.env
 
 # Corpus and exports (large local data — not for version control)
 runner/corpus/

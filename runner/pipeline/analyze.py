@@ -90,13 +90,22 @@ def run(
 def _analyze_with_claude(preprocess: PreprocessResult, config: Config) -> AnalysisResult:
     import anthropic
     client = anthropic.Anthropic(api_key=config.anthropic_api_key)
-    system_prompt = _build_system_prompt_with_lexicon(config)
+    static_prompt, dynamic_prompt = _build_system_prompt_with_lexicon(
+        config, split_for_claude=True
+    )
     user_message  = _build_user_message(preprocess)
 
     response = client.messages.create(
         model=config.claude_model,
         max_tokens=4096,
-        system=system_prompt,
+        system=[
+            {
+                "type": "text",
+                "text": static_prompt,
+                "cache_control": {"type": "ephemeral"},
+            },
+            {"type": "text", "text": dynamic_prompt},
+        ],
         messages=[{"role": "user", "content": user_message}],
     )
     raw_json = response.content[0].text
@@ -200,7 +209,10 @@ def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config) -> An
     return _validate_response(raw_json)
 
 
-def _build_system_prompt_with_lexicon(config: Config) -> str:
+def _build_system_prompt_with_lexicon(
+    config: Config,
+    split_for_claude: bool = False,
+) -> str | tuple[str, str]:
     base = _load_system_prompt()
     try:
         terms = _fetch_active_lexicon_terms(config)
@@ -208,15 +220,14 @@ def _build_system_prompt_with_lexicon(config: Config) -> str:
         terms = []
 
     if not terms:
-        return base
+        return (base, "") if split_for_claude else base
 
-    term_lines = "\n".join(
-        f"- {t['term']} ({t.get('proposedCluster', '')})"
-        for t in terms
-    )
+    term_lines = "\n".join(_format_lexicon_prompt_line(t) for t in terms)
     lexicon_injection = (
         f"\n\nCURRENT LEXICON TERMS (do not propose these as candidates):\n{term_lines}"
     )
+    if split_for_claude:
+        return base, lexicon_injection
     return base + lexicon_injection
 
 
@@ -289,7 +300,10 @@ def _build_user_message(preprocess: PreprocessResult) -> str:
 def _fetch_active_lexicon_terms(config: Config) -> list[dict]:
     """GROQ query for draft + validated lexicon terms via Sanity Content API."""
     import httpx
-    query = '*[_type == "lexiconEntry" && status in ["draft","validated"]]{ term, proposedCluster, function }'
+    query = (
+        '*[_type == "lexiconEntry" && status in ["draft","validated"]]'
+        '{ term, proposedCluster, function, multilingualVariants }'
+    )
     url = (
         f"https://{config.sanity_project_id}.api.sanity.io"
         f"/v2024-01-01/data/query/{config.sanity_dataset}"
@@ -298,6 +312,17 @@ def _fetch_active_lexicon_terms(config: Config) -> list[dict]:
     r = httpx.get(url, params={"query": query}, headers=headers, timeout=10)
     r.raise_for_status()
     return r.json().get("result", [])
+
+
+def _format_lexicon_prompt_line(term: dict) -> str:
+    variants = term.get("multilingualVariants") or []
+    variant_text = ", ".join(
+        f"{v.get('variantTerm')}[{v.get('language', 'unknown')}]"
+        for v in variants[:12]
+        if v.get("variantTerm")
+    )
+    suffix = f"; variants: {variant_text}" if variant_text else ""
+    return f"- {term['term']} ({term.get('proposedCluster', '')}, function={term.get('function', '')}{suffix})"
 
 
 def _validate_response(raw_json: str) -> AnalysisResult:

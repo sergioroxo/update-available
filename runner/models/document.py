@@ -139,9 +139,21 @@ class AnalysisResult(BaseModel):
         2. Alternative field names: "research_summary" → "summary" etc.
         3. Single-element lists for scalar fields: ["Anti-SOGICE"] → "Anti-SOGICE"
         """
+        if not isinstance(data, dict):
+            return data
+
+        data = dict(data)
+        warnings = list(data.get("normalisation_warnings") or [])
+
         # 1. Lowercase all top-level keys and replace spaces with underscores
         #    "NARRATIVE REGISTER" → "narrative_register", "TYPE" → "type"
-        data = {k.lower().replace(" ", "_"): v for k, v in data.items()}
+        normalised_data = {}
+        for key, value in data.items():
+            normalised_key = key.lower().replace(" ", "_")
+            if normalised_key != key:
+                warnings.append(f"Normalised top-level key '{key}' to '{normalised_key}'.")
+            normalised_data[normalised_key] = value
+        data = normalised_data
 
         # 2. Remap alternative field names the model commonly uses
         _key_aliases = {
@@ -154,6 +166,7 @@ class AnalysisResult(BaseModel):
         for old, new in _key_aliases.items():
             if old in data and new not in data:
                 data[new] = data.pop(old)
+                warnings.append(f"Mapped model field '{old}' to schema field '{new}'.")
 
         # 3. Remap nested confidence fields:
         #    .overall / .overall_score  → confidence.overall_score
@@ -162,9 +175,13 @@ class AnalysisResult(BaseModel):
         if isinstance(conf, dict):
             if "overall" in conf and "overall_score" not in conf:
                 conf["overall_score"] = conf.pop("overall")
+                warnings.append("Mapped confidence.overall to confidence.overall_score.")
             for _fs_key in ("field_scores", "field-level", "field_level"):
                 if _fs_key in conf and "field_confidence" not in data:
                     data["field_confidence"] = conf.pop(_fs_key)
+                    warnings.append(
+                        f"Moved confidence.{_fs_key} to top-level field_confidence."
+                    )
                     break
 
         # 4. Unwrap single-element lists for Literal scalar fields
@@ -172,6 +189,9 @@ class AnalysisResult(BaseModel):
             val = data.get(key)
             if isinstance(val, list) and len(val) == 1:
                 data[key] = val[0]
+                warnings.append(f"Unwrapped single-item list for scalar field '{key}'.")
+
+        data["normalisation_warnings"] = warnings
 
         return data
     country: list[str] = Field(default_factory=list)
@@ -197,6 +217,7 @@ class AnalysisResult(BaseModel):
     suggested_actors: list[SuggestedActor] = Field(default_factory=list)
     suggested_networks: list[SuggestedNetwork] = Field(default_factory=list)
     extractable_assets: list[ExtractableAsset] = Field(default_factory=list)
+    normalisation_warnings: list[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -262,12 +283,15 @@ class IntakeResult:
     batch_id: str
     language: Optional[str]               # ISO 639-1, None if unknown at intake
     archive_url: Optional[str] = None     # Wayback Machine URL once archived
+    wayback_status: str = ""              # existing | saved | unavailable | failed | skipped
+    wayback_checked_at: str = ""
+    wayback_error: str = ""
+    source_url: str = ""                  # provenance URL for local files, if known
+    original_filename: str = ""           # original local file name before doc_id storage
+    local_copy_path: str = ""             # corpus copy of local file, preserving original name
+    source_html_sha256: str = ""          # hash of captured source.html for URL ingests
+    testimony_consent: str = ""           # confirmed | pending | refused for testimony-flagged docs
     local_dir: Optional[Path] = None      # ~/survivingsogice/corpus/{doc_id}/
-    # Provenance for local files
-    source_url: Optional[str] = None      # where this file was obtained (URL to track later)
-    original_filename: str = ""           # original filename before renaming to doc_id
-    # Integrity
-    source_html_sha256: str = ""          # SHA-256 of raw HTML at capture time (URL sources)
 
 
 @dataclass
@@ -290,8 +314,8 @@ class PreprocessResult:
     hostname: str = ""                     # bare domain, e.g. christianconcern.com
     outbound_links: list[dict] = field(default_factory=list)   # [{url, anchor_text, domain}]
     page_intel: Optional["PageIntelligence"] = None
-    # Internal: raw HTML for source.html snapshot (not serialised to JSON)
-    _raw_html: str = field(default="", repr=False, compare=False)
+    source_html_path: str = ""
+    source_html_sha256: str = ""
 
 
 @dataclass
