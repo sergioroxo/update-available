@@ -185,6 +185,8 @@ python3 -m runner status                    # show locally saved, not yet upload
 python3 -m runner status <doc_id>           # detailed pipeline trace for one document
 python3 -m runner upload-doc <doc_id>       # push a saved document to Sanity + Supabase
 python3 -m runner export batch-07           # export batch JSON to exports/batch-07/
+python3 -m runner reanalyze <doc_id>        # re-run Stage 3b analysis (archives previous analysis.json)
+python3 -m runner reanalyze <doc_id> --llm claude --upload  # re-analyse + push to Sanity
 python3 -m runner enrich <doc_id>           # Stage 3c enrichment on existing doc (lexicon + entities)
 python3 -m runner push-enrichment <doc_id>  # push approved enrichment proposals to Sanity
 python3 -m runner queue                     # show all ingestion candidates from enrichment results

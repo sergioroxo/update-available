@@ -189,6 +189,71 @@ def ingest(
             console.print(Panel(f"[red]Enrichment failed: {exc}[/red]", title="Stage 3c error"))
 
 
+@app.command(name="reanalyze")
+def reanalyze_doc(
+    doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
+    llm: str = typer.Option("litelm", help="LLM to use: litelm | litelm-heavy | claude | local"),
+    upload_after: bool = typer.Option(False, "--upload", help="Upload to Sanity + Supabase after saving"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Auto-accept result without review"),
+):
+    """Re-run Stage 3b analysis on an already-ingested document.
+
+    Useful when the original classification was wrong, you want to try a
+    different model, or the ingestion prompt has been updated.
+    Previous analysis.json is archived as analysis_{timestamp}.json before overwrite.
+    """
+    import json as _json
+    import shutil
+    from datetime import datetime
+    config = load_config(llm=llm)
+    doc_dir = config.corpus_dir / doc_id
+
+    preprocess_path = doc_dir / "preprocess.json"
+    extracted_path  = doc_dir / "extracted.txt"
+    analysis_path   = doc_dir / "analysis.json"
+
+    if not doc_dir.exists():
+        console.print(f"[red]No local folder found for {doc_id}[/red]")
+        raise typer.Exit(1)
+    if not extracted_path.exists():
+        console.print(f"[red]extracted.txt not found for {doc_id} — cannot re-analyse without document text[/red]")
+        raise typer.Exit(1)
+
+    from .models.document import PreprocessResult
+    if preprocess_path.exists():
+        preprocess = upload._load_preprocess(preprocess_path)
+    else:
+        preprocess = PreprocessResult(
+            doc_id=doc_id, tool_used="unknown", quality="low",
+            text=extracted_path.read_text(encoding="utf-8"),
+        )
+
+    # Archive the previous analysis before overwriting
+    if analysis_path.exists():
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        archive = doc_dir / f"analysis_{ts}.json"
+        shutil.copy2(analysis_path, archive)
+        console.print(f"[dim]Previous analysis archived → {archive.name}[/dim]")
+
+    console.print(f"[dim]Re-analysing {doc_id} with {llm}...[/dim]")
+    try:
+        new_analysis = analyze.run(preprocess, llm=llm, config=config)
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Analysis failed"))
+        raise typer.Exit(1)
+
+    final = review.checkpoint_analysis(new_analysis, doc_id=doc_id, yes=yes)
+    if final is None:
+        console.print("[yellow]Aborted — previous analysis archive kept.[/yellow]")
+        raise typer.Exit()
+
+    analysis_path.write_text(final.model_dump_json(indent=2), encoding="utf-8")
+    console.print(f"[green]analysis.json updated for {doc_id}[/green]")
+
+    if upload_after:
+        upload.upload_saved(doc_id, config)
+
+
 @app.command(name="enrich")
 def enrich_doc(
     doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
