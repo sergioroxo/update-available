@@ -27,7 +27,7 @@ console = Console()
 @app.command()
 def ingest(
     source: str = typer.Argument(..., help="URL, PDF path, video file, SRT, or EPUB"),
-    llm: str = typer.Option("claude", help="LLM: claude | local | local-heavy | local-reasoning | litelm | litelm-heavy | litelm-reasoning | openrouter | both | prefer-local | prefer-claude"),
+    llm: str = typer.Option("litelm", help="LLM: litelm | litelm-heavy | litelm-reasoning | claude | local | local-heavy | local-reasoning | openrouter | both | prefer-local | prefer-claude"),
     tier: Optional[int] = typer.Option(None, help="Override auto-assigned tier (1|2|3)"),
     batch: Optional[str] = typer.Option(None, help="Assign to existing batch ID"),
     source_url: Optional[str] = typer.Option(None, "--source-url", help="Original/provenance URL for a local file"),
@@ -457,51 +457,71 @@ def doctor():
         fail(".env file", "Not found. Copy runner/.env.example to runner/.env and fill in keys.")
 
     # ── Required credentials ──────────────────────────────────────────────
-    required = {
-        "ANTHROPIC_API_KEY":   "Anthropic API (Claude classification)",
-        "SANITY_PROJECT_ID":   "Sanity project",
-        "SANITY_DATASET":      "Sanity dataset",
-        "SANITY_WRITE_TOKEN":  "Sanity write token",
-        "SUPABASE_URL":        "Supabase project URL",
+    always_required = {
+        "SANITY_PROJECT_ID":    "Sanity project",
+        "SANITY_DATASET":       "Sanity dataset",
+        "SANITY_WRITE_TOKEN":   "Sanity write token",
+        "SUPABASE_URL":         "Supabase project URL",
         "SUPABASE_SERVICE_KEY": "Supabase service role key",
     }
-    for key, description in required.items():
+    placeholders = ("", "https://<project>.supabase.co", "sk-local-research-key-change-this")
+    for key, description in always_required.items():
         val = os.getenv(key, "")
-        placeholder = val in ("", "sk-ant-...", "https://<project>.supabase.co", "sk-local-research-key-change-this")
-        if val and not placeholder:
+        if val and val not in placeholders:
             ok(key, description)
         else:
             fail(key, f"Missing or placeholder — {description}")
+
+    # Claude API key is optional — only needed for --llm claude
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if anthropic_key and anthropic_key not in ("sk-ant-...",):
+        ok("ANTHROPIC_API_KEY", "Set (used only for --llm claude)")
+    else:
+        ok("ANTHROPIC_API_KEY", "Not set — not needed unless you use --llm claude")
+
+    # ── LiteLLM proxy (primary analysis path) ────────────────────────────
+    litelm_url = os.getenv("LITELM_BASE_URL", "")
+    litelm_key = os.getenv("LITELM_API_KEY", "")
+    litelm_placeholder = litelm_key in ("", "sk-local-research-key-change-this")
+    if not litelm_url:
+        fail("LiteLLM proxy", "LITELM_BASE_URL not set — primary analysis path unavailable.\nAdd the Mac Studio Tailscale URL to .env")
+    else:
+        try:
+            import httpx as _httpx
+            r = _httpx.get(f"{litelm_url}/health", timeout=5,
+                           headers={"Authorization": f"Bearer {litelm_key}"})
+            r.raise_for_status()
+            ok("LiteLLM proxy", f"Reachable at {litelm_url}")
+        except Exception as exc:
+            fail("LiteLLM proxy", f"Not reachable at {litelm_url}: {type(exc).__name__}\nIs the Mac Studio on Tailscale and LiteLLM running?")
 
     ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     embedding_model = os.getenv("EMBEDDING_MODEL", "qwen3-embedding:8b")
     analysis_model  = os.getenv("LOCAL_ANALYSIS_MODEL", "qwen3.5:9b")
 
-    # ── Ollama reachability + installed models ────────────────────────────
+    # ── Ollama reachability + embedding model ─────────────────────────────
     installed_models: set[str] = set()
     try:
         import httpx as _httpx
         r = _httpx.get(f"{ollama_base_url}/api/tags", timeout=5)
         r.raise_for_status()
         installed_models = {m["name"] for m in r.json().get("models", [])}
-        ok("Ollama", f"Running at {ollama_base_url}, {len(installed_models)} model(s)")
+        ok("Ollama (local)", f"Running at {ollama_base_url}, {len(installed_models)} model(s)")
     except Exception as exc:
-        fail("Ollama", f"Not reachable at {ollama_base_url}: {exc}\nRun: ollama serve")
+        fail("Ollama (local)", f"Not reachable at {ollama_base_url}: {exc}\nRun: ollama serve")
 
-    # Embedding model installed?
-    emb_tag = embedding_model if ":" in embedding_model else f"{embedding_model}:latest"
     if installed_models:
         if any(m.startswith(embedding_model.split(":")[0]) for m in installed_models):
             ok("Embedding model", embedding_model)
         else:
             fail("Embedding model", f"{embedding_model} not found in Ollama.\nRun: ollama pull {embedding_model}")
 
-    # Analysis model installed?
+    # Local analysis model: optional since Mac Studio is primary
     if installed_models:
         if any(m.startswith(analysis_model.split(":")[0]) for m in installed_models):
-            ok("Analysis model (local)", analysis_model)
+            ok("Local analysis model", f"{analysis_model} (fallback for --llm local)")
         else:
-            fail("Analysis model (local)", f"{analysis_model} not found.\nRun: ollama pull {analysis_model}\n(Only needed for --llm local; Claude is the default)")
+            ok("Local analysis model", f"{analysis_model} not installed — only needed for offline/fallback (--llm local)")
 
     # ── Embedding dimension ───────────────────────────────────────────────
     if installed_models and any(m.startswith(embedding_model.split(":")[0]) for m in installed_models):
@@ -580,8 +600,10 @@ def doctor():
     if not failures:
         console.print(Panel(
             "[bold green]All checks passed.[/bold green]\n\n"
-            "You're ready to ingest. Start with:\n"
-            "  [bold]python -m runner ingest https://example.org/document[/bold]\n"
+            "You're ready to ingest. Default path uses the Mac Studio via LiteLLM:\n"
+            "  [bold]python -m runner ingest https://example.org/document[/bold]\n\n"
+            "For Tier 1 / high-stakes docs, override to Claude:\n"
+            "  [bold]python -m runner ingest <url> --llm claude[/bold]\n\n"
             "Or open the Streamlit workbench:\n"
             "  [bold]cd runner && streamlit run app.py[/bold]",
             title="Ready ✓",

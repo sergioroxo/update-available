@@ -25,16 +25,20 @@ Key docs:
 | Embeddings (local) | `qwen3-embedding:8b` via Ollama | Pinned 8b — 4096d confirmed |
 | Embeddings (remote) | `research-embedding` via LiteLLM | Same model on Mac Studio — used when `--llm litelm*` |
 
-### Analysis — MacBook (fallback / offline)
+### Analysis — Mac Studio M2 Ultra 64 GB (**default for all ingestion**)
+
+**`--llm litelm` is the default.** Claude API is used only on explicit request (`--llm claude`) or triage recommendation.
+
+### Analysis — MacBook (fallback / offline only)
 
 | Tier | Model | `--llm` flag | Use when |
 |---|---|---|---|
-| Default | `qwen3.5:9b` | `local` | Offline / Mac Studio unavailable |
-| Heavy | `gemma-4-26B-A4B-it` | `local-heavy` | Long docs offline (check RAM first — Q23) |
-| Reasoning | `Ministral-3-14B-Reasoning-2512` | `local-reasoning` | Ambiguous docs offline |
-| Primary | Claude API (`claude-sonnet-4-6`) | `claude` | Gold standard; Tier 1 final classification |
+| Fallback | `qwen3.5:9b` | `local` | Mac Studio offline / Tailscale unreachable |
+| Heavy fallback | `gemma-4-26B-A4B-it` | `local-heavy` | Long docs offline (check RAM first — Q23) |
+| Reasoning fallback | `Ministral-3-14B-Reasoning-2512` | `local-reasoning` | Ambiguous docs offline |
+| Override only | Claude API (`claude-sonnet-4-6`) | `claude` | Tier 1 final classification on researcher request |
 
-### Analysis — Mac Studio M2 Ultra 64 GB (preferred for all ingestion)
+### Mac Studio via LiteLLM (preferred for all ingestion)
 
 LiteLLM proxy at `LITELM_BASE_URL` (Tailscale). All `--llm litelm*` flags route here for both analysis AND embedding.
 
