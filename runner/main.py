@@ -371,12 +371,21 @@ def migrate_supabase(
         return
     try:
         supabase_client.migrate_document_embeddings(config)
-    except RuntimeError as exc:
-        console.print(Panel(f"[red]{exc}[/red]", title="Migration failed"))
+        console.print(
+            "[green]Migration complete.[/green] Existing embeddings were dropped; "
+            "re-run ingestion or upload to repopulate."
+        )
+    except RuntimeError:
+        project_id = config.supabase_url.split("//")[1].split(".")[0] if "//" in config.supabase_url else "<project>"
+        console.print(Panel(
+            "Supabase does not expose a built-in SQL RPC — run the migration manually:\n\n"
+            f"  1. Open: [bold]https://supabase.com/dashboard/project/{project_id}/sql[/bold]\n"
+            "  2. Paste the SQL shown above\n"
+            "  3. Click [bold]Run[/bold]\n\n"
+            "Then run [bold]python3 -m runner doctor[/bold] to verify the table exists.",
+            title="[yellow]Manual step required[/yellow]",
+        ))
         raise typer.Exit(1)
-    console.print(
-        "[yellow]Migration complete. Existing embeddings were dropped; re-run ingestion/upload or re-embed documents.[/yellow]"
-    )
 
 
 @app.command(name="embed-test")
