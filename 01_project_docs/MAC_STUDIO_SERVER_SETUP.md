@@ -1,59 +1,61 @@
-# Mac Studio M2 Ultra — Ollama Inference Server Setup
+# Mac Studio M2 Ultra — LiteLLM + Ollama Server Setup
 
 **Hardware**: Apple Mac Studio M2 Ultra, 64 GB unified memory  
-**Role**: Remote Ollama API server for heavy LLM inference (analysis + embeddings)  
-**Access**: SSH tunnel from MacBook Pro M4 (your development machine)
+**Role**: Primary inference server — Ollama backend + LiteLLM proxy  
+**Access**: Tailscale (anywhere) or SSH tunnel (LAN)  
+**Default runner path**: `--llm litelm` → `LITELM_BASE_URL` → LiteLLM → Ollama
 
 ---
 
-## Why This Works Well
+## Architecture
 
-The M2 Ultra's unified memory architecture means the GPU and CPU share the full 64 GB pool — no VRAM ceiling. Ollama runs models directly on the Neural Engine + GPU cores with full bandwidth. At 64 GB you can run models that are completely impractical on the 24 GB M4.
+```
+MacBook (runner)
+    │
+    │  HTTPS + API key (Tailscale)
+    ▼
+LiteLLM proxy  :4000   ←── litellm_config.yaml (model aliases)
+    │
+    │  localhost
+    ▼
+Ollama         :11434  ←── actual models (qwen3.6:35b-a3b, gemma4:31b-it …)
+```
+
+LiteLLM sits in front of Ollama and exposes an **OpenAI-compatible** `/v1/chat/completions` and `/v1/embeddings` API. The runner talks to LiteLLM — not Ollama directly — so model selection, routing, and auth are all handled at the proxy layer.
 
 ---
 
-## Model Strategy for the Mac Studio
+## Model Map
 
-| Tier | Model | RAM (4-bit) | `--llm` flag | Use when |
-|---|---|---|---|---|
-| Embedding | `qwen3-embedding:8b` | ~5 GB | — | All documents (same as local) |
-| Default | `qwen3.5:32b` | ~20 GB | `local` | Everyday analysis — much better than 9b |
-| Heavy | `qwen3:72b` | ~42 GB | `local-heavy` | Long books, SRTs, richly interpretive docs |
-| Reasoning | `qwen3.5:32b` (with think) | ~20 GB | `local-reasoning` | Ambiguous docs — 32b can handle extended thinking |
+| LiteLLM alias | Ollama model | RAM (4-bit) | Role |
+|---|---|---|---|
+| `core-qwen` | `qwen3.6:35b-a3b` | ~22 GB | Default analysis (`--llm litelm`) |
+| `core-gemma` | `gemma4:31b-it` | ~20 GB | Heavy / long docs (`--llm litelm-heavy`) |
+| `review-qwen` | `qwen3.6:27b` | ~17 GB | Reasoning / ambiguous (`--llm litelm-reasoning`) |
+| `review-gemma` | `gemma4:26b-a4b-it` | ~16 GB | Second-opinion enrichment |
+| `triage` | `gemma4:e4b-it` | ~3 GB | Fast pre-screen (`--triage`) |
+| `lexicon-llm` | `qwen3.6:35b-a3b` | ~22 GB | Stage 3c enrichment (same weights as core-qwen) |
+| `coder` | `qwen3-coder:30b-a3b-instruct` | ~19 GB | Structured extraction |
+| `research-embedding` | `qwen3-embedding:8b` | ~5 GB | Embeddings (all `--llm litelm*` paths) |
 
-> The 72b model leaves ~22 GB for system + Ollama overhead, which is safe on M2 Ultra.
-> You can run embedding + a 32b analysis model simultaneously (~25 GB total).
+> The M2 Ultra's 64 GB is shared between all processes. Running two 22 GB models simultaneously is tight — `OLLAMA_KEEP_ALIVE=0` (set below) unloads each model after use, so only one is resident at a time. Embedding + a 22 GB chat model together (~27 GB total) is comfortable.
 
 ---
 
-## Part 1 — Mac Studio Initial Setup
+## Part 1 — Ollama on Mac Studio
 
-### 1.1 Enable Remote Login (SSH)
-
-On the Mac Studio:
-```
-System Settings → General → Sharing → Remote Login → ON
-```
-
-Note the username and local IP:
-```bash
-whoami          # your username
-ipconfig getifaddr en0   # local IP (e.g. 192.168.1.50)
-```
-
-### 1.2 Install Homebrew + Ollama
+### 1.1 Install Homebrew + Ollama
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 brew install ollama
 ```
 
-### 1.3 Configure Ollama to Accept Remote Connections
+### 1.2 Configure Ollama (LaunchAgent)
 
-By default Ollama only listens on `localhost`. To accept connections from your MacBook over the LAN (or via SSH tunnel), set:
+Create a persistent service that binds only to localhost (LiteLLM is the public face):
 
 ```bash
-# Create a LaunchAgent plist so the setting survives reboots
 mkdir -p ~/Library/LaunchAgents
 
 cat > ~/Library/LaunchAgents/com.ollama.server.plist << 'EOF'
@@ -71,7 +73,7 @@ cat > ~/Library/LaunchAgents/com.ollama.server.plist << 'EOF'
     <key>EnvironmentVariables</key>
     <dict>
         <key>OLLAMA_HOST</key>
-        <string>0.0.0.0:11434</string>
+        <string>127.0.0.1:11434</string>
         <key>OLLAMA_KEEP_ALIVE</key>
         <string>0</string>
         <key>OLLAMA_NUM_PARALLEL</key>
@@ -92,53 +94,357 @@ EOF
 launchctl load ~/Library/LaunchAgents/com.ollama.server.plist
 ```
 
-`OLLAMA_KEEP_ALIVE=0` unloads the model from RAM after each request — important when you want to switch between models without running out of memory.
+`OLLAMA_HOST=127.0.0.1` keeps Ollama localhost-only — LiteLLM handles external access.  
+`OLLAMA_KEEP_ALIVE=0` unloads each model after the request — prevents OOM when switching models.
 
-### 1.4 Pull the Models
+### 1.3 Pull Models
 
 ```bash
-# Embedding (same as your MacBook — keeps the vector space consistent)
+# Embedding (always needed)
 ollama pull qwen3-embedding:8b
 
-# Standard analysis (replaces qwen3.5:9b on the MacBook)
-ollama pull qwen3.5:32b
+# Default analysis
+ollama pull qwen3.6:35b-a3b
 
-# Heavy analysis (fits comfortably in 64 GB)
-ollama pull qwen3:72b
+# Heavy / long docs
+ollama pull gemma4:31b-it
 
-# Verify what's installed
+# Reasoning / second opinion
+ollama pull qwen3.6:27b
+
+# Fast triage
+ollama pull gemma4:e4b-it
+
+# Enrichment (shares weights with core-qwen — no extra pull needed if core-qwen is installed)
+# ollama pull qwen3.6:35b-a3b  ← already done above
+
+# Optional: structured extraction
+# ollama pull qwen3-coder:30b-a3b-instruct
+
+# Verify
 ollama list
 ```
 
-> Pulls are large (20–42 GB). Run over ethernet or fast Wi-Fi. They only happen once.
+> Pulls are large (5–22 GB each). Run over ethernet. They download once and cache permanently.
 
-### 1.5 Test Ollama is Serving
+### 1.4 Verify Ollama
 
 ```bash
 curl http://localhost:11434/api/tags
-# Should return JSON listing installed models
+# Returns JSON listing installed models
 ```
 
 ---
 
-## Part 2 — Remote Access from Your MacBook
+## Part 2 — LiteLLM Proxy
 
-### Option A: SSH Tunnel (Recommended — Works From Anywhere)
+LiteLLM is a lightweight Python proxy that translates OpenAI-format requests to Ollama (and other backends). Install it once, configure model aliases, and point the runner at it.
 
-The SSH tunnel forwards your MacBook's local port 11434 to the Mac Studio's port 11434. The runner thinks Ollama is local — no code changes needed.
-
-**Step 1 — Set up SSH key auth (do this once)**
+### 2.1 Install LiteLLM
 
 ```bash
-# On your MacBook:
-ssh-keygen -t ed25519 -C "macbook-to-macstudio"
-ssh-copy-id username@192.168.1.50   # use the Mac Studio's LAN IP
+# On the Mac Studio — needs Python 3.11+
+pip3 install 'litellm[proxy]'
+
+# Verify
+litellm --version
 ```
 
-**Step 2 — Add a host alias (do this once)**
+If `pip3` installs to a path that's not in your shell's `PATH`, use:
+```bash
+python3 -m pip install 'litellm[proxy]'
+python3 -m litellm --version
+```
+
+### 2.2 Create `litellm_config.yaml`
+
+Save this file on the Mac Studio at `~/sogice/litellm_config.yaml` (or any stable path):
 
 ```bash
-# On your MacBook, append to ~/.ssh/config:
+mkdir -p ~/sogice
+```
+
+```yaml
+# ~/sogice/litellm_config.yaml
+#
+# CRITICAL: max_tokens must be set for every chat model.
+# Without it, Ollama uses its default ~2048 token limit, which truncates
+# structured JSON responses mid-object and causes Pydantic parse failures.
+
+model_list:
+
+  - model_name: core-qwen
+    litellm_params:
+      model: ollama_chat/qwen3.6:35b-a3b
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  - model_name: core-gemma
+    litellm_params:
+      model: ollama_chat/gemma4:31b-it
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  - model_name: review-qwen
+    litellm_params:
+      model: ollama_chat/qwen3.6:27b
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  - model_name: review-gemma
+    litellm_params:
+      model: ollama_chat/gemma4:26b-a4b-it
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  - model_name: triage
+    litellm_params:
+      model: ollama_chat/gemma4:e4b-it
+      api_base: http://localhost:11434
+      max_tokens: 4096
+
+  - model_name: lexicon-llm
+    litellm_params:
+      model: ollama_chat/qwen3.6:35b-a3b
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  - model_name: coder
+    litellm_params:
+      model: ollama_chat/qwen3-coder:30b-a3b-instruct
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  - model_name: research-embedding
+    litellm_params:
+      model: ollama/qwen3-embedding:8b
+      api_base: http://localhost:11434
+
+litellm_settings:
+  drop_params: true          # silently drop unsupported params (e.g. stream_options)
+  request_timeout: 300       # 5 min — long docs can be slow on first model load
+
+general_settings:
+  master_key: sk-local-research-key-change-this   # must match LITELM_API_KEY in runner/.env
+```
+
+**Change the `master_key`** to something unique before first use. Write it down — it goes in `runner/.env` as `LITELM_API_KEY`.
+
+### 2.3 Test LiteLLM Manually
+
+```bash
+# Start LiteLLM (foreground for testing)
+litellm --config ~/sogice/litellm_config.yaml --port 4000
+
+# In a separate terminal — test chat completion
+curl http://localhost:4000/v1/chat/completions \
+  -H "Authorization: Bearer sk-local-research-key-change-this" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "triage", "messages": [{"role": "user", "content": "Say OK"}], "max_tokens": 10}'
+
+# Test embedding
+curl http://localhost:4000/v1/embeddings \
+  -H "Authorization: Bearer sk-local-research-key-change-this" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "research-embedding", "input": "test"}'
+```
+
+Both should return valid JSON. The first chat call will be slow (~15–30s) as Ollama loads the model.
+
+### 2.4 Run LiteLLM as a Persistent Service (LaunchAgent)
+
+```bash
+# Find the full path to the litellm binary
+which litellm
+# Typical result: /usr/local/bin/litellm  or  /opt/homebrew/bin/litellm
+```
+
+Create the LaunchAgent (replace the `ProgramArguments` path if different):
+
+```bash
+cat > ~/Library/LaunchAgents/com.sogice.litelm.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sogice.litelm</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/litellm</string>
+        <string>--config</string>
+        <string>/Users/YOUR_USERNAME/sogice/litellm_config.yaml</string>
+        <string>--port</string>
+        <string>4000</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/litelm.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/litelm.err</string>
+</dict>
+</plist>
+EOF
+
+# Replace YOUR_USERNAME and load
+sed -i '' "s/YOUR_USERNAME/$(whoami)/g" ~/Library/LaunchAgents/com.sogice.litelm.plist
+launchctl load ~/Library/LaunchAgents/com.sogice.litelm.plist
+```
+
+Verify it started:
+```bash
+curl http://localhost:4000/health
+# Should return {"status": "healthy", ...}
+```
+
+Check logs if something's wrong:
+```bash
+tail -f /tmp/litelm.log
+tail -f /tmp/litelm.err
+```
+
+---
+
+## Part 3 — Remote Access (Tailscale)
+
+Tailscale creates an encrypted mesh network between your devices. Once both machines are on Tailscale, the MacBook can reach the Mac Studio at its Tailscale hostname regardless of network.
+
+### 3.1 Install Tailscale on Both Machines
+
+```bash
+# On Mac Studio AND MacBook:
+brew install --cask tailscale
+```
+
+Open the Tailscale app → sign in with the same account on both machines.
+
+Find the Mac Studio's Tailscale hostname:
+```bash
+# On Mac Studio:
+tailscale status
+# Look for the machine name, e.g.: macstudio.tail12345.ts.net
+```
+
+### 3.2 Expose LiteLLM via Tailscale
+
+By default LiteLLM binds to `0.0.0.0:4000`, which includes the Tailscale interface. No extra config needed — Tailscale handles NAT traversal and encryption.
+
+Test from your MacBook:
+```bash
+curl https://macstudio.tail12345.ts.net:4000/health \
+  -H "Authorization: Bearer sk-local-research-key-change-this"
+```
+
+> **HTTPS vs HTTP**: Tailscale traffic is already encrypted at the network layer, so `http://` is fine within a Tailscale network. If you want browser-accessible HTTPS (e.g. for the Streamlit dashboard), enable Tailscale HTTPS certificates: `tailscale cert macstudio.tail12345.ts.net` — but the runner works with plain `http://`.
+
+### 3.3 Update `runner/.env` on MacBook
+
+```env
+# LiteLLM proxy on Mac Studio (Tailscale)
+LITELM_BASE_URL=http://macstudio.tail12345.ts.net:4000
+LITELM_API_KEY=sk-local-research-key-change-this
+
+# Model aliases (must match litellm_config.yaml)
+LITELM_ANALYSIS_MODEL=core-qwen
+LITELM_ANALYSIS_MODEL_HEAVY=core-gemma
+LITELM_ANALYSIS_MODEL_REASONING=review-qwen
+LITELM_EMBEDDING_MODEL=research-embedding
+LITELM_ENRICHMENT_MODEL=lexicon-llm
+LITELM_ENRICHMENT_MODEL_ALT=core-gemma
+
+# Raise truncation — Mac Studio handles full context
+TRUNCATION_LIMIT_LOCAL=200000
+```
+
+---
+
+## Part 4 — Verify Full Stack
+
+Run these from your MacBook once Tailscale + LiteLLM + Ollama are all running:
+
+```bash
+cd runner
+
+# 1. Pre-flight check (checks LiteLLM connectivity, credentials, Ollama)
+python3 -m runner doctor
+
+# 2. Verify embedding dimension (should report 4096d)
+python3 -m runner embed-test
+
+# 3. First ingest — default path through LiteLLM
+python3 -m runner ingest https://example.org/document
+
+# 4. Heavy model test (expect 2–5 min on first load)
+python3 -m runner ingest document.pdf --llm litelm-heavy
+```
+
+---
+
+## Part 5 — Maintenance
+
+### Restart Services
+
+```bash
+# Restart Ollama
+launchctl unload ~/Library/LaunchAgents/com.ollama.server.plist
+launchctl load ~/Library/LaunchAgents/com.ollama.server.plist
+
+# Restart LiteLLM
+launchctl unload ~/Library/LaunchAgents/com.sogice.litelm.plist
+launchctl load ~/Library/LaunchAgents/com.sogice.litelm.plist
+```
+
+### Update LiteLLM
+
+```bash
+pip3 install --upgrade 'litellm[proxy]'
+# Then restart the LaunchAgent (see above)
+```
+
+### Update Ollama
+
+```bash
+brew upgrade ollama
+launchctl unload ~/Library/LaunchAgents/com.ollama.server.plist
+launchctl load ~/Library/LaunchAgents/com.ollama.server.plist
+```
+
+### Check RAM During Inference
+
+```bash
+# On Mac Studio — snapshot RAM usage
+top -l 1 | grep -E "PhysMem|ollama"
+
+# Or watch GPU + unified memory:
+sudo powermetrics --samplers gpu_power -i 2000 -n 10
+```
+
+### View Logs
+
+```bash
+tail -f /tmp/ollama.log     # Ollama
+tail -f /tmp/litelm.log     # LiteLLM requests
+tail -f /tmp/litelm.err     # LiteLLM errors
+```
+
+---
+
+## Part 6 — Fallback: SSH Tunnel (LAN Only, No LiteLLM)
+
+If LiteLLM is not running and you need to use Ollama directly (e.g. `--llm local` from the MacBook via tunnel), you can forward the Ollama port directly. This bypasses LiteLLM and uses the local model flags instead of litelm aliases.
+
+**Set up SSH key auth (once):**
+```bash
+# On MacBook:
+ssh-keygen -t ed25519 -C "macbook-to-macstudio"
+ssh-copy-id username@192.168.1.50   # Mac Studio LAN IP
+```
+
+**Add host alias (once):**
+```bash
 cat >> ~/.ssh/config << 'EOF'
 
 Host macstudio
@@ -150,160 +456,34 @@ Host macstudio
 EOF
 ```
 
-**Step 3 — Open the tunnel**
-
+**Open tunnel:**
 ```bash
 ssh -N -L 11434:localhost:11434 macstudio
 ```
 
-Run this in a terminal tab and leave it open. While it's running, `http://localhost:11434` on your MacBook routes to the Mac Studio.
+While the tunnel is open, `OLLAMA_BASE_URL=http://localhost:11434` routes to the Mac Studio. Use `--llm local-heavy` etc. — not `--llm litelm`.
 
-**Step 4 — Use the runner normally**
-
-```bash
-# In a separate terminal tab — no changes to .env needed
-python3 -m runner ingest https://example.org --llm local-heavy
-```
-
-### Option B: Persistent Background Tunnel (AutoSSH)
-
-If you want the tunnel to survive disconnects and restart automatically:
-
-```bash
-brew install autossh
-
-# Run once to test:
-autossh -M 0 -N -L 11434:localhost:11434 macstudio
-
-# Or add to your MacBook's LaunchAgents for automatic startup:
-cat > ~/Library/LaunchAgents/com.sogice.ollama-tunnel.plist << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.sogice.ollama-tunnel</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/bin/autossh</string>
-        <string>-M</string>
-        <string>0</string>
-        <string>-N</string>
-        <string>-L</string>
-        <string>11434:localhost:11434</string>
-        <string>macstudio</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-</dict>
-</plist>
-EOF
-
-launchctl load ~/Library/LaunchAgents/com.sogice.ollama-tunnel.plist
-```
-
-### Remote Access From Outside the Office (VPN / Tailscale)
-
-If the Mac Studio is on the office network and you're working from home or travelling:
-
-**Option 1 — Tailscale (easiest, free for personal use)**
-
-```bash
-# Install on Mac Studio AND MacBook:
-brew install --cask tailscale
-# Sign in with same account on both machines
-# After that, use the Tailscale IP instead of the LAN IP in ~/.ssh/config:
-#   HostName 100.x.x.x   (your Mac Studio's Tailscale IP)
-```
-
-Tailscale handles NAT traversal automatically — no port forwarding needed on the office router.
-
-**Option 2 — Office VPN**
-
-If your office already has a VPN (Cisco, WireGuard, etc.), connect to it first, then use the Mac Studio's LAN IP as normal.
-
----
-
-## Part 3 — Update Your Runner Config
-
-Once the tunnel is active, update `runner/.env` to point to the Mac Studio models:
-
-```env
-# Ollama — points to localhost because the SSH tunnel forwards there
-OLLAMA_BASE_URL=http://localhost:11434
-
-# Upgrade models for the Mac Studio's capacity
-LOCAL_ANALYSIS_MODEL=qwen3.5:32b
-LOCAL_ANALYSIS_MODEL_HEAVY=qwen3:72b
-LOCAL_ANALYSIS_MODEL_REASONING=qwen3.5:32b
-EMBEDDING_MODEL=qwen3-embedding:8b
-
-# Raise truncation limit — 32b+ models handle long context reliably
-TRUNCATION_LIMIT_LOCAL=200000
-```
-
-> Keep `OLLAMA_BASE_URL=http://localhost:11434` even when using the Mac Studio — the SSH tunnel makes it transparent.
-
----
-
-## Part 4 — Verify Everything Works
-
-```bash
-# 1. Open tunnel (or verify autossh is running)
-ssh -N -L 11434:localhost:11434 macstudio &
-
-# 2. Test embedding dimension (should still report 4096d)
-python3 -m runner embed-test
-
-# 3. Quick ingest test
-python3 -m runner ingest https://christianconcern.com/comment/why-christians-must-defeat-the-global-attack-on-conversion-therapy-for-homosexuality/ --llm local
-
-# 4. Heavy model test (qwen3:72b — expect 2–5 min on first load)
-python3 -m runner ingest document.pdf --llm local-heavy
-```
-
----
-
-## Part 5 — Mac Studio Maintenance
-
-```bash
-# Check Ollama logs
-tail -f /tmp/ollama.log
-
-# Restart Ollama service
-launchctl unload ~/Library/LaunchAgents/com.ollama.server.plist
-launchctl load ~/Library/LaunchAgents/com.ollama.server.plist
-
-# Update Ollama
-brew upgrade ollama
-launchctl unload ~/Library/LaunchAgents/com.ollama.server.plist
-launchctl load ~/Library/LaunchAgents/com.ollama.server.plist
-
-# Check RAM usage during inference (run on Mac Studio)
-sudo powermetrics --samplers gpu_power -i 1000 -n 5
-# Or simpler:
-top -l 1 | grep -E "PhysMem|ollama"
-```
+> For the SSH tunnel approach, you'd also need to change Ollama's `OLLAMA_HOST` in the plist from `127.0.0.1` to `0.0.0.0` so it accepts tunnel connections. Edit the plist and reload.
 
 ---
 
 ## Expected Performance (M2 Ultra, 64 GB)
 
-| Model | Load time | Inference (avg doc ~9k chars) |
+| Model | First load | Inference (avg doc ~9k chars) |
 |---|---|---|
 | `qwen3-embedding:8b` | ~5s | ~3s |
-| `qwen3.5:32b` | ~15s | ~45–90s |
-| `qwen3:72b` | ~30s | ~3–6 min |
+| `qwen3.6:35b-a3b` (core-qwen) | ~20s | ~60–120s |
+| `gemma4:31b-it` (core-gemma) | ~18s | ~60–90s |
+| `qwen3.6:27b` (review-qwen) | ~15s | ~45–90s |
+| `gemma4:e4b-it` (triage) | ~5s | ~10–20s |
 
-With `OLLAMA_KEEP_ALIVE=0`, load time is paid on every request. For batch processing (many documents in a session), set `keep_alive` to a duration (e.g. `"5m"`) in the Ollama request options to keep the model warm between calls.
+With `OLLAMA_KEEP_ALIVE=0`, load time is paid on every request. For batch runs, temporarily set `keep_alive: "10m"` in the LiteLLM config to keep the active model warm.
 
 ---
 
 ## Security Notes
 
-- The SSH tunnel encrypts all traffic — safe over the internet if you use Tailscale or VPN
-- Do not expose port 11434 directly to the internet (no firewall exceptions needed with SSH tunnel approach)
-- Ollama has no authentication — the SSH tunnel is your auth layer
-- If the Mac Studio is unattended in the office, ensure macOS screensaver lock is enabled but **Remote Login stays on** (locking the screen does not disconnect SSH)
+- Tailscale encrypts all traffic — safe from anywhere
+- LiteLLM's `master_key` is your auth layer — keep it out of git
+- Ollama binds to `127.0.0.1` only — not directly accessible from the network
+- Do not add port 4000 to any public firewall rules — Tailscale is the only intended path
