@@ -8,10 +8,12 @@
 
 ## Changelog from v2.0
 
-- **C2 additions (16 terms):** Sanctification-Trajectory, Spiritual-Friendship, Costly-Discipleship, World-Contamination-Doctrine, Danger-of-Labeling, Accountability-Partnership, Accompagnamento (IT), Ferita-Antropologica (IT), Patimă (RO), Troska-Duszpasterska (PL), Sjelesorg (NO), Imago-Dei-Integrity-Argument, Mixed-Orientation-Marriage, Relapse-as-Deepening, Healing-Retreat, Ministry-Formation-Track
-- **C3 additions (2 terms):** Developmental-Arrest-Framing, Disordine-Interiore (IT)
+- **C1 additions (2 terms):** Identity-Alignment, Faith-Based-Life-Coaching — Platform-Evasion vocabulary completing the SSA gateway
+- **C2 additions (19 terms):** Sanctification-Trajectory, Spiritual-Friendship, Costly-Discipleship, World-Contamination-Doctrine, Danger-of-Labeling, Accountability-Partnership, Accompagnamento (IT), Ferita-Antropologica (IT), Patimă (RO), Troska-Duszpasterska (PL), Sjelesorg (NO), Imago-Dei-Integrity-Argument, Mixed-Orientation-Marriage, Relapse-as-Deepening, Healing-Retreat, Ministry-Formation-Track, Divine-Design, Spiritual-Wholeness, Walking-in-Truth, Healing-the-Root
+- **C3 additions (3 terms):** Developmental-Arrest-Framing, Disordine-Interiore (IT), Gender-Role-Deficit
 - **C4 additions (7 terms):** Beratungsfreiheit (DE), Libertà-Terapeutica (IT), Terápiás-Szabadság (HU), Exploratory-Therapy-Rebranding, Einvernehmliche-Therapie (DE), Suwerenność-Rodzicielska (PL), Therapeutic-Alliance-Performance
 - **Section 11 additions:** German, Italian, Polish, Hungarian, Romanian, Greek legislative dog whistle vocabulary
+- **Three-system analysis:** Documents the interlocking logic of System A (Causal/Medical), System B (Spiritual/Divine Design), and System C (Platform-Evasion/Policy) — new terms fill gaps in each
 - **Companion prompt:** ingestion-v3.3
 
 ---
@@ -130,6 +132,18 @@ Every entry defines a specific term, phrase, acronym, or coded expression in SOG
 - Cluster: SSA-Rhetoric | Function: Pastoral Rhetoric
 - Definition: Ministry narrative framing conversion as a spiritual journey. Implies ongoing progress toward heterosexuality. Source documentation needed.
 - Related: → Freedom from SSA, → Overcomer
+
+**Identity-Alignment**
+- Cluster: SSA-Rhetoric / Policy-Resistance | Function: Euphemism / Platform-Evasion
+- Definition: Wellness-coded SOGICE term used to bypass platform content filters and ban definitions. "Working toward identity alignment" or "living in alignment with your values" = SOGICE without using the word. Operates within System C's platform-evasion logic. Particularly prevalent on social media, coaching platforms, and in advertising copy for programs that could not use earlier terminology. Currently referenced in the prompt's MULTILINGUAL CODED LANGUAGE section as a detection signal; elevated here as a taggable lexicon entry because it is used promotionally in source documents.
+- Promotional use rule: Tag when a source uses "identity alignment" to promote or describe SOGICE outcomes. Do not tag when used in affirming therapeutic contexts.
+- Related: → Platform-Evasion, → Congruence-Therapy, → Faith-Based-Life-Coaching, → SAFE-T
+
+**Faith-Based-Life-Coaching**
+- Cluster: SSA-Rhetoric / Policy-Resistance | Function: Euphemism / Platform-Evasion
+- Definition: Use of "coaching" rather than "therapy" or "counseling" specifically to avoid the licensed-practitioner definitions in ban legislation. Most European conversion practice bans target psychological therapy and pastoral counseling by licensed practitioners; "life coaching" sits outside regulated categories in most jurisdictions. Faith-based life coaching for people "navigating SSA or gender questions" is a rapidly expanding category in post-ban environments. Structurally identical to SOGICE in intent and technique; legally invisible in most frameworks.
+- Promotional use rule: Tag when source offers, promotes, or endorses faith-based life coaching for LGBTQ+ people with a change-oriented frame.
+- Related: → Platform-Evasion, → Identity-Alignment, → Practice:Coaching-Counselling-Rebrand, → Soft-Referral-Pipeline
 
 ---
 
@@ -296,6 +310,30 @@ Every entry defines a specific term, phrase, acronym, or coded expression in SOG
 - Definition: Training pathway for SOGICE program leaders drawn from among program "graduates" — people who have participated in SOGICE and now facilitate it for others. Creates a professional-adjacent credentialing path that converts participants into practitioners, expanding the SOGICE network organically while generating testimonials and deepening participant commitment. Used by IFTCC-affiliated and ex-gay ministry networks to train local facilitators across Europe.
 - Related: → Training-Certification-Material, → Academic-Credentialing, → Healing-Retreat
 
+**Divine-Design**
+- Cluster: Pastoral-Coercion | Function: Pastoral Rhetoric
+- Definition: The evangelical Protestant and broader Christian equivalent of Fitra-Frame. "God's divine design for sexuality" posits heterosexuality and binary gender as the blueprint written into creation — not a preference or cultural norm but a design parameter. Same-sex attraction represents a departure from that design; SOGICE restores it. Very high frequency in Anglophone evangelical SOGICE materials, particularly from US-origin networks operating in Europe (IFTCC affiliates, Living Waters, Desert Stream). Functionally identical to Imago-Dei-Integrity-Argument but with explicitly design-engineering rather than image/likeness theological language.
+- Promotional use rule: Tag when "divine design" (or direct translations: diseño divino, dessein divin, göttliches Design, divino disegno) is used to frame heterosexuality as the created norm requiring restoration.
+- Related: → Imago-Dei-Integrity-Argument, → Biblical-Masculinity-Femininity-Restoration, → Fitra-SOGICE, → Fitra-Frame, → Spiritual-Wholeness
+- Links to actors: Living Waters Ministry, Desert Stream Ministries, IFTCC-affiliated European programs
+
+**Spiritual-Wholeness**
+- Cluster: Pastoral-Coercion | Function: Euphemism / Testimonial-Marketing
+- Definition: Coded proxy for the SOGICE outcome — the celibate or heterosexually-directed end state — framed as spiritual fulfillment rather than as orientation change. "Finding wholeness in Christ," "experiencing true wholeness," or "the wholeness God intends" functions as the conversion goal without naming heterosexuality or change directly. Deliberately vague enough to survive legal scrutiny while communicating unmistakably to the target audience. Appears in testimonials, program advertising, and retreat marketing.
+- Promotional use rule: Tag when "spiritual wholeness" or equivalent is used as a destination state implying suppression of LGBTQ+ identity.
+- Related: → Sanctification-Trajectory, → Divine-Design, → Walking-in-Truth, → Sexual-Restoration, → Testimonial-Marketing
+
+**Walking-in-Truth**
+- Cluster: Pastoral-Coercion | Function: Pastoral Rhetoric / Euphemism
+- Definition: Coded pastoral compliance phrase meaning living heterosexually or celibately in accordance with the community's theological framework. "Walking in truth," "walking in the light," "walking in freedom" = the SOGICE outcome described as spiritual faithfulness. Signals active, ongoing compliance rather than a fixed destination — the person is on the journey. Common in Side-B discourse, LDS SOGICE programs, and pastoral accountability contexts. Serves as a status marker within SOGICE communities: participants who "walk in truth" are affirmed; those who don't are subjects of increased pastoral concern.
+- Related: → Side-B, → Spiritual-Wholeness, → Truth-in-Love, → Accountability-Partnership
+
+**Healing-the-Root**
+- Cluster: Pastoral-Coercion / Policy-Resistance | Function: Euphemism / Political Slogan
+- Definition: The core legislative defence of the Causal/Medical SOGICE system (System A). The framing: "We do not change orientation — we heal the underlying trauma, attachment wound, or developmental deficit that causes same-sex attraction. When the root is healed, the symptom resolves naturally." This argument was explicitly deployed by reintegrative therapy practitioners (Pickup, Nicolosi Jr.) in legislative hearings to distinguish their practice from "conversion therapy." Makes SOGICE appear as ordinary trauma treatment rather than orientation change effort. Requires SSA depersonalization first: the root can only be "healed" once same-sex attraction is established as a symptom rather than an identity.
+- Promotional use rule: Tag when used by a SOGICE-promoting source to characterize its practice as addressing root causes rather than orientation directly.
+- Related: → Causal-Theory-Frame, → Reintegrative-Therapy, → Father-Wound, → Developmental-Arrest-Framing, → Therapeutic-Autonomy-Frame
+
 ---
 
 ## SECTION 3 — Pseudo-Science (C3)
@@ -378,6 +416,12 @@ Every entry defines a specific term, phrase, acronym, or coded expression in SOG
 - Cluster: Pseudo-Science / Pastoral-Coercion | Function: Pseudo-Diagnostic
 - Definition: Italian Catholic term for "inner disorder." Used in Italian diocesan materials, Courage International–Italy, and some academic Catholic theology to describe same-sex attraction as an interior psychological and spiritual disorder distinct from sinful acts. Derived from Catechism of the Catholic Church §2358 ("objectively disordered") but clinicalized into a quasi-therapeutic diagnostic concept that positions pastoral care as the appropriate treatment.
 - Related: → Ferita-Antropologica, → Sexual-Brokenness, → Homosexual-Disorder
+
+**Gender-Role-Deficit**
+- Cluster: Pseudo-Science | Function: Pseudo-Diagnostic
+- Definition: Nicolosi's peer-level origin theory: homosexuality in boys results from failure to identify with and bond with male peers during middle childhood — the boy feels excluded from male peer culture, experiences male peers as Other rather than Same, and eroticizes that otherness in adolescence. Distinct from Father-Wound (which concerns the parental relationship) and operates at the social-developmental level. Part of the Reparative-Drive system: the "masculine deficit" created by peer exclusion generates the reparative drive that becomes sexualized. Used in NARTH and IFTCC materials to explain why some gay men report childhood gender-nonconformity or feelings of masculine inadequacy. No empirical support. The theory was central to reparative therapy practice (group bonding exercises, "masculine affirmation" activities).
+- Related: → Father-Wound, → Reparative-Drive, → Failed-Boy-Syndrome, → Developmental-Arrest-Framing
+- Links to actors: NARTH (Nicolosi Sr.), IFTCC
 
 ---
 
