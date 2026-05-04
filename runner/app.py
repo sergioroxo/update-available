@@ -578,7 +578,26 @@ def _render_analysis_summary(analysis) -> None:
     c2.metric("Format", analysis.format)
     c3.metric("Scope", analysis.scope)
     c4.metric("Confidence", f"{analysis.confidence.overall_score:.2f} ({analysis.confidence.status})")
+
+    # Second row: intensity / framing / register / compound type
+    r2c1, r2c2, r2c3, r2c4 = st.columns(4)
+    r2c1.metric("Rhetorical Intensity", getattr(analysis, "rhetorical_intensity", None) or "—")
+    r2c2.metric("Framing Balance", getattr(analysis, "framing_balance", None) or "—")
+    r2c3.metric("Narrative Register", getattr(analysis, "narrative_register", "—"))
+    _pt = getattr(analysis, "primary_type", None)
+    _st = getattr(analysis, "secondary_type", None)
+    compound = f"{_pt} + {_st}" if _pt and _st else (_pt or "—")
+    r2c4.metric("Compound Type", compound)
+
     st.write(analysis.summary)
+
+    _ls = getattr(analysis, "legal_status", None)
+    if _ls and getattr(_ls, "jurisdiction", None):
+        st.caption(
+            f"⚖️ Legal status: **{_ls.status}** in **{_ls.jurisdiction}**"
+            + (f" ({_ls.instrument})" if _ls.instrument else "")
+        )
+
     if getattr(analysis, "normalisation_warnings", None):
         with st.expander("Model output corrections", expanded=True):
             st.warning(
@@ -590,12 +609,16 @@ def _render_analysis_summary(analysis) -> None:
         st.write("**Tactics:**", ", ".join(analysis.tactic))
     if analysis.term:
         st.write("**Existing terms used promotionally:**", ", ".join(analysis.term))
+    _tuc = getattr(analysis, "term_use_context", None)
+    if _tuc:
+        st.write("**Terms used non-promotionally (definitional/critical/reported):**")
+        st.dataframe([t.model_dump() for t in _tuc], use_container_width=True)
     if analysis.candidate_terms:
         st.write("**Candidate terms:**")
-        st.dataframe([t.model_dump() for t in analysis.candidate_terms], width="stretch")
+        st.dataframe([t.model_dump() for t in analysis.candidate_terms], use_container_width=True)
     if analysis.suggested_actors:
         st.write("**Suggested actors:**")
-        st.dataframe([a.model_dump() for a in analysis.suggested_actors], width="stretch")
+        st.dataframe([a.model_dump() for a in analysis.suggested_actors], use_container_width=True)
 
 
 def _render_enrichment_result(result) -> None:
@@ -730,6 +753,8 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             "summary":     data.get("summary", ""),
             "country":     data.get("country", []),
             "tactic":      data.get("tactic", []),
+            "rhetorical_intensity": data.get("rhetorical_intensity") or "—",
+            "framing_balance":      data.get("framing_balance") or "—",
             "candidate_terms": len(data.get("candidate_terms", [])),
             "suggested_actors": len(data.get("suggested_actors", [])),
             "batch_id":    intake.get("batch_id", "—"),
@@ -762,6 +787,9 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 st.write("**Countries:**", ", ".join(doc["country"]))
             if doc["tactic"]:
                 st.write("**Tactics:**", ", ".join(doc["tactic"][:4]))
+            ri = doc.get("rhetorical_intensity", "—")
+            fb = doc.get("framing_balance", "—")
+            st.write(f"**Intensity:** {ri}  |  **Framing:** {fb}")
             st.write(
                 f"**Candidate terms:** {doc['candidate_terms']}  |  "
                 f"**Actors:** {doc['suggested_actors']}"
