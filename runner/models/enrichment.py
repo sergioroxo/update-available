@@ -24,7 +24,27 @@ Sanity targets:
 """
 from __future__ import annotations
 from typing import Literal, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def _to_title_case(s: str) -> str:
+    """Title-case a term while preserving existing uppercase (acronyms, proper nouns).
+
+    'unwanted same-sex attraction' → 'Unwanted Same-Sex Attraction'
+    'anti-LGBT conspiracy'         → 'Anti-LGBT Conspiracy'
+    'Pastoral-Coercion'            → 'Pastoral-Coercion'
+    """
+    def _cap_word(word: str) -> str:
+        if any(c.isupper() for c in word):
+            return word
+        return word.capitalize()
+
+    def _cap_token(token: str) -> str:
+        if "-" in token:
+            return "-".join(_cap_word(part) for part in token.split("-"))
+        return _cap_word(token)
+
+    return " ".join(_cap_token(t) for t in s.split())
 
 
 # ---------------------------------------------------------------------------
@@ -64,8 +84,13 @@ class LexiconProposal(BaseModel):
     action: Literal["add_new", "add_variant", "add_evidence", "add_definition", "merge_into"]
 
     # The term itself
-    term: str                              # exact form as used in the document
+    term: str                              # canonical form (auto title-cased on ingest)
     language: str = "en"                  # ISO 639-1
+
+    @field_validator("term", mode="before")
+    @classmethod
+    def title_case_term(cls, v: str) -> str:
+        return _to_title_case(v.strip()) if isinstance(v, str) else v
     proposed_cluster: Literal[
         "SSA-Rhetoric",
         "Pastoral-Coercion",

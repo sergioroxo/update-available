@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, Optional
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -66,6 +66,27 @@ class FieldConfidence(BaseModel):
     low_confidence_reasons: list[LowConfidenceReason] = Field(default_factory=list)
 
 
+def _to_title_case(s: str) -> str:
+    """Title-case preserving existing uppercase (acronyms, proper nouns).
+    'unwanted same-sex attraction' → 'Unwanted Same-Sex Attraction'
+    'anti-LGBT conspiracy'         → 'Anti-LGBT Conspiracy'
+    'Religious-Freedom-Shield'     → 'Religious-Freedom-Shield'
+    """
+    def _cap_word(word: str) -> str:
+        # Preserve words that already contain uppercase (acronyms, proper nouns)
+        if any(c.isupper() for c in word):
+            return word
+        return word.capitalize()
+
+    def _cap_token(token: str) -> str:
+        # Handle hyphenated tokens part-by-part so "anti-LGBT" → "Anti-LGBT"
+        if "-" in token:
+            return "-".join(_cap_word(part) for part in token.split("-"))
+        return _cap_word(token)
+
+    return " ".join(_cap_token(t) for t in s.split())
+
+
 class CandidateTerm(BaseModel):
     term: str
     language: str = "unknown"
@@ -73,6 +94,11 @@ class CandidateTerm(BaseModel):
     promotional_use: bool = True
     draft_definition: str = ""
     context_quote: str = ""
+
+    @field_validator("term", mode="before")
+    @classmethod
+    def title_case_term(cls, v: str) -> str:
+        return _to_title_case(v.strip()) if isinstance(v, str) else v
 
 
 class TermUseContext(BaseModel):
