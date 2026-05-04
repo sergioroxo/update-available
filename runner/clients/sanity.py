@@ -298,23 +298,49 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         "provenance": provenance,
 
         "classification": {
-            "type":             analysis.type,
-            "format":           analysis.format,
-            "evidence":         analysis.evidence,
-            "scope":            analysis.scope,
-            "country":          analysis.country,
-            "tactic":           analysis.tactic,
-            "actor":            analysis.actor,
-            "network":          analysis.network,
-            "practice":         analysis.practice,
-            "term":             analysis.term,
-            "harm":             analysis.harm,
-            "migration":        analysis.migration,
-            "function":         analysis.function,
-            "landmark":         analysis.landmark,
-            "flags":            analysis.flags,
-            "narrativeRegister": analysis.narrative_register,
+            "type":                analysis.type,
+            "primaryType":         analysis.primary_type,
+            "secondaryType":       analysis.secondary_type,
+            "format":              analysis.format,
+            "evidence":            analysis.evidence,
+            "scope":               analysis.scope,
+            "country":             analysis.country,
+            "tactic":              analysis.tactic,
+            "actor":               analysis.actor,
+            "network":             analysis.network,
+            "practice":            analysis.practice,
+            "term":                analysis.term,
+            "harm":                analysis.harm,
+            "migration":           analysis.migration,
+            "function":            analysis.function,
+            "landmark":            analysis.landmark,
+            "flags":               analysis.flags,
+            "narrativeRegister":   analysis.narrative_register,
+            "rhetoricalIntensity": analysis.rhetorical_intensity,
+            "framingBalance":      analysis.framing_balance,
+            "needsReview":         analysis.needs_review,
+            "testimonyFlag":       analysis.testimony_flag,
         },
+
+        "legalStatus": (
+            {
+                "jurisdiction": analysis.legal_status.jurisdiction,
+                "status":       analysis.legal_status.status,
+                "instrument":   analysis.legal_status.instrument,
+            }
+            if analysis.legal_status and analysis.legal_status.jurisdiction
+            else None
+        ),
+
+        "termUseContext": [
+            {
+                "_key":  f"tuc-{i}",
+                "term":  t.term,
+                "use":   t.use,
+                "quote": t.quote,
+            }
+            for i, t in enumerate(analysis.term_use_context)
+        ],
 
         "confidence": {
             "overallScore": analysis.confidence.overall_score,
@@ -385,6 +411,7 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         "aiMetadata": {
             "primaryModel":    pkg.llm_used,
             "primaryProvider": _provider_for_llm(pkg.llm_used),
+            "promptVersion":   "ingestion-v3.3",
             "ontologyVersion": "v3.0",
             "processingDate":  now_iso,
             "inputLengthChars": prep.char_count,

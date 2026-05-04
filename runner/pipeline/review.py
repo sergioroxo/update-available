@@ -144,9 +144,24 @@ def checkpoint_analysis(
 
     table = Table(show_header=False, box=None, padding=(0, 1))
     table.add_row("Type:",   result.type)
+    _pt = getattr(result, "primary_type", None)
+    _st = getattr(result, "secondary_type", None)
+    if _pt or _st:
+        table.add_row("Compound type:", f"{_pt or '—'} + {_st or '—'}")
     table.add_row("Format:", result.format)
     table.add_row("Scope:",  result.scope)
+    table.add_row("Narrative register:", result.narrative_register)
+    ri = getattr(result, "rhetorical_intensity", None)
+    if ri:
+        table.add_row("Rhetorical intensity:", ri)
+    fb = getattr(result, "framing_balance", None)
+    if fb:
+        table.add_row("Framing balance:", fb)
     table.add_row("Confidence:", f"{result.confidence.overall_score:.2f} ({result.confidence.status})")
+    _ls = getattr(result, "legal_status", None)
+    if _ls and getattr(_ls, "jurisdiction", None):
+        instrument = f" ({_ls.instrument})" if _ls.instrument else ""
+        table.add_row("Legal status:", f"{_ls.status} in {_ls.jurisdiction}{instrument}")
     if result.country:
         table.add_row("Country:", ", ".join(result.country))
     if result.tactic:
@@ -154,10 +169,14 @@ def checkpoint_analysis(
     if result.actor:
         table.add_row("Actors:", ", ".join(result.actor[:5]))
     if result.term:
-        table.add_row("Terms:", ", ".join(result.term))
+        table.add_row("Terms (promo):", ", ".join(result.term))
+    _tuc = getattr(result, "term_use_context", None)
+    if _tuc:
+        table.add_row("Terms (non-promo):", f"{len(_tuc)} entries")
     if result.flags:
         table.add_row("Flags:", ", ".join(result.flags))
     table.add_row("Testimony flag:", "YES" if result.testimony_flag else "no")
+    table.add_row("Needs review:", "YES" if result.needs_review else "no")
     table.add_row("Candidate terms:", str(len(result.candidate_terms)))
     table.add_row("Suggested actors:", str(len(result.suggested_actors)))
 
@@ -267,11 +286,11 @@ def _show_diff(claude: AnalysisResult, local: AnalysisResult) -> None:
     diff_table.add_column("Field")
     diff_table.add_column("Claude")
     diff_table.add_column("Local")
-    for field in ("type", "scope", "narrative_register"):
-        cv = getattr(claude, field)
-        lv = getattr(local, field)
+    for field in ("type", "scope", "narrative_register", "rhetorical_intensity", "framing_balance"):
+        cv = getattr(claude, field, None)
+        lv = getattr(local, field, None)
         style = "" if cv == lv else "yellow"
-        diff_table.add_row(field, str(cv), str(lv), style=style)
+        diff_table.add_row(field, str(cv) if cv is not None else "—", str(lv) if lv is not None else "—", style=style)
     for field in ("tactic", "country", "actor"):
         cv = set(getattr(claude, field))
         lv = set(getattr(local, field))
