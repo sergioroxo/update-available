@@ -693,5 +693,111 @@ def doctor():
         raise typer.Exit(1)
 
 
+@app.command(name="seed-lexicon")
+def seed_lexicon_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Parse and count entries without writing to Sanity"),
+    force:   bool = typer.Option(False, "--force",   help="Overwrite existing Sanity entries (default: skip if exists)"),
+):
+    """Seed Sanity with all ~163 lexicon terms from SOGICE_Lexicon_v2.1.md.
+
+    Parses the markdown file, converts each term entry to a draft lexiconEntry,
+    and writes it to Sanity using createOrReplace. Existing entries are skipped
+    unless --force is given.
+
+    Run with --dry-run first to verify the parser finds all expected terms.
+    """
+    from .pipeline.seed import parse_lexicon_md, seed_lexicon
+
+    if dry_run:
+        entries = parse_lexicon_md()
+        console.print(f"[bold]Dry run:[/bold] parsed {len(entries)} terms — no writes performed.")
+        for e in entries[:10]:
+            console.print(f"  {e['term']:45s} cluster={e['proposed_cluster']}  fn={e['function']}")
+        if len(entries) > 10:
+            console.print(f"  … and {len(entries) - 10} more")
+        return
+
+    config = load_config()
+    console.print("[bold]Seeding lexicon from SOGICE_Lexicon_v2.1.md …[/bold]")
+    summary = seed_lexicon(config, dry_run=False, force=force)
+
+    console.print(
+        f"\n[bold green]Done.[/bold green] "
+        f"{summary['created']} created, "
+        f"{summary['skipped']} skipped (already exist), "
+        f"{len(summary['errors'])} errors "
+        f"(of {summary['attempted']} attempted)"
+    )
+    if summary["errors"]:
+        console.print("\n[red]Errors:[/red]")
+        for err in summary["errors"][:20]:
+            console.print(f"  {err}")
+        if len(summary["errors"]) > 20:
+            console.print(f"  … and {len(summary['errors']) - 20} more")
+
+
+@app.command(name="seed-entities")
+def seed_entities_cmd(
+    entity_type: str = typer.Option("all", "--type", help="org | person | law | event | all"),
+    dry_run: bool    = typer.Option(False, "--dry-run", help="Parse and count without writing"),
+):
+    """Seed Sanity with organizations, persons, laws, and events from Entity_Registry_v1.1.md.
+
+    Writes records with registryStatus='seeded'. Existing records are replaced
+    (createOrReplace). Safe to re-run — idempotent via stable Sanity IDs.
+
+    Use --type to import only one section:
+      --type org      → organizations only
+      --type person   → persons only
+      --type law      → laws and policies only
+      --type event    → events only
+    """
+    from .pipeline.seed import parse_entity_registry_md, seed_entities
+
+    valid_types = {"org", "person", "law", "event", "all"}
+    if entity_type not in valid_types:
+        console.print(f"[red]Unknown --type '{entity_type}'. Choose from: {', '.join(sorted(valid_types))}[/red]")
+        raise typer.Exit(1)
+
+    if dry_run:
+        registry = parse_entity_registry_md()
+        orgs    = len(registry["orgs"])    if entity_type in ("org",    "all") else 0
+        persons = len(registry["persons"]) if entity_type in ("person", "all") else 0
+        laws    = len(registry["laws"])    if entity_type in ("law",    "all") else 0
+        events  = len(registry["events"])  if entity_type in ("event",  "all") else 0
+        total = orgs + persons + laws + events
+        console.print(
+            f"[bold]Dry run:[/bold] {total} entities parsed — "
+            f"orgs={orgs}, persons={persons}, laws={laws}, events={events}"
+        )
+        if entity_type in ("org", "all"):
+            console.print("\n[bold]Organizations (first 10):[/bold]")
+            for e in registry["orgs"][:10]:
+                console.print(f"  {e['name']}")
+        if entity_type in ("person", "all"):
+            console.print("\n[bold]Persons (first 10):[/bold]")
+            for e in registry["persons"][:10]:
+                console.print(f"  {e['name']}  ({e.get('role', '')})")
+        return
+
+    config = load_config()
+    console.print(f"[bold]Seeding entities (type={entity_type}) from Entity_Registry_v1.1.md …[/bold]")
+    summary = seed_entities(config, dry_run=False, entity_type=entity_type)  # type: ignore[arg-type]
+
+    console.print(
+        f"\n[bold green]Done.[/bold green] "
+        f"{summary['created']} created, "
+        f"{summary['skipped']} skipped, "
+        f"{len(summary['errors'])} errors "
+        f"(of {summary['attempted']} attempted)"
+    )
+    if summary["errors"]:
+        console.print("\n[red]Errors:[/red]")
+        for err in summary["errors"][:20]:
+            console.print(f"  {err}")
+        if len(summary["errors"]) > 20:
+            console.print(f"  … and {len(summary['errors']) - 20} more")
+
+
 if __name__ == "__main__":
     app()

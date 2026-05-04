@@ -254,6 +254,183 @@ def write_seed_lexicon_variant(variant: dict, config: Config) -> str:
         raise RuntimeError(f"Unexpected Sanity response for variant write:\n{result}")
 
 
+def write_seed_organization(entry: dict, config: Config) -> str:
+    """Create or replace an organization record from seed entity registry data."""
+    name = (entry.get("name") or "").strip()
+    if not name:
+        raise ValueError("Cannot write organization without a name")
+
+    sanity_id = f"organization-{_slugify(name)}"
+    type_raw = entry.get("type", "")
+    org_type = _org_type_from_seed(type_raw)
+
+    doc: dict = {
+        "_id": sanity_id,
+        "_type": "organization",
+        "name": name,
+        "type": org_type,
+        "visibility": "research_contextualized",
+        "registryStatus": "seeded",
+    }
+    if entry.get("country"):
+        doc["country"] = entry["country"].split("(")[0].strip().split("/")[0].strip()
+    if entry.get("founded"):
+        year_str = re.sub(r"[^\d]", "", str(entry["founded"]))
+        if year_str.isdigit():
+            doc["founded"] = int(year_str)
+    if entry.get("dissolved"):
+        year_str = re.sub(r"[^\d]", "", str(entry["dissolved"]))
+        if year_str.isdigit():
+            doc["dissolved"] = int(year_str)
+    if entry.get("description"):
+        doc["description"] = entry["description"]
+    if entry.get("note"):
+        doc["notes"] = entry["note"]
+    if entry.get("expansion"):
+        doc["fullName"] = entry["expansion"]
+
+    doc = {k: v for k, v in doc.items() if v is not None}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for seed org write:\n{result}")
+
+
+def write_seed_person(entry: dict, config: Config) -> str:
+    """Create or replace a person record from seed entity registry data."""
+    name = (entry.get("name") or "").strip()
+    if not name:
+        raise ValueError("Cannot write person without a name")
+
+    sanity_id = f"person-{_slugify(name)}"
+
+    doc: dict = {
+        "_id": sanity_id,
+        "_type": "person",
+        "name": name,
+        "registryStatus": "seeded",
+    }
+    if entry.get("role"):
+        doc["role"] = _person_role(entry["role"])
+    if entry.get("country"):
+        doc["countryOfOperation"] = entry["country"].split("/")[0].strip()
+    if entry.get("description"):
+        doc["description"] = entry["description"]
+    if entry.get("contested_figure", "").lower() in ("true", "yes"):
+        doc["contestedFigure"] = True
+        if entry.get("contested_figure_note"):
+            doc["contestedFigureNote"] = entry["contested_figure_note"]
+    else:
+        doc["contestedFigure"] = False
+    if entry.get("affiliated_orgs_raw"):
+        doc["affiliatedOrgNames"] = [
+            a.strip() for a in re.split(r"[;,]", entry["affiliated_orgs_raw"]) if a.strip()
+        ]
+
+    doc = {k: v for k, v in doc.items() if v is not None}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for seed person write:\n{result}")
+
+
+def write_seed_law(entry: dict, config: Config) -> str:
+    """Create or replace a legalDefinition record from seed entity registry data."""
+    name = (entry.get("name") or "").strip()
+    if not name:
+        raise ValueError("Cannot write law without a name")
+
+    sanity_id = f"law-{_slugify(name)}"
+    doc: dict = {
+        "_id": sanity_id,
+        "_type": "legalDefinition",
+        "name": name,
+        "registryStatus": "seeded",
+    }
+    if entry.get("country"):
+        doc["jurisdiction"] = entry["country"].split("(")[0].strip()
+    if entry.get("year"):
+        year_str = re.sub(r"[^\d]", "", str(entry["year"]))
+        if year_str.isdigit():
+            doc["year"] = int(year_str)
+    if entry.get("applies_to"):
+        doc["appliesTo"] = entry["applies_to"]
+    if entry.get("description"):
+        doc["description"] = entry["description"]
+    if entry.get("historical_significance"):
+        doc["historicalSignificance"] = entry["historical_significance"]
+    if entry.get("status"):
+        raw_status = entry["status"].lower()
+        if "enacted" in raw_status:
+            doc["enactmentStatus"] = "enacted"
+        elif "pending" in raw_status:
+            doc["enactmentStatus"] = "pending"
+        else:
+            doc["enactmentStatus"] = raw_status[:40]
+
+    doc = {k: v for k, v in doc.items() if v is not None}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for seed law write:\n{result}")
+
+
+def write_seed_event(entry: dict, config: Config) -> str:
+    """Create or replace an event record from seed entity registry data."""
+    name = (entry.get("name") or "").strip()
+    if not name:
+        raise ValueError("Cannot write event without a name")
+
+    sanity_id = f"event-{_slugify(name)}"
+    doc: dict = {
+        "_id": sanity_id,
+        "_type": "event",
+        "name": name,
+        "registryStatus": "seeded",
+    }
+    if entry.get("type"):
+        doc["eventType"] = entry["type"]
+    if entry.get("date"):
+        doc["date"] = entry["date"]
+    if entry.get("description"):
+        doc["description"] = entry["description"]
+    if entry.get("actors_raw"):
+        doc["actorNames"] = [
+            a.strip() for a in re.split(r"[;,]", entry["actors_raw"]) if a.strip()
+        ]
+    if entry.get("historical_significance"):
+        doc["historicalSignificance"] = entry["historical_significance"]
+
+    doc = {k: v for k, v in doc.items() if v is not None}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for seed event write:\n{result}")
+
+
+def _org_type_from_seed(raw: str) -> str:
+    raw = raw.lower()
+    if "church" in raw:
+        return "church"
+    if "pseudo-professional" in raw or "pseudo_professional" in raw:
+        return "pseudo-professional-body"
+    if "therapy" in raw or "counselling" in raw:
+        return "therapy_practice"
+    if "media" in raw:
+        return "media"
+    if "ministry" in raw:
+        return "ministry"
+    if "network" in raw:
+        return "network_node"
+    if "political" in raw or "party" in raw:
+        return "political_party"
+    return "advocacy"
+
+
 def _build_sanity_document(pkg: DocumentPackage) -> dict:
     intake   = pkg.intake
     prep     = pkg.preprocess
