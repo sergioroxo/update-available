@@ -279,22 +279,51 @@ def page_ingest_workbench():
         st.caption("Open Lexicon → Local Proposals to approve/reject proposals and push approved records.")
     _render_stage_progress()
 
-    if st.button("1. Intake Source", type="primary", disabled=not source.strip()):
+    btn_col1, btn_col2 = st.columns([1, 3])
+    with btn_col1:
+        run_all = st.button(
+            "▶ Run Pipeline",
+            type="primary",
+            disabled=not source.strip(),
+            help="Runs Intake → Extract → Analyze automatically, then stops for you to review the JSON.",
+        )
+    with btn_col2:
+        st.caption("Runs all stages automatically and stops at the JSON review step.")
+
+    if run_all:
+        effective_max = _effective_max_chars(max_chars, llm, config)
         _workbench_intake(config, source, tier, batch, provenance_url)
+        if st.session_state.ingest.get("intake"):
+            _workbench_preprocess(config, effective_max)
+        if st.session_state.ingest.get("preprocess"):
+            _workbench_analyze(config, llm)
 
     intake_result = st.session_state.ingest.get("intake")
     if intake_result:
         st.subheader("Intake")
-        st.json(_intake_to_dict(intake_result))
-        if st.button("2. Extract Text"):
-            effective_max = _effective_max_chars(max_chars, llm, config)
-            _workbench_preprocess(config, effective_max)
+        intake_dict = _intake_to_dict(intake_result)
+        st.json(intake_dict)
+        # Show local HTML path when Wayback fails
+        if intake_result.wayback_status in ("failed", "unavailable"):
+            html_path = intake_result.local_dir / "source.html" if intake_result.local_dir else None
+            if html_path and html_path.exists():
+                st.info(
+                    f"Wayback Machine {intake_result.wayback_status}. "
+                    f"Source HTML saved locally at: `{html_path}`"
+                )
+            else:
+                st.warning(f"Wayback Machine {intake_result.wayback_status}: {intake_result.wayback_error}")
+        if not run_all:
+            if st.button("2. Extract Text"):
+                effective_max = _effective_max_chars(max_chars, llm, config)
+                _workbench_preprocess(config, effective_max)
 
     preprocess_result = st.session_state.ingest.get("preprocess")
     if preprocess_result:
         _render_preprocess_review(preprocess_result)
-        if st.button("3. Analyze Document"):
-            _workbench_analyze(config, llm)
+        if not run_all and not st.session_state.ingest.get("analysis"):
+            if st.button("3. Analyze Document"):
+                _workbench_analyze(config, llm)
 
     analysis = st.session_state.ingest.get("analysis")
     if analysis:
@@ -438,7 +467,10 @@ def _workbench_analyze(config, llm: str) -> None:
                 embedding_vector = embed.run(preprocess_result.text, config=config)
             result = analyze.run(preprocess_result, llm=llm, config=config)
         except Exception as exc:
-            st.error(f"Analysis failed: {exc}")
+            err_msg = str(exc)
+            st.error(f"Analysis failed: {err_msg}")
+            with st.expander("Copy error details"):
+                st.code(err_msg)
             return
     st.session_state.ingest.update({
         "embedding": embedding_vector,
@@ -490,6 +522,10 @@ def _render_analysis_editor(config, llm: str) -> None:
     )
     st.session_state.ingest["analysis_json"] = analysis_text
 
+    # Copy-friendly read-only code block for pasting into Claude
+    with st.expander("Copy JSON (read-only, click to expand)", expanded=False):
+        st.code(analysis_text, language="json")
+
     c1, c2, c3, c4 = st.columns(4)
     testimony_blocked = _testimony_requires_review(
         st.session_state.ingest["intake"].doc_id,
@@ -510,7 +546,10 @@ def _render_analysis_editor(config, llm: str) -> None:
                 st.success("JSON is valid.")
             except Exception as exc:
                 st.session_state.ingest["analysis_valid"] = False
-                st.error(f"Invalid analysis JSON: {exc}")
+                err_msg = str(exc)
+                st.error(f"Invalid analysis JSON: {err_msg}")
+                with st.expander("Copy error details"):
+                    st.code(err_msg)
     with c2:
         if st.button("Save Locally", disabled=not st.session_state.ingest.get("analysis_valid")):
             try:
@@ -525,7 +564,10 @@ def _render_analysis_editor(config, llm: str) -> None:
                 )
                 st.success(f"Saved locally: {saved}")
             except Exception as exc:
-                st.error(f"Save failed: {exc}")
+                err_msg = str(exc)
+                st.error(f"Save failed: {err_msg}")
+                with st.expander("Copy error details"):
+                    st.code(err_msg)
     with c3:
         if st.button("Upload", disabled=(not st.session_state.ingest.get("analysis_valid") or testimony_blocked)):
             try:
@@ -541,7 +583,10 @@ def _render_analysis_editor(config, llm: str) -> None:
                 st.session_state.ingest["uploaded"] = True
                 st.success("Uploaded to Sanity and Supabase.")
             except Exception as exc:
-                st.error(f"Upload failed: {exc}")
+                err_msg = str(exc)
+                st.error(f"Upload failed: {err_msg}")
+                with st.expander("Copy error details"):
+                    st.code(err_msg)
     with c4:
         if st.button("Run Enrichment", disabled=not st.session_state.ingest.get("analysis_valid")):
             try:
@@ -561,7 +606,10 @@ def _render_analysis_editor(config, llm: str) -> None:
                 st.session_state.pop("entity_registry", None)
                 st.success("Enrichment saved.")
             except Exception as exc:
-                st.error(f"Enrichment failed: {exc}")
+                err_msg = str(exc)
+                st.error(f"Enrichment failed: {err_msg}")
+                with st.expander("Copy error details"):
+                    st.code(err_msg)
 
     analysis = st.session_state.ingest.get("analysis")
     if analysis:

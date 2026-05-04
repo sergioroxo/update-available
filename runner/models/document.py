@@ -216,6 +216,17 @@ class AnalysisResult(BaseModel):
                 data[key] = val[0]
                 warnings.append(f"Unwrapped single-item list for scalar field '{key}'.")
 
+        # 5. Wrap scalar strings into lists for list[str] fields
+        #    e.g. "country": "UK" → "country": ["UK"]
+        for key in (
+            "country", "tactic", "actor", "network", "practice", "term",
+            "harm", "migration", "function", "landmark", "flags", "evidence",
+        ):
+            val = data.get(key)
+            if isinstance(val, str):
+                data[key] = [val] if val else []
+                warnings.append(f"Wrapped scalar string into list for field '{key}'.")
+
         data["normalisation_warnings"] = warnings
 
         return data
