@@ -1,9 +1,9 @@
 # SurvivingSOGICE — Claude Ingestion Prompt
 
-**Version:** ingestion-v3.2  
+**Version:** ingestion-v3.3  
 **Ontology version:** v3.0  
-**Last updated:** April 2026  
-**Companion documents:** PRD_v3.1.md · SOGICE_Ontology_v3.0.md · SOGICE_Lexicon_v2.0.md  
+**Last updated:** May 2026  
+**Companion documents:** PRD_v3.1.md · SOGICE_Ontology_v3.0.md · SOGICE_Lexicon_v2.1.md  
 **Prompt type:** Ingestion (primary classification)
 
 ---
@@ -40,7 +40,7 @@ Identify candidate new terms, actors, and networks not yet in the vocabulary. Th
 
 ABSOLUTE RULES
 
-1. TERM tags (the `term` array) = PROMOTIONAL USE ONLY. Never tag a term if the source is critiquing, defining, or reporting on it. Only tag if the source uses the term to advocate for or conduct SOGICE.
+1. TERM tags (the `term` array) = PROMOTIONAL USE ONLY. Never tag a term if the source is critiquing, defining, or reporting on it. Only tag if the source uses the term to advocate for or conduct SOGICE. For terms that appear in the document but are used critically, analytically, or as quoted language rather than promotionally, record them in `term_use_context` instead — this preserves their presence without the promotional flag and is essential for Anti-SOGICE, journalism, and academic documents.
 2. COUNTRY = the organisation's country, not the language of the text. A Norwegian subtitle on a US video → country: USA.
 3. EVIDENCE must have at least one tag. Most documents have exactly one; a document that is simultaneously journalism and testimony gets both.
 4. TACTIC is the most important field. Be generous — a document can have 3–5 tactics simultaneously.
@@ -63,12 +63,26 @@ SOGICE documents frequently avoid explicit terminology to evade detection or app
 - Shudhudh (شذوذ): the primary Arabic clinical/religious dog whistle, literally "deviation/anomaly," used to pathologise homosexuality; flag as both Dehumanizing-Language and Fitra-Frame when it appears in a SOGICE context
 - Platform-adapted wellness language: "wellness journey," "life coaching," "community mentorship," "identity alignment," "faith-based support" without affirming clinical credentials — signals Platform-Evasion
 
+THREE CROSS-CUTTING CROSS-LANGUAGE PATTERNS
+
+- Pastoral care cluster (ban-exemption framing): Italian `accompagnamento`, Norwegian `sjelesorg`, Polish `troska duszpasterska`, Hungarian `lelkipásztori gondozás`, Romanian `îngrijire pastorală`, French `accompagnement pastoral` — all mean "pastoral care/soul accompaniment" and are used in each country's ban debates to claim legislative exemptions. Recognize as → PastoralCoercion-LegislativeLoophole when paired with SOGICE context.
+- Autonomy-inversion vocabulary (rights-language capture): German `Beratungsfreiheit` (counseling freedom), Italian `libertà terapeutica`, Hungarian `terápiás szabadság`, French `liberté thérapeutique`, Polish `wolność terapeutyczna` — frames the client's alleged right to seek SOGICE as the civil-liberties issue. Always signals → Therapeutic-Autonomy-Frame or → Religious-Freedom-Shield.
+- Consent-based exemption language (adult carve-out): German `einvernehmliche Therapie` (consensual therapy), Italian `terapia consensuale`, Polish `terapia dobrowolna` — used to argue adult SOGICE with consent should be exempt from bans. Signals → Conscience-Carve-Out tactic in adult carve-out legislative proposals.
+
 ---
 
 VOCABULARY
 
-TYPE (exactly one)
-Pro-SOGICE | Anti-SOGICE | Neutral-Academic | Legal-Instrument | Testimony | Media-Coverage | Internal-Org-Document | Mixed
+TYPE (exactly one — assign the most specific and dominant type)
+Pro-SOGICE | Anti-SOGICE | Neutral-Academic | Legal-Instrument | Testimony | Media-Coverage | Internal-Org-Document | Mixed | Training-Certification-Material | Liturgical-Devotional-Material | Clinical-Therapeutic-Protocol | Survivor-Network-Material | Regulatory-Policy-Document
+
+- Training-Certification-Material: curricula, certification programs, training manuals used to train SOGICE practitioners
+- Liturgical-Devotional-Material: prayers, liturgical texts, retreat guides, devotional materials used in spiritual SOGICE
+- Clinical-Therapeutic-Protocol: clinical guides, therapy protocols, assessment frameworks, treatment manuals for SOGICE practice
+- Survivor-Network-Material: documents produced by or for survivor/recovery networks (apply alongside Pro/Anti directional type via primary_type/secondary_type)
+- Regulatory-Policy-Document: professional ethics statements, regulatory frameworks, organizational guidelines from professional or regulatory bodies
+
+Compound TYPE: when a document meaningfully serves two primary functions (e.g. simultaneously Pro-SOGICE and Internal-Org-Document), assign the dominant stance to "type" and populate "primary_type"/"secondary_type" in the output schema.
 
 FORMAT (exactly one)
 Website-Page | Blog-Post | Social-Media-Post | Video | Podcast | Academic-Paper | NGO-Report | Government-Report | Court-Judgment | Legislative-Submission | Parliamentary-Debate | Press-Release | Book | Book-Chapter | Pamphlet | Newsletter | Email | Manual | Course-Material | Event-Program | Other
@@ -83,11 +97,21 @@ Core | Contextual | Reference
 - Reference = global/foundational background material
 
 TACTIC (one or more — the rhetorical or political move being made)
-Identity-Erasure | Rebranding-SOGICE | Gender-Essentialism | False-Scientific-Authority | Social-Contagion-Myth | ROGD-Frame | Detrans-Propaganda | Sex-Rejection-Frame | Anti-Trans-Rhetoric | Policy-Resistance-Frame | Anti-Gender-Narrative | Anti-LGBT-Conspiracy | Groomer-Panic | Dehumanizing-Language | PastoralCoercion-LegislativeLoophole | Operation-Gideon | Parental-Rights-Trans | Fitra-Frame | Causal-Theory-Frame | Platform-Evasion
+Identity-Erasure | Rebranding-SOGICE | Gender-Essentialism | False-Scientific-Authority | Social-Contagion-Myth | ROGD-Frame | Detrans-Propaganda | Sex-Rejection-Frame | Anti-Trans-Rhetoric | Policy-Resistance-Frame | Anti-Gender-Narrative | Anti-LGBT-Conspiracy | Groomer-Panic | Dehumanizing-Language | PastoralCoercion-LegislativeLoophole | Operation-Gideon | Parental-Rights-Trans | Fitra-Frame | Causal-Theory-Frame | Platform-Evasion | Religious-Freedom-Shield | Conscience-Carve-Out | Child-Safeguarding-Inversion | Therapeutic-Autonomy-Frame | Academic-Credentialing | Interfaith-Coalition-Building | Network-Laundering | Ecumenical-Consensus-Claim | Soft-Referral-Pipeline | Presuppositional-Framing
 
 - Fitra-Frame: invokes the Islamic concept of innate primordial nature (الفطرة) to frame homosexuality or gender diversity as a departure from God-given design that can be "corrected." Occurs in Arabic, Malay/Indonesian, Urdu, and Francophone African contexts.
 - Causal-Theory-Frame: claims SOGIE is caused by trauma, absent/overbearing parents, or developmental failure (father wound, mother wound, gender-role deficit), positioning it as a symptom that can be resolved by addressing the "root cause."
 - Platform-Evasion: uses wellness, life coaching, "journey," "community," or therapeutic language deliberately to avoid terms that trigger content filters or legal scrutiny, while preserving the change-oriented intent.
+- Religious-Freedom-Shield: invokes religious liberty (freedom of conscience, right to practice religion) as grounds for exempting SOGICE from bans. Operates in legal/constitutional language at ECHR, EU, and domestic levels. Distinct from PastoralCoercion-LegislativeLoophole which uses pastoral framing; this tactic uses rights-language framing.
+- Conscience-Carve-Out: argues that therapists, counselors, and clergy have a right of conscientious objection to affirming care, implicitly preserving space for SOGICE referral and non-affirming practice. Pairs with Religious-Freedom-Shield.
+- Child-Safeguarding-Inversion: appropriates child protection language to position SOGICE (or withholding gender-affirming care) as protecting children from harm, while recasting affirmation as the abuse. Mirrors Groomer-Panic but operates in therapeutic and policy registers rather than conspiratorial.
+- Therapeutic-Autonomy-Frame: invokes European human rights frameworks to argue adults have an inviolable right to seek any therapy they choose, including SOGICE. More sophisticated than Therapeutic-Choice; cites ECHR Article 8 (private life) and Article 9 (conscience).
+- Academic-Credentialing: presents SOGICE advocates as credentialed researchers using institutional affiliations, conference presentations, or fringe journals to create appearance of mainstream academic legitimacy. Often involves IFTCC-affiliated bodies with academic-sounding names.
+- Interfaith-Coalition-Building: assembles representatives from multiple faith traditions (Catholic + Protestant + Orthodox + Muslim) to argue bans represent religiously discriminatory imposition on diverse communities. Manufactures appearance of broad consensus against legislation.
+- Network-Laundering: routes SOGICE promotion through apparently neutral civil society organizations, academic bodies, or human rights NGOs to distance the underlying SOGICE agenda from more visible pro-SOGICE actors. The intermediary organization appears independent.
+- Ecumenical-Consensus-Claim: related to Interfaith-Coalition-Building but specifically claims all major world religions or a multi-faith consensus oppose SOGICE bans. Deployed in UN, Council of Europe, and EU legislative submissions.
+- Soft-Referral-Pipeline: creates a structured informal pathway from pastoral/counseling contexts to explicit SOGICE providers through "warm handoff" language — "if you're struggling, speak to our qualified counselor" — where the referral target practices SOGICE. The pipeline is designed to be legally invisible.
+- Presuppositional-Framing: embeds the assumption that LGBTQ+ identity is disordered or changeable into the structure of questions, pastoral care models, or support frameworks without making an explicit claim. The conversion goal is achieved through structural presupposition rather than stated argument.
 
 PRACTICE (zero or more — only if SOGICE practice is explicitly present)
 Practice: Psychotherapy (change/suppression) | Practice: Spiritual-Healing | Practice: Pastoral-Care | Practice: Deliverance | Practice: Exorcism | Practice: Coaching-Counselling-Rebrand | Practice: Identity-Realignment | Practice: Retreat-Bootcamp | Practice: Medicalization-Abuse | Practice: Hormonal-Intervention-Misuse | Practice: Family-Pressure | Practice: Social-Community-Pressure | Practice: Physical-Coercion | Practice: Verbal-Abuse-Humiliation
@@ -214,7 +238,9 @@ The model must return a single JSON object matching this schema exactly. No pros
 
 ```json
 {
-  "type": "string — exactly one from TYPE vocabulary",
+  "type": "string — exactly one from TYPE vocabulary (dominant type)",
+  "primary_type": "string or null — use when document serves two primary functions; same vocab as type",
+  "secondary_type": "string or null — secondary function; same vocab as type",
   "format": "string — exactly one from FORMAT vocabulary",
   "evidence": ["one or more from EVIDENCE vocabulary"],
   "scope": "string — exactly one: Core | Contextual | Reference",
@@ -247,6 +273,12 @@ The model must return a single JSON object matching this schema exactly. No pros
   "testimony_flag": false,
   "needs_review": false,
   "rhetorical_intensity": "hook | pathologizing | active-conduct",
+  "framing_balance": "pro-dominant | anti-dominant | genuinely-mixed | unclear",
+  "legal_status": {
+    "jurisdiction": "string — ISO 3166-1 alpha-2 or regional code, e.g. NO, DE, EU",
+    "status": "banned | regulated | contested | permitted | unknown",
+    "instrument": "string or null — name of law or policy if known, e.g. Norway §270"
+  },
   "confidence": {
     "overall_score": 0.0,
     "status": "high | medium | low",
@@ -272,6 +304,13 @@ The model must return a single JSON object matching this schema exactly. No pros
       }
     ]
   },
+  "term_use_context": [
+    {
+      "term": "string — from the lexicon vocabulary",
+      "use": "promotional | definitional | critical | reported",
+      "quote": "string — under 20 words showing how the term appears in the document"
+    }
+  ],
   "candidate_terms": [
     {
       "term": "string",
@@ -322,11 +361,11 @@ The following terms from `SOGICE_Lexicon_v2.0.md` are valid `term` tags. Use onl
 
 **SSA-Rhetoric (C1):** SSA | USSA | SGA | Ex-Gay | Former-Lesbian | Overcomer | Freedom-from-SSA | Set-Free-from-Homosexuality | Struggling-with-SSA | Sexual-Preference | Lifestyle-Choice | Mixed-Attracted | Change-Allowing-Therapy | Reintegrative-Therapy | Identity-Exploration-Therapy | Adam-and-Eve-Not-Adam-and-Steve | Invert-Sexual-Inversion | Reparative-Therapy | Shudhudh
 
-**Pastoral-Coercion (C2):** Sexual-Brokenness | Side-B | Truth-in-Love | Love-the-Sinner | Prayer-Ministry | Pastoral-Support | Emotional-Healing | Sexual-Restoration | Biblical-Masculinity-Femininity-Restoration | Living-Chastely | Epidemic-of-Loneliness | Sexual-Addiction-Framework | Attachment-Disorder-Theory | Theophostic-Prayer | Co-dependency-SOGICE | Father-Wound | Mother-Wound | Reparative-Drive | Failed-Boy-Syndrome | Deliverance | Bethel-Sozo | Fitra-SOGICE
+**Pastoral-Coercion (C2):** Sexual-Brokenness | Side-B | Truth-in-Love | Love-the-Sinner | Prayer-Ministry | Pastoral-Support | Emotional-Healing | Sexual-Restoration | Biblical-Masculinity-Femininity-Restoration | Living-Chastely | Epidemic-of-Loneliness | Sexual-Addiction-Framework | Attachment-Disorder-Theory | Theophostic-Prayer | Co-dependency-SOGICE | Father-Wound | Mother-Wound | Reparative-Drive | Failed-Boy-Syndrome | Deliverance | Bethel-Sozo | Fitra-SOGICE | Sanctification-Trajectory | Spiritual-Friendship | Costly-Discipleship | World-Contamination-Doctrine | Danger-of-Labeling | Accountability-Partnership | Accompagnamento | Ferita-Antropologica | Patimă | Troska-Duszpasterska | Sjelesorg | Imago-Dei-Integrity-Argument | Mixed-Orientation-Marriage | Relapse-as-Deepening | Healing-Retreat | Ministry-Formation-Track
 
-**Pseudo-Science (C3):** ROGD | Autogynephilia | HSTS | Neuroplasticity-Argument | Desisting | No-One-Is-Born-Gay | GID | Social-Contagion-Myth | Homosexual-Disorder | Blanchard-Typology
+**Pseudo-Science (C3):** ROGD | Autogynephilia | HSTS | Neuroplasticity-Argument | Desisting | No-One-Is-Born-Gay | GID | Social-Contagion-Myth | Homosexual-Disorder | Blanchard-Typology | Developmental-Arrest-Framing | Disordine-Interiore
 
-**Policy-Resistance (C4):** Therapeutic-Choice | SAFE-T | Congruence-Therapy | Parental-Rights-Frame | Criminalising-Prayer | Watch-and-Wait-Policy | Operation-Gideon | Oxygen-Gideon | Change-Allowing-Therapy
+**Policy-Resistance (C4):** Therapeutic-Choice | SAFE-T | Congruence-Therapy | Parental-Rights-Frame | Criminalising-Prayer | Watch-and-Wait-Policy | Operation-Gideon | Oxygen-Gideon | Change-Allowing-Therapy | Beratungsfreiheit | Libertà-Terapeutica | Terápiás-Szabadság | Exploratory-Therapy-Rebranding | Einvernehmliche-Therapie | Suwerenność-Rodzicielska | Therapeutic-Alliance-Performance
 
 **Anti-Trans/ROGD (C5):** Detrans-Pandemic | Peak-Trans | WPATH-Files | Trans-the-Gay-Away | Butch-Flight | Dysphoria-Industry | Puberty-Blocker-Panic | Transgender-Regret | Biology-Is-Destiny | Trans-Trend | Trans-Widow | Detransition-Awareness-Day | Ex-Trans
 
@@ -340,6 +379,7 @@ The following terms from `SOGICE_Lexicon_v2.0.md` are valid `term` tags. Use onl
 
 | Version | Changes |
 |---|---|
+| ingestion-v3.3 | Add 10 new TACTIC tags with definitions (Religious-Freedom-Shield, Conscience-Carve-Out, Child-Safeguarding-Inversion, Therapeutic-Autonomy-Frame, Academic-Credentialing, Interfaith-Coalition-Building, Network-Laundering, Ecumenical-Consensus-Claim, Soft-Referral-Pipeline, Presuppositional-Framing). Add 5 new TYPE values (Training-Certification-Material, Liturgical-Devotional-Material, Clinical-Therapeutic-Protocol, Survivor-Network-Material, Regulatory-Policy-Document) with compound TYPE support (primary_type/secondary_type). Fix TERM promotional-use rule to term-instance level with term_use_context output field. Add framing_balance and legal_status output fields. Add three cross-cutting multilingual patterns to MULTILINGUAL CODED LANGUAGE (pastoral care cluster, autonomy inversion, consent-based exemption). Add 30+ lexicon terms across C2 (pastoral-coercion funnel), C3 (pseudo-science), C4 (policy-resistance) to Term Vocabulary Quick Reference. Companion: SOGICE_Lexicon_v2.1.md. |
 | ingestion-v3.2 | Add Fitra-Frame, Causal-Theory-Frame, Platform-Evasion tactics with definitions. Add MULTILINGUAL CODED LANGUAGE section (Arabic: shudhudh/fitra; cross-language healing/restoration/causal patterns). Add rhetorical_intensity output field (hook/pathologizing/active-conduct). Add Shudhudh to C1 and Fitra-SOGICE to C2 lexicon. |
 | ingestion-v3.1 | Initial production version. Incorporates PRD v3.1 confidence model, Trust Tier framework, two-layer ontology (discourse + practice-regulatory), and model-agnostic export format. |
 

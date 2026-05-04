@@ -1,5 +1,5 @@
 """
-Pydantic models that mirror the ingestion-v3.2 output schema exactly.
+Pydantic models that mirror the ingestion-v3.3 output schema exactly.
 AnalysisResult validates Claude's or Ollama's JSON response.
 IntakeResult and PreprocessResult carry pipeline state between stages.
 """
@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 # ---------------------------------------------------------------------------
-# ingestion-v3.1 output schema
+# ingestion-v3.3 output schema
 # ---------------------------------------------------------------------------
 
 class DocumentDate(BaseModel):
@@ -74,6 +74,19 @@ class CandidateTerm(BaseModel):
     context_quote: str = ""
 
 
+class TermUseContext(BaseModel):
+    """Records a lexicon term that appears in the document non-promotionally."""
+    term: str
+    use: Literal["promotional", "definitional", "critical", "reported"] = "reported"
+    quote: str = ""
+
+
+class LegalStatus(BaseModel):
+    jurisdiction: str = ""
+    status: Literal["banned", "regulated", "contested", "permitted", "unknown"] = "unknown"
+    instrument: Optional[str] = None
+
+
 class SuggestedActor(BaseModel):
     name: str
     type: Literal["person", "organization"] = "organization"
@@ -102,6 +115,9 @@ class ExtractableAsset(BaseModel):
 DocumentType = Literal[
     "Pro-SOGICE", "Anti-SOGICE", "Neutral-Academic", "Legal-Instrument",
     "Testimony", "Media-Coverage", "Internal-Org-Document", "Mixed",
+    "Training-Certification-Material", "Liturgical-Devotional-Material",
+    "Clinical-Therapeutic-Protocol", "Survivor-Network-Material",
+    "Regulatory-Policy-Document",
 ]
 
 DocumentFormat = Literal[
@@ -119,15 +135,18 @@ NarrativeRegister = Literal[
 
 Scope = Literal["Core", "Contextual", "Reference"]
 
-
 RhetoricalIntensity = Literal["hook", "pathologizing", "active-conduct"]
+
+FramingBalance = Literal["pro-dominant", "anti-dominant", "genuinely-mixed", "unclear"]
 
 
 class AnalysisResult(BaseModel):
-    """Exact mirror of the ingestion-v3.2 JSON output schema."""
+    """Exact mirror of the ingestion-v3.3 JSON output schema."""
     model_config = ConfigDict(extra="ignore")
 
     type: DocumentType
+    primary_type: Optional[DocumentType] = None
+    secondary_type: Optional[DocumentType] = None
     format: DocumentFormat
     evidence: list[str]
     scope: Scope
@@ -188,7 +207,10 @@ class AnalysisResult(BaseModel):
                     break
 
         # 4. Unwrap single-element lists for Literal scalar fields
-        for key in ("type", "format", "scope", "narrative_register", "rhetorical_intensity"):
+        for key in (
+            "type", "primary_type", "secondary_type", "format", "scope",
+            "narrative_register", "rhetorical_intensity", "framing_balance",
+        ):
             val = data.get(key)
             if isinstance(val, list) and len(val) == 1:
                 data[key] = val[0]
@@ -197,6 +219,7 @@ class AnalysisResult(BaseModel):
         data["normalisation_warnings"] = warnings
 
         return data
+
     country: list[str] = Field(default_factory=list)
     tactic: list[str] = Field(default_factory=list)
     actor: list[str] = Field(default_factory=list)
@@ -215,8 +238,11 @@ class AnalysisResult(BaseModel):
     testimony_flag: bool = False
     needs_review: bool = False
     rhetorical_intensity: Optional[RhetoricalIntensity] = None
+    framing_balance: Optional[FramingBalance] = None
+    legal_status: Optional[LegalStatus] = None
     confidence: Confidence = Field(default_factory=Confidence)
     field_confidence: FieldConfidence = Field(default_factory=FieldConfidence)
+    term_use_context: list[TermUseContext] = Field(default_factory=list)
     candidate_terms: list[CandidateTerm] = Field(default_factory=list)
     suggested_actors: list[SuggestedActor] = Field(default_factory=list)
     suggested_networks: list[SuggestedNetwork] = Field(default_factory=list)
