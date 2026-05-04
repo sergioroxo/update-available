@@ -4,6 +4,7 @@ AnalysisResult validates Claude's or Ollama's JSON response.
 IntakeResult and PreprocessResult carry pipeline state between stages.
 """
 from __future__ import annotations
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, Optional
@@ -199,7 +200,7 @@ class AnalysisResult(BaseModel):
             if "overall" in conf and "overall_score" not in conf:
                 conf["overall_score"] = conf.pop("overall")
                 warnings.append("Mapped confidence.overall to confidence.overall_score.")
-            for _fs_key in ("field_scores", "field-level", "field_level"):
+            for _fs_key in ("field_scores", "field-level", "field_level", "field_level_scores"):
                 if _fs_key in conf and "field_confidence" not in data:
                     data["field_confidence"] = conf.pop(_fs_key)
                     warnings.append(
@@ -224,7 +225,14 @@ class AnalysisResult(BaseModel):
                 data[key] = val[0]
                 warnings.append(f"Unwrapped single-item list for scalar field '{key}'.")
 
-        # 5. Coerce list[str] fields: null→[], scalar string→[value]
+        # 5. Coerce list[str] fields: null→[], scalar string→[value],
+        #    strip spurious "Category: " prefixes some models add to list items
+        #    e.g. "Practice: Pastoral-Care" → "Pastoral-Care"
+        _prefix_pattern = re.compile(
+            r"^(?:Practice|Function|Harm|Flag|Evidence|Tactic|Actor|Network"
+            r"|Migration|Term|Landmark|Country):\s*",
+            re.IGNORECASE,
+        )
         for key in (
             "country", "tactic", "actor", "network", "practice", "term",
             "harm", "migration", "function", "landmark", "flags", "evidence",
@@ -236,6 +244,11 @@ class AnalysisResult(BaseModel):
             elif isinstance(val, str):
                 data[key] = [val] if val else []
                 warnings.append(f"Wrapped scalar string into list for field '{key}'.")
+            if isinstance(data.get(key), list):
+                cleaned = [_prefix_pattern.sub("", v) if isinstance(v, str) else v for v in data[key]]
+                if cleaned != data[key]:
+                    warnings.append(f"Stripped category prefixes from '{key}' items.")
+                    data[key] = cleaned
 
         data["normalisation_warnings"] = warnings
 

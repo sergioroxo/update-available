@@ -328,16 +328,21 @@ def _format_lexicon_prompt_line(term: dict) -> str:
 def _validate_response(raw_json: str) -> AnalysisResult:
     """Extract and validate JSON from LLM response, handling think tags and markdown fences."""
     original = raw_json.strip()
+    last_error: Exception | None = None
 
     def _try_extract(text: str) -> AnalysisResult | None:
+        nonlocal last_error
         text = re.sub(r"^```(?:json)?\s*", "", text.strip())
         text = re.sub(r"\s*```$", "", text.strip())
-        match = re.search(r"\{.*\}", text, re.DOTALL)
-        if not match:
+        # Use brace-counting to find the first COMPLETE JSON object, not greedy
+        # regex (which matches to the last } and breaks on truncated responses)
+        candidate = _extract_first_json_object(text)
+        if not candidate:
             return None
         try:
-            return AnalysisResult.model_validate(json.loads(match.group(0)))
-        except Exception:
+            return AnalysisResult.model_validate(json.loads(candidate))
+        except Exception as exc:
+            last_error = exc
             return None
 
     # 1. Try content outside think tags (normal case)
@@ -366,10 +371,44 @@ def _validate_response(raw_json: str) -> AnalysisResult:
         "If using LiteLLM, add max_tokens: 8192 to each model in config.yaml."
     ) if looks_truncated else ""
 
+    validation_detail = f"\nValidation error: {last_error}" if last_error else ""
+
     raise ValueError(
-        f"Could not extract valid JSON from model response.{hint}\n"
+        f"Could not extract valid JSON from model response.{hint}{validation_detail}\n"
         f"Raw response (first 2000 chars): {original[:2000]}"
     )
+
+
+def _extract_first_json_object(text: str) -> str | None:
+    """Return the first complete JSON object from text using brace counting.
+    More robust than a greedy regex: stops at the matching closing brace rather
+    than the last } in the string, so truncated responses don't produce
+    partial matches that look like valid JSON."""
+    start = text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    in_string = False
+    escape_next = False
+    for i, ch in enumerate(text[start:], start):
+        if escape_next:
+            escape_next = False
+            continue
+        if ch == "\\" and in_string:
+            escape_next = True
+            continue
+        if ch == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None  # JSON object not closed — response truncated
 
 
 def _merge_for_review(claude: AnalysisResult, local: AnalysisResult) -> AnalysisResult:
