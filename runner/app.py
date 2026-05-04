@@ -281,14 +281,21 @@ def page_ingest_workbench():
 
     btn_col1, btn_col2 = st.columns([1, 3])
     with btn_col1:
+        enrich_label = " + Enrich" if run_enrich else ""
         run_all = st.button(
-            "▶ Run Pipeline",
+            f"▶ Run Pipeline{enrich_label}",
             type="primary",
             disabled=not source.strip(),
-            help="Runs Intake → Extract → Analyze automatically, then stops for you to review the JSON.",
+            help=(
+                "Runs Intake → Extract → Analyze automatically, then stops for JSON review."
+                + (" Also runs enrichment after upload." if run_enrich else "")
+            ),
         )
     with btn_col2:
-        st.caption("Runs all stages automatically and stops at the JSON review step.")
+        st.caption(
+            "Runs all stages automatically and stops at the JSON review step."
+            + (" Enrichment checkbox is ON — will also run enrichment after upload." if run_enrich else "")
+        )
 
     if run_all:
         effective_max = _effective_max_chars(max_chars, llm, config)
@@ -297,6 +304,9 @@ def page_ingest_workbench():
             _workbench_preprocess(config, effective_max)
         if st.session_state.ingest.get("preprocess"):
             _workbench_analyze(config, llm)
+        # Auto-run enrichment only if checkbox is checked and analysis succeeded
+        if run_enrich and st.session_state.ingest.get("analysis_valid"):
+            _workbench_enrich(config, llm)
 
     intake_result = st.session_state.ingest.get("intake")
     if intake_result:
@@ -396,6 +406,17 @@ def _render_stage_progress() -> None:
 def _workbench_intake(config, source: str, tier: str, batch: str, source_url: str = "") -> None:
     from runner.pipeline import intake
 
+    # Dedup check before creating a new record
+    existing = intake.find_existing_by_source(source.strip(), config)
+    if existing:
+        ids = ", ".join(e["doc_id"] for e in existing)
+        uploaded = [e for e in existing if e.get("uploaded")]
+        status = "uploaded to Sanity" if uploaded else "saved locally but not yet uploaded"
+        st.warning(
+            f"This source was already ingested as **{ids}** ({status}). "
+            "Continue below to ingest again, or reset and use the existing doc_id."
+        )
+
     with st.spinner("Creating intake record..."):
         try:
             tier_value = None if tier == "auto" else int(tier)
@@ -481,6 +502,36 @@ def _workbench_analyze(config, llm: str) -> None:
         "uploaded": False,
     })
     st.success("Analysis complete. Review and edit the JSON before saving or uploading.")
+
+
+def _workbench_enrich(config, llm: str) -> None:
+    from runner.pipeline import enrich
+    from runner.models.document import AnalysisResult
+
+    try:
+        final = AnalysisResult.model_validate(
+            json.loads(st.session_state.ingest["analysis_json"])
+        )
+        enrich_llm = "litelm" if llm.startswith("litelm") else llm
+        with st.spinner("Running enrichment..."):
+            result = enrich.run(
+                st.session_state.ingest["intake"].doc_id,
+                st.session_state.ingest["preprocess"],
+                final,
+                config=config,
+                llm=enrich_llm,
+                model=st.session_state.ingest.get("enrich_model") or None,
+            )
+        enrich.save(st.session_state.ingest["intake"].doc_id, result, config)
+        st.session_state.ingest["enrichment"] = result
+        st.session_state.pop("lexicon_terms", None)
+        st.session_state.pop("entity_registry", None)
+        st.success("Enrichment saved.")
+    except Exception as exc:
+        err_msg = str(exc)
+        st.error(f"Enrichment failed: {err_msg}")
+        with st.expander("Copy error details"):
+            st.code(err_msg)
 
 
 def _render_preprocess_review(result) -> None:
@@ -589,27 +640,7 @@ def _render_analysis_editor(config, llm: str) -> None:
                     st.code(err_msg)
     with c4:
         if st.button("Run Enrichment", disabled=not st.session_state.ingest.get("analysis_valid")):
-            try:
-                final = AnalysisResult.model_validate(json.loads(st.session_state.ingest["analysis_json"]))
-                enrich_llm = "litelm" if llm.startswith("litelm") else llm
-                result = enrich.run(
-                    st.session_state.ingest["intake"].doc_id,
-                    st.session_state.ingest["preprocess"],
-                    final,
-                    config=config,
-                    llm=enrich_llm,
-                    model=st.session_state.ingest.get("enrich_model") or None,
-                )
-                enrich.save(st.session_state.ingest["intake"].doc_id, result, config)
-                st.session_state.ingest["enrichment"] = result
-                st.session_state.pop("lexicon_terms", None)
-                st.session_state.pop("entity_registry", None)
-                st.success("Enrichment saved.")
-            except Exception as exc:
-                err_msg = str(exc)
-                st.error(f"Enrichment failed: {err_msg}")
-                with st.expander("Copy error details"):
-                    st.code(err_msg)
+            _workbench_enrich(config, llm)
 
     analysis = st.session_state.ingest.get("analysis")
     if analysis:
