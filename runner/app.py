@@ -592,10 +592,10 @@ def _render_analysis_summary(analysis) -> None:
         st.write("**Existing terms used promotionally:**", ", ".join(analysis.term))
     if analysis.candidate_terms:
         st.write("**Candidate terms:**")
-        st.dataframe([t.model_dump() for t in analysis.candidate_terms], use_container_width=True)
+        st.dataframe([t.model_dump() for t in analysis.candidate_terms], width="stretch")
     if analysis.suggested_actors:
         st.write("**Suggested actors:**")
-        st.dataframe([a.model_dump() for a in analysis.suggested_actors], use_container_width=True)
+        st.dataframe([a.model_dump() for a in analysis.suggested_actors], width="stretch")
 
 
 def _render_enrichment_result(result) -> None:
@@ -610,19 +610,19 @@ def _render_enrichment_result(result) -> None:
     c4.metric("Connections", len(result.corpus_connections))
     if result.lexicon_proposals:
         st.write("**Lexicon proposals:**")
-        st.dataframe([p.model_dump(by_alias=True) for p in result.lexicon_proposals], use_container_width=True)
+        st.dataframe([p.model_dump(by_alias=True) for p in result.lexicon_proposals], width="stretch")
     if result.entity_proposals:
         st.write("**Entity proposals:**")
-        st.dataframe([p.model_dump() for p in result.entity_proposals], use_container_width=True)
+        st.dataframe([p.model_dump() for p in result.entity_proposals], width="stretch")
     if result.ingestion_queue:
         st.write("**Documents to ingest next:**")
-        st.dataframe([p.model_dump() for p in result.ingestion_queue], use_container_width=True)
+        st.dataframe([p.model_dump() for p in result.ingestion_queue], width="stretch")
     if result.practice_descriptions:
         st.write("**Practice descriptions:**")
-        st.dataframe([p.model_dump() for p in result.practice_descriptions], use_container_width=True)
+        st.dataframe([p.model_dump() for p in result.practice_descriptions], width="stretch")
     if result.statistical_claims:
         st.write("**Statistical claims:**")
-        st.dataframe([p.model_dump() for p in result.statistical_claims], use_container_width=True)
+        st.dataframe([p.model_dump() for p in result.statistical_claims], width="stretch")
 
 
 def _intake_to_dict(intake_result) -> dict:
@@ -953,7 +953,7 @@ def page_lexicon():
         terms = st.session_state.lexicon_terms
         st.caption(f"{len(terms)} draft/validated terms")
         if terms:
-            st.dataframe(terms, use_container_width=True, hide_index=True)
+            st.dataframe(terms, width="stretch", hide_index=True)
 
     with tabs[1]:
         if st.button("Refresh Registry"):
@@ -968,7 +968,7 @@ def page_lexicon():
         entities = st.session_state.entity_registry
         st.caption(f"{len(entities)} organizations/persons")
         if entities:
-            st.dataframe(entities, use_container_width=True, hide_index=True)
+            st.dataframe(entities, width="stretch", hide_index=True)
 
     with tabs[2]:
         _render_local_proposal_queue(config)
@@ -1097,7 +1097,7 @@ def page_tag_registry():
             }
             for row in filtered
         ],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -1197,7 +1197,7 @@ def _render_seed_lexicon_import(config) -> None:
     ]
     edited_rows = st.data_editor(
         table_rows,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         disabled=["term", "recommended_status", "cluster", "function", "has_source", "pushed_to_sanity"],
         column_config={
@@ -1293,7 +1293,7 @@ def _render_variant_import(config) -> None:
             }
             for row in rows
         ],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         disabled=["canonical_term", "variant_term", "language", "canonical_in_sanity", "pushed_to_sanity"],
         column_config={
@@ -1464,7 +1464,7 @@ def _render_legacy_vocabulary_import(config) -> None:
             }
             for row in visible
         ],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         disabled=["term", "language", "cluster", "function", "occurrences", "has_source", "exists_in_seed", "pushed_to_sanity"],
         column_config={
@@ -1972,7 +1972,7 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
             "pushed_to_sanity": record["item"].get("pushed_to_sanity", False),
         }
         for record in records
-    ], use_container_width=True, hide_index=True)
+    ], width="stretch", hide_index=True)
     if st.button("Push approved drafts to Sanity"):
         pushed = 0
         errors: list[str] = []
@@ -2032,7 +2032,7 @@ def _render_entity_queue(config, records: list[dict]) -> None:
             "pushed_to_sanity": record["item"].get("pushed_to_sanity", False),
         }
         for record in records
-    ], use_container_width=True, hide_index=True)
+    ], width="stretch", hide_index=True)
 
     if st.button("Push approved entities to Sanity"):
         pushed = 0
@@ -2148,10 +2148,10 @@ def _render_single_entity_editor(record: dict) -> None:
     item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
     if item.get("network_connections"):
         st.write("**Network connections:**")
-        st.dataframe(item["network_connections"], use_container_width=True)
+        st.dataframe(item["network_connections"], width="stretch")
     if item.get("key_individuals"):
         st.write("**Key individuals:**")
-        st.dataframe(item["key_individuals"], use_container_width=True)
+        st.dataframe(item["key_individuals"], width="stretch")
 
     b1, b2, b3 = st.columns(3)
     with b1:
@@ -2257,7 +2257,7 @@ def page_testimony_review():
         "Testimony defaults to consentStatus=unclear and publicDisplay=false. "
         "Upload is blocked for testimony-flagged workbench documents until a review exists."
     )
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, width="stretch", hide_index=True)
 
     selected = st.selectbox("Review document", [row["doc_id"] for row in rows])
     doc_dir = config.corpus_dir / selected
@@ -2272,7 +2272,7 @@ def page_testimony_review():
     ]
     if assets:
         st.write("**Testimony excerpts detected:**")
-        st.dataframe(assets, use_container_width=True)
+        st.dataframe(assets, width="stretch")
 
     consent = st.selectbox(
         "Consent status",
@@ -2366,7 +2366,7 @@ def page_activity_log():
         st.info("No local activity yet.")
         return
 
-    st.dataframe(docs, use_container_width=True, hide_index=True)
+    st.dataframe(docs, width="stretch", hide_index=True)
 
     selected = st.selectbox("Inspect document", [row["doc_id"] for row in docs])
     doc_dir = config.corpus_dir / selected
@@ -2640,7 +2640,7 @@ def page_model_routing():
     }
 
     import pandas as pd
-    st.dataframe(pd.DataFrame(data), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(data), width="stretch", hide_index=True)
 
     st.subheader("Enrichment model (Stage 3c)")
     st.info(
@@ -2663,7 +2663,7 @@ def page_model_routing():
         "Dimension": ["4096d", "4096d"],
         "Triggered by": ["--llm local / claude / openrouter", "--llm litelm*"],
     }
-    st.dataframe(pd.DataFrame(emb_data), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(emb_data), width="stretch", hide_index=True)
 
     st.subheader("Decision flowchart")
     st.markdown(
