@@ -944,6 +944,91 @@ def page_pending_upload():
 # Lexicon
 # ---------------------------------------------------------------------------
 
+def _render_three_system_reference() -> None:
+    st.subheader("Three-System Persuasion Architecture")
+    st.caption(
+        "SOGICE discourse operates through three interlocking persuasion systems. "
+        "Understanding which system a document uses determines the correct TACTIC tags "
+        "and helps identify legislative loopholes the document is exploiting."
+    )
+
+    st.markdown("""
+---
+### System A — Causal / Medical
+**Logic chain:** *You are not gay — you experience SSA (identity erasure). SSA is a symptom of unresolved psychological injury. By healing the injury, the symptom resolves naturally. We offer that healing.*
+
+Change is presented as the organic consequence of trauma healing — not as the goal. This makes it legally defensible as "trauma therapy" rather than conversion.
+
+**Key terms and tactics:**
+
+| Term | Cluster | Role in System A |
+|---|---|---|
+| SSA / USSA | C1 | Gateway depersonalisation — must happen first |
+| Father-Wound / Mother-Wound | C3 | The claimed trauma root |
+| Gender-Role-Deficit | C3 | Peer-level developmental failure mechanism |
+| Developmental-Arrest-Framing | C3 | Pseudo-scientific framing of the failure |
+| Reparative-Drive | C3 | The eroticisation of the deficit |
+| Reparative-Therapy / Reintegrative-Therapy | C1/C3 | The treatment |
+| Healing-the-Root | C2 | The legislative defence — "we treat trauma, not orientation" |
+| Causal-Theory-Frame | TACTIC | Signals System A is active |
+
+---
+### System B — Spiritual / Divine Design
+**Logic chain:** *God created humanity with Divine Design — heterosexual, binary. Your SOGIE is a departure from that design through brokenness. You can return to your true self through spiritual work. This is what genuine love requires. Wholeness awaits.*
+
+Change is presented as spiritual homecoming to an original, authentic self. Survives in pastoral exemptions even where clinical SOGICE is banned.
+
+**Key terms and tactics:**
+
+| Term | Cluster | Role in System B |
+|---|---|---|
+| Divine-Design | C2 | The theological premise — Protestant/evangelical variant |
+| Fitra-SOGICE | C2 | Islamic equivalent of Divine-Design |
+| Imago-Dei-Integrity-Argument | C2 | Catholic theological equivalent |
+| Sexual-Brokenness | C2 | The departure from design |
+| Side-B / Living-Chastely | C2 | Celibacy variant — no change claim needed |
+| Sanctification-Trajectory | C2 | Ongoing journey frame — prevents exits |
+| Spiritual-Wholeness | C2 | The coded destination state |
+| Walking-in-Truth | C2 | Compliance phrase = living heterosexually/celibately |
+| Healing-Retreat / Theophostic-Prayer | C2 | The spiritual intervention formats |
+| Relapse-as-Deepening | C2 | Retains subjects after failure |
+| Sjelesorg / Accompagnamento / Troska-Duszpasterska | C2 | Language-specific pastoral loophole terms |
+| Fitra-Frame / PastoralCoercion-LegislativeLoophole | TACTIC | Signals System B is active |
+
+---
+### System C — Platform-Evasion / Policy
+**Logic chain:** *We're not "conversion therapy" — we're offering therapeutic choice, pastoral support, life coaching, or identity exploration. Our clients freely choose this. Banning us criminalises prayer and parental rights. We operate under different names to protect access.*
+
+Requires System A or B first to establish demand. System C is purely about legal/platform survival.
+
+**Key terms and tactics:**
+
+| Term | Cluster | Role in System C |
+|---|---|---|
+| USSA | C1 | Manufactured demand — "clients choose this" |
+| Therapeutic-Choice / SAFE-T / Congruence-Therapy | C4 | Ban-resistant rebranding |
+| Identity-Alignment | C1 | Wellness-coded SOGICE for content filters |
+| Faith-Based-Life-Coaching | C1 | "Coaching" to evade licensed-practitioner ban definitions |
+| Beratungsfreiheit / Libertà-Terapeutica / Terápiás-Szabadság | C4 | Rights-language capture in German, Italian, Hungarian |
+| Einvernehmliche-Therapie | C4 | Adult consent carve-out argument |
+| Exploratory-Therapy-Rebranding | C4 | Exploiting ban exemptions for affirming exploration |
+| Therapeutic-Alliance-Performance | C4 | Appearing clinically neutral to regulators |
+| Soft-Referral-Pipeline / Network-Laundering | TACTIC | Hidden routing to SOGICE providers |
+| Platform-Evasion / Religious-Freedom-Shield / Conscience-Carve-Out | TACTIC | Signals System C is active |
+
+---
+### How the systems interlock
+
+```
+System A feeds C:  "we treat trauma, not identity" → the legislative loophole
+System B feeds C:  "pastoral support" → exemption carve-out in every European ban
+Both require C1:   SSA gateway must depersonalise identity before A or B can operate
+```
+
+**Tagging rule:** A single document can run all three systems simultaneously. Assign TACTIC tags from each active system. The `rhetorical_intensity` field captures how far the document moves toward active conduct.
+""")
+
+
 def page_lexicon():
     st.title("Lexicon")
 
@@ -966,6 +1051,8 @@ def page_lexicon():
         "Legacy Vocabulary Preview",
         "Sanity Schema Files",
         "Seed Docs",
+        "Three-System Reference",
+        "Ingestion Prompt",
     ])
 
     with tabs[0]:
@@ -1027,7 +1114,7 @@ def page_lexicon():
             "entries without source URL/evidence should enter Sanity as draft so new ingestions can collect validating evidence and regional variants."
         )
         seed_files = {
-            "Lexicon seed document": _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.0.md",
+            "Lexicon seed document (v2.1)": _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.1.md",
             "Entity registry seed document": _project_root / "00_infrastructure" / "Entity_Registry_v1.1.md",
             "Sanity schema reference": _project_root / "00_infrastructure" / "SANITY_SCHEMA_v1.0.md",
             "Ontology": _project_root / "00_infrastructure" / "SOGICE_Ontology_v3.0.md",
@@ -1037,6 +1124,16 @@ def page_lexicon():
         }
         selected = st.selectbox("Reference file", list(seed_files.keys()))
         _show_text_file(seed_files[selected], language="markdown")
+
+    with tabs[8]:
+        _render_three_system_reference()
+
+    with tabs[9]:
+        st.caption("Live read of `02_working_tools/Claude_Ingestion_Prompt.md` (ingestion-v3.3)")
+        _show_text_file(
+            _project_root / "02_working_tools" / "Claude_Ingestion_Prompt.md",
+            language="markdown",
+        )
 
 
 def _local_enrichment_proposals(corpus_dir: Path) -> list[dict]:
@@ -1177,7 +1274,7 @@ def _render_seed_lexicon_import(config) -> None:
         "Preview the local Markdown lexicon before it enters Sanity. "
         "Validated is recommended only when an entry has a definition plus explicit source evidence; otherwise it imports as draft."
     )
-    seed_path = _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.0.md"
+    seed_path = _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.1.md"
     if not seed_path.exists():
         st.error(f"Seed lexicon file not found: {seed_path}")
         return
@@ -1275,7 +1372,7 @@ def _render_variant_import(config) -> None:
         "Attach translated/regional terms to their canonical lexicon entry. "
         "These variants stay searchable in Sanity and are injected into analysis/enrichment prompts."
     )
-    seed_path = _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.0.md"
+    seed_path = _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.1.md"
     if st.button("Reload variant preview"):
         st.session_state.pop("seed_variant_rows", None)
         st.session_state.pop("lexicon_terms", None)
@@ -1599,7 +1696,7 @@ def _parse_legacy_vocabulary() -> list[dict]:
 
     current_seed = {
         _term_key(row["term"])
-        for row in _parse_seed_lexicon(_project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.0.md")
+        for row in _parse_seed_lexicon(_project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.1.md")
     }
     csv_terms = _legacy_csv_terms(csv_path)
 

@@ -1,7 +1,7 @@
 """
 Stage 3b — LLM analysis.
 
-Builds the ingestion-v3.1 prompt, calls Claude or Ollama, validates the JSON
+Builds the ingestion-v3.3 prompt, calls Claude or Ollama, validates the JSON
 response with Pydantic, and writes analysis.json to the local corpus directory.
 
 LLM routing (controlled by --llm flag):
@@ -22,7 +22,7 @@ from pathlib import Path
 from ..config import Config
 from ..models.document import AnalysisResult, PreprocessResult
 
-PROMPT_VERSION = "ingestion-v3.1"
+PROMPT_VERSION = "ingestion-v3.3"
 
 _PROMPT_FILE = (
     Path(__file__).parents[2]

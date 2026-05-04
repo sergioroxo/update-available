@@ -176,7 +176,7 @@ def write_seed_lexicon_entry(entry: dict, config: Config) -> str:
         status = "draft"
 
     source_bits = [
-        "Seed import from SOGICE_Lexicon_v2.0.md.",
+        "Seed import from SOGICE_Lexicon_v2.1.md.",
         f"Recommended status: {entry.get('recommended_status', 'draft')}.",
     ]
     if entry.get("source_url"):
