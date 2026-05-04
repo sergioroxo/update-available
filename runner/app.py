@@ -84,6 +84,7 @@ def main():
             "Guide",
             "Model Routing",
             "Triage Tool",
+            "Mac Studio Node",
         ],
         label_visibility="collapsed",
     )
@@ -118,6 +119,8 @@ def main():
         page_model_routing()
     elif page == "Triage Tool":
         page_triage_tool()
+    elif page == "Mac Studio Node":
+        page_mac_studio_node()
 
 
 # ---------------------------------------------------------------------------
@@ -2972,6 +2975,191 @@ def page_triage_tool():
         source_arg = input_url.strip() if input_url.strip() else "<url_or_file>"
         st.code(
             f"python -m runner ingest {source_arg} --llm {result.recommended_llm}",
+            language="bash",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Mac Studio Node
+# ---------------------------------------------------------------------------
+
+def page_mac_studio_node():
+    import httpx
+    from datetime import datetime
+
+    st.title("Mac Studio Node")
+    st.caption(f"Last refresh: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} — refresh the browser to update")
+
+    config = _load_config_safe()
+    litelm_url  = (config.litelm_base_url.rstrip("/") if config and config.litelm_base_url else "")
+    litelm_key  = (config.litelm_api_key if config else "")
+
+    # Derive Mac Studio Ollama URL from env or fallback: swap LiteLLM port for 11434
+    import os
+    mac_ollama_url = os.getenv("MAC_STUDIO_OLLAMA_URL", "")
+    if not mac_ollama_url and litelm_url:
+        from urllib.parse import urlparse, urlunparse
+        parsed = urlparse(litelm_url)
+        mac_ollama_url = urlunparse(parsed._replace(netloc=parsed.hostname + ":11434"))
+    mac_dashboard_url = os.getenv("MAC_STUDIO_DASHBOARD_URL", "")
+
+    # ── Services ─────────────────────────────────────────────────────────────
+    st.header("AI Services")
+    s1, s2, s3 = st.columns(3)
+
+    # LiteLLM
+    litellm_models = []
+    if litelm_url:
+        try:
+            r = httpx.get(
+                f"{litelm_url}/v1/models",
+                headers={"Authorization": f"Bearer {litelm_key}"},
+                timeout=5,
+            )
+            if r.status_code == 200:
+                s1.success(f"LiteLLM online ({litelm_url})")
+                litellm_models = [m["id"] for m in r.json().get("data", [])]
+            else:
+                s1.error(f"LiteLLM HTTP {r.status_code}")
+        except Exception as exc:
+            s1.error(f"LiteLLM unreachable: {exc}")
+    else:
+        s1.warning("LITELM_BASE_URL not set")
+
+    # Ollama on Mac Studio
+    ollama_models = []
+    ollama_loaded = []
+    if mac_ollama_url:
+        try:
+            ro = httpx.get(f"{mac_ollama_url}/api/tags", timeout=5)
+            if ro.status_code == 200:
+                s2.success(f"Ollama online ({mac_ollama_url})")
+                ollama_models = [m["name"] for m in ro.json().get("models", [])]
+            else:
+                s2.error(f"Ollama HTTP {ro.status_code}")
+        except Exception as exc:
+            s2.error(f"Ollama unreachable: {exc}")
+        try:
+            rp = httpx.get(f"{mac_ollama_url}/api/ps", timeout=5)
+            if rp.status_code == 200:
+                ollama_loaded = [m["name"] for m in rp.json().get("models", [])]
+        except Exception:
+            pass
+    else:
+        s2.warning("MAC_STUDIO_OLLAMA_URL not set (add to .env)")
+
+    # Dashboard link
+    if mac_dashboard_url:
+        s3.success(f"[Open Mac Studio Dashboard]({mac_dashboard_url})")
+    else:
+        s3.info("Set MAC_STUDIO_DASHBOARD_URL in .env to link the dashboard")
+
+    # ── Models ───────────────────────────────────────────────────────────────
+    st.header("Models")
+    m1, m2 = st.columns(2)
+    with m1:
+        st.subheader("LiteLLM aliases")
+        if litellm_models:
+            st.dataframe({"model": litellm_models}, use_container_width=True)
+        else:
+            st.info("No models returned (LiteLLM offline or no aliases configured)")
+    with m2:
+        st.subheader("Ollama installed")
+        if ollama_models:
+            st.dataframe({"model": ollama_models}, use_container_width=True)
+        else:
+            st.info("No models returned")
+        if ollama_loaded:
+            st.caption("Currently loaded in memory: " + ", ".join(ollama_loaded))
+
+    # ── Quick Model Test ──────────────────────────────────────────────────────
+    st.header("Quick Model Test")
+    test_models = litellm_models or [
+        "triage", "core-qwen", "core-gemma",
+        "review-qwen", "review-gemma", "coder", "lexicon-llm",
+    ]
+    t1, t2 = st.columns([3, 1])
+    with t1:
+        test_prompt = st.text_area(
+            "Test prompt",
+            value="Reply with exactly: DASHBOARD MODEL TEST OK",
+            height=80,
+        )
+    with t2:
+        test_model = st.selectbox("Model", test_models)
+
+    if st.button("Run test", type="primary"):
+        if not litelm_url:
+            st.error("LITELM_BASE_URL not configured.")
+        else:
+            with st.spinner(f"Sending to {test_model}..."):
+                try:
+                    r = httpx.post(
+                        f"{litelm_url}/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {litelm_key}",
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "model": test_model,
+                            "messages": [{"role": "user", "content": test_prompt}],
+                            "max_tokens": 256,
+                        },
+                        timeout=120,
+                    )
+                    if r.status_code == 200:
+                        reply = r.json()["choices"][0]["message"]["content"]
+                        st.success(reply)
+                    else:
+                        st.error(f"HTTP {r.status_code}")
+                        with st.expander("Full response"):
+                            st.code(r.text)
+                except Exception as exc:
+                    st.error(str(exc))
+
+    # ── LiteLLM Logs ─────────────────────────────────────────────────────────
+    st.header("LiteLLM Logs")
+    st.caption(
+        "Logs are read from the Mac Studio via SSH or a shared path. "
+        "If MAC_STUDIO_DASHBOARD_URL is set, open the full dashboard for live logs."
+    )
+    log_path_out = os.getenv("MAC_STUDIO_LITELM_LOG", "")
+    log_path_err = os.getenv("MAC_STUDIO_LITELM_ERR", "")
+    if log_path_out or log_path_err:
+        lc1, lc2 = st.columns(2)
+        with lc1:
+            st.subheader("stdout")
+            if log_path_out and Path(log_path_out).exists():
+                lines = Path(log_path_out).read_text(errors="replace").splitlines()
+                st.code("\n".join(lines[-80:]))
+            else:
+                st.info(f"Not found: {log_path_out or '(not set)'}")
+        with lc2:
+            st.subheader("stderr")
+            if log_path_err and Path(log_path_err).exists():
+                lines = Path(log_path_err).read_text(errors="replace").splitlines()
+                st.code("\n".join(lines[-80:]))
+            else:
+                st.info(f"Not found: {log_path_err or '(not set)'}")
+    else:
+        st.info(
+            "Set `MAC_STUDIO_LITELM_LOG` and `MAC_STUDIO_LITELM_ERR` in `.env` "
+            "to a path accessible from the MacBook (e.g. a Tailscale-mounted share). "
+            "Otherwise use the Mac Studio Dashboard link above."
+        )
+
+    # ── Config reminder ───────────────────────────────────────────────────────
+    with st.expander("How to configure this page (.env keys)"):
+        st.code(
+            "# Already set:\n"
+            "LITELM_BASE_URL=http://<tailscale-ip>:4000\n"
+            "LITELM_API_KEY=sk-local-research-key-change-this\n\n"
+            "# Add these for full Mac Studio visibility:\n"
+            "MAC_STUDIO_OLLAMA_URL=http://<tailscale-ip>:11434\n"
+            "MAC_STUDIO_DASHBOARD_URL=https://mqvlfwcwmc.tail379051.ts.net:8502\n"
+            "# Optional — only if logs are on a shared path:\n"
+            "MAC_STUDIO_LITELM_LOG=/tmp/litelm.log\n"
+            "MAC_STUDIO_LITELM_ERR=/tmp/litelm.err\n",
             language="bash",
         )
 
