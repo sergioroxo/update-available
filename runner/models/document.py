@@ -1,5 +1,5 @@
 """
-Pydantic models that mirror the ingestion-v3.1 output schema exactly.
+Pydantic models that mirror the ingestion-v3.2 output schema exactly.
 AnalysisResult validates Claude's or Ollama's JSON response.
 IntakeResult and PreprocessResult carry pipeline state between stages.
 """
@@ -120,8 +120,11 @@ NarrativeRegister = Literal[
 Scope = Literal["Core", "Contextual", "Reference"]
 
 
+RhetoricalIntensity = Literal["hook", "pathologizing", "active-conduct"]
+
+
 class AnalysisResult(BaseModel):
-    """Exact mirror of the ingestion-v3.1 JSON output schema."""
+    """Exact mirror of the ingestion-v3.2 JSON output schema."""
     model_config = ConfigDict(extra="ignore")
 
     type: DocumentType
@@ -185,7 +188,7 @@ class AnalysisResult(BaseModel):
                     break
 
         # 4. Unwrap single-element lists for Literal scalar fields
-        for key in ("type", "format", "scope", "narrative_register"):
+        for key in ("type", "format", "scope", "narrative_register", "rhetorical_intensity"):
             val = data.get(key)
             if isinstance(val, list) and len(val) == 1:
                 data[key] = val[0]
@@ -211,6 +214,7 @@ class AnalysisResult(BaseModel):
     priority: Priority = Field(default_factory=Priority)
     testimony_flag: bool = False
     needs_review: bool = False
+    rhetorical_intensity: Optional[RhetoricalIntensity] = None
     confidence: Confidence = Field(default_factory=Confidence)
     field_confidence: FieldConfidence = Field(default_factory=FieldConfidence)
     candidate_terms: list[CandidateTerm] = Field(default_factory=list)

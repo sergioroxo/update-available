@@ -1,6 +1,6 @@
 # SurvivingSOGICE — Claude Ingestion Prompt
 
-**Version:** ingestion-v3.1  
+**Version:** ingestion-v3.2  
 **Ontology version:** v3.0  
 **Last updated:** April 2026  
 **Companion documents:** PRD_v3.1.md · SOGICE_Ontology_v3.0.md · SOGICE_Lexicon_v2.0.md  
@@ -51,6 +51,20 @@ ABSOLUTE RULES
 
 ---
 
+MULTILINGUAL CODED LANGUAGE
+
+SOGICE documents frequently avoid explicit terminology to evade detection or appear pastoral/clinical. The following patterns recur across languages — recognize them regardless of the document's language:
+
+- Healing/restoration applied to identity: sanación, restauración, guérison, исцеление, شفاء, penyembuhan, cura, guarigione — always flag when the subject of "healing" is orientation or gender identity
+- "Return to nature/truth": العودة إلى الفطرة (return to fitra), retour à la nature, vuelta a la naturaleza, kembali ke fitrah — signals Fitra-Frame
+- "Overcoming/freedom from": libertad de atracción, التغلب على الميول, superar atracciones, sortir de l'homosexualité — signals Identity-Erasure
+- Causal framing: herida del padre, الجرح الأبوي, ferida do pai, déséquilibre émotionnel, trauma-root, racine profonde — signals Causal-Theory-Frame
+- Identity depersonalisation: "same-sex attracted" (SSA) replacing "gay/lesbian" to reduce identity to behaviour; equivalent substitutions in other languages
+- Shudhudh (شذوذ): the primary Arabic clinical/religious dog whistle, literally "deviation/anomaly," used to pathologise homosexuality; flag as both Dehumanizing-Language and Fitra-Frame when it appears in a SOGICE context
+- Platform-adapted wellness language: "wellness journey," "life coaching," "community mentorship," "identity alignment," "faith-based support" without affirming clinical credentials — signals Platform-Evasion
+
+---
+
 VOCABULARY
 
 TYPE (exactly one)
@@ -69,7 +83,11 @@ Core | Contextual | Reference
 - Reference = global/foundational background material
 
 TACTIC (one or more — the rhetorical or political move being made)
-Identity-Erasure | Rebranding-SOGICE | Gender-Essentialism | False-Scientific-Authority | Social-Contagion-Myth | ROGD-Frame | Detrans-Propaganda | Sex-Rejection-Frame | Anti-Trans-Rhetoric | Policy-Resistance-Frame | Anti-Gender-Narrative | Anti-LGBT-Conspiracy | Groomer-Panic | Dehumanizing-Language | PastoralCoercion-LegislativeLoophole | Operation-Gideon | Parental-Rights-Trans
+Identity-Erasure | Rebranding-SOGICE | Gender-Essentialism | False-Scientific-Authority | Social-Contagion-Myth | ROGD-Frame | Detrans-Propaganda | Sex-Rejection-Frame | Anti-Trans-Rhetoric | Policy-Resistance-Frame | Anti-Gender-Narrative | Anti-LGBT-Conspiracy | Groomer-Panic | Dehumanizing-Language | PastoralCoercion-LegislativeLoophole | Operation-Gideon | Parental-Rights-Trans | Fitra-Frame | Causal-Theory-Frame | Platform-Evasion
+
+- Fitra-Frame: invokes the Islamic concept of innate primordial nature (الفطرة) to frame homosexuality or gender diversity as a departure from God-given design that can be "corrected." Occurs in Arabic, Malay/Indonesian, Urdu, and Francophone African contexts.
+- Causal-Theory-Frame: claims SOGIE is caused by trauma, absent/overbearing parents, or developmental failure (father wound, mother wound, gender-role deficit), positioning it as a symptom that can be resolved by addressing the "root cause."
+- Platform-Evasion: uses wellness, life coaching, "journey," "community," or therapeutic language deliberately to avoid terms that trigger content filters or legal scrutiny, while preserving the change-oriented intent.
 
 PRACTICE (zero or more — only if SOGICE practice is explicitly present)
 Practice: Psychotherapy (change/suppression) | Practice: Spiritual-Healing | Practice: Pastoral-Care | Practice: Deliverance | Practice: Exorcism | Practice: Coaching-Counselling-Rebrand | Practice: Identity-Realignment | Practice: Retreat-Bootcamp | Practice: Medicalization-Abuse | Practice: Hormonal-Intervention-Misuse | Practice: Family-Pressure | Practice: Social-Community-Pressure | Practice: Physical-Coercion | Practice: Verbal-Abuse-Humiliation
@@ -93,6 +111,14 @@ Pastoral-Healing | Scientific-Clinical | Legal-Policy | Testimonial-Personal | C
 
 LANDMARK EVENTS (tag if document directly relates to or was produced in the context of one of these)
 Malta-Ban-2016 | Germany-Ban-2020 | France-Ban-2022 | Belgium-Ban-2023 | Spain-Ley-Trans-2023 | Iceland-Ban-2023 | Cyprus-Ban-2023 | Norway-Ban-2024 | Portugal-Ban-2024 | PACE-Resolution-2643-2026 | EU-Citizens-Initiative-2025 | Operation-Gideon-2025 | ILGA-Europe-Intersections-2-2026 | Matthew-Grech-Acquittal-Malta-2026 | Spitzer-Retraction-2012 | APA-Task-Force-2009 | Exodus-International-Dissolution-2013 | ICD-11-Adoption-2019
+
+---
+
+RHETORICAL INTENSITY
+Assign exactly one value indicating how far the document moves toward active SOGICE conduct:
+- hook: soft framing — questions identity, promotes "traditional values," or raises "concerns" without explicitly pathologising or offering a change programme
+- pathologizing: frames SOGIE as a symptom, disorder, trauma response, or spiritual failing; positions change as desirable but may not explicitly offer it
+- active-conduct: explicitly promotes, advertises, or documents SOGICE practice — retreats, programmes, prayer protocols, clinical sessions, or testimonies of undergoing SOGICE
 
 ---
 
@@ -220,6 +246,7 @@ The model must return a single JSON object matching this schema exactly. No pros
   },
   "testimony_flag": false,
   "needs_review": false,
+  "rhetorical_intensity": "hook | pathologizing | active-conduct",
   "confidence": {
     "overall_score": 0.0,
     "status": "high | medium | low",
@@ -293,9 +320,9 @@ This section contains the base vocabulary from `SOGICE_Lexicon_v2.0.md`. Before 
 
 The following terms from `SOGICE_Lexicon_v2.0.md` are valid `term` tags. Use only for PROMOTIONAL use in the source document.
 
-**SSA-Rhetoric (C1):** SSA | USSA | SGA | Ex-Gay | Former-Lesbian | Overcomer | Freedom-from-SSA | Set-Free-from-Homosexuality | Struggling-with-SSA | Sexual-Preference | Lifestyle-Choice | Mixed-Attracted | Change-Allowing-Therapy | Reintegrative-Therapy | Identity-Exploration-Therapy | Adam-and-Eve-Not-Adam-and-Steve | Invert-Sexual-Inversion | Reparative-Therapy
+**SSA-Rhetoric (C1):** SSA | USSA | SGA | Ex-Gay | Former-Lesbian | Overcomer | Freedom-from-SSA | Set-Free-from-Homosexuality | Struggling-with-SSA | Sexual-Preference | Lifestyle-Choice | Mixed-Attracted | Change-Allowing-Therapy | Reintegrative-Therapy | Identity-Exploration-Therapy | Adam-and-Eve-Not-Adam-and-Steve | Invert-Sexual-Inversion | Reparative-Therapy | Shudhudh
 
-**Pastoral-Coercion (C2):** Sexual-Brokenness | Side-B | Truth-in-Love | Love-the-Sinner | Prayer-Ministry | Pastoral-Support | Emotional-Healing | Sexual-Restoration | Biblical-Masculinity-Femininity-Restoration | Living-Chastely | Epidemic-of-Loneliness | Sexual-Addiction-Framework | Attachment-Disorder-Theory | Theophostic-Prayer | Co-dependency-SOGICE | Father-Wound | Mother-Wound | Reparative-Drive | Failed-Boy-Syndrome | Deliverance | Bethel-Sozo
+**Pastoral-Coercion (C2):** Sexual-Brokenness | Side-B | Truth-in-Love | Love-the-Sinner | Prayer-Ministry | Pastoral-Support | Emotional-Healing | Sexual-Restoration | Biblical-Masculinity-Femininity-Restoration | Living-Chastely | Epidemic-of-Loneliness | Sexual-Addiction-Framework | Attachment-Disorder-Theory | Theophostic-Prayer | Co-dependency-SOGICE | Father-Wound | Mother-Wound | Reparative-Drive | Failed-Boy-Syndrome | Deliverance | Bethel-Sozo | Fitra-SOGICE
 
 **Pseudo-Science (C3):** ROGD | Autogynephilia | HSTS | Neuroplasticity-Argument | Desisting | No-One-Is-Born-Gay | GID | Social-Contagion-Myth | Homosexual-Disorder | Blanchard-Typology
 
@@ -313,6 +340,7 @@ The following terms from `SOGICE_Lexicon_v2.0.md` are valid `term` tags. Use onl
 
 | Version | Changes |
 |---|---|
+| ingestion-v3.2 | Add Fitra-Frame, Causal-Theory-Frame, Platform-Evasion tactics with definitions. Add MULTILINGUAL CODED LANGUAGE section (Arabic: shudhudh/fitra; cross-language healing/restoration/causal patterns). Add rhetorical_intensity output field (hook/pathologizing/active-conduct). Add Shudhudh to C1 and Fitra-SOGICE to C2 lexicon. |
 | ingestion-v3.1 | Initial production version. Incorporates PRD v3.1 confidence model, Trust Tier framework, two-layer ontology (discourse + practice-regulatory), and model-agnostic export format. |
 
 ---
