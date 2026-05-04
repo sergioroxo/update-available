@@ -565,7 +565,7 @@ def _render_preprocess_review(result) -> None:
 
 def _render_analysis_editor(config, llm: str) -> None:
     from runner.models.document import AnalysisResult
-    from runner.pipeline import enrich, upload
+    from runner.pipeline import upload
 
     st.subheader("Analysis JSON")
     analysis_text = st.text_area(

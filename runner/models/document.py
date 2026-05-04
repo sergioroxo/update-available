@@ -193,6 +193,7 @@ class AnalysisResult(BaseModel):
         # 3. Remap nested confidence fields:
         #    .overall / .overall_score  → confidence.overall_score
         #    .field_scores / .field-level → field_confidence (top-level)
+        #    .reasons scalar → list
         conf = data.get("confidence")
         if isinstance(conf, dict):
             if "overall" in conf and "overall_score" not in conf:
@@ -205,6 +206,13 @@ class AnalysisResult(BaseModel):
                         f"Moved confidence.{_fs_key} to top-level field_confidence."
                     )
                     break
+            # reasons: null or scalar string → list
+            reasons = conf.get("reasons")
+            if reasons is None:
+                conf["reasons"] = []
+            elif isinstance(reasons, str):
+                conf["reasons"] = [reasons] if reasons else []
+                warnings.append("Wrapped confidence.reasons scalar into list.")
 
         # 4. Unwrap single-element lists for Literal scalar fields
         for key in (
@@ -216,14 +224,16 @@ class AnalysisResult(BaseModel):
                 data[key] = val[0]
                 warnings.append(f"Unwrapped single-item list for scalar field '{key}'.")
 
-        # 5. Wrap scalar strings into lists for list[str] fields
-        #    e.g. "country": "UK" → "country": ["UK"]
+        # 5. Coerce list[str] fields: null→[], scalar string→[value]
         for key in (
             "country", "tactic", "actor", "network", "practice", "term",
             "harm", "migration", "function", "landmark", "flags", "evidence",
         ):
             val = data.get(key)
-            if isinstance(val, str):
+            if val is None:
+                data[key] = []
+                warnings.append(f"Replaced null with [] for list field '{key}'.")
+            elif isinstance(val, str):
                 data[key] = [val] if val else []
                 warnings.append(f"Wrapped scalar string into list for field '{key}'.")
 

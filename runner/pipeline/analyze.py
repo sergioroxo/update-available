@@ -358,8 +358,16 @@ def _validate_response(raw_json: str) -> AnalysisResult:
     if result:
         return result
 
+    # Detect likely truncation: response starts with { but never closes
+    stripped = re.sub(r"<think>.*?</think>", "", original, flags=re.DOTALL).strip()
+    looks_truncated = stripped.startswith("{") and not stripped.rstrip().endswith("}")
+    hint = (
+        "\nResponse looks truncated (starts with { but no closing }). "
+        "If using LiteLLM, add max_tokens: 8192 to each model in config.yaml."
+    ) if looks_truncated else ""
+
     raise ValueError(
-        f"Could not extract valid JSON from model response.\n"
+        f"Could not extract valid JSON from model response.{hint}\n"
         f"Raw response (first 2000 chars): {original[:2000]}"
     )
 
