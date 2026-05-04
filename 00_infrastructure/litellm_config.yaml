@@ -1,7 +1,9 @@
 # LiteLLM proxy config — Mac Studio M2 Ultra
 #
 # Deploy to: ~/sogice/litellm_config.yaml  (on the Mac Studio)
-# Start:     litellm --config ~/sogice/litellm_config.yaml --port 4000
+# Start:     litellm --config ~/sogice/litellm_config.yaml --port 4000 --host 0.0.0.0
+#            ↑ --host 0.0.0.0 is required — without it LiteLLM binds to localhost only
+#              and is unreachable over Tailscale (ConnectError in runner doctor)
 #
 # CRITICAL: max_tokens must be set on every chat model.
 # Without it, Ollama uses its default ~2048 token limit, which truncates
@@ -73,3 +75,5 @@ litellm_settings:
 
 general_settings:
   master_key: sk-local-research-key-change-this   # CHANGE THIS — must match LITELM_API_KEY in runner/.env
+  host: "0.0.0.0"   # bind to all interfaces — required for Tailscale / remote access
+  port: 4000

@@ -234,7 +234,9 @@ general_settings:
 
 ```bash
 # Start LiteLLM (foreground for testing)
-litellm --config ~/sogice/litellm_config.yaml --port 4000
+# --host 0.0.0.0 is required — without it LiteLLM binds to localhost only and is
+# unreachable over Tailscale (you'll see ConnectError in runner doctor)
+litellm --config ~/sogice/litellm_config.yaml --port 4000 --host 0.0.0.0
 
 # In a separate terminal — test chat completion
 curl http://localhost:4000/v1/chat/completions \
@@ -276,6 +278,8 @@ cat > ~/Library/LaunchAgents/com.sogice.litelm.plist << 'EOF'
         <string>/Users/YOUR_USERNAME/sogice/litellm_config.yaml</string>
         <string>--port</string>
         <string>4000</string>
+        <string>--host</string>
+        <string>0.0.0.0</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -330,7 +334,9 @@ tailscale status
 
 ### 3.2 Expose LiteLLM via Tailscale
 
-By default LiteLLM binds to `0.0.0.0:4000`, which includes the Tailscale interface. No extra config needed — Tailscale handles NAT traversal and encryption.
+LiteLLM defaults to binding on `127.0.0.1` (localhost only). The `--host 0.0.0.0` flag (set in the LaunchAgent above and in `general_settings` in the YAML) makes it listen on all interfaces, including the Tailscale interface. Without it you'll get `ConnectError` in `runner doctor` even though Tailscale is connected and the macOS firewall allows the process.
+
+Tailscale handles NAT traversal and encryption — no extra config needed beyond the bind address.
 
 Test from your MacBook:
 ```bash

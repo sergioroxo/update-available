@@ -558,7 +558,19 @@ def doctor():
             r.raise_for_status()
             ok("LiteLLM proxy", f"Reachable at {litelm_url}")
         except Exception as exc:
-            fail("LiteLLM proxy", f"Not reachable at {litelm_url}: {type(exc).__name__}\nIs the Mac Studio on Tailscale and LiteLLM running?")
+            exc_type = type(exc).__name__
+            hint = (
+                "ConnectError = port not listening on the Tailscale interface.\n"
+                "Most likely cause: LiteLLM was started without --host 0.0.0.0\n"
+                "(it defaults to 127.0.0.1, so Tailscale can't reach it).\n"
+                "Fix: restart LiteLLM with:\n"
+                "  litellm --config ~/sogice/litellm_config.yaml --port 4000 --host 0.0.0.0\n"
+                "Or reload the LaunchAgent after adding --host 0.0.0.0 to the plist.\n"
+                "See MAC_STUDIO_SERVER_SETUP.md § 2.3 and § 2.4."
+                if "ConnectError" in exc_type else
+                "Is the Mac Studio on Tailscale and LiteLLM running?"
+            )
+            fail("LiteLLM proxy", f"Not reachable at {litelm_url}: {exc_type}\n{hint}")
 
     ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     embedding_model = os.getenv("EMBEDDING_MODEL", "qwen3-embedding:8b")
