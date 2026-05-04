@@ -250,6 +250,28 @@ class AnalysisResult(BaseModel):
                     warnings.append(f"Stripped category prefixes from '{key}' items.")
                     data[key] = cleaned
 
+        # 6. Coerce list-of-objects fields where model returns list-of-strings
+        #    candidate_terms: ["term a", "term b"] → [{"term": "term a"}, ...]
+        #    suggested_actors / suggested_networks: same pattern
+        for key, term_key in (
+            ("candidate_terms", "term"),
+            ("suggested_actors", "name"),
+            ("suggested_networks", "name"),
+        ):
+            val = data.get(key)
+            if isinstance(val, list):
+                coerced = []
+                changed = False
+                for item in val:
+                    if isinstance(item, str):
+                        coerced.append({term_key: item})
+                        changed = True
+                    else:
+                        coerced.append(item)
+                if changed:
+                    data[key] = coerced
+                    warnings.append(f"Coerced string items in '{key}' to {{{term_key}: ...}} dicts.")
+
         data["normalisation_warnings"] = warnings
 
         return data
