@@ -318,8 +318,6 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
             "narrativeRegister":   analysis.narrative_register,
             "rhetoricalIntensity": analysis.rhetorical_intensity,
             "framingBalance":      analysis.framing_balance,
-            "needsReview":         analysis.needs_review,
-            "testimonyFlag":       analysis.testimony_flag,
         },
 
         "legalStatus": (

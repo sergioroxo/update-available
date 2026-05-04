@@ -96,7 +96,48 @@ export default {
       title: 'Classification',
       type: 'object',
       fields: [
-        { name: 'type', type: 'string' },
+        {
+          name: 'type',
+          title: 'Type',
+          type: 'string',
+          options: {
+            list: [
+              'Pro-SOGICE', 'Anti-SOGICE', 'Neutral-Academic', 'Legal-Instrument',
+              'Testimony', 'Media-Coverage', 'Internal-Org-Document', 'Mixed',
+              'Training-Certification-Material', 'Liturgical-Devotional-Material',
+              'Clinical-Therapeutic-Protocol', 'Survivor-Network-Material',
+              'Regulatory-Policy-Document',
+            ],
+          },
+        },
+        {
+          name: 'primaryType',
+          title: 'Primary Type (compound)',
+          type: 'string',
+          options: {
+            list: [
+              'Pro-SOGICE', 'Anti-SOGICE', 'Neutral-Academic', 'Legal-Instrument',
+              'Testimony', 'Media-Coverage', 'Internal-Org-Document', 'Mixed',
+              'Training-Certification-Material', 'Liturgical-Devotional-Material',
+              'Clinical-Therapeutic-Protocol', 'Survivor-Network-Material',
+              'Regulatory-Policy-Document',
+            ],
+          },
+        },
+        {
+          name: 'secondaryType',
+          title: 'Secondary Type (compound)',
+          type: 'string',
+          options: {
+            list: [
+              'Pro-SOGICE', 'Anti-SOGICE', 'Neutral-Academic', 'Legal-Instrument',
+              'Testimony', 'Media-Coverage', 'Internal-Org-Document', 'Mixed',
+              'Training-Certification-Material', 'Liturgical-Devotional-Material',
+              'Clinical-Therapeutic-Protocol', 'Survivor-Network-Material',
+              'Regulatory-Policy-Document',
+            ],
+          },
+        },
         { name: 'format', type: 'string' },
         { name: 'evidence', type: 'array', of: [{ type: 'string' }] },
         { name: 'scope', type: 'string', options: { list: ['Core', 'Contextual', 'Reference'] } },
@@ -111,7 +152,30 @@ export default {
         { name: 'function', type: 'array', of: [{ type: 'string' }] },
         { name: 'landmark', type: 'array', of: [{ type: 'string' }] },
         { name: 'flags', type: 'array', of: [{ type: 'string' }] },
-        { name: 'narrativeRegister', type: 'string' },
+        {
+          name: 'narrativeRegister',
+          title: 'Narrative Register',
+          type: 'string',
+          options: {
+            list: [
+              'Pastoral-Healing', 'Scientific-Clinical', 'Legal-Policy',
+              'Testimonial-Personal', 'Conspiratorial', 'Activist-Advocacy',
+              'Journalistic', 'Academic-Analytical', 'Mixed',
+            ],
+          },
+        },
+        {
+          name: 'rhetoricalIntensity',
+          title: 'Rhetorical Intensity',
+          type: 'string',
+          options: { list: ['hook', 'pathologizing', 'active-conduct'] },
+        },
+        {
+          name: 'framingBalance',
+          title: 'Framing Balance',
+          type: 'string',
+          options: { list: ['pro-dominant', 'anti-dominant', 'genuinely-mixed', 'unclear'] },
+        },
       ],
     },
 
@@ -361,6 +425,44 @@ export default {
       }],
     },
 
+    // ── Legal Status ────────────────────────────────────────────
+    {
+      name: 'legalStatus',
+      title: 'Legal Status',
+      type: 'object',
+      fields: [
+        { name: 'jurisdiction', title: 'Jurisdiction (ISO 3166-1 or regional)', type: 'string' },
+        {
+          name: 'status',
+          title: 'Status',
+          type: 'string',
+          options: { list: ['banned', 'regulated', 'contested', 'permitted', 'unknown'] },
+          initialValue: 'unknown',
+        },
+        { name: 'instrument', title: 'Law or Policy Instrument', type: 'string' },
+      ],
+    },
+
+    // ── Term Use Context ─────────────────────────────────────────
+    {
+      name: 'termUseContext',
+      title: 'Term Use Context (non-promotional appearances)',
+      type: 'array',
+      of: [{
+        type: 'object',
+        fields: [
+          { name: 'term', title: 'Lexicon Term', type: 'string' },
+          {
+            name: 'use',
+            title: 'Use Type',
+            type: 'string',
+            options: { list: ['promotional', 'definitional', 'critical', 'reported'] },
+          },
+          { name: 'quote', title: 'Context Quote (≤20 words)', type: 'string' },
+        ],
+      }],
+    },
+
     // ── Validation ──────────────────────────────────────────────
     {
       name: 'validation',
@@ -415,9 +517,10 @@ export default {
         },
         { name: 'validationModel', type: 'string' },
         { name: 'validationProvider', type: 'string' },
+        { name: 'promptVersion', title: 'Prompt Version (e.g. ingestion-v3.3)', type: 'string' },
         {
           name: 'promptVersionRef',
-          title: 'Prompt Version',
+          title: 'Prompt Version (linked record)',
           type: 'reference',
           to: [{ type: 'promptVersion' }],
         },
