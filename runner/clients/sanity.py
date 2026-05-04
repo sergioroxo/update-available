@@ -298,33 +298,37 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         "provenance": provenance,
 
         "classification": {
-            "type":                analysis.type,
-            "primaryType":         analysis.primary_type,
-            "secondaryType":       analysis.secondary_type,
-            "format":              analysis.format,
-            "evidence":            analysis.evidence,
-            "scope":               analysis.scope,
-            "country":             analysis.country,
-            "tactic":              analysis.tactic,
-            "actor":               analysis.actor,
-            "network":             analysis.network,
-            "practice":            analysis.practice,
-            "term":                analysis.term,
-            "harm":                analysis.harm,
-            "migration":           analysis.migration,
-            "function":            analysis.function,
-            "landmark":            analysis.landmark,
-            "flags":               analysis.flags,
-            "narrativeRegister":   analysis.narrative_register,
-            "rhetoricalIntensity": analysis.rhetorical_intensity,
-            "framingBalance":      analysis.framing_balance,
+            k: v for k, v in {
+                "type":                analysis.type,
+                "primaryType":         analysis.primary_type,
+                "secondaryType":       analysis.secondary_type,
+                "format":              analysis.format,
+                "evidence":            analysis.evidence,
+                "scope":               analysis.scope,
+                "country":             analysis.country,
+                "tactic":              analysis.tactic,
+                "actor":               analysis.actor,
+                "network":             analysis.network,
+                "practice":            analysis.practice,
+                "term":                analysis.term,
+                "harm":                analysis.harm,
+                "migration":           analysis.migration,
+                "function":            analysis.function,
+                "landmark":            analysis.landmark,
+                "flags":               analysis.flags,
+                "narrativeRegister":   analysis.narrative_register,
+                "rhetoricalIntensity": analysis.rhetorical_intensity,
+                "framingBalance":      analysis.framing_balance,
+            }.items() if v is not None
         },
 
         "legalStatus": (
             {
-                "jurisdiction": analysis.legal_status.jurisdiction,
-                "status":       analysis.legal_status.status,
-                "instrument":   analysis.legal_status.instrument,
+                k: v for k, v in {
+                    "jurisdiction": analysis.legal_status.jurisdiction,
+                    "status":       analysis.legal_status.status,
+                    "instrument":   analysis.legal_status.instrument,
+                }.items() if v is not None
             }
             if analysis.legal_status and analysis.legal_status.jurisdiction
             else None
@@ -433,6 +437,9 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
 
     if prep.language_detected:
         doc["content"]["languageDetected"] = prep.language_detected
+
+    # Strip top-level None values — Sanity rejects null for non-nullable fields
+    doc = {k: v for k, v in doc.items() if v is not None}
 
     return doc
 
