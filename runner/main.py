@@ -553,7 +553,7 @@ def doctor():
     else:
         try:
             import httpx as _httpx
-            r = _httpx.get(f"{litelm_url}/health", timeout=5,
+            r = _httpx.get(f"{litelm_url}/health", timeout=15,
                            headers={"Authorization": f"Bearer {litelm_key}"})
             r.raise_for_status()
             ok("LiteLLM proxy", f"Reachable at {litelm_url}")
