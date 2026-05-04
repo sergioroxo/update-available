@@ -736,6 +736,53 @@ def seed_lexicon_cmd(
             console.print(f"  … and {len(summary['errors']) - 20} more")
 
 
+@app.command(name="seed-lexicon-variants")
+def seed_lexicon_variants_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Count variants without writing"),
+):
+    """Seed multilingualVariants from Section 11 of SOGICE_Lexicon_v2.1.md.
+
+    Reads the multilingual translation table and language-specific note paragraphs,
+    then appends each non-English term as a multilingualVariant on its parent
+    lexiconEntry in Sanity.
+
+    Parent entries that don't yet exist are created as minimal stubs automatically.
+    Safe to re-run — duplicate variant keys are ignored by Sanity.
+
+    Run seed-lexicon first so most parents already exist.
+    """
+    from .pipeline.seed import parse_multilingual_variants_md, seed_lexicon_variants
+
+    if dry_run:
+        variants = parse_multilingual_variants_md()
+        by_lang: dict[str, int] = {}
+        for v in variants:
+            by_lang[v["language"]] = by_lang.get(v["language"], 0) + 1
+        console.print(f"[bold]Dry run:[/bold] {len(variants)} variants parsed across {len(by_lang)} languages.")
+        for lang, count in sorted(by_lang.items()):
+            console.print(f"  {lang}: {count} variants")
+        console.print("\n[bold]Sample (first 10):[/bold]")
+        for v in variants[:10]:
+            console.print(f"  {v['variant_term']:40s} [{v['language']}] → {v['canonical_term']}")
+        return
+
+    config = load_config()
+    console.print("[bold]Seeding multilingual variants from SOGICE_Lexicon_v2.1.md Section 11 …[/bold]")
+    summary = seed_lexicon_variants(config, dry_run=False)
+
+    console.print(
+        f"\n[bold green]Done.[/bold green] "
+        f"{summary['appended']} variants appended, "
+        f"{summary['stub_created']} parent stubs created, "
+        f"{len(summary['errors'])} errors "
+        f"(of {summary['attempted']} attempted)"
+    )
+    if summary["errors"]:
+        console.print("\n[red]Errors:[/red]")
+        for err in summary["errors"][:20]:
+            console.print(f"  {err}")
+
+
 @app.command(name="seed-entities")
 def seed_entities_cmd(
     entity_type: str = typer.Option("all", "--type", help="org | person | law | event | all"),

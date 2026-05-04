@@ -2,12 +2,14 @@
 Stage 0 — Seed import from static markdown files.
 
 Parsers:
-  parse_lexicon_md()       → list of term dicts from SOGICE_Lexicon_v2.1.md
-  parse_entity_registry_md() → dict with keys: orgs, persons, laws, events
+  parse_lexicon_md()              → list of term dicts from SOGICE_Lexicon_v2.1.md
+  parse_multilingual_variants_md() → list of variant dicts (Section 11 table + notes)
+  parse_entity_registry_md()      → dict with keys: orgs, persons, laws, events
 
 Writers:
-  seed_lexicon()   → iterated write to Sanity via sanity.write_seed_lexicon_entry()
-  seed_entities()  → iterated write to Sanity via per-type writers
+  seed_lexicon()          → iterated write to Sanity via sanity.write_seed_lexicon_entry()
+  seed_lexicon_variants() → appends multilingualVariants to parent entries
+  seed_entities()         → iterated write to Sanity via per-type writers
 """
 from __future__ import annotations
 
@@ -449,6 +451,250 @@ def seed_entities(
                 summary["errors"].append(f"{name}: {exc}")
 
     return summary
+
+
+# ---------------------------------------------------------------------------
+# Section 11 — multilingual variants
+# ---------------------------------------------------------------------------
+
+# Section 11 table column order → ISO 639-1 codes
+_TABLE_LANG_COLS = ["en", "no", "it", "fr", "de", "es", "pl", "fi", "sv", "hu", "el", "mt"]
+
+# Section 11 language note prefixes → ISO code
+_LANG_NOTE_MAP = {
+    "Norwegian":   "no",
+    "Italian":     "it",
+    "Portuguese":  "pt",
+    "Spanish":     "es",
+    "German":      "de",
+    "Polish":      "pl",
+    "Hungarian":   "hu",
+    "Romanian":    "ro",
+    "Greek":       "el",
+    "Maltese":     "mt",
+    "French":      "fr",
+    "Russian":     "ru",
+    "Finnish":     "fi",
+    "Swedish":     "sv",
+}
+
+# Tier markers in variant cells
+_TIER_RE = re.compile(r"\(T([123])\)")
+
+
+def parse_multilingual_variants_md(path: Path | None = None) -> list[dict]:
+    """Parse Section 11 of SOGICE_Lexicon_v2.1.md and return variant dicts.
+
+    Each dict: canonical_term, canonical_id, variant_term, language,
+    attestation_tier, source_note.
+    Covers both the translation table and the language-specific notes paragraphs.
+    """
+    raw = (path or _LEXICON_FILE).read_text(encoding="utf-8")
+    lines = raw.splitlines()
+    variants: list[dict] = []
+
+    in_section_11 = False
+    in_table = False
+    table_english_col: list[str] = []  # English cell per row → canonical term
+
+    for line in lines:
+        if "## SECTION 11" in line:
+            in_section_11 = True
+            continue
+        if in_section_11 and line.startswith("## "):
+            # Left Section 11
+            in_section_11 = False
+            continue
+        if not in_section_11:
+            continue
+
+        # Table rows start with |
+        if line.startswith("|"):
+            cells = [c.strip() for c in line.split("|")[1:-1]]
+            if not cells:
+                continue
+            # Header row: "English | Norwegian | ..."
+            if cells[0].lower() == "english":
+                in_table = True
+                continue
+            # Separator row: ---|---|...
+            if re.match(r"^-+$", cells[0].replace(" ", "")):
+                continue
+            if in_table and len(cells) >= 2:
+                english_term = cells[0].strip()
+                if not english_term or english_term == "—":
+                    continue
+                canonical_id = f"lexicon-{_slugify(english_term)}"
+                for col_idx, lang in enumerate(_TABLE_LANG_COLS):
+                    if col_idx == 0 or col_idx >= len(cells):
+                        continue
+                    cell = cells[col_idx].strip()
+                    if not cell or cell == "—":
+                        continue
+                    # May have "(T1)" or "(T2)" tier marker
+                    tier_match = _TIER_RE.search(cell)
+                    tier = "tier-1-legal" if (tier_match and tier_match.group(1) == "1") else "tier-2-ngo-academic"
+                    variant_term = _TIER_RE.sub("", cell).strip().strip("()")
+                    if not variant_term or variant_term == "—":
+                        continue
+                    variants.append({
+                        "canonical_term": english_term,
+                        "canonical_id": canonical_id,
+                        "variant_term": variant_term,
+                        "language": lang,
+                        "attestation_tier": tier,
+                        "source_note": "SOGICE_Lexicon_v2.1 Section 11 table",
+                    })
+            continue
+
+        # Language-specific note lines: "**Norwegian:** term1 (T2, note) · term2 · ..."
+        lang_note_match = re.match(r"^\*\*([A-Za-z]+):\*\*\s+(.+)$", line)
+        if lang_note_match:
+            lang_name = lang_note_match.group(1)
+            lang_code = _LANG_NOTE_MAP.get(lang_name)
+            if not lang_code:
+                continue
+            rest = lang_note_match.group(2)
+            # Terms are separated by " · "
+            for token in rest.split("·"):
+                token = token.strip()
+                if not token:
+                    continue
+                # "Cristoterapia — 'Christ therapy,' Italian Catholic SOGICE rebranding (C2)"
+                # "kjønnsideologi (T2, policy debates)"
+                # Extract term (before " — " or "(")
+                term_part = re.split(r"\s*[—–(]", token)[0].strip()
+                if not term_part:
+                    continue
+                tier_m = _TIER_RE.search(token)
+                tier = "tier-1-legal" if (tier_m and tier_m.group(1) == "1") else "tier-2-ngo-academic"
+                # Source note: the part in parens
+                note_match = re.search(r"\(([^)]+)\)", token)
+                source_note = note_match.group(1) if note_match else ""
+                # Remove tier info from note
+                source_note = _TIER_RE.sub("", source_note).strip().strip(",").strip()
+                # Best-guess canonical: try to find a matching English parent
+                canonical_id, canonical_term = _guess_canonical(term_part, lang_code)
+                variants.append({
+                    "canonical_term": canonical_term,
+                    "canonical_id": canonical_id,
+                    "variant_term": term_part,
+                    "language": lang_code,
+                    "attestation_tier": tier,
+                    "source_note": f"SOGICE_Lexicon_v2.1 Section 11 {lang_name} notes"
+                        + (f" — {source_note}" if source_note else ""),
+                })
+
+    return variants
+
+
+def seed_lexicon_variants(
+    config: Config,
+    dry_run: bool = False,
+    path: Path | None = None,
+) -> dict:
+    """Parse Section 11 variants and append them as multilingualVariants on parent entries.
+
+    Parents that don't yet exist in Sanity are created as minimal stub entries
+    so the variant patch has a target document.
+    Returns summary dict: {attempted, appended, stub_created, errors}.
+    """
+    from ..clients import sanity as sanity_client
+
+    variants = parse_multilingual_variants_md(path)
+    summary = {"attempted": len(variants), "appended": 0, "stub_created": 0, "errors": []}
+
+    # Collect unique parent IDs that need to exist
+    parent_ids_needed: dict[str, str] = {}  # canonical_id → canonical_term
+    for v in variants:
+        parent_ids_needed[v["canonical_id"]] = v["canonical_term"]
+
+    if not dry_run:
+        # Ensure all parent entries exist (create stubs for missing ones)
+        try:
+            existing = sanity_client.fetch_lexicon_terms(config)
+            existing_ids = {e.get("_id", "") for e in existing}
+        except Exception:
+            existing_ids = set()
+
+        for cid, cterm in parent_ids_needed.items():
+            if cid not in existing_ids:
+                try:
+                    sanity_client.write_seed_lexicon_entry(
+                        {
+                            "sanity_id": cid,
+                            "term": cterm,
+                            "language": "en",
+                            "proposed_cluster": "Unknown",
+                            "function": "Unknown",
+                            "definition": "",
+                            "recommended_status": "draft",
+                        },
+                        config,
+                    )
+                    summary["stub_created"] += 1
+                except Exception as exc:
+                    summary["errors"].append(f"stub {cterm}: {exc}")
+
+    for v in variants:
+        if dry_run:
+            summary["appended"] += 1
+            continue
+        try:
+            sanity_client.write_seed_lexicon_variant(v, config)
+            summary["appended"] += 1
+        except Exception as exc:
+            summary["errors"].append(f"{v['variant_term']} ({v['language']}): {exc}")
+
+    return summary
+
+
+def _guess_canonical(variant_term: str, lang_code: str) -> tuple[str, str]:
+    """Best-effort map of a non-English variant back to its English canonical term.
+
+    Falls back to the variant itself slugified (will create a new entry keyed on
+    the foreign term — acceptable for isolated terms with no English parent).
+    """
+    # Known mappings: foreign term patterns → English canonical
+    _KNOWN = {
+        # Norwegian
+        "kjønnsideologi":          ("lexicon-gender-ideology",       "Gender Ideology"),
+        "reparativ terapi":        ("lexicon-reparative-therapy",    "Reparative Therapy"),
+        "konverteringsterapi":     ("lexicon-congruence-therapy",    "Congruence Therapy"),
+        "konverteringspraksis":    ("lexicon-conversion-practices",  "Conversion Practices"),
+        "sjelesorg":               ("lexicon-sjelesorg",             "Sjelesorg"),
+        "avventende observasjon":  ("lexicon-watch-and-wait-policy", "Watch and Wait Policy"),
+        # Italian
+        "cristoterapia":           ("lexicon-congruence-therapy",    "Congruence Therapy"),
+        "accompagnamento":         ("lexicon-accompagnamento",       "Accompagnamento"),
+        "libertà terapeutica":     ("lexicon-libert-terapeutica",    "Libertà-Terapeutica"),
+        "disordine interiore":     ("lexicon-disordine-interiore",   "Disordine-Interiore"),
+        "ferita antropologica":    ("lexicon-ferita-antropologica",  "Ferita-Antropologica"),
+        "terapia consensuale":     ("lexicon-einvernehmliche-therapie", "Einvernehmliche-Therapie"),
+        # German
+        "beratungsfreiheit":       ("lexicon-beratungsfreiheit",     "Beratungsfreiheit"),
+        "einvernehmliche therapie":("lexicon-einvernehmliche-therapie", "Einvernehmliche-Therapie"),
+        "konversionstherapieverbot":("lexicon-policy-resistance",    "Policy-Resistance"),
+        "konversionsbehandlung":   ("lexicon-congruence-therapy",    "Congruence Therapy"),
+        "seelsorge":               ("lexicon-sjelesorg",             "Sjelesorg"),
+        # Polish
+        "troska duszpasterska":    ("lexicon-troska-duszpasterska",  "Troska-Duszpasterska"),
+        "suwerenność rodzicielska":("lexicon-suwerenno-rodzicielska","Suwerenność-Rodzicielska"),
+        # Hungarian
+        "terápiás szabadság":      ("lexicon-ter-pi-s-szabads-g",   "Terápiás-Szabadság"),
+        "lelkipásztori gondozás":  ("lexicon-sjelesorg",             "Sjelesorg"),
+        # Romanian
+        "patimă":                  ("lexicon-patim",                 "Patimă"),
+        "terapie de conversie":    ("lexicon-congruence-therapy",    "Congruence Therapy"),
+        # Portuguese
+        "terapia do amor":         ("lexicon-congruence-therapy",    "Congruence Therapy"),
+    }
+    key = variant_term.lower().strip()
+    if key in _KNOWN:
+        return _KNOWN[key]
+    # Fall back to variant's own slug as canonical
+    slug = _slugify(variant_term)
+    return f"lexicon-{slug}", variant_term
 
 
 # ---------------------------------------------------------------------------
