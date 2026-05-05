@@ -67,11 +67,23 @@ def run_litelm(text: str, config: Config) -> list[float]:
 
 
 def test_dimension(ollama_base_url: str, model: str) -> int:
-    """Embed a short test string and return the vector dimension.
-    Called by `runner embed-test` to resolve Q22.
-    Does not require API keys — only needs Ollama running locally."""
+    """Embed a short test string via local Ollama and return the vector dimension."""
     vector = _call(ollama_base_url, model, "SurvivingSOGICE embedding dimension test.")
     return len(vector)
+
+
+def test_dimension_litelm(litelm_base_url: str, model: str) -> int:
+    """Embed a short test string via LiteLLM proxy (Mac Studio) and return the vector dimension."""
+    import os
+    api_key = os.getenv("LITELM_API_KEY", "sk-dummy")
+    response = httpx.post(
+        f"{litelm_base_url}/v1/embeddings",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={"model": model, "input": "SurvivingSOGICE embedding dimension test."},
+        timeout=_TIMEOUT,
+    )
+    response.raise_for_status()
+    return len(response.json()["data"][0]["embedding"])
 
 
 def save(doc_id: str, vector: list[float], config: Config) -> None:

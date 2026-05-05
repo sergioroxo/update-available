@@ -454,37 +454,82 @@ def migrate_supabase(
 
 
 @app.command(name="embed-test")
-def embed_test():
-    """Run a test embedding and print the vector dimension. Do this before Phase 0-B.
-    Only needs Ollama running — no API keys required."""
+def embed_test(
+    llm: str = typer.Option(
+        "litelm",
+        help="Embedding source: litelm (Mac Studio via LiteLLM) | local (MacBook Ollama)",
+    ),
+):
+    """Test the embedding model and print the vector dimension.
+
+    litelm (default) — hits Mac Studio via Tailscale/LiteLLM proxy.
+                       Mac Studio must be reachable (check with: ping mac-studio).
+    local            — hits local Ollama on this machine (ollama serve must be running).
+
+    Expected result: 4096 dimensions (qwen3-embedding:8b).
+    """
     import os
     from dotenv import load_dotenv
+    load_dotenv("runner/.env")
     load_dotenv()
 
-    ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    model = os.getenv("EMBEDDING_MODEL", "qwen3-embedding:8b")
+    use_litelm = llm.startswith("litelm")
 
-    console.print(f"Testing [bold]{model}[/bold] at [bold]{ollama_url}[/bold] ...")
-    try:
-        dim = embed.test_dimension(ollama_url, model)
-    except Exception as exc:
-        if "Connect" in type(exc).__name__:
+    if use_litelm:
+        litelm_url = os.getenv("LITELM_BASE_URL", "")
+        if not litelm_url:
             console.print(Panel(
-                "[red]Cannot connect to Ollama.[/red]\n\n"
-                "Start it with: [bold]ollama serve[/bold]\n"
-                f"Then pull the model: [bold]ollama pull {model}[/bold]",
-                title="Connection error",
+                "[red]LITELM_BASE_URL not set in runner/.env[/red]\n\n"
+                "Add: [bold]LITELM_BASE_URL=http://<mac-studio-tailscale-ip>:4000[/bold]",
+                title="Config error",
             ))
+            raise typer.Exit(1)
+        embed_url = litelm_url.rstrip("/")
+        model = os.getenv("LITELM_EMBEDDING_MODEL", "research-embedding")
+        console.print(
+            f"Testing [bold]{model}[/bold] via LiteLLM at [bold]{embed_url}[/bold]\n"
+            f"[dim](Mac Studio → qwen3-embedding:8b)[/dim]"
+        )
+    else:
+        embed_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        model = os.getenv("EMBEDDING_MODEL", "qwen3-embedding:8b")
+        console.print(f"Testing [bold]{model}[/bold] at [bold]{embed_url}[/bold] (local Ollama) ...")
+
+    try:
+        if use_litelm:
+            dim = embed.test_dimension_litelm(embed_url, model)
+        else:
+            dim = embed.test_dimension(embed_url, model)
+    except Exception as exc:
+        err = str(exc)
+        if "Connect" in type(exc).__name__ or "connect" in err.lower():
+            if use_litelm:
+                console.print(Panel(
+                    "[red]Cannot reach LiteLLM proxy (Mac Studio).[/red]\n\n"
+                    "Check: Is Mac Studio on? Is Tailscale connected?\n"
+                    f"Test with: [bold]curl {embed_url}/health[/bold]",
+                    title="Connection error",
+                ))
+            else:
+                console.print(Panel(
+                    "[red]Cannot connect to local Ollama.[/red]\n\n"
+                    "Start it with: [bold]ollama serve[/bold]\n"
+                    f"Then pull the model: [bold]ollama pull {model}[/bold]",
+                    title="Connection error",
+                ))
         else:
             console.print(Panel(f"[red]{exc}[/red]", title="Error"))
         raise typer.Exit(1)
 
+    status = "[bold green]✓ correct[/bold green]" if dim == 4096 else f"[bold red]✗ unexpected — expected 4096[/bold red]"
     console.print(Panel(
-        f"[bold green]{model}  →  {dim} dimensions[/bold green]\n\n"
-        f"Record this in CLAUDE.md under Open Questions (Q22):\n"
-        f"  {model} output dimension = [bold]{dim}d[/bold]\n\n"
-        f"Use [bold]vector({dim})[/bold] when creating the Supabase table.",
-        title="Embedding Dimension Test ✓",
+        f"[bold green]{model}  →  {dim} dimensions[/bold green]  {status}\n\n"
+        + (
+            "Supabase table is correctly sized at [bold]vector(4096)[/bold]."
+            if dim == 4096 else
+            f"[red]Supabase table must use vector({dim}) — run migrate-supabase --confirm.[/red]"
+        ),
+        title="Embedding Dimension Test ✓" if dim == 4096 else "Embedding Dimension Test — MISMATCH",
     ))
 
 
