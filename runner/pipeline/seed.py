@@ -871,6 +871,44 @@ def parse_tactics(path: Path | None = None) -> list[dict]:
             "tactic_level": "sub-tactic",
             "parent_tactic_id": "tactic-identity-erasure",
         },
+        # Rebranding-SOGICE sub-tactics
+        {
+            "tactic": "Rebranding-SOGICE (coaching-rebrand)",
+            "primary_cluster": "Policy-Resistance",
+            "secondary_cluster": "Pseudo-Science",
+            "definition": (
+                "Delivering SOGICE under the label of life coaching, mentoring, identity coaching, "
+                "or wellbeing consultancy to evade conversion therapy bans and platform content "
+                "policies. The change goal is preserved; only the packaging changes. Key markers: "
+                "'non-therapeutic,' 'not clinical,' 'client-led exploration,' 'personal development.'"
+            ),
+            "boundaries": (
+                "Distinct from Rebranding-SOGICE (language) which swaps terminology within "
+                "pastoral/clinical registers; this sub-tactic specifically exploits the coaching "
+                "vs. therapy legal distinction to operate outside ban definitions. "
+                "The practice counterpart is Practice: Coaching/Counselling-Rebrand."
+            ),
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-rebranding-sogice",
+        },
+        {
+            "tactic": "Rebranding-SOGICE (platform-evasion)",
+            "primary_cluster": "Policy-Resistance",
+            "secondary_cluster": "Anti-Gender",
+            "definition": (
+                "Modifying language, hashtags, and framing in social media and digital content "
+                "specifically to evade platform content moderation filters and demonetisation — "
+                "while distributing the same SOGICE material. Related to but distinct from "
+                "legislative evasion; targets algorithmic and moderation enforcement."
+            ),
+            "boundaries": (
+                "Distinct from Rebranding-SOGICE (coaching-rebrand) which targets legal ban "
+                "definitions; this sub-tactic targets platform terms of service and algorithmic "
+                "enforcement rather than statutory law."
+            ),
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-rebranding-sogice",
+        },
     ]
     entries.extend(_SUB_TACTICS)
 
@@ -1225,8 +1263,10 @@ def parse_practices(path: Path | None = None) -> list[dict]:
             "documented in Catholic, Evangelical, and Pentecostal contexts."
         ),
         "Coaching/Counselling-Rebrand": (
-            "SOGICE repackaged as generic life coaching, mentoring, or 'identity exploration' "
-            "to evade bans on conversion therapy; overlaps with Rebranding-SOGICE tactic."
+            "SOGICE delivered under a coaching, mentoring, or 'identity exploration' label "
+            "to evade conversion therapy bans and platform filters. The practice counterpart "
+            "to the tactic Rebranding-SOGICE (coaching-rebrand): the tactic is the rhetorical "
+            "and legal evasion move; this practice is how it is actually delivered."
         ),
         "Identity Realignment": (
             "Structured programme guiding individuals toward heterosexual or cisgender identity "
@@ -1264,8 +1304,9 @@ def parse_practices(path: Path | None = None) -> list[dict]:
 
     _TACTIC_OVERLAP: dict[str, str] = {
         "Coaching/Counselling-Rebrand": (
-            "Overlaps with Rebranding-SOGICE tactic and Platform-Evasion tactic. "
-            "Consider whether this is better classified as a tactic variant."
+            "This practice is the delivery mechanism for the Rebranding-SOGICE (coaching-rebrand) "
+            "sub-tactic. The practice describes HOW SOGICE is delivered (as coaching/counselling); "
+            "the tactic describes the rhetorical/legal evasion move."
         ),
     }
 
