@@ -5,4 +5,5 @@ export default defineCliConfig({
     projectId: 'eqg5bxk6',
     dataset: 'production',
   },
+  studioHost: 'surviving-sogice',
 })
