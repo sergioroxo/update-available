@@ -14,6 +14,28 @@ export default {
       initialValue: 'draft',
     },
     {
+      name: 'tacticLevel',
+      title: 'Tactic Level',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'Structural — the underlying rhetorical mechanism', value: 'structural' },
+          { title: 'Sub-tactic — a context-specific variant of a structural tactic', value: 'sub-tactic' },
+          { title: 'Campaign — a documented coordinated deployment', value: 'campaign' },
+        ],
+      },
+      initialValue: 'structural',
+      description: 'Structural tactics are the core rhetorical mechanisms. Sub-tactics are context-specific variants (e.g. Gender-Essentialism (religious) is a sub-tactic of Gender-Essentialism). Campaigns are documented coordinated deployments like Operation Gideon.',
+    },
+    {
+      name: 'parentTactic',
+      title: 'Parent Tactic',
+      type: 'reference',
+      to: [{ type: 'tacticEntry' }],
+      description: 'For sub-tactics: the structural tactic this is a variant of.',
+      hidden: ({ document }: any) => document?.tacticLevel !== 'sub-tactic',
+    },
+    {
       name: 'primaryCluster',
       title: 'Primary Cluster',
       type: 'string',

@@ -319,6 +319,15 @@ def write_seed_tactic_entry(entry: dict, config: Config) -> str:
     if _clean_cluster(entry.get("secondary_cluster", "")):
         doc["secondaryCluster"] = _clean_cluster(entry["secondary_cluster"])
 
+    tactic_level = entry.get("tactic_level", "structural")
+    if tactic_level in ("structural", "sub-tactic", "campaign"):
+        doc["tacticLevel"] = tactic_level
+    if entry.get("parent_tactic_id"):
+        doc["parentTactic"] = {
+            "_type": "reference",
+            "_ref": entry["parent_tactic_id"],
+        }
+
     doc = {k: v for k, v in doc.items() if v is not None}
     result = _mutate([{"createOrReplace": doc}], config)
     try:

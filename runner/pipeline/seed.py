@@ -696,6 +696,39 @@ def parse_tactics(path: Path | None = None) -> list[dict]:
     for k, v in _EXTRA_CLUSTERS.items():
         cluster_map.setdefault(k, v)
 
+    # ── Definitions for qualified sub-variants from ontology table ───────────
+    _QUALIFIED_DEFS: dict[str, str] = {
+        "Rebranding-SOGICE (language)":    "Replacing explicit conversion terminology with euphemistic language in pastoral, clinical, and testimonial registers — SSA, SGA, 'identity exploration,' 'congruence therapy' — to preserve the change goal while evading scrutiny.",
+        "Rebranding-SOGICE (legislative)": "Deploying wellness, coaching, and therapeutic-neutrality language specifically in legislative and regulatory contexts to argue SOGICE falls outside ban definitions — 'it's not conversion therapy, it's identity exploration.'",
+        "Gender-Essentialism (religious)": "Theological claims that sex is divinely ordained, binary, and immutable — 'male and female he created them,' 'eternal gender,' 'Imago Dei integrity' — deployed to frame gender transition as a spiritual error.",
+        "Gender-Essentialism (secular)":   "Secular biological essentialism — 'sex is binary and immutable,' 'you cannot change sex' — deployed by gender-critical and scientific-authority actors to deny trans legitimacy without religious framing.",
+    }
+    for k, v in _QUALIFIED_DEFS.items():
+        prompt_defs.setdefault(k, v)
+
+    # ── Static definitions for the 14 core tactics (from tagger vocabulary) ──
+    # These don't have standalone definition paragraphs in the ontology —
+    # their meaning is embedded in cluster descriptions. Definitions here are
+    # concise one-liners from the tagger vocabulary, sufficient for draft status.
+    _STATIC_DEFS: dict[str, str] = {
+        "Identity-Erasure":        "Minimizing or denying LGBTQ+ identity — 'labels don't define you,' 'you experience SSA not BE gay' — to keep conversion intact without appearing to attack the person.",
+        "Rebranding-SOGICE":       "Replacing explicit conversion therapy language with softer terms (SSA/SGA, congruence therapy, identity exploration, life coaching) to evade bans, platform filters, and public scrutiny.",
+        "Gender-Essentialism":     "Rigid biological or theological claims about sex: 'true sex,' 'born male/female,' 'restoring masculinity/femininity' — used to delegitimize trans identity or justify change-oriented practice.",
+        "False-Scientific-Authority": "Misusing scientific register — pseudo-diagnostics (ROGD), fringe journals, neuroplasticity claims — to give SOGICE the appearance of evidence-based clinical legitimacy.",
+        "Social-Contagion-Myth":   "Claiming LGBTQ+ identities spread like trends, contagion, or peer influence, implying they are not genuine and can be reversed by removing the social influence.",
+        "ROGD-Frame":              "Using Rapid Onset Gender Dysphoria theory — and social contagion logic applied specifically to trans identity — to argue trans youth require watchful waiting rather than affirmation.",
+        "Detrans-Propaganda":      "Weaponizing detransition stories to restrict gender-affirming care, delegitimize trans identity broadly, or argue that affirmation causes irreversible harm.",
+        "Sex-Rejection-Frame":     "Framing gender transition as a rejection of one's 'true' biological sex — positioning trans identity as self-harm or denial of biological reality.",
+        "Anti-Trans-Rhetoric":     "Delegitimizing trans identity and attacking gender-affirming care through a range of strategies — from ontological denial to medical opposition to legal restriction.",
+        "Policy-Resistance-Frame": "Opposing conversion therapy bans by framing SOGICE as freedom, therapeutic choice, or civil rights — recasting regulation as government overreach or attack on conscience.",
+        "Anti-Gender-Narrative":   "Framing LGBTQ+ rights as the ideological takeover of 'natural' gender by a coordinated political movement ('gender ideology'), positioning resistance as defense of biological and social order.",
+        "Anti-LGBT-Conspiracy":    "Claims of global plots, institutional indoctrination, and grooming — 'they're coming for our children' — portraying LGBTQ+ existence as organized predation or civilizational threat.",
+        "Groomer-Panic":           "Claiming LGBTQ+ people, educators, or institutions groom or harm children — translating Anti-LGBT-Conspiracy into specific behavioral accusations targeting individuals and schools.",
+        "Dehumanizing-Language":   "Slurs, descriptions of LGBTQ+ identities as unnatural, degenerate, or evil — the rhetorical floor of Anti-Gender and Anti-Trans discourse.",
+    }
+    for k, v in _STATIC_DEFS.items():
+        prompt_defs.setdefault(k, v)
+
     # ── Deduplicate: normalise space→hyphen variants ──────────────────────────
     # "Anti-Trans Rhetoric" and "Anti-Trans-Rhetoric" are the same tactic
     def _norm(s: str) -> str:
@@ -705,7 +738,7 @@ def parse_tactics(path: Path | None = None) -> list[dict]:
     for name in tactic_vocab:
         seen_normed[_norm(name)] = name
 
-    # ── Merge: all known tactics → unified dicts ─────────────────────────────
+    # ── Merge: structural tactics → unified dicts ─────────────────────────────
     all_names: list[str] = list(dict.fromkeys(
         tactic_vocab
         + list(cluster_map.keys())
@@ -718,7 +751,6 @@ def parse_tactics(path: Path | None = None) -> list[dict]:
         if not name or "|" in name:
             continue
         normed = _norm(name)
-        # Skip if we already emitted the hyphenated canonical form
         canonical = seen_normed.get(normed, name)
         if canonical in emitted:
             continue
@@ -732,6 +764,15 @@ def parse_tactics(path: Path | None = None) -> list[dict]:
             or prompt_defs.get(name)
             or ""
         )
+        # tacticLevel: campaign for Operation-Gideon; sub-tactic for qualified variants
+        is_sub = "(" in canonical and ")" in canonical
+        is_campaign = canonical in ("Operation-Gideon",)
+        tactic_level = "campaign" if is_campaign else ("sub-tactic" if is_sub else "structural")
+        parent_id = None
+        if is_sub:
+            parent_name = re.sub(r"\s*\([^)]*\)", "", canonical).strip()
+            parent_id = f"tactic-{_slugify(parent_name)}"
+
         entries.append({
             "tactic": canonical,
             "primary_cluster": clusters.get("primary", ""),
@@ -739,7 +780,90 @@ def parse_tactics(path: Path | None = None) -> list[dict]:
             "definition": definition,
             "boundaries": odef.get("boundaries", ""),
             "source_note": odef.get("source_note", ""),
+            "tactic_level": tactic_level,
+            "parent_tactic_id": parent_id,
         })
+
+    # ── Sub-tactics: context-specific variants not in the ontology table ──────
+    _SUB_TACTICS: list[dict] = [
+        # Anti-Trans Rhetoric sub-tactics
+        {
+            "tactic": "Anti-Trans-Rhetoric (identity-denial)",
+            "primary_cluster": "Anti-Trans/ROGD",
+            "secondary_cluster": "Anti-Gender",
+            "definition": "Ontological denial of trans identity — 'there is no such thing as a trans person,' 'you cannot change sex.' Targets the legitimacy of trans existence as such, prior to any clinical question.",
+            "boundaries": "Distinct from Anti-Trans-Rhetoric (care-opposition) which targets medical intervention rather than trans identity itself.",
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-anti-trans-rhetoric",
+        },
+        {
+            "tactic": "Anti-Trans-Rhetoric (care-opposition)",
+            "primary_cluster": "Anti-Trans/ROGD",
+            "secondary_cluster": "Policy-Resistance",
+            "definition": "Opposing gender-affirming medical care — puberty blockers, hormones, surgery — through safety, regret, and detransition arguments. Operates primarily in clinical and regulatory registers.",
+            "boundaries": "Distinct from Anti-Trans-Rhetoric (identity-denial) which disputes trans existence; this variant accepts trans people exist but contests their access to care.",
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-anti-trans-rhetoric",
+        },
+        # Groomer-Panic sub-tactics
+        {
+            "tactic": "Groomer-Panic (educator)",
+            "primary_cluster": "Anti-Gender",
+            "secondary_cluster": "Anti-Trans/ROGD",
+            "definition": "Claiming LGBTQ+ educators, curricula, or school programs groom children — targeting institutional and educational contexts. Key vector for school exclusion campaigns and curriculum bans.",
+            "boundaries": "Distinct from Groomer-Panic (predator-claim) which makes direct criminal accusations against individuals rather than institutional criticism.",
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-groomer-panic",
+        },
+        {
+            "tactic": "Groomer-Panic (predator-claim)",
+            "primary_cluster": "Anti-Gender",
+            "secondary_cluster": "Anti-LGBT-Conspiracy",
+            "definition": "Direct accusations that LGBTQ+ individuals are sexual predators targeting children. Moves from institutional critique to individual criminal accusation. Associated with doxxing and harassment campaigns.",
+            "boundaries": "More severe than Groomer-Panic (educator) — individual criminal accusation vs. institutional policy criticism.",
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-groomer-panic",
+        },
+        # Policy-Resistance-Frame sub-tactics
+        {
+            "tactic": "Policy-Resistance-Frame (rights-language)",
+            "primary_cluster": "Policy-Resistance",
+            "secondary_cluster": "",
+            "definition": "Invoking European human rights frameworks — ECHR Articles 8 (private life) and 9 (conscience/religion) — to argue conversion therapy bans violate fundamental rights. More legally sophisticated than ban-overreach framing.",
+            "boundaries": "Distinct from Policy-Resistance-Frame (ban-overreach) which uses populist 'criminalising prayer' language; this variant operates in legal/constitutional registers before courts and treaty bodies.",
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-policy-resistance-frame",
+        },
+        {
+            "tactic": "Policy-Resistance-Frame (ban-overreach)",
+            "primary_cluster": "Policy-Resistance",
+            "secondary_cluster": "Pastoral-Coercion",
+            "definition": "Populist framing of conversion therapy bans as criminalising prayer, pastoral conversation, or parental discipline. Targets lay audiences rather than legal bodies. Key phrases: 'criminalising Christianity,' 'banning pastoral support.'",
+            "boundaries": "Distinct from Policy-Resistance-Frame (rights-language) which uses technical rights framing; this variant uses pastoral/populist language aimed at congregation-level mobilization.",
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-policy-resistance-frame",
+        },
+        # Identity-Erasure sub-tactics
+        {
+            "tactic": "Identity-Erasure (pastoral)",
+            "primary_cluster": "Pastoral-Coercion",
+            "secondary_cluster": "SSA-Rhetoric",
+            "definition": "Pastoral register erasure: 'labels don't define you,' 'you are more than your attractions,' 'your identity is in Christ.' Separates the person from the identity without appearing confrontational.",
+            "boundaries": "Distinct from Identity-Erasure (clinical) which uses pseudo-medical language. Pastoral erasure operates through belonging and spiritual formation rather than diagnosis.",
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-identity-erasure",
+        },
+        {
+            "tactic": "Identity-Erasure (clinical)",
+            "primary_cluster": "Pseudo-Science",
+            "secondary_cluster": "SSA-Rhetoric",
+            "definition": "Clinical register erasure: 'you experience same-sex attraction, you are not gay,' 'SSA is a symptom not an identity,' 'orientation is fluid.' Uses diagnostic framing to separate the person from their identity.",
+            "boundaries": "Distinct from Identity-Erasure (pastoral) which uses spiritual/belonging framing. Clinical erasure uses pseudo-medical language to position identity as a changeable symptom.",
+            "tactic_level": "sub-tactic",
+            "parent_tactic_id": "tactic-identity-erasure",
+        },
+    ]
+    entries.extend(_SUB_TACTICS)
 
     return entries
 
