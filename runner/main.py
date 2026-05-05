@@ -896,5 +896,129 @@ def seed_entities_cmd(
             console.print(f"  … and {len(summary['errors']) - 20} more")
 
 
+@app.command(name="seed-practices")
+def seed_practices_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Parse and preview without writing to Sanity"),
+):
+    """Seed Sanity with SOGICE practice entries (14 practices).
+
+    Writes practiceEntry records with registryStatus='seeded'. Safe to re-run — idempotent.
+
+    Includes 12 practices from the vocabulary CSV plus 2 missing from the CSV but
+    present in the ingestion prompt (Physical-Coercion, Verbal-Abuse-Humiliation).
+
+    NOTE: Practice: Coaching/Counselling-Rebrand overlaps with the Rebranding-SOGICE
+    tactic — flagged in the record notes for researcher review.
+    """
+    from .pipeline.seed import parse_practices, seed_practices
+
+    if dry_run:
+        practices = parse_practices()
+        console.print(f"\n[bold]Dry run:[/bold] {len(practices)} practices parsed\n")
+        for p in practices:
+            has_def = "[green]✓ def[/green]" if p.get("definition") else "[yellow]no def[/yellow]"
+            overlap = "  [red]⚠ tactic-overlap[/red]" if p.get("notes") else ""
+            console.print(f"  [{p.get('practice_type', '?'):14}] {p['practice']}  ({has_def}){overlap}")
+        return
+
+    config = load_config()
+    console.print("[bold]Seeding practices to Sanity …[/bold]")
+    summary = seed_practices(config, dry_run=False)
+    console.print(
+        f"\n[bold green]Done.[/bold green] "
+        f"{summary['written']} written, {summary['failed']} failed "
+        f"(of {summary['total']} total)"
+    )
+
+
+@app.command(name="seed-tag-registry")
+def seed_tag_registry_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Parse and preview without writing to Sanity"),
+    category: str = typer.Option(
+        "all", "--category", "-c",
+        help="Category to seed: Type|Format|Evidence|Country|Function|Harm|Migration|all",
+    ),
+):
+    """Seed Sanity tagRegistry with controlled vocabulary from the vocabulary CSV.
+
+    Categories: Type (16), Format (19), Evidence (9), Country (26),
+    Function (10), Harm (7), Migration (5). Total: ~92 tags.
+
+    Network entries are seeded separately via seed-networks (written as organization records).
+
+    Harm taxonomy note: CSV severity-first labels (Mild/Moderate/Severe) conflict with the
+    ingestion prompt type-first taxonomy (Psychological/Physical/Spiritual). Severity tags
+    are flagged as 'superseded' in promptAlignment field.
+
+    Migration taxonomy note: CSV directional tags (To-Europe/From-Europe) differ from the
+    prompt protection-claim tags (Asylum-Related). Both preserved with alignment notes.
+    """
+    from .pipeline.seed import parse_vocabulary_csv, seed_tag_registry, _TAG_CATEGORIES
+
+    valid_cats = _TAG_CATEGORIES | {"all"}
+    if category not in valid_cats:
+        console.print(
+            f"[red]Unknown category '{category}'. "
+            f"Choose from: {', '.join(sorted(valid_cats))}[/red]"
+        )
+        raise typer.Exit(1)
+
+    cats = None if category == "all" else {category}
+
+    if dry_run:
+        from collections import Counter
+        tags = parse_vocabulary_csv(categories=cats)
+        by_cat = Counter(t["category"] for t in tags)
+        console.print(f"\n[bold]Dry run:[/bold] {len(tags)} tags\n")
+        for cat_name, count in sorted(by_cat.items()):
+            console.print(f"  [bold]{cat_name}[/bold] ({count})")
+        console.print()
+        for t in tags:
+            align = t.get("prompt_alignment", "")
+            align_str = f"  [dim][{align}][/dim]" if align else ""
+            console.print(f"  {t['tag']}{align_str}")
+        return
+
+    config = load_config()
+    console.print(f"[bold]Seeding tag registry (category={category}) …[/bold]")
+    summary = seed_tag_registry(config, dry_run=False, categories=cats)
+    console.print(
+        f"\n[bold green]Done.[/bold green] "
+        f"{summary['written']} written, {summary['failed']} failed "
+        f"(of {summary['total']} total)"
+    )
+
+
+@app.command(name="seed-networks")
+def seed_networks_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Parse and preview without writing to Sanity"),
+):
+    """Seed Sanity with Network entries from the vocabulary CSV as organization records.
+
+    34 network entries are written as organization records with type='advocacy-network'.
+    Some entries duplicate organizations already in the entity registry (IFTCC, NARTH, ADF, etc.)
+    — these will be overwritten safely. Run seed-entities first to preserve the richer
+    entity registry data where available.
+    """
+    from .pipeline.seed import parse_networks, seed_networks
+
+    if dry_run:
+        networks = parse_networks()
+        console.print(f"\n[bold]Dry run:[/bold] {len(networks)} network entries\n")
+        for n in networks:
+            has_desc = "[green]✓ desc[/green]" if n.get("description") else "[yellow]no desc[/yellow]"
+            console.print(f"  {n['name']}  ({has_desc})")
+        return
+
+    config = load_config()
+    console.print("[bold]Seeding network organizations to Sanity …[/bold]")
+    summary = seed_networks(config, dry_run=False)
+    console.print(
+        f"\n[bold green]Done.[/bold green] "
+        f"{summary['written']} written, {summary['failed']} failed "
+        f"(of {summary['total']} total)"
+    )
+
+
 if __name__ == "__main__":
     app()

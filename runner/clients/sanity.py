@@ -336,6 +336,83 @@ def write_seed_tactic_entry(entry: dict, config: Config) -> str:
         raise RuntimeError(f"Unexpected Sanity response for tactic write:\n{result}")
 
 
+def write_seed_practice_entry(entry: dict, config: Config) -> str:
+    """Create or replace a practiceEntry record from seed data."""
+    name = (entry.get("practice") or "").strip()
+    if not name:
+        raise ValueError("Cannot write practice entry without a name")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    sanity_id = f"practice-{_slugify(name)}"
+
+    doc: dict = {
+        "_id": sanity_id,
+        "_type": "practiceEntry",
+        "practice": name,
+        "status": "draft",
+        "registryStatus": "seeded",
+        "frequency": 0,
+    }
+    if entry.get("definition"):
+        doc["definition"] = entry["definition"]
+    if entry.get("accessible_definition"):
+        doc["accessibleDefinition"] = entry["accessible_definition"]
+    if entry.get("practice_type"):
+        doc["practiceType"] = entry["practice_type"]
+    if entry.get("delivery_context"):
+        ctx = entry["delivery_context"]
+        doc["deliveryContext"] = ctx if isinstance(ctx, list) else [ctx]
+    if entry.get("harm_categories"):
+        harms = entry["harm_categories"]
+        doc["harmCategories"] = harms if isinstance(harms, list) else [harms]
+    if entry.get("religious_context"):
+        rc = entry["religious_context"]
+        doc["religiousContext"] = rc if isinstance(rc, list) else [rc]
+    if entry.get("legal_status"):
+        doc["legalStatus"] = entry["legal_status"]
+
+    doc = {k: v for k, v in doc.items() if v is not None}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for practice write:\n{result}")
+
+
+def write_seed_tag_registry(entry: dict, config: Config) -> str:
+    """Create or replace a tagRegistry record from vocabulary CSV data."""
+    tag = (entry.get("tag") or "").strip()
+    category = (entry.get("category") or "").strip()
+    if not tag or not category:
+        raise ValueError("Cannot write tag registry entry without tag and category")
+
+    sanity_id = f"tag-{_slugify(tag)}"
+
+    doc: dict = {
+        "_id": sanity_id,
+        "_type": "tagRegistry",
+        "tag": tag,
+        "category": category,
+        "status": "active",
+        "frequency": entry.get("frequency", 0),
+    }
+    if entry.get("definition"):
+        doc["definition"] = entry["definition"]
+    if entry.get("notes"):
+        doc["notes"] = entry["notes"]
+    if entry.get("prompt_alignment"):
+        doc["promptAlignment"] = entry["prompt_alignment"]
+    if entry.get("prompt_equivalent"):
+        doc["promptEquivalent"] = entry["prompt_equivalent"]
+
+    doc = {k: v for k, v in doc.items() if v is not None}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for tag registry write:\n{result}")
+
+
 def write_seed_organization(entry: dict, config: Config) -> str:
     """Create or replace an organization record from seed entity registry data."""
     name = (entry.get("name") or "").strip()

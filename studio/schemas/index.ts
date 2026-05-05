@@ -2,6 +2,8 @@ import document from './document'
 import testimony from './testimony'
 import lexiconEntry from './lexiconEntry'
 import tacticEntry from './tacticEntry'
+import practiceEntry from './practiceEntry'
+import tagRegistry from './tagRegistry'
 import person from './person'
 import organization from './organization'
 import lawPolicy from './lawPolicy'
@@ -17,6 +19,8 @@ export const schemaTypes = [
   testimony,
   lexiconEntry,
   tacticEntry,
+  practiceEntry,
+  tagRegistry,
   person,
   organization,
   lawPolicy,

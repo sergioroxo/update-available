@@ -5,14 +5,20 @@ Parsers:
   parse_lexicon_md()              → list of term dicts from SOGICE_Lexicon_v2.1.md
   parse_multilingual_variants_md() → list of variant dicts (Section 11 table + notes)
   parse_entity_registry_md()      → dict with keys: orgs, persons, laws, events
+  parse_vocabulary_csv()          → list of tag dicts from sogice_vocabulary_*.csv
+  parse_practices()               → list of practice dicts
 
 Writers:
   seed_lexicon()          → iterated write to Sanity via sanity.write_seed_lexicon_entry()
   seed_lexicon_variants() → appends multilingualVariants to parent entries
   seed_entities()         → iterated write to Sanity via per-type writers
+  seed_tag_registry()     → seeds Type/Format/Evidence/Country/Function/Harm/Migration tags
+  seed_practices()        → seeds practiceEntry records
+  seed_networks()         → seeds Network CSV entries as organization records
 """
 from __future__ import annotations
 
+import csv
 import re
 from pathlib import Path
 from typing import Literal
@@ -24,6 +30,9 @@ _LEXICON_FILE = (
 )
 _ENTITY_FILE = (
     Path(__file__).parents[2] / "00_infrastructure" / "Entity_Registry_v1.1.md"
+)
+_VOCAB_CSV = (
+    Path(__file__).parents[2] / "03_data" / "sogice_vocabulary_2026-04-03.csv"
 )
 
 # Cluster section headers → proposedCluster values
@@ -1071,3 +1080,366 @@ def _parse_related(raw: str) -> list[str]:
         if t:
             result.append(t)
     return result
+
+
+# ---------------------------------------------------------------------------
+# Vocabulary CSV parser
+# ---------------------------------------------------------------------------
+
+# Categories seeded into tagRegistry (not Network — those go to organization)
+_TAG_CATEGORIES = {"Type", "Format", "Evidence", "Country", "Function", "Harm", "Migration"}
+
+# Practices are seeded separately
+_PRACTICE_CATEGORY = "Practice"
+
+# Network entries → organization records
+_NETWORK_CATEGORY = "Network"
+
+# Prompt alignment metadata: maps CSV category+tag suffix to alignment type and prompt equivalent
+_PROMPT_ALIGNMENT: dict[str, tuple[str, str]] = {
+    # Harm — CSV uses severity-first; prompt uses type-first
+    "Harm:Mild":          ("superseded", "harm severity dimension — use Psychological/Physical/Spiritual instead"),
+    "Harm:Moderate":      ("superseded", "harm severity dimension — use Psychological/Physical/Spiritual instead"),
+    "Harm:Severe":        ("superseded", "harm severity dimension — use Psychological/Physical/Spiritual instead"),
+    "Harm:Graphic":       ("superseded", "harm severity dimension — use Psychological/Physical/Spiritual instead"),
+    "Harm:Psychological": ("exact",      "Psychological"),
+    "Harm:Medical":       ("synonym",    "Physical"),
+    "Harm:Faith-Based":   ("synonym",    "Spiritual"),
+    # Migration — CSV directional tags vs prompt protection-claim tags
+    "Migration:To-Europe":          ("csv-only", ""),
+    "Migration:From-Europe":        ("csv-only", ""),
+    "Migration:Transnational-SOGICE": ("synonym", "asylum/migration SOGICE context"),
+    "Migration:Asylum-Related":     ("synonym",  "Asylum-Related"),
+    "Migration:Refugee-Claim":      ("synonym",  "Asylum-Related"),
+}
+
+
+def parse_vocabulary_csv(
+    path: Path | None = None,
+    categories: set[str] | None = None,
+) -> list[dict]:
+    """Parse sogice_vocabulary_*.csv and return tag registry dicts.
+
+    Args:
+        path: CSV file path (defaults to _VOCAB_CSV)
+        categories: limit to these categories (default: _TAG_CATEGORIES)
+
+    Returns:
+        List of dicts with keys: tag, category, definition, frequency,
+        prompt_alignment, prompt_equivalent, notes
+    """
+    csv_path = path or _VOCAB_CSV
+    want = categories if categories is not None else _TAG_CATEGORIES
+    entries: list[dict] = []
+    seen: set[str] = set()
+
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            cat = (row.get("Category") or "").strip()
+            tag = (row.get("Tag") or "").strip()
+            if not cat or not tag or cat not in want:
+                continue
+            if tag in seen:
+                continue
+            seen.add(tag)
+
+            # Frequency
+            try:
+                freq = int(row.get("Occurrences") or 0)
+            except (ValueError, TypeError):
+                freq = 0
+
+            # Definition from CSV (usually empty — fill from definition field)
+            definition = (row.get("Definition") or "").strip()
+
+            # Prompt alignment lookup
+            alignment_key = f"{cat}:{tag.split(': ', 1)[-1]}"
+            alignment, prompt_equiv = _PROMPT_ALIGNMENT.get(alignment_key, ("", ""))
+
+            entry: dict = {
+                "tag": tag,
+                "category": cat,
+                "frequency": freq,
+            }
+            if definition:
+                entry["definition"] = definition
+            if alignment:
+                entry["prompt_alignment"] = alignment
+            if prompt_equiv:
+                entry["prompt_equivalent"] = prompt_equiv
+
+            entries.append(entry)
+
+    return entries
+
+
+def parse_practices(path: Path | None = None) -> list[dict]:
+    """Parse Practice rows from the vocabulary CSV and return practice dicts.
+
+    Returns dicts with keys: practice, practice_type, definition.
+    Note: Practice: Coaching/Counselling-Rebrand overlaps with Rebranding-SOGICE
+    tactic — flagged in notes.
+    """
+    csv_path = path or _VOCAB_CSV
+
+    # Hand-authored practice type classification
+    _PRACTICE_TYPES: dict[str, str] = {
+        "Psychotherapy (change/suppression)": "psychological",
+        "Spiritual Healing":                  "spiritual",
+        "Pastoral Care":                      "spiritual",
+        "Deliverance":                        "spiritual",
+        "Exorcism":                           "spiritual",
+        "Coaching/Counselling-Rebrand":       "psychological",
+        "Identity Realignment":               "psychological",
+        "Retreat / Bootcamp":                 "hybrid",
+        "Medicalization-Abuse":               "medical",
+        "Hormonal-Intervention-Misuse":       "medical",
+        "Family Pressure":                    "social",
+        "Social Pressure / Community Pressure": "social",
+        # Two practices missing from CSV but present in ingestion prompt
+        "Physical Coercion":                  "medical",
+        "Verbal Abuse / Humiliation":         "social",
+    }
+
+    _PRACTICE_DEFS: dict[str, str] = {
+        "Psychotherapy (change/suppression)": (
+            "Licensed or unlicensed psychological intervention aimed at changing or suppressing "
+            "sexual orientation or gender identity, including talk therapy, CBT adaptations, "
+            "and aversion techniques."
+        ),
+        "Spiritual Healing": (
+            "Prayer, anointing, or spiritual intercession framed as healing homosexuality or "
+            "gender variance as spiritual disorder or sin."
+        ),
+        "Pastoral Care": (
+            "One-to-one or small-group religious guidance framing LGBTQ+ identity as incompatible "
+            "with faith, promoting celibacy or identity suppression."
+        ),
+        "Deliverance": (
+            "Charismatic/Pentecostal ritual casting out 'spirits' of homosexuality or gender "
+            "variance; distinct from exorcism in degree of formality."
+        ),
+        "Exorcism": (
+            "Formal religious rite expelling demonic influence attributed to LGBTQ+ identity; "
+            "documented in Catholic, Evangelical, and Pentecostal contexts."
+        ),
+        "Coaching/Counselling-Rebrand": (
+            "SOGICE repackaged as generic life coaching, mentoring, or 'identity exploration' "
+            "to evade bans on conversion therapy; overlaps with Rebranding-SOGICE tactic."
+        ),
+        "Identity Realignment": (
+            "Structured programme guiding individuals toward heterosexual or cisgender identity "
+            "through a combination of psychological, spiritual, and social methods."
+        ),
+        "Retreat / Bootcamp": (
+            "Residential intensive programme (weekend to multi-week) delivering concentrated "
+            "SOGICE through prayer, group therapy, and community accountability."
+        ),
+        "Medicalization-Abuse": (
+            "Use of medical authority or clinical settings to pathologize and suppress LGBTQ+ "
+            "identity, including historic aversion therapy (electric shock, nausea induction)."
+        ),
+        "Hormonal-Intervention-Misuse": (
+            "Prescribing hormones (e.g., testosterone suppression) to alter or suppress gender "
+            "identity or expression, without clinical gender-affirming indication."
+        ),
+        "Family Pressure": (
+            "Coordinated family-imposed sanctions, isolation, or coercion targeting LGBTQ+ "
+            "family members to induce identity change or suppression."
+        ),
+        "Social Pressure / Community Pressure": (
+            "Community-wide ostracism, shunning, or conditional belonging used to coerce "
+            "LGBTQ+ individuals into identity suppression or change attempts."
+        ),
+        "Physical Coercion": (
+            "Physical force, confinement, or deprivation used to compel identity change; "
+            "documented in residential and family-based SOGICE contexts."
+        ),
+        "Verbal Abuse / Humiliation": (
+            "Systematic verbal degradation, shaming, and humiliation deployed as a conversion "
+            "mechanism within spiritual, therapeutic, or family settings."
+        ),
+    }
+
+    _TACTIC_OVERLAP: dict[str, str] = {
+        "Coaching/Counselling-Rebrand": (
+            "Overlaps with Rebranding-SOGICE tactic and Platform-Evasion tactic. "
+            "Consider whether this is better classified as a tactic variant."
+        ),
+    }
+
+    entries: list[dict] = []
+    seen: set[str] = set()
+
+    # First pass: read from CSV
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            cat = (row.get("Category") or "").strip()
+            tag = (row.get("Tag") or "").strip()
+            if cat != "Practice" or not tag:
+                continue
+            # Strip "Practice: " prefix
+            name = tag.removeprefix("Practice: ").strip()
+            if name in seen:
+                continue
+            seen.add(name)
+
+            ptype = _PRACTICE_TYPES.get(name, "hybrid")
+            definition = _PRACTICE_DEFS.get(name, "")
+            notes = _TACTIC_OVERLAP.get(name, "")
+
+            entry: dict = {"practice": name, "practice_type": ptype}
+            if definition:
+                entry["definition"] = definition
+            if notes:
+                entry["notes"] = notes
+            entries.append(entry)
+
+    # Second pass: add practices missing from CSV (present in ingestion prompt)
+    for name in ("Physical Coercion", "Verbal Abuse / Humiliation"):
+        if name not in seen:
+            entry = {
+                "practice": name,
+                "practice_type": _PRACTICE_TYPES.get(name, "hybrid"),
+            }
+            if name in _PRACTICE_DEFS:
+                entry["definition"] = _PRACTICE_DEFS[name]
+            entries.append(entry)
+
+    return entries
+
+
+def parse_networks(path: Path | None = None) -> list[dict]:
+    """Parse Network rows from the vocabulary CSV and return organization dicts.
+
+    Network entries are written as organization records with orgType 'network'
+    or the appropriate org type if they are already in the entity registry.
+    """
+    csv_path = path or _VOCAB_CSV
+    entries: list[dict] = []
+    seen: set[str] = set()
+
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            cat = (row.get("Category") or "").strip()
+            tag = (row.get("Tag") or "").strip()
+            if cat != "Network" or not tag:
+                continue
+            # Strip "Network: " prefix
+            name = tag.removeprefix("Network: ").strip()
+            if not name or name in seen:
+                continue
+            seen.add(name)
+
+            definition = (row.get("Definition") or "").strip()
+            entry: dict = {
+                "name": name,
+                "type": "advocacy-network",
+            }
+            if definition:
+                entry["description"] = definition
+            entries.append(entry)
+
+    return entries
+
+
+# ---------------------------------------------------------------------------
+# Seed writers — vocabulary
+# ---------------------------------------------------------------------------
+
+def seed_tag_registry(
+    config: Config,
+    dry_run: bool = False,
+    categories: set[str] | None = None,
+    path: Path | None = None,
+) -> dict:
+    """Seed Type/Format/Evidence/Country/Function/Harm/Migration tags to Sanity tagRegistry."""
+    from ..clients import sanity as san
+
+    tags = parse_vocabulary_csv(path=path, categories=categories)
+    want = categories or _TAG_CATEGORIES
+
+    if dry_run:
+        by_cat: dict[str, list[str]] = {}
+        for t in tags:
+            by_cat.setdefault(t["category"], []).append(t["tag"])
+        print(f"\nDRY RUN — {len(tags)} tags across categories: {sorted(want)}")
+        for cat, items in sorted(by_cat.items()):
+            print(f"  {cat} ({len(items)}): {', '.join(items[:5])}{'...' if len(items) > 5 else ''}")
+        return {"total": len(tags), "dry_run": True}
+
+    written = 0
+    failed = 0
+    for tag in tags:
+        try:
+            san.write_seed_tag_registry(tag, config)
+            written += 1
+        except Exception as exc:
+            print(f"  ERROR seeding tag '{tag['tag']}': {exc}")
+            failed += 1
+
+    return {"written": written, "failed": failed, "total": len(tags)}
+
+
+def seed_practices(
+    config: Config,
+    dry_run: bool = False,
+    path: Path | None = None,
+) -> dict:
+    """Seed practiceEntry records to Sanity."""
+    from ..clients import sanity as san
+
+    practices = parse_practices(path=path)
+
+    if dry_run:
+        print(f"\nDRY RUN — {len(practices)} practices:")
+        for p in practices:
+            has_def = "✓ def" if p.get("definition") else "no def"
+            has_note = " ⚠ tactic-overlap" if p.get("notes") else ""
+            print(f"  [{p['practice_type']:14}] {p['practice']}  ({has_def}){has_note}")
+        return {"total": len(practices), "dry_run": True}
+
+    written = 0
+    failed = 0
+    for p in practices:
+        try:
+            san.write_seed_practice_entry(p, config)
+            written += 1
+        except Exception as exc:
+            print(f"  ERROR seeding practice '{p['practice']}': {exc}")
+            failed += 1
+
+    return {"written": written, "failed": failed, "total": len(practices)}
+
+
+def seed_networks(
+    config: Config,
+    dry_run: bool = False,
+    path: Path | None = None,
+) -> dict:
+    """Seed Network CSV entries as organization records in Sanity."""
+    from ..clients import sanity as san
+
+    networks = parse_networks(path=path)
+
+    if dry_run:
+        print(f"\nDRY RUN — {len(networks)} network organizations:")
+        for n in networks:
+            has_desc = "✓ desc" if n.get("description") else "no desc"
+            print(f"  {n['name']}  ({has_desc})")
+        return {"total": len(networks), "dry_run": True}
+
+    written = 0
+    failed = 0
+    for net in networks:
+        try:
+            san.write_seed_organization(net, config)
+            written += 1
+        except Exception as exc:
+            print(f"  ERROR seeding network '{net['name']}': {exc}")
+            failed += 1
+
+    return {"written": written, "failed": failed, "total": len(networks)}
