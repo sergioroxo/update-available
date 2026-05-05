@@ -1020,5 +1020,51 @@ def seed_networks_cmd(
     )
 
 
+@app.command(name="seed-exclusion-clauses")
+def seed_exclusion_clauses_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Parse and preview without writing to Sanity"),
+):
+    """Seed the 6 exclusionClause records from SOGICE_Ontology_v3.0.md Part IV.
+
+    Also seeds 2 missing parent laws (Germany 2020, Canada C-4) that are referenced
+    by the exclusion clauses but absent from Entity_Registry_v1.1.md.
+
+    All 6 clauses are flagged with interpretation risks documenting how pro-SOGICE
+    actors exploit or contest each exclusion:
+
+      EC-MT-1   Malta 2016          exploration/affirmation carve-out (Grech acquittal)
+      EC-DE-1   Germany 2020        ICD-10 §302 disorder-treatment carve-out
+      EC-BE-1   Belgium 2023        exploration/affirmation (same risk as Malta)
+      EC-CA-1   Canada C-4 (2021)   model clause — 'without favouring' standard
+      EC-FR-1   France 2022         youth-transition prudence carve-out (most contested)
+      EC-UK-MOU UK MoU              pastoral support exemption (Ozanne loophole)
+    """
+    from .pipeline.seed import parse_exclusion_clauses, seed_exclusion_clauses
+
+    if dry_run:
+        from .pipeline.seed import _MISSING_EXCLUSION_CLAUSE_LAWS
+        clauses = parse_exclusion_clauses()
+        console.print(f"\n[bold]Dry run:[/bold] {len(clauses)} exclusion clauses + {len(_MISSING_EXCLUSION_CLAUSE_LAWS)} missing parent laws\n")
+        console.print("[bold]Missing parent laws to seed:[/bold]")
+        for law in _MISSING_EXCLUSION_CLAUSE_LAWS:
+            console.print(f"  {law['name']}")
+        console.print("\n[bold]Exclusion clauses:[/bold]")
+        for c in clauses:
+            used = "  [yellow]⚠ used in policy arguments[/yellow]" if c.get("used_in_policy_arguments") else ""
+            console.print(f"  EC-{c['id']:<8}  {c['parent_law_id'][:55]}{used}")
+        return
+
+    config = load_config()
+    console.print("[bold]Seeding exclusion clauses (+ 2 missing parent laws) to Sanity …[/bold]")
+    summary = seed_exclusion_clauses(config, dry_run=False)
+    console.print(
+        f"\n[bold green]Done.[/bold green] "
+        f"{summary['written_laws']} laws written, "
+        f"{summary['written_clauses']} clauses written, "
+        f"{summary['failed']} failed "
+        f"(of {summary['total_clauses']} clauses total)"
+    )
+
+
 if __name__ == "__main__":
     app()

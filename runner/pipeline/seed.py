@@ -1484,3 +1484,235 @@ def seed_networks(
             failed += 1
 
     return {"written": written, "failed": failed, "total": len(networks)}
+
+
+# ---------------------------------------------------------------------------
+# Exclusion clauses
+# ---------------------------------------------------------------------------
+
+# Two laws referenced by exclusion clauses but absent from Entity_Registry_v1.1.md.
+# Seeded inline here so parent references resolve.
+_MISSING_EXCLUSION_CLAUSE_LAWS: list[dict] = [
+    {
+        "name": "Germany Gesetz zum Schutz vor Konversionsbehandlungen (2020)",
+        "country": "Germany",
+        "year": 2020,
+        "status": "enacted",
+        "applies_to": "ban",
+        "description": (
+            "German federal law prohibiting conversion treatments. Bans SOGICE on minors "
+            "outright; bans on adults when performed against their will or exploiting "
+            "vulnerability. Article 1 §2 defines 'conversion treatment' as measures aimed at "
+            "changing or suppressing sexual orientation or gender identity."
+        ),
+    },
+    {
+        "name": "Canada Bill C-4 (2021)",
+        "country": "Canada",
+        "year": 2021,
+        "status": "enacted",
+        "applies_to": "ban",
+        "description": (
+            "Canadian federal law amending the Criminal Code to prohibit conversion therapy. "
+            "Criminalises causing a person to undergo conversion therapy, removing a minor from "
+            "Canada for that purpose, and advertising or profiting from it. Contains a 'for greater "
+            "certainty' clause (§320.101) that explicitly preserves identity exploration and "
+            "affirmation unless based on an assumption that one sexual orientation/gender identity "
+            "is preferable to another — widely regarded as the strongest exclusion clause model."
+        ),
+    },
+]
+
+
+def parse_exclusion_clauses() -> list[dict]:
+    """Return the 6 seeded exclusion clauses from SOGICE_Ontology_v3.0.md Part IV.
+
+    Each dict has:
+      id, parent_law_id, excludes (list), text_excerpt,
+      interpretation_risks, used_in_policy_arguments
+    """
+    return [
+        {
+            "id": "MT-1",
+            "parent_law_id": "law-malta-affirmation-of-sexual-orientation-gender-identity-and-gender-expression-ac",
+            "excludes": ["exploration", "affirmation", "transition_care"],
+            "text_excerpt": (
+                "Exploration or free development of a person's sexual orientation, gender "
+                "identity or gender expression, or affirmation thereof via counselling; "
+                "healthcare for the purpose of gender identity affirmation."
+            ),
+            "interpretation_risks": (
+                "Pro-SOGICE actors argue 'identity exploration' and 'free development' language "
+                "covers their practices. The 2026 Matthew Grech acquittal was partly argued on "
+                "pastoral/exploration grounds — the most significant real-world exploitation of "
+                "this clause in Europe."
+            ),
+            "used_in_policy_arguments": True,
+            "policy_argument_description": (
+                "Cited by IFTCC and Core Issues Trust as evidence that pastoral 'exploration' is "
+                "protected even under ban legislation. Used to argue UK and Scottish ban proposals "
+                "need comparable carve-outs."
+            ),
+        },
+        {
+            "id": "DE-1",
+            "parent_law_id": "law-germany-gesetz-zum-schutz-vor-konversionsbehandlungen-2020",
+            "excludes": ["mental_disorder_treatment"],
+            "text_excerpt": (
+                "Treatment of medically recognised sexual preference disorders "
+                "(§302 ICD-10); medical procedures relating to gender identity "
+                "that are not aimed at changing gender identity."
+            ),
+            "interpretation_risks": (
+                "The ICD-10 §302 reference creates an opening to argue that clinical SOGICE "
+                "targeting diagnosed 'sexual preference disorders' remains permitted. With ICD-11 "
+                "now removing most such diagnoses, this carve-out is narrowing — but practitioners "
+                "using legacy ICD-10 framing can still invoke it."
+            ),
+            "used_in_policy_arguments": True,
+            "policy_argument_description": (
+                "Used by NARTH-affiliated European practitioners to argue clinical SOGICE "
+                "for 'ego-dystonic homosexuality' (ICD-10 F66.1) falls outside the German ban."
+            ),
+        },
+        {
+            "id": "BE-1",
+            "parent_law_id": "law-belgium-conversion-therapy-ban-2023",
+            "excludes": ["exploration", "affirmation", "transition_care"],
+            "text_excerpt": (
+                "Help provided in the context of healthcare regarding the exploration or "
+                "development of a person's sexual orientation, gender identity or gender "
+                "expression; care relating to gender transition."
+            ),
+            "interpretation_risks": (
+                "Same structural risk as Malta EC-MT-1: 'exploration' language is the primary "
+                "loophole exploited by coaching/counselling rebranding. The Belgian text follows "
+                "the Malta model closely and inherits the same vulnerability."
+            ),
+            "used_in_policy_arguments": False,
+        },
+        {
+            "id": "CA-1",
+            "parent_law_id": "law-canada-bill-c-4-2021",
+            "excludes": ["exploration", "affirmation", "reflective_practice"],
+            "text_excerpt": (
+                "For greater certainty, this definition does not include a practice, treatment "
+                "or service that relates to the exploration or development of an integrated "
+                "personal identity without favouring any particular sexual orientation, gender "
+                "identity or gender expression."
+            ),
+            "interpretation_risks": (
+                "The 'without favouring' standard is the strongest formulation available — it "
+                "closes the exploration loophole by requiring orientation-neutral practice. "
+                "Pro-SOGICE actors challenge this as impossible (they claim all therapy "
+                "implicitly favours heterosexuality/cisgender identity). Contested in advocacy "
+                "but has not been successfully litigated."
+            ),
+            "used_in_policy_arguments": True,
+            "policy_argument_description": (
+                "Cited by Jayne Ozanne and survivor advocates as the model clause for UK "
+                "legislation. ILGA-Europe uses it as benchmark for evaluating European ban "
+                "language. Pro-SOGICE actors cite it as proof that bans are ideologically loaded."
+            ),
+        },
+        {
+            "id": "FR-1",
+            "parent_law_id": "law-france-conversion-therapy-ban-2022",
+            "excludes": ["reflective_practice"],
+            "text_excerpt": (
+                "A healthcare professional inviting a person, particularly a young person "
+                "considering a medical pathway, to reflect or exercise prudence regarding "
+                "their decision."
+            ),
+            "interpretation_risks": (
+                "The most contested exclusion in European law. Creates a specific carve-out for "
+                "clinicians raising concerns about youth medical transition — designed as a "
+                "safeguard but exploited as a SOGICE loophole. French conservative and gender-"
+                "critical networks have specifically invoked this clause to argue that "
+                "questioning trans youth identity is protected medical practice."
+            ),
+            "used_in_policy_arguments": True,
+            "policy_argument_description": (
+                "Cited extensively in anti-trans medical advocacy across Europe as a precedent "
+                "for 'prudence clauses' in national ban legislation. Used to argue Scotland, UK, "
+                "and Nordic ban proposals should include equivalent youth-transition carve-outs."
+            ),
+        },
+        {
+            "id": "UK-MOU",
+            "parent_law_id": "law-uk-memorandum-of-understanding-on-conversion-therapy-multiple-versions",
+            "excludes": ["exploration", "reflective_practice"],
+            "text_excerpt": (
+                "Mainstream counselling and psychotherapy [does not include] a non-directive "
+                "therapeutic approach which enables a person to explore their sexual orientation "
+                "or gender identity, without seeking to change it; or offering a non-directive "
+                "pastoral support to individuals who are uncertain about or exploring their "
+                "sexual orientation, gender identity or gender expression."
+            ),
+            "interpretation_risks": (
+                "Identified by Jayne Ozanne as the primary loophole in the UK MoU framework. "
+                "'Non-directive' pastoral support is precisely the register in which most UK "
+                "SOGICE now operates — coaching, prayer ministry, 'accompaniment,' and "
+                "'walking alongside' are all claimed as non-directive. The exemption has been "
+                "widely exploited by IFTCC-affiliated practitioners."
+            ),
+            "used_in_policy_arguments": True,
+            "policy_argument_description": (
+                "Core Issues Trust and IFTCC routinely cite the MoU's pastoral exemption as "
+                "proof that their practices are already compliant with existing UK frameworks. "
+                "Used in Scottish parliament submissions to argue statutory bans are unnecessary "
+                "given the existing MoU protections."
+            ),
+        },
+    ]
+
+
+def seed_exclusion_clauses(config: Config, dry_run: bool = False) -> dict:
+    """Seed the 6 exclusionClause records to Sanity.
+
+    First seeds the 2 parent laws missing from the entity registry
+    (Germany 2020, Canada C-4), then creates all 6 exclusion clauses.
+    """
+    from ..clients import sanity as san
+
+    clauses = parse_exclusion_clauses()
+
+    if dry_run:
+        print(f"\nDRY RUN — {len(clauses)} exclusion clauses + 2 missing parent laws\n")
+        print("  Missing parent laws to seed first:")
+        for law in _MISSING_EXCLUSION_CLAUSE_LAWS:
+            print(f"    {law['name']}")
+        print("\n  Exclusion clauses:")
+        for c in clauses:
+            used = "⚠ used in policy arguments" if c.get("used_in_policy_arguments") else ""
+            print(f"    EC-{c['id']:8}  parent: {c['parent_law_id'][:50]}  {used}")
+        return {"total": len(clauses), "dry_run": True}
+
+    written_laws = 0
+    written_clauses = 0
+    failed = 0
+
+    # Seed the two missing parent laws first
+    for law in _MISSING_EXCLUSION_CLAUSE_LAWS:
+        try:
+            san.write_seed_law(law, config)
+            written_laws += 1
+        except Exception as exc:
+            print(f"  ERROR seeding law '{law['name']}': {exc}")
+            failed += 1
+
+    # Seed all exclusion clauses
+    for clause in clauses:
+        try:
+            san.write_seed_exclusion_clause(clause, config)
+            written_clauses += 1
+        except Exception as exc:
+            print(f"  ERROR seeding clause EC-{clause['id']}: {exc}")
+            failed += 1
+
+    return {
+        "written_laws": written_laws,
+        "written_clauses": written_clauses,
+        "failed": failed,
+        "total_clauses": len(clauses),
+    }

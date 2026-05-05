@@ -537,6 +537,36 @@ def write_seed_law(entry: dict, config: Config) -> str:
         raise RuntimeError(f"Unexpected Sanity response for seed law write:\n{result}")
 
 
+def write_seed_exclusion_clause(entry: dict, config: Config) -> str:
+    """Create or replace an exclusionClause record from seed data."""
+    ec_id = (entry.get("id") or "").strip()
+    parent_ref = (entry.get("parent_law_id") or "").strip()
+    if not ec_id or not parent_ref:
+        raise ValueError("Cannot write exclusion clause without id and parent_law_id")
+
+    doc: dict = {
+        "_id": f"ec-{ec_id.lower()}",
+        "_type": "exclusionClause",
+        "parentLegalDefinition": {"_type": "reference", "_ref": parent_ref},
+        "usedInPolicyArguments": entry.get("used_in_policy_arguments", False),
+    }
+    if entry.get("excludes"):
+        doc["excludes"] = entry["excludes"]
+    if entry.get("text_excerpt"):
+        doc["textExcerpt"] = entry["text_excerpt"]
+    if entry.get("interpretation_risks"):
+        doc["interpretationRisks"] = entry["interpretation_risks"]
+    if entry.get("policy_argument_description"):
+        doc["policyArgumentDescription"] = entry["policy_argument_description"]
+
+    doc = {k: v for k, v in doc.items() if v is not None}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for exclusion clause write:\n{result}")
+
+
 def write_seed_event(entry: dict, config: Config) -> str:
     """Create or replace an event record from seed entity registry data."""
     name = (entry.get("name") or "").strip()
