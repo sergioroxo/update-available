@@ -1534,7 +1534,7 @@ def parse_exclusion_clauses() -> list[dict]:
     return [
         {
             "id": "MT-1",
-            "parent_law_id": "law-malta-affirmation-of-sexual-orientation-gender-identity-and-gender-expression-ac",
+            "parent_law_id": "law-malta-affirmation-of-sexual-orientation-gender-identity-and-gender-expression-act-2016",
             "excludes": ["exploration", "affirmation", "transition_care"],
             "text_excerpt": (
                 "Exploration or free development of a person's sexual orientation, gender "
