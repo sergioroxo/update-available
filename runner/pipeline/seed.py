@@ -1209,6 +1209,35 @@ def parse_vocabulary_csv(
 
             entries.append(entry)
 
+    # Add Function tags present in the ontology but absent from the CSV
+    _EXTRA_FUNCTION_TAGS = [
+        {
+            "tag": "Function: Promotional Recruitment",
+            "category": "Function",
+            "frequency": 0,
+            "definition": (
+                "Content that actively recruits individuals into SOGICE programmes or "
+                "communities — testimonial calls to action, ministry sign-up prompts, "
+                "retreat invitations framed as personal transformation opportunities."
+            ),
+            "prompt_alignment": "exact",
+        },
+        {
+            "tag": "Function: Testimonial Marketing",
+            "category": "Function",
+            "frequency": 0,
+            "definition": (
+                "First-person 'change narratives' or 'formerly LGBT' testimonials deployed "
+                "as evidence that SOGICE works. Distinct from Promotional Recruitment in that "
+                "the primary move is evidential (it worked for me) rather than invitational."
+            ),
+            "prompt_alignment": "exact",
+        },
+    ]
+    for extra in _EXTRA_FUNCTION_TAGS:
+        if extra["tag"] not in seen and ("Function" in want):
+            entries.append(extra)
+
     return entries
 
 
