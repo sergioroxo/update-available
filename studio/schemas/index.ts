@@ -1,6 +1,7 @@
 import document from './document'
 import testimony from './testimony'
 import lexiconEntry from './lexiconEntry'
+import tacticEntry from './tacticEntry'
 import person from './person'
 import organization from './organization'
 import lawPolicy from './lawPolicy'
@@ -15,6 +16,7 @@ export const schemaTypes = [
   document,
   testimony,
   lexiconEntry,
+  tacticEntry,
   person,
   organization,
   lawPolicy,
@@ -25,3 +27,4 @@ export const schemaTypes = [
   validationBatch,
   promptVersion,
 ]
+

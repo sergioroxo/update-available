@@ -254,6 +254,79 @@ def write_seed_lexicon_variant(variant: dict, config: Config) -> str:
         raise RuntimeError(f"Unexpected Sanity response for variant write:\n{result}")
 
 
+def fetch_tactic_entries(config: Config) -> list[dict]:
+    """GROQ: all draft + validated tactic entries."""
+    query = '*[_type == "tacticEntry"]{ _id, tactic }'
+    url = (
+        f"https://{config.sanity_project_id}.api.sanity.io"
+        f"/v2024-01-01/data/query/{config.sanity_dataset}"
+    )
+    headers = {"Authorization": f"Bearer {config.sanity_write_token}"}
+    r = httpx.get(url, params={"query": query}, headers=headers, timeout=10)
+    r.raise_for_status()
+    return r.json().get("result", [])
+
+
+def write_seed_tactic_entry(entry: dict, config: Config) -> str:
+    """Create or replace a tacticEntry record from seed data."""
+    name = (entry.get("tactic") or "").strip()
+    if not name:
+        raise ValueError("Cannot write tactic entry without a name")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    sanity_id = f"tactic-{_slugify(name)}"
+
+    def _clean_cluster(v: str) -> str | None:
+        valid = {
+            "SSA-Rhetoric", "Pastoral-Coercion", "Pseudo-Science",
+            "Policy-Resistance", "Anti-Trans/ROGD", "Anti-Gender",
+            "Pro-Trans-SOGICE", "Non-SOGICE",
+        }
+        v = v.strip()
+        # Handle "Pseudo-Science" written as "Pseudo-science" in ontology
+        for c in valid:
+            if c.lower() == v.lower():
+                return c
+        return None
+
+    doc: dict = {
+        "_id": sanity_id,
+        "_type": "tacticEntry",
+        "tactic": name,
+        "status": "draft",
+        "registryStatus": "seeded",
+        "approvedBy": "researcher",
+        "approvedAt": now_iso,
+        "frequency": 0,
+        "lastReanalyzed": now_iso,
+        "validationHistory": [
+            {
+                "_key": "seed-import-0",
+                "runDate": now_iso,
+                "model": "seed-tactics-import",
+                "recommendation": "confirm",
+                "reasoning": "Seeded from SOGICE_Ontology_v3.0.md and Claude_Ingestion_Prompt.md.",
+                "resolvedByResearcher": True,
+            }
+        ],
+    }
+    if entry.get("definition"):
+        doc["definition"] = entry["definition"]
+    if entry.get("boundaries"):
+        doc["boundaries"] = entry["boundaries"]
+    if _clean_cluster(entry.get("primary_cluster", "")):
+        doc["primaryCluster"] = _clean_cluster(entry["primary_cluster"])
+    if _clean_cluster(entry.get("secondary_cluster", "")):
+        doc["secondaryCluster"] = _clean_cluster(entry["secondary_cluster"])
+
+    doc = {k: v for k, v in doc.items() if v is not None}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for tactic write:\n{result}")
+
+
 def write_seed_organization(entry: dict, config: Config) -> str:
     """Create or replace an organization record from seed entity registry data."""
     name = (entry.get("name") or "").strip()

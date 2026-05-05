@@ -588,6 +588,201 @@ def parse_multilingual_variants_md(path: Path | None = None) -> list[dict]:
     return variants
 
 
+def parse_tactics(path: Path | None = None) -> list[dict]:
+    """Parse tactic definitions from SOGICE_Ontology_v3.0.md (Part III)
+    and supplementary definitions from Claude_Ingestion_Prompt.md.
+
+    Returns list of dicts with: tactic, primary_cluster, secondary_cluster,
+    definition, boundaries, source_note.
+    """
+    _ONTOLOGY_FILE = Path(__file__).parents[2] / "00_infrastructure" / "SOGICE_Ontology_v3.0.md"
+    _PROMPT_FILE   = Path(__file__).parents[2] / "02_working_tools" / "Claude_Ingestion_Prompt.md"
+
+    # ── Prompt: tactic vocabulary line (pipe-separated) ──────────────────────
+    prompt_raw = (_PROMPT_FILE).read_text(encoding="utf-8") if _PROMPT_FILE.exists() else ""
+    tactic_vocab: list[str] = []
+    for line in prompt_raw.splitlines():
+        if line.startswith("TACTIC") and "|" in line:
+            # "TACTIC (one or more ...) \nIdentity-Erasure | Rebranding-SOGICE | ..."
+            # Sometimes the list is on the next line
+            continue
+        if tactic_vocab:
+            break
+        # The vocabulary list line follows immediately
+        if "Identity-Erasure" in line and "|" in line:
+            tactic_vocab = [t.strip() for t in line.split("|") if t.strip()]
+
+    # Also parse inline definitions from the prompt (lines "- TacticName: definition")
+    prompt_defs: dict[str, str] = {}
+    for line in prompt_raw.splitlines():
+        m = re.match(r"^- ([A-Za-z][A-Za-z0-9_\-]+):\s+(.+)$", line)
+        if m and m.group(1) in tactic_vocab:
+            prompt_defs[m.group(1)] = m.group(2).strip()
+
+    # ── Ontology: Part III table + extended entries ───────────────────────────
+    ontology_raw = _ONTOLOGY_FILE.read_text(encoding="utf-8") if _ONTOLOGY_FILE.exists() else ""
+    cluster_map: dict[str, dict] = {}  # tactic → {primary, secondary}
+
+    in_part3 = False
+    for line in ontology_raw.splitlines():
+        if "## PART III" in line:
+            in_part3 = True
+            continue
+        if in_part3 and line.startswith("## "):
+            in_part3 = False
+            continue
+        if not in_part3:
+            continue
+        # Table row: | Tactic | Primary Cluster | Secondary Cluster |
+        if line.startswith("|") and "|" in line[1:]:
+            cells = [c.strip() for c in line.split("|")[1:-1]]
+            if len(cells) >= 2 and cells[0] and cells[0] not in ("Tactic", "---", "---"):
+                tname = cells[0].strip()
+                pcluster = cells[1].strip() if len(cells) > 1 else ""
+                scluster = cells[2].strip() if len(cells) > 2 else ""
+                if tname and not tname.startswith("-"):
+                    cluster_map[tname] = {
+                        "primary": pcluster if pcluster != "—" else "",
+                        "secondary": scluster if scluster != "—" else "",
+                    }
+
+    # Extended entries with bold headings + bullets
+    ontology_defs: dict[str, dict] = {}
+    current_tactic: str | None = None
+    for line in ontology_raw.splitlines():
+        # Match **`TacticName`** bold-backtick headings
+        m = re.match(r"^\*\*`([^`]+)`\*\*$", line.strip())
+        if m:
+            current_tactic = m.group(1).strip()
+            ontology_defs[current_tactic] = {}
+            continue
+        if current_tactic and line.startswith("- "):
+            text = line[2:].strip()
+            if text.startswith("Primary:"):
+                rest = text[len("Primary:"):].strip()
+                parts = rest.split("·")
+                primary = parts[0].strip()
+                secondary = parts[1].strip() if len(parts) > 1 else ""
+                # Strip "Secondary: " prefix if present
+                secondary = re.sub(r"^Secondary:\s*", "", secondary)
+                cluster_map[current_tactic] = {"primary": primary, "secondary": secondary}
+            elif text.startswith("Source:") or text.startswith("Key documents:"):
+                ontology_defs[current_tactic]["source_note"] = text.split(":", 1)[1].strip()
+            elif not any(text.startswith(p) for p in ("Primary:", "Secondary:", "Boundary:")):
+                # First non-prefixed bullet = definition
+                if "definition" not in ontology_defs[current_tactic]:
+                    ontology_defs[current_tactic]["definition"] = text
+            elif text.startswith("Boundary:"):
+                ontology_defs[current_tactic]["boundaries"] = text[len("Boundary:"):].strip()
+        elif current_tactic and not line.strip():
+            current_tactic = None
+
+    # Cluster assignments for v3.2/v3.3 tactics not in the ontology table
+    _EXTRA_CLUSTERS: dict[str, dict] = {
+        "Fitra-Frame":                 {"primary": "Pastoral-Coercion",  "secondary": "SSA-Rhetoric"},
+        "Causal-Theory-Frame":         {"primary": "Pseudo-Science",      "secondary": "Pastoral-Coercion"},
+        "Platform-Evasion":            {"primary": "Policy-Resistance",   "secondary": "SSA-Rhetoric"},
+        "Religious-Freedom-Shield":    {"primary": "Policy-Resistance",   "secondary": ""},
+        "Conscience-Carve-Out":        {"primary": "Policy-Resistance",   "secondary": "Pastoral-Coercion"},
+        "Child-Safeguarding-Inversion":{"primary": "Anti-Trans/ROGD",     "secondary": "Anti-Gender"},
+        "Therapeutic-Autonomy-Frame":  {"primary": "Policy-Resistance",   "secondary": ""},
+        "Academic-Credentialing":      {"primary": "Pseudo-Science",      "secondary": "Policy-Resistance"},
+        "Interfaith-Coalition-Building":{"primary": "Policy-Resistance",  "secondary": "Anti-Gender"},
+        "Network-Laundering":          {"primary": "Policy-Resistance",   "secondary": ""},
+        "Ecumenical-Consensus-Claim":  {"primary": "Policy-Resistance",   "secondary": "Anti-Gender"},
+        "Soft-Referral-Pipeline":      {"primary": "Pastoral-Coercion",   "secondary": "Policy-Resistance"},
+        "Presuppositional-Framing":    {"primary": "Pastoral-Coercion",   "secondary": ""},
+    }
+    for k, v in _EXTRA_CLUSTERS.items():
+        cluster_map.setdefault(k, v)
+
+    # ── Deduplicate: normalise space→hyphen variants ──────────────────────────
+    # "Anti-Trans Rhetoric" and "Anti-Trans-Rhetoric" are the same tactic
+    def _norm(s: str) -> str:
+        return re.sub(r"\s+", "-", s.strip())
+
+    seen_normed: dict[str, str] = {}  # normalised → canonical (hyphenated) name
+    for name in tactic_vocab:
+        seen_normed[_norm(name)] = name
+
+    # ── Merge: all known tactics → unified dicts ─────────────────────────────
+    all_names: list[str] = list(dict.fromkeys(
+        tactic_vocab
+        + list(cluster_map.keys())
+        + list(ontology_defs.keys())
+    ))
+
+    entries: list[dict] = []
+    emitted: set[str] = set()
+    for name in all_names:
+        if not name or "|" in name:
+            continue
+        normed = _norm(name)
+        # Skip if we already emitted the hyphenated canonical form
+        canonical = seen_normed.get(normed, name)
+        if canonical in emitted:
+            continue
+        emitted.add(canonical)
+
+        clusters = cluster_map.get(canonical) or cluster_map.get(name) or {}
+        odef = ontology_defs.get(canonical) or ontology_defs.get(name) or {}
+        definition = (
+            odef.get("definition")
+            or prompt_defs.get(canonical)
+            or prompt_defs.get(name)
+            or ""
+        )
+        entries.append({
+            "tactic": canonical,
+            "primary_cluster": clusters.get("primary", ""),
+            "secondary_cluster": clusters.get("secondary", ""),
+            "definition": definition,
+            "boundaries": odef.get("boundaries", ""),
+            "source_note": odef.get("source_note", ""),
+        })
+
+    return entries
+
+
+def seed_tactics(
+    config: Config,
+    dry_run: bool = False,
+    force: bool = False,
+) -> dict:
+    """Parse tactic definitions and write tacticEntry records to Sanity.
+
+    Returns summary dict: {attempted, created, skipped, errors}.
+    """
+    from ..clients import sanity as sanity_client
+
+    entries = parse_tactics()
+    summary = {"attempted": len(entries), "created": 0, "skipped": 0, "errors": []}
+
+    existing_ids: set[str] = set()
+    if not force and not dry_run:
+        try:
+            existing = sanity_client.fetch_tactic_entries(config)
+            existing_ids = {e.get("_id", "") for e in existing}
+        except Exception:
+            existing_ids = set()
+
+    for entry in entries:
+        sanity_id = f"tactic-{_slugify(entry['tactic'])}"
+        if not force and sanity_id in existing_ids:
+            summary["skipped"] += 1
+            continue
+        if dry_run:
+            summary["created"] += 1
+            continue
+        try:
+            sanity_client.write_seed_tactic_entry(entry, config)
+            summary["created"] += 1
+        except Exception as exc:
+            summary["errors"].append(f"{entry['tactic']}: {exc}")
+
+    return summary
+
+
 def seed_lexicon_variants(
     config: Config,
     dry_run: bool = False,

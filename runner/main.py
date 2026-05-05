@@ -736,6 +736,56 @@ def seed_lexicon_cmd(
             console.print(f"  … and {len(summary['errors']) - 20} more")
 
 
+@app.command(name="seed-tactics")
+def seed_tactics_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Parse and count without writing"),
+    force:   bool = typer.Option(False, "--force",   help="Overwrite existing Sanity entries"),
+):
+    """Seed Sanity with all 30 tactics from the ontology and ingestion prompt.
+
+    Parses SOGICE_Ontology_v3.0.md (Part III cluster mappings + extended
+    definitions) and Claude_Ingestion_Prompt.md (vocabulary + inline definitions)
+    to build tacticEntry records with name, primary/secondary cluster, definition,
+    and boundaries.
+
+    The tacticEntry type is dynamic — cultural variants, historical periods,
+    and linked lexicon terms can be added as the corpus grows.
+
+    Requires the tacticEntry schema to be deployed to your Sanity studio first.
+    """
+    from .pipeline.seed import parse_tactics, seed_tactics
+
+    if dry_run:
+        entries = parse_tactics()
+        console.print(f"[bold]Dry run:[/bold] parsed {len(entries)} tactics — no writes performed.")
+        for e in entries[:15]:
+            pcluster = e.get("primary_cluster", "?")[:20]
+            has_def  = "✓ def" if e.get("definition") else "  no def"
+            console.print(f"  {e['tactic']:45s} {pcluster:22s} {has_def}")
+        if len(entries) > 15:
+            console.print(f"  … and {len(entries) - 15} more")
+        no_def = [e["tactic"] for e in entries if not e.get("definition")]
+        if no_def:
+            console.print(f"\n[yellow]{len(no_def)} tactics without definitions:[/yellow] {', '.join(no_def)}")
+        return
+
+    config = load_config()
+    console.print("[bold]Seeding tactics from ontology + ingestion prompt …[/bold]")
+    summary = seed_tactics(config, dry_run=False, force=force)
+
+    console.print(
+        f"\n[bold green]Done.[/bold green] "
+        f"{summary['created']} created, "
+        f"{summary['skipped']} skipped, "
+        f"{len(summary['errors'])} errors "
+        f"(of {summary['attempted']} attempted)"
+    )
+    if summary["errors"]:
+        console.print("\n[red]Errors:[/red]")
+        for err in summary["errors"][:20]:
+            console.print(f"  {err}")
+
+
 @app.command(name="seed-lexicon-variants")
 def seed_lexicon_variants_cmd(
     dry_run: bool = typer.Option(False, "--dry-run", help="Count variants without writing"),
