@@ -411,7 +411,29 @@ def upload_saved(doc_id: str, config: Config) -> None:
         return
 
     analysis = AnalysisResult.model_validate_json(analysis_path.read_text())
-    embedding = json.loads(embedding_path.read_text())["vector"] if embedding_path.exists() else []
+
+    if embedding_path.exists():
+        embedding = json.loads(embedding_path.read_text())["vector"]
+    else:
+        # Generate embedding now — it was missing or skipped during original upload
+        console.print(f"[dim]embedding.json missing for {doc_id} — generating now...[/dim]")
+        extracted_path = doc_dir / "extracted.txt"
+        if not extracted_path.exists():
+            console.print(f"[yellow]Cannot generate embedding: extracted.txt missing for {doc_id}[/yellow]")
+            embedding = []
+        else:
+            try:
+                from .embed import run_litelm, run, save as save_embedding
+                text = extracted_path.read_text(encoding="utf-8")
+                try:
+                    embedding = run_litelm(text, config)
+                except Exception:
+                    embedding = run(text, config)
+                save_embedding(doc_id, embedding, config)
+                console.print(f"[dim]Embedding generated ({len(embedding)}d) and saved.[/dim]")
+            except Exception as exc:
+                console.print(f"[yellow]Embedding generation failed: {exc}[/yellow]")
+                embedding = []
 
     intake_data = {}
     if intake_path.exists():

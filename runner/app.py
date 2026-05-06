@@ -2845,7 +2845,7 @@ def page_activity_log():
 
     selected = st.selectbox("Inspect document", [row["doc_id"] for row in docs])
     doc_dir = config.corpus_dir / selected
-    tabs = st.tabs(["Audit", "Intake", "Wayback", "HTML Snapshot", "Analysis", "Enrichment", "Sanity Record"])
+    tabs = st.tabs(["Audit", "Intake", "Wayback", "HTML Snapshot", "Analysis", "Enrichment", "Sanity Record", "Supabase"])
     with tabs[0]:
         audit = doc_dir / "audit.log"
         st.code(audit.read_text() if audit.exists() else "No audit.log", language="text")
@@ -2872,6 +2872,51 @@ def page_activity_log():
         _show_json_file(doc_dir / "enrichment.json")
     with tabs[6]:
         _show_json_file(doc_dir / "sanity_record.json")
+    with tabs[7]:
+        emb_path = doc_dir / "embedding.json"
+        if emb_path.exists():
+            emb_data = json.loads(emb_path.read_text())
+            c1, c2 = st.columns(2)
+            c1.metric("Dimension", emb_data.get("dimension", "?"))
+            c2.metric("Model", emb_data.get("model", "?"))
+            st.caption(f"Local file: {emb_path}")
+            if config:
+                if st.button("Check Supabase row", key=f"chk_supabase_{selected}"):
+                    try:
+                        from runner.clients.supabase import _client as _sb_client
+                        result = _sb_client(config).table("document_embeddings").select(
+                            "doc_id,doc_type,scope,tier,language,embedded_at,embedding_model"
+                        ).eq("doc_id", selected).execute()
+                        if result.data:
+                            st.json(result.data[0])
+                        else:
+                            st.warning("No row found in Supabase — use upload-doc to push the embedding.")
+                    except Exception as exc:
+                        st.error(f"Supabase query failed: {exc}")
+        else:
+            st.warning("No local embedding.json — embedding has not been generated yet.")
+            if config and st.button("Generate + push embedding now", key=f"gen_emb_{selected}"):
+                from runner.pipeline import embed as _embed
+                from runner.clients import supabase as _sb
+                with st.spinner("Generating embedding…"):
+                    try:
+                        extracted = (doc_dir / "extracted.txt").read_text(encoding="utf-8")
+                        try:
+                            vec = _embed.run_litelm(extracted, config)
+                        except Exception:
+                            vec = _embed.run(extracted, config)
+                        _embed.save(selected, vec, config)
+                        analysis_data = json.loads((doc_dir / "analysis.json").read_text()) if (doc_dir / "analysis.json").exists() else {}
+                        from runner.models.document import AnalysisResult as _AR
+                        ar = _AR.model_validate(analysis_data)
+                        intake_data = json.loads((doc_dir / "intake.json").read_text()) if (doc_dir / "intake.json").exists() else {}
+                        _sb.upsert_embedding(selected, vec, ar, config,
+                                             tier=str(intake_data.get("tier", "")),
+                                             language=intake_data.get("language", ""),
+                                             embedding_model=config.embedding_model)
+                        st.success(f"Embedding generated ({len(vec)}d) and pushed to Supabase.")
+                    except Exception as exc:
+                        st.error(f"Failed: {exc}")
 
 
 def _activity_rows(corpus_dir: Path) -> list[dict]:
@@ -2893,6 +2938,7 @@ def _activity_rows(corpus_dir: Path) -> list[dict]:
             "type": analysis.get("type", "?"),
             "scope": analysis.get("scope", "?"),
             "uploaded": (doc_dir / "sanity_record.json").exists(),
+            "embedded": (doc_dir / "embedding.json").exists(),
             "enriched": (doc_dir / "enrichment.json").exists(),
             "audit_events": _audit_event_count(doc_dir / "audit.log"),
         })
