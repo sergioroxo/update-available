@@ -350,14 +350,45 @@ def page_ingest_workbench():
 
     if run_all:
         effective_max = _effective_max_chars(max_chars, llm, config)
-        _workbench_intake(config, source, tier, batch, provenance_url)
-        if st.session_state.ingest.get("intake"):
-            _workbench_preprocess(config, effective_max)
-        if st.session_state.ingest.get("preprocess"):
-            _workbench_analyze(config, llm)
-        # Auto-run enrichment only if checkbox is checked and analysis succeeded
-        if run_enrich and st.session_state.ingest.get("analysis_valid"):
-            _workbench_enrich(config, llm)
+        from runner.pipeline import intake as _intake_mod
+        existing = _intake_mod.find_existing_by_source(source.strip(), config)
+        if existing:
+            ids = ", ".join(e["doc_id"] for e in existing)
+            uploaded_flag = any(e.get("uploaded") for e in existing)
+            status = "uploaded to Sanity" if uploaded_flag else "saved locally but not yet uploaded"
+            st.session_state["_dup_pending"] = {
+                "source": source, "tier": tier, "batch": batch,
+                "provenance_url": provenance_url, "effective_max": effective_max,
+                "llm": llm, "run_enrich": run_enrich,
+                "ids": ids, "status": status,
+            }
+        else:
+            _workbench_run_pipeline(config, source, tier, batch, provenance_url,
+                                    effective_max, llm, run_enrich)
+
+    # Duplicate gate — shown when a previous run_all found an existing source
+    if "_dup_pending" in st.session_state:
+        dup = st.session_state["_dup_pending"]
+        ids, status = dup["ids"], dup["status"]
+        st.warning(
+            f"**Duplicate detected.** This source was already ingested as **{ids}** ({status}). "
+            f"To view it, go to **Document List** or run `python3 -m runner status {ids}`."
+        )
+        st.markdown("Do you want to ingest it again as a separate document?")
+        dc1, dc2 = st.columns([1, 3])
+        with dc1:
+            if st.button("Yes, ingest as new copy", type="primary"):
+                params = st.session_state.pop("_dup_pending")
+                _workbench_run_pipeline(
+                    config, params["source"], params["tier"], params["batch"],
+                    params["provenance_url"], params["effective_max"],
+                    params["llm"], params["run_enrich"],
+                )
+                st.rerun()
+        with dc2:
+            if st.button("Cancel — keep existing"):
+                st.session_state.pop("_dup_pending", None)
+                st.rerun()
 
     intake_result = st.session_state.ingest.get("intake")
     if intake_result:
@@ -454,21 +485,20 @@ def _render_stage_progress() -> None:
         col.metric(label, "done" if done else "pending")
 
 
+def _workbench_run_pipeline(config, source, tier, batch, provenance_url,
+                            effective_max, llm, run_enrich) -> None:
+    """Run the full auto-pipeline after duplicate gate has been cleared."""
+    _workbench_intake(config, source, tier, batch, provenance_url)
+    if st.session_state.ingest.get("intake"):
+        _workbench_preprocess(config, effective_max)
+    if st.session_state.ingest.get("preprocess"):
+        _workbench_analyze(config, llm)
+    if run_enrich and st.session_state.ingest.get("analysis_valid"):
+        _workbench_enrich(config, llm)
+
+
 def _workbench_intake(config, source: str, tier: str, batch: str, source_url: str = "") -> None:
     from runner.pipeline import intake
-
-    # Dedup check before creating a new record
-    existing = intake.find_existing_by_source(source.strip(), config)
-    if existing:
-        ids = ", ".join(e["doc_id"] for e in existing)
-        uploaded = [e for e in existing if e.get("uploaded")]
-        status = "uploaded to Sanity" if uploaded else "saved locally but not yet uploaded"
-        st.warning(
-            f"This source was already ingested as **{ids}** ({status}). "
-            "Continue below to ingest again, or use the existing doc_id: "
-            "go to **Document List** to view it, or run "
-            f"`python3 -m runner status {ids}` in the terminal."
-        )
 
     with st.spinner("Creating intake record..."):
         try:
