@@ -2488,7 +2488,7 @@ def _update_enrichment_proposal(path: Path, key: str, index: int, item: dict) ->
 
 def _render_ingestion_queue(config) -> None:
     """Show URLs flagged as ingestion candidates from enrichment.json files."""
-    from .pipeline import enrich as _enrich
+    from runner.pipeline import enrich as _enrich
 
     rows = []
     for doc_dir in sorted(config.corpus_dir.iterdir()):
