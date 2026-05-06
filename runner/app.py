@@ -2151,13 +2151,15 @@ def _plain_first_sentence(value: str, max_chars: int = 240) -> str:
 def _render_local_proposal_queue(config) -> None:
     lexicon_records = _local_enrichment_proposal_records(config.corpus_dir, "lexicon_proposals")
     entity_records = _local_enrichment_proposal_records(config.corpus_dir, "entity_proposals")
-    queue_tabs = st.tabs(["Lexicon Queue", "Entity Queue", "Gate Status"])
+    queue_tabs = st.tabs(["Lexicon Queue", "Entity Queue", "Ingestion Queue", "Gate Status"])
 
     with queue_tabs[0]:
         _render_lexicon_queue(config, lexicon_records)
     with queue_tabs[1]:
         _render_entity_queue(config, entity_records)
     with queue_tabs[2]:
+        _render_ingestion_queue(config)
+    with queue_tabs[3]:
         st.json(_proposal_gate_status(config.corpus_dir))
 
 
@@ -2405,6 +2407,54 @@ def _update_enrichment_proposal(path: Path, key: str, index: int, item: dict) ->
         raise IndexError(f"Proposal index {index} no longer exists in {path}")
     proposals[index] = item
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _render_ingestion_queue(config) -> None:
+    """Show URLs flagged as ingestion candidates from enrichment.json files."""
+    from .pipeline import enrich as _enrich
+
+    rows = []
+    for doc_dir in sorted(config.corpus_dir.iterdir()):
+        if not doc_dir.is_dir():
+            continue
+        enrichment_path = doc_dir / "enrichment.json"
+        if not enrichment_path.exists():
+            continue
+        result = _enrich.load(doc_dir.name, config)
+        if not result or not result.ingestion_queue:
+            continue
+        for item in result.ingestion_queue:
+            rows.append({
+                "doc_id":       doc_dir.name,
+                "url":          item.url,
+                "title":        item.title or "",
+                "type":         item.source_type,
+                "priority":     item.priority,
+                "in_corpus":    item.already_in_corpus,
+            })
+
+    if not rows:
+        st.info("No ingestion candidates found. Run enrichment on ingested documents to discover linked sources.")
+        return
+
+    pending = [r for r in rows if not r["in_corpus"]]
+    already = [r for r in rows if r["in_corpus"]]
+
+    st.caption(f"{len(pending)} pending · {len(already)} already in corpus · {len(rows)} total")
+
+    if pending:
+        st.markdown("**Pending — not yet ingested**")
+        for r in pending:
+            priority_colour = "🔴" if r["priority"] == "high" else "🟡" if r["priority"] == "medium" else "⚪"
+            with st.expander(f"{priority_colour} [{r['type']}] {r['title'] or r['url'][:80]}"):
+                st.code(f"python3 -m runner ingest '{r['url']}' --llm litelm", language="bash")
+                st.caption(f"Source doc: `{r['doc_id']}`")
+                st.markdown(f"[Open URL]({r['url']})")
+
+    if already:
+        with st.expander(f"{len(already)} already in corpus"):
+            for r in already:
+                st.caption(f"`{r['doc_id']}` — {r['url'][:80]}")
 
 
 def _proposal_gate_status(corpus_dir: Path) -> dict:
