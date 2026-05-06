@@ -425,6 +425,40 @@ export default {
       }],
     },
 
+    // ── Suggested Actors ────────────────────────────────────────
+    {
+      name: 'suggestedActors',
+      title: 'Suggested Actors (AI-proposed)',
+      type: 'array',
+      of: [{
+        type: 'object',
+        fields: [
+          { name: 'name', type: 'string' },
+          { name: 'type', type: 'string', options: { list: ['person', 'organization'] } },
+          { name: 'country', type: 'string' },
+          { name: 'role', type: 'string' },
+          { name: 'evidenceQuote', type: 'string' },
+          { name: 'approved', type: 'boolean', initialValue: false },
+        ],
+      }],
+    },
+
+    // ── Suggested Networks ──────────────────────────────────────
+    {
+      name: 'suggestedNetworks',
+      title: 'Suggested Networks (AI-proposed)',
+      type: 'array',
+      of: [{
+        type: 'object',
+        fields: [
+          { name: 'name', type: 'string' },
+          { name: 'description', type: 'string' },
+          { name: 'evidenceQuote', type: 'string' },
+          { name: 'approved', type: 'boolean', initialValue: false },
+        ],
+      }],
+    },
+
     // ── Legal Status ────────────────────────────────────────────
     {
       name: 'legalStatus',
@@ -567,6 +601,12 @@ export default {
               options: { list: ['high', 'medium', 'low', 'blocked'] },
             },
           ],
+        },
+        {
+          name: 'normalisationWarnings',
+          title: 'Normalisation Warnings',
+          type: 'array',
+          of: [{ type: 'string' }],
         },
       ],
     },

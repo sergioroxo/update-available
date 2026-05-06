@@ -313,6 +313,31 @@ class AnalysisResult(BaseModel):
     function: list[str] = Field(default_factory=list)
     landmark: list[str] = Field(default_factory=list)
     flags: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def warn_unknown_vocab(self) -> "AnalysisResult":
+        """Append warnings for values that don't match expected vocab prefixes.
+        Does not reject — ingestion must not break on evolving or extended terms.
+        """
+        _PREFIX_RULES: dict[str, str] = {
+            "practice":  "Practice:",
+            "harm":      "Harm:",
+            "migration": "Migration:",
+            "function":  "Function:",
+            "flags":     "Flag:",
+        }
+        extra: list[str] = []
+        for field_name, prefix in _PREFIX_RULES.items():
+            values: list[str] = getattr(self, field_name, [])
+            bad = [v for v in values if v and not v.startswith(prefix)]
+            if bad:
+                extra.append(
+                    f"vocab-warn: '{field_name}' contains values without expected "
+                    f"'{prefix}' prefix: {bad}"
+                )
+        if extra:
+            self.normalisation_warnings = list(self.normalisation_warnings) + extra
+        return self
     narrative_register: NarrativeRegister
     document_date: DocumentDate = Field(default_factory=DocumentDate)
     summary: str

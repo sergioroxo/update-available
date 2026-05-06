@@ -691,12 +691,12 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         "legalStatus": (
             {
                 k: v for k, v in {
-                    "jurisdiction": analysis.legal_status.jurisdiction,
+                    "jurisdiction": analysis.legal_status.jurisdiction or None,
                     "status":       analysis.legal_status.status,
                     "instrument":   analysis.legal_status.instrument,
                 }.items() if v is not None
             }
-            if analysis.legal_status and analysis.legal_status.jurisdiction
+            if analysis.legal_status
             else None
         ),
 
@@ -728,6 +728,15 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
             "term":   analysis.field_confidence.term,
             "actor":  analysis.field_confidence.actor,
             "scope":  analysis.field_confidence.scope,
+            "lowConfidenceReasons": [
+                {
+                    "_key":     f"lcr-{i}",
+                    "field":    r.field,
+                    "issue":    r.issue,
+                    "severity": r.severity,
+                }
+                for i, r in enumerate(analysis.field_confidence.low_confidence_reasons)
+            ],
         },
 
         "documentDate": {
@@ -776,16 +785,41 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
             for i, a in enumerate(analysis.extractable_assets)
         ],
 
+        "suggestedActors": [
+            {
+                "_key":          f"actor-{i}",
+                "name":          a.name,
+                "type":          a.type,
+                "country":       a.country,
+                "role":          a.role,
+                "evidenceQuote": a.evidence_quote,
+                "approved":      False,
+            }
+            for i, a in enumerate(analysis.suggested_actors)
+        ],
+
+        "suggestedNetworks": [
+            {
+                "_key":          f"net-{i}",
+                "name":          n.name,
+                "description":   n.description,
+                "evidenceQuote": n.evidence_quote,
+                "approved":      False,
+            }
+            for i, n in enumerate(analysis.suggested_networks)
+        ],
+
         "aiMetadata": {
-            "primaryModel":    pkg.llm_used,
-            "primaryProvider": _provider_for_llm(pkg.llm_used),
-            "promptVersion":   "ingestion-v3.3",
-            "ontologyVersion": "v3.0",
-            "processingDate":  now_iso,
-            "inputLengthChars": prep.char_count,
-            "truncated":       prep.truncated,
-            "agreementStatus": "not_validated",
-            "resolution":      "not_applicable",
+            "primaryModel":          pkg.llm_used,
+            "primaryProvider":       _provider_for_llm(pkg.llm_used),
+            "promptVersion":         "ingestion-v3.3",
+            "ontologyVersion":       "v3.0",
+            "processingDate":        now_iso,
+            "inputLengthChars":      prep.char_count,
+            "truncated":             prep.truncated,
+            "agreementStatus":       "not_validated",
+            "resolution":            "not_applicable",
+            "normalisationWarnings": analysis.normalisation_warnings or [],
         },
 
         "referencedUrls": _build_referenced_urls(prep),
