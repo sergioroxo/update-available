@@ -60,6 +60,13 @@ def insert_null_row(doc_id: str, config: Config) -> None:
     }).execute()
 
 
+def count_embeddings(config: Config) -> int:
+    """Return the number of rows in document_embeddings."""
+    client = _client(config)
+    result = client.table("document_embeddings").select("doc_id", count="exact").execute()
+    return result.count or 0
+
+
 def migrate_document_embeddings(config: Config) -> None:
     """Run the document_embeddings 4096d migration through a Supabase SQL RPC.
 

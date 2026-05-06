@@ -85,6 +85,7 @@ def main():
             "Model Routing",
             "Triage Tool",
             "Mac Studio Node",
+            "Seed Data",
         ],
         label_visibility="collapsed",
     )
@@ -121,6 +122,8 @@ def main():
         page_triage_tool()
     elif page == "Mac Studio Node":
         page_mac_studio_node()
+    elif page == "Seed Data":
+        page_seed_data()
 
 
 # ---------------------------------------------------------------------------
@@ -178,7 +181,52 @@ def page_dashboard():
         cols[i % 3].markdown(f"{'✅' if ok else '❌'} {label}")
 
     if not all_ok:
-        st.caption("Run `python3 -m runner doctor` in the terminal for detailed fix instructions.")
+        st.caption("Run doctor check in Mac Studio Node for detailed fix instructions.")
+
+    # ── Verify: live Sanity + Supabase record counts ──────────────────────
+    st.subheader("Live record counts (Verify)")
+    if st.button("▶ Verify Sanity + Supabase", key="verify_btn"):
+        import httpx as _httpx
+        errors = []
+
+        # Sanity counts
+        st.markdown("**Sanity**")
+        types = [
+            ("lexiconEntry","Terms"), ("tacticEntry","Tactics"), ("practiceEntry","Practices"),
+            ("tagRegistry","Tag Registry"), ("organization","Orgs/Networks"), ("person","Persons"),
+            ("legalDefinition","Laws"), ("exclusionClause","Excl. Clauses"), ("event","Events"),
+            ("sogiceDocument","Documents"),
+        ]
+        base_s = (
+            f"https://{config.sanity_project_id}.api.sanity.io"
+            f"/v2024-01-01/data/query/{config.sanity_dataset}"
+        )
+        headers_s = {"Authorization": f"Bearer {config.sanity_write_token}"}
+        s_cols = st.columns(5)
+        for i, (t, label) in enumerate(types):
+            try:
+                r = _httpx.get(base_s, params={"query": f'count(*[_type=="{t}"])'}, headers=headers_s, timeout=8)
+                n = r.json().get("result","?") if r.status_code == 200 else f"err {r.status_code}"
+            except Exception as exc:
+                n = "unreachable"
+                errors.append(f"Sanity {t}: {exc}")
+            s_cols[i % 5].metric(label, n)
+
+        # Supabase count
+        st.markdown("**Supabase**")
+        try:
+            from runner.clients.supabase import count_embeddings
+            emb_count = count_embeddings(config)
+            st.metric("document_embeddings rows", emb_count)
+        except Exception as exc:
+            st.warning(f"Could not count Supabase rows: {exc}")
+
+        if errors:
+            with st.expander("Errors"):
+                for e in errors:
+                    st.caption(e)
+        else:
+            st.success("Verify complete — all services responded.")
 
 
 def _corpus_stats(corpus_dir: Path) -> dict[str, int]:
@@ -795,6 +843,35 @@ def page_document_list():
         filtered = [d for d in filtered if not d.get("uploaded")]
 
     st.caption(f"Showing {len(filtered)} of {len(docs)} documents")
+
+    # ── Export ────────────────────────────────────────────────────────────
+    with st.expander("Export batch to JSON"):
+        batch_id = st.text_input(
+            "Batch ID (leave blank to export all local docs)",
+            key="export_batch_id",
+            placeholder="e.g. batch-07",
+        )
+        export_dest = st.text_input(
+            "Export directory",
+            value="exports/",
+            key="export_dest",
+        )
+        if st.button("⬇ Export", key="export_btn"):
+            import shutil as _shutil
+            dest = Path(export_dest.strip()) / (batch_id.strip() or "all")
+            dest.mkdir(parents=True, exist_ok=True)
+            exported = 0
+            for doc in docs:
+                if batch_id and doc.get("batch_id") != batch_id:
+                    continue
+                did = doc["doc_id"]
+                doc_dir = corpus_dir / did
+                for fname in ("analysis.json", "intake.json", "preprocess.json", "enrichment.json"):
+                    src = doc_dir / fname
+                    if src.exists():
+                        _shutil.copy2(src, dest / f"{did}_{fname}")
+                        exported += 1
+            st.success(f"Exported {exported} files to `{dest}`")
 
     for doc in filtered:
         _render_doc_card(doc, corpus_dir)
@@ -3212,6 +3289,406 @@ def page_mac_studio_node():
             "MAC_STUDIO_LITELM_ERR=/tmp/litelm.err\n",
             language="bash",
         )
+
+    st.divider()
+
+    # ── Embedding dimension test ──────────────────────────────────────────
+    st.subheader("Embedding Dimension Test")
+    st.caption("Verify that Mac Studio returns 4096-dimension vectors (required for Supabase vector(4096) table).")
+    if st.button("▶ Run embed-test (Mac Studio)", key="embed_test_btn"):
+        import os as _os
+        litelm_url_et = config.litelm_base_url.rstrip("/") if config and config.litelm_base_url else ""
+        litelm_key_et = config.litelm_api_key if config else ""
+        model_et = _os.getenv("LITELM_EMBEDDING_MODEL", "research-embedding")
+        if not litelm_url_et:
+            st.error("LITELM_BASE_URL not set in runner/.env")
+        else:
+            import httpx as _httpx
+            with st.spinner(f"Sending test embedding to {litelm_url_et} …"):
+                try:
+                    r = _httpx.post(
+                        f"{litelm_url_et}/v1/embeddings",
+                        headers={"Authorization": f"Bearer {litelm_key_et}", "Content-Type": "application/json"},
+                        json={"model": model_et, "input": "SurvivingSOGICE embedding dimension test."},
+                        timeout=30,
+                    )
+                    r.raise_for_status()
+                    dim = len(r.json()["data"][0]["embedding"])
+                    if dim == 4096:
+                        st.success(f"✅ {model_et} → {dim} dimensions — Supabase table correctly sized at vector(4096)")
+                    else:
+                        st.error(f"❌ {model_et} → {dim} dimensions — expected 4096. Run migrate-supabase below.")
+                except Exception as exc:
+                    st.error(f"Connection failed: {exc}")
+
+    st.divider()
+
+    # ── Pre-flight / Doctor ───────────────────────────────────────────────
+    st.subheader("Pre-flight Check (Doctor)")
+    st.caption("Checks all credentials, services, and dependencies before running the first ingest.")
+    if st.button("▶ Run doctor", key="doctor_btn"):
+        checks = []
+        cfg = config
+        checks.append(("SANITY_PROJECT_ID", bool(cfg and cfg.sanity_project_id)))
+        checks.append(("SANITY_WRITE_TOKEN", bool(cfg and cfg.sanity_write_token)))
+        checks.append(("SUPABASE_URL", bool(cfg and cfg.supabase_url)))
+        checks.append(("SUPABASE_SERVICE_KEY", bool(cfg and cfg.supabase_service_key)))
+        checks.append(("LITELM_BASE_URL", bool(cfg and cfg.litelm_base_url)))
+        # Service reachability
+        import httpx as _httpx
+        if cfg and cfg.litelm_base_url:
+            try:
+                r = _httpx.get(f"{cfg.litelm_base_url.rstrip('/')}/health", timeout=4)
+                checks.append(("LiteLLM reachable", r.status_code < 400))
+            except Exception:
+                checks.append(("LiteLLM reachable", False))
+        if cfg:
+            try:
+                r = _httpx.get(f"{cfg.ollama_base_url}/api/tags", timeout=4)
+                checks.append(("Local Ollama reachable", r.status_code == 200))
+            except Exception:
+                checks.append(("Local Ollama reachable", False))
+        # Sanity reachability
+        if cfg and cfg.sanity_project_id:
+            try:
+                r = _httpx.get(
+                    f"https://{cfg.sanity_project_id}.api.sanity.io/v2024-01-01/data/query/{cfg.sanity_dataset}",
+                    params={"query": "count(*[_type == 'lexiconEntry'])"},
+                    headers={"Authorization": f"Bearer {cfg.sanity_write_token}"},
+                    timeout=8,
+                )
+                checks.append(("Sanity API reachable", r.status_code == 200))
+            except Exception:
+                checks.append(("Sanity API reachable", False))
+
+        all_ok = all(ok for _, ok in checks)
+        col1, col2 = st.columns(2)
+        for i, (label, ok) in enumerate(checks):
+            (col1 if i % 2 == 0 else col2).markdown(f"{'✅' if ok else '❌'} {label}")
+        if all_ok:
+            st.success("All checks passed — ready to ingest.")
+        else:
+            st.warning("Some checks failed. Fix the issues above, then re-run.")
+
+    st.divider()
+
+    # ── Supabase migration ────────────────────────────────────────────────
+    st.subheader("Supabase Migration")
+    st.caption(
+        "Recreates the `document_embeddings` table with `vector(4096)`. "
+        "**Destructive** — drops the existing table. Only run if the table was created with the wrong dimension."
+    )
+    st.info(
+        "Supabase does not expose a REST SQL endpoint — paste the SQL below into the "
+        "[Supabase SQL editor](https://supabase.com/dashboard/project/"
+        + (config.supabase_url.split("//")[1].split(".")[0] if config and config.supabase_url else "your-project")
+        + "/sql)."
+    )
+    migration_sql = """\
+DROP TABLE IF EXISTS document_embeddings;
+CREATE TABLE document_embeddings (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_id          text NOT NULL UNIQUE,
+  embedding       vector(4096),
+  doc_type        text,
+  scope           text,
+  tier            text,
+  language        text,
+  embedded_at     timestamptz DEFAULT now(),
+  embedding_model text
+);"""
+    st.code(migration_sql, language="sql")
+    if st.button("📋 Copy SQL to clipboard", key="copy_sql"):
+        st.write('<script>navigator.clipboard.writeText(`' + migration_sql.replace('`','\\`') + '`)</script>', unsafe_allow_html=True)
+        st.success("SQL shown above — copy and paste into Supabase SQL editor.")
+
+
+# ---------------------------------------------------------------------------
+# Seed Data page
+# ---------------------------------------------------------------------------
+
+def page_seed_data():
+    st.title("Seed Data")
+    st.caption(
+        "Populate Sanity with the full research taxonomy. "
+        "All operations are idempotent — safe to re-run. "
+        "Run dry-run first to preview what will be written."
+    )
+
+    config = _load_config_safe()
+    if not config:
+        st.error("Cannot load config — check runner/.env.")
+        return
+
+    # Live counts from Sanity
+    @st.cache_data(ttl=30, show_spinner=False)
+    def _sanity_counts():
+        import httpx as _httpx
+        base = (
+            f"https://{config.sanity_project_id}.api.sanity.io"
+            f"/v2024-01-01/data/query/{config.sanity_dataset}"
+        )
+        headers = {"Authorization": f"Bearer {config.sanity_write_token}"}
+        types = [
+            "lexiconEntry", "tacticEntry", "practiceEntry", "tagRegistry",
+            "organization", "person", "legalDefinition", "exclusionClause", "event",
+        ]
+        counts = {}
+        for t in types:
+            try:
+                r = _httpx.get(base, params={"query": f'count(*[_type=="{t}"])'}, headers=headers, timeout=8)
+                counts[t] = r.json().get("result", "?") if r.status_code == 200 else "err"
+            except Exception:
+                counts[t] = "—"
+        return counts
+
+    with st.spinner("Fetching current Sanity counts …"):
+        counts = _sanity_counts()
+
+    # Summary metrics row
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Terms",         counts.get("lexiconEntry", "—"))
+    c2.metric("Tactics",       counts.get("tacticEntry", "—"))
+    c3.metric("Practices",     counts.get("practiceEntry", "—"))
+    c4.metric("Tag Registry",  counts.get("tagRegistry", "—"))
+    c5.metric("Orgs/Networks", counts.get("organization", "—"))
+    d1, d2, d3, d4 = st.columns(4)
+    d1.metric("Persons",       counts.get("person", "—"))
+    d2.metric("Laws",          counts.get("legalDefinition", "—"))
+    d3.metric("Excl. Clauses", counts.get("exclusionClause", "—"))
+    d4.metric("Events",        counts.get("event", "—"))
+
+    if st.button("↻ Refresh counts"):
+        st.cache_data.clear()
+        st.rerun()
+
+    st.divider()
+
+    tabs = st.tabs([
+        "Lexicon",
+        "Tactics",
+        "Practices",
+        "Tag Registry",
+        "Entities",
+        "Networks",
+        "Exclusion Clauses",
+        "Variants",
+    ])
+
+    # ── Lexicon ──────────────────────────────────────────────────────────────
+    with tabs[0]:
+        st.subheader("Lexicon Terms")
+        st.caption("145 terms from SOGICE_Lexicon_v2.1.md → lexiconEntry records")
+        force = st.checkbox("Force overwrite existing entries", key="lex_force")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("▶ Dry run", key="lex_dry"):
+                from runner.pipeline.seed import parse_lexicon_md
+                terms = parse_lexicon_md()
+                st.success(f"Would write {len(terms)} terms")
+                st.dataframe(
+                    [{"term": t["term"], "cluster": t.get("proposedCluster",""), "function": t.get("function","")} for t in terms[:20]],
+                    use_container_width=True,
+                )
+                if len(terms) > 20:
+                    st.caption(f"… and {len(terms)-20} more")
+        with col2:
+            if st.button("⬆ Seed Lexicon", key="lex_run", type="primary"):
+                from runner.pipeline.seed import seed_lexicon
+                with st.spinner("Seeding lexicon …"):
+                    summary = seed_lexicon(config, dry_run=False, force=force)
+                st.success(f"Done — {summary.get('written',0)} written, {summary.get('failed',0)} failed")
+                st.cache_data.clear()
+
+    # ── Tactics ──────────────────────────────────────────────────────────────
+    with tabs[1]:
+        st.subheader("Tactics")
+        st.caption("44 tactics (structural + sub-tactics + campaign) from SOGICE_Ontology_v3.0.md → tacticEntry records")
+        force_t = st.checkbox("Force overwrite existing entries", key="tac_force")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("▶ Dry run", key="tac_dry"):
+                from runner.pipeline.seed import parse_tactics
+                tactics = parse_tactics()
+                structural = [t for t in tactics if t.get("tactic_level","structural") == "structural"]
+                sub = [t for t in tactics if t.get("tactic_level") == "sub-tactic"]
+                campaigns = [t for t in tactics if t.get("tactic_level") == "campaign"]
+                st.success(f"Would write {len(tactics)} tactics — {len(structural)} structural, {len(sub)} sub-tactics, {len(campaigns)} campaigns")
+                st.dataframe(
+                    [{"tactic": t["tactic"], "level": t.get("tactic_level","structural"), "cluster": t.get("primary_cluster",""), "has_def": bool(t.get("definition"))} for t in tactics],
+                    use_container_width=True,
+                )
+        with col2:
+            if st.button("⬆ Seed Tactics", key="tac_run", type="primary"):
+                from runner.pipeline.seed import seed_tactics
+                with st.spinner("Seeding tactics …"):
+                    summary = seed_tactics(config, dry_run=False, force=force_t)
+                st.success(f"Done — {summary.get('written',0)} written, {summary.get('failed',0)} failed")
+                st.cache_data.clear()
+
+    # ── Practices ────────────────────────────────────────────────────────────
+    with tabs[2]:
+        st.subheader("Practices")
+        st.caption("14 SOGICE practices → practiceEntry records")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("▶ Dry run", key="prac_dry"):
+                from runner.pipeline.seed import parse_practices
+                practices = parse_practices()
+                st.success(f"Would write {len(practices)} practices")
+                st.dataframe(
+                    [{"practice": p["practice"], "type": p.get("practice_type",""), "has_def": bool(p.get("definition")), "tactic_overlap": bool(p.get("notes"))} for p in practices],
+                    use_container_width=True,
+                )
+        with col2:
+            if st.button("⬆ Seed Practices", key="prac_run", type="primary"):
+                from runner.pipeline.seed import seed_practices
+                with st.spinner("Seeding practices …"):
+                    summary = seed_practices(config, dry_run=False)
+                st.success(f"Done — {summary.get('written',0)} written, {summary.get('failed',0)} failed")
+                st.cache_data.clear()
+
+    # ── Tag Registry ─────────────────────────────────────────────────────────
+    with tabs[3]:
+        st.subheader("Tag Registry")
+        st.caption("94 controlled vocabulary tags (Type/Format/Evidence/Country/Function/Harm/Migration) → tagRegistry records")
+        from runner.pipeline.seed import _TAG_CATEGORIES
+        cat_options = ["all"] + sorted(_TAG_CATEGORIES)
+        selected_cat = st.selectbox("Category", cat_options, key="tag_cat")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("▶ Dry run", key="tag_dry"):
+                from runner.pipeline.seed import parse_vocabulary_csv
+                cats = None if selected_cat == "all" else {selected_cat}
+                tags = parse_vocabulary_csv(categories=cats)
+                from collections import Counter
+                by_cat = Counter(t["category"] for t in tags)
+                st.success(f"Would write {len(tags)} tags")
+                for cat_name, n in sorted(by_cat.items()):
+                    st.caption(f"  {cat_name}: {n}")
+        with col2:
+            if st.button("⬆ Seed Tag Registry", key="tag_run", type="primary"):
+                from runner.pipeline.seed import seed_tag_registry
+                cats = None if selected_cat == "all" else {selected_cat}
+                with st.spinner("Seeding tag registry …"):
+                    summary = seed_tag_registry(config, dry_run=False, categories=cats)
+                st.success(f"Done — {summary.get('written',0)} written, {summary.get('failed',0)} failed")
+                st.cache_data.clear()
+
+    # ── Entities ─────────────────────────────────────────────────────────────
+    with tabs[4]:
+        st.subheader("Entity Registry")
+        st.caption("Organizations, persons, laws, and events from Entity_Registry_v1.1.md")
+        entity_type = st.selectbox("Entity type", ["all", "org", "person", "law", "event"], key="ent_type")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("▶ Dry run", key="ent_dry"):
+                from runner.pipeline.seed import parse_entity_registry_md
+                registry = parse_entity_registry_md()
+                orgs    = len(registry["orgs"])    if entity_type in ("org", "all") else 0
+                persons = len(registry["persons"]) if entity_type in ("person", "all") else 0
+                laws    = len(registry["laws"])    if entity_type in ("law", "all") else 0
+                events  = len(registry["events"])  if entity_type in ("event", "all") else 0
+                total = orgs + persons + laws + events
+                st.success(f"Would write {total} entities — orgs={orgs}, persons={persons}, laws={laws}, events={events}")
+        with col2:
+            if st.button("⬆ Seed Entities", key="ent_run", type="primary"):
+                from runner.pipeline.seed import seed_entities
+                with st.spinner(f"Seeding entities (type={entity_type}) …"):
+                    summary = seed_entities(config, dry_run=False, entity_type=entity_type)
+                st.success(
+                    f"Done — {summary.get('created',0)} created, "
+                    f"{summary.get('skipped',0)} skipped, "
+                    f"{len(summary.get('errors',[]))} errors"
+                )
+                if summary.get("errors"):
+                    with st.expander("Errors"):
+                        for e in summary["errors"][:20]:
+                            st.caption(e)
+                st.cache_data.clear()
+
+    # ── Networks ─────────────────────────────────────────────────────────────
+    with tabs[5]:
+        st.subheader("Networks")
+        st.caption("34 network entries from vocabulary CSV → organization records (type=advocacy-network)")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("▶ Dry run", key="net_dry"):
+                from runner.pipeline.seed import parse_networks
+                networks = parse_networks()
+                st.success(f"Would write {len(networks)} network organizations")
+                st.dataframe(
+                    [{"name": n["name"], "has_desc": bool(n.get("description"))} for n in networks],
+                    use_container_width=True,
+                )
+        with col2:
+            if st.button("⬆ Seed Networks", key="net_run", type="primary"):
+                from runner.pipeline.seed import seed_networks
+                with st.spinner("Seeding networks …"):
+                    summary = seed_networks(config, dry_run=False)
+                st.success(f"Done — {summary.get('written',0)} written, {summary.get('failed',0)} failed")
+                st.cache_data.clear()
+
+    # ── Exclusion Clauses ────────────────────────────────────────────────────
+    with tabs[6]:
+        st.subheader("Exclusion Clauses")
+        st.caption(
+            "6 exclusion clauses from SOGICE_Ontology_v3.0.md Part IV → exclusionClause records. "
+            "Also seeds 2 missing parent laws (Germany 2020, Canada C-4)."
+        )
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("▶ Dry run", key="ec_dry"):
+                from runner.pipeline.seed import parse_exclusion_clauses, _MISSING_EXCLUSION_CLAUSE_LAWS
+                clauses = parse_exclusion_clauses()
+                st.success(f"Would write {len(clauses)} clauses + {len(_MISSING_EXCLUSION_CLAUSE_LAWS)} parent laws")
+                for c in clauses:
+                    used = "⚠ policy argument" if c.get("used_in_policy_arguments") else ""
+                    st.caption(f"EC-{c['id']}  {used}")
+        with col2:
+            if st.button("⬆ Seed Exclusion Clauses", key="ec_run", type="primary"):
+                from runner.pipeline.seed import seed_exclusion_clauses
+                with st.spinner("Seeding exclusion clauses …"):
+                    summary = seed_exclusion_clauses(config, dry_run=False)
+                st.success(
+                    f"Done — {summary.get('written_laws',0)} laws + "
+                    f"{summary.get('written_clauses',0)} clauses written, "
+                    f"{summary.get('failed',0)} failed"
+                )
+                st.cache_data.clear()
+
+    # ── Lexicon Variants ─────────────────────────────────────────────────────
+    with tabs[7]:
+        st.subheader("Multilingual Variants")
+        st.caption(
+            "107 multilingual variants from Section 11 of SOGICE_Lexicon_v2.1.md → "
+            "appended to parent lexiconEntry records as multilingualVariants array. "
+            "Run seed-lexicon first."
+        )
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("▶ Dry run", key="var_dry"):
+                from runner.pipeline.seed import parse_multilingual_variants_md
+                variants = parse_multilingual_variants_md()
+                langs = {}
+                for v in variants:
+                    langs[v.get("language","?")] = langs.get(v.get("language","?"),0) + 1
+                st.success(f"Would append {len(variants)} variants across {len(langs)} languages")
+                st.dataframe(
+                    [{"language": k, "count": v} for k,v in sorted(langs.items())],
+                    use_container_width=True,
+                )
+        with col2:
+            if st.button("⬆ Seed Variants", key="var_run", type="primary"):
+                from runner.pipeline.seed import seed_lexicon_variants
+                with st.spinner("Seeding multilingual variants …"):
+                    summary = seed_lexicon_variants(config, dry_run=False)
+                st.success(
+                    f"Done — {summary.get('appended',0)} appended, "
+                    f"{summary.get('stubs',0)} stubs created, "
+                    f"{summary.get('errors',0)} errors"
+                )
+                st.cache_data.clear()
 
 
 # ---------------------------------------------------------------------------
