@@ -2378,6 +2378,9 @@ def _render_single_proposal_editor(record: dict) -> None:
             value=item.get("accessible_definition", ""),
             height=80,
             key=f"{prefix}_accessible",
+            help="Plain-language version of the definition — no academic jargon. "
+                 "Used in the public archive so survivors, journalists, and non-specialists "
+                 "can understand the term without prior knowledge of conversion therapy discourse.",
         )
 
     item["exact_quote"] = st.text_area("Origin quote", value=item.get("exact_quote", ""), height=100, key=f"{prefix}_quote")
@@ -2429,6 +2432,23 @@ def _render_single_entity_editor(record: dict) -> None:
             key=f"{prefix}_description",
         )
         item["role_in_sogice"] = st.text_input("Role in SOGICE", value=item.get("role_in_sogice", ""), key=f"{prefix}_role")
+
+    c3, c4 = st.columns([1, 1])
+    with c3:
+        item["country_of_origin"] = st.text_input(
+            "Country of origin",
+            value=item.get("country_of_origin", ""),
+            key=f"{prefix}_country",
+            help="ISO country code or full country name where the entity is based or registered (e.g. 'NO', 'Germany'). "
+                 "Confirm against the source document or the entity's own website before approving.",
+        )
+    with c4:
+        item["website_url"] = st.text_input(
+            "Website URL",
+            value=item.get("website_url", ""),
+            key=f"{prefix}_website",
+            help="Official website. Verify the link is live and actually belongs to this entity before saving.",
+        )
 
     item["evidence_quote"] = st.text_area("Evidence quote", value=item.get("evidence_quote", ""), height=100, key=f"{prefix}_quote")
     item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
@@ -2488,6 +2508,12 @@ def _update_enrichment_proposal(path: Path, key: str, index: int, item: dict) ->
 
 def _render_ingestion_queue(config) -> None:
     """Show URLs flagged as ingestion candidates from enrichment.json files."""
+    st.caption(
+        "These are documents — URLs, PDFs, or other sources — that the enrichment stage "
+        "discovered inside already-ingested documents and flagged as worth ingesting next. "
+        "They have **not** been ingested yet. Click the command to copy it and run it in the terminal, "
+        "or ingest directly from the Ingest Workbench page."
+    )
     from runner.pipeline import enrich as _enrich
 
     rows = []
