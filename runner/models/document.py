@@ -149,10 +149,10 @@ DocumentType = Literal[
 
 DocumentFormat = Literal[
     "Website-Page", "Blog-Post", "Social-Media-Post", "Video", "Podcast",
-    "Academic-Paper", "NGO-Report", "Government-Report", "Court-Judgment",
-    "Legislative-Submission", "Parliamentary-Debate", "Press-Release",
-    "Book", "Book-Chapter", "Pamphlet", "Newsletter", "Email",
-    "Manual", "Course-Material", "Event-Program", "Other",
+    "News-Article", "Academic-Paper", "NGO-Report", "Government-Report",
+    "Court-Judgment", "Legislative-Submission", "Parliamentary-Debate",
+    "Press-Release", "Book", "Book-Chapter", "Pamphlet", "Newsletter",
+    "Email", "Manual", "Course-Material", "Event-Program", "Other",
 ]
 
 NarrativeRegister = Literal[

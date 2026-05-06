@@ -465,7 +465,9 @@ def _workbench_intake(config, source: str, tier: str, batch: str, source_url: st
         status = "uploaded to Sanity" if uploaded else "saved locally but not yet uploaded"
         st.warning(
             f"This source was already ingested as **{ids}** ({status}). "
-            "Continue below to ingest again, or reset and use the existing doc_id."
+            "Continue below to ingest again, or use the existing doc_id: "
+            "go to **Document List** to view it, or run "
+            f"`python3 -m runner status {ids}` in the terminal."
         )
 
     with st.spinner("Creating intake record..."):

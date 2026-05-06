@@ -85,7 +85,7 @@ Pro-SOGICE | Anti-SOGICE | Neutral-Academic | Legal-Instrument | Testimony | Med
 Compound TYPE: when a document meaningfully serves two primary functions (e.g. simultaneously Pro-SOGICE and Internal-Org-Document), assign the dominant stance to "type" and populate "primary_type"/"secondary_type" in the output schema.
 
 FORMAT (exactly one)
-Website-Page | Blog-Post | Social-Media-Post | Video | Podcast | Academic-Paper | NGO-Report | Government-Report | Court-Judgment | Legislative-Submission | Parliamentary-Debate | Press-Release | Book | Book-Chapter | Pamphlet | Newsletter | Email | Manual | Course-Material | Event-Program | Other
+Website-Page | Blog-Post | Social-Media-Post | Video | Podcast | News-Article | Academic-Paper | NGO-Report | Government-Report | Court-Judgment | Legislative-Submission | Parliamentary-Debate | Press-Release | Book | Book-Chapter | Pamphlet | Newsletter | Email | Manual | Course-Material | Event-Program | Other
 
 EVIDENCE (one or more — what kind of knowledge claim is the source making?)
 Evidence: Academic | Evidence: Government | Evidence: NGO | Evidence: Journalism | Evidence: Organization-Claim | Evidence: Propaganda | Evidence: Public-Social-Media | Evidence: Testimony | Evidence: Unverified
