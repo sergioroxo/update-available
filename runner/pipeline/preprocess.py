@@ -74,12 +74,19 @@ def _preprocess_url(url: str, snapshot_dir: Path | None = None) -> PreprocessRes
     json_str = trafilatura.extract(
         downloaded,
         output_format="json",
-        include_comments=False,
-        favor_precision=True,
+        include_comments=True,   # reader comments often contain SOGICE rhetoric
+        include_tables=True,     # tables may contain data (survey results, legislation)
+        favor_recall=True,       # capture more content; LLM can filter noise
     )
     metadata: dict = _json.loads(json_str) if json_str else {}
     text = metadata.get("text") or trafilatura.extract(downloaded) or ""
-    md   = trafilatura.extract(downloaded, output_format="markdown") or text
+    md   = trafilatura.extract(
+        downloaded,
+        output_format="markdown",
+        include_comments=True,
+        include_tables=True,
+        favor_recall=True,
+    ) or text
 
     # Full page intelligence extraction
     intel = _extract_page_intelligence(downloaded, base_url=url)
