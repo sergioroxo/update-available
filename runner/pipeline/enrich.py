@@ -359,6 +359,7 @@ def _call_ollama(
                 {"role": "user",   "content": user_message},
             ],
             "stream": False,
+            "keep_alive": 0,
             "format": "json",
             "think": False,
             "options": {"temperature": 0.1, "num_ctx": 32768, "num_predict": 8192},

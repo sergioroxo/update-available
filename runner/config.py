@@ -36,6 +36,8 @@ class Config:
     litelm_embedding_model: str        # used when --llm litelm*
     litelm_enrichment_model: str       # Stage 3c lexicon/enrichment model
     litelm_enrichment_model_alt: str   # optional second-opinion enrichment model
+    litelm_ollama_base_url: str        # optional direct Ollama URL for model unloads
+    litelm_ollama_embedding_model: str # actual Ollama model behind research-embedding
 
     # Truncation limits (chars). Claude default is conservative due to API cost.
     # Local models have large context windows so LOCAL_TRUNCATION_LIMIT can be
@@ -105,6 +107,8 @@ def load_config(llm: str | None = None) -> Config:
         litelm_embedding_model=os.getenv("LITELM_EMBEDDING_MODEL", "research-embedding"),
         litelm_enrichment_model=os.getenv("LITELM_ENRICHMENT_MODEL", "lexicon-llm"),
         litelm_enrichment_model_alt=os.getenv("LITELM_ENRICHMENT_MODEL_ALT", "core-gemma"),
+        litelm_ollama_base_url=os.getenv("LITELM_OLLAMA_BASE_URL", "") or os.getenv("MAC_STUDIO_OLLAMA_URL", ""),
+        litelm_ollama_embedding_model=os.getenv("LITELM_OLLAMA_EMBEDDING_MODEL", "qwen3-embedding:8b"),
         truncation_limit=int(os.getenv("TRUNCATION_LIMIT", "24000")),
         truncation_limit_local=int(os.getenv("TRUNCATION_LIMIT_LOCAL", "200000")),
     )

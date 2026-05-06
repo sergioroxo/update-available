@@ -18,7 +18,7 @@ from rich.panel import Panel
 
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
-from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload
+from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory
 
 app = typer.Typer(name="runner", add_completion=False)
 console = Console()
@@ -117,6 +117,11 @@ def ingest(
     # litelm* flags use the Mac Studio's research-embedding model via LiteLLM proxy
     if llm.startswith("litelm"):
         embedding_vector = embed.run_litelm(preprocess_result.text, config=config)
+        try:
+            if ollama_memory.unload_litelm_embedding(config):
+                console.print("[dim]Unloaded LiteLLM embedding model before analysis.[/dim]")
+        except Exception as exc:
+            console.print(f"[yellow]Could not unload LiteLLM embedding model: {exc}[/yellow]")
     else:
         embedding_vector = embed.run(preprocess_result.text, config=config)
     analysis_result = analyze.run(preprocess_result, llm=llm, config=config)

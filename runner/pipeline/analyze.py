@@ -126,6 +126,7 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
                 {"role": "user",   "content": user_message},
             ],
             "stream": False,
+            "keep_alive": 0,
             "format": "json",   # constrained decoding — forces valid JSON output
             "think": False,     # disable thinking mode — 9B models exhaust tokens reasoning in prose
             "options": {

@@ -643,13 +643,18 @@ def _workbench_preprocess(config, max_chars: int | None) -> None:
 
 
 def _workbench_analyze(config, llm: str) -> None:
-    from runner.pipeline import analyze, embed
+    from runner.pipeline import analyze, embed, ollama_memory
 
     preprocess_result = st.session_state.ingest["preprocess"]
     with st.spinner("Generating embedding and running analysis..."):
         try:
             if llm.startswith("litelm"):
                 embedding_vector = embed.run_litelm(preprocess_result.text, config=config)
+                try:
+                    if ollama_memory.unload_litelm_embedding(config):
+                        st.info("Unloaded LiteLLM embedding model before analysis.")
+                except Exception as unload_exc:
+                    st.warning(f"Could not unload LiteLLM embedding model: {unload_exc}")
             else:
                 embedding_vector = embed.run(preprocess_result.text, config=config)
             result = analyze.run(preprocess_result, llm=llm, config=config)
