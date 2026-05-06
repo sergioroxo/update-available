@@ -139,7 +139,7 @@ def write_entity_from_proposal(
             "role": _person_role(proposal.get("role_in_sogice", "")),
             "countryOfOperation": _first_or_empty(proposal.get("geographic_scope", [])),
             "description": description,
-            "sourceDocuments": [{"_type": "reference", "_ref": f"doc-{doc_id}"}],
+            "sourceDocuments": [{"_type": "reference", "_key": f"src-{doc_id}", "_ref": f"doc-{doc_id}"}],
             "registryStatus": "confirmed",
         }
         if proposal.get("affiliated_orgs"):
@@ -153,7 +153,7 @@ def write_entity_from_proposal(
             "country": _first_or_empty(proposal.get("geographic_scope", [])),
             "description": description,
             "visibility": "research_contextualized",
-            "sourceDocuments": [{"_type": "reference", "_ref": f"doc-{doc_id}"}],
+            "sourceDocuments": [{"_type": "reference", "_key": f"src-{doc_id}", "_ref": f"doc-{doc_id}"}],
             "registryStatus": "confirmed",
         }
 
