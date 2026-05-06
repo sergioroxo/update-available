@@ -276,6 +276,25 @@ def page_ingest_workbench():
             st.session_state.ingest = _blank_ingest_state()
             st.rerun()
 
+    # ── Resume an existing doc ───────────────────────────────────────────────
+    with st.expander("Resume existing doc_id", expanded=False):
+        st.caption(
+            "Load a document that was already ingested (intake + extraction done) "
+            "but still needs analysis, upload, or both. "
+            "Paste the doc_id, pick the stage to continue from, then use the buttons below."
+        )
+        resume_id = st.text_input("doc_id to resume", placeholder="e.g. 3281c668", key="resume_doc_id")
+        resume_stage = st.selectbox(
+            "Continue from stage",
+            ["Analyze", "Upload (analysis already done)"],
+            key="resume_stage",
+        )
+        if st.button("Load doc into workbench", key="resume_load"):
+            if not resume_id.strip():
+                st.error("Enter a doc_id first.")
+            else:
+                _workbench_resume(config, resume_id.strip(), resume_stage)
+
     source = st.text_input("Source URL or local file path", value=st.session_state.ingest["source"])
     st.session_state.ingest["source"] = source
     provenance_url = st.text_input(
@@ -445,6 +464,70 @@ def _render_tier_help() -> None:
 Use **auto** when unsure. For a Christian Concern article or organization page, Tier 1 or 2 is normal; use Tier 2 when it is likely to matter for research writing or network evidence.
 """
         )
+
+
+def _workbench_resume(config, doc_id: str, stage: str) -> None:
+    """Load an existing doc's saved state into the workbench session."""
+    from runner.pipeline.upload import _load_preprocess
+    from runner.models.document import AnalysisResult
+
+    doc_dir = config.corpus_dir / doc_id
+    intake_path     = doc_dir / "intake.json"
+    preprocess_path = doc_dir / "preprocess.json"
+    extracted_path  = doc_dir / "extracted.txt"
+    analysis_path   = doc_dir / "analysis.json"
+
+    if not doc_dir.exists():
+        st.error(f"No local folder found for `{doc_id}`.")
+        return
+    if not extracted_path.exists():
+        st.error(f"`extracted.txt` not found for `{doc_id}` — extraction step missing.")
+        return
+
+    # Load intake record
+    intake_result = None
+    if intake_path.exists():
+        try:
+            from runner.models.document import IntakeResult
+            intake_result = IntakeResult(**json.loads(intake_path.read_text()))
+        except Exception as exc:
+            st.warning(f"Could not load intake.json: {exc}")
+
+    # Load preprocess record
+    preprocess_result = None
+    if preprocess_path.exists():
+        try:
+            preprocess_result = _load_preprocess(preprocess_path)
+        except Exception as exc:
+            st.warning(f"Could not load preprocess.json: {exc}")
+
+    # Load analysis if already done and stage is Upload
+    analysis_result = None
+    analysis_json = ""
+    analysis_valid = False
+    if stage.startswith("Upload") and analysis_path.exists():
+        try:
+            raw = analysis_path.read_text()
+            analysis_result = AnalysisResult.model_validate_json(raw)
+            analysis_json = raw
+            analysis_valid = True
+        except Exception as exc:
+            st.warning(f"Could not load analysis.json: {exc}")
+
+    st.session_state.ingest.update({
+        "source":         getattr(intake_result, "source", "") if intake_result else "",
+        "intake":         intake_result,
+        "preprocess":     preprocess_result,
+        "analysis":       analysis_result,
+        "analysis_json":  analysis_json,
+        "analysis_valid": analysis_valid,
+        "uploaded":       False,
+    })
+    loaded = []
+    if intake_result:    loaded.append("intake")
+    if preprocess_result: loaded.append("extraction")
+    if analysis_result:  loaded.append("analysis")
+    st.success(f"Loaded `{doc_id}` — {', '.join(loaded)} ready. Scroll down to continue.")
 
 
 def _blank_ingest_state() -> dict:
