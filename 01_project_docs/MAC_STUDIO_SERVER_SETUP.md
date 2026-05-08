@@ -18,7 +18,7 @@ LiteLLM proxy  :4000   ←── litellm_config.yaml (model aliases)
     │
     │  localhost
     ▼
-Ollama         :11434  ←── actual models (qwen3.6:35b-a3b, gemma4:31b-it …)
+Ollama         :11434  ←── actual models (qwen3.6:35b-a3b, gemma4:31b …)
 ```
 
 LiteLLM sits in front of Ollama and exposes an **OpenAI-compatible** `/v1/chat/completions` and `/v1/embeddings` API. The runner talks to LiteLLM — not Ollama directly — so model selection, routing, and auth are all handled at the proxy layer.
@@ -30,10 +30,10 @@ LiteLLM sits in front of Ollama and exposes an **OpenAI-compatible** `/v1/chat/c
 | LiteLLM alias | Ollama model | RAM (4-bit) | Role |
 |---|---|---|---|
 | `core-qwen` | `qwen3.6:35b-a3b` | ~22 GB | Default analysis (`--llm litelm`) |
-| `core-gemma` | `gemma4:31b-it` | ~20 GB | Heavy / long docs (`--llm litelm-heavy`) |
+| `core-gemma` | `gemma4:31b` | ~20 GB | Heavy / long docs (`--llm litelm-heavy`) |
 | `review-qwen` | `qwen3.6:27b` | ~17 GB | Reasoning / ambiguous (`--llm litelm-reasoning`) |
 | `review-gemma` | `gemma4:26b-a4b-it` | ~16 GB | Second-opinion enrichment |
-| `triage` | `gemma4:e4b-it` | ~3 GB | Fast pre-screen (`--triage`) |
+| `triage` | `gemma4:e4b` | ~3 GB | Fast pre-screen (`--triage`) |
 | `lexicon-llm` | `qwen3.6:35b-a3b` | ~22 GB | Stage 3c enrichment (same weights as core-qwen) |
 | `coder` | `qwen3-coder:30b-a3b-instruct` | ~19 GB | Structured extraction |
 | `research-embedding` | `qwen3-embedding:8b` | ~5 GB | Embeddings (all `--llm litelm*` paths) |
@@ -107,13 +107,13 @@ ollama pull qwen3-embedding:8b
 ollama pull qwen3.6:35b-a3b
 
 # Heavy / long docs
-ollama pull gemma4:31b-it
+ollama pull gemma4:31b
 
 # Reasoning / second opinion
 ollama pull qwen3.6:27b
 
 # Fast triage
-ollama pull gemma4:e4b-it
+ollama pull gemma4:e4b
 
 # Enrichment (shares weights with core-qwen — no extra pull needed if core-qwen is installed)
 # ollama pull qwen3.6:35b-a3b  ← already done above
@@ -181,7 +181,7 @@ model_list:
 
   - model_name: core-gemma
     litellm_params:
-      model: ollama_chat/gemma4:31b-it
+      model: ollama_chat/gemma4:31b
       api_base: http://localhost:11434
       max_tokens: 8192
 
@@ -199,7 +199,7 @@ model_list:
 
   - model_name: triage
     litellm_params:
-      model: ollama_chat/gemma4:e4b-it
+      model: ollama_chat/gemma4:e4b
       api_base: http://localhost:11434
       max_tokens: 4096
 
@@ -479,9 +479,9 @@ While the tunnel is open, `OLLAMA_BASE_URL=http://localhost:11434` routes to the
 |---|---|---|
 | `qwen3-embedding:8b` | ~5s | ~3s |
 | `qwen3.6:35b-a3b` (core-qwen) | ~20s | ~60–120s |
-| `gemma4:31b-it` (core-gemma) | ~18s | ~60–90s |
+| `gemma4:31b` (core-gemma) | ~18s | ~60–90s |
 | `qwen3.6:27b` (review-qwen) | ~15s | ~45–90s |
-| `gemma4:e4b-it` (triage) | ~5s | ~10–20s |
+| `gemma4:e4b` (triage) | ~5s | ~10–20s |
 
 With `OLLAMA_KEEP_ALIVE=0`, load time is paid on every request. For batch runs, temporarily set `keep_alive: "10m"` in the LiteLLM config to keep the active model warm.
 

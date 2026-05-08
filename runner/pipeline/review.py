@@ -354,6 +354,7 @@ def checkpoint_enrichment(result: EnrichmentResult, doc_id: str) -> bool:
     table.add_row("Model:", result.enrichment_model)
     table.add_row("Lexicon proposals:", str(len(result.lexicon_proposals)))
     table.add_row("Entity proposals:", str(len(result.entity_proposals)))
+    table.add_row("Tactic proposals:", str(len(result.tactic_proposals)))
     table.add_row("Ingestion queue:", str(len(result.ingestion_queue)))
     table.add_row("Corpus connections:", str(len(result.corpus_connections)))
     table.add_row("Practice descriptions:", str(len(result.practice_descriptions)))

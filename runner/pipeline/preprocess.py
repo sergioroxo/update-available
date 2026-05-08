@@ -43,7 +43,8 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
 
     result.doc_id = intake.doc_id
 
-    # Determine effective limit: CLI flag > env var > default
+    # Determine effective limit: CLI/app flag > env var > default.
+    # max_chars=0 is intentional: _maybe_truncate treats 0 as no truncation.
     limit = max_chars if max_chars is not None else config.truncation_limit
     text, truncated = _maybe_truncate(result.text, limit)
     result.text = text
@@ -99,8 +100,8 @@ def _preprocess_url(url: str, snapshot_dir: Path | None = None) -> PreprocessRes
         markdown=md,
         title=metadata.get("title", "") or intel.og_title,
         author=metadata.get("author", ""),
-        date_published=metadata.get("date", ""),
-        sitename=metadata.get("sitename", ""),
+        date_published=metadata.get("date", "") or intel.date_published,
+        sitename=metadata.get("sitename", "") or intel.publisher,
         description=metadata.get("description", "") or intel.og_description,
         hostname=metadata.get("hostname", ""),
         outbound_links=intel.outbound_links,
@@ -312,6 +313,22 @@ def _extract_page_intelligence(html: str, base_url: str) -> "PageIntelligence":
     og_description = _meta("og:description") or _meta("twitter:description", "name")
     og_image       = _meta("og:image") or _meta("twitter:image", "name")
     og_type        = _meta("og:type")
+    og_locale      = _meta("og:locale")
+
+    date_published = (
+        _meta("article:published_time")
+        or _meta("date", "name")
+        or _meta("dc.date", "name")
+        or _meta("dc.date.issued", "name")
+        or _meta("dcterms.created", "name")
+        or _meta("pubdate", "name")
+    )
+    date_modified = (
+        _meta("article:modified_time")
+        or _meta("last-modified", "name")
+        or _meta("dcterms.modified", "name")
+    )
+    publisher = _meta("og:site_name") or _meta("article:publisher")
 
     keywords_raw = _meta("keywords", "name")
     keywords = [k.strip() for k in keywords_raw.split(",") if k.strip()]
@@ -330,11 +347,36 @@ def _extract_page_intelligence(html: str, base_url: str) -> "PageIntelligence":
         except Exception:
             pass
 
-    # Extract categories/tags from JSON-LD Article or NewsArticle
+    def _jsonld_nodes(value) -> list[dict]:
+        nodes: list[dict] = []
+        if isinstance(value, list):
+            for item in value:
+                nodes.extend(_jsonld_nodes(item))
+        elif isinstance(value, dict):
+            nodes.append(value)
+            graph = value.get("@graph")
+            if isinstance(graph, list):
+                nodes.extend(_jsonld_nodes(graph))
+        return nodes
+
+    json_ld_nodes = []
+    for obj in json_ld:
+        json_ld_nodes.extend(_jsonld_nodes(obj))
+
+    def _jsonld_text(value) -> str:
+        if isinstance(value, str):
+            return value.strip()
+        if isinstance(value, dict):
+            for key in ("name", "url", "@id"):
+                if value.get(key):
+                    return str(value[key]).strip()
+        return ""
+
+    # Extract categories/tags, dates, and publisher from JSON-LD Article/NewsArticle
     tags: list[str] = []
     categories: list[str] = []
     author_url = ""
-    for obj in json_ld:
+    for obj in json_ld_nodes:
         if isinstance(obj, dict):
             for k in ("keywords", "about"):
                 v = obj.get(k)
@@ -348,6 +390,21 @@ def _extract_page_intelligence(html: str, base_url: str) -> "PageIntelligence":
             au = obj.get("author")
             if isinstance(au, dict):
                 author_url = au.get("url", "")
+            date_published = date_published or _jsonld_text(
+                obj.get("datePublished") or obj.get("dateCreated")
+            )
+            date_modified = date_modified or _jsonld_text(obj.get("dateModified"))
+            pub = obj.get("publisher")
+            if not publisher:
+                if isinstance(pub, list) and pub:
+                    publisher = _jsonld_text(pub[0])
+                else:
+                    publisher = _jsonld_text(pub)
+
+    if not date_published:
+        time_el = tree.find('.//time[@datetime]')
+        if time_el is not None:
+            date_published = (time_el.get("datetime") or "").strip()
 
     # ── Link classification ─────────────────────────────────────────────────
     _SOCIAL_DOMAINS: dict[str, str] = {
@@ -451,9 +508,13 @@ def _extract_page_intelligence(html: str, base_url: str) -> "PageIntelligence":
         og_description=og_description,
         og_image=og_image,
         og_type=og_type,
+        og_locale=og_locale,
         tags=list(dict.fromkeys(tags))[:30],
         categories=list(dict.fromkeys(categories))[:10],
         keywords=keywords[:20],
+        date_published=date_published,
+        date_modified=date_modified,
+        publisher=publisher,
         author_url=author_url,
         social_profiles=social_profiles,
         document_links=document_links,
@@ -506,6 +567,47 @@ def _preprocess_metadata(result: PreprocessResult) -> dict:
         "source_html_path": result.source_html_path,
         "source_html_sha256": result.source_html_sha256,
     }
+
+
+def repair_preprocess_metadata(data: dict, doc_dir: Path | None = None, base_url: str = "") -> dict:
+    """Backfill publication metadata from saved page intelligence or source.html.
+
+    This is used for older locally saved documents where HTML metadata existed
+    but was not copied into top-level preprocess fields before upload.
+    """
+    repaired = dict(data or {})
+    page_intel = repaired.get("page_intel")
+    current_site = str(repaired.get("sitename") or "")
+    needs_html_reparse = (
+        not isinstance(page_intel, dict)
+        or not (repaired.get("date_published") or page_intel.get("date_published"))
+        or current_site.startswith(("http://", "https://"))
+    )
+    if needs_html_reparse and doc_dir:
+        source_html = doc_dir / "source.html"
+        if source_html.exists():
+            try:
+                intel = _extract_page_intelligence(
+                    source_html.read_text(encoding="utf-8", errors="replace"),
+                    base_url or repaired.get("canonical_url", ""),
+                )
+                page_intel = intel.__dict__
+                repaired["page_intel"] = page_intel
+            except Exception:
+                page_intel = None
+
+    if isinstance(page_intel, dict):
+        if not repaired.get("date_published"):
+            repaired["date_published"] = page_intel.get("date_published", "")
+        current_is_url = current_site.startswith(("http://", "https://"))
+        if not current_site or current_is_url:
+            repaired["sitename"] = page_intel.get("publisher", "")
+        if not repaired.get("description"):
+            repaired["description"] = page_intel.get("og_description", "")
+        if not repaired.get("title"):
+            repaired["title"] = page_intel.get("og_title", "")
+
+    return repaired
 
 
 def _update_intake_html_hash(doc_dir: Path, sha256: str) -> None:

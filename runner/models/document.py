@@ -166,6 +166,22 @@ RhetoricalIntensity = Literal["hook", "pathologizing", "active-conduct"]
 
 FramingBalance = Literal["pro-dominant", "anti-dominant", "genuinely-mixed", "unclear"]
 
+_DOCUMENT_TYPES = {
+    "Pro-SOGICE", "Anti-SOGICE", "Neutral-Academic", "Legal-Instrument",
+    "Testimony", "Media-Coverage", "Internal-Org-Document", "Mixed",
+    "Training-Certification-Material", "Liturgical-Devotional-Material",
+    "Clinical-Therapeutic-Protocol", "Survivor-Network-Material",
+    "Regulatory-Policy-Document",
+}
+
+_DOCUMENT_FORMATS = {
+    "Website-Page", "Blog-Post", "Social-Media-Post", "Video", "Podcast",
+    "News-Article", "Academic-Paper", "NGO-Report", "Government-Report",
+    "Court-Judgment", "Legislative-Submission", "Parliamentary-Debate",
+    "Press-Release", "Book", "Book-Chapter", "Pamphlet", "Newsletter",
+    "Email", "Manual", "Course-Material", "Event-Program", "Other",
+}
+
 
 class AnalysisResult(BaseModel):
     """Exact mirror of the ingestion-v3.3 JSON output schema."""
@@ -217,6 +233,16 @@ class AnalysisResult(BaseModel):
                 data[new] = data.pop(old)
                 warnings.append(f"Mapped model field '{old}' to schema field '{new}'.")
 
+        # 2b. Some models put document format values in secondary_type.
+        #     Keep type fields inside DocumentType and preserve the format label.
+        secondary = data.get("secondary_type")
+        if isinstance(secondary, str) and secondary in _DOCUMENT_FORMATS and secondary not in _DOCUMENT_TYPES:
+            if not data.get("format") or data.get("format") == "Other":
+                data["format"] = secondary
+                warnings.append(f"Moved format-like secondary_type '{secondary}' into format.")
+            data["secondary_type"] = data.get("primary_type") or data.get("type")
+            warnings.append(f"Replaced invalid secondary_type '{secondary}' with primary/type value.")
+
         # 3. Remap nested confidence fields:
         #    .overall / .overall_score  → confidence.overall_score
         #    .field_scores / .field-level → field_confidence (top-level)
@@ -251,14 +277,7 @@ class AnalysisResult(BaseModel):
                 data[key] = val[0]
                 warnings.append(f"Unwrapped single-item list for scalar field '{key}'.")
 
-        # 5. Coerce list[str] fields: null→[], scalar string→[value],
-        #    strip spurious "Category: " prefixes some models add to list items
-        #    e.g. "Practice: Pastoral-Care" → "Pastoral-Care"
-        _prefix_pattern = re.compile(
-            r"^(?:Practice|Function|Harm|Flag|Evidence|Tactic|Actor|Network"
-            r"|Migration|Term|Landmark|Country):\s*",
-            re.IGNORECASE,
-        )
+        # 5. Coerce list[str] fields: null→[], scalar string→[value].
         for key in (
             "country", "tactic", "actor", "network", "practice", "term",
             "harm", "migration", "function", "landmark", "flags", "evidence",
@@ -270,11 +289,6 @@ class AnalysisResult(BaseModel):
             elif isinstance(val, str):
                 data[key] = [val] if val else []
                 warnings.append(f"Wrapped scalar string into list for field '{key}'.")
-            if isinstance(data.get(key), list):
-                cleaned = [_prefix_pattern.sub("", v) if isinstance(v, str) else v for v in data[key]]
-                if cleaned != data[key]:
-                    warnings.append(f"Stripped category prefixes from '{key}' items.")
-                    data[key] = cleaned
 
         # 6. Coerce list-of-objects fields where model returns list-of-strings
         #    candidate_terms: ["term a", "term b"] → [{"term": "term a"}, ...]
@@ -297,6 +311,22 @@ class AnalysisResult(BaseModel):
                 if changed:
                     data[key] = coerced
                     warnings.append(f"Coerced string items in '{key}' to {{{term_key}: ...}} dicts.")
+
+        # 7. term_use_context requires objects, but models often return a list
+        #    of term strings. Preserve those as reported term mentions.
+        tuc = data.get("term_use_context")
+        if isinstance(tuc, list):
+            coerced_tuc = []
+            changed = False
+            for item in tuc:
+                if isinstance(item, str):
+                    coerced_tuc.append({"term": item, "use": "reported", "quote": ""})
+                    changed = True
+                else:
+                    coerced_tuc.append(item)
+            if changed:
+                data["term_use_context"] = coerced_tuc
+                warnings.append("Coerced string items in 'term_use_context' to term context dicts.")
 
         data["normalisation_warnings"] = warnings
 
@@ -374,11 +404,17 @@ class PageIntelligence:
     og_description: str = ""
     og_image: str = ""
     og_type: str = ""                       # article | website | video | ...
+    og_locale: str = ""                     # e.g. en_US, pt_BR
 
     # CMS taxonomy
     tags: list[str] = field(default_factory=list)
     categories: list[str] = field(default_factory=list)
     keywords: list[str] = field(default_factory=list)
+
+    # Publication metadata from HTML / Schema.org / meta tags
+    date_published: str = ""
+    date_modified: str = ""
+    publisher: str = ""
 
     # Author enrichment
     author_url: str = ""                    # link to author profile page

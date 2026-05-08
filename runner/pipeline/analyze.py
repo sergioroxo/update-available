@@ -131,8 +131,8 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
             "think": False,     # disable thinking mode — 9B models exhaust tokens reasoning in prose
             "options": {
                 "temperature": 0.1,
-                "num_ctx": 32768,  # Qwen3's actual context window (16k was our own cap)
-                "num_predict": 8192,
+                "num_ctx": config.local_context_tokens,
+                "num_predict": config.local_output_tokens,
             },
         },
         timeout=300,
@@ -168,7 +168,7 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
                 {"role": "user",   "content": user_message},
             ],
             "temperature": 0.1,
-            "max_tokens": 8192,
+            "max_tokens": config.local_output_tokens,
         },
         timeout=600,
     )
@@ -369,7 +369,7 @@ def _validate_response(raw_json: str) -> AnalysisResult:
     looks_truncated = stripped.startswith("{") and not stripped.rstrip().endswith("}")
     hint = (
         "\nResponse looks truncated (starts with { but no closing }). "
-        "If using LiteLLM, add max_tokens: 8192 to each model in config.yaml."
+        "Increase LOCAL_OUTPUT_TOKENS or the LiteLLM model max_tokens setting."
     ) if looks_truncated else ""
 
     validation_detail = f"\nValidation error: {last_error}" if last_error else ""

@@ -40,24 +40,30 @@ def upsert_embedding(
 ) -> None:
     """Insert or update a row in document_embeddings."""
     client = _client(config)
-    client.table("document_embeddings").upsert({
-        "doc_id":          doc_id,
-        "embedding":       vector,
-        "doc_type":        analysis.type,
-        "scope":           analysis.scope,
-        "tier":            tier,
-        "language":        language,
-        "embedding_model": embedding_model or config.embedding_model,
-    }).execute()
+    client.table("document_embeddings").upsert(
+        {
+            "doc_id":          doc_id,
+            "embedding":       vector,
+            "doc_type":        analysis.type,
+            "scope":           analysis.scope,
+            "tier":            tier,
+            "language":        language,
+            "embedding_model": embedding_model or config.embedding_model,
+        },
+        on_conflict="doc_id",
+    ).execute()
 
 
 def insert_null_row(doc_id: str, config: Config) -> None:
     """Create a null-vector placeholder row at intake time (Phase 0-B requirement)."""
     client = _client(config)
-    client.table("document_embeddings").upsert({
-        "doc_id":    doc_id,
-        "embedding": None,
-    }).execute()
+    client.table("document_embeddings").upsert(
+        {
+            "doc_id":    doc_id,
+            "embedding": None,
+        },
+        on_conflict="doc_id",
+    ).execute()
 
 
 def count_embeddings(config: Config) -> int:

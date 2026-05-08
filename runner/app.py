@@ -321,7 +321,17 @@ def page_ingest_workbench():
 
     c4, c5 = st.columns([1, 1])
     with c4:
-        max_chars = st.number_input("Max chars (0 = no truncation)", min_value=0, value=0, step=1000)
+        max_chars = st.number_input(
+            "Preprocess char limit (0 = full document)",
+            min_value=0,
+            value=0,
+            step=1000,
+            help=(
+                "This is a character limit before analysis, not the model token window. "
+                "Use 0 for no preprocessing truncation. Local/LiteLLM defaults use "
+                f"{config.truncation_limit_local:,} chars when a limit is needed."
+            ),
+        )
     with c5:
         run_enrich = st.checkbox("Run enrichment after analysis", value=st.session_state.ingest["run_enrich"])
         st.session_state.ingest["run_enrich"] = run_enrich
@@ -332,7 +342,7 @@ def page_ingest_workbench():
             index=0,
         )
         st.session_state.ingest["enrich_model"] = enrich_model
-        st.caption("Enrichment creates proposals. It does not change the live lexicon until you approve them.")
+        st.caption("Enrichment creates proposals. It does not change live registries or document assets until you approve them.")
 
     st.divider()
     gate = _proposal_gate_status(config.corpus_dir)
@@ -344,7 +354,13 @@ def page_ingest_workbench():
             f"Unresolved lexicon: {gate['unresolved_lexicon']} | "
             f"approved lexicon not pushed: {gate['approved_unpushed_lexicon']} | "
             f"unresolved entities: {gate['unresolved_entities']} | "
-            f"approved entities not pushed: {gate['approved_unpushed_entities']}"
+            f"approved entities not pushed: {gate['approved_unpushed_entities']} | "
+            f"unresolved tactics: {gate['unresolved_tactics']} | "
+            f"approved tactics not pushed: {gate['approved_unpushed_tactics']} | "
+            f"unresolved practices: {gate['unresolved_practices']} | "
+            f"approved practices not pushed: {gate['approved_unpushed_practices']} | "
+            f"unresolved claims: {gate['unresolved_statistical_claims']} | "
+            f"approved claims not pushed: {gate['approved_unpushed_statistical_claims']}"
         )
         st.caption("Open Lexicon → Local Proposals to approve/reject proposals and push approved records.")
     _render_stage_progress()
@@ -611,7 +627,7 @@ def _workbench_intake(config, source: str, tier: str, batch: str, source_url: st
 
 def _effective_max_chars(max_chars: int, llm: str, config) -> int | None:
     if max_chars == 0:
-        return None
+        return 0
     if max_chars:
         return max_chars
     if llm in ("local", "local-heavy", "local-reasoning", "prefer-local", "litelm", "litelm-heavy", "litelm-reasoning"):
@@ -646,18 +662,28 @@ def _workbench_analyze(config, llm: str) -> None:
     from runner.pipeline import analyze, embed, ollama_memory
 
     preprocess_result = st.session_state.ingest["preprocess"]
-    with st.spinner("Generating embedding and running analysis..."):
+    with st.spinner("Running analysis and generating embedding..."):
         try:
             if llm.startswith("litelm"):
+                result = analyze.run(preprocess_result, llm=llm, config=config)
+                try:
+                    if ollama_memory.unload_litelm_analysis(config, llm):
+                        st.info("Unloaded LiteLLM analysis model before embedding.")
+                    else:
+                        st.warning("Could not unload LiteLLM analysis model; set LITELM_OLLAMA_BASE_URL and backing model names to prevent RAM overlap.")
+                except Exception as unload_exc:
+                    st.warning(f"Could not unload LiteLLM analysis model: {unload_exc}")
                 embedding_vector = embed.run_litelm(preprocess_result.text, config=config)
                 try:
                     if ollama_memory.unload_litelm_embedding(config):
-                        st.info("Unloaded LiteLLM embedding model before analysis.")
+                        st.info("Unloaded LiteLLM embedding model after embedding.")
+                    else:
+                        st.warning("Could not unload LiteLLM embedding model; set LITELM_OLLAMA_BASE_URL and LITELM_OLLAMA_EMBEDDING_MODEL.")
                 except Exception as unload_exc:
                     st.warning(f"Could not unload LiteLLM embedding model: {unload_exc}")
             else:
                 embedding_vector = embed.run(preprocess_result.text, config=config)
-            result = analyze.run(preprocess_result, llm=llm, config=config)
+                result = analyze.run(preprocess_result, llm=llm, config=config)
         except Exception as exc:
             err_msg = str(exc)
             st.error(f"Analysis failed: {err_msg}")
@@ -748,6 +774,8 @@ def _render_analysis_editor(config, llm: str) -> None:
     with st.expander("Copy JSON (read-only, click to expand)", expanded=False):
         st.code(analysis_text, language="json")
 
+    _render_archival_issue_panel(analysis_text)
+
     c1, c2, c3, c4 = st.columns(4)
     testimony_blocked = _testimony_requires_review(
         st.session_state.ingest["intake"].doc_id,
@@ -803,7 +831,10 @@ def _render_analysis_editor(config, llm: str) -> None:
                     llm_used=llm,
                 )
                 st.session_state.ingest["uploaded"] = True
-                st.success("Uploaded to Sanity and Supabase.")
+                if st.session_state.ingest.get("embedding"):
+                    st.success("Uploaded to Sanity and Supabase.")
+                else:
+                    st.warning("Uploaded to Sanity. No embedding vector was available, so Supabase was skipped.")
             except Exception as exc:
                 err_msg = str(exc)
                 st.error(f"Upload failed: {err_msg}")
@@ -819,6 +850,126 @@ def _render_analysis_editor(config, llm: str) -> None:
     enrichment_result = st.session_state.ingest.get("enrichment")
     if enrichment_result:
         _render_enrichment_result(enrichment_result)
+
+
+def _render_archival_issue_panel(analysis_text: str) -> None:
+    """Show researcher-fillable archival gaps before local save/upload."""
+    try:
+        analysis_data = json.loads(analysis_text) if analysis_text.strip() else {}
+    except Exception:
+        st.warning("Archival checks will appear after the JSON is parseable.")
+        return
+    if not isinstance(analysis_data, dict):
+        return
+
+    preprocess = st.session_state.ingest.get("preprocess")
+    intake = st.session_state.ingest.get("intake")
+    preprocess_meta = {}
+    if preprocess:
+        page_intel = getattr(preprocess, "page_intel", None)
+        preprocess_meta = {
+            "title": getattr(preprocess, "title", ""),
+            "date_published": getattr(preprocess, "date_published", ""),
+            "sitename": getattr(preprocess, "sitename", ""),
+            "hostname": getattr(preprocess, "hostname", ""),
+            "page_intel": page_intel.__dict__ if page_intel else {},
+        }
+    intake_meta = {
+        "source": getattr(intake, "source", ""),
+        "source_url": getattr(intake, "source_url", ""),
+        "source_type": getattr(intake, "source_type", ""),
+    } if intake else {}
+
+    from runner.pipeline.metadata_quality import archival_issues, publication_metadata
+
+    pub = publication_metadata(preprocess_meta)
+    issues = archival_issues(analysis_data, preprocess_meta, intake_meta)
+    with st.expander("Archival completeness checks", expanded=bool(issues)):
+        found = [
+            f"published {pub['date_published']}" if pub.get("date_published") else "",
+            f"publisher {pub['publisher']}" if pub.get("publisher") else "",
+            f"host {pub['hostname']}" if pub.get("hostname") else "",
+        ]
+        found = [item for item in found if item]
+        if found:
+            st.caption("Source metadata found: " + " · ".join(found))
+        if not issues:
+            st.success("No fundamental archival gaps detected.")
+            return
+        st.warning("Review these before upload if you can resolve them.")
+        st.dataframe(issues, width="stretch", hide_index=True)
+        _render_manual_archival_fixes(analysis_data, preprocess_meta)
+
+
+def _render_manual_archival_fixes(analysis_data: dict, preprocess_meta: dict) -> None:
+    preprocess = st.session_state.ingest.get("preprocess")
+    intake = st.session_state.ingest.get("intake")
+    doc_id = getattr(intake, "doc_id", "") if intake else ""
+    current_date = preprocess_meta.get("date_published", "")
+    current_title = preprocess_meta.get("title", "")
+    current_publisher = preprocess_meta.get("sitename", "")
+    doc_date = analysis_data.get("document_date") or {}
+
+    with st.form("manual_archival_fixes"):
+        st.markdown("**Fill missing archival fields**")
+        title = st.text_input("Source title", value=current_title)
+        date_published = st.text_input(
+            "Website/source publication date",
+            value=current_date,
+            placeholder="YYYY-MM-DD or full ISO date",
+        )
+        publisher = st.text_input("Publisher / site name", value=current_publisher)
+        country = st.text_input(
+            "Country / jurisdiction",
+            value=", ".join(analysis_data.get("country") or []),
+            placeholder="Canada, United States, United Kingdom...",
+        )
+        c1, c2, c3 = st.columns(3)
+        year = c1.number_input("Document year", min_value=0, max_value=2100, value=int(doc_date.get("year") or 0))
+        month = c2.number_input("Month", min_value=0, max_value=12, value=int(doc_date.get("month") or 0))
+        day = c3.number_input("Day", min_value=0, max_value=31, value=int(doc_date.get("day") or 0))
+        apply = st.form_submit_button("Apply fixes to local review state")
+
+    if not apply:
+        return
+
+    if preprocess:
+        preprocess.title = title.strip()
+        preprocess.date_published = date_published.strip()
+        preprocess.sitename = publisher.strip()
+        if doc_id:
+            try:
+                from runner.pipeline.preprocess import _preprocess_metadata
+
+                doc_dir = Path(getattr(intake, "local_dir", "") or "") if intake else Path()
+                if not doc_dir or str(doc_dir) == ".":
+                    config = _load_config_safe()
+                    doc_dir = config.corpus_dir / doc_id if config else Path()
+                if doc_dir:
+                    (doc_dir / "preprocess.json").write_text(
+                        json.dumps(_preprocess_metadata(preprocess), indent=2),
+                        encoding="utf-8",
+                    )
+            except Exception as exc:
+                st.warning(f"Could not write preprocess.json yet: {exc}")
+
+    analysis_data["country"] = [item.strip() for item in country.split(",") if item.strip()]
+    analysis_data["document_date"] = {
+        "year": int(year),
+        "month": int(month),
+        "day": int(day),
+        "confidence": "exact" if year and month and day else "approximate" if year else "unknown",
+    }
+    st.session_state.ingest["analysis_json"] = json.dumps(analysis_data, indent=2)
+    try:
+        from runner.models.document import AnalysisResult
+
+        parsed = AnalysisResult.model_validate(analysis_data)
+        st.session_state.ingest["analysis"] = parsed
+        st.session_state.ingest["analysis_valid"] = True
+    except Exception:
+        st.session_state.ingest["analysis_valid"] = False
+    st.success("Applied. The JSON review state and source metadata have been updated; click Save Locally or Upload when ready.")
 
 
 def _render_analysis_summary(analysis) -> None:
@@ -874,19 +1025,23 @@ def _render_analysis_summary(analysis) -> None:
 def _render_enrichment_result(result) -> None:
     st.subheader("Enrichment")
     st.caption(
-        "These are review proposals saved locally. They become live Sanity lexicon/entity changes only after an approval workflow writes them."
+        "These are review proposals saved locally. They become live Sanity registry/document changes only after an approval workflow writes them."
     )
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Lexicon proposals", len(result.lexicon_proposals))
     c2.metric("Entity proposals", len(result.entity_proposals))
-    c3.metric("Ingestion queue", len(result.ingestion_queue))
-    c4.metric("Connections", len(result.corpus_connections))
+    c3.metric("Tactic proposals", len(result.tactic_proposals))
+    c4.metric("Practice descriptions", len(result.practice_descriptions))
+    c5.metric("Claims", len(result.statistical_claims))
     if result.lexicon_proposals:
         st.write("**Lexicon proposals:**")
         st.dataframe([p.model_dump(by_alias=True) for p in result.lexicon_proposals], width="stretch")
     if result.entity_proposals:
         st.write("**Entity proposals:**")
         st.dataframe([p.model_dump() for p in result.entity_proposals], width="stretch")
+    if result.tactic_proposals:
+        st.write("**Tactic proposals:**")
+        st.dataframe([p.model_dump() for p in result.tactic_proposals], width="stretch")
     if result.ingestion_queue:
         st.write("**Documents to ingest next:**")
         st.dataframe([p.model_dump() for p in result.ingestion_queue], width="stretch")
@@ -999,6 +1154,7 @@ def page_document_list():
 
 def _load_local_docs(corpus_dir: Path) -> list[dict]:
     docs = []
+    config = _load_config_safe()
     for doc_dir in sorted(corpus_dir.iterdir()):
         if not doc_dir.is_dir():
             continue
@@ -1021,6 +1177,7 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
 
         uploaded = (doc_dir / "sanity_record.json").exists()
         has_enrichment = (doc_dir / "enrichment.json").exists()
+        embedding_status = _local_embedding_status(doc_dir, config)
 
         docs.append({
             "doc_id":      doc_dir.name,
@@ -1039,6 +1196,10 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             "batch_id":    intake.get("batch_id", "—"),
             "source":      intake.get("source", ""),
             "uploaded":    uploaded,
+            "embedding_ok": embedding_status["ok"],
+            "embedding_detail": embedding_status["detail"],
+            "supabase_ok": embedding_status["supabase_ok"],
+            "supabase_detail": embedding_status["supabase_detail"],
             "has_enrichment": has_enrichment,
         })
 
@@ -1049,9 +1210,10 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
     conf = doc["confidence"]
     conf_color = "🟢" if conf >= 0.85 else "🟡" if conf >= 0.70 else "🔴"
     upload_badge = "☁️ Sanity" if doc["uploaded"] else "💾 Local"
+    embedding_badge = " · Supabase" if doc.get("supabase_ok") else " · Embedding missing"
     enrich_badge = " ✨ Enriched" if doc["has_enrichment"] else ""
 
-    header = f"{conf_color} **{doc['doc_id']}** — {doc['type']} | {doc['format']} | {upload_badge}{enrich_badge}"
+    header = f"{conf_color} **{doc['doc_id']}** — {doc['type']} | {doc['format']} | {upload_badge}{embedding_badge}{enrich_badge}"
 
     with st.expander(header, expanded=False):
         col1, col2 = st.columns([2, 1])
@@ -1073,6 +1235,10 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 f"**Candidate terms:** {doc['candidate_terms']}  |  "
                 f"**Actors:** {doc['suggested_actors']}"
             )
+            if not doc.get("embedding_ok"):
+                st.warning(f"Local embedding is missing or empty: {doc.get('embedding_detail')}")
+            elif not doc.get("supabase_ok"):
+                st.warning(f"No Supabase embedding row found: {doc.get('supabase_detail')}")
 
         # Show enrichment summary if available
         enrich_path = corpus_dir / doc["doc_id"] / "enrichment.json"
@@ -1081,11 +1247,12 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 try:
                     er = json.loads(enrich_path.read_text())
                     st.divider()
-                    ec1, ec2, ec3, ec4 = st.columns(4)
+                    ec1, ec2, ec3, ec4, ec5 = st.columns(5)
                     ec1.metric("Lexicon proposals", len(er.get("lexicon_proposals", [])))
                     ec2.metric("Entity proposals",  len(er.get("entity_proposals", [])))
-                    ec3.metric("Ingestion queue",   len(er.get("ingestion_queue", [])))
-                    ec4.metric("Corpus connections", len(er.get("corpus_connections", [])))
+                    ec3.metric("Tactic proposals", len(er.get("tactic_proposals", [])))
+                    ec4.metric("Practice descriptions", len(er.get("practice_descriptions", [])))
+                    ec5.metric("Claims", len(er.get("statistical_claims", [])))
                 except Exception:
                     pass
 
@@ -1104,16 +1271,28 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 if st.button("⬆ Upload to Sanity", key=f"upload_{doc['doc_id']}", type="primary"):
                     with st.spinner("Uploading…"):
                         r = __import__("subprocess").run(
-                            ["python3", "-m", "runner", "upload-doc", doc["doc_id"]],
+                            [sys.executable, "-m", "runner", "upload-doc", doc["doc_id"]],
                             capture_output=True, text=True, cwd=_project_root,
                         )
                     if r.returncode == 0:
-                        st.success("Uploaded.")
+                        if doc.get("embedding_ok"):
+                            st.success("Uploaded.")
+                        else:
+                            st.warning("Uploaded to Sanity, but embedding is missing/empty. Generate and push embedding before considering it complete.")
                     else:
                         st.error(r.stderr[-600:] or r.stdout[-600:])
                     st.rerun()
             else:
                 st.caption("☁️ Uploaded to Sanity")
+
+        if (not doc.get("embedding_ok")) or (not doc.get("supabase_ok")):
+            if st.button("Generate + push embedding", key=f"doc_emb_{doc['doc_id']}"):
+                ok, message = _generate_and_push_embedding(doc["doc_id"], corpus_dir, _load_config_safe())
+                if ok:
+                    st.success(message)
+                else:
+                    st.error(message)
+                st.rerun()
 
         with act_cols[1]:
             llm_opts = ["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local"]
@@ -1121,7 +1300,7 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
             if st.button("🔄 Reanalyze", key=f"reanalyze_{doc['doc_id']}"):
                 with st.spinner(f"Re-running analysis with {ra_llm}…"):
                     r = __import__("subprocess").run(
-                        ["python3", "-m", "runner", "reanalyze", doc["doc_id"],
+                        [sys.executable, "-m", "runner", "reanalyze", doc["doc_id"],
                          "--llm", ra_llm, "--yes"],
                         capture_output=True, text=True, cwd=_project_root,
                     )
@@ -1135,7 +1314,7 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
             if st.button("✨ Re-enrich", key=f"reenrich_{doc['doc_id']}"):
                 with st.spinner("Running enrichment…"):
                     r = __import__("subprocess").run(
-                        ["python3", "-m", "runner", "enrich", doc["doc_id"], "--yes"],
+                        [sys.executable, "-m", "runner", "enrich", doc["doc_id"], "--yes"],
                         capture_output=True, text=True, cwd=_project_root,
                     )
                 if r.returncode == 0:
@@ -1143,6 +1322,101 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 else:
                     st.error(r.stderr[-600:] or r.stdout[-600:])
                 st.rerun()
+
+
+def _local_embedding_status(doc_dir: Path, config) -> dict:
+    status = {
+        "ok": False,
+        "detail": "missing embedding.json",
+        "supabase_ok": False,
+        "supabase_detail": "not checked",
+    }
+    emb_path = doc_dir / "embedding.json"
+    if emb_path.exists():
+        try:
+            emb = json.loads(emb_path.read_text())
+            vector = emb.get("vector") or []
+            dim = int(emb.get("dimension") or len(vector))
+            status["ok"] = bool(vector) and dim > 0
+            status["detail"] = f"{emb.get('model', '')} | dimension={dim}"
+            if not status["ok"]:
+                status["detail"] += " | empty vector"
+        except Exception as exc:
+            status["detail"] = f"invalid embedding.json: {exc}"
+    if config:
+        try:
+            from runner.clients.supabase import _client as _sb_client
+
+            result = _sb_client(config).table("document_embeddings").select(
+                "doc_id,embedding_model"
+            ).eq("doc_id", doc_dir.name).limit(1).execute()
+            if result.data:
+                status["supabase_ok"] = True
+                status["supabase_detail"] = result.data[0].get("embedding_model") or "row found"
+            else:
+                status["supabase_detail"] = "no row found"
+        except Exception as exc:
+            status["supabase_detail"] = f"check failed: {exc}"
+    return status
+
+
+def _generate_and_push_embedding(doc_id: str, corpus_dir: Path, config) -> tuple[bool, str]:
+    if not config:
+        return False, "Could not load config."
+    doc_dir = corpus_dir / doc_id
+    try:
+        extracted = (doc_dir / "extracted.txt").read_text(encoding="utf-8")
+        from runner.pipeline import embed as _embed
+        from runner.clients import supabase as _sb
+
+        attempts: list[str] = []
+        vec: list[float] = []
+        if getattr(config, "litelm_base_url", ""):
+            try:
+                vec = _embed.run_litelm(extracted, config)
+                attempts.append(f"LiteLLM {config.litelm_embedding_model}: ok ({len(vec)}d)")
+            except Exception as exc:
+                attempts.append(f"LiteLLM {config.litelm_embedding_model}: failed: {exc}")
+
+        if not vec and getattr(config, "litelm_ollama_base_url", ""):
+            try:
+                vec = _embed._call(
+                    config.litelm_ollama_base_url,
+                    config.litelm_ollama_embedding_model,
+                    extracted,
+                )
+                attempts.append(f"Mac Studio Ollama {config.litelm_ollama_embedding_model}: ok ({len(vec)}d)")
+            except Exception as exc:
+                attempts.append(f"Mac Studio Ollama {config.litelm_ollama_embedding_model}: failed: {exc}")
+
+        if not vec:
+            try:
+                vec = _embed.run(extracted, config)
+                attempts.append(f"Local Ollama {config.embedding_model}: ok ({len(vec)}d)")
+            except Exception as exc:
+                attempts.append(f"Local Ollama {config.embedding_model}: failed: {exc}")
+
+        if not vec:
+            return False, "Embedding generation failed. Attempts:\n" + "\n".join(f"- {item}" for item in attempts)
+        _embed.save(doc_id, vec, config)
+
+        from runner.models.document import AnalysisResult as _AR
+
+        analysis_data = json.loads((doc_dir / "analysis.json").read_text())
+        ar = _AR.model_validate(analysis_data)
+        intake_data = json.loads((doc_dir / "intake.json").read_text()) if (doc_dir / "intake.json").exists() else {}
+        _sb.upsert_embedding(
+            doc_id,
+            vec,
+            ar,
+            config,
+            tier=str(intake_data.get("tier", "")),
+            language=intake_data.get("language", ""),
+            embedding_model=config.embedding_model,
+        )
+        return True, f"Embedding generated ({len(vec)}d) and pushed to Supabase.\n" + "\n".join(attempts)
+    except Exception as exc:
+        return False, f"Embedding generation/push failed: {exc}"
 
 
 # ---------------------------------------------------------------------------
@@ -1188,7 +1462,7 @@ def page_pending_upload():
         for i, p in enumerate(pending):
             with st.spinner(f"Uploading {p['doc_id']}…"):
                 r = __import__("subprocess").run(
-                    ["python3", "-m", "runner", "upload-doc", p["doc_id"]],
+                    [sys.executable, "-m", "runner", "upload-doc", p["doc_id"]],
                     capture_output=True, text=True, cwd=_project_root,
                 )
                 if r.returncode != 0:
@@ -1208,7 +1482,7 @@ def page_pending_upload():
         if col2.button("Upload", key=f"pu_{p['doc_id']}"):
             with st.spinner("Uploading…"):
                 r = __import__("subprocess").run(
-                    ["python3", "-m", "runner", "upload-doc", p["doc_id"]],
+                    [sys.executable, "-m", "runner", "upload-doc", p["doc_id"]],
                     capture_output=True, text=True, cwd=_project_root,
                 )
             if r.returncode == 0:
@@ -2345,18 +2619,136 @@ def _plain_first_sentence(value: str, max_chars: int = 240) -> str:
     return first[: max_chars - 1].rstrip() + "…"
 
 
+def _short_label(value: str, max_chars: int = 100) -> str:
+    value = re.sub(r"\s+", " ", value or "").strip()
+    if len(value) <= max_chars:
+        return value
+    return value[: max_chars - 1].rstrip() + "…"
+
+
+def _proposal_review_status(item: dict) -> str:
+    if item.get("rejected"):
+        return "Rejected"
+    if item.get("approved") and item.get("pushed_to_sanity"):
+        return "Pushed"
+    if item.get("approved"):
+        return "Approved, not pushed"
+    return "Needs review"
+
+
+def _proposal_review_sort_key(record: dict, label_field: str = "term") -> tuple[int, str, str]:
+    item = record["item"]
+    status_rank = {
+        "Needs review": 0,
+        "Approved, not pushed": 1,
+        "Rejected": 2,
+        "Pushed": 3,
+    }
+    return (
+        status_rank.get(_proposal_review_status(item), 99),
+        str(record.get("doc_id", "")),
+        str(item.get(label_field, "")).lower(),
+    )
+
+
+def _proposal_status_counts(records: list[dict]) -> dict[str, int]:
+    counts = {
+        "Needs review": 0,
+        "Approved, not pushed": 0,
+        "Pushed": 0,
+        "Rejected": 0,
+    }
+    for record in records:
+        status = _proposal_review_status(record["item"])
+        counts[status] = counts.get(status, 0) + 1
+    return counts
+
+
+def _render_proposal_status_metrics(records: list[dict]) -> None:
+    status_counts = _proposal_status_counts(records)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Needs review", status_counts["Needs review"])
+    c2.metric("Approved, not pushed", status_counts["Approved, not pushed"])
+    c3.metric("Pushed", status_counts["Pushed"])
+    c4.metric("Rejected", status_counts["Rejected"])
+
+
+def _proposal_expander_label(record: dict, label: str) -> str:
+    status = _proposal_review_status(record["item"])
+    return f"[{status}] {record['doc_id']} · {label}"
+
+
+def _ingestion_status(row: dict) -> str:
+    if row.get("in_corpus"):
+        return "Already in corpus"
+    priority = str(row.get("priority", "medium")).lower()
+    if priority == "high":
+        return "Pending high"
+    if priority == "low":
+        return "Pending low"
+    return "Pending medium"
+
+
+def _ingestion_sort_key(row: dict) -> tuple[int, str, str]:
+    rank = {
+        "Pending high": 0,
+        "Pending medium": 1,
+        "Pending low": 2,
+        "Already in corpus": 3,
+    }
+    return (
+        rank.get(_ingestion_status(row), 99),
+        str(row.get("doc_id", "")),
+        str(row.get("title") or row.get("url") or "").lower(),
+    )
+
+
+def _render_ingestion_status_metrics(rows: list[dict]) -> None:
+    counts = {
+        "Pending high": 0,
+        "Pending medium": 0,
+        "Pending low": 0,
+        "Already in corpus": 0,
+    }
+    for row in rows:
+        status = _ingestion_status(row)
+        counts[status] = counts.get(status, 0) + 1
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Pending high", counts["Pending high"])
+    c2.metric("Pending medium", counts["Pending medium"])
+    c3.metric("Pending low", counts["Pending low"])
+    c4.metric("Already in corpus", counts["Already in corpus"])
+
+
 def _render_local_proposal_queue(config) -> None:
     lexicon_records = _local_enrichment_proposal_records(config.corpus_dir, "lexicon_proposals")
     entity_records = _local_enrichment_proposal_records(config.corpus_dir, "entity_proposals")
-    queue_tabs = st.tabs(["Lexicon Queue", "Entity Queue", "Ingestion Queue", "Gate Status"])
+    tactic_records = _local_enrichment_proposal_records(config.corpus_dir, "tactic_proposals")
+    practice_records = _local_enrichment_proposal_records(config.corpus_dir, "practice_descriptions")
+    claim_records = _local_enrichment_proposal_records(config.corpus_dir, "statistical_claims")
+    queue_tabs = st.tabs([
+        "Lexicon Queue",
+        "Entity Queue",
+        "Tactic Queue",
+        "Practice Queue",
+        "Claims Queue",
+        "Ingestion Queue",
+        "Gate Status",
+    ])
 
     with queue_tabs[0]:
         _render_lexicon_queue(config, lexicon_records)
     with queue_tabs[1]:
         _render_entity_queue(config, entity_records)
     with queue_tabs[2]:
-        _render_ingestion_queue(config)
+        _render_tactic_queue(config, tactic_records)
     with queue_tabs[3]:
+        _render_practice_queue(config, practice_records)
+    with queue_tabs[4]:
+        _render_claim_queue(config, claim_records)
+    with queue_tabs[5]:
+        _render_ingestion_queue(config)
+    with queue_tabs[6]:
         st.json(_proposal_gate_status(config.corpus_dir))
 
 
@@ -2365,8 +2757,11 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
     if not records:
         st.info("No local lexicon proposals found yet.")
         return
+    records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "term"))
+    _render_proposal_status_metrics(records)
     st.dataframe([
         {
+            "status": _proposal_review_status(record["item"]),
             "doc_id": record["doc_id"],
             "index": record["index"],
             "term": record["item"].get("term", ""),
@@ -2416,7 +2811,7 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
     st.subheader("Review Proposals")
     for record in records:
         item = record["item"]
-        label = f"{record['doc_id']} · {item.get('term', '(missing term)')}"
+        label = _proposal_expander_label(record, item.get("term", "(missing term)"))
         with st.expander(label):
             _render_single_proposal_editor(record)
 
@@ -2426,8 +2821,11 @@ def _render_entity_queue(config, records: list[dict]) -> None:
     if not records:
         st.info("No local entity proposals found yet.")
         return
+    records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "name"))
+    _render_proposal_status_metrics(records)
     st.dataframe([
         {
+            "status": _proposal_review_status(record["item"]),
             "doc_id": record["doc_id"],
             "index": record["index"],
             "name": record["item"].get("name", ""),
@@ -2466,9 +2864,177 @@ def _render_entity_queue(config, records: list[dict]) -> None:
     st.subheader("Review Entities")
     for record in records:
         item = record["item"]
-        label = f"{record['doc_id']} · {item.get('name', '(missing name)')}"
+        label = _proposal_expander_label(record, item.get("name", "(missing name)"))
         with st.expander(label):
             _render_single_entity_editor(record)
+
+
+def _render_tactic_queue(config, records: list[dict]) -> None:
+    st.caption(f"{len(records)} local tactic proposal(s)")
+    if not records:
+        st.info("No local tactic proposals found yet.")
+        return
+    records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "tactic"))
+    _render_proposal_status_metrics(records)
+    st.dataframe([
+        {
+            "status": _proposal_review_status(record["item"]),
+            "doc_id": record["doc_id"],
+            "index": record["index"],
+            "tactic": record["item"].get("tactic", ""),
+            "action": record["item"].get("action", ""),
+            "approved": record["item"].get("approved", False),
+            "rejected": record["item"].get("rejected", False),
+            "pushed_to_sanity": record["item"].get("pushed_to_sanity", False),
+        }
+        for record in records
+    ], width="stretch", hide_index=True)
+
+    if st.button("Push approved tactics to Sanity"):
+        pushed = 0
+        errors: list[str] = []
+        for record in records:
+            item = record["item"]
+            if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                continue
+            try:
+                from runner.clients.sanity import write_tactic_from_proposal
+                sanity_id = write_tactic_from_proposal(item, record["doc_id"], config)
+                item["pushed_to_sanity"] = True
+                item["sanity_id"] = sanity_id
+                item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity tactic registry.").strip()
+                _update_enrichment_proposal(record["path"], "tactic_proposals", record["index"], item)
+                pushed += 1
+            except Exception as exc:
+                errors.append(f"{record['doc_id']} / {item.get('tactic', '?')}: {exc}")
+        if pushed:
+            st.success(f"Pushed {pushed} approved tactic(s) to Sanity.")
+        if errors:
+            st.error("\n".join(errors))
+
+    st.subheader("Review Tactics")
+    for record in records:
+        item = record["item"]
+        label = _proposal_expander_label(record, item.get("tactic", "(missing tactic)"))
+        with st.expander(label):
+            _render_single_tactic_editor(record)
+
+
+def _render_practice_queue(config, records: list[dict]) -> None:
+    st.caption(f"{len(records)} local practice proposal(s)")
+    if not records:
+        st.info("No local practice descriptions found yet.")
+        return
+    records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "practice_id"))
+    _render_proposal_status_metrics(records)
+    st.dataframe([
+        {
+            "status": _proposal_review_status(record["item"]),
+            "doc_id": record["doc_id"],
+            "index": record["index"],
+            "practice_id": record["item"].get("practice_id", ""),
+            "harm_stance": record["item"].get("harm_stance", ""),
+            "approved": record["item"].get("approved", False),
+            "rejected": record["item"].get("rejected", False),
+            "pushed_to_sanity": record["item"].get("pushed_to_sanity", False),
+        }
+        for record in records
+    ], width="stretch", hide_index=True)
+
+    if st.button("Push approved practices to Sanity"):
+        pushed = 0
+        errors: list[str] = []
+        for record in records:
+            item = record["item"]
+            if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                continue
+            try:
+                from runner.clients.sanity import append_extractable_asset_from_proposal, write_practice_from_proposal
+                sanity_id = write_practice_from_proposal(item, record["doc_id"], config)
+                append_extractable_asset_from_proposal(
+                    item,
+                    record["doc_id"],
+                    config,
+                    asset_type="practice_description",
+                    content=item.get("exact_description", ""),
+                    target_module="practice_registry",
+                )
+                item["pushed_to_sanity"] = True
+                item["sanity_id"] = sanity_id
+                item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity practice registry.").strip()
+                _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
+                pushed += 1
+            except Exception as exc:
+                errors.append(f"{record['doc_id']} / {item.get('practice_id', '?')}: {exc}")
+        if pushed:
+            st.success(f"Pushed {pushed} approved practice(s) to Sanity.")
+        if errors:
+            st.error("\n".join(errors))
+
+    st.subheader("Review Practices")
+    for record in records:
+        item = record["item"]
+        label = _proposal_expander_label(record, item.get("practice_id", "(missing practice)"))
+        with st.expander(label):
+            _render_single_practice_editor(record)
+
+
+def _render_claim_queue(config, records: list[dict]) -> None:
+    st.caption(f"{len(records)} local statistical claim proposal(s)")
+    if not records:
+        st.info("No statistical claims found yet.")
+        return
+    records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "claim"))
+    _render_proposal_status_metrics(records)
+    st.dataframe([
+        {
+            "status": _proposal_review_status(record["item"]),
+            "doc_id": record["doc_id"],
+            "index": record["index"],
+            "claim": _short_label(record["item"].get("claim", ""), 100),
+            "verifiable": record["item"].get("verifiable", False),
+            "approved": record["item"].get("approved", False),
+            "rejected": record["item"].get("rejected", False),
+            "pushed_to_sanity": record["item"].get("pushed_to_sanity", False),
+        }
+        for record in records
+    ], width="stretch", hide_index=True)
+
+    if st.button("Push approved claims to Sanity"):
+        pushed = 0
+        errors: list[str] = []
+        for record in records:
+            item = record["item"]
+            if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                continue
+            try:
+                from runner.clients.sanity import append_extractable_asset_from_proposal
+                sanity_id = append_extractable_asset_from_proposal(
+                    item,
+                    record["doc_id"],
+                    config,
+                    asset_type="statistical_claim",
+                    content=item.get("claim", ""),
+                    target_module="fact_checking",
+                )
+                item["pushed_to_sanity"] = True
+                item["sanity_id"] = sanity_id
+                item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity document assets.").strip()
+                _update_enrichment_proposal(record["path"], "statistical_claims", record["index"], item)
+                pushed += 1
+            except Exception as exc:
+                errors.append(f"{record['doc_id']} / {item.get('claim', '?')[:80]}: {exc}")
+        if pushed:
+            st.success(f"Pushed {pushed} approved claim(s) to Sanity.")
+        if errors:
+            st.error("\n".join(errors))
+
+    st.subheader("Review Claims")
+    for record in records:
+        item = record["item"]
+        label = _proposal_expander_label(record, _short_label(item.get("claim", "(missing claim)"), 90))
+        with st.expander(label):
+            _render_single_claim_editor(record)
 
 
 def _render_single_proposal_editor(record: dict) -> None:
@@ -2598,6 +3164,94 @@ def _render_single_entity_editor(record: dict) -> None:
             st.success("Rejected locally.")
 
 
+def _render_single_tactic_editor(record: dict) -> None:
+    item = dict(record["item"])
+    prefix = f"tactic_{record['doc_id']}_{record['index']}"
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        item["tactic"] = st.text_input("Tactic", value=item.get("tactic", ""), key=f"{prefix}_tactic")
+        item["action"] = st.selectbox(
+            "Action",
+            ["add_new", "enrich_existing"],
+            index=_option_index(["add_new", "enrich_existing"], item.get("action", "add_new")),
+            key=f"{prefix}_action",
+        )
+        item["tactic_level"] = st.selectbox(
+            "Tactic level",
+            ["structural", "sub-tactic", "campaign"],
+            index=_option_index(["structural", "sub-tactic", "campaign"], item.get("tactic_level", "structural")),
+            key=f"{prefix}_level",
+        )
+    with c2:
+        item["primary_cluster"] = st.text_input("Primary cluster", value=item.get("primary_cluster", ""), key=f"{prefix}_primary")
+        item["secondary_cluster"] = st.text_input("Secondary cluster", value=item.get("secondary_cluster", ""), key=f"{prefix}_secondary")
+        item["existing_tactic_id"] = st.text_input("Existing Sanity tactic id", value=item.get("existing_tactic_id", "") or "", key=f"{prefix}_existing")
+
+    item["definition"] = st.text_area("Definition", value=item.get("definition", ""), height=100, key=f"{prefix}_definition")
+    item["evidence_quote"] = st.text_area("Evidence quote", value=item.get("evidence_quote", ""), height=100, key=f"{prefix}_quote")
+    item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
+    _render_review_buttons(record, "tactic_proposals", item, prefix, "tactic")
+
+
+def _render_single_practice_editor(record: dict) -> None:
+    item = dict(record["item"])
+    prefix = f"practice_{record['doc_id']}_{record['index']}"
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        item["practice_id"] = st.text_input("Practice id", value=item.get("practice_id", ""), key=f"{prefix}_id")
+        item["harm_stance"] = st.selectbox(
+            "Harm stance",
+            ["denied", "minimized", "reframed", "acknowledged", "not_mentioned"],
+            index=_option_index(["denied", "minimized", "reframed", "acknowledged", "not_mentioned"], item.get("harm_stance", "not_mentioned")),
+            key=f"{prefix}_harm",
+        )
+    with c2:
+        item["sanity_id"] = st.text_input("Sanity id", value=item.get("sanity_id", "") or "", disabled=True, key=f"{prefix}_sanity")
+        item["pushed_to_sanity"] = st.checkbox("Pushed to Sanity", value=item.get("pushed_to_sanity", False), disabled=True, key=f"{prefix}_pushed")
+
+    item["exact_description"] = st.text_area("Exact description", value=item.get("exact_description", ""), height=120, key=f"{prefix}_description")
+    item["harm_quote"] = st.text_area("Harm quote", value=item.get("harm_quote", ""), height=100, key=f"{prefix}_quote")
+    item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
+    _render_review_buttons(record, "practice_descriptions", item, prefix, "practice")
+
+
+def _render_single_claim_editor(record: dict) -> None:
+    item = dict(record["item"])
+    prefix = f"claim_{record['doc_id']}_{record['index']}"
+    item["claim"] = st.text_area("Claim", value=item.get("claim", ""), height=100, key=f"{prefix}_claim")
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        item["source_cited"] = st.text_input("Source cited", value=item.get("source_cited", ""), key=f"{prefix}_source")
+        item["verifiable"] = st.checkbox("Verifiable", value=item.get("verifiable", False), key=f"{prefix}_verifiable")
+    with c2:
+        item["sanity_id"] = st.text_input("Sanity id", value=item.get("sanity_id", "") or "", disabled=True, key=f"{prefix}_sanity")
+        item["pushed_to_sanity"] = st.checkbox("Pushed to Sanity", value=item.get("pushed_to_sanity", False), disabled=True, key=f"{prefix}_pushed")
+    item["context"] = st.text_area("Context", value=item.get("context", ""), height=90, key=f"{prefix}_context")
+    item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
+    _render_review_buttons(record, "statistical_claims", item, prefix, "claim")
+
+
+def _render_review_buttons(record: dict, key: str, item: dict, prefix: str, label: str) -> None:
+    st.caption(f"Origin: {record['path']} · proposal index {record['index']}")
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        if st.button(f"Save {label.title()} Edits", key=f"{prefix}_save"):
+            _update_enrichment_proposal(record["path"], key, record["index"], item)
+            st.success(f"Saved {label} edits.")
+    with b2:
+        if st.button(f"Approve {label.title()}", key=f"{prefix}_approve"):
+            item["approved"] = True
+            item["rejected"] = False
+            _update_enrichment_proposal(record["path"], key, record["index"], item)
+            st.success(f"Approved {label} locally. Push approved records to Sanity when ready.")
+    with b3:
+        if st.button(f"Reject {label.title()}", key=f"{prefix}_reject"):
+            item["approved"] = False
+            item["rejected"] = True
+            _update_enrichment_proposal(record["path"], key, record["index"], item)
+            st.success(f"Rejected {label} locally.")
+
+
 def _local_enrichment_proposal_records(corpus_dir: Path, key: str = "lexicon_proposals") -> list[dict]:
     records: list[dict] = []
     if not corpus_dir.exists():
@@ -2660,16 +3314,28 @@ def _render_ingestion_queue(config) -> None:
         st.info("No ingestion candidates found. Run enrichment on ingested documents to discover linked sources.")
         return
 
+    rows = sorted(rows, key=_ingestion_sort_key)
     pending = [r for r in rows if not r["in_corpus"]]
     already = [r for r in rows if r["in_corpus"]]
 
-    st.caption(f"{len(pending)} pending · {len(already)} already in corpus · {len(rows)} total")
+    _render_ingestion_status_metrics(rows)
+    st.dataframe([
+        {
+            "status": _ingestion_status(row),
+            "doc_id": row["doc_id"],
+            "priority": row["priority"],
+            "type": row["type"],
+            "title": row["title"],
+            "url": row["url"],
+        }
+        for row in rows
+    ], width="stretch", hide_index=True)
 
     if pending:
         st.markdown("**Pending — not yet ingested**")
         for r in pending:
             priority_colour = "🔴" if r["priority"] == "high" else "🟡" if r["priority"] == "medium" else "⚪"
-            with st.expander(f"{priority_colour} [{r['type']}] {r['title'] or r['url'][:80]}"):
+            with st.expander(f"[{_ingestion_status(r)}] {priority_colour} {r['doc_id']} · [{r['type']}] {r['title'] or r['url'][:80]}"):
                 st.code(f"python3 -m runner ingest '{r['url']}' --llm litelm", language="bash")
                 st.caption(f"Source doc: `{r['doc_id']}`")
                 st.markdown(f"[Open URL]({r['url']})")
@@ -2677,12 +3343,15 @@ def _render_ingestion_queue(config) -> None:
     if already:
         with st.expander(f"{len(already)} already in corpus"):
             for r in already:
-                st.caption(f"`{r['doc_id']}` — {r['url'][:80]}")
+                st.caption(f"[{_ingestion_status(r)}] `{r['doc_id']}` — {r['url'][:80]}")
 
 
 def _proposal_gate_status(corpus_dir: Path) -> dict:
     lexicon = _local_enrichment_proposal_records(corpus_dir, "lexicon_proposals")
     entities = _local_enrichment_proposal_records(corpus_dir, "entity_proposals")
+    tactics = _local_enrichment_proposal_records(corpus_dir, "tactic_proposals")
+    practices = _local_enrichment_proposal_records(corpus_dir, "practice_descriptions")
+    claims = _local_enrichment_proposal_records(corpus_dir, "statistical_claims")
 
     def unresolved(records: list[dict]) -> int:
         return sum(
@@ -2704,6 +3373,12 @@ def _proposal_gate_status(corpus_dir: Path) -> dict:
         "approved_unpushed_lexicon": approved_unpushed(lexicon),
         "unresolved_entities": unresolved(entities),
         "approved_unpushed_entities": approved_unpushed(entities),
+        "unresolved_tactics": unresolved(tactics),
+        "approved_unpushed_tactics": approved_unpushed(tactics),
+        "unresolved_practices": unresolved(practices),
+        "approved_unpushed_practices": approved_unpushed(practices),
+        "unresolved_statistical_claims": unresolved(claims),
+        "approved_unpushed_statistical_claims": approved_unpushed(claims),
     }
     status["blocked"] = any(status.values())
     return status
@@ -2841,7 +3516,7 @@ def page_activity_log():
         st.error("Could not load config. Check runner/.env.")
         return
 
-    docs = _activity_rows(config.corpus_dir)
+    docs = _activity_rows(config.corpus_dir, config)
     if not docs:
         st.info("No local activity yet.")
         return
@@ -2885,6 +3560,9 @@ def page_activity_log():
             c1.metric("Dimension", emb_data.get("dimension", "?"))
             c2.metric("Model", emb_data.get("model", "?"))
             st.caption(f"Local file: {emb_path}")
+            vector = emb_data.get("vector") or []
+            if not vector or int(emb_data.get("dimension") or 0) <= 0:
+                st.warning("Local embedding file is empty. Regenerate it before considering Supabase complete.")
             if config:
                 if st.button("Check Supabase row", key=f"chk_supabase_{selected}"):
                     try:
@@ -2895,36 +3573,27 @@ def page_activity_log():
                         if result.data:
                             st.json(result.data[0])
                         else:
-                            st.warning("No row found in Supabase — use upload-doc to push the embedding.")
+                            st.warning("No row found in Supabase — regenerate and push the embedding.")
                     except Exception as exc:
                         st.error(f"Supabase query failed: {exc}")
+                if st.button("Regenerate + push embedding", key=f"regen_emb_{selected}"):
+                    ok, message = _generate_and_push_embedding(selected, config.corpus_dir, config)
+                    if ok:
+                        st.success(message)
+                    else:
+                        st.error(message)
         else:
             st.warning("No local embedding.json — embedding has not been generated yet.")
             if config and st.button("Generate + push embedding now", key=f"gen_emb_{selected}"):
-                from runner.pipeline import embed as _embed
-                from runner.clients import supabase as _sb
                 with st.spinner("Generating embedding…"):
-                    try:
-                        extracted = (doc_dir / "extracted.txt").read_text(encoding="utf-8")
-                        try:
-                            vec = _embed.run_litelm(extracted, config)
-                        except Exception:
-                            vec = _embed.run(extracted, config)
-                        _embed.save(selected, vec, config)
-                        analysis_data = json.loads((doc_dir / "analysis.json").read_text()) if (doc_dir / "analysis.json").exists() else {}
-                        from runner.models.document import AnalysisResult as _AR
-                        ar = _AR.model_validate(analysis_data)
-                        intake_data = json.loads((doc_dir / "intake.json").read_text()) if (doc_dir / "intake.json").exists() else {}
-                        _sb.upsert_embedding(selected, vec, ar, config,
-                                             tier=str(intake_data.get("tier", "")),
-                                             language=intake_data.get("language", ""),
-                                             embedding_model=config.embedding_model)
-                        st.success(f"Embedding generated ({len(vec)}d) and pushed to Supabase.")
-                    except Exception as exc:
-                        st.error(f"Failed: {exc}")
+                    ok, message = _generate_and_push_embedding(selected, config.corpus_dir, config)
+                if ok:
+                    st.success(message)
+                else:
+                    st.error(message)
 
 
-def _activity_rows(corpus_dir: Path) -> list[dict]:
+def _activity_rows(corpus_dir: Path, config=None) -> list[dict]:
     rows: list[dict] = []
     if not corpus_dir.exists():
         return rows
@@ -2943,7 +3612,7 @@ def _activity_rows(corpus_dir: Path) -> list[dict]:
             "type": analysis.get("type", "?"),
             "scope": analysis.get("scope", "?"),
             "uploaded": (doc_dir / "sanity_record.json").exists(),
-            "embedded": (doc_dir / "embedding.json").exists(),
+            "embedded": _local_embedding_status(doc_dir, config).get("ok", False) if config else False,
             "enriched": (doc_dir / "enrichment.json").exists(),
             "audit_events": _audit_event_count(doc_dir / "audit.log"),
         })
@@ -2991,15 +3660,15 @@ The app is the ingestion cockpit. A document moves through five stages:
 2. **Extract** turns a URL, PDF, transcript, or file into readable text for review. URL ingests also keep a local `source.html` snapshot.
 3. **Analyze** sends the extracted text to the selected model and returns structured JSON.
 4. **Review** is where you edit and validate the JSON before it becomes part of the archive.
-5. **Upload / Enrich** writes approved records to Sanity/Supabase and optionally proposes lexicon/entity updates.
-6. **Resolve proposals** approves or rejects enrichment findings. This queue is non-blocking, but approved terms/entities should be pushed to Sanity when ready so future runs use the updated living lexicon and registry.
+5. **Upload / Enrich** writes reviewed documents to Sanity/Supabase and optionally proposes registry/document-asset updates.
+6. **Resolve proposals** approves or rejects enrichment findings. This queue is non-blocking, but approved terms, entities, tactics, practices, and claims should be pushed to Sanity when ready so future runs use the updated living lexicon and registries.
 
 ### Which page to use
 
 - **Ingest Workbench**: run a new document through the pipeline.
 - **Document List**: browse local analyses and enrichment counts.
 - **Pending Upload**: find documents saved locally but not sent to Sanity.
-- **Lexicon**: inspect current terms, registry entities, approve/reject local proposals, preview seed lexicon imports, and push approved drafts/entities to Sanity.
+- **Lexicon**: inspect current terms, registry entities, approve/reject local proposals, preview seed lexicon imports, and push approved proposal records to Sanity.
 - **Tag Registry**: inspect/edit local tags used as enrichment connection hints.
 - **Testimony Review**: handle testimony flags, consent status, public-display decisions, and researcher notes.
 - **Activity Log**: see what happened for each document, including Wayback metadata and local HTML snapshots.
@@ -3020,7 +3689,7 @@ The app is the ingestion cockpit. A document moves through five stages:
 - If analysis fails, check the service status on Dashboard and confirm the required API key for the selected model is in `runner/.env`.
 - If upload fails, check Sanity/Supabase credentials and use Activity Log to verify the local `analysis.json` was saved.
 - If JSON validation fails, fix the specific field named in the error. Most failures are invalid controlled-vocabulary values or malformed arrays.
-- If the enrichment queue is growing, open Lexicon → Local Proposals. Approve/reject proposals and push approved term/entity records when you are ready.
+- If the enrichment queue is growing, open Lexicon → Local Proposals. Approve/reject proposals and push approved records when you are ready.
 - If the starting lexicon needs to be loaded, open Lexicon → Seed Import Preview. Review the draft/validated recommendation, edit definitions if needed, select rows, and push them to Sanity.
 - If translations/regional terms need to be attached, open Lexicon → Variant Import Preview. Canonical terms must exist in Sanity before variants can attach.
 - If older tagger vocabulary needs review, open Lexicon → Legacy Vocabulary Preview. It imports pending April 2026 glossary entries as draft and skips rows already present in the current seed lexicon.
@@ -3125,7 +3794,7 @@ def page_model_routing():
         ],
         "Actual model": [
             "core-qwen (qwen3.6:35b-a3b)",
-            "core-gemma (gemma4:31b-it)",
+            "core-gemma (gemma4:31b)",
             "review-qwen (qwen3.6:27b)",
             "claude-sonnet-4-6",
             "qwen3.5:9b",
@@ -3178,7 +3847,7 @@ def page_model_routing():
     st.subheader("Triage model (Stage 0.5)")
     st.info(
         "Fast pre-screen to recommend which model to use.  \n"
-        "Uses **triage** LiteLLM alias (`gemma4:e4b-it` on Mac Studio).  \n"
+        "Uses **triage** LiteLLM alias (`gemma4:e4b` on Mac Studio).  \n"
         "Run with: `python -m runner ingest <url> --triage`"
     )
 
@@ -3233,7 +3902,7 @@ def page_triage_tool():
     with col2:
         st.markdown("### What happens")
         st.markdown(
-            "The **triage model** (`gemma4:e4b-it` on Mac Studio, or local qwen3.5:9b) "
+            "The **triage model** (`gemma4:e4b` on Mac Studio, or local qwen3.5:9b) "
             "reads your snippet and recommends:\n"
             "- Which `--llm` flag to use\n"
             "- Document type hint\n"

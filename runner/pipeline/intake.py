@@ -7,6 +7,7 @@ creates the local corpus directory.
 """
 from __future__ import annotations
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import json
 from pathlib import Path
 import shutil
@@ -120,6 +121,10 @@ def _wayback_check(url: str) -> dict:
                 "error": "",
             }
 
+        deeper = _wayback_existing_snapshot(url, checked_at)
+        if deeper.get("archive_url"):
+            return deeper
+
         # Request a fresh save
         r2 = httpx.get(
             f"https://web.archive.org/save/{quote(url, safe=':/?&=%#')}",
@@ -154,6 +159,94 @@ def _wayback_check(url: str) -> dict:
             "http_status": "",
             "error": str(exc),
         }
+
+
+def _wayback_existing_snapshot(url: str, checked_at: str) -> dict:
+    """Fallback snapshot lookup using Memento TimeMap and CDX.
+
+    The Availability API can miss URLs that still have captures. Memento/CDX
+    give us a second chance before asking Save Page Now to create a new capture.
+    """
+    errors: list[str] = []
+
+    try:
+        tm = httpx.get(
+            f"https://web.archive.org/web/timemap/json/{url}",
+            timeout=12,
+        )
+        tm.raise_for_status()
+        rows = tm.json()
+        if isinstance(rows, list) and len(rows) > 1:
+            header = rows[0]
+            records = [dict(zip(header, row)) for row in rows[1:] if isinstance(row, list)]
+            records = [r for r in records if str(r.get("statuscode", "")) in {"200", ""}]
+            if records:
+                latest = records[-1]
+                ts = _wayback_timestamp(latest.get("datetime") or latest.get("timestamp") or "")
+                original = latest.get("original_uri") or latest.get("uri") or url
+                if ts:
+                    return {
+                        "archive_url": f"https://web.archive.org/web/{ts}/{original}",
+                        "status": "existing-memento",
+                        "checked_at": checked_at,
+                        "timestamp": ts,
+                        "http_status": latest.get("statuscode", ""),
+                        "error": "",
+                    }
+    except Exception as exc:
+        errors.append(f"Memento: {exc}")
+
+    try:
+        cdx = httpx.get(
+            "https://web.archive.org/cdx",
+            params={
+                "url": url,
+                "output": "json",
+                "fl": "timestamp,original,statuscode,mimetype,digest",
+                "filter": "statuscode:200",
+                "collapse": "digest",
+                "limit": "1",
+                "sort": "reverse",
+            },
+            timeout=12,
+        )
+        cdx.raise_for_status()
+        rows = cdx.json()
+        if isinstance(rows, list) and len(rows) > 1:
+            header = rows[0]
+            latest = dict(zip(header, rows[1]))
+            ts = latest.get("timestamp", "")
+            original = latest.get("original", url)
+            if ts:
+                return {
+                    "archive_url": f"https://web.archive.org/web/{ts}/{original}",
+                    "status": "existing-cdx",
+                    "checked_at": checked_at,
+                    "timestamp": ts,
+                    "http_status": latest.get("statuscode", ""),
+                    "error": "",
+                }
+    except Exception as exc:
+        errors.append(f"CDX: {exc}")
+
+    return {
+        "archive_url": None,
+        "status": "not-found",
+        "checked_at": checked_at,
+        "timestamp": "",
+        "http_status": "",
+        "error": "; ".join(errors),
+    }
+
+
+def _wayback_timestamp(value: str) -> str:
+    value = (value or "").strip()
+    if value.isdigit():
+        return value
+    try:
+        return parsedate_to_datetime(value).strftime("%Y%m%d%H%M%S")
+    except Exception:
+        return ""
 
 
 def _archive_url(url: str, config: Config) -> Optional[str]:

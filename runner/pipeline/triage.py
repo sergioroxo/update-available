@@ -5,7 +5,7 @@ Runs a fast model on a short snippet (first 3 000 chars) to recommend which
 analysis model to use. Called when --triage flag is passed to `runner ingest`.
 
 Model routing:
-  Mac Studio available  → "triage" LiteLLM alias (gemma4:e4b-it)
+  Mac Studio available  → "triage" LiteLLM alias (gemma4:e4b)
   Mac Studio unavailable → local qwen3.5:9b fallback
   Both fail             → return safe default (litelm / moderate)
 """

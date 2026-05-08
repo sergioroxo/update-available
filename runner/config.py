@@ -38,12 +38,17 @@ class Config:
     litelm_enrichment_model_alt: str   # optional second-opinion enrichment model
     litelm_ollama_base_url: str        # optional direct Ollama URL for model unloads
     litelm_ollama_embedding_model: str # actual Ollama model behind research-embedding
+    litelm_ollama_analysis_model: str
+    litelm_ollama_analysis_model_heavy: str
+    litelm_ollama_analysis_model_reasoning: str
 
     # Truncation limits (chars). Claude default is conservative due to API cost.
     # Local models have large context windows so LOCAL_TRUNCATION_LIMIT can be
     # set much higher (e.g. 200000) for full SRT / book ingestion.
     truncation_limit: int
     truncation_limit_local: int
+    local_context_tokens: int
+    local_output_tokens: int
 
     @property
     def sanity_api_base(self) -> str:
@@ -109,6 +114,11 @@ def load_config(llm: str | None = None) -> Config:
         litelm_enrichment_model_alt=os.getenv("LITELM_ENRICHMENT_MODEL_ALT", "core-gemma"),
         litelm_ollama_base_url=os.getenv("LITELM_OLLAMA_BASE_URL", "") or os.getenv("MAC_STUDIO_OLLAMA_URL", ""),
         litelm_ollama_embedding_model=os.getenv("LITELM_OLLAMA_EMBEDDING_MODEL", "qwen3-embedding:8b"),
+        litelm_ollama_analysis_model=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL", "qwen3.6:35b-a3b"),
+        litelm_ollama_analysis_model_heavy=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL_HEAVY", "gemma4:31b"),
+        litelm_ollama_analysis_model_reasoning=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL_REASONING", "qwen3.6:27b"),
         truncation_limit=int(os.getenv("TRUNCATION_LIMIT", "24000")),
-        truncation_limit_local=int(os.getenv("TRUNCATION_LIMIT_LOCAL", "200000")),
+        truncation_limit_local=int(os.getenv("TRUNCATION_LIMIT_LOCAL", "1000000")),
+        local_context_tokens=int(os.getenv("LOCAL_CONTEXT_TOKENS", "262144")),
+        local_output_tokens=int(os.getenv("LOCAL_OUTPUT_TOKENS", "16384")),
     )

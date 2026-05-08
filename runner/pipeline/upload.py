@@ -23,7 +23,8 @@ from ..config import Config
 from ..models.document import AnalysisResult, DocumentPackage, IntakeResult, PageIntelligence, PreprocessResult
 from ..clients import sanity as sanity_client
 from ..clients import supabase as supabase_client
-from .preprocess import _preprocess_metadata
+from .preprocess import _preprocess_metadata, repair_preprocess_metadata
+from .metadata_quality import archival_issues, date_parts, publication_metadata
 
 console = Console()
 
@@ -37,6 +38,7 @@ def run(
     llm_used: str,
 ) -> None:
     _enforce_testimony_upload_gate(intake, analysis)
+    _repair_analysis_date_from_source(analysis, preprocess)
     pkg = DocumentPackage(
         intake=intake,
         preprocess=preprocess,
@@ -48,15 +50,21 @@ def run(
     )
     save_locally(intake, preprocess, embedding, analysis, config, llm_used=llm_used)
     sanity_id = sanity_client.write_document(pkg, config)
-    supabase_client.upsert_embedding(
-        intake.doc_id,
-        embedding,
-        analysis,
-        config,
-        tier=str(intake.tier),
-        language=intake.language or preprocess.language_detected or "",
-        embedding_model=config.embedding_model,
-    )
+    if embedding:
+        supabase_client.upsert_embedding(
+            intake.doc_id,
+            embedding,
+            analysis,
+            config,
+            tier=str(intake.tier),
+            language=intake.language or preprocess.language_detected or "",
+            embedding_model=config.embedding_model,
+        )
+    else:
+        console.print(
+            f"[yellow]No embedding vector for {intake.doc_id}; uploaded Sanity record only. "
+            "Generate/push embedding later from Activity Log.[/yellow]"
+        )
 
     # Record that this doc was uploaded
     (config.corpus_dir / intake.doc_id / "sanity_record.json").write_text(
@@ -196,7 +204,11 @@ def inspect_document_status(doc_id: str, config: Config) -> dict:
         return status
 
     intake = _read_json(doc_dir / "intake.json")
-    preprocess_meta = _read_json(doc_dir / "preprocess.json")
+    preprocess_meta = repair_preprocess_metadata(
+        _read_json(doc_dir / "preprocess.json"),
+        doc_dir=doc_dir,
+        base_url=intake.get("source") or intake.get("source_url", ""),
+    )
     analysis = _read_json(doc_dir / "analysis.json")
     metadata = _read_json(doc_dir / "metadata.json")
     sanity_record = _read_json(doc_dir / "sanity_record.json")
@@ -224,7 +236,9 @@ def inspect_document_status(doc_id: str, config: Config) -> dict:
     stage("Preprocess Metadata", bool(preprocess_meta), _preprocess_summary(preprocess_meta))
     stage("Extracted Text", extracted.exists(), _text_summary(extracted))
     stage("Analysis", bool(analysis), _analysis_summary(analysis))
-    stage("Embedding", (doc_dir / "embedding.json").exists(), metadata.get("embedding_model", ""))
+    embedding_status = _embedding_status(doc_dir, config)
+    stage("Embedding", embedding_status["ok"], embedding_status["detail"])
+    stage("Supabase", embedding_status["supabase_ok"], embedding_status["supabase_detail"])
     stage("Upload", bool(sanity_record), sanity_record.get("sanity_id", "not uploaded"))
     stage("Enrichment", bool(enrichment), _enrichment_summary(enrichment))
     stage(
@@ -240,6 +254,8 @@ def inspect_document_status(doc_id: str, config: Config) -> dict:
         "type": analysis.get("type", ""),
         "confidence": analysis.get("confidence", {}).get("overall_score", ""),
         "uploaded": bool(sanity_record),
+        "embedding_ok": embedding_status["ok"],
+        "supabase_ok": embedding_status["supabase_ok"],
         "enriched": bool(enrichment),
     }
 
@@ -249,10 +265,18 @@ def inspect_document_status(doc_id: str, config: Config) -> dict:
         status["warnings"].append("source.html exists but no SHA-256 is recorded in preprocess/intake metadata.")
     if analysis.get("testimony_flag") and not testimony_review:
         status["warnings"].append("analysis marks testimony_flag=true but testimony_review.json is missing.")
+    if not embedding_status["ok"]:
+        status["warnings"].append("embedding is missing or empty; generate it before treating the record as complete.")
+    elif sanity_record and not embedding_status["supabase_ok"]:
+        status["warnings"].append("Sanity record exists but Supabase embedding row was not found; regenerate/push embedding.")
     if enrichment:
         gate = _enrichment_gate(enrichment)
         if gate:
             status["warnings"].append(gate)
+    for issue in archival_issues(analysis, preprocess_meta, intake):
+        status["warnings"].append(
+            f"{issue['severity']}: {issue['field']} — {issue['message']} {issue.get('suggestion', '')}".strip()
+        )
 
     status["next_action"] = _next_action(status)
     return status
@@ -340,6 +364,49 @@ def _text_summary(path: Path) -> str:
     return f"{path.stat().st_size:,} bytes"
 
 
+def _embedding_status(doc_dir: Path, config: Config) -> dict:
+    path = doc_dir / "embedding.json"
+    status = {
+        "ok": False,
+        "detail": "missing embedding.json",
+        "dimension": 0,
+        "supabase_ok": False,
+        "supabase_detail": "not checked",
+    }
+    if path.exists():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            vector = data.get("vector") or []
+            dim = int(data.get("dimension") or len(vector))
+            status["dimension"] = dim
+            status["ok"] = bool(vector) and dim > 0
+            status["detail"] = f"{data.get('model', '')} | dimension={dim}"
+            if not status["ok"]:
+                status["detail"] += " | empty vector"
+        except Exception as exc:
+            status["detail"] = f"invalid embedding.json: {exc}"
+
+    try:
+        from ..clients.supabase import _client as _sb_client
+
+        result = (
+            _sb_client(config)
+            .table("document_embeddings")
+            .select("doc_id,embedding_model")
+            .eq("doc_id", doc_dir.name)
+            .limit(1)
+            .execute()
+        )
+        if result.data:
+            status["supabase_ok"] = True
+            status["supabase_detail"] = result.data[0].get("embedding_model") or "row found"
+        else:
+            status["supabase_detail"] = "no row found"
+    except Exception as exc:
+        status["supabase_detail"] = f"check failed: {exc}"
+    return status
+
+
 def _analysis_summary(analysis: dict) -> str:
     if not analysis:
         return "missing analysis.json"
@@ -354,12 +421,21 @@ def _enrichment_summary(enrichment: dict) -> str:
     return (
         f"terms={len(enrichment.get('lexicon_proposals', []))} | "
         f"entities={len(enrichment.get('entity_proposals', []))} | "
+        f"tactics={len(enrichment.get('tactic_proposals', []))} | "
+        f"practices={len(enrichment.get('practice_descriptions', []))} | "
+        f"claims={len(enrichment.get('statistical_claims', []))} | "
         f"run_type={enrichment.get('run_type', 'main')}"
     )
 
 
 def _enrichment_gate(enrichment: dict) -> str:
-    proposals = enrichment.get("lexicon_proposals", []) + enrichment.get("entity_proposals", [])
+    proposals = (
+        enrichment.get("lexicon_proposals", [])
+        + enrichment.get("entity_proposals", [])
+        + enrichment.get("tactic_proposals", [])
+        + enrichment.get("practice_descriptions", [])
+        + enrichment.get("statistical_claims", [])
+    )
     unresolved = [
         p for p in proposals
         if not p.get("approved") and not p.get("rejected")
@@ -470,7 +546,10 @@ def upload_saved(doc_id: str, config: Config) -> None:
             tool_used="unknown",
             quality="low",
             text=extracted_path.read_text(encoding="utf-8") if extracted_path.exists() else "",
-        )
+            )
+
+    if _repair_analysis_date_from_source(analysis, preprocess):
+        analysis_path.write_text(analysis.model_dump_json(indent=2), encoding="utf-8")
 
     pkg = DocumentPackage(
         intake=intake,
@@ -661,11 +740,21 @@ def _sanity_record_payload(
     intake: IntakeResult,
     preprocess: PreprocessResult,
 ) -> dict:
+    pub = publication_metadata({
+        "date_published": preprocess.date_published,
+        "sitename": preprocess.sitename,
+        "hostname": preprocess.hostname,
+        "page_intel": preprocess.page_intel.__dict__ if preprocess.page_intel else {},
+    })
     return {
         "sanity_id": sanity_id,
         "doc_id": intake.doc_id,
         "source_url": intake.source_url or (intake.source if intake.source_type == "url" else ""),
         "archive_url": intake.archive_url,
+        "date_published": pub["date_published"],
+        "date_modified": pub["date_modified"],
+        "publisher": pub["publisher"],
+        "hostname": pub["hostname"],
         "source_html_sha256": preprocess.source_html_sha256 or intake.source_html_sha256,
     }
 
@@ -699,8 +788,14 @@ def _merge_intake_metadata(
 
 
 def _load_preprocess(path: Path) -> PreprocessResult:
-    data = json.loads(path.read_text())
     doc_dir = path.parent
+    intake = _read_json(doc_dir / "intake.json")
+    data = repair_preprocess_metadata(
+        json.loads(path.read_text()),
+        doc_dir=doc_dir,
+        base_url=intake.get("source") or intake.get("source_url", ""),
+    )
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
     if not data.get("text"):
         extracted = doc_dir / "extracted.txt"
         data["text"] = extracted.read_text(encoding="utf-8") if extracted.exists() else ""
@@ -713,6 +808,31 @@ def _load_preprocess(path: Path) -> PreprocessResult:
     if isinstance(page_intel, dict):
         data["page_intel"] = PageIntelligence(**page_intel)
     return PreprocessResult(**data)
+
+
+def _repair_analysis_date_from_source(
+    analysis: AnalysisResult,
+    preprocess: PreprocessResult,
+) -> bool:
+    if analysis.document_date.year:
+        return False
+    pub = publication_metadata({
+        "date_published": preprocess.date_published,
+        "sitename": preprocess.sitename,
+        "hostname": preprocess.hostname,
+        "page_intel": preprocess.page_intel.__dict__ if preprocess.page_intel else {},
+    })
+    parts = date_parts(pub.get("date_published", ""))
+    if not parts["year"]:
+        return False
+    analysis.document_date.year = parts["year"]
+    analysis.document_date.month = parts["month"]
+    analysis.document_date.day = parts["day"]
+    analysis.document_date.confidence = "exact" if parts["month"] and parts["day"] else "approximate"
+    analysis.normalisation_warnings = list(analysis.normalisation_warnings) + [
+        "document_date backfilled from source publication metadata."
+    ]
+    return True
 
 
 def _enforce_testimony_upload_gate(

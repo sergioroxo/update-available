@@ -110,6 +110,18 @@ SCHEMA:
       "role_in_sogice": ""
     }
   ],
+  "tactic_proposals": [
+    {
+      "action": "add_new|enrich_existing",
+      "tactic": "canonical tactic label",
+      "definition": "how the tactic operates in this document",
+      "evidence_quote": "most informative quote",
+      "primary_cluster": "ontology cluster if known",
+      "secondary_cluster": "",
+      "tactic_level": "structural|sub-tactic|campaign",
+      "existing_tactic_id": null
+    }
+  ],
   "ingestion_queue": [
     {
       "url": "https://...",
@@ -183,7 +195,16 @@ For every named organisation:
 
 **Do not confuse** self-description with actual practice. The WIKIA records both.
 
-### 3. Linked documents (ingestion queue)
+### 3. Tactics
+
+For every tactic that appears to be new, unusually named, or materially enriched by this document:
+- Propose a canonical tactic label
+- Define how the tactic operates in this document
+- Quote the passage that supports the proposal
+- Use existing ontology clusters where possible
+- Use `entity_proposals` for actors/networks involved in the tactic
+
+### 4. Linked documents (ingestion queue)
 
 Every PDF, report, academic paper, court judgment, or website linked or cited:
 - Should be added to the ingestion queue
@@ -191,14 +212,14 @@ Every PDF, report, academic paper, court judgment, or website linked or cited:
 - Priority MEDIUM: academic papers, NGO reports, news coverage
 - Priority LOW: social media, general websites
 
-### 4. Practices and harm stances
+### 5. Practices and harm stances
 
 For each SOGICE practice mentioned:
 - How does the document describe it? (exact language matters — this feeds the practice evidence dossier)
 - What is their stance on harm? (denied / minimized / reframed / acknowledged)
 - Quote the most revealing sentence
 
-### 5. Statistical and empirical claims
+### 6. Statistical and empirical claims
 
 Any number, percentage, study citation, or claim of scale:
 - Extract exactly

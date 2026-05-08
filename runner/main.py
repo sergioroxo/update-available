@@ -101,7 +101,7 @@ def ingest(
     # Stage 2 — Preprocessing
     # max_chars=0 means no truncation; None means pick from config by LLM mode
     if max_chars is not None:
-        effective_max = None if max_chars == 0 else max_chars
+        effective_max = max_chars
     elif intake_result.source_type == "url":
         effective_max = None
     elif llm in ("local", "local-heavy", "local-reasoning", "prefer-local",
@@ -113,18 +113,30 @@ def ingest(
     if not yes and not review.checkpoint_preprocess(preprocess_result):
         raise typer.Exit()
 
-    # Stage 3 — Embedding + Analysis
-    # litelm* flags use the Mac Studio's research-embedding model via LiteLLM proxy
+    # Stage 3 — Analysis + embedding
+    # For litelm*, run analysis first, unload the large analysis model, then
+    # generate embeddings. This avoids keeping the embedding and LLM models in
+    # Mac Studio RAM at the same time.
     if llm.startswith("litelm"):
+        analysis_result = analyze.run(preprocess_result, llm=llm, config=config)
+        try:
+            if ollama_memory.unload_litelm_analysis(config, llm):
+                console.print("[dim]Unloaded LiteLLM analysis model before embedding.[/dim]")
+            else:
+                console.print("[yellow]Could not unload LiteLLM analysis model; set LITELM_OLLAMA_BASE_URL and backing model names.[/yellow]")
+        except Exception as exc:
+            console.print(f"[yellow]Could not unload LiteLLM analysis model: {exc}[/yellow]")
         embedding_vector = embed.run_litelm(preprocess_result.text, config=config)
         try:
             if ollama_memory.unload_litelm_embedding(config):
-                console.print("[dim]Unloaded LiteLLM embedding model before analysis.[/dim]")
+                console.print("[dim]Unloaded LiteLLM embedding model after embedding.[/dim]")
+            else:
+                console.print("[yellow]Could not unload LiteLLM embedding model; set LITELM_OLLAMA_BASE_URL and LITELM_OLLAMA_EMBEDDING_MODEL.[/yellow]")
         except Exception as exc:
             console.print(f"[yellow]Could not unload LiteLLM embedding model: {exc}[/yellow]")
     else:
         embedding_vector = embed.run(preprocess_result.text, config=config)
-    analysis_result = analyze.run(preprocess_result, llm=llm, config=config)
+        analysis_result = analyze.run(preprocess_result, llm=llm, config=config)
 
     # Stage 4 — Analysis review (Checkpoint 3)
     final_analysis = review.checkpoint_analysis(
@@ -337,7 +349,7 @@ def upload_doc(
 def push_enrichment(
     doc_id: str = typer.Argument(..., help="doc_id of a document with an enrichment.json"),
 ):
-    """Push all approved (not yet sent) lexicon/entity proposals from enrichment.json to Sanity."""
+    """Push all approved (not yet sent) enrichment proposals from enrichment.json to Sanity."""
     config = load_config()
     try:
         result = enrich.push_approved_to_sanity(doc_id, config)
@@ -345,10 +357,13 @@ def push_enrichment(
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1)
 
-    if result["lexicon"] or result["entities"]:
+    pushed_total = sum(v for k, v in result.items() if k != "errors")
+    if pushed_total:
         console.print(
-            f"[green]Pushed {result['lexicon']} lexicon entr{'y' if result['lexicon'] == 1 else 'ies'} "
-            f"and {result['entities']} entit{'y' if result['entities'] == 1 else 'ies'} to Sanity.[/green]"
+            "[green]Pushed enrichment proposals to Sanity: "
+            f"lexicon={result['lexicon']}, entities={result['entities']}, "
+            f"tactics={result['tactics']}, practices={result['practices']}, "
+            f"statistical_claims={result['statistical_claims']}.[/green]"
         )
     else:
         console.print("[yellow]Nothing to push — no approved-not-yet-pushed proposals found.[/yellow]")

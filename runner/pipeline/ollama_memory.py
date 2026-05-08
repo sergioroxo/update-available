@@ -23,3 +23,15 @@ def unload_litelm_embedding(config: Config) -> bool:
         config.litelm_ollama_base_url,
         config.litelm_ollama_embedding_model,
     )
+
+
+def unload_litelm_analysis(config: Config, llm: str) -> bool:
+    if not config.litelm_ollama_base_url or "<" in config.litelm_ollama_base_url:
+        return False
+    if llm == "litelm-heavy":
+        model = config.litelm_ollama_analysis_model_heavy
+    elif llm == "litelm-reasoning":
+        model = config.litelm_ollama_analysis_model_reasoning
+    else:
+        model = config.litelm_ollama_analysis_model
+    return unload_model(config.litelm_ollama_base_url, model)

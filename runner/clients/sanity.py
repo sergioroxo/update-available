@@ -13,6 +13,7 @@ import httpx
 
 from ..config import Config
 from ..models.document import DocumentPackage
+from ..pipeline.metadata_quality import publication_metadata
 
 
 def write_document(pkg: DocumentPackage, config: Config) -> str:
@@ -128,7 +129,10 @@ def write_entity_from_proposal(
     if entity_type not in {"organization", "person"}:
         entity_type = "organization"
 
-    sanity_id = proposal.get("existing_entity_id") or f"{entity_type}-{_slugify(name)}"
+    sanity_id = _sanity_id_or_fallback(
+        proposal.get("existing_entity_id"),
+        f"{entity_type}-{_slugify(name)}",
+    )
     description = proposal.get("self_description") or proposal.get("evidence_quote", "")
 
     if entity_type == "person":
@@ -162,6 +166,151 @@ def write_entity_from_proposal(
         return result["results"][0]["id"]
     except (KeyError, IndexError):
         raise RuntimeError(f"Unexpected Sanity response for entity write:\n{result}")
+
+
+def write_tactic_from_proposal(
+    proposal: dict,
+    doc_id: str,
+    config: Config,
+) -> str:
+    """Create or replace a tacticEntry from a reviewed enrichment proposal."""
+    name = (proposal.get("tactic") or "").strip()
+    if not name:
+        raise ValueError("Cannot write tactic entry without a name")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    sanity_id = _sanity_id_or_fallback(
+        proposal.get("existing_tactic_id"),
+        f"tactic-{_slugify(name)}",
+    )
+    doc: dict = {
+        "_id": sanity_id,
+        "_type": "tacticEntry",
+        "tactic": name,
+        "status": "draft",
+        "registryStatus": "confirmed",
+        "approvedBy": "researcher",
+        "approvedAt": now_iso,
+        "approvedFromDocument": {"_type": "reference", "_ref": f"doc-{doc_id}"},
+        "frequency": 1,
+        "lastReanalyzed": now_iso,
+    }
+    if proposal.get("definition"):
+        doc["definition"] = proposal["definition"]
+    if proposal.get("evidence_quote"):
+        doc["evidenceDossier"] = [
+            {
+                "_key": f"evidence-{_slugify(doc_id)}-0",
+                "documentRef": {"_type": "reference", "_ref": f"doc-{doc_id}"},
+                "excerpt": _short_excerpt(proposal["evidence_quote"]),
+                "extractedBy": "human",
+            }
+        ]
+    if proposal.get("primary_cluster"):
+        doc["primaryCluster"] = proposal["primary_cluster"]
+    if proposal.get("secondary_cluster"):
+        doc["secondaryCluster"] = proposal["secondary_cluster"]
+    if proposal.get("tactic_level") in {"structural", "sub-tactic", "campaign"}:
+        doc["tacticLevel"] = proposal["tactic_level"]
+
+    doc = {k: v for k, v in doc.items() if v is not None}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for tactic proposal write:\n{result}")
+
+
+def write_practice_from_proposal(
+    proposal: dict,
+    doc_id: str,
+    config: Config,
+) -> str:
+    """Create or replace a practiceEntry from a reviewed practice description."""
+    raw_name = (proposal.get("practice_id") or "").strip()
+    name = re.sub(r"^Practice:\s*", "", raw_name).strip()
+    if not name:
+        raise ValueError("Cannot write practice entry without a practice_id")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    sanity_id = _sanity_id_or_fallback(
+        proposal.get("existing_practice_id"),
+        f"practice-{_slugify(name)}",
+    )
+    doc: dict = {
+        "_id": sanity_id,
+        "_type": "practiceEntry",
+        "practice": name,
+        "status": "draft",
+        "registryStatus": "confirmed",
+        "approvedBy": "researcher",
+        "approvedAt": now_iso,
+        "approvedFromDocument": {"_type": "reference", "_ref": f"doc-{doc_id}"},
+        "frequency": 1,
+        "lastReanalyzed": now_iso,
+        "descriptionFromDocument": proposal.get("exact_description", ""),
+        "harmStance": proposal.get("harm_stance", "not_mentioned"),
+    }
+    if proposal.get("harm_quote"):
+        doc["harmQuote"] = proposal["harm_quote"]
+    if proposal.get("researcher_note"):
+        doc["notes"] = proposal["researcher_note"]
+
+    doc = {k: v for k, v in doc.items() if v not in (None, "")}
+    result = _mutate([{"createOrReplace": doc}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for practice proposal write:\n{result}")
+
+
+def append_extractable_asset_from_proposal(
+    proposal: dict,
+    doc_id: str,
+    config: Config,
+    asset_type: str,
+    content: str,
+    target_module: str = "",
+) -> str:
+    """Append an approved claim/evidence-style proposal to a sogiceDocument."""
+    if not content.strip():
+        raise ValueError("Cannot write extractable asset without content")
+
+    key = f"asset-{asset_type}-{_slugify(content)[:48]}"
+    item = {
+        "_key": key,
+        "assetType": asset_type,
+        "content": content,
+        "targetModule": target_module,
+        "extractedBy": "human_review",
+    }
+    if proposal.get("source_cited"):
+        item["sourceCited"] = proposal["source_cited"]
+    if proposal.get("context"):
+        item["context"] = proposal["context"]
+    if proposal.get("practice_id"):
+        item["practiceId"] = proposal["practice_id"]
+    if proposal.get("harm_stance"):
+        item["harmStance"] = proposal["harm_stance"]
+    if proposal.get("harm_quote"):
+        item["evidenceQuote"] = proposal["harm_quote"]
+
+    result = _mutate(
+        [
+            {
+                "patch": {
+                    "id": f"doc-{doc_id}",
+                    "setIfMissing": {"extractableAssets": []},
+                    "insert": {"after": "extractableAssets[-1]", "items": [item]},
+                }
+            }
+        ],
+        config,
+    )
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for extractable asset patch:\n{result}")
 
 
 def write_seed_lexicon_entry(entry: dict, config: Config) -> str:
@@ -632,6 +781,20 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         "preprocessingTool":    prep.tool_used,
         "preprocessingQuality": prep.quality,
     }
+    pub_meta = publication_metadata({
+        "date_published": prep.date_published,
+        "sitename": prep.sitename,
+        "hostname": prep.hostname,
+        "page_intel": prep.page_intel.__dict__ if prep.page_intel else {},
+    })
+    if pub_meta["date_published"]:
+        meta["datePublished"] = pub_meta["date_published"]
+    if pub_meta["date_modified"]:
+        meta["dateModified"] = pub_meta["date_modified"]
+    if pub_meta["publisher"]:
+        meta["publisher"] = pub_meta["publisher"]
+    if pub_meta["hostname"]:
+        meta["hostname"] = pub_meta["hostname"]
     source_url = intake.source if intake.source_type == "url" else intake.source_url
     if source_url:
         meta["sourceUrl"] = source_url
@@ -646,6 +809,12 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
     }
     if source_url:
         provenance["originalUrl"] = source_url
+    if pub_meta["canonical_url"]:
+        provenance["canonicalUrl"] = pub_meta["canonical_url"]
+    if pub_meta["date_published"]:
+        provenance["sourceDatePublished"] = pub_meta["date_published"]
+    if pub_meta["date_modified"]:
+        provenance["sourceDateModified"] = pub_meta["date_modified"]
     if intake.archive_url:
         provenance["waybackUrl"] = intake.archive_url
     html_hash = prep.source_html_sha256 or intake.source_html_sha256
@@ -850,6 +1019,17 @@ def _slugify(value: str) -> str:
     return value.strip("-") or "untitled"
 
 
+def _valid_sanity_id(value: str | None) -> bool:
+    if not value:
+        return False
+    return re.fullmatch(r"[A-Za-z0-9._-]+", value) is not None
+
+
+def _sanity_id_or_fallback(candidate: str | None, fallback: str) -> str:
+    candidate = (candidate or "").strip()
+    return candidate if _valid_sanity_id(candidate) else fallback
+
+
 def _short_excerpt(value: str, max_words: int = 15) -> str:
     words = value.strip().split()
     return " ".join(words[:max_words])
@@ -1015,5 +1195,9 @@ def _mutate(mutations: list[dict], config: Config) -> dict:
         headers=headers,
         timeout=30,
     )
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        body = response.text[:2000]
+        raise RuntimeError(f"Sanity mutation failed ({response.status_code}): {body}") from exc
     return response.json()

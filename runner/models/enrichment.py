@@ -17,9 +17,10 @@ Sanity targets:
   lexicon_proposals    → lexiconEntry (create or patch evidenceDossier,
                          multilingualVariants, relatedTerms, draftDefinition)
   entity_proposals     → organization / person (create or patch)
+  tactic_proposals     → tacticEntry (create or patch)
   ingestion_queue      → feeds the next ingest batch
   corpus_connections   → referencedUrls on the sogiceDocument record
-  practice_descriptions → extractableAssets on the sogiceDocument record
+  practice_descriptions → practiceEntry + extractableAssets on the sogiceDocument record
   statistical_claims    → extractableAssets (statistical_claim type)
 """
 from __future__ import annotations
@@ -222,6 +223,31 @@ class EntityProposal(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Tactic proposals
+# ---------------------------------------------------------------------------
+
+class TacticProposal(BaseModel):
+    """Proposal to create or enrich a tactic registry record."""
+    model_config = ConfigDict(extra="ignore")
+
+    action: Literal["add_new", "enrich_existing"] = "add_new"
+    tactic: str
+    definition: str = ""
+    evidence_quote: str = ""
+    primary_cluster: str = ""
+    secondary_cluster: str = ""
+    tactic_level: Literal["structural", "sub-tactic", "campaign"] = "structural"
+    existing_tactic_id: Optional[str] = None
+
+    # Researcher decision
+    approved: bool = False
+    rejected: bool = False
+    pushed_to_sanity: bool = False
+    sanity_id: Optional[str] = None
+    researcher_note: str = ""
+
+
+# ---------------------------------------------------------------------------
 # Ingestion queue
 # ---------------------------------------------------------------------------
 
@@ -266,6 +292,8 @@ class CorpusConnection(BaseModel):
 
 class PracticeDescription(BaseModel):
     """How this document specifically describes a SOGICE practice."""
+    model_config = ConfigDict(extra="ignore")
+
     practice_id: str                      # e.g. "Practice: Pastoral-Care"
     exact_description: str                # verbatim or near-verbatim description from doc
     harm_stance: Literal[
@@ -277,6 +305,13 @@ class PracticeDescription(BaseModel):
     ] = "not_mentioned"
     harm_quote: str = ""                  # the quote demonstrating the stance
 
+    # Researcher decision
+    approved: bool = False
+    rejected: bool = False
+    pushed_to_sanity: bool = False
+    sanity_id: Optional[str] = None
+    researcher_note: str = ""
+
 
 # ---------------------------------------------------------------------------
 # Statistical claims
@@ -284,10 +319,19 @@ class PracticeDescription(BaseModel):
 
 class StatisticalClaim(BaseModel):
     """A quantitative or empirical claim made in the document."""
+    model_config = ConfigDict(extra="ignore")
+
     claim: str                            # the exact claim
     source_cited: str = ""               # what source the document gives
     verifiable: bool = False              # does it cite a traceable source?
     context: str = ""                     # why it matters for research
+
+    # Researcher decision
+    approved: bool = False
+    rejected: bool = False
+    pushed_to_sanity: bool = False
+    sanity_id: Optional[str] = None
+    researcher_note: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -300,11 +344,12 @@ class EnrichmentResult(BaseModel):
 
     doc_id: str
     enrichment_model: str = ""           # which model ran this pass
-    enrichment_prompt_version: str = "enrichment-v1.0"
+    enrichment_prompt_version: str = "enrichment-v1.1"
     run_type: Literal["main", "alt"] = "main"
 
     lexicon_proposals: list[LexiconProposal] = Field(default_factory=list)
     entity_proposals: list[EntityProposal] = Field(default_factory=list)
+    tactic_proposals: list[TacticProposal] = Field(default_factory=list)
     ingestion_queue: list[IngestionCandidate] = Field(default_factory=list)
     corpus_connections: list[CorpusConnection] = Field(default_factory=list)
     practice_descriptions: list[PracticeDescription] = Field(default_factory=list)
