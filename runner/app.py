@@ -6333,16 +6333,34 @@ def _mr_dates_panel(doc_id: str, doc_dir: Path, meta: dict, intake: dict):
 
 
 def _set_primary_transcript(doc_id: str, doc_dir: Path, label: str, push_sanity: bool, config) -> None:
-    """Promote a transcript version to primary: update media_metadata + transcript_chunks."""
+    """Promote a transcript version to primary: update media_metadata + transcript_chunks.
+
+    Raises ValueError when the version file is missing or contains no chunks so
+    the caller can surface a blocking warning rather than leaving the label and
+    the actual chunk content out of sync.
+    """
     safe = "".join(c if c.isalnum() or c in {"-", "_"} else "_" for c in label).strip("_")
     version_file = doc_dir / "transcripts" / f"{safe}.json"
-    payload = json.loads(version_file.read_text(encoding="utf-8")) if version_file.exists() else {}
+
+    if not version_file.exists():
+        raise ValueError(
+            f"No transcript file found for '{label}' "
+            f"(expected transcripts/{safe}.json). "
+            "Cannot set as primary without chunk data — attach or re-download the transcript first."
+        )
+
+    payload = json.loads(version_file.read_text(encoding="utf-8"))
     chunks = payload.get("chunks") or []
 
-    if chunks:
-        (doc_dir / "transcript_chunks.json").write_text(
-            json.dumps(chunks, indent=2), encoding="utf-8"
+    if not chunks:
+        raise ValueError(
+            f"Transcript file for '{label}' exists but contains no chunks. "
+            "Cannot set as primary — the file may be malformed or empty."
         )
+
+    (doc_dir / "transcript_chunks.json").write_text(
+        json.dumps(chunks, indent=2), encoding="utf-8"
+    )
 
     media_path = doc_dir / "media_metadata.json"
     media = json.loads(media_path.read_text(encoding="utf-8")) if media_path.exists() else {}

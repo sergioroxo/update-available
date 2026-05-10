@@ -214,29 +214,32 @@ def test_set_primary_transcript_updates_media_metadata(tmp_path):
     assert chunks[0]["text"] == "Hello"
 
 
-def test_set_primary_transcript_no_chunks_file(tmp_path):
-    """If the version file has no chunks, transcript_chunks.json should not be written."""
+def test_set_primary_transcript_no_chunks_raises(tmp_path):
+    """Version file exists but has no chunks — must raise rather than silently leaving stale data."""
     from runner.app import _set_primary_transcript
 
     (tmp_path / "transcripts").mkdir()
     _write_json(tmp_path / "transcripts" / "empty.json", {"label": "empty", "chunks": []})
     _write_json(tmp_path / "media_metadata.json", {"transcriptEvidence": {}})
 
-    _set_primary_transcript("abc", tmp_path, "empty", push_sanity=False, config=None)
+    with pytest.raises(ValueError, match="no chunks"):
+        _set_primary_transcript("abc", tmp_path, "empty", push_sanity=False, config=None)
 
+    # Neither media_metadata label nor transcript_chunks.json should be touched.
     media = _read_json(tmp_path / "media_metadata.json")
-    assert media["transcriptEvidence"]["selectedTranscriptLabel"] == "empty"
+    assert "selectedTranscriptLabel" not in media.get("transcriptEvidence", {})
     assert not (tmp_path / "transcript_chunks.json").exists()
 
 
-def test_set_primary_transcript_version_file_missing(tmp_path):
-    """If version file doesn't exist, only update media_metadata label."""
+def test_set_primary_transcript_version_file_missing_raises(tmp_path):
+    """No version file — must raise rather than silently updating only the label."""
     from runner.app import _set_primary_transcript
 
     (tmp_path / "transcripts").mkdir()
     _write_json(tmp_path / "media_metadata.json", {"transcriptEvidence": {}})
 
-    _set_primary_transcript("abc", tmp_path, "nonexistent", push_sanity=False, config=None)
+    with pytest.raises(ValueError, match="No transcript file found"):
+        _set_primary_transcript("abc", tmp_path, "nonexistent", push_sanity=False, config=None)
 
     media = _read_json(tmp_path / "media_metadata.json")
-    assert media["transcriptEvidence"]["selectedTranscriptLabel"] == "nonexistent"
+    assert "selectedTranscriptLabel" not in media.get("transcriptEvidence", {})
