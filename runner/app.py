@@ -792,6 +792,28 @@ _SOGICE_TYPES = [
     "Internal-Org-Document", "Mixed", "Regulatory-Policy-Document",
 ]
 
+_LEXICON_CLUSTERS = [
+    "Unknown", "SSA-Rhetoric", "Pastoral-Coercion", "Pseudo-Science",
+    "Policy-Resistance", "Anti-Trans/ROGD", "Anti-Gender",
+    "Pro-Trans-SOGICE", "Non-SOGICE",
+]
+
+_LEXICON_FUNCTIONS = [
+    "Unknown", "Slur", "Euphemism", "Conspiracy", "Pseudo-Diagnostic",
+    "Identity-Policing", "Moral-Purity Frame", "Political Slogan",
+    "Recruitment Frame", "Pastoral Rhetoric", "Disinformation Narrative",
+    "Promotional Recruitment", "Testimonial Marketing",
+]
+
+_ENRICHMENT_ACTION_HELP = {
+    "add_new": "Create a new Sanity entry if it does not already exist.",
+    "add_variant": "Attach this wording as a variant of an existing lexicon term.",
+    "add_evidence": "Append this document's evidence to an existing lexicon entry.",
+    "add_definition": "Use this source to improve an existing entry's definition.",
+    "merge_into": "Merge this proposal into another existing lexicon entry.",
+    "enrich_existing": "Add evidence/details to an existing registry record.",
+}
+
 
 def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
     """Side-by-side metadata source view with researcher confirmation controls."""
@@ -862,7 +884,10 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
             "Canonical language (ISO code, e.g. en, pt, no, de)",
             value=best_lang,
             placeholder="en",
-            help="Saved to preprocess.json. Controls Supabase language column and Sanity content.languageDetected.",
+            help=(
+                "Use an ISO language code such as en, pt, no, nb, de, es, or pt-BR. "
+                "Saved to preprocess.json. Controls Supabase language column and Sanity content.languageDetected."
+            ),
         )
 
         st.markdown("**Classification fields**")
@@ -890,7 +915,15 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
             placeholder="e.g. United Kingdom, Germany",
         )
 
-        push_sanity = st.checkbox("Also patch Sanity (content + classification fields)", value=False)
+        push_sanity = st.checkbox(
+            "Also patch Sanity (content + classification fields)",
+            value=False,
+            disabled=not bool(config),
+            help=(
+                "Off by default. Local files are always saved first. Turn this on only when you want "
+                "these confirmed values patched to Sanity immediately."
+            ),
+        )
         submitted = st.form_submit_button("Save confirmed metadata")
 
     if not submitted:
@@ -899,11 +932,17 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
     changed: list[str] = []
     errors: list[str] = []
 
-    if confirmed_title.strip():
-        _save_confirmed_title(doc_dir, confirmed_title.strip())
+    confirmed_title = confirmed_title.strip()
+    confirmed_lang = confirmed_lang.strip()
+    if confirmed_lang and not _valid_language_code(confirmed_lang):
+        st.error("Language must be an ISO-style code such as `en`, `pt`, `no`, `nb`, `de`, or `pt-BR`.")
+        return
+
+    if confirmed_title:
+        _save_confirmed_title(doc_dir, confirmed_title)
         changed.append("title")
-    if confirmed_lang.strip():
-        _save_confirmed_language(doc_dir, confirmed_lang.strip())
+    if confirmed_lang:
+        _save_confirmed_language(doc_dir, confirmed_lang)
         changed.append("language")
 
     country_list = [c.strip() for c in confirmed_country.split(",") if c.strip()]
@@ -923,32 +962,41 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
         )
         changed.append("classification")
 
-    if push_sanity and config and changed:
+    sanity_patched: list[str] = []
+    if push_sanity and config:
         from runner.clients import sanity as sanity_client
         try:
-            if "title" in changed or "language" in changed:
-                sanity_client.write_content_metadata_update(
+            if confirmed_title or confirmed_lang:
+                sanity_id = sanity_client.write_content_metadata_update(
                     doc_id,
-                    confirmed_title.strip() if "title" in changed else None,
-                    confirmed_lang.strip() if "language" in changed else None,
+                    confirmed_title or None,
+                    confirmed_lang or None,
                     config,
                 )
+                sanity_patched.append(f"content ({sanity_id})")
         except Exception as exc:
             errors.append(f"Sanity content patch: {exc}")
         try:
-            if "classification" in changed:
-                sanity_client.write_classification_update(
+            if country_list or confirmed_type or confirmed_format.strip():
+                sanity_id = sanity_client.write_classification_update(
                     doc_id,
                     country_list if confirmed_country.strip() else None,
-                    confirmed_type if confirmed_type != (src["type"]["analysis"] or "") else None,
-                    confirmed_format.strip() if confirmed_format.strip() != (src["format"]["analysis"] or "") else None,
+                    confirmed_type or None,
+                    confirmed_format.strip() or None,
                     config,
                 )
+                sanity_patched.append(f"classification ({sanity_id})")
         except Exception as exc:
             errors.append(f"Sanity classification patch: {exc}")
 
     if changed:
-        st.success(f"Saved: {', '.join(changed)}." + (" Sanity patched." if push_sanity and not errors else ""))
+        st.success(f"Saved locally: {', '.join(changed)}.")
+    elif push_sanity and sanity_patched:
+        st.info("No local values changed; Sanity patch was still sent from the confirmed form values.")
+    elif not changed:
+        st.info("No local values changed. Edit a field, or tick Sanity patch to resend confirmed values to Sanity.")
+    if sanity_patched:
+        st.success("Patched Sanity: " + "; ".join(sanity_patched))
     if errors:
         for e in errors:
             st.error(e)
@@ -1089,6 +1137,11 @@ def _normalise_publication_date(value: str) -> str:
     if len(parts) == 2:
         return f"{parts[0]}-{parts[1]}"
     return f"{parts[0]}-{parts[1]}-{parts[2]}"
+
+
+def _valid_language_code(value: str) -> bool:
+    """Accept simple ISO 639 style codes and common BCP-47 regional variants."""
+    return bool(re.match(r"^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$", (value or "").strip()))
 
 
 def _year_from_date(value: str) -> int:
@@ -4479,15 +4532,37 @@ def _render_single_proposal_editor(record: dict) -> None:
     c1, c2 = st.columns([1, 1])
     with c1:
         item["term"] = st.text_input("Term", value=item.get("term", ""), key=f"{prefix}_term")
-        item["language"] = st.text_input("Language", value=item.get("language", "en"), key=f"{prefix}_language")
+        item["language"] = st.text_input(
+            "Language",
+            value=item.get("language", "en"),
+            key=f"{prefix}_language",
+            help="ISO 639 language code for this term evidence, usually `en`, `pt`, `no`, `de`, etc.",
+        )
         item["action"] = st.selectbox(
             "Action",
             ["add_new", "add_variant", "add_evidence", "add_definition", "merge_into"],
             index=_option_index(["add_new", "add_variant", "add_evidence", "add_definition", "merge_into"], item.get("action", "add_new")),
             key=f"{prefix}_action",
+            help=(
+                "add_new creates a draft entry; add_evidence appends this document to an existing entry; "
+                "add_variant adds an alternate wording; add_definition improves wording; merge_into folds this proposal into another term."
+            ),
         )
-        item["proposed_cluster"] = st.text_input("Cluster", value=item.get("proposed_cluster", ""), key=f"{prefix}_cluster")
-        item["function"] = st.text_input("Function", value=item.get("function", ""), key=f"{prefix}_function")
+        st.caption(_ENRICHMENT_ACTION_HELP.get(item["action"], ""))
+        item["proposed_cluster"] = _controlled_select(
+            "Cluster",
+            item.get("proposed_cluster", "Unknown"),
+            _LEXICON_CLUSTERS,
+            key=f"{prefix}_cluster",
+            help="Controlled Sanity cluster. `Unknown` is saved locally but omitted from the Sanity field.",
+        )
+        item["function"] = _controlled_select(
+            "Function",
+            item.get("function", "Unknown"),
+            _LEXICON_FUNCTIONS,
+            key=f"{prefix}_function",
+            help="Controlled Sanity function/category. `Unknown` is saved locally but omitted from the Sanity field.",
+        )
     with c2:
         item["definition_as_used"] = st.text_area(
             "Definition as used",
@@ -4691,7 +4766,9 @@ def _render_single_tactic_editor(record: dict) -> None:
             ["add_new", "enrich_existing"],
             index=_option_index(["add_new", "enrich_existing"], item.get("action", "add_new")),
             key=f"{prefix}_action",
+            help="add_new creates a new tacticEntry; enrich_existing appends evidence/details to an existing tacticEntry.",
         )
+        st.caption(_ENRICHMENT_ACTION_HELP.get(item["action"], ""))
         item["tactic_level"] = st.selectbox(
             "Tactic level",
             ["structural", "sub-tactic", "campaign"],
@@ -4699,8 +4776,20 @@ def _render_single_tactic_editor(record: dict) -> None:
             key=f"{prefix}_level",
         )
     with c2:
-        item["primary_cluster"] = st.text_input("Primary cluster", value=item.get("primary_cluster", ""), key=f"{prefix}_primary")
-        item["secondary_cluster"] = st.text_input("Secondary cluster", value=item.get("secondary_cluster", ""), key=f"{prefix}_secondary")
+        item["primary_cluster"] = _controlled_select(
+            "Primary cluster",
+            item.get("primary_cluster", "Unknown"),
+            _LEXICON_CLUSTERS,
+            key=f"{prefix}_primary",
+            help="Controlled Sanity cluster for tacticEntry.primaryCluster.",
+        )
+        item["secondary_cluster"] = _controlled_select(
+            "Secondary cluster",
+            item.get("secondary_cluster", "Unknown"),
+            _LEXICON_CLUSTERS,
+            key=f"{prefix}_secondary",
+            help="Optional controlled Sanity cluster for tacticEntry.secondaryCluster.",
+        )
         item["existing_tactic_id"] = st.text_input("Existing Sanity tactic id", value=item.get("existing_tactic_id", "") or "", key=f"{prefix}_existing")
 
     item["definition"] = st.text_area("Definition", value=item.get("definition", ""), height=100, key=f"{prefix}_definition")
@@ -4915,6 +5004,22 @@ def _option_index(options: list[str], value: str) -> int:
         return options.index(value)
     except ValueError:
         return 0
+
+
+def _controlled_select(label: str, value: str, options: list[str], key: str, help: str = "") -> str:
+    """Select a controlled-vocabulary value while preserving unexpected legacy values."""
+    current = value or options[0]
+    display_options = list(options)
+    if current and current not in display_options:
+        display_options.append(current)
+        help = (help + " " if help else "") + "Current value is outside the controlled list; save a listed value before pushing to Sanity."
+    return st.selectbox(
+        label,
+        display_options,
+        index=_option_index(display_options, current),
+        key=key,
+        help=help,
+    )
 
 
 # ---------------------------------------------------------------------------
