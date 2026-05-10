@@ -1674,6 +1674,10 @@ def _render_enrichment_result(result) -> None:
         st.dataframe([p.model_dump() for p in result.practice_descriptions], width="stretch")
     if result.statistical_claims:
         st.write("**Statistical claims:**")
+        st.caption(
+            "These are claims made by the source document. Presence does not verify accuracy. "
+            "Each claim must be reviewed before use in research outputs."
+        )
         st.dataframe([p.model_dump() for p in result.statistical_claims], width="stretch")
 
 

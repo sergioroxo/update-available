@@ -91,8 +91,8 @@ def test_write_document_date_update_patches_document_and_source_dates(monkeypatc
         "day": 8,
         "dateConfidence": "exact",
     }
-    assert patch["set"]["meta.datePublished"] == "2021-03-08"
-    assert patch["set"]["provenance.sourceDatePublished"] == "2021-03-08"
+    assert "meta.datePublished" not in patch["set"]
+    assert "provenance.sourceDatePublished" not in patch["set"]
     assert patch["set"]["mediaMetadata.general.publicationDate"] == "2021-03-08"
 
 

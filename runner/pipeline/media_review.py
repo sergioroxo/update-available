@@ -183,7 +183,7 @@ def collect_comments_for_document(
     opts = {
         "skip_download": True,
         "quiet": True,
-        "ignoreerrors": False,
+        "ignoreerrors": True,
         "getcomments": True,
         "extractor_args": {"youtube": {"comment_sort": ["top"]}},
     }

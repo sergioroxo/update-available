@@ -139,8 +139,6 @@ def write_document_date_update(
             or "unknown",
         }
     if publication_date:
-        set_fields["meta.datePublished"] = publication_date
-        set_fields["provenance.sourceDatePublished"] = publication_date
         set_fields["mediaMetadata.general.publicationDate"] = publication_date
 
     if not set_fields:
@@ -152,8 +150,6 @@ def write_document_date_update(
                 "patch": {
                     "id": _sogice_document_ref(doc_id),
                     "setIfMissing": {
-                        "meta": {},
-                        "provenance": {},
                         "mediaMetadata": {},
                         "mediaMetadata.general": {},
                     },
