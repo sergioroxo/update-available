@@ -27,3 +27,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Local agent worktrees/session state
+.claude/
