@@ -2205,6 +2205,13 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                     ec3.metric("Tactic proposals", len(er.get("tactic_proposals", [])))
                     ec4.metric("Practice descriptions", len(er.get("practice_descriptions", [])))
                     ec5.metric("Claims", len(er.get("statistical_claims", [])))
+                    nav_cols = st.columns(2)
+                    if nav_cols[0].button("Review in Lexicon", key=f"nav_lexicon_{doc['doc_id']}"):
+                        st.session_state["_nav_to"] = "Lexicon"
+                        st.rerun()
+                    if nav_cols[1].button("Review in Tag Registry", key=f"nav_tags_{doc['doc_id']}"):
+                        st.session_state["_nav_to"] = "Tag Registry"
+                        st.rerun()
                 except Exception:
                     pass
 
@@ -6795,7 +6802,8 @@ def _render_shame_article_annotation(path: Path, data: dict, result: dict):
     t3.write(", ".join(f"`{x}`" for x in result.get("conversionTerminology", [])) or "—")
 
     st.markdown("**Audience**")
-    st.markdown(f"`{result.get('audiencePositioning', 'unclear')}`")
+    audience_pos = result.get("audiencePositioning") or ""
+    st.markdown(f"`{audience_pos}`" if audience_pos else "*not assessed*")
     if result.get("targetAudience"):
         st.write(result["targetAudience"])
 
@@ -6820,11 +6828,15 @@ def _render_shame_article_annotation(path: Path, data: dict, result: dict):
 
     notes_key = f"shame_notes_{path}"
     notes = st.text_area("Researcher notes", value=result.get("researcherNotes", ""), key=notes_key)
+    st.caption(
+        "Saved locally only. To push to Sanity, use the review decision block below "
+        "and enable 'Also push this review decision to Sanity'."
+    )
     if st.button("Save researcher notes", key=f"save_shame_notes_{path}"):
         result["researcherNotes"] = notes
         data["resultJson"] = result
         path.write_text(json.dumps(data, indent=2), encoding="utf-8")
-        st.success("Saved notes locally.")
+        st.success("Saved locally.")
 
     followups = result.get("researcherFollowupQuestions") or []
     if followups:
@@ -6925,6 +6937,12 @@ def _mr_comments(doc_id: str, doc_dir: Path, config):
 
 def _mr_candidates(doc_id: str, doc_dir: Path, config):
     """Related-source candidates grouped by category."""
+    st.caption(
+        "Identifies mirrors, re-uploads, and related documents that may need separate ingestion — "
+        "e.g. the same video on another platform, prior coverage of the same event, or "
+        "a document this source cites. Candidates are not ingested automatically; "
+        "review and queue them manually."
+    )
     from runner.pipeline.related_search import run_related_source_search
 
     candidates_path = doc_dir / "candidate_sources.json"

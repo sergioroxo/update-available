@@ -785,9 +785,11 @@ def _sanity_record_payload(
         "hostname": preprocess.hostname,
         "page_intel": preprocess.page_intel.__dict__ if preprocess.page_intel else {},
     })
+    from datetime import datetime, timezone
     return {
         "sanity_id": sanity_id,
         "doc_id": intake.doc_id,
+        "uploaded_at": datetime.now(timezone.utc).isoformat(),
         "source_url": intake.source_url or (intake.source if intake.source_type == "url" else ""),
         "archive_url": intake.archive_url,
         "date_published": pub["date_published"],
