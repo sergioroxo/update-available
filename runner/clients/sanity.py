@@ -337,7 +337,7 @@ def _lexicon_evidence_item(proposal: dict, doc_id: str, language: str, now_iso: 
         "relationshipNotes": _relationship_notes(proposal.get("relationships", [])),
         "modelConfidence": model_confidence,
         "confidenceRationale": proposal.get("confidence_rationale", ""),
-        "extractedBy": "human",
+        "extractedBy": "llm_extracted",
         "researcherNote": proposal.get("researcher_note", ""),
         "confirmed": False,
     }
@@ -528,7 +528,7 @@ def write_tactic_from_proposal(
                 "_key": f"evidence-{_slugify(doc_id)}-0",
                 "documentRef": {"_type": "reference", "_ref": f"doc-{doc_id}"},
                 "excerpt": _short_excerpt(proposal["evidence_quote"]),
-                "extractedBy": "human",
+                "extractedBy": "llm_extracted",
             }
         ]
     if proposal.get("primary_cluster"):
