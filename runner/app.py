@@ -2244,6 +2244,143 @@ def page_pending_upload():
 # Lexicon
 # ---------------------------------------------------------------------------
 
+def _render_sanity_lexicon_tab(config) -> None:
+    """Show Sanity lexicon terms as per-document research dossiers."""
+    c_refresh, c_search, c_status = st.columns([1, 3, 2])
+    with c_refresh:
+        if st.button("Refresh", key="sanity_lexicon_refresh"):
+            st.session_state.pop("lexicon_terms", None)
+    with c_search:
+        search_q = st.text_input(
+            "Search terms",
+            placeholder="Filter by term...",
+            label_visibility="collapsed",
+            key="sanity_lexicon_search",
+        )
+    with c_status:
+        status_filter = st.selectbox(
+            "Status",
+            ["all", "candidate", "draft", "validated"],
+            label_visibility="collapsed",
+            key="sanity_lexicon_status",
+        )
+
+    if "lexicon_terms" not in st.session_state:
+        try:
+            from runner.clients.sanity import fetch_lexicon_terms
+
+            st.session_state.lexicon_terms = fetch_lexicon_terms(config)
+        except Exception as exc:
+            st.error(f"Could not fetch lexicon from Sanity: {exc}")
+            st.session_state.lexicon_terms = []
+
+    terms = st.session_state.lexicon_terms
+    visible = terms
+    if search_q:
+        sq = search_q.lower()
+        visible = [row for row in visible if sq in (row.get("term") or "").lower()]
+    if status_filter != "all":
+        visible = [row for row in visible if row.get("status") == status_filter]
+
+    total_evidence = sum(len(row.get("evidenceDossier") or []) for row in terms)
+    confirmed = sum(
+        1
+        for row in terms
+        for evidence in (row.get("evidenceDossier") or [])
+        if evidence.get("confirmed")
+    )
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Terms", len(terms))
+    m2.metric("Showing", len(visible))
+    m3.metric("Evidence records", total_evidence)
+    m4.metric("Confirmed", f"{confirmed}/{total_evidence}")
+    st.caption(
+        "Each evidence record is one document-specific usage of a term. Confirming a record means "
+        "you reviewed that usage; it does not mean every use of the term has the same meaning."
+    )
+
+    if not visible:
+        st.info("No lexicon terms match the current filters.")
+        return
+
+    for term_entry in visible:
+        term_name = term_entry.get("term", "?")
+        status = term_entry.get("status", "draft")
+        cluster = term_entry.get("proposedCluster") or "-"
+        function = term_entry.get("function") or "-"
+        dossier = term_entry.get("evidenceDossier") or []
+        confirmed_count = sum(1 for row in dossier if row.get("confirmed"))
+        pending_count = len(dossier) - confirmed_count
+        header = (
+            f"{term_name} - {status} - {cluster} / {function} - "
+            f"{len(dossier)} evidence record(s), {pending_count} pending"
+        )
+        with st.expander(header, expanded=(pending_count > 0 and len(visible) <= 8)):
+            definition = term_entry.get("draftDefinition") or term_entry.get("accessibleDefinition") or ""
+            if definition:
+                st.write(definition)
+            if not dossier:
+                st.caption("No evidence dossier records yet.")
+                continue
+            for evidence in dossier:
+                _render_lexicon_evidence_record(term_entry, evidence, config)
+
+
+def _render_lexicon_evidence_record(term_entry: dict, evidence: dict, config) -> None:
+    evidence_key = evidence.get("_key", "")
+    sanity_id = term_entry.get("_id", "")
+    doc_ref = (evidence.get("docRef") or "unknown").replace("doc-", "")
+    confirmed = bool(evidence.get("confirmed"))
+    model_conf = _format_confidence(evidence.get("modelConfidence"))
+    researcher_conf = _format_confidence(evidence.get("researcherConfidence"))
+    register = evidence.get("usageRegister") or evidence.get("stanceProfile") or "-"
+    lang = evidence.get("language") or "-"
+    st.markdown(
+        f"**{'Confirmed' if confirmed else 'Pending'}** | "
+        f"doc `{doc_ref}` | language `{lang}` | register `{register}` | "
+        f"model confidence `{model_conf}` | researcher confidence `{researcher_conf}`"
+    )
+
+    quote = evidence.get("exactQuote") or evidence.get("excerpt") or ""
+    if quote:
+        st.markdown(f"> {quote}")
+    definition_as_used = evidence.get("definitionAsUsed") or ""
+    if definition_as_used:
+        st.markdown(f"**Definition as used in this source:** {definition_as_used}")
+
+    detail_bits = {
+        "Co-occurring terms": ", ".join(evidence.get("coOccurringTerms") or []),
+        "Relationship notes": evidence.get("relationshipNotes") or "",
+        "Model rationale": evidence.get("confidenceRationale") or "",
+        "Researcher note": evidence.get("researcherNote") or "",
+        "Confirmation note": evidence.get("confirmedNote") or "",
+    }
+    if any(detail_bits.values()):
+        with st.expander("Evidence details"):
+            for label, value in detail_bits.items():
+                if value:
+                    st.markdown(f"**{label}:** {value}")
+
+    if not confirmed and sanity_id and evidence_key:
+        with st.form(f"confirm_lexicon_{sanity_id}_{evidence_key}"):
+            note = st.text_input(
+                "Confirmation note",
+                placeholder="Optional note about why this usage is confirmed",
+            )
+            submitted = st.form_submit_button("Confirm this evidence record")
+        if submitted:
+            try:
+                from runner.clients.sanity import confirm_lexicon_context
+
+                confirm_lexicon_context(sanity_id, evidence_key, config, note=note)
+                st.session_state.pop("lexicon_terms", None)
+                st.success("Lexicon evidence record confirmed.")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Could not confirm evidence record: {exc}")
+    st.divider()
+
+
 def _render_three_system_reference() -> None:
     st.subheader("Three-System Persuasion Architecture")
     st.caption(
@@ -2356,19 +2493,7 @@ def page_lexicon():
     ])
 
     with tabs[0]:
-        if st.button("Refresh Lexicon"):
-            st.session_state.pop("lexicon_terms", None)
-        if "lexicon_terms" not in st.session_state:
-            try:
-                from runner.clients.sanity import fetch_lexicon_terms
-                st.session_state.lexicon_terms = fetch_lexicon_terms(config)
-            except Exception as exc:
-                st.error(f"Could not fetch lexicon from Sanity: {exc}")
-                st.session_state.lexicon_terms = []
-        terms = st.session_state.lexicon_terms
-        st.caption(f"{len(terms)} draft/validated terms")
-        if terms:
-            st.dataframe(terms, width="stretch", hide_index=True)
+        _render_sanity_lexicon_tab(config)
 
     with tabs[1]:
         if st.button("Refresh Registry"):

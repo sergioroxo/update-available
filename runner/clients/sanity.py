@@ -172,10 +172,16 @@ def write_document_date_update(
 
 
 def fetch_lexicon_terms(config: Config) -> list[dict]:
-    """GROQ: all draft + validated lexicon entries with term, cluster, function."""
+    """GROQ: lexicon entries with per-document evidence dossiers."""
     query = (
-        '*[_type == "lexiconEntry" && status in ["draft","validated"]]'
-        '{ _id, term, proposedCluster, function, multilingualVariants }'
+        '*[_type == "lexiconEntry" && status in ["candidate","draft","validated"]]'
+        '|order(term asc)'
+        '{ _id, term, status, proposedCluster, function, draftDefinition, accessibleDefinition, '
+        'frequency, firstSeen, lastSeen, multilingualVariants, '
+        'evidenceDossier[]{ _key, "docRef": documentRef._ref, excerpt, exactQuote, '
+        'definitionAsUsed, language, stanceProfile, usageRegister, coOccurringTerms, '
+        'relationshipNotes, modelConfidence, researcherConfidence, confidenceRationale, '
+        'extractedBy, extractionModel, confirmed, confirmedAt, confirmedNote, researcherNote } }'
     )
     url = (
         f"https://{config.sanity_project_id}.api.sanity.io"
@@ -185,6 +191,32 @@ def fetch_lexicon_terms(config: Config) -> list[dict]:
     r = httpx.get(url, params={"query": query}, headers=headers, timeout=10)
     r.raise_for_status()
     return r.json().get("result", [])
+
+
+def confirm_lexicon_context(
+    sanity_id: str,
+    evidence_key: str,
+    config: Config,
+    note: str = "",
+) -> str:
+    """Mark one lexicon evidenceDossier record as researcher-confirmed."""
+    if not sanity_id or not evidence_key:
+        raise ValueError("sanity_id and evidence_key are required")
+    now_iso = datetime.now(timezone.utc).isoformat()
+    set_fields = {
+        f'evidenceDossier[_key=="{evidence_key}"].confirmed': True,
+        f'evidenceDossier[_key=="{evidence_key}"].confirmedAt': now_iso,
+    }
+    if note:
+        set_fields[f'evidenceDossier[_key=="{evidence_key}"].confirmedNote'] = note
+    result = _mutate(
+        [{"patch": {"id": sanity_id, "set": set_fields}}],
+        config,
+    )
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for lexicon confirmation:\n{result}")
 
 
 def write_lexicon_draft_from_proposal(

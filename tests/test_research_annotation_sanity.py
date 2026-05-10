@@ -167,6 +167,28 @@ def test_lexicon_write_preserves_full_evidence_dossier(monkeypatch):
     assert evidence["confirmed"] is False
 
 
+def test_confirm_lexicon_context_patches_one_evidence_item(monkeypatch):
+    calls = []
+
+    def fake_mutate(mutations, config):
+        calls.append(mutations)
+        return {"results": [{"id": "lexicon-pastoral-care"}]}
+
+    monkeypatch.setattr(sanity, "_mutate", fake_mutate)
+
+    sanity.confirm_lexicon_context(
+        "lexicon-pastoral-care",
+        "evidence-doc-1-pastoral-care",
+        _Config(),
+        note="Checked against source text.",
+    )
+
+    patch = calls[0][0]["patch"]
+    assert patch["id"] == "lexicon-pastoral-care"
+    assert patch["set"]['evidenceDossier[_key=="evidence-doc-1-pastoral-care"].confirmed'] is True
+    assert patch["set"]['evidenceDossier[_key=="evidence-doc-1-pastoral-care"].confirmedNote'] == "Checked against source text."
+
+
 def test_approved_network_suggestion_writes_organization(monkeypatch):
     calls = []
 
