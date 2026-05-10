@@ -1379,6 +1379,7 @@ def _render_analysis_editor(config, llm: str) -> None:
         st.code(analysis_text, language="json")
 
     _render_archival_issue_panel(analysis_text)
+    _render_second_opinion_gate(config, analysis_text)
 
     c1, c2, c3, c4 = st.columns(4)
     testimony_blocked = _testimony_requires_review(
@@ -1666,6 +1667,180 @@ def _render_enrichment_result(result) -> None:
     if result.statistical_claims:
         st.write("**Statistical claims:**")
         st.dataframe([p.model_dump() for p in result.statistical_claims], width="stretch")
+
+
+def _render_second_opinion_gate(config, analysis_text: str) -> None:
+    from runner.models.document import AnalysisResult
+    from runner.pipeline import second_opinion
+
+    intake_result = st.session_state.ingest.get("intake")
+    if not intake_result:
+        return
+    doc_id = intake_result.doc_id
+    doc_dir = config.corpus_dir / doc_id
+    try:
+        current = AnalysisResult.model_validate(json.loads(analysis_text))
+    except Exception:
+        return
+
+    comparisons = second_opinion.list_second_opinions(doc_id, config) if doc_dir.exists() else []
+    should_offer = bool(current.needs_review or current.confidence.overall_score < 0.75)
+    if not should_offer and not comparisons:
+        return
+
+    with st.expander("Second opinion review", expanded=should_offer):
+        if should_offer:
+            st.warning(
+                "A second opinion is recommended because this analysis is low-confidence or marked for review. "
+                "Running it saves an alternate analysis and comparison record; it does not change analysis.json."
+            )
+            reasons = []
+            if current.confidence.overall_score < 0.75:
+                reasons.append(f"Overall confidence is {current.confidence.overall_score:.2f}, below 0.75.")
+            if current.needs_review:
+                reasons.append("The analysis has `needs_review: true`.")
+            for reason in current.field_confidence.low_confidence_reasons:
+                reasons.append(f"{reason.field}: {reason.issue} ({reason.severity})")
+            for reason in reasons:
+                st.markdown(f"- {reason}")
+            st.caption(
+                "Workflow: run second model -> save `analysis_alt_*` -> save `analysis_comparison_*` -> "
+                "choose keep original, adopt second opinion, or edit/adopt. Nothing is promoted automatically."
+            )
+
+            if not (doc_dir / "analysis.json").exists():
+                st.info("Save locally first so the current analysis exists as `analysis.json` before comparison.")
+            else:
+                llm_choice = st.selectbox(
+                    "Second-opinion model",
+                    ["litelm-reasoning", "litelm-heavy", "litelm", "local-reasoning", "local-heavy", "local"],
+                    key=f"second_opinion_llm_{doc_id}",
+                )
+                if st.button("Run second opinion", key=f"run_second_opinion_{doc_id}"):
+                    try:
+                        with st.spinner("Running second-opinion analysis..."):
+                            payload = second_opinion.run_second_opinion(doc_id, config=config, llm=llm_choice)
+                        st.success(f"Saved comparison: {payload['comparison_path'].name}")
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(str(exc))
+
+        if comparisons:
+            st.subheader("Second opinion comparisons")
+            for comparison in comparisons:
+                _render_second_opinion_comparison(config, doc_id, comparison)
+
+
+def _render_second_opinion_comparison(config, doc_id: str, comparison: dict) -> None:
+    from runner.models.document import AnalysisResult
+    from runner.pipeline import second_opinion
+
+    filename = comparison.get("filename") or comparison.get("comparison_file", "")
+    outcome = comparison.get("outcome", "pending")
+    fields = comparison.get("fields_that_differed") or []
+    with st.expander(
+        f"{filename} - {outcome} - {len(fields)} differing field(s)",
+        expanded=outcome == "pending",
+    ):
+        st.caption(
+            f"Original model: {comparison.get('original_model') or '-'} | "
+            f"Second model: {comparison.get('second_opinion_model') or '-'}"
+        )
+        differences = comparison.get("differences") or []
+        if differences:
+            st.dataframe(
+                [
+                    {
+                        "Field": row.get("field", ""),
+                        "Original": _short_json_value(row.get("original")),
+                        "Second opinion": _short_json_value(row.get("second_opinion")),
+                        "Added": ", ".join(row.get("added", [])),
+                        "Removed": ", ".join(row.get("removed", [])),
+                    }
+                    for row in differences
+                ],
+                hide_index=True,
+                use_container_width=True,
+            )
+        else:
+            st.success("No tracked fields differ.")
+
+        if outcome != "pending":
+            if comparison.get("researcher_note"):
+                st.info(f"Decision note: {comparison['researcher_note']}")
+            return
+
+        note = st.text_input("Decision note", key=f"second_note_{filename}")
+        d1, d2 = st.columns(2)
+        with d1:
+            if st.button("Keep original", key=f"keep_original_{filename}"):
+                try:
+                    second_opinion.decide_second_opinion(
+                        doc_id, filename, "kept_original", config, researcher_note=note
+                    )
+                    st.success("Decision saved: kept original.")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+        with d2:
+            if st.button("Adopt second opinion", key=f"adopt_alt_{filename}"):
+                try:
+                    second_opinion.decide_second_opinion(
+                        doc_id, filename, "adopted_alt", config, researcher_note=note
+                    )
+                    _reload_workbench_analysis_from_disk(config, doc_id)
+                    st.success("Second opinion adopted; original was archived.")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+
+        alt_path = config.corpus_dir / doc_id / str(comparison.get("alt_file", ""))
+        if alt_path.exists():
+            with st.expander("Edit second opinion before adopting"):
+                edited = st.text_area(
+                    "Edited analysis JSON",
+                    value=alt_path.read_text(encoding="utf-8"),
+                    height=360,
+                    key=f"edited_second_opinion_{filename}",
+                )
+                if st.button("Validate and adopt edited version", key=f"adopt_edited_{filename}"):
+                    try:
+                        AnalysisResult.model_validate_json(edited)
+                        second_opinion.decide_second_opinion(
+                            doc_id,
+                            filename,
+                            "edited",
+                            config,
+                            researcher_note=note,
+                            edited_json=edited,
+                        )
+                        _reload_workbench_analysis_from_disk(config, doc_id)
+                        st.success("Edited second opinion adopted; original was archived.")
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(str(exc))
+
+
+def _reload_workbench_analysis_from_disk(config, doc_id: str) -> None:
+    from runner.models.document import AnalysisResult
+
+    path = config.corpus_dir / doc_id / "analysis.json"
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8")
+    parsed = AnalysisResult.model_validate_json(text)
+    st.session_state.ingest["analysis"] = parsed
+    st.session_state.ingest["analysis_json"] = parsed.model_dump_json(indent=2)
+    st.session_state.ingest["analysis_valid"] = True
+    st.session_state.ingest["uploaded"] = False
+
+
+def _short_json_value(value, max_chars: int = 240) -> str:
+    if isinstance(value, (dict, list)):
+        text = json.dumps(value, ensure_ascii=False)
+    else:
+        text = "" if value is None else str(value)
+    return _short_label(text, max_chars)
 
 
 def _intake_to_dict(intake_result) -> dict:

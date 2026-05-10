@@ -19,7 +19,7 @@ from rich.panel import Panel
 
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
-from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots
+from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion
 from .pipeline.system_tools import tool_path
 
 app = typer.Typer(name="runner", add_completion=False)
@@ -276,6 +276,86 @@ def reanalyze_doc(
 
     if upload_after:
         upload.upload_saved(doc_id, config)
+
+
+@app.command(name="second-opinion")
+def second_opinion_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
+    llm: str = typer.Option("litelm-reasoning", "--llm", help="Second-opinion LLM route"),
+):
+    """Run a safe second-opinion analysis without replacing analysis.json."""
+    config = load_config(llm=llm, require_services=False)
+    try:
+        payload = second_opinion.run_second_opinion(doc_id, config=config, llm=llm)
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Second opinion failed"))
+        raise typer.Exit(1)
+
+    comparison = payload["comparison"]
+    console.print(Panel(
+        f"Alt analysis: [bold]{payload['alt_path'].name}[/bold]\n"
+        f"Comparison: [bold]{payload['comparison_path'].name}[/bold]\n"
+        f"Fields differed: {', '.join(comparison.get('fields_that_differed', [])) or 'none'}\n\n"
+        "No canonical analysis was changed.",
+        title="[green]Second opinion saved[/green]",
+    ))
+
+
+@app.command(name="decide-second-opinion")
+def decide_second_opinion_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
+    comparison_file: str = typer.Argument(..., help="analysis_comparison_*.json or analysis_alt_*.json filename"),
+    outcome: str = typer.Option("kept_original", "--outcome", help="kept_original | adopted_alt"),
+    note: str = typer.Option("", "--note", help="Researcher decision note"),
+):
+    """Record a second-opinion decision and optionally promote the alt result."""
+    if outcome == "edited":
+        console.print("[red]Use the Streamlit editor for edited second-opinion decisions.[/red]")
+        raise typer.Exit(1)
+    config = load_config(require_services=False)
+    try:
+        comparison = second_opinion.decide_second_opinion(
+            doc_id=doc_id,
+            comparison_file=comparison_file,
+            outcome=outcome,
+            config=config,
+            researcher_note=note,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Second opinion decision failed"))
+        raise typer.Exit(1)
+    console.print(Panel(
+        f"Outcome: [bold]{comparison['outcome']}[/bold]\n"
+        f"Decided at: {comparison.get('decided_at', '')}\n"
+        f"Fields differed: {', '.join(comparison.get('fields_that_differed', [])) or 'none'}",
+        title="[green]Second opinion decision saved[/green]",
+    ))
+
+
+@app.command(name="adopt-second-opinion")
+def adopt_second_opinion_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
+    comparison_or_alt_file: str = typer.Argument(..., help="analysis_comparison_*.json or analysis_alt_*.json filename"),
+    note: str = typer.Option("", "--note", help="Researcher decision note"),
+):
+    """Promote a second-opinion alt analysis to canonical analysis.json."""
+    config = load_config(require_services=False)
+    try:
+        comparison = second_opinion.decide_second_opinion(
+            doc_id=doc_id,
+            comparison_file=comparison_or_alt_file,
+            outcome="adopted_alt",
+            config=config,
+            researcher_note=note,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Adopt second opinion failed"))
+        raise typer.Exit(1)
+    console.print(Panel(
+        f"Promoted: [bold]{comparison.get('promoted_file', comparison.get('alt_file', ''))}[/bold]\n"
+        f"Previous analysis.json was archived first.",
+        title="[green]Second opinion adopted[/green]",
+    ))
 
 
 @app.command(name="enrich")
