@@ -13,6 +13,7 @@ import exclusionClause from './exclusionClause'
 import ingestionBatch from './ingestionBatch'
 import validationBatch from './validationBatch'
 import promptVersion from './promptVersion'
+import researchAnnotation from './researchAnnotation'
 
 export const schemaTypes = [
   document,
@@ -30,5 +31,5 @@ export const schemaTypes = [
   ingestionBatch,
   validationBatch,
   promptVersion,
+  researchAnnotation,
 ]
-

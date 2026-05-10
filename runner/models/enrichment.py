@@ -48,6 +48,14 @@ def _to_title_case(s: str) -> str:
     return " ".join(_cap_token(t) for t in s.split())
 
 
+class ProposalConfidenceMixin(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    model_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    confidence_rationale: str = ""
+    researcher_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+
+
 # ---------------------------------------------------------------------------
 # Lexicon proposals
 # ---------------------------------------------------------------------------
@@ -78,7 +86,7 @@ class TermRelationship(BaseModel):
     evidence: str = ""                     # quote or rationale
 
 
-class LexiconProposal(BaseModel):
+class LexiconProposal(ProposalConfidenceMixin):
     """Proposal to create a new lexicon entry or enrich an existing one."""
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
@@ -187,7 +195,7 @@ class KeyIndividual(BaseModel):
     quote: str = ""                        # most informative direct quote
 
 
-class EntityProposal(BaseModel):
+class EntityProposal(ProposalConfidenceMixin):
     """Proposal to create or enrich an organization or person record."""
     model_config = ConfigDict(extra="ignore")
 
@@ -226,7 +234,7 @@ class EntityProposal(BaseModel):
 # Tactic proposals
 # ---------------------------------------------------------------------------
 
-class TacticProposal(BaseModel):
+class TacticProposal(ProposalConfidenceMixin):
     """Proposal to create or enrich a tactic registry record."""
     model_config = ConfigDict(extra="ignore")
 
@@ -290,7 +298,7 @@ class CorpusConnection(BaseModel):
 # Practice descriptions
 # ---------------------------------------------------------------------------
 
-class PracticeDescription(BaseModel):
+class PracticeDescription(ProposalConfidenceMixin):
     """How this document specifically describes a SOGICE practice."""
     model_config = ConfigDict(extra="ignore")
 
@@ -317,7 +325,7 @@ class PracticeDescription(BaseModel):
 # Statistical claims
 # ---------------------------------------------------------------------------
 
-class StatisticalClaim(BaseModel):
+class StatisticalClaim(ProposalConfidenceMixin):
     """A quantitative or empirical claim made in the document."""
     model_config = ConfigDict(extra="ignore")
 

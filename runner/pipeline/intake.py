@@ -13,7 +13,7 @@ from pathlib import Path
 import shutil
 from typing import Optional
 import uuid
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import httpx
 
@@ -39,9 +39,10 @@ def run(
     source_type = _detect_source_type(source)
     assigned_tier = tier if tier is not None else _auto_assign_tier(source_type)
     batch_id    = batch or "unassigned"
+    ingested_at = datetime.now(timezone.utc).isoformat()
 
     wayback = {"archive_url": None, "status": "skipped", "checked_at": "", "error": ""}
-    if source_type == "url":
+    if source.startswith(("http://", "https://")):
         wayback = _wayback_check(source)
 
     local_dir = _create_local_dir(doc_id, config)
@@ -60,7 +61,8 @@ def run(
         wayback_status=wayback.get("status", ""),
         wayback_checked_at=wayback.get("checked_at", ""),
         wayback_error=wayback.get("error", ""),
-        source_url=source if source_type == "url" else source_url,
+        ingested_at=ingested_at,
+        source_url=source if source.startswith(("http://", "https://")) else source_url,
         original_filename=Path(source).name if source_type != "url" else "",
         local_copy_path=local_copy_path,
         testimony_consent="",
@@ -72,6 +74,10 @@ def run(
 
 def _detect_source_type(source: str) -> str:
     if source.startswith(("http://", "https://")):
+        if _is_video_platform_url(source):
+            return "video"
+        if _is_audio_platform_url(source):
+            return "audio"
         return "url"
     suffix = Path(source).suffix.lower()
     if suffix in _DOC_EXT:
@@ -87,6 +93,36 @@ def _detect_source_type(source: str) -> str:
     if suffix in {".html", ".htm"}:
         return "html"
     return "html"
+
+
+def _is_video_platform_url(source: str) -> bool:
+    parsed = urlparse(source)
+    host = parsed.netloc.lower()
+    path = parsed.path.lower()
+    query = parsed.query.lower()
+    if "youtube.com" in host:
+        return (
+            path.startswith("/watch")
+            or path.startswith("/shorts/")
+            or path.startswith("/embed/")
+            or "v=" in query
+        )
+    if "youtu.be" in host:
+        return bool(path.strip("/"))
+    if any(domain in host for domain in (
+        "vimeo.com", "rumble.com", "odysee.com", "bitchute.com",
+        "dailymotion.com", "facebook.com", "fb.watch",
+    )):
+        return True
+    return False
+
+
+def _is_audio_platform_url(source: str) -> bool:
+    parsed = urlparse(source)
+    host = parsed.netloc.lower()
+    return any(domain in host for domain in (
+        "soundcloud.com", "podcasts.apple.com", "open.spotify.com",
+    ))
 
 
 def _generate_doc_id() -> str:
@@ -285,6 +321,7 @@ def _save_intake_metadata(doc_dir: Path, intake: IntakeResult) -> None:
             "wayback_status": intake.wayback_status,
             "wayback_checked_at": intake.wayback_checked_at,
             "wayback_error": intake.wayback_error,
+            "ingested_at": intake.ingested_at,
             "source_url": intake.source_url,
             "original_filename": intake.original_filename,
             "local_copy_path": intake.local_copy_path,

@@ -13,6 +13,7 @@ import httpx
 
 from ..config import Config
 from ..models.document import DocumentPackage
+from ..models.research_annotation import ResearchAnnotation, REVIEWED_STATUSES
 from ..pipeline.metadata_quality import publication_metadata
 
 
@@ -25,6 +26,148 @@ def write_document(pkg: DocumentPackage, config: Config) -> str:
     except (KeyError, IndexError):
         raise RuntimeError(
             f"Unexpected Sanity response (check token permissions and schema):\n{result}"
+        )
+
+
+def write_research_annotation(
+    annotation: ResearchAnnotation,
+    config: Config,
+    force_reviewed: bool = False,
+) -> str:
+    """Create or replace a researchAnnotation record for a profile/document pair."""
+    doc = _build_research_annotation_document(annotation)
+    if not force_reviewed:
+        existing = _fetch_document_by_id(doc["_id"], config, "{ annotationStatus }")
+        if existing and existing.get("annotationStatus") in REVIEWED_STATUSES:
+            raise RuntimeError(
+                f"Sanity annotation {doc['_id']} is reviewed/corrected; "
+                "pass --force-reviewed to replace it"
+            )
+
+    mutations = [{"createOrReplace": doc}]
+    public_candidate = bool(
+        annotation.annotation_status in REVIEWED_STATUSES
+        and annotation.result_json.get("publicTableCandidate")
+    )
+    if public_candidate:
+        mutations.append(
+            {
+                "patch": {
+                    "id": _sogice_document_ref(annotation.doc_id),
+                    "setIfMissing": {
+                        "mediaMetadata": {},
+                        "mediaMetadata.classificationProvenance": {},
+                    },
+                    "set": {
+                        "mediaMetadata.classificationProvenance.publicTableCandidate": True,
+                        "mediaMetadata.classificationProvenance.publicTableCandidateSource": annotation.profile,
+                        "mediaMetadata.classificationProvenance.publicTableCandidateReviewedAt": (
+                            annotation.reviewed_at.isoformat()
+                            if annotation.reviewed_at
+                            else datetime.now(timezone.utc).isoformat()
+                        ),
+                    },
+                }
+            }
+        )
+
+    result = _mutate(mutations, config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(
+            f"Unexpected Sanity response for research annotation write:\n{result}"
+        )
+
+
+def fetch_research_annotations_for_doc(doc_id: str, config: Config) -> list[dict]:
+    """Return researchAnnotation records linked to a sogiceDocument."""
+    query = (
+        '*[_type == "researchAnnotation" && sourceDocument._ref == $doc_ref]'
+        '|order(generatedAt desc)'
+        '{ _id, profile, profileVersion, annotationStatus, generatedAt, reviewedAt, '
+        'sourceStance, publicVisibility, modelProvider, modelName, resolvedModelName, promptVersion }'
+    )
+    return _query(query, config, {"doc_ref": _sogice_document_ref(doc_id)})
+
+
+def write_media_metadata_update(
+    doc_id: str,
+    media_metadata_patch: dict,
+    config: Config,
+) -> str:
+    """Patch mediaMetadata on an existing sogiceDocument."""
+    media_metadata = _with_array_keys(_drop_empty(media_metadata_patch), prefix="media")
+    set_fields = {
+        f"mediaMetadata.{key}": value for key, value in media_metadata.items()
+    }
+    result = _mutate(
+        [
+            {
+                "patch": {
+                    "id": _sogice_document_ref(doc_id),
+                    "setIfMissing": {"mediaMetadata": {}},
+                    "set": set_fields,
+                }
+            }
+        ],
+        config,
+    )
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(
+            f"Unexpected Sanity response for media metadata update:\n{result}"
+        )
+
+
+def write_document_date_update(
+    doc_id: str,
+    document_date: dict,
+    publication_date: str,
+    config: Config,
+) -> str:
+    """Patch source/document dates on an existing sogiceDocument."""
+    set_fields: dict = {}
+    if document_date:
+        set_fields["documentDate"] = {
+            "year": int(document_date.get("year") or 0),
+            "month": int(document_date.get("month") or 0),
+            "day": int(document_date.get("day") or 0),
+            "dateConfidence": document_date.get("dateConfidence")
+            or document_date.get("confidence")
+            or "unknown",
+        }
+    if publication_date:
+        set_fields["meta.datePublished"] = publication_date
+        set_fields["provenance.sourceDatePublished"] = publication_date
+        set_fields["mediaMetadata.general.publicationDate"] = publication_date
+
+    if not set_fields:
+        raise ValueError("No date fields supplied for Sanity update")
+
+    result = _mutate(
+        [
+            {
+                "patch": {
+                    "id": _sogice_document_ref(doc_id),
+                    "setIfMissing": {
+                        "meta": {},
+                        "provenance": {},
+                        "mediaMetadata": {},
+                        "mediaMetadata.general": {},
+                    },
+                    "set": set_fields,
+                }
+            }
+        ],
+        config,
+    )
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(
+            f"Unexpected Sanity response for document date update:\n{result}"
         )
 
 
@@ -50,15 +193,19 @@ def write_lexicon_draft_from_proposal(
     config: Config,
     approved_by: str = "researcher",
 ) -> str:
-    """Create or replace a draft lexiconEntry from a reviewed enrichment proposal."""
+    """Write a reviewed lexicon proposal without flattening per-document evidence."""
     now_iso = datetime.now(timezone.utc).isoformat()
     term = (proposal.get("term") or "").strip()
     if not term:
         raise ValueError("Cannot write lexicon entry without a term")
 
-    sanity_id = proposal.get("existing_entry_id") or f"lexicon-{_slugify(term)}"
-    quote = _short_excerpt(proposal.get("exact_quote", ""))
+    sanity_id = _sanity_id_or_fallback(
+        proposal.get("existing_entry_id"),
+        f"lexicon-{_slugify(term)}",
+    )
     language = proposal.get("language") or "unknown"
+    evidence_item = _lexicon_evidence_item(proposal, doc_id, language, now_iso)
+    variants = _lexicon_variant_items(proposal.get("variants", []))
 
     doc = {
         "_id": sanity_id,
@@ -75,44 +222,139 @@ def write_lexicon_draft_from_proposal(
             "_type": "reference",
             "_ref": f"doc-{doc_id}",
         },
-        "evidenceDossier": [
-            {
-                "_key": f"evidence-{_slugify(doc_id)}-0",
-                "documentRef": {
-                    "_type": "reference",
-                    "_ref": f"doc-{doc_id}",
-                },
-                "excerpt": quote,
-                "language": language,
-                "stanceProfile": _stance_profile(proposal.get("register", "")),
-                "confidence": 0.75,
-                "extractedBy": "human",
-            }
-        ] if quote else [],
+        "evidenceDossier": [evidence_item] if evidence_item else [],
         "frequency": 1,
         "languagesSeen": [language] if language and language != "unknown" else [],
         "firstSeen": now_iso,
         "lastSeen": now_iso,
         "lastReanalyzed": now_iso,
     }
-    if proposal.get("variants"):
-        doc["multilingualVariants"] = [
-            {
-                "_key": f"variant-{i}",
-                "variantTerm": v.get("variant_term", ""),
-                "language": v.get("language", "unknown"),
-                "attestationTier": v.get("attestation_tier", "tier-3-inferred"),
-                "sourceNote": v.get("source_note", ""),
-            }
-            for i, v in enumerate(proposal.get("variants", []))
-            if v.get("variant_term")
-        ]
+    if variants:
+        doc["multilingualVariants"] = variants
 
-    result = _mutate([{"createOrReplace": doc}], config)
+    action = proposal.get("action", "add_new")
+    if action == "add_new":
+        mutations = [{"createOrReplace": doc}]
+    else:
+        set_fields = {
+            "lastSeen": now_iso,
+            "lastReanalyzed": now_iso,
+        }
+        if action == "add_definition" and proposal.get("definition_as_used"):
+            set_fields["draftDefinition"] = proposal["definition_as_used"]
+        mutations = [
+            {
+                "patch": {
+                    "id": sanity_id,
+                    "setIfMissing": {
+                        "evidenceDossier": [],
+                        "multilingualVariants": [],
+                        "languagesSeen": [],
+                    },
+                    "set": set_fields,
+                }
+            }
+        ]
+        if evidence_item:
+            mutations.append(
+                {
+                    "patch": {
+                        "id": sanity_id,
+                        "insert": {"after": "evidenceDossier[-1]", "items": [evidence_item]},
+                    }
+                }
+            )
+        if variants:
+            mutations.append(
+                {
+                    "patch": {
+                        "id": sanity_id,
+                        "insert": {"after": "multilingualVariants[-1]", "items": variants},
+                    }
+                }
+            )
+
+    result = _mutate(mutations, config)
     try:
         return result["results"][0]["id"]
     except (KeyError, IndexError):
         raise RuntimeError(f"Unexpected Sanity response for lexicon write:\n{result}")
+
+
+def _lexicon_evidence_item(proposal: dict, doc_id: str, language: str, now_iso: str) -> dict | None:
+    quote = (proposal.get("exact_quote") or "").strip()
+    if not quote:
+        return None
+    model_confidence = _normalise_confidence(
+        proposal.get("model_confidence")
+        or proposal.get("llm_confidence")
+        or proposal.get("confidence"),
+        default=0.75,
+    )
+    researcher_confidence = proposal.get("researcher_confidence")
+    item = {
+        "_key": f"evidence-{_slugify(doc_id)}-{_slugify(proposal.get('term', 'term'))}",
+        "documentRef": {"_type": "reference", "_ref": _sogice_document_ref(doc_id)},
+        "language": language,
+        "excerpt": _short_excerpt(quote),
+        "exactQuote": quote,
+        "definitionAsUsed": proposal.get("definition_as_used", ""),
+        "stanceProfile": _stance_profile(proposal.get("register", "")),
+        "usageRegister": proposal.get("register", ""),
+        "coOccurringTerms": proposal.get("co_occurring_terms", []),
+        "relationshipNotes": _relationship_notes(proposal.get("relationships", [])),
+        "modelConfidence": model_confidence,
+        "confidenceRationale": proposal.get("confidence_rationale", ""),
+        "extractedBy": "human",
+        "researcherNote": proposal.get("researcher_note", ""),
+        "confirmed": False,
+    }
+    if researcher_confidence not in (None, ""):
+        item["researcherConfidence"] = _normalise_confidence(researcher_confidence, default=model_confidence)
+    if proposal.get("confirmed"):
+        item["confirmed"] = True
+        item["confirmedAt"] = proposal.get("confirmed_at") or now_iso
+        if proposal.get("confirmed_note"):
+            item["confirmedNote"] = proposal["confirmed_note"]
+    return _drop_empty(item)
+
+
+def _lexicon_variant_items(variants: list[dict]) -> list[dict]:
+    rows = []
+    for i, variant in enumerate(variants or []):
+        term = variant.get("variant_term", "")
+        if not term:
+            continue
+        rows.append(
+            {
+                "_key": f"variant-{i}-{_slugify(term)}",
+                "variantTerm": term,
+                "language": variant.get("language", "unknown"),
+                "attestationTier": variant.get("attestation_tier", "tier-3-inferred"),
+                "sourceNote": variant.get("source_note", ""),
+            }
+        )
+    return rows
+
+
+def _relationship_notes(relationships: list[dict]) -> str:
+    notes = []
+    for rel in relationships or []:
+        target = rel.get("existing_term", "")
+        relationship = rel.get("relationship", "")
+        evidence = rel.get("evidence", "")
+        bits = [bit for bit in (relationship, target, evidence) if bit]
+        if bits:
+            notes.append(" — ".join(bits))
+    return "\n".join(notes)
+
+
+def _normalise_confidence(value, default: float = 0.75) -> float:
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return default
+    return max(0.0, min(1.0, score))
 
 
 def write_entity_from_proposal(
@@ -166,6 +408,57 @@ def write_entity_from_proposal(
         return result["results"][0]["id"]
     except (KeyError, IndexError):
         raise RuntimeError(f"Unexpected Sanity response for entity write:\n{result}")
+
+
+def write_network_from_suggestion(
+    network: dict,
+    doc_id: str,
+    config: Config,
+) -> str:
+    """Promote an approved suggestedNetwork to an organization network record."""
+    name = (network.get("name") or "").strip()
+    if not name:
+        raise ValueError("Cannot write network organization without a name")
+    sanity_id = f"organization-{_slugify(name)}"
+    doc = {
+        "_id": sanity_id,
+        "_type": "organization",
+        "name": name,
+        "type": "network_node",
+        "description": network.get("description") or network.get("evidenceQuote", ""),
+        "visibility": "research_contextualized",
+        "sourceDocuments": [{"_type": "reference", "_key": f"src-{_slugify(doc_id)}", "_ref": _sogice_document_ref(doc_id)}],
+        "registryStatus": "under_investigation",
+    }
+    if network.get("evidenceQuote"):
+        doc["notes"] = "Suggested network evidence: " + network["evidenceQuote"]
+    result = _mutate([{"createOrReplace": _drop_empty(doc)}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for network write:\n{result}")
+
+
+def promote_approved_suggested_networks(doc_id: str, config: Config) -> dict:
+    """Create organization records for approved suggestedNetworks on a sogiceDocument."""
+    doc_ref = _sogice_document_ref(doc_id)
+    doc = _fetch_document_by_id(
+        doc_ref,
+        config,
+        "{ suggestedNetworks[]{ name, description, evidenceQuote, approved } }",
+    ) or {}
+    pushed: list[str] = []
+    skipped = 0
+    errors: list[str] = []
+    for network in doc.get("suggestedNetworks") or []:
+        if not network.get("approved"):
+            skipped += 1
+            continue
+        try:
+            pushed.append(write_network_from_suggestion(network, doc_id, config))
+        except Exception as exc:
+            errors.append(f"{network.get('name', '?')}: {exc}")
+    return {"pushed": pushed, "skipped": skipped, "errors": errors}
 
 
 def write_tactic_from_proposal(
@@ -373,7 +666,10 @@ def write_seed_lexicon_entry(entry: dict, config: Config) -> str:
 
 def write_seed_lexicon_variant(variant: dict, config: Config) -> str:
     """Append a multilingual variant to an existing lexiconEntry."""
-    canonical_id = variant.get("canonical_id") or f"lexicon-{_slugify(variant.get('canonical_term', ''))}"
+    canonical_id = _sanity_id_or_fallback(
+        variant.get("canonical_id"),
+        f"lexicon-{_slugify(variant.get('canonical_term', ''))}",
+    )
     variant_term = (variant.get("variant_term") or "").strip()
     if not canonical_id or not variant_term:
         raise ValueError("Cannot write multilingual variant without canonical_id and variant_term")
@@ -774,10 +1070,12 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
     prep     = pkg.preprocess
     analysis = pkg.analysis
     now_iso  = datetime.now(timezone.utc).isoformat()
+    ingested_at = intake.ingested_at or now_iso
+    analysed_at = _analysis_processing_date(pkg, now_iso)
 
     # Omit None URL values — Sanity url fields cannot be null
     meta: dict = {
-        "ingestedAt":           now_iso,
+        "ingestedAt":           ingested_at,
         "preprocessingTool":    prep.tool_used,
         "preprocessingQuality": prep.quality,
     }
@@ -983,7 +1281,8 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
             "primaryProvider":       _provider_for_llm(pkg.llm_used),
             "promptVersion":         "ingestion-v3.3",
             "ontologyVersion":       "v3.0",
-            "processingDate":        now_iso,
+            "processingDate":        analysed_at,
+            "analysedAt":            analysed_at,
             "inputLengthChars":      prep.char_count,
             "truncated":             prep.truncated,
             "agreementStatus":       "not_validated",
@@ -1000,6 +1299,10 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
             "status": "not_validated",
         },
     }
+    if prep.media_metadata:
+        media_metadata = dict(prep.media_metadata)
+        media_metadata.pop("rawYtDlpMetadata", None)
+        doc["mediaMetadata"] = _with_array_keys(_drop_empty(media_metadata), prefix="media")
     testimony_review = _load_testimony_review(pkg.local_dir)
     if testimony_review:
         doc["testimonyReview"] = testimony_review
@@ -1011,6 +1314,21 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
     doc = {k: v for k, v in doc.items() if v is not None}
 
     return doc
+
+
+def _analysis_processing_date(pkg: DocumentPackage, fallback: str) -> str:
+    metadata_path = pkg.local_dir / "metadata.json"
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8")) if metadata_path.exists() else {}
+    except Exception:
+        metadata = {}
+    for key in ("saved_at", "analysis_saved_at", "processing_date"):
+        if metadata.get(key):
+            return str(metadata[key])
+    analysis_path = pkg.local_dir / "analysis.json"
+    if analysis_path.exists():
+        return datetime.fromtimestamp(analysis_path.stat().st_mtime, timezone.utc).isoformat()
+    return fallback
 
 
 def _slugify(value: str) -> str:
@@ -1180,6 +1498,82 @@ def _provider_for_llm(llm_used: str) -> str:
     if llm_used == "openrouter":
         return "openrouter"
     return "local"
+
+
+def _research_annotation_id(annotation: ResearchAnnotation) -> str:
+    return f"researchAnnotation-{_slugify(annotation.doc_id.removeprefix('doc-'))}-{_slugify(annotation.profile)}"
+
+
+def _build_research_annotation_document(annotation: ResearchAnnotation) -> dict:
+    data = annotation.model_dump(by_alias=True, mode="json")
+    doc_id = data.pop("doc_id")
+    result_json = _with_array_keys(data.pop("resultJson", {}), prefix="result")
+    doc = {
+        "_id": _research_annotation_id(annotation),
+        "_type": "researchAnnotation",
+        "sourceDocument": {"_type": "reference", "_ref": _sogice_document_ref(doc_id)},
+        "resultJson": result_json,
+        **data,
+    }
+    return {k: v for k, v in doc.items() if v not in (None, "")}
+
+
+def _sogice_document_ref(doc_id: str) -> str:
+    doc_id = doc_id.strip()
+    return doc_id if doc_id.startswith("doc-") else f"doc-{doc_id}"
+
+
+def _with_array_keys(value, prefix: str = "item"):
+    """Recursively add Sanity _key values to object items inside arrays."""
+    if isinstance(value, list):
+        result = []
+        for index, item in enumerate(value):
+            item = _with_array_keys(item, prefix=f"{prefix}-{index}")
+            if isinstance(item, dict) and "_key" not in item:
+                item = {"_key": f"{prefix}-{index}", **item}
+            result.append(item)
+        return result
+    if isinstance(value, dict):
+        return {k: _with_array_keys(v, prefix=f"{prefix}-{_slugify(str(k))}") for k, v in value.items()}
+    return value
+
+
+def _drop_empty(value):
+    if isinstance(value, list):
+        return [
+            cleaned for item in value
+            if (cleaned := _drop_empty(item)) not in (None, "", [], {})
+        ]
+    if isinstance(value, dict):
+        return {
+            key: cleaned for key, item in value.items()
+            if (cleaned := _drop_empty(item)) not in (None, "", [], {})
+        }
+    return value
+
+
+def _query(query: str, config: Config, params: dict | None = None) -> list[dict]:
+    url = (
+        f"https://{config.sanity_project_id}.api.sanity.io"
+        f"/v2024-01-01/data/query/{config.sanity_dataset}"
+    )
+    headers = {"Authorization": f"Bearer {config.sanity_write_token}"}
+    encoded_params = {"query": query}
+    for key, value in (params or {}).items():
+        encoded_params[key if key.startswith("$") else f"${key}"] = value
+    response = httpx.get(
+        url,
+        params=encoded_params,
+        headers=headers,
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json().get("result", [])
+
+
+def _fetch_document_by_id(doc_id: str, config: Config, projection: str) -> dict | None:
+    result = _query(f'*[_id == $doc_id][0]{projection}', config, {"doc_id": doc_id})
+    return result if isinstance(result, dict) else None
 
 
 def _mutate(mutations: list[dict], config: Config) -> dict:

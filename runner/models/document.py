@@ -282,6 +282,8 @@ class AnalysisResult(BaseModel):
             "country", "tactic", "actor", "network", "practice", "term",
             "harm", "migration", "function", "landmark", "flags", "evidence",
         ):
+            if key not in data:
+                continue
             val = data.get(key)
             if val is None:
                 data[key] = []
@@ -459,6 +461,7 @@ class IntakeResult:
     wayback_status: str = ""              # existing | saved | unavailable | failed | skipped
     wayback_checked_at: str = ""
     wayback_error: str = ""
+    ingested_at: str = ""                 # stable first-ingest timestamp
     source_url: str = ""                  # provenance URL for local files, if known
     original_filename: str = ""           # original local file name before doc_id storage
     local_copy_path: str = ""             # corpus copy of local file, preserving original name
@@ -489,6 +492,13 @@ class PreprocessResult:
     page_intel: Optional["PageIntelligence"] = None
     source_html_path: str = ""
     source_html_sha256: str = ""
+    media_metadata: dict = field(default_factory=dict)
+    transcript_chunks: list[dict] = field(default_factory=list)
+    transcript_versions: list[dict] = field(default_factory=list)
+    transcript_comparison: dict = field(default_factory=dict)
+    media_comments: list[dict] = field(default_factory=list)
+    duplicate_candidates: list[dict] = field(default_factory=list)
+    discovery_seed_queue: list[dict] = field(default_factory=list)
 
 
 @dataclass

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "sanity dev",
-    "build": "sanity build",
+    "build": "DO_NOT_TRACK=1 NO_UPDATE_NOTIFIER=1 COLUMNS=120 LINES=40 sanity build --hide-major-message",
     "deploy": "sanity deploy"
   },
   "dependencies": {

@@ -12,13 +12,15 @@ Usage:
   python -m runner embed-test
 """
 from typing import Optional
+from pathlib import Path
 import typer
 from rich.console import Console
 from rich.panel import Panel
 
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
-from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory
+from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots
+from .pipeline.system_tools import tool_path
 
 app = typer.Typer(name="runner", add_completion=False)
 console = Console()
@@ -37,9 +39,14 @@ def ingest(
     run_enrich: bool = typer.Option(False, "--enrich", help="Run Stage 3c enrichment pass after upload (lexicon + entity proposals)"),
     enrich_model: Optional[str] = typer.Option(None, "--enrich-model", help="LiteLLM model alias for enrichment, e.g. lexicon-llm or core-gemma"),
     second_opinion: bool = typer.Option(False, "--second-opinion", help="Also run alternate enrichment model and save a comparison file"),
+    collect_comments: bool = typer.Option(False, "--collect-comments", help="For video platforms, collect a bounded lower-trust comment evidence artifact"),
+    max_comments: int = typer.Option(50, "--max-comments", help="Maximum comments to retain when --collect-comments is enabled"),
 ):
     """Full ingestion pipeline: intake → preprocess → embed → classify → review → upload."""
     config = load_config(llm=llm)
+    if collect_comments:
+        config.media_collect_comments = True
+        config.media_max_comments = max_comments
 
     # Stage 0.5 — Triage (optional): fast pre-screen to recommend analysis model
     if run_triage and not yes:
@@ -324,12 +331,463 @@ def enrich_doc(
         console.print("[yellow]Enrichment skipped.[/yellow]")
 
 
+@app.command(name="research-annotate")
+def research_annotate_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
+    profile: str = typer.Option(..., "--profile", help="Research profile to run"),
+    llm: str = typer.Option("litelm", help="LLM: litelm | litelm-heavy | litelm-reasoning | claude | local | local-heavy | local-reasoning"),
+    model: Optional[str] = typer.Option(None, "--model", help="Override model alias/name"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Run and validate without saving or writing Sanity"),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite local file without archiving prior version"),
+    force_reviewed: bool = typer.Option(False, "--force-reviewed", help="Allow replacing reviewed/corrected annotations"),
+    save_local_only: bool = typer.Option(False, "--save-local-only", help="Save local annotation but do not write Sanity"),
+):
+    """Run a selected research annotation profile on an already-ingested document."""
+    config = load_config(llm=llm)
+    try:
+        annotation = research_annotate.annotate_document(
+            doc_id=doc_id,
+            profile=profile,
+            config=config,
+            llm=llm,
+            model=model,
+            dry_run=dry_run,
+            overwrite=overwrite,
+            force_reviewed=force_reviewed,
+            save_local_only=save_local_only,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Research annotation failed"))
+        raise typer.Exit(1)
+
+    save_note = "validated only" if dry_run else "saved locally"
+    if not dry_run and not save_local_only:
+        save_note += " + written to Sanity"
+    console.print(Panel(
+        f"Document: [bold]{annotation.doc_id}[/bold]\n"
+        f"Profile: [bold]{annotation.profile}[/bold]\n"
+        f"Stance: [bold]{annotation.source_stance}[/bold]\n"
+        f"Status: {annotation.annotation_status}\n"
+        f"Result: {save_note}",
+        title="[green]Research annotation complete[/green]",
+    ))
+
+
+@app.command(name="research-annotations")
+def research_annotations_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
+):
+    """List local and Sanity research annotations for a document."""
+    from rich.table import Table as RichTable
+
+    config = load_config(require_services=False)
+    table = RichTable(title=f"Research annotations — {doc_id}")
+    table.add_column("Location")
+    table.add_column("Profile")
+    table.add_column("Status")
+    table.add_column("Visibility")
+    table.add_column("Generated")
+    table.add_column("Detail", overflow="fold")
+
+    local_rows = research_annotate.list_local_annotations(doc_id, config)
+    for row in local_rows:
+        table.add_row(
+            "local",
+            row.get("profile", ""),
+            row.get("annotationStatus", ""),
+            row.get("publicVisibility", ""),
+            row.get("generatedAt", ""),
+            row.get("path", ""),
+        )
+
+    try:
+        sanity_rows = __import__(
+            "runner.clients.sanity", fromlist=["fetch_research_annotations_for_doc"]
+        ).fetch_research_annotations_for_doc(doc_id, config)
+        for row in sanity_rows:
+            table.add_row(
+                "Sanity",
+                row.get("profile", ""),
+                row.get("annotationStatus", ""),
+                row.get("publicVisibility", ""),
+                row.get("generatedAt", ""),
+                row.get("_id", ""),
+            )
+    except Exception as exc:
+        table.add_row("Sanity", "unavailable", "", "", "", str(exc))
+
+    if not local_rows:
+        console.print("[dim]No local research annotation files found.[/dim]")
+    console.print(table)
+
+
+@app.command(name="set-research-profile")
+def set_research_profile_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
+    profile: str = typer.Option(..., "--profile", help="Research profile to activate/deactivate"),
+    active: bool = typer.Option(True, "--active/--inactive", help="Activate or deactivate this profile"),
+    reason: str = typer.Option("", "--reason", help="Optional reason for profile status"),
+    reviewer_note: str = typer.Option("", "--reviewer-note", help="Optional researcher note"),
+    local_only: bool = typer.Option(False, "--local-only", help="Update local media_metadata.json only"),
+):
+    """Set mediaMetadata profile activation for a sogiceDocument."""
+    config = load_config(require_services=not local_only)
+    try:
+        data = research_annotate.set_profile_status(
+            doc_id=doc_id,
+            profile=profile,
+            active=active,
+            config=config,
+            reason=reason,
+            reviewer_note=reviewer_note,
+            write_sanity=not local_only,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Profile update failed"))
+        raise typer.Exit(1)
+
+    console.print(Panel(
+        f"Document: [bold]{doc_id.removeprefix('doc-')}[/bold]\n"
+        f"Profile: [bold]{profile}[/bold]\n"
+        f"Active: [bold]{active}[/bold]\n"
+        f"Active profiles: {', '.join(data.get('activeResearchProfiles', []))}",
+        title="[green]Research profile updated[/green]",
+    ))
+
+
+@app.command(name="annotate-batch")
+def annotate_batch_cmd(
+    profile: str = typer.Argument(..., help="Research annotation profile to run"),
+    llm: str = typer.Option("litelm", "--llm", help="LLM route for annotation"),
+    filter_format: str = typer.Option("", "--format", help="Only annotate docs with this analysis format"),
+    filter_type: str = typer.Option("", "--type", help="Only annotate docs with this analysis type"),
+    filter_set: str = typer.Option("", "--set", help="Only annotate docs in this saved document set"),
+    skip_existing: bool = typer.Option(True, "--skip-existing/--no-skip-existing", help="Skip existing non-rejected annotations"),
+    force_reviewed: bool = typer.Option(False, "--force-reviewed", help="Allow replacing reviewed/corrected annotations"),
+    save_local_only: bool = typer.Option(True, "--save-local-only/--push-sanity", help="Save locally only by default"),
+    delay_seconds: float = typer.Option(2.0, "--delay-seconds", help="Pause between documents"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print candidate docs without running annotations"),
+):
+    """Run a research annotation profile over multiple corpus documents."""
+    import json
+    import time
+
+    if profile == "documentary_analysis":
+        console.print(
+            "[red]documentary_analysis is intentionally manual-only.[/red]\n"
+            "Run it one document at a time from Media Review or `research-annotate`."
+        )
+        raise typer.Exit(1)
+
+    config = load_config(llm=llm, require_services=not save_local_only)
+    candidates = _annotation_batch_candidates(
+        config=config,
+        filter_format=filter_format,
+        filter_type=filter_type,
+        filter_set=filter_set,
+    )
+    annotated = skipped = errors = 0
+    total = len(candidates)
+    console.print(f"[bold]Batch annotation:[/bold] {profile} over {total} candidate document(s)")
+
+    try:
+        for index, doc_id in enumerate(candidates, start=1):
+            status = "done"
+            try:
+                existing = research_annotate.load_local_annotation(doc_id, profile, config)
+                if skip_existing and existing and existing.annotation_status != "rejected":
+                    skipped += 1
+                    status = "skipped"
+                elif dry_run:
+                    status = "dry-run"
+                else:
+                    research_annotate.annotate_document(
+                        doc_id=doc_id,
+                        profile=profile,
+                        config=config,
+                        llm=llm,
+                        force_reviewed=force_reviewed,
+                        save_local_only=save_local_only,
+                        overwrite=True,
+                    )
+                    annotated += 1
+                    if delay_seconds > 0:
+                        time.sleep(delay_seconds)
+            except Exception as exc:
+                errors += 1
+                status = f"error: {exc}"
+            console.print(f"{index}/{total}  {doc_id}  {profile}  [{status}]", markup=False)
+    except KeyboardInterrupt:
+        console.print("[yellow]Interrupted by user. Completed annotations remain saved.[/yellow]")
+
+    console.print(Panel(
+        f"Annotated: {annotated}\nSkipped: {skipped}\nErrors: {errors}",
+        title="[green]Batch annotation summary[/green]" if errors == 0 else "[yellow]Batch annotation summary[/yellow]",
+    ))
+
+
+@app.command(name="review-annotation")
+def review_annotation_cmd(
+    doc_id: str = typer.Argument(..., help="Document id"),
+    profile: str = typer.Argument(..., help="Research annotation profile"),
+    status: str = typer.Option("researcher_reviewed", "--status", help="model_generated | researcher_reviewed | corrected | rejected"),
+    reviewer_notes: str = typer.Option("", "--notes", help="Reviewer notes to store locally"),
+    public_visibility: str = typer.Option("", "--public-visibility", help="Optional visibility override"),
+    push_sanity: bool = typer.Option(False, "--push-sanity", help="Also write the reviewed annotation to Sanity"),
+):
+    """Update human review status for a local research annotation."""
+    config = load_config(require_services=push_sanity)
+    try:
+        annotation = research_annotate.update_annotation_review(
+            doc_id=doc_id,
+            profile=profile,
+            config=config,
+            annotation_status=status,
+            reviewer_notes=reviewer_notes,
+            public_visibility=public_visibility or None,
+            write_sanity=push_sanity,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Review annotation failed"))
+        raise typer.Exit(1)
+
+    console.print(Panel(
+        f"Document: [bold]{annotation.doc_id}[/bold]\n"
+        f"Profile: [bold]{annotation.profile}[/bold]\n"
+        f"Status: {annotation.annotation_status}\n"
+        f"Visibility: {annotation.public_visibility}\n"
+        f"Reviewed at: {annotation.reviewed_at or 'not set'}",
+        title="[green]Annotation review updated[/green]",
+    ))
+
+
+@app.command(name="export-annotations")
+def export_annotations_cmd(
+    profile: str = typer.Argument(..., help="Research annotation profile to export"),
+    output: str = typer.Option("", "--output", "-o", help="Markdown output path"),
+    filter_format: str = typer.Option("", "--format", help="Only include docs with this analysis format"),
+    filter_type: str = typer.Option("", "--type", help="Only include docs with this analysis type"),
+):
+    """Export local research annotations as a Markdown corpus-reading file."""
+    config = load_config(require_services=False)
+    try:
+        path = research_annotate.export_annotations_markdown(
+            profile=profile,
+            config=config,
+            output_path=Path(output) if output else None,
+            filter_format=filter_format,
+            filter_type=filter_type,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Export annotations failed"))
+        raise typer.Exit(1)
+    console.print(f"[green]Exported annotations:[/green] {path}")
+
+
+@app.command(name="push-approved-networks")
+def push_approved_networks_cmd(
+    doc_id: str = typer.Argument(..., help="Document id whose approved suggestedNetworks should be promoted"),
+):
+    """Promote approved suggestedNetworks on a Sanity document to organization records."""
+    config = load_config(require_services=True)
+    try:
+        from runner.clients.sanity import promote_approved_suggested_networks
+
+        result = promote_approved_suggested_networks(doc_id, config)
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Network promotion failed"))
+        raise typer.Exit(1)
+    title = "[green]Network promotion complete[/green]" if not result["errors"] else "[yellow]Network promotion completed with errors[/yellow]"
+    console.print(Panel(
+        f"Pushed: {len(result['pushed'])}\n"
+        f"Skipped not approved: {result['skipped']}\n"
+        f"Errors: {len(result['errors'])}\n"
+        + ("\n".join(result["errors"]) if result["errors"] else ""),
+        title=title,
+    ))
+
+
+@app.command(name="capture-screenshots")
+def capture_screenshots_cmd(
+    doc_id: str = typer.Argument(..., help="Document id with a documentary annotation"),
+    profile: str = typer.Option("documentary_analysis", "--profile", help="Annotation profile with screenshot suggestions"),
+    video_path: str = typer.Option("", "--video-path", help="Local video file path if not stored in intake metadata"),
+    output_dir: str = typer.Option("", "--output-dir", help="Directory for screenshots"),
+    limit: int = typer.Option(20, "--limit", help="Maximum screenshots to capture"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show planned screenshots without running ffmpeg"),
+):
+    """Capture local screenshot evidence from annotation timestamp suggestions."""
+    config = load_config(require_services=False)
+    try:
+        payload = screenshots.capture_screenshots(
+            doc_id=doc_id,
+            profile=profile,
+            config=config,
+            video_path=video_path,
+            output_dir=output_dir,
+            limit=limit,
+            dry_run=dry_run,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Capture screenshots failed"))
+        raise typer.Exit(1)
+
+    console.print(Panel(
+        f"Document: [bold]{payload['doc_id']}[/bold]\n"
+        f"Profile: {payload['profile']}\n"
+        f"Video: {payload['videoPath']}\n"
+        f"Screenshots: {payload['timestampCount']}\n"
+        f"Output: {payload['outputDir']}",
+        title="[green]Screenshot capture plan[/green]" if dry_run else "[green]Screenshots captured[/green]",
+    ))
+
+
+@app.command(name="make-set")
+def make_set_cmd(
+    name: str = typer.Argument(..., help="Document set name"),
+    doc_ids: list[str] = typer.Argument(None, help="Doc IDs to include"),
+    description: str = typer.Option("", "--description", help="Optional set description"),
+):
+    """Create or replace a local document set."""
+    config = load_config(require_services=False)
+    payload = _write_document_set(config, name, list(doc_ids or []), description)
+    console.print(f"[green]Saved set {payload['name']} with {len(payload['docIds'])} document(s).[/green]")
+
+
+@app.command(name="list-sets")
+def list_sets_cmd():
+    """List saved local document sets."""
+    from rich.table import Table as RichTable
+
+    config = load_config(require_services=False)
+    table = RichTable(title="Document Sets")
+    table.add_column("Name")
+    table.add_column("Docs")
+    table.add_column("Created")
+    table.add_column("Description", overflow="fold")
+    for item in _list_document_sets(config):
+        table.add_row(item["name"], str(len(item.get("docIds", []))), item.get("createdAt", ""), item.get("description", ""))
+    console.print(table)
+
+
+@app.command(name="show-set")
+def show_set_cmd(name: str = typer.Argument(..., help="Document set name")):
+    """Show doc_ids in a saved document set."""
+    config = load_config(require_services=False)
+    payload = _read_document_set(config, name)
+    console.print(Panel("\n".join(payload.get("docIds", [])) or "(empty)", title=f"Set: {payload['name']}"))
+
+
+@app.command(name="add-to-set")
+def add_to_set_cmd(
+    name: str = typer.Argument(..., help="Document set name"),
+    doc_id: str = typer.Argument(..., help="Doc ID to add"),
+):
+    """Add a document to a saved set."""
+    config = load_config(require_services=False)
+    payload = _read_document_set(config, name)
+    doc_ids = list(dict.fromkeys([*payload.get("docIds", []), doc_id.removeprefix("doc-")]))
+    payload = _write_document_set(config, name, doc_ids, payload.get("description", ""))
+    console.print(f"[green]Set {name} now has {len(payload['docIds'])} document(s).[/green]")
+
+
+@app.command(name="remove-from-set")
+def remove_from_set_cmd(
+    name: str = typer.Argument(..., help="Document set name"),
+    doc_id: str = typer.Argument(..., help="Doc ID to remove"),
+):
+    """Remove a document from a saved set."""
+    config = load_config(require_services=False)
+    payload = _read_document_set(config, name)
+    target = doc_id.removeprefix("doc-")
+    doc_ids = [item for item in payload.get("docIds", []) if item != target]
+    payload = _write_document_set(config, name, doc_ids, payload.get("description", ""))
+    console.print(f"[green]Set {name} now has {len(payload['docIds'])} document(s).[/green]")
+
+
+def _document_sets_dir(config):
+    path = config.corpus_dir / ".document_sets"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _set_path(config, name: str):
+    safe = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in name.strip()).strip("_")
+    if not safe:
+        raise ValueError("Set name is required")
+    return _document_sets_dir(config) / f"{safe}.json"
+
+
+def _write_document_set(config, name: str, doc_ids: list[str], description: str = "") -> dict:
+    from datetime import datetime, timezone
+    import json
+
+    clean_ids = list(dict.fromkeys(item.strip().removeprefix("doc-") for item in doc_ids if item.strip()))
+    payload = {
+        "name": _set_path(config, name).stem,
+        "createdAt": datetime.now(timezone.utc).isoformat(),
+        "description": description,
+        "docIds": clean_ids,
+    }
+    _set_path(config, name).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return payload
+
+
+def _read_document_set(config, name: str) -> dict:
+    import json
+
+    path = _set_path(config, name)
+    if not path.exists():
+        raise FileNotFoundError(f"No document set named {name!r}")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _list_document_sets(config) -> list[dict]:
+    import json
+
+    rows = []
+    for path in sorted(_document_sets_dir(config).glob("*.json")):
+        try:
+            rows.append(json.loads(path.read_text(encoding="utf-8")))
+        except Exception:
+            continue
+    return rows
+
+
+def _annotation_batch_candidates(config, filter_format: str = "", filter_type: str = "", filter_set: str = "") -> list[str]:
+    import json
+
+    allowed = None
+    if filter_set:
+        allowed = set(_read_document_set(config, filter_set).get("docIds", []))
+    candidates: list[str] = []
+    for doc_dir in sorted(config.corpus_dir.iterdir()):
+        if not doc_dir.is_dir() or doc_dir.name.startswith("."):
+            continue
+        if allowed is not None and doc_dir.name not in allowed:
+            continue
+        analysis_path = doc_dir / "analysis.json"
+        extracted_path = doc_dir / "extracted.txt"
+        if not analysis_path.exists() or not extracted_path.exists():
+            continue
+        try:
+            analysis = json.loads(analysis_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if filter_format and str(analysis.get("format", "")).lower() != filter_format.lower():
+            continue
+        if filter_type and str(analysis.get("type", "")).lower() != filter_type.lower():
+            continue
+        candidates.append(doc_dir.name)
+    return candidates
+
+
 @app.command()
 def status(
     doc_id: Optional[str] = typer.Argument(None, help="Optional doc_id for a detailed pipeline trace"),
 ):
     """List pending documents, or show a detailed status trace for one document."""
-    config = load_config()
+    config = load_config(require_services=False)
     if doc_id:
         upload.print_document_status(doc_id, config)
     else:
@@ -418,6 +876,249 @@ def show_queue(
         return
     console.print(table)
     console.print(f"[dim]Total: {total} candidates. Ingest with: python -m runner ingest <url>[/dim]")
+
+
+@app.command(name="related-source-search")
+def related_source_search_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id with a discovery_seed_queue.json"),
+    provider: str = typer.Option("duckduckgo", "--provider", help="Search provider: duckduckgo"),
+    max_queries: int = typer.Option(5, "--max-queries", help="Maximum discovery seed queries to run"),
+    max_results: int = typer.Option(5, "--max-results", help="Maximum search results per query"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show seeds without searching or writing candidate_sources.json"),
+):
+    """Search related sources from discovery seeds and save a review-only candidate queue."""
+    from rich.table import Table as RichTable
+
+    config = load_config(require_services=False)
+    try:
+        payload = related_search.run_related_source_search(
+            doc_id=doc_id,
+            config=config,
+            provider=provider,
+            max_queries=max_queries,
+            max_results_per_query=max_results,
+            dry_run=dry_run,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Related source search failed"))
+        raise typer.Exit(1)
+
+    if dry_run:
+        table = RichTable(title=f"Discovery seeds — {doc_id}")
+        table.add_column("Query")
+        table.add_column("Type")
+        table.add_column("Reason", overflow="fold")
+        for seed in payload["seedsUsed"]:
+            table.add_row(seed.get("query", ""), seed.get("seedType", ""), seed.get("reason", ""))
+        console.print(table)
+        console.print("[dim]Dry run only: no search performed and no files written.[/dim]")
+        return
+
+    table = RichTable(title=f"Candidate sources — {doc_id}")
+    table.add_column("Score")
+    table.add_column("Platform")
+    table.add_column("Category")
+    table.add_column("In corpus")
+    table.add_column("Title", overflow="fold")
+    table.add_column("URL", overflow="fold")
+    for row in payload["candidates"][:20]:
+        table.add_row(
+            str(row.get("score", "")),
+            row.get("platform", ""),
+            row.get("candidateCategory", ""),
+            "yes" if row.get("alreadyInCorpus") else "no",
+            row.get("title", ""),
+            row.get("url", ""),
+        )
+    console.print(table)
+    console.print(
+        f"[green]Saved {payload['candidateCount']} candidate source(s) to "
+        f"{config.corpus_dir / payload['doc_id'] / 'candidate_sources.json'}[/green]\n"
+        "[dim]Review manually. This command never ingests candidates automatically.[/dim]"
+    )
+
+
+@app.command(name="media-report")
+def media_report_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id with media extraction artifacts"),
+):
+    """Show transcript, comment, duplicate, and related-source media artifacts."""
+    from rich.table import Table as RichTable
+
+    config = load_config(require_services=False)
+    try:
+        report = media_review.media_extraction_report(doc_id, config)
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Media report failed"))
+        raise typer.Exit(1)
+
+    summary = (
+        f"Document: [bold]{report['doc_id']}[/bold]\n"
+        f"Format: {report.get('contentFormat') or 'unknown'} / {report.get('mediaMode') or 'unknown'}\n"
+        f"Platforms: {', '.join(report.get('platforms') or []) or 'none recorded'}\n"
+        f"Views: {report.get('platformViewCount') if report.get('platformViewCount') is not None else 'not recorded'} "
+        "(platform metadata, not independently verified)\n"
+        f"Primary transcript chunks: {report.get('primaryTranscriptChunkCount', 0)}\n"
+        f"Comments collected: {report.get('commentEvidenceCount', 0)} "
+        f"({report.get('commentAnalysisStatus', 'not_available')})\n"
+        f"Related candidates: {report.get('relatedCandidateCount', 0)}"
+    )
+    console.print(Panel(summary, title="[green]Media Extraction Report[/green]"))
+
+    versions = RichTable(title="Transcript Versions")
+    versions.add_column("Label")
+    versions.add_column("Language")
+    versions.add_column("Source")
+    versions.add_column("Kind")
+    versions.add_column("Chunks")
+    versions.add_column("Chars")
+    for row in report.get("transcriptVersions", []):
+        versions.add_row(
+            row.get("label", ""),
+            row.get("language", ""),
+            row.get("source", ""),
+            row.get("kind", ""),
+            str(row.get("chunkCount", "")),
+            str(row.get("charCount", "")),
+        )
+    console.print(versions)
+
+    comparisons = report.get("transcriptComparison", {}).get("comparisons", [])
+    if comparisons:
+        table = RichTable(title="Transcript Comparisons")
+        table.add_column("Left")
+        table.add_column("Right")
+        table.add_column("Similarity")
+        table.add_column("Char Δ")
+        table.add_column("Chunk Δ")
+        for row in comparisons:
+            table.add_row(
+                row.get("left", ""),
+                row.get("right", ""),
+                str(row.get("similarity", "")),
+                str(row.get("charDelta", "")),
+                str(row.get("chunkDelta", "")),
+            )
+        console.print(table)
+
+    actions = report.get("nextRecommendedActions", [])
+    if actions:
+        console.print("[yellow]Next media checks:[/yellow]")
+        for action in actions:
+            console.print(f"  - {action}")
+
+
+@app.command(name="collect-comments")
+def collect_comments_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id with a video/audio platform source"),
+    max_comments: int = typer.Option(50, "--max-comments", help="Maximum comments to retain for review"),
+):
+    """Collect platform comments after ingest and build a lower-trust review queue."""
+    config = load_config(require_services=False)
+    try:
+        result = media_review.collect_comments_for_document(
+            doc_id=doc_id,
+            config=config,
+            max_comments=max_comments,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Collect comments failed"))
+        raise typer.Exit(1)
+
+    platform_total = result.get("platformCommentCount")
+    console.print(Panel(
+        f"Document: [bold]{result['doc_id']}[/bold]\n"
+        f"Platform comment count: {platform_total if platform_total is not None else 'not reported'}\n"
+        f"Collected for review: {result['collectedCount']}\n"
+        f"LLM analysis status: {result['queue'].get('analysisStatus', '')}\n"
+        "Use: comments remain lower-trust context, not source claims.",
+        title="[green]Comments collected[/green]",
+    ))
+
+
+@app.command(name="repair-media-metadata")
+def repair_media_metadata_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id with media_metadata.json"),
+    push_sanity: bool = typer.Option(False, "--push-sanity", help="Patch structured mediaMetadata into Sanity"),
+):
+    """Promote table-ready fields from raw yt-dlp metadata into structured media metadata."""
+    config = load_config(require_services=push_sanity)
+    try:
+        result = media_review.repair_media_metadata_from_raw(
+            doc_id=doc_id,
+            config=config,
+            write_sanity=push_sanity,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Repair media metadata failed"))
+        raise typer.Exit(1)
+
+    changed = result.get("changed", {})
+    lines = [
+        f"Document: [bold]{result['doc_id']}[/bold]",
+        f"Changed fields: {result['changedCount']}",
+        f"Local file: {result['mediaMetadataPath']}",
+    ]
+    if result.get("sanityId"):
+        lines.append(f"Patched Sanity: {result['sanityId']}")
+    if changed:
+        lines.append("Fields: " + ", ".join(changed.keys()))
+    console.print(Panel("\n".join(lines), title="[green]Media metadata repaired[/green]"))
+
+
+@app.command(name="attach-srt")
+def attach_srt_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id of an existing corpus document"),
+    srt_path: str = typer.Argument(..., help="Path to researcher-provided SRT/VTT"),
+    label: str = typer.Option("", "--label", help="Stable label for this transcript version"),
+    language: str = typer.Option("", "--language", help="Transcript language code, e.g. en, pt, no"),
+    make_primary: bool = typer.Option(True, "--make-primary/--compare-only", help="Use uploaded SRT as primary extracted transcript"),
+):
+    """Attach a researcher-provided SRT/VTT to an existing media document."""
+    config = load_config(require_services=False)
+    try:
+        result = media_review.attach_srt_to_document(
+            doc_id=doc_id,
+            srt_path=srt_path,
+            config=config,
+            label=label,
+            language=language,
+            make_primary=make_primary,
+        )
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Attach SRT failed"))
+        raise typer.Exit(1)
+
+    console.print(Panel(
+        f"Document: [bold]{result['doc_id']}[/bold]\n"
+        f"Transcript: [bold]{result['label']}[/bold]\n"
+        f"Chunks: {result['chunkCount']}  Chars: {result['charCount']}\n"
+        f"Primary: {result['makePrimary']}\n"
+        f"Saved: {result['transcriptPath']}",
+        title="[green]Transcript attached[/green]",
+    ))
+
+
+@app.command(name="comment-evidence-queue")
+def comment_evidence_queue_cmd(
+    doc_id: str = typer.Argument(..., help="doc_id with media_comments.json"),
+):
+    """Create or show the lower-trust comment evidence queue for later review."""
+    config = load_config(require_services=False)
+    try:
+        queue = media_review.load_or_build_comment_queue(doc_id, config, save=True)
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Comment evidence queue failed"))
+        raise typer.Exit(1)
+
+    console.print(Panel(
+        f"Document: [bold]{doc_id}[/bold]\n"
+        f"Comments: {queue.get('commentCount', 0)}\n"
+        f"Review status: {queue.get('reviewStatus', '')}\n"
+        f"LLM analysis status: {queue.get('analysisStatus', '')}\n"
+        f"Use: comments remain lower-trust context, not source claims.",
+        title="[green]Comment Evidence Queue[/green]",
+    ))
 
 
 @app.command(name="export")
@@ -664,6 +1365,29 @@ def doctor():
             ok("Local analysis model", f"{analysis_model} (fallback for --llm local)")
         else:
             ok("Local analysis model", f"{analysis_model} not installed — only needed for offline/fallback (--llm local)")
+
+    # ── Media extraction tools ───────────────────────────────────────────
+    try:
+        import yt_dlp as _yt_dlp
+        version_mod = getattr(_yt_dlp, "version", None)
+        ok("yt-dlp", f"Installed ({getattr(version_mod, '__version__', 'version unknown')})")
+    except Exception as exc:
+        fail("yt-dlp", f"Not importable: {exc}. Install/update yt-dlp before media ingest.")
+
+    ffmpeg_path = tool_path("ffmpeg")
+    if ffmpeg_path:
+        ok("ffmpeg", ffmpeg_path)
+    else:
+        fail("ffmpeg", "Not found. Install ffmpeg for reliable audio fallback, screenshots, and video tooling.")
+
+    js_runtimes = [name for name in ("deno", "node", "bun") if tool_path(name)]
+    if js_runtimes:
+        ok("YouTube JS runtime", ", ".join(js_runtimes))
+    else:
+        fail(
+            "YouTube JS runtime",
+            "No deno/node/bun found. yt-dlp may miss YouTube formats or metadata as YouTube extraction changes.",
+        )
 
     # ── Embedding dimension ───────────────────────────────────────────────
     if installed_models and any(m.startswith(embedding_model.split(":")[0]) for m in installed_models):

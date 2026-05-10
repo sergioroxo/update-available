@@ -58,6 +58,9 @@ SCHEMA:
       "function": "Euphemism|Conspiracy|Pseudo-Diagnostic|Identity-Policing|Moral-Purity Frame|Political Slogan|Recruitment Frame|Pastoral Rhetoric|Disinformation Narrative|Promotional Recruitment|Testimonial Marketing|Unknown",
       "exact_quote": "the sentence where this term appears",
       "definition_as_used": "how the document defines or uses this term",
+      "model_confidence": 0.0,
+      "confidence_rationale": "brief reason for the confidence score, grounded in quote clarity and specificity",
+      "researcher_confidence": null,
       "register": "promotional|defensive|euphemistic|clinical|legal|conspiratorial|testimonial|neutral",
       "variants": [
         {
@@ -92,6 +95,9 @@ SCHEMA:
       "legal_entities_mentioned": ["Christian Legal Centre"],
       "claims_made": ["notable quantitative or policy claims"],
       "evidence_quote": "most informative 2-3 sentence passage about this entity",
+      "model_confidence": 0.0,
+      "confidence_rationale": "brief reason for the confidence score",
+      "researcher_confidence": null,
       "network_connections": [
         {
           "entity_name": "connected entity name",
@@ -116,6 +122,9 @@ SCHEMA:
       "tactic": "canonical tactic label",
       "definition": "how the tactic operates in this document",
       "evidence_quote": "most informative quote",
+      "model_confidence": 0.0,
+      "confidence_rationale": "brief reason for the confidence score",
+      "researcher_confidence": null,
       "primary_cluster": "ontology cluster if known",
       "secondary_cluster": "",
       "tactic_level": "structural|sub-tactic|campaign",
@@ -147,7 +156,10 @@ SCHEMA:
       "practice_id": "Practice: Pastoral-Care",
       "exact_description": "verbatim or near-verbatim description from document",
       "harm_stance": "denied|minimized|reframed|acknowledged|not_mentioned",
-      "harm_quote": "the quote demonstrating the harm stance"
+      "harm_quote": "the quote demonstrating the harm stance",
+      "model_confidence": 0.0,
+      "confidence_rationale": "brief reason for the confidence score",
+      "researcher_confidence": null
     }
   ],
   "statistical_claims": [
@@ -155,7 +167,10 @@ SCHEMA:
       "claim": "exact claim made",
       "source_cited": "what source they give",
       "verifiable": true,
-      "context": "why it matters for research"
+      "context": "why it matters for research",
+      "model_confidence": 0.0,
+      "confidence_rationale": "brief reason for the confidence score",
+      "researcher_confidence": null
     }
   ]
 }
@@ -173,6 +188,12 @@ For every SOGICE-related term, phrase, or label in the document:
 - Extract it exactly as written — do not paraphrase
 - Note whether the document DEFINES it (even implicitly) — capture that definition
 - Note the register: are they promoting it? defending it? disguising it?
+- Set `model_confidence` from 0.0 to 1.0 for the proposal itself:
+  - 0.85–1.00: exact term, direct quote, clear SOGICE relevance, clear function/register
+  - 0.65–0.84: relevant and evidenced, but function, cluster, or definition needs researcher judgement
+  - 0.40–0.64: possible term/variant; include only if useful for review and explain uncertainty
+  - below 0.40: do not propose unless the term is strategically important and uncertainty is explicit
+- Leave `researcher_confidence` as null. The researcher sets it during review.
 - Look for cross-language equivalents if the document switches languages or cites foreign sources
 - Note which other terms appear in the same sentences — these co-occurrences reveal rhetorical clusters
 - If the term is a rebranding of a known harmful practice, flag the relationship
@@ -251,6 +272,9 @@ MAIN ANALYSIS RESULT (candidate terms and actors already identified):
 ## QUALITY RULES
 
 - Every `lexicon_proposal` MUST have a non-empty `exact_quote`
+- Every `lexicon_proposal` MUST include `model_confidence` and `confidence_rationale`
+- Every entity, tactic, practice, and statistical claim proposal SHOULD include `model_confidence` and `confidence_rationale`
+- Leave every `researcher_confidence` field as null; it is set only during human review
 - Every `entity_proposal` MUST have a non-empty `evidence_quote`
 - Prefer `add_evidence` over `add_new` if the term already exists in the lexicon
 - Do not propose generic terms like "homosexuality", "faith", "God" — only SOGICE-specific terminology

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import json
 
+from runner.pipeline.intake import _detect_source_type
 from runner.pipeline.intake import find_existing_by_source
 from runner.pipeline.intake import update_intake_consent
 
@@ -56,3 +57,10 @@ def test_update_intake_consent_patches_existing_intake_json(tmp_path):
     data = json.loads((doc_dir / "intake.json").read_text())
     assert data["testimony_consent"] == "confirmed"
     assert data["testimony_consent_updated_at"]
+
+
+def test_detect_source_type_routes_video_platform_urls_to_video():
+    assert _detect_source_type("https://www.youtube.com/watch?v=abc123") == "video"
+    assert _detect_source_type("https://youtu.be/abc123") == "video"
+    assert _detect_source_type("https://vimeo.com/123456") == "video"
+    assert _detect_source_type("https://example.org/article") == "url"

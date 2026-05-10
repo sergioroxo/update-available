@@ -17,6 +17,18 @@ from pathlib import Path
 
 from ..config import Config
 from ..models.document import IntakeResult, PreprocessResult
+from .transcripts import (
+    chunks_to_text,
+    compare_transcript_versions,
+    parse_timed_text,
+    transcript_version,
+)
+from .media_evidence import (
+    comment_evidence_from_ytdlp,
+    discovery_seed_queue_from_media,
+    duplicate_candidates_from_media,
+)
+from .system_tools import ensure_tool_path_env, tool_path
 
 # Fallback constants — overridden by config or --max-chars CLI flag
 _DEFAULT_LIMIT = 24_000
@@ -35,7 +47,7 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
     elif st == "epub":
         result = _preprocess_pdf(Path(intake.source))  # Docling handles EPUB
     elif st in ("video", "audio"):
-        result = _preprocess_video(intake.source)
+        result = _preprocess_video(intake.source, config=config)
     elif st == "srt":
         result = _preprocess_srt(Path(intake.source))
     else:
@@ -180,10 +192,12 @@ def _preprocess_pdf(path: Path) -> PreprocessResult:
         )
 
 
-def _preprocess_video(source: str) -> PreprocessResult:
+def _preprocess_video(source: str, config: Config | None = None) -> PreprocessResult:
     """yt-dlp subtitle extraction; faster-whisper transcription fallback."""
     import tempfile, os
 
+    ensure_tool_path_env()
+    last_info: dict = {}
     # Try yt-dlp subtitles first (fast, no compute)
     try:
         import yt_dlp
@@ -195,19 +209,75 @@ def _preprocess_video(source: str) -> PreprocessResult:
                 "skip_download": True,
                 "outtmpl": os.path.join(tmp, "%(id)s.%(ext)s"),
                 "quiet": True,
+                "writeinfojson": True,
+                "ignoreerrors": False,
+                "getcomments": bool(getattr(config, "media_collect_comments", False)),
             }
+            ffmpeg = tool_path("ffmpeg")
+            if ffmpeg:
+                opts["ffmpeg_location"] = ffmpeg
             with yt_dlp.YoutubeDL(opts) as ydl:
-                ydl.download([source])
+                info = ydl.extract_info(source, download=True)
+                last_info = info or {}
             srt_files = list(Path(tmp).glob("*.vtt")) + list(Path(tmp).glob("*.srt"))
             if srt_files:
-                text = _strip_srt(srt_files[0].read_text(encoding="utf-8"))
+                versions: list[dict] = []
+                texts_by_label: dict[str, str] = {}
+                chunks_by_label: dict[str, list[dict]] = {}
+                for caption_path in sorted(srt_files):
+                    chunks = parse_timed_text(
+                        caption_path.read_text(encoding="utf-8", errors="replace"),
+                        source_format=caption_path.suffix.lstrip(".") or "caption",
+                    )
+                    if not chunks:
+                        continue
+                    label = caption_path.stem
+                    language = _caption_language(caption_path)
+                    kind = _caption_kind(info, language)
+                    version = transcript_version(
+                        label=label,
+                        chunks=chunks,
+                        language=language,
+                        source="yt-dlp",
+                        kind=kind,
+                    )
+                    versions.append(version)
+                    texts_by_label[label] = chunks_to_text(chunks, include_timestamps=False)
+                    chunks_by_label[label] = chunks
+                if not versions:
+                    raise ValueError("yt-dlp downloaded captions but no timed transcript chunks parsed")
+                selected = _select_caption_version(versions)
+                selected_chunks = chunks_by_label[selected["label"]]
+                text = chunks_to_text(selected_chunks, include_timestamps=True)
                 if text.strip():
                     quality = _rate_quality(text, "yt-dlp")
+                    media_metadata, media_comments, duplicate_candidates, discovery_seed_queue = (
+                        _media_sidecars_from_info(info or {}, source, config)
+                    )
+                    media_metadata["transcriptEvidence"] = {
+                        "selectedTranscriptLabel": selected.get("label", ""),
+                        "transcriptVersionCount": len(versions),
+                        "transcriptChunkCount": len(selected_chunks),
+                    }
                     return PreprocessResult(
                         doc_id="",
                         tool_used="yt-dlp",
                         quality=quality,
                         text=text,
+                        title=(info or {}).get("title", ""),
+                        author=(info or {}).get("uploader", "") or (info or {}).get("channel", ""),
+                        date_published=_yt_upload_date((info or {}).get("upload_date", "")),
+                        sitename=_platform_name(info or {}, source),
+                        description=(info or {}).get("description", ""),
+                        hostname=(info or {}).get("webpage_url_domain", ""),
+                        language_detected=selected.get("language", "") or None,
+                        media_metadata=media_metadata,
+                        transcript_chunks=selected_chunks,
+                        transcript_versions=versions,
+                        transcript_comparison=compare_transcript_versions(versions, texts_by_label),
+                        media_comments=media_comments,
+                        duplicate_candidates=duplicate_candidates,
+                        discovery_seed_queue=discovery_seed_queue,
                     )
     except ImportError:
         pass
@@ -217,16 +287,63 @@ def _preprocess_video(source: str) -> PreprocessResult:
     # faster-whisper fallback (local file or downloaded audio)
     try:
         from faster_whisper import WhisperModel
-        model = WhisperModel("small", device="cpu", compute_type="int8")
-        segments, info = model.transcribe(source, beam_size=5)
-        text = " ".join(seg.text.strip() for seg in segments)
+        with tempfile.TemporaryDirectory() as tmp:
+            audio_source, downloaded_info = _audio_source_for_whisper(source, Path(tmp))
+            if downloaded_info:
+                last_info = {**last_info, **downloaded_info}
+            model = WhisperModel("small", device="cpu", compute_type="int8")
+            segments, info = model.transcribe(audio_source, beam_size=5)
+            segment_list = list(segments)
+            text = " ".join(seg.text.strip() for seg in segment_list)
+            chunks = [
+                {
+                    "index": i,
+                    "start": _seconds_to_timestamp(getattr(seg, "start", 0.0)),
+                    "end": _seconds_to_timestamp(getattr(seg, "end", 0.0)),
+                    "text": seg.text.strip(),
+                    "sourceFormat": "whisper",
+                }
+                for i, seg in enumerate(segment_list)
+                if seg.text.strip()
+            ]
+        if chunks:
+            text = chunks_to_text(chunks, include_timestamps=True)
         quality = _rate_quality(text, "whisper")
+        version = transcript_version(
+            label="whisper-local",
+            chunks=chunks,
+            language=info.language,
+            source="faster-whisper",
+            kind="local_transcription",
+        )
+        media_metadata, media_comments, duplicate_candidates, discovery_seed_queue = (
+            _media_sidecars_from_info(last_info, source, config)
+        )
+        if media_metadata:
+            media_metadata["transcriptEvidence"] = {
+                "selectedTranscriptLabel": "whisper-local",
+                "transcriptVersionCount": 1 if chunks else 0,
+                "transcriptChunkCount": len(chunks),
+            }
         return PreprocessResult(
             doc_id="",
             tool_used="whisper",
             quality=quality,
             text=text,
             language_detected=info.language,
+            title=last_info.get("title", ""),
+            author=last_info.get("uploader", "") or last_info.get("channel", ""),
+            date_published=_yt_upload_date(last_info.get("upload_date", "")),
+            sitename=_platform_name(last_info, source) if last_info else "",
+            description=last_info.get("description", ""),
+            hostname=last_info.get("webpage_url_domain", ""),
+            media_metadata=media_metadata,
+            transcript_chunks=chunks,
+            transcript_versions=[version] if chunks else [],
+            transcript_comparison={"versionCount": 1, "comparisons": []} if chunks else {},
+            media_comments=media_comments,
+            duplicate_candidates=duplicate_candidates,
+            discovery_seed_queue=discovery_seed_queue,
         )
     except ImportError:
         raise RuntimeError(
@@ -237,13 +354,33 @@ def _preprocess_video(source: str) -> PreprocessResult:
 
 def _preprocess_srt(path: Path) -> PreprocessResult:
     raw  = path.read_text(encoding="utf-8", errors="replace")
-    text = _strip_srt(raw)
+    chunks = parse_timed_text(raw, source_format=path.suffix.lstrip(".") or "srt")
+    text = chunks_to_text(chunks, include_timestamps=True) if chunks else _strip_srt(raw)
     quality = _rate_quality(text, "srt")
+    version = transcript_version(
+        label=path.stem,
+        chunks=chunks,
+        language="",
+        source="researcher_provided",
+        kind="uploaded_srt",
+    ) if chunks else {}
     return PreprocessResult(
         doc_id="",
         tool_used="srt",
         quality=quality,
         text=text,
+        title=path.stem,
+        transcript_chunks=chunks,
+        transcript_versions=[version] if version else [],
+        transcript_comparison={"versionCount": 1, "comparisons": []} if version else {},
+        media_metadata={
+            "contentFormat": "other",
+            "mediaMode": "video",
+            "transcriptEvidence": {
+                "providedTranscriptPath": str(path),
+                "providedTranscriptFormat": path.suffix.lstrip(".").lower(),
+            },
+        },
     )
 
 
@@ -260,6 +397,218 @@ def _strip_srt(raw: str) -> str:
     # Collapse blank lines
     raw = re.sub(r"\n{3,}", "\n\n", raw)
     return raw.strip()
+
+
+def _audio_source_for_whisper(source: str, tmp_dir: Path) -> tuple[str, dict]:
+    if not source.startswith(("http://", "https://")):
+        return source, {}
+    try:
+        import yt_dlp
+    except ImportError as exc:
+        raise RuntimeError(
+            "Video URL has no usable captions and yt-dlp is required to download audio for Whisper."
+        ) from exc
+
+    opts = {
+        "format": "bestaudio/best",
+        "outtmpl": str(tmp_dir / "%(id)s.%(ext)s"),
+        "quiet": True,
+        "ignoreerrors": False,
+        "writeinfojson": True,
+    }
+    ffmpeg = tool_path("ffmpeg")
+    if ffmpeg:
+        opts["ffmpeg_location"] = ffmpeg
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        info = ydl.extract_info(source, download=True) or {}
+        requested = info.get("requested_downloads") or []
+        candidates = [
+            Path(item.get("filepath", ""))
+            for item in requested
+            if item.get("filepath")
+        ]
+        candidates.extend(
+            path for path in tmp_dir.iterdir()
+            if path.is_file() and path.suffix.lower() not in {".json", ".srt", ".vtt"}
+        )
+        for candidate in candidates:
+            if candidate.exists():
+                return str(candidate), info
+    raise RuntimeError("yt-dlp did not produce an audio file for Whisper transcription.")
+
+
+def _caption_language(path: Path) -> str:
+    parts = path.name.split(".")
+    if len(parts) >= 3:
+        return parts[-2]
+    return ""
+
+
+def _caption_kind(info: dict, language: str) -> str:
+    subtitles = info.get("subtitles") or {}
+    automatic = info.get("automatic_captions") or {}
+    if language and language in subtitles:
+        return "platform_manual_caption"
+    if language and language in automatic:
+        return "platform_auto_caption"
+    return "platform_caption"
+
+
+def _select_caption_version(versions: list[dict]) -> dict:
+    language_priority = {"en": 0, "no": 1, "nb": 1, "nn": 1, "pt": 2, "es": 3}
+    kind_priority = {
+        "platform_manual_caption": 0,
+        "platform_caption": 1,
+        "platform_auto_caption": 2,
+    }
+    return sorted(
+        versions,
+        key=lambda v: (
+            language_priority.get(str(v.get("language") or ""), 50),
+            kind_priority.get(str(v.get("kind") or ""), 50),
+            -int(v.get("charCount") or 0),
+        ),
+    )[0]
+
+
+def _media_metadata_from_ytdlp(info: dict, source: str) -> dict:
+    if not info:
+        return {}
+    webpage_url = info.get("webpage_url") or source
+    platform = _platform_name(info, source).lower().replace(" ", "_") or "other"
+    tags = info.get("tags") or []
+    categories = info.get("categories") or []
+    return {
+        "contentFormat": "social_video",
+        "mediaMode": "video",
+        "general": {
+            "durationMinutes": round((info.get("duration") or 0) / 60, 2) if info.get("duration") else None,
+            "publicationDate": _yt_upload_date(info.get("upload_date", "")),
+            "creator": info.get("uploader") or info.get("channel") or "",
+            "channelUrl": info.get("channel_url") or "",
+            "channelHandle": info.get("uploader_id") or "",
+            "likeCount": info.get("like_count"),
+            "commentCount": info.get("comment_count"),
+            "availability": info.get("availability") or "",
+            "seriesTitle": info.get("playlist_title") or "",
+            "episodeTitle": info.get("title") or "",
+            "synopsis": info.get("description") or "",
+        },
+        "platformDistribution": [
+            {
+                "platform": platform if platform in {
+                    "youtube", "vimeo", "rumble", "odysee", "dailymotion",
+                    "internet_archive", "facebook", "bitchute", "self_hosted",
+                    "podcast_platform", "other",
+                } else "other",
+                "url": webpage_url,
+                "viewCount": info.get("view_count"),
+                "status": "active" if webpage_url else "unknown",
+            }
+        ],
+        "reachMetrics": {
+            "totalEstimatedViews": info.get("view_count"),
+            "viewCountNote": "Captured from platform metadata via yt-dlp; platform metrics can change.",
+        },
+        "platformAlgorithmicSignals": {
+            "tags": tags,
+            "categories": categories,
+            "hashtags": _hashtags(info.get("description") or ""),
+            "chapters": [
+                {
+                    "title": c.get("title", ""),
+                    "startTime": c.get("start_time"),
+                    "endTime": c.get("end_time"),
+                }
+                for c in (info.get("chapters") or [])
+            ],
+            "thumbnails": [
+                {
+                    "url": t.get("url", ""),
+                    "width": t.get("width"),
+                    "height": t.get("height"),
+                }
+                for t in (info.get("thumbnails") or [])[:12]
+            ],
+            "note": "These are exposed platform metadata and presentation signals, not proof of recommendation algorithm behavior.",
+        },
+        "classificationProvenance": {
+            "classificationSource": "model_suggested",
+            "classificationReviewed": False,
+            "classificationNotes": "Initial media metadata captured from yt-dlp.",
+        },
+        "rawYtDlpMetadata": _safe_ytdlp_info(info),
+    }
+
+
+def _safe_ytdlp_info(info: dict) -> dict:
+    allowed = {
+        "id", "title", "description", "webpage_url", "webpage_url_domain",
+        "original_url", "uploader", "uploader_id", "channel", "channel_id",
+        "channel_url", "upload_date", "timestamp", "duration", "view_count",
+        "like_count", "comment_count", "tags", "categories", "availability",
+        "age_limit", "live_status", "chapters", "thumbnails", "subtitles",
+        "automatic_captions", "playlist", "playlist_title",
+    }
+    return {key: info.get(key) for key in sorted(allowed) if key in info}
+
+
+def _media_sidecars_from_info(
+    info: dict,
+    source: str,
+    config: Config | None = None,
+) -> tuple[dict, list[dict], list[dict], list[dict]]:
+    if not info:
+        return {}, [], [], []
+    media_metadata = _media_metadata_from_ytdlp(info, source)
+    media_comments = comment_evidence_from_ytdlp(
+        info,
+        max_comments=int(getattr(config, "media_max_comments", 50)),
+    )
+    duplicate_candidates = duplicate_candidates_from_media(info, source)
+    discovery_seed_queue = discovery_seed_queue_from_media(info, source)
+    return media_metadata, media_comments, duplicate_candidates, discovery_seed_queue
+
+
+def _yt_upload_date(value: str) -> str:
+    if not value or not re.fullmatch(r"\d{8}", str(value)):
+        return ""
+    value = str(value)
+    return f"{value[:4]}-{value[4:6]}-{value[6:8]}"
+
+
+def _platform_name(info: dict, source: str) -> str:
+    extractor = (info.get("extractor_key") or info.get("extractor") or "").lower()
+    text = f"{extractor} {source}".lower()
+    if "youtube" in text or "youtu.be" in text:
+        return "youtube"
+    if "vimeo" in text:
+        return "vimeo"
+    if "rumble" in text:
+        return "rumble"
+    if "odysee" in text:
+        return "odysee"
+    if "bitchute" in text:
+        return "bitchute"
+    if "facebook" in text:
+        return "facebook"
+    if "dailymotion" in text:
+        return "dailymotion"
+    if "archive.org" in text:
+        return "internet_archive"
+    return extractor or "other"
+
+
+def _hashtags(text: str) -> list[str]:
+    return sorted(set(re.findall(r"#[\w-]+", text or "")))
+
+
+def _seconds_to_timestamp(value: float) -> str:
+    total_ms = int(float(value or 0) * 1000)
+    hours, rem = divmod(total_ms, 3_600_000)
+    minutes, rem = divmod(rem, 60_000)
+    seconds, ms = divmod(rem, 1000)
+    return f"{hours:02}:{minutes:02}:{seconds:02}.{ms:03}"
 
 
 def _rate_quality(text: str, tool: str) -> str:
@@ -536,6 +885,54 @@ def _save_artifacts(result: PreprocessResult, doc_dir: Path) -> None:
     if result.markdown:
         (doc_dir / "extracted.md").write_text(result.markdown, encoding="utf-8")
     (doc_dir / "extracted.txt").write_text(result.text, encoding="utf-8")
+    if result.media_metadata:
+        (doc_dir / "media_metadata.json").write_text(
+            json.dumps(result.media_metadata, indent=2),
+            encoding="utf-8",
+        )
+        raw = result.media_metadata.get("rawYtDlpMetadata")
+        if raw:
+            (doc_dir / "video_metadata.json").write_text(
+                json.dumps(raw, indent=2),
+                encoding="utf-8",
+            )
+    if result.transcript_chunks:
+        (doc_dir / "transcript_chunks.json").write_text(
+            json.dumps(result.transcript_chunks, indent=2),
+            encoding="utf-8",
+        )
+    if result.transcript_versions:
+        (doc_dir / "transcript_versions.json").write_text(
+            json.dumps(result.transcript_versions, indent=2),
+            encoding="utf-8",
+        )
+    if result.transcript_comparison:
+        (doc_dir / "transcript_comparison.json").write_text(
+            json.dumps(result.transcript_comparison, indent=2),
+            encoding="utf-8",
+        )
+    if result.media_comments:
+        (doc_dir / "media_comments.json").write_text(
+            json.dumps(
+                {
+                    "trustLevel": "lower_trust_platform_comment",
+                    "reviewStatus": "needs_review",
+                    "comments": result.media_comments,
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+    if result.duplicate_candidates:
+        (doc_dir / "duplicate_candidates.json").write_text(
+            json.dumps(result.duplicate_candidates, indent=2),
+            encoding="utf-8",
+        )
+    if result.discovery_seed_queue:
+        (doc_dir / "discovery_seed_queue.json").write_text(
+            json.dumps(result.discovery_seed_queue, indent=2),
+            encoding="utf-8",
+        )
     (doc_dir / "preprocess.json").write_text(
         json.dumps(_preprocess_metadata(result), indent=2),
         encoding="utf-8",
@@ -566,6 +963,18 @@ def _preprocess_metadata(result: PreprocessResult) -> dict:
         "page_intel": page_intel,
         "source_html_path": result.source_html_path,
         "source_html_sha256": result.source_html_sha256,
+        "media_metadata_path": "media_metadata.json" if result.media_metadata else "",
+        "transcript_chunks_path": "transcript_chunks.json" if result.transcript_chunks else "",
+        "transcript_versions_path": "transcript_versions.json" if result.transcript_versions else "",
+        "transcript_comparison_path": "transcript_comparison.json" if result.transcript_comparison else "",
+        "media_comments_path": "media_comments.json" if result.media_comments else "",
+        "duplicate_candidates_path": "duplicate_candidates.json" if result.duplicate_candidates else "",
+        "discovery_seed_queue_path": "discovery_seed_queue.json" if result.discovery_seed_queue else "",
+        "transcript_chunk_count": len(result.transcript_chunks),
+        "transcript_version_count": len(result.transcript_versions),
+        "media_comment_count": len(result.media_comments),
+        "duplicate_candidate_count": len(result.duplicate_candidates),
+        "discovery_seed_count": len(result.discovery_seed_queue),
     }
 
 

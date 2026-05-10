@@ -355,6 +355,249 @@ export default {
       ],
     },
 
+    // ── Media Research Metadata ──────────────────────────────────────────
+    {
+      name: 'mediaMetadata',
+      title: 'Media Research Metadata',
+      type: 'object',
+      fields: [
+        {
+          name: 'contentFormat',
+          type: 'string',
+          options: {
+            list: [
+              'documentary', 'short_documentary', 'video_testimony', 'podcast',
+              'video_podcast', 'interview', 'sermon', 'conference_talk',
+              'panel_discussion', 'news_report', 'campaign_video', 'social_video',
+              'webpage', 'pdf', 'book_or_manual', 'mixed_media', 'other',
+            ],
+          },
+        },
+        {
+          name: 'mediaMode',
+          type: 'string',
+          options: { list: ['video', 'audio', 'text', 'image', 'mixed'] },
+        },
+        {
+          name: 'activeResearchProfiles',
+          type: 'array',
+          of: [{
+            type: 'string',
+            options: {
+              list: [
+                'archive_core', 'visual_network', 'search_discovery', 'shame_article',
+                'documentary_analysis', 'podcast_analysis', 'testimony_analysis',
+                'anti_gender_network', 'public_website_table',
+              ],
+            },
+          }],
+        },
+        {
+          name: 'profileStatus',
+          type: 'array',
+          of: [{
+            type: 'object',
+            fields: [
+              {
+                name: 'profile',
+                type: 'string',
+                options: {
+                  list: [
+                    'archive_core', 'visual_network', 'search_discovery', 'shame_article',
+                    'documentary_analysis', 'podcast_analysis', 'testimony_analysis',
+                    'anti_gender_network', 'public_website_table',
+                  ],
+                },
+              },
+              { name: 'active', type: 'boolean', initialValue: true },
+              {
+                name: 'status',
+                type: 'string',
+                options: { list: ['candidate', 'active', 'excluded', 'reviewed', 'published'] },
+              },
+              { name: 'reason', type: 'string' },
+              { name: 'reviewerNote', type: 'text', rows: 2 },
+            ],
+          }],
+        },
+        {
+          name: 'general',
+          type: 'object',
+          fields: [
+            { name: 'durationMinutes', type: 'number' },
+            { name: 'yearOfRelease', type: 'number' },
+            { name: 'countryOfProduction', type: 'string' },
+            { name: 'languages', type: 'array', of: [{ type: 'string' }] },
+            { name: 'subtitleLanguages', type: 'array', of: [{ type: 'string' }] },
+            { name: 'dubbedLanguages', type: 'array', of: [{ type: 'string' }] },
+            { name: 'synopsis', type: 'text', rows: 3 },
+            { name: 'productionCompany', type: 'string' },
+            { name: 'creator', type: 'string' },
+            { name: 'channelUrl', type: 'url' },
+            { name: 'channelHandle', type: 'string' },
+            { name: 'likeCount', type: 'number' },
+            { name: 'commentCount', type: 'number' },
+            { name: 'availability', type: 'string' },
+            { name: 'seriesTitle', type: 'string' },
+            { name: 'episodeTitle', type: 'string' },
+            { name: 'publicationDate', type: 'date' },
+          ],
+        },
+        {
+          name: 'documentary',
+          type: 'object',
+          fields: [
+            { name: 'director', type: 'string' },
+            { name: 'productionCompany', type: 'string' },
+            { name: 'durationMinutes', type: 'number' },
+            { name: 'yearOfRelease', type: 'number' },
+            { name: 'countryOfProduction', type: 'string' },
+            { name: 'synopsis', type: 'text', rows: 3 },
+            { name: 'languages', type: 'array', of: [{ type: 'string' }] },
+            { name: 'subtitleLanguages', type: 'array', of: [{ type: 'string' }] },
+            { name: 'dubbedLanguages', type: 'array', of: [{ type: 'string' }] },
+            {
+              name: 'documentaryCategory',
+              type: 'string',
+              options: {
+                list: [
+                  'ex_gay', 'detrans', 'anti_gender_ideology',
+                  'anti_homosexuality_trans', 'parental_family',
+                  'spousal_partner', 'mixed', 'other',
+                ],
+              },
+            },
+            {
+              name: 'productionBackground',
+              type: 'string',
+              options: {
+                list: [
+                  'faith_based', 'far_right_media', 'independent', 'media',
+                  'hate_group', 'mixed', 'unknown',
+                ],
+              },
+            },
+            { name: 'associatedMinistry', type: 'string' },
+          ],
+        },
+        {
+          name: 'podcast',
+          type: 'object',
+          fields: [
+            { name: 'podcastTitle', type: 'string' },
+            { name: 'episodeTitle', type: 'string' },
+            { name: 'episodeNumber', type: 'string' },
+            { name: 'hostNames', type: 'array', of: [{ type: 'string' }] },
+            { name: 'guestNames', type: 'array', of: [{ type: 'string' }] },
+            { name: 'publisher', type: 'string' },
+            { name: 'seriesUrl', type: 'url' },
+            { name: 'audioOnly', type: 'boolean' },
+            { name: 'transcriptAvailable', type: 'boolean' },
+          ],
+        },
+        {
+          name: 'platformDistribution',
+          type: 'array',
+          of: [{
+            type: 'object',
+            fields: [
+              {
+                name: 'platform',
+                type: 'string',
+                options: {
+                  list: [
+                    'youtube', 'vimeo', 'rumble', 'odysee', 'dailymotion',
+                    'internet_archive', 'facebook', 'bitchute', 'self_hosted',
+                    'podcast_platform', 'other',
+                  ],
+                },
+              },
+              { name: 'url', type: 'url' },
+              { name: 'viewCount', type: 'number' },
+              { name: 'capturedAt', type: 'datetime' },
+              {
+                name: 'status',
+                type: 'string',
+                options: { list: ['active', 'removed', 'unlisted', 'reuploaded', 'unknown'] },
+              },
+            ],
+          }],
+        },
+        {
+          name: 'reachMetrics',
+          type: 'object',
+          fields: [
+            { name: 'internetArchiveUrl', type: 'url' },
+            { name: 'accessOnDemand', type: 'boolean' },
+            { name: 'totalEstimatedViews', type: 'number' },
+            { name: 'viewCountNote', type: 'text', rows: 2 },
+          ],
+        },
+        {
+          name: 'platformAlgorithmicSignals',
+          title: 'Platform / Discovery Signals',
+          type: 'object',
+          description: 'Exposed platform metadata and presentation signals; not proof of recommendation behavior.',
+          fields: [
+            { name: 'tags', type: 'array', of: [{ type: 'string' }] },
+            { name: 'categories', type: 'array', of: [{ type: 'string' }] },
+            { name: 'hashtags', type: 'array', of: [{ type: 'string' }] },
+            {
+              name: 'chapters',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  { name: 'title', type: 'string' },
+                  { name: 'startTime', type: 'number' },
+                  { name: 'endTime', type: 'number' },
+                ],
+              }],
+            },
+            {
+              name: 'thumbnails',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  { name: 'url', type: 'url' },
+                  { name: 'width', type: 'number' },
+                  { name: 'height', type: 'number' },
+                ],
+              }],
+            },
+            { name: 'note', type: 'text', rows: 2 },
+          ],
+        },
+        {
+          name: 'transcriptEvidence',
+          type: 'object',
+          fields: [
+            { name: 'providedTranscriptPath', type: 'string' },
+            { name: 'providedTranscriptFormat', type: 'string' },
+            { name: 'selectedTranscriptLabel', type: 'string' },
+            { name: 'transcriptVersionCount', type: 'number' },
+            { name: 'transcriptChunkCount', type: 'number' },
+          ],
+        },
+        {
+          name: 'classificationProvenance',
+          type: 'object',
+          fields: [
+            {
+              name: 'classificationSource',
+              type: 'string',
+              options: {
+                list: ['researcher', 'imported_excel', 'model_suggested', 'external_reference'],
+              },
+            },
+            { name: 'classificationReviewed', type: 'boolean', initialValue: false },
+            { name: 'classificationNotes', type: 'text', rows: 3 },
+          ],
+        },
+      ],
+    },
+
     // ── Priority Score ──────────────────────────────────────────
     {
       name: 'priorityScore',
@@ -560,6 +803,7 @@ export default {
         },
         { name: 'ontologyVersion', type: 'string', initialValue: 'v3.0' },
         { name: 'processingDate', type: 'datetime' },
+        { name: 'analysedAt', type: 'datetime' },
         { name: 'inputLengthChars', type: 'number' },
         { name: 'truncated', type: 'boolean', initialValue: false },
         {

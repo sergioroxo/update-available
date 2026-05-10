@@ -72,6 +72,42 @@ def test_build_sanity_document_preserves_local_file_source_url_and_hash(tmp_path
     assert "testimonyReview" not in doc
 
 
+def test_build_sanity_document_uses_stable_ingest_and_analysis_dates(tmp_path):
+    (tmp_path / "metadata.json").write_text('{"saved_at": "2024-02-03T04:05:06+00:00"}')
+    intake = IntakeResult(
+        doc_id="doc-1",
+        source="https://example.org/source",
+        source_type="url",
+        declared_type="url",
+        tier=2,
+        batch_id="batch-1",
+        language=None,
+        ingested_at="2024-01-02T03:04:05+00:00",
+        local_dir=tmp_path,
+    )
+    preprocess = PreprocessResult(
+        doc_id="doc-1",
+        tool_used="trafilatura",
+        quality="high",
+        text="one two three",
+    )
+    pkg = DocumentPackage(
+        intake=intake,
+        preprocess=preprocess,
+        analysis=_analysis(),
+        embedding=[],
+        embedding_model="embedding-model",
+        llm_used="litelm",
+        local_dir=tmp_path,
+    )
+
+    doc = _build_sanity_document(pkg)
+
+    assert doc["meta"]["ingestedAt"] == "2024-01-02T03:04:05+00:00"
+    assert doc["aiMetadata"]["processingDate"] == "2024-02-03T04:05:06+00:00"
+    assert doc["aiMetadata"]["analysedAt"] == "2024-02-03T04:05:06+00:00"
+
+
 def test_build_sanity_document_adds_testimony_consent_when_flagged(tmp_path):
     intake = IntakeResult(
         doc_id="doc-1",
@@ -103,6 +139,69 @@ def test_build_sanity_document_adds_testimony_consent_when_flagged(tmp_path):
     doc = _build_sanity_document(pkg)
 
     assert doc["meta"]["testimonyConsent"] == "confirmed"
+
+
+def test_build_sanity_document_maps_media_metadata_without_raw_snapshot(tmp_path):
+    intake = IntakeResult(
+        doc_id="doc-1",
+        source="https://www.youtube.com/watch?v=abc",
+        source_type="url",
+        declared_type="url",
+        tier=2,
+        batch_id="batch-1",
+        language=None,
+        local_dir=tmp_path,
+    )
+    preprocess = PreprocessResult(
+        doc_id="doc-1",
+        tool_used="yt-dlp",
+        quality="high",
+        text="one two three",
+        media_metadata={
+            "mediaMode": "video",
+            "general": {
+                "channelUrl": "https://www.youtube.com/@example",
+                "channelHandle": "@example",
+                "likeCount": 1200,
+                "commentCount": 345,
+                "availability": "public",
+            },
+            "platformDistribution": [
+                {
+                    "platform": "youtube",
+                    "url": "https://www.youtube.com/watch?v=abc",
+                    "status": "active",
+                }
+            ],
+            "platformAlgorithmicSignals": {
+                "tags": ["ex-gay"],
+                "chapters": [{"title": "Intro", "startTime": 0}],
+            },
+            "rawYtDlpMetadata": {"id": "abc"},
+        },
+    )
+    pkg = DocumentPackage(
+        intake=intake,
+        preprocess=preprocess,
+        analysis=_analysis(),
+        embedding=[],
+        embedding_model="embedding-model",
+        llm_used="litelm",
+        local_dir=tmp_path,
+    )
+
+    doc = _build_sanity_document(pkg)
+
+    assert doc["mediaMetadata"]["mediaMode"] == "video"
+    assert doc["mediaMetadata"]["general"]["channelUrl"] == "https://www.youtube.com/@example"
+    assert doc["mediaMetadata"]["general"]["channelHandle"] == "@example"
+    assert doc["mediaMetadata"]["general"]["likeCount"] == 1200
+    assert doc["mediaMetadata"]["general"]["commentCount"] == 345
+    assert doc["mediaMetadata"]["general"]["availability"] == "public"
+    assert "rawYtDlpMetadata" not in doc["mediaMetadata"]
+    assert doc["mediaMetadata"]["platformDistribution"][0]["_key"]
+    assert doc["mediaMetadata"]["platformAlgorithmicSignals"]["chapters"][0]["_key"]
+    assert doc["aiMetadata"]["processingDate"] == doc["aiMetadata"]["analysedAt"]
 
 
 def test_testimony_upload_gate_blocks_missing_consent(tmp_path):

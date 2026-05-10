@@ -12,6 +12,7 @@ Supabase writes use supabase-py via clients/supabase.py.
 """
 from __future__ import annotations
 import json
+import socket
 from pathlib import Path
 
 from rich.console import Console
@@ -23,6 +24,7 @@ from ..config import Config
 from ..models.document import AnalysisResult, DocumentPackage, IntakeResult, PageIntelligence, PreprocessResult
 from ..clients import sanity as sanity_client
 from ..clients import supabase as supabase_client
+from .doc_ids import resolve_doc_dir
 from .preprocess import _preprocess_metadata, repair_preprocess_metadata
 from .metadata_quality import archival_issues, date_parts, publication_metadata
 
@@ -189,7 +191,7 @@ def list_pending(config: Config) -> None:
 
 def inspect_document_status(doc_id: str, config: Config) -> dict:
     """Return a human-readable pipeline trace for one local document."""
-    doc_dir = config.corpus_dir / doc_id
+    doc_id, doc_dir = resolve_doc_dir(doc_id, config)
     status = {
         "doc_id": doc_id,
         "exists": doc_dir.exists(),
@@ -223,9 +225,10 @@ def inspect_document_status(doc_id: str, config: Config) -> dict:
         status["stages"].append({"stage": name, "ok": ok, "detail": detail})
 
     stage("Intake", bool(intake), _source_summary(intake))
+    source_is_remote = str(intake.get("source") or "").startswith(("http://", "https://"))
     stage(
         "Source Copy",
-        bool(local_copy and local_copy.exists()) if intake.get("source_type") != "url" else None,
+        bool(local_copy and local_copy.exists()) if not source_is_remote else None,
         str(local_copy or "not applicable"),
     )
     stage(
@@ -238,7 +241,10 @@ def inspect_document_status(doc_id: str, config: Config) -> dict:
     stage("Analysis", bool(analysis), _analysis_summary(analysis))
     embedding_status = _embedding_status(doc_dir, config)
     stage("Embedding", embedding_status["ok"], embedding_status["detail"])
-    stage("Supabase", embedding_status["supabase_ok"], embedding_status["supabase_detail"])
+    supabase_stage_ok = embedding_status["supabase_ok"]
+    if embedding_status.get("supabase_state") in {"unreachable", "not_configured", "not_checked"}:
+        supabase_stage_ok = None
+    stage("Supabase", supabase_stage_ok, embedding_status["supabase_detail"])
     stage("Upload", bool(sanity_record), sanity_record.get("sanity_id", "not uploaded"))
     stage("Enrichment", bool(enrichment), _enrichment_summary(enrichment))
     stage(
@@ -256,6 +262,7 @@ def inspect_document_status(doc_id: str, config: Config) -> dict:
         "uploaded": bool(sanity_record),
         "embedding_ok": embedding_status["ok"],
         "supabase_ok": embedding_status["supabase_ok"],
+        "supabase_state": embedding_status.get("supabase_state", "not_checked"),
         "enriched": bool(enrichment),
     }
 
@@ -267,8 +274,10 @@ def inspect_document_status(doc_id: str, config: Config) -> dict:
         status["warnings"].append("analysis marks testimony_flag=true but testimony_review.json is missing.")
     if not embedding_status["ok"]:
         status["warnings"].append("embedding is missing or empty; generate it before treating the record as complete.")
-    elif sanity_record and not embedding_status["supabase_ok"]:
+    elif sanity_record and embedding_status.get("supabase_state") == "missing":
         status["warnings"].append("Sanity record exists but Supabase embedding row was not found; regenerate/push embedding.")
+    elif sanity_record and embedding_status.get("supabase_state") == "unreachable":
+        status["warnings"].append("Sanity record exists but Supabase could not be reached; retry status when the network/service is available.")
     if enrichment:
         gate = _enrichment_gate(enrichment)
         if gate:
@@ -372,6 +381,7 @@ def _embedding_status(doc_dir: Path, config: Config) -> dict:
         "dimension": 0,
         "supabase_ok": False,
         "supabase_detail": "not checked",
+        "supabase_state": "not_checked",
     }
     if path.exists():
         try:
@@ -399,12 +409,40 @@ def _embedding_status(doc_dir: Path, config: Config) -> dict:
         )
         if result.data:
             status["supabase_ok"] = True
+            status["supabase_state"] = "present"
             status["supabase_detail"] = result.data[0].get("embedding_model") or "row found"
         else:
+            status["supabase_state"] = "missing"
             status["supabase_detail"] = "no row found"
+    except (socket.gaierror, TimeoutError, ConnectionError) as exc:
+        status["supabase_state"] = "unreachable"
+        status["supabase_detail"] = f"unreachable: {exc}"
     except Exception as exc:
-        status["supabase_detail"] = f"check failed: {exc}"
+        if _looks_like_network_error(exc):
+            status["supabase_state"] = "unreachable"
+            status["supabase_detail"] = f"unreachable: {exc}"
+        else:
+            status["supabase_state"] = "error"
+            status["supabase_detail"] = f"check failed: {exc}"
     return status
+
+
+def _looks_like_network_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    name = type(exc).__name__.lower()
+    return any(
+        marker in text or marker in name
+        for marker in (
+            "nodename nor servname",
+            "name or service not known",
+            "temporary failure in name resolution",
+            "connection refused",
+            "connecterror",
+            "timeout",
+            "network",
+            "dns",
+        )
+    )
 
 
 def _analysis_summary(analysis: dict) -> str:
@@ -460,10 +498,10 @@ def _next_action(status: dict) -> str:
         return "Run preprocessing again; extracted.txt is required for deferred enrichment and upload word counts."
     if not stage_map.get("Analysis"):
         return "Run analysis from the Ingest Workbench or CLI before upload."
-    if status["warnings"]:
-        return "Review the warnings above before uploading or re-enriching."
     if not stage_map.get("Upload"):
         return f"Upload when reviewed: python -m runner upload-doc {status['doc_id']}"
+    if status["warnings"]:
+        return "Review the warnings above before uploading or re-enriching."
     if not stage_map.get("Enrichment"):
         return f"Optional: run enrichment with python -m runner enrich {status['doc_id']}"
     return "Record looks complete locally. Process any enrichment proposals when ready."
@@ -530,6 +568,7 @@ def upload_saved(doc_id: str, config: Config) -> None:
         wayback_status=intake_data.get("wayback_status", ""),
         wayback_checked_at=intake_data.get("wayback_checked_at", ""),
         wayback_error=intake_data.get("wayback_error", ""),
+        ingested_at=intake_data.get("ingested_at", ""),
         source_url=intake_data.get("source_url", ""),
         original_filename=intake_data.get("original_filename", ""),
         local_copy_path=intake_data.get("local_copy_path", ""),
@@ -803,7 +842,46 @@ def _load_preprocess(path: Path) -> PreprocessResult:
         extracted_md = doc_dir / "extracted.md"
         if extracted_md.exists():
             data["markdown"] = extracted_md.read_text(encoding="utf-8")
+    artifact_map = {
+        "media_metadata": "media_metadata.json",
+        "transcript_chunks": "transcript_chunks.json",
+        "transcript_versions": "transcript_versions.json",
+        "transcript_comparison": "transcript_comparison.json",
+        "duplicate_candidates": "duplicate_candidates.json",
+        "discovery_seed_queue": "discovery_seed_queue.json",
+    }
+    for field_name, filename in artifact_map.items():
+        if data.get(field_name):
+            continue
+        artifact = doc_dir / filename
+        if artifact.exists():
+            try:
+                data[field_name] = json.loads(artifact.read_text(encoding="utf-8"))
+            except Exception:
+                pass
     data.pop("outbound_link_count", None)
+    for key in (
+        "media_metadata_path",
+        "transcript_chunks_path",
+        "transcript_versions_path",
+            "transcript_comparison_path",
+            "media_comments_path",
+            "duplicate_candidates_path",
+            "discovery_seed_queue_path",
+            "transcript_chunk_count",
+            "transcript_version_count",
+            "media_comment_count",
+            "duplicate_candidate_count",
+            "discovery_seed_count",
+    ):
+        data.pop(key, None)
+    comments_path = doc_dir / "media_comments.json"
+    if not data.get("media_comments") and comments_path.exists():
+        try:
+            comments_data = json.loads(comments_path.read_text(encoding="utf-8"))
+            data["media_comments"] = comments_data.get("comments", [])
+        except Exception:
+            pass
     page_intel = data.get("page_intel")
     if isinstance(page_intel, dict):
         data["page_intel"] = PageIntelligence(**page_intel)

@@ -62,6 +62,9 @@ export default {
     },
 
     // ── Evidence Dossier ────────────────────────────────────────
+    // One record per document where this term is attested. Each record carries the
+    // full extraction context from that document so it can later be compiled into a
+    // per-term research dossier. Confirmation gates inclusion in definitions.
     {
       name: 'evidenceDossier',
       title: 'Evidence Dossier',
@@ -69,22 +72,63 @@ export default {
       of: [{
         type: 'object',
         fields: [
+          // ── Source ──────────────────────────────────────────────
           { name: 'documentRef', title: 'Document', type: 'reference', to: [{ type: 'sogiceDocument' }] },
-          { name: 'excerpt', title: 'Excerpt (under 15 words)', type: 'string' },
           { name: 'language', title: 'Language (ISO 639-1)', type: 'string' },
+          { name: 'contextDate', title: 'Context Date (from source)', type: 'date' },
+
+          // ── Verbatim evidence ────────────────────────────────────
+          { name: 'excerpt', title: 'Excerpt (headline, under 15 words)', type: 'string' },
+          { name: 'exactQuote', title: 'Exact Quote (full sentence/passage)', type: 'text', rows: 3 },
+
+          // ── How this document uses the term ─────────────────────
+          // definitionAsUsed: what the source says the term means — may differ across documents.
+          // This feeds the compiled term document; not necessarily the canonical definition.
+          { name: 'definitionAsUsed', title: 'Definition as Used in This Source', type: 'text', rows: 3 },
+
+          // ── Rhetorical context ───────────────────────────────────
           {
             name: 'stanceProfile',
             title: 'Stance Profile',
             type: 'string',
             options: { list: ['promotional', 'critical_advocacy', 'legal_administrative', 'research_clinical'] },
           },
-          { name: 'confidence', type: 'number' },
+          {
+            name: 'usageRegister',
+            title: 'Usage Register',
+            type: 'string',
+            options: { list: ['promotional', 'defensive', 'euphemistic', 'clinical', 'legal', 'conspiratorial', 'testimonial', 'neutral'] },
+          },
+
+          // ── Co-occurrence and relationships (within this document) ──
+          // coOccurringTerms: other SOGICE terms found alongside this one in the same document.
+          { name: 'coOccurringTerms', title: 'Co-occurring Terms (in this document)', type: 'array', of: [{ type: 'string' }] },
+          // relationshipNotes: how this document positions this term relative to other terms.
+          { name: 'relationshipNotes', title: 'Relationship Notes', type: 'text', rows: 2 },
+
+          // ── Model extraction metadata ────────────────────────────
+          { name: 'modelConfidence', title: 'Model Confidence (0–1)', type: 'number' },
+          // confidenceRationale: the model's explanation of why it extracted this term here.
+          { name: 'confidenceRationale', title: 'Model Confidence Rationale', type: 'text', rows: 2 },
           {
             name: 'extractedBy',
+            title: 'Extracted By',
             type: 'string',
-            options: { list: ['llm_primary', 'llm_validation', 'human'] },
+            options: { list: ['llm_extracted', 'llm_validation', 'human'] },
           },
-          { name: 'contextDate', type: 'date' },
+          { name: 'extractionModel', title: 'Extraction Model', type: 'string' },
+
+          // ── Researcher assessment ────────────────────────────────
+          { name: 'researcherConfidence', title: 'Researcher Confidence (0–1)', type: 'number' },
+          { name: 'researcherNote', title: 'Researcher Note', type: 'text', rows: 2 },
+
+          // ── Confirmation gate ────────────────────────────────────
+          // confirmed: set by researcher. Only confirmed records contribute to definitions
+          // and to the compiled per-term document. Unconfirmed records are stored but
+          // labelled "pending confirmation" on any public-facing surface.
+          { name: 'confirmed', title: 'Confirmed by researcher', type: 'boolean', initialValue: false },
+          { name: 'confirmedAt', title: 'Confirmed At', type: 'datetime' },
+          { name: 'confirmedNote', title: 'Confirmation Note', type: 'string' },
         ],
       }],
     },

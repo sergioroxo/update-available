@@ -36,28 +36,32 @@ class Config:
     litelm_embedding_model: str        # used when --llm litelm*
     litelm_enrichment_model: str       # Stage 3c lexicon/enrichment model
     litelm_enrichment_model_alt: str   # optional second-opinion enrichment model
-    litelm_ollama_base_url: str        # optional direct Ollama URL for model unloads
-    litelm_ollama_embedding_model: str # actual Ollama model behind research-embedding
-    litelm_ollama_analysis_model: str
-    litelm_ollama_analysis_model_heavy: str
-    litelm_ollama_analysis_model_reasoning: str
+    litelm_ollama_base_url: str = ""        # optional direct Ollama URL for model unloads
+    litelm_ollama_embedding_model: str = "qwen3-embedding:8b" # actual Ollama model behind research-embedding
+    litelm_ollama_analysis_model: str = "qwen3.6:35b-a3b"
+    litelm_ollama_analysis_model_heavy: str = "gemma4:31b"
+    litelm_ollama_analysis_model_reasoning: str = "qwen3.6:27b"
 
     # Truncation limits (chars). Claude default is conservative due to API cost.
     # Local models have large context windows so LOCAL_TRUNCATION_LIMIT can be
     # set much higher (e.g. 200000) for full SRT / book ingestion.
-    truncation_limit: int
-    truncation_limit_local: int
-    local_context_tokens: int
-    local_output_tokens: int
+    truncation_limit: int = 24000
+    truncation_limit_local: int = 1000000
+    local_context_tokens: int = 262144
+    local_output_tokens: int = 16384
+    media_collect_comments: bool = False
+    media_max_comments: int = 50
 
     @property
     def sanity_api_base(self) -> str:
         return f"https://{self.sanity_project_id}.api.sanity.io/v2024-01-01/data/mutate/{self.sanity_dataset}"
 
 
-def load_config(llm: str | None = None) -> Config:
+def load_config(llm: str | None = None, require_services: bool = True) -> Config:
     """Load config. Only validates LLM-specific keys when llm is set.
-    upload-doc / status / export never need an LLM key — pass llm=None."""
+    upload-doc / status / export never need an LLM key — pass llm=None.
+    Local review commands can pass require_services=False to avoid requiring
+    Sanity/Supabase credentials for purely filesystem work."""
 
     always_required = ["SANITY_PROJECT_ID", "SANITY_DATASET",
                        "SANITY_WRITE_TOKEN", "SUPABASE_URL", "SUPABASE_SERVICE_KEY"]
@@ -66,9 +70,10 @@ def load_config(llm: str | None = None) -> Config:
     needs_litelm     = llm is not None and llm.startswith("litelm")
 
     missing = []
-    for key in always_required:
-        if not os.getenv(key):
-            missing.append(key)
+    if require_services:
+        for key in always_required:
+            if not os.getenv(key):
+                missing.append(key)
     if needs_claude and not os.getenv("ANTHROPIC_API_KEY"):
         missing.append("ANTHROPIC_API_KEY")
     if needs_openrouter and not os.getenv("OPENROUTER_API_KEY"):
@@ -89,11 +94,11 @@ def load_config(llm: str | None = None) -> Config:
 
     return Config(
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
-        sanity_project_id=os.environ["SANITY_PROJECT_ID"],
-        sanity_dataset=os.environ["SANITY_DATASET"],
-        sanity_write_token=os.environ["SANITY_WRITE_TOKEN"],
-        supabase_url=os.environ["SUPABASE_URL"],
-        supabase_service_key=os.environ["SUPABASE_SERVICE_KEY"],
+        sanity_project_id=os.getenv("SANITY_PROJECT_ID", ""),
+        sanity_dataset=os.getenv("SANITY_DATASET", ""),
+        sanity_write_token=os.getenv("SANITY_WRITE_TOKEN", ""),
+        supabase_url=os.getenv("SUPABASE_URL", ""),
+        supabase_service_key=os.getenv("SUPABASE_SERVICE_KEY", ""),
         corpus_dir=corpus_dir,
         exports_dir=exports_dir,
         ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
@@ -121,4 +126,6 @@ def load_config(llm: str | None = None) -> Config:
         truncation_limit_local=int(os.getenv("TRUNCATION_LIMIT_LOCAL", "1000000")),
         local_context_tokens=int(os.getenv("LOCAL_CONTEXT_TOKENS", "262144")),
         local_output_tokens=int(os.getenv("LOCAL_OUTPUT_TOKENS", "16384")),
+        media_collect_comments=os.getenv("MEDIA_COLLECT_COMMENTS", "").lower() in {"1", "true", "yes"},
+        media_max_comments=int(os.getenv("MEDIA_MAX_COMMENTS", "50")),
     )

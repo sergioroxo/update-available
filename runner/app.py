@@ -70,25 +70,37 @@ def main():
     st.sidebar.markdown("*PhD research archive*")
     st.sidebar.divider()
 
+    pages = [
+        "Dashboard",
+        "Corpus Intelligence",
+        "Ingest Workbench",
+        "Document List",
+        "Pending Upload",
+        "Media Review",
+        "Lexicon",
+        "Tag Registry",
+        "Testimony Review",
+        "Activity Log",
+        "Guide",
+        "Model Routing",
+        "Triage Tool",
+        "Mac Studio Node",
+        "Seed Data",
+    ]
+    if st.session_state.get("page") not in pages:
+        st.session_state["page"] = pages[0]
+    requested_page = st.session_state.pop("_nav_to", None)
+    if requested_page in pages:
+        st.session_state["page"] = requested_page
+
     page = st.sidebar.radio(
         "Navigate",
-        [
-            "Dashboard",
-            "Ingest Workbench",
-            "Document List",
-            "Pending Upload",
-            "Lexicon",
-            "Tag Registry",
-            "Testimony Review",
-            "Activity Log",
-            "Guide",
-            "Model Routing",
-            "Triage Tool",
-            "Mac Studio Node",
-            "Seed Data",
-        ],
+        pages,
+        index=pages.index(st.session_state.get("page", pages[0])),
+        key="nav_page",
         label_visibility="collapsed",
     )
+    st.session_state["page"] = page
 
     st.sidebar.divider()
     st.sidebar.caption(
@@ -100,12 +112,16 @@ def main():
 
     if page == "Dashboard":
         page_dashboard()
+    elif page == "Corpus Intelligence":
+        page_corpus_intelligence()
     elif page == "Ingest Workbench":
         page_ingest_workbench()
     elif page == "Document List":
         page_document_list()
     elif page == "Pending Upload":
         page_pending_upload()
+    elif page == "Media Review":
+        page_media_review()
     elif page == "Lexicon":
         page_lexicon()
     elif page == "Tag Registry":
@@ -161,6 +177,39 @@ def page_dashboard():
 
     if stats["pending"]:
         st.warning(f"{stats['pending']} document(s) are saved locally but not uploaded yet. Go to Pending Upload.")
+
+    _dashboard_ingest_readiness(config)
+
+    st.subheader("Corpus Sets")
+    sets = _app_list_document_sets(config.corpus_dir)
+    if not sets:
+        st.caption("No saved document sets yet. Create one from Document List.")
+    else:
+        rows = []
+        for item in sets:
+            doc_ids = item.get("docIds", [])
+            annotated_profiles = set()
+            last_annotation = ""
+            for doc_id in doc_ids:
+                ann_dir = config.corpus_dir / doc_id / "research_annotations"
+                if not ann_dir.exists():
+                    continue
+                for path in ann_dir.glob("*.json"):
+                    try:
+                        ann = json.loads(path.read_text(encoding="utf-8"))
+                    except Exception:
+                        continue
+                    annotated_profiles.add(ann.get("profile") or path.stem)
+                    generated = ann.get("generatedAt", "")
+                    if generated > last_annotation:
+                        last_annotation = generated
+            rows.append({
+                "Set": item.get("name", ""),
+                "Docs": len(doc_ids),
+                "Profiles annotated": ", ".join(sorted(annotated_profiles)) or "—",
+                "Last annotation": last_annotation[:19] if last_annotation else "—",
+            })
+        st.dataframe(rows, hide_index=True, use_container_width=True)
 
     # ── Setup checklist ───────────────────────────────────────────────────
     st.subheader("Setup status")
@@ -229,6 +278,86 @@ def page_dashboard():
             st.success("Verify complete — all services responded.")
 
 
+def _dashboard_ingest_readiness(config):
+    st.subheader("Before Continuing Ingestion")
+    docs = _load_local_docs(config.corpus_dir) if config.corpus_dir.exists() else []
+    intel_rows = _corpus_intelligence_rows(config.corpus_dir) if config.corpus_dir.exists() else []
+    gate = _proposal_gate_status(config.corpus_dir) if config.corpus_dir.exists() else {}
+
+    missing_dates = [doc for doc in docs if not doc.get("publication_date")]
+    embedding_gaps = [
+        doc for doc in docs
+        if not doc.get("embedding_ok") or not doc.get("supabase_ok")
+    ]
+    missing_recommended = [
+        row for row in intel_rows
+        if row.get("missingRecommended")
+    ]
+    comment_gaps = [
+        row for row in intel_rows
+        if row.get("isMedia") and not row.get("commentsCollected")
+    ]
+    unresolved = sum(
+        int(gate.get(key, 0))
+        for key in gate
+        if key.startswith("unresolved_")
+    )
+    approved_unpushed = sum(
+        int(gate.get(key, 0))
+        for key in gate
+        if key.startswith("approved_unpushed_")
+    )
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Missing publication dates", len(missing_dates))
+    c2.metric("Embedding/Supabase gaps", len(embedding_gaps))
+    c3.metric("Recommended annotations missing", len(missing_recommended))
+    c4.metric("Media comment gaps", len(comment_gaps))
+    c5.metric("Enrichment queue items", unresolved + approved_unpushed)
+
+    if any([missing_dates, embedding_gaps, missing_recommended, comment_gaps, unresolved, approved_unpushed]):
+        with st.expander("Action checklist", expanded=True):
+            rows = []
+            if missing_dates:
+                rows.append({
+                    "Priority": "High",
+                    "Issue": "Some records are missing publication dates.",
+                    "Where to fix": "Document List -> expand record -> Edit dates and publication metadata.",
+                    "Why": "Dates are central for public table, citation, chronology, and Sanity queries.",
+                })
+            if embedding_gaps:
+                rows.append({
+                    "Priority": "High",
+                    "Issue": "Some records have missing local embeddings or Supabase rows.",
+                    "Where to fix": "Document List -> Generate + push embedding.",
+                    "Why": "Semantic search and corpus comparison depend on the vector store.",
+                })
+            if missing_recommended:
+                rows.append({
+                    "Priority": "Medium",
+                    "Issue": "Recommended annotation profiles have not been run.",
+                    "Where to fix": "Corpus Intelligence -> Annotation Coverage, or Media Review -> Annotations.",
+                    "Why": "These are optional deeper research layers, but important before close reading/citation.",
+                })
+            if comment_gaps:
+                rows.append({
+                    "Priority": "Medium",
+                    "Issue": "Media comments are not collected for some media records.",
+                    "Where to fix": "Media Review -> Comments / Collect comments.",
+                    "Why": "Comments are lower-trust context, but useful for reception and discovery.",
+                })
+            if unresolved or approved_unpushed:
+                rows.append({
+                    "Priority": "Medium",
+                    "Issue": f"{unresolved} unresolved and {approved_unpushed} approved-not-pushed enrichment proposal(s).",
+                    "Where to fix": "Lexicon -> Local Proposals.",
+                    "Why": "Approved terms/entities/tactics should reach Sanity before relying on the living registry.",
+                })
+            st.dataframe(rows, hide_index=True, use_container_width=True)
+    else:
+        st.success("No major local logistics gaps found. You can continue ingestion.")
+
+
 def _corpus_stats(corpus_dir: Path) -> dict[str, int]:
     stats = {"total": 0, "uploaded": 0, "pending": 0, "enriched": 0}
     if not corpus_dir.exists():
@@ -255,6 +384,481 @@ def _service_status(base_url: str) -> str:
         return "online" if response.status_code < 500 else "error"
     except Exception:
         return "offline"
+
+
+# ---------------------------------------------------------------------------
+# Corpus Intelligence
+# ---------------------------------------------------------------------------
+
+def page_corpus_intelligence():
+    st.title("Corpus Intelligence")
+    st.caption(
+        "Local corpus overview for sampling decisions, annotation planning, and spotting gaps before close reading."
+    )
+
+    config = _load_config_safe()
+    if not config:
+        st.error("Could not load config. Check runner/.env.")
+        return
+    if not config.corpus_dir.exists():
+        st.info(f"Corpus directory does not exist yet: {config.corpus_dir}")
+        return
+
+    rows = _corpus_intelligence_rows(config.corpus_dir)
+    if not rows:
+        st.info("No analysed local documents found yet.")
+        return
+
+    import pandas as pd
+
+    df = pd.DataFrame(rows)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Documents", len(df))
+    c2.metric("Media docs", int(df["isMedia"].sum()))
+    c3.metric("Uploaded", int(df["uploaded"].sum()))
+    c4.metric("With annotations", int((df["annotationCount"] > 0).sum()))
+
+    with st.expander("Filters", expanded=True):
+        f1, f2, f3, f4 = st.columns(4)
+        with f1:
+            type_filter = st.multiselect("Type", sorted(x for x in df["type"].unique() if x))
+        with f2:
+            format_filter = st.multiselect("Format", sorted(x for x in df["format"].unique() if x))
+        with f3:
+            country_filter = st.multiselect(
+                "Country",
+                sorted({country for row in rows for country in row.get("countryList", []) if country}),
+            )
+        with f4:
+            only_needs_annotation = st.checkbox("Needs recommended annotation", value=False)
+
+    filtered = df
+    if type_filter:
+        filtered = filtered[filtered["type"].isin(type_filter)]
+    if format_filter:
+        filtered = filtered[filtered["format"].isin(format_filter)]
+    if country_filter:
+        filtered = filtered[
+            filtered["countryList"].apply(lambda values: any(country in values for country in country_filter))
+        ]
+    if only_needs_annotation:
+        filtered = filtered[filtered["missingRecommended"].astype(bool)]
+
+    st.caption(f"Showing {len(filtered)} of {len(df)} documents")
+
+    tab_breakdown, tab_sources, tab_annotations, tab_gap, tab_table = st.tabs(
+        ["Breakdowns", "Sources", "Annotation Coverage", "Gaps", "Table"]
+    )
+
+    with tab_breakdown:
+        left, right = st.columns(2)
+        with left:
+            st.subheader("Type x format")
+            if not filtered.empty:
+                st.dataframe(
+                    pd.crosstab(filtered["type"], filtered["format"]),
+                    use_container_width=True,
+                )
+        with right:
+            st.subheader("Year distribution")
+            year_counts = (
+                filtered[filtered["year"] != ""]
+                .groupby("year")
+                .size()
+                .reset_index(name="documents")
+                .sort_values("year")
+            )
+            if not year_counts.empty:
+                st.bar_chart(year_counts, x="year", y="documents")
+            else:
+                st.caption("No publication years found in local metadata.")
+
+        cc1, cc2 = st.columns(2)
+        with cc1:
+            st.subheader("Countries")
+            countries = []
+            for values in filtered["countryList"]:
+                countries.extend(values)
+            country_df = _count_frame(countries, "country", "documents", pd)
+            st.dataframe(country_df, hide_index=True, use_container_width=True)
+        with cc2:
+            st.subheader("Upload and enrichment")
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {"State": "Uploaded", "Documents": int(filtered["uploaded"].sum())},
+                        {"State": "Local only", "Documents": int((~filtered["uploaded"]).sum())},
+                        {"State": "Enriched", "Documents": int(filtered["hasEnrichment"].sum())},
+                        {"State": "Not enriched", "Documents": int((~filtered["hasEnrichment"]).sum())},
+                    ]
+                ),
+                hide_index=True,
+                use_container_width=True,
+            )
+
+    with tab_sources:
+        s1, s2 = st.columns(2)
+        with s1:
+            st.subheader("Creators / channels")
+            st.dataframe(
+                _count_frame(filtered["creator"].tolist(), "creator", "documents", pd),
+                hide_index=True,
+                use_container_width=True,
+            )
+        with s2:
+            st.subheader("Source hosts")
+            st.dataframe(
+                _count_frame(filtered["sourceHost"].tolist(), "host", "documents", pd),
+                hide_index=True,
+                use_container_width=True,
+            )
+
+    with tab_annotations:
+        st.subheader("Profile coverage")
+        profiles = [
+            "documentary_analysis",
+            "shame_article",
+            "podcast_analysis",
+            "testimony_analysis",
+            "anti_gender_network",
+            "search_discovery",
+        ]
+        coverage_rows = []
+        for profile in profiles:
+            has_profile = filtered["annotationProfiles"].apply(lambda values: profile in values)
+            reviewed_profile = filtered["reviewedProfiles"].apply(lambda values: profile in values)
+            coverage_rows.append(
+                {
+                    "Profile": profile,
+                    "Annotated": int(has_profile.sum()),
+                    "Reviewed/corrected": int(reviewed_profile.sum()),
+                    "Missing": int((~has_profile).sum()),
+                }
+            )
+        st.dataframe(coverage_rows, hide_index=True, use_container_width=True)
+
+        st.subheader("Recommended but not yet run")
+        needed = filtered[filtered["missingRecommended"].astype(bool)][
+            ["doc_id", "type", "format", "recommendedProfiles", "missingRecommended"]
+        ]
+        st.dataframe(needed, hide_index=True, use_container_width=True)
+
+    with tab_gap:
+        st.subheader("Practical gaps")
+        gap_rows = []
+        for _, row in filtered.iterrows():
+            gaps = []
+            if row["isMedia"] and not row["hasTranscript"]:
+                gaps.append("missing transcript evidence")
+            if row["isMedia"] and row["commentsCollected"] == 0:
+                gaps.append("comments not collected")
+            if row["isMedia"] and row["transcriptVersionCount"] < 2:
+                gaps.append("no alternate transcript/SRT comparison")
+            if row["missingRecommended"]:
+                gaps.append("recommended annotation not run")
+            if not row["uploaded"]:
+                gaps.append("local only")
+            if gaps:
+                gap_rows.append(
+                    {
+                        "doc_id": row["doc_id"],
+                        "Type": row["type"],
+                        "Format": row["format"],
+                        "Gaps": "; ".join(gaps),
+                    }
+                )
+        st.dataframe(gap_rows, hide_index=True, use_container_width=True)
+
+        if gap_rows:
+            set_name = st.text_input("Save these gap docs as set", key="ci_gap_set_name")
+            if st.button("Save gap set", key="ci_save_gap_set"):
+                if not set_name.strip():
+                    st.error("Give the set a name first.")
+                else:
+                    payload = _app_write_document_set(
+                        config.corpus_dir,
+                        set_name,
+                        [row["doc_id"] for row in gap_rows],
+                        "Created from Corpus Intelligence gap view",
+                    )
+                    st.success(f"Saved `{payload['name']}` with {len(payload['docIds'])} document(s).")
+
+    with tab_table:
+        display_cols = [
+            "doc_id", "type", "format", "country", "publicationDate", "analysisSavedAt",
+            "uploadedAt", "latestAnnotationAt", "latestReviewAt", "creator", "sourceHost",
+            "uploaded", "hasEnrichment", "annotationProfiles", "missingRecommended",
+            "commentsCollected", "transcriptVersionCount",
+        ]
+        st.dataframe(
+            filtered[display_cols],
+            hide_index=True,
+            use_container_width=True,
+        )
+
+
+def _corpus_intelligence_rows(corpus_dir: Path) -> list[dict]:
+    from runner.pipeline.research_annotate import recommended_profiles
+    from urllib.parse import urlparse
+
+    rows = []
+    for doc_dir in sorted(corpus_dir.iterdir()):
+        if not doc_dir.is_dir() or doc_dir.name.startswith("."):
+            continue
+        analysis = _read_json_file(doc_dir / "analysis.json", {})
+        if not analysis:
+            continue
+        intake = _read_json_file(doc_dir / "intake.json", {})
+        media = _read_json_file(doc_dir / "media_metadata.json", {})
+        general = media.get("general", {}) if isinstance(media, dict) else {}
+        transcript_evidence = media.get("transcriptEvidence", {}) if isinstance(media, dict) else {}
+        signals = media.get("platformAlgorithmicSignals", {}) if isinstance(media, dict) else {}
+        collection = media.get("commentCollection", {}) if isinstance(media, dict) else {}
+
+        country_list = analysis.get("country") or []
+        if isinstance(country_list, str):
+            country_list = [country_list]
+        publication_date = (
+            general.get("publicationDate")
+            or analysis.get("publication_date")
+            or analysis.get("date")
+            or intake.get("date_published")
+            or ""
+        )
+        year = str(publication_date)[:4] if re.match(r"^\d{4}", str(publication_date)) else ""
+        source = intake.get("source_url") or intake.get("source") or ""
+        source_host = urlparse(source).netloc.replace("www.", "") if source else ""
+        profile_rows = _annotation_profile_summary(doc_dir)
+        profiles = sorted(profile_rows.keys())
+        reviewed = sorted(
+            profile for profile, status in profile_rows.items()
+            if status in {"researcher_reviewed", "corrected"}
+        )
+        recommended = recommended_profiles(analysis.get("format", ""), analysis.get("type", ""))
+        missing = [profile for profile in recommended if profile not in profiles]
+        latest_annotation, latest_review = _latest_annotation_dates(doc_dir)
+        transcript_versions = int(transcript_evidence.get("transcriptVersionCount") or 0)
+        comments_collected = int(
+            collection.get("collectedCount")
+            or signals.get("commentsCollectedCount")
+            or 0
+        )
+        rows.append(
+            {
+                "doc_id": doc_dir.name,
+                "type": analysis.get("type", "Unknown") or "Unknown",
+                "format": analysis.get("format", "Unknown") or "Unknown",
+                "country": ", ".join(country_list),
+                "countryList": country_list,
+                "year": year,
+                "publicationDate": publication_date,
+                "analysisSavedAt": _file_timestamp(doc_dir / "analysis.json"),
+                "uploadedAt": _file_timestamp(doc_dir / "sanity_record.json"),
+                "latestAnnotationAt": latest_annotation,
+                "latestReviewAt": latest_review,
+                "creator": general.get("creator") or analysis.get("source_actor") or "",
+                "sourceHost": source_host,
+                "uploaded": (doc_dir / "sanity_record.json").exists(),
+                "hasEnrichment": (doc_dir / "enrichment.json").exists(),
+                "isMedia": (doc_dir / "media_metadata.json").exists(),
+                "hasTranscript": (doc_dir / "transcript_chunks.json").exists(),
+                "transcriptVersionCount": transcript_versions,
+                "commentsCollected": comments_collected,
+                "annotationCount": len(profiles),
+                "annotationProfiles": profiles,
+                "reviewedProfiles": reviewed,
+                "recommendedProfiles": recommended,
+                "missingRecommended": missing,
+            }
+        )
+    return rows
+
+
+def _annotation_profile_summary(doc_dir: Path) -> dict[str, str]:
+    root = doc_dir / "research_annotations"
+    if not root.exists():
+        return {}
+    profiles: dict[str, str] = {}
+    for path in root.glob("*.json"):
+        data = _read_json_file(path, {})
+        profile = data.get("profile") or path.stem
+        profiles[profile] = data.get("annotationStatus", "")
+    return profiles
+
+
+def _read_json_file(path: Path, default):
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default
+
+
+def _render_document_date_editor(doc_id: str, doc_dir: Path, config, compact: bool = False):
+    if not config:
+        st.warning("Config unavailable; cannot edit dates.")
+        return
+    analysis = _read_json_file(doc_dir / "analysis.json", {})
+    preprocess = _read_json_file(doc_dir / "preprocess.json", {})
+    media = _read_json_file(doc_dir / "media_metadata.json", {})
+    general = media.get("general", {}) if isinstance(media, dict) else {}
+    document_date = analysis.get("document_date") or {}
+    publication_date = (
+        general.get("publicationDate")
+        or preprocess.get("date_published")
+        or analysis.get("publication_date")
+        or ""
+    )
+    publication_date = _normalise_publication_date(str(publication_date or ""))
+
+    st.markdown("**Source and document dates**")
+    st.caption(
+        "Publication date is the source/platform date. Document date is the archive classification date used in Sanity."
+    )
+    with st.form(f"doc_date_editor_{doc_id}_{'compact' if compact else 'full'}"):
+        publication_input = st.text_input(
+            "Source publication date",
+            value=str(publication_date or ""),
+            placeholder="YYYY-MM-DD",
+        )
+        c1, c2, c3, c4 = st.columns(4)
+        year = c1.number_input(
+            "Document year",
+            min_value=0,
+            max_value=2100,
+            value=int(document_date.get("year") or _year_from_date(publication_date) or 0),
+        )
+        month = c2.number_input(
+            "Month",
+            min_value=0,
+            max_value=12,
+            value=int(document_date.get("month") or _month_from_date(publication_date) or 0),
+        )
+        day = c3.number_input(
+            "Day",
+            min_value=0,
+            max_value=31,
+            value=int(document_date.get("day") or _day_from_date(publication_date) or 0),
+        )
+        confidence_values = ["exact", "approximate", "unknown"]
+        confidence = document_date.get("confidence") or document_date.get("dateConfidence") or "unknown"
+        confidence_index = confidence_values.index(confidence) if confidence in confidence_values else 2
+        date_confidence = c4.selectbox("Confidence", confidence_values, index=confidence_index)
+        push_sanity = st.checkbox("Also push dates to Sanity", value=False)
+        submitted = st.form_submit_button("Save dates")
+
+    if not submitted:
+        return
+
+    publication_input = _normalise_publication_date(publication_input.strip())
+    if publication_input and not re.match(r"^\d{4}(-\d{2})?(-\d{2})?$", publication_input):
+        st.error("Use YYYY, YYYY-MM, YYYY-MM-DD, or an ISO datetime for source publication date.")
+        return
+
+    try:
+        payload = _save_document_dates_local(
+            doc_dir=doc_dir,
+            publication_date=publication_input,
+            document_date={
+                "year": int(year),
+                "month": int(month),
+                "day": int(day),
+                "confidence": date_confidence,
+            },
+        )
+        sanity_id = ""
+        if push_sanity:
+            from runner.clients import sanity as sanity_client
+
+            sanity_id = sanity_client.write_document_date_update(
+                doc_id,
+                payload["document_date"],
+                payload["publication_date"],
+                config,
+            )
+        if sanity_id:
+            st.success(f"Saved locally and patched Sanity: {sanity_id}")
+        else:
+            st.success("Saved dates locally.")
+        st.rerun()
+    except Exception as exc:
+        st.error(str(exc))
+
+
+def _save_document_dates_local(doc_dir: Path, publication_date: str, document_date: dict) -> dict:
+    analysis_path = doc_dir / "analysis.json"
+    analysis = _read_json_file(analysis_path, {})
+    if analysis:
+        analysis["document_date"] = document_date
+        analysis["publication_date"] = publication_date
+        analysis_path.write_text(json.dumps(analysis, indent=2), encoding="utf-8")
+
+    preprocess_path = doc_dir / "preprocess.json"
+    preprocess = _read_json_file(preprocess_path, {})
+    if preprocess:
+        preprocess["date_published"] = publication_date
+        preprocess_path.write_text(json.dumps(preprocess, indent=2), encoding="utf-8")
+
+    media_path = doc_dir / "media_metadata.json"
+    media = _read_json_file(media_path, {})
+    if media:
+        media.setdefault("general", {})["publicationDate"] = publication_date
+        media_path.write_text(json.dumps(media, indent=2), encoding="utf-8")
+
+    return {"publication_date": publication_date, "document_date": document_date}
+
+
+def _normalise_publication_date(value: str) -> str:
+    value = (value or "").strip()
+    match = re.match(r"^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?", value)
+    if not match:
+        return value
+    parts = [part for part in match.groups() if part]
+    if len(parts) == 1:
+        return parts[0]
+    if len(parts) == 2:
+        return f"{parts[0]}-{parts[1]}"
+    return f"{parts[0]}-{parts[1]}-{parts[2]}"
+
+
+def _year_from_date(value: str) -> int:
+    return int(value[:4]) if value and re.match(r"^\d{4}", str(value)) else 0
+
+
+def _month_from_date(value: str) -> int:
+    return int(value[5:7]) if value and re.match(r"^\d{4}-\d{2}", str(value)) else 0
+
+
+def _day_from_date(value: str) -> int:
+    return int(value[8:10]) if value and re.match(r"^\d{4}-\d{2}-\d{2}", str(value)) else 0
+
+
+def _document_date_to_text(document_date: dict) -> str:
+    if not isinstance(document_date, dict):
+        return ""
+    year = int(document_date.get("year") or 0)
+    month = int(document_date.get("month") or 0)
+    day = int(document_date.get("day") or 0)
+    if not year:
+        return ""
+    if month and day:
+        return f"{year:04d}-{month:02d}-{day:02d}"
+    if month:
+        return f"{year:04d}-{month:02d}"
+    return f"{year:04d}"
+
+
+def _count_frame(values, label: str, count_label: str, pd):
+    from collections import Counter
+
+    clean = [str(value).strip() for value in values if str(value).strip()]
+    counts = Counter(clean)
+    rows = [
+        {label: key, count_label: count}
+        for key, count in counts.most_common(25)
+    ]
+    return pd.DataFrame(rows, columns=[label, count_label])
 
 
 # ---------------------------------------------------------------------------
@@ -813,6 +1417,11 @@ def _render_analysis_editor(config, llm: str) -> None:
                     llm_used=llm,
                 )
                 st.success(f"Saved locally: {saved}")
+                if (saved / "media_metadata.json").exists():
+                    if st.button("Open in Media Review", key="open_media_review_saved"):
+                        st.session_state["mr_doc_id"] = saved.name
+                        st.session_state["_nav_to"] = "Media Review"
+                        st.rerun()
             except Exception as exc:
                 err_msg = str(exc)
                 st.error(f"Save failed: {err_msg}")
@@ -835,6 +1444,12 @@ def _render_analysis_editor(config, llm: str) -> None:
                     st.success("Uploaded to Sanity and Supabase.")
                 else:
                     st.warning("Uploaded to Sanity. No embedding vector was available, so Supabase was skipped.")
+                doc_id = st.session_state.ingest["intake"].doc_id
+                if (config.corpus_dir / doc_id / "media_metadata.json").exists():
+                    if st.button("Open in Media Review", key="open_media_review_uploaded"):
+                        st.session_state["mr_doc_id"] = doc_id
+                        st.session_state["_nav_to"] = "Media Review"
+                        st.rerun()
             except Exception as exc:
                 err_msg = str(exc)
                 st.error(f"Upload failed: {err_msg}")
@@ -1148,8 +1763,105 @@ def page_document_list():
                         exported += 1
             st.success(f"Exported {exported} files to `{dest}`")
 
+    with st.expander("Document sets and batch annotation", expanded=False):
+        selected_docs = st.multiselect(
+            "Select documents for a set",
+            [doc["doc_id"] for doc in filtered],
+            key="doc_set_selected",
+        )
+        set_name = st.text_input("Set name", key="doc_set_name", placeholder="e.g. youtube_sample_01")
+        set_desc = st.text_input("Description", key="doc_set_desc")
+        if st.button("Save selected as set", key="doc_set_save"):
+            if not set_name.strip():
+                st.error("Give the set a name first.")
+            else:
+                payload = _app_write_document_set(corpus_dir, set_name, selected_docs, set_desc)
+                st.success(f"Saved `{payload['name']}` with {len(payload['docIds'])} document(s).")
+
+        sets = _app_list_document_sets(corpus_dir)
+        if sets:
+            st.markdown("**Saved sets**")
+            st.dataframe(
+                [
+                    {
+                        "Name": item.get("name", ""),
+                        "Docs": len(item.get("docIds", [])),
+                        "Created": item.get("createdAt", "")[:19],
+                        "Description": item.get("description", ""),
+                    }
+                    for item in sets
+                ],
+                hide_index=True,
+                use_container_width=True,
+            )
+            batch_cols = st.columns(4)
+            with batch_cols[0]:
+                run_set = st.selectbox("Run on set", [item["name"] for item in sets], key="doc_set_run_name")
+            with batch_cols[1]:
+                run_profile = st.selectbox(
+                    "Profile",
+                    ["shame_article", "podcast_analysis", "testimony_analysis", "anti_gender_network", "search_discovery"],
+                    key="doc_set_run_profile",
+                    help="documentary_analysis is manual-only and is not available for batch runs.",
+                )
+            with batch_cols[2]:
+                run_llm = st.selectbox("Model", ["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local"], key="doc_set_run_llm")
+            with batch_cols[3]:
+                dry_run = st.checkbox("Dry run", value=True, key="doc_set_run_dry")
+            if st.button("Run annotation profile on this set", key="doc_set_run_btn"):
+                cmd = [
+                    sys.executable, "-m", "runner", "annotate-batch",
+                    run_profile, "--llm", run_llm, "--set", run_set,
+                ]
+                if dry_run:
+                    cmd.append("--dry-run")
+                with st.spinner("Running batch annotation…"):
+                    r = __import__("subprocess").run(cmd, capture_output=True, text=True, cwd=_project_root)
+                if r.returncode == 0:
+                    st.success("Batch command completed.")
+                    st.code(r.stdout[-3000:] or "(no output)")
+                else:
+                    st.error(r.stderr[-2000:] or r.stdout[-2000:])
+
     for doc in filtered:
         _render_doc_card(doc, corpus_dir)
+
+
+def _app_document_sets_dir(corpus_dir: Path) -> Path:
+    path = corpus_dir / ".document_sets"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _app_safe_set_name(name: str) -> str:
+    safe = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in name.strip()).strip("_")
+    if not safe:
+        raise ValueError("Set name is required")
+    return safe
+
+
+def _app_write_document_set(corpus_dir: Path, name: str, doc_ids: list[str], description: str = "") -> dict:
+    payload = {
+        "name": _app_safe_set_name(name),
+        "createdAt": datetime.now(timezone.utc).isoformat(),
+        "description": description,
+        "docIds": list(dict.fromkeys(doc_id.removeprefix("doc-") for doc_id in doc_ids)),
+    }
+    (_app_document_sets_dir(corpus_dir) / f"{payload['name']}.json").write_text(
+        json.dumps(payload, indent=2),
+        encoding="utf-8",
+    )
+    return payload
+
+
+def _app_list_document_sets(corpus_dir: Path) -> list[dict]:
+    rows = []
+    for path in sorted(_app_document_sets_dir(corpus_dir).glob("*.json")):
+        try:
+            rows.append(json.loads(path.read_text(encoding="utf-8")))
+        except Exception:
+            continue
+    return rows
 
 
 def _load_local_docs(corpus_dir: Path) -> list[dict]:
@@ -1178,6 +1890,20 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
         uploaded = (doc_dir / "sanity_record.json").exists()
         has_enrichment = (doc_dir / "enrichment.json").exists()
         embedding_status = _local_embedding_status(doc_dir, config)
+        media = _read_json_file(doc_dir / "media_metadata.json", {})
+        general = media.get("general", {}) if isinstance(media, dict) else {}
+        preprocess = _read_json_file(doc_dir / "preprocess.json", {})
+        metadata = _read_json_file(doc_dir / "metadata.json", {})
+        latest_annotation, latest_review = _latest_annotation_dates(doc_dir)
+        publication_date = (
+            general.get("publicationDate")
+            or preprocess.get("date_published")
+            or data.get("publication_date")
+            or data.get("date")
+            or _document_date_to_text(data.get("document_date") or {})
+            or ""
+        )
+        publication_date = _normalise_publication_date(str(publication_date or ""))
 
         docs.append({
             "doc_id":      doc_dir.name,
@@ -1193,9 +1919,15 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             "framing_balance":      data.get("framing_balance") or "—",
             "candidate_terms": len(data.get("candidate_terms", [])),
             "suggested_actors": len(data.get("suggested_actors", [])),
+            "publication_date": publication_date,
+            "analysis_saved_at": metadata.get("saved_at") or _file_timestamp(doc_dir / "analysis.json"),
+            "uploaded_at": _file_timestamp(doc_dir / "sanity_record.json"),
+            "latest_annotation_at": latest_annotation,
+            "latest_review_at": latest_review,
             "batch_id":    intake.get("batch_id", "—"),
             "source":      intake.get("source", ""),
             "uploaded":    uploaded,
+            "is_media":    (doc_dir / "media_metadata.json").exists(),
             "embedding_ok": embedding_status["ok"],
             "embedding_detail": embedding_status["detail"],
             "supabase_ok": embedding_status["supabase_ok"],
@@ -1224,6 +1956,13 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 st.caption(f"Source: {doc['source']}")
         with col2:
             st.metric("Confidence", f"{conf:.2f} ({doc['conf_status']})")
+            date_rows = [
+                f"Published: {doc.get('publication_date') or '—'}",
+                f"Analysed/saved: {str(doc.get('analysis_saved_at') or '—')[:19]}",
+                f"Uploaded: {str(doc.get('uploaded_at') or '—')[:19]}",
+                f"Latest annotation: {str(doc.get('latest_annotation_at') or '—')[:19]}",
+            ]
+            st.caption("  \n".join(date_rows))
             if doc["country"]:
                 st.write("**Countries:**", ", ".join(doc["country"]))
             if doc["tactic"]:
@@ -1262,11 +2001,19 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
             if analysis_path.exists():
                 st.json(json.loads(analysis_path.read_text()))
 
+        with st.expander("Edit dates and publication metadata", expanded=not doc.get("publication_date")):
+            _render_document_date_editor(doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe())
+
         # ── Actions ───────────────────────────────────────────────────────
         st.divider()
         act_cols = st.columns([1, 2, 1])
 
         with act_cols[0]:
+            if doc.get("is_media"):
+                if st.button("Open in Media Review", key=f"open_mr_{doc['doc_id']}"):
+                    st.session_state["mr_doc_id"] = doc["doc_id"]
+                    st.session_state["_nav_to"] = "Media Review"
+                    st.rerun()
             if not doc["uploaded"]:
                 if st.button("⬆ Upload to Sanity", key=f"upload_{doc['doc_id']}", type="primary"):
                     with st.spinner("Uploading…"):
@@ -2673,6 +3420,31 @@ def _render_proposal_status_metrics(records: list[dict]) -> None:
     c4.metric("Rejected", status_counts["Rejected"])
 
 
+def _proposal_display_position(record: dict) -> int:
+    return int(record.get("index", 0)) + 1
+
+
+def _proposal_confidence(item: dict, *keys: str):
+    for key in keys:
+        value = item.get(key)
+        if value in ("", None):
+            continue
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _format_confidence(value) -> str:
+    if value is None:
+        return "—"
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return "—"
+
+
 def _proposal_expander_label(record: dict, label: str) -> str:
     status = _proposal_review_status(record["item"])
     return f"[{status}] {record['doc_id']} · {label}"
@@ -2759,12 +3531,22 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
         return
     records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "term"))
     _render_proposal_status_metrics(records)
+    st.caption(
+        "Proposal # is only the item's position inside that document's local enrichment.json file. "
+        "It is not a quality score or priority ranking."
+    )
     st.dataframe([
         {
             "status": _proposal_review_status(record["item"]),
             "doc_id": record["doc_id"],
-            "index": record["index"],
+            "proposal #": _proposal_display_position(record),
             "term": record["item"].get("term", ""),
+            "LLM confidence": _format_confidence(
+                _proposal_confidence(record["item"], "model_confidence", "llm_confidence", "confidence")
+            ),
+            "researcher confidence": _format_confidence(
+                _proposal_confidence(record["item"], "researcher_confidence")
+            ),
             "action": record["item"].get("action", ""),
             "cluster": record["item"].get("proposed_cluster", ""),
             "function": record["item"].get("function", ""),
@@ -2823,12 +3605,21 @@ def _render_entity_queue(config, records: list[dict]) -> None:
         return
     records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "name"))
     _render_proposal_status_metrics(records)
+    st.caption(
+        "Proposal # is the local JSON position for editing/saving. It is not a model confidence score."
+    )
     st.dataframe([
         {
             "status": _proposal_review_status(record["item"]),
             "doc_id": record["doc_id"],
-            "index": record["index"],
+            "proposal #": _proposal_display_position(record),
             "name": record["item"].get("name", ""),
+            "LLM confidence": _format_confidence(
+                _proposal_confidence(record["item"], "model_confidence", "llm_confidence", "confidence")
+            ),
+            "researcher confidence": _format_confidence(
+                _proposal_confidence(record["item"], "researcher_confidence")
+            ),
             "entity_type": record["item"].get("entity_type", ""),
             "action": record["item"].get("action", ""),
             "approved": record["item"].get("approved", False),
@@ -2876,12 +3667,21 @@ def _render_tactic_queue(config, records: list[dict]) -> None:
         return
     records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "tactic"))
     _render_proposal_status_metrics(records)
+    st.caption(
+        "Proposal # is the local JSON position for editing/saving. It is not a model confidence score."
+    )
     st.dataframe([
         {
             "status": _proposal_review_status(record["item"]),
             "doc_id": record["doc_id"],
-            "index": record["index"],
+            "proposal #": _proposal_display_position(record),
             "tactic": record["item"].get("tactic", ""),
+            "LLM confidence": _format_confidence(
+                _proposal_confidence(record["item"], "model_confidence", "llm_confidence", "confidence")
+            ),
+            "researcher confidence": _format_confidence(
+                _proposal_confidence(record["item"], "researcher_confidence")
+            ),
             "action": record["item"].get("action", ""),
             "approved": record["item"].get("approved", False),
             "rejected": record["item"].get("rejected", False),
@@ -2927,12 +3727,21 @@ def _render_practice_queue(config, records: list[dict]) -> None:
         return
     records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "practice_id"))
     _render_proposal_status_metrics(records)
+    st.caption(
+        "Proposal # is the local JSON position for editing/saving. It is not a model confidence score."
+    )
     st.dataframe([
         {
             "status": _proposal_review_status(record["item"]),
             "doc_id": record["doc_id"],
-            "index": record["index"],
+            "proposal #": _proposal_display_position(record),
             "practice_id": record["item"].get("practice_id", ""),
+            "LLM confidence": _format_confidence(
+                _proposal_confidence(record["item"], "model_confidence", "llm_confidence", "confidence")
+            ),
+            "researcher confidence": _format_confidence(
+                _proposal_confidence(record["item"], "researcher_confidence")
+            ),
             "harm_stance": record["item"].get("harm_stance", ""),
             "approved": record["item"].get("approved", False),
             "rejected": record["item"].get("rejected", False),
@@ -2986,12 +3795,26 @@ def _render_claim_queue(config, records: list[dict]) -> None:
         return
     records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "claim"))
     _render_proposal_status_metrics(records)
+    st.warning(
+        "Claims are extracted claims made by the source. Approving a claim keeps it as a citable/fact-checkable "
+        "source claim; it does not certify that the claim is externally true."
+    )
+    st.caption(
+        "Proposal # is the local JSON position for editing/saving. Review the claim text, context, and source cited "
+        "before approving or pushing to Sanity."
+    )
     st.dataframe([
         {
             "status": _proposal_review_status(record["item"]),
             "doc_id": record["doc_id"],
-            "index": record["index"],
+            "proposal #": _proposal_display_position(record),
             "claim": _short_label(record["item"].get("claim", ""), 100),
+            "LLM confidence": _format_confidence(
+                _proposal_confidence(record["item"], "model_confidence", "llm_confidence", "confidence")
+            ),
+            "researcher confidence": _format_confidence(
+                _proposal_confidence(record["item"], "researcher_confidence")
+            ),
             "verifiable": record["item"].get("verifiable", False),
             "approved": record["item"].get("approved", False),
             "rejected": record["item"].get("rejected", False),
@@ -3040,6 +3863,8 @@ def _render_claim_queue(config, records: list[dict]) -> None:
 def _render_single_proposal_editor(record: dict) -> None:
     item = dict(record["item"])
     prefix = f"proposal_{record['doc_id']}_{record['index']}"
+    model_confidence = _proposal_confidence(item, "model_confidence", "llm_confidence", "confidence")
+    researcher_confidence = _proposal_confidence(item, "researcher_confidence")
     c1, c2 = st.columns([1, 1])
     with c1:
         item["term"] = st.text_input("Term", value=item.get("term", ""), key=f"{prefix}_term")
@@ -3069,9 +3894,48 @@ def _render_single_proposal_editor(record: dict) -> None:
                  "can understand the term without prior knowledge of conversion therapy discourse.",
         )
 
+        st.markdown("**Confidence**")
+        if model_confidence is None:
+            st.caption("LLM proposal confidence was not recorded for this older enrichment run. Re-enrich to generate it.")
+        else:
+            item["model_confidence"] = st.slider(
+                "LLM proposal confidence",
+                min_value=0.0,
+                max_value=1.0,
+                value=float(model_confidence),
+                step=0.05,
+                key=f"{prefix}_model_conf",
+                help="The model's own confidence that this term proposal is relevant and correctly evidenced.",
+            )
+        researcher_default = (
+            float(researcher_confidence)
+            if researcher_confidence is not None
+            else float(model_confidence)
+            if model_confidence is not None
+            else 0.5
+        )
+        item["researcher_confidence"] = st.slider(
+            "Researcher confidence",
+            min_value=0.0,
+            max_value=1.0,
+            value=researcher_default,
+            step=0.05,
+            key=f"{prefix}_researcher_conf",
+            help="Your confidence after reading the quote and definition. This can be lower or higher than the LLM score.",
+        )
+        item["confidence_rationale"] = st.text_area(
+            "Confidence rationale",
+            value=item.get("confidence_rationale", ""),
+            height=70,
+            key=f"{prefix}_confidence_rationale",
+        )
+
     item["exact_quote"] = st.text_area("Origin quote", value=item.get("exact_quote", ""), height=100, key=f"{prefix}_quote")
     item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
-    st.caption(f"Origin: {record['path']} · proposal index {record['index']}")
+    st.caption(
+        f"Origin: {record['path']} · proposal #{_proposal_display_position(record)} "
+        f"(JSON position {record['index']})"
+    )
 
     b1, b2, b3 = st.columns(3)
     with b1:
@@ -3090,6 +3954,46 @@ def _render_single_proposal_editor(record: dict) -> None:
             item["rejected"] = True
             _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
             st.success("Rejected locally.")
+
+
+def _render_proposal_confidence_editor(item: dict, prefix: str) -> None:
+    model_confidence = _proposal_confidence(item, "model_confidence", "llm_confidence", "confidence")
+    researcher_confidence = _proposal_confidence(item, "researcher_confidence")
+    st.markdown("**Confidence**")
+    if model_confidence is None:
+        st.caption("LLM proposal confidence was not recorded for this older enrichment run. Re-enrich to generate it.")
+    else:
+        item["model_confidence"] = st.slider(
+            "LLM proposal confidence",
+            min_value=0.0,
+            max_value=1.0,
+            value=float(model_confidence),
+            step=0.05,
+            key=f"{prefix}_model_conf",
+            help="The model's confidence that this proposal is relevant and correctly evidenced.",
+        )
+    researcher_default = (
+        float(researcher_confidence)
+        if researcher_confidence is not None
+        else float(model_confidence)
+        if model_confidence is not None
+        else 0.5
+    )
+    item["researcher_confidence"] = st.slider(
+        "Researcher confidence",
+        min_value=0.0,
+        max_value=1.0,
+        value=researcher_default,
+        step=0.05,
+        key=f"{prefix}_researcher_conf",
+        help="Your confidence after reading the evidence. This may be lower or higher than the LLM score.",
+    )
+    item["confidence_rationale"] = st.text_area(
+        "Confidence rationale",
+        value=item.get("confidence_rationale", ""),
+        height=70,
+        key=f"{prefix}_confidence_rationale",
+    )
 
 
 def _render_single_entity_editor(record: dict) -> None:
@@ -3144,6 +4048,7 @@ def _render_single_entity_editor(record: dict) -> None:
     if item.get("key_individuals"):
         st.write("**Key individuals:**")
         st.dataframe(item["key_individuals"], width="stretch")
+    _render_proposal_confidence_editor(item, prefix)
 
     b1, b2, b3 = st.columns(3)
     with b1:
@@ -3190,6 +4095,7 @@ def _render_single_tactic_editor(record: dict) -> None:
     item["definition"] = st.text_area("Definition", value=item.get("definition", ""), height=100, key=f"{prefix}_definition")
     item["evidence_quote"] = st.text_area("Evidence quote", value=item.get("evidence_quote", ""), height=100, key=f"{prefix}_quote")
     item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
+    _render_proposal_confidence_editor(item, prefix)
     _render_review_buttons(record, "tactic_proposals", item, prefix, "tactic")
 
 
@@ -3212,12 +4118,17 @@ def _render_single_practice_editor(record: dict) -> None:
     item["exact_description"] = st.text_area("Exact description", value=item.get("exact_description", ""), height=120, key=f"{prefix}_description")
     item["harm_quote"] = st.text_area("Harm quote", value=item.get("harm_quote", ""), height=100, key=f"{prefix}_quote")
     item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
+    _render_proposal_confidence_editor(item, prefix)
     _render_review_buttons(record, "practice_descriptions", item, prefix, "practice")
 
 
 def _render_single_claim_editor(record: dict) -> None:
     item = dict(record["item"])
     prefix = f"claim_{record['doc_id']}_{record['index']}"
+    st.info(
+        "Read this as: 'the source claims...' until you have checked the quotation, context, and any external evidence. "
+        "Use approval to keep it in the archive workflow, not to mark it as true."
+    )
     item["claim"] = st.text_area("Claim", value=item.get("claim", ""), height=100, key=f"{prefix}_claim")
     c1, c2 = st.columns([1, 1])
     with c1:
@@ -3228,11 +4139,15 @@ def _render_single_claim_editor(record: dict) -> None:
         item["pushed_to_sanity"] = st.checkbox("Pushed to Sanity", value=item.get("pushed_to_sanity", False), disabled=True, key=f"{prefix}_pushed")
     item["context"] = st.text_area("Context", value=item.get("context", ""), height=90, key=f"{prefix}_context")
     item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
+    _render_proposal_confidence_editor(item, prefix)
     _render_review_buttons(record, "statistical_claims", item, prefix, "claim")
 
 
 def _render_review_buttons(record: dict, key: str, item: dict, prefix: str, label: str) -> None:
-    st.caption(f"Origin: {record['path']} · proposal index {record['index']}")
+    st.caption(
+        f"Origin: {record['path']} · proposal #{_proposal_display_position(record)} "
+        f"(JSON position {record['index']})"
+    )
     b1, b2, b3 = st.columns(3)
     with b1:
         if st.button(f"Save {label.title()} Edits", key=f"{prefix}_save"):
@@ -4550,6 +5465,1224 @@ def page_seed_data():
                     f"{summary.get('errors',0)} errors"
                 )
                 st.cache_data.clear()
+
+
+# ---------------------------------------------------------------------------
+# Media Review
+# ---------------------------------------------------------------------------
+
+def page_media_review():
+    st.title("Media Review")
+    st.caption(
+        "Transcript versions, research annotations, comment evidence, and related-source "
+        "candidates for media documents. All annotations remain private until researcher review."
+    )
+
+    config = _load_config_safe()
+    if not config:
+        st.error("Could not load config — is runner/.env configured?")
+        return
+
+    corpus_dir = config.corpus_dir
+    if not corpus_dir.exists():
+        st.info(f"Corpus directory does not exist yet: {corpus_dir}")
+        return
+
+    media_docs = sorted(
+        [d.name for d in corpus_dir.iterdir() if d.is_dir() and (d / "media_metadata.json").exists()]
+    )
+    if not media_docs:
+        st.info("No media documents found. Ingest a video or attach an SRT file to get started.")
+        return
+
+    doc_id = st.selectbox("Document", media_docs, key="mr_doc_id")
+    if not doc_id:
+        return
+
+    doc_dir = corpus_dir / doc_id
+    _mr_overview_section(doc_id, doc_dir, config)
+    st.divider()
+
+    tab_transcripts, tab_annotations, tab_comments, tab_candidates = st.tabs(
+        ["Transcripts", "Annotations", "Comments", "Related Sources"]
+    )
+    with tab_transcripts:
+        _mr_transcripts(doc_id, doc_dir, config)
+    with tab_annotations:
+        _mr_annotations(doc_id, doc_dir, config)
+    with tab_comments:
+        _mr_comments(doc_id, doc_dir, config)
+    with tab_candidates:
+        _mr_candidates(doc_id, doc_dir, config)
+
+
+def _mr_read_json(path, default=None):
+    if default is None:
+        default = {}
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default
+
+
+def _file_timestamp(path: Path) -> str:
+    if not path.exists():
+        return "—"
+    return datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()
+
+
+def _latest_annotation_dates(doc_dir: Path) -> tuple[str, str]:
+    latest_generated = ""
+    latest_reviewed = ""
+    root = doc_dir / "research_annotations"
+    if not root.exists():
+        return latest_generated, latest_reviewed
+    for path in root.glob("*.json"):
+        data = _mr_read_json(path, {})
+        generated = str(data.get("generatedAt") or "")
+        reviewed = str(data.get("reviewedAt") or "")
+        if generated > latest_generated:
+            latest_generated = generated
+        if reviewed > latest_reviewed:
+            latest_reviewed = reviewed
+    return latest_generated, latest_reviewed
+
+
+def _mr_overview_section(doc_id: str, doc_dir: Path, config):
+    """Platform metadata card + Sanity/Supabase/local status."""
+    meta = _mr_read_json(doc_dir / "media_metadata.json")
+    intake = _mr_read_json(doc_dir / "intake.json")
+    general = meta.get("general", {})
+    dist = meta.get("platformDistribution", [])
+    reach = meta.get("reachMetrics", {})
+    te = meta.get("transcriptEvidence", {})
+
+    col_meta, col_status = st.columns([3, 1])
+    with col_meta:
+        title = general.get("episodeTitle") or general.get("seriesTitle") or doc_id
+        st.subheader(title)
+        creator = general.get("creator") or ""
+        pub_date = general.get("publicationDate") or ""
+        duration = general.get("durationMinutes")
+        parts = []
+        if creator:
+            parts.append(f"**{creator}**")
+        if pub_date:
+            parts.append(pub_date)
+        if duration:
+            parts.append(f"{duration:.1f} min")
+        if parts:
+            st.markdown("  ·  ".join(parts))
+
+        synopsis = general.get("synopsis") or ""
+        if synopsis:
+            with st.expander("Synopsis"):
+                st.write(synopsis)
+
+        if dist:
+            rows_dist = []
+            for p in dist:
+                vc = p.get("viewCount")
+                rows_dist.append({
+                    "Platform": p.get("platform", ""),
+                    "URL": p.get("url", ""),
+                    "Views (platform metadata)": f"{vc:,}" if isinstance(vc, int) else str(vc or "—"),
+                    "Status": p.get("status", ""),
+                })
+            st.dataframe(rows_dist, hide_index=True, use_container_width=True)
+
+        total_views = reach.get("totalEstimatedViews")
+        signals = meta.get("platformAlgorithmicSignals", {})
+        comment_count = (
+            meta.get("commentCollection", {}).get("platformCommentCount")
+            or signals.get("commentCount")
+            or general.get("commentCount")
+        )
+        comments_collected = (
+            meta.get("commentCollection", {}).get("collectedCount")
+            or signals.get("commentsCollectedCount")
+            or 0
+        )
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Platform views", f"{total_views:,}" if isinstance(total_views, int) else "—")
+        c2.metric("Comments on platform", str(comment_count) if comment_count is not None else "not reported")
+        c3.metric(
+            "Comments collected for review",
+            str(comments_collected),
+            help="Run collect-comments <doc_id> to collect platform comments for lower-trust review.",
+        )
+        if not comments_collected:
+            st.info(
+                f"No comments collected yet. Run:  \n"
+                f"```\npython -m runner collect-comments {doc_id}\n```"
+            )
+        repair_col, comments_col = st.columns(2)
+        with repair_col:
+            if st.button("Repair table metadata", key=f"mr_repair_meta_{doc_id}"):
+                try:
+                    from runner.pipeline.media_review import repair_media_metadata_from_raw
+
+                    result = repair_media_metadata_from_raw(doc_id, config, write_sanity=False)
+                    st.success(f"Updated {result['changedCount']} local metadata field(s).")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+            st.caption("Promotes channel URL, handle, likes, comments, and availability from local yt-dlp metadata.")
+        with comments_col:
+            max_comments = st.number_input(
+                "Max comments",
+                min_value=1,
+                max_value=500,
+                value=50,
+                step=10,
+                key=f"mr_collect_comments_max_{doc_id}",
+            )
+            if st.button("Collect comments", key=f"mr_collect_comments_{doc_id}"):
+                try:
+                    from runner.pipeline.media_review import collect_comments_for_document
+
+                    result = collect_comments_for_document(doc_id, config, max_comments=int(max_comments))
+                    st.success(f"Collected {result['collectedCount']} comment(s) for review.")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+
+        primary_label = te.get("selectedTranscriptLabel", "")
+        chunk_count = te.get("transcriptChunkCount", 0)
+        version_count = te.get("transcriptVersionCount", 0)
+        st.caption(
+            f"Transcript: {version_count} version(s) · primary: `{primary_label or 'none'}` · {chunk_count} chunks"
+        )
+
+    with col_status:
+        st.subheader("Storage status")
+        sanity_ok = (doc_dir / "sanity_record.json").exists()
+        embedding_json = doc_dir / "embedding.json"
+        embed_ok = embedding_json.exists() and bool(_mr_read_json(embedding_json, {}).get("embedding"))
+
+        if sanity_ok:
+            st.success("Sanity: uploaded")
+        else:
+            st.warning("Sanity: local only")
+
+        if embed_ok:
+            embedding_data = _mr_read_json(embedding_json)
+            model = embedding_data.get("embedding_model", "")
+            dim = len(embedding_data.get("embedding", []))
+            st.success(f"Embedding: {model}, {dim}d")
+        else:
+            st.warning("Embedding: missing")
+
+        try:
+            from runner.pipeline.upload import _embedding_status as _upemb
+            emb_status = _upemb(doc_dir, config)
+            supa_state = emb_status.get("supabase_state", "")
+            supa_detail = emb_status.get("supabase_detail", "")
+            if emb_status.get("supabase_ok"):
+                st.success(f"Supabase: {supa_detail}")
+            elif supa_state == "unreachable":
+                st.warning(f"Supabase: unreachable  \n{supa_detail}")
+            else:
+                st.error(f"Supabase: {supa_detail}")
+        except Exception as exc:
+            st.warning(f"Supabase: check unavailable ({exc})")
+
+        source_url = intake.get("source_url") or intake.get("source", "")
+        if source_url.startswith("http"):
+            st.markdown(f"[Open source]({source_url})")
+
+    _mr_dates_panel(doc_id, doc_dir, meta, intake)
+    _mr_artifact_completeness_panel(doc_id, doc_dir)
+
+
+def _mr_dates_panel(doc_id: str, doc_dir: Path, meta: dict, intake: dict):
+    general = meta.get("general", {}) if isinstance(meta, dict) else {}
+    analysis = _mr_read_json(doc_dir / "analysis.json", {})
+    metadata = _mr_read_json(doc_dir / "metadata.json", {})
+    latest_ann, latest_review = _latest_annotation_dates(doc_dir)
+    rows = [
+        {"Date": "Source publication", "Value": general.get("publicationDate") or analysis.get("publication_date") or "—", "From": "media_metadata.general / analysis"},
+        {"Date": "Intake Wayback check", "Value": intake.get("wayback_checked_at") or "—", "From": "intake.json"},
+        {"Date": "Local save / analysis package", "Value": metadata.get("saved_at") or _file_timestamp(doc_dir / "analysis.json"), "From": "metadata.json / analysis.json"},
+        {"Date": "Sanity upload record", "Value": _file_timestamp(doc_dir / "sanity_record.json"), "From": "sanity_record.json"},
+        {"Date": "Latest annotation generated", "Value": latest_ann or "—", "From": "research_annotations/*.json"},
+        {"Date": "Latest annotation reviewed", "Value": latest_review or "—", "From": "research_annotations/*.json"},
+    ]
+    with st.expander("Dates and provenance", expanded=False):
+        st.dataframe(rows, hide_index=True, use_container_width=True)
+        _render_document_date_editor(doc_id, doc_dir, _load_config_safe(), compact=True)
+
+
+def _mr_artifact_completeness_panel(doc_id: str, doc_dir: Path):
+    checks = [
+        ("Intake / source provenance", "intake.json", "Required for source URL, Wayback state, duplicate logic."),
+        ("Extracted canonical text", "extracted.txt", "Required for analysis, enrichment, and research annotations."),
+        ("Preprocess metadata", "preprocess.json", "Required for extraction provenance."),
+        ("Main analysis", "analysis.json", "Required before upload/enrichment/research profiles."),
+        ("Embedding", "embedding.json", "Required for Supabase semantic search."),
+        ("Media metadata", "media_metadata.json", "Required for media review and future public table fields."),
+        ("Primary transcript chunks", "transcript_chunks.json", "Required for non-truncated timestamped annotation."),
+        ("Transcript versions", "transcript_versions.json", "Needed for SRT/platform transcript comparison."),
+        ("Transcript comparison", "transcript_comparison.json", "Needed to evaluate SRT differences."),
+        ("Comments evidence queue", "comment_evidence_queue.json", "Lower-trust comment review artifact."),
+        ("Related-source candidates", "candidate_sources.json", "Manual discovery/reupload/mirror review queue."),
+        ("Research annotations", "research_annotations", "Profile-specific analytical layer."),
+        ("Enrichment proposals", "enrichment.json", "Where candidate lexicon/entity/tactic/practice proposals live."),
+        ("Sanity upload record", "sanity_record.json", "Local proof this sogiceDocument was uploaded."),
+    ]
+    rows = []
+    for label, filename, reason in checks:
+        path = doc_dir / filename
+        exists = path.exists()
+        if filename == "research_annotations":
+            count = len(list(path.glob("*.json"))) if path.exists() else 0
+            detail = f"{count} profile(s)" if count else "missing"
+            exists = count > 0
+        else:
+            detail = "present" if exists else "missing"
+        rows.append(
+            {
+                "Artifact": label,
+                "Status": "OK" if exists else "Missing",
+                "Detail": detail,
+                "Why it matters": reason,
+            }
+        )
+    missing_count = sum(1 for row in rows if row["Status"] == "Missing")
+    with st.expander(f"Document completeness checklist ({missing_count} missing)", expanded=missing_count > 0):
+        st.dataframe(rows, hide_index=True, use_container_width=True)
+
+
+def _mr_transcripts(doc_id: str, doc_dir: Path, config):
+    """Transcript versions table, full-text viewer, and cue-level diff."""
+    from runner.pipeline.transcripts import diff_transcript_chunks, chunks_to_text
+
+    versions_path = doc_dir / "transcript_versions.json"
+    versions = _mr_read_json(versions_path, [])
+    if not isinstance(versions, list) or not versions:
+        st.info("No transcript versions recorded. Ingest with a video URL or attach an SRT file.")
+
+        st.subheader("Attach a researcher-provided SRT / VTT")
+        srt_path = st.text_input("SRT / VTT file path", key="mr_srt_path")
+        lang = st.text_input("Language code (e.g. en, pt, no)", key="mr_srt_lang")
+        make_primary = st.checkbox("Set as primary transcript", value=True, key="mr_srt_primary")
+        if st.button("Attach", key="mr_srt_attach"):
+            if not srt_path:
+                st.error("Paste the file path above first.")
+            else:
+                from runner.pipeline.media_review import attach_srt_to_document
+                try:
+                    result = attach_srt_to_document(
+                        doc_id=doc_id, srt_path=srt_path, config=config,
+                        language=lang, make_primary=make_primary,
+                    )
+                    st.success(f"Attached: {result['label']} — {result['chunkCount']} chunks")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+        return
+
+    st.subheader("Transcript versions")
+    rows = []
+    for v in versions:
+        rows.append({
+            "Label": v.get("label", ""),
+            "Language": v.get("language", ""),
+            "Source": v.get("source", ""),
+            "Kind": v.get("kind", ""),
+            "Chunks": v.get("chunkCount", ""),
+            "Chars": v.get("charCount", ""),
+        })
+    st.dataframe(rows, hide_index=True, use_container_width=True)
+
+    comparison = _mr_read_json(doc_dir / "transcript_comparison.json", {})
+    comps = comparison.get("comparisons", [])
+    if comps:
+        st.subheader("Summary comparison")
+        comp_rows = []
+        for c in comps:
+            sim = c.get("similarity", 0)
+            comp_rows.append({
+                "Left": c.get("left", ""),
+                "Right": c.get("right", ""),
+                "Similarity": f"{sim:.2%}",
+                "Char Δ": c.get("charDelta", ""),
+                "Chunk Δ": c.get("chunkDelta", ""),
+                "Assessment": "likely identical" if sim > 0.98 else
+                              "minor formatting differences" if sim > 0.90 else
+                              "moderate differences — review recommended" if sim > 0.70 else
+                              "substantial differences",
+            })
+        st.dataframe(comp_rows, hide_index=True, use_container_width=True)
+
+    st.subheader("Read a transcript version")
+    labels = [v.get("label", "") for v in versions]
+    primary_label = _mr_read_json(doc_dir / "media_metadata.json").get(
+        "transcriptEvidence", {}
+    ).get("selectedTranscriptLabel", "")
+    default_idx = labels.index(primary_label) if primary_label in labels else 0
+    selected_label = st.selectbox("Version", labels, index=default_idx, key="mr_read_label")
+    if selected_label:
+        transcript_file = doc_dir / "transcripts" / f"{''.join(c if c.isalnum() or c in {'-','_'} else '_' for c in selected_label).strip('_')}.json"
+        payload = _mr_read_json(transcript_file, {})
+        chunks = payload.get("chunks") if isinstance(payload, dict) else None
+        if chunks:
+            show_ts = st.checkbox("Show timestamps", value=True, key="mr_show_ts")
+            text = chunks_to_text(chunks, include_timestamps=show_ts)
+            st.text_area("Transcript text", value=text, height=400, key="mr_text_area")
+        else:
+            chunk_file = doc_dir / "transcript_chunks.json"
+            if chunk_file.exists() and selected_label == primary_label:
+                chunks = _mr_read_json(chunk_file, [])
+                show_ts = st.checkbox("Show timestamps", value=True, key="mr_show_ts_primary")
+                text = chunks_to_text(chunks, include_timestamps=show_ts)
+                st.text_area("Transcript text", value=text, height=400, key="mr_text_area_primary")
+            else:
+                st.warning("Transcript file not found for this version.")
+
+    if len(labels) >= 2:
+        st.subheader("Cue-level diff")
+        col_l, col_r = st.columns(2)
+        with col_l:
+            left_label = st.selectbox("Left version", labels, index=0, key="mr_diff_left")
+        with col_r:
+            right_options = [l for l in labels if l != left_label]
+            right_label = st.selectbox("Right version", right_options, key="mr_diff_right")
+
+        if st.button("Run diff", key="mr_diff_btn"):
+            left_chunks = _mr_load_chunks(doc_dir, left_label, primary_label)
+            right_chunks = _mr_load_chunks(doc_dir, right_label, primary_label)
+            if not left_chunks or not right_chunks:
+                st.warning("Could not load chunks for one or both versions.")
+            else:
+                regions = diff_transcript_chunks(left_chunks, right_chunks, context_lines=1)
+                changed = [r for r in regions if r["op"] != "equal"]
+                equal_count = sum(r.get("collapsed", 0) for r in regions if r["op"] == "equal")
+                st.caption(
+                    f"{len(changed)} changed region(s)  ·  {equal_count} unchanged cue(s) collapsed"
+                )
+                _mr_render_diff(regions, left_label, right_label)
+
+    st.divider()
+    st.subheader("Attach a new SRT / VTT")
+    srt_path2 = st.text_input("File path", key="mr_srt_path2")
+    lang2 = st.text_input("Language code", key="mr_srt_lang2")
+    make_primary2 = st.checkbox("Set as primary", value=False, key="mr_srt_primary2")
+    if st.button("Attach", key="mr_srt_attach2"):
+        if not srt_path2:
+            st.error("Paste the file path above first.")
+        else:
+            from runner.pipeline.media_review import attach_srt_to_document
+            try:
+                result = attach_srt_to_document(
+                    doc_id=doc_id, srt_path=srt_path2, config=config,
+                    language=lang2, make_primary=make_primary2,
+                )
+                st.success(f"Attached: {result['label']} — {result['chunkCount']} chunks")
+                st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
+
+
+def _mr_load_chunks(doc_dir: Path, label: str, primary_label: str) -> list:
+    safe = "".join(c if c.isalnum() or c in {"-", "_"} else "_" for c in label).strip("_")
+    transcript_file = doc_dir / "transcripts" / f"{safe}.json"
+    payload = _mr_read_json(transcript_file, {})
+    chunks = payload.get("chunks") if isinstance(payload, dict) else None
+    if chunks:
+        return chunks
+    if label == primary_label:
+        return _mr_read_json(doc_dir / "transcript_chunks.json", [])
+    return []
+
+
+def _mr_render_diff(regions: list, left_label: str, right_label: str):
+    OP_COLORS = {
+        "replace": ("#fff3cd", "#d1ecf1"),
+        "delete":  ("#f8d7da", "#f8d7da"),
+        "insert":  ("#d4edda", "#d4edda"),
+        "equal":   ("transparent", "transparent"),
+    }
+    header = st.columns(2)
+    header[0].markdown(f"**{left_label}** (left)")
+    header[1].markdown(f"**{right_label}** (right)")
+
+    for region in regions:
+        op = region["op"]
+        lc_bg, rc_bg = OP_COLORS.get(op, ("transparent", "transparent"))
+        left_cues = region.get("leftCues", [])
+        right_cues = region.get("rightCues", [])
+        collapsed = region.get("collapsed", 0)
+
+        col_l, col_r = st.columns(2)
+        if op == "equal":
+            label_text = "".join(
+                f"`[{c.get('start','')}]` {c.get('text','')}\n" for c in left_cues
+            )
+            if collapsed:
+                label_text += f"*… {collapsed} unchanged cue(s) …*"
+            col_l.markdown(label_text or "—")
+            col_r.markdown(label_text or "—")
+        else:
+            left_text = "\n\n".join(
+                f"`[{c.get('start','')}]` {c.get('text','')}" for c in left_cues
+            ) or "*(nothing)*"
+            right_text = "\n\n".join(
+                f"`[{c.get('start','')}]` {c.get('text','')}" for c in right_cues
+            ) or "*(nothing)*"
+            with col_l:
+                st.markdown(
+                    f'<div style="background:{lc_bg};padding:6px 8px;border-radius:4px;'
+                    f'margin-bottom:4px">{left_text}</div>',
+                    unsafe_allow_html=True,
+                )
+            with col_r:
+                st.markdown(
+                    f'<div style="background:{rc_bg};padding:6px 8px;border-radius:4px;'
+                    f'margin-bottom:4px">{right_text}</div>',
+                    unsafe_allow_html=True,
+                )
+
+
+def _mr_annotations(doc_id: str, doc_dir: Path, config):
+    """Research annotation cards — structured view, not raw JSON."""
+    from runner.pipeline.research_annotate import (
+        list_local_annotations,
+        available_profiles,
+        annotate_document,
+        recommended_profiles,
+        update_annotation_review,
+        export_annotations_markdown,
+    )
+
+    annotations = list_local_annotations(doc_id, config)
+    analysis = _mr_read_json(doc_dir / "analysis.json", {})
+    recommended = recommended_profiles(
+        analysis.get("format", ""),
+        analysis.get("type", ""),
+    )
+    existing_profiles = {a.get("profile") for a in annotations}
+    recommendations = [
+        {"profile": profile, "status": "already run" if profile in existing_profiles else "not run"}
+        for profile in recommended
+    ]
+
+    _mr_annotation_process_guide()
+    _mr_annotation_summary_table(annotations)
+
+    if recommendations:
+        st.subheader("Recommended Profiles For This Document")
+        st.dataframe(
+            [
+                {
+                    **row,
+                    "purpose": _annotation_profile_purpose(row["profile"]),
+                }
+                for row in recommendations
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
+    else:
+        st.info("No extra research annotation profiles are recommended for this document type; enrichment may be enough.")
+
+    if not annotations:
+        st.info("No research annotations yet for this document.")
+    else:
+        for ann_meta in annotations:
+            profile = ann_meta.get("profile", "")
+            status = ann_meta.get("annotationStatus", "model_generated")
+            visibility = ann_meta.get("publicVisibility", "private")
+            generated = ann_meta.get("generatedAt", "")[:10]
+
+            status_color = {
+                "model_generated": "🟡",
+                "researcher_reviewed": "🟢",
+                "corrected": "🟢",
+                "rejected": "🔴",
+            }.get(status, "⚪")
+            vis_badge = {"private": "🔒", "internal_research": "🔬"}.get(visibility, "👁")
+
+            with st.expander(
+                f"{status_color} {profile}  {vis_badge}  ·  {status}  ·  {generated}",
+                expanded=True,
+            ):
+                path = Path(ann_meta.get("path", ""))
+                if not path.exists():
+                    st.warning("Annotation file not found.")
+                    continue
+                try:
+                    data = json.loads(path.read_text(encoding="utf-8"))
+                except Exception:
+                    st.error("Could not parse annotation JSON.")
+                    continue
+
+                result = data.get("resultJson", {})
+                model_name = data.get("modelName", "")
+                resolved_model = data.get("resolvedModelName", "")
+                model_provider = data.get("modelProvider", "")
+                prompt_ver = data.get("promptVersion", "")
+                input_hash = data.get("inputTextHash", "")[:12]
+
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Source stance", result.get("sourceStance", "—"))
+                model_line = f"`{model_name}`"
+                if resolved_model and resolved_model != model_name:
+                    model_line += f" → `{resolved_model}`"
+                c2.markdown(f"**Model:** {model_line} ({model_provider})")
+                c3.markdown(f"**Prompt:** `{prompt_ver}`  \n**Input hash:** `{input_hash}…`")
+
+                if data.get("reviewerNotes"):
+                    st.info(f"Researcher notes: {data['reviewerNotes']}")
+
+                if data.get("profile") == "shame_article":
+                    _render_shame_article_annotation(path, data, result)
+                else:
+                    _render_documentary_annotation(result, doc_id=doc_id, config=config, profile=profile)
+
+                st.markdown("**Review decision**")
+                review_cols = st.columns([1, 1, 2])
+                with review_cols[0]:
+                    next_status = st.selectbox(
+                        "Status",
+                        ["model_generated", "researcher_reviewed", "corrected", "rejected"],
+                        index=["model_generated", "researcher_reviewed", "corrected", "rejected"].index(status)
+                        if status in ["model_generated", "researcher_reviewed", "corrected", "rejected"] else 0,
+                        key=f"review_status_{profile}_{path}",
+                    )
+                with review_cols[1]:
+                    next_visibility = st.selectbox(
+                        "Visibility",
+                        ["private", "internal_research", "public_metadata_only", "public_table_candidate", "published"],
+                        index=["private", "internal_research", "public_metadata_only", "public_table_candidate", "published"].index(visibility)
+                        if visibility in ["private", "internal_research", "public_metadata_only", "public_table_candidate", "published"] else 0,
+                        key=f"review_visibility_{profile}_{path}",
+                    )
+                with review_cols[2]:
+                    next_notes = st.text_area(
+                        "Reviewer notes",
+                        value=data.get("reviewerNotes", ""),
+                        key=f"review_notes_{profile}_{path}",
+                    )
+                push_sanity = st.checkbox(
+                    "Also push this review decision to Sanity",
+                    value=False,
+                    key=f"review_push_sanity_{profile}_{path}",
+                )
+                if st.button("Save review decision", key=f"save_review_{profile}_{path}"):
+                    try:
+                        update_annotation_review(
+                            doc_id=doc_id,
+                            profile=profile,
+                            config=config,
+                            annotation_status=next_status,
+                            reviewer_notes=next_notes,
+                            public_visibility=next_visibility,
+                            write_sanity=push_sanity,
+                        )
+                        st.success("Review decision saved.")
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(str(exc))
+
+                with st.expander("Raw result JSON"):
+                    st.json(result)
+
+    st.divider()
+    st.subheader("Run a new research annotation")
+    all_profiles = list(available_profiles())
+    profile_choice = st.selectbox("Profile", all_profiles, key="mr_ann_profile")
+    llm_choice = st.selectbox(
+        "Model", ["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local"],
+        key="mr_ann_llm",
+    )
+    save_local_only = st.checkbox("Save locally only (don't push to Sanity)", value=True, key="mr_ann_local")
+    overwrite = st.checkbox("Overwrite if model-generated annotation exists", value=False, key="mr_ann_overwrite")
+
+    if profile_choice in existing_profiles:
+        st.warning(f"An annotation for `{profile_choice}` already exists. Enable Overwrite to replace it.")
+
+    if st.button("Run annotation", key="mr_ann_run"):
+        with st.spinner(f"Running {profile_choice} annotation…"):
+            try:
+                result = annotate_document(
+                    doc_id=doc_id,
+                    profile=profile_choice,
+                    config=config,
+                    llm=llm_choice,
+                    save_local_only=save_local_only,
+                    overwrite=overwrite,
+                )
+                st.success(
+                    f"Done — stance: {result.source_stance}  ·  status: {result.annotation_status}"
+                )
+                st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
+
+    st.divider()
+    st.subheader("Export annotation profile")
+    export_cols = st.columns([1, 1, 2])
+    with export_cols[0]:
+        export_profile = st.selectbox("Export profile", all_profiles, key="mr_export_profile")
+    with export_cols[1]:
+        export_format = st.text_input("Format filter", value="", key="mr_export_format", placeholder="optional")
+    with export_cols[2]:
+        export_type = st.text_input("Type filter", value="", key="mr_export_type", placeholder="optional")
+    if st.button("Export Markdown for NotebookLM / reading", key="mr_export_btn"):
+        try:
+            path = export_annotations_markdown(
+                profile=export_profile,
+                config=config,
+                filter_format=export_format,
+                filter_type=export_type,
+            )
+            st.success(f"Exported: {path}")
+        except Exception as exc:
+            st.error(str(exc))
+
+
+def _mr_annotation_process_guide():
+    with st.expander("How annotation review works", expanded=True):
+        st.markdown(
+            """
+Research annotations are an optional layer on top of the existing `sogiceDocument`.
+They do not replace intake, preprocessing, main analysis, embeddings, enrichment, or upload.
+
+Review states:
+
+- `model_generated`: created by a model and private by default; read before relying on it.
+- `researcher_reviewed`: you checked the source/transcript and consider the annotation usable.
+- `corrected`: you made or recorded substantive corrections in reviewer notes.
+- `rejected`: keep the file for provenance, but do not use it analytically.
+
+Visibility:
+
+- `private`: local/internal only.
+- `internal_research`: usable for your research workspace but not public.
+- `public_metadata_only`: safe to expose as metadata, not as full analysis.
+- `public_table_candidate`: candidate for later website/table inclusion.
+- `published`: final public-facing state after separate review.
+"""
+        )
+        st.dataframe(
+            [
+                {"Layer": "Main analysis", "File": "analysis.json", "Where it goes": "sogiceDocument fields in Sanity", "Human action": "Review/edit before upload."},
+                {"Layer": "Enrichment proposals", "File": "enrichment.json", "Where it goes": "Lexicon/entity/tactic/practice Sanity records after approval", "Human action": "Approve in Lexicon/Pending Upload, then push enrichment."},
+                {"Layer": "Research annotations", "File": "research_annotations/<profile>.json", "Where it goes": "researchAnnotation documents only if pushed", "Human action": "Mark reviewed/corrected/rejected; keep private by default."},
+                {"Layer": "Suggested search terms", "File": "resultJson.searchTerms", "Where it goes": "Related-source search/research notes, not the lexicon", "Human action": "Use for discovery; do not treat as controlled vocabulary."},
+                {"Layer": "Candidate lexicon terms", "File": "analysis.json / enrichment.json", "Where it goes": "lexiconEntry after researcher approval", "Human action": "Approve/push, then verify in Sanity."},
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
+    with st.expander("Which annotations should be run for each document type?", expanded=True):
+        st.dataframe(_annotation_selection_rows(), hide_index=True, use_container_width=True)
+        st.caption(
+            "`archive_core` is always the metadata baseline. The rows above describe optional deeper annotation profiles."
+        )
+
+
+def _annotation_selection_rows() -> list[dict]:
+    return [
+        {
+            "Document format": "YouTube video / social video",
+            "Profiles to run": "documentary_analysis + shame_article",
+            "Notes": "Run both: documentary_analysis captures structure; shame_article captures the theoretical argument.",
+        },
+        {
+            "Document format": "Full documentary (long video, SRT provided)",
+            "Profiles to run": "documentary_analysis + shame_article + testimony_analysis",
+            "Notes": "Add testimony_analysis only if personal witness segments are central.",
+        },
+        {
+            "Document format": "Podcast episode",
+            "Profiles to run": "podcast_analysis + shame_article",
+            "Notes": "podcast_analysis replaces documentary_analysis for audio-first material.",
+        },
+        {
+            "Document format": "Testimony / personal account",
+            "Profiles to run": "testimony_analysis only",
+            "Notes": "Privacy-first profile. Do not run documentary_analysis on personal testimonies.",
+        },
+        {
+            "Document format": "Organisational website / article",
+            "Profiles to run": "shame_article + anti_gender_network",
+            "Notes": "Network mapping matters more than visual structure.",
+        },
+        {
+            "Document format": "Legislative / legal document",
+            "Profiles to run": "None of the above; enrichment only",
+            "Notes": "These usually do not benefit from rhetorical/media profiles.",
+        },
+        {
+            "Document format": "Mixed / unclear",
+            "Profiles to run": "shame_article baseline, then add others after reading",
+            "Notes": "shame_article is the most format-agnostic analytical profile.",
+        },
+    ]
+
+
+def _mr_annotation_summary_table(annotations: list[dict]):
+    if not annotations:
+        return
+    rows = []
+    for ann_meta in annotations:
+        path = Path(ann_meta.get("path", ""))
+        data = _mr_read_json(path, {}) if path.exists() else {}
+        result = data.get("resultJson", {}) if isinstance(data, dict) else {}
+        rows.append(
+            {
+                "Profile": data.get("profile") or ann_meta.get("profile", ""),
+                "Status": data.get("annotationStatus") or ann_meta.get("annotationStatus", ""),
+                "Visibility": data.get("publicVisibility") or ann_meta.get("publicVisibility", ""),
+                "Stance": data.get("sourceStance") or result.get("sourceStance", ""),
+                "Generated": str(data.get("generatedAt") or ann_meta.get("generatedAt", ""))[:19],
+                "Reviewed": str(data.get("reviewedAt") or "")[:19],
+                "Model": _model_display(data),
+                "Input hash": str(data.get("inputTextHash") or "")[:12],
+            }
+        )
+    st.subheader("Annotations Table")
+    st.dataframe(rows, hide_index=True, use_container_width=True)
+
+
+def _model_display(data: dict) -> str:
+    if not data:
+        return ""
+    model = data.get("modelName", "")
+    resolved = data.get("resolvedModelName", "")
+    if resolved and resolved != model:
+        return f"{model} -> {resolved}"
+    return model
+
+
+def _annotation_profile_purpose(profile: str) -> str:
+    return {
+        "documentary_analysis": "Narrative structure, visual/rhetorical form, screenshot moments.",
+        "shame_article": "Shame mechanics, rhetorical arguments, terminology, article relevance.",
+        "podcast_analysis": "Audio-first structure, host/guest dynamics, spoken rhetoric.",
+        "testimony_analysis": "Privacy-first reading of personal witness/testimony.",
+        "anti_gender_network": "Actor/network positioning and movement infrastructure.",
+        "search_discovery": "Discovery phrases and related-source search preparation.",
+        "public_website_table": "Data-preparation view for future public table, not publication itself.",
+        "visual_network": "Visual actor/network cues where media evidence supports it.",
+    }.get(profile, "")
+
+
+def _render_documentary_annotation(result: dict, doc_id: str = "", config=None, profile: str = "documentary_analysis"):
+    narrative = result.get("narrativeStructure") or result.get("narrative") or ""
+    if narrative:
+        st.markdown("**Narrative structure**")
+        st.write(narrative)
+
+    opening = result.get("openingFraming") or ""
+    if opening:
+        st.markdown("**Opening framing**")
+        st.write(opening)
+
+    emotional_arc = result.get("emotionalArc") or ""
+    if emotional_arc:
+        st.markdown("**Emotional arc**")
+        st.write(emotional_arc)
+
+    before_after = result.get("beforeAfterTransformationLogic") or ""
+    if before_after:
+        st.markdown("**Before/after transformation logic**")
+        st.write(before_after)
+
+    visual = result.get("visualRhetoric") or ""
+    if visual:
+        st.markdown("**Visual rhetoric** *(transcript-only — unverified)*")
+        st.caption(visual)
+
+    quotable = result.get("quotablePassages") or []
+    if quotable:
+        st.markdown("**Quotable passages**")
+        for q in quotable:
+            ts = q.get("timestamp") or q.get("pageOrTimestamp") or ""
+            quote = q.get("quote") or q.get("text") or ""
+            sig = q.get("significance") or ""
+            ts_str = f"`{ts}`  " if ts else ""
+            st.markdown(f"{ts_str}> {quote}")
+            if sig:
+                st.caption(sig)
+
+    screenshots = result.get("sceneScreenshotSuggestions") or []
+    if screenshots:
+        st.markdown("**Screenshot suggestions**")
+        for s in screenshots:
+            st.markdown(f"- {s}")
+        if doc_id and config:
+            with st.expander("Capture suggested screenshots"):
+                video_path = st.text_input(
+                    "Local video path",
+                    key=f"screenshot_video_path_{doc_id}",
+                    placeholder="/path/to/video.mp4",
+                )
+                out_dir = st.text_input(
+                    "Output directory",
+                    key=f"screenshot_output_dir_{doc_id}",
+                    placeholder="leave blank for corpus/<doc_id>/screenshots/documentary_analysis",
+                )
+                cols = st.columns(3)
+                with cols[0]:
+                    limit = st.number_input("Limit", min_value=1, max_value=100, value=20, key=f"screenshot_limit_{doc_id}")
+                with cols[1]:
+                    dry_run = st.checkbox("Dry run", value=True, key=f"screenshot_dry_{doc_id}")
+                with cols[2]:
+                    run_capture = st.button("Capture", key=f"screenshot_capture_{doc_id}")
+                if run_capture:
+                    try:
+                        from runner.pipeline.screenshots import capture_screenshots
+
+                        payload = capture_screenshots(
+                            doc_id=doc_id,
+                            config=config,
+                            profile=profile,
+                            video_path=video_path,
+                            output_dir=out_dir,
+                            limit=int(limit),
+                            dry_run=dry_run,
+                        )
+                        if dry_run:
+                            st.info(f"Planned {payload['timestampCount']} screenshot(s).")
+                        else:
+                            st.success(f"Captured {payload['timestampCount']} screenshot(s) to {payload['outputDir']}.")
+                        st.dataframe(payload["screenshots"], hide_index=True, use_container_width=True)
+                    except Exception as exc:
+                        st.error(str(exc))
+
+    actors = result.get("networkRelevantActors") or []
+    if actors:
+        st.markdown("**Actors / network**")
+        actor_rows = [
+            {"Name": a.get("name", ""), "Role": a.get("role", "")}
+            for a in actors if isinstance(a, dict)
+        ]
+        st.dataframe(actor_rows, hide_index=True, use_container_width=True)
+
+    search_terms = result.get("searchTerms") or []
+    if search_terms:
+        st.markdown("**Suggested search terms**")
+        st.write("  ·  ".join(search_terms))
+
+    uncertainty = result.get("uncertaintyNotes") or []
+    if uncertainty:
+        with st.expander("Uncertainty notes"):
+            for u in uncertainty:
+                st.markdown(f"- {u}")
+
+
+def _render_shame_article_annotation(path: Path, data: dict, result: dict):
+    st.markdown("**Shame phases**")
+    phase = result.get("shamePhase") or {}
+    evidence = phase.get("phaseEvidence") or {}
+    phase_cols = st.columns(3)
+    for col, label, key, quote_key in zip(
+        phase_cols,
+        ["Precondition", "Method", "Residue"],
+        ["precondition", "method", "residue"],
+        ["preconditionQuote", "methodQuote", "residueQuote"],
+    ):
+        present = bool(phase.get(key))
+        col.markdown(f"**{label}**  {'✓ present' if present else '— absent'}")
+        quote = evidence.get(quote_key, "")
+        if quote:
+            col.caption(f"“{quote}”")
+
+    structural = bool(result.get("shameAsStructural"))
+    st.markdown(f"**STRUCTURAL:** {'Yes' if structural else 'No'}")
+    if result.get("shameAsStructuralReasoning"):
+        st.caption(result["shameAsStructuralReasoning"])
+
+    _pill_section("Identity frames", result.get("identityFrames") or [])
+
+    strategies = result.get("rhetoricalStrategies") or []
+    if strategies:
+        st.markdown("**Rhetorical strategies**")
+        for item in strategies:
+            if isinstance(item, dict):
+                st.markdown(f"- `{item.get('strategy', '')}`")
+                if item.get("evidenceQuote"):
+                    st.caption(f"“{item['evidenceQuote']}”")
+            else:
+                st.markdown(f"- `{item}`")
+
+    _pill_section("Narrative inversions", result.get("narrativeInversions") or [])
+    _pill_section("Dominant messaging", result.get("dominantMessaging") or result.get("messagingFrames") or [])
+
+    arguments = [
+        "psychological_distress_as_cause",
+        "culture_media_contagion",
+        "exgay_detrans_as_evidence",
+        "spiritual_moral_framing",
+        "no_gay_gene",
+        "physical_health_consequences",
+        "trauma_as_cause",
+        "narcissistic_motives",
+        "ability_to_choose",
+        "association_with_paedophilia",
+        "brain_body_mismatch",
+    ]
+    present_arguments = set(result.get("rhetoricalArguments") or [])
+    evidence_map = result.get("rhetoricalArgumentEvidence") or {}
+    st.markdown("**Rhetorical arguments**")
+    st.warning(
+        "These are arguments or claims made by the source. Presence means the source uses that argument; "
+        "it does not verify the argument as true."
+    )
+    st.dataframe(
+        [{"Argument": arg, "Present": "✓" if arg in present_arguments else "—"} for arg in arguments],
+        hide_index=True,
+        use_container_width=True,
+    )
+    if evidence_map:
+        with st.expander("Argument evidence"):
+            for arg in arguments:
+                quote = evidence_map.get(arg)
+                if quote:
+                    st.markdown(f"**{arg}**")
+                    st.caption(f"“{quote}”")
+
+    t1, t2, t3 = st.columns(3)
+    t1.markdown("**Shame vocabulary**")
+    t1.write(", ".join(f"`{x}`" for x in result.get("shameVocabulary", [])) or "—")
+    t2.markdown("**Identity terms**")
+    t2.write(", ".join(f"`{x}`" for x in result.get("identityTerminology", [])) or "—")
+    t3.markdown("**Conversion terms**")
+    t3.write(", ".join(f"`{x}`" for x in result.get("conversionTerminology", [])) or "—")
+
+    st.markdown("**Audience**")
+    st.markdown(f"`{result.get('audiencePositioning', 'unclear')}`")
+    if result.get("targetAudience"):
+        st.write(result["targetAudience"])
+
+    st.markdown("**SOGICE connection**")
+    st.markdown(f"Implies change necessary: {'✓' if result.get('impliesChangeNecessary') else '—'}")
+    _pill_section("Conversion approach shown", result.get("conversionApproachShown") or [])
+
+    st.markdown("**Article relevance**")
+    themes = result.get("articleThemes") or []
+    if themes:
+        st.markdown("Themes: " + "  ·  ".join(f"`{theme}`" for theme in themes))
+    quotable = result.get("quotablePassages") or []
+    for q in quotable:
+        if not isinstance(q, dict):
+            continue
+        ts = q.get("timestamp") or q.get("pageOrTimestamp") or ""
+        quote = q.get("quote") or q.get("text") or ""
+        sig = q.get("significance") or ""
+        st.markdown(f"{'`' + ts + '` ' if ts else ''}> {quote}")
+        if sig:
+            st.caption(sig)
+
+    notes_key = f"shame_notes_{path}"
+    notes = st.text_area("Researcher notes", value=result.get("researcherNotes", ""), key=notes_key)
+    if st.button("Save researcher notes", key=f"save_shame_notes_{path}"):
+        result["researcherNotes"] = notes
+        data["resultJson"] = result
+        path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        st.success("Saved notes locally.")
+
+    followups = result.get("researcherFollowupQuestions") or []
+    if followups:
+        st.markdown("**Researcher follow-up questions**")
+        for q in followups:
+            st.markdown(f"- {q}")
+
+    if result.get("publicTableCandidate"):
+        st.success("Candidate for public table")
+    else:
+        st.caption("Not yet public-ready")
+
+
+def _pill_section(title: str, values: list):
+    if not values:
+        return
+    st.markdown(f"**{title}**")
+    st.markdown(" ".join(f"`{v}`" for v in values))
+
+
+def _mr_comments(doc_id: str, doc_dir: Path, config):
+    """Lower-trust comment evidence queue with risk-flag highlighting."""
+    queue_path = doc_dir / "comment_evidence_queue.json"
+    queue = _mr_read_json(queue_path, {})
+    comments = queue.get("comments", [])
+
+    col_info, col_action = st.columns([2, 1])
+    with col_info:
+        count = queue.get("commentCount", len(comments))
+        review_status = queue.get("reviewStatus", "empty")
+        analysis_status = queue.get("analysisStatus", "not_available")
+        st.metric("Comments in queue", count)
+        st.caption(
+            f"Review status: **{review_status}**  ·  LLM analysis: **{analysis_status}**  \n"
+            "Comments are lower-trust platform data — not source claims. Review before any analysis."
+        )
+    with col_action:
+        max_c = st.number_input("Max comments", min_value=10, max_value=500, value=50, step=10, key="mr_max_comments")
+        if st.button("Collect / refresh comments", key="mr_collect_btn"):
+            from runner.pipeline.media_review import collect_comments_for_document
+            with st.spinner("Collecting platform comments…"):
+                try:
+                    result = collect_comments_for_document(
+                        doc_id=doc_id, config=config, max_comments=int(max_c)
+                    )
+                    platform_total = result.get("platformCommentCount")
+                    st.success(
+                        f"Collected {result['collectedCount']} comments"
+                        + (f" (platform total: {platform_total})" if platform_total else "")
+                    )
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+
+    if not comments:
+        st.info("No comments collected yet.")
+        return
+
+    st.divider()
+
+    filter_flagged = st.checkbox("Show flagged only", key="mr_comments_flagged")
+    shown = [c for c in comments if c.get("riskFlags")] if filter_flagged else comments
+
+    st.caption(f"Showing {len(shown)} of {len(comments)} comments")
+    for idx, c in enumerate(shown):
+        flags = c.get("riskFlags", [])
+        pinned = c.get("isPinned", False)
+        favorited = c.get("isFavorited", False)
+        likes = c.get("likeCount")
+        author = c.get("author", "")
+        text = c.get("text", "")
+        trust = c.get("trustLevel", "lower_trust_platform_comment")
+
+        badges = []
+        if pinned:
+            badges.append("📌 pinned")
+        if favorited:
+            badges.append("⭐ creator-favorited")
+        if "self_harm_or_violence_language" in flags:
+            badges.append("🔴 self-harm language")
+        if "potential_harmful_language" in flags:
+            badges.append("🔴 harmful language")
+        if "possible_personal_testimony" in flags:
+            badges.append("🟡 possible personal testimony")
+
+        with st.expander(
+            f"{'🔴 ' if flags else ''}{author[:40] or 'Anonymous'}  ·  "
+            f"{f'{likes} likes  ·' if isinstance(likes, int) else ''} "
+            f"{'  ·  '.join(badges) or trust}",
+            expanded=bool(flags),
+        ):
+            st.write(text)
+            st.caption(
+                f"Trust level: {trust}  ·  Evidence use: {c.get('evidenceUse', '')}  ·  "
+                f"Review status: {c.get('reviewStatus', '')}"
+            )
+
+
+def _mr_candidates(doc_id: str, doc_dir: Path, config):
+    """Related-source candidates grouped by category."""
+    from runner.pipeline.related_search import run_related_source_search
+
+    candidates_path = doc_dir / "candidate_sources.json"
+    payload = _mr_read_json(candidates_path, {})
+    seeds_path = doc_dir / "discovery_seed_queue.json"
+    seeds = _mr_read_json(seeds_path, [])
+
+    col_seeds, col_run = st.columns([2, 1])
+    with col_seeds:
+        seed_count = len(seeds) if isinstance(seeds, list) else 0
+        candidate_count = payload.get("candidateCount", 0)
+        error_count = payload.get("errorCount", 0)
+        st.metric("Discovery seeds", seed_count)
+        st.metric("Candidates found", candidate_count)
+        if error_count:
+            st.warning(f"{error_count} search error(s) — check candidate_sources.json")
+        generated = payload.get("generatedAt", "")[:10]
+        if generated:
+            st.caption(f"Last search: {generated}")
+    with col_run:
+        max_q = st.number_input("Max queries", min_value=1, max_value=20, value=5, key="mr_max_q")
+        dry_run = st.checkbox("Dry run (don't save)", value=False, key="mr_dry_run")
+        if st.button("Run search", key="mr_search_btn"):
+            with st.spinner("Searching…"):
+                try:
+                    result = run_related_source_search(
+                        doc_id=doc_id, config=config,
+                        max_queries=int(max_q), dry_run=dry_run,
+                    )
+                    st.success(
+                        f"Found {result['candidateCount']} candidates from {len(result['seedsUsed'])} queries"
+                    )
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+
+    if seeds and isinstance(seeds, list):
+        with st.expander(f"Discovery seeds ({seed_count})"):
+            seed_rows = [
+                {
+                    "Type": s.get("seedType", ""),
+                    "Query": s.get("query", ""),
+                    "Reason": s.get("reason", ""),
+                    "Status": s.get("reviewStatus", ""),
+                }
+                for s in seeds if isinstance(s, dict)
+            ]
+            st.dataframe(seed_rows, hide_index=True, use_container_width=True)
+
+    candidates = payload.get("candidates", [])
+    if not candidates:
+        if payload:
+            st.info("Search completed but found no candidates.")
+        else:
+            st.info("No search results yet. Run the search above.")
+        return
+
+    st.divider()
+    by_category: dict[str, list] = {}
+    for c in candidates:
+        cat = c.get("candidateCategory", "related_context_candidate")
+        by_category.setdefault(cat, []).append(c)
+
+    CATEGORY_LABELS = {
+        "possible_mirror_or_reupload": "Possible mirrors / reuploads",
+        "same_creator_or_channel_candidate": "Same creator / channel",
+        "same_title_candidate": "Same title, different platform",
+        "tag_or_hashtag_related": "Tag / hashtag related",
+        "query_title_match": "Title match",
+        "related_context_candidate": "Related context",
+    }
+
+    for cat, items in sorted(by_category.items(), key=lambda x: list(CATEGORY_LABELS).index(x[0]) if x[0] in CATEGORY_LABELS else 99):
+        label = CATEGORY_LABELS.get(cat, cat)
+        st.subheader(f"{label} ({len(items)})")
+        for item in sorted(items, key=lambda x: -float(x.get("score", 0))):
+            in_corpus = item.get("alreadyInCorpus", False)
+            existing_ids = item.get("existingDocIds", [])
+            platform = item.get("platform", "other")
+            score = item.get("score", 0)
+            url = item.get("url", "")
+            title = item.get("title", url[:80])
+
+            corpus_badge = f"✅ in corpus: {', '.join(existing_ids)}" if in_corpus else "⬜ not in corpus"
+            with st.expander(f"[{platform}] {title[:80]}  ·  score {score:.1f}  ·  {corpus_badge}"):
+                st.write(f"**URL:** {url}")
+                snippet = item.get("snippet", "")
+                if snippet:
+                    st.caption(snippet)
+                st.caption(
+                    f"Seed: {item.get('seedType','')} — {item.get('seedReason','')}  ·  "
+                    f"Review: {item.get('reviewStatus','')}  ·  "
+                    f"Auto-ingest allowed: {item.get('autonomousIngestAllowed', False)}"
+                )
+                if not in_corpus:
+                    ingest_cmd = f"python -m runner ingest \"{url}\""
+                    st.code(ingest_cmd, language="bash")
 
 
 # ---------------------------------------------------------------------------
