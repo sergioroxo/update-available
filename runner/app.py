@@ -787,8 +787,9 @@ def _save_confirmed_classification(
 
 
 _SOGICE_TYPES = [
-    "Pro-SOGICE", "Anti-SOGICE", "Neutral/Academic",
-    "Policy/Legal", "Testimony", "Unknown",
+    "Pro-SOGICE", "Anti-SOGICE", "Neutral-Academic",
+    "Legal-Instrument", "Testimony", "Media-Coverage",
+    "Internal-Org-Document", "Mixed", "Regulatory-Policy-Document",
 ]
 
 
