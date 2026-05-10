@@ -778,9 +778,17 @@ def _render_document_date_editor(doc_id: str, doc_dir: Path, config, compact: bo
                 config,
             )
         if sanity_id:
-            st.success(f"Saved locally and patched Sanity: {sanity_id}")
+            st.success(
+                f"Saved locally and patched Sanity: {sanity_id}. "
+                f"Source published: {payload['publication_date'] or '—'}; "
+                f"document date: {_document_date_to_text(payload['document_date']) or '—'}."
+            )
         else:
-            st.success("Saved dates locally.")
+            st.success(
+                "Saved dates locally. "
+                f"Source published: {payload['publication_date'] or '—'}; "
+                f"document date: {_document_date_to_text(payload['document_date']) or '—'}."
+            )
         st.rerun()
     except Exception as exc:
         st.error(str(exc))
@@ -2070,15 +2078,21 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
         preprocess = _read_json_file(doc_dir / "preprocess.json", {})
         metadata = _read_json_file(doc_dir / "metadata.json", {})
         latest_annotation, latest_review = _latest_annotation_dates(doc_dir)
-        publication_date = (
+        annotation_profiles = _annotation_profile_summary(doc_dir)
+        reviewed_annotation_profiles = [
+            profile for profile, status in annotation_profiles.items()
+            if status in {"researcher_reviewed", "corrected"}
+        ]
+        source_publication_date = (
             general.get("publicationDate")
             or preprocess.get("date_published")
             or data.get("publication_date")
             or data.get("date")
-            or _document_date_to_text(data.get("document_date") or {})
             or ""
         )
-        publication_date = _normalise_publication_date(str(publication_date or ""))
+        source_publication_date = _normalise_publication_date(str(source_publication_date or ""))
+        document_date_text = _document_date_to_text(data.get("document_date") or {})
+        display_publication_date = source_publication_date or document_date_text
 
         docs.append({
             "doc_id":      doc_dir.name,
@@ -2094,7 +2108,9 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             "framing_balance":      data.get("framing_balance") or "—",
             "candidate_terms": len(data.get("candidate_terms", [])),
             "suggested_actors": len(data.get("suggested_actors", [])),
-            "publication_date": publication_date,
+            "publication_date": display_publication_date,
+            "source_publication_date": source_publication_date,
+            "document_date_text": document_date_text,
             "analysis_saved_at": metadata.get("saved_at") or _file_timestamp(doc_dir / "analysis.json"),
             "uploaded_at": _file_timestamp(doc_dir / "sanity_record.json"),
             "latest_annotation_at": latest_annotation,
@@ -2103,6 +2119,8 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             "source":      intake.get("source", ""),
             "uploaded":    uploaded,
             "is_media":    (doc_dir / "media_metadata.json").exists(),
+            "annotation_profiles": sorted(annotation_profiles.keys()),
+            "reviewed_annotation_profiles": sorted(reviewed_annotation_profiles),
             "embedding_ok": embedding_status["ok"],
             "embedding_detail": embedding_status["detail"],
             "supabase_ok": embedding_status["supabase_ok"],
@@ -2119,8 +2137,17 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
     upload_badge = "☁️ Sanity" if doc["uploaded"] else "💾 Local"
     embedding_badge = " · Supabase" if doc.get("supabase_ok") else " · Embedding missing"
     enrich_badge = " ✨ Enriched" if doc["has_enrichment"] else ""
+    media_badge = " · Media" if doc.get("is_media") else ""
+    annotation_count = len(doc.get("annotation_profiles") or [])
+    reviewed_count = len(doc.get("reviewed_annotation_profiles") or [])
+    annotation_badge = f" · Annotations {annotation_count}"
+    if annotation_count:
+        annotation_badge += f" ({reviewed_count} reviewed)"
 
-    header = f"{conf_color} **{doc['doc_id']}** — {doc['type']} | {doc['format']} | {upload_badge}{embedding_badge}{enrich_badge}"
+    header = (
+        f"{conf_color} **{doc['doc_id']}** — {doc['type']} | {doc['format']} | "
+        f"{upload_badge}{embedding_badge}{enrich_badge}{media_badge}{annotation_badge}"
+    )
 
     with st.expander(header, expanded=False):
         col1, col2 = st.columns([2, 1])
@@ -2132,7 +2159,8 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
         with col2:
             st.metric("Confidence", f"{conf:.2f} ({doc['conf_status']})")
             date_rows = [
-                f"Published: {doc.get('publication_date') or '—'}",
+                f"Source published: {doc.get('source_publication_date') or '—'}",
+                f"Document date: {doc.get('document_date_text') or '—'}",
                 f"Analysed/saved: {str(doc.get('analysis_saved_at') or '—')[:19]}",
                 f"Uploaded: {str(doc.get('uploaded_at') or '—')[:19]}",
                 f"Latest annotation: {str(doc.get('latest_annotation_at') or '—')[:19]}",
@@ -2149,6 +2177,12 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 f"**Candidate terms:** {doc['candidate_terms']}  |  "
                 f"**Actors:** {doc['suggested_actors']}"
             )
+            if doc.get("annotation_profiles"):
+                reviewed = ", ".join(doc.get("reviewed_annotation_profiles") or []) or "none reviewed"
+                st.write(
+                    f"**Annotations:** {', '.join(doc['annotation_profiles'])}  "
+                    f"(**Reviewed:** {reviewed})"
+                )
             if not doc.get("embedding_ok"):
                 st.warning(f"Local embedding is missing or empty: {doc.get('embedding_detail')}")
             elif not doc.get("supabase_ok"):
