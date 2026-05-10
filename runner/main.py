@@ -1452,7 +1452,15 @@ def doctor():
         version_mod = getattr(_yt_dlp, "version", None)
         ok("yt-dlp", f"Installed ({getattr(version_mod, '__version__', 'version unknown')})")
     except Exception as exc:
-        fail("yt-dlp", f"Not importable: {exc}. Install/update yt-dlp before media ingest.")
+        import sys as _sys
+        if "No module named" in str(exc):
+            fail(
+                "yt-dlp",
+                f"Not importable by {_sys.executable}. "
+                "Run doctor via the project venv: .venv/bin/python3 -m runner doctor",
+            )
+        else:
+            fail("yt-dlp", f"Not importable: {exc}. Install/update yt-dlp before media ingest.")
 
     ffmpeg_path = tool_path("ffmpeg")
     if ffmpeg_path:

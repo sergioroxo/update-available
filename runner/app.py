@@ -5933,13 +5933,14 @@ def _mr_overview_section(doc_id: str, doc_dir: Path, config):
 
         total_views = reach.get("totalEstimatedViews")
         signals = meta.get("platformAlgorithmicSignals", {})
+        comment_collection = meta.get("commentCollection") or {}
         comment_count = (
-            meta.get("commentCollection", {}).get("platformCommentCount")
+            comment_collection.get("platformCommentCount")
             or signals.get("commentCount")
             or general.get("commentCount")
         )
         comments_collected = (
-            meta.get("commentCollection", {}).get("collectedCount")
+            comment_collection.get("collectedCount")
             or signals.get("commentsCollectedCount")
             or 0
         )
