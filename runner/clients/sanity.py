@@ -167,6 +167,67 @@ def write_document_date_update(
         )
 
 
+def write_content_metadata_update(
+    doc_id: str,
+    title: str | None,
+    language_detected: str | None,
+    config: Config,
+) -> str:
+    """Patch content.title / content.languageDetected on an existing sogiceDocument."""
+    set_fields: dict = {}
+    if_missing: dict = {}
+    if title:
+        set_fields["content.title"] = title
+        set_fields["mediaMetadata.general.episodeTitle"] = title
+        if_missing["content"] = {}
+        if_missing["mediaMetadata"] = {}
+        if_missing["mediaMetadata.general"] = {}
+    if language_detected:
+        set_fields["content.languageDetected"] = language_detected
+        if_missing.setdefault("content", {})
+
+    if not set_fields:
+        raise ValueError("No content metadata fields supplied for Sanity update")
+
+    result = _mutate(
+        [{"patch": {"id": _sogice_document_ref(doc_id), "setIfMissing": if_missing, "set": set_fields}}],
+        config,
+    )
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for content metadata update:\n{result}")
+
+
+def write_classification_update(
+    doc_id: str,
+    country: list | None,
+    doc_type: str | None,
+    doc_format: str | None,
+    config: Config,
+) -> str:
+    """Patch classification.country / type / format on an existing sogiceDocument."""
+    set_fields: dict = {}
+    if country is not None:
+        set_fields["classification.country"] = country
+    if doc_type:
+        set_fields["classification.type"] = doc_type
+    if doc_format:
+        set_fields["classification.format"] = doc_format
+
+    if not set_fields:
+        raise ValueError("No classification fields supplied for Sanity update")
+
+    result = _mutate(
+        [{"patch": {"id": _sogice_document_ref(doc_id), "setIfMissing": {"classification": {}}, "set": set_fields}}],
+        config,
+    )
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for classification update:\n{result}")
+
+
 def fetch_lexicon_terms(config: Config) -> list[dict]:
     """GROQ: lexicon entries with per-document evidence dossiers."""
     query = (

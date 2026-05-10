@@ -695,6 +695,266 @@ def _read_json_file(path: Path, default):
         return default
 
 
+def _collect_metadata_sources(doc_dir: Path) -> dict:
+    """Read field values from all local source files for reconciliation display."""
+    preprocess = _read_json_file(doc_dir / "preprocess.json", {})
+    media = _read_json_file(doc_dir / "media_metadata.json", {})
+    general = media.get("general", {}) if isinstance(media, dict) else {}
+    analysis = _read_json_file(doc_dir / "analysis.json", {})
+    intake = _read_json_file(doc_dir / "intake.json", {})
+    pre_overrides = preprocess.get("_manual_overrides", {})
+    ana_overrides = analysis.get("_manual_overrides", {})
+    media_langs = general.get("languages") or ([general["language"]] if general.get("language") else [])
+    return {
+        "title": {
+            "preprocess": preprocess.get("title") or "",
+            "media": general.get("episodeTitle") or general.get("seriesTitle") or "",
+            "confirmed": pre_overrides.get("title") == "researcher_confirmed",
+        },
+        "language": {
+            "preprocess": preprocess.get("language_detected") or "",
+            "media": ", ".join(media_langs) if media_langs else "",
+            "analysis": analysis.get("language") or "",
+            "confirmed": pre_overrides.get("language_detected") == "researcher_confirmed",
+        },
+        "creator": {
+            "preprocess": preprocess.get("sitename") or preprocess.get("hostname") or "",
+            "media": general.get("creator") or general.get("channel") or "",
+        },
+        "source_url": intake.get("source_url") or intake.get("source") or "",
+        "type": {
+            "analysis": analysis.get("type") or "",
+            "confidence": analysis.get("confidence", {}).get("overall_score"),
+            "confidence_status": analysis.get("confidence", {}).get("status", ""),
+            "confirmed": ana_overrides.get("type") == "researcher_confirmed",
+        },
+        "format": {
+            "analysis": analysis.get("format") or "",
+            "confirmed": ana_overrides.get("format") == "researcher_confirmed",
+        },
+        "country": {
+            "analysis": analysis.get("country") or [],
+            "confirmed": ana_overrides.get("country") == "researcher_confirmed",
+        },
+    }
+
+
+def _save_confirmed_title(doc_dir: Path, title: str) -> None:
+    preprocess_path = doc_dir / "preprocess.json"
+    preprocess = _read_json_file(preprocess_path, {})
+    if preprocess is not None:
+        preprocess["title"] = title
+        preprocess.setdefault("_manual_overrides", {})["title"] = "researcher_confirmed"
+        preprocess_path.write_text(json.dumps(preprocess, indent=2), encoding="utf-8")
+    media_path = doc_dir / "media_metadata.json"
+    if media_path.exists():
+        media = _read_json_file(media_path, {})
+        if media is not None:
+            media.setdefault("general", {})["episodeTitle"] = title
+            media_path.write_text(json.dumps(media, indent=2), encoding="utf-8")
+
+
+def _save_confirmed_language(doc_dir: Path, language: str) -> None:
+    preprocess_path = doc_dir / "preprocess.json"
+    preprocess = _read_json_file(preprocess_path, {})
+    if preprocess is not None:
+        preprocess["language_detected"] = language
+        preprocess.setdefault("_manual_overrides", {})["language_detected"] = "researcher_confirmed"
+        preprocess_path.write_text(json.dumps(preprocess, indent=2), encoding="utf-8")
+
+
+def _save_confirmed_classification(
+    doc_dir: Path,
+    country: list | None,
+    doc_type: str | None,
+    doc_format: str | None,
+) -> None:
+    analysis_path = doc_dir / "analysis.json"
+    analysis = _read_json_file(analysis_path, {})
+    if analysis is None:
+        return
+    overrides: dict = analysis.setdefault("_manual_overrides", {})
+    if country is not None:
+        analysis["country"] = country
+        overrides["country"] = "researcher_confirmed"
+    if doc_type:
+        analysis["type"] = doc_type
+        overrides["type"] = "researcher_confirmed"
+    if doc_format:
+        analysis["format"] = doc_format
+        overrides["format"] = "researcher_confirmed"
+    analysis_path.write_text(json.dumps(analysis, indent=2), encoding="utf-8")
+
+
+_SOGICE_TYPES = [
+    "Pro-SOGICE", "Anti-SOGICE", "Neutral/Academic",
+    "Policy/Legal", "Testimony", "Unknown",
+]
+
+
+def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
+    """Side-by-side metadata source view with researcher confirmation controls."""
+    src = _collect_metadata_sources(doc_dir)
+
+    # ── Source comparison table ──────────────────────────────────────────────
+    def _badge(confirmed: bool) -> str:
+        return " ✓ confirmed" if confirmed else ""
+
+    rows = [
+        {
+            "Field": f"title{_badge(src['title']['confirmed'])}",
+            "preprocess.json": src["title"]["preprocess"] or "—",
+            "media_metadata.json": src["title"]["media"] or "—",
+        },
+        {
+            "Field": f"language{_badge(src['language']['confirmed'])}",
+            "preprocess.json": src["language"]["preprocess"] or "—",
+            "media_metadata.json": src["language"]["media"] or "—",
+            "analysis.json": src["language"]["analysis"] or "—",
+        },
+        {
+            "Field": "creator/channel",
+            "preprocess.json": src["creator"]["preprocess"] or "—",
+            "media_metadata.json": src["creator"]["media"] or "—",
+        },
+        {
+            "Field": "source URL",
+            "intake.json": (src["source_url"] or "—")[:60],
+        },
+        {
+            "Field": f"type{_badge(src['type']['confirmed'])}",
+            "analysis.json": (
+                f"{src['type']['analysis'] or '—'}"
+                + (f" ({src['type']['confidence_status']} {src['type']['confidence']:.2f})"
+                   if src["type"]["confidence"] is not None else "")
+            ),
+        },
+        {
+            "Field": f"format{_badge(src['format']['confirmed'])}",
+            "analysis.json": src["format"]["analysis"] or "—",
+        },
+        {
+            "Field": f"country{_badge(src['country']['confirmed'])}",
+            "analysis.json": ", ".join(src["country"]["analysis"]) if src["country"]["analysis"] else "—",
+        },
+    ]
+    st.dataframe(rows, hide_index=True, use_container_width=True)
+
+    # ── Title + language confirmation ────────────────────────────────────────
+    st.markdown("**Confirm title and language**")
+    best_title = src["title"]["preprocess"] or src["title"]["media"] or ""
+    best_lang = (
+        src["language"]["preprocess"]
+        or src["language"]["analysis"]
+        or src["language"]["media"]
+        or ""
+    )
+    with st.form(f"meta_recon_{doc_id}"):
+        confirmed_title = st.text_input(
+            "Canonical title",
+            value=best_title,
+            placeholder="Enter or confirm title",
+            help="Saved to preprocess.json and media_metadata.json. "
+                 "Controls what appears in Sanity content.title on next upload.",
+        )
+        confirmed_lang = st.text_input(
+            "Canonical language (ISO code, e.g. en, pt, no, de)",
+            value=best_lang,
+            placeholder="en",
+            help="Saved to preprocess.json. Controls Supabase language column and Sanity content.languageDetected.",
+        )
+
+        st.markdown("**Classification fields**")
+        st.caption(
+            "Editing these updates analysis.json and marks them researcher-confirmed. "
+            "Changing type or country may affect recommended annotation profiles and public-table filtering."
+        )
+        type_options = _SOGICE_TYPES
+        cur_type = src["type"]["analysis"] or ""
+        type_idx = type_options.index(cur_type) if cur_type in type_options else 0
+        confirmed_type = st.selectbox(
+            "Type",
+            type_options,
+            index=type_idx,
+            help="Changing this overrides the LLM classification.",
+        )
+        confirmed_format = st.text_input(
+            "Format",
+            value=src["format"]["analysis"] or "",
+            placeholder="e.g. documentary, article, podcast",
+        )
+        confirmed_country = st.text_input(
+            "Country / countries (comma-separated)",
+            value=", ".join(src["country"]["analysis"]) if src["country"]["analysis"] else "",
+            placeholder="e.g. United Kingdom, Germany",
+        )
+
+        push_sanity = st.checkbox("Also patch Sanity (content + classification fields)", value=False)
+        submitted = st.form_submit_button("Save confirmed metadata")
+
+    if not submitted:
+        return
+
+    changed: list[str] = []
+    errors: list[str] = []
+
+    if confirmed_title.strip():
+        _save_confirmed_title(doc_dir, confirmed_title.strip())
+        changed.append("title")
+    if confirmed_lang.strip():
+        _save_confirmed_language(doc_dir, confirmed_lang.strip())
+        changed.append("language")
+
+    country_list = [c.strip() for c in confirmed_country.split(",") if c.strip()]
+    classification_changed = False
+    if confirmed_type != (src["type"]["analysis"] or ""):
+        classification_changed = True
+    if confirmed_format.strip() != (src["format"]["analysis"] or ""):
+        classification_changed = True
+    if country_list != (src["country"]["analysis"] or []):
+        classification_changed = True
+    if classification_changed:
+        _save_confirmed_classification(
+            doc_dir,
+            country_list if confirmed_country.strip() else None,
+            confirmed_type if confirmed_type != (src["type"]["analysis"] or "") else None,
+            confirmed_format.strip() if confirmed_format.strip() != (src["format"]["analysis"] or "") else None,
+        )
+        changed.append("classification")
+
+    if push_sanity and config and changed:
+        from runner.clients import sanity as sanity_client
+        try:
+            if "title" in changed or "language" in changed:
+                sanity_client.write_content_metadata_update(
+                    doc_id,
+                    confirmed_title.strip() if "title" in changed else None,
+                    confirmed_lang.strip() if "language" in changed else None,
+                    config,
+                )
+        except Exception as exc:
+            errors.append(f"Sanity content patch: {exc}")
+        try:
+            if "classification" in changed:
+                sanity_client.write_classification_update(
+                    doc_id,
+                    country_list if confirmed_country.strip() else None,
+                    confirmed_type if confirmed_type != (src["type"]["analysis"] or "") else None,
+                    confirmed_format.strip() if confirmed_format.strip() != (src["format"]["analysis"] or "") else None,
+                    config,
+                )
+        except Exception as exc:
+            errors.append(f"Sanity classification patch: {exc}")
+
+    if changed:
+        st.success(f"Saved: {', '.join(changed)}." + (" Sanity patched." if push_sanity and not errors else ""))
+    if errors:
+        for e in errors:
+            st.error(e)
+    if changed:
+        st.rerun()
+
+
 def _render_document_date_editor(doc_id: str, doc_dir: Path, config, compact: bool = False):
     if not config:
         st.warning("Config unavailable; cannot edit dates.")
@@ -2223,6 +2483,11 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
 
         with st.expander("Edit dates and publication metadata", expanded=not doc.get("publication_date")):
             _render_document_date_editor(doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe())
+
+        src = _collect_metadata_sources(corpus_dir / doc["doc_id"])
+        needs_recon = not src["title"]["preprocess"] or not src["language"]["preprocess"]
+        with st.expander("Metadata sources / reconciliation", expanded=needs_recon):
+            _render_metadata_reconciliation(doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe())
 
         # ── Actions ───────────────────────────────────────────────────────
         st.divider()
@@ -6060,6 +6325,33 @@ def _mr_dates_panel(doc_id: str, doc_dir: Path, meta: dict, intake: dict):
         st.dataframe(rows, hide_index=True, use_container_width=True)
         _render_document_date_editor(doc_id, doc_dir, _load_config_safe(), compact=True)
 
+    src = _collect_metadata_sources(doc_dir)
+    needs_recon = not src["title"]["preprocess"] or not src["language"]["preprocess"]
+    with st.expander("Metadata sources / reconciliation", expanded=needs_recon):
+        _render_metadata_reconciliation(doc_id, doc_dir, _load_config_safe())
+
+
+def _set_primary_transcript(doc_id: str, doc_dir: Path, label: str, push_sanity: bool, config) -> None:
+    """Promote a transcript version to primary: update media_metadata + transcript_chunks."""
+    safe = "".join(c if c.isalnum() or c in {"-", "_"} else "_" for c in label).strip("_")
+    version_file = doc_dir / "transcripts" / f"{safe}.json"
+    payload = json.loads(version_file.read_text(encoding="utf-8")) if version_file.exists() else {}
+    chunks = payload.get("chunks") or []
+
+    if chunks:
+        (doc_dir / "transcript_chunks.json").write_text(
+            json.dumps(chunks, indent=2), encoding="utf-8"
+        )
+
+    media_path = doc_dir / "media_metadata.json"
+    media = json.loads(media_path.read_text(encoding="utf-8")) if media_path.exists() else {}
+    media.setdefault("transcriptEvidence", {})["selectedTranscriptLabel"] = label
+    media_path.write_text(json.dumps(media, indent=2), encoding="utf-8")
+
+    if push_sanity and config:
+        from runner.clients import sanity as sanity_client
+        sanity_client.write_media_metadata_update(doc_id, media, config)
+
 
 def _mr_artifact_completeness_panel(doc_id: str, doc_dir: Path):
     checks = [
@@ -6131,10 +6423,15 @@ def _mr_transcripts(doc_id: str, doc_dir: Path, config):
         return
 
     st.subheader("Transcript versions")
+    primary_label_current = _mr_read_json(doc_dir / "media_metadata.json").get(
+        "transcriptEvidence", {}
+    ).get("selectedTranscriptLabel", "")
     rows = []
     for v in versions:
+        label = v.get("label", "")
         rows.append({
-            "Label": v.get("label", ""),
+            "Label": label,
+            "Primary": "✓" if label == primary_label_current else "",
             "Language": v.get("language", ""),
             "Source": v.get("source", ""),
             "Kind": v.get("kind", ""),
@@ -6142,6 +6439,31 @@ def _mr_transcripts(doc_id: str, doc_dir: Path, config):
             "Chars": v.get("charCount", ""),
         })
     st.dataframe(rows, hide_index=True, use_container_width=True)
+
+    labels = [v.get("label", "") for v in versions]
+    if labels:
+        st.markdown("**Set primary transcript**")
+        prim_col, prim_btn_col = st.columns([3, 1])
+        with prim_col:
+            new_primary = st.selectbox(
+                "Select version to make primary",
+                labels,
+                index=labels.index(primary_label_current) if primary_label_current in labels else 0,
+                key="mr_set_primary_label",
+            )
+        prim_push = st.checkbox("Also patch Sanity mediaMetadata", value=False, key="mr_prim_push_sanity")
+        with prim_btn_col:
+            st.markdown("&nbsp;", unsafe_allow_html=True)
+            if st.button("Set as primary", key="mr_set_primary_btn"):
+                try:
+                    _set_primary_transcript(doc_id, doc_dir, new_primary, prim_push, _load_config_safe())
+                    st.success(
+                        f"Primary set to `{new_primary}`. "
+                        "If you have run research annotations, re-run them — they use the primary transcript."
+                    )
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
 
     comparison = _mr_read_json(doc_dir / "transcript_comparison.json", {})
     comps = comparison.get("comparisons", [])
@@ -6164,10 +6486,7 @@ def _mr_transcripts(doc_id: str, doc_dir: Path, config):
         st.dataframe(comp_rows, hide_index=True, use_container_width=True)
 
     st.subheader("Read a transcript version")
-    labels = [v.get("label", "") for v in versions]
-    primary_label = _mr_read_json(doc_dir / "media_metadata.json").get(
-        "transcriptEvidence", {}
-    ).get("selectedTranscriptLabel", "")
+    primary_label = primary_label_current
     default_idx = labels.index(primary_label) if primary_label in labels else 0
     selected_label = st.selectbox("Version", labels, index=default_idx, key="mr_read_label")
     if selected_label:
