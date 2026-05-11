@@ -10,7 +10,12 @@ from runner.pipeline.preprocess import (
     _preprocess_video,
     _save_artifacts,
 )
-from runner.pipeline.transcripts import compare_transcript_versions, parse_timed_text, transcript_version
+from runner.pipeline.transcripts import (
+    compare_transcript_versions,
+    deoverlap_caption_chunks,
+    parse_timed_text,
+    transcript_version,
+)
 from runner.pipeline.upload import _load_preprocess, _merge_intake_metadata
 
 
@@ -116,6 +121,54 @@ def test_preprocess_srt_preserves_timestamps_as_chunks(tmp_path):
     assert result.transcript_chunks[0]["text"] == "Hello there"
     assert "[00:00:03.000 --> 00:00:04.000] Second cue" in result.text
     assert result.transcript_versions[0]["kind"] == "uploaded_srt"
+
+
+def test_deoverlap_caption_chunks_removes_youtube_rolling_window():
+    chunks = [
+        {
+            "index": 0,
+            "start": "00:00:02.560",
+            "end": "00:00:02.570",
+            "text": "I'm Dr. Jennifer Roback Morse I'm",
+        },
+        {
+            "index": 1,
+            "start": "00:00:02.570",
+            "end": "00:00:04.420",
+            "text": "I'm Dr. Jennifer Roback Morse I'm founder and president of the Ruth",
+        },
+        {
+            "index": 2,
+            "start": "00:00:04.420",
+            "end": "00:00:04.430",
+            "text": "founder and president of the Ruth",
+        },
+        {
+            "index": 3,
+            "start": "00:00:04.430",
+            "end": "00:00:06.519",
+            "text": "founder and president of the Ruth Institute the mission of the Ruth",
+        },
+    ]
+
+    cleaned = deoverlap_caption_chunks(chunks)
+
+    assert [chunk["text"] for chunk in cleaned] == [
+        "I'm Dr. Jennifer Roback Morse I'm",
+        "founder and president of the Ruth",
+        "Institute the mission of the Ruth",
+    ]
+    assert cleaned[1]["overlapTrimmed"] is True
+    assert cleaned[2]["index"] == 2
+
+
+def test_deoverlap_caption_chunks_leaves_non_overlapping_cues_alone():
+    chunks = [
+        {"index": 0, "start": "00:00:01.000", "end": "00:00:02.000", "text": "First sentence"},
+        {"index": 1, "start": "00:00:03.000", "end": "00:00:04.000", "text": "Second sentence"},
+    ]
+
+    assert deoverlap_caption_chunks(chunks) == chunks
 
 
 def test_audio_source_for_whisper_downloads_url_audio(monkeypatch, tmp_path):

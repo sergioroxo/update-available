@@ -57,6 +57,40 @@ def chunks_to_text(chunks: list[dict], include_timestamps: bool = True) -> str:
     return "\n".join(lines).strip()
 
 
+def deoverlap_caption_chunks(chunks: list[dict], min_overlap_words: int = 3) -> list[dict]:
+    """Remove rolling-window overlap from auto-caption cue text.
+
+    Some platform auto-captions, especially YouTube VTT, emit cues as a rolling
+    phrase window:
+
+        "I am Dr. X"
+        "I am Dr. X founder of Y"
+        "founder of Y Institute"
+
+    Joining those cues directly creates an inflated transcript. This helper
+    keeps timestamps but replaces each cue's text with only the new suffix when
+    the current cue begins with at least `min_overlap_words` from the previous
+    raw cue. Empty duplicate cues are dropped.
+    """
+    cleaned: list[dict] = []
+    previous_text = ""
+    for chunk in chunks:
+        text = clean_caption_text(str(chunk.get("text", "")))
+        if not text:
+            continue
+        deduped = _remove_previous_overlap(previous_text, text, min_overlap_words)
+        previous_text = text
+        if not deduped:
+            continue
+        next_chunk = dict(chunk)
+        next_chunk["index"] = len(cleaned)
+        next_chunk["text"] = deduped
+        if deduped != text:
+            next_chunk["overlapTrimmed"] = True
+        cleaned.append(next_chunk)
+    return cleaned
+
+
 def clean_caption_text(text: str) -> str:
     text = re.sub(r"<[^>]+>", "", text)
     text = re.sub(r"\{\\.*?\}", "", text)
@@ -65,6 +99,40 @@ def clean_caption_text(text: str) -> str:
     text = re.sub(r"&gt;", ">", text)
     text = re.sub(r"\s+", " ", text)
     return text.strip()
+
+
+def _remove_previous_overlap(previous: str, current: str, min_overlap_words: int) -> str:
+    if not previous or not current:
+        return current
+
+    previous_tokens = _caption_tokens(previous)
+    current_tokens = _caption_tokens(current)
+    if not previous_tokens or not current_tokens:
+        return current
+
+    max_overlap = min(len(previous_tokens), len(current_tokens))
+    overlap = 0
+    for size in range(max_overlap, min_overlap_words - 1, -1):
+        previous_tail = [token[0] for token in previous_tokens[-size:]]
+        current_head = [token[0] for token in current_tokens[:size]]
+        if previous_tail == current_head:
+            overlap = size
+            break
+
+    if not overlap:
+        return current
+    if overlap >= len(current_tokens):
+        return ""
+    return current[current_tokens[overlap][1]:].strip()
+
+
+def _caption_tokens(text: str) -> list[tuple[str, int]]:
+    tokens: list[tuple[str, int]] = []
+    for match in re.finditer(r"\S+", text):
+        normalised = re.sub(r"(^[^\w]+|[^\w]+$)", "", match.group(0).lower())
+        if normalised:
+            tokens.append((normalised, match.start()))
+    return tokens
 
 
 def transcript_version(

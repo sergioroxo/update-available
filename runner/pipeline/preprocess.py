@@ -20,6 +20,7 @@ from ..models.document import IntakeResult, PreprocessResult
 from .transcripts import (
     chunks_to_text,
     compare_transcript_versions,
+    deoverlap_caption_chunks,
     parse_timed_text,
     transcript_version,
 )
@@ -237,6 +238,7 @@ def _preprocess_video(source: str, config: Config | None = None) -> PreprocessRe
                         caption_path.read_text(encoding="utf-8", errors="replace"),
                         source_format=caption_path.suffix.lstrip(".") or "caption",
                     )
+                    chunks = deoverlap_caption_chunks(chunks)
                     if not chunks:
                         continue
                     label = caption_path.stem
