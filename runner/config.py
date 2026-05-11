@@ -51,6 +51,7 @@ class Config:
     local_output_tokens: int = 16384
     media_collect_comments: bool = False
     media_max_comments: int = 50
+    media_allow_whisper: bool = True
 
     @property
     def sanity_api_base(self) -> str:
@@ -128,4 +129,5 @@ def load_config(llm: str | None = None, require_services: bool = True) -> Config
         local_output_tokens=int(os.getenv("LOCAL_OUTPUT_TOKENS", "16384")),
         media_collect_comments=os.getenv("MEDIA_COLLECT_COMMENTS", "").lower() in {"1", "true", "yes"},
         media_max_comments=int(os.getenv("MEDIA_MAX_COMMENTS", "50")),
+        media_allow_whisper=os.getenv("MEDIA_ALLOW_WHISPER", "true").lower() not in {"0", "false", "no"},
     )

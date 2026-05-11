@@ -789,7 +789,18 @@ def _save_confirmed_classification(
 _SOGICE_TYPES = [
     "Pro-SOGICE", "Anti-SOGICE", "Neutral-Academic",
     "Legal-Instrument", "Testimony", "Media-Coverage",
-    "Internal-Org-Document", "Mixed", "Regulatory-Policy-Document",
+    "Internal-Org-Document", "Mixed",
+    "Training-Certification-Material", "Liturgical-Devotional-Material",
+    "Clinical-Therapeutic-Protocol", "Survivor-Network-Material",
+    "Regulatory-Policy-Document",
+]
+
+_DOCUMENT_FORMATS = [
+    "Website-Page", "Blog-Post", "Social-Media-Post", "Video", "Podcast",
+    "News-Article", "Academic-Paper", "NGO-Report", "Government-Report",
+    "Court-Judgment", "Legislative-Submission", "Parliamentary-Debate",
+    "Press-Release", "Book", "Book-Chapter", "Pamphlet", "Newsletter",
+    "Email", "Manual", "Course-Material", "Event-Program", "Other",
 ]
 
 _LEXICON_CLUSTERS = [
@@ -913,10 +924,13 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
             index=type_idx,
             help="Changing this overrides the LLM classification.",
         )
-        confirmed_format = st.text_input(
+        cur_format = src["format"]["analysis"] or "Other"
+        confirmed_format = _controlled_select(
             "Format",
-            value=src["format"]["analysis"] or "",
-            placeholder="e.g. documentary, article, podcast",
+            cur_format,
+            _DOCUMENT_FORMATS,
+            key=f"recon_format_{doc_id}",
+            help="Must match the Sanity controlled vocabulary.",
         )
         confirmed_country = st.text_input(
             "Country / countries (comma-separated)",
@@ -958,7 +972,7 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
     classification_changed = False
     if confirmed_type != (src["type"]["analysis"] or ""):
         classification_changed = True
-    if confirmed_format.strip() != (src["format"]["analysis"] or ""):
+    if confirmed_format != (src["format"]["analysis"] or "Other"):
         classification_changed = True
     if country_list != (src["country"]["analysis"] or []):
         classification_changed = True
@@ -967,7 +981,7 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
             doc_dir,
             country_list if confirmed_country.strip() else None,
             confirmed_type if confirmed_type != (src["type"]["analysis"] or "") else None,
-            confirmed_format.strip() if confirmed_format.strip() != (src["format"]["analysis"] or "") else None,
+            confirmed_format if confirmed_format != (src["format"]["analysis"] or "Other") else None,
         )
         changed.append("classification")
 
@@ -995,7 +1009,7 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
                 class_fields = []
                 if confirmed_type:
                     class_fields.append("classification.type")
-                if confirmed_format.strip():
+                if confirmed_format and confirmed_format != "Other":
                     class_fields.append("classification.format")
                 if country_list:
                     class_fields.append("classification.country")
@@ -1003,7 +1017,7 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
                     doc_id,
                     country_list if confirmed_country.strip() else None,
                     confirmed_type or None,
-                    confirmed_format.strip() or None,
+                    confirmed_format if confirmed_format != "Other" else None,
                     config,
                 )
                 sanity_patched.append(f"{', '.join(class_fields)} → {sanity_id}")
