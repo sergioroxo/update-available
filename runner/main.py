@@ -265,6 +265,7 @@ def reanalyze_doc(
         shutil.copy2(analysis_path, archive)
         console.print(f"[dim]Previous analysis archived → {archive.name}[/dim]")
 
+    analyze.enrich_preprocess_from_intake(preprocess, doc_dir / "intake.json")
     console.print(f"[dim]Re-analysing {doc_id} with {llm}...[/dim]")
     try:
         new_analysis = analyze.run(preprocess, llm=llm, config=config)

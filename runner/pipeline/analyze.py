@@ -24,6 +24,20 @@ from ..models.document import AnalysisResult, PreprocessResult
 
 PROMPT_VERSION = "ingestion-v3.3"
 
+
+def enrich_preprocess_from_intake(preprocess: PreprocessResult, intake_path: Path) -> None:
+    """Populate intake context fields on a PreprocessResult from a saved intake.json.
+
+    Mutates preprocess in-place. Safe to call even if the file does not exist.
+    """
+    try:
+        intake_data = json.loads(intake_path.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    preprocess.intake_declared_type = intake_data.get("declared_type") or None
+    preprocess.intake_batch_id = intake_data.get("batch_id") or None
+    preprocess.intake_source_url = intake_data.get("source_url") or None
+
 _PROMPT_FILE = (
     Path(__file__).parents[2]
     / "02_working_tools"

@@ -41,6 +41,7 @@ def run_second_opinion(
 
     original = AnalysisResult.model_validate_json(analysis_path.read_text(encoding="utf-8"))
     preprocess = _load_preprocess_for_second_opinion(doc_id, doc_dir)
+    analyze.enrich_preprocess_from_intake(preprocess, doc_dir / "intake.json")
     alt = analyze.run(preprocess, llm=llm, config=config)
 
     timestamp = _timestamp()

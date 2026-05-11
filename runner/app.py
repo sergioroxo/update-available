@@ -1708,6 +1708,10 @@ def _workbench_resume(config, doc_id: str, stage: str) -> None:
     if preprocess_path.exists():
         try:
             preprocess_result = _load_preprocess(preprocess_path)
+            if preprocess_result and intake_result:
+                preprocess_result.intake_declared_type = getattr(intake_result, "declared_type", None) or None
+                preprocess_result.intake_batch_id = getattr(intake_result, "batch_id", None) or None
+                preprocess_result.intake_source_url = getattr(intake_result, "source_url", None) or None
         except Exception as exc:
             st.warning(f"Could not load preprocess.json: {exc}")
 
@@ -1956,6 +1960,12 @@ def _workbench_preprocess(config, max_chars: int | None) -> None:
             return
     if result.source_html_sha256:
         st.session_state.ingest["intake"].source_html_sha256 = result.source_html_sha256
+    # Populate intake context so the analysis prompt sees researcher-declared hints
+    _intake = st.session_state.ingest.get("intake")
+    if _intake:
+        result.intake_declared_type = getattr(_intake, "declared_type", None) or None
+        result.intake_batch_id = getattr(_intake, "batch_id", None) or None
+        result.intake_source_url = getattr(_intake, "source_url", None) or None
     st.session_state.ingest.update({
         "preprocess": result,
         "embedding": None,
