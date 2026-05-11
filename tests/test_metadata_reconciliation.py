@@ -243,3 +243,133 @@ def test_set_primary_transcript_version_file_missing_raises(tmp_path):
 
     media = _read_json(tmp_path / "media_metadata.json")
     assert "selectedTranscriptLabel" not in media.get("transcriptEvidence", {})
+
+
+# ── _save_confirmed_register_fields ──────────────────────────────────────────
+
+def test_save_confirmed_register_fields_all_three(tmp_path):
+    from runner.app import _save_confirmed_register_fields
+
+    _write_json(tmp_path / "analysis.json", {
+        "narrative_register": "Mixed",
+        "rhetorical_intensity": "",
+        "framing_balance": "",
+    })
+    changed = _save_confirmed_register_fields(
+        tmp_path,
+        "Legal-Policy",
+        "pathologizing",
+        "pro-dominant",
+    )
+
+    ana = _read_json(tmp_path / "analysis.json")
+    assert ana["narrative_register"] == "Legal-Policy"
+    assert ana["rhetorical_intensity"] == "pathologizing"
+    assert ana["framing_balance"] == "pro-dominant"
+    assert ana["_manual_overrides"]["narrative_register"] == "researcher_confirmed"
+    assert ana["_manual_overrides"]["rhetorical_intensity"] == "researcher_confirmed"
+    assert ana["_manual_overrides"]["framing_balance"] == "researcher_confirmed"
+    assert set(changed) == {"narrative_register", "rhetorical_intensity", "framing_balance"}
+
+
+def test_save_confirmed_register_fields_partial(tmp_path):
+    from runner.app import _save_confirmed_register_fields
+
+    _write_json(tmp_path / "analysis.json", {"narrative_register": "Mixed"})
+    changed = _save_confirmed_register_fields(tmp_path, "Journalistic", None, None)
+
+    ana = _read_json(tmp_path / "analysis.json")
+    assert ana["narrative_register"] == "Journalistic"
+    assert ana["_manual_overrides"]["narrative_register"] == "researcher_confirmed"
+    assert "rhetorical_intensity" not in ana.get("_manual_overrides", {})
+    assert "framing_balance" not in ana.get("_manual_overrides", {})
+    assert changed == ["narrative_register"]
+
+
+def test_save_confirmed_register_fields_empty_strings_are_noop(tmp_path):
+    from runner.app import _save_confirmed_register_fields
+
+    _write_json(tmp_path / "analysis.json", {"narrative_register": "Mixed"})
+    changed = _save_confirmed_register_fields(tmp_path, "", "", "")
+
+    ana = _read_json(tmp_path / "analysis.json")
+    assert ana["narrative_register"] == "Mixed"
+    assert "_manual_overrides" not in ana
+    assert changed == []
+
+
+def test_save_confirmed_register_fields_preserves_existing_overrides(tmp_path):
+    from runner.app import _save_confirmed_register_fields
+
+    _write_json(tmp_path / "analysis.json", {
+        "narrative_register": "Mixed",
+        "_manual_overrides": {"type": "researcher_confirmed"},
+    })
+    _save_confirmed_register_fields(tmp_path, "Academic-Analytical", None, None)
+
+    ana = _read_json(tmp_path / "analysis.json")
+    assert ana["_manual_overrides"]["type"] == "researcher_confirmed"
+    assert ana["_manual_overrides"]["narrative_register"] == "researcher_confirmed"
+
+
+def test_save_confirmed_register_fields_no_analysis_file(tmp_path):
+    from runner.app import _save_confirmed_register_fields
+
+    # analysis.json absent — should return empty list without crash
+    changed = _save_confirmed_register_fields(tmp_path, "Legal-Policy", None, None)
+    assert changed == []
+    assert not (tmp_path / "analysis.json").exists()
+
+
+# ── _normalise_country / _normalise_country_list ──────────────────────────────
+
+def test_normalise_country_iso2_uk():
+    from runner.app import _normalise_country
+    assert _normalise_country("UK") == "United Kingdom"
+
+
+def test_normalise_country_iso2_us():
+    from runner.app import _normalise_country
+    assert _normalise_country("US") == "United States"
+
+
+def test_normalise_country_iso2_de():
+    from runner.app import _normalise_country
+    assert _normalise_country("DE") == "Germany"
+
+
+def test_normalise_country_iso2_no():
+    from runner.app import _normalise_country
+    assert _normalise_country("NO") == "Norway"
+
+
+def test_normalise_country_passthrough_unknown():
+    from runner.app import _normalise_country
+    assert _normalise_country("Ruritania") == "Ruritania"
+
+
+def test_normalise_country_strips_whitespace():
+    from runner.app import _normalise_country
+    assert _normalise_country("  UK  ") == "United Kingdom"
+
+
+def test_normalise_country_list_mixed():
+    from runner.app import _normalise_country_list
+    result = _normalise_country_list(["UK", "Germany", "US", "Norway"])
+    assert result == ["United Kingdom", "Germany", "United States", "Norway"]
+
+
+def test_normalise_country_list_skips_empty():
+    from runner.app import _normalise_country_list
+    result = _normalise_country_list(["UK", "", "  "])
+    assert result == ["United Kingdom"]
+
+
+def test_save_confirmed_classification_normalises_country(tmp_path):
+    from runner.app import _save_confirmed_classification
+
+    _write_json(tmp_path / "analysis.json", {"type": "Anti-SOGICE", "country": []})
+    _save_confirmed_classification(tmp_path, ["UK", "US", "DE"], "Anti-SOGICE", None)
+
+    ana = _read_json(tmp_path / "analysis.json")
+    assert ana["country"] == ["United Kingdom", "United States", "Germany"]

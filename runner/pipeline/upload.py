@@ -915,19 +915,44 @@ def _repair_analysis_date_from_source(
     return True
 
 
+_CONSENT_GATED_TYPES = {"Testimony", "Survivor-Network-Material"}
+
+
+def _requires_consent_gate(analysis: AnalysisResult) -> bool:
+    """Return True when the document requires consent confirmation before upload.
+
+    Triggers on testimony_flag OR when type / primary_type / secondary_type
+    is a consent-gated category, so that the gate cannot be bypassed by the
+    LLM omitting testimony_flag on typed testimony or survivor material.
+    """
+    if analysis.testimony_flag:
+        return True
+    if analysis.type in _CONSENT_GATED_TYPES:
+        return True
+    if getattr(analysis, "primary_type", None) in _CONSENT_GATED_TYPES:
+        return True
+    if getattr(analysis, "secondary_type", None) in _CONSENT_GATED_TYPES:
+        return True
+    return False
+
+
 def _enforce_testimony_upload_gate(
     intake: IntakeResult,
     analysis: AnalysisResult,
 ) -> None:
-    if not analysis.testimony_flag:
+    if not _requires_consent_gate(analysis):
         return
     if intake.testimony_consent == "confirmed":
         return
     status = intake.testimony_consent or "missing"
+    type_note = ""
+    if analysis.type in _CONSENT_GATED_TYPES and not analysis.testimony_flag:
+        type_note = f"\n\nDocument type is [bold]{analysis.type}[/bold] — consent gate applies regardless of testimony_flag."
     console.print(Panel(
-        "This document is flagged as testimony, but consent is not confirmed.\n\n"
+        "This document requires consent confirmation before upload.\n\n"
         f"Current consent status: [bold]{status}[/bold]\n"
-        "Upload is blocked. Confirm consent through the ingest review flow before uploading.",
-        title="[yellow]Testimony Upload Blocked[/yellow]",
+        "Upload is blocked. Confirm consent through the ingest review flow before uploading."
+        + type_note,
+        title="[yellow]Consent Gate — Upload Blocked[/yellow]",
     ))
     raise typer.Exit(1)

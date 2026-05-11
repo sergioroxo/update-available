@@ -386,6 +386,11 @@ def _service_status(base_url: str) -> str:
         return "offline"
 
 
+@st.cache_data(ttl=30, show_spinner=False)
+def _litelm_status_cached(base_url: str) -> str:
+    return _service_status(base_url)
+
+
 # ---------------------------------------------------------------------------
 # Corpus Intelligence
 # ---------------------------------------------------------------------------
@@ -754,6 +759,63 @@ def _save_confirmed_title(doc_dir: Path, title: str) -> None:
             media_path.write_text(json.dumps(media, indent=2), encoding="utf-8")
 
 
+_COUNTRY_ALIASES: dict[str, str] = {
+    "UK": "United Kingdom",
+    "GB": "United Kingdom",
+    "Great Britain": "United Kingdom",
+    "England": "United Kingdom",
+    "US": "United States",
+    "USA": "United States",
+    "United States of America": "United States",
+    "DE": "Germany",
+    "NO": "Norway",
+    "SE": "Sweden",
+    "FI": "Finland",
+    "DK": "Denmark",
+    "IS": "Iceland",
+    "NL": "Netherlands",
+    "The Netherlands": "Netherlands",
+    "Holland": "Netherlands",
+    "FR": "France",
+    "ES": "Spain",
+    "IT": "Italy",
+    "PL": "Poland",
+    "AT": "Austria",
+    "CH": "Switzerland",
+    "BE": "Belgium",
+    "PT": "Portugal",
+    "IE": "Ireland",
+    "HU": "Hungary",
+    "CZ": "Czech Republic",
+    "SK": "Slovakia",
+    "RO": "Romania",
+    "HR": "Croatia",
+    "RS": "Serbia",
+    "BA": "Bosnia and Herzegovina",
+    "GR": "Greece",
+    "BG": "Bulgaria",
+    "UA": "Ukraine",
+    "RU": "Russia",
+    "TR": "Turkey",
+    "EU": "European Union",
+    "CA": "Canada",
+    "AU": "Australia",
+    "NZ": "New Zealand",
+    "ZA": "South Africa",
+    "BR": "Brazil",
+}
+
+
+def _normalise_country(name: str) -> str:
+    """Expand ISO-2 codes and common abbreviations to full country names."""
+    stripped = name.strip()
+    return _COUNTRY_ALIASES.get(stripped, stripped)
+
+
+def _normalise_country_list(countries: list) -> list[str]:
+    return [_normalise_country(c) for c in countries if isinstance(c, str) and c.strip()]
+
+
 def _save_confirmed_language(doc_dir: Path, language: str) -> None:
     preprocess_path = doc_dir / "preprocess.json"
     preprocess = _read_json_file(preprocess_path, {})
@@ -775,7 +837,7 @@ def _save_confirmed_classification(
         return
     overrides: dict = analysis.setdefault("_manual_overrides", {})
     if country is not None:
-        analysis["country"] = country
+        analysis["country"] = _normalise_country_list(country)
         overrides["country"] = "researcher_confirmed"
     if doc_type:
         analysis["type"] = doc_type
@@ -784,6 +846,41 @@ def _save_confirmed_classification(
         analysis["format"] = doc_format
         overrides["format"] = "researcher_confirmed"
     analysis_path.write_text(json.dumps(analysis, indent=2), encoding="utf-8")
+
+
+def _save_confirmed_register_fields(
+    doc_dir: Path,
+    narrative_register: str | None,
+    rhetorical_intensity: str | None,
+    framing_balance: str | None,
+) -> list[str]:
+    """Save researcher-confirmed register/intensity/balance fields to analysis.json.
+
+    Returns a list of field names that were actually changed.
+    """
+    analysis_path = doc_dir / "analysis.json"
+    if not analysis_path.exists():
+        return []
+    analysis = _read_json_file(analysis_path, {})
+    if not analysis:
+        return []
+    overrides: dict = analysis.setdefault("_manual_overrides", {})
+    changed: list[str] = []
+    if narrative_register:
+        analysis["narrative_register"] = narrative_register
+        overrides["narrative_register"] = "researcher_confirmed"
+        changed.append("narrative_register")
+    if rhetorical_intensity:
+        analysis["rhetorical_intensity"] = rhetorical_intensity
+        overrides["rhetorical_intensity"] = "researcher_confirmed"
+        changed.append("rhetorical_intensity")
+    if framing_balance:
+        analysis["framing_balance"] = framing_balance
+        overrides["framing_balance"] = "researcher_confirmed"
+        changed.append("framing_balance")
+    if changed:
+        analysis_path.write_text(json.dumps(analysis, indent=2), encoding="utf-8")
+    return changed
 
 
 _SOGICE_TYPES = [
@@ -802,6 +899,26 @@ _DOCUMENT_FORMATS = [
     "Press-Release", "Book", "Book-Chapter", "Pamphlet", "Newsletter",
     "Email", "Manual", "Course-Material", "Event-Program", "Other",
 ]
+
+_NARRATIVE_REGISTERS = [
+    "", "Pastoral-Healing", "Scientific-Clinical", "Legal-Policy",
+    "Testimonial-Personal", "Conspiratorial", "Activist-Advocacy",
+    "Journalistic", "Academic-Analytical", "Mixed",
+]
+
+_RHETORICAL_INTENSITIES = [
+    "", "hook", "pathologizing", "active-conduct",
+]
+
+_FRAMING_BALANCES = [
+    "", "pro-dominant", "anti-dominant", "genuinely-mixed", "unclear",
+]
+
+_HIGH_HARM_INDICATORS = {"Harm: Suicidality", "Harm: Physical"}
+
+
+def _has_high_harm(harm_list: list) -> bool:
+    return bool(_HIGH_HARM_INDICATORS.intersection(harm_list))
 
 _LEXICON_CLUSTERS = [
     "Unknown", "SSA-Rhetoric", "Pastoral-Coercion", "Pseudo-Science",
@@ -1040,6 +1157,67 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
             st.error(e)
     if changed:
         st.rerun()
+
+    # ── Register / intensity / balance correction ────────────────────────────
+    st.markdown("**Narrative register, rhetorical intensity, framing balance**")
+    st.caption(
+        "These fields capture the rhetorical mode and SOGICE engagement level. "
+        "Corrections are saved to analysis.json with a researcher_confirmed override marker. "
+        "Leave blank to keep the current LLM value."
+    )
+    _analysis_now = _read_json_file(doc_dir / "analysis.json", {})
+    _reg_overrides = _analysis_now.get("_manual_overrides", {})
+
+    with st.form(key=f"recon_register_{doc_id}"):
+        reg_col, int_col, bal_col = st.columns(3)
+        with reg_col:
+            cur_reg = _analysis_now.get("narrative_register") or ""
+            confirmed_reg = _controlled_select(
+                "Narrative register",
+                cur_reg if cur_reg in _NARRATIVE_REGISTERS else "",
+                _NARRATIVE_REGISTERS,
+                key=f"recon_reg_{doc_id}",
+                help="Overall tone and rhetorical mode of the document.",
+            )
+            if _reg_overrides.get("narrative_register") == "researcher_confirmed":
+                st.caption("✓ researcher confirmed")
+        with int_col:
+            cur_int = _analysis_now.get("rhetorical_intensity") or ""
+            confirmed_int = _controlled_select(
+                "Rhetorical intensity",
+                cur_int if cur_int in _RHETORICAL_INTENSITIES else "",
+                _RHETORICAL_INTENSITIES,
+                key=f"recon_int_{doc_id}",
+                help="hook = soft framing; pathologizing = frames SOGIE as disorder; active-conduct = explicit SOGICE practice.",
+            )
+            if _reg_overrides.get("rhetorical_intensity") == "researcher_confirmed":
+                st.caption("✓ researcher confirmed")
+        with bal_col:
+            cur_bal = _analysis_now.get("framing_balance") or ""
+            confirmed_bal = _controlled_select(
+                "Framing balance",
+                cur_bal if cur_bal in _FRAMING_BALANCES else "",
+                _FRAMING_BALANCES,
+                key=f"recon_bal_{doc_id}",
+                help="Whether the document's framing is pro-, anti-, mixed, or unclear.",
+            )
+            if _reg_overrides.get("framing_balance") == "researcher_confirmed":
+                st.caption("✓ researcher confirmed")
+
+        reg_submitted = st.form_submit_button("Save register corrections")
+
+    if reg_submitted:
+        reg_changed = _save_confirmed_register_fields(
+            doc_dir,
+            confirmed_reg or None,
+            confirmed_int or None,
+            confirmed_bal or None,
+        )
+        if reg_changed:
+            st.success(f"Saved register corrections: {', '.join(reg_changed)}.")
+            st.rerun()
+        else:
+            st.info("No register fields changed.")
 
 
 def _render_document_date_editor(doc_id: str, doc_dir: Path, config, compact: bool = False):
@@ -1284,6 +1462,12 @@ def page_ingest_workbench():
             index=["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local", "local-heavy", "local-reasoning", "openrouter", "both"].index(st.session_state.ingest["llm"]),
         )
         st.session_state.ingest["llm"] = llm
+        if llm.startswith("litelm") and config.litelm_base_url:
+            _litelm_stat = _litelm_status_cached(config.litelm_base_url)
+            _litelm_badge = {"online": "🟢 Mac Studio reachable", "offline": "🔴 Mac Studio offline", "error": "🟠 Mac Studio error"}.get(_litelm_stat, "⚪ Unknown")
+            st.caption(_litelm_badge)
+        elif llm.startswith("litelm") and not config.litelm_base_url:
+            st.caption("⚪ LITELM_BASE_URL not set")
     with c2:
         tier = st.selectbox("Tier", ["auto", "1", "2", "3"], index=0)
         _render_tier_help()
@@ -1347,7 +1531,7 @@ def page_ingest_workbench():
         st.caption("Open Lexicon → Local Proposals to approve/reject proposals and push approved records.")
     _render_stage_progress()
 
-    btn_col1, btn_col2 = st.columns([1, 3])
+    btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 2])
     with btn_col1:
         enrich_label = " + Enrich" if run_enrich else ""
         run_all = st.button(
@@ -1360,10 +1544,36 @@ def page_ingest_workbench():
             ),
         )
     with btn_col2:
+        run_triage_btn = st.button(
+            "🔎 Triage",
+            disabled=not source.strip(),
+            help="Quick pre-screen: recommends which analysis model to use. Non-blocking — does not affect the pipeline.",
+        )
+    with btn_col3:
         st.caption(
             "Runs all stages automatically and stops at the JSON review step."
             + (" Enrichment checkbox is ON — will also run enrichment after upload." if run_enrich else "")
         )
+
+    if run_triage_btn and source.strip():
+        with st.spinner("Running triage…"):
+            try:
+                from runner.pipeline import triage as _triage_mod
+                snippet, _method = _triage_mod.extract_snippet(source.strip())
+                triage_result = _triage_mod.run(snippet, config)
+                st.info(
+                    f"**Triage recommendation:** `{triage_result.recommended_llm}`  \n"
+                    f"**Type hint:** {triage_result.doc_type_hint}  |  "
+                    f"**Complexity:** {triage_result.complexity}  \n"
+                    f"**Reason:** {triage_result.routing_reason}"
+                )
+                if triage_result.recommended_llm and triage_result.recommended_llm != llm:
+                    st.caption(
+                        f"You are currently set to `{llm}`. "
+                        "Update the model selector above if you want to follow this recommendation."
+                    )
+            except Exception as _triage_exc:
+                st.warning(f"Triage failed (non-blocking): {_triage_exc}")
 
     if run_all:
         effective_max = _effective_max_chars(max_chars, llm, config)
@@ -1897,8 +2107,17 @@ def _render_analysis_editor(config, llm: str) -> None:
         config,
     )
     if testimony_blocked:
+        _analysis_obj = st.session_state.ingest.get("analysis")
+        _doc_type = getattr(_analysis_obj, "type", "") or ""
+        _type_note = (
+            f" Document type is **{_doc_type}** — consent gate applies to Testimony and Survivor-Network-Material regardless of testimony_flag."
+            if _doc_type in _CONSENT_GATED_TYPES
+            else ""
+        )
         st.warning(
-            "This document is flagged for testimony. Upload is blocked until Testimony Review records consent status."
+            "Upload is blocked — consent review required before this document can be uploaded."
+            + _type_note
+            + " Complete Testimony Review and confirm consent status."
         )
     with c1:
         if st.button("Validate JSON"):
@@ -1986,6 +2205,14 @@ def _render_archival_issue_panel(analysis_text: str) -> None:
         return
     if not isinstance(analysis_data, dict):
         return
+
+    _harm_list = analysis_data.get("harm") or []
+    if _has_high_harm(_harm_list):
+        _high_harm_labels = sorted(_HIGH_HARM_INDICATORS.intersection(_harm_list))
+        st.warning(
+            f"**High-harm content:** {', '.join(_high_harm_labels)}. "
+            "Handle with care — follow your safeguarding protocol before uploading."
+        )
 
     preprocess = st.session_state.ingest.get("preprocess")
     intake = st.session_state.ingest.get("intake")
@@ -2398,7 +2625,7 @@ def page_document_list():
         return
 
     # Filters
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         all_types = sorted({d.get("type", "Unknown") for d in docs})
         filter_type = st.multiselect("Document type", all_types)
@@ -2408,6 +2635,11 @@ def page_document_list():
     with col3:
         filter_uploaded = st.selectbox(
             "Upload status", ["All", "Uploaded", "Local only"]
+        )
+    with col4:
+        filter_intensity = st.selectbox(
+            "Rhetorical intensity",
+            ["All", "hook", "pathologizing", "active-conduct", "— (unset)"],
         )
 
     filtered = docs
@@ -2419,6 +2651,26 @@ def page_document_list():
         filtered = [d for d in filtered if d.get("uploaded")]
     elif filter_uploaded == "Local only":
         filtered = [d for d in filtered if not d.get("uploaded")]
+    if filter_intensity != "All":
+        _intensity_value = None if filter_intensity == "— (unset)" else filter_intensity
+        filtered = [
+            d for d in filtered
+            if (d.get("rhetorical_intensity") or None) == _intensity_value
+        ]
+
+    sort_col1, sort_col2 = st.columns([1, 3])
+    with sort_col1:
+        sort_by = st.selectbox(
+            "Sort by",
+            ["doc_id", "confidence ↓", "rhetorical_intensity", "analysis_saved_at ↓"],
+        )
+    if sort_by == "confidence ↓":
+        filtered = sorted(filtered, key=lambda d: d.get("confidence", 0), reverse=True)
+    elif sort_by == "rhetorical_intensity":
+        _ri_order = {"active-conduct": 0, "pathologizing": 1, "hook": 2, None: 3, "—": 3}
+        filtered = sorted(filtered, key=lambda d: _ri_order.get(d.get("rhetorical_intensity") or None, 3))
+    elif sort_by == "analysis_saved_at ↓":
+        filtered = sorted(filtered, key=lambda d: str(d.get("analysis_saved_at") or ""), reverse=True)
 
     st.caption(f"Showing {len(filtered)} of {len(docs)} documents")
 
@@ -2631,6 +2883,7 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             "supabase_ok": embedding_status["supabase_ok"],
             "supabase_detail": embedding_status["supabase_detail"],
             "has_enrichment": has_enrichment,
+            "harm": data.get("harm", []),
         })
 
     return docs
@@ -2655,6 +2908,12 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
     )
 
     with st.expander(header, expanded=False):
+        if _has_high_harm(doc.get("harm", [])):
+            high_harm_labels = sorted(_HIGH_HARM_INDICATORS.intersection(doc["harm"]))
+            st.warning(
+                f"**High-harm content:** {', '.join(high_harm_labels)}. "
+                "Handle with care — follow your safeguarding protocol before reviewing or uploading."
+            )
         col1, col2 = st.columns([2, 1])
         with col1:
             if doc["summary"]:
@@ -5261,6 +5520,14 @@ def page_testimony_review():
     public_excerpt = st.text_area("Public excerpt (optional, max 200 words)", value=existing.get("public_excerpt", ""), height=120)
     notes = st.text_area("Researcher notes", value=existing.get("notes", ""), height=120)
 
+    if consent == "withdrawn" and (doc_dir / "sanity_record.json").exists():
+        st.warning(
+            "**Consent withdrawn — this document may already be live in Sanity.** "
+            "A `sanity_record.json` exists locally, indicating it was previously uploaded. "
+            "You must manually review the Sanity record, redact or remove any testimony content, "
+            "and patch `meta.testimonyConsent` to `withdrawn`. Do not re-upload without researcher sign-off."
+        )
+
     if public_display and consent != "confirmed":
         st.error("Public display requires confirmed consent.")
 
@@ -5312,10 +5579,25 @@ def _testimony_review_path(config, doc_id: str) -> Path:
     return config.corpus_dir / doc_id / "testimony_review.json"
 
 
+_CONSENT_GATED_TYPES = {"Testimony", "Survivor-Network-Material"}
+
+
 def _testimony_requires_review(doc_id: str, analysis, config) -> bool:
+    """Return True when the document requires consent review before upload.
+
+    Mirrors _requires_consent_gate in upload.py: gates on testimony_flag
+    AND on document type, so typed Testimony / Survivor-Network-Material
+    documents cannot bypass the gate by omitting testimony_flag.
+    """
     if not analysis:
         return False
-    if not getattr(analysis, "testimony_flag", False):
+    flagged = getattr(analysis, "testimony_flag", False)
+    typed_gated = (
+        getattr(analysis, "type", None) in _CONSENT_GATED_TYPES
+        or getattr(analysis, "primary_type", None) in _CONSENT_GATED_TYPES
+        or getattr(analysis, "secondary_type", None) in _CONSENT_GATED_TYPES
+    )
+    if not flagged and not typed_gated:
         return False
     path = _testimony_review_path(config, doc_id)
     data = _load_json_if_exists(path)

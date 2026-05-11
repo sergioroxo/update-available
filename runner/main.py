@@ -120,6 +120,9 @@ def ingest(
     else:
         effective_max = config.truncation_limit
     preprocess_result = preprocess.run(intake_result, config=config, max_chars=effective_max)
+    preprocess_result.intake_declared_type = intake_result.declared_type or None
+    preprocess_result.intake_batch_id = intake_result.batch_id or None
+    preprocess_result.intake_source_url = intake_result.source_url or None
     if not yes and not review.checkpoint_preprocess(preprocess_result):
         raise typer.Exit()
 

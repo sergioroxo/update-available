@@ -223,6 +223,16 @@ def _build_system_prompt_with_lexicon(
     if not terms:
         return (base, "") if split_for_claude else base
 
+    _LEXICON_INJECTION_CAP = 200
+    if len(terms) > _LEXICON_INJECTION_CAP:
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "Lexicon has %d active terms — capping injection at %d. "
+            "Approve or archive excess terms in the Lexicon page.",
+            len(terms), _LEXICON_INJECTION_CAP,
+        )
+        terms = terms[:_LEXICON_INJECTION_CAP]
+
     term_lines = "\n".join(_format_lexicon_prompt_line(t) for t in terms)
     lexicon_injection = (
         f"\n\nCURRENT LEXICON TERMS (do not propose these as candidates):\n{term_lines}"
@@ -294,6 +304,20 @@ def _build_user_message(preprocess: PreprocessResult) -> str:
             lines.append(
                 f"OUTBOUND DOMAINS ({len(preprocess.outbound_links)} links): {', '.join(domains)}"
             )
+
+    # Researcher-declared intake context — included as non-authoritative hints.
+    # The model should use these as a starting signal, not as ground truth.
+    intake_hints = []
+    if preprocess.intake_declared_type:
+        intake_hints.append(f"RESEARCHER-DECLARED TYPE: {preprocess.intake_declared_type}")
+    if preprocess.intake_batch_id:
+        intake_hints.append(f"BATCH ID: {preprocess.intake_batch_id}")
+    if preprocess.intake_source_url:
+        intake_hints.append(f"CANONICAL SOURCE URL: {preprocess.intake_source_url}")
+    if intake_hints:
+        lines.append("")
+        lines.append("RESEARCHER INTAKE CONTEXT (non-authoritative — use as a starting signal only):")
+        lines.extend(intake_hints)
 
     return "\n".join(lines) + "\n\n---\n\nDOCUMENT TEXT:\n" + preprocess.text + "\n\n---\n\nOutput ONLY a valid JSON object. Start with { and end with }. No explanation, no prose, no markdown fences."
 

@@ -499,6 +499,11 @@ class PreprocessResult:
     media_comments: list[dict] = field(default_factory=list)
     duplicate_candidates: list[dict] = field(default_factory=list)
     discovery_seed_queue: list[dict] = field(default_factory=list)
+    # Researcher-declared intake context — passed to the analysis prompt as
+    # non-authoritative hints so the model can weight its classification accordingly.
+    intake_declared_type: Optional[str] = None   # declared_type from IntakeResult
+    intake_batch_id: Optional[str] = None        # batch_id from IntakeResult
+    intake_source_url: Optional[str] = None      # source_url (canonical URL) from IntakeResult
 
 
 @dataclass

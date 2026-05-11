@@ -8,7 +8,7 @@ from runner.models.document import (
     IntakeResult,
     PreprocessResult,
 )
-from runner.pipeline.upload import _enforce_testimony_upload_gate
+from runner.pipeline.upload import _enforce_testimony_upload_gate, _requires_consent_gate
 
 
 def _analysis() -> AnalysisResult:
@@ -204,10 +204,10 @@ def test_build_sanity_document_maps_media_metadata_without_raw_snapshot(tmp_path
     assert doc["aiMetadata"]["processingDate"] == doc["aiMetadata"]["analysedAt"]
 
 
-def test_testimony_upload_gate_blocks_missing_consent(tmp_path):
-    intake = IntakeResult(
+def _make_intake(tmp_path) -> IntakeResult:
+    return IntakeResult(
         doc_id="doc-1",
-        source="https://example.org/testimony",
+        source="https://example.org/doc",
         source_type="url",
         declared_type="url",
         tier=2,
@@ -216,5 +216,87 @@ def test_testimony_upload_gate_blocks_missing_consent(tmp_path):
         local_dir=tmp_path,
     )
 
+
+def _typed_analysis(doc_type: str) -> AnalysisResult:
+    return AnalysisResult.model_validate({
+        "type": doc_type,
+        "format": "Blog-Post",
+        "evidence": ["Evidence text."],
+        "scope": "Core",
+        "narrative_register": "Testimonial-Personal",
+        "summary": "A short summary.",
+    })
+
+
+# ── _requires_consent_gate ──────────────────────────────────────────────────
+
+def test_requires_consent_gate_on_testimony_flag():
+    analysis = _testimony_analysis()
+    assert _requires_consent_gate(analysis) is True
+
+
+def test_requires_consent_gate_on_testimony_type():
+    analysis = _typed_analysis("Testimony")
+    assert analysis.testimony_flag is False  # flag NOT set
+    assert _requires_consent_gate(analysis) is True
+
+
+def test_requires_consent_gate_on_survivor_network_type():
+    analysis = _typed_analysis("Survivor-Network-Material")
+    assert analysis.testimony_flag is False
+    assert _requires_consent_gate(analysis) is True
+
+
+def test_requires_consent_gate_false_for_normal_type():
+    analysis = _typed_analysis("Anti-SOGICE")
+    assert analysis.testimony_flag is False
+    assert _requires_consent_gate(analysis) is False
+
+
+def test_requires_consent_gate_on_primary_type():
+    analysis = _typed_analysis("Mixed")
+    analysis.primary_type = "Testimony"
+    assert _requires_consent_gate(analysis) is True
+
+
+# ── _enforce_testimony_upload_gate ──────────────────────────────────────────
+
+def test_testimony_upload_gate_blocks_missing_consent(tmp_path):
+    intake = _make_intake(tmp_path)
     with pytest.raises(click.exceptions.Exit):
         _enforce_testimony_upload_gate(intake, _testimony_analysis())
+
+
+def test_gate_blocks_testimony_type_without_flag(tmp_path):
+    """type=Testimony must be blocked even when testimony_flag is False."""
+    intake = _make_intake(tmp_path)
+    analysis = _typed_analysis("Testimony")
+    assert analysis.testimony_flag is False
+    with pytest.raises(click.exceptions.Exit):
+        _enforce_testimony_upload_gate(intake, analysis)
+
+
+def test_gate_blocks_survivor_network_type(tmp_path):
+    """type=Survivor-Network-Material must be blocked without confirmed consent."""
+    intake = _make_intake(tmp_path)
+    analysis = _typed_analysis("Survivor-Network-Material")
+    with pytest.raises(click.exceptions.Exit):
+        _enforce_testimony_upload_gate(intake, analysis)
+
+
+def test_gate_passes_with_confirmed_consent(tmp_path):
+    """Confirmed consent clears the gate for all gated types."""
+    intake = _make_intake(tmp_path)
+    intake.testimony_consent = "confirmed"
+    # Should not raise for any gated combination
+    _enforce_testimony_upload_gate(intake, _testimony_analysis())
+    _enforce_testimony_upload_gate(intake, _typed_analysis("Testimony"))
+    _enforce_testimony_upload_gate(intake, _typed_analysis("Survivor-Network-Material"))
+
+
+def test_gate_does_not_block_non_gated_type(tmp_path):
+    """Normal documents must never be blocked by the consent gate."""
+    intake = _make_intake(tmp_path)
+    _enforce_testimony_upload_gate(intake, _typed_analysis("Anti-SOGICE"))
+    _enforce_testimony_upload_gate(intake, _typed_analysis("Pro-SOGICE"))
+    _enforce_testimony_upload_gate(intake, _typed_analysis("Media-Coverage"))
