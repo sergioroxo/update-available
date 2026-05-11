@@ -198,6 +198,7 @@ def _preprocess_video(source: str, config: Config | None = None) -> PreprocessRe
 
     ensure_tool_path_env()
     last_info: dict = {}
+    _ytdlp_diagnostics: str = ""
     # Try yt-dlp subtitles first (fast, no compute)
     try:
         import yt_dlp
@@ -284,14 +285,27 @@ def _preprocess_video(source: str, config: Config | None = None) -> PreprocessRe
                     )
     except ImportError:
         pass
-    except Exception:
-        pass
+    except Exception as _ytdlp_exc:
+        _ytdlp_diagnostics = str(_ytdlp_exc)
 
     if not getattr(config, "media_allow_whisper", True):
-        raise RuntimeError(
-            "No usable platform captions were extracted. Upload an SRT/VTT transcript, "
-            "or enable Whisper fallback if you want local transcription."
-        )
+        msg = "No usable platform captions were extracted."
+        if _ytdlp_diagnostics:
+            low = _ytdlp_diagnostics.lower()
+            if "429" in _ytdlp_diagnostics or "too many requests" in low:
+                msg += (
+                    " YouTube rate-limited this request (HTTP 429). "
+                    "Wait a few minutes and retry, or try from a different network."
+                )
+            elif any(kw in low for kw in ("sign in", "signin", "challenge", "bot detection", "js challenge")):
+                msg += (
+                    " YouTube returned a sign-in or bot-detection challenge. "
+                    "Try a different network, or provide a cookies file via yt-dlp."
+                )
+            else:
+                msg += f" yt-dlp diagnostic: {_ytdlp_diagnostics[:300]}"
+        msg += " Upload an SRT/VTT transcript, or enable Whisper fallback for local transcription."
+        raise RuntimeError(msg)
 
     # faster-whisper fallback (local file or downloaded audio)
     try:

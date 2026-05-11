@@ -815,6 +815,15 @@ _ENRICHMENT_ACTION_HELP = {
 }
 
 
+def _sanity_studio_url(config, doc_id: str) -> str | None:
+    """Return the Sanity Studio URL for a sogiceDocument, or None if credentials missing."""
+    pid = getattr(config, "sanity_project_id", "") if config else ""
+    dataset = getattr(config, "sanity_dataset", "production") if config else "production"
+    if not pid or not doc_id:
+        return None
+    return f"https://{pid}.sanity.studio/{dataset}/structure/sogiceDocument;doc-{doc_id}"
+
+
 def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
     """Side-by-side metadata source view with researcher confirmation controls."""
     src = _collect_metadata_sources(doc_dir)
@@ -967,17 +976,29 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
         from runner.clients import sanity as sanity_client
         try:
             if confirmed_title or confirmed_lang:
+                content_fields = []
+                if confirmed_title:
+                    content_fields += ["content.title", "mediaMetadata.general.episodeTitle"]
+                if confirmed_lang:
+                    content_fields.append("content.languageDetected")
                 sanity_id = sanity_client.write_content_metadata_update(
                     doc_id,
                     confirmed_title or None,
                     confirmed_lang or None,
                     config,
                 )
-                sanity_patched.append(f"content ({sanity_id})")
+                sanity_patched.append(f"{', '.join(content_fields)} → {sanity_id}")
         except Exception as exc:
             errors.append(f"Sanity content patch: {exc}")
         try:
             if country_list or confirmed_type or confirmed_format.strip():
+                class_fields = []
+                if confirmed_type:
+                    class_fields.append("classification.type")
+                if confirmed_format.strip():
+                    class_fields.append("classification.format")
+                if country_list:
+                    class_fields.append("classification.country")
                 sanity_id = sanity_client.write_classification_update(
                     doc_id,
                     country_list if confirmed_country.strip() else None,
@@ -985,7 +1006,7 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
                     confirmed_format.strip() or None,
                     config,
                 )
-                sanity_patched.append(f"classification ({sanity_id})")
+                sanity_patched.append(f"{', '.join(class_fields)} → {sanity_id}")
         except Exception as exc:
             errors.append(f"Sanity classification patch: {exc}")
 
@@ -996,7 +1017,10 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
     elif not changed:
         st.info("No local values changed. Edit a field, or tick Sanity patch to resend confirmed values to Sanity.")
     if sanity_patched:
-        st.success("Patched Sanity: " + "; ".join(sanity_patched))
+        st.success("Patched Sanity fields: " + "; ".join(sanity_patched))
+        studio_url = _sanity_studio_url(config, doc_id)
+        if studio_url:
+            st.markdown(f"[Verify in Sanity Studio]({studio_url})")
     if errors:
         for e in errors:
             st.error(e)
@@ -1087,11 +1111,19 @@ def _render_document_date_editor(doc_id: str, doc_dir: Path, config, compact: bo
                 config,
             )
         if sanity_id:
+            date_fields = []
+            if payload.get("publication_date"):
+                date_fields.append("mediaMetadata.general.publicationDate")
+            if payload.get("document_date"):
+                date_fields.append("mediaMetadata.general.documentDate")
             st.success(
-                f"Saved locally and patched Sanity: {sanity_id}. "
+                f"Saved locally and patched Sanity fields: {', '.join(date_fields) or 'dates'} → {sanity_id}. "
                 f"Source published: {payload['publication_date'] or '—'}; "
                 f"document date: {_document_date_to_text(payload['document_date']) or '—'}."
             )
+            studio_url = _sanity_studio_url(config, doc_id)
+            if studio_url:
+                st.markdown(f"[Verify in Sanity Studio]({studio_url})")
         else:
             st.success(
                 "Saved dates locally. "
@@ -1575,6 +1607,21 @@ def _effective_max_chars(max_chars: int, llm: str, config) -> int | None:
     return config.truncation_limit
 
 
+_TRANSCRIPT_TYPE_REFERENCE = """\
+**Transcript types and quality hierarchy (highest → lowest)**
+
+| Type | Source | When to use |
+|---|---|---|
+| **Manual platform captions** | Uploader-provided SRT on YouTube/Vimeo | Best — exact wording, timestamps; use as-is |
+| **Researcher SRT / UiO Autotekst** | Researcher transcribes or uses UiO Autotekst service | Preferred when platform captions are absent or auto-only |
+| **Auto-captions** | Platform ASR (YouTube auto, Whisper-based) | Acceptable; check proper nouns and SOGICE terminology |
+| **Whisper (local fallback)** | faster-whisper running locally | Last resort — enable deliberately; always review output |
+
+After replacing a transcript, rerun any research annotations that reference the primary text. \
+Annotations contain direct quotes; they may be misaligned if the source text changes.
+"""
+
+
 def _render_pre_analysis_transcript_upload(config) -> None:
     intake_result = st.session_state.ingest.get("intake")
     if not intake_result or not intake_result.local_dir:
@@ -1582,9 +1629,13 @@ def _render_pre_analysis_transcript_upload(config) -> None:
 
     with st.expander("Transcript checkpoint: upload SRT/VTT before analysis", expanded=True):
         st.info(
-            "For video/audio research, a researcher-provided SRT/VTT is preferred over Whisper. "
-            "If platform captions were unavailable, upload a transcript here and it will become the primary text for analysis."
+            "Platform captions were unavailable or not extracted. "
+            "A researcher-provided SRT/VTT is preferred over Whisper — upload one here and it will "
+            "become the primary text for analysis. You can also skip this and enable Whisper fallback above."
         )
+        with st.expander("About transcript types", expanded=False):
+            st.markdown(_TRANSCRIPT_TYPE_REFERENCE)
+
         uploaded = st.file_uploader(
             "Upload SRT or VTT",
             type=["srt", "vtt"],
@@ -1602,6 +1653,7 @@ def _render_pre_analysis_transcript_upload(config) -> None:
                 st.error("Language must be an ISO-style code such as `en`, `pt`, `no`, `nb`, `de`, or `pt-BR`.")
                 return
             try:
+                from datetime import datetime, timezone
                 from runner.models.document import PreprocessResult
                 from runner.pipeline.media_review import attach_srt_to_document
 
@@ -1610,7 +1662,7 @@ def _render_pre_analysis_transcript_upload(config) -> None:
                 safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", uploaded.name).strip("_") or "uploaded.srt"
                 transcript_path = upload_dir / safe_name
                 transcript_path.write_bytes(uploaded.getvalue())
-                attach_srt_to_document(
+                attach_result = attach_srt_to_document(
                     doc_id=intake_result.doc_id,
                     srt_path=transcript_path,
                     config=config,
@@ -1618,6 +1670,22 @@ def _render_pre_analysis_transcript_upload(config) -> None:
                     make_primary=True,
                 )
                 doc_dir = Path(intake_result.local_dir)
+
+                # Write an immediate provenance record so the audit trail survives
+                # even if session state is cleared before analysis runs.
+                provenance = {
+                    "tool_used": "researcher_srt",
+                    "attachedAt": datetime.now(timezone.utc).isoformat(),
+                    "label": attach_result.get("label", safe_name),
+                    "sourcePath": str(transcript_path),
+                    "language": language.strip(),
+                    "chunkCount": attach_result.get("chunkCount", 0),
+                    "_manual_overrides": {"transcript": "researcher_provided_pre_analysis"},
+                }
+                (doc_dir / "researcher_transcript_provenance.json").write_text(
+                    json.dumps(provenance, indent=2), encoding="utf-8"
+                )
+
                 chunks = _read_json_file(doc_dir / "transcript_chunks.json", [])
                 versions = _read_json_file(doc_dir / "transcript_versions.json", [])
                 media = _read_json_file(doc_dir / "media_metadata.json", {})
@@ -1643,7 +1711,11 @@ def _render_pre_analysis_transcript_upload(config) -> None:
                     "enrichment": None,
                     "uploaded": False,
                 })
-                st.success("Uploaded transcript is now the primary text. Continue to analysis.")
+                st.success(
+                    f"Uploaded transcript `{attach_result.get('label', safe_name)}` "
+                    f"({attach_result.get('chunkCount', 0)} chunks) is now the primary text. "
+                    "Continue to analysis. If you later add research annotations, rerun them after any transcript replacement."
+                )
                 st.rerun()
             except Exception as exc:
                 st.error(f"Transcript upload failed: {exc}")
@@ -1754,11 +1826,17 @@ def _render_preprocess_review(result) -> None:
     c4.metric("Truncated", "yes" if result.truncated else "no")
     if result.tool_used == "whisper":
         st.warning(
-            "This transcript was generated by Whisper fallback. If you have a researcher-provided SRT/VTT "
-            "or can produce one with UiO Autotekst, attach it in Media Review and rerun transcript-dependent analysis."
+            "**Whisper fallback transcript.** Review for accuracy before analysis — Whisper can mis-transcribe "
+            "proper nouns, SOGICE-specific terminology, and non-English content. "
+            "If you have a researcher-provided SRT/VTT or can produce one with UiO Autotekst, "
+            "attach it in Media Review → Transcripts and rerun any research annotations that reference the primary text."
         )
     elif result.tool_used in {"yt-dlp", "researcher_srt"}:
-        st.success("Transcript is timestamped and suitable for transcript-based analysis.")
+        source_label = "platform captions" if result.tool_used == "yt-dlp" else "researcher-provided SRT"
+        st.success(
+            f"Transcript is timestamped ({source_label}) and suitable for transcript-based analysis. "
+            "If you later replace the primary transcript, rerun any research annotations that reference it."
+        )
 
     meta = {
         "title": result.title,
@@ -4717,12 +4795,17 @@ def _render_single_proposal_editor(record: dict) -> None:
         f"Origin: {record['path']} · proposal #{_proposal_display_position(record)} "
         f"(JSON position {record['index']})"
     )
+    st.caption(
+        "**Save Edits** writes to the local enrichment.json only. "
+        "**Approve as Draft** marks it ready; it will be sent to Sanity when you click "
+        "'Push approved drafts to Sanity' at the top of the queue."
+    )
 
     b1, b2, b3 = st.columns(3)
     with b1:
         if st.button("Save Edits", key=f"{prefix}_save"):
             _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
-            st.success("Saved proposal edits.")
+            st.success("Saved proposal edits to local enrichment.json.")
     with b2:
         if st.button("Approve as Draft", key=f"{prefix}_approve"):
             item["approved"] = True
@@ -6615,6 +6698,9 @@ def _mr_artifact_completeness_panel(doc_id: str, doc_dir: Path):
 def _mr_transcripts(doc_id: str, doc_dir: Path, config):
     """Transcript versions table, full-text viewer, and cue-level diff."""
     from runner.pipeline.transcripts import diff_transcript_chunks, chunks_to_text
+
+    with st.expander("About transcript types", expanded=False):
+        st.markdown(_TRANSCRIPT_TYPE_REFERENCE)
 
     versions_path = doc_dir / "transcript_versions.json"
     versions = _mr_read_json(versions_path, [])
