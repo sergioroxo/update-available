@@ -357,6 +357,8 @@ class AnalysisResult(BaseModel):
             "migration": "Migration:",
             "function":  "Function:",
             "flags":     "Flag:",
+            "tactic":    "Tactic:",
+            "landmark":  "Event:",
         }
         extra: list[str] = []
         for field_name, prefix in _PREFIX_RULES.items():
@@ -369,6 +371,57 @@ class AnalysisResult(BaseModel):
                 )
         if extra:
             self.normalisation_warnings = list(self.normalisation_warnings) + extra
+        return self
+
+    @model_validator(mode="after")
+    def warn_term_in_non_promotional_doc(self) -> "AnalysisResult":
+        """Warn when term[] is populated for non-promotional document types.
+
+        Per ABSOLUTE RULE 1: term[] is only for promotional use of SOGICE terminology.
+        Anti-SOGICE, Neutral-Academic, and Media-Coverage documents almost never
+        promote SOGICE terms, so populated term[] is likely an annotation error.
+        """
+        _NON_PROMOTIONAL_TYPES = {"Anti-SOGICE", "Neutral-Academic", "Media-Coverage"}
+        if self.type in _NON_PROMOTIONAL_TYPES and self.term:
+            self.normalisation_warnings = list(self.normalisation_warnings) + [
+                f"vocab-warn: 'term' is populated ({self.term}) for type '{self.type}' "
+                "which is a non-promotional document type. Per ABSOLUTE RULE 1, term[] "
+                "is only for promotional use of SOGICE terminology. Verify this is intentional."
+            ]
+        return self
+
+    @model_validator(mode="after")
+    def warn_term_use_context_cross_check(self) -> "AnalysisResult":
+        """Warn when term_use_context contains non-promotional uses that contradict term[].
+
+        If a term appears in term[] (implying promotional use) but also appears in
+        term_use_context with use != 'promotional', the two fields are in contradiction.
+        """
+        if not self.term or not self.term_use_context:
+            return self
+        term_set = {t.lower() for t in self.term}
+        contradictions = [
+            tuc.term for tuc in self.term_use_context
+            if tuc.term.lower() in term_set and tuc.use != "promotional"
+        ]
+        if contradictions:
+            self.normalisation_warnings = list(self.normalisation_warnings) + [
+                f"vocab-warn: terms {contradictions} appear in both term[] and "
+                f"term_use_context with non-promotional use. Resolve the contradiction."
+            ]
+        return self
+
+    @model_validator(mode="after")
+    def enforce_needs_review_on_low_confidence(self) -> "AnalysisResult":
+        """Deterministically set needs_review = True when confidence score is below 0.70.
+
+        This is a pipeline rule, not a suggestion — it cannot be overridden by the LLM.
+        """
+        if self.confidence.overall_score < 0.70 and not self.needs_review:
+            self.needs_review = True
+            self.normalisation_warnings = list(self.normalisation_warnings) + [
+                f"needs_review forced True: overall_score={self.confidence.overall_score:.3f} < 0.70"
+            ]
         return self
     narrative_register: NarrativeRegister
     document_date: DocumentDate = Field(default_factory=DocumentDate)
@@ -466,7 +519,7 @@ class IntakeResult:
     original_filename: str = ""           # original local file name before doc_id storage
     local_copy_path: str = ""             # corpus copy of local file, preserving original name
     source_html_sha256: str = ""          # hash of captured source.html for URL ingests
-    testimony_consent: str = ""           # confirmed | pending | refused for testimony-flagged docs
+    testimony_consent: Literal["", "unclear", "pending", "confirmed", "refused", "withdrawn"] = ""
     local_dir: Optional[Path] = None      # ~/survivingsogice/corpus/{doc_id}/
 
 

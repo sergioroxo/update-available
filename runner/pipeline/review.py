@@ -244,32 +244,44 @@ def checkpoint_testimony_consent(
 ) -> str:
     """Ethics checkpoint for testimony-flagged documents.
 
-    Returns one of: confirmed, pending, refused, not_required.
+    Returns one of: unclear, pending, confirmed, refused, withdrawn, not_required.
     """
     if not result.testimony_flag:
         return "not_required"
 
     console.print(Panel(
         "[bold yellow]TESTIMONY FLAG[/bold yellow]\n\n"
-        "[bold]c[/bold] = confirmed — subject has given consent → proceed to upload\n"
-        "[bold]p[/bold] = pending   — not yet obtained → save locally only, do not upload\n"
-        "[bold]r[/bold] = refused   → suppress: do not save or upload",
+        "[bold]c[/bold] = confirmed  — subject has given consent → proceed to upload\n"
+        "[bold]p[/bold] = pending    — not yet obtained → save locally, do not upload\n"
+        "[bold]u[/bold] = unclear    — consent status unknown → save locally, do not upload\n"
+        "[bold]w[/bold] = withdrawn  — consent previously given but now revoked → suppress\n"
+        "[bold]r[/bold] = refused    — consent refused → suppress: do not save or upload",
         title="[bold yellow]⚠ TESTIMONY FLAG[/bold yellow]",
     ))
     while True:
-        action = typer.prompt("Consent status [c/p/r]", default="p").strip().lower()
+        action = typer.prompt("Consent status [c/p/u/w/r]", default="p").strip().lower()
         if action in ("c", "confirmed"):
             intake_pipeline.update_intake_consent(doc_id, "confirmed", config)
             return "confirmed"
         if action in ("p", "pending"):
             intake_pipeline.update_intake_consent(doc_id, "pending", config)
             return "pending"
+        if action in ("u", "unclear"):
+            intake_pipeline.update_intake_consent(doc_id, "unclear", config)
+            return "unclear"
+        if action in ("w", "withdrawn"):
+            console.print(
+                "[red]Consent withdrawn. Suppressing document: no local analysis package or upload will be written.[/red]"
+            )
+            intake_pipeline.update_intake_consent(doc_id, "withdrawn", config)
+            return "withdrawn"
         if action in ("r", "refused"):
             console.print(
                 "[red]Consent refused. Suppressing document: no local analysis package or upload will be written.[/red]"
             )
+            intake_pipeline.update_intake_consent(doc_id, "refused", config)
             return "refused"
-        console.print("[yellow]Choose c, p, or r.[/yellow]")
+        console.print("[yellow]Choose c, p, u, w, or r.[/yellow]")
 
 
 # ---------------------------------------------------------------------------

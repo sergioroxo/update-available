@@ -47,6 +47,11 @@ class Config:
     # set much higher (e.g. 200000) for full SRT / book ingestion.
     truncation_limit: int = 24000
     truncation_limit_local: int = 1000000
+    # End-aware truncation head/tail sizes (chars). When a document exceeds the
+    # truncation_limit, the pipeline preserves the first head_chars and last
+    # tail_chars with a [TRUNCATED MIDDLE] marker between them.
+    truncation_head_chars: int = 16000
+    truncation_tail_chars: int = 6000
     local_context_tokens: int = 262144
     local_output_tokens: int = 16384
     media_collect_comments: bool = False
@@ -125,6 +130,8 @@ def load_config(llm: str | None = None, require_services: bool = True) -> Config
         litelm_ollama_analysis_model_reasoning=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL_REASONING", "qwen3.6:27b"),
         truncation_limit=int(os.getenv("TRUNCATION_LIMIT", "24000")),
         truncation_limit_local=int(os.getenv("TRUNCATION_LIMIT_LOCAL", "1000000")),
+        truncation_head_chars=int(os.getenv("TRUNCATION_HEAD_CHARS", "16000")),
+        truncation_tail_chars=int(os.getenv("TRUNCATION_TAIL_CHARS", "6000")),
         local_context_tokens=int(os.getenv("LOCAL_CONTEXT_TOKENS", "262144")),
         local_output_tokens=int(os.getenv("LOCAL_OUTPUT_TOKENS", "16384")),
         media_collect_comments=os.getenv("MEDIA_COLLECT_COMMENTS", "").lower() in {"1", "true", "yes"},

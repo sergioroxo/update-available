@@ -31,9 +31,9 @@ from .media_evidence import (
 from .system_tools import ensure_tool_path_env, tool_path
 
 # Fallback constants — overridden by config or --max-chars CLI flag
-_DEFAULT_LIMIT = 24_000
-_HEAD_RATIO    = 0.67   # 2/3 of limit from the front
-_TAIL_RATIO    = 0.25   # 1/4 of limit from the end
+_DEFAULT_LIMIT      = 24_000
+_DEFAULT_HEAD_CHARS = 16_000
+_DEFAULT_TAIL_CHARS =  6_000
 
 
 def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> PreprocessResult:
@@ -58,7 +58,11 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
     # Determine effective limit: CLI/app flag > env var > default.
     # max_chars=0 is intentional: _maybe_truncate treats 0 as no truncation.
     limit = max_chars if max_chars is not None else config.truncation_limit
-    text, truncated = _maybe_truncate(result.text, limit)
+    text, truncated = _maybe_truncate(
+        result.text, limit,
+        head_chars=config.truncation_head_chars,
+        tail_chars=config.truncation_tail_chars,
+    )
     result.text = text
     result.truncated = truncated
     result.char_count = len(result.text)
@@ -645,16 +649,23 @@ def _rate_quality(text: str, tool: str) -> str:
     return "high"
 
 
-def _maybe_truncate(text: str, limit: int | None = _DEFAULT_LIMIT) -> tuple[str, bool]:
+def _maybe_truncate(
+    text: str,
+    limit: int | None = _DEFAULT_LIMIT,
+    head_chars: int = _DEFAULT_HEAD_CHARS,
+    tail_chars: int = _DEFAULT_TAIL_CHARS,
+) -> tuple[str, bool]:
     if limit is None or limit <= 0:
         return text, False
     if len(text) <= limit:
         return text, False
-    head_size = int(limit * _HEAD_RATIO)
-    tail_size = int(limit * _TAIL_RATIO)
+    head_size = min(head_chars, limit)
+    tail_size = min(tail_chars, limit - head_size)
+    omitted = len(text) - head_size - tail_size
     head = text[:head_size]
-    tail = text[-tail_size:]
-    truncated = f"{head}\n\n[TRUNCATED — {len(text)} total chars, showing first {head_size} + last {tail_size}]\n\n{tail}"
+    tail = text[-tail_size:] if tail_size > 0 else ""
+    marker = f"[TRUNCATED MIDDLE — {omitted:,} chars omitted]"
+    truncated = f"{head}\n\n{marker}\n\n{tail}" if tail else f"{head}\n\n{marker}"
     return truncated, True
 
 

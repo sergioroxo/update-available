@@ -14,6 +14,7 @@ import httpx
 from ..config import Config
 from ..models.document import DocumentPackage
 from ..models.research_annotation import ResearchAnnotation, REVIEWED_STATUSES
+from ..pipeline.analyze import PROMPT_VERSION
 from ..pipeline.metadata_quality import publication_metadata
 
 
@@ -1368,7 +1369,7 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         "aiMetadata": {
             "primaryModel":          pkg.llm_used,
             "primaryProvider":       _provider_for_llm(pkg.llm_used),
-            "promptVersion":         "ingestion-v3.3",
+            "promptVersion":         PROMPT_VERSION,
             "ontologyVersion":       "v3.0",
             "processingDate":        analysed_at,
             "analysedAt":            analysed_at,
@@ -1504,9 +1505,11 @@ def _load_testimony_review(doc_dir) -> dict:
     except Exception:
         return {}
     consent_map = {
-        "confirmed": "obtained",
-        "unclear": "pending",
-        "withdrawn": "withdrawn",
+        "confirmed":  "obtained",
+        "unclear":    "pending",
+        "pending":    "pending",
+        "refused":    "refused",
+        "withdrawn":  "withdrawn",
     }
     return {
         "consentStatus": consent_map.get(data.get("consent_status"), data.get("consent_status", "pending")),

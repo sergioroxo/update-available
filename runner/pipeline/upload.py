@@ -24,11 +24,26 @@ from ..config import Config
 from ..models.document import AnalysisResult, DocumentPackage, IntakeResult, PageIntelligence, PreprocessResult
 from ..clients import sanity as sanity_client
 from ..clients import supabase as supabase_client
+from .analyze import PROMPT_VERSION
 from .doc_ids import resolve_doc_dir
 from .preprocess import _preprocess_metadata, repair_preprocess_metadata
 from .metadata_quality import archival_issues, date_parts, publication_metadata
 
+_ONTOLOGY_VERSION = "v3.0"
+
 console = Console()
+
+# Types that require explicit consent before upload is allowed.
+# Single source of truth — imported by app.py.
+_CONSENT_GATED_TYPES: frozenset[str] = frozenset({"Testimony", "Survivor-Network-Material"})
+
+
+def requires_consent_gate(analysis: AnalysisResult) -> bool:
+    """Return True if this document type requires a consent gate before upload."""
+    if analysis.testimony_flag:
+        return True
+    types = {analysis.type, analysis.primary_type, analysis.secondary_type}
+    return bool(types & _CONSENT_GATED_TYPES)
 
 
 def run(
@@ -89,8 +104,11 @@ def save_locally(
     doc_dir = config.corpus_dir / intake.doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
 
+    analysis_data = json.loads(analysis.model_dump_json())
+    analysis_data["prompt_version"] = PROMPT_VERSION
+    analysis_data["ontology_version"] = _ONTOLOGY_VERSION
     (doc_dir / "analysis.json").write_text(
-        analysis.model_dump_json(indent=2), encoding="utf-8"
+        json.dumps(analysis_data, indent=2), encoding="utf-8"
     )
     (doc_dir / "embedding.json").write_text(
         json.dumps({
@@ -915,32 +933,11 @@ def _repair_analysis_date_from_source(
     return True
 
 
-_CONSENT_GATED_TYPES = {"Testimony", "Survivor-Network-Material"}
-
-
-def _requires_consent_gate(analysis: AnalysisResult) -> bool:
-    """Return True when the document requires consent confirmation before upload.
-
-    Triggers on testimony_flag OR when type / primary_type / secondary_type
-    is a consent-gated category, so that the gate cannot be bypassed by the
-    LLM omitting testimony_flag on typed testimony or survivor material.
-    """
-    if analysis.testimony_flag:
-        return True
-    if analysis.type in _CONSENT_GATED_TYPES:
-        return True
-    if getattr(analysis, "primary_type", None) in _CONSENT_GATED_TYPES:
-        return True
-    if getattr(analysis, "secondary_type", None) in _CONSENT_GATED_TYPES:
-        return True
-    return False
-
-
 def _enforce_testimony_upload_gate(
     intake: IntakeResult,
     analysis: AnalysisResult,
 ) -> None:
-    if not _requires_consent_gate(analysis):
+    if not requires_consent_gate(analysis):
         return
     if intake.testimony_consent == "confirmed":
         return

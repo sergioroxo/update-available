@@ -334,7 +334,7 @@ def _save_intake_metadata(doc_dir: Path, intake: IntakeResult) -> None:
 
 def update_intake_consent(doc_id: str, consent_status: str, config: Config) -> None:
     """Patch testimony consent status in intake.json."""
-    if consent_status not in {"confirmed", "pending", "refused"}:
+    if consent_status not in {"unclear", "pending", "confirmed", "refused", "withdrawn"}:
         raise ValueError(f"Invalid testimony consent status: {consent_status!r}")
     intake_path = config.corpus_dir / doc_id / "intake.json"
     if not intake_path.exists():

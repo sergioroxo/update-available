@@ -41,7 +41,7 @@ Identify candidate new terms, actors, and networks not yet in the vocabulary. Th
 ABSOLUTE RULES
 
 1. TERM tags (the `term` array) = PROMOTIONAL USE ONLY. Never tag a term if the source is critiquing, defining, or reporting on it. Only tag if the source uses the term to advocate for or conduct SOGICE. For terms that appear in the document but are used critically, analytically, or as quoted language rather than promotionally, record them in `term_use_context` instead — this preserves their presence without the promotional flag and is essential for Anti-SOGICE, journalism, and academic documents.
-2. COUNTRY = the organisation's country, not the language of the text. A Norwegian subtitle on a US video → country: USA.
+2. COUNTRY = the organisation's country, not the language of the text. A Norwegian subtitle on a US video → country: United States. Use full English country names (e.g. "Norway", "United Kingdom", "United States", "Germany") — not ISO codes.
 3. EVIDENCE must have at least one tag. Most documents have exactly one; a document that is simultaneously journalism and testimony gets both.
 4. TACTIC is the most important field. Be generous — a document can have 3–5 tactics simultaneously.
 5. Do NOT invent tags. If no tag fits, leave the array empty.
@@ -79,7 +79,7 @@ Pro-SOGICE | Anti-SOGICE | Neutral-Academic | Legal-Instrument | Testimony | Med
 - Training-Certification-Material: curricula, certification programs, training manuals used to train SOGICE practitioners
 - Liturgical-Devotional-Material: prayers, liturgical texts, retreat guides, devotional materials used in spiritual SOGICE
 - Clinical-Therapeutic-Protocol: clinical guides, therapy protocols, assessment frameworks, treatment manuals for SOGICE practice
-- Survivor-Network-Material: documents produced by or for survivor/recovery networks (apply alongside Pro/Anti directional type via primary_type/secondary_type)
+- Survivor-Network-Material: documents produced by or for survivor/recovery networks. Can stand alone as "type" when the document's primary purpose is survivor community support or network communication with no clear Pro/Anti directional stance. When it co-occurs with a directional type (e.g. a survivor testimony that is also Anti-SOGICE), use primary_type/secondary_type to capture both.
 - Regulatory-Policy-Document: professional ethics statements, regulatory frameworks, organizational guidelines from professional or regulatory bodies
 
 Compound TYPE: when a document meaningfully serves two primary functions (e.g. simultaneously Pro-SOGICE and Internal-Org-Document), assign the dominant stance to "type" and populate "primary_type"/"secondary_type" in the output schema.
@@ -143,6 +143,15 @@ Assign exactly one value indicating how far the document moves toward active SOG
 - hook: soft framing — questions identity, promotes "traditional values," or raises "concerns" without explicitly pathologising or offering a change programme
 - pathologizing: frames SOGIE as a symptom, disorder, trauma response, or spiritual failing; positions change as desirable but may not explicitly offer it
 - active-conduct: explicitly promotes, advertises, or documents SOGICE practice — retreats, programmes, prayer protocols, clinical sessions, or testimonies of undergoing SOGICE
+
+---
+
+FRAMING BALANCE
+Assign one value capturing how the document positions Pro-SOGICE vs Anti-SOGICE perspectives:
+- pro-dominant: document primarily promotes or supports SOGICE
+- anti-dominant: document primarily critiques, opposes, or documents harm from SOGICE
+- genuinely-mixed: document presents both perspectives with roughly equal weight
+- unclear: appropriate when framing balance is not applicable or determinable — use for Court-Judgment, Legal-Instrument, Neutral-Academic, and Regulatory-Policy-Document where the document describes a legal/policy position without itself taking an advocacy stance. Also use when the document is so fragmented or ambiguous that a definitive framing cannot be assigned.
 
 ---
 
@@ -244,7 +253,7 @@ The model must return a single JSON object matching this schema exactly. No pros
   "format": "string — exactly one from FORMAT vocabulary",
   "evidence": ["one or more from EVIDENCE vocabulary"],
   "scope": "string — exactly one: Core | Contextual | Reference",
-  "country": ["ISO 3166-1 alpha-2 codes, e.g. NO, GB, US, EU"],
+  "country": ["Full English country names, e.g. Norway, United Kingdom, United States, European Union"],
   "tactic": ["zero or more from TACTIC vocabulary"],
   "actor": ["string names of known actors — match Entity Registry names exactly where possible"],
   "network": ["string names of known networks"],

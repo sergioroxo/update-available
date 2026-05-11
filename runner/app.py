@@ -2121,7 +2121,7 @@ def _render_analysis_editor(config, llm: str) -> None:
         _doc_type = getattr(_analysis_obj, "type", "") or ""
         _type_note = (
             f" Document type is **{_doc_type}** — consent gate applies to Testimony and Survivor-Network-Material regardless of testimony_flag."
-            if _doc_type in _CONSENT_GATED_TYPES
+            if _doc_type in upload._CONSENT_GATED_TYPES
             else ""
         )
         st.warning(
@@ -2382,6 +2382,76 @@ def _render_analysis_summary(analysis) -> None:
     if analysis.suggested_actors:
         st.write("**Suggested actors:**")
         st.dataframe([a.model_dump() for a in analysis.suggested_actors], width="stretch")
+
+    _render_second_run_gate(analysis)
+
+
+def _render_second_run_gate(analysis) -> None:
+    """Show a human-gated second-opinion panel when the analysis warrants review.
+
+    A second run is never triggered automatically. The researcher must read the
+    explanation and click Approve before any additional model call is made.
+    Steps are shown so the reviewer understands what will happen and can intervene.
+    """
+    score = analysis.confidence.overall_score
+    needs_review = getattr(analysis, "needs_review", False)
+    low_conf_reasons = getattr(analysis.field_confidence, "low_confidence_reasons", [])
+
+    should_offer = needs_review or score < 0.75
+
+    if not should_offer:
+        return
+
+    reasons: list[str] = []
+    if score < 0.75:
+        reasons.append(f"Overall confidence is **{score:.2f}** (threshold: 0.75). The model was uncertain about one or more primary fields.")
+    if needs_review:
+        reasons.append("The model flagged this document for human review (`needsReview: true`).")
+    for r in (low_conf_reasons or []):
+        field = getattr(r, "field", r.get("field", "")) if not hasattr(r, "items") else r.get("field", "")
+        issue = getattr(r, "issue", r.get("issue", "")) if not hasattr(r, "items") else r.get("issue", "")
+        sev = getattr(r, "severity", r.get("severity", "")) if not hasattr(r, "items") else r.get("severity", "")
+        if field and issue:
+            reasons.append(f"`{field}` ({sev}): {issue}")
+
+    with st.expander("⚠️ Second opinion available — read before approving", expanded=True):
+        st.warning("A second model run is recommended based on the analysis below. **This will not run automatically.** Read the reasons, then approve if you want to proceed.")
+
+        st.markdown("**Why a second opinion is suggested:**")
+        for r in reasons:
+            st.markdown(f"- {r}")
+
+        st.markdown("**What a second run does (steps):**")
+        st.markdown(
+            "1. Sends the same extracted text to `review-qwen` (second-opinion model via LiteLLM)\n"
+            "2. Runs the same ingestion-v3.3 prompt — no changes to the classification task\n"
+            "3. Shows a side-by-side diff of this result vs. the second opinion\n"
+            "4. You choose which version to keep — neither is applied automatically\n"
+            "5. If you accept the second opinion, it replaces `analysis.json` locally only (Sanity is not updated until you click Upload)"
+        )
+
+        doc_id = st.session_state.get("ingest", {}).get("doc_id", "")
+        if not doc_id:
+            st.caption("Second-run button requires a doc_id in session state (run from Ingest Workbench).")
+            return
+
+        approved_key = f"second_run_approved_{doc_id}"
+        if st.button("Approve second opinion run", key=f"approve_second_{doc_id}"):
+            st.session_state[approved_key] = True
+
+        if st.session_state.get(approved_key):
+            st.info("Running second opinion with `review-qwen`… (this may take 30–90 seconds)")
+            import subprocess, sys
+            proc = subprocess.run(
+                [sys.executable, "-m", "runner", "reanalyze", doc_id, "--llm", "litelm-reasoning"],
+                capture_output=True,
+                text=True,
+            )
+            st.session_state.pop(approved_key, None)
+            if proc.returncode == 0:
+                st.success("Second opinion complete. Reload the Ingest Workbench to see the diff.")
+            else:
+                st.error(f"Second opinion run failed:\n{proc.stderr[-800:]}")
 
 
 def _render_enrichment_result(result) -> None:
@@ -3459,6 +3529,152 @@ Both require C1:   SSA gateway must depersonalise identity before A or B can ope
 
 **Tagging rule:** A single document can run all three systems simultaneously. Assign TACTIC tags from each active system. The `rhetorical_intensity` field captures how far the document moves toward active conduct.
 """)
+
+
+def _render_sanity_lexicon_tab(config) -> None:
+    """Card-based view of lexicon entries with per-context confirmation buttons."""
+    col_refresh, col_search, col_filter = st.columns([1, 3, 2])
+    with col_refresh:
+        if st.button("Refresh"):
+            st.session_state.pop("lexicon_terms", None)
+    with col_search:
+        search_q = st.text_input("Search terms", placeholder="Filter by term…", label_visibility="collapsed")
+    with col_filter:
+        status_filter = st.selectbox(
+            "Status", ["all", "candidate", "draft", "validated"], label_visibility="collapsed"
+        )
+
+    if "lexicon_terms" not in st.session_state:
+        try:
+            from runner.clients.sanity import fetch_lexicon_terms
+            st.session_state.lexicon_terms = fetch_lexicon_terms(config)
+        except Exception as exc:
+            st.error(f"Could not fetch lexicon from Sanity: {exc}")
+            st.session_state.lexicon_terms = []
+    terms = st.session_state.lexicon_terms
+
+    # Filter
+    visible = terms
+    if search_q:
+        sq = search_q.lower()
+        visible = [t for t in visible if sq in (t.get("term") or "").lower()]
+    if status_filter != "all":
+        visible = [t for t in visible if t.get("status") == status_filter]
+
+    # Summary row
+    total_evidence = sum(len(t.get("evidenceDossier") or []) for t in terms)
+    confirmed_evidence = sum(
+        sum(1 for e in (t.get("evidenceDossier") or []) if e.get("confirmed"))
+        for t in terms
+    )
+    mc1, mc2, mc3, mc4 = st.columns(4)
+    mc1.metric("Terms", len(terms))
+    mc2.metric("Showing", len(visible))
+    mc3.metric("Evidence records", total_evidence)
+    mc4.metric("Confirmed", f"{confirmed_evidence}/{total_evidence}")
+
+    st.divider()
+
+    for term_entry in visible:
+        term_name = term_entry.get("term", "?")
+        status = term_entry.get("status", "candidate")
+        cluster = term_entry.get("proposedCluster") or "—"
+        func = term_entry.get("function") or "—"
+        freq = term_entry.get("frequency") or 0
+        dossier = term_entry.get("evidenceDossier") or []
+        confirmed_count = sum(1 for e in dossier if e.get("confirmed"))
+        pending_count = len(dossier) - confirmed_count
+
+        status_badge = {"validated": "✅", "draft": "🔵", "candidate": "🟡"}.get(status, "⬜")
+        pending_badge = f"  🔴 {pending_count} pending" if pending_count else ""
+        header = f"{status_badge} **{term_name}** — {cluster} · {func} · {freq} doc(s){pending_badge}"
+
+        with st.expander(header, expanded=(pending_count > 0 and len(visible) <= 10)):
+            def_text = term_entry.get("draftDefinition") or term_entry.get("accessibleDefinition") or ""
+            if def_text:
+                st.caption(def_text[:300])
+
+            if not dossier:
+                st.caption("No evidence records yet.")
+            else:
+                for ctx_i, ctx in enumerate(dossier):
+                    key = ctx.get("_key", "")
+                    doc_ref = (ctx.get("docRef") or "unknown").replace("doc-", "")
+                    quote = ctx.get("exactQuote") or ctx.get("excerpt") or "—"
+                    def_as_used = ctx.get("definitionAsUsed") or ""
+                    register = ctx.get("usageRegister") or ctx.get("stanceProfile") or "—"
+                    m_conf = ctx.get("modelConfidence")
+                    r_conf = ctx.get("researcherConfidence")
+                    conf_str = f"{m_conf:.2f}" if m_conf is not None else "—"
+                    rationale = ctx.get("confidenceRationale") or ""
+                    co_terms = ctx.get("coOccurringTerms") or []
+                    rel_notes = ctx.get("relationshipNotes") or ""
+                    r_note = ctx.get("researcherNote") or ""
+                    lang = ctx.get("language") or "—"
+                    is_confirmed = ctx.get("confirmed", False)
+
+                    # Header row: status + doc + register + confidence
+                    ctx_col1, ctx_col2 = st.columns([5, 1])
+                    with ctx_col1:
+                        badge = "✅ Confirmed" if is_confirmed else "🔴 Pending"
+                        st.markdown(
+                            f"{badge} · **doc:** `{doc_ref}` · **lang:** {lang} · "
+                            f"**register:** {register} · **model conf:** {conf_str}"
+                            + (f" · **researcher conf:** {r_conf:.2f}" if r_conf is not None else "")
+                        )
+                    with ctx_col2:
+                        if not is_confirmed:
+                            if st.button("Confirm ✓", key=f"confirm_{term_entry['_id']}_{key}"):
+                                st.session_state[f"confirming_{term_entry['_id']}_{key}"] = True
+                        else:
+                            confirmed_at = (ctx.get("confirmedAt") or "")[:10]
+                            st.caption(f"✅ {confirmed_at}")
+
+                    # Confirmation note input (shows when confirm button was just clicked)
+                    if st.session_state.get(f"confirming_{term_entry['_id']}_{key}"):
+                        note_val = st.text_input(
+                            "Confirmation note (optional — will be saved with this record)",
+                            key=f"note_input_{term_entry['_id']}_{key}",
+                        )
+                        c_submit, c_cancel = st.columns(2)
+                        with c_submit:
+                            if st.button("Save confirmation", key=f"save_confirm_{term_entry['_id']}_{key}"):
+                                try:
+                                    from runner.clients.sanity import confirm_lexicon_context
+                                    confirm_lexicon_context(term_entry["_id"], key, config, note=note_val)
+                                    st.session_state.pop(f"confirming_{term_entry['_id']}_{key}", None)
+                                    st.session_state.pop("lexicon_terms", None)
+                                    st.rerun()
+                                except Exception as exc:
+                                    st.error(f"Confirm failed: {exc}")
+                        with c_cancel:
+                            if st.button("Cancel", key=f"cancel_confirm_{term_entry['_id']}_{key}"):
+                                st.session_state.pop(f"confirming_{term_entry['_id']}_{key}", None)
+                                st.rerun()
+
+                    # Verbatim quote
+                    st.markdown(f"> {quote[:600]}")
+
+                    # Definition as used in this document (most important per-document field)
+                    if def_as_used:
+                        st.markdown(f"**Definition as used here:** {def_as_used[:400]}")
+
+                    # Rich context — collapsible so it doesn't bury the primary content
+                    has_extra = any([co_terms, rel_notes, rationale, r_note, is_confirmed and ctx.get("confirmedNote")])
+                    if has_extra:
+                        with st.expander("Context details", expanded=False):
+                            if co_terms:
+                                st.markdown(f"**Co-occurring terms:** {', '.join(co_terms)}")
+                            if rel_notes:
+                                st.markdown(f"**Relationship notes:** {rel_notes}")
+                            if rationale:
+                                st.markdown(f"**Model rationale:** {rationale}")
+                            if r_note:
+                                st.markdown(f"**Researcher note:** {r_note}")
+                            if is_confirmed and ctx.get("confirmedNote"):
+                                st.markdown(f"**Confirmation note:** {ctx['confirmedNote']}")
+
+                    st.divider()
 
 
 def page_lexicon():
@@ -5521,10 +5737,11 @@ def page_testimony_review():
         st.write("**Testimony excerpts detected:**")
         st.dataframe(assets, width="stretch")
 
+    _CONSENT_OPTIONS = ["unclear", "pending", "confirmed", "refused", "withdrawn"]
     consent = st.selectbox(
         "Consent status",
-        ["unclear", "confirmed", "withdrawn"],
-        index=_option_index(["unclear", "confirmed", "withdrawn"], existing.get("consent_status", "unclear")),
+        _CONSENT_OPTIONS,
+        index=_option_index(_CONSENT_OPTIONS, existing.get("consent_status", "unclear")),
     )
     public_display = st.checkbox("Allow public display", value=bool(existing.get("public_display", False)))
     public_excerpt = st.text_area("Public excerpt (optional, max 200 words)", value=existing.get("public_excerpt", ""), height=120)
@@ -5589,25 +5806,18 @@ def _testimony_review_path(config, doc_id: str) -> Path:
     return config.corpus_dir / doc_id / "testimony_review.json"
 
 
-_CONSENT_GATED_TYPES = {"Testimony", "Survivor-Network-Material"}
-
-
 def _testimony_requires_review(doc_id: str, analysis, config) -> bool:
     """Return True when the document requires consent review before upload.
 
-    Mirrors _requires_consent_gate in upload.py: gates on testimony_flag
-    AND on document type, so typed Testimony / Survivor-Network-Material
-    documents cannot bypass the gate by omitting testimony_flag.
+    Mirrors upload.requires_consent_gate: gates on testimony_flag and on
+    document type, so typed Testimony / Survivor-Network-Material documents
+    cannot bypass the gate by omitting testimony_flag.
     """
+    from runner.pipeline.upload import requires_consent_gate
+
     if not analysis:
         return False
-    flagged = getattr(analysis, "testimony_flag", False)
-    typed_gated = (
-        getattr(analysis, "type", None) in _CONSENT_GATED_TYPES
-        or getattr(analysis, "primary_type", None) in _CONSENT_GATED_TYPES
-        or getattr(analysis, "secondary_type", None) in _CONSENT_GATED_TYPES
-    )
-    if not flagged and not typed_gated:
+    if not requires_consent_gate(analysis):
         return False
     path = _testimony_review_path(config, doc_id)
     data = _load_json_if_exists(path)

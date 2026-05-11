@@ -14,6 +14,7 @@ def _minimal_payload(**overrides):
         "scope": "Core",
         "narrative_register": "Legal-Policy",
         "summary": "A short summary.",
+        "confidence": {"overall_score": 0.85, "status": "high"},
     }
     payload.update(overrides)
     return payload
@@ -177,6 +178,13 @@ def test_lexicon_injection_no_cap_when_under_200(monkeypatch, tmp_path, caplog):
     ]
     monkeypatch.setattr(analyze, "_fetch_active_lexicon_terms", lambda _: small_lexicon)
 
+    with caplog.at_level(logging.WARNING, logger="runner.pipeline.analyze"):
+        prompt = analyze._build_system_prompt_with_lexicon(config)
+
+    term_count = sum(1 for i in range(50) if f"term-{i}" in prompt)
+    assert term_count == 50
+    assert "capping injection" not in caplog.text
+
 
 # ── _build_user_message intake context (C2) ──────────────────────────────────
 
@@ -222,3 +230,149 @@ def test_build_user_message_partial_context():
     assert "RESEARCHER-DECLARED TYPE: Testimony" in msg
     assert "BATCH ID: b-01" in msg
     assert "CANONICAL SOURCE URL" not in msg
+
+
+# ── Model validators (F3, F6, F7, F8) ────────────────────────────────────────
+
+def _high_confidence_payload(**overrides):
+    base = _minimal_payload()
+    base.update(overrides)
+    return base
+
+
+def test_anti_sogice_with_term_emits_normalisation_warning():
+    result = AnalysisResult.model_validate(
+        _high_confidence_payload(
+            type="Anti-SOGICE",
+            term=["Reparative Therapy"],
+        )
+    )
+    assert any("non-promotional document type" in w for w in result.normalisation_warnings)
+
+
+def test_neutral_academic_with_term_emits_normalisation_warning():
+    result = AnalysisResult.model_validate(
+        _high_confidence_payload(type="Neutral-Academic", term=["Reintegrative Therapy"])
+    )
+    assert any("non-promotional document type" in w for w in result.normalisation_warnings)
+
+
+def test_pro_sogice_with_term_has_no_type_warning():
+    result = AnalysisResult.model_validate(
+        _high_confidence_payload(type="Pro-SOGICE", term=["Reparative Therapy"])
+    )
+    assert not any("non-promotional document type" in w for w in result.normalisation_warnings)
+
+
+def test_low_confidence_forces_needs_review():
+    result = AnalysisResult.model_validate(
+        _minimal_payload(
+            needs_review=False,
+            confidence={"overall_score": 0.55, "status": "low"},
+        )
+    )
+    assert result.needs_review is True
+    assert any("needs_review forced" in w for w in result.normalisation_warnings)
+
+
+def test_high_confidence_does_not_force_needs_review():
+    result = AnalysisResult.model_validate(
+        _minimal_payload(
+            needs_review=False,
+            confidence={"overall_score": 0.85, "status": "high"},
+        )
+    )
+    assert result.needs_review is False
+
+
+def test_exactly_at_threshold_does_not_force_needs_review():
+    result = AnalysisResult.model_validate(
+        _minimal_payload(
+            needs_review=False,
+            confidence={"overall_score": 0.70, "status": "medium"},
+        )
+    )
+    assert result.needs_review is False
+
+
+def test_unknown_tactic_emits_vocab_warning():
+    result = AnalysisResult.model_validate(
+        _high_confidence_payload(tactic=["UnknownTacticXYZ"])
+    )
+    assert any("tactic" in w and "vocab-warn" in w for w in result.normalisation_warnings)
+
+
+def test_known_tactic_prefix_no_warning():
+    result = AnalysisResult.model_validate(
+        _high_confidence_payload(tactic=["Tactic:Religious-Freedom-Shield"])
+    )
+    assert not any("tactic" in w and "vocab-warn" in w for w in result.normalisation_warnings)
+
+
+def test_unknown_landmark_emits_vocab_warning():
+    result = AnalysisResult.model_validate(
+        _high_confidence_payload(landmark=["UnknownLandmarkXYZ"])
+    )
+    assert any("landmark" in w and "vocab-warn" in w for w in result.normalisation_warnings)
+
+
+def test_term_use_context_contradiction_emits_warning():
+    result = AnalysisResult.model_validate(
+        _high_confidence_payload(
+            type="Pro-SOGICE",
+            term=["Reparative Therapy"],
+            term_use_context=[{"term": "Reparative Therapy", "use": "critical", "quote": "criticized it"}],
+        )
+    )
+    assert any("Resolve the contradiction" in w for w in result.normalisation_warnings)
+
+
+def test_term_use_context_promotional_no_contradiction():
+    result = AnalysisResult.model_validate(
+        _high_confidence_payload(
+            type="Pro-SOGICE",
+            term=["Reparative Therapy"],
+            term_use_context=[{"term": "Reparative Therapy", "use": "promotional", "quote": "..."}],
+        )
+    )
+    assert not any("Resolve the contradiction" in w for w in result.normalisation_warnings)
+
+
+# ── End-aware truncation (D6) ─────────────────────────────────────────────────
+
+def test_maybe_truncate_passthrough_when_under_limit():
+    from runner.pipeline.preprocess import _maybe_truncate
+    text = "a" * 1000
+    result, truncated = _maybe_truncate(text, limit=2000)
+    assert result == text
+    assert truncated is False
+
+
+def test_maybe_truncate_no_op_when_limit_zero():
+    from runner.pipeline.preprocess import _maybe_truncate
+    text = "a" * 50000
+    result, truncated = _maybe_truncate(text, limit=0)
+    assert result == text
+    assert truncated is False
+
+
+def test_maybe_truncate_includes_beginning_and_end():
+    from runner.pipeline.preprocess import _maybe_truncate
+    head = "START " * 3000
+    tail = "END " * 2000
+    middle = "MIDDLE " * 5000
+    text = head + middle + tail
+    result, truncated = _maybe_truncate(text, limit=22000, head_chars=16000, tail_chars=6000)
+    assert truncated is True
+    assert result.startswith("START")
+    assert "END" in result
+    assert "[TRUNCATED MIDDLE" in result
+    assert "omitted]" in result
+
+
+def test_maybe_truncate_marker_shows_omitted_count():
+    from runner.pipeline.preprocess import _maybe_truncate
+    text = "X" * 30000
+    result, _ = _maybe_truncate(text, limit=22000, head_chars=16000, tail_chars=6000)
+    omitted = 30000 - 16000 - 6000
+    assert f"{omitted:,}" in result

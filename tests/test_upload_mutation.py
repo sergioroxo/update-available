@@ -8,7 +8,7 @@ from runner.models.document import (
     IntakeResult,
     PreprocessResult,
 )
-from runner.pipeline.upload import _enforce_testimony_upload_gate, _requires_consent_gate
+from runner.pipeline.upload import _enforce_testimony_upload_gate, requires_consent_gate
 
 
 def _analysis() -> AnalysisResult:
@@ -228,35 +228,35 @@ def _typed_analysis(doc_type: str) -> AnalysisResult:
     })
 
 
-# ── _requires_consent_gate ──────────────────────────────────────────────────
+# ── requires_consent_gate ───────────────────────────────────────────────────
 
 def test_requires_consent_gate_on_testimony_flag():
     analysis = _testimony_analysis()
-    assert _requires_consent_gate(analysis) is True
+    assert requires_consent_gate(analysis) is True
 
 
 def test_requires_consent_gate_on_testimony_type():
     analysis = _typed_analysis("Testimony")
     assert analysis.testimony_flag is False  # flag NOT set
-    assert _requires_consent_gate(analysis) is True
+    assert requires_consent_gate(analysis) is True
 
 
 def test_requires_consent_gate_on_survivor_network_type():
     analysis = _typed_analysis("Survivor-Network-Material")
     assert analysis.testimony_flag is False
-    assert _requires_consent_gate(analysis) is True
+    assert requires_consent_gate(analysis) is True
 
 
 def test_requires_consent_gate_false_for_normal_type():
     analysis = _typed_analysis("Anti-SOGICE")
     assert analysis.testimony_flag is False
-    assert _requires_consent_gate(analysis) is False
+    assert requires_consent_gate(analysis) is False
 
 
 def test_requires_consent_gate_on_primary_type():
     analysis = _typed_analysis("Mixed")
     analysis.primary_type = "Testimony"
-    assert _requires_consent_gate(analysis) is True
+    assert requires_consent_gate(analysis) is True
 
 
 # ── _enforce_testimony_upload_gate ──────────────────────────────────────────
@@ -300,3 +300,112 @@ def test_gate_does_not_block_non_gated_type(tmp_path):
     _enforce_testimony_upload_gate(intake, _typed_analysis("Anti-SOGICE"))
     _enforce_testimony_upload_gate(intake, _typed_analysis("Pro-SOGICE"))
     _enforce_testimony_upload_gate(intake, _typed_analysis("Media-Coverage"))
+
+
+def test_testimony_gate_blocks_withdrawn_consent(tmp_path):
+    intake = _make_intake(tmp_path)
+    intake.testimony_consent = "withdrawn"
+
+    with pytest.raises(click.exceptions.Exit):
+        _enforce_testimony_upload_gate(intake, _testimony_analysis())
+
+
+def test_testimony_gate_blocks_refused_consent(tmp_path):
+    intake = _make_intake(tmp_path)
+    intake.testimony_consent = "refused"
+
+    with pytest.raises(click.exceptions.Exit):
+        _enforce_testimony_upload_gate(intake, _testimony_analysis())
+
+
+def test_prompt_version_imported_from_single_source():
+    from runner.pipeline.analyze import PROMPT_VERSION as analyze_version
+    from runner.pipeline.upload import PROMPT_VERSION as upload_version
+    assert analyze_version == upload_version
+
+
+def test_sanity_document_uses_prompt_version_from_analyze(tmp_path):
+    from runner.pipeline.analyze import PROMPT_VERSION
+    intake = IntakeResult(
+        doc_id="doc-1",
+        source="https://example.org/doc",
+        source_type="url",
+        declared_type="url",
+        tier=2,
+        batch_id="batch-1",
+        language=None,
+        local_dir=tmp_path,
+    )
+    preprocess = PreprocessResult(
+        doc_id="doc-1",
+        tool_used="trafilatura",
+        quality="high",
+        text="text",
+    )
+    pkg = DocumentPackage(
+        intake=intake,
+        preprocess=preprocess,
+        analysis=_analysis(),
+        embedding=[],
+        embedding_model="test-model",
+        llm_used="litelm",
+        local_dir=tmp_path,
+    )
+    doc = _build_sanity_document(pkg)
+    assert doc["aiMetadata"]["promptVersion"] == PROMPT_VERSION
+
+
+def test_save_locally_stamps_prompt_and_ontology_version(tmp_path):
+    import json
+    from runner.config import Config
+    from runner.pipeline.upload import save_locally, PROMPT_VERSION, _ONTOLOGY_VERSION
+
+    config = Config(
+        anthropic_api_key="",
+        sanity_project_id="p",
+        sanity_dataset="d",
+        sanity_write_token="t",
+        supabase_url="u",
+        supabase_service_key="k",
+        corpus_dir=tmp_path,
+        exports_dir=tmp_path,
+        ollama_base_url="",
+        embedding_model="qwen3-embedding:8b",
+        local_analysis_model="local",
+        local_analysis_model_heavy="heavy",
+        local_analysis_model_reasoning="reasoning",
+        claude_model="claude",
+        openrouter_api_key="",
+        openrouter_model="",
+        litelm_base_url="",
+        litelm_api_key="",
+        litelm_analysis_model="",
+        litelm_analysis_model_heavy="",
+        litelm_analysis_model_reasoning="",
+        litelm_embedding_model="",
+        litelm_enrichment_model="",
+        litelm_enrichment_model_alt="",
+        truncation_limit=24000,
+        truncation_limit_local=200000,
+    )
+    intake = IntakeResult(
+        doc_id="doc-version-test",
+        source="https://example.org/doc",
+        source_type="url",
+        declared_type="url",
+        tier=2,
+        batch_id="batch-1",
+        language=None,
+    )
+    preprocess = PreprocessResult(
+        doc_id="doc-version-test",
+        tool_used="trafilatura",
+        quality="high",
+        text="text",
+    )
+    save_locally(intake, preprocess, [], _analysis(), config)
+
+    analysis_file = tmp_path / "doc-version-test" / "analysis.json"
+    data = json.loads(analysis_file.read_text())
+    assert data["prompt_version"] == PROMPT_VERSION
+    assert data["ontology_version"] == _ONTOLOGY_VERSION
