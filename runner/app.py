@@ -1258,6 +1258,16 @@ def page_ingest_workbench():
                 f"{config.truncation_limit_local:,} chars when a limit is needed."
             ),
         )
+        allow_whisper = st.checkbox(
+            "Allow Whisper fallback for video/audio",
+            value=st.session_state.ingest.get("allow_whisper", False),
+            help=(
+                "Off by default. If platform captions are unavailable, the workflow pauses "
+                "so you can upload an SRT/VTT before analysis. Turn this on to transcribe locally."
+            ),
+        )
+        st.session_state.ingest["allow_whisper"] = allow_whisper
+        config.media_allow_whisper = allow_whisper
     with c5:
         run_enrich = st.checkbox("Run enrichment after analysis", value=st.session_state.ingest["run_enrich"])
         st.session_state.ingest["run_enrich"] = run_enrich
@@ -1370,6 +1380,8 @@ def page_ingest_workbench():
             if st.button("2. Extract Text"):
                 effective_max = _effective_max_chars(max_chars, llm, config)
                 _workbench_preprocess(config, effective_max)
+        if intake_result.source_type in {"video", "audio"} and not st.session_state.ingest.get("preprocess"):
+            _render_pre_analysis_transcript_upload(config)
 
     preprocess_result = st.session_state.ingest.get("preprocess")
     if preprocess_result:
@@ -1479,6 +1491,7 @@ def _blank_ingest_state() -> dict:
         "llm": "litelm",
         "batch": "",
         "run_enrich": False,
+        "allow_whisper": False,
         "enrich_model": "",
         "intake": None,
         "preprocess": None,
@@ -1514,6 +1527,7 @@ def _workbench_run_pipeline(config, source, tier, batch, provenance_url,
                             effective_max, llm, run_enrich) -> None:
     """Run the full auto-pipeline after duplicate gate has been cleared."""
     _workbench_intake(config, source, tier, batch, provenance_url)
+    config.media_allow_whisper = st.session_state.ingest.get("allow_whisper", False)
     if st.session_state.ingest.get("intake"):
         _workbench_preprocess(config, effective_max)
     if st.session_state.ingest.get("preprocess"):
@@ -1559,6 +1573,80 @@ def _effective_max_chars(max_chars: int, llm: str, config) -> int | None:
     if llm in ("local", "local-heavy", "local-reasoning", "prefer-local", "litelm", "litelm-heavy", "litelm-reasoning"):
         return config.truncation_limit_local
     return config.truncation_limit
+
+
+def _render_pre_analysis_transcript_upload(config) -> None:
+    intake_result = st.session_state.ingest.get("intake")
+    if not intake_result or not intake_result.local_dir:
+        return
+
+    with st.expander("Transcript checkpoint: upload SRT/VTT before analysis", expanded=True):
+        st.info(
+            "For video/audio research, a researcher-provided SRT/VTT is preferred over Whisper. "
+            "If platform captions were unavailable, upload a transcript here and it will become the primary text for analysis."
+        )
+        uploaded = st.file_uploader(
+            "Upload SRT or VTT",
+            type=["srt", "vtt"],
+            key=f"pre_analysis_srt_{intake_result.doc_id}",
+        )
+        language = st.text_input(
+            "Transcript language code",
+            value="",
+            placeholder="en",
+            key=f"pre_analysis_srt_lang_{intake_result.doc_id}",
+            help="ISO-style language code, e.g. en, pt, no, nb, de.",
+        )
+        if st.button("Use uploaded transcript for analysis", disabled=uploaded is None, key=f"use_pre_analysis_srt_{intake_result.doc_id}"):
+            if language.strip() and not _valid_language_code(language.strip()):
+                st.error("Language must be an ISO-style code such as `en`, `pt`, `no`, `nb`, `de`, or `pt-BR`.")
+                return
+            try:
+                from runner.models.document import PreprocessResult
+                from runner.pipeline.media_review import attach_srt_to_document
+
+                upload_dir = Path(intake_result.local_dir) / "researcher_transcripts"
+                upload_dir.mkdir(parents=True, exist_ok=True)
+                safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", uploaded.name).strip("_") or "uploaded.srt"
+                transcript_path = upload_dir / safe_name
+                transcript_path.write_bytes(uploaded.getvalue())
+                attach_srt_to_document(
+                    doc_id=intake_result.doc_id,
+                    srt_path=transcript_path,
+                    config=config,
+                    language=language.strip(),
+                    make_primary=True,
+                )
+                doc_dir = Path(intake_result.local_dir)
+                chunks = _read_json_file(doc_dir / "transcript_chunks.json", [])
+                versions = _read_json_file(doc_dir / "transcript_versions.json", [])
+                media = _read_json_file(doc_dir / "media_metadata.json", {})
+                text = (doc_dir / "extracted.txt").read_text(encoding="utf-8")
+                result = PreprocessResult(
+                    doc_id=intake_result.doc_id,
+                    tool_used="researcher_srt",
+                    quality="high",
+                    text=text,
+                    char_count=len(text),
+                    language_detected=language.strip() or None,
+                    media_metadata=media,
+                    transcript_chunks=chunks if isinstance(chunks, list) else [],
+                    transcript_versions=versions if isinstance(versions, list) else [],
+                    transcript_comparison=_read_json_file(doc_dir / "transcript_comparison.json", {}),
+                )
+                st.session_state.ingest.update({
+                    "preprocess": result,
+                    "embedding": None,
+                    "analysis": None,
+                    "analysis_json": "",
+                    "analysis_valid": False,
+                    "enrichment": None,
+                    "uploaded": False,
+                })
+                st.success("Uploaded transcript is now the primary text. Continue to analysis.")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Transcript upload failed: {exc}")
 
 
 def _workbench_preprocess(config, max_chars: int | None) -> None:
@@ -1664,6 +1752,13 @@ def _render_preprocess_review(result) -> None:
     c2.metric("Quality", result.quality)
     c3.metric("Chars", f"{result.char_count:,}")
     c4.metric("Truncated", "yes" if result.truncated else "no")
+    if result.tool_used == "whisper":
+        st.warning(
+            "This transcript was generated by Whisper fallback. If you have a researcher-provided SRT/VTT "
+            "or can produce one with UiO Autotekst, attach it in Media Review and rerun transcript-dependent analysis."
+        )
+    elif result.tool_used in {"yt-dlp", "researcher_srt"}:
+        st.success("Transcript is timestamped and suitable for transcript-based analysis.")
 
     meta = {
         "title": result.title,

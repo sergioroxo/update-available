@@ -41,12 +41,15 @@ def ingest(
     second_opinion: bool = typer.Option(False, "--second-opinion", help="Also run alternate enrichment model and save a comparison file"),
     collect_comments: bool = typer.Option(False, "--collect-comments", help="For video platforms, collect a bounded lower-trust comment evidence artifact"),
     max_comments: int = typer.Option(50, "--max-comments", help="Maximum comments to retain when --collect-comments is enabled"),
+    skip_whisper: bool = typer.Option(False, "--skip-whisper", help="For video/audio, stop if platform captions are unavailable instead of running Whisper"),
 ):
     """Full ingestion pipeline: intake → preprocess → embed → classify → review → upload."""
     config = load_config(llm=llm)
     if collect_comments:
         config.media_collect_comments = True
         config.media_max_comments = max_comments
+    if skip_whisper:
+        config.media_allow_whisper = False
 
     # Stage 0.5 — Triage (optional): fast pre-screen to recommend analysis model
     if run_triage and not yes:

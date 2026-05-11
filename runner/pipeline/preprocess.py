@@ -287,6 +287,12 @@ def _preprocess_video(source: str, config: Config | None = None) -> PreprocessRe
     except Exception:
         pass
 
+    if not getattr(config, "media_allow_whisper", True):
+        raise RuntimeError(
+            "No usable platform captions were extracted. Upload an SRT/VTT transcript, "
+            "or enable Whisper fallback if you want local transcription."
+        )
+
     # faster-whisper fallback (local file or downloaded audio)
     try:
         from faster_whisper import WhisperModel

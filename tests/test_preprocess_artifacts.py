@@ -7,6 +7,7 @@ from runner.pipeline.preprocess import (
     _audio_source_for_whisper,
     _media_metadata_from_ytdlp,
     _preprocess_srt,
+    _preprocess_video,
     _save_artifacts,
 )
 from runner.pipeline.transcripts import compare_transcript_versions, parse_timed_text, transcript_version
@@ -143,6 +144,31 @@ def test_audio_source_for_whisper_downloads_url_audio(monkeypatch, tmp_path):
 
     assert audio_source == str(tmp_path / "abc.m4a")
     assert info["title"] == "Captionless video"
+
+
+def test_preprocess_video_can_require_researcher_transcript_before_whisper(monkeypatch):
+    class FakeYoutubeDL:
+        def __init__(self, opts):
+            self.opts = opts
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def extract_info(self, source, download=True):
+            return {"id": "abc", "title": "Captionless video"}
+
+    config = types.SimpleNamespace(media_allow_whisper=False, media_collect_comments=False)
+    monkeypatch.setitem(sys.modules, "yt_dlp", types.SimpleNamespace(YoutubeDL=FakeYoutubeDL))
+
+    try:
+        _preprocess_video("https://youtu.be/abc", config=config)
+    except RuntimeError as exc:
+        assert "Upload an SRT/VTT transcript" in str(exc)
+    else:
+        raise AssertionError("Expected transcript checkpoint RuntimeError")
 
 
 def test_media_metadata_maps_table_ready_youtube_fields():
