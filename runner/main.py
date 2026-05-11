@@ -278,8 +278,11 @@ def reanalyze_doc(
         console.print("[yellow]Aborted — previous analysis archive kept.[/yellow]")
         raise typer.Exit()
 
-    analysis_path.write_text(final.model_dump_json(indent=2), encoding="utf-8")
-    console.print(f"[green]analysis.json updated for {doc_id}[/green]")
+    import json as _json
+    analysis_path.write_text(
+        _json.dumps(upload._stamp_analysis_dict(final), indent=2), encoding="utf-8"
+    )
+    console.print(f"[green]analysis.json updated for {doc_id} (prompt_version stamped)[/green]")
 
     if upload_after:
         upload.upload_saved(doc_id, config)

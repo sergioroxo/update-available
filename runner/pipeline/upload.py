@@ -33,6 +33,19 @@ _ONTOLOGY_VERSION = "v3.0"
 
 console = Console()
 
+
+def _stamp_analysis_dict(analysis: AnalysisResult) -> dict:
+    """Return the analysis model dict with prompt_version + ontology_version stamped in.
+
+    Use this everywhere analysis.json is written so provenance is consistent
+    whether the write comes from initial ingest, reanalyze, second-opinion, or
+    upload-saved date repair.
+    """
+    data = json.loads(analysis.model_dump_json())
+    data["prompt_version"] = PROMPT_VERSION
+    data["ontology_version"] = _ONTOLOGY_VERSION
+    return data
+
 # Types that require explicit consent before upload is allowed.
 # Single source of truth — imported by app.py.
 _CONSENT_GATED_TYPES: frozenset[str] = frozenset({"Testimony", "Survivor-Network-Material"})
@@ -104,11 +117,8 @@ def save_locally(
     doc_dir = config.corpus_dir / intake.doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
 
-    analysis_data = json.loads(analysis.model_dump_json())
-    analysis_data["prompt_version"] = PROMPT_VERSION
-    analysis_data["ontology_version"] = _ONTOLOGY_VERSION
     (doc_dir / "analysis.json").write_text(
-        json.dumps(analysis_data, indent=2), encoding="utf-8"
+        json.dumps(_stamp_analysis_dict(analysis), indent=2), encoding="utf-8"
     )
     (doc_dir / "embedding.json").write_text(
         json.dumps({
@@ -606,7 +616,9 @@ def upload_saved(doc_id: str, config: Config) -> None:
             )
 
     if _repair_analysis_date_from_source(analysis, preprocess):
-        analysis_path.write_text(analysis.model_dump_json(indent=2), encoding="utf-8")
+        analysis_path.write_text(
+            json.dumps(_stamp_analysis_dict(analysis), indent=2), encoding="utf-8"
+        )
 
     pkg = DocumentPackage(
         intake=intake,

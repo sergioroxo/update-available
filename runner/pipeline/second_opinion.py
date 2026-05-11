@@ -18,6 +18,7 @@ from runner.config import Config
 from runner.models.document import AnalysisResult, PreprocessResult
 from runner.pipeline import analyze, upload
 from runner.pipeline.doc_ids import resolve_doc_dir
+from runner.pipeline.upload import _stamp_analysis_dict
 
 
 VALID_OUTCOMES = {"pending", "kept_original", "adopted_alt", "edited"}
@@ -47,7 +48,7 @@ def run_second_opinion(
     timestamp = _timestamp()
     model_label = _safe_label(_model_label_for_llm(llm, config))
     alt_path = doc_dir / f"analysis_alt_{model_label}_{timestamp}.json"
-    alt_path.write_text(alt.model_dump_json(indent=2), encoding="utf-8")
+    alt_path.write_text(json.dumps(_stamp_analysis_dict(alt), indent=2), encoding="utf-8")
 
     comparison = build_analysis_comparison(
         doc_id=doc_id,
@@ -147,10 +148,11 @@ def decide_second_opinion(
         if not edited_json.strip():
             raise ValueError("edited_json is required when outcome is edited")
         edited = AnalysisResult.model_validate_json(edited_json)
+        stamped = json.dumps(_stamp_analysis_dict(edited), indent=2)
         edited_path = doc_dir / f"analysis_edited_{_timestamp()}.json"
-        edited_path.write_text(edited.model_dump_json(indent=2), encoding="utf-8")
+        edited_path.write_text(stamped, encoding="utf-8")
         _archive_analysis(analysis_path)
-        analysis_path.write_text(edited.model_dump_json(indent=2), encoding="utf-8")
+        analysis_path.write_text(stamped, encoding="utf-8")
         promoted_file = edited_path.name
 
     comparison["outcome"] = outcome

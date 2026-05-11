@@ -1,3 +1,5 @@
+import json
+
 import click
 import pytest
 
@@ -356,7 +358,6 @@ def test_sanity_document_uses_prompt_version_from_analyze(tmp_path):
 
 
 def test_save_locally_stamps_prompt_and_ontology_version(tmp_path):
-    import json
     from runner.config import Config
     from runner.pipeline.upload import save_locally, PROMPT_VERSION, _ONTOLOGY_VERSION
 
@@ -409,3 +410,71 @@ def test_save_locally_stamps_prompt_and_ontology_version(tmp_path):
     data = json.loads(analysis_file.read_text())
     assert data["prompt_version"] == PROMPT_VERSION
     assert data["ontology_version"] == _ONTOLOGY_VERSION
+
+
+# ── Consent sync: update_intake_consent ──────────────────────────────────────
+
+def test_update_intake_consent_writes_to_intake_json(tmp_path):
+    from runner.pipeline.intake import update_intake_consent
+    from dataclasses import dataclass
+
+    @dataclass
+    class _Cfg:
+        corpus_dir: object
+
+    doc_dir = tmp_path / "doc-consent"
+    doc_dir.mkdir()
+    intake_path = doc_dir / "intake.json"
+    intake_path.write_text('{"doc_id": "doc-consent"}', encoding="utf-8")
+
+    cfg = _Cfg(corpus_dir=tmp_path)
+    update_intake_consent("doc-consent", "confirmed", cfg)
+
+    data = json.loads(intake_path.read_text(encoding="utf-8"))
+    assert data["testimony_consent"] == "confirmed"
+    assert "testimony_consent_updated_at" in data
+
+
+def test_update_intake_consent_rejects_invalid_status(tmp_path):
+    from runner.pipeline.intake import update_intake_consent
+    from dataclasses import dataclass
+
+    @dataclass
+    class _Cfg:
+        corpus_dir: object
+
+    cfg = _Cfg(corpus_dir=tmp_path)
+    with pytest.raises(ValueError, match="Invalid testimony consent status"):
+        update_intake_consent("doc-x", "approved", cfg)
+
+
+def test_update_intake_consent_all_valid_statuses(tmp_path):
+    from runner.pipeline.intake import update_intake_consent
+    from dataclasses import dataclass
+
+    @dataclass
+    class _Cfg:
+        corpus_dir: object
+
+    for status in ("unclear", "pending", "confirmed", "refused", "withdrawn"):
+        doc_dir = tmp_path / f"doc-{status}"
+        doc_dir.mkdir()
+        intake_path = doc_dir / "intake.json"
+        intake_path.write_text('{}', encoding="utf-8")
+        update_intake_consent(f"doc-{status}", status, _Cfg(corpus_dir=tmp_path))
+        data = json.loads(intake_path.read_text(encoding="utf-8"))
+        assert data["testimony_consent"] == status
+
+
+def test_update_intake_consent_no_op_when_intake_missing(tmp_path):
+    """Should not raise if intake.json does not exist."""
+    from runner.pipeline.intake import update_intake_consent
+    from dataclasses import dataclass
+
+    @dataclass
+    class _Cfg:
+        corpus_dir: object
+
+    cfg = _Cfg(corpus_dir=tmp_path)
+    # Should complete silently — no intake.json present
+    update_intake_consent("nonexistent-doc", "confirmed", cfg)

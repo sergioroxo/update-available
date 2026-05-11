@@ -952,6 +952,27 @@ def _sanity_studio_url(config, doc_id: str) -> str | None:
     return f"https://{pid}.sanity.studio/{dataset}/structure/sogiceDocument;doc-{doc_id}"
 
 
+def _sanity_studio_section_url(config, section: str) -> str | None:
+    """Return a Sanity Studio URL for a content-type section (e.g. lexiconEntry, tacticEntry).
+
+    section examples: 'lexiconEntry', 'tacticEntry', 'entityEntry'
+    """
+    pid = getattr(config, "sanity_project_id", "") if config else ""
+    dataset = getattr(config, "sanity_dataset", "production") if config else "production"
+    if not pid:
+        return None
+    return f"https://{pid}.sanity.studio/{dataset}/structure/{section}"
+
+
+def _sanity_studio_record_url(config, sanity_id: str, section: str = "lexiconEntry") -> str | None:
+    """Return a direct Sanity Studio URL for a specific record by its _id."""
+    pid = getattr(config, "sanity_project_id", "") if config else ""
+    dataset = getattr(config, "sanity_dataset", "production") if config else "production"
+    if not pid or not sanity_id:
+        return None
+    return f"https://{pid}.sanity.studio/{dataset}/structure/{section};{sanity_id}"
+
+
 def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
     """Side-by-side metadata source view with researcher confirmation controls."""
     src = _collect_metadata_sources(doc_dir)
@@ -1056,12 +1077,13 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
         )
 
         push_sanity = st.checkbox(
-            "Also patch Sanity (content + classification fields)",
+            "Push to Sanity now (live write — requires connection)",
             value=False,
             disabled=not bool(config),
             help=(
-                "Off by default. Local files are always saved first. Turn this on only when you want "
-                "these confirmed values patched to Sanity immediately."
+                "Off by default — local files are always saved first regardless. "
+                "Enable only when you want to patch the live Sanity record immediately. "
+                "Requires SANITY_WRITE_TOKEN and an active network connection."
             ),
         )
         submitted = st.form_submit_button("Save confirmed metadata")
@@ -1141,17 +1163,31 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
         except Exception as exc:
             errors.append(f"Sanity classification patch: {exc}")
 
+    _file_hints = {
+        "title": "preprocess.json + media_metadata.json",
+        "language": "preprocess.json",
+        "classification": "analysis.json (_manual_overrides)",
+    }
     if changed:
-        st.success(f"Saved locally: {', '.join(changed)}.")
+        file_details = "; ".join(
+            f"{f} → {_file_hints.get(f, 'local')}" for f in changed
+        )
+        st.success(f"Saved locally: {file_details}.")
+        if not push_sanity:
+            st.info(
+                "Local files updated. These changes will be included the next time you "
+                "upload or re-upload this document to Sanity. To push immediately, "
+                "enable 'Push to Sanity now' and resubmit."
+            )
     elif push_sanity and sanity_patched:
         st.info("No local values changed; Sanity patch was still sent from the confirmed form values.")
     elif not changed:
-        st.info("No local values changed. Edit a field, or tick Sanity patch to resend confirmed values to Sanity.")
+        st.info("No local values changed. Edit a field, or enable Sanity push to resend confirmed values.")
     if sanity_patched:
         st.success("Patched Sanity fields: " + "; ".join(sanity_patched))
         studio_url = _sanity_studio_url(config, doc_id)
         if studio_url:
-            st.markdown(f"[Verify in Sanity Studio]({studio_url})")
+            st.markdown(f"[Verify in Sanity Studio ↗]({studio_url})")
     if errors:
         for e in errors:
             st.error(e)
@@ -1214,7 +1250,11 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
             confirmed_bal or None,
         )
         if reg_changed:
-            st.success(f"Saved register corrections: {', '.join(reg_changed)}.")
+            st.success(
+                f"Saved to analysis.json: {', '.join(reg_changed)} "
+                "(marked researcher_confirmed in _manual_overrides). "
+                "These will be included on next Sanity upload."
+            )
             st.rerun()
         else:
             st.info("No register fields changed.")
@@ -1318,9 +1358,10 @@ def _render_document_date_editor(doc_id: str, doc_dir: Path, config, compact: bo
                 st.markdown(f"[Verify in Sanity Studio]({studio_url})")
         else:
             st.success(
-                "Saved dates locally. "
+                "Saved dates to analysis.json + preprocess.json. "
                 f"Source published: {payload['publication_date'] or '—'}; "
-                f"document date: {_document_date_to_text(payload['document_date']) or '—'}."
+                f"document date: {_document_date_to_text(payload['document_date']) or '—'}. "
+                "Tick 'Also push dates to Sanity' and resubmit to push these to the live record."
             )
         st.rerun()
     except Exception as exc:
@@ -4895,6 +4936,7 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
     if st.button("Push approved drafts to Sanity"):
         pushed = 0
         errors: list[str] = []
+        pushed_ids: list[str] = []
         for record in records:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
@@ -4918,11 +4960,19 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity as draft.").strip()
                 _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
                 pushed += 1
+                pushed_ids.append(sanity_id)
             except Exception as exc:
                 errors.append(f"{record['doc_id']} / {item.get('term', '?')}: {exc}")
         st.session_state.pop("lexicon_terms", None)
         if pushed:
-            st.success(f"Pushed {pushed} approved draft term(s) to Sanity.")
+            st.success(
+                f"Pushed {pushed} draft term(s) to Sanity as `lexiconEntry` records (status: draft). "
+                f"Sanity IDs: {', '.join(pushed_ids)}. "
+                "Enrichment.json updated with pushed_to_sanity=True and sanity_id."
+            )
+            lex_url = _sanity_studio_section_url(config, "lexiconEntry")
+            if lex_url:
+                st.markdown(f"[Verify in Sanity Studio → lexiconEntry ↗]({lex_url})")
         if errors:
             st.error("\n".join(errors))
 
@@ -4968,6 +5018,7 @@ def _render_entity_queue(config, records: list[dict]) -> None:
     if st.button("Push approved entities to Sanity"):
         pushed = 0
         errors: list[str] = []
+        pushed_ids: list[str] = []
         for record in records:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
@@ -4980,11 +5031,18 @@ def _render_entity_queue(config, records: list[dict]) -> None:
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity registry.").strip()
                 _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
                 pushed += 1
+                pushed_ids.append(sanity_id)
             except Exception as exc:
                 errors.append(f"{record['doc_id']} / {item.get('name', '?')}: {exc}")
         st.session_state.pop("entity_registry", None)
         if pushed:
-            st.success(f"Pushed {pushed} approved entit(ies) to Sanity.")
+            st.success(
+                f"Pushed {pushed} entit(ies) to Sanity entity registry. "
+                f"Sanity IDs: {', '.join(pushed_ids)}."
+            )
+            entity_url = _sanity_studio_section_url(config, "entityEntry")
+            if entity_url:
+                st.markdown(f"[Verify in Sanity Studio → entityEntry ↗]({entity_url})")
         if errors:
             st.error("\n".join(errors))
 
@@ -5029,6 +5087,7 @@ def _render_tactic_queue(config, records: list[dict]) -> None:
     if st.button("Push approved tactics to Sanity"):
         pushed = 0
         errors: list[str] = []
+        pushed_ids: list[str] = []
         for record in records:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
@@ -5041,10 +5100,18 @@ def _render_tactic_queue(config, records: list[dict]) -> None:
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity tactic registry.").strip()
                 _update_enrichment_proposal(record["path"], "tactic_proposals", record["index"], item)
                 pushed += 1
+                pushed_ids.append(sanity_id)
             except Exception as exc:
                 errors.append(f"{record['doc_id']} / {item.get('tactic', '?')}: {exc}")
         if pushed:
-            st.success(f"Pushed {pushed} approved tactic(s) to Sanity.")
+            st.success(
+                f"Pushed {pushed} tactic(s) to Sanity as `tacticEntry` records. "
+                f"Sanity IDs: {', '.join(pushed_ids)}. "
+                "Enrichment.json updated locally."
+            )
+            tactic_url = _sanity_studio_section_url(config, "tacticEntry")
+            if tactic_url:
+                st.markdown(f"[Verify in Sanity Studio → tacticEntry ↗]({tactic_url})")
         if errors:
             st.error("\n".join(errors))
 
@@ -5089,6 +5156,7 @@ def _render_practice_queue(config, records: list[dict]) -> None:
     if st.button("Push approved practices to Sanity"):
         pushed = 0
         errors: list[str] = []
+        pushed_ids: list[str] = []
         for record in records:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
@@ -5109,10 +5177,17 @@ def _render_practice_queue(config, records: list[dict]) -> None:
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity practice registry.").strip()
                 _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
                 pushed += 1
+                pushed_ids.append(sanity_id)
             except Exception as exc:
                 errors.append(f"{record['doc_id']} / {item.get('practice_id', '?')}: {exc}")
         if pushed:
-            st.success(f"Pushed {pushed} approved practice(s) to Sanity.")
+            st.success(
+                f"Pushed {pushed} practice(s) to Sanity practice registry. "
+                f"Sanity IDs: {', '.join(pushed_ids)}."
+            )
+            practice_url = _sanity_studio_section_url(config, "practiceEntry")
+            if practice_url:
+                st.markdown(f"[Verify in Sanity Studio → practiceEntry ↗]({practice_url})")
         if errors:
             st.error("\n".join(errors))
 
@@ -5771,7 +5846,34 @@ def page_testimony_review():
             "reviewed_at": datetime.now(timezone.utc).isoformat(),
         }
         _testimony_review_path(config, selected).write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        st.success("Saved testimony review.")
+
+        # Sync consent status to intake.json so the upload gate can read it.
+        # The upload gate checks intake.testimony_consent, not testimony_review.json.
+        try:
+            from runner.pipeline.intake import update_intake_consent
+            # Only sync recognised 5-value consent states; skip "withdrawn" (revoked) — that
+            # should remain as-is in intake.json; the gate will block upload regardless.
+            if consent in ("confirmed", "pending", "unclear", "refused", "withdrawn"):
+                update_intake_consent(selected, consent, config)
+        except Exception:
+            pass  # intake.json may not exist for older ingest records; not fatal
+
+        if consent == "confirmed":
+            st.success(
+                f"Saved testimony_review.json and updated intake.json → consent: **{consent}**. "
+                "Upload gate will now pass for this document."
+            )
+        elif consent in ("refused", "withdrawn"):
+            st.warning(
+                f"Saved testimony_review.json and updated intake.json → consent: **{consent}**. "
+                "Upload is blocked. If already uploaded to Sanity, manually patch "
+                "`meta.testimonyConsent` and redact any public-facing content."
+            )
+        else:
+            st.info(
+                f"Saved testimony_review.json and updated intake.json → consent: **{consent}**. "
+                "Upload will remain blocked until consent is confirmed."
+            )
 
 
 def _testimony_review_rows(corpus_dir: Path) -> list[dict]:
@@ -7278,10 +7380,18 @@ def _mr_transcripts(doc_id: str, doc_dir: Path, config):
             if st.button("Set as primary", key="mr_set_primary_btn"):
                 try:
                     _set_primary_transcript(doc_id, doc_dir, new_primary, prim_push, _load_config_safe())
+                    sanity_note = ""
+                    if prim_push:
+                        sanity_note = " Sanity `mediaMetadata.transcriptEvidence.selectedTranscriptLabel` patched."
                     st.success(
                         f"Primary set to `{new_primary}`. "
+                        f"Updated local files: `transcript_chunks.json`, `media_metadata.json`.{sanity_note} "
                         "If you have run research annotations, re-run them — they use the primary transcript."
                     )
+                    if prim_push:
+                        mr_url = _sanity_studio_url(_load_config_safe(), doc_id)
+                        if mr_url:
+                            st.markdown(f"[Verify in Sanity Studio ↗]({mr_url})")
                     st.rerun()
                 except Exception as exc:
                     st.error(str(exc))
@@ -7568,7 +7678,17 @@ def _mr_annotations(doc_id: str, doc_dir: Path, config):
                             public_visibility=next_visibility,
                             write_sanity=push_sanity,
                         )
-                        st.success("Review decision saved.")
+                        sanity_msg = " Sanity `researchAnnotations` field patched." if push_sanity else (
+                            " Local only — tick 'Also push to Sanity' and save again to push."
+                        )
+                        st.success(
+                            f"Review decision saved to `research_annotations/{profile}.json`. "
+                            f"Status: {next_status} · Visibility: {next_visibility}.{sanity_msg}"
+                        )
+                        if push_sanity:
+                            doc_url = _sanity_studio_url(config, doc_id)
+                            if doc_url:
+                                st.markdown(f"[Verify in Sanity Studio ↗]({doc_url})")
                         st.rerun()
                     except Exception as exc:
                         st.error(str(exc))
@@ -7602,7 +7722,9 @@ def _mr_annotations(doc_id: str, doc_dir: Path, config):
                     overwrite=overwrite,
                 )
                 st.success(
-                    f"Done — stance: {result.source_stance}  ·  status: {result.annotation_status}"
+                    f"Saved to `research_annotations/{profile_choice}.json`. "
+                    f"Stance: {result.source_stance}  ·  Status: {result.annotation_status}. "
+                    + ("Local only — push via 'Save review decision' when ready." if save_local_only else "Pushed to Sanity.")
                 )
                 st.rerun()
             except Exception as exc:

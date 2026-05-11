@@ -143,3 +143,39 @@ def test_edited_decision_validates_and_promotes_edited_json(tmp_path, monkeypatc
     assert canonical["summary"] == "Researcher edited summary."
     assert decision["outcome"] == "edited"
     assert decision["promoted_file"].startswith("analysis_edited_")
+
+
+# ── Version stamping in alt and promoted files ────────────────────────────────
+
+def test_second_opinion_alt_file_has_version_stamps(monkeypatch, tmp_path):
+    from runner.pipeline.upload import PROMPT_VERSION, _ONTOLOGY_VERSION
+    config = _Config(corpus_dir=tmp_path)
+    doc_dir = _doc(tmp_path)
+
+    alt_analysis = _analysis("Pro-SOGICE", 0.82)
+    monkeypatch.setattr(second_opinion.analyze, "run", lambda *a, **kw: alt_analysis)
+    monkeypatch.setattr(second_opinion.analyze, "enrich_preprocess_from_intake", lambda *a: None)
+
+    payload = second_opinion.run_second_opinion("doc-1", config, llm="litelm-reasoning")
+    alt_data = json.loads(payload["alt_path"].read_text(encoding="utf-8"))
+
+    assert alt_data["prompt_version"] == PROMPT_VERSION
+    assert alt_data["ontology_version"] == _ONTOLOGY_VERSION
+
+
+def test_stamp_analysis_dict_adds_version_keys():
+    from runner.pipeline.upload import _stamp_analysis_dict, PROMPT_VERSION, _ONTOLOGY_VERSION
+    from runner.models.document import AnalysisResult
+    analysis = AnalysisResult.model_validate({
+        "type": "Anti-SOGICE",
+        "format": "Blog-Post",
+        "evidence": ["Evidence."],
+        "scope": "Core",
+        "narrative_register": "Legal-Policy",
+        "summary": "Summary.",
+        "confidence": {"overall_score": 0.85, "status": "high"},
+    })
+    stamped = _stamp_analysis_dict(analysis)
+    assert stamped["prompt_version"] == PROMPT_VERSION
+    assert stamped["ontology_version"] == _ONTOLOGY_VERSION
+    assert stamped["type"] == "Anti-SOGICE"
