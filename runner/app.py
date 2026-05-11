@@ -209,7 +209,7 @@ def page_dashboard():
                 "Profiles annotated": ", ".join(sorted(annotated_profiles)) or "—",
                 "Last annotation": last_annotation[:19] if last_annotation else "—",
             })
-        st.dataframe(rows, hide_index=True, use_container_width=True)
+        st.dataframe(rows, hide_index=True, width="stretch")
 
     # ── Setup checklist ───────────────────────────────────────────────────
     st.subheader("Setup status")
@@ -353,7 +353,7 @@ def _dashboard_ingest_readiness(config):
                     "Where to fix": "Lexicon -> Local Proposals.",
                     "Why": "Approved terms/entities/tactics should reach Sanity before relying on the living registry.",
                 })
-            st.dataframe(rows, hide_index=True, use_container_width=True)
+            st.dataframe(rows, hide_index=True, width="stretch")
     else:
         st.success("No major local logistics gaps found. You can continue ingestion.")
 
@@ -457,7 +457,7 @@ def page_corpus_intelligence():
             if not filtered.empty:
                 st.dataframe(
                     pd.crosstab(filtered["type"], filtered["format"]),
-                    use_container_width=True,
+                    width="stretch",
                 )
         with right:
             st.subheader("Year distribution")
@@ -480,7 +480,7 @@ def page_corpus_intelligence():
             for values in filtered["countryList"]:
                 countries.extend(values)
             country_df = _count_frame(countries, "country", "documents", pd)
-            st.dataframe(country_df, hide_index=True, use_container_width=True)
+            st.dataframe(country_df, hide_index=True, width="stretch")
         with cc2:
             st.subheader("Upload and enrichment")
             st.dataframe(
@@ -493,7 +493,7 @@ def page_corpus_intelligence():
                     ]
                 ),
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
             )
 
     with tab_sources:
@@ -503,14 +503,14 @@ def page_corpus_intelligence():
             st.dataframe(
                 _count_frame(filtered["creator"].tolist(), "creator", "documents", pd),
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
             )
         with s2:
             st.subheader("Source hosts")
             st.dataframe(
                 _count_frame(filtered["sourceHost"].tolist(), "host", "documents", pd),
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
             )
 
     with tab_annotations:
@@ -535,13 +535,13 @@ def page_corpus_intelligence():
                     "Missing": int((~has_profile).sum()),
                 }
             )
-        st.dataframe(coverage_rows, hide_index=True, use_container_width=True)
+        st.dataframe(coverage_rows, hide_index=True, width="stretch")
 
         st.subheader("Recommended but not yet run")
         needed = filtered[filtered["missingRecommended"].astype(bool)][
             ["doc_id", "type", "format", "recommendedProfiles", "missingRecommended"]
         ]
-        st.dataframe(needed, hide_index=True, use_container_width=True)
+        st.dataframe(needed, hide_index=True, width="stretch")
 
     with tab_gap:
         st.subheader("Practical gaps")
@@ -567,7 +567,7 @@ def page_corpus_intelligence():
                         "Gaps": "; ".join(gaps),
                     }
                 )
-        st.dataframe(gap_rows, hide_index=True, use_container_width=True)
+        st.dataframe(gap_rows, hide_index=True, width="stretch")
 
         if gap_rows:
             set_name = st.text_input("Save these gap docs as set", key="ci_gap_set_name")
@@ -593,7 +593,7 @@ def page_corpus_intelligence():
         st.dataframe(
             filtered[display_cols],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
 
 
@@ -861,7 +861,7 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
             "analysis.json": ", ".join(src["country"]["analysis"]) if src["country"]["analysis"] else "—",
         },
     ]
-    st.dataframe(rows, hide_index=True, use_container_width=True)
+    st.dataframe(rows, hide_index=True, width="stretch")
 
     # ── Title + language confirmation ────────────────────────────────────────
     st.markdown("**Confirm title and language**")
@@ -1951,13 +1951,13 @@ def _render_analysis_summary(analysis) -> None:
     _tuc = getattr(analysis, "term_use_context", None)
     if _tuc:
         st.write("**Terms used non-promotionally (definitional/critical/reported):**")
-        st.dataframe([t.model_dump() for t in _tuc], use_container_width=True)
+        st.dataframe([t.model_dump() for t in _tuc], width="stretch")
     if analysis.candidate_terms:
         st.write("**Candidate terms:**")
-        st.dataframe([t.model_dump() for t in analysis.candidate_terms], use_container_width=True)
+        st.dataframe([t.model_dump() for t in analysis.candidate_terms], width="stretch")
     if analysis.suggested_actors:
         st.write("**Suggested actors:**")
-        st.dataframe([a.model_dump() for a in analysis.suggested_actors], use_container_width=True)
+        st.dataframe([a.model_dump() for a in analysis.suggested_actors], width="stretch")
 
 
 def _render_enrichment_result(result) -> None:
@@ -2086,7 +2086,7 @@ def _render_second_opinion_comparison(config, doc_id: str, comparison: dict) -> 
                     for row in differences
                 ],
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
             )
         else:
             st.success("No tracked fields differ.")
@@ -2293,7 +2293,7 @@ def page_document_list():
                     for item in sets
                 ],
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
             )
             batch_cols = st.columns(4)
             with batch_cols[0]:
@@ -5679,13 +5679,13 @@ def page_mac_studio_node():
     with m1:
         st.subheader("LiteLLM aliases")
         if litellm_models:
-            st.dataframe({"model": litellm_models}, use_container_width=True)
+            st.dataframe({"model": litellm_models}, width="stretch")
         else:
             st.info("No models returned (LiteLLM offline or no aliases configured)")
     with m2:
         st.subheader("Ollama installed")
         if ollama_models:
-            st.dataframe({"model": ollama_models}, use_container_width=True)
+            st.dataframe({"model": ollama_models}, width="stretch")
         else:
             st.info("No models returned")
         if ollama_loaded:
@@ -5980,7 +5980,7 @@ def page_seed_data():
                 st.success(f"Would write {len(terms)} terms")
                 st.dataframe(
                     [{"term": t["term"], "cluster": t.get("proposedCluster",""), "function": t.get("function","")} for t in terms[:20]],
-                    use_container_width=True,
+                    width="stretch",
                 )
                 if len(terms) > 20:
                     st.caption(f"… and {len(terms)-20} more")
@@ -6008,7 +6008,7 @@ def page_seed_data():
                 st.success(f"Would write {len(tactics)} tactics — {len(structural)} structural, {len(sub)} sub-tactics, {len(campaigns)} campaigns")
                 st.dataframe(
                     [{"tactic": t["tactic"], "level": t.get("tactic_level","structural"), "cluster": t.get("primary_cluster",""), "has_def": bool(t.get("definition"))} for t in tactics],
-                    use_container_width=True,
+                    width="stretch",
                 )
         with col2:
             if st.button("⬆ Seed Tactics", key="tac_run", type="primary"):
@@ -6030,7 +6030,7 @@ def page_seed_data():
                 st.success(f"Would write {len(practices)} practices")
                 st.dataframe(
                     [{"practice": p["practice"], "type": p.get("practice_type",""), "has_def": bool(p.get("definition")), "tactic_overlap": bool(p.get("notes"))} for p in practices],
-                    use_container_width=True,
+                    width="stretch",
                 )
         with col2:
             if st.button("⬆ Seed Practices", key="prac_run", type="primary"):
@@ -6111,7 +6111,7 @@ def page_seed_data():
                 st.success(f"Would write {len(networks)} network organizations")
                 st.dataframe(
                     [{"name": n["name"], "has_desc": bool(n.get("description"))} for n in networks],
-                    use_container_width=True,
+                    width="stretch",
                 )
         with col2:
             if st.button("⬆ Seed Networks", key="net_run", type="primary"):
@@ -6168,7 +6168,7 @@ def page_seed_data():
                 st.success(f"Would append {len(variants)} variants across {len(langs)} languages")
                 st.dataframe(
                     [{"language": k, "count": v} for k,v in sorted(langs.items())],
-                    use_container_width=True,
+                    width="stretch",
                 )
         with col2:
             if st.button("⬆ Seed Variants", key="var_run", type="primary"):
@@ -6307,7 +6307,7 @@ def _mr_overview_section(doc_id: str, doc_dir: Path, config):
                     "Views (platform metadata)": f"{vc:,}" if isinstance(vc, int) else str(vc or "—"),
                     "Status": p.get("status", ""),
                 })
-            st.dataframe(rows_dist, hide_index=True, use_container_width=True)
+            st.dataframe(rows_dist, hide_index=True, width="stretch")
 
         total_views = reach.get("totalEstimatedViews")
         signals = meta.get("platformAlgorithmicSignals", {})
@@ -6428,7 +6428,7 @@ def _mr_dates_panel(doc_id: str, doc_dir: Path, meta: dict, intake: dict):
         {"Date": "Latest annotation reviewed", "Value": latest_review or "—", "From": "research_annotations/*.json"},
     ]
     with st.expander("Dates and provenance", expanded=False):
-        st.dataframe(rows, hide_index=True, use_container_width=True)
+        st.dataframe(rows, hide_index=True, width="stretch")
         _render_document_date_editor(doc_id, doc_dir, _load_config_safe(), compact=True)
 
     src = _collect_metadata_sources(doc_dir)
@@ -6514,7 +6514,7 @@ def _mr_artifact_completeness_panel(doc_id: str, doc_dir: Path):
         )
     missing_count = sum(1 for row in rows if row["Status"] == "Missing")
     with st.expander(f"Document completeness checklist ({missing_count} missing)", expanded=missing_count > 0):
-        st.dataframe(rows, hide_index=True, use_container_width=True)
+        st.dataframe(rows, hide_index=True, width="stretch")
 
 
 def _mr_transcripts(doc_id: str, doc_dir: Path, config):
@@ -6562,7 +6562,7 @@ def _mr_transcripts(doc_id: str, doc_dir: Path, config):
             "Chunks": v.get("chunkCount", ""),
             "Chars": v.get("charCount", ""),
         })
-    st.dataframe(rows, hide_index=True, use_container_width=True)
+    st.dataframe(rows, hide_index=True, width="stretch")
 
     labels = [v.get("label", "") for v in versions]
     if labels:
@@ -6607,7 +6607,7 @@ def _mr_transcripts(doc_id: str, doc_dir: Path, config):
                               "moderate differences — review recommended" if sim > 0.70 else
                               "substantial differences",
             })
-        st.dataframe(comp_rows, hide_index=True, use_container_width=True)
+        st.dataframe(comp_rows, hide_index=True, width="stretch")
 
     st.subheader("Read a transcript version")
     primary_label = primary_label_current
@@ -6772,7 +6772,7 @@ def _mr_annotations(doc_id: str, doc_dir: Path, config):
                 for row in recommendations
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     else:
         st.info("No extra research annotation profiles are recommended for this document type; enrichment may be enough.")
@@ -6965,10 +6965,10 @@ Visibility:
                 {"Layer": "Candidate lexicon terms", "File": "analysis.json / enrichment.json", "Where it goes": "lexiconEntry after researcher approval", "Human action": "Approve/push, then verify in Sanity."},
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     with st.expander("Which annotations should be run for each document type?", expanded=True):
-        st.dataframe(_annotation_selection_rows(), hide_index=True, use_container_width=True)
+        st.dataframe(_annotation_selection_rows(), hide_index=True, width="stretch")
         st.caption(
             "`archive_core` is always the metadata baseline. The rows above describe optional deeper annotation profiles."
         )
@@ -7035,7 +7035,7 @@ def _mr_annotation_summary_table(annotations: list[dict]):
             }
         )
     st.subheader("Annotations Table")
-    st.dataframe(rows, hide_index=True, use_container_width=True)
+    st.dataframe(rows, hide_index=True, width="stretch")
 
 
 def _model_display(data: dict) -> str:
@@ -7140,7 +7140,7 @@ def _render_documentary_annotation(result: dict, doc_id: str = "", config=None, 
                             st.info(f"Planned {payload['timestampCount']} screenshot(s).")
                         else:
                             st.success(f"Captured {payload['timestampCount']} screenshot(s) to {payload['outputDir']}.")
-                        st.dataframe(payload["screenshots"], hide_index=True, use_container_width=True)
+                        st.dataframe(payload["screenshots"], hide_index=True, width="stretch")
                     except Exception as exc:
                         st.error(str(exc))
 
@@ -7151,7 +7151,7 @@ def _render_documentary_annotation(result: dict, doc_id: str = "", config=None, 
             {"Name": a.get("name", ""), "Role": a.get("role", "")}
             for a in actors if isinstance(a, dict)
         ]
-        st.dataframe(actor_rows, hide_index=True, use_container_width=True)
+        st.dataframe(actor_rows, hide_index=True, width="stretch")
 
     search_terms = result.get("searchTerms") or []
     if search_terms:
@@ -7226,7 +7226,7 @@ def _render_shame_article_annotation(path: Path, data: dict, result: dict):
     st.dataframe(
         [{"Argument": arg, "Present": "✓" if arg in present_arguments else "—"} for arg in arguments],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
     if evidence_map:
         with st.expander("Argument evidence"):
@@ -7433,7 +7433,7 @@ def _mr_candidates(doc_id: str, doc_dir: Path, config):
                 }
                 for s in seeds if isinstance(s, dict)
             ]
-            st.dataframe(seed_rows, hide_index=True, use_container_width=True)
+            st.dataframe(seed_rows, hide_index=True, width="stretch")
 
     candidates = payload.get("candidates", [])
     if not candidates:

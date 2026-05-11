@@ -210,7 +210,10 @@ def _preprocess_video(source: str, config: Config | None = None) -> PreprocessRe
                 "outtmpl": os.path.join(tmp, "%(id)s.%(ext)s"),
                 "quiet": True,
                 "writeinfojson": True,
-                "ignoreerrors": False,
+                # YouTube may rate-limit or fail one caption language while others
+                # are still usable. Do not force Whisper fallback just because a
+                # non-selected subtitle download failed.
+                "ignoreerrors": True,
                 "getcomments": bool(getattr(config, "media_collect_comments", False)),
             }
             ffmpeg = tool_path("ffmpeg")
