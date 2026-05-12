@@ -397,3 +397,41 @@ def test_annotation_quote_fields_accepts_plain_string():
     from runner.app import _annotation_quote_fields
 
     assert _annotation_quote_fields("quoted text") == ("", "quoted text", "")
+
+
+def test_as_display_list_wraps_plain_string():
+    from runner.app import _as_display_list
+
+    assert _as_display_list("visual rhetoric is inferred") == ["visual rhetoric is inferred"]
+
+
+def test_as_display_list_preserves_list():
+    from runner.app import _as_display_list
+
+    assert _as_display_list(["one", "two"]) == ["one", "two"]
+
+
+def test_embedding_payload_status_accepts_vector_schema():
+    from runner.app import _embedding_payload_status
+
+    status = _embedding_payload_status({"model": "qwen3-embedding:8b", "dimension": 4096, "vector": [0.1, 0.2]})
+    assert status["ok"] is True
+    assert status["model"] == "qwen3-embedding:8b"
+    assert status["dimension"] == 4096
+
+
+def test_embedding_payload_status_accepts_legacy_embedding_schema():
+    from runner.app import _embedding_payload_status
+
+    status = _embedding_payload_status({"embedding_model": "legacy", "embedding": [0.1, 0.2]})
+    assert status["ok"] is True
+    assert status["model"] == "legacy"
+    assert status["dimension"] == 2
+
+
+def test_embedding_payload_status_flags_empty_vector():
+    from runner.app import _embedding_payload_status
+
+    status = _embedding_payload_status({"model": "qwen3-embedding:8b", "dimension": 4096, "vector": []})
+    assert status["ok"] is False
+    assert status["detail"] == "empty vector"

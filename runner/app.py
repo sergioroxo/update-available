@@ -7108,14 +7108,18 @@ def _mr_overview_section(doc_id: str, doc_dir: Path, config):
         total_views = reach.get("totalEstimatedViews")
         signals = meta.get("platformAlgorithmicSignals", {})
         comment_collection = meta.get("commentCollection") or {}
+        comments_path = doc_dir / "media_comments.json"
+        comments_payload = _mr_read_json(comments_path, {}) if comments_path.exists() else {}
         comment_count = (
             comment_collection.get("platformCommentCount")
             or signals.get("commentCount")
             or general.get("commentCount")
+            or comments_payload.get("platformCommentCount")
         )
         comments_collected = (
             comment_collection.get("collectedCount")
             or signals.get("commentsCollectedCount")
+            or comments_payload.get("collectedCount")
             or 0
         )
         c1, c2, c3 = st.columns(3)
@@ -7127,10 +7131,23 @@ def _mr_overview_section(doc_id: str, doc_dir: Path, config):
             help="Run collect-comments <doc_id> to collect platform comments for lower-trust review.",
         )
         if not comments_collected:
-            st.info(
-                f"No comments collected yet. Run:  \n"
-                f"```\npython -m runner collect-comments {doc_id}\n```"
-            )
+            if comments_path.exists():
+                generated = comments_payload.get("generatedAt", "")
+                st.info(
+                    "Comment collection has been attempted, but yt-dlp returned 0 usable comments. "
+                    "This can mean comments are disabled, unavailable without login/cookies, rate-limited, "
+                    "or not exposed by the extractor for this video."
+                )
+                if generated:
+                    st.caption(f"Last collection attempt: {generated}. Local file: `media_comments.json`.")
+            else:
+                st.info(
+                    f"No comments collected yet. Run:  \n"
+                    f"```\npython -m runner collect-comments {doc_id}\n```"
+                )
+        feedback_key = f"mr_collect_comments_feedback_{doc_id}"
+        if st.session_state.get(feedback_key):
+            st.info(st.session_state[feedback_key])
         repair_col, comments_col = st.columns(2)
         with repair_col:
             if st.button("Repair table metadata", key=f"mr_repair_meta_{doc_id}"):
@@ -7156,8 +7173,19 @@ def _mr_overview_section(doc_id: str, doc_dir: Path, config):
                 try:
                     from runner.pipeline.media_review import collect_comments_for_document
 
-                    result = collect_comments_for_document(doc_id, config, max_comments=int(max_comments))
-                    st.success(f"Collected {result['collectedCount']} comment(s) for review.")
+                    with st.spinner("Collecting platform comments with yt-dlp…"):
+                        result = collect_comments_for_document(doc_id, config, max_comments=int(max_comments))
+                    count = int(result.get("collectedCount") or 0)
+                    if count:
+                        st.session_state[feedback_key] = (
+                            f"Collected {count} comment(s). Updated `media_comments.json` "
+                            "and `comment_evidence_queue.json` locally."
+                        )
+                    else:
+                        st.session_state[feedback_key] = (
+                            "Collection ran and updated `media_comments.json`, but yt-dlp returned 0 usable comments. "
+                            "No LLM analysis is run on comments automatically; comments are only a lower-trust review queue."
+                        )
                     st.rerun()
                 except Exception as exc:
                     st.error(str(exc))
@@ -7173,7 +7201,9 @@ def _mr_overview_section(doc_id: str, doc_dir: Path, config):
         st.subheader("Storage status")
         sanity_ok = (doc_dir / "sanity_record.json").exists()
         embedding_json = doc_dir / "embedding.json"
-        embed_ok = embedding_json.exists() and bool(_mr_read_json(embedding_json, {}).get("embedding"))
+        embedding_data = _mr_read_json(embedding_json, {}) if embedding_json.exists() else {}
+        embed_status = _embedding_payload_status(embedding_data)
+        embed_ok = embedding_json.exists() and embed_status["ok"]
 
         if sanity_ok:
             st.success("Sanity: uploaded")
@@ -7181,12 +7211,9 @@ def _mr_overview_section(doc_id: str, doc_dir: Path, config):
             st.warning("Sanity: local only")
 
         if embed_ok:
-            embedding_data = _mr_read_json(embedding_json)
-            model = embedding_data.get("embedding_model", "")
-            dim = len(embedding_data.get("embedding", []))
-            st.success(f"Embedding: {model}, {dim}d")
+            st.success(f"Embedding: {embed_status['model']}, {embed_status['dimension']}d")
         else:
-            st.warning("Embedding: missing")
+            st.warning(f"Embedding: {embed_status['detail'] if embedding_json.exists() else 'missing'}")
 
         try:
             from runner.pipeline.upload import _embedding_status as _upemb
@@ -7298,6 +7325,13 @@ def _mr_artifact_completeness_panel(doc_id: str, doc_dir: Path):
             count = len(list(path.glob("*.json"))) if path.exists() else 0
             detail = f"{count} profile(s)" if count else "missing"
             exists = count > 0
+        elif filename == "embedding.json":
+            if path.exists():
+                status = _embedding_payload_status(_mr_read_json(path, {}))
+                exists = status["ok"]
+                detail = status["detail"]
+            else:
+                detail = "missing"
         else:
             detail = "present" if exists else "missing"
         rows.append(
@@ -7867,6 +7901,30 @@ def _model_display(data: dict) -> str:
     return model
 
 
+def _as_display_list(value) -> list:
+    if value is None or value == "":
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, tuple):
+        return list(value)
+    return [value]
+
+
+def _embedding_payload_status(data: dict) -> dict:
+    if not isinstance(data, dict):
+        return {"ok": False, "model": "", "dimension": 0, "detail": "invalid embedding.json"}
+    vector = data.get("vector")
+    if vector is None:
+        vector = data.get("embedding")
+    vector = vector or []
+    dim = int(data.get("dimension") or len(vector) or 0)
+    model = data.get("model") or data.get("embedding_model") or ""
+    ok = bool(vector) and dim > 0
+    detail = f"{model or 'unknown model'}, {dim}d" if ok else "empty vector"
+    return {"ok": ok, "model": model, "dimension": dim, "detail": detail}
+
+
 def _annotation_profile_purpose(profile: str) -> str:
     return {
         "documentary_analysis": "Narrative structure, visual/rhetorical form, screenshot moments.",
@@ -7928,7 +7986,7 @@ def _render_documentary_annotation(result: dict, doc_id: str = "", config=None, 
             if sig:
                 st.caption(sig)
 
-    screenshots = result.get("sceneScreenshotSuggestions") or []
+    screenshots = _as_display_list(result.get("sceneScreenshotSuggestions"))
     if screenshots:
         st.markdown("**Screenshot suggestions**")
         for s in screenshots:
@@ -7982,12 +8040,12 @@ def _render_documentary_annotation(result: dict, doc_id: str = "", config=None, 
         ]
         st.dataframe(actor_rows, hide_index=True, width="stretch")
 
-    search_terms = result.get("searchTerms") or []
+    search_terms = _as_display_list(result.get("searchTerms"))
     if search_terms:
         st.markdown("**Suggested search terms**")
-        st.write("  ·  ".join(search_terms))
+        st.write("  ·  ".join(str(term) for term in search_terms))
 
-    uncertainty = result.get("uncertaintyNotes") or []
+    uncertainty = _as_display_list(result.get("uncertaintyNotes"))
     if uncertainty:
         with st.expander("Uncertainty notes"):
             for u in uncertainty:
