@@ -373,3 +373,27 @@ def test_save_confirmed_classification_normalises_country(tmp_path):
 
     ana = _read_json(tmp_path / "analysis.json")
     assert ana["country"] == ["United Kingdom", "United States", "Germany"]
+
+
+# ── _annotation_quote_fields ─────────────────────────────────────────────────
+
+def test_annotation_quote_fields_accepts_dict_shape():
+    from runner.app import _annotation_quote_fields
+
+    assert _annotation_quote_fields(
+        {"timestamp": "00:01:02", "quote": "quoted text", "significance": "important"}
+    ) == ("00:01:02", "quoted text", "important")
+
+
+def test_annotation_quote_fields_accepts_page_timestamp_alias():
+    from runner.app import _annotation_quote_fields
+
+    assert _annotation_quote_fields(
+        {"pageOrTimestamp": "p. 4", "text": "quoted text"}
+    ) == ("p. 4", "quoted text", "")
+
+
+def test_annotation_quote_fields_accepts_plain_string():
+    from runner.app import _annotation_quote_fields
+
+    assert _annotation_quote_fields("quoted text") == ("", "quoted text", "")

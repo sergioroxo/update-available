@@ -7880,6 +7880,16 @@ def _annotation_profile_purpose(profile: str) -> str:
     }.get(profile, "")
 
 
+def _annotation_quote_fields(item) -> tuple[str, str, str]:
+    """Return timestamp, quote, significance for loose annotation quote shapes."""
+    if isinstance(item, dict):
+        ts = item.get("timestamp") or item.get("pageOrTimestamp") or ""
+        quote = item.get("quote") or item.get("text") or ""
+        sig = item.get("significance") or ""
+        return str(ts), str(quote), str(sig)
+    return "", str(item), ""
+
+
 def _render_documentary_annotation(result: dict, doc_id: str = "", config=None, profile: str = "documentary_analysis"):
     narrative = result.get("narrativeStructure") or result.get("narrative") or ""
     if narrative:
@@ -7910,9 +7920,9 @@ def _render_documentary_annotation(result: dict, doc_id: str = "", config=None, 
     if quotable:
         st.markdown("**Quotable passages**")
         for q in quotable:
-            ts = q.get("timestamp") or q.get("pageOrTimestamp") or ""
-            quote = q.get("quote") or q.get("text") or ""
-            sig = q.get("significance") or ""
+            ts, quote, sig = _annotation_quote_fields(q)
+            if not quote:
+                continue
             ts_str = f"`{ts}`  " if ts else ""
             st.markdown(f"{ts_str}> {quote}")
             if sig:
@@ -8079,11 +8089,9 @@ def _render_shame_article_annotation(path: Path, data: dict, result: dict):
         st.markdown("Themes: " + "  ·  ".join(f"`{theme}`" for theme in themes))
     quotable = result.get("quotablePassages") or []
     for q in quotable:
-        if not isinstance(q, dict):
+        ts, quote, sig = _annotation_quote_fields(q)
+        if not quote:
             continue
-        ts = q.get("timestamp") or q.get("pageOrTimestamp") or ""
-        quote = q.get("quote") or q.get("text") or ""
-        sig = q.get("significance") or ""
         st.markdown(f"{'`' + ts + '` ' if ts else ''}> {quote}")
         if sig:
             st.caption(sig)
