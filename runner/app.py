@@ -2925,6 +2925,16 @@ def _app_list_document_sets(corpus_dir: Path) -> list[dict]:
     return rows
 
 
+def _pending_second_opinion_summary(doc_dir: Path) -> dict:
+    pending = []
+    for path in sorted(doc_dir.glob("analysis_comparison_*.json"), reverse=True):
+        payload = _read_json_file(path, {})
+        if payload.get("outcome") == "pending":
+            pending.append(payload)
+    latest = pending[0].get("generated_at", "") if pending else ""
+    return {"count": len(pending), "latest_generated_at": latest}
+
+
 def _load_local_docs(corpus_dir: Path) -> list[dict]:
     docs = []
     config = _load_config_safe()
@@ -2956,6 +2966,7 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
         preprocess = _read_json_file(doc_dir / "preprocess.json", {})
         metadata = _read_json_file(doc_dir / "metadata.json", {})
         latest_annotation, latest_review = _latest_annotation_dates(doc_dir)
+        pending_second_opinions = _pending_second_opinion_summary(doc_dir)
         annotation_profiles = _annotation_profile_summary(doc_dir)
         reviewed_annotation_profiles = [
             profile for profile, status in annotation_profiles.items()
@@ -2993,6 +3004,8 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             "uploaded_at": _file_timestamp(doc_dir / "sanity_record.json"),
             "latest_annotation_at": latest_annotation,
             "latest_review_at": latest_review,
+            "pending_second_opinion_count": pending_second_opinions["count"],
+            "latest_pending_second_opinion_at": pending_second_opinions["latest_generated_at"],
             "batch_id":    intake.get("batch_id", "—"),
             "source":      intake.get("source", ""),
             "uploaded":    uploaded,
@@ -3022,10 +3035,13 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
     annotation_badge = f" · Annotations {annotation_count}"
     if annotation_count:
         annotation_badge += f" ({reviewed_count} reviewed)"
+    second_opinion_badge = ""
+    if doc.get("pending_second_opinion_count"):
+        second_opinion_badge = f" · Second opinions {doc['pending_second_opinion_count']} pending"
 
     header = (
         f"{conf_color} **{doc['doc_id']}** — {doc['type']} | {doc['format']} | "
-        f"{upload_badge}{embedding_badge}{enrich_badge}{media_badge}{annotation_badge}"
+        f"{upload_badge}{embedding_badge}{enrich_badge}{media_badge}{annotation_badge}{second_opinion_badge}"
     )
 
     with st.expander(header, expanded=False):
@@ -3034,6 +3050,12 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
             st.warning(
                 f"**High-harm content:** {', '.join(high_harm_labels)}. "
                 "Handle with care — follow your safeguarding protocol before reviewing or uploading."
+            )
+        if doc.get("pending_second_opinion_count"):
+            generated = str(doc.get("latest_pending_second_opinion_at") or "")[:19] or "unknown date"
+            st.warning(
+                f"{doc['pending_second_opinion_count']} second-opinion comparison(s) are still pending a researcher decision. "
+                f"Latest generated: {generated}. Resolve them in the second-opinion review panel before treating this analysis as settled."
             )
         col1, col2 = st.columns([2, 1])
         with col1:

@@ -435,3 +435,20 @@ def test_embedding_payload_status_flags_empty_vector():
     status = _embedding_payload_status({"model": "qwen3-embedding:8b", "dimension": 4096, "vector": []})
     assert status["ok"] is False
     assert status["detail"] == "empty vector"
+
+
+def test_pending_second_opinion_summary_counts_pending_only(tmp_path):
+    from runner.app import _pending_second_opinion_summary
+
+    _write_json(
+        tmp_path / "analysis_comparison_newer.json",
+        {"outcome": "pending", "generated_at": "2026-05-12T10:00:00+00:00"},
+    )
+    _write_json(
+        tmp_path / "analysis_comparison_older.json",
+        {"outcome": "adopted_alt", "generated_at": "2026-05-11T10:00:00+00:00"},
+    )
+
+    summary = _pending_second_opinion_summary(tmp_path)
+
+    assert summary == {"count": 1, "latest_generated_at": "2026-05-12T10:00:00+00:00"}
