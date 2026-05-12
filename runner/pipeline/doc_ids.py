@@ -11,9 +11,18 @@ def normalise_local_doc_id(doc_id: str) -> str:
     return doc_id.strip().removeprefix("doc-")
 
 
+def _validate_doc_id(doc_id: str) -> str:
+    raw = doc_id.strip()
+    if not raw:
+        raise ValueError("Invalid doc_id: empty value.")
+    if Path(raw).is_absolute() or ".." in Path(raw).parts or "/" in raw or "\\" in raw:
+        raise ValueError(f"Invalid doc_id (path traversal attempt): {raw!r}")
+    return raw
+
+
 def resolve_doc_dir(doc_id: str, config: Config) -> tuple[str, Path]:
     """Resolve a corpus folder from either bare id or Sanity-style doc-* id."""
-    raw = doc_id.strip()
+    raw = _validate_doc_id(doc_id)
     candidates = [raw, normalise_local_doc_id(raw)]
     seen: set[str] = set()
     for candidate in candidates:

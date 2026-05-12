@@ -54,6 +54,7 @@ class Config:
     truncation_tail_chars: int = 6000
     local_context_tokens: int = 262144
     local_output_tokens: int = 16384
+    claude_output_tokens: int = 8192
     media_collect_comments: bool = False
     media_max_comments: int = 50
     media_allow_whisper: bool = True
@@ -61,6 +62,16 @@ class Config:
     @property
     def sanity_api_base(self) -> str:
         return f"https://{self.sanity_project_id}.api.sanity.io/v2024-01-01/data/mutate/{self.sanity_dataset}"
+
+    def __repr__(self) -> str:
+        return (
+            "Config("
+            f"sanity_project_id={self.sanity_project_id!r}, "
+            f"sanity_dataset={self.sanity_dataset!r}, "
+            f"corpus_dir={self.corpus_dir!r}, "
+            f"exports_dir={self.exports_dir!r}"
+            ")"
+        )
 
 
 def load_config(llm: str | None = None, require_services: bool = True) -> Config:
@@ -134,6 +145,7 @@ def load_config(llm: str | None = None, require_services: bool = True) -> Config
         truncation_tail_chars=int(os.getenv("TRUNCATION_TAIL_CHARS", "6000")),
         local_context_tokens=int(os.getenv("LOCAL_CONTEXT_TOKENS", "262144")),
         local_output_tokens=int(os.getenv("LOCAL_OUTPUT_TOKENS", "16384")),
+        claude_output_tokens=int(os.getenv("CLAUDE_OUTPUT_TOKENS", "8192")),
         media_collect_comments=os.getenv("MEDIA_COLLECT_COMMENTS", "").lower() in {"1", "true", "yes"},
         media_max_comments=int(os.getenv("MEDIA_MAX_COMMENTS", "50")),
         media_allow_whisper=os.getenv("MEDIA_ALLOW_WHISPER", "true").lower() not in {"0", "false", "no"},

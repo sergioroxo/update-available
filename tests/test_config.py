@@ -33,3 +33,24 @@ def test_load_config_requires_service_credentials_by_default(monkeypatch, tmp_pa
 
     with pytest.raises(EnvironmentError, match="SANITY_PROJECT_ID"):
         load_config()
+
+
+def test_config_repr_redacts_credentials(monkeypatch, tmp_path):
+    monkeypatch.setenv("SANITY_PROJECT_ID", "project")
+    monkeypatch.setenv("SANITY_DATASET", "dataset")
+    monkeypatch.setenv("SANITY_WRITE_TOKEN", "sanity-secret-token")
+    monkeypatch.setenv("SUPABASE_URL", "https://supabase.example")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "supabase-secret-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "anthropic-secret-key")
+    monkeypatch.setenv("LITELM_API_KEY", "litelm-secret-key")
+    monkeypatch.setenv("CORPUS_DIR", str(tmp_path / "corpus"))
+    monkeypatch.setenv("EXPORTS_DIR", str(tmp_path / "exports"))
+
+    display = repr(load_config())
+
+    assert "project" in display
+    assert "dataset" in display
+    assert "sanity-secret-token" not in display
+    assert "supabase-secret-key" not in display
+    assert "anthropic-secret-key" not in display
+    assert "litelm-secret-key" not in display

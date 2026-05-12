@@ -111,7 +111,7 @@ def _analyze_with_claude(preprocess: PreprocessResult, config: Config) -> Analys
 
     response = client.messages.create(
         model=config.claude_model,
-        max_tokens=4096,
+        max_tokens=config.claude_output_tokens,
         system=[
             {
                 "type": "text",
@@ -458,7 +458,9 @@ def _merge_for_review(claude: AnalysisResult, local: AnalysisResult) -> Analysis
 
 
 def save(doc_id: str, result: AnalysisResult, config: Config) -> None:
+    from .upload import _stamp_analysis_dict
+
     doc_dir = config.corpus_dir / doc_id
     (doc_dir / "analysis.json").write_text(
-        result.model_dump_json(indent=2), encoding="utf-8"
+        json.dumps(_stamp_analysis_dict(result), indent=2), encoding="utf-8"
     )

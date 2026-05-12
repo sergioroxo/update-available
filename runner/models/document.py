@@ -7,7 +7,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, get_args
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
@@ -166,21 +166,8 @@ RhetoricalIntensity = Literal["hook", "pathologizing", "active-conduct"]
 
 FramingBalance = Literal["pro-dominant", "anti-dominant", "genuinely-mixed", "unclear"]
 
-_DOCUMENT_TYPES = {
-    "Pro-SOGICE", "Anti-SOGICE", "Neutral-Academic", "Legal-Instrument",
-    "Testimony", "Media-Coverage", "Internal-Org-Document", "Mixed",
-    "Training-Certification-Material", "Liturgical-Devotional-Material",
-    "Clinical-Therapeutic-Protocol", "Survivor-Network-Material",
-    "Regulatory-Policy-Document",
-}
-
-_DOCUMENT_FORMATS = {
-    "Website-Page", "Blog-Post", "Social-Media-Post", "Video", "Podcast",
-    "News-Article", "Academic-Paper", "NGO-Report", "Government-Report",
-    "Court-Judgment", "Legislative-Submission", "Parliamentary-Debate",
-    "Press-Release", "Book", "Book-Chapter", "Pamphlet", "Newsletter",
-    "Email", "Manual", "Course-Material", "Event-Program", "Other",
-}
+_DOCUMENT_TYPES = frozenset(get_args(DocumentType))
+_DOCUMENT_FORMATS = frozenset(get_args(DocumentFormat))
 
 
 class AnalysisResult(BaseModel):

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import json
+import pytest
 
+from runner.pipeline.doc_ids import resolve_doc_dir
 from runner.pipeline.upload import inspect_document_status
 
 
@@ -8,6 +10,11 @@ from runner.pipeline.upload import inspect_document_status
 class _Config:
     corpus_dir: object
     embedding_model: str = "embedding-model"
+
+
+def test_resolve_doc_dir_rejects_traversal(tmp_path):
+    with pytest.raises(ValueError, match="path traversal"):
+        resolve_doc_dir("../../etc/passwd", _Config(corpus_dir=tmp_path))
 
 
 def test_inspect_document_status_reports_partial_intake_next_action(tmp_path):

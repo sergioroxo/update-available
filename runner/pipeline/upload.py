@@ -596,7 +596,7 @@ def upload_saved(doc_id: str, config: Config) -> None:
         wayback_status=intake_data.get("wayback_status", ""),
         wayback_checked_at=intake_data.get("wayback_checked_at", ""),
         wayback_error=intake_data.get("wayback_error", ""),
-        ingested_at=intake_data.get("ingested_at", ""),
+        ingested_at=intake_data.get("ingested_at") or metadata.get("saved_at", ""),
         source_url=intake_data.get("source_url", ""),
         original_filename=intake_data.get("original_filename", ""),
         local_copy_path=intake_data.get("local_copy_path", ""),

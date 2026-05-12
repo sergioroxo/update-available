@@ -1,4 +1,6 @@
 import json
+import sys
+import types
 
 from runner.config import Config
 from runner.models.document import AnalysisResult, PreprocessResult
@@ -116,6 +118,32 @@ def test_build_system_prompt_splits_static_and_dynamic_for_claude(monkeypatch, t
     assert static_prompt == "STATIC PROMPT"
     assert "known term" in dynamic_prompt
     assert joined == static_prompt + dynamic_prompt
+
+
+def test_analyze_with_claude_uses_config_max_tokens(monkeypatch, tmp_path):
+    calls = {}
+
+    class _Messages:
+        def create(self, **kwargs):
+            calls.update(kwargs)
+            return types.SimpleNamespace(content=[types.SimpleNamespace(text=json.dumps(_minimal_payload()))])
+
+    class _Anthropic:
+        def __init__(self, api_key):
+            self.api_key = api_key
+            self.messages = _Messages()
+
+    monkeypatch.setitem(sys.modules, "anthropic", types.SimpleNamespace(Anthropic=_Anthropic))
+    monkeypatch.setattr(analyze, "_build_system_prompt_with_lexicon", lambda *_args, **_kwargs: ("STATIC", "DYNAMIC"))
+
+    config = _make_config(tmp_path)
+    config.claude_output_tokens = 12345
+    preprocess = PreprocessResult(doc_id="doc-1", tool_used="test", quality="high", text="Document text")
+
+    result = analyze._analyze_with_claude(preprocess, config)
+
+    assert result.type == "Anti-SOGICE"
+    assert calls["max_tokens"] == 12345
 
 
 def _make_config(tmp_path):

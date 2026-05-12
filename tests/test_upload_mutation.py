@@ -10,6 +10,7 @@ from runner.models.document import (
     IntakeResult,
     PreprocessResult,
 )
+from runner.pipeline import analyze
 from runner.pipeline.upload import _enforce_testimony_upload_gate, requires_consent_gate
 
 
@@ -72,6 +73,18 @@ def test_build_sanity_document_preserves_local_file_source_url_and_hash(tmp_path
     assert doc["provenance"]["originalUrl"] == "https://example.org/source.pdf"
     assert doc["provenance"]["htmlSnapshotHash"] == "b" * 64
     assert "testimonyReview" not in doc
+
+
+def test_analyze_save_stamps_versions(tmp_path):
+    config = type("Config", (), {"corpus_dir": tmp_path})()
+    doc_dir = tmp_path / "doc-1"
+    doc_dir.mkdir()
+
+    analyze.save("doc-1", _analysis(), config)
+
+    payload = json.loads((doc_dir / "analysis.json").read_text())
+    assert payload["prompt_version"]
+    assert payload["ontology_version"]
 
 
 def test_build_sanity_document_uses_stable_ingest_and_analysis_dates(tmp_path):
