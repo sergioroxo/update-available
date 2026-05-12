@@ -21,6 +21,7 @@ from pathlib import Path
 
 from ..config import Config
 from ..models.document import AnalysisResult, PreprocessResult
+from .sanity_reads import fetch_active_lexicon_terms
 
 PROMPT_VERSION = "ingestion-v3.3"
 
@@ -337,20 +338,8 @@ def _build_user_message(preprocess: PreprocessResult) -> str:
 
 
 def _fetch_active_lexicon_terms(config: Config) -> list[dict]:
-    """GROQ query for draft + validated lexicon terms via Sanity Content API."""
-    import httpx
-    query = (
-        '*[_type == "lexiconEntry" && status in ["draft","validated"]]'
-        '{ term, proposedCluster, function, multilingualVariants }'
-    )
-    url = (
-        f"https://{config.sanity_project_id}.api.sanity.io"
-        f"/v2024-01-01/data/query/{config.sanity_dataset}"
-    )
-    headers = {"Authorization": f"Bearer {config.sanity_write_token}"}
-    r = httpx.get(url, params={"query": query}, headers=headers, timeout=10)
-    r.raise_for_status()
-    return r.json().get("result", [])
+    """Backwards-compatible wrapper for the shared cached read helper."""
+    return fetch_active_lexicon_terms(config)
 
 
 def _format_lexicon_prompt_line(term: dict) -> str:

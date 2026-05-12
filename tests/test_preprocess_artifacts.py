@@ -269,7 +269,8 @@ def test_transcript_comparison_reports_similarity_and_deltas():
 
 
 def test_load_preprocess_rehydrates_text_from_extracted_txt(tmp_path):
-    (tmp_path / "preprocess.json").write_text(
+    preprocess_path = tmp_path / "preprocess.json"
+    preprocess_path.write_text(
         json.dumps(
             {
                 "doc_id": "doc-1",
@@ -283,11 +284,13 @@ def test_load_preprocess_rehydrates_text_from_extracted_txt(tmp_path):
         encoding="utf-8",
     )
     (tmp_path / "extracted.txt").write_text("full extracted text", encoding="utf-8")
+    before = preprocess_path.read_text(encoding="utf-8")
 
-    result = _load_preprocess(tmp_path / "preprocess.json")
+    result = _load_preprocess(preprocess_path)
 
     assert result.text == "full extracted text"
     assert result.tool_used == "trafilatura"
+    assert preprocess_path.read_text(encoding="utf-8") == before
 
 
 def test_merge_intake_metadata_preserves_unknown_existing_fields(tmp_path):

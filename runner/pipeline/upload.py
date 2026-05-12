@@ -866,7 +866,6 @@ def _load_preprocess(path: Path) -> PreprocessResult:
         doc_dir=doc_dir,
         base_url=intake.get("source") or intake.get("source_url", ""),
     )
-    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
     if not data.get("text"):
         extracted = doc_dir / "extracted.txt"
         data["text"] = extracted.read_text(encoding="utf-8") if extracted.exists() else ""

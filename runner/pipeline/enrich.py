@@ -26,10 +26,12 @@ try:
     from runner.config import Config
     from runner.models.document import AnalysisResult, PreprocessResult
     from runner.models.enrichment import EnrichmentResult
+    from runner.pipeline.sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 except ImportError:
     from ..config import Config
     from ..models.document import AnalysisResult, PreprocessResult
     from ..models.enrichment import EnrichmentResult
+    from .sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 
 PROMPT_VERSION = "enrichment-v1.1"
 
@@ -616,23 +618,7 @@ def _call_ollama(
 # ---------------------------------------------------------------------------
 
 def _fetch_lexicon_entries(config: Config) -> list[dict]:
-    import httpx
-    query = (
-        '*[_type == "lexiconEntry" && status in ["draft","validated"]]'
-        '{ term, proposedCluster, function, multilingualVariants }'
-    )
-    url = (
-        f"https://{config.sanity_project_id}.api.sanity.io"
-        f"/v2024-01-01/data/query/{config.sanity_dataset}"
-    )
-    r = httpx.get(
-        url,
-        params={"query": query},
-        headers={"Authorization": f"Bearer {config.sanity_write_token}"},
-        timeout=10,
-    )
-    r.raise_for_status()
-    return r.json().get("result", [])
+    return fetch_active_lexicon_terms(config)
 
 
 def _format_lexicon_prompt_line(term: dict) -> str:
@@ -659,7 +645,7 @@ def _fetch_entity_registry(config: Config) -> list[dict]:
     r = httpx.get(
         url,
         params={"query": query},
-        headers={"Authorization": f"Bearer {config.sanity_write_token}"},
+        headers=sanity_read_headers(config),
         timeout=10,
     )
     r.raise_for_status()

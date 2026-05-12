@@ -54,3 +54,15 @@ def test_config_repr_redacts_credentials(monkeypatch, tmp_path):
     assert "supabase-secret-key" not in display
     assert "anthropic-secret-key" not in display
     assert "litelm-secret-key" not in display
+
+
+def test_load_config_reads_optional_sanity_read_token(monkeypatch, tmp_path):
+    for key in SERVICE_ENV:
+        monkeypatch.setenv(key, f"value-{key.lower()}")
+    monkeypatch.setenv("SANITY_READ_TOKEN", "sanity-read-only-token")
+    monkeypatch.setenv("CORPUS_DIR", str(tmp_path / "corpus"))
+    monkeypatch.setenv("EXPORTS_DIR", str(tmp_path / "exports"))
+
+    config = load_config()
+
+    assert config.sanity_read_token == "sanity-read-only-token"

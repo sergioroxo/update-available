@@ -36,6 +36,7 @@ class Config:
     litelm_embedding_model: str        # used when --llm litelm*
     litelm_enrichment_model: str       # Stage 3c lexicon/enrichment model
     litelm_enrichment_model_alt: str   # optional second-opinion enrichment model
+    sanity_read_token: str = ""        # optional read-only Sanity token for GROQ queries
     litelm_ollama_base_url: str = ""        # optional direct Ollama URL for model unloads
     litelm_ollama_embedding_model: str = "qwen3-embedding:8b" # actual Ollama model behind research-embedding
     litelm_ollama_analysis_model: str = "qwen3.6:35b-a3b"
@@ -114,6 +115,7 @@ def load_config(llm: str | None = None, require_services: bool = True) -> Config
         sanity_project_id=os.getenv("SANITY_PROJECT_ID", ""),
         sanity_dataset=os.getenv("SANITY_DATASET", ""),
         sanity_write_token=os.getenv("SANITY_WRITE_TOKEN", ""),
+        sanity_read_token=os.getenv("SANITY_READ_TOKEN", ""),
         supabase_url=os.getenv("SUPABASE_URL", ""),
         supabase_service_key=os.getenv("SUPABASE_SERVICE_KEY", ""),
         corpus_dir=corpus_dir,
