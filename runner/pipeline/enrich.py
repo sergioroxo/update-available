@@ -26,11 +26,13 @@ try:
     from runner.config import Config
     from runner.models.document import AnalysisResult, PreprocessResult
     from runner.models.enrichment import EnrichmentResult
+    from runner.pipeline.http_retry import call_with_http_retries
     from runner.pipeline.sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 except ImportError:
     from ..config import Config
     from ..models.document import AnalysisResult, PreprocessResult
     from ..models.enrichment import EnrichmentResult
+    from .http_retry import call_with_http_retries
     from .sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 
 PROMPT_VERSION = "enrichment-v1.1"
@@ -545,7 +547,7 @@ def _summarise_analysis(analysis: AnalysisResult) -> str:
 
 def _call_litelm(system_prompt: str, user_message: str, config: Config, model: str) -> str:
     import httpx
-    response = httpx.post(
+    response = call_with_http_retries(lambda: httpx.post(
         f"{config.litelm_base_url}/v1/chat/completions",
         headers={
             "Authorization": f"Bearer {config.litelm_api_key}",
@@ -561,7 +563,7 @@ def _call_litelm(system_prompt: str, user_message: str, config: Config, model: s
             "max_tokens": config.local_output_tokens,
         },
         timeout=600,
-    )
+    ))
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"]
 
@@ -582,7 +584,7 @@ def _call_ollama(
     system_prompt: str, user_message: str, config: Config, model: str
 ) -> str:
     import httpx
-    response = httpx.post(
+    response = call_with_http_retries(lambda: httpx.post(
         f"{config.ollama_base_url}/api/chat",
         json={
             "model": model,
@@ -601,7 +603,7 @@ def _call_ollama(
             },
         },
         timeout=600,
-    )
+    ))
     response.raise_for_status()
     msg = response.json()["message"]
     raw = msg.get("content", "").strip() or msg.get("thinking", "")

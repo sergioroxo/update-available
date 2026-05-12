@@ -21,6 +21,7 @@ from pathlib import Path
 
 from ..config import Config
 from ..models.document import AnalysisResult, PreprocessResult
+from .http_retry import call_with_http_retries
 from .sanity_reads import fetch_active_lexicon_terms
 
 PROMPT_VERSION = "ingestion-v3.3"
@@ -132,7 +133,7 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
     system_prompt = _build_system_prompt_with_lexicon(config)
     user_message  = _build_user_message(preprocess)
 
-    response = httpx.post(
+    response = call_with_http_retries(lambda: httpx.post(
         f"{config.ollama_base_url}/api/chat",
         json={
             "model": model,
@@ -151,7 +152,7 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
             },
         },
         timeout=300,
-    )
+    ))
     response.raise_for_status()
     msg = response.json()["message"]
     # Qwen3 thinking models: content holds the response, thinking holds the reasoning.
@@ -170,7 +171,7 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
     system_prompt = _build_system_prompt_with_lexicon(config)
     user_message  = _build_user_message(preprocess)
 
-    response = httpx.post(
+    response = call_with_http_retries(lambda: httpx.post(
         f"{config.litelm_base_url}/v1/chat/completions",
         headers={
             "Authorization": f"Bearer {config.litelm_api_key}",
@@ -186,7 +187,7 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
             "max_tokens": config.local_output_tokens,
         },
         timeout=600,
-    )
+    ))
     response.raise_for_status()
     raw_json = response.json()["choices"][0]["message"]["content"]
     return _validate_response(raw_json)

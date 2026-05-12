@@ -25,6 +25,7 @@ from ..models.research_annotation import (
 )
 from .doc_ids import resolve_doc_dir
 from .transcripts import chunks_to_text
+from .http_retry import call_with_http_retries
 
 PROMPT_DIR = Path(__file__).parents[1] / "prompts" / "research_profiles"
 
@@ -547,7 +548,7 @@ def _call_annotation_model(
 def _call_litelm(system_prompt: str, user_message: str, config: Config, model: str) -> AnnotationModelResponse:
     import httpx
 
-    response = httpx.post(
+    response = call_with_http_retries(lambda: httpx.post(
         f"{config.litelm_base_url}/v1/chat/completions",
         headers={
             "Authorization": f"Bearer {config.litelm_api_key}",
@@ -563,7 +564,7 @@ def _call_litelm(system_prompt: str, user_message: str, config: Config, model: s
             "max_tokens": config.local_output_tokens,
         },
         timeout=600,
-    )
+    ))
     response.raise_for_status()
     data = response.json()
     return AnnotationModelResponse(
@@ -589,7 +590,7 @@ def _call_claude(system_prompt: str, user_message: str, config: Config) -> str:
 def _call_ollama(system_prompt: str, user_message: str, config: Config, model: str) -> str:
     import httpx
 
-    response = httpx.post(
+    response = call_with_http_retries(lambda: httpx.post(
         f"{config.ollama_base_url}/api/chat",
         json={
             "model": model,
@@ -608,7 +609,7 @@ def _call_ollama(system_prompt: str, user_message: str, config: Config, model: s
             },
         },
         timeout=600,
-    )
+    ))
     response.raise_for_status()
     msg = response.json()["message"]
     raw = msg.get("content", "").strip() or msg.get("thinking", "")

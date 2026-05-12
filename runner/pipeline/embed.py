@@ -17,6 +17,7 @@ import json
 import httpx
 
 from ..config import Config
+from .http_retry import call_with_http_retries
 
 _TIMEOUT = 120  # seconds — embedding a long document can be slow on first run
 
@@ -24,11 +25,11 @@ _TIMEOUT = 120  # seconds — embedding a long document can be slow on first run
 def _call(ollama_base_url: str, model: str, text: str) -> list[float]:
     """Call Ollama embed API. Tries the current endpoint first, falls back to legacy."""
     try:
-        response = httpx.post(
+        response = call_with_http_retries(lambda: httpx.post(
             f"{ollama_base_url}/api/embed",
             json={"model": model, "input": text, "keep_alive": 0},
             timeout=_TIMEOUT,
-        )
+        ))
         response.raise_for_status()
         data = response.json()
         # /api/embed returns {"embeddings": [[...floats...]]}
@@ -37,11 +38,11 @@ def _call(ollama_base_url: str, model: str, text: str) -> list[float]:
         if exc.response.status_code != 404:
             raise
     # Legacy endpoint fallback (Ollama < 0.4)
-    response = httpx.post(
+    response = call_with_http_retries(lambda: httpx.post(
         f"{ollama_base_url}/api/embeddings",
         json={"model": model, "prompt": text, "keep_alive": 0},
         timeout=_TIMEOUT,
-    )
+    ))
     response.raise_for_status()
     return response.json()["embedding"]
 
@@ -53,7 +54,7 @@ def run(text: str, config: Config) -> list[float]:
 
 def run_litelm(text: str, config: Config) -> list[float]:
     """Generate embedding via LiteLLM proxy (OpenAI-compatible /v1/embeddings)."""
-    response = httpx.post(
+    response = call_with_http_retries(lambda: httpx.post(
         f"{config.litelm_base_url}/v1/embeddings",
         headers={
             "Authorization": f"Bearer {config.litelm_api_key}",
@@ -61,7 +62,7 @@ def run_litelm(text: str, config: Config) -> list[float]:
         },
         json={"model": config.litelm_embedding_model, "input": text},
         timeout=_TIMEOUT,
-    )
+    ))
     response.raise_for_status()
     return response.json()["data"][0]["embedding"]
 
