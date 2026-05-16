@@ -920,6 +920,70 @@ _HIGH_HARM_INDICATORS = {"Harm: Suicidality", "Harm: Physical"}
 def _has_high_harm(harm_list: list) -> bool:
     return bool(_HIGH_HARM_INDICATORS.intersection(harm_list))
 
+
+# ── ISO 639-1 language options for controlled selectbox (U1) ─────────────────
+# Displayed as "en — English" but selectbox returns the bare ISO code.
+# Languages are ordered by expected corpus frequency, then alphabetically.
+_ISO_LANGUAGES: dict[str, str] = {
+    "en": "English",
+    "no": "Norwegian",
+    "nb": "Norwegian Bokmål",
+    "nn": "Norwegian Nynorsk",
+    "de": "German",
+    "fr": "French",
+    "es": "Spanish",
+    "pt": "Portuguese",
+    "it": "Italian",
+    "nl": "Dutch",
+    "pl": "Polish",
+    "ro": "Romanian",
+    "cs": "Czech",
+    "hu": "Hungarian",
+    "sv": "Swedish",
+    "da": "Danish",
+    "fi": "Finnish",
+    "ca": "Catalan",
+    "sk": "Slovak",
+    "hr": "Croatian",
+    "lt": "Lithuanian",
+    "lv": "Latvian",
+    "et": "Estonian",
+    "ru": "Russian",
+    "uk": "Ukrainian",
+    "el": "Greek",
+    "tr": "Turkish",
+}
+_ISO_LANGUAGE_CODES = list(_ISO_LANGUAGES.keys())
+_ISO_LANGUAGE_UNKNOWN = "(other — type below)"
+
+
+def _iso_lang_display(code: str) -> str:
+    """Format an ISO code for display: 'en — English'.  Unknown codes returned as-is."""
+    name = _ISO_LANGUAGES.get(code)
+    return f"{code} — {name}" if name else code
+
+
+# ── Panel session-state reset helper (U3) ────────────────────────────────────
+
+def _panel_reset_on_doc_change(panel: str, doc_id: str, keys: list[str]) -> bool:
+    """Clear panel-local session-state keys when the active document changes.
+
+    Returns True if the document changed this render cycle (callers can use
+    this to skip stale in-memory state and re-read from disk).
+
+    Usage::
+        changed = _panel_reset_on_doc_change("mr", doc_id, ["mr_srt_path", ...])
+    """
+    tracker_key = f"_panel_{panel}_last_doc"
+    last_doc = st.session_state.get(tracker_key)
+    if last_doc == doc_id:
+        return False
+    # Document switched — clear all panel-local keys
+    for key in keys:
+        st.session_state.pop(key, None)
+    st.session_state[tracker_key] = doc_id
+    return True
+
 _LEXICON_CLUSTERS = [
     "Unknown", "SSA-Rhetoric", "Pastoral-Coercion", "Pseudo-Science",
     "Policy-Resistance", "Anti-Trans/ROGD", "Anti-Gender",
@@ -1038,15 +1102,35 @@ def _render_metadata_reconciliation(doc_id: str, doc_dir: Path, config):
             help="Saved to preprocess.json and media_metadata.json. "
                  "Controls what appears in Sanity content.title on next upload.",
         )
-        confirmed_lang = st.text_input(
-            "Canonical language (ISO code, e.g. en, pt, no, de)",
-            value=best_lang,
-            placeholder="en",
+        # U1: controlled ISO language selectbox — shows full name, stores bare code.
+        # If the existing value is not in the known list, offer it as a custom option.
+        _lang_options = _ISO_LANGUAGE_CODES + [_ISO_LANGUAGE_UNKNOWN]
+        _lang_idx = (
+            _lang_options.index(best_lang)
+            if best_lang and best_lang in _lang_options
+            else len(_lang_options) - 1  # "other" sentinel
+        )
+        _lang_selected = st.selectbox(
+            "Canonical language",
+            _lang_options,
+            index=_lang_idx,
+            format_func=lambda c: _iso_lang_display(c) if c != _ISO_LANGUAGE_UNKNOWN else c,
             help=(
-                "Use an ISO language code such as en, pt, no, nb, de, es, or pt-BR. "
-                "Saved to preprocess.json. Controls Supabase language column and Sanity content.languageDetected."
+                "Select from the list. For regional variants (e.g. pt-BR) or rare "
+                "languages, choose '(other — type below)' and enter the BCP-47 code."
             ),
         )
+        _lang_custom = ""
+        if _lang_selected == _ISO_LANGUAGE_UNKNOWN:
+            _lang_custom = st.text_input(
+                "Custom language code (BCP-47, e.g. pt-BR, nb, sr-Latn)",
+                value=best_lang if best_lang and best_lang not in _ISO_LANGUAGE_CODES else "",
+                placeholder="pt-BR",
+                help="Enter a valid BCP-47 or ISO 639-1 code.",
+            )
+        # Effective code: custom input overrides selectbox when "other" is chosen
+        confirmed_lang = (_lang_custom.strip() if _lang_selected == _ISO_LANGUAGE_UNKNOWN
+                          else _lang_selected)
 
         st.markdown("**Classification fields**")
         st.caption(
@@ -1613,6 +1697,14 @@ def page_ingest_workbench():
                         f"You are currently set to `{llm}`. "
                         "Update the model selector above if you want to follow this recommendation."
                     )
+                # U6: persist triage result — save to doc folder if we have a doc_id,
+                # otherwise stash in session state for intake to pick up later.
+                _resume_doc = resume_id.strip() if resume_id.strip() else ""
+                if _resume_doc:
+                    _triage_mod.save_triage_result(_resume_doc, triage_result, config)
+                    st.caption(f"Triage result saved to `{_resume_doc}/triage_result.json`.")
+                else:
+                    st.session_state["_pending_triage_result"] = triage_result
             except Exception as _triage_exc:
                 st.warning(f"Triage failed (non-blocking): {_triage_exc}")
 
@@ -1784,6 +1876,19 @@ def _workbench_resume(config, doc_id: str, stage: str) -> None:
     if analysis_result:  loaded.append("analysis")
     st.success(f"Loaded `{doc_id}` — {', '.join(loaded)} ready. Scroll down to continue.")
 
+    # U6: surface any previously saved triage result for this doc
+    try:
+        from runner.pipeline.triage import load_triage_result
+        _saved_triage = load_triage_result(doc_id, config)
+        if _saved_triage:
+            st.info(
+                f"**Previous triage result:** recommended `{_saved_triage.recommended_llm}` "
+                f"· type hint: {_saved_triage.doc_type_hint} · complexity: {_saved_triage.complexity}"
+                + (f" · reason: {_saved_triage.routing_reason}" if _saved_triage.routing_reason else "")
+            )
+    except Exception:
+        pass  # non-blocking
+
 
 def _blank_ingest_state() -> dict:
     return {
@@ -1863,6 +1968,14 @@ def _workbench_intake(config, source: str, tier: str, batch: str, source_url: st
         "enrichment": None,
         "uploaded": False,
     })
+    # U6: flush any triage result that was run before intake assigned a doc_id
+    _pending_triage = st.session_state.pop("_pending_triage_result", None)
+    if _pending_triage is not None:
+        try:
+            from runner.pipeline import triage as _triage_mod
+            _triage_mod.save_triage_result(result.doc_id, _pending_triage, config)
+        except Exception:
+            pass  # non-blocking — triage persistence should never break intake
     st.success(f"Created doc_id {result.doc_id}")
 
 
@@ -2644,16 +2757,34 @@ def _render_second_opinion_comparison(config, doc_id: str, comparison: dict) -> 
                 except Exception as exc:
                     st.error(str(exc))
         with d2:
-            if st.button("Adopt second opinion", key=f"adopt_alt_{filename}"):
-                try:
-                    second_opinion.decide_second_opinion(
-                        doc_id, filename, "adopted_alt", config, researcher_note=note
-                    )
-                    _reload_workbench_analysis_from_disk(config, doc_id)
-                    st.success("Second opinion adopted; original was archived.")
+            # U4: two-step confirm before adopting (archives current analysis.json)
+            _adopt_confirm_key = f"_confirm_adopt_{filename}"
+            if not st.session_state.get(_adopt_confirm_key):
+                if st.button("Adopt second opinion", key=f"adopt_alt_{filename}",
+                             help="Archives the current analysis.json and promotes the alt. Requires confirmation."):
+                    st.session_state[_adopt_confirm_key] = True
                     st.rerun()
-                except Exception as exc:
-                    st.error(str(exc))
+            else:
+                st.warning(
+                    "⚠ This will **archive** `analysis.json` and promote the second-opinion result. "
+                    "The archive copy is kept in the doc folder."
+                )
+                c1, c2 = st.columns(2)
+                if c1.button("✓ Confirm adopt", key=f"adopt_alt_confirm_{filename}", type="primary"):
+                    try:
+                        second_opinion.decide_second_opinion(
+                            doc_id, filename, "adopted_alt", config, researcher_note=note
+                        )
+                        _reload_workbench_analysis_from_disk(config, doc_id)
+                        st.session_state.pop(_adopt_confirm_key, None)
+                        st.success("Second opinion adopted; original was archived.")
+                        st.rerun()
+                    except Exception as exc:
+                        st.session_state.pop(_adopt_confirm_key, None)
+                        st.error(str(exc))
+                if c2.button("✗ Cancel", key=f"adopt_alt_cancel_{filename}"):
+                    st.session_state.pop(_adopt_confirm_key, None)
+                    st.rerun()
 
         alt_path = config.corpus_dir / doc_id / str(comparison.get("alt_file", ""))
         if alt_path.exists():
@@ -2664,22 +2795,43 @@ def _render_second_opinion_comparison(config, doc_id: str, comparison: dict) -> 
                     height=360,
                     key=f"edited_second_opinion_{filename}",
                 )
-                if st.button("Validate and adopt edited version", key=f"adopt_edited_{filename}"):
-                    try:
-                        AnalysisResult.model_validate_json(edited)
-                        second_opinion.decide_second_opinion(
-                            doc_id,
-                            filename,
-                            "edited",
-                            config,
-                            researcher_note=note,
-                            edited_json=edited,
-                        )
-                        _reload_workbench_analysis_from_disk(config, doc_id)
-                        st.success("Edited second opinion adopted; original was archived.")
+                # U4: two-step confirm for adopt-edited (also archives current analysis.json)
+                _edit_confirm_key = f"_confirm_adopt_edited_{filename}"
+                if not st.session_state.get(_edit_confirm_key):
+                    if st.button("Validate and adopt edited version",
+                                 key=f"adopt_edited_{filename}",
+                                 help="Validates JSON, archives current analysis.json, promotes your edited version."):
+                        try:
+                            AnalysisResult.model_validate_json(edited)
+                            st.session_state[_edit_confirm_key] = True
+                            st.rerun()
+                        except Exception as exc:
+                            st.error(f"JSON validation failed: {exc}")
+                else:
+                    st.warning(
+                        "⚠ This will **archive** `analysis.json` and promote your edited version."
+                    )
+                    ec1, ec2 = st.columns(2)
+                    if ec1.button("✓ Confirm adopt edited", key=f"adopt_edited_confirm_{filename}", type="primary"):
+                        try:
+                            second_opinion.decide_second_opinion(
+                                doc_id,
+                                filename,
+                                "edited",
+                                config,
+                                researcher_note=note,
+                                edited_json=edited,
+                            )
+                            _reload_workbench_analysis_from_disk(config, doc_id)
+                            st.session_state.pop(_edit_confirm_key, None)
+                            st.success("Edited second opinion adopted; original was archived.")
+                            st.rerun()
+                        except Exception as exc:
+                            st.session_state.pop(_edit_confirm_key, None)
+                            st.error(str(exc))
+                    if ec2.button("✗ Cancel", key=f"adopt_edited_cancel_{filename}"):
+                        st.session_state.pop(_edit_confirm_key, None)
                         st.rerun()
-                    except Exception as exc:
-                        st.error(str(exc))
 
 
 def _reload_workbench_analysis_from_disk(config, doc_id: str) -> None:
@@ -5820,6 +5972,9 @@ def page_testimony_review():
     st.dataframe(rows, width="stretch", hide_index=True)
 
     selected = st.selectbox("Review document", [row["doc_id"] for row in rows])
+    # U3: clear any pending consent-form state when the selected document changes
+    _panel_reset_on_doc_change("testimony", selected, ["_testimony_consent_pending"])
+
     doc_dir = config.corpus_dir / selected
     analysis = _load_json_if_exists(doc_dir / "analysis.json") or {}
     existing = _load_json_if_exists(_testimony_review_path(config, selected)) or {}
@@ -6347,6 +6502,15 @@ def page_triage_tool():
             height=200,
             placeholder="Paste the beginning of the document here...",
         )
+        # U6: optional doc_id association — saves result to doc folder for reload
+        associate_doc_id = st.text_input(
+            "Associate with existing doc_id (optional)",
+            placeholder="e.g. 3281c668",
+            help=(
+                "If provided, the triage result is saved to that doc's folder as "
+                "`triage_result.json` so it can be reloaded in the Ingest Workbench."
+            ),
+        )
 
     with col2:
         st.markdown("### What happens")
@@ -6406,6 +6570,16 @@ def page_triage_tool():
 
         if result.languages:
             st.write(f"**Languages detected:** {', '.join(result.languages)}")
+
+        # U6: persist triage result to doc folder if doc_id provided
+        _assoc = associate_doc_id.strip()
+        if _assoc:
+            try:
+                from runner.pipeline.triage import save_triage_result
+                saved_path = save_triage_result(_assoc, result, config)
+                st.caption(f"Result saved to `{saved_path.relative_to(config.corpus_dir)}`.")
+            except Exception as _save_exc:
+                st.caption(f"Could not save to doc folder: {_save_exc}")
 
         st.divider()
         st.markdown("**Suggested CLI command:**")
@@ -7032,6 +7206,13 @@ def page_media_review():
     doc_id = st.selectbox("Document", media_docs, key="mr_doc_id")
     if not doc_id:
         return
+
+    # U3: clear panel-local state when the selected document changes
+    _panel_reset_on_doc_change(
+        "mr", doc_id,
+        ["mr_srt_path", "mr_srt_lang", "mr_srt_primary",
+         "mr_comments_flagged", "mr_set_primary_confirm"],
+    )
 
     doc_dir = corpus_dir / doc_id
     _mr_overview_section(doc_id, doc_dir, config)

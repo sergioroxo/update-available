@@ -10,9 +10,11 @@ Model routing:
   Both fail             → return safe default (litelm / moderate)
 """
 from __future__ import annotations
+from datetime import datetime, timezone
 import json
 import re
 from pathlib import Path
+from typing import Optional
 
 try:
     from runner.config import Config
@@ -156,6 +158,35 @@ def _call_ollama(user_msg: str, config: Config) -> str:
     r.raise_for_status()
     msg = r.json()["message"]
     return msg.get("content", "").strip() or msg.get("thinking", "")
+
+
+def save_triage_result(doc_id: str, result: "TriageResult", config: "Config") -> Path:
+    """Persist a TriageResult to {corpus_dir}/{doc_id}/triage_result.json.
+
+    Creates the doc folder if it does not yet exist (e.g. new-doc triage before
+    intake runs). The caller is responsible for ensuring doc_id is valid.
+    """
+    doc_dir = config.corpus_dir / doc_id
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    path = doc_dir / "triage_result.json"
+    data = result.model_dump(mode="json")
+    data["saved_at"] = datetime.now(timezone.utc).isoformat()
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return path
+
+
+def load_triage_result(doc_id: str, config: "Config") -> "Optional[TriageResult]":
+    """Load a previously saved TriageResult from the doc folder.
+
+    Returns None if no file exists or the file cannot be parsed.
+    """
+    path = config.corpus_dir / doc_id / "triage_result.json"
+    if not path.exists():
+        return None
+    try:
+        return TriageResult.model_validate_json(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
 
 
 def _parse(raw: str) -> TriageResult:
