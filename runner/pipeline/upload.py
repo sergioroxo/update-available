@@ -584,6 +584,19 @@ def upload_saved(doc_id: str, config: Config) -> None:
     if metadata_path.exists():
         metadata = json.loads(metadata_path.read_text())
 
+    # A5: prefer embedding.json model field (reflects re-embedding) over metadata.json
+    _embedding_json_data: dict = {}
+    if embedding_path.exists():
+        try:
+            _embedding_json_data = json.loads(embedding_path.read_text())
+        except Exception:
+            pass
+    _resolved_embedding_model: str = (
+        _embedding_json_data.get("model")
+        or metadata.get("embedding_model")
+        or config.embedding_model
+    )
+
     intake = IntakeResult(
         doc_id=doc_id,
         source=intake_data.get("source", ""),
@@ -625,7 +638,7 @@ def upload_saved(doc_id: str, config: Config) -> None:
         preprocess=preprocess,
         analysis=analysis,
         embedding=embedding,
-        embedding_model=metadata.get("embedding_model", config.embedding_model),
+        embedding_model=_resolved_embedding_model,
         llm_used=metadata.get("llm_used", "unknown"),
         local_dir=doc_dir,
     )
@@ -640,7 +653,7 @@ def upload_saved(doc_id: str, config: Config) -> None:
             config,
             tier=str(intake.tier),
             language=intake.language or preprocess.language_detected or "",
-            embedding_model=metadata.get("embedding_model", config.embedding_model),
+            embedding_model=_resolved_embedding_model,
         )
 
     (doc_dir / "sanity_record.json").write_text(
@@ -660,54 +673,131 @@ def export_batch(batch_id: str, config: Config) -> None:
     export_dir = config.exports_dir / batch_id
     export_dir.mkdir(parents=True, exist_ok=True)
 
-    docs = []
+    out_path = export_dir / f"{batch_id}.jsonl"
+    count = 0
+    with out_path.open("w", encoding="utf-8") as f:
+        for doc_dir in sorted(config.corpus_dir.iterdir()):
+            if not doc_dir.is_dir():
+                continue
+            intake_path = doc_dir / "intake.json"
+            if not intake_path.exists():
+                continue
+            intake_data = _read_json(intake_path)
+            if intake_data.get("batch_id") != batch_id:
+                continue
+            analysis_path = doc_dir / "analysis.json"
+            if not analysis_path.exists():
+                continue
+            preprocess_meta = _read_json(doc_dir / "preprocess.json")
+            sanity_record   = _read_json(doc_dir / "sanity_record.json")
+            metadata        = _read_json(doc_dir / "metadata.json")
+
+            doc = json.loads(analysis_path.read_text())
+            doc["_export"] = {
+                "doc_id":           doc_dir.name,
+                "batch_id":         batch_id,
+                "source":           intake_data.get("source", ""),
+                "source_url":       intake_data.get("source_url", ""),
+                "archive_url":      intake_data.get("archive_url", ""),
+                "source_type":      intake_data.get("source_type", ""),
+                "tier":             intake_data.get("tier", ""),
+                "ingested_at":      intake_data.get("ingested_at", ""),
+                "title":            preprocess_meta.get("title", ""),
+                "author":           preprocess_meta.get("author", ""),
+                "date_published":   preprocess_meta.get("date_published", ""),
+                "char_count":       preprocess_meta.get("char_count", 0),
+                "tool_used":        preprocess_meta.get("tool_used", ""),
+                "llm_used":         metadata.get("llm_used", ""),
+                "sanity_id":        sanity_record.get("sanity_id", ""),
+                "uploaded":         bool(sanity_record),
+            }
+            f.write(json.dumps(doc, ensure_ascii=False) + "\n")
+            count += 1
+
+    if count == 0:
+        console.print(f"[yellow]No documents found for batch: {batch_id}[/yellow]")
+        return
+
+    console.print(f"[green]Exported {count} documents → {out_path}[/green]")
+
+
+def migrate_corpus_files(config: Config, dry_run: bool = True) -> dict:
+    """Backfill missing provenance fields across the corpus.
+
+    Walks every subdirectory of config.corpus_dir that contains an intake.json
+    and backfills:
+      - intake.json: ingested_at (from metadata.json saved_at) if missing
+      - analysis.json: prompt_version and ontology_version if missing
+
+    Returns {"docs_scanned": N, "docs_patched": M, "fields_written": K}
+    """
+    docs_scanned = 0
+    docs_patched = 0
+    fields_written = 0
+
     for doc_dir in sorted(config.corpus_dir.iterdir()):
         if not doc_dir.is_dir():
             continue
         intake_path = doc_dir / "intake.json"
         if not intake_path.exists():
             continue
+
+        docs_scanned += 1
+        doc_patched = False
+
+        # a. Backfill intake.json ingested_at from metadata.json saved_at
         intake_data = _read_json(intake_path)
-        if intake_data.get("batch_id") != batch_id:
-            continue
+        if not intake_data.get("ingested_at"):
+            metadata = _read_json(doc_dir / "metadata.json")
+            saved_at = metadata.get("saved_at")
+            if saved_at:
+                if not dry_run:
+                    intake_data["ingested_at"] = saved_at
+                    intake_path.write_text(
+                        json.dumps(intake_data, indent=2), encoding="utf-8"
+                    )
+                console.print(
+                    f"{'[DRY RUN] ' if dry_run else ''}"
+                    f"{doc_dir.name}: intake.json ← ingested_at={saved_at}"
+                )
+                fields_written += 1
+                doc_patched = True
+
+        # b. Backfill analysis.json prompt_version and ontology_version
         analysis_path = doc_dir / "analysis.json"
-        if not analysis_path.exists():
-            continue
-        preprocess_meta = _read_json(doc_dir / "preprocess.json")
-        sanity_record   = _read_json(doc_dir / "sanity_record.json")
-        metadata        = _read_json(doc_dir / "metadata.json")
+        if analysis_path.exists():
+            analysis_data = _read_json(analysis_path)
+            changed_fields: list[str] = []
 
-        doc = json.loads(analysis_path.read_text())
-        doc["_export"] = {
-            "doc_id":           doc_dir.name,
-            "batch_id":         batch_id,
-            "source":           intake_data.get("source", ""),
-            "source_url":       intake_data.get("source_url", ""),
-            "archive_url":      intake_data.get("archive_url", ""),
-            "source_type":      intake_data.get("source_type", ""),
-            "tier":             intake_data.get("tier", ""),
-            "ingested_at":      intake_data.get("ingested_at", ""),
-            "title":            preprocess_meta.get("title", ""),
-            "author":           preprocess_meta.get("author", ""),
-            "date_published":   preprocess_meta.get("date_published", ""),
-            "char_count":       preprocess_meta.get("char_count", 0),
-            "tool_used":        preprocess_meta.get("tool_used", ""),
-            "llm_used":         metadata.get("llm_used", ""),
-            "sanity_id":        sanity_record.get("sanity_id", ""),
-            "uploaded":         bool(sanity_record),
-        }
-        docs.append(doc)
+            if not analysis_data.get("prompt_version"):
+                analysis_data["prompt_version"] = PROMPT_VERSION
+                changed_fields.append(f"prompt_version={PROMPT_VERSION}")
+                fields_written += 1
 
-    if not docs:
-        console.print(f"[yellow]No documents found for batch: {batch_id}[/yellow]")
-        return
+            if not analysis_data.get("ontology_version"):
+                analysis_data["ontology_version"] = _ONTOLOGY_VERSION
+                changed_fields.append(f"ontology_version={_ONTOLOGY_VERSION}")
+                fields_written += 1
 
-    out_path = export_dir / f"{batch_id}.jsonl"
-    with out_path.open("w", encoding="utf-8") as f:
-        for doc in docs:
-            f.write(json.dumps(doc, ensure_ascii=False) + "\n")
+            if changed_fields:
+                if not dry_run:
+                    analysis_path.write_text(
+                        json.dumps(analysis_data, indent=2), encoding="utf-8"
+                    )
+                console.print(
+                    f"{'[DRY RUN] ' if dry_run else ''}"
+                    f"{doc_dir.name}: analysis.json ← {', '.join(changed_fields)}"
+                )
+                doc_patched = True
 
-    console.print(f"[green]Exported {len(docs)} documents → {out_path}[/green]")
+        if doc_patched:
+            docs_patched += 1
+
+    return {
+        "docs_scanned": docs_scanned,
+        "docs_patched": docs_patched,
+        "fields_written": fields_written,
+    }
 
 
 def verify_uploads(limit: int, config: Config) -> None:

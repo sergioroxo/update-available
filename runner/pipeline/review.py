@@ -16,6 +16,7 @@ import click
 import typer
 
 from ..models.document import AnalysisResult, IntakeResult, PreprocessResult
+from .analyze import DualAnalysisResult
 from ..models.triage import TriageResult
 from ..models.enrichment import EnrichmentResult
 from ..config import Config
@@ -133,12 +134,24 @@ def checkpoint_preprocess(result: PreprocessResult) -> bool:
 
 
 def checkpoint_analysis(
-    result: AnalysisResult,
+    result: AnalysisResult | DualAnalysisResult,
     doc_id: str,
     yes: bool = False,
 ) -> Optional[AnalysisResult]:
     """Checkpoint 3 — display classification fields, return (possibly edited) result.
-    Returns None if researcher aborts."""
+
+    Accepts either a plain AnalysisResult or a DualAnalysisResult (--llm both).
+    When DualAnalysisResult is received, the primary (Claude) result is displayed
+    and used; the comparison (local model) result is shown as a diff panel.
+
+    Returns None if researcher aborts.
+    """
+    # Unwrap DualAnalysisResult — keep comparison for diff display below
+    comparison: Optional[AnalysisResult] = None
+    if isinstance(result, DualAnalysisResult):
+        comparison = result.comparison
+        result = result.primary
+
     if yes:
         return result
 
@@ -184,9 +197,8 @@ def checkpoint_analysis(
     console.print(Panel(result.summary, title="Summary"))
 
     # Show --llm both comparison if available
-    local = getattr(result, "_local_comparison", None)
-    if local is not None:
-        _show_diff(result, local)
+    if comparison is not None:
+        _show_diff(result, comparison)
 
     if result.confidence.reasons:
         console.print(

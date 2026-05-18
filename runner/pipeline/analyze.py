@@ -15,6 +15,7 @@ LLM routing (controlled by --llm flag):
   prefer-claude   → Claude first, Ollama fallback on API failure
 """
 from __future__ import annotations
+from dataclasses import dataclass
 import json
 import re
 from pathlib import Path
@@ -25,6 +26,20 @@ from .http_retry import call_with_http_retries
 from .sanity_reads import fetch_active_lexicon_terms
 
 PROMPT_VERSION = "ingestion-v3.3"
+
+
+@dataclass
+class DualAnalysisResult:
+    """Returned by analyze.run() when --llm both is used.
+
+    Replaces the former ``object.__setattr__`` hack that stashed the local
+    result as a hidden attribute on the Claude AnalysisResult.  Callers that
+    only need the primary result should check::
+
+        primary = result.primary if isinstance(result, DualAnalysisResult) else result
+    """
+    primary: AnalysisResult       # Claude result (authoritative)
+    comparison: AnalysisResult    # Local-model result (for diff display only)
 
 
 def enrich_preprocess_from_intake(preprocess: PreprocessResult, intake_path: Path) -> None:
@@ -86,7 +101,7 @@ def run(
     if llm == "both":
         claude_result = _analyze_with_claude(preprocess, config)
         local_result  = _analyze_with_ollama(preprocess, config, config.local_analysis_model)
-        return _merge_for_review(claude_result, local_result)
+        return DualAnalysisResult(primary=claude_result, comparison=local_result)
     if llm == "prefer-local":
         try:
             result = _analyze_with_ollama(preprocess, config, config.local_analysis_model)
@@ -438,13 +453,6 @@ def _extract_first_json_object(text: str) -> str | None:
             if depth == 0:
                 return text[start : i + 1]
     return None  # JSON object not closed — response truncated
-
-
-def _merge_for_review(claude: AnalysisResult, local: AnalysisResult) -> AnalysisResult:
-    """When --llm both is used, return Claude's result but store local result
-    in a private attribute so review.py can show a diff at Checkpoint 3."""
-    object.__setattr__(claude, "_local_comparison", local)
-    return claude
 
 
 def save(doc_id: str, result: AnalysisResult, config: Config) -> None:

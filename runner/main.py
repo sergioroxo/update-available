@@ -1264,6 +1264,27 @@ def migrate_supabase(
         raise typer.Exit(1)
 
 
+@app.command(name="migrate-corpus")
+def migrate_corpus(
+    confirm: bool = typer.Option(False, "--confirm", help="Actually write changes (default: dry-run)"),
+):
+    """Backfill missing provenance fields (ingested_at, prompt_version, ontology_version) across the corpus."""
+    from .pipeline import upload as upload_pipeline
+
+    config = load_config()
+    dry_run = not confirm
+    if dry_run:
+        console.print("[yellow]Dry-run mode — no files will be changed. Pass --confirm to write.[/yellow]")
+    result = upload_pipeline.migrate_corpus_files(config, dry_run=dry_run)
+    console.print(
+        f"[green]Done.[/green] "
+        f"Scanned: {result['docs_scanned']}, "
+        f"Patched: {result['docs_patched']}, "
+        f"Fields written: {result['fields_written']}"
+        + (" (dry run — nothing written)" if dry_run else "")
+    )
+
+
 @app.command(name="embed-test")
 def embed_test(
     llm: str = typer.Option(

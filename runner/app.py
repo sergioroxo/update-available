@@ -17,6 +17,7 @@ Pages:
   Triage Tool      — paste a snippet and get a model recommendation
 """
 from __future__ import annotations
+import difflib
 import json
 import os
 import re
@@ -2164,6 +2165,13 @@ def _workbench_analyze(config, llm: str) -> None:
             with st.expander("Copy error details"):
                 st.code(err_msg)
             return
+    # C5: unwrap DualAnalysisResult (--llm both) — store primary, surface comparison
+    from runner.pipeline.analyze import DualAnalysisResult
+    comparison_result = None
+    if isinstance(result, DualAnalysisResult):
+        comparison_result = result.comparison
+        result = result.primary
+
     st.session_state.ingest.update({
         "embedding": embedding_vector,
         "analysis": result,
@@ -2172,6 +2180,14 @@ def _workbench_analyze(config, llm: str) -> None:
         "enrichment": None,
         "uploaded": False,
     })
+
+    if comparison_result is not None:
+        _show_diff(result, comparison_result)
+        st.info(
+            "**--llm both:** Claude result (above) is primary. "
+            "Local model comparison shown. Edit or accept in the JSON editor below."
+        )
+
     st.success("Analysis complete. Review and edit the JSON before saving or uploading.")
 
 
@@ -2263,6 +2279,31 @@ def _render_analysis_editor(config, llm: str) -> None:
 
     _render_archival_issue_panel(analysis_text)
     _render_second_opinion_gate(config, analysis_text)
+
+    # U4: diff preview — compare current saved file vs. editor content
+    _intake = st.session_state.ingest.get("intake")
+    if _intake:
+        _saved_analysis_path = (
+            config.corpus_dir / _intake.doc_id / "analysis.json"
+            if config else None
+        )
+        if _saved_analysis_path and _saved_analysis_path.exists():
+            try:
+                _current_text = _saved_analysis_path.read_text(encoding="utf-8")
+                _old_lines = _current_text.splitlines()
+                _new_lines = analysis_text.splitlines()
+                _diff_lines = list(difflib.unified_diff(
+                    _old_lines,
+                    _new_lines,
+                    fromfile="current",
+                    tofile="after save",
+                    lineterm="",
+                ))
+                if _diff_lines:
+                    with st.expander("Preview changes"):
+                        st.code("\n".join(_diff_lines), language="diff")
+            except Exception:
+                pass
 
     c1, c2, c3, c4 = st.columns(4)
     testimony_blocked = _testimony_requires_review(
