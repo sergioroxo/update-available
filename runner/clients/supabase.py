@@ -3,6 +3,21 @@ Supabase client wrapper.
 
 Handles upserts to the document_embeddings table.
 The vector column dimension must match qwen3-embedding:8b output (Q22 = 4096d).
+
+─── Supabase Data API grant change (May / October 2026) ───────────────────────
+Supabase changed their default permission model for the Data API (PostgREST):
+
+  • New projects created after 30 May 2026 — tables and functions no longer
+    receive automatic grants to `anon` or `authenticated` roles.  The runner
+    uses the SERVICE ROLE key, so explicit grants to `service_role` are required
+    for every table and function accessed via supabase-py.
+
+  • Existing projects — the old behaviour is preserved until 30 October 2026,
+    at which point they switch to the new model automatically.
+
+The constants below include the required GRANT and RLS statements.
+Do NOT grant access to `anon` or `authenticated` — this is a private archive.
+────────────────────────────────────────────────────────────────────────────────
 """
 from __future__ import annotations
 
@@ -10,8 +25,17 @@ from ..config import Config
 from ..models.document import AnalysisResult
 
 
-MIGRATE_DOCUMENT_EMBEDDINGS_SQL = """DROP TABLE IF EXISTS document_embeddings;
-CREATE TABLE document_embeddings (
+# Full setup SQL — run once in the Supabase SQL editor.
+# Includes: DROP+CREATE (destructive), grants, and RLS policy.
+# Safe to re-run on an empty or new table; destructive on an existing one.
+# Do NOT execute this automatically from Python — run it manually.
+MIGRATE_DOCUMENT_EMBEDDINGS_SQL = """\
+-- 0. Enable pgvector (idempotent)
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- 1. Drop and recreate table (destructive — run only when migration is needed)
+DROP TABLE IF EXISTS public.document_embeddings;
+CREATE TABLE public.document_embeddings (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   doc_id          text NOT NULL UNIQUE,
   embedding       vector(4096),
@@ -21,7 +45,85 @@ CREATE TABLE document_embeddings (
   language        text,
   embedded_at     timestamptz DEFAULT now(),
   embedding_model text
-);"""
+);
+
+-- 2. Permissions: service_role only (no anon / authenticated access)
+--    Required for new Supabase projects (post-2026-05-30) and all projects
+--    from 2026-10-30 onwards when Supabase removes legacy auto-grants.
+GRANT USAGE ON SCHEMA public TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLE public.document_embeddings
+  TO service_role;
+
+-- 3. Row Level Security — enabled but permissive for service_role
+--    (service_role bypasses RLS by default in Supabase, but enabling RLS
+--    future-proofs the table and documents intent clearly)
+ALTER TABLE public.document_embeddings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "service role can manage document embeddings"
+  ON public.document_embeddings
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+"""
+
+# Permissions-only SQL — safe to run on an EXISTING table that was created
+# before the grant change.  Does not drop or alter the table schema.
+SETUP_PERMISSIONS_SQL = """\
+-- Run this on any existing document_embeddings table to apply the new
+-- permission model required from 2026-10-30 onwards.
+GRANT USAGE ON SCHEMA public TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLE public.document_embeddings
+  TO service_role;
+
+ALTER TABLE public.document_embeddings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "service role can manage document embeddings"
+  ON public.document_embeddings
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+"""
+
+# match_documents RPC — run once to enable cosine similarity search.
+# The GRANT below uses `vector` (base type) which PostgreSQL resolves to
+# any vector(N) variant; adjust to `vector(4096)` if your pg version requires it.
+MATCH_DOCUMENTS_SQL = """\
+CREATE OR REPLACE FUNCTION public.match_documents(
+  query_embedding vector(4096),
+  match_count     int  DEFAULT 10,
+  filter_type     text DEFAULT '',
+  filter_scope    text DEFAULT ''
+)
+RETURNS TABLE (
+  doc_id          text,
+  doc_type        text,
+  scope           text,
+  tier            text,
+  language        text,
+  embedding_model text,
+  similarity      float
+)
+LANGUAGE sql STABLE AS $$
+  SELECT doc_id, doc_type, scope, tier, language, embedding_model,
+         1 - (embedding <=> query_embedding) AS similarity
+  FROM   public.document_embeddings
+  WHERE  (filter_type  = '' OR doc_type = filter_type)
+    AND  (filter_scope = '' OR scope    = filter_scope)
+    AND  embedding IS NOT NULL
+  ORDER  BY embedding <=> query_embedding
+  LIMIT  match_count;
+$$;
+
+-- Grant execute to service_role
+-- (vector without dimension matches any vector(N) in PostgreSQL's GRANT resolution)
+GRANT EXECUTE
+  ON FUNCTION public.match_documents(vector, int, text, text)
+  TO service_role;
+"""
 
 
 def _client(config: Config):

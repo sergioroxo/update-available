@@ -58,34 +58,40 @@ The schema design is complete in `SANITY_SCHEMA_v1.0.md`. This step is implement
 
 Supabase holds the embedding vectors for Phase 2 semantic analysis. The `content_embedding` column **must be defined here, in Phase 0**, even though it stays null until Phase 2. Creating it later requires a migration on a populated table — define it now.
 
-**Q22 RESOLVED (April 2026).** Model: `qwen3-embedding:4b` via Ollama. Dimension: **2560d**. Verified with `python -m runner embed-test`. Use `vector(2560)` throughout this task.
+**Q22 RESOLVED (April 2026) — UPDATED (May 2026).** Model: `qwen3-embedding:8b` via Ollama. Dimension: **4096d** (not 2560d as originally recorded). Verified with `python -m runner embed-test`. Use `vector(4096)` throughout.
+
+> ⚠️ **The SQL below is superseded.** The schema shown here was written before Q22 was fully resolved and predates the May 2026 Supabase Data API grant change. Use the current SQL from `runner/clients/supabase.py` (`MIGRATE_DOCUMENT_EMBEDDINGS_SQL`) and follow the setup instructions in `CODEX_HANDOFF.md` §1 instead — it includes the correct `vector(4096)` dimension, explicit `GRANT` to `service_role`, and Row Level Security policy required for new projects created after 30 May 2026 (and all projects from 30 October 2026 onwards).
 
 **Also define cross-lingual query alignment before Phase 2 begins:** Document how semantic similarity will be interpreted across languages (e.g., does Norwegian "konverteringsterapi" cluster with Portuguese "terapia de conversão" in the vector space?). Add a brief semantic alignment note to `TAGGING_GUIDE.md` when Q22 is resolved.
 
 **Tasks:**
 
-1. **Resolve Q22** — choose embedding model, document decision in open questions table and `TAGGING_GUIDE.md`
+1. ~~**Resolve Q22**~~ — **RESOLVED: `qwen3-embedding:8b`, 4096d** (see `CLAUDE.md` open questions)
 2. Create Supabase project (EU region to match Sanity)
 3. Enable `pgvector` extension: `CREATE EXTENSION IF NOT EXISTS vector;`
-4. Create the document embeddings companion table (Q22 resolved: `vector(2560)`):
+4. Create the document embeddings companion table — **use `CODEX_HANDOFF.md` §1 SQL, not the block below** (current schema, with grants and RLS):
 
 ```sql
+-- SUPERSEDED — kept for historical reference only.
+-- Dimension was wrong (2560d, should be 4096d).
+-- Missing: GRANT to service_role, Row Level Security policy.
+-- Missing: doc_id, doc_type, scope columns (current schema uses these instead of sanity_document_id).
+-- See runner/clients/supabase.py MIGRATE_DOCUMENT_EMBEDDINGS_SQL for the authoritative version.
 CREATE TABLE document_embeddings (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   sanity_document_id text NOT NULL UNIQUE,
-  content_embedding  vector(2560),        -- qwen3-embedding:4b, verified 2560d
-  language           text,                -- ISO 639-1 — for cross-language queries
-  tier               text,                -- '1' | '2' | '3' — for tier-filtered search
-  validation_status  text,                -- mirrors Sanity validation.status
+  content_embedding  vector(2560),        -- WRONG: should be vector(4096)
+  language           text,
+  tier               text,
+  validation_status  text,
   embedded_at        timestamptz,
-  embedding_model    text                 -- which model generated this vector
+  embedding_model    text
 );
 
 -- INDEX DEFERRED TO PHASE 2:
 -- Both ivfflat and hnsw have a 2000-dimension limit in current Supabase pgvector.
--- 2560d exceeds this. No index needed at pilot scale (sequential scan is fast enough
--- for <1000 rows). Add index in Phase 2 once Supabase upgrades pgvector, or truncate
--- vectors to 2000d using qwen3's Matryoshka support and migrate the column then.
+-- 4096d exceeds this. No index needed at pilot scale (sequential scan is fast enough
+-- for <1000 rows). Add index in Phase 2 once Supabase upgrades pgvector.
 ```
 
 5. Add Supabase connection string to Vercel environment variables (`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`)

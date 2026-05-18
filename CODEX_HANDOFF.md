@@ -36,7 +36,13 @@ A local Python CLI + Streamlit UI for ingesting, classifying, and archiving docu
 
 ## Requires one-time configuration (not yet verified against live services)
 
-### 1. Supabase: confirm table dimension ⚙️
+### 1. Supabase: confirm table dimension + permissions ⚙️
+
+> ⚠️ **Supabase Data API grant change — May / October 2026**
+> - **New projects created after 30 May 2026** — tables and functions no longer receive automatic grants to `anon` or `authenticated`. Explicit `GRANT` to `service_role` is required.
+> - **Existing projects** — legacy auto-grants remain until **30 October 2026**, then switch automatically.
+> - The runner uses the SERVICE ROLE key. We intentionally do **not** grant `anon` or `authenticated` access — this is a private archive.
+> - The full SQL below already includes the required grants. Run it even if your project was created before May 30 — it is safe and idempotent on the permissions/RLS parts.
 
 The `document_embeddings` table must use `vector(4096)`. Verify in the Supabase SQL editor:
 
@@ -46,11 +52,15 @@ FROM information_schema.columns
 WHERE table_name = 'document_embeddings';
 ```
 
-If the `embedding` column shows `vector(2560)` or any dimension other than 4096, recreate it:
+**Option A — New table (or replacing an old one):** Run the full setup block from `runner/clients/supabase.py` (`MIGRATE_DOCUMENT_EMBEDDINGS_SQL`). This is destructive — it drops and recreates the table, then applies grants and RLS:
 
 ```sql
-DROP TABLE IF EXISTS document_embeddings;
-CREATE TABLE document_embeddings (
+-- 0. Enable pgvector (idempotent)
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- 1. Drop and recreate table
+DROP TABLE IF EXISTS public.document_embeddings;
+CREATE TABLE public.document_embeddings (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   doc_id          text NOT NULL UNIQUE,
   embedding       vector(4096),
@@ -61,35 +71,80 @@ CREATE TABLE document_embeddings (
   embedded_at     timestamptz DEFAULT now(),
   embedding_model text
 );
+
+-- 2. Permissions: service_role only (no anon / authenticated access)
+GRANT USAGE ON SCHEMA public TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLE public.document_embeddings
+  TO service_role;
+
+-- 3. Row Level Security
+ALTER TABLE public.document_embeddings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "service role can manage document embeddings"
+  ON public.document_embeddings
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+```
+
+**Option B — Existing table (schema already correct, just add permissions):** Run the permissions-only block from `runner/clients/supabase.py` (`SETUP_PERMISSIONS_SQL`). Does not drop or alter the table:
+
+```sql
+GRANT USAGE ON SCHEMA public TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLE public.document_embeddings
+  TO service_role;
+
+ALTER TABLE public.document_embeddings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "service role can manage document embeddings"
+  ON public.document_embeddings
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 ```
 
 **Note:** The `runner migrate-supabase --confirm` CLI command attempts this via an `exec_sql` RPC that likely doesn't exist in a standard Supabase project. Run the SQL manually in the dashboard instead.
 
 ### 2. Supabase: semantic search RPC ⚙️ (needed for similarity scores)
 
-`runner search` works without this — it uses a client-side fallback and returns results ranked by local metadata. The `sim` column shows `—` in fallback mode. For real cosine similarity scores, create this function in the Supabase SQL editor:
+`runner search` works without this — it uses a client-side fallback and returns results ranked by local metadata. The `sim` column shows `—` in fallback mode. For real cosine similarity scores, create this function in the Supabase SQL editor (full block also in `runner/clients/supabase.py` as `MATCH_DOCUMENTS_SQL`):
 
 ```sql
-CREATE OR REPLACE FUNCTION match_documents(
+CREATE OR REPLACE FUNCTION public.match_documents(
   query_embedding vector(4096),
-  match_count int DEFAULT 10,
-  filter_type text DEFAULT '',
-  filter_scope text DEFAULT ''
+  match_count     int  DEFAULT 10,
+  filter_type     text DEFAULT '',
+  filter_scope    text DEFAULT ''
 )
 RETURNS TABLE (
-  doc_id text, doc_type text, scope text, tier text,
-  language text, embedding_model text, similarity float
+  doc_id          text,
+  doc_type        text,
+  scope           text,
+  tier            text,
+  language        text,
+  embedding_model text,
+  similarity      float
 )
 LANGUAGE sql STABLE AS $$
   SELECT doc_id, doc_type, scope, tier, language, embedding_model,
          1 - (embedding <=> query_embedding) AS similarity
-  FROM document_embeddings
-  WHERE (filter_type = '' OR doc_type = filter_type)
-    AND (filter_scope = '' OR scope = filter_scope)
-    AND embedding IS NOT NULL
-  ORDER BY embedding <=> query_embedding
-  LIMIT match_count;
+  FROM   public.document_embeddings
+  WHERE  (filter_type  = '' OR doc_type = filter_type)
+    AND  (filter_scope = '' OR scope    = filter_scope)
+    AND  embedding IS NOT NULL
+  ORDER  BY embedding <=> query_embedding
+  LIMIT  match_count;
 $$;
+
+-- Grant execute to service_role
+-- (vector without dimension matches any vector(N) in PostgreSQL's GRANT resolution)
+GRANT EXECUTE
+  ON FUNCTION public.match_documents(vector, int, text, text)
+  TO service_role;
 ```
 
 ### 3. LiteLLM: verify max_tokens on Mac Studio ⚙️

@@ -100,11 +100,13 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 - [x] **Q22 resolved** — `qwen3-embedding:8b` = **4096d** → use `vector(4096)`
 - [x] Create Supabase project (EU region)
 - [x] Enable pgvector extension
-- [ ] **Recreate `document_embeddings` table with `vector(4096)`** — drop old `vector(2560)` table first
+- [ ] **Recreate `document_embeddings` table with `vector(4096)`** — drop old `vector(2560)` table first; use `CODEX_HANDOFF.md` §1 SQL (includes grants + RLS)
 - [x] ~~Create ivfflat index~~ — **deferred to Phase 2** (sequential scan fine at pilot scale)
 - [x] Add `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` to `runner/.env`
 - [ ] **Run `python3 -m runner embed-test`** — verify Ollama is running + embedding dimension
 - [ ] **Test full pipeline end-to-end** — ingest one URL → verify Sanity record + Supabase row created
+
+> **Supabase Data API grant change (May / October 2026):** New projects created after 30 May 2026 require explicit `GRANT` to `service_role` — Supabase no longer auto-grants `anon`/`authenticated`. Existing projects are affected from 30 October 2026. The setup SQL in `runner/clients/supabase.py` (`MIGRATE_DOCUMENT_EMBEDDINGS_SQL`, `SETUP_PERMISSIONS_SQL`, `MATCH_DOCUMENTS_SQL`) and `CODEX_HANDOFF.md` §1–2 already include the required grants and RLS policy. We intentionally do **not** grant `anon` or `authenticated` — this is a private archive.
 
 ### MVP CLI Runner (`runner/`)
 - [x] Project skeleton (`main.py`, `config.py`, `models/`, `pipeline/`, `clients/`)
