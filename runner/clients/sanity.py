@@ -1212,6 +1212,7 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
     doc: dict = {
         "_type": "sogiceDocument",
         "_id":   f"doc-{intake.doc_id}",
+        "docId": intake.doc_id,   # explicit, queryable — not the Sanity _id prefix
 
         "workflowStatus": "unverified",
         "tier":           str(intake.tier),

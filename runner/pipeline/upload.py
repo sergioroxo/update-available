@@ -13,6 +13,7 @@ Supabase writes use supabase-py via clients/supabase.py.
 from __future__ import annotations
 import json
 import socket
+import time as _time
 from pathlib import Path
 
 from rich.console import Console
@@ -32,6 +33,31 @@ from .metadata_quality import archival_issues, date_parts, publication_metadata
 _ONTOLOGY_VERSION = "v3.0"
 
 console = Console()
+
+
+class _EmbeddingStatusCache:
+    """Simple TTL cache for Supabase embedding status checks.
+    Prevents repeated round-trips for the same doc in a single session."""
+    _TTL = 300  # seconds (5 minutes)
+
+    def __init__(self):
+        self._store: dict[str, tuple[float, dict]] = {}
+
+    def get(self, doc_id: str) -> dict | None:
+        if doc_id in self._store:
+            ts, val = self._store[doc_id]
+            if _time.monotonic() - ts < self._TTL:
+                return val
+        return None
+
+    def set(self, doc_id: str, value: dict) -> None:
+        self._store[doc_id] = (_time.monotonic(), value)
+
+    def invalidate(self, doc_id: str) -> None:
+        self._store.pop(doc_id, None)
+
+
+_embedding_status_cache = _EmbeddingStatusCache()
 
 
 def _stamp_analysis_dict(analysis: AnalysisResult) -> dict:
@@ -112,17 +138,20 @@ def save_locally(
     analysis: AnalysisResult,
     config: Config,
     llm_used: str = "unknown",
+    embedding_model: str | None = None,   # explicit embedding model name
 ) -> Path:
     """Write all artifacts to ~/survivingsogice/corpus/{doc_id}/. Always called before upload."""
     doc_dir = config.corpus_dir / intake.doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
+
+    _embedding_model_name = embedding_model or config.embedding_model
 
     (doc_dir / "analysis.json").write_text(
         json.dumps(_stamp_analysis_dict(analysis), indent=2), encoding="utf-8"
     )
     (doc_dir / "embedding.json").write_text(
         json.dumps({
-            "model":     config.embedding_model,
+            "model":     _embedding_model_name,
             "dimension": len(embedding),
             "vector":    embedding,
         }, indent=2),
@@ -140,7 +169,7 @@ def save_locally(
     (doc_dir / "metadata.json").write_text(
         json.dumps({
             "llm_used": llm_used,
-            "embedding_model": config.embedding_model,
+            "embedding_model": _embedding_model_name,
             "saved_at": datetime.now(timezone.utc).isoformat(),
         }, indent=2),
         encoding="utf-8",
@@ -149,12 +178,14 @@ def save_locally(
     return doc_dir
 
 
-def list_pending(config: Config) -> None:
+def list_pending(config: Config, limit: int | None = None) -> None:
     """Print all local documents that have no sanity_record.json (not yet uploaded)."""
     pending: list[Path] = []
     partial: list[Path] = []
     incomplete: list[Path] = []
     for doc_dir in config.corpus_dir.iterdir():
+        if limit is not None and len(pending) + len(partial) >= limit:
+            break
         if not doc_dir.is_dir() or (doc_dir / "sanity_record.json").exists():
             continue
         if (doc_dir / "analysis.json").exists():
@@ -163,6 +194,9 @@ def list_pending(config: Config) -> None:
                 incomplete.append(doc_dir)
         elif (doc_dir / "intake.json").exists():
             partial.append(doc_dir)
+
+    if limit is not None and len(pending) + len(partial) >= limit:
+        console.print(f"[dim](Scan limited to first {limit} results)[/dim]")
 
     if not pending and not partial:
         console.print("[green]No pending or partial documents.[/green]")
@@ -402,6 +436,10 @@ def _text_summary(path: Path) -> str:
 
 
 def _embedding_status(doc_dir: Path, config: Config) -> dict:
+    cached = _embedding_status_cache.get(str(doc_dir))
+    if cached is not None:
+        return cached
+
     path = doc_dir / "embedding.json"
     status = {
         "ok": False,
@@ -452,6 +490,7 @@ def _embedding_status(doc_dir: Path, config: Config) -> dict:
         else:
             status["supabase_state"] = "error"
             status["supabase_detail"] = f"check failed: {exc}"
+    _embedding_status_cache.set(str(doc_dir), status)
     return status
 
 
@@ -800,6 +839,15 @@ def migrate_corpus_files(config: Config, dry_run: bool = True) -> dict:
     }
 
 
+def _sanity_doc_id(d: dict) -> str:
+    """Extract the local doc_id from a Sanity document dict.
+    Prefers the explicit docId field; falls back to stripping 'doc-' prefix."""
+    if d.get("docId"):
+        return d["docId"]
+    raw = d.get("_id", "")
+    return raw[4:] if raw.startswith("doc-") else raw
+
+
 def verify_uploads(limit: int, config: Config) -> None:
     """Query Sanity and Supabase directly and print what's actually stored there."""
     import httpx
@@ -809,7 +857,7 @@ def verify_uploads(limit: int, config: Config) -> None:
     try:
         query = (
             f'*[_type == "sogiceDocument"] | order(_createdAt desc)[0..{limit - 1}]'
-            '{ _id, "docType": classification.type, workflowStatus, _createdAt, "sourceUrl": meta.sourceUrl }'
+            '{ _id, docId, "docType": classification.type, workflowStatus, _createdAt, "sourceUrl": meta.sourceUrl }'
         )
         url = (
             f"https://{config.sanity_project_id}.api.sanity.io"
@@ -844,6 +892,7 @@ def verify_uploads(limit: int, config: Config) -> None:
     # --- Sanity table ---
     if sanity_docs:
         t = Table(title=f"Sanity — last {len(sanity_docs)} sogiceDocuments")
+        t.add_column("doc_id")
         t.add_column("_id", style="dim")
         t.add_column("type")
         t.add_column("status")
@@ -852,6 +901,7 @@ def verify_uploads(limit: int, config: Config) -> None:
         for d in sanity_docs:
             created = (d.get("_createdAt") or "")[:19].replace("T", " ")
             t.add_row(
+                _sanity_doc_id(d),
                 d.get("_id", ""),
                 d.get("docType", "?"),
                 d.get("workflowStatus", "?"),
@@ -875,7 +925,7 @@ def verify_uploads(limit: int, config: Config) -> None:
         console.print("[yellow]No rows found in Supabase document_embeddings.[/yellow]")
 
     # --- Cross-check: in Sanity but not Supabase ---
-    sanity_ids = {d["_id"].replace("doc-", "") for d in sanity_docs}
+    sanity_ids = {_sanity_doc_id(d) for d in sanity_docs}
     supa_ids   = {r["doc_id"] for r in supabase_rows}
     missing_in_supa = sanity_ids - supa_ids
     if missing_in_supa:

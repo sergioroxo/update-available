@@ -11,11 +11,14 @@ from email.utils import parsedate_to_datetime
 import json
 from pathlib import Path
 import shutil
+import time
 from typing import Optional
 import uuid
 from urllib.parse import quote, urlparse
 
 import httpx
+
+_WAYBACK_RETRY_DELAYS = [2, 4, 8]
 
 from ..config import Config
 from ..models.document import IntakeResult
@@ -42,8 +45,10 @@ def run(
     ingested_at = datetime.now(timezone.utc).isoformat()
 
     wayback = {"archive_url": None, "status": "skipped", "checked_at": "", "error": ""}
-    if source.startswith(("http://", "https://")):
+    if source.startswith(("http://", "https://")) and config.wayback_enabled:
         wayback = _wayback_check(source)
+    elif source.startswith(("http://", "https://")) and not config.wayback_enabled:
+        wayback = {"archive_url": None, "status": "disabled", "checked_at": datetime.now(timezone.utc).isoformat(), "error": ""}
 
     local_dir = _create_local_dir(doc_id, config)
     _save_wayback_metadata(local_dir, source, wayback)
@@ -137,16 +142,48 @@ def _auto_assign_tier(source_type: str) -> int:
 
 def _wayback_check(url: str) -> dict:
     """Check Wayback for a snapshot, request Save Page Now if needed, and return metadata.
-    Never blocks intake — failures are recorded as metadata."""
+    Never blocks intake — failures are recorded as metadata.
+    The availability check retries up to 3 times on transient network errors
+    (2s, 4s, 8s backoff). The Save Page Now write is NOT retried."""
     checked_at = datetime.now(timezone.utc).isoformat()
+
+    # --- Availability check with retry ---
+    closest = None
+    last_exc: Exception | None = None
+    availability_ok = False
+
+    for attempt, delay in enumerate([0] + _WAYBACK_RETRY_DELAYS):
+        if delay:
+            time.sleep(delay)
+        try:
+            r = httpx.get(
+                "https://archive.org/wayback/available",
+                params={"url": url},
+                timeout=10,
+            )
+            r.raise_for_status()
+            closest = r.json().get("archived_snapshots", {}).get("closest")
+            availability_ok = True
+            break
+        except httpx.HTTPStatusError:
+            # 4xx/5xx — don't retry, fall through to Save Page Now
+            availability_ok = True  # we got a response, just not a good one
+            break
+        except Exception as exc:
+            last_exc = exc
+            if attempt < len(_WAYBACK_RETRY_DELAYS):
+                continue  # retry
+            # all retries exhausted
+            return {
+                "archive_url": None,
+                "status": "failed",
+                "checked_at": checked_at,
+                "timestamp": "",
+                "http_status": "",
+                "error": str(last_exc),
+            }
+
     try:
-        r = httpx.get(
-            "https://archive.org/wayback/available",
-            params={"url": url},
-            timeout=10,
-        )
-        r.raise_for_status()
-        closest = r.json().get("archived_snapshots", {}).get("closest")
         if closest and closest.get("available"):
             return {
                 "archive_url": closest.get("url"),

@@ -170,6 +170,7 @@ def ingest(
         saved_path = upload.save_locally(
             intake_result, preprocess_result, embedding_vector, final_analysis,
             config=config, llm_used=llm,
+            embedding_model=config.litelm_embedding_model if llm.startswith("litelm") else config.embedding_model,
         )
         console.print(Panel(
             f"Saved locally at [bold]{saved_path}[/bold]\n\n"
@@ -188,6 +189,7 @@ def ingest(
         saved_path = upload.save_locally(
             intake_result, preprocess_result, embedding_vector, final_analysis,
             config=config, llm_used=llm,
+            embedding_model=config.litelm_embedding_model if llm.startswith("litelm") else config.embedding_model,
         )
         console.print(Panel(
             f"Saved locally at [bold]{saved_path}[/bold]\n\n"
@@ -875,13 +877,15 @@ def _annotation_batch_candidates(config, filter_format: str = "", filter_type: s
 @app.command()
 def status(
     doc_id: Optional[str] = typer.Argument(None, help="Optional doc_id for a detailed pipeline trace"),
+    limit: int = typer.Option(50, "--limit", help="Max pending docs to scan (0 = unlimited)"),
 ):
     """List pending documents, or show a detailed status trace for one document."""
     config = load_config(require_services=False)
     if doc_id:
         upload.print_document_status(doc_id, config)
     else:
-        upload.list_pending(config)
+        actual_limit = limit if limit > 0 else None
+        upload.list_pending(config, limit=actual_limit)
 
 
 @app.command()

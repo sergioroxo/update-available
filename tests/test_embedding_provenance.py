@@ -1,11 +1,13 @@
-"""Tests for embedding_model provenance fix in upload_saved() (Item A5)."""
+"""Tests for embedding_model provenance fix in upload_saved() (Item A5) and
+save_locally() embedding_model parameter (Item A2)."""
 from __future__ import annotations
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional, Literal
 from unittest.mock import MagicMock, patch
 
-from runner.models.document import AnalysisResult
+from runner.models.document import AnalysisResult, IntakeResult, PreprocessResult
 
 
 @dataclass
@@ -120,3 +122,77 @@ def test_embedding_model_falls_back_to_metadata_json(tmp_path):
 
     used_model = _run_upload_saved_capture_model(tmp_path, "doc-embed-fallback", config)
     assert used_model == "metadata-model"
+
+
+# ---------------------------------------------------------------------------
+# Item A2 — save_locally() embedding_model parameter
+# ---------------------------------------------------------------------------
+
+def _make_analysis() -> AnalysisResult:
+    return AnalysisResult.model_validate({
+        "type": "Anti-SOGICE",
+        "format": "Blog-Post",
+        "evidence": ["Evidence."],
+        "scope": "Core",
+        "narrative_register": "Legal-Policy",
+        "summary": "Summary.",
+        "confidence": {"overall_score": 0.85, "status": "high"},
+    })
+
+
+def _make_intake(tmp_path: Path, doc_id: str = "doc-save-test") -> IntakeResult:
+    return IntakeResult(
+        doc_id=doc_id,
+        source="https://example.com",
+        source_type="url",
+        declared_type="url",
+        tier=1,
+        batch_id="test",
+        language=None,
+        local_dir=tmp_path / doc_id,
+    )
+
+
+def _make_preprocess(doc_id: str = "doc-save-test") -> PreprocessResult:
+    return PreprocessResult(
+        doc_id=doc_id,
+        tool_used="trafilatura",
+        quality="high",
+        text="Some extracted text.",
+    )
+
+
+def test_save_locally_writes_correct_embedding_model_for_litelm(tmp_path):
+    """When embedding_model='research-embedding' is passed, embedding.json must record it."""
+    from runner.pipeline.upload import save_locally
+
+    config = _Config(corpus_dir=tmp_path)
+    intake = _make_intake(tmp_path)
+    preprocess = _make_preprocess()
+    embedding = [0.1, 0.2, 0.3]
+
+    save_locally(intake, preprocess, embedding, _make_analysis(), config,
+                 llm_used="litelm", embedding_model="research-embedding")
+
+    doc_dir = tmp_path / intake.doc_id
+    data = json.loads((doc_dir / "embedding.json").read_text(encoding="utf-8"))
+    assert data["model"] == "research-embedding"
+
+    meta = json.loads((doc_dir / "metadata.json").read_text(encoding="utf-8"))
+    assert meta["embedding_model"] == "research-embedding"
+
+
+def test_save_locally_falls_back_to_config_embedding_model(tmp_path):
+    """When embedding_model is not passed, save_locally uses config.embedding_model."""
+    from runner.pipeline.upload import save_locally
+
+    config = _Config(corpus_dir=tmp_path, embedding_model="config-model")
+    intake = _make_intake(tmp_path, doc_id="doc-fallback")
+    preprocess = _make_preprocess(doc_id="doc-fallback")
+    embedding = [0.1, 0.2, 0.3]
+
+    save_locally(intake, preprocess, embedding, _make_analysis(), config, llm_used="local")
+
+    doc_dir = tmp_path / intake.doc_id
+    data = json.loads((doc_dir / "embedding.json").read_text(encoding="utf-8"))
+    assert data["model"] == "config-model"
