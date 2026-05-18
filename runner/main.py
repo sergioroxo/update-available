@@ -1477,6 +1477,175 @@ def embed_test(
     ))
 
 
+@app.command(name="litelm-test")
+def litelm_test(
+    chat:  bool = typer.Option(True,  "--chat/--no-chat",  help="Test a tiny chat completion"),
+    embed: bool = typer.Option(True,  "--embed/--no-embed", help="Test a tiny embedding request"),
+    model: Optional[str] = typer.Option(None, "--model", help="Override chat model (default: LITELM_ANALYSIS_MODEL)"),
+    embed_model: Optional[str] = typer.Option(None, "--embed-model", help="Override embedding model (default: LITELM_EMBEDDING_MODEL)"),
+    timeout: int = typer.Option(60, "--timeout", help="Request timeout in seconds"),
+):
+    """Deep health test for LiteLLM / Mac Studio — chat completion + embedding.
+
+    Sends real (tiny) inference requests to the Mac Studio and classifies
+    any failure precisely:
+
+      NETWORK_UNREACHABLE  Mac Studio offline or Tailscale disconnected
+      AUTH_FAILURE         Wrong LITELM_API_KEY
+      HTTP_500_PTY         Mac Studio hit macOS PTY/process-limit (restart Ollama)
+      HTTP_500_UPSTREAM    Ollama model-runner error (model not loaded, OOM)
+      HTTP_500_LITELM      LiteLLM internal error
+      HTTP_500_UNKNOWN     500 with no interpretable body
+      JSON_PARSE           Malformed response (model output or proxy bug)
+      DIMENSION_MISMATCH   Embedding returned wrong vector length
+
+    Prints the exact URL and model used for each request.
+    Run after 'runner doctor' passes to confirm Mac Studio is actually serving.
+    See docs/MAC_STUDIO_TROUBLESHOOTING.md for remediation steps.
+    """
+    import os
+    from dotenv import load_dotenv
+    from rich.table import Table as RichTable
+    from .pipeline.diagnostics import (
+        probe_health, probe_chat, probe_embedding,
+        ErrorKind, get_process_count, get_pty_count, get_pty_limit,
+    )
+
+    load_dotenv("runner/.env")
+    load_dotenv()
+
+    litelm_url   = os.getenv("LITELM_BASE_URL", "").rstrip("/")
+    litelm_key   = os.getenv("LITELM_API_KEY", "")
+    chat_model   = model        or os.getenv("LITELM_ANALYSIS_MODEL",  "core-qwen")
+    emb_model    = embed_model  or os.getenv("LITELM_EMBEDDING_MODEL", "research-embedding")
+
+    if not litelm_url:
+        console.print(Panel(
+            "[red]LITELM_BASE_URL not set in runner/.env[/red]\n\n"
+            "Add: [bold]LITELM_BASE_URL=http://<mac-studio-tailscale-ip>:4000[/bold]",
+            title="Config error",
+        ))
+        raise typer.Exit(1)
+
+    console.print(f"\n[bold]LiteLLM deep test[/bold] → [cyan]{litelm_url}[/cyan]")
+    console.print(f"  chat model : [bold]{chat_model}[/bold]")
+    console.print(f"  embed model: [bold]{emb_model}[/bold]\n")
+
+    results: list[tuple[str, str, str, str]] = []   # (step, endpoint, status, detail)
+    any_failure = False
+
+    def _row(step: str, endpoint: str, dr) -> None:
+        nonlocal any_failure
+        icon = "[green]✓[/green]" if dr.ok else "[red]✗[/red]"
+        results.append((step, endpoint, icon, dr.message))
+        if not dr.ok:
+            any_failure = True
+
+    # 1. Health endpoint
+    console.print("[dim]1/3  GET /health …[/dim]")
+    dr = probe_health(litelm_url, api_key=litelm_key, timeout=10)
+    _row("Health", f"{litelm_url}/health", dr)
+    if not dr.ok and dr.kind == ErrorKind.NETWORK_UNREACHABLE:
+        # No point testing further if we can't reach the host
+        table = RichTable(show_lines=False)
+        table.add_column("Step"); table.add_column("Endpoint")
+        table.add_column("", width=3); table.add_column("Result", overflow="fold")
+        for r in results:
+            table.add_row(*r)
+        console.print(table)
+        console.print(Panel(
+            "[red]Cannot reach LiteLLM proxy.[/red]\n\n"
+            "• Is Mac Studio powered on?\n"
+            "• Is Tailscale connected? (check menu bar icon)\n"
+            f"• Quick test: [bold]curl {litelm_url}/health[/bold]\n\n"
+            "See docs/MAC_STUDIO_TROUBLESHOOTING.md § Connectivity.",
+            title="[red]Network unreachable — further tests skipped[/red]",
+        ))
+        raise typer.Exit(1)
+
+    # 2. Chat completion
+    if chat:
+        console.print(f"[dim]2/3  POST /chat/completions  model={chat_model} …[/dim]")
+        dr = probe_chat(litelm_url, api_key=litelm_key, model=chat_model, timeout=timeout)
+        _row("Chat", f"{litelm_url}/chat/completions", dr)
+    else:
+        results.append(("Chat", "—", "[dim]—[/dim]", "skipped (--no-chat)"))
+
+    # 3. Embedding
+    if embed:
+        console.print(f"[dim]3/3  POST /embeddings        model={emb_model} …[/dim]")
+        dr = probe_embedding(litelm_url, api_key=litelm_key, model=emb_model, timeout=timeout)
+        _row("Embedding", f"{litelm_url}/embeddings", dr)
+    else:
+        results.append(("Embedding", "—", "[dim]—[/dim]", "skipped (--no-embed)"))
+
+    # ── Print table ───────────────────────────────────────────────────────
+    table = RichTable(title="LiteLLM Deep Test", show_lines=False)
+    table.add_column("Step")
+    table.add_column("Endpoint")
+    table.add_column("", width=3)
+    table.add_column("Result", overflow="fold")
+    for r in results:
+        table.add_row(*r)
+
+    # System resources (informational)
+    proc    = get_process_count()
+    pty_cur = get_pty_count()
+    pty_max = get_pty_limit()
+    if proc is not None or pty_cur is not None:
+        table.add_section()
+        if proc is not None:
+            table.add_row("Local processes", "(this machine)", "[dim]ℹ[/dim]", str(proc))
+        if pty_cur is not None:
+            pty_str = str(pty_cur)
+            if pty_max:
+                pct = pty_cur * 100 // pty_max
+                pty_str = f"{pty_cur} / {pty_max}  ({pct}%)"
+                if pct >= 80:
+                    pty_str += "  ← HIGH"
+            table.add_row("PTY devices (/dev/ttys*)", "(this machine)", "[dim]ℹ[/dim]", pty_str)
+
+    console.print(table)
+
+    if not any_failure:
+        console.print(Panel(
+            "[bold green]All LiteLLM probes passed.[/bold green]\n\n"
+            "Mac Studio is reachable, authenticated, and serving both chat and embeddings.\n"
+            "You can run: [bold]python -m runner ingest <url>[/bold]",
+            title="Mac Studio — healthy ✓",
+        ))
+    else:
+        # Find the most informative failure for a tailored summary
+        from .pipeline.diagnostics import ErrorKind as _EK
+        last_kind = None
+        last_detail = ""
+        for step, _, icon, msg in results:
+            if "✗" in icon:
+                # look up the DiagnosticResult kind via the message prefix
+                last_detail = f"{step}: {msg}"
+        pane_lines = [f"[red]One or more probes failed.[/red]\n"]
+
+        # Check if any failure is PTY-related
+        fail_msgs = " ".join(m for _, _, icon, m in results if "✗" in icon).lower()
+        if "pty" in fail_msgs or "forkpty" in fail_msgs or "pseudo-tty" in fail_msgs:
+            pane_lines.append(
+                "PTY / process exhaustion detected on Mac Studio.\n"
+                "See docs/MAC_STUDIO_TROUBLESHOOTING.md § PTY exhaustion."
+            )
+        elif "auth" in fail_msgs or "401" in fail_msgs or "403" in fail_msgs:
+            pane_lines.append(
+                "Authentication failure — check LITELM_API_KEY in runner/.env."
+            )
+        else:
+            pane_lines.append(
+                "Run: [bold]python -m runner litelm-test[/bold] again after restarting\n"
+                "the Mac Studio or Ollama service.\n"
+                "See docs/MAC_STUDIO_TROUBLESHOOTING.md for remediation steps."
+            )
+        console.print(Panel("\n".join(pane_lines), title="[red]Mac Studio — unhealthy[/red]"))
+        raise typer.Exit(1)
+
+
 @app.command(name="doctor")
 def doctor():
     """Pre-flight check — verify every prerequisite before the first ingest.
@@ -1534,32 +1703,54 @@ def doctor():
         ok("ANTHROPIC_API_KEY", "Not set — not needed unless you use --llm claude")
 
     # ── LiteLLM proxy (primary analysis path) ────────────────────────────
-    litelm_url = os.getenv("LITELM_BASE_URL", "")
-    litelm_key = os.getenv("LITELM_API_KEY", "")
-    litelm_placeholder = litelm_key in ("", "sk-local-research-key-change-this")
+    from .pipeline.diagnostics import (
+        probe_health as _probe_health,
+        ErrorKind as _EK,
+        get_process_count as _proc_count,
+        get_pty_count as _pty_count,
+        get_pty_limit as _pty_limit,
+    )
+    litelm_url  = os.getenv("LITELM_BASE_URL", "")
+    litelm_key  = os.getenv("LITELM_API_KEY", "")
+    litelm_chat = os.getenv("LITELM_ANALYSIS_MODEL", "core-qwen")
+    litelm_emb  = os.getenv("LITELM_EMBEDDING_MODEL", "research-embedding")
     if not litelm_url:
-        fail("LiteLLM proxy", "LITELM_BASE_URL not set — primary analysis path unavailable.\nAdd the Mac Studio Tailscale URL to .env")
+        fail("LiteLLM proxy",
+             "LITELM_BASE_URL not set — primary analysis path unavailable.\n"
+             "Add the Mac Studio Tailscale URL to runner/.env")
     else:
-        try:
-            import httpx as _httpx
-            r = _httpx.get(f"{litelm_url}/health", timeout=15,
-                           headers={"Authorization": f"Bearer {litelm_key}"})
-            r.raise_for_status()
-            ok("LiteLLM proxy", f"Reachable at {litelm_url}")
-        except Exception as exc:
-            exc_type = type(exc).__name__
-            hint = (
-                "ConnectError = port not listening on the Tailscale interface.\n"
-                "Most likely cause: LiteLLM was started without --host 0.0.0.0\n"
-                "(it defaults to 127.0.0.1, so Tailscale can't reach it).\n"
-                "Fix: restart LiteLLM with:\n"
-                "  litellm --config ~/sogice/litellm_config.yaml --port 4000 --host 0.0.0.0\n"
-                "Or reload the LaunchAgent after adding --host 0.0.0.0 to the plist.\n"
-                "See MAC_STUDIO_SERVER_SETUP.md § 2.3 and § 2.4."
-                if "ConnectError" in exc_type else
-                "Is the Mac Studio on Tailscale and LiteLLM running?"
-            )
-            fail("LiteLLM proxy", f"Not reachable at {litelm_url}: {exc_type}\n{hint}")
+        dr = _probe_health(litelm_url, api_key=litelm_key, timeout=15)
+        if dr.ok:
+            ok("LiteLLM proxy",
+               f"Reachable at {litelm_url}  "
+               f"(chat={litelm_chat}, embed={litelm_emb})")
+        else:
+            _hints = {
+                _EK.NETWORK_UNREACHABLE: (
+                    "Cannot connect — Mac Studio offline, Tailscale down, or LiteLLM\n"
+                    "bound to 127.0.0.1 instead of 0.0.0.0.\n"
+                    "Fix: restart LiteLLM with --host 0.0.0.0\n"
+                    "  litellm --config ~/sogice/litellm_config.yaml --port 4000 --host 0.0.0.0\n"
+                    "See docs/MAC_STUDIO_TROUBLESHOOTING.md § Connectivity."
+                ),
+                _EK.AUTH_FAILURE: (
+                    "HTTP 401/403 — LITELM_API_KEY in runner/.env does not match\n"
+                    "master_key in LiteLLM config.yaml on Mac Studio."
+                ),
+                _EK.HTTP_500_PTY: (
+                    "HTTP 500 with PTY exhaustion — Mac Studio has hit the macOS\n"
+                    "pseudo-terminal limit.  Restart Ollama on Mac Studio.\n"
+                    "See docs/MAC_STUDIO_TROUBLESHOOTING.md § PTY exhaustion."
+                ),
+                _EK.HTTP_500_UPSTREAM: (
+                    "HTTP 500 from Ollama — model runner error (model not loaded,\n"
+                    "OOM, or Ollama crashed).  Check 'ollama ps' on Mac Studio."
+                ),
+            }
+            hint = _hints.get(dr.kind, "")
+            fail("LiteLLM proxy",
+                 f"{dr.message}\n{hint}\nDetail: {dr.detail[:120]}" if hint
+                 else f"{dr.message}\n{dr.detail[:200]}")
 
     ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     embedding_model = os.getenv("EMBEDDING_MODEL", "qwen3-embedding:8b")
@@ -1680,6 +1871,25 @@ def doctor():
         else:
             fail(f"Prompt file: {p.name}", "Cannot parse — '## SYSTEM PROMPT\\n```' section not found")
 
+    # ── System resource counts (informational — macOS PTY / process limits) ──
+    #    Shown as context only; not included in the pass/fail count.
+    info_rows: list[tuple[str, str]] = []
+
+    proc = _proc_count()
+    if proc is not None:
+        info_rows.append(("Running processes", str(proc)))
+
+    pty_cur  = _pty_count()
+    pty_max  = _pty_limit()
+    if pty_cur is not None:
+        pty_str = str(pty_cur)
+        if pty_max:
+            pct = pty_cur * 100 // pty_max
+            pty_str = f"{pty_cur} / {pty_max}  ({pct}%)"
+            if pct >= 80:
+                pty_str += "  ← HIGH — Mac Studio may be approaching PTY limit"
+        info_rows.append(("PTY devices (/dev/ttys*)", pty_str))
+
     # ── Print results ─────────────────────────────────────────────────────
     table = RichTable(title="Pre-flight Check", show_lines=False)
     table.add_column("Check")
@@ -1691,6 +1901,10 @@ def doctor():
             "[green]✓[/green]" if passed else "[red]✗[/red]",
             detail,
         )
+    if info_rows:
+        table.add_section()
+        for label, value in info_rows:
+            table.add_row(label, "[dim]ℹ[/dim]", value)
     console.print(table)
 
     failures = [label for label, passed, _ in checks if not passed]
@@ -1702,12 +1916,16 @@ def doctor():
             "For Tier 1 / high-stakes docs, override to Claude:\n"
             "  [bold]python -m runner ingest <url> --llm claude[/bold]\n\n"
             "Or open the Streamlit workbench:\n"
-            "  [bold]cd runner && streamlit run app.py[/bold]",
+            "  [bold]cd runner && streamlit run app.py[/bold]\n\n"
+            "To deep-test Mac Studio (chat + embedding):\n"
+            "  [bold]python -m runner litelm-test[/bold]",
             title="Ready ✓",
         ))
     else:
         console.print(Panel(
-            f"[red]{len(failures)} check(s) failed.[/red] Fix the items marked ✗ above before ingesting.",
+            f"[red]{len(failures)} check(s) failed.[/red] Fix the items marked ✗ above before ingesting.\n\n"
+            "If LiteLLM shows HTTP 500: run [bold]python -m runner litelm-test[/bold] for a detailed diagnosis.\n"
+            "Common cause: Mac Studio hit macOS PTY limit — see docs/MAC_STUDIO_TROUBLESHOOTING.md.",
             title="[red]Not ready[/red]",
         ))
         raise typer.Exit(1)

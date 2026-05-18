@@ -166,12 +166,17 @@ model_list:
 
 Run when Mac Studio is on Tailscale:
 ```bash
+python3 -m runner doctor                # pre-flight: all services
+python3 -m runner litelm-test           # deep test: chat + embedding via LiteLLM
 python3 -m runner embed-test            # should print "4096d"
 python3 -m runner ingest https://example.org/any-article --llm litelm
 python3 -m runner verify
 python3 -m runner stats
 python3 -m runner search "SOGICE testimony Norway"
 ```
+
+If `litelm-test` fails with `HTTP_500_PTY`, restart Ollama on Mac Studio.
+See `docs/MAC_STUDIO_TROUBLESHOOTING.md` for the full diagnosis and restart procedures.
 
 ---
 
