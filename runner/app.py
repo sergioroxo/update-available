@@ -158,23 +158,16 @@ def page_dashboard():
         st.error("Could not load config. Check runner/.env.")
         return
 
-    stats = _corpus_stats(config.corpus_dir)
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Local documents", stats["total"])
-    c2.metric("Uploaded", stats["uploaded"])
-    c3.metric("Pending upload", stats["pending"])
-    c4.metric("Enriched", stats["enriched"])
-
-    # --- Live corpus stats ---
+    # --- Corpus overview (single block, replaces old _corpus_stats row) ---
     st.subheader("Corpus Overview")
     try:
         from runner.pipeline.upload import corpus_stats
         s = corpus_stats(config)
-        sc1, sc2, sc3, sc4 = st.columns(4)
-        sc1.metric("Total analysed", s["total"])
-        sc2.metric("Uploaded to Sanity", s["uploaded"])
-        sc3.metric("Pending upload", s["pending_upload"])
-        sc4.metric("Low confidence", len(s["low_confidence_docs"]))
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Total analysed", s["total"])
+        c2.metric("Uploaded to Sanity", s["uploaded"])
+        c3.metric("Pending upload", s["pending_upload"])
+        c4.metric("Enriched locally", _corpus_stats(config.corpus_dir)["enriched"])
         if s.get("by_type"):
             with st.expander("By document type"):
                 for k, v in sorted(s["by_type"].items(), key=lambda x: -x[1]):
@@ -189,7 +182,14 @@ def page_dashboard():
                 for did in s["low_confidence_docs"][:20]:
                     st.write(f"- `{did}`")
     except Exception as _e:
-        st.warning(f"Could not load corpus stats: {_e}")
+        # Fallback to simple scan if pipeline import fails
+        stats = _corpus_stats(config.corpus_dir)
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Local documents", stats["total"])
+        c2.metric("Uploaded", stats["uploaded"])
+        c3.metric("Pending upload", stats["pending"])
+        c4.metric("Enriched", stats["enriched"])
+        st.caption(f"Extended stats unavailable: {_e}")
 
     st.subheader("Services")
     s1, s2, s3, s4 = st.columns(4)
@@ -3410,7 +3410,12 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
             else:
                 st.caption("☁️ Uploaded to Sanity")
 
-        if (not doc.get("embedding_ok")) or (not doc.get("supabase_ok")):
+        embedding_ok  = doc.get("embedding_ok", False)
+        supabase_ok   = doc.get("supabase_ok", False)
+        uploaded      = doc.get("uploaded", False)
+
+        if not embedding_ok:
+            # No local embedding vector — full regenerate + push
             if st.button("Generate + push embedding", key=f"doc_emb_{doc['doc_id']}"):
                 ok, message = _generate_and_push_embedding(doc["doc_id"], corpus_dir, _load_config_safe())
                 if ok:
@@ -3418,17 +3423,17 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 else:
                     st.error(message)
                 st.rerun()
-        elif doc.get("uploaded") and doc.get("supabase_state") == "missing":
-            # Sanity record exists but Supabase row is missing — offer targeted push
+        elif uploaded and not supabase_ok:
+            # Embedding exists locally + Sanity record written, but Supabase row is missing
             if st.button("Push embedding to Supabase", key=f"push_supa_{doc['doc_id']}",
-                         help="Sanity record exists but this document is missing from Supabase"):
-                with st.spinner("Pushing embedding to Supabase…"):
+                         help="Embedding exists locally; Supabase row is missing. Re-uploads to Sanity + Supabase."):
+                with st.spinner("Pushing to Supabase…"):
                     r = __import__("subprocess").run(
                         [sys.executable, "-m", "runner", "upload-doc", doc["doc_id"]],
                         capture_output=True, text=True, cwd=_project_root,
                     )
                 if r.returncode == 0:
-                    st.success("Embedding pushed to Supabase.")
+                    st.success("Pushed. Supabase row created.")
                 else:
                     st.error(r.stderr[-400:] or r.stdout[-400:])
                 st.rerun()
