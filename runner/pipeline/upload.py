@@ -848,6 +848,171 @@ def _sanity_doc_id(d: dict) -> str:
     return raw[4:] if raw.startswith("doc-") else raw
 
 
+def export_corpus_csv(config: Config, batch_id: str = "", out_path: Path | None = None) -> Path:
+    """Export corpus as a flat CSV for use in R, SPSS, or Excel.
+
+    One row per document. Columns: doc_id, batch_id, type, primary_type, format, scope,
+    tier, confidence_score, confidence_status, languages, country, tactic, source_type,
+    source, title, date_published, char_count, llm_used, uploaded, sanity_id,
+    ingested_at, prompt_version.
+
+    If batch_id is given, exports only that batch. Otherwise exports all documents.
+    """
+    import csv
+
+    if out_path is None:
+        name = f"{batch_id or 'all-corpus'}.csv"
+        out_dir = config.exports_dir / (batch_id or "all")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path = out_dir / name
+
+    fieldnames = [
+        "doc_id", "batch_id", "type", "primary_type", "format", "scope",
+        "tier", "confidence_score", "confidence_status",
+        "languages", "country", "tactic",
+        "source_type", "source", "title", "author", "date_published",
+        "char_count", "llm_used", "prompt_version",
+        "uploaded", "sanity_id",
+        "ingested_at", "testimony_flag",
+    ]
+
+    count = 0
+    with out_path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+
+        for doc_dir in sorted(config.corpus_dir.iterdir()):
+            if not doc_dir.is_dir():
+                continue
+            intake_path = doc_dir / "intake.json"
+            analysis_path = doc_dir / "analysis.json"
+            if not intake_path.exists() or not analysis_path.exists():
+                continue
+
+            intake_data = _read_json(intake_path)
+            if batch_id and intake_data.get("batch_id") != batch_id:
+                continue
+
+            try:
+                analysis = json.loads(analysis_path.read_text())
+            except Exception:
+                continue
+
+            preprocess_meta = _read_json(doc_dir / "preprocess.json")
+            sanity_record   = _read_json(doc_dir / "sanity_record.json")
+            metadata        = _read_json(doc_dir / "metadata.json")
+
+            conf = analysis.get("confidence", {})
+
+            row = {
+                "doc_id":             doc_dir.name,
+                "batch_id":           intake_data.get("batch_id", ""),
+                "type":               analysis.get("type", ""),
+                "primary_type":       analysis.get("primary_type", ""),
+                "format":             analysis.get("format", ""),
+                "scope":              analysis.get("scope", ""),
+                "tier":               intake_data.get("tier", ""),
+                "confidence_score":   conf.get("overall_score", ""),
+                "confidence_status":  conf.get("status", ""),
+                "languages":          "|".join(analysis.get("languages", [])),
+                "country":            "|".join(analysis.get("country", [])),
+                "tactic":             "|".join(analysis.get("tactic", [])),
+                "source_type":        intake_data.get("source_type", ""),
+                "source":             intake_data.get("source", ""),
+                "title":              preprocess_meta.get("title", ""),
+                "author":             preprocess_meta.get("author", ""),
+                "date_published":     preprocess_meta.get("date_published", ""),
+                "char_count":         preprocess_meta.get("char_count", ""),
+                "llm_used":           metadata.get("llm_used", ""),
+                "prompt_version":     analysis.get("prompt_version", ""),
+                "uploaded":           "yes" if sanity_record else "no",
+                "sanity_id":          sanity_record.get("sanity_id", ""),
+                "ingested_at":        intake_data.get("ingested_at", ""),
+                "testimony_flag":     "yes" if analysis.get("testimony_flag") else "no",
+            }
+            writer.writerow(row)
+            count += 1
+
+    console.print(f"[green]CSV export: {count} documents → {out_path}[/green]")
+    return out_path
+
+
+def corpus_stats(config: Config) -> dict:
+    """Scan the corpus and return aggregate counts for the dashboard.
+
+    Returns a dict with:
+      total, uploaded, pending_upload, partial (intake only),
+      by_type (Counter), by_scope (Counter), by_confidence (Counter),
+      by_tier (Counter), by_language (Counter),
+      low_confidence (list of doc_ids), needs_review (list of doc_ids),
+      testimony_flagged (int)
+    """
+    from collections import Counter
+
+    stats: dict = {
+        "total": 0,
+        "uploaded": 0,
+        "pending_upload": 0,
+        "partial": 0,
+        "testimony_flagged": 0,
+        "by_type": Counter(),
+        "by_scope": Counter(),
+        "by_confidence": Counter(),
+        "by_tier": Counter(),
+        "by_language": Counter(),
+        "low_confidence_docs": [],
+        "needs_review_docs": [],
+    }
+
+    for doc_dir in config.corpus_dir.iterdir():
+        if not doc_dir.is_dir():
+            continue
+        intake_path = doc_dir / "intake.json"
+        if not intake_path.exists():
+            continue
+
+        analysis_path = doc_dir / "analysis.json"
+        if not analysis_path.exists():
+            stats["partial"] += 1
+            continue
+
+        stats["total"] += 1
+
+        sanity_record = _read_json(doc_dir / "sanity_record.json")
+        if sanity_record:
+            stats["uploaded"] += 1
+        else:
+            stats["pending_upload"] += 1
+
+        try:
+            analysis = json.loads(analysis_path.read_text())
+        except Exception:
+            continue
+
+        intake_data = _read_json(intake_path)
+
+        stats["by_type"][analysis.get("type", "unknown")] += 1
+        stats["by_scope"][analysis.get("scope", "unknown")] += 1
+        stats["by_tier"][str(intake_data.get("tier", "?"))] += 1
+
+        conf = analysis.get("confidence", {})
+        score = conf.get("overall_score", 0)
+        status = conf.get("status", "unknown")
+        stats["by_confidence"][status] += 1
+
+        if status == "low" or (isinstance(score, (int, float)) and score < 0.70):
+            stats["low_confidence_docs"].append(doc_dir.name)
+        if analysis.get("needs_review"):
+            stats["needs_review_docs"].append(doc_dir.name)
+        if analysis.get("testimony_flag"):
+            stats["testimony_flagged"] += 1
+
+        for lang in analysis.get("languages", []):
+            stats["by_language"][lang] += 1
+
+    return stats
+
+
 def verify_uploads(limit: int, config: Config) -> None:
     """Query Sanity and Supabase directly and print what's actually stored there."""
     import httpx

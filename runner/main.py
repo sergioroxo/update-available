@@ -20,6 +20,7 @@ from rich.panel import Panel
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
 from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion
+from .pipeline import search as search_mod
 from .pipeline.system_tools import tool_path
 
 app = typer.Typer(name="runner", add_completion=False)
@@ -1222,6 +1223,113 @@ def export_batch(
     """Export all documents in a batch as JSON to exports/{batch_id}/."""
     config = load_config()
     upload.export_batch(batch_id, config)
+
+
+@app.command(name="export-csv")
+def export_csv_cmd(
+    batch_id: str = typer.Argument("", help="Batch ID to export (omit for all documents)"),
+    out: str = typer.Option("", "--out", help="Output CSV path (default: exports/{batch_id|all}/...)"),
+):
+    """Export corpus as a flat CSV for analysis in R, SPSS, or Excel."""
+    config = load_config(llm=None, require_services=False)
+    out_path = Path(out) if out else None
+    upload.export_corpus_csv(config, batch_id=batch_id, out_path=out_path)
+
+
+@app.command(name="stats")
+def stats_cmd():
+    """Show corpus statistics: totals, by type, confidence, language, upload status."""
+    config = load_config(llm=None, require_services=False)
+    from rich.table import Table as RichTable
+
+    s = upload.corpus_stats(config)
+
+    console.print(f"\n[bold]Corpus Overview[/bold]")
+    console.print(f"  Total documents:   [cyan]{s['total']}[/cyan]")
+    console.print(f"  Uploaded:          [green]{s['uploaded']}[/green]")
+    console.print(f"  Pending upload:    [yellow]{s['pending_upload']}[/yellow]")
+    console.print(f"  Partial (no analysis): [dim]{s['partial']}[/dim]")
+    console.print(f"  Testimony flagged: {s['testimony_flagged']}")
+    console.print(f"  Low confidence:    [red]{len(s['low_confidence_docs'])}[/red]")
+
+    if s["by_type"]:
+        t = RichTable(title="By document type")
+        t.add_column("type"); t.add_column("count", justify="right")
+        for k, v in s["by_type"].most_common():
+            t.add_row(k, str(v))
+        console.print(t)
+
+    if s["by_confidence"]:
+        t2 = RichTable(title="By confidence")
+        t2.add_column("confidence"); t2.add_column("count", justify="right")
+        for k, v in s["by_confidence"].most_common():
+            color = "green" if k == "high" else "yellow" if k == "medium" else "red"
+            t2.add_row(f"[{color}]{k}[/{color}]", str(v))
+        console.print(t2)
+
+    if s["by_language"]:
+        t3 = RichTable(title="By language")
+        t3.add_column("language"); t3.add_column("count", justify="right")
+        for k, v in s["by_language"].most_common(10):
+            t3.add_row(k, str(v))
+        console.print(t3)
+
+    if s["low_confidence_docs"]:
+        console.print(f"\n[red]Low-confidence documents:[/red] {', '.join(s['low_confidence_docs'][:10])}")
+        if len(s["low_confidence_docs"]) > 10:
+            console.print(f"  ...and {len(s['low_confidence_docs']) - 10} more")
+
+
+@app.command(name="search")
+def search_cmd(
+    query: str = typer.Argument(..., help="Text query to search for similar documents"),
+    top_k: int = typer.Option(10, "--top-k", "-k", help="Number of results to return"),
+    doc_type: str = typer.Option("", "--type", "-t", help="Filter by document type"),
+    scope: str = typer.Option("", "--scope", "-s", help="Filter by scope"),
+    tier: str = typer.Option("", "--tier", help="Filter by tier (1, 2, 3)"),
+    llm: str = typer.Option("litelm", "--llm", help="Embedding route: litelm | local"),
+):
+    """Search the corpus for documents semantically similar to a text query."""
+    config = load_config(llm=None, require_services=True)
+    from rich.table import Table as RichTable
+
+    console.print(f"[dim]Embedding query and searching corpus...[/dim]")
+    try:
+        results = search_mod.search_corpus(
+            query, config, top_k=top_k,
+            doc_type=doc_type, scope=scope, tier=str(tier) if tier else "",
+            llm_mode=llm,
+        )
+    except Exception as exc:
+        console.print(f"[red]Search failed: {exc}[/red]")
+        raise typer.Exit(1)
+
+    if not results:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+
+    t = RichTable(title=f"Search results for: {query!r}")
+    t.add_column("#", style="dim", width=3)
+    t.add_column("doc_id", style="cyan")
+    t.add_column("sim", width=5)
+    t.add_column("type", width=20)
+    t.add_column("scope", width=12)
+    t.add_column("confidence", width=10)
+    t.add_column("summary", overflow="fold")
+
+    for i, r in enumerate(results, 1):
+        sim = r.get("similarity", 0)
+        sim_str = f"{sim:.3f}" if sim else "—"
+        t.add_row(
+            str(i),
+            r.get("doc_id", ""),
+            sim_str,
+            r.get("type", "?"),
+            r.get("scope", "?"),
+            str(r.get("confidence", "?")),
+            r.get("summary", ""),
+        )
+    console.print(t)
 
 
 @app.command(name="verify")

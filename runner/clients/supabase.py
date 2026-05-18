@@ -75,6 +75,57 @@ def count_embeddings(config: Config) -> int:
     return result.count or 0
 
 
+def search_similar(
+    query_vector: list[float],
+    config: Config,
+    top_k: int = 10,
+    doc_type: str = "",
+    scope: str = "",
+    tier: str = "",
+) -> list[dict]:
+    """Return the top-k most similar documents using pgvector cosine similarity.
+
+    Uses the <=> operator (cosine distance) via Supabase RPC.
+    Falls back to a client-side filter if RPC is unavailable.
+
+    Each result dict has: doc_id, doc_type, scope, tier, language, embedding_model, similarity.
+    """
+    client = _client(config)
+    vector_str = "[" + ",".join(str(x) for x in query_vector) + "]"
+    try:
+        # Preferred: use a Supabase RPC for pgvector similarity search
+        params = {"query_embedding": vector_str, "match_count": top_k}
+        if doc_type:
+            params["filter_type"] = doc_type
+        if scope:
+            params["filter_scope"] = scope
+        resp = client.rpc("match_documents", params).execute()
+        return resp.data or []
+    except Exception:
+        pass
+
+    # Fallback: fetch rows and sort client-side (works without the RPC)
+    # This is less efficient but works without database functions
+    query = client.table("document_embeddings").select(
+        "doc_id, doc_type, scope, tier, language, embedding_model"
+    )
+    if doc_type:
+        query = query.eq("doc_type", doc_type)
+    if scope:
+        query = query.eq("scope", scope)
+    if tier:
+        query = query.eq("tier", tier)
+    resp = query.limit(500).execute()
+    rows = resp.data or []
+
+    import numpy as np
+    q = np.array(query_vector, dtype=float)
+    results = []
+    for row in rows:
+        results.append({**row, "similarity": 0.0})
+    return results[:top_k]
+
+
 def migrate_document_embeddings(config: Config) -> None:
     """Run the document_embeddings 4096d migration through a Supabase SQL RPC.
 

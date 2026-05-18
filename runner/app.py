@@ -31,8 +31,11 @@ from pathlib import Path
 _runner_dir = Path(__file__).resolve().parent
 _project_root = Path(__file__).resolve().parent.parent
 _legacy_vocab_dir = Path(
-    "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/"
-    "SurvivingSOGICE/SurvivingSOGICE_Tagger/Old_Artifact_Bakcup"
+    os.getenv(
+        "SOGICE_LEGACY_VOCAB_DIR",
+        str(Path.home() / "Library/CloudStorage/OneDrive-UniversityofBergen"
+            "/SurvivingSOGICE/SurvivingSOGICE_Tagger/Old_Artifact_Bakcup"),
+    )
 )
 sys.path[:] = [
     p for p in sys.path
@@ -161,6 +164,32 @@ def page_dashboard():
     c2.metric("Uploaded", stats["uploaded"])
     c3.metric("Pending upload", stats["pending"])
     c4.metric("Enriched", stats["enriched"])
+
+    # --- Live corpus stats ---
+    st.subheader("Corpus Overview")
+    try:
+        from runner.pipeline.upload import corpus_stats
+        s = corpus_stats(config)
+        sc1, sc2, sc3, sc4 = st.columns(4)
+        sc1.metric("Total analysed", s["total"])
+        sc2.metric("Uploaded to Sanity", s["uploaded"])
+        sc3.metric("Pending upload", s["pending_upload"])
+        sc4.metric("Low confidence", len(s["low_confidence_docs"]))
+        if s.get("by_type"):
+            with st.expander("By document type"):
+                for k, v in sorted(s["by_type"].items(), key=lambda x: -x[1]):
+                    st.write(f"**{k}**: {v}")
+        if s.get("by_confidence"):
+            bc1, bc2, bc3 = st.columns(3)
+            bc1.metric("High confidence", s["by_confidence"].get("high", 0))
+            bc2.metric("Medium confidence", s["by_confidence"].get("medium", 0))
+            bc3.metric("Low confidence", s["by_confidence"].get("low", 0))
+        if s.get("low_confidence_docs"):
+            with st.expander(f"Low confidence docs ({len(s['low_confidence_docs'])}) — candidates for re-analysis"):
+                for did in s["low_confidence_docs"][:20]:
+                    st.write(f"- `{did}`")
+    except Exception as _e:
+        st.warning(f"Could not load corpus stats: {_e}")
 
     st.subheader("Services")
     s1, s2, s3, s4 = st.columns(4)
@@ -2135,43 +2164,71 @@ def _workbench_preprocess(config, max_chars: int | None) -> None:
 
 def _workbench_analyze(config, llm: str) -> None:
     from runner.pipeline import analyze, embed, ollama_memory
+    from runner.pipeline.analyze import DualAnalysisResult
 
     preprocess_result = st.session_state.ingest["preprocess"]
-    with st.spinner("Running analysis and generating embedding..."):
+    embedding_vector: list = []
+    comparison_result = None
+
+    # ── Step 1: LLM Analysis ────────────────────────────────────────────────
+    st.markdown("**Step 1 of 2 — LLM Analysis**")
+    with st.spinner(f"Sending document to `{llm}` for classification…"):
         try:
-            if llm.startswith("litelm"):
-                result = analyze.run(preprocess_result, llm=llm, config=config)
-                try:
-                    if ollama_memory.unload_litelm_analysis(config, llm):
-                        st.info("Unloaded LiteLLM analysis model before embedding.")
-                    else:
-                        st.warning("Could not unload LiteLLM analysis model; set LITELM_OLLAMA_BASE_URL and backing model names to prevent RAM overlap.")
-                except Exception as unload_exc:
-                    st.warning(f"Could not unload LiteLLM analysis model: {unload_exc}")
-                embedding_vector = embed.run_litelm(preprocess_result.text, config=config)
-                try:
-                    if ollama_memory.unload_litelm_embedding(config):
-                        st.info("Unloaded LiteLLM embedding model after embedding.")
-                    else:
-                        st.warning("Could not unload LiteLLM embedding model; set LITELM_OLLAMA_BASE_URL and LITELM_OLLAMA_EMBEDDING_MODEL.")
-                except Exception as unload_exc:
-                    st.warning(f"Could not unload LiteLLM embedding model: {unload_exc}")
-            else:
-                embedding_vector = embed.run(preprocess_result.text, config=config)
-                result = analyze.run(preprocess_result, llm=llm, config=config)
+            result = analyze.run(preprocess_result, llm=llm, config=config)
         except Exception as exc:
             err_msg = str(exc)
             st.error(f"Analysis failed: {err_msg}")
             with st.expander("Copy error details"):
                 st.code(err_msg)
             return
-    # C5: unwrap DualAnalysisResult (--llm both) — store primary, surface comparison
-    from runner.pipeline.analyze import DualAnalysisResult
-    comparison_result = None
+
+    # Unwrap DualAnalysisResult (--llm both)
     if isinstance(result, DualAnalysisResult):
         comparison_result = result.comparison
         result = result.primary
 
+    # Show the raw result immediately so the researcher can read it NOW
+    with st.expander("Classification result (expand to review before embedding)", expanded=True):
+        st.json(result.model_dump())
+
+    if llm.startswith("litelm"):
+        try:
+            if ollama_memory.unload_litelm_analysis(config, llm):
+                st.info("Analysis model unloaded from Mac Studio RAM.")
+            else:
+                st.warning(
+                    "Could not unload analysis model — set LITELM_OLLAMA_BASE_URL "
+                    "and backing model names to avoid RAM overlap."
+                )
+        except Exception as unload_exc:
+            st.warning(f"Could not unload analysis model: {unload_exc}")
+
+    # ── Step 2: Embedding ────────────────────────────────────────────────────
+    st.markdown("**Step 2 of 2 — Embedding**")
+    with st.spinner("Generating embedding vector…"):
+        try:
+            if llm.startswith("litelm"):
+                embedding_vector = embed.run_litelm(preprocess_result.text, config=config)
+            else:
+                embedding_vector = embed.run(preprocess_result.text, config=config)
+        except Exception as exc:
+            st.warning(
+                f"Embedding failed: {exc}\n\n"
+                "You can still save and review the classification above. "
+                "The Supabase row will be empty until you re-embed."
+            )
+
+    if llm.startswith("litelm") and embedding_vector:
+        try:
+            if ollama_memory.unload_litelm_embedding(config):
+                st.info("Embedding model unloaded from Mac Studio RAM.")
+        except Exception as unload_exc:
+            st.warning(f"Could not unload embedding model: {unload_exc}")
+
+    if embedding_vector:
+        st.success(f"Embedding: {len(embedding_vector)}d vector generated.")
+
+    # ── Save to session state ────────────────────────────────────────────────
     st.session_state.ingest.update({
         "embedding": embedding_vector,
         "analysis": result,
@@ -3361,6 +3418,20 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 else:
                     st.error(message)
                 st.rerun()
+        elif doc.get("uploaded") and doc.get("supabase_state") == "missing":
+            # Sanity record exists but Supabase row is missing — offer targeted push
+            if st.button("Push embedding to Supabase", key=f"push_supa_{doc['doc_id']}",
+                         help="Sanity record exists but this document is missing from Supabase"):
+                with st.spinner("Pushing embedding to Supabase…"):
+                    r = __import__("subprocess").run(
+                        [sys.executable, "-m", "runner", "upload-doc", doc["doc_id"]],
+                        capture_output=True, text=True, cwd=_project_root,
+                    )
+                if r.returncode == 0:
+                    st.success("Embedding pushed to Supabase.")
+                else:
+                    st.error(r.stderr[-400:] or r.stdout[-400:])
+                st.rerun()
 
         with act_cols[1]:
             llm_opts = ["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local"]
@@ -3940,6 +4011,31 @@ def page_lexicon():
     if not config:
         st.error("Could not load config. Check runner/.env.")
         return
+
+    # ── Lexicon status at a glance ───────────────────────────────────────────
+    st.subheader("Lexicon Status")
+    try:
+        from runner.clients.sanity import fetch_lexicon_terms
+        all_terms = fetch_lexicon_terms(config)
+        approved = [t for t in all_terms if t.get("status") == "approved"]
+        draft    = [t for t in all_terms if t.get("status") in ("draft", "candidate", "pending", "")]
+        rejected = [t for t in all_terms if t.get("status") == "rejected"]
+
+        lc1, lc2, lc3 = st.columns(3)
+        lc1.metric("✅ Approved", len(approved))
+        lc2.metric("📋 Draft / pending", len(draft))
+        lc3.metric("❌ Rejected", len(rejected))
+
+        if approved:
+            with st.expander(f"Approved terms ({len(approved)}) — injected into every analysis prompt"):
+                for t in sorted(approved, key=lambda x: x.get("term", "")):
+                    st.write(f"- **{t.get('term', '?')}** — {(t.get('draftDefinition') or '')[:100]}")
+        if draft:
+            with st.expander(f"Draft / pending ({len(draft)}) — visible to model as candidates"):
+                for t in sorted(draft, key=lambda x: x.get("term", "")):
+                    st.write(f"- {t.get('term', '?')}")
+    except Exception as _lex_e:
+        st.caption(f"Could not load lexicon status from Sanity: {_lex_e}")
 
     st.info(
         "Analysis and enrichment fetch current Sanity lexicon/registry data at run time. "
