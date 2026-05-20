@@ -4303,13 +4303,11 @@ def _render_registry_status_overview(config) -> None:
     ]
     rows = []
     for schema_type in type_order:
-        bucket = overview.get("by_type", {}).get(schema_type)
-        if not bucket:
-            continue
+        bucket = overview.get("by_type", {}).get(schema_type) or {}
         states = bucket.get("states", {})
         rows.append(
             {
-                "registry": bucket.get("label", schema_type),
+                "registry": bucket.get("label") or _registry_type_label(schema_type),
                 "total": bucket.get("total", 0),
                 "validated": states.get("validated", 0),
                 "needs_validation": states.get("needs_review", 0),
@@ -4424,7 +4422,7 @@ def _render_registry_validation_row(row: dict, config, local_matches: list[dict]
                 + ", ".join(f"`{ref}`" for ref in document_refs[:6])
                 + (" ..." if len(document_refs) > 6 else "")
             )
-        elif requires_document_evidence:
+        elif requires_document_evidence and not possible_local_matches:
             st.caption("No linked Sanity source document/evidence is recorded yet.")
         if direct_local_matches:
             _render_local_registry_matches("Local pushed/approved evidence", direct_local_matches)

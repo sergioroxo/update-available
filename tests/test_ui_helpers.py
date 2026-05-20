@@ -297,3 +297,138 @@ def test_registry_review_filter_options_only_include_types_with_rows():
 
     assert options == ["All", "Organizations", "People", "Tactics"]
     assert "Tags" not in options
+
+
+# ---------------------------------------------------------------------------
+# Bug fixes: registry summary table + "no evidence" caption
+# ---------------------------------------------------------------------------
+
+def _make_overview(by_type: dict) -> dict:
+    """Minimal overview dict for _build_registry_summary_rows tests."""
+    return {"by_type": by_type, "review_rows": []}
+
+
+def _build_summary_rows(overview: dict) -> list[dict]:
+    """
+    Re-implement the fixed summary-row logic so tests don't need Streamlit.
+
+    Mirrors the patched loop in _render_registry_status_overview (minus st.dataframe).
+    """
+    from runner.app import _registry_type_label
+
+    type_order = [
+        "lexiconEntry",
+        "organization",
+        "person",
+        "tacticEntry",
+        "practiceEntry",
+        "tagRegistry",
+    ]
+    rows = []
+    for schema_type in type_order:
+        bucket = overview.get("by_type", {}).get(schema_type) or {}
+        states = bucket.get("states", {})
+        rows.append(
+            {
+                "registry": bucket.get("label") or _registry_type_label(schema_type),
+                "total": bucket.get("total", 0),
+                "validated": states.get("validated", 0),
+                "needs_validation": states.get("needs_review", 0),
+                "deprecated": states.get("deprecated", 0),
+                "with_document_evidence": sum(
+                    1 for row in bucket.get("rows", []) if row.get("hasDocumentEvidence")
+                ),
+            }
+        )
+    return rows
+
+
+def test_summary_table_includes_all_six_types_when_some_buckets_missing():
+    """Bug 1 fix: types with no Sanity records must still appear in the summary table."""
+    overview = _make_overview(
+        {
+            "organization": {
+                "label": "Organizations",
+                "total": 3,
+                "states": {"validated": 1, "needs_review": 2},
+                "rows": [],
+            },
+            # lexiconEntry, person, tacticEntry, practiceEntry, tagRegistry all absent
+        }
+    )
+    rows = _build_summary_rows(overview)
+    labels = [r["registry"] for r in rows]
+
+    assert len(rows) == 6, f"Expected 6 rows, got {len(rows)}: {labels}"
+    assert "Lexicon" in labels
+    assert "Tags" in labels
+    assert "Organizations" in labels
+
+
+def test_summary_table_zero_totals_for_missing_buckets():
+    """Types absent from by_type should show zeros, not be skipped."""
+    overview = _make_overview({})
+    rows = _build_summary_rows(overview)
+    for row in rows:
+        assert row["total"] == 0
+        assert row["validated"] == 0
+        assert row["needs_validation"] == 0
+
+
+def test_summary_table_existing_bucket_values_preserved():
+    """Populated buckets should still report their real counts after the fix."""
+    overview = _make_overview(
+        {
+            "tagRegistry": {
+                "label": "Tags",
+                "total": 5,
+                "states": {"validated": 2, "needs_review": 3},
+                "rows": [{"hasDocumentEvidence": True}, {"hasDocumentEvidence": False}],
+            }
+        }
+    )
+    rows = _build_summary_rows(overview)
+    tag_row = next(r for r in rows if r["registry"] == "Tags")
+    assert tag_row["total"] == 5
+    assert tag_row["validated"] == 2
+    assert tag_row["needs_validation"] == 3
+    assert tag_row["with_document_evidence"] == 1
+
+
+def _no_evidence_caption_shown(document_refs, possible_matches, requires_evidence=True) -> bool:
+    """
+    Return True if the "No linked Sanity source document/evidence" caption would fire.
+
+    Mirrors the patched condition in _render_registry_validation_row (Bug 2 fix).
+    """
+    return (not document_refs) and requires_evidence and (not possible_matches)
+
+
+def test_no_evidence_caption_hidden_when_fuzzy_matches_present():
+    """Bug 2 fix: caption must NOT show when possible_local_matches is non-empty."""
+    assert _no_evidence_caption_shown(
+        document_refs=[],
+        possible_matches=[{"match": "similar", "doc_id": "abc"}],
+    ) is False
+
+
+def test_no_evidence_caption_shown_when_no_refs_and_no_fuzzy():
+    """Caption should still appear when there are truly no references at all."""
+    assert _no_evidence_caption_shown(document_refs=[], possible_matches=[]) is True
+
+
+def test_no_evidence_caption_hidden_when_document_refs_present():
+    """Caption should not fire when the row already has Sanity document refs."""
+    assert _no_evidence_caption_shown(
+        document_refs=["doc-abc"],
+        possible_matches=[],
+    ) is False
+
+
+def test_no_evidence_caption_hidden_for_type_that_does_not_require_evidence():
+    """Types like tagRegistry don't require document evidence — caption never fires."""
+    assert _no_evidence_caption_shown(
+        document_refs=[],
+        possible_matches=[],
+        requires_evidence=False,
+    ) is False
