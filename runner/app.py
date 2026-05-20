@@ -3371,6 +3371,8 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 except Exception:
                     pass
 
+        _render_document_analysis_tags(doc["doc_id"], corpus_dir / doc["doc_id"])
+
         # Raw JSON toggle
         if st.toggle("Show raw analysis JSON", key=f"raw_{doc['doc_id']}"):
             analysis_path = corpus_dir / doc["doc_id"] / "analysis.json"
@@ -3469,6 +3471,148 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 else:
                     st.error(r.stderr[-600:] or r.stdout[-600:])
                 st.rerun()
+
+
+def _format_tag_list(values, *, limit: int = 40) -> str:
+    if not values:
+        return "—"
+    if not isinstance(values, list):
+        values = [values]
+    cleaned = [str(value) for value in values if str(value or "").strip()]
+    if not cleaned:
+        return "—"
+    shown = cleaned[:limit]
+    suffix = f" (+{len(cleaned) - limit} more)" if len(cleaned) > limit else ""
+    return ", ".join(shown) + suffix
+
+
+def _render_document_analysis_tags(doc_id: str, doc_dir: Path) -> None:
+    analysis = _read_json_file(doc_dir / "analysis.json", {})
+    if not analysis:
+        return
+
+    with st.expander("Analysis tags", expanded=False):
+        st.caption(
+            "Labels from the main ingestion analysis (`analysis.json`). "
+            "These are separate from enrichment proposals and research annotations."
+        )
+        top_rows = [
+            ("Type", analysis.get("type")),
+            ("Primary / secondary type", " / ".join(
+                value for value in [analysis.get("primary_type"), analysis.get("secondary_type")] if value
+            ) or "—"),
+            ("Format", analysis.get("format")),
+            ("Scope", analysis.get("scope")),
+            ("Narrative register", analysis.get("narrative_register")),
+            ("Rhetorical intensity", analysis.get("rhetorical_intensity")),
+            ("Framing balance", analysis.get("framing_balance")),
+            ("Countries", analysis.get("country", [])),
+        ]
+        st.dataframe(
+            [
+                {"Field": label, "Value": _format_tag_list(value)}
+                for label, value in top_rows
+            ],
+            hide_index=True,
+            width="stretch",
+        )
+
+        tag_rows = [
+            ("Tactics", analysis.get("tactic", [])),
+            ("Practices", analysis.get("practice", [])),
+            ("Functions", analysis.get("function", [])),
+            ("Harms", analysis.get("harm", [])),
+            ("Migration", analysis.get("migration", [])),
+            ("Landmarks", analysis.get("landmark", [])),
+            ("Flags", analysis.get("flags", [])),
+            ("Actors", analysis.get("actor", [])),
+            ("Networks", analysis.get("network", [])),
+            ("Promotional terms", analysis.get("term", [])),
+        ]
+        st.dataframe(
+            [
+                {"Tag group": label, "Values": _format_tag_list(values)}
+                for label, values in tag_rows
+            ],
+            hide_index=True,
+            width="stretch",
+        )
+
+        term_context = analysis.get("term_use_context") or []
+        if term_context:
+            st.markdown("**Term-use context**")
+            st.dataframe(
+                [
+                    {
+                        "Term": item.get("term", ""),
+                        "Use": item.get("use", ""),
+                        "Quote": (item.get("quote", "") or "")[:220],
+                    }
+                    for item in term_context
+                    if isinstance(item, dict)
+                ],
+                hide_index=True,
+                width="stretch",
+            )
+
+        candidate_terms = analysis.get("candidate_terms") or []
+        suggested_actors = analysis.get("suggested_actors") or []
+        suggested_networks = analysis.get("suggested_networks") or []
+        if candidate_terms or suggested_actors or suggested_networks:
+            st.markdown("**Candidates proposed by the analysis**")
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                if candidate_terms:
+                    st.caption("Candidate terms")
+                    st.dataframe(
+                        [
+                            {
+                                "Term": item.get("term", ""),
+                                "Register": item.get("usage_register", item.get("register", "")),
+                                "Confidence": item.get("confidence", item.get("model_confidence", "")),
+                            }
+                            for item in candidate_terms
+                            if isinstance(item, dict)
+                        ],
+                        hide_index=True,
+                        width="stretch",
+                    )
+            with c2:
+                if suggested_actors:
+                    st.caption("Suggested actors")
+                    st.dataframe(
+                        [
+                            {
+                                "Name": item.get("name", ""),
+                                "Role": item.get("role", ""),
+                            }
+                            for item in suggested_actors
+                            if isinstance(item, dict)
+                        ],
+                        hide_index=True,
+                        width="stretch",
+                    )
+            with c3:
+                if suggested_networks:
+                    st.caption("Suggested networks")
+                    st.dataframe(
+                        [
+                            {
+                                "Name": item.get("name", ""),
+                                "Role": item.get("role", ""),
+                            }
+                            for item in suggested_networks
+                            if isinstance(item, dict)
+                        ],
+                        hide_index=True,
+                        width="stretch",
+                    )
+
+        warnings = analysis.get("normalisation_warnings") or []
+        if warnings:
+            with st.expander("Normalisation warnings", expanded=False):
+                for warning in warnings:
+                    st.warning(str(warning))
 
 
 def _local_embedding_status(doc_dir: Path, config) -> dict:
