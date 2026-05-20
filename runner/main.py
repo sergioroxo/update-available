@@ -1726,7 +1726,7 @@ def doctor():
         if dr.ok or dr.kind == _EK.HEALTH_SLOW:
             # HEALTH_SLOW = /v1/models confirmed reachable but /health timed out
             # (LiteLLM pings all cold models before responding — can take 30–60 s)
-            suffix = "  [yellow][/health slow — cold model ping][/yellow]" if dr.kind == _EK.HEALTH_SLOW else ""
+            suffix = "  [yellow](health slow — cold model ping, inference OK)[/yellow]" if dr.kind == _EK.HEALTH_SLOW else ""
             ok("LiteLLM proxy",
                f"Reachable at {litelm_url}{suffix}  "
                f"(chat={litelm_chat}, embed={litelm_emb})")
