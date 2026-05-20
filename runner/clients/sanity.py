@@ -295,8 +295,11 @@ def fetch_registry_status_overview(config: Config) -> dict:
         '|order(_type asc, coalesce(term, name, tactic, practice, tag) asc)'
         '{ _id, _type, "label": coalesce(term, name, tactic, practice, tag), '
         'status, registryStatus, category, proposedCluster, function, '
+        '"sourceDocuments": sourceDocuments[]{ "docRef": _ref }, '
+        '"approvedDocRef": approvedFromDocument._ref, '
         '"evidenceTotal": count(evidenceDossier[]), '
-        '"evidenceConfirmed": count(evidenceDossier[confirmed == true]) }'
+        '"evidenceConfirmed": count(evidenceDossier[confirmed == true]), '
+        '"evidenceDossier": evidenceDossier[]{ _key, "docRef": documentRef._ref, excerpt, exactQuote, confirmed } }'
     )
     rows = _query(query, config)
     return summarize_registry_status(rows)
@@ -314,13 +317,23 @@ def summarize_registry_status(rows: list[dict]) -> dict:
         "evidence_total": 0,
         "evidence_confirmed": 0,
         "evidence_pending": 0,
+        "lexicon_evidence_total": 0,
+        "lexicon_evidence_confirmed": 0,
+        "lexicon_evidence_pending": 0,
+        "records_with_document_evidence": 0,
         "review_rows": [],
     }
     by_type: dict[str, dict] = {}
     for row in rows:
         schema_type = row.get("_type") or "unknown"
         state = registry_validation_state(row)
-        row_with_state = {**row, "validationState": state}
+        document_refs = registry_document_refs(row)
+        row_with_state = {
+            **row,
+            "validationState": state,
+            "documentRefs": document_refs,
+            "hasDocumentEvidence": bool(document_refs),
+        }
         if schema_type not in by_type:
             by_type[schema_type] = {
                 "label": REGISTRY_TYPE_LABELS.get(schema_type, schema_type),
@@ -345,9 +358,17 @@ def summarize_registry_status(rows: list[dict]) -> dict:
         evidence_confirmed = int(row.get("evidenceConfirmed") or 0)
         summary["evidence_total"] += evidence_total
         summary["evidence_confirmed"] += evidence_confirmed
+        if schema_type == "lexiconEntry":
+            summary["lexicon_evidence_total"] += evidence_total
+            summary["lexicon_evidence_confirmed"] += evidence_confirmed
+        if document_refs:
+            summary["records_with_document_evidence"] += 1
 
     summary["evidence_pending"] = max(
         0, summary["evidence_total"] - summary["evidence_confirmed"]
+    )
+    summary["lexicon_evidence_pending"] = max(
+        0, summary["lexicon_evidence_total"] - summary["lexicon_evidence_confirmed"]
     )
     summary["by_type"] = {
         schema_type: {
@@ -357,6 +378,37 @@ def summarize_registry_status(rows: list[dict]) -> dict:
         for schema_type, bucket in by_type.items()
     }
     return summary
+
+
+def registry_document_refs(row: dict) -> list[str]:
+    """Return unique corpus document refs that support a registry row."""
+    refs: list[str] = []
+
+    for source in row.get("sourceDocuments") or []:
+        if isinstance(source, dict):
+            ref = source.get("docRef") or source.get("_ref")
+        else:
+            ref = ""
+        if ref:
+            refs.append(ref)
+
+    approved_ref = row.get("approvedDocRef")
+    if approved_ref:
+        refs.append(approved_ref)
+
+    for evidence in row.get("evidenceDossier") or []:
+        ref = evidence.get("docRef") if isinstance(evidence, dict) else ""
+        if ref:
+            refs.append(ref)
+
+    unique_refs = []
+    seen = set()
+    for ref in refs:
+        cleaned = str(ref).replace("doc-", "")
+        if cleaned and cleaned not in seen:
+            seen.add(cleaned)
+            unique_refs.append(cleaned)
+    return unique_refs
 
 
 def registry_validation_state(row: dict) -> str:

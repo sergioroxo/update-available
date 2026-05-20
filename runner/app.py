@@ -4284,8 +4284,12 @@ def _render_registry_status_overview(config) -> None:
     c2.metric("Needs validation", overview.get("needs_review", 0))
     c3.metric("Deprecated / rejected", overview.get("deprecated", 0))
     c4.metric(
-        "Evidence confirmed",
-        f"{overview.get('evidence_confirmed', 0)}/{overview.get('evidence_total', 0)}",
+        "Lexicon evidence confirmed",
+        f"{overview.get('lexicon_evidence_confirmed', 0)}/{overview.get('lexicon_evidence_total', 0)}",
+    )
+    st.caption(
+        f"{overview.get('records_with_document_evidence', 0)} registry record(s) have linked corpus-document evidence. "
+        "Registry validation confirms the canonical record; lexicon evidence confirmation separately checks each quoted usage."
     )
 
     type_order = [
@@ -4309,6 +4313,9 @@ def _render_registry_status_overview(config) -> None:
                 "validated": states.get("validated", 0),
                 "needs_validation": states.get("needs_review", 0),
                 "deprecated": states.get("deprecated", 0),
+                "with_document_evidence": sum(
+                    1 for row in bucket.get("rows", []) if row.get("hasDocumentEvidence")
+                ),
             }
         )
     if rows:
@@ -4319,8 +4326,9 @@ def _render_registry_status_overview(config) -> None:
         with st.expander(f"Needs validation queue ({len(review_rows)})"):
             st.caption(
                 "This queue covers lexicon terms, entity records, tactics, practices, and tag registry rows. "
-                "Confirming here changes the Sanity registry status; lexicon evidence records still have "
-                "their own per-document confirmation buttons in the Sanity Lexicon tab."
+                "The source/evidence lines show which corpus document supports a row. "
+                "Validating here changes the canonical registry status; lexicon evidence records still have "
+                "per-document confirmation buttons in the Sanity Lexicon tab."
             )
             filter_options = ["All"] + [
                 bucket["label"]
@@ -4367,13 +4375,41 @@ def _render_registry_validation_row(row: dict, config) -> None:
     meta = f"{_registry_type_label(schema_type)} | status: {status} | registry: {registry_status}"
     if evidence_total:
         meta += f" | evidence: {evidence_confirmed}/{evidence_total}"
+    document_refs = row.get("documentRefs") or []
+    requires_document_evidence = schema_type in {
+        "lexiconEntry",
+        "organization",
+        "person",
+        "tacticEntry",
+        "practiceEntry",
+    }
+    can_validate = bool(document_refs) or not requires_document_evidence
+    action_label = "Validate term" if schema_type == "lexiconEntry" else "Validate record"
 
     row_col, action_col = st.columns([5, 1])
     with row_col:
         st.markdown(f"**{label}**")
         st.caption(meta)
+        if document_refs:
+            st.markdown(
+                "**Source document(s):** "
+                + ", ".join(f"`{ref}`" for ref in document_refs[:6])
+                + (" ..." if len(document_refs) > 6 else "")
+            )
+        elif requires_document_evidence:
+            st.caption("No linked corpus document/evidence is recorded yet; validate after adding a source document.")
+        _render_registry_evidence_preview(row)
     with action_col:
-        if st.button("Validate", key=f"validate_registry_{sanity_id}"):
+        if st.button(
+            action_label,
+            key=f"validate_registry_{sanity_id}",
+            disabled=not can_validate,
+            help=(
+                "Requires at least one linked corpus document/evidence record."
+                if not can_validate
+                else "Mark this Sanity registry row as researcher-validated."
+            ),
+        ):
             try:
                 from runner.clients.sanity import patch_registry_validation
 
@@ -4385,6 +4421,30 @@ def _render_registry_validation_row(row: dict, config) -> None:
                 st.rerun()
             except Exception as exc:
                 st.error(f"Could not validate {label}: {exc}")
+
+
+def _render_registry_evidence_preview(row: dict) -> None:
+    evidence_rows = row.get("evidenceDossier") or []
+    if not evidence_rows:
+        return
+    with st.expander("Evidence preview", expanded=False):
+        for evidence in evidence_rows[:5]:
+            doc_ref = (evidence.get("docRef") or "").replace("doc-", "")
+            quote = evidence.get("exactQuote") or evidence.get("excerpt") or ""
+            confirmed = evidence.get("confirmed")
+            confirmed_label = (
+                "confirmed"
+                if confirmed is True
+                else "pending"
+                if confirmed is False
+                else "not separately confirmed"
+            )
+            prefix = f"`{doc_ref}` | {confirmed_label}" if doc_ref else confirmed_label
+            st.caption(prefix)
+            if quote:
+                st.markdown(f"> {quote[:500]}")
+        if len(evidence_rows) > 5:
+            st.caption(f"{len(evidence_rows) - 5} more evidence record(s) not shown.")
 
 
 def page_lexicon():

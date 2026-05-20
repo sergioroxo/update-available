@@ -199,6 +199,10 @@ def test_summarize_registry_status_counts_all_registry_types():
                 "status": "validated",
                 "evidenceTotal": 2,
                 "evidenceConfirmed": 1,
+                "evidenceDossier": [
+                    {"docRef": "doc-one", "confirmed": True},
+                    {"docRef": "doc-two", "confirmed": False},
+                ],
             },
             {
                 "_id": "lexicon-b",
@@ -207,12 +211,14 @@ def test_summarize_registry_status_counts_all_registry_types():
                 "status": "draft",
                 "evidenceTotal": 1,
                 "evidenceConfirmed": 0,
+                "evidenceDossier": [{"docRef": "doc-three", "confirmed": False}],
             },
             {
                 "_id": "organization-c",
                 "_type": "organization",
                 "label": "C",
                 "registryStatus": "under_investigation",
+                "sourceDocuments": [{"docRef": "doc-four"}],
             },
             {
                 "_id": "person-d",
@@ -226,6 +232,7 @@ def test_summarize_registry_status_counts_all_registry_types():
                 "label": "E",
                 "status": "draft",
                 "registryStatus": "confirmed",
+                "approvedDocRef": "doc-five",
             },
             {
                 "_id": "practice-f",
@@ -249,10 +256,15 @@ def test_summarize_registry_status_counts_all_registry_types():
     assert overview["evidence_total"] == 3
     assert overview["evidence_confirmed"] == 1
     assert overview["evidence_pending"] == 2
+    assert overview["lexicon_evidence_total"] == 3
+    assert overview["lexicon_evidence_confirmed"] == 1
+    assert overview["lexicon_evidence_pending"] == 2
+    assert overview["records_with_document_evidence"] == 4
     assert overview["by_type"]["lexiconEntry"]["states"] == {
         "validated": 1,
         "needs_review": 1,
     }
+    assert overview["by_type"]["organization"]["rows"][0]["documentRefs"] == ["four"]
     assert {row["_id"] for row in overview["review_rows"]} == {
         "lexicon-b",
         "organization-c",
