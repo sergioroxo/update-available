@@ -843,6 +843,9 @@ def _normalize_enrichment_payload(data: dict) -> dict:
         item["action"] = _enum(item.get("action"), _ENTITY_ACTIONS, "add_new")
         item["entity_type"] = _enum(item.get("entity_type"), _ENTITY_TYPES, "organization")
         item["name"] = _as_string(item.get("name"))
+        item["self_description"] = _as_string(item.get("self_description"))
+        item["evidence_quote"] = _as_string(item.get("evidence_quote"))
+        item["role_in_sogice"] = _as_string(item.get("role_in_sogice"))
         for key in (
             "activities_stated",
             "geographic_scope",

@@ -69,3 +69,36 @@ def test_enrichment_validate_response_reports_validation_details():
     message = str(excinfo.value)
     assert "Validation details" in message
     assert "model_confidence" in message
+
+
+def test_enrichment_validate_response_accepts_null_entity_text_fields():
+    raw = """
+    {
+      "entity_proposals": [
+        {
+          "action": "add_new",
+          "entity_type": "organization",
+          "name": "Political Network for Values",
+          "self_description": null,
+          "evidence_quote": null,
+          "role_in_sogice": null,
+          "activities_stated": ["Organizing Transatlantic Summits"],
+          "geographic_scope": ["Europe"],
+          "network_connections": [
+            {
+              "entity_name": "Alliance Defending Freedom",
+              "connection_type": "partner",
+              "evidence_quote": "ADF appeared at the summit."
+            }
+          ]
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    entity = result.entity_proposals[0]
+    assert entity.self_description == ""
+    assert entity.evidence_quote == ""
+    assert entity.role_in_sogice == ""
