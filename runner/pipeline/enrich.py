@@ -45,6 +45,89 @@ _PROMPT_FILE = (
 
 _SYSTEM_PROMPT: str | None = None
 
+_LEXICON_ACTIONS = {"add_new", "add_variant", "add_evidence", "add_definition", "merge_into"}
+_LEXICON_CLUSTERS = {
+    "SSA-Rhetoric",
+    "Pastoral-Coercion",
+    "Pseudo-Science",
+    "Policy-Resistance",
+    "Anti-Trans/ROGD",
+    "Anti-Gender",
+    "Pro-Trans-SOGICE",
+    "Non-SOGICE",
+    "Unknown",
+}
+_LEXICON_FUNCTIONS = {
+    "Slur",
+    "Euphemism",
+    "Conspiracy",
+    "Pseudo-Diagnostic",
+    "Identity-Policing",
+    "Moral-Purity Frame",
+    "Political Slogan",
+    "Recruitment Frame",
+    "Pastoral Rhetoric",
+    "Disinformation Narrative",
+    "Promotional Recruitment",
+    "Testimonial Marketing",
+    "Unknown",
+}
+_LEXICON_FUNCTION_ALIASES = {
+    value.replace(" ", "-"): value
+    for value in _LEXICON_FUNCTIONS
+    if " " in value
+}
+_USAGE_REGISTERS = {
+    "promotional",
+    "defensive",
+    "euphemistic",
+    "clinical",
+    "legal",
+    "conspiratorial",
+    "testimonial",
+    "neutral",
+}
+_TERM_RELATIONSHIPS = {
+    "synonym_of",
+    "successor_to",
+    "euphemism_for",
+    "derived_from",
+    "translates_to",
+    "co_occurs_with",
+    "contrasts_with",
+}
+_ENTITY_ACTIONS = {"add_new", "enrich_existing"}
+_ENTITY_TYPES = {"organization", "person"}
+_NETWORK_CONNECTIONS = {
+    "partner",
+    "funds",
+    "funded_by",
+    "affiliate",
+    "parent_org",
+    "child_org",
+    "legal_defense",
+    "training_provider",
+    "media_outlet",
+    "co-signatory",
+    "opposes",
+}
+_TACTIC_LEVELS = {"structural", "sub-tactic", "campaign"}
+_INGESTION_SOURCE_TYPES = {"pdf", "url", "video", "audio", "unknown"}
+_PRIORITIES = {"high", "medium", "low"}
+_CORPUS_CONNECTION_TYPES = {
+    "same_organization",
+    "same_event",
+    "same_individual",
+    "cites",
+    "cited_by",
+    "same_tactic",
+    "same_term",
+    "contradicts",
+    "sequel_to",
+    "precedes",
+}
+_HARM_STANCES = {"denied", "minimized", "reframed", "acknowledged", "not_mentioned"}
+
 
 def _load_system_prompt() -> str:
     global _SYSTEM_PROMPT
@@ -658,22 +741,199 @@ def _fetch_entity_registry(config: Config) -> list[dict]:
 # Response validation
 # ---------------------------------------------------------------------------
 
+def _first_json_object(text: str) -> dict | None:
+    """Return the first complete JSON object in text.
+
+    A regex like ``{.*}`` is brittle with LLM output because it greedily grabs
+    explanatory text after the object, or braces inside prose. The decoder can
+    stop at the exact end of the first complete object.
+    """
+    cleaned = re.sub(r"^```(?:json)?\s*", "", text.strip())
+    cleaned = re.sub(r"\s*```$", "", cleaned.strip())
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"\{", cleaned):
+        try:
+            data, _end = decoder.raw_decode(cleaned[match.start():])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict):
+            return data
+    return None
+
+
+def _as_string(value, default: str = "") -> str:
+    if value is None:
+        return default
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
+def _as_string_list(value) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [_as_string(item).strip() for item in value if _as_string(item).strip()]
+    text = _as_string(value).strip()
+    return [text] if text else []
+
+
+def _as_object_list(value) -> list[dict]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def _enum(value, allowed: set[str], default: str, aliases: dict[str, str] | None = None) -> str:
+    text = _as_string(value, default).strip()
+    if aliases and text in aliases:
+        text = aliases[text]
+    return text if text in allowed else default
+
+
+def _normalize_enrichment_payload(data: dict) -> dict:
+    """Make common LLM schema drift reviewable instead of fatal.
+
+    Enrichment proposals are not final facts; they are queued for researcher
+    review. When a model invents a near-miss enum value, prefer preserving the
+    proposal with a conservative default over dropping the whole enrichment run.
+    """
+    normalized = dict(data)
+    for key in (
+        "lexicon_proposals",
+        "entity_proposals",
+        "tactic_proposals",
+        "ingestion_queue",
+        "corpus_connections",
+        "practice_descriptions",
+        "statistical_claims",
+    ):
+        normalized[key] = _as_object_list(normalized.get(key, []))
+
+    for item in normalized["lexicon_proposals"]:
+        item["action"] = _enum(item.get("action"), _LEXICON_ACTIONS, "add_new")
+        item["term"] = _as_string(item.get("term"))
+        item["language"] = _as_string(item.get("language"), "en") or "en"
+        item["proposed_cluster"] = _enum(item.get("proposed_cluster"), _LEXICON_CLUSTERS, "Unknown")
+        item["function"] = _enum(
+            item.get("function"),
+            _LEXICON_FUNCTIONS,
+            "Unknown",
+            aliases=_LEXICON_FUNCTION_ALIASES,
+        )
+        register_value = item.get("usage_register", item.get("register"))
+        item["register"] = _enum(register_value, _USAGE_REGISTERS, "neutral")
+        item["exact_quote"] = _as_string(item.get("exact_quote"))
+        item["definition_as_used"] = _as_string(item.get("definition_as_used"))
+        item["variants"] = _as_object_list(item.get("variants"))
+        item["co_occurring_terms"] = _as_string_list(item.get("co_occurring_terms"))
+        relationships = []
+        for relationship in _as_object_list(item.get("relationships")):
+            relationship["existing_term"] = _as_string(relationship.get("existing_term"))
+            relationship["relationship"] = _enum(
+                relationship.get("relationship"),
+                _TERM_RELATIONSHIPS,
+                "co_occurs_with",
+            )
+            relationship["evidence"] = _as_string(relationship.get("evidence"))
+            relationships.append(relationship)
+        item["relationships"] = relationships
+
+    for item in normalized["entity_proposals"]:
+        item["action"] = _enum(item.get("action"), _ENTITY_ACTIONS, "add_new")
+        item["entity_type"] = _enum(item.get("entity_type"), _ENTITY_TYPES, "organization")
+        item["name"] = _as_string(item.get("name"))
+        for key in (
+            "activities_stated",
+            "geographic_scope",
+            "legal_entities_mentioned",
+            "claims_made",
+            "affiliated_orgs",
+        ):
+            item[key] = _as_string_list(item.get(key))
+        item["network_connections"] = _as_object_list(item.get("network_connections"))
+        for connection in item["network_connections"]:
+            connection["entity_name"] = _as_string(connection.get("entity_name"))
+            connection["connection_type"] = _enum(
+                connection.get("connection_type"),
+                _NETWORK_CONNECTIONS,
+                "partner",
+            )
+            connection["evidence_quote"] = _as_string(connection.get("evidence_quote"))
+        item["key_individuals"] = _as_object_list(item.get("key_individuals"))
+        for person in item["key_individuals"]:
+            person["name"] = _as_string(person.get("name"))
+            person["role"] = _as_string(person.get("role"))
+            person["quote"] = _as_string(person.get("quote"))
+
+    for item in normalized["tactic_proposals"]:
+        item["action"] = _enum(item.get("action"), _ENTITY_ACTIONS, "add_new")
+        item["tactic"] = _as_string(item.get("tactic"))
+        item["tactic_level"] = _enum(item.get("tactic_level"), _TACTIC_LEVELS, "structural")
+
+    normalized["ingestion_queue"] = [
+        item
+        for item in normalized["ingestion_queue"]
+        if _as_string(item.get("url")).strip()
+    ]
+    for item in normalized["ingestion_queue"]:
+        item["url"] = _as_string(item.get("url"))
+        item["source_type"] = _enum(item.get("source_type"), _INGESTION_SOURCE_TYPES, "unknown")
+        item["priority"] = _enum(item.get("priority"), _PRIORITIES, "medium")
+
+    normalized["corpus_connections"] = [
+        item
+        for item in normalized["corpus_connections"]
+        if _as_string(item.get("doc_id")).strip() and _as_string(item.get("shared_element")).strip()
+    ]
+    for item in normalized["corpus_connections"]:
+        item["doc_id"] = _as_string(item.get("doc_id"))
+        item["connection_type"] = _enum(
+            item.get("connection_type"),
+            _CORPUS_CONNECTION_TYPES,
+            "same_term",
+        )
+        item["shared_element"] = _as_string(item.get("shared_element"))
+
+    normalized["practice_descriptions"] = [
+        item
+        for item in normalized["practice_descriptions"]
+        if _as_string(item.get("practice_id")).strip() and _as_string(item.get("exact_description")).strip()
+    ]
+    for item in normalized["practice_descriptions"]:
+        item["practice_id"] = _as_string(item.get("practice_id"))
+        item["exact_description"] = _as_string(item.get("exact_description"))
+        item["harm_stance"] = _enum(item.get("harm_stance"), _HARM_STANCES, "not_mentioned")
+
+    normalized["statistical_claims"] = [
+        item
+        for item in normalized["statistical_claims"]
+        if _as_string(item.get("claim")).strip()
+    ]
+    for item in normalized["statistical_claims"]:
+        item["claim"] = _as_string(item.get("claim"))
+        item["source_cited"] = _as_string(item.get("source_cited"))
+        item["context"] = _as_string(item.get("context"))
+
+    return normalized
+
+
 def _validate_response(doc_id: str, raw: str, llm: str) -> EnrichmentResult:
     original = raw.strip()
+    validation_errors: list[str] = []
 
     def _try(text: str) -> EnrichmentResult | None:
-        text = re.sub(r"^```(?:json)?\s*", "", text.strip())
-        text = re.sub(r"\s*```$", "", text.strip())
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if not m:
+        data = _first_json_object(text)
+        if data is None:
             return None
         try:
-            data = json.loads(m.group(0))
             data["doc_id"] = doc_id
             data["enrichment_model"] = llm
             data["enrichment_prompt_version"] = PROMPT_VERSION
+            data = _normalize_enrichment_payload(data)
             return EnrichmentResult.model_validate(data)
-        except Exception:
+        except Exception as exc:
+            validation_errors.append(str(exc))
             return None
 
     # Try outside think tags first
@@ -693,7 +953,11 @@ def _validate_response(doc_id: str, raw: str, llm: str) -> EnrichmentResult:
     if result:
         return result
 
+    detail = ""
+    if validation_errors:
+        detail = "\nValidation details:\n" + "\n---\n".join(validation_errors[-3:])
     raise ValueError(
         f"Could not extract valid EnrichmentResult JSON.\n"
+        f"{detail}\n"
         f"Raw response (first 2 000 chars): {original[:2000]}"
     )
