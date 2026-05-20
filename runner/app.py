@@ -4262,6 +4262,131 @@ def _render_sanity_lexicon_tab(config) -> None:
                     st.divider()
 
 
+def _render_registry_status_overview(config) -> None:
+    """Show validation status across all Sanity registry schemas."""
+    st.subheader("Sanity Registry Status")
+    try:
+        from runner.clients.sanity import fetch_registry_status_overview
+
+        if st.button("Refresh registry status", key="registry_status_refresh"):
+            st.session_state.pop("registry_status_overview", None)
+            st.session_state.pop("lexicon_terms", None)
+            st.session_state.pop("entity_registry", None)
+        if "registry_status_overview" not in st.session_state:
+            st.session_state.registry_status_overview = fetch_registry_status_overview(config)
+        overview = st.session_state.registry_status_overview
+    except Exception as exc:
+        st.caption(f"Could not load registry status from Sanity: {exc}")
+        return
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Validated / confirmed", overview.get("validated", 0))
+    c2.metric("Needs validation", overview.get("needs_review", 0))
+    c3.metric("Deprecated / rejected", overview.get("deprecated", 0))
+    c4.metric(
+        "Evidence confirmed",
+        f"{overview.get('evidence_confirmed', 0)}/{overview.get('evidence_total', 0)}",
+    )
+
+    type_order = [
+        "lexiconEntry",
+        "organization",
+        "person",
+        "tacticEntry",
+        "practiceEntry",
+        "tagRegistry",
+    ]
+    rows = []
+    for schema_type in type_order:
+        bucket = overview.get("by_type", {}).get(schema_type)
+        if not bucket:
+            continue
+        states = bucket.get("states", {})
+        rows.append(
+            {
+                "registry": bucket.get("label", schema_type),
+                "total": bucket.get("total", 0),
+                "validated": states.get("validated", 0),
+                "needs_validation": states.get("needs_review", 0),
+                "deprecated": states.get("deprecated", 0),
+            }
+        )
+    if rows:
+        st.dataframe(rows, width="stretch", hide_index=True)
+
+    review_rows = overview.get("review_rows", [])
+    if review_rows:
+        with st.expander(f"Needs validation queue ({len(review_rows)})"):
+            st.caption(
+                "This queue covers lexicon terms, entity records, tactics, practices, and tag registry rows. "
+                "Confirming here changes the Sanity registry status; lexicon evidence records still have "
+                "their own per-document confirmation buttons in the Sanity Lexicon tab."
+            )
+            filter_options = ["All"] + [
+                bucket["label"]
+                for key in type_order
+                if (bucket := overview.get("by_type", {}).get(key))
+            ]
+            selected = st.selectbox(
+                "Registry type",
+                filter_options,
+                key="registry_validation_filter",
+            )
+            visible = review_rows
+            if selected != "All":
+                visible = [
+                    row
+                    for row in visible
+                    if _registry_type_label(row.get("_type", "")) == selected
+                ]
+            for row in visible[:100]:
+                _render_registry_validation_row(row, config)
+            if len(visible) > 100:
+                st.caption(f"Showing first 100 of {len(visible)} records. Use Sanity Studio for bulk cleanup.")
+
+
+def _registry_type_label(schema_type: str) -> str:
+    return {
+        "lexiconEntry": "Lexicon",
+        "organization": "Organizations",
+        "person": "People",
+        "tacticEntry": "Tactics",
+        "practiceEntry": "Practices",
+        "tagRegistry": "Tags",
+    }.get(schema_type, schema_type or "Unknown")
+
+
+def _render_registry_validation_row(row: dict, config) -> None:
+    sanity_id = row.get("_id", "")
+    schema_type = row.get("_type", "")
+    label = row.get("label") or sanity_id or "Untitled"
+    status = row.get("status") or "-"
+    registry_status = row.get("registryStatus") or "-"
+    evidence_total = int(row.get("evidenceTotal") or 0)
+    evidence_confirmed = int(row.get("evidenceConfirmed") or 0)
+    meta = f"{_registry_type_label(schema_type)} | status: {status} | registry: {registry_status}"
+    if evidence_total:
+        meta += f" | evidence: {evidence_confirmed}/{evidence_total}"
+
+    row_col, action_col = st.columns([5, 1])
+    with row_col:
+        st.markdown(f"**{label}**")
+        st.caption(meta)
+    with action_col:
+        if st.button("Validate", key=f"validate_registry_{sanity_id}"):
+            try:
+                from runner.clients.sanity import patch_registry_validation
+
+                patch_registry_validation(sanity_id, schema_type, config)
+                st.session_state.pop("registry_status_overview", None)
+                st.session_state.pop("lexicon_terms", None)
+                st.session_state.pop("entity_registry", None)
+                st.success(f"Validated {label}.")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Could not validate {label}: {exc}")
+
+
 def page_lexicon():
     st.title("Lexicon")
 
@@ -4270,30 +4395,7 @@ def page_lexicon():
         st.error("Could not load config. Check runner/.env.")
         return
 
-    # ── Lexicon status at a glance ───────────────────────────────────────────
-    st.subheader("Lexicon Status")
-    try:
-        from runner.clients.sanity import fetch_lexicon_terms
-        all_terms = fetch_lexicon_terms(config)
-        approved = [t for t in all_terms if t.get("status") == "approved"]
-        draft    = [t for t in all_terms if t.get("status") in ("draft", "candidate", "pending", "")]
-        rejected = [t for t in all_terms if t.get("status") == "rejected"]
-
-        lc1, lc2, lc3 = st.columns(3)
-        lc1.metric("✅ Approved", len(approved))
-        lc2.metric("📋 Draft / pending", len(draft))
-        lc3.metric("❌ Rejected", len(rejected))
-
-        if approved:
-            with st.expander(f"Approved terms ({len(approved)}) — injected into every analysis prompt"):
-                for t in sorted(approved, key=lambda x: x.get("term", "")):
-                    st.write(f"- **{t.get('term', '?')}** — {(t.get('draftDefinition') or '')[:100]}")
-        if draft:
-            with st.expander(f"Draft / pending ({len(draft)}) — visible to model as candidates"):
-                for t in sorted(draft, key=lambda x: x.get("term", "")):
-                    st.write(f"- {t.get('term', '?')}")
-    except Exception as _lex_e:
-        st.caption(f"Could not load lexicon status from Sanity: {_lex_e}")
+    _render_registry_status_overview(config)
 
     st.info(
         "Analysis and enrichment fetch current Sanity lexicon/registry data at run time. "

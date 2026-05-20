@@ -189,6 +189,120 @@ def test_confirm_lexicon_context_patches_one_evidence_item(monkeypatch):
     assert patch["set"]['evidenceDossier[_key=="evidence-doc-1-pastoral-care"].confirmedNote'] == "Checked against source text."
 
 
+def test_summarize_registry_status_counts_all_registry_types():
+    overview = sanity.summarize_registry_status(
+        [
+            {
+                "_id": "lexicon-a",
+                "_type": "lexiconEntry",
+                "label": "A",
+                "status": "validated",
+                "evidenceTotal": 2,
+                "evidenceConfirmed": 1,
+            },
+            {
+                "_id": "lexicon-b",
+                "_type": "lexiconEntry",
+                "label": "B",
+                "status": "draft",
+                "evidenceTotal": 1,
+                "evidenceConfirmed": 0,
+            },
+            {
+                "_id": "organization-c",
+                "_type": "organization",
+                "label": "C",
+                "registryStatus": "under_investigation",
+            },
+            {
+                "_id": "person-d",
+                "_type": "person",
+                "label": "D",
+                "registryStatus": "confirmed",
+            },
+            {
+                "_id": "tactic-e",
+                "_type": "tacticEntry",
+                "label": "E",
+                "status": "draft",
+                "registryStatus": "confirmed",
+            },
+            {
+                "_id": "practice-f",
+                "_type": "practiceEntry",
+                "label": "F",
+                "status": "validated",
+                "registryStatus": "confirmed",
+            },
+            {
+                "_id": "tag-g",
+                "_type": "tagRegistry",
+                "label": "G",
+                "status": "candidate",
+            },
+        ]
+    )
+
+    assert overview["total"] == 7
+    assert overview["validated"] == 3
+    assert overview["needs_review"] == 4
+    assert overview["evidence_total"] == 3
+    assert overview["evidence_confirmed"] == 1
+    assert overview["evidence_pending"] == 2
+    assert overview["by_type"]["lexiconEntry"]["states"] == {
+        "validated": 1,
+        "needs_review": 1,
+    }
+    assert {row["_id"] for row in overview["review_rows"]} == {
+        "lexicon-b",
+        "organization-c",
+        "tactic-e",
+        "tag-g",
+    }
+
+
+def test_patch_registry_validation_uses_schema_specific_fields(monkeypatch):
+    calls = []
+
+    def fake_mutate(mutations, config):
+        calls.append(mutations)
+        return {"results": [{"id": mutations[0]["patch"]["id"]}]}
+
+    monkeypatch.setattr(sanity, "_mutate", fake_mutate)
+
+    sanity.patch_registry_validation("lexicon-a", "lexiconEntry", _Config())
+    sanity.patch_registry_validation("organization-b", "organization", _Config())
+    sanity.patch_registry_validation("tactic-c", "tacticEntry", _Config())
+    sanity.patch_registry_validation("practice-d", "practiceEntry", _Config())
+    sanity.patch_registry_validation("tag-e", "tagRegistry", _Config())
+
+    lexicon_set = calls[0][0]["patch"]["set"]
+    org_set = calls[1][0]["patch"]["set"]
+    tactic_set = calls[2][0]["patch"]["set"]
+    practice_set = calls[3][0]["patch"]["set"]
+    tag_set = calls[4][0]["patch"]["set"]
+
+    assert lexicon_set["status"] == "validated"
+    assert lexicon_set["approvedBy"] == "researcher"
+    assert org_set == {"registryStatus": "confirmed"}
+    assert tactic_set["status"] == "validated"
+    assert tactic_set["registryStatus"] == "confirmed"
+    assert practice_set["status"] == "validated"
+    assert practice_set["registryStatus"] == "confirmed"
+    assert tag_set == {"status": "active"}
+
+
+def test_patch_registry_validation_rejects_unknown_schema_type(monkeypatch):
+    monkeypatch.setattr(sanity, "_mutate", lambda *args, **kwargs: None)
+
+    try:
+        sanity.patch_registry_validation("x", "unknownType", _Config())
+    except ValueError as exc:
+        assert "unsupported registry type" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for unsupported registry type")
+
+
 def test_approved_network_suggestion_writes_organization(monkeypatch):
     calls = []
 

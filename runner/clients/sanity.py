@@ -5,6 +5,7 @@ Reference: https://www.sanity.io/docs/http-mutations
 Writes use the /mutate endpoint.
 """
 from __future__ import annotations
+from collections import Counter
 from datetime import datetime, timezone
 import json
 import re
@@ -275,6 +276,152 @@ def confirm_lexicon_context(
         return result["results"][0]["id"]
     except (KeyError, IndexError):
         raise RuntimeError(f"Unexpected Sanity response for lexicon confirmation:\n{result}")
+
+
+REGISTRY_TYPE_LABELS = {
+    "lexiconEntry": "Lexicon",
+    "organization": "Organizations",
+    "person": "People",
+    "tacticEntry": "Tactics",
+    "practiceEntry": "Practices",
+    "tagRegistry": "Tags",
+}
+
+
+def fetch_registry_status_overview(config: Config) -> dict:
+    """Fetch Sanity vocabulary/registry items and summarize validation state."""
+    query = (
+        '*[_type in ["lexiconEntry","organization","person","tacticEntry","practiceEntry","tagRegistry"]]'
+        '|order(_type asc, coalesce(term, name, tactic, practice, tag) asc)'
+        '{ _id, _type, "label": coalesce(term, name, tactic, practice, tag), '
+        'status, registryStatus, category, proposedCluster, function, '
+        '"evidenceTotal": count(evidenceDossier[]), '
+        '"evidenceConfirmed": count(evidenceDossier[confirmed == true]) }'
+    )
+    rows = _query(query, config)
+    return summarize_registry_status(rows)
+
+
+def summarize_registry_status(rows: list[dict]) -> dict:
+    """Return stable counts and review queues for registry rows."""
+    summary = {
+        "rows": rows,
+        "total": len(rows),
+        "by_type": {},
+        "validated": 0,
+        "needs_review": 0,
+        "deprecated": 0,
+        "evidence_total": 0,
+        "evidence_confirmed": 0,
+        "evidence_pending": 0,
+        "review_rows": [],
+    }
+    by_type: dict[str, dict] = {}
+    for row in rows:
+        schema_type = row.get("_type") or "unknown"
+        state = registry_validation_state(row)
+        row_with_state = {**row, "validationState": state}
+        if schema_type not in by_type:
+            by_type[schema_type] = {
+                "label": REGISTRY_TYPE_LABELS.get(schema_type, schema_type),
+                "total": 0,
+                "states": Counter(),
+                "rows": [],
+            }
+        bucket = by_type[schema_type]
+        bucket["total"] += 1
+        bucket["states"][state] += 1
+        bucket["rows"].append(row_with_state)
+
+        if state == "validated":
+            summary["validated"] += 1
+        elif state == "deprecated":
+            summary["deprecated"] += 1
+        else:
+            summary["needs_review"] += 1
+            summary["review_rows"].append(row_with_state)
+
+        evidence_total = int(row.get("evidenceTotal") or 0)
+        evidence_confirmed = int(row.get("evidenceConfirmed") or 0)
+        summary["evidence_total"] += evidence_total
+        summary["evidence_confirmed"] += evidence_confirmed
+
+    summary["evidence_pending"] = max(
+        0, summary["evidence_total"] - summary["evidence_confirmed"]
+    )
+    summary["by_type"] = {
+        schema_type: {
+            **bucket,
+            "states": dict(bucket["states"]),
+        }
+        for schema_type, bucket in by_type.items()
+    }
+    return summary
+
+
+def registry_validation_state(row: dict) -> str:
+    """Map each Sanity registry schema onto one shared UI validation state."""
+    schema_type = row.get("_type")
+    status = (row.get("status") or "").strip()
+    registry_status = (row.get("registryStatus") or "").strip()
+
+    if schema_type == "lexiconEntry":
+        if status == "validated":
+            return "validated"
+        if status == "rejected":
+            return "deprecated"
+        return "needs_review"
+    if schema_type in {"organization", "person"}:
+        if registry_status == "confirmed":
+            return "validated"
+        return "needs_review"
+    if schema_type in {"tacticEntry", "practiceEntry"}:
+        if status == "deprecated" or registry_status == "deprecated":
+            return "deprecated"
+        if status == "validated":
+            return "validated"
+        return "needs_review"
+    if schema_type == "tagRegistry":
+        if status == "active":
+            return "validated"
+        if status == "deprecated":
+            return "deprecated"
+        return "needs_review"
+    return "needs_review"
+
+
+def patch_registry_validation(
+    sanity_id: str,
+    schema_type: str,
+    config: Config,
+) -> str:
+    """Mark a Sanity registry record as researcher-validated.
+
+    Each registry schema uses slightly different status fields. This helper keeps
+    the UI from needing to know those schema details.
+    """
+    now_iso = datetime.now(timezone.utc).isoformat()
+    if schema_type == "lexiconEntry":
+        set_fields = {"status": "validated", "approvedBy": "researcher", "approvedAt": now_iso}
+    elif schema_type in {"organization", "person"}:
+        set_fields = {"registryStatus": "confirmed"}
+    elif schema_type in {"tacticEntry", "practiceEntry"}:
+        set_fields = {
+            "status": "validated",
+            "registryStatus": "confirmed",
+            "approvedBy": "researcher",
+            "approvedAt": now_iso,
+        }
+    elif schema_type == "tagRegistry":
+        set_fields = {"status": "active"}
+    else:
+        raise ValueError(f"Cannot validate unsupported registry type: {schema_type!r}")
+
+    result = _mutate([{"patch": {"id": sanity_id, "set": set_fields}}], config)
+    try:
+        return result["results"][0]["id"]
+    except (KeyError, IndexError):
+        raise RuntimeError(f"Unexpected Sanity response for registry validation:\n{result}")
 
 
 def write_lexicon_draft_from_proposal(
