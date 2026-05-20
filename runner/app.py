@@ -4338,11 +4338,7 @@ def _render_registry_status_overview(config) -> None:
                 "The source/evidence lines show which corpus document supports a row. "
                 "Validating here changes the canonical registry status. Lexicon term/evidence review lives in the Sanity Lexicon tab below."
             )
-            filter_options = ["All"] + [
-                bucket["label"]
-                for key in type_order
-                if (bucket := overview.get("by_type", {}).get(key))
-            ]
+            filter_options = _registry_review_filter_options(review_rows, type_order)
             selected = st.selectbox(
                 "Registry type",
                 filter_options,
@@ -4375,6 +4371,16 @@ def _registry_type_label(schema_type: str) -> str:
         "practiceEntry": "Practices",
         "tagRegistry": "Tags",
     }.get(schema_type, schema_type or "Unknown")
+
+
+def _registry_review_filter_options(review_rows: list[dict], type_order: list[str]) -> list[str]:
+    present_types = {row.get("_type") for row in review_rows}
+    options = [
+        _registry_type_label(schema_type)
+        for schema_type in type_order
+        if schema_type in present_types
+    ]
+    return ["All"] + options
 
 
 def _render_registry_validation_row(row: dict, config, local_matches: list[dict] | None = None) -> None:

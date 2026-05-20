@@ -281,3 +281,19 @@ def test_local_registry_evidence_matches_exact_and_similar():
     assert exact[0]["doc_id"] == "7b76c504"
     assert similar[0]["match"] == "similar"
     assert similar[0]["doc_id"] == "dc0ff39b"
+
+
+def test_registry_review_filter_options_only_include_types_with_rows():
+    from runner.app import _registry_review_filter_options
+
+    options = _registry_review_filter_options(
+        [
+            {"_type": "organization"},
+            {"_type": "person"},
+            {"_type": "tacticEntry"},
+        ],
+        ["organization", "person", "tacticEntry", "practiceEntry", "tagRegistry"],
+    )
+
+    assert options == ["All", "Organizations", "People", "Tactics"]
+    assert "Tags" not in options
