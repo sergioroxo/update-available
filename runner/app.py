@@ -9129,6 +9129,286 @@ def _mr_candidates(doc_id: str, doc_dir: Path, config):
 
 
 # ---------------------------------------------------------------------------
+# Source Queue page
+# ---------------------------------------------------------------------------
+
+def page_source_queue():
+    st.title("📥 Source Queue")
+    st.caption(
+        "Collect candidate URLs before running full ingestion. "
+        "Paste, triage, prioritise, and batch-group sources here — "
+        "then send ready items to **Ingest Workbench** or the CLI."
+    )
+
+    config = _load_config_safe()
+    if config is None:
+        st.error("Config unavailable — check runner/.env.")
+        return
+
+    try:
+        from runner.pipeline.source_queue import (
+            open_db, queue_db_path, add_items_from_text, list_items,
+            update_status, update_priority, update_notes, delete_item,
+            apply_triage_result, queue_stats, batch_groups,
+            VALID_STATUSES, VALID_PRIORITIES,
+        )
+    except ImportError as exc:
+        st.error(f"source_queue module unavailable: {exc}")
+        return
+
+    db_path = queue_db_path(config.corpus_dir)
+    db = open_db(db_path)
+
+    # ── Stats bar ──────────────────────────────────────────────────────────
+    stats = queue_stats(db)
+    by_s = stats["by_status"]
+    cols = st.columns(6)
+    cols[0].metric("Total", stats["total"])
+    cols[1].metric("New", by_s.get("new", 0))
+    cols[2].metric("Triaged", by_s.get("triaged", 0))
+    cols[3].metric("Ready", by_s.get("ready_to_ingest", 0))
+    cols[4].metric("Ingested", by_s.get("ingested", 0))
+    cols[5].metric("Skipped", by_s.get("skipped", 0))
+
+    st.divider()
+
+    # ── Import panel ───────────────────────────────────────────────────────
+    with st.expander("➕ Add sources", expanded=stats["total"] == 0):
+        st.caption(
+            "Paste URLs — one per line, CSV, Zotero RIS (UR  - ...), "
+            "BibTeX (url = {...}), or tab-separated URL\\tTitle."
+        )
+        pasted = st.text_area(
+            "URLs",
+            height=160,
+            placeholder=(
+                "https://www.christianconcern.com/...\n"
+                "https://www.un.org/...\n"
+                "# Lines starting with # are skipped"
+            ),
+            key="sq_paste_box",
+        )
+
+        imp_col1, imp_col2, imp_col3, imp_col4 = st.columns(4)
+        imp_priority = imp_col1.selectbox(
+            "Priority", ["medium", "high", "low", "skip"],
+            key="sq_import_priority",
+        )
+        imp_batch = imp_col2.text_input("Batch group", key="sq_import_batch",
+                                         placeholder="e.g. UN sources")
+        imp_tags = imp_col3.text_input("Tags", key="sq_import_tags",
+                                        placeholder="e.g. sogice,legal")
+        imp_notes = imp_col4.text_input("Notes", key="sq_import_notes",
+                                         placeholder="optional free text")
+
+        if st.button("Add to queue", type="primary", disabled=not pasted.strip()):
+            with st.spinner("Adding…"):
+                added, dup_q, dup_c = add_items_from_text(
+                    db, pasted, config.corpus_dir,
+                    priority=imp_priority,
+                    tags=imp_tags,
+                    batch_group=imp_batch,
+                    notes=imp_notes,
+                )
+            parts = []
+            if added:
+                parts.append(f"✅ {added} added")
+            if dup_c:
+                parts.append(f"🔁 {dup_c} already in corpus (marked ingested)")
+            if dup_q:
+                parts.append(f"⏭ {dup_q} duplicate(s) skipped")
+            if parts:
+                st.success("  ·  ".join(parts))
+            else:
+                st.warning("No valid URLs found in the pasted text.")
+            st.rerun()
+
+    # ── File import ────────────────────────────────────────────────────────
+    with st.expander("📂 Import from file"):
+        st.caption("Upload a .txt, .csv, or Zotero .ris export.")
+        uploaded = st.file_uploader(
+            "Choose file", type=["txt", "csv", "ris", "bib"],
+            key="sq_file_upload",
+        )
+        if uploaded is not None:
+            file_text = uploaded.read().decode("utf-8", errors="ignore")
+            file_batch = st.text_input(
+                "Batch group for this file", key="sq_file_batch",
+                placeholder="e.g. Zotero export May 2026",
+            )
+            if st.button("Import file", key="sq_file_import"):
+                with st.spinner("Importing…"):
+                    added, dup_q, dup_c = add_items_from_text(
+                        db, file_text, config.corpus_dir,
+                        batch_group=file_batch,
+                    )
+                st.success(f"Added {added}  ·  {dup_c} corpus dupes  ·  {dup_q} queue dupes")
+                st.rerun()
+
+    st.divider()
+
+    # ── Filters ────────────────────────────────────────────────────────────
+    filter_cols = st.columns([2, 2, 3, 1])
+    status_filter = filter_cols[0].selectbox(
+        "Status", ["(all)"] + sorted(VALID_STATUSES),
+        key="sq_filter_status",
+    )
+    priority_filter = filter_cols[1].selectbox(
+        "Priority", ["(all)"] + sorted(VALID_PRIORITIES),
+        key="sq_filter_priority",
+    )
+    batches = ["(all)"] + batch_groups(db)
+    batch_filter = filter_cols[2].selectbox("Batch", batches, key="sq_filter_batch")
+    show_limit = filter_cols[3].number_input("Limit", min_value=10, max_value=2000,
+                                              value=200, step=50, key="sq_limit")
+
+    items = list_items(
+        db,
+        status=None if status_filter == "(all)" else status_filter,
+        priority=None if priority_filter == "(all)" else priority_filter,
+        batch_group=None if batch_filter == "(all)" else batch_filter,
+        limit=int(show_limit),
+    )
+
+    if not items:
+        st.info("No items match the current filter.")
+        return
+
+    # ── Bulk triage button ──────────────────────────────────────────────────
+    new_count = sum(1 for i in items if i.status == "new")
+    if new_count:
+        triage_cols = st.columns([3, 1])
+        triage_cols[0].caption(
+            f"{new_count} untriaged item(s) visible. "
+            "Triage fetches each URL and asks the fast model for a routing recommendation."
+        )
+        triage_n = triage_cols[1].number_input(
+            "Max to triage", min_value=1, max_value=50, value=min(new_count, 10),
+            key="sq_triage_n",
+        )
+        if triage_cols[0].button("⚡ Run triage on new items", key="sq_triage_btn"):
+            try:
+                from runner.pipeline import triage as triage_mod
+                new_items = [i for i in items if i.status == "new"][:int(triage_n)]
+                progress = st.progress(0, text="Starting triage…")
+                for idx, item in enumerate(new_items):
+                    progress.progress(
+                        (idx + 1) / len(new_items),
+                        text=f"Triaging {idx + 1}/{len(new_items)}: {item.url[:60]}",
+                    )
+                    try:
+                        snippet, _ = triage_mod.extract_snippet(item.url)
+                        result = triage_mod.run(snippet, config)
+                        apply_triage_result(db, item.id, result)
+                    except Exception as exc:
+                        st.warning(f"Triage failed for {item.id}: {exc}")
+                progress.empty()
+                st.success(f"Triaged {len(new_items)} item(s).")
+                st.rerun()
+            except ImportError as exc:
+                st.error(f"Triage module unavailable: {exc}")
+
+    # ── Queue table ────────────────────────────────────────────────────────
+    _STATUS_EMOJI = {
+        "new": "🆕", "triaged": "🔬", "ready_to_ingest": "✅",
+        "ingested": "📦", "skipped": "⏭",
+    }
+    _PRIO_EMOJI = {"high": "🔴", "medium": "🟡", "low": "⚪", "skip": "⛔"}
+
+    st.caption(f"Showing {len(items)} item(s)")
+
+    for item in items:
+        s_emoji = _STATUS_EMOJI.get(item.status, "")
+        p_emoji = _PRIO_EMOJI.get(item.priority, "")
+        header = (
+            f"{s_emoji} {p_emoji}  "
+            f"**{item.url[:80]}{'…' if len(item.url) > 80 else ''}**"
+        )
+        if item.title:
+            header += f"  ·  {item.title[:50]}"
+        if item.batch_group:
+            header += f"  `{item.batch_group}`"
+
+        with st.expander(header, expanded=False):
+            meta_col, action_col = st.columns([3, 1])
+
+            with meta_col:
+                st.markdown(f"**URL:** {item.url}")
+                row1 = (
+                    f"Status: `{item.status}` · Priority: `{item.priority}` · "
+                    f"Type: `{item.source_type}` · LLM: `{item.recommended_llm}`"
+                )
+                if item.doc_type_hint and item.doc_type_hint != "unknown":
+                    row1 += f" · hint: `{item.doc_type_hint}`"
+                st.caption(row1)
+                if item.routing_reason:
+                    st.caption(f"Routing reason: {item.routing_reason}")
+                if item.notes:
+                    st.caption(f"Notes: {item.notes}")
+                if item.tags:
+                    st.caption(f"Tags: {item.tags}")
+                if item.corpus_doc_id:
+                    st.caption(f"Corpus doc: `{item.corpus_doc_id}`")
+                st.caption(f"Added: {item.added_at[:10]}  ·  ID: `{item.id}`")
+
+                # Ingest command shortcut
+                if item.status in ("new", "triaged", "ready_to_ingest"):
+                    llm_flag = item.recommended_llm or "litelm"
+                    st.code(
+                        f'python -m runner ingest "{item.url}" --llm {llm_flag}',
+                        language="bash",
+                    )
+
+            with action_col:
+                # Quick status transitions
+                if item.status in ("new", "triaged"):
+                    if st.button("✅ Mark ready", key=f"sq_ready_{item.id}"):
+                        update_status(db, item.id, "ready_to_ingest")
+                        st.rerun()
+                    if st.button("⏭ Skip", key=f"sq_skip_{item.id}"):
+                        update_status(db, item.id, "skipped")
+                        st.rerun()
+
+                if item.status == "ready_to_ingest":
+                    if st.button("↩ Back to triaged", key=f"sq_unready_{item.id}"):
+                        update_status(db, item.id, "triaged")
+                        st.rerun()
+                    if st.button("⏭ Skip", key=f"sq_skip2_{item.id}"):
+                        update_status(db, item.id, "skipped")
+                        st.rerun()
+
+                if item.status == "skipped":
+                    if st.button("↩ Restore", key=f"sq_restore_{item.id}"):
+                        update_status(db, item.id, "new")
+                        st.rerun()
+
+                # Priority picker
+                new_prio = st.selectbox(
+                    "Priority",
+                    sorted(VALID_PRIORITIES),
+                    index=sorted(VALID_PRIORITIES).index(item.priority)
+                    if item.priority in VALID_PRIORITIES else 0,
+                    key=f"sq_prio_{item.id}",
+                    label_visibility="collapsed",
+                )
+                if new_prio != item.priority:
+                    update_priority(db, item.id, new_prio)
+                    st.rerun()
+
+                # Open URL
+                st.markdown(f"[🔗 Open]({item.url})", unsafe_allow_html=False)
+
+                # Delete (only ingested/skipped)
+                if item.status in ("ingested", "skipped"):
+                    if st.button("🗑 Remove", key=f"sq_del_{item.id}",
+                                  help="Remove from queue (corpus document is NOT affected)"):
+                        delete_item(db, item.id)
+                        st.rerun()
+
+    st.caption(f"Queue DB: `{db_path}`")
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 

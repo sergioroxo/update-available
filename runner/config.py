@@ -65,6 +65,11 @@ class Config:
     def sanity_api_base(self) -> str:
         return f"https://{self.sanity_project_id}.api.sanity.io/v2024-01-01/data/mutate/{self.sanity_dataset}"
 
+    @property
+    def source_queue_db_path(self) -> Path:
+        """SQLite queue DB — adjacent to the corpus directory."""
+        return self.corpus_dir.parent / "source_queue.db"
+
     def __repr__(self) -> str:
         return (
             "Config("

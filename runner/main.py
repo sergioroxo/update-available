@@ -973,6 +973,235 @@ def show_queue(
     console.print(f"[dim]Total: {total} candidates. Ingest with: python -m runner ingest <url>[/dim]")
 
 
+# ---------------------------------------------------------------------------
+# Pre-ingestion source queue commands
+# ---------------------------------------------------------------------------
+
+@app.command(name="queue-add")
+def queue_add(
+    url: Optional[str] = typer.Argument(None, help="Single URL to add (omit to read from --file or stdin)"),
+    file: Optional[Path] = typer.Option(None, "--file", "-f", help="Text/CSV file with one URL per line"),
+    priority: str = typer.Option("medium", "--priority", "-p", help="Priority: high | medium | low | skip"),
+    batch: str = typer.Option("", "--batch", "-b", help="Batch group label, e.g. 'UN sources'"),
+    notes: str = typer.Option("", "--notes", "-n", help="Free-text notes for all added items"),
+    tags: str = typer.Option("", "--tags", "-t", help="Comma-separated tags, e.g. 'sogice,evidence'"),
+):
+    """Add one or more URLs to the pre-ingestion source queue.
+
+    \b
+    Examples:
+      runner queue-add https://example.com
+      runner queue-add --file urls.txt --batch "UN sources" --priority high
+      cat urls.txt | runner queue-add --file -
+    """
+    from .pipeline.source_queue import (
+        open_db, queue_db_path, add_item, add_items_from_text, VALID_PRIORITIES
+    )
+    if priority not in VALID_PRIORITIES:
+        console.print(f"[red]Invalid priority {priority!r}. Choose from: {sorted(VALID_PRIORITIES)}[/red]")
+        raise typer.Exit(1)
+
+    config = load_config(require_services=False)
+    db = open_db(queue_db_path(config.corpus_dir))
+
+    # Collect text to parse
+    text: str = ""
+    if url:
+        text = url
+    elif file:
+        if str(file) == "-":
+            import sys as _sys
+            text = _sys.stdin.read()
+        else:
+            text = file.read_text(encoding="utf-8", errors="ignore")
+    else:
+        console.print("[dim]Paste URLs (one per line). Press Ctrl-D when done.[/dim]")
+        import sys as _sys
+        text = _sys.stdin.read()
+
+    added, dup_queue, dup_corpus = add_items_from_text(
+        db, text, config.corpus_dir,
+        priority=priority, notes=notes, tags=tags, batch_group=batch,
+    )
+    parts = []
+    if added:
+        parts.append(f"[green]{added} added[/green]")
+    if dup_corpus:
+        parts.append(f"[yellow]{dup_corpus} already in corpus (marked ingested)[/yellow]")
+    if dup_queue:
+        parts.append(f"[dim]{dup_queue} duplicate(s) skipped[/dim]")
+    if not parts:
+        console.print("[dim]No URLs found in input.[/dim]")
+    else:
+        console.print("  ".join(parts))
+    console.print(f"[dim]Queue DB: {queue_db_path(config.corpus_dir)}[/dim]")
+
+
+@app.command(name="queue-list")
+def queue_list(
+    status: Optional[str] = typer.Option(None, "--status", "-s",
+        help="Filter by status: new | triaged | ready_to_ingest | ingested | skipped"),
+    priority: Optional[str] = typer.Option(None, "--priority", "-p",
+        help="Filter by priority: high | medium | low | skip"),
+    batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Filter by batch group"),
+    limit: int = typer.Option(100, "--limit", "-n", help="Maximum rows to show"),
+):
+    """List the pre-ingestion source queue."""
+    from rich.table import Table as RichTable
+    from .pipeline.source_queue import open_db, queue_db_path, list_items, queue_stats
+
+    config = load_config(require_services=False)
+    db_path = queue_db_path(config.corpus_dir)
+    if not db_path.exists():
+        console.print("[dim]Source queue is empty. Use: runner queue-add <url>[/dim]")
+        return
+    db = open_db(db_path)
+
+    stats = queue_stats(db)
+    by_s = stats["by_status"]
+    stat_parts = [f"Total: {stats['total']}"]
+    for s in ("new", "triaged", "ready_to_ingest", "ingested", "skipped"):
+        n = by_s.get(s, 0)
+        if n:
+            stat_parts.append(f"{s}: {n}")
+    console.print("[dim]" + "  |  ".join(stat_parts) + "[/dim]")
+
+    items = list_items(db, status=status, priority=priority, batch_group=batch, limit=limit)
+    if not items:
+        console.print("[dim]No items match the filter.[/dim]")
+        return
+
+    tbl = RichTable(title="Source Queue")
+    tbl.add_column("id", style="dim", width=10)
+    tbl.add_column("status", width=16)
+    tbl.add_column("priority", width=8)
+    tbl.add_column("type", width=8)
+    tbl.add_column("llm", width=14)
+    tbl.add_column("batch", width=18)
+    tbl.add_column("url", overflow="fold")
+
+    _status_colour = {
+        "new": "white", "triaged": "cyan", "ready_to_ingest": "green",
+        "ingested": "dim", "skipped": "red",
+    }
+    _prio_colour = {"high": "red", "medium": "yellow", "low": "dim", "skip": "red"}
+
+    for item in items:
+        sc = _status_colour.get(item.status, "white")
+        pc = _prio_colour.get(item.priority, "white")
+        tbl.add_row(
+            item.id,
+            f"[{sc}]{item.status}[/{sc}]",
+            f"[{pc}]{item.priority}[/{pc}]",
+            item.source_type,
+            item.recommended_llm,
+            item.batch_group or "—",
+            item.url,
+        )
+    console.print(tbl)
+    if len(items) == limit:
+        console.print(f"[dim](showing first {limit}; use --limit N for more)[/dim]")
+
+
+@app.command(name="queue-triage")
+def queue_triage(
+    limit: int = typer.Option(10, "--limit", "-n", help="Maximum items to triage in one run"),
+    batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Triage only items in this batch group"),
+    force: bool = typer.Option(False, "--force", help="Re-triage items already in 'triaged' status"),
+):
+    """Run fast triage on new source-queue items.
+
+    Fetches each URL, sends a snippet to the triage model, and updates
+    priority / recommended_llm / doc_type_hint in the queue.
+    """
+    from .pipeline.source_queue import (
+        open_db, queue_db_path, list_items, apply_triage_result
+    )
+    from .pipeline import triage as triage_mod
+
+    config = load_config(require_services=False)
+    db = open_db(queue_db_path(config.corpus_dir))
+
+    status_filter = None if force else "new"
+    candidates = list_items(db, status=status_filter, batch_group=batch, limit=limit)
+    if force:
+        candidates = [i for i in candidates if i.status in ("new", "triaged")]
+
+    if not candidates:
+        console.print("[dim]No new items to triage.[/dim]")
+        return
+
+    console.print(f"[cyan]Triaging {len(candidates)} item(s)...[/cyan]")
+    for i, item in enumerate(candidates, 1):
+        console.print(f"[dim]({i}/{len(candidates)})[/dim] {item.url[:80]}")
+        try:
+            snippet, note = triage_mod.extract_snippet(item.url)
+            console.print(f"  [dim]{note[:60]}[/dim]")
+            result = triage_mod.run(snippet, config)
+            apply_triage_result(db, item.id, result)
+            console.print(
+                f"  → [cyan]{result.doc_type_hint}[/cyan]  "
+                f"[yellow]{result.recommended_llm}[/yellow]  "
+                f"{result.routing_reason[:60]}"
+            )
+        except Exception as exc:
+            console.print(f"  [red]Triage failed: {exc}[/red]")
+
+    console.print(f"[green]Done. Use 'runner queue-list' to review.[/green]")
+
+
+@app.command(name="queue-mark")
+def queue_mark(
+    item_id: str = typer.Argument(..., help="Queue item ID (8-char, from queue-list)"),
+    status: Optional[str] = typer.Option(None, "--status", "-s",
+        help="New status: new | triaged | ready_to_ingest | ingested | skipped"),
+    priority: Optional[str] = typer.Option(None, "--priority", "-p",
+        help="New priority: high | medium | low | skip"),
+    notes: Optional[str] = typer.Option(None, "--notes", "-n", help="Update notes field"),
+    batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Update batch group"),
+    title: Optional[str] = typer.Option(None, "--title", help="Update title"),
+):
+    """Update a source-queue item's status, priority, or notes."""
+    from .pipeline.source_queue import (
+        open_db, queue_db_path, update_status, update_priority, update_notes,
+        get_item, VALID_STATUSES, VALID_PRIORITIES,
+    )
+
+    config = load_config(require_services=False)
+    db = open_db(queue_db_path(config.corpus_dir))
+    item = get_item(db, item_id)
+    if item is None:
+        console.print(f"[red]No queue item with id={item_id!r}[/red]")
+        raise typer.Exit(1)
+
+    changed: list[str] = []
+    if status:
+        if status not in VALID_STATUSES:
+            console.print(f"[red]Invalid status {status!r}. Choose from: {sorted(VALID_STATUSES)}[/red]")
+            raise typer.Exit(1)
+        update_status(db, item_id, status)
+        changed.append(f"status={status}")
+    if priority:
+        if priority not in VALID_PRIORITIES:
+            console.print(f"[red]Invalid priority {priority!r}. Choose from: {sorted(VALID_PRIORITIES)}[/red]")
+            raise typer.Exit(1)
+        update_priority(db, item_id, priority)
+        changed.append(f"priority={priority}")
+    if any(v is not None for v in (notes, batch, title)):
+        update_notes(db, item_id, notes=notes, batch_group=batch, title=title)
+        if notes is not None:
+            changed.append("notes")
+        if batch is not None:
+            changed.append(f"batch={batch}")
+        if title is not None:
+            changed.append("title")
+
+    if changed:
+        console.print(f"[green]Updated {item_id}: {', '.join(changed)}[/green]")
+    else:
+        console.print(f"[yellow]Nothing to change — pass --status, --priority, --notes, --batch, or --title[/yellow]")
+
+
 @app.command(name="related-source-search")
 def related_source_search_cmd(
     doc_id: str = typer.Argument(..., help="doc_id with a discovery_seed_queue.json"),
