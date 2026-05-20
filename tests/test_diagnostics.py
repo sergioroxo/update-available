@@ -134,10 +134,19 @@ class TestDiagnosticResultOk:
         assert dr.ok is True
 
     def test_non_ok_kind_is_not_ok(self):
+        # HEALTH_SLOW means the service is up — excluded from the "not ok" check.
+        # Everything else should be a failure.
         for kind in ErrorKind:
-            if kind != ErrorKind.OK:
+            if kind not in (ErrorKind.OK, ErrorKind.HEALTH_SLOW):
                 dr = DiagnosticResult(kind, "fail")
                 assert dr.ok is False, f"{kind} should not be ok"
+
+    def test_health_slow_is_not_ok(self):
+        # HEALTH_SLOW.ok is False (DiagnosticResult.ok checks == OK literally),
+        # but doctor/litelm-test treat it as a pass.  This test locks in that
+        # distinction so callers that check dr.ok don't accidentally treat it as a pass.
+        dr = DiagnosticResult(ErrorKind.HEALTH_SLOW, "slow")
+        assert dr.ok is False  # raw .ok is False — callers must check kind explicitly
 
 
 # ── System resource probes ───────────────────────────────────────────────────
@@ -232,6 +241,66 @@ class TestProbeHealth:
                 del sys.modules["httpx"]
 
         assert dr.kind == ErrorKind.HTTP_500_PTY
+
+    def test_health_slow_when_models_ok_but_health_times_out(self):
+        """If /v1/models returns 200 but /health raises (timeout), result is HEALTH_SLOW."""
+        from runner.pipeline import diagnostics
+        import sys, types
+
+        call_count = {"n": 0}
+
+        class _ModelsOk:
+            status_code = 200
+            text = '{"object":"list","data":[]}'
+            def raise_for_status(self): pass
+
+        class _TimeoutError(Exception):
+            pass
+
+        def _fake_get(url, **kw):
+            call_count["n"] += 1
+            if "models" in url:
+                return _ModelsOk()
+            raise _TimeoutError("read timeout")
+
+        fake_httpx = types.ModuleType("httpx")
+        fake_httpx.get = _fake_get
+
+        original = sys.modules.get("httpx")
+        sys.modules["httpx"] = fake_httpx
+        try:
+            dr = diagnostics.probe_health("http://localhost:4000")
+        finally:
+            if original is not None:
+                sys.modules["httpx"] = original
+            else:
+                del sys.modules["httpx"]
+
+        assert dr.kind == ErrorKind.HEALTH_SLOW
+        assert call_count["n"] == 2   # tried /v1/models then /health
+
+    def test_network_unreachable_when_both_fail(self):
+        """If both /v1/models and /health raise, result is NETWORK_UNREACHABLE."""
+        from runner.pipeline import diagnostics
+        import sys, types
+
+        class ConnectError(Exception):
+            pass
+
+        fake_httpx = types.ModuleType("httpx")
+        fake_httpx.get = staticmethod(lambda *a, **kw: (_ for _ in ()).throw(ConnectError("refused")))
+
+        original = sys.modules.get("httpx")
+        sys.modules["httpx"] = fake_httpx
+        try:
+            dr = diagnostics.probe_health("http://localhost:4000")
+        finally:
+            if original is not None:
+                sys.modules["httpx"] = original
+            else:
+                del sys.modules["httpx"]
+
+        assert dr.kind == ErrorKind.NETWORK_UNREACHABLE
 
 
 class TestProbeEmbedding:

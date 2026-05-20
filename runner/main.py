@@ -1536,15 +1536,18 @@ def litelm_test(
 
     def _row(step: str, endpoint: str, dr) -> None:
         nonlocal any_failure
-        icon = "[green]✓[/green]" if dr.ok else "[red]✗[/red]"
-        results.append((step, endpoint, icon, dr.message))
-        if not dr.ok:
+        # HEALTH_SLOW = service is up, /health just timed out — treat as warning not failure
+        if dr.ok or dr.kind == ErrorKind.HEALTH_SLOW:
+            icon = "[green]✓[/green]" if dr.ok else "[yellow]~[/yellow]"
+        else:
+            icon = "[red]✗[/red]"
             any_failure = True
+        results.append((step, endpoint, icon, dr.message))
 
     # 1. Health endpoint
-    console.print("[dim]1/3  GET /health …[/dim]")
+    console.print("[dim]1/3  GET /v1/models + /health …[/dim]")
     dr = probe_health(litelm_url, api_key=litelm_key, timeout=10)
-    _row("Health", f"{litelm_url}/health", dr)
+    _row("Health", f"{litelm_url}/v1/models", dr)
     if not dr.ok and dr.kind == ErrorKind.NETWORK_UNREACHABLE:
         # No point testing further if we can't reach the host
         table = RichTable(show_lines=False)
@@ -1720,9 +1723,12 @@ def doctor():
              "Add the Mac Studio Tailscale URL to runner/.env")
     else:
         dr = _probe_health(litelm_url, api_key=litelm_key, timeout=15)
-        if dr.ok:
+        if dr.ok or dr.kind == _EK.HEALTH_SLOW:
+            # HEALTH_SLOW = /v1/models confirmed reachable but /health timed out
+            # (LiteLLM pings all cold models before responding — can take 30–60 s)
+            suffix = "  [yellow][/health slow — cold model ping][/yellow]" if dr.kind == _EK.HEALTH_SLOW else ""
             ok("LiteLLM proxy",
-               f"Reachable at {litelm_url}  "
+               f"Reachable at {litelm_url}{suffix}  "
                f"(chat={litelm_chat}, embed={litelm_emb})")
         else:
             _hints = {

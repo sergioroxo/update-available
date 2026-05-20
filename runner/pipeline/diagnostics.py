@@ -37,6 +37,7 @@ class ErrorKind(str, Enum):
     HTTP_OTHER          = "HTTP_OTHER"
     JSON_PARSE          = "JSON_PARSE"
     DIMENSION_MISMATCH  = "DIMENSION_MISMATCH"
+    HEALTH_SLOW         = "HEALTH_SLOW"   # /health timed out but /v1/models OK → service is up
     OK                  = "OK"
 
 
@@ -269,22 +270,67 @@ def probe_health(
     api_key: str = "",
     timeout: int = 10,
 ) -> DiagnosticResult:
-    """GET /health on the LiteLLM proxy or Ollama base URL."""
+    """Check LiteLLM / Ollama reachability.
+
+    Strategy (two stages):
+
+    1. GET /v1/models  — instant model-list endpoint; does NOT ping running
+       models, so it responds in milliseconds even when models are cold.
+       This is the primary reachability signal.
+
+    2. GET /health     — LiteLLM's deep health check pings every configured
+       model before replying.  With large cold models (35B, 31B) this can
+       take 30–60 s.  If /v1/models already confirmed reachability, a
+       /health timeout is classified as HEALTH_SLOW (service is up, health
+       check is just slow) rather than NETWORK_UNREACHABLE.
+
+    Why this matters: a 10-second /health timeout on a cold LiteLLM service
+    previously caused `runner doctor` to report NETWORK_UNREACHABLE and exit
+    with code 1 even when the service was serving inference requests normally.
+    """
     try:
         import httpx
     except ImportError:
         return DiagnosticResult(ErrorKind.HTTP_OTHER, "httpx not installed", "pip install httpx")
 
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    base    = base_url.rstrip("/")
+
+    # ── Stage 1: GET /v1/models (fast reachability probe) ──────────────────
+    models_reachable = False
     try:
-        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
-        r = httpx.get(base_url.rstrip("/") + "/health", headers=headers, timeout=timeout)
+        r = httpx.get(f"{base}/v1/models", headers=headers, timeout=timeout)
+        if r.status_code == 200:
+            models_reachable = True
+        elif r.status_code in (401, 403):
+            return classify_http_error(r.status_code, r.text)
+        # Other non-200 on /v1/models is inconclusive; fall through to /health
+    except Exception:
+        pass   # will surface in stage 2
+
+    # ── Stage 2: GET /health (deeper check, may be slow) ───────────────────
+    try:
+        r = httpx.get(f"{base}/health", headers=headers, timeout=timeout)
     except Exception as exc:
+        if models_reachable:
+            # /v1/models confirmed the service is up; /health just timed out
+            return DiagnosticResult(
+                ErrorKind.HEALTH_SLOW,
+                "Reachable — /health timed out (LiteLLM cold-start model ping)",
+                (
+                    "LiteLLM's /health endpoint pings every configured model before "
+                    "responding.  With cold large models (35B, 31B) this can take "
+                    "30–60 s and will time out at the default 10 s limit.  "
+                    "The service is running normally — /v1/models returned 200.  "
+                    "Run 'runner litelm-test' for a full inference test."
+                ),
+            )
         return classify_exception(exc)
 
     if r.status_code != 200:
         return classify_http_error(r.status_code, r.text)
 
-    return DiagnosticResult(ErrorKind.OK, f"Reachable — HTTP 200")
+    return DiagnosticResult(ErrorKind.OK, "Reachable — HTTP 200")
 
 
 def probe_chat(
