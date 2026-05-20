@@ -163,6 +163,50 @@ def classify_http_error(
     )
 
 
+def classify_supabase_error(exc: Exception) -> DiagnosticResult:
+    """Classify a Supabase connection exception into a DiagnosticResult.
+
+    Handles the most common failure modes in order of frequency:
+      - DNS resolution failure  → project paused (free-tier auto-pause)
+      - Connection refused       → project paused or Supabase unreachable
+      - Table not found          → migrate-supabase needed
+      - Other                    → raw error
+    """
+    err = str(exc)
+    err_lower = err.lower()
+
+    if "nodename nor servname" in err or "errno 8" in err_lower or "name or service not known" in err_lower:
+        return DiagnosticResult(
+            ErrorKind.NETWORK_UNREACHABLE,
+            "Supabase hostname did not resolve — project is likely paused",
+            (
+                "Free-tier Supabase projects pause after 7 days of inactivity.  "
+                "Go to app.supabase.com → select the project → click 'Restore project'.  "
+                "Wait 1–2 min then re-run: python -m runner doctor"
+            ),
+        )
+
+    if "refused" in err_lower or ("connect" in err_lower and "error" in err_lower):
+        return DiagnosticResult(
+            ErrorKind.NETWORK_UNREACHABLE,
+            "Supabase connection refused — project may be paused",
+            "Check app.supabase.com and restore the project if it shows 'Paused'.",
+        )
+
+    if "does not exist" in err or "42p01" in err_lower:
+        return DiagnosticResult(
+            ErrorKind.HTTP_OTHER,
+            "document_embeddings table not found",
+            "Run: python -m runner migrate-supabase --confirm",
+        )
+
+    return DiagnosticResult(
+        ErrorKind.HTTP_OTHER,
+        f"Supabase error: {err[:120]}",
+        "",
+    )
+
+
 def classify_exception(exc: Exception) -> DiagnosticResult:
     """Classify a Python exception (raised before any HTTP response) into a
     DiagnosticResult."""

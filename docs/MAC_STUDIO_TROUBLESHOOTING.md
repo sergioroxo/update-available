@@ -20,9 +20,10 @@ python -m runner embed-test      # embedding dimension only
 2. [Checking Ollama models on Mac Studio](#2-checking-ollama-models-on-mac-studio)
 3. [What to do when Mac Studio is asleep or offline](#3-what-to-do-when-mac-studio-is-asleep-or-offline)
 4. [PTY / process exhaustion](#4-pty--process-exhaustion)
-5. [Error classification reference](#5-error-classification-reference)
-6. [Safe restart steps (manual only)](#6-safe-restart-steps-manual-only)
-7. [LiteLLM binding to 127.0.0.1 vs 0.0.0.0](#7-litelm-binding-to-127001-vs-0000)
+5. [Supabase project paused](#5-supabase-project-paused)
+6. [Error classification reference](#6-error-classification-reference)
+7. [Safe restart steps (manual only)](#7-safe-restart-steps-manual-only)
+8. [LiteLLM binding to 127.0.0.1 vs 0.0.0.0](#8-litelm-binding-to-127001-vs-0000)
 
 ---
 
@@ -211,7 +212,48 @@ See [§ 6 — Safe restart steps](#6-safe-restart-steps-manual-only).
 
 ---
 
-## 5. Error classification reference
+## 5. Supabase project paused
+
+### What happens
+
+Supabase automatically pauses free-tier projects after **7 days of inactivity**.
+When a project is paused, its hostname (e.g. `<project-ref>.supabase.co`) is
+taken offline and DNS resolution fails entirely.
+
+### Symptom
+
+`runner doctor` shows:
+
+```
+✗  Supabase document_embeddings
+   DNS resolution failed for Supabase hostname — project is likely paused.
+   Free-tier projects pause after 7 days of inactivity.
+```
+
+The underlying OS error is `[Errno 8] nodename nor servname provided, or not
+known` (macOS `EAI_NONAME`) — the hostname simply does not resolve because
+Supabase has taken it offline.
+
+### Fix
+
+1. Go to **[app.supabase.com](https://app.supabase.com)**
+2. Select the SurvivingSOGICE project
+3. Click **"Restore project"** (shown as a banner when the project is paused)
+4. Wait 1–2 minutes for the project to come back online
+5. Re-run: `python -m runner doctor`
+
+### Prevention
+
+The project pauses only if no API calls reach it for 7 consecutive days.
+Running `runner stats` or `runner verify` once a week is enough to keep it
+active (both make a lightweight Supabase read).
+
+Alternatively, upgrade to the Supabase Pro tier (paid) to disable
+auto-pausing entirely.
+
+---
+
+## 6. Error classification reference
 
 `runner litelm-test` classifies every failure precisely.  Here is the
 full taxonomy with causes and remediation:
@@ -229,7 +271,7 @@ full taxonomy with causes and remediation:
 
 ---
 
-## 6. Safe restart steps (manual only)
+## 7. Safe restart steps (manual only)
 
 > ⚠️ **These steps require SSH or physical access to Mac Studio.**
 > Do not run them unless you understand which services are affected.
@@ -309,7 +351,7 @@ python -m runner litelm-test
 
 ---
 
-## 7. LiteLLM binding to 127.0.0.1 vs 0.0.0.0
+## 8. LiteLLM binding to 127.0.0.1 vs 0.0.0.0
 
 LiteLLM defaults to binding on `127.0.0.1`, which means it only accepts
 connections from the Mac Studio itself.  Tailscale traffic arrives on the

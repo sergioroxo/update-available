@@ -1856,11 +1856,9 @@ def doctor():
             sb.table("document_embeddings").select("doc_id").limit(1).execute()
             ok("Supabase document_embeddings", "Table exists and is reachable")
         except Exception as exc:
-            err = str(exc)
-            if "does not exist" in err or "42P01" in err:
-                fail("Supabase document_embeddings", "Table not found. Run: python -m runner migrate-supabase --confirm")
-            else:
-                fail("Supabase document_embeddings", f"Query failed: {err[:120]}")
+            from .pipeline.diagnostics import classify_supabase_error as _csb
+            dr = _csb(exc)
+            fail("Supabase document_embeddings", f"{dr.message}\n{dr.detail}" if dr.detail else dr.message)
 
     # ── Prompt files ──────────────────────────────────────────────────────
     from pathlib import Path as _Path

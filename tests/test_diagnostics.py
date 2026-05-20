@@ -12,6 +12,7 @@ from runner.pipeline.diagnostics import (
     DiagnosticResult,
     classify_http_error,
     classify_exception,
+    classify_supabase_error,
     get_process_count,
     get_pty_count,
 )
@@ -389,3 +390,45 @@ class TestProbeEmbedding:
             else:
                 del sys.modules["httpx"]
         assert dr.kind == ErrorKind.AUTH_FAILURE
+
+
+# ── classify_supabase_error ──────────────────────────────────────────────────
+
+class TestClassifySupabaseError:
+    def test_dns_failure_nodename(self):
+        """[Errno 8] nodename nor servname → paused project hint."""
+        exc = OSError("[Errno 8] nodename nor servname provided, or not known")
+        dr = classify_supabase_error(exc)
+        assert dr.kind == ErrorKind.NETWORK_UNREACHABLE
+        assert "paused" in dr.message.lower()
+        assert "app.supabase.com" in dr.detail
+
+    def test_dns_failure_name_or_service(self):
+        """Linux variant of the same DNS error."""
+        exc = OSError("Name or service not known")
+        dr = classify_supabase_error(exc)
+        assert dr.kind == ErrorKind.NETWORK_UNREACHABLE
+        assert "paused" in dr.message.lower()
+
+    def test_connection_refused(self):
+        exc = ConnectionRefusedError("Connection refused")
+        dr = classify_supabase_error(exc)
+        assert dr.kind == ErrorKind.NETWORK_UNREACHABLE
+        assert "paused" in dr.message.lower()
+
+    def test_table_not_found(self):
+        exc = Exception('relation "document_embeddings" does not exist')
+        dr = classify_supabase_error(exc)
+        assert dr.kind == ErrorKind.HTTP_OTHER
+        assert "migrate-supabase" in dr.detail
+
+    def test_postgres_code_42p01(self):
+        exc = Exception("ERROR:  42P01: relation not found")
+        dr = classify_supabase_error(exc)
+        assert dr.kind == ErrorKind.HTTP_OTHER
+        assert "migrate-supabase" in dr.detail
+
+    def test_unknown_error_returns_http_other(self):
+        exc = Exception("something completely unexpected")
+        dr = classify_supabase_error(exc)
+        assert dr.kind == ErrorKind.HTTP_OTHER
