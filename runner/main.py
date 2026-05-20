@@ -1341,6 +1341,94 @@ def verify(
     upload.verify_uploads(limit, config)
 
 
+@app.command(name="discard-doc")
+def discard_doc(
+    doc_id: str = typer.Argument(..., help="doc_id to mark as discarded (e.g. 250b9c33)"),
+    reason: str = typer.Option("", "--reason", "-r", help="Human-readable reason for discarding"),
+    sanity: bool = typer.Option(True, "--sanity/--no-sanity",
+                                help="Patch workflowStatus=discarded in Sanity (default: yes)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would happen without writing anything"),
+):
+    """Mark a document as discarded — local marker + optional Sanity patch.
+
+    Creates a discarded.json marker in the corpus folder (creating a minimal
+    folder if none exists) and optionally patches workflowStatus=discarded
+    in Sanity.  Nothing is deleted permanently.
+
+    The document remains in Sanity and can be restored by running:
+      runner discard-doc <doc_id> --no-sanity  (if you only want to undo locally)
+    or by manually setting workflowStatus back to 'unverified' in Sanity Studio.
+
+    'runner verify' will exclude discarded documents from the
+    'in Sanity but missing from Supabase' mismatch warning.
+    """
+    import json as _json
+    from datetime import datetime, timezone
+    from .clients.sanity import patch_workflow_status as _patch_ws
+
+    config = load_config()
+    doc_dir = config.corpus_dir / doc_id
+
+    sanity_id = f"doc-{doc_id}"
+
+    marker = {
+        "doc_id":      doc_id,
+        "discarded_at": datetime.now(timezone.utc).isoformat(),
+        "reason":       reason or "marked discarded by researcher",
+        "sanity_id":    sanity_id,
+    }
+
+    if dry_run:
+        console.print(Panel(
+            f"[bold]Dry run — nothing will be written.[/bold]\n\n"
+            f"Would create: [cyan]{doc_dir / 'discarded.json'}[/cyan]\n"
+            f"  {_json.dumps(marker, indent=2)}\n\n"
+            + (f"Would patch Sanity {sanity_id} → workflowStatus=discarded"
+               if sanity else "Sanity patch skipped (--no-sanity)"),
+            title=f"discard-doc {doc_id} — dry run",
+        ))
+        return
+
+    # ── Write local marker ────────────────────────────────────────────────
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    marker_path = doc_dir / "discarded.json"
+    marker_path.write_text(_json.dumps(marker, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    console.print(f"[green]✓[/green] Wrote {marker_path}")
+
+    # ── Append to audit log ───────────────────────────────────────────────
+    ts = marker["discarded_at"]
+    with (doc_dir / "audit.log").open("a", encoding="utf-8") as f:
+        f.write(f"{ts} discarded — {marker['reason']}\n")
+    console.print(f"[green]✓[/green] Appended to {doc_dir / 'audit.log'}")
+
+    # ── Sanity patch ──────────────────────────────────────────────────────
+    if sanity:
+        try:
+            _patch_ws(sanity_id, "discarded", config)
+            console.print(f"[green]✓[/green] Sanity {sanity_id} → workflowStatus=discarded")
+        except Exception as exc:
+            console.print(Panel(
+                f"[red]Sanity patch failed: {exc}[/red]\n\n"
+                "The local discarded.json marker was written successfully.\n"
+                "Re-run without --no-sanity, or set workflowStatus=discarded\n"
+                "manually in Sanity Studio.",
+                title="[yellow]Partial discard[/yellow]",
+            ))
+            raise typer.Exit(1)
+    else:
+        console.print("[dim]Sanity patch skipped (--no-sanity)[/dim]")
+
+    console.print(Panel(
+        f"[bold green]Document {doc_id} discarded.[/bold green]\n\n"
+        f"Local marker: {marker_path}\n"
+        f"Sanity: {'workflowStatus=discarded' if sanity else 'unchanged (--no-sanity)'}\n\n"
+        "Nothing was permanently deleted.  To restore:\n"
+        "  • Delete the discarded.json file from the corpus folder\n"
+        "  • Set workflowStatus back to 'unverified' in Sanity Studio",
+        title=f"Discarded {doc_id}",
+    ))
+
+
 @app.command(name="migrate-supabase")
 def migrate_supabase(
     confirm: bool = typer.Option(False, "--confirm", help="Execute the migration without prompting"),

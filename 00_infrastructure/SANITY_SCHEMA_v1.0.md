@@ -51,7 +51,7 @@ export default {
       name: 'workflowStatus',
       title: 'Workflow Status',
       type: 'string',
-      options: { list: ['unverified', 'in_progress', 'verified', 'published'] },
+      options: { list: ['unverified', 'in_progress', 'verified', 'published', 'discarded'] },
       initialValue: 'unverified',
     },
     {

@@ -1688,3 +1688,43 @@ def _mutate(mutations: list[dict], config: Config) -> dict:
         body = response.text[:2000]
         raise RuntimeError(f"Sanity mutation failed ({response.status_code}): {body}") from exc
     return response.json()
+
+
+# ── Document archival ────────────────────────────────────────────────────────
+
+VALID_WORKFLOW_STATUSES = frozenset([
+    "unverified", "in_progress", "verified", "published", "discarded",
+])
+
+
+def patch_workflow_status(
+    sanity_id: str,
+    status: str,
+    config: Config,
+) -> dict:
+    """Set workflowStatus on a sogiceDocument via a Sanity patch mutation.
+
+    Parameters
+    ----------
+    sanity_id:  The Sanity document _id, e.g. 'doc-dc0ff39b'.
+    status:     One of VALID_WORKFLOW_STATUSES.
+    config:     Runner config (needs sanity_write_token etc.).
+
+    Returns the raw Sanity mutation response.
+
+    Notes
+    -----
+    This uses a targeted ``patch.set`` mutation so only workflowStatus is
+    changed — no other fields are touched and no data is lost.  The
+    document is NOT deleted; it remains in Sanity and can be inspected or
+    restored in Sanity Studio.
+    """
+    if status not in VALID_WORKFLOW_STATUSES:
+        raise ValueError(
+            f"Invalid workflowStatus {status!r}. "
+            f"Valid values: {sorted(VALID_WORKFLOW_STATUSES)}"
+        )
+    return _mutate(
+        [{"patch": {"id": sanity_id, "set": {"workflowStatus": status}}}],
+        config,
+    )

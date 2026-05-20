@@ -1090,16 +1090,30 @@ def verify_uploads(limit: int, config: Config) -> None:
         console.print("[yellow]No rows found in Supabase document_embeddings.[/yellow]")
 
     # --- Cross-check: in Sanity but not Supabase ---
-    sanity_ids = {_sanity_doc_id(d) for d in sanity_docs}
-    supa_ids   = {r["doc_id"] for r in supabase_rows}
-    missing_in_supa = sanity_ids - supa_ids
+    # Exclude discarded documents — they are intentionally absent from Supabase.
+    active_sanity_ids = {
+        _sanity_doc_id(d) for d in sanity_docs
+        if d.get("workflowStatus") != "discarded"
+    }
+    discarded_ids = {
+        _sanity_doc_id(d) for d in sanity_docs
+        if d.get("workflowStatus") == "discarded"
+    }
+    supa_ids        = {r["doc_id"] for r in supabase_rows}
+    missing_in_supa = active_sanity_ids - supa_ids
+
+    if discarded_ids:
+        console.print(
+            f"\n[dim]Sanity records marked discarded (excluded from mismatch check):[/dim] "
+            + ", ".join(sorted(discarded_ids))
+        )
     if missing_in_supa:
         console.print(
             f"\n[yellow]In Sanity but missing from Supabase:[/yellow] "
             + ", ".join(sorted(missing_in_supa))
         )
     else:
-        console.print("\n[green]✓ All Sanity records also present in Supabase.[/green]")
+        console.print("\n[green]✓ All active Sanity records also present in Supabase.[/green]")
 
 
 def _write_audit_event(doc_dir: Path, event: str) -> None:
