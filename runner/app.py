@@ -22,6 +22,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -4321,14 +4322,21 @@ def _render_registry_status_overview(config) -> None:
     if rows:
         st.dataframe(rows, width="stretch", hide_index=True)
 
-    review_rows = overview.get("review_rows", [])
+    local_evidence = _local_registry_evidence_index(config.corpus_dir)
+    review_rows = [
+        row for row in overview.get("review_rows", [])
+        if row.get("_type") != "lexiconEntry"
+    ]
+    lexicon_review_count = sum(
+        1 for row in overview.get("review_rows", [])
+        if row.get("_type") == "lexiconEntry"
+    )
     if review_rows:
-        with st.expander(f"Needs validation queue ({len(review_rows)})"):
+        with st.expander(f"Non-lexicon validation queue ({len(review_rows)})"):
             st.caption(
-                "This queue covers lexicon terms, entity records, tactics, practices, and tag registry rows. "
+                "This queue covers entity records, tactics, practices, and tag registry rows. "
                 "The source/evidence lines show which corpus document supports a row. "
-                "Validating here changes the canonical registry status; lexicon evidence records still have "
-                "per-document confirmation buttons in the Sanity Lexicon tab."
+                "Validating here changes the canonical registry status. Lexicon term/evidence review lives in the Sanity Lexicon tab below."
             )
             filter_options = ["All"] + [
                 bucket["label"]
@@ -4348,9 +4356,14 @@ def _render_registry_status_overview(config) -> None:
                     if _registry_type_label(row.get("_type", "")) == selected
                 ]
             for row in visible[:100]:
-                _render_registry_validation_row(row, config)
+                matches = _local_registry_evidence_matches(row, local_evidence)
+                _render_registry_validation_row(row, config, matches)
             if len(visible) > 100:
                 st.caption(f"Showing first 100 of {len(visible)} records. Use Sanity Studio for bulk cleanup.")
+    if lexicon_review_count:
+        st.caption(
+            f"{lexicon_review_count} lexicon term(s) still need canonical/evidence review; use the Sanity Lexicon tab below so term status and per-document evidence are not split across two places."
+        )
 
 
 def _registry_type_label(schema_type: str) -> str:
@@ -4364,7 +4377,7 @@ def _registry_type_label(schema_type: str) -> str:
     }.get(schema_type, schema_type or "Unknown")
 
 
-def _render_registry_validation_row(row: dict, config) -> None:
+def _render_registry_validation_row(row: dict, config, local_matches: list[dict] | None = None) -> None:
     sanity_id = row.get("_id", "")
     schema_type = row.get("_type", "")
     label = row.get("label") or sanity_id or "Untitled"
@@ -4383,7 +4396,16 @@ def _render_registry_validation_row(row: dict, config) -> None:
         "tacticEntry",
         "practiceEntry",
     }
-    can_validate = bool(document_refs) or not requires_document_evidence
+    local_matches = local_matches or []
+    direct_local_matches = [
+        match for match in local_matches
+        if match.get("match") in {"sanity_id", "label"}
+    ]
+    possible_local_matches = [
+        match for match in local_matches
+        if match.get("match") == "similar"
+    ]
+    can_validate = bool(document_refs) or bool(direct_local_matches) or not requires_document_evidence
     action_label = "Validate term" if schema_type == "lexiconEntry" else "Validate record"
 
     row_col, action_col = st.columns([5, 1])
@@ -4397,7 +4419,17 @@ def _render_registry_validation_row(row: dict, config) -> None:
                 + (" ..." if len(document_refs) > 6 else "")
             )
         elif requires_document_evidence:
-            st.caption("No linked corpus document/evidence is recorded yet; validate after adding a source document.")
+            st.caption("No linked Sanity source document/evidence is recorded yet.")
+        if direct_local_matches:
+            _render_local_registry_matches("Local pushed/approved evidence", direct_local_matches)
+        if possible_local_matches:
+            _render_local_registry_matches("Possible local duplicate/evidence match", possible_local_matches)
+            st.caption(
+                "Possible matches may differ by spelling/accent or may point to a separate Sanity record. "
+                "Check or merge in Sanity before validating this row."
+            )
+        if requires_document_evidence and not document_refs and not direct_local_matches:
+            st.caption("Validate after linking a source document or resolving a local duplicate.")
         _render_registry_evidence_preview(row)
     with action_col:
         if st.button(
@@ -4423,6 +4455,21 @@ def _render_registry_validation_row(row: dict, config) -> None:
                 st.error(f"Could not validate {label}: {exc}")
 
 
+def _render_local_registry_matches(title: str, matches: list[dict]) -> None:
+    with st.expander(f"{title} ({len(matches)})", expanded=False):
+        for match in matches[:5]:
+            status = match.get("status", "")
+            sanity_id = match.get("sanity_id") or "not pushed"
+            st.caption(
+                f"`{match.get('doc_id', '')}` | {status} | Sanity `{sanity_id}` | {match.get('match', '')}"
+            )
+            quote = match.get("evidence_quote") or match.get("definition") or ""
+            if quote:
+                st.markdown(f"> {quote[:500]}")
+        if len(matches) > 5:
+            st.caption(f"{len(matches) - 5} more local match(es) not shown.")
+
+
 def _render_registry_evidence_preview(row: dict) -> None:
     evidence_rows = row.get("evidenceDossier") or []
     if not evidence_rows:
@@ -4445,6 +4492,86 @@ def _render_registry_evidence_preview(row: dict) -> None:
                 st.markdown(f"> {quote[:500]}")
         if len(evidence_rows) > 5:
             st.caption(f"{len(evidence_rows) - 5} more evidence record(s) not shown.")
+
+
+def _local_registry_evidence_index(corpus_dir: Path) -> list[dict]:
+    rows: list[dict] = []
+    for key, schema_selector, label_field, quote_fields in [
+        ("entity_proposals", _entity_schema_type_from_proposal, "name", ["evidence_quote", "self_description"]),
+        ("tactic_proposals", lambda item: "tacticEntry", "tactic", ["evidence_quote", "definition"]),
+        ("practice_descriptions", lambda item: "practiceEntry", "practice_id", ["exact_description", "harm_quote"]),
+    ]:
+        for record in _local_enrichment_proposal_records(corpus_dir, key):
+            item = record["item"]
+            label = _local_registry_label(item, label_field)
+            if not label:
+                continue
+            rows.append(
+                {
+                    "schema_type": schema_selector(item),
+                    "label": label,
+                    "norm_label": _registry_match_key(label),
+                    "doc_id": record["doc_id"],
+                    "status": _proposal_review_status(item),
+                    "sanity_id": item.get("sanity_id", ""),
+                    "approved": bool(item.get("approved")),
+                    "pushed_to_sanity": bool(item.get("pushed_to_sanity")),
+                    "evidence_quote": _first_nonempty(item, quote_fields),
+                }
+            )
+    return rows
+
+
+def _entity_schema_type_from_proposal(item: dict) -> str:
+    return "person" if item.get("entity_type") == "person" else "organization"
+
+
+def _local_registry_label(item: dict, label_field: str) -> str:
+    value = (item.get(label_field) or "").strip()
+    if label_field == "practice_id":
+        value = re.sub(r"^Practice:\s*", "", value).strip()
+    return value
+
+
+def _first_nonempty(item: dict, fields: list[str]) -> str:
+    for field in fields:
+        value = item.get(field)
+        if value:
+            return str(value)
+    return ""
+
+
+def _registry_match_key(value: str) -> str:
+    decomposed = unicodedata.normalize("NFKD", value or "")
+    ascii_text = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+    return re.sub(r"[^a-z0-9]+", " ", ascii_text.lower()).strip()
+
+
+def _local_registry_evidence_matches(row: dict, local_evidence: list[dict]) -> list[dict]:
+    schema_type = row.get("_type")
+    sanity_id = row.get("_id") or ""
+    label_key = _registry_match_key(row.get("label") or "")
+    matches: list[dict] = []
+    for local in local_evidence:
+        if local.get("schema_type") != schema_type:
+            continue
+        if not (local.get("approved") or local.get("pushed_to_sanity")):
+            continue
+        match = ""
+        if local.get("sanity_id") and local.get("sanity_id") == sanity_id:
+            match = "sanity_id"
+        elif local.get("norm_label") and local.get("norm_label") == label_key:
+            match = "label"
+        elif label_key and local.get("norm_label"):
+            ratio = difflib.SequenceMatcher(None, label_key, local["norm_label"]).ratio()
+            if ratio >= 0.88:
+                match = "similar"
+        if match:
+            matches.append({**local, "match": match})
+    return sorted(
+        matches,
+        key=lambda match: {"sanity_id": 0, "label": 1, "similar": 2}.get(match["match"], 9),
+    )
 
 
 def page_lexicon():

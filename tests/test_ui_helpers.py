@@ -231,3 +231,53 @@ def test_proposal_review_rows_summarises_enrichment_groups():
     assert rows["Entities"][0]["State"] == "approved locally"
     assert rows["Tactics"][0]["State"] == "rejected"
     assert rows["Claims"][0]["Name"] == "Six groups have consultative status."
+
+
+def test_registry_match_key_normalises_accents_and_punctuation():
+    from runner.app import _registry_match_key
+
+    assert _registry_match_key("Víctor Madrigal-Borloz") == "victor madrigal borloz"
+    assert _registry_match_key("  Religious-Freedom Shield ") == "religious freedom shield"
+
+
+def test_local_registry_evidence_matches_exact_and_similar():
+    from runner.app import _local_registry_evidence_matches
+
+    local_evidence = [
+        {
+            "schema_type": "person",
+            "label": "Victor Madrigal-Borlaz",
+            "norm_label": "victor madrigal borlaz",
+            "doc_id": "dc0ff39b",
+            "status": "Pushed",
+            "sanity_id": "person-victor-madrigal-borlaz",
+            "approved": True,
+            "pushed_to_sanity": True,
+            "evidence_quote": "Victor Madrigal-Borlaz was quoted in the source.",
+        },
+        {
+            "schema_type": "person",
+            "label": "John Paulk",
+            "norm_label": "john paulk",
+            "doc_id": "7b76c504",
+            "status": "Pushed",
+            "sanity_id": "person-john-paulk",
+            "approved": True,
+            "pushed_to_sanity": True,
+            "evidence_quote": "",
+        },
+    ]
+
+    exact = _local_registry_evidence_matches(
+        {"_type": "person", "_id": "person-john-paulk", "label": "John Paulk"},
+        local_evidence,
+    )
+    similar = _local_registry_evidence_matches(
+        {"_type": "person", "_id": "person-victor-madrigal-borloz", "label": "Víctor Madrigal-Borloz"},
+        local_evidence,
+    )
+
+    assert exact[0]["match"] == "sanity_id"
+    assert exact[0]["doc_id"] == "7b76c504"
+    assert similar[0]["match"] == "similar"
+    assert similar[0]["doc_id"] == "dc0ff39b"
