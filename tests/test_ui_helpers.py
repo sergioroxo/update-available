@@ -168,3 +168,66 @@ def test_panel_reset_independent_per_panel():
     changed, final = _call_panel_reset("mr", "doc-2", ["mr_srt_path"], state)
     assert changed is True
     assert final["_panel_testimony_last_doc"] == "doc-A"
+
+
+# ---------------------------------------------------------------------------
+# Document List enrichment proposal helpers
+# ---------------------------------------------------------------------------
+
+def test_proposal_state_priority():
+    from runner.app import _proposal_state
+
+    assert _proposal_state({"rejected": True, "approved": True, "pushed_to_sanity": True}) == "rejected"
+    assert _proposal_state({"approved": True, "pushed_to_sanity": True}) == "pushed to Sanity"
+    assert _proposal_state({"approved": True}) == "approved locally"
+    assert _proposal_state({}) == "pending review"
+
+
+def test_proposal_review_rows_summarises_enrichment_groups():
+    from runner.app import _proposal_review_rows
+
+    enrichment = {
+        "lexicon_proposals": [
+            {
+                "term": "religious freedom",
+                "approved": True,
+                "pushed_to_sanity": True,
+                "sanity_id": "lexicon-religious-freedom",
+                "proposed_cluster": "Policy-Resistance",
+                "function": "Political Slogan",
+                "register": "defensive",
+                "model_confidence": 0.9,
+            }
+        ],
+        "entity_proposals": [
+            {
+                "name": "Alliance Defending Freedom",
+                "approved": True,
+                "entity_type": "organization",
+                "role_in_sogice": "legal advocacy",
+            }
+        ],
+        "tactic_proposals": [
+            {
+                "tactic": "Network-Laundering",
+                "rejected": True,
+                "primary_cluster": "Institutional Legitimacy",
+            }
+        ],
+        "practice_descriptions": [],
+        "statistical_claims": [
+            {
+                "claim": "Six groups have consultative status.",
+                "source_cited": "UN ECOSOC",
+                "verifiable": True,
+            }
+        ],
+    }
+
+    rows = _proposal_review_rows(enrichment)
+
+    assert rows["Lexicon terms"][0]["Name"] == "religious freedom"
+    assert rows["Lexicon terms"][0]["State"] == "pushed to Sanity"
+    assert rows["Entities"][0]["State"] == "approved locally"
+    assert rows["Tactics"][0]["State"] == "rejected"
+    assert rows["Claims"][0]["Name"] == "Six groups have consultative status."

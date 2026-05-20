@@ -3370,6 +3370,7 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                         st.rerun()
                 except Exception:
                     pass
+            _render_document_enrichment_proposals(doc["doc_id"], enrich_path)
 
         _render_document_analysis_tags(doc["doc_id"], corpus_dir / doc["doc_id"])
 
@@ -3484,6 +3485,111 @@ def _format_tag_list(values, *, limit: int = 40) -> str:
     shown = cleaned[:limit]
     suffix = f" (+{len(cleaned) - limit} more)" if len(cleaned) > limit else ""
     return ", ".join(shown) + suffix
+
+
+def _proposal_state(item: dict) -> str:
+    if item.get("rejected"):
+        return "rejected"
+    if item.get("pushed_to_sanity"):
+        return "pushed to Sanity"
+    if item.get("approved"):
+        return "approved locally"
+    return "pending review"
+
+
+def _proposal_state_counts(items: list[dict]) -> dict[str, int]:
+    counts = {"pushed to Sanity": 0, "approved locally": 0, "pending review": 0, "rejected": 0}
+    for item in items:
+        counts[_proposal_state(item)] = counts.get(_proposal_state(item), 0) + 1
+    return counts
+
+
+def _proposal_review_rows(enrichment: dict) -> dict[str, list[dict]]:
+    def _rows(items: list[dict], name_key: str, extra_keys: list[str]) -> list[dict]:
+        rows = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            row = {
+                "Name": item.get(name_key, ""),
+                "State": _proposal_state(item),
+                "Sanity ID": item.get("sanity_id", ""),
+            }
+            for key in extra_keys:
+                label = key.replace("_", " ").title()
+                value = item.get(key, "")
+                if isinstance(value, list):
+                    value = ", ".join(str(v) for v in value if str(v or "").strip())
+                row[label] = value
+            rows.append(row)
+        return rows
+
+    return {
+        "Lexicon terms": _rows(
+            enrichment.get("lexicon_proposals") or [],
+            "term",
+            ["proposed_cluster", "function", "register", "model_confidence"],
+        ),
+        "Entities": _rows(
+            enrichment.get("entity_proposals") or [],
+            "name",
+            ["entity_type", "role_in_sogice", "model_confidence"],
+        ),
+        "Tactics": _rows(
+            enrichment.get("tactic_proposals") or [],
+            "tactic",
+            ["primary_cluster", "secondary_cluster", "tactic_level", "model_confidence"],
+        ),
+        "Practices": _rows(
+            enrichment.get("practice_descriptions") or [],
+            "practice_id",
+            ["harm_stance", "model_confidence"],
+        ),
+        "Claims": _rows(
+            enrichment.get("statistical_claims") or [],
+            "claim",
+            ["source_cited", "verifiable", "model_confidence"],
+        ),
+    }
+
+
+def _render_document_enrichment_proposals(doc_id: str, enrich_path: Path) -> None:
+    enrichment = _read_json_file(enrich_path, {})
+    if not enrichment:
+        return
+
+    groups = _proposal_review_rows(enrichment)
+    total = sum(len(rows) for rows in groups.values())
+    if not total:
+        return
+
+    all_items = []
+    for key in (
+        "lexicon_proposals",
+        "entity_proposals",
+        "tactic_proposals",
+        "practice_descriptions",
+        "statistical_claims",
+    ):
+        all_items.extend(item for item in (enrichment.get(key) or []) if isinstance(item, dict))
+    counts = _proposal_state_counts(all_items)
+
+    with st.expander("Enrichment proposals", expanded=False):
+        st.caption(
+            "Candidate research objects extracted from this document. "
+            "These are separate from official analysis tags; approved/pushed items remain reviewable evidence."
+        )
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Pushed to Sanity", counts.get("pushed to Sanity", 0))
+        c2.metric("Approved locally", counts.get("approved locally", 0))
+        c3.metric("Pending review", counts.get("pending review", 0))
+        c4.metric("Rejected", counts.get("rejected", 0))
+
+        for label, rows in groups.items():
+            if not rows:
+                continue
+            with st.expander(f"{label} ({len(rows)})", expanded=False):
+                st.dataframe(rows, hide_index=True, width="stretch")
 
 
 def _render_document_analysis_tags(doc_id: str, doc_dir: Path) -> None:
