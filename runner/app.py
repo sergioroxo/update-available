@@ -160,13 +160,15 @@ def page_dashboard():
 
     # --- Corpus overview (single block, replaces old _corpus_stats row) ---
     st.subheader("Corpus Overview")
+    pending_upload_count = 0
     try:
         from runner.pipeline.upload import corpus_stats
         s = corpus_stats(config)
+        pending_upload_count = int(s.get("pending_upload", 0))
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Total analysed", s["total"])
         c2.metric("Uploaded to Sanity", s["uploaded"])
-        c3.metric("Pending upload", s["pending_upload"])
+        c3.metric("Pending upload", pending_upload_count)
         c4.metric("Enriched locally", _corpus_stats(config.corpus_dir)["enriched"])
         if s.get("by_type"):
             with st.expander("By document type"):
@@ -189,6 +191,7 @@ def page_dashboard():
         c2.metric("Uploaded", stats["uploaded"])
         c3.metric("Pending upload", stats["pending"])
         c4.metric("Enriched", stats["enriched"])
+        pending_upload_count = int(stats.get("pending", 0))
         st.caption(f"Extended stats unavailable: {_e}")
 
     st.subheader("Services")
@@ -205,8 +208,8 @@ def page_dashboard():
         "local/Sanity/Supabase state."
     )
 
-    if stats["pending"]:
-        st.warning(f"{stats['pending']} document(s) are saved locally but not uploaded yet. Go to Pending Upload.")
+    if pending_upload_count:
+        st.warning(f"{pending_upload_count} document(s) are saved locally but not uploaded yet. Go to Pending Upload.")
 
     _dashboard_ingest_readiness(config)
 
