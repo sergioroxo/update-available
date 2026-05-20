@@ -78,6 +78,7 @@ def main():
     pages = [
         "Dashboard",
         "Corpus Intelligence",
+        "Source Queue",
         "Ingest Workbench",
         "Document List",
         "Pending Upload",
@@ -119,6 +120,8 @@ def main():
         page_dashboard()
     elif page == "Corpus Intelligence":
         page_corpus_intelligence()
+    elif page == "Source Queue":
+        page_source_queue()
     elif page == "Ingest Workbench":
         page_ingest_workbench()
     elif page == "Document List":
@@ -3894,61 +3897,6 @@ def page_pending_upload():
 # ---------------------------------------------------------------------------
 # Lexicon
 # ---------------------------------------------------------------------------
-
-
-def _render_lexicon_evidence_record(term_entry: dict, evidence: dict, config) -> None:
-    evidence_key = evidence.get("_key", "")
-    sanity_id = term_entry.get("_id", "")
-    doc_ref = (evidence.get("docRef") or "unknown").replace("doc-", "")
-    confirmed = bool(evidence.get("confirmed"))
-    model_conf = _format_confidence(evidence.get("modelConfidence"))
-    researcher_conf = _format_confidence(evidence.get("researcherConfidence"))
-    register = evidence.get("usageRegister") or evidence.get("stanceProfile") or "-"
-    lang = evidence.get("language") or "-"
-    st.markdown(
-        f"**{'Confirmed' if confirmed else 'Pending'}** | "
-        f"doc `{doc_ref}` | language `{lang}` | register `{register}` | "
-        f"model confidence `{model_conf}` | researcher confidence `{researcher_conf}`"
-    )
-
-    quote = evidence.get("exactQuote") or evidence.get("excerpt") or ""
-    if quote:
-        st.markdown(f"> {quote}")
-    definition_as_used = evidence.get("definitionAsUsed") or ""
-    if definition_as_used:
-        st.markdown(f"**Definition as used in this source:** {definition_as_used}")
-
-    detail_bits = {
-        "Co-occurring terms": ", ".join(evidence.get("coOccurringTerms") or []),
-        "Relationship notes": evidence.get("relationshipNotes") or "",
-        "Model rationale": evidence.get("confidenceRationale") or "",
-        "Researcher note": evidence.get("researcherNote") or "",
-        "Confirmation note": evidence.get("confirmedNote") or "",
-    }
-    if any(detail_bits.values()):
-        with st.expander("Evidence details"):
-            for label, value in detail_bits.items():
-                if value:
-                    st.markdown(f"**{label}:** {value}")
-
-    if not confirmed and sanity_id and evidence_key:
-        with st.form(f"confirm_lexicon_{sanity_id}_{evidence_key}"):
-            note = st.text_input(
-                "Confirmation note",
-                placeholder="Optional note about why this usage is confirmed",
-            )
-            submitted = st.form_submit_button("Confirm this evidence record")
-        if submitted:
-            try:
-                from runner.clients.sanity import confirm_lexicon_context
-
-                confirm_lexicon_context(sanity_id, evidence_key, config, note=note)
-                st.session_state.pop("lexicon_terms", None)
-                st.success("Lexicon evidence record confirmed.")
-                st.rerun()
-            except Exception as exc:
-                st.error(f"Could not confirm evidence record: {exc}")
-    st.divider()
 
 
 def _render_three_system_reference() -> None:
