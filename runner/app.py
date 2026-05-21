@@ -5530,6 +5530,13 @@ def _proposal_display_position(record: dict) -> int:
     return int(record.get("index", 0)) + 1
 
 
+def _source_queue_initial_priority(add_mode: str, selected_priority: str) -> str:
+    """Return the priority saved before optional immediate source-queue triage."""
+    if add_mode == "Add and triage now":
+        return "medium"
+    return selected_priority
+
+
 def _proposal_confidence(item: dict, *keys: str):
     for key in keys:
         value = item.get(key)
@@ -9195,18 +9202,6 @@ def page_source_queue():
             key="sq_paste_box",
         )
 
-        imp_col1, imp_col2, imp_col3, imp_col4 = st.columns(4)
-        imp_priority = imp_col1.selectbox(
-            "Priority", ["medium", "high", "low", "skip"],
-            key="sq_import_priority",
-        )
-        imp_batch = imp_col2.text_input("Batch group", key="sq_import_batch",
-                                         placeholder="e.g. UN sources")
-        imp_tags = imp_col3.text_input("Tags", key="sq_import_tags",
-                                        placeholder="e.g. sogice,legal")
-        imp_notes = imp_col4.text_input("Notes", key="sq_import_notes",
-                                         placeholder="optional free text")
-
         add_mode = st.radio(
             "After adding",
             ["Add only", "Add and triage now"],
@@ -9218,6 +9213,36 @@ def page_source_queue():
                 "slower but gives priority/LLM suggestions immediately."
             ),
         )
+
+        imp_col1, imp_col2, imp_col3, imp_col4 = st.columns(4)
+        if add_mode == "Add and triage now":
+            imp_col1.selectbox(
+                "Priority",
+                ["Let triage decide"],
+                disabled=True,
+                key="sq_import_priority_auto",
+                help="The queue stores an initial medium value, then triage overwrites it with high/medium/low/skip when the model succeeds.",
+            )
+            imp_priority = _source_queue_initial_priority(add_mode, "medium")
+        else:
+            selected_priority = imp_col1.selectbox(
+                "Priority",
+                ["medium", "high", "low", "skip"],
+                key="sq_import_priority",
+                help="Manual priority used until you run triage. Triage can update this later.",
+            )
+            imp_priority = _source_queue_initial_priority(add_mode, selected_priority)
+        imp_batch = imp_col2.text_input("Batch group", key="sq_import_batch",
+                                         placeholder="e.g. UN sources")
+        imp_tags = imp_col3.text_input("Tags", key="sq_import_tags",
+                                        placeholder="e.g. sogice,legal")
+        imp_notes = imp_col4.text_input("Notes", key="sq_import_notes",
+                                         placeholder="optional free text")
+
+        if add_mode == "Add and triage now":
+            st.caption(
+                "Priority will be assigned by the triage model. If triage fails for a URL, it stays `new` with temporary `medium` priority so you can retry."
+            )
 
         if st.button("Add to queue", type="primary", disabled=not pasted.strip()):
             with st.spinner("Adding…"):

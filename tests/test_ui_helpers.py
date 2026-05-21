@@ -299,6 +299,20 @@ def test_registry_review_filter_options_only_include_types_with_rows():
     assert "Tags" not in options
 
 
+def test_source_queue_initial_priority_lets_triage_decide():
+    from runner.app import _source_queue_initial_priority
+
+    assert _source_queue_initial_priority("Add and triage now", "high") == "medium"
+    assert _source_queue_initial_priority("Add and triage now", "skip") == "medium"
+
+
+def test_source_queue_initial_priority_keeps_manual_add_only_choice():
+    from runner.app import _source_queue_initial_priority
+
+    assert _source_queue_initial_priority("Add only", "high") == "high"
+    assert _source_queue_initial_priority("Add only", "skip") == "skip"
+
+
 # ---------------------------------------------------------------------------
 # Bug fixes: registry summary table + "no evidence" caption
 # ---------------------------------------------------------------------------
