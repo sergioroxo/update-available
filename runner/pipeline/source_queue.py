@@ -10,13 +10,23 @@ No external deps — stdlib sqlite3 only.
 
 Status lifecycle
 ----------------
-  new              → just added
-  triaged          → triage model ran, fields populated
-  ready_to_ingest  → researcher approved for ingestion
-  ingested         → runner ingest completed; corpus_doc_id set
+  new              → captured but not yet triaged
+  triaged          → fast model has inspected it; routing/priority suggested
+  ready_to_ingest  → researcher reviewed and approved — NOT yet ingested
+  ingested         → ``runner ingest`` completed; corpus_doc_id set
   skipped          → researcher decided not to ingest
 
 Priority values: high | medium | low | skip
+
+URL source types (detect_url_source_type)
+-----------------------------------------
+  pdf      → URL ends in .pdf
+  docx     → URL ends in .doc or .docx
+  youtube  → youtube.com/watch, youtu.be, youtube shorts
+  video    → other video platforms (vimeo, rumble, …) or video file extension
+  audio    → audio platform or audio file extension
+  webpage  → any other http/https URL
+  unknown  → cannot determine
 """
 from __future__ import annotations
 
@@ -42,27 +52,33 @@ VALID_PRIORITIES: frozenset[str] = frozenset({"high", "medium", "low", "skip"})
 
 _CREATE_SQL = """
 CREATE TABLE IF NOT EXISTS source_queue (
-    id              TEXT PRIMARY KEY,
-    url             TEXT NOT NULL,
-    url_hash        TEXT NOT NULL UNIQUE,
-    title           TEXT NOT NULL DEFAULT '',
-    source_type     TEXT NOT NULL DEFAULT 'url',
-    doc_type_hint   TEXT NOT NULL DEFAULT 'unknown',
-    priority        TEXT NOT NULL DEFAULT 'medium',
-    recommended_llm TEXT NOT NULL DEFAULT 'litelm',
-    routing_reason  TEXT NOT NULL DEFAULT '',
-    notes           TEXT NOT NULL DEFAULT '',
-    tags            TEXT NOT NULL DEFAULT '',
-    batch_group     TEXT NOT NULL DEFAULT '',
-    status          TEXT NOT NULL DEFAULT 'new',
-    added_at        TEXT NOT NULL,
-    triaged_at      TEXT NOT NULL DEFAULT '',
-    corpus_doc_id   TEXT NOT NULL DEFAULT ''
+    id                TEXT PRIMARY KEY,
+    url               TEXT NOT NULL,
+    url_hash          TEXT NOT NULL UNIQUE,
+    title             TEXT NOT NULL DEFAULT '',
+    source_type       TEXT NOT NULL DEFAULT 'webpage',
+    doc_type_hint     TEXT NOT NULL DEFAULT 'unknown',
+    priority          TEXT NOT NULL DEFAULT 'medium',
+    recommended_llm   TEXT NOT NULL DEFAULT 'litelm',
+    routing_reason    TEXT NOT NULL DEFAULT '',
+    notes             TEXT NOT NULL DEFAULT '',
+    tags              TEXT NOT NULL DEFAULT '',
+    batch_group       TEXT NOT NULL DEFAULT '',
+    status            TEXT NOT NULL DEFAULT 'new',
+    added_at          TEXT NOT NULL,
+    triaged_at        TEXT NOT NULL DEFAULT '',
+    corpus_doc_id     TEXT NOT NULL DEFAULT '',
+    triage_model_used TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_sq_status    ON source_queue (status);
 CREATE INDEX IF NOT EXISTS idx_sq_priority  ON source_queue (priority);
 CREATE INDEX IF NOT EXISTS idx_sq_batch     ON source_queue (batch_group);
 """
+
+# Columns added after initial schema — handled by _migrate_db()
+_MIGRATIONS: list[tuple[str, str]] = [
+    ("triage_model_used", "ALTER TABLE source_queue ADD COLUMN triage_model_used TEXT NOT NULL DEFAULT ''"),
+]
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +91,7 @@ class QueueItem:
     url: str
     url_hash: str
     title: str = ""
-    source_type: str = "url"
+    source_type: str = "webpage"
     doc_type_hint: str = "unknown"
     priority: str = "medium"
     recommended_llm: str = "litelm"
@@ -87,10 +103,12 @@ class QueueItem:
     added_at: str = ""
     triaged_at: str = ""
     corpus_doc_id: str = ""
+    triage_model_used: str = ""
 
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> "QueueItem":
-        return cls(**{k: (row[k] or "") for k in row.keys()})
+        keys = row.keys()
+        return cls(**{k: (row[k] or "") for k in keys})
 
 
 # ---------------------------------------------------------------------------
@@ -100,6 +118,19 @@ class QueueItem:
 def queue_db_path(corpus_dir: Path) -> Path:
     """Return the queue DB path adjacent to the corpus directory."""
     return corpus_dir.parent / "source_queue.db"
+
+
+def _migrate_db(conn: sqlite3.Connection) -> None:
+    """Add columns that were introduced after the initial schema.
+
+    SQLite does not support IF NOT EXISTS in ALTER TABLE, so we check the
+    existing column names from PRAGMA table_info and only add missing ones.
+    """
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(source_queue)")}
+    for col_name, alter_sql in _MIGRATIONS:
+        if col_name not in existing:
+            conn.execute(alter_sql)
+    conn.commit()
 
 
 def open_db(path: Path) -> sqlite3.Connection:
@@ -114,6 +145,7 @@ def open_db(path: Path) -> sqlite3.Connection:
         if stmt:
             conn.execute(stmt)
     conn.commit()
+    _migrate_db(conn)
     return conn
 
 
@@ -147,22 +179,58 @@ def url_hash(url: str) -> str:
     return hashlib.sha256(normalise_url(url).encode()).hexdigest()[:24]
 
 
-def _detect_source_type(url: str) -> str:
-    """Cheap source-type hint from URL pattern."""
+def detect_url_source_type(url: str) -> str:
+    """Classify a URL's source type using extension/domain heuristics only.
+
+    No network requests are made.
+
+    Returns one of:
+      ``"pdf"``     — URL path ends in .pdf
+      ``"docx"``    — URL path ends in .doc or .docx
+      ``"youtube"`` — YouTube watch/shorts/embed URL
+      ``"video"``   — other video platform or video file extension
+      ``"audio"``   — audio platform or audio file extension
+      ``"webpage"`` — any other http/https URL
+      ``"unknown"`` — cannot determine (non-http input, no extension)
+    """
+    if not url.strip():
+        return "unknown"
     lower = url.lower()
+    # YouTube (specific category per task spec)
+    if any(p in lower for p in (
+        "youtube.com/watch", "youtube.com/shorts/", "youtube.com/embed/",
+        "youtu.be/",
+    )):
+        return "youtube"
+    # Other video platforms
     if any(d in lower for d in (
-        "youtube.com/watch", "youtu.be/", "vimeo.com/",
-        "rumble.com/", "odysee.com/", "bitchute.com/",
+        "vimeo.com/", "rumble.com/", "odysee.com/", "bitchute.com/",
+        "dailymotion.com/", "facebook.com/watch", "fb.watch",
     )):
         return "video"
+    # File extension
     ext = Path(urlparse(url).path).suffix.lower()
-    if ext in {".pdf", ".doc", ".docx"}:
+    if ext == ".pdf":
         return "pdf"
-    if ext in {".mp3", ".wav", ".m4a", ".ogg"}:
-        return "audio"
-    if ext in {".mp4", ".mkv", ".avi", ".mov", ".webm"}:
+    if ext in {".doc", ".docx"}:
+        return "docx"
+    if ext in {".mp4", ".mkv", ".avi", ".mov", ".webm", ".m4v", ".flv"}:
         return "video"
-    return "url"
+    if ext in {".mp3", ".wav", ".m4a", ".ogg", ".aac", ".flac"}:
+        return "audio"
+    # Audio platforms
+    if any(d in lower for d in (
+        "soundcloud.com/", "open.spotify.com/", "podcasts.apple.com/",
+    )):
+        return "audio"
+    # Generic web page
+    if url.startswith(("http://", "https://")):
+        return "webpage"
+    return "unknown"
+
+
+# Private alias used internally (keeps backward compat with old callers)
+_detect_source_type = detect_url_source_type
 
 
 # ---------------------------------------------------------------------------
@@ -287,7 +355,7 @@ def source_type_from_triage(triage_result) -> str:
     doc_type = getattr(triage_result, "doc_type_hint", "unknown")
     if doc_type == "media":
         return "video"
-    return "url"
+    return "webpage"
 
 
 # ---------------------------------------------------------------------------
@@ -339,7 +407,7 @@ def add_item(
         url=url,
         url_hash=h,
         title=title,
-        source_type=_detect_source_type(url),
+        source_type=detect_url_source_type(url),
         priority=priority,
         notes=notes,
         tags=tags,
@@ -352,13 +420,14 @@ def add_item(
         """INSERT INTO source_queue
            (id, url, url_hash, title, source_type, doc_type_hint, priority,
             recommended_llm, routing_reason, notes, tags, batch_group,
-            status, added_at, triaged_at, corpus_doc_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            status, added_at, triaged_at, corpus_doc_id, triage_model_used)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             item.id, item.url, item.url_hash, item.title, item.source_type,
             item.doc_type_hint, item.priority, item.recommended_llm,
             item.routing_reason, item.notes, item.tags, item.batch_group,
             item.status, item.added_at, item.triaged_at, item.corpus_doc_id,
+            item.triage_model_used,
         ),
     )
     db.commit()
@@ -377,9 +446,14 @@ def add_items_from_text(
 ) -> tuple[int, int, int]:
     """Parse pasted text, dedup, and bulk-add to the queue.
 
-    Returns ``(added, dup_queue, dup_corpus)`` counts.
-    Already-ingested corpus URLs are added with ``status='ingested'`` so the
-    researcher can see they're already done.
+    Returns ``(added, dup_queue, dup_corpus)`` counts where:
+
+    - ``added``     — new items added with status=new
+    - ``dup_queue`` — URLs already present in the queue (not re-added)
+    - ``dup_corpus`` — URLs found in the local corpus; added to the queue
+      with ``corpus_doc_id`` set and status=new so the researcher can review
+      and confirm.  Status is **not** automatically set to ``ingested`` —
+      that requires explicit researcher confirmation.
     """
     raw_urls = parse_pasted_urls(text)
     added = dup_queue = dup_corpus = 0
@@ -387,11 +461,14 @@ def add_items_from_text(
     for raw_url in raw_urls:
         doc_id = already_in_corpus(raw_url, corpus_dir)
         if doc_id:
+            # Add to queue with corpus association noted, but status=new.
+            # The researcher sees "Already in corpus: <doc_id>" and can
+            # decide whether to mark it ingested or skip it.
             result = add_item(
                 db, raw_url,
                 priority=priority, notes=notes, tags=tags,
                 batch_group=batch_group,
-                corpus_doc_id=doc_id, status="ingested",
+                corpus_doc_id=doc_id, status="new",
             )
             if result is None:
                 dup_queue += 1
@@ -473,20 +550,30 @@ def update_priority(db: sqlite3.Connection, item_id: str, priority: str) -> bool
 
 
 def apply_triage_result(
-    db: sqlite3.Connection, item_id: str, triage_result
+    db: sqlite3.Connection,
+    item_id: str,
+    triage_result,
+    *,
+    model_name: str = "",
 ) -> bool:
-    """Write TriageResult fields to the queue row and set status=triaged."""
+    """Write TriageResult fields to the queue row and set status=triaged.
+
+    ``model_name`` is the human-readable name of the model that ran triage
+    (e.g. ``"litelm/triage"`` or ``"qwen3.5:9b"``).  Stored in
+    ``triage_model_used`` for provenance.
+    """
     priority = priority_from_triage(triage_result)
     s_type = source_type_from_triage(triage_result)
     cur = db.execute(
         """UPDATE source_queue SET
-               doc_type_hint    = ?,
-               recommended_llm  = ?,
-               routing_reason   = ?,
-               priority         = ?,
-               source_type      = CASE WHEN source_type = 'url' THEN ? ELSE source_type END,
-               status           = 'triaged',
-               triaged_at       = ?
+               doc_type_hint     = ?,
+               recommended_llm   = ?,
+               routing_reason    = ?,
+               priority          = ?,
+               source_type       = CASE WHEN source_type IN ('webpage', 'url') THEN ? ELSE source_type END,
+               status            = 'triaged',
+               triaged_at        = ?,
+               triage_model_used = ?
            WHERE id = ?""",
         (
             triage_result.doc_type_hint,
@@ -495,6 +582,7 @@ def apply_triage_result(
             priority,
             s_type,
             _now(),
+            model_name,
             item_id,
         ),
     )

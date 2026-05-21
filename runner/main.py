@@ -985,17 +985,20 @@ def queue_add(
     batch: str = typer.Option("", "--batch", "-b", help="Batch group label, e.g. 'UN sources'"),
     notes: str = typer.Option("", "--notes", "-n", help="Free-text notes for all added items"),
     tags: str = typer.Option("", "--tags", "-t", help="Comma-separated tags, e.g. 'sogice,evidence'"),
+    triage_now: bool = typer.Option(False, "--triage-now", help="Run fast triage immediately after adding"),
 ):
     """Add one or more URLs to the pre-ingestion source queue.
 
     \b
     Examples:
       runner queue-add https://example.com
+      runner queue-add https://example.com --triage-now
       runner queue-add --file urls.txt --batch "UN sources" --priority high
       cat urls.txt | runner queue-add --file -
     """
     from .pipeline.source_queue import (
-        open_db, queue_db_path, add_item, add_items_from_text, VALID_PRIORITIES
+        open_db, queue_db_path, add_items_from_text, list_items,
+        apply_triage_result, VALID_PRIORITIES,
     )
     if priority not in VALID_PRIORITIES:
         console.print(f"[red]Invalid priority {priority!r}. Choose from: {sorted(VALID_PRIORITIES)}[/red]")
@@ -1027,7 +1030,7 @@ def queue_add(
     if added:
         parts.append(f"[green]{added} added[/green]")
     if dup_corpus:
-        parts.append(f"[yellow]{dup_corpus} already in corpus (marked ingested)[/yellow]")
+        parts.append(f"[yellow]{dup_corpus} already in corpus (association noted, status=new)[/yellow]")
     if dup_queue:
         parts.append(f"[dim]{dup_queue} duplicate(s) skipped[/dim]")
     if not parts:
@@ -1035,6 +1038,26 @@ def queue_add(
     else:
         console.print("  ".join(parts))
     console.print(f"[dim]Queue DB: {queue_db_path(config.corpus_dir)}[/dim]")
+
+    if triage_now and (added + dup_corpus) > 0:
+        from .pipeline import triage as triage_mod
+        # Triage only the items we just added (status=new, batch matches if set)
+        new_items = list_items(db, status="new", batch_group=batch or None, limit=added + dup_corpus + 10)
+        model_name = "litelm/triage" if config.litelm_base_url else config.local_analysis_model
+        console.print(f"[cyan]Triaging {len(new_items)} item(s) with {model_name}...[/cyan]")
+        for i, item in enumerate(new_items, 1):
+            console.print(f"  [{i}/{len(new_items)}] {item.url[:80]}")
+            try:
+                snippet, _ = triage_mod.extract_snippet(item.url)
+                result = triage_mod.run(snippet, config)
+                apply_triage_result(db, item.id, result, model_name=model_name)
+                console.print(
+                    f"    → [cyan]{result.doc_type_hint}[/cyan] "
+                    f"[yellow]{result.recommended_llm}[/yellow] "
+                    f"{result.routing_reason[:55]}"
+                )
+            except Exception as exc:
+                console.print(f"    [red]Triage failed: {exc}[/red]")
 
 
 @app.command(name="queue-list")
@@ -1045,8 +1068,14 @@ def queue_list(
         help="Filter by priority: high | medium | low | skip"),
     batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Filter by batch group"),
     limit: int = typer.Option(100, "--limit", "-n", help="Maximum rows to show"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show triage comment and corpus association"),
 ):
-    """List the pre-ingestion source queue."""
+    """List the pre-ingestion source queue.
+
+    \b
+    Lifecycle: new → triaged → ready_to_ingest → ingested
+    ready_to_ingest = approved by researcher but NOT yet ingested.
+    """
     from rich.table import Table as RichTable
     from .pipeline.source_queue import open_db, queue_db_path, list_items, queue_stats
 
@@ -1063,8 +1092,10 @@ def queue_list(
     for s in ("new", "triaged", "ready_to_ingest", "ingested", "skipped"):
         n = by_s.get(s, 0)
         if n:
-            stat_parts.append(f"{s}: {n}")
-    console.print("[dim]" + "  |  ".join(stat_parts) + "[/dim]")
+            colour = {"ready_to_ingest": "green", "ingested": "dim",
+                      "skipped": "red", "triaged": "cyan"}.get(s, "white")
+            stat_parts.append(f"[{colour}]{s}: {n}[/{colour}]")
+    console.print("  |  ".join(stat_parts))
 
     items = list_items(db, status=status, priority=priority, batch_group=batch, limit=limit)
     if not items:
@@ -1073,11 +1104,12 @@ def queue_list(
 
     tbl = RichTable(title="Source Queue")
     tbl.add_column("id", style="dim", width=10)
-    tbl.add_column("status", width=16)
-    tbl.add_column("priority", width=8)
-    tbl.add_column("type", width=8)
-    tbl.add_column("llm", width=14)
-    tbl.add_column("batch", width=18)
+    tbl.add_column("status", width=18)
+    tbl.add_column("prio", width=7)
+    tbl.add_column("type", width=9)
+    tbl.add_column("llm", width=16)
+    tbl.add_column("model", width=14)
+    tbl.add_column("corpus", width=10)
     tbl.add_column("url", overflow="fold")
 
     _status_colour = {
@@ -1089,16 +1121,37 @@ def queue_list(
     for item in items:
         sc = _status_colour.get(item.status, "white")
         pc = _prio_colour.get(item.priority, "white")
+        corpus_cell = f"[yellow]{item.corpus_doc_id}[/yellow]" if item.corpus_doc_id else "—"
         tbl.add_row(
             item.id,
             f"[{sc}]{item.status}[/{sc}]",
             f"[{pc}]{item.priority}[/{pc}]",
             item.source_type,
-            item.recommended_llm,
-            item.batch_group or "—",
+            item.recommended_llm or "—",
+            item.triage_model_used[:12] if item.triage_model_used else "—",
+            corpus_cell,
             item.url,
         )
     console.print(tbl)
+
+    if verbose:
+        console.print()
+        for item in items:
+            if item.routing_reason or item.notes:
+                console.print(
+                    f"  [dim]{item.id}[/dim]  "
+                    + (f"[cyan]{item.routing_reason[:70]}[/cyan]" if item.routing_reason else "")
+                    + (f"  notes: {item.notes[:50]}" if item.notes else "")
+                )
+
+    # Ingest commands only for ready_to_ingest items
+    ready = [i for i in items if i.status == "ready_to_ingest"]
+    if ready:
+        console.print(f"\n[green]Ready for ingest ({len(ready)} item(s)):[/green]")
+        for item in ready:
+            llm = item.recommended_llm or "litelm"
+            console.print(f'  python -m runner ingest "{item.url}" --llm {llm}')
+
     if len(items) == limit:
         console.print(f"[dim](showing first {limit}; use --limit N for more)[/dim]")
 
@@ -1131,14 +1184,15 @@ def queue_triage(
         console.print("[dim]No new items to triage.[/dim]")
         return
 
-    console.print(f"[cyan]Triaging {len(candidates)} item(s)...[/cyan]")
+    model_name = "litelm/triage" if config.litelm_base_url else config.local_analysis_model
+    console.print(f"[cyan]Triaging {len(candidates)} item(s) with {model_name}...[/cyan]")
     for i, item in enumerate(candidates, 1):
         console.print(f"[dim]({i}/{len(candidates)})[/dim] {item.url[:80]}")
         try:
             snippet, note = triage_mod.extract_snippet(item.url)
             console.print(f"  [dim]{note[:60]}[/dim]")
             result = triage_mod.run(snippet, config)
-            apply_triage_result(db, item.id, result)
+            apply_triage_result(db, item.id, result, model_name=model_name)
             console.print(
                 f"  → [cyan]{result.doc_type_hint}[/cyan]  "
                 f"[yellow]{result.recommended_llm}[/yellow]  "
@@ -1147,7 +1201,10 @@ def queue_triage(
         except Exception as exc:
             console.print(f"  [red]Triage failed: {exc}[/red]")
 
-    console.print(f"[green]Done. Use 'runner queue-list' to review.[/green]")
+    console.print(
+        f"[green]Done.[/green] Use [dim]runner queue-list[/dim] to review. "
+        "Mark approved items with: [dim]runner queue-mark <id> --status ready_to_ingest[/dim]"
+    )
 
 
 @app.command(name="queue-mark")
