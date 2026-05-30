@@ -444,6 +444,171 @@ def enrich_doc(
         console.print("[yellow]Enrichment skipped.[/yellow]")
 
 
+def _extract_markdown_for_split(source: str) -> tuple[str, str]:
+    """Extract markdown text from a source for book splitting.
+
+    Returns ``(markdown_text, tool_used)``.  Does not create corpus
+    directories, does not write to Sanity or Supabase, and does not call
+    any analysis or enrichment stage.
+
+    Routing:
+      .md / .txt  → read directly (no conversion)
+      PDF / EPUB / DOCX → Docling via preprocess._preprocess_pdf
+      http(s) URL → Trafilatura via preprocess._preprocess_url
+    """
+    path = Path(source)
+
+    # Plain markdown / plain text: read directly, no conversion
+    if path.suffix.lower() in {".md", ".txt"} and path.exists():
+        return path.read_text(encoding="utf-8"), "direct"
+
+    # PDF / EPUB / DOCX: use Docling (Unstructured fallback in preprocess)
+    if path.suffix.lower() in {".pdf", ".epub", ".docx", ".doc", ".odt"} and path.exists():
+        result = preprocess._preprocess_pdf(path)
+        return result.markdown or result.text, result.tool_used
+
+    # URL: Trafilatura extraction
+    if source.startswith(("http://", "https://")):
+        result = preprocess._preprocess_url(source)
+        return result.markdown or result.text, result.tool_used
+
+    raise ValueError(
+        f"Cannot extract text from {source!r}.\n"
+        "Expected a local .pdf/.epub/.docx/.md/.txt file or an http(s) URL."
+    )
+
+
+@app.command(name="split-book")
+def split_book(
+    source: str = typer.Argument(..., help="Local PDF/EPUB/DOCX/.md file or URL"),
+    min_chars: int = typer.Option(
+        3000, "--min-chars",
+        help="Minimum characters per section; shorter sections are merged forward",
+    ),
+    max_level: int = typer.Option(
+        2, "--max-level",
+        help="Maximum heading depth to split on (1 = H1 only, 2 = H1 + H2)",
+    ),
+    preview_chars: int = typer.Option(
+        200, "--preview-chars",
+        help="Characters of section body to show in the preview",
+    ),
+    out: Optional[str] = typer.Option(
+        None, "--out",
+        help="Write preview JSON to this path (e.g. preview.json)",
+    ),
+):
+    """Preview proposed book/report sections without ingesting.
+
+    Extracts text from a local file or URL using existing preprocessing,
+    splits at heading boundaries using the book splitter, and prints a
+    table of proposed sections (index, heading level, title, char count,
+    short text preview).
+
+    This is --preview only: no corpus writes, no analysis, no enrichment,
+    no Sanity or Supabase writes. Use --out to save the preview as JSON.
+
+    Typical next step after reviewing the preview:
+      python -m runner ingest <section-file> --llm litelm
+    """
+    from .pipeline.book_splitter import estimate_section_count, split_by_headings
+    from rich.table import Table as RichTable
+
+    console.print(f"[dim]Extracting text from {source!r}…[/dim]")
+    try:
+        markdown, tool_used = _extract_markdown_for_split(source)
+    except Exception as exc:
+        console.print(Panel(f"[red]{exc}[/red]", title="Extraction failed"))
+        raise typer.Exit(1)
+
+    if not markdown.strip():
+        console.print(Panel(
+            "[yellow]No text extracted — the document may be empty or unsupported.[/yellow]",
+            title="Nothing to split",
+        ))
+        raise typer.Exit(0)
+
+    total_chars = len(markdown)
+    estimated = estimate_section_count(markdown, max_level=max_level)
+    sections = split_by_headings(markdown, min_chars=min_chars, max_level=max_level)
+
+    console.print(Panel(
+        f"Source:              [bold]{source}[/bold]\n"
+        f"Tool:                {tool_used}\n"
+        f"Total characters:    {total_chars:,}\n"
+        f"Estimated sections (before merge):                  {estimated}\n"
+        f"Actual sections (after merge at ≥{min_chars:,} chars):  {len(sections)}",
+        title="Book/Report Split Preview",
+    ))
+
+    if not sections:
+        console.print("[yellow]No sections produced.[/yellow]")
+    else:
+        table = RichTable(
+            show_header=True,
+            header_style="bold",
+            box=None,
+            padding=(0, 1),
+        )
+        table.add_column("#", style="dim", width=4, justify="right")
+        table.add_column("Lvl", width=4, justify="center")
+        table.add_column("Title", min_width=28)
+        table.add_column("Chars", width=8, justify="right")
+        table.add_column("Preview")
+
+        for s in sections:
+            lvl_label = f"H{s.level}" if s.level > 0 else "—"
+            # Body text: strip the heading line itself so the preview shows prose
+            body = s.text.lstrip()
+            if body.startswith("#"):
+                newline = body.find("\n")
+                body = body[newline:].strip() if newline != -1 else ""
+            snippet = body[:preview_chars].replace("\n", " ").strip()
+            if len(body) > preview_chars:
+                snippet += "…"
+            table.add_row(
+                str(s.section_index),
+                lvl_label,
+                s.title,
+                f"{len(s.text):,}",
+                snippet,
+            )
+        console.print(table)
+
+    if out:
+        import json as _json
+
+        payload = {
+            "source": source,
+            "tool_used": tool_used,
+            "total_chars": total_chars,
+            "estimated_section_count": estimated,
+            "actual_section_count": len(sections),
+            "min_chars": min_chars,
+            "max_level": max_level,
+            "sections": [
+                {
+                    "section_index": s.section_index,
+                    "title": s.title,
+                    "level": s.level,
+                    "char_count": len(s.text),
+                    "start_char": s.start_char,
+                    "end_char": s.end_char,
+                    "preview": s.text[:preview_chars].replace("\n", " ").strip(),
+                }
+                for s in sections
+            ],
+        }
+        out_path = Path(out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(
+            _json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        console.print(f"\n[green]Preview JSON written → {out_path}[/green]")
+    else:
+        console.print("\n[dim]Tip: use --out preview.json to save as JSON.[/dim]")
+
+
 @app.command(name="research-annotate")
 def research_annotate_cmd(
     doc_id: str = typer.Argument(..., help="doc_id of an already-ingested document"),
