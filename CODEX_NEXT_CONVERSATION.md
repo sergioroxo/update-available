@@ -169,7 +169,7 @@ Do not treat old chat summaries as authoritative. Read files and run tests.
 
 ## Current Task Direction
 
-`NEXT_SESSION.md` defines tasks A through F. A–D are complete.
+`NEXT_SESSION.md` defines tasks A through F plus a new TASK G. A–E are complete.
 
 **✓ A -- Triage workflow routing flags** (commit `3ee358796`)
 `needs_book_splitting`, `needs_testimony_review`, `needs_media_review`,
@@ -189,34 +189,43 @@ on every save. Chunked fallback truthfulness fixed. Streamlit wired.
 `--enrich/--no-enrich`, default True. Normal ingest now runs enrichment after
 confirmed upload. `--no-enrich` skips for quick tests.
 
-**E -- `split-book --preview` CLI** ← NEXT
-Build the `runner split-book` command using the existing `book_splitter.py` module.
-`--preview` mode first (print sections, no corpus changes); full queue integration
-deferred. See NEXT_SESSION.md for full spec.
+**✓ E -- `split-book --preview` CLI** (commit `74a35f847`)
+`split-book` command in `main.py`. `_extract_markdown_for_split()` helper routes
+by extension/URL (Docling / Trafilatura / direct read). Options: `--min-chars`,
+`--max-level`, `--preview-chars`, `--out`. Prints Rich panel + section table. No
+corpus writes, no analysis, no upload. 32 new tests (670 total).
 
-**F -- Batch Runner** (AFTER Task A -- now unblocked for design; build carefully)
+**G -- Deep architecture review / critic pass** ← NEXT (before TASK F)
+Ask a fresh high-intelligence model conversation to audit the full staged-intelligence
+system for workflow gaps, methodological risks, UI/UX friction, and audit/provenance
+gaps. Produces a prioritised findings report. See NEXT_SESSION.md §TASK G for scope
+and input file list. Do not start TASK F until this review is complete.
+
+**F -- Batch Runner** (after TASK G; build carefully)
 Must read `overnight_batch_safe` before processing items unattended.
 
 Recommended order for a new session:
-1. Verify repo/test state (638 passed expected).
-2. Start with TASK E -- book splitting preview CLI.
-3. One slice per session, with tests, before moving to the next.
+1. Verify repo/test state (670 passed expected).
+2. Run TASK G — share the listed input files with a fresh model and request a structured audit report.
+3. Review findings with researcher; update NEXT_SESSION.md with any new tasks or decisions.
+4. Then start TASK F — Batch Runner.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 638
-- Last commit: `65c775319` -- TASK D enrichment default-on
+- Tests passing: 670
+- Last commit: `74a35f847` -- TASK E split-book --preview CLI
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
 - Compact orientation lexicon: `includeInAnalysisLexicon` boolean on `lexiconEntry` ✓ (TASK B)
   - Researcher action needed: toggle flag in Sanity Studio for trusted draft terms
 - Enrichment default-on: `--enrich/--no-enrich`, default True ✓ (TASK D)
-- Book splitter: `book_splitter.py` module built (44 tests); CLI not yet built (TASK E next)
+- Book splitter: `book_splitter.py` module built (44 tests) ✓; `split-book --preview` CLI built ✓ (TASK E)
 - Triage workflow flags: built and wired ✓ (TASK A)
-- Batch Runner: unblocked for design; not yet built (TASK F)
+- Deep architecture review: planned as TASK G — to run before Batch Runner (TASK F)
+- Batch Runner: unblocked for design; not yet built (TASK F, after TASK G)
 
 ---
 

@@ -98,6 +98,7 @@ LiteLLM proxy at `LITELM_BASE_URL` (Tailscale). All `--llm litelm*` flags route 
 | Q23 | RAM usage of `gemma-4-26B-A4B-it` on M4 24 GB — test before setting as default for heavy docs | Phase 0.5 |
 | ~~**Q-Lexicon**~~ | ~~Compact orientation lexicon selection mechanism~~ — **RESOLVED (TASK B):** `includeInAnalysisLexicon` boolean on `lexiconEntry` (default false). Analysis fetches `validated` + `draft && includeInAnalysisLexicon==true`. Researcher must toggle flag in Sanity Studio for trusted draft terms. | ~~TASK B~~ complete |
 | ~~**Q-EnrichDefault**~~ | ~~Enrichment default pending~~ — **RESOLVED (TASK D):** Enrichment runs by default after confirmed upload (`--enrich/--no-enrich`, default True). Use `--no-enrich` for quick tests. | ~~TASK D~~ complete |
+| **Q-BookSanity** | Should book sections create a new Sanity type (`sogiceBook`) or use `sogiceDocument` with `parentBook` reference field? New type is cleaner but changes the Sanity schema. Needs researcher sign-off. | `split-book` queue integration (after TASK G) |
 
 **Q22 resolved (April 2026):** `qwen3-embedding:8b` output dimension = **4096d**
 Use `vector(4096)` in Supabase. Drop and recreate the table if it was created with `vector(2560)`.
@@ -153,6 +154,7 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 - [x] `runner push-enrichment <doc_id>` — CLI push of approved enrichment proposals to Sanity
 - [x] `runner queue [doc_id]` — show ingestion candidates from enrichment.json
 - [x] `runner doctor` — pre-flight check before first ingest
+- [x] `runner split-book <path_or_url> --preview` — preview PDF/book sections without ingesting (TASK E complete, commit `74a35f847`)
 - [ ] **End-to-end test**: one URL ingested + uploaded to Sanity + Supabase ← **next milestone**
 
 ### Phase 0.5 — Pilot Batch
@@ -217,6 +219,10 @@ python3 -m runner push-enrichment <doc_id>  # push approved enrichment proposals
 python3 -m runner queue                     # show all ingestion candidates from enrichment results
 python3 -m runner verify                    # check Sanity + Supabase records directly
 python3 -m runner migrate-supabase --confirm  # recreate document_embeddings with vector(4096)
+
+# Book splitting (preview only — no corpus changes)
+python3 -m runner split-book book.pdf --preview           # extract + show sections
+python3 -m runner split-book book.pdf --out sections.json # write section JSON
 
 # Flags
 python3 -m runner ingest <url> --triage     # Stage 0.5 pre-screen: recommends which --llm to use

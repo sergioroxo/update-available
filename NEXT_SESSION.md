@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 638
-**Last commit:** `65c775319` (TASK D — enrichment default-on, --no-enrich opt-out)
+**Tests passing:** 670
+**Last commit:** `74a35f847` (TASK E — split-book --preview CLI)
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 638 tests -- run before every edit
+tests/                          # 670 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -189,7 +189,7 @@ when triage flags `complexity=complex` or `doc_type_hint=legal`.
 ## Settled decisions -- do not re-open
 
 1. **Enrichment model = core-gemma.** Cross-architecture diversity: analysis on Qwen, enrichment on Gemma4.
-2. **Books require chapter splitting, not full-document ingestion.** `book_splitter.py` module is built. The `split-book` CLI command and Sanity schema are still needed.
+2. **Books require chapter splitting, not full-document ingestion.** `book_splitter.py` module is built. The `split-book --preview` CLI command is built (TASK E complete). Full queue integration and Sanity `sogiceBook` schema remain deferred (see Q-BookSanity).
 3. **Batch size = 10-15 documents per review cycle.**
 4. **Default model = `--llm litelm` (core-qwen, 35B MoE).** Use `litelm-reasoning` only for triage-flagged complex/legal docs.
 5. **Compact orientation lexicon for analysis -- implemented (TASK B).** Selection
@@ -255,24 +255,62 @@ ingest command. Enrichment now runs by default after confirmed upload. Pass
 
 ---
 
-### TASK E -- `runner split-book --preview` CLI
+### ~~TASK E~~ -- `runner split-book --preview` CLI ✓ COMPLETE
 
-**What exists:** `runner/pipeline/book_splitter.py` is built with 44 tests.
-`split_by_headings()`, `merge_short_sections()`, `estimate_section_count()` are all tested.
+`_extract_markdown_for_split()` module-level helper in `main.py` routes by
+extension/URL (Docling for PDF/EPUB/DOCX, Trafilatura for URLs, direct read for
+.md/.txt). `split-book` command options: `--min-chars` (3000), `--max-level`
+(2), `--preview-chars` (200), `--out`. Prints a Rich panel (source, tool,
+total chars, estimated vs actual section count) plus a table of sections
+(index, level, title, chars, preview). `--out` writes JSON with section offsets.
+No corpus writes, no analysis, no upload, no Sanity/Supabase calls.
+Full queue integration and Sanity `sogiceBook` schema remain deferred.
+**32 new tests (670 total). Commit:** `74a35f847`
 
-**What to build:**
-```bash
-python -m runner split-book book.pdf --preview   # show sections without ingesting
-python -m runner split-book book.pdf --batch "sogice-books" --llm litelm
-```
+---
 
-**Steps:**
-1. Run Docling preprocessing on PDF -> `extracted.md`
-2. Call `split_by_headings()` -> list of `BookSection` objects
-3. `--preview`: print section count, titles, char counts -- no corpus changes
-4. Without `--preview`: ask researcher to confirm, then add sections to source queue as `ready_to_ingest` with `parent_book_id` metadata
+### TASK G -- Deep architecture review / critic pass
 
-**`--preview` only for this slice.** Full queue integration and Sanity `sogiceBook` schema are DEFERRED.
+**What it is:** A structured review of the whole staged-intelligence ingest
+system by a fresh high-intelligence model conversation (not the implementation
+thread). This is not a code task — it is a methodological audit that produces a
+prioritized list of gaps and improvements.
+
+**Purpose:** Before building overnight batch mode (TASK F) and exposing the
+system to unattended processing, audit what the researcher might regret skipping.
+The pipeline is now complex enough that silent gaps are a real risk.
+
+**Scope the reviewer should cover:**
+- Workflow gaps: are the stage boundaries correct? Is anything missing that the
+  researcher will need at Phase 0.5 / Phase 1?
+- Methodological risks: what could silently degrade archival quality? Missing
+  provenance fields? Lossy normalisations? Confidence miscalibration? Enrichment
+  proposals that bypass researcher intent?
+- UI/UX friction: what in the Streamlit workbench creates cognitive overhead or
+  risks researcher error under time pressure?
+- Audit / provenance gaps: what does `analysis_audit.json` / `enrichment_audit.json`
+  not capture that would be needed for a methodology chapter?
+- Prioritisation: which of these gaps block Phase 0.5 pilot vs. which can wait
+  until Phase 1?
+
+**Input files to share with reviewer:**
+- `NEXT_SESSION.md` (this file)
+- `CODEX_NEXT_CONVERSATION.md`
+- `02_working_tools/Claude_Ingestion_Prompt.md`
+- `02_working_tools/ENRICHMENT_PROMPT_v1.0.md`
+- `runner/pipeline/audit.py`
+- `runner/pipeline/triage.py`
+- `runner/models/document.py`
+- `runner/models/enrichment.py`
+- `runner/models/triage.py`
+- `runner/pipeline/enrich.py`
+
+**Output expected:** A structured report with prioritised findings grouped by
+severity. The researcher reviews, picks what to act on before TASK F, and
+updates this file with any new tasks or resolved decisions.
+
+**Recommendation: complete TASK G before starting TASK F.** A Batch Runner
+with silent gaps is worse than no Batch Runner.
 
 ---
 
@@ -389,4 +427,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–D complete. TASK E (split-book --preview) is next.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G (deep architecture review) is recommended before TASK F (Batch Runner).*
