@@ -6,6 +6,7 @@ Usage:
   python -m runner ingest document.pdf --tier 2 --batch batch-07
   python -m runner ingest recording.mp4 --llm local
   python -m runner ingest document.pdf --llm both
+  python -m runner ingest <url-or-file> --no-enrich   # skip Stage 3c for quick tests
   python -m runner status
   python -m runner upload-doc <doc_id>
   python -m runner export batch-07
@@ -37,14 +38,18 @@ def ingest(
     max_chars: Optional[int] = typer.Option(None, "--max-chars", help="Truncation limit in characters (overrides .env). Use 0 for no truncation."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Auto-approve all checkpoints (no interactive prompts)"),
     run_triage: bool = typer.Option(False, "--triage", help="Run fast pre-screen triage to recommend which model to use"),
-    run_enrich: bool = typer.Option(False, "--enrich", help="Run Stage 3c enrichment pass after upload (lexicon + entity proposals)"),
+    run_enrich: bool = typer.Option(True, "--enrich/--no-enrich", help="Run Stage 3c enrichment after upload (default on; use --no-enrich to skip for quick tests or resource-constrained runs)"),
     enrich_model: Optional[str] = typer.Option(None, "--enrich-model", help="LiteLLM model alias for enrichment, e.g. lexicon-llm or core-gemma"),
     second_opinion: bool = typer.Option(False, "--second-opinion", help="Also run alternate enrichment model and save a comparison file"),
     collect_comments: bool = typer.Option(False, "--collect-comments", help="For video platforms, collect a bounded lower-trust comment evidence artifact"),
     max_comments: int = typer.Option(50, "--max-comments", help="Maximum comments to retain when --collect-comments is enabled"),
     skip_whisper: bool = typer.Option(False, "--skip-whisper", help="For video/audio, stop if platform captions are unavailable instead of running Whisper"),
 ):
-    """Full ingestion pipeline: intake → preprocess → embed → classify → review → upload."""
+    """Full ingestion pipeline: intake → preprocess → embed → classify → review → upload → enrich.
+
+    Enrichment (Stage 3c) runs by default after a confirmed upload.
+    Use --no-enrich to skip it for quick tests or resource-constrained runs.
+    """
     config = load_config(llm=llm)
     if collect_comments:
         config.media_collect_comments = True
@@ -202,7 +207,7 @@ def ingest(
             title="Saved locally",
         ))
 
-    # Stage 3c — Enrichment (optional, runs after upload)
+    # Stage 3c — Enrichment (default on, skipped with --no-enrich or when upload was not confirmed)
     if run_enrich and confirmed:
         console.print("\n[dim]Running Stage 3c enrichment pass...[/dim]")
         enrich_llm = "litelm" if llm.startswith("litelm") else llm

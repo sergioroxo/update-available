@@ -1661,7 +1661,15 @@ def page_ingest_workbench():
         st.session_state.ingest["allow_whisper"] = allow_whisper
         config.media_allow_whisper = allow_whisper
     with c5:
-        run_enrich = st.checkbox("Run enrichment after analysis", value=st.session_state.ingest["run_enrich"])
+        run_enrich = st.checkbox(
+            "Run enrichment after upload",
+            value=st.session_state.ingest["run_enrich"],
+            help=(
+                "On by default. Enrichment (Stage 3c) mines the document for lexicon "
+                "and entity proposals after a confirmed upload. Uncheck to skip for "
+                "quick tests or when Mac Studio is offline."
+            ),
+        )
         st.session_state.ingest["run_enrich"] = run_enrich
         enrich_options = list(dict.fromkeys([config.litelm_enrichment_model, config.litelm_enrichment_model_alt, "lexicon-llm", "core-gemma"]))
         enrich_model = st.selectbox(
@@ -1933,7 +1941,7 @@ def _blank_ingest_state() -> dict:
         "source_url": "",
         "llm": "litelm",
         "batch": "",
-        "run_enrich": False,
+        "run_enrich": True,
         "allow_whisper": False,
         "enrich_model": "",
         "intake": None,
@@ -6897,7 +6905,11 @@ def page_start_ingest():
     with c1:
         run_triage = st.checkbox("Run triage first")
     with c2:
-        run_enrich = st.checkbox("Run enrichment")
+        run_enrich = st.checkbox(
+            "Run enrichment (default on)",
+            value=True,
+            help="Enrichment runs by default after upload. Uncheck to add --no-enrich.",
+        )
     with c3:
         auto_yes = st.checkbox("Auto-approve checkpoints")
 
@@ -6908,8 +6920,8 @@ def page_start_ingest():
         parts.extend(["--batch", batch.strip()])
     if run_triage:
         parts.append("--triage")
-    if run_enrich:
-        parts.append("--enrich")
+    if not run_enrich:
+        parts.append("--no-enrich")
     if auto_yes:
         parts.append("--yes")
 
