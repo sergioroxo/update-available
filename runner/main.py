@@ -207,12 +207,14 @@ def ingest(
         console.print("\n[dim]Running Stage 3c enrichment pass...[/dim]")
         enrich_llm = "litelm" if llm.startswith("litelm") else llm
         try:
+            _enrich_audit: dict = {}
             enrichment_result = enrich.run(
                 intake_result.doc_id, preprocess_result, final_analysis,
                 config=config, llm=enrich_llm, model=enrich_model,
+                _audit=_enrich_audit,
             )
             if yes or review.checkpoint_enrichment(enrichment_result, intake_result.doc_id):
-                saved = enrich.save(intake_result.doc_id, enrichment_result, config)
+                saved = enrich.save(intake_result.doc_id, enrichment_result, config, _audit=_enrich_audit)
                 console.print(f"[green]Enrichment saved → {saved}[/green]")
             if second_opinion and enrich_llm.startswith("litelm"):
                 alt_model = config.litelm_enrichment_model_alt
@@ -418,14 +420,15 @@ def enrich_doc(
         )
 
     console.print(f"[dim]Running enrichment on {doc_id} with {llm}...[/dim]")
+    _enrich_audit: dict = {}
     try:
-        enrichment_result = enrich.run(doc_id, preprocess, analysis, config=config, llm=llm, model=model)
+        enrichment_result = enrich.run(doc_id, preprocess, analysis, config=config, llm=llm, model=model, _audit=_enrich_audit)
     except Exception as exc:
         console.print(Panel(f"[red]{exc}[/red]", title="Enrichment failed"))
         raise typer.Exit(1)
 
     if yes or review.checkpoint_enrichment(enrichment_result, doc_id):
-        saved = enrich.save(doc_id, enrichment_result, config)
+        saved = enrich.save(doc_id, enrichment_result, config, _audit=_enrich_audit)
         console.print(f"[green]Enrichment saved → {saved}[/green]")
         if second_opinion and llm.startswith("litelm"):
             alt_model = config.litelm_enrichment_model_alt

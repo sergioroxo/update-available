@@ -68,7 +68,8 @@ class EnrichmentRunMeta:
     input_char_count: int = 0
     chunked: bool = False
     chunk_count: int | None = None
-    chunks: list[dict] | None = None  # [{index, char_count, succeeded, error}]
+    chunks: list[dict] | None = None  # [{index, char_count, succeeded, model, validation_path, validation_attempts, normalization_repairs, error}]
+    whole_doc_fallback_reason: str = ""  # non-empty only when chunked=True; explains why whole-doc extraction failed
     validation_path: str = ""
     validation_attempts: int = 0
     normalization_repairs: int = 0

@@ -238,6 +238,7 @@ def test_write_enrichment_audit_schema_keys_present(tmp_path):
         "schema_version", "doc_id", "run_at", "prompt_version", "run_type",
         "llm_flag", "model", "input_char_count",
         "chunked", "chunk_count", "chunks",
+        "whole_doc_fallback_reason",
         "validation_path", "validation_attempts", "normalization_repairs", "errors",
         "enrichment_model",
         "lexicon_proposals_count", "entity_proposals_count", "tactic_proposals_count",
@@ -470,3 +471,40 @@ def test_enrichment_audit_dataclass_input_still_works(tmp_path):
     payload = json.loads((tmp_path / "enrichment_audit.json").read_text())
     assert payload["llm_flag"] == "litelm"
     assert payload["normalization_repairs"] == 3
+
+
+# ---------------------------------------------------------------------------
+# whole_doc_fallback_reason -- survives into enrichment_audit.json
+# ---------------------------------------------------------------------------
+
+def test_whole_doc_fallback_reason_persists_via_dataclass(tmp_path):
+    meta = EnrichmentRunMeta(
+        chunked=True,
+        whole_doc_fallback_reason="Could not extract valid JSON after 3 attempts",
+    )
+    write_enrichment_audit(tmp_path, meta, _enrichment())
+    payload = json.loads((tmp_path / "enrichment_audit.json").read_text())
+    assert payload["whole_doc_fallback_reason"] == "Could not extract valid JSON after 3 attempts"
+
+
+def test_whole_doc_fallback_reason_persists_via_dict(tmp_path):
+    run_meta = {
+        "chunked": True,
+        "whole_doc_fallback_reason": "Whole-doc parse failed",
+    }
+    write_enrichment_audit(tmp_path, run_meta, _enrichment())
+    payload = json.loads((tmp_path / "enrichment_audit.json").read_text())
+    assert payload["whole_doc_fallback_reason"] == "Whole-doc parse failed"
+
+
+def test_whole_doc_fallback_reason_defaults_to_empty_string(tmp_path):
+    write_enrichment_audit(tmp_path, None, _enrichment())
+    payload = json.loads((tmp_path / "enrichment_audit.json").read_text())
+    assert payload["whole_doc_fallback_reason"] == ""
+
+
+def test_whole_doc_fallback_reason_empty_when_not_chunked(tmp_path):
+    meta = EnrichmentRunMeta(chunked=False)
+    write_enrichment_audit(tmp_path, meta, _enrichment())
+    payload = json.loads((tmp_path / "enrichment_audit.json").read_text())
+    assert payload["whole_doc_fallback_reason"] == ""

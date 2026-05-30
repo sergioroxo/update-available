@@ -2264,6 +2264,7 @@ def _workbench_enrich(config, llm: str) -> None:
             json.loads(st.session_state.ingest["analysis_json"])
         )
         enrich_llm = "litelm" if llm.startswith("litelm") else llm
+        _enrich_audit: dict = {}
         with st.spinner("Running enrichment..."):
             result = enrich.run(
                 st.session_state.ingest["intake"].doc_id,
@@ -2272,8 +2273,9 @@ def _workbench_enrich(config, llm: str) -> None:
                 config=config,
                 llm=enrich_llm,
                 model=st.session_state.ingest.get("enrich_model") or None,
+                _audit=_enrich_audit,
             )
-        enrich.save(st.session_state.ingest["intake"].doc_id, result, config)
+        enrich.save(st.session_state.ingest["intake"].doc_id, result, config, _audit=_enrich_audit)
         st.session_state.ingest["enrichment"] = result
         st.session_state.pop("lexicon_terms", None)
         st.session_state.pop("entity_registry", None)

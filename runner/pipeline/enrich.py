@@ -26,12 +26,14 @@ try:
     from runner.config import Config
     from runner.models.document import AnalysisResult, PreprocessResult
     from runner.models.enrichment import EnrichmentResult
+    from runner.pipeline.audit import write_enrichment_audit
     from runner.pipeline.http_retry import call_with_http_retries
     from runner.pipeline.sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 except ImportError:
     from ..config import Config
     from ..models.document import AnalysisResult, PreprocessResult
     from ..models.enrichment import EnrichmentResult
+    from .audit import write_enrichment_audit
     from .http_retry import call_with_http_retries
     from .sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 
@@ -147,16 +149,44 @@ def run(
     config: Config,
     llm: str = "litelm",
     model: str | None = None,
+    *,
+    _audit: dict | None = None,
 ) -> EnrichmentResult:
     """Run Stage 3c enrichment and return an EnrichmentResult."""
+    if _audit is not None:
+        _audit["llm_flag"] = llm
+        _audit["input_char_count"] = len(preprocess.text)
+        _audit.setdefault("errors", [])
+        _audit["chunked"] = False
+        _audit["chunk_count"] = None
+        _audit["chunks"] = None
+
     system_prompt = _build_system_prompt(config, analysis)
     user_message  = _build_user_message(doc_id, preprocess)
 
-    raw = _call_enrichment_model(llm, system_prompt, user_message, config, model)
+    raw = _call_enrichment_model(llm, system_prompt, user_message, config, model, _audit=_audit)
+
+    # Use a separate dict for the whole-document validation attempt.  If it
+    # fails and we fall through to the chunked fallback, we do NOT want the
+    # main _audit left with validation_path="failed" when the run ultimately
+    # succeeds.  On success the relevant fields are copied into _audit below.
+    _whole_doc_audit: dict = {}
     try:
-        return _validate_response(doc_id, raw, llm)
+        result = _validate_response(doc_id, raw, llm, _audit=_whole_doc_audit)
+        if _audit is not None:
+            _audit["validation_path"] = _whole_doc_audit.get("validation_path", "")
+            _audit["validation_attempts"] = _whole_doc_audit.get("validation_attempts", 0)
+            _audit["normalization_repairs"] = _whole_doc_audit.get("normalization_repairs", 0)
+        return result
     except ValueError as exc:
         if len(preprocess.text) < 8_000:
+            # No chunked fallback for short docs — propagate the failure state.
+            if _audit is not None:
+                _audit["validation_path"] = _whole_doc_audit.get("validation_path", "failed")
+                _audit["validation_attempts"] = _whole_doc_audit.get("validation_attempts", 0)
+                _audit.setdefault("errors", []).extend(
+                    _whole_doc_audit.get("errors", [])
+                )
             raise
         return _run_chunked_enrichment(
             doc_id=doc_id,
@@ -166,10 +196,11 @@ def run(
             llm=llm,
             model=model,
             first_error=exc,
+            _audit=_audit,
         )
 
 
-def save(doc_id: str, result: EnrichmentResult, config: Config) -> Path:
+def save(doc_id: str, result: EnrichmentResult, config: Config, *, _audit: dict | None = None) -> Path:
     """Write enrichment.json to the document's corpus directory."""
     doc_dir = config.corpus_dir / doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
@@ -179,6 +210,8 @@ def save(doc_id: str, result: EnrichmentResult, config: Config) -> Path:
         shutil.copy2(out, archive)
     result.run_type = "main"
     out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
+    if _audit is not None:
+        write_enrichment_audit(doc_dir, _audit, result)
     return out
 
 
@@ -367,23 +400,34 @@ def _call_enrichment_model(
     user_message: str,
     config: Config,
     model: str | None = None,
+    *,
+    _audit: dict | None = None,
 ) -> str:
     raw: str | None = None
 
     if llm == "claude":
+        if _audit is not None:
+            _audit["model"] = config.claude_model
         return _call_claude(system_prompt, user_message, config)
     if llm.startswith("local"):
+        if _audit is not None:
+            _audit["model"] = config.local_analysis_model
         return _call_ollama(system_prompt, user_message, config, config.local_analysis_model)
 
     # litelm* or default: try lexicon-llm on Mac Studio
+    resolved = model or config.litelm_enrichment_model
     if config.litelm_base_url:
         try:
-            return _call_litelm(system_prompt, user_message, config, model or config.litelm_enrichment_model)
+            if _audit is not None:
+                _audit["model"] = resolved
+            return _call_litelm(system_prompt, user_message, config, resolved)
         except Exception:
             if llm.startswith("litelm"):
                 raise  # user explicitly asked for litelm — don't hide the error
             # fallback path: try local
     if raw is None:
+        if _audit is not None:
+            _audit["model"] = config.local_analysis_model
         return _call_ollama(system_prompt, user_message, config, config.local_analysis_model)
     return raw
 
@@ -396,11 +440,21 @@ def _run_chunked_enrichment(
     llm: str,
     model: str | None,
     first_error: ValueError,
+    *,
+    _audit: dict | None = None,
 ) -> EnrichmentResult:
     system_prompt = _build_system_prompt(config, analysis)
     chunks = _chunk_text(preprocess.text)
     results: list[EnrichmentResult] = []
     errors: list[str] = []
+
+    if _audit is not None:
+        _audit["chunked"] = True
+        _audit["chunk_count"] = len(chunks)
+        _audit["chunks"] = []
+        # Preserve the whole-doc failure as context, but keep it out of errors
+        # so the final audit is truthful about whether the run succeeded.
+        _audit["whole_doc_fallback_reason"] = str(first_error)[:500]
 
     for index, chunk in enumerate(chunks, start=1):
         user_message = _build_user_message(
@@ -409,18 +463,63 @@ def _run_chunked_enrichment(
             text_override=chunk,
             chunk_label=f"section {index} of {len(chunks)}",
         )
+        chunk_entry: dict | None = None
+        _chunk_audit: dict | None = {} if _audit is not None else None
+        if _audit is not None:
+            chunk_entry = {
+                "index": index,
+                "char_count": len(chunk),
+                "succeeded": False,
+                "model": None,
+                "validation_path": None,
+                "validation_attempts": None,
+                "normalization_repairs": None,
+                "error": None,
+            }
         try:
-            raw = _call_enrichment_model(llm, system_prompt, user_message, config, model)
-            results.append(_validate_response(doc_id, raw, llm))
+            raw = _call_enrichment_model(
+                llm, system_prompt, user_message, config, model, _audit=_chunk_audit
+            )
+            results.append(_validate_response(doc_id, raw, llm, _audit=_chunk_audit))
+            if chunk_entry is not None and _chunk_audit is not None:
+                chunk_entry["succeeded"] = True
+                chunk_entry["model"] = _chunk_audit.get("model")
+                chunk_entry["validation_path"] = _chunk_audit.get("validation_path")
+                chunk_entry["validation_attempts"] = _chunk_audit.get("validation_attempts")
+                chunk_entry["normalization_repairs"] = _chunk_audit.get("normalization_repairs", 0)
         except Exception as exc:
             errors.append(f"chunk {index}/{len(chunks)}: {exc}")
+            if chunk_entry is not None:
+                chunk_entry["error"] = str(exc)
+                if _chunk_audit is not None:
+                    chunk_entry["model"] = _chunk_audit.get("model")
+                    chunk_entry["validation_path"] = _chunk_audit.get("validation_path")
+                    chunk_entry["validation_attempts"] = _chunk_audit.get("validation_attempts")
+        if _audit is not None and chunk_entry is not None:
+            _audit["chunks"].append(chunk_entry)
 
     if not results:
         detail = "\n".join(errors[:5])
+        if _audit is not None:
+            _audit["validation_path"] = "failed"
+            _audit["validation_attempts"] = 0
+            _audit.setdefault("errors", []).append(
+                f"All {len(chunks)} chunks failed enrichment"
+            )
         raise ValueError(
             f"Whole-document enrichment failed, and chunked enrichment also failed.\n"
             f"Original error: {first_error}\n"
             f"Chunk errors:\n{detail}"
+        )
+
+    # Chunked run succeeded — write a truthful top-level audit state.
+    if _audit is not None:
+        _audit["validation_path"] = "chunked_fallback"
+        _audit["validation_attempts"] = 0   # chunk-level attempts are in chunks[]
+        _audit["normalization_repairs"] = sum(
+            (c.get("normalization_repairs") or 0)
+            for c in _audit["chunks"]
+            if c.get("succeeded")
         )
 
     merged = _merge_enrichment_results(doc_id, llm, results)
@@ -791,13 +890,26 @@ def _enum(value, allowed: set[str], default: str, aliases: dict[str, str] | None
     return text if text in allowed else default
 
 
-def _normalize_enrichment_payload(data: dict) -> dict:
+def _normalize_enrichment_payload(data: dict) -> tuple[dict, int]:
     """Make common LLM schema drift reviewable instead of fatal.
 
-    Enrichment proposals are not final facts; they are queued for researcher
-    review. When a model invents a near-miss enum value, prefer preserving the
-    proposal with a conservative default over dropping the whole enrichment run.
+    Returns (normalized_data, repair_count) where repair_count is the number
+    of enum values that fell back to a default because the model's value was
+    not in the allowed set. Enrichment proposals are not final facts; they are
+    queued for researcher review.
     """
+    _repairs = 0
+
+    def _renum(value, allowed: set[str], default: str, aliases: dict[str, str] | None = None) -> str:
+        nonlocal _repairs
+        text = _as_string(value, default).strip()
+        if aliases and text in aliases:
+            text = aliases[text]
+        if text not in allowed:
+            _repairs += 1
+            return default
+        return text
+
     normalized = dict(data)
     for key in (
         "lexicon_proposals",
@@ -811,18 +923,18 @@ def _normalize_enrichment_payload(data: dict) -> dict:
         normalized[key] = _as_object_list(normalized.get(key, []))
 
     for item in normalized["lexicon_proposals"]:
-        item["action"] = _enum(item.get("action"), _LEXICON_ACTIONS, "add_new")
+        item["action"] = _renum(item.get("action"), _LEXICON_ACTIONS, "add_new")
         item["term"] = _as_string(item.get("term"))
         item["language"] = _as_string(item.get("language"), "en") or "en"
-        item["proposed_cluster"] = _enum(item.get("proposed_cluster"), _LEXICON_CLUSTERS, "Unknown")
-        item["function"] = _enum(
+        item["proposed_cluster"] = _renum(item.get("proposed_cluster"), _LEXICON_CLUSTERS, "Unknown")
+        item["function"] = _renum(
             item.get("function"),
             _LEXICON_FUNCTIONS,
             "Unknown",
             aliases=_LEXICON_FUNCTION_ALIASES,
         )
         register_value = item.get("usage_register", item.get("register"))
-        item["register"] = _enum(register_value, _USAGE_REGISTERS, "neutral")
+        item["register"] = _renum(register_value, _USAGE_REGISTERS, "neutral")
         item["exact_quote"] = _as_string(item.get("exact_quote"))
         item["definition_as_used"] = _as_string(item.get("definition_as_used"))
         item["variants"] = _as_object_list(item.get("variants"))
@@ -830,7 +942,7 @@ def _normalize_enrichment_payload(data: dict) -> dict:
         relationships = []
         for relationship in _as_object_list(item.get("relationships")):
             relationship["existing_term"] = _as_string(relationship.get("existing_term"))
-            relationship["relationship"] = _enum(
+            relationship["relationship"] = _renum(
                 relationship.get("relationship"),
                 _TERM_RELATIONSHIPS,
                 "co_occurs_with",
@@ -840,8 +952,8 @@ def _normalize_enrichment_payload(data: dict) -> dict:
         item["relationships"] = relationships
 
     for item in normalized["entity_proposals"]:
-        item["action"] = _enum(item.get("action"), _ENTITY_ACTIONS, "add_new")
-        item["entity_type"] = _enum(item.get("entity_type"), _ENTITY_TYPES, "organization")
+        item["action"] = _renum(item.get("action"), _ENTITY_ACTIONS, "add_new")
+        item["entity_type"] = _renum(item.get("entity_type"), _ENTITY_TYPES, "organization")
         item["name"] = _as_string(item.get("name"))
         item["self_description"] = _as_string(item.get("self_description"))
         item["evidence_quote"] = _as_string(item.get("evidence_quote"))
@@ -857,7 +969,7 @@ def _normalize_enrichment_payload(data: dict) -> dict:
         item["network_connections"] = _as_object_list(item.get("network_connections"))
         for connection in item["network_connections"]:
             connection["entity_name"] = _as_string(connection.get("entity_name"))
-            connection["connection_type"] = _enum(
+            connection["connection_type"] = _renum(
                 connection.get("connection_type"),
                 _NETWORK_CONNECTIONS,
                 "partner",
@@ -870,9 +982,9 @@ def _normalize_enrichment_payload(data: dict) -> dict:
             person["quote"] = _as_string(person.get("quote"))
 
     for item in normalized["tactic_proposals"]:
-        item["action"] = _enum(item.get("action"), _ENTITY_ACTIONS, "add_new")
+        item["action"] = _renum(item.get("action"), _ENTITY_ACTIONS, "add_new")
         item["tactic"] = _as_string(item.get("tactic"))
-        item["tactic_level"] = _enum(item.get("tactic_level"), _TACTIC_LEVELS, "structural")
+        item["tactic_level"] = _renum(item.get("tactic_level"), _TACTIC_LEVELS, "structural")
 
     normalized["ingestion_queue"] = [
         item
@@ -881,8 +993,8 @@ def _normalize_enrichment_payload(data: dict) -> dict:
     ]
     for item in normalized["ingestion_queue"]:
         item["url"] = _as_string(item.get("url"))
-        item["source_type"] = _enum(item.get("source_type"), _INGESTION_SOURCE_TYPES, "unknown")
-        item["priority"] = _enum(item.get("priority"), _PRIORITIES, "medium")
+        item["source_type"] = _renum(item.get("source_type"), _INGESTION_SOURCE_TYPES, "unknown")
+        item["priority"] = _renum(item.get("priority"), _PRIORITIES, "medium")
 
     normalized["corpus_connections"] = [
         item
@@ -891,7 +1003,7 @@ def _normalize_enrichment_payload(data: dict) -> dict:
     ]
     for item in normalized["corpus_connections"]:
         item["doc_id"] = _as_string(item.get("doc_id"))
-        item["connection_type"] = _enum(
+        item["connection_type"] = _renum(
             item.get("connection_type"),
             _CORPUS_CONNECTION_TYPES,
             "same_term",
@@ -906,7 +1018,7 @@ def _normalize_enrichment_payload(data: dict) -> dict:
     for item in normalized["practice_descriptions"]:
         item["practice_id"] = _as_string(item.get("practice_id"))
         item["exact_description"] = _as_string(item.get("exact_description"))
-        item["harm_stance"] = _enum(item.get("harm_stance"), _HARM_STANCES, "not_mentioned")
+        item["harm_stance"] = _renum(item.get("harm_stance"), _HARM_STANCES, "not_mentioned")
 
     normalized["statistical_claims"] = [
         item
@@ -918,14 +1030,23 @@ def _normalize_enrichment_payload(data: dict) -> dict:
         item["source_cited"] = _as_string(item.get("source_cited"))
         item["context"] = _as_string(item.get("context"))
 
-    return normalized
+    return normalized, _repairs
 
 
-def _validate_response(doc_id: str, raw: str, llm: str) -> EnrichmentResult:
+def _validate_response(
+    doc_id: str,
+    raw: str,
+    llm: str,
+    *,
+    _audit: dict | None = None,
+) -> EnrichmentResult:
     original = raw.strip()
     validation_errors: list[str] = []
+    _attempts = 0
+    _repairs = 0
 
     def _try(text: str) -> EnrichmentResult | None:
+        nonlocal _repairs
         data = _first_json_object(text)
         if data is None:
             return None
@@ -933,32 +1054,56 @@ def _validate_response(doc_id: str, raw: str, llm: str) -> EnrichmentResult:
             data["doc_id"] = doc_id
             data["enrichment_model"] = llm
             data["enrichment_prompt_version"] = PROMPT_VERSION
-            data = _normalize_enrichment_payload(data)
+            data, repairs = _normalize_enrichment_payload(data)
+            _repairs += repairs
             return EnrichmentResult.model_validate(data)
         except Exception as exc:
             validation_errors.append(str(exc))
             return None
 
     # Try outside think tags first
+    _attempts += 1
     outside = re.sub(r"<think>.*?</think>", "", original, flags=re.DOTALL).strip()
     result = _try(outside)
     if result:
+        if _audit is not None:
+            _audit["validation_path"] = "outside_think_tags"
+            _audit["validation_attempts"] = _attempts
+            _audit["normalization_repairs"] = _audit.get("normalization_repairs", 0) + _repairs
         return result
 
     # Try inside think tags (model embedded JSON in reasoning)
     for block in re.findall(r"<think>(.*?)</think>", original, re.DOTALL):
+        _attempts += 1
         result = _try(block)
         if result:
+            if _audit is not None:
+                _audit["validation_path"] = "inside_think_tags"
+                _audit["validation_attempts"] = _attempts
+                _audit["normalization_repairs"] = _audit.get("normalization_repairs", 0) + _repairs
             return result
 
     # Try raw
+    _attempts += 1
     result = _try(original)
     if result:
+        if _audit is not None:
+            _audit["validation_path"] = "raw"
+            _audit["validation_attempts"] = _attempts
+            _audit["normalization_repairs"] = _audit.get("normalization_repairs", 0) + _repairs
         return result
 
     detail = ""
     if validation_errors:
         detail = "\nValidation details:\n" + "\n---\n".join(validation_errors[-3:])
+
+    if _audit is not None:
+        _audit["validation_path"] = "failed"
+        _audit["validation_attempts"] = _attempts
+        _audit.setdefault("errors", []).append(
+            f"Could not extract valid EnrichmentResult JSON after {_attempts} attempt(s)"
+        )
+
     raise ValueError(
         f"Could not extract valid EnrichmentResult JSON.\n"
         f"{detail}\n"
