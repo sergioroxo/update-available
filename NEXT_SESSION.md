@@ -30,6 +30,13 @@ single person doing PhD-quality archival research part-time.
 
 These define what each stage does and does NOT do. Do not collapse them.
 
+This system is best understood as **role-specialized staged intelligence**:
+separate AI roles perform bounded tasks in sequence, each with typed outputs,
+audit sidecars, and human review gates. It is not an autonomous truth-making
+machine and not a pile of interchangeable agents. The design goal is trust
+through transparency: the researcher can inspect what each stage saw, decided,
+and failed to connect.
+
 ### Stage 0.5 -- Triage (routing intelligence)
 Runs a fast model on the first ~3,000 chars. Determines:
 - Likely document type and language(s)

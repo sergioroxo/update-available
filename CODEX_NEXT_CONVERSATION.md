@@ -69,6 +69,13 @@ auditable for one researcher.
 
 These are settled. Do not re-open or collapse them.
 
+SurvivingSOGICE should be described as **role-specialized staged intelligence**:
+bounded AI roles run in sequence, with typed outputs, audit files, and human
+review gates. This phrase is useful for article/methodology writing because it
+captures the design better than "multi-agent automation": the system distributes
+labor across specialized stages while keeping interpretation and publication
+under researcher control.
+
 **Triage (Stage 0.5) -- routing intelligence**
 Determines: doc type hint, complexity, recommended model, whether splitting is needed,
 whether media/testimony/legal review is required, whether overnight batch is safe.

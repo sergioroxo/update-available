@@ -22,6 +22,11 @@ Key docs:
 
 These define what each stage does. Do not collapse them.
 
+Use the phrase **role-specialized staged intelligence** when describing the
+architecture in documentation or methodology materials. Each AI stage has a
+bounded role, typed output, audit trail, and human review gate. The system is
+designed to be inspectable and protective for a solo researcher, not autonomous.
+
 | Stage | Role | Lexicon context |
 |---|---|---|
 | **Triage (0.5)** | Routing intelligence: doc type, complexity, model, splitting needed, media/testimony/legal flags, overnight-batch safety | None (snippet only) |
