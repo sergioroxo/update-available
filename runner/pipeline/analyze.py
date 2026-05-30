@@ -81,50 +81,65 @@ def run(
     preprocess: PreprocessResult,
     llm: str,
     config: Config,
+    *,
+    _audit: dict | None = None,
 ) -> AnalysisResult:
+    if _audit is not None:
+        _audit["llm_flag"] = llm
+        _audit.setdefault("errors", [])
     if llm == "claude":
-        return _analyze_with_claude(preprocess, config)
+        return _analyze_with_claude(preprocess, config, _audit=_audit)
     if llm == "local":
-        return _analyze_with_ollama(preprocess, config, config.local_analysis_model)
+        return _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
     if llm == "local-heavy":
-        return _analyze_with_ollama(preprocess, config, config.local_analysis_model_heavy)
+        return _analyze_with_ollama(preprocess, config, config.local_analysis_model_heavy, _audit=_audit)
     if llm == "local-reasoning":
-        return _analyze_with_ollama(preprocess, config, config.local_analysis_model_reasoning)
+        return _analyze_with_ollama(preprocess, config, config.local_analysis_model_reasoning, _audit=_audit)
     if llm == "litelm":
-        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model)
+        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model, _audit=_audit)
     if llm == "litelm-heavy":
-        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_heavy)
+        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_heavy, _audit=_audit)
     if llm == "litelm-reasoning":
-        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_reasoning)
+        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_reasoning, _audit=_audit)
     if llm == "openrouter":
-        return _analyze_with_openrouter(preprocess, config)
+        return _analyze_with_openrouter(preprocess, config, _audit=_audit)
     if llm == "both":
-        claude_result = _analyze_with_claude(preprocess, config)
+        # Thread _audit to the primary (Claude) result only; comparison run is display-only.
+        claude_result = _analyze_with_claude(preprocess, config, _audit=_audit)
         local_result  = _analyze_with_ollama(preprocess, config, config.local_analysis_model)
         return DualAnalysisResult(primary=claude_result, comparison=local_result)
     if llm == "prefer-local":
         try:
-            result = _analyze_with_ollama(preprocess, config, config.local_analysis_model)
+            result = _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
             if result.confidence.status == "low":
-                return _analyze_with_claude(preprocess, config)
+                return _analyze_with_claude(preprocess, config, _audit=_audit)
             return result
-        except Exception:
-            return _analyze_with_claude(preprocess, config)
+        except Exception as exc:
+            if _audit is not None:
+                _audit.setdefault("errors", []).append(f"prefer-local primary failed: {exc}")
+            return _analyze_with_claude(preprocess, config, _audit=_audit)
     if llm == "prefer-claude":
         try:
-            return _analyze_with_claude(preprocess, config)
-        except Exception:
-            return _analyze_with_ollama(preprocess, config, config.local_analysis_model)
+            return _analyze_with_claude(preprocess, config, _audit=_audit)
+        except Exception as exc:
+            if _audit is not None:
+                _audit.setdefault("errors", []).append(f"prefer-claude primary failed: {exc}")
+            return _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
     raise ValueError(f"Unknown LLM option: {llm!r}")
 
 
-def _analyze_with_claude(preprocess: PreprocessResult, config: Config) -> AnalysisResult:
+def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None) -> AnalysisResult:
     import anthropic
     client = anthropic.Anthropic(api_key=config.anthropic_api_key)
     static_prompt, dynamic_prompt = _build_system_prompt_with_lexicon(
-        config, split_for_claude=True
+        config, split_for_claude=True, _audit=_audit
     )
     user_message  = _build_user_message(preprocess)
+
+    if _audit is not None:
+        _audit["model"] = config.claude_model
+        _audit["input_char_count"] = len(preprocess.text)
+        _audit["input_truncated"] = preprocess.truncated
 
     response = client.messages.create(
         model=config.claude_model,
@@ -140,13 +155,20 @@ def _analyze_with_claude(preprocess: PreprocessResult, config: Config) -> Analys
         messages=[{"role": "user", "content": user_message}],
     )
     raw_json = response.content[0].text
-    return _validate_response(raw_json)
+    if _audit is not None:
+        _audit["raw_response_chars"] = len(raw_json)
+    return _validate_response(raw_json, _audit=_audit)
 
 
-def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: str) -> AnalysisResult:
+def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None) -> AnalysisResult:
     import httpx
-    system_prompt = _build_system_prompt_with_lexicon(config)
+    system_prompt = _build_system_prompt_with_lexicon(config, _audit=_audit)
     user_message  = _build_user_message(preprocess)
+
+    if _audit is not None:
+        _audit["model"] = model
+        _audit["input_char_count"] = len(preprocess.text)
+        _audit["input_truncated"] = preprocess.truncated
 
     response = call_with_http_retries(lambda: httpx.post(
         f"{config.ollama_base_url}/api/chat",
@@ -178,13 +200,20 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
         raise ValueError(
             f"Ollama returned empty response. Message keys: {list(msg.keys())}"
         )
-    return _validate_response(raw_json)
+    if _audit is not None:
+        _audit["raw_response_chars"] = len(raw_json)
+    return _validate_response(raw_json, _audit=_audit)
 
 
-def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: str) -> AnalysisResult:
+def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None) -> AnalysisResult:
     import httpx
-    system_prompt = _build_system_prompt_with_lexicon(config)
+    system_prompt = _build_system_prompt_with_lexicon(config, _audit=_audit)
     user_message  = _build_user_message(preprocess)
+
+    if _audit is not None:
+        _audit["model"] = model
+        _audit["input_char_count"] = len(preprocess.text)
+        _audit["input_truncated"] = preprocess.truncated
 
     response = call_with_http_retries(lambda: httpx.post(
         f"{config.litelm_base_url}/v1/chat/completions",
@@ -205,18 +234,25 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
     ))
     response.raise_for_status()
     raw_json = response.json()["choices"][0]["message"]["content"]
-    return _validate_response(raw_json)
+    if _audit is not None:
+        _audit["raw_response_chars"] = len(raw_json)
+    return _validate_response(raw_json, _audit=_audit)
 
 
-def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config) -> AnalysisResult:
+def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None) -> AnalysisResult:
     import httpx
     if not config.openrouter_api_key:
         raise EnvironmentError(
             "OPENROUTER_API_KEY is not set in runner/.env\n"
             "Get a free key at https://openrouter.ai — no credit card required."
         )
-    system_prompt = _build_system_prompt_with_lexicon(config)
+    system_prompt = _build_system_prompt_with_lexicon(config, _audit=_audit)
     user_message  = _build_user_message(preprocess)
+
+    if _audit is not None:
+        _audit["model"] = config.openrouter_model
+        _audit["input_char_count"] = len(preprocess.text)
+        _audit["input_truncated"] = preprocess.truncated
 
     response = httpx.post(
         "https://openrouter.ai/api/v1/chat/completions",
@@ -238,12 +274,16 @@ def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config) -> An
     )
     response.raise_for_status()
     raw_json = response.json()["choices"][0]["message"]["content"]
-    return _validate_response(raw_json)
+    if _audit is not None:
+        _audit["raw_response_chars"] = len(raw_json)
+    return _validate_response(raw_json, _audit=_audit)
 
 
 def _build_system_prompt_with_lexicon(
     config: Config,
     split_for_claude: bool = False,
+    *,
+    _audit: dict | None = None,
 ) -> str | tuple[str, str]:
     base = _load_system_prompt()
     try:
@@ -251,18 +291,30 @@ def _build_system_prompt_with_lexicon(
     except Exception:
         terms = []
 
+    _LEXICON_INJECTION_CAP = 200
+    terms_available = len(terms)
+
     if not terms:
+        if _audit is not None:
+            _audit["lexicon_terms_available"] = 0
+            _audit["lexicon_terms_injected"] = 0
+            _audit["lexicon_injection_cap"] = _LEXICON_INJECTION_CAP
         return (base, "") if split_for_claude else base
 
-    _LEXICON_INJECTION_CAP = 200
     if len(terms) > _LEXICON_INJECTION_CAP:
         import logging as _logging
         _logging.getLogger(__name__).warning(
             "Lexicon has %d active terms — capping injection at %d. "
-            "Approve or archive excess terms in the Lexicon page.",
-            len(terms), _LEXICON_INJECTION_CAP,
+            "Analysis prompt uses the first %d terms as a compact orientation layer; "
+            "enrichment and registry matching should use deeper lexicon context.",
+            len(terms), _LEXICON_INJECTION_CAP, _LEXICON_INJECTION_CAP,
         )
         terms = terms[:_LEXICON_INJECTION_CAP]
+
+    if _audit is not None:
+        _audit["lexicon_terms_available"] = terms_available
+        _audit["lexicon_terms_injected"] = len(terms)
+        _audit["lexicon_injection_cap"] = _LEXICON_INJECTION_CAP
 
     term_lines = "\n".join(_format_lexicon_prompt_line(t) for t in terms)
     lexicon_injection = (
@@ -369,10 +421,11 @@ def _format_lexicon_prompt_line(term: dict) -> str:
     return f"- {term['term']} ({term.get('proposedCluster', '')}, function={term.get('function', '')}{suffix})"
 
 
-def _validate_response(raw_json: str) -> AnalysisResult:
+def _validate_response(raw_json: str, *, _audit: dict | None = None) -> AnalysisResult:
     """Extract and validate JSON from LLM response, handling think tags and markdown fences."""
     original = raw_json.strip()
     last_error: Exception | None = None
+    _attempts = 0
 
     def _try_extract(text: str) -> AnalysisResult | None:
         nonlocal last_error
@@ -390,21 +443,33 @@ def _validate_response(raw_json: str) -> AnalysisResult:
             return None
 
     # 1. Try content outside think tags (normal case)
+    _attempts += 1
     outside = re.sub(r"<think>.*?</think>", "", original, flags=re.DOTALL).strip()
     result = _try_extract(outside)
     if result:
+        if _audit is not None:
+            _audit["validation_path"] = "outside_think_tags"
+            _audit["validation_attempts"] = _attempts
         return result
 
     # 2. Try content inside think tags (model embedded JSON in its reasoning)
     inside_blocks = re.findall(r"<think>(.*?)</think>", original, re.DOTALL)
     for block in inside_blocks:
+        _attempts += 1
         result = _try_extract(block)
         if result:
+            if _audit is not None:
+                _audit["validation_path"] = "inside_think_tags"
+                _audit["validation_attempts"] = _attempts
             return result
 
     # 3. Try the raw text with no tag stripping (non-thinking model)
+    _attempts += 1
     result = _try_extract(original)
     if result:
+        if _audit is not None:
+            _audit["validation_path"] = "raw"
+            _audit["validation_attempts"] = _attempts
         return result
 
     # Detect likely truncation: response starts with { but never closes
@@ -416,6 +481,13 @@ def _validate_response(raw_json: str) -> AnalysisResult:
     ) if looks_truncated else ""
 
     validation_detail = f"\nValidation error: {last_error}" if last_error else ""
+
+    if _audit is not None:
+        _audit["validation_path"] = "failed"
+        _audit["validation_attempts"] = _attempts
+        _audit.setdefault("errors", []).append(
+            f"Could not extract valid JSON after {_attempts} attempt(s)"
+        )
 
     raise ValueError(
         f"Could not extract valid JSON from model response.{hint}{validation_detail}\n"

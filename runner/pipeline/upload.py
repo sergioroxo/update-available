@@ -92,6 +92,8 @@ def run(
     analysis: AnalysisResult,
     config: Config,
     llm_used: str,
+    *,
+    _audit: dict | None = None,
 ) -> None:
     _enforce_testimony_upload_gate(intake, analysis)
     _repair_analysis_date_from_source(analysis, preprocess)
@@ -104,7 +106,7 @@ def run(
         llm_used=llm_used,
         local_dir=config.corpus_dir / intake.doc_id,
     )
-    save_locally(intake, preprocess, embedding, analysis, config, llm_used=llm_used)
+    save_locally(intake, preprocess, embedding, analysis, config, llm_used=llm_used, _audit=_audit)
     sanity_id = sanity_client.write_document(pkg, config)
     if embedding:
         supabase_client.upsert_embedding(
@@ -139,6 +141,8 @@ def save_locally(
     config: Config,
     llm_used: str = "unknown",
     embedding_model: str | None = None,   # explicit embedding model name
+    *,
+    _audit: dict | None = None,
 ) -> Path:
     """Write all artifacts to ~/survivingsogice/corpus/{doc_id}/. Always called before upload."""
     doc_dir = config.corpus_dir / intake.doc_id
@@ -175,6 +179,16 @@ def save_locally(
         encoding="utf-8",
     )
     _write_audit_event(doc_dir, "saved_locally")
+    if _audit is not None:
+        from .audit import write_analysis_audit
+        write_analysis_audit(
+            doc_dir,
+            _audit,
+            analysis,
+            doc_id=intake.doc_id,
+            prompt_version=PROMPT_VERSION,
+            ontology_version=_ONTOLOGY_VERSION,
+        )
     return doc_dir
 
 

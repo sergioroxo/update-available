@@ -47,8 +47,10 @@ class AnalysisRunMeta:
     model: str = ""                 # resolved model alias, e.g. "core-qwen"
     input_char_count: int = 0       # len(preprocess.text) sent to the model
     input_truncated: bool = False   # whether _maybe_truncate fired
-    lexicon_terms_injected: int = 0 # count of lexicon terms in the system prompt
-    raw_response_chars: int = 0     # len(raw_json) returned by the model
+    lexicon_terms_available: int = 0 # count fetched from Sanity before the analysis cap
+    lexicon_terms_injected: int = 0  # count actually in the analysis prompt (after cap)
+    lexicon_injection_cap: int = 0   # cap applied (200 for Stage 3b analysis)
+    raw_response_chars: int = 0      # len(raw_json) returned by the model
     validation_path: str = ""       # "outside_think_tags" | "inside_think_tags" | "raw"
     validation_attempts: int = 0    # extraction paths tried before success
     errors: list[str] = field(default_factory=list)

@@ -131,8 +131,9 @@ def ingest(
     # For litelm*, run analysis first, unload the large analysis model, then
     # generate embeddings. This avoids keeping the embedding and LLM models in
     # Mac Studio RAM at the same time.
+    _analysis_audit: dict = {}
     if llm.startswith("litelm"):
-        analysis_result = analyze.run(preprocess_result, llm=llm, config=config)
+        analysis_result = analyze.run(preprocess_result, llm=llm, config=config, _audit=_analysis_audit)
         try:
             if ollama_memory.unload_litelm_analysis(config, llm):
                 console.print("[dim]Unloaded LiteLLM analysis model before embedding.[/dim]")
@@ -150,7 +151,7 @@ def ingest(
             console.print(f"[yellow]Could not unload LiteLLM embedding model: {exc}[/yellow]")
     else:
         embedding_vector = embed.run(preprocess_result.text, config=config)
-        analysis_result = analyze.run(preprocess_result, llm=llm, config=config)
+        analysis_result = analyze.run(preprocess_result, llm=llm, config=config, _audit=_analysis_audit)
 
     # Stage 4 — Analysis review (Checkpoint 3)
     final_analysis = review.checkpoint_analysis(
@@ -172,6 +173,7 @@ def ingest(
             intake_result, preprocess_result, embedding_vector, final_analysis,
             config=config, llm_used=llm,
             embedding_model=config.litelm_embedding_model if llm.startswith("litelm") else config.embedding_model,
+            _audit=_analysis_audit,
         )
         console.print(Panel(
             f"Saved locally at [bold]{saved_path}[/bold]\n\n"
@@ -185,12 +187,14 @@ def ingest(
         upload.run(
             intake_result, preprocess_result, embedding_vector, final_analysis,
             config=config, llm_used=llm,
+            _audit=_analysis_audit,
         )
     elif consent_status != "pending":
         saved_path = upload.save_locally(
             intake_result, preprocess_result, embedding_vector, final_analysis,
             config=config, llm_used=llm,
             embedding_model=config.litelm_embedding_model if llm.startswith("litelm") else config.embedding_model,
+            _audit=_analysis_audit,
         )
         console.print(Panel(
             f"Saved locally at [bold]{saved_path}[/bold]\n\n"
@@ -270,8 +274,9 @@ def reanalyze_doc(
 
     analyze.enrich_preprocess_from_intake(preprocess, doc_dir / "intake.json")
     console.print(f"[dim]Re-analysing {doc_id} with {llm}...[/dim]")
+    _reanalyze_audit: dict = {}
     try:
-        new_analysis = analyze.run(preprocess, llm=llm, config=config)
+        new_analysis = analyze.run(preprocess, llm=llm, config=config, _audit=_reanalyze_audit)
     except Exception as exc:
         console.print(Panel(f"[red]{exc}[/red]", title="Analysis failed"))
         raise typer.Exit(1)
@@ -284,6 +289,13 @@ def reanalyze_doc(
     import json as _json
     analysis_path.write_text(
         _json.dumps(upload._stamp_analysis_dict(final), indent=2), encoding="utf-8"
+    )
+    from .pipeline.audit import write_analysis_audit as _write_analysis_audit
+    _write_analysis_audit(
+        doc_dir, _reanalyze_audit, final,
+        doc_id=doc_id,
+        prompt_version=analyze.PROMPT_VERSION,
+        ontology_version=upload._ONTOLOGY_VERSION,
     )
     console.print(f"[green]analysis.json updated for {doc_id} (prompt_version stamped)[/green]")
 
