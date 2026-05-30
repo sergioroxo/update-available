@@ -11,9 +11,25 @@ PhD research archive studying SOGICE (Sexual Orientation and Gender Identity Cha
 Key docs:
 - `01_project_docs/ARCHITECTURE_LOCAL_RUNNER_v1.0.md` — architecture decision, role boundaries, model stack, checkpoints
 - `01_project_docs/IMPLEMENTATION_PLAN_v1.0.md` — full phase plan (written for Vercel but phases 0-A/0-B/0-G and all prompt/schema tasks are still accurate)
-- `02_working_tools/Claude_Ingestion_Prompt.md` — ingestion-v3.1 system prompt + exact JSON output schema
+- `02_working_tools/Claude_Ingestion_Prompt.md` — ingestion-v3.3 system prompt + exact JSON output schema
+- `02_working_tools/ENRICHMENT_PROMPT_v1.0.md` — enrichment-v1.1 system prompt
 - `00_infrastructure/SANITY_SCHEMA_v1.0.md` — all 12 Sanity content types
 - `00_infrastructure/Entity_Registry_v1.1.md` — seed data for persons, orgs, laws, events
+
+---
+
+## Stage contracts
+
+These define what each stage does. Do not collapse them.
+
+| Stage | Role | Lexicon context |
+|---|---|---|
+| **Triage (0.5)** | Routing intelligence: doc type, complexity, model, splitting needed, media/testimony/legal flags, overnight-batch safety | None (snippet only) |
+| **Analysis (3b)** | Classification and summary: type, tactic, evidence, confidence, summary | Compact orientation lexicon -- validated + researcher-trusted draft terms, cap 200. Excludes unreviewed candidates. |
+| **Enrichment (3c)** | Lexicon/registry intelligence: propose terms/entities/tactics/practices, connect to existing entries before proposing new | Full lexicon -- draft + validated + entity registry |
+| **Human review** | Methodological layer: validate, reject, edit, preserve provenance | N/A -- researcher decides |
+
+The pipeline proposes. The researcher decides. The archive records.
 
 ---
 
@@ -75,6 +91,8 @@ LiteLLM proxy at `LITELM_BASE_URL` (Tailscale). All `--llm litelm*` flags route 
 | Q14 | JUST CHANGE™ ↔ i-Doc integration method | Phase 4 October build |
 | Q18 | Testimony removal formal protocol | Phase 3 publication |
 | Q23 | RAM usage of `gemma-4-26B-A4B-it` on M4 24 GB — test before setting as default for heavy docs | Phase 0.5 |
+| Q-Lexicon | Inspect all Sanity `lexiconEntry` status values and counts. Draft terms are not low quality -- they await evidence citation. TASK B requires researcher to decide which draft terms are orientation-eligible before any code is written. | TASK B |
+| Q-EnrichDefault | Architecture confirmed: enrichment should always run after normal ingest. Code pending (TASK D) -- timing/RAM/batch behavior requires careful handling. | TASK D |
 
 **Q22 resolved (April 2026):** `qwen3-embedding:8b` output dimension = **4096d**
 Use `vector(4096)` in Supabase. Drop and recreate the table if it was created with `vector(2560)`.
@@ -110,7 +128,7 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 
 ### MVP CLI Runner (`runner/`)
 - [x] Project skeleton (`main.py`, `config.py`, `models/`, `pipeline/`, `clients/`)
-- [x] Pydantic models for ingestion-v3.1 output schema (`models/document.py`)
+- [x] Pydantic models for ingestion-v3.3 output schema (`models/document.py`)
 - [x] `requirements.txt` + `.env.example`
 - [x] **`pipeline/intake.py`** — URL/file detection, doc_id, Wayback Machine, deduplication check
 - [x] **`pipeline/preprocess.py`** — Docling (PDF), Trafilatura (URL+full HTML intel), yt-dlp + faster-whisper (video)
@@ -222,13 +240,20 @@ runner/
 ├── main.py               # Typer CLI entry point — all commands
 ├── config.py             # .env loading, Config dataclass
 ├── models/
-│   └── document.py       # Pydantic models for ingestion-v3.1 output schema
+│   ├── document.py       # Pydantic models for ingestion-v3.3 output schema
+│   ├── enrichment.py     # EnrichmentResult, 7 proposal types
+│   └── triage.py         # TriageResult schema
 ├── pipeline/
 │   ├── intake.py         # Stage 1: source detection, doc_id, Wayback, dedup
 │   ├── preprocess.py     # Stage 2: Docling / Trafilatura / yt-dlp / Whisper + HTML intel
-│   ├── embed.py          # Stage 3a: qwen3-embedding:4b via Ollama
-│   ├── analyze.py        # Stage 3b: Claude / Ollama (3-tier) / OpenRouter routing
-│   ├── review.py         # Checkpoints 1–4: Rich terminal UI
+│   ├── embed.py          # Stage 3a: qwen3-embedding:8b via Ollama
+│   ├── analyze.py        # Stage 3b: Claude / Ollama / LiteLLM routing, audit-wired
+│   ├── enrich.py         # Stage 3c: lexicon/entity/tactic proposals
+│   ├── triage.py         # Stage 0.5: fast pre-screen (gemma4:e4b)
+│   ├── book_splitter.py  # Markdown heading splitter for long PDFs (built)
+│   ├── audit.py          # Audit sidecar writers (analysis_audit.json / enrichment_audit.json)
+│   ├── source_queue.py   # Pre-ingest SQLite queue
+│   ├── review.py         # Checkpoints 1-4: Rich terminal UI
 │   └── upload.py         # Stage 5: Sanity write + Supabase insert + local save
 └── clients/
     ├── sanity.py         # httpx Sanity Content API client
