@@ -1,9 +1,9 @@
 # SurvivingSOGICE — Next Session Handoff
-**Generated:** 2026-05-21  
-**Branch:** `claude/review-architecture-70CUm`  
-**Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`  
-**Tests passing:** 409  
-**Last commit:** `078bd8f18`
+**Generated:** 2026-05-30
+**Branch:** `claude/review-architecture-70CUm`
+**Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
+**Tests passing:** 409
+**Last commit:** `a2e701b0d`
 
 ---
 
@@ -33,16 +33,17 @@ Source Queue → Triage → Ingest → Preprocess → Embed → Analyze → Enri
 | Source queue (pre-ingest staging) | `runner queue-add/list/triage/mark` | ✅ Built, tested |
 | Ingestion | `runner ingest <url> --llm litelm` | ✅ Working |
 | Re-analysis | `runner reanalyze <doc_id>` | ✅ Working |
-| Enrichment | `runner enrich <doc_id>` | ✅ Working |
+| Enrichment | `runner enrich <doc_id>` | ✅ Working, now uses Gemma4 |
 | Push to Sanity | `runner push-enrichment <doc_id>` | ✅ Working |
 | Verify | `runner verify` | ✅ Working |
 | Streamlit UI | `cd runner && streamlit run app.py` | ✅ Working |
 | Discard stale docs | `runner discard-doc <doc_id>` | ✅ Working |
+| Mac Studio diagnostics | `runner litelm-test` / `runner doctor` | ✅ Working |
 
-### Streamlit pages (in order as they appear in sidebar)
+### Streamlit pages (sidebar order)
 1. Dashboard
 2. Corpus Intelligence
-3. **Source Queue** ← new, pre-ingest staging
+3. **Source Queue** ← pre-ingest staging, built this session
 4. Ingest Workbench
 5. Document List
 6. Pending Upload
@@ -60,263 +61,339 @@ Source Queue → Triage → Ingest → Preprocess → Embed → Analyze → Enri
 ### Key files
 ```
 runner/
-├── main.py                     # All CLI commands
+├── main.py                     # All CLI commands (~1400 lines)
 ├── config.py                   # Config dataclass + load_config()
-├── app.py                      # Streamlit (~9300 lines)
+├── app.py                      # Streamlit UI (~9400 lines)
 ├── pipeline/
 │   ├── intake.py               # Stage 1: doc_id, Wayback, dedup
 │   ├── preprocess.py           # Stage 2: Docling/Trafilatura/Whisper + truncation
-│   ├── embed.py                # Stage 3a: embedding
-│   ├── analyze.py              # Stage 3b: LLM classification
+│   │                           #   _maybe_truncate() at line 654
+│   │                           #   _preprocess_pdf() at line 159 — Docling primary
+│   ├── embed.py                # Stage 3a: embedding (qwen3-embedding:8b)
+│   ├── analyze.py              # Stage 3b: LLM classification (ingestion-v3.3 prompt)
 │   ├── enrich.py               # Stage 3c: lexicon/entity proposals (966 lines)
-│   ├── triage.py               # Stage 0.5: fast pre-screen
-│   ├── source_queue.py         # Pre-ingest SQLite queue
+│   │                           #   _call_enrichment_model() at line 364
+│   │                           #   _run_chunked_enrichment() at line 391
+│   │                           #   _chunk_text() at line 437 — 10k chars, 600 overlap
+│   ├── triage.py               # Stage 0.5: fast pre-screen (gemma4:e4b)
+│   ├── source_queue.py         # Pre-ingest SQLite queue (274 lines)
 │   ├── upload.py               # Stage 5: Sanity + Supabase
-│   └── diagnostics.py          # Mac Studio health checks
+│   ├── book_splitter.py        # ← DOES NOT EXIST YET — TASK 2 builds this
+│   └── diagnostics.py          # Mac Studio health checks + ErrorKind taxonomy
 ├── clients/
 │   ├── sanity.py               # Sanity REST client
-│   └── supabase.py             # Supabase client
+│   └── supabase.py             # Supabase client (SQL constants, migrations)
 └── models/
     ├── document.py             # Pydantic models for analysis output
-    ├── enrichment.py           # EnrichmentResult, proposals
-    └── triage.py               # TriageResult
+    ├── enrichment.py           # EnrichmentResult, 7 proposal types
+    └── triage.py               # TriageResult schema
+
 tests/                          # 409 tests — run before every edit
+02_working_tools/
+└── Claude_Ingestion_Prompt.md  # ingestion-v3.3 — the analysis system prompt
 ```
 
 ---
 
-## Model stack (Mac Studio M2 Ultra 64GB via LiteLLM/Tailscale)
+## Model stack — Mac Studio M2 Ultra 64GB via LiteLLM/Tailscale
 
-| Role | LiteLLM alias | Actual model | `--llm` flag | Speed |
+| Role | LiteLLM alias | Actual Ollama model | `--llm` flag | Speed |
 |---|---|---|---|---|
-| Default analysis | `core-qwen` | qwen3.6:35b-a3b (MoE, ~3B active) | `litelm` | **Fastest** |
-| Heavy/long docs | `core-gemma` | gemma4:31b-it | `litelm-heavy` | Medium |
-| Second opinion | `review-qwen` | qwen3.6:27b (dense) | `litelm-reasoning` | Slowest |
-| Enrichment (current) | `lexicon-llm` | qwen3.6:35b-a3b | (auto) | Fast |
-| **Enrichment (target)** | **`core-gemma`** | **gemma4:31b-it** | **(set in .env)** | Medium |
-| Triage | `triage` | gemma4:e4b-it | (auto) | Very fast |
-| Embedding | `research-embedding` | qwen3-embedding:8b | (auto with litelm) | Fast |
+| Default analysis | `core-qwen` | `qwen3.6:35b-a3b` (MoE, ~3B active) | `litelm` | **Fastest** |
+| Heavy / long docs | `core-gemma` | `gemma4:31b` | `litelm-heavy` | Medium |
+| Second opinion / reasoning | `review-qwen` | `qwen3.6:27b` (dense) | `litelm-reasoning` | Slowest |
+| **Enrichment** | **`core-gemma`** | **`gemma4:31b`** | (auto, set in .env) | Medium |
+| Triage (fast pre-screen) | `triage` | `gemma4:e4b` | (auto with --triage) | Very fast |
+| Embedding | `research-embedding` | `qwen3-embedding:8b` | (auto with litelm) | Fast |
 
 **IMPORTANT — MoE architecture:**
-`core-qwen` (35B MoE) has 35B total parameters but only ~3B active per token. It is
-**faster than `review-qwen` (27B dense)**, not slower. Use `--llm litelm` (core-qwen)
-as default. Use `litelm-reasoning` only for docs flagged `complexity=complex` by triage.
+`core-qwen` (`qwen3.6:35b-a3b`) has 35 billion total parameters but only ~3 billion
+active per token because of Mixture-of-Experts routing. It is **faster than
+`review-qwen` (27B dense)**, not slower. Use `--llm litelm` (core-qwen) as the
+default for 85% of documents. Only use `litelm-reasoning` for documents that triage
+flags as `complexity=complex` or `doc_type_hint=legal`.
 
 ### MacBook fallback (Mac Studio offline)
 | Flag | Model |
 |---|---|
-| `--llm local` | qwen3.5:9b |
-| `--llm local-heavy` | gemma-4-26B-A4B-it |
+| `--llm local` | `qwen3.5:9b` |
+| `--llm local-heavy` | `gemma-4-26B-A4B-it` (MacBook, verify RAM first) |
+
+---
+
+## Current .env state — already applied, do not re-apply
+
+```bash
+# Enrichment — switched to Gemma4 for cross-architecture diversity
+# Analysis uses Qwen (core-qwen); enrichment uses Gemma4 (core-gemma)
+# so Qwen-specific biases don't propagate to the lexicon
+LITELM_ENRICHMENT_MODEL=core-gemma
+LITELM_ENRICHMENT_MODEL_ALT=core-gemma
+
+# Truncation limits — updated from defaults
+# TRUNCATION_LIMIT_LOCAL was 1,000,000 → now 250,000 chars (~62k tokens)
+# Fits comfortably in qwen3.6:35b-a3b's 262,144-token context window
+TRUNCATION_LIMIT=24000          # Claude API only — keep low for cost reasons
+TRUNCATION_LIMIT_LOCAL=250000   # LiteLLM/local — books use split-book instead
+TRUNCATION_HEAD_CHARS=20000     # was 16,000
+TRUNCATION_TAIL_CHARS=8000      # was 6,000
+```
+
+**Verification:** After your next `runner enrich <doc_id>`, confirm with:
+```bash
+python3 -c "import json; d=json.load(open('~/Documents/surviving-sogice-corpus/<doc_id>/enrichment.json')); print(d.get('enrichment_model'))"
+# Should print: core-gemma
+```
 
 ---
 
 ## Truncation behaviour — critical for books
 
+`_maybe_truncate()` in `runner/pipeline/preprocess.py` line 654:
+- If `len(text) <= limit` → no truncation, full text sent
+- If `len(text) > limit` → keeps first `TRUNCATION_HEAD_CHARS` + last `TRUNCATION_TAIL_CHARS`
+  with `[TRUNCATED MIDDLE — N chars omitted]` marker between them
+
+**For a 300-page book (~250,000 chars) with current settings:**
+- `--llm litelm` (limit = 250,000 chars): book is exactly at the limit. Borderline.
+  Use `--max-chars 0` to disable truncation for books.
+- `--llm claude` (limit = 24,000 chars): keeps first 20k + last 8k = **222k chars
+  silently discarded**. ❌ Never use Claude for books.
+
+**For LiteLLM models, truncation is manageable — the deeper problem is that the
+analysis prompt (`ingestion-v3.3`) is designed for a single article, not 300 pages.**
+That is why TASK 2 (chapter splitting) is the correct approach.
+
+---
+
+## Decisions settled — do not re-open
+
+### 1. Enrichment model = core-gemma ✅ DONE
+Cross-architecture diversity: analysis on Qwen (35B MoE), enrichment on Gemma4 (31B).
+Different tokenizer + training mix reduces systematic bias propagation to the lexicon.
+Applied in `.env`. No code changes needed or made.
+
+### 2. Books → Level 2 (chapter splitting), NOT Level 1 (full-doc)
+Level 1 (`--max-chars 0 --llm litelm-heavy`) sends ~250k chars as a single document.
+The analysis prompt returns one shallow JSON. Enrichment falls back to 25 chunked
+calls × ~30s = 12+ minutes. Result is low quality and will require re-ingestion.
+
+Level 2 is required: split book into chapters, ingest each as a `sogiceDocument`
+with `parent_book_id`, aggregate chapter-level results for researcher review.
+Build it once correctly. TASK 2 below.
+
+### 3. Batch size = 10–15 documents per review cycle
+Larger batches cause fatigue-driven enrichment proposal approvals. 12–15 is the
+ceiling for focused review (20–45 min per batch including triage and enrichment).
+
+### 4. Time frame for 2,000 ingestions = ~5 months calendar
+- Machine time: 2000 × ~58s avg = ~32 hours
+- Researcher active review time: ~63 hours
+- At ~3 active hours/week: ~5 months calendar. Acceptable for a solo PhD project.
+
+### 5. Default model = `--llm litelm` (core-qwen, 35B MoE)
+NOT `litelm-reasoning`. The MoE architecture makes core-qwen faster AND larger than
+the 27B dense model. Use `litelm-reasoning` only when triage flags `complexity=complex`.
+
+---
+
+## TASKS (in priority order)
+
+---
+
+### TASK 1 — Overnight batch runner in Streamlit ✳️ NEXT
+
+**Goal:** Researcher marks 12–15 items `ready_to_ingest` in Source Queue, presses
+"Start overnight batch", goes to sleep. System processes each item serially with
+`--yes` (no interactive checkpoints), runs enrichment, uploads to Sanity + Supabase,
+logs progress to disk. Morning: review results in Document List.
+
+**Add new Streamlit page: "Batch Runner"** (insert in pages list between Source Queue
+and Ingest Workbench).
+
+#### Panel layout
+
+```
+┌─ Batch Runner ─────────────────────────────────────────────────┐
+│                                                                  │
+│  Source: ● ready_to_ingest items from Source Queue (N items)   │
+│          ○ Custom URL list (paste below)                        │
+│                                                                  │
+│  Batch name:     [batch-07              ]                       │
+│  Analysis model: ● litelm  ○ litelm-heavy  ○ litelm-reasoning │
+│  Run enrichment: ☑ Yes                                         │
+│  Max items:      [12]                                           │
+│                                                                  │
+│  [ Start batch ]                                                │
+│                                                                  │
+│  ── Progress ──────────────────────────────────────────────    │
+│  3 / 12 complete  ████████░░░░░░░░░░░░  25%                   │
+│  Current: https://example.com/doc                              │
+│  Last log: [Stage 3b] Analyze complete — confidence 0.87       │
+│  Errors: 0                                                      │
+│                                                                  │
+│  [ Stop ]    [ View results in Document List ]                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+#### Implementation spec
+
+**Batch job file** written to disk before processing starts:
+```json
+// {corpus_dir.parent}/batch_jobs/{batch_id}.json
+{
+  "batch_id": "batch-07",
+  "llm": "litelm",
+  "enrich": true,
+  "created_at": "2026-05-30T22:00:00Z",
+  "items": [
+    {"queue_id": "abc12345", "url": "https://...", "status": "queued", "doc_id": null, "error": null},
+    ...
+  ]
+}
+```
+
+**Statuses per item:** `queued → running → done | failed`
+
+**Processing loop (run in Streamlit with auto-rerun):**
 ```python
-# config.py defaults
-truncation_limit        = 24_000    # chars — Claude API only
-truncation_limit_local  = 1_000_000 # chars — LiteLLM/local (effectively unlimited)
-truncation_head_chars   = 16_000
-truncation_tail_chars   =  6_000
+# In Streamlit — check for active batch on every render
+batch_file = corpus_dir.parent / "batch_jobs" / f"{batch_id}.json"
+if batch_file.exists():
+    data = json.loads(batch_file.read_text())
+    next_item = next((i for i in data["items"] if i["status"] == "queued"), None)
+    if next_item:
+        next_item["status"] = "running"
+        batch_file.write_text(json.dumps(data, indent=2))
+        # Launch subprocess
+        proc = subprocess.Popen([
+            sys.executable, "-m", "runner", "ingest", next_item["url"],
+            "--llm", data["llm"],
+            "--enrich" if data["enrich"] else "--no-enrich",
+            "--batch", data["batch_id"],
+            "--yes",
+        ], stdout=log_file, stderr=subprocess.STDOUT)
+        st.session_state["batch_proc"] = proc
+    time.sleep(3)
+    st.rerun()
 ```
 
-**For a 300-page book (~250,000 chars):**
-- `--llm litelm` (default): full text sent (1M char limit not hit) ✅
-- `--llm claude`: only first 16k + last 6k = **178k chars silently discarded** ❌ Never use Claude for books.
+**Key constraints:**
+- Use `subprocess.Popen` with `--yes` — never Python threads in Streamlit
+- Write stdout + stderr to `{corpus_dir}/{doc_id}/batch_ingest.log`
+- Detect subprocess completion by polling `proc.poll()`
+- On success: update item status → `done`, mark source queue item → `ingested`
+- On failure: update item status → `failed`, log error, continue to next item
+- If Mac Studio offline (LiteLLM unreachable): stop batch, show error, do NOT
+  auto-fallback to local MacBook models without researcher confirmation
+- Persist batch state to JSON on every state change so Streamlit rerenders pick it up
 
-**For LiteLLM models, truncation is NOT the problem.** The problem is that the
-analysis prompt (`ingestion-v3.3`) is designed for one article, not 300 pages.
-That is why chapter splitting is required (see TASK 3 below).
-
----
-
-## Decisions made in previous sessions
-
-### 1. Enrichment model → core-gemma (IMMEDIATE)
-**Decision:** Switch `LITELM_ENRICHMENT_MODEL` from `lexicon-llm` (Qwen) to `core-gemma`
-(Gemma4:31b).
-
-**Rationale:** Cross-architecture diversity — analysis uses Qwen, enrichment uses Gemma4.
-Different tokenizer + training mix = different biases. Systematic Qwen errors in
-classification are less likely to propagate to the lexicon if enrichment runs on
-Gemma4. The researcher has no time to do 50-doc A/B comparison — Gemma4 is the
-defensible immediate choice.
-
-**How to apply:**
-```bash
-# In runner/.env — change this line:
-LITELM_ENRICHMENT_MODEL=core-gemma
-```
-That is the only change needed. No code change.
-
-### 2. Books must use Level 2 (chapter splitting), not Level 1 (full-doc with --max-chars 0)
-Level 1 (`--max-chars 0 --llm litelm-heavy`) sends 250k chars to Gemma4 as a single
-document. This produces one shallow classification JSON. The enrichment then runs 25
-chunks × 30s = 12 minutes. The result is low-quality because the analysis prompt
-expects one article, not a book.
-
-**Level 2 is the correct approach:** Split book into chapters, ingest each chapter as
-a separate `sogiceDocument` with a shared `parent_book_id`, then aggregate
-chapter-level classifications and enrichments into a book-level confidence review.
-
-### 3. Batch size: 10–15 documents per review cycle
-Larger batches lead to fatigue-driven approval of enrichment proposals. 12–15 is the
-ceiling for focused review (20–45 min per batch).
-
-### 4. Time frame for 2,000 ingestions: ~5 months
-- Machine time: 2000 × 58s avg = ~32 hours
-- Researcher review time: ~63 hours total
-- At 3 active hours/week on ingestion: ~5 months calendar
-
-### 5. Default model for analysis: `--llm litelm` (core-qwen, 35B MoE)
-Not `litelm-reasoning`. The 35B MoE is faster than 27B dense and good enough for
-85% of the corpus. Save `litelm-reasoning` for docs triage flags as `complexity=complex`.
-
----
-
-## TASKS FOR THIS SESSION (in priority order)
-
----
-
-### TASK 1 — Apply .env changes (5 minutes, no code)
-
-**File:** `runner/.env`
-
-Make these changes:
-```bash
-# Switch enrichment to Gemma4
-LITELM_ENRICHMENT_MODEL=core-gemma
-
-# Raise local truncation limit slightly for better long-doc coverage
-# (keeps full text for docs up to 250k chars, still well within context window)
-TRUNCATION_LIMIT_LOCAL=250000
-TRUNCATION_HEAD_CHARS=20000
-TRUNCATION_TAIL_CHARS=8000
-```
-
-Note: `TRUNCATION_LIMIT_LOCAL=250000` is intentionally lower than the 1M default.
-This gives LiteLLM models a 250k-char ceiling (~62k tokens), which fits comfortably
-in qwen3.6:35b-a3b's 262,144-token context window while keeping inference fast. For
-books that exceed this, chapter splitting (TASK 3) handles the rest.
-
-**Also update `.env.example`** to reflect these new recommended defaults.
-
----
-
-### TASK 2 — Overnight batch system in Streamlit (1–2 days)
-
-**Goal:** Researcher sets up a batch of 12–15 items in Source Queue, presses "Run
-overnight batch", goes to sleep. System processes all `ready_to_ingest` items
-serially, runs enrichment, uploads to Sanity/Supabase, logs progress. Morning review
-shows results in Streamlit Document List.
-
-**Design:**
-
-Add a new Streamlit page **"Batch Runner"** (or panel within Source Queue) that:
-
-1. Shows all `ready_to_ingest` items from the source queue
-2. Has a "Configure batch" panel:
-   - Model selector (default: litelm, options: litelm / litelm-heavy / litelm-reasoning)
-   - Run enrichment: yes/no toggle (default: yes)
-   - Max items: number input (default: 12)
-   - Batch name: text input
-3. Has a "Start batch" button that writes a **batch job file** to disk:
-   ```
-   {corpus_dir.parent}/batch_jobs/{batch_id}.json
-   ```
-   containing the list of URLs + config
-4. A background worker (Streamlit `@st.fragment` with `run_every=5`) that:
-   - Reads the batch job file
-   - Picks next unprocessed item
-   - Calls `runner ingest <url> --llm <model> --enrich --yes --batch <batch_id>`
-     via `subprocess.Popen`
-   - Writes progress back to the batch job file
-   - Marks queue item as ingested on success
-5. A live progress display (auto-refreshing) showing:
-   - Items processed / total
-   - Current item URL
-   - Last 5 log lines
-   - Errors (if any)
-6. After completion: shows "Batch complete — review in Document List" with direct
-   navigation link
-
-**Implementation notes:**
-- Use `subprocess.Popen` with `--yes` flag to suppress interactive checkpoints
-- Write stdout/stderr to `{corpus_dir}/{doc_id}/batch.log`
-- The batch job JSON tracks: `{url, status: queued|running|done|failed, doc_id, error}`
-- Streamlit refresh with `time.sleep(2); st.rerun()` inside a spinner — or use
-  `st.fragment(run_every=3)` if Streamlit version supports it
-- Do NOT use Python threads for subprocess management — Streamlit + threads = pain
-- If Mac Studio is offline, batch fails gracefully and stops (don't fall back to local
-  automatically — researcher must decide)
-
-**CLI equivalent (also add this for terminal use):**
+**CLI equivalent** (also implement):
 ```bash
 python -m runner ingest-batch --batch batch-07 --llm litelm --enrich --max 12
-# Reads ready_to_ingest items from source queue for batch-07
-# Processes them one by one with --yes
-# Updates queue status for each
+# Reads ready_to_ingest items from source queue for that batch
+# Processes serially with --yes, updates queue status for each
 ```
 
 ---
 
-### TASK 3 — Book ingestion system with chapter splitting (2–3 days)
+### TASK 2 — Book ingestion with chapter splitting 📚 MOST IMPORTANT
 
-This is the most important new capability. Do not skip or simplify.
+**This is a required capability before ingesting SOGICE books. Build it correctly
+once. Do not simplify to Level 1 (full-doc). The researcher does not have time to
+re-ingest 20 times.**
 
-**The problem:**
-A 300-page SOGICE book (~250k chars) cannot be meaningfully classified as a single
-`sogiceDocument`. The analysis prompt (`ingestion-v3.3`) expects one article-length
-document and returns one JSON object. Sending 250k chars produces vague, low-confidence
-output. Enrichment falls back to 25 chunked calls that produce 25 separate proposal
-sets that then need merging.
+#### The problem (confirmed by code analysis)
 
-**The correct solution:**
+A 300-page book (~250k chars) sent to the analysis prompt (`ingestion-v3.3`) produces
+one shallow JSON with vague type, low confidence, and a summary of the introduction.
+Enrichment (`_run_chunked_enrichment`) falls back to 25 chunks × ~30s = **12+ minutes**
+with proposals split across 25 separate outputs that then get merged by `_merge_enrichment_results()`.
+This produces a low-quality result that requires re-ingestion.
 
-#### Step 1: Extract chapter structure from PDF
+#### Step 1 — Build `runner/pipeline/book_splitter.py`
 
-Docling already extracts Markdown from PDFs with heading structure. A 300-page book
-converted by Docling produces `extracted.md` with headings like:
+New module. No external dependencies beyond what's already installed.
+
+```python
+"""
+Book chapter splitting for large PDFs.
+
+Uses the Markdown headings from Docling's extracted.md to split a book
+into sections suitable for individual ingestion.
+"""
+from dataclasses import dataclass
+
+@dataclass
+class BookSection:
+    title: str          # heading text, e.g. "Chapter 3: Policy Responses"
+    level: int          # heading level (1 = H1, 2 = H2)
+    text: str           # full section text including heading
+    section_index: int  # 1-based position in book
+    start_char: int     # character offset in original markdown
+    end_char: int
+
+def split_by_headings(
+    markdown: str,
+    min_chars: int = 3000,
+    max_level: int = 2,          # split at H1 and H2
+) -> list[BookSection]:
+    """Split Docling-extracted markdown at heading boundaries.
+
+    Sections shorter than min_chars are merged into the following section.
+    Returns sections in document order.
+    """
+
+def merge_short_sections(sections: list[BookSection], min_chars: int) -> list[BookSection]:
+    """Merge consecutive sections that are individually too short."""
+
+def estimate_section_count(markdown: str) -> int:
+    """Quick count of expected sections without full parsing."""
+```
+
+Docling markdown headings look like:
 ```markdown
 # Chapter 1: Historical Background
+content...
 ## 1.1 Origins of the movement
-...
+content...
 # Chapter 2: Theological Frameworks
 ```
 
-Build `runner/pipeline/book_splitter.py` with:
-```python
-def split_by_headings(markdown: str, min_chars: int = 3000) -> list[BookSection]:
-    """Split Docling-extracted markdown into sections at H1/H2 boundaries.
-    
-    Returns list of BookSection(title, level, text, start_char, end_char).
-    Sections shorter than min_chars are merged with the next section.
-    """
-```
+Test file: `tests/test_book_splitter.py` with fixtures for real-world heading patterns
+including: numbered chapters, unnumbered sections, preface/index, short sections that
+need merging.
 
-#### Step 2: New CLI command `runner split-book`
+#### Step 2 — New CLI command `runner split-book`
 
 ```bash
 python -m runner split-book book.pdf --batch "sogice-books" --llm litelm
+python -m runner split-book book.pdf --preview   # show sections without ingesting
 ```
 
-What it does:
-1. Runs Docling preprocessing on the PDF → `extracted.md`
-2. Runs `split_by_headings()` → list of sections (typically 5–30 per book)
-3. Creates a **parent book record** in Sanity (`sogiceBook` document type — see below)
-4. For each section:
-   - Creates a local corpus folder: `{doc_id}_{section_index}/`
-   - Saves section text as `extracted.txt`
-   - Queues section for analysis: adds to source queue as `ready_to_ingest` with
-     metadata `{parent_book_id, section_title, section_index, total_sections}`
-5. Prints summary: "Split into N sections. Run: runner ingest-batch --set {book_id}"
+**What it does:**
+1. Runs Docling preprocessing on PDF → saves `extracted.md` in a temp/parent folder
+2. Calls `split_by_headings()` → list of `BookSection` objects
+3. Prints preview: section count, titles, char counts
+4. Asks researcher to confirm before creating corpus entries (unless `--yes`)
+5. Creates a **parent book entry** in source queue (status = `new`, tagged `book_parent`)
+6. For each section:
+   - Generates a `doc_id` with suffix: `{book_short_id}_s{index:02d}`
+   - Creates local corpus folder
+   - Writes section text as `extracted.txt` and `extracted.md`
+   - Adds to source queue as `ready_to_ingest` with metadata:
+     `parent_book_id, section_title, section_index, total_sections, source_type=book_section`
+7. Output: "Split into N sections. Review in Source Queue → Batch Runner."
 
-#### Step 3: Section-level ingestion
+#### Step 3 — Section ingestion (uses existing pipeline, no changes needed)
 
-Each section is ingested as a normal `sogiceDocument` with extra metadata:
+Each section ingests as a normal `sogiceDocument`. The analysis prompt receives
+one chapter worth of text (~3,000–15,000 chars) — appropriate length for the prompt.
+
+Extra metadata in `analysis.json`:
 ```json
 {
-  "parent_book_id": "sogicebook-author-2024",
+  "parent_book_id": "doc12345",
   "section_title": "Chapter 3: Policy Responses",
   "section_index": 3,
   "total_sections": 18,
@@ -324,105 +401,112 @@ Each section is ingested as a normal `sogiceDocument` with extra metadata:
 }
 ```
 
-This goes into the `analysis.json` and gets uploaded to Sanity as a normal document
-with the parent book reference.
+#### Step 4 — Book aggregation review in Streamlit
 
-#### Step 4: Book-level aggregation review in Streamlit
+Add **"Book Review"** panel to Document List page (not a new page — an expander
+that appears when multiple docs share the same `parent_book_id`):
 
-After all sections are ingested, show a new Streamlit panel:
-**"Book Review"** (accessible from Document List or new sidebar page):
+- Lists all sections with their individual `type`, `confidence`, `summary`
+- Aggregated view:
+  - **Book type**: most common `type` across sections (weighted by confidence)
+  - **Book confidence**: average confidence across all sections
+  - **Lexicon candidates**: union of all `candidate_terms`, sorted by frequency
+    (terms appearing in 3+ sections = high reliability)
+  - **Entities**: deduplicated union of all entity proposals
+- Researcher actions:
+  - Confirm or override book-level classification
+  - Approve/reject lexicon terms (multi-select by frequency tier)
+  - Set book metadata: author, publisher, year, ISBN
+  - Create Sanity `sogiceBook` record linking all chapter documents
 
-- Shows all chapters of the book with their individual analysis results
-- Aggregates: 
-  - Most common `type` across chapters → book type
-  - Weighted average confidence across chapters → book confidence
-  - Union of all `candidate_terms` across chapters → book lexicon candidates
-  - All entity proposals across chapters → deduplicated
-- Researcher can:
-  - Confirm or override the book-level classification
-  - Approve/reject lexicon terms that appear in multiple chapters (high reliability)
-  - Set book metadata (author, publisher, year, ISBN)
-  - Push book-level Sanity record and all chapter records
+#### Step 5 — Sanity schema (`studio/schemas/sogiceBook.ts`)
 
-#### Step 5: Sanity schema addition
-
-Add `sogiceBook` document type to `studio/schemas/`:
 ```typescript
-{
+export default {
   name: 'sogiceBook',
   title: 'SOGICE Book',
   type: 'document',
   fields: [
-    { name: 'title', type: 'string' },
-    { name: 'author', type: 'string' },
-    { name: 'year', type: 'number' },
-    { name: 'isbn', type: 'string' },
-    { name: 'bookType', type: 'string' },  // Anti-SOGICE, Pro-SOGICE, etc.
-    { name: 'aggregatedConfidence', type: 'number' },
-    { name: 'sectionCount', type: 'number' },
-    { name: 'sections', type: 'array', of: [{ type: 'reference', to: [{ type: 'sogiceDocument' }] }] },
+    { name: 'title',               type: 'string',  title: 'Title' },
+    { name: 'author',              type: 'string',  title: 'Author(s)' },
+    { name: 'publisher',           type: 'string',  title: 'Publisher' },
+    { name: 'year',                type: 'number',  title: 'Year' },
+    { name: 'isbn',                type: 'string',  title: 'ISBN' },
+    { name: 'bookType',            type: 'string',  title: 'SOGICE Classification',
+      options: { list: ['Anti-SOGICE', 'Pro-SOGICE', 'Peripheral', 'Academic'] } },
+    { name: 'aggregatedConfidence', type: 'number', title: 'Aggregated Confidence' },
+    { name: 'sectionCount',        type: 'number',  title: 'Section Count' },
+    { name: 'sections', type: 'array', title: 'Sections',
+      of: [{ type: 'reference', to: [{ type: 'sogiceDocument' }] }] },
+    { name: 'workflowStatus', type: 'string', title: 'Workflow Status',
+      options: { list: ['draft', 'reviewed', 'published'] } },
   ]
 }
 ```
 
+**Register in `studio/schemas/index.ts`** alongside existing types.
+
 #### Tests to add
-- `tests/test_book_splitter.py`: heading detection, min-chars merging, empty sections
-- `tests/test_book_aggregation.py`: confidence averaging, term deduplication
+- `tests/test_book_splitter.py`: heading parsing, min-chars merging, edge cases
+  (no headings, very short sections, non-English headings, Roman numeral chapters)
+- `tests/test_book_aggregation.py`: confidence averaging, term frequency ranking,
+  entity deduplication across sections
 
 ---
 
-### TASK 4 — Streamlit: Large document settings panel
+### TASK 3 — Streamlit: Large document settings in Ingest Workbench
 
-**Goal:** Researcher can control truncation and model from Streamlit without touching
-the CLI or .env.
+**Goal:** Researcher controls truncation and model from Streamlit — no `.env` editing
+required for per-document overrides.
 
-In the **Ingest Workbench** page, add a collapsible "Advanced document settings" panel:
+Add collapsible "⚙️ Document settings" expander in the Ingest Workbench page,
+above the ingest button:
 
 ```
-┌─ Advanced document settings ──────────────────────────────────┐
-│                                                                │
-│  Document type:   [Article ▼]  [Long PDF ▼]  [Book section ▼]│
-│                                                                │
-│  Analysis model:  ● litelm (recommended)                      │
-│                   ○ litelm-heavy (Gemma4, long docs)          │
-│                   ○ litelm-reasoning (Qwen27B, ambiguous)     │
-│                                                                │
-│  Truncation:      ● Auto (from .env)                          │
-│                   ○ No truncation (send full text)            │
-│                   ○ Custom limit: [______] chars              │
-│                                                                │
-│  Run enrichment:  ☑ Yes  (model: Gemma4:31b)                  │
-│  Second opinion:  ☐ No                                        │
-│                                                                │
-└────────────────────────────────────────────────────────────────┘
+┌─ ⚙️ Document settings ────────────────────────────────────────┐
+│                                                                 │
+│  Analysis model:  ● litelm — Qwen 35B MoE (recommended)       │
+│                   ○ litelm-heavy — Gemma4 31B (long docs)      │
+│                   ○ litelm-reasoning — Qwen 27B (ambiguous)    │
+│                                                                 │
+│  Truncation:      ● Auto (250,000 chars from .env)             │
+│                   ○ No truncation — send full text             │
+│                   ○ Custom limit: [________] chars             │
+│                                                                 │
+│  Enrichment:      ☑ Run enrichment (Gemma4:31b)               │
+│  Second opinion:  ☐ Run second opinion comparison             │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-"No truncation" sets `--max-chars 0` equivalent in the Streamlit ingest call.
-Store the last-used settings in `st.session_state` so they persist within the session.
+- Store selections in `st.session_state` (persist within session)
+- "No truncation" passes `max_chars=0` to the preprocess step
+- Show the effective truncation limit as a caption under the radio
+- When model = `litelm-heavy`, auto-suggest "No truncation" for long docs
 
 ---
 
-### TASK 5 — Source Queue: batch automation integration
+### TASK 4 — Source Queue → Batch Runner integration
 
-**Goal:** Connect Source Queue's `ready_to_ingest` items directly to the batch runner.
+**Goal:** One-click path from Source Queue to Batch Runner.
 
-In Source Queue page, after items are marked `ready_to_ingest`:
-- Show a "Send to batch runner" button
-- It collects all `ready_to_ingest` items and writes them to a batch job file
-- Then navigates to Batch Runner page
-
-Also add to Source Queue table: display the recommended `--llm` flag from triage
-prominently on each item, so the researcher can confirm the model before batching.
+In Source Queue page, when items are in `ready_to_ingest`:
+- Show a banner: "N items ready — [Send to Batch Runner →]"
+- Clicking it writes the batch job file and navigates to Batch Runner page
+- In the queue table, show the triage-recommended `--llm` flag prominently
+  for each item so researcher can confirm model before batching
 
 ---
 
 ## What NOT to touch
 
-- Model routing logic in `analyze.py` — do not change LLM routing code
-- Sanity schema for `sogiceDocument` — no structural changes until book schema is designed
-- Supabase live data — only `verify` and `migrate-supabase` commands touch it
-- Active corpus documents — do not re-ingest already-uploaded docs without `runner reanalyze`
-- `.claude/worktrees/objective-hypatia-69d7fe` — stale, never use this path
+- `runner/pipeline/analyze.py` — do not change LLM routing or prompt loading
+- `runner/models/document.py` — do not change the ingestion-v3.3 output schema
+- `studio/schemas/document.ts` (sogiceDocument) — no structural changes until
+  book schema is fully designed and agreed
+- Supabase live data — only `runner verify` and `runner migrate-supabase` touch it
+- Active corpus documents — never re-ingest without `runner reanalyze`
+- `.claude/worktrees/objective-hypatia-69d7fe` — stale worktree, never use this path
 
 ---
 
@@ -433,124 +517,45 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# All 409 tests must pass before any edits
+# Must see: 409 passed (or higher after new tests)
 ```
 
 ---
 
-## The .env keys that matter most
+## Important code locations
 
-```bash
-# In runner/.env
-
-# Model routing
-LITELM_BASE_URL=http://<mac-studio-tailscale-ip>:4000
-LITELM_API_KEY=<key>
-
-# ★ CHANGE THIS (was lexicon-llm):
-LITELM_ENRICHMENT_MODEL=core-gemma
-LITELM_ENRICHMENT_MODEL_ALT=core-gemma
-
-# ★ CHANGE THESE (was 1000000 / 16000 / 6000):
-TRUNCATION_LIMIT_LOCAL=250000
-TRUNCATION_HEAD_CHARS=20000
-TRUNCATION_TAIL_CHARS=8000
-TRUNCATION_LIMIT=24000
-
-# Corpus paths
-CORPUS_DIR=~/Documents/surviving-sogice-corpus
-EXPORTS_DIR=~/Documents/surviving-sogice-exports
-
-# Source queue DB is auto-derived: {corpus_dir.parent}/source_queue.db
-```
+| What | File | Line |
+|---|---|---|
+| Truncation logic | `runner/pipeline/preprocess.py` | 59–71 + `_maybe_truncate()` at 654 |
+| PDF extraction (Docling) | `runner/pipeline/preprocess.py` | `_preprocess_pdf()` at 159 |
+| Enrichment model routing | `runner/pipeline/enrich.py` | `_call_enrichment_model()` at 364 |
+| Enrichment chunking | `runner/pipeline/enrich.py` | `_run_chunked_enrichment()` at 391, `_chunk_text()` at 437 |
+| Source queue CRUD | `runner/pipeline/source_queue.py` | Full module |
+| Streamlit page routing | `runner/app.py` | 78–148 |
+| Batch pattern reference | `runner/main.py` | `annotate-batch` at line 551 |
+| Sanity schema location | `studio/schemas/` | `document.ts`, `index.ts` |
 
 ---
 
-## Important code locations (for new tasks)
+## Open questions (decide before implementing)
 
-### Truncation logic
-`runner/pipeline/preprocess.py` lines 59–71 and `_maybe_truncate()` at line 654.
+**Q1:** Should the book aggregation create a new Sanity document type (`sogiceBook`),
+or reuse `sogiceDocument` with `sourceType=book_section` and a `parentBook` reference
+field? → Lean toward new type (`sogiceBook`) but needs researcher sign-off because
+it changes the Sanity schema.
 
-### Enrichment model routing
-`runner/pipeline/enrich.py` `_call_enrichment_model()` at line 364. Uses
-`config.litelm_enrichment_model` (from `.env`). One change to `.env` is all that's
-needed.
+**Q2:** Should overnight batch processing auto-stop if Mac Studio (LiteLLM) goes
+offline mid-batch, or should it queue items as `failed` and resume when the
+connection is restored? → Lean toward stop + notify. Auto-resume on reconnect risks
+sending duplicate documents to Sanity if the previous attempt partially succeeded.
 
-### Source queue
-`runner/pipeline/source_queue.py` — full SQLite-backed queue module.
-`QueueItem` dataclass, `open_db()`, `add_items_from_text()`, `list_items()`,
-`apply_triage_result()` with `triage_model_used`.
-
-### Streamlit page routing
-`runner/app.py` lines 78–148. Add new pages to `pages = [...]` list and add
-`elif page == "..."` branch.
-
-### Batch-related CLI
-`runner/main.py` — `annotate-batch` command (line 551) shows the existing batch
-pattern for processing multiple docs. Model for the new `ingest-batch` command.
-
-### Docling PDF extraction
-`runner/pipeline/preprocess.py` `_preprocess_pdf()` at line 159. Uses
-`DocumentConverter().convert()` and `.export_to_markdown()` and `.export_to_text()`.
-The markdown output contains heading structure — this is the input for `split_by_headings()`.
+**Q3:** For book sections in Sanity, should the `sourceUrl` field contain the
+original PDF path/URL or the parent book's URL? → The parent book's URL (or ISBN),
+since the section has no standalone URL.
 
 ---
 
-## Commit history for this branch (recent)
-
-```
-078bd8f18  Add human AI collaboration schematic materials
-5689a8e28  Let source queue triage decide import priority
-8168f1da2  Clarify source queue triage workflow (enrichment model, corpus semantics, URL types)
-b930e770d  Add pre-ingestion source queue (SQLite-backed)
-67bcb59e1  Remove unreachable lexicon evidence helper
-3e38eaf9d  Remove dead _render_sanity_lexicon_tab duplicate
-bad25fc55  Fix two registry validation UI bugs found during audit
-bf14dbb34  Hide empty registry validation filters
-```
-
----
-
-## Questions settled — do not re-open
-
-1. **Should Level 1 (full-doc --max-chars 0) be used for books?** No. Skip directly
-   to Level 2 (chapter splitting). Level 1 produces shallow output that requires
-   re-ingestion anyway. Build it right once.
-
-2. **Should enrichment use Qwen or Gemma4?** Gemma4 (core-gemma). Decided.
-   Cross-architecture diversity > marginal speed gain from Qwen. Set in .env.
-
-3. **Should the first 2000 docs use litelm-reasoning (27B) for safety?** No.
-   `core-qwen` (35B MoE, ~3B active) is faster AND uses more learned capacity.
-   `litelm-reasoning` is for ambiguous/complex docs only. Triage surfaces those.
-
-4. **Is the system ready for production web/article ingestion?** Yes. Start now.
-   Books wait for TASK 3.
-
-5. **Time estimate for 2000 docs?** ~5 months calendar at solo researcher pace.
-   ~32h machine time, ~63h active review time. Not a problem — it is an expected
-   duration for a PhD archive at this quality level.
-
----
-
-## Open questions (not yet decided)
-
-- Should the book aggregation create a new Sanity document type (`sogiceBook`), or
-  should it use the existing `sogiceDocument` type with a special `sourceType=book`
-  and a `parentBook` reference field?
-  → Lean toward new type, but needs schema review before implementation.
-
-- Should overnight batch processing use Streamlit's `st.fragment(run_every=N)` or
-  a separate background process? → Use subprocess + polling for reliability.
-  Streamlit's fragment API may not be stable enough for long-running jobs.
-
-- What happens if Mac Studio (LiteLLM) goes offline mid-batch? → Stop batch, log
-  failure, notify researcher in UI. Do NOT auto-fallback to local MacBook models
-  without researcher confirmation.
-
----
-
-*This document was generated at the end of a long analysis session. The analysis
-covered: pipeline stage timing, model architecture, truncation behaviour, enrichment
-routing, batch processing strategy, and book ingestion design. All decisions above
-are evidence-based from reading the source code directly.*
+*This document was written after a full multi-agent code analysis covering pipeline
+timing, model architecture (MoE vs dense), truncation behaviour, enrichment routing,
+batch processing strategy, and book ingestion design. All decisions are based on
+reading the source code directly. Tests confirmed at 409 passing after all changes.*
