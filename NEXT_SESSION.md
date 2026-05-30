@@ -5,6 +5,11 @@
 **Tests passing:** 409
 **Last commit:** `a2e701b0d`
 
+**Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`  
+Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
+`CODEX_NEXT_CONVERSATION.md` when starting a clean Codex conversation to verify
+state, steer Claude, and keep the system coherent.
+
 ---
 
 ## What this project is
