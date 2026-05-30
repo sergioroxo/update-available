@@ -77,13 +77,28 @@ CREATE INDEX IF NOT EXISTS idx_sq_batch     ON source_queue (batch_group);
 
 # Columns added after initial schema — handled by _migrate_db()
 _MIGRATIONS: list[tuple[str, str]] = [
-    ("triage_model_used", "ALTER TABLE source_queue ADD COLUMN triage_model_used TEXT NOT NULL DEFAULT ''"),
+    ("triage_model_used",       "ALTER TABLE source_queue ADD COLUMN triage_model_used TEXT NOT NULL DEFAULT ''"),
+    ("needs_book_splitting",    "ALTER TABLE source_queue ADD COLUMN needs_book_splitting INTEGER NOT NULL DEFAULT 0"),
+    ("needs_testimony_review",  "ALTER TABLE source_queue ADD COLUMN needs_testimony_review INTEGER NOT NULL DEFAULT 0"),
+    ("needs_media_review",      "ALTER TABLE source_queue ADD COLUMN needs_media_review INTEGER NOT NULL DEFAULT 0"),
+    ("needs_legal_review",      "ALTER TABLE source_queue ADD COLUMN needs_legal_review INTEGER NOT NULL DEFAULT 0"),
+    ("overnight_batch_safe",    "ALTER TABLE source_queue ADD COLUMN overnight_batch_safe INTEGER NOT NULL DEFAULT 1"),
+    ("suggested_process_route", "ALTER TABLE source_queue ADD COLUMN suggested_process_route TEXT NOT NULL DEFAULT ''"),
 ]
 
 
 # ---------------------------------------------------------------------------
 # Data class
 # ---------------------------------------------------------------------------
+
+_BOOL_COLUMNS: frozenset[str] = frozenset({
+    "needs_book_splitting",
+    "needs_testimony_review",
+    "needs_media_review",
+    "needs_legal_review",
+    "overnight_batch_safe",
+})
+
 
 @dataclass
 class QueueItem:
@@ -104,11 +119,24 @@ class QueueItem:
     triaged_at: str = ""
     corpus_doc_id: str = ""
     triage_model_used: str = ""
+    # Workflow routing flags (persisted as SQLite INTEGER 0/1)
+    needs_book_splitting: bool = False
+    needs_testimony_review: bool = False
+    needs_media_review: bool = False
+    needs_legal_review: bool = False
+    overnight_batch_safe: bool = True
+    suggested_process_route: str = ""
 
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> "QueueItem":
-        keys = row.keys()
-        return cls(**{k: (row[k] or "") for k in keys})
+        data = {}
+        for k in row.keys():
+            v = row[k]
+            if k in _BOOL_COLUMNS:
+                data[k] = bool(v)   # SQLite INTEGER 0/1 -> Python bool
+            else:
+                data[k] = v or ""   # NULL/empty text -> ""
+        return cls(**data)
 
 
 # ---------------------------------------------------------------------------
@@ -566,14 +594,20 @@ def apply_triage_result(
     s_type = source_type_from_triage(triage_result)
     cur = db.execute(
         """UPDATE source_queue SET
-               doc_type_hint     = ?,
-               recommended_llm   = ?,
-               routing_reason    = ?,
-               priority          = ?,
-               source_type       = CASE WHEN source_type IN ('webpage', 'url') THEN ? ELSE source_type END,
-               status            = 'triaged',
-               triaged_at        = ?,
-               triage_model_used = ?
+               doc_type_hint          = ?,
+               recommended_llm        = ?,
+               routing_reason         = ?,
+               priority               = ?,
+               source_type            = CASE WHEN source_type IN ('webpage', 'url') THEN ? ELSE source_type END,
+               needs_book_splitting   = ?,
+               needs_testimony_review = ?,
+               needs_media_review     = ?,
+               needs_legal_review     = ?,
+               overnight_batch_safe   = ?,
+               suggested_process_route = ?,
+               status                 = 'triaged',
+               triaged_at             = ?,
+               triage_model_used      = ?
            WHERE id = ?""",
         (
             triage_result.doc_type_hint,
@@ -581,6 +615,12 @@ def apply_triage_result(
             triage_result.routing_reason,
             priority,
             s_type,
+            int(getattr(triage_result, "needs_book_splitting",    False)),
+            int(getattr(triage_result, "needs_testimony_review",  False)),
+            int(getattr(triage_result, "needs_media_review",      False)),
+            int(getattr(triage_result, "needs_legal_review",      False)),
+            int(getattr(triage_result, "overnight_batch_safe",    True)),
+            getattr(triage_result,     "suggested_process_route", ""),
             _now(),
             model_name,
             item_id,

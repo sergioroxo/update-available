@@ -1,8 +1,11 @@
 """
 Stage 0.5 — Document triage.
 
-Runs a fast model on a short snippet (first 3 000 chars) to recommend which
-analysis model to use. Called when --triage flag is passed to `runner ingest`.
+Runs a fast model on a bounded context built by build_triage_context(): a head
+window, any detected structural markers (headings/chapter lines), and a tail
+window. This gives more signal than a fixed first-N-chars slice while staying
+within the triage model's token budget. Called when --triage flag is passed to
+`runner ingest`.
 
 Model routing:
   Mac Studio available  → "triage" LiteLLM alias (gemma4:e4b)
@@ -23,12 +26,19 @@ except ImportError:
     from ..config import Config
     from ..models.triage import TriageResult
 
-_SNIPPET_CHARS = 3_000
+_SNIPPET_CHARS = 3_000   # legacy; build_triage_context() is preferred
+_TRIAGE_HEAD_CHARS = 2_000
+_TRIAGE_TAIL_CHARS = 1_000
+_TRIAGE_MAX_HEADINGS = 20
+
+_HEADING_LINE_RE = re.compile(
+    r'^(?:#{1,6}\s|(?:Chapter|Section|Part|CHAPTER|SECTION|PART)\s|\d+\.\s)',
+)
 
 _SYSTEM_PROMPT = """\
 You are a document routing assistant for the SurvivingSOGICE research archive.
 You receive a short snippet from an unclassified document and must quickly decide
-which analysis model to route it to.
+which analysis model and process route to use.
 
 Output ONLY valid JSON — no prose, no markdown fences. Start with { and end with }.
 
@@ -39,18 +49,90 @@ Schema:
   "complexity": "simple|moderate|complex",
   "estimated_tokens": 5000,
   "recommended_llm": "litelm|litelm-heavy|litelm-reasoning|claude|local",
-  "routing_reason": "one-sentence explanation"
+  "routing_reason": "one-sentence explanation",
+  "needs_book_splitting": false,
+  "needs_testimony_review": false,
+  "needs_media_review": false,
+  "needs_legal_review": false,
+  "overnight_batch_safe": true,
+  "suggested_process_route": "standard"
 }
 
-Routing rules:
-- litelm-heavy   : document is clearly long (book, transcript, multi-section report),
-                   or complexity=complex
+LLM routing rules:
+- litelm-heavy     : document is clearly long (book, transcript, multi-section report),
+                     or complexity=complex
 - litelm-reasoning : SOGICE relevance is ambiguous, or requires careful evidence weighing
-- claude         : official court judgments, legislative submissions, government policy
-                   (high accuracy matters more than speed)
-- litelm         : everything else — promotional web content, NGO articles, press releases
-- local          : only if litelm unavailable and document is short/simple
+- claude           : official court judgments, legislative submissions, government policy
+                     (high accuracy matters more than speed)
+- litelm           : everything else — promotional web content, NGO articles, press releases
+- local            : only if litelm unavailable and document is short/simple
+
+Workflow flag rules:
+- needs_book_splitting   : true if document is a book, multi-chapter report, or thesis
+                           (set suggested_process_route to "split-book")
+- needs_testimony_review : true if document is or contains personal testimony
+                           (requires researcher consent review before processing)
+- needs_media_review     : true if document is video, audio, or requires transcript
+                           (set suggested_process_route to "media-ingest")
+- needs_legal_review     : true if document is a court judgment, legislative submission,
+                           or official legal instrument
+- overnight_batch_safe   : false when ANY of the following are true:
+                             needs_testimony_review, needs_legal_review,
+                             needs_book_splitting, needs_media_review
+                           These all require a route-specific runner or researcher
+                           confirmation before unattended batch processing.
+                           Set to true only for standard promotional, news, or simple
+                           academic content with no special handling required.
+- suggested_process_route: "split-book" if needs_book_splitting; "media-ingest" if
+                           needs_media_review; "standard" otherwise
 """
+
+
+def build_triage_context(
+    text: str,
+    source_label: str = "",
+    head_chars: int = _TRIAGE_HEAD_CHARS,
+    tail_chars: int = _TRIAGE_TAIL_CHARS,
+) -> str:
+    """Build a bounded triage context from document text and optional metadata.
+
+    For short documents (<= head_chars) returns the full text.
+    For long documents returns: source label, head, detected headings/structure
+    found in the middle section, and the tail.
+
+    Total output is bounded to head_chars + tail_chars + modest heading overhead,
+    well within a 4096-token triage context window.
+    """
+    parts: list[str] = []
+    if source_label:
+        parts.append(f"SOURCE: {source_label}")
+
+    if not text.strip():
+        return "\n\n".join(parts) if parts else ""
+
+    if len(text) <= head_chars:
+        parts.append(text)
+        return "\n\n".join(parts)
+
+    # Long document: head + extracted structure + tail
+    parts.append(text[:head_chars])
+
+    middle_end = max(head_chars, len(text) - tail_chars)
+    middle = text[head_chars:middle_end]
+    headings: list[str] = []
+    for line in middle.splitlines():
+        stripped = line.strip()
+        if stripped and _HEADING_LINE_RE.match(stripped):
+            headings.append(stripped)
+            if len(headings) >= _TRIAGE_MAX_HEADINGS:
+                break
+    if headings:
+        parts.append("STRUCTURE DETECTED IN MIDDLE:\n" + "\n".join(headings))
+
+    omitted = len(text) - head_chars - tail_chars
+    parts.append(f"[... {omitted:,} chars omitted ...]\n\n{text[-tail_chars:]}")
+
+    return "\n\n".join(parts)
 
 
 def extract_snippet(source: str, max_chars: int = _SNIPPET_CHARS) -> tuple[str, str]:
@@ -90,13 +172,10 @@ def extract_snippet(source: str, max_chars: int = _SNIPPET_CHARS) -> tuple[str, 
     return text[:max_chars], f"Read {len(text)} chars from local file"
 
 
-def run(text: str, config: Config) -> TriageResult:
-    """Triage a document snippet. Never raises — returns a safe default on failure."""
-    user_msg = (
-        "Document snippet:\n\n"
-        + text[:_SNIPPET_CHARS]
-        + "\n\n---\nOutput JSON only."
-    )
+def run(text: str, config: Config, *, source_label: str = "") -> TriageResult:
+    """Triage a document. Never raises -- returns a safe default on failure."""
+    context = build_triage_context(text, source_label=source_label)
+    user_msg = f"Document context:\n\n{context}\n\n---\nOutput JSON only."
 
     raw: str | None = None
 
@@ -130,7 +209,7 @@ def _call_litelm(user_msg: str, config: Config) -> str:
                 {"role": "user",   "content": user_msg},
             ],
             "temperature": 0.0,
-            "max_tokens": 256,
+            "max_tokens": 400,
         },
         timeout=60,
     )
@@ -151,7 +230,7 @@ def _call_ollama(user_msg: str, config: Config) -> str:
             "stream": False,
             "format": "json",
             "think": False,
-            "options": {"temperature": 0.0, "num_ctx": 4096, "num_predict": 256},
+            "options": {"temperature": 0.0, "num_ctx": 4096, "num_predict": 400},
         },
         timeout=120,
     )
