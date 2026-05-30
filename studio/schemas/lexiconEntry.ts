@@ -60,6 +60,17 @@ export default {
       type: 'reference',
       to: [{ type: 'sogiceDocument' }],
     },
+    {
+      name: 'includeInAnalysisLexicon',
+      title: 'Include Draft in Analysis Orientation Lexicon',
+      type: 'boolean',
+      initialValue: false,
+      description:
+        'Stage 3b analysis injects a compact orientation lexicon (max 200 terms). '
+        + 'Validated terms are included automatically by status. '
+        + 'For draft terms, enable this only when the researcher trusts the term enough to orient analysis. '
+        + 'Leave false for unreviewed model suggestions.',
+    },
 
     // ── Evidence Dossier ────────────────────────────────────────
     // One record per document where this term is attested. Each record carries the

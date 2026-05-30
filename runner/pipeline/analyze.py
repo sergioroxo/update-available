@@ -23,7 +23,7 @@ from pathlib import Path
 from ..config import Config
 from ..models.document import AnalysisResult, PreprocessResult
 from .http_retry import call_with_http_retries
-from .sanity_reads import fetch_active_lexicon_terms
+from .sanity_reads import fetch_analysis_orientation_terms
 
 PROMPT_VERSION = "ingestion-v3.3"
 
@@ -406,8 +406,18 @@ def _build_user_message(preprocess: PreprocessResult) -> str:
 
 
 def _fetch_active_lexicon_terms(config: Config) -> list[dict]:
-    """Backwards-compatible wrapper for the shared cached read helper."""
-    return fetch_active_lexicon_terms(config)
+    """Fetch the Stage 3b analysis orientation lexicon.
+
+    Returns only validated terms and researcher-trusted drafts
+    (``status == "validated"`` or ``status == "draft" &&
+    includeInAnalysisLexicon == true``).  Results are ordered so that
+    validated entries come first, then trusted drafts alphabetically —
+    making the 200-term cap deterministic.
+
+    Stage 3c enrichment uses the full draft+validated set via
+    ``fetch_active_lexicon_terms`` (a separate cached query).
+    """
+    return fetch_analysis_orientation_terms(config)
 
 
 def _format_lexicon_prompt_line(term: dict) -> str:

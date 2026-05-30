@@ -501,6 +501,11 @@ def write_lexicon_draft_from_proposal(
         "_type": "lexiconEntry",
         "term": term,
         "status": "draft",
+        # New enrichment-proposed terms are excluded from the Stage 3b analysis
+        # orientation lexicon until the researcher explicitly enables this flag
+        # in Sanity Studio. Prevents unreviewed model suggestions from entering
+        # the analysis prompt automatically.
+        "includeInAnalysisLexicon": False,
         "proposedCluster": _clean_unknown(proposal.get("proposed_cluster")),
         "function": _clean_unknown(proposal.get("function")),
         "draftDefinition": proposal.get("definition_as_used", ""),
