@@ -96,8 +96,8 @@ LiteLLM proxy at `LITELM_BASE_URL` (Tailscale). All `--llm litelm*` flags route 
 | Q14 | JUST CHANGE™ ↔ i-Doc integration method | Phase 4 October build |
 | Q18 | Testimony removal formal protocol | Phase 3 publication |
 | Q23 | RAM usage of `gemma-4-26B-A4B-it` on M4 24 GB — test before setting as default for heavy docs | Phase 0.5 |
-| Q-Lexicon | Inspect all Sanity `lexiconEntry` status values and counts. Draft terms are not low quality -- they await evidence citation. TASK B requires researcher to decide which draft terms are orientation-eligible before any code is written. | TASK B |
-| Q-EnrichDefault | Architecture confirmed: enrichment should always run after normal ingest. Code pending (TASK D) -- timing/RAM/batch behavior requires careful handling. | TASK D |
+| ~~**Q-Lexicon**~~ | ~~Compact orientation lexicon selection mechanism~~ — **RESOLVED (TASK B):** `includeInAnalysisLexicon` boolean on `lexiconEntry` (default false). Analysis fetches `validated` + `draft && includeInAnalysisLexicon==true`. Researcher must toggle flag in Sanity Studio for trusted draft terms. | ~~TASK B~~ complete |
+| ~~**Q-EnrichDefault**~~ | ~~Enrichment default pending~~ — **RESOLVED (TASK D):** Enrichment runs by default after confirmed upload (`--enrich/--no-enrich`, default True). Use `--no-enrich` for quick tests. | ~~TASK D~~ complete |
 
 **Q22 resolved (April 2026):** `qwen3-embedding:8b` output dimension = **4096d**
 Use `vector(4096)` in Supabase. Drop and recreate the table if it was created with `vector(2560)`.
@@ -220,7 +220,7 @@ python3 -m runner migrate-supabase --confirm  # recreate document_embeddings wit
 
 # Flags
 python3 -m runner ingest <url> --triage     # Stage 0.5 pre-screen: recommends which --llm to use
-python3 -m runner ingest <url> --enrich     # also run Stage 3c after upload
+python3 -m runner ingest <url> --no-enrich  # skip Stage 3c (enrichment runs by default)
 python3 -m runner ingest <url> --llm both   # Claude + local, shows diff at Checkpoint 3
 
 # Streamlit UI

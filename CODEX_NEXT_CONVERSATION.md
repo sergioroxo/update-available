@@ -5,7 +5,7 @@ project. It is a companion to `NEXT_SESSION.md`, which is the Claude Code task
 handoff. This document is for steering the collaboration: what to trust, what to
 verify, how to guide Claude, and how Codex should keep the system coherent.
 
-Generated: 2026-05-30
+Generated: 2026-05-31
 Repo: `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 Main working branch: `claude/review-architecture-70CUm`
 
@@ -161,62 +161,62 @@ Do not treat old chat summaries as authoritative. Read files and run tests.
 9. Do not change the `ingestion-v3.3` prompt or `enrichment-v1.1` prompt without
    researcher sign-off. These are calibrated tools, not configuration.
 
-10. Do not flip the enrichment code default until TASK D implements safe
-    timing/RAM/batch behavior and preserves an explicit opt-out (`--no-enrich`
-    for quick tests). The architecture decision itself is confirmed: enrichment
-    should normally run after analysis.
+10. Enrichment now runs by default after confirmed upload (TASK D complete). The
+    opt-out is `--no-enrich`. Do not remove the opt-out or make enrichment blocking
+    to the ingest result — it must remain non-fatal.
 
 ---
 
 ## Current Task Direction
 
-`NEXT_SESSION.md` defines tasks A through F in priority order:
+`NEXT_SESSION.md` defines tasks A through F. A–D are complete.
 
-**A -- Triage workflow flags** (NEXT)
-Adds `needs_book_splitting`, `needs_testimony_review`, `needs_media_review`,
-`needs_legal_review`, `overnight_batch_safe`, `suggested_process_route` to
-`TriageResult` and source queue. Required before building the Batch Runner.
+**✓ A -- Triage workflow routing flags** (commit `3ee358796`)
+`needs_book_splitting`, `needs_testimony_review`, `needs_media_review`,
+`needs_legal_review`, `overnight_batch_safe`, `suggested_process_route` added to
+`TriageResult` and source queue. Batch Runner can now read `overnight_batch_safe`.
 
-**B -- Compact orientation lexicon design**
-Draft terms are NOT low quality -- many are meaningful SOGICE vocabulary awaiting
-evidence citation. Goal: separate the trusted orientation set from unreviewed
-candidates. Inspect Sanity status fields, count terms, agree with researcher on
-selection criteria (new status, flag, or curation), then implement the split.
-Enrichment continues using full draft+validated. Researcher decides the criteria.
+**✓ B -- Compact orientation lexicon** (commit `4cb1c0e93`)
+`includeInAnalysisLexicon` boolean on `lexiconEntry` (default false). Analysis uses
+`fetch_analysis_orientation_terms()` — validated + flagged-draft only. Enrichment
+unchanged. Researcher must toggle flag in Sanity Studio for trusted draft terms.
 
-**C -- Enrichment audit wiring**
-Thread `_audit` through `enrich.py`. Mirrors the analysis audit wiring already done.
-`EnrichmentRunMeta` is built; just needs threading.
+**✓ C -- Enrichment audit sidecar** (commit `18ba8da14`)
+`_audit` threaded through all enrichment functions. `enrichment_audit.json` written
+on every save. Chunked fallback truthfulness fixed. Streamlit wired.
 
-**D -- Enrichment default**
-Flip `run_enrich` to default True. Researcher must confirm timing implications first.
+**✓ D -- Enrichment default-on** (commit `65c775319`)
+`--enrich/--no-enrich`, default True. Normal ingest now runs enrichment after
+confirmed upload. `--no-enrich` skips for quick tests.
 
-**E -- `split-book --preview` CLI**
+**E -- `split-book --preview` CLI** ← NEXT
 Build the `runner split-book` command using the existing `book_splitter.py` module.
-`--preview` mode first; full queue integration deferred.
+`--preview` mode first (print sections, no corpus changes); full queue integration
+deferred. See NEXT_SESSION.md for full spec.
 
-**F -- Batch Runner** (AFTER Task A)
-Do not build until triage workflow flags exist. The batch runner must read
-`overnight_batch_safe` before processing items unattended.
+**F -- Batch Runner** (AFTER Task A -- now unblocked for design; build carefully)
+Must read `overnight_batch_safe` before processing items unattended.
 
 Recommended order for a new session:
-1. Verify repo/test state (519 passed expected).
-2. Start with TASK A -- it is the smallest and unblocks the most.
+1. Verify repo/test state (638 passed expected).
+2. Start with TASK E -- book splitting preview CLI.
 3. One slice per session, with tests, before moving to the next.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 519 (up from 409 at start of this session arc)
-- Last commit: `627386de3` -- Wire analysis audit sidecar generation
-- Branch: `claude/review-architecture-70CUm` (1 commit ahead of origin after push)
-- Analysis audit: `analysis_audit.json` written on every ingest/reanalyze
-- Enrichment audit: infrastructure built, not yet wired
-- Book splitter: `book_splitter.py` module built (44 tests); CLI not yet built
-- Triage workflow flags: NOT YET BUILT (TASK A)
-- Compact orientation lexicon design: NOT YET BUILT (TASK B) -- requires Sanity status inspection and researcher decision on selection criteria
-- Enrichment default (always-on): architecture confirmed; code pending (TASK D) -- timing/RAM/batch behavior requires careful handling
+- Tests passing: 638
+- Last commit: `65c775319` -- TASK D enrichment default-on
+- Branch: `claude/review-architecture-70CUm` (up to date with origin)
+- Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
+- Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
+- Compact orientation lexicon: `includeInAnalysisLexicon` boolean on `lexiconEntry` ✓ (TASK B)
+  - Researcher action needed: toggle flag in Sanity Studio for trusted draft terms
+- Enrichment default-on: `--enrich/--no-enrich`, default True ✓ (TASK D)
+- Book splitter: `book_splitter.py` module built (44 tests); CLI not yet built (TASK E next)
+- Triage workflow flags: built and wired ✓ (TASK A)
+- Batch Runner: unblocked for design; not yet built (TASK F)
 
 ---
 

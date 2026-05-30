@@ -1,9 +1,9 @@
 # SurvivingSOGICE -- Next Session Handoff
-**Generated:** 2026-05-30
+**Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 519
-**Last commit:** `627386de3` (Wire analysis audit sidecar generation)
+**Tests passing:** 638
+**Last commit:** `65c775319` (TASK D — enrichment default-on, --no-enrich opt-out)
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -109,9 +109,9 @@ Source Queue -> Triage -> Ingest -> Preprocess -> Embed -> Analyze -> Enrich -> 
 | Stage | Command | Status |
 |---|---|---|
 | Source queue | `runner queue-add/list/triage/mark` | Built, tested |
-| Ingestion | `runner ingest <url> --llm litelm` | Working |
+| Ingestion | `runner ingest <url> --llm litelm` | Working — enrichment runs by default |
 | Re-analysis | `runner reanalyze <doc_id>` | Working |
-| Enrichment | `runner enrich <doc_id>` | Working, uses Gemma4 |
+| Enrichment (standalone) | `runner enrich <doc_id>` | Working, uses Gemma4 |
 | Push to Sanity | `runner push-enrichment <doc_id>` | Working |
 | Verify | `runner verify` | Working |
 | Streamlit UI | `cd runner && streamlit run app.py` | Working |
@@ -149,19 +149,21 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 519 tests -- run before every edit
+tests/                          # 638 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
 ```
 
-### Audit infrastructure (built this session)
+### Audit infrastructure (complete)
 - `runner/pipeline/audit.py` -- `AnalysisRunMeta`, `EnrichmentRunMeta`, write functions
 - `analysis_audit.json` written beside `analysis.json` on every ingest/reanalyze
-- Fields captured: llm_flag, model, input_char_count, input_truncated,
-  lexicon_terms_available, lexicon_terms_injected, lexicon_injection_cap,
-  raw_response_chars, validation_path, validation_attempts, confidence, doc_type, errors
-- `EnrichmentRunMeta` defined but not yet wired into `enrich.py` (TASK C)
+  - Fields: llm_flag, model, input_char_count, input_truncated,
+    lexicon_terms_available, lexicon_terms_injected, lexicon_injection_cap,
+    raw_response_chars, validation_path, validation_attempts, confidence, doc_type, errors
+- `enrichment_audit.json` written beside `enrichment.json` on every enrichment run (TASK C complete)
+  - Fields: llm_flag, model, input_char_count, chunked, chunk_count, chunks,
+    whole_doc_fallback_reason, validation_path, validation_attempts, normalization_repairs, errors
 
 ---
 
@@ -190,13 +192,17 @@ when triage flags `complexity=complex` or `doc_type_hint=legal`.
 2. **Books require chapter splitting, not full-document ingestion.** `book_splitter.py` module is built. The `split-book` CLI command and Sanity schema are still needed.
 3. **Batch size = 10-15 documents per review cycle.**
 4. **Default model = `--llm litelm` (core-qwen, 35B MoE).** Use `litelm-reasoning` only for triage-flagged complex/legal docs.
-5. **Compact orientation lexicon for analysis.** Validated + researcher-trusted
-   draft terms, capped at 200. Excludes unreviewed local candidates. Draft terms are
-   not inherently low quality -- many are meaningful SOGICE vocabulary awaiting evidence
-   citation. The selection mechanism is designed in TASK B.
-6. **Enrichment always runs after normal ingest -- architecture confirmed.** Code is still
-   pending (TASK D) because timing, RAM, and overnight batch behavior require careful
-   handling. The default flag flip is one line; the safe implementation is not.
+5. **Compact orientation lexicon for analysis -- implemented (TASK B).** Selection
+   mechanism: `includeInAnalysisLexicon` boolean on `lexiconEntry` in Sanity (default
+   false). Analysis fetches `validated` + `draft && includeInAnalysisLexicon==true`,
+   ordered deterministically (status desc, term asc), capped at 200. Enrichment continues
+   using full draft+validated. **Researcher action required:** toggle trusted draft terms
+   in Sanity Studio with "Include Draft in Analysis Orientation Lexicon".
+6. **Enrichment runs by default after normal ingest -- implemented (TASK D).** Use
+   `--no-enrich` to skip for quick tests or when Mac Studio is offline. Enrichment is
+   non-fatal: a failure does not affect the already-completed ingest. Safety gates
+   unchanged: enrichment only fires on confirmed upload (testimony-pending and
+   upload-declined paths remain blocked).
 
 ---
 
@@ -204,89 +210,48 @@ when triage flags `complexity=complex` or `doc_type_hint=legal`.
 
 ---
 
-### TASK A -- Triage workflow flags
+### ~~TASK A~~ -- Triage workflow routing flags ✓ COMPLETE
 
-**Why first:** Without these flags, overnight batch processing cannot safely distinguish testimonies, legal documents, and books that need different handling. The Batch Runner (TASK F) depends on this.
-
-**What to add to `TriageResult`:**
-```python
-needs_book_splitting: bool = False    # long PDF/EPUB requiring split-book
-needs_testimony_review: bool = False  # consent gate required
-needs_media_review: bool = False      # transcript/media processing needed
-needs_legal_review: bool = False      # court/legislative -- researcher must confirm
-overnight_batch_safe: bool = True     # False for testimony/legal without explicit ok
-suggested_process_route: str = ""     # "split-book" | "media-ingest" | "standard"
-```
-
-**Other changes:**
-- Update triage system prompt to return these fields
-- Add DB columns in `source_queue.py` via `_MIGRATIONS`
-- Update `QueueItem` dataclass with the new fields
-- Update `apply_triage_result()` to persist them
-- Update `priority_from_triage()` to account for `needs_legal_review`
-
-**Tests:** flag persistence through `apply_triage_result`, `overnight_batch_safe` False for testimony/legal, `needs_book_splitting` True for long docs.
+Added to `TriageResult`: `needs_book_splitting`, `needs_testimony_review`,
+`needs_media_review`, `needs_legal_review`, `overnight_batch_safe` (default True),
+`suggested_process_route` (default "standard"). DB columns added to `source_queue.py`
+via `_MIGRATIONS`. `apply_triage_result()` persists all flags. `priority_from_triage()`
+accounts for `needs_legal_review`. **Commit:** `3ee358796`
 
 ---
 
-### TASK B -- Compact orientation lexicon design
+### ~~TASK B~~ -- Compact orientation lexicon ✓ COMPLETE
 
-**Corrected framing:** Draft terms are NOT inherently low quality. Many are meaningful,
-already-used SOGICE vocabulary that remain draft only because they still need a direct
-document evidence citation. The goal is NOT "validated only." It is: separate the
-compact, stable orientation set from unreviewed local candidates and noisy one-off
-model suggestions.
-
-**Steps:**
-1. Inspect Sanity `lexiconEntry` status fields. Run:
-   ```
-   *[_type == "lexiconEntry"] | {status: status} | group(status)
-   ```
-2. Count terms at each status. Understand the landscape before deciding anything.
-3. Determine with researcher which mechanism marks a term as "orientation-eligible":
-   - A new status value: `trusted_draft` or `orientation`
-   - A boolean flag on the record: `includeInAnalysisLexicon`
-   - Or confirm that `validated` is sufficient once the registry matures
-4. Implement `fetch_analysis_orientation_terms(config)` in `sanity_reads.py`
-   using the agreed selection criteria
-5. Change `analyze._fetch_active_lexicon_terms()` to call the new function
-6. Enrichment continues using `fetch_active_lexicon_terms` (full draft+validated)
-
-**Precondition:** researcher decides which draft terms are orientation-eligible.
-This is a methodology decision about the registry, not a code configuration choice.
-
-**Tests:** verify new query uses agreed selection; verify audit fields reflect the
-new count; verify enrichment is unaffected.
+`includeInAnalysisLexicon` boolean added to `lexiconEntry` Sanity schema (default false).
+`fetch_analysis_orientation_terms()` added to `sanity_reads.py`: queries
+`status == "validated" || (status == "draft" && includeInAnalysisLexicon == true)`,
+ordered `status desc, term asc` for deterministic cap behaviour.
+`analyze._fetch_active_lexicon_terms()` now calls the orientation function.
+Enrichment unchanged — still uses `fetch_active_lexicon_terms()` (full draft+validated).
+New draft entries from `push-enrichment` start with `includeInAnalysisLexicon=False`.
+**Researcher action required:** toggle trusted draft terms in Sanity Studio.
+**Commit:** `4cb1c0e93`
 
 ---
 
-### TASK C -- Enrichment audit wiring
+### ~~TASK C~~ -- Enrichment audit sidecar wiring ✓ COMPLETE
 
-**What exists:** `EnrichmentRunMeta` dataclass and `write_enrichment_audit()` are built but not yet wired into `enrich.py`. The `_audit` threading pattern from `analyze.py` should be mirrored.
-
-**What to add:**
-- Thread `*, _audit: dict | None = None` through `enrich.run()`, `_call_enrichment_model()`, and `_validate_response()`
-- Populate: `llm_flag`, `model`, `input_char_count`, `chunked`, `chunk_count`, `chunks` (per-chunk success/failure), `validation_path`, `validation_attempts`, `normalization_repairs`
-- Call `write_enrichment_audit()` from `enrich.save()`
-- Thread `_audit` from `main.py` enrich calls
-
-**Tests:** parallel to `test_analysis_audit_wiring.py`.
+`_audit` dict threaded through `enrich.run()`, `_call_enrichment_model()`,
+`_validate_response()`, `_run_chunked_enrichment()`, and `enrich.save()`.
+`enrichment_audit.json` written on every save. Chunked fallback truthfulness fixed
+(whole-doc failure state never leaks into audit when chunked succeeds).
+`whole_doc_fallback_reason` persists in `EnrichmentRunMeta`. Streamlit wired.
+**Commit:** `18ba8da14`
 
 ---
 
-### TASK D -- Enrichment default for normal ingest
+### ~~TASK D~~ -- Enrichment default-on ✓ COMPLETE
 
-**Current state:** `--enrich` is opt-in. Architecture says enrichment should always follow analysis.
-
-**Pending decision:** Flip default to `run_enrich=True` in the ingest command. This adds ~30-90s per document and one more Mac Studio call. For overnight batch this is acceptable; for quick test ingestions the researcher can pass `--no-enrich`.
-
-**Code change (one line once decided):**
-```python
-# main.py ingest command
-run_enrich: bool = typer.Option(True, "--enrich/--no-enrich", help="Run Stage 3c enrichment after analysis")
-```
-
-**Researcher must confirm this before implementation** -- it changes ingest timing for all paths.
+`run_enrich` flipped from `False/--enrich` to `True/--enrich/--no-enrich` in the
+ingest command. Enrichment now runs by default after confirmed upload. Pass
+`--no-enrich` to skip for quick tests or when Mac Studio is offline. Streamlit
+`_blank_ingest_state()` also starts with `run_enrich=True`. Safety gates unchanged.
+**Commit:** `65c775319`
 
 ---
 
@@ -373,7 +338,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 519 passed (or higher after new tests)
+# Must see: 638 passed (or higher after new tests)
 ```
 
 ---
@@ -386,7 +351,8 @@ git pull origin claude/review-architecture-70CUm
 | Triage schema | `runner/models/triage.py` | `TriageResult` |
 | Triage -> queue wiring | `runner/pipeline/source_queue.py` | `apply_triage_result()` |
 | Analysis prompt loading | `runner/pipeline/analyze.py` | `_build_system_prompt_with_lexicon()` |
-| Lexicon fetch (analysis) | `runner/pipeline/sanity_reads.py` | `fetch_active_lexicon_terms()` |
+| Lexicon fetch (analysis) | `runner/pipeline/sanity_reads.py` | `fetch_analysis_orientation_terms()` |
+| Lexicon fetch (enrichment) | `runner/pipeline/sanity_reads.py` | `fetch_active_lexicon_terms()` (full draft+validated) |
 | Truncation logic | `runner/pipeline/preprocess.py` | `_maybe_truncate()` at line 654 |
 | PDF extraction (Docling) | `runner/pipeline/preprocess.py` | `_preprocess_pdf()` at line 159 |
 | Enrichment model routing | `runner/pipeline/enrich.py` | `_call_enrichment_model()` |
@@ -400,14 +366,13 @@ git pull origin claude/review-architecture-70CUm
 
 ## Open questions
 
-**Q-Lexicon:** Inspect all Sanity `lexiconEntry` status values and counts before TASK B.
-Run: `*[_type == "lexiconEntry"] | {status: status} | group(status)`.
-Draft terms are NOT low quality -- they await evidence citations, not validity judgement.
-The question is: which subset of draft terms are already trusted as orientation vocabulary?
+**~~Q-Lexicon~~** -- Resolved by TASK B. Selection mechanism: `includeInAnalysisLexicon`
+boolean on `lexiconEntry`. Researcher must toggle this in Sanity Studio for trusted
+draft terms before the orientation lexicon is populated.
 
-**Q-EnrichDefault:** Architecture confirmed: enrichment should always run after normal
-ingest. Code pending (TASK D). Timing/RAM/batch handling must be designed carefully.
-The flag flip is trivial; making it safe for overnight batch is not.
+**~~Q-EnrichDefault~~** -- Resolved by TASK D. Enrichment runs by default after confirmed
+upload. Opt-out with `--no-enrich`. Safety gates (testimony-pending, upload-declined)
+unchanged.
 
 **Q-BookSanity:** Should book sections create a new Sanity type (`sogiceBook`) or use
 `sogiceDocument` with `parentBook` reference field? New type is cleaner but changes
@@ -424,5 +389,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-30 after architecture audit. Previous task specs (batch runner
-full implementation, book splitter full pipeline) preserved in git history.*
+*Updated 2026-05-31. TASKS A–D complete. TASK E (split-book --preview) is next.*
