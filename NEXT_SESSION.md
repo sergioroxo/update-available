@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 670
-**Last commit:** `74a35f847` (TASK E — split-book --preview CLI)
+**Tests passing:** 729
+**Last commit:** `1e50d7558` (G2-b-2b — wire ingest headless testimony and legal holds)
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 670 tests -- run before every edit
+tests/                          # 729 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -213,10 +213,11 @@ when triage flags `complexity=complex` or `doc_type_hint=legal`.
 ### ~~TASK A~~ -- Triage workflow routing flags ✓ COMPLETE
 
 Added to `TriageResult`: `needs_book_splitting`, `needs_testimony_review`,
-`needs_media_review`, `needs_legal_review`, `overnight_batch_safe` (default True),
-`suggested_process_route` (default "standard"). DB columns added to `source_queue.py`
-via `_MIGRATIONS`. `apply_triage_result()` persists all flags. `priority_from_triage()`
-accounts for `needs_legal_review`. **Commit:** `3ee358796`
+`needs_media_review`, `needs_legal_review`, `overnight_batch_safe` (introduced
+in TASK A, later flipped fail-closed by G1), `suggested_process_route` (default
+"standard"). DB columns added to `source_queue.py` via `_MIGRATIONS`.
+`apply_triage_result()` persists all flags. `priority_from_triage()` accounts for
+`needs_legal_review`. **Commit:** `3ee358796`
 
 ---
 
@@ -265,7 +266,7 @@ total chars, estimated vs actual section count) plus a table of sections
 (index, level, title, chars, preview). `--out` writes JSON with section offsets.
 No corpus writes, no analysis, no upload, no Sanity/Supabase calls.
 Full queue integration and Sanity `sogiceBook` schema remain deferred.
-**32 new tests (670 total). Commit:** `74a35f847`
+**32 new tests (suite was 670 at TASK E; current baseline is 729). Commit:** `74a35f847`
 
 ---
 
@@ -304,42 +305,39 @@ provenance gaps below. A Batch Runner with silent gaps is worse than no Batch Ru
 
 ---
 
-### TASK G1 -- Batch safety: triage must fail closed ← NEXT
+### ~~TASK G1~~ -- Batch safety: triage must fail closed ✓ COMPLETE
 
-**Finding:** `triage.run()` currently returns a bare `TriageResult()` on model,
-network, or parse failure. Because `TriageResult.overnight_batch_safe` defaults
-to `True`, failures can become "safe for unattended batch" by accident.
-
-**Implement:**
-- Triage model/network/parse failure must set `overnight_batch_safe=False`.
-- Preserve enough error metadata to tell "triage failed" from "triage succeeded
-  and decided this is safe".
-- Source queue must distinguish "untriaged" from "triaged and safe". Untriaged
-  items must not be eligible for overnight batch.
-- Add focused tests for network failure, parse failure, legacy queue rows, and
-  source-queue filtering assumptions.
+`triage.run()` / `_parse()` now return a fail-closed `TriageResult.failed(...)`
+on model/network/parse failure (`triage_succeeded=False`,
+`overnight_batch_safe=False`). Added `triage_succeeded` field. Source queue gained
+`is_overnight_safe(item)` — True only for triaged/ready items with a recorded
+triage model, the safe flag set, and no special-review flag; legacy/untriaged
+rows fail closed. `queue-triage` now persists a failed triage instead of leaving
+a stale default-safe row. **Commit:** `9a58cc807`
 
 ---
 
-### TASK G2 -- Batch safety: cross-check triage and analysis gates
+### ~~TASK G2~~ -- Batch safety: cross-check triage and analysis gates ✓ COMPLETE
 
-**Finding:** Triage can flag `needs_testimony_review` / `needs_legal_review`, but
-the upload gate currently depends on analysis fields. If analysis misses a
-testimony/legal signal, a future `--yes` batch could upload material that triage
-had already marked as needing review.
-
-**Implement:**
-- Upload must block or require explicit researcher override if **either** triage
-  or analysis flags testimony/legal sensitivity.
-- Disagreement between triage and analysis should be visible to the researcher,
-  not silently resolved in favor of upload.
-- Batch/headless mode must not reach interactive testimony prompts.
-- Add tests for triage-only testimony flag, analysis-only testimony flag,
-  disagreement, and confirmed-safe path.
+The full cross-stage policy is live in the ingest path:
+- **G2-a** (`7b39ea090`): triage result persisted to `triage_result.json` after
+  intake acceptance; `upload.load_triage_result()` loads it (tolerates absence).
+- **G2-b-1** (`5bf15c436`): `requires_consent_gate(analysis, triage_result=None)`
+  fires on testimony_flag OR consent-gated type OR triage `needs_testimony_review`;
+  separate `requires_legal_review(...)` helper (legal ≠ consent; `legal_status`
+  is not a trigger); hard testimony backstop in both `upload.run` and
+  `upload_saved`.
+- **G2-b-2a** (`726623bf6`): `checkpoint_testimony_consent(..., triage_result=None,
+  yes=False)` — headless never prompts (gated → held `pending`); consent-gated
+  types now prompt in attended mode (intentional tightening).
+- **G2-b-2b** (`1e50d7558`): `main.ingest` resolves triage from disk under `--yes`,
+  passes `triage_result`/`yes` to the checkpoint, holds testimony/legal-sensitive
+  docs locally (no upload, no enrichment) with distinct testimony-pending vs
+  legal-review-hold panels; attended legal warns then defers to the researcher.
 
 ---
 
-### TASK G3 -- Provenance guard: do not clobber reviewed Sanity documents
+### TASK G3 -- Provenance guard: do not clobber reviewed Sanity documents ← NEXT
 
 **Finding:** `write_document` uses `createOrReplace` without checking whether a
 Sanity `sogiceDocument` has been manually reviewed or edited. Researcher edits
@@ -387,22 +385,33 @@ semantic maps, related-document search, or corpus connection claims.
 
 ---
 
-### TASK F -- Batch Runner (after G1/G2 at minimum; ideally after G1-G5)
+### TASK F -- Batch Runner (technically unblocked; recommend G3–G5 first)
 
-**Why deferred:** The deep review found fail-open paths around triage and
-testimony/legal gates. Do not build a batch runner that silently ingests
-testimonies, legal documents, or untriaged queue items.
+**Status:** G1 + G2 are complete, so TASK F is **technically unblocked**. However,
+for a genuinely safe overnight/night-batch system the recommended order is to
+close the remaining provenance gaps first:
+
+1. **G3** — reviewed-doc clobber guard (prevents a batch from overwriting
+   researcher-edited Sanity records)
+2. **G4** — audit/provenance hardening (so unattended runs are reproducible)
+3. **G5** — corpus-connection grounding (so batch enrichment doesn't emit
+   ungrounded connections at scale)
+4. **TASK F** — Batch Runner
+
+**Why this order:** the review found fail-open paths (closed by G1/G2) plus
+provenance gaps (G3–G5). A batch runner amplifies any remaining silent gap across
+many documents, so G3–G5 are worth landing before unattended scale.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
 
-**Preconditions before building:**
-- TASK G1 complete: triage failures and untriaged items are not overnight-safe
-- TASK G2 complete: triage/analysis testimony/legal flags are cross-checked
-- Batch runner filters out any item with `overnight_batch_safe=False`, triage
-  failure, missing triage, testimony review, legal review, media review, or book
-  splitting requirement unless the researcher explicitly chooses that queue
+**Preconditions (now met by G1/G2):**
+- TASK G1 complete ✓: triage failures and untriaged items are not overnight-safe
+- TASK G2 complete ✓: triage/analysis testimony/legal flags are cross-checked
+- Batch runner must filter via `source_queue.is_overnight_safe(item)` (never query
+  `overnight_batch_safe` directly) and surface excluded items before starting
 - Headless batch mode must never block on interactive testimony consent prompts
+  (the consent checkpoint is already headless-safe as of G2-b-2a)
 
 ---
 
@@ -454,7 +463,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 670 passed (or higher after new tests)
+# Must see: 729 passed (or higher after new tests)
 ```
 
 ---
@@ -505,4 +514,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. NEXT: TASK G1/G2 batch-safety fixes before TASK F.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 (through G2-b-2b) complete — last commit `1e50d7558`, 729 tests passing. TASK F is technically unblocked; recommended next order: G3 → G4 → G5 → TASK F.*

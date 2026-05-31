@@ -171,11 +171,13 @@ Do not treat old chat summaries as authoritative. Read files and run tests.
 
 `NEXT_SESSION.md` defines tasks A–G plus review-derived safety tasks G1–G5.
 A–E are complete. The first external architecture review (TASK G) is captured.
+G1 and G2 are complete through G2-b-2b.
 
 **✓ A -- Triage workflow routing flags** (commit `3ee358796`)
 `needs_book_splitting`, `needs_testimony_review`, `needs_media_review`,
 `needs_legal_review`, `overnight_batch_safe`, `suggested_process_route` added to
-`TriageResult` and source queue. Batch Runner can now read `overnight_batch_safe`.
+`TriageResult` and source queue. G1 later flipped the runtime safety default
+fail-closed and added `source_queue.is_overnight_safe(item)`.
 
 **✓ B -- Compact orientation lexicon** (commit `4cb1c0e93`)
 `includeInAnalysisLexicon` boolean on `lexiconEntry` (default false). Analysis uses
@@ -194,7 +196,8 @@ confirmed upload. `--no-enrich` skips for quick tests.
 `split-book` command in `main.py`. `_extract_markdown_for_split()` helper routes
 by extension/URL (Docling / Trafilatura / direct read). Options: `--min-chars`,
 `--max-level`, `--preview-chars`, `--out`. Prints Rich panel + section table. No
-corpus writes, no analysis, no upload. 32 new tests (670 total).
+corpus writes, no analysis, no upload. 32 new tests (suite was 670 at TASK E;
+current baseline is 729).
 
 **✓ G -- Deep architecture review / critic pass** (captured 2026-05-31)
 Claude 4.8 reviewed the full staged-intelligence system after TASK E. The review
@@ -204,16 +207,20 @@ It also answered the added review questions:
 - Q12: future data-use ideas such as network graphs, maps, lexicon genealogy,
   semantic maps, and claim ledgers
 
-**G1 -- Batch safety: triage must fail closed** ← NEXT
-Fix `triage.run()` / parse fallback so model failures never produce
-`overnight_batch_safe=True`. Source queue must distinguish untriaged items from
-triaged-and-safe items.
+**✓ G1 -- Batch safety: triage must fail closed** (commit `9a58cc807`)
+`triage.run()` / `_parse()` now return `TriageResult.failed(...)` on
+model/network/parse failure (`triage_succeeded=False`,
+`overnight_batch_safe=False`). Source queue gained `is_overnight_safe(item)`;
+legacy/untriaged/failed rows fail closed.
 
-**G2 -- Batch safety: cross-check triage and analysis gates**
-Upload/batch flow must block or require explicit researcher override when either
-triage or analysis flags testimony/legal sensitivity.
+**✓ G2 -- Batch safety: cross-check triage and analysis gates** (commits
+`7b39ea090` -> `1e50d7558`)
+Triage is persisted per document; upload backstops can load it; consent gates
+cross-check analysis + triage testimony signals; legal review remains separate;
+headless `--yes` never prompts and holds testimony/legal-sensitive docs locally
+with no upload/enrichment.
 
-**G3 -- Provenance guard: do not clobber reviewed Sanity documents**
+**G3 -- Provenance guard: do not clobber reviewed Sanity documents** ← NEXT
 Add a reviewed-state guard to `write_document` before `reanalyze --upload` or
 `upload-doc` can overwrite researcher-edited `sogiceDocument` records.
 
@@ -225,22 +232,23 @@ flagging, and triage audit metadata.
 Do not let enrichment `corpus_connections` read as evidence until vector retrieval
 is wired, or clearly label/suppress them.
 
-**F -- Batch Runner** (after G1/G2 at minimum; ideally after G1-G5)
-Must read `overnight_batch_safe`, triage status, and review flags before processing
-items unattended.
+**F -- Batch Runner** (technically unblocked; recommend after G3-G5)
+Must use `source_queue.is_overnight_safe(item)` and surface excluded items before
+processing unattended. G1/G2 preconditions are complete, but G3-G5 should land
+first for safer overnight runs.
 
 Recommended order for a new session:
-1. Verify repo/test state (670 passed expected).
-2. Implement G1 and G2 as focused safety slices with tests.
-3. Implement G3/G4/G5 or consciously defer parts with researcher sign-off.
-4. Only then start TASK F — Batch Runner.
+1. Verify repo/test state (729 passed expected).
+2. Implement G3, then G4, then G5 as focused safety/provenance slices.
+3. Only then start TASK F — Batch Runner, unless researcher explicitly accepts
+   the remaining provenance risk.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 670
-- Last commit: `74a35f847` -- TASK E split-book --preview CLI
+- Tests passing: 729
+- Last commit: `1e50d7558` -- G2-b-2b wire ingest headless testimony and legal holds
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -251,7 +259,7 @@ Recommended order for a new session:
 - Triage workflow flags: built and wired ✓ (TASK A)
 - Deep architecture review: captured as TASK G; findings converted to G1-G5
 - External systems/data-use questions: captured in NEXT_SESSION.md under TASK G
-- Batch Runner: not yet built; blocked on G1/G2 at minimum
+- Batch Runner: not yet built; technically unblocked by G1/G2, recommended after G3-G5
 
 ---
 
@@ -319,35 +327,34 @@ Report:
 Then implement only that plan, add focused tests, run the full suite, commit, and push.
 ```
 
-### TASK A: Triage Workflow Flags
+### Completed TASK A Reference: Triage Workflow Flags
 
 ```text
-Implement TASK A from NEXT_SESSION.md: add workflow routing flags to TriageResult.
+TASK A is complete. Use this only as historical context when reviewing triage fields.
 
-Scope:
-- Add fields to TriageResult: needs_book_splitting, needs_testimony_review,
-  needs_media_review, needs_legal_review, overnight_batch_safe (bool, default True),
-  suggested_process_route (str, default "standard")
-- Update triage system prompt to return these fields
-- Add DB columns to source_queue.py via _MIGRATIONS
-- Update QueueItem dataclass with new fields
-- Update apply_triage_result() to persist them
-
-Add tests for flag persistence and routing logic.
-Run full test suite. Commit. Push.
+Current state: routing fields exist; G1 made triage fail closed; callers should
+use source_queue.is_overnight_safe(item), not the raw overnight_batch_safe column.
 ```
 
-### TASK G1: Triage Fail-Closed Safety
+### TASK G3: Reviewed-Document Clobber Guard
 
 ```text
-Implement TASK G1 from NEXT_SESSION.md: triage must fail closed before any batch runner work.
+Implement TASK G3 from NEXT_SESSION.md: prevent write_document/upload-doc/reanalyze
+from overwriting researcher-reviewed Sanity document records.
 
 Scope:
-- Inspect runner/pipeline/triage.py, runner/models/triage.py, runner/pipeline/source_queue.py, and existing triage/source queue tests.
-- On model/network/parse failure, triage must return/record overnight_batch_safe=False.
-- Source queue must distinguish untriaged items from triaged-and-safe items; untriaged must not be eligible for overnight batch.
-- Add focused tests for model failure, parse failure, legacy queue rows, and safe triaged rows.
-Run full test suite. Commit. Push.
+- Inspect runner/clients/sanity.py, upload-doc/reanalyze upload paths, Sanity schema
+  fields, and existing upload mutation tests.
+- Identify which Sanity field(s) mark a sogiceDocument as researcher-reviewed or
+  manually edited. If ambiguous, report options before coding.
+- Add a non-destructive guard before createOrReplace-style writes to existing
+  reviewed documents.
+- The guard should fail closed unless an explicit researcher override flag is
+  provided.
+- Add focused tests for reviewed doc block, unreviewed doc allowed, missing remote
+  doc allowed, and explicit override.
+
+Run focused tests and the full suite. Show the diff before committing.
 ```
 
 ---
@@ -414,6 +421,6 @@ Favour:
 - explicit provenance
 - researcher control at every consequential step
 
-The next session should start with TASK A (triage workflow flags). It is the smallest
-slice that unblocks the most: Batch Runner, overnight safety, and correct document
-routing all depend on triage returning trustworthy workflow signals.
+The next session should start with G3. G1/G2 made overnight processing safer, but
+G3/G4/G5 are the protection layer that keeps unattended scale from overwriting
+reviewed archive work or producing weak provenance.
