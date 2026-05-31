@@ -90,13 +90,53 @@ def _stamp_analysis_dict(analysis: AnalysisResult) -> dict:
 # Single source of truth — imported by app.py.
 _CONSENT_GATED_TYPES: frozenset[str] = frozenset({"Testimony", "Survivor-Network-Material"})
 
+# Document types whose accuracy warrants human review before publication.
+# This is NOT a consent concept — see requires_legal_review().
+_LEGAL_SENSITIVE_TYPES: frozenset[str] = frozenset(
+    {"Legal-Instrument", "Regulatory-Policy-Document"}
+)
 
-def requires_consent_gate(analysis: AnalysisResult) -> bool:
-    """Return True if this document type requires a consent gate before upload."""
+
+def requires_consent_gate(analysis: AnalysisResult, triage_result=None) -> bool:
+    """Return True if this document requires a testimony consent gate before upload.
+
+    Fires when ANY of:
+      - analysis.testimony_flag is set
+      - analysis type / primary_type / secondary_type is a consent-gated type
+      - triage flagged needs_testimony_review (G2-b cross-check)
+
+    ``triage_result`` is optional and may be None (no triage available) — in
+    which case the decision degrades to the analysis-only behaviour. Callers
+    that have no triage context can omit it (backward compatible).
+    """
     if analysis.testimony_flag:
         return True
     types = {analysis.type, analysis.primary_type, analysis.secondary_type}
-    return bool(types & _CONSENT_GATED_TYPES)
+    if types & _CONSENT_GATED_TYPES:
+        return True
+    if triage_result is not None and getattr(triage_result, "needs_testimony_review", False):
+        return True
+    return False
+
+
+def requires_legal_review(analysis: AnalysisResult, triage_result=None) -> bool:
+    """Return True if this document needs human legal-accuracy review before publish.
+
+    This is a REVIEW hold, not a consent gate — it has no consent state and does
+    not block attended uploads on its own. Fires when ANY of:
+      - analysis type / primary_type / secondary_type is a legal-sensitive type
+      - triage flagged needs_legal_review (G2-b cross-check)
+
+    Per researcher decision, ``analysis.legal_status`` is intentionally NOT a
+    trigger: many non-legal documents mention legal status without being legal
+    instruments, so it would over-hold.
+    """
+    types = {analysis.type, analysis.primary_type, analysis.secondary_type}
+    if types & _LEGAL_SENSITIVE_TYPES:
+        return True
+    if triage_result is not None and getattr(triage_result, "needs_legal_review", False):
+        return True
+    return False
 
 
 def run(
@@ -109,7 +149,10 @@ def run(
     *,
     _audit: dict | None = None,
 ) -> None:
-    _enforce_testimony_upload_gate(intake, analysis)
+    # G2-b: cross-check the persisted triage flags against analysis at the hard
+    # testimony backstop. Tolerant of a missing file (returns None).
+    _triage = load_triage_result(intake.doc_id, config)
+    _enforce_testimony_upload_gate(intake, analysis, _triage)
     _repair_analysis_date_from_source(analysis, preprocess)
     pkg = DocumentPackage(
         intake=intake,
@@ -709,7 +752,9 @@ def upload_saved(doc_id: str, config: Config) -> None:
         llm_used=metadata.get("llm_used", "unknown"),
         local_dir=doc_dir,
     )
-    _enforce_testimony_upload_gate(intake, analysis)
+    # G2-b: testimony backstop cross-checks persisted triage flags (hard gate).
+    _triage = load_triage_result(doc_id, config)
+    _enforce_testimony_upload_gate(intake, analysis, _triage)
 
     sanity_id = sanity_client.write_document(pkg, config)
     if embedding:
@@ -1294,8 +1339,9 @@ def _repair_analysis_date_from_source(
 def _enforce_testimony_upload_gate(
     intake: IntakeResult,
     analysis: AnalysisResult,
+    triage_result=None,
 ) -> None:
-    if not requires_consent_gate(analysis):
+    if not requires_consent_gate(analysis, triage_result):
         return
     if intake.testimony_consent == "confirmed":
         return
@@ -1303,6 +1349,13 @@ def _enforce_testimony_upload_gate(
     type_note = ""
     if analysis.type in _CONSENT_GATED_TYPES and not analysis.testimony_flag:
         type_note = f"\n\nDocument type is [bold]{analysis.type}[/bold] — consent gate applies regardless of testimony_flag."
+    elif (
+        triage_result is not None
+        and getattr(triage_result, "needs_testimony_review", False)
+        and not analysis.testimony_flag
+        and analysis.type not in _CONSENT_GATED_TYPES
+    ):
+        type_note = "\n\nTriage flagged this source for testimony review — consent gate applies even though analysis did not set testimony_flag."
     console.print(Panel(
         "This document requires consent confirmation before upload.\n\n"
         f"Current consent status: [bold]{status}[/bold]\n"
