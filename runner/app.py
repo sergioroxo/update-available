@@ -749,6 +749,7 @@ from runner.app_provenance import (  # noqa: E402
     _load_preservation_status_dict,
     _check_artifact_completeness,
     _collect_provenance_warnings,
+    _generate_researcher_checklist,
 )
 
 
@@ -3438,21 +3439,32 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
             _render_metadata_reconciliation(doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe())
 
         # Warn about provenance issues inline (date, languages, queue mismatch, etc.)
+        _prov_cfg = _load_config_safe()
         _prov_inline_warnings = _collect_provenance_warnings(
-            corpus_dir / doc["doc_id"], config=_load_config_safe()
+            corpus_dir / doc["doc_id"], config=_prov_cfg
         )
         if _prov_inline_warnings:
-            with st.expander(
-                f"⚠️ Provenance / Audit ({len(_prov_inline_warnings)} warning(s))",
-                expanded=True,
-            ):
+            _prov_blockers = [w for w in _prov_inline_warnings if w.severity == "pre_push_blocker"]
+            _prov_actions  = [w for w in _prov_inline_warnings if w.severity == "action_needed"]
+            if _prov_blockers:
+                _prov_label = (
+                    f"🔴 Provenance / Audit — {len(_prov_blockers)} push blocker(s)"
+                )
+            elif _prov_actions:
+                _prov_label = (
+                    f"⚠️ Provenance / Audit — {len(_prov_actions)} action(s) needed"
+                )
+            else:
+                _prov_label = "ℹ️ Provenance / Audit — notes"
+            _prov_auto_expand = bool(_prov_blockers or _prov_actions)
+            with st.expander(_prov_label, expanded=_prov_auto_expand):
                 _render_provenance_panel(
-                    doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe()
+                    doc["doc_id"], corpus_dir / doc["doc_id"], _prov_cfg
                 )
         else:
             with st.expander("🔍 Provenance / Audit", expanded=False):
                 _render_provenance_panel(
-                    doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe()
+                    doc["doc_id"], corpus_dir / doc["doc_id"], _prov_cfg
                 )
 
         # ── Actions ───────────────────────────────────────────────────────
@@ -3542,16 +3554,64 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
 
 
 def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
-    """Render analysis/enrichment audits, preservation status, artifact completeness, and warnings."""
-    # Warnings first — most actionable
+    """Render structured provenance/audit view: checklist, grouped findings, audit sub-tabs."""
     provenance_warnings = _collect_provenance_warnings(doc_dir, config=config)
-    for w in provenance_warnings:
-        st.warning(w)
 
+    action_needed = [w for w in provenance_warnings if w.severity == "action_needed"]
+    blockers      = [w for w in provenance_warnings if w.severity == "pre_push_blocker"]
+    prov_notes    = [w for w in provenance_warnings if w.severity == "provenance_note"]
+
+    # ── Researcher checklist ───────────────────────────────────────────────
+    # One line per actionable item — quick scan for the researcher.
+    if blockers or action_needed:
+        checklist = _generate_researcher_checklist(provenance_warnings)
+        st.markdown("**Researcher checklist**")
+        for item in checklist:
+            w = next((x for x in provenance_warnings if x.title == item), None)
+            icon = "🔴" if (w and w.severity == "pre_push_blocker") else "🟡"
+            st.markdown(f"{icon} {item}")
+    elif not provenance_warnings:
+        st.success("✓ No provenance issues found.")
+
+    # ── Grouped detail sections ────────────────────────────────────────────
+    if action_needed:
+        st.markdown("#### Action needed")
+        for w in action_needed:
+            st.markdown(f"🟡 **{w.title}**")
+            st.caption(w.explanation)
+            st.caption(f"*→ {w.suggested_action}*")
+            if w.source_fields:
+                st.caption("Fields: " + " · ".join(f"`{f}`" for f in w.source_fields))
+
+    if blockers:
+        st.markdown("#### Before pushing to Sanity")
+        for w in blockers:
+            st.markdown(f"🔴 **{w.title}**")
+            st.caption(w.explanation)
+            st.caption(f"*→ {w.suggested_action}*")
+            if w.source_fields:
+                st.caption("Fields: " + " · ".join(f"`{f}`" for f in w.source_fields))
+
+    if prov_notes:
+        with st.expander("ℹ️ Provenance notes", expanded=False):
+            for w in prov_notes:
+                st.markdown(f"**{w.title}**")
+                st.caption(w.explanation)
+                if w.source_fields:
+                    st.caption("Fields: " + " · ".join(f"`{f}`" for f in w.source_fields))
+
+    if provenance_warnings:
+        st.divider()
+
+    # ── Sub-tabs ──────────────────────────────────────────────────────────
     tabs = st.tabs(["Analysis Audit", "Enrichment Audit", "Preservation", "Artifacts"])
 
     # ── Analysis Audit ────────────────────────────────────────────────────
     with tabs[0]:
+        st.caption(
+            "Proves which model, prompt, and git commit produced `analysis.json`. "
+            "Use hashes to verify reproducibility or cite provenance in methodology."
+        )
         audit = _load_analysis_audit(doc_dir)
         if not audit:
             st.info("No `analysis_audit.json` found for this document.")
@@ -3582,6 +3642,21 @@ def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
                 f"Prompt: {audit.get('prompt_version', '?')} · "
                 f"Ontology: {audit.get('ontology_version', '?')}"
             )
+
+            with st.expander("Full hashes & git commit", expanded=False):
+                if ph:
+                    st.code(ph, language="text")
+                    st.caption("prompt_sha256 (full — copy for citation)")
+                if pth:
+                    st.code(pth, language="text")
+                    st.caption("prompt_template_sha256 (full)")
+                gc_full = audit.get("git_commit") or ""
+                if gc_full:
+                    st.code(gc_full, language="text")
+                    st.caption("git_commit (full)")
+                if not (ph or pth or gc_full):
+                    st.caption("No hash/commit data in this audit file.")
+
             nw = audit.get("normalisation_warnings") or []
             if nw:
                 with st.expander(f"Normalisation warnings ({len(nw)})"):
@@ -3590,6 +3665,10 @@ def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
 
     # ── Enrichment Audit ──────────────────────────────────────────────────
     with tabs[1]:
+        st.caption(
+            "Proves which model, prompt, and git commit produced `enrichment.json`. "
+            "Chunked flag indicates the document exceeded the enrichment context window."
+        )
         eaudit = _load_enrichment_audit(doc_dir)
         if not eaudit:
             st.info("No `enrichment_audit.json` found for this document.")
@@ -3608,6 +3687,20 @@ def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
             h2.code(gc[:12] + "…" if len(gc) >= 12 else gc, language="text")
             h2.caption("git_commit (truncated)")
 
+            with st.expander("Full hashes & git commit", expanded=False):
+                if ph:
+                    st.code(ph, language="text")
+                    st.caption("prompt_sha256 (full — copy for citation)")
+                pth_e = eaudit.get("prompt_template_sha256") or ""
+                if pth_e:
+                    st.code(pth_e, language="text")
+                    st.caption("prompt_template_sha256 (full)")
+                if gc:
+                    st.code(gc, language="text")
+                    st.caption("git_commit (full)")
+                if not (ph or pth_e or gc):
+                    st.caption("No hash/commit data in this audit file.")
+
             if eaudit.get("corpus_connections_suppressed"):
                 st.info(
                     "Corpus connections suppressed — "
@@ -3623,6 +3716,10 @@ def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
 
     # ── Preservation Status ───────────────────────────────────────────────
     with tabs[2]:
+        st.caption(
+            "Records what was captured locally and whether the public archive has a copy. "
+            "Use capture_needed + suggested_route to plan Wayback/Browsertrix work."
+        )
         pstatus = _load_preservation_status_dict(doc_dir)
         if not pstatus:
             st.info("No `preservation_status.json` found — run ingest again to generate it.")

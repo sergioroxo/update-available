@@ -6,17 +6,47 @@ environments and CLI contexts.  ``runner/app.py`` imports from here so that the
 Streamlit render functions can call these helpers.
 
 Public API:
-    _load_analysis_audit(doc_dir)          → dict
-    _load_enrichment_audit(doc_dir)        → dict
-    _load_preservation_status_dict(doc_dir) → dict
-    _check_artifact_completeness(doc_dir)  → dict[str, bool]
-    _collect_provenance_warnings(doc_dir, *, config=None) → list[str]
+    ProvenanceWarning                               — structured finding dataclass
+    _load_analysis_audit(doc_dir)                   → dict
+    _load_enrichment_audit(doc_dir)                 → dict
+    _load_preservation_status_dict(doc_dir)         → dict
+    _check_artifact_completeness(doc_dir)           → dict[str, bool]
+    _detect_commit_mismatch(doc_dir)                → ProvenanceWarning | None
+    _collect_provenance_warnings(doc_dir, ...)      → list[ProvenanceWarning]
+    _generate_researcher_checklist(warnings)        → list[str]
 """
 from __future__ import annotations
 
 import json
 import sqlite3
+from dataclasses import dataclass, field
 from pathlib import Path
+
+
+# ---------------------------------------------------------------------------
+# Structured warning type
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ProvenanceWarning:
+    """A single provenance or quality-control finding.
+
+    severity
+        ``action_needed``    — researcher should act before using this document
+                               in the archive (e.g. missing language, unknown date).
+        ``pre_push_blocker`` — must be resolved before running ``push-enrichment``
+                               (e.g. ``enrich_existing`` proposal without an entity ID).
+        ``provenance_note``  — informational; no action required now; worth recording
+                               for methodology (e.g. triage misclassification, commit
+                               mismatch between analysis and enrichment).
+    """
+
+    severity: str               # "action_needed" | "pre_push_blocker" | "provenance_note"
+    title: str                  # Short label shown in checklists and section headers
+    explanation: str            # Why this is a problem / what was observed
+    suggested_action: str       # What the researcher should do (or "No action needed…")
+    source_fields: list[str] = field(default_factory=list)
+    """Optional file/field references, e.g. ``["analysis.json → languages"]``."""
 
 
 # ---------------------------------------------------------------------------
@@ -84,42 +114,94 @@ def _check_artifact_completeness(doc_dir: Path) -> dict[str, bool]:
 
 
 # ---------------------------------------------------------------------------
+# Commit mismatch detection
+# ---------------------------------------------------------------------------
+
+def _detect_commit_mismatch(doc_dir: Path) -> "ProvenanceWarning | None":
+    """Return a ``provenance_note`` if analysis and enrichment git commits differ.
+
+    Returns ``None`` when either audit file is absent, or when the commits match.
+    """
+    audit  = _load_analysis_audit(doc_dir)
+    eaudit = _load_enrichment_audit(doc_dir)
+    a_commit = (audit.get("git_commit") or "").strip()
+    e_commit = (eaudit.get("git_commit") or "").strip()
+    if a_commit and e_commit and a_commit != e_commit:
+        return ProvenanceWarning(
+            severity="provenance_note",
+            title="Analysis/enrichment commit mismatch",
+            explanation=(
+                f"Analysis was produced at commit `{a_commit[:12]}` and enrichment "
+                f"at `{e_commit[:12]}`. They ran against different versions of the "
+                "prompt or schema."
+            ),
+            suggested_action=(
+                "No action needed unless a schema change occurred between commits. "
+                "Check git history if in doubt."
+            ),
+            source_fields=[
+                "analysis_audit.json → git_commit",
+                "enrichment_audit.json → git_commit",
+            ],
+        )
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Warning collector — pure logic, no I/O besides local file reads
 # ---------------------------------------------------------------------------
 
-def _collect_provenance_warnings(doc_dir: Path, *, config=None) -> list[str]:
-    """Return a list of human-readable Markdown warning strings.
+def _collect_provenance_warnings(
+    doc_dir: Path, *, config=None
+) -> list[ProvenanceWarning]:
+    """Return a list of structured provenance findings.
 
-    Checks (all derived from local files — no network, no Sanity/Supabase):
+    Severity mapping:
+        ``action_needed``    — missing languages, unknown date
+        ``pre_push_blocker`` — ``enrich_existing`` proposals without ``existing_entity_id``
+        ``provenance_note``  — source_type mismatch, analysis/enrichment commit mismatch
 
-    1. Missing ``languages`` in analysis output.
-    2. Missing document/publication date.
-    3. Queue ``source_type`` disagrees with intake ``source_type`` (needs config).
-    4. ``enrich_existing`` entity proposals that lack an ``existing_entity_id``.
+    All checks are derived from local files only — no network, no Sanity/Supabase.
     """
-    warnings_out: list[str] = []
+    warnings_out: list[ProvenanceWarning] = []
 
     analysis = _read_json_safe(doc_dir / "analysis.json", {})
 
-    # 1. Missing languages
+    # 1. Missing languages ──────────────────────────────────────────────────
     if not analysis.get("languages"):
-        warnings_out.append(
-            "**Languages missing** — `analysis.languages` is empty. "
-            "Consider reanalysing or editing manually to add ISO 639-1 code(s)."
-        )
+        warnings_out.append(ProvenanceWarning(
+            severity="action_needed",
+            title="Languages missing",
+            explanation="`analysis.languages` is empty — the document language is unrecorded.",
+            suggested_action=(
+                "Reanalyse or edit `analysis.json` manually to add ISO 639-1 code(s)."
+            ),
+            source_fields=["analysis.json → languages"],
+        ))
 
-    # 2. Missing document/publication date
+    # 2. Missing document/publication date ──────────────────────────────────
     doc_date = analysis.get("document_date") or {}
     preprocess = _read_json_safe(doc_dir / "preprocess.json", {})
     preprocess_date = str(preprocess.get("date_published") or "").strip()
     if not doc_date.get("year") and not preprocess_date:
-        warnings_out.append(
-            "**Date unknown** — neither `document_date.year` nor "
-            "`preprocess.date_published` is set. "
-            "The document has no dateable anchor for the archive timeline."
-        )
+        warnings_out.append(ProvenanceWarning(
+            severity="action_needed",
+            title="Date unknown",
+            explanation=(
+                "Neither `document_date.year` nor `preprocess.date_published` is set. "
+                "The document has no dateable anchor for the archive timeline."
+            ),
+            suggested_action=(
+                "Check the source page or document header for a publication date, "
+                "then edit `analysis.json → document_date` or reanalyse."
+            ),
+            source_fields=[
+                "analysis.json → document_date",
+                "preprocess.json → date_published",
+            ],
+        ))
 
-    # 3. Queue source_type / intake source_type disagreement
+    # 3. Queue source_type / intake source_type disagreement ────────────────
     if config is not None:
         try:
             from runner.pipeline.source_queue import queue_db_path as _qdb_path
@@ -139,16 +221,27 @@ def _collect_provenance_warnings(doc_dir: Path, *, config=None) -> list[str]:
                     q_st  = str(row["source_type"]  or "").strip()
                     q_dth = str(row["doc_type_hint"] or "").strip()
                     if q_st and actual_st and q_st != actual_st:
-                        warnings_out.append(
-                            f"**Triage source_type mismatch** — queue has `{q_st}`, "
-                            f"intake recorded `{actual_st}` (doc_type_hint: `{q_dth}`). "
-                            "Triage may have misclassified the source type; "
-                            "ingestion used the correct intake value."
-                        )
+                        warnings_out.append(ProvenanceWarning(
+                            severity="provenance_note",
+                            title="Triage source_type mismatch",
+                            explanation=(
+                                f"Queue recorded `{q_st}` (doc_type_hint: `{q_dth}`), "
+                                f"but intake used `{actual_st}`. "
+                                "Triage may have misclassified the source type."
+                            ),
+                            suggested_action=(
+                                "No action needed — ingestion used the correct intake value. "
+                                "Note this if writing methodology."
+                            ),
+                            source_fields=[
+                                "source_queue → source_type",
+                                "intake.json → source_type",
+                            ],
+                        ))
         except Exception:
             pass
 
-    # 4. enrich_existing proposals with no existing_entity_id
+    # 4. enrich_existing proposals with no existing_entity_id ───────────────
     enrichment = _read_json_safe(doc_dir / "enrichment.json", {})
     missing_ids = [
         str(p.get("name") or "?")
@@ -156,11 +249,45 @@ def _collect_provenance_warnings(doc_dir: Path, *, config=None) -> list[str]:
         if p.get("action") == "enrich_existing" and not p.get("existing_entity_id")
     ]
     if missing_ids:
-        names = ", ".join(f"`{n}`" for n in missing_ids)
-        warnings_out.append(
-            f"**Missing `existing_entity_id`** on `enrich_existing` "
-            f"proposal(s): {names}. "
-            "Look up the Sanity document ID for each before pushing to Sanity."
-        )
+        names_str = ", ".join(missing_ids)
+        warnings_out.append(ProvenanceWarning(
+            severity="pre_push_blocker",
+            title="Missing existing_entity_id",
+            explanation=(
+                f"`enrich_existing` proposal(s) for {names_str} have no "
+                "`existing_entity_id`. Pushing without it will create a duplicate entity."
+            ),
+            suggested_action=(
+                f"Look up the Sanity document ID for {names_str} in Sanity Studio, "
+                "then fill `existing_entity_id` in `enrichment.json` before running "
+                "`push-enrichment`."
+            ),
+            source_fields=["enrichment.json → entity_proposals → existing_entity_id"],
+        ))
+
+    # 5. Analysis/enrichment git commit mismatch ────────────────────────────
+    mismatch = _detect_commit_mismatch(doc_dir)
+    if mismatch:
+        warnings_out.append(mismatch)
 
     return warnings_out
+
+
+# ---------------------------------------------------------------------------
+# Researcher checklist helper
+# ---------------------------------------------------------------------------
+
+def _generate_researcher_checklist(warnings: list[ProvenanceWarning]) -> list[str]:
+    """Return a concise action list derived from structured warnings.
+
+    Includes ``action_needed`` and ``pre_push_blocker`` items only — these are
+    the findings the researcher must address.  ``provenance_note`` items are
+    excluded because they require no action.
+
+    Each item is the warning ``title`` — a short, scannable label.
+    """
+    return [
+        w.title
+        for w in warnings
+        if w.severity in ("action_needed", "pre_push_blocker")
+    ]
