@@ -992,6 +992,7 @@ def _enum(value, allowed: set[str], default: str, aliases: dict[str, str] | None
 def _normalize_enrichment_payload(
     data: dict,
     *,
+    doc_id: str = "",
     retrieval_grounded: bool = False,
 ) -> tuple[dict, int]:
     """Make common LLM schema drift reviewable instead of fatal.
@@ -1000,6 +1001,9 @@ def _normalize_enrichment_payload(
     of enum values that fell back to a default because the model's value was
     not in the allowed set. Enrichment proposals are not final facts; they are
     queued for researcher review.
+
+    doc_id is stamped onto each NetworkConnection as attested_in_doc so that
+    edges carry provenance even after being extracted from their parent proposal.
     """
     _repairs = 0
 
@@ -1078,6 +1082,10 @@ def _normalize_enrichment_payload(
                 "partner",
             )
             connection["evidence_quote"] = _as_string(connection.get("evidence_quote"))
+            # Stamp provenance: preserve existing value (e.g. from merged runs);
+            # always ensure the key is present so downstream dicts are consistent.
+            if not connection.get("attested_in_doc"):
+                connection["attested_in_doc"] = doc_id
         item["key_individuals"] = _as_object_list(item.get("key_individuals"))
         for person in item["key_individuals"]:
             person["name"] = _as_string(person.get("name"))
@@ -1168,6 +1176,7 @@ def _validate_response(
             data["enrichment_prompt_version"] = PROMPT_VERSION
             data, repairs = _normalize_enrichment_payload(
                 data,
+                doc_id=doc_id,
                 retrieval_grounded=retrieval_grounded,
             )
             _repairs += repairs

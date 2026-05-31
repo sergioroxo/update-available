@@ -49,7 +49,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | Data Structure | Needed For | Action | Status |
 |---|---|---|---|
 | Stable document/entity/term IDs | All exports and graph joins | Never recycle IDs; enforce `existing_entry_id` / `existing_entity_id` in review where applicable | Ongoing |
-| First-class directional edges | Actor graph, lexicon genealogy, corpus graph | Export edge view with source, target, type, evidence quote, doc_id, confidence | Pending |
+| First-class directional edges | Actor graph, lexicon genealogy, corpus graph | DS-2 added local `attested_in_doc` and `export_network_edges()`; Sanity schema/write deferred | Done locally; Sanity later |
 | Provenance key on derived claims | Methodology defense, audit, public trust | Covered by G4 | Done for audit sidecars; enforce per-export later |
 | ISO 3166 geography | Maps/timelines | DS-3 normalizes common country aliases; review/export ISO mapping remains later | Partial |
 | ISO 639 language tags | Glossary, cross-language analysis | DS-1 added `AnalysisResult.languages`; DS-3 normalizes to ISO 639-1; deterministic language-ID check and Sanity schema migration later | Partial |
@@ -147,7 +147,7 @@ These stay deferred until the spine is stronger:
 
 ## 8. Recommended Sequence
 
-1. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle. DS-1, DS-3, and DS-4 are complete; DS-2 directional edges is next before TASK F.
+1. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle. DS-1, DS-2, DS-3, and DS-4 are complete; DS-5/6/7 remain deferred unless TASK F planning exposes a blocker.
 2. **TASK F:** conservative batch runner with dry-run manifest and batch ledger.
 3. **Pilot calibration:** 10-20 documents across languages/types/stakes.
 4. **Export-only outputs:** network graph, glossary, claims ledger, framing matrix.

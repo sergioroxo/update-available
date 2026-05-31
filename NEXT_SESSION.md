@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 779
-**Latest completed milestone:** DS-4 — statistical claim verification status
+**Tests passing:** 796
+**Latest completed milestone:** DS-2 — local directional network edge export
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 779 tests -- run before every edit
+tests/                          # 796 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -401,9 +401,11 @@ will depend on:
 - DS-4 complete: `StatisticalClaim.verification_status` now tracks
   `unverified`, `verified`, `disputed`, `debunked`, or `unverifiable` in
   `enrichment.json`. Sanity write/schema migration is deferred.
+- DS-2 complete: `NetworkConnection.attested_in_doc` is first-class locally and
+  `export_network_edges()` returns graph-ready edge rows from enrichment files.
+  Sanity `networkConnections[]` schema/write support remains deferred pending
+  researcher sign-off.
 - Stable document/entity/term IDs and review-time enforcement of existing IDs.
-- NEXT: DS-2 first-class directional edge export/persistence shape with
-  evidence/provenance.
 - Temporal axis conventions (`document_date`, future `first_attested`).
 
 ---
@@ -476,7 +478,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 779 passed (or higher after new tests)
+# Must see: 796 passed (or higher after new tests)
 ```
 
 ---
@@ -527,4 +529,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-3, and DS-4 complete with 779 tests passing. TASK F is technically unblocked; recommended next order: DS-2 directional edges → TASK F.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete with 796 tests passing. TASK F is technically unblocked; recommended next order: conservative TASK F batch runner.*

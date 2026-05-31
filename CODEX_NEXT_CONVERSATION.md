@@ -244,16 +244,16 @@ Must use `source_queue.is_overnight_safe(item)` and surface excluded items befor
 processing unattended. G1-G5 safety/provenance preconditions are complete.
 
 Recommended order for a new session:
-1. Verify repo/test state (779 passed expected).
-2. Continue data-structure lock-in with DS-2 directional edges.
-3. Then start TASK F — Batch Runner.
+1. Verify repo/test state (796 passed expected).
+2. Start TASK F — Batch Runner as a conservative dry-run/ledger slice.
+3. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 779
-- Latest completed milestone: DS-4 -- statistical claim verification status
+- Tests passing: 796
+- Latest completed milestone: DS-2 -- local directional network edge export
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -275,7 +275,9 @@ Recommended order for a new session:
 - Data-structure lock-in DS-3: language/country normalization built ✓
 - Data-structure lock-in DS-4: `StatisticalClaim.verification_status` built ✓;
   Sanity schema/write deferred
-- Batch Runner: not yet built; technically unblocked by G1-G5, recommended after data-structure lock-in
+- Data-structure lock-in DS-2: `NetworkConnection.attested_in_doc` and
+  `export_network_edges()` built ✓; Sanity network schema/write deferred
+- Batch Runner: not yet built; technically unblocked by G1-G5 and DS-1/2/3/4
 
 ---
 

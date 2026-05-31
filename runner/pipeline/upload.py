@@ -843,6 +843,88 @@ def export_batch(batch_id: str, config: Config) -> None:
     console.print(f"[green]Exported {count} documents → {out_path}[/green]")
 
 
+def export_network_edges(
+    config: Config,
+    *,
+    approved_only: bool = True,
+) -> list[dict]:
+    """Return a flat edge list from all entity proposals across the corpus.
+
+    Each row represents one NetworkConnection and carries full provenance so
+    it can be used directly for graph analysis (networkx, Gephi, GraphML, CSV).
+    Source is always the containing EntityProposal.name; target is
+    NetworkConnection.entity_name. Direction is encoded in connection_type.
+
+    Parameters
+    ----------
+    config:
+        Standard Config object.
+    approved_only:
+        When True (default), only include connections from entity proposals
+        that the researcher has approved. Set to False to see all proposals
+        including unapproved drafts.
+
+    Returns
+    -------
+    list[dict] with keys:
+        source_entity, source_entity_type, target_entity,
+        connection_type, evidence_quote, attested_in_doc,
+        model_confidence, entity_approved, entity_pushed_to_sanity
+
+    No Sanity or Supabase calls are made. Purely local read.
+    """
+    edges: list[dict] = []
+
+    if not config.corpus_dir.exists():
+        return edges
+
+    for doc_dir in sorted(config.corpus_dir.iterdir()):
+        if not doc_dir.is_dir():
+            continue
+        enrichment_path = doc_dir / "enrichment.json"
+        if not enrichment_path.exists():
+            continue
+        try:
+            enrichment = json.loads(enrichment_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        enrichment_doc_id = str(enrichment.get("doc_id") or doc_dir.name)
+
+        for proposal in enrichment.get("entity_proposals") or []:
+            if not isinstance(proposal, dict):
+                continue
+            if approved_only and not proposal.get("approved"):
+                continue
+            if proposal.get("rejected"):
+                continue
+
+            source_name = (proposal.get("name") or "").strip()
+            if not source_name:
+                continue
+            source_type = proposal.get("entity_type", "organization")
+            confidence = proposal.get("model_confidence")
+
+            for conn in proposal.get("network_connections") or []:
+                if not isinstance(conn, dict):
+                    continue
+                target_name = (conn.get("entity_name") or "").strip()
+                if not target_name:
+                    continue
+                edges.append({
+                    "source_entity":          source_name,
+                    "source_entity_type":     source_type,
+                    "target_entity":          target_name,
+                    "connection_type":        conn.get("connection_type", ""),
+                    "evidence_quote":         conn.get("evidence_quote", ""),
+                    "attested_in_doc":        conn.get("attested_in_doc") or enrichment_doc_id,
+                    "model_confidence":       confidence,
+                    "entity_approved":        bool(proposal.get("approved")),
+                    "entity_pushed_to_sanity": bool(proposal.get("pushed_to_sanity")),
+                })
+
+    return edges
+
+
 def migrate_corpus_files(config: Config, dry_run: bool = True) -> dict:
     """Backfill missing provenance fields across the corpus.
 

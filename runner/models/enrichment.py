@@ -170,8 +170,15 @@ class LexiconProposal(ProposalConfidenceMixin):
 # ---------------------------------------------------------------------------
 
 class NetworkConnection(BaseModel):
-    """An explicit connection between two entities stated in the document."""
-    entity_name: str                       # the other entity's name
+    """An explicit connection between two entities stated in the document.
+
+    Source entity is always the containing EntityProposal.name.
+    Target entity is entity_name below.
+    Direction is encoded in connection_type (e.g. "funds" = source funds target;
+    "funded_by" = source is funded by target).
+    attested_in_doc is set by the normalizer from the enrichment run's doc_id.
+    """
+    entity_name: str                       # the other entity's name (target)
     connection_type: Literal[
         "partner",
         "funds",
@@ -186,6 +193,7 @@ class NetworkConnection(BaseModel):
         "opposes",
     ]
     evidence_quote: str = ""
+    attested_in_doc: str = ""              # doc_id of the enrichment run that proposed this edge
 
 
 class KeyIndividual(BaseModel):
