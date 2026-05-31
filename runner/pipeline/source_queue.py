@@ -180,6 +180,32 @@ def is_overnight_safe(item: QueueItem) -> bool:
     return True
 
 
+def exclusion_reason(item: QueueItem) -> str:
+    """Return why this item cannot be batch-processed, or "" if it is safe.
+
+    Mirrors the logic of is_overnight_safe() exactly — any change to that
+    function must be reflected here. Returns a stable string constant so
+    callers (batch plan, tests, UI) can assert on exact values.
+
+    Reason strings:
+      ""                          — item is overnight-safe (no exclusion)
+      "not_triaged"               — triage_model_used is empty
+      "status:<value>"            — status is not triaged / ready_to_ingest
+      "triage_flagged_unsafe"     — overnight_batch_safe is False
+      "needs_review:<flag_name>"  — a special-review flag is set
+    """
+    if not item.triage_model_used:
+        return "not_triaged"
+    if item.status not in _OVERNIGHT_ELIGIBLE_STATUSES:
+        return f"status:{item.status}"
+    if not item.overnight_batch_safe:
+        return "triage_flagged_unsafe"
+    for flag in _SPECIAL_REVIEW_FLAGS:
+        if getattr(item, flag, False):
+            return f"needs_review:{flag}"
+    return ""
+
+
 # ---------------------------------------------------------------------------
 # DB helpers
 # ---------------------------------------------------------------------------

@@ -244,16 +244,16 @@ Must use `source_queue.is_overnight_safe(item)` and surface excluded items befor
 processing unattended. G1-G5 safety/provenance preconditions are complete.
 
 Recommended order for a new session:
-1. Verify repo/test state (796 passed expected).
-2. Start TASK F — Batch Runner as a conservative dry-run/ledger slice.
+1. Verify repo/test state (822 passed expected).
+2. Use `runner batch-plan` to inspect the queue before any execution work.
 3. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 796
-- Latest completed milestone: DS-2 -- local directional network edge export
+- Tests passing: 822
+- Latest completed milestone: TASK F Slice 1 -- dry-run batch plan
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -277,7 +277,7 @@ Recommended order for a new session:
   Sanity schema/write deferred
 - Data-structure lock-in DS-2: `NetworkConnection.attested_in_doc` and
   `export_network_edges()` built ✓; Sanity network schema/write deferred
-- Batch Runner: not yet built; technically unblocked by G1-G5 and DS-1/2/3/4
+- Batch Runner Slice 1: `runner batch-plan` built ✓; execution mode still deferred
 
 ---
 

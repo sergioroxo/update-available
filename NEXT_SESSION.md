@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 796
-**Latest completed milestone:** DS-2 — local directional network edge export
+**Tests passing:** 822
+**Latest completed milestone:** TASK F Slice 1 — dry-run batch plan
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 796 tests -- run before every edit
+tests/                          # 822 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -410,12 +410,21 @@ will depend on:
 
 ---
 
-### TASK F -- Batch Runner (technically unblocked; recommend data-structure lock-in first)
+### TASK F -- Batch Runner (Slice 1 complete; execution still deferred)
 
 **Status:** G1 + G2 are complete, G3 protects reviewed Sanity records, G4 hardens
-provenance, and G5 suppresses ungrounded corpus connections. TASK F is now
-technically unblocked, but the recommended order is data-structure lock-in before
-unattended scale.
+provenance, G5 suppresses ungrounded corpus connections, and DS-1/2/3/4 lock in
+the immediate export-critical structures.
+
+**Slice 1 complete:** `runner batch-plan` now builds a dry-run manifest from the
+source queue. It applies `source_queue.exclusion_reason()` / `is_overnight_safe()`,
+enforces the 15-item hard cap, surfaces included/excluded rows with stable
+reasons, and can optionally write manifest JSON with `--out`. It does not ingest,
+analyze, enrich, upload, or mutate queue statuses.
+
+**Next TASK F slice:** execution remains deferred. Before building `batch-run`,
+plan pre-flight connectivity checks, a per-run ledger, hard stop-on-uncertainty,
+and queue status updates after successful ingest only.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -478,7 +487,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 796 passed (or higher after new tests)
+# Must see: 822 passed (or higher after new tests)
 ```
 
 ---
@@ -529,4 +538,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete with 796 tests passing. TASK F is technically unblocked; recommended next order: conservative TASK F batch runner.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan complete with 822 tests passing. Recommended next order: review live queue/manifest behavior, then plan conservative TASK F execution slice.*

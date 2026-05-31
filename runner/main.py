@@ -1758,6 +1758,103 @@ def comment_evidence_queue_cmd(
     ))
 
 
+@app.command(name="batch-plan")
+def batch_plan_cmd(
+    batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Only inspect items in this batch group"),
+    limit: int = typer.Option(10, "--limit", "-n", help="Maximum items to include (hard cap: 15)"),
+    priority: Optional[str] = typer.Option(None, "--priority", "-p", help="Filter by priority: high | medium | low"),
+    out: Optional[Path] = typer.Option(None, "--out", help="Write manifest JSON to this path (optional)"),
+):
+    """Dry-run batch plan: show which queue items are safe to process unattended.
+
+    \b
+    Applies all overnight-safety gates without mutating any state.
+    No ingestion, analysis, upload, or queue changes are made.
+    All four safety checks must pass for an item to be included:
+      • triage was run and succeeded
+      • status is triaged or ready_to_ingest
+      • triage did not flag the document as unsafe
+      • no testimony / legal / media / book-splitting review flag is set
+
+    \b
+    Excluded items are listed with the reason they failed the safety check.
+    Use this output to decide whether to proceed with: runner batch-run (Slice 2, not yet built).
+    """
+    import json as _json
+    from rich.table import Table
+    from .pipeline.source_queue import open_db, queue_db_path
+    from .pipeline.batch import plan_batch, MAX_BATCH_LIMIT
+
+    config = load_config(require_services=False)
+    db = open_db(queue_db_path(config.corpus_dir))
+    manifest = plan_batch(
+        db,
+        batch_group=batch or "",
+        limit=limit,
+        priority_filter=priority or "",
+    )
+
+    console.print(f"\n[bold]Batch Plan[/bold]  [dim](generated {manifest.generated_at})[/dim]")
+    console.print(
+        f"  Candidates inspected: {manifest.total_candidates}"
+        + (f"  |  batch group: [cyan]{manifest.batch_group_filter}[/cyan]" if manifest.batch_group_filter else "")
+        + (f"  |  priority filter: [cyan]{manifest.priority_filter}[/cyan]" if manifest.priority_filter else "")
+    )
+    console.print(
+        f"  [green]Included: {manifest.total_included}[/green]"
+        f"  [yellow]Excluded: {manifest.total_excluded}[/yellow]"
+        f"  [dim]Limit: {manifest.limit} (hard cap: {MAX_BATCH_LIMIT})[/dim]"
+    )
+
+    if manifest.included:
+        t = Table(title=f"Included ({manifest.total_included})", show_lines=False)
+        t.add_column("#",             style="dim",    width=3)
+        t.add_column("ID",            style="cyan",   no_wrap=True)
+        t.add_column("URL",           no_wrap=False,  max_width=55)
+        t.add_column("Status",        style="green",  no_wrap=True)
+        t.add_column("Priority",      no_wrap=True)
+        t.add_column("LLM",           no_wrap=True)
+        t.add_column("Type hint",     no_wrap=True)
+        for i, item in enumerate(manifest.included, 1):
+            t.add_row(
+                str(i),
+                item.item_id[:12],
+                item.url[:55],
+                item.status,
+                item.priority,
+                item.recommended_llm,
+                item.doc_type_hint,
+            )
+        console.print(t)
+    else:
+        console.print("[yellow]No items eligible for batch processing.[/yellow]")
+
+    if manifest.excluded:
+        t2 = Table(title=f"Excluded ({manifest.total_excluded})", show_lines=False)
+        t2.add_column("ID",     style="dim",  no_wrap=True)
+        t2.add_column("URL",    no_wrap=False, max_width=55)
+        t2.add_column("Status", style="dim",  no_wrap=True)
+        t2.add_column("Reason", style="red",  no_wrap=True)
+        for item in manifest.excluded:
+            t2.add_row(
+                item.item_id[:12],
+                item.url[:55],
+                item.status,
+                item.exclusion_reason,
+            )
+        console.print(t2)
+
+    for note in manifest.notes:
+        console.print(f"[yellow]▲ {note}[/yellow]")
+
+    if out:
+        out.write_text(
+            _json.dumps(manifest.to_dict(), indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        console.print(f"[dim]Manifest written → {out}[/dim]")
+
+
 @app.command(name="export")
 def export_batch(
     batch_id: str = typer.Argument(..., help="Batch ID to export"),

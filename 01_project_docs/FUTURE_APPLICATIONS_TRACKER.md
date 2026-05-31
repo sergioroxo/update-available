@@ -63,9 +63,9 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 
 | Step | Description | Dependency | Status |
 |---|---|---|---|
-| TASK F dry-run manifest | Show included/excluded queue items, reasons, route, estimated risk | G5 recommended | Pending |
+| TASK F dry-run manifest | Show included/excluded queue items, reasons, route, estimated risk | G5 recommended | Done (`runner batch-plan`) |
 | TASK F batch ledger | Record source IDs, doc IDs, triage, audit paths, upload/enrichment status, errors | TASK F | Pending |
-| 10-15 doc limit | Keep review load human-sized | TASK F | Pending |
+| 10-15 doc limit | Keep review load human-sized | TASK F | Done for dry-run plan; enforce again in execution |
 | Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Pending |
 | Morning report | Human-facing summary of what happened overnight | TASK F | Pending |
 | Stakes-ranked review inbox | Legal/testimony/Tier-1/low-confidence first | TASK F + Streamlit | Pending |
