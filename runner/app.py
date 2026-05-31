@@ -737,6 +737,21 @@ def _read_json_file(path: Path, default):
         return default
 
 
+# ---------------------------------------------------------------------------
+# Provenance / Audit helpers — pure functions, no st.* calls
+# Thin re-exports from runner.app_provenance so app.py stays dependency-free
+# of the logic; tests import runner.app_provenance directly.
+# ---------------------------------------------------------------------------
+
+from runner.app_provenance import (  # noqa: E402
+    _load_analysis_audit,
+    _load_enrichment_audit,
+    _load_preservation_status_dict,
+    _check_artifact_completeness,
+    _collect_provenance_warnings,
+)
+
+
 def _collect_metadata_sources(doc_dir: Path) -> dict:
     """Read field values from all local source files for reconciliation display."""
     preprocess = _read_json_file(doc_dir / "preprocess.json", {})
@@ -3018,6 +3033,13 @@ def page_document_list():
         st.info("No documents found in local corpus. Run `python -m runner ingest <url>` to add one.")
         return
 
+    # ── Search ────────────────────────────────────────────────────────────
+    search_q = st.text_input(
+        "🔍 Search by doc_id or source URL",
+        placeholder="e.g. 8fe67e19 or transdatalibrary",
+        key="doc_list_search",
+    )
+
     # Filters
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -3037,6 +3059,13 @@ def page_document_list():
         )
 
     filtered = docs
+    if search_q:
+        _sq = search_q.strip().lower()
+        filtered = [
+            d for d in filtered
+            if _sq in d["doc_id"].lower()
+            or _sq in (d.get("source") or "").lower()
+        ]
     if filter_type:
         filtered = [d for d in filtered if d.get("type") in filter_type]
     if filter_batch:
@@ -3408,6 +3437,24 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
         with st.expander("Metadata sources / reconciliation", expanded=needs_recon):
             _render_metadata_reconciliation(doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe())
 
+        # Warn about provenance issues inline (date, languages, queue mismatch, etc.)
+        _prov_inline_warnings = _collect_provenance_warnings(
+            corpus_dir / doc["doc_id"], config=_load_config_safe()
+        )
+        if _prov_inline_warnings:
+            with st.expander(
+                f"⚠️ Provenance / Audit ({len(_prov_inline_warnings)} warning(s))",
+                expanded=True,
+            ):
+                _render_provenance_panel(
+                    doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe()
+                )
+        else:
+            with st.expander("🔍 Provenance / Audit", expanded=False):
+                _render_provenance_panel(
+                    doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe()
+                )
+
         # ── Actions ───────────────────────────────────────────────────────
         st.divider()
         act_cols = st.columns([1, 2, 1])
@@ -3492,6 +3539,131 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 else:
                     st.error(r.stderr[-600:] or r.stdout[-600:])
                 st.rerun()
+
+
+def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
+    """Render analysis/enrichment audits, preservation status, artifact completeness, and warnings."""
+    # Warnings first — most actionable
+    provenance_warnings = _collect_provenance_warnings(doc_dir, config=config)
+    for w in provenance_warnings:
+        st.warning(w)
+
+    tabs = st.tabs(["Analysis Audit", "Enrichment Audit", "Preservation", "Artifacts"])
+
+    # ── Analysis Audit ────────────────────────────────────────────────────
+    with tabs[0]:
+        audit = _load_analysis_audit(doc_dir)
+        if not audit:
+            st.info("No `analysis_audit.json` found for this document.")
+        else:
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Model", audit.get("model") or "?")
+            m2.metric("LLM flag", audit.get("llm_flag") or "?")
+            dur = audit.get("duration_ms")
+            m3.metric("Duration", f"{int(dur / 1000)}s" if dur else "?")
+
+            h1, h2 = st.columns(2)
+            ph  = audit.get("prompt_sha256") or ""
+            pth = audit.get("prompt_template_sha256") or ""
+            h1.code(ph[:16]  + "…" if len(ph)  >= 16 else ph,  language="text")
+            h1.caption("prompt_sha256 (truncated)")
+            h2.code(pth[:16] + "…" if len(pth) >= 16 else pth, language="text")
+            h2.caption("prompt_template_sha256 (truncated)")
+
+            r1, r2, r3 = st.columns(3)
+            gc = (audit.get("git_commit") or "")[:12]
+            r1.write(f"**Git commit:** `{gc}{'…' if gc else ''}`")
+            r2.write(f"**Validation:** `{audit.get('validation_path') or '—'}`")
+            derived = audit.get("score_derived_from_status")
+            r3.write(f"**Score derived:** {'⚠️ Yes' if derived else '✓ No'}")
+
+            st.caption(
+                f"Schema v{audit.get('schema_version', '?')} · "
+                f"Prompt: {audit.get('prompt_version', '?')} · "
+                f"Ontology: {audit.get('ontology_version', '?')}"
+            )
+            nw = audit.get("normalisation_warnings") or []
+            if nw:
+                with st.expander(f"Normalisation warnings ({len(nw)})"):
+                    for w in nw:
+                        st.caption(f"• {w}")
+
+    # ── Enrichment Audit ──────────────────────────────────────────────────
+    with tabs[1]:
+        eaudit = _load_enrichment_audit(doc_dir)
+        if not eaudit:
+            st.info("No `enrichment_audit.json` found for this document.")
+        else:
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Model", eaudit.get("model") or "?")
+            dur = eaudit.get("duration_ms")
+            m2.metric("Duration", f"{int(dur / 1000)}s" if dur else "?")
+            m3.metric("Chunked", "Yes" if eaudit.get("chunked") else "No")
+
+            h1, h2 = st.columns(2)
+            ph = eaudit.get("prompt_sha256") or ""
+            gc = eaudit.get("git_commit") or ""
+            h1.code(ph[:16] + "…" if len(ph) >= 16 else ph, language="text")
+            h1.caption("prompt_sha256 (truncated)")
+            h2.code(gc[:12] + "…" if len(gc) >= 12 else gc, language="text")
+            h2.caption("git_commit (truncated)")
+
+            if eaudit.get("corpus_connections_suppressed"):
+                st.info(
+                    "Corpus connections suppressed — "
+                    f"`{eaudit.get('corpus_connections_suppression_reason') or '?'}`"
+                )
+            repairs = eaudit.get("normalization_repairs") or 0
+            if repairs:
+                st.write(f"**Normalisation repairs:** {repairs}")
+            st.caption(
+                f"Schema v{eaudit.get('schema_version', '?')} · "
+                f"Prompt: {eaudit.get('prompt_version', '?')}"
+            )
+
+    # ── Preservation Status ───────────────────────────────────────────────
+    with tabs[2]:
+        pstatus = _load_preservation_status_dict(doc_dir)
+        if not pstatus:
+            st.info("No `preservation_status.json` found — run ingest again to generate it.")
+        else:
+            _PSTATUS_ICONS: dict[str, str] = {
+                "captured_html":  "✅",
+                "capture_needed": "⚠️",
+                "metadata_only":  "ℹ️",
+                "not_applicable": "—",
+            }
+            status = pstatus.get("preservation_status") or "?"
+            icon   = _PSTATUS_ICONS.get(status, "❓")
+            st.markdown(f"**Status:** {icon} `{status}`")
+
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Capture needed", "⚠️ Yes" if pstatus.get("capture_needed") else "✓ No")
+            c2.metric("Wayback",        pstatus.get("public_archive_status") or "?")
+            c3.metric("Route",          pstatus.get("suggested_capture_route") or "—")
+
+            if pstatus.get("capture_reason"):
+                st.write(f"**Reason:** {pstatus['capture_reason']}")
+            sha = pstatus.get("local_html_sha256") or ""
+            if sha:
+                st.caption(f"SHA-256: `{sha}`")
+            for note in (pstatus.get("notes") or []):
+                st.caption(f"• {note}")
+
+    # ── Artifact Completeness ─────────────────────────────────────────────
+    with tabs[3]:
+        completeness = _check_artifact_completeness(doc_dir)
+        present_count = sum(1 for v in completeness.values() if v)
+        absent = [k for k, v in completeness.items() if not v]
+        if absent:
+            st.warning(f"Missing: {', '.join(f'`{a}`' for a in absent)}")
+        items = list(completeness.items())
+        col_a, col_b = st.columns(2)
+        for k, v in items[:5]:
+            col_a.write(f"{'✅' if v else '❌'} `{k}`")
+        for k, v in items[5:]:
+            col_b.write(f"{'✅' if v else '❌'} `{k}`")
+        st.caption(f"{present_count}/{len(completeness)} artifacts present")
 
 
 def _format_tag_list(values, *, limit: int = 40) -> str:
@@ -6707,7 +6879,11 @@ def page_activity_log():
 
     selected = st.selectbox("Inspect document", [row["doc_id"] for row in docs])
     doc_dir = config.corpus_dir / selected
-    tabs = st.tabs(["Audit", "Intake", "Wayback", "HTML Snapshot", "Analysis", "Enrichment", "Sanity Record", "Supabase"])
+    tabs = st.tabs([
+        "Audit", "Intake", "Wayback", "HTML Snapshot",
+        "Analysis", "Enrichment", "Sanity Record", "Supabase",
+        "Provenance",
+    ])
     with tabs[0]:
         audit = doc_dir / "audit.log"
         st.code(audit.read_text() if audit.exists() else "No audit.log", language="text")
@@ -6734,6 +6910,8 @@ def page_activity_log():
         _show_json_file(doc_dir / "enrichment.json")
     with tabs[6]:
         _show_json_file(doc_dir / "sanity_record.json")
+    with tabs[8]:
+        _render_provenance_panel(selected, doc_dir, config)
     with tabs[7]:
         emb_path = doc_dir / "embedding.json"
         if emb_path.exists():
