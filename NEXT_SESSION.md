@@ -2,8 +2,8 @@
 **Generated:** 2026-06-01
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 966
-**Latest completed milestone:** Research Review Cockpit v1 — Provenance/Audit panel (`e65c06e75`)
+**Tests passing:** 989
+**Latest completed milestone:** Research Review Cockpit provenance clarity slice (`54f0ec204`)
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -459,9 +459,10 @@ uploaded to Sanity/Supabase, enriched locally, and linked back to queue item
 `f52eb82a` as `ingested`.
 
 **Next sequence:** open the Streamlit app, navigate to Document List, search for
-`8fe67e19`, open the ⚠️ Provenance / Audit panel to review the 6 enrichment
-proposals and fix the 2 `connection_type` errors before pushing. Then run a
-2–3 item attended pilot batch (see notes below) before any overnight use.
+`8fe67e19`. The panel now shows a **researcher checklist** — fix the 2
+`connection_type` errors, look up Sanity IDs for SEGM and Genspect, then run
+`push-enrichment`. After that run a 2–3 item attended pilot batch before any
+overnight use.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -499,7 +500,7 @@ evaluation candidates, not integrated dependencies.
 
 The Streamlit Document List and Activity Log now include a per-document
 **Provenance / Audit** panel backed by `runner/app_provenance.py` (pure module,
-no Streamlit dependency, 32 tests):
+no Streamlit dependency, 32 tests at v1):
 
 **Document List** — new `🔍 Search by doc_id or source URL` text input above
 the filter row (substring match on `doc_id` and source URL). Every doc card
@@ -528,6 +529,41 @@ For pilot document `8fe67e19`: warnings 1, 2, 3, 4 all fire (languages empty,
 date unknown, queue says `video` / intake says `url`, SEGM+Genspect proposals
 lack existing_entity_id). These are the 6 proposals plus the triage artefact
 identified in the attended review.
+
+---
+
+### ~~Research Review Cockpit v1~~ — Provenance clarity slice ✓ COMPLETE (`54f0ec204`)
+
+Decision-oriented redesign of `runner/app_provenance.py` and `_render_provenance_panel`.
+55 tests (up from 32). No pipeline logic changes.
+
+**`ProvenanceWarning` dataclass** — structured finding with five fields:
+`severity`, `title`, `explanation`, `suggested_action`, `source_fields`. Three
+severity levels with distinct UI treatment:
+
+| Severity | What | Example |
+|---|---|---|
+| `action_needed` | Researcher should act before using this doc | Languages missing, Date unknown |
+| `pre_push_blocker` | Must resolve before `push-enrichment` | Missing `existing_entity_id` |
+| `provenance_note` | Informational, no action needed | Triage source_type mismatch, commit mismatch |
+
+**New helpers in `app_provenance.py`:**
+- `_detect_commit_mismatch(doc_dir)` — returns `provenance_note` if analysis and
+  enrichment audits show different git commits; `None` if they match or either is absent.
+- `_generate_researcher_checklist(warnings)` — returns `list[str]` of titles for
+  `action_needed` + `pre_push_blocker` items only.
+
+**Improved `_render_provenance_panel`:**
+1. **Researcher checklist** at top — one `🔴`/`🟡` line per actionable item
+2. **Grouped detail sections** — "Action needed", "Before pushing to Sanity", and
+   a collapsed "Provenance notes" expander with lighter visual weight
+3. **Audit captions** — one sentence in each sub-tab explaining what it proves
+4. **Full hashes expander** in Analysis Audit and Enrichment Audit — copyable
+   `st.code` blocks for all prompt hashes and git commits
+
+**Inline card expander label** now distinguishes severity:
+`🔴 … push blocker(s)` / `⚠️ … action(s) needed` / `ℹ️ … notes`.
+Auto-expands only when blockers or actions are present.
 
 ---
 
@@ -630,4 +666,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit v1 provenance/audit panel complete (`e65c06e75`). First pilot doc `8fe67e19` uploaded, embedded, enriched, and queue-linked. Provenance panel shows all 4 expected warnings for this doc (languages empty, date unknown, queue/intake source_type mismatch, missing entity IDs). 966 tests passing. Recommended next: open app → Document List → search `8fe67e19` → resolve enrichment proposals → run 2–3 item attended pilot.*
+*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit v1 provenance/audit panel complete (`e65c06e75`). Research Review Cockpit provenance clarity slice complete (`54f0ec204`) — structured `ProvenanceWarning`, researcher checklist, grouped severity sections, full hash expanders, commit mismatch detection. 989 tests passing. Recommended next: open app → Document List → search `8fe67e19` → resolve enrichment proposals → run 2–3 item attended pilot.*

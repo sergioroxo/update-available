@@ -5,7 +5,7 @@ project. It is a companion to `NEXT_SESSION.md`, which is the Claude Code task
 handoff. This document is for steering the collaboration: what to trust, what to
 verify, how to guide Claude, and how Codex should keep the system coherent.
 
-Generated: 2026-06-01
+Generated: 2026-06-01 (updated post-clarity-slice)
 Repo: `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 Main working branch: `claude/review-architecture-70CUm`
 
@@ -260,7 +260,7 @@ upload, Supabase embedding confirmation, enrichment, and queue linking
 the document status and queue row now reflect the recovered success.
 
 **✓ Research Review Cockpit v1 -- Provenance/Audit panel** (commit `e65c06e75`)
-`runner/app_provenance.py` (pure module, 32 tests) provides five helpers:
+`runner/app_provenance.py` (pure module, 32 tests at v1) provides five helpers:
 `_load_analysis_audit`, `_load_enrichment_audit`, `_load_preservation_status_dict`,
 `_check_artifact_completeness`, `_collect_provenance_warnings`. The Streamlit app
 gains: a doc_id/URL search box in Document List; a `🔍 Provenance / Audit`
@@ -269,10 +269,19 @@ tab in the Activity Log inspector. Inline warnings fire for missing languages,
 missing date, queue/intake source_type mismatch, and `enrich_existing` proposals
 lacking `existing_entity_id`. All four warnings fire for pilot doc `8fe67e19`.
 
+**✓ Research Review Cockpit -- Provenance clarity slice** (commit `54f0ec204`)
+Decision-oriented redesign. 55 tests (989 total). `ProvenanceWarning` dataclass
+replaces plain strings; three severity levels (`action_needed`, `pre_push_blocker`,
+`provenance_note`). New helpers: `_detect_commit_mismatch`, `_generate_researcher_checklist`.
+Panel now shows a researcher checklist at top, grouped sections by severity, one-sentence
+audit captions, and full hash expanders in both audit sub-tabs. Card expander label
+distinguishes 🔴 push blockers / ⚠️ actions needed / ℹ️ notes.
+
 Recommended order for a new session:
-1. Verify repo/test state (966 passed expected).
-2. Open app → Document List → search `8fe67e19` → resolve the 6 enrichment
-   proposals (fix 2 connection_type errors before pushing to Sanity).
+1. Verify repo/test state (989 passed expected).
+2. Open app → Document List → search `8fe67e19` → read the researcher checklist →
+   resolve the 6 enrichment proposals (fix 2 connection_type errors; look up Sanity
+   IDs for SEGM and Genspect before pushing).
 3. Use `runner batch-plan` to inspect the queue before the next live execution.
 4. Run a 2-3 item attended pilot before any overnight use.
 5. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
@@ -281,8 +290,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 966
-- Latest completed milestone: Research Review Cockpit v1 — Provenance/Audit panel (`e65c06e75`)
+- Tests passing: 989
+- Latest completed milestone: Research Review Cockpit provenance clarity slice (`54f0ec204`)
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -334,13 +343,20 @@ Recommended order for a new session:
   uploaded to Sanity, present in Supabase, enriched locally, and queue-linked to
   source item `f52eb82a`.
 - Research Review Cockpit v1 — Provenance/Audit panel built ✓ (`e65c06e75`)
-  - `runner/app_provenance.py`: 5 pure helpers, no Streamlit dependency, 32 tests.
-  - Document List: doc_id/URL search box; provenance expander per doc card (auto-open with warnings).
+  - `runner/app_provenance.py`: 5 pure helpers, no Streamlit dependency, 32 tests at v1.
+  - Document List: doc_id/URL search box; provenance expander per doc card.
   - Activity Log: 9th "Provenance" tab with Analysis Audit, Enrichment Audit,
     Preservation, and Artifacts sub-tabs.
   - Inline warnings: missing languages, missing date, queue/intake source_type
     mismatch, `enrich_existing` missing `existing_entity_id`.
-  - Pilot doc `8fe67e19` shows all 4 expected warnings — actionable before next push.
+  - Pilot doc `8fe67e19` shows all 4 expected warnings.
+- Research Review Cockpit provenance clarity slice built ✓ (`54f0ec204`)
+  - `ProvenanceWarning` dataclass: severity/title/explanation/suggested_action/source_fields.
+  - `_detect_commit_mismatch`: provenance_note when analysis and enrichment git commits differ.
+  - `_generate_researcher_checklist`: list[str] of titles for action_needed + pre_push_blocker.
+  - Panel: researcher checklist at top, grouped sections by severity, audit captions, full hash expanders.
+  - Card expander: 🔴 push blockers / ⚠️ actions needed / ℹ️ notes (auto-expands only for blockers/actions).
+  - 55 provenance tests; 989 total.
 
 ---
 
