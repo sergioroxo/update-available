@@ -303,6 +303,10 @@ provenance gaps below. A Batch Runner with silent gaps is worse than no Batch Ru
 - Claim/fact-check ledger from `statistical_claims`
 - Multilingual SOGICE glossary from variants/translations
 
+**Roadmap/tracker artifacts:**
+- `01_project_docs/FUTURE_APPLICATIONS_ROADMAP_v1.0.md` — narrative strategy/design reference.
+- `01_project_docs/FUTURE_APPLICATIONS_TRACKER.md` — working checklist for follow-up steps, outputs, external tools, data structures, and do-not-build-yet decisions.
+
 ---
 
 ### ~~TASK G1~~ -- Batch safety: triage must fail closed ✓ COMPLETE

@@ -263,6 +263,9 @@ Recommended order for a new session:
 - Triage workflow flags: built and wired ✓ (TASK A)
 - Deep architecture review: captured as TASK G; findings converted to G1-G5
 - External systems/data-use questions: captured in NEXT_SESSION.md under TASK G
+- Future applications roadmap/tracker:
+  `01_project_docs/FUTURE_APPLICATIONS_ROADMAP_v1.0.md` and
+  `01_project_docs/FUTURE_APPLICATIONS_TRACKER.md`
 - Reviewed-doc overwrite guard: built ✓ (TASK G3)
 - Batch Runner: not yet built; technically unblocked by G1/G2, recommended after G4-G5
 
