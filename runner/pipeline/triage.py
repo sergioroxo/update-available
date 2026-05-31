@@ -261,6 +261,7 @@ def _call_litelm(user_msg: str, config: Config) -> str:
             ],
             "temperature": 0.0,
             "max_tokens": 400,
+            "think": False,
         },
         timeout=60,
     )

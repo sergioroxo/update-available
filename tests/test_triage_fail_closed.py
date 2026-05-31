@@ -191,6 +191,32 @@ def test_run_parse_honours_explicit_false(monkeypatch):
     assert result.overnight_batch_safe is False
 
 
+def test_litelm_call_disables_thinking(monkeypatch):
+    """The triage LiteLLM alias must answer in content, not reasoning_content."""
+    captured: dict = {}
+
+    class _Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"choices": [{"message": {"content": _VALID_JSON}}]}
+
+    def _fake_post(*args, **kwargs):
+        captured.update(kwargs)
+        return _Response()
+
+    monkeypatch.setattr("httpx.post", _fake_post)
+
+    raw = triage_mod._call_litelm("route this", _cfg(litelm=True))
+
+    assert raw == _VALID_JSON
+    assert captured["json"]["model"] == "triage"
+    assert captured["json"]["temperature"] == 0.0
+    assert captured["json"]["max_tokens"] == 400
+    assert captured["json"]["think"] is False
+
+
 # ---------------------------------------------------------------------------
 # is_overnight_safe()
 # ---------------------------------------------------------------------------

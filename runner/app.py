@@ -9184,6 +9184,41 @@ def page_source_queue():
     db_path = queue_db_path(config.corpus_dir)
     db = open_db(db_path)
 
+    def _run_source_queue_triage(target_items, *, label: str = "Triaging") -> None:
+        """Run queue triage for visible items and persist fail-closed results."""
+        if not target_items:
+            st.info("No queue items selected for triage.")
+            return
+        try:
+            from runner.pipeline import triage as triage_mod
+        except ImportError as exc:
+            st.error(f"Triage module unavailable: {exc}")
+            return
+
+        model_name = "litelm/triage" if config.litelm_base_url else config.local_analysis_model
+        progress = st.progress(0, text=f"{label}…")
+        parsed = 0
+        failed = 0
+        for idx, item in enumerate(target_items):
+            progress.progress(
+                (idx + 1) / max(len(target_items), 1),
+                text=f"{label} {idx + 1}/{len(target_items)}: {item.url[:55]}",
+            )
+            try:
+                snippet, _ = triage_mod.extract_snippet(item.url)
+                result = triage_mod.run(snippet, config)
+                apply_triage_result(db, item.id, result, model_name=model_name)
+                if result.triage_succeeded:
+                    parsed += 1
+                else:
+                    failed += 1
+                    st.warning(f"Triage failed closed for {item.id}: {result.routing_reason}")
+            except Exception as exc:
+                failed += 1
+                st.warning(f"Triage failed for {item.id}: {exc}")
+        progress.empty()
+        st.success(f"Triage complete with {model_name}: {parsed} parsed, {failed} failed closed.")
+
     # ── Stats bar ──────────────────────────────────────────────────────────
     stats = queue_stats(db)
     by_s = stats["by_status"]
@@ -9255,7 +9290,7 @@ def page_source_queue():
 
         if add_mode == "Add and triage now":
             st.caption(
-                "Priority will be assigned by the triage model. If triage fails for a URL, it stays `new` with temporary `medium` priority so you can retry."
+                "Priority will be assigned by the triage model. If triage fails for a URL, it is marked `triaged` but fail-closed so you can review or retry it."
             )
 
         if st.button("Add to queue", type="primary", disabled=not pasted.strip()):
@@ -9286,32 +9321,12 @@ def page_source_queue():
                 st.warning("No valid URLs found in the pasted text.")
 
             if add_mode == "Add and triage now" and (added + dup_c) > 0:
-                try:
-                    from runner.pipeline import triage as triage_mod
-                    new_items = list_items(
-                        db, status="new",
-                        batch_group=imp_batch or None,
-                        limit=added + dup_c + 10,
-                    )
-                    model_name = "litelm/triage" if config.litelm_base_url else config.local_analysis_model
-                    progress = st.progress(0, text="Starting triage…")
-                    ok = 0
-                    for idx, item in enumerate(new_items):
-                        progress.progress(
-                            (idx + 1) / max(len(new_items), 1),
-                            text=f"Triaging {idx + 1}/{len(new_items)}: {item.url[:55]}",
-                        )
-                        try:
-                            snippet, _ = triage_mod.extract_snippet(item.url)
-                            result = triage_mod.run(snippet, config)
-                            apply_triage_result(db, item.id, result, model_name=model_name)
-                            ok += 1
-                        except Exception as exc:
-                            st.warning(f"Triage failed for {item.id}: {exc}")
-                    progress.empty()
-                    st.success(f"Triage complete: {ok}/{len(new_items)} item(s) updated.")
-                except ImportError as exc:
-                    st.error(f"Triage module unavailable: {exc}")
+                new_items = list_items(
+                    db, status="new",
+                    batch_group=imp_batch or None,
+                    limit=added + dup_c + 10,
+                )
+                _run_source_queue_triage(new_items, label="Triaging new item")
 
             st.rerun()
 
@@ -9399,29 +9414,27 @@ def page_source_queue():
             key="sq_triage_n",
         )
         if triage_cols[0].button("⚡ Run triage on new items", key="sq_triage_btn"):
-            try:
-                from runner.pipeline import triage as triage_mod
-                new_items = [i for i in items if i.status == "new"][:int(triage_n)]
-                model_name = "litelm/triage" if config.litelm_base_url else config.local_analysis_model
-                progress = st.progress(0, text="Starting triage…")
-                ok = 0
-                for idx, item in enumerate(new_items):
-                    progress.progress(
-                        (idx + 1) / len(new_items),
-                        text=f"Triaging {idx + 1}/{len(new_items)}: {item.url[:55]}",
-                    )
-                    try:
-                        snippet, _ = triage_mod.extract_snippet(item.url)
-                        result = triage_mod.run(snippet, config)
-                        apply_triage_result(db, item.id, result, model_name=model_name)
-                        ok += 1
-                    except Exception as exc:
-                        st.warning(f"Triage failed for {item.id}: {exc}")
-                progress.empty()
-                st.success(f"Triaged {ok}/{len(new_items)} item(s) with {model_name}.")
-                st.rerun()
-            except ImportError as exc:
-                st.error(f"Triage module unavailable: {exc}")
+            _run_source_queue_triage([i for i in items if i.status == "new"][:int(triage_n)])
+            st.rerun()
+
+    failed_triage_items = [
+        i for i in items
+        if i.status == "triaged" and str(i.routing_reason).startswith("triage failed:")
+    ]
+    if failed_triage_items:
+        retry_cols = st.columns([4, 1])
+        retry_cols[0].caption(
+            f"**{len(failed_triage_items)} failed triage item(s) visible.** "
+            "Retry re-fetches each URL and asks the triage model again. It does not ingest."
+        )
+        retry_n = retry_cols[1].number_input(
+            "Retry max", min_value=1, max_value=50,
+            value=min(len(failed_triage_items), 10),
+            key="sq_retry_failed_n",
+        )
+        if retry_cols[0].button("🔁 Retry failed triage", key="sq_retry_failed_btn"):
+            _run_source_queue_triage(failed_triage_items[:int(retry_n)], label="Retrying failed triage")
+            st.rerun()
 
     # ── Queue table ────────────────────────────────────────────────────────
     _STATUS_EMOJI = {
@@ -9485,6 +9498,16 @@ def page_source_queue():
                 if item.batch_group:
                     st.caption(f"Batch: {item.batch_group}")
                 st.caption(f"Added: {item.added_at[:10]}  ·  ID: `{item.id}`")
+                note_text = st.text_area(
+                    "Research note",
+                    value=item.notes or "",
+                    height=80,
+                    key=f"sq_note_text_{item.id}",
+                    placeholder="Why this source matters, where it came from, or what to remember later.",
+                )
+                if st.button("Save note", key=f"sq_note_save_{item.id}"):
+                    update_notes(db, item.id, notes=note_text)
+                    st.rerun()
 
                 # Ingest command — ONLY for ready_to_ingest
                 if item.status == "ready_to_ingest":
@@ -9503,6 +9526,10 @@ def page_source_queue():
             with action_col:
                 # Status transitions
                 if item.status in ("new", "triaged"):
+                    if st.button("🔁 Retry triage", key=f"sq_retry_{item.id}",
+                                  help="Fetch this URL and run triage again. Does not ingest."):
+                        _run_source_queue_triage([item], label="Retrying triage")
+                        st.rerun()
                     if st.button("✳️ Ready for ingest", key=f"sq_ready_{item.id}",
                                   help="Mark as approved — still requires running runner ingest"):
                         update_status(db, item.id, "ready_to_ingest")
