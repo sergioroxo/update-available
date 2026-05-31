@@ -173,23 +173,30 @@ def extract_snippet(source: str, max_chars: int = _SNIPPET_CHARS) -> tuple[str, 
 
 
 def run(text: str, config: Config, *, source_label: str = "") -> TriageResult:
-    """Triage a document. Never raises -- returns a safe default on failure."""
+    """Triage a document. Never raises -- returns a FAIL-CLOSED result on failure.
+
+    A model/network/parse failure yields ``TriageResult.failed(...)`` with
+    triage_succeeded=False and overnight_batch_safe=False, so an item is never
+    mistaken for overnight-safe just because triage could not complete.
+    """
     context = build_triage_context(text, source_label=source_label)
     user_msg = f"Document context:\n\n{context}\n\n---\nOutput JSON only."
 
     raw: str | None = None
+    errors: list[str] = []
 
     if config.litelm_base_url:
         try:
             raw = _call_litelm(user_msg, config)
-        except Exception:
-            pass
+        except Exception as exc:
+            errors.append(f"litelm: {exc}")
 
     if raw is None:
         try:
             raw = _call_ollama(user_msg, config)
-        except Exception:
-            return TriageResult()
+        except Exception as exc:
+            errors.append(f"ollama: {exc}")
+            return TriageResult.failed("; ".join(errors) or "no triage model available")
 
     return _parse(raw)
 
@@ -269,12 +276,21 @@ def load_triage_result(doc_id: str, config: "Config") -> "Optional[TriageResult]
 
 
 def _parse(raw: str) -> TriageResult:
+    """Parse a triage model response. Fail closed on any non-parse.
+
+    Only a clean JSON parse + schema validation marks triage_succeeded=True.
+    overnight_batch_safe reflects the model's own value; if the model omits it,
+    the schema default (False) applies -- a valid-but-incomplete response is not
+    treated as overnight-safe.
+    """
     text = re.sub(r"^```(?:json)?\s*", "", raw.strip())
     text = re.sub(r"\s*```$", "", text.strip())
     m = re.search(r"\{.*\}", text, re.DOTALL)
     if not m:
-        return TriageResult()
+        return TriageResult.failed("response contained no JSON object")
     try:
-        return TriageResult.model_validate(json.loads(m.group(0)))
-    except Exception:
-        return TriageResult()
+        result = TriageResult.model_validate(json.loads(m.group(0)))
+    except Exception as exc:
+        return TriageResult.failed(f"invalid triage JSON: {exc}")
+    result.triage_succeeded = True
+    return result

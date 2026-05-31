@@ -89,7 +89,9 @@ def test_new_fields_have_safe_defaults():
     assert result.needs_testimony_review is False
     assert result.needs_media_review is False
     assert result.needs_legal_review is False
-    assert result.overnight_batch_safe is True
+    # G1: a bare TriageResult() is the failure/absent fallback -> fail closed.
+    assert result.triage_succeeded is False
+    assert result.overnight_batch_safe is False
     assert result.suggested_process_route == ""
 
 
@@ -225,9 +227,10 @@ def test_load_legacy_json_without_new_fields(tmp_path):
     loaded = load_triage_result("doc-legacy", cfg)
     assert loaded is not None
     assert loaded.doc_type_hint == "academic"
-    # New fields default safely
+    # New fields fail closed: a legacy file with no overnight_batch_safe is NOT
+    # treated as overnight-safe.
     assert loaded.needs_book_splitting is False
-    assert loaded.overnight_batch_safe is True
+    assert loaded.overnight_batch_safe is False
 
 
 # ---------------------------------------------------------------------------
@@ -350,7 +353,8 @@ class TestApplyTriageResultNewFlags:
         updated = get_item(db, item.id)
         assert updated.status == "triaged"
         assert updated.needs_book_splitting is False
-        assert updated.overnight_batch_safe is True  # safe default
+        # G1: a triage object missing overnight_batch_safe fails closed.
+        assert updated.overnight_batch_safe is False
 
 
 # ---------------------------------------------------------------------------

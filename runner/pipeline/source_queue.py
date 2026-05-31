@@ -139,6 +139,47 @@ class QueueItem:
         return cls(**data)
 
 
+# Special-handling flags that each block unattended processing on their own.
+_SPECIAL_REVIEW_FLAGS: tuple[str, ...] = (
+    "needs_testimony_review",
+    "needs_legal_review",
+    "needs_media_review",
+    "needs_book_splitting",
+)
+
+# Queue statuses from which an item may be processed unattended.
+_OVERNIGHT_ELIGIBLE_STATUSES: frozenset[str] = frozenset({"triaged", "ready_to_ingest"})
+
+
+def is_overnight_safe(item: QueueItem) -> bool:
+    """Return True only when an item is safe for unattended (overnight) processing.
+
+    Fails closed: legacy rows, never-triaged rows, and rows where triage failed
+    all return False. ALL of the following must hold:
+
+    - triage actually ran: ``triage_model_used`` is recorded (non-empty). A
+      failed triage clears ``overnight_batch_safe`` even though a model name is
+      recorded, so it is still excluded by the flag check below.
+    - status is ``triaged`` or ``ready_to_ingest`` (the researcher-reachable
+      states after triage); ``new`` / ``ingested`` / ``skipped`` are not eligible.
+    - ``overnight_batch_safe`` is True.
+    - none of the special-review flags (testimony, legal, media, book splitting)
+      is set.
+
+    This is the single authority the batch runner (TASK F, not built yet) must
+    consult; do not query ``overnight_batch_safe`` directly.
+    """
+    if not item.triage_model_used:
+        return False
+    if item.status not in _OVERNIGHT_ELIGIBLE_STATUSES:
+        return False
+    if not item.overnight_batch_safe:
+        return False
+    if any(getattr(item, flag, False) for flag in _SPECIAL_REVIEW_FLAGS):
+        return False
+    return True
+
+
 # ---------------------------------------------------------------------------
 # DB helpers
 # ---------------------------------------------------------------------------
@@ -619,7 +660,8 @@ def apply_triage_result(
             int(getattr(triage_result, "needs_testimony_review",  False)),
             int(getattr(triage_result, "needs_media_review",      False)),
             int(getattr(triage_result, "needs_legal_review",      False)),
-            int(getattr(triage_result, "overnight_batch_safe",    True)),
+            # Fail closed: a triage object without this attribute is not safe.
+            int(getattr(triage_result, "overnight_batch_safe",    False)),
             getattr(triage_result,     "suggested_process_route", ""),
             _now(),
             model_name,
