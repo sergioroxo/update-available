@@ -114,17 +114,17 @@ def ingest(
     )
     if not yes and not review.checkpoint_intake(intake_result):
         raise typer.Exit()
-    # G2-a: persist the triage result alongside the document, but only AFTER the
-    # intake checkpoint is accepted — so rejecting/aborting at intake never leaves
-    # a corpus folder containing only triage_result.json. In --yes mode the
-    # checkpoint is skipped, so this still persists. Upload-gate cross-checks and
-    # the future batch runner read these workflow flags (testimony/legal/media/
-    # book). Persistence only — no gate behaviour change yet. Non-fatal.
+    # Persist triage only AFTER the intake checkpoint is accepted, so rejecting
+    # intake never leaves a corpus folder containing only triage_result.json.
+    # If --yes skipped live triage, load any prior result for the cross-stage
+    # testimony/legal safety checks below. Persistence remains non-fatal.
     if triage_result is not None:
         try:
             triage.save_triage_result(intake_result.doc_id, triage_result, config)
         except Exception as exc:
             console.print(f"[yellow]Could not persist triage result: {exc}[/yellow]")
+    else:
+        triage_result = triage.load_triage_result(intake_result.doc_id, config)
 
     # Stage 2 — Preprocessing
     # max_chars=0 means no truncation; None means pick from config by LLM mode
@@ -179,12 +179,14 @@ def ingest(
 
     # Stage 5 — Testimony consent gate + upload confirmation (Checkpoint 4)
     consent_status = review.checkpoint_testimony_consent(
-        intake_result.doc_id, final_analysis, config
+        intake_result.doc_id, final_analysis, config,
+        triage_result=triage_result, yes=yes,
     )
     if consent_status == "refused":
         raise typer.Exit()
     if consent_status in {"confirmed", "pending"}:
         intake_result.testimony_consent = consent_status
+    hold_reason: str | None = None
     if consent_status == "pending":
         saved_path = upload.save_locally(
             intake_result, preprocess_result, embedding_vector, final_analysis,
@@ -199,7 +201,22 @@ def ingest(
         ))
         confirmed = False
     else:
-        confirmed = yes or review.checkpoint_upload(intake_result.doc_id, final_analysis)
+        legal_hold = upload.requires_legal_review(final_analysis, triage_result)
+        if legal_hold and yes:
+            confirmed = False
+            hold_reason = "legal"
+        elif legal_hold:
+            console.print(Panel(
+                "This document appears to require legal-accuracy review before publication.\n\n"
+                "Reason: legal-sensitive document type or triage flagged legal review.\n"
+                "This is a review hold, not a testimony consent gate.",
+                title="Legal review recommended",
+            ))
+            confirmed = review.checkpoint_upload(intake_result.doc_id, final_analysis)
+            if not confirmed:
+                hold_reason = "legal"
+        else:
+            confirmed = yes or review.checkpoint_upload(intake_result.doc_id, final_analysis)
     if confirmed:
         upload.run(
             intake_result, preprocess_result, embedding_vector, final_analysis,
@@ -215,8 +232,13 @@ def ingest(
         )
         console.print(Panel(
             f"Saved locally at [bold]{saved_path}[/bold]\n\n"
-            f"Upload later with: [bold]python -m runner upload-doc {intake_result.doc_id}[/bold]",
-            title="Saved locally",
+            + (
+                "Held for legal review. Review legal accuracy, then upload manually with: "
+                f"[bold]python -m runner upload-doc {intake_result.doc_id}[/bold]"
+                if hold_reason == "legal"
+                else f"Upload later with: [bold]python -m runner upload-doc {intake_result.doc_id}[/bold]"
+            ),
+            title="Saved locally — legal review hold" if hold_reason == "legal" else "Saved locally",
         ))
 
     # Stage 3c — Enrichment (default on, skipped with --no-enrich or when upload was not confirmed)
