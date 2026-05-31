@@ -98,7 +98,11 @@ LiteLLM proxy at `LITELM_BASE_URL` (Tailscale). All `--llm litelm*` flags route 
 | Q23 | RAM usage of `gemma-4-26B-A4B-it` on M4 24 GB — test before setting as default for heavy docs | Phase 0.5 |
 | ~~**Q-Lexicon**~~ | ~~Compact orientation lexicon selection mechanism~~ — **RESOLVED (TASK B):** `includeInAnalysisLexicon` boolean on `lexiconEntry` (default false). Analysis fetches `validated` + `draft && includeInAnalysisLexicon==true`. Researcher must toggle flag in Sanity Studio for trusted draft terms. | ~~TASK B~~ complete |
 | ~~**Q-EnrichDefault**~~ | ~~Enrichment default pending~~ — **RESOLVED (TASK D):** Enrichment runs by default after confirmed upload (`--enrich/--no-enrich`, default True). Use `--no-enrich` for quick tests. | ~~TASK D~~ complete |
-| **Q-BookSanity** | Should book sections create a new Sanity type (`sogiceBook`) or use `sogiceDocument` with `parentBook` reference field? New type is cleaner but changes the Sanity schema. Needs researcher sign-off. | `split-book` queue integration (after TASK G) |
+| **Q-BookSanity** | Should book sections create a new Sanity type (`sogiceBook`) or use `sogiceDocument` with `parentBook` reference field? New type is cleaner but changes the Sanity schema. Needs researcher sign-off. | `split-book` queue integration (after batch-safety fixes) |
+| **Q-BatchSafety** | Deep review found triage fail-open and triage/analysis gate disagreement risks. Implement G1/G2 before Batch Runner. | TASK G1/G2 |
+| **Q-ReviewedDocGuard** | Which Sanity field marks a `sogiceDocument` as researcher-reviewed/edited so `write_document` can refuse clobbering it? | TASK G3 |
+| **Q-ExternalSystems** | Evaluate WhisperX/whisper.cpp, marker/surya, GROBID, Label Studio/Argilla, fastText/lingua, DVC/git-annex, and graph tools as future capability candidates. | Roadmap, not immediate |
+| **Q-DataUses** | Preserve roadmap ideas: actor/funding graphs, lexicon genealogy, maps/timelines, framing matrices, semantic maps, claim ledgers, multilingual glossary. | Methodology/outputs |
 
 **Q22 resolved (April 2026):** `qwen3-embedding:8b` output dimension = **4096d**
 Use `vector(4096)` in Supabase. Drop and recreate the table if it was created with `vector(2560)`.
@@ -158,6 +162,11 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 - [ ] **End-to-end test**: one URL ingested + uploaded to Sanity + Supabase ← **next milestone**
 
 ### Phase 0.5 — Pilot Batch
+- [ ] **G1:** Triage fails closed; untriaged queue items are not overnight-safe
+- [ ] **G2:** Upload/batch gates cross-check triage and analysis testimony/legal flags
+- [ ] **G3:** Guard `write_document` against overwriting reviewed Sanity document records
+- [ ] **G4:** Add prompt hashes/git commit/runtime params/duration/derived-score flag/triage audit to provenance
+- [ ] **G5:** Suppress or ground enrichment `corpus_connections` until vector retrieval is wired
 - [ ] Pull and verify local models: `ollama pull qwen3.5:9b` + `gemma-4-26B-A4B-it` (check RAM)
 - [ ] Run 10–20 documents covering all 6 languages + all tiers
 - [ ] Calibrate confidence thresholds (baseline: high ≥0.85, medium 0.70–0.84, low <0.70)

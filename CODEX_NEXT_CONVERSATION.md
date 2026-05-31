@@ -169,7 +169,8 @@ Do not treat old chat summaries as authoritative. Read files and run tests.
 
 ## Current Task Direction
 
-`NEXT_SESSION.md` defines tasks A through F plus a new TASK G. A–E are complete.
+`NEXT_SESSION.md` defines tasks A–G plus review-derived safety tasks G1–G5.
+A–E are complete. The first external architecture review (TASK G) is captured.
 
 **✓ A -- Triage workflow routing flags** (commit `3ee358796`)
 `needs_book_splitting`, `needs_testimony_review`, `needs_media_review`,
@@ -195,20 +196,44 @@ by extension/URL (Docling / Trafilatura / direct read). Options: `--min-chars`,
 `--max-level`, `--preview-chars`, `--out`. Prints Rich panel + section table. No
 corpus writes, no analysis, no upload. 32 new tests (670 total).
 
-**G -- Deep architecture review / critic pass** ← NEXT (before TASK F)
-Ask a fresh high-intelligence model conversation to audit the full staged-intelligence
-system for workflow gaps, methodological risks, UI/UX friction, and audit/provenance
-gaps. Produces a prioritised findings report. See NEXT_SESSION.md §TASK G for scope
-and input file list. Do not start TASK F until this review is complete.
+**✓ G -- Deep architecture review / critic pass** (captured 2026-05-31)
+Claude 4.8 reviewed the full staged-intelligence system after TASK E. The review
+confirmed the architecture but found fail-open batch-safety and provenance gaps.
+It also answered the added review questions:
+- Q11: external apps/systems/repos worth evaluating for multimodal analysis
+- Q12: future data-use ideas such as network graphs, maps, lexicon genealogy,
+  semantic maps, and claim ledgers
 
-**F -- Batch Runner** (after TASK G; build carefully)
-Must read `overnight_batch_safe` before processing items unattended.
+**G1 -- Batch safety: triage must fail closed** ← NEXT
+Fix `triage.run()` / parse fallback so model failures never produce
+`overnight_batch_safe=True`. Source queue must distinguish untriaged items from
+triaged-and-safe items.
+
+**G2 -- Batch safety: cross-check triage and analysis gates**
+Upload/batch flow must block or require explicit researcher override when either
+triage or analysis flags testimony/legal sensitivity.
+
+**G3 -- Provenance guard: do not clobber reviewed Sanity documents**
+Add a reviewed-state guard to `write_document` before `reanalyze --upload` or
+`upload-doc` can overwrite researcher-edited `sogiceDocument` records.
+
+**G4 -- Provenance hardening**
+Add prompt hashes, git commit, runtime/sampling params, duration, derived-score
+flagging, and triage audit metadata.
+
+**G5 -- Ground or suppress corpus connections**
+Do not let enrichment `corpus_connections` read as evidence until vector retrieval
+is wired, or clearly label/suppress them.
+
+**F -- Batch Runner** (after G1/G2 at minimum; ideally after G1-G5)
+Must read `overnight_batch_safe`, triage status, and review flags before processing
+items unattended.
 
 Recommended order for a new session:
 1. Verify repo/test state (670 passed expected).
-2. Run TASK G — share the listed input files with a fresh model and request a structured audit report.
-3. Review findings with researcher; update NEXT_SESSION.md with any new tasks or decisions.
-4. Then start TASK F — Batch Runner.
+2. Implement G1 and G2 as focused safety slices with tests.
+3. Implement G3/G4/G5 or consciously defer parts with researcher sign-off.
+4. Only then start TASK F — Batch Runner.
 
 ---
 
@@ -224,8 +249,9 @@ Recommended order for a new session:
 - Enrichment default-on: `--enrich/--no-enrich`, default True ✓ (TASK D)
 - Book splitter: `book_splitter.py` module built (44 tests) ✓; `split-book --preview` CLI built ✓ (TASK E)
 - Triage workflow flags: built and wired ✓ (TASK A)
-- Deep architecture review: planned as TASK G — to run before Batch Runner (TASK F)
-- Batch Runner: unblocked for design; not yet built (TASK F, after TASK G)
+- Deep architecture review: captured as TASK G; findings converted to G1-G5
+- External systems/data-use questions: captured in NEXT_SESSION.md under TASK G
+- Batch Runner: not yet built; blocked on G1/G2 at minimum
 
 ---
 
@@ -257,9 +283,9 @@ Do not collapse these into one concept.
 
 Analysis orientation lexicon: **validated + researcher-trusted draft terms**. Draft
 terms are not low quality -- they await evidence citation, not validity judgement.
-The exact selection mechanism is TASK B (inspect Sanity fields, agree criteria with
-researcher, implement). Currently uses all draft+validated, which is the known gap.
-Enrichment context: **full draft + validated** (correct now and after TASK B).
+The selection mechanism is implemented: `includeInAnalysisLexicon` on `lexiconEntry`
+admits trusted drafts; validated terms are included by status. Enrichment context:
+**full draft + validated**.
 
 ### Registry Validation vs Evidence Confirmation
 
@@ -311,20 +337,16 @@ Add tests for flag persistence and routing logic.
 Run full test suite. Commit. Push.
 ```
 
-### TASK E: split-book --preview
+### TASK G1: Triage Fail-Closed Safety
 
 ```text
-Implement TASK E from NEXT_SESSION.md: the split-book CLI command.
+Implement TASK G1 from NEXT_SESSION.md: triage must fail closed before any batch runner work.
 
 Scope:
-- New runner split-book command in main.py
-- --preview flag: run Docling on the PDF, call split_by_headings(), print
-  section count, titles, char counts. No corpus or queue changes.
-- Without --preview: ask researcher to confirm, then add sections to source queue
-  with parent_book_id metadata.
-
-Use the existing book_splitter.py module. Do not change book_splitter.py.
-Add tests for --preview output format.
+- Inspect runner/pipeline/triage.py, runner/models/triage.py, runner/pipeline/source_queue.py, and existing triage/source queue tests.
+- On model/network/parse failure, triage must return/record overnight_batch_safe=False.
+- Source queue must distinguish untriaged items from triaged-and-safe items; untriaged must not be eligible for overnight batch.
+- Add focused tests for model failure, parse failure, legacy queue rows, and safe triaged rows.
 Run full test suite. Commit. Push.
 ```
 

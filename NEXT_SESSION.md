@@ -269,62 +269,140 @@ Full queue integration and Sanity `sogiceBook` schema remain deferred.
 
 ---
 
-### TASK G -- Deep architecture review / critic pass
+### ~~TASK G~~ -- External architecture review / critic pass ✓ CAPTURED
 
-**What it is:** A structured review of the whole staged-intelligence ingest
-system by a fresh high-intelligence model conversation (not the implementation
-thread). This is not a code task — it is a methodological audit that produces a
-prioritized list of gaps and improvements.
+Claude 4.8 completed the first deep architecture review after TASK E. The review
+confirmed that the staged architecture is coherent, but found batch-safety and
+provenance gaps that must be addressed before unattended overnight operation.
 
-**Purpose:** Before building overnight batch mode (TASK F) and exposing the
-system to unattended processing, audit what the researcher might regret skipping.
-The pipeline is now complex enough that silent gaps are a real risk.
+The review explicitly included the two added researcher questions:
+- **Q11:** Are there apps, systems, or repositories that would improve this
+  multimodal analysis?
+- **Q12:** What new/fresh uses of the collected data become possible (network
+  analysis, maps, lexicon genealogy, semantic maps, claim ledgers, etc.)?
 
-**Scope the reviewer should cover:**
-- Workflow gaps: are the stage boundaries correct? Is anything missing that the
-  researcher will need at Phase 0.5 / Phase 1?
-- Methodological risks: what could silently degrade archival quality? Missing
-  provenance fields? Lossy normalisations? Confidence miscalibration? Enrichment
-  proposals that bypass researcher intent?
-- UI/UX friction: what in the Streamlit workbench creates cognitive overhead or
-  risks researcher error under time pressure?
-- Audit / provenance gaps: what does `analysis_audit.json` / `enrichment_audit.json`
-  not capture that would be needed for a methodology chapter?
-- Prioritisation: which of these gaps block Phase 0.5 pilot vs. which can wait
-  until Phase 1?
+**Key conclusion:** Do not build TASK F yet. First close the fail-open paths and
+provenance gaps below. A Batch Runner with silent gaps is worse than no Batch Runner.
 
-**Input files to share with reviewer:**
-- `NEXT_SESSION.md` (this file)
-- `CODEX_NEXT_CONVERSATION.md`
-- `02_working_tools/Claude_Ingestion_Prompt.md`
-- `02_working_tools/ENRICHMENT_PROMPT_v1.0.md`
-- `runner/pipeline/audit.py`
-- `runner/pipeline/triage.py`
-- `runner/models/document.py`
-- `runner/models/enrichment.py`
-- `runner/models/triage.py`
-- `runner/pipeline/enrich.py`
+**External systems to evaluate later (not immediate implementation):**
+- WhisperX / whisper.cpp for timestamped multilingual transcription and diarization
+- marker / surya as OCR/layout fallbacks for structureless PDFs
+- GROBID for academic PDF references and citation extraction
+- Label Studio or Argilla for human adjudication/calibration workflows
+- fastText or lingua for deterministic language ID checks
+- DVC or git-annex for versioned corpus/audit reproducibility
+- Neo4j / Gephi / networkx for entity and funding network analysis
 
-**Output expected:** A structured report with prioritised findings grouped by
-severity. The researcher reviews, picks what to act on before TASK F, and
-updates this file with any new tasks or resolved decisions.
-
-**Recommendation: complete TASK G before starting TASK F.** A Batch Runner
-with silent gaps is worse than no Batch Runner.
+**Future data-use directions to preserve in the roadmap:**
+- Actor/funding network graph from entity `NetworkConnection` edges
+- Lexicon genealogy / euphemism-evolution graph from `TermRelationship`
+- Geographic spread map and timeline from `geographic_scope` + dates
+- Tactic co-occurrence / framing matrix
+- Semantic corpus map once embeddings and pgvector are verified
+- Claim/fact-check ledger from `statistical_claims`
+- Multilingual SOGICE glossary from variants/translations
 
 ---
 
-### TASK F -- Batch Runner (unblocked after TASK A)
+### TASK G1 -- Batch safety: triage must fail closed ← NEXT
 
-**Why deferred:** Without triage workflow flags (TASK A), the batch runner cannot safely distinguish which items need human oversight vs which can run unattended. Do not build a batch runner that silently ingests testimonies or legal documents without a consent/review gate.
+**Finding:** `triage.run()` currently returns a bare `TriageResult()` on model,
+network, or parse failure. Because `TriageResult.overnight_batch_safe` defaults
+to `True`, failures can become "safe for unattended batch" by accident.
+
+**Implement:**
+- Triage model/network/parse failure must set `overnight_batch_safe=False`.
+- Preserve enough error metadata to tell "triage failed" from "triage succeeded
+  and decided this is safe".
+- Source queue must distinguish "untriaged" from "triaged and safe". Untriaged
+  items must not be eligible for overnight batch.
+- Add focused tests for network failure, parse failure, legacy queue rows, and
+  source-queue filtering assumptions.
+
+---
+
+### TASK G2 -- Batch safety: cross-check triage and analysis gates
+
+**Finding:** Triage can flag `needs_testimony_review` / `needs_legal_review`, but
+the upload gate currently depends on analysis fields. If analysis misses a
+testimony/legal signal, a future `--yes` batch could upload material that triage
+had already marked as needing review.
+
+**Implement:**
+- Upload must block or require explicit researcher override if **either** triage
+  or analysis flags testimony/legal sensitivity.
+- Disagreement between triage and analysis should be visible to the researcher,
+  not silently resolved in favor of upload.
+- Batch/headless mode must not reach interactive testimony prompts.
+- Add tests for triage-only testimony flag, analysis-only testimony flag,
+  disagreement, and confirmed-safe path.
+
+---
+
+### TASK G3 -- Provenance guard: do not clobber reviewed Sanity documents
+
+**Finding:** `write_document` uses `createOrReplace` without checking whether a
+Sanity `sogiceDocument` has been manually reviewed or edited. Researcher edits
+could be overwritten by `reanalyze --upload` or `upload-doc`.
+
+**Implement after researcher decision on the reviewed marker field:**
+- Mirror the reviewed-state guard pattern used by `write_research_annotation`.
+- Refuse overwrite of reviewed/corrected `sogiceDocument` unless `--force` or an
+  explicit researcher override is passed.
+- Add tests for safe new write, blocked reviewed overwrite, and forced overwrite.
+
+---
+
+### TASK G4 -- Provenance hardening for methodology chapter
+
+**Finding:** Audit sidecars are operationally useful but not yet fully
+reproducible for methodology defense.
+
+**Implement in slices:**
+- Add SHA-256 hash of the resolved analysis/enrichment prompt text to audit files.
+- Add current git commit hash where available.
+- Add model sampling/runtime parameters and wall-clock duration.
+- Add `score_derived_from_status` so synthetic confidence scores are labelled.
+- Add a triage audit sidecar or equivalent queue metadata so failure/default
+  paths are visible.
+- Consider an opt-in raw-response retention mode (`--keep-raw`) after researcher
+  sign-off.
+
+---
+
+### TASK G5 -- Ground or suppress ungrounded corpus connections
+
+**Finding:** Enrichment currently asks for `corpus_connections` while vector
+similarity is deferred. Without actual related-doc context, these connections
+are hallucination-prone.
+
+**Implement one of:**
+- Suppress `corpus_connections` extraction until Supabase vector retrieval is
+  wired into enrichment context, or
+- Label them explicitly as ungrounded suggestions and keep them out of evidence
+  workflows.
+
+Also finish embedding verification / `vector(4096)` migration before relying on
+semantic maps, related-document search, or corpus connection claims.
+
+---
+
+### TASK F -- Batch Runner (after G1/G2 at minimum; ideally after G1-G5)
+
+**Why deferred:** The deep review found fail-open paths around triage and
+testimony/legal gates. Do not build a batch runner that silently ingests
+testimonies, legal documents, or untriaged queue items.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
 
 **Preconditions before building:**
-- TASK A complete (triage flags exist and are persisted in source queue)
-- `overnight_batch_safe` field on `QueueItem` is queryable
-- Batch runner filters out any item with `overnight_batch_safe=False` and surfaces them to the researcher before starting
+- TASK G1 complete: triage failures and untriaged items are not overnight-safe
+- TASK G2 complete: triage/analysis testimony/legal flags are cross-checked
+- Batch runner filters out any item with `overnight_batch_safe=False`, triage
+  failure, missing triage, testimony review, legal review, media review, or book
+  splitting requirement unless the researcher explicitly chooses that queue
+- Headless batch mode must never block on interactive testimony consent prompts
 
 ---
 
@@ -376,7 +454,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 638 passed (or higher after new tests)
+# Must see: 670 passed (or higher after new tests)
 ```
 
 ---
@@ -427,4 +505,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G (deep architecture review) is recommended before TASK F (Batch Runner).*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. NEXT: TASK G1/G2 batch-safety fixes before TASK F.*
