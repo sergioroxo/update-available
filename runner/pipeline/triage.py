@@ -130,6 +130,7 @@ def source_context_label(
     *,
     extraction_note: str = "",
     snippet: str = "",
+    researcher_note: str = "",
 ) -> str:
     """Return source metadata for triage context.
 
@@ -145,6 +146,12 @@ def source_context_label(
     host = parsed.netloc.lower().removeprefix("www.")
     path = parsed.path.lower()
     hints: list[str] = []
+    researcher_note = (researcher_note or "").strip()
+    if researcher_note:
+        hints.append(
+            f"researcher note: {researcher_note}; use this researcher-provided "
+            "source rationale when extraction text is blocked or boilerplate"
+        )
 
     if host in _VIDEO_HOST_HINTS or any(host.endswith(f".{h}") for h in _VIDEO_HOST_HINTS):
         hints.append(
@@ -154,7 +161,9 @@ def source_context_label(
     if host in _SOCIAL_HOST_HINTS or any(host.endswith(f".{h}") for h in _SOCIAL_HOST_HINTS):
         hints.append(
             "social media profile/post URL; extraction may show login or technical shell; "
-            "do not classify the shell page as the source content"
+            "do not classify the shell page as the source content; for profile/account "
+            "URLs, use suggested_process_route=standard and needs_media_review=false "
+            "unless the URL or note specifically indicates video, audio, or transcript work"
         )
     if (
         host in _ACADEMIC_HOST_HINTS

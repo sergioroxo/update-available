@@ -1304,7 +1304,10 @@ def queue_add(
                     snippet,
                     config,
                     source_label=triage_mod.source_context_label(
-                        item.url, extraction_note=note, snippet=snippet,
+                        item.url,
+                        extraction_note=note,
+                        snippet=snippet,
+                        researcher_note=item.notes,
                     ),
                 )
                 apply_triage_result(db, item.id, result, model_name=model_name)
@@ -1453,7 +1456,10 @@ def queue_triage(
                 snippet,
                 config,
                 source_label=triage_mod.source_context_label(
-                    item.url, extraction_note=note, snippet=snippet,
+                    item.url,
+                    extraction_note=note,
+                    snippet=snippet,
+                    researcher_note=item.notes,
                 ),
                 _audit=triage_audit,
             )

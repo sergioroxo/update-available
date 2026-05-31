@@ -318,6 +318,10 @@ def detect_url_source_type(url: str) -> str:
         "soundcloud.com/", "open.spotify.com/", "podcasts.apple.com/",
     )):
         return "audio"
+    if any(d in lower for d in (
+        "x.com/", "twitter.com/", "instagram.com/", "tiktok.com/",
+    )):
+        return "social"
     # Generic web page
     if url.startswith(("http://", "https://")):
         return "webpage"
@@ -448,7 +452,13 @@ def priority_from_triage(triage_result) -> str:
 
 def source_type_from_triage(triage_result) -> str:
     doc_type = getattr(triage_result, "doc_type_hint", "unknown")
+    route = getattr(triage_result, "suggested_process_route", "")
+    reason = str(getattr(triage_result, "routing_reason", "")).lower()
     if doc_type == "media":
+        if "social media" in reason or "social platform" in reason:
+            return "social"
+        if route == "media-ingest":
+            return "video"
         return "video"
     return "webpage"
 

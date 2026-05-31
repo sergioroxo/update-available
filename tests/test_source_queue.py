@@ -466,6 +466,19 @@ class TestApplyTriageResult:
         apply_triage_result(db, item.id, triage)
         assert get_item(db, item.id).priority == "low"
 
+    def test_social_media_triage_keeps_social_source_type(self, db):
+        from types import SimpleNamespace
+        item = add_item(db, "https://x.com/seja_bondoso")
+        triage = SimpleNamespace(
+            doc_type_hint="media",
+            recommended_llm="litelm",
+            routing_reason="Social media profile with researcher note.",
+            complexity="simple",
+            suggested_process_route="standard",
+        )
+        apply_triage_result(db, item.id, triage)
+        assert get_item(db, item.id).source_type == "social"
+
 
 # ---------------------------------------------------------------------------
 # priority_from_triage
@@ -611,6 +624,9 @@ class TestDetectUrlSourceType:
 
     def test_soundcloud_is_audio(self):
         assert detect_url_source_type("https://soundcloud.com/artist/track") == "audio"
+
+    def test_x_profile_is_social(self):
+        assert detect_url_source_type("https://x.com/seja_bondoso") == "social"
 
     def test_regular_webpage(self):
         assert detect_url_source_type("https://www.christianconcern.com/news/article") == "webpage"

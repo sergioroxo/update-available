@@ -489,10 +489,15 @@ def test_source_context_label_marks_social_shell():
     label = source_context_label(
         "https://x.com/seja_bondoso",
         snippet="Something went wrong. Try reloading.",
+        researcher_note="Therapist that defends conversion",
     )
 
+    assert "researcher note: Therapist that defends conversion" in label
+    assert "source rationale" in label
     assert "social media profile/post URL" in label
     assert "technical shell" in label
+    assert "suggested_process_route=standard" in label
+    assert "needs_media_review=false" in label
 
 
 def test_source_context_label_marks_youtube_as_video():
