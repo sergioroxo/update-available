@@ -174,7 +174,7 @@ tests/                          # 740 tests -- run before every edit
 | Default analysis | `core-qwen` | `qwen3.6:35b-a3b` (MoE, ~3B active) | `litelm` |
 | Heavy / long docs | `core-gemma` | `gemma4:31b` | `litelm-heavy` |
 | Second opinion | `review-qwen` | `qwen3.6:27b` (dense) | `litelm-reasoning` |
-| Enrichment | `core-gemma` | `gemma4:31b` | (auto, set in .env) |
+| Enrichment | `lexicon-llm` | `qwen3.6:35b-a3b` | (auto, set in env/config) |
 | Triage | `triage` | `gemma4:e4b` | (auto with --triage) |
 | Embedding | `research-embedding` | `qwen3-embedding:8b` | (auto with litelm*) |
 
@@ -188,7 +188,7 @@ when triage flags `complexity=complex` or `doc_type_hint=legal`.
 
 ## Settled decisions -- do not re-open
 
-1. **Enrichment model = core-gemma.** Cross-architecture diversity: analysis on Qwen, enrichment on Gemma4.
+1. **Enrichment model = `lexicon-llm`.** Current code/config defaults Stage 3c to `LITELM_ENRICHMENT_MODEL=lexicon-llm` (Qwen). `core-gemma` remains the alt/second-opinion enrichment route via `LITELM_ENRICHMENT_MODEL_ALT`.
 2. **Books require chapter splitting, not full-document ingestion.** `book_splitter.py` module is built. The `split-book --preview` CLI command is built (TASK E complete). Full queue integration and Sanity `sogiceBook` schema remain deferred (see Q-BookSanity).
 3. **Batch size = 10-15 documents per review cycle.**
 4. **Default model = `--llm litelm` (core-qwen, 35B MoE).** Use `litelm-reasoning` only for triage-flagged complex/legal docs.
