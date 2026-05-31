@@ -253,13 +253,39 @@ def checkpoint_testimony_consent(
     doc_id: str,
     result: AnalysisResult,
     config: Config,
+    *,
+    triage_result: "Optional[TriageResult]" = None,
+    yes: bool = False,
 ) -> str:
-    """Ethics checkpoint for testimony-flagged documents.
+    """Ethics checkpoint for documents requiring testimony consent.
+
+    Gating (G2-b) is decided by ``upload.requires_consent_gate`` so it fires on
+    analysis.testimony_flag, consent-gated *types* (even when testimony_flag is
+    False), OR triage's needs_testimony_review. ``triage_result`` is optional.
+
+    Headless (``yes=True``): never prompts. A gated document is held by recording
+    consent as "pending" (save-locally, no upload) so an unattended run cannot
+    silently publish sensitive material.
+
+    Attended (``yes=False``): the existing c/p/u/w/r prompt flow is preserved.
 
     Returns one of: unclear, pending, confirmed, refused, withdrawn, not_required.
     """
-    if not result.testimony_flag:
+    # Function-local import: upload does not import review, but a local import
+    # keeps the dependency direction unambiguous at module load.
+    from .upload import requires_consent_gate
+
+    if not requires_consent_gate(result, triage_result):
         return "not_required"
+
+    if yes:
+        # Headless: do not prompt. Hold for review as consent-pending.
+        intake_pipeline.update_intake_consent(doc_id, "pending", config)
+        console.print(
+            "[yellow]Consent gate applies (headless mode): holding as "
+            "[bold]pending[/bold] — saved locally, not uploaded.[/yellow]"
+        )
+        return "pending"
 
     console.print(Panel(
         "[bold yellow]TESTIMONY FLAG[/bold yellow]\n\n"

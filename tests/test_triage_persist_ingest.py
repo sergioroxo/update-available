@@ -169,7 +169,7 @@ def stub_pipeline(monkeypatch, tmp_path):
     monkeypatch.setattr(
         main_mod.review,
         "checkpoint_testimony_consent",
-        lambda doc_id, result, config: "not_required",
+        lambda doc_id, result, config, *, triage_result=None, yes=False: "not_required",
     )
     monkeypatch.setattr(main_mod.review, "checkpoint_upload", lambda doc_id, result: True)
 
