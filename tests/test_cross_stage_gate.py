@@ -213,7 +213,7 @@ def test_upload_run_loads_and_passes_persisted_triage(tmp_path, monkeypatch):
     )
 
     captured = _capture_enforce(monkeypatch)
-    monkeypatch.setattr(upload_mod.sanity_client, "write_document", lambda pkg, config: "sanity-id")
+    monkeypatch.setattr(upload_mod.sanity_client, "write_document", lambda pkg, config, **kwargs: "sanity-id")
     monkeypatch.setattr(upload_mod.supabase_client, "upsert_embedding", lambda *a, **k: None)
     monkeypatch.setattr(upload_mod, "_repair_analysis_date_from_source", lambda a, p: False)
 
@@ -254,7 +254,7 @@ def test_upload_saved_loads_and_passes_persisted_triage(tmp_path, monkeypatch):
     )
 
     captured = _capture_enforce(monkeypatch)
-    monkeypatch.setattr(upload_mod.sanity_client, "write_document", lambda pkg, config: "sanity-id")
+    monkeypatch.setattr(upload_mod.sanity_client, "write_document", lambda pkg, config, **kwargs: "sanity-id")
     monkeypatch.setattr(upload_mod.supabase_client, "upsert_embedding", lambda *a, **k: None)
     monkeypatch.setattr(upload_mod, "_repair_analysis_date_from_source", lambda a, p: False)
 

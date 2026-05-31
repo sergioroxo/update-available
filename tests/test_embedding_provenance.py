@@ -80,7 +80,7 @@ def _run_upload_saved_capture_model(tmp_path: Path, doc_id: str, config: _Config
     def _fake_upsert(doc_id, embedding, analysis, config, tier, language, embedding_model):
         captured["embedding_model"] = embedding_model
 
-    def _fake_write_document(pkg, config):
+    def _fake_write_document(pkg, config, **kwargs):
         return "sanity-id-fake"
 
     def _fake_enforce(intake, analysis, triage_result=None):

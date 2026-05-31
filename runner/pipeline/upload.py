@@ -148,6 +148,7 @@ def run(
     llm_used: str,
     *,
     _audit: dict | None = None,
+    force_sanity_overwrite: bool = False,
 ) -> None:
     # G2-b: cross-check the persisted triage flags against analysis at the hard
     # testimony backstop. Tolerant of a missing file (returns None).
@@ -164,7 +165,9 @@ def run(
         local_dir=config.corpus_dir / intake.doc_id,
     )
     save_locally(intake, preprocess, embedding, analysis, config, llm_used=llm_used, _audit=_audit)
-    sanity_id = sanity_client.write_document(pkg, config)
+    sanity_id = sanity_client.write_document(
+        pkg, config, force_reviewed=force_sanity_overwrite
+    )
     if embedding:
         supabase_client.upsert_embedding(
             intake.doc_id,
@@ -645,7 +648,12 @@ def _next_action(status: dict) -> str:
     return "Record looks complete locally. Process any enrichment proposals when ready."
 
 
-def upload_saved(doc_id: str, config: Config) -> None:
+def upload_saved(
+    doc_id: str,
+    config: Config,
+    *,
+    force_sanity_overwrite: bool = False,
+) -> None:
     """Load a locally saved document and upload it to Sanity + Supabase."""
     doc_dir = config.corpus_dir / doc_id
     if not doc_dir.exists():
@@ -756,7 +764,9 @@ def upload_saved(doc_id: str, config: Config) -> None:
     _triage = load_triage_result(doc_id, config)
     _enforce_testimony_upload_gate(intake, analysis, _triage)
 
-    sanity_id = sanity_client.write_document(pkg, config)
+    sanity_id = sanity_client.write_document(
+        pkg, config, force_reviewed=force_sanity_overwrite
+    )
     if embedding:
         supabase_client.upsert_embedding(
             doc_id,

@@ -273,6 +273,12 @@ def reanalyze_doc(
     llm: str = typer.Option("litelm", help="LLM to use: litelm | litelm-heavy | claude | local"),
     upload_after: bool = typer.Option(False, "--upload", help="Upload to Sanity + Supabase after saving"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Auto-accept result without review"),
+    force_reviewed: bool = typer.Option(
+        False,
+        "--force-reviewed",
+        "--force",
+        help="Allow replacing a reviewed/corrected Sanity document when used with --upload",
+    ),
 ):
     """Re-run Stage 3b analysis on an already-ingested document.
 
@@ -341,7 +347,11 @@ def reanalyze_doc(
     console.print(f"[green]analysis.json updated for {doc_id} (prompt_version stamped)[/green]")
 
     if upload_after:
-        upload.upload_saved(doc_id, config)
+        upload.upload_saved(
+            doc_id,
+            config,
+            force_sanity_overwrite=force_reviewed,
+        )
 
 
 @app.command(name="second-opinion")
@@ -1111,10 +1121,20 @@ def status(
 @app.command()
 def upload_doc(
     doc_id: str = typer.Argument(..., help="doc_id of a locally saved document"),
+    force_reviewed: bool = typer.Option(
+        False,
+        "--force-reviewed",
+        "--force",
+        help="Allow replacing a reviewed/corrected Sanity document",
+    ),
 ):
     """Upload a locally saved document to Sanity and Supabase."""
     config = load_config()
-    upload.upload_saved(doc_id, config)
+    upload.upload_saved(
+        doc_id,
+        config,
+        force_sanity_overwrite=force_reviewed,
+    )
 
 
 @app.command(name="push-enrichment")

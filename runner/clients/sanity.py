@@ -19,9 +19,18 @@ from ..pipeline.analyze import PROMPT_VERSION
 from ..pipeline.metadata_quality import publication_metadata
 
 
-def write_document(pkg: DocumentPackage, config: Config) -> str:
+_REVIEWED_DOCUMENT_WORKFLOW_STATUSES = {"verified", "published"}
+
+
+def write_document(
+    pkg: DocumentPackage,
+    config: Config,
+    force_reviewed: bool = False,
+) -> str:
     """Write a sogiceDocument record to Sanity. Returns the Sanity document _id."""
     doc = _build_sanity_document(pkg)
+    if not force_reviewed:
+        _guard_reviewed_document_overwrite(doc["_id"], config)
     result = _mutate([{"createOrReplace": doc}], config)
     try:
         return result["results"][0]["id"]
@@ -29,6 +38,54 @@ def write_document(pkg: DocumentPackage, config: Config) -> str:
         raise RuntimeError(
             f"Unexpected Sanity response (check token permissions and schema):\n{result}"
         )
+
+
+def _guard_reviewed_document_overwrite(sanity_id: str, config: Config) -> None:
+    existing = _fetch_document_by_id(
+        sanity_id,
+        config,
+        (
+            "{ workflowStatus, "
+            "validation{status, validationTrigger, resolution}, "
+            "aiMetadata{resolution, humanReview{reviewedBy, reviewedAt, changesMade}} }"
+        ),
+    )
+    reasons = _reviewed_document_reasons(existing)
+    if reasons:
+        raise RuntimeError(
+            f"Sanity document {sanity_id} is reviewed/corrected "
+            f"({', '.join(reasons)}); pass --force-reviewed to replace it"
+        )
+
+
+def _reviewed_document_reasons(existing: dict | None) -> list[str]:
+    if not existing:
+        return []
+
+    reasons: list[str] = []
+    workflow_status = existing.get("workflowStatus")
+    if workflow_status in _REVIEWED_DOCUMENT_WORKFLOW_STATUSES:
+        reasons.append(f"workflowStatus={workflow_status}")
+
+    validation = existing.get("validation") or {}
+    if validation.get("resolution") == "human_override":
+        reasons.append("validation.resolution=human_override")
+    if (
+        validation.get("status") == "validated"
+        and validation.get("validationTrigger") == "manual_researcher"
+    ):
+        reasons.append("validation.status=validated by manual_researcher")
+
+    ai_metadata = existing.get("aiMetadata") or {}
+    if ai_metadata.get("resolution") == "human_override":
+        reasons.append("aiMetadata.resolution=human_override")
+    human_review = ai_metadata.get("humanReview") or {}
+    if human_review.get("reviewedAt") or human_review.get("reviewedBy"):
+        reasons.append("aiMetadata.humanReview reviewed")
+    if human_review.get("changesMade") is True:
+        reasons.append("aiMetadata.humanReview changesMade")
+
+    return reasons
 
 
 def write_research_annotation(
