@@ -1908,7 +1908,14 @@ def batch_run_cmd(
     from datetime import datetime, timezone
     from rich.table import Table
     from .pipeline.source_queue import open_db, queue_db_path, mark_ingested
-    from .pipeline.batch import batch_preflight, build_batch_ledger, plan_batch, write_batch_ledger
+    from .pipeline.batch import (
+        _next_action,
+        batch_preflight,
+        build_batch_ledger,
+        plan_batch,
+        write_batch_ledger,
+        write_batch_report,
+    )
 
     config = load_config(require_services=False)
     db = open_db(queue_db_path(config.corpus_dir))
@@ -1933,8 +1940,13 @@ def batch_run_cmd(
         ledger.completed = False
         ledger.stop_reason = "no eligible items"
         path = write_batch_ledger(ledger, ledger_dir)
+        report_path = write_batch_report(ledger, ledger_dir)
         console.print("[yellow]No eligible items to ingest.[/yellow]")
+        _act = _next_action(ledger)
+        if _act:
+            console.print(f"[bold]Next:[/bold] {_act}")
         console.print(f"[dim]Ledger written → {path}[/dim]")
+        console.print(f"[dim]Report → {report_path}[/dim]")
         return
 
     if not execute:
@@ -1943,8 +1955,13 @@ def batch_run_cmd(
         ledger.completed = False
         ledger.stop_reason = "execute flag not provided"
         path = write_batch_ledger(ledger, ledger_dir)
+        report_path = write_batch_report(ledger, ledger_dir)
         console.print("[yellow]Rehearsal only. Re-run with --execute to ingest.[/yellow]")
+        _act = _next_action(ledger)
+        if _act:
+            console.print(f"[bold]Next:[/bold] {_act}")
         console.print(f"[dim]Ledger written → {path}[/dim]")
+        console.print(f"[dim]Report → {report_path}[/dim]")
         return
 
     # ── Pre-flight checks (execute mode only) ────────────────────────────
@@ -1959,6 +1976,7 @@ def batch_run_cmd(
             ledger.completed = False
             ledger.stop_reason = f"preflight_failed:{failed[0].check}"
             path = write_batch_ledger(ledger, ledger_dir)
+            report_path = write_batch_report(ledger, ledger_dir)
             console.print(Panel(
                 "\n".join(
                     f"{r.check}: {r.message}\n  {r.detail}"
@@ -1967,7 +1985,11 @@ def batch_run_cmd(
                 ),
                 title="[red]Pre-flight failed — batch not started[/red]",
             ))
+            _act = _next_action(ledger)
+            if _act:
+                console.print(f"[bold]Next:[/bold] {_act}")
             console.print(f"[dim]Ledger written → {path}[/dim]")
+            console.print(f"[dim]Report → {report_path}[/dim]")
             raise typer.Exit(1)
 
     by_id = {item.item_id: item for item in manifest.included}
@@ -2005,15 +2027,21 @@ def batch_run_cmd(
             ledger.completed = False
             ledger.stop_reason = f"failed:{ledger_item.item_id}"
             path = write_batch_ledger(ledger, ledger_dir)
+            report_path = write_batch_report(ledger, ledger_dir)
             console.print(Panel(
                 f"{manifest_item.url}\n\n{exc}\n\nLedger: {path}",
                 title="[red]Batch stopped on first failure[/red]",
             ))
+            _act = _next_action(ledger)
+            if _act:
+                console.print(f"[bold]Next:[/bold] {_act}")
+            console.print(f"[dim]Report → {report_path}[/dim]")
             raise typer.Exit(1)
         ledger_item.finished_at = datetime.now(timezone.utc).isoformat()
 
     ledger.completed = True
     path = write_batch_ledger(ledger, ledger_dir)
+    report_path = write_batch_report(ledger, ledger_dir)
 
     t = Table(title="Batch complete", show_lines=False)
     t.add_column("ID", style="dim", no_wrap=True)
@@ -2022,7 +2050,11 @@ def batch_run_cmd(
     for item in ledger.items:
         t.add_row(item.item_id[:12], item.status, item.doc_id)
     console.print(t)
+    _act = _next_action(ledger)
+    if _act:
+        console.print(f"[bold]Next:[/bold] {_act}")
     console.print(f"[dim]Ledger written → {path}[/dim]")
+    console.print(f"[dim]Report → {report_path}[/dim]")
 
 
 @app.command(name="export")

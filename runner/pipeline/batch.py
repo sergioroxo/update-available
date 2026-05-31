@@ -309,6 +309,167 @@ def write_batch_ledger(ledger: BatchLedger, out_dir: Path) -> Path:
     return path
 
 
+# ── Batch run report ──────────────────────────────────────────────────────────
+
+# Maps preflight check names to researcher-facing next-action hints.
+_PREFLIGHT_NEXT_ACTIONS: dict[str, str] = {
+    "sanity_credentials": (
+        "Add SANITY_PROJECT_ID + SANITY_DATASET + SANITY_WRITE_TOKEN "
+        "to runner/.env and re-run."
+    ),
+    "supabase_credentials": (
+        "Add SUPABASE_URL + SUPABASE_SERVICE_KEY to runner/.env and re-run."
+    ),
+    "litelm_endpoint": (
+        "Check Mac Studio / LiteLLM: is Tailscale connected? "
+        "Run `runner doctor` for diagnostics."
+    ),
+    "ledger_dir_writable": (
+        "Ledger directory not writable — use `--out-dir` to set a writable path."
+    ),
+}
+
+
+def _next_action(ledger: BatchLedger) -> str:
+    """Return a one-line next-action hint derived from the ledger state.
+
+    Returns ``""`` when no specific guidance applies (e.g. an unrecognised
+    stop_reason on an incomplete ledger).
+    """
+    sr = ledger.stop_reason
+    if sr == "no eligible items":
+        return (
+            "Add sources to the queue, run `runner queue-triage` to triage them, "
+            "then re-run batch-run."
+        )
+    if sr == "execute flag not provided":
+        return "Re-run with `--execute` to start live ingestion."
+    if sr.startswith("preflight_failed:"):
+        check = sr[len("preflight_failed:"):]
+        return _PREFLIGHT_NEXT_ACTIONS.get(
+            check, "Fix the pre-flight failure above and re-run."
+        )
+    if sr.startswith("failed:"):
+        return "Review the failed item, fix the issue, then re-run batch-run."
+    if ledger.completed:
+        return (
+            "Review ingested documents. "
+            "Push approved enrichments with `runner push-enrichment <doc_id>`."
+        )
+    return ""
+
+
+def format_batch_report(ledger: BatchLedger, *, ledger_path: Path) -> str:
+    """Return a human-readable Markdown report from a BatchLedger.
+
+    The output is valid Markdown and also readable as plain text.
+    Suitable for writing to a ``.md`` file or printing to the terminal.
+    """
+    m = ledger.manifest
+    mode = "Live execution" if ledger.execute else "Rehearsal (--execute not provided)"
+
+    sr = ledger.stop_reason
+    if ledger.completed:
+        result = "✓ Complete"
+    elif sr == "no eligible items":
+        result = "Skipped — no eligible items in queue"
+    elif sr == "execute flag not provided":
+        result = "Planned only"
+    elif sr.startswith("preflight_failed:"):
+        check = sr[len("preflight_failed:"):]
+        result = f"✗ Pre-flight failed: {check}"
+    elif sr.startswith("failed:"):
+        result = "✗ Stopped on failure"
+    elif sr:
+        result = f"✗ Stopped — {sr}"
+    else:
+        result = "In progress"
+
+    total_candidates = m.get("total_candidates", 0)
+    total_included   = m.get("total_included",   0)
+    total_excluded   = m.get("total_excluded",   0)
+    notes: list[str] = m.get("notes", [])
+
+    # Item status counts
+    status_counts: dict[str, int] = {}
+    for item in ledger.items:
+        status_counts[item.status] = status_counts.get(item.status, 0) + 1
+    status_line = ", ".join(
+        f"{v} {k}" for k, v in sorted(status_counts.items())
+    ) or "none"
+
+    failed_items = [i for i in ledger.items if i.status == "failed"]
+    next_act = _next_action(ledger)
+
+    parts: list[str] = [
+        f"# Batch Run Report: {ledger.batch_id}",
+        f"",
+        f"Mode:      {mode}",
+        f"Generated: {ledger.generated_at}",
+        f"Result:    {result}",
+        f"Stop reason: {ledger.stop_reason or 'none'}",
+        f"",
+        f"## Manifest",
+        f"",
+        f"- Candidates: {total_candidates} total "
+        f"({total_included} eligible, {total_excluded} excluded)",
+    ]
+
+    if notes:
+        parts.append("")
+        parts.append("Queue notes:")
+        for note in notes:
+            parts.append(f"  - {note}")
+
+    parts.extend([
+        f"",
+        f"## Items",
+        f"",
+        f"- Status: {status_line}",
+    ])
+
+    if failed_items:
+        fi = failed_items[0]
+        parts.extend([
+            f"",
+            f"## Failure Detail",
+            f"",
+            f"- URL:   {fi.url}",
+            f"- Error: {fi.error}",
+        ])
+
+    if next_act:
+        parts.extend([
+            f"",
+            f"## Next Action",
+            f"",
+            f"{next_act}",
+        ])
+
+    parts.extend([
+        f"",
+        f"---",
+        f"",
+        f"Ledger: `{ledger_path}`",
+    ])
+
+    return "\n".join(parts) + "\n"
+
+
+def write_batch_report(ledger: BatchLedger, ledger_dir: Path) -> Path:
+    """Write a Markdown report next to the batch ledger and return its path.
+
+    The report file is named ``{batch_id}_report.md`` and placed in
+    ``ledger_dir``.  The directory is created if it does not exist.
+    """
+    ledger_dir.mkdir(parents=True, exist_ok=True)
+    ledger_path = ledger_dir / f"{ledger.batch_id}_ledger.json"
+    report_path = ledger_dir / f"{ledger.batch_id}_report.md"
+    content = format_batch_report(ledger, ledger_path=ledger_path)
+    report_path.write_text(content, encoding="utf-8")
+    return report_path
+
+
 def plan_batch(
     db: sqlite3.Connection,
     *,
