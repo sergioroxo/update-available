@@ -20,13 +20,13 @@ These come before large batch processing or public outputs.
 | G1 | Triage fails closed | Prevent untriaged/failed items from reading as overnight-safe | none | code + tests | Done (`9a58cc807`) |
 | G2 | Cross-stage testimony/legal holds | Prevent headless upload/enrichment of sensitive docs | G1 | code + tests | Done through G2-b-2b (`1e50d7558`) |
 | G3 | Reviewed Sanity doc clobber guard | Prevent overwriting researcher-edited records | G1/G2 | code + tests | Done (`3bdfe91ae`) |
-| G4 | Provenance hardening | Make outputs reproducible and methodologically defensible | G1-G3 | audit metadata + tests | Done (local changes; 748 tests) |
-| G5 | Ground/suppress corpus connections | Prevent ungrounded related-document claims | G4 preferred | enrichment/retrieval change + tests | Next |
+| G4 | Provenance hardening | Make outputs reproducible and methodologically defensible | G1-G3 | audit metadata + tests | Done (`5482bcc17`) |
+| G5 | Ground/suppress corpus connections | Prevent ungrounded related-document claims | G4 preferred | enrichment/retrieval change + tests | Done (suppression route; retrieval deferred) |
 
 G4 checklist:
 - [x] Analysis resolved/template prompt SHA-256 fields in `analysis_audit.json`
 - [x] Enrichment resolved/template prompt SHA-256 fields in `enrichment_audit.json`
-- [x] Audit sidecar `schema_version` bumped to `2`
+- [x] Audit sidecar `schema_version` bumped to `2` for G4 (`3` after G5 enrichment-audit fields)
 - [x] Current git commit hash in audit sidecars
 - [x] Model/runtime/sampling params in audit sidecars
 - [x] Wall-clock duration for analysis/enrichment
@@ -35,10 +35,10 @@ G4 checklist:
 - [x] Explicit decision on opt-in raw response retention: default off; not implemented without researcher sign-off
 
 G5 checklist:
-- [ ] Suppress `corpus_connections` until retrieval is wired, or mark them explicitly ungrounded
-- [ ] Verify Supabase `vector(4096)` storage/query path
-- [ ] Add retrieval context before allowing evidence-like corpus links
-- [ ] Keep ungrounded connections out of public/export evidence workflows
+- [x] Suppress `corpus_connections` until retrieval is wired, or mark them explicitly ungrounded
+- [ ] Verify Supabase `vector(4096)` storage/query path (retrieval enablement; deferred)
+- [ ] Add retrieval context before allowing evidence-like corpus links (retrieval enablement; deferred)
+- [x] Keep ungrounded connections out of public/export evidence workflows
 
 ---
 
@@ -90,8 +90,8 @@ Start with export-only outputs. Public interfaces come later.
 | Practice/harm catalogue | High | `PracticeDescription.harm_stance` | Reviewable table/export | Pending |
 | Claim/fact-check ledger | Medium | `StatisticalClaim` + verification lifecycle | Claims CSV with status | Pending |
 | Geographic timeline map | Medium | ISO geography + dates | Datawrapper/Leaflet-ready export | Pending |
-| Semantic corpus map | Low for now | Verified embeddings + retrieval | UMAP/HDBSCAN/BERTopic experiment | Blocked by G5 |
-| Corpus connection graph | Blocked | Retrieval-grounded `CorpusConnection` | Evidence-safe graph export | Blocked by G5 |
+| Semantic corpus map | Low for now | Verified embeddings + retrieval | UMAP/HDBSCAN/BERTopic experiment | Blocked by retrieval verification |
+| Corpus connection graph | Blocked | Retrieval-grounded `CorpusConnection` | Evidence-safe graph export | Blocked by retrieval verification |
 
 ---
 
@@ -111,7 +111,7 @@ Evaluate only when a concrete workflow is blocked without the tool.
 | Datawrapper / Leaflet | Publishable maps/timelines | Near-future | Candidate |
 | Label Studio / Argilla | Calibration/adjudication UI if review volume grows | Defer | Candidate |
 | Neo4j | Graph database if flat exports become insufficient | Defer | Candidate |
-| BERTopic / UMAP / HDBSCAN | Semantic map once embeddings are verified | Defer until G5 | Candidate |
+| BERTopic / UMAP / HDBSCAN | Semantic map once embeddings are verified | Defer until retrieval is wired | Candidate |
 
 ---
 
@@ -147,11 +147,11 @@ These stay deferred until the spine is stronger:
 
 ## 8. Recommended Sequence
 
-1. **G5:** ground or suppress corpus connections; verify `vector(4096)` and retrieval.
-2. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle.
-3. **TASK F:** conservative batch runner with dry-run manifest and batch ledger.
-4. **Pilot calibration:** 10-20 documents across languages/types/stakes.
-5. **Export-only outputs:** network graph, glossary, claims ledger, framing matrix.
-6. **Book schema:** only when a real book needs ingestion and Q-BookSanity is decided.
+1. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle.
+2. **TASK F:** conservative batch runner with dry-run manifest and batch ledger.
+3. **Pilot calibration:** 10-20 documents across languages/types/stakes.
+4. **Export-only outputs:** network graph, glossary, claims ledger, framing matrix.
+5. **Book schema:** only when a real book needs ingestion and Q-BookSanity is decided.
+6. **Retrieval enablement:** verify `vector(4096)`, wire related-doc context, then re-enable grounded `CorpusConnection`.
 7. **Semantic map:** after retrieval and embedding verification.
 8. **Public archive:** validated subset only, with provenance and removal protocol.

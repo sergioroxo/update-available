@@ -150,6 +150,7 @@ def run(
     config: Config,
     llm: str = "litelm",
     model: str | None = None,
+    retrieval_grounded: bool = False,
     *,
     _audit: dict | None = None,
 ) -> EnrichmentResult:
@@ -163,8 +164,12 @@ def run(
         _audit["chunk_count"] = None
         _audit["chunks"] = None
         _audit["git_commit"] = current_git_commit()
+        _audit["corpus_connections_suppressed"] = not retrieval_grounded
+        _audit["corpus_connections_suppression_reason"] = (
+            "retrieval_not_wired" if not retrieval_grounded else ""
+        )
 
-    system_prompt = _build_system_prompt(config, analysis)
+    system_prompt = _build_system_prompt_for_run(config, analysis, retrieval_grounded)
     user_message  = _build_user_message(doc_id, preprocess)
     if _audit is not None:
         _audit["prompt_sha256"] = sha256_text(system_prompt)
@@ -179,7 +184,13 @@ def run(
         # succeeds.  On success the relevant fields are copied into _audit below.
         _whole_doc_audit: dict = {}
         try:
-            result = _validate_response(doc_id, raw, llm, _audit=_whole_doc_audit)
+            result = _validate_response_for_run(
+                doc_id,
+                raw,
+                llm,
+                _whole_doc_audit,
+                retrieval_grounded,
+            )
             if _audit is not None:
                 _audit["validation_path"] = _whole_doc_audit.get("validation_path", "")
                 _audit["validation_attempts"] = _whole_doc_audit.get("validation_attempts", 0)
@@ -203,6 +214,7 @@ def run(
                 llm=llm,
                 model=model,
                 first_error=exc,
+                retrieval_grounded=retrieval_grounded,
                 _audit=_audit,
             )
     finally:
@@ -469,10 +481,11 @@ def _run_chunked_enrichment(
     llm: str,
     model: str | None,
     first_error: ValueError,
+    retrieval_grounded: bool = False,
     *,
     _audit: dict | None = None,
 ) -> EnrichmentResult:
-    system_prompt = _build_system_prompt(config, analysis)
+    system_prompt = _build_system_prompt_for_run(config, analysis, retrieval_grounded)
     chunks = _chunk_text(preprocess.text)
     results: list[EnrichmentResult] = []
     errors: list[str] = []
@@ -512,7 +525,13 @@ def _run_chunked_enrichment(
             raw = _call_enrichment_model(
                 llm, system_prompt, user_message, config, model, _audit=_chunk_audit
             )
-            results.append(_validate_response(doc_id, raw, llm, _audit=_chunk_audit))
+            results.append(_validate_response_for_run(
+                doc_id,
+                raw,
+                llm,
+                _chunk_audit,
+                retrieval_grounded,
+            ))
             if chunk_entry is not None and _chunk_audit is not None:
                 chunk_entry["succeeded"] = True
                 chunk_entry["model"] = _chunk_audit.get("model")
@@ -643,7 +662,28 @@ def _dedupe(items: list, key_fn) -> list:
 # Prompt construction
 # ---------------------------------------------------------------------------
 
-def _build_system_prompt(config: Config, analysis: AnalysisResult) -> str:
+def _build_system_prompt_for_run(
+    config: Config,
+    analysis: AnalysisResult,
+    retrieval_grounded: bool,
+) -> str:
+    """Build the enrichment prompt while tolerating older test doubles."""
+    try:
+        return _build_system_prompt(
+            config,
+            analysis,
+            retrieval_grounded=retrieval_grounded,
+        )
+    except TypeError:
+        return _build_system_prompt(config, analysis)
+
+
+def _build_system_prompt(
+    config: Config,
+    analysis: AnalysisResult,
+    *,
+    retrieval_grounded: bool = False,
+) -> str:
     base = _load_system_prompt()
 
     lexicon_block = "(not available — Sanity query failed)"
@@ -671,12 +711,19 @@ def _build_system_prompt(config: Config, analysis: AnalysisResult) -> str:
     except Exception:
         pass
 
+    related_docs_block = "(vector similarity deferred — not yet available)"
+    if not retrieval_grounded:
+        related_docs_block += (
+            "\nIMPORTANT: No related corpus documents are available for this run. "
+            "Return corpus_connections as an empty array []. Do not invent doc_ids."
+        )
+
     injection = (
         f"\n\nCURRENT LEXICON ENTRIES (do not re-propose — add variant or evidence instead):\n"
         f"{lexicon_block}\n\n"
         f"CURRENT ENTITY REGISTRY (do not re-propose — use enrich_existing if found):\n"
         f"{entity_block}\n\n"
-        f"RELATED CORPUS DOCUMENTS:\n(vector similarity deferred — not yet available)\n\n"
+        f"RELATED CORPUS DOCUMENTS:\n{related_docs_block}\n\n"
         f"MAIN ANALYSIS RESULT:\n{_summarise_analysis(analysis)}"
     )
     return base + injection
@@ -872,6 +919,25 @@ def _fetch_entity_registry(config: Config) -> list[dict]:
 # Response validation
 # ---------------------------------------------------------------------------
 
+def _validate_response_for_run(
+    doc_id: str,
+    raw: str,
+    llm: str,
+    audit: dict | None,
+    retrieval_grounded: bool,
+) -> EnrichmentResult:
+    """Validate enrichment output while tolerating older test doubles."""
+    try:
+        return _validate_response(
+            doc_id,
+            raw,
+            llm,
+            retrieval_grounded=retrieval_grounded,
+            _audit=audit,
+        )
+    except TypeError:
+        return _validate_response(doc_id, raw, llm, _audit=audit)
+
 def _first_json_object(text: str) -> dict | None:
     """Return the first complete JSON object in text.
 
@@ -922,7 +988,11 @@ def _enum(value, allowed: set[str], default: str, aliases: dict[str, str] | None
     return text if text in allowed else default
 
 
-def _normalize_enrichment_payload(data: dict) -> tuple[dict, int]:
+def _normalize_enrichment_payload(
+    data: dict,
+    *,
+    retrieval_grounded: bool = False,
+) -> tuple[dict, int]:
     """Make common LLM schema drift reviewable instead of fatal.
 
     Returns (normalized_data, repair_count) where repair_count is the number
@@ -1028,19 +1098,24 @@ def _normalize_enrichment_payload(data: dict) -> tuple[dict, int]:
         item["source_type"] = _renum(item.get("source_type"), _INGESTION_SOURCE_TYPES, "unknown")
         item["priority"] = _renum(item.get("priority"), _PRIORITIES, "medium")
 
-    normalized["corpus_connections"] = [
-        item
-        for item in normalized["corpus_connections"]
-        if _as_string(item.get("doc_id")).strip() and _as_string(item.get("shared_element")).strip()
-    ]
-    for item in normalized["corpus_connections"]:
-        item["doc_id"] = _as_string(item.get("doc_id"))
-        item["connection_type"] = _renum(
-            item.get("connection_type"),
-            _CORPUS_CONNECTION_TYPES,
-            "same_term",
-        )
-        item["shared_element"] = _as_string(item.get("shared_element"))
+    if not retrieval_grounded:
+        normalized["corpus_connections"] = []
+    else:
+        normalized["corpus_connections"] = [
+            item
+            for item in normalized["corpus_connections"]
+            if _as_string(item.get("doc_id")).strip() and _as_string(item.get("shared_element")).strip()
+        ]
+        for item in normalized["corpus_connections"]:
+            item["doc_id"] = _as_string(item.get("doc_id"))
+            item["connection_type"] = _renum(
+                item.get("connection_type"),
+                _CORPUS_CONNECTION_TYPES,
+                "same_term",
+            )
+            item["shared_element"] = _as_string(item.get("shared_element"))
+            item["evidence"] = _as_string(item.get("evidence"))
+            item["is_retrieval_grounded"] = True
 
     normalized["practice_descriptions"] = [
         item
@@ -1070,6 +1145,7 @@ def _validate_response(
     raw: str,
     llm: str,
     *,
+    retrieval_grounded: bool = False,
     _audit: dict | None = None,
 ) -> EnrichmentResult:
     original = raw.strip()
@@ -1086,7 +1162,10 @@ def _validate_response(
             data["doc_id"] = doc_id
             data["enrichment_model"] = llm
             data["enrichment_prompt_version"] = PROMPT_VERSION
-            data, repairs = _normalize_enrichment_payload(data)
+            data, repairs = _normalize_enrichment_payload(
+                data,
+                retrieval_grounded=retrieval_grounded,
+            )
             _repairs += repairs
             return EnrichmentResult.model_validate(data)
         except Exception as exc:

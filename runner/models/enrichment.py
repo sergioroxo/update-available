@@ -292,6 +292,12 @@ class CorpusConnection(BaseModel):
     ]
     shared_element: str                   # what they share (org name, event, term…)
     evidence: str = ""                    # brief justification
+    is_retrieval_grounded: bool = False   # True only when real retrieved doc_ids were injected
+
+    # Researcher decision -- inactive until retrieval-grounded connections are enabled.
+    approved: bool = False
+    rejected: bool = False
+    pushed_to_sanity: bool = False
 
 
 # ---------------------------------------------------------------------------

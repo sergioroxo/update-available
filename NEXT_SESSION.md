@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 748
-**Last commit:** `3bdfe91ae` (G3 — guard reviewed Sanity documents from overwrite; G4 local changes pending commit)
+**Tests passing:** 753
+**Last commit:** `5482bcc17` (G4 — harden audit provenance)
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 748 tests -- run before every edit
+tests/                          # 753 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -358,7 +358,7 @@ and upload paths fail closed by default. **Commit:** `3bdfe91ae`
 Audit sidecars now carry reproducibility metadata for methodology defense:
 - `prompt_sha256` for the resolved prompt text actually sent to the model.
 - `prompt_template_sha256` for the bare prompt template before runtime injections.
-- Audit `schema_version` is `2`.
+- Audit `schema_version` is `2` for G4 and `3` after G5 enrichment-audit fields.
 - Current git commit hash where available.
 - Model sampling/runtime parameters and wall-clock duration.
 - `score_derived_from_status` for confidence scores filled from status defaults.
@@ -369,37 +369,44 @@ opt-in `--keep-raw` only after researcher sign-off.
 
 ---
 
-### TASK G5 -- Ground or suppress ungrounded corpus connections ← NEXT
+### ~~TASK G5~~ -- Ground or suppress ungrounded corpus connections ✓ COMPLETE
 
 **Finding:** Enrichment currently asks for `corpus_connections` while vector
 similarity is deferred. Without actual related-doc context, these connections
 are hallucination-prone.
 
-**Implement one of:**
-- Suppress `corpus_connections` extraction until Supabase vector retrieval is
-  wired into enrichment context, or
-- Label them explicitly as ungrounded suggestions and keep them out of evidence
-  workflows.
+Current implementation chooses the conservative suppression route:
+- `CorpusConnection` now has review/grounding fields for future retrieval-grounded use.
+- Enrichment defaults to `retrieval_grounded=False`.
+- `_normalize_enrichment_payload()` strips incoming `corpus_connections` unless retrieval grounding is explicitly enabled.
+- Runtime enrichment prompt instructs the model to return `corpus_connections: []` when no related corpus documents are injected.
+- `enrichment_audit.json` records `corpus_connections_suppressed` and `corpus_connections_suppression_reason`.
+- Audit `schema_version` is now `3`.
 
-Also finish embedding verification / `vector(4096)` migration before relying on
-semantic maps, related-document search, or corpus connection claims.
+Retrieval remains deferred: finish embedding verification / `vector(4096)`
+migration before enabling semantic maps, related-document search, or corpus
+connection claims.
 
 ---
 
-### TASK F -- Batch Runner (technically unblocked; recommend G5 first)
+### NEXT -- Data-structure lock-in
 
-**Status:** G1 + G2 are complete, so TASK F is **technically unblocked**. G3 is
-also complete. However,
-for a genuinely safe overnight/night-batch system the recommended order is to
-close the remaining corpus-connection gap first:
+Before TASK F scales ingestion, lock in the data structures that future exports
+will depend on:
+- Stable document/entity/term IDs and review-time enforcement of existing IDs.
+- First-class directional edge export shape with evidence/provenance.
+- ISO 3166 geography and ISO 639 language normalization plan.
+- Temporal axis conventions (`document_date`, future `first_attested`).
+- Claim verification lifecycle for statistical claims.
 
-1. **G5** — corpus-connection grounding (so batch enrichment doesn't emit
-   ungrounded connections at scale)
-2. **TASK F** — Batch Runner
+---
 
-**Why this order:** the review found fail-open paths (closed by G1/G2) plus
-provenance gaps (G3 and G4 now closed). A batch runner amplifies any remaining
-silent gap across many documents, so G5 is worth landing before unattended scale.
+### TASK F -- Batch Runner (technically unblocked; recommend data-structure lock-in first)
+
+**Status:** G1 + G2 are complete, G3 protects reviewed Sanity records, G4 hardens
+provenance, and G5 suppresses ungrounded corpus connections. TASK F is now
+technically unblocked, but the recommended order is data-structure lock-in before
+unattended scale.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -462,7 +469,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 748 passed (or higher after new tests)
+# Must see: 753 passed (or higher after new tests)
 ```
 
 ---
@@ -513,4 +520,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete — last commit `3bdfe91ae` with G4 local changes pending commit, 748 tests passing. TASK F is technically unblocked; recommended next order: G5 → TASK F.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed (`5482bcc17`). G5 complete locally with 753 tests passing. TASK F is technically unblocked; recommended next order: data-structure lock-in → TASK F.*

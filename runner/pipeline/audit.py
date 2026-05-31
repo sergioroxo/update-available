@@ -28,7 +28,7 @@ except ImportError:
     from ..models.document import AnalysisResult
     from ..models.enrichment import EnrichmentResult
 
-_SCHEMA_VERSION = "2"
+_SCHEMA_VERSION = "3"
 _REPO_ROOT = Path(__file__).parents[2]
 
 
@@ -109,6 +109,8 @@ class EnrichmentRunMeta:
     validation_path: str = ""
     validation_attempts: int = 0
     normalization_repairs: int = 0
+    corpus_connections_suppressed: bool = False
+    corpus_connections_suppression_reason: str = ""
     errors: list[str] = field(default_factory=list)
 
 

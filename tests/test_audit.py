@@ -96,7 +96,7 @@ def test_write_analysis_audit_schema_keys_present(tmp_path):
 def test_write_analysis_audit_schema_version(tmp_path):
     write_analysis_audit(tmp_path, None, _analysis())
     payload = json.loads((tmp_path / "analysis_audit.json").read_text())
-    assert payload["schema_version"] == "2"
+    assert payload["schema_version"] == "3"
 
 
 # ---------------------------------------------------------------------------
@@ -273,6 +273,7 @@ def test_write_enrichment_audit_schema_keys_present(tmp_path):
         "whole_doc_fallback_reason",
         "prompt_sha256", "prompt_template_sha256", "git_commit", "model_parameters", "duration_ms",
         "validation_path", "validation_attempts", "normalization_repairs", "errors",
+        "corpus_connections_suppressed", "corpus_connections_suppression_reason",
         "enrichment_model",
         "lexicon_proposals_count", "entity_proposals_count", "tactic_proposals_count",
         "ingestion_queue_count", "corpus_connections_count",
@@ -355,6 +356,8 @@ def test_write_enrichment_audit_populated_run_meta(tmp_path):
         validation_path="outside_think_tags",
         validation_attempts=1,
         normalization_repairs=2,
+        corpus_connections_suppressed=True,
+        corpus_connections_suppression_reason="retrieval_not_wired",
     )
     write_enrichment_audit(tmp_path, meta, _enrichment())
     payload = json.loads((tmp_path / "enrichment_audit.json").read_text())
@@ -368,6 +371,8 @@ def test_write_enrichment_audit_populated_run_meta(tmp_path):
     assert payload["model_parameters"]["max_tokens"] == 16384
     assert payload["duration_ms"] == 5678
     assert payload["normalization_repairs"] == 2
+    assert payload["corpus_connections_suppressed"] is True
+    assert payload["corpus_connections_suppression_reason"] == "retrieval_not_wired"
 
 
 # ---------------------------------------------------------------------------

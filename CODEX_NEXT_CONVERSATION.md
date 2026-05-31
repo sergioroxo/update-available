@@ -228,33 +228,32 @@ records unless `--force-reviewed` / `--force` is passed through `upload-doc` or
 explicit `aiMetadata.humanReview`, human override resolution, and
 manual-researcher validation markers.
 
-**✓ G4 -- Provenance hardening** (local changes pending commit)
-Audit sidecars now use schema v2 and include resolved/template prompt hashes,
+**✓ G4 -- Provenance hardening** (`5482bcc17`)
+Audit sidecars use schema v2 and include resolved/template prompt hashes,
 git commit, runtime/sampling params, duration, derived-score flagging, and
 triage audit metadata. Raw-response retention remains default-off and
 unimplemented pending researcher sign-off.
 
-**G5 -- Ground or suppress corpus connections** ← NEXT
-Do not let enrichment `corpus_connections` read as evidence until vector retrieval
-is wired, or clearly label/suppress them.
+**✓ G5 -- Ground or suppress corpus connections** (suppression route)
+Ungrounded enrichment `corpus_connections` are stripped by default before
+`enrichment.json`; enrichment audit records suppression. Retrieval-grounded
+connections remain deferred until vector retrieval is wired.
 
-**F -- Batch Runner** (technically unblocked; recommend after G4-G5)
+**F -- Batch Runner** (technically unblocked; recommend after data-structure lock-in)
 Must use `source_queue.is_overnight_safe(item)` and surface excluded items before
-processing unattended. G1/G2 preconditions are complete, but G5 should land
-first for safer overnight runs.
+processing unattended. G1-G5 safety/provenance preconditions are complete.
 
 Recommended order for a new session:
-1. Verify repo/test state (748 passed expected).
-2. Implement G5 as a focused safety/provenance slice.
-3. Only then start TASK F — Batch Runner, unless researcher explicitly accepts
-   the remaining provenance risk.
+1. Verify repo/test state (753 passed expected).
+2. Do data-structure lock-in as a focused design/code slice.
+3. Then start TASK F — Batch Runner.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 748
-- Last commit: `3bdfe91ae` -- G3 guard reviewed Sanity documents from overwrite; G4 local changes pending commit
+- Tests passing: 753
+- Last pushed commit: `5482bcc17` -- G4 harden audit provenance
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -270,7 +269,8 @@ Recommended order for a new session:
   `01_project_docs/FUTURE_APPLICATIONS_TRACKER.md`
 - Reviewed-doc overwrite guard: built ✓ (TASK G3)
 - Provenance hardening: built ✓ (TASK G4)
-- Batch Runner: not yet built; technically unblocked by G1/G2, recommended after G5
+- Corpus-connection suppression: built ✓ (TASK G5)
+- Batch Runner: not yet built; technically unblocked by G1-G5, recommended after data-structure lock-in
 
 ---
 
@@ -435,6 +435,6 @@ Favour:
 - explicit provenance
 - researcher control at every consequential step
 
-The next session should start with G5. G1/G2 made overnight processing safer,
-G3 protects reviewed Sanity records, and G4 hardens audit provenance; G5 is the
-remaining protection layer before unattended batch work.
+The next session should start with data-structure lock-in. G1/G2 made overnight
+processing safer, G3 protects reviewed Sanity records, G4 hardens audit
+provenance, and G5 suppresses ungrounded corpus connections before batch work.

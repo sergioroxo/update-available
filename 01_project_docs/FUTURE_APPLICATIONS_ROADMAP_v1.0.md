@@ -2,8 +2,8 @@
 
 **Status:** design proposal — not yet ratified.
 **Generated:** 2026-05-31. Branch `claude/review-architecture-70CUm`.
-**Assumes complete:** G1 (triage fail-closed), G2 (cross-stage testimony/legal holds), G3 (reviewed-doc clobber guard), G4 (provenance hardening).
-**Sequenced after:** G5 (corpus-connection grounding) → TASK F (batch runner).
+**Assumes complete:** G1 (triage fail-closed), G2 (cross-stage testimony/legal holds), G3 (reviewed-doc clobber guard), G4 (provenance hardening), G5 (corpus-connection suppression).
+**Sequenced after:** data-structure lock-in → TASK F (batch runner).
 
 **Core method (non-negotiable):** *AI proposes, the researcher validates, the archive preserves provenance.*
 Everything below is a way to make that method **produce more** — not a way to remove the researcher from the loop.
@@ -166,10 +166,9 @@ Every public artifact ships with: provenance, an uncertainty/validation status, 
 
 ## Recommended sequence (one screen)
 
-1. **G5** — ground/suppress corpus connections; finish `vector(4096)` + retrieval.
-2. **Data-structure lock-in (§3)** — IDs, edges, ISO geo/lang, temporal axis, claim lifecycle. Cheap now.
-3. **TASK F** — batch runner, gated by `is_overnight_safe()`, after Phase 0.5 calibration.
-4. **First outputs (export-only):** network graph, glossary, claims ledger, framing matrix — the high-readiness wins from §1.
-5. **Then** book schema (when a book arrives) → semantic map (Phase 2) → public Vercel archive over a validated subset (Phase 3).
+1. **Data-structure lock-in (§3)** — IDs, edges, ISO geo/lang, temporal axis, claim lifecycle. Cheap now.
+2. **TASK F** — batch runner, gated by `is_overnight_safe()`, after Phase 0.5 calibration.
+3. **First outputs (export-only):** network graph, glossary, claims ledger, framing matrix — the high-readiness wins from §1.
+4. **Then** retrieval enablement (`vector(4096)` + related-doc context), book schema (when a book arrives), semantic map (Phase 2), and public Vercel archive over a validated subset (Phase 3).
 
 **Bottom line:** the corpus is already structured for ambitious outputs; the near-term work is *protecting provenance and keeping IDs/edges clean*, not adding intelligence. Build read-only views and exports first, keep every consequential decision human, and let the public artifacts follow the validated subset — never the raw pipeline.
