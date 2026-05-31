@@ -331,6 +331,15 @@ class PracticeDescription(ProposalConfidenceMixin):
 # Statistical claims
 # ---------------------------------------------------------------------------
 
+VerificationStatus = Literal[
+    "unverified",     # default — no check performed yet
+    "verified",       # confirmed accurate
+    "disputed",       # evidence contested or ambiguous
+    "debunked",       # found to be false
+    "unverifiable",   # source inaccessible or untraceable
+]
+
+
 class StatisticalClaim(ProposalConfidenceMixin):
     """A quantitative or empirical claim made in the document."""
     model_config = ConfigDict(extra="ignore")
@@ -339,6 +348,9 @@ class StatisticalClaim(ProposalConfidenceMixin):
     source_cited: str = ""               # what source the document gives
     verifiable: bool = False              # does it cite a traceable source?
     context: str = ""                     # why it matters for research
+    verification_status: VerificationStatus = "unverified"
+    # Tracks the fact-checking lifecycle: unverified → verified/disputed/debunked/unverifiable.
+    # Distinct from approved/rejected (which control the Sanity push workflow).
 
     # Researcher decision
     approved: bool = False

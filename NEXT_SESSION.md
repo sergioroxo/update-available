@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 760
-**Latest completed milestone:** DS-1 — analysis languages field
+**Tests passing:** 779
+**Latest completed milestone:** DS-4 — statistical claim verification status
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 760 tests -- run before every edit
+tests/                          # 779 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -393,14 +393,18 @@ connection claims.
 
 Before TASK F scales ingestion, lock in the data structures that future exports
 will depend on:
-- DS-1 complete locally: `AnalysisResult.languages` is now a first-class field,
+- DS-1 complete: `AnalysisResult.languages` is now a first-class field,
   serialized into `analysis.json`, and counted by corpus stats. Sanity
   `classification.languages` is deliberately deferred until a schema migration.
+- DS-3 complete: analysis language values normalize to ISO 639-1 codes and
+  common country aliases normalize to canonical full names at validation time.
+- DS-4 complete: `StatisticalClaim.verification_status` now tracks
+  `unverified`, `verified`, `disputed`, `debunked`, or `unverifiable` in
+  `enrichment.json`. Sanity write/schema migration is deferred.
 - Stable document/entity/term IDs and review-time enforcement of existing IDs.
-- First-class directional edge export shape with evidence/provenance.
-- ISO 3166 geography and ISO 639 language normalization plan.
+- NEXT: DS-2 first-class directional edge export/persistence shape with
+  evidence/provenance.
 - Temporal axis conventions (`document_date`, future `first_attested`).
-- Claim verification lifecycle for statistical claims.
 
 ---
 
@@ -472,7 +476,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 760 passed (or higher after new tests)
+# Must see: 779 passed (or higher after new tests)
 ```
 
 ---
@@ -523,4 +527,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1 language field complete with 760 tests passing. TASK F is technically unblocked; recommended next order: finish data-structure lock-in → TASK F.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-3, and DS-4 complete with 779 tests passing. TASK F is technically unblocked; recommended next order: DS-2 directional edges → TASK F.*

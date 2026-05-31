@@ -130,6 +130,7 @@ _CORPUS_CONNECTION_TYPES = {
     "precedes",
 }
 _HARM_STANCES = {"denied", "minimized", "reframed", "acknowledged", "not_mentioned"}
+_VERIFICATION_STATUSES = {"unverified", "verified", "disputed", "debunked", "unverifiable"}
 
 
 def _load_system_prompt() -> str:
@@ -1136,6 +1137,9 @@ def _normalize_enrichment_payload(
         item["claim"] = _as_string(item.get("claim"))
         item["source_cited"] = _as_string(item.get("source_cited"))
         item["context"] = _as_string(item.get("context"))
+        item["verification_status"] = _renum(
+            item.get("verification_status"), _VERIFICATION_STATUSES, "unverified"
+        )
 
     return normalized, _repairs
 
