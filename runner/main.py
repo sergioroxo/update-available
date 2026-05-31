@@ -58,6 +58,7 @@ def ingest(
         config.media_allow_whisper = False
 
     # Stage 0.5 — Triage (optional): fast pre-screen to recommend analysis model
+    triage_result = None
     if run_triage and not yes:
         snippet = ""
         try:
@@ -113,6 +114,17 @@ def ingest(
     )
     if not yes and not review.checkpoint_intake(intake_result):
         raise typer.Exit()
+    # G2-a: persist the triage result alongside the document, but only AFTER the
+    # intake checkpoint is accepted — so rejecting/aborting at intake never leaves
+    # a corpus folder containing only triage_result.json. In --yes mode the
+    # checkpoint is skipped, so this still persists. Upload-gate cross-checks and
+    # the future batch runner read these workflow flags (testimony/legal/media/
+    # book). Persistence only — no gate behaviour change yet. Non-fatal.
+    if triage_result is not None:
+        try:
+            triage.save_triage_result(intake_result.doc_id, triage_result, config)
+        except Exception as exc:
+            console.print(f"[yellow]Could not persist triage result: {exc}[/yellow]")
 
     # Stage 2 — Preprocessing
     # max_chars=0 means no truncation; None means pick from config by LLM mode

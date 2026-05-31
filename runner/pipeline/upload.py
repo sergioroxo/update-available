@@ -60,6 +60,20 @@ class _EmbeddingStatusCache:
 _embedding_status_cache = _EmbeddingStatusCache()
 
 
+def load_triage_result(doc_id: str, config: Config):
+    """Load the optional triage result saved for ``doc_id``, or None if absent.
+
+    G2-a: lets upload-related code retrieve the triage workflow flags
+    (needs_testimony_review / needs_legal_review / needs_media_review /
+    needs_book_splitting) for the future cross-stage consent gate (G2-b) and
+    batch runner. Tolerant of a missing or unreadable file — returns None.
+
+    This loader is read-only and does NOT change gate behaviour yet.
+    """
+    from .triage import load_triage_result as _load
+    return _load(doc_id, config)
+
+
 def _stamp_analysis_dict(analysis: AnalysisResult) -> dict:
     """Return the analysis model dict with prompt_version + ontology_version stamped in.
 
