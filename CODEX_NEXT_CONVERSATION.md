@@ -244,16 +244,16 @@ Must use `source_queue.is_overnight_safe(item)` and surface excluded items befor
 processing unattended. G1-G5 safety/provenance preconditions are complete.
 
 Recommended order for a new session:
-1. Verify repo/test state (753 passed expected).
-2. Do data-structure lock-in as a focused design/code slice.
+1. Verify repo/test state (760 passed expected).
+2. Continue data-structure lock-in as focused design/code slices.
 3. Then start TASK F — Batch Runner.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 753
-- Last pushed commit: `5482bcc17` -- G4 harden audit provenance
+- Tests passing: 760
+- Latest completed milestone: DS-1 -- analysis languages field
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -270,6 +270,8 @@ Recommended order for a new session:
 - Reviewed-doc overwrite guard: built ✓ (TASK G3)
 - Provenance hardening: built ✓ (TASK G4)
 - Corpus-connection suppression: built ✓ (TASK G5)
+- Data-structure lock-in DS-1: `AnalysisResult.languages` built ✓; Sanity
+  classification language write deferred until schema migration
 - Batch Runner: not yet built; technically unblocked by G1-G5, recommended after data-structure lock-in
 
 ---

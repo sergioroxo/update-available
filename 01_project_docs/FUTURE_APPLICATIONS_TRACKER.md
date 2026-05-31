@@ -52,7 +52,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | First-class directional edges | Actor graph, lexicon genealogy, corpus graph | Export edge view with source, target, type, evidence quote, doc_id, confidence | Pending |
 | Provenance key on derived claims | Methodology defense, audit, public trust | Covered by G4 | Done for audit sidecars; enforce per-export later |
 | ISO 3166 geography | Maps/timelines | Normalize `geographic_scope` at review/export time | Pending |
-| ISO 639 language tags | Glossary, cross-language analysis | Add deterministic language-ID check later | Pending |
+| ISO 639 language tags | Glossary, cross-language analysis | DS-1 added `AnalysisResult.languages`; add deterministic language-ID check and Sanity schema migration later | Partial |
 | Temporal axis | Lexicon genealogy, timelines | Preserve `document_date`; reserve `first_attested` for terms/events | Pending |
 | Claim verification lifecycle | Claim/fact-check ledger | Add `verification_status`: proposed, checked, supported, contradicted, unverifiable | Pending |
 | Embedding provenance | Semantic map, retrieval | Keep model/dimension; finish `vector(4096)` verification | Pending |
@@ -147,7 +147,7 @@ These stay deferred until the spine is stronger:
 
 ## 8. Recommended Sequence
 
-1. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle.
+1. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle. DS-1 language field is complete; remaining language work is deterministic ID and Sanity/export normalization.
 2. **TASK F:** conservative batch runner with dry-run manifest and batch ledger.
 3. **Pilot calibration:** 10-20 documents across languages/types/stakes.
 4. **Export-only outputs:** network graph, glossary, claims ledger, framing matrix.

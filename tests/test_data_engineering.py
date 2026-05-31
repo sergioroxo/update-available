@@ -138,6 +138,28 @@ def test_corpus_stats_pending_vs_uploaded(tmp_path):
     assert s["total"] == 2
 
 
+def test_corpus_stats_counts_by_language(tmp_path):
+    """corpus_stats.by_language uses the languages field from analysis.json.
+
+    This was always broken before DS-1 (AnalysisResult dropped the field).
+    Now languages is a proper model field and flows through model_dump_json
+    into analysis.json, so corpus_stats can aggregate correctly.
+    """
+    config = _make_config(tmp_path)
+    config.corpus_dir.mkdir()
+
+    _make_doc(config.corpus_dir, "doc-en1", languages=["en"])
+    _make_doc(config.corpus_dir, "doc-en2", languages=["en"])
+    _make_doc(config.corpus_dir, "doc-de",  languages=["de"])
+    _make_doc(config.corpus_dir, "doc-multi", languages=["en", "fr"])
+
+    s = corpus_stats(config)
+
+    assert s["by_language"]["en"] == 3   # doc-en1, doc-en2, doc-multi
+    assert s["by_language"]["de"] == 1
+    assert s["by_language"]["fr"] == 1
+
+
 def test_corpus_stats_low_confidence_flagged(tmp_path):
     config = _make_config(tmp_path)
     config.corpus_dir.mkdir()

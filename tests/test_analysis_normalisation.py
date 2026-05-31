@@ -56,6 +56,58 @@ def test_canonical_analysis_payload_has_no_normalisation_warnings():
     assert result.normalisation_warnings == []
 
 
+# ---------------------------------------------------------------------------
+# DS-1: languages field
+# ---------------------------------------------------------------------------
+
+def test_languages_field_defaults_to_empty_list():
+    """Old analysis.json files without a languages key produce an empty list."""
+    result = AnalysisResult.model_validate(_minimal_payload())
+
+    assert result.languages == []
+
+
+def test_languages_null_coerced_to_empty_list():
+    result = AnalysisResult.model_validate(_minimal_payload(languages=None))
+
+    assert result.languages == []
+    assert any("null" in w and "languages" in w for w in result.normalisation_warnings)
+
+
+def test_languages_scalar_string_coerced_to_list():
+    result = AnalysisResult.model_validate(_minimal_payload(languages="en"))
+
+    assert result.languages == ["en"]
+    assert any("scalar" in w and "languages" in w for w in result.normalisation_warnings)
+
+
+def test_languages_list_preserved():
+    result = AnalysisResult.model_validate(_minimal_payload(languages=["en", "fr"]))
+
+    assert result.languages == ["en", "fr"]
+    assert not any("languages" in w for w in result.normalisation_warnings)
+
+
+def test_languages_in_model_dump_json():
+    """languages must appear in the serialised dict so analysis.json contains it."""
+    import json as _json
+
+    result = AnalysisResult.model_validate(_minimal_payload(languages=["de"]))
+    dumped = _json.loads(result.model_dump_json())
+
+    assert dumped["languages"] == ["de"]
+
+
+def test_languages_absent_from_payload_yields_empty_list_without_warning():
+    """Completely omitting the key (old documents) should be silent."""
+    payload = _minimal_payload()
+    payload.pop("languages", None)
+    result = AnalysisResult.model_validate(payload)
+
+    assert result.languages == []
+    assert not any("languages" in w for w in result.normalisation_warnings)
+
+
 def test_validate_response_extracts_json_from_markdown_fence():
     payload = _minimal_payload(summary="Extracted from a fenced response.")
     raw = "```json\n" + json.dumps(payload) + "\n```"

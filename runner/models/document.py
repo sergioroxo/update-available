@@ -266,7 +266,7 @@ class AnalysisResult(BaseModel):
 
         # 5. Coerce list[str] fields: null→[], scalar string→[value].
         for key in (
-            "country", "tactic", "actor", "network", "practice", "term",
+            "languages", "country", "tactic", "actor", "network", "practice", "term",
             "harm", "migration", "function", "landmark", "flags", "evidence",
         ):
             if key not in data:
@@ -321,6 +321,7 @@ class AnalysisResult(BaseModel):
 
         return data
 
+    languages: list[str] = Field(default_factory=list)
     country: list[str] = Field(default_factory=list)
     tactic: list[str] = Field(default_factory=list)
     actor: list[str] = Field(default_factory=list)
