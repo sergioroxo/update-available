@@ -1,9 +1,9 @@
 # SurvivingSOGICE -- Next Session Handoff
-**Generated:** 2026-05-31
+**Generated:** 2026-06-01
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 934
-**Latest completed milestone:** One-item attended pilot complete
+**Tests passing:** 966
+**Latest completed milestone:** Research Review Cockpit v1 — Provenance/Audit panel (`e65c06e75`)
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -124,6 +124,7 @@ runner/
 ├── main.py                     # All CLI commands
 ├── config.py                   # Config dataclass + load_config()
 ├── app.py                      # Streamlit UI
+├── app_provenance.py           # Pure provenance/audit helpers (no st.*) -- imported by app.py
 ├── pipeline/
 │   ├── intake.py               # Stage 1: doc_id, Wayback, dedup
 │   ├── preprocess.py           # Stage 2: Docling/Trafilatura/Whisper + truncation
@@ -149,7 +150,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 934 tests -- run before every edit
+tests/                          # 966 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -457,8 +458,10 @@ document `8fe67e19` (`https://transdatalibrary.org/person/avi-ring`) was then
 uploaded to Sanity/Supabase, enriched locally, and linked back to queue item
 `f52eb82a` as `ingested`.
 
-**Next sequence:** review the pilot document warnings/enrichment proposals, then
-run a 2-3 item attended pilot before any overnight use.
+**Next sequence:** open the Streamlit app, navigate to Document List, search for
+`8fe67e19`, open the ⚠️ Provenance / Audit panel to review the 6 enrichment
+proposals and fix the 2 `connection_type` errors before pushing. Then run a
+2–3 item attended pilot batch (see notes below) before any overnight use.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -489,6 +492,42 @@ classified them as possible media; YouTube/video/audio URLs route to media
 metadata/transcript review; DOI/journal pages with poor extraction route to
 manual PDF capture. Browsertrix/ArchiveBox/Arquivo.pt/Perma.cc/MemGator remain
 evaluation candidates, not integrated dependencies.
+
+---
+
+### ~~Research Review Cockpit v1~~ — Provenance/Audit panel ✓ COMPLETE (`e65c06e75`)
+
+The Streamlit Document List and Activity Log now include a per-document
+**Provenance / Audit** panel backed by `runner/app_provenance.py` (pure module,
+no Streamlit dependency, 32 tests):
+
+**Document List** — new `🔍 Search by doc_id or source URL` text input above
+the filter row (substring match on `doc_id` and source URL). Every doc card
+gains a `🔍 Provenance / Audit` expander (auto-expanded and badged ⚠️ when
+warnings are present).
+
+**Activity Log** — new 9th tab "Provenance" alongside the existing Audit/Intake/
+Analysis/Enrichment/… tabs.
+
+**Provenance panel** has four sub-tabs:
+
+| Tab | Content |
+|---|---|
+| Analysis Audit | model, LLM flag, duration, truncated prompt hashes, git commit, validation path, score-derived badge, schema/prompt/ontology versions, collapsible normalisation warnings |
+| Enrichment Audit | model, duration, chunked, prompt SHA, git commit, corpus-connections-suppressed note, normalisation repairs |
+| Preservation | status icon (✅/⚠️/ℹ️/—), capture-needed, Wayback status, suggested route, reason, SHA-256, notes |
+| Artifacts | ✅/❌ checklist for all 10 expected artifacts, count summary, warning when any are missing |
+
+**Inline warnings** (surfaced before the tabs) fire for:
+1. Missing `analysis.languages`
+2. Missing document date (both `document_date.year` and `preprocess.date_published` absent)
+3. Queue `source_type` ≠ intake `source_type` (triage misclassification)
+4. `enrich_existing` entity proposals with no `existing_entity_id`
+
+For pilot document `8fe67e19`: warnings 1, 2, 3, 4 all fire (languages empty,
+date unknown, queue says `video` / intake says `url`, SEGM+Genspect proposals
+lack existing_entity_id). These are the 6 proposals plus the triage artefact
+identified in the attended review.
 
 ---
 
@@ -591,4 +630,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan, Slice 2 guarded `batch-run`, Slice 3 preflight checks, and Slice 4 batch reports are complete. TASK P preservation status sidecar is complete. First one-item pilot found and fixed a Sanity GROQ parameter encoding bug before document mutation; recovered doc `8fe67e19` is uploaded, embedded, enriched, and queue-linked. Queue triage is source-aware for blocked DOI/journal, social, and video URLs, and queue notes inform retries. 934 tests passing. Recommended next order: review pilot warnings/proposals, then run a 2-3 item attended pilot before any overnight use.*
+*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit v1 provenance/audit panel complete (`e65c06e75`). First pilot doc `8fe67e19` uploaded, embedded, enriched, and queue-linked. Provenance panel shows all 4 expected warnings for this doc (languages empty, date unknown, queue/intake source_type mismatch, missing entity IDs). 966 tests passing. Recommended next: open app → Document List → search `8fe67e19` → resolve enrichment proposals → run 2–3 item attended pilot.*

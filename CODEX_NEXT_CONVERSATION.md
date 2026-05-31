@@ -5,7 +5,7 @@ project. It is a companion to `NEXT_SESSION.md`, which is the Claude Code task
 handoff. This document is for steering the collaboration: what to trust, what to
 verify, how to guide Claude, and how Codex should keep the system coherent.
 
-Generated: 2026-05-31
+Generated: 2026-06-01
 Repo: `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 Main working branch: `claude/review-architecture-70CUm`
 
@@ -115,6 +115,7 @@ Treat these as the highest-value context files:
 | `CODEX_HANDOFF.md` | Older architecture/setup notes (still valid for infra) |
 | `runner/main.py` | CLI command surface |
 | `runner/app.py` | Streamlit UI |
+| `runner/app_provenance.py` | Pure provenance/audit helpers (no st.* — safe to import in tests) |
 | `runner/pipeline/triage.py` | Stage 0.5 -- routing |
 | `runner/pipeline/analyze.py` | Stage 3b -- classification |
 | `runner/pipeline/enrich.py` | Stage 3c -- lexicon/registry |
@@ -171,7 +172,8 @@ Do not treat old chat summaries as authoritative. Read files and run tests.
 
 `NEXT_SESSION.md` defines tasks A–G plus review-derived safety tasks G1–G5.
 A–E are complete. The first external architecture review (TASK G) is captured.
-G1-G5, DS-1/2/3/4, TASK F, TASK P, and the first attended pilot are complete.
+G1-G5, DS-1/2/3/4, TASK F, TASK P, the first attended pilot, and the Research
+Review Cockpit v1 provenance/audit panel are complete.
 
 **✓ A -- Triage workflow routing flags** (commit `3ee358796`)
 `needs_book_splitting`, `needs_testimony_review`, `needs_media_review`,
@@ -197,7 +199,7 @@ confirmed upload. `--no-enrich` skips for quick tests.
 by extension/URL (Docling / Trafilatura / direct read). Options: `--min-chars`,
 `--max-level`, `--preview-chars`, `--out`. Prints Rich panel + section table. No
 corpus writes, no analysis, no upload. 32 new tests (suite was 670 at TASK E;
-current baseline is 934).
+current baseline is 966).
 
 **✓ G -- Deep architecture review / critic pass** (captured 2026-05-31)
 Claude 4.8 reviewed the full staged-intelligence system after TASK E. The review
@@ -257,9 +259,20 @@ upload, Supabase embedding confirmation, enrichment, and queue linking
 (`f52eb82a` -> `ingested`). The original batch ledger remains a failed ledger;
 the document status and queue row now reflect the recovered success.
 
+**✓ Research Review Cockpit v1 -- Provenance/Audit panel** (commit `e65c06e75`)
+`runner/app_provenance.py` (pure module, 32 tests) provides five helpers:
+`_load_analysis_audit`, `_load_enrichment_audit`, `_load_preservation_status_dict`,
+`_check_artifact_completeness`, `_collect_provenance_warnings`. The Streamlit app
+gains: a doc_id/URL search box in Document List; a `🔍 Provenance / Audit`
+expander (⚠️ badged when warnings present) in every doc card; a 9th "Provenance"
+tab in the Activity Log inspector. Inline warnings fire for missing languages,
+missing date, queue/intake source_type mismatch, and `enrich_existing` proposals
+lacking `existing_entity_id`. All four warnings fire for pilot doc `8fe67e19`.
+
 Recommended order for a new session:
-1. Verify repo/test state (934 passed expected).
-2. Review pilot doc `8fe67e19` warnings and enrichment proposals.
+1. Verify repo/test state (966 passed expected).
+2. Open app → Document List → search `8fe67e19` → resolve the 6 enrichment
+   proposals (fix 2 connection_type errors before pushing to Sanity).
 3. Use `runner batch-plan` to inspect the queue before the next live execution.
 4. Run a 2-3 item attended pilot before any overnight use.
 5. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
@@ -268,8 +281,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 934
-- Latest completed milestone: One-item attended pilot complete
+- Tests passing: 966
+- Latest completed milestone: Research Review Cockpit v1 — Provenance/Audit panel (`e65c06e75`)
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -320,6 +333,14 @@ Recommended order for a new session:
   query params in `runner/clients/sanity.py`; recovered doc `8fe67e19` is
   uploaded to Sanity, present in Supabase, enriched locally, and queue-linked to
   source item `f52eb82a`.
+- Research Review Cockpit v1 — Provenance/Audit panel built ✓ (`e65c06e75`)
+  - `runner/app_provenance.py`: 5 pure helpers, no Streamlit dependency, 32 tests.
+  - Document List: doc_id/URL search box; provenance expander per doc card (auto-open with warnings).
+  - Activity Log: 9th "Provenance" tab with Analysis Audit, Enrichment Audit,
+    Preservation, and Artifacts sub-tabs.
+  - Inline warnings: missing languages, missing date, queue/intake source_type
+    mismatch, `enrich_existing` missing `existing_entity_id`.
+  - Pilot doc `8fe67e19` shows all 4 expected warnings — actionable before next push.
 
 ---
 
