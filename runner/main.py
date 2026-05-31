@@ -1892,17 +1892,23 @@ def batch_run_cmd(
     out_dir: Optional[Path] = typer.Option(None, "--out-dir", help="Directory for batch ledger JSON"),
     execute: bool = typer.Option(False, "--execute", help="Actually ingest included items. Omit for rehearsal only."),
     run_enrich: bool = typer.Option(True, "--enrich/--no-enrich", help="Run Stage 3c enrichment during each ingest"),
+    skip_preflight: bool = typer.Option(
+        False,
+        "--skip-preflight",
+        help="[DANGER] Skip pre-flight connectivity checks. Use only for isolated testing.",
+    ),
 ):
     """Guarded batch ingestion from the source queue.
 
     Without --execute, this command only writes a rehearsal ledger. With
-    --execute, it processes eligible queue items through ingest(..., --yes),
-    stops on the first failure, and marks only successful items as ingested.
+    --execute, it runs pre-flight checks (credentials + LiteLLM reachability),
+    then processes eligible queue items through ingest(..., --yes), stops on
+    the first failure, and marks only successful items as ingested.
     """
     from datetime import datetime, timezone
     from rich.table import Table
     from .pipeline.source_queue import open_db, queue_db_path, mark_ingested
-    from .pipeline.batch import build_batch_ledger, plan_batch, write_batch_ledger
+    from .pipeline.batch import batch_preflight, build_batch_ledger, plan_batch, write_batch_ledger
 
     config = load_config(require_services=False)
     db = open_db(queue_db_path(config.corpus_dir))
@@ -1940,6 +1946,29 @@ def batch_run_cmd(
         console.print("[yellow]Rehearsal only. Re-run with --execute to ingest.[/yellow]")
         console.print(f"[dim]Ledger written → {path}[/dim]")
         return
+
+    # ── Pre-flight checks (execute mode only) ────────────────────────────
+    if not skip_preflight:
+        preflight = batch_preflight(config, manifest, ledger_dir=ledger_dir)
+        failed = [r for r in preflight if not r.ok]
+        for r in preflight:
+            icon = "[green]✓[/green]" if r.ok else "[red]✗[/red]"
+            hint = f"  [dim]{r.detail[:80]}[/dim]" if (not r.ok and r.detail) else ""
+            console.print(f"  {icon} {r.check}: {r.message}{hint}")
+        if failed:
+            ledger.completed = False
+            ledger.stop_reason = f"preflight_failed:{failed[0].check}"
+            path = write_batch_ledger(ledger, ledger_dir)
+            console.print(Panel(
+                "\n".join(
+                    f"{r.check}: {r.message}\n  {r.detail}"
+                    if r.detail else f"{r.check}: {r.message}"
+                    for r in failed
+                ),
+                title="[red]Pre-flight failed — batch not started[/red]",
+            ))
+            console.print(f"[dim]Ledger written → {path}[/dim]")
+            raise typer.Exit(1)
 
     by_id = {item.item_id: item for item in manifest.included}
     for ledger_item in ledger.items:

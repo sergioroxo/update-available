@@ -320,6 +320,15 @@ class _CliConfig:
         self.exports_dir = base / "exports"
         self.corpus_dir.mkdir(parents=True, exist_ok=True)
         self.exports_dir.mkdir(parents=True, exist_ok=True)
+        # Credential fields required by batch_preflight() (wired since Slice 3).
+        # Set to valid non-placeholder values so the execute tests reach the ingest loop.
+        self.sanity_project_id   = "proj-test"
+        self.sanity_dataset      = "production"
+        self.sanity_write_token  = "tok-test"
+        self.supabase_url        = "https://xxx.supabase.co"
+        self.supabase_service_key = "key-test"
+        self.litelm_base_url     = ""   # no litelm probe needed — items use fake ingest
+        self.litelm_api_key      = ""
 
 
 def _patch_config(monkeypatch, tmp_path: Path) -> _CliConfig:
@@ -378,7 +387,7 @@ def test_batch_run_execute_marks_successful_item_ingested(monkeypatch, tmp_path)
 
     result = CliRunner().invoke(
         main.app,
-        ["batch-run", "--execute", "--out-dir", str(tmp_path / "ledgers")],
+        ["batch-run", "--execute", "--skip-preflight", "--out-dir", str(tmp_path / "ledgers")],
     )
 
     assert result.exit_code == 0
@@ -410,7 +419,7 @@ def test_batch_run_execute_stops_on_first_failure(monkeypatch, tmp_path):
 
     result = CliRunner().invoke(
         main.app,
-        ["batch-run", "--execute", "--out-dir", str(tmp_path / "ledgers")],
+        ["batch-run", "--execute", "--skip-preflight", "--out-dir", str(tmp_path / "ledgers")],
     )
 
     assert result.exit_code == 1

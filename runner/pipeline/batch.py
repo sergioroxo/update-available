@@ -7,6 +7,9 @@ requests.
 
 BatchLedger records what batch-run did or would do. Execution itself lives in
 runner.main so the CLI can reuse the existing ingest() path.
+
+batch_preflight() runs before live execution to confirm that required services
+are reachable and credentials are present. Rehearsal mode must skip it entirely.
 """
 from __future__ import annotations
 
@@ -15,12 +18,17 @@ import sqlite3
 from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import NamedTuple, TYPE_CHECKING
 
+from .diagnostics import probe_health as _probe_health, ErrorKind as _DiagErrorKind
 from .source_queue import (
     QueueItem,
     exclusion_reason,
     list_items,
 )
+
+if TYPE_CHECKING:
+    from ..config import Config
 
 # Priority sort order for included items (high first).
 _PRIORITY_ORDER: dict[str, int] = {"high": 0, "medium": 1, "low": 2, "skip": 3}
@@ -34,6 +42,159 @@ DEFAULT_BATCH_LIMIT: int = 10
 
 def _now_utc() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+# ── Pre-flight infrastructure ─────────────────────────────────────────────────
+
+# Credential values that should be treated as "not configured".
+_CRED_PLACEHOLDERS: frozenset[str] = frozenset({
+    "",
+    "https://<project>.supabase.co",
+    "sk-local-research-key-change-this",
+})
+
+
+class PreflightResult(NamedTuple):
+    """Result of a single pre-flight check.
+
+    ``check`` is a stable, snake_case identifier used in ledger stop_reason.
+    ``ok`` is False for any check that should block live batch execution.
+    ``detail`` is an optional remediation hint or raw error excerpt.
+    """
+    check:   str
+    ok:      bool
+    message: str
+    detail:  str = ""
+
+
+def _cred_ok(value: str) -> bool:
+    """Return True when a credential string looks populated and non-placeholder."""
+    return bool(value) and value not in _CRED_PLACEHOLDERS
+
+
+def _needs_litelm(manifest: BatchManifest) -> bool:
+    """Return True if any included item's effective LLM route uses LiteLLM.
+
+    Items with an empty ``recommended_llm`` fall back to ``"litelm"`` in the
+    execute loop, so they are treated as litelm-routed here.
+    """
+    return any(
+        (item.recommended_llm or "litelm").startswith("litelm")
+        for item in manifest.included
+    )
+
+
+def batch_preflight(
+    config: Config,
+    manifest: BatchManifest,
+    *,
+    ledger_dir: Path,
+) -> list[PreflightResult]:
+    """Run pre-flight checks before live batch execution.
+
+    Checks (in order):
+      1. Sanity credentials present — local, no I/O.
+      2. Supabase credentials present — local, no I/O.
+      3. LiteLLM endpoint reachable — one HTTP probe, only when included items
+         route through a ``litelm*`` LLM path.
+      4. Ledger directory writable — local filesystem write test.
+
+    All checks run regardless of earlier failures so the researcher sees the
+    complete picture.  The caller must test ``any(not r.ok for r in results)``
+    to decide whether to proceed.
+
+    Only call this when ``execute=True``.  Rehearsal mode must skip preflight.
+    """
+    results: list[PreflightResult] = []
+
+    # ── 1. Sanity credentials (local) ─────────────────────────────────────
+    sanity_missing = [
+        k for k, v in [
+            ("SANITY_PROJECT_ID",  str(config.sanity_project_id)),
+            ("SANITY_DATASET",     str(config.sanity_dataset)),
+            ("SANITY_WRITE_TOKEN", str(config.sanity_write_token)),
+        ]
+        if not _cred_ok(v)
+    ]
+    if sanity_missing:
+        results.append(PreflightResult(
+            "sanity_credentials", False,
+            f"Sanity credentials missing or placeholder: {', '.join(sanity_missing)}",
+            "Add the missing values to runner/.env and re-run.",
+        ))
+    else:
+        results.append(PreflightResult(
+            "sanity_credentials", True,
+            "SANITY_PROJECT_ID + SANITY_DATASET + SANITY_WRITE_TOKEN present",
+        ))
+
+    # ── 2. Supabase credentials (local) ───────────────────────────────────
+    supa_missing = [
+        k for k, v in [
+            ("SUPABASE_URL",         str(config.supabase_url)),
+            ("SUPABASE_SERVICE_KEY", str(config.supabase_service_key)),
+        ]
+        if not _cred_ok(v)
+    ]
+    if supa_missing:
+        results.append(PreflightResult(
+            "supabase_credentials", False,
+            f"Supabase credentials missing or placeholder: {', '.join(supa_missing)}",
+            "Add the missing values to runner/.env and re-run.",
+        ))
+    else:
+        results.append(PreflightResult(
+            "supabase_credentials", True,
+            "SUPABASE_URL + SUPABASE_SERVICE_KEY present",
+        ))
+
+    # ── 3. LiteLLM endpoint reachability (network, only when needed) ──────
+    if _needs_litelm(manifest):
+        litelm_url = str(config.litelm_base_url)
+        if not _cred_ok(litelm_url):
+            results.append(PreflightResult(
+                "litelm_endpoint", False,
+                "LITELM_BASE_URL not configured — batch items need the Mac Studio",
+                "Set LITELM_BASE_URL in runner/.env to the LiteLLM Tailscale URL.",
+            ))
+        else:
+            dr = _probe_health(
+                litelm_url,
+                api_key=str(config.litelm_api_key),
+                timeout=15,
+            )
+            if dr.ok or dr.kind == _DiagErrorKind.HEALTH_SLOW:
+                results.append(PreflightResult(
+                    "litelm_endpoint", True,
+                    f"LiteLLM reachable at {litelm_url}",
+                    "Health check slow (cold model ping) — inference is OK."
+                    if dr.kind == _DiagErrorKind.HEALTH_SLOW else "",
+                ))
+            else:
+                results.append(PreflightResult(
+                    "litelm_endpoint", False,
+                    f"LiteLLM not reachable: {dr.message}",
+                    dr.detail,
+                ))
+
+    # ── 4. Ledger directory writable (local filesystem) ───────────────────
+    try:
+        ledger_dir.mkdir(parents=True, exist_ok=True)
+        _test = ledger_dir / ".preflight_write_test"
+        _test.write_text("ok")
+        _test.unlink()
+        results.append(PreflightResult(
+            "ledger_dir_writable", True,
+            f"Ledger directory writable: {ledger_dir}",
+        ))
+    except OSError as exc:
+        results.append(PreflightResult(
+            "ledger_dir_writable", False,
+            f"Cannot write to ledger directory: {ledger_dir}",
+            str(exc),
+        ))
+
+    return results
 
 
 @dataclass

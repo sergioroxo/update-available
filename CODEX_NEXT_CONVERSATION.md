@@ -239,25 +239,27 @@ Ungrounded enrichment `corpus_connections` are stripped by default before
 `enrichment.json`; enrichment audit records suppression. Retrieval-grounded
 connections remain deferred until vector retrieval is wired.
 
-**✓ F Slice 1-2 -- Batch Runner foundation**
+**✓ F Slice 1-3 -- Batch Runner foundation**
 `runner batch-plan` surfaces included/excluded queue items before execution.
 `runner batch-run` is guarded: rehearsal by default, `--execute` required, uses
 `source_queue.is_overnight_safe(item)` via `plan_batch()`, stops on first ingest
 failure, writes a ledger, and marks queue rows ingested only after success. No
-live batch run has been performed yet.
+live batch run has been performed yet. `--execute` also runs preflight checks for
+Sanity/Supabase credentials, LiteLLM reachability when needed, and ledger
+writability before the first ingest.
 
 Recommended order for a new session:
-1. Verify repo/test state (831 passed expected).
+1. Verify repo/test state (861 passed expected).
 2. Use `runner batch-plan` to inspect the queue before any live execution.
-3. Add/verify pre-flight checks and morning report before the first attended `batch-run --execute`.
+3. Add a morning report / run summary before the first attended `batch-run --execute`.
 4. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 831
-- Latest completed milestone: TASK F guarded batch-run
+- Tests passing: 861
+- Latest completed milestone: TASK F preflight checks
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -289,6 +291,11 @@ Recommended order for a new session:
   - Uses existing ingest path with `yes=True` and `run_triage=False`.
   - Stops on first failure and marks queue rows ingested only after success.
   - Writes ledgers to `exports/batch_ledgers/` unless `--out-dir` is provided.
+- Batch Runner Slice 3: preflight checks built ✓
+  - Blocks live execution on missing/placeholder Sanity/Supabase credentials.
+  - Probes LiteLLM only when an included item routes through `litelm*`.
+  - Checks ledger directory writability before starting.
+  - Rehearsal mode skips preflight; `--skip-preflight` is danger-labelled for tests.
 
 ---
 

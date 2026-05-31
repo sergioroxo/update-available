@@ -67,7 +67,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | TASK F guarded batch-run | Rehearsal by default; `--execute` required; stops on first failure; marks queue rows ingested only after success | TASK F dry-run manifest | Done; live run deferred |
 | TASK F batch ledger | Record source IDs, doc IDs, manifest snapshot, execution status, and errors | TASK F | Done foundation; audit-path/morning-report details later |
 | 10-15 doc limit | Keep review load human-sized | TASK F | Done for dry-run and execution planning |
-| Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Partial: stop-on-ingest-failure built; pre-flight checks pending |
+| Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Partial: stop-on-ingest-failure + preflight checks built; richer service probes later if needed |
 | Morning report | Human-facing summary of what happened overnight | TASK F | Pending |
 | Stakes-ranked review inbox | Legal/testimony/Tier-1/low-confidence first | TASK F + Streamlit | Pending |
 | Calibration dashboard | Confidence vs researcher corrections | Pilot batch | Pending |
