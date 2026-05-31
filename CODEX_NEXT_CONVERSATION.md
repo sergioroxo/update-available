@@ -239,21 +239,25 @@ Ungrounded enrichment `corpus_connections` are stripped by default before
 `enrichment.json`; enrichment audit records suppression. Retrieval-grounded
 connections remain deferred until vector retrieval is wired.
 
-**F -- Batch Runner** (technically unblocked; recommend after data-structure lock-in)
-Must use `source_queue.is_overnight_safe(item)` and surface excluded items before
-processing unattended. G1-G5 safety/provenance preconditions are complete.
+**✓ F Slice 1-2 -- Batch Runner foundation**
+`runner batch-plan` surfaces included/excluded queue items before execution.
+`runner batch-run` is guarded: rehearsal by default, `--execute` required, uses
+`source_queue.is_overnight_safe(item)` via `plan_batch()`, stops on first ingest
+failure, writes a ledger, and marks queue rows ingested only after success. No
+live batch run has been performed yet.
 
 Recommended order for a new session:
-1. Verify repo/test state (827 passed expected).
-2. Use `runner batch-plan` to inspect the queue before any execution work.
-3. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
+1. Verify repo/test state (831 passed expected).
+2. Use `runner batch-plan` to inspect the queue before any live execution.
+3. Add/verify pre-flight checks and morning report before the first attended `batch-run --execute`.
+4. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 827
-- Latest completed milestone: Source-aware queue triage
+- Tests passing: 831
+- Latest completed milestone: TASK F guarded batch-run
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -279,7 +283,12 @@ Recommended order for a new session:
   Sanity schema/write deferred
 - Data-structure lock-in DS-2: `NetworkConnection.attested_in_doc` and
   `export_network_edges()` built ✓; Sanity network schema/write deferred
-- Batch Runner Slice 1: `runner batch-plan` built ✓; execution mode still deferred
+- Batch Runner Slice 1: `runner batch-plan` built ✓
+- Batch Runner Slice 2: guarded `runner batch-run` built ✓; live execution still deferred
+  - Default is rehearsal-only; `--execute` is required for ingestion.
+  - Uses existing ingest path with `yes=True` and `run_triage=False`.
+  - Stops on first failure and marks queue rows ingested only after success.
+  - Writes ledgers to `exports/batch_ledgers/` unless `--out-dir` is provided.
 
 ---
 

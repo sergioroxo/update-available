@@ -1,17 +1,20 @@
-"""TASK F — Batch planning (Slice 1: dry-run manifest only).
+"""TASK F — Batch planning and guarded execution ledgers.
 
 plan_batch() inspects the source queue and builds a BatchManifest that
 separates overnight-safe items (included) from excluded items with reasons.
 It does NOT mutate the queue, does NOT call ingest, and makes no network
 requests.
 
-Slice 2 (batch execution) is deliberately NOT in this file yet.
+BatchLedger records what batch-run did or would do. Execution itself lives in
+runner.main so the CLI can reuse the existing ingest() path.
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
+from pathlib import Path
 
 from .source_queue import (
     QueueItem,
@@ -27,6 +30,10 @@ MAX_BATCH_LIMIT: int = 15
 
 # Default limit when none is specified.
 DEFAULT_BATCH_LIMIT: int = 10
+
+
+def _now_utc() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 @dataclass
@@ -75,6 +82,72 @@ class BatchManifest:
         return d
 
 
+@dataclass
+class LedgerItem:
+    """Execution record for one manifest item."""
+    item_id: str
+    url: str
+    recommended_llm: str
+    status: str = "planned"
+    doc_id: str = ""
+    error: str = ""
+    started_at: str = ""
+    finished_at: str = ""
+
+
+@dataclass
+class BatchLedger:
+    """Persistent record of a batch-run attempt.
+
+    ``execute=False`` ledgers are rehearsals only. ``execute=True`` ledgers
+    record each attempted ingest and stop on the first failure.
+    """
+    batch_id: str
+    generated_at: str
+    execute: bool
+    manifest: dict
+    completed: bool = False
+    stop_reason: str = ""
+    items: list[LedgerItem] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+def build_batch_ledger(
+    manifest: BatchManifest,
+    *,
+    batch_id: str,
+    execute: bool,
+) -> BatchLedger:
+    """Create an execution ledger from a dry-run manifest."""
+    return BatchLedger(
+        batch_id=batch_id,
+        generated_at=_now_utc(),
+        execute=execute,
+        manifest=manifest.to_dict(),
+        items=[
+            LedgerItem(
+                item_id=item.item_id,
+                url=item.url,
+                recommended_llm=item.recommended_llm,
+            )
+            for item in manifest.included
+        ],
+    )
+
+
+def write_batch_ledger(ledger: BatchLedger, out_dir: Path) -> Path:
+    """Write a batch ledger JSON file and return its path."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"{ledger.batch_id}_ledger.json"
+    path.write_text(
+        json.dumps(ledger.to_dict(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return path
+
+
 def plan_batch(
     db: sqlite3.Connection,
     *,
@@ -107,7 +180,7 @@ def plan_batch(
         Read-only. No queue state is modified.
     """
     effective_limit = min(max(1, limit), MAX_BATCH_LIMIT)
-    generated_at = datetime.now(timezone.utc).isoformat()
+    generated_at = _now_utc()
 
     # Read a broad set from the queue — no status filter so we can surface
     # excluded items (e.g. status=new needs triage, status=ingested is done).

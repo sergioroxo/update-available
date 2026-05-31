@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 827
-**Latest completed milestone:** Source-aware queue triage
+**Tests passing:** 831
+**Latest completed milestone:** TASK F guarded batch-run
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 827 tests -- run before every edit
+tests/                          # 831 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -410,7 +410,7 @@ will depend on:
 
 ---
 
-### TASK F -- Batch Runner (Slice 1 complete; execution still deferred)
+### TASK F -- Batch Runner (Slices 1-2 complete; live execution still deferred)
 
 **Status:** G1 + G2 are complete, G3 protects reviewed Sanity records, G4 hardens
 provenance, G5 suppresses ungrounded corpus connections, and DS-1/2/3/4 lock in
@@ -422,14 +422,22 @@ enforces the 15-item hard cap, surfaces included/excluded rows with stable
 reasons, and can optionally write manifest JSON with `--out`. It does not ingest,
 analyze, enrich, upload, or mutate queue statuses.
 
+**Slice 2 complete:** `runner batch-run` now adds a guarded execution path. By
+default it is rehearsal-only and writes a ledger with `not_executed` rows. Passing
+`--execute` processes only manifest-included items through the existing
+`ingest(..., yes=True, run_triage=False)` path, stops on the first failure, writes
+a JSON ledger to `exports/batch_ledgers/` (or `--out-dir`), and marks queue rows
+`ingested` only after successful ingest. No live batch execution has been run in
+this session.
+
 **Queue triage improvement:** triage now passes URL-derived source hints into
 the model, so DOI/journal pages blocked by Cloudflare route as academic but
 not overnight-safe, social media shells route as social/media, and YouTube
 boilerplate routes as media/transcript work rather than generic footer text.
 
-**Next TASK F slice:** execution remains deferred. Before building `batch-run`,
-plan pre-flight connectivity checks, a per-run ledger, hard stop-on-uncertainty,
-and queue status updates after successful ingest only.
+**Next TASK F slice:** add pre-flight connectivity checks and a morning report.
+Before the first live `--execute` run, inspect `runner batch-plan`, confirm the
+Mac Studio/LiteLLM/Sanity/Supabase state, and run a tiny attended pilot batch.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -492,7 +500,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 827 passed (or higher after new tests)
+# Must see: 831 passed (or higher after new tests)
 ```
 
 ---
@@ -543,4 +551,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan complete. Queue triage is source-aware for blocked DOI/journal, social, and video URLs, and queue notes inform retries. 827 tests passing. Recommended next order: review live queue/manifest behavior, then plan conservative TASK F execution slice.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan and Slice 2 guarded `batch-run` are complete. Queue triage is source-aware for blocked DOI/journal, social, and video URLs, and queue notes inform retries. 831 tests passing. Recommended next order: pre-flight connectivity checks, morning report, then a tiny attended pilot batch before any overnight use.*

@@ -23,12 +23,15 @@ Covers:
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from typer.testing import CliRunner
 
+from runner import main
 from runner.pipeline.source_queue import (
     add_item,
     apply_triage_result,
@@ -41,7 +44,9 @@ from runner.pipeline.source_queue import (
 from runner.pipeline.batch import (
     BatchManifest,
     MAX_BATCH_LIMIT,
+    build_batch_ledger,
     plan_batch,
+    write_batch_ledger,
 )
 
 
@@ -303,3 +308,117 @@ def test_plan_batch_to_dict_includes_computed_counts(db):
     assert "generated_at" in d
     assert "included" in d
     assert "excluded" in d
+
+
+# ---------------------------------------------------------------------------
+# batch-run ledger and CLI tests
+# ---------------------------------------------------------------------------
+
+class _CliConfig:
+    def __init__(self, base: Path):
+        self.corpus_dir = base / "corpus"
+        self.exports_dir = base / "exports"
+        self.corpus_dir.mkdir(parents=True, exist_ok=True)
+        self.exports_dir.mkdir(parents=True, exist_ok=True)
+
+
+def _patch_config(monkeypatch, tmp_path: Path) -> _CliConfig:
+    cfg = _CliConfig(tmp_path)
+    monkeypatch.setattr(main, "load_config", lambda *args, **kwargs: cfg)
+    return cfg
+
+
+def test_build_and_write_batch_ledger(db, tmp_path):
+    _add_safe_item(db, "https://example.org/ledger")
+    manifest = plan_batch(db)
+
+    ledger = build_batch_ledger(manifest, batch_id="batch-test", execute=False)
+    path = write_batch_ledger(ledger, tmp_path)
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert path.name == "batch-test_ledger.json"
+    assert data["batch_id"] == "batch-test"
+    assert data["execute"] is False
+    assert data["items"][0]["status"] == "planned"
+    assert data["manifest"]["total_included"] == 1
+
+
+def test_batch_run_without_execute_writes_rehearsal_ledger(monkeypatch, tmp_path):
+    cfg = _patch_config(monkeypatch, tmp_path)
+    db = open_db(queue_db_path(cfg.corpus_dir))
+    _add_safe_item(db, "https://example.org/rehearsal")
+    calls = []
+    monkeypatch.setattr(main, "ingest", lambda *args, **kwargs: calls.append((args, kwargs)))
+
+    result = CliRunner().invoke(main.app, ["batch-run", "--out-dir", str(tmp_path / "ledgers")])
+
+    assert result.exit_code == 0
+    assert "Rehearsal only" in result.stdout
+    assert calls == []
+    ledgers = list((tmp_path / "ledgers").glob("*_ledger.json"))
+    assert len(ledgers) == 1
+    data = json.loads(ledgers[0].read_text(encoding="utf-8"))
+    assert data["execute"] is False
+    assert data["completed"] is False
+    assert data["stop_reason"] == "execute flag not provided"
+    assert data["items"][0]["status"] == "not_executed"
+
+
+def test_batch_run_execute_marks_successful_item_ingested(monkeypatch, tmp_path):
+    cfg = _patch_config(monkeypatch, tmp_path)
+    db = open_db(queue_db_path(cfg.corpus_dir))
+    item = _add_safe_item(db, "https://example.org/success")
+    calls = []
+
+    def fake_ingest(*args, **kwargs):
+        calls.append((args, kwargs))
+        return "doc-success"
+
+    monkeypatch.setattr(main, "ingest", fake_ingest)
+
+    result = CliRunner().invoke(
+        main.app,
+        ["batch-run", "--execute", "--out-dir", str(tmp_path / "ledgers")],
+    )
+
+    assert result.exit_code == 0
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args == ("https://example.org/success",)
+    assert kwargs["yes"] is True
+    assert kwargs["run_triage"] is False
+    assert kwargs["run_enrich"] is True
+    assert kwargs["batch"].startswith("batch-")
+    loaded = get_item(db, item.id)
+    assert loaded.status == "ingested"
+    assert loaded.corpus_doc_id == "doc-success"
+    data = json.loads(next((tmp_path / "ledgers").glob("*_ledger.json")).read_text(encoding="utf-8"))
+    assert data["completed"] is True
+    assert data["items"][0]["status"] == "succeeded"
+    assert data["items"][0]["doc_id"] == "doc-success"
+
+
+def test_batch_run_execute_stops_on_first_failure(monkeypatch, tmp_path):
+    cfg = _patch_config(monkeypatch, tmp_path)
+    db = open_db(queue_db_path(cfg.corpus_dir))
+    item = _add_safe_item(db, "https://example.org/failure")
+
+    def fake_ingest(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(main, "ingest", fake_ingest)
+
+    result = CliRunner().invoke(
+        main.app,
+        ["batch-run", "--execute", "--out-dir", str(tmp_path / "ledgers")],
+    )
+
+    assert result.exit_code == 1
+    loaded = get_item(db, item.id)
+    assert loaded.status == "triaged"
+    assert loaded.corpus_doc_id == ""
+    data = json.loads(next((tmp_path / "ledgers").glob("*_ledger.json")).read_text(encoding="utf-8"))
+    assert data["completed"] is False
+    assert data["stop_reason"] == f"failed:{item.id}"
+    assert data["items"][0]["status"] == "failed"
+    assert data["items"][0]["error"] == "boom"

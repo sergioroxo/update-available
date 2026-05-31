@@ -278,6 +278,8 @@ def ingest(
         except Exception as exc:
             console.print(Panel(f"[red]Enrichment failed: {exc}[/red]", title="Stage 3c error"))
 
+    return intake_result.doc_id
+
 
 @app.command(name="reanalyze")
 def reanalyze_doc(
@@ -1880,6 +1882,118 @@ def batch_plan_cmd(
             encoding="utf-8",
         )
         console.print(f"[dim]Manifest written → {out}[/dim]")
+
+
+@app.command(name="batch-run")
+def batch_run_cmd(
+    batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Only process items in this batch group"),
+    limit: int = typer.Option(10, "--limit", "-n", help="Maximum items to include (hard cap: 15)"),
+    priority: Optional[str] = typer.Option(None, "--priority", "-p", help="Filter by priority: high | medium | low"),
+    out_dir: Optional[Path] = typer.Option(None, "--out-dir", help="Directory for batch ledger JSON"),
+    execute: bool = typer.Option(False, "--execute", help="Actually ingest included items. Omit for rehearsal only."),
+    run_enrich: bool = typer.Option(True, "--enrich/--no-enrich", help="Run Stage 3c enrichment during each ingest"),
+):
+    """Guarded batch ingestion from the source queue.
+
+    Without --execute, this command only writes a rehearsal ledger. With
+    --execute, it processes eligible queue items through ingest(..., --yes),
+    stops on the first failure, and marks only successful items as ingested.
+    """
+    from datetime import datetime, timezone
+    from rich.table import Table
+    from .pipeline.source_queue import open_db, queue_db_path, mark_ingested
+    from .pipeline.batch import build_batch_ledger, plan_batch, write_batch_ledger
+
+    config = load_config(require_services=False)
+    db = open_db(queue_db_path(config.corpus_dir))
+    manifest = plan_batch(
+        db,
+        batch_group=batch or "",
+        limit=limit,
+        priority_filter=priority or "",
+    )
+    batch_id = datetime.now(timezone.utc).strftime("batch-%Y%m%d-%H%M%S")
+    ledger = build_batch_ledger(manifest, batch_id=batch_id, execute=execute)
+    ledger_dir = out_dir or (config.exports_dir / "batch_ledgers")
+
+    console.print(f"\n[bold]Batch Run[/bold]  [dim]{batch_id}[/dim]")
+    console.print(
+        f"  Eligible items: {manifest.total_included}"
+        f"  [yellow]Excluded: {manifest.total_excluded}[/yellow]"
+        f"  [dim]execute={execute}[/dim]"
+    )
+
+    if not manifest.included:
+        ledger.completed = False
+        ledger.stop_reason = "no eligible items"
+        path = write_batch_ledger(ledger, ledger_dir)
+        console.print("[yellow]No eligible items to ingest.[/yellow]")
+        console.print(f"[dim]Ledger written → {path}[/dim]")
+        return
+
+    if not execute:
+        for item in ledger.items:
+            item.status = "not_executed"
+        ledger.completed = False
+        ledger.stop_reason = "execute flag not provided"
+        path = write_batch_ledger(ledger, ledger_dir)
+        console.print("[yellow]Rehearsal only. Re-run with --execute to ingest.[/yellow]")
+        console.print(f"[dim]Ledger written → {path}[/dim]")
+        return
+
+    by_id = {item.item_id: item for item in manifest.included}
+    for ledger_item in ledger.items:
+        manifest_item = by_id[ledger_item.item_id]
+        ledger_item.started_at = datetime.now(timezone.utc).isoformat()
+        ledger_item.status = "running"
+        try:
+            doc_id = ingest(
+                manifest_item.url,
+                llm=manifest_item.recommended_llm or "litelm",
+                tier=None,
+                batch=batch_id,
+                source_url=None,
+                max_chars=None,
+                yes=True,
+                run_triage=False,
+                run_enrich=run_enrich,
+                enrich_model=None,
+                second_opinion=False,
+                collect_comments=False,
+                max_comments=50,
+                skip_whisper=False,
+            )
+            ledger_item.doc_id = doc_id or ""
+            ledger_item.status = "succeeded"
+            mark_ingested(db, ledger_item.item_id, ledger_item.doc_id)
+            console.print(
+                f"[green]✓[/green] {ledger_item.item_id[:12]} → {ledger_item.doc_id}"
+            )
+        except Exception as exc:
+            ledger_item.status = "failed"
+            ledger_item.error = str(exc)
+            ledger_item.finished_at = datetime.now(timezone.utc).isoformat()
+            ledger.completed = False
+            ledger.stop_reason = f"failed:{ledger_item.item_id}"
+            path = write_batch_ledger(ledger, ledger_dir)
+            console.print(Panel(
+                f"{manifest_item.url}\n\n{exc}\n\nLedger: {path}",
+                title="[red]Batch stopped on first failure[/red]",
+            ))
+            raise typer.Exit(1)
+        ledger_item.finished_at = datetime.now(timezone.utc).isoformat()
+
+    ledger.completed = True
+    path = write_batch_ledger(ledger, ledger_dir)
+
+    t = Table(title="Batch complete", show_lines=False)
+    t.add_column("ID", style="dim", no_wrap=True)
+    t.add_column("Status", no_wrap=True)
+    t.add_column("Doc ID", style="green", no_wrap=True)
+    for item in ledger.items:
+        t.add_row(item.item_id[:12], item.status, item.doc_id)
+    console.print(t)
+    console.print(f"[dim]Ledger written → {path}[/dim]")
 
 
 @app.command(name="export")

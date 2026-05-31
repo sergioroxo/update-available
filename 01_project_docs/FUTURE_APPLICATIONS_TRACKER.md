@@ -64,9 +64,10 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | Step | Description | Dependency | Status |
 |---|---|---|---|
 | TASK F dry-run manifest | Show included/excluded queue items, reasons, route, estimated risk | G5 recommended | Done (`runner batch-plan`) |
-| TASK F batch ledger | Record source IDs, doc IDs, triage, audit paths, upload/enrichment status, errors | TASK F | Pending |
-| 10-15 doc limit | Keep review load human-sized | TASK F | Done for dry-run plan; enforce again in execution |
-| Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Pending |
+| TASK F guarded batch-run | Rehearsal by default; `--execute` required; stops on first failure; marks queue rows ingested only after success | TASK F dry-run manifest | Done; live run deferred |
+| TASK F batch ledger | Record source IDs, doc IDs, manifest snapshot, execution status, and errors | TASK F | Done foundation; audit-path/morning-report details later |
+| 10-15 doc limit | Keep review load human-sized | TASK F | Done for dry-run and execution planning |
+| Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Partial: stop-on-ingest-failure built; pre-flight checks pending |
 | Morning report | Human-facing summary of what happened overnight | TASK F | Pending |
 | Stakes-ranked review inbox | Legal/testimony/Tier-1/low-confidence first | TASK F + Streamlit | Pending |
 | Calibration dashboard | Confidence vs researcher corrections | Pilot batch | Pending |
@@ -148,7 +149,7 @@ These stay deferred until the spine is stronger:
 ## 8. Recommended Sequence
 
 1. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle. DS-1, DS-2, DS-3, and DS-4 are complete; DS-5/6/7 remain deferred unless TASK F planning exposes a blocker.
-2. **TASK F:** conservative batch runner with dry-run manifest and batch ledger.
+2. **TASK F:** conservative batch runner with dry-run manifest and guarded batch ledger. Pre-flight checks and morning report remain before overnight use.
 3. **Pilot calibration:** 10-20 documents across languages/types/stakes.
 4. **Export-only outputs:** network graph, glossary, claims ledger, framing matrix.
 5. **Book schema:** only when a real book needs ingestion and Q-BookSanity is decided.
