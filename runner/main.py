@@ -62,6 +62,7 @@ def ingest(
     _triage_audit: dict | None = None
     if run_triage and not yes:
         snippet = ""
+        note = ""
         try:
             snippet, note = triage.extract_snippet(source)
             console.print(f"[dim]{note}[/dim]")
@@ -69,7 +70,14 @@ def ingest(
             console.print(f"[yellow]Triage snippet extraction failed: {exc}[/yellow]")
         if snippet:
             _triage_audit = {}
-            triage_result = triage.run(snippet, config, _audit=_triage_audit)
+            triage_result = triage.run(
+                snippet,
+                config,
+                source_label=triage.source_context_label(
+                    source, extraction_note=note, snippet=snippet,
+                ),
+                _audit=_triage_audit,
+            )
             llm = review.checkpoint_triage(triage_result, llm)
 
     # Deduplication check — offer update-in-place or new document
@@ -1291,8 +1299,14 @@ def queue_add(
         for i, item in enumerate(new_items, 1):
             console.print(f"  [{i}/{len(new_items)}] {item.url[:80]}")
             try:
-                snippet, _ = triage_mod.extract_snippet(item.url)
-                result = triage_mod.run(snippet, config)
+                snippet, note = triage_mod.extract_snippet(item.url)
+                result = triage_mod.run(
+                    snippet,
+                    config,
+                    source_label=triage_mod.source_context_label(
+                        item.url, extraction_note=note, snippet=snippet,
+                    ),
+                )
                 apply_triage_result(db, item.id, result, model_name=model_name)
                 console.print(
                     f"    → [cyan]{result.doc_type_hint}[/cyan] "
@@ -1435,7 +1449,14 @@ def queue_triage(
             snippet, note = triage_mod.extract_snippet(item.url)
             console.print(f"  [dim]{note[:60]}[/dim]")
             triage_audit: dict = {}
-            result = triage_mod.run(snippet, config, _audit=triage_audit)
+            result = triage_mod.run(
+                snippet,
+                config,
+                source_label=triage_mod.source_context_label(
+                    item.url, extraction_note=note, snippet=snippet,
+                ),
+                _audit=triage_audit,
+            )
             apply_triage_result(db, item.id, result, model_name=model_name)
             if not result.triage_succeeded:
                 # run() returned a fail-closed result (model/network/parse failure).

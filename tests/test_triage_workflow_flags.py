@@ -22,7 +22,7 @@ from types import SimpleNamespace
 import pytest
 
 from runner.models.triage import TriageResult
-from runner.pipeline.triage import build_triage_context
+from runner.pipeline.triage import build_triage_context, source_context_label
 from runner.pipeline.source_queue import (
     QueueItem,
     add_item,
@@ -471,6 +471,38 @@ def test_context_source_label_prepended():
 def test_context_source_label_absent_when_empty():
     ctx = build_triage_context("Content.")
     assert "SOURCE:" not in ctx
+
+
+def test_source_context_label_marks_doi_article_with_blocked_extraction():
+    label = source_context_label(
+        "https://acamh.onlinelibrary.wiley.com/doi/10.1111/camh.12380",
+        snippet="Just a moment... Cloudflare is checking your browser.",
+    )
+
+    assert "SOURCE_HINTS:" in label
+    assert "academic/research article or DOI landing page" in label
+    assert "access/login/challenge/boilerplate" in label
+    assert "overnight_batch_safe=false" in label
+
+
+def test_source_context_label_marks_social_shell():
+    label = source_context_label(
+        "https://x.com/seja_bondoso",
+        snippet="Something went wrong. Try reloading.",
+    )
+
+    assert "social media profile/post URL" in label
+    assert "technical shell" in label
+
+
+def test_source_context_label_marks_youtube_as_video():
+    label = source_context_label(
+        "https://www.youtube.com/watch?v=stBt7_NTT3o",
+        snippet="About Press Copyright Contact us Creators Advertise",
+    )
+
+    assert "video platform URL" in label
+    assert "page boilerplate" in label
 
 
 def test_context_detects_markdown_headings_in_middle():

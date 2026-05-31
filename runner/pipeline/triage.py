@@ -19,6 +19,7 @@ import re
 import time
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
 try:
     from runner.config import Config
@@ -36,6 +37,39 @@ _TRIAGE_MAX_HEADINGS = 20
 
 _HEADING_LINE_RE = re.compile(
     r'^(?:#{1,6}\s|(?:Chapter|Section|Part|CHAPTER|SECTION|PART)\s|\d+\.\s)',
+)
+
+_ACADEMIC_HOST_HINTS = (
+    "doi.org",
+    "onlinelibrary.wiley.com",
+    "journals.sagepub.com",
+    "tandfonline.com",
+    "pubmed.ncbi.nlm.nih.gov",
+    "springer.com",
+    "link.springer.com",
+    "sciencedirect.com",
+    "cambridge.org",
+    "academic.oup.com",
+)
+
+_SOCIAL_HOST_HINTS = (
+    "x.com",
+    "twitter.com",
+    "facebook.com",
+    "instagram.com",
+    "tiktok.com",
+)
+
+_VIDEO_HOST_HINTS = (
+    "youtube.com",
+    "youtu.be",
+    "vimeo.com",
+)
+
+_BLOCKER_TEXT_RE = re.compile(
+    r"cloudflare|verify you are human|enable javascript|access denied|"
+    r"technical error|something went wrong|sign in|login|cookie|website footer",
+    re.IGNORECASE,
 )
 
 _SYSTEM_PROMPT = """\
@@ -89,6 +123,64 @@ Workflow flag rules:
 - suggested_process_route: "split-book" if needs_book_splitting; "media-ingest" if
                            needs_media_review; "standard" otherwise
 """
+
+
+def source_context_label(
+    source: str,
+    *,
+    extraction_note: str = "",
+    snippet: str = "",
+) -> str:
+    """Return source metadata for triage context.
+
+    The triage model should not mistake Cloudflare/login/footer text for the
+    document itself. This helper adds URL-derived hints so blocked pages,
+    DOI/article landing pages, social profiles, and videos still route sensibly.
+    """
+    source = (source or "").strip()
+    if not source:
+        return ""
+
+    parsed = urlparse(source)
+    host = parsed.netloc.lower().removeprefix("www.")
+    path = parsed.path.lower()
+    hints: list[str] = []
+
+    if host in _VIDEO_HOST_HINTS or any(host.endswith(f".{h}") for h in _VIDEO_HOST_HINTS):
+        hints.append(
+            "video platform URL; extraction may show page boilerplate; "
+            "route as media/video and require transcript/media review when needed"
+        )
+    if host in _SOCIAL_HOST_HINTS or any(host.endswith(f".{h}") for h in _SOCIAL_HOST_HINTS):
+        hints.append(
+            "social media profile/post URL; extraction may show login or technical shell; "
+            "do not classify the shell page as the source content"
+        )
+    if (
+        host in _ACADEMIC_HOST_HINTS
+        or any(host.endswith(f".{h}") for h in _ACADEMIC_HOST_HINTS)
+        or host == "doi.org"
+        or "/doi/" in path
+    ):
+        hints.append(
+            "academic/research article or DOI landing page; if extraction is blocked, "
+            "route from URL metadata rather than classifying the blocker page"
+        )
+    if path.endswith(".pdf"):
+        hints.append("direct PDF URL; likely report, article, or official document")
+
+    blocker_probe = f"{extraction_note}\n{snippet[:700]}"
+    if _BLOCKER_TEXT_RE.search(blocker_probe):
+        hints.append(
+            "extracted text appears to be access/login/challenge/boilerplate; "
+            "treat it as extraction failure metadata, not as the document substance; "
+            "set overnight_batch_safe=false because unattended ingest may capture the blocker page"
+        )
+
+    if not hints:
+        return source
+
+    return source + "\nSOURCE_HINTS: " + " | ".join(hints)
 
 
 def build_triage_context(

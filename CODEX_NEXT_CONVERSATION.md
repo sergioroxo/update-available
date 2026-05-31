@@ -244,7 +244,7 @@ Must use `source_queue.is_overnight_safe(item)` and surface excluded items befor
 processing unattended. G1-G5 safety/provenance preconditions are complete.
 
 Recommended order for a new session:
-1. Verify repo/test state (822 passed expected).
+1. Verify repo/test state (825 passed expected).
 2. Use `runner batch-plan` to inspect the queue before any execution work.
 3. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
@@ -252,8 +252,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 822
-- Latest completed milestone: TASK F Slice 1 -- dry-run batch plan
+- Tests passing: 825
+- Latest completed milestone: Source-aware queue triage
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -262,6 +262,8 @@ Recommended order for a new session:
 - Enrichment default-on: `--enrich/--no-enrich`, default True ✓ (TASK D)
 - Book splitter: `book_splitter.py` module built (44 tests) ✓; `split-book --preview` CLI built ✓ (TASK E)
 - Triage workflow flags: built and wired ✓ (TASK A)
+- Source-aware queue triage: DOI/journal blockers, social shells, and video
+  boilerplate now get URL-derived hints before model routing ✓
 - Deep architecture review: captured as TASK G; findings converted to G1-G5
 - External systems/data-use questions: captured in NEXT_SESSION.md under TASK G
 - Future applications roadmap/tracker:

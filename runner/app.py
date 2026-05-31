@@ -1730,7 +1730,13 @@ def page_ingest_workbench():
             try:
                 from runner.pipeline import triage as _triage_mod
                 snippet, _method = _triage_mod.extract_snippet(source.strip())
-                triage_result = _triage_mod.run(snippet, config)
+                triage_result = _triage_mod.run(
+                    snippet,
+                    config,
+                    source_label=_triage_mod.source_context_label(
+                        source.strip(), extraction_note=_method, snippet=snippet,
+                    ),
+                )
                 st.info(
                     f"**Triage recommendation:** `{triage_result.recommended_llm}`  \n"
                     f"**Type hint:** {triage_result.doc_type_hint}  |  "
@@ -7106,6 +7112,7 @@ def page_triage_tool():
             return
 
         text = snippet.strip()
+        note = ""
 
         if not text and input_url:
             with st.spinner("Fetching URL..."):
@@ -7129,7 +7136,14 @@ def page_triage_tool():
         with st.spinner("Running triage..."):
             try:
                 from runner.pipeline.triage import run as triage_run
-                result = triage_run(text, config)
+                from runner.pipeline.triage import source_context_label
+                result = triage_run(
+                    text,
+                    config,
+                    source_label=source_context_label(
+                        input_url, extraction_note=note if input_url else "", snippet=text,
+                    ) if input_url else "",
+                )
             except Exception as exc:
                 st.error(f"Triage failed: {exc}")
                 return
@@ -9205,8 +9219,14 @@ def page_source_queue():
                 text=f"{label} {idx + 1}/{len(target_items)}: {item.url[:55]}",
             )
             try:
-                snippet, _ = triage_mod.extract_snippet(item.url)
-                result = triage_mod.run(snippet, config)
+                snippet, note = triage_mod.extract_snippet(item.url)
+                result = triage_mod.run(
+                    snippet,
+                    config,
+                    source_label=triage_mod.source_context_label(
+                        item.url, extraction_note=note, snippet=snippet,
+                    ),
+                )
                 apply_triage_result(db, item.id, result, model_name=model_name)
                 if result.triage_succeeded:
                     parsed += 1
