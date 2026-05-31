@@ -87,6 +87,186 @@ def _to_title_case(s: str) -> str:
     return " ".join(_cap_token(t) for t in s.split())
 
 
+# ---------------------------------------------------------------------------
+# DS-3: ISO 639-1 and country normalization tables
+# ---------------------------------------------------------------------------
+
+# Maps any recognisable language name/code → canonical ISO 639-1 lowercase code.
+# All keys MUST be lowercase (lookup does key.lower() before dict hit).
+# Values are ISO 639-1 two-letter codes.
+_LANGUAGE_ALIASES: dict[str, str] = {
+    # English
+    "english": "en", "eng": "en",
+    # German
+    "german": "de", "deutsch": "de", "deu": "de", "ger": "de",
+    # French
+    "french": "fr", "français": "fr", "francais": "fr", "fra": "fr", "fre": "fr",
+    # Spanish
+    "spanish": "es", "español": "es", "espanol": "es", "spa": "es",
+    # Portuguese
+    "portuguese": "pt", "português": "pt", "portugues": "pt", "por": "pt",
+    # Italian
+    "italian": "it", "italiano": "it", "ita": "it",
+    # Dutch
+    "dutch": "nl", "nederlands": "nl", "nld": "nl", "dut": "nl",
+    # Polish
+    "polish": "pl", "polski": "pl", "pol": "pl",
+    # Swedish
+    "swedish": "sv", "svenska": "sv", "swe": "sv",
+    # Danish
+    "danish": "da", "dansk": "da", "dan": "da",
+    # Norwegian — nb, nn, and "Norwegian" all normalise to "no"
+    "norwegian": "no", "norsk": "no", "nor": "no",
+    "norwegian bokmål": "no", "norwegian nynorsk": "no",
+    "bokmål": "no", "bokmal": "no", "nynorsk": "no",
+    # Finnish
+    "finnish": "fi", "suomi": "fi", "fin": "fi",
+    # Hungarian
+    "hungarian": "hu", "magyar": "hu", "hun": "hu",
+    # Czech
+    "czech": "cs", "čeština": "cs", "cestina": "cs", "ces": "cs", "cze": "cs",
+    # Slovak
+    "slovak": "sk", "slovenčina": "sk", "slovencina": "sk", "slk": "sk", "slo": "sk",
+    # Romanian
+    "romanian": "ro", "română": "ro", "romana": "ro", "ron": "ro", "rum": "ro",
+    # Croatian
+    "croatian": "hr", "hrvatski": "hr", "hrv": "hr",
+    # Serbian
+    "serbian": "sr", "srpski": "sr", "srp": "sr",
+    # Bulgarian
+    "bulgarian": "bg", "bul": "bg",
+    # Greek
+    "greek": "el", "ell": "el", "gre": "el",
+    # Ukrainian
+    "ukrainian": "uk", "ukr": "uk",
+    # Russian
+    "russian": "ru", "rus": "ru",
+    # Turkish
+    "turkish": "tr", "türkçe": "tr", "turkce": "tr", "tur": "tr",
+    # Arabic
+    "arabic": "ar", "ara": "ar",
+    # Hebrew
+    "hebrew": "he", "heb": "he",
+    # Latvian
+    "latvian": "lv", "latviešu": "lv", "lav": "lv",
+    # Lithuanian
+    "lithuanian": "lt", "lietuvių": "lt", "lit": "lt",
+    # Estonian
+    "estonian": "et", "eesti": "et", "est": "et",
+    # Slovenian
+    "slovenian": "sl", "slovene": "sl", "slovenščina": "sl", "slv": "sl",
+    # Albanian
+    "albanian": "sq", "shqip": "sq", "alb": "sq", "sqi": "sq",
+    # Macedonian
+    "macedonian": "mk", "mkd": "mk", "mac": "mk",
+    # Welsh
+    "welsh": "cy", "cymraeg": "cy", "wel": "cy",
+    # Irish
+    "irish": "ga", "gaeilge": "ga",
+    # Catalan
+    "catalan": "ca", "català": "ca", "cat": "ca",
+    # Basque
+    "basque": "eu", "euskara": "eu", "baq": "eu", "eus": "eu",
+}
+
+# Complete set of valid ISO 639-1 two-letter codes (184 codes).
+# Used so that codes already in canonical form don't trigger iso-warn.
+_VALID_ISO_639_1: frozenset[str] = frozenset({
+    "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av", "ay", "az",
+    "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo", "br", "bs",
+    "ca", "ce", "ch", "co", "cr", "cs", "cu", "cv", "cy",
+    "da", "de", "dv", "dz",
+    "ee", "el", "en", "eo", "es", "et", "eu",
+    "fa", "ff", "fi", "fj", "fo", "fr", "fy",
+    "ga", "gd", "gl", "gn", "gu", "gv",
+    "ha", "he", "hi", "ho", "hr", "ht", "hu", "hy",
+    "hz",
+    "ia", "id", "ie", "ig", "ii", "ik", "io", "is", "it", "iu",
+    "ja", "jv",
+    "ka", "kg", "ki", "kj", "kk", "kl", "km", "kn", "ko", "kr",
+    "ks", "ku", "kv", "kw", "ky",
+    "la", "lb", "lg", "li", "ln", "lo", "lt", "lu", "lv",
+    "mg", "mh", "mi", "mk", "ml", "mn", "mr", "ms", "mt", "my",
+    "na", "nb", "nd", "ne", "ng", "nl", "nn", "no", "nr", "nv", "ny",
+    "oc", "oj", "om", "or", "os",
+    "pa", "pi", "pl", "ps", "pt",
+    "qu",
+    "rm", "rn", "ro", "ru", "rw",
+    "sa", "sc", "sd", "se", "sg", "si", "sk", "sl", "sm", "sn",
+    "so", "sq", "sr", "ss", "st", "su", "sv", "sw",
+    "ta", "te", "tg", "th", "ti", "tk", "tl", "tn", "to", "tr",
+    "ts", "tt", "tw", "ty",
+    "ug", "uk", "ur", "uz",
+    "va", "ve", "vi", "vo",
+    "wa", "wo",
+    "xh",
+    "yi", "yo",
+    "za", "zh", "zu",
+})
+
+# Maps ISO-2 codes and common abbreviations → canonical full country name.
+# Used for pipeline-layer normalization (separate from the display alias table
+# in app.py, which serves the same purpose for the Streamlit UI).
+_COUNTRY_ALIASES_MODEL: dict[str, str] = {
+    "UK": "United Kingdom",
+    "GB": "United Kingdom",
+    "Great Britain": "United Kingdom",
+    "England": "United Kingdom",
+    "US": "United States",
+    "USA": "United States",
+    "United States of America": "United States",
+    "DE": "Germany",
+    "NO": "Norway",
+    "SE": "Sweden",
+    "FI": "Finland",
+    "DK": "Denmark",
+    "IS": "Iceland",
+    "NL": "Netherlands",
+    "The Netherlands": "Netherlands",
+    "Holland": "Netherlands",
+    "FR": "France",
+    "ES": "Spain",
+    "IT": "Italy",
+    "PL": "Poland",
+    "AT": "Austria",
+    "CH": "Switzerland",
+    "BE": "Belgium",
+    "PT": "Portugal",
+    "IE": "Ireland",
+    "HU": "Hungary",
+    "CZ": "Czech Republic",
+    "SK": "Slovakia",
+    "RO": "Romania",
+    "HR": "Croatia",
+    "RS": "Serbia",
+    "BA": "Bosnia and Herzegovina",
+    "GR": "Greece",
+    "BG": "Bulgaria",
+    "UA": "Ukraine",
+    "RU": "Russia",
+    "TR": "Turkey",
+    "EU": "European Union",
+    "CA": "Canada",
+    "AU": "Australia",
+    "NZ": "New Zealand",
+    "ZA": "South Africa",
+    "BR": "Brazil",
+    "LV": "Latvia",
+    "LT": "Lithuania",
+    "EE": "Estonia",
+    "SI": "Slovenia",
+    "LU": "Luxembourg",
+    "MT": "Malta",
+    "CY": "Cyprus",
+    "AL": "Albania",
+    "MK": "North Macedonia",
+    "ME": "Montenegro",
+    "XK": "Kosovo",
+    "MD": "Moldova",
+    "BY": "Belarus",
+}
+
+
 class CandidateTerm(BaseModel):
     term: str
     language: str = "unknown"
@@ -333,6 +513,44 @@ class AnalysisResult(BaseModel):
     function: list[str] = Field(default_factory=list)
     landmark: list[str] = Field(default_factory=list)
     flags: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def normalise_vocab_codes(self) -> "AnalysisResult":
+        """Normalize languages → ISO 639-1 codes; country → canonical full names.
+
+        Language lookup order (all key comparisons use key.lower()):
+          1. key.lower() in _LANGUAGE_ALIASES → use mapped code          (no warning)
+          2. key.lower() in _VALID_ISO_639_1  → already canonical code   (no warning)
+          3. otherwise                         → pass through, emit iso-warn
+
+        This ensures that already-normalized output (e.g. from analysis.json)
+        re-validates identically without accumulating warnings — idempotent.
+
+        Country: exact-match against _COUNTRY_ALIASES_MODEL; unknown values
+        pass through silently (the set of valid countries is open-ended).
+        """
+        normalized_langs: list[str] = []
+        for lang in self.languages:
+            key = lang.strip()
+            key_lower = key.lower()
+            if key_lower in _LANGUAGE_ALIASES:
+                normalized_langs.append(_LANGUAGE_ALIASES[key_lower])
+            elif key_lower in _VALID_ISO_639_1:
+                # Already a valid code — normalise case to lowercase ("EN" → "en")
+                normalized_langs.append(key_lower)
+            else:
+                normalized_langs.append(key)
+                self.normalisation_warnings = list(self.normalisation_warnings) + [
+                    f"iso-warn: 'languages' value '{key}' not in ISO 639-1 alias table — kept as-is"
+                ]
+        self.languages = normalized_langs
+
+        self.country = [
+            _COUNTRY_ALIASES_MODEL.get(c.strip(), c.strip())
+            for c in self.country
+            if isinstance(c, str)
+        ]
+        return self
 
     @model_validator(mode="after")
     def warn_unknown_vocab(self) -> "AnalysisResult":

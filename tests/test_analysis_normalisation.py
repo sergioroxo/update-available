@@ -108,6 +108,92 @@ def test_languages_absent_from_payload_yields_empty_list_without_warning():
     assert not any("languages" in w for w in result.normalisation_warnings)
 
 
+# ---------------------------------------------------------------------------
+# DS-3a: languages → ISO 639-1 code normalization
+# ---------------------------------------------------------------------------
+
+def test_languages_full_name_normalized_to_code():
+    """Full English names of languages are mapped to ISO 639-1 codes."""
+    result = AnalysisResult.model_validate(_minimal_payload(languages=["English", "German"]))
+
+    assert result.languages == ["en", "de"]
+    assert not any("iso-warn" in w for w in result.normalisation_warnings)
+
+
+def test_languages_iso_code_passthrough():
+    """Already-canonical ISO 639-1 codes are preserved without any warning."""
+    result = AnalysisResult.model_validate(_minimal_payload(languages=["en", "de", "fr"]))
+
+    assert result.languages == ["en", "de", "fr"]
+    assert not any("iso-warn" in w for w in result.normalisation_warnings)
+
+
+def test_languages_iso_code_uppercase_normalised():
+    """Upper-cased codes ('EN', 'De') are lowercased to canonical form without warning."""
+    result = AnalysisResult.model_validate(_minimal_payload(languages=["EN", "De", "FR"]))
+
+    assert result.languages == ["en", "de", "fr"]
+    assert not any("iso-warn" in w for w in result.normalisation_warnings)
+
+
+def test_languages_3char_iso639_2_code_normalized():
+    """ISO 639-2 three-letter codes are mapped to their ISO 639-1 equivalents."""
+    result = AnalysisResult.model_validate(_minimal_payload(languages=["eng", "deu", "fra"]))
+
+    assert result.languages == ["en", "de", "fr"]
+    assert not any("iso-warn" in w for w in result.normalisation_warnings)
+
+
+def test_languages_unknown_emits_iso_warn():
+    """Unrecognised language values are kept as-is and generate an iso-warn."""
+    result = AnalysisResult.model_validate(_minimal_payload(languages=["Klingon"]))
+
+    assert result.languages == ["Klingon"]
+    assert any("iso-warn" in w and "Klingon" in w for w in result.normalisation_warnings)
+
+
+def test_languages_idempotent_no_warning_growth():
+    """Re-validating already-normalized output yields identical result without new warnings.
+
+    Simulates the reanalyze path: analysis.json is written with normalized codes,
+    then re-read and re-validated. No iso-warn should accumulate.
+    """
+    result1 = AnalysisResult.model_validate(_minimal_payload(languages=["English", "de"]))
+    assert result1.languages == ["en", "de"]
+
+    # Second validation on the serialized output (as reanalyze would do)
+    result2 = AnalysisResult.model_validate(result1.model_dump())
+
+    assert result2.languages == ["en", "de"]
+    assert result2.normalisation_warnings == result1.normalisation_warnings
+
+
+# ---------------------------------------------------------------------------
+# DS-3b: country → canonical full name normalization
+# ---------------------------------------------------------------------------
+
+def test_country_iso2_expanded_to_full_name():
+    """ISO-2 country codes are expanded to canonical full names."""
+    result = AnalysisResult.model_validate(_minimal_payload(country=["UK", "DE", "US"]))
+
+    assert result.country == ["United Kingdom", "Germany", "United States"]
+
+
+def test_country_full_name_passthrough():
+    """Full country names that are already canonical pass through unchanged."""
+    result = AnalysisResult.model_validate(_minimal_payload(country=["Germany", "France"]))
+
+    assert result.country == ["Germany", "France"]
+
+
+def test_country_unknown_passthrough_silent():
+    """Unrecognised country values pass through without generating any warning."""
+    result = AnalysisResult.model_validate(_minimal_payload(country=["Ruritania"]))
+
+    assert result.country == ["Ruritania"]
+    assert not any("iso-warn" in w and "Ruritania" in w for w in result.normalisation_warnings)
+
+
 def test_validate_response_extracts_json_from_markdown_fence():
     payload = _minimal_payload(summary="Extracted from a fenced response.")
     raw = "```json\n" + json.dumps(payload) + "\n```"
