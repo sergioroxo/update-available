@@ -100,7 +100,7 @@ LiteLLM proxy at `LITELM_BASE_URL` (Tailscale). All `--llm litelm*` flags route 
 | ~~**Q-EnrichDefault**~~ | ~~Enrichment default pending~~ — **RESOLVED (TASK D):** Enrichment runs by default after confirmed upload (`--enrich/--no-enrich`, default True). Use `--no-enrich` for quick tests. | ~~TASK D~~ complete |
 | **Q-BookSanity** | Should book sections create a new Sanity type (`sogiceBook`) or use `sogiceDocument` with `parentBook` reference field? New type is cleaner but changes the Sanity schema. Needs researcher sign-off. | `split-book` queue integration (after batch-safety fixes) |
 | ~~**Q-BatchSafety**~~ | ~~Triage fail-open + triage/analysis gate disagreement risks~~ — **RESOLVED (G1 + G2, through G2-b-2b, last commit `1e50d7558`):** triage fails closed, `is_overnight_safe()` gates the queue, and ingest cross-checks triage+analysis testimony/legal flags (headless holds locally, no upload/enrich). | ~~G1/G2~~ complete |
-| **Q-ReviewedDocGuard** | Which Sanity field marks a `sogiceDocument` as researcher-reviewed/edited so `write_document` can refuse clobbering it? Needed for G3 (next). | TASK G3 |
+| ~~**Q-ReviewedDocGuard**~~ | ~~Which Sanity field marks a `sogiceDocument` as researcher-reviewed/edited~~ — **RESOLVED (G3):** guard uses existing markers: `workflowStatus` verified/published, explicit `aiMetadata.humanReview`, human override resolution, and manual-researcher validation markers. Override requires `--force-reviewed` / `--force`. | ~~TASK G3~~ complete |
 | **Q-ExternalSystems** | Evaluate WhisperX/whisper.cpp, marker/surya, GROBID, Label Studio/Argilla, fastText/lingua, DVC/git-annex, and graph tools as future capability candidates. | Roadmap, not immediate |
 | **Q-DataUses** | Preserve roadmap ideas: actor/funding graphs, lexicon genealogy, maps/timelines, framing matrices, semantic maps, claim ledgers, multilingual glossary. | Methodology/outputs |
 
@@ -164,10 +164,10 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 ### Phase 0.5 — Pilot Batch
 - [x] **G1:** Triage fails closed; untriaged queue items are not overnight-safe (`9a58cc807`)
 - [x] **G2:** Ingest cross-checks triage + analysis testimony/legal flags; headless holds locally (`7b39ea090` → `1e50d7558`)
-- [ ] **G3:** Guard `write_document` against overwriting reviewed Sanity document records ← **next**
-- [ ] **G4:** Add prompt hashes/git commit/runtime params/duration/derived-score flag/triage audit to provenance
+- [x] **G3:** Guard `write_document` against overwriting reviewed Sanity document records (`3bdfe91ae`)
+- [ ] **G4:** Add prompt hashes/git commit/runtime params/duration/derived-score flag/triage audit to provenance ← **next**
 - [ ] **G5:** Suppress or ground enrichment `corpus_connections` until vector retrieval is wired
-- [ ] **TASK F:** Batch Runner — technically unblocked by G1/G2; recommended after G3–G5
+- [ ] **TASK F:** Batch Runner — technically unblocked by G1/G2; recommended after G4–G5
 - [ ] Pull and verify local models: `ollama pull qwen3.5:9b` + `gemma-4-26B-A4B-it` (check RAM)
 - [ ] Run 10–20 documents covering all 6 languages + all tiers
 - [ ] Calibrate confidence thresholds (baseline: high ≥0.85, medium 0.70–0.84, low <0.70)

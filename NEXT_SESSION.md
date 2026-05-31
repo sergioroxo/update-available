@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 729
-**Last commit:** `1e50d7558` (G2-b-2b — wire ingest headless testimony and legal holds)
+**Tests passing:** 740
+**Last commit:** `3bdfe91ae` (G3 — guard reviewed Sanity documents from overwrite)
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 729 tests -- run before every edit
+tests/                          # 740 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -266,7 +266,7 @@ total chars, estimated vs actual section count) plus a table of sections
 (index, level, title, chars, preview). `--out` writes JSON with section offsets.
 No corpus writes, no analysis, no upload, no Sanity/Supabase calls.
 Full queue integration and Sanity `sogiceBook` schema remain deferred.
-**32 new tests (suite was 670 at TASK E; current baseline is 729). Commit:** `74a35f847`
+**32 new tests (suite was 670 at TASK E; current baseline is 740). Commit:** `74a35f847`
 
 ---
 
@@ -337,21 +337,19 @@ The full cross-stage policy is live in the ingest path:
 
 ---
 
-### TASK G3 -- Provenance guard: do not clobber reviewed Sanity documents ← NEXT
+### ~~TASK G3~~ -- Provenance guard: do not clobber reviewed Sanity documents ✓ COMPLETE
 
-**Finding:** `write_document` uses `createOrReplace` without checking whether a
-Sanity `sogiceDocument` has been manually reviewed or edited. Researcher edits
-could be overwritten by `reanalyze --upload` or `upload-doc`.
-
-**Implement after researcher decision on the reviewed marker field:**
-- Mirror the reviewed-state guard pattern used by `write_research_annotation`.
-- Refuse overwrite of reviewed/corrected `sogiceDocument` unless `--force` or an
-  explicit researcher override is passed.
-- Add tests for safe new write, blocked reviewed overwrite, and forced overwrite.
+`write_document()` now checks existing `sogiceDocument` records before
+`createOrReplace`. It blocks replacement when Sanity shows reviewed/corrected
+state via `workflowStatus` (`verified` / `published`), explicit
+`aiMetadata.humanReview`, `aiMetadata.resolution=human_override`, or manual
+validation override markers. `upload-doc` and `reanalyze --upload` accept
+`--force-reviewed` / `--force` for explicit researcher override. Initial ingest
+and upload paths fail closed by default. **Commit:** `3bdfe91ae`
 
 ---
 
-### TASK G4 -- Provenance hardening for methodology chapter
+### TASK G4 -- Provenance hardening for methodology chapter ← NEXT
 
 **Finding:** Audit sidecars are operationally useful but not yet fully
 reproducible for methodology defense.
@@ -385,22 +383,22 @@ semantic maps, related-document search, or corpus connection claims.
 
 ---
 
-### TASK F -- Batch Runner (technically unblocked; recommend G3–G5 first)
+### TASK F -- Batch Runner (technically unblocked; recommend G4–G5 first)
 
-**Status:** G1 + G2 are complete, so TASK F is **technically unblocked**. However,
+**Status:** G1 + G2 are complete, so TASK F is **technically unblocked**. G3 is
+also complete. However,
 for a genuinely safe overnight/night-batch system the recommended order is to
 close the remaining provenance gaps first:
 
-1. **G3** — reviewed-doc clobber guard (prevents a batch from overwriting
-   researcher-edited Sanity records)
-2. **G4** — audit/provenance hardening (so unattended runs are reproducible)
-3. **G5** — corpus-connection grounding (so batch enrichment doesn't emit
+1. **G4** — audit/provenance hardening (so unattended runs are reproducible)
+2. **G5** — corpus-connection grounding (so batch enrichment doesn't emit
    ungrounded connections at scale)
-4. **TASK F** — Batch Runner
+3. **TASK F** — Batch Runner
 
 **Why this order:** the review found fail-open paths (closed by G1/G2) plus
-provenance gaps (G3–G5). A batch runner amplifies any remaining silent gap across
-many documents, so G3–G5 are worth landing before unattended scale.
+provenance gaps (G3 now closed; G4–G5 remain). A batch runner amplifies any
+remaining silent gap across many documents, so G4–G5 are worth landing before
+unattended scale.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -463,7 +461,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 729 passed (or higher after new tests)
+# Must see: 740 passed (or higher after new tests)
 ```
 
 ---
@@ -514,4 +512,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 (through G2-b-2b) complete — last commit `1e50d7558`, 729 tests passing. TASK F is technically unblocked; recommended next order: G3 → G4 → G5 → TASK F.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 complete — last commit `3bdfe91ae`, 740 tests passing. TASK F is technically unblocked; recommended next order: G4 → G5 → TASK F.*

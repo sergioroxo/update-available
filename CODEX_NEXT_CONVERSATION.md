@@ -171,7 +171,7 @@ Do not treat old chat summaries as authoritative. Read files and run tests.
 
 `NEXT_SESSION.md` defines tasks A–G plus review-derived safety tasks G1–G5.
 A–E are complete. The first external architecture review (TASK G) is captured.
-G1 and G2 are complete through G2-b-2b.
+G1, G2, and G3 are complete.
 
 **✓ A -- Triage workflow routing flags** (commit `3ee358796`)
 `needs_book_splitting`, `needs_testimony_review`, `needs_media_review`,
@@ -197,7 +197,7 @@ confirmed upload. `--no-enrich` skips for quick tests.
 by extension/URL (Docling / Trafilatura / direct read). Options: `--min-chars`,
 `--max-level`, `--preview-chars`, `--out`. Prints Rich panel + section table. No
 corpus writes, no analysis, no upload. 32 new tests (suite was 670 at TASK E;
-current baseline is 729).
+current baseline is 740).
 
 **✓ G -- Deep architecture review / critic pass** (captured 2026-05-31)
 Claude 4.8 reviewed the full staged-intelligence system after TASK E. The review
@@ -220,11 +220,15 @@ cross-check analysis + triage testimony signals; legal review remains separate;
 headless `--yes` never prompts and holds testimony/legal-sensitive docs locally
 with no upload/enrichment.
 
-**G3 -- Provenance guard: do not clobber reviewed Sanity documents** ← NEXT
-Add a reviewed-state guard to `write_document` before `reanalyze --upload` or
-`upload-doc` can overwrite researcher-edited `sogiceDocument` records.
+**✓ G3 -- Provenance guard: do not clobber reviewed Sanity documents** (commit
+`3bdfe91ae`)
+`write_document()` blocks replacement of reviewed/corrected `sogiceDocument`
+records unless `--force-reviewed` / `--force` is passed through `upload-doc` or
+`reanalyze --upload`. Reviewed markers: workflowStatus verified/published,
+explicit `aiMetadata.humanReview`, human override resolution, and
+manual-researcher validation markers.
 
-**G4 -- Provenance hardening**
+**G4 -- Provenance hardening** ← NEXT
 Add prompt hashes, git commit, runtime/sampling params, duration, derived-score
 flagging, and triage audit metadata.
 
@@ -232,14 +236,14 @@ flagging, and triage audit metadata.
 Do not let enrichment `corpus_connections` read as evidence until vector retrieval
 is wired, or clearly label/suppress them.
 
-**F -- Batch Runner** (technically unblocked; recommend after G3-G5)
+**F -- Batch Runner** (technically unblocked; recommend after G4-G5)
 Must use `source_queue.is_overnight_safe(item)` and surface excluded items before
-processing unattended. G1/G2 preconditions are complete, but G3-G5 should land
+processing unattended. G1/G2 preconditions are complete, but G4-G5 should land
 first for safer overnight runs.
 
 Recommended order for a new session:
-1. Verify repo/test state (729 passed expected).
-2. Implement G3, then G4, then G5 as focused safety/provenance slices.
+1. Verify repo/test state (740 passed expected).
+2. Implement G4, then G5 as focused safety/provenance slices.
 3. Only then start TASK F — Batch Runner, unless researcher explicitly accepts
    the remaining provenance risk.
 
@@ -247,8 +251,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 729
-- Last commit: `1e50d7558` -- G2-b-2b wire ingest headless testimony and legal holds
+- Tests passing: 740
+- Last commit: `3bdfe91ae` -- G3 guard reviewed Sanity documents from overwrite
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -259,7 +263,8 @@ Recommended order for a new session:
 - Triage workflow flags: built and wired ✓ (TASK A)
 - Deep architecture review: captured as TASK G; findings converted to G1-G5
 - External systems/data-use questions: captured in NEXT_SESSION.md under TASK G
-- Batch Runner: not yet built; technically unblocked by G1/G2, recommended after G3-G5
+- Reviewed-doc overwrite guard: built ✓ (TASK G3)
+- Batch Runner: not yet built; technically unblocked by G1/G2, recommended after G4-G5
 
 ---
 
@@ -336,25 +341,33 @@ Current state: routing fields exist; G1 made triage fail closed; callers should
 use source_queue.is_overnight_safe(item), not the raw overnight_batch_safe column.
 ```
 
-### TASK G3: Reviewed-Document Clobber Guard
+### Completed TASK G3 Reference: Reviewed-Document Clobber Guard
 
 ```text
-Implement TASK G3 from NEXT_SESSION.md: prevent write_document/upload-doc/reanalyze
-from overwriting researcher-reviewed Sanity document records.
+TASK G3 is complete. Use this only as historical context when reviewing Sanity
+document overwrite behavior.
+
+Current state: write_document guards createOrReplace writes; upload-doc and
+reanalyze --upload expose --force-reviewed / --force. Do not bypass this guard
+for batch work.
+```
+
+### TASK G4: Provenance Hardening
+
+```text
+Implement TASK G4 from NEXT_SESSION.md in small slices.
 
 Scope:
-- Inspect runner/clients/sanity.py, upload-doc/reanalyze upload paths, Sanity schema
-  fields, and existing upload mutation tests.
-- Identify which Sanity field(s) mark a sogiceDocument as researcher-reviewed or
-  manually edited. If ambiguous, report options before coding.
-- Add a non-destructive guard before createOrReplace-style writes to existing
-  reviewed documents.
-- The guard should fail closed unless an explicit researcher override flag is
-  provided.
-- Add focused tests for reviewed doc block, unreviewed doc allowed, missing remote
-  doc allowed, and explicit override.
+- Inspect runner/pipeline/audit.py, analyze.py, enrich.py, triage.py, and existing
+  audit tests.
+- Add SHA-256 hash of resolved analysis/enrichment prompt text to audit files.
+- Add current git commit hash where available.
+- Add model runtime/sampling parameters and wall-clock duration.
+- Add score_derived_from_status so synthetic confidence scores are visible.
+- Add triage audit sidecar or equivalent queue metadata for failure/default paths.
+- Do not add raw-response retention unless the researcher explicitly approves it.
 
-Run focused tests and the full suite. Show the diff before committing.
+Run focused audit tests and the full suite. Show the diff before committing.
 ```
 
 ---
@@ -421,6 +434,6 @@ Favour:
 - explicit provenance
 - researcher control at every consequential step
 
-The next session should start with G3. G1/G2 made overnight processing safer, but
-G3/G4/G5 are the protection layer that keeps unattended scale from overwriting
-reviewed archive work or producing weak provenance.
+The next session should start with G4. G1/G2 made overnight processing safer and
+G3 protects reviewed Sanity records; G4/G5 are the remaining protection layer
+before unattended batch work.
