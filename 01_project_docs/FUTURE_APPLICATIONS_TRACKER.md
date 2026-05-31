@@ -64,13 +64,14 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | Step | Description | Dependency | Status |
 |---|---|---|---|
 | TASK F dry-run manifest | Show included/excluded queue items, reasons, route, estimated risk | G5 recommended | Done (`runner batch-plan`) |
-| TASK F guarded batch-run | Rehearsal by default; `--execute` required; stops on first failure; marks queue rows ingested only after success | TASK F dry-run manifest | Done; live run deferred |
+| TASK F guarded batch-run | Rehearsal by default; `--execute` required; stops on first failure; marks queue rows ingested only after success | TASK F dry-run manifest | Done; one-item pilot recovered |
 | TASK F batch ledger/report | Record source IDs, doc IDs, manifest snapshot, execution status, errors, and human-readable next action | TASK F | Done; richer review inbox later |
 | 10-15 doc limit | Keep review load human-sized | TASK F | Done for dry-run and execution planning |
 | Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Partial: stop-on-ingest-failure + preflight checks built; richer service probes later if needed |
 | Morning report | Human-facing summary of what happened overnight | TASK F | Done as local Markdown batch report; aggregate dashboard later |
 | Preservation status sidecar | Make blocked/dynamic/social/video capture needs explicit without adding capture dependencies | TASK P | Done locally (`preservation_status.json`) |
 | Stakes-ranked review inbox | Legal/testimony/Tier-1/low-confidence first | TASK F + Streamlit | Pending |
+| Pilot calibration | Attended test batches across languages/types/stakes before overnight use | TASK F + TASK P | Started: one-item pilot complete after recovery |
 | Calibration dashboard | Confidence vs researcher corrections | Pilot batch | Pending |
 
 Batch rule: the runner must use `source_queue.is_overnight_safe(item)` and must
@@ -153,7 +154,7 @@ These stay deferred until the spine is stronger:
 
 1. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle. DS-1, DS-2, DS-3, and DS-4 are complete; DS-5/6/7 remain deferred unless TASK F planning exposes a blocker.
 2. **TASK F:** conservative batch runner with dry-run manifest, guarded execution, pre-flight checks, and Markdown report is complete for pilot use.
-3. **Pilot calibration:** 10-20 documents across languages/types/stakes.
+3. **Pilot calibration:** first one-item pilot completed after recovery; next run should be 2-3 attended documents, then build toward 10-20 across languages/types/stakes.
 4. **Export-only outputs:** network graph, glossary, claims ledger, framing matrix.
 5. **Book schema:** only when a real book needs ingestion and Q-BookSanity is decided.
 6. **Retrieval enablement:** verify `vector(4096)`, wire related-doc context, then re-enable grounded `CorpusConnection`.

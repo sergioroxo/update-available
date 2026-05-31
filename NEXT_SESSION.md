@@ -3,7 +3,7 @@
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 **Tests passing:** 934
-**Latest completed milestone:** Pilot Sanity query fix
+**Latest completed milestone:** One-item attended pilot complete
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -449,12 +449,16 @@ the model, so DOI/journal pages blocked by Cloudflare route as academic but
 not overnight-safe, social media shells route as social/media, and YouTube
 boilerplate routes as media/transcript work rather than generic footer text.
 
-**Pilot note:** the first one-item pilot stopped safely on Sanity upload guard
-before document mutation. Root cause was fixed: GROQ query parameters are now
-JSON-encoded in `runner/clients/sanity.py`, so `_id == $doc_id` queries send
-`$doc_id="doc-..."` instead of a raw string. The failed item remains for retry.
+**Pilot note:** the first one-item pilot initially stopped safely on the Sanity
+upload guard before document mutation. Root cause was fixed: GROQ query
+parameters are now JSON-encoded in `runner/clients/sanity.py`, so `_id == $doc_id`
+queries send `$doc_id="doc-..."` instead of a raw string. The recovered pilot
+document `8fe67e19` (`https://transdatalibrary.org/person/avi-ring`) was then
+uploaded to Sanity/Supabase, enriched locally, and linked back to queue item
+`f52eb82a` as `ingested`.
 
-**Next sequence:** retry the one-item attended pilot before any overnight use.
+**Next sequence:** review the pilot document warnings/enrichment proposals, then
+run a 2-3 item attended pilot before any overnight use.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -587,4 +591,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan, Slice 2 guarded `batch-run`, Slice 3 preflight checks, and Slice 4 batch reports are complete. TASK P preservation status sidecar is complete. First one-item pilot found and fixed a Sanity GROQ parameter encoding bug before document mutation. Queue triage is source-aware for blocked DOI/journal, social, and video URLs, and queue notes inform retries. 934 tests passing. Recommended next order: retry tiny attended pilot before any overnight use.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan, Slice 2 guarded `batch-run`, Slice 3 preflight checks, and Slice 4 batch reports are complete. TASK P preservation status sidecar is complete. First one-item pilot found and fixed a Sanity GROQ parameter encoding bug before document mutation; recovered doc `8fe67e19` is uploaded, embedded, enriched, and queue-linked. Queue triage is source-aware for blocked DOI/journal, social, and video URLs, and queue notes inform retries. 934 tests passing. Recommended next order: review pilot warnings/proposals, then run a 2-3 item attended pilot before any overnight use.*

@@ -171,7 +171,7 @@ Do not treat old chat summaries as authoritative. Read files and run tests.
 
 `NEXT_SESSION.md` defines tasks A–G plus review-derived safety tasks G1–G5.
 A–E are complete. The first external architecture review (TASK G) is captured.
-G1, G2, and G3 are complete.
+G1-G5, DS-1/2/3/4, TASK F, TASK P, and the first attended pilot are complete.
 
 **✓ A -- Triage workflow routing flags** (commit `3ee358796`)
 `needs_book_splitting`, `needs_testimony_review`, `needs_media_review`,
@@ -197,7 +197,7 @@ confirmed upload. `--no-enrich` skips for quick tests.
 by extension/URL (Docling / Trafilatura / direct read). Options: `--min-chars`,
 `--max-level`, `--preview-chars`, `--out`. Prints Rich panel + section table. No
 corpus writes, no analysis, no upload. 32 new tests (suite was 670 at TASK E;
-current baseline is 740).
+current baseline is 934).
 
 **✓ G -- Deep architecture review / critic pass** (captured 2026-05-31)
 Claude 4.8 reviewed the full staged-intelligence system after TASK E. The review
@@ -243,24 +243,33 @@ connections remain deferred until vector retrieval is wired.
 `runner batch-plan` surfaces included/excluded queue items before execution.
 `runner batch-run` is guarded: rehearsal by default, `--execute` required, uses
 `source_queue.is_overnight_safe(item)` via `plan_batch()`, stops on first ingest
-failure, writes a ledger, and marks queue rows ingested only after success. No
-live batch run has been performed yet. `--execute` also runs preflight checks for
-Sanity/Supabase credentials, LiteLLM reachability when needed, and ledger
-writability before the first ingest. Every batch-run path writes a Markdown report
-beside the ledger with counts, stop reason, failures, and next action.
+failure, writes a ledger, and marks queue rows ingested only after success.
+`--execute` also runs preflight checks for Sanity/Supabase credentials, LiteLLM
+reachability when needed, and ledger writability before the first ingest. Every
+batch-run path writes a Markdown report beside the ledger with counts, stop
+reason, failures, and next action.
+
+**✓ First attended pilot -- complete after recovery**
+The first one-item pilot exposed a Sanity GROQ parameter encoding bug before
+document mutation. After fixing `_query()` in `runner/clients/sanity.py`, doc
+`8fe67e19` (`https://transdatalibrary.org/person/avi-ring`) was recovered through
+upload, Supabase embedding confirmation, enrichment, and queue linking
+(`f52eb82a` -> `ingested`). The original batch ledger remains a failed ledger;
+the document status and queue row now reflect the recovered success.
 
 Recommended order for a new session:
 1. Verify repo/test state (934 passed expected).
-2. Use `runner batch-plan` to inspect the queue before any live execution.
-3. Retry the tiny attended pilot batch before any overnight use.
-4. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
+2. Review pilot doc `8fe67e19` warnings and enrichment proposals.
+3. Use `runner batch-plan` to inspect the queue before the next live execution.
+4. Run a 2-3 item attended pilot before any overnight use.
+5. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
 - Tests passing: 934
-- Latest completed milestone: Pilot Sanity query fix
+- Latest completed milestone: One-item attended pilot complete
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -287,7 +296,7 @@ Recommended order for a new session:
 - Data-structure lock-in DS-2: `NetworkConnection.attested_in_doc` and
   `export_network_edges()` built ✓; Sanity network schema/write deferred
 - Batch Runner Slice 1: `runner batch-plan` built ✓
-- Batch Runner Slice 2: guarded `runner batch-run` built ✓; live execution still deferred
+- Batch Runner Slice 2: guarded `runner batch-run` built ✓; one-item pilot completed after recovery
   - Default is rehearsal-only; `--execute` is required for ingestion.
   - Uses existing ingest path with `yes=True` and `run_triage=False`.
   - Stops on first failure and marks queue rows ingested only after success.
@@ -306,9 +315,11 @@ Recommended order for a new session:
   - Records public Wayback status, local HTML path/hash, capture-needed state, notes, and suggested route.
   - Routes blocker/dynamic pages to `browsertrix`, DOI/journal poor extraction to `manual_pdf`, social pages to `screenshot`, and video/audio URLs to `media_metadata`.
   - Does not integrate or run Browsertrix, ArchiveBox, Arquivo.pt, Perma.cc, Scoop, or MemGator.
-- Pilot fix: first one-item pilot stopped before Sanity mutation because `_query()`
-  sent raw GROQ params (`$doc_id=doc-...`). Fixed by JSON-encoding query params
-  in `runner/clients/sanity.py`; retry the one-item pilot next.
+- Pilot result: first one-item pilot stopped before Sanity mutation because
+  `_query()` sent raw GROQ params (`$doc_id=doc-...`). Fixed by JSON-encoding
+  query params in `runner/clients/sanity.py`; recovered doc `8fe67e19` is
+  uploaded to Sanity, present in Supabase, enriched locally, and queue-linked to
+  source item `f52eb82a`.
 
 ---
 
