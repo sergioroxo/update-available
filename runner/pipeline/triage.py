@@ -16,15 +16,18 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 import re
+import time
 from pathlib import Path
 from typing import Optional
 
 try:
     from runner.config import Config
     from runner.models.triage import TriageResult
+    from runner.pipeline.audit import current_git_commit, sha256_text, write_triage_audit
 except ImportError:
     from ..config import Config
     from ..models.triage import TriageResult
+    from .audit import current_git_commit, sha256_text, write_triage_audit
 
 _SNIPPET_CHARS = 3_000   # legacy; build_triage_context() is preferred
 _TRIAGE_HEAD_CHARS = 2_000
@@ -172,7 +175,13 @@ def extract_snippet(source: str, max_chars: int = _SNIPPET_CHARS) -> tuple[str, 
     return text[:max_chars], f"Read {len(text)} chars from local file"
 
 
-def run(text: str, config: Config, *, source_label: str = "") -> TriageResult:
+def run(
+    text: str,
+    config: Config,
+    *,
+    source_label: str = "",
+    _audit: dict | None = None,
+) -> TriageResult:
     """Triage a document. Never raises -- returns a FAIL-CLOSED result on failure.
 
     A model/network/parse failure yields ``TriageResult.failed(...)`` with
@@ -181,24 +190,59 @@ def run(text: str, config: Config, *, source_label: str = "") -> TriageResult:
     """
     context = build_triage_context(text, source_label=source_label)
     user_msg = f"Document context:\n\n{context}\n\n---\nOutput JSON only."
+    _started = time.perf_counter()
+    if _audit is not None:
+        _audit["context_char_count"] = len(context)
+        _audit["prompt_sha256"] = sha256_text(_SYSTEM_PROMPT)
+        _audit["prompt_template_sha256"] = sha256_text(_SYSTEM_PROMPT)
+        _audit["git_commit"] = current_git_commit()
+        _audit["validation_path"] = ""
+        _audit["validation_attempts"] = 0
+        _audit.setdefault("errors", [])
 
     raw: str | None = None
     errors: list[str] = []
 
     if config.litelm_base_url:
         try:
+            if _audit is not None:
+                _audit["model"] = "triage"
+                _audit["model_parameters"] = {
+                    "temperature": 0.0,
+                    "max_tokens": 400,
+                }
             raw = _call_litelm(user_msg, config)
         except Exception as exc:
             errors.append(f"litelm: {exc}")
+            if _audit is not None:
+                _audit.setdefault("errors", []).append(f"litelm: {exc}")
 
     if raw is None:
         try:
+            if _audit is not None:
+                _audit["model"] = config.local_analysis_model
+                _audit["model_parameters"] = {
+                    "temperature": 0.0,
+                    "num_ctx": 4096,
+                    "num_predict": 400,
+                    "format": "json",
+                    "think": False,
+                }
             raw = _call_ollama(user_msg, config)
         except Exception as exc:
             errors.append(f"ollama: {exc}")
+            if _audit is not None:
+                _audit.setdefault("errors", []).append(f"ollama: {exc}")
+                _audit["duration_ms"] = int((time.perf_counter() - _started) * 1000)
             return TriageResult.failed("; ".join(errors) or "no triage model available")
 
-    return _parse(raw)
+    if _audit is not None:
+        _audit["raw_response_chars"] = len(raw)
+    try:
+        return _parse(raw, _audit=_audit)
+    finally:
+        if _audit is not None:
+            _audit["duration_ms"] = int((time.perf_counter() - _started) * 1000)
 
 
 def _call_litelm(user_msg: str, config: Config) -> str:
@@ -246,7 +290,13 @@ def _call_ollama(user_msg: str, config: Config) -> str:
     return msg.get("content", "").strip() or msg.get("thinking", "")
 
 
-def save_triage_result(doc_id: str, result: "TriageResult", config: "Config") -> Path:
+def save_triage_result(
+    doc_id: str,
+    result: "TriageResult",
+    config: "Config",
+    *,
+    _audit: dict | None = None,
+) -> Path:
     """Persist a TriageResult to {corpus_dir}/{doc_id}/triage_result.json.
 
     Creates the doc folder if it does not yet exist (e.g. new-doc triage before
@@ -258,6 +308,7 @@ def save_triage_result(doc_id: str, result: "TriageResult", config: "Config") ->
     data = result.model_dump(mode="json")
     data["saved_at"] = datetime.now(timezone.utc).isoformat()
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    write_triage_audit(doc_dir, _audit, result, doc_id=doc_id)
     return path
 
 
@@ -275,7 +326,7 @@ def load_triage_result(doc_id: str, config: "Config") -> "Optional[TriageResult]
         return None
 
 
-def _parse(raw: str) -> TriageResult:
+def _parse(raw: str, *, _audit: dict | None = None) -> TriageResult:
     """Parse a triage model response. Fail closed on any non-parse.
 
     Only a clean JSON parse + schema validation marks triage_succeeded=True.
@@ -287,10 +338,21 @@ def _parse(raw: str) -> TriageResult:
     text = re.sub(r"\s*```$", "", text.strip())
     m = re.search(r"\{.*\}", text, re.DOTALL)
     if not m:
+        if _audit is not None:
+            _audit["validation_path"] = "failed"
+            _audit["validation_attempts"] = 1
+            _audit.setdefault("errors", []).append("response contained no JSON object")
         return TriageResult.failed("response contained no JSON object")
     try:
         result = TriageResult.model_validate(json.loads(m.group(0)))
     except Exception as exc:
+        if _audit is not None:
+            _audit["validation_path"] = "failed"
+            _audit["validation_attempts"] = 1
+            _audit.setdefault("errors", []).append(f"invalid triage JSON: {exc}")
         return TriageResult.failed(f"invalid triage JSON: {exc}")
     result.triage_succeeded = True
+    if _audit is not None:
+        _audit["validation_path"] = "json_object"
+        _audit["validation_attempts"] = 1
     return result

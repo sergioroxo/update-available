@@ -252,6 +252,10 @@ def test_run_sets_llm_flag(monkeypatch, tmp_path):
     audit: dict = {}
     enrich.run("doc-1", _preprocess(), _analysis(), _config(tmp_path), _audit=audit)
     assert audit["llm_flag"] == "litelm"
+    assert len(audit["prompt_sha256"]) == 64
+    assert len(audit["prompt_template_sha256"]) == 64
+    assert audit["prompt_template_sha256"] != audit["prompt_sha256"]
+    assert "duration_ms" in audit
 
 
 def test_run_sets_input_char_count(monkeypatch, tmp_path):
@@ -333,6 +337,8 @@ def test_call_enrichment_model_litelm_sets_model(monkeypatch, tmp_path):
     audit: dict = {}
     enrich._call_enrichment_model("litelm", "sys", "usr", cfg, _audit=audit)
     assert audit["model"] == cfg.litelm_enrichment_model
+    assert audit["model_parameters"]["temperature"] == 0.1
+    assert audit["model_parameters"]["max_tokens"] == cfg.local_output_tokens
 
 
 def test_call_enrichment_model_litelm_uses_override_model(monkeypatch, tmp_path):
@@ -634,6 +640,10 @@ def test_run_to_save_audit_persisted(monkeypatch, tmp_path):
     assert payload["llm_flag"] == "litelm"
     assert payload["model"] == "core-gemma"
     assert payload["input_char_count"] == len("Some text")
+    assert len(payload["prompt_sha256"]) == 64
+    assert len(payload["prompt_template_sha256"]) == 64
+    assert payload["prompt_template_sha256"] != payload["prompt_sha256"]
+    assert "duration_ms" in payload
     assert payload["chunked"] is False
     assert payload["validation_path"] in ("outside_think_tags", "raw")
 

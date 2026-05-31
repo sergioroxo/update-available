@@ -173,6 +173,20 @@ def test_validate_response_no_audit_unchanged_behavior():
     assert result.type == "Anti-SOGICE"
 
 
+def test_validate_response_marks_explicit_confidence_score_not_derived():
+    audit: dict = {}
+    _validate_response(json.dumps(_minimal_payload()), _audit=audit)
+    assert audit["score_derived_from_status"] is False
+
+
+def test_validate_response_marks_missing_confidence_score_as_derived():
+    payload = _minimal_payload(confidence={"status": "medium", "reasons": []})
+    audit: dict = {}
+    result = _validate_response(json.dumps(payload), _audit=audit)
+    assert result.confidence.overall_score == 0.75
+    assert audit["score_derived_from_status"] is True
+
+
 # ---------------------------------------------------------------------------
 # analyze.run() -- llm_flag
 # ---------------------------------------------------------------------------
@@ -193,6 +207,7 @@ def test_run_sets_llm_flag_in_audit(monkeypatch, tmp_path):
     audit: dict = {}
     analyze.run(_preprocess(), "litelm", _config(tmp_path), _audit=audit)
     assert audit["llm_flag"] == "litelm"
+    assert "duration_ms" in audit
 
 
 def test_run_initialises_errors_list(monkeypatch, tmp_path):
@@ -242,6 +257,10 @@ def test_analyze_with_litelm_populates_audit(monkeypatch, tmp_path):
     assert audit["model"] == "core-qwen"
     assert audit["input_char_count"] == len(preprocess.text)
     assert audit["input_truncated"] is True
+    assert len(audit["prompt_sha256"]) == 64
+    assert len(audit["prompt_template_sha256"]) == 64
+    assert audit["model_parameters"]["temperature"] == 0.1
+    assert audit["model_parameters"]["max_tokens"] == cfg.local_output_tokens
     assert audit["raw_response_chars"] == len(raw_payload)
 
 
@@ -291,6 +310,10 @@ def test_analyze_with_claude_populates_audit(monkeypatch, tmp_path):
     assert audit["model"] == cfg.claude_model
     assert audit["input_char_count"] == len(preprocess.text)
     assert audit["input_truncated"] is False
+    assert len(audit["prompt_sha256"]) == 64
+    assert len(audit["prompt_template_sha256"]) == 64
+    assert audit["model_parameters"]["max_tokens"] == cfg.claude_output_tokens
+    assert audit["model_parameters"]["system_cache_control"] == "ephemeral"
     assert audit["raw_response_chars"] == len(raw_payload)
 
 

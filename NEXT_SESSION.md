@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 740
-**Last commit:** `3bdfe91ae` (G3 — guard reviewed Sanity documents from overwrite)
+**Tests passing:** 748
+**Last commit:** `3bdfe91ae` (G3 — guard reviewed Sanity documents from overwrite; G4 local changes pending commit)
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 740 tests -- run before every edit
+tests/                          # 748 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -353,24 +353,23 @@ and upload paths fail closed by default. **Commit:** `3bdfe91ae`
 
 ---
 
-### TASK G4 -- Provenance hardening for methodology chapter ← NEXT
+### ~~TASK G4~~ -- Provenance hardening for methodology chapter ✓ COMPLETE
 
-**Finding:** Audit sidecars are operationally useful but not yet fully
-reproducible for methodology defense.
+Audit sidecars now carry reproducibility metadata for methodology defense:
+- `prompt_sha256` for the resolved prompt text actually sent to the model.
+- `prompt_template_sha256` for the bare prompt template before runtime injections.
+- Audit `schema_version` is `2`.
+- Current git commit hash where available.
+- Model sampling/runtime parameters and wall-clock duration.
+- `score_derived_from_status` for confidence scores filled from status defaults.
+- `triage_audit.json` beside `triage_result.json`, including failure/default path metadata.
 
-**Implement in slices:**
-- Add SHA-256 hash of the resolved analysis/enrichment prompt text to audit files.
-- Add current git commit hash where available.
-- Add model sampling/runtime parameters and wall-clock duration.
-- Add `score_derived_from_status` so synthetic confidence scores are labelled.
-- Add a triage audit sidecar or equivalent queue metadata so failure/default
-  paths are visible.
-- Consider an opt-in raw-response retention mode (`--keep-raw`) after researcher
-  sign-off.
+Raw-response retention remains deliberately off and was not implemented; add an
+opt-in `--keep-raw` only after researcher sign-off.
 
 ---
 
-### TASK G5 -- Ground or suppress ungrounded corpus connections
+### TASK G5 -- Ground or suppress ungrounded corpus connections ← NEXT
 
 **Finding:** Enrichment currently asks for `corpus_connections` while vector
 similarity is deferred. Without actual related-doc context, these connections
@@ -387,22 +386,20 @@ semantic maps, related-document search, or corpus connection claims.
 
 ---
 
-### TASK F -- Batch Runner (technically unblocked; recommend G4–G5 first)
+### TASK F -- Batch Runner (technically unblocked; recommend G5 first)
 
 **Status:** G1 + G2 are complete, so TASK F is **technically unblocked**. G3 is
 also complete. However,
 for a genuinely safe overnight/night-batch system the recommended order is to
-close the remaining provenance gaps first:
+close the remaining corpus-connection gap first:
 
-1. **G4** — audit/provenance hardening (so unattended runs are reproducible)
-2. **G5** — corpus-connection grounding (so batch enrichment doesn't emit
+1. **G5** — corpus-connection grounding (so batch enrichment doesn't emit
    ungrounded connections at scale)
-3. **TASK F** — Batch Runner
+2. **TASK F** — Batch Runner
 
 **Why this order:** the review found fail-open paths (closed by G1/G2) plus
-provenance gaps (G3 now closed; G4–G5 remain). A batch runner amplifies any
-remaining silent gap across many documents, so G4–G5 are worth landing before
-unattended scale.
+provenance gaps (G3 and G4 now closed). A batch runner amplifies any remaining
+silent gap across many documents, so G5 is worth landing before unattended scale.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -465,7 +462,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 740 passed (or higher after new tests)
+# Must see: 748 passed (or higher after new tests)
 ```
 
 ---
@@ -516,4 +513,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 complete — last commit `3bdfe91ae`, 740 tests passing. TASK F is technically unblocked; recommended next order: G4 → G5 → TASK F.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete — last commit `3bdfe91ae` with G4 local changes pending commit, 748 tests passing. TASK F is technically unblocked; recommended next order: G5 → TASK F.*

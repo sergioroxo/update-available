@@ -18,10 +18,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 import re
+import time
 from pathlib import Path
 
 from ..config import Config
 from ..models.document import AnalysisResult, PreprocessResult
+from .audit import current_git_commit, sha256_text
 from .http_retry import call_with_http_retries
 from .sanity_reads import fetch_analysis_orientation_terms
 
@@ -84,48 +86,54 @@ def run(
     *,
     _audit: dict | None = None,
 ) -> AnalysisResult:
+    _started = time.perf_counter()
     if _audit is not None:
         _audit["llm_flag"] = llm
         _audit.setdefault("errors", [])
-    if llm == "claude":
-        return _analyze_with_claude(preprocess, config, _audit=_audit)
-    if llm == "local":
-        return _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
-    if llm == "local-heavy":
-        return _analyze_with_ollama(preprocess, config, config.local_analysis_model_heavy, _audit=_audit)
-    if llm == "local-reasoning":
-        return _analyze_with_ollama(preprocess, config, config.local_analysis_model_reasoning, _audit=_audit)
-    if llm == "litelm":
-        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model, _audit=_audit)
-    if llm == "litelm-heavy":
-        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_heavy, _audit=_audit)
-    if llm == "litelm-reasoning":
-        return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_reasoning, _audit=_audit)
-    if llm == "openrouter":
-        return _analyze_with_openrouter(preprocess, config, _audit=_audit)
-    if llm == "both":
-        # Thread _audit to the primary (Claude) result only; comparison run is display-only.
-        claude_result = _analyze_with_claude(preprocess, config, _audit=_audit)
-        local_result  = _analyze_with_ollama(preprocess, config, config.local_analysis_model)
-        return DualAnalysisResult(primary=claude_result, comparison=local_result)
-    if llm == "prefer-local":
-        try:
-            result = _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
-            if result.confidence.status == "low":
-                return _analyze_with_claude(preprocess, config, _audit=_audit)
-            return result
-        except Exception as exc:
-            if _audit is not None:
-                _audit.setdefault("errors", []).append(f"prefer-local primary failed: {exc}")
+        _audit["git_commit"] = current_git_commit()
+    try:
+        if llm == "claude":
             return _analyze_with_claude(preprocess, config, _audit=_audit)
-    if llm == "prefer-claude":
-        try:
-            return _analyze_with_claude(preprocess, config, _audit=_audit)
-        except Exception as exc:
-            if _audit is not None:
-                _audit.setdefault("errors", []).append(f"prefer-claude primary failed: {exc}")
+        if llm == "local":
             return _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
-    raise ValueError(f"Unknown LLM option: {llm!r}")
+        if llm == "local-heavy":
+            return _analyze_with_ollama(preprocess, config, config.local_analysis_model_heavy, _audit=_audit)
+        if llm == "local-reasoning":
+            return _analyze_with_ollama(preprocess, config, config.local_analysis_model_reasoning, _audit=_audit)
+        if llm == "litelm":
+            return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model, _audit=_audit)
+        if llm == "litelm-heavy":
+            return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_heavy, _audit=_audit)
+        if llm == "litelm-reasoning":
+            return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_reasoning, _audit=_audit)
+        if llm == "openrouter":
+            return _analyze_with_openrouter(preprocess, config, _audit=_audit)
+        if llm == "both":
+            # Thread _audit to the primary (Claude) result only; comparison run is display-only.
+            claude_result = _analyze_with_claude(preprocess, config, _audit=_audit)
+            local_result  = _analyze_with_ollama(preprocess, config, config.local_analysis_model)
+            return DualAnalysisResult(primary=claude_result, comparison=local_result)
+        if llm == "prefer-local":
+            try:
+                result = _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
+                if result.confidence.status == "low":
+                    return _analyze_with_claude(preprocess, config, _audit=_audit)
+                return result
+            except Exception as exc:
+                if _audit is not None:
+                    _audit.setdefault("errors", []).append(f"prefer-local primary failed: {exc}")
+                return _analyze_with_claude(preprocess, config, _audit=_audit)
+        if llm == "prefer-claude":
+            try:
+                return _analyze_with_claude(preprocess, config, _audit=_audit)
+            except Exception as exc:
+                if _audit is not None:
+                    _audit.setdefault("errors", []).append(f"prefer-claude primary failed: {exc}")
+                return _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
+        raise ValueError(f"Unknown LLM option: {llm!r}")
+    finally:
+        if _audit is not None:
+            _audit["duration_ms"] = int((time.perf_counter() - _started) * 1000)
 
 
 def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None) -> AnalysisResult:
@@ -140,6 +148,12 @@ def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit
         _audit["model"] = config.claude_model
         _audit["input_char_count"] = len(preprocess.text)
         _audit["input_truncated"] = preprocess.truncated
+        _audit["prompt_sha256"] = sha256_text(static_prompt + dynamic_prompt)
+        _audit["prompt_template_sha256"] = sha256_text(static_prompt)
+        _audit["model_parameters"] = {
+            "max_tokens": config.claude_output_tokens,
+            "system_cache_control": "ephemeral",
+        }
 
     response = client.messages.create(
         model=config.claude_model,
@@ -169,6 +183,15 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
         _audit["model"] = model
         _audit["input_char_count"] = len(preprocess.text)
         _audit["input_truncated"] = preprocess.truncated
+        _audit["prompt_sha256"] = sha256_text(system_prompt)
+        _audit["prompt_template_sha256"] = sha256_text(_load_system_prompt())
+        _audit["model_parameters"] = {
+            "temperature": 0.1,
+            "num_ctx": config.local_context_tokens,
+            "num_predict": config.local_output_tokens,
+            "format": "json",
+            "think": False,
+        }
 
     response = call_with_http_retries(lambda: httpx.post(
         f"{config.ollama_base_url}/api/chat",
@@ -214,6 +237,12 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
         _audit["model"] = model
         _audit["input_char_count"] = len(preprocess.text)
         _audit["input_truncated"] = preprocess.truncated
+        _audit["prompt_sha256"] = sha256_text(system_prompt)
+        _audit["prompt_template_sha256"] = sha256_text(_load_system_prompt())
+        _audit["model_parameters"] = {
+            "temperature": 0.1,
+            "max_tokens": config.local_output_tokens,
+        }
 
     response = call_with_http_retries(lambda: httpx.post(
         f"{config.litelm_base_url}/v1/chat/completions",
@@ -253,6 +282,11 @@ def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _a
         _audit["model"] = config.openrouter_model
         _audit["input_char_count"] = len(preprocess.text)
         _audit["input_truncated"] = preprocess.truncated
+        _audit["prompt_sha256"] = sha256_text(system_prompt)
+        _audit["prompt_template_sha256"] = sha256_text(_load_system_prompt())
+        _audit["model_parameters"] = {
+            "temperature": 0.1,
+        }
 
     response = httpx.post(
         "https://openrouter.ai/api/v1/chat/completions",
@@ -447,7 +481,11 @@ def _validate_response(raw_json: str, *, _audit: dict | None = None) -> Analysis
         if not candidate:
             return None
         try:
-            return AnalysisResult.model_validate(json.loads(candidate))
+            payload = json.loads(candidate)
+            result = AnalysisResult.model_validate(payload)
+            if _audit is not None:
+                _audit["score_derived_from_status"] = _confidence_score_was_derived(payload)
+            return result
         except Exception as exc:
             last_error = exc
             return None
@@ -535,6 +573,14 @@ def _extract_first_json_object(text: str) -> str | None:
             if depth == 0:
                 return text[start : i + 1]
     return None  # JSON object not closed — response truncated
+
+
+def _confidence_score_was_derived(payload: dict) -> bool:
+    """True when Pydantic filled confidence.overall_score from status default."""
+    confidence = payload.get("confidence")
+    if not isinstance(confidence, dict):
+        return True
+    return "overall_score" not in confidence or confidence.get("overall_score") in (None, 0, 0.0)
 
 
 def save(doc_id: str, result: AnalysisResult, config: Config) -> None:

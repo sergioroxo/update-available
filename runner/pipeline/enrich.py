@@ -20,20 +20,21 @@ from datetime import datetime
 import json
 import re
 import shutil
+import time
 from pathlib import Path
 
 try:
     from runner.config import Config
     from runner.models.document import AnalysisResult, PreprocessResult
     from runner.models.enrichment import EnrichmentResult
-    from runner.pipeline.audit import write_enrichment_audit
+    from runner.pipeline.audit import current_git_commit, sha256_text, write_enrichment_audit
     from runner.pipeline.http_retry import call_with_http_retries
     from runner.pipeline.sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 except ImportError:
     from ..config import Config
     from ..models.document import AnalysisResult, PreprocessResult
     from ..models.enrichment import EnrichmentResult
-    from .audit import write_enrichment_audit
+    from .audit import current_git_commit, sha256_text, write_enrichment_audit
     from .http_retry import call_with_http_retries
     from .sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 
@@ -153,6 +154,7 @@ def run(
     _audit: dict | None = None,
 ) -> EnrichmentResult:
     """Run Stage 3c enrichment and return an EnrichmentResult."""
+    _started = time.perf_counter()
     if _audit is not None:
         _audit["llm_flag"] = llm
         _audit["input_char_count"] = len(preprocess.text)
@@ -160,44 +162,52 @@ def run(
         _audit["chunked"] = False
         _audit["chunk_count"] = None
         _audit["chunks"] = None
+        _audit["git_commit"] = current_git_commit()
 
     system_prompt = _build_system_prompt(config, analysis)
     user_message  = _build_user_message(doc_id, preprocess)
+    if _audit is not None:
+        _audit["prompt_sha256"] = sha256_text(system_prompt)
+        _audit["prompt_template_sha256"] = sha256_text(_load_system_prompt())
 
-    raw = _call_enrichment_model(llm, system_prompt, user_message, config, model, _audit=_audit)
-
-    # Use a separate dict for the whole-document validation attempt.  If it
-    # fails and we fall through to the chunked fallback, we do NOT want the
-    # main _audit left with validation_path="failed" when the run ultimately
-    # succeeds.  On success the relevant fields are copied into _audit below.
-    _whole_doc_audit: dict = {}
     try:
-        result = _validate_response(doc_id, raw, llm, _audit=_whole_doc_audit)
-        if _audit is not None:
-            _audit["validation_path"] = _whole_doc_audit.get("validation_path", "")
-            _audit["validation_attempts"] = _whole_doc_audit.get("validation_attempts", 0)
-            _audit["normalization_repairs"] = _whole_doc_audit.get("normalization_repairs", 0)
-        return result
-    except ValueError as exc:
-        if len(preprocess.text) < 8_000:
-            # No chunked fallback for short docs — propagate the failure state.
+        raw = _call_enrichment_model(llm, system_prompt, user_message, config, model, _audit=_audit)
+
+        # Use a separate dict for the whole-document validation attempt.  If it
+        # fails and we fall through to the chunked fallback, we do NOT want the
+        # main _audit left with validation_path="failed" when the run ultimately
+        # succeeds.  On success the relevant fields are copied into _audit below.
+        _whole_doc_audit: dict = {}
+        try:
+            result = _validate_response(doc_id, raw, llm, _audit=_whole_doc_audit)
             if _audit is not None:
-                _audit["validation_path"] = _whole_doc_audit.get("validation_path", "failed")
+                _audit["validation_path"] = _whole_doc_audit.get("validation_path", "")
                 _audit["validation_attempts"] = _whole_doc_audit.get("validation_attempts", 0)
-                _audit.setdefault("errors", []).extend(
-                    _whole_doc_audit.get("errors", [])
-                )
-            raise
-        return _run_chunked_enrichment(
-            doc_id=doc_id,
-            preprocess=preprocess,
-            analysis=analysis,
-            config=config,
-            llm=llm,
-            model=model,
-            first_error=exc,
-            _audit=_audit,
-        )
+                _audit["normalization_repairs"] = _whole_doc_audit.get("normalization_repairs", 0)
+            return result
+        except ValueError as exc:
+            if len(preprocess.text) < 8_000:
+                # No chunked fallback for short docs — propagate the failure state.
+                if _audit is not None:
+                    _audit["validation_path"] = _whole_doc_audit.get("validation_path", "failed")
+                    _audit["validation_attempts"] = _whole_doc_audit.get("validation_attempts", 0)
+                    _audit.setdefault("errors", []).extend(
+                        _whole_doc_audit.get("errors", [])
+                    )
+                raise
+            return _run_chunked_enrichment(
+                doc_id=doc_id,
+                preprocess=preprocess,
+                analysis=analysis,
+                config=config,
+                llm=llm,
+                model=model,
+                first_error=exc,
+                _audit=_audit,
+            )
+    finally:
+        if _audit is not None:
+            _audit["duration_ms"] = int((time.perf_counter() - _started) * 1000)
 
 
 def save(doc_id: str, result: EnrichmentResult, config: Config, *, _audit: dict | None = None) -> Path:
@@ -408,10 +418,18 @@ def _call_enrichment_model(
     if llm == "claude":
         if _audit is not None:
             _audit["model"] = config.claude_model
+            _audit["model_parameters"] = {"max_tokens": config.local_output_tokens}
         return _call_claude(system_prompt, user_message, config)
     if llm.startswith("local"):
         if _audit is not None:
             _audit["model"] = config.local_analysis_model
+            _audit["model_parameters"] = {
+                "temperature": 0.1,
+                "num_ctx": config.local_context_tokens,
+                "num_predict": config.local_output_tokens,
+                "format": "json",
+                "think": False,
+            }
         return _call_ollama(system_prompt, user_message, config, config.local_analysis_model)
 
     # litelm* or default: try lexicon-llm on Mac Studio
@@ -420,6 +438,10 @@ def _call_enrichment_model(
         try:
             if _audit is not None:
                 _audit["model"] = resolved
+                _audit["model_parameters"] = {
+                    "temperature": 0.1,
+                    "max_tokens": config.local_output_tokens,
+                }
             return _call_litelm(system_prompt, user_message, config, resolved)
         except Exception:
             if llm.startswith("litelm"):
@@ -428,6 +450,13 @@ def _call_enrichment_model(
     if raw is None:
         if _audit is not None:
             _audit["model"] = config.local_analysis_model
+            _audit["model_parameters"] = {
+                "temperature": 0.1,
+                "num_ctx": config.local_context_tokens,
+                "num_predict": config.local_output_tokens,
+                "format": "json",
+                "think": False,
+            }
         return _call_ollama(system_prompt, user_message, config, config.local_analysis_model)
     return raw
 
@@ -465,6 +494,9 @@ def _run_chunked_enrichment(
         )
         chunk_entry: dict | None = None
         _chunk_audit: dict | None = {} if _audit is not None else None
+        if _chunk_audit is not None:
+            _chunk_audit["prompt_sha256"] = _audit.get("prompt_sha256", "")
+            _chunk_audit["prompt_template_sha256"] = _audit.get("prompt_template_sha256", "")
         if _audit is not None:
             chunk_entry = {
                 "index": index,

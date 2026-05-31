@@ -12,11 +12,15 @@ import pytest
 
 from runner.models.document import AnalysisResult
 from runner.models.enrichment import EnrichmentResult
+from runner.models.triage import TriageResult
 from runner.pipeline.audit import (
     AnalysisRunMeta,
     EnrichmentRunMeta,
+    TriageRunMeta,
+    sha256_text,
     write_analysis_audit,
     write_enrichment_audit,
+    write_triage_audit,
 )
 
 
@@ -43,6 +47,20 @@ def _enrichment(**overrides) -> EnrichmentResult:
     return EnrichmentResult.model_validate(data)
 
 
+def _triage(**overrides) -> TriageResult:
+    data = {
+        "doc_type_hint": "promotional",
+        "complexity": "simple",
+        "recommended_llm": "litelm",
+        "routing_reason": "safe standard web page",
+        "triage_succeeded": True,
+        "overnight_batch_safe": True,
+        "suggested_process_route": "standard",
+    }
+    data.update(overrides)
+    return TriageResult.model_validate(data)
+
+
 # ---------------------------------------------------------------------------
 # write_analysis_audit -- basic file creation
 # ---------------------------------------------------------------------------
@@ -64,8 +82,10 @@ def test_write_analysis_audit_schema_keys_present(tmp_path):
     expected_keys = {
         "schema_version", "doc_id", "run_at", "prompt_version", "ontology_version",
         "llm_flag", "model", "input_char_count", "input_truncated",
+        "prompt_sha256", "prompt_template_sha256", "git_commit", "model_parameters", "duration_ms",
         "lexicon_terms_injected", "raw_response_chars",
         "validation_path", "validation_attempts", "errors",
+        "score_derived_from_status",
         "normalisation_warnings", "confidence_score", "confidence_status",
         "doc_type", "needs_review", "testimony_flag",
         "candidate_terms_count", "evidence_count",
@@ -76,7 +96,7 @@ def test_write_analysis_audit_schema_keys_present(tmp_path):
 def test_write_analysis_audit_schema_version(tmp_path):
     write_analysis_audit(tmp_path, None, _analysis())
     payload = json.loads((tmp_path / "analysis_audit.json").read_text())
-    assert payload["schema_version"] == "1"
+    assert payload["schema_version"] == "2"
 
 
 # ---------------------------------------------------------------------------
@@ -170,9 +190,15 @@ def test_write_analysis_audit_populated_run_meta(tmp_path):
         input_char_count=18500,
         input_truncated=False,
         lexicon_terms_injected=12,
+        prompt_sha256="a" * 64,
+        prompt_template_sha256="t" * 64,
+        git_commit="abc123",
+        model_parameters={"temperature": 0.1, "max_tokens": 4096},
+        duration_ms=1234,
         raw_response_chars=3200,
         validation_path="outside_think_tags",
         validation_attempts=1,
+        score_derived_from_status=True,
         errors=[],
     )
     write_analysis_audit(tmp_path, meta, _analysis())
@@ -181,9 +207,15 @@ def test_write_analysis_audit_populated_run_meta(tmp_path):
     assert payload["model"] == "core-qwen"
     assert payload["input_char_count"] == 18500
     assert payload["lexicon_terms_injected"] == 12
+    assert payload["prompt_sha256"] == "a" * 64
+    assert payload["prompt_template_sha256"] == "t" * 64
+    assert payload["git_commit"] == "abc123"
+    assert payload["model_parameters"]["temperature"] == 0.1
+    assert payload["duration_ms"] == 1234
     assert payload["raw_response_chars"] == 3200
     assert payload["validation_path"] == "outside_think_tags"
     assert payload["validation_attempts"] == 1
+    assert payload["score_derived_from_status"] is True
 
 
 def test_write_analysis_audit_errors_list(tmp_path):
@@ -239,6 +271,7 @@ def test_write_enrichment_audit_schema_keys_present(tmp_path):
         "llm_flag", "model", "input_char_count",
         "chunked", "chunk_count", "chunks",
         "whole_doc_fallback_reason",
+        "prompt_sha256", "prompt_template_sha256", "git_commit", "model_parameters", "duration_ms",
         "validation_path", "validation_attempts", "normalization_repairs", "errors",
         "enrichment_model",
         "lexicon_proposals_count", "entity_proposals_count", "tactic_proposals_count",
@@ -314,6 +347,11 @@ def test_write_enrichment_audit_populated_run_meta(tmp_path):
             {"index": 2, "char_count": 9500, "succeeded": True, "error": None},
             {"index": 3, "char_count": 4200, "succeeded": False, "error": "Timeout"},
         ],
+        prompt_sha256="b" * 64,
+        prompt_template_sha256="u" * 64,
+        git_commit="def456",
+        model_parameters={"temperature": 0.1, "max_tokens": 16384},
+        duration_ms=5678,
         validation_path="outside_think_tags",
         validation_attempts=1,
         normalization_repairs=2,
@@ -324,6 +362,11 @@ def test_write_enrichment_audit_populated_run_meta(tmp_path):
     assert payload["chunk_count"] == 3
     assert len(payload["chunks"]) == 3
     assert payload["chunks"][2]["succeeded"] is False
+    assert payload["prompt_sha256"] == "b" * 64
+    assert payload["prompt_template_sha256"] == "u" * 64
+    assert payload["git_commit"] == "def456"
+    assert payload["model_parameters"]["max_tokens"] == 16384
+    assert payload["duration_ms"] == 5678
     assert payload["normalization_repairs"] == 2
 
 
@@ -508,3 +551,80 @@ def test_whole_doc_fallback_reason_empty_when_not_chunked(tmp_path):
     write_enrichment_audit(tmp_path, meta, _enrichment())
     payload = json.loads((tmp_path / "enrichment_audit.json").read_text())
     assert payload["whole_doc_fallback_reason"] == ""
+
+
+# ---------------------------------------------------------------------------
+# prompt hashing
+# ---------------------------------------------------------------------------
+
+def test_sha256_text_is_stable():
+    assert sha256_text("same prompt") == sha256_text("same prompt")
+    assert sha256_text("same prompt") != sha256_text("different prompt")
+    assert len(sha256_text("same prompt")) == 64
+
+
+# ---------------------------------------------------------------------------
+# write_triage_audit
+# ---------------------------------------------------------------------------
+
+def test_write_triage_audit_creates_file(tmp_path):
+    write_triage_audit(tmp_path, None, _triage(), doc_id="doc-triage")
+    assert (tmp_path / "triage_audit.json").exists()
+
+
+def test_write_triage_audit_schema_keys_present(tmp_path):
+    write_triage_audit(tmp_path, None, _triage(), doc_id="doc-triage")
+    payload = json.loads((tmp_path / "triage_audit.json").read_text())
+    expected_keys = {
+        "schema_version", "doc_id", "run_at", "stage", "git_commit",
+        "model", "context_char_count", "prompt_sha256", "prompt_template_sha256", "model_parameters",
+        "duration_ms", "raw_response_chars", "validation_path",
+        "validation_attempts", "errors", "triage_succeeded",
+        "doc_type_hint", "recommended_llm", "complexity",
+        "overnight_batch_safe", "needs_book_splitting",
+        "needs_testimony_review", "needs_media_review", "needs_legal_review",
+        "suggested_process_route", "routing_reason",
+    }
+    assert expected_keys.issubset(payload.keys())
+
+
+def test_write_triage_audit_populated_run_meta(tmp_path):
+    meta = TriageRunMeta(
+        model="triage",
+        context_char_count=2900,
+        prompt_sha256="c" * 64,
+        prompt_template_sha256="v" * 64,
+        git_commit="ghi789",
+        model_parameters={"temperature": 0.0, "max_tokens": 400},
+        duration_ms=321,
+        raw_response_chars=240,
+        validation_path="json_object",
+        validation_attempts=1,
+    )
+    write_triage_audit(tmp_path, meta, _triage(), doc_id="doc-triage")
+    payload = json.loads((tmp_path / "triage_audit.json").read_text())
+    assert payload["doc_id"] == "doc-triage"
+    assert payload["model"] == "triage"
+    assert payload["context_char_count"] == 2900
+    assert payload["prompt_sha256"] == "c" * 64
+    assert payload["prompt_template_sha256"] == "v" * 64
+    assert payload["git_commit"] == "ghi789"
+    assert payload["model_parameters"]["temperature"] == 0.0
+    assert payload["duration_ms"] == 321
+    assert payload["validation_path"] == "json_object"
+    assert payload["triage_succeeded"] is True
+    assert payload["overnight_batch_safe"] is True
+
+
+def test_write_triage_audit_records_failed_result(tmp_path):
+    write_triage_audit(
+        tmp_path,
+        {"errors": ["ollama: down"], "validation_path": "failed"},
+        TriageResult.failed("ollama: down"),
+        doc_id="doc-failed",
+    )
+    payload = json.loads((tmp_path / "triage_audit.json").read_text())
+    assert payload["triage_succeeded"] is False
+    assert payload["overnight_batch_safe"] is False
+    assert payload["errors"] == ["ollama: down"]
+    assert "triage failed" in payload["routing_reason"]

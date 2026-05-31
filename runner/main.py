@@ -59,6 +59,7 @@ def ingest(
 
     # Stage 0.5 — Triage (optional): fast pre-screen to recommend analysis model
     triage_result = None
+    _triage_audit: dict | None = None
     if run_triage and not yes:
         snippet = ""
         try:
@@ -67,7 +68,8 @@ def ingest(
         except Exception as exc:
             console.print(f"[yellow]Triage snippet extraction failed: {exc}[/yellow]")
         if snippet:
-            triage_result = triage.run(snippet, config)
+            _triage_audit = {}
+            triage_result = triage.run(snippet, config, _audit=_triage_audit)
             llm = review.checkpoint_triage(triage_result, llm)
 
     # Deduplication check — offer update-in-place or new document
@@ -120,7 +122,9 @@ def ingest(
     # testimony/legal safety checks below. Persistence remains non-fatal.
     if triage_result is not None:
         try:
-            triage.save_triage_result(intake_result.doc_id, triage_result, config)
+            triage.save_triage_result(
+                intake_result.doc_id, triage_result, config, _audit=_triage_audit
+            )
         except Exception as exc:
             console.print(f"[yellow]Could not persist triage result: {exc}[/yellow]")
     else:
@@ -1430,7 +1434,8 @@ def queue_triage(
         try:
             snippet, note = triage_mod.extract_snippet(item.url)
             console.print(f"  [dim]{note[:60]}[/dim]")
-            result = triage_mod.run(snippet, config)
+            triage_audit: dict = {}
+            result = triage_mod.run(snippet, config, _audit=triage_audit)
             apply_triage_result(db, item.id, result, model_name=model_name)
             if not result.triage_succeeded:
                 # run() returned a fail-closed result (model/network/parse failure).

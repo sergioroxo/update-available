@@ -228,22 +228,24 @@ records unless `--force-reviewed` / `--force` is passed through `upload-doc` or
 explicit `aiMetadata.humanReview`, human override resolution, and
 manual-researcher validation markers.
 
-**G4 -- Provenance hardening** ← NEXT
-Add prompt hashes, git commit, runtime/sampling params, duration, derived-score
-flagging, and triage audit metadata.
+**✓ G4 -- Provenance hardening** (local changes pending commit)
+Audit sidecars now use schema v2 and include resolved/template prompt hashes,
+git commit, runtime/sampling params, duration, derived-score flagging, and
+triage audit metadata. Raw-response retention remains default-off and
+unimplemented pending researcher sign-off.
 
-**G5 -- Ground or suppress corpus connections**
+**G5 -- Ground or suppress corpus connections** ← NEXT
 Do not let enrichment `corpus_connections` read as evidence until vector retrieval
 is wired, or clearly label/suppress them.
 
 **F -- Batch Runner** (technically unblocked; recommend after G4-G5)
 Must use `source_queue.is_overnight_safe(item)` and surface excluded items before
-processing unattended. G1/G2 preconditions are complete, but G4-G5 should land
+processing unattended. G1/G2 preconditions are complete, but G5 should land
 first for safer overnight runs.
 
 Recommended order for a new session:
-1. Verify repo/test state (740 passed expected).
-2. Implement G4, then G5 as focused safety/provenance slices.
+1. Verify repo/test state (748 passed expected).
+2. Implement G5 as a focused safety/provenance slice.
 3. Only then start TASK F — Batch Runner, unless researcher explicitly accepts
    the remaining provenance risk.
 
@@ -251,8 +253,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 740
-- Last commit: `3bdfe91ae` -- G3 guard reviewed Sanity documents from overwrite
+- Tests passing: 748
+- Last commit: `3bdfe91ae` -- G3 guard reviewed Sanity documents from overwrite; G4 local changes pending commit
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -267,7 +269,8 @@ Recommended order for a new session:
   `01_project_docs/FUTURE_APPLICATIONS_ROADMAP_v1.0.md` and
   `01_project_docs/FUTURE_APPLICATIONS_TRACKER.md`
 - Reviewed-doc overwrite guard: built ✓ (TASK G3)
-- Batch Runner: not yet built; technically unblocked by G1/G2, recommended after G4-G5
+- Provenance hardening: built ✓ (TASK G4)
+- Batch Runner: not yet built; technically unblocked by G1/G2, recommended after G5
 
 ---
 
@@ -355,22 +358,17 @@ reanalyze --upload expose --force-reviewed / --force. Do not bypass this guard
 for batch work.
 ```
 
-### TASK G4: Provenance Hardening
+### Completed TASK G4 Reference: Provenance Hardening
 
 ```text
-Implement TASK G4 from NEXT_SESSION.md in small slices.
+TASK G4 is complete. Use this only as historical context when reviewing audit
+provenance behavior.
 
-Scope:
-- Inspect runner/pipeline/audit.py, analyze.py, enrich.py, triage.py, and existing
-  audit tests.
-- Add SHA-256 hash of resolved analysis/enrichment prompt text to audit files.
-- Add current git commit hash where available.
-- Add model runtime/sampling parameters and wall-clock duration.
-- Add score_derived_from_status so synthetic confidence scores are visible.
-- Add triage audit sidecar or equivalent queue metadata for failure/default paths.
-- Do not add raw-response retention unless the researcher explicitly approves it.
-
-Run focused audit tests and the full suite. Show the diff before committing.
+Current state: analysis/enrichment/triage audit sidecars use schema v2 and
+include resolved/template prompt hashes, git commit, model/runtime params,
+duration, and confidence-score provenance.
+Raw-response retention remains default-off and unimplemented without researcher
+sign-off.
 ```
 
 ---
@@ -437,6 +435,6 @@ Favour:
 - explicit provenance
 - researcher control at every consequential step
 
-The next session should start with G4. G1/G2 made overnight processing safer and
-G3 protects reviewed Sanity records; G4/G5 are the remaining protection layer
-before unattended batch work.
+The next session should start with G5. G1/G2 made overnight processing safer,
+G3 protects reviewed Sanity records, and G4 hardens audit provenance; G5 is the
+remaining protection layer before unattended batch work.

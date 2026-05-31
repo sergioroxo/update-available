@@ -51,6 +51,32 @@ def test_save_triage_result_creates_file(tmp_path):
     assert data["recommended_llm"] == "litelm"
     assert data["doc_type_hint"] == "promotional"
     assert "saved_at" in data  # timestamp must be written
+    assert (tmp_path / "doc-1" / "triage_audit.json").exists()
+
+
+def test_save_triage_result_writes_triage_audit_when_meta_provided(tmp_path):
+    cfg = _cfg(tmp_path)
+    (tmp_path / "doc-audit").mkdir()
+    audit = {
+        "model": "triage",
+        "context_char_count": 1234,
+        "prompt_sha256": "d" * 64,
+        "prompt_template_sha256": "e" * 64,
+        "model_parameters": {"temperature": 0.0, "max_tokens": 400},
+        "duration_ms": 42,
+        "raw_response_chars": 250,
+        "validation_path": "json_object",
+        "validation_attempts": 1,
+    }
+    save_triage_result("doc-audit", _result(triage_succeeded=True), cfg, _audit=audit)
+    payload = json.loads((tmp_path / "doc-audit" / "triage_audit.json").read_text())
+    assert payload["model"] == "triage"
+    assert payload["context_char_count"] == 1234
+    assert payload["prompt_sha256"] == "d" * 64
+    assert payload["prompt_template_sha256"] == "e" * 64
+    assert payload["model_parameters"]["max_tokens"] == 400
+    assert payload["duration_ms"] == 42
+    assert payload["validation_path"] == "json_object"
 
 
 def test_save_triage_result_creates_missing_doc_dir(tmp_path):

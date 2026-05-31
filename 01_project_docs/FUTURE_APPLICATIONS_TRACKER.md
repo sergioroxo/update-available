@@ -20,18 +20,19 @@ These come before large batch processing or public outputs.
 | G1 | Triage fails closed | Prevent untriaged/failed items from reading as overnight-safe | none | code + tests | Done (`9a58cc807`) |
 | G2 | Cross-stage testimony/legal holds | Prevent headless upload/enrichment of sensitive docs | G1 | code + tests | Done through G2-b-2b (`1e50d7558`) |
 | G3 | Reviewed Sanity doc clobber guard | Prevent overwriting researcher-edited records | G1/G2 | code + tests | Done (`3bdfe91ae`) |
-| G4 | Provenance hardening | Make outputs reproducible and methodologically defensible | G1-G3 | audit metadata + tests | Next |
-| G5 | Ground/suppress corpus connections | Prevent ungrounded related-document claims | G4 preferred | enrichment/retrieval change + tests | Pending |
+| G4 | Provenance hardening | Make outputs reproducible and methodologically defensible | G1-G3 | audit metadata + tests | Done (local changes; 748 tests) |
+| G5 | Ground/suppress corpus connections | Prevent ungrounded related-document claims | G4 preferred | enrichment/retrieval change + tests | Next |
 
 G4 checklist:
-- [ ] Analysis prompt SHA-256 in `analysis_audit.json`
-- [ ] Enrichment prompt SHA-256 in `enrichment_audit.json`
-- [ ] Current git commit hash in audit sidecars
-- [ ] Model/runtime/sampling params in audit sidecars
-- [ ] Wall-clock duration for analysis/enrichment
-- [ ] `score_derived_from_status` or equivalent confidence provenance
-- [ ] Triage audit sidecar or queue metadata for failure/default paths
-- [ ] Explicit decision on opt-in raw response retention (`--keep-raw`), default off
+- [x] Analysis resolved/template prompt SHA-256 fields in `analysis_audit.json`
+- [x] Enrichment resolved/template prompt SHA-256 fields in `enrichment_audit.json`
+- [x] Audit sidecar `schema_version` bumped to `2`
+- [x] Current git commit hash in audit sidecars
+- [x] Model/runtime/sampling params in audit sidecars
+- [x] Wall-clock duration for analysis/enrichment
+- [x] `score_derived_from_status` or equivalent confidence provenance
+- [x] Triage audit sidecar or queue metadata for failure/default paths
+- [x] Explicit decision on opt-in raw response retention: default off; not implemented without researcher sign-off
 
 G5 checklist:
 - [ ] Suppress `corpus_connections` until retrieval is wired, or mark them explicitly ungrounded
@@ -49,7 +50,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 |---|---|---|---|
 | Stable document/entity/term IDs | All exports and graph joins | Never recycle IDs; enforce `existing_entry_id` / `existing_entity_id` in review where applicable | Ongoing |
 | First-class directional edges | Actor graph, lexicon genealogy, corpus graph | Export edge view with source, target, type, evidence quote, doc_id, confidence | Pending |
-| Provenance key on derived claims | Methodology defense, audit, public trust | Covered by G4 | Next |
+| Provenance key on derived claims | Methodology defense, audit, public trust | Covered by G4 | Done for audit sidecars; enforce per-export later |
 | ISO 3166 geography | Maps/timelines | Normalize `geographic_scope` at review/export time | Pending |
 | ISO 639 language tags | Glossary, cross-language analysis | Add deterministic language-ID check later | Pending |
 | Temporal axis | Lexicon genealogy, timelines | Preserve `document_date`; reserve `first_attested` for terms/events | Pending |
@@ -62,7 +63,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 
 | Step | Description | Dependency | Status |
 |---|---|---|---|
-| TASK F dry-run manifest | Show included/excluded queue items, reasons, route, estimated risk | G4/G5 recommended | Pending |
+| TASK F dry-run manifest | Show included/excluded queue items, reasons, route, estimated risk | G5 recommended | Pending |
 | TASK F batch ledger | Record source IDs, doc IDs, triage, audit paths, upload/enrichment status, errors | TASK F | Pending |
 | 10-15 doc limit | Keep review load human-sized | TASK F | Pending |
 | Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Pending |
@@ -146,13 +147,11 @@ These stay deferred until the spine is stronger:
 
 ## 8. Recommended Sequence
 
-1. **G4:** audit/provenance hardening.
-2. **G5:** ground or suppress corpus connections; verify `vector(4096)` and retrieval.
-3. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle.
-4. **TASK F:** conservative batch runner with dry-run manifest and batch ledger.
-5. **Pilot calibration:** 10-20 documents across languages/types/stakes.
-6. **Export-only outputs:** network graph, glossary, claims ledger, framing matrix.
-7. **Book schema:** only when a real book needs ingestion and Q-BookSanity is decided.
-8. **Semantic map:** after retrieval and embedding verification.
-9. **Public archive:** validated subset only, with provenance and removal protocol.
-
+1. **G5:** ground or suppress corpus connections; verify `vector(4096)` and retrieval.
+2. **Data structure lock-in:** IDs, edges, ISO geo/language, temporal axis, claim lifecycle.
+3. **TASK F:** conservative batch runner with dry-run manifest and batch ledger.
+4. **Pilot calibration:** 10-20 documents across languages/types/stakes.
+5. **Export-only outputs:** network graph, glossary, claims ledger, framing matrix.
+6. **Book schema:** only when a real book needs ingestion and Q-BookSanity is decided.
+7. **Semantic map:** after retrieval and embedding verification.
+8. **Public archive:** validated subset only, with provenance and removal protocol.

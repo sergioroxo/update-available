@@ -97,10 +97,14 @@ def test_run_litelm_failure_then_ollama_failure_is_fail_closed(monkeypatch):
 
     monkeypatch.setattr(triage_mod, "_call_litelm", _boom)
     monkeypatch.setattr(triage_mod, "_call_ollama", _boom)
-    result = triage_mod.run("some document text", _cfg(litelm=True))
+    audit: dict = {}
+    result = triage_mod.run("some document text", _cfg(litelm=True), _audit=audit)
     assert result.triage_succeeded is False
     assert result.overnight_batch_safe is False
     assert "litelm" in result.routing_reason
+    assert audit["validation_path"] == ""
+    assert audit["duration_ms"] >= 0
+    assert any("litelm" in error for error in audit["errors"])
 
 
 def test_run_ollama_fallback_failure_is_fail_closed(monkeypatch):
@@ -149,10 +153,17 @@ def test_run_litelm_failure_falls_back_to_ollama_success(monkeypatch):
 
 def test_run_successful_parse_sets_triage_succeeded(monkeypatch):
     monkeypatch.setattr(triage_mod, "_call_litelm", lambda *a, **k: _VALID_JSON)
-    result = triage_mod.run("text", _cfg(litelm=True))
+    audit: dict = {}
+    result = triage_mod.run("text", _cfg(litelm=True), _audit=audit)
     assert result.triage_succeeded is True
     assert result.overnight_batch_safe is True
     assert result.doc_type_hint == "promotional"
+    assert audit["model"] == "triage"
+    assert len(audit["prompt_sha256"]) == 64
+    assert len(audit["prompt_template_sha256"]) == 64
+    assert audit["prompt_template_sha256"] == audit["prompt_sha256"]
+    assert audit["raw_response_chars"] == len(_VALID_JSON)
+    assert audit["validation_path"] == "json_object"
 
 
 def test_run_valid_json_missing_overnight_flag_is_not_safe(monkeypatch):
