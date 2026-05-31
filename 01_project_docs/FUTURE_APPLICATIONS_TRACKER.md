@@ -69,6 +69,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | 10-15 doc limit | Keep review load human-sized | TASK F | Done for dry-run and execution planning |
 | Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Partial: stop-on-ingest-failure + preflight checks built; richer service probes later if needed |
 | Morning report | Human-facing summary of what happened overnight | TASK F | Done as local Markdown batch report; aggregate dashboard later |
+| Preservation status sidecar | Make blocked/dynamic/social/video capture needs explicit without adding capture dependencies | TASK P | Done locally (`preservation_status.json`) |
 | Stakes-ranked review inbox | Legal/testimony/Tier-1/low-confidence first | TASK F + Streamlit | Pending |
 | Calibration dashboard | Confidence vs researcher corrections | Pilot batch | Pending |
 
@@ -104,6 +105,8 @@ Evaluate only when a concrete workflow is blocked without the tool.
 |---|---|---|---|
 | marker / surya | OCR/layout fallback, scanned PDFs, page provenance | Now-useful | Candidate |
 | WhisperX / whisper.cpp | Timestamped transcription, diarization, media/testimony attribution | Now-useful | Candidate |
+| Browsertrix | High-fidelity WACZ/screenshot capture for dynamic/blocker pages | Near-term after pilot shows capture volume | Candidate |
+| ArchiveBox | Private redundant local archive vault | Near-term after preservation status review | Candidate |
 | fastText / lingua | Deterministic language-ID check | Now-useful | Candidate |
 | GROBID | Academic PDF references/citation extraction | Now-useful | Candidate |
 | DVC / git-annex | Version corpus + audit sidecars as data | Near-term | Candidate |

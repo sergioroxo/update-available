@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 898
-**Latest completed milestone:** TASK F batch report
+**Tests passing:** 933
+**Latest completed milestone:** TASK P preservation status
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 898 tests -- run before every edit
+tests/                          # 933 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -449,9 +449,8 @@ the model, so DOI/journal pages blocked by Cloudflare route as academic but
 not overnight-safe, social media shells route as social/media, and YouTube
 boilerplate routes as media/transcript work rather than generic footer text.
 
-**Next sequence:** before the first live `--execute` run, add TASK P preservation
-fallback/status hardening for blocked/dynamic/social/video sources. Then inspect
-`runner batch-plan`, let preflight run, and use a tiny attended pilot batch.
+**Next sequence:** inspect `runner batch-plan`, let preflight run, and use a tiny
+attended pilot batch before any overnight use.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -463,6 +462,25 @@ before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if neede
   `overnight_batch_safe` directly) and surface excluded items before starting
 - Headless batch mode must never block on interactive testimony consent prompts
   (the consent checkpoint is already headless-safe as of G2-b-2a)
+
+---
+
+### ~~TASK P~~ -- Preservation fallback/status hardening ✓ COMPLETE
+
+`runner/pipeline/preservation.py` now assesses existing preservation signals
+without adding dependencies or running live captures. After preprocessing, the
+pipeline writes `preservation_status.json` beside document artifacts. It records
+whether HTML was captured, whether additional capture is needed, the public
+Wayback status, local HTML path/hash, notes, and a suggested route such as
+`browsertrix`, `manual_pdf`, `screenshot`, or `media_metadata`.
+
+The assessment is non-fatal and uses only existing signals: source type/domain,
+Wayback status, preprocessing quality, local HTML SHA-256/path, and blocker text
+in captured HTML. Social pages are routed to screenshot capture even if intake
+classified them as possible media; YouTube/video/audio URLs route to media
+metadata/transcript review; DOI/journal pages with poor extraction route to
+manual PDF capture. Browsertrix/ArchiveBox/Arquivo.pt/Perma.cc/MemGator remain
+evaluation candidates, not integrated dependencies.
 
 ---
 
@@ -514,7 +532,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 898 passed (or higher after new tests)
+# Must see: 933 passed (or higher after new tests)
 ```
 
 ---
@@ -565,4 +583,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan, Slice 2 guarded `batch-run`, Slice 3 preflight checks, and Slice 4 batch reports are complete. Queue triage is source-aware for blocked DOI/journal, social, and video URLs, and queue notes inform retries. 898 tests passing. Recommended next order: TASK P preservation fallback/status hardening, then a tiny attended pilot batch before any overnight use.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan, Slice 2 guarded `batch-run`, Slice 3 preflight checks, and Slice 4 batch reports are complete. TASK P preservation status sidecar is complete. Queue triage is source-aware for blocked DOI/journal, social, and video URLs, and queue notes inform retries. 933 tests passing. Recommended next order: tiny attended pilot batch before any overnight use.*

@@ -72,6 +72,25 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
         if result.source_html_sha256:
             _update_intake_html_hash(intake.local_dir, result.source_html_sha256)
         _save_artifacts(result, intake.local_dir)
+        # Preservation status assessment — non-fatal, never blocks ingest.
+        try:
+            from .preservation import assess_preservation, write_preservation_status
+            _html_text = ""
+            _html_file = intake.local_dir / "source.html"
+            if _html_file.exists():
+                _html_text = _html_file.read_text(encoding="utf-8", errors="replace")
+            _pstatus = assess_preservation(
+                source=intake.source,
+                source_type=intake.source_type,
+                wayback_status=intake.wayback_status,
+                preprocess_quality=result.quality,
+                local_html_sha256=result.source_html_sha256,
+                local_html_path=result.source_html_path,
+                captured_html=_html_text,
+            )
+            write_preservation_status(intake.local_dir, _pstatus)
+        except Exception:
+            pass  # preservation assessment must never block ingestion
 
     return result
 

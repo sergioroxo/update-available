@@ -250,17 +250,17 @@ writability before the first ingest. Every batch-run path writes a Markdown repo
 beside the ledger with counts, stop reason, failures, and next action.
 
 Recommended order for a new session:
-1. Verify repo/test state (898 passed expected).
+1. Verify repo/test state (933 passed expected).
 2. Use `runner batch-plan` to inspect the queue before any live execution.
-3. Add TASK P preservation fallback/status hardening for blocked/dynamic/social/video sources.
+3. Run a tiny attended pilot batch before any overnight use.
 4. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 898
-- Latest completed milestone: TASK F batch report
+- Tests passing: 933
+- Latest completed milestone: TASK P preservation status
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -301,6 +301,11 @@ Recommended order for a new session:
   - Writes `{batch_id}_report.md` beside every ledger.
   - Covers rehearsal, no eligible items, preflight failure, execution failure, and success.
   - Includes raw stop reason, manifest/item counts, queue notes, failure detail, and next action.
+- TASK P preservation status built ✓
+  - `preservation_status.json` is written after preprocessing when a local doc dir exists.
+  - Records public Wayback status, local HTML path/hash, capture-needed state, notes, and suggested route.
+  - Routes blocker/dynamic pages to `browsertrix`, DOI/journal poor extraction to `manual_pdf`, social pages to `screenshot`, and video/audio URLs to `media_metadata`.
+  - Does not integrate or run Browsertrix, ArchiveBox, Arquivo.pt, Perma.cc, Scoop, or MemGator.
 
 ---
 
