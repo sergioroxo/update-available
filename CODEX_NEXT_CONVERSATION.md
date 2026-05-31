@@ -250,17 +250,17 @@ writability before the first ingest. Every batch-run path writes a Markdown repo
 beside the ledger with counts, stop reason, failures, and next action.
 
 Recommended order for a new session:
-1. Verify repo/test state (933 passed expected).
+1. Verify repo/test state (934 passed expected).
 2. Use `runner batch-plan` to inspect the queue before any live execution.
-3. Run a tiny attended pilot batch before any overnight use.
+3. Retry the tiny attended pilot batch before any overnight use.
 4. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 933
-- Latest completed milestone: TASK P preservation status
+- Tests passing: 934
+- Latest completed milestone: Pilot Sanity query fix
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -306,6 +306,9 @@ Recommended order for a new session:
   - Records public Wayback status, local HTML path/hash, capture-needed state, notes, and suggested route.
   - Routes blocker/dynamic pages to `browsertrix`, DOI/journal poor extraction to `manual_pdf`, social pages to `screenshot`, and video/audio URLs to `media_metadata`.
   - Does not integrate or run Browsertrix, ArchiveBox, Arquivo.pt, Perma.cc, Scoop, or MemGator.
+- Pilot fix: first one-item pilot stopped before Sanity mutation because `_query()`
+  sent raw GROQ params (`$doc_id=doc-...`). Fixed by JSON-encoding query params
+  in `runner/clients/sanity.py`; retry the one-item pilot next.
 
 ---
 

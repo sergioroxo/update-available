@@ -2,8 +2,8 @@
 **Generated:** 2026-05-31
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 933
-**Latest completed milestone:** TASK P preservation status
+**Tests passing:** 934
+**Latest completed milestone:** Pilot Sanity query fix
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -149,7 +149,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 933 tests -- run before every edit
+tests/                          # 934 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -449,8 +449,12 @@ the model, so DOI/journal pages blocked by Cloudflare route as academic but
 not overnight-safe, social media shells route as social/media, and YouTube
 boilerplate routes as media/transcript work rather than generic footer text.
 
-**Next sequence:** inspect `runner batch-plan`, let preflight run, and use a tiny
-attended pilot batch before any overnight use.
+**Pilot note:** the first one-item pilot stopped safely on Sanity upload guard
+before document mutation. Root cause was fixed: GROQ query parameters are now
+JSON-encoded in `runner/clients/sanity.py`, so `_id == $doc_id` queries send
+`$doc_id="doc-..."` instead of a raw string. The failed item remains for retry.
+
+**Next sequence:** retry the one-item attended pilot before any overnight use.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -532,7 +536,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 933 passed (or higher after new tests)
+# Must see: 934 passed (or higher after new tests)
 ```
 
 ---
@@ -583,4 +587,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan, Slice 2 guarded `batch-run`, Slice 3 preflight checks, and Slice 4 batch reports are complete. TASK P preservation status sidecar is complete. Queue triage is source-aware for blocked DOI/journal, social, and video URLs, and queue notes inform retries. 933 tests passing. Recommended next order: tiny attended pilot batch before any overnight use.*
+*Updated 2026-05-31. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 complete and pushed. G5 complete and pushed (`7638ff07c`). Data-structure lock-in DS-1, DS-2, DS-3, and DS-4 complete. TASK F Slice 1 dry-run batch plan, Slice 2 guarded `batch-run`, Slice 3 preflight checks, and Slice 4 batch reports are complete. TASK P preservation status sidecar is complete. First one-item pilot found and fixed a Sanity GROQ parameter encoding bug before document mutation. Queue triage is source-aware for blocked DOI/journal, social, and video URLs, and queue notes inform retries. 934 tests passing. Recommended next order: retry tiny attended pilot before any overnight use.*

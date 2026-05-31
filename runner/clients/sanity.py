@@ -1914,7 +1914,7 @@ def _query(query: str, config: Config, params: dict | None = None) -> list[dict]
     headers = {"Authorization": f"Bearer {config.sanity_write_token}"}
     encoded_params = {"query": query}
     for key, value in (params or {}).items():
-        encoded_params[key if key.startswith("$") else f"${key}"] = value
+        encoded_params[key if key.startswith("$") else f"${key}"] = json.dumps(value)
     response = httpx.get(
         url,
         params=encoded_params,

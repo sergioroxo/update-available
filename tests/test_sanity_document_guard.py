@@ -61,6 +61,38 @@ def _config(tmp_path):
     return SimpleNamespace(corpus_dir=tmp_path)
 
 
+def test_query_json_encodes_groq_params(monkeypatch, tmp_path):
+    captured = {}
+
+    class _Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"result": []}
+
+    def _get(url, *, params, headers, timeout):
+        captured["params"] = params
+        return _Response()
+
+    monkeypatch.setattr(sanity.httpx, "get", _get)
+
+    cfg = SimpleNamespace(
+        sanity_project_id="proj",
+        sanity_dataset="production",
+        sanity_write_token="token",
+    )
+
+    sanity._query(
+        "*[_id == $doc_id && count($types) > 0]",
+        cfg,
+        {"doc_id": "doc-abc", "$types": ["sogiceDocument"]},
+    )
+
+    assert captured["params"]["$doc_id"] == json.dumps("doc-abc")
+    assert captured["params"]["$types"] == json.dumps(["sogiceDocument"])
+
+
 def test_write_document_allows_new_sanity_document(monkeypatch, tmp_path):
     calls = {"fetched": [], "mutations": []}
 
