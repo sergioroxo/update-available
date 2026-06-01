@@ -547,3 +547,114 @@ class TestCollectProvenanceWarnings:
         })
         _write_json(doc_dir / "enrichment.json", {"entity_proposals": []})
         assert _collect_provenance_warnings(doc_dir, config=None) == []
+
+
+# ---------------------------------------------------------------------------
+# Date warning text — app path and Wayback clarification
+# ---------------------------------------------------------------------------
+
+class TestDateWarningText:
+    """The date warning must include the app path and must not treat Wayback
+    capture date as publication date."""
+
+    def _make_date_unknown_dir(self, tmp_path, **kwargs) -> "Path":
+        """Create a doc_dir with no known date, optionally with intake.json."""
+        doc_dir = tmp_path / "nodatedoc"
+        doc_dir.mkdir(exist_ok=True)
+        _write_json(doc_dir / "analysis.json", {
+            "languages": ["en"],
+            "document_date": {"year": 0},
+        })
+        if "ingested_at" in kwargs:
+            _write_json(doc_dir / "intake.json", {
+                "ingested_at": kwargs["ingested_at"],
+            })
+        if "archive_url" in kwargs:
+            data = {"archive_url": kwargs["archive_url"]}
+            if "ingested_at" in kwargs:
+                data["ingested_at"] = kwargs["ingested_at"]
+            _write_json(doc_dir / "intake.json", data)
+        return doc_dir
+
+    def test_suggested_action_includes_app_path(self, tmp_path):
+        doc_dir = self._make_date_unknown_dir(tmp_path)
+        warnings = _collect_provenance_warnings(doc_dir, config=None)
+        w = next((x for x in warnings if x.title == "Date unknown"), None)
+        assert w is not None
+        assert "Document List" in w.suggested_action
+
+    def test_suggested_action_includes_edit_dates_path(self, tmp_path):
+        doc_dir = self._make_date_unknown_dir(tmp_path)
+        warnings = _collect_provenance_warnings(doc_dir, config=None)
+        w = next(x for x in warnings if x.title == "Date unknown")
+        # Should mention the specific UI path
+        assert "Edit dates and publication metadata" in w.suggested_action
+
+    def test_wayback_capture_date_not_treated_as_publication_date(self, tmp_path):
+        """Explanation must clarify that Wayback capture date ≠ publication date."""
+        doc_dir = self._make_date_unknown_dir(
+            tmp_path,
+            archive_url="https://web.archive.org/web/20220101/https://example.com",
+        )
+        warnings = _collect_provenance_warnings(doc_dir, config=None)
+        w = next(x for x in warnings if x.title == "Date unknown")
+        # The explanation must mention that the Wayback/capture date is not the publication date
+        text_to_check = (w.explanation + " " + w.suggested_action).lower()
+        assert "not" in text_to_check
+        assert any(
+            phrase in text_to_check
+            for phrase in ["not the publication date", "not when it was", "archived", "wayback"]
+        )
+
+    def test_ingested_at_surfaced_in_explanation_when_present(self, tmp_path):
+        doc_dir = self._make_date_unknown_dir(
+            tmp_path,
+            ingested_at="2024-03-15T10:00:00Z",
+        )
+        warnings = _collect_provenance_warnings(doc_dir, config=None)
+        w = next(x for x in warnings if x.title == "Date unknown")
+        # The ingested_at date should appear as context in explanation
+        assert "2024-03-15" in w.explanation
+
+    def test_ingested_at_clarified_as_capture_not_publication(self, tmp_path):
+        doc_dir = self._make_date_unknown_dir(
+            tmp_path,
+            ingested_at="2024-03-15T10:00:00Z",
+        )
+        warnings = _collect_provenance_warnings(doc_dir, config=None)
+        w = next(x for x in warnings if x.title == "Date unknown")
+        # Must explicitly say it is not the publication date
+        assert "not" in w.explanation.lower()
+        # And should be in source_fields as context label
+        source_field_text = " ".join(w.source_fields)
+        assert "ingested_at" in source_field_text
+        assert "capture" in source_field_text.lower() or "not publication" in source_field_text.lower()
+
+    def test_no_date_warning_when_ingested_at_present_but_year_known(self, tmp_path):
+        """Having an ingested_at does not suppress the warning if year is still 0."""
+        doc_dir = self._make_date_unknown_dir(
+            tmp_path,
+            ingested_at="2024-01-01T00:00:00Z",
+        )
+        # ingested_at alone should NOT fill the year — warning still fires
+        warnings = _collect_provenance_warnings(doc_dir, config=None)
+        assert any(w.title == "Date unknown" for w in warnings)
+
+    def test_suggested_action_mentions_not_inventing_date(self, tmp_path):
+        doc_dir = self._make_date_unknown_dir(tmp_path)
+        warnings = _collect_provenance_warnings(doc_dir, config=None)
+        w = next(x for x in warnings if x.title == "Date unknown")
+        # Should caution against inventing a date
+        assert "do not invent" in w.suggested_action.lower() or "genuinely unknown" in w.suggested_action.lower()
+
+    def test_languages_warning_suggests_app_path(self, tmp_path):
+        """Languages warning should also include an app path for resolution."""
+        doc_dir = tmp_path / "nolang"
+        doc_dir.mkdir()
+        _write_json(doc_dir / "analysis.json", {
+            "languages": [],
+            "document_date": {"year": 2024},
+        })
+        warnings = _collect_provenance_warnings(doc_dir, config=None)
+        w = next(x for x in warnings if x.title == "Languages missing")
+        assert "Document List" in w.suggested_action

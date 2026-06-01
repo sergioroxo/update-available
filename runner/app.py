@@ -3553,6 +3553,105 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 st.rerun()
 
 
+def _render_entity_resolver(doc_dir: Path, proposal_name: str, config) -> None:
+    """Render the entity ID resolver widget for one entity proposal.
+
+    Shows exact Sanity matches (safe to auto-fill) and candidates
+    (researcher must confirm). Writes back to local ``enrichment.json`` only —
+    no Sanity mutations.
+    """
+    from runner.app_entity_resolver import match_entity_name, fill_entity_id_in_enrichment
+
+    doc_id = doc_dir.name
+    # Stable session-state keys scoped to this doc + entity
+    _key = lambda suffix: f"eresolve_{doc_id}_{proposal_name}_{suffix}"
+
+    st.markdown(f"**{proposal_name}** — `existing_entity_id` missing")
+
+    btn_col, manual_col, use_col = st.columns([2, 4, 1])
+
+    with btn_col:
+        if st.button("🔍 Find in Sanity", key=_key("find")):
+            if config:
+                try:
+                    from runner.pipeline.sanity_reads import fetch_entities_for_resolver
+                    entities = fetch_entities_for_resolver(config)
+                    matches  = match_entity_name(proposal_name, entities)
+                    st.session_state[_key("results")] = matches
+                except Exception as exc:
+                    st.session_state[_key("results")] = f"__error__{exc}"
+            else:
+                st.session_state[_key("results")] = "__error__config unavailable"
+
+    manual_id = manual_col.text_input(
+        "Paste Sanity ID manually",
+        placeholder="organization-segm",
+        key=_key("manual"),
+        label_visibility="collapsed",
+    )
+    with use_col:
+        if st.button("✓ Use", key=_key("use_manual"), help="Apply the pasted Sanity ID"):
+            sid = manual_id.strip()
+            if sid:
+                if fill_entity_id_in_enrichment(doc_dir, proposal_name, sid):
+                    st.success(f"Filled `{sid}`")
+                    st.rerun()
+                else:
+                    st.error("Could not update enrichment.json")
+            else:
+                st.warning("Paste a Sanity _id first.")
+
+    # ── Show lookup results ────────────────────────────────────────────────
+    results = st.session_state.get(_key("results"))
+    if results is None:
+        st.caption("Click **Find in Sanity** to search the registry, or paste an ID above.")
+        return
+
+    if isinstance(results, str) and results.startswith("__error__"):
+        st.error(f"Lookup failed: {results[9:]}")
+        return
+
+    if not results:
+        st.caption("No matches found in Sanity registry.")
+        return
+
+    exact_matches = [m for m in results if m.confidence == "exact"]
+    candidates    = [m for m in results if m.confidence == "candidate"]
+
+    if exact_matches:
+        st.caption("✅ Exact matches — safe to use:")
+        for m in exact_matches:
+            ec1, ec2 = st.columns([4, 1])
+            ec1.code(f"{m.sanity_id}  ({m.sanity_type}) — {m.name}", language="text")
+            with ec2:
+                if st.button("Use", key=_key(f"use_e_{m.sanity_id}"),
+                             help="Fill existing_entity_id with this ID"):
+                    if fill_entity_id_in_enrichment(doc_dir, proposal_name, m.sanity_id):
+                        st.success(f"Filled `{m.sanity_id}`")
+                        st.rerun()
+                    else:
+                        st.error("Could not update enrichment.json")
+
+    if candidates:
+        with st.expander(
+            f"🟡 Candidates ({len(candidates)}) — review before using", expanded=False
+        ):
+            st.caption(
+                "These are partial/contains matches. Verify the Sanity record before applying."
+            )
+            for m in candidates:
+                cc1, cc2 = st.columns([4, 1])
+                cc1.caption(f"`{m.sanity_id}` ({m.sanity_type}) — {m.name}")
+                with cc2:
+                    if st.button("Use", key=_key(f"use_c_{m.sanity_id}"),
+                                 help="Fill existing_entity_id with this candidate ID"):
+                        if fill_entity_id_in_enrichment(doc_dir, proposal_name, m.sanity_id):
+                            st.success(f"Filled `{m.sanity_id}`")
+                            st.rerun()
+                        else:
+                            st.error("Could not update enrichment.json")
+
+
 def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
     """Render structured provenance/audit view: checklist, grouped findings, audit sub-tabs."""
     provenance_warnings = _collect_provenance_warnings(doc_dir, config=config)
@@ -3591,6 +3690,22 @@ def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
             st.caption(f"*→ {w.suggested_action}*")
             if w.source_fields:
                 st.caption("Fields: " + " · ".join(f"`{f}`" for f in w.source_fields))
+
+            # ── Inline entity ID resolver ──────────────────────────────
+            if w.title == "Missing existing_entity_id":
+                enrichment_data = _read_json_file(doc_dir / "enrichment.json", {})
+                missing_entities = [
+                    (p.get("name") or "?")
+                    for p in (enrichment_data.get("entity_proposals") or [])
+                    if p.get("action") == "enrich_existing"
+                    and not p.get("existing_entity_id")
+                ]
+                if missing_entities:
+                    st.markdown("**Resolve entity IDs:**")
+                    for entity_name in missing_entities:
+                        with st.container():
+                            _render_entity_resolver(doc_dir, entity_name, config)
+                        st.markdown("---")
 
     if prov_notes:
         with st.expander("ℹ️ Provenance notes", expanded=False):

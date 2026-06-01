@@ -136,8 +136,8 @@ def _detect_commit_mismatch(doc_dir: Path) -> "ProvenanceWarning | None":
                 "prompt or schema."
             ),
             suggested_action=(
-                "No action needed unless a schema change occurred between commits. "
-                "Check git history if in doubt."
+                "Safe to ignore — this is informational. "
+                "Check git history if a schema change may have occurred between commits."
             ),
             source_fields=[
                 "analysis_audit.json → git_commit",
@@ -174,7 +174,10 @@ def _collect_provenance_warnings(
             title="Languages missing",
             explanation="`analysis.languages` is empty — the document language is unrecorded.",
             suggested_action=(
-                "Reanalyse or edit `analysis.json` manually to add ISO 639-1 code(s)."
+                "In the app: Document List → open this document → Reanalyze (or edit "
+                "`analysis.json → languages` manually with ISO 639-1 code(s)). "
+                "Not required before pushing to Sanity, but affects archive quality "
+                "and multilingual export."
             ),
             source_fields=["analysis.json → languages"],
         ))
@@ -184,21 +187,58 @@ def _collect_provenance_warnings(
     preprocess = _read_json_safe(doc_dir / "preprocess.json", {})
     preprocess_date = str(preprocess.get("date_published") or "").strip()
     if not doc_date.get("year") and not preprocess_date:
+        # Read intake.json to surface capture/ingest date as context only.
+        # The ingest/Wayback date is NOT the publication date.
+        intake_for_date = _read_json_safe(doc_dir / "intake.json", {})
+        ingested_at = str(intake_for_date.get("ingested_at") or "").strip()
+        archive_url = str(intake_for_date.get("archive_url") or "").strip()
+
+        explanation_parts = [
+            "Neither `document_date.year` nor `preprocess.date_published` is set. "
+            "The document has no dateable anchor for the archive timeline.",
+        ]
+        if ingested_at:
+            explanation_parts.append(
+                f"The ingestion date (`{ingested_at[:10]}`) records when the page was "
+                "fetched by this tool — it is **not** the publication date. "
+                "Do not use it as a proxy for when the document was created or published."
+            )
+        elif archive_url:
+            explanation_parts.append(
+                "A Wayback Machine URL is present, but the Wayback capture date records "
+                "when the page was archived, not when it was originally published. "
+                "Do not use the Wayback date as the publication date."
+            )
+        else:
+            explanation_parts.append(
+                "Note: any Wayback capture date or ingestion timestamp records when the "
+                "page was archived or fetched — not when it was created or published."
+            )
+
+        source_fields_date = [
+            "analysis.json → document_date",
+            "preprocess.json → date_published",
+        ]
+        if ingested_at:
+            source_fields_date.append(
+                f"intake.json → ingested_at = {ingested_at[:10]} (capture date only, "
+                "not publication date)"
+            )
+
         warnings_out.append(ProvenanceWarning(
             severity="action_needed",
             title="Date unknown",
-            explanation=(
-                "Neither `document_date.year` nor `preprocess.date_published` is set. "
-                "The document has no dateable anchor for the archive timeline."
-            ),
+            explanation=" ".join(explanation_parts),
             suggested_action=(
-                "Check the source page or document header for a publication date, "
-                "then edit `analysis.json → document_date` or reanalyse."
+                "Check the source page or document header for a publication date. "
+                "In the app: Document List → open this document → "
+                "Edit dates and publication metadata. "
+                "Not required before pushing to Sanity, but required for the archive "
+                "timeline and temporal analysis. "
+                "If the date is genuinely unknown, this can be marked in a future "
+                "researcher-annotation slice — do not invent a date."
             ),
-            source_fields=[
-                "analysis.json → document_date",
-                "preprocess.json → date_published",
-            ],
+            source_fields=source_fields_date,
         ))
 
     # 3. Queue source_type / intake source_type disagreement ────────────────
@@ -230,8 +270,8 @@ def _collect_provenance_warnings(
                                 "Triage may have misclassified the source type."
                             ),
                             suggested_action=(
-                                "No action needed — ingestion used the correct intake value. "
-                                "Note this if writing methodology."
+                                "Safe to ignore — ingestion used the correct intake value. "
+                                "Record this discrepancy in your methodology notes if relevant."
                             ),
                             source_fields=[
                                 "source_queue → source_type",
@@ -258,9 +298,12 @@ def _collect_provenance_warnings(
                 "`existing_entity_id`. Pushing without it will create a duplicate entity."
             ),
             suggested_action=(
-                f"Look up the Sanity document ID for {names_str} in Sanity Studio, "
-                "then fill `existing_entity_id` in `enrichment.json` before running "
-                "`push-enrichment`."
+                f"Required before push — pushing without it creates a duplicate entity. "
+                f"Use the entity ID resolver in the app (shown below this warning) to look "
+                f"up `{names_str}` in the Sanity registry. Or look up the `_id` in Sanity "
+                "Studio and paste it manually. "
+                "In the app: Document List → open this document → Provenance / Audit panel "
+                "→ Before pushing to Sanity → entity ID resolver."
             ),
             source_fields=["enrichment.json → entity_proposals → existing_entity_id"],
         ))

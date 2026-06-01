@@ -104,6 +104,24 @@ def fetch_analysis_orientation_terms(
     return terms
 
 
+def fetch_entities_for_resolver(config: Config) -> list[dict]:
+    """Fetch organization/person records for the entity ID resolver UI.
+
+    Returns ``_id``, ``_type``, ``name``, and ``fullName`` (populated for
+    organizations that have an expansion/abbreviation).
+
+    This is an on-demand, uncached fetch used only by the Streamlit provenance
+    panel resolver — it is not called during pipeline ingestion.  The results
+    are intentionally not cached so the resolver always reflects the live
+    Sanity registry state.
+    """
+    query = (
+        '*[_type in ["organization","person"]]'
+        '{ _id, _type, name, fullName }'
+    )
+    return _sanity_get(config, query)
+
+
 def clear_lexicon_cache() -> None:
     """Clear both the active-lexicon cache and the orientation cache."""
     _LEXICON_CACHE.clear()

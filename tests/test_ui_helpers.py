@@ -446,3 +446,250 @@ def test_no_evidence_caption_hidden_for_type_that_does_not_require_evidence():
         possible_matches=[],
         requires_evidence=False,
     ) is False
+
+
+# ---------------------------------------------------------------------------
+# Entity ID Resolver — normalize_entity_name
+# ---------------------------------------------------------------------------
+
+class TestNormalizeEntityName:
+    def _n(self, name):
+        from runner.app_entity_resolver import normalize_entity_name
+        return normalize_entity_name(name)
+
+    def test_lowercase(self):
+        assert self._n("SEGM") == "segm"
+
+    def test_strips_accents(self):
+        assert self._n("Väre") == "vare"
+        assert self._n("Genspèct") == "genspect"
+
+    def test_strips_cedilla(self):
+        assert self._n("Garçon") == "garcon"
+
+    def test_punctuation_becomes_space(self):
+        result = self._n("L'Heure")
+        assert "'" not in result
+        assert "l" in result
+        assert "heure" in result
+
+    def test_hyphen_becomes_space(self):
+        result = self._n("Väre-Institut")
+        assert "-" not in result
+
+    def test_collapses_whitespace(self):
+        assert self._n("  SEGM  Society ") == "segm  society".replace("  ", " ")
+        # More specific:
+        assert " " not in self._n("  SEGM  ")  or self._n("  SEGM  ") == "segm"
+
+    def test_empty_string(self):
+        assert self._n("") == ""
+
+    def test_already_normalized(self):
+        assert self._n("segm") == "segm"
+
+    def test_numbers_preserved(self):
+        result = self._n("Group42")
+        assert "42" in result
+
+
+# ---------------------------------------------------------------------------
+# Entity ID Resolver — match_entity_name
+# ---------------------------------------------------------------------------
+
+class TestMatchEntityName:
+    def _match(self, proposal, entities):
+        from runner.app_entity_resolver import match_entity_name
+        return match_entity_name(proposal, entities)
+
+    def _registry(self, *entries):
+        """Build a minimal registry list from (id, type, name[, fullName]) tuples."""
+        rows = []
+        for entry in entries:
+            row = {"_id": entry[0], "_type": entry[1], "name": entry[2]}
+            if len(entry) > 3:
+                row["fullName"] = entry[3]
+            rows.append(row)
+        return rows
+
+    def test_exact_match_on_primary_name(self):
+        registry = self._registry(("organization-segm", "organization", "SEGM"))
+        results = self._match("SEGM", registry)
+        assert len(results) == 1
+        assert results[0].confidence == "exact"
+        assert results[0].sanity_id == "organization-segm"
+
+    def test_exact_match_case_insensitive(self):
+        registry = self._registry(("organization-segm", "organization", "SEGM"))
+        results = self._match("segm", registry)
+        assert len(results) == 1
+        assert results[0].confidence == "exact"
+
+    def test_exact_match_accent_insensitive(self):
+        registry = self._registry(("org-abc", "organization", "Väre"))
+        results = self._match("Vare", registry)
+        assert len(results) == 1
+        assert results[0].confidence == "exact"
+
+    def test_candidate_match_contains(self):
+        registry = self._registry(
+            ("org-foo", "organization", "Sexual Ethics and Gender in Medicine")
+        )
+        results = self._match("Gender in Medicine", registry)
+        assert len(results) == 1
+        assert results[0].confidence == "candidate"
+
+    def test_candidate_match_not_auto_filled(self):
+        """Candidate matches must be 'candidate' only, never 'exact'."""
+        from runner.app_entity_resolver import EntityMatch
+        registry = self._registry(
+            ("org-foo", "organization", "SEGM Extended Organization")
+        )
+        results = self._match("SEGM", registry)
+        assert len(results) == 1
+        result = results[0]
+        # 'SEGM' is contained in the name — must be candidate, not exact
+        assert result.confidence == "candidate"
+
+    def test_no_match_returns_empty_list(self):
+        registry = self._registry(("org-xyz", "organization", "Completely Different"))
+        results = self._match("SEGM", registry)
+        assert results == []
+
+    def test_exact_match_on_full_name(self):
+        """Match on fullName should also give exact confidence."""
+        registry = self._registry(
+            ("org-jonah", "organization", "JONAH", "Jews Offering New Alternatives to Homosexuality")
+        )
+        results = self._match("Jews Offering New Alternatives to Homosexuality", registry)
+        assert len(results) == 1
+        assert results[0].confidence == "exact"
+        assert results[0].match_type == "full_name"
+        # Canonical name shown, not fullName
+        assert results[0].name == "JONAH"
+
+    def test_exact_matches_sorted_before_candidates(self):
+        registry = self._registry(
+            ("org-candidate", "organization", "SEGM Extended Registry"),
+            ("org-exact", "organization", "SEGM"),
+        )
+        results = self._match("SEGM", registry)
+        assert results[0].confidence == "exact"
+        assert results[0].sanity_id == "org-exact"
+
+    def test_entity_appears_at_most_once(self):
+        """Primary name match wins; fullName is not also checked."""
+        registry = self._registry(
+            ("org-dual", "organization", "SEGM", "SEGM Full Name")
+        )
+        results = self._match("SEGM", registry)
+        assert len(results) == 1
+
+    def test_missing_id_skipped(self):
+        registry = [{"_type": "organization", "name": "NoID Org"}]
+        results = self._match("NoID Org", registry)
+        assert results == []
+
+    def test_person_type_preserved(self):
+        registry = self._registry(("person-jsmith", "person", "John Smith"))
+        results = self._match("John Smith", registry)
+        assert len(results) == 1
+        assert results[0].sanity_type == "person"
+
+
+# ---------------------------------------------------------------------------
+# Entity ID Resolver — fill_entity_id_in_enrichment
+# ---------------------------------------------------------------------------
+
+class TestFillEntityIdInEnrichment:
+    def _setup(self, tmp_path, proposals):
+        import json
+        doc_dir = tmp_path / "testdoc"
+        doc_dir.mkdir()
+        data = {"entity_proposals": proposals}
+        (doc_dir / "enrichment.json").write_text(
+            json.dumps(data), encoding="utf-8"
+        )
+        return doc_dir
+
+    def _read(self, doc_dir):
+        import json
+        return json.loads((doc_dir / "enrichment.json").read_text(encoding="utf-8"))
+
+    def test_fills_existing_entity_id(self, tmp_path):
+        from runner.app_entity_resolver import fill_entity_id_in_enrichment
+        proposals = [{"action": "enrich_existing", "name": "SEGM", "existing_entity_id": None}]
+        doc_dir = self._setup(tmp_path, proposals)
+        ok = fill_entity_id_in_enrichment(doc_dir, "SEGM", "organization-segm")
+        assert ok is True
+        data = self._read(doc_dir)
+        assert data["entity_proposals"][0]["existing_entity_id"] == "organization-segm"
+
+    def test_case_insensitive_name_match(self, tmp_path):
+        from runner.app_entity_resolver import fill_entity_id_in_enrichment
+        proposals = [{"action": "enrich_existing", "name": "SEGM", "existing_entity_id": None}]
+        doc_dir = self._setup(tmp_path, proposals)
+        ok = fill_entity_id_in_enrichment(doc_dir, "segm", "organization-segm")
+        assert ok is True
+
+    def test_does_not_change_other_proposals(self, tmp_path):
+        from runner.app_entity_resolver import fill_entity_id_in_enrichment
+        proposals = [
+            {"action": "enrich_existing", "name": "SEGM",     "existing_entity_id": None},
+            {"action": "enrich_existing", "name": "Genspect", "existing_entity_id": None},
+        ]
+        doc_dir = self._setup(tmp_path, proposals)
+        fill_entity_id_in_enrichment(doc_dir, "SEGM", "organization-segm")
+        data = self._read(doc_dir)
+        assert data["entity_proposals"][1]["existing_entity_id"] is None
+
+    def test_does_not_change_other_fields(self, tmp_path):
+        from runner.app_entity_resolver import fill_entity_id_in_enrichment
+        proposals = [{"action": "enrich_existing", "name": "SEGM", "role": "key_actor"}]
+        doc_dir = self._setup(tmp_path, proposals)
+        fill_entity_id_in_enrichment(doc_dir, "SEGM", "org-segm")
+        data = self._read(doc_dir)
+        assert data["entity_proposals"][0]["role"] == "key_actor"
+
+    def test_returns_false_when_file_missing(self, tmp_path):
+        from runner.app_entity_resolver import fill_entity_id_in_enrichment
+        doc_dir = tmp_path / "empty"
+        doc_dir.mkdir()
+        assert fill_entity_id_in_enrichment(doc_dir, "SEGM", "org-segm") is False
+
+    def test_returns_false_when_proposal_not_found(self, tmp_path):
+        from runner.app_entity_resolver import fill_entity_id_in_enrichment
+        proposals = [{"action": "enrich_existing", "name": "SomeOtherOrg"}]
+        doc_dir = self._setup(tmp_path, proposals)
+        assert fill_entity_id_in_enrichment(doc_dir, "SEGM", "org-segm") is False
+
+    def test_warning_clears_after_fill(self, tmp_path):
+        """After fill, _collect_provenance_warnings should not flag this entity."""
+        import json
+        from runner.app_entity_resolver import fill_entity_id_in_enrichment
+        from runner.app_provenance import _collect_provenance_warnings
+
+        doc_dir = tmp_path / "cleardoc"
+        doc_dir.mkdir()
+        # Create a valid analysis.json
+        (doc_dir / "analysis.json").write_text(json.dumps({
+            "languages": ["en"],
+            "document_date": {"year": 2024},
+        }), encoding="utf-8")
+        # Enrichment with one unresolved enrich_existing
+        (doc_dir / "enrichment.json").write_text(json.dumps({
+            "entity_proposals": [
+                {"action": "enrich_existing", "name": "SEGM", "existing_entity_id": None}
+            ]
+        }), encoding="utf-8")
+
+        # Warning should fire before fill
+        warnings_before = _collect_provenance_warnings(doc_dir, config=None)
+        assert any(w.title == "Missing existing_entity_id" for w in warnings_before)
+
+        # Fill the ID
+        fill_entity_id_in_enrichment(doc_dir, "SEGM", "organization-segm")
+
+        # Warning should be gone after fill
+        warnings_after = _collect_provenance_warnings(doc_dir, config=None)
+        assert not any(w.title == "Missing existing_entity_id" for w in warnings_after)
