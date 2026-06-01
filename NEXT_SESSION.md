@@ -2,8 +2,8 @@
 **Generated:** 2026-06-01
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 1092
-**Latest completed milestone:** Proposal identity review summary polish
+**Tests passing:** 1095
+**Latest completed milestone:** Proposal identity merge alias repair
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -151,7 +151,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 1092 tests -- run before every edit
+tests/                          # 1095 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -426,7 +426,7 @@ Entity ID resolution for `enrich_existing` proposals and improved date warning g
 
 ### ~~Proposal identity P1/P2/P3~~ ✓ COMPLETE
 
-Stable proposal identity, lifecycle status, and merge-aware re-enrichment. Follow-up glue added merge-summary audit visibility, Activity Log/Provenance Complement enrichment controls, and local network-connection repair UI. 1092 tests passing. No prompts modified.
+Stable proposal identity, lifecycle status, and merge-aware re-enrichment. Follow-up glue added merge-summary audit visibility, Activity Log/Provenance Complement enrichment controls, and local network-connection repair UI. 1095 tests passing. No prompts modified.
 
 **P1 — Stable proposal identity** (`ProposalConfidenceMixin` + `_normalize_enrichment_payload`):
 - `proposal_id: Optional[str]` — deterministic SHA-256 hash of `(family, doc_id, content_key)`. Stable across model re-runs. Existing IDs are never overwritten.
@@ -688,7 +688,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 1092 passed (or higher after new tests)
+# Must see: 1095 passed (or higher after new tests)
 ```
 
 ---
@@ -739,4 +739,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, and entity ID resolver complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, and network connection repair dropdowns. 1092 tests passing. Recommended next: open app → Document List or Activity Log → search `8fe67e19` → resolve remaining repair warnings/entity IDs → push-enrichment → 2–3 item attended pilot.*
+*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, and entity ID resolver complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, and network connection repair dropdowns. 1095 tests passing. Recommended next: open app → Document List or Activity Log → search `8fe67e19` → resolve remaining repair warnings/entity IDs → push-enrichment → 2–3 item attended pilot.*

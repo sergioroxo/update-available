@@ -289,6 +289,31 @@ class TestBuildOldProposalIndex:
         assert idx
         assert set(map(id, idx.values())) == {id(old[2])}
 
+    def test_reviewed_alias_wins_over_unreviewed_duplicate(self):
+        """When old identity aliases collide, keep the reviewed local proposal."""
+        old = [
+            {
+                "action": "enrich_existing",
+                "entity_type": "person",
+                "name": "Avi Ring",
+                "proposal_id": _generate_proposal_id(
+                    "entity",
+                    "doc-1",
+                    {"action": "enrich_existing", "entity_type": "person", "name": "Avi Ring"},
+                ),
+            },
+            {
+                "action": "add_new",
+                "entity_type": "person",
+                "name": "Avi Ring",
+                "approved": True,
+            },
+        ]
+        idx = _build_old_proposal_index(old, "entity", "doc-1")
+        legacy = _generate_legacy_proposal_id("entity", "doc-1", old[0])
+        assert idx[legacy]["action"] == "add_new"
+        assert idx[legacy]["approved"] is True
+
 
 class TestApplyResearcherFields:
     def test_carries_approved(self):
@@ -462,6 +487,8 @@ class TestMergeResearcherState:
         assert len(merged.lexicon_proposals) == 1
         assert merged.lexicon_proposals[0].term == old_term
         assert merged.lexicon_proposals[0].approved is True
+        assert merged.lexicon_proposals[0].proposal_id
+        assert merged.lexicon_proposals[0].proposal_status == "approved"
         assert summary["appended_from_prior"] == 1
 
     # --- backward compat ---
@@ -522,6 +549,97 @@ class TestMergeResearcherState:
         assert merged.entity_proposals[0].existing_entity_id == sanity_id
         assert merged.entity_proposals[0].approved is True
         assert summary["carried_forward"] == 1
+
+    def test_entity_action_flip_matches_legacy_identity_without_duplicate(self):
+        """Entity add_new/enrich_existing flips should not create duplicate entities."""
+        doc_id = "doc-p3j"
+        entity_name = "Avi Ring"
+        new_result = EnrichmentResult(
+            doc_id=doc_id,
+            entity_proposals=[
+                EntityProposal(
+                    action="enrich_existing",
+                    entity_type="person",
+                    name=entity_name,
+                    proposal_id=_generate_proposal_id(
+                        "entity",
+                        doc_id,
+                        {
+                            "action": "enrich_existing",
+                            "entity_type": "person",
+                            "name": entity_name,
+                        },
+                    ),
+                )
+            ],
+        )
+        old_data = {
+            "lexicon_proposals": [],
+            "entity_proposals": [
+                {
+                    "action": "add_new",
+                    "entity_type": "person",
+                    "name": entity_name,
+                    "approved": True,
+                    "evidence_quote": "older reviewed evidence",
+                }
+            ],
+            "tactic_proposals": [],
+            "ingestion_queue": [],
+            "corpus_connections": [],
+            "practice_descriptions": [],
+            "statistical_claims": [],
+        }
+        merged, summary = _merge_researcher_state(new_result, old_data, doc_id)
+        assert len(merged.entity_proposals) == 1
+        assert merged.entity_proposals[0].approved is True
+        assert merged.entity_proposals[0].action == "add_new"
+        assert summary["carried_forward"] == 1
+        assert summary["appended_from_prior"] == 0
+
+    def test_entity_action_flip_prefers_reviewed_legacy_over_unreviewed_stored_id(self):
+        """When stored and legacy IDs both match, reviewed local state wins."""
+        doc_id = "doc-p3k"
+        entity_name = "Avi Ring"
+        fresh = {
+            "action": "enrich_existing",
+            "entity_type": "person",
+            "name": entity_name,
+        }
+        fresh["proposal_id"] = _generate_proposal_id("entity", doc_id, fresh)
+        new_result = EnrichmentResult(
+            doc_id=doc_id,
+            entity_proposals=[EntityProposal(**fresh)],
+        )
+        old_data = {
+            "lexicon_proposals": [],
+            "entity_proposals": [
+                {
+                    **fresh,
+                    "approved": False,
+                    "evidence_quote": "unreviewed duplicate",
+                },
+                {
+                    "action": "add_new",
+                    "entity_type": "person",
+                    "name": entity_name,
+                    "approved": True,
+                    "evidence_quote": "reviewed local proposal",
+                },
+            ],
+            "tactic_proposals": [],
+            "ingestion_queue": [],
+            "corpus_connections": [],
+            "practice_descriptions": [],
+            "statistical_claims": [],
+        }
+        merged, summary = _merge_researcher_state(new_result, old_data, doc_id)
+        assert len(merged.entity_proposals) == 1
+        assert merged.entity_proposals[0].approved is True
+        assert merged.entity_proposals[0].action == "add_new"
+        assert merged.entity_proposals[0].evidence_quote == "reviewed local proposal"
+        assert summary["carried_forward"] == 1
+        assert summary["appended_from_prior"] == 0
 
 
 # ---------------------------------------------------------------------------

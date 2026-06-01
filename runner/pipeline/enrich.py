@@ -337,9 +337,31 @@ def _build_old_proposal_index(
         if not isinstance(p, dict):
             continue
         for pid in _proposal_id_candidates(family, doc_id, p):
-            if pid and pid not in index:
+            if not pid:
+                continue
+            if pid not in index or _proposal_review_weight(p) > _proposal_review_weight(index[pid]):
                 index[pid] = p
     return index
+
+
+def _proposal_review_weight(item: dict) -> int:
+    """Rank old proposal candidates so reviewed local state wins alias collisions."""
+    if item.get("pushed_to_sanity") or item.get("sanity_id"):
+        return 4
+    if item.get("approved") or item.get("rejected"):
+        return 3
+    if any(
+        item.get(field)
+        for field in (
+            "existing_entity_id",
+            "existing_entry_id",
+            "existing_tactic_id",
+            "merge_target_id",
+            "researcher_note",
+        )
+    ):
+        return 2
+    return 1
 
 
 def _is_blank_for_merge(value) -> bool:
@@ -439,16 +461,23 @@ def _merge_researcher_state(
 
         merged: list = []
         for new_p in new_proposals:
-            pid = getattr(new_p, "proposal_id", None)
-            if not pid:
-                # No stored ID: generate from content so we can match against
-                # old proposals that also lack a proposal_id (backward compat).
-                pid = _generate_proposal_id(family_name, doc_id, new_p.model_dump())
-            if pid and pid in old_index:
-                old_p = old_index[pid]
+            new_dict_for_id = new_p.model_dump()
+            new_candidate_ids = _proposal_id_candidates(family_name, doc_id, new_dict_for_id)
+            matching_old = [
+                old_index[pid]
+                for pid in new_candidate_ids
+                if pid in old_index
+            ]
+            old_p = max(matching_old, key=_proposal_review_weight) if matching_old else None
+            matched_pid = (
+                _proposal_id_candidates(family_name, doc_id, old_p)[0]
+                if old_p
+                else ""
+            )
+            if matched_pid:
                 new_dict = _merge_existing_proposal_with_fresh(
                     old_p,
-                    new_p.model_dump(),
+                    new_dict_for_id,
                     extra_fields,
                 )
                 try:
@@ -469,6 +498,15 @@ def _merge_researcher_state(
             if any(pid in matched_old_ids for pid in old_candidate_ids):
                 continue
             try:
+                old_p = dict(old_p)
+                if not old_p.get("proposal_id"):
+                    old_p["proposal_id"] = _generate_proposal_id(family_name, doc_id, old_p)
+                if not old_p.get("proposal_status"):
+                    old_p["proposal_status"] = _derive_proposal_status(old_p)
+                if not old_p.get("proposal_created_at"):
+                    old_p["proposal_created_at"] = _now_iso()
+                if not old_p.get("proposal_updated_at"):
+                    old_p["proposal_updated_at"] = _now_iso()
                 appended = model_class.model_validate(old_p)
                 merged.append(appended)
                 matched_old_ids.update(old_candidate_ids)
