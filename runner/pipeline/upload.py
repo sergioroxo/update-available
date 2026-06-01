@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import socket
 import time as _time
+from dataclasses import fields
 from pathlib import Path
 
 from rich.console import Console
@@ -1400,6 +1401,8 @@ def _load_preprocess(path: Path) -> PreprocessResult:
     page_intel = data.get("page_intel")
     if isinstance(page_intel, dict):
         data["page_intel"] = PageIntelligence(**page_intel)
+    allowed = {field.name for field in fields(PreprocessResult)}
+    data = {key: value for key, value in data.items() if key in allowed}
     return PreprocessResult(**data)
 
 

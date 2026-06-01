@@ -1614,7 +1614,7 @@ def page_ingest_workbench():
         resume_id = st.text_input("doc_id to resume", placeholder="e.g. 3281c668", key="resume_doc_id")
         resume_stage = st.selectbox(
             "Continue from stage",
-            ["Analyze", "Upload (analysis already done)"],
+            ["Analyze", "Upload (analysis already done)", "Enrich (analysis already done)"],
             key="resume_stage",
         )
         if st.button("Load doc into workbench", key="resume_load"):
@@ -1915,11 +1915,11 @@ def _workbench_resume(config, doc_id: str, stage: str) -> None:
         except Exception as exc:
             st.warning(f"Could not load preprocess.json: {exc}")
 
-    # Load analysis if already done and stage is Upload
+    # Load analysis if already done and stage needs it.
     analysis_result = None
     analysis_json = ""
     analysis_valid = False
-    if stage.startswith("Upload") and analysis_path.exists():
+    if (stage.startswith("Upload") or stage.startswith("Enrich")) and analysis_path.exists():
         try:
             raw = analysis_path.read_text()
             analysis_result = AnalysisResult.model_validate_json(raw)
@@ -1942,6 +1942,8 @@ def _workbench_resume(config, doc_id: str, stage: str) -> None:
     if preprocess_result: loaded.append("extraction")
     if analysis_result:  loaded.append("analysis")
     st.success(f"Loaded `{doc_id}` — {', '.join(loaded)} ready. Scroll down to continue.")
+    if stage.startswith("Enrich") and analysis_valid:
+        st.info("Ready for enrichment. Scroll to the JSON review buttons and click **Run Enrichment**.")
 
     # U6: surface any previously saved triage result for this doc
     try:
@@ -3326,6 +3328,29 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
     return docs
 
 
+def _set_doc_action_feedback(doc_id: str, level: str, message: str) -> None:
+    st.session_state[f"doc_action_feedback_{doc_id}"] = {
+        "level": level,
+        "message": message,
+    }
+
+
+def _render_doc_action_feedback(doc_id: str) -> None:
+    feedback = st.session_state.pop(f"doc_action_feedback_{doc_id}", None)
+    if not feedback:
+        return
+    level = feedback.get("level", "info")
+    message = feedback.get("message", "")
+    if level == "success":
+        st.success(message)
+    elif level == "warning":
+        st.warning(message)
+    elif level == "error":
+        st.error(message)
+    else:
+        st.info(message)
+
+
 def _render_doc_card(doc: dict, corpus_dir: Path):
     conf = doc["confidence"]
     conf_color = "🟢" if conf >= 0.85 else "🟡" if conf >= 0.70 else "🔴"
@@ -3348,6 +3373,7 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
     )
 
     with st.expander(header, expanded=False):
+        _render_doc_action_feedback(doc["doc_id"])
         if _has_high_harm(doc.get("harm", [])):
             high_harm_labels = sorted(_HIGH_HARM_INDICATORS.intersection(doc["harm"]))
             st.warning(
@@ -3534,9 +3560,17 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                         capture_output=True, text=True, cwd=_project_root,
                     )
                 if r.returncode == 0:
-                    st.success("Analysis updated.")
+                    _set_doc_action_feedback(
+                        doc["doc_id"],
+                        "success",
+                        "Analysis updated. Reopen this document to review the new analysis and provenance warnings.",
+                    )
                 else:
-                    st.error(r.stderr[-600:] or r.stdout[-600:])
+                    _set_doc_action_feedback(
+                        doc["doc_id"],
+                        "error",
+                        "Reanalysis failed:\n\n" + (r.stderr[-1200:] or r.stdout[-1200:] or "(no output)"),
+                    )
                 st.rerun()
 
         with act_cols[2]:
@@ -3547,9 +3581,17 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                         capture_output=True, text=True, cwd=_project_root,
                     )
                 if r.returncode == 0:
-                    st.success("Enrichment saved.")
+                    _set_doc_action_feedback(
+                        doc["doc_id"],
+                        "success",
+                        "Enrichment saved. Reopen this document to review updated proposals and audit metadata.",
+                    )
                 else:
-                    st.error(r.stderr[-600:] or r.stdout[-600:])
+                    _set_doc_action_feedback(
+                        doc["doc_id"],
+                        "error",
+                        "Re-enrichment failed:\n\n" + (r.stderr[-1200:] or r.stdout[-1200:] or "(no output)"),
+                    )
                 st.rerun()
 
 

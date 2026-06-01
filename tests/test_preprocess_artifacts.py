@@ -293,6 +293,29 @@ def test_load_preprocess_rehydrates_text_from_extracted_txt(tmp_path):
     assert preprocess_path.read_text(encoding="utf-8") == before
 
 
+def test_load_preprocess_ignores_app_manual_overrides(tmp_path):
+    preprocess_path = tmp_path / "preprocess.json"
+    preprocess_path.write_text(
+        json.dumps(
+            {
+                "doc_id": "doc-1",
+                "tool_used": "trafilatura",
+                "quality": "high",
+                "char_count": 19,
+                "truncated": False,
+                "_manual_overrides": {"title": "researcher_confirmed"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "extracted.txt").write_text("full extracted text", encoding="utf-8")
+
+    result = _load_preprocess(preprocess_path)
+
+    assert result.text == "full extracted text"
+    assert result.doc_id == "doc-1"
+
+
 def test_merge_intake_metadata_preserves_unknown_existing_fields(tmp_path):
     intake_path = tmp_path / "intake.json"
     intake_path.write_text(
