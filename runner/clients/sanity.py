@@ -545,10 +545,16 @@ def write_lexicon_draft_from_proposal(
     if not term:
         raise ValueError("Cannot write lexicon entry without a term")
 
-    sanity_id = _sanity_id_or_fallback(
-        proposal.get("existing_entry_id"),
-        f"lexicon-{_slugify(term)}",
-    )
+    action = proposal.get("action", "add_new")
+    fallback_id = f"lexicon-{_slugify(term)}"
+    existing_entry_id = proposal.get("existing_entry_id")
+    if (
+        action != "add_new"
+        and existing_entry_id
+        and _slugify(str(existing_entry_id)) == _slugify(term)
+    ):
+        existing_entry_id = fallback_id
+    sanity_id = _sanity_id_or_fallback(existing_entry_id, fallback_id)
     language = proposal.get("language") or "unknown"
     evidence_item = _lexicon_evidence_item(proposal, doc_id, language, now_iso)
     variants = _lexicon_variant_items(proposal.get("variants", []))
@@ -583,7 +589,6 @@ def write_lexicon_draft_from_proposal(
     if variants:
         doc["multilingualVariants"] = variants
 
-    action = proposal.get("action", "add_new")
     if action == "add_new":
         mutations = [{"createOrReplace": doc}]
     else:

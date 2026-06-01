@@ -5,7 +5,7 @@ project. It is a companion to `NEXT_SESSION.md`, which is the Claude Code task
 handoff. This document is for steering the collaboration: what to trust, what to
 verify, how to guide Claude, and how Codex should keep the system coherent.
 
-Generated: 2026-06-01 (updated post-proposal-identity merge alias repair)
+Generated: 2026-06-01 (updated lexicon existing-id guard)
 Repo: `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 Main working branch: `claude/review-architecture-70CUm`
 
@@ -294,7 +294,7 @@ or cross-document canonical identity, but do not expand that before the pilot ex
 a concrete need.
 
 Recommended order for a new session:
-1. Verify repo/test state (1095 passed expected).
+1. Verify repo/test state (1096 passed expected).
 2. Open app → Document List or Activity Log → search `8fe67e19`. Complement enrichment
    is available in the card, Activity Log → Enrichment, and Provenance → Enrichment Audit.
 3. Use entity ID resolver for any remaining `enrich_existing` proposals and repair
@@ -308,7 +308,7 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1095
+- Tests passing: 1096
 - Latest completed milestone: Proposal identity P1/P2/P3 + workflow glue
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
@@ -390,7 +390,7 @@ Recommended order for a new session:
   - Network connection repair dropdown in the entity editor lets the researcher choose an allowed type locally before approval/push.
   - P4: Design note in `_proposal_semantic_key()` for future cross-doc canonical identity.
   - New helpers: `_generate_proposal_id`, `_derive_proposal_status`, `_build_old_proposal_index`, `_apply_researcher_fields`, `_merge_researcher_state`.
-  - 1095 total tests passing.
+  - 1096 total tests passing.
 
 ---
 

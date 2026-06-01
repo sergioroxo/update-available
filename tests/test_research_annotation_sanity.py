@@ -167,6 +167,31 @@ def test_lexicon_write_preserves_full_evidence_dossier(monkeypatch):
     assert evidence["confirmed"] is False
 
 
+def test_lexicon_patch_treats_bare_term_existing_id_as_slug_id(monkeypatch):
+    calls = []
+
+    def fake_mutate(mutations, config):
+        calls.append(mutations)
+        return {"results": [{"id": "lexicon-rogd"}]}
+
+    monkeypatch.setattr(sanity, "_mutate", fake_mutate)
+
+    sanity.write_lexicon_draft_from_proposal(
+        {
+            "action": "add_evidence",
+            "term": "ROGD",
+            "existing_entry_id": "ROGD",
+            "language": "en",
+            "exact_quote": "ROGD appears in the source.",
+        },
+        "doc-1",
+        _Config(),
+    )
+
+    assert calls[0][0]["patch"]["id"] == "lexicon-rogd"
+    assert calls[0][1]["patch"]["id"] == "lexicon-rogd"
+
+
 def test_confirm_lexicon_context_patches_one_evidence_item(monkeypatch):
     calls = []
 
