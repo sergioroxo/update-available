@@ -5,7 +5,7 @@ project. It is a companion to `NEXT_SESSION.md`, which is the Claude Code task
 handoff. This document is for steering the collaboration: what to trust, what to
 verify, how to guide Claude, and how Codex should keep the system coherent.
 
-Generated: 2026-06-01 (updated post-clarity-slice)
+Generated: 2026-06-01 (updated post-entity-resolver-slice)
 Repo: `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 Main working branch: `claude/review-architecture-70CUm`
 
@@ -116,6 +116,7 @@ Treat these as the highest-value context files:
 | `runner/main.py` | CLI command surface |
 | `runner/app.py` | Streamlit UI |
 | `runner/app_provenance.py` | Pure provenance/audit helpers (no st.* — safe to import in tests) |
+| `runner/app_entity_resolver.py` | Entity ID resolver helpers (pure — no st.*, no network imports) |
 | `runner/pipeline/triage.py` | Stage 0.5 -- routing |
 | `runner/pipeline/analyze.py` | Stage 3b -- classification |
 | `runner/pipeline/enrich.py` | Stage 3c -- lexicon/registry |
@@ -277,21 +278,37 @@ Panel now shows a researcher checklist at top, grouped sections by severity, one
 audit captions, and full hash expanders in both audit sub-tabs. Card expander label
 distinguishes 🔴 push blockers / ⚠️ actions needed / ℹ️ notes.
 
+**✓ Research Review Cockpit -- Entity ID resolver + date guidance slice** (commit `74cab7b8c`)
+35 new tests (1024 total). New `runner/app_entity_resolver.py`: `normalize_entity_name`
+(accent-insensitive), `match_entity_name` (exact/candidate, name+fullName, sorted),
+`fill_entity_id_in_enrichment` (local file only, zero Sanity API). New
+`fetch_entities_for_resolver` in `sanity_reads.py` (read-only, uncached). New
+`_render_entity_resolver` widget in `app.py`: per-proposal "Find in Sanity" button,
+exact matches with one-click Use, candidates in expander (never auto-applied), manual
+paste option. Date warning now clarifies that `ingested_at` / Wayback capture date ≠
+publication date; adds app navigation path and do-not-invent-date caution.
+
+**Pending design task (no implementation yet):** stable proposal identity / proposal
+lifecycle model. Key questions: stable proposal_id across re-enrichment, explicit status
+(pending/approved/rejected/pushed), merge-aware re-enrichment, per-proposal push audit
+trail. Do not implement until researcher sign-off.
+
 Recommended order for a new session:
-1. Verify repo/test state (989 passed expected).
-2. Open app → Document List → search `8fe67e19` → read the researcher checklist →
-   resolve the 6 enrichment proposals (fix 2 connection_type errors; look up Sanity
-   IDs for SEGM and Genspect before pushing).
+1. Verify repo/test state (1024 passed expected).
+2. Open app → Document List → search `8fe67e19` → use entity ID resolver for SEGM +
+   Genspect (click "Find in Sanity", then "Use"), fix 2 connection_type errors → run
+   `push-enrichment 8fe67e19`.
 3. Use `runner batch-plan` to inspect the queue before the next live execution.
 4. Run a 2-3 item attended pilot before any overnight use.
 5. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
+6. Design task: write up the proposal lifecycle model design for researcher sign-off.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 989
-- Latest completed milestone: Research Review Cockpit provenance clarity slice (`54f0ec204`)
+- Tests passing: 1024
+- Latest completed milestone: Research Review Cockpit entity ID resolver + date guidance slice (`74cab7b8c`)
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -357,6 +374,13 @@ Recommended order for a new session:
   - Panel: researcher checklist at top, grouped sections by severity, audit captions, full hash expanders.
   - Card expander: 🔴 push blockers / ⚠️ actions needed / ℹ️ notes (auto-expands only for blockers/actions).
   - 55 provenance tests; 989 total.
+- Research Review Cockpit entity ID resolver + date guidance slice built ✓ (`74cab7b8c`)
+  - New `runner/app_entity_resolver.py`: normalize_entity_name, match_entity_name (exact/candidate, accent-insensitive), fill_entity_id_in_enrichment (local file only).
+  - New `fetch_entities_for_resolver` in `sanity_reads.py`: read-only, uncached, returns _id+_type+name+fullName.
+  - `_render_entity_resolver` Streamlit widget: "Find in Sanity" button, exact-match Use buttons, candidate expander, manual paste. Never auto-applies candidates. Calls st.rerun() after fill so warning disappears.
+  - Date warning: ingested_at / Wayback capture date explicitly distinguished from publication date. App navigation path added. "Do not invent a date" caution added.
+  - All five warning types now include app navigation paths and required/safe-to-ignore labels.
+  - 35 new tests; 1024 total.
 
 ---
 

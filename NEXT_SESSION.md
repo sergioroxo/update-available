@@ -2,8 +2,8 @@
 **Generated:** 2026-06-01
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 989
-**Latest completed milestone:** Research Review Cockpit provenance clarity slice (`54f0ec204`)
+**Tests passing:** 1024
+**Latest completed milestone:** Research Review Cockpit entity ID resolver + date guidance slice (`74cab7b8c`)
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -125,6 +125,7 @@ runner/
 ├── config.py                   # Config dataclass + load_config()
 ├── app.py                      # Streamlit UI
 ├── app_provenance.py           # Pure provenance/audit helpers (no st.*) -- imported by app.py
+├── app_entity_resolver.py      # Entity ID resolver helpers (pure, no st.* or network imports)
 ├── pipeline/
 │   ├── intake.py               # Stage 1: doc_id, Wayback, dedup
 │   ├── preprocess.py           # Stage 2: Docling/Trafilatura/Whisper + truncation
@@ -150,7 +151,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 966 tests -- run before every edit
+tests/                          # 1024 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -390,6 +391,54 @@ connection claims.
 
 ---
 
+### ~~Research Review Cockpit -- Entity ID resolver + date guidance slice~~ ✓ COMPLETE (`74cab7b8c`)
+
+Entity ID resolution for `enrich_existing` proposals and improved date warning guidance.
+35 new tests (1024 total). No pipeline logic changes. No prompts modified.
+
+**New `runner/app_entity_resolver.py`** (pure module, no Streamlit dependency, safe in tests):
+- `normalize_entity_name(name)` — NFD → strip combining chars → lowercase → punct-to-space → collapse whitespace. Accent/cedilla/hyphen agnostic.
+- `match_entity_name(proposal_name, registry_entities)` — checks primary `name` then `fullName`; returns `EntityMatch` list with `confidence` `"exact"` (normalized strings identical) or `"candidate"` (substring containment). Sorted exact-first then alphabetical. Each entity appears at most once.
+- `fill_entity_id_in_enrichment(doc_dir, proposal_name, sanity_id)` — local file write only; finds first `entity_proposals` entry by case-insensitive name match, sets `existing_entity_id`, writes back. Zero Sanity API calls.
+
+**New `fetch_entities_for_resolver(config)`** in `sanity_reads.py` — GROQ `_type in ["organization","person"]` returning `_id, _type, name, fullName`. On-demand, uncached. Does not replace `_fetch_entity_registry` in `enrich.py` (which omits `_id`).
+
+**`_render_entity_resolver` widget in `app.py`** — per-proposal, shown inline below the `pre_push_blocker` warning:
+- "🔍 Find in Sanity" button: fetches registry, runs match, stores results in `st.session_state`
+- Exact matches: inline code block + one-click "Use" button
+- Candidates: collapsed expander with explicit "review before using" caption — never auto-applied
+- Manual text input + "✓ Use" button for direct paste
+- After any `fill_entity_id_in_enrichment`, calls `st.rerun()` → warning disappears on next render (no special logic needed)
+
+**Date warning improvements in `app_provenance.py`:**
+- Reads `intake.json` for `ingested_at` / `archive_url` as context
+- When `ingested_at` present: surfaces the date explicitly as "the date the page was fetched — not the publication date"
+- When only `archive_url`: clarifies that Wayback capture date ≠ publication date
+- `suggested_action` now includes "Document List → open this document → Edit dates and publication metadata" and a caution not to invent a date
+- `source_fields` adds `"intake.json → ingested_at (capture date only, not publication date)"` when present
+
+**All five warning types** now include explicit app navigation paths and "Safe to ignore" / "Required before push" labels so the researcher does not need to infer severity from color alone.
+
+**Note (not a blocker):** If Sanity stores `name=SEGM` and `fullName=Society for Evidence Based Gender Medicine`, the compound proposal `Society for Evidence Based Gender Medicine (SEGM)` may score as `"candidate"` rather than `"exact"`. This is intentional — the researcher still gets a one-click "Use" button from the candidates expander.
+
+---
+
+### NEXT -- Proposal lifecycle / stable identity design task
+
+**Design task, no implementation yet. Do not implement until researcher sign-off.**
+
+Before TASK F scales to overnight batch, the proposal data model needs a clear lifecycle that survives re-enrichment and batch accumulation without collapsing or duplicating proposals.
+
+Key design questions to think through (not to answer in code yet):
+- **Stable proposal identity:** what uniquely identifies an `entity_proposal` across re-enrichment runs? Currently proposals are matched by name (case-insensitive) only — fragile when the same entity appears with different name spellings. Consider a stable `proposal_id` (hash of type+name or UUID assigned at creation).
+- **Lifecycle states:** should proposals track `status` (pending / approved / rejected / pushed)? Currently approval is implicit (the researcher modifies `enrichment.json`). An explicit status would let the UI distinguish "model proposed, not yet seen" from "researcher reviewed but deferred."
+- **Re-enrichment merge behavior:** when `runner enrich` runs again on the same doc, should it replace `enrichment.json` or merge? Currently it replaces. A merge-aware model (keyed by proposal_id) would preserve researcher edits across re-enrichment.
+- **Push audit:** `push-enrichment` currently reads `approved=True` and pushes all at once. A per-proposal push audit trail (which proposal, which Sanity `_id` it created/updated, when) would round out provenance.
+
+This is a **design task only** — think, document, get researcher sign-off, then implement in a focused slice after the next attended pilot.
+
+---
+
 ### NEXT -- Data-structure lock-in
 
 Before TASK F scales ingestion, lock in the data structures that future exports
@@ -459,10 +508,11 @@ uploaded to Sanity/Supabase, enriched locally, and linked back to queue item
 `f52eb82a` as `ingested`.
 
 **Next sequence:** open the Streamlit app, navigate to Document List, search for
-`8fe67e19`. The panel now shows a **researcher checklist** — fix the 2
-`connection_type` errors, look up Sanity IDs for SEGM and Genspect, then run
-`push-enrichment`. After that run a 2–3 item attended pilot batch before any
-overnight use.
+`8fe67e19`. The panel now shows a **researcher checklist** — use the new entity ID
+resolver to look up SEGM and Genspect (click "🔍 Find in Sanity" on each proposal,
+then "Use" on the exact match or confirm a candidate), fix the 2 `connection_type`
+errors in `enrichment.json`, then run `push-enrichment`. After that run a 2–3 item
+attended pilot batch before any overnight use.
 
 **Design reference:** Full spec preserved in git history (commit `7748aaf3f` -- `NEXT_SESSION.md`
 before this rewrite). Recover with `git show 7748aaf3f:NEXT_SESSION.md` if needed.
@@ -615,7 +665,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 934 passed (or higher after new tests)
+# Must see: 1024 passed (or higher after new tests)
 ```
 
 ---
@@ -666,4 +716,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit v1 provenance/audit panel complete (`e65c06e75`). Research Review Cockpit provenance clarity slice complete (`54f0ec204`) — structured `ProvenanceWarning`, researcher checklist, grouped severity sections, full hash expanders, commit mismatch detection. 989 tests passing. Recommended next: open app → Document List → search `8fe67e19` → resolve enrichment proposals → run 2–3 item attended pilot.*
+*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit v1 provenance/audit panel complete (`e65c06e75`). Research Review Cockpit provenance clarity slice complete (`54f0ec204`). Research Review Cockpit entity ID resolver + date guidance slice complete (`74cab7b8c`) — assisted entity ID resolution, accent-insensitive matching, one-click fill, date warning with capture-date clarification, 35 new tests. 1024 tests passing. Recommended next: open app → Document List → search `8fe67e19` → use entity ID resolver for SEGM + Genspect → push-enrichment → 2–3 item attended pilot. Design task pending: stable proposal identity / proposal lifecycle model (no implementation until researcher sign-off).*
