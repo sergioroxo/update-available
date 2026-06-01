@@ -224,14 +224,31 @@ def run(
 
 
 def save(doc_id: str, result: EnrichmentResult, config: Config, *, _audit: dict | None = None) -> Path:
-    """Write enrichment.json to the document's corpus directory."""
+    """Write enrichment.json to the document's corpus directory.
+
+    If an active enrichment already exists, keep researcher-reviewed proposals
+    in the active file and append newly discovered unique proposals from this
+    run. The previous file is still archived before writing.
+    """
     doc_dir = config.corpus_dir / doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
     out = doc_dir / "enrichment.json"
+    existing: EnrichmentResult | None = None
     if out.exists():
+        try:
+            existing = EnrichmentResult.model_validate(json.loads(out.read_text(encoding="utf-8")))
+        except Exception:
+            existing = None
         archive = doc_dir / f"enrichment_{_timestamp()}.json"
         shutil.copy2(out, archive)
     result.run_type = "main"
+    if existing is not None:
+        result = _merge_enrichment_results(
+            doc_id,
+            result.enrichment_model or existing.enrichment_model,
+            [existing, result],
+        )
+        result.run_type = "main"
     out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
     if _audit is not None:
         write_enrichment_audit(doc_dir, _audit, result)
@@ -643,6 +660,12 @@ def _merge_enrichment_results(
     merged.statistical_claims = _dedupe(
         [item for result in results for item in result.statistical_claims],
         lambda item: item.claim.lower(),
+    )
+    merged.researcher_notes = "\n\n".join(
+        _dedupe(
+            [result.researcher_notes.strip() for result in results if result.researcher_notes.strip()],
+            lambda item: item,
+        )
     )
     return merged
 

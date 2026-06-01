@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import json
 
-from runner.models.enrichment import EnrichmentResult
+from runner.models.enrichment import EnrichmentResult, EntityProposal, LexiconProposal
 from runner.pipeline import enrich
 
 
@@ -27,6 +27,118 @@ def test_enrichment_save_archives_existing_with_microsecond_timestamp(tmp_path):
     current = json.loads((doc_dir / "enrichment.json").read_text())
     assert current["run_type"] == "main"
     assert current["enrichment_model"] == "second"
+
+
+def test_enrichment_save_merges_existing_proposals_instead_of_replacing(tmp_path):
+    config = _Config(corpus_dir=tmp_path)
+    doc_dir = tmp_path / "doc-1"
+    doc_dir.mkdir()
+    existing = EnrichmentResult(
+        doc_id="doc-1",
+        enrichment_model="first",
+        entity_proposals=[
+            EntityProposal(
+                action="enrich_existing",
+                entity_type="organization",
+                name="SEGM",
+                existing_entity_id="organization-segm",
+                evidence_quote="SEGM appears in the source.",
+                approved=True,
+            )
+        ],
+    )
+    (doc_dir / "enrichment.json").write_text(existing.model_dump_json(), encoding="utf-8")
+
+    fresh = EnrichmentResult(
+        doc_id="doc-1",
+        enrichment_model="second",
+        entity_proposals=[
+            EntityProposal(
+                action="add_new",
+                entity_type="organization",
+                name="Genspect",
+                evidence_quote="Genspect appears in the source.",
+            )
+        ],
+        lexicon_proposals=[
+            LexiconProposal(
+                action="add_new",
+                term="Rapid Onset Gender Dysphoria",
+                exact_quote="Rapid Onset Gender Dysphoria is named.",
+            )
+        ],
+    )
+
+    enrich.save("doc-1", fresh, config)
+
+    current = EnrichmentResult.model_validate_json((doc_dir / "enrichment.json").read_text())
+    assert [proposal.name for proposal in current.entity_proposals] == ["SEGM", "Genspect"]
+    assert current.entity_proposals[0].existing_entity_id == "organization-segm"
+    assert current.entity_proposals[0].approved is True
+    assert current.lexicon_proposals[0].term == "Rapid Onset Gender Dysphoria"
+
+
+def test_enrichment_save_keeps_existing_review_state_for_duplicate_proposal(tmp_path):
+    config = _Config(corpus_dir=tmp_path)
+    doc_dir = tmp_path / "doc-1"
+    doc_dir.mkdir()
+    existing = EnrichmentResult(
+        doc_id="doc-1",
+        enrichment_model="first",
+        entity_proposals=[
+            EntityProposal(
+                action="enrich_existing",
+                entity_type="organization",
+                name="SEGM",
+                existing_entity_id="organization-segm",
+                evidence_quote="SEGM appears in the source.",
+                researcher_note="checked in Sanity",
+            )
+        ],
+    )
+    (doc_dir / "enrichment.json").write_text(existing.model_dump_json(), encoding="utf-8")
+    fresh = EnrichmentResult(
+        doc_id="doc-1",
+        enrichment_model="second",
+        entity_proposals=[
+            EntityProposal(
+                action="enrich_existing",
+                entity_type="organization",
+                name="SEGM",
+                evidence_quote="SEGM appears in the source.",
+                existing_entity_id=None,
+            )
+        ],
+    )
+
+    enrich.save("doc-1", fresh, config)
+
+    current = EnrichmentResult.model_validate_json((doc_dir / "enrichment.json").read_text())
+    assert len(current.entity_proposals) == 1
+    assert current.entity_proposals[0].existing_entity_id == "organization-segm"
+    assert current.entity_proposals[0].researcher_note == "checked in Sanity"
+
+
+def test_enrichment_save_preserves_existing_researcher_notes(tmp_path):
+    config = _Config(corpus_dir=tmp_path)
+    doc_dir = tmp_path / "doc-1"
+    doc_dir.mkdir()
+    existing = EnrichmentResult(
+        doc_id="doc-1",
+        enrichment_model="first",
+        researcher_notes="SEGM ID checked manually.",
+    )
+    (doc_dir / "enrichment.json").write_text(existing.model_dump_json(), encoding="utf-8")
+    fresh = EnrichmentResult(
+        doc_id="doc-1",
+        enrichment_model="second",
+        researcher_notes="Second pass found Genspect.",
+    )
+
+    enrich.save("doc-1", fresh, config)
+
+    current = EnrichmentResult.model_validate_json((doc_dir / "enrichment.json").read_text())
+    assert current.researcher_notes == "SEGM ID checked manually.\n\nSecond pass found Genspect."
 
 
 def test_enrichment_save_alt_never_touches_main_file_and_marks_run_type(tmp_path):

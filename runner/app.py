@@ -3574,8 +3574,8 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 st.rerun()
 
         with act_cols[2]:
-            if st.button("✨ Re-enrich", key=f"reenrich_{doc['doc_id']}"):
-                with st.spinner("Running enrichment…"):
+            if st.button("✨ Complement enrichment", key=f"reenrich_{doc['doc_id']}"):
+                with st.spinner("Running enrichment and merging with existing proposals…"):
                     r = __import__("subprocess").run(
                         [sys.executable, "-m", "runner", "enrich", doc["doc_id"], "--yes"],
                         capture_output=True, text=True, cwd=_project_root,
@@ -3584,7 +3584,7 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                     _set_doc_action_feedback(
                         doc["doc_id"],
                         "success",
-                        "Enrichment saved. Reopen this document to review updated proposals and audit metadata.",
+                        "Enrichment merged. Existing reviewed proposals were preserved; reopen this document to review new proposals and audit metadata.",
                     )
                 else:
                     _set_doc_action_feedback(
