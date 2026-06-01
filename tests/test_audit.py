@@ -274,6 +274,7 @@ def test_write_enrichment_audit_schema_keys_present(tmp_path):
         "prompt_sha256", "prompt_template_sha256", "git_commit", "model_parameters", "duration_ms",
         "validation_path", "validation_attempts", "normalization_repairs", "errors",
         "corpus_connections_suppressed", "corpus_connections_suppression_reason",
+        "merge_summary",
         "enrichment_model",
         "lexicon_proposals_count", "entity_proposals_count", "tactic_proposals_count",
         "ingestion_queue_count", "corpus_connections_count",
@@ -358,6 +359,7 @@ def test_write_enrichment_audit_populated_run_meta(tmp_path):
         normalization_repairs=2,
         corpus_connections_suppressed=True,
         corpus_connections_suppression_reason="retrieval_not_wired",
+        merge_summary={"carried_forward": 2, "new_proposals": 1, "appended_from_prior": 3},
     )
     write_enrichment_audit(tmp_path, meta, _enrichment())
     payload = json.loads((tmp_path / "enrichment_audit.json").read_text())
@@ -373,6 +375,9 @@ def test_write_enrichment_audit_populated_run_meta(tmp_path):
     assert payload["normalization_repairs"] == 2
     assert payload["corpus_connections_suppressed"] is True
     assert payload["corpus_connections_suppression_reason"] == "retrieval_not_wired"
+    assert payload["merge_summary"]["carried_forward"] == 2
+    assert payload["merge_summary"]["new_proposals"] == 1
+    assert payload["merge_summary"]["appended_from_prior"] == 3
 
 
 # ---------------------------------------------------------------------------
@@ -484,13 +489,20 @@ def test_analysis_audit_dataclass_input_still_works(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_enrichment_audit_accepts_partial_dict(tmp_path):
-    run_meta = {"llm_flag": "litelm", "model": "core-gemma", "chunked": True, "chunk_count": 5}
+    run_meta = {
+        "llm_flag": "litelm",
+        "model": "core-gemma",
+        "chunked": True,
+        "chunk_count": 5,
+        "merge_summary": {"carried_forward": 1},
+    }
     write_enrichment_audit(tmp_path, run_meta, _enrichment())
     payload = json.loads((tmp_path / "enrichment_audit.json").read_text())
     assert payload["llm_flag"] == "litelm"
     assert payload["model"] == "core-gemma"
     assert payload["chunked"] is True
     assert payload["chunk_count"] == 5
+    assert payload["merge_summary"] == {"carried_forward": 1}
     # Fields absent from the dict use dataclass defaults
     assert payload["normalization_repairs"] == 0
     assert payload["errors"] == []

@@ -70,8 +70,17 @@ def _pid_for_lex(doc_id: str, term: str, action: str = "add_new") -> str:
     return _generate_proposal_id("lexicon", doc_id, {"action": action, "term": term.lower()})
 
 
-def _pid_for_entity(doc_id: str, name: str, etype: str = "organization") -> str:
-    return _generate_proposal_id("entity", doc_id, {"entity_type": etype, "name": name.lower()})
+def _pid_for_entity(
+    doc_id: str,
+    name: str,
+    etype: str = "organization",
+    action: str = "add_new",
+) -> str:
+    return _generate_proposal_id(
+        "entity",
+        doc_id,
+        {"action": action, "entity_type": etype, "name": name.lower()},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -128,9 +137,19 @@ class TestGenerateProposalId:
         assert id_title == id_lower
 
     def test_entity_name_case_insensitive(self):
-        id1 = _generate_proposal_id("entity", "doc-x", {"entity_type": "organization", "name": "SEGM"})
-        id2 = _generate_proposal_id("entity", "doc-x", {"entity_type": "organization", "name": "segm"})
+        id1 = _generate_proposal_id("entity", "doc-x", {"action": "add_new", "entity_type": "organization", "name": "SEGM"})
+        id2 = _generate_proposal_id("entity", "doc-x", {"action": "add_new", "entity_type": "organization", "name": "segm"})
         assert id1 == id2
+
+    def test_lexicon_language_affects_identity(self):
+        id_en = _generate_proposal_id("lexicon", "doc-x", {"action": "add_new", "term": "conversion", "language": "en"})
+        id_no = _generate_proposal_id("lexicon", "doc-x", {"action": "add_new", "term": "conversion", "language": "no"})
+        assert id_en != id_no
+
+    def test_entity_action_affects_identity(self):
+        id_new = _generate_proposal_id("entity", "doc-x", {"action": "add_new", "entity_type": "organization", "name": "SEGM"})
+        id_existing = _generate_proposal_id("entity", "doc-x", {"action": "enrich_existing", "entity_type": "organization", "name": "SEGM"})
+        assert id_new != id_existing
 
 
 class TestNormalizePayloadIdentity:
@@ -255,14 +274,15 @@ class TestBuildOldProposalIndex:
         """Backward compat: old proposals without proposal_id still get indexed."""
         old = [{"action": "add_new", "term": "Historical Term"}]
         idx = _build_old_proposal_index(old, "lexicon", "doc-1")
-        assert len(idx) == 1
-        pid = list(idx.keys())[0]
-        assert pid.startswith("prop-")
+        assert idx
+        assert all(pid.startswith("prop-") for pid in idx)
+        assert set(map(id, idx.values())) == {id(old[0])}
 
     def test_skips_non_dict_entries(self):
         old = [None, "string", {"proposal_id": "prop-valid0000000001", "name": "Org"}]
         idx = _build_old_proposal_index(old, "entity", "doc-1")
-        assert len(idx) == 1
+        assert idx
+        assert set(map(id, idx.values())) == {id(old[2])}
 
 
 class TestApplyResearcherFields:
@@ -383,8 +403,8 @@ class TestMergeResearcherState:
         merged, _ = _merge_researcher_state(new_result, old_data, doc_id)
         assert merged.lexicon_proposals[0].proposal_created_at == original_ts
 
-    def test_model_output_refreshed_not_overridden(self):
-        """Model-generated fields (exact_quote) come from the new run, not old."""
+    def test_existing_model_output_wins_when_not_blank(self):
+        """Existing reviewed fields stay authoritative across re-enrichment."""
         doc_id = "doc-p3e"
         term = "Side B"
         pid = _pid_for_lex(doc_id, term)
@@ -394,8 +414,20 @@ class TestMergeResearcherState:
              "exact_quote": "old stale quote", "approved": True},
         ])
         merged, _ = _merge_researcher_state(new_result, old_data, doc_id)
-        assert merged.lexicon_proposals[0].exact_quote == "fresh quote from new run"
+        assert merged.lexicon_proposals[0].exact_quote == "old stale quote"
         assert merged.lexicon_proposals[0].approved is True
+
+    def test_fresh_model_output_fills_blank_existing_field(self):
+        doc_id = "doc-p3e2"
+        term = "Side B"
+        pid = _pid_for_lex(doc_id, term)
+        new_result = self._new_result(doc_id, [self._lex_proposal(doc_id, term)])
+        old_data = self._old_data(doc_id, [
+            {"action": "add_new", "term": term, "proposal_id": pid,
+             "exact_quote": "", "approved": True},
+        ])
+        merged, _ = _merge_researcher_state(new_result, old_data, doc_id)
+        assert merged.lexicon_proposals[0].exact_quote == "fresh quote from new run"
 
     # --- new proposals ---
 
@@ -452,7 +484,7 @@ class TestMergeResearcherState:
         doc_id = "doc-p3i"
         entity_name = "SEGM"
         sanity_id = "organization-segm"
-        pid = _pid_for_entity(doc_id, entity_name)
+        pid = _pid_for_entity(doc_id, entity_name, action="enrich_existing")
 
         new_result = EnrichmentResult(
             doc_id=doc_id,
@@ -543,8 +575,8 @@ class TestSaveMergeIntegration:
         assert lex[0]["approved"] is True
         assert lex[0]["researcher_note"] == "verified"
         assert lex[0]["proposal_created_at"] == "2024-01-01T00:00:00+00:00"
-        # Model output was refreshed
-        assert lex[0]["exact_quote"] == "refreshed quote from second run"
+        # Existing reviewed proposal remains authoritative
+        assert lex[0]["exact_quote"] == "original quote"
         # Archive was created
         archives = list((doc_dir).glob("enrichment_*.json"))
         assert len(archives) == 1
@@ -619,6 +651,8 @@ class TestNetworkConnectionRepairNote:
         assert conn["connection_type"] == "partner"   # normalized to default
         assert "repair_note" in conn
         assert "collaborates_with" in conn["repair_note"]
+        assert conn["invalid_connection_type"] == "collaborates_with"
+        assert conn["connection_repair_status"] == "needs_review"
         assert repairs >= 1
 
     def test_no_repair_note_on_valid_type(self):
@@ -629,12 +663,14 @@ class TestNetworkConnectionRepairNote:
         conn = data["entity_proposals"][0]["network_connections"][0]
         assert conn["connection_type"] == "funds"
         assert not conn.get("repair_note")
+        assert conn["connection_repair_status"] == "valid"
 
-    def test_repair_note_includes_repaired_value(self):
+    def test_role_like_invalid_type_maps_to_affiliate_with_guidance(self):
         data, _ = _normalize_enrichment_payload(
-            self._entity_payload("network_member"),
+            self._entity_payload("founder"),
             doc_id="doc-repair",
         )
         conn = data["entity_proposals"][0]["network_connections"][0]
-        assert "network_member" in conn["repair_note"]
-        assert "partner" in conn["repair_note"]
+        assert conn["connection_type"] == "affiliate"
+        assert "founder" in conn["repair_note"]
+        assert "key_individuals" in conn["repair_note"]

@@ -23,6 +23,21 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
+ALLOWED_NETWORK_CONNECTION_TYPES = (
+    "partner",
+    "funds",
+    "funded_by",
+    "affiliate",
+    "parent_org",
+    "child_org",
+    "legal_defense",
+    "training_provider",
+    "media_outlet",
+    "co-signatory",
+    "opposes",
+)
+
+
 # ---------------------------------------------------------------------------
 # Structured warning type
 # ---------------------------------------------------------------------------
@@ -308,7 +323,64 @@ def _collect_provenance_warnings(
             source_fields=["enrichment.json → entity_proposals → existing_entity_id"],
         ))
 
-    # 5. Analysis/enrichment git commit mismatch ────────────────────────────
+    # 5. Invalid/repaired network connection types ─────────────────────────
+    invalid_connections = []
+    allowed_connections = set(ALLOWED_NETWORK_CONNECTION_TYPES)
+    for proposal in enrichment.get("entity_proposals") or []:
+        if not isinstance(proposal, dict):
+            continue
+        source_name = str(proposal.get("name") or "?")
+        for connection in proposal.get("network_connections") or []:
+            if not isinstance(connection, dict):
+                continue
+            connection_type = str(connection.get("connection_type") or "").strip()
+            invalid_type = str(connection.get("invalid_connection_type") or "").strip()
+            repair_status = str(connection.get("connection_repair_status") or "").strip()
+            repair_note = str(connection.get("repair_note") or "").strip()
+            if (
+                connection_type not in allowed_connections
+                or invalid_type
+                or repair_status == "needs_review"
+                or repair_note
+            ):
+                invalid_connections.append({
+                    "source": source_name,
+                    "target": str(connection.get("entity_name") or "?"),
+                    "invalid_type": invalid_type or connection_type,
+                    "current_type": connection_type,
+                    "repair_note": repair_note,
+                })
+
+    if invalid_connections:
+        examples = "; ".join(
+            (
+                f"{item['source']} -> {item['target']}: "
+                f"Invalid connection type: {item['invalid_type']}. "
+                f"Current local type: {item['current_type'] or '?'}"
+            )
+            for item in invalid_connections[:5]
+        )
+        warnings_out.append(ProvenanceWarning(
+            severity="pre_push_blocker",
+            title="Invalid network connection type",
+            explanation=(
+                examples
+                + ". Choose an allowed type or move this relation to "
+                  "key_individuals / affiliated_orgs."
+            ),
+            suggested_action=(
+                "Required before push — open the entity proposal and choose one of "
+                f"the allowed types ({', '.join(ALLOWED_NETWORK_CONNECTION_TYPES)}) "
+                "from the local repair dropdown, or move person-role relations such "
+                "as founder/team_member into key_individuals / affiliated_orgs."
+            ),
+            source_fields=[
+                "enrichment.json → entity_proposals → network_connections → connection_type",
+                "enrichment.json → entity_proposals → network_connections → invalid_connection_type",
+            ],
+        ))
+
+    # 6. Analysis/enrichment git commit mismatch ────────────────────────────
     mismatch = _detect_commit_mismatch(doc_dir)
     if mismatch:
         warnings_out.append(mismatch)

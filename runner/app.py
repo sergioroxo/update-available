@@ -744,6 +744,7 @@ def _read_json_file(path: Path, default):
 # ---------------------------------------------------------------------------
 
 from runner.app_provenance import (  # noqa: E402
+    ALLOWED_NETWORK_CONNECTION_TYPES,
     _load_analysis_audit,
     _load_enrichment_audit,
     _load_preservation_status_dict,
@@ -3351,6 +3352,68 @@ def _render_doc_action_feedback(doc_id: str) -> None:
         st.info(message)
 
 
+def _run_complement_enrichment(doc_id: str):
+    """Run merge-aware enrichment for an existing document."""
+    return __import__("subprocess").run(
+        [sys.executable, "-m", "runner", "enrich", doc_id, "--yes"],
+        capture_output=True, text=True, cwd=_project_root,
+    )
+
+
+def _render_complement_enrichment_action(
+    doc_id: str,
+    *,
+    key_prefix: str,
+    feedback_to_doc_card: bool = False,
+    show_caption: bool = True,
+) -> None:
+    """Render the merge-aware enrichment rerun action."""
+    feedback_key = f"complement_enrichment_feedback_{key_prefix}_{doc_id}"
+    feedback = st.session_state.pop(feedback_key, None)
+    if feedback:
+        level = feedback.get("level", "info")
+        message = feedback.get("message", "")
+        if level == "success":
+            st.success(message)
+        elif level == "error":
+            st.error(message)
+        else:
+            st.info(message)
+
+    if show_caption:
+        st.caption(
+            "Runs enrichment again and merges new proposals into the existing "
+            "`enrichment.json` without deleting reviewed proposals, IDs, notes, "
+            "or push state."
+        )
+
+    if st.button(
+        "✨ Complement enrichment",
+        key=f"complement_enrichment_{key_prefix}_{doc_id}",
+        help="Merge-safe enrichment rerun. Existing reviewed proposals are preserved; new unique proposals are appended.",
+    ):
+        with st.spinner("Running enrichment and merging with existing proposals…"):
+            r = _run_complement_enrichment(doc_id)
+        if r.returncode == 0:
+            message = (
+                "Enrichment merged. Existing reviewed proposals were preserved; "
+                "review any new proposals and the merge summary in the audit."
+            )
+            if feedback_to_doc_card:
+                _set_doc_action_feedback(doc_id, "success", message)
+            else:
+                st.session_state[feedback_key] = {"level": "success", "message": message}
+        else:
+            message = "Re-enrichment failed:\n\n" + (
+                r.stderr[-1200:] or r.stdout[-1200:] or "(no output)"
+            )
+            if feedback_to_doc_card:
+                _set_doc_action_feedback(doc_id, "error", message)
+            else:
+                st.session_state[feedback_key] = {"level": "error", "message": message}
+        st.rerun()
+
+
 def _render_doc_card(doc: dict, corpus_dir: Path):
     conf = doc["confidence"]
     conf_color = "🟢" if conf >= 0.85 else "🟡" if conf >= 0.70 else "🔴"
@@ -3574,25 +3637,12 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 st.rerun()
 
         with act_cols[2]:
-            if st.button("✨ Complement enrichment", key=f"reenrich_{doc['doc_id']}"):
-                with st.spinner("Running enrichment and merging with existing proposals…"):
-                    r = __import__("subprocess").run(
-                        [sys.executable, "-m", "runner", "enrich", doc["doc_id"], "--yes"],
-                        capture_output=True, text=True, cwd=_project_root,
-                    )
-                if r.returncode == 0:
-                    _set_doc_action_feedback(
-                        doc["doc_id"],
-                        "success",
-                        "Enrichment merged. Existing reviewed proposals were preserved; reopen this document to review new proposals and audit metadata.",
-                    )
-                else:
-                    _set_doc_action_feedback(
-                        doc["doc_id"],
-                        "error",
-                        "Re-enrichment failed:\n\n" + (r.stderr[-1200:] or r.stdout[-1200:] or "(no output)"),
-                    )
-                st.rerun()
+            _render_complement_enrichment_action(
+                doc["doc_id"],
+                key_prefix="doc_card",
+                feedback_to_doc_card=True,
+                show_caption=False,
+            )
 
 
 def _render_entity_resolver(doc_dir: Path, proposal_name: str, config) -> None:
@@ -3826,6 +3876,11 @@ def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
             "Proves which model, prompt, and git commit produced `enrichment.json`. "
             "Chunked flag indicates the document exceeded the enrichment context window."
         )
+        _render_complement_enrichment_action(
+            doc_id,
+            key_prefix="provenance_enrichment",
+        )
+        st.divider()
         eaudit = _load_enrichment_audit(doc_dir)
         if not eaudit:
             st.info("No `enrichment_audit.json` found for this document.")
@@ -3866,6 +3921,13 @@ def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
             repairs = eaudit.get("normalization_repairs") or 0
             if repairs:
                 st.write(f"**Normalisation repairs:** {repairs}")
+            merge_summary = eaudit.get("merge_summary") or {}
+            if merge_summary:
+                st.write("**Re-enrichment merge summary:**")
+                ms1, ms2, ms3 = st.columns(3)
+                ms1.metric("Preserved reviewed", merge_summary.get("carried_forward", 0))
+                ms2.metric("New proposals", merge_summary.get("new_proposals", 0))
+                ms3.metric("Kept from prior", merge_summary.get("appended_from_prior", 0))
             st.caption(
                 f"Schema v{eaudit.get('schema_version', '?')} · "
                 f"Prompt: {eaudit.get('prompt_version', '?')}"
@@ -6681,17 +6743,53 @@ def _render_single_entity_editor(record: dict) -> None:
         # Warn the researcher when connection_type was auto-repaired from an
         # invalid model output value so they can correct it before approving.
         _repair_warnings = [
-            f"**{conn.get('entity_name', '?')}**: {conn.get('repair_note')}"
+            f"**{conn.get('entity_name', '?')}**: "
+            f"{conn.get('repair_note') or 'Invalid connection type needs review.'}"
             for conn in item["network_connections"]
-            if conn.get("repair_note")
+            if (
+                conn.get("repair_note")
+                or conn.get("invalid_connection_type")
+                or conn.get("connection_repair_status") == "needs_review"
+            )
         ]
         if _repair_warnings:
             st.warning(
-                "⚠️ **Auto-repaired `connection_type`(s)** — the model used an invalid "
-                "value that was normalized to `partner`. Check and correct the type(s) "
-                "manually using the table below before approving this proposal:\n\n"
+                "⚠️ **Invalid `connection_type` value(s)** — choose an allowed type, "
+                "or move person-role relations such as founder/team_member to "
+                "`key_individuals` / `affiliated_orgs` before approving:\n\n"
                 + "\n".join(f"• {w}" for w in _repair_warnings)
             )
+            st.write("**Repair network connection types:**")
+            for conn_index, conn in enumerate(item["network_connections"]):
+                if not (
+                    conn.get("repair_note")
+                    or conn.get("invalid_connection_type")
+                    or conn.get("connection_repair_status") == "needs_review"
+                ):
+                    continue
+                repair_cols = st.columns([3, 2, 1])
+                repair_cols[0].caption(
+                    f"{item.get('name', '?')} -> {conn.get('entity_name', '?')} "
+                    f"(invalid: `{conn.get('invalid_connection_type') or conn.get('connection_type') or '?'}`)"
+                )
+                selected_type = repair_cols[1].selectbox(
+                    "Allowed connection type",
+                    list(ALLOWED_NETWORK_CONNECTION_TYPES),
+                    index=_option_index(
+                        list(ALLOWED_NETWORK_CONNECTION_TYPES),
+                        conn.get("connection_type", "affiliate"),
+                    ),
+                    key=f"{prefix}_conn_repair_{conn_index}",
+                    label_visibility="collapsed",
+                )
+                if repair_cols[2].button("Save", key=f"{prefix}_conn_repair_save_{conn_index}"):
+                    item["network_connections"][conn_index]["connection_type"] = selected_type
+                    item["network_connections"][conn_index]["repair_note"] = ""
+                    item["network_connections"][conn_index]["invalid_connection_type"] = ""
+                    item["network_connections"][conn_index]["connection_repair_status"] = "valid"
+                    _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
+                    st.success("Saved repaired connection type locally.")
+                    st.rerun()
         st.write("**Network connections:**")
         st.dataframe(item["network_connections"], width="stretch")
     if item.get("key_individuals"):
@@ -7198,6 +7296,15 @@ def page_activity_log():
     with tabs[4]:
         _show_json_file(doc_dir / "analysis.json")
     with tabs[5]:
+        st.caption(
+            "Review the active enrichment output. Complement enrichment runs a new pass "
+            "and merge-preserves reviewed proposals instead of replacing this file."
+        )
+        _render_complement_enrichment_action(
+            selected,
+            key_prefix="activity_enrichment",
+        )
+        st.divider()
         _show_json_file(doc_dir / "enrichment.json")
     with tabs[6]:
         _show_json_file(doc_dir / "sanity_record.json")

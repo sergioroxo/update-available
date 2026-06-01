@@ -5,7 +5,7 @@ project. It is a companion to `NEXT_SESSION.md`, which is the Claude Code task
 handoff. This document is for steering the collaboration: what to trust, what to
 verify, how to guide Claude, and how Codex should keep the system coherent.
 
-Generated: 2026-06-01 (updated post-proposal-identity-slice)
+Generated: 2026-06-01 (updated post-proposal-identity workflow glue)
 Repo: `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 Main working branch: `claude/review-architecture-70CUm`
 
@@ -288,27 +288,28 @@ exact matches with one-click Use, candidates in expander (never auto-applied), m
 paste option. Date warning now clarifies that `ingested_at` / Wayback capture date ≠
 publication date; adds app navigation path and do-not-invent-date caution.
 
-**Pending design task (no implementation yet):** stable proposal identity / proposal
-lifecycle model. Key questions: stable proposal_id across re-enrichment, explicit status
-(pending/approved/rejected/pushed), merge-aware re-enrichment, per-proposal push audit
-trail. Do not implement until researcher sign-off.
+**Completed design task:** stable proposal identity / proposal lifecycle model is now
+implemented locally (P1/P2/P3). Future work may add a per-proposal push audit trail
+or cross-document canonical identity, but do not expand that before the pilot exposes
+a concrete need.
 
 Recommended order for a new session:
-1. Verify repo/test state (1072 passed expected).
-2. Open app → Document List → search `8fe67e19` → use entity ID resolver for SEGM +
-   Genspect (click "Find in Sanity", then "Use"). The app will now show repair warnings
-   for any auto-corrected connection_type values — correct them before approving.
-3. Run `push-enrichment 8fe67e19`.
-4. Use `runner batch-plan` to inspect the queue before the next live execution.
-5. Run a 2-3 item attended pilot before any overnight use.
-6. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
+1. Verify repo/test state (1081 passed expected).
+2. Open app → Document List or Activity Log → search `8fe67e19`. Complement enrichment
+   is available in the card, Activity Log → Enrichment, and Provenance → Enrichment Audit.
+3. Use entity ID resolver for any remaining `enrich_existing` proposals and repair
+   network connection warnings with the local dropdown before approving.
+4. Run `push-enrichment 8fe67e19`.
+5. Use `runner batch-plan` to inspect the queue before the next live execution.
+6. Run a 2-3 item attended pilot before any overnight use.
+7. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1072
-- Latest completed milestone: Proposal identity P1/P2/P3
+- Tests passing: 1081
+- Latest completed milestone: Proposal identity P1/P2/P3 + workflow glue
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -382,13 +383,14 @@ Recommended order for a new session:
   - All five warning types now include app navigation paths and required/safe-to-ignore labels.
   - 35 new tests; 1024 total.
 - Proposal identity P1/P2/P3 built ✓
-  - P1: `proposal_id` (deterministic SHA-256, `prop-` prefix, 16-char hex), `proposal_created_at`, `proposal_updated_at` on all reviewable proposal models. `NetworkConnection.repair_note` set when connection_type was normalized from invalid value.
+  - P1: `proposal_id` (deterministic SHA-256, `prop-` prefix, 16-char hex), `proposal_created_at`, `proposal_updated_at` on all reviewable proposal models. `NetworkConnection.repair_note`, `invalid_connection_type`, and `connection_repair_status` capture invalid connection_type repairs.
   - P2: `proposal_status` ("pending"/"approved"/"rejected"/"pushed") synced from booleans in normalization and all approve/reject/push callbacks. `_proposal_review_status()` reads `proposal_status` first, falls back to booleans.
-  - P3: `save()` merge — match by proposal_id (content-based ID generated for old files without one), carry researcher fields, append dropped proposals, concatenate researcher_notes. Old proposals never silently discarded.
+  - P3: `save()` merge — match by proposal_id and legacy/canonical aliases, carry researcher fields, append dropped proposals, concatenate researcher_notes. Old proposals never silently discarded.
+  - Workflow glue: Complement enrichment is available from Document List, Activity Log → Enrichment, and Provenance → Enrichment Audit. `merge_summary` persists in `enrichment_audit.json` and renders as preserved/new/kept counts.
+  - Network connection repair dropdown in the entity editor lets the researcher choose an allowed type locally before approval/push.
   - P4: Design note in `_proposal_semantic_key()` for future cross-doc canonical identity.
   - New helpers: `_generate_proposal_id`, `_derive_proposal_status`, `_build_old_proposal_index`, `_apply_researcher_fields`, `_merge_researcher_state`.
-  - Network connection repair warning in entity editor UI.
-  - 48 new tests; 1072 total.
+  - 1081 total tests passing.
 
 ---
 

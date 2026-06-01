@@ -111,6 +111,7 @@ class EnrichmentRunMeta:
     normalization_repairs: int = 0
     corpus_connections_suppressed: bool = False
     corpus_connections_suppression_reason: str = ""
+    merge_summary: dict = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
 
 

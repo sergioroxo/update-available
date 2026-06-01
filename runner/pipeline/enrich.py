@@ -129,6 +129,24 @@ _NETWORK_CONNECTIONS = {
     "co-signatory",
     "opposes",
 }
+_PERSON_ROLE_CONNECTION_HINTS = {
+    "founder",
+    "co-founder",
+    "cofounder",
+    "team_member",
+    "team member",
+    "board_member",
+    "board member",
+    "staff",
+    "employee",
+    "director",
+    "leader",
+    "president",
+    "chair",
+    "trustee",
+    "advisor",
+    "adviser",
+}
 _TACTIC_LEVELS = {"structural", "sub-tactic", "campaign"}
 _INGESTION_SOURCE_TYPES = {"pdf", "url", "video", "audio", "unknown"}
 _PRIORITIES = {"high", "medium", "low"}
@@ -210,6 +228,34 @@ def _proposal_semantic_key(family: str, item: dict) -> str:
     if family == "lexicon":
         action = (item.get("action") or "").strip()
         term = (item.get("term") or "").lower().strip()
+        language = (item.get("language") or "en").lower().strip()
+        return f"{action}\x00{term}\x00{language}"
+    if family == "entity":
+        action = (item.get("action") or "").strip()
+        etype = (item.get("entity_type") or "organization").strip()
+        name = (item.get("name") or "").lower().strip()
+        return f"{action}\x00{etype}\x00{name}"
+    if family == "tactic":
+        action = (item.get("action") or "").strip()
+        tactic = (item.get("tactic") or "").lower().strip()
+        return f"{action}\x00{tactic}"
+    if family == "practice":
+        practice_id = (item.get("practice_id") or "").lower().strip()
+        description = re.sub(r"\s+", " ", (item.get("exact_description") or "").lower()).strip()
+        description_hash = hashlib.sha256(description[:240].encode()).hexdigest()[:12]
+        return f"{practice_id}\x00{description_hash}"
+    if family == "claim":
+        return (item.get("claim") or "")[:120].lower().strip()
+    if family == "ingestion":
+        return (item.get("url") or "").lower().strip()
+    return ""
+
+
+def _legacy_proposal_semantic_key(family: str, item: dict) -> str:
+    """Return the previous P1/P2/P3 semantic key for backward compatibility."""
+    if family == "lexicon":
+        action = (item.get("action") or "").strip()
+        term = (item.get("term") or "").lower().strip()
         return f"{action}\x00{term}"
     if family == "entity":
         etype = (item.get("entity_type") or "organization").strip()
@@ -237,6 +283,24 @@ def _generate_proposal_id(family: str, doc_id: str, item: dict) -> str:
     semantic_key = _proposal_semantic_key(family, item)
     raw = f"{family}\x00{doc_id}\x00{semantic_key}"
     return "prop-" + hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def _generate_legacy_proposal_id(family: str, doc_id: str, item: dict) -> str:
+    """Generate the prior proposal ID shape so old local files still match."""
+    semantic_key = _legacy_proposal_semantic_key(family, item)
+    raw = f"{family}\x00{doc_id}\x00{semantic_key}"
+    return "prop-" + hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def _proposal_id_candidates(family: str, doc_id: str, item: dict) -> list[str]:
+    """Return all IDs that may identify a proposal across identity revisions."""
+    candidates = [
+        item.get("proposal_id"),
+        _generate_proposal_id(family, doc_id, item),
+        _generate_legacy_proposal_id(family, doc_id, item),
+    ]
+    seen: set[str] = set()
+    return [pid for pid in candidates if pid and not (pid in seen or seen.add(pid))]
 
 
 def _derive_proposal_status(item: dict) -> str:
@@ -272,10 +336,39 @@ def _build_old_proposal_index(
     for p in old_proposals:
         if not isinstance(p, dict):
             continue
-        pid = p.get("proposal_id") or _generate_proposal_id(family, doc_id, p)
-        if pid and pid not in index:
-            index[pid] = p
+        for pid in _proposal_id_candidates(family, doc_id, p):
+            if pid and pid not in index:
+                index[pid] = p
     return index
+
+
+def _is_blank_for_merge(value) -> bool:
+    return value is None or value == "" or value == [] or value == {}
+
+
+def _merge_existing_proposal_with_fresh(
+    old_dict: dict,
+    new_dict: dict,
+    extra_fields: frozenset[str],
+) -> dict:
+    """Keep the existing reviewed proposal as base, filling blanks from a new run."""
+    merged = dict(old_dict)
+    for field, new_val in new_dict.items():
+        if field == "proposal_updated_at" and new_val:
+            merged[field] = new_val
+            continue
+        if field == "proposal_status":
+            continue
+        if field not in merged or _is_blank_for_merge(merged.get(field)):
+            merged[field] = new_val
+
+    for field in _RESEARCHER_FIELDS | extra_fields:
+        if field in old_dict:
+            merged[field] = old_dict.get(field)
+
+    merged.setdefault("proposal_created_at", new_dict.get("proposal_created_at"))
+    merged["proposal_status"] = _derive_proposal_status(merged)
+    return merged
 
 
 def _apply_researcher_fields(
@@ -318,7 +411,8 @@ def _merge_researcher_state(
     """Merge researcher decisions from a prior enrichment.json into a new result.
 
     Rules:
-    - Proposals matching by proposal_id: carry forward all researcher fields.
+    - Proposals matching by proposal_id: keep the existing reviewed proposal
+      as the base and fill only blank fields from the fresh model proposal.
     - Old proposals not in the new result: appended (never silently lost).
     - New proposals not in the old result: kept as pending.
     - Old proposals without a proposal_id: matched via content-derived ID
@@ -352,33 +446,32 @@ def _merge_researcher_state(
                 pid = _generate_proposal_id(family_name, doc_id, new_p.model_dump())
             if pid and pid in old_index:
                 old_p = old_index[pid]
-                new_dict = new_p.model_dump()
-                new_dict = _apply_researcher_fields(new_dict, old_p, extra_fields)
+                new_dict = _merge_existing_proposal_with_fresh(
+                    old_p,
+                    new_p.model_dump(),
+                    extra_fields,
+                )
                 try:
                     new_p = model_class.model_validate(new_dict)
                 except Exception:
                     pass  # Non-fatal: keep unmerged proposal
-                matched_old_ids.add(pid)
+                matched_old_ids.update(_proposal_id_candidates(family_name, doc_id, old_p))
                 summary["carried_forward"] += 1
             else:
                 summary["new_proposals"] += 1
-                if pid:
-                    matched_old_ids.add(pid)
             merged.append(new_p)
 
         # Append old proposals not in the new run — never silently discard.
         for old_p in old_proposals:
             if not isinstance(old_p, dict):
                 continue
-            pid = old_p.get("proposal_id") or _generate_proposal_id(
-                family_name, doc_id, old_p
-            )
-            if pid in matched_old_ids:
+            old_candidate_ids = _proposal_id_candidates(family_name, doc_id, old_p)
+            if any(pid in matched_old_ids for pid in old_candidate_ids):
                 continue
             try:
                 appended = model_class.model_validate(old_p)
                 merged.append(appended)
-                matched_old_ids.add(pid)
+                matched_old_ids.update(old_candidate_ids)
                 summary["appended_from_prior"] += 1
             except Exception:
                 pass  # Non-fatal: skip malformed old proposals
@@ -505,9 +598,9 @@ def save(doc_id: str, result: EnrichmentResult, config: Config, *, _audit: dict 
     doc_dir.mkdir(parents=True, exist_ok=True)
     out = doc_dir / "enrichment.json"
 
-    # P3: Merge researcher state from the prior run before archiving.
-    # The archive captures the raw LLM output for the record; the active
-    # enrichment.json always reflects the merged (researcher-inclusive) state.
+    # P3: Merge researcher state from the prior run before writing. The archive
+    # captures the previous active enrichment.json; the active file always
+    # reflects the merged researcher-inclusive state.
     if out.exists():
         try:
             old_data = json.loads(out.read_text(encoding="utf-8"))
@@ -1406,15 +1499,36 @@ def _normalize_enrichment_payload(
             connection["entity_name"] = _as_string(connection.get("entity_name"))
             # Capture original value before normalization to detect repairs.
             _ct_raw = _as_string(connection.get("connection_type")).strip()
-            connection["connection_type"] = _renum(
-                connection.get("connection_type"),
-                _NETWORK_CONNECTIONS,
-                "partner",
-            )
-            # Record repair note for UI guidance when model used an invalid type.
             if _ct_raw and _ct_raw not in _NETWORK_CONNECTIONS:
+                _repairs += 1
+                raw_key = _ct_raw.lower().replace("-", "_").replace(" ", "_")
+                role_keys = {
+                    value.lower().replace("-", "_").replace(" ", "_")
+                    for value in _PERSON_ROLE_CONNECTION_HINTS
+                }
+                repair_target = "affiliate" if raw_key in role_keys else "partner"
+                connection["connection_type"] = repair_target
+                connection["invalid_connection_type"] = _ct_raw
+                connection["connection_repair_status"] = "needs_review"
                 connection["repair_note"] = (
-                    f"connection_type repaired: '{_ct_raw}' → '{connection['connection_type']}'"
+                    f"Invalid connection type: {_ct_raw}. "
+                    f"Current local type: {repair_target}. "
+                    "Choose an allowed type or move this relation to "
+                    "key_individuals / affiliated_orgs."
+                )
+            else:
+                connection["connection_type"] = _renum(
+                    connection.get("connection_type"),
+                    _NETWORK_CONNECTIONS,
+                    "partner",
+                )
+                connection["invalid_connection_type"] = _as_string(
+                    connection.get("invalid_connection_type")
+                )
+                connection["connection_repair_status"] = (
+                    "needs_review"
+                    if connection.get("repair_note") or connection.get("invalid_connection_type")
+                    else "valid"
                 )
             connection["evidence_quote"] = _as_string(connection.get("evidence_quote"))
             # Stamp provenance: preserve existing value (e.g. from merged runs);

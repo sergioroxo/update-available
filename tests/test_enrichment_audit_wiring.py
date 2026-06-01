@@ -558,6 +558,55 @@ def test_save_writes_enrichment_audit_when_audit_provided(tmp_path):
     assert payload["validation_path"] == "outside_think_tags"
 
 
+def test_save_persists_merge_summary_in_enrichment_audit(tmp_path):
+    doc_id = "doc-save-merge-audit"
+    doc_dir = tmp_path / doc_id
+    doc_dir.mkdir()
+    (doc_dir / "enrichment.json").write_text(
+        json.dumps(
+            {
+                "doc_id": doc_id,
+                "enrichment_model": "core-gemma",
+                "lexicon_proposals": [
+                    {
+                        "action": "add_new",
+                        "term": "Existing Term",
+                        "exact_quote": "old quote",
+                        "approved": True,
+                    }
+                ],
+                "entity_proposals": [],
+                "tactic_proposals": [],
+                "ingestion_queue": [],
+                "corpus_connections": [],
+                "practice_descriptions": [],
+                "statistical_claims": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cfg = types.SimpleNamespace(corpus_dir=tmp_path)
+    fresh = EnrichmentResult.model_validate(
+        {
+            "doc_id": doc_id,
+            "enrichment_model": "core-gemma",
+            "lexicon_proposals": [
+                {
+                    "action": "add_new",
+                    "term": "New Term",
+                    "exact_quote": "new quote",
+                }
+            ],
+        }
+    )
+    enrich.save(doc_id, fresh, cfg, _audit={"llm_flag": "litelm"})
+
+    payload = json.loads((doc_dir / "enrichment_audit.json").read_text())
+    assert payload["merge_summary"]["new_proposals"] == 1
+    assert payload["merge_summary"]["appended_from_prior"] == 1
+
+
 def test_save_no_audit_file_when_audit_none(tmp_path):
     doc_id = "doc-no-audit"
     doc_dir = tmp_path / doc_id

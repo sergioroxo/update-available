@@ -217,6 +217,8 @@ class NetworkConnection(BaseModel):
     evidence_quote: str = ""
     attested_in_doc: str = ""              # doc_id of the enrichment run that proposed this edge
     repair_note: str = ""                  # non-empty when connection_type was normalised from an invalid value
+    invalid_connection_type: str = ""      # original invalid model value, preserved for researcher review
+    connection_repair_status: Literal["valid", "needs_review"] = "valid"
 
 
 class KeyIndividual(BaseModel):

@@ -121,3 +121,32 @@ def test_enrichment_validate_response_accepts_null_entity_text_fields():
     assert entity.self_description == ""
     assert entity.evidence_quote == ""
     assert entity.role_in_sogice == ""
+
+
+def test_enrichment_validate_response_preserves_invalid_connection_guidance():
+    raw = """
+    {
+      "entity_proposals": [
+        {
+          "action": "add_new",
+          "entity_type": "organization",
+          "name": "Test Org",
+          "network_connections": [
+            {
+              "entity_name": "Jane Person",
+              "connection_type": "founder",
+              "evidence_quote": "Jane founded the organization."
+            }
+          ]
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    connection = result.entity_proposals[0].network_connections[0]
+    assert connection.connection_type == "affiliate"
+    assert connection.invalid_connection_type == "founder"
+    assert connection.connection_repair_status == "needs_review"
+    assert "key_individuals" in connection.repair_note

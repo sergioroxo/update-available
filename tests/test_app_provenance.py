@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from runner.app_provenance import (
+    ALLOWED_NETWORK_CONNECTION_TYPES,
     ProvenanceWarning,
     _check_artifact_completeness,
     _collect_provenance_warnings,
@@ -416,6 +417,81 @@ class TestCollectProvenanceWarnings:
         doc_dir = _make_doc_dir(tmp_path, entity_proposals=proposals)
         assert not any(
             w.title == "Missing existing_entity_id"
+            for w in _collect_provenance_warnings(doc_dir)
+        )
+
+    # ── invalid network connection types ─────────────────────────────────
+
+    def test_invalid_network_connection_warning_emitted(self, tmp_path):
+        proposals = [{
+            "action": "add_new",
+            "name": "Org",
+            "network_connections": [{
+                "entity_name": "Person",
+                "connection_type": "affiliate",
+                "invalid_connection_type": "founder",
+                "connection_repair_status": "needs_review",
+                "repair_note": (
+                    "Invalid connection type: founder. Choose an allowed type "
+                    "or move this relation to key_individuals / affiliated_orgs."
+                ),
+            }],
+        }]
+        doc_dir = _make_doc_dir(tmp_path, entity_proposals=proposals)
+        warnings = _collect_provenance_warnings(doc_dir)
+        assert any(w.title == "Invalid network connection type" for w in warnings)
+
+    def test_invalid_network_connection_warning_has_pre_push_severity(self, tmp_path):
+        proposals = [{
+            "action": "add_new",
+            "name": "Org",
+            "network_connections": [{
+                "entity_name": "Person",
+                "connection_type": "affiliate",
+                "invalid_connection_type": "team_member",
+                "connection_repair_status": "needs_review",
+            }],
+        }]
+        doc_dir = _make_doc_dir(tmp_path, entity_proposals=proposals)
+        warning = next(
+            w for w in _collect_provenance_warnings(doc_dir)
+            if w.title == "Invalid network connection type"
+        )
+        assert warning.severity == "pre_push_blocker"
+
+    def test_invalid_network_connection_warning_lists_allowed_values(self, tmp_path):
+        proposals = [{
+            "action": "add_new",
+            "name": "Org",
+            "network_connections": [{
+                "entity_name": "Person",
+                "connection_type": "affiliate",
+                "invalid_connection_type": "founder",
+                "connection_repair_status": "needs_review",
+            }],
+        }]
+        doc_dir = _make_doc_dir(tmp_path, entity_proposals=proposals)
+        warning = next(
+            w for w in _collect_provenance_warnings(doc_dir)
+            if w.title == "Invalid network connection type"
+        )
+        assert "founder" in warning.explanation
+        assert "key_individuals" in warning.suggested_action
+        assert "partner" in warning.suggested_action
+        assert "opposes" in ALLOWED_NETWORK_CONNECTION_TYPES
+
+    def test_no_invalid_network_warning_for_valid_connection(self, tmp_path):
+        proposals = [{
+            "action": "add_new",
+            "name": "Org",
+            "network_connections": [{
+                "entity_name": "Partner",
+                "connection_type": "partner",
+            }],
+        }]
+        doc_dir = _make_doc_dir(tmp_path, entity_proposals=proposals)
+        assert not any(
+            w.title == "Invalid network connection type"
             for w in _collect_provenance_warnings(doc_dir)
         )
 
