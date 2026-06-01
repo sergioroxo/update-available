@@ -49,7 +49,7 @@ def test_enrichment_validate_response_accepts_common_model_enum_drift():
     assert result.practice_descriptions[0].harm_stance == "not_mentioned"
 
 
-def test_enrichment_validate_response_reports_validation_details():
+def test_enrichment_validate_response_repairs_out_of_range_confidence():
     raw = """
     {
       "lexicon_proposals": [
@@ -63,12 +63,31 @@ def test_enrichment_validate_response_reports_validation_details():
     }
     """
 
+    result = _validate_response("doc-1", raw, "litelm")
+
+    assert result.lexicon_proposals[0].model_confidence == 1.0
+
+
+def test_enrichment_validate_response_reports_unrepairable_validation_details():
+    raw = """
+    {
+      "lexicon_proposals": [
+        {
+          "action": "add_new",
+          "term": "developmental disorder",
+          "exact_quote": "homosexuality as disorder",
+          "variants": [{"variant_term": "x", "language": "en", "attestation_tier": "bad-tier"}]
+        }
+      ]
+    }
+    """
+
     with pytest.raises(ValueError) as excinfo:
         _validate_response("doc-1", raw, "litelm")
 
     message = str(excinfo.value)
     assert "Validation details" in message
-    assert "model_confidence" in message
+    assert "attestation_tier" in message
 
 
 def test_enrichment_validate_response_accepts_null_entity_text_fields():

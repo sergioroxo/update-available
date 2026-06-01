@@ -1017,6 +1017,28 @@ def _normalize_enrichment_payload(
             return default
         return text
 
+    def _repair_confidence_fields(item: dict) -> None:
+        nonlocal _repairs
+        for key in ("model_confidence", "researcher_confidence"):
+            if key not in item:
+                continue
+            value = item.get(key)
+            if value in (None, ""):
+                item[key] = None
+                continue
+            try:
+                score = float(value)
+            except (TypeError, ValueError):
+                item[key] = None
+                _repairs += 1
+                continue
+            bounded = max(0.0, min(1.0, score))
+            if bounded != score or not isinstance(value, (int, float)):
+                _repairs += 1
+            item[key] = bounded
+        if "confidence_rationale" in item:
+            item["confidence_rationale"] = _as_string(item.get("confidence_rationale"))
+
     normalized = dict(data)
     for key in (
         "lexicon_proposals",
@@ -1030,6 +1052,7 @@ def _normalize_enrichment_payload(
         normalized[key] = _as_object_list(normalized.get(key, []))
 
     for item in normalized["lexicon_proposals"]:
+        _repair_confidence_fields(item)
         item["action"] = _renum(item.get("action"), _LEXICON_ACTIONS, "add_new")
         item["term"] = _as_string(item.get("term"))
         item["language"] = _as_string(item.get("language"), "en") or "en"
@@ -1059,6 +1082,7 @@ def _normalize_enrichment_payload(
         item["relationships"] = relationships
 
     for item in normalized["entity_proposals"]:
+        _repair_confidence_fields(item)
         item["action"] = _renum(item.get("action"), _ENTITY_ACTIONS, "add_new")
         item["entity_type"] = _renum(item.get("entity_type"), _ENTITY_TYPES, "organization")
         item["name"] = _as_string(item.get("name"))
@@ -1093,6 +1117,7 @@ def _normalize_enrichment_payload(
             person["quote"] = _as_string(person.get("quote"))
 
     for item in normalized["tactic_proposals"]:
+        _repair_confidence_fields(item)
         item["action"] = _renum(item.get("action"), _ENTITY_ACTIONS, "add_new")
         item["tactic"] = _as_string(item.get("tactic"))
         item["tactic_level"] = _renum(item.get("tactic_level"), _TACTIC_LEVELS, "structural")
@@ -1132,6 +1157,7 @@ def _normalize_enrichment_payload(
         if _as_string(item.get("practice_id")).strip() and _as_string(item.get("exact_description")).strip()
     ]
     for item in normalized["practice_descriptions"]:
+        _repair_confidence_fields(item)
         item["practice_id"] = _as_string(item.get("practice_id"))
         item["exact_description"] = _as_string(item.get("exact_description"))
         item["harm_stance"] = _renum(item.get("harm_stance"), _HARM_STANCES, "not_mentioned")
@@ -1142,6 +1168,7 @@ def _normalize_enrichment_payload(
         if _as_string(item.get("claim")).strip()
     ]
     for item in normalized["statistical_claims"]:
+        _repair_confidence_fields(item)
         item["claim"] = _as_string(item.get("claim"))
         item["source_cited"] = _as_string(item.get("source_cited"))
         item["context"] = _as_string(item.get("context"))
