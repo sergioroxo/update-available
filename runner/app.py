@@ -3876,6 +3876,25 @@ def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
             "Proves which model, prompt, and git commit produced `enrichment.json`. "
             "Chunked flag indicates the document exceeded the enrichment context window."
         )
+        # ── Proposal status summary ──────────────────────────────────────
+        _enrich_data = _read_json_file(doc_dir / "enrichment.json", {})
+        if _enrich_data:
+            _all_props = []
+            for _fkey in (
+                "lexicon_proposals", "entity_proposals", "tactic_proposals",
+                "practice_descriptions", "statistical_claims",
+            ):
+                _all_props.extend(
+                    item for item in (_enrich_data.get(_fkey) or [])
+                    if isinstance(item, dict)
+                )
+            if _all_props:
+                _pcounts = _proposal_state_counts(_all_props)
+                _ps1, _ps2, _ps3, _ps4 = st.columns(4)
+                _ps1.metric("Pending", _pcounts.get("pending review", 0))
+                _ps2.metric("Approved", _pcounts.get("approved locally", 0))
+                _ps3.metric("Pushed to Sanity", _pcounts.get("pushed to Sanity", 0))
+                _ps4.metric("Rejected", _pcounts.get("rejected", 0))
         _render_complement_enrichment_action(
             doc_id,
             key_prefix="provenance_enrichment",

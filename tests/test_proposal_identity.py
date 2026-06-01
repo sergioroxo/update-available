@@ -11,6 +11,8 @@ Covers:
     preservation, appending dropped proposals, backward-compat, entity IDs
   - save(): integration test via tmp_path
   - NetworkConnection repair_note: set on invalid type, absent on valid type
+  - _proposal_id_candidates: triple-fallback ordering and deduplication
+  - _merge_existing_proposal_with_fresh: old-as-base semantics
 """
 from __future__ import annotations
 
@@ -25,8 +27,11 @@ from runner.pipeline.enrich import (
     _build_old_proposal_index,
     _derive_proposal_status,
     _generate_proposal_id,
+    _generate_legacy_proposal_id,
+    _merge_existing_proposal_with_fresh,
     _merge_researcher_state,
     _normalize_enrichment_payload,
+    _proposal_id_candidates,
     _proposal_semantic_key,
     save as enrich_save,
 )
@@ -674,3 +679,128 @@ class TestNetworkConnectionRepairNote:
         assert conn["connection_type"] == "affiliate"
         assert "founder" in conn["repair_note"]
         assert "key_individuals" in conn["repair_note"]
+
+
+# ---------------------------------------------------------------------------
+# _proposal_id_candidates: triple-fallback and deduplication
+# ---------------------------------------------------------------------------
+
+class TestProposalIdCandidates:
+    """_proposal_id_candidates returns IDs in priority order with no duplicates."""
+
+    def _lex_dict(self, doc_id: str, term: str, action: str = "add_new", **kw) -> dict:
+        return {"action": action, "term": term, "exact_quote": "q", **kw}
+
+    def test_stored_id_is_first_when_present(self):
+        doc_id = "doc-cand"
+        item = self._lex_dict(doc_id, "test term", proposal_id="prop-stored01234567")
+        candidates = _proposal_id_candidates("lexicon", doc_id, item)
+        assert candidates[0] == "prop-stored01234567"
+
+    def test_generated_id_included_when_no_stored_id(self):
+        doc_id = "doc-cand2"
+        item = self._lex_dict(doc_id, "test term")
+        candidates = _proposal_id_candidates("lexicon", doc_id, item)
+        expected = _generate_proposal_id("lexicon", doc_id, item)
+        assert expected in candidates
+
+    def test_legacy_id_included_for_backward_compat(self):
+        doc_id = "doc-cand3"
+        item = self._lex_dict(doc_id, "test term")
+        candidates = _proposal_id_candidates("lexicon", doc_id, item)
+        legacy = _generate_legacy_proposal_id("lexicon", doc_id, item)
+        assert legacy in candidates
+
+    def test_no_duplicates_when_new_and_legacy_ids_match(self):
+        """If new and legacy semantic keys are the same, only one ID is emitted."""
+        doc_id = "doc-cand4"
+        # Use a claim whose new and legacy keys are identical (claim key hasn't changed)
+        item = {"claim": "42% of participants improved"}
+        candidates = _proposal_id_candidates("claim", doc_id, item)
+        assert len(candidates) == len(set(candidates))
+
+    def test_none_not_in_output(self):
+        """proposal_id=None must not appear in the candidate list."""
+        doc_id = "doc-cand5"
+        item = self._lex_dict(doc_id, "orphan term", proposal_id=None)
+        candidates = _proposal_id_candidates("lexicon", doc_id, item)
+        assert None not in candidates
+        assert all(isinstance(pid, str) and pid.startswith("prop-") for pid in candidates)
+
+
+# ---------------------------------------------------------------------------
+# _merge_existing_proposal_with_fresh: old-as-base semantics
+# ---------------------------------------------------------------------------
+
+class TestMergeExistingProposalWithFresh:
+    """The old (reviewed) proposal is the base; fresh model output fills
+    only fields that were blank in the old proposal."""
+
+    def _old_lex(self, **kw) -> dict:
+        base = {
+            "action": "add_new",
+            "term": "Test Term",
+            "exact_quote": "old quote",
+            "proposal_id": "prop-old1234567890ab",
+            "proposal_created_at": "2024-01-01T00:00:00+00:00",
+            "approved": False,
+            "rejected": False,
+        }
+        base.update(kw)
+        return base
+
+    def _new_lex(self, **kw) -> dict:
+        base = {
+            "action": "add_new",
+            "term": "Test Term",
+            "exact_quote": "fresh quote",
+            "proposal_id": "prop-old1234567890ab",
+            "proposal_updated_at": "2026-01-01T00:00:00+00:00",
+        }
+        base.update(kw)
+        return base
+
+    def test_old_nonempty_field_not_overwritten_by_fresh(self):
+        """existing exact_quote must survive re-enrichment."""
+        old = self._old_lex(exact_quote="old quote")
+        new = self._new_lex(exact_quote="fresh quote")
+        merged = _merge_existing_proposal_with_fresh(old, new, frozenset())
+        assert merged["exact_quote"] == "old quote"
+
+    def test_blank_old_field_filled_from_fresh(self):
+        """blank definition_as_used in old proposal is filled from new run."""
+        old = self._old_lex(definition_as_used="")
+        new = self._new_lex(definition_as_used="new definition from model")
+        merged = _merge_existing_proposal_with_fresh(old, new, frozenset())
+        assert merged["definition_as_used"] == "new definition from model"
+
+    def test_proposal_updated_at_always_takes_fresh_value(self):
+        """proposal_updated_at must reflect the new run's timestamp."""
+        old = self._old_lex(proposal_updated_at="2024-06-01T00:00:00+00:00")
+        new = self._new_lex(proposal_updated_at="2026-06-01T00:00:00+00:00")
+        merged = _merge_existing_proposal_with_fresh(old, new, frozenset())
+        assert merged["proposal_updated_at"] == "2026-06-01T00:00:00+00:00"
+
+    def test_approved_state_preserved_from_old(self):
+        """approval set by researcher must survive."""
+        old = self._old_lex(approved=True, rejected=False)
+        new = self._new_lex()
+        merged = _merge_existing_proposal_with_fresh(old, new, frozenset())
+        assert merged["approved"] is True
+        assert merged["proposal_status"] == "approved"
+
+    def test_extra_link_field_preserved_from_old(self):
+        """existing_entity_id set by entity resolver must survive."""
+        old = self._old_lex(existing_entity_id="organization-segm")
+        new = self._new_lex()
+        merged = _merge_existing_proposal_with_fresh(
+            old, new, frozenset({"existing_entity_id"})
+        )
+        assert merged["existing_entity_id"] == "organization-segm"
+
+    def test_proposal_created_at_comes_from_old_when_present(self):
+        """original first-seen timestamp must be preserved."""
+        old = self._old_lex(proposal_created_at="2024-01-01T00:00:00+00:00")
+        new = self._new_lex(proposal_created_at="2026-01-01T00:00:00+00:00")
+        merged = _merge_existing_proposal_with_fresh(old, new, frozenset())
+        assert merged["proposal_created_at"] == "2024-01-01T00:00:00+00:00"
