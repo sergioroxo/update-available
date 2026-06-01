@@ -55,6 +55,28 @@ class ProposalConfidenceMixin(BaseModel):
     confidence_rationale: str = ""
     researcher_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
 
+    # ── Proposal identity (P1) ────────────────────────────────────────────────
+    # Set by the pipeline normaliser, not by the LLM.  Stable across re-runs.
+    proposal_id: Optional[str] = None
+    """Deterministic SHA-256 hash of (family, doc_id, content key).  Enables
+    merge-by-identity in save() so researcher decisions survive re-enrichment."""
+
+    proposal_created_at: Optional[str] = None
+    """ISO 8601 UTC datetime when this proposal was first generated.
+    Preserved across re-enrichment; never reset by a later model run."""
+
+    proposal_updated_at: Optional[str] = None
+    """ISO 8601 UTC datetime of the most recent model refresh of this proposal.
+    Updated on every re-enrichment run regardless of researcher state."""
+
+    # ── Lifecycle status (P2) ─────────────────────────────────────────────────
+    # Derived and kept in sync with the three boolean fields below.
+    # Values: "pending" | "approved" | "rejected" | "pushed"
+    # The boolean fields (approved, rejected, pushed_to_sanity) remain
+    # authoritative; proposal_status is a convenience summary for the UI and
+    # for the P3 merge pass.  Do not remove the booleans yet.
+    proposal_status: Optional[str] = None
+
 
 # ---------------------------------------------------------------------------
 # Lexicon proposals
@@ -194,6 +216,7 @@ class NetworkConnection(BaseModel):
     ]
     evidence_quote: str = ""
     attested_in_doc: str = ""              # doc_id of the enrichment run that proposed this edge
+    repair_note: str = ""                  # non-empty when connection_type was normalised from an invalid value
 
 
 class KeyIndividual(BaseModel):

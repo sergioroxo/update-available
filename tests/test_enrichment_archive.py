@@ -72,9 +72,11 @@ def test_enrichment_save_merges_existing_proposals_instead_of_replacing(tmp_path
     enrich.save("doc-1", fresh, config)
 
     current = EnrichmentResult.model_validate_json((doc_dir / "enrichment.json").read_text())
-    assert [proposal.name for proposal in current.entity_proposals] == ["SEGM", "Genspect"]
-    assert current.entity_proposals[0].existing_entity_id == "organization-segm"
-    assert current.entity_proposals[0].approved is True
+    # P3 merge: Genspect (new proposal) comes first; SEGM (appended from old run) second.
+    assert {p.name for p in current.entity_proposals} == {"SEGM", "Genspect"}
+    segm = next(p for p in current.entity_proposals if p.name == "SEGM")
+    assert segm.existing_entity_id == "organization-segm"
+    assert segm.approved is True
     assert current.lexicon_proposals[0].term == "Rapid Onset Gender Dysphoria"
 
 

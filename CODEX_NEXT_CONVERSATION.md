@@ -5,7 +5,7 @@ project. It is a companion to `NEXT_SESSION.md`, which is the Claude Code task
 handoff. This document is for steering the collaboration: what to trust, what to
 verify, how to guide Claude, and how Codex should keep the system coherent.
 
-Generated: 2026-06-01 (updated post-entity-resolver-slice)
+Generated: 2026-06-01 (updated post-proposal-identity-slice)
 Repo: `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 Main working branch: `claude/review-architecture-70CUm`
 
@@ -294,21 +294,21 @@ lifecycle model. Key questions: stable proposal_id across re-enrichment, explici
 trail. Do not implement until researcher sign-off.
 
 Recommended order for a new session:
-1. Verify repo/test state (1024 passed expected).
+1. Verify repo/test state (1072 passed expected).
 2. Open app → Document List → search `8fe67e19` → use entity ID resolver for SEGM +
-   Genspect (click "Find in Sanity", then "Use"), fix 2 connection_type errors → run
-   `push-enrichment 8fe67e19`.
-3. Use `runner batch-plan` to inspect the queue before the next live execution.
-4. Run a 2-3 item attended pilot before any overnight use.
-5. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
-6. Design task: write up the proposal lifecycle model design for researcher sign-off.
+   Genspect (click "Find in Sanity", then "Use"). The app will now show repair warnings
+   for any auto-corrected connection_type values — correct them before approving.
+3. Run `push-enrichment 8fe67e19`.
+4. Use `runner batch-plan` to inspect the queue before the next live execution.
+5. Run a 2-3 item attended pilot before any overnight use.
+6. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1024
-- Latest completed milestone: Research Review Cockpit entity ID resolver + date guidance slice (`74cab7b8c`)
+- Tests passing: 1072
+- Latest completed milestone: Proposal identity P1/P2/P3
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -381,6 +381,14 @@ Recommended order for a new session:
   - Date warning: ingested_at / Wayback capture date explicitly distinguished from publication date. App navigation path added. "Do not invent a date" caution added.
   - All five warning types now include app navigation paths and required/safe-to-ignore labels.
   - 35 new tests; 1024 total.
+- Proposal identity P1/P2/P3 built ✓
+  - P1: `proposal_id` (deterministic SHA-256, `prop-` prefix, 16-char hex), `proposal_created_at`, `proposal_updated_at` on all reviewable proposal models. `NetworkConnection.repair_note` set when connection_type was normalized from invalid value.
+  - P2: `proposal_status` ("pending"/"approved"/"rejected"/"pushed") synced from booleans in normalization and all approve/reject/push callbacks. `_proposal_review_status()` reads `proposal_status` first, falls back to booleans.
+  - P3: `save()` merge — match by proposal_id (content-based ID generated for old files without one), carry researcher fields, append dropped proposals, concatenate researcher_notes. Old proposals never silently discarded.
+  - P4: Design note in `_proposal_semantic_key()` for future cross-doc canonical identity.
+  - New helpers: `_generate_proposal_id`, `_derive_proposal_status`, `_build_old_proposal_index`, `_apply_researcher_fields`, `_merge_researcher_state`.
+  - Network connection repair warning in entity editor UI.
+  - 48 new tests; 1072 total.
 
 ---
 

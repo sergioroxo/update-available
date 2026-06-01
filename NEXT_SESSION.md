@@ -2,8 +2,8 @@
 **Generated:** 2026-06-01
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 1024
-**Latest completed milestone:** Research Review Cockpit entity ID resolver + date guidance slice (`74cab7b8c`)
+**Tests passing:** 1072
+**Latest completed milestone:** Proposal identity P1/P2/P3 slice
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -151,7 +151,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 1024 tests -- run before every edit
+tests/                          # 1072 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -423,19 +423,38 @@ Entity ID resolution for `enrich_existing` proposals and improved date warning g
 
 ---
 
-### NEXT -- Proposal lifecycle / stable identity design task
+### ~~Proposal identity P1/P2/P3~~ ✓ COMPLETE
 
-**Design task, no implementation yet. Do not implement until researcher sign-off.**
+Stable proposal identity, lifecycle status, and merge-aware re-enrichment. 48 new tests (1072 total). No prompts modified.
 
-Before TASK F scales to overnight batch, the proposal data model needs a clear lifecycle that survives re-enrichment and batch accumulation without collapsing or duplicating proposals.
+**P1 — Stable proposal identity** (`ProposalConfidenceMixin` + `_normalize_enrichment_payload`):
+- `proposal_id: Optional[str]` — deterministic SHA-256 hash of `(family, doc_id, content_key)`. Stable across model re-runs. Existing IDs are never overwritten.
+- `proposal_created_at: Optional[str]` — ISO 8601 UTC, set once on first generation, preserved across re-enrichment.
+- `proposal_updated_at: Optional[str]` — ISO 8601 UTC, refreshed on every model run.
+- `NetworkConnection.repair_note: str` — non-empty when `connection_type` was normalized from an invalid model output; shown as a `st.warning()` in the entity editor.
+- New helpers: `_now_iso()`, `_proposal_semantic_key()`, `_generate_proposal_id()`.
 
-Key design questions to think through (not to answer in code yet):
-- **Stable proposal identity:** what uniquely identifies an `entity_proposal` across re-enrichment runs? Currently proposals are matched by name (case-insensitive) only — fragile when the same entity appears with different name spellings. Consider a stable `proposal_id` (hash of type+name or UUID assigned at creation).
-- **Lifecycle states:** should proposals track `status` (pending / approved / rejected / pushed)? Currently approval is implicit (the researcher modifies `enrichment.json`). An explicit status would let the UI distinguish "model proposed, not yet seen" from "researcher reviewed but deferred."
-- **Re-enrichment merge behavior:** when `runner enrich` runs again on the same doc, should it replace `enrichment.json` or merge? Currently it replaces. A merge-aware model (keyed by proposal_id) would preserve researcher edits across re-enrichment.
-- **Push audit:** `push-enrichment` currently reads `approved=True` and pushes all at once. A per-proposal push audit trail (which proposal, which Sanity `_id` it created/updated, when) would round out provenance.
+**P2 — Lifecycle status** (`ProposalConfidenceMixin`):
+- `proposal_status: Optional[str]` — `"pending" | "approved" | "rejected" | "pushed"`. Synced from booleans in `_normalize_enrichment_payload` and after every approve/reject/push action in `app.py`.
+- Three booleans (`approved`, `rejected`, `pushed_to_sanity`) remain authoritative and are not removed.
+- `_proposal_review_status()` in `app.py` reads `proposal_status` first, falls back to boolean derivation for older files.
 
-This is a **design task only** — think, document, get researcher sign-off, then implement in a focused slice after the next attended pilot.
+**P3 — Merge-aware re-enrichment** (`save()` in `enrich.py`):
+- `save()` loads the prior `enrichment.json`, calls `_merge_researcher_state()`, archives the old file, writes merged result.
+- Match strategy: by `proposal_id` if present; if None (old file or direct Pydantic construction), generates content-based ID for matching — full backward compat.
+- Researcher fields carried forward: `approved`, `rejected`, `pushed_to_sanity`, `sanity_id`, `researcher_note`, `proposal_created_at`, `proposal_status`, and family-specific link fields (`existing_entity_id`, `existing_entry_id`, `existing_tactic_id`, `verification_status`, `verifiable`).
+- Model-generated fields (quote, description, confidence) are intentionally NOT merged — new run provides fresher output.
+- Old proposals not in new run are appended — never silently discarded. Ordering: new proposals first, appended-from-prior second.
+- Top-level `researcher_notes` concatenated when both old and new are non-empty.
+- New helpers: `_build_old_proposal_index()`, `_apply_researcher_fields()`, `_merge_researcher_state()`.
+
+**P4 — Design note only** (no implementation):
+- `_proposal_semantic_key()` includes a `TODO` comment for future cross-document canonical identity (accent-insensitive names, canonical term forms, cross-family deduplication).
+
+**Also delivered:**
+- Network connection repair warning in `_render_single_entity_editor()` — `st.warning()` with per-connection guidance when `repair_note` is set.
+- `push_approved_to_sanity()` in `enrich.py` now syncs `proposal_status = "pushed"` on all 5 proposal families.
+- `test_enrichment_archive.py` updated: ordering assertion now uses name-based set equality (P3 appends old proposals after new ones).
 
 ---
 
@@ -665,7 +684,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 1024 passed (or higher after new tests)
+# Must see: 1072 passed (or higher after new tests)
 ```
 
 ---
@@ -716,4 +735,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit v1 provenance/audit panel complete (`e65c06e75`). Research Review Cockpit provenance clarity slice complete (`54f0ec204`). Research Review Cockpit entity ID resolver + date guidance slice complete (`74cab7b8c`) — assisted entity ID resolution, accent-insensitive matching, one-click fill, date warning with capture-date clarification, 35 new tests. 1024 tests passing. Recommended next: open app → Document List → search `8fe67e19` → use entity ID resolver for SEGM + Genspect → push-enrichment → 2–3 item attended pilot. Design task pending: stable proposal identity / proposal lifecycle model (no implementation until researcher sign-off).*
+*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, and entity ID resolver complete. Proposal identity P1/P2/P3 complete — deterministic proposal_id, lifecycle status, merge-aware re-enrichment, network connection repair warnings. 1072 tests passing. Recommended next: open app → Document List → search `8fe67e19` → use entity ID resolver for SEGM + Genspect → push-enrichment → 2–3 item attended pilot.*

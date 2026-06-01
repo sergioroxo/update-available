@@ -16,7 +16,8 @@ LLM routing:
   fallback        → tries litelm then local
 """
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone
+import hashlib
 import json
 import re
 import shutil
@@ -26,17 +27,31 @@ from pathlib import Path
 try:
     from runner.config import Config
     from runner.models.document import AnalysisResult, PreprocessResult
-    from runner.models.enrichment import EnrichmentResult
+    from runner.models.enrichment import (
+        EnrichmentResult,
+        LexiconProposal,
+        EntityProposal,
+        TacticProposal,
+        PracticeDescription,
+        StatisticalClaim,
+    )
     from runner.pipeline.audit import current_git_commit, sha256_text, write_enrichment_audit
     from runner.pipeline.http_retry import call_with_http_retries
     from runner.pipeline.sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 except ImportError:
-    from ..config import Config
-    from ..models.document import AnalysisResult, PreprocessResult
-    from ..models.enrichment import EnrichmentResult
-    from .audit import current_git_commit, sha256_text, write_enrichment_audit
-    from .http_retry import call_with_http_retries
-    from .sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
+    from ..config import Config  # type: ignore[no-redef]
+    from ..models.document import AnalysisResult, PreprocessResult  # type: ignore[no-redef]
+    from ..models.enrichment import (  # type: ignore[no-redef]
+        EnrichmentResult,
+        LexiconProposal,
+        EntityProposal,
+        TacticProposal,
+        PracticeDescription,
+        StatisticalClaim,
+    )
+    from .audit import current_git_commit, sha256_text, write_enrichment_audit  # type: ignore[no-redef]
+    from .http_retry import call_with_http_retries  # type: ignore[no-redef]
+    from .sanity_reads import fetch_active_lexicon_terms, sanity_read_headers  # type: ignore[no-redef]
 
 PROMPT_VERSION = "enrichment-v1.1"
 
@@ -132,6 +147,256 @@ _CORPUS_CONNECTION_TYPES = {
 _HARM_STANCES = {"denied", "minimized", "reframed", "acknowledged", "not_mentioned"}
 _VERIFICATION_STATUSES = {"unverified", "verified", "disputed", "debunked", "unverifiable"}
 
+# Mapping from enrichment.json family key → short name used in proposal IDs.
+_FAMILY_NAME: dict[str, str] = {
+    "lexicon_proposals":     "lexicon",
+    "entity_proposals":      "entity",
+    "tactic_proposals":      "tactic",
+    "practice_descriptions": "practice",
+    "statistical_claims":    "claim",
+}
+
+# Pydantic model class for each proposal family.
+_FAMILY_MODEL: dict[str, type] = {
+    "lexicon_proposals":     LexiconProposal,
+    "entity_proposals":      EntityProposal,
+    "tactic_proposals":      TacticProposal,
+    "practice_descriptions": PracticeDescription,
+    "statistical_claims":    StatisticalClaim,
+}
+
+# Researcher-controlled fields preserved across re-enrichment (P3 merge).
+_RESEARCHER_FIELDS: frozenset[str] = frozenset({
+    "approved",
+    "rejected",
+    "pushed_to_sanity",
+    "sanity_id",
+    "researcher_note",
+    "proposal_created_at",   # always preserve original first-seen timestamp
+    "proposal_status",       # carry forward so status is not reset to pending
+})
+
+# Per-family link fields the researcher fills in (e.g. entity ID resolver).
+_LINK_FIELDS: dict[str, frozenset[str]] = {
+    "lexicon_proposals":     frozenset({"existing_entry_id", "existing_entry_term", "merge_target_id"}),
+    "entity_proposals":      frozenset({"existing_entity_id"}),
+    "tactic_proposals":      frozenset({"existing_tactic_id"}),
+    "practice_descriptions": frozenset(),
+    "statistical_claims":    frozenset({"verification_status", "verifiable"}),
+}
+
+
+# ---------------------------------------------------------------------------
+# Proposal identity helpers (P1)
+# ---------------------------------------------------------------------------
+
+def _now_iso() -> str:
+    """Return the current UTC time as an ISO 8601 string."""
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _proposal_semantic_key(family: str, item: dict) -> str:
+    """Return the stable content component of a proposal's deterministic ID.
+
+    Uses only the fields that are most stable across model re-runs — the
+    primary name/identifier field rather than exact quotes or descriptions,
+    which can vary between runs.
+
+    P4 design note: a future cross-document canonical identity architecture
+    should extend this to accent-insensitive entity names, canonical term
+    forms, and cross-family deduplication. See NEXT_SESSION.md for the P4
+    design task.
+    """
+    if family == "lexicon":
+        action = (item.get("action") or "").strip()
+        term = (item.get("term") or "").lower().strip()
+        return f"{action}\x00{term}"
+    if family == "entity":
+        etype = (item.get("entity_type") or "organization").strip()
+        name = (item.get("name") or "").lower().strip()
+        return f"{etype}\x00{name}"
+    if family == "tactic":
+        return (item.get("tactic") or "").lower().strip()
+    if family == "practice":
+        return (item.get("practice_id") or "").lower().strip()
+    if family == "claim":
+        return (item.get("claim") or "")[:120].lower().strip()
+    if family == "ingestion":
+        return (item.get("url") or "").lower().strip()
+    return ""
+
+
+def _generate_proposal_id(family: str, doc_id: str, item: dict) -> str:
+    """Generate a deterministic 16-char hex proposal ID.
+
+    The ID is stable across re-enrichment runs: the same doc_id + family +
+    content key always produces the same value, enabling merge-by-identity
+    in save().  doc_id is included so the same entity proposed from two
+    documents gets two separate IDs (two separate evidence contributions).
+    """
+    semantic_key = _proposal_semantic_key(family, item)
+    raw = f"{family}\x00{doc_id}\x00{semantic_key}"
+    return "prop-" + hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def _derive_proposal_status(item: dict) -> str:
+    """Derive proposal_status from booleans conservatively.
+
+    pushed_to_sanity is checked first so a pushed proposal is never
+    silently re-labelled 'approved' even if both flags happen to be True.
+    """
+    if item.get("pushed_to_sanity"):
+        return "pushed"
+    if item.get("rejected"):
+        return "rejected"
+    if item.get("approved"):
+        return "approved"
+    return "pending"
+
+
+# ---------------------------------------------------------------------------
+# Proposal merge helpers (P3)
+# ---------------------------------------------------------------------------
+
+def _build_old_proposal_index(
+    old_proposals: list,
+    family: str,
+    doc_id: str,
+) -> dict[str, dict]:
+    """Build a proposal_id → dict index from prior enrichment.json proposals.
+
+    Proposals without a proposal_id (files pre-dating P1) get one generated
+    from their content, so backward-compatible matching still works.
+    """
+    index: dict[str, dict] = {}
+    for p in old_proposals:
+        if not isinstance(p, dict):
+            continue
+        pid = p.get("proposal_id") or _generate_proposal_id(family, doc_id, p)
+        if pid and pid not in index:
+            index[pid] = p
+    return index
+
+
+def _apply_researcher_fields(
+    new_dict: dict,
+    old_dict: dict,
+    extra_fields: frozenset[str],
+) -> dict:
+    """Copy researcher decisions from an old proposal dict into a new one.
+
+    Only truthy values are carried forward (True, non-empty strings).
+    proposal_created_at is an exception: always carried when present to
+    preserve the original first-seen timestamp.
+    researcher_note is always carried (even empty) so a deliberate clear
+    by the researcher is preserved.
+
+    Model-generated fields (quote, description, confidence values) are
+    intentionally NOT merged — the new LLM run provides fresher output.
+    """
+    carry_fields = _RESEARCHER_FIELDS | extra_fields
+    for field in carry_fields:
+        old_val = old_dict.get(field)
+        if field == "proposal_created_at":
+            if old_val:
+                new_dict[field] = old_val
+        elif field == "researcher_note":
+            if "researcher_note" in old_dict:
+                new_dict["researcher_note"] = old_dict.get("researcher_note", "")
+        elif old_val:
+            new_dict[field] = old_val
+    # Re-derive proposal_status after merging booleans
+    new_dict["proposal_status"] = _derive_proposal_status(new_dict)
+    return new_dict
+
+
+def _merge_researcher_state(
+    result: EnrichmentResult,
+    old_data: dict,
+    doc_id: str,
+) -> tuple[EnrichmentResult, dict]:
+    """Merge researcher decisions from a prior enrichment.json into a new result.
+
+    Rules:
+    - Proposals matching by proposal_id: carry forward all researcher fields.
+    - Old proposals not in the new result: appended (never silently lost).
+    - New proposals not in the old result: kept as pending.
+    - Old proposals without a proposal_id: matched via content-derived ID
+      (backward compat for files that pre-date P1).
+
+    Returns (merged_result, merge_summary) where merge_summary keys are:
+      carried_forward, appended_from_prior, new_proposals
+    """
+    summary: dict[str, int] = {
+        "carried_forward": 0,
+        "appended_from_prior": 0,
+        "new_proposals": 0,
+    }
+
+    for family_key, model_class in _FAMILY_MODEL.items():
+        family_name = _FAMILY_NAME[family_key]
+        extra_fields = _LINK_FIELDS.get(family_key, frozenset())
+
+        old_proposals: list = old_data.get(family_key) or []
+        new_proposals: list = list(getattr(result, family_key, []))
+
+        old_index = _build_old_proposal_index(old_proposals, family_name, doc_id)
+        matched_old_ids: set[str] = set()
+
+        merged: list = []
+        for new_p in new_proposals:
+            pid = getattr(new_p, "proposal_id", None)
+            if not pid:
+                # No stored ID: generate from content so we can match against
+                # old proposals that also lack a proposal_id (backward compat).
+                pid = _generate_proposal_id(family_name, doc_id, new_p.model_dump())
+            if pid and pid in old_index:
+                old_p = old_index[pid]
+                new_dict = new_p.model_dump()
+                new_dict = _apply_researcher_fields(new_dict, old_p, extra_fields)
+                try:
+                    new_p = model_class.model_validate(new_dict)
+                except Exception:
+                    pass  # Non-fatal: keep unmerged proposal
+                matched_old_ids.add(pid)
+                summary["carried_forward"] += 1
+            else:
+                summary["new_proposals"] += 1
+                if pid:
+                    matched_old_ids.add(pid)
+            merged.append(new_p)
+
+        # Append old proposals not in the new run — never silently discard.
+        for old_p in old_proposals:
+            if not isinstance(old_p, dict):
+                continue
+            pid = old_p.get("proposal_id") or _generate_proposal_id(
+                family_name, doc_id, old_p
+            )
+            if pid in matched_old_ids:
+                continue
+            try:
+                appended = model_class.model_validate(old_p)
+                merged.append(appended)
+                matched_old_ids.add(pid)
+                summary["appended_from_prior"] += 1
+            except Exception:
+                pass  # Non-fatal: skip malformed old proposals
+
+        setattr(result, family_key, merged)
+
+    # Merge top-level researcher_notes: concatenate old + new when both are
+    # non-empty and distinct, so manual notes from prior runs are preserved.
+    old_notes = str(old_data.get("researcher_notes") or "").strip()
+    new_notes = str(getattr(result, "researcher_notes", "") or "").strip()
+    if old_notes and new_notes and old_notes != new_notes:
+        result.researcher_notes = f"{old_notes}\n\n{new_notes}"
+    elif old_notes and not new_notes:
+        result.researcher_notes = old_notes
+    # else: keep result.researcher_notes (new_notes or empty)
+
+    return result, summary
+
 
 def _load_system_prompt() -> str:
     global _SYSTEM_PROMPT
@@ -226,29 +491,38 @@ def run(
 def save(doc_id: str, result: EnrichmentResult, config: Config, *, _audit: dict | None = None) -> Path:
     """Write enrichment.json to the document's corpus directory.
 
-    If an active enrichment already exists, keep researcher-reviewed proposals
-    in the active file and append newly discovered unique proposals from this
-    run. The previous file is still archived before writing.
+    P3 merge: if a prior enrichment.json exists, researcher decisions
+    (approved, rejected, pushed flags, notes, link IDs) are merged into
+    the new result before writing.  Old proposals not present in the new
+    run are appended so nothing is ever silently discarded.  The pre-merge
+    file is archived as enrichment_<timestamp>.json for full auditability.
+
+    Merge is keyed on proposal_id (a deterministic SHA-256 hash of family +
+    doc_id + primary content key).  Files predating P1 are matched by
+    generating the same hash from their content.
     """
     doc_dir = config.corpus_dir / doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
     out = doc_dir / "enrichment.json"
-    existing: EnrichmentResult | None = None
+
+    # P3: Merge researcher state from the prior run before archiving.
+    # The archive captures the raw LLM output for the record; the active
+    # enrichment.json always reflects the merged (researcher-inclusive) state.
     if out.exists():
         try:
-            existing = EnrichmentResult.model_validate(json.loads(out.read_text(encoding="utf-8")))
-        except Exception:
-            existing = None
+            old_data = json.loads(out.read_text(encoding="utf-8"))
+            result, merge_summary = _merge_researcher_state(result, old_data, doc_id)
+            if _audit is not None:
+                _audit["merge_summary"] = merge_summary
+        except Exception as exc:
+            if _audit is not None:
+                _audit.setdefault("errors", []).append(
+                    f"P3 merge skipped (non-fatal): {exc}"
+                )
         archive = doc_dir / f"enrichment_{_timestamp()}.json"
         shutil.copy2(out, archive)
+
     result.run_type = "main"
-    if existing is not None:
-        result = _merge_enrichment_results(
-            doc_id,
-            result.enrichment_model or existing.enrichment_model,
-            [existing, result],
-        )
-        result.run_type = "main"
     out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
     if _audit is not None:
         write_enrichment_audit(doc_dir, _audit, result)
@@ -326,6 +600,7 @@ def push_approved_to_sanity(doc_id: str, config: Config) -> dict:
             sanity_id = write_lexicon_draft_from_proposal(prop.model_dump(by_alias=True), doc_id, config)
             prop.pushed_to_sanity = True
             prop.sanity_id = sanity_id
+            prop.proposal_status = "pushed"
             pushed_lexicon += 1
         except Exception as exc:
             errors.append(f"lexicon/{prop.term}: {exc}")
@@ -337,6 +612,7 @@ def push_approved_to_sanity(doc_id: str, config: Config) -> dict:
             sanity_id = write_entity_from_proposal(prop.model_dump(), doc_id, config)
             prop.pushed_to_sanity = True
             prop.sanity_id = sanity_id
+            prop.proposal_status = "pushed"
             pushed_entities += 1
         except Exception as exc:
             errors.append(f"entity/{prop.name}: {exc}")
@@ -348,6 +624,7 @@ def push_approved_to_sanity(doc_id: str, config: Config) -> dict:
             sanity_id = write_tactic_from_proposal(prop.model_dump(), doc_id, config)
             prop.pushed_to_sanity = True
             prop.sanity_id = sanity_id
+            prop.proposal_status = "pushed"
             pushed_tactics += 1
         except Exception as exc:
             errors.append(f"tactic/{prop.tactic}: {exc}")
@@ -367,6 +644,7 @@ def push_approved_to_sanity(doc_id: str, config: Config) -> dict:
             )
             prop.pushed_to_sanity = True
             prop.sanity_id = sanity_id
+            prop.proposal_status = "pushed"
             pushed_practices += 1
         except Exception as exc:
             errors.append(f"practice/{prop.practice_id}: {exc}")
@@ -385,6 +663,7 @@ def push_approved_to_sanity(doc_id: str, config: Config) -> dict:
             )
             prop.pushed_to_sanity = True
             prop.sanity_id = sanity_id
+            prop.proposal_status = "pushed"
             pushed_claims += 1
         except Exception as exc:
             errors.append(f"statistical_claim/{prop.claim[:80]}: {exc}")
@@ -1062,6 +1341,8 @@ def _normalize_enrichment_payload(
         if "confidence_rationale" in item:
             item["confidence_rationale"] = _as_string(item.get("confidence_rationale"))
 
+    _now_str = _now_iso()   # single timestamp for the whole normalization pass
+
     normalized = dict(data)
     for key in (
         "lexicon_proposals",
@@ -1123,11 +1404,18 @@ def _normalize_enrichment_payload(
         item["network_connections"] = _as_object_list(item.get("network_connections"))
         for connection in item["network_connections"]:
             connection["entity_name"] = _as_string(connection.get("entity_name"))
+            # Capture original value before normalization to detect repairs.
+            _ct_raw = _as_string(connection.get("connection_type")).strip()
             connection["connection_type"] = _renum(
                 connection.get("connection_type"),
                 _NETWORK_CONNECTIONS,
                 "partner",
             )
+            # Record repair note for UI guidance when model used an invalid type.
+            if _ct_raw and _ct_raw not in _NETWORK_CONNECTIONS:
+                connection["repair_note"] = (
+                    f"connection_type repaired: '{_ct_raw}' → '{connection['connection_type']}'"
+                )
             connection["evidence_quote"] = _as_string(connection.get("evidence_quote"))
             # Stamp provenance: preserve existing value (e.g. from merged runs);
             # always ensure the key is present so downstream dicts are consistent.
@@ -1198,6 +1486,50 @@ def _normalize_enrichment_payload(
         item["verification_status"] = _renum(
             item.get("verification_status"), _VERIFICATION_STATUSES, "unverified"
         )
+
+    # P1/P2: Assign stable proposal identities and lifecycle status.
+    # Done as a second pass after normalization so IDs are keyed on clean
+    # field values (e.g. title-cased term, normalised action).
+    # Existing proposal_id values are preserved (never overwritten).
+    for item in normalized["lexicon_proposals"]:
+        if not item.get("proposal_id"):
+            item["proposal_id"] = _generate_proposal_id("lexicon", doc_id, item)
+        if not item.get("proposal_created_at"):
+            item["proposal_created_at"] = _now_str
+        item["proposal_updated_at"] = _now_str
+        item["proposal_status"] = _derive_proposal_status(item)
+
+    for item in normalized["entity_proposals"]:
+        if not item.get("proposal_id"):
+            item["proposal_id"] = _generate_proposal_id("entity", doc_id, item)
+        if not item.get("proposal_created_at"):
+            item["proposal_created_at"] = _now_str
+        item["proposal_updated_at"] = _now_str
+        item["proposal_status"] = _derive_proposal_status(item)
+
+    for item in normalized["tactic_proposals"]:
+        if not item.get("proposal_id"):
+            item["proposal_id"] = _generate_proposal_id("tactic", doc_id, item)
+        if not item.get("proposal_created_at"):
+            item["proposal_created_at"] = _now_str
+        item["proposal_updated_at"] = _now_str
+        item["proposal_status"] = _derive_proposal_status(item)
+
+    for item in normalized["practice_descriptions"]:
+        if not item.get("proposal_id"):
+            item["proposal_id"] = _generate_proposal_id("practice", doc_id, item)
+        if not item.get("proposal_created_at"):
+            item["proposal_created_at"] = _now_str
+        item["proposal_updated_at"] = _now_str
+        item["proposal_status"] = _derive_proposal_status(item)
+
+    for item in normalized["statistical_claims"]:
+        if not item.get("proposal_id"):
+            item["proposal_id"] = _generate_proposal_id("claim", doc_id, item)
+        if not item.get("proposal_created_at"):
+            item["proposal_created_at"] = _now_str
+        item["proposal_updated_at"] = _now_str
+        item["proposal_status"] = _derive_proposal_status(item)
 
     return normalized, _repairs
 

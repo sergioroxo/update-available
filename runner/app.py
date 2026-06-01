@@ -5922,6 +5922,18 @@ def _short_label(value: str, max_chars: int = 100) -> str:
 
 
 def _proposal_review_status(item: dict) -> str:
+    # P2: Use proposal_status if present (set by pipeline and kept in sync).
+    # Falls back to boolean derivation for files that pre-date P2.
+    status = item.get("proposal_status")
+    if status == "pushed":
+        return "Pushed"
+    if status == "rejected":
+        return "Rejected"
+    if status == "approved":
+        return "Approved, not pushed"
+    if status == "pending":
+        return "Needs review"
+    # Backward-compat: derive from booleans for older enrichment files.
     if item.get("rejected"):
         return "Rejected"
     if item.get("approved") and item.get("pushed_to_sanity"):
@@ -6135,6 +6147,7 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
                 sanity_id = write_lexicon_draft_from_proposal(item, record["doc_id"], config)
                 item["pushed_to_sanity"] = True
                 item["sanity_id"] = sanity_id
+                item["proposal_status"] = "pushed"
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity as draft.").strip()
                 _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
                 pushed += 1
@@ -6206,6 +6219,7 @@ def _render_entity_queue(config, records: list[dict]) -> None:
                 sanity_id = write_entity_from_proposal(item, record["doc_id"], config)
                 item["pushed_to_sanity"] = True
                 item["sanity_id"] = sanity_id
+                item["proposal_status"] = "pushed"
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity registry.").strip()
                 _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
                 pushed += 1
@@ -6275,6 +6289,7 @@ def _render_tactic_queue(config, records: list[dict]) -> None:
                 sanity_id = write_tactic_from_proposal(item, record["doc_id"], config)
                 item["pushed_to_sanity"] = True
                 item["sanity_id"] = sanity_id
+                item["proposal_status"] = "pushed"
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity tactic registry.").strip()
                 _update_enrichment_proposal(record["path"], "tactic_proposals", record["index"], item)
                 pushed += 1
@@ -6352,6 +6367,7 @@ def _render_practice_queue(config, records: list[dict]) -> None:
                 )
                 item["pushed_to_sanity"] = True
                 item["sanity_id"] = sanity_id
+                item["proposal_status"] = "pushed"
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity practice registry.").strip()
                 _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
                 pushed += 1
@@ -6431,6 +6447,7 @@ def _render_claim_queue(config, records: list[dict]) -> None:
                 )
                 item["pushed_to_sanity"] = True
                 item["sanity_id"] = sanity_id
+                item["proposal_status"] = "pushed"
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity document assets.").strip()
                 _update_enrichment_proposal(record["path"], "statistical_claims", record["index"], item)
                 pushed += 1
@@ -6562,12 +6579,14 @@ def _render_single_proposal_editor(record: dict) -> None:
         if st.button("Approve as Draft", key=f"{prefix}_approve"):
             item["approved"] = True
             item["rejected"] = False
+            item["proposal_status"] = "approved"
             _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
             st.success("Approved locally. Push approved drafts to Sanity when ready.")
     with b3:
         if st.button("Reject", key=f"{prefix}_reject"):
             item["approved"] = False
             item["rejected"] = True
+            item["proposal_status"] = "rejected"
             _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
             st.success("Rejected locally.")
 
@@ -6659,6 +6678,20 @@ def _render_single_entity_editor(record: dict) -> None:
     item["evidence_quote"] = st.text_area("Evidence quote", value=item.get("evidence_quote", ""), height=100, key=f"{prefix}_quote")
     item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
     if item.get("network_connections"):
+        # Warn the researcher when connection_type was auto-repaired from an
+        # invalid model output value so they can correct it before approving.
+        _repair_warnings = [
+            f"**{conn.get('entity_name', '?')}**: {conn.get('repair_note')}"
+            for conn in item["network_connections"]
+            if conn.get("repair_note")
+        ]
+        if _repair_warnings:
+            st.warning(
+                "⚠️ **Auto-repaired `connection_type`(s)** — the model used an invalid "
+                "value that was normalized to `partner`. Check and correct the type(s) "
+                "manually using the table below before approving this proposal:\n\n"
+                + "\n".join(f"• {w}" for w in _repair_warnings)
+            )
         st.write("**Network connections:**")
         st.dataframe(item["network_connections"], width="stretch")
     if item.get("key_individuals"):
@@ -6675,12 +6708,14 @@ def _render_single_entity_editor(record: dict) -> None:
         if st.button("Approve Entity", key=f"{prefix}_approve"):
             item["approved"] = True
             item["rejected"] = False
+            item["proposal_status"] = "approved"
             _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
             st.success("Approved locally. Push approved entities to Sanity when ready.")
     with b3:
         if st.button("Reject Entity", key=f"{prefix}_reject"):
             item["approved"] = False
             item["rejected"] = True
+            item["proposal_status"] = "rejected"
             _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
             st.success("Rejected locally.")
 
@@ -6787,12 +6822,14 @@ def _render_review_buttons(record: dict, key: str, item: dict, prefix: str, labe
         if st.button(f"Approve {label.title()}", key=f"{prefix}_approve"):
             item["approved"] = True
             item["rejected"] = False
+            item["proposal_status"] = "approved"
             _update_enrichment_proposal(record["path"], key, record["index"], item)
             st.success(f"Approved {label} locally. Push approved records to Sanity when ready.")
     with b3:
         if st.button(f"Reject {label.title()}", key=f"{prefix}_reject"):
             item["approved"] = False
             item["rejected"] = True
+            item["proposal_status"] = "rejected"
             _update_enrichment_proposal(record["path"], key, record["index"], item)
             st.success(f"Rejected {label} locally.")
 
