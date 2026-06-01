@@ -5,7 +5,7 @@ project. It is a companion to `NEXT_SESSION.md`, which is the Claude Code task
 handoff. This document is for steering the collaboration: what to trust, what to
 verify, how to guide Claude, and how Codex should keep the system coherent.
 
-Generated: 2026-06-01 (updated lexicon existing-id guard)
+Generated: 2026-06-02 (updated entity registry-fit safety layer)
 Repo: `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 Main working branch: `claude/review-architecture-70CUm`
 
@@ -294,22 +294,24 @@ or cross-document canonical identity, but do not expand that before the pilot ex
 a concrete need.
 
 Recommended order for a new session:
-1. Verify repo/test state (1096 passed expected).
+1. Verify repo/test state (1101 passed expected).
 2. Open app → Document List or Activity Log → search `8fe67e19`. Complement enrichment
    is available in the card, Activity Log → Enrichment, and Provenance → Enrichment Audit.
-3. Use entity ID resolver for any remaining `enrich_existing` proposals and repair
+3. In the Entity Queue, mark podcasts/channels/publications/source projects with
+   Registry fit = "Media/source, not entity" (or click "Mark Media/Source") before approving.
+4. Use entity ID resolver for any remaining `enrich_existing` proposals and repair
    network connection warnings with the local dropdown before approving.
-4. Run `push-enrichment 8fe67e19`.
-5. Use `runner batch-plan` to inspect the queue before the next live execution.
-6. Run a 2-3 item attended pilot before any overnight use.
-7. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
+5. Run `push-enrichment 8fe67e19`.
+6. Use `runner batch-plan` to inspect the queue before the next live execution.
+7. Run a 2-3 item attended pilot before any overnight use.
+8. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1096
-- Latest completed milestone: Proposal identity P1/P2/P3 + workflow glue
+- Tests passing: 1101
+- Latest completed milestone: Entity registry-fit safety layer
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -388,9 +390,10 @@ Recommended order for a new session:
   - P3: `save()` merge — match by proposal_id and legacy/canonical aliases, carry researcher fields, append dropped proposals, concatenate researcher_notes. Old proposals never silently discarded.
   - Workflow glue: Complement enrichment is available from Document List, Activity Log → Enrichment, and Provenance → Enrichment Audit. `merge_summary` persists in `enrichment_audit.json` and renders as preserved/new/kept counts.
   - Network connection repair dropdown in the entity editor lets the researcher choose an allowed type locally before approval/push.
+  - Entity registry-fit safety: `registry_entity`, `media_or_source`, `not_entity`, `needs_review` routing prevents podcasts/channels/publications/source projects from being pushed as organizations/persons. Registry-fit decisions are preserved across Complement enrichment.
   - P4: Design note in `_proposal_semantic_key()` for future cross-doc canonical identity.
   - New helpers: `_generate_proposal_id`, `_derive_proposal_status`, `_build_old_proposal_index`, `_apply_researcher_fields`, `_merge_researcher_state`.
-  - 1096 total tests passing.
+  - 1101 total tests passing.
 
 ---
 

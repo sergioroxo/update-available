@@ -192,6 +192,35 @@ def test_lexicon_patch_treats_bare_term_existing_id_as_slug_id(monkeypatch):
     assert calls[0][1]["patch"]["id"] == "lexicon-rogd"
 
 
+def test_entity_write_rejects_media_or_source_registry_fit(monkeypatch):
+    calls = []
+
+    def fake_mutate(mutations, config):
+        calls.append(mutations)
+        return {"results": [{"id": "organization-gender-a-wider-lens"}]}
+
+    monkeypatch.setattr(sanity, "_mutate", fake_mutate)
+
+    try:
+        sanity.write_entity_from_proposal(
+            {
+                "action": "add_new",
+                "entity_type": "organization",
+                "name": "Gender: A Wider Lens",
+                "registry_fit": "media_or_source",
+                "self_description": "anti-transgender podcast",
+            },
+            "doc-1",
+            _Config(),
+        )
+    except ValueError as exc:
+        assert "registry_fit=media_or_source" in str(exc)
+    else:
+        raise AssertionError("Expected media/source entity proposal to be rejected")
+
+    assert calls == []
+
+
 def test_confirm_lexicon_context_patches_one_evidence_item(monkeypatch):
     calls = []
 

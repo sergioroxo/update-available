@@ -150,3 +150,66 @@ def test_enrichment_validate_response_preserves_invalid_connection_guidance():
     assert connection.invalid_connection_type == "founder"
     assert connection.connection_repair_status == "needs_review"
     assert "key_individuals" in connection.repair_note
+
+
+def test_enrichment_validate_response_marks_podcast_as_media_source_not_entity():
+    raw = """
+    {
+      "entity_proposals": [
+        {
+          "action": "add_new",
+          "entity_type": "organization",
+          "name": "Gender: A Wider Lens",
+          "self_description": "anti-transgender podcast",
+          "role_in_sogice": "Media dissemination of anti-trans narratives.",
+          "evidence_quote": "Genspect supports projects like the podcast Gender: A Wider Lens."
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    entity = result.entity_proposals[0]
+    assert entity.registry_fit == "media_or_source"
+    assert "media/source/project" in entity.registry_fit_rationale
+
+
+def test_enrichment_validate_response_leaves_person_as_registry_entity():
+    raw = """
+    {
+      "entity_proposals": [
+        {
+          "action": "add_new",
+          "entity_type": "person",
+          "name": "Avi Ring",
+          "self_description": "Norwegian academic",
+          "role_in_sogice": "Promoted ROGD theory.",
+          "evidence_quote": "Ring was listed as a team member."
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    assert result.entity_proposals[0].registry_fit == "registry_entity"
+
+
+def test_enrichment_validate_response_invalid_registry_fit_needs_review():
+    raw = """
+    {
+      "entity_proposals": [
+        {
+          "action": "add_new",
+          "entity_type": "organization",
+          "name": "Example Org",
+          "registry_fit": "definitely-not-valid"
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    assert result.entity_proposals[0].registry_fit == "needs_review"

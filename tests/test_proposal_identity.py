@@ -550,6 +550,50 @@ class TestMergeResearcherState:
         assert merged.entity_proposals[0].approved is True
         assert summary["carried_forward"] == 1
 
+    def test_preserves_entity_registry_fit_decision(self):
+        """Media/source decisions survive complement enrichment."""
+        doc_id = "doc-p3-fit"
+        entity_name = "Gender: A Wider Lens"
+        pid = _pid_for_entity(doc_id, entity_name, action="add_new")
+
+        new_result = EnrichmentResult(
+            doc_id=doc_id,
+            entity_proposals=[
+                EntityProposal(
+                    action="add_new",
+                    entity_type="organization",
+                    name=entity_name,
+                    proposal_id=pid,
+                    registry_fit="registry_entity",
+                )
+            ],
+        )
+        old_data = {
+            "lexicon_proposals": [],
+            "entity_proposals": [{
+                "action": "add_new",
+                "entity_type": "organization",
+                "name": entity_name,
+                "proposal_id": pid,
+                "registry_fit": "media_or_source",
+                "registry_fit_rationale": "Podcast/source, not a registry org.",
+                "rejected": True,
+            }],
+            "tactic_proposals": [],
+            "ingestion_queue": [],
+            "corpus_connections": [],
+            "practice_descriptions": [],
+            "statistical_claims": [],
+        }
+
+        merged, summary = _merge_researcher_state(new_result, old_data, doc_id)
+
+        proposal = merged.entity_proposals[0]
+        assert proposal.registry_fit == "media_or_source"
+        assert proposal.registry_fit_rationale == "Podcast/source, not a registry org."
+        assert proposal.rejected is True
+        assert summary["carried_forward"] == 1
+
     def test_entity_action_flip_matches_legacy_identity_without_duplicate(self):
         """Entity add_new/enrich_existing flips should not create duplicate entities."""
         doc_id = "doc-p3j"

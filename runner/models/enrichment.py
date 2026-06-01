@@ -25,7 +25,36 @@ Sanity targets:
 """
 from __future__ import annotations
 from typing import Literal, Optional
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+EntityRegistryFit = Literal[
+    "registry_entity",
+    "media_or_source",
+    "not_entity",
+    "needs_review",
+]
+
+ENTITY_REGISTRY_FIT_VALUES = {
+    "registry_entity",
+    "media_or_source",
+    "not_entity",
+    "needs_review",
+}
+
+_MEDIA_OR_SOURCE_MARKERS = (
+    "podcast",
+    "youtube channel",
+    "video channel",
+    "newsletter",
+    "publication",
+    "magazine",
+    "journal",
+    "media project",
+    "media outlet",
+    "radio show",
+    "tv show",
+)
 
 
 def _to_title_case(s: str) -> str:
@@ -46,6 +75,32 @@ def _to_title_case(s: str) -> str:
         return _cap_word(token)
 
     return " ".join(_cap_token(t) for t in s.split())
+
+
+def infer_entity_registry_fit(payload: dict) -> str:
+    """Infer whether an entity proposal belongs in the entity registry.
+
+    The LLM schema only has organization/person, so media projects and source
+    artefacts can be squeezed into ``organization``. This helper keeps that
+    distinction explicit for local review and push gating.
+    """
+    existing = str(payload.get("registry_fit") or "").strip()
+    if existing:
+        return existing if existing in ENTITY_REGISTRY_FIT_VALUES else "needs_review"
+
+    text = " ".join(
+        str(payload.get(key) or "")
+        for key in (
+            "name",
+            "self_description",
+            "role_in_sogice",
+            "evidence_quote",
+            "researcher_note",
+        )
+    ).lower()
+    if any(marker in text for marker in _MEDIA_OR_SOURCE_MARKERS):
+        return "media_or_source"
+    return "registry_entity"
 
 
 class ProposalConfidenceMixin(BaseModel):
@@ -235,6 +290,32 @@ class EntityProposal(ProposalConfidenceMixin):
     action: Literal["add_new", "enrich_existing"]
     entity_type: Literal["organization", "person"]
     name: str                              # full name as appears in document
+
+    # Local review routing. Only registry_entity proposals are eligible for
+    # organization/person Sanity writes; media/source proposals stay local.
+    registry_fit: EntityRegistryFit = "registry_entity"
+    registry_fit_rationale: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_registry_fit_before_validation(cls, data):
+        if not isinstance(data, dict):
+            return data
+        data = dict(data)
+        if not data.get("registry_fit"):
+            fit = infer_entity_registry_fit(data)
+            data["registry_fit"] = fit
+            if fit == "media_or_source" and not data.get("registry_fit_rationale"):
+                data["registry_fit_rationale"] = (
+                    "Looks like a media/source/project rather than an "
+                    "organization/person registry record."
+                )
+        return data
+
+    @field_validator("registry_fit", mode="before")
+    @classmethod
+    def normalise_registry_fit(cls, v: str) -> str:
+        return v if isinstance(v, str) and v in ENTITY_REGISTRY_FIT_VALUES else "needs_review"
 
     # Link to existing entity if enriching
     existing_entity_id: Optional[str] = None   # Sanity _id

@@ -752,6 +752,7 @@ from runner.app_provenance import (  # noqa: E402
     _collect_provenance_warnings,
     _generate_researcher_checklist,
 )
+from runner.models.enrichment import infer_entity_registry_fit  # noqa: E402
 
 
 def _collect_metadata_sources(doc_dir: Path) -> dict:
@@ -6024,6 +6025,38 @@ def _proposal_review_status(item: dict) -> str:
     return "Needs review"
 
 
+_ENTITY_REGISTRY_FIT_OPTIONS = [
+    "registry_entity",
+    "media_or_source",
+    "not_entity",
+    "needs_review",
+]
+
+_ENTITY_REGISTRY_FIT_LABELS = {
+    "registry_entity": "Registry entity",
+    "media_or_source": "Media/source, not entity",
+    "not_entity": "Not an entity",
+    "needs_review": "Needs decision",
+}
+
+_ENTITY_REGISTRY_FIT_HELP = {
+    "registry_entity": (
+        "Eligible for Sanity organization/person registry after normal approval."
+    ),
+    "media_or_source": (
+        "Keep as local evidence or ingest as a source/document; do not push as "
+        "organization/person."
+    ),
+    "not_entity": "Reject locally; this proposal should not become a registry record.",
+    "needs_review": "Hold for researcher decision before approval or push.",
+}
+
+
+def _entity_registry_fit(item: dict) -> str:
+    fit = infer_entity_registry_fit(item)
+    return fit if fit in _ENTITY_REGISTRY_FIT_OPTIONS else "needs_review"
+
+
 def _proposal_review_sort_key(record: dict, label_field: str = "term") -> tuple[int, str, str]:
     item = record["item"]
     status_rank = {
@@ -6278,6 +6311,10 @@ def _render_entity_queue(config, records: list[dict]) -> None:
             "researcher confidence": _format_confidence(
                 _proposal_confidence(record["item"], "researcher_confidence")
             ),
+            "registry_fit": _ENTITY_REGISTRY_FIT_LABELS.get(
+                _entity_registry_fit(record["item"]),
+                _entity_registry_fit(record["item"]),
+            ),
             "entity_type": record["item"].get("entity_type", ""),
             "action": record["item"].get("action", ""),
             "approved": record["item"].get("approved", False),
@@ -6294,6 +6331,14 @@ def _render_entity_queue(config, records: list[dict]) -> None:
         for record in records:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                continue
+            fit = _entity_registry_fit(item)
+            if fit != "registry_entity":
+                errors.append(
+                    f"{record['doc_id']} / {item.get('name', '?')}: "
+                    f"registry_fit={fit}; mark as Registry entity before pushing, "
+                    "or keep it local / ingest it as a source instead."
+                )
                 continue
             try:
                 from runner.clients.sanity import write_entity_from_proposal
@@ -6730,6 +6775,19 @@ def _render_single_entity_editor(record: dict) -> None:
             index=_option_index(["add_new", "enrich_existing"], item.get("action", "add_new")),
             key=f"{prefix}_action",
         )
+        current_fit = _entity_registry_fit(item)
+        item["registry_fit"] = st.selectbox(
+            "Registry fit",
+            _ENTITY_REGISTRY_FIT_OPTIONS,
+            index=_option_index(_ENTITY_REGISTRY_FIT_OPTIONS, current_fit),
+            format_func=lambda value: _ENTITY_REGISTRY_FIT_LABELS.get(value, value),
+            key=f"{prefix}_registry_fit",
+            help=(
+                "Controls whether this proposal is allowed to become an "
+                "organization/person registry record in Sanity."
+            ),
+        )
+        st.caption(_ENTITY_REGISTRY_FIT_HELP.get(item["registry_fit"], ""))
     with c2:
         item["self_description"] = st.text_area(
             "Self-description",
@@ -6738,6 +6796,27 @@ def _render_single_entity_editor(record: dict) -> None:
             key=f"{prefix}_description",
         )
         item["role_in_sogice"] = st.text_input("Role in SOGICE", value=item.get("role_in_sogice", ""), key=f"{prefix}_role")
+        item["registry_fit_rationale"] = st.text_area(
+            "Registry-fit rationale",
+            value=item.get("registry_fit_rationale", ""),
+            height=70,
+            key=f"{prefix}_registry_fit_rationale",
+            help="Short note explaining why this is a registry entity, source/media item, or not an entity.",
+        )
+
+    if item.get("registry_fit") == "media_or_source":
+        st.info(
+            "This proposal will stay local and will not be pushed to the "
+            "organization/person registry. Use this for podcasts, channels, "
+            "publications, source projects, or other media artefacts. If it "
+            "should be ingested as its own document, add the URL through the "
+            "source queue or Ingest Workbench."
+        )
+    elif item.get("registry_fit") in {"not_entity", "needs_review"}:
+        st.warning(
+            "This proposal is not eligible for entity-registry push until it is "
+            "changed to Registry entity and saved."
+        )
 
     c3, c4 = st.columns([1, 1])
     with c3:
@@ -6816,18 +6895,24 @@ def _render_single_entity_editor(record: dict) -> None:
         st.dataframe(item["key_individuals"], width="stretch")
     _render_proposal_confidence_editor(item, prefix)
 
-    b1, b2, b3 = st.columns(3)
+    b1, b2, b3, b4 = st.columns(4)
     with b1:
         if st.button("Save Entity Edits", key=f"{prefix}_save"):
             _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
             st.success("Saved entity edits.")
     with b2:
         if st.button("Approve Entity", key=f"{prefix}_approve"):
-            item["approved"] = True
-            item["rejected"] = False
-            item["proposal_status"] = "approved"
-            _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
-            st.success("Approved locally. Push approved entities to Sanity when ready.")
+            if item.get("registry_fit") != "registry_entity":
+                st.error(
+                    "This proposal is marked as media/source, not-entity, or needs decision. "
+                    "Change Registry fit to Registry entity before approving it for Sanity."
+                )
+            else:
+                item["approved"] = True
+                item["rejected"] = False
+                item["proposal_status"] = "approved"
+                _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
+                st.success("Approved locally. Push approved entities to Sanity when ready.")
     with b3:
         if st.button("Reject Entity", key=f"{prefix}_reject"):
             item["approved"] = False
@@ -6835,6 +6920,20 @@ def _render_single_entity_editor(record: dict) -> None:
             item["proposal_status"] = "rejected"
             _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
             st.success("Rejected locally.")
+    with b4:
+        if st.button("Mark Media/Source", key=f"{prefix}_media_source"):
+            item["registry_fit"] = "media_or_source"
+            if not item.get("registry_fit_rationale"):
+                item["registry_fit_rationale"] = "Reviewed as media/source material, not a registry entity."
+            item["approved"] = False
+            item["rejected"] = True
+            item["proposal_status"] = "rejected"
+            note = item.get("researcher_note", "")
+            marker = "Marked as media/source, not an organization/person registry entity."
+            if marker not in note:
+                item["researcher_note"] = (note + "\n" + marker).strip()
+            _update_enrichment_proposal(record["path"], "entity_proposals", record["index"], item)
+            st.success("Marked as media/source and kept out of entity registry push.")
 
 
 def _render_single_tactic_editor(record: dict) -> None:

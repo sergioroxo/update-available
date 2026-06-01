@@ -1,9 +1,9 @@
 # SurvivingSOGICE -- Next Session Handoff
-**Generated:** 2026-06-01
+**Generated:** 2026-06-02
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 1096
-**Latest completed milestone:** Lexicon existing-id guard
+**Tests passing:** 1101
+**Latest completed milestone:** Entity registry-fit safety layer
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -151,7 +151,7 @@ runner/
     ├── enrichment.py           # EnrichmentResult, 7 proposal types
     └── triage.py               # TriageResult schema
 
-tests/                          # 1096 tests -- run before every edit
+tests/                          # 1101 tests -- run before every edit
 02_working_tools/
 ├── Claude_Ingestion_Prompt.md  # ingestion-v3.3 -- analysis system prompt
 └── ENRICHMENT_PROMPT_v1.0.md   # enrichment-v1.1 -- enrichment system prompt
@@ -426,7 +426,7 @@ Entity ID resolution for `enrich_existing` proposals and improved date warning g
 
 ### ~~Proposal identity P1/P2/P3~~ ✓ COMPLETE
 
-Stable proposal identity, lifecycle status, and merge-aware re-enrichment. Follow-up glue added merge-summary audit visibility, Activity Log/Provenance Complement enrichment controls, and local network-connection repair UI. 1096 tests passing. No prompts modified.
+Stable proposal identity, lifecycle status, and merge-aware re-enrichment. Follow-up glue added merge-summary audit visibility, Activity Log/Provenance Complement enrichment controls, local network-connection repair UI, and entity registry-fit safety. 1101 tests passing. No prompts modified.
 
 **P1 — Stable proposal identity** (`ProposalConfidenceMixin` + `_normalize_enrichment_payload`):
 - `proposal_id: Optional[str]` — deterministic SHA-256 hash of `(family, doc_id, content_key)`. Stable across model re-runs. Existing IDs are never overwritten.
@@ -434,6 +434,8 @@ Stable proposal identity, lifecycle status, and merge-aware re-enrichment. Follo
 - `proposal_updated_at: Optional[str]` — ISO 8601 UTC, refreshed on every model run.
 - `NetworkConnection.repair_note: str` — non-empty when `connection_type` was normalized from an invalid model output; shown as a `st.warning()` in the entity editor.
 - `NetworkConnection.invalid_connection_type` and `connection_repair_status` preserve the original invalid value until the researcher repairs it.
+- `EntityProposal.registry_fit` — local review routing for whether a proposal is a real organization/person registry entity, a media/source artefact, not an entity, or needs decision.
+- `EntityProposal.registry_fit_rationale` — researcher/model note explaining that routing choice. Preserved across Complement enrichment.
 - New helpers: `_now_iso()`, `_proposal_semantic_key()`, `_generate_proposal_id()`.
 
 **P2 — Lifecycle status** (`ProposalConfidenceMixin`):
@@ -458,7 +460,21 @@ Stable proposal identity, lifecycle status, and merge-aware re-enrichment. Follo
 - Network connection repair warning + dropdown in `_render_single_entity_editor()` — invalid role-like values such as `founder` / `team_member` are marked `needs_review` and can be repaired locally to an allowed type before approval.
 - Complement enrichment controls are now visible from Document List, Activity Log → Enrichment, and Provenance → Enrichment Audit. All use merge-aware `runner enrich <doc_id> --yes`.
 - `push_approved_to_sanity()` in `enrich.py` now syncs `proposal_status = "pushed"` on all 5 proposal families.
+- Entity registry-fit safety layer prevents podcasts/channels/publications/source projects from being pushed as organizations/persons. The Entity Queue shows `registry_fit`; the editor has a "Registry fit" selector, rationale field, and "Mark Media/Source" button. `write_entity_from_proposal()` rejects non-`registry_entity` proposals in both app and CLI paths.
 - `test_enrichment_archive.py` updated: ordering assertion now uses name-based set equality (P3 appends old proposals after new ones).
+
+---
+
+### ~~Entity registry-fit safety layer~~ ✓ COMPLETE
+
+Solves the "podcast/media project became an organization/person" failure mode without changing Sanity schema or prompts.
+
+- `EntityRegistryFit` values: `registry_entity`, `media_or_source`, `not_entity`, `needs_review`.
+- Narrow inference marks obvious podcasts/channels/publications/media projects as `media_or_source` when the LLM squeezed them into `entity_type="organization"`.
+- App approval and bulk push guards prevent `media_or_source`, `not_entity`, or `needs_review` proposals from being pushed to Sanity as organizations/persons.
+- Lower-level Sanity client guard makes CLI and app behavior agree.
+- Complement enrichment preserves `registry_fit` and `registry_fit_rationale`, so reviewed routing decisions are not overwritten by later model runs.
+- Researcher workflow for "Gender: A Wider Lens": set Registry fit to "Media/source, not entity" or click "Mark Media/Source". If it deserves its own document, add its URL to the source queue / Ingest Workbench instead of pushing it to the entity registry.
 
 ---
 
@@ -688,7 +704,7 @@ cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 git status --short --branch
 git pull origin claude/review-architecture-70CUm
 .venv/bin/python -m pytest --tb=short -q
-# Must see: 1096 passed (or higher after new tests)
+# Must see: 1101 passed (or higher after new tests)
 ```
 
 ---
@@ -739,4 +755,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-06-01. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, and entity ID resolver complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, and network connection repair dropdowns. 1096 tests passing. Recommended next: open app → Document List or Activity Log → search `8fe67e19` → resolve remaining repair warnings/entity IDs → push-enrichment → 2–3 item attended pilot.*
+*Updated 2026-06-02. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, and entity ID resolver complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, network connection repair dropdowns, and entity registry-fit safety layer. 1101 tests passing. Recommended next: open app → Entity Queue → mark media/source proposals such as podcasts correctly → resolve remaining repair warnings/entity IDs → push-enrichment → 2–3 item attended pilot.*

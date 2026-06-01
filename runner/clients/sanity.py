@@ -14,6 +14,7 @@ import httpx
 
 from ..config import Config
 from ..models.document import DocumentPackage
+from ..models.enrichment import infer_entity_registry_fit
 from ..models.research_annotation import ResearchAnnotation, REVIEWED_STATUSES
 from ..pipeline.analyze import PROMPT_VERSION
 from ..pipeline.metadata_quality import publication_metadata
@@ -719,6 +720,13 @@ def write_entity_from_proposal(
     config: Config,
 ) -> str:
     """Create or replace an organization/person record from a reviewed proposal."""
+    registry_fit = infer_entity_registry_fit(proposal)
+    if registry_fit != "registry_entity":
+        raise ValueError(
+            f"Entity proposal registry_fit={registry_fit}; it is not eligible "
+            "for organization/person Sanity registry push."
+        )
+
     name = (proposal.get("name") or "").strip()
     if not name:
         raise ValueError("Cannot write entity without a name")

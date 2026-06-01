@@ -29,11 +29,13 @@ try:
     from runner.models.document import AnalysisResult, PreprocessResult
     from runner.models.enrichment import (
         EnrichmentResult,
+        ENTITY_REGISTRY_FIT_VALUES,
         LexiconProposal,
         EntityProposal,
         TacticProposal,
         PracticeDescription,
         StatisticalClaim,
+        infer_entity_registry_fit,
     )
     from runner.pipeline.audit import current_git_commit, sha256_text, write_enrichment_audit
     from runner.pipeline.http_retry import call_with_http_retries
@@ -43,11 +45,13 @@ except ImportError:
     from ..models.document import AnalysisResult, PreprocessResult  # type: ignore[no-redef]
     from ..models.enrichment import (  # type: ignore[no-redef]
         EnrichmentResult,
+        ENTITY_REGISTRY_FIT_VALUES,
         LexiconProposal,
         EntityProposal,
         TacticProposal,
         PracticeDescription,
         StatisticalClaim,
+        infer_entity_registry_fit,
     )
     from .audit import current_git_commit, sha256_text, write_enrichment_audit  # type: ignore[no-redef]
     from .http_retry import call_with_http_retries  # type: ignore[no-redef]
@@ -116,6 +120,7 @@ _TERM_RELATIONSHIPS = {
 }
 _ENTITY_ACTIONS = {"add_new", "enrich_existing"}
 _ENTITY_TYPES = {"organization", "person"}
+_ENTITY_REGISTRY_FITS = ENTITY_REGISTRY_FIT_VALUES
 _NETWORK_CONNECTIONS = {
     "partner",
     "funds",
@@ -190,6 +195,8 @@ _RESEARCHER_FIELDS: frozenset[str] = frozenset({
     "pushed_to_sanity",
     "sanity_id",
     "researcher_note",
+    "registry_fit",
+    "registry_fit_rationale",
     "proposal_created_at",   # always preserve original first-seen timestamp
     "proposal_status",       # carry forward so status is not reset to pending
 })
@@ -1524,6 +1531,18 @@ def _normalize_enrichment_payload(
         item["self_description"] = _as_string(item.get("self_description"))
         item["evidence_quote"] = _as_string(item.get("evidence_quote"))
         item["role_in_sogice"] = _as_string(item.get("role_in_sogice"))
+        inferred_registry_fit = infer_entity_registry_fit(item)
+        item["registry_fit"] = _renum(
+            item.get("registry_fit") or inferred_registry_fit,
+            _ENTITY_REGISTRY_FITS,
+            inferred_registry_fit,
+        )
+        item["registry_fit_rationale"] = _as_string(item.get("registry_fit_rationale"))
+        if item["registry_fit"] == "media_or_source" and not item["registry_fit_rationale"]:
+            item["registry_fit_rationale"] = (
+                "Looks like a media/source/project rather than an "
+                "organization/person registry record."
+            )
         for key in (
             "activities_stated",
             "geographic_scope",
