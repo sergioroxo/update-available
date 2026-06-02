@@ -70,7 +70,8 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Partial: stop-on-ingest-failure + preflight checks built; richer service probes later if needed |
 | Morning report | Human-facing summary of what happened overnight | TASK F | Done as local Markdown batch report; aggregate dashboard later |
 | Preservation status sidecar | Make blocked/dynamic/social/video capture needs explicit without adding capture dependencies | TASK P | Done locally (`preservation_status.json`) |
-| Stakes-ranked review inbox | Legal/testimony/Tier-1/low-confidence first | TASK F + Streamlit | Pending |
+| Per-document readiness summary | One calm "what next / safe to push?" view per doc; unifies provenance blockers + enrichment lifecycle; ties Complement enrichment into the flow | Provenance panel | Done (`runner/app_readiness.py`) |
+| Stakes-ranked review inbox | Legal/testimony/Tier-1/low-confidence first; can rank by `DocumentReadiness.status` across the corpus | TASK F + Streamlit + readiness layer | Pending (readiness layer is the per-doc precursor) |
 | Pilot calibration | Attended test batches across languages/types/stakes before overnight use | TASK F + TASK P | Started: one-item pilot complete after recovery |
 | Calibration dashboard | Confidence vs researcher corrections | Pilot batch | Pending |
 

@@ -749,8 +749,16 @@ from runner.app_provenance import (  # noqa: E402
     _load_enrichment_audit,
     _load_preservation_status_dict,
     _check_artifact_completeness,
-    _collect_provenance_warnings,
-    _generate_researcher_checklist,
+)
+from runner.app_readiness import (  # noqa: E402
+    CATEGORY_BLOCKER,
+    CATEGORY_QUALITY,
+    CATEGORY_NOTE,
+    STATUS_NEEDS_REVIEW,
+    STATUS_QUALITY,
+    STATUS_READY,
+    STATUS_NO_DATA,
+    build_document_readiness,
 )
 from runner.models.enrichment import infer_entity_registry_fit  # noqa: E402
 
@@ -3528,34 +3536,31 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
         with st.expander("Metadata sources / reconciliation", expanded=needs_recon):
             _render_metadata_reconciliation(doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe())
 
-        # Warn about provenance issues inline (date, languages, queue mismatch, etc.)
+        # Readiness / Next Actions + provenance (date, languages, entity IDs, …)
         _prov_cfg = _load_config_safe()
-        _prov_inline_warnings = _collect_provenance_warnings(
+        _readiness = build_document_readiness(
             corpus_dir / doc["doc_id"], config=_prov_cfg
         )
-        if _prov_inline_warnings:
-            _prov_blockers = [w for w in _prov_inline_warnings if w.severity == "pre_push_blocker"]
-            _prov_actions  = [w for w in _prov_inline_warnings if w.severity == "action_needed"]
-            if _prov_blockers:
-                _prov_label = (
-                    f"🔴 Provenance / Audit — {len(_prov_blockers)} push blocker(s)"
-                )
-            elif _prov_actions:
-                _prov_label = (
-                    f"⚠️ Provenance / Audit — {len(_prov_actions)} action(s) needed"
-                )
-            else:
-                _prov_label = "ℹ️ Provenance / Audit — notes"
-            _prov_auto_expand = bool(_prov_blockers or _prov_actions)
-            with st.expander(_prov_label, expanded=_prov_auto_expand):
-                _render_provenance_panel(
-                    doc["doc_id"], corpus_dir / doc["doc_id"], _prov_cfg
-                )
+        if _readiness.status == STATUS_NEEDS_REVIEW:
+            _prov_label = (
+                f"🔴 Readiness: Needs review before push "
+                f"— {len(_readiness.blockers)} blocker(s)"
+            )
+        elif _readiness.status == STATUS_QUALITY:
+            _prov_label = (
+                f"🟡 Readiness: Review / quality actions "
+                f"— {len(_readiness.quality)} item(s)"
+            )
+        elif _readiness.status == STATUS_READY:
+            _prov_label = "🟢 Readiness: Ready to push"
         else:
-            with st.expander("🔍 Provenance / Audit", expanded=False):
-                _render_provenance_panel(
-                    doc["doc_id"], corpus_dir / doc["doc_id"], _prov_cfg
-                )
+            _prov_label = "⚪ Readiness: No analysis yet"
+        # Auto-expand only when blockers exist — keep ready/quality calm.
+        _prov_auto_expand = _readiness.status == STATUS_NEEDS_REVIEW
+        with st.expander(_prov_label, expanded=_prov_auto_expand):
+            _render_provenance_panel(
+                doc["doc_id"], corpus_dir / doc["doc_id"], _prov_cfg
+            )
 
         # ── Actions ───────────────────────────────────────────────────────
         st.divider()
@@ -3745,71 +3750,88 @@ def _render_entity_resolver(doc_dir: Path, proposal_name: str, config) -> None:
                             st.error("Could not update enrichment.json")
 
 
+_READINESS_STATUS_BADGE = {
+    STATUS_NEEDS_REVIEW: "🔴 Needs review before push",
+    STATUS_QUALITY:      "🟡 Review / quality actions remain",
+    STATUS_READY:        "🟢 Ready to push",
+    STATUS_NO_DATA:      "⚪ No analysis yet",
+}
+
+
+def _render_readiness_item(item, doc_dir: Path, config) -> None:
+    """Render one ReadinessItem: title, detail, where-to-fix, optional widget."""
+    st.markdown(f"**{item.title}**")
+    if item.detail:
+        st.caption(item.detail)
+    if item.where_to_fix:
+        st.caption(f"*Where to fix: {item.where_to_fix}*")
+
+    # Attach the matching repair affordance so the fix lives next to the warning.
+    if item.handler == "entity_resolver":
+        enrichment_data = _read_json_file(doc_dir / "enrichment.json", {})
+        missing_entities = [
+            (p.get("name") or "?")
+            for p in (enrichment_data.get("entity_proposals") or [])
+            if p.get("action") == "enrich_existing"
+            and not p.get("existing_entity_id")
+        ]
+        if missing_entities:
+            st.caption("Resolve entity IDs (writes locally only — no Sanity changes):")
+            for entity_name in missing_entities:
+                with st.container():
+                    _render_entity_resolver(doc_dir, entity_name, config)
+                st.markdown("---")
+    elif item.handler == "complement_enrichment":
+        _render_complement_enrichment_action(
+            doc_dir.name,
+            key_prefix="readiness",
+            feedback_to_doc_card=False,
+            show_caption=False,
+        )
+
+
+def _render_readiness_summary(doc_id: str, doc_dir: Path, config) -> None:
+    """Render the unified Readiness / Next Actions summary for one document.
+
+    Three calm, text-labelled buckets (no colour-only meaning):
+        "Needs review before push" — blockers
+        "Review / quality actions remain" — non-blocking review/push work
+        "Provenance notes" — informational
+    """
+    readiness = build_document_readiness(doc_dir, config=config)
+
+    st.markdown(f"**Readiness: {_READINESS_STATUS_BADGE.get(readiness.status, readiness.status_label)}**")
+    st.caption(readiness.status_explanation)
+
+    if readiness.blockers:
+        st.markdown("#### Needs review before push")
+        st.caption("Resolve these before running `push-enrichment`.")
+        for item in readiness.blockers:
+            _render_readiness_item(item, doc_dir, config)
+
+    if readiness.quality:
+        st.markdown("#### Review / quality actions")
+        st.caption("No hard blockers, but these items still need review, push, or quality attention.")
+        for item in readiness.quality:
+            _render_readiness_item(item, doc_dir, config)
+
+    if readiness.notes:
+        with st.expander("ℹ️ Provenance notes — informational, no action needed", expanded=False):
+            for item in readiness.notes:
+                st.markdown(f"**{item.title}**")
+                if item.detail:
+                    st.caption(item.detail)
+                if item.where_to_fix:
+                    st.caption(f"*{item.where_to_fix}*")
+
+    if readiness.status == STATUS_READY and not readiness.notes:
+        st.success("✓ No blockers, pending review, or quality gaps found.")
+
+
 def _render_provenance_panel(doc_id: str, doc_dir: Path, config) -> None:
-    """Render structured provenance/audit view: checklist, grouped findings, audit sub-tabs."""
-    provenance_warnings = _collect_provenance_warnings(doc_dir, config=config)
-
-    action_needed = [w for w in provenance_warnings if w.severity == "action_needed"]
-    blockers      = [w for w in provenance_warnings if w.severity == "pre_push_blocker"]
-    prov_notes    = [w for w in provenance_warnings if w.severity == "provenance_note"]
-
-    # ── Researcher checklist ───────────────────────────────────────────────
-    # One line per actionable item — quick scan for the researcher.
-    if blockers or action_needed:
-        checklist = _generate_researcher_checklist(provenance_warnings)
-        st.markdown("**Researcher checklist**")
-        for item in checklist:
-            w = next((x for x in provenance_warnings if x.title == item), None)
-            icon = "🔴" if (w and w.severity == "pre_push_blocker") else "🟡"
-            st.markdown(f"{icon} {item}")
-    elif not provenance_warnings:
-        st.success("✓ No provenance issues found.")
-
-    # ── Grouped detail sections ────────────────────────────────────────────
-    if action_needed:
-        st.markdown("#### Action needed")
-        for w in action_needed:
-            st.markdown(f"🟡 **{w.title}**")
-            st.caption(w.explanation)
-            st.caption(f"*→ {w.suggested_action}*")
-            if w.source_fields:
-                st.caption("Fields: " + " · ".join(f"`{f}`" for f in w.source_fields))
-
-    if blockers:
-        st.markdown("#### Before pushing to Sanity")
-        for w in blockers:
-            st.markdown(f"🔴 **{w.title}**")
-            st.caption(w.explanation)
-            st.caption(f"*→ {w.suggested_action}*")
-            if w.source_fields:
-                st.caption("Fields: " + " · ".join(f"`{f}`" for f in w.source_fields))
-
-            # ── Inline entity ID resolver ──────────────────────────────
-            if w.title == "Missing existing_entity_id":
-                enrichment_data = _read_json_file(doc_dir / "enrichment.json", {})
-                missing_entities = [
-                    (p.get("name") or "?")
-                    for p in (enrichment_data.get("entity_proposals") or [])
-                    if p.get("action") == "enrich_existing"
-                    and not p.get("existing_entity_id")
-                ]
-                if missing_entities:
-                    st.markdown("**Resolve entity IDs:**")
-                    for entity_name in missing_entities:
-                        with st.container():
-                            _render_entity_resolver(doc_dir, entity_name, config)
-                        st.markdown("---")
-
-    if prov_notes:
-        with st.expander("ℹ️ Provenance notes", expanded=False):
-            for w in prov_notes:
-                st.markdown(f"**{w.title}**")
-                st.caption(w.explanation)
-                if w.source_fields:
-                    st.caption("Fields: " + " · ".join(f"`{f}`" for f in w.source_fields))
-
-    if provenance_warnings:
-        st.divider()
+    """Render Readiness summary + provenance/audit sub-tabs."""
+    _render_readiness_summary(doc_id, doc_dir, config)
+    st.divider()
 
     # ── Sub-tabs ──────────────────────────────────────────────────────────
     tabs = st.tabs(["Analysis Audit", "Enrichment Audit", "Preservation", "Artifacts"])

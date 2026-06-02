@@ -116,6 +116,7 @@ Treat these as the highest-value context files:
 | `runner/main.py` | CLI command surface |
 | `runner/app.py` | Streamlit UI |
 | `runner/app_provenance.py` | Pure provenance/audit helpers (no st.* — safe to import in tests) |
+| `runner/app_readiness.py` | Pure per-document Readiness/Next-Actions composer (no st.*) |
 | `runner/app_entity_resolver.py` | Entity ID resolver helpers (pure — no st.*, no network imports) |
 | `runner/pipeline/triage.py` | Stage 0.5 -- routing |
 | `runner/pipeline/analyze.py` | Stage 3b -- classification |
@@ -310,8 +311,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1101
-- Latest completed milestone: Entity registry-fit safety layer
+- Tests passing: 1121
+- Latest completed milestone: Researcher Readiness / Next Actions layer
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -394,6 +395,17 @@ Recommended order for a new session:
   - P4: Design note in `_proposal_semantic_key()` for future cross-doc canonical identity.
   - New helpers: `_generate_proposal_id`, `_derive_proposal_status`, `_build_old_proposal_index`, `_apply_researcher_fields`, `_merge_researcher_state`.
   - 1101 total tests passing.
+- Researcher Readiness / Next Actions layer built ✓
+  - New `runner/app_readiness.py` (pure, no st.*): `ReadinessItem`, `DocumentReadiness`,
+    `summarize_enrichment_lifecycle`, `build_document_readiness`.
+  - Composes provenance warnings (severity → category) + enrichment lifecycle into one
+    per-document summary with four text statuses: needs_review_before_push,
+    quality_improvements_optional, ready_to_push, no_analysis_yet (no colour-only meaning).
+  - Complement enrichment is surfaced inside the summary as a lifecycle step (run-if-absent,
+    merge-safe-rerun-if-pending), not a separate mysterious action.
+  - `_render_provenance_panel` now leads with `_render_readiness_summary`; Document List card
+    label shows the readiness status. Inline repair: entity ID resolver + ✨ Complement enrichment.
+  - 20 new tests in `tests/test_app_readiness.py`; 1121 total.
 
 ---
 

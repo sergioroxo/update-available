@@ -2,8 +2,8 @@
 **Generated:** 2026-06-02
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 1101
-**Latest completed milestone:** Entity registry-fit safety layer
+**Tests passing:** 1121
+**Latest completed milestone:** Researcher Readiness / Next Actions layer
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -125,6 +125,7 @@ runner/
 ├── config.py                   # Config dataclass + load_config()
 ├── app.py                      # Streamlit UI
 ├── app_provenance.py           # Pure provenance/audit helpers (no st.*) -- imported by app.py
+├── app_readiness.py            # Pure per-document Readiness/Next-Actions composer (no st.*)
 ├── app_entity_resolver.py      # Entity ID resolver helpers (pure, no st.* or network imports)
 ├── pipeline/
 │   ├── intake.py               # Stage 1: doc_id, Wayback, dedup
@@ -478,6 +479,59 @@ Solves the "podcast/media project became an organization/person" failure mode wi
 
 ---
 
+### ~~Research Review Cockpit -- Readiness / Next Actions layer~~ ✓ COMPLETE
+
+Unifies the fragmented per-document repair guidance into one calm, ordered
+summary so the researcher always knows the single answer to "what do I do next
+with this document, and is it safe to push?". 20 new tests (1121 total). No
+pipeline logic changes. No prompts modified. Local-only; no Sanity/Supabase calls.
+
+**New `runner/app_readiness.py`** (pure module, no Streamlit dependency, safe in tests):
+- `ReadinessItem` — one categorized next-action (`category`, `title`, `detail`,
+  `where_to_fix`, optional `handler` UI hook).
+- `DocumentReadiness` — per-document summary with `status`, text `status_label`,
+  `status_explanation`, and `blockers` / `quality` / `notes` lists plus
+  `lifecycle` counts. `actionable_count` = blockers + quality.
+- Four text-first statuses (no colour-only meaning): `needs_review_before_push`,
+  `quality_improvements_optional`, `ready_to_push`, `no_analysis_yet`.
+- `summarize_enrichment_lifecycle(doc_dir)` — pure read of `enrichment.json`:
+  total / pending / approved-unpushed / pushed / rejected / registry-fit-holds.
+  `_proposal_state()` is `proposal_status`-first with boolean fallback (P2-compatible).
+- `build_document_readiness(doc_dir, config=None)` — composes
+  `_collect_provenance_warnings` (severity → category) **plus** enrichment
+  lifecycle items. Status = highest-severity bucket present.
+
+**Complement enrichment is now part of the same lifecycle, not a separate action:**
+- When no `enrichment.json` exists → a quality item "Enrichment not yet run" with
+  `handler="complement_enrichment"`.
+- When proposals are pending → a quality item "N proposal(s) await review" that
+  explains Complement enrichment is merge-safe to re-run here (`handler` inlines
+  the ✨ button).
+- Approved-unpushed proposals → quality item "N ready to push".
+- Registry-fit holds → an informational note (the safety guard working as intended).
+
+**Streamlit wiring (`runner/app.py`):**
+- New `_render_readiness_summary` + `_render_readiness_item` render the three calm
+  buckets ("Needs review before push" / "Review / quality actions remain" /
+  "Provenance notes") with explicit "Where to fix:" lines and inline repair
+  affordances (entity ID resolver for `entity_resolver`, ✨ Complement enrichment
+  for `complement_enrichment`).
+- `_render_provenance_panel` now leads with the readiness summary, then the
+  unchanged Analysis/Enrichment/Preservation/Artifacts sub-tabs. The old ad-hoc
+  "Researcher checklist" + duplicated grouped sections were replaced by it.
+- Document List card expander label now reads the readiness status directly:
+  `🔴 Readiness: Needs review before push — N blocker(s)`,
+  `🟡 Readiness: Review / quality actions remain — N item(s)`,
+  `🟢 Readiness: Ready to push`, `⚪ Readiness: No analysis yet`.
+  Auto-expands only on blockers (keeps ready/quality calm).
+
+**Tests:** `tests/test_app_readiness.py` — dataclasses, lifecycle counting
+(states, boolean-pushed, registry-fit holds, non-dict skip), status resolution
+(no-data / ready / blocker-beats-quality / pending-downgrade / no-enrichment),
+and item categorization/handlers.
+
+---
+
 ### NEXT -- Data-structure lock-in
 
 Before TASK F scales ingestion, lock in the data structures that future exports
@@ -755,4 +809,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-06-02. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, and entity ID resolver complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, network connection repair dropdowns, and entity registry-fit safety layer. 1101 tests passing. Recommended next: open app → Entity Queue → mark media/source proposals such as podcasts correctly → resolve remaining repair warnings/entity IDs → push-enrichment → 2–3 item attended pilot.*
+*Updated 2026-06-02. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, entity ID resolver, and Readiness/Next-Actions layer complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, network connection repair dropdowns, and entity registry-fit safety layer. 1121 tests passing. Recommended next: open app → Document List → each card now shows a "Readiness" status (Ready to push / Needs review / Review/quality actions); work the blockers top-down → resolve entity IDs/network connections inline → push-enrichment → 2–3 item attended pilot.*
