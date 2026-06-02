@@ -27,6 +27,7 @@ Public API:
     STATUS_LABELS                       — status code → human label
     summarize_enrichment_lifecycle(d)   → dict of proposal-state counts
     build_document_readiness(doc_dir)   → DocumentReadiness
+    collect_corpus_readiness(corpus_dir)→ list[dict] — corpus-wide summary rows
 """
 from __future__ import annotations
 
@@ -389,3 +390,100 @@ def build_document_readiness(doc_dir: Path, *, config=None) -> DocumentReadiness
         notes=notes,
         lifecycle=lifecycle,
     )
+
+
+# ---------------------------------------------------------------------------
+# Corpus-wide summary
+# ---------------------------------------------------------------------------
+
+def _get_short_title(doc_dir: Path) -> str:
+    """Return a short display title for a document directory.
+
+    Priority: ``preprocess.json → title`` → ``analysis.json → summary``
+    (truncated to 80 chars) → ``""`` (caller decides fallback).
+
+    Pure: reads local files only, never raises.
+    """
+    preprocess = _read_json_safe(doc_dir / "preprocess.json", {})
+    if isinstance(preprocess, dict):
+        title = str(preprocess.get("title") or "").strip()
+        if title:
+            return title[:120]
+    analysis = _read_json_safe(doc_dir / "analysis.json", {})
+    if isinstance(analysis, dict):
+        summary = str(analysis.get("summary") or "").strip()
+        if summary:
+            return (summary[:80] + "…") if len(summary) > 80 else summary
+    return ""
+
+
+def _get_source_url(doc_dir: Path) -> str:
+    """Return the source URL or local path for a document directory.
+
+    Reads ``intake.json``; returns ``""`` when absent or unreadable.
+    Pure: local files only, never raises.
+    """
+    intake = _read_json_safe(doc_dir / "intake.json", {})
+    if isinstance(intake, dict):
+        return str(intake.get("source_url") or intake.get("source") or "").strip()
+    return ""
+
+
+def collect_corpus_readiness(corpus_dir: Path, *, config=None) -> list[dict]:
+    """Scan ``corpus_dir`` and return one summary row per document directory.
+
+    Each row is a plain ``dict`` with::
+
+        doc_id               — directory name
+        status               — one of the STATUS_* constants
+        status_label         — human-readable text label
+        blocker_count        — number of pre-push blockers
+        quality_count        — number of quality / review items
+        note_count           — number of informational notes
+        pending              — pending enrichment proposals
+        approved_unpushed    — approved but not yet pushed to Sanity
+        registry_fit_holds   — entity proposals held out of the registry
+        title                — short display title (from preprocess or analysis)
+        source               — source URL or path (from intake.json)
+        next_action_title    — title of the first blocker or quality item
+
+    Rows are sorted by ``doc_id`` (directory name) for a stable, reproducible
+    order independent of filesystem ordering.
+
+    Pure: reads local files only, no network calls, tolerates missing or
+    corrupt JSON in every file it touches.  Non-directory entries in
+    ``corpus_dir`` are silently skipped.
+    """
+    if not corpus_dir.exists():
+        return []
+
+    rows: list[dict] = []
+    for doc_dir in sorted(corpus_dir.iterdir()):
+        if not doc_dir.is_dir():
+            continue
+
+        readiness = build_document_readiness(doc_dir, config=config)
+        lifecycle = readiness.lifecycle
+
+        first_action_title = ""
+        if readiness.blockers:
+            first_action_title = readiness.blockers[0].title
+        elif readiness.quality:
+            first_action_title = readiness.quality[0].title
+
+        rows.append({
+            "doc_id": doc_dir.name,
+            "status": readiness.status,
+            "status_label": readiness.status_label,
+            "blocker_count": len(readiness.blockers),
+            "quality_count": len(readiness.quality),
+            "note_count": len(readiness.notes),
+            "pending": lifecycle.get("pending", 0),
+            "approved_unpushed": lifecycle.get("approved_unpushed", 0),
+            "registry_fit_holds": lifecycle.get("registry_fit_holds", 0),
+            "title": _get_short_title(doc_dir),
+            "source": _get_source_url(doc_dir),
+            "next_action_title": first_action_title,
+        })
+
+    return rows

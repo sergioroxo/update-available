@@ -2,8 +2,8 @@
 **Generated:** 2026-06-02
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 1121
-**Latest completed milestone:** Researcher Readiness / Next Actions layer
+**Tests passing:** 1140
+**Latest completed milestone:** Corpus-Wide Review Inbox
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -479,6 +479,47 @@ Solves the "podcast/media project became an organization/person" failure mode wi
 
 ---
 
+### ~~Research Review Cockpit -- Corpus-Wide Review Inbox~~ ✓ COMPLETE
+
+New `page_review_inbox()` Streamlit page ("Review Inbox" in the sidebar, between
+Dashboard and Corpus Intelligence). 19 new tests (1140 total). No pipeline logic
+changes. No prompts modified. Local-only; no Sanity/Supabase calls.
+
+**New `runner/app_readiness.collect_corpus_readiness(corpus_dir, *, config=None)`** (pure):
+- Scans every subdirectory in the corpus, calls `build_document_readiness` on each.
+- Returns a stable list of dicts (sorted by `doc_id`) containing:
+  `doc_id`, `status`, `status_label`, `blocker_count`, `quality_count`, `note_count`,
+  `pending`, `approved_unpushed`, `registry_fit_holds`, `title`, `source`,
+  `next_action_title`.
+- `title` is extracted from `preprocess.json → title` (priority) then
+  `analysis.json → summary` (truncated to 80 chars). Falls back to `""`.
+- `source` is from `intake.json → source_url` / `source`.
+- `next_action_title` is the title of the first blocker, or first quality item if no
+  blockers, or `""` if the document is ready.
+- Private helpers: `_get_short_title(doc_dir)`, `_get_source_url(doc_dir)`.
+
+**New `page_review_inbox()` + `_render_inbox_row(row)` in `runner/app.py`:**
+- 5-column summary bar: Total / 🔴 Need review / 🟡 Quality work / 🟢 Ready to push /
+  ⚪ No analysis.
+- 4 groups, only rendered when non-empty:
+  - 🔴 Needs review before push — blockers (entity ID missing, invalid connections)
+  - 🟡 Review / quality actions remain — pending proposals, approved-unpushed, missing date/lang
+  - 🟢 Ready to push — no outstanding items
+  - ⚪ No analysis yet — `analysis.json` absent
+- Each document is one flat row (no nested expanders): `doc_id`, title/source, next-action
+  hint with count context, "Open" button → navigates to Document List and pre-fills the
+  search box with the `doc_id`.
+- Text labels throughout, no colour-only meaning.
+
+**Tests:** `tests/test_app_readiness.py::TestCollectCorpusReadiness` — 19 cases:
+guard rails (missing/empty corpus, non-dir files), status classification (no-data /
+blocker / quality / ready), title/source extraction (preprocess priority, analysis
+fallback, long summary truncated, intake source_url and source fallback), proposal
+lifecycle counts, `next_action_title` for blocker/quality/ready, sorted-by-doc_id
+ordering, corrupt JSON toleration, row schema completeness.
+
+---
+
 ### ~~Research Review Cockpit -- Readiness / Next Actions layer~~ ✓ COMPLETE
 
 Unifies the fragmented per-document repair guidance into one calm, ordered
@@ -809,4 +850,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-06-02. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, entity ID resolver, and Readiness/Next-Actions layer complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, network connection repair dropdowns, and entity registry-fit safety layer. 1121 tests passing. Recommended next: open app → Document List → each card now shows a "Readiness" status (Ready to push / Needs review / Review/quality actions); work the blockers top-down → resolve entity IDs/network connections inline → push-enrichment → 2–3 item attended pilot.*
+*Updated 2026-06-02. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, entity ID resolver, Readiness/Next-Actions layer, and Corpus-Wide Review Inbox complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, network connection repair dropdowns, and entity registry-fit safety layer. 1140 tests passing. Recommended next: open app → Review Inbox (sidebar) for corpus-wide triage → open each 🔴 blocker document → resolve entity IDs / network connections inline → push-enrichment → 2–3 item attended pilot.*

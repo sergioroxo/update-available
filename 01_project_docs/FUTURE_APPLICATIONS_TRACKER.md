@@ -2,7 +2,7 @@
 
 **Status:** working tracker for follow-up steps after the future applications roadmap.
 **Roadmap source:** `01_project_docs/FUTURE_APPLICATIONS_ROADMAP_v1.0.md`
-**Last updated:** 2026-05-31
+**Last updated:** 2026-06-02
 
 Core rule: **AI proposes, the researcher validates, the archive preserves provenance.**
 
@@ -71,7 +71,8 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | Morning report | Human-facing summary of what happened overnight | TASK F | Done as local Markdown batch report; aggregate dashboard later |
 | Preservation status sidecar | Make blocked/dynamic/social/video capture needs explicit without adding capture dependencies | TASK P | Done locally (`preservation_status.json`) |
 | Per-document readiness summary | One calm "what next / safe to push?" view per doc; unifies provenance blockers + enrichment lifecycle; ties Complement enrichment into the flow | Provenance panel | Done (`runner/app_readiness.py`) |
-| Stakes-ranked review inbox | Legal/testimony/Tier-1/low-confidence first; can rank by `DocumentReadiness.status` across the corpus | TASK F + Streamlit + readiness layer | Pending (readiness layer is the per-doc precursor) |
+| Corpus-wide review inbox | Status-grouped list of all docs with next-action hints; "Open" button pre-fills Document List search; flat layout, no nested expanders | Readiness layer + Streamlit | Done (`page_review_inbox`, `collect_corpus_readiness`) |
+| Stakes-ranked review inbox | Sort 🔴 group by tactic/type/confidence for testimony-first or legal-first review ordering | Corpus-wide inbox (done) + analysis tags | Pending — extend `collect_corpus_readiness` row with harm/type/confidence for sort |
 | Pilot calibration | Attended test batches across languages/types/stakes before overnight use | TASK F + TASK P | Started: one-item pilot complete after recovery |
 | Calibration dashboard | Confidence vs researcher corrections | Pilot batch | Pending |
 

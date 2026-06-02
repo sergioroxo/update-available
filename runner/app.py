@@ -77,6 +77,7 @@ def main():
 
     pages = [
         "Dashboard",
+        "Review Inbox",
         "Corpus Intelligence",
         "Source Queue",
         "Ingest Workbench",
@@ -118,6 +119,8 @@ def main():
 
     if page == "Dashboard":
         page_dashboard()
+    elif page == "Review Inbox":
+        page_review_inbox()
     elif page == "Corpus Intelligence":
         page_corpus_intelligence()
     elif page == "Source Queue":
@@ -426,6 +429,168 @@ def _service_status(base_url: str) -> str:
 @st.cache_data(ttl=30, show_spinner=False)
 def _litelm_status_cached(base_url: str) -> str:
     return _service_status(base_url)
+
+
+# ---------------------------------------------------------------------------
+# Review Inbox
+# ---------------------------------------------------------------------------
+
+def _render_inbox_row(row: dict) -> None:
+    """Render one document as a compact row in the Review Inbox.
+
+    Four columns: doc_id | title / source | next action | open button.
+    No nested expanders, no colour-only meaning.
+    """
+    doc_id = row["doc_id"]
+    title = row.get("title") or ""
+    source = row.get("source") or ""
+    next_action = row.get("next_action_title") or ""
+
+    # Prefer preprocess/analysis title; fall back to source URL; last resort "—"
+    display_text = title or source or "—"
+    if len(display_text) > 80:
+        display_text = display_text[:79] + "…"
+
+    # Issue count summary
+    count_parts = []
+    if row.get("blocker_count"):
+        count_parts.append(f"{row['blocker_count']} blocker(s)")
+    if row.get("quality_count"):
+        count_parts.append(f"{row['quality_count']} quality item(s)")
+    if row.get("pending"):
+        count_parts.append(f"{row['pending']} pending")
+    if row.get("approved_unpushed"):
+        count_parts.append(f"{row['approved_unpushed']} ready to push")
+    count_text = " · ".join(count_parts) if count_parts else ""
+
+    # One-line next-action hint: first blocker/quality title + count context
+    if next_action and count_text:
+        action_text = f"{next_action}  ({count_text})"
+    elif next_action:
+        action_text = next_action
+    elif count_text:
+        action_text = count_text
+    else:
+        action_text = "No outstanding items"
+
+    c_id, c_title, c_action, c_btn = st.columns([1, 3, 3, 1])
+    c_id.write(f"`{doc_id}`")
+    c_title.write(display_text)
+    c_action.caption(action_text)
+    if c_btn.button("Open", key=f"inbox_open_{doc_id}"):
+        st.session_state["doc_list_search"] = doc_id
+        st.session_state["_nav_to"] = "Document List"
+        st.rerun()
+
+
+def page_review_inbox():
+    st.title("Review Inbox")
+    st.caption(
+        "Corpus-wide review status — what to work on next, grouped by readiness. "
+        "All checks read local files only; no network calls. "
+        "Open a document to use the repair widgets (entity ID resolver, "
+        "connection-type dropdown, Complement enrichment)."
+    )
+
+    config = _load_config_safe()
+    if not config:
+        st.error("Could not load config. Check runner/.env.")
+        return
+
+    corpus_dir = config.corpus_dir
+    if not corpus_dir.exists():
+        st.info(f"Corpus directory does not exist yet: {corpus_dir}")
+        return
+
+    rows = collect_corpus_readiness(corpus_dir, config=config)
+    if not rows:
+        st.info(
+            "No documents found in local corpus. "
+            "Run `python -m runner ingest <url>` to add one."
+        )
+        return
+
+    # ── Summary counts ────────────────────────────────────────────────────
+    _counts = {
+        STATUS_NEEDS_REVIEW: 0,
+        STATUS_QUALITY: 0,
+        STATUS_READY: 0,
+        STATUS_NO_DATA: 0,
+    }
+    for _r in rows:
+        _s = _r["status"]
+        if _s in _counts:
+            _counts[_s] += 1
+
+    _sc1, _sc2, _sc3, _sc4, _sc5 = st.columns(5)
+    _sc1.metric("Total", len(rows))
+    _sc2.metric("🔴 Need review",    _counts[STATUS_NEEDS_REVIEW])
+    _sc3.metric("🟡 Quality work",   _counts[STATUS_QUALITY])
+    _sc4.metric("🟢 Ready to push",  _counts[STATUS_READY])
+    _sc5.metric("⚪ No analysis",    _counts[STATUS_NO_DATA])
+
+    if st.button("🔄 Refresh", key="inbox_refresh"):
+        st.rerun()
+
+    st.divider()
+
+    # ── Groups ────────────────────────────────────────────────────────────
+    _groups = [
+        (
+            STATUS_NEEDS_REVIEW,
+            "🔴 Needs review before push",
+            (
+                "Hard blockers — resolve before running `push-enrichment`. "
+                "Typical causes: `enrich_existing` proposal missing an entity ID, "
+                "or an invalid network connection type."
+            ),
+        ),
+        (
+            STATUS_QUALITY,
+            "🟡 Review / quality actions remain",
+            (
+                "No hard blockers, but review, push, or quality work remains. "
+                "Includes: pending proposals, approved-unpushed proposals, "
+                "missing date or language, enrichment not yet run."
+            ),
+        ),
+        (
+            STATUS_READY,
+            "🟢 Ready to push",
+            "No blockers, pending review, or outstanding quality gaps.",
+        ),
+        (
+            STATUS_NO_DATA,
+            "⚪ No analysis yet",
+            (
+                "No `analysis.json` found. "
+                "Run `python -m runner ingest <url>` or re-open the document "
+                "in the Ingest Workbench."
+            ),
+        ),
+    ]
+
+    for _status_code, _heading, _explain in _groups:
+        _group_rows = [_r for _r in rows if _r["status"] == _status_code]
+        if not _group_rows:
+            continue
+
+        st.subheader(f"{_heading} ({len(_group_rows)})")
+        st.caption(_explain)
+
+        # Column header row
+        _hc1, _hc2, _hc3, _hc4 = st.columns([1, 3, 3, 1])
+        _hc1.caption("**Doc ID**")
+        _hc2.caption("**Title / source**")
+        _hc3.caption("**Next action**")
+
+        for _row in _group_rows:
+            _render_inbox_row(_row)
+
+        st.write("")  # spacer between groups
+
+    st.divider()
+    st.caption(f"Scanned {len(rows)} document(s) from `{corpus_dir}`")
 
 
 # ---------------------------------------------------------------------------
@@ -759,6 +924,7 @@ from runner.app_readiness import (  # noqa: E402
     STATUS_READY,
     STATUS_NO_DATA,
     build_document_readiness,
+    collect_corpus_readiness,
 )
 from runner.models.enrichment import infer_entity_registry_fit  # noqa: E402
 

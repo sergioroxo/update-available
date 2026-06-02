@@ -295,24 +295,23 @@ or cross-document canonical identity, but do not expand that before the pilot ex
 a concrete need.
 
 Recommended order for a new session:
-1. Verify repo/test state (1101 passed expected).
-2. Open app → Document List or Activity Log → search `8fe67e19`. Complement enrichment
-   is available in the card, Activity Log → Enrichment, and Provenance → Enrichment Audit.
-3. In the Entity Queue, mark podcasts/channels/publications/source projects with
+1. Verify repo/test state (1140 passed expected).
+2. Open app → **Review Inbox** (sidebar, between Dashboard and Corpus Intelligence).
+   Scan the 🔴 group for any documents that need review before push.
+3. For `8fe67e19` or any 🔴 doc: click "Open" → Document List → resolve entity IDs,
+   repair network connection types, then `push-enrichment <doc_id>`.
+4. In the Entity Queue, mark podcasts/channels/publications/source projects with
    Registry fit = "Media/source, not entity" (or click "Mark Media/Source") before approving.
-4. Use entity ID resolver for any remaining `enrich_existing` proposals and repair
-   network connection warnings with the local dropdown before approving.
-5. Run `push-enrichment 8fe67e19`.
-6. Use `runner batch-plan` to inspect the queue before the next live execution.
-7. Run a 2-3 item attended pilot before any overnight use.
-8. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
+5. Use `runner batch-plan` to inspect the queue before the next live execution.
+6. Run a 2-3 item attended pilot before any overnight use.
+7. Keep DS-5/DS-6/DS-7 deferred unless they become necessary during TASK F planning.
 
 ---
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1121
-- Latest completed milestone: Researcher Readiness / Next Actions layer
+- Tests passing: 1140
+- Latest completed milestone: Corpus-Wide Review Inbox
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -406,6 +405,16 @@ Recommended order for a new session:
   - `_render_provenance_panel` now leads with `_render_readiness_summary`; Document List card
     label shows the readiness status. Inline repair: entity ID resolver + ✨ Complement enrichment.
   - 20 new tests in `tests/test_app_readiness.py`; 1121 total.
+- Corpus-Wide Review Inbox built ✓
+  - New `collect_corpus_readiness(corpus_dir, *, config=None)` in `runner/app_readiness.py`
+    (pure, no st.*): scans every doc dir, returns one summary dict per document with
+    doc_id, status, blocker/quality/note counts, pending/approved-unpushed/registry-fit counts,
+    title (from preprocess or analysis), source (from intake), next_action_title.
+  - New "Review Inbox" sidebar page (between Dashboard and Corpus Intelligence).
+    5-column summary bar, 4 status groups (only rendered when non-empty), flat row layout
+    (no nested expanders), "Open" button per doc pre-fills Document List search box.
+  - `_render_inbox_row(row)`: doc_id | title/source | next action + count context | Open button.
+  - 19 new tests in `tests/test_app_readiness.py::TestCollectCorpusReadiness`; 1140 total.
 
 ---
 
