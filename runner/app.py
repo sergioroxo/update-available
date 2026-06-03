@@ -6330,6 +6330,125 @@ _PRACTICE_FIT_DECISION_GUIDE = {
     ),
 }
 
+_PRACTICE_CLUSTER_CATALOGUE = {
+    "rogd": {
+        "label": "ROGD / sudden-onset diagnosis frame",
+        "description": (
+            "Evidence that frames trans identity as Rapid Onset Gender Dysphoria, social contagion, "
+            "peer influence, or a diagnostic explanation for youth transition."
+        ),
+        "review_hint": (
+            "Usually keep narrow labels as evidence first. Promote only if the corpus supports one stable "
+            "practice category rather than several wording variants."
+        ),
+        "examples": "ROGD-Diagnosis, ROGD-Promotion, social contagion framing",
+    },
+    "parent_guidance": {
+        "label": "Parent / family guidance",
+        "description": (
+            "Evidence where parents, families, schools, or carers are instructed how to resist, delay, "
+            "redirect, monitor, or manage a young person's SOGIE."
+        ),
+        "review_hint": (
+            "Check whether this is a standalone practice or evidence for a broader family-intervention pattern. "
+            "Use existing_practice when Sanity already has the broader parent-guidance entry."
+        ),
+        "examples": "Strategic-Guidance-for-Parents, Tactical-Guidance-for-Parents",
+    },
+    "pathologization": {
+        "label": "Pathologization / pseudo-clinical framing",
+        "description": (
+            "Evidence that casts LGBTQ+ identity, gender nonconformity, or transition as pathology, confusion, "
+            "trauma symptom, addiction, developmental failure, or clinical problem."
+        ),
+        "review_hint": (
+            "Often overlaps with tactics and rhetoric. Keep as evidence unless the document describes a concrete "
+            "repeatable intervention practice."
+        ),
+        "examples": "diagnosis language, trauma-cause framing, disorder/pathology claims",
+    },
+    "pastoral_guidance": {
+        "label": "Pastoral / spiritual guidance",
+        "description": (
+            "Evidence of religious counselling, prayer, pastoral care, spiritual direction, discipleship, or "
+            "faith-based instruction used to redirect or suppress SOGIE."
+        ),
+        "review_hint": (
+            "Distinguish a general theological claim from a repeatable pastoral intervention. The former is usually "
+            "evidence/tactic; the latter may become a practice."
+        ),
+        "examples": "pastoral care, prayer counselling, spiritual mentoring",
+    },
+    "clinical_authority": {
+        "label": "Clinical authority / evidence laundering",
+        "description": (
+            "Evidence where credentials, medical language, research claims, or professional authority are used to "
+            "legitimise SOGICE-adjacent intervention."
+        ),
+        "review_hint": (
+            "Often belongs in tactics or network evidence. Promote as a practice only if the source describes a "
+            "specific clinical intervention, not just authority signalling."
+        ),
+        "examples": "expert protocol claims, clinician guidance, medical misinformation",
+    },
+    "institutional_legitimation": {
+        "label": "Institutional legitimation",
+        "description": (
+            "Evidence where institutions, accreditations, universities, NGOs, consultative status, or official "
+            "processes are used to legitimise SOGICE-related claims or actors."
+        ),
+        "review_hint": (
+            "Usually a tactic/network cluster rather than a practice. Keep as evidence unless there is an explicit "
+            "repeatable intervention procedure."
+        ),
+        "examples": "UN status, university affiliation, professional body endorsement",
+    },
+    "media_dissemination": {
+        "label": "Media dissemination",
+        "description": (
+            "Evidence of podcasts, channels, publications, newsletters, campaigns, or media projects spreading "
+            "SOGICE-adjacent narratives."
+        ),
+        "review_hint": (
+            "Usually route to media/source evidence or entity registry-fit review, not practice registry. Episodes "
+            "can be ingested as documents and connected by tags/entities later."
+        ),
+        "examples": "podcast platform, interview series, campaign channel",
+    },
+    "legal_policy_advocacy": {
+        "label": "Legal / policy advocacy",
+        "description": (
+            "Evidence of legal arguments, policy submissions, model bills, rights claims, or lobbying used to "
+            "protect or advance SOGICE-adjacent activity."
+        ),
+        "review_hint": (
+            "Often a tactic or policy-evidence cluster. Promote only when the item describes a repeatable practice, "
+            "not merely an advocacy position."
+        ),
+        "examples": "religious freedom claims, school policy templates, consultation submissions",
+    },
+    "testimony_narrative": {
+        "label": "Testimony / detransition narrative",
+        "description": (
+            "Evidence using personal testimony, survivor-style narrative, regret, detransition, or identity-change "
+            "stories to justify intervention or discourage affirmation."
+        ),
+        "review_hint": (
+            "Usually keep as evidence connected to testimony/media/tactic review. Promote only if a repeatable "
+            "intervention process is described."
+        ),
+        "examples": "personal story, detransition testimony, ex-gay narrative",
+    },
+    "unclustered": {
+        "label": "Unclustered / needs researcher framing",
+        "description": (
+            "No reliable local cluster has been inferred yet. This should be reviewed before promotion."
+        ),
+        "review_hint": "Assign a cluster or keep as evidence until similar material appears.",
+        "examples": "new or one-off model label",
+    },
+}
+
 
 def _entity_registry_fit(item: dict) -> str:
     fit = infer_entity_registry_fit(item)
@@ -6344,6 +6463,27 @@ def _practice_fit(item: dict) -> str:
 def _practice_cluster_key(item: dict) -> str:
     cluster = str(item.get("practice_cluster") or "").strip()
     return cluster or "unclustered"
+
+
+def _practice_cluster_info(cluster: str) -> dict:
+    key = str(cluster or "").strip() or "unclustered"
+    if key in _PRACTICE_CLUSTER_CATALOGUE:
+        return _PRACTICE_CLUSTER_CATALOGUE[key]
+    return {
+        "label": key.replace("_", " ").title(),
+        "description": "Local researcher-defined cluster not yet in the shared catalogue.",
+        "review_hint": (
+            "Use this as a temporary consolidation bucket. If it recurs, add it to the catalogue "
+            "with a clearer definition before promoting practice entries."
+        ),
+        "examples": "",
+    }
+
+
+def _practice_cluster_display(cluster: str) -> str:
+    key = str(cluster or "").strip() or "unclustered"
+    info = _practice_cluster_info(key)
+    return f"{key} — {info['label']}"
 
 
 def _practice_cluster_summary(records: list[dict]) -> list[dict]:
@@ -6383,6 +6523,7 @@ def _practice_cluster_summary(records: list[dict]) -> list[dict]:
         summary.append(
             {
                 "cluster": row["cluster"],
+                "meaning": _practice_cluster_info(row["cluster"])["label"],
                 "proposals": row["proposals"],
                 "needs_review": row["needs_review"],
                 "held_evidence": row["held_evidence"],
@@ -6797,6 +6938,7 @@ def _render_practice_queue(config, records: list[dict]) -> None:
         "Cluster filter",
         cluster_options,
         key="practice_cluster_filter",
+        format_func=lambda value: value if value == "All clusters" else _practice_cluster_display(value),
         help=(
             "Filter the Practice Queue to one cluster when deciding whether labels are duplicate evidence, "
             "an existing practice, or a genuinely new registry practice."
@@ -6809,6 +6951,11 @@ def _render_practice_queue(config, records: list[dict]) -> None:
             if _practice_cluster_key(record["item"]) == selected_cluster
         ]
         st.caption(f"Showing {len(records)} proposal(s) in cluster `{selected_cluster}`.")
+        selected_info = _practice_cluster_info(selected_cluster)
+        st.info(
+            f"**{selected_info['label']}** — {selected_info['description']}\n\n"
+            f"**Review hint:** {selected_info['review_hint']}"
+        )
     _render_proposal_status_metrics(records)
     st.caption(
         "Proposal # is the local JSON position for editing/saving. It is not a model confidence score."
@@ -7433,6 +7580,14 @@ def _render_single_practice_editor(record: dict) -> None:
         )
     elif item["practice_fit"] == "existing_practice" and not item.get("existing_practice_id"):
         st.warning("Fill `existing_practice_id` before approving/pushing this as existing-practice evidence.")
+
+    cluster_info = _practice_cluster_info(item.get("practice_cluster", ""))
+    with st.expander("Cluster meaning", expanded=False):
+        st.markdown(f"**{_practice_cluster_display(item.get('practice_cluster', ''))}**")
+        st.write(cluster_info["description"])
+        st.markdown(f"**Review hint:** {cluster_info['review_hint']}")
+        if cluster_info.get("examples"):
+            st.caption(f"Examples: {cluster_info['examples']}")
 
     item["exact_description"] = st.text_area("Exact description", value=item.get("exact_description", ""), height=120, key=f"{prefix}_description")
     item["harm_quote"] = st.text_area("Harm quote", value=item.get("harm_quote", ""), height=100, key=f"{prefix}_quote")

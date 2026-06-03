@@ -374,6 +374,7 @@ def test_practice_cluster_summary_groups_related_labels():
     assert summary == [
         {
             "cluster": "rogd",
+            "meaning": "ROGD / sudden-onset diagnosis frame",
             "proposals": 2,
             "needs_review": 1,
             "held_evidence": 2,
@@ -411,6 +412,7 @@ def test_practice_cluster_summary_counts_push_candidates():
     row = summary[0]
 
     assert row["cluster"] == "parent_guidance"
+    assert row["meaning"] == "Parent / family guidance"
     assert row["push_candidate"] == 2
     assert row["held_evidence"] == 0
     assert row["needs_review"] == 1
@@ -428,7 +430,29 @@ def test_practice_cluster_summary_uses_unclustered_fallback_last():
     )
 
     assert [row["cluster"] for row in summary] == ["rogd", "unclustered"]
+    assert summary[1]["meaning"] == "Unclustered / needs researcher framing"
     assert summary[1]["held_evidence"] == 1
+
+
+def test_practice_cluster_info_for_unknown_cluster_is_researcher_defined():
+    from runner.app import _practice_cluster_info, _practice_cluster_display
+
+    info = _practice_cluster_info("school_policy")
+
+    assert info["label"] == "School Policy"
+    assert "researcher-defined" in info["description"]
+    assert _practice_cluster_display("school_policy") == "school_policy — School Policy"
+
+
+def test_practice_cluster_catalogue_has_media_and_legal_distinctions():
+    from runner.app import _practice_cluster_info
+
+    media = _practice_cluster_info("media_dissemination")
+    legal = _practice_cluster_info("legal_policy_advocacy")
+
+    assert "podcasts" in media["description"]
+    assert "practice registry" in media["review_hint"]
+    assert "policy" in legal["description"].lower()
 
 
 # ---------------------------------------------------------------------------
