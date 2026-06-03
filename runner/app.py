@@ -6283,18 +6283,51 @@ _PRACTICE_FIT_LABELS = {
 
 _PRACTICE_FIT_HELP = {
     "needs_clustering": (
-        "Hold locally until similar practice labels are grouped, renamed, or linked."
+        "Use when the model found practice-like evidence, but the label is too narrow, "
+        "duplicative, or not ready to become a registry entry. It stays in enrichment.json, "
+        "is grouped by practice_cluster, and cannot be pushed until linked or promoted."
     ),
     "candidate_evidence": (
-        "Keep this as evidence for later consolidation; do not create a practice registry entry."
+        "Use when the quote is useful evidence for a broader pattern, but this proposal "
+        "should not become its own practice. It is kept locally for future consolidation "
+        "and is blocked from Sanity push."
     ),
     "existing_practice": (
-        "Append this document's evidence to an existing practice entry after filling existing_practice_id."
+        "Use when Sanity already has the practice and this document only adds evidence. "
+        "Fill existing_practice_id before approval so the push updates the right record "
+        "instead of creating a duplicate."
     ),
     "registry_practice": (
-        "Eligible to create a new practice registry draft after deliberate researcher promotion."
+        "Use only after researcher review decides this is a stable, reusable practice "
+        "category. Approval makes it eligible to create a new Sanity practice draft."
     ),
-    "not_practice": "Reject locally; this is not practice-registry material.",
+    "not_practice": (
+        "Use when the item is really a tactic, claim, entity, tag, vague phrase, or "
+        "otherwise not practice-registry material. It is rejected locally."
+    ),
+}
+
+_PRACTICE_FIT_DECISION_GUIDE = {
+    "Needs clustering": (
+        "Default safe state for model-created labels like ROGD-Diagnosis. Keep related "
+        "items under the same cluster until the broader category is clear."
+    ),
+    "Keep as evidence": (
+        "Preserves the quote and rationale for later analysis, but prevents this item "
+        "from becoming a public registry record."
+    ),
+    "Existing practice evidence": (
+        "Use when the cluster already maps to a Sanity practice. Requires "
+        "existing_practice_id before approval or push."
+    ),
+    "Promote to registry practice": (
+        "Use sparingly, after comparing the cluster. This turns a local evidence pattern "
+        "into a candidate public practice entry."
+    ),
+    "Not a practice": (
+        "Rejects the proposal because it belongs in another review family or is not "
+        "useful evidence."
+    ),
 }
 
 
@@ -6306,6 +6339,59 @@ def _entity_registry_fit(item: dict) -> str:
 def _practice_fit(item: dict) -> str:
     fit = str(item.get("practice_fit") or "").strip()
     return fit if fit in _PRACTICE_FIT_OPTIONS else "needs_clustering"
+
+
+def _practice_cluster_key(item: dict) -> str:
+    cluster = str(item.get("practice_cluster") or "").strip()
+    return cluster or "unclustered"
+
+
+def _practice_cluster_summary(records: list[dict]) -> list[dict]:
+    clusters: dict[str, dict] = {}
+    for record in records:
+        item = record["item"]
+        cluster_key = _practice_cluster_key(item)
+        row = clusters.setdefault(
+            cluster_key,
+            {
+                "cluster": cluster_key,
+                "proposals": 0,
+                "needs_review": 0,
+                "held_evidence": 0,
+                "push_candidate": 0,
+                "_doc_ids": set(),
+                "_examples": [],
+            },
+        )
+        fit = _practice_fit(item)
+        row["proposals"] += 1
+        if _proposal_review_status(item) == "Needs review":
+            row["needs_review"] += 1
+        if fit in {"needs_clustering", "candidate_evidence"}:
+            row["held_evidence"] += 1
+        if fit in {"existing_practice", "registry_practice"}:
+            row["push_candidate"] += 1
+        doc_id = str(record.get("doc_id", "")).strip()
+        if doc_id:
+            row["_doc_ids"].add(doc_id)
+        practice_id = str(item.get("practice_id") or item.get("exact_description") or "").strip()
+        if practice_id and practice_id not in row["_examples"] and len(row["_examples"]) < 4:
+            row["_examples"].append(practice_id)
+
+    summary: list[dict] = []
+    for row in clusters.values():
+        summary.append(
+            {
+                "cluster": row["cluster"],
+                "proposals": row["proposals"],
+                "needs_review": row["needs_review"],
+                "held_evidence": row["held_evidence"],
+                "push_candidate": row["push_candidate"],
+                "docs": ", ".join(sorted(row["_doc_ids"])),
+                "examples": "; ".join(row["_examples"]),
+            }
+        )
+    return sorted(summary, key=lambda row: (row["cluster"] == "unclustered", row["cluster"].lower()))
 
 
 def _proposal_review_sort_key(record: dict, label_field: str = "term") -> tuple[int, str, str]:
@@ -6699,6 +6785,30 @@ def _render_practice_queue(config, records: list[dict]) -> None:
         st.info("No local practice descriptions found yet.")
         return
     records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "practice_id"))
+    cluster_summary = _practice_cluster_summary(records)
+    st.markdown("**Practice clusters**")
+    st.caption(
+        "Clusters are local consolidation keys. Use them to compare near-duplicate practice labels "
+        "before deciding whether to keep evidence, link to an existing practice, or promote one stable category."
+    )
+    st.dataframe(cluster_summary, width="stretch", hide_index=True)
+    cluster_options = ["All clusters"] + [row["cluster"] for row in cluster_summary]
+    selected_cluster = st.selectbox(
+        "Cluster filter",
+        cluster_options,
+        key="practice_cluster_filter",
+        help=(
+            "Filter the Practice Queue to one cluster when deciding whether labels are duplicate evidence, "
+            "an existing practice, or a genuinely new registry practice."
+        ),
+    )
+    if selected_cluster != "All clusters":
+        records = [
+            record
+            for record in records
+            if _practice_cluster_key(record["item"]) == selected_cluster
+        ]
+        st.caption(f"Showing {len(records)} proposal(s) in cluster `{selected_cluster}`.")
     _render_proposal_status_metrics(records)
     st.caption(
         "Proposal # is the local JSON position for editing/saving. It is not a model confidence score."
@@ -7252,9 +7362,24 @@ def _render_single_tactic_editor(record: dict) -> None:
 def _render_single_practice_editor(record: dict) -> None:
     item = dict(record["item"])
     prefix = f"practice_{record['doc_id']}_{record['index']}"
+    with st.expander("Practice-fit decision guide", expanded=False):
+        st.caption(
+            "Use this before approving. The safest default is to keep narrow model labels as clustered evidence "
+            "until several documents show a stable pattern."
+        )
+        for label, guidance in _PRACTICE_FIT_DECISION_GUIDE.items():
+            st.markdown(f"**{label}** — {guidance}")
     c1, c2 = st.columns([1, 1])
     with c1:
-        item["practice_id"] = st.text_input("Practice id", value=item.get("practice_id", ""), key=f"{prefix}_id")
+        item["practice_id"] = st.text_input(
+            "Practice id",
+            value=item.get("practice_id", ""),
+            key=f"{prefix}_id",
+            help=(
+                "Human-readable local label from the model or researcher. It is not safe by itself as a Sanity ID; "
+                "use Practice fit and Practice cluster to decide what it should become."
+            ),
+        )
         item["practice_fit"] = st.selectbox(
             "Practice fit",
             _PRACTICE_FIT_OPTIONS,
@@ -7262,8 +7387,8 @@ def _render_single_practice_editor(record: dict) -> None:
             format_func=lambda value: _PRACTICE_FIT_LABELS.get(value, value),
             key=f"{prefix}_fit",
             help=(
-                "Controls whether this proposal stays as local evidence, waits "
-                "for clustering, links to an existing practice, or is deliberately promoted."
+                "Controls the lifecycle consequence: held locally, rejected, linked to an existing Sanity practice, "
+                "or made eligible for a new registry practice after approval."
             ),
         )
         st.caption(_PRACTICE_FIT_HELP.get(item["practice_fit"], ""))
@@ -7272,19 +7397,30 @@ def _render_single_practice_editor(record: dict) -> None:
             ["denied", "minimized", "reframed", "acknowledged", "not_mentioned"],
             index=_option_index(["denied", "minimized", "reframed", "acknowledged", "not_mentioned"], item.get("harm_stance", "not_mentioned")),
             key=f"{prefix}_harm",
+            help=(
+                "How the source treats harm: denied means harm is rejected; minimized means downplayed; "
+                "reframed means presented as help/care; acknowledged means harm is recognized; "
+                "not_mentioned means the source does not address harm."
+            ),
         )
     with c2:
         item["practice_cluster"] = st.text_input(
             "Practice cluster",
             value=item.get("practice_cluster", ""),
             key=f"{prefix}_cluster",
-            help="Local consolidation key for similar practice evidence, e.g. `rogd` or `parent_guidance`.",
+            help=(
+                "Local consolidation key for similar evidence, e.g. `rogd` or `parent_guidance`. "
+                "Several narrow labels can share one cluster while you decide whether a broader practice exists."
+            ),
         )
         item["existing_practice_id"] = st.text_input(
             "Existing practice id",
             value=item.get("existing_practice_id", "") or "",
             key=f"{prefix}_existing",
-            help="Required when Practice fit is Existing practice evidence.",
+            help=(
+                "Required only for Existing practice evidence. Paste the Sanity practiceEntry ID so this evidence "
+                "connects to the existing record instead of creating a duplicate."
+            ),
         )
         item["sanity_id"] = st.text_input("Sanity id", value=item.get("sanity_id", "") or "", disabled=True, key=f"{prefix}_sanity")
         item["pushed_to_sanity"] = st.checkbox("Pushed to Sanity", value=item.get("pushed_to_sanity", False), disabled=True, key=f"{prefix}_pushed")
@@ -7305,8 +7441,18 @@ def _render_single_practice_editor(record: dict) -> None:
         value=item.get("practice_fit_rationale", ""),
         height=70,
         key=f"{prefix}_fit_rationale",
+        help=(
+            "Short researcher memory note explaining why this item was kept as evidence, linked, promoted, or rejected. "
+            "This is especially useful when revisiting the corpus months later."
+        ),
     )
-    item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
+    item["researcher_note"] = st.text_area(
+        "Researcher note",
+        value=item.get("researcher_note", ""),
+        height=80,
+        key=f"{prefix}_note",
+        help="Free-form note for context, caveats, follow-up checks, or why the evidence matters.",
+    )
     _render_proposal_confidence_editor(item, prefix)
 
     st.caption(
@@ -7315,11 +7461,22 @@ def _render_single_practice_editor(record: dict) -> None:
     )
     b1, b2, b3, b4 = st.columns(4)
     with b1:
-        if st.button("Save Practice Edits", key=f"{prefix}_save"):
+        if st.button(
+            "Save Practice Edits",
+            key=f"{prefix}_save",
+            help="Writes the current field edits back to enrichment.json only. It does not approve or push anything.",
+        ):
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
             st.success("Saved practice edits.")
     with b2:
-        if st.button("Approve Practice", key=f"{prefix}_approve"):
+        if st.button(
+            "Approve Practice",
+            key=f"{prefix}_approve",
+            help=(
+                "Marks the proposal approved locally. Only Existing practice evidence and Promote to registry practice "
+                "can be approved; held evidence remains blocked from push."
+            ),
+        ):
             if item["practice_fit"] not in {"registry_practice", "existing_practice"}:
                 st.error(
                     "This proposal is held as evidence/needs clustering. "
@@ -7334,7 +7491,14 @@ def _render_single_practice_editor(record: dict) -> None:
                 _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
                 st.success("Approved locally. Push approved practices to Sanity when ready.")
     with b3:
-        if st.button("Keep as Evidence", key=f"{prefix}_evidence"):
+        if st.button(
+            "Keep as Evidence",
+            key=f"{prefix}_evidence",
+            help=(
+                "Converts this proposal to local evidence, marks it rejected for push, and preserves it for future "
+                "cluster consolidation. It does not delete the quote."
+            ),
+        ):
             item["practice_fit"] = "candidate_evidence"
             item["approved"] = False
             item["rejected"] = True
@@ -7344,7 +7508,14 @@ def _render_single_practice_editor(record: dict) -> None:
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
             st.success("Kept as local practice evidence for future consolidation.")
     with b4:
-        if st.button("Promote", key=f"{prefix}_promote"):
+        if st.button(
+            "Promote",
+            key=f"{prefix}_promote",
+            help=(
+                "Changes the fit to registry_practice but leaves it pending. Review the cluster and rationale, "
+                "then approve before pushing."
+            ),
+        ):
             item["practice_fit"] = "registry_practice"
             item["approved"] = False
             item["rejected"] = False

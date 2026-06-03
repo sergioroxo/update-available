@@ -310,8 +310,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1148
-- Latest completed milestone: Practice evidence clustering guard
+- Tests passing: 1151
+- Latest completed milestone: Practice cluster review visibility + decision help
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -399,13 +399,18 @@ Recommended order for a new session:
     `practice_fit_rationale`, and `existing_practice_id`.
   - Model-created practice labels such as `Practice: ROGD-Diagnosis` default to
     `needs_clustering` and infer a local cluster such as `rogd` or `parent_guidance`.
-  - Practice Queue shows fit/cluster, supports "Keep as Evidence" and "Promote",
-    and blocks approval/push until a proposal is linked to an existing practice or
-    deliberately promoted to `registry_practice`.
+  - Practice Queue shows a cluster overview before individual proposal review:
+    cluster, proposal count, held evidence, push candidates, docs, and example
+    practice labels. It also supports filtering to one cluster.
+  - Practice editor shows a decision guide and detailed helper text for fit,
+    cluster, existing-practice ID, rationale, notes, and each action button.
+  - Practice Queue still supports "Keep as Evidence" and "Promote", and blocks
+    approval/push until a proposal is linked to an existing practice or deliberately
+    promoted to `registry_practice`.
   - `write_practice_from_proposal()` rejects `needs_clustering`,
     `candidate_evidence`, and `not_practice`, protecting app and CLI paths.
   - Complement enrichment preserves practice fit/cluster decisions.
-  - 1148 total tests passing.
+  - 1151 total tests passing.
 - Researcher Readiness / Next Actions layer built ✓
   - New `runner/app_readiness.py` (pure, no st.*): `ReadinessItem`, `DocumentReadiness`,
     `summarize_enrichment_lifecycle`, `build_document_readiness`.

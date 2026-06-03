@@ -343,6 +343,95 @@ def test_source_queue_initial_priority_keeps_manual_add_only_choice():
 
 
 # ---------------------------------------------------------------------------
+# Practice Queue cluster review helpers
+# ---------------------------------------------------------------------------
+
+def test_practice_cluster_summary_groups_related_labels():
+    from runner.app import _practice_cluster_summary
+
+    records = [
+        {
+            "doc_id": "8fe67e19",
+            "item": {
+                "practice_id": "Practice: ROGD-Diagnosis",
+                "practice_cluster": "rogd",
+                "practice_fit": "needs_clustering",
+            },
+        },
+        {
+            "doc_id": "8fe67e19",
+            "item": {
+                "practice_id": "Practice: ROGD-Promotion",
+                "practice_cluster": "rogd",
+                "practice_fit": "candidate_evidence",
+                "rejected": True,
+            },
+        },
+    ]
+
+    summary = _practice_cluster_summary(records)
+
+    assert summary == [
+        {
+            "cluster": "rogd",
+            "proposals": 2,
+            "needs_review": 1,
+            "held_evidence": 2,
+            "push_candidate": 0,
+            "docs": "8fe67e19",
+            "examples": "Practice: ROGD-Diagnosis; Practice: ROGD-Promotion",
+        }
+    ]
+
+
+def test_practice_cluster_summary_counts_push_candidates():
+    from runner.app import _practice_cluster_summary
+
+    records = [
+        {
+            "doc_id": "doc-a",
+            "item": {
+                "practice_id": "Strategic Guidance for Parents",
+                "practice_cluster": "parent_guidance",
+                "practice_fit": "existing_practice",
+                "approved": True,
+            },
+        },
+        {
+            "doc_id": "doc-b",
+            "item": {
+                "practice_id": "Tactical Guidance for Parents",
+                "practice_cluster": "parent_guidance",
+                "practice_fit": "registry_practice",
+            },
+        },
+    ]
+
+    summary = _practice_cluster_summary(records)
+    row = summary[0]
+
+    assert row["cluster"] == "parent_guidance"
+    assert row["push_candidate"] == 2
+    assert row["held_evidence"] == 0
+    assert row["needs_review"] == 1
+    assert row["docs"] == "doc-a, doc-b"
+
+
+def test_practice_cluster_summary_uses_unclustered_fallback_last():
+    from runner.app import _practice_cluster_summary
+
+    summary = _practice_cluster_summary(
+        [
+            {"doc_id": "doc-a", "item": {"practice_id": "Unclear practice"}},
+            {"doc_id": "doc-b", "item": {"practice_id": "ROGD", "practice_cluster": "rogd"}},
+        ]
+    )
+
+    assert [row["cluster"] for row in summary] == ["rogd", "unclustered"]
+    assert summary[1]["held_evidence"] == 1
+
+
+# ---------------------------------------------------------------------------
 # Bug fixes: registry summary table + "no evidence" caption
 # ---------------------------------------------------------------------------
 
