@@ -485,6 +485,7 @@ Solves the "one document invents several near-duplicate practice registry entrie
 - Cluster overview now includes human-readable meanings and review hints for `rogd`, `parent_guidance`, `pathologization`, `pastoral_guidance`, `clinical_authority`, `institutional_legitimation`, `media_dissemination`, `legal_policy_advocacy`, `testimony_narrative`, and `unclustered`.
 - Older proposals with blank `practice_cluster` are interpreted in the UI using `infer_practice_cluster()`, so labels such as `Practice: ROGD-Diagnosis` and `Practice: Strategic-Guidance-for-Parents` appear under `rogd` / `parent_guidance` before manual save.
 - The practice editor uses a category picker plus optional custom snake_case override instead of an empty free-text-only field.
+- A visible "Save Cluster Choice" button saves the cluster/fit/top-section fields immediately, then reruns the app with a confirmation message so the table reflects the updated JSON state.
 - The practice editor adds a decision guide plus detailed helper text for practice fit, cluster, existing-practice ID, rationale, notes, and each action button.
 - It should now be clearer that clusters are local evidence/consolidation buckets, while `registry_practice` and `existing_practice` are the only pushable paths.
 - App bulk push and lower-level `write_practice_from_proposal()` reject `needs_clustering`, `candidate_evidence`, and `not_practice`. This protects both app and CLI paths.

@@ -410,6 +410,9 @@ Recommended order for a new session:
     `infer_practice_cluster()`, so existing records are grouped before manual save.
   - Practice editor uses a cluster category picker plus optional custom snake_case
     override instead of a blank free-text-only field.
+  - "Save Cluster Choice" writes the cluster/fit/top-section fields immediately
+    and reruns with a confirmation message so the queue/table reflects the saved
+    state.
   - Practice editor shows a decision guide and detailed helper text for fit,
     cluster, cluster meaning, existing-practice ID, rationale, notes, and each
     action button.

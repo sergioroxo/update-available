@@ -7523,6 +7523,9 @@ def _render_single_tactic_editor(record: dict) -> None:
 def _render_single_practice_editor(record: dict) -> None:
     item = dict(record["item"])
     prefix = f"practice_{record['doc_id']}_{record['index']}"
+    flash_key = f"{prefix}_flash"
+    if st.session_state.get(flash_key):
+        st.success(st.session_state.pop(flash_key))
     with st.expander("Practice-fit decision guide", expanded=False):
         st.caption(
             "Use this before approving. The safest default is to keep narrow model labels as clustered evidence "
@@ -7599,6 +7602,17 @@ def _render_single_practice_editor(record: dict) -> None:
         )
         item["sanity_id"] = st.text_input("Sanity id", value=item.get("sanity_id", "") or "", disabled=True, key=f"{prefix}_sanity")
         item["pushed_to_sanity"] = st.checkbox("Pushed to Sanity", value=item.get("pushed_to_sanity", False), disabled=True, key=f"{prefix}_pushed")
+        if st.button(
+            "Save Cluster Choice",
+            key=f"{prefix}_save_cluster",
+            help=(
+                "Saves the selected cluster, practice fit, harm stance, existing practice ID, and current top section. "
+                "Use this to confirm clustering before deciding whether the item stays as evidence or becomes pushable."
+            ),
+        ):
+            _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
+            st.session_state[flash_key] = "Saved cluster choice."
+            st.rerun()
 
     if item["practice_fit"] in {"needs_clustering", "candidate_evidence"}:
         st.info(
@@ -7650,7 +7664,8 @@ def _render_single_practice_editor(record: dict) -> None:
             help="Writes the current field edits back to enrichment.json only. It does not approve or push anything.",
         ):
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.success("Saved practice edits.")
+            st.session_state[flash_key] = "Saved practice edits."
+            st.rerun()
     with b2:
         if st.button(
             "Approve Practice",
@@ -7672,7 +7687,8 @@ def _render_single_practice_editor(record: dict) -> None:
                 item["rejected"] = False
                 item["proposal_status"] = "approved"
                 _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-                st.success("Approved locally. Push approved practices to Sanity when ready.")
+                st.session_state[flash_key] = "Approved locally. Push approved practices to Sanity when ready."
+                st.rerun()
     with b3:
         if st.button(
             "Keep as Evidence",
@@ -7689,7 +7705,8 @@ def _render_single_practice_editor(record: dict) -> None:
             if not item.get("practice_fit_rationale"):
                 item["practice_fit_rationale"] = "Kept as clusterable practice evidence, not a registry entry."
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.success("Kept as local practice evidence for future consolidation.")
+            st.session_state[flash_key] = "Kept as local practice evidence for future consolidation."
+            st.rerun()
     with b4:
         if st.button(
             "Promote",
@@ -7706,7 +7723,8 @@ def _render_single_practice_editor(record: dict) -> None:
             if not item.get("practice_fit_rationale"):
                 item["practice_fit_rationale"] = "Researcher promoted this evidence cluster to a candidate registry practice."
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.success("Promoted to registry-practice candidate. Review and approve before push.")
+            st.session_state[flash_key] = "Promoted to registry-practice candidate. Review and approve before push."
+            st.rerun()
 
 
 def _render_single_claim_editor(record: dict) -> None:
