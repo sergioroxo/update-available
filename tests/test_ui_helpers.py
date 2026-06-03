@@ -147,7 +147,7 @@ def test_open_document_from_inbox_sets_navigation_and_clears_filters():
     assert mock_ss["doc_list_filter_intensity"] == "All"
     assert mock_ss["_nav_to"] == "Document List"
     assert mock_ss["page"] == "Document List"
-    assert mock_ss["nav_page"] == "Document List"
+    assert mock_ss["nav_page"] == "Review Inbox"
 
 
 def test_panel_reset_clears_on_doc_switch():

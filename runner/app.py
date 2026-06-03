@@ -498,7 +498,6 @@ def _open_document_from_inbox(doc_id: str) -> None:
     st.session_state["doc_list_filter_intensity"] = "All"
     st.session_state["_nav_to"] = "Document List"
     st.session_state["page"] = "Document List"
-    st.session_state["nav_page"] = "Document List"
 
 
 def page_review_inbox():
