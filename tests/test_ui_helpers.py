@@ -364,7 +364,6 @@ def test_practice_cluster_summary_groups_related_labels():
                 "practice_id": "Practice: ROGD-Promotion",
                 "practice_cluster": "rogd",
                 "practice_fit": "candidate_evidence",
-                "rejected": True,
             },
         },
     ]
@@ -494,6 +493,47 @@ def test_practice_review_status_does_not_show_blocked_fit_as_approved():
     }
 
     assert _practice_review_status(item) == "Needs review"
+
+
+def test_candidate_practice_evidence_has_own_status():
+    from runner.app import _practice_review_status
+
+    item = {
+        "practice_fit": "candidate_evidence",
+        "practice_cluster": "rogd",
+        "proposal_status": "pending",
+    }
+
+    assert _practice_review_status(item) == "Evidence only"
+
+
+def test_save_cluster_as_evidence_converts_needs_framing():
+    from runner.app import _save_cluster_as_evidence_if_ready
+
+    item = {
+        "practice_id": "Practice: ROGD-Diagnosis",
+        "practice_fit": "needs_clustering",
+        "practice_cluster": "rogd",
+        "approved": True,
+        "rejected": True,
+        "proposal_status": "approved",
+    }
+
+    assert _save_cluster_as_evidence_if_ready(item) is True
+    assert item["practice_fit"] == "candidate_evidence"
+    assert item["approved"] is False
+    assert item["rejected"] is False
+    assert item["proposal_status"] == "pending"
+    assert "rogd" in item["practice_fit_rationale"]
+
+
+def test_save_cluster_as_evidence_skips_unclustered():
+    from runner.app import _save_cluster_as_evidence_if_ready
+
+    item = {"practice_fit": "needs_clustering", "practice_cluster": "unclustered"}
+
+    assert _save_cluster_as_evidence_if_ready(item) is False
+    assert item["practice_fit"] == "needs_clustering"
 
 
 def test_clear_stale_practice_approval_when_fit_is_not_pushable():

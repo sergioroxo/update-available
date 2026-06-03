@@ -310,8 +310,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1158
-- Latest completed milestone: Non-blocking enrichment + practice approval guard
+- Tests passing: 1161
+- Latest completed milestone: Evidence-only practice cluster path
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -411,8 +411,10 @@ Recommended order for a new session:
   - Practice editor uses a cluster category picker plus optional custom snake_case
     override instead of a blank free-text-only field.
   - "Save Cluster Choice" writes the cluster/fit/top-section fields immediately
-    and reruns with a confirmation message so the queue/table reflects the saved
-    state.
+    and converts `needs_clustering` + real cluster into Evidence only, then reruns
+    with a confirmation message so the queue/table reflects the saved state.
+  - Evidence-only items get their own Practice Queue status/metric. They are local
+    cluster evidence, not rejected proposals and not standalone push candidates.
   - Stale approval repair: `needs_clustering`, `candidate_evidence`,
     `not_practice`, and `existing_practice` without `existing_practice_id` render
     as Needs review even if old JSON says approved; saving clears stale approval.
@@ -425,7 +427,7 @@ Recommended order for a new session:
   - `write_practice_from_proposal()` rejects `needs_clustering`,
     `candidate_evidence`, and `not_practice`, protecting app and CLI paths.
   - Complement enrichment preserves practice fit/cluster decisions.
-  - 1158 total tests passing.
+  - 1161 total tests passing.
 - Background Complement enrichment from review UI built ✓
   - `_render_complement_enrichment_action()` starts `python -m runner enrich <doc_id> --yes`
     with `subprocess.Popen`, not blocking `subprocess.run`.

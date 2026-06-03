@@ -2,8 +2,8 @@
 **Generated:** 2026-06-02
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 1158
-**Latest completed milestone:** Non-blocking enrichment + practice approval guard
+**Tests passing:** 1161
+**Latest completed milestone:** Evidence-only practice cluster path
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -479,19 +479,20 @@ Solves the "one document invents several near-duplicate practice registry entrie
 - New model helpers infer clusters from `practice_id` / description text. Examples:
   - `Practice: ROGD-Diagnosis` → `practice_cluster="rogd"`
   - parent/family guidance labels → `practice_cluster="parent_guidance"`
-- New model-created practice labels default to `practice_fit="needs_clustering"` and are held as local evidence. They are not eligible for push until the researcher links them to an existing practice or promotes them to `registry_practice`.
+- New model-created practice labels default to `practice_fit="needs_clustering"` only until framed. Saving a real cluster automatically converts them to `practice_fit="candidate_evidence"` ("Evidence only"), which preserves them under the cluster without making them standalone practice entries.
 - `runner/pipeline/enrich.py` normalizes these fields and preserves them across Complement enrichment.
 - Practice Queue shows a cluster overview (`cluster`, proposal count, held evidence, push candidates, docs, examples), supports cluster filtering, and then shows practice fit + cluster per proposal.
 - Cluster overview now includes human-readable meanings and review hints for `rogd`, `parent_guidance`, `pathologization`, `pastoral_guidance`, `clinical_authority`, `institutional_legitimation`, `media_dissemination`, `legal_policy_advocacy`, `testimony_narrative`, and `unclustered`.
 - Older proposals with blank `practice_cluster` are interpreted in the UI using `infer_practice_cluster()`, so labels such as `Practice: ROGD-Diagnosis` and `Practice: Strategic-Guidance-for-Parents` appear under `rogd` / `parent_guidance` before manual save.
 - The practice editor uses a category picker plus optional custom snake_case override instead of an empty free-text-only field.
-- A visible "Save Cluster Choice" button saves the cluster/fit/top-section fields immediately, then reruns the app with a confirmation message so the table reflects the updated JSON state.
+- A visible "Save Cluster Choice" button saves the cluster/fit/top-section fields immediately, converts `needs_clustering` + real cluster into Evidence only, then reruns the app with a confirmation message so the table reflects the updated JSON state.
+- Evidence-only items get their own Practice Queue status/metric. They are not "Rejected"; they are local cluster evidence and are intentionally blocked from standalone practice push.
 - Stale approvals are no longer treated as pushable when `practice_fit` is `needs_clustering`, `candidate_evidence`, `not_practice`, or `existing_practice` without `existing_practice_id`; saving clears the stale approval back to pending.
 - The practice editor adds a decision guide plus detailed helper text for practice fit, cluster, existing-practice ID, rationale, notes, and each action button.
 - It should now be clearer that clusters are local evidence/consolidation buckets, while `registry_practice` and `existing_practice` are the only pushable paths.
 - App bulk push and lower-level `write_practice_from_proposal()` reject `needs_clustering`, `candidate_evidence`, and `not_practice`. This protects both app and CLI paths.
 - For the `8fe67e19` examples (`ROGD-Diagnosis`, `ROGD-Promotion`, parent guidance variants), the safe path is to keep them as evidence under a cluster, then consolidate later into one broader practice if the pilot shows the category is stable.
-- 18 new/updated tests across the guard, cluster-review visibility, cluster catalogue, legacy blank-cluster inference, and stale approval repair; 1158 total passing.
+- 21 new/updated tests across the guard, cluster-review visibility, cluster catalogue, legacy blank-cluster inference, stale approval repair, and Evidence-only conversion; 1161 total passing.
 
 ---
 

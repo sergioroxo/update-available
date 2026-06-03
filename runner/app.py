@@ -6356,8 +6356,8 @@ _PRACTICE_FIT_OPTIONS = [
 ]
 
 _PRACTICE_FIT_LABELS = {
-    "needs_clustering": "Needs clustering",
-    "candidate_evidence": "Keep as evidence",
+    "needs_clustering": "Needs framing",
+    "candidate_evidence": "Evidence only",
     "existing_practice": "Existing practice evidence",
     "registry_practice": "Promote to registry practice",
     "not_practice": "Not a practice",
@@ -6365,14 +6365,13 @@ _PRACTICE_FIT_LABELS = {
 
 _PRACTICE_FIT_HELP = {
     "needs_clustering": (
-        "Use when the model found practice-like evidence, but the label is too narrow, "
-        "duplicative, or not ready to become a registry entry. It stays in enrichment.json, "
-        "is grouped by practice_cluster, and cannot be pushed until linked or promoted."
+        "Temporary state for model-created practice-like evidence before it is framed. "
+        "Choose/save a cluster to keep it as evidence, or deliberately link/promote it."
     ),
     "candidate_evidence": (
-        "Use when the quote is useful evidence for a broader pattern, but this proposal "
-        "should not become its own practice. It is kept locally for future consolidation "
-        "and is blocked from Sanity push."
+        "Use when the quote is useful evidence under a broader cluster, tactic, or strategy, "
+        "but should not become its own practice registry entry. It stays local and is blocked "
+        "from Sanity push."
     ),
     "existing_practice": (
         "Use when Sanity already has the practice and this document only adds evidence. "
@@ -6390,13 +6389,14 @@ _PRACTICE_FIT_HELP = {
 }
 
 _PRACTICE_FIT_DECISION_GUIDE = {
-    "Needs clustering": (
-        "Default safe state for model-created labels like ROGD-Diagnosis. Keep related "
-        "items under the same cluster until the broader category is clear."
+    "Needs framing": (
+        "Temporary default for model-created labels like ROGD-Diagnosis. Once you choose "
+        "a real cluster, save it as evidence unless you are deliberately linking/promoting."
     ),
-    "Keep as evidence": (
+    "Evidence only": (
         "Preserves the quote and rationale for later analysis, but prevents this item "
-        "from becoming a public registry record."
+        "from becoming a public registry record. This is the normal path for sub-labels "
+        "under a broader cluster such as ROGD."
     ),
     "Existing practice evidence": (
         "Use when the cluster already maps to a Sanity practice. Requires "
@@ -6544,6 +6544,8 @@ def _practice_fit(item: dict) -> str:
 
 def _practice_push_block_reason(item: dict) -> str:
     fit = _practice_fit(item)
+    if fit == "candidate_evidence":
+        return "kept as evidence only; it is not a standalone practice registry entry."
     if fit not in {"registry_practice", "existing_practice"}:
         return (
             f"practice_fit={fit}; keep as evidence, cluster, link to an existing "
@@ -6557,6 +6559,8 @@ def _practice_push_block_reason(item: dict) -> str:
 def _practice_review_status(item: dict) -> str:
     if item.get("proposal_status") == "pushed" or item.get("pushed_to_sanity"):
         return "Pushed"
+    if _practice_fit(item) == "candidate_evidence":
+        return "Evidence only"
     if item.get("proposal_status") == "rejected" or item.get("rejected"):
         return "Rejected"
     if item.get("proposal_status") == "approved" or item.get("approved"):
@@ -6575,6 +6579,23 @@ def _clear_stale_practice_approval_if_blocked(item: dict) -> bool:
         return False
     item["approved"] = False
     item["proposal_status"] = "pending"
+    return True
+
+
+def _save_cluster_as_evidence_if_ready(item: dict) -> bool:
+    if _practice_fit(item) != "needs_clustering":
+        return False
+    cluster = _practice_cluster_key(item)
+    if cluster == "unclustered":
+        return False
+    item["practice_fit"] = "candidate_evidence"
+    item["approved"] = False
+    item["rejected"] = False
+    item["proposal_status"] = "pending"
+    if not item.get("practice_fit_rationale"):
+        item["practice_fit_rationale"] = (
+            f"Kept as evidence under the `{cluster}` cluster; not a standalone practice entry."
+        )
     return True
 
 
@@ -6698,6 +6719,7 @@ def _proposal_status_counts(records: list[dict]) -> dict[str, int]:
 def _practice_status_counts(records: list[dict]) -> dict[str, int]:
     counts = {
         "Needs review": 0,
+        "Evidence only": 0,
         "Approved, not pushed": 0,
         "Pushed": 0,
         "Rejected": 0,
@@ -6719,11 +6741,12 @@ def _render_proposal_status_metrics(records: list[dict]) -> None:
 
 def _render_practice_status_metrics(records: list[dict]) -> None:
     status_counts = _practice_status_counts(records)
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Needs review", status_counts["Needs review"])
-    c2.metric("Approved, not pushed", status_counts["Approved, not pushed"])
-    c3.metric("Pushed", status_counts["Pushed"])
-    c4.metric("Rejected", status_counts["Rejected"])
+    c2.metric("Evidence only", status_counts["Evidence only"])
+    c3.metric("Approved, not pushed", status_counts["Approved, not pushed"])
+    c4.metric("Pushed", status_counts["Pushed"])
+    c5.metric("Rejected", status_counts["Rejected"])
 
 
 def _proposal_display_position(record: dict) -> int:
@@ -7751,23 +7774,29 @@ def _render_single_practice_editor(record: dict) -> None:
             "Save Cluster Choice",
             key=f"{prefix}_save_cluster",
             help=(
-                "Saves the selected cluster, practice fit, harm stance, existing practice ID, and current top section. "
-                "Use this to confirm clustering before deciding whether the item stays as evidence or becomes pushable."
+                "Saves the selected cluster and top-section fields. If the fit is Needs framing and a real cluster "
+                "is selected, the item is automatically kept as Evidence only."
             ),
         ):
+            converted_to_evidence = _save_cluster_as_evidence_if_ready(item)
             stale_cleared = _clear_stale_practice_approval_if_blocked(item)
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.session_state[flash_key] = (
-                "Saved cluster choice and cleared stale approval."
-                if stale_cleared else "Saved cluster choice."
-            )
+            if converted_to_evidence:
+                st.session_state[flash_key] = (
+                    f"Saved as evidence under `{item['practice_cluster']}`. It will not be pushed as a standalone practice."
+                )
+            else:
+                st.session_state[flash_key] = (
+                    "Saved cluster choice and cleared stale approval."
+                    if stale_cleared else "Saved cluster choice."
+                )
             st.rerun()
 
     if item["practice_fit"] in {"needs_clustering", "candidate_evidence"}:
         st.info(
-            "This practice proposal is held locally as clusterable evidence. "
-            "It will not create a new practice registry entry until you promote "
-            "it or link it to an existing practice."
+            "This item is local evidence under a cluster, not a standalone practice entry. "
+            "That is expected for labels such as ROGD-Diagnosis/ROGD-Promotion when they "
+            "are better understood as sub-strategies or tactic evidence."
         )
     elif item["practice_fit"] == "existing_practice" and not item.get("existing_practice_id"):
         st.warning("Fill `existing_practice_id` before approving/pushing this as existing-practice evidence.")
@@ -7812,53 +7841,55 @@ def _render_single_practice_editor(record: dict) -> None:
             key=f"{prefix}_save",
             help="Writes the current field edits back to enrichment.json only. It does not approve or push anything.",
         ):
+            converted_to_evidence = _save_cluster_as_evidence_if_ready(item)
             stale_cleared = _clear_stale_practice_approval_if_blocked(item)
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.session_state[flash_key] = (
-                "Saved practice edits and cleared stale approval."
-                if stale_cleared else "Saved practice edits."
-            )
+            if converted_to_evidence:
+                st.session_state[flash_key] = (
+                    f"Saved as evidence under `{item['practice_cluster']}`. It will not be pushed as a standalone practice."
+                )
+            else:
+                st.session_state[flash_key] = (
+                    "Saved practice edits and cleared stale approval."
+                    if stale_cleared else "Saved practice edits."
+                )
             st.rerun()
     with b2:
+        approve_block_reason = _practice_push_block_reason(item)
         if st.button(
             "Approve Practice",
             key=f"{prefix}_approve",
             help=(
-                "Marks the proposal approved locally. Only Existing practice evidence and Promote to registry practice "
-                "can be approved; held evidence remains blocked from push."
+                approve_block_reason
+                or "Marks the proposal approved locally. Only Existing practice evidence and Promote to registry practice can be approved."
             ),
+            disabled=bool(approve_block_reason),
         ):
-            if item["practice_fit"] not in {"registry_practice", "existing_practice"}:
-                st.error(
-                    "This proposal is held as evidence/needs clustering. "
-                    "Promote it or link it to an existing practice before approval."
-                )
-            elif item["practice_fit"] == "existing_practice" and not item.get("existing_practice_id"):
-                st.error("Fill existing_practice_id before approving existing-practice evidence.")
-            else:
-                item["approved"] = True
-                item["rejected"] = False
-                item["proposal_status"] = "approved"
-                _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-                st.session_state[flash_key] = "Approved locally. Push approved practices to Sanity when ready."
-                st.rerun()
+            item["approved"] = True
+            item["rejected"] = False
+            item["proposal_status"] = "approved"
+            _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
+            st.session_state[flash_key] = "Approved locally. Push approved practices to Sanity when ready."
+            st.rerun()
+        if approve_block_reason:
+            st.caption(f"Approval disabled: {approve_block_reason}")
     with b3:
         if st.button(
             "Keep as Evidence",
             key=f"{prefix}_evidence",
             help=(
-                "Converts this proposal to local evidence, marks it rejected for push, and preserves it for future "
-                "cluster consolidation. It does not delete the quote."
+                "Converts this proposal to Evidence only: local, preserved under its cluster, and blocked from "
+                "standalone practice push. It does not delete the quote."
             ),
         ):
             item["practice_fit"] = "candidate_evidence"
             item["approved"] = False
-            item["rejected"] = True
-            item["proposal_status"] = "rejected"
+            item["rejected"] = False
+            item["proposal_status"] = "pending"
             if not item.get("practice_fit_rationale"):
-                item["practice_fit_rationale"] = "Kept as clusterable practice evidence, not a registry entry."
+                item["practice_fit_rationale"] = "Kept as cluster evidence, not a standalone practice registry entry."
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.session_state[flash_key] = "Kept as local practice evidence for future consolidation."
+            st.session_state[flash_key] = "Kept as local evidence under its cluster."
             st.rerun()
     with b4:
         if st.button(
