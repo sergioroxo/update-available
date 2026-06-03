@@ -21,6 +21,8 @@ import difflib
 import json
 import os
 import re
+import shlex
+import subprocess
 import sys
 import unicodedata
 from datetime import datetime, timezone
@@ -3550,12 +3552,84 @@ def _render_doc_action_feedback(doc_id: str) -> None:
         st.info(message)
 
 
-def _run_complement_enrichment(doc_id: str):
-    """Run merge-aware enrichment for an existing document."""
-    return __import__("subprocess").run(
-        [sys.executable, "-m", "runner", "enrich", doc_id, "--yes"],
-        capture_output=True, text=True, cwd=_project_root,
-    )
+def _complement_enrichment_command(doc_id: str) -> list[str]:
+    return [sys.executable, "-m", "runner", "enrich", doc_id, "--yes"]
+
+
+def _job_log_tail(path: Path, limit: int = 2400) -> str:
+    if not path.exists():
+        return ""
+    text = path.read_text(encoding="utf-8", errors="replace")
+    return text[-limit:]
+
+
+def _start_complement_enrichment_job(doc_id: str, key_prefix: str) -> dict:
+    """Start merge-aware enrichment without blocking the Streamlit app."""
+    safe_prefix = re.sub(r"[^a-zA-Z0-9_.-]+", "-", key_prefix).strip("-") or "app"
+    safe_doc_id = re.sub(r"[^a-zA-Z0-9_.-]+", "-", doc_id).strip("-") or "doc"
+    started = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    log_dir = _project_root / "exports" / "app_jobs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{started}_{safe_prefix}_{safe_doc_id}_enrich.log"
+    command = _complement_enrichment_command(doc_id)
+    with log_path.open("w", encoding="utf-8") as log_file:
+        log_file.write(f"$ {shlex.join(command)}\n\n")
+        log_file.flush()
+        proc = subprocess.Popen(
+            command,
+            cwd=_project_root,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    return {
+        "process": proc,
+        "pid": proc.pid,
+        "started_at": started,
+        "log_path": str(log_path),
+        "command": shlex.join(command),
+    }
+
+
+def _render_complement_enrichment_job(job_key: str) -> bool:
+    job = st.session_state.get(job_key)
+    if not job:
+        return False
+    proc = job.get("process")
+    returncode = proc.poll() if proc is not None else None
+    log_path = Path(job.get("log_path", ""))
+
+    if returncode is None:
+        st.info(
+            f"Complement enrichment is running in the background "
+            f"(PID {job.get('pid')}). You can keep using the app."
+        )
+        c1, c2 = st.columns([1, 1])
+        if c1.button("Refresh enrichment status", key=f"{job_key}_refresh"):
+            st.rerun()
+        if c2.button("Forget this status card", key=f"{job_key}_forget_running"):
+            st.session_state.pop(job_key, None)
+            st.rerun()
+        tail = _job_log_tail(log_path)
+        if tail:
+            with st.expander("Enrichment log tail", expanded=False):
+                st.code(tail, language="text")
+        st.caption(f"Log: `{log_path}`")
+        return True
+
+    if returncode == 0:
+        st.success("Complement enrichment finished. Refresh/reopen the document to review new merged proposals.")
+    else:
+        st.error(f"Complement enrichment exited with code {returncode}.")
+    tail = _job_log_tail(log_path)
+    if tail:
+        with st.expander("Enrichment log tail", expanded=returncode != 0):
+            st.code(tail, language="text")
+    st.caption(f"Log: `{log_path}`")
+    if st.button("Clear enrichment status", key=f"{job_key}_clear_done"):
+        st.session_state.pop(job_key, None)
+        st.rerun()
+    return False
 
 
 def _render_complement_enrichment_action(
@@ -3567,6 +3641,7 @@ def _render_complement_enrichment_action(
 ) -> None:
     """Render the merge-aware enrichment rerun action."""
     feedback_key = f"complement_enrichment_feedback_{key_prefix}_{doc_id}"
+    job_key = f"complement_enrichment_job_{key_prefix}_{doc_id}"
     feedback = st.session_state.pop(feedback_key, None)
     if feedback:
         level = feedback.get("level", "info")
@@ -3584,31 +3659,38 @@ def _render_complement_enrichment_action(
             "`enrichment.json` without deleting reviewed proposals, IDs, notes, "
             "or push state."
         )
+        st.caption(
+            "This can take several minutes. The app now starts it as a background job "
+            "so review work is not blocked."
+        )
+
+    job_active = _render_complement_enrichment_job(job_key)
+    command = shlex.join(_complement_enrichment_command(doc_id))
+    with st.expander("Terminal command", expanded=False):
+        st.code(command, language="bash")
 
     if st.button(
-        "✨ Complement enrichment",
+        "✨ Start background enrichment",
         key=f"complement_enrichment_{key_prefix}_{doc_id}",
-        help="Merge-safe enrichment rerun. Existing reviewed proposals are preserved; new unique proposals are appended.",
+        help=(
+            "Starts merge-safe enrichment in the background. Existing reviewed proposals are preserved; "
+            "new unique proposals are appended."
+        ),
+        disabled=job_active,
     ):
-        with st.spinner("Running enrichment and merging with existing proposals…"):
-            r = _run_complement_enrichment(doc_id)
-        if r.returncode == 0:
-            message = (
-                "Enrichment merged. Existing reviewed proposals were preserved; "
-                "review any new proposals and the merge summary in the audit."
-            )
+        try:
+            st.session_state[job_key] = _start_complement_enrichment_job(doc_id, key_prefix)
             if feedback_to_doc_card:
-                _set_doc_action_feedback(doc_id, "success", message)
-            else:
-                st.session_state[feedback_key] = {"level": "success", "message": message}
-        else:
-            message = "Re-enrichment failed:\n\n" + (
-                r.stderr[-1200:] or r.stdout[-1200:] or "(no output)"
-            )
-            if feedback_to_doc_card:
-                _set_doc_action_feedback(doc_id, "error", message)
-            else:
-                st.session_state[feedback_key] = {"level": "error", "message": message}
+                _set_doc_action_feedback(
+                    doc_id,
+                    "info",
+                    "Complement enrichment started in the background. Check the status card or log.",
+                )
+        except Exception as exc:
+            st.session_state[feedback_key] = {
+                "level": "error",
+                "message": f"Could not start background enrichment: {exc}",
+            }
         st.rerun()
 
 
@@ -6460,6 +6542,42 @@ def _practice_fit(item: dict) -> str:
     return fit if fit in _PRACTICE_FIT_OPTIONS else "needs_clustering"
 
 
+def _practice_push_block_reason(item: dict) -> str:
+    fit = _practice_fit(item)
+    if fit not in {"registry_practice", "existing_practice"}:
+        return (
+            f"practice_fit={fit}; keep as evidence, cluster, link to an existing "
+            "practice, or promote before pushing."
+        )
+    if fit == "existing_practice" and not item.get("existing_practice_id"):
+        return "existing_practice requires existing_practice_id before push."
+    return ""
+
+
+def _practice_review_status(item: dict) -> str:
+    if item.get("proposal_status") == "pushed" or item.get("pushed_to_sanity"):
+        return "Pushed"
+    if item.get("proposal_status") == "rejected" or item.get("rejected"):
+        return "Rejected"
+    if item.get("proposal_status") == "approved" or item.get("approved"):
+        if _practice_push_block_reason(item):
+            return "Needs review"
+        return "Approved, not pushed"
+    return "Needs review"
+
+
+def _clear_stale_practice_approval_if_blocked(item: dict) -> bool:
+    if item.get("pushed_to_sanity"):
+        return False
+    if not (item.get("approved") or item.get("proposal_status") == "approved"):
+        return False
+    if not _practice_push_block_reason(item):
+        return False
+    item["approved"] = False
+    item["proposal_status"] = "pending"
+    return True
+
+
 def _practice_cluster_key(item: dict) -> str:
     cluster = str(item.get("practice_cluster") or "").strip()
     if cluster:
@@ -6519,7 +6637,7 @@ def _practice_cluster_summary(records: list[dict]) -> list[dict]:
         )
         fit = _practice_fit(item)
         row["proposals"] += 1
-        if _proposal_review_status(item) == "Needs review":
+        if _practice_review_status(item) == "Needs review":
             row["needs_review"] += 1
         if fit in {"needs_clustering", "candidate_evidence"}:
             row["held_evidence"] += 1
@@ -6577,8 +6695,30 @@ def _proposal_status_counts(records: list[dict]) -> dict[str, int]:
     return counts
 
 
+def _practice_status_counts(records: list[dict]) -> dict[str, int]:
+    counts = {
+        "Needs review": 0,
+        "Approved, not pushed": 0,
+        "Pushed": 0,
+        "Rejected": 0,
+    }
+    for record in records:
+        status = _practice_review_status(record["item"])
+        counts[status] = counts.get(status, 0) + 1
+    return counts
+
+
 def _render_proposal_status_metrics(records: list[dict]) -> None:
     status_counts = _proposal_status_counts(records)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Needs review", status_counts["Needs review"])
+    c2.metric("Approved, not pushed", status_counts["Approved, not pushed"])
+    c3.metric("Pushed", status_counts["Pushed"])
+    c4.metric("Rejected", status_counts["Rejected"])
+
+
+def _render_practice_status_metrics(records: list[dict]) -> None:
+    status_counts = _practice_status_counts(records)
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Needs review", status_counts["Needs review"])
     c2.metric("Approved, not pushed", status_counts["Approved, not pushed"])
@@ -6620,6 +6760,11 @@ def _format_confidence(value) -> str:
 
 def _proposal_expander_label(record: dict, label: str) -> str:
     status = _proposal_review_status(record["item"])
+    return f"[{status}] {record['doc_id']} · {label}"
+
+
+def _practice_expander_label(record: dict, label: str) -> str:
+    status = _practice_review_status(record["item"])
     return f"[{status}] {record['doc_id']} · {label}"
 
 
@@ -6970,13 +7115,13 @@ def _render_practice_queue(config, records: list[dict]) -> None:
             f"**{selected_info['label']}** — {selected_info['description']}\n\n"
             f"**Review hint:** {selected_info['review_hint']}"
         )
-    _render_proposal_status_metrics(records)
+    _render_practice_status_metrics(records)
     st.caption(
         "Proposal # is the local JSON position for editing/saving. It is not a model confidence score."
     )
     st.dataframe([
         {
-            "status": _proposal_review_status(record["item"]),
+            "status": _practice_review_status(record["item"]),
             "doc_id": record["doc_id"],
             "proposal #": _proposal_display_position(record),
             "practice_id": record["item"].get("practice_id", ""),
@@ -7007,17 +7152,11 @@ def _render_practice_queue(config, records: list[dict]) -> None:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
                 continue
-            fit = _practice_fit(item)
-            if fit not in {"registry_practice", "existing_practice"}:
+            block_reason = _practice_push_block_reason(item)
+            if block_reason:
                 errors.append(
                     f"{record['doc_id']} / {item.get('practice_id', '?')}: "
-                    f"practice_fit={fit}; keep as evidence or cluster/promote before pushing."
-                )
-                continue
-            if fit == "existing_practice" and not item.get("existing_practice_id"):
-                errors.append(
-                    f"{record['doc_id']} / {item.get('practice_id', '?')}: "
-                    "existing_practice requires existing_practice_id before push."
+                    f"{block_reason}"
                 )
                 continue
             try:
@@ -7054,7 +7193,7 @@ def _render_practice_queue(config, records: list[dict]) -> None:
     st.subheader("Review Practices")
     for record in records:
         item = record["item"]
-        label = _proposal_expander_label(record, item.get("practice_id", "(missing practice)"))
+        label = _practice_expander_label(record, item.get("practice_id", "(missing practice)"))
         with st.expander(label):
             _render_single_practice_editor(record)
 
@@ -7526,6 +7665,12 @@ def _render_single_practice_editor(record: dict) -> None:
     flash_key = f"{prefix}_flash"
     if st.session_state.get(flash_key):
         st.success(st.session_state.pop(flash_key))
+    initial_block_reason = _practice_push_block_reason(item)
+    if (item.get("approved") or item.get("proposal_status") == "approved") and initial_block_reason:
+        st.warning(
+            "This proposal has stale local approval, but its current Practice fit is not pushable. "
+            f"{initial_block_reason} Saving this proposal will clear the stale approval and return it to Needs review."
+        )
     with st.expander("Practice-fit decision guide", expanded=False):
         st.caption(
             "Use this before approving. The safest default is to keep narrow model labels as clustered evidence "
@@ -7610,8 +7755,12 @@ def _render_single_practice_editor(record: dict) -> None:
                 "Use this to confirm clustering before deciding whether the item stays as evidence or becomes pushable."
             ),
         ):
+            stale_cleared = _clear_stale_practice_approval_if_blocked(item)
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.session_state[flash_key] = "Saved cluster choice."
+            st.session_state[flash_key] = (
+                "Saved cluster choice and cleared stale approval."
+                if stale_cleared else "Saved cluster choice."
+            )
             st.rerun()
 
     if item["practice_fit"] in {"needs_clustering", "candidate_evidence"}:
@@ -7663,8 +7812,12 @@ def _render_single_practice_editor(record: dict) -> None:
             key=f"{prefix}_save",
             help="Writes the current field edits back to enrichment.json only. It does not approve or push anything.",
         ):
+            stale_cleared = _clear_stale_practice_approval_if_blocked(item)
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.session_state[flash_key] = "Saved practice edits."
+            st.session_state[flash_key] = (
+                "Saved practice edits and cleared stale approval."
+                if stale_cleared else "Saved practice edits."
+            )
             st.rerun()
     with b2:
         if st.button(

@@ -55,7 +55,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | ISO 639 language tags | Glossary, cross-language analysis | DS-1 added `AnalysisResult.languages`; DS-3 normalizes to ISO 639-1; deterministic language-ID check and Sanity schema migration later | Partial |
 | Temporal axis | Lexicon genealogy, timelines | Preserve `document_date`; reserve `first_attested` for terms/events | Pending |
 | Claim verification lifecycle | Claim/fact-check ledger | DS-4 added `verification_status`: unverified, verified, disputed, debunked, unverifiable | Done locally; Sanity/export later |
-| Practice evidence clustering | Practice/harm catalogue, future consolidation | Practice proposals now carry `practice_fit` + `practice_cluster`; Practice Queue infers legacy blank clusters and shows cluster overview/filter, catalogue picker/meanings, and decision help; model-created labels are held as evidence unless promoted/linked | Done locally; Sanity/export later |
+| Practice evidence clustering | Practice/harm catalogue, future consolidation | Practice proposals now carry `practice_fit` + `practice_cluster`; Practice Queue infers legacy blank clusters and shows cluster overview/filter, catalogue picker/meanings, decision help, and stale-approval repair; model-created labels are held as evidence unless promoted/linked | Done locally; Sanity/export later |
 | Embedding provenance | Semantic map, retrieval | Keep model/dimension; finish `vector(4096)` verification | Pending |
 
 ---
@@ -71,7 +71,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | Stop-on-uncertainty rules | Stop when Mac Studio/LiteLLM/Sanity/Supabase state is uncertain | TASK F | Partial: stop-on-ingest-failure + preflight checks built; richer service probes later if needed |
 | Morning report | Human-facing summary of what happened overnight | TASK F | Done as local Markdown batch report; aggregate dashboard later |
 | Preservation status sidecar | Make blocked/dynamic/social/video capture needs explicit without adding capture dependencies | TASK P | Done locally (`preservation_status.json`) |
-| Per-document readiness summary | One calm "what next / safe to push?" view per doc; unifies provenance blockers + enrichment lifecycle; ties Complement enrichment into the flow | Provenance panel | Done (`runner/app_readiness.py`) |
+| Per-document readiness summary | One calm "what next / safe to push?" view per doc; unifies provenance blockers + enrichment lifecycle; ties Complement enrichment into the flow | Provenance panel; Complement enrichment now launches as background app job with log/status instead of blocking UI | Done (`runner/app_readiness.py`) |
 | Corpus-wide review inbox | Status-grouped list of all docs with next-action hints; "Open" button pre-fills Document List search; flat layout, no nested expanders | Readiness layer + Streamlit | Done (`page_review_inbox`, `collect_corpus_readiness`) |
 | Stakes-ranked review inbox | Sort 🔴 group by tactic/type/confidence for testimony-first or legal-first review ordering | Corpus-wide inbox (done) + analysis tags | Pending — extend `collect_corpus_readiness` row with harm/type/confidence for sort |
 | Pilot calibration | Attended test batches across languages/types/stakes before overnight use | TASK F + TASK P | Started: one-item pilot complete after recovery |

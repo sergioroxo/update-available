@@ -2,8 +2,8 @@
 **Generated:** 2026-06-02
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 1155
-**Latest completed milestone:** Practice cluster picker + legacy inference
+**Tests passing:** 1158
+**Latest completed milestone:** Non-blocking enrichment + practice approval guard
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -459,7 +459,7 @@ Stable proposal identity, lifecycle status, and merge-aware re-enrichment. Follo
 
 **Also delivered:**
 - Network connection repair warning + dropdown in `_render_single_entity_editor()` — invalid role-like values such as `founder` / `team_member` are marked `needs_review` and can be repaired locally to an allowed type before approval.
-- Complement enrichment controls are now visible from Document List, Activity Log → Enrichment, and Provenance → Enrichment Audit. All use merge-aware `runner enrich <doc_id> --yes`.
+- Complement enrichment controls are now visible from Document List, Activity Log → Enrichment, and Provenance → Enrichment Audit. They start merge-aware `runner enrich <doc_id> --yes` as a background app job with PID/log/status instead of blocking the Streamlit UI.
 - `push_approved_to_sanity()` in `enrich.py` now syncs `proposal_status = "pushed"` on all 5 proposal families.
 - Entity registry-fit safety layer prevents podcasts/channels/publications/source projects from being pushed as organizations/persons. The Entity Queue shows `registry_fit`; the editor has a "Registry fit" selector, rationale field, and "Mark Media/Source" button. `write_entity_from_proposal()` rejects non-`registry_entity` proposals in both app and CLI paths.
 - Practice evidence clustering guard prevents model-created `Practice: ...` labels from becoming registry entries until clustered, linked, or explicitly promoted. The Practice Queue now shows a cluster overview, infers categories for older blank records, supports cluster filtering, includes a researcher-facing cluster catalogue/picker, and provides detailed decision help for practice-fit choices; Complement enrichment preserves those decisions.
@@ -486,11 +486,12 @@ Solves the "one document invents several near-duplicate practice registry entrie
 - Older proposals with blank `practice_cluster` are interpreted in the UI using `infer_practice_cluster()`, so labels such as `Practice: ROGD-Diagnosis` and `Practice: Strategic-Guidance-for-Parents` appear under `rogd` / `parent_guidance` before manual save.
 - The practice editor uses a category picker plus optional custom snake_case override instead of an empty free-text-only field.
 - A visible "Save Cluster Choice" button saves the cluster/fit/top-section fields immediately, then reruns the app with a confirmation message so the table reflects the updated JSON state.
+- Stale approvals are no longer treated as pushable when `practice_fit` is `needs_clustering`, `candidate_evidence`, `not_practice`, or `existing_practice` without `existing_practice_id`; saving clears the stale approval back to pending.
 - The practice editor adds a decision guide plus detailed helper text for practice fit, cluster, existing-practice ID, rationale, notes, and each action button.
 - It should now be clearer that clusters are local evidence/consolidation buckets, while `registry_practice` and `existing_practice` are the only pushable paths.
 - App bulk push and lower-level `write_practice_from_proposal()` reject `needs_clustering`, `candidate_evidence`, and `not_practice`. This protects both app and CLI paths.
 - For the `8fe67e19` examples (`ROGD-Diagnosis`, `ROGD-Promotion`, parent guidance variants), the safe path is to keep them as evidence under a cluster, then consolidate later into one broader practice if the pilot shows the category is stable.
-- 15 new/updated tests across the guard, cluster-review visibility, cluster catalogue, and legacy blank-cluster inference; 1155 total passing.
+- 18 new/updated tests across the guard, cluster-review visibility, cluster catalogue, legacy blank-cluster inference, and stale approval repair; 1158 total passing.
 
 ---
 
@@ -585,6 +586,12 @@ pipeline logic changes. No prompts modified. Local-only; no Sanity/Supabase call
   "Provenance notes") with explicit "Where to fix:" lines and inline repair
   affordances (entity ID resolver for `entity_resolver`, ✨ Complement enrichment
   for `complement_enrichment`).
+- Review-screen Complement enrichment now runs as a background process:
+  - status card shows PID, log path, refresh button, and log tail
+  - log files are written under `exports/app_jobs/`
+  - start button is disabled while a same-document job is running
+  - terminal command remains visible for manual runs
+  - this avoids freezing the Streamlit app during multi-minute LLM calls
 - `_render_provenance_panel` now leads with the readiness summary, then the
   unchanged Analysis/Enrichment/Preservation/Artifacts sub-tabs. The old ad-hoc
   "Researcher checklist" + duplicated grouped sections were replaced by it.
@@ -878,4 +885,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-06-03. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, entity ID resolver, Readiness/Next-Actions layer, and Corpus-Wide Review Inbox complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, network connection repair dropdowns, entity registry-fit safety layer, and practice evidence clustering guard. 1148 tests passing. Recommended next: open app → Tag Registry → Practice Queue → keep model-created practice labels as evidence unless deliberately promoted/linked → then return to Review Inbox for pilot triage.*
+*Updated 2026-06-03. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, entity ID resolver, Readiness/Next-Actions layer, and Corpus-Wide Review Inbox complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, network connection repair dropdowns, entity registry-fit safety layer, practice evidence clustering guard, and non-blocking background Complement enrichment from review screens. 1155 tests passing. Recommended next: open app → Tag Registry → Practice Queue → keep model-created practice labels as evidence unless deliberately promoted/linked → then return to Review Inbox for pilot triage.*

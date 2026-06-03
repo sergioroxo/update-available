@@ -395,6 +395,7 @@ def test_practice_cluster_summary_counts_push_candidates():
                 "practice_id": "Strategic Guidance for Parents",
                 "practice_cluster": "parent_guidance",
                 "practice_fit": "existing_practice",
+                "existing_practice_id": "practice-parent-guidance",
                 "approved": True,
             },
         },
@@ -480,6 +481,47 @@ def test_practice_cluster_options_include_current_custom_before_unclustered():
 
     assert "school_policy" in options
     assert options[-1] == "unclustered"
+
+
+def test_practice_review_status_does_not_show_blocked_fit_as_approved():
+    from runner.app import _practice_review_status
+
+    item = {
+        "practice_id": "Tactical-Guidance-for-Parents",
+        "practice_fit": "needs_clustering",
+        "approved": True,
+        "proposal_status": "approved",
+    }
+
+    assert _practice_review_status(item) == "Needs review"
+
+
+def test_clear_stale_practice_approval_when_fit_is_not_pushable():
+    from runner.app import _clear_stale_practice_approval_if_blocked
+
+    item = {
+        "practice_fit": "needs_clustering",
+        "approved": True,
+        "proposal_status": "approved",
+    }
+
+    assert _clear_stale_practice_approval_if_blocked(item) is True
+    assert item["approved"] is False
+    assert item["proposal_status"] == "pending"
+
+
+def test_pushable_existing_practice_keeps_approval_when_id_present():
+    from runner.app import _clear_stale_practice_approval_if_blocked, _practice_review_status
+
+    item = {
+        "practice_fit": "existing_practice",
+        "existing_practice_id": "practice-parent-guidance",
+        "approved": True,
+        "proposal_status": "approved",
+    }
+
+    assert _clear_stale_practice_approval_if_blocked(item) is False
+    assert _practice_review_status(item) == "Approved, not pushed"
 
 
 # ---------------------------------------------------------------------------

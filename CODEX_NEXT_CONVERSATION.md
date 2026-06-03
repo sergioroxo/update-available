@@ -310,8 +310,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1155
-- Latest completed milestone: Practice cluster picker + legacy inference
+- Tests passing: 1158
+- Latest completed milestone: Non-blocking enrichment + practice approval guard
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -388,7 +388,7 @@ Recommended order for a new session:
   - P1: `proposal_id` (deterministic SHA-256, `prop-` prefix, 16-char hex), `proposal_created_at`, `proposal_updated_at` on all reviewable proposal models. `NetworkConnection.repair_note`, `invalid_connection_type`, and `connection_repair_status` capture invalid connection_type repairs.
   - P2: `proposal_status` ("pending"/"approved"/"rejected"/"pushed") synced from booleans in normalization and all approve/reject/push callbacks. `_proposal_review_status()` reads `proposal_status` first, falls back to booleans.
   - P3: `save()` merge — match by proposal_id and legacy/canonical aliases, carry researcher fields, append dropped proposals, concatenate researcher_notes. Old proposals never silently discarded.
-  - Workflow glue: Complement enrichment is available from Document List, Activity Log → Enrichment, and Provenance → Enrichment Audit. `merge_summary` persists in `enrichment_audit.json` and renders as preserved/new/kept counts.
+  - Workflow glue: Complement enrichment is available from Document List, Activity Log → Enrichment, and Provenance → Enrichment Audit. It now starts as a background app job with PID/log/status instead of blocking Streamlit. `merge_summary` persists in `enrichment_audit.json` and renders as preserved/new/kept counts.
   - Network connection repair dropdown in the entity editor lets the researcher choose an allowed type locally before approval/push.
   - Entity registry-fit safety: `registry_entity`, `media_or_source`, `not_entity`, `needs_review` routing prevents podcasts/channels/publications/source projects from being pushed as organizations/persons. Registry-fit decisions are preserved across Complement enrichment.
   - P4: Design note in `_proposal_semantic_key()` for future cross-doc canonical identity.
@@ -413,6 +413,9 @@ Recommended order for a new session:
   - "Save Cluster Choice" writes the cluster/fit/top-section fields immediately
     and reruns with a confirmation message so the queue/table reflects the saved
     state.
+  - Stale approval repair: `needs_clustering`, `candidate_evidence`,
+    `not_practice`, and `existing_practice` without `existing_practice_id` render
+    as Needs review even if old JSON says approved; saving clears stale approval.
   - Practice editor shows a decision guide and detailed helper text for fit,
     cluster, cluster meaning, existing-practice ID, rationale, notes, and each
     action button.
@@ -422,7 +425,14 @@ Recommended order for a new session:
   - `write_practice_from_proposal()` rejects `needs_clustering`,
     `candidate_evidence`, and `not_practice`, protecting app and CLI paths.
   - Complement enrichment preserves practice fit/cluster decisions.
-  - 1155 total tests passing.
+  - 1158 total tests passing.
+- Background Complement enrichment from review UI built ✓
+  - `_render_complement_enrichment_action()` starts `python -m runner enrich <doc_id> --yes`
+    with `subprocess.Popen`, not blocking `subprocess.run`.
+  - Status card shows PID, refresh, forget/clear action, log path, and log tail.
+  - Logs are written to `exports/app_jobs/`.
+  - Start button is disabled while the same-document job is active.
+  - Terminal command remains visible for manual runs.
 - Researcher Readiness / Next Actions layer built ✓
   - New `runner/app_readiness.py` (pure, no st.*): `ReadinessItem`, `DocumentReadiness`,
     `summarize_enrichment_lifecycle`, `build_document_readiness`.
