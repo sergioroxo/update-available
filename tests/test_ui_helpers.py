@@ -121,6 +121,35 @@ def test_panel_reset_no_change_same_doc():
     assert final["mr_srt_path"] == "/tmp/foo.srt"
 
 
+def test_open_document_from_inbox_sets_navigation_and_clears_filters():
+    import runner.app as app_mod
+
+    original_ss = app_mod.st.session_state
+    mock_ss = _MockSt({
+        "doc_list_filter_type": ["Article"],
+        "doc_list_filter_batch": ["old-batch"],
+        "doc_list_filter_uploaded": "Uploaded",
+        "doc_list_filter_intensity": "pathologizing",
+        "nav_page": "Review Inbox",
+        "page": "Review Inbox",
+    })
+    app_mod.st.session_state = mock_ss
+    try:
+        app_mod._open_document_from_inbox("8fe67e19")
+    finally:
+        app_mod.st.session_state = original_ss
+
+    assert mock_ss["doc_list_search"] == "8fe67e19"
+    assert mock_ss["doc_list_open_doc_id"] == "8fe67e19"
+    assert mock_ss["doc_list_filter_type"] == []
+    assert mock_ss["doc_list_filter_batch"] == []
+    assert mock_ss["doc_list_filter_uploaded"] == "All"
+    assert mock_ss["doc_list_filter_intensity"] == "All"
+    assert mock_ss["_nav_to"] == "Document List"
+    assert mock_ss["page"] == "Document List"
+    assert mock_ss["nav_page"] == "Document List"
+
+
 def test_panel_reset_clears_on_doc_switch():
     """Switching from doc-1 to doc-2 should clear the keys."""
     state = {

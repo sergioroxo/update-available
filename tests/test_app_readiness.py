@@ -307,6 +307,13 @@ class TestCollectCorpusReadiness:
         result = collect_corpus_readiness(tmp_path)
         assert result == []
 
+    def test_hidden_internal_dirs_skipped(self, tmp_path):
+        (tmp_path / ".document_sets").mkdir()
+        _make_doc_dir(tmp_path)
+        result = collect_corpus_readiness(tmp_path)
+        assert len(result) == 1
+        assert result[0]["doc_id"] != ".document_sets"
+
     # ── Status classification ─────────────────────────────────────────────
 
     def test_doc_with_no_analysis_is_no_data(self, tmp_path):

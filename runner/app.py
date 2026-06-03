@@ -99,6 +99,7 @@ def main():
     requested_page = st.session_state.pop("_nav_to", None)
     if requested_page in pages:
         st.session_state["page"] = requested_page
+        st.session_state["nav_page"] = requested_page
 
     page = st.sidebar.radio(
         "Navigate",
@@ -478,9 +479,26 @@ def _render_inbox_row(row: dict) -> None:
     c_title.write(display_text)
     c_action.caption(action_text)
     if c_btn.button("Open", key=f"inbox_open_{doc_id}"):
-        st.session_state["doc_list_search"] = doc_id
-        st.session_state["_nav_to"] = "Document List"
+        _open_document_from_inbox(doc_id)
         st.rerun()
+
+
+def _open_document_from_inbox(doc_id: str) -> None:
+    """Route to Document List and make the selected document visible.
+
+    Streamlit keeps widget state separately from our page state. Set both the
+    sidebar radio key and the page key, and reset Document List filters so the
+    searched document is not hidden by stale filter selections.
+    """
+    st.session_state["doc_list_search"] = doc_id
+    st.session_state["doc_list_open_doc_id"] = doc_id
+    st.session_state["doc_list_filter_type"] = []
+    st.session_state["doc_list_filter_batch"] = []
+    st.session_state["doc_list_filter_uploaded"] = "All"
+    st.session_state["doc_list_filter_intensity"] = "All"
+    st.session_state["_nav_to"] = "Document List"
+    st.session_state["page"] = "Document List"
+    st.session_state["nav_page"] = "Document List"
 
 
 def page_review_inbox():
@@ -3223,18 +3241,24 @@ def page_document_list():
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         all_types = sorted({d.get("type", "Unknown") for d in docs})
-        filter_type = st.multiselect("Document type", all_types)
+        filter_type = st.multiselect(
+            "Document type", all_types, key="doc_list_filter_type"
+        )
     with col2:
         all_batches = sorted({d.get("batch_id", "—") for d in docs})
-        filter_batch = st.multiselect("Batch", all_batches)
+        filter_batch = st.multiselect(
+            "Batch", all_batches, key="doc_list_filter_batch"
+        )
     with col3:
         filter_uploaded = st.selectbox(
-            "Upload status", ["All", "Uploaded", "Local only"]
+            "Upload status", ["All", "Uploaded", "Local only"],
+            key="doc_list_filter_uploaded",
         )
     with col4:
         filter_intensity = st.selectbox(
             "Rhetorical intensity",
             ["All", "hook", "pathologizing", "active-conduct", "— (unset)"],
+            key="doc_list_filter_intensity",
         )
 
     filtered = docs
@@ -3610,7 +3634,9 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
         f"{upload_badge}{embedding_badge}{enrich_badge}{media_badge}{annotation_badge}{second_opinion_badge}"
     )
 
-    with st.expander(header, expanded=False):
+    _selected_from_inbox = st.session_state.get("doc_list_open_doc_id") == doc["doc_id"]
+
+    with st.expander(header, expanded=_selected_from_inbox):
         _render_doc_action_feedback(doc["doc_id"])
         if _has_high_harm(doc.get("harm", [])):
             high_harm_labels = sorted(_HIGH_HARM_INDICATORS.intersection(doc["harm"]))
@@ -3722,7 +3748,7 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
         else:
             _prov_label = "⚪ Readiness: No analysis yet"
         # Auto-expand only when blockers exist — keep ready/quality calm.
-        _prov_auto_expand = _readiness.status == STATUS_NEEDS_REVIEW
+        _prov_auto_expand = _readiness.status == STATUS_NEEDS_REVIEW or _selected_from_inbox
         with st.expander(_prov_label, expanded=_prov_auto_expand):
             _render_provenance_panel(
                 doc["doc_id"], corpus_dir / doc["doc_id"], _prov_cfg

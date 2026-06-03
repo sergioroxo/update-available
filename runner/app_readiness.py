@@ -459,7 +459,7 @@ def collect_corpus_readiness(corpus_dir: Path, *, config=None) -> list[dict]:
 
     rows: list[dict] = []
     for doc_dir in sorted(corpus_dir.iterdir()):
-        if not doc_dir.is_dir():
+        if not doc_dir.is_dir() or doc_dir.name.startswith("."):
             continue
 
         readiness = build_document_readiness(doc_dir, config=config)
