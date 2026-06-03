@@ -213,3 +213,63 @@ def test_enrichment_validate_response_invalid_registry_fit_needs_review():
     result = _validate_response("doc-1", raw, "litelm")
 
     assert result.entity_proposals[0].registry_fit == "needs_review"
+
+
+def test_enrichment_validate_response_practice_defaults_to_clusterable_evidence():
+    raw = """
+    {
+      "practice_descriptions": [
+        {
+          "practice_id": "Practice: ROGD-Diagnosis",
+          "exact_description": "The source frames ROGD as a diagnostic pathway for parents.",
+          "harm_stance": "minimized"
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    practice = result.practice_descriptions[0]
+    assert practice.practice_fit == "needs_clustering"
+    assert practice.practice_cluster == "rogd"
+    assert "held as evidence" in practice.practice_fit_rationale
+
+
+def test_enrichment_validate_response_practice_existing_id_is_existing_practice():
+    raw = """
+    {
+      "practice_descriptions": [
+        {
+          "practice_id": "Practice: ROGD-Diagnosis",
+          "existing_practice_id": "practice-rogd-parent-guidance",
+          "exact_description": "Evidence for an existing practice.",
+          "harm_stance": "minimized"
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    practice = result.practice_descriptions[0]
+    assert practice.practice_fit == "existing_practice"
+    assert practice.existing_practice_id == "practice-rogd-parent-guidance"
+
+
+def test_enrichment_validate_response_invalid_practice_fit_needs_clustering():
+    raw = """
+    {
+      "practice_descriptions": [
+        {
+          "practice_id": "Practice: Strategic-Guidance-for-Parents",
+          "practice_fit": "not-a-real-fit",
+          "exact_description": "Strategic guidance directed at parents."
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    assert result.practice_descriptions[0].practice_fit == "needs_clustering"

@@ -2,7 +2,7 @@
 
 **Status:** working tracker for follow-up steps after the future applications roadmap.
 **Roadmap source:** `01_project_docs/FUTURE_APPLICATIONS_ROADMAP_v1.0.md`
-**Last updated:** 2026-06-02
+**Last updated:** 2026-06-03
 
 Core rule: **AI proposes, the researcher validates, the archive preserves provenance.**
 
@@ -55,6 +55,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | ISO 639 language tags | Glossary, cross-language analysis | DS-1 added `AnalysisResult.languages`; DS-3 normalizes to ISO 639-1; deterministic language-ID check and Sanity schema migration later | Partial |
 | Temporal axis | Lexicon genealogy, timelines | Preserve `document_date`; reserve `first_attested` for terms/events | Pending |
 | Claim verification lifecycle | Claim/fact-check ledger | DS-4 added `verification_status`: unverified, verified, disputed, debunked, unverifiable | Done locally; Sanity/export later |
+| Practice evidence clustering | Practice/harm catalogue, future consolidation | Practice proposals now carry `practice_fit` + `practice_cluster`; model-created labels are held as evidence unless promoted/linked | Done locally; Sanity/export later |
 | Embedding provenance | Semantic map, retrieval | Keep model/dimension; finish `vector(4096)` verification | Pending |
 
 ---

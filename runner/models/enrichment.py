@@ -24,6 +24,7 @@ Sanity targets:
   statistical_claims    → extractableAssets (statistical_claim type)
 """
 from __future__ import annotations
+import re
 from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -40,6 +41,22 @@ ENTITY_REGISTRY_FIT_VALUES = {
     "media_or_source",
     "not_entity",
     "needs_review",
+}
+
+PracticeFit = Literal[
+    "registry_practice",
+    "existing_practice",
+    "candidate_evidence",
+    "needs_clustering",
+    "not_practice",
+]
+
+PRACTICE_FIT_VALUES = {
+    "registry_practice",
+    "existing_practice",
+    "candidate_evidence",
+    "needs_clustering",
+    "not_practice",
 }
 
 _MEDIA_OR_SOURCE_MARKERS = (
@@ -101,6 +118,44 @@ def infer_entity_registry_fit(payload: dict) -> str:
     if any(marker in text for marker in _MEDIA_OR_SOURCE_MARKERS):
         return "media_or_source"
     return "registry_entity"
+
+
+def infer_practice_cluster(payload: dict) -> str:
+    """Infer a stable local cluster key for practice evidence consolidation."""
+    existing = str(payload.get("practice_cluster") or "").strip()
+    if existing:
+        return existing
+    text = " ".join(
+        str(payload.get(key) or "")
+        for key in ("practice_id", "exact_description", "harm_quote", "researcher_note")
+    ).lower()
+    if "rogd" in text or "rapid onset gender dysphoria" in text:
+        return "rogd"
+    if "parent" in text or "parents" in text or "family" in text:
+        return "parent_guidance"
+    if "diagnos" in text or "patholog" in text:
+        return "pathologization"
+    if "pastoral" in text or "spiritual" in text or "religious" in text:
+        return "pastoral_guidance"
+
+    raw = re.sub(r"^practice:\s*", "", str(payload.get("practice_id") or ""), flags=re.I)
+    tokens = [t for t in re.split(r"[^a-zA-Z0-9]+", raw.lower()) if t]
+    return "_".join(tokens[:3]) if tokens else "unclustered"
+
+
+def infer_practice_fit(payload: dict) -> str:
+    """Infer whether a practice proposal should be pushed or held as evidence.
+
+    New model-created ``Practice: ...`` identifiers are useful as local evidence,
+    but risky as immediate registry entries. They default to ``needs_clustering``
+    until a researcher links or promotes them.
+    """
+    existing = str(payload.get("practice_fit") or "").strip()
+    if existing:
+        return existing if existing in PRACTICE_FIT_VALUES else "needs_clustering"
+    if payload.get("existing_practice_id"):
+        return "existing_practice"
+    return "needs_clustering"
 
 
 class ProposalConfidenceMixin(BaseModel):
@@ -424,6 +479,10 @@ class PracticeDescription(ProposalConfidenceMixin):
 
     practice_id: str                      # e.g. "Practice: Pastoral-Care"
     exact_description: str                # verbatim or near-verbatim description from doc
+    practice_fit: PracticeFit = "needs_clustering"
+    practice_cluster: str = ""            # local consolidation key, not a Sanity id
+    practice_fit_rationale: str = ""
+    existing_practice_id: Optional[str] = None
     harm_stance: Literal[
         "denied",       # document claims no harm exists
         "minimized",    # acknowledges concern but frames as exaggerated
@@ -432,6 +491,28 @@ class PracticeDescription(ProposalConfidenceMixin):
         "not_mentioned",
     ] = "not_mentioned"
     harm_quote: str = ""                  # the quote demonstrating the stance
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_practice_review_fields(cls, data):
+        if not isinstance(data, dict):
+            return data
+        data = dict(data)
+        if not data.get("practice_cluster"):
+            data["practice_cluster"] = infer_practice_cluster(data)
+        if not data.get("practice_fit"):
+            data["practice_fit"] = infer_practice_fit(data)
+        if data["practice_fit"] == "needs_clustering" and not data.get("practice_fit_rationale"):
+            data["practice_fit_rationale"] = (
+                "Model-created practice label held as evidence until it is "
+                "clustered, linked to an existing practice, or promoted."
+            )
+        return data
+
+    @field_validator("practice_fit", mode="before")
+    @classmethod
+    def normalise_practice_fit(cls, v: str) -> str:
+        return v if isinstance(v, str) and v in PRACTICE_FIT_VALUES else "needs_clustering"
 
     # Researcher decision
     approved: bool = False

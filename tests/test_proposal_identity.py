@@ -39,6 +39,7 @@ from runner.models.enrichment import (
     EnrichmentResult,
     EntityProposal,
     LexiconProposal,
+    PracticeDescription,
     StatisticalClaim,
     TacticProposal,
 )
@@ -591,6 +592,51 @@ class TestMergeResearcherState:
         proposal = merged.entity_proposals[0]
         assert proposal.registry_fit == "media_or_source"
         assert proposal.registry_fit_rationale == "Podcast/source, not a registry org."
+        assert proposal.rejected is True
+        assert summary["carried_forward"] == 1
+
+    def test_preserves_practice_fit_and_cluster_decision(self):
+        """Practice evidence/clustering decisions survive complement enrichment."""
+        doc_id = "doc-p3-practice-fit"
+        practice_id = "Practice: ROGD-Diagnosis"
+        pid = _generate_proposal_id("practice", doc_id, {"practice_id": practice_id})
+
+        new_result = EnrichmentResult(
+            doc_id=doc_id,
+            practice_descriptions=[
+                PracticeDescription(
+                    practice_id=practice_id,
+                    exact_description="fresh model description",
+                    proposal_id=pid,
+                    practice_fit="registry_practice",
+                    practice_cluster="rogd",
+                )
+            ],
+        )
+        old_data = {
+            "lexicon_proposals": [],
+            "entity_proposals": [],
+            "tactic_proposals": [],
+            "ingestion_queue": [],
+            "corpus_connections": [],
+            "practice_descriptions": [{
+                "practice_id": practice_id,
+                "exact_description": "reviewed evidence",
+                "proposal_id": pid,
+                "practice_fit": "candidate_evidence",
+                "practice_cluster": "rogd",
+                "practice_fit_rationale": "Keep as evidence for later consolidation.",
+                "rejected": True,
+            }],
+            "statistical_claims": [],
+        }
+
+        merged, summary = _merge_researcher_state(new_result, old_data, doc_id)
+
+        proposal = merged.practice_descriptions[0]
+        assert proposal.practice_fit == "candidate_evidence"
+        assert proposal.practice_cluster == "rogd"
+        assert proposal.practice_fit_rationale == "Keep as evidence for later consolidation."
         assert proposal.rejected is True
         assert summary["carried_forward"] == 1
 

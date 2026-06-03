@@ -884,6 +884,15 @@ def write_practice_from_proposal(
     config: Config,
 ) -> str:
     """Create or replace a practiceEntry from a reviewed practice description."""
+    practice_fit = proposal.get("practice_fit") or (
+        "existing_practice" if proposal.get("existing_practice_id") else "needs_clustering"
+    )
+    if practice_fit not in {"registry_practice", "existing_practice"}:
+        raise ValueError(
+            f"Practice proposal practice_fit={practice_fit}; keep it as local "
+            "evidence or cluster/promote it before creating a practiceEntry."
+        )
+
     raw_name = (proposal.get("practice_id") or "").strip()
     name = re.sub(r"^Practice:\s*", "", raw_name).strip()
     if not name:

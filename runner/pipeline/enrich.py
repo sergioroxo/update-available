@@ -32,10 +32,13 @@ try:
         ENTITY_REGISTRY_FIT_VALUES,
         LexiconProposal,
         EntityProposal,
+        PRACTICE_FIT_VALUES,
         TacticProposal,
         PracticeDescription,
         StatisticalClaim,
         infer_entity_registry_fit,
+        infer_practice_cluster,
+        infer_practice_fit,
     )
     from runner.pipeline.audit import current_git_commit, sha256_text, write_enrichment_audit
     from runner.pipeline.http_retry import call_with_http_retries
@@ -48,10 +51,13 @@ except ImportError:
         ENTITY_REGISTRY_FIT_VALUES,
         LexiconProposal,
         EntityProposal,
+        PRACTICE_FIT_VALUES,
         TacticProposal,
         PracticeDescription,
         StatisticalClaim,
         infer_entity_registry_fit,
+        infer_practice_cluster,
+        infer_practice_fit,
     )
     from .audit import current_git_commit, sha256_text, write_enrichment_audit  # type: ignore[no-redef]
     from .http_retry import call_with_http_retries  # type: ignore[no-redef]
@@ -168,6 +174,7 @@ _CORPUS_CONNECTION_TYPES = {
     "precedes",
 }
 _HARM_STANCES = {"denied", "minimized", "reframed", "acknowledged", "not_mentioned"}
+_PRACTICE_FITS = PRACTICE_FIT_VALUES
 _VERIFICATION_STATUSES = {"unverified", "verified", "disputed", "debunked", "unverifiable"}
 
 # Mapping from enrichment.json family key → short name used in proposal IDs.
@@ -197,6 +204,9 @@ _RESEARCHER_FIELDS: frozenset[str] = frozenset({
     "researcher_note",
     "registry_fit",
     "registry_fit_rationale",
+    "practice_fit",
+    "practice_cluster",
+    "practice_fit_rationale",
     "proposal_created_at",   # always preserve original first-seen timestamp
     "proposal_status",       # carry forward so status is not reset to pending
 })
@@ -206,7 +216,7 @@ _LINK_FIELDS: dict[str, frozenset[str]] = {
     "lexicon_proposals":     frozenset({"existing_entry_id", "existing_entry_term", "merge_target_id"}),
     "entity_proposals":      frozenset({"existing_entity_id"}),
     "tactic_proposals":      frozenset({"existing_tactic_id"}),
-    "practice_descriptions": frozenset(),
+    "practice_descriptions": frozenset({"existing_practice_id"}),
     "statistical_claims":    frozenset({"verification_status", "verifiable"}),
 }
 
@@ -1642,6 +1652,22 @@ def _normalize_enrichment_payload(
         _repair_confidence_fields(item)
         item["practice_id"] = _as_string(item.get("practice_id"))
         item["exact_description"] = _as_string(item.get("exact_description"))
+        item["existing_practice_id"] = _as_string(item.get("existing_practice_id"))
+        item["practice_cluster"] = _as_string(
+            item.get("practice_cluster") or infer_practice_cluster(item)
+        )
+        inferred_practice_fit = infer_practice_fit(item)
+        item["practice_fit"] = _renum(
+            item.get("practice_fit") or inferred_practice_fit,
+            _PRACTICE_FITS,
+            inferred_practice_fit,
+        )
+        item["practice_fit_rationale"] = _as_string(item.get("practice_fit_rationale"))
+        if item["practice_fit"] == "needs_clustering" and not item["practice_fit_rationale"]:
+            item["practice_fit_rationale"] = (
+                "Model-created practice label held as evidence until it is "
+                "clustered, linked to an existing practice, or promoted."
+            )
         item["harm_stance"] = _renum(item.get("harm_stance"), _HARM_STANCES, "not_mentioned")
 
     normalized["statistical_claims"] = [

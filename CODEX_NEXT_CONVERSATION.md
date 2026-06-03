@@ -5,7 +5,7 @@ project. It is a companion to `NEXT_SESSION.md`, which is the Claude Code task
 handoff. This document is for steering the collaboration: what to trust, what to
 verify, how to guide Claude, and how Codex should keep the system coherent.
 
-Generated: 2026-06-02 (updated entity registry-fit safety layer)
+Generated: 2026-06-03 (updated practice evidence clustering guard)
 Repo: `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
 Main working branch: `claude/review-architecture-70CUm`
 
@@ -295,7 +295,7 @@ or cross-document canonical identity, but do not expand that before the pilot ex
 a concrete need.
 
 Recommended order for a new session:
-1. Verify repo/test state (1140 passed expected).
+1. Verify repo/test state (1148 passed expected).
 2. Open app → **Review Inbox** (sidebar, between Dashboard and Corpus Intelligence).
    Scan the 🔴 group for any documents that need review before push.
 3. For `8fe67e19` or any 🔴 doc: click "Open" → Document List → resolve entity IDs,
@@ -310,8 +310,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1140
-- Latest completed milestone: Corpus-Wide Review Inbox
+- Tests passing: 1148
+- Latest completed milestone: Practice evidence clustering guard
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -394,6 +394,18 @@ Recommended order for a new session:
   - P4: Design note in `_proposal_semantic_key()` for future cross-doc canonical identity.
   - New helpers: `_generate_proposal_id`, `_derive_proposal_status`, `_build_old_proposal_index`, `_apply_researcher_fields`, `_merge_researcher_state`.
   - 1101 total tests passing.
+- Practice evidence clustering guard built ✓
+  - `PracticeDescription` now carries `practice_fit`, `practice_cluster`,
+    `practice_fit_rationale`, and `existing_practice_id`.
+  - Model-created practice labels such as `Practice: ROGD-Diagnosis` default to
+    `needs_clustering` and infer a local cluster such as `rogd` or `parent_guidance`.
+  - Practice Queue shows fit/cluster, supports "Keep as Evidence" and "Promote",
+    and blocks approval/push until a proposal is linked to an existing practice or
+    deliberately promoted to `registry_practice`.
+  - `write_practice_from_proposal()` rejects `needs_clustering`,
+    `candidate_evidence`, and `not_practice`, protecting app and CLI paths.
+  - Complement enrichment preserves practice fit/cluster decisions.
+  - 1148 total tests passing.
 - Researcher Readiness / Next Actions layer built ✓
   - New `runner/app_readiness.py` (pure, no st.*): `ReadinessItem`, `DocumentReadiness`,
     `summarize_enrichment_lifecycle`, `build_document_readiness`.

@@ -6265,9 +6265,47 @@ _ENTITY_REGISTRY_FIT_HELP = {
 }
 
 
+_PRACTICE_FIT_OPTIONS = [
+    "needs_clustering",
+    "candidate_evidence",
+    "existing_practice",
+    "registry_practice",
+    "not_practice",
+]
+
+_PRACTICE_FIT_LABELS = {
+    "needs_clustering": "Needs clustering",
+    "candidate_evidence": "Keep as evidence",
+    "existing_practice": "Existing practice evidence",
+    "registry_practice": "Promote to registry practice",
+    "not_practice": "Not a practice",
+}
+
+_PRACTICE_FIT_HELP = {
+    "needs_clustering": (
+        "Hold locally until similar practice labels are grouped, renamed, or linked."
+    ),
+    "candidate_evidence": (
+        "Keep this as evidence for later consolidation; do not create a practice registry entry."
+    ),
+    "existing_practice": (
+        "Append this document's evidence to an existing practice entry after filling existing_practice_id."
+    ),
+    "registry_practice": (
+        "Eligible to create a new practice registry draft after deliberate researcher promotion."
+    ),
+    "not_practice": "Reject locally; this is not practice-registry material.",
+}
+
+
 def _entity_registry_fit(item: dict) -> str:
     fit = infer_entity_registry_fit(item)
     return fit if fit in _ENTITY_REGISTRY_FIT_OPTIONS else "needs_review"
+
+
+def _practice_fit(item: dict) -> str:
+    fit = str(item.get("practice_fit") or "").strip()
+    return fit if fit in _PRACTICE_FIT_OPTIONS else "needs_clustering"
 
 
 def _proposal_review_sort_key(record: dict, label_field: str = "term") -> tuple[int, str, str]:
@@ -6671,6 +6709,11 @@ def _render_practice_queue(config, records: list[dict]) -> None:
             "doc_id": record["doc_id"],
             "proposal #": _proposal_display_position(record),
             "practice_id": record["item"].get("practice_id", ""),
+            "practice_fit": _PRACTICE_FIT_LABELS.get(
+                _practice_fit(record["item"]),
+                _practice_fit(record["item"]),
+            ),
+            "cluster": record["item"].get("practice_cluster", ""),
             "LLM confidence": _format_confidence(
                 _proposal_confidence(record["item"], "model_confidence", "llm_confidence", "confidence")
             ),
@@ -6692,6 +6735,19 @@ def _render_practice_queue(config, records: list[dict]) -> None:
         for record in records:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                continue
+            fit = _practice_fit(item)
+            if fit not in {"registry_practice", "existing_practice"}:
+                errors.append(
+                    f"{record['doc_id']} / {item.get('practice_id', '?')}: "
+                    f"practice_fit={fit}; keep as evidence or cluster/promote before pushing."
+                )
+                continue
+            if fit == "existing_practice" and not item.get("existing_practice_id"):
+                errors.append(
+                    f"{record['doc_id']} / {item.get('practice_id', '?')}: "
+                    "existing_practice requires existing_practice_id before push."
+                )
                 continue
             try:
                 from runner.clients.sanity import append_extractable_asset_from_proposal, write_practice_from_proposal
@@ -7199,6 +7255,18 @@ def _render_single_practice_editor(record: dict) -> None:
     c1, c2 = st.columns([1, 1])
     with c1:
         item["practice_id"] = st.text_input("Practice id", value=item.get("practice_id", ""), key=f"{prefix}_id")
+        item["practice_fit"] = st.selectbox(
+            "Practice fit",
+            _PRACTICE_FIT_OPTIONS,
+            index=_option_index(_PRACTICE_FIT_OPTIONS, _practice_fit(item)),
+            format_func=lambda value: _PRACTICE_FIT_LABELS.get(value, value),
+            key=f"{prefix}_fit",
+            help=(
+                "Controls whether this proposal stays as local evidence, waits "
+                "for clustering, links to an existing practice, or is deliberately promoted."
+            ),
+        )
+        st.caption(_PRACTICE_FIT_HELP.get(item["practice_fit"], ""))
         item["harm_stance"] = st.selectbox(
             "Harm stance",
             ["denied", "minimized", "reframed", "acknowledged", "not_mentioned"],
@@ -7206,14 +7274,85 @@ def _render_single_practice_editor(record: dict) -> None:
             key=f"{prefix}_harm",
         )
     with c2:
+        item["practice_cluster"] = st.text_input(
+            "Practice cluster",
+            value=item.get("practice_cluster", ""),
+            key=f"{prefix}_cluster",
+            help="Local consolidation key for similar practice evidence, e.g. `rogd` or `parent_guidance`.",
+        )
+        item["existing_practice_id"] = st.text_input(
+            "Existing practice id",
+            value=item.get("existing_practice_id", "") or "",
+            key=f"{prefix}_existing",
+            help="Required when Practice fit is Existing practice evidence.",
+        )
         item["sanity_id"] = st.text_input("Sanity id", value=item.get("sanity_id", "") or "", disabled=True, key=f"{prefix}_sanity")
         item["pushed_to_sanity"] = st.checkbox("Pushed to Sanity", value=item.get("pushed_to_sanity", False), disabled=True, key=f"{prefix}_pushed")
 
+    if item["practice_fit"] in {"needs_clustering", "candidate_evidence"}:
+        st.info(
+            "This practice proposal is held locally as clusterable evidence. "
+            "It will not create a new practice registry entry until you promote "
+            "it or link it to an existing practice."
+        )
+    elif item["practice_fit"] == "existing_practice" and not item.get("existing_practice_id"):
+        st.warning("Fill `existing_practice_id` before approving/pushing this as existing-practice evidence.")
+
     item["exact_description"] = st.text_area("Exact description", value=item.get("exact_description", ""), height=120, key=f"{prefix}_description")
     item["harm_quote"] = st.text_area("Harm quote", value=item.get("harm_quote", ""), height=100, key=f"{prefix}_quote")
+    item["practice_fit_rationale"] = st.text_area(
+        "Practice-fit rationale",
+        value=item.get("practice_fit_rationale", ""),
+        height=70,
+        key=f"{prefix}_fit_rationale",
+    )
     item["researcher_note"] = st.text_area("Researcher note", value=item.get("researcher_note", ""), height=80, key=f"{prefix}_note")
     _render_proposal_confidence_editor(item, prefix)
-    _render_review_buttons(record, "practice_descriptions", item, prefix, "practice")
+
+    st.caption(
+        f"Origin: {record['path']} · proposal #{_proposal_display_position(record)} "
+        f"(JSON position {record['index']})"
+    )
+    b1, b2, b3, b4 = st.columns(4)
+    with b1:
+        if st.button("Save Practice Edits", key=f"{prefix}_save"):
+            _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
+            st.success("Saved practice edits.")
+    with b2:
+        if st.button("Approve Practice", key=f"{prefix}_approve"):
+            if item["practice_fit"] not in {"registry_practice", "existing_practice"}:
+                st.error(
+                    "This proposal is held as evidence/needs clustering. "
+                    "Promote it or link it to an existing practice before approval."
+                )
+            elif item["practice_fit"] == "existing_practice" and not item.get("existing_practice_id"):
+                st.error("Fill existing_practice_id before approving existing-practice evidence.")
+            else:
+                item["approved"] = True
+                item["rejected"] = False
+                item["proposal_status"] = "approved"
+                _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
+                st.success("Approved locally. Push approved practices to Sanity when ready.")
+    with b3:
+        if st.button("Keep as Evidence", key=f"{prefix}_evidence"):
+            item["practice_fit"] = "candidate_evidence"
+            item["approved"] = False
+            item["rejected"] = True
+            item["proposal_status"] = "rejected"
+            if not item.get("practice_fit_rationale"):
+                item["practice_fit_rationale"] = "Kept as clusterable practice evidence, not a registry entry."
+            _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
+            st.success("Kept as local practice evidence for future consolidation.")
+    with b4:
+        if st.button("Promote", key=f"{prefix}_promote"):
+            item["practice_fit"] = "registry_practice"
+            item["approved"] = False
+            item["rejected"] = False
+            item["proposal_status"] = "pending"
+            if not item.get("practice_fit_rationale"):
+                item["practice_fit_rationale"] = "Researcher promoted this evidence cluster to a candidate registry practice."
+            _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
+            st.success("Promoted to registry-practice candidate. Review and approve before push.")
 
 
 def _render_single_claim_editor(record: dict) -> None:

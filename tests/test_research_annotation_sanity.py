@@ -221,6 +221,58 @@ def test_entity_write_rejects_media_or_source_registry_fit(monkeypatch):
     assert calls == []
 
 
+def test_practice_write_rejects_clusterable_evidence(monkeypatch):
+    calls = []
+
+    def fake_mutate(mutations, config):
+        calls.append(mutations)
+        return {"results": [{"id": "practice-rogd-diagnosis"}]}
+
+    monkeypatch.setattr(sanity, "_mutate", fake_mutate)
+
+    try:
+        sanity.write_practice_from_proposal(
+            {
+                "practice_id": "Practice: ROGD-Diagnosis",
+                "practice_fit": "needs_clustering",
+                "practice_cluster": "rogd",
+                "exact_description": "ROGD is framed as a diagnosis.",
+            },
+            "doc-1",
+            _Config(),
+        )
+    except ValueError as exc:
+        assert "practice_fit=needs_clustering" in str(exc)
+    else:
+        raise AssertionError("Expected clusterable practice evidence to be rejected")
+
+    assert calls == []
+
+
+def test_practice_write_allows_promoted_registry_practice(monkeypatch):
+    calls = []
+
+    def fake_mutate(mutations, config):
+        calls.append(mutations)
+        return {"results": [{"id": "practice-rogd-diagnosis"}]}
+
+    monkeypatch.setattr(sanity, "_mutate", fake_mutate)
+
+    sanity_id = sanity.write_practice_from_proposal(
+        {
+            "practice_id": "Practice: ROGD-Diagnosis",
+            "practice_fit": "registry_practice",
+            "practice_cluster": "rogd",
+            "exact_description": "ROGD is framed as a diagnosis.",
+        },
+        "doc-1",
+        _Config(),
+    )
+
+    assert sanity_id == "practice-rogd-diagnosis"
+    assert calls[0][0]["createOrReplace"]["_type"] == "practiceEntry"
+
+
 def test_confirm_lexicon_context_patches_one_evidence_item(monkeypatch):
     calls = []
 
