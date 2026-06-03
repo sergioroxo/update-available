@@ -2,8 +2,8 @@
 **Generated:** 2026-06-02
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 1153
-**Latest completed milestone:** Practice cluster catalogue + decision help
+**Tests passing:** 1155
+**Latest completed milestone:** Practice cluster picker + legacy inference
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -462,7 +462,7 @@ Stable proposal identity, lifecycle status, and merge-aware re-enrichment. Follo
 - Complement enrichment controls are now visible from Document List, Activity Log → Enrichment, and Provenance → Enrichment Audit. All use merge-aware `runner enrich <doc_id> --yes`.
 - `push_approved_to_sanity()` in `enrich.py` now syncs `proposal_status = "pushed"` on all 5 proposal families.
 - Entity registry-fit safety layer prevents podcasts/channels/publications/source projects from being pushed as organizations/persons. The Entity Queue shows `registry_fit`; the editor has a "Registry fit" selector, rationale field, and "Mark Media/Source" button. `write_entity_from_proposal()` rejects non-`registry_entity` proposals in both app and CLI paths.
-- Practice evidence clustering guard prevents model-created `Practice: ...` labels from becoming registry entries until clustered, linked, or explicitly promoted. The Practice Queue now shows a cluster overview, supports cluster filtering, includes a researcher-facing cluster catalogue, and provides detailed decision help for practice-fit choices; Complement enrichment preserves those decisions.
+- Practice evidence clustering guard prevents model-created `Practice: ...` labels from becoming registry entries until clustered, linked, or explicitly promoted. The Practice Queue now shows a cluster overview, infers categories for older blank records, supports cluster filtering, includes a researcher-facing cluster catalogue/picker, and provides detailed decision help for practice-fit choices; Complement enrichment preserves those decisions.
 - `test_enrichment_archive.py` updated: ordering assertion now uses name-based set equality (P3 appends old proposals after new ones).
 
 ---
@@ -483,11 +483,13 @@ Solves the "one document invents several near-duplicate practice registry entrie
 - `runner/pipeline/enrich.py` normalizes these fields and preserves them across Complement enrichment.
 - Practice Queue shows a cluster overview (`cluster`, proposal count, held evidence, push candidates, docs, examples), supports cluster filtering, and then shows practice fit + cluster per proposal.
 - Cluster overview now includes human-readable meanings and review hints for `rogd`, `parent_guidance`, `pathologization`, `pastoral_guidance`, `clinical_authority`, `institutional_legitimation`, `media_dissemination`, `legal_policy_advocacy`, `testimony_narrative`, and `unclustered`.
+- Older proposals with blank `practice_cluster` are interpreted in the UI using `infer_practice_cluster()`, so labels such as `Practice: ROGD-Diagnosis` and `Practice: Strategic-Guidance-for-Parents` appear under `rogd` / `parent_guidance` before manual save.
+- The practice editor uses a category picker plus optional custom snake_case override instead of an empty free-text-only field.
 - The practice editor adds a decision guide plus detailed helper text for practice fit, cluster, existing-practice ID, rationale, notes, and each action button.
 - It should now be clearer that clusters are local evidence/consolidation buckets, while `registry_practice` and `existing_practice` are the only pushable paths.
 - App bulk push and lower-level `write_practice_from_proposal()` reject `needs_clustering`, `candidate_evidence`, and `not_practice`. This protects both app and CLI paths.
 - For the `8fe67e19` examples (`ROGD-Diagnosis`, `ROGD-Promotion`, parent guidance variants), the safe path is to keep them as evidence under a cluster, then consolidate later into one broader practice if the pilot shows the category is stable.
-- 13 new/updated tests across the guard, cluster-review visibility, and cluster catalogue; 1153 total passing.
+- 15 new/updated tests across the guard, cluster-review visibility, cluster catalogue, and legacy blank-cluster inference; 1155 total passing.
 
 ---
 

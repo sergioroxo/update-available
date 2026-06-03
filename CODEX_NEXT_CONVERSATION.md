@@ -310,8 +310,8 @@ Recommended order for a new session:
 
 ## Known State As Of This Handoff
 
-- Tests passing: 1153
-- Latest completed milestone: Practice cluster catalogue + decision help
+- Tests passing: 1155
+- Latest completed milestone: Practice cluster picker + legacy inference
 - Branch: `claude/review-architecture-70CUm` (up to date with origin)
 - Analysis audit: `analysis_audit.json` written on every ingest/reanalyze ✓
 - Enrichment audit: `enrichment_audit.json` written on every enrichment save ✓ (TASK C)
@@ -406,6 +406,10 @@ Recommended order for a new session:
     `rogd`, `parent_guidance`, `pathologization`, `pastoral_guidance`,
     `clinical_authority`, `institutional_legitimation`, `media_dissemination`,
     `legal_policy_advocacy`, `testimony_narrative`, and `unclustered`.
+  - Older proposals with blank `practice_cluster` are interpreted in the UI via
+    `infer_practice_cluster()`, so existing records are grouped before manual save.
+  - Practice editor uses a cluster category picker plus optional custom snake_case
+    override instead of a blank free-text-only field.
   - Practice editor shows a decision guide and detailed helper text for fit,
     cluster, cluster meaning, existing-practice ID, rationale, notes, and each
     action button.
@@ -415,7 +419,7 @@ Recommended order for a new session:
   - `write_practice_from_proposal()` rejects `needs_clustering`,
     `candidate_evidence`, and `not_practice`, protecting app and CLI paths.
   - Complement enrichment preserves practice fit/cluster decisions.
-  - 1153 total tests passing.
+  - 1155 total tests passing.
 - Researcher Readiness / Next Actions layer built ✓
   - New `runner/app_readiness.py` (pure, no st.*): `ReadinessItem`, `DocumentReadiness`,
     `summarize_enrichment_lifecycle`, `build_document_readiness`.

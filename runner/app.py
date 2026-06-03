@@ -943,7 +943,7 @@ from runner.app_readiness import (  # noqa: E402
     build_document_readiness,
     collect_corpus_readiness,
 )
-from runner.models.enrichment import infer_entity_registry_fit  # noqa: E402
+from runner.models.enrichment import infer_entity_registry_fit, infer_practice_cluster  # noqa: E402
 
 
 def _collect_metadata_sources(doc_dir: Path) -> dict:
@@ -6462,7 +6462,13 @@ def _practice_fit(item: dict) -> str:
 
 def _practice_cluster_key(item: dict) -> str:
     cluster = str(item.get("practice_cluster") or "").strip()
-    return cluster or "unclustered"
+    if cluster:
+        return cluster
+    try:
+        inferred = str(infer_practice_cluster(item) or "").strip()
+    except Exception:
+        inferred = ""
+    return inferred or "unclustered"
 
 
 def _practice_cluster_info(cluster: str) -> dict:
@@ -6484,6 +6490,14 @@ def _practice_cluster_display(cluster: str) -> str:
     key = str(cluster or "").strip() or "unclustered"
     info = _practice_cluster_info(key)
     return f"{key} — {info['label']}"
+
+
+def _practice_cluster_options(current: str = "") -> list[str]:
+    options = list(_PRACTICE_CLUSTER_CATALOGUE.keys())
+    current = str(current or "").strip()
+    if current and current not in options:
+        options.insert(-1, current)
+    return options
 
 
 def _practice_cluster_summary(records: list[dict]) -> list[dict]:
@@ -6970,7 +6984,7 @@ def _render_practice_queue(config, records: list[dict]) -> None:
                 _practice_fit(record["item"]),
                 _practice_fit(record["item"]),
             ),
-            "cluster": record["item"].get("practice_cluster", ""),
+            "cluster": _practice_cluster_key(record["item"]),
             "LLM confidence": _format_confidence(
                 _proposal_confidence(record["item"], "model_confidence", "llm_confidence", "confidence")
             ),
@@ -7551,15 +7565,29 @@ def _render_single_practice_editor(record: dict) -> None:
             ),
         )
     with c2:
-        item["practice_cluster"] = st.text_input(
+        inferred_cluster = _practice_cluster_key(item)
+        cluster_options = _practice_cluster_options(inferred_cluster)
+        selected_cluster = st.selectbox(
             "Practice cluster",
-            value=item.get("practice_cluster", ""),
+            cluster_options,
+            index=_option_index(cluster_options, inferred_cluster),
             key=f"{prefix}_cluster",
+            format_func=_practice_cluster_display,
             help=(
-                "Local consolidation key for similar evidence, e.g. `rogd` or `parent_guidance`. "
-                "Several narrow labels can share one cluster while you decide whether a broader practice exists."
+                "Choose the local evidence bucket this proposal belongs to. This does not push anything by itself; "
+                "it helps compare similar labels before linking or promoting a stable practice."
             ),
         )
+        custom_cluster = st.text_input(
+            "Custom cluster key",
+            value="",
+            key=f"{prefix}_cluster_custom",
+            help=(
+                "Optional. Use only when none of the listed categories fits. Prefer lowercase snake_case, "
+                "for example `school_policy`."
+            ),
+        )
+        item["practice_cluster"] = custom_cluster.strip() or selected_cluster
         item["existing_practice_id"] = st.text_input(
             "Existing practice id",
             value=item.get("existing_practice_id", "") or "",

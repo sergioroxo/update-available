@@ -424,7 +424,7 @@ def test_practice_cluster_summary_uses_unclustered_fallback_last():
 
     summary = _practice_cluster_summary(
         [
-            {"doc_id": "doc-a", "item": {"practice_id": "Unclear practice"}},
+            {"doc_id": "doc-a", "item": {}},
             {"doc_id": "doc-b", "item": {"practice_id": "ROGD", "practice_cluster": "rogd"}},
         ]
     )
@@ -432,6 +432,24 @@ def test_practice_cluster_summary_uses_unclustered_fallback_last():
     assert [row["cluster"] for row in summary] == ["rogd", "unclustered"]
     assert summary[1]["meaning"] == "Unclustered / needs researcher framing"
     assert summary[1]["held_evidence"] == 1
+
+
+def test_practice_cluster_summary_infers_from_older_blank_records():
+    from runner.app import _practice_cluster_summary
+
+    summary = _practice_cluster_summary(
+        [
+            {"doc_id": "8fe67e19", "item": {"practice_id": "Practice: ROGD-Diagnosis"}},
+            {
+                "doc_id": "8fe67e19",
+                "item": {"practice_id": "Practice: Strategic-Guidance-for-Parents"},
+            },
+        ]
+    )
+
+    clusters = {row["cluster"]: row for row in summary}
+    assert clusters["rogd"]["meaning"] == "ROGD / sudden-onset diagnosis frame"
+    assert clusters["parent_guidance"]["meaning"] == "Parent / family guidance"
 
 
 def test_practice_cluster_info_for_unknown_cluster_is_researcher_defined():
@@ -453,6 +471,15 @@ def test_practice_cluster_catalogue_has_media_and_legal_distinctions():
     assert "podcasts" in media["description"]
     assert "practice registry" in media["review_hint"]
     assert "policy" in legal["description"].lower()
+
+
+def test_practice_cluster_options_include_current_custom_before_unclustered():
+    from runner.app import _practice_cluster_options
+
+    options = _practice_cluster_options("school_policy")
+
+    assert "school_policy" in options
+    assert options[-1] == "unclustered"
 
 
 # ---------------------------------------------------------------------------
