@@ -1025,6 +1025,7 @@ def _guess_canonical(variant_term: str, lang_code: str) -> tuple[str, str]:
     _KNOWN = {
         # Norwegian
         "kjønnsideologi":          ("lexicon-gender-ideology",       "Gender Ideology"),
+        "kjønnsdysfori":           ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
         "reparativ terapi":        ("lexicon-reparative-therapy",    "Reparative Therapy"),
         "konverteringsterapi":     ("lexicon-congruence-therapy",    "Congruence Therapy"),
         "konverteringspraksis":    ("lexicon-conversion-practices",  "Conversion Practices"),
@@ -1037,18 +1038,34 @@ def _guess_canonical(variant_term: str, lang_code: str) -> tuple[str, str]:
         "disordine interiore":     ("lexicon-disordine-interiore",   "Disordine-Interiore"),
         "ferita antropologica":    ("lexicon-ferita-antropologica",  "Ferita-Antropologica"),
         "terapia consensuale":     ("lexicon-einvernehmliche-therapie", "Einvernehmliche-Therapie"),
+        "disforia di genere":      ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
+        # French
+        "dysphorie de genre":      ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
         # German
         "beratungsfreiheit":       ("lexicon-beratungsfreiheit",     "Beratungsfreiheit"),
         "einvernehmliche therapie":("lexicon-einvernehmliche-therapie", "Einvernehmliche-Therapie"),
         "konversionstherapieverbot":("lexicon-policy-resistance",    "Policy-Resistance"),
         "konversionsbehandlung":   ("lexicon-congruence-therapy",    "Congruence Therapy"),
         "seelsorge":               ("lexicon-sjelesorg",             "Sjelesorg"),
+        "geschlechtsdysphorie":    ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
         # Polish
+        "dysforia płciowa":        ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
         "troska duszpasterska":    ("lexicon-troska-duszpasterska",  "Troska-Duszpasterska"),
         "suwerenność rodzicielska":("lexicon-suwerenno-rodzicielska","Suwerenność-Rodzicielska"),
+        # Spanish
+        "disforia de género":      ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
+        # Finnish
+        "sukupuolidysforia":       ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
+        # Swedish
+        "könsdysfori":             ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
         # Hungarian
+        "nemi diszfória":          ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
         "terápiás szabadság":      ("lexicon-ter-pi-s-szabads-g",   "Terápiás-Szabadság"),
         "lelkipásztori gondozás":  ("lexicon-sjelesorg",             "Sjelesorg"),
+        # Greek
+        "δυσφορία φύλου":          ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
+        # Maltese
+        "disforija tal-ġeneru":    ("lexicon-gender-dysphoria",      "Gender Dysphoria"),
         # Romanian
         "patimă":                  ("lexicon-patim",                 "Patimă"),
         "terapie de conversie":    ("lexicon-congruence-therapy",    "Congruence Therapy"),

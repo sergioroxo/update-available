@@ -203,6 +203,13 @@ class TermVariant(BaseModel):
     ] = "tier-3-inferred"
     source_note: str = ""                  # brief note on where/how it appears
 
+    @field_validator("attestation_tier", mode="before")
+    @classmethod
+    def normalise_legacy_attestation_tier(cls, value):
+        if value == "tier-2-documented":
+            return "tier-2-ngo-academic"
+        return value
+
 
 class TermRelationship(BaseModel):
     existing_term: str                     # the term it relates to (exact string match)
@@ -285,6 +292,12 @@ class LexiconProposal(ProposalConfidenceMixin):
     # Link to existing lexicon entry if this is an update
     existing_entry_id: Optional[str] = None    # Sanity _id of existing lexiconEntry
     existing_entry_term: Optional[str] = None  # term string of existing entry
+
+    # Where the selected canonical target came from when this is a link action.
+    # "sanity" = already a live lexiconEntry; "seed"/"legacy" = curated previous-system
+    # draft not yet pushed. Used only for provenance on the auto-created canonical draft
+    # when attaching a variant/evidence to a seed/legacy target. Never auto-validates.
+    target_origin: Optional[str] = None        # "sanity" | "seed" | "legacy"
 
     # For merge_into: which entry should absorb this term
     merge_target_id: Optional[str] = None

@@ -188,8 +188,55 @@ def test_lexicon_patch_treats_bare_term_existing_id_as_slug_id(monkeypatch):
         _Config(),
     )
 
-    assert calls[0][0]["patch"]["id"] == "lexicon-rogd"
+    # Non-add_new now prepends an idempotent createIfNotExists so the patch never
+    # targets a missing document (e.g. a seed/legacy draft never pushed).
+    assert calls[0][0]["createIfNotExists"]["_id"] == "lexicon-rogd"
+    assert calls[0][0]["createIfNotExists"]["status"] == "draft"
     assert calls[0][1]["patch"]["id"] == "lexicon-rogd"
+    assert calls[0][2]["patch"]["id"] == "lexicon-rogd"
+
+
+def test_lexicon_add_variant_to_seed_target_materialises_canonical_draft(monkeypatch):
+    """Attaching a variant to a seed-draft canonical creates it as a draft and
+    records seed provenance — without auto-validating it."""
+    calls = []
+
+    def fake_mutate(mutations, config):
+        calls.append(mutations)
+        return {"results": [{"id": "lexicon-gender-dysphoria"}]}
+
+    monkeypatch.setattr(sanity, "_mutate", fake_mutate)
+
+    sanity_id = sanity.write_lexicon_draft_from_proposal(
+        {
+            "action": "add_variant",
+            "term": "Discordance Between Their Sex And Perceived Sex",
+            "existing_entry_id": "lexicon-gender-dysphoria",
+            "existing_entry_term": "Gender Dysphoria",
+            "target_origin": "seed",
+            "language": "en",
+            "exact_quote": "the discordance between their sex and perceived sex",
+            "variants": [
+                {"variant_term": "Discordance Between Their Sex And Perceived Sex", "language": "en"}
+            ],
+        },
+        "doc-xyz",
+        _Config(),
+    )
+
+    assert sanity_id == "lexicon-gender-dysphoria"
+    base = calls[0][0]["createIfNotExists"]
+    # Canonical, not the variant wording.
+    assert base["term"] == "Gender Dysphoria"
+    assert base["_id"] == "lexicon-gender-dysphoria"
+    assert base["status"] == "draft"
+    assert base["includeInAnalysisLexicon"] is False
+    assert "seed" in base["approvedBy"]
+    # The variant is attached via a subsequent multilingualVariants insert patch.
+    assert any(
+        "multilingualVariants" in str(m.get("patch", {}).get("insert", {}))
+        for m in calls[0][1:]
+    )
 
 
 def test_entity_write_rejects_media_or_source_registry_fit(monkeypatch):

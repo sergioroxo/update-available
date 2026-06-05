@@ -96,7 +96,7 @@ def test_write_analysis_audit_schema_keys_present(tmp_path):
 def test_write_analysis_audit_schema_version(tmp_path):
     write_analysis_audit(tmp_path, None, _analysis())
     payload = json.loads((tmp_path / "analysis_audit.json").read_text())
-    assert payload["schema_version"] == "3"
+    assert payload["schema_version"] == "4"
 
 
 # ---------------------------------------------------------------------------

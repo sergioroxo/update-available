@@ -161,6 +161,28 @@ def test_normalize_alias_does_not_count_as_repair():
     assert repairs == 0
 
 
+def test_normalize_repairs_known_gender_dysphoria_variant_add_new():
+    data = _minimal_enrichment_payload(lexicon_proposals=[{
+        "action": "add_new",
+        "term": "Discordance Between Their Sex And Perceived Sex",
+        "language": "en",
+        "exact_quote": "discordance between their sex and perceived sex",
+        "definition_as_used": "A replacement for gender dysphoria.",
+        "proposed_cluster": "Pseudo-Science",
+        "function": "Pseudo-Diagnostic",
+    }])
+
+    normalized, repairs = _normalize_enrichment_payload(data)
+    proposal = normalized["lexicon_proposals"][0]
+
+    assert repairs >= 1
+    assert proposal["action"] == "add_variant"
+    assert proposal["existing_entry_id"] == "lexicon-gender-dysphoria"
+    assert proposal["existing_entry_term"] == "Gender Dysphoria"
+    assert proposal["target_origin"] == "seed"
+    assert proposal["variants"][0]["variant_term"] == "Discordance Between Their Sex And Perceived Sex"
+
+
 # ---------------------------------------------------------------------------
 # _validate_response — validation_path, validation_attempts, repairs
 # ---------------------------------------------------------------------------

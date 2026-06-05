@@ -41,6 +41,7 @@ try:
         infer_practice_fit,
     )
     from runner.pipeline.audit import current_git_commit, sha256_text, write_enrichment_audit
+    from runner.pipeline.enrichment_lexicon import merge_enrichment_lexicon
     from runner.pipeline.http_retry import call_with_http_retries
     from runner.pipeline.sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 except ImportError:
@@ -60,6 +61,7 @@ except ImportError:
         infer_practice_fit,
     )
     from .audit import current_git_commit, sha256_text, write_enrichment_audit  # type: ignore[no-redef]
+    from .enrichment_lexicon import merge_enrichment_lexicon  # type: ignore[no-redef]
     from .http_retry import call_with_http_retries  # type: ignore[no-redef]
     from .sanity_reads import fetch_active_lexicon_terms, sanity_read_headers  # type: ignore[no-redef]
 
@@ -74,6 +76,8 @@ _PROMPT_FILE = (
 _SYSTEM_PROMPT: str | None = None
 
 _LEXICON_ACTIONS = {"add_new", "add_variant", "add_evidence", "add_definition", "merge_into"}
+_GENDER_DYSPHORIA_CANONICAL_ID = "lexicon-gender-dysphoria"
+_GENDER_DYSPHORIA_CANONICAL_TERM = "Gender Dysphoria"
 _LEXICON_CLUSTERS = {
     "SSA-Rhetoric",
     "Pastoral-Coercion",
@@ -583,7 +587,7 @@ def run(
             "retrieval_not_wired" if not retrieval_grounded else ""
         )
 
-    system_prompt = _build_system_prompt_for_run(config, analysis, retrieval_grounded)
+    system_prompt = _build_system_prompt_for_run(config, analysis, retrieval_grounded, _audit)
     user_message  = _build_user_message(doc_id, preprocess)
     if _audit is not None:
         _audit["prompt_sha256"] = sha256_text(system_prompt)
@@ -930,7 +934,7 @@ def _run_chunked_enrichment(
     *,
     _audit: dict | None = None,
 ) -> EnrichmentResult:
-    system_prompt = _build_system_prompt_for_run(config, analysis, retrieval_grounded)
+    system_prompt = _build_system_prompt_for_run(config, analysis, retrieval_grounded, _audit)
     chunks = _chunk_text(preprocess.text)
     results: list[EnrichmentResult] = []
     errors: list[str] = []
@@ -1117,6 +1121,7 @@ def _build_system_prompt_for_run(
     config: Config,
     analysis: AnalysisResult,
     retrieval_grounded: bool,
+    _audit: dict | None = None,
 ) -> str:
     """Build the enrichment prompt while tolerating older test doubles."""
     try:
@@ -1124,9 +1129,17 @@ def _build_system_prompt_for_run(
             config,
             analysis,
             retrieval_grounded=retrieval_grounded,
+            _audit=_audit,
         )
     except TypeError:
-        return _build_system_prompt(config, analysis)
+        try:
+            return _build_system_prompt(
+                config,
+                analysis,
+                retrieval_grounded=retrieval_grounded,
+            )
+        except TypeError:
+            return _build_system_prompt(config, analysis)
 
 
 def _build_system_prompt(
@@ -1134,14 +1147,30 @@ def _build_system_prompt(
     analysis: AnalysisResult,
     *,
     retrieval_grounded: bool = False,
+    _audit: dict | None = None,
 ) -> str:
     base = _load_system_prompt()
 
     lexicon_block = "(not available — Sanity query failed)"
     entity_block  = "(not available — Sanity query failed)"
 
+    # Stage 3c research memory: live Sanity draft+validated terms merged with
+    # curated seed-draft and legacy-draft memory so the model can MATCH against
+    # previous-system vocabulary even before it is pushed to Sanity. Seed/legacy
+    # terms are labelled by source and are draft memory only — never validated by
+    # being visible here. Sanity failure must NOT drop seed/legacy memory.
+    sanity_terms: list[dict] = []
     try:
-        terms = _fetch_lexicon_entries(config)
+        sanity_terms = _fetch_lexicon_entries(config)
+    except Exception:
+        sanity_terms = []
+    try:
+        terms, _lex_counts = merge_enrichment_lexicon(sanity_terms)
+        if _audit is not None:
+            _audit["lexicon_terms_sanity"] = _lex_counts.get("sanity", 0)
+            _audit["lexicon_terms_seed"] = _lex_counts.get("seed", 0)
+            _audit["lexicon_terms_legacy"] = _lex_counts.get("legacy", 0)
+            _audit["lexicon_terms_injected"] = _lex_counts.get("injected", 0)
         lexicon_block = (
             "\n".join(
                 _format_lexicon_prompt_line(t)
@@ -1170,7 +1199,11 @@ def _build_system_prompt(
         )
 
     injection = (
-        f"\n\nCURRENT LEXICON ENTRIES (do not re-propose — add variant or evidence instead):\n"
+        f"\n\nCURRENT LEXICON MEMORY — match new wording against these known concepts. "
+        f"Each line is tagged by source: [Sanity validated] and [Sanity draft] are live "
+        f"registry entries; [seed draft] and [legacy draft] are curated previous-system "
+        f"vocabulary not yet in Sanity. For any concept already listed here (any source), "
+        f"prefer add_variant or add_evidence linking to it over proposing it again as add_new:\n"
         f"{lexicon_block}\n\n"
         f"CURRENT ENTITY REGISTRY (do not re-propose — use enrich_existing if found):\n"
         f"{entity_block}\n\n"
@@ -1335,6 +1368,17 @@ def _fetch_lexicon_entries(config: Config) -> list[dict]:
     return fetch_active_lexicon_terms(config)
 
 
+def _lexicon_source_label(term: dict) -> str:
+    """Human-readable source/status tag for a memory term in the prompt."""
+    source = (term.get("source") or "sanity").lower()
+    if source == "seed":
+        return "seed draft"
+    if source == "legacy":
+        return "legacy draft"
+    status = term.get("status") or "draft"
+    return f"Sanity {status}"
+
+
 def _format_lexicon_prompt_line(term: dict) -> str:
     variants = term.get("multilingualVariants") or []
     variant_text = ", ".join(
@@ -1344,7 +1388,8 @@ def _format_lexicon_prompt_line(term: dict) -> str:
     )
     suffix = f"; variants: {variant_text}" if variant_text else ""
     return (
-        f"- {term['term']} (cluster={term.get('proposedCluster','?')}, "
+        f"- [{_lexicon_source_label(term)}] {term['term']} "
+        f"(cluster={term.get('proposedCluster','?')}, "
         f"function={term.get('function','?')}{suffix})"
     )
 
@@ -1489,6 +1534,38 @@ def _normalize_enrichment_payload(
         if "confidence_rationale" in item:
             item["confidence_rationale"] = _as_string(item.get("confidence_rationale"))
 
+    def _repair_known_lexicon_variant(item: dict) -> None:
+        """Route narrow, known previous-system variants to their canonical target."""
+        nonlocal _repairs
+        if item.get("action") != "add_new":
+            return
+        term = _as_string(item.get("term")).casefold()
+        if (
+            "discordance between" not in term
+            or "sex" not in term
+            or ("perceived sex" not in term and "perceived gender" not in term)
+        ):
+            return
+        item["action"] = "add_variant"
+        item["existing_entry_id"] = _GENDER_DYSPHORIA_CANONICAL_ID
+        item["existing_entry_term"] = _GENDER_DYSPHORIA_CANONICAL_TERM
+        item["target_origin"] = item.get("target_origin") or "seed"
+        variant_term = _as_string(item.get("term"))
+        variants = _as_object_list(item.get("variants"))
+        seen_variants = {
+            _as_string(row.get("variant_term")).casefold()
+            for row in variants
+        }
+        if variant_term and variant_term.casefold() not in seen_variants:
+            variants.insert(0, {
+                "variant_term": variant_term,
+                "language": _as_string(item.get("language"), "en") or "en",
+                "attestation_tier": "tier-3-inferred",
+                "source_note": _as_string(item.get("exact_quote")),
+            })
+            item["variants"] = variants
+        _repairs += 1
+
     _now_str = _now_iso()   # single timestamp for the whole normalization pass
 
     normalized = dict(data)
@@ -1520,6 +1597,7 @@ def _normalize_enrichment_payload(
         item["exact_quote"] = _as_string(item.get("exact_quote"))
         item["definition_as_used"] = _as_string(item.get("definition_as_used"))
         item["variants"] = _as_object_list(item.get("variants"))
+        _repair_known_lexicon_variant(item)
         item["co_occurring_terms"] = _as_string_list(item.get("co_occurring_terms"))
         relationships = []
         for relationship in _as_object_list(item.get("relationships")):

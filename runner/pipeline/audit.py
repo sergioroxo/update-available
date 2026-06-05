@@ -28,7 +28,7 @@ except ImportError:
     from ..models.document import AnalysisResult
     from ..models.enrichment import EnrichmentResult
 
-_SCHEMA_VERSION = "3"
+_SCHEMA_VERSION = "4"
 _REPO_ROOT = Path(__file__).parents[2]
 
 
@@ -97,6 +97,12 @@ class EnrichmentRunMeta:
     llm_flag: str = ""
     model: str = ""
     input_char_count: int = 0
+    # Stage 3c research-memory lexicon source counts (schema v4). Records how much
+    # of each memory layer was injected so the lexicon coverage is auditable.
+    lexicon_terms_sanity: int = 0   # live Sanity draft+validated terms injected
+    lexicon_terms_seed: int = 0     # curated seed-draft terms injected
+    lexicon_terms_legacy: int = 0   # legacy-glossary draft terms injected
+    lexicon_terms_injected: int = 0 # total after dedupe (sanity > seed > legacy)
     chunked: bool = False
     chunk_count: int | None = None
     chunks: list[dict] | None = None  # [{index, char_count, succeeded, model, validation_path, validation_attempts, normalization_repairs, error}]

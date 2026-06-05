@@ -251,21 +251,23 @@ Any number, percentage, study citation, or claim of scale:
 
 ## EXISTING CONTEXT (injected at runtime)
 
-The following sections are injected dynamically before the document text:
+The following sections are appended dynamically before the document text. They are
+not manually edited in this file; the pipeline builds them from current research
+memory and local document state:
 
-```
-CURRENT LEXICON ENTRIES (do not re-propose — add variant or evidence instead):
-{lexicon_terms}
+- `CURRENT LEXICON MEMORY`: live Sanity draft/validated entries plus curated
+  seed-draft and legacy-draft memory, labelled by source. Match new wording
+  against these concepts and prefer `add_variant` or `add_evidence` over
+  proposing duplicate `add_new` entries.
+- `CURRENT ENTITY REGISTRY`: live organization/person names. Use
+  `enrich_existing` when the document refers to an existing entity.
+- `RELATED CORPUS DOCUMENTS`: currently empty unless retrieval grounding is
+  explicitly wired for the run. Never invent `doc_id` values.
+- `MAIN ANALYSIS RESULT`: the Stage 3b document classification summary and
+  candidate terms/actors already identified.
 
-CURRENT ENTITY REGISTRY (do not re-propose — use enrich_existing if found):
-{entity_registry}
-
-RELATED CORPUS DOCUMENTS (use doc_id for corpus_connections):
-{related_docs}
-
-MAIN ANALYSIS RESULT (candidate terms and actors already identified):
-{main_analysis_summary}
-```
+The runtime block is the source of truth for the available lexicon/entity/corpus
+context in a given run.
 
 ---
 

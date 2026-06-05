@@ -90,6 +90,33 @@ def test_enrichment_validate_response_reports_unrepairable_validation_details():
     assert "attestation_tier" in message
 
 
+def test_enrichment_validate_response_accepts_legacy_documented_attestation_tier():
+    raw = """
+    {
+      "lexicon_proposals": [
+        {
+          "action": "add_variant",
+          "term": "discordance between sex and perceived sex",
+          "existing_entry_id": "lexicon-gender-dysphoria",
+          "existing_entry_term": "Gender Dysphoria",
+          "exact_quote": "discordance between their sex and perceived sex",
+          "variants": [
+            {
+              "variant_term": "discordance between sex and perceived sex",
+              "language": "en",
+              "attestation_tier": "tier-2-documented"
+            }
+          ]
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    assert result.lexicon_proposals[0].variants[0].attestation_tier == "tier-2-ngo-academic"
+
+
 def test_enrichment_validate_response_accepts_null_entity_text_fields():
     raw = """
     {

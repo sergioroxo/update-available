@@ -593,6 +593,33 @@ def write_lexicon_draft_from_proposal(
     if action == "add_new":
         mutations = [{"createOrReplace": doc}]
     else:
+        # Materialise the canonical entry first if it does not yet exist. The
+        # target may be a curated seed/legacy draft that the researcher never
+        # pushed — without this, the patch below would fail against a missing
+        # document. createIfNotExists is idempotent: a no-op when the canonical
+        # already exists, so it never clobbers a reviewed entry. It does NOT
+        # auto-validate; the entry is created as a draft for later review.
+        canonical_term = (proposal.get("existing_entry_term") or term).strip() or term
+        target_origin = str(proposal.get("target_origin") or "").strip().lower()
+        if target_origin in ("seed", "legacy"):
+            approved_by_note = (
+                f"{approved_by} (canonical draft auto-created from {target_origin} "
+                "target on variant/evidence attachment)"
+            )
+        else:
+            approved_by_note = approved_by
+        base_doc = {
+            "_id": sanity_id,
+            "_type": "lexiconEntry",
+            "term": canonical_term,
+            "status": "draft",
+            # Auto-created canonicals stay out of the analysis orientation lexicon
+            # until the researcher explicitly enables the flag in Sanity Studio.
+            "includeInAnalysisLexicon": False,
+            "approvedBy": approved_by_note,
+            "frequency": 0,
+            "firstSeen": now_iso,
+        }
         set_fields = {
             "lastSeen": now_iso,
             "lastReanalyzed": now_iso,
@@ -600,6 +627,7 @@ def write_lexicon_draft_from_proposal(
         if action == "add_definition" and proposal.get("definition_as_used"):
             set_fields["draftDefinition"] = proposal["definition_as_used"]
         mutations = [
+            {"createIfNotExists": base_doc},
             {
                 "patch": {
                     "id": sanity_id,
@@ -610,7 +638,7 @@ def write_lexicon_draft_from_proposal(
                     },
                     "set": set_fields,
                 }
-            }
+            },
         ]
         if evidence_item:
             mutations.append(
