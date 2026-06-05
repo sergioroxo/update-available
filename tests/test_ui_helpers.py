@@ -150,6 +150,82 @@ def test_open_document_from_inbox_sets_navigation_and_clears_filters():
     assert mock_ss["nav_page"] == "Review Inbox"
 
 
+def test_batch_run_command_live_includes_execute_and_enrich_by_default():
+    import runner.app as app_mod
+
+    cmd = app_mod._batch_run_command(
+        batch_group="pilot test",
+        limit=3,
+        execute=True,
+    )
+
+    assert cmd[:5] == [
+        app_mod.sys.executable,
+        "-m",
+        "runner",
+        "batch-run",
+        "--batch",
+    ]
+    assert "pilot test" in cmd
+    assert "--execute" in cmd
+    assert "--no-enrich" not in cmd
+
+
+def test_batch_run_command_passes_enrichment_model():
+    import runner.app as app_mod
+
+    cmd = app_mod._batch_run_command(
+        batch_group="pilot",
+        limit=3,
+        execute=True,
+        enrich_model="core-gemma",
+    )
+
+    assert cmd[cmd.index("--enrich-model") + 1] == "core-gemma"
+    assert "--no-enrich" not in cmd
+
+
+def test_batch_run_command_can_disable_enrichment():
+    import runner.app as app_mod
+
+    cmd = app_mod._batch_run_command(
+        batch_group="pilot",
+        limit=3,
+        execute=True,
+        run_enrich=False,
+        enrich_model="core-gemma",
+    )
+
+    assert "--execute" in cmd
+    assert "--no-enrich" in cmd
+    assert "--enrich-model" not in cmd
+
+
+def test_batch_run_command_rehearsal_has_no_execute():
+    import runner.app as app_mod
+
+    cmd = app_mod._batch_run_command(batch_group="pilot", limit=3)
+
+    assert "--execute" not in cmd
+    assert "--batch" in cmd
+    assert "--limit" in cmd
+
+
+def test_batch_run_command_adds_priority_and_skip_preflight():
+    import runner.app as app_mod
+
+    cmd = app_mod._batch_run_command(
+        batch_group="pilot",
+        limit=5,
+        priority="high",
+        execute=True,
+        skip_preflight=True,
+    )
+
+    assert cmd[cmd.index("--priority") + 1] == "high"
+    assert "--skip-preflight" in cmd
+
+
 def test_panel_reset_clears_on_doc_switch():
     """Switching from doc-1 to doc-2 should clear the keys."""
     state = {
@@ -210,6 +286,26 @@ def test_proposal_state_priority():
     assert _proposal_state({"approved": True, "pushed_to_sanity": True}) == "pushed to Sanity"
     assert _proposal_state({"approved": True}) == "approved locally"
     assert _proposal_state({}) == "pending review"
+
+
+def test_proposal_record_key_is_stable_when_status_changes(tmp_path):
+    from runner.app import _proposal_record_key
+
+    path = tmp_path / "doc-a" / "enrichment.json"
+    before = {
+        "path": path,
+        "doc_id": "doc-a",
+        "index": 2,
+        "item": {"term": "ROGD", "proposal_status": "pending"},
+    }
+    after = {
+        "path": path,
+        "doc_id": "doc-a",
+        "index": 2,
+        "item": {"term": "ROGD", "proposal_status": "approved"},
+    }
+
+    assert _proposal_record_key(before) == _proposal_record_key(after)
 
 
 def test_proposal_review_rows_summarises_enrichment_groups():
@@ -343,7 +439,7 @@ def test_source_queue_initial_priority_keeps_manual_add_only_choice():
 
 
 # ---------------------------------------------------------------------------
-# Practice Queue cluster review helpers
+# Practice Evidence cluster review helpers
 # ---------------------------------------------------------------------------
 
 def test_practice_cluster_summary_groups_related_labels():
@@ -375,16 +471,17 @@ def test_practice_cluster_summary_groups_related_labels():
             "cluster": "rogd",
             "meaning": "ROGD / sudden-onset diagnosis frame",
             "proposals": 2,
-            "needs_review": 1,
+            "needs_review": 0,
             "held_evidence": 2,
-            "push_candidate": 0,
+            "linked_evidence": 0,
+            "promotion_review": 0,
             "docs": "8fe67e19",
             "examples": "Practice: ROGD-Diagnosis; Practice: ROGD-Promotion",
         }
     ]
 
 
-def test_practice_cluster_summary_counts_push_candidates():
+def test_practice_cluster_summary_counts_linked_and_promotion_candidates():
     from runner.app import _practice_cluster_summary
 
     records = [
@@ -413,9 +510,10 @@ def test_practice_cluster_summary_counts_push_candidates():
 
     assert row["cluster"] == "parent_guidance"
     assert row["meaning"] == "Parent / family guidance"
-    assert row["push_candidate"] == 2
+    assert row["linked_evidence"] == 1
+    assert row["promotion_review"] == 1
     assert row["held_evidence"] == 0
-    assert row["needs_review"] == 1
+    assert row["needs_review"] == 0
     assert row["docs"] == "doc-a, doc-b"
 
 
@@ -492,7 +590,7 @@ def test_practice_review_status_does_not_show_blocked_fit_as_approved():
         "proposal_status": "approved",
     }
 
-    assert _practice_review_status(item) == "Needs review"
+    assert _practice_review_status(item) == "Evidence only"
 
 
 def test_candidate_practice_evidence_has_own_status():
@@ -561,7 +659,207 @@ def test_pushable_existing_practice_keeps_approval_when_id_present():
     }
 
     assert _clear_stale_practice_approval_if_blocked(item) is False
-    assert _practice_review_status(item) == "Approved, not pushed"
+    assert _practice_review_status(item) == "Linked evidence"
+
+
+def test_practice_evidence_decision_maps_legacy_fits():
+    from runner.app import _practice_evidence_decision
+
+    assert _practice_evidence_decision({"practice_fit": "needs_clustering"}) == "keep_evidence"
+    assert _practice_evidence_decision({"practice_fit": "candidate_evidence"}) == "keep_evidence"
+    assert _practice_evidence_decision({"practice_fit": "existing_practice"}) == "link_existing"
+    assert _practice_evidence_decision({"practice_fit": "registry_practice"}) == "flag_promotion"
+    assert _practice_evidence_decision({"practice_fit": "not_practice"}) == "reject"
+
+
+def test_apply_practice_evidence_decision_writes_new_and_legacy_fields():
+    from runner.app import _apply_practice_evidence_decision
+
+    item = {
+        "practice_cluster": "rogd",
+        "existing_practice_id": "practice-rogd-frame",
+        "approved": True,
+        "proposal_status": "approved",
+    }
+
+    _apply_practice_evidence_decision(item, "link_existing")
+
+    assert item["evidence_decision"] == "link_existing"
+    assert item["practice_fit"] == "existing_practice"
+    assert item["cluster_label"] == "rogd"
+    assert item["linked_type_kind"] == "practice"
+    assert item["linked_type_id"] == "practice-rogd-frame"
+    assert item["approved"] is False
+    assert item["proposal_status"] == "pending"
+
+
+def test_apply_practice_evidence_decision_rejects_locally():
+    from runner.app import _apply_practice_evidence_decision
+
+    item = {"practice_cluster": "rogd", "approved": True}
+
+    _apply_practice_evidence_decision(item, "reject")
+
+    assert item["evidence_decision"] == "reject"
+    assert item["practice_fit"] == "not_practice"
+    assert item["rejected"] is True
+    assert item["proposal_status"] == "rejected"
+
+
+def test_lexicon_target_options_sort_and_skip_incomplete_rows():
+    from runner.app import _lexicon_target_options
+
+    rows = _lexicon_target_options([
+        {"_id": "lex-z", "term": "Zeta", "status": "draft"},
+        {"_id": "", "term": "Missing id"},
+        {"_id": "lex-a", "term": "Alpha", "status": "validated"},
+        {"_id": "lex-empty", "term": ""},
+        {"_id": "lex-a", "term": "Alpha duplicate"},
+    ])
+
+    assert [row["_id"] for row in rows] == ["lex-a", "lex-z"]
+    assert rows[0]["label"] == "Alpha · Sanity · validated"
+
+
+def test_lexicon_target_options_combines_seed_and_legacy_worlds():
+    from runner.app import _lexicon_target_options
+
+    rows = _lexicon_target_options(
+        [{"_id": "lexicon-rogd", "term": "ROGD", "status": "validated"}],
+        seed_terms=[
+            {"term": "Gender Dysphoria"},
+            {"term": "ROGD"},  # already live in Sanity → deduped away
+        ],
+        legacy_terms=[{"term": "Discordance Between Their Sex And Perceived Sex"}],
+    )
+
+    by_term = {row["term"]: row for row in rows}
+    # Live Sanity term wins the dedupe over the seed duplicate.
+    assert by_term["ROGD"]["origin"] == "sanity"
+    assert by_term["ROGD"]["in_sanity"] is True
+    # Seed draft is offered as a target with a computed canonical id.
+    gd = by_term["Gender Dysphoria"]
+    assert gd["origin"] == "seed"
+    assert gd["in_sanity"] is False
+    assert gd["_id"] == "lexicon-gender-dysphoria"
+    assert gd["label"] == "Gender Dysphoria · Seed draft · not pushed"
+    # Legacy draft is offered too.
+    legacy = by_term["Discordance Between Their Sex And Perceived Sex"]
+    assert legacy["origin"] == "legacy"
+    assert legacy["label"].endswith("Legacy draft · not pushed")
+
+
+def test_apply_lexicon_target_records_seed_origin_for_push_provenance():
+    from runner.app import _apply_lexicon_target
+
+    item = {"term": "Discordance Between Their Sex And Perceived Sex", "language": "en", "variants": []}
+    _apply_lexicon_target(
+        item,
+        {"_id": "lexicon-gender-dysphoria", "term": "Gender Dysphoria", "origin": "seed", "in_sanity": False},
+        action="add_variant",
+    )
+
+    assert item["existing_entry_id"] == "lexicon-gender-dysphoria"
+    assert item["target_origin"] == "seed"
+    assert item["variants"][0]["variant_term"] == "Discordance Between Their Sex And Perceived Sex"
+    assert item["variants"][0]["attestation_tier"] == "tier-2-ngo-academic"
+
+
+def test_proposal_target_index_prefers_existing_entry_id_then_term():
+    from runner.app import _proposal_target_index
+
+    options = [
+        {"_id": "lex-gender-dysphoria", "term": "Gender dysphoria", "status": "validated"},
+        {"_id": "lex-rogd", "term": "ROGD", "status": "draft"},
+    ]
+
+    assert _proposal_target_index(options, {"existing_entry_id": "lex-rogd"}) == 1
+    assert _proposal_target_index(options, {"existing_entry_term": "gender dysphoria"}) == 0
+    assert _proposal_target_index(options, {}) == 0
+
+
+def test_apply_lexicon_target_sets_variant_fields_for_writer():
+    from runner.app import _apply_lexicon_target
+
+    item = {
+        "term": "Discordance Between Their Sex And Perceived Sex",
+        "language": "en",
+        "exact_quote": "discordance between their sex and perceived sex",
+        "variants": [],
+    }
+
+    _apply_lexicon_target(
+        item,
+        {"_id": "lex-gender-dysphoria", "term": "Gender dysphoria"},
+        action="add_variant",
+    )
+
+    assert item["existing_entry_id"] == "lex-gender-dysphoria"
+    assert item["existing_entry_term"] == "Gender dysphoria"
+    assert item["variants"][0]["variant_term"] == "Discordance Between Their Sex And Perceived Sex"
+    assert item["variants"][0]["language"] == "en"
+
+
+def test_repair_known_lexicon_variant_for_review_targets_gender_dysphoria():
+    from runner.app import _repair_known_lexicon_variant_for_review
+
+    item = {
+        "action": "add_new",
+        "term": "Discordance Between Their Sex And Perceived Sex",
+        "language": "en",
+        "exact_quote": "discordance between their sex and perceived sex",
+        "variants": [],
+    }
+
+    repaired = _repair_known_lexicon_variant_for_review(item)
+
+    assert repaired["action"] == "add_variant"
+    assert repaired["existing_entry_id"] == "lexicon-gender-dysphoria"
+    assert repaired["existing_entry_term"] == "Gender Dysphoria"
+    assert repaired["target_origin"] == "seed"
+    assert repaired["variants"][0]["variant_term"] == "Discordance Between Their Sex And Perceived Sex"
+    assert item["action"] == "add_new"
+
+
+def test_repair_known_lexicon_variant_for_review_ignores_unrelated_terms():
+    from runner.app import _repair_known_lexicon_variant_for_review
+
+    item = {
+        "action": "add_new",
+        "term": "Trauma Causation Claims",
+        "definition_as_used": "Claims that gender dysphoria is caused by trauma.",
+    }
+
+    repaired = _repair_known_lexicon_variant_for_review(item)
+
+    assert repaired == item
+
+
+def test_local_enrichment_proposal_records_repairs_known_lexicon_variants(tmp_path):
+    import json
+    from runner.app import _local_enrichment_proposal_records
+
+    doc_dir = tmp_path / "0b5ed480"
+    doc_dir.mkdir()
+    (doc_dir / "enrichment.json").write_text(
+        json.dumps({
+            "lexicon_proposals": [
+                {
+                    "action": "add_new",
+                    "term": "Discordance Between Their Sex And Perceived Sex Or Perceived Gender",
+                    "language": "en",
+                    "variants": [],
+                }
+            ]
+        }),
+        encoding="utf-8",
+    )
+
+    records = _local_enrichment_proposal_records(tmp_path, "lexicon_proposals")
+
+    assert len(records) == 1
+    assert records[0]["item"]["action"] == "add_variant"
+    assert records[0]["item"]["existing_entry_id"] == "lexicon-gender-dysphoria"
 
 
 # ---------------------------------------------------------------------------

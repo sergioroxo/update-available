@@ -1254,6 +1254,210 @@ _ENRICHMENT_ACTION_HELP = {
     "enrich_existing": "Add evidence/details to an existing registry record.",
 }
 
+_GENDER_DYSPHORIA_CANONICAL_ID = "lexicon-gender-dysphoria"
+_GENDER_DYSPHORIA_CANONICAL_TERM = "Gender Dysphoria"
+
+
+def _lexicon_canonical_id(term: str) -> str:
+    """Canonical lexiconEntry _id for a term, matching the Sanity writer's slug.
+
+    Mirrors clients.sanity._slugify so a seed/legacy target's id equals the
+    live Sanity _id once it is materialised — letting the three worlds dedupe.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", str(term or "").strip().lower()).strip("-")
+    return f"lexicon-{slug or 'untitled'}"
+
+
+def _lexicon_target_label(term: dict) -> str:
+    origin = (term.get("origin") or "sanity").lower()
+    status = term.get("status") or "unknown"
+    value = term.get("term") or term.get("_id") or "(untitled)"
+    if origin == "seed":
+        return f"{value} · Seed draft · not pushed"
+    if origin == "legacy":
+        return f"{value} · Legacy draft · not pushed"
+    return f"{value} · Sanity · {status}"
+
+
+def _lexicon_target_options(
+    sanity_terms: list[dict],
+    seed_terms: list[dict] | None = None,
+    legacy_terms: list[dict] | None = None,
+) -> list[dict]:
+    """Unified canonical-term picker across the live + seed + legacy worlds.
+
+    Sanity terms keep their real ``_id`` and status. Seed/legacy terms are not in
+    Sanity yet, so they carry a computed canonical id and ``status='draft'``; the
+    push path materialises them on first link. Dedupe is by canonical id with
+    Sanity winning over seed winning over legacy, so a concept that already exists
+    live is never shown twice.
+    """
+    rows: list[dict] = []
+    seen: set[str] = set()
+
+    # Sanity first so live entries win the dedupe.
+    for term in sanity_terms or []:
+        term_id = str(term.get("_id") or "").strip()
+        term_text = str(term.get("term") or "").strip()
+        if not term_id or not term_text or term_id in seen:
+            continue
+        seen.add(term_id)
+        row = {
+            "_id": term_id,
+            "term": term_text,
+            "status": term.get("status") or "unknown",
+            "origin": "sanity",
+            "in_sanity": True,
+        }
+        row["label"] = _lexicon_target_label(row)
+        rows.append(row)
+
+    for origin, source in (("seed", seed_terms), ("legacy", legacy_terms)):
+        for term in source or []:
+            term_text = str(term.get("term") or "").strip()
+            if not term_text:
+                continue
+            term_id = str(term.get("_id") or "").strip() or _lexicon_canonical_id(term_text)
+            if term_id in seen:
+                continue
+            seen.add(term_id)
+            row = {
+                "_id": term_id,
+                "term": term_text,
+                "status": "draft",
+                "origin": origin,
+                "in_sanity": False,
+            }
+            row["label"] = _lexicon_target_label(row)
+            rows.append(row)
+
+    return sorted(rows, key=lambda row: row["term"].casefold())
+
+
+def _local_lexicon_targets() -> dict[str, list[dict]]:
+    """Curated seed + legacy draft terms as link targets (no network/Sanity call).
+
+    These are the 'trusted seed drafts' / 'legacy drafts': real previous-system
+    vocabulary that may not be in Sanity yet. Returned as minimal ``{"term": ...}``
+    rows for the unified canonical-term picker. Parse failures degrade to empty.
+    """
+    seed: list[dict] = []
+    legacy: list[dict] = []
+    try:
+        seed_path = _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.1.md"
+        if seed_path.exists():
+            seed = [
+                {"term": str(row.get("term") or "").strip()}
+                for row in _parse_seed_lexicon(seed_path)
+                if str(row.get("term") or "").strip()
+            ]
+    except Exception:
+        seed = []
+    try:
+        legacy = [
+            {"term": str(row.get("term") or "").strip()}
+            for row in _parse_legacy_vocabulary()
+            if str(row.get("term") or "").strip()
+        ]
+    except Exception:
+        legacy = []
+    return {"seed": seed, "legacy": legacy}
+
+
+def _proposal_target_index(options: list[dict], item: dict) -> int:
+    target_id = str(
+        item.get("existing_entry_id")
+        or item.get("merge_target_id")
+        or item.get("target_term_id")
+        or ""
+    ).strip()
+    target_term = str(
+        item.get("existing_entry_term")
+        or item.get("canonical_term")
+        or item.get("variant_of")
+        or ""
+    ).strip().casefold()
+    if target_id:
+        for idx, option in enumerate(options):
+            if option["_id"] == target_id:
+                return idx
+    if target_term:
+        for idx, option in enumerate(options):
+            if option["term"].casefold() == target_term:
+                return idx
+    return 0
+
+
+def _apply_lexicon_target(item: dict, target: dict, *, action: str) -> None:
+    """Store the selected existing lexicon target using writer-compatible keys."""
+    item["existing_entry_id"] = target["_id"]
+    item["existing_entry_term"] = target["term"]
+    # Provenance for the push path: seed/legacy targets are materialised as draft
+    # canonicals on first link; "sanity" targets already exist.
+    item["target_origin"] = target.get("origin", "sanity")
+    if action == "merge_into":
+        item["merge_target_id"] = target["_id"]
+    elif item.get("merge_target_id") == target["_id"]:
+        item.pop("merge_target_id", None)
+    if action == "add_variant":
+        variant = {
+            "variant_term": item.get("term", ""),
+            "language": item.get("language", "unknown") or "unknown",
+            "attestation_tier": item.get("attestation_tier", "tier-2-ngo-academic"),
+            "source_note": item.get("researcher_note", "") or item.get("exact_quote", ""),
+        }
+        variants = [
+            row for row in (item.get("variants") or [])
+            if str(row.get("variant_term", "")).casefold() != str(variant["variant_term"]).casefold()
+        ]
+        if variant["variant_term"]:
+            variants.insert(0, variant)
+        item["variants"] = variants
+
+
+def _repair_known_lexicon_variant_for_review(item: dict) -> dict:
+    """Route narrow previous-system variants to their canonical review target.
+
+    This mirrors the enrichment normalizer, but runs in the Streamlit review
+    queue so older enrichment.json files do not keep presenting known variants
+    as brand-new canonical terms.
+    """
+    repaired = dict(item)
+    if repaired.get("action") != "add_new":
+        return repaired
+    term = str(repaired.get("term") or "").casefold()
+    if (
+        "discordance between" not in term
+        or "sex" not in term
+        or ("perceived sex" not in term and "perceived gender" not in term)
+    ):
+        return repaired
+
+    repaired["action"] = "add_variant"
+    repaired["existing_entry_id"] = _GENDER_DYSPHORIA_CANONICAL_ID
+    repaired["existing_entry_term"] = _GENDER_DYSPHORIA_CANONICAL_TERM
+    repaired["target_origin"] = repaired.get("target_origin") or "seed"
+
+    variant_term = str(repaired.get("term") or "").strip()
+    variants = [
+        dict(row)
+        for row in (repaired.get("variants") or [])
+        if isinstance(row, dict)
+    ]
+    seen = {
+        str(row.get("variant_term") or "").casefold()
+        for row in variants
+    }
+    if variant_term and variant_term.casefold() not in seen:
+        variants.insert(0, {
+            "variant_term": variant_term,
+            "language": repaired.get("language") or "en",
+            "attestation_tier": "tier-3-inferred",
+            "source_note": repaired.get("exact_quote") or "",
+        })
+    repaired["variants"] = variants
+    return repaired
+
 
 def _sanity_studio_url(config, doc_id: str) -> str | None:
     """Return the Sanity Studio URL for a sogiceDocument, or None if credentials missing."""
@@ -3556,6 +3760,175 @@ def _complement_enrichment_command(doc_id: str) -> list[str]:
     return [sys.executable, "-m", "runner", "enrich", doc_id, "--yes"]
 
 
+def _default_source_queue_batch_group() -> str:
+    return datetime.now(timezone.utc).strftime("pilot-%Y-%m-%d-%H%M")
+
+
+def _batch_run_command(
+    *,
+    batch_group: str,
+    limit: int,
+    priority: str = "",
+    execute: bool = False,
+    run_enrich: bool = True,
+    enrich_model: str = "",
+    skip_preflight: bool = False,
+) -> list[str]:
+    command = [
+        sys.executable,
+        "-m",
+        "runner",
+        "batch-run",
+        "--batch",
+        batch_group,
+        "--limit",
+        str(limit),
+    ]
+    if priority:
+        command.extend(["--priority", priority])
+    if execute:
+        command.append("--execute")
+    if not run_enrich:
+        command.append("--no-enrich")
+    elif enrich_model:
+        command.extend(["--enrich-model", enrich_model])
+    if skip_preflight:
+        command.append("--skip-preflight")
+    return command
+
+
+def _app_job_lock_path() -> Path:
+    return _project_root / "exports" / "app_jobs" / "active_llm_job.json"
+
+
+def _pid_is_running(pid: int | str | None) -> bool:
+    try:
+        pid_int = int(pid or 0)
+    except (TypeError, ValueError):
+        return False
+    if pid_int <= 0:
+        return False
+    try:
+        os.kill(pid_int, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _read_app_job_lock() -> dict | None:
+    """Return the active heavy app job, clearing stale lock files."""
+    path = _app_job_lock_path()
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        path.unlink(missing_ok=True)
+        return None
+    if _pid_is_running(data.get("pid")):
+        return data
+    path.unlink(missing_ok=True)
+    return None
+
+
+def _write_app_job_lock(job: dict) -> None:
+    path = _app_job_lock_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "pid": job.get("pid"),
+        "kind": job.get("kind", "job"),
+        "mode": job.get("mode", ""),
+        "started_at": job.get("started_at", ""),
+        "log_path": job.get("log_path", ""),
+        "command": job.get("command", ""),
+    }
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _clear_app_job_lock(job: dict | None = None) -> None:
+    path = _app_job_lock_path()
+    if not path.exists():
+        return
+    if not job:
+        path.unlink(missing_ok=True)
+        return
+    try:
+        current = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        path.unlink(missing_ok=True)
+        return
+    if str(current.get("pid", "")) == str(job.get("pid", "")):
+        path.unlink(missing_ok=True)
+
+
+def _format_app_job_lock(job: dict) -> str:
+    kind = job.get("kind", "job")
+    mode = job.get("mode", "")
+    pid = job.get("pid", "unknown")
+    started = job.get("started_at", "")
+    label = f"{kind} {mode}".strip()
+    return f"{label} is already running (PID {pid}, started {started})."
+
+
+def _start_batch_run_job(
+    *,
+    batch_group: str,
+    limit: int,
+    priority: str = "",
+    execute: bool = False,
+    run_enrich: bool = True,
+    enrich_model: str = "",
+    skip_preflight: bool = False,
+) -> dict:
+    """Start batch-run without blocking the Streamlit app."""
+    mode = "live" if execute else "rehearsal"
+    if execute:
+        active = _read_app_job_lock()
+        if active:
+            raise RuntimeError(
+                _format_app_job_lock(active)
+                + " Wait for it to finish before starting another heavy model job."
+            )
+    safe_batch = re.sub(r"[^a-zA-Z0-9_.-]+", "-", batch_group).strip("-") or "batch"
+    started = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    log_dir = _project_root / "exports" / "app_jobs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{started}_{safe_batch}_{mode}_batch.log"
+    command = _batch_run_command(
+        batch_group=batch_group,
+        limit=limit,
+        priority=priority,
+        execute=execute,
+        run_enrich=run_enrich,
+        enrich_model=enrich_model,
+        skip_preflight=skip_preflight,
+    )
+    with log_path.open("w", encoding="utf-8") as log_file:
+        log_file.write(f"$ {shlex.join(command)}\n\n")
+        log_file.flush()
+        proc = subprocess.Popen(
+            command,
+            cwd=_project_root,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    job = {
+        "process": proc,
+        "pid": proc.pid,
+        "started_at": started,
+        "log_path": str(log_path),
+        "command": shlex.join(command),
+        "kind": "batch",
+        "mode": mode,
+    }
+    if execute:
+        _write_app_job_lock(job)
+    return job
+
+
 def _job_log_tail(path: Path, limit: int = 2400) -> str:
     if not path.exists():
         return ""
@@ -3565,6 +3938,12 @@ def _job_log_tail(path: Path, limit: int = 2400) -> str:
 
 def _start_complement_enrichment_job(doc_id: str, key_prefix: str) -> dict:
     """Start merge-aware enrichment without blocking the Streamlit app."""
+    active = _read_app_job_lock()
+    if active:
+        raise RuntimeError(
+            _format_app_job_lock(active)
+            + " Wait for it to finish before starting another heavy model job."
+        )
     safe_prefix = re.sub(r"[^a-zA-Z0-9_.-]+", "-", key_prefix).strip("-") or "app"
     safe_doc_id = re.sub(r"[^a-zA-Z0-9_.-]+", "-", doc_id).strip("-") or "doc"
     started = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -3582,13 +3961,17 @@ def _start_complement_enrichment_job(doc_id: str, key_prefix: str) -> dict:
             stderr=subprocess.STDOUT,
             text=True,
         )
-    return {
+    job = {
         "process": proc,
         "pid": proc.pid,
         "started_at": started,
         "log_path": str(log_path),
         "command": shlex.join(command),
+        "kind": "enrichment",
+        "mode": "single",
     }
+    _write_app_job_lock(job)
+    return job
 
 
 def _render_complement_enrichment_job(job_key: str) -> bool:
@@ -3621,12 +4004,87 @@ def _render_complement_enrichment_job(job_key: str) -> bool:
         st.success("Complement enrichment finished. Refresh/reopen the document to review new merged proposals.")
     else:
         st.error(f"Complement enrichment exited with code {returncode}.")
+    _clear_app_job_lock(job)
     tail = _job_log_tail(log_path)
     if tail:
         with st.expander("Enrichment log tail", expanded=returncode != 0):
             st.code(tail, language="text")
     st.caption(f"Log: `{log_path}`")
     if st.button("Clear enrichment status", key=f"{job_key}_clear_done"):
+        st.session_state.pop(job_key, None)
+        st.rerun()
+    return False
+
+
+def _render_batch_run_job(job_key: str) -> bool:
+    job = st.session_state.get(job_key)
+    if not job:
+        return False
+    proc = job.get("process")
+    returncode = proc.poll() if proc is not None else None
+    log_path = Path(job.get("log_path", ""))
+    mode = job.get("mode", "batch")
+
+    if returncode is None:
+        if mode == "rehearsal":
+            tail = _job_log_tail(log_path)
+            if "Rehearsal only." in tail or "Report" in tail:
+                returncode = 0
+            else:
+                st.info(
+                    f"Batch rehearsal is checking eligibility in the background "
+                    f"(PID {job.get('pid')}). Live run will unlock as soon as it finishes."
+                )
+                c1, c2 = st.columns([1, 1])
+                if c1.button("Refresh batch status", key=f"{job_key}_refresh"):
+                    st.rerun()
+                if c2.button("Forget this status card", key=f"{job_key}_forget_running"):
+                    st.session_state.pop(job_key, None)
+                    st.rerun()
+                if tail:
+                    with st.expander("Batch log tail", expanded=False):
+                        st.code(tail, language="text")
+                st.caption(f"Log: `{log_path}`")
+                return True
+
+    if returncode is None:
+        st.info(
+            f"Batch {mode} is running in the background "
+            f"(PID {job.get('pid')}). You can keep using the app."
+        )
+        c1, c2 = st.columns([1, 1])
+        if c1.button("Refresh batch status", key=f"{job_key}_refresh"):
+            st.rerun()
+        if c2.button("Forget this status card", key=f"{job_key}_forget_running"):
+            st.session_state.pop(job_key, None)
+            st.rerun()
+        tail = _job_log_tail(log_path)
+        if tail:
+            with st.expander("Batch log tail", expanded=False):
+                st.code(tail, language="text")
+        st.caption(f"Log: `{log_path}`")
+        return True
+
+    if returncode == 0:
+        if mode == "rehearsal":
+            st.success(
+                "Rehearsal complete. This only checked eligibility; no documents were ingested. "
+                "Use Start live batch to run the real ingest/enrichment pass."
+            )
+        else:
+            st.success(
+                "Batch finished. Check Document List/Review Inbox for new documents and proposals."
+            )
+    else:
+        st.error(f"Batch exited with code {returncode}.")
+    if mode == "live":
+        _clear_app_job_lock(job)
+    tail = _job_log_tail(log_path)
+    if tail:
+        with st.expander("Batch log tail", expanded=returncode != 0):
+            st.code(tail, language="text")
+    st.caption(f"Log: `{log_path}`")
+    if st.button("Clear batch status", key=f"{job_key}_clear_done"):
         st.session_state.pop(job_key, None)
         st.rerun()
     return False
@@ -3665,6 +4123,14 @@ def _render_complement_enrichment_action(
         )
 
     job_active = _render_complement_enrichment_job(job_key)
+    active_heavy_job = _read_app_job_lock()
+    if active_heavy_job and str(active_heavy_job.get("pid", "")) != str(
+        (st.session_state.get(job_key) or {}).get("pid", "")
+    ):
+        st.warning(
+            _format_app_job_lock(active_heavy_job)
+            + " Complement enrichment is locked until that job finishes."
+        )
     command = shlex.join(_complement_enrichment_command(doc_id))
     with st.expander("Terminal command", expanded=False):
         st.code(command, language="bash")
@@ -3676,7 +4142,7 @@ def _render_complement_enrichment_action(
             "Starts merge-safe enrichment in the background. Existing reviewed proposals are preserved; "
             "new unique proposals are appended."
         ),
-        disabled=job_active,
+        disabled=job_active or bool(active_heavy_job),
     ):
         try:
             st.session_state[job_key] = _start_complement_enrichment_job(doc_id, key_prefix)
@@ -5272,14 +5738,24 @@ def page_lexicon():
         st.error("Could not load config. Check runner/.env.")
         return
 
-    _render_registry_status_overview(config)
+    show_registry_overview = st.checkbox(
+        "Show live Sanity registry overview",
+        value=False,
+        key="lexicon_show_registry_overview",
+        help=(
+            "Fetches live registry counts from Sanity. Leave off while reviewing "
+            "local proposals so save/approve actions stay fast."
+        ),
+    )
+    if show_registry_overview:
+        _render_registry_status_overview(config)
 
     st.info(
         "Analysis and enrichment fetch current Sanity lexicon/registry data at run time. "
         "Local proposals are saved after enrichment; approval-to-Sanity is intentionally separate."
     )
 
-    tabs = st.tabs([
+    lexicon_sections = [
         "Sanity Lexicon",
         "Entity Registry",
         "Local Proposals",
@@ -5290,12 +5766,22 @@ def page_lexicon():
         "Seed Docs",
         "Three-System Reference",
         "Ingestion Prompt",
-    ])
+    ]
+    selected_section = st.radio(
+        "Lexicon section",
+        lexicon_sections,
+        horizontal=True,
+        key="lexicon_active_section",
+        help=(
+            "Only the selected section is rendered. This keeps local proposal "
+            "save/approve actions fast and avoids accidental Sanity fetches."
+        ),
+    )
 
-    with tabs[0]:
+    if selected_section == "Sanity Lexicon":
         _render_sanity_lexicon_tab(config)
 
-    with tabs[1]:
+    elif selected_section == "Entity Registry":
         if st.button("Refresh Registry"):
             st.session_state.pop("entity_registry", None)
         if "entity_registry" not in st.session_state:
@@ -5310,19 +5796,19 @@ def page_lexicon():
         if entities:
             st.dataframe(entities, width="stretch", hide_index=True)
 
-    with tabs[2]:
+    elif selected_section == "Local Proposals":
         _render_local_proposal_queue(config)
 
-    with tabs[3]:
+    elif selected_section == "Seed Import Preview":
         _render_seed_lexicon_import(config)
 
-    with tabs[4]:
+    elif selected_section == "Variant Import Preview":
         _render_variant_import(config)
 
-    with tabs[5]:
+    elif selected_section == "Legacy Vocabulary Preview":
         _render_legacy_vocabulary_import(config)
 
-    with tabs[6]:
+    elif selected_section == "Sanity Schema Files":
         schema_files = {
             "Document schema": _project_root / "studio" / "schemas" / "document.ts",
             "Lexicon entry schema": _project_root / "studio" / "schemas" / "lexiconEntry.ts",
@@ -5333,7 +5819,7 @@ def page_lexicon():
         selected = st.selectbox("Schema file", list(schema_files.keys()))
         _show_text_file(schema_files[selected], language="typescript")
 
-    with tabs[7]:
+    elif selected_section == "Seed Docs":
         st.info(
             "Seed lexicon import policy: entries with clear definition and source evidence can become validated; "
             "entries without source URL/evidence should enter Sanity as draft so new ingestions can collect validating evidence and regional variants."
@@ -5350,10 +5836,10 @@ def page_lexicon():
         selected = st.selectbox("Reference file", list(seed_files.keys()))
         _show_text_file(seed_files[selected], language="markdown")
 
-    with tabs[8]:
+    elif selected_section == "Three-System Reference":
         _render_three_system_reference()
 
-    with tabs[9]:
+    elif selected_section == "Ingestion Prompt":
         st.caption("Live read of `02_working_tools/Claude_Ingestion_Prompt.md` (ingestion-v3.3)")
         _show_text_file(
             _project_root / "02_working_tools" / "Claude_Ingestion_Prompt.md",
@@ -5728,7 +6214,7 @@ def _parse_multilingual_variants(path: Path) -> list[dict]:
         if len(cells) != len(header):
             continue
         canonical = cells[0]
-        if canonical in {"Gender Ideology", "Reparative Therapy", "Conversion Therapy", "Conversion Practices", "Pastoral Support", "Watchful Waiting", "Self-determination", "Same-sex attraction"}:
+        if canonical in {"Gender Ideology", "Gender Dysphoria", "Reparative Therapy", "Conversion Therapy", "Conversion Practices", "Pastoral Support", "Watchful Waiting", "Self-determination", "Same-sex attraction"}:
             for lang_name, cell in zip(header[1:], cells[1:]):
                 variant = cell.strip()
                 if not variant or variant == "—":
@@ -6412,6 +6898,53 @@ _PRACTICE_FIT_DECISION_GUIDE = {
     ),
 }
 
+_PRACTICE_EVIDENCE_DECISION_OPTIONS = [
+    "keep_evidence",
+    "link_existing",
+    "flag_promotion",
+    "reject",
+]
+
+_PRACTICE_EVIDENCE_DECISION_LABELS = {
+    "keep_evidence": "Keep as evidence",
+    "link_existing": "Keep as evidence and link to existing tactic/frame/practice",
+    "flag_promotion": "Flag for promotion review",
+    "reject": "Reject",
+}
+
+_PRACTICE_EVIDENCE_DECISION_HELP = {
+    "keep_evidence": (
+        "Default. Preserve the quote under a local cluster. It will not create "
+        "or update a public practice registry record."
+    ),
+    "link_existing": (
+        "Use when the evidence clearly belongs to an existing controlled tactic, "
+        "frame, or practice. The link is local evidence metadata for now."
+    ),
+    "flag_promotion": (
+        "Use rarely. This sends the cluster/item to a later batch curation pass; "
+        "it does not create a Sanity practice entry."
+    ),
+    "reject": "Use when the item is noise, irrelevant, or belongs in another review family.",
+}
+
+_PRACTICE_LINK_TYPE_OPTIONS = ["tactic", "frame", "practice"]
+
+_PRACTICE_DECISION_TO_LEGACY_FIT = {
+    "keep_evidence": "candidate_evidence",
+    "link_existing": "existing_practice",
+    "flag_promotion": "registry_practice",
+    "reject": "not_practice",
+}
+
+_LEGACY_FIT_TO_PRACTICE_DECISION = {
+    "needs_clustering": "keep_evidence",
+    "candidate_evidence": "keep_evidence",
+    "existing_practice": "link_existing",
+    "registry_practice": "flag_promotion",
+    "not_practice": "reject",
+}
+
 _PRACTICE_CLUSTER_CATALOGUE = {
     "rogd": {
         "label": "ROGD / sudden-onset diagnosis frame",
@@ -6542,7 +7075,60 @@ def _practice_fit(item: dict) -> str:
     return fit if fit in _PRACTICE_FIT_OPTIONS else "needs_clustering"
 
 
+def _practice_evidence_decision(item: dict) -> str:
+    decision = str(item.get("evidence_decision") or "").strip()
+    if decision in _PRACTICE_EVIDENCE_DECISION_OPTIONS:
+        return decision
+    return _LEGACY_FIT_TO_PRACTICE_DECISION.get(_practice_fit(item), "keep_evidence")
+
+
+def _apply_practice_evidence_decision(item: dict, decision: str) -> dict:
+    decision = decision if decision in _PRACTICE_EVIDENCE_DECISION_OPTIONS else "keep_evidence"
+    item["evidence_decision"] = decision
+    item["practice_fit"] = _PRACTICE_DECISION_TO_LEGACY_FIT[decision]
+    item["cluster_label"] = str(item.get("cluster_label") or item.get("practice_cluster") or "").strip()
+    if item["cluster_label"]:
+        item["practice_cluster"] = item["cluster_label"]
+    if decision == "link_existing":
+        linked_id = str(item.get("linked_type_id") or item.get("existing_practice_id") or "").strip()
+        item["linked_type_id"] = linked_id
+        item["linked_type_kind"] = str(item.get("linked_type_kind") or "practice").strip()
+        if item["linked_type_kind"] == "practice":
+            item["existing_practice_id"] = linked_id
+        else:
+            item["existing_practice_id"] = ""
+        item["promotion_review_flag"] = False
+        item["approved"] = False
+        item["rejected"] = False
+        item["proposal_status"] = "pending"
+    elif decision == "flag_promotion":
+        item["promotion_review_flag"] = True
+        item["approved"] = False
+        item["rejected"] = False
+        item["proposal_status"] = "pending"
+    elif decision == "reject":
+        item["promotion_review_flag"] = False
+        item["linked_type_id"] = ""
+        item["linked_type_kind"] = ""
+        item["existing_practice_id"] = ""
+        item["approved"] = False
+        item["rejected"] = True
+        item["proposal_status"] = "rejected"
+    else:
+        item["promotion_review_flag"] = False
+        item["linked_type_id"] = ""
+        item["linked_type_kind"] = ""
+        item["existing_practice_id"] = ""
+        item["approved"] = False
+        item["rejected"] = False
+        item["proposal_status"] = "pending"
+    return item
+
+
 def _practice_push_block_reason(item: dict) -> str:
+    decision = _practice_evidence_decision(item)
+    if decision != "link_existing":
+        return "practice evidence is local by default; public practice pushes are an advanced reconciliation step."
     fit = _practice_fit(item)
     if fit == "candidate_evidence":
         return "kept as evidence only; it is not a standalone practice registry entry."
@@ -6559,7 +7145,14 @@ def _practice_push_block_reason(item: dict) -> str:
 def _practice_review_status(item: dict) -> str:
     if item.get("proposal_status") == "pushed" or item.get("pushed_to_sanity"):
         return "Pushed"
-    if _practice_fit(item) == "candidate_evidence":
+    decision = _practice_evidence_decision(item)
+    if decision == "reject" or item.get("proposal_status") == "rejected" or item.get("rejected"):
+        return "Rejected"
+    if decision == "flag_promotion" or item.get("promotion_review_flag"):
+        return "Promotion review"
+    if decision == "link_existing":
+        return "Linked evidence"
+    if decision == "keep_evidence":
         return "Evidence only"
     if item.get("proposal_status") == "rejected" or item.get("rejected"):
         return "Rejected"
@@ -6583,15 +7176,13 @@ def _clear_stale_practice_approval_if_blocked(item: dict) -> bool:
 
 
 def _save_cluster_as_evidence_if_ready(item: dict) -> bool:
-    if _practice_fit(item) != "needs_clustering":
+    if _practice_evidence_decision(item) != "keep_evidence" and _practice_fit(item) != "needs_clustering":
         return False
     cluster = _practice_cluster_key(item)
     if cluster == "unclustered":
         return False
-    item["practice_fit"] = "candidate_evidence"
-    item["approved"] = False
-    item["rejected"] = False
-    item["proposal_status"] = "pending"
+    item["cluster_label"] = cluster
+    _apply_practice_evidence_decision(item, "keep_evidence")
     if not item.get("practice_fit_rationale"):
         item["practice_fit_rationale"] = (
             f"Kept as evidence under the `{cluster}` cluster; not a standalone practice entry."
@@ -6600,7 +7191,7 @@ def _save_cluster_as_evidence_if_ready(item: dict) -> bool:
 
 
 def _practice_cluster_key(item: dict) -> str:
-    cluster = str(item.get("practice_cluster") or "").strip()
+    cluster = str(item.get("cluster_label") or item.get("practice_cluster") or "").strip()
     if cluster:
         return cluster
     try:
@@ -6651,19 +7242,22 @@ def _practice_cluster_summary(records: list[dict]) -> list[dict]:
                 "proposals": 0,
                 "needs_review": 0,
                 "held_evidence": 0,
-                "push_candidate": 0,
+                "linked_evidence": 0,
+                "promotion_review": 0,
                 "_doc_ids": set(),
                 "_examples": [],
             },
         )
-        fit = _practice_fit(item)
+        decision = _practice_evidence_decision(item)
         row["proposals"] += 1
         if _practice_review_status(item) == "Needs review":
             row["needs_review"] += 1
-        if fit in {"needs_clustering", "candidate_evidence"}:
+        if decision == "keep_evidence":
             row["held_evidence"] += 1
-        if fit in {"existing_practice", "registry_practice"}:
-            row["push_candidate"] += 1
+        if decision == "link_existing":
+            row["linked_evidence"] += 1
+        if decision == "flag_promotion":
+            row["promotion_review"] += 1
         doc_id = str(record.get("doc_id", "")).strip()
         if doc_id:
             row["_doc_ids"].add(doc_id)
@@ -6680,7 +7274,8 @@ def _practice_cluster_summary(records: list[dict]) -> list[dict]:
                 "proposals": row["proposals"],
                 "needs_review": row["needs_review"],
                 "held_evidence": row["held_evidence"],
-                "push_candidate": row["push_candidate"],
+                "linked_evidence": row["linked_evidence"],
+                "promotion_review": row["promotion_review"],
                 "docs": ", ".join(sorted(row["_doc_ids"])),
                 "examples": "; ".join(row["_examples"]),
             }
@@ -6720,7 +7315,8 @@ def _practice_status_counts(records: list[dict]) -> dict[str, int]:
     counts = {
         "Needs review": 0,
         "Evidence only": 0,
-        "Approved, not pushed": 0,
+        "Linked evidence": 0,
+        "Promotion review": 0,
         "Pushed": 0,
         "Rejected": 0,
     }
@@ -6742,11 +7338,11 @@ def _render_proposal_status_metrics(records: list[dict]) -> None:
 def _render_practice_status_metrics(records: list[dict]) -> None:
     status_counts = _practice_status_counts(records)
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Needs review", status_counts["Needs review"])
-    c2.metric("Evidence only", status_counts["Evidence only"])
-    c3.metric("Approved, not pushed", status_counts["Approved, not pushed"])
-    c4.metric("Pushed", status_counts["Pushed"])
-    c5.metric("Rejected", status_counts["Rejected"])
+    c1.metric("Evidence only", status_counts["Evidence only"])
+    c2.metric("Linked evidence", status_counts["Linked evidence"])
+    c3.metric("Promotion review", status_counts["Promotion review"])
+    c4.metric("Rejected", status_counts["Rejected"])
+    c5.metric("Legacy pushed", status_counts["Pushed"])
 
 
 def _proposal_display_position(record: dict) -> int:
@@ -6789,6 +7385,51 @@ def _proposal_expander_label(record: dict, label: str) -> str:
 def _practice_expander_label(record: dict, label: str) -> str:
     status = _practice_review_status(record["item"])
     return f"[{status}] {record['doc_id']} · {label}"
+
+
+def _proposal_select_label(record: dict, label: str, *, practice: bool = False) -> str:
+    status = _practice_review_status(record["item"]) if practice else _proposal_review_status(record["item"])
+    return (
+        f"[{status}] {record['doc_id']} · "
+        f"#{_proposal_display_position(record)} · {_short_label(label, 90)}"
+    )
+
+
+def _proposal_record_key(record: dict) -> str:
+    """Stable UI identity for one proposal across sorting/status changes."""
+    path = str(record.get("path") or "")
+    doc_id = str(record.get("doc_id") or "")
+    index = int(record.get("index", 0))
+    return f"{path}::{doc_id}::{index}"
+
+
+def _render_selected_proposal_editor(
+    records: list[dict],
+    *,
+    key: str,
+    label_func,
+    render_func,
+) -> None:
+    if not records:
+        return
+    record_by_key = {
+        _proposal_record_key(record): record
+        for record in records
+    }
+    record_keys = list(record_by_key.keys())
+    if st.session_state.get(key) not in record_by_key:
+        st.session_state[key] = record_keys[0]
+    selected_key = st.selectbox(
+        "Open proposal",
+        record_keys,
+        format_func=lambda record_key: label_func(record_by_key[record_key]),
+        key=key,
+        help=(
+            "Only the selected proposal editor is rendered. This keeps local "
+            "save/approve actions responsive."
+        ),
+    )
+    render_func(record_by_key[selected_key])
 
 
 def _ingestion_status(row: dict) -> str:
@@ -6839,29 +7480,39 @@ def _render_local_proposal_queue(config) -> None:
     tactic_records = _local_enrichment_proposal_records(config.corpus_dir, "tactic_proposals")
     practice_records = _local_enrichment_proposal_records(config.corpus_dir, "practice_descriptions")
     claim_records = _local_enrichment_proposal_records(config.corpus_dir, "statistical_claims")
-    queue_tabs = st.tabs([
+    queue_sections = [
         "Lexicon Queue",
         "Entity Queue",
         "Tactic Queue",
-        "Practice Queue",
+        "Practice Evidence",
         "Claims Queue",
         "Ingestion Queue",
         "Gate Status",
-    ])
+    ]
+    selected_queue = st.radio(
+        "Proposal queue",
+        queue_sections,
+        horizontal=True,
+        key="local_proposal_active_queue",
+        help=(
+            "Only the selected proposal family is rendered. This avoids slow "
+            "whole-page reruns when saving or approving one local proposal."
+        ),
+    )
 
-    with queue_tabs[0]:
+    if selected_queue == "Lexicon Queue":
         _render_lexicon_queue(config, lexicon_records)
-    with queue_tabs[1]:
+    elif selected_queue == "Entity Queue":
         _render_entity_queue(config, entity_records)
-    with queue_tabs[2]:
+    elif selected_queue == "Tactic Queue":
         _render_tactic_queue(config, tactic_records)
-    with queue_tabs[3]:
+    elif selected_queue == "Practice Evidence":
         _render_practice_queue(config, practice_records)
-    with queue_tabs[4]:
+    elif selected_queue == "Claims Queue":
         _render_claim_queue(config, claim_records)
-    with queue_tabs[5]:
+    elif selected_queue == "Ingestion Queue":
         _render_ingestion_queue(config)
-    with queue_tabs[6]:
+    elif selected_queue == "Gate Status":
         st.json(_proposal_gate_status(config.corpus_dir))
 
 
@@ -6942,11 +7593,12 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
             st.error("\n".join(errors))
 
     st.subheader("Review Proposals")
-    for record in records:
-        item = record["item"]
-        label = _proposal_expander_label(record, item.get("term", "(missing term)"))
-        with st.expander(label):
-            _render_single_proposal_editor(record)
+    _render_selected_proposal_editor(
+        records,
+        key="lexicon_queue_selected_proposal",
+        label_func=lambda record: _proposal_select_label(record, record["item"].get("term", "(missing term)")),
+        render_func=_render_single_proposal_editor,
+    )
 
 
 def _render_entity_queue(config, records: list[dict]) -> None:
@@ -7025,11 +7677,12 @@ def _render_entity_queue(config, records: list[dict]) -> None:
             st.error("\n".join(errors))
 
     st.subheader("Review Entities")
-    for record in records:
-        item = record["item"]
-        label = _proposal_expander_label(record, item.get("name", "(missing name)"))
-        with st.expander(label):
-            _render_single_entity_editor(record)
+    _render_selected_proposal_editor(
+        records,
+        key="entity_queue_selected_proposal",
+        label_func=lambda record: _proposal_select_label(record, record["item"].get("name", "(missing name)")),
+        render_func=_render_single_entity_editor,
+    )
 
 
 def _render_tactic_queue(config, records: list[dict]) -> None:
@@ -7095,24 +7748,25 @@ def _render_tactic_queue(config, records: list[dict]) -> None:
             st.error("\n".join(errors))
 
     st.subheader("Review Tactics")
-    for record in records:
-        item = record["item"]
-        label = _proposal_expander_label(record, item.get("tactic", "(missing tactic)"))
-        with st.expander(label):
-            _render_single_tactic_editor(record)
+    _render_selected_proposal_editor(
+        records,
+        key="tactic_queue_selected_proposal",
+        label_func=lambda record: _proposal_select_label(record, record["item"].get("tactic", "(missing tactic)")),
+        render_func=_render_single_tactic_editor,
+    )
 
 
 def _render_practice_queue(config, records: list[dict]) -> None:
-    st.caption(f"{len(records)} local practice proposal(s)")
+    st.caption(f"{len(records)} local practice evidence item(s)")
     if not records:
-        st.info("No local practice descriptions found yet.")
+        st.info("No local practice evidence found yet.")
         return
     records = sorted(records, key=lambda record: _proposal_review_sort_key(record, "practice_id"))
     cluster_summary = _practice_cluster_summary(records)
-    st.markdown("**Practice clusters**")
+    st.markdown("**Evidence clusters**")
     st.caption(
-        "Clusters are local consolidation keys. Use them to compare near-duplicate practice labels "
-        "before deciding whether to keep evidence, link to an existing practice, or promote one stable category."
+        "Clusters are provisional local evidence buckets. Most items should stay as evidence; "
+        "link or flag only when the match is clear."
     )
     st.dataframe(cluster_summary, width="stretch", hide_index=True)
     cluster_options = ["All clusters"] + [row["cluster"] for row in cluster_summary]
@@ -7122,8 +7776,8 @@ def _render_practice_queue(config, records: list[dict]) -> None:
         key="practice_cluster_filter",
         format_func=lambda value: value if value == "All clusters" else _practice_cluster_display(value),
         help=(
-            "Filter the Practice Queue to one cluster when deciding whether labels are duplicate evidence, "
-            "an existing practice, or a genuinely new registry practice."
+            "Filter Practice Evidence to one cluster when deciding whether labels are duplicate evidence, "
+            "clear links to existing controlled records, or promotion-review candidates."
         ),
     )
     if selected_cluster != "All clusters":
@@ -7147,12 +7801,14 @@ def _render_practice_queue(config, records: list[dict]) -> None:
             "status": _practice_review_status(record["item"]),
             "doc_id": record["doc_id"],
             "proposal #": _proposal_display_position(record),
-            "practice_id": record["item"].get("practice_id", ""),
-            "practice_fit": _PRACTICE_FIT_LABELS.get(
-                _practice_fit(record["item"]),
-                _practice_fit(record["item"]),
+            "evidence label": record["item"].get("practice_id", ""),
+            "decision": _PRACTICE_EVIDENCE_DECISION_LABELS.get(
+                _practice_evidence_decision(record["item"]),
+                _practice_evidence_decision(record["item"]),
             ),
             "cluster": _practice_cluster_key(record["item"]),
+            "linked type": record["item"].get("linked_type_kind", ""),
+            "linked id": record["item"].get("linked_type_id") or record["item"].get("existing_practice_id", ""),
             "LLM confidence": _format_confidence(
                 _proposal_confidence(record["item"], "model_confidence", "llm_confidence", "confidence")
             ),
@@ -7167,58 +7823,68 @@ def _render_practice_queue(config, records: list[dict]) -> None:
         for record in records
     ], width="stretch", hide_index=True)
 
-    if st.button("Push approved practices to Sanity"):
-        pushed = 0
-        errors: list[str] = []
-        pushed_ids: list[str] = []
-        for record in records:
-            item = record["item"]
-            if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
-                continue
-            block_reason = _practice_push_block_reason(item)
-            if block_reason:
-                errors.append(
-                    f"{record['doc_id']} / {item.get('practice_id', '?')}: "
-                    f"{block_reason}"
+    with st.expander("Advanced: legacy practiceEntry push", expanded=False):
+        st.warning(
+            "Practice evidence should usually stay local during the pilot. Use this only for "
+            "already-curated, named intervention modalities that truly deserve a public Sanity practiceEntry."
+        )
+        if st.button("Push legacy approved practice records to Sanity"):
+            pushed = 0
+            errors: list[str] = []
+            pushed_ids: list[str] = []
+            for record in records:
+                item = record["item"]
+                if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                    continue
+                block_reason = _practice_push_block_reason(item)
+                if block_reason:
+                    errors.append(
+                        f"{record['doc_id']} / {item.get('practice_id', '?')}: "
+                        f"{block_reason}"
+                    )
+                    continue
+                try:
+                    from runner.clients.sanity import append_extractable_asset_from_proposal, write_practice_from_proposal
+                    sanity_id = write_practice_from_proposal(item, record["doc_id"], config)
+                    append_extractable_asset_from_proposal(
+                        item,
+                        record["doc_id"],
+                        config,
+                        asset_type="practice_description",
+                        content=item.get("exact_description", ""),
+                        target_module="practice_registry",
+                    )
+                    item["pushed_to_sanity"] = True
+                    item["sanity_id"] = sanity_id
+                    item["proposal_status"] = "pushed"
+                    item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity practice registry.").strip()
+                    _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
+                    pushed += 1
+                    pushed_ids.append(sanity_id)
+                except Exception as exc:
+                    errors.append(f"{record['doc_id']} / {item.get('practice_id', '?')}: {exc}")
+            if pushed:
+                st.success(
+                    f"Pushed {pushed} practice(s) to Sanity practice registry. "
+                    f"Sanity IDs: {', '.join(pushed_ids)}."
                 )
-                continue
-            try:
-                from runner.clients.sanity import append_extractable_asset_from_proposal, write_practice_from_proposal
-                sanity_id = write_practice_from_proposal(item, record["doc_id"], config)
-                append_extractable_asset_from_proposal(
-                    item,
-                    record["doc_id"],
-                    config,
-                    asset_type="practice_description",
-                    content=item.get("exact_description", ""),
-                    target_module="practice_registry",
-                )
-                item["pushed_to_sanity"] = True
-                item["sanity_id"] = sanity_id
-                item["proposal_status"] = "pushed"
-                item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity practice registry.").strip()
-                _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-                pushed += 1
-                pushed_ids.append(sanity_id)
-            except Exception as exc:
-                errors.append(f"{record['doc_id']} / {item.get('practice_id', '?')}: {exc}")
-        if pushed:
-            st.success(
-                f"Pushed {pushed} practice(s) to Sanity practice registry. "
-                f"Sanity IDs: {', '.join(pushed_ids)}."
-            )
-            practice_url = _sanity_studio_section_url(config, "practiceEntry")
-            if practice_url:
-                st.markdown(f"[Verify in Sanity Studio → practiceEntry ↗]({practice_url})")
-        if errors:
-            st.error("\n".join(errors))
+                practice_url = _sanity_studio_section_url(config, "practiceEntry")
+                if practice_url:
+                    st.markdown(f"[Verify in Sanity Studio → practiceEntry ↗]({practice_url})")
+            if errors:
+                st.error("\n".join(errors))
 
-    st.subheader("Review Practices")
-    for record in records:
-        item = record["item"]
-        label = _practice_expander_label(record, item.get("practice_id", "(missing practice)"))
-        with st.expander(label):
-            _render_single_practice_editor(record)
+    st.subheader("Review Practice Evidence")
+    _render_selected_proposal_editor(
+        records,
+        key="practice_queue_selected_proposal",
+        label_func=lambda record: _proposal_select_label(
+            record,
+            record["item"].get("practice_id", "(missing practice)"),
+            practice=True,
+        ),
+        render_func=_render_single_practice_editor,
+    )
 
 
 def _render_claim_queue(config, records: list[dict]) -> None:
@@ -7287,11 +7953,15 @@ def _render_claim_queue(config, records: list[dict]) -> None:
             st.error("\n".join(errors))
 
     st.subheader("Review Claims")
-    for record in records:
-        item = record["item"]
-        label = _proposal_expander_label(record, _short_label(item.get("claim", "(missing claim)"), 90))
-        with st.expander(label):
-            _render_single_claim_editor(record)
+    _render_selected_proposal_editor(
+        records,
+        key="claim_queue_selected_proposal",
+        label_func=lambda record: _proposal_select_label(
+            record,
+            _short_label(record["item"].get("claim", "(missing claim)"), 90),
+        ),
+        render_func=_render_single_claim_editor,
+    )
 
 
 def _render_single_proposal_editor(record: dict) -> None:
@@ -7319,6 +7989,55 @@ def _render_single_proposal_editor(record: dict) -> None:
             ),
         )
         st.caption(_ENRICHMENT_ACTION_HELP.get(item["action"], ""))
+        if item["action"] != "add_new":
+            config = _load_config_safe()
+            if st.button("Reload existing lexicon terms", key=f"{prefix}_reload_lexicon_targets"):
+                st.session_state.pop("lexicon_terms", None)
+                st.session_state.pop("local_lexicon_targets", None)
+            if "lexicon_terms" not in st.session_state:
+                try:
+                    from runner.clients.sanity import fetch_lexicon_terms
+                    st.session_state.lexicon_terms = fetch_lexicon_terms(config) if config else []
+                except Exception as exc:
+                    st.session_state.lexicon_terms = []
+                    st.caption(f"Could not load Sanity lexicon targets: {exc}")
+            if "local_lexicon_targets" not in st.session_state:
+                st.session_state.local_lexicon_targets = _local_lexicon_targets()
+            local_targets = st.session_state.get("local_lexicon_targets", {})
+            target_options = _lexicon_target_options(
+                st.session_state.get("lexicon_terms", []),
+                local_targets.get("seed", []),
+                local_targets.get("legacy", []),
+            )
+            if target_options:
+                target = st.selectbox(
+                    "Canonical term to connect",
+                    target_options,
+                    index=_proposal_target_index(target_options, item),
+                    format_func=lambda row: row["label"],
+                    key=f"{prefix}_existing_lexicon_target",
+                    help=(
+                        "Required for add_variant/add_evidence/add_definition/merge_into. "
+                        "Combines live Sanity terms with curated seed and legacy drafts. "
+                        "Selecting a 'Seed draft' or 'Legacy draft' target is safe: pushing "
+                        "this proposal creates that canonical entry as a draft and attaches "
+                        "the wording/evidence to it. It is not auto-validated."
+                    ),
+                )
+                _apply_lexicon_target(item, target, action=item["action"])
+                if target.get("in_sanity"):
+                    st.caption(f"Will connect to `{target['term']}` (`{target['_id']}`, Sanity).")
+                else:
+                    st.caption(
+                        f"Will create canonical draft `{target['term']}` "
+                        f"(`{target['_id']}`, from {target.get('origin', 'seed')}) on push, "
+                        "then attach this wording/evidence to it."
+                    )
+            else:
+                st.warning(
+                    "No lexicon terms loaded. Use Reload existing lexicon terms, "
+                    "or approve as add_new only if this truly needs a new canonical entry."
+                )
         item["proposed_cluster"] = _controlled_select(
             "Cluster",
             item.get("proposed_cluster", "Unknown"),
@@ -7688,65 +8407,61 @@ def _render_single_practice_editor(record: dict) -> None:
     flash_key = f"{prefix}_flash"
     if st.session_state.get(flash_key):
         st.success(st.session_state.pop(flash_key))
-    initial_block_reason = _practice_push_block_reason(item)
-    if (item.get("approved") or item.get("proposal_status") == "approved") and initial_block_reason:
-        st.warning(
-            "This proposal has stale local approval, but its current Practice fit is not pushable. "
-            f"{initial_block_reason} Saving this proposal will clear the stale approval and return it to Needs review."
-        )
-    with st.expander("Practice-fit decision guide", expanded=False):
+
+    current_decision = _practice_evidence_decision(item)
+    with st.expander("Practice evidence decision guide", expanded=False):
         st.caption(
-            "Use this before approving. The safest default is to keep narrow model labels as clustered evidence "
-            "until several documents show a stable pattern."
+            "Evidence is the default and safest pilot decision. Public practice categories "
+            "should be curated later from recurring clusters, not created item by item."
         )
-        for label, guidance in _PRACTICE_FIT_DECISION_GUIDE.items():
-            st.markdown(f"**{label}** — {guidance}")
+        for value in _PRACTICE_EVIDENCE_DECISION_OPTIONS:
+            st.markdown(
+                f"**{_PRACTICE_EVIDENCE_DECISION_LABELS[value]}** — "
+                f"{_PRACTICE_EVIDENCE_DECISION_HELP[value]}"
+            )
+
+    quote_text = (item.get("harm_quote") or item.get("exact_description") or "").strip()
+    if quote_text:
+        st.markdown("**Grounded evidence quote / description**")
+        st.code(quote_text, language="text")
+    else:
+        st.warning(
+            "This item has no grounded quote/description. Keep it as evidence only after "
+            "adding a source note, or reject it if it cannot be grounded."
+        )
+
     c1, c2 = st.columns([1, 1])
     with c1:
         item["practice_id"] = st.text_input(
-            "Practice id",
+            "Evidence label",
             value=item.get("practice_id", ""),
             key=f"{prefix}_id",
             help=(
-                "Human-readable local label from the model or researcher. It is not safe by itself as a Sanity ID; "
-                "use Practice fit and Practice cluster to decide what it should become."
+                "Human-readable local label from the model or researcher. It is evidence metadata, "
+                "not a public practiceEntry name by itself."
             ),
         )
-        item["practice_fit"] = st.selectbox(
-            "Practice fit",
-            _PRACTICE_FIT_OPTIONS,
-            index=_option_index(_PRACTICE_FIT_OPTIONS, _practice_fit(item)),
-            format_func=lambda value: _PRACTICE_FIT_LABELS.get(value, value),
-            key=f"{prefix}_fit",
-            help=(
-                "Controls the lifecycle consequence: held locally, rejected, linked to an existing Sanity practice, "
-                "or made eligible for a new registry practice after approval."
-            ),
+        selected_decision = st.radio(
+            "Decision",
+            _PRACTICE_EVIDENCE_DECISION_OPTIONS,
+            index=_option_index(_PRACTICE_EVIDENCE_DECISION_OPTIONS, current_decision),
+            format_func=lambda value: _PRACTICE_EVIDENCE_DECISION_LABELS.get(value, value),
+            key=f"{prefix}_decision",
+            help="Primary review choice. Keeping evidence is the normal pilot path.",
         )
-        st.caption(_PRACTICE_FIT_HELP.get(item["practice_fit"], ""))
-        item["harm_stance"] = st.selectbox(
-            "Harm stance",
-            ["denied", "minimized", "reframed", "acknowledged", "not_mentioned"],
-            index=_option_index(["denied", "minimized", "reframed", "acknowledged", "not_mentioned"], item.get("harm_stance", "not_mentioned")),
-            key=f"{prefix}_harm",
-            help=(
-                "How the source treats harm: denied means harm is rejected; minimized means downplayed; "
-                "reframed means presented as help/care; acknowledged means harm is recognized; "
-                "not_mentioned means the source does not address harm."
-            ),
-        )
+        st.caption(_PRACTICE_EVIDENCE_DECISION_HELP[selected_decision])
     with c2:
         inferred_cluster = _practice_cluster_key(item)
         cluster_options = _practice_cluster_options(inferred_cluster)
         selected_cluster = st.selectbox(
-            "Practice cluster",
+            "Evidence cluster",
             cluster_options,
             index=_option_index(cluster_options, inferred_cluster),
             key=f"{prefix}_cluster",
             format_func=_practice_cluster_display,
             help=(
-                "Choose the local evidence bucket this proposal belongs to. This does not push anything by itself; "
-                "it helps compare similar labels before linking or promoting a stable practice."
+                "Provisional local bucket for comparing similar evidence later. "
+                "It does not create or update a public taxonomy record."
             ),
         )
         custom_cluster = st.text_input(
@@ -7758,156 +8473,109 @@ def _render_single_practice_editor(record: dict) -> None:
                 "for example `school_policy`."
             ),
         )
-        item["practice_cluster"] = custom_cluster.strip() or selected_cluster
-        item["existing_practice_id"] = st.text_input(
-            "Existing practice id",
-            value=item.get("existing_practice_id", "") or "",
-            key=f"{prefix}_existing",
-            help=(
-                "Required only for Existing practice evidence. Paste the Sanity practiceEntry ID so this evidence "
-                "connects to the existing record instead of creating a duplicate."
-            ),
-        )
-        item["sanity_id"] = st.text_input("Sanity id", value=item.get("sanity_id", "") or "", disabled=True, key=f"{prefix}_sanity")
-        item["pushed_to_sanity"] = st.checkbox("Pushed to Sanity", value=item.get("pushed_to_sanity", False), disabled=True, key=f"{prefix}_pushed")
-        if st.button(
-            "Save Cluster Choice",
-            key=f"{prefix}_save_cluster",
-            help=(
-                "Saves the selected cluster and top-section fields. If the fit is Needs framing and a real cluster "
-                "is selected, the item is automatically kept as Evidence only."
-            ),
-        ):
-            converted_to_evidence = _save_cluster_as_evidence_if_ready(item)
-            stale_cleared = _clear_stale_practice_approval_if_blocked(item)
-            _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            if converted_to_evidence:
-                st.session_state[flash_key] = (
-                    f"Saved as evidence under `{item['practice_cluster']}`. It will not be pushed as a standalone practice."
-                )
-            else:
-                st.session_state[flash_key] = (
-                    "Saved cluster choice and cleared stale approval."
-                    if stale_cleared else "Saved cluster choice."
-                )
-            st.rerun()
+        item["cluster_label"] = custom_cluster.strip() or selected_cluster
+        item["practice_cluster"] = item["cluster_label"]
 
-    if item["practice_fit"] in {"needs_clustering", "candidate_evidence"}:
+    if selected_decision == "link_existing":
+        link_cols = st.columns([1, 2])
+        with link_cols[0]:
+            item["linked_type_kind"] = st.selectbox(
+                "Link type",
+                _PRACTICE_LINK_TYPE_OPTIONS,
+                index=_option_index(_PRACTICE_LINK_TYPE_OPTIONS, item.get("linked_type_kind") or "practice"),
+                key=f"{prefix}_linked_kind",
+                help="What kind of existing controlled record this evidence supports.",
+            )
+        with link_cols[1]:
+            item["linked_type_id"] = st.text_input(
+                "Existing tactic/frame/practice ID",
+                value=item.get("linked_type_id") or item.get("existing_practice_id", "") or "",
+                key=f"{prefix}_linked_id",
+                help="Paste the existing Sanity ID or stable local ID. Leave blank if unsure and keep as evidence instead.",
+            )
+        if item.get("linked_type_kind") == "practice":
+            item["existing_practice_id"] = item.get("linked_type_id", "")
+    elif selected_decision == "flag_promotion":
         st.info(
-            "This item is local evidence under a cluster, not a standalone practice entry. "
-            "That is expected for labels such as ROGD-Diagnosis/ROGD-Promotion when they "
-            "are better understood as sub-strategies or tactic evidence."
+            "This will be flagged for a later curation pass. It will not create a public "
+            "practiceEntry now."
         )
-    elif item["practice_fit"] == "existing_practice" and not item.get("existing_practice_id"):
-        st.warning("Fill `existing_practice_id` before approving/pushing this as existing-practice evidence.")
 
-    cluster_info = _practice_cluster_info(item.get("practice_cluster", ""))
+    cluster_info = _practice_cluster_info(item.get("cluster_label", ""))
     with st.expander("Cluster meaning", expanded=False):
-        st.markdown(f"**{_practice_cluster_display(item.get('practice_cluster', ''))}**")
+        st.markdown(f"**{_practice_cluster_display(item.get('cluster_label', ''))}**")
         st.write(cluster_info["description"])
         st.markdown(f"**Review hint:** {cluster_info['review_hint']}")
         if cluster_info.get("examples"):
             st.caption(f"Examples: {cluster_info['examples']}")
 
-    item["exact_description"] = st.text_area("Exact description", value=item.get("exact_description", ""), height=120, key=f"{prefix}_description")
-    item["harm_quote"] = st.text_area("Harm quote", value=item.get("harm_quote", ""), height=100, key=f"{prefix}_quote")
-    item["practice_fit_rationale"] = st.text_area(
-        "Practice-fit rationale",
-        value=item.get("practice_fit_rationale", ""),
-        height=70,
-        key=f"{prefix}_fit_rationale",
-        help=(
-            "Short researcher memory note explaining why this item was kept as evidence, linked, promoted, or rejected. "
-            "This is especially useful when revisiting the corpus months later."
-        ),
-    )
     item["researcher_note"] = st.text_area(
         "Researcher note",
         value=item.get("researcher_note", ""),
-        height=80,
+        height=90,
         key=f"{prefix}_note",
         help="Free-form note for context, caveats, follow-up checks, or why the evidence matters.",
     )
     _render_proposal_confidence_editor(item, prefix)
 
+    with st.expander("Advanced fields", expanded=False):
+        item["harm_stance"] = st.selectbox(
+            "Harm stance",
+            ["denied", "minimized", "reframed", "acknowledged", "not_mentioned"],
+            index=_option_index(["denied", "minimized", "reframed", "acknowledged", "not_mentioned"], item.get("harm_stance", "not_mentioned")),
+            key=f"{prefix}_harm",
+            help=(
+                "How the source treats harm: denied means harm is rejected; minimized means downplayed; "
+                "reframed means presented as help/care; acknowledged means harm is recognized; "
+                "not_mentioned means the source does not address harm."
+            ),
+        )
+        item["exact_description"] = st.text_area("Exact description", value=item.get("exact_description", ""), height=100, key=f"{prefix}_description")
+        item["harm_quote"] = st.text_area("Harm quote", value=item.get("harm_quote", ""), height=100, key=f"{prefix}_quote")
+        item["practice_fit_rationale"] = st.text_area(
+            "Evidence decision rationale",
+            value=item.get("practice_fit_rationale", ""),
+            height=70,
+            key=f"{prefix}_fit_rationale",
+            help="Short researcher memory note explaining why this item was kept as evidence, linked, flagged, or rejected.",
+        )
+        item["sanity_id"] = st.text_input("Sanity id", value=item.get("sanity_id", "") or "", disabled=True, key=f"{prefix}_sanity")
+        item["pushed_to_sanity"] = st.checkbox("Pushed to Sanity", value=item.get("pushed_to_sanity", False), disabled=True, key=f"{prefix}_pushed")
+
     st.caption(
         f"Origin: {record['path']} · proposal #{_proposal_display_position(record)} "
         f"(JSON position {record['index']})"
     )
-    b1, b2, b3, b4 = st.columns(4)
+    b1, b2, b3 = st.columns(3)
     with b1:
         if st.button(
-            "Save Practice Edits",
+            "Save Evidence Review",
             key=f"{prefix}_save",
-            help="Writes the current field edits back to enrichment.json only. It does not approve or push anything.",
+            help="Writes the current evidence decision to enrichment.json only. It does not push anything.",
         ):
-            converted_to_evidence = _save_cluster_as_evidence_if_ready(item)
-            stale_cleared = _clear_stale_practice_approval_if_blocked(item)
+            _apply_practice_evidence_decision(item, selected_decision)
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            if converted_to_evidence:
-                st.session_state[flash_key] = (
-                    f"Saved as evidence under `{item['practice_cluster']}`. It will not be pushed as a standalone practice."
-                )
-            else:
-                st.session_state[flash_key] = (
-                    "Saved practice edits and cleared stale approval."
-                    if stale_cleared else "Saved practice edits."
-                )
+            st.session_state[flash_key] = f"Saved: {_PRACTICE_EVIDENCE_DECISION_LABELS[selected_decision]}."
             st.rerun()
     with b2:
-        approve_block_reason = _practice_push_block_reason(item)
         if st.button(
-            "Approve Practice",
-            key=f"{prefix}_approve",
-            help=(
-                approve_block_reason
-                or "Marks the proposal approved locally. Only Existing practice evidence and Promote to registry practice can be approved."
-            ),
-            disabled=bool(approve_block_reason),
+            "Save as Evidence",
+            key=f"{prefix}_evidence",
+            help="Shortcut: keep this item as local evidence under its selected cluster.",
         ):
-            item["approved"] = True
-            item["rejected"] = False
-            item["proposal_status"] = "approved"
+            _apply_practice_evidence_decision(item, "keep_evidence")
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.session_state[flash_key] = "Approved locally. Push approved practices to Sanity when ready."
+            st.session_state[flash_key] = "Saved as local evidence. It will not be pushed as a standalone practice."
             st.rerun()
-        if approve_block_reason:
-            st.caption(f"Approval disabled: {approve_block_reason}")
     with b3:
         if st.button(
-            "Keep as Evidence",
-            key=f"{prefix}_evidence",
-            help=(
-                "Converts this proposal to Evidence only: local, preserved under its cluster, and blocked from "
-                "standalone practice push. It does not delete the quote."
-            ),
+            "Reject",
+            key=f"{prefix}_reject",
+            help="Rejects this item locally; it will remain in enrichment.json as reviewed noise.",
         ):
-            item["practice_fit"] = "candidate_evidence"
-            item["approved"] = False
-            item["rejected"] = False
-            item["proposal_status"] = "pending"
-            if not item.get("practice_fit_rationale"):
-                item["practice_fit_rationale"] = "Kept as cluster evidence, not a standalone practice registry entry."
+            _apply_practice_evidence_decision(item, "reject")
             _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.session_state[flash_key] = "Kept as local evidence under its cluster."
-            st.rerun()
-    with b4:
-        if st.button(
-            "Promote",
-            key=f"{prefix}_promote",
-            help=(
-                "Changes the fit to registry_practice but leaves it pending. Review the cluster and rationale, "
-                "then approve before pushing."
-            ),
-        ):
-            item["practice_fit"] = "registry_practice"
-            item["approved"] = False
-            item["rejected"] = False
-            item["proposal_status"] = "pending"
-            if not item.get("practice_fit_rationale"):
-                item["practice_fit_rationale"] = "Researcher promoted this evidence cluster to a candidate registry practice."
-            _update_enrichment_proposal(record["path"], "practice_descriptions", record["index"], item)
-            st.session_state[flash_key] = "Promoted to registry-practice candidate. Review and approve before push."
+            st.session_state[flash_key] = "Rejected locally."
             st.rerun()
 
 
@@ -7968,6 +8636,8 @@ def _local_enrichment_proposal_records(corpus_dir: Path, key: str = "lexicon_pro
         except Exception:
             continue
         for index, item in enumerate(data.get(key, [])):
+            if key == "lexicon_proposals" and isinstance(item, dict):
+                item = _repair_known_lexicon_variant_for_review(item)
             records.append({
                 "path": enrich_path,
                 "doc_id": enrich_path.parent.name,
@@ -8786,9 +9456,52 @@ def page_triage_tool():
 # Mac Studio Node
 # ---------------------------------------------------------------------------
 
+def _remote_service_error_note(label: str, url: str, exc_or_detail: object) -> str:
+    """Return a researcher-facing hint for common Mac Studio proxy failures."""
+    from urllib.parse import urlparse
+
+    host = urlparse(url).hostname or url
+    detail = str(exc_or_detail or "").strip()
+    note = f"{label}: {detail}" if detail else f"{label}: unreachable"
+    lower = detail.lower()
+
+    dns_phrases = (
+        "nodename nor servname provided",
+        "name or service not known",
+        "temporary failure in name resolution",
+        "failed to resolve",
+        "no address associated with hostname",
+    )
+    if any(phrase in lower for phrase in dns_phrases):
+        return (
+            f"{note}\n\n"
+            f"Tailscale MagicDNS is not resolving `{host}` from this MacBook/Streamlit process. "
+            "Open Tailscale on the MacBook and confirm it is connected, then run "
+            f"`tailscale status` and `curl -I https://{host}:4000/v1/models`. "
+            "If MagicDNS stays broken, use the Mac Studio Tailscale IP in the env vars or restart Tailscale."
+        )
+
+    if "timed out" in lower or "readtimeout" in lower or "connecttimeout" in lower:
+        return (
+            f"{note}\n\n"
+            "The hostname resolved, but the request timed out. Check that the Mac Studio is awake, "
+            "`tailscale serve status` still lists the port, and the matching LaunchAgent is running."
+        )
+
+    if "403" in lower or "forbidden" in lower or "401" in lower or "unauthorized" in lower:
+        return (
+            f"{note}\n\n"
+            "The service answered but rejected the request. Check the LiteLLM API key or "
+            "MAC_STUDIO_MODEL_CONTROL_TOKEN in `runner/.env`, then restart Streamlit."
+        )
+
+    return note
+
+
 def page_mac_studio_node():
     import httpx
     from datetime import datetime
+    from runner.pipeline.diagnostics import ErrorKind, probe_health
 
     st.title("Mac Studio Node")
     st.caption(f"Last refresh: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} — refresh the browser to update")
@@ -8796,14 +9509,20 @@ def page_mac_studio_node():
     config = _load_config_safe()
     litelm_url  = (config.litelm_base_url.rstrip("/") if config and config.litelm_base_url else "")
     litelm_key  = (config.litelm_api_key if config else "")
+    model_control_url = (
+        config.mac_studio_model_control_url.rstrip("/")
+        if config and config.mac_studio_model_control_url
+        else ""
+    )
+    model_control_token = config.mac_studio_model_control_token if config else ""
 
-    # Derive Mac Studio Ollama URL from env or fallback: swap LiteLLM port for 11434
+    # Direct Ollama is optional. Prefer the model-control helper when configured:
+    # it avoids exposing Ollama itself and is what batch preflight uses for unloads.
     import os
-    mac_ollama_url = os.getenv("MAC_STUDIO_OLLAMA_URL", "")
-    if not mac_ollama_url and litelm_url:
-        from urllib.parse import urlparse, urlunparse
-        parsed = urlparse(litelm_url)
-        mac_ollama_url = urlunparse(parsed._replace(netloc=parsed.hostname + ":11434"))
+    mac_ollama_url = (
+        os.getenv("MAC_STUDIO_OLLAMA_URL", "")
+        or (config.litelm_ollama_base_url if config else "")
+    ).rstrip("/")
     mac_dashboard_url = os.getenv("MAC_STUDIO_DASHBOARD_URL", "")
 
     # ── Services ─────────────────────────────────────────────────────────────
@@ -8814,13 +9533,16 @@ def page_mac_studio_node():
     litellm_models = []
     if litelm_url:
         try:
+            health = probe_health(litelm_url, api_key=litelm_key, timeout=15)
             r = httpx.get(
                 f"{litelm_url}/v1/models",
                 headers={"Authorization": f"Bearer {litelm_key}"},
-                timeout=5,
+                timeout=15,
             )
             if r.status_code == 200:
                 s1.success(f"LiteLLM online ({litelm_url})")
+                if health.kind == ErrorKind.HEALTH_SLOW:
+                    s1.caption("API is reachable; `/health` is slow because it pings cold large models.")
                 litellm_models = [m["id"] for m in r.json().get("data", [])]
             else:
                 s1.error(f"LiteLLM HTTP {r.status_code}")
@@ -8832,7 +9554,24 @@ def page_mac_studio_node():
     # Ollama on Mac Studio
     ollama_models = []
     ollama_loaded = []
-    if mac_ollama_url:
+    if model_control_url:
+        headers = {"Authorization": f"Bearer {model_control_token}"} if model_control_token else {}
+        try:
+            ro = httpx.get(f"{model_control_url}/api/tags", headers=headers, timeout=10)
+            if ro.status_code == 200:
+                s2.success(f"Model control online ({model_control_url})")
+                ollama_models = [m["name"] for m in ro.json().get("models", [])]
+            else:
+                s2.error(f"Model control HTTP {ro.status_code}")
+        except Exception as exc:
+            s2.error(f"Model control unreachable: {exc}")
+        try:
+            rp = httpx.get(f"{model_control_url}/api/ps", headers=headers, timeout=10)
+            if rp.status_code == 200:
+                ollama_loaded = [m["name"] for m in rp.json().get("models", [])]
+        except Exception:
+            pass
+    elif mac_ollama_url:
         try:
             ro = httpx.get(f"{mac_ollama_url}/api/tags", timeout=5)
             if ro.status_code == 200:
@@ -8849,7 +9588,7 @@ def page_mac_studio_node():
         except Exception:
             pass
     else:
-        s2.warning("MAC_STUDIO_OLLAMA_URL not set (add to .env)")
+        s2.warning("MAC_STUDIO_MODEL_CONTROL_URL not set (preferred) or MAC_STUDIO_OLLAMA_URL not set")
 
     # Dashboard link
     if mac_dashboard_url:
@@ -8955,11 +9694,14 @@ def page_mac_studio_node():
     with st.expander("How to configure this page (.env keys)"):
         st.code(
             "# Already set:\n"
-            "LITELM_BASE_URL=http://<tailscale-ip>:4000\n"
+            "LITELM_BASE_URL=https://<tailscale-host>.ts.net:4000\n"
             "LITELM_API_KEY=sk-local-research-key-change-this\n\n"
             "# Add these for full Mac Studio visibility:\n"
-            "MAC_STUDIO_OLLAMA_URL=http://<tailscale-ip>:11434\n"
+            "MAC_STUDIO_MODEL_CONTROL_URL=https://mqvlfwcwmc.tail379051.ts.net:11555\n"
+            "MAC_STUDIO_MODEL_CONTROL_TOKEN=<token>\n"
             "MAC_STUDIO_DASHBOARD_URL=https://mqvlfwcwmc.tail379051.ts.net:8502\n"
+            "# Optional only if direct Ollama is deliberately exposed:\n"
+            "MAC_STUDIO_OLLAMA_URL=http://<tailscale-ip>:11434\n"
             "# Optional — only if logs are on a shared path:\n"
             "MAC_STUDIO_LITELM_LOG=/tmp/litelm.log\n"
             "MAC_STUDIO_LITELM_ERR=/tmp/litelm.err\n",
@@ -9004,6 +9746,7 @@ def page_mac_studio_node():
     st.caption("Checks all credentials, services, and dependencies before running the first ingest.")
     if st.button("▶ Run doctor", key="doctor_btn"):
         checks = []
+        notes = []
         cfg = config
         checks.append(("SANITY_PROJECT_ID", bool(cfg and cfg.sanity_project_id)))
         checks.append(("SANITY_WRITE_TOKEN", bool(cfg and cfg.sanity_write_token)))
@@ -9013,11 +9756,30 @@ def page_mac_studio_node():
         # Service reachability
         import httpx as _httpx
         if cfg and cfg.litelm_base_url:
+            dr = probe_health(cfg.litelm_base_url, api_key=cfg.litelm_api_key, timeout=15)
+            litelm_ok = dr.ok or dr.kind == ErrorKind.HEALTH_SLOW
+            checks.append(("LiteLLM reachable", litelm_ok))
+            if dr.kind == ErrorKind.HEALTH_SLOW:
+                notes.append("LiteLLM `/health` is slow, but `/v1/models` is reachable. This is OK for batching.")
+            elif not litelm_ok:
+                notes.append(f"LiteLLM: {dr.message}")
+                if dr.detail:
+                    notes.append(_remote_service_error_note("LiteLLM", cfg.litelm_base_url, dr.detail))
+        if cfg and cfg.mac_studio_model_control_url:
             try:
-                r = _httpx.get(f"{cfg.litelm_base_url.rstrip('/')}/health", timeout=4)
-                checks.append(("LiteLLM reachable", r.status_code < 400))
-            except Exception:
-                checks.append(("LiteLLM reachable", False))
+                headers = (
+                    {"Authorization": f"Bearer {cfg.mac_studio_model_control_token}"}
+                    if cfg.mac_studio_model_control_token else {}
+                )
+                r = _httpx.get(f"{cfg.mac_studio_model_control_url.rstrip('/')}/health", headers=headers, timeout=10)
+                checks.append(("Mac Studio model-control reachable", r.status_code == 200))
+            except Exception as exc:
+                checks.append(("Mac Studio model-control reachable", False))
+                notes.append(_remote_service_error_note(
+                    "Mac Studio model-control",
+                    cfg.mac_studio_model_control_url,
+                    exc,
+                ))
         if cfg:
             try:
                 r = _httpx.get(f"{cfg.ollama_base_url}/api/tags", timeout=4)
@@ -9041,6 +9803,10 @@ def page_mac_studio_node():
         col1, col2 = st.columns(2)
         for i, (label, ok) in enumerate(checks):
             (col1 if i % 2 == 0 else col2).markdown(f"{'✅' if ok else '❌'} {label}")
+        if notes:
+            with st.expander("Doctor notes", expanded=not all_ok):
+                for note in notes:
+                    st.write(f"- {note}")
         if all_ok:
             st.success("All checks passed — ready to ingest.")
         else:
@@ -10793,6 +11559,7 @@ def page_source_queue():
             apply_triage_result, queue_stats, batch_groups,
             VALID_STATUSES, VALID_PRIORITIES,
         )
+        from runner.pipeline.batch import plan_batch, MAX_BATCH_LIMIT
     except ImportError as exc:
         st.error(f"source_queue module unavailable: {exc}")
         return
@@ -11061,6 +11828,242 @@ def page_source_queue():
             _run_source_queue_triage(failed_triage_items[:int(retry_n)], label="Retrying failed triage")
             st.rerun()
 
+    # ── Batch workbench ───────────────────────────────────────────────────
+    visible_select_keys = {item.id: f"sq_select_{item.id}" for item in items}
+    selected_items = [
+        item for item in items
+        if bool(st.session_state.get(visible_select_keys[item.id], False))
+    ]
+    if "sq_batch_workbench_group" not in st.session_state:
+        st.session_state["sq_batch_workbench_group"] = _default_source_queue_batch_group()
+
+    with st.expander("🧪 Batch selected queue items", expanded=bool(selected_items)):
+        st.caption(
+            "Tick rows in the queue below, stamp them with a temporary batch group, "
+            "then rehearse or run the batch from here. Live batch runs include enrichment by default."
+        )
+        saved_batch_rows = [
+            dict(row) for row in db.execute(
+                """
+                SELECT
+                    batch_group AS batch,
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN status IN ('triaged', 'ready_to_ingest') THEN 1 ELSE 0 END) AS triaged_or_ready,
+                    SUM(CASE WHEN status = 'ingested' THEN 1 ELSE 0 END) AS ingested
+                FROM source_queue
+                WHERE batch_group != ''
+                GROUP BY batch_group
+                ORDER BY batch_group
+                """
+            ).fetchall()
+        ]
+        if saved_batch_rows:
+            with st.expander("Saved batch groups", expanded=False):
+                st.caption(
+                    "These are queue rows that already have a batch group saved. "
+                    "Pick one in the Saved batch dropdown below to rehearse or run it."
+                )
+                st.dataframe(saved_batch_rows, hide_index=True, use_container_width=True)
+
+        select_cols = st.columns([1, 1, 3])
+        if select_cols[0].button("Select visible triaged/ready", key="sq_batch_select_visible"):
+            for item in items:
+                st.session_state[visible_select_keys[item.id]] = (
+                    item.status in ("triaged", "ready_to_ingest")
+                )
+            st.rerun()
+        if select_cols[1].button("Clear visible selection", key="sq_batch_clear_visible"):
+            for key in visible_select_keys.values():
+                st.session_state[key] = False
+            st.rerun()
+        select_cols[2].caption(
+            f"{len(selected_items)} visible item(s) selected. "
+            "Batch planning still excludes unsafe, untriaged, already-ingested, or review-flagged items."
+        )
+
+        batch_cols = st.columns([3, 1, 1, 1, 2])
+        saved_batch_groups = batch_groups(db)
+        saved_batch_options = ["New / custom"] + saved_batch_groups
+        current_batch_group = st.session_state.get("sq_batch_workbench_group", "")
+        saved_batch_index = (
+            saved_batch_options.index(current_batch_group)
+            if current_batch_group in saved_batch_options else 0
+        )
+        saved_batch_choice = batch_cols[0].selectbox(
+            "Saved batch",
+            saved_batch_options,
+            index=saved_batch_index,
+            key="sq_batch_saved_group",
+            help=(
+                "Pick an existing saved batch group, or choose New / custom to "
+                "create a fresh temporary batch from checked rows."
+            ),
+        )
+        if saved_batch_choice == "New / custom":
+            batch_group_name = batch_cols[0].text_input(
+                "Batch group",
+                key="sq_batch_workbench_group",
+                help=(
+                    "Temporary label used by the batch runner. Use a fresh name when you "
+                    "want exactly the checked rows, or reuse a name to append more rows."
+                ),
+            ).strip()
+        else:
+            batch_group_name = saved_batch_choice
+            batch_cols[0].caption(f"Using saved batch group: `{batch_group_name}`")
+        batch_limit = int(batch_cols[1].number_input(
+            "Limit",
+            min_value=1,
+            max_value=MAX_BATCH_LIMIT,
+            value=min(3, MAX_BATCH_LIMIT),
+            step=1,
+            key="sq_batch_workbench_limit",
+            help=f"Maximum items to process. Hard cap is {MAX_BATCH_LIMIT}.",
+        ))
+        batch_priority = batch_cols[2].selectbox(
+            "Priority",
+            ["(all)", "high", "medium", "low"],
+            key="sq_batch_workbench_priority",
+            help="Optional priority filter applied during batch planning.",
+        )
+        include_enrich = batch_cols[3].checkbox(
+            "Enrich",
+            value=True,
+            key="sq_batch_workbench_enrich",
+            help="Keep checked for normal pilot runs. Unchecking passes --no-enrich.",
+        )
+        enrich_model_options = list(dict.fromkeys([
+            "core-gemma",
+            config.litelm_enrichment_model_alt,
+            config.litelm_enrichment_model,
+            "lexicon-llm",
+        ]))
+        enrich_model = batch_cols[4].selectbox(
+            "Enrich model",
+            enrich_model_options,
+            key="sq_batch_workbench_enrich_model",
+            disabled=not include_enrich,
+            help=(
+                "Model alias passed to --enrich-model. core-gemma is the safer "
+                "default for richer Stage 3c proposal extraction."
+            ),
+        )
+        priority_arg = "" if batch_priority == "(all)" else batch_priority
+
+        assign_disabled = not selected_items or not batch_group_name
+        if st.button(
+            "Assign checked rows to this batch group",
+            key="sq_batch_assign_selected",
+            disabled=assign_disabled,
+            help="Writes the batch group onto the selected queue rows. It does not ingest yet.",
+        ):
+            changed = 0
+            for item in selected_items:
+                if update_notes(db, item.id, batch_group=batch_group_name):
+                    changed += 1
+            st.success(f"Assigned {changed} selected item(s) to `{batch_group_name}`.")
+            st.rerun()
+
+        if batch_group_name:
+            manifest = plan_batch(
+                db,
+                batch_group=batch_group_name,
+                limit=batch_limit,
+                priority_filter=priority_arg,
+            )
+            mcols = st.columns(4)
+            mcols[0].metric("Candidates", manifest.total_candidates)
+            mcols[1].metric("Eligible", manifest.total_included)
+            mcols[2].metric("Excluded", manifest.total_excluded)
+            mcols[3].metric("Limit", manifest.limit)
+            if manifest.notes:
+                for note in manifest.notes:
+                    st.warning(note)
+            if manifest.included:
+                st.dataframe(
+                    [
+                        {
+                            "item_id": item.item_id,
+                            "priority": item.priority,
+                            "llm": item.recommended_llm or "litelm",
+                            "type": item.doc_type_hint or item.status,
+                            "url": item.url,
+                        }
+                        for item in manifest.included
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
+            elif not selected_items:
+                st.info("Tick queue rows below, then assign them to this batch group.")
+            else:
+                st.warning(
+                    "No eligible items in this batch group yet. Assign checked rows, "
+                    "or triage/review the excluded items first."
+                )
+
+            command_preview = _batch_run_command(
+                batch_group=batch_group_name,
+                limit=batch_limit,
+                priority=priority_arg,
+                execute=True,
+                run_enrich=include_enrich,
+                enrich_model=enrich_model if include_enrich else "",
+            )
+            with st.expander("Live command preview", expanded=False):
+                st.code(shlex.join(command_preview), language="bash")
+
+            job_key = f"sq_batch_job_{re.sub(r'[^a-zA-Z0-9_.-]+', '-', batch_group_name)}"
+            job_active = _render_batch_run_job(job_key)
+            active_job = st.session_state.get(job_key) or {}
+            active_mode = active_job.get("mode", "")
+            live_job_active = bool(job_active and active_mode == "live")
+            active_heavy_job = _read_app_job_lock()
+            if active_heavy_job and str(active_heavy_job.get("pid", "")) != str(active_job.get("pid", "")):
+                st.warning(
+                    _format_app_job_lock(active_heavy_job)
+                    + " Live batching is locked until that job finishes."
+                )
+            run_cols = st.columns([1, 1, 2])
+            if run_cols[0].button(
+                "Run rehearsal",
+                key="sq_batch_rehearsal",
+                disabled=live_job_active or not batch_group_name,
+                help="Dry run only: writes a ledger/report and confirms which items are eligible. Does not ingest.",
+            ):
+                st.session_state[job_key] = _start_batch_run_job(
+                    batch_group=batch_group_name,
+                    limit=batch_limit,
+                    priority=priority_arg,
+                    execute=False,
+                    run_enrich=include_enrich,
+                    enrich_model=enrich_model if include_enrich else "",
+                )
+                st.rerun()
+            if run_cols[1].button(
+                "Start live batch",
+                key="sq_batch_live",
+                type="primary",
+                disabled=live_job_active or bool(active_heavy_job) or manifest.total_included == 0,
+                help=(
+                    "Real run: executes ingest/upload and Stage 3c enrichment for eligible items. "
+                    "A completed or running rehearsal does not block this."
+                ),
+            ):
+                st.session_state[job_key] = _start_batch_run_job(
+                    batch_group=batch_group_name,
+                    limit=batch_limit,
+                    priority=priority_arg,
+                    execute=True,
+                    run_enrich=include_enrich,
+                    enrich_model=enrich_model if include_enrich else "",
+                )
+                st.rerun()
+            run_cols[2].caption(
+                "Live mode runs preflight checks, ingests eligible items, uploads them, "
+                "and runs enrichment when Enrich is checked."
+            )
+
     # ── Queue table ────────────────────────────────────────────────────────
     _STATUS_EMOJI = {
         "new": "🆕", "triaged": "🔬", "ready_to_ingest": "✳️",
@@ -11149,6 +12152,12 @@ def page_source_queue():
                     )
 
             with action_col:
+                st.checkbox(
+                    "Batch",
+                    key=visible_select_keys[item.id],
+                    help="Tick this row, then use 'Batch selected queue items' above.",
+                )
+
                 # Status transitions
                 if item.status in ("new", "triaged"):
                     if st.button("🔁 Retry triage", key=f"sq_retry_{item.id}",
