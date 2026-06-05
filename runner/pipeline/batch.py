@@ -15,11 +15,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import httpx
 from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple, TYPE_CHECKING
 
+from .atomic_io import atomic_write_json, atomic_write_text
 from .diagnostics import probe_health as _probe_health, ErrorKind as _DiagErrorKind
 from .source_queue import (
     QueueItem,
@@ -81,6 +83,81 @@ def _needs_litelm(manifest: BatchManifest) -> bool:
     return any(
         (item.recommended_llm or "litelm").startswith("litelm")
         for item in manifest.included
+    )
+
+
+def _control_headers(token: str = "") -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"} if token else {}
+
+
+def _probe_model_control_endpoint(
+    control_url: str,
+    *,
+    token: str = "",
+    timeout: int = 5,
+) -> PreflightResult:
+    if not _cred_ok(control_url):
+        return PreflightResult(
+            "litelm_model_control", False,
+            "MAC_STUDIO_MODEL_CONTROL_URL not configured",
+            "Configure the Mac Studio model-control helper or direct Ollama unload access.",
+        )
+    try:
+        response = httpx.get(
+            f"{control_url.rstrip('/')}/health",
+            headers=_control_headers(token),
+            timeout=timeout,
+        )
+        response.raise_for_status()
+    except Exception as exc:
+        return PreflightResult(
+            "litelm_model_control", False,
+            f"Mac Studio model-control helper not reachable: {control_url}",
+            str(exc),
+        )
+    return PreflightResult(
+        "litelm_model_control", True,
+        f"Mac Studio model-control helper reachable: {control_url}",
+    )
+
+
+def _probe_ollama_unload_endpoint(base_url: str, *, timeout: int = 5) -> PreflightResult:
+    """Check direct Ollama access needed for model unloads.
+
+    LiteLLM health can pass while direct Ollama is unreachable. In that state
+    the pipeline can call Qwen, embeddings, and Gemma successfully but fail to
+    unload them, which is dangerous on the 64 GB Mac Studio.
+    """
+    if not _cred_ok(base_url):
+        return PreflightResult(
+            "litelm_ollama_unload", False,
+            "LITELM_OLLAMA_BASE_URL / MAC_STUDIO_OLLAMA_URL not configured",
+            "Set it to the Mac Studio Ollama URL, e.g. http://<tailscale-host>:11434.",
+        )
+    try:
+        response = httpx.get(f"{base_url.rstrip('/')}/api/tags", timeout=timeout)
+        response.raise_for_status()
+    except Exception as exc:
+        return PreflightResult(
+            "litelm_ollama_unload", False,
+            f"Direct Ollama unload endpoint not reachable: {base_url}",
+            str(exc),
+        )
+    return PreflightResult(
+        "litelm_ollama_unload", True,
+        f"Direct Ollama reachable for model unloads: {base_url}",
+    )
+
+
+def _probe_unload_path(config: Config) -> PreflightResult:
+    control_url = str(getattr(config, "mac_studio_model_control_url", ""))
+    if _cred_ok(control_url):
+        return _probe_model_control_endpoint(
+            control_url,
+            token=str(getattr(config, "mac_studio_model_control_token", "")),
+        )
+    return _probe_ollama_unload_endpoint(
+        str(getattr(config, "litelm_ollama_base_url", "")),
     )
 
 
@@ -176,6 +253,7 @@ def batch_preflight(
                     f"LiteLLM not reachable: {dr.message}",
                     dr.detail,
                 ))
+        results.append(_probe_unload_path(config))
 
     # ── 4. Ledger directory writable (local filesystem) ───────────────────
     try:
@@ -302,10 +380,7 @@ def write_batch_ledger(ledger: BatchLedger, out_dir: Path) -> Path:
     """Write a batch ledger JSON file and return its path."""
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{ledger.batch_id}_ledger.json"
-    path.write_text(
-        json.dumps(ledger.to_dict(), indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    atomic_write_json(path, ledger.to_dict())
     return path
 
 
@@ -323,6 +398,10 @@ _PREFLIGHT_NEXT_ACTIONS: dict[str, str] = {
     "litelm_endpoint": (
         "Check Mac Studio / LiteLLM: is Tailscale connected? "
         "Run `runner doctor` for diagnostics."
+    ),
+    "litelm_ollama_unload": (
+        "Enable direct Mac Studio Ollama access for unloads "
+        "(set LITELM_OLLAMA_BASE_URL or MAC_STUDIO_OLLAMA_URL), then re-run."
     ),
     "ledger_dir_writable": (
         "Ledger directory not writable — use `--out-dir` to set a writable path."
@@ -466,7 +545,7 @@ def write_batch_report(ledger: BatchLedger, ledger_dir: Path) -> Path:
     ledger_path = ledger_dir / f"{ledger.batch_id}_ledger.json"
     report_path = ledger_dir / f"{ledger.batch_id}_report.md"
     content = format_batch_report(ledger, ledger_path=ledger_path)
-    report_path.write_text(content, encoding="utf-8")
+    atomic_write_text(report_path, content)
     return report_path
 
 

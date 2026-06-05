@@ -38,6 +38,8 @@ class Config:
     litelm_enrichment_model_alt: str   # optional second-opinion enrichment model
     sanity_read_token: str = ""        # optional read-only Sanity token for GROQ queries
     litelm_ollama_base_url: str = ""        # optional direct Ollama URL for model unloads
+    mac_studio_model_control_url: str = ""  # optional tiny control service for safe unloads
+    mac_studio_model_control_token: str = "" # optional bearer token for the control service
     litelm_ollama_embedding_model: str = "qwen3-embedding:8b" # actual Ollama model behind research-embedding
     litelm_ollama_analysis_model: str = "qwen3.6:35b-a3b"
     litelm_ollama_analysis_model_heavy: str = "gemma4:31b"
@@ -143,6 +145,8 @@ def load_config(llm: str | None = None, require_services: bool = True) -> Config
         litelm_enrichment_model=os.getenv("LITELM_ENRICHMENT_MODEL", "lexicon-llm"),
         litelm_enrichment_model_alt=os.getenv("LITELM_ENRICHMENT_MODEL_ALT", "core-gemma"),
         litelm_ollama_base_url=os.getenv("LITELM_OLLAMA_BASE_URL", "") or os.getenv("MAC_STUDIO_OLLAMA_URL", ""),
+        mac_studio_model_control_url=os.getenv("MAC_STUDIO_MODEL_CONTROL_URL", ""),
+        mac_studio_model_control_token=os.getenv("MAC_STUDIO_MODEL_CONTROL_TOKEN", ""),
         litelm_ollama_embedding_model=os.getenv("LITELM_OLLAMA_EMBEDDING_MODEL", "qwen3-embedding:8b"),
         litelm_ollama_analysis_model=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL", "qwen3.6:35b-a3b"),
         litelm_ollama_analysis_model_heavy=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL_HEAVY", "gemma4:31b"),

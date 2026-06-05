@@ -8,7 +8,7 @@ from ..config import Config
 
 def normalise_local_doc_id(doc_id: str) -> str:
     """Return the local corpus folder id from either local id or Sanity _id."""
-    return doc_id.strip().removeprefix("doc-")
+    return _validate_doc_id(doc_id.strip().removeprefix("doc-"))
 
 
 def _validate_doc_id(doc_id: str) -> str:

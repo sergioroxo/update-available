@@ -407,6 +407,35 @@ def test_batch_run_execute_marks_successful_item_ingested(monkeypatch, tmp_path)
     assert data["items"][0]["doc_id"] == "doc-success"
 
 
+def test_batch_run_execute_passes_enrich_model(monkeypatch, tmp_path):
+    cfg = _patch_config(monkeypatch, tmp_path)
+    db = open_db(queue_db_path(cfg.corpus_dir))
+    _add_safe_item(db, "https://example.org/success")
+    calls = []
+
+    def fake_ingest(*args, **kwargs):
+        calls.append((args, kwargs))
+        return "doc-success"
+
+    monkeypatch.setattr(main, "ingest", fake_ingest)
+
+    result = CliRunner().invoke(
+        main.app,
+        [
+            "batch-run",
+            "--execute",
+            "--skip-preflight",
+            "--enrich-model",
+            "core-gemma",
+            "--out-dir",
+            str(tmp_path / "ledgers"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert calls[0][1]["enrich_model"] == "core-gemma"
+
+
 def test_batch_run_execute_stops_on_first_failure(monkeypatch, tmp_path):
     cfg = _patch_config(monkeypatch, tmp_path)
     db = open_db(queue_db_path(cfg.corpus_dir))

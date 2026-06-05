@@ -24,6 +24,8 @@ python -m runner embed-test      # embedding dimension only
 6. [Error classification reference](#6-error-classification-reference)
 7. [Safe restart steps (manual only)](#7-safe-restart-steps-manual-only)
 8. [LiteLLM binding to 127.0.0.1 vs 0.0.0.0](#8-litelm-binding-to-127001-vs-0000)
+9. [Enterprise network mode: Tailscale ping works but TCP times out](#9-enterprise-network-mode-tailscale-ping-works-but-tcp-times-out)
+10. [What still works when Mac Studio TCP is blocked](#10-what-still-works-when-mac-studio-tcp-is-blocked)
 
 ---
 
@@ -398,3 +400,166 @@ Verify from MacBook after reloading:
 curl http://<mac-studio-tailscale-ip>:4000/health
 python -m runner litelm-test
 ```
+
+---
+
+## 9. Enterprise network mode: Tailscale ping works but TCP times out
+
+This is a distinct failure mode observed on the work/enterprise network.
+Do not keep changing runner code, model aliases, API keys, or prompts when this
+happens.
+
+### Symptom
+
+On the MacBook, Tailscale peer routing works:
+
+```bash
+tailscale ping mqvlfwcwmc
+# pong from mqvlfwcwmc (100.107.255.70) ...
+```
+
+But every TCP request to the Mac Studio times out:
+
+```bash
+curl -i --connect-timeout 8 http://100.107.255.70:4000/v1/models
+curl -i --connect-timeout 8 http://100.107.255.70:11555/health
+curl -i https://mqvlfwcwmc.tail379051.ts.net/v1/models
+curl -i https://mqvlfwcwmc.tail379051.ts.net:11555/health
+```
+
+Typical result:
+
+```text
+curl: (28) Failed to connect ... Timeout was reached
+```
+
+At the same time, the Mac Studio itself reports the services are healthy:
+
+```bash
+curl -i http://127.0.0.1:4000/v1/models
+# 401 Unauthorized is OK here if no API key is provided; it proves LiteLLM answered.
+
+curl -i http://127.0.0.1:11555/health \
+  -H "Authorization: Bearer <MODEL_CONTROL_TOKEN>"
+# {"ok": true}
+```
+
+And the LaunchAgents are running:
+
+```bash
+launchctl print gui/$(id -u)/com.sogice.litelm | head -40
+launchctl print gui/$(id -u)/org.sogice.model-control | head -40
+```
+
+### Meaning
+
+The ingestion system is not broken. LiteLLM and model-control are not broken.
+The MacBook can see the Mac Studio as a Tailscale peer, but TCP traffic to the
+Mac Studio is not usable from the MacBook. This can be caused by enterprise
+network filtering, local firewall / network extension policy, Tailscale Serve
+limitations on that network, or device-management rules.
+
+### What not to do
+
+- Do not keep changing `LITELM_BASE_URL` between ports hoping one will work.
+- Do not delete unrelated Tailscale Serve handlers unless you know what they
+  expose.
+- Do not disturb RustDesk or other remote-management tools. RustDesk is a
+  separate safety channel and should remain available.
+- Do not conclude that Sanity, Supabase, prompts, enrichment, or the Streamlit
+  app are broken solely from this failure.
+
+### Current safe interpretation
+
+Use this table:
+
+| Check | Meaning |
+|---|---|
+| Mac Studio `curl 127.0.0.1:4000` works | LiteLLM service is alive |
+| Mac Studio `curl 127.0.0.1:11555/health` works | model-control service is alive |
+| MacBook `tailscale ping mqvlfwcwmc` works | Tailscale identity/routing exists |
+| MacBook `curl 100.107.255.70:4000` times out | MacBook -> Mac Studio TCP is blocked/unusable |
+| MacBook `curl tailnet HTTPS` times out | Tailscale Serve path is also blocked/unusable |
+
+When the last two rows are true, do not run MacBook-side `--llm litelm` batch
+jobs. They will hang or fail at the network layer.
+
+### Recovery options
+
+Pick one. Do not combine all at once.
+
+1. Move to a network where MacBook -> Mac Studio TCP works, then retest direct IP:
+
+   ```bash
+   curl -i --connect-timeout 8 http://100.107.255.70:4000/v1/models \
+     -H "Authorization: Bearer <LITELM_API_KEY>"
+   ```
+
+2. Run the ingestion app and batch runner on the Mac Studio itself, against the
+   local services. This avoids MacBook -> Mac Studio TCP entirely, but requires
+   a deliberate corpus/repo sync strategy.
+
+3. Use MacBook-local fallback models for small attended work:
+
+   ```bash
+   python -m runner ingest <url> --llm local
+   python -m runner reanalyze <doc_id> --llm local
+   ```
+
+4. Use Claude/API paths for selected high-priority documents if configured and
+   methodologically acceptable.
+
+### Tailscale Serve note
+
+Tailscale Serve can show valid routes such as:
+
+```text
+https://mqvlfwcwmc.tail379051.ts.net
+|-- / proxy http://127.0.0.1:4000
+
+https://mqvlfwcwmc.tail379051.ts.net:11555
+|-- / proxy http://127.0.0.1:11555
+```
+
+This proves the Mac Studio has a Serve configuration. It does not prove the
+MacBook can open TCP connections to those served ports from the current network.
+Always confirm from the MacBook with `curl`.
+
+---
+
+## 10. What still works when Mac Studio TCP is blocked
+
+The runner is staged. A Mac Studio network outage does not mean every workflow
+must stop.
+
+### Safe to do
+
+- Add URLs to the Source Queue.
+- Edit researcher notes, review local JSON, approve/reject proposals, and update
+  provenance/readiness fields in the Streamlit app.
+- Use local Ollama paths if `Local Ollama reachable` is green.
+- Push already-reviewed local records to Sanity/Supabase if those services are
+  reachable and the document does not require a fresh LiteLLM analysis/enrichment
+  run.
+- Run tests and documentation updates.
+
+### Do not do until LiteLLM is green
+
+- MacBook-side `--llm litelm`, `litelm-heavy`, or `litelm-reasoning` analysis.
+- Batch ingestion that includes Stage 3b/3c via LiteLLM.
+- Complement enrichment through the Mac Studio models.
+- Overnight unattended batches.
+
+### Practical operating rule
+
+Doctor should distinguish these layers:
+
+- `Local Ollama reachable` green means MacBook-local fallback is available.
+- `LiteLLM reachable` red means Mac Studio inference from the MacBook is not
+  available.
+- `Mac Studio model-control reachable` red means automatic model unloads from
+  the MacBook are not available.
+
+If local work is enough, continue locally. If the pilot requires Mac Studio
+quality/speed, either fix the network path first or run the workflow on the
+Mac Studio itself.

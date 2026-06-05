@@ -43,6 +43,8 @@ from runner.pipeline.batch import (
     PreflightResult,
     _cred_ok,
     _needs_litelm,
+    _probe_ollama_unload_endpoint,
+    _probe_model_control_endpoint,
     batch_preflight,
 )
 from runner.pipeline.diagnostics import DiagnosticResult, ErrorKind
@@ -105,6 +107,9 @@ def _make_config(tmp_path: Path, **overrides) -> SimpleNamespace:
         supabase_service_key="service-key-abc",
         litelm_base_url="",
         litelm_api_key="",
+        litelm_ollama_base_url="",
+        mac_studio_model_control_url="",
+        mac_studio_model_control_token="",
         corpus_dir=tmp_path / "corpus",
         exports_dir=tmp_path / "exports",
     )
@@ -288,19 +293,37 @@ def test_preflight_litelm_items_no_base_url(tmp_path):
 
 
 def test_preflight_litelm_probe_ok(monkeypatch, tmp_path):
-    cfg = _make_config(tmp_path, litelm_base_url="http://mac-studio:4000")
+    cfg = _make_config(
+        tmp_path,
+        litelm_base_url="http://mac-studio:4000",
+        litelm_ollama_base_url="http://mac-studio:11434",
+    )
     monkeypatch.setattr("runner.pipeline.batch._probe_health", lambda *a, **kw: _ok_dr())
+    monkeypatch.setattr(
+        "runner.pipeline.batch._probe_ollama_unload_endpoint",
+        lambda *a, **kw: PreflightResult("litelm_ollama_unload", True, "ok"),
+    )
     manifest = _manifest_with_items("litelm")
     results = batch_preflight(cfg, manifest, ledger_dir=tmp_path / "ledgers")
     litelm = next(r for r in results if r.check == "litelm_endpoint")
     assert litelm.ok
     assert "http://mac-studio:4000" in litelm.message
+    unload = next(r for r in results if r.check == "litelm_ollama_unload")
+    assert unload.ok
 
 
 def test_preflight_litelm_probe_health_slow_passes(monkeypatch, tmp_path):
     """HEALTH_SLOW = cold model ping; service is reachable — must not block."""
-    cfg = _make_config(tmp_path, litelm_base_url="http://mac-studio:4000")
+    cfg = _make_config(
+        tmp_path,
+        litelm_base_url="http://mac-studio:4000",
+        litelm_ollama_base_url="http://mac-studio:11434",
+    )
     monkeypatch.setattr("runner.pipeline.batch._probe_health", lambda *a, **kw: _slow_dr())
+    monkeypatch.setattr(
+        "runner.pipeline.batch._probe_ollama_unload_endpoint",
+        lambda *a, **kw: PreflightResult("litelm_ollama_unload", True, "ok"),
+    )
     manifest = _manifest_with_items("litelm")
     results = batch_preflight(cfg, manifest, ledger_dir=tmp_path / "ledgers")
     litelm = next(r for r in results if r.check == "litelm_endpoint")
@@ -309,8 +332,16 @@ def test_preflight_litelm_probe_health_slow_passes(monkeypatch, tmp_path):
 
 
 def test_preflight_litelm_probe_unreachable_fails(monkeypatch, tmp_path):
-    cfg = _make_config(tmp_path, litelm_base_url="http://mac-studio:4000")
+    cfg = _make_config(
+        tmp_path,
+        litelm_base_url="http://mac-studio:4000",
+        litelm_ollama_base_url="http://mac-studio:11434",
+    )
     monkeypatch.setattr("runner.pipeline.batch._probe_health", lambda *a, **kw: _unreachable_dr())
+    monkeypatch.setattr(
+        "runner.pipeline.batch._probe_ollama_unload_endpoint",
+        lambda *a, **kw: PreflightResult("litelm_ollama_unload", True, "ok"),
+    )
     manifest = _manifest_with_items("litelm")
     results = batch_preflight(cfg, manifest, ledger_dir=tmp_path / "ledgers")
     litelm = next(r for r in results if r.check == "litelm_endpoint")
@@ -319,18 +350,77 @@ def test_preflight_litelm_probe_unreachable_fails(monkeypatch, tmp_path):
     assert "Mac Studio offline" in litelm.detail
 
 
+def test_preflight_litelm_requires_ollama_unload_endpoint(monkeypatch, tmp_path):
+    cfg = _make_config(tmp_path, litelm_base_url="http://mac-studio:4000")
+    monkeypatch.setattr("runner.pipeline.batch._probe_health", lambda *a, **kw: _ok_dr())
+
+    results = batch_preflight(cfg, _manifest_with_items("litelm"), ledger_dir=tmp_path / "ledgers")
+
+    unload = next(r for r in results if r.check == "litelm_ollama_unload")
+    assert not unload.ok
+    assert "not configured" in unload.message
+
+
+def test_probe_ollama_unload_endpoint_missing_base_url():
+    result = _probe_ollama_unload_endpoint("")
+
+    assert result.check == "litelm_ollama_unload"
+    assert not result.ok
+    assert "not configured" in result.message
+
+
+def test_probe_model_control_endpoint_missing_base_url():
+    result = _probe_model_control_endpoint("")
+
+    assert result.check == "litelm_model_control"
+    assert not result.ok
+    assert "not configured" in result.message
+
+
+def test_preflight_prefers_model_control_endpoint(monkeypatch, tmp_path):
+    cfg = _make_config(
+        tmp_path,
+        litelm_base_url="http://mac-studio:4000",
+        mac_studio_model_control_url="https://mac-studio:11555",
+        mac_studio_model_control_token="secret",
+    )
+    monkeypatch.setattr("runner.pipeline.batch._probe_health", lambda *a, **kw: _ok_dr())
+    direct_called = []
+    monkeypatch.setattr(
+        "runner.pipeline.batch._probe_ollama_unload_endpoint",
+        lambda *a, **kw: direct_called.append(1) or PreflightResult("litelm_ollama_unload", False, "bad"),
+    )
+    monkeypatch.setattr(
+        "runner.pipeline.batch._probe_model_control_endpoint",
+        lambda url, **kw: PreflightResult("litelm_model_control", True, f"ok {url}"),
+    )
+
+    results = batch_preflight(cfg, _manifest_with_items("litelm"), ledger_dir=tmp_path / "ledgers")
+
+    assert direct_called == []
+    helper = next(r for r in results if r.check == "litelm_model_control")
+    assert helper.ok
+
+
 def test_preflight_local_items_no_probe_performed(monkeypatch, tmp_path):
     """local-only items — litelm_endpoint check must be absent from results."""
     probe_called = []
+    unload_called = []
     monkeypatch.setattr(
         "runner.pipeline.batch._probe_health",
         lambda *a, **kw: probe_called.append(1) or _ok_dr(),
+    )
+    monkeypatch.setattr(
+        "runner.pipeline.batch._probe_ollama_unload_endpoint",
+        lambda *a, **kw: unload_called.append(1) or PreflightResult("litelm_ollama_unload", True, "ok"),
     )
     cfg = _make_config(tmp_path)
     manifest = _manifest_with_items("local", "local-heavy")
     results = batch_preflight(cfg, manifest, ledger_dir=tmp_path / "ledgers")
     assert probe_called == []
+    assert unload_called == []
     assert not any(r.check == "litelm_endpoint" for r in results)
+    assert not any(r.check == "litelm_ollama_unload" for r in results)
 
 
 # ---------------------------------------------------------------------------

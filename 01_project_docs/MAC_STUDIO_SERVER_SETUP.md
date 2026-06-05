@@ -5,6 +5,14 @@
 **Access**: Tailscale (anywhere) or SSH tunnel (LAN)  
 **Default runner path**: `--llm litelm` → `LITELM_BASE_URL` → LiteLLM → Ollama
 
+> **Enterprise-network caveat (observed 2026-06-04):** some managed/work
+> networks allow `tailscale ping` between MacBook and Mac Studio but still block
+> or black-hole TCP connections to LiteLLM/model-control ports. In that state,
+> the Mac Studio services can be healthy locally while MacBook-side
+> `--llm litelm` ingestion still times out. See
+> `docs/MAC_STUDIO_TROUBLESHOOTING.md`, §9-10 before changing ports, prompts,
+> API keys, or app code.
+
 ---
 
 ## Architecture
@@ -22,6 +30,20 @@ Ollama         :11434  ←── actual models (qwen3.6:35b-a3b, gemma4:31b …)
 ```
 
 LiteLLM sits in front of Ollama and exposes an **OpenAI-compatible** `/v1/chat/completions` and `/v1/embeddings` API. The runner talks to LiteLLM — not Ollama directly — so model selection, routing, and auth are all handled at the proxy layer.
+
+This architecture has two independent health questions:
+
+1. Are Mac Studio services healthy locally?
+   - `curl http://127.0.0.1:4000/v1/models` on Mac Studio should answer
+     (401 is acceptable without an API key).
+   - `curl http://127.0.0.1:11434/api/tags` should list Ollama models.
+2. Can the MacBook open TCP connections to those services over Tailscale?
+   - `tailscale ping mqvlfwcwmc` is necessary but not sufficient.
+   - `curl http://100.107.255.70:4000/v1/models` from the MacBook must also
+     connect, or MacBook-side LiteLLM ingestion will not work.
+
+If (1) is green and (2) times out, the runner is not the broken layer. Treat it
+as a network/transport problem or run the workflow directly on the Mac Studio.
 
 ---
 

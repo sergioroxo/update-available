@@ -12,7 +12,7 @@ Usage:
   python -m runner export batch-07
   python -m runner embed-test
 """
-from typing import Optional
+from typing import List, Optional
 from pathlib import Path
 import typer
 from rich.console import Console
@@ -257,6 +257,7 @@ def ingest(
     if run_enrich and confirmed:
         console.print("\n[dim]Running Stage 3c enrichment pass...[/dim]")
         enrich_llm = "litelm" if llm.startswith("litelm") else llm
+        resolved_enrich_model = enrich_model or config.litelm_enrichment_model
         try:
             _enrich_audit: dict = {}
             enrichment_result = enrich.run(
@@ -277,6 +278,15 @@ def ingest(
                 console.print(f"[green]Second-opinion enrichment saved → {alt_saved}[/green]")
         except Exception as exc:
             console.print(Panel(f"[red]Enrichment failed: {exc}[/red]", title="Stage 3c error"))
+        finally:
+            if enrich_llm.startswith("litelm"):
+                try:
+                    if ollama_memory.unload_litelm_enrichment(config, resolved_enrich_model):
+                        console.print("[dim]Unloaded LiteLLM enrichment model after Stage 3c.[/dim]")
+                    else:
+                        console.print("[yellow]Could not unload LiteLLM enrichment model; set LITELM_OLLAMA_BASE_URL and backing model names.[/yellow]")
+                except Exception as exc:
+                    console.print(f"[yellow]Could not unload LiteLLM enrichment model: {exc}[/yellow]")
 
     return intake_result.doc_id
 
@@ -484,6 +494,7 @@ def enrich_doc(
 
     console.print(f"[dim]Running enrichment on {doc_id} with {llm}...[/dim]")
     _enrich_audit: dict = {}
+    resolved_enrich_model = model or config.litelm_enrichment_model
     try:
         enrichment_result = enrich.run(doc_id, preprocess, analysis, config=config, llm=llm, model=model, _audit=_enrich_audit)
     except Exception as exc:
@@ -500,6 +511,15 @@ def enrich_doc(
             console.print(f"[green]Second-opinion enrichment saved → {alt_saved}[/green]")
     else:
         console.print("[yellow]Enrichment skipped.[/yellow]")
+
+    if llm.startswith("litelm"):
+        try:
+            if ollama_memory.unload_litelm_enrichment(config, resolved_enrich_model):
+                console.print("[dim]Unloaded LiteLLM enrichment model after Stage 3c.[/dim]")
+            else:
+                console.print("[yellow]Could not unload LiteLLM enrichment model; set LITELM_OLLAMA_BASE_URL and backing model names.[/yellow]")
+        except Exception as exc:
+            console.print(f"[yellow]Could not unload LiteLLM enrichment model: {exc}[/yellow]")
 
 
 def _extract_markdown_for_split(source: str) -> tuple[str, str]:
@@ -1892,6 +1912,7 @@ def batch_run_cmd(
     out_dir: Optional[Path] = typer.Option(None, "--out-dir", help="Directory for batch ledger JSON"),
     execute: bool = typer.Option(False, "--execute", help="Actually ingest included items. Omit for rehearsal only."),
     run_enrich: bool = typer.Option(True, "--enrich/--no-enrich", help="Run Stage 3c enrichment during each ingest"),
+    enrich_model: Optional[str] = typer.Option(None, "--enrich-model", help="LiteLLM model alias for Stage 3c enrichment, e.g. core-gemma"),
     skip_preflight: bool = typer.Option(
         False,
         "--skip-preflight",
@@ -2008,7 +2029,7 @@ def batch_run_cmd(
                 yes=True,
                 run_triage=False,
                 run_enrich=run_enrich,
-                enrich_model=None,
+                enrich_model=enrich_model,
                 second_opinion=False,
                 collect_comments=False,
                 max_comments=50,
@@ -2055,6 +2076,172 @@ def batch_run_cmd(
         console.print(f"[bold]Next:[/bold] {_act}")
     console.print(f"[dim]Ledger written → {path}[/dim]")
     console.print(f"[dim]Report → {report_path}[/dim]")
+
+
+@app.command(name="offload-export")
+def offload_export_cmd(
+    doc_ids: List[str] = typer.Argument(
+        ...,
+        help="One or more corpus doc IDs (bare id or doc- prefixed) to package",
+    ),
+    package_id: Optional[str] = typer.Option(
+        None, "--package-id", help="Explicit package id (default: auto-generated)"
+    ),
+    offload_root: Optional[Path] = typer.Option(
+        None,
+        "--offload-root",
+        help="Offload root directory (default: <exports_dir>/offload)",
+    ),
+):
+    """Export selected documents into a bounded Mac Studio offload package.
+
+    \b
+    Builds a conservative `analysis_package` in <offload_root>/inbox/<package_id>.
+    Copies only intake/preprocess/extracted text (+ present optional context) for
+    the chosen documents, with SHA-256 hashes and a per-document stage summary.
+
+    \b
+    This command is local-only. It never touches source_queue.db, never calls
+    Sanity/Supabase, and never calls any LLM/Ollama/LiteLLM. A document is refused
+    (and no package is written) unless its required artifacts are present and valid.
+    """
+    from rich.table import Table
+    from .pipeline.offload import build_analysis_package
+
+    config = load_config(require_services=False)
+    root = Path(offload_root) if offload_root else (config.exports_dir / "offload")
+
+    try:
+        manifest = build_analysis_package(
+            corpus_dir=config.corpus_dir,
+            doc_ids=list(doc_ids),
+            offload_root=root,
+            package_id=package_id,
+        )
+    except (ValueError, FileExistsError) as exc:
+        console.print(Panel(str(exc), title="[red]Offload export refused[/red]"))
+        raise typer.Exit(1)
+
+    package_dir = root / manifest.lifecycle_state / manifest.package_id
+    manifest_path = package_dir / "offload_manifest.json"
+
+    console.print(f"\n[bold]Offload package created[/bold]  [dim]{manifest.package_kind}[/dim]")
+    console.print(f"  Package ID:    [cyan]{manifest.package_id}[/cyan]")
+    console.print(f"  Lifecycle:     [green]{manifest.lifecycle_state}[/green]")
+    console.print(f"  Documents:     {len(manifest.documents)}")
+    console.print(f"  Manifest:      [dim]{manifest_path}[/dim]")
+
+    t = Table(title="Source stage summary", show_lines=False)
+    t.add_column("doc_id", style="cyan", no_wrap=True)
+    t.add_column("type", no_wrap=True)
+    t.add_column("quality", no_wrap=True)
+    t.add_column("tool", no_wrap=True)
+    t.add_column("text", no_wrap=True)
+    t.add_column("html", no_wrap=True)
+    t.add_column("wayback", no_wrap=True)
+    t.add_column("media", no_wrap=True)
+    t.add_column("ocr", no_wrap=True)
+    for doc in manifest.documents:
+        s = doc.source_stage_summary
+        t.add_row(
+            doc.doc_id[:16],
+            str(s.get("source_type") or "-"),
+            str(s.get("preprocess_quality") or "-"),
+            str(s.get("preprocess_tool") or "-"),
+            "yes" if s.get("extracted_text_ready") else "no",
+            str(s.get("html_capture_status") or "-"),
+            str(s.get("wayback_metadata_status") or "-"),
+            str(s.get("media_or_video_context_status") or "-"),
+            str(s.get("ocr_status") or "-"),
+        )
+    console.print(t)
+    console.print(
+        "[dim]Manual cleanup only — packages are kept until import is verified.[/dim]"
+    )
+
+
+@app.command(name="offload-verify")
+def offload_verify_cmd(
+    package_dir: Path = typer.Argument(
+        ...,
+        help="Path to a package directory (…/offload/<state>/<package_id>)",
+    ),
+):
+    """Read-only integrity check of an offload package.
+
+    \b
+    Verifies the manifest loads, the lifecycle folder matches the manifest state,
+    every present artifact still exists, and every SHA-256 still matches. Reports
+    missing/mismatched artifacts and the per-document source-stage summary.
+
+    \b
+    This command never repairs, moves, or deletes anything, and never calls any
+    service. It exits non-zero on any missing/mismatched artifact, lifecycle
+    mismatch, or corrupt/missing manifest.
+    """
+    from rich.table import Table
+    from .pipeline.offload import verify_package
+
+    report = verify_package(package_dir)
+
+    console.print(f"\n[bold]Offload package verify[/bold]  [dim]{report['package_dir']}[/dim]")
+    if report["package_id"]:
+        console.print(f"  Package ID: [cyan]{report['package_id']}[/cyan]")
+
+    if report["errors"]:
+        console.print(Panel("\n".join(report["errors"]), title="[red]Manifest errors[/red]"))
+        raise typer.Exit(1)
+
+    life = report["lifecycle"] or {}
+    if life.get("consistent"):
+        console.print(
+            f"  Lifecycle:  [green]consistent[/green] "
+            f"([dim]{life.get('folder_state')} == {life.get('manifest_state')}[/dim])"
+        )
+    else:
+        console.print(
+            f"  Lifecycle:  [red]MISMATCH[/red] "
+            f"(folder=[yellow]{life.get('folder_state')}[/yellow] "
+            f"manifest=[yellow]{life.get('manifest_state')}[/yellow])"
+        )
+
+    if report["documents"]:
+        t = Table(title="Source stage summary", show_lines=False)
+        t.add_column("doc_id", style="cyan", no_wrap=True)
+        t.add_column("verified", justify="right", no_wrap=True)
+        t.add_column("type", no_wrap=True)
+        t.add_column("text", no_wrap=True)
+        t.add_column("html", no_wrap=True)
+        t.add_column("wayback", no_wrap=True)
+        t.add_column("media", no_wrap=True)
+        for doc in report["documents"]:
+            s = doc.get("source_stage_summary") or {}
+            t.add_row(
+                str(doc["doc_id"])[:16],
+                str(doc.get("verified_artifacts", 0)),
+                str(s.get("source_type") or "-"),
+                "yes" if s.get("extracted_text_ready") else "no",
+                str(s.get("html_capture_status") or "-"),
+                str(s.get("wayback_metadata_status") or "-"),
+                str(s.get("media_or_video_context_status") or "-"),
+            )
+        console.print(t)
+
+    for entry in report["missing_artifacts"]:
+        console.print(
+            f"[red]✗ missing[/red] {entry['doc_id']}: {entry['relative_path']} ({entry['label']})"
+        )
+    for entry in report["mismatched_artifacts"]:
+        console.print(
+            f"[red]✗ hash mismatch[/red] {entry['doc_id']}: {entry['relative_path']} "
+            f"[dim](expected {entry['expected_sha256'][:12]}…, got {entry['actual_sha256'][:12]}…)[/dim]"
+        )
+
+    if report["ok"]:
+        console.print("[green]✓ Package verified — all artifacts present and hashes match.[/green]")
+    else:
+        console.print("[red]✗ Package verification failed.[/red]")
+        raise typer.Exit(1)
 
 
 @app.command(name="export")

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import json
 import pytest
 
-from runner.pipeline.doc_ids import resolve_doc_dir
+from runner.pipeline.doc_ids import normalise_local_doc_id, resolve_doc_dir
 from runner.pipeline.upload import inspect_document_status
 
 
@@ -15,6 +15,16 @@ class _Config:
 def test_resolve_doc_dir_rejects_traversal(tmp_path):
     with pytest.raises(ValueError, match="path traversal"):
         resolve_doc_dir("../../etc/passwd", _Config(corpus_dir=tmp_path))
+
+
+def test_normalise_local_doc_id_rejects_sanity_prefixed_traversal():
+    with pytest.raises(ValueError, match="path traversal"):
+        normalise_local_doc_id("doc-..")
+
+
+def test_resolve_doc_dir_rejects_sanity_prefixed_traversal(tmp_path):
+    with pytest.raises(ValueError, match="path traversal"):
+        resolve_doc_dir("doc-..", _Config(corpus_dir=tmp_path))
 
 
 def test_inspect_document_status_reports_partial_intake_next_action(tmp_path):
