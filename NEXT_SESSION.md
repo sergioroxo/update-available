@@ -1,9 +1,19 @@
 # SurvivingSOGICE -- Next Session Handoff
-**Generated:** 2026-06-02
+**Generated:** 2026-06-06
 **Branch:** `claude/review-architecture-70CUm`
 **Repo:** `/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest`
-**Tests passing:** 1161
-**Latest completed milestone:** Evidence-only practice cluster path
+**Tests passing:** 1287
+**Latest completed milestone:** Mac Studio offload package foundation + lexicon connection + Streamlit review/batch UI
+
+**Pushed this session (branch in sync with origin):**
+- `46448abed` — offload package foundation (`offload-export` / `offload-verify`, atomic writes) + Mac Studio batch memory-safety
+- `46e6ac840` — lexicon research memory + seed variant grounding (Stage 3c seed/legacy memory)
+- `ed053cb97` — Streamlit review + batch operations UI
+- `26d7a11ee` — Gender Dysphoria seed lexicon grounding (required seed data for the seed-parser / enrichment-memory tests)
+
+**Not yet built (future work):** offload lifecycle move + import command; the
+overnight Mac Studio package/worker workflow; further lexicon
+validation/promotion automation.
 
 **Companion steering guide:** `CODEX_NEXT_CONVERSATION.md`
 Use `NEXT_SESSION.md` for Claude's implementation tasks. Use
@@ -74,8 +84,11 @@ Runs after analysis on the full document text. Mines for:
 - Ingestion queue candidates (linked documents to ingest next)
 - Cross-corpus connections
 
-Enrichment uses the **full lexicon context**: draft + validated terms + entity registry.
-It should connect to existing terms before proposing new ones.
+Enrichment uses a broader **research-memory lexicon**: live Sanity draft +
+validated terms, curated seed-draft terms, legacy-draft terms, and multilingual
+variants, each labelled by source/status in the runtime prompt. It should connect
+to existing memory before proposing new terms. Seed/legacy visibility does not
+validate a term; validation remains researcher/evidence-backed.
 
 **Action types that must be explicitly distinguished in every proposal:**
 - `add_new` -- a term not yet in the registry
@@ -96,6 +109,25 @@ Nothing becomes archive truth without explicit researcher action:
 - Every Sanity write is gated by a human checkpoint
 
 The pipeline proposes. The researcher decides. The archive records.
+
+### Practice Evidence review -- current decision model
+
+`practice_descriptions` remains the backward-compatible JSON family key for now,
+but the app presents these items as **Practice Evidence**, not as ready-made
+practice registry records. Evidence is the default and the floor:
+- Keep as Evidence -- default pilot decision; preserves the quote under a local
+  `cluster_label` and does not push to Sanity.
+- Link to existing tactic/frame/practice -- adds `linked_type_kind` and
+  `linked_type_id` when the evidence clearly supports an existing controlled node.
+- Flag for promotion review -- marks `promotion_review_flag=True` for later batch
+  curation; it does not create a public `practiceEntry`.
+- Reject -- marks the item as reviewed noise or wrong-family evidence.
+
+New additive fields written by the UI: `evidence_decision`, `cluster_label`,
+`linked_type_kind`, `linked_type_id`, `promotion_review_flag`. Old fields
+(`practice_fit`, `practice_cluster`, `existing_practice_id`) are still read/written
+for compatibility. Do not physically rename `practice_descriptions` before the
+pilot unless a separate migration is planned.
 
 ---
 
@@ -232,7 +264,9 @@ in TASK A, later flipped fail-closed by G1), `suggested_process_route` (default
 `status == "validated" || (status == "draft" && includeInAnalysisLexicon == true)`,
 ordered `status desc, term asc` for deterministic cap behaviour.
 `analyze._fetch_active_lexicon_terms()` now calls the orientation function.
-Enrichment unchanged — still uses `fetch_active_lexicon_terms()` (full draft+validated).
+Enrichment is intentionally broader: it wraps `fetch_active_lexicon_terms()`
+with `runner/pipeline/enrichment_lexicon.py`, merging live Sanity draft/validated
+terms with curated seed-draft and legacy-draft memory.
 New draft entries from `push-enrichment` start with `includeInAnalysisLexicon=False`.
 **Researcher action required:** toggle trusted draft terms in Sanity Studio.
 **Commit:** `4cb1c0e93`
@@ -467,32 +501,40 @@ Stable proposal identity, lifecycle status, and merge-aware re-enrichment. Follo
 
 ---
 
-### ~~Practice evidence clustering guard~~ ✓ COMPLETE
+### ~~Practice Evidence review UI (evidence-first PE-1)~~ ✓ COMPLETE
 
-Solves the "one document invents several near-duplicate practice registry entries" failure mode without changing prompts or Sanity schema.
+Supersedes the older "practice clustering guard" UI. The app now treats
+`practice_descriptions` as **Practice Evidence** in the interface, while keeping
+the JSON family key and legacy fields for backward compatibility.
 
-- `PracticeDescription` now has local review fields:
-  - `practice_fit`: `needs_clustering`, `candidate_evidence`, `existing_practice`, `registry_practice`, `not_practice`
-  - `practice_cluster`: local consolidation key such as `rogd`, `parent_guidance`, `pathologization`
-  - `practice_fit_rationale`
+- Evidence is the default and safe floor. Most model-emitted labels such as
+  `Practice: ROGD-Diagnosis`, `ROGD-Promotion`, or parent-guidance variants
+  should be kept as local evidence under a cluster, not promoted into public
+  `practiceEntry` records during item review.
+- The visible researcher decision is now:
+  - `keep_evidence`
+  - `link_existing`
+  - `flag_promotion`
+  - `reject`
+- The UI writes additive fields:
+  - `evidence_decision`
+  - `cluster_label`
+  - `linked_type_kind`
+  - `linked_type_id`
+  - `promotion_review_flag`
+- Legacy compatibility fields are still read/written:
+  - `practice_fit`
+  - `practice_cluster`
   - `existing_practice_id`
-- New model helpers infer clusters from `practice_id` / description text. Examples:
-  - `Practice: ROGD-Diagnosis` → `practice_cluster="rogd"`
-  - parent/family guidance labels → `practice_cluster="parent_guidance"`
-- New model-created practice labels default to `practice_fit="needs_clustering"` only until framed. Saving a real cluster automatically converts them to `practice_fit="candidate_evidence"` ("Evidence only"), which preserves them under the cluster without making them standalone practice entries.
-- `runner/pipeline/enrich.py` normalizes these fields and preserves them across Complement enrichment.
-- Practice Queue shows a cluster overview (`cluster`, proposal count, held evidence, push candidates, docs, examples), supports cluster filtering, and then shows practice fit + cluster per proposal.
-- Cluster overview now includes human-readable meanings and review hints for `rogd`, `parent_guidance`, `pathologization`, `pastoral_guidance`, `clinical_authority`, `institutional_legitimation`, `media_dissemination`, `legal_policy_advocacy`, `testimony_narrative`, and `unclustered`.
-- Older proposals with blank `practice_cluster` are interpreted in the UI using `infer_practice_cluster()`, so labels such as `Practice: ROGD-Diagnosis` and `Practice: Strategic-Guidance-for-Parents` appear under `rogd` / `parent_guidance` before manual save.
-- The practice editor uses a category picker plus optional custom snake_case override instead of an empty free-text-only field.
-- A visible "Save Cluster Choice" button saves the cluster/fit/top-section fields immediately, converts `needs_clustering` + real cluster into Evidence only, then reruns the app with a confirmation message so the table reflects the updated JSON state.
-- Evidence-only items get their own Practice Queue status/metric. They are not "Rejected"; they are local cluster evidence and are intentionally blocked from standalone practice push.
-- Stale approvals are no longer treated as pushable when `practice_fit` is `needs_clustering`, `candidate_evidence`, `not_practice`, or `existing_practice` without `existing_practice_id`; saving clears the stale approval back to pending.
-- The practice editor adds a decision guide plus detailed helper text for practice fit, cluster, existing-practice ID, rationale, notes, and each action button.
-- It should now be clearer that clusters are local evidence/consolidation buckets, while `registry_practice` and `existing_practice` are the only pushable paths.
-- App bulk push and lower-level `write_practice_from_proposal()` reject `needs_clustering`, `candidate_evidence`, and `not_practice`. This protects both app and CLI paths.
-- For the `8fe67e19` examples (`ROGD-Diagnosis`, `ROGD-Promotion`, parent guidance variants), the safe path is to keep them as evidence under a cluster, then consolidate later into one broader practice if the pilot shows the category is stable.
-- 21 new/updated tests across the guard, cluster-review visibility, cluster catalogue, legacy blank-cluster inference, stale approval repair, and Evidence-only conversion; 1161 total passing.
+- Cluster inference still groups older blank-cluster proposals, but clusters are
+  framed as local evidence buckets rather than public taxonomy nodes.
+- Normal review actions are now `Save Evidence Review`, `Save as Evidence`, and
+  `Reject`. The old public practiceEntry push remains available only inside an
+  advanced legacy expander and should not be part of the pilot default flow.
+- Complement enrichment preserves these evidence decisions and local clusters.
+- Evidence-first UI slice passed at 1174 tests; current suite is 1287 after the
+  labelled enrichment lexicon memory plus the offload, Streamlit UI, and
+  seed-grounding commits.
 
 ---
 
@@ -849,7 +891,7 @@ git pull origin claude/review-architecture-70CUm
 | Triage -> queue wiring | `runner/pipeline/source_queue.py` | `apply_triage_result()` |
 | Analysis prompt loading | `runner/pipeline/analyze.py` | `_build_system_prompt_with_lexicon()` |
 | Lexicon fetch (analysis) | `runner/pipeline/sanity_reads.py` | `fetch_analysis_orientation_terms()` |
-| Lexicon fetch (enrichment) | `runner/pipeline/sanity_reads.py` | `fetch_active_lexicon_terms()` (full draft+validated) |
+| Lexicon memory (enrichment) | `runner/pipeline/enrichment_lexicon.py` + `runner/pipeline/sanity_reads.py` | `merge_enrichment_lexicon(fetch_active_lexicon_terms())` |
 | Truncation logic | `runner/pipeline/preprocess.py` | `_maybe_truncate()` at line 654 |
 | PDF extraction (Docling) | `runner/pipeline/preprocess.py` | `_preprocess_pdf()` at line 159 |
 | Enrichment model routing | `runner/pipeline/enrich.py` | `_call_enrichment_model()` |
@@ -886,4 +928,4 @@ risks duplicate Sanity writes if a previous attempt partially succeeded.
 
 ---
 
-*Updated 2026-06-03. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, entity ID resolver, Readiness/Next-Actions layer, and Corpus-Wide Review Inbox complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, network connection repair dropdowns, entity registry-fit safety layer, practice evidence clustering guard, and non-blocking background Complement enrichment from review screens. 1155 tests passing. Recommended next: open app → Tag Registry → Practice Queue → keep model-created practice labels as evidence unless deliberately promoted/linked → then return to Review Inbox for pilot triage.*
+*Updated 2026-06-06. TASKS A–E complete. TASK G review captured. G1 + G2 + G3 + G4 + G5 complete. Data-structure lock-in DS-1–DS-4 complete. TASK F Slices 1–4 complete (preflight, ledger, batch report). TASK P preservation status sidecar complete. Research Review Cockpit provenance/audit panel, clarity slice, entity ID resolver, Readiness/Next-Actions layer, and Corpus-Wide Review Inbox complete. Proposal identity P1/P2/P3 complete with workflow glue — deterministic proposal_id, lifecycle status, merge-aware Complement enrichment, persisted merge summaries, network connection repair dropdowns, entity registry-fit safety layer, practice evidence clustering guard, and non-blocking background Complement enrichment from review screens. Enrichment now injects labelled Sanity + seed + legacy lexicon research memory and records source counts in enrichment audit schema v4. Mac Studio offload package foundation + batch memory-safety (`46448abed`), lexicon research memory + seed variant grounding (`46e6ac840`), the Streamlit review + batch operations UI (`ed053cb97`), and Gender Dysphoria seed lexicon grounding (`26d7a11ee`) are complete and pushed. Offload lifecycle move/import, the overnight Mac Studio package workflow, and further lexicon validation/promotion automation remain future work. 1287 tests passing. Recommended next: open app → Tag Registry → Practice Queue → keep model-created practice labels as evidence unless deliberately promoted/linked → then return to Review Inbox for pilot triage.*

@@ -76,6 +76,10 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | Stakes-ranked review inbox | Sort 🔴 group by tactic/type/confidence for testimony-first or legal-first review ordering | Corpus-wide inbox (done) + analysis tags | Pending — extend `collect_corpus_readiness` row with harm/type/confidence for sort |
 | Pilot calibration | Attended test batches across languages/types/stakes before overnight use | TASK F + TASK P | Started: one-item pilot complete after recovery |
 | Calibration dashboard | Confidence vs researcher corrections | Pilot batch | Pending |
+| Offload package foundation | Export a bounded analysis package (selected doc artifacts only, hashed) + read-only verify; no live corpus / `source_queue.db` sync | TASK F + atomic writes | Done (`runner offload-export` / `offload-verify`, `46448abed`) |
+| Mac Studio batch memory-safety | Unload enrichment model after Stage 3c; model-control preflight probes; single-heavy-job app lock | TASK F | Done (`46448abed` + Streamlit UI `ed053cb97`) |
+| Offload lifecycle move + import | Move package between lifecycle folders; import returned worker outputs only after hash/schema checks; record offload provenance | Offload foundation | Pending |
+| Overnight Mac Studio package workflow | Mac Studio worker processes packages (localhost inference, single heavy job, unload between models) and returns a result package | Offload foundation + import | Pending |
 
 Batch rule: the runner must use `source_queue.is_overnight_safe(item)` and must
 surface excluded items before it starts. Do not query raw `overnight_batch_safe`
@@ -144,7 +148,8 @@ These stay deferred until the spine is stronger:
 - [ ] Public Vercel archive UI
 - [ ] Sanity book schema beyond `split-book --preview`
 - [ ] Corpus-connection evidence without retrieval
-- [ ] Automatic lexicon merging
+- [x] Stage 3c enrichment lexicon memory merge (Sanity + seed + legacy, labelled draft memory)
+- [ ] Automatic lexicon validation/promotion
 - [ ] Automatic publication
 - [ ] Raw-response retention by default
 - [ ] Team dashboards or assignment workflows
