@@ -388,6 +388,29 @@ Canonical concept node with language variant children. Enables network graph to 
 }
 ```
 
+```json
+{
+  "concept_id": "gender-dysphoria",
+  "canonical_term": "Gender Dysphoria",
+  "canonical_language": "en",
+  "cluster": "Non-SOGICE",
+  "function": "Clinical reference",
+  "variants": [
+    {"term": "kjønnsdysfori", "language": "no", "tier": 2},
+    {"term": "disforia di genere", "language": "it", "tier": 2},
+    {"term": "dysphorie de genre", "language": "fr", "tier": 2},
+    {"term": "Geschlechtsdysphorie", "language": "de", "tier": 2},
+    {"term": "disforia de género", "language": "es", "tier": 2},
+    {"term": "dysforia płciowa", "language": "pl", "tier": 2},
+    {"term": "sukupuolidysforia", "language": "fi", "tier": 2},
+    {"term": "könsdysfori", "language": "sv", "tier": 2},
+    {"term": "nemi diszfória", "language": "hu", "tier": 2},
+    {"term": "δυσφορία φύλου", "language": "el", "tier": 2},
+    {"term": "disforija tal-ġeneru", "language": "mt", "tier": 2}
+  ]
+}
+```
+
 ### Attestation Tiers
 
 | Tier | Definition | Examples |
@@ -403,6 +426,7 @@ Canonical concept node with language variant children. Enables network graph to 
 | English | Norwegian | Italian | French | German | Spanish | Polish | Finnish | Swedish | Hungarian | Greek | Maltese |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Gender Ideology | kjønnsideologi | ideologia gender | idéologie du genre | Gender-Ideologie | ideología de género | ideologia genderowa | sukupuoli-ideologia | genusideologi | genderideológia | — | — |
+| Gender Dysphoria | kjønnsdysfori | disforia di genere | dysphorie de genre | Geschlechtsdysphorie | disforia de género | dysforia płciowa | sukupuolidysforia | könsdysfori | nemi diszfória | δυσφορία φύλου | disforija tal-ġeneru |
 | Reparative Therapy | reparativ terapi | terapie riparative | thérapies réparatrices | Reparativtherapie | terapia reparativa | terapia reparatywna | reparatiivinen terapia | reparativ terapi | reparatív terápia | — | — |
 | Conversion Therapy | konverteringsterapi | terapie di conversione | thérapies de conversion | Konversionstherapie | terapia de conversión | terapia konwersyjna | konversioterapia | konverteringsterapi | konverziós terápia | θεραπείες μεταστροφής | — |
 | Conversion Practices | konverteringspraksis | pratiche di conversione | pratiques de conversion | Konversionspraktiken | prácticas de conversión | praktyki konwersyjne | konversiokäytännöt | konverteringspraktiker | konverziós gyakorlatok | Πρακτικές μεταστροφής | prattiċi ta' konverżjoni |

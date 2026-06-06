@@ -385,6 +385,12 @@ Every entry defines a specific term, phrase, acronym, or coded expression in SOG
 - Definition: Former DSM category, replaced by Gender Dysphoria in DSM-5 (2013). Continued use is a False-Scientific-Authority marker.
 - Related: → ROGD, → Autogynephilia
 
+**Gender Dysphoria**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Clinical/reference term for distress related to incongruence between experienced gender and assigned sex. In the corpus, the term and its multilingual equivalents are tracked as reference vocabulary because SOGICE and anti-trans actors often quote, reframe, or replace it with pseudo-clinical language to argue for delay, restriction, or change-oriented intervention.
+- Usage rule: Do not treat the clinical term itself as SOGICE. Tag when a source weaponizes, narrows, replaces, or mistranslates the term to justify non-affirmation, desistance, or change-oriented practice.
+- Related: → ROGD, → GID, → Desisting, → Watch and Wait Policy
+
 **Neuroplasticity Argument (weaponized)**
 - Cluster: Pseudo-Science | Function: Pseudo-Diagnostic
 - Definition: Misuse of neuroplasticity research to claim orientation can be altered. Cherry-picks studies, ignores distinctions. Used by IFTCC and NARTH for contemporary scientific veneer.
@@ -757,6 +763,7 @@ Terms needed for Lexicon background and researcher reference. NOT used as tagger
 | English | Norwegian | Italian | French | German | Spanish | Polish | Finnish | Swedish | Hungarian | Greek | Maltese |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Gender Ideology | kjønnsideologi | ideologia gender | idéologie du genre | Gender-Ideologie | ideología de género | ideologia genderowa | sukupuoli-ideologia | genusideologi | genderideológia | — | — |
+| Gender Dysphoria | kjønnsdysfori | disforia di genere | dysphorie de genre | Geschlechtsdysphorie | disforia de género | dysforia płciowa | sukupuolidysforia | könsdysfori | nemi diszfória | δυσφορία φύλου | disforija tal-ġeneru |
 | Reparative Therapy | reparativ terapi | terapie riparative | thérapies réparatrices | Reparativtherapie | terapia reparativa | terapia reparatywna | reparatiivinen terapia | reparativ terapi | reparatív terápia | — | — |
 | Conversion Therapy | konverteringsterapi | terapie di conversione | thérapies de conversion | Konversionstherapie | terapia de conversión | terapia konwersyjna | konversioterapia | konverteringsterapi | konverziós terápia | θεραπείες μεταστροφής (T2) | — |
 | Conversion Practices | konverteringspraksis | pratiche di conversione | pratiques de conversion | Konversionspraktiken | prácticas de conversión | praktyki konwersyjne | konversiokäytännöt | konverteringspraktiker | konverziós gyakorlatok | Πρακτικές μεταστροφής (T1) | prattiċi ta' konverżjoni (T1) |
