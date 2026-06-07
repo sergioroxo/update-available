@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Literal
 
-from .atomic_io import atomic_write_json
+from .atomic_io import atomic_write_bytes, atomic_write_json
 
 
 PACKAGE_SCHEMA_VERSION = 1
@@ -49,6 +49,43 @@ OPTIONAL_CONTEXT_ARTIFACTS = (
     "transcript_comparison.json",
     "media_comments.json",
 )
+
+# ── Lifecycle transition graph ────────────────────────────────────────────────
+# Explicit, reversible-where-sensible state machine over LIFECYCLE_STATES. No
+# transition deletes anything. ``failed`` and ``archive`` are reachable from any
+# active state so a broken package can always be quarantined or retained.
+ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
+    "inbox":      frozenset({"processing", "failed", "archive"}),
+    "processing": frozenset({"outbox", "inbox", "failed", "archive"}),  # inbox = release
+    "outbox":     frozenset({"imported", "failed", "archive"}),
+    "imported":   frozenset({"archive"}),
+    "failed":     frozenset({"inbox", "processing", "archive"}),        # inbox/processing = retry
+    "archive":    frozenset(),                                          # terminal
+}
+
+# Moves into these states are quarantine/retention and must work even when the
+# package fails integrity verification (so a tampered package can be set aside).
+_NO_VERIFY_TARGET_STATES: frozenset[str] = frozenset({"failed", "archive"})
+
+# ── Result (returned) package contract ────────────────────────────────────────
+RESULT_SCHEMA_VERSION = 1
+PACKAGE_KIND_RESULT = "analysis_result"
+RESULT_MANIFEST_NAME = "result_manifest.json"
+
+# Only these worker-produced artifacts may be imported into the corpus. Mirrors
+# ``_worker_contract()["worker_may_write"]``. Anything else is refused.
+ALLOWED_IMPORT_ARTIFACTS: frozenset[str] = frozenset({
+    "analysis.json",
+    "analysis_audit.json",
+    "enrichment.json",
+    "enrichment_audit.json",
+    "embedding.json",
+    "worker_report.json",
+})
+
+# Import is only permitted from a package whose manifest + folder lifecycle is
+# this state (worker completed and returned outputs).
+IMPORT_SOURCE_STATE = "outbox"
 
 
 @dataclass(frozen=True)
@@ -642,3 +679,465 @@ def move_package_state(
     )
     atomic_write_json(target / "offload_manifest.json", updated.to_dict())
     return target
+
+
+# ---------------------------------------------------------------------------
+# Lifecycle transitions
+# ---------------------------------------------------------------------------
+
+def validate_state_transition(from_state: str, to_state: str) -> None:
+    """Raise ``ValueError`` if ``from_state -> to_state`` is not allowed."""
+    if from_state not in LIFECYCLE_STATES:
+        raise ValueError(f"Unknown from_state: {from_state!r}")
+    if to_state not in LIFECYCLE_STATES:
+        raise ValueError(f"Unknown to_state: {to_state!r}")
+    if from_state == to_state:
+        raise ValueError(f"No-op lifecycle transition: {from_state} -> {to_state}")
+    allowed = ALLOWED_TRANSITIONS.get(from_state, frozenset())
+    if to_state not in allowed:
+        allowed_str = ", ".join(sorted(allowed)) or "none (terminal)"
+        raise ValueError(
+            f"Invalid lifecycle transition: {from_state} -> {to_state}. "
+            f"Allowed from {from_state}: {allowed_str}."
+        )
+
+
+def transition_package_state(
+    *,
+    offload_root: Path,
+    package_id: str,
+    from_state: str,
+    to_state: str,
+    verify: bool = True,
+) -> Path:
+    """Validate the transition, integrity-check, then atomically move the package.
+
+    The transition graph (``ALLOWED_TRANSITIONS``) is enforced. For forward
+    transitions the package is first run through ``verify_package`` and the move
+    is refused if it fails (hash mismatch, missing artifact, or folder/manifest
+    lifecycle mismatch). Moves into ``failed`` / ``archive`` skip verification so
+    a broken package can always be quarantined or retained.
+    """
+    validate_state_transition(from_state, to_state)
+    offload_root = Path(offload_root)
+    package_id = validate_package_id(package_id)
+    source = offload_root / from_state / package_id
+    if not source.is_dir():
+        raise FileNotFoundError(source)
+
+    if verify and to_state not in _NO_VERIFY_TARGET_STATES:
+        report = verify_package(source)
+        if not report["ok"]:
+            problems = list(report["errors"])
+            problems += [f"missing:{m['relative_path']}" for m in report["missing_artifacts"]]
+            problems += [f"hash_mismatch:{m['relative_path']}" for m in report["mismatched_artifacts"]]
+            lifecycle = report.get("lifecycle") or {}
+            if not lifecycle.get("consistent", True):
+                problems.append(
+                    f"lifecycle_mismatch:folder={lifecycle.get('folder_state')}:"
+                    f"manifest={lifecycle.get('manifest_state')}"
+                )
+            raise ValueError(
+                f"Refusing to move {package_id} {from_state} -> {to_state}: "
+                f"package failed verification ({'; '.join(problems) or 'unknown'})."
+            )
+
+    return move_package_state(
+        offload_root=offload_root,
+        package_id=package_id,
+        from_state=from_state,
+        to_state=to_state,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Result (returned) package: verify + import
+# ---------------------------------------------------------------------------
+
+def _fs_timestamp() -> str:
+    """Filesystem-safe UTC timestamp (microsecond) for backup filenames."""
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+
+
+def _rollback_import(created_files: list[Path], backup_pairs: list[tuple[Path, Path]]) -> None:
+    """Best-effort undo of a partially written import.
+
+    ``created_files`` are corpus files that did not exist before this import and
+    are removed. ``backup_pairs`` are ``(dest, backup)`` of files that existed and
+    were backed up before overwrite; each dest is restored from its backup and the
+    backup is then removed, returning the corpus to its pre-import state.
+    """
+    for path in created_files:
+        try:
+            Path(path).unlink(missing_ok=True)
+        except OSError:
+            pass
+    for dest, backup in backup_pairs:
+        try:
+            if Path(backup).exists():
+                shutil.copy2(backup, dest)
+                Path(backup).unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
+def _validate_result_artifact_schema(label: str, path: Path) -> str:
+    """Return '' if the artifact parses and matches its expected schema, else an error.
+
+    All allowed artifacts must be valid JSON objects. analysis.json and
+    enrichment.json must validate against their Pydantic models; embedding.json
+    must carry a model name and a numeric vector whose length matches dimension.
+    Audit/report artifacts only need the JSON-object floor.
+    """
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return f"invalid_json:{label}:{exc}"
+    if not isinstance(loaded, dict):
+        return f"schema_invalid:{label}:expected object"
+
+    if label == "analysis.json":
+        try:
+            try:
+                from runner.models.document import AnalysisResult
+            except ImportError:
+                from ..models.document import AnalysisResult  # type: ignore[no-redef]
+            AnalysisResult.model_validate(loaded)
+        except Exception as exc:
+            return f"schema_invalid:analysis.json:{exc}"
+    elif label == "enrichment.json":
+        try:
+            try:
+                from runner.models.enrichment import EnrichmentResult
+            except ImportError:
+                from ..models.enrichment import EnrichmentResult  # type: ignore[no-redef]
+            EnrichmentResult.model_validate(loaded)
+        except Exception as exc:
+            return f"schema_invalid:enrichment.json:{exc}"
+    elif label == "embedding.json":
+        model = loaded.get("model")
+        vector = loaded.get("vector")
+        dimension = loaded.get("dimension")
+        if not isinstance(model, str) or not model.strip():
+            return "schema_invalid:embedding.json:missing model"
+        if not isinstance(vector, list) or not vector:
+            return "schema_invalid:embedding.json:missing or empty vector"
+        if not all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in vector):
+            return "schema_invalid:embedding.json:non-numeric vector value"
+        if not isinstance(dimension, int) or isinstance(dimension, bool) or dimension != len(vector):
+            return "schema_invalid:embedding.json:dimension does not match vector length"
+    # audits + worker_report.json: JSON-object floor already satisfied above.
+    return ""
+
+
+def verify_result_package(package_dir: Path, *, corpus_dir: Path) -> dict:
+    """Read-only validation of a returned (result) package. Never writes/mutates.
+
+    Confirms the package is an ``outbox`` analysis_result whose result_manifest
+    references only expected, corpus-present doc IDs and only allowed artifacts,
+    with safe in-package paths, matching SHA-256 hashes, and valid schemas.
+    ``ok`` is True only when every check passes for at least one document and
+    every referenced artifact is valid.
+    """
+    package_dir = Path(package_dir)
+    corpus_dir = Path(corpus_dir)
+    report: dict = {
+        "package_dir": str(package_dir),
+        "package_id": "",
+        "ok": False,
+        "lifecycle": None,
+        "documents": [],
+        "errors": [],
+    }
+
+    # 1. Offload manifest: source of expected doc IDs + lifecycle state.
+    if not (package_dir / "offload_manifest.json").is_file():
+        report["errors"].append("offload_manifest_not_found")
+        return report
+    try:
+        omanifest = load_manifest(package_dir)
+    except Exception as exc:  # noqa: BLE001 - corrupt/missing keys must fail closed
+        report["errors"].append(f"corrupt_offload_manifest:{exc}")
+        return report
+
+    report["package_id"] = omanifest.package_id
+    folder_state = package_dir.parent.name
+    lifecycle = {
+        "folder_state": folder_state,
+        "manifest_state": omanifest.lifecycle_state,
+        "consistent": folder_state == omanifest.lifecycle_state,
+    }
+    report["lifecycle"] = lifecycle
+    if omanifest.lifecycle_state != IMPORT_SOURCE_STATE:
+        report["errors"].append(
+            f"not_in_outbox:manifest_state={omanifest.lifecycle_state}"
+        )
+    if not lifecycle["consistent"]:
+        report["errors"].append(
+            f"lifecycle_mismatch:folder={folder_state}:manifest={omanifest.lifecycle_state}"
+        )
+
+    # Refuse before any import if the imported/ destination already exists, so we
+    # never write corpus files and then get stuck unable to move the package.
+    imported_dest = package_dir.parent.parent / "imported" / package_dir.name
+    if imported_dest.exists():
+        report["errors"].append(f"imported_destination_exists:{imported_dest}")
+
+    expected_doc_ids = {d.doc_id for d in omanifest.documents}
+    omanifest_by_doc = {d.doc_id: d for d in omanifest.documents}
+
+    # 2. Result manifest.
+    result_path = package_dir / RESULT_MANIFEST_NAME
+    if not result_path.is_file():
+        report["errors"].append("result_manifest_not_found")
+        return report
+    try:
+        rdata = json.loads(result_path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        report["errors"].append(f"corrupt_result_manifest:{exc}")
+        return report
+    if not isinstance(rdata, dict):
+        report["errors"].append("corrupt_result_manifest:expected object")
+        return report
+    if rdata.get("schema_version") != RESULT_SCHEMA_VERSION:
+        report["errors"].append(
+            f"unexpected_result_schema_version:{rdata.get('schema_version')!r}"
+            f"!={RESULT_SCHEMA_VERSION}"
+        )
+    if str(rdata.get("package_kind")) != PACKAGE_KIND_RESULT:
+        report["errors"].append(f"unexpected_result_kind:{rdata.get('package_kind')!r}")
+    if str(rdata.get("package_id")) != omanifest.package_id:
+        report["errors"].append(
+            f"result_package_id_mismatch:{rdata.get('package_id')!r}!={omanifest.package_id!r}"
+        )
+
+    documents = rdata.get("documents")
+    if not isinstance(documents, list) or not documents:
+        report["errors"].append("result_manifest_has_no_documents")
+        documents = []
+
+    seen_doc_ids: set[str] = set()
+    for drow in documents:
+        if not isinstance(drow, dict):
+            report["errors"].append("result_document_not_object")
+            continue
+        raw_doc_id = str(drow.get("doc_id") or "")
+        try:
+            doc_id = normalise_doc_id(raw_doc_id)
+        except ValueError:
+            report["errors"].append(f"unsafe_doc_id:{raw_doc_id!r}")
+            continue
+        if doc_id in seen_doc_ids:
+            report["errors"].append(f"duplicate_doc_id:{doc_id}")
+            continue
+        seen_doc_ids.add(doc_id)
+        if doc_id not in expected_doc_ids:
+            report["errors"].append(f"unknown_doc_id:{doc_id}")
+            continue
+        if not (corpus_dir / doc_id).is_dir():
+            report["errors"].append(f"doc_not_in_corpus:{doc_id}")
+            continue
+
+        artifacts = drow.get("artifacts")
+        if not isinstance(artifacts, list) or not artifacts:
+            report["errors"].append(f"no_artifacts:{doc_id}")
+            continue
+
+        validated: list[dict] = []
+        claimed_names: set[str] = set()  # filenames the result manifest declares for this doc
+        for arow in artifacts:
+            if not isinstance(arow, dict):
+                report["errors"].append(f"artifact_not_object:{doc_id}")
+                continue
+            label = str(arow.get("label") or "")
+            rel_raw_any = str(arow.get("relative_path") or "")
+            if label:
+                claimed_names.add(label)
+            if rel_raw_any:
+                claimed_names.add(Path(rel_raw_any).name)
+            if label not in ALLOWED_IMPORT_ARTIFACTS:
+                report["errors"].append(f"disallowed_artifact:{doc_id}:{label!r}")
+                continue
+            rel_raw = str(arow.get("relative_path") or "")
+            try:
+                safe_rel = validate_manifest_relative_path(rel_raw, field=f"{doc_id}.{label}")
+            except ValueError as exc:
+                report["errors"].append(str(exc))
+                continue
+            expected_rel = f"docs/{doc_id}/{label}"
+            if safe_rel != expected_rel:
+                report["errors"].append(
+                    f"unexpected_artifact_path:{doc_id}:{safe_rel}!={expected_rel}"
+                )
+                continue
+            artifact_path = package_dir / safe_rel
+            # Defence in depth: the resolved path must stay inside the package.
+            try:
+                artifact_path.resolve().relative_to(package_dir.resolve())
+            except ValueError:
+                report["errors"].append(f"path_escapes_package:{doc_id}:{safe_rel}")
+                continue
+            if not artifact_path.is_file():
+                report["errors"].append(f"missing_artifact:{doc_id}:{safe_rel}")
+                continue
+            expected_sha = str(arow.get("sha256") or "")
+            actual_sha = sha256_file(artifact_path)
+            if not expected_sha or actual_sha != expected_sha:
+                report["errors"].append(f"hash_mismatch:{doc_id}:{safe_rel}")
+                continue
+            expected_bytes = arow.get("bytes")
+            actual_bytes = artifact_path.stat().st_size
+            if (
+                not isinstance(expected_bytes, int)
+                or isinstance(expected_bytes, bool)
+                or expected_bytes != actual_bytes
+            ):
+                report["errors"].append(
+                    f"bytes_mismatch:{doc_id}:{safe_rel}:{expected_bytes!r}!={actual_bytes}"
+                )
+                continue
+            schema_error = _validate_result_artifact_schema(label, artifact_path)
+            if schema_error:
+                report["errors"].append(schema_error)
+                continue
+            validated.append({
+                "label": label,
+                "relative_path": safe_rel,
+                "sha256": actual_sha,
+                "bytes": artifact_path.stat().st_size,
+            })
+
+        # Reject any extra worker output left under docs/<doc_id>/ that is neither
+        # an original input/context artifact (recorded in the offload manifest) nor
+        # a result artifact declared in the result manifest.
+        omanifest_doc = omanifest_by_doc.get(doc_id)
+        input_files = {
+            a.relative_path for a in omanifest_doc.artifacts if a.present
+        } if omanifest_doc else set()
+        allowed_names = input_files | claimed_names
+        docs_doc_dir = package_dir / "docs" / doc_id
+        if docs_doc_dir.is_dir():
+            for entry in sorted(docs_doc_dir.iterdir(), key=lambda p: p.name):
+                if entry.name not in allowed_names:
+                    report["errors"].append(f"unexpected_file:{doc_id}:{entry.name}")
+
+        report["documents"].append({"doc_id": doc_id, "artifacts": validated})
+
+    # Document coverage: the result manifest must cover exactly the same doc IDs
+    # as the original offload manifest. Extra/unknown IDs are already refused
+    # above; here we refuse any expected doc that never came back. A partial
+    # worker run must be represented as a failed package, not imported as complete.
+    for missing_doc_id in sorted(expected_doc_ids - seen_doc_ids):
+        report["errors"].append(f"missing_result_doc:{missing_doc_id}")
+
+    report["ok"] = bool(
+        not report["errors"]
+        and report["documents"]
+        and all(doc["artifacts"] for doc in report["documents"])
+    )
+    return report
+
+
+def import_result_package(
+    package_dir: Path,
+    *,
+    corpus_dir: Path,
+    dry_run: bool = False,
+) -> dict:
+    """Validate a returned package in full, then atomically import allowed artifacts.
+
+    Validate-all-before-copy: if any document/artifact fails verification, nothing
+    is written and the corpus is left untouched. On success, each allowed artifact
+    is written into ``corpus_dir/<doc_id>/`` atomically; any existing target file
+    is first backed up to ``<artifact>.preimport-<ts>``; an ``offload_import.json``
+    provenance sidecar records what came from which offload package. This function
+    does not move the package, touch source_queue.db, call Sanity/Supabase, or run
+    any model.
+    """
+    package_dir = Path(package_dir)
+    corpus_dir = Path(corpus_dir)
+    report = verify_result_package(package_dir, corpus_dir=corpus_dir)
+
+    summary: dict = {
+        "package_dir": str(package_dir),
+        "package_id": report.get("package_id", ""),
+        "ok": report["ok"],
+        "dry_run": dry_run,
+        "imported": False,
+        "lifecycle": report.get("lifecycle"),
+        "errors": list(report["errors"]),
+        "documents": [],
+    }
+
+    if not report["ok"]:
+        return summary  # nothing written — corpus untouched
+
+    if dry_run:
+        summary["documents"] = [
+            {"doc_id": d["doc_id"], "would_write": [a["label"] for a in d["artifacts"]]}
+            for d in report["documents"]
+        ]
+        return summary
+
+    imported_at = now_utc()
+    # Rollback ledger: on any write-phase exception we undo everything so the
+    # corpus is left exactly as it was. (A hard process kill mid-write remains a
+    # documented residual risk; normal Python exceptions roll back.)
+    created_files: list[Path] = []                 # newly created — remove on failure
+    backup_pairs: list[tuple[Path, Path]] = []     # (dest, backup) — restore on failure
+    written_docs: list[dict] = []
+    try:
+        for doc in report["documents"]:
+            doc_id = doc["doc_id"]
+            corpus_doc_dir = corpus_dir / doc_id
+            written: list[dict] = []
+            backups: list[dict] = []
+
+            def _record_write(dest: Path, label: str) -> None:
+                if dest.exists():
+                    backup = corpus_doc_dir / f"{label}.preimport-{_fs_timestamp()}"
+                    shutil.copy2(dest, backup)
+                    backup_pairs.append((dest, backup))
+                    backups.append({"label": label, "backup_path": backup.name})
+                else:
+                    created_files.append(dest)
+
+            for artifact in doc["artifacts"]:
+                source = package_dir / artifact["relative_path"]
+                dest = corpus_doc_dir / artifact["label"]
+                _record_write(dest, artifact["label"])
+                atomic_write_bytes(dest, source.read_bytes())
+                written.append({
+                    "label": artifact["label"],
+                    "sha256": artifact["sha256"],
+                    "bytes": artifact["bytes"],
+                })
+
+            provenance = {
+                "imported_at": imported_at,
+                "package_id": summary["package_id"],
+                "package_kind": PACKAGE_KIND_RESULT,
+                "source_lifecycle_state": (summary["lifecycle"] or {}).get("manifest_state", ""),
+                "imported_artifacts": written,
+                "backups": backups,
+            }
+            prov_dest = corpus_doc_dir / "offload_import.json"
+            _record_write(prov_dest, "offload_import.json")
+            atomic_write_json(prov_dest, provenance)
+
+            written_docs.append({
+                "doc_id": doc_id,
+                "written": [w["label"] for w in written],
+                "backups": [b["label"] for b in backups],
+            })
+    except Exception as exc:  # noqa: BLE001 - any write failure must roll back cleanly
+        _rollback_import(created_files, backup_pairs)
+        summary["ok"] = False
+        summary["imported"] = False
+        summary["documents"] = []
+        summary["errors"].append(f"write_failed_rolled_back:{exc}")
+        return summary
+
+    summary["documents"] = written_docs
+    summary["imported"] = True
+    return summary

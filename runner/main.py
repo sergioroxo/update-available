@@ -2244,6 +2244,138 @@ def offload_verify_cmd(
         raise typer.Exit(1)
 
 
+@app.command(name="offload-move")
+def offload_move_cmd(
+    package_dir: Path = typer.Argument(
+        ...,
+        help="Path to a package directory (…/offload/<state>/<package_id>)",
+    ),
+    to: str = typer.Option(
+        ...,
+        "--to",
+        help="Target lifecycle state: inbox | processing | outbox | imported | failed | archive",
+    ),
+    no_verify: bool = typer.Option(
+        False,
+        "--no-verify",
+        help="[DANGER] Skip integrity verification before a forward move. Ignored for failed/archive.",
+    ),
+):
+    """Move an offload package to another lifecycle state, enforcing the transition graph.
+
+    \b
+    The from-state is inferred from the package path. Forward transitions verify
+    the package first (hashes, artifacts, lifecycle consistency) and refuse on
+    failure; moves into failed/archive always succeed so a broken package can be
+    quarantined. Local-only: no queue, Sanity/Supabase, or LLM calls.
+    """
+    from .pipeline.offload import transition_package_state
+
+    pkg = Path(package_dir)
+    from_state = pkg.parent.name
+    package_id = pkg.name
+    offload_root = pkg.parent.parent
+
+    try:
+        new_path = transition_package_state(
+            offload_root=offload_root,
+            package_id=package_id,
+            from_state=from_state,
+            to_state=to,
+            verify=not no_verify,
+        )
+    except (ValueError, FileNotFoundError, FileExistsError) as exc:
+        console.print(Panel(str(exc), title="[red]Offload move refused[/red]"))
+        raise typer.Exit(1)
+
+    console.print(
+        f"[green]✓ Moved[/green] [cyan]{package_id}[/cyan]: "
+        f"{from_state} → [green]{to}[/green]"
+    )
+    console.print(f"  New location: [dim]{new_path}[/dim]")
+
+
+@app.command(name="offload-import")
+def offload_import_cmd(
+    package_dir: Path = typer.Argument(
+        ...,
+        help="Path to a returned package in outbox (…/offload/outbox/<package_id>)",
+    ),
+    corpus_root: Optional[Path] = typer.Option(
+        None,
+        "--corpus-root",
+        help="Corpus directory to import into (default: configured CORPUS_DIR)",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Verify and report what would be imported, without writing anything.",
+    ),
+):
+    """Import a worker-returned offload package's outputs into the local corpus.
+
+    \b
+    Validate-all-before-copy: verifies the result manifest, expected doc IDs,
+    allowed artifacts, in-package paths, SHA-256 hashes, and schemas. Only on full
+    success are allowed artifacts written into the corpus (existing files backed up
+    to <artifact>.preimport-<ts>) with an offload_import.json provenance sidecar,
+    after which the package is moved outbox → imported. On any failure the corpus
+    is left untouched and the package is not marked imported. Never touches
+    source_queue.db, Sanity/Supabase, or any model.
+    """
+    from .pipeline.offload import import_result_package, transition_package_state
+
+    config = load_config(require_services=False)
+    corpus_dir = Path(corpus_root) if corpus_root else config.corpus_dir
+    pkg = Path(package_dir)
+
+    summary = import_result_package(pkg, corpus_dir=corpus_dir, dry_run=dry_run)
+
+    console.print(f"\n[bold]Offload import[/bold]  [dim]{summary['package_dir']}[/dim]")
+    if summary["package_id"]:
+        console.print(f"  Package ID: [cyan]{summary['package_id']}[/cyan]")
+
+    if not summary["ok"]:
+        console.print(Panel("\n".join(summary["errors"]) or "validation failed",
+                            title="[red]Import refused — corpus untouched[/red]"))
+        raise typer.Exit(1)
+
+    if dry_run:
+        for doc in summary["documents"]:
+            console.print(
+                f"  [yellow]would import[/yellow] {doc['doc_id']}: "
+                f"{', '.join(doc['would_write'])}"
+            )
+        console.print("[dim]Dry run — nothing was written and the package was not moved.[/dim]")
+        return
+
+    for doc in summary["documents"]:
+        backups = f" (backed up: {', '.join(doc['backups'])})" if doc["backups"] else ""
+        console.print(
+            f"  [green]✓ imported[/green] {doc['doc_id']}: "
+            f"{', '.join(doc['written'])}{backups}"
+        )
+
+    # Mark the package imported only after a fully successful corpus write.
+    pkg_path = Path(summary["package_dir"])
+    try:
+        new_path = transition_package_state(
+            offload_root=pkg_path.parent.parent,
+            package_id=pkg_path.name,
+            from_state=pkg_path.parent.name,
+            to_state="imported",
+            verify=False,  # corpus already written; package contents unchanged
+        )
+        console.print(f"[green]✓ Package marked imported[/green] [dim]{new_path}[/dim]")
+    except (ValueError, FileNotFoundError, FileExistsError) as exc:
+        console.print(Panel(
+            f"Artifacts were imported into the corpus, but the package could not be "
+            f"moved to 'imported':\n{exc}\n\nMove it manually with offload-move once resolved.",
+            title="[yellow]Imported, but package not marked[/yellow]",
+        ))
+        raise typer.Exit(1)
+
+
 @app.command(name="export")
 def export_batch(
     batch_id: str = typer.Argument(..., help="Batch ID to export"),

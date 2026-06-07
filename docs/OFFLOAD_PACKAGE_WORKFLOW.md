@@ -1,7 +1,8 @@
 # Offload Package Workflow
 
-Status: foundation + `offload-export` / `offload-verify` CLI implemented;
-lifecycle-move, import, Mac Studio worker, and Streamlit UX still pending.
+Status: foundation + `offload-export` / `offload-verify` / `offload-move` /
+`offload-import` CLI implemented; the Mac Studio worker script and Streamlit UX
+are still pending.
 
 This workflow is for overnight or long-running Mac Studio model work without
 syncing the live MacBook corpus or `source_queue.db`.
@@ -159,16 +160,92 @@ artifact `relative_path` that is absolute, contains `..`, or contains a
 backslash, before joining it to the package directory. Such a manifest fails
 verification with a non-zero exit instead of reading outside the package.
 
+### `runner offload-move <package_dir> --to <state>`
+
+Moves a package to another lifecycle state, enforcing the transition graph
+below. The from-state is inferred from the package path. Forward transitions
+first run `verify_package` (hashes, artifacts, folder/manifest consistency) and
+**refuse on failure**; moves into `failed` / `archive` skip verification so a
+broken package can always be quarantined or retained. `--no-verify` exists for
+isolated testing and is ignored for `failed` / `archive`. Local-only.
+
+Lifecycle transition graph (no transition deletes anything):
+
+```
+inbox      → processing | failed | archive
+processing → outbox | inbox (release) | failed | archive
+outbox     → imported | failed | archive
+imported   → archive
+failed     → inbox (retry) | processing | archive
+archive    → (terminal)
+```
+
+### `runner offload-import <package_dir> [--corpus-root] [--dry-run]`
+
+Imports a worker-returned package's outputs into the local corpus. Import is
+permitted **only** from a package whose manifest + folder lifecycle is `outbox`.
+
+Validate-all-before-copy: the command first verifies the result manifest,
+expected doc IDs, allowed artifacts, in-package paths, SHA-256 hashes, and
+schemas. **Only if every check passes** are allowed artifacts written into
+`<corpus>/<doc_id>/` (atomic writes; any existing target file is first backed up
+to `<artifact>.preimport-<timestamp>`) with an `offload_import.json` provenance
+sidecar. After a fully successful corpus write the package is moved
+`outbox → imported`. On **any** validation or write failure the corpus is left
+untouched and the package is **not** marked imported. `--dry-run` verifies and
+reports what would be imported without writing or moving anything.
+
+`offload-import` never touches `source_queue.db`, never calls Sanity/Supabase,
+and never runs a model. Pushing imported analysis/embeddings to Sanity/Supabase
+remains a separate, researcher-gated step.
+
+#### Returned (result) package contract
+
+The returned package is the same package (it still carries `offload_manifest.json`,
+which supplies the expected doc IDs) plus a worker-written `result_manifest.json`
+and output artifacts under `docs/<doc_id>/`:
+
+```json
+{
+  "schema_version": 1,
+  "package_id": "offload-…",
+  "package_kind": "analysis_result",
+  "produced_at": "2026-…Z",
+  "documents": [
+    { "doc_id": "abc123",
+      "artifacts": [
+        { "label": "analysis.json",
+          "relative_path": "docs/abc123/analysis.json",
+          "sha256": "…", "bytes": 1234 }
+      ] }
+  ]
+}
+```
+
+Allowed import artifacts (mirrors the worker contract's `worker_may_write`):
+`analysis.json`, `analysis_audit.json`, `enrichment.json`,
+`enrichment_audit.json`, `embedding.json`, `worker_report.json`. Anything else,
+any unexpected path, any doc ID not in the original `offload_manifest`, any
+hash mismatch, any byte-size mismatch, any wrong/missing `schema_version`, any
+unmanifested extra file under `docs/<doc_id>/`, or any schema failure
+(`analysis.json` → `AnalysisResult`, `enrichment.json` → `EnrichmentResult`,
+`embedding.json` → model + numeric vector matching `dimension`) is refused.
+
+**Document coverage must be exact.** `result_manifest.documents` must cover
+*exactly* the same doc IDs as `offload_manifest.documents` — no more, no fewer.
+An expected doc that never came back is refused (`missing_result_doc:<doc_id>`)
+before anything is written, so a partially completed batch can never be imported
+as if it were complete. A partial worker run should be represented as a **failed
+package** (move it to `failed/`) plus a `worker_report.json` explaining which
+documents failed — not as an `outbox` package missing documents.
+
 ## Next Implementation Slice
 
 Still pending (in suggested order):
 
-- a lifecycle-move command (`inbox → processing → outbox → imported/failed`)
-- an import command that writes returned outputs into the corpus only after
-  hash/schema checks (atomic writes), records offload provenance, and leaves
-  Sanity/Supabase push as a separate researcher-gated step
-- the Mac Studio worker script (localhost inference only, single heavy job,
-  unload between models)
-- Streamlit Source Queue UX to export checked batch rows and import results
+- the Mac Studio worker script that produces the `result_manifest.json` contract
+  above (localhost inference only, single heavy job, unload between models)
+- Streamlit Source Queue UX to export checked batch rows, move package state, and
+  import results
 
-Worker and import are intentionally **not** built yet.
+Worker and Streamlit UX are intentionally **not** built yet.
