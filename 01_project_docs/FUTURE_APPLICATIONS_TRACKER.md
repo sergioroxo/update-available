@@ -2,7 +2,7 @@
 
 **Status:** working tracker for follow-up steps after the future applications roadmap.
 **Roadmap source:** `01_project_docs/FUTURE_APPLICATIONS_ROADMAP_v1.0.md`
-**Last updated:** 2026-06-03
+**Last updated:** 2026-06-07
 
 Core rule: **AI proposes, the researcher validates, the archive preserves provenance.**
 
@@ -78,6 +78,7 @@ These make future maps, graphs, glossaries, and ledgers possible without re-inge
 | Calibration dashboard | Confidence vs researcher corrections | Pilot batch | Pending |
 | Offload package foundation | Export a bounded analysis package (selected doc artifacts only, hashed) + read-only verify; no live corpus / `source_queue.db` sync | TASK F + atomic writes | Done (`runner offload-export` / `offload-verify`, `46448abed`) |
 | Mac Studio batch memory-safety | Unload enrichment model after Stage 3c; model-control preflight probes; single-heavy-job app lock | TASK F | Done (`46448abed` + Streamlit UI `ed053cb97`) |
+| Local model benchmark lane | Evaluate Ollama 0.30.5+ GGUF candidates before changing production aliases: Gemma 4 12B QAT for enrichment/review, Gemma 4 E4B QAT for triage, Qwen 3.6 27B MTP as experimental heavy analysis/coder; compare JSON validity, quote grounding, multilingual extraction, RAM/swap, throughput, and unload behavior | Mac Studio memory-safety + worker/offload package flow | Pending — benchmark only; no production switch or fine-tune until reviewed corrections justify it |
 | Offload lifecycle move + import | Move package between lifecycle folders; import returned worker outputs only after hash/schema checks; record offload provenance | Offload foundation | Pending |
 | Overnight Mac Studio package workflow | Mac Studio worker processes packages (localhost inference, single heavy job, unload between models) and returns a result package | Offload foundation + import | Pending |
 
@@ -117,6 +118,7 @@ Evaluate only when a concrete workflow is blocked without the tool.
 | ArchiveBox | Private redundant local archive vault | Near-term after preservation status review | Candidate |
 | fastText / lingua | Deterministic language-ID check | Now-useful | Candidate |
 | GROBID | Academic PDF references/citation extraction | Now-useful | Candidate |
+| Ollama GGUF / Unsloth model benchmark | Controlled local benchmark of Gemma 4 12B QAT, Gemma 4 E4B QAT, Qwen 3.6 27B MTP, and current aliases before changing LiteLLM routes | After worker path is stable; before large unattended batches | Candidate |
 | DVC / git-annex | Version corpus + audit sidecars as data | Near-term | Candidate |
 | networkx | Local graph analysis and exports | Near-term | Candidate |
 | Gephi / Cytoscape | Visual graph exploration | Near-future | Candidate |
@@ -155,6 +157,7 @@ These stay deferred until the spine is stronger:
 - [ ] Team dashboards or assignment workflows
 - [ ] Large batch mode before calibration
 - [ ] Neo4j or heavy graph infrastructure
+- [ ] Fine-tuning local models before enough researcher-reviewed corrections exist
 
 ---
 
