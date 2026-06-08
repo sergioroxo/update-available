@@ -1,8 +1,8 @@
 # Offload Package Workflow
 
 Status: foundation + `offload-export` / `offload-verify` / `offload-move` /
-`offload-import` CLI implemented; the Mac Studio worker script and Streamlit UX
-are still pending.
+`offload-import` / `offload-worker` CLI implemented; the Streamlit UX is still
+pending.
 
 This workflow is for overnight or long-running Mac Studio model work without
 syncing the live MacBook corpus or `source_queue.db`.
@@ -239,13 +239,51 @@ as if it were complete. A partial worker run should be represented as a **failed
 package** (move it to `failed/`) plus a `worker_report.json` explaining which
 documents failed — not as an `outbox` package missing documents.
 
+### `runner offload-worker <package_dir>` (Mac Studio node)
+
+Processes one **inbox** package on the Mac Studio. It runs locally against the
+node's own LiteLLM/Ollama stack and is strictly package-only: it never reads or
+writes the live corpus, `source_queue.db`, Sanity, or Supabase, and it never
+fetches/parses/OCRs/transcribes — it consumes only prepared package artifacts
+(`intake.json`, `preprocess.json`, `extracted.txt|md`).
+
+Flow:
+
+1. Acquire the `<offload_root>/.worker.lock` PID lock (refuses if another worker
+   is running; clears a stale lock whose PID is dead) — prevents concurrent heavy
+   model loads.
+2. Claim: `inbox → processing` (verifies input hashes + lifecycle first).
+3. Stage A — analysis for all docs, then unload the analysis model.
+4. Stage B — enrichment for all docs, then unload the enrichment model.
+5. Stage C — embedding for all docs, then unload the embedding model.
+   (One heavy model resident at a time; unload between stages.)
+6. On **full success**: write a per-document `docs/<doc_id>/worker_report.json`
+   (importable provenance — stage status, model aliases, durations, artifact
+   hashes; **no raw extracted text**), write `result_manifest.json` covering
+   exactly the offload manifest's doc IDs, write a package-level
+   `worker_report.json` at the root, then `processing → outbox`.
+7. On **any failure**: write only the **root** `worker_report.json` (per-doc
+   statuses + errors), write **no** `result_manifest.json`, then
+   `processing → failed`.
+
+Outputs are limited to the allowed artifacts (`analysis.json`,
+`analysis_audit.json`, `enrichment.json`, `enrichment_audit.json`,
+`embedding.json`, and the per-doc `worker_report.json`), each listed in
+`result_manifest.json` so the importer accepts them. The root-level
+`worker_report.json` lives outside `docs/<doc_id>/` and is never imported.
+
+Lexicon context is best-effort: analyze/enrich read Sanity for lexicon when
+available and fall back to seed/legacy memory otherwise, so the worker runs even
+with Sanity unreachable. (A package-carried lexicon snapshot is future work.)
+
 ## Next Implementation Slice
 
-Still pending (in suggested order):
+Still pending:
 
-- the Mac Studio worker script that produces the `result_manifest.json` contract
-  above (localhost inference only, single heavy job, unload between models)
-- Streamlit Source Queue UX to export checked batch rows, move package state, and
-  import results
+- Streamlit Source Queue UX to export checked batch rows, move package state, run
+  the worker, and import results.
+- Optional: a `--claim-next` worker mode that pulls the oldest inbox package
+  (after the explicit-path flow is proven).
 
-Worker and Streamlit UX are intentionally **not** built yet.
+Streamlit UX is intentionally **not** built yet, and the worker has **no**
+daemon/background-service mode — it is an explicit one-package CLI command.

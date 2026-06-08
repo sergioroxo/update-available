@@ -2376,6 +2376,70 @@ def offload_import_cmd(
         raise typer.Exit(1)
 
 
+@app.command(name="offload-worker")
+def offload_worker_cmd(
+    package_dir: Path = typer.Argument(
+        ...,
+        help="Path to an inbox package (…/offload/inbox/<package_id>)",
+    ),
+    llm: str = typer.Option(
+        "litelm",
+        "--llm",
+        help="Analysis/enrichment route: litelm | litelm-heavy | litelm-reasoning | local | …",
+    ),
+    enrich_model: Optional[str] = typer.Option(
+        None, "--enrich-model", help="LiteLLM model alias for Stage 3c enrichment (e.g. core-gemma)",
+    ),
+):
+    """Process one inbox offload package on this (Mac Studio) node.
+
+    \b
+    Claims the package (inbox → processing), runs analysis/enrichment/embedding
+    per document against the local LiteLLM/Ollama stack, unloads each heavy model
+    between stages, writes the allowed result artifacts + result_manifest, then
+    moves the package to outbox on full success or failed on any failure.
+
+    \b
+    Package-only I/O: never reads/writes the live corpus, source_queue.db,
+    Sanity, or Supabase, and never fetches/parses/OCRs/transcribes — it consumes
+    only already-prepared package artifacts. A single PID worker lock prevents
+    concurrent heavy model loads.
+    """
+    from .pipeline.offload_worker import run_offload_worker
+
+    config = load_config(require_services=False)
+
+    try:
+        summary = run_offload_worker(
+            package_dir, config, llm=llm, enrich_model=enrich_model,
+        )
+    except RuntimeError as exc:  # worker lock held by another process
+        console.print(Panel(str(exc), title="[red]Worker not started[/red]"))
+        raise typer.Exit(1)
+
+    console.print(f"\n[bold]Offload worker[/bold]  [dim]{summary['package_dir']}[/dim]")
+    console.print(f"  Package ID: [cyan]{summary['package_id']}[/cyan]")
+    console.print(f"  Final state: {summary['final_state']}")
+    for doc in summary["documents"]:
+        icon = "[green]✓[/green]" if doc.get("status") == "succeeded" else "[red]✗[/red]"
+        err = f"  [dim]{doc['error']}[/dim]" if doc.get("error") else ""
+        console.print(f"  {icon} {doc['doc_id']}{err}")
+
+    if summary["ok"]:
+        console.print(
+            f"[green]✓ Worker complete — package moved to outbox "
+            f"({len(summary['documents'])} doc(s)).[/green]"
+        )
+    else:
+        if summary["errors"]:
+            console.print(Panel("\n".join(summary["errors"]), title="[red]Worker failed[/red]"))
+        console.print(
+            f"[red]✗ Worker failed — package in {summary['final_state']}. "
+            f"See worker_report.json.[/red]"
+        )
+        raise typer.Exit(1)
+
+
 @app.command(name="export")
 def export_batch(
     batch_id: str = typer.Argument(..., help="Batch ID to export"),
