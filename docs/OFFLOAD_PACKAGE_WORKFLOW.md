@@ -377,20 +377,80 @@ auto-delete; delete manually only after a verified import.
 
 ### Not in S1
 
-Source worker (S2), source import (S3), Streamlit UI (S4), remote execution,
-transfer automation, queue status changes, book splitting, and any new
-OCR/transcription engine are all out of scope for this slice.
+Source worker (S2 — now built, see below), source import (S3), Streamlit UI
+(S4), remote execution, transfer automation, queue status changes, book
+splitting, and any new OCR/transcription engine were out of scope for S1.
+
+## Source worker (S2)
+
+`runner source-worker <package_dir>` (`runner/pipeline/source_worker.py`,
+`run_source_worker`) processes one **inbox** `source_package` on the Mac Studio
+and returns completed corpus documents. It reuses the existing pipeline
+unchanged — `intake.run` → `preprocess.run` → `analyze.run` → `enrich.run` →
+`embed.run` — driven against a **package-local staging corpus**.
+
+Flow:
+
+1. Acquire the `<source_offload_root>/.worker.lock` PID lock (stale-clearing;
+   prevents concurrent heavy-model loads).
+2. Verify the source **inputs** (`verify_source_inputs`, a retry-tolerant view of
+   `verify_source_package` that ignores the worker-owned `docs/` /
+   `result_manifest.json` / root `worker_report.json` siblings).
+3. Clean worker-owned outputs (the whole `docs/` tree + the two root files), so a
+   `failed → inbox` retry starts clean and no stale `*_audit_*.json` backups
+   survive.
+4. Claim `inbox → processing` (`move_source_package_state`, which updates the
+   `source_manifest.json` lifecycle).
+5. Build a package-local config (`dataclasses.replace(config,
+   corpus_dir=<package>/docs)`) — the live corpus is never touched.
+6. **Stage 0** intake + preprocess for all docs (URL items re-fetch on the Mac
+   Studio; file items read the package-local `items/<doc_id>/source.<ext>` blob).
+7. **Stage A** analysis (all docs) → unload analysis model.
+8. **Stage B** enrichment (all docs) → unload enrichment model.
+9. **Stage C** embedding (all docs) → unload embedding model.
+10. Carry queue linkage (copy `source_item.json` into each doc folder) and
+    validate produced artifacts against `ALLOWED_INGEST_ARTIFACTS` (+ the per-doc
+    local source copy); any unexpected pipeline output fails the package.
+11. On **full success**: write per-doc + root `worker_report.json` (no raw text),
+    write `result_manifest.json` (kind `ingest_result`, exact document coverage,
+    with `queue_item_id` / `url_hash` / `source_url` / `declared_source_type` /
+    `local_source_filename` per doc for S3 relink), then `processing → outbox`.
+12. On **any failure**: write only the root `worker_report.json`, write **no**
+    `result_manifest.json`, then `processing → failed`.
+
+Best-effort network reads are allowed (the Mac Studio is online):
+Trafilatura/Docling/Wayback/media paths already in the pipeline. The worker never
+calls `upload.*` / `enrich.save` / `embed.save`, never writes `source_queue.db`,
+Sanity, or Supabase, and never auto-deletes. The returned package preserves the
+normal corpus folder shape, including the copied original file.
+
+### Returned (`ingest_result`) package
+
+```
+source_manifest.json          # lifecycle now "outbox"
+result_manifest.json          # kind "ingest_result", exact doc coverage
+worker_report.json            # root provenance (no raw text)
+items/<doc_id>/…              # original source inputs (unchanged)
+docs/<doc_id>/                # full corpus-style document folder:
+    intake.json, preprocess.json, extracted.txt|md,
+    analysis.json, analysis_audit.json,
+    enrichment.json, enrichment_audit.json, embedding.json,
+    source.<ext>              # copied original (file items)
+    wayback.json / source.html / media_*.json / transcript_*.json (when produced)
+    source_item.json          # queue linkage passthrough
+    worker_report.json        # per-doc provenance (no raw text)
+```
+
+S3 import will validate this package and create/update corpus doc folders,
+relinking the source queue — that is the next slice.
 
 ## Next Implementation Slice
 
 Still pending:
 
-- **S2 — Mac Studio source worker**: run the full pipeline against a
-  package-local staging corpus and return an `ingest_result` package. No remote
-  execution; explicit one-package CLI on the Mac Studio.
-- **S3 — source import on MacBook**: validate + create/update corpus doc
-  folders, relink the source queue, researcher-gated (no auto-push to
-  Sanity/Supabase, no auto-delete).
+- **S3 — source import on MacBook**: validate the `ingest_result` package +
+  create/update corpus doc folders, relink the source queue, researcher-gated
+  (no auto-push to Sanity/Supabase, no auto-delete).
 - **S4 — Streamlit source UX** (export/lifecycle/verify/move/import; worker
   display-only, like the result UX).
 - Result-stage remote worker execution and an optional `--claim-next` mode

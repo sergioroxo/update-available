@@ -67,6 +67,52 @@ _BUILD_STATE = "inbox"
 
 VALID_SOURCE_KINDS: frozenset[str] = frozenset({"url", "file"})
 
+# ── Returned (ingest_result) package contract — produced by the S2 worker ─────
+# The source worker runs the *full* pipeline against a package-local staging
+# corpus and returns complete corpus-style document folders under docs/<doc_id>/.
+PACKAGE_KIND_INGEST = "ingest_result"
+INGEST_RESULT_SCHEMA_VERSION = 1
+INGEST_RESULT_MANIFEST_NAME = "result_manifest.json"
+
+# Worker-owned siblings that may legitimately sit beside the source inputs after
+# a run (and must be cleaned before a retry). They are NOT part of the portable
+# source package and are tolerated by ``verify_source_inputs``.
+WORKER_OWNED_SIBLINGS: frozenset[str] = frozenset(
+    {"docs", INGEST_RESULT_MANIFEST_NAME, "worker_report.json"}
+)
+
+# Fixed-name artifacts allowed inside a returned docs/<doc_id>/ folder. The local
+# source copy (e.g. ``source.pdf``) is additionally allowed by exact match to the
+# per-doc ``local_source_filename`` recorded in the result manifest.
+ALLOWED_INGEST_ARTIFACTS: frozenset[str] = frozenset({
+    # Core pipeline outputs.
+    "intake.json",
+    "preprocess.json",
+    "extracted.txt",
+    "extracted.md",
+    "analysis.json",
+    "analysis_audit.json",
+    "enrichment.json",
+    "enrichment_audit.json",
+    "embedding.json",
+    # Queue linkage passthrough + worker provenance.
+    "source_item.json",
+    "worker_report.json",
+    # Optional context (present only when the pipeline produced it).
+    "wayback.json",
+    "preservation_status.json",
+    "source.html",
+    "html_snapshot.json",
+    "media_metadata.json",
+    "video_metadata.json",
+    "transcript_chunks.json",
+    "transcript_versions.json",
+    "transcript_comparison.json",
+    "media_comments.json",
+    "duplicate_candidates.json",
+    "discovery_seed_queue.json",
+})
+
 # Owner-only intent for private research material on a shared Mac Studio.
 _DIR_MODE = 0o700
 _FILE_MODE = 0o600
@@ -601,3 +647,63 @@ def verify_source_package(package_dir: Path) -> dict:
 
     report["ok"] = not report["errors"] and not report["unexpected"]
     return report
+
+
+# ---------------------------------------------------------------------------
+# S2 worker support — retry-tolerant verify + source-package state moves
+# ---------------------------------------------------------------------------
+
+def verify_source_inputs(package_dir: Path) -> dict:
+    """Verify a source package's *inputs*, tolerating worker-owned siblings.
+
+    Identical to ``verify_source_package`` except that the worker-generated
+    siblings in ``WORKER_OWNED_SIBLINGS`` (``docs/``, ``result_manifest.json``,
+    root ``worker_report.json``) are not treated as unexpected. The S2 worker
+    uses this at claim time so a ``failed -> inbox`` retry — whose package still
+    carries a partial ``docs/`` from the previous run — still verifies, while
+    every genuine integrity check on the source inputs (manifest, items, hashes,
+    canonical paths, coverage, drift) is unchanged.
+    """
+    report = verify_source_package(package_dir)
+    filtered = [u for u in report["unexpected"] if u not in WORKER_OWNED_SIBLINGS]
+    report["unexpected"] = filtered
+    report["ok"] = not report["errors"] and not filtered
+    return report
+
+
+def move_source_package_state(
+    *,
+    offload_root: Path,
+    package_id: str,
+    from_state: str,
+    to_state: str,
+) -> Path:
+    """Move a source package between lifecycle folders and update its manifest.
+
+    Enforces the shared transition graph (``offload.validate_state_transition``)
+    and rewrites ``source_manifest.json``'s ``lifecycle_state`` so folder and
+    manifest stay consistent. Source packages carry ``source_manifest.json`` (not
+    ``offload_manifest.json``), so the offload result-package movers cannot be
+    reused here. No deletion; no verification (callers verify explicitly).
+    """
+    from . import offload as _offload
+
+    _offload.validate_state_transition(from_state, to_state)
+    offload_root = Path(offload_root)
+    pkg_id = validate_package_id(package_id)
+    source = offload_root / from_state / pkg_id
+    target = offload_root / to_state / pkg_id
+    if not source.is_dir():
+        raise FileNotFoundError(source)
+    if target.exists():
+        raise FileExistsError(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(source), str(target))
+
+    # Keep folder/manifest lifecycle consistent.
+    manifest = load_source_manifest(target)
+    data = manifest.to_dict()
+    data["lifecycle_state"] = to_state
+    atomic_write_json(target / SOURCE_MANIFEST_NAME, data)
+    _restrict(target / SOURCE_MANIFEST_NAME, _FILE_MODE)
+    return target

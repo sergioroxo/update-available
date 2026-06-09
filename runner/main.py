@@ -2642,6 +2642,74 @@ def source_offload_verify_cmd(
         raise typer.Exit(1)
 
 
+@app.command(name="source-worker")
+def source_worker_cmd(
+    package_dir: Path = typer.Argument(
+        ...,
+        help="Path to an inbox source package (…/source_offload/inbox/<package_id>)",
+    ),
+    llm: str = typer.Option(
+        "litelm",
+        "--llm",
+        help="Analysis/enrichment route: litelm | litelm-heavy | litelm-reasoning | local | …",
+    ),
+    enrich_model: Optional[str] = typer.Option(
+        None, "--enrich-model", help="LiteLLM model alias for Stage 3c enrichment (e.g. core-gemma)",
+    ),
+):
+    """Process one inbox source package end-to-end on this (Mac Studio) node (Slice S2).
+
+    \b
+    Verifies the source inputs, claims the package (inbox → processing), and for
+    every item runs the full pipeline (intake → preprocess → analysis →
+    enrichment → embedding) against a package-local staging corpus
+    (<package>/docs/<doc_id>/), unloading each heavy model between stages. On full
+    success it writes complete corpus-style document folders, per-doc + root
+    worker_report.json, and an `ingest_result` result_manifest.json, then moves
+    the package to outbox; on any failure it writes the root worker_report.json
+    and moves the package to failed.
+
+    \b
+    Never reads/writes the live corpus (corpus_dir points inside the package),
+    never writes source_queue.db / Sanity / Supabase, and never auto-deletes. A
+    single PID worker lock prevents concurrent heavy model loads.
+    """
+    from .pipeline.source_worker import run_source_worker
+
+    config = load_config(require_services=False)
+
+    try:
+        summary = run_source_worker(
+            package_dir, config, llm=llm, enrich_model=enrich_model,
+        )
+    except RuntimeError as exc:  # worker lock held by another process
+        console.print(Panel(str(exc), title="[red]Worker not started[/red]"))
+        raise typer.Exit(1)
+
+    console.print(f"\n[bold]Source worker[/bold]  [dim]{summary['package_dir']}[/dim]")
+    console.print(f"  Package ID:  [cyan]{summary['package_id']}[/cyan]")
+    console.print(f"  Kind:        {summary['package_kind']}")
+    console.print(f"  Final state: {summary['final_state']}")
+    for doc in summary["documents"]:
+        icon = "[green]✓[/green]" if doc.get("status") == "succeeded" else "[red]✗[/red]"
+        err = f"  [dim]{doc['error']}[/dim]" if doc.get("error") else ""
+        console.print(f"  {icon} {doc['doc_id']}{err}")
+
+    if summary["ok"]:
+        console.print(
+            f"[green]✓ Worker complete — package moved to outbox "
+            f"({len(summary['documents'])} doc(s)).[/green]"
+        )
+    else:
+        if summary["errors"]:
+            console.print(Panel("\n".join(summary["errors"]), title="[red]Worker failed[/red]"))
+        console.print(
+            f"[red]✗ Worker failed — package in {summary['final_state']}. "
+            f"See worker_report.json.[/red]"
+        )
+        raise typer.Exit(1)
+
+
 @app.command(name="export")
 def export_batch(
     batch_id: str = typer.Argument(..., help="Batch ID to export"),
