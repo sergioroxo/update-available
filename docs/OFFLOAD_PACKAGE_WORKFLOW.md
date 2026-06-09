@@ -441,16 +441,51 @@ docs/<doc_id>/                # full corpus-style document folder:
     worker_report.json        # per-doc provenance (no raw text)
 ```
 
-S3 import will validate this package and create/update corpus doc folders,
-relinking the source queue — that is the next slice.
+## Source import (S3)
+
+`runner source-offload-import <package_dir> [--corpus-root] [--dry-run] [--force]`
+(`offload_source.import_ingest_result` + `verify_ingest_result`) imports a
+returned `ingest_result` package from **outbox** into the MacBook live corpus.
+
+`verify_ingest_result` (read-only) checks: schema_version/`package_kind`
+(`ingest_result`), outbox lifecycle (folder == manifest), **exact** document
+coverage vs the source manifest, safe + canonical artifact paths
+(`docs/<doc_id>/<label>`), SHA-256 + byte size, the allowed artifact set (incl.
+the per-doc `local_source_filename`), required core artifacts + extracted text,
+no unexpected files, core-artifact schemas (analysis→`AnalysisResult`,
+enrichment→`EnrichmentResult`, embedding→model+numeric vector==dimension,
+extracted text non-empty, JSON-object floor for the rest), and result↔source
+linkage drift.
+
+`import_ingest_result` (validate-all-before-copy):
+
+- refuses if any existing target corpus doc is **researcher-reviewed/edited**
+  (markers: `sanity_record.json`, `metadata.json`, a `_manual_overrides` key in
+  `analysis.json`/`preprocess.json`, or a verified/published `workflowStatus`)
+  unless `--force`; a bare `offload_import.json` (a prior auto-import) is **not**
+  treated as reviewed, so re-import is allowed;
+- writes complete corpus-style document folders atomically, backing up any
+  existing target file to `<label>.preimport-<ts>`; writes an
+  `offload_import.json` provenance sidecar (package id/kind, source lifecycle,
+  queue linkage, imported artifacts + backups);
+- rolls the corpus back on any write-phase exception (created files removed,
+  backups restored);
+- never touches `source_queue.db`, Sanity/Supabase, the package lifecycle, or any
+  model.
+
+After a **fully successful corpus write**, the CLI relinks the source queue —
+`mark_ingested`, preferring `queue_item_id`, then falling back to `url_hash`;
+ad-hoc items (neither present) are skipped — and then moves the package
+`outbox → imported`. The queue is never written before corpus success (dry-run
+and any refusal leave it untouched), and a relink failure is reported **without**
+rolling back the corpus (the corpus import is the source of truth). No
+auto-delete; no Sanity/Supabase upload (that remains a separate researcher-gated
+step).
 
 ## Next Implementation Slice
 
 Still pending:
 
-- **S3 — source import on MacBook**: validate the `ingest_result` package +
-  create/update corpus doc folders, relink the source queue, researcher-gated
-  (no auto-push to Sanity/Supabase, no auto-delete).
 - **S4 — Streamlit source UX** (export/lifecycle/verify/move/import; worker
   display-only, like the result UX).
 - Result-stage remote worker execution and an optional `--claim-next` mode

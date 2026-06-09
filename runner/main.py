@@ -2710,6 +2710,121 @@ def source_worker_cmd(
         raise typer.Exit(1)
 
 
+@app.command(name="source-offload-import")
+def source_offload_import_cmd(
+    package_dir: Path = typer.Argument(
+        ...,
+        help="Path to a returned source package in outbox (…/source_offload/outbox/<package_id>)",
+    ),
+    corpus_root: Optional[Path] = typer.Option(
+        None, "--corpus-root", help="Corpus directory to import into (default: configured CORPUS_DIR)",
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Verify and report what would be imported, writing nothing.",
+    ),
+    force: bool = typer.Option(
+        False, "--force", help="Overwrite even researcher-reviewed/edited corpus docs (backed up first).",
+    ),
+):
+    """Import a returned `ingest_result` source package into the live corpus (Slice S3).
+
+    \b
+    Validate-all-before-copy: verifies schema/kind/outbox lifecycle, exact document
+    coverage, safe canonical paths, SHA-256/bytes, the allowed artifact set (incl.
+    the copied original), no unexpected files, and core-artifact schemas. Only on
+    full success are complete corpus-style document folders written into the corpus
+    (existing files backed up to <label>.preimport-<ts>) with an offload_import.json
+    provenance sidecar. Researcher-reviewed/edited docs are refused unless --force.
+
+    \b
+    After a successful corpus write the source queue is relinked (mark_ingested,
+    preferring queue_item_id then url_hash) and the package is moved outbox →
+    imported. Queue is never written before corpus success, and a relink failure is
+    reported without rolling back the corpus (the corpus import is the source of
+    truth). Never calls Sanity/Supabase and never auto-deletes.
+    """
+    from .pipeline.offload_source import (
+        import_ingest_result, ingest_result_linkages, move_source_package_state,
+    )
+
+    config = load_config(require_services=False)
+    corpus_dir = Path(corpus_root) if corpus_root else config.corpus_dir
+    pkg = Path(package_dir)
+
+    summary = import_ingest_result(pkg, corpus_dir=corpus_dir, dry_run=dry_run, force=force)
+
+    console.print(f"\n[bold]Source import[/bold]  [dim]{summary['package_dir']}[/dim]")
+    if summary["package_id"]:
+        console.print(f"  Package ID: [cyan]{summary['package_id']}[/cyan]")
+
+    if not summary["ok"]:
+        title = "[red]Import refused — corpus untouched[/red]"
+        if summary["reviewed_blocked"]:
+            title = "[red]Import refused — reviewed docs (use --force)[/red]"
+        console.print(Panel("\n".join(summary["errors"]) or "validation failed", title=title))
+        raise typer.Exit(1)
+
+    if dry_run:
+        for doc in summary["documents"]:
+            console.print(
+                f"  [yellow]would import[/yellow] {doc['doc_id']}: {', '.join(doc['would_write'])}"
+            )
+        console.print("[dim]Dry run — nothing written, queue untouched, package not moved.[/dim]")
+        return
+
+    for doc in summary["documents"]:
+        backups = f" (backed up: {', '.join(doc['backups'])})" if doc["backups"] else ""
+        console.print(
+            f"  [green]✓ imported[/green] {doc['doc_id']}: {', '.join(doc['written'])}{backups}"
+        )
+
+    # ── Queue relink (only after a fully successful corpus write) ──
+    pkg_path = Path(summary["package_dir"])
+    try:
+        from .pipeline.source_queue import open_db, queue_db_path, mark_ingested
+
+        db = open_db(queue_db_path(config.corpus_dir))
+        try:
+            for link in ingest_result_linkages(pkg_path):
+                doc_id = link["doc_id"]
+                item_id = link["queue_item_id"]
+                via = "queue_item_id"
+                if not item_id and link["url_hash"]:
+                    row = db.execute(
+                        "SELECT id FROM source_queue WHERE url_hash = ?", (link["url_hash"],)
+                    ).fetchone()
+                    if row:
+                        item_id = row["id"]
+                        via = "url_hash"
+                if item_id and mark_ingested(db, item_id, doc_id):
+                    console.print(f"  [green]↳ queue relinked[/green] {doc_id} → {item_id} [dim]({via})[/dim]")
+                else:
+                    console.print(f"  [dim]↳ no queue row for {doc_id} (ad-hoc item)[/dim]")
+        finally:
+            db.close()
+    except Exception as exc:  # noqa: BLE001 — corpus is source of truth; do not roll back
+        console.print(Panel(
+            f"Corpus import succeeded, but source-queue relink failed:\n{exc}\n\n"
+            "The corpus is the source of truth — relink manually if needed.",
+            title="[yellow]Imported, queue relink failed[/yellow]",
+        ))
+
+    # ── Move outbox → imported ──
+    try:
+        new_path = move_source_package_state(
+            offload_root=pkg_path.parent.parent, package_id=pkg_path.name,
+            from_state=pkg_path.parent.name, to_state="imported",
+        )
+        console.print(f"[green]✓ Package marked imported[/green] [dim]{new_path}[/dim]")
+    except (ValueError, FileNotFoundError, FileExistsError) as exc:
+        console.print(Panel(
+            f"Artifacts were imported into the corpus, but the package could not be "
+            f"moved to 'imported':\n{exc}\n\nMove it manually once resolved.",
+            title="[yellow]Imported, but package not marked[/yellow]",
+        ))
+        raise typer.Exit(1)
+
+
 @app.command(name="export")
 def export_batch(
     batch_id: str = typer.Argument(..., help="Batch ID to export"),

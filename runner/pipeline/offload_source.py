@@ -33,6 +33,7 @@ No function here deletes packages automatically — manual cleanup only.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -41,7 +42,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Iterable
 
-from .atomic_io import atomic_write_json
+from . import offload as _offload
+from .atomic_io import atomic_write_bytes, atomic_write_json
 from .offload import (
     LIFECYCLE_STATES,
     default_package_id,
@@ -112,6 +114,25 @@ ALLOWED_INGEST_ARTIFACTS: frozenset[str] = frozenset({
     "duplicate_candidates.json",
     "discovery_seed_queue.json",
 })
+
+# Fixed-name core artifacts every returned document must include (extracted text
+# is required separately as either extracted.txt or extracted.md).
+REQUIRED_INGEST_CORE: tuple[str, ...] = (
+    "intake.json",
+    "preprocess.json",
+    "analysis.json",
+    "analysis_audit.json",
+    "enrichment.json",
+    "enrichment_audit.json",
+    "embedding.json",
+    "source_item.json",
+    "worker_report.json",
+)
+
+# Local corpus-doc markers that indicate researcher review / edit / upload. A
+# bare ``offload_import.json`` (a prior auto-import, never researcher-touched) is
+# intentionally NOT in this set — that is a re-import, allowed with backup.
+_REVIEWED_DOC_MARKERS: tuple[str, ...] = ("sanity_record.json", "metadata.json")
 
 # Owner-only intent for private research material on a shared Mac Studio.
 _DIR_MODE = 0o700
@@ -707,3 +728,395 @@ def move_source_package_state(
     atomic_write_json(target / SOURCE_MANIFEST_NAME, data)
     _restrict(target / SOURCE_MANIFEST_NAME, _FILE_MODE)
     return target
+
+
+# ---------------------------------------------------------------------------
+# S3 — verify + import of a returned ``ingest_result`` package
+# ---------------------------------------------------------------------------
+
+IMPORT_SOURCE_STATE = "outbox"  # only outbox packages may be imported
+
+
+def _validate_ingest_artifact_schema(label: str, path: Path) -> str:
+    """Return '' if the artifact is well-formed for its kind, else an error.
+
+    JSON artifacts use the shared result-artifact validator (object floor +
+    Pydantic checks for analysis/enrichment/embedding). Extracted text must be
+    non-empty. Non-JSON artifacts (source.html, the local source copy) are only
+    integrity-checked by hash/bytes elsewhere.
+    """
+    if label in ("extracted.txt", "extracted.md"):
+        try:
+            if not path.read_text(encoding="utf-8").strip():
+                return f"empty_extracted_text:{label}"
+        except Exception as exc:  # noqa: BLE001
+            return f"unreadable_extracted_text:{label}:{exc}"
+        return ""
+    if label.endswith(".json"):
+        return _offload._validate_result_artifact_schema(label, path)
+    return ""
+
+
+def _is_reviewed_corpus_doc(doc_dir: Path) -> bool:
+    """True if an existing corpus doc folder shows researcher review / edit / upload.
+
+    Markers: ``sanity_record.json`` / ``metadata.json`` (uploaded / upload path),
+    a ``_manual_overrides`` key in ``analysis.json`` / ``preprocess.json``
+    (Streamlit researcher confirmations), or a verified/published
+    ``workflowStatus`` in a local record. A bare ``offload_import.json`` alone is
+    not treated as reviewed (it is a prior auto-import; re-import is allowed).
+    """
+    doc_dir = Path(doc_dir)
+    for marker in _REVIEWED_DOC_MARKERS:
+        if (doc_dir / marker).exists():
+            return True
+    for name in ("analysis.json", "preprocess.json"):
+        p = doc_dir / name
+        if not p.exists():
+            continue
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if isinstance(data, dict):
+            if data.get("_manual_overrides"):
+                return True
+            if str(data.get("workflowStatus", "")).lower() in ("verified", "published"):
+                return True
+    return False
+
+
+def verify_ingest_result(package_dir: Path, *, corpus_dir: Path) -> dict:
+    """Read-only full validation of a returned ``ingest_result`` package.
+
+    Confirms it is an ``outbox`` ingest_result whose result manifest covers
+    exactly the source manifest's doc IDs, with safe canonical paths, matching
+    hashes/bytes, only allowed artifacts (incl. the per-doc local source copy),
+    no unexpected files, and valid core-artifact schemas. Never mutates anything.
+    ``ok`` is True only when there are no errors and no unexpected entries.
+    """
+    package_dir = Path(package_dir)
+    corpus_dir = Path(corpus_dir)
+    report: dict = {
+        "package_dir": str(package_dir),
+        "package_id": "",
+        "ok": False,
+        "lifecycle": None,
+        "documents": [],
+        "errors": [],
+        "unexpected": [],
+    }
+
+    # 1. Source manifest — expected doc IDs + lifecycle + linkage source of truth.
+    if not (package_dir / SOURCE_MANIFEST_NAME).is_file():
+        report["errors"].append("source_manifest_not_found")
+        return report
+    try:
+        smanifest = load_source_manifest(package_dir)
+    except Exception as exc:  # noqa: BLE001
+        report["errors"].append(f"corrupt_source_manifest:{exc}")
+        return report
+
+    report["package_id"] = smanifest.package_id
+    folder_state = package_dir.parent.name
+    lifecycle = {
+        "folder_state": folder_state,
+        "manifest_state": smanifest.lifecycle_state,
+        "consistent": folder_state == smanifest.lifecycle_state,
+    }
+    report["lifecycle"] = lifecycle
+    if smanifest.lifecycle_state != IMPORT_SOURCE_STATE:
+        report["errors"].append(f"not_in_outbox:manifest_state={smanifest.lifecycle_state}")
+    if not lifecycle["consistent"]:
+        report["errors"].append(
+            f"lifecycle_mismatch:folder={folder_state}:manifest={smanifest.lifecycle_state}"
+        )
+
+    expected_doc_ids = {d.doc_id for d in smanifest.items}
+    source_by_doc = {d.doc_id: d for d in smanifest.items}
+
+    # 2. Result manifest.
+    result_path = package_dir / INGEST_RESULT_MANIFEST_NAME
+    if not result_path.is_file():
+        report["errors"].append("result_manifest_not_found")
+        return report
+    try:
+        rdata = json.loads(result_path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        report["errors"].append(f"corrupt_result_manifest:{exc}")
+        return report
+    if not isinstance(rdata, dict):
+        report["errors"].append("corrupt_result_manifest:expected object")
+        return report
+    if rdata.get("schema_version") != INGEST_RESULT_SCHEMA_VERSION:
+        report["errors"].append(
+            f"unexpected_result_schema_version:{rdata.get('schema_version')!r}"
+        )
+    if str(rdata.get("package_kind")) != PACKAGE_KIND_INGEST:
+        report["errors"].append(f"unexpected_result_kind:{rdata.get('package_kind')!r}")
+    if str(rdata.get("package_id")) != smanifest.package_id:
+        report["errors"].append(
+            f"result_package_id_mismatch:{rdata.get('package_id')!r}!={smanifest.package_id!r}"
+        )
+
+    documents = rdata.get("documents")
+    if not isinstance(documents, list) or not documents:
+        report["errors"].append("result_manifest_has_no_documents")
+        documents = []
+
+    seen_doc_ids: set[str] = set()
+    for drow in documents:
+        if not isinstance(drow, dict):
+            report["errors"].append("result_document_not_object")
+            continue
+        raw_doc_id = str(drow.get("doc_id") or "")
+        try:
+            doc_id = normalise_doc_id(raw_doc_id)
+        except ValueError:
+            report["errors"].append(f"unsafe_doc_id:{raw_doc_id!r}")
+            continue
+        if doc_id in seen_doc_ids:
+            report["errors"].append(f"duplicate_doc_id:{doc_id}")
+            continue
+        seen_doc_ids.add(doc_id)
+        if doc_id not in expected_doc_ids:
+            report["errors"].append(f"unknown_doc_id:{doc_id}")
+            continue
+
+        local_source_filename = str(drow.get("local_source_filename") or "")
+        doc_errors: list[str] = []
+        artifacts = drow.get("artifacts")
+        if not isinstance(artifacts, list) or not artifacts:
+            doc_errors.append("no_artifacts")
+            artifacts = []
+
+        validated: list[dict] = []
+        claimed_names: set[str] = set()
+        for arow in artifacts:
+            if not isinstance(arow, dict):
+                doc_errors.append("artifact_not_object")
+                continue
+            label = str(arow.get("label") or "")
+            try:
+                safe_rel = validate_manifest_relative_path(
+                    str(arow.get("relative_path", "")), field=f"{doc_id}.{label}.relative_path"
+                )
+            except ValueError as exc:
+                doc_errors.append(str(exc))
+                continue
+            if safe_rel != f"docs/{doc_id}/{label}":
+                doc_errors.append(f"noncanonical_artifact_path:{safe_rel}")
+                continue
+            if not (label in ALLOWED_INGEST_ARTIFACTS
+                    or (local_source_filename and label == local_source_filename)):
+                doc_errors.append(f"disallowed_artifact:{label}")
+                continue
+            p = package_dir / safe_rel
+            if not p.is_file():
+                doc_errors.append(f"missing_artifact:{safe_rel}")
+                continue
+            if sha256_file(p) != str(arow.get("sha256", "")):
+                doc_errors.append(f"hash_mismatch:{safe_rel}")
+            if p.stat().st_size != int(arow.get("bytes", -1) or -1):
+                doc_errors.append(f"bytes_mismatch:{safe_rel}")
+            schema_err = _validate_ingest_artifact_schema(label, p)
+            if schema_err:
+                doc_errors.append(schema_err)
+            claimed_names.add(label)
+            validated.append({
+                "label": label, "relative_path": safe_rel,
+                "sha256": str(arow.get("sha256", "")), "bytes": int(arow.get("bytes", 0) or 0),
+            })
+
+        # Required core artifacts + extracted text.
+        for core in REQUIRED_INGEST_CORE:
+            if core not in claimed_names:
+                doc_errors.append(f"missing_required:{core}")
+        if not ({"extracted.txt", "extracted.md"} & claimed_names):
+            doc_errors.append("missing_required:extracted_text")
+
+        # No unexpected files under docs/<doc_id>/.
+        doc_dir = package_dir / "docs" / doc_id
+        if doc_dir.is_dir():
+            for child in sorted(doc_dir.iterdir()):
+                if child.is_dir():
+                    report["unexpected"].append(f"docs/{doc_id}/{child.name}/")
+                elif child.name not in claimed_names:
+                    report["unexpected"].append(f"docs/{doc_id}/{child.name}")
+
+        # Linkage drift: result manifest vs source manifest record.
+        src_rec = source_by_doc.get(doc_id)
+        if src_rec is not None:
+            for fld in ("queue_item_id", "url_hash"):
+                if str(drow.get(fld, "")) != str(getattr(src_rec, fld, "") or ""):
+                    doc_errors.append(
+                        f"linkage_drift:{fld}:{drow.get(fld)!r}!={getattr(src_rec, fld, '')!r}"
+                    )
+
+        report["documents"].append({
+            "doc_id": doc_id,
+            "queue_item_id": str(drow.get("queue_item_id", "")),
+            "url_hash": str(drow.get("url_hash", "")),
+            "source_url": str(drow.get("source_url", "")),
+            "declared_source_type": str(drow.get("declared_source_type", "")),
+            "local_source_filename": local_source_filename,
+            "artifacts": validated,
+            "errors": doc_errors,
+        })
+        report["errors"].extend(f"{doc_id}:{e}" for e in doc_errors)
+
+    # Exact coverage: every expected doc must come back.
+    for missing in sorted(expected_doc_ids - seen_doc_ids):
+        report["errors"].append(f"missing_result_doc:{missing}")
+
+    report["ok"] = not report["errors"] and not report["unexpected"]
+    return report
+
+
+def ingest_result_linkages(package_dir: Path) -> list[dict]:
+    """Per-doc queue linkage from a result manifest. Pure; no DB access.
+
+    Returns ``[{doc_id, queue_item_id, url_hash, source_url}]`` for the importer
+    CLI to relink the source queue after a successful corpus write.
+    """
+    data = json.loads((Path(package_dir) / INGEST_RESULT_MANIFEST_NAME).read_text(encoding="utf-8"))
+    out: list[dict] = []
+    for d in data.get("documents", []):
+        if isinstance(d, dict):
+            out.append({
+                "doc_id": str(d.get("doc_id", "")),
+                "queue_item_id": str(d.get("queue_item_id", "")),
+                "url_hash": str(d.get("url_hash", "")),
+                "source_url": str(d.get("source_url", "")),
+            })
+    return out
+
+
+def import_ingest_result(
+    package_dir: Path,
+    *,
+    corpus_dir: Path,
+    dry_run: bool = False,
+    force: bool = False,
+) -> dict:
+    """Validate a returned ingest_result package, then import into the live corpus.
+
+    Validate-all-before-copy: if any document/artifact fails verification — or any
+    existing corpus doc is researcher-reviewed/edited and ``force`` is False —
+    nothing is written. On success each artifact (incl. the copied original) is
+    written into ``corpus_dir/<doc_id>/`` atomically; any existing target is first
+    backed up to ``<label>.preimport-<ts>``; an ``offload_import.json`` provenance
+    sidecar is written. Any write-phase exception rolls the corpus back. This
+    function never touches source_queue.db, Sanity/Supabase, the package
+    lifecycle, or any model.
+    """
+    package_dir = Path(package_dir)
+    corpus_dir = Path(corpus_dir)
+    report = verify_ingest_result(package_dir, corpus_dir=corpus_dir)
+
+    summary: dict = {
+        "package_dir": str(package_dir),
+        "package_id": report.get("package_id", ""),
+        "ok": report["ok"],
+        "dry_run": dry_run,
+        "force": force,
+        "imported": False,
+        "lifecycle": report.get("lifecycle"),
+        "errors": list(report["errors"]) + [f"unexpected:{u}" for u in report["unexpected"]],
+        "reviewed_blocked": [],
+        "documents": [],
+    }
+
+    if not report["ok"]:
+        summary["ok"] = False
+        return summary  # corpus untouched
+
+    # Reviewed/local-edited guard — validate across all docs before any write.
+    blocked = [
+        doc["doc_id"] for doc in report["documents"]
+        if (corpus_dir / doc["doc_id"]).exists()
+        and _is_reviewed_corpus_doc(corpus_dir / doc["doc_id"])
+        and not force
+    ]
+    if blocked:
+        summary["ok"] = False
+        summary["reviewed_blocked"] = blocked
+        summary["errors"].append(
+            "reviewed_doc_blocked:" + ",".join(blocked) + " (use --force to overwrite)"
+        )
+        return summary
+
+    if dry_run:
+        summary["documents"] = [
+            {"doc_id": d["doc_id"], "would_write": [a["label"] for a in d["artifacts"]],
+             "queue_item_id": d["queue_item_id"], "url_hash": d["url_hash"]}
+            for d in report["documents"]
+        ]
+        return summary
+
+    imported_at = now_utc()
+    source_state = (report.get("lifecycle") or {}).get("manifest_state", "")
+    created_files: list[Path] = []
+    backup_pairs: list[tuple[Path, Path]] = []
+    written_docs: list[dict] = []
+    try:
+        for doc in report["documents"]:
+            doc_id = doc["doc_id"]
+            corpus_doc_dir = corpus_dir / doc_id
+            written: list[dict] = []
+            backups: list[dict] = []
+
+            def _record_write(dest: Path, label: str) -> None:
+                if dest.exists():
+                    backup = corpus_doc_dir / f"{label}.preimport-{_offload._fs_timestamp()}"
+                    shutil.copy2(dest, backup)
+                    backup_pairs.append((dest, backup))
+                    backups.append({"label": label, "backup_path": backup.name})
+                else:
+                    created_files.append(dest)
+
+            for artifact in doc["artifacts"]:
+                source = package_dir / artifact["relative_path"]
+                dest = corpus_doc_dir / artifact["label"]
+                _record_write(dest, artifact["label"])
+                atomic_write_bytes(dest, source.read_bytes())
+                written.append({
+                    "label": artifact["label"],
+                    "sha256": artifact["sha256"], "bytes": artifact["bytes"],
+                })
+
+            provenance = {
+                "imported_at": imported_at,
+                "package_id": summary["package_id"],
+                "package_kind": PACKAGE_KIND_INGEST,
+                "source_lifecycle_state": source_state,
+                "queue_item_id": doc["queue_item_id"],
+                "url_hash": doc["url_hash"],
+                "source_url": doc["source_url"],
+                "declared_source_type": doc["declared_source_type"],
+                "local_source_filename": doc["local_source_filename"],
+                "imported_artifacts": written,
+                "backups": backups,
+            }
+            prov_dest = corpus_doc_dir / "offload_import.json"
+            _record_write(prov_dest, "offload_import.json")
+            atomic_write_json(prov_dest, provenance)
+
+            written_docs.append({
+                "doc_id": doc_id,
+                "written": [w["label"] for w in written],
+                "backups": [b["label"] for b in backups],
+                "queue_item_id": doc["queue_item_id"],
+                "url_hash": doc["url_hash"],
+            })
+    except Exception as exc:  # noqa: BLE001 — any write failure must roll back cleanly
+        _offload._rollback_import(created_files, backup_pairs)
+        summary["ok"] = False
+        summary["imported"] = False
+        summary["documents"] = []
+        summary["errors"].append(f"write_failed_rolled_back:{exc}")
+        return summary
+
+    summary["documents"] = written_docs
+    summary["imported"] = True
+    return summary

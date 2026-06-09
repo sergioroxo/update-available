@@ -440,9 +440,21 @@ def test_source_item_source_blob_drift_fails_verify(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_module_has_no_network_or_model_imports():
-    text = Path(src.__file__).read_text(encoding="utf-8")
-    for forbidden in ("import httpx", "import requests", "supabase", "sanity", "ollama", "litellm"):
-        assert forbidden not in text, f"offload_source must not reference {forbidden!r}"
+    """AST-based: only real imports are inspected, so legitimate marker strings
+    (e.g. "sanity_record.json" as a local reviewed-doc marker) do not trip it."""
+    import ast
+
+    tree = ast.parse(Path(src.__file__).read_text(encoding="utf-8"))
+    imported: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported += [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            base = node.module or ""
+            imported += [f"{base}.{a.name}" for a in node.names]
+    blob = " ".join(imported).lower()
+    for forbidden in ("httpx", "requests", "supabase", "sanity", "ollama", "litellm", "source_queue"):
+        assert forbidden not in blob, f"offload_source must not import {forbidden!r}"
 
 
 # ---------------------------------------------------------------------------
