@@ -94,6 +94,7 @@ def main():
         "Model Routing",
         "Triage Tool",
         "Mac Studio Node",
+        "Offload Packages",
         "Seed Data",
     ]
     if st.session_state.get("page") not in pages:
@@ -152,6 +153,8 @@ def main():
         page_triage_tool()
     elif page == "Mac Studio Node":
         page_mac_studio_node()
+    elif page == "Offload Packages":
+        page_offload_packages()
     elif page == "Seed Data":
         page_seed_data()
 
@@ -12227,6 +12230,483 @@ def page_source_queue():
                         st.rerun()
 
     st.caption(f"Queue DB: `{db_path}`")
+
+
+# ---------------------------------------------------------------------------
+# Offload Packages — Mac Studio offload lifecycle UX
+# ---------------------------------------------------------------------------
+#
+# This page is a researcher-facing front end for the already-built offload
+# pipeline (runner/pipeline/offload.py). It calls the pure pipeline functions
+# directly for export / verify / move / import. It deliberately does NOT launch
+# the Mac Studio worker: the worker must run on the Mac Studio against package
+# files that live on that machine, so this page only displays copy-paste
+# terminal commands for `offload-worker` / `offload-verify` / `offload-import`.
+
+def _offload_root(config) -> Path:
+    """Resolve the offload root (mirrors the CLI default: <exports_dir>/offload)."""
+    return Path(config.exports_dir) / "offload"
+
+
+def _offload_cli_command(verb: str, package_dir) -> list[str]:
+    """Build a copy-paste terminal command for an offload CLI verb.
+
+    Pure string builder — never executed from the app. The worker, in
+    particular, is intentionally only ever shown as text for the researcher to
+    run on the Mac Studio node.
+    """
+    return ["python3", "-m", "runner", verb, str(package_dir)]
+
+
+def _offload_move_targets(state: str) -> list[str]:
+    """Allowed lifecycle targets from ``state`` (sorted), per ALLOWED_TRANSITIONS."""
+    from runner.pipeline.offload import ALLOWED_TRANSITIONS
+
+    return sorted(ALLOWED_TRANSITIONS.get(state, frozenset()))
+
+
+def _offload_browser_move_targets(state: str) -> list[str]:
+    """Lifecycle targets offered as *normal* moves in the browser.
+
+    ``outbox -> imported`` is intentionally excluded here: marking a package
+    imported must only happen as the result of a successful confirmed import in
+    the Import tab (which then calls ``transition_package_state`` itself, like
+    the CLI). Offering it as a plain move would let a researcher mark a package
+    imported without ever running ``offload-import``.
+    """
+    return [t for t in _offload_move_targets(state) if t != "imported"]
+
+
+# Quarantine/retain targets that skip integrity verification on the way in.
+_OFFLOAD_NO_VERIFY_TARGETS = frozenset({"failed", "archive"})
+
+
+def _offload_import_allowed(state: str, dry_run_ok: bool, confirmed: bool) -> bool:
+    """Gate the real import: outbox-only, dry-run succeeded, and confirmed."""
+    return state == "outbox" and bool(dry_run_ok) and bool(confirmed)
+
+
+def _offload_exportable_doc_ids(corpus_dir) -> list[str]:
+    """Corpus doc IDs eligible for offload export.
+
+    A document is eligible only when intake, preprocess metadata, and extracted
+    text are all present — the same minimum ``build_analysis_package`` enforces.
+    Pre-ingest items (e.g. Source Queue URLs) are intentionally excluded.
+    """
+    if not corpus_dir:
+        return []
+    root = Path(corpus_dir)
+    if not root.exists():
+        return []
+    out: list[str] = []
+    for doc_dir in sorted(root.iterdir()):
+        if not doc_dir.is_dir() or doc_dir.name.startswith("."):
+            continue
+        if not (doc_dir / "intake.json").exists():
+            continue
+        if not (doc_dir / "preprocess.json").exists():
+            continue
+        if not ((doc_dir / "extracted.txt").exists() or (doc_dir / "extracted.md").exists()):
+            continue
+        out.append(doc_dir.name)
+    return out
+
+
+def _offload_package_rows(offload_root) -> list[dict]:
+    """Summarise every package across all lifecycle folders.
+
+    Read-only filesystem scan — no network, no models, no mutation. Each row
+    reports folder state, manifest state, folder/manifest consistency, document
+    count, kind, and created_at. A package whose manifest fails to load is still
+    listed with an ``error`` so it is never silently hidden.
+    """
+    from runner.pipeline.offload import (
+        LIFECYCLE_STATES,
+        load_manifest,
+    )
+
+    rows: list[dict] = []
+    root = Path(offload_root)
+    for state in LIFECYCLE_STATES:
+        state_dir = root / state
+        if not state_dir.exists():
+            continue
+        for pkg in sorted(state_dir.iterdir()):
+            if not pkg.is_dir() or pkg.name.startswith("."):
+                continue
+            row = {
+                "package_id": pkg.name,
+                "folder_state": state,
+                "path": str(pkg),
+                "doc_count": None,
+                "created_at": "",
+                "package_kind": "",
+                "manifest_state": "",
+                "consistent": None,
+                "error": "",
+            }
+            try:
+                manifest = load_manifest(pkg)
+                row["doc_count"] = len(manifest.documents)
+                row["created_at"] = manifest.created_at
+                row["package_kind"] = manifest.package_kind
+                row["manifest_state"] = manifest.lifecycle_state
+                row["consistent"] = manifest.lifecycle_state == state
+            except Exception as exc:  # noqa: BLE001 — surfaced, never hidden
+                row["error"] = str(exc)
+            rows.append(row)
+    return rows
+
+
+def _offload_worker_lock_info(offload_root) -> dict | None:
+    """Best-effort read of the Mac Studio worker PID lock, if present.
+
+    Display-only. Never created, cleared, or trusted by this page.
+    """
+    path = Path(offload_root) / ".worker.lock"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"raw": path.read_text(encoding="utf-8", errors="replace")}
+
+
+def _offload_verify_reports(state: str, pkg_dir, corpus_dir) -> list[dict]:
+    """Verify reports to show for a package, in display order.
+
+    Base package verification (``verify_package``) is always included. For
+    ``outbox`` packages the returned **result** package is additionally verified
+    (``verify_result_package``) so a bad ``result_manifest`` / result artifact
+    cannot show "Verified OK" in the browser and then fail at dry-run import.
+    Read-only — no network, no models, no mutation.
+    """
+    from runner.pipeline.offload import verify_package, verify_result_package
+
+    reports: list[dict] = []
+    try:
+        base = verify_package(Path(pkg_dir))
+    except Exception as exc:  # noqa: BLE001 — surfaced, never hidden
+        base = {"ok": False, "package_id": "", "errors": [f"verify_package_raised:{exc}"]}
+    reports.append({"title": "Base package verification", "report": base})
+
+    if state == "outbox":
+        try:
+            result = verify_result_package(Path(pkg_dir), corpus_dir=Path(corpus_dir))
+        except Exception as exc:  # noqa: BLE001
+            result = {"ok": False, "package_id": "", "errors": [f"verify_result_package_raised:{exc}"]}
+        reports.append({"title": "Result package verification", "report": result})
+
+    return reports
+
+
+def _render_offload_commands(pkg_dir: Path) -> None:
+    """Show copy-paste terminal commands for a package (worker is text-only)."""
+    st.caption(
+        "Run these in a terminal **on the Mac Studio** (worker) or locally "
+        "(verify/import). This app never launches the worker."
+    )
+    st.code(shlex.join(_offload_cli_command("offload-worker", pkg_dir)), language="bash")
+    st.code(shlex.join(_offload_cli_command("offload-verify", pkg_dir)), language="bash")
+    st.code(shlex.join(_offload_cli_command("offload-import", pkg_dir)), language="bash")
+
+
+def _render_offload_verify_report(report: dict, *, title: str = "Verification") -> None:
+    """Render a verify report — failures are always shown, never hidden."""
+    if report.get("ok"):
+        st.success(f"{title}: OK — {report.get('package_id', '')}")
+    else:
+        st.error(f"{title}: FAILED — {report.get('package_id', '')}")
+    lifecycle = report.get("lifecycle") or {}
+    if lifecycle and not lifecycle.get("consistent", True):
+        st.warning(
+            "Lifecycle mismatch: folder="
+            f"`{lifecycle.get('folder_state')}` vs manifest="
+            f"`{lifecycle.get('manifest_state')}`. A process may have died mid-move."
+        )
+    errors = report.get("errors") or []
+    missing = report.get("missing_artifacts") or []
+    mismatched = report.get("mismatched_artifacts") or []
+    if errors:
+        st.error("Errors:\n" + "\n".join(f"- {e}" for e in errors))
+    if missing:
+        st.error("Missing artifacts:\n" + "\n".join(f"- {m.get('relative_path')}" for m in missing))
+    if mismatched:
+        st.error("Hash mismatches:\n" + "\n".join(f"- {m.get('relative_path')}" for m in mismatched))
+
+
+def _render_offload_export(config, offload_root: Path) -> None:
+    from runner.pipeline.offload import build_analysis_package
+
+    st.subheader("Export documents to an offload package")
+    st.caption(
+        "Builds a bounded `analysis_package` in `inbox/`. Only documents with "
+        "intake + preprocess + extracted text are eligible; full source "
+        "fetching/OCR/Wayback stays on the MacBook."
+    )
+    eligible = _offload_exportable_doc_ids(config.corpus_dir)
+    if not eligible:
+        st.info("No export-eligible documents found (need intake, preprocess, and extracted text).")
+        return
+
+    selected = st.multiselect(
+        "Documents to package",
+        options=eligible,
+        key="offload_export_docs",
+        help="Each selected document is copied into a new inbox package.",
+    )
+    package_id = st.text_input(
+        "Package ID (optional)",
+        key="offload_export_pkgid",
+        placeholder="auto-generated if blank (offload-<timestamp>-<rand>)",
+    ).strip()
+
+    if st.button("Build offload package", disabled=not selected, key="offload_export_build"):
+        try:
+            manifest = build_analysis_package(
+                corpus_dir=Path(config.corpus_dir),
+                doc_ids=selected,
+                offload_root=offload_root,
+                package_id=package_id or None,
+            )
+        except Exception as exc:  # noqa: BLE001 — refusal reasons shown verbatim
+            st.error(f"Export refused — nothing was written:\n\n{exc}")
+            return
+        st.success(
+            f"Created package `{manifest.package_id}` "
+            f"({len(manifest.documents)} document(s)) in inbox."
+        )
+        not_ready = [d.doc_id for d in manifest.documents if not d.ready_for_worker]
+        if not_ready:
+            st.warning(
+                "Some packaged documents are not marked worker-ready: "
+                + ", ".join(not_ready)
+            )
+        pkg_dir = offload_root / "inbox" / manifest.package_id
+        st.caption(f"Package path: `{pkg_dir}`")
+        _render_offload_commands(pkg_dir)
+
+
+def _render_offload_browser(config, offload_root: Path) -> None:
+    from runner.pipeline.offload import transition_package_state
+
+    st.subheader("Lifecycle browser")
+    rows = _offload_package_rows(offload_root)
+    if not rows:
+        st.info(f"No packages under `{offload_root}`.")
+        return
+
+    by_state: dict[str, list[dict]] = {}
+    for row in rows:
+        by_state.setdefault(row["folder_state"], []).append(row)
+
+    from runner.pipeline.offload import LIFECYCLE_STATES
+
+    for state in LIFECYCLE_STATES:
+        state_rows = by_state.get(state)
+        if not state_rows:
+            continue
+        st.markdown(f"#### `{state}` ({len(state_rows)})")
+        for row in state_rows:
+            pkg_id = row["package_id"]
+            pkg_dir = Path(row["path"])
+            title = f"{pkg_id}"
+            if row["doc_count"] is not None:
+                title += f" · {row['doc_count']} doc(s)"
+            if row["created_at"]:
+                title += f" · {row['created_at']}"
+            with st.expander(title, expanded=False):
+                if row["error"]:
+                    st.error(f"Manifest could not be loaded: {row['error']}")
+                if row["consistent"] is False:
+                    st.warning(
+                        "Folder/manifest lifecycle mismatch: folder="
+                        f"`{row['folder_state']}` vs manifest=`{row['manifest_state']}`."
+                    )
+                st.caption(f"Path: `{pkg_dir}`")
+
+                # Verify (read-only). For outbox packages this shows BOTH base
+                # package verification and result package verification, so a bad
+                # returned result cannot show "Verified OK" here and then fail at
+                # dry-run import.
+                if st.button("Verify", key=f"offload_verify_{state}_{pkg_id}"):
+                    for item in _offload_verify_reports(
+                        state, pkg_dir, Path(config.corpus_dir)
+                    ):
+                        _render_offload_verify_report(
+                            item["report"], title=item["title"]
+                        )
+
+                # Move / quarantine. `outbox -> imported` is intentionally not
+                # offered here; it happens only via a confirmed import.
+                targets = _offload_browser_move_targets(state)
+                if targets:
+                    target = st.selectbox(
+                        "Move to",
+                        options=targets,
+                        key=f"offload_move_target_{state}_{pkg_id}",
+                    )
+                    ack = True
+                    if target in _OFFLOAD_NO_VERIFY_TARGETS:
+                        ack = st.checkbox(
+                            f"I understand moving to `{target}` skips integrity verification.",
+                            key=f"offload_move_ack_{state}_{pkg_id}",
+                        )
+                    if st.button(
+                        f"Move to {target}",
+                        key=f"offload_move_btn_{state}_{pkg_id}",
+                        disabled=not ack,
+                    ):
+                        try:
+                            transition_package_state(
+                                offload_root=offload_root,
+                                package_id=pkg_id,
+                                from_state=state,
+                                to_state=target,
+                            )
+                        except Exception as exc:  # noqa: BLE001 — refusal shown verbatim
+                            st.error(f"Move refused:\n\n{exc}")
+                        else:
+                            st.success(f"Moved `{pkg_id}`: {state} → {target}")
+                            st.rerun()
+                else:
+                    st.caption("Terminal state — no further moves.")
+
+                _render_offload_commands(pkg_dir)
+
+
+def _render_offload_import(config, offload_root: Path) -> None:
+    from runner.pipeline.offload import import_result_package, transition_package_state
+
+    st.subheader("Import returned results")
+    st.caption(
+        "Imports a worker-returned package's outputs into the live corpus. "
+        "Import is offered **only** for `outbox` packages, requires a successful "
+        "dry-run, and an explicit confirmation. Existing files are backed up; "
+        "nothing is deleted."
+    )
+    outbox_dir = offload_root / "outbox"
+    pkg_dirs = (
+        [p for p in sorted(outbox_dir.iterdir()) if p.is_dir() and not p.name.startswith(".")]
+        if outbox_dir.exists()
+        else []
+    )
+    if not pkg_dirs:
+        st.info("No packages in `outbox/` to import.")
+        return
+
+    pkg_names = [p.name for p in pkg_dirs]
+    chosen = st.selectbox("Outbox package", options=pkg_names, key="offload_import_pkg")
+    pkg_dir = outbox_dir / chosen
+
+    dryrun_key = f"offload_dryrun_ok::{chosen}"
+
+    if st.button("Dry-run import (preview)", key=f"offload_dryrun_{chosen}"):
+        try:
+            summary = import_result_package(
+                pkg_dir, corpus_dir=Path(config.corpus_dir), dry_run=True
+            )
+        except Exception as exc:  # noqa: BLE001
+            st.session_state[dryrun_key] = False
+            st.error(f"Dry-run failed: {exc}")
+        else:
+            st.session_state[dryrun_key] = bool(summary.get("ok"))
+            if summary.get("ok"):
+                st.success("Dry-run OK — import would proceed. Review below, then confirm.")
+                docs = summary.get("documents") or []
+                if docs:
+                    st.write(docs)
+            else:
+                st.error(
+                    "Dry-run FAILED — corpus untouched:\n"
+                    + "\n".join(f"- {e}" for e in (summary.get("errors") or []))
+                )
+
+    dry_run_ok = bool(st.session_state.get(dryrun_key))
+    if dry_run_ok:
+        st.info("Dry-run succeeded for this package in this session.")
+    confirmed = st.checkbox(
+        "I have reviewed the dry-run and confirm importing into the live corpus.",
+        key=f"offload_import_confirm_{chosen}",
+        disabled=not dry_run_ok,
+    )
+
+    can_import = _offload_import_allowed("outbox", dry_run_ok, confirmed)
+    if st.button("Import into corpus", key=f"offload_import_go_{chosen}", disabled=not can_import):
+        try:
+            summary = import_result_package(
+                pkg_dir, corpus_dir=Path(config.corpus_dir), dry_run=False
+            )
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Import failed — corpus may be partially untouched: {exc}")
+            return
+        if summary.get("imported"):
+            st.session_state.pop(dryrun_key, None)
+            # Mark the package imported (outbox -> imported), mirroring the CLI.
+            # verify=False: the corpus write already succeeded; the move must not
+            # be blocked by a re-verification at this point.
+            moved = False
+            try:
+                transition_package_state(
+                    offload_root=offload_root,
+                    package_id=chosen,
+                    from_state="outbox",
+                    to_state="imported",
+                    verify=False,
+                )
+                moved = True
+            except Exception as exc:  # noqa: BLE001
+                st.warning(
+                    "Imported into corpus, but package could not be marked "
+                    f"imported; resolve manually.\n\n{exc}"
+                )
+            else:
+                st.success(
+                    f"Imported `{summary.get('package_id', chosen)}` into the corpus "
+                    "and moved the package to `imported/`."
+                )
+            final_dir = (offload_root / "imported" / chosen) if moved else pkg_dir
+            _render_offload_commands(final_dir)
+        else:
+            st.error(
+                "Import did not complete — corpus left untouched:\n"
+                + "\n".join(f"- {e}" for e in (summary.get("errors") or []))
+            )
+
+
+def page_offload_packages():
+    st.title("📦 Offload Packages")
+    st.caption(
+        "Bounded Mac Studio offload packages — export selected docs, browse the "
+        "lifecycle, verify, move/quarantine, and import returned results. "
+        "The worker runs on the Mac Studio; this page never launches it."
+    )
+
+    config = _load_config_safe()
+    if config is None:
+        st.error("Config unavailable — check runner/.env.")
+        return
+
+    offload_root = _offload_root(config)
+    st.caption(f"Offload root: `{offload_root}`")
+
+    lock_info = _offload_worker_lock_info(offload_root)
+    if lock_info:
+        st.warning(
+            "A worker lock is present at `.worker.lock` "
+            f"(pid {lock_info.get('pid', '?')}, started {lock_info.get('started_at', '?')}). "
+            "A worker may be running on the Mac Studio node."
+        )
+
+    tab_export, tab_browse, tab_import = st.tabs(
+        ["Export", "Lifecycle browser", "Import results"]
+    )
+    with tab_export:
+        _render_offload_export(config, offload_root)
+    with tab_browse:
+        _render_offload_browser(config, offload_root)
+    with tab_import:
+        _render_offload_import(config, offload_root)
 
 
 # ---------------------------------------------------------------------------

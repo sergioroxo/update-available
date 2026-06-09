@@ -1,8 +1,10 @@
 # Offload Package Workflow
 
 Status: foundation + `offload-export` / `offload-verify` / `offload-move` /
-`offload-import` / `offload-worker` CLI implemented; the Streamlit UX is still
-pending.
+`offload-import` / `offload-worker` CLI implemented, plus a Streamlit
+**Offload Packages** page for export / lifecycle browsing / verify /
+move-quarantine / dry-run + confirmed import. The Streamlit page does **not**
+launch the worker (see "Streamlit Offload Packages page" below).
 
 This workflow is for overnight or long-running Mac Studio model work without
 syncing the live MacBook corpus or `source_queue.db`.
@@ -276,14 +278,44 @@ Lexicon context is best-effort: analyze/enrich read Sanity for lexicon when
 available and fall back to seed/legacy memory otherwise, so the worker runs even
 with Sanity unreachable. (A package-carried lexicon snapshot is future work.)
 
+## Streamlit Offload Packages page
+
+A researcher-facing **Offload Packages** page (`runner/app.py`,
+`page_offload_packages`) front-ends the offload pipeline. It calls the pure
+pipeline functions directly — `build_analysis_package`, `verify_package`,
+`transition_package_state`, `import_result_package` — and is organised in three
+tabs:
+
+- **Export** — select corpus documents that already have intake + preprocess +
+  extracted text (pre-ingest items are excluded) and build an `inbox` package.
+  Refusals are shown verbatim; nothing partial is written.
+- **Lifecycle browser** — list every package grouped by folder state, flag any
+  folder/manifest lifecycle mismatch, run a read-only **Verify** (failures are
+  always shown, never hidden), and **Move/quarantine** using only the
+  `ALLOWED_TRANSITIONS` targets. Moves into `failed` / `archive` require an
+  explicit "skips verification" acknowledgement.
+- **Import results** — offered **only** for `outbox` packages. The real import
+  button stays disabled until a **dry-run** has succeeded for that package and a
+  confirmation checkbox is ticked. Import reuses `import_result_package`
+  (validate-all-before-copy, `.preimport-<ts>` backups, provenance sidecar).
+
+**The page never launches the worker.** The worker must run on the Mac Studio
+against package files that exist on that machine; launching it from a MacBook
+Streamlit session could load heavy models locally or point at a path that does
+not exist on the node. Instead the page **displays copy-paste terminal
+commands** for `offload-worker`, `offload-verify`, and `offload-import`. The
+page also shows (read-only) the Mac Studio `.worker.lock` if present, but never
+creates or clears it. No auto-delete anywhere.
+
 ## Next Implementation Slice
 
 Still pending:
 
-- Streamlit Source Queue UX to export checked batch rows, move package state, run
-  the worker, and import results.
+- Remote worker execution: only after an explicit package transfer / shared
+  folder story exists, so a "run worker" control cannot point at a path that is
+  absent on the Mac Studio node or load heavy models on the wrong machine.
 - Optional: a `--claim-next` worker mode that pulls the oldest inbox package
   (after the explicit-path flow is proven).
 
-Streamlit UX is intentionally **not** built yet, and the worker has **no**
-daemon/background-service mode — it is an explicit one-package CLI command.
+The worker has **no** daemon/background-service mode — it remains an explicit
+one-package CLI command, run on the Mac Studio.
