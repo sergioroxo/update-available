@@ -482,14 +482,48 @@ rolling back the corpus (the corpus import is the source of truth). No
 auto-delete; no Sanity/Supabase upload (that remains a separate researcher-gated
 step).
 
+## Streamlit Source Offload page (S4)
+
+A dedicated **Source Offload** page (`runner/app.py`, `page_source_offload`) —
+placed right after **Source Queue** and kept deliberately separate from the
+result-stage **Offload Packages** page (both carry a one-line disambiguation
+banner). It drives the source-stage pipeline via four tabs:
+
+- **Export** — pick eligible Source Queue items (status new / triaged /
+  ready_to_ingest; `ingested` / `skipped` excluded) plus optional ad-hoc
+  files/URLs, and build a `source_package` in `inbox/`. Review-flagged items
+  (testimony/legal/media/book) are shown but **not pre-selected** and require an
+  explicit acknowledgement to include. Export never mutates the queue.
+- **Lifecycle browser** — packages grouped by lifecycle folder, with
+  folder/manifest consistency, read-only verify (`verify_source_package` for
+  inbox, `verify_source_inputs` for packages that already carry `docs/`), a
+  first-class **failed → inbox retry**, and constrained move/quarantine
+  (`move_source_package_state`; `outbox → imported` is never offered here).
+- **Transfer & worker** — copy-paste `rsync` up / `source-worker` / `rsync` back
+  commands for a selected package, filled from `MAC_STUDIO_SSH_HOST` /
+  `MAC_STUDIO_OFFLOAD_ROOT` / `MAC_STUDIO_PYTHON` (placeholders shown if unset).
+  MacBook-local commands (verify/import) use the app's own venv interpreter
+  (`sys.executable`); the Mac Studio worker command uses `MAC_STUDIO_PYTHON`
+  (the node's repo venv) — never bare `python3`, so a pasted command can't fail
+  on missing dependencies. **The app never SSHes, rsyncs, or launches the
+  worker.**
+- **Import results** — detect returned `ingest_result` outbox packages, run a
+  **dry-run** (`import_ingest_result(dry_run=True)`), and only after it passes +
+  an explicit confirmation enable the real import. A **force** checkbox overrides
+  the reviewed-doc guard (backed up first). After a successful corpus import the
+  source queue is relinked (`mark_ingested`, preferring `queue_item_id` then
+  `url_hash`) and the package is moved `outbox → imported`.
+
+No Sanity/Supabase upload, no auto-delete, no queue write before corpus success.
+
 ## Next Implementation Slice
 
 Still pending:
 
-- **S4 — Streamlit source UX** (export/lifecycle/verify/move/import; worker
-  display-only, like the result UX).
 - Result-stage remote worker execution and an optional `--claim-next` mode
   remain deferred until an explicit package-transfer story exists.
+- Automated (non-copy-paste) transfer — only after an agreed secure transport;
+  the app currently shows commands and never runs SSH/rsync itself.
 
 The worker has **no** daemon/background-service mode — it remains an explicit
 one-package CLI command, run on the Mac Studio.

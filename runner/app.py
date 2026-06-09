@@ -82,6 +82,7 @@ def main():
         "Review Inbox",
         "Corpus Intelligence",
         "Source Queue",
+        "Source Offload",
         "Ingest Workbench",
         "Document List",
         "Pending Upload",
@@ -129,6 +130,8 @@ def main():
         page_corpus_intelligence()
     elif page == "Source Queue":
         page_source_queue()
+    elif page == "Source Offload":
+        page_source_offload()
     elif page == "Ingest Workbench":
         page_ingest_workbench()
     elif page == "Document List":
@@ -12677,8 +12680,10 @@ def _render_offload_import(config, offload_root: Path) -> None:
 def page_offload_packages():
     st.title("📦 Offload Packages")
     st.caption(
-        "Bounded Mac Studio offload packages — export selected docs, browse the "
-        "lifecycle, verify, move/quarantine, and import returned results. "
+        "**Result-stage offload: for documents already ingested into the corpus** "
+        "(intake + extracted text present) — the Mac Studio re-runs "
+        "analysis/enrichment/embedding. For queue items / sources **not yet "
+        "ingested**, use **📤 Source Offload** instead. "
         "The worker runs on the Mac Studio; this page never launches it."
     )
 
@@ -12707,6 +12712,633 @@ def page_offload_packages():
         _render_offload_browser(config, offload_root)
     with tab_import:
         _render_offload_import(config, offload_root)
+
+
+# ---------------------------------------------------------------------------
+# Source Offload — Mac Studio source-stage lifecycle UX (Slice S4)
+# ---------------------------------------------------------------------------
+#
+# This page is the front end for the SOURCE-stage offload pipeline
+# (runner/pipeline/offload_source.py + source_worker.py). It is deliberately
+# separate from the result-stage "Offload Packages" page:
+#   - Source Offload  → queue items / files / URLs NOT yet ingested; the Mac
+#     Studio runs the full pipeline (intake → … → embedding) and returns docs.
+#   - Offload Packages → already-ingested corpus docs; the Mac Studio re-runs
+#     analysis/enrichment/embedding only.
+# The app never SSHes, rsyncs, or launches the worker — it shows copy-paste
+# commands only. Import is gated on a passing dry-run + explicit confirmation,
+# and the source queue is relinked only after a successful corpus import.
+
+_SOURCE_OFFLOAD_ELIGIBLE_STATUSES = frozenset({"new", "triaged", "ready_to_ingest"})
+_SOURCE_REVIEW_FLAGS = (
+    "needs_testimony_review", "needs_legal_review",
+    "needs_media_review", "needs_book_splitting",
+)
+_SOURCE_NO_VERIFY_TARGETS = frozenset({"failed", "archive"})
+
+
+def _source_offload_root(config) -> Path:
+    """Resolve the SOURCE offload root (CLI default: <exports_dir>/source_offload)."""
+    return Path(config.exports_dir) / "source_offload"
+
+
+def _source_cli_command(verb: str, *args) -> list[str]:
+    """Build a copy-paste terminal command for a MacBook-local source-offload verb.
+
+    Pure string builder — never executed from the app. Uses ``sys.executable`` so
+    the shown command runs under the same (venv) Python as the app, avoiding
+    bare-``python3`` paste failures from missing dependencies. The Mac Studio
+    worker command is built separately (see ``_mac_studio_python``).
+    """
+    return [sys.executable, "-m", "runner", verb, *[str(a) for a in args]]
+
+
+def _mac_studio_python() -> str:
+    """Python interpreter to show in the Mac Studio worker command.
+
+    Reads ``MAC_STUDIO_PYTHON``; defaults to a visible placeholder (the node's
+    repo venv), never bare ``python3``, so a pasted command can't silently use a
+    dependency-less interpreter.
+    """
+    return os.getenv("MAC_STUDIO_PYTHON", "").strip() or "<MAC_STUDIO_REPO>/.venv/bin/python"
+
+
+def _source_move_targets(state: str) -> list[str]:
+    from runner.pipeline.offload import ALLOWED_TRANSITIONS
+
+    return sorted(ALLOWED_TRANSITIONS.get(state, frozenset()))
+
+
+def _source_browser_move_targets(state: str) -> list[str]:
+    """Normal browser move targets. ``outbox -> imported`` is excluded — that
+    transition only happens via a confirmed import in the Import tab."""
+    return [t for t in _source_move_targets(state) if t != "imported"]
+
+
+def _source_import_allowed(state: str, dry_run_ok: bool, confirmed: bool) -> bool:
+    """Gate the real source import: outbox-only, dry-run passed, and confirmed."""
+    return state == "outbox" and bool(dry_run_ok) and bool(confirmed)
+
+
+def _source_offload_eligible_items(db) -> list[dict]:
+    """Source Queue items eligible for source offload (not yet ingested).
+
+    Eligible statuses are new / triaged / ready_to_ingest; ingested / skipped are
+    excluded. Each row surfaces special-review flags + ``exclusion_reason`` so the
+    researcher sees testimony/legal/media/book holds before exporting.
+    """
+    from runner.pipeline.source_queue import list_items, exclusion_reason
+
+    out: list[dict] = []
+    for item in list_items(db, limit=1000):
+        if item.status not in _SOURCE_OFFLOAD_ELIGIBLE_STATUSES:
+            continue
+        flags = [f for f in _SOURCE_REVIEW_FLAGS if getattr(item, f, False)]
+        out.append({
+            "id": item.id, "url": item.url, "title": item.title,
+            "status": item.status, "priority": item.priority,
+            "source_type": item.source_type, "flags": flags,
+            "flagged": bool(flags), "exclusion_reason": exclusion_reason(item),
+            "corpus_doc_id": item.corpus_doc_id,
+        })
+    return out
+
+
+def _source_specs_from_queue_items(items) -> list:
+    """Map QueueItem objects to SourceItemSpec(url) — mirrors the export CLI."""
+    from runner.pipeline import intake as intake_mod
+    from runner.pipeline.offload_source import SourceItemSpec
+
+    specs = []
+    for item in items:
+        specs.append(SourceItemSpec(
+            source_kind="url",
+            declared_source_type=intake_mod._detect_source_type(item.url),
+            url=item.url, queue_item_id=item.id, url_hash=item.url_hash,
+            title=item.title, notes=item.notes, priority=item.priority,
+            recommended_llm=item.recommended_llm,
+            overnight_batch_safe=item.overnight_batch_safe,
+            tags=item.tags, doc_type_hint=item.doc_type_hint,
+            suggested_process_route=item.suggested_process_route,
+        ))
+    return specs
+
+
+def _source_package_rows(source_offload_root) -> list[dict]:
+    """Summarise every source package across lifecycle folders (read-only).
+
+    A package whose manifest fails to load is still listed with an ``error`` so it
+    is never silently hidden. ``has_result_manifest`` flags a returned package.
+    """
+    from runner.pipeline.offload import LIFECYCLE_STATES
+    from runner.pipeline.offload_source import (
+        INGEST_RESULT_MANIFEST_NAME, load_source_manifest,
+    )
+
+    rows: list[dict] = []
+    root = Path(source_offload_root)
+    for state in LIFECYCLE_STATES:
+        state_dir = root / state
+        if not state_dir.exists():
+            continue
+        for pkg in sorted(state_dir.iterdir()):
+            if not pkg.is_dir() or pkg.name.startswith("."):
+                continue
+            row = {
+                "package_id": pkg.name, "folder_state": state, "path": str(pkg),
+                "item_count": None, "created_at": "", "package_kind": "",
+                "manifest_state": "", "consistent": None,
+                "has_result_manifest": (pkg / INGEST_RESULT_MANIFEST_NAME).is_file(),
+                "error": "",
+            }
+            try:
+                manifest = load_source_manifest(pkg)
+                row["item_count"] = len(manifest.items)
+                row["created_at"] = manifest.created_at
+                row["package_kind"] = manifest.package_kind
+                row["manifest_state"] = manifest.lifecycle_state
+                row["consistent"] = manifest.lifecycle_state == state
+            except Exception as exc:  # noqa: BLE001 — surfaced, never hidden
+                row["error"] = str(exc)
+            rows.append(row)
+    return rows
+
+
+def _mac_studio_transfer_target(config=None) -> tuple[str, str]:
+    """(ssh_host, remote_root) for transfer commands, from env with placeholders."""
+    host = os.getenv("MAC_STUDIO_SSH_HOST", "").strip() or "<MAC_STUDIO_HOST>"
+    root = os.getenv("MAC_STUDIO_OFFLOAD_ROOT", "").strip() or "/Users/cdn-ai/sogice-offload"
+    return host, root
+
+
+def _source_offload_transfer_commands(
+    pkg_dir, ssh_host: str, remote_root: str,
+    mac_python: str = "<MAC_STUDIO_REPO>/.venv/bin/python",
+) -> dict:
+    """Build copy-paste rsync-up / source-worker / rsync-back commands (pure).
+
+    Never executed — the app only displays these for the researcher to run. The
+    worker line uses ``mac_python`` (the Mac Studio repo venv), never bare
+    ``python3``.
+    """
+    pkg = Path(pkg_dir)
+    pkg_id = pkg.name
+    local_root = pkg.parent.parent  # …/source_offload
+    remote_root = remote_root.rstrip("/")
+    remote_inbox = f"{remote_root}/inbox/{pkg_id}"
+    remote_outbox = f"{remote_root}/outbox/{pkg_id}"
+    return {
+        "rsync_up": (
+            f"rsync -avz --chmod=D700,F600 {shlex.quote(str(local_root / 'inbox' / pkg_id))} "
+            f"{ssh_host}:{remote_root}/inbox/"
+        ),
+        "worker": f"{mac_python} -m runner source-worker {remote_inbox}",
+        "rsync_back": (
+            f"rsync -avz --chmod=D700,F600 {ssh_host}:{remote_outbox} "
+            f"{shlex.quote(str(local_root / 'outbox'))}/"
+        ),
+    }
+
+
+def _source_import_relink_preview(pkg_dir) -> list[dict]:
+    """Queue-linkage preview for a returned package (read-only; no DB)."""
+    from runner.pipeline.offload_source import ingest_result_linkages
+
+    try:
+        return ingest_result_linkages(Path(pkg_dir))
+    except Exception:  # noqa: BLE001
+        return []
+
+
+# ── Render helpers ─────────────────────────────────────────────────────────
+
+def _render_source_local_commands(pkg_dir) -> None:
+    st.caption("Local commands (verify / import on the MacBook):")
+    st.code(shlex.join(_source_cli_command("source-offload-verify", pkg_dir)), language="bash")
+    st.code(shlex.join(_source_cli_command("source-offload-import", pkg_dir)), language="bash")
+
+
+def _render_source_import_errors(summary: dict) -> None:
+    if summary.get("reviewed_blocked"):
+        st.error(
+            "Refused — researcher-reviewed/edited corpus docs: "
+            + ", ".join(summary["reviewed_blocked"])
+            + ". Tick **Force overwrite** to override (existing files are backed up)."
+        )
+    errs = [e for e in (summary.get("errors") or []) if not e.startswith("reviewed_doc_blocked")]
+    if errs:
+        st.error("Import refused — corpus untouched:\n" + "\n".join(f"- {e}" for e in errs))
+
+
+def _render_source_export(config, root: Path) -> None:
+    from runner.pipeline.offload_source import build_source_package, verify_source_package
+
+    st.subheader("Export queued/source items to a source package")
+    st.caption(
+        "For Source Queue items (and ad-hoc files/URLs) that have **not** been "
+        "ingested yet. Builds a `source_package` in `inbox/`; the Mac Studio "
+        "fetches + analyzes them later. The queue is not modified by export."
+    )
+
+    eligible: list[dict] = []
+    try:
+        from runner.pipeline.source_queue import open_db, queue_db_path
+        db = open_db(queue_db_path(config.corpus_dir))
+        try:
+            eligible = _source_offload_eligible_items(db)
+        finally:
+            db.close()
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Source queue unavailable: {exc}")
+
+    safe_items = [e for e in eligible if not e["flagged"]]
+    flagged_items = [e for e in eligible if e["flagged"]]
+
+    def _label(e: dict) -> str:
+        return f"{e['id']} · {e['status']} · {e['priority']} · {e['url'][:60]}"
+
+    chosen_ids: list[str] = []
+    if safe_items:
+        chosen_ids += st.multiselect(
+            "Eligible queue items (not yet ingested)",
+            options=[e["id"] for e in safe_items],
+            format_func=lambda i: _label(next(e for e in safe_items if e["id"] == i)),
+            key="src_export_items",
+        )
+    else:
+        st.info("No unflagged eligible queue items (need status new / triaged / ready_to_ingest).")
+
+    if flagged_items:
+        with st.expander(f"⚠ Review-flagged items ({len(flagged_items)}) — extra care"):
+            st.caption(
+                "These carry testimony / legal / media / book-split flags. Include "
+                "only after reviewing the special-handling requirement."
+            )
+            ack = st.checkbox(
+                "I have reviewed these special-handling flags and want to include selected flagged items.",
+                key="src_export_flag_ack",
+            )
+            fsel = st.multiselect(
+                "Flagged items",
+                options=[e["id"] for e in flagged_items],
+                format_func=lambda i: _label(next(e for e in flagged_items if e["id"] == i))
+                + " · ⚠ " + ",".join(next(e for e in flagged_items if e["id"] == i)["flags"]),
+                key="src_export_flagged", disabled=not ack,
+            )
+            if ack:
+                chosen_ids += fsel
+
+    urls_text = st.text_area("Ad-hoc URLs (one per line, optional)", key="src_export_urls")
+    files_text = st.text_area("Local file paths (one per line, optional)", key="src_export_files")
+    package_id = st.text_input(
+        "Package ID (optional)", key="src_export_pkgid",
+        placeholder="auto-generated if blank",
+    ).strip()
+
+    url_list = [x.strip() for x in urls_text.splitlines() if x.strip()]
+    file_list = [x.strip() for x in files_text.splitlines() if x.strip()]
+    has_input = bool(chosen_ids or url_list or file_list)
+
+    if st.button("Build source package", disabled=not has_input, key="src_export_build"):
+        from runner.pipeline import intake as intake_mod
+        from runner.pipeline.offload_source import SourceItemSpec
+
+        specs = []
+        if chosen_ids:
+            try:
+                from runner.pipeline.source_queue import open_db, queue_db_path, get_item
+                db = open_db(queue_db_path(config.corpus_dir))
+                try:
+                    qitems = [q for q in (get_item(db, i) for i in chosen_ids) if q is not None]
+                finally:
+                    db.close()
+                specs += _source_specs_from_queue_items(qitems)
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"Queue read failed: {exc}")
+                return
+        for u in url_list:
+            specs.append(SourceItemSpec(
+                source_kind="url", declared_source_type=intake_mod._detect_source_type(u), url=u,
+            ))
+        for f in file_list:
+            specs.append(SourceItemSpec(
+                source_kind="file", declared_source_type=intake_mod._detect_source_type(f), file_path=f,
+            ))
+
+        try:
+            manifest = build_source_package(
+                specs=specs, source_offload_root=root, package_id=package_id or None,
+            )
+        except Exception as exc:  # noqa: BLE001 — refusal reasons shown verbatim
+            st.error(f"Export refused — nothing was written:\n\n{exc}")
+            return
+
+        st.success(f"Created `{manifest.package_id}` ({len(manifest.items)} item(s)) in inbox.")
+        pkg_dir = root / "inbox" / manifest.package_id
+        st.caption(f"Package path: `{pkg_dir}`")
+        _render_offload_verify_report(verify_source_package(pkg_dir), title="Source package verification")
+        host, rroot = _mac_studio_transfer_target(config)
+        st.caption("Next — transfer to the Mac Studio (copy-paste; the app does not run it):")
+        st.code(
+            _source_offload_transfer_commands(pkg_dir, host, rroot, _mac_studio_python())["rsync_up"],
+            language="bash",
+        )
+
+
+def _render_source_browser(config, root: Path) -> None:
+    from runner.pipeline.offload import LIFECYCLE_STATES
+    from runner.pipeline.offload_source import (
+        move_source_package_state, verify_source_inputs, verify_source_package,
+    )
+
+    st.subheader("Lifecycle browser")
+    rows = _source_package_rows(root)
+    if not rows:
+        st.info(f"No source packages under `{root}`.")
+        return
+
+    by_state: dict[str, list[dict]] = {}
+    for row in rows:
+        by_state.setdefault(row["folder_state"], []).append(row)
+
+    for state in LIFECYCLE_STATES:
+        state_rows = by_state.get(state)
+        if not state_rows:
+            continue
+        st.markdown(f"#### `{state}` ({len(state_rows)})")
+        for row in state_rows:
+            pkg_id = row["package_id"]
+            pkg_dir = Path(row["path"])
+            title = pkg_id
+            if row["item_count"] is not None:
+                title += f" · {row['item_count']} item(s)"
+            if row["has_result_manifest"]:
+                title += " · ✓ result"
+            if row["created_at"]:
+                title += f" · {row['created_at']}"
+            with st.expander(title):
+                if row["error"]:
+                    st.error(f"Manifest could not be loaded: {row['error']}")
+                if row["consistent"] is False:
+                    st.warning(
+                        "Folder/manifest lifecycle mismatch: folder="
+                        f"`{row['folder_state']}` vs manifest=`{row['manifest_state']}`."
+                    )
+                st.caption(f"Path: `{pkg_dir}`")
+
+                if st.button("Verify", key=f"src_verify_{state}_{pkg_id}"):
+                    if state in ("processing", "outbox", "imported"):
+                        # Worker outputs (docs/) may be present — tolerate them.
+                        _render_offload_verify_report(
+                            verify_source_inputs(pkg_dir), title="Source inputs verification"
+                        )
+                    else:
+                        _render_offload_verify_report(
+                            verify_source_package(pkg_dir), title="Source package verification"
+                        )
+
+                if state == "failed":
+                    if st.button("↻ Retry: move failed → inbox", key=f"src_retry_{pkg_id}"):
+                        try:
+                            move_source_package_state(
+                                offload_root=root, package_id=pkg_id,
+                                from_state="failed", to_state="inbox",
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            st.error(f"Move refused:\n\n{exc}")
+                        else:
+                            st.success(f"Moved `{pkg_id}` failed → inbox. Re-transfer and re-run the worker.")
+                            st.rerun()
+
+                targets = _source_browser_move_targets(state)
+                if targets:
+                    tgt = st.selectbox("Move to", options=targets, key=f"src_movetgt_{state}_{pkg_id}")
+                    ack = True
+                    if tgt in _SOURCE_NO_VERIFY_TARGETS:
+                        ack = st.checkbox(
+                            f"I understand moving to `{tgt}` skips verification.",
+                            key=f"src_moveack_{state}_{pkg_id}",
+                        )
+                    if st.button(f"Move to {tgt}", key=f"src_movebtn_{state}_{pkg_id}", disabled=not ack):
+                        try:
+                            move_source_package_state(
+                                offload_root=root, package_id=pkg_id,
+                                from_state=state, to_state=tgt,
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            st.error(f"Move refused:\n\n{exc}")
+                        else:
+                            st.success(f"Moved `{pkg_id}`: {state} → {tgt}")
+                            st.rerun()
+                else:
+                    st.caption("Terminal state — no further moves.")
+
+                _render_source_local_commands(pkg_dir)
+
+
+def _render_source_transfer(config, root: Path) -> None:
+    st.subheader("Transfer & worker commands")
+    host, rroot = _mac_studio_transfer_target(config)
+    if host == "<MAC_STUDIO_HOST>":
+        st.warning(
+            "`MAC_STUDIO_SSH_HOST` is not set — the host below is a placeholder. "
+            "Set `MAC_STUDIO_SSH_HOST` (and optionally `MAC_STUDIO_OFFLOAD_ROOT`) "
+            "in `runner/.env` for ready-to-run commands."
+        )
+    mac_python = _mac_studio_python()
+    if mac_python.startswith("<"):
+        st.warning(
+            "`MAC_STUDIO_PYTHON` is not set — the worker command below shows a "
+            "placeholder interpreter. Set it to the Mac Studio repo venv "
+            "(e.g. `/Users/cdn-ai/surviving-sogice-ingest/.venv/bin/python`) so "
+            "the pasted command uses the right dependencies."
+        )
+    st.caption(f"Mac Studio: `{host}`  ·  remote root: `{rroot}`  ·  python: `{mac_python}`")
+
+    rows = _source_package_rows(root)
+    pkgs = sorted({r["package_id"] for r in rows})
+    if not pkgs:
+        st.info("No source packages yet — build one in the **Export** tab.")
+        return
+    chosen = st.selectbox("Package", options=pkgs, key="src_transfer_pkg")
+    row = next((r for r in rows if r["package_id"] == chosen), None)
+    pkg_dir = Path(row["path"]) if row else (root / "inbox" / chosen)
+    cmds = _source_offload_transfer_commands(pkg_dir, host, rroot, mac_python)
+
+    st.caption("The app never SSHes/rsyncs or launches the worker — copy-paste these in a terminal.")
+    st.markdown("**1) Transfer the package to the Mac Studio:**")
+    st.code(cmds["rsync_up"], language="bash")
+    st.markdown("**2) Run the worker ON the Mac Studio:**")
+    st.code(cmds["worker"], language="bash")
+    st.markdown("**3) After it finishes, transfer the returned package back:**")
+    st.code(cmds["rsync_back"], language="bash")
+    st.caption("Then import it from the **Import results** tab.")
+
+
+def _source_relink_queue(config, pkg_dir) -> None:
+    """Relink source-queue rows after a successful corpus import (a queue write)."""
+    try:
+        from runner.pipeline.source_queue import open_db, queue_db_path, mark_ingested
+        db = open_db(queue_db_path(config.corpus_dir))
+        try:
+            for link in _source_import_relink_preview(pkg_dir):
+                doc_id = link.get("doc_id", "")
+                item_id = link.get("queue_item_id", "")
+                via = "queue_item_id"
+                if not item_id and link.get("url_hash"):
+                    r = db.execute(
+                        "SELECT id FROM source_queue WHERE url_hash = ?", (link["url_hash"],)
+                    ).fetchone()
+                    if r:
+                        item_id = r["id"]
+                        via = "url_hash"
+                if item_id and mark_ingested(db, item_id, doc_id):
+                    st.write(f"↳ queue relinked **{doc_id}** → `{item_id}` ({via})")
+                else:
+                    st.write(f"↳ no queue row for **{doc_id}** (ad-hoc item)")
+        finally:
+            db.close()
+    except Exception as exc:  # noqa: BLE001 — corpus is source of truth; do not roll back
+        st.warning(f"Corpus import succeeded, but queue relink failed: {exc}\n\nThe corpus is the source of truth — relink manually if needed.")
+
+
+def _render_source_import(config, root: Path) -> None:
+    from runner.pipeline.offload_source import (
+        INGEST_RESULT_MANIFEST_NAME, import_ingest_result, move_source_package_state,
+    )
+
+    st.subheader("Import returned results")
+    st.caption(
+        "Imports a Mac-Studio-returned `ingest_result` package into the live "
+        "corpus. Offered **only** for `outbox` packages, requires a passing "
+        "dry-run and explicit confirmation. Existing files are backed up; nothing "
+        "is deleted. The source queue is relinked **only after** a successful "
+        "corpus import."
+    )
+    outbox_dir = root / "outbox"
+    pkg_dirs = (
+        [p for p in sorted(outbox_dir.iterdir())
+         if p.is_dir() and not p.name.startswith(".") and (p / INGEST_RESULT_MANIFEST_NAME).is_file()]
+        if outbox_dir.exists() else []
+    )
+    if not pkg_dirs:
+        st.info("No returned `ingest_result` packages in `outbox/` to import.")
+        return
+
+    chosen = st.selectbox("Outbox package", options=[p.name for p in pkg_dirs], key="src_import_pkg")
+    pkg_dir = outbox_dir / chosen
+
+    preview = _source_import_relink_preview(pkg_dir)
+    if preview:
+        st.caption("Queue relink preview (applied only after a successful import):")
+        st.write(preview)
+
+    dryrun_key = f"src_dryrun_ok::{chosen}"
+    force = st.checkbox(
+        "Force overwrite researcher-reviewed/edited corpus docs (backed up first)",
+        key=f"src_force_{chosen}",
+    )
+
+    if st.button("Dry-run import (preview)", key=f"src_dryrun_{chosen}"):
+        try:
+            summary = import_ingest_result(
+                pkg_dir, corpus_dir=Path(config.corpus_dir), dry_run=True, force=force,
+            )
+        except Exception as exc:  # noqa: BLE001
+            st.session_state[dryrun_key] = False
+            st.error(f"Dry-run failed: {exc}")
+        else:
+            st.session_state[dryrun_key] = bool(summary.get("ok"))
+            if summary.get("ok"):
+                st.success("Dry-run OK — import would proceed. Review below, then confirm.")
+                if summary.get("documents"):
+                    st.write(summary["documents"])
+            else:
+                _render_source_import_errors(summary)
+
+    dry_run_ok = bool(st.session_state.get(dryrun_key))
+    if dry_run_ok:
+        st.info("Dry-run succeeded for this package in this session.")
+    confirmed = st.checkbox(
+        "I have reviewed the dry-run and confirm importing into the live corpus.",
+        key=f"src_confirm_{chosen}", disabled=not dry_run_ok,
+    )
+
+    can_import = _source_import_allowed("outbox", dry_run_ok, confirmed)
+    if st.button("Import into corpus", key=f"src_import_go_{chosen}", disabled=not can_import):
+        try:
+            summary = import_ingest_result(
+                pkg_dir, corpus_dir=Path(config.corpus_dir), dry_run=False, force=force,
+            )
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Import failed — corpus may be partially untouched: {exc}")
+            return
+        if not summary.get("imported"):
+            _render_source_import_errors(summary)
+            return
+
+        st.session_state.pop(dryrun_key, None)
+        st.success(f"Imported `{summary.get('package_id', chosen)}` into the corpus.")
+        for doc in summary.get("documents", []):
+            bk = f" (backed up: {', '.join(doc['backups'])})" if doc.get("backups") else ""
+            st.write(f"✓ **{doc['doc_id']}**: {', '.join(doc['written'])}{bk}")
+
+        # Queue relink — only now, after a successful corpus write.
+        _source_relink_queue(config, pkg_dir)
+
+        moved = False
+        try:
+            move_source_package_state(
+                offload_root=root, package_id=chosen, from_state="outbox", to_state="imported",
+            )
+            moved = True
+        except Exception as exc:  # noqa: BLE001
+            st.warning(
+                "Imported into corpus, but the package could not be marked "
+                f"imported; resolve manually.\n\n{exc}"
+            )
+        else:
+            st.success("Package moved to `imported/`.")
+        _render_source_local_commands((root / "imported" / chosen) if moved else pkg_dir)
+
+
+def page_source_offload():
+    st.title("📤 Source Offload")
+    st.caption(
+        "**For queued / source documents that have NOT been ingested yet** — the "
+        "Mac Studio fetches and analyzes raw sources, then returns completed "
+        "corpus documents. This is **different from 📦 Offload Packages** "
+        "(result-stage: already-ingested corpus docs). The app shows copy-paste "
+        "commands only — it never SSHes, rsyncs, or launches the Mac Studio worker."
+    )
+
+    config = _load_config_safe()
+    if config is None:
+        st.error("Config unavailable — check runner/.env.")
+        return
+
+    root = _source_offload_root(config)
+    st.caption(f"Source-offload root: `{root}`")
+
+    lock_info = _offload_worker_lock_info(root)
+    if lock_info:
+        st.warning(
+            "A worker lock is present at `.worker.lock` "
+            f"(pid {lock_info.get('pid', '?')}, started {lock_info.get('started_at', '?')}). "
+            "A worker may be running on the Mac Studio node."
+        )
+
+    tab_export, tab_browse, tab_transfer, tab_import = st.tabs(
+        ["Export", "Lifecycle browser", "Transfer & worker", "Import results"]
+    )
+    with tab_export:
+        _render_source_export(config, root)
+    with tab_browse:
+        _render_source_browser(config, root)
+    with tab_transfer:
+        _render_source_transfer(config, root)
+    with tab_import:
+        _render_source_import(config, root)
 
 
 # ---------------------------------------------------------------------------
