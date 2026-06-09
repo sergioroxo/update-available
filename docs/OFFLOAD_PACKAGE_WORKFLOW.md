@@ -307,15 +307,94 @@ commands** for `offload-worker`, `offload-verify`, and `offload-import`. The
 page also shows (read-only) the Mac Studio `.worker.lock` if present, but never
 creates or clears it. No auto-delete anywhere.
 
+## Source Offload (source-stage) — Slice S1
+
+The package kind above (`analysis_package`) is a **result-stage** offload: it
+packages documents the MacBook has *already* fetched and extracted, so the Mac
+Studio only runs analysis/enrichment/embedding. It does **not** let the MacBook
+go offline while the Mac Studio fetches and extracts raw sources.
+
+The **source-stage** offload (`source_package`) closes that gap. The MacBook
+packages *raw source material* (queue URLs and/or local file copies); a later
+slice (S2) lets the Mac Studio run the full pipeline (intake → preprocess →
+analysis → enrichment → embedding) and return completed corpus documents.
+
+**Slice S1 builds and verifies source packages only — no processing, no
+worker, no import, no Streamlit UI, no queue mutation.**
+
+### Separate root
+
+Source packages live under a **separate** root, default
+`<exports_dir>/source_offload`, so they never mix with the existing
+`<exports_dir>/offload` result lifecycle browser. Same six lifecycle folders
+(`inbox / processing / outbox / imported / failed / archive`).
+
+### Package kind: `source_package` (schema version 1)
+
+On-disk layout (`inbox/<package_id>/`):
+
+```
+source_manifest.json
+items/<doc_id>/source_item.json
+items/<doc_id>/source.<ext>        # local file-backed items only
+```
+
+- **URL items** store the URL + queue metadata in `source_item.json` and the
+  manifest. No fetch and **no blob** is stored — the Mac Studio re-fetches in S2.
+- **File items** copy the source file in as `source.<ext>` and record its
+  SHA-256 + byte size.
+- The manifest preserves `queue_item_id`, `url_hash`, source URL, declared type,
+  and priority/safety hints. It carries **no absolute MacBook paths** (those, if
+  ever needed for recovery, belong in a private per-machine export ledger that is
+  not part of the portable package — and is itself flagged as unexpected if it
+  leaks into the package directory).
+
+The MacBook pre-assigns each `doc_id`, so the corpus folder name is stable
+across the eventual roundtrip. **S1 does not mutate `source_queue.db`** and does
+not add an `offloaded` status — queue relinking waits for the import slice.
+
+### Security (shared Mac Studio)
+
+Source packages may contain private research material. The builder writes
+package directories `chmod 700` and files `chmod 600` (best-effort, owner-only).
+On the Mac Studio, keep the source-offload root in a private folder under
+`/Users/cdn-ai` (`chmod 700`), ideally on an encrypted APFS volume. No
+auto-delete; delete manually only after a verified import.
+
+### CLI (built)
+
+- `runner source-offload-export [--queue-id ID ...] [--file PATH ...] [--url U ...]
+  [--package-id ID] [--source-offload-root DIR]` — builds a `source_package` in
+  `inbox/`. Reads `source_queue.db` **read-only** for `--queue-id` items; refuses
+  (writing nothing) on an unsafe id, missing file, invalid URL, or duplicate doc.
+  Never fetches, never calls a model/Sanity/Supabase, never writes the corpus.
+- `runner source-offload-verify <package_dir>` — read-only integrity check:
+  manifest parses, schema/kind match, lifecycle folder/manifest consistency,
+  safe doc IDs and manifest-relative paths (no traversal), each
+  `source_item.json` + file blob present with matching SHA-256/bytes, URL items
+  carry valid URL metadata, **exact** item coverage, and any unexpected
+  file/dir surfaced. Exits non-zero on any problem.
+
+### Not in S1
+
+Source worker (S2), source import (S3), Streamlit UI (S4), remote execution,
+transfer automation, queue status changes, book splitting, and any new
+OCR/transcription engine are all out of scope for this slice.
+
 ## Next Implementation Slice
 
 Still pending:
 
-- Remote worker execution: only after an explicit package transfer / shared
-  folder story exists, so a "run worker" control cannot point at a path that is
-  absent on the Mac Studio node or load heavy models on the wrong machine.
-- Optional: a `--claim-next` worker mode that pulls the oldest inbox package
-  (after the explicit-path flow is proven).
+- **S2 — Mac Studio source worker**: run the full pipeline against a
+  package-local staging corpus and return an `ingest_result` package. No remote
+  execution; explicit one-package CLI on the Mac Studio.
+- **S3 — source import on MacBook**: validate + create/update corpus doc
+  folders, relink the source queue, researcher-gated (no auto-push to
+  Sanity/Supabase, no auto-delete).
+- **S4 — Streamlit source UX** (export/lifecycle/verify/move/import; worker
+  display-only, like the result UX).
+- Result-stage remote worker execution and an optional `--claim-next` mode
+  remain deferred until an explicit package-transfer story exists.
 
 The worker has **no** daemon/background-service mode — it remains an explicit
 one-package CLI command, run on the Mac Studio.

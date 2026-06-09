@@ -2440,6 +2440,208 @@ def offload_worker_cmd(
         raise typer.Exit(1)
 
 
+@app.command(name="source-offload-export")
+def source_offload_export_cmd(
+    queue_id: List[str] = typer.Option(
+        [], "--queue-id", help="Source Queue item ID(s) to package (read-only; queue is not mutated)",
+    ),
+    file: List[Path] = typer.Option(
+        [], "--file", help="Local source file(s) to copy into the package",
+    ),
+    url: List[str] = typer.Option(
+        [], "--url", help="Ad-hoc URL(s) to package as url items (not fetched)",
+    ),
+    package_id: Optional[str] = typer.Option(
+        None, "--package-id", help="Explicit package id (default: auto-generated)",
+    ),
+    source_offload_root: Optional[Path] = typer.Option(
+        None,
+        "--source-offload-root",
+        help="Source offload root directory (default: <exports_dir>/source_offload)",
+    ),
+):
+    """Build a Mac Studio *source* package from queue items / files / URLs (Slice S1).
+
+    \b
+    Packages raw source material (not extracted text) so the Mac Studio can run
+    the full pipeline later (S2). Builds a `source_package` in
+    <source_offload_root>/inbox/<package_id>:
+      - URL items store URL + queue metadata only (no fetch, no blob)
+      - local files are copied in with SHA-256 + byte size recorded
+
+    \b
+    Local-only and side-effect-free: it never fetches a URL, never calls a model,
+    Sanity, or Supabase, never writes the live corpus, and never mutates
+    source_queue.db (queue items are read only). A bad input (unsafe id, missing
+    file, invalid URL, duplicate doc) is refused and no package is written.
+    """
+    from rich.table import Table
+    from .pipeline import intake as intake_mod
+    from .pipeline.offload_source import SourceItemSpec, build_source_package
+
+    if not queue_id and not file and not url:
+        console.print(
+            Panel(
+                "Provide at least one of --queue-id, --file, or --url.",
+                title="[red]Nothing to export[/red]",
+            )
+        )
+        raise typer.Exit(1)
+
+    config = load_config(require_services=False)
+    root = Path(source_offload_root) if source_offload_root else (config.exports_dir / "source_offload")
+
+    specs: list[SourceItemSpec] = []
+
+    # Source Queue items (read-only).
+    if queue_id:
+        from .pipeline.source_queue import open_db, queue_db_path, get_item
+
+        db = open_db(queue_db_path(config.corpus_dir))
+        try:
+            for qid in queue_id:
+                item = get_item(db, qid)
+                if item is None:
+                    console.print(Panel(f"Queue item not found: {qid}", title="[red]Export refused[/red]"))
+                    raise typer.Exit(1)
+                specs.append(
+                    SourceItemSpec(
+                        source_kind="url",
+                        declared_source_type=intake_mod._detect_source_type(item.url),
+                        url=item.url,
+                        queue_item_id=item.id,
+                        url_hash=item.url_hash,
+                        title=item.title,
+                        notes=item.notes,
+                        priority=item.priority,
+                        recommended_llm=item.recommended_llm,
+                        overnight_batch_safe=item.overnight_batch_safe,
+                        tags=item.tags,
+                        doc_type_hint=item.doc_type_hint,
+                        suggested_process_route=item.suggested_process_route,
+                    )
+                )
+        finally:
+            db.close()
+
+    # Ad-hoc URLs.
+    for u in url:
+        specs.append(
+            SourceItemSpec(
+                source_kind="url",
+                declared_source_type=intake_mod._detect_source_type(u),
+                url=u,
+            )
+        )
+
+    # Local files.
+    for f in file:
+        specs.append(
+            SourceItemSpec(
+                source_kind="file",
+                declared_source_type=intake_mod._detect_source_type(str(f)),
+                file_path=str(f),
+            )
+        )
+
+    try:
+        manifest = build_source_package(
+            specs=specs,
+            source_offload_root=root,
+            package_id=package_id,
+        )
+    except (ValueError, FileNotFoundError, FileExistsError) as exc:
+        console.print(Panel(str(exc), title="[red]Source offload export refused[/red]"))
+        raise typer.Exit(1)
+
+    package_dir = root / manifest.lifecycle_state / manifest.package_id
+    manifest_path = package_dir / "source_manifest.json"
+
+    console.print(f"\n[bold]Source package created[/bold]  [dim]{manifest.package_kind}[/dim]")
+    console.print(f"  Package ID:    [cyan]{manifest.package_id}[/cyan]")
+    console.print(f"  Lifecycle:     [green]{manifest.lifecycle_state}[/green]")
+    console.print(f"  Items:         {len(manifest.items)}")
+    console.print(f"  Manifest:      [dim]{manifest_path}[/dim]")
+
+    t = Table(title="Source items", show_lines=False)
+    t.add_column("doc_id", style="cyan", no_wrap=True)
+    t.add_column("kind", no_wrap=True)
+    t.add_column("type", no_wrap=True)
+    t.add_column("queue id", no_wrap=True)
+    t.add_column("bytes", justify="right", no_wrap=True)
+    t.add_column("url / blob", no_wrap=False)
+    for it in manifest.items:
+        t.add_row(
+            it.doc_id[:16],
+            it.source_kind,
+            it.declared_source_type,
+            (it.queue_item_id or "-")[:16],
+            str(it.bytes) if it.source_kind == "file" else "-",
+            it.url if it.source_kind == "url" else it.relative_path,
+        )
+    console.print(t)
+    console.print(
+        "[dim]Manual cleanup only — keep package until import is verified. "
+        "Source files may be private; store owner-only.[/dim]"
+    )
+
+
+@app.command(name="source-offload-verify")
+def source_offload_verify_cmd(
+    package_dir: Path = typer.Argument(
+        ...,
+        help="Path to a source package directory (…/source_offload/<state>/<package_id>)",
+    ),
+):
+    """Read-only integrity check of a source package (Slice S1).
+
+    \b
+    Verifies the manifest loads, schema/kind match, lifecycle is consistent,
+    doc IDs and manifest paths are safe, each source_item.json + file blob exists
+    with matching SHA-256/bytes, URL items carry valid URL metadata, item
+    coverage is exact, and no unexpected files are present. Never repairs, moves,
+    or deletes anything, and calls no service. Exits non-zero on any problem.
+    """
+    from .pipeline.offload_source import verify_source_package
+
+    report = verify_source_package(package_dir)
+
+    console.print(f"\n[bold]Source package verify[/bold]  [dim]{report['package_dir']}[/dim]")
+    if report["package_id"]:
+        console.print(f"  Package ID: [cyan]{report['package_id']}[/cyan]")
+
+    life = report["lifecycle"]
+    if life is not None:
+        if life.get("consistent"):
+            console.print(
+                f"  Lifecycle:  [green]consistent[/green] "
+                f"([dim]{life.get('folder_state')} == {life.get('manifest_state')}[/dim])"
+            )
+        else:
+            console.print(
+                f"  Lifecycle:  [red]MISMATCH[/red] "
+                f"(folder=[yellow]{life.get('folder_state')}[/yellow] "
+                f"manifest=[yellow]{life.get('manifest_state')}[/yellow])"
+            )
+
+    for item in report["items"]:
+        icon = "[green]✓[/green]" if item.get("verified") else "[red]✗[/red]"
+        console.print(f"  {icon} {item['doc_id'][:16]} [dim]({item.get('source_kind')})[/dim]")
+
+    if report["errors"]:
+        console.print(Panel("\n".join(report["errors"]), title="[red]Verification errors[/red]"))
+    if report["unexpected"]:
+        console.print(
+            Panel("\n".join(report["unexpected"]), title="[yellow]Unexpected files (surfaced)[/yellow]")
+        )
+
+    if report["ok"]:
+        console.print("[green]✓ Source package verified — items, hashes, and coverage all match.[/green]")
+    else:
+        console.print("[red]✗ Source package verification failed.[/red]")
+        raise typer.Exit(1)
+
+
 @app.command(name="export")
 def export_batch(
     batch_id: str = typer.Argument(..., help="Batch ID to export"),
