@@ -128,14 +128,22 @@ def _preprocess_url(url: str, snapshot_dir: Path | None = None) -> PreprocessRes
     # Full page intelligence extraction
     intel = _extract_page_intelligence(downloaded, base_url=url)
 
+    # Deterministic language detection from og:locale / <html lang> (no model).
+    from ..models.document import language_country_from_locale
+    lang_from_locale, _ = language_country_from_locale(intel.og_locale or intel.html_lang)
+
     return PreprocessResult(
         doc_id="",
         tool_used="trafilatura",
         quality=_rate_quality(text, "trafilatura"),
         text=text,
         markdown=md,
+        language_detected=lang_from_locale or None,
         title=metadata.get("title", "") or intel.og_title,
         author=metadata.get("author", ""),
+        # Published-only: a modified date (e.g. og:updated_time) is NOT a
+        # publication date. It is preserved in page_intel.date_modified and
+        # surfaced separately as a review candidate downstream.
         date_published=metadata.get("date", "") or intel.date_published,
         sitename=metadata.get("sitename", "") or intel.publisher,
         description=metadata.get("description", "") or intel.og_description,
@@ -713,6 +721,14 @@ def _extract_page_intelligence(html: str, base_url: str) -> "PageIntelligence":
     canonical_el = tree.find('.//link[@rel="canonical"]')
     canonical_url = canonical_el.get("href", "") if canonical_el is not None else ""
 
+    # <html lang="..."> — fallback language signal when og:locale is absent.
+    html_lang = ""
+    try:
+        root_el = tree if tree.tag == "html" else tree.getroottree().getroot()
+        html_lang = (root_el.get("lang") or root_el.get("xml:lang") or "").strip()
+    except Exception:
+        html_lang = ""
+
     og_title       = _meta("og:title") or _meta("twitter:title", "name")
     og_description = _meta("og:description") or _meta("twitter:description", "name")
     og_image       = _meta("og:image") or _meta("twitter:image", "name")
@@ -721,6 +737,7 @@ def _extract_page_intelligence(html: str, base_url: str) -> "PageIntelligence":
 
     date_published = (
         _meta("article:published_time")
+        or _meta("og:published_time")
         or _meta("date", "name")
         or _meta("dc.date", "name")
         or _meta("dc.date.issued", "name")
@@ -729,6 +746,7 @@ def _extract_page_intelligence(html: str, base_url: str) -> "PageIntelligence":
     )
     date_modified = (
         _meta("article:modified_time")
+        or _meta("og:updated_time")
         or _meta("last-modified", "name")
         or _meta("dcterms.modified", "name")
     )
@@ -913,6 +931,7 @@ def _extract_page_intelligence(html: str, base_url: str) -> "PageIntelligence":
         og_image=og_image,
         og_type=og_type,
         og_locale=og_locale,
+        html_lang=html_lang,
         tags=list(dict.fromkeys(tags))[:30],
         categories=list(dict.fromkeys(categories))[:10],
         keywords=keywords[:20],
@@ -1062,6 +1081,7 @@ def repair_preprocess_metadata(data: dict, doc_dir: Path | None = None, base_url
 
     if isinstance(page_intel, dict):
         if not repaired.get("date_published"):
+            # Published-only — never backfill from a modified date here.
             repaired["date_published"] = page_intel.get("date_published", "")
         current_is_url = current_site.startswith(("http://", "https://"))
         if not current_site or current_is_url:

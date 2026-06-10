@@ -1419,16 +1419,30 @@ def _repair_analysis_date_from_source(
         "page_intel": preprocess.page_intel.__dict__ if preprocess.page_intel else {},
     })
     parts = date_parts(pub.get("date_published", ""))
-    if not parts["year"]:
-        return False
-    analysis.document_date.year = parts["year"]
-    analysis.document_date.month = parts["month"]
-    analysis.document_date.day = parts["day"]
-    analysis.document_date.confidence = "exact" if parts["month"] and parts["day"] else "approximate"
-    analysis.normalisation_warnings = list(analysis.normalisation_warnings) + [
-        "document_date backfilled from source publication metadata."
-    ]
-    return True
+    if parts["year"]:
+        analysis.document_date.year = parts["year"]
+        analysis.document_date.month = parts["month"]
+        analysis.document_date.day = parts["day"]
+        analysis.document_date.confidence = "exact" if parts["month"] and parts["day"] else "approximate"
+        analysis.normalisation_warnings = list(analysis.normalisation_warnings) + [
+            "document_date backfilled from source publication metadata."
+        ]
+        return True
+    # No publication date — fall back to the source *modified* date as a
+    # low-confidence review candidate, clearly marked. Never asserted as a
+    # publication date (date_published stays empty).
+    mod_parts = date_parts(pub.get("date_modified", ""))
+    if mod_parts["year"]:
+        analysis.document_date.year = mod_parts["year"]
+        analysis.document_date.month = mod_parts["month"]
+        analysis.document_date.day = mod_parts["day"]
+        analysis.document_date.confidence = "approximate"
+        analysis.normalisation_warnings = list(analysis.normalisation_warnings) + [
+            "document_date set from source modified date (modified_date_fallback) — "
+            "no publication date available; review and confirm."
+        ]
+        return True
+    return False
 
 
 def _enforce_testimony_upload_gate(

@@ -136,6 +136,33 @@ def run(
             _audit["duration_ms"] = int((time.perf_counter() - _started) * 1000)
 
 
+def _postfill_locale_fields(result: AnalysisResult, preprocess: PreprocessResult) -> AnalysisResult:
+    """Fill empty ``languages``/``country`` from the page locale when the model
+    left them blank. Deterministic (og:locale / <html lang>), researcher-reviewed,
+    and recorded as a normalisation warning so provenance shows it was derived.
+    Never overrides values the model already produced."""
+    intel = preprocess.page_intel
+    if intel is None:
+        return result
+    locale = getattr(intel, "og_locale", "") or getattr(intel, "html_lang", "")
+    if not locale:
+        return result
+    from ..models.document import language_country_from_locale
+    lang, country = language_country_from_locale(locale)
+    notes: list[str] = []
+    if lang and not result.languages:
+        result.languages = [lang]
+        notes.append(f"languages derived from page locale '{locale}' → ['{lang}']")
+    if country and not result.country:
+        result.country = [country]
+        notes.append(f"country derived from page locale '{locale}' → ['{country}']")
+    if notes:
+        result.normalisation_warnings = list(result.normalisation_warnings) + [
+            "locale-fill: " + "; ".join(notes)
+        ]
+    return result
+
+
 def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None) -> AnalysisResult:
     import anthropic
     client = anthropic.Anthropic(api_key=config.anthropic_api_key)
@@ -171,7 +198,7 @@ def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit
     raw_json = response.content[0].text
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
-    return _validate_response(raw_json, _audit=_audit)
+    return _postfill_locale_fields(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
 def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None) -> AnalysisResult:
@@ -225,7 +252,7 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
         )
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
-    return _validate_response(raw_json, _audit=_audit)
+    return _postfill_locale_fields(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
 def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None) -> AnalysisResult:
@@ -265,7 +292,7 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
     raw_json = response.json()["choices"][0]["message"]["content"]
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
-    return _validate_response(raw_json, _audit=_audit)
+    return _postfill_locale_fields(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
 def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None) -> AnalysisResult:
@@ -310,7 +337,7 @@ def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _a
     raw_json = response.json()["choices"][0]["message"]["content"]
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
-    return _validate_response(raw_json, _audit=_audit)
+    return _postfill_locale_fields(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
 def _build_system_prompt_with_lexicon(

@@ -992,6 +992,144 @@ def ingest_result_linkages(package_dir: Path) -> list[dict]:
     return out
 
 
+# ── Imported-metadata local-path rewrite ─────────────────────────────────────
+# The Mac Studio worker runs with ``corpus_dir = <package>/docs``, so any field
+# that stores an absolute filesystem path (e.g. ``source_html_path``) bakes in a
+# Mac Studio path like ``/Users/cdn-ai/sogice-offload/...``. After import those
+# artifacts live under the MacBook corpus, so the stored paths are dangling. We
+# rewrite each known local-path field to point at the imported file in the
+# MacBook corpus — but only when that exact basename was actually imported into
+# the doc folder, so non-local / external references are left untouched.
+#
+# Keys are imported artifact filenames; values are dotted field paths within the
+# JSON that hold a local filesystem path.
+_IMPORT_LOCAL_PATH_FIELDS: dict[str, tuple[str, ...]] = {
+    "intake.json": ("local_copy_path",),
+    "preprocess.json": ("source_html_path",),
+    "html_snapshot.json": ("path",),
+    "preservation_status.json": ("local_html_path",),
+    "media_metadata.json": ("transcriptEvidence.providedTranscriptPath",),
+    "video_metadata.json": ("transcriptEvidence.providedTranscriptPath",),
+}
+
+# Wayback statuses that warrant a retryable preservation action on the MacBook.
+_WAYBACK_RETRY_STATUSES: frozenset[str] = frozenset({"failed", "unavailable", "timeout"})
+_WAYBACK_RETRY_QUEUE_NAME = "wayback_retry_queue.json"
+
+
+def _dotted_get(obj: dict, dotted: str):
+    cur = obj
+    for part in dotted.split("."):
+        if not isinstance(cur, dict) or part not in cur:
+            return None
+        cur = cur[part]
+    return cur
+
+
+def _dotted_set(obj: dict, dotted: str, value) -> None:
+    parts = dotted.split(".")
+    cur = obj
+    for part in parts[:-1]:
+        cur = cur[part]
+    cur[parts[-1]] = value
+
+
+def _rewrite_imported_local_paths(corpus_doc_dir: Path) -> list[dict]:
+    """Rewrite known local-path fields in imported artifacts to MacBook corpus paths.
+
+    Only rewrites a field when the basename of its stored path was actually
+    imported into ``corpus_doc_dir`` (so external / uncopied references stay as
+    they are). Returns a list of ``{file, field, old, new}`` records. Pure file
+    IO — no network, no DB, no model. Safe to call inside the import try-block so
+    rewrites are covered by the corpus rollback.
+    """
+    rewrites: list[dict] = []
+    for filename, fields in _IMPORT_LOCAL_PATH_FIELDS.items():
+        target = corpus_doc_dir / filename
+        if not target.exists():
+            continue
+        try:
+            data = json.loads(target.read_text(encoding="utf-8"))
+        except Exception:
+            continue  # malformed metadata must never block import
+        if not isinstance(data, dict):
+            continue
+        changed = False
+        for field_path in fields:
+            old = _dotted_get(data, field_path)
+            if not isinstance(old, str) or not old.strip():
+                continue
+            basename = Path(old).name
+            if not basename:
+                continue
+            imported = corpus_doc_dir / basename
+            new = str(imported)
+            if imported.exists() and new != old:
+                _dotted_set(data, field_path, new)
+                rewrites.append({"file": filename, "field": field_path,
+                                 "old": old, "new": new})
+                changed = True
+        if changed:
+            atomic_write_json(target, data)
+    return rewrites
+
+
+def _wayback_retry_entry(corpus_doc_dir: Path) -> dict | None:
+    """Return a dedupe-able retry entry if the imported wayback.json shows a
+    retryable failure, else None. Pure read; no network."""
+    wb = corpus_doc_dir / "wayback.json"
+    if not wb.exists():
+        return None
+    try:
+        data = json.loads(wb.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    status = str(data.get("status") or "").lower()
+    if status not in _WAYBACK_RETRY_STATUSES:
+        return None
+    source = str(data.get("source") or "")
+    if not source:
+        return None
+    return {
+        "source": source,
+        "archive_url": data.get("archive_url"),
+        "status": status,
+        "checked_at": data.get("checked_at", ""),
+        "error": data.get("error", ""),
+    }
+
+
+def _append_wayback_retries(corpus_dir: Path, entries: list[dict]) -> list[str]:
+    """Append retry entries to the MacBook ``wayback_retry_queue.json``, deduped
+    by source. Returns the list of sources actually added. Idempotent."""
+    if not entries:
+        return []
+    queue_path = corpus_dir / _WAYBACK_RETRY_QUEUE_NAME
+    try:
+        existing = (
+            json.loads(queue_path.read_text(encoding="utf-8"))
+            if queue_path.exists() else []
+        )
+    except Exception:
+        existing = []
+    if not isinstance(existing, list):
+        existing = []
+    known = {str(item.get("source")) for item in existing if isinstance(item, dict)}
+    added: list[str] = []
+    for entry in entries:
+        src = entry["source"]
+        if src in known:
+            continue
+        existing.append(entry)
+        known.add(src)
+        added.append(src)
+    if added:
+        atomic_write_json(queue_path, existing)
+    return added
+
+
 def import_ingest_result(
     package_dir: Path,
     *,
@@ -1059,6 +1197,7 @@ def import_ingest_result(
     created_files: list[Path] = []
     backup_pairs: list[tuple[Path, Path]] = []
     written_docs: list[dict] = []
+    wayback_pending: list[dict] = []  # queued; written only after the loop succeeds
     try:
         for doc in report["documents"]:
             doc_id = doc["doc_id"]
@@ -1085,6 +1224,15 @@ def import_ingest_result(
                     "sha256": artifact["sha256"], "bytes": artifact["bytes"],
                 })
 
+            # Rewrite Mac Studio absolute paths → MacBook corpus paths (in-place,
+            # covered by the rollback since these files were just written).
+            path_rewrites = _rewrite_imported_local_paths(corpus_doc_dir)
+
+            # Surface a retryable wayback failure (deferred queue write below).
+            wb_entry = _wayback_retry_entry(corpus_doc_dir)
+            if wb_entry is not None:
+                wayback_pending.append(wb_entry)
+
             provenance = {
                 "imported_at": imported_at,
                 "package_id": summary["package_id"],
@@ -1097,6 +1245,8 @@ def import_ingest_result(
                 "local_source_filename": doc["local_source_filename"],
                 "imported_artifacts": written,
                 "backups": backups,
+                "path_rewrites": path_rewrites,
+                "wayback_retry": wb_entry,
             }
             prov_dest = corpus_doc_dir / "offload_import.json"
             _record_write(prov_dest, "offload_import.json")
@@ -1106,6 +1256,8 @@ def import_ingest_result(
                 "doc_id": doc_id,
                 "written": [w["label"] for w in written],
                 "backups": [b["label"] for b in backups],
+                "path_rewrites": path_rewrites,
+                "wayback_retry": bool(wb_entry),
                 "queue_item_id": doc["queue_item_id"],
                 "url_hash": doc["url_hash"],
             })
@@ -1117,6 +1269,11 @@ def import_ingest_result(
         summary["errors"].append(f"write_failed_rolled_back:{exc}")
         return summary
 
+    # Corpus is committed; record retryable preservation work (idempotent, additive).
+    wayback_added = _append_wayback_retries(corpus_dir, wayback_pending)
+
     summary["documents"] = written_docs
     summary["imported"] = True
+    summary["path_rewrites"] = sum(len(d["path_rewrites"]) for d in written_docs)
+    summary["wayback_retries"] = wayback_added
     return summary

@@ -267,6 +267,32 @@ _COUNTRY_ALIASES_MODEL: dict[str, str] = {
 }
 
 
+def language_country_from_locale(locale: str) -> tuple[str, str]:
+    """Deterministically derive ``(iso_639_1_language, canonical_country)`` from a
+    BCP-47 / OpenGraph locale string such as ``en_US``, ``pt-BR`` or ``en``.
+
+    Returns ``("", "")`` for empty / unrecognised input. The language is mapped
+    via the same alias tables used for analysis normalisation; the country is the
+    region subtag mapped through ``_COUNTRY_ALIASES_MODEL`` (so ``US`` →
+    ``United States``). A region subtag that isn't in the table yields no country
+    rather than a guess. Pure — no network, no model.
+    """
+    if not locale or not isinstance(locale, str):
+        return "", ""
+    parts = re.split(r"[_\-]", locale.strip())
+    lang_raw = parts[0].strip().lower() if parts else ""
+    region_raw = parts[1].strip().upper() if len(parts) > 1 else ""
+
+    language = ""
+    if lang_raw in _LANGUAGE_ALIASES:
+        language = _LANGUAGE_ALIASES[lang_raw]
+    elif lang_raw in _VALID_ISO_639_1:
+        language = lang_raw
+
+    country = _COUNTRY_ALIASES_MODEL.get(region_raw, "") if region_raw else ""
+    return language, country
+
+
 class CandidateTerm(BaseModel):
     term: str
     language: str = "unknown"
@@ -629,6 +655,28 @@ class AnalysisResult(BaseModel):
                 f"needs_review forced True: overall_score={self.confidence.overall_score:.3f} < 0.70"
             ]
         return self
+
+    @model_validator(mode="after")
+    def reconcile_testimony_flag(self) -> "AnalysisResult":
+        """Keep ``flags`` and ``testimony_flag`` from disagreeing — fail-safe.
+
+        If a testimony-extraction flag is present but ``testimony_flag`` is False,
+        raise the boolean to True (never silently drop the flag). Erring toward
+        review protects against hiding a real testimony signal; the researcher can
+        clear it at the review gate.
+        """
+        _TESTIMONY_FLAG = "flag: testimony-extraction-required"
+        has_testimony_flag = any(
+            isinstance(f, str) and f.strip().lower() == _TESTIMONY_FLAG
+            for f in self.flags
+        )
+        if has_testimony_flag and not self.testimony_flag:
+            self.testimony_flag = True
+            self.normalisation_warnings = list(self.normalisation_warnings) + [
+                "testimony_flag forced True: 'Flag: Testimony-Extraction-Required' "
+                "present in flags but testimony_flag was False (fail-safe — flag preserved)"
+            ]
+        return self
     narrative_register: NarrativeRegister
     document_date: DocumentDate = Field(default_factory=DocumentDate)
     summary: str
@@ -666,6 +714,7 @@ class PageIntelligence:
     og_image: str = ""
     og_type: str = ""                       # article | website | video | ...
     og_locale: str = ""                     # e.g. en_US, pt_BR
+    html_lang: str = ""                     # <html lang="..."> fallback, e.g. en, pt-BR
 
     # CMS taxonomy
     tags: list[str] = field(default_factory=list)
