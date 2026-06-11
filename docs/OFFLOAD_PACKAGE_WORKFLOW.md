@@ -516,6 +516,63 @@ banner). It drives the source-stage pipeline via four tabs:
 
 No Sanity/Supabase upload, no auto-delete, no queue write before corpus success.
 
+## Archive transfer mode (Slice D) — SSH/rsync-free
+
+On networks that block SSH/rsync (e.g. UiB), move a single **archive** instead of
+the live package tree. A lifecycle package is packed into one
+`<package_id>.tar.gz` plus a `<package_id>.tar.gz.sha256` sidecar; the single
+archive + sidecar is what travels.
+
+### Why archives, not synced folders
+
+**Never sync a live package folder through iCloud Drive.** iCloud's partial sync,
+`.icloud` placeholder stubs, and dataless files can surface a half-written
+multi-file package mid-process and corrupt it. A single `.tar.gz` is atomic and
+checksum-verified, so AirDrop, an iCloud **shared folder**, or an external drive
+all move it safely. The two Macs can use different iCloud accounts: one shares a
+folder, the other participates — but only ever drop the **single archive files**
+into it, not the package tree.
+
+### CLI
+
+`runner source-offload-archive <package_dir> [--output-dir <dir>]`
+- Validates where appropriate (a non-quarantine package must carry a readable
+  `source_manifest.json` whose `package_id` matches the folder; `failed`/`archive`
+  packages are archived best-effort with a warning).
+- Writes `<package_id>.tar.gz` (contents under a single top-level `<package_id>/`
+  folder) + `<package_id>.tar.gz.sha256`. **Never deletes the original package**;
+  refuses if the target archive already exists.
+
+`runner source-offload-unpack <archive.tar.gz> --source-offload-root <root> [--state inbox|outbox|…]`
+- **Verifies the SHA-256 sidecar before extracting.** Refuses malformed archives,
+  path traversal, absolute paths, backslash/NUL members, symlink/hardlink/device
+  members, more than one top-level package dir, and a missing `source_manifest.json`.
+- Destination state defaults to the archived manifest's `lifecycle_state`;
+  `--state` overrides it. **Refuses to overwrite an existing lifecycle package.**
+- Reconciles the manifest `lifecycle_state` to the destination folder, then runs
+  a post-unpack shape verification (tolerant of worker-owned siblings so an
+  archived `outbox` `ingest_result` package still verifies). **Never deletes the
+  archive.**
+
+### Round trip (no SSH)
+
+1. **MacBook** — `source-offload-archive …/source_offload/inbox/<pkg>` →
+   `<pkg>.tar.gz` + `.sha256`.
+2. **Copy** both files via AirDrop / iCloud shared folder / external drive;
+   `shasum -a 256 -c <pkg>.tar.gz.sha256` where they land.
+3. **Mac Studio** — `source-offload-unpack <pkg>.tar.gz --source-offload-root <root> --state inbox`,
+   then run `source-worker` as usual.
+4. **Mac Studio** — `source-offload-archive <root>/outbox/<pkg>` once the worker
+   finishes.
+5. **Copy back**, then **MacBook** —
+   `source-offload-unpack <pkg>.tar.gz --source-offload-root …/source_offload --state outbox`,
+   then import from the **Import results** tab.
+
+The Streamlit **Source Offload → Transfer & worker** tab shows these archive/unpack
+commands (display-only, alongside the rsync path) using the app's venv python
+locally and `MAC_STUDIO_PYTHON` for the Mac Studio side. **The app never runs
+`tar`, `shasum`, SSH, or rsync** — it only displays the commands.
+
 ## Next Implementation Slice
 
 Still pending:

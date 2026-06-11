@@ -2681,6 +2681,94 @@ def source_offload_verify_cmd(
         raise typer.Exit(1)
 
 
+@app.command(name="source-offload-archive")
+def source_offload_archive_cmd(
+    package_dir: Path = typer.Argument(
+        ...,
+        help="Path to a source package directory (…/source_offload/<state>/<package_id>)",
+    ),
+    output_dir: Optional[Path] = typer.Option(
+        None, "--output-dir",
+        help="Where to write <package_id>.tar.gz + .sha256 (default: the package's parent state dir)",
+    ),
+):
+    """Pack a lifecycle package into one .tar.gz + .sha256 for manual transfer (Slice D).
+
+    \b
+    Produces <package_id>.tar.gz (contents under a single <package_id>/ folder)
+    plus a <package_id>.tar.gz.sha256 sidecar. Move the single archive + sidecar
+    through an iCloud shared folder / AirDrop / external drive — never the live
+    package tree (partial sync corrupts it). The original package is never
+    deleted; a non-quarantine package must carry a valid source_manifest.json.
+    """
+    from .pipeline.offload_source import archive_source_package
+
+    try:
+        res = archive_source_package(package_dir, output_dir=output_dir)
+    except (FileNotFoundError, FileExistsError, ValueError) as exc:
+        console.print(Panel(str(exc), title="[red]Archive refused[/red]"))
+        raise typer.Exit(1)
+
+    console.print(f"\n[bold]Source package archived[/bold]  [dim]{res['folder_state']}[/dim]")
+    console.print(f"  Package ID: [cyan]{res['package_id']}[/cyan]")
+    console.print(f"  Archive:    [dim]{res['archive_path']}[/dim]")
+    console.print(f"  Checksum:   [dim]{res['sha256_path']}[/dim]")
+    console.print(f"  SHA-256:    {res['sha256']}")
+    console.print(f"  Bytes:      {res['bytes']}")
+    for w in res["warnings"]:
+        console.print(f"  [yellow]⚠ {w}[/yellow]")
+    console.print(
+        "[green]✓ Archive written. Move BOTH the .tar.gz and .sha256; unpack on "
+        "the other machine with `source-offload-unpack`.[/green]"
+    )
+
+
+@app.command(name="source-offload-unpack")
+def source_offload_unpack_cmd(
+    archive: Path = typer.Argument(
+        ..., help="Path to a <package_id>.tar.gz produced by source-offload-archive",
+    ),
+    source_offload_root: Path = typer.Option(
+        ..., "--source-offload-root",
+        help="Destination source offload root (…/source_offload)",
+    ),
+    state: Optional[str] = typer.Option(
+        None, "--state",
+        help="Lifecycle folder to unpack into (default: the archive's manifest state, e.g. inbox/outbox)",
+    ),
+):
+    """Verify + extract a transferred package archive into a lifecycle folder (Slice D).
+
+    \b
+    Verifies the SHA-256 sidecar and archive shape (single safe top-level package
+    dir, source_manifest.json present, no traversal/absolute/symlink members)
+    before extracting. Refuses to overwrite an existing lifecycle package,
+    reconciles the manifest lifecycle_state to the destination, and verifies
+    package shape after unpack. The archive is never deleted.
+    """
+    from .pipeline.offload_source import unpack_source_archive
+
+    try:
+        res = unpack_source_archive(archive, source_offload_root=source_offload_root, state=state)
+    except (FileNotFoundError, FileExistsError, ValueError) as exc:
+        console.print(Panel(str(exc), title="[red]Unpack refused[/red]"))
+        raise typer.Exit(1)
+
+    verify = res["verify"]
+    console.print(f"\n[bold]Source package unpacked[/bold]  [dim]{res['state']}[/dim]")
+    console.print(f"  Package ID: [cyan]{res['package_id']}[/cyan]")
+    console.print(f"  Path:       [dim]{res['package_dir']}[/dim]")
+    if verify.get("ok"):
+        console.print("[green]✓ Unpacked and verified — manifest, items, and hashes match.[/green]")
+    else:
+        for e in verify.get("errors", []):
+            console.print(f"  [red]✗ {e}[/red]")
+        for u in verify.get("unexpected", []):
+            console.print(f"  [yellow]⚠ unexpected: {u}[/yellow]")
+        console.print("[red]✗ Unpacked but post-unpack verification failed.[/red]")
+        raise typer.Exit(1)
+
+
 @app.command(name="source-worker")
 def source_worker_cmd(
     package_dir: Path = typer.Argument(

@@ -37,6 +37,7 @@ import json
 import os
 import re
 import shutil
+import tarfile
 import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -768,6 +769,266 @@ def move_source_package_state(
     atomic_write_json(target / SOURCE_MANIFEST_NAME, data)
     _restrict(target / SOURCE_MANIFEST_NAME, _FILE_MODE)
     return target
+
+
+# ---------------------------------------------------------------------------
+# Slice D — single-archive transfer (SSH/rsync-free)
+# ---------------------------------------------------------------------------
+# A lifecycle package is packed into one ``<package_id>.tar.gz`` plus a
+# ``<package_id>.tar.gz.sha256`` sidecar. The single-file archive is what moves
+# through iCloud shared folders / AirDrop / an external drive — never the live
+# multi-file package tree (partial sync corrupts it). Unpack verifies the
+# checksum and the archive shape before extracting, and refuses to overwrite an
+# existing lifecycle package. No network/model access; the original is never
+# deleted on archive and the archive is never deleted on unpack.
+
+ARCHIVE_SUFFIX = ".tar.gz"
+SHA256_SUFFIX = ".sha256"
+# States whose packages may be malformed (quarantine) — archiving tolerates a
+# missing/unreadable manifest there rather than refusing.
+_ARCHIVE_LENIENT_STATES: frozenset[str] = frozenset({"failed", "archive"})
+
+
+def _tar_reset(tarinfo: tarfile.TarInfo) -> tarfile.TarInfo:
+    """Strip ownership/identity from archived members for portable, reproducible
+    archives (no host uid/gid/usernames leak across machines)."""
+    tarinfo.uid = 0
+    tarinfo.gid = 0
+    tarinfo.uname = ""
+    tarinfo.gname = ""
+    return tarinfo
+
+
+def archive_source_package(package_dir: Path, *, output_dir: Path | None = None) -> dict:
+    """Pack a lifecycle package into ``<package_id>.tar.gz`` + ``.sha256``.
+
+    The archive holds the package contents under a single top-level
+    ``<package_id>/`` folder. The original package directory is never deleted.
+    Refuses if the target archive already exists. Validation is applied where
+    appropriate: a non-quarantine package must carry a readable
+    ``source_manifest.json`` whose ``package_id`` matches the folder; quarantine
+    (``failed``/``archive``) packages are archived best-effort with a warning.
+
+    Returns ``{package_id, folder_state, archive_path, sha256_path, sha256,
+    bytes, warnings}``.
+    """
+    package_dir = Path(package_dir)
+    if not package_dir.is_dir():
+        raise FileNotFoundError(package_dir)
+    pkg_id = validate_package_id(package_dir.name)
+    folder_state = package_dir.parent.name
+    warnings: list[str] = []
+
+    # Validation where appropriate.
+    try:
+        manifest = load_source_manifest(package_dir)
+        if manifest.package_id != pkg_id:
+            raise ValueError(
+                f"package_id mismatch: manifest={manifest.package_id!r} folder={pkg_id!r}"
+            )
+    except FileNotFoundError:
+        if folder_state in _ARCHIVE_LENIENT_STATES:
+            warnings.append(f"missing source_manifest.json (quarantine state {folder_state})")
+        else:
+            raise ValueError("missing source_manifest.json — refusing to archive")
+    except (ValueError, KeyError, json.JSONDecodeError) as exc:
+        if folder_state in _ARCHIVE_LENIENT_STATES:
+            warnings.append(f"unreadable manifest in quarantine state {folder_state}: {exc}")
+        else:
+            raise
+
+    out_dir = Path(output_dir) if output_dir else package_dir.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+    archive_path = out_dir / f"{pkg_id}{ARCHIVE_SUFFIX}"
+    sha_path = out_dir / f"{pkg_id}{ARCHIVE_SUFFIX}{SHA256_SUFFIX}"
+    if archive_path.exists():
+        raise FileExistsError(archive_path)
+
+    tmp = out_dir / f".{pkg_id}{ARCHIVE_SUFFIX}.tmp-{_offload._fs_timestamp()}"
+    try:
+        with tarfile.open(tmp, "w:gz") as tar:
+            tar.add(package_dir, arcname=pkg_id, filter=_tar_reset)
+        os.replace(tmp, archive_path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+    _restrict(archive_path, _FILE_MODE)
+
+    digest = sha256_file(archive_path)
+    sha_path.write_text(f"{digest}  {archive_path.name}\n", encoding="utf-8")
+    _restrict(sha_path, _FILE_MODE)
+
+    return {
+        "package_id": pkg_id,
+        "folder_state": folder_state,
+        "archive_path": str(archive_path),
+        "sha256_path": str(sha_path),
+        "sha256": digest,
+        "bytes": archive_path.stat().st_size,
+        "warnings": warnings,
+    }
+
+
+def _read_checksum_sidecar(sha_path: Path) -> str:
+    """Return the lowercased hex digest from a ``.sha256`` sidecar, or raise."""
+    raw = sha_path.read_text(encoding="utf-8").strip()
+    if not raw:
+        raise ValueError("empty checksum sidecar")
+    token = raw.split()[0].strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", token):
+        raise ValueError("malformed checksum sidecar (not a sha256 hex digest)")
+    return token
+
+
+def _safe_archive_members(members: list[tarfile.TarInfo]) -> str:
+    """Validate tar members and return the single top-level ``<package_id>``.
+
+    Refuses path traversal, absolute paths, backslashes, NUL, symlinks / hard
+    links / device nodes, more than one top-level directory, and any member not
+    under that directory. Raises ``ValueError`` on the first problem.
+    """
+    if not members:
+        raise ValueError("archive is empty")
+    tops: set[str] = set()
+    for m in members:
+        name = m.name
+        if not name or name in (".", "./"):
+            continue
+        if name.startswith("/") or (len(name) > 1 and name[1] == ":"):
+            raise ValueError(f"absolute path in archive: {name!r}")
+        if "\\" in name or "\x00" in name:
+            raise ValueError(f"illegal character in archive member: {name!r}")
+        parts = [p for p in name.split("/") if p not in ("", ".")]
+        if any(p == ".." for p in parts):
+            raise ValueError(f"path traversal in archive: {name!r}")
+        if not (m.isfile() or m.isdir()):
+            raise ValueError(f"unsupported archive member type: {name!r}")
+        if parts:
+            tops.add(parts[0])
+    if len(tops) != 1:
+        raise ValueError(f"archive must contain exactly one top-level package dir, found {sorted(tops)}")
+    pkg_id = validate_package_id(next(iter(tops)))
+    names = {m.name.rstrip("/") for m in members}
+    if f"{pkg_id}/{SOURCE_MANIFEST_NAME}" not in names:
+        raise ValueError(f"archive is missing {pkg_id}/{SOURCE_MANIFEST_NAME}")
+    return pkg_id
+
+
+def inspect_source_archive(archive_path: Path) -> dict:
+    """Verify the checksum and archive shape without extracting.
+
+    Returns ``{package_id, manifest_state}``. Raises ``ValueError`` /
+    ``FileNotFoundError`` on any integrity or shape problem. Pure read.
+    """
+    archive_path = Path(archive_path)
+    if not archive_path.is_file():
+        raise FileNotFoundError(archive_path)
+    sha_path = Path(str(archive_path) + SHA256_SUFFIX)
+    if not sha_path.is_file():
+        raise ValueError(f"missing checksum sidecar: {sha_path.name}")
+    expected = _read_checksum_sidecar(sha_path)
+    actual = sha256_file(archive_path).lower()
+    if expected != actual:
+        raise ValueError(
+            f"checksum_mismatch: expected {expected[:12]}… got {actual[:12]}…"
+        )
+    try:
+        with tarfile.open(archive_path, "r:gz") as tar:
+            members = tar.getmembers()
+            pkg_id = _safe_archive_members(members)
+            manifest_member = tar.extractfile(f"{pkg_id}/{SOURCE_MANIFEST_NAME}")
+            manifest_state = ""
+            if manifest_member is not None:
+                data = json.loads(manifest_member.read().decode("utf-8"))
+                manifest_state = str(data.get("lifecycle_state", ""))
+    except tarfile.TarError as exc:
+        raise ValueError(f"malformed archive: {exc}") from exc
+    return {"package_id": pkg_id, "manifest_state": manifest_state}
+
+
+def unpack_source_archive(
+    archive_path: Path,
+    *,
+    source_offload_root: Path,
+    state: str | None = None,
+) -> dict:
+    """Verify + extract a ``<package_id>.tar.gz`` into a lifecycle folder.
+
+    Verifies the SHA-256 sidecar and the archive shape (single safe top-level
+    package dir, ``source_manifest.json`` present, no traversal/absolute/symlink
+    members) before extracting. The destination state defaults to the archived
+    manifest's ``lifecycle_state``; ``state`` overrides it. Refuses to overwrite
+    an existing lifecycle package, reconciles the manifest ``lifecycle_state`` to
+    the destination, and verifies package shape after unpack. The archive is
+    never deleted.
+
+    Returns ``{package_id, state, package_dir, verify}``.
+    """
+    archive_path = Path(archive_path)
+    info = inspect_source_archive(archive_path)  # checksum + shape (raises on problem)
+    pkg_id = info["package_id"]
+
+    target_state = state or info["manifest_state"] or _BUILD_STATE
+    if target_state not in LIFECYCLE_STATES:
+        raise ValueError(f"invalid lifecycle state: {target_state!r}")
+
+    root = prepare_offload_root(Path(source_offload_root))
+    target_dir = root / target_state / pkg_id
+    if target_dir.exists():
+        raise FileExistsError(target_dir)
+
+    staging = root / f".unpack-{pkg_id}-{_offload._fs_timestamp()}"
+    if staging.exists():
+        shutil.rmtree(staging)
+    staging.mkdir(parents=True)
+    staging_resolved = staging.resolve()
+    try:
+        with tarfile.open(archive_path, "r:gz") as tar:
+            members = tar.getmembers()
+            _safe_archive_members(members)  # re-validate at extraction time
+            for m in members:
+                rel = m.name
+                if not rel or rel in (".", "./"):
+                    continue
+                dest = (staging / rel)
+                if not str(dest.resolve()).startswith(str(staging_resolved) + os.sep) \
+                        and dest.resolve() != staging_resolved:
+                    raise ValueError(f"path escape blocked: {rel!r}")
+                if m.isdir():
+                    dest.mkdir(parents=True, exist_ok=True)
+                else:  # isfile() — guaranteed by _safe_archive_members
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    src = tar.extractfile(m)
+                    if src is None:
+                        raise ValueError(f"unreadable archive member: {rel!r}")
+                    with open(dest, "wb") as fh:
+                        shutil.copyfileobj(src, fh)
+
+        extracted = staging / pkg_id
+        if not (extracted / SOURCE_MANIFEST_NAME).is_file():
+            raise ValueError(f"unpacked package missing {SOURCE_MANIFEST_NAME}")
+
+        # Reconcile manifest lifecycle_state to the destination folder.
+        manifest = load_source_manifest(extracted)
+        data = manifest.to_dict()
+        data["lifecycle_state"] = target_state
+        atomic_write_json(extracted / SOURCE_MANIFEST_NAME, data)
+
+        target_dir.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(extracted), str(target_dir))
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging, ignore_errors=True)
+
+    # Post-unpack shape verification (tolerant of worker-owned siblings so an
+    # archived outbox ingest_result package still verifies).
+    verify = verify_source_inputs(target_dir)
+    return {
+        "package_id": pkg_id,
+        "state": target_state,
+        "package_dir": str(target_dir),
+        "verify": verify,
+    }
 
 
 # ---------------------------------------------------------------------------

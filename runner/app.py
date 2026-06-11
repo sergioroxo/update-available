@@ -12939,6 +12939,55 @@ def _source_offload_transfer_commands(
     }
 
 
+def _source_offload_archive_commands(
+    pkg_dir, remote_root: str,
+    *,
+    local_python=None,
+    mac_python: str = "<MAC_STUDIO_REPO>/.venv/bin/python",
+) -> dict:
+    """Build copy-paste archive/unpack commands for SSH-free manual transfer (pure).
+
+    Display-only — never executed by the app. Covers the round trip:
+    MacBook archives the inbox package → copy the single .tar.gz + .sha256 by
+    AirDrop / iCloud shared folder / external drive → Mac Studio unpacks into its
+    inbox → (worker runs) → Mac Studio archives the outbox result → copy back →
+    MacBook unpacks into its outbox. Local commands use the app's venv python;
+    the Mac Studio command uses ``mac_python`` (its repo venv), never bare
+    ``python3``.
+    """
+    import sys as _sys
+
+    pkg = Path(pkg_dir)
+    pkg_id = pkg.name
+    local_root = pkg.parent.parent  # …/source_offload
+    remote_root = remote_root.rstrip("/")
+    lpy = local_python or _sys.executable
+    archive_name = f"{pkg_id}.tar.gz"
+    return {
+        # MacBook → archive the inbox package (writes .tar.gz + .sha256).
+        "archive_local": (
+            f"{lpy} -m runner source-offload-archive "
+            f"{shlex.quote(str(local_root / 'inbox' / pkg_id))}"
+        ),
+        # Verify the checksum after copying the archive anywhere.
+        "verify_checksum": f"shasum -a 256 -c {shlex.quote(archive_name + '.sha256')}",
+        # Mac Studio → unpack the transferred archive into its inbox.
+        "unpack_remote_inbox": (
+            f"{mac_python} -m runner source-offload-unpack {shlex.quote(archive_name)} "
+            f"--source-offload-root {remote_root} --state inbox"
+        ),
+        # Mac Studio → archive the finished outbox package for the trip back.
+        "archive_remote_outbox": (
+            f"{mac_python} -m runner source-offload-archive {remote_root}/outbox/{pkg_id}"
+        ),
+        # MacBook → unpack the returned archive into its outbox (ready to import).
+        "unpack_local_outbox": (
+            f"{lpy} -m runner source-offload-unpack {shlex.quote(archive_name)} "
+            f"--source-offload-root {shlex.quote(str(local_root))} --state outbox"
+        ),
+    }
+
+
 def _source_import_relink_preview(pkg_dir) -> list[dict]:
     """Queue-linkage preview for a returned package (read-only; no DB)."""
     from runner.pipeline.offload_source import ingest_result_linkages
@@ -13232,6 +13281,27 @@ def _render_source_transfer(config, root: Path) -> None:
     st.markdown("**3) After it finishes, transfer the returned package back:**")
     st.code(cmds["rsync_back"], language="bash")
     st.caption("Then import it from the **Import results** tab.")
+
+    st.divider()
+    st.markdown("#### Manual archive transfer (no SSH — iCloud / AirDrop / external drive)")
+    st.caption(
+        "When SSH/rsync is blocked (e.g. on UiB networks), move a single "
+        "`.tar.gz` + `.sha256` instead of the live folder. **Never sync the live "
+        "package tree through iCloud** — partial sync corrupts it; archives are "
+        "atomic and checksum-verified. The app only displays these commands."
+    )
+    arc = _source_offload_archive_commands(pkg_dir, rroot, mac_python=mac_python)
+    st.markdown("**A) MacBook — archive the inbox package:**")
+    st.code(arc["archive_local"], language="bash")
+    st.markdown("**B) Copy the `.tar.gz` + `.sha256`** (AirDrop / iCloud shared folder / "
+                "external drive), then verify the checksum where you copied it:")
+    st.code(arc["verify_checksum"], language="bash")
+    st.markdown("**C) Mac Studio — unpack into its inbox, then run the worker (step 2 above):**")
+    st.code(arc["unpack_remote_inbox"], language="bash")
+    st.markdown("**D) Mac Studio — archive the finished outbox package:**")
+    st.code(arc["archive_remote_outbox"], language="bash")
+    st.markdown("**E) Copy back, then MacBook — unpack into its outbox (ready to import):**")
+    st.code(arc["unpack_local_outbox"], language="bash")
 
 
 def _source_relink_queue(config, pkg_dir) -> None:
