@@ -163,6 +163,18 @@ def _postfill_locale_fields(result: AnalysisResult, preprocess: PreprocessResult
     return result
 
 
+def _postprocess_analysis(result: AnalysisResult, preprocess: PreprocessResult) -> AnalysisResult:
+    """Deterministic post-analysis fills applied on every analysis path so that
+    regular ingest, reanalyze, both-LLM, and the source worker all emit the same
+    ``analysis.json``: locale-derived language/country, then ``document_date``
+    backfilled from source publication metadata (idempotent; never overrides an
+    LLM-provided date)."""
+    result = _postfill_locale_fields(result, preprocess)
+    from .metadata_quality import backfill_document_date
+    backfill_document_date(result, preprocess)
+    return result
+
+
 def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None) -> AnalysisResult:
     import anthropic
     client = anthropic.Anthropic(api_key=config.anthropic_api_key)
@@ -198,7 +210,7 @@ def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit
     raw_json = response.content[0].text
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
-    return _postfill_locale_fields(_validate_response(raw_json, _audit=_audit), preprocess)
+    return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
 def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None) -> AnalysisResult:
@@ -252,7 +264,7 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
         )
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
-    return _postfill_locale_fields(_validate_response(raw_json, _audit=_audit), preprocess)
+    return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
 def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None) -> AnalysisResult:
@@ -292,7 +304,7 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
     raw_json = response.json()["choices"][0]["message"]["content"]
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
-    return _postfill_locale_fields(_validate_response(raw_json, _audit=_audit), preprocess)
+    return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
 def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None) -> AnalysisResult:
@@ -337,7 +349,7 @@ def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _a
     raw_json = response.json()["choices"][0]["message"]["content"]
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
-    return _postfill_locale_fields(_validate_response(raw_json, _audit=_audit), preprocess)
+    return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
 def _build_system_prompt_with_lexicon(

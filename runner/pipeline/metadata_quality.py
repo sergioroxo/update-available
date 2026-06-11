@@ -85,3 +85,64 @@ def date_parts(value: str) -> dict:
         "month": int(match.group(2) or 0),
         "day": int(match.group(3) or 0),
     }
+
+
+def backfill_document_date(analysis, preprocess) -> bool:
+    """Populate ``analysis.document_date`` from source publication metadata when
+    the model left it unknown. Returns True if a date was set.
+
+    Shared by the analysis stage (so regular ingest, reanalyze, both-LLM paths,
+    and the source worker all emit ``analysis.json`` with a populated date) and
+    by the upload-time repair (idempotent safety net).
+
+    Semantics (matching the Slice Q date rules):
+    - Publication date (``date_published`` / ``page_intel.date_published``) →
+      ``exact`` when month+day are present, else ``approximate``.
+    - No publication date but a *modified* date → ``approximate`` with a
+      ``modified_date_fallback`` provenance warning. A modified date is never
+      asserted as a publication date.
+    - An LLM-provided ``document_date`` (year already set) is never overridden;
+      a second call after the date is set returns False (idempotent).
+
+    Duck-typed: operates on any objects exposing the expected attributes, so
+    this module stays free of model imports.
+    """
+    if getattr(analysis.document_date, "year", 0):
+        return False
+
+    page_intel = preprocess.page_intel.__dict__ if getattr(preprocess, "page_intel", None) else {}
+    pub = publication_metadata({
+        "date_published": getattr(preprocess, "date_published", "") or "",
+        "sitename": getattr(preprocess, "sitename", "") or "",
+        "hostname": getattr(preprocess, "hostname", "") or "",
+        "page_intel": page_intel,
+    })
+
+    parts = date_parts(pub.get("date_published", ""))
+    if parts["year"]:
+        analysis.document_date.year = parts["year"]
+        analysis.document_date.month = parts["month"]
+        analysis.document_date.day = parts["day"]
+        analysis.document_date.confidence = (
+            "exact" if parts["month"] and parts["day"] else "approximate"
+        )
+        analysis.normalisation_warnings = list(analysis.normalisation_warnings) + [
+            "document_date backfilled from source publication metadata."
+        ]
+        return True
+
+    # No publication date — fall back to the source *modified* date as a
+    # low-confidence review candidate, clearly marked. Never asserted as a
+    # publication date (date_published stays empty).
+    mod_parts = date_parts(pub.get("date_modified", ""))
+    if mod_parts["year"]:
+        analysis.document_date.year = mod_parts["year"]
+        analysis.document_date.month = mod_parts["month"]
+        analysis.document_date.day = mod_parts["day"]
+        analysis.document_date.confidence = "approximate"
+        analysis.normalisation_warnings = list(analysis.normalisation_warnings) + [
+            "document_date set from source modified date (modified_date_fallback) — "
+            "no publication date available; review and confirm."
+        ]
+        return True
+    return False
