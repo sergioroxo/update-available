@@ -2451,6 +2451,16 @@ def source_offload_export_cmd(
     url: List[str] = typer.Option(
         [], "--url", help="Ad-hoc URL(s) to package as url items (not fetched)",
     ),
+    queue_snapshot: List[str] = typer.Option(
+        [],
+        "--queue-snapshot",
+        help=(
+            "Attach a browser-saved snapshot to a queue item: 'QID:/path/to/saved.html'. "
+            "Packages the saved FILE (so the Mac Studio processes the snapshot, not the "
+            "blocked URL) while preserving the original source URL + queue metadata. "
+            "Use for Cloudflare/challenge/dynamic pages."
+        ),
+    ),
     package_id: Optional[str] = typer.Option(
         None, "--package-id", help="Explicit package id (default: auto-generated)",
     ),
@@ -2477,12 +2487,14 @@ def source_offload_export_cmd(
     """
     from rich.table import Table
     from .pipeline import intake as intake_mod
-    from .pipeline.offload_source import SourceItemSpec, build_source_package
+    from .pipeline.offload_source import (
+        SourceItemSpec, build_snapshot_spec, build_source_package,
+    )
 
-    if not queue_id and not file and not url:
+    if not queue_id and not file and not url and not queue_snapshot:
         console.print(
             Panel(
-                "Provide at least one of --queue-id, --file, or --url.",
+                "Provide at least one of --queue-id, --queue-snapshot, --file, or --url.",
                 title="[red]Nothing to export[/red]",
             )
         )
@@ -2493,8 +2505,8 @@ def source_offload_export_cmd(
 
     specs: list[SourceItemSpec] = []
 
-    # Source Queue items (read-only).
-    if queue_id:
+    # Source Queue items (read-only) — plain URL items and saved-snapshot items.
+    if queue_id or queue_snapshot:
         from .pipeline.source_queue import open_db, queue_db_path, get_item
 
         db = open_db(queue_db_path(config.corpus_dir))
@@ -2521,6 +2533,33 @@ def source_offload_export_cmd(
                         suggested_process_route=item.suggested_process_route,
                     )
                 )
+
+            # Browser-saved snapshots attached to queue items: 'QID:/path/to/file'.
+            for mapping in queue_snapshot:
+                qid, sep, raw_path = mapping.partition(":")
+                qid = qid.strip()
+                raw_path = raw_path.strip()
+                if not qid or not sep or not raw_path:
+                    console.print(Panel(
+                        f"Invalid --queue-snapshot {mapping!r}. "
+                        "Expected 'QID:/path/to/saved.html'.",
+                        title="[red]Export refused[/red]"))
+                    raise typer.Exit(1)
+                snap = Path(raw_path).expanduser()
+                if not snap.is_file():
+                    console.print(Panel(
+                        f"Snapshot file not found for {qid}: {snap}",
+                        title="[red]Export refused[/red]"))
+                    raise typer.Exit(1)
+                item = get_item(db, qid)
+                if item is None:
+                    console.print(Panel(f"Queue item not found: {qid}", title="[red]Export refused[/red]"))
+                    raise typer.Exit(1)
+                specs.append(build_snapshot_spec(
+                    queue_item=item,
+                    snapshot_path=str(snap),
+                    declared_source_type=intake_mod._detect_source_type(str(snap)),
+                ))
         finally:
             db.close()
 

@@ -12824,6 +12824,45 @@ def _source_specs_from_queue_items(items) -> list:
     return specs
 
 
+def _source_snapshot_spec(item, snapshot_path: str):
+    """Map a queue item + a browser-saved snapshot path to a file-backed spec.
+
+    Validates the snapshot exists; raises ValueError otherwise. The original
+    source URL and queue metadata are preserved so S3 import relinks the queue
+    item. Mirrors the ``--queue-snapshot`` CLI path.
+    """
+    from pathlib import Path as _Path
+
+    from runner.pipeline import intake as intake_mod
+    from runner.pipeline.offload_source import build_snapshot_spec
+
+    snap = _Path(snapshot_path).expanduser()
+    if not snap.is_file():
+        raise ValueError(f"Snapshot file not found: {snap}")
+    return build_snapshot_spec(
+        queue_item=item,
+        snapshot_path=str(snap),
+        declared_source_type=intake_mod._detect_source_type(str(snap)),
+    )
+
+
+def _source_specs_from_selection(items, snapshot_paths: dict) -> list:
+    """Build specs for a queue selection, honoring optional saved snapshots.
+
+    ``snapshot_paths`` maps queue_item_id → local snapshot path. Items with a
+    non-empty mapped path become file-backed snapshot specs (worker processes the
+    saved file, not the blocked URL); the rest become ordinary URL specs. Raises
+    ValueError if a provided snapshot path does not exist.
+    """
+    url_items = [it for it in items if not (snapshot_paths or {}).get(it.id, "").strip()]
+    specs = _source_specs_from_queue_items(url_items)
+    for it in items:
+        path = (snapshot_paths or {}).get(it.id, "").strip()
+        if path:
+            specs.append(_source_snapshot_spec(it, path))
+    return specs
+
+
 def _source_package_rows(source_offload_root) -> list[dict]:
     """Summarise every source package across lifecycle folders (read-only).
 
@@ -12988,6 +13027,26 @@ def _render_source_export(config, root: Path) -> None:
             if ack:
                 chosen_ids += fsel
 
+    # Optional browser-saved snapshot per selected queue item (for blocked URLs).
+    snapshot_paths: dict[str, str] = {}
+    if chosen_ids:
+        with st.expander("Use browser-saved snapshot for blocked URL (Cloudflare / dynamic page)"):
+            st.caption(
+                "If a selected URL is Cloudflare-challenged or JavaScript-rendered, save the "
+                "page manually in your browser (Save As → HTML, or Print → PDF) and give the "
+                "local file path here. The Mac Studio will **process that saved file** instead "
+                "of re-fetching the blocked URL, while the **original source URL and queue link "
+                "are preserved**. Leave blank to package the URL normally."
+            )
+            id_to_e = {e["id"]: e for e in eligible}
+            for cid in chosen_ids:
+                e = id_to_e.get(cid, {"url": ""})
+                snapshot_paths[cid] = st.text_input(
+                    f"Saved snapshot for {cid} — {e.get('url', '')[:60]}",
+                    key=f"src_export_snap_{cid}",
+                    placeholder="/path/to/saved.html  (optional)",
+                ).strip()
+
     urls_text = st.text_area("Ad-hoc URLs (one per line, optional)", key="src_export_urls")
     files_text = st.text_area("Local file paths (one per line, optional)", key="src_export_files")
     package_id = st.text_input(
@@ -13012,7 +13071,7 @@ def _render_source_export(config, root: Path) -> None:
                     qitems = [q for q in (get_item(db, i) for i in chosen_ids) if q is not None]
                 finally:
                     db.close()
-                specs += _source_specs_from_queue_items(qitems)
+                specs += _source_specs_from_selection(qitems, snapshot_paths)
             except Exception as exc:  # noqa: BLE001
                 st.error(f"Queue read failed: {exc}")
                 return

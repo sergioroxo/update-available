@@ -207,6 +207,45 @@ def default_source_package_id() -> str:
     return default_package_id("source")
 
 
+def build_snapshot_spec(
+    *,
+    queue_item,
+    snapshot_path: str,
+    declared_source_type: str,
+) -> SourceItemSpec:
+    """Build a **file-backed** spec from a queue item + a browser-saved snapshot.
+
+    For a Cloudflare/challenge/dynamic page the researcher saves the rendered page
+    manually (HTML/PDF) and attaches it to the existing queue item. The package
+    then carries the *saved file* (so the Mac Studio worker processes the snapshot
+    instead of re-fetching the blocked URL), while preserving the original source
+    URL and all queue metadata so S3 import relinks the original queue item by
+    ``queue_item_id`` / ``url_hash``.
+
+    ``queue_item`` is duck-typed (any object exposing the queue fields), keeping
+    this module free of ``source_queue`` imports. ``declared_source_type`` is
+    detected from the snapshot file by the caller (which owns intake detection).
+    """
+    return SourceItemSpec(
+        source_kind="file",
+        declared_source_type=declared_source_type,
+        file_path=snapshot_path,
+        # Preserve the ORIGINAL source URL (not the file path) so the worker
+        # threads it as source_url and provenance/relink stay accurate.
+        url=getattr(queue_item, "url", "") or "",
+        queue_item_id=getattr(queue_item, "id", "") or "",
+        url_hash=getattr(queue_item, "url_hash", "") or "",
+        title=getattr(queue_item, "title", "") or "",
+        notes=getattr(queue_item, "notes", "") or "",
+        priority=getattr(queue_item, "priority", "") or "",
+        recommended_llm=getattr(queue_item, "recommended_llm", "") or "",
+        overnight_batch_safe=bool(getattr(queue_item, "overnight_batch_safe", True)),
+        tags=getattr(queue_item, "tags", "") or "",
+        doc_type_hint=getattr(queue_item, "doc_type_hint", "") or "",
+        suggested_process_route=getattr(queue_item, "suggested_process_route", "") or "",
+    )
+
+
 def _restrict(path: Path, mode: int) -> None:
     """Best-effort owner-only permissions; never fatal."""
     try:
