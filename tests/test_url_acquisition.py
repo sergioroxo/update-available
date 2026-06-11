@@ -1,0 +1,281 @@
+"""U1 — Robust URL acquisition (fetch separated from extraction).
+
+No real network: trafilatura.fetch_url and httpx.get are monkeypatched. Covers
+challenge classification, the no-crash blocked path, httpx fallback success,
+saved-local-HTML extraction, ImportError reporting, and shared regular-ingest /
+source-worker behavior.
+"""
+from __future__ import annotations
+
+import json
+import types
+from pathlib import Path
+
+import pytest
+
+from runner.pipeline import acquire
+from runner.pipeline.acquire import (
+    AcquisitionResult,
+    acquire_local_html,
+    acquire_url,
+    classify_challenge,
+)
+from runner.pipeline.preservation import assess_preservation
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+class _Resp:
+    def __init__(self, status, text, headers=None, url="https://example.org/a"):
+        self.status_code = status
+        self.text = text
+        self.headers = headers or {}
+        self.url = url
+
+
+def _patch_traf(monkeypatch, value):
+    mod = types.SimpleNamespace(fetch_url=lambda url: value,
+                                extract=lambda *a, **k: "")
+    monkeypatch.setitem(__import__("sys").modules, "trafilatura", mod)
+
+
+def _patch_httpx(monkeypatch, resp=None, raises=None):
+    def _get(url, **kw):
+        if raises is not None:
+            raise raises
+        return resp
+    mod = types.SimpleNamespace(get=_get)
+    monkeypatch.setitem(__import__("sys").modules, "httpx", mod)
+
+
+# ---------------------------------------------------------------------------
+# classify_challenge
+# ---------------------------------------------------------------------------
+
+def test_classify_cf_mitigated_header():
+    assert classify_challenge(status=200, headers={"cf-mitigated": "challenge"}, body="") \
+        == "cf-mitigated:challenge"
+
+
+@pytest.mark.parametrize("status", [403, 429, 503])
+def test_classify_cloudflare_blocking_status(status):
+    sig = classify_challenge(status=status, headers={"server": "cloudflare"}, body="")
+    assert sig == f"cloudflare_http:{status}"
+
+
+def test_classify_blocker_body_text():
+    assert classify_challenge(status=200, headers={}, body="<html>Just a moment...</html>") \
+        == "blocker_text"
+
+
+def test_classify_clean_page_is_not_challenge():
+    assert classify_challenge(status=200, headers={"server": "nginx"},
+                              body="<html><p>Real article</p></html>") == ""
+
+
+def test_classify_403_without_cloudflare_is_not_challenge():
+    # A bare 403 with no Cloudflare markers is a failed fetch, not a proven challenge.
+    assert classify_challenge(status=403, headers={"server": "nginx"}, body="") == ""
+
+
+# ---------------------------------------------------------------------------
+# acquire_url
+# ---------------------------------------------------------------------------
+
+def test_acquire_url_trafilatura_first_path(monkeypatch):
+    _patch_traf(monkeypatch, "<html><p>Real content</p></html>")
+    acq = acquire_url("https://example.org/a")
+    assert acq.ok is True
+    assert acq.fetch_tool == "trafilatura"
+    assert acq.challenge is False
+
+
+def test_acquire_url_cf_mitigated_challenge_via_httpx(monkeypatch):
+    _patch_traf(monkeypatch, None)  # trafilatura fails → httpx fallback
+    _patch_httpx(monkeypatch, _Resp(403, "<html>blocked</html>",
+                                    headers={"cf-mitigated": "challenge", "server": "cloudflare"}))
+    acq = acquire_url("https://example.org/a")
+    assert acq.ok is False
+    assert acq.challenge is True
+    assert acq.challenge_signal == "cf-mitigated:challenge"
+    assert acq.http_status == 403
+    assert acq.fetch_tool == "httpx"
+
+
+def test_acquire_url_httpx_fallback_success(monkeypatch):
+    _patch_traf(monkeypatch, None)
+    _patch_httpx(monkeypatch, _Resp(200, "<html><p>Recovered via httpx</p></html>",
+                                    headers={"server": "nginx"}))
+    acq = acquire_url("https://example.org/a")
+    assert acq.ok is True
+    assert acq.fetch_tool == "httpx"
+    assert acq.http_status == 200
+    assert "Recovered via httpx" in acq.html
+
+
+def test_acquire_url_cloudflare_403_body_challenge(monkeypatch):
+    _patch_traf(monkeypatch, None)
+    _patch_httpx(monkeypatch, _Resp(503, "Attention Required! Cloudflare ray id 123",
+                                    headers={"server": "cloudflare", "cf-ray": "abc"}))
+    acq = acquire_url("https://example.org/a")
+    assert acq.challenge is True
+    assert acq.challenge_signal == "cloudflare_http:503"
+
+
+def test_acquire_url_httpx_error_is_not_raised(monkeypatch):
+    _patch_traf(monkeypatch, None)
+    _patch_httpx(monkeypatch, raises=RuntimeError("conn reset"))
+    acq = acquire_url("https://example.org/a")
+    assert acq.ok is False
+    assert acq.challenge is False
+    assert "httpx GET failed" in acq.note
+
+
+def test_acquire_url_importerror_reports_underlying(monkeypatch):
+    import builtins
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "trafilatura":
+            raise ImportError("No module named 'lxml_html_clean'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    with pytest.raises(RuntimeError) as exc:
+        acquire_url("https://example.org/a")
+    assert "lxml_html_clean" in str(exc.value)
+
+
+# ---------------------------------------------------------------------------
+# acquire_local_html
+# ---------------------------------------------------------------------------
+
+def test_acquire_local_html_reads_disk(tmp_path):
+    f = tmp_path / "saved.html"
+    f.write_text("<html><body><p>Saved article body</p></body></html>", encoding="utf-8")
+    acq = acquire_local_html(str(f))
+    assert acq.ok is True
+    assert acq.fetch_tool == "local_file"
+    assert "Saved article body" in acq.html
+
+
+def test_acquire_local_html_missing_file(tmp_path):
+    acq = acquire_local_html(str(tmp_path / "nope.html"))
+    assert acq.ok is False
+    assert "not found" in acq.note
+
+
+def test_acquire_local_html_challenge_page(tmp_path):
+    f = tmp_path / "challenge.html"
+    f.write_text("<html>Just a moment... checking your browser</html>", encoding="utf-8")
+    acq = acquire_local_html(str(f))
+    assert acq.ok is False and acq.challenge is True
+
+
+def test_provenance_omits_body_keeps_length():
+    acq = AcquisitionResult(ok=True, html="abcde", fetch_tool="httpx")
+    prov = acq.to_provenance()
+    assert "html" not in prov
+    assert prov["html_chars"] == 5
+    assert prov["fetch_tool"] == "httpx"
+
+
+# ---------------------------------------------------------------------------
+# _preprocess_url integration — no crash on challenge
+# ---------------------------------------------------------------------------
+
+def test_preprocess_url_challenge_returns_blocked_not_raise(monkeypatch, tmp_path):
+    from runner.pipeline import preprocess as pp
+    import runner.pipeline.acquire as acq_mod
+    monkeypatch.setattr(acq_mod, "acquire_url",
+                        lambda url, **kw: AcquisitionResult(
+                            ok=False, html="", final_url=url, http_status=403,
+                            headers={"cf-mitigated": "challenge"}, fetch_tool="httpx",
+                            challenge=True, challenge_signal="cf-mitigated:challenge"))
+    result = pp._preprocess_url("https://example.org/a", snapshot_dir=tmp_path)
+    assert result.quality == "blocked"
+    assert result.text == ""
+    assert result.acquisition["challenge"] is True
+    # acquisition.json sidecar written.
+    prov = json.loads((tmp_path / "acquisition.json").read_text(encoding="utf-8"))
+    assert prov["challenge_signal"] == "cf-mitigated:challenge"
+
+
+def test_preprocess_url_local_html_extracts(monkeypatch, tmp_path):
+    from runner.pipeline import preprocess as pp
+    src = tmp_path / "saved.html"
+    src.write_text(
+        "<html><head><title>T</title></head><body>"
+        + ("<p>Real saved article paragraph. </p>" * 40)
+        + "</body></html>",
+        encoding="utf-8",
+    )
+    snap = tmp_path / "doc"
+    snap.mkdir()
+    result = pp._preprocess_url(str(src), snapshot_dir=snap, is_local_file=True)
+    assert result.quality in ("medium", "high")
+    assert "Real saved article paragraph" in result.text
+    assert result.acquisition["fetch_tool"] == "local_file"
+
+
+# ---------------------------------------------------------------------------
+# Preservation routing for an acquisition challenge (header-only, empty body)
+# ---------------------------------------------------------------------------
+
+def test_preservation_routes_header_only_challenge_to_browsertrix():
+    status = assess_preservation(
+        source="https://example.org/a", source_type="url", wayback_status="failed",
+        preprocess_quality="blocked", local_html_sha256="", local_html_path="",
+        captured_html="",  # header-only challenge: no body to pattern-match
+        acquisition_challenge=True, acquisition_challenge_signal="cf-mitigated:challenge",
+    )
+    assert status.preservation_status == "capture_needed"
+    assert status.capture_needed is True
+    assert status.suggested_capture_route == "browsertrix"
+
+
+def test_preservation_clean_page_still_captured_html():
+    status = assess_preservation(
+        source="https://example.org/a", source_type="url", wayback_status="existing",
+        preprocess_quality="high", local_html_sha256="a" * 64,
+        local_html_path="/x/source.html", captured_html="<html>Real content</html>",
+        acquisition_challenge=False,
+    )
+    assert status.preservation_status == "captured_html"
+
+
+# ---------------------------------------------------------------------------
+# Shared regular-ingest / source-worker behavior
+# ---------------------------------------------------------------------------
+
+def test_regular_ingest_and_worker_share_acquire(monkeypatch, tmp_path):
+    """preprocess.run (regular ingest) and the worker both route a challenged URL
+    to a blocked result + capture_needed, because both call _preprocess_url which
+    calls the shared acquire layer."""
+    from runner.pipeline import preprocess as pp
+    import runner.pipeline.acquire as acq_mod
+
+    monkeypatch.setattr(acq_mod, "acquire_url",
+                        lambda url, **kw: AcquisitionResult(
+                            ok=False, html="", final_url=url, http_status=403,
+                            headers={"cf-mitigated": "challenge"}, fetch_tool="httpx",
+                            challenge=True, challenge_signal="cf-mitigated:challenge"))
+
+    doc_dir = tmp_path / "corpus" / "docX"
+    doc_dir.mkdir(parents=True)
+    (doc_dir / "intake.json").write_text("{}", encoding="utf-8")
+    intake = types.SimpleNamespace(
+        doc_id="docX", source="https://example.org/a", source_type="url",
+        wayback_status="failed", local_dir=doc_dir,
+    )
+    config = types.SimpleNamespace(
+        truncation_limit=24000, truncation_head_chars=16000, truncation_tail_chars=6000,
+        media_collect_comments=False, media_max_comments=50, media_allow_whisper=False,
+    )
+    result = pp.run(intake, config)
+    assert result.quality == "blocked"
+    pstatus = json.loads((doc_dir / "preservation_status.json").read_text(encoding="utf-8"))
+    assert pstatus["preservation_status"] == "capture_needed"
+    assert pstatus["suggested_capture_route"] == "browsertrix"

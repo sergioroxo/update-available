@@ -102,6 +102,7 @@ ALLOWED_INGEST_ARTIFACTS: frozenset[str] = frozenset({
     "worker_report.json",
     # Optional context (present only when the pipeline produced it).
     "wayback.json",
+    "acquisition.json",
     "preservation_status.json",
     "source.html",
     "html_snapshot.json",

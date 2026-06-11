@@ -124,6 +124,8 @@ def assess_preservation(
     local_html_sha256: str = "",
     local_html_path: str = "",
     captured_html: str = "",
+    acquisition_challenge: bool = False,
+    acquisition_challenge_signal: str = "",
 ) -> PreservationStatus:
     """Classify preservation/capture status from existing pipeline signals.
 
@@ -211,6 +213,31 @@ def assess_preservation(
             local_html_path=local_html_path,
             local_html_sha256=local_html_sha256,
             notes=["Media sources use transcript extraction, not HTML capture."],
+        )
+
+    # ── 3.5 Acquisition-layer challenge (deterministic, header-aware) ────
+    # A Cloudflare/bot/JS challenge detected by the acquisition layer (e.g. a
+    # ``cf-mitigated: challenge`` header or a 403 with no usable body) must route
+    # to capture even when ``captured_html`` is empty and so cannot match
+    # ``_BLOCKER_RE`` below.
+    if acquisition_challenge:
+        signal = acquisition_challenge_signal or "challenge"
+        notes.append(
+            f"Acquisition layer classified the fetch as a challenge ({signal}) — "
+            "Cloudflare/bot/JS wall, not the document content."
+        )
+        return PreservationStatus(
+            preservation_status="capture_needed",
+            capture_needed=True,
+            capture_reason=(
+                f"Acquisition challenge ({signal}) — page is gated behind a "
+                "Cloudflare/bot/JS wall; manual capture required."
+            ),
+            suggested_capture_route="browsertrix",
+            public_archive_status=public_archive_status,
+            local_html_path=local_html_path,
+            local_html_sha256=local_html_sha256,
+            notes=notes,
         )
 
     # ── 4. Blocker/challenge page detected in captured HTML ──────────────

@@ -798,6 +798,9 @@ class PreprocessResult:
     hostname: str = ""                     # bare domain, e.g. christianconcern.com
     outbound_links: list[dict] = field(default_factory=list)   # [{url, anchor_text, domain}]
     page_intel: Optional["PageIntelligence"] = None
+    # URL/HTML acquisition provenance (fetch tool, http status/headers,
+    # challenge classification) — populated by the acquisition layer.
+    acquisition: dict = field(default_factory=dict)
     source_html_path: str = ""
     source_html_sha256: str = ""
     media_metadata: dict = field(default_factory=dict)

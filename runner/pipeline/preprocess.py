@@ -42,7 +42,10 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
     if st == "url":
         result = _preprocess_url(intake.source, snapshot_dir=intake.local_dir)
     elif st == "html":
-        result = _preprocess_url(intake.source)
+        # Saved local HTML — read from disk, never fetch_url(local_path).
+        result = _preprocess_url(
+            intake.source, snapshot_dir=intake.local_dir, is_local_file=True
+        )
     elif st == "pdf":
         result = _preprocess_pdf(Path(intake.source))
     elif st == "epub":
@@ -79,6 +82,7 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
             _html_file = intake.local_dir / "source.html"
             if _html_file.exists():
                 _html_text = _html_file.read_text(encoding="utf-8", errors="replace")
+            _acq = getattr(result, "acquisition", None) or {}
             _pstatus = assess_preservation(
                 source=intake.source,
                 source_type=intake.source_type,
@@ -87,6 +91,8 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
                 local_html_sha256=result.source_html_sha256,
                 local_html_path=result.source_html_path,
                 captured_html=_html_text,
+                acquisition_challenge=bool(_acq.get("challenge")),
+                acquisition_challenge_signal=str(_acq.get("challenge_signal") or ""),
             )
             write_preservation_status(intake.local_dir, _pstatus)
         except Exception:
@@ -95,19 +101,52 @@ def run(intake: IntakeResult, config: Config, max_chars: int | None = None) -> P
     return result
 
 
-def _preprocess_url(url: str, snapshot_dir: Path | None = None) -> PreprocessResult:
-    try:
-        import trafilatura
-    except ImportError:
-        raise RuntimeError("trafilatura is not installed. Run: pip install trafilatura")
+def _preprocess_url(
+    url: str,
+    snapshot_dir: Path | None = None,
+    *,
+    is_local_file: bool = False,
+) -> PreprocessResult:
+    """Acquire a URL (or saved local HTML) then extract — acquisition is now a
+    separate, non-crashing step (see ``acquire.py``).
 
-    downloaded = trafilatura.fetch_url(url)
-    if not downloaded:
-        raise ValueError(f"trafilatura: could not fetch {url}")
-    snapshot_meta = _save_html_snapshot(downloaded, url, snapshot_dir) if snapshot_dir else {}
+    A Cloudflare / bot-challenge / JS-wall, an empty fetch, or a failed fetch no
+    longer raises: it returns a ``quality="blocked"`` result carrying acquisition
+    provenance so the preservation router classifies it ``capture_needed`` /
+    ``browsertrix`` for manual capture.
+    """
+    from .acquire import acquire_local_html, acquire_url
+
+    acq = acquire_url(url) if not is_local_file else acquire_local_html(url)
+
+    # Persist whatever we received (even a challenge page — it is evidence) plus
+    # the acquisition provenance sidecar.
+    snapshot_meta: dict = {}
+    if snapshot_dir is not None:
+        if acq.html:
+            snapshot_meta = _save_html_snapshot(acq.html, url, snapshot_dir)
+        _save_acquisition_status(snapshot_dir, acq)
+
+    acquisition_prov = acq.to_provenance()
+
+    # ── Blocked / challenge / empty: do NOT crash — return a blocked result ──
+    if not acq.ok or not acq.html.strip():
+        return PreprocessResult(
+            doc_id="",
+            tool_used=acq.fetch_tool or "trafilatura",
+            quality="blocked",
+            text="",
+            markdown="",
+            acquisition=acquisition_prov,
+            source_html_path=snapshot_meta.get("path", ""),
+            source_html_sha256=snapshot_meta.get("sha256", ""),
+        )
+
+    downloaded = acq.html
 
     # JSON output gives us structured metadata alongside the text
     import json as _json
+    import trafilatura
     json_str = trafilatura.extract(
         downloaded,
         output_format="json",
@@ -134,7 +173,7 @@ def _preprocess_url(url: str, snapshot_dir: Path | None = None) -> PreprocessRes
 
     return PreprocessResult(
         doc_id="",
-        tool_used="trafilatura",
+        tool_used=acq.fetch_tool or "trafilatura",
         quality=_rate_quality(text, "trafilatura"),
         text=text,
         markdown=md,
@@ -150,9 +189,21 @@ def _preprocess_url(url: str, snapshot_dir: Path | None = None) -> PreprocessRes
         hostname=metadata.get("hostname", ""),
         outbound_links=intel.outbound_links,
         page_intel=intel,
+        acquisition=acquisition_prov,
         source_html_path=snapshot_meta.get("path", ""),
         source_html_sha256=snapshot_meta.get("sha256", ""),
     )
+
+
+def _save_acquisition_status(doc_dir: Path, acq) -> Path:
+    """Write acquisition provenance to ``{doc_dir}/acquisition.json``."""
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    path = doc_dir / "acquisition.json"
+    path.write_text(
+        json.dumps(acq.to_provenance(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return path
 
 
 def _save_html_snapshot(html: str | bytes, source_url: str, doc_dir: Path) -> dict:
