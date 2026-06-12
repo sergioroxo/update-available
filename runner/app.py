@@ -13003,7 +13003,8 @@ _SOURCE_REVIEW_FLAGS = (
     "needs_media_review", "needs_book_splitting",
 )
 _SOURCE_NO_VERIFY_TARGETS = frozenset({"failed", "archive"})
-_SOURCE_WORKER_DEFAULT_LLM = os.getenv("SOURCE_WORKER_DEFAULT_LLM", "litelm-heavy")
+_SOURCE_WORKER_DEFAULT_LLM = os.getenv("SOURCE_WORKER_DEFAULT_LLM", "litelm")
+_SOURCE_WORKER_DEFAULT_ENRICH_MODEL = os.getenv("SOURCE_WORKER_DEFAULT_ENRICH_MODEL", "core-gemma")
 
 
 def _source_offload_root(config) -> Path:
@@ -13183,6 +13184,7 @@ def _source_offload_transfer_commands(
     pkg_dir, ssh_host: str, remote_root: str,
     mac_python: str = "<MAC_STUDIO_REPO>/.venv/bin/python",
     llm: str = _SOURCE_WORKER_DEFAULT_LLM,
+    enrich_model: str = _SOURCE_WORKER_DEFAULT_ENRICH_MODEL,
 ) -> dict:
     """Build copy-paste rsync-up / source-worker / rsync-back commands (pure).
 
@@ -13201,7 +13203,10 @@ def _source_offload_transfer_commands(
             f"rsync -avz --chmod=D700,F600 {shlex.quote(str(local_root / 'inbox' / pkg_id))} "
             f"{ssh_host}:{remote_root}/inbox/"
         ),
-        "worker": f"{mac_python} -m runner source-worker {remote_inbox} --llm {llm}",
+        "worker": (
+            f"{mac_python} -m runner source-worker {remote_inbox} "
+            f"--llm {llm} --enrich-model {enrich_model}"
+        ),
         "rsync_back": (
             f"rsync -avz --chmod=D700,F600 {ssh_host}:{remote_outbox} "
             f"{shlex.quote(str(local_root / 'outbox'))}/"
@@ -13397,7 +13402,12 @@ def _mac_studio_offload_root() -> Path:
     return Path(os.getenv("MAC_STUDIO_OFFLOAD_ROOT", "/Users/cdn-ai/sogice-offload")).expanduser()
 
 
-def _start_source_worker_job(package_dir: Path, *, llm: str = _SOURCE_WORKER_DEFAULT_LLM) -> dict:
+def _start_source_worker_job(
+    package_dir: Path,
+    *,
+    llm: str = _SOURCE_WORKER_DEFAULT_LLM,
+    enrich_model: str = _SOURCE_WORKER_DEFAULT_ENRICH_MODEL,
+) -> dict:
     """Start one local Mac Studio source worker in the background."""
     root = Path(package_dir).parent.parent
     lock_info = _offload_worker_lock_info(root)
@@ -13417,7 +13427,10 @@ def _start_source_worker_job(package_dir: Path, *, llm: str = _SOURCE_WORKER_DEF
     log_dir = _project_root / "exports" / "app_jobs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"{started}_{pkg_id}_source_worker.log"
-    command = [sys.executable, "-m", "runner", "source-worker", str(package_dir), "--llm", llm]
+    command = [
+        sys.executable, "-m", "runner", "source-worker", str(package_dir),
+        "--llm", llm, "--enrich-model", enrich_model,
+    ]
     with log_path.open("w", encoding="utf-8") as log_file:
         log_file.write(f"$ {shlex.join(command)}\n\n")
         log_file.flush()
@@ -14255,10 +14268,16 @@ def page_mac_studio_worker():
             )
             pkg_dir = offload_root / "inbox" / chosen
             llm = st.text_input(
-                "LLM route",
+                "Analysis route",
                 value=_SOURCE_WORKER_DEFAULT_LLM,
                 key="ms_worker_llm",
-                help="`litelm-heavy` routes analysis through core-gemma / gemma4:31b. Embedding still uses research-embedding.",
+                help="`litelm` routes analysis through core-qwen. Use `litelm-heavy` only if you intentionally want analysis on core-gemma.",
+            )
+            enrich_model = st.text_input(
+                "Enrichment model",
+                value=_SOURCE_WORKER_DEFAULT_ENRICH_MODEL,
+                key="ms_worker_enrich_model",
+                help="`core-gemma` routes enrichment through gemma4:31b. Embedding still uses research-embedding.",
             )
             if st.button("Verify selected package", key=f"ms_verify_{chosen}"):
                 _render_offload_verify_report(
@@ -14269,7 +14288,9 @@ def page_mac_studio_worker():
             if st.button("Run source-worker", key=f"ms_run_{chosen}", disabled=disabled):
                 try:
                     st.session_state[job_key] = _start_source_worker_job(
-                        pkg_dir, llm=llm.strip() or _SOURCE_WORKER_DEFAULT_LLM,
+                        pkg_dir,
+                        llm=llm.strip() or _SOURCE_WORKER_DEFAULT_LLM,
+                        enrich_model=enrich_model.strip() or _SOURCE_WORKER_DEFAULT_ENRICH_MODEL,
                     )
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Could not start worker:\n\n{exc}")

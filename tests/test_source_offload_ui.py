@@ -319,7 +319,7 @@ def test_transfer_commands_build_up_worker_back(tmp_path):
     # Worker line uses the Mac Studio venv python, never bare python3.
     assert cmds["worker"] == (
         "/Users/cdn-ai/repo/.venv/bin/python -m runner source-worker "
-        "/Users/cdn-ai/sogice-offload/inbox/src-ui --llm litelm-heavy"
+        "/Users/cdn-ai/sogice-offload/inbox/src-ui --llm litelm --enrich-model core-gemma"
     )
     assert "python3 -m runner" not in cmds["worker"]
     assert "cdn-ai@studio.ts.net:/Users/cdn-ai/sogice-offload/outbox/src-ui" in cmds["rsync_back"]
@@ -331,7 +331,7 @@ def test_transfer_commands_default_worker_python_is_placeholder(tmp_path):
         root / "inbox" / "src-ui", "host", "/root",
     )
     assert cmds["worker"].startswith("<MAC_STUDIO_REPO>/.venv/bin/python ")
-    assert cmds["worker"].endswith("--llm litelm-heavy")
+    assert cmds["worker"].endswith("--llm litelm --enrich-model core-gemma")
 
 
 # ---------------------------------------------------------------------------
@@ -357,4 +357,5 @@ def test_no_source_worker_launch_helper():
                 "_start_source_worker_job",
                 "_render_source_worker_job",
                 "_SOURCE_WORKER_DEFAULT_LLM",
+                "_SOURCE_WORKER_DEFAULT_ENRICH_MODEL",
             }, f"unexpected source-worker helper: {name}"
