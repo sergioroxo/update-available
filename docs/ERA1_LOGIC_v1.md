@@ -113,3 +113,28 @@ notes, and ArenaAI feel tests should reference them.
    does nothing? (Dead second button = consent theater sharpened.)
 4. **S1.3 prayer text**: co-write (felt register, period-real) — drafts on
    request, your approval required (ethics: survivor-adjacent voice).
+5. **The poster conversion** (Sérgio, round 9): the wall posters start as
+   queer pop-culture (pop star, billboard energy); mid-era — tied to the kit
+   install or the escalation — they SWAP to religious/straight-coded imagery.
+   The room itself gets converted while you're looking at the screen. Strong;
+   needs the asset pass (two poster textures each) and a trigger-beat
+   decision (S1.2 install vs S1.7 escalation). ⚑ tone check: the swap is the
+   system's act — never queer art destroyed for spectacle.
+
+## 7. Implementation notes (round 9 build — verified in preview)
+
+- **S1.0 power-on beat is LIVE**: warning → dark room + hint ("the screen is
+  dark — switch the computer on") → click the power button on the CRT (or
+  the dark glass, or Enter) → BIOS now ends in `NEW OPERATING SYSTEM FOUND. /
+  INSTALLING PHASE/2 95 (TM) / "EVERY PHASE PASSES."` ⚑ the name-play
+  tagline is a placeholder for co-writing.
+- **Witness wall is dormant** (dark, "· · ·") until the system has a record —
+  interim trigger: the mIRC log; moves to `kit-inserted` when S1.2 ships.
+- **Free look**: the mouse turns fully around (no clamp); crossing into the
+  witness hemisphere does the filing bookkeeping however you got there; the
+  ⟲/F2 control is an assist tween now, not the only door.
+- Era-1 canvas is **4:3 (512×384)** — a 1997 CRT; casing rebuilt squarish,
+  bezels flush (nothing cut).
+- STILL TO BUILD (the era's actual new spine): S1.1–S1.4 kit sequence
+  (`data/dialog/s1_kit.json`), revised channel script (by-name DM, explicit
+  terms), S1.7–S1.9 escalation/packet/suspension.

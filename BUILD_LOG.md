@@ -23,3 +23,25 @@
 - Verified in preview: warning→BIOS→splash→name on the in-room CRT, drag
   both directions (kit envelope visible on desk pre-S1.2), F2 flip to the
   intake wall, ESC return, flat mode. npm test (invariants) + build clean.
+
+## 2026-06-12 — Round 9: Sérgio's playtest notes applied (verified in preview)
+- Era-1 canvas → 4:3 (512×384), CRT casing rebuilt squarish with FLUSH
+  bezels — the cut text he reported was bezel overlap. IRC window enlarged
+  for 4:3; chat lines clip with … before the nick list (measureText).
+- S1.0 power-on beat: warning → 'off' phase (dark glass, DOM hint, no blur
+  per Sérgio) → clickable power button on the CRT (ray test) / dark glass /
+  Enter → BIOS, which now ends NEW OPERATING SYSTEM FOUND / INSTALLING
+  PHASE/2 95 (TM) / "EVERY PHASE PASSES." (⚑ tagline placeholder). Boot
+  lines moved from code into data/strings/slice.json (Codex Gap A).
+- Free mouse look: yaw unclamped — you can turn to the witness side by
+  dragging; crossing the hemisphere does the filing bookkeeping however you
+  got there; ⟲/F2 is now an assist tween. Pitch ±55°.
+- Witness wall dormant ("· · ·" in the dark) until the first record exists
+  (interim: mirc-log; moves to kit-inserted with S1.2).
+- Room enlarged (~4.3×4.4m), chair back lowered out of view, bed/shelf/
+  door/witness furniture repositioned.
+- ERA1_LOGIC_v1 §6.5 added: the poster conversion (queer pop poster swaps
+  to religious imagery mid-era — the room itself gets converted).
+- Verified: 4:3 warning uncut → off+hint → power click → boot → name →
+  desktop → manual 180° drag shows DORMANT wall → chat+DM → flip shows
+  ACTIVE record (2 messages, pastoral-referral). Build + invariants clean.

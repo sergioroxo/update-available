@@ -37,7 +37,25 @@ export class WitnessCanvas {
   update(dt: number): void {
     this.t += dt;
     this.dirty = true;
-    this.draw();
+    // the wall is dormant until the system has a record on you —
+    // interim gate: the mIRC log; moves to 'kit-inserted' when S1.2 ships
+    if (ledger.records.includes('mirc-log')) {
+      this.draw();
+    } else {
+      this.drawDormant();
+    }
+  }
+
+  /** before activation: a dark wall, barely breathing — not yet a system */
+  private drawDormant(): void {
+    const { ctx } = this;
+    const W = ERA1_CANVAS.width;
+    const H = ERA1_CANVAS.height;
+    px(ctx, 0, 0, W, H, '#05050a');
+    const pulse = Math.floor(this.t * 0.8) % 2 === 0;
+    setFont(ctx, 10);
+    ctx.fillStyle = pulse ? '#15151f' : '#1d1d2c';
+    ctx.fillText(strings.witness.dormant, Math.round(W / 2) - 10, Math.round(H / 2) - 5);
   }
 
   private field(label: string, value: string, y: number, valueColor = INK): void {

@@ -106,10 +106,18 @@ export class IrcApp {
     return this.userMessages;
   }
 
+  /** clip to the column — never let a line run under the user list */
+  private clipped(ctx: CanvasRenderingContext2D, text: string, maxW: number): string {
+    if (ctx.measureText(text).width <= maxW) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+    return t + '…';
+  }
+
   // ── drawing ────────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D, caretOn: boolean): void {
-    // channel window
-    const c = ui.windowFrame(ctx, 14, 26, 360, 210, `${dialog.channel} — IRC`, this.focus === 'channel');
+    // channel window (4:3 era canvas — 512×384)
+    const c = ui.windowFrame(ctx, 14, 30, 400, 290, `${dialog.channel} — IRC`, this.focus === 'channel');
     ui.px(ctx, c.x, c.y, c.w, c.h - 22, ERA1.black);
     // user list strip
     const listW = 78;
@@ -121,7 +129,7 @@ export class IrcApp {
     });
     // log (last N lines)
     const logW = c.w - listW - 6;
-    const maxLines = 13;
+    const maxLines = 18;
     const shown = this.log.slice(-maxLines);
     ui.setFont(ctx, 9);
     shown.forEach((l, i) => {
@@ -130,25 +138,26 @@ export class IrcApp {
       const prefix = `<${l.from}> `;
       ctx.fillText(prefix, c.x + 4, y);
       ctx.fillStyle = ERA1.silver;
-      ctx.fillText(l.text.slice(0, 52), c.x + 4 + ctx.measureText(prefix).width, y);
-      void logW;
+      const px = ctx.measureText(prefix).width;
+      ctx.fillText(this.clipped(ctx, l.text, logW - 8 - px), c.x + 4 + px, y);
     });
     // input bar
     ui.inputField(ctx, c.x, c.y + c.h - 20, c.w, 18, this.input, caretOn && this.focus === 'channel');
 
     // DM window, overlapping — intimacy arrives on top of community
     if (this.dmOpen) {
-      const d = ui.windowFrame(ctx, 150, 96, 280, 150, dialog.dmTitle, this.focus === 'dm');
+      const d = ui.windowFrame(ctx, 170, 140, 300, 170, dialog.dmTitle, this.focus === 'dm');
       ui.px(ctx, d.x, d.y, d.w, d.h - 22, ERA1.paper);
       ui.setFont(ctx, 9);
-      const dmShown = this.dmLog.slice(-8);
+      const dmShown = this.dmLog.slice(-9);
       dmShown.forEach((l, i) => {
         const y = d.y + 4 + i * 12;
         ctx.fillStyle = l.from === ledger.name ? ERA1.navy : ERA1.warnDark;
         const prefix = `${l.from}: `;
         ctx.fillText(prefix, d.x + 4, y);
         ctx.fillStyle = ERA1.black;
-        ctx.fillText(l.text.slice(0, 42), d.x + 4 + ctx.measureText(prefix).width, y);
+        const px = ctx.measureText(prefix).width;
+        ctx.fillText(this.clipped(ctx, l.text, d.w - 12 - px), d.x + 4 + px, y);
       });
       ui.inputField(ctx, d.x, d.y + d.h - 20, d.w, 18, this.dmInput, caretOn && this.focus === 'dm');
     }
@@ -156,8 +165,8 @@ export class IrcApp {
 
   /** crude hit-test: clicking the lower window region switches focus */
   handleClick(x: number, y: number): void {
-    if (this.dmOpen && x >= 150 && x <= 430 && y >= 96 && y <= 246) this.focus = 'dm';
-    else if (x >= 14 && x <= 374 && y >= 26 && y <= 236) this.focus = 'channel';
+    if (this.dmOpen && x >= 170 && x <= 470 && y >= 140 && y <= 310) this.focus = 'dm';
+    else if (x >= 14 && x <= 414 && y >= 30 && y <= 320) this.focus = 'channel';
     this.dirty = true;
   }
 }

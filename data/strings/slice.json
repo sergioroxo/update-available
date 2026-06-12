@@ -19,6 +19,29 @@
   "left": {
     "body": ["You can close this tab.", "", "Nothing you typed was kept."]
   },
+  "off": {
+    "hint": "the screen is dark — switch the computer on"
+  },
+  "boot": {
+    "lines": [
+      "PHASE/2 SYSTEMS BIOS  v1.97",
+      "COPYRIGHT (C) 1994-97",
+      "",
+      "640K BASE MEMORY ............ OK",
+      "EXTENDED MEMORY ............. OK",
+      "KEYBOARD .................... DETECTED",
+      "MODEM ....................... DETECTED",
+      "PROFILE SERVICES ............ STANDBY",
+      "CLASSIFICATION .............. STANDBY",
+      "",
+      "NEW OPERATING SYSTEM FOUND.",
+      "INSTALLING PHASE/2 95 (TM)",
+      "\"EVERY PHASE PASSES.\"",
+      "",
+      "BOOT RECORD FOUND.",
+      "LOADING."
+    ]
+  },
   "splash": {
     "title": "PHASE/2 95",
     "subtitle": "Starting your computer"
@@ -45,6 +68,7 @@
     "leave": "LEAVE"
   },
   "witness": {
+    "dormant": "· · ·",
     "header": "INTAKE RECORD",
     "subheader": "CLASSIFIED — INTERNAL USE ONLY",
     "subject": "SUBJECT",

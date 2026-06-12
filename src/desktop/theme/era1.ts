@@ -21,8 +21,8 @@ export const ERA1 = {
   olive: '#808000'
 } as const;
 
-/** Desktop canvas logical resolution for eras 1–2 (v0.2 §2.2). */
-export const ERA1_CANVAS = { width: 512, height: 288 } as const;
+/** Desktop canvas logical resolution for eras 1–2 — 4:3, a 1997 CRT. */
+export const ERA1_CANVAS = { width: 512, height: 384 } as const;
 
 /**
  * Backing-store multiplier: layout math stays logical (512×288) but the

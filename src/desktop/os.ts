@@ -12,25 +12,13 @@ import { IrcApp } from './apps/irc';
 import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 
-type Phase = 'warning' | 'boot' | 'splash' | 'name' | 'desktop' | 'left';
+type Phase = 'warning' | 'off' | 'boot' | 'splash' | 'name' | 'desktop' | 'left';
 
 const SPLASH_SECONDS = 2.8;
 
 const WARNING_ARM_DELAY = 4; // s before CONTINUE becomes active (ethics)
-const BOOT_LINES: ReadonlyArray<string> = [
-  'PHASE/2 SYSTEMS BIOS  v1.97',
-  'COPYRIGHT (C) 1994-97',
-  '',
-  '640K BASE MEMORY ............ OK',
-  'EXTENDED MEMORY ............. OK',
-  'KEYBOARD .................... DETECTED',
-  'MODEM ....................... DETECTED',
-  'PROFILE SERVICES ............ STANDBY',
-  'CLASSIFICATION .............. STANDBY',
-  '',
-  'BOOT RECORD FOUND.',
-  'LOADING.'
-];
+// display text lives in data/ — never in code (CLAUDE.md law)
+const BOOT_LINES: ReadonlyArray<string> = strings.boot.lines;
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
@@ -77,6 +65,15 @@ export class DesktopOS {
 
   get inDesktop(): boolean {
     return this.phase === 'desktop';
+  }
+
+  /** S1.0 power-on beat: the machine waits dark until the player acts */
+  get isOff(): boolean {
+    return this.phase === 'off';
+  }
+
+  powerOn(): void {
+    if (this.phase === 'off') this.setPhase('boot');
   }
 
   private setPhase(p: Phase): void {
@@ -134,6 +131,7 @@ export class DesktopOS {
 
     switch (this.phase) {
       case 'warning': this.drawWarning(W, H); break;
+      case 'off': ui.px(this.ctx, 0, 0, W, H, ERA1.black); break;
       case 'boot': this.drawBoot(); break;
       case 'splash': this.drawSplash(W, H); break;
       case 'name': this.drawName(W, H); break;
@@ -346,9 +344,13 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
+    if (this.phase === 'off') { // any click on the dark glass = the switch
+      this.powerOn();
+      return;
+    }
     if (hit) {
       switch (hit.id) {
-        case 'continue': this.setPhase('boot'); break;
+        case 'continue': this.setPhase('off'); break;
         case 'leave': this.leave(); break;
         case 'ok': this.confirmName(); break;
         case 'icon-irc': if (this.irc) this.irc.open = true; break;
@@ -373,7 +375,11 @@ export class DesktopOS {
     if (this.paused) return true;
 
     if (this.phase === 'warning' && key === 'Enter' && this.phaseT >= WARNING_ARM_DELAY) {
-      this.setPhase('boot');
+      this.setPhase('off');
+      return true;
+    }
+    if (this.phase === 'off' && key === 'Enter') {
+      this.powerOn();
       return true;
     }
     if (this.phase === 'splash' && key === 'Enter') { // skippable
