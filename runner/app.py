@@ -14059,13 +14059,21 @@ def page_mac_studio_worker():
                     st.error(row["error"])
                 else:
                     st.success("Archive checksum and shape verified.")
-                exists = _source_unpacked_package_exists(offload_root, "inbox", row["package_id"])
-                if exists:
-                    st.info("Already unpacked into `inbox/`.")
+                existing_states = _source_existing_package_states(offload_root, row["package_id"])
+                if "inbox" in existing_states:
+                    st.info("Already unpacked into `inbox/`; run it from the **Run worker** tab.")
+                elif "outbox" in existing_states:
+                    st.success("Already processed and present in `outbox/`; archive it from the **Archive outbox** tab.")
+                elif existing_states:
+                    st.info(
+                        "This package already exists locally in: "
+                        + ", ".join(f"`{state}/`" for state in existing_states)
+                        + ". No need to unpack this transfer copy again."
+                    )
                 if st.button(
                     "Unpack to Mac Studio inbox",
                     key=f"ms_unpack_{row['package_id']}",
-                    disabled=bool(row["error"] or exists),
+                    disabled=bool(row["error"] or existing_states),
                 ):
                     try:
                         result = unpack_source_archive(
