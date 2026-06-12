@@ -1,0 +1,26 @@
+{
+  "channel": "#stillstruggling",
+  "users": ["Lume", "Branwen", "anjo_97", "MentorRob"],
+  "ambient": [
+    { "from": "Lume", "text": "anyone else's parents do the \"we just worry about you\" thing" },
+    { "from": "Branwen", "text": "every sunday. like clockwork" },
+    { "from": "anjo_97", "text": "at least here i can say it out loud" },
+    { "from": "Lume", "text": "this channel is the only place i'm not pretending" },
+    { "from": "Branwen", "text": "same honestly" },
+    { "from": "MentorRob", "text": "it gets easier. i promise you that" },
+    { "from": "anjo_97", "text": "rob you always say that lol" },
+    { "from": "MentorRob", "text": "because it's true :)" },
+    { "from": "Lume", "text": "ok but did anyone tape the x-files yesterday" },
+    { "from": "Branwen", "text": "obviously" }
+  ],
+  "welcome": { "from": "Lume", "text": "hey {name} :) you're safe here" },
+  "secondReply": { "from": "Branwen", "text": "{name}: we've all been there. promise" },
+  "dm": [
+    "hi {name}. i hope it's ok that i message you.",
+    "i read what you wrote in the channel. i used to feel exactly the same.",
+    "there's a group that helped me through it. real people, very kind.",
+    "no pressure at all. i just thought of you."
+  ],
+  "dmReply": "you don't have to decide anything tonight. i'm always here.",
+  "dmTitle": "MentorRob — private message"
+}
