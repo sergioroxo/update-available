@@ -12,6 +12,8 @@ interface Line { from: string; text: string }
 
 const AMBIENT_INTERVAL = 3.2; // s between scripted channel lines
 const DM_DELAY = 3.5; // s after the 2nd user message
+/** the DM also comes for lurkers — Rob was told you'd arrive (v0.7 §6) */
+const DM_LURKER_DELAY = 28;
 
 export class IrcApp {
   open = true;
@@ -26,7 +28,7 @@ export class IrcApp {
   private nextAmbientAt = 1.2;
   private ambientIdx = 0;
   private userMessages = 0;
-  private dmAt = Infinity;
+  private dmAt = DM_LURKER_DELAY;
   private dmIdx = 0;
   private nextDmLineAt = 0;
   private dmReplied = false;
@@ -75,8 +77,8 @@ export class IrcApp {
         this.log.push({ from: dialog.welcome.from, text: this.fill(dialog.welcome.text) });
       } else if (this.userMessages === 2) {
         this.log.push({ from: dialog.secondReply.from, text: this.fill(dialog.secondReply.text) });
-        this.dmAt = this.t + DM_DELAY;
-        this.nextDmLineAt = this.t + DM_DELAY;
+        this.dmAt = Math.min(this.dmAt, this.t + DM_DELAY);
+        this.nextDmLineAt = this.dmAt;
       }
       this.dirty = true;
     } else if (this.focus === 'dm' && this.dmInput.trim()) {

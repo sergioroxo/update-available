@@ -9,6 +9,7 @@
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import * as ui from './theme/chrome';
 import { IrcApp } from './apps/irc';
+import { KitApp } from './apps/kit';
 import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 
@@ -43,14 +44,18 @@ export class DesktopOS {
   private greeting = false;
 
   // desktop
+  kit: KitApp | null = null;
   irc: IrcApp | null = null;
   private toast: { text: string; t: number } | null = null;
+  private kitToastShown = false;
   dossierUnlocked = false;
   private dossierOpen = false;
   /** engine listens: pulse the flip affordance when the hook lands */
   onFlipReady?: () => void;
   /** engine listens: user chose LEAVE */
   onLeave?: () => void;
+  /** engine listens: hide the physical floppy once it is in the drive */
+  onKitInserted?: () => void;
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -74,6 +79,25 @@ export class DesktopOS {
 
   powerOn(): void {
     if (this.phase === 'off') this.setPhase('boot');
+  }
+
+  /** S1.2 — the disk goes in (3D floppy click, or the A:\ icon) */
+  insertKit(): void {
+    if (this.phase !== 'desktop' || this.kit) return;
+    this.kit = new KitApp();
+    this.toast = null;
+    if (!ledger.records.includes('kit-inserted')) ledger.records.push('kit-inserted');
+    this.onKitInserted?.();
+    this.kit.onConnect = () => {
+      // S1.4 — the kit's last step is the channel it chose for you
+      if (!ledger.records.includes('went-online')) ledger.records.push('went-online');
+      this.irc = new IrcApp();
+      this.irc.onHooked = () => {
+        this.toast = { text: strings.desktop.logToast, t: 6 };
+        this.onFlipReady?.();
+      };
+    };
+    this.dirty = true;
   }
 
   private setPhase(p: Phase): void {
@@ -104,13 +128,13 @@ export class DesktopOS {
     }
     if (this.phase === 'splash' && this.phaseT >= SPLASH_SECONDS) this.setPhase('name');
     if (this.phase === 'name' && this.greeting && this.phaseT > 2.8) {
-      this.setPhase('desktop');
-      this.irc = new IrcApp();
-      this.irc.onHooked = () => {
-        this.toast = { text: strings.desktop.logToast, t: 6 };
-        this.onFlipReady?.();
-      };
+      this.setPhase('desktop'); // empty desk — the kit is the only way in (S1.1)
     }
+    if (this.phase === 'desktop' && !this.kit && !this.kitToastShown && this.phaseT > 6) {
+      this.kitToastShown = true;
+      this.toast = { text: strings.desktop.kitToast, t: 8 };
+    }
+    if (this.phase === 'desktop' && this.kit) this.kit.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
     if (this.toast) {
       this.toast.t -= dt;
@@ -246,10 +270,12 @@ export class DesktopOS {
   private drawDesktop(W: number, H: number): void {
     const { ctx } = this;
     ui.px(ctx, 0, 0, W, H, ERA1.teal);
-    // icons
-    this.drawIcon(10, 8, strings.desktop.iconIrc, true, 'icon-irc');
+    // icons — the channel only exists once the kit has routed you there
+    if (!this.kit) this.drawIcon(10, 8, strings.desktop.iconA, true, 'icon-a');
+    if (this.irc) this.drawIcon(10, 8, strings.desktop.iconIrc, true, 'icon-irc');
     this.drawIcon(10, 56, strings.desktop.iconDossier, this.dossierUnlocked, 'icon-dossier');
     // windows
+    if (this.kit?.open) this.kit.draw(ctx);
     if (this.irc?.open) this.irc.draw(ctx, this.caretOn());
     if (this.dossierOpen) this.drawDossier(W, H);
     // taskbar
@@ -353,6 +379,7 @@ export class DesktopOS {
         case 'continue': this.setPhase('off'); break;
         case 'leave': this.leave(); break;
         case 'ok': this.confirmName(); break;
+        case 'icon-a': this.insertKit(); break;
         case 'icon-irc': if (this.irc) this.irc.open = true; break;
         case 'icon-dossier': this.dossierOpen = true; break;
         case 'dossier-close': this.dossierOpen = false; break;
@@ -360,6 +387,7 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
+    if (this.phase === 'desktop' && this.kit?.open) { this.kit.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.irc?.open) this.irc.handleClick(x, y);
   }
 
@@ -390,6 +418,10 @@ export class DesktopOS {
       if (key === 'Enter') { this.confirmName(); return true; }
       if (key === 'Backspace') { this.nameInput = this.nameInput.slice(0, -1); this.dirty = true; return true; }
       if (key.length === 1 && this.nameInput.length < 24) { this.nameInput += key; this.dirty = true; return true; }
+    }
+    if (this.phase === 'desktop' && this.kit?.open) {
+      if (key === 'Enter') { this.kit.advance(); return true; }
+      return key.length === 1; // reading, not typing — swallow strays
     }
     if (this.phase === 'desktop' && this.irc) {
       if (key === 'Enter') { this.irc.submit(); return true; }

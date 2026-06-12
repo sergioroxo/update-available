@@ -38,8 +38,8 @@ export class WitnessCanvas {
     this.t += dt;
     this.dirty = true;
     // the wall is dormant until the system has a record on you —
-    // interim gate: the mIRC log; moves to 'kit-inserted' when S1.2 ships
-    if (ledger.records.includes('mirc-log')) {
+    // it wakes the moment the disk goes in (S1.2)
+    if (ledger.records.includes('kit-inserted')) {
       this.draw();
     } else {
       this.drawDormant();
@@ -95,12 +95,24 @@ export class WitnessCanvas {
     // computed fields — only things the player actually did
     this.field(s.subject, ledger.name, 40);
     this.field(s.source, s.sourceValue, 62);
-    this.field(s.channelLog, s.messagesLogged.replace('{n}', String(this.messagesOnFile)), 84);
-    this.field(s.tags, ledger.tags.join(', ') || '—', 106, ledger.tags.length ? '#cc8855' : INK);
-    this.field(s.status, s.statusValue, 128, '#cc8855');
+    this.field(
+      s.trustedContact,
+      ledger.tags.includes('pastoral-referral') ? s.trustedMade : s.trustedAssigned,
+      84,
+      ledger.tags.includes('pastoral-referral') ? '#cc8855' : INK
+    );
+    this.field(
+      s.channelLog,
+      ledger.records.includes('went-online')
+        ? s.messagesLogged.replace('{n}', String(this.messagesOnFile))
+        : s.notOnline,
+      106
+    );
+    this.field(s.tags, ledger.tags.join(', ') || '—', 128, ledger.tags.length ? '#cc8855' : INK);
+    this.field(s.status, s.statusValue, 150, '#cc8855');
 
     // the index card — the name copied into the era's filing artifact
-    const cx = 28; const cy = 158; const cw = 200; const ch = 64;
+    const cx = 28; const cy = 190; const cw = 200; const ch = 64;
     px(ctx, cx, cy, cw, ch, '#15151f');
     px(ctx, cx, cy, cw, 1, LINE);
     px(ctx, cx, cy, 1, ch, LINE);
@@ -115,7 +127,7 @@ export class WitnessCanvas {
     ctx.fillText('index · era 1 · drawer 12', cx + 10, cy + 44);
 
     // dead FILE button — no raised bevel; it looks inert because it is
-    const bx = W - 140; const by = 180;
+    const bx = W - 140; const by = 212;
     px(ctx, bx, by, 110, 22, '#15151f');
     px(ctx, bx, by, 110, 1, LINE);
     px(ctx, bx, by, 1, 22, LINE);

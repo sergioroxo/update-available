@@ -135,6 +135,25 @@ notes, and ArenaAI feel tests should reference them.
   ⟲/F2 control is an assist tween now, not the only door.
 - Era-1 canvas is **4:3 (512×384)** — a 1997 CRT; casing rebuilt squarish,
   bezels flush (nothing cut).
-- STILL TO BUILD (the era's actual new spine): S1.1–S1.4 kit sequence
-  (`data/dialog/s1_kit.json`), revised channel script (by-name DM, explicit
-  terms), S1.7–S1.9 escalation/packet/suspension.
+- **S1.1–S1.6 LIVE (round 10, verified end-to-end)**: empty desk after login
+  (A:\ icon + "There is a disk in the envelope on your desk." toast at 6s) →
+  insert the floppy by clicking it ON THE DESK in 3D (or the A:\ icon — the
+  flat-mode path) → kit autorun → 5 booklet pages (hymn indicator, the
+  prayer subtitled) → CONNECT NOW → modem dial → #stillstruggling. The DM
+  arrives **by name** and **even for lurkers** (28s timer — Rob was told
+  you'd come; typing two messages only pulls it earlier). The witness wall
+  wakes at INSERT, not at chat: mid-kit it already reads `starter kit v1.2 —
+  postal placement / assigned — awaiting first contact / subject not yet
+  online`; after the DM: `MentorRob — contact established / pastoral-referral`
+  — with 0 messages on file if you never typed. The record indicts the
+  routing, not the player.
+- All kit wording = `data/dialog/s1_kit.json`, channel = `s1_irc.json` —
+  iterate there. ⚑ "Morning Light Fellowship" is an invented composite —
+  verify no real org collision before release; ⚑ all kit copy (esp. the
+  prayer and "EVERY PHASE PASSES.") is DRAFT for Sérgio.
+- Period-language note (sources in PROCESS_REGISTER round 10): 1997 says
+  "struggler / struggling with SSA / change is possible"; "UNWANTED
+  same-sex attraction" is the LATER rebrand — reserve it for an Era 3/4
+  changelog line (the rebranding becomes playable).
+- STILL TO BUILD: S1.3 boombox/tape-2 interaction (audio milestone),
+  S1.7–S1.9 escalation → packet → suspension (the era's ending).

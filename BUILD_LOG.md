@@ -45,3 +45,27 @@
 - Verified: 4:3 warning uncut → off+hint → power click → boot → name →
   desktop → manual 180° drag shows DORMANT wall → chat+DM → flip shows
   ACTIVE record (2 messages, pastoral-referral). Build + invariants clean.
+
+## 2026-06-12 — Round 10: the Starter Kit (S1.1–S1.6 live)
+- data/dialog/s1_kit.json: the kit's full content — Morning Light
+  Fellowship "FIRST STEPS" companion disk v1.2 (⚑ composite name, verify;
+  ⚑ all copy draft): autorun, 5 booklet pages (welcome / naming the
+  struggle / first steps / the prayer subtitled / you are not alone),
+  hymn.mid indicator, dial sequence. Period vocabulary researched live
+  ("struggler"/"SSA" = 1997; "unwanted SSA" reserved for later eras —
+  the rebrand becomes playable).
+- src/desktop/apps/kit.ts: KitApp (autorun → pages → dialing); Enter
+  advances; CONNECT NOW → modem dial → the OS opens the channel.
+- os.ts: desktop now starts EMPTY (kit is the only way in); A:\ icon +
+  desk toast; insertKit() (3D floppy click or icon); kit→irc chaining;
+  mIRC icon only exists after the kit routes you.
+- engine: clicking the physical floppy on the desk inserts it (ray test)
+  and the disk vanishes from the desk into the drive.
+- irc: DM arrives BY NAME and for lurkers (28s timer; 2 messages pulls
+  it earlier). New ambient line ties the booklet into channel speech.
+- witness: wakes at kit INSERT (not chat); new fields — SOURCE: starter
+  kit v1.2 — postal placement; TRUSTED CONTACT: assigned → MentorRob —
+  contact established; CHANNEL LOG: subject not yet online → N message(s).
+- Verified end-to-end in preview incl. the two money shots: mid-kit flip
+  (system already waiting, subject not yet online) and post-DM flip with
+  0 messages on file. Build + invariants clean.

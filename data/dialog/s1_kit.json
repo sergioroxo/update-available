@@ -1,0 +1,95 @@
+{
+  "_doc": "S1.2–S1.4 — the Starter Kit (ERA1_LOGIC_v1 §3). Register: operable (perpetrator self-presentation; satire-permitted but period-real). ⚑ ALL WORDING IS DRAFT for Sérgio's approval. Ministry name is an invented composite — ⚑ verify no real organization shares it before release. Period vocabulary grounded in 1990s ex-gay ministry language ('struggler', 'SSA', 'change is possible'); 'unwanted SSA' is deliberately ABSENT — that rebrand belongs to a later era (see PROCESS_REGISTER round-10 sources).",
+  "ministry": "Morning Light Fellowship",
+  "program": "FIRST STEPS",
+  "version": "companion disk v1.2",
+  "windowTitle": "FIRST STEPS — Morning Light Fellowship",
+  "autorun": [
+    "READING DRIVE A: ...",
+    "FIRSTSTEP.EXE",
+    "(c) 1996 Morning Light Fellowship",
+    "loading companion ..."
+  ],
+  "midiNote": "hymn.mid — now playing",
+  "pages": [
+    {
+      "title": "Welcome, friend",
+      "lines": [
+        "If you are reading this, someone who loves you",
+        "wanted you to know: you are not alone.",
+        "",
+        "Thousands of men and women have walked this",
+        "road before you, and found their way through.",
+        "",
+        "Change is possible."
+      ]
+    },
+    {
+      "title": "Naming the struggle",
+      "lines": [
+        "What you have been feeling has a name:",
+        "same-sex attraction (SSA).",
+        "",
+        "It is a feeling. It is not who you are.",
+        "",
+        "The world will tell you it is an identity.",
+        "We gently say: it is a struggle — and a",
+        "struggle can be walked out of, step by step."
+      ]
+    },
+    {
+      "title": "First steps",
+      "lines": [
+        "STEP ONE — Pray.",
+        "You were not meant to carry this alone.",
+        "",
+        "STEP TWO — Listen.",
+        "Play tape one of your companion cassette now,",
+        "and let the words rest on you as you read.",
+        "",
+        "STEP THREE — Fellowship.",
+        "Strugglers who walk together, arrive together."
+      ]
+    },
+    {
+      "title": "Tape one — a prayer for the journey",
+      "prayer": true,
+      "lines": [
+        "(tape hiss)",
+        "",
+        "Lord, you see this child at the doorway,",
+        "carrying what they did not choose",
+        "and do not have to keep.",
+        "Make the crooked places straight before them.",
+        "Send them friends of the right kind,",
+        "and voices of the right kind,",
+        "and the courage to be made new.",
+        "We thank you for the work",
+        "you are beginning tonight.",
+        "",
+        "(tape ends)"
+      ]
+    },
+    {
+      "title": "You are not alone",
+      "connect": "CONNECT NOW",
+      "lines": [
+        "Right now — tonight — there are others awake,",
+        "walking it out, on the computer in front of you.",
+        "",
+        "Our fellowship hosts a support channel:",
+        "",
+        "      #stillstruggling",
+        "",
+        "When you arrive, ask for Rob.",
+        "He has been where you are."
+      ]
+    }
+  ],
+  "dial": [
+    "ATDT 5550197",
+    "DIALING ...",
+    "CARRIER 28800",
+    "CONNECTED — welcome to the fellowship network"
+  ]
+}

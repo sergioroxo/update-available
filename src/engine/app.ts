@@ -25,6 +25,8 @@ const WITNESS = { w: 1.6, h: 1.2, x: 0, y: 1.5, z: 3.4 };
 const EYE = { x: 0, y: 1.16, z: 0.7 };
 /** the power button on the CRT (S1.0 power-on beat) */
 const POWER_BTN = { x: 0.19, y: 0.895, z: 0.03 };
+/** the Starter Kit floppy on the desk (S1.2 insert beat) */
+const KIT_FLOPPY = { x: -0.4, y: 0.76, z: 0.11 };
 const DRAG_PITCH_MAX = 55;
 
 function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.Texture {
@@ -203,7 +205,7 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
     return { x: u * ERA1_CANVAS.width, y: v * ERA1_CANVAS.height };
   }
 
-  function rayHitsPowerButton(e: MouseEvent): boolean {
+  function rayHitsPoint(e: MouseEvent, p: { x: number; y: number; z: number }, radius: number): boolean {
     const ray = screenRay(e);
     if (!ray) return false;
     const dx = ray.p1.x - ray.p0.x;
@@ -211,18 +213,30 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
     const dz = ray.p1.z - ray.p0.z;
     const len2 = dx * dx + dy * dy + dz * dz;
     if (len2 < 1e-9) return false;
-    let t = ((POWER_BTN.x - ray.p0.x) * dx + (POWER_BTN.y - ray.p0.y) * dy + (POWER_BTN.z - ray.p0.z) * dz) / len2;
+    let t = ((p.x - ray.p0.x) * dx + (p.y - ray.p0.y) * dy + (p.z - ray.p0.z) * dz) / len2;
     t = Math.max(0, Math.min(1, t));
-    const cx = ray.p0.x + t * dx - POWER_BTN.x;
-    const cy = ray.p0.y + t * dy - POWER_BTN.y;
-    const cz = ray.p0.z + t * dz - POWER_BTN.z;
-    return Math.sqrt(cx * cx + cy * cy + cz * cz) < 0.08;
+    const cx = ray.p0.x + t * dx - p.x;
+    const cy = ray.p0.y + t * dy - p.y;
+    const cz = ray.p0.z + t * dz - p.z;
+    return Math.sqrt(cx * cx + cy * cy + cz * cz) < radius;
   }
+
+  // the disk leaves the desk when it enters the drive
+  os.onKitInserted = () => {
+    for (const id of ['kitFloppy', 'kitFloppyLabel']) {
+      const ent = app.root.findByName(id);
+      if (ent instanceof pc.Entity) ent.enabled = false;
+    }
+  };
 
   canvasEl.addEventListener('pointerdown', (e) => {
     if (!facingBack) {
-      if (os.isOff && rayHitsPowerButton(e)) { // the era's first gesture
+      if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
+        return;
+      }
+      if (os.inDesktop && !os.kit && rayHitsPoint(e, KIT_FLOPPY, 0.13)) {
+        os.insertKit(); // S1.2 — you put the disk in yourself
         return;
       }
       const p = toDesktop(e);

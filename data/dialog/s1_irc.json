@@ -1,4 +1,5 @@
 {
+  "_doc": "S1.5 — the channel the kit routed you to (ERA1_LOGIC_v1 §3, register: felt). The warmth is real; the routing is the harm. The DM arrives BY NAME — the network knew you were coming (v0.7 §6). Period terms ('struggle', 'SSA') appear in ambient speech, not as lectures. ⚑ draft for Sérgio.",
   "channel": "#stillstruggling",
   "users": ["Lume", "Branwen", "anjo_97", "MentorRob"],
   "ambient": [
@@ -10,15 +11,16 @@
     { "from": "MentorRob", "text": "it gets easier. i promise you that" },
     { "from": "anjo_97", "text": "rob you always say that lol" },
     { "from": "MentorRob", "text": "because it's true :)" },
+    { "from": "Branwen", "text": "the booklet says naming the struggle is half the walk" },
     { "from": "Lume", "text": "ok but did anyone tape the x-files yesterday" },
     { "from": "Branwen", "text": "obviously" }
   ],
   "welcome": { "from": "Lume", "text": "hey {name} :) you're safe here" },
   "secondReply": { "from": "Branwen", "text": "{name}: we've all been there. promise" },
   "dm": [
-    "hi {name}. i hope it's ok that i message you.",
-    "i read what you wrote in the channel. i used to feel exactly the same.",
-    "there's a group that helped me through it. real people, very kind.",
+    "hi {name}. you must be the one the fellowship wrote to us about.",
+    "i'm glad you found your way here. i read what you typed — i used to feel exactly the same.",
+    "there's a group of us who meet, strugglers like you and me. it's where things finally started to change for me.",
     "no pressure at all. i just thought of you."
   ],
   "dmReply": "you don't have to decide anything tonight. i'm always here.",
