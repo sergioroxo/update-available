@@ -1,17 +1,29 @@
 /**
- * Engine — one scene, two facings (PRODUCTION_SCRIPT v0.3 Part I).
- * Front plane: the desktop OS. Behind the camera: the witness side.
- * Browser flip = the ⟲ control swings the camera 180°; on the witness
- * side every control is dead (cursor: not-allowed, clicks swallowed).
- * The room and the XR session arrive in the next milestone.
+ * Engine — one room, two facings (PRODUCTION_SCRIPT v0.3 Part I; room per
+ * ERA1_LOGIC v1 §4). The monitor at the desk carries the desktop OS; behind
+ * the player, the back-of-house carries the witness repository wall.
+ * Browser: drag anywhere off the monitor to look around (clamped on the life
+ * side); the ⟲ control / F2 performs the 180° flip. On the witness side
+ * every control is dead (cursor: not-allowed, clicks swallowed).
+ * Units are meters; the monitor screen is centered at the origin.
  */
 import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 import { WitnessCanvas } from '../witness/intake';
 import { ledger } from '../state/ledger';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
+import { buildEra1Room } from '../room/era1room';
 
 const FLIP_SECONDS = 0.9;
+/** the CRT's visible screen (meters) — bezel boxes in era1.json sit flush */
+const SCREEN = { w: 0.4, h: 0.225, x: 0, y: 1.08, z: 0 };
+/** the witness repository wall (sharp, oversized — surveillance scale) */
+const WITNESS = { w: 1.8, h: 1.0, x: 0, y: 1.5, z: 3.0 };
+/** seated eye position at the desk */
+const EYE = { x: 0, y: 1.16, z: 0.7 };
+/** drag-look clamps: the life side is a glance, the flip is the act */
+const DRAG_YAW_MAX = 110;
+const DRAG_PITCH_MAX = 55;
 
 function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.Texture {
   const tex = new pc.Texture(app.graphicsDevice, {
@@ -28,7 +40,7 @@ function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.T
   return tex;
 }
 
-function makeScreenEntity(name: string, tex: pc.Texture, aspect: number): pc.Entity {
+function makeScreenEntity(name: string, tex: pc.Texture, w: number, h: number): pc.Entity {
   const material = new pc.StandardMaterial();
   material.useLighting = false;
   material.diffuse = new pc.Color(0, 0, 0);
@@ -37,7 +49,7 @@ function makeScreenEntity(name: string, tex: pc.Texture, aspect: number): pc.Ent
   material.update();
   const e = new pc.Entity(name);
   e.addComponent('render', { type: 'plane' });
-  e.setLocalScale(aspect, 1, 1);
+  e.setLocalScale(w, 1, h);
   if (e.render) e.render.material = material;
   return e;
 }
@@ -49,35 +61,51 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
   app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
   app.setCanvasResolution(pc.RESOLUTION_AUTO);
   window.addEventListener('resize', () => app.resizeCanvas());
-  app.scene.ambientLight = new pc.Color(0.05, 0.05, 0.06);
+  app.scene.ambientLight = new pc.Color(0.16, 0.15, 0.15);
+
+  buildEra1Room(app);
 
   // ── the two surfaces ──
   const os = new DesktopOS();
   const witness = new WitnessCanvas();
-  const aspect = os.canvas.width / os.canvas.height;
 
   const frontTex = makeScreenTexture(app, os.canvas);
-  const front = makeScreenEntity('desktop-screen', frontTex, aspect);
-  front.setLocalPosition(0, 0, 0);
-  front.setLocalEulerAngles(90, 0, 0); // faces +Z (camera)
+  const front = makeScreenEntity('desktop-screen', frontTex, SCREEN.w, SCREEN.h);
+  front.setLocalPosition(SCREEN.x, SCREEN.y, SCREEN.z);
+  front.setLocalEulerAngles(90, 0, 0); // faces +Z (the chair)
   app.root.addChild(front);
 
   const backTex = makeScreenTexture(app, witness.canvas);
-  const back = makeScreenEntity('witness-screen', backTex, aspect);
-  back.setLocalPosition(0, 0, 3.2);
-  back.setLocalEulerAngles(90, 180, 0); // faces -Z (camera, once turned)
+  const back = makeScreenEntity('witness-screen', backTex, WITNESS.w, WITNESS.h);
+  back.setLocalPosition(WITNESS.x, WITNESS.y, WITNESS.z);
+  back.setLocalEulerAngles(90, 180, 0); // faces -Z (the chair, once turned)
   app.root.addChild(back);
 
   const camera = new pc.Entity('camera');
-  camera.addComponent('camera', { clearColor: new pc.Color(0, 0, 0), fov: 45 });
-  camera.setLocalPosition(0, 0, 1.6);
+  camera.addComponent('camera', {
+    clearColor: new pc.Color(0.05, 0.04, 0.03),
+    fov: 42,
+    nearClip: 0.05
+  });
+  camera.setLocalPosition(EYE.x, EYE.y, EYE.z);
   app.root.addChild(camera);
 
-  // ── the flip ──
-  let yaw = 0;
+  // vignette: definition falls off toward the edges (taste call: no particles)
+  const vignette = document.createElement('div');
+  Object.assign(vignette.style, {
+    position: 'fixed', inset: '0', zIndex: '5', pointerEvents: 'none',
+    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 52%, rgba(26,16,8,0.55) 100%)'
+  } as CSSStyleDeclaration);
+  document.body.appendChild(vignette);
+
+  // ── the flip + drag-look ──
+  let yaw = 0; // 0 = desk, 180 = witness (the flip owns this)
   let yawTarget = 0;
+  let dragYaw = 0; // the player's own glancing (clamped)
+  let dragPitch = 0;
   let facingBack = false;
   let flipCount = 0;
+  let drag: { x: number; y: number } | null = null;
 
   const flipBtn = document.createElement('button');
   flipBtn.id = 'flip';
@@ -103,6 +131,8 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
   function doFlip(): void {
     if (!os.inDesktop || os.paused) return;
     yawTarget = yawTarget === 0 ? 180 : 0;
+    dragYaw = 0; // the flip recenters the glance
+    dragPitch = 0;
     flipBtn.style.color = '#667';
     flipBtn.style.borderColor = '#334';
     if (yawTarget === 180) {
@@ -117,7 +147,7 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
   }
   flipBtn.addEventListener('click', doFlip);
 
-  // ── input routing: screen px → desktop canvas px ──
+  // ── input routing: screen px → desktop canvas logical px ──
   function toDesktop(e: MouseEvent): { x: number; y: number } | null {
     if (!camera.camera) return null;
     const rect = canvasEl.getBoundingClientRect();
@@ -127,27 +157,38 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
     const p1 = camera.camera.screenToWorld(sx, sy, camera.camera.farClip);
     const dz = p1.z - p0.z;
     if (Math.abs(dz) < 1e-6) return null;
-    const t = (0 - p0.z) / dz; // front plane lives at z=0
+    const t = (SCREEN.z - p0.z) / dz;
     if (t < 0 || t > 1) return null;
     const wx = p0.x + (p1.x - p0.x) * t;
     const wy = p0.y + (p1.y - p0.y) * t;
-    const u = wx / aspect + 0.5;
-    const v = 0.5 - wy;
+    const u = (wx - SCREEN.x) / SCREEN.w + 0.5;
+    const v = 0.5 - (wy - SCREEN.y) / SCREEN.h;
     if (u < 0 || u > 1 || v < 0 || v > 1) return null;
     // hit-testing speaks logical pixels; the backing store is ×RENDER_SCALE
     return { x: u * ERA1_CANVAS.width, y: v * ERA1_CANVAS.height };
   }
 
   canvasEl.addEventListener('pointerdown', (e) => {
-    if (facingBack) return; // the witness side does not respond to you
-    const p = toDesktop(e);
-    if (p) os.handleClick(p.x, p.y);
+    const p = facingBack ? null : toDesktop(e);
+    if (p) { // the monitor is the UI; everywhere else is the room
+      os.handleClick(p.x, p.y);
+      return;
+    }
+    drag = { x: e.clientX, y: e.clientY };
+    try { canvasEl.setPointerCapture(e.pointerId); } catch { /* synthetic pointers */ }
   });
   canvasEl.addEventListener('pointermove', (e) => {
-    if (facingBack) return;
+    if (drag && (e.buttons & 1)) {
+      dragYaw = Math.max(-DRAG_YAW_MAX, Math.min(DRAG_YAW_MAX, dragYaw - (e.clientX - drag.x) * 0.16));
+      dragPitch = Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, dragPitch - (e.clientY - drag.y) * 0.12));
+      drag = { x: e.clientX, y: e.clientY };
+      return;
+    }
+    if (facingBack) return; // the witness side does not respond to you
     const p = toDesktop(e);
     if (p) os.handleMove(p.x, p.y);
   });
+  canvasEl.addEventListener('pointerup', () => { drag = null; });
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     // F2, not a letter: printable keys must always reach the typing hand
@@ -166,13 +207,14 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
 
   // ── frame loop ──
   app.on('update', (dt: number) => {
-    // camera swing
+    // camera swing (the flip) + the player's own glance
     if (yaw !== yawTarget) {
       const dir = Math.sign(yawTarget - yaw);
       yaw += dir * (180 / FLIP_SECONDS) * dt;
       if ((dir > 0 && yaw >= yawTarget) || (dir < 0 && yaw <= yawTarget)) yaw = yawTarget;
-      camera.setLocalEulerAngles(0, yaw, 0);
     }
+    camera.setLocalEulerAngles(dragPitch, yaw + dragYaw, 0);
+
     const nowBack = yaw > 90;
     if (nowBack !== facingBack) {
       facingBack = nowBack;
