@@ -270,6 +270,23 @@ def test_source_archive_rows_surfaces_checksum_problem(tmp_path):
     assert "checksum_mismatch" in rows[0]["error"]
 
 
+def test_source_transfer_folder_rows_reports_direct_package_folder(tmp_path):
+    root = _build_inbox(tmp_path)
+    incoming = tmp_path / "transfer" / "to-mac-studio"
+    incoming.mkdir(parents=True)
+    (incoming / "trial-folder").mkdir()
+    # Simulate a direct folder sync by copying the built package tree.
+    import shutil
+    shutil.copytree(root / "inbox" / "src-ui", incoming / "src-ui")
+
+    rows = app_mod._source_transfer_folder_rows(incoming)
+    by_id = {r["package_id"]: r for r in rows}
+
+    assert by_id["src-ui"]["ok"] is True
+    assert by_id["src-ui"]["state"] == "inbox"
+    assert by_id["trial-folder"]["ok"] is False
+
+
 def test_source_unpacked_package_exists(tmp_path):
     root = _build_inbox(tmp_path)
     assert app_mod._source_unpacked_package_exists(root, "inbox", "src-ui") is True

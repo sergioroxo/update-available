@@ -21,6 +21,7 @@ import difflib
 import json
 import os
 import re
+import shutil
 import shlex
 import subprocess
 import sys
@@ -13317,6 +13318,45 @@ def _source_archive_rows(archive_dir: Path) -> list[dict]:
     return rows
 
 
+def _source_transfer_folder_rows(folder_dir: Path) -> list[dict]:
+    """Summarise direct package folders in a transfer dir (legacy fallback)."""
+    from runner.pipeline.offload_source import load_source_manifest, verify_source_inputs
+
+    folder_dir = Path(folder_dir)
+    rows: list[dict] = []
+    if not folder_dir.exists():
+        return rows
+    for pkg in sorted(folder_dir.iterdir()):
+        if (
+            not pkg.is_dir()
+            or pkg.name.startswith(".")
+            or pkg.name in {"old", "to-mac-studio", "from-mac-studio"}
+        ):
+            continue
+        row = {
+            "package_id": pkg.name,
+            "path": str(pkg),
+            "ok": False,
+            "state": "",
+            "item_count": None,
+            "error": "",
+        }
+        try:
+            report = verify_source_inputs(pkg)
+            row["ok"] = bool(report.get("ok"))
+            try:
+                row["state"] = load_source_manifest(pkg).lifecycle_state
+            except Exception:
+                row["state"] = ""
+            row["item_count"] = len(report.get("items") or [])
+            if not row["ok"]:
+                row["error"] = "; ".join(report.get("errors") or ["verification failed"])
+        except Exception as exc:  # noqa: BLE001
+            row["error"] = str(exc)
+        rows.append(row)
+    return rows
+
+
 def _source_unpacked_package_exists(source_offload_root: Path, state: str, package_id: str) -> bool:
     return (Path(source_offload_root) / state / package_id).is_dir()
 
@@ -14110,6 +14150,52 @@ def page_mac_studio_worker():
                         st.error(f"Unpack refused:\n\n{exc}")
                     else:
                         st.success(f"Unpacked `{result['package_id']}` to `{result['package_dir']}`.")
+                        st.rerun()
+        folder_rows = _source_transfer_folder_rows(incoming)
+        if folder_rows:
+            st.divider()
+            st.markdown("#### Direct package folders")
+            st.caption(
+                "These are live package folders synced into `to-mac-studio/`. "
+                "The safer path is `.tar.gz` + `.sha256`, but this fallback can "
+                "copy a fully synced folder into the Mac Studio inbox. The transfer "
+                "copy is not deleted."
+            )
+        for row in folder_rows:
+            title = row["package_id"]
+            title += " · verified" if row["ok"] else " · problem"
+            with st.expander(title):
+                st.caption(f"Folder: `{row['path']}`")
+                if row["error"]:
+                    st.error(row["error"])
+                else:
+                    st.success("Folder package verified.")
+                existing_states = _source_existing_package_states(offload_root, row["package_id"])
+                if "inbox" in existing_states:
+                    st.info("Already copied into `inbox/`; run it from the **Run worker** tab.")
+                elif "outbox" in existing_states:
+                    st.success("Already processed and present in `outbox/`; archive it from the **Archive outbox** tab.")
+                elif existing_states:
+                    st.info(
+                        "This package already exists locally in: "
+                        + ", ".join(f"`{state}/`" for state in existing_states)
+                        + ". No need to copy this transfer folder again."
+                    )
+                target = offload_root / "inbox" / row["package_id"]
+                if st.button(
+                    "Copy folder to Mac Studio inbox",
+                    key=f"ms_copy_folder_{row['package_id']}",
+                    disabled=bool(row["error"] or existing_states),
+                ):
+                    try:
+                        if target.exists():
+                            raise FileExistsError(target)
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copytree(row["path"], target)
+                    except Exception as exc:  # noqa: BLE001
+                        st.error(f"Copy refused:\n\n{exc}")
+                    else:
+                        st.success(f"Copied `{row['package_id']}` to `{target}`.")
                         st.rerun()
 
     with tab_worker:
