@@ -4,7 +4,7 @@
  * player actually did). Register law: this surface is SHARP and cold —
  * surveillance is high-definition. It never responds to input.
  */
-import { ERA1_CANVAS } from '../desktop/theme/era1';
+import { ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont } from '../desktop/theme/chrome';
 import { ledger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
@@ -25,12 +25,13 @@ export class WitnessCanvas {
 
   constructor() {
     this.canvas = document.createElement('canvas');
-    this.canvas.width = ERA1_CANVAS.width;
-    this.canvas.height = ERA1_CANVAS.height;
+    this.canvas.width = ERA1_CANVAS.width * RENDER_SCALE;
+    this.canvas.height = ERA1_CANVAS.height * RENDER_SCALE;
     const ctx = this.canvas.getContext('2d');
     if (!ctx) throw new Error('2D context unavailable');
     this.ctx = ctx;
     this.ctx.imageSmoothingEnabled = false;
+    this.ctx.scale(RENDER_SCALE, RENDER_SCALE); // layout stays logical
   }
 
   update(dt: number): void {
@@ -45,7 +46,7 @@ export class WitnessCanvas {
     ctx.fillStyle = DIM;
     ctx.fillText(label, 28, y + 3);
     const vx = 170;
-    const vw = this.canvas.width - vx - 28;
+    const vw = ERA1_CANVAS.width - vx - 28;
     px(ctx, vx, y, vw, 16, FIELD);
     px(ctx, vx, y, vw, 1, LINE);
     px(ctx, vx, y, 1, 16, LINE);
@@ -58,8 +59,8 @@ export class WitnessCanvas {
 
   private draw(): void {
     const { ctx } = this;
-    const W = this.canvas.width;
-    const H = this.canvas.height;
+    const W = ERA1_CANVAS.width;
+    const H = ERA1_CANVAS.height;
     const s = strings.witness;
 
     px(ctx, 0, 0, W, H, '#05050a');

@@ -9,6 +9,7 @@ import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 import { WitnessCanvas } from '../witness/intake';
 import { ledger } from '../state/ledger';
+import { ERA1_CANVAS } from '../desktop/theme/era1';
 
 const FLIP_SECONDS = 0.9;
 
@@ -133,7 +134,8 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
     const u = wx / aspect + 0.5;
     const v = 0.5 - wy;
     if (u < 0 || u > 1 || v < 0 || v > 1) return null;
-    return { x: u * os.canvas.width, y: v * os.canvas.height };
+    // hit-testing speaks logical pixels; the backing store is ×RENDER_SCALE
+    return { x: u * ERA1_CANVAS.width, y: v * ERA1_CANVAS.height };
   }
 
   canvasEl.addEventListener('pointerdown', (e) => {

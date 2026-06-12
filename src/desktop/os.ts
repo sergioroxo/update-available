@@ -6,13 +6,15 @@
  * Registers: warning/left = frame (bare); name/desktop = operable;
  * the ESC pause overlay is care infrastructure and preempts everything.
  */
-import { ERA1, ERA1_CANVAS } from './theme/era1';
+import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import * as ui from './theme/chrome';
 import { IrcApp } from './apps/irc';
 import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 
-type Phase = 'warning' | 'boot' | 'name' | 'desktop' | 'left';
+type Phase = 'warning' | 'boot' | 'splash' | 'name' | 'desktop' | 'left';
+
+const SPLASH_SECONDS = 2.8;
 
 const WARNING_ARM_DELAY = 4; // s before CONTINUE becomes active (ethics)
 const BOOT_LINES: ReadonlyArray<string> = [
@@ -64,12 +66,13 @@ export class DesktopOS {
 
   constructor() {
     this.canvas = document.createElement('canvas');
-    this.canvas.width = ERA1_CANVAS.width;
-    this.canvas.height = ERA1_CANVAS.height;
+    this.canvas.width = ERA1_CANVAS.width * RENDER_SCALE;
+    this.canvas.height = ERA1_CANVAS.height * RENDER_SCALE;
     const ctx = this.canvas.getContext('2d');
     if (!ctx) throw new Error('2D context unavailable');
     this.ctx = ctx;
     this.ctx.imageSmoothingEnabled = false;
+    this.ctx.scale(RENDER_SCALE, RENDER_SCALE); // all layout stays logical
   }
 
   get inDesktop(): boolean {
@@ -100,8 +103,9 @@ export class DesktopOS {
     if (this.phase === 'boot') {
       const next = Math.min(Math.floor(this.phaseT / 0.018), this.bootTotal);
       if (next !== this.bootChars) this.bootChars = next;
-      if (this.bootChars >= this.bootTotal && this.phaseT > 3.2) this.setPhase('name');
+      if (this.bootChars >= this.bootTotal && this.phaseT > 3.2) this.setPhase('splash');
     }
+    if (this.phase === 'splash' && this.phaseT >= SPLASH_SECONDS) this.setPhase('name');
     if (this.phase === 'name' && this.greeting && this.phaseT > 2.8) {
       this.setPhase('desktop');
       this.irc = new IrcApp();
@@ -124,18 +128,45 @@ export class DesktopOS {
   }
 
   private draw(): void {
-    const W = this.canvas.width;
-    const H = this.canvas.height;
+    const W = ERA1_CANVAS.width;
+    const H = ERA1_CANVAS.height;
     this.hits = [];
 
     switch (this.phase) {
       case 'warning': this.drawWarning(W, H); break;
       case 'boot': this.drawBoot(); break;
+      case 'splash': this.drawSplash(W, H); break;
       case 'name': this.drawName(W, H); break;
       case 'desktop': this.drawDesktop(W, H); break;
       case 'left': this.drawLeft(W, H); break;
     }
     if (this.paused) this.drawPause(W, H);
+  }
+
+  private drawSplash(W: number, H: number): void {
+    const { ctx } = this;
+    ui.px(ctx, 0, 0, W, H, ERA1.black);
+    // four-square mark (invented, era-true) + wordmark
+    const mx = Math.round(W / 2) - 50; const my = Math.round(H / 2) - 40;
+    ui.px(ctx, mx, my, 14, 14, ERA1.warn);
+    ui.px(ctx, mx + 16, my, 14, 14, ERA1.ok);
+    ui.px(ctx, mx, my + 16, 14, 14, ERA1.titleBlue);
+    ui.px(ctx, mx + 16, my + 16, 14, 14, ERA1.olive);
+    ui.setFont(ctx, 16);
+    ctx.fillStyle = ERA1.white;
+    ctx.fillText(strings.splash.title, mx + 40, my + 2);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.grey;
+    ctx.fillText(strings.splash.subtitle, mx + 40, my + 22);
+    // banded loading bar, looping
+    const bw = 180; const bx = Math.round((W - bw) / 2); const by = my + 56;
+    ui.px(ctx, bx - 1, by - 1, bw + 2, 12, ERA1.greyDark);
+    ui.px(ctx, bx, by, bw, 10, ERA1.black);
+    const off = Math.floor((this.phaseT * 60) % (bw + 30)) - 30;
+    for (let i = 0; i < 5; i++) {
+      const sx = off + i * 7;
+      if (sx >= 0 && sx + 5 <= bw) ui.px(ctx, bx + sx, by + 1, 5, 8, ERA1.titleBlue);
+    }
   }
 
   private drawWarning(W: number, H: number): void {
@@ -165,7 +196,7 @@ export class DesktopOS {
 
   private drawBoot(): void {
     const { ctx } = this;
-    ui.px(ctx, 0, 0, this.canvas.width, this.canvas.height, ERA1.black);
+    ui.px(ctx, 0, 0, ERA1_CANVAS.width, ERA1_CANVAS.height, ERA1.black);
     ui.setFont(ctx, 12);
     ctx.fillStyle = ERA1.silver;
     let remaining = this.bootChars;
@@ -343,6 +374,10 @@ export class DesktopOS {
 
     if (this.phase === 'warning' && key === 'Enter' && this.phaseT >= WARNING_ARM_DELAY) {
       this.setPhase('boot');
+      return true;
+    }
+    if (this.phase === 'splash' && key === 'Enter') { // skippable
+      this.setPhase('name');
       return true;
     }
     if (this.phase === 'name' && !this.greeting) {

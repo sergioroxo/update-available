@@ -23,3 +23,10 @@ export const ERA1 = {
 
 /** Desktop canvas logical resolution for eras 1–2 (v0.2 §2.2). */
 export const ERA1_CANVAS = { width: 512, height: 288 } as const;
+
+/**
+ * Backing-store multiplier: layout math stays logical (512×288) but the
+ * canvas renders at ×3 (1536×864) so text is legible in VR. Pixel-art
+ * sprites still land on the logical grid; only glyph rendering gains detail.
+ */
+export const RENDER_SCALE = 3;
