@@ -1,0 +1,7 @@
+{
+  "enabledPlugins": {
+    "aframe-webxr@claude-design-skillstack": true,
+    "playcanvas-engine@claude-design-skillstack": true,
+    "threejs-webgl@claude-design-skillstack": true
+  }
+}
