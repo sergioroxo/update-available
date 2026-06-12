@@ -278,12 +278,14 @@ def test_source_transfer_folder_rows_reports_direct_package_folder(tmp_path):
     # Simulate a direct folder sync by copying the built package tree.
     import shutil
     shutil.copytree(root / "inbox" / "src-ui", incoming / "src-ui")
+    (incoming / "src-ui" / ".DS_Store").write_text("finder", encoding="utf-8")
 
     rows = app_mod._source_transfer_folder_rows(incoming)
     by_id = {r["package_id"]: r for r in rows}
 
     assert by_id["src-ui"]["ok"] is True
     assert by_id["src-ui"]["state"] == "inbox"
+    assert by_id["src-ui"]["unexpected"] == []
     assert by_id["trial-folder"]["ok"] is False
 
 

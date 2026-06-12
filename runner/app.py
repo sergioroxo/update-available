@@ -13318,6 +13318,22 @@ def _source_archive_rows(archive_dir: Path) -> list[dict]:
     return rows
 
 
+_SOURCE_TRANSFER_JUNK_NAMES = frozenset({".DS_Store", "Icon\r", "Thumbs.db"})
+
+
+def _source_transfer_ignored_member(path: str) -> bool:
+    p = Path(path)
+    return (
+        p.name in _SOURCE_TRANSFER_JUNK_NAMES
+        or p.name.startswith("._")
+        or p.name.startswith(".syncthing.")
+    )
+
+
+def _source_filter_transfer_unexpected(unexpected: list[str]) -> list[str]:
+    return [u for u in unexpected if not _source_transfer_ignored_member(u)]
+
+
 def _source_transfer_folder_rows(folder_dir: Path) -> list[dict]:
     """Summarise direct package folders in a transfer dir (legacy fallback)."""
     from runner.pipeline.offload_source import load_source_manifest, verify_source_inputs
@@ -13339,18 +13355,25 @@ def _source_transfer_folder_rows(folder_dir: Path) -> list[dict]:
             "ok": False,
             "state": "",
             "item_count": None,
+            "errors": [],
+            "unexpected": [],
             "error": "",
         }
         try:
             report = verify_source_inputs(pkg)
-            row["ok"] = bool(report.get("ok"))
+            errors = list(report.get("errors") or [])
+            unexpected = _source_filter_transfer_unexpected(list(report.get("unexpected") or []))
+            row["errors"] = errors
+            row["unexpected"] = unexpected
+            row["ok"] = not errors and not unexpected
             try:
                 row["state"] = load_source_manifest(pkg).lifecycle_state
             except Exception:
                 row["state"] = ""
             row["item_count"] = len(report.get("items") or [])
             if not row["ok"]:
-                row["error"] = "; ".join(report.get("errors") or ["verification failed"])
+                bits = errors + [f"unexpected:{u}" for u in unexpected]
+                row["error"] = "; ".join(bits or ["verification failed"])
         except Exception as exc:  # noqa: BLE001
             row["error"] = str(exc)
         rows.append(row)
@@ -14168,6 +14191,12 @@ def page_mac_studio_worker():
                 st.caption(f"Folder: `{row['path']}`")
                 if row["error"]:
                     st.error(row["error"])
+                    if row.get("errors") or row.get("unexpected"):
+                        st.caption("Details:")
+                        st.write({
+                            "errors": row.get("errors", []),
+                            "unexpected": row.get("unexpected", []),
+                        })
                 else:
                     st.success("Folder package verified.")
                 existing_states = _source_existing_package_states(offload_root, row["package_id"])
@@ -14191,7 +14220,13 @@ def page_mac_studio_worker():
                         if target.exists():
                             raise FileExistsError(target)
                         target.parent.mkdir(parents=True, exist_ok=True)
-                        shutil.copytree(row["path"], target)
+                        shutil.copytree(
+                            row["path"],
+                            target,
+                            ignore=lambda _dir, names: [
+                                n for n in names if _source_transfer_ignored_member(n)
+                            ],
+                        )
                     except Exception as exc:  # noqa: BLE001
                         st.error(f"Copy refused:\n\n{exc}")
                     else:
