@@ -1,0 +1,104 @@
+<svg width="1360" height="1440" viewBox="0 0 680 720" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Era 1 room moodboard</title>
+<rect x="0" y="0" width="680" height="720" fill="#FFFFFF"/>
+<rect x="40" y="40" width="600" height="220" fill="#EBD9C4"/>
+<rect x="40" y="260" width="600" height="80" fill="#C9A07A"/>
+<rect x="40" y="258" width="600" height="3" fill="#B98F6B"/>
+<rect x="146" y="66" width="108" height="98" fill="#A8917B"/>
+<rect x="152" y="72" width="96" height="86" fill="#2C3A5C"/>
+<circle cx="225" cy="95" r="9" fill="#F3EAD8"/>
+<rect x="165" y="85" width="2" height="2" fill="#F3EAD8"/>
+<rect x="190" y="112" width="2" height="2" fill="#F3EAD8"/>
+<rect x="208" y="80" width="2" height="2" fill="#F3EAD8"/>
+<rect x="172" y="128" width="2" height="2" fill="#F3EAD8"/>
+<rect x="138" y="62" width="10" height="110" fill="#D9A8A0"/>
+<rect x="252" y="62" width="10" height="110" fill="#D9A8A0"/>
+<rect x="290" y="86" width="38" height="50" fill="#E8B7C8" stroke="#C98FA6" stroke-width="0.5"/>
+<rect x="268" y="98" width="18" height="30" fill="#9FD8CB" stroke="#6FAE9F" stroke-width="0.5"/>
+<ellipse cx="430" cy="304" rx="95" ry="20" fill="#B98563"/>
+<rect x="62" y="224" width="38" height="16" fill="#F0E5D4" stroke="#B9A48E" stroke-width="0.5"/>
+<rect x="56" y="234" width="148" height="46" fill="#DCC8B2" stroke="#B9A48E" stroke-width="1" stroke-dasharray="4 3"/>
+<rect x="116" y="236" width="86" height="42" fill="#D4A0A0"/>
+<rect x="566" y="96" width="44" height="128" fill="#E6D8C4" stroke="#B9A48E" stroke-width="1" stroke-dasharray="4 3"/>
+<rect x="566" y="138" width="44" height="3" fill="#B9A48E"/>
+<rect x="566" y="180" width="44" height="3" fill="#B9A48E"/>
+<rect x="572" y="112" width="7" height="24" fill="#C9A8A0"/>
+<rect x="581" y="116" width="7" height="20" fill="#A8B49A"/>
+<rect x="572" y="154" width="7" height="24" fill="#9FB4C0"/>
+<rect x="330" y="208" width="220" height="12" fill="#8A5A3B"/>
+<rect x="338" y="220" width="10" height="60" fill="#74492F"/>
+<rect x="532" y="220" width="10" height="60" fill="#74492F"/>
+<rect x="500" y="148" width="34" height="60" fill="#D8CDB4" stroke="#B5A98C" stroke-width="0.5"/>
+<rect x="506" y="156" width="22" height="3" fill="#B5A98C"/>
+<rect x="506" y="164" width="22" height="3" fill="#B5A98C"/>
+<circle cx="354" cy="168" r="36" fill="#F7C775" opacity="0.28"/>
+<circle cx="354" cy="168" r="20" fill="#F7C775" opacity="0.4"/>
+<rect x="350" y="178" width="6" height="28" fill="#74492F"/>
+<rect x="340" y="203" width="26" height="5" fill="#74492F"/>
+<polygon points="338,168 370,168 360,150 348,150" fill="#EFA13F"/>
+<rect x="376" y="122" width="120" height="96" fill="#5DCAA5" opacity="0.12"/>
+<rect x="382" y="128" width="108" height="84" fill="#D8CDB4" stroke="#B5A98C" stroke-width="0.5"/>
+<rect x="394" y="138" width="84" height="58" fill="#134F46"/>
+<rect x="398" y="142" width="76" height="50" fill="#008080"/>
+<rect x="404" y="148" width="38" height="3" fill="#9FE1CB"/>
+<rect x="404" y="156" width="54" height="3" fill="#9FE1CB"/>
+<rect x="404" y="164" width="30" height="3" fill="#9FE1CB"/>
+<rect x="404" y="174" width="6" height="4" fill="#E1F5EE"/>
+<rect x="398" y="200" width="72" height="8" fill="#C9BFA6" stroke="#B5A98C" stroke-width="0.5"/>
+<rect x="480" y="198" width="11" height="10" fill="#C96F4A"/>
+<rect x="40" y="40" width="92" height="300" fill="#F2EADF" opacity="0.72"/>
+<rect x="552" y="40" width="88" height="300" fill="#F2EADF" opacity="0.72"/>
+<g font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<rect x="40" y="352" width="12" height="12" fill="#008080" rx="2"/>
+<text x="58" y="362" font-size="12" fill="#5F5E5A">hero — full detail (the monitor)</text>
+<rect x="280" y="352" width="12" height="12" fill="#EFA13F" rx="2"/>
+<text x="298" y="362" font-size="12" fill="#5F5E5A">set — simple shapes</text>
+<rect x="470" y="352" width="12" height="12" fill="#F2EADF" stroke="#B9A48E" stroke-width="1" stroke-dasharray="3 2" rx="2"/>
+<text x="488" y="362" font-size="12" fill="#5F5E5A">fog — edges dissolve</text>
+<text x="40" y="402" font-size="14" font-weight="500" fill="#2C2C2A">life side — soft</text>
+<text x="255" y="402" font-size="14" font-weight="500" fill="#2C2C2A">era-1 os (canon)</text>
+<text x="470" y="402" font-size="14" font-weight="500" fill="#2C2C2A">witness — sharp</text>
+<rect x="40" y="414" width="30" height="20" fill="#F7C775" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="78" y="428" font-size="12" fill="#5F5E5A">#F7C775 · lamp</text>
+<rect x="40" y="444" width="30" height="20" fill="#EBD9C4" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="78" y="458" font-size="12" fill="#5F5E5A">#EBD9C4 · wall</text>
+<rect x="40" y="474" width="30" height="20" fill="#D9A8A0" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="78" y="488" font-size="12" fill="#5F5E5A">#D9A8A0 · curtain</text>
+<rect x="40" y="504" width="30" height="20" fill="#8A5A3B" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="78" y="518" font-size="12" fill="#5F5E5A">#8A5A3B · wood</text>
+<rect x="40" y="534" width="30" height="20" fill="#2C3A5C" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="78" y="548" font-size="12" fill="#5F5E5A">#2C3A5C · night</text>
+<rect x="255" y="414" width="30" height="20" fill="#008080" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="293" y="428" font-size="12" fill="#5F5E5A">#008080 · desktop</text>
+<rect x="255" y="444" width="30" height="20" fill="#d4d0c8" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="293" y="458" font-size="12" fill="#5F5E5A">#d4d0c8 · chrome</text>
+<rect x="255" y="474" width="30" height="20" fill="#000080" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="293" y="488" font-size="12" fill="#5F5E5A">#000080 · title bar</text>
+<rect x="255" y="504" width="30" height="20" fill="#f5f4ed" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="293" y="518" font-size="12" fill="#5F5E5A">#f5f4ed · paper</text>
+<rect x="255" y="534" width="30" height="20" fill="#c42020" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="293" y="548" font-size="12" fill="#5F5E5A">#c42020 · warn</text>
+<rect x="470" y="414" width="30" height="20" fill="#05050a" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="508" y="428" font-size="12" fill="#5F5E5A">#05050a · void</text>
+<rect x="470" y="444" width="30" height="20" fill="#0d0d1a" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="508" y="458" font-size="12" fill="#5F5E5A">#0d0d1a · panel</text>
+<rect x="470" y="474" width="30" height="20" fill="#556677" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="508" y="488" font-size="12" fill="#5F5E5A">#556677 · dim</text>
+<rect x="470" y="504" width="30" height="20" fill="#aabbcc" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="508" y="518" font-size="12" fill="#5F5E5A">#aabbcc · ink</text>
+<rect x="470" y="534" width="30" height="20" fill="#cc8855" rx="3" stroke="#B4B2A9" stroke-width="0.5"/>
+<text x="508" y="548" font-size="12" fill="#5F5E5A">#cc8855 · flag</text>
+<rect x="40" y="580" width="600" height="110" fill="#05050A" stroke="#222244" stroke-width="1"/>
+<text x="56" y="606" font-size="14" font-weight="500" fill="#aabbcc">intake record — the only sharp surface</text>
+<rect x="56" y="620" width="90" height="6" fill="#556677"/>
+<rect x="170" y="614" width="380" height="16" fill="#0A0A15" stroke="#222244" stroke-width="0.5"/>
+<rect x="178" y="619" width="120" height="4" fill="#aabbcc" opacity="0.7"/>
+<rect x="56" y="642" width="90" height="6" fill="#556677"/>
+<rect x="170" y="636" width="380" height="16" fill="#0A0A15" stroke="#222244" stroke-width="0.5"/>
+<rect x="178" y="641" width="84" height="4" fill="#aabbcc" opacity="0.7"/>
+<rect x="56" y="664" width="90" height="6" fill="#556677"/>
+<rect x="170" y="658" width="380" height="16" fill="#0A0A15" stroke="#222244" stroke-width="0.5"/>
+<rect x="178" y="663" width="150" height="4" fill="#cc8855" opacity="0.85"/>
+<text x="56" y="684" font-size="12" fill="#556677">read only — this panel does not respond to you</text>
+</g>
+</svg>
