@@ -951,6 +951,17 @@ from runner.app_readiness import (  # noqa: E402
     build_document_readiness,
     collect_corpus_readiness,
 )
+from runner.app_review_overrides import (  # noqa: E402
+    analysis_review_marker_available,
+    analysis_review_record,
+    clear_testimony_gate,
+    legal_review_available,
+    legal_review_record,
+    mark_analysis_reviewed,
+    mark_legal_review_complete,
+    testimony_gate_cleared,
+    testimony_override_available,
+)
 from runner.models.enrichment import infer_entity_registry_fit, infer_practice_cluster  # noqa: E402
 
 
@@ -4166,6 +4177,154 @@ def _render_complement_enrichment_action(
         st.rerun()
 
 
+def _render_review_overrides(doc_id: str, doc_dir: Path) -> None:
+    """Researcher review overrides for an already-imported corpus document.
+
+    Three safe, local-only review actions (no Sanity/Supabase writes, no model
+    re-run): clear a false-positive testimony gate, record a completed legal
+    review, and mark a low-confidence analysis as reviewed. Each requires an
+    explicit confirmation checkbox and a researcher note. Logic lives in the
+    pure ``runner.app_review_overrides`` module; this only renders it.
+    """
+    analysis = _read_json_file(doc_dir / "analysis.json", {})
+    if not isinstance(analysis, dict):
+        analysis = {}
+
+    show_testimony = testimony_override_available(analysis)
+    show_legal = legal_review_available(analysis)
+    show_review = analysis_review_marker_available(analysis)
+    if not (show_testimony or show_legal or show_review):
+        return
+
+    with st.expander("🛠 Researcher review overrides", expanded=False):
+        st.caption(
+            "Local-only researcher decisions. These never write to Sanity or "
+            "Supabase, never change tactic/practice/harm tags, and never re-run "
+            "the model. Each action is recorded with your note for provenance."
+        )
+
+        # ── 1. Clear testimony gate (false-positive correction) ────────────
+        if show_testimony:
+            st.markdown("**Not testimony / clear testimony gate**")
+            if testimony_gate_cleared(doc_dir):
+                st.success(
+                    "Testimony gate already cleared "
+                    "(`_manual_overrides.testimony_flag = researcher_confirmed_false`)."
+                )
+            else:
+                st.caption(
+                    "Use only when the testimony flag is a false positive. Sets "
+                    "`testimony_flag=false` and removes "
+                    "`Flag: Testimony-Extraction-Required`. A typed *Testimony* / "
+                    "*Survivor-Network-Material* document still trips the type-based "
+                    "consent gate — this does not reclassify the document."
+                )
+                t_note = st.text_area(
+                    "Researcher note (why this is not testimony)",
+                    key=f"ro_testimony_note_{doc_id}",
+                    height=80,
+                )
+                t_confirm = st.checkbox(
+                    "I confirm this document is not testimony and the consent gate "
+                    "should be cleared.",
+                    key=f"ro_testimony_confirm_{doc_id}",
+                )
+                if st.button(
+                    "Clear testimony gate",
+                    key=f"ro_testimony_btn_{doc_id}",
+                    disabled=not (t_confirm and t_note.strip()),
+                ):
+                    result = clear_testimony_gate(doc_dir, note=t_note)
+                    if result["ok"] and result["changed"]:
+                        st.success(
+                            "Testimony gate cleared. "
+                            f"Removed {len(result['removed_flags'])} flag(s); "
+                            "warning appended to analysis provenance."
+                        )
+                    elif result["ok"]:
+                        st.info("No change — testimony gate was already cleared.")
+                    else:
+                        st.error(f"Could not clear gate: {result['reason']}.")
+                    st.rerun()
+            st.divider()
+
+        # ── 2. Legal review completed ──────────────────────────────────────
+        if show_legal:
+            st.markdown("**Legal review completed**")
+            existing_legal = legal_review_record(doc_dir)
+            if existing_legal.get("reviewed"):
+                st.success(
+                    "Legal review recorded "
+                    f"({str(existing_legal.get('reviewed_at') or '')[:19]} by "
+                    f"{existing_legal.get('reviewed_by', 'researcher')})."
+                )
+                if existing_legal.get("notes"):
+                    st.caption(f"Note: {existing_legal['notes']}")
+            st.caption(
+                "Records that a human checked the legal accuracy of this "
+                "legal-sensitive document. Does not change the model classification."
+            )
+            l_note = st.text_area(
+                "Legal review note",
+                key=f"ro_legal_note_{doc_id}",
+                height=80,
+            )
+            l_confirm = st.checkbox(
+                "I confirm I completed a legal-accuracy review of this document.",
+                key=f"ro_legal_confirm_{doc_id}",
+            )
+            if st.button(
+                "Save legal review",
+                key=f"ro_legal_btn_{doc_id}",
+                disabled=not (l_confirm and l_note.strip()),
+            ):
+                result = mark_legal_review_complete(doc_dir, note=l_note)
+                if result["ok"]:
+                    st.success("Legal review saved to legal_review.json.")
+                else:
+                    st.error(f"Could not save: {result['reason']}.")
+                st.rerun()
+            st.divider()
+
+        # ── 3. Analysis reviewed (low-confidence / needs_review) ───────────
+        if show_review:
+            st.markdown("**Analysis reviewed**")
+            existing_review = analysis_review_record(doc_dir)
+            if existing_review.get("analysis_reviewed"):
+                st.success(
+                    "Analysis marked reviewed "
+                    f"({str(existing_review.get('reviewed_at') or '')[:19]} by "
+                    f"{existing_review.get('reviewed_by', 'researcher')})."
+                )
+                if existing_review.get("notes"):
+                    st.caption(f"Note: {existing_review['notes']}")
+            st.caption(
+                "For low-confidence / needs-review documents. Records your human "
+                "review without altering the model's confidence or `needs_review` "
+                "flag — the validator is left untouched."
+            )
+            r_note = st.text_area(
+                "Review note",
+                key=f"ro_review_note_{doc_id}",
+                height=80,
+            )
+            r_confirm = st.checkbox(
+                "I confirm I reviewed this analysis.",
+                key=f"ro_review_confirm_{doc_id}",
+            )
+            if st.button(
+                "Mark analysis reviewed",
+                key=f"ro_review_btn_{doc_id}",
+                disabled=not (r_confirm and r_note.strip()),
+            ):
+                result = mark_analysis_reviewed(doc_dir, note=r_note)
+                if result["ok"]:
+                    st.success("Saved to review_status.json.")
+                else:
+                    st.error(f"Could not save: {result['reason']}.")
+                st.rerun()
+
+
 def _render_doc_card(doc: dict, corpus_dir: Path):
     conf = doc["confidence"]
     conf_color = "🟢" if conf >= 0.85 else "🟡" if conf >= 0.70 else "🔴"
@@ -4306,6 +4465,8 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
             _render_provenance_panel(
                 doc["doc_id"], corpus_dir / doc["doc_id"], _prov_cfg
             )
+
+        _render_review_overrides(doc["doc_id"], corpus_dir / doc["doc_id"])
 
         # ── Actions ───────────────────────────────────────────────────────
         st.divider()
