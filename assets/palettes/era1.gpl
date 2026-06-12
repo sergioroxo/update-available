@@ -1,0 +1,20 @@
+GIMP Palette
+#Palette Name: ERA1 (~1995-99)
+#Description: matches src/desktop/theme/era1.ts — import in Aseprite
+#Colors: 16
+0 0 0	black
+255 255 255	white
+192 192 192	silver
+128 128 128	grey
+64 64 64	grey-dark
+212 208 200	beige-chrome
+245 244 237	paper
+0 128 128	teal-desktop
+0 64 64	teal-dark
+0 0 128	navy-title
+16 132 208	title-blue
+255 255 204	tooltip
+128 0 0	warn-dark
+196 32 32	warn
+0 128 0	ok
+128 128 0	olive
