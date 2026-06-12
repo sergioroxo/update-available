@@ -95,6 +95,7 @@ def main():
         "Model Routing",
         "Triage Tool",
         "Mac Studio Node",
+        "Mac Studio Worker",
         "Offload Packages",
         "Seed Data",
     ]
@@ -156,6 +157,8 @@ def main():
         page_triage_tool()
     elif page == "Mac Studio Node":
         page_mac_studio_node()
+    elif page == "Mac Studio Worker":
+        page_mac_studio_worker()
     elif page == "Offload Packages":
         page_offload_packages()
     elif page == "Seed Data":
@@ -1270,6 +1273,11 @@ _ENRICHMENT_ACTION_HELP = {
     "merge_into": "Merge this proposal into another existing lexicon entry.",
     "enrich_existing": "Add evidence/details to an existing registry record.",
 }
+
+_PERSON_ROLE_OPTIONS = [
+    "founder", "leader", "influencer", "therapist", "pastor",
+    "survivor", "researcher", "politician", "other",
+]
 
 _GENDER_DYSPHORIA_CANONICAL_ID = "lexicon-gender-dysphoria"
 _GENDER_DYSPHORIA_CANONICAL_TERM = "Gender Dysphoria"
@@ -7570,6 +7578,57 @@ def _proposal_record_key(record: dict) -> str:
     return f"{path}::{doc_id}::{index}"
 
 
+def _proposal_source_doc_uploaded(corpus_dir: Path, doc_id: str) -> bool:
+    """Return True when the local source document has a Sanity upload marker."""
+    return bool(doc_id and (corpus_dir / doc_id / "sanity_record.json").exists())
+
+
+def _proposal_source_upload_issue(record: dict, config) -> str:
+    """Human-readable reason a proposal cannot reference its source document yet."""
+    doc_id = str(record.get("doc_id") or "")
+    if not doc_id:
+        return "missing source document id"
+    if not _proposal_source_doc_uploaded(config.corpus_dir, doc_id):
+        return (
+            f"source document `{doc_id}` is not uploaded to Sanity yet. "
+            f"Upload it first (`python -m runner upload-doc {doc_id}`), then push this proposal."
+        )
+    return ""
+
+
+def _render_proposal_source_context(record: dict) -> None:
+    """Show where a proposal came from and whether Sanity can reference it."""
+    config = _load_config_safe()
+    doc_id = str(record.get("doc_id") or "")
+    if not config or not doc_id:
+        return
+
+    doc_dir = config.corpus_dir / doc_id
+    intake = _read_json_file(doc_dir / "intake.json", {})
+    source = intake.get("source_url") or intake.get("source") or ""
+    uploaded = _proposal_source_doc_uploaded(config.corpus_dir, doc_id)
+
+    with st.container():
+        cols = st.columns([2, 2, 1])
+        cols[0].caption(f"Source document: `{doc_id}`")
+        cols[1].caption(f"Source: {source or '—'}")
+        if cols[2].button("Open source doc", key=f"open_source_for_proposal_{_proposal_record_key(record)}"):
+            _open_document_from_inbox(doc_id)
+            st.rerun()
+        if uploaded:
+            url = _sanity_studio_url(config, doc_id)
+            if url:
+                st.markdown(f"[Open source document in Sanity ↗]({url})")
+            else:
+                st.success("Source document has a local Sanity upload marker.")
+        else:
+            st.warning(
+                "This proposal cannot be pushed as a Sanity registry record until "
+                "the source document is uploaded. Sanity rejects references to "
+                f"`doc-{doc_id}` while that document does not exist."
+            )
+
+
 def _render_selected_proposal_editor(
     records: list[dict],
     *,
@@ -7596,7 +7655,9 @@ def _render_selected_proposal_editor(
             "save/approve actions responsive."
         ),
     )
-    render_func(record_by_key[selected_key])
+    selected_record = record_by_key[selected_key]
+    _render_proposal_source_context(selected_record)
+    render_func(selected_record)
 
 
 def _ingestion_status(row: dict) -> str:
@@ -7723,6 +7784,10 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
                 continue
+            source_issue = _proposal_source_upload_issue(record, config)
+            if source_issue:
+                errors.append(f"{record['doc_id']} / {item.get('term', '?')}: {source_issue}")
+                continue
             issues = _lexicon_import_issues({
                 "term": item.get("term", ""),
                 "proposed_cluster": item.get("proposed_cluster", ""),
@@ -7811,6 +7876,10 @@ def _render_entity_queue(config, records: list[dict]) -> None:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
                 continue
+            source_issue = _proposal_source_upload_issue(record, config)
+            if source_issue:
+                errors.append(f"{record['doc_id']} / {item.get('name', '?')}: {source_issue}")
+                continue
             fit = _entity_registry_fit(item)
             if fit != "registry_entity":
                 errors.append(
@@ -7889,6 +7958,16 @@ def _render_tactic_queue(config, records: list[dict]) -> None:
         for record in records:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                continue
+            source_issue = _proposal_source_upload_issue(record, config)
+            if source_issue:
+                errors.append(f"{record['doc_id']} / {item.get('tactic', '?')}: {source_issue}")
+                continue
+            if item.get("action") == "enrich_existing" and not item.get("existing_tactic_id"):
+                errors.append(
+                    f"{record['doc_id']} / {item.get('tactic', '?')}: "
+                    "`enrich_existing` requires `existing_tactic_id`; fill the existing Sanity tactic id or change Action to add_new."
+                )
                 continue
             try:
                 from runner.clients.sanity import write_tactic_from_proposal
@@ -8003,6 +8082,10 @@ def _render_practice_queue(config, records: list[dict]) -> None:
                 item = record["item"]
                 if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
                     continue
+                source_issue = _proposal_source_upload_issue(record, config)
+                if source_issue:
+                    errors.append(f"{record['doc_id']} / {item.get('practice_id', '?')}: {source_issue}")
+                    continue
                 block_reason = _practice_push_block_reason(item)
                 if block_reason:
                     errors.append(
@@ -8095,6 +8178,10 @@ def _render_claim_queue(config, records: list[dict]) -> None:
         for record in records:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
+                continue
+            source_issue = _proposal_source_upload_issue(record, config)
+            if source_issue:
+                errors.append(f"{record['doc_id']} / {item.get('claim', '?')[:80]}: {source_issue}")
                 continue
             try:
                 from runner.clients.sanity import append_extractable_asset_from_proposal
@@ -8383,7 +8470,21 @@ def _render_single_entity_editor(record: dict) -> None:
             height=100,
             key=f"{prefix}_description",
         )
-        item["role_in_sogice"] = st.text_input("Role in SOGICE", value=item.get("role_in_sogice", ""), key=f"{prefix}_role")
+        if item.get("entity_type") == "person":
+            item["role_in_sogice"] = st.selectbox(
+                "Role in SOGICE",
+                _PERSON_ROLE_OPTIONS,
+                index=_option_index(_PERSON_ROLE_OPTIONS, item.get("role_in_sogice", "other")),
+                key=f"{prefix}_role",
+                help="Controlled role used by the Sanity person schema.",
+            )
+        else:
+            item["role_in_sogice"] = st.text_input(
+                "Role in SOGICE",
+                value=item.get("role_in_sogice", ""),
+                key=f"{prefix}_role",
+                help="Free-text role/context for organization proposals. Person proposals use a controlled role list.",
+            )
         item["registry_fit_rationale"] = st.text_area(
             "Registry-fit rationale",
             value=item.get("registry_fit_rationale", ""),
@@ -8538,6 +8639,11 @@ def _render_single_tactic_editor(record: dict) -> None:
             help="add_new creates a new tacticEntry; enrich_existing appends evidence/details to an existing tacticEntry.",
         )
         st.caption(_ENRICHMENT_ACTION_HELP.get(item["action"], ""))
+        if item["action"] == "enrich_existing" and not item.get("existing_tactic_id"):
+            st.warning(
+                "`enrich_existing` needs an existing Sanity tactic id. "
+                "Without it the proposal cannot safely attach evidence to the intended tactic."
+            )
         item["tactic_level"] = st.selectbox(
             "Tactic level",
             ["structural", "sub-tactic", "campaign"],
@@ -13149,6 +13255,152 @@ def _source_offload_archive_commands(
     }
 
 
+def _source_transfer_root(*, mac_studio: bool = False) -> Path:
+    """Resolve the Syncthing/AirDrop archive-transfer root for this machine."""
+    env = (
+        os.getenv("SOURCE_OFFLOAD_TRANSFER_ROOT", "").strip()
+        or os.getenv("SOGICE_TRANSFER_ROOT", "").strip()
+    )
+    if env:
+        return Path(env).expanduser()
+    if mac_studio:
+        return Path(os.getenv("MAC_STUDIO_TRANSFER_ROOT", "/Users/cdn-ai/sogice-transfer")).expanduser()
+    return Path(
+        os.getenv(
+            "MACBOOK_TRANSFER_ROOT",
+            str(Path.home() / "Documents" / "surviving-sogice-studio"),
+        )
+    ).expanduser()
+
+
+def _source_archive_rows(archive_dir: Path) -> list[dict]:
+    """Summarise transferred ``.tar.gz`` packages, including checksum status."""
+    from runner.pipeline.offload_source import ARCHIVE_SUFFIX, inspect_source_archive
+
+    archive_dir = Path(archive_dir)
+    rows: list[dict] = []
+    if not archive_dir.exists():
+        return rows
+    for archive in sorted(archive_dir.glob(f"*{ARCHIVE_SUFFIX}")):
+        if archive.name.startswith("."):
+            continue
+        row = {
+            "archive_path": str(archive),
+            "archive_name": archive.name,
+            "package_id": archive.name.removesuffix(ARCHIVE_SUFFIX),
+            "manifest_state": "",
+            "checksum_ok": False,
+            "sha256_path": str(Path(str(archive) + ".sha256")),
+            "sha256_exists": Path(str(archive) + ".sha256").is_file(),
+            "bytes": archive.stat().st_size if archive.exists() else 0,
+            "modified_at": datetime.fromtimestamp(
+                archive.stat().st_mtime, timezone.utc
+            ).isoformat() if archive.exists() else "",
+            "error": "",
+        }
+        try:
+            info = inspect_source_archive(archive)
+            row["package_id"] = info.get("package_id", row["package_id"])
+            row["manifest_state"] = info.get("manifest_state", "")
+            row["checksum_ok"] = True
+        except Exception as exc:  # noqa: BLE001 — surfaced in UI
+            row["error"] = str(exc)
+        rows.append(row)
+    return rows
+
+
+def _source_unpacked_package_exists(source_offload_root: Path, state: str, package_id: str) -> bool:
+    return (Path(source_offload_root) / state / package_id).is_dir()
+
+
+def _mac_studio_offload_root() -> Path:
+    return Path(os.getenv("MAC_STUDIO_OFFLOAD_ROOT", "/Users/cdn-ai/sogice-offload")).expanduser()
+
+
+def _start_source_worker_job(package_dir: Path, *, llm: str = "litelm") -> dict:
+    """Start one local Mac Studio source worker in the background."""
+    root = Path(package_dir).parent.parent
+    lock_info = _offload_worker_lock_info(root)
+    if lock_info:
+        raise RuntimeError(
+            "A source worker lock already exists "
+            f"(pid {lock_info.get('pid', '?')}, started {lock_info.get('started_at', '?')})."
+        )
+    active = _read_app_job_lock()
+    if active:
+        raise RuntimeError(
+            _format_app_job_lock(active)
+            + " Wait for it to finish before starting another heavy model job."
+        )
+    pkg_id = re.sub(r"[^a-zA-Z0-9_.-]+", "-", Path(package_dir).name).strip("-") or "source"
+    started = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    log_dir = _project_root / "exports" / "app_jobs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{started}_{pkg_id}_source_worker.log"
+    command = [sys.executable, "-m", "runner", "source-worker", str(package_dir), "--llm", llm]
+    with log_path.open("w", encoding="utf-8") as log_file:
+        log_file.write(f"$ {shlex.join(command)}\n\n")
+        log_file.flush()
+        proc = subprocess.Popen(
+            command,
+            cwd=_project_root,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    job = {
+        "process": proc,
+        "pid": proc.pid,
+        "started_at": started,
+        "log_path": str(log_path),
+        "command": shlex.join(command),
+        "kind": "source-worker",
+        "mode": pkg_id,
+    }
+    _write_app_job_lock(job)
+    return job
+
+
+def _render_source_worker_job(job_key: str) -> bool:
+    job = st.session_state.get(job_key)
+    if not job:
+        return False
+    proc = job.get("process")
+    returncode = proc.poll() if proc is not None else None
+    log_path = Path(job.get("log_path", ""))
+    if returncode is None:
+        st.info(
+            f"Source worker is running in the background "
+            f"(PID {job.get('pid')}). You can leave this page open and refresh."
+        )
+        c1, c2 = st.columns([1, 1])
+        if c1.button("Refresh worker status", key=f"{job_key}_refresh"):
+            st.rerun()
+        if c2.button("Forget this status card", key=f"{job_key}_forget_running"):
+            st.session_state.pop(job_key, None)
+            st.rerun()
+        tail = _job_log_tail(log_path)
+        if tail:
+            with st.expander("Worker log tail", expanded=False):
+                st.code(tail, language="text")
+        st.caption(f"Log: `{log_path}`")
+        return True
+    _clear_app_job_lock(job)
+    if returncode == 0:
+        st.success("Source worker finished. Check `outbox/`, then archive the result.")
+    else:
+        st.error(f"Source worker exited with code {returncode}.")
+    tail = _job_log_tail(log_path)
+    if tail:
+        with st.expander("Worker log tail", expanded=returncode != 0):
+            st.code(tail, language="text")
+    st.caption(f"Log: `{log_path}`")
+    if st.button("Clear worker status", key=f"{job_key}_clear_done"):
+        st.session_state.pop(job_key, None)
+        st.rerun()
+    return False
+
+
 def _source_import_relink_preview(pkg_dir) -> list[dict]:
     """Queue-linkage preview for a returned package (read-only; no DB)."""
     from runner.pipeline.offload_source import ingest_result_linkages
@@ -13177,6 +13429,102 @@ def _render_source_import_errors(summary: dict) -> None:
     errs = [e for e in (summary.get("errors") or []) if not e.startswith("reviewed_doc_blocked")]
     if errs:
         st.error("Import refused — corpus untouched:\n" + "\n".join(f"- {e}" for e in errs))
+
+
+def _open_document_in_document_list(doc_id: str) -> None:
+    st.session_state["doc_list_search"] = doc_id
+    st.session_state["doc_list_open_doc_id"] = doc_id
+    st.session_state["_nav_to"] = "Document List"
+    st.rerun()
+
+
+def _render_imported_doc_actions(config, doc_ids: list[str], *, key_prefix: str) -> None:
+    if not doc_ids:
+        return
+    st.markdown("#### Imported documents")
+    for doc_id in doc_ids:
+        cols = st.columns([2, 1, 1, 1])
+        cols[0].write(f"`{doc_id}`")
+        if cols[1].button("Open in Document List", key=f"{key_prefix}_open_{doc_id}"):
+            _open_document_in_document_list(doc_id)
+        if cols[2].button("Status", key=f"{key_prefix}_status_{doc_id}"):
+            r = subprocess.run(
+                [sys.executable, "-m", "runner", "status", doc_id],
+                cwd=_project_root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            output = (r.stdout or "") + (r.stderr or "")
+            if r.returncode == 0:
+                st.code(output or f"status OK for {doc_id}", language="text")
+            else:
+                st.error(output or f"`status` exited with {r.returncode}")
+        if cols[3].button("Upload", key=f"{key_prefix}_upload_{doc_id}"):
+            st.caption("Manual action: runs `upload-doc`; no upload happens unless you press this button.")
+            r = subprocess.run(
+                [sys.executable, "-m", "runner", "upload-doc", doc_id],
+                cwd=_project_root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            output = (r.stdout or "") + (r.stderr or "")
+            if r.returncode == 0:
+                st.success(f"Uploaded `{doc_id}`.")
+                st.code(output, language="text")
+            else:
+                st.error(output or f"`upload-doc` exited with {r.returncode}")
+
+
+def _render_source_received_archives(config, root: Path) -> None:
+    """MacBook-side scanner for returned Syncthing/AirDrop archives."""
+    from runner.pipeline.offload_source import unpack_source_archive
+
+    transfer_root = _source_transfer_root(mac_studio=False)
+    incoming = transfer_root / "from-mac-studio"
+    st.markdown("#### Returned archives")
+    st.caption(
+        "Scans the shared transfer folder for Mac-Studio-returned archives. "
+        "Unpack puts the package in `source_offload/outbox/`; nothing is imported "
+        "or uploaded until you use the buttons below."
+    )
+    st.caption(f"Folder: `{incoming}`")
+    rows = _source_archive_rows(incoming)
+    if not rows:
+        st.info("No returned `.tar.gz` archives found yet.")
+        return
+    for row in rows:
+        label = row["package_id"]
+        if row["checksum_ok"]:
+            label += f" · checksum OK · manifest `{row.get('manifest_state') or '?'}`"
+        else:
+            label += " · checksum/problem"
+        with st.expander(label):
+            st.caption(f"Archive: `{row['archive_path']}`")
+            if row["error"]:
+                st.error(row["error"])
+            else:
+                st.success("Archive checksum and shape verified.")
+            exists = _source_unpacked_package_exists(root, "outbox", row["package_id"])
+            if exists:
+                st.info("Already unpacked into `outbox/`; use the import controls below.")
+            if st.button(
+                "Unpack into source_offload/outbox",
+                key=f"src_recv_unpack_{row['package_id']}",
+                disabled=bool(row["error"] or exists),
+            ):
+                try:
+                    result = unpack_source_archive(
+                        Path(row["archive_path"]),
+                        source_offload_root=root,
+                        state="outbox",
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"Unpack refused:\n\n{exc}")
+                else:
+                    st.success(f"Unpacked `{result['package_id']}` to `{result['package_dir']}`.")
+                    st.rerun()
 
 
 def _render_source_export(config, root: Path) -> None:
@@ -13505,6 +13853,9 @@ def _render_source_import(config, root: Path) -> None:
         "is deleted. The source queue is relinked **only after** a successful "
         "corpus import."
     )
+    _render_source_received_archives(config, root)
+    st.divider()
+    st.markdown("#### Outbox packages ready to import")
     outbox_dir = root / "outbox"
     pkg_dirs = (
         [p for p in sorted(outbox_dir.iterdir())
@@ -13569,9 +13920,12 @@ def _render_source_import(config, root: Path) -> None:
 
         st.session_state.pop(dryrun_key, None)
         st.success(f"Imported `{summary.get('package_id', chosen)}` into the corpus.")
+        imported_doc_ids: list[str] = []
         for doc in summary.get("documents", []):
             bk = f" (backed up: {', '.join(doc['backups'])})" if doc.get("backups") else ""
             st.write(f"✓ **{doc['doc_id']}**: {', '.join(doc['written'])}{bk}")
+            if doc.get("doc_id"):
+                imported_doc_ids.append(doc["doc_id"])
 
         # Queue relink — only now, after a successful corpus write.
         _source_relink_queue(config, pkg_dir)
@@ -13590,6 +13944,7 @@ def _render_source_import(config, root: Path) -> None:
         else:
             st.success("Package moved to `imported/`.")
         _render_source_local_commands((root / "imported" / chosen) if moved else pkg_dir)
+        _render_imported_doc_actions(config, imported_doc_ids, key_prefix=f"src_imported_{chosen}")
 
 
 def page_source_offload():
@@ -13629,6 +13984,154 @@ def page_source_offload():
         _render_source_transfer(config, root)
     with tab_import:
         _render_source_import(config, root)
+
+
+# ---------------------------------------------------------------------------
+# Mac Studio Worker Console — local worker controls for archive transfer
+# ---------------------------------------------------------------------------
+
+def page_mac_studio_worker():
+    from runner.pipeline.offload_source import (
+        archive_source_package,
+        unpack_source_archive,
+        verify_source_package,
+    )
+
+    st.title("🖥️ Mac Studio Worker")
+    st.caption(
+        "Local console for the Mac Studio side of source offload. It scans the "
+        "Syncthing/AirDrop transfer folder, unpacks packages into the local "
+        "source-offload inbox, runs `source-worker` locally, and archives finished "
+        "outbox packages back to the transfer folder. No package is auto-deleted."
+    )
+
+    transfer_root = _source_transfer_root(mac_studio=True)
+    offload_root = _mac_studio_offload_root()
+    st.caption(f"Transfer root: `{transfer_root}`")
+    st.caption(f"Mac Studio source-offload root: `{offload_root}`")
+
+    lock_info = _offload_worker_lock_info(offload_root)
+    if lock_info:
+        st.warning(
+            "A source worker lock is present at `.worker.lock` "
+            f"(pid {lock_info.get('pid', '?')}, started {lock_info.get('started_at', '?')}). "
+            "Wait for the current worker to finish before starting another."
+        )
+    active = _read_app_job_lock()
+    if active:
+        st.info(_format_app_job_lock(active))
+
+    job_key = "mac_studio_source_worker_job"
+    _render_source_worker_job(job_key)
+
+    tab_in, tab_worker, tab_out = st.tabs(
+        ["Incoming archives", "Run worker", "Archive outbox"]
+    )
+
+    with tab_in:
+        incoming = transfer_root / "to-mac-studio"
+        st.subheader("Incoming archives")
+        st.caption(f"Folder: `{incoming}`")
+        rows = _source_archive_rows(incoming)
+        if not rows:
+            st.info("No `.tar.gz` packages found in `to-mac-studio/`.")
+        for row in rows:
+            title = row["package_id"]
+            title += " · checksum OK" if row["checksum_ok"] else " · checksum/problem"
+            with st.expander(title):
+                st.caption(f"Archive: `{row['archive_path']}`")
+                if row["error"]:
+                    st.error(row["error"])
+                else:
+                    st.success("Archive checksum and shape verified.")
+                exists = _source_unpacked_package_exists(offload_root, "inbox", row["package_id"])
+                if exists:
+                    st.info("Already unpacked into `inbox/`.")
+                if st.button(
+                    "Unpack to Mac Studio inbox",
+                    key=f"ms_unpack_{row['package_id']}",
+                    disabled=bool(row["error"] or exists),
+                ):
+                    try:
+                        result = unpack_source_archive(
+                            Path(row["archive_path"]),
+                            source_offload_root=offload_root,
+                            state="inbox",
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        st.error(f"Unpack refused:\n\n{exc}")
+                    else:
+                        st.success(f"Unpacked `{result['package_id']}` to `{result['package_dir']}`.")
+                        st.rerun()
+
+    with tab_worker:
+        st.subheader("Run source worker")
+        st.caption(
+            "Starts one local background worker using this app's Python environment. "
+            "The app checks both the app heavy-job lock and the source-offload `.worker.lock`."
+        )
+        inbox_rows = [
+            r for r in _source_package_rows(offload_root)
+            if r["folder_state"] == "inbox" and not r.get("error")
+        ]
+        if not inbox_rows:
+            st.info("No inbox packages ready to run.")
+        else:
+            chosen = st.selectbox(
+                "Inbox package",
+                options=[r["package_id"] for r in inbox_rows],
+                key="ms_worker_pkg",
+            )
+            pkg_dir = offload_root / "inbox" / chosen
+            llm = st.text_input("LLM alias", value="litelm", key="ms_worker_llm")
+            if st.button("Verify selected package", key=f"ms_verify_{chosen}"):
+                _render_offload_verify_report(
+                    verify_source_package(pkg_dir),
+                    title="Source package verification",
+                )
+            disabled = bool(_offload_worker_lock_info(offload_root) or _read_app_job_lock())
+            if st.button("Run source-worker", key=f"ms_run_{chosen}", disabled=disabled):
+                try:
+                    st.session_state[job_key] = _start_source_worker_job(pkg_dir, llm=llm.strip() or "litelm")
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"Could not start worker:\n\n{exc}")
+                else:
+                    st.success("Source worker started. Use Refresh worker status to watch progress.")
+                    st.rerun()
+
+    with tab_out:
+        st.subheader("Archive completed outbox packages")
+        outgoing = transfer_root / "from-mac-studio"
+        st.caption(f"Destination: `{outgoing}`")
+        outbox_rows = [
+            r for r in _source_package_rows(offload_root)
+            if r["folder_state"] == "outbox" and not r.get("error")
+        ]
+        if not outbox_rows:
+            st.info("No completed outbox packages to archive.")
+        for row in outbox_rows:
+            pkg_id = row["package_id"]
+            pkg_dir = Path(row["path"])
+            archive_path = outgoing / f"{pkg_id}.tar.gz"
+            with st.expander(f"{pkg_id} · {row.get('item_count') or '?'} item(s)"):
+                st.caption(f"Package: `{pkg_dir}`")
+                if archive_path.exists():
+                    st.info(f"Archive already exists: `{archive_path}`")
+                if st.button(
+                    "Archive to from-mac-studio",
+                    key=f"ms_archive_{pkg_id}",
+                    disabled=archive_path.exists(),
+                ):
+                    try:
+                        result = archive_source_package(pkg_dir, output_dir=outgoing)
+                    except Exception as exc:  # noqa: BLE001
+                        st.error(f"Archive refused:\n\n{exc}")
+                    else:
+                        st.success(
+                            f"Archived `{pkg_id}`. Move/sync both files: "
+                            f"`{result['archive_path']}` and `{result['sha256_path']}`."
+                        )
+                        st.rerun()
 
 
 # ---------------------------------------------------------------------------

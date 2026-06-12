@@ -1242,3 +1242,38 @@ class TestFillEntityIdInEnrichment:
         # Warning should be gone after fill
         warnings_after = _collect_provenance_warnings(doc_dir, config=None)
         assert not any(w.title == "Missing existing_entity_id" for w in warnings_after)
+
+
+# ---------------------------------------------------------------------------
+# Proposal source-document preflight
+# ---------------------------------------------------------------------------
+
+def test_proposal_source_doc_uploaded_reads_sanity_marker(tmp_path):
+    from runner.app import _proposal_source_doc_uploaded
+
+    corpus = tmp_path / "corpus"
+    doc_dir = corpus / "doc-a"
+    doc_dir.mkdir(parents=True)
+
+    assert _proposal_source_doc_uploaded(corpus, "doc-a") is False
+
+    (doc_dir / "sanity_record.json").write_text("{}", encoding="utf-8")
+    assert _proposal_source_doc_uploaded(corpus, "doc-a") is True
+
+
+def test_proposal_source_upload_issue_explains_missing_sanity_doc(tmp_path):
+    from types import SimpleNamespace
+
+    from runner.app import _proposal_source_upload_issue
+
+    config = SimpleNamespace(corpus_dir=tmp_path / "corpus")
+    record = {"doc_id": "doc-a"}
+
+    issue = _proposal_source_upload_issue(record, config)
+    assert "not uploaded to Sanity yet" in issue
+    assert "upload-doc doc-a" in issue
+
+    doc_dir = config.corpus_dir / "doc-a"
+    doc_dir.mkdir(parents=True)
+    (doc_dir / "sanity_record.json").write_text("{}", encoding="utf-8")
+    assert _proposal_source_upload_issue(record, config) == ""

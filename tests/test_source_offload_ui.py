@@ -17,6 +17,7 @@ import runner.app as app_mod
 from runner.pipeline.offload_source import (
     INGEST_RESULT_MANIFEST_NAME,
     SourceItemSpec,
+    archive_source_package,
     build_source_package,
     move_source_package_state,
 )
@@ -226,6 +227,53 @@ def test_mac_studio_target_uses_env_then_placeholder(monkeypatch):
     assert root == "/Users/cdn-ai/private"
 
 
+def test_source_transfer_root_defaults_and_env(monkeypatch):
+    monkeypatch.delenv("SOURCE_OFFLOAD_TRANSFER_ROOT", raising=False)
+    monkeypatch.delenv("SOGICE_TRANSFER_ROOT", raising=False)
+    monkeypatch.delenv("MACBOOK_TRANSFER_ROOT", raising=False)
+    monkeypatch.delenv("MAC_STUDIO_TRANSFER_ROOT", raising=False)
+
+    assert app_mod._source_transfer_root(mac_studio=False).name == "surviving-sogice-studio"
+    assert str(app_mod._source_transfer_root(mac_studio=True)) == "/Users/cdn-ai/sogice-transfer"
+
+    monkeypatch.setenv("SOURCE_OFFLOAD_TRANSFER_ROOT", "/tmp/shared")
+    assert str(app_mod._source_transfer_root(mac_studio=False)) == "/tmp/shared"
+    assert str(app_mod._source_transfer_root(mac_studio=True)) == "/tmp/shared"
+
+
+def test_source_archive_rows_reports_checksum_ok(tmp_path):
+    root = _build_inbox(tmp_path)
+    out = tmp_path / "transfer" / "to-mac-studio"
+    result = archive_source_package(root / "inbox" / "src-ui", output_dir=out)
+
+    rows = app_mod._source_archive_rows(out)
+
+    assert len(rows) == 1
+    assert rows[0]["package_id"] == "src-ui"
+    assert rows[0]["checksum_ok"] is True
+    assert rows[0]["archive_path"] == result["archive_path"]
+    assert rows[0]["sha256_exists"] is True
+    assert rows[0]["error"] == ""
+
+
+def test_source_archive_rows_surfaces_checksum_problem(tmp_path):
+    root = _build_inbox(tmp_path)
+    out = tmp_path / "transfer" / "to-mac-studio"
+    archive_source_package(root / "inbox" / "src-ui", output_dir=out)
+    (out / "src-ui.tar.gz.sha256").write_text("0" * 64 + "  src-ui.tar.gz\n", encoding="utf-8")
+
+    rows = app_mod._source_archive_rows(out)
+
+    assert rows[0]["checksum_ok"] is False
+    assert "checksum_mismatch" in rows[0]["error"]
+
+
+def test_source_unpacked_package_exists(tmp_path):
+    root = _build_inbox(tmp_path)
+    assert app_mod._source_unpacked_package_exists(root, "inbox", "src-ui") is True
+    assert app_mod._source_unpacked_package_exists(root, "outbox", "src-ui") is False
+
+
 def test_transfer_commands_build_up_worker_back(tmp_path):
     root = _build_inbox(tmp_path)
     pkg_dir = root / "inbox" / "src-ui"
@@ -266,9 +314,12 @@ def test_no_ssh_rsync_or_worker_subprocess_launch():
 
 
 def test_no_source_worker_launch_helper():
-    """No app helper that launches the Mac Studio worker."""
+    """Only the dedicated Mac Studio console helper may launch the source worker."""
     for name in dir(app_mod):
         low = name.lower()
         if "source" in low and "worker" in low:
-            # Only the display-only command builder / lock reader are allowed.
-            assert name in {"_source_cli_command"}, f"unexpected source-worker helper: {name}"
+            assert name in {
+                "_source_cli_command",
+                "_start_source_worker_job",
+                "_render_source_worker_job",
+            }, f"unexpected source-worker helper: {name}"
