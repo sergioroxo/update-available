@@ -239,6 +239,8 @@ def test_source_transfer_root_defaults_and_env(monkeypatch):
     monkeypatch.setenv("SOURCE_OFFLOAD_TRANSFER_ROOT", "/tmp/shared")
     assert str(app_mod._source_transfer_root(mac_studio=False)) == "/tmp/shared"
     assert str(app_mod._source_transfer_root(mac_studio=True)) == "/tmp/shared"
+    assert str(app_mod._source_to_mac_studio_dir(mac_studio=False)) == "/tmp/shared/to-mac-studio"
+    assert str(app_mod._source_from_mac_studio_dir(mac_studio=True)) == "/tmp/shared/from-mac-studio"
 
 
 def test_source_archive_rows_reports_checksum_ok(tmp_path):

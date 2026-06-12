@@ -13273,6 +13273,14 @@ def _source_transfer_root(*, mac_studio: bool = False) -> Path:
     ).expanduser()
 
 
+def _source_to_mac_studio_dir(*, mac_studio: bool = False) -> Path:
+    return _source_transfer_root(mac_studio=mac_studio) / "to-mac-studio"
+
+
+def _source_from_mac_studio_dir(*, mac_studio: bool = False) -> Path:
+    return _source_transfer_root(mac_studio=mac_studio) / "from-mac-studio"
+
+
 def _source_archive_rows(archive_dir: Path) -> list[dict]:
     """Summarise transferred ``.tar.gz`` packages, including checksum status."""
     from runner.pipeline.offload_source import ARCHIVE_SUFFIX, inspect_source_archive
@@ -13488,8 +13496,7 @@ def _render_source_received_archives(config, root: Path) -> None:
     """MacBook-side scanner for returned Syncthing/AirDrop archives."""
     from runner.pipeline.offload_source import unpack_source_archive
 
-    transfer_root = _source_transfer_root(mac_studio=False)
-    incoming = transfer_root / "from-mac-studio"
+    incoming = _source_from_mac_studio_dir(mac_studio=False)
     st.markdown("#### Returned archives")
     st.caption(
         "Scans the shared transfer folder for Mac-Studio-returned archives. "
@@ -13543,7 +13550,11 @@ def _render_source_received_archives(config, root: Path) -> None:
 
 
 def _render_source_export(config, root: Path) -> None:
-    from runner.pipeline.offload_source import build_source_package, verify_source_package
+    from runner.pipeline.offload_source import (
+        archive_source_package,
+        build_source_package,
+        verify_source_package,
+    )
 
     st.subheader("Export queued/source items to a source package")
     st.caption(
@@ -13667,14 +13678,28 @@ def _render_source_export(config, root: Path) -> None:
 
         st.success(f"Created `{manifest.package_id}` ({len(manifest.items)} item(s)) in inbox.")
         pkg_dir = root / "inbox" / manifest.package_id
-        st.caption(f"Package path: `{pkg_dir}`")
+        st.caption(f"Working package path: `{pkg_dir}`")
         _render_offload_verify_report(verify_source_package(pkg_dir), title="Source package verification")
-        host, rroot = _mac_studio_transfer_target(config)
-        st.caption("Next — transfer to the Mac Studio (copy-paste; the app does not run it):")
-        st.code(
-            _source_offload_transfer_commands(pkg_dir, host, rroot, _mac_studio_python())["rsync_up"],
-            language="bash",
-        )
+        transfer_dir = _source_to_mac_studio_dir(mac_studio=False)
+        try:
+            archived = archive_source_package(pkg_dir, output_dir=transfer_dir)
+        except FileExistsError:
+            archive_path = transfer_dir / f"{manifest.package_id}.tar.gz"
+            st.info(
+                "Transfer archive already exists, so I did not overwrite it. "
+                f"Syncthing should send: `{archive_path}` and `{archive_path}.sha256`."
+            )
+        except Exception as exc:  # noqa: BLE001
+            st.warning(
+                "The package was built and verified, but the transfer archive could "
+                f"not be created in `{transfer_dir}`:\n\n{exc}"
+            )
+        else:
+            st.success(
+                "Transfer archive created for Syncthing: "
+                f"`{archived['archive_path']}` + `{archived['sha256_path']}`."
+            )
+            st.caption("Next: open **Mac Studio Worker** on the Mac Studio and unpack it from Incoming archives.")
 
 
 def _render_source_browser(config, root: Path) -> None:
@@ -14044,7 +14069,7 @@ def page_mac_studio_worker():
     )
 
     with tab_in:
-        incoming = transfer_root / "to-mac-studio"
+        incoming = _source_to_mac_studio_dir(mac_studio=True)
         st.subheader("Incoming archives")
         st.caption(f"Folder: `{incoming}`")
         rows = _source_archive_rows(incoming)
@@ -14124,7 +14149,7 @@ def page_mac_studio_worker():
 
     with tab_out:
         st.subheader("Archive completed outbox packages")
-        outgoing = transfer_root / "from-mac-studio"
+        outgoing = _source_from_mac_studio_dir(mac_studio=True)
         st.caption(f"Destination: `{outgoing}`")
         outbox_rows = [
             r for r in _source_package_rows(offload_root)
