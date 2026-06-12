@@ -13313,6 +13313,13 @@ def _source_unpacked_package_exists(source_offload_root: Path, state: str, packa
     return (Path(source_offload_root) / state / package_id).is_dir()
 
 
+def _source_existing_package_states(source_offload_root: Path, package_id: str) -> list[str]:
+    from runner.pipeline.offload import LIFECYCLE_STATES
+
+    root = Path(source_offload_root)
+    return [state for state in LIFECYCLE_STATES if (root / state / package_id).is_dir()]
+
+
 def _mac_studio_offload_root() -> Path:
     return Path(os.getenv("MAC_STUDIO_OFFLOAD_ROOT", "/Users/cdn-ai/sogice-offload")).expanduser()
 
@@ -13506,13 +13513,21 @@ def _render_source_received_archives(config, root: Path) -> None:
                 st.error(row["error"])
             else:
                 st.success("Archive checksum and shape verified.")
-            exists = _source_unpacked_package_exists(root, "outbox", row["package_id"])
-            if exists:
+            existing_states = _source_existing_package_states(root, row["package_id"])
+            if "imported" in existing_states:
+                st.success("Already imported into the corpus. This archive is retained only as transfer history.")
+            elif "outbox" in existing_states:
                 st.info("Already unpacked into `outbox/`; use the import controls below.")
+            elif existing_states:
+                st.info(
+                    "This package already exists locally in: "
+                    + ", ".join(f"`{state}/`" for state in existing_states)
+                    + ". Move/archive it from the lifecycle browser if you need to retry."
+                )
             if st.button(
                 "Unpack into source_offload/outbox",
                 key=f"src_recv_unpack_{row['package_id']}",
-                disabled=bool(row["error"] or exists),
+                disabled=bool(row["error"] or existing_states),
             ):
                 try:
                     result = unpack_source_archive(

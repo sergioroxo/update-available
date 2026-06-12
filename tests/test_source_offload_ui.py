@@ -274,6 +274,18 @@ def test_source_unpacked_package_exists(tmp_path):
     assert app_mod._source_unpacked_package_exists(root, "outbox", "src-ui") is False
 
 
+def test_source_existing_package_states_lists_local_lifecycle_presence(tmp_path):
+    root = _build_inbox(tmp_path)
+    move_source_package_state(offload_root=root, package_id="src-ui", from_state="inbox", to_state="processing")
+    move_source_package_state(offload_root=root, package_id="src-ui", from_state="processing", to_state="outbox")
+    imported = root / "imported" / "old-copy"
+    imported.mkdir(parents=True)
+
+    assert app_mod._source_existing_package_states(root, "src-ui") == ["outbox"]
+    assert app_mod._source_existing_package_states(root, "old-copy") == ["imported"]
+    assert app_mod._source_existing_package_states(root, "missing") == []
+
+
 def test_transfer_commands_build_up_worker_back(tmp_path):
     root = _build_inbox(tmp_path)
     pkg_dir = root / "inbox" / "src-ui"
