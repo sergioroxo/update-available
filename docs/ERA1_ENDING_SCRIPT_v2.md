@@ -45,7 +45,7 @@ Only the proceed control is live.
 
 **Draft packet (⚑ approval; referral *abroad*, composite, never a named place):**
 ```
-        BRIGHTPATH FELLOWSHIP — RESIDENTIAL PLACEMENT
+        TRIEDPATH FELLOWSHIP — RESIDENTIAL PLACEMENT
         ----------------------------------------------------
         PARTICIPANT ......... {name}
         AGE ................. 16
@@ -135,10 +135,11 @@ the next build.
 
 ## Still needs you (small)
 
-1. ⚑ **Names** — recommend **Brightpath Fellowship** / program **"New Morning"**
-   / disk **"THE WALK"**. Pick or veto (all invented; verify before release).
-2. ⚑ **The diary interaction** — player commits the line (my rec) vs. it types
-   itself?
+1. ✅ **Names — CONFIRMED:** **TriedPath Fellowship** · disk **Un-Walk** ·
+   residential **"New Morning"** (kept; may re-subvert later). Doctrine:
+   uncanny CT branding (v0.8 §5).
+2. ✅ **Diary interaction — CONFIRMED:** the player **commits** the line (the
+   one true act in Era 1).
 3. ⚑ Confirm the **escalation arc**, **packet**, **EULA bold lines**,
    **changelog** read true to you (edit any line).
 4. Round-10 leftovers cleared in the same pass: the prayer text, the

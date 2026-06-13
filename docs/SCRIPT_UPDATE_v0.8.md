@@ -84,22 +84,55 @@ The update ritual does not just restart a desktop. Across the install:
 So the Era 1→2 ritual ends not on Alex's desktop but at a **new person's
 login** — the next milestone picks up there.
 
-## 5. NAMING — both prior names collide; replacements proposed ⚑
+## 5. NAMING DOCTRINE — "uncanny CT branding" (NEW CANON, Sérgio)
 
-"Morning Light Ministry" and "First Steps" both exist (and the org space is
-crowded; Love in Action / Desert Stream / Living Waters are REAL ex-gay orgs —
-hard-avoid). All names are invented composites, flagged fictional, verified
-against famous collisions only — Sérgio confirms before release.
+Names should **echo real conversion-practice phrasing but be subtly OFF** —
+uncanny, self-betraying, not-quite-positive, while still reading as earnest CT
+branding at a glance. The word does the critique: it looks benign on the
+poster and curdles when you actually read it. (Hard-avoid REAL org names:
+Morning Light Ministry, First Steps, Love in Action, Desert Stream, Living
+Waters, Exodus, NARTH, Love Won Out. All ours are invented composites,
+verified against famous collisions, Sérgio confirms before release.)
 
-- **Ministry/org** (recommend): **Brightpath Fellowship** · alts: The Open
-  Gate Fellowship · Greater Calling Fellowship
-- **Residential program** (recommend, keeps Sérgio's dawn motif): **New
-  Morning** · alts: The Turning · Homeward
-- Disk/booklet title (was "FIRST STEPS"): **THE WALK** · alt: Steps Home
+**Era 1 names — CONFIRMED (Sérgio):**
+- **Ministry/org:** **TriedPath Fellowship** *(subverts "Brightpath" → "tried"
+  = strain, trial, tried-and-failed; reads real, lands wrong)*
+- **At-home companion disk** (was "FIRST STEPS"): **Un-Walk** *(subverts the
+  Christian "walk" → a path that undoes you)*
+- **Residential placement** (S1.8 packet): **"New Morning"** residential *(kept
+  — may later be re-subverted to match the doctrine; flag)*
+- OS tagline stays **"EVERY PHASE PASSES."** (PHASE/2 OS, not the ministry).
 
-## 6. EULA — "corrects in your best interest" (Sérgio's, adopted)
+## 6. EULA — "corrects in your best interest" (Sérgio's, CONFIRMED)
 
-Bold line changes from *"the program acts in your best interest"* → **"you
-agree the program corrects in your best interest."** Not too much — it is the
-mask slipping in the one bold line no one reads. The horror of unread consent
-is that the cruelty is *right there*, legible, and skipped. Adopted.
+Bold line: **"You agree the program corrects in your best interest."** Not too
+much — the mask slipping in the one bold line no one reads; the cruelty is
+legible and skipped. Doctrine Sérgio set: *"Nuance but always present."*
+
+## 7. ERA TRANSITION — the cascade (refined, Sérgio)
+
+Not a glitch-while-staring. A **cascade**: as the update runs it **guides the
+player to look around the room**, the new era's space resolving as they pan
+(system-glitch flavour, §4) — and when they **return their gaze to the desk,
+the PC itself is new**. The reveal is spatial, earned by the look-around we
+already built. New embodiment / new login sits on that new machine (§4).
+
+## 8. ERA = PERSON + PALETTE + ROOM (NEW CANON, Sérgio)
+
+Each era is a different **person** with a different identity, targeting logic,
+palette, and room (the multi-persona structure, v0.7 / Codex Addendum A, now
+made concrete):
+
+| Era | Person | Targeting logic | Palette feel |
+|---|---|---|---|
+| 1 | **juvenile** (questioning teen, 1997) | community/postal referral → camp | warm dusk juvenile (built) |
+| 2 | **ex-gay** (adult man, ~2000s) | accountability / confession / "sexual addiction" 12-step / the ex-gay *app* | TBD — cooler, controlled, austere |
+| 3 | **lesbian** *(tentative — "maybe")* | wellness / flourishing / commerce / appified belonging | TBD |
+| 4 | **trans** | platform + AI capture / "exploratory" / anti-trans | TBD |
+
+⚑ **Era 4 (trans) hard line:** never satirize the gender-exploratory clinical
+debate (ETHICS_AND_CARE) — the contested-clinical-scene rules apply (two
+captions, unresolved, no satire/Assistant jokes/glitch spectacle).
+⚑ Era 3 identity is tentative ("maybe lesbian").
+Asset/palette groundwork for each room collected per era (Era 2 first:
+`update-available/docs/MOODBOARD_ERA2_ROOM.md`).

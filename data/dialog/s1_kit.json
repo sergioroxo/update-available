@@ -1,13 +1,13 @@
 {
-  "_doc": "S1.2–S1.4 — the Starter Kit (ERA1_LOGIC_v1 §3). Register: operable (perpetrator self-presentation; satire-permitted but period-real). ⚑ ALL WORDING IS DRAFT for Sérgio's approval. Ministry name is an invented composite — ⚑ verify no real organization shares it before release. Period vocabulary grounded in 1990s ex-gay ministry language ('struggler', 'SSA', 'change is possible'); 'unwanted SSA' is deliberately ABSENT — that rebrand belongs to a later era (see PROCESS_REGISTER round-10 sources).",
-  "ministry": "Morning Light Fellowship",
-  "program": "FIRST STEPS",
+  "_doc": "S1.2–S1.4 — the Starter Kit (ERA1_LOGIC_v1 §3). Register: operable (perpetrator self-presentation; satire-permitted but period-real). ⚑ ALL WORDING IS DRAFT for Sérgio's approval. Names follow the 'uncanny CT branding' doctrine (SCRIPT_UPDATE_v0.8 §5): TriedPath Fellowship (subverts 'Brightpath'), Un-Walk (subverts 'the walk') — read real, land wrong. ⚑ verify no real-org collision before release. Period vocabulary: 'struggler', 'SSA', 'change is possible'; 'unwanted SSA' deliberately ABSENT (a later-era rebrand).",
+  "ministry": "TriedPath Fellowship",
+  "program": "Un-Walk",
   "version": "companion disk v1.2",
-  "windowTitle": "FIRST STEPS — Morning Light Fellowship",
+  "windowTitle": "UN-WALK — TriedPath Fellowship",
   "autorun": [
     "READING DRIVE A: ...",
-    "FIRSTSTEP.EXE",
-    "(c) 1996 Morning Light Fellowship",
+    "UNWALK.EXE",
+    "(c) 1996 TriedPath Fellowship",
     "loading companion ..."
   ],
   "midiNote": "hymn.mid — now playing",
