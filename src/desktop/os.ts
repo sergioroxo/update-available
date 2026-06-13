@@ -15,7 +15,9 @@ import strings from '../../data/strings/slice.json';
 
 type Phase = 'warning' | 'off' | 'boot' | 'splash' | 'name' | 'desktop' | 'left';
 
-const SPLASH_SECONDS = 2.8;
+const SPLASH_SECONDS = 4.6;        // hold the loading screen long enough to read
+const BOOT_CPS = 0.030;            // seconds per char — slower BIOS crawl
+const BOOT_HOLD = 4.8;             // hold completed BIOS so the install lines read
 
 const WARNING_ARM_DELAY = 4; // s before CONTINUE becomes active (ethics)
 // display text lives in data/ — never in code (CLAUDE.md law)
@@ -135,9 +137,9 @@ export class DesktopOS {
     if (this.paused) { this.draw(); return; }
 
     if (this.phase === 'boot') {
-      const next = Math.min(Math.floor(this.phaseT / 0.018), this.bootTotal);
+      const next = Math.min(Math.floor(this.phaseT / BOOT_CPS), this.bootTotal);
       if (next !== this.bootChars) this.bootChars = next;
-      if (this.bootChars >= this.bootTotal && this.phaseT > 3.2) this.setPhase('splash');
+      if (this.bootChars >= this.bootTotal && this.phaseT > BOOT_HOLD) this.setPhase('splash');
     }
     if (this.phase === 'splash' && this.phaseT >= SPLASH_SECONDS) this.setPhase('name');
     if (this.phase === 'name' && this.greeting && this.phaseT > 2.8) {

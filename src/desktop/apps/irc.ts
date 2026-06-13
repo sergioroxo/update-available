@@ -11,12 +11,14 @@ import dialog from '../../../data/dialog/s1_irc.json';
 
 interface Line { from: string; text: string }
 
-const TYPE_CPS = 30;          // characters per second — natural typing
-const HOLD_CHANNEL = 0.8;     // pause after a channel line finishes
-const HOLD_DM = 1.1;          // pause after a DM line (slower, intimate)
-const AMBIENT_START = 1.2;    // s before the room starts talking
-const DM_DELAY = 3.5;         // s after the 2nd user message
-const DM_LURKER_DELAY = 30;   // the DM comes even if you never speak (v0.7 §6)
+// pacing tuned for reading, not speed — most of the audience reads English as
+// a second language (Sérgio). Slow type, generous holds so each line can land.
+const TYPE_CPS = 17;          // characters per second — unhurried typing
+const HOLD_CHANNEL = 1.8;     // pause after a channel line finishes
+const HOLD_DM = 3.2;          // pause after a DM line — time to read Rob fully
+const AMBIENT_START = 1.4;    // s before the room starts talking
+const DM_DELAY = 4.5;         // s after the 2nd user message
+const DM_LURKER_DELAY = 32;   // the DM comes even if you never speak (v0.7 §6)
 
 /** a stream that types queued lines out one character at a time */
 class TypeStream {

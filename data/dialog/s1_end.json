@@ -1,0 +1,66 @@
+{
+  "_doc": "Era-1 ending content S1.7–ritual (ERA1_ENDING_SCRIPT_v2). Register per beat. ⚑ ALL DRAFT for Sérgio. Names: TriedPath Fellowship / 'New Morning' residential. The reply chips ARE the narrowed inner voice (v0.8 §3): they change the witness label, never the outcome. Wiring (PacketApp/DiaryApp/ritual phase + glitch overlay) is the next build; this is the approved text, ready.",
+
+  "escalation": {
+    "dm": [
+      "i've been thinking about you. how are things at home?",
+      "some of us are meeting in person. a proper program — two weeks, away from all the noise.",
+      "it's residential. people your age, the same struggle. it changed my life.",
+      "i spoke with your mother. she's relieved, honestly. she wants this for you.",
+      "everything's arranged. you don't have to carry the decision — it's already made."
+    ],
+    "chips": [
+      { "text": "I don't know if I'm ready.", "witness": "hesitant — reassure" },
+      { "text": "What is it, exactly?", "witness": "seeking detail — minimize" },
+      { "text": "Did you really talk to my mum?", "witness": "boundary probe — affirm trust" },
+      { "text": "I don't want to go.", "witness": "resistant — proceed; consent on file" }
+    ]
+  },
+
+  "packet": {
+    "windowTitle": "TriedPath Fellowship — Placement",
+    "lines": [
+      "TRIEDPATH FELLOWSHIP — RESIDENTIAL PLACEMENT",
+      "----------------------------------------------",
+      "PARTICIPANT ......... {name}",
+      "AGE ................. 16",
+      "REFERRED BY ......... pastoral contact (online)",
+      "PROGRAM ............. \"New Morning\" residential · 14 days",
+      "LOCATION ............ partner house, abroad",
+      "DEPARTURE ........... Saturday",
+      "",
+      "CONSENT",
+      "Parent / guardian signature ...... [ already signed ]",
+      "Participant acknowledgement ...... ___________",
+      "",
+      "BRING: bible · modest clothing · this page.",
+      "Leave behind: music, journals, anything from \"before\"."
+    ],
+    "ok": "OK",
+    "deadButton": "Ask a question"
+  },
+
+  "diary": {
+    "fileTitle": "DIARY.TXT — Notepad",
+    "prompt": "(press to write what's true)",
+    "entry": "I know who I am, I just can't be it — but I will, even if they don't accept me.",
+    "committed": "you wrote it down. for a second, the screen does not know what to do with you."
+  },
+
+  "ritual": {
+    "notification": "An update is installing. Do not turn off your computer.",
+    "eulaBold": [
+      "By continuing you accept the terms of care.",
+      "You agree the program corrects in your best interest."
+    ],
+    "eulaButton": "I AGREE",
+    "changelog": [
+      "PHASE/2 95   ->   PHASE/2 2000",
+      "",
+      "· profile migrated while you were away",
+      "· enrollment added to your record",
+      "· \"cure\" is still available",
+      "· new: ongoing accountability"
+    ]
+  }
+}

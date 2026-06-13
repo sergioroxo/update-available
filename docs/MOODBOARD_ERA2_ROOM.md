@@ -22,6 +22,37 @@ rather than recruited. The room should feel like Era 1's warmth has been
 > source via `docs/ANALYSIS_PROMPT_era_framing.md` (Erzen et al.). ⚑ evidence
 > before assertion.
 
+## Sourced framing (ChatGPT 5.5 analysis, 2026-06-12 — `docs/ChatGPT analysis.md`)
+
+Key points now anchoring the eras (all `[VERIFY SOURCE]` → dossier):
+- **Era 2 (gay man) is correct but precise:** ex-gay discourse made *gay male*
+  sexuality the public emblem of "homosexual sin/addiction" (masculinity
+  repair, father-wound, "sexual addiction", 12-step). Lesbians were **not
+  absent** — disciplined differently, through *"female masculinity"* and
+  forced femininity/compulsory heterosexuality (Rich). So Era 2 = the visible
+  male-addiction frame; **Era 3's lesbian subject inherits the gender-
+  discipline frame** — a different mechanism, not a lesser one. (Erzen,
+  *Straight to Jesus*; Babits 2024; Robinson & Spivey 2015.)
+- **Correction:** the pulled app was **Google / Living Hope Ministries (2019)**
+  (Axios), not Apple. (Apple pulled Exodus's app in 2011.) Both are 2010s →
+  the *app* belongs to **Era 3**, not Era 2. So **Era 2's Assistant = desktop
+  accountability software** (period-correct ~2000s, e.g. Covenant-Eyes-style);
+  the mobile app + YouTube testimony culture is Era 3.
+- **Era 3 (≈2010, lesbian):** Exodus collapse 2013 (= our Era 2→3 trigger),
+  APA 2009; migration to YouTube testimony, "ex-lesbian" content with queer-
+  coded aesthetics (Anchored North, 2018), *Pray Away* (2021). GPAHE's finding
+  that **euphemistic search terms** ("unwanted same-sex attraction") surface
+  providers = a playable autocomplete/search mechanic, and validates holding
+  "unwanted SSA" for this era.
+- **Era 4 (trans):** documented ex-gay→anti-trans continuity (Robinson &
+  Spivey 2019; Core Issues Trust/NI, IFTCC/London, Til Helhet/Norway; LGB
+  Alliance "transing the gay away"). ⚑ Hard line holds: exploration ≠
+  conversion; the line is *asymmetry / predetermined cis outcome* (Cass, UK
+  MoU, Ashley vs. D'Angelo) — two captions, unresolved.
+- **Finale confirmed:** EU ECI → Commission will adopt a **2027 Recommendation**
+  (non-binding), not a binding ban; Malta 2016 / Norway 2023 / UK draft. This
+  is exactly v0.6's "reality, not utopia" close.
+
 ## The era's targeting logic (from research — gives us the mechanics)
 
 The ex-gay 2000s ran on **accountability**, and that becomes the era's

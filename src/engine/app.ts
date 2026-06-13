@@ -25,8 +25,8 @@ const WITNESS = { w: 1.6, h: 1.2, x: 0, y: 1.5, z: 3.4 };
 const EYE = { x: 0, y: 1.16, z: 0.7 };
 /** the power button on the CRT (S1.0 power-on beat) */
 const POWER_BTN = { x: 0.19, y: 0.895, z: 0.03 };
-/** the Starter Kit floppy on the desk (S1.2 insert beat) */
-const KIT_FLOPPY = { x: -0.4, y: 0.76, z: 0.11 };
+/** the Starter Kit floppy on the desk (S1.2 insert beat) — in the leaflet pocket */
+const KIT_FLOPPY = { x: -0.34, y: 0.762, z: 0.12 };
 const DRAG_PITCH_MAX = 55;
 
 function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.Texture {
@@ -104,11 +104,12 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
 
   // the cold creep: when the system has filed something unseen, the witness
   // side bleeds into peripheral vision — a reason to turn around (Sérgio)
+  // NOTE: no CSS transition here — opacity is driven every frame (a transition
+  // would fight the per-frame pulse and the layer would never reach its target)
   const coldCreep = document.createElement('div');
   Object.assign(coldCreep.style, {
     position: 'fixed', inset: '0', zIndex: '6', pointerEvents: 'none', opacity: '0',
-    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 46%, rgba(40,60,90,0.0) 60%, rgba(60,90,130,0.5) 100%)',
-    transition: 'opacity 0.6s'
+    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 38%, rgba(70,110,160,0.0) 56%, rgba(80,130,190,0.82) 100%)'
   } as CSSStyleDeclaration);
   document.body.appendChild(coldCreep);
   let coldPhase = 0;
@@ -234,7 +235,7 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
 
   // the disk leaves the desk when it enters the drive
   os.onKitInserted = () => {
-    for (const id of ['kitFloppy', 'kitFloppyLabel']) {
+    for (const id of ['kitFloppy', 'kitFloppyLabel', 'kitFloppyShutter']) {
       const ent = app.root.findByName(id);
       if (ent instanceof pc.Entity) ent.enabled = false;
     }
@@ -311,9 +312,10 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
     // cold creep: pulse the witness side into the edges while it goes unseen
     if (os.hasUnseenWitness && !facingBack) {
       coldPhase += dt;
-      const pulse = 0.32 + 0.16 * Math.sin(coldPhase * 2.2);
-      coldCreep.style.opacity = String(pulse);
+      const pulse = 0.55 + 0.25 * Math.sin(coldPhase * 2.0); // 0.30–0.80, clearly felt
+      coldCreep.style.opacity = pulse.toFixed(3);
     } else {
+      coldPhase = 0;
       coldCreep.style.opacity = '0';
     }
 

@@ -87,3 +87,24 @@
   = era-resonance not desaturation, 410prod PSX monitor preferred CC-BY +
   no-style-mixing, Clippy-assistant, Era3=2010 YouTube/lesbian, Era4 trans +
   LGB-anti-trans critical angle). Analysis prompt for external model added.
+
+## 2026-06-12 — Round 11c: pacing, brochure legibility, cold-creep bugfix, ending content
+- Pacing (Sérgio: too fast, ESL audience): IRC TYPE_CPS 30→17, HOLD_DM 1.1→3.2,
+  HOLD_CHANNEL 0.8→1.8; boot crawl 0.018→0.030 s/char + 4.8s hold; splash
+  2.8→4.6s. Reading time, not speed.
+- Brochure rebuilt to READ as a leaflet: tri-fold sheet w/ fold lines, teal
+  cover band + title + motif, 3 instruction text-strips, a pocket flap, and
+  the floppy with a metal shutter + label in the pocket. Verified in 3D
+  (looks like a pamphlet + disk now). KIT_FLOPPY ray target + hide-list updated.
+- Cold-creep BUGFIX: it had a CSS `transition: opacity 0.6s` fighting the
+  per-frame pulse, so it never reached visible opacity ("didn't work" — Sérgio
+  was right). Removed the transition; strengthened to 0.30–0.80 pulse, more
+  saturated. Resets cleanly when facing back.
+- Verified files: preview pinned to canonical repo; no active duplicate dirs
+  (only backups). Brochure was rendering all along — it was a legibility issue.
+- s1_end.json authored (approved ending content: escalation+chips, packet,
+  diary, EULA, changelog) — ready to wire next turn.
+- ChatGPT 5.5 analysis integrated into MOODBOARD_ERA2 (gay-male-emblem precise;
+  lesbians disciplined via 'female masculinity'; app=Google/Living Hope 2019 →
+  Era 3; Era 2 assistant = desktop accountability sw; finale = EU 2027
+  Recommendation non-binding, confirmed).
