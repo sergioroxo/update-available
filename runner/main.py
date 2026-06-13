@@ -2426,10 +2426,17 @@ def offload_worker_cmd(
         console.print(f"  {icon} {doc['doc_id']}{err}")
 
     if summary["ok"]:
-        console.print(
-            f"[green]✓ Worker complete — package moved to outbox "
-            f"({len(summary['documents'])} doc(s)).[/green]"
-        )
+        if summary.get("partial"):
+            console.print(
+                f"[yellow]✓ Worker partial — package moved to outbox "
+                f"({summary.get('succeeded_count', 0)} succeeded, "
+                f"{summary.get('failed_count', 0)} failed).[/yellow]"
+            )
+        else:
+            console.print(
+                f"[green]✓ Worker complete — package moved to outbox "
+                f"({len(summary['documents'])} doc(s)).[/green]"
+            )
     else:
         if summary["errors"]:
             console.print(Panel("\n".join(summary["errors"]), title="[red]Worker failed[/red]"))
@@ -2883,6 +2890,12 @@ def source_offload_import_cmd(
     console.print(f"\n[bold]Source import[/bold]  [dim]{summary['package_dir']}[/dim]")
     if summary["package_id"]:
         console.print(f"  Package ID: [cyan]{summary['package_id']}[/cyan]")
+    if summary.get("partial"):
+        omitted = ", ".join(summary.get("omitted_doc_ids") or [])
+        console.print(
+            f"  [yellow]Partial result:[/yellow] importing completed docs only"
+            + (f"; failed/omitted docs: {omitted}" if omitted else "")
+        )
 
     if not summary["ok"]:
         title = "[red]Import refused — corpus untouched[/red]"

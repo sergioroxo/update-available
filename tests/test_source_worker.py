@@ -99,7 +99,7 @@ def _stubs(events: list, *, fail_stage=None, fail_doc=None, extra_file=None):
 
     def fake_embed(text, config):
         events.append(("embed", None))
-        if fail_stage == "embedding":
+        if fail_stage == "embedding" and (fail_doc is None or fail_doc in text):
             raise RuntimeError("embedding boom")
         return [0.1, 0.2, 0.3]
 
@@ -270,6 +270,33 @@ def test_failure_moves_to_failed_without_result_manifest(tmp_path, stage):
     assert failed.is_dir()
     assert (failed / "worker_report.json").is_file()
     assert not (failed / "result_manifest.json").exists()
+
+
+def test_partial_embedding_failure_moves_to_outbox_with_only_successful_docs(tmp_path):
+    root, inbox = _build_source_inbox(tmp_path, with_file=True)
+    live = tmp_path / "live_corpus"; live.mkdir()
+    cfg = _worker_config(live)
+
+    summary = sw.run_source_worker(
+        inbox, cfg, **_stubs([], fail_stage="embedding", fail_doc="filedoc")
+    )
+
+    assert summary["ok"] is True
+    assert summary["partial"] is True
+    assert summary["final_state"] == "outbox"
+    assert summary["succeeded_count"] == 1
+    assert summary["failed_count"] == 1
+    outbox = root / "outbox" / "src-w"
+    assert (outbox / "result_manifest.json").is_file()
+    manifest = json.loads((outbox / "result_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["partial"] is True
+    assert {d["doc_id"] for d in manifest["documents"]} == {"urldoc"}
+    assert manifest["omitted_documents"][0]["doc_id"] == "filedoc"
+    assert "embedding_failed" in manifest["omitted_documents"][0]["error"]
+    report = json.loads((outbox / "worker_report.json").read_text(encoding="utf-8"))
+    assert report["worker_status"] == "partial"
+    statuses = {d["doc_id"]: d["status"] for d in report["documents"]}
+    assert statuses == {"urldoc": "succeeded", "filedoc": "failed"}
 
 
 def test_intake_preprocess_failure_skips_later_stages(tmp_path):

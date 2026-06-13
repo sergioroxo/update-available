@@ -135,6 +135,53 @@ def test_verify_rejects_missing_result_doc(tmp_path):
         "result_manifest_has_no_documents" in report["errors"]
 
 
+def test_verify_allows_declared_partial_when_enabled(tmp_path):
+    root, outbox = _make_outbox(tmp_path, with_file=True)
+
+    def _mut(d):
+        omitted = d["documents"].pop()
+        d["partial"] = True
+        d["omitted_documents"] = [
+            {"doc_id": omitted["doc_id"], "status": "failed", "error": "embedding_failed:boom"}
+        ]
+
+    _tamper_result_manifest(outbox, _mut)
+
+    strict = verify_ingest_result(outbox, corpus_dir=tmp_path / "corpus")
+    assert strict["ok"] is False
+    assert any("missing_result_doc:filedoc" in e for e in strict["errors"])
+
+    partial = verify_ingest_result(outbox, corpus_dir=tmp_path / "corpus", allow_partial=True)
+    assert partial["ok"] is True, partial["errors"]
+    assert partial["partial"] is True
+    assert partial["omitted_doc_ids"] == ["filedoc"]
+    assert {d["doc_id"] for d in partial["documents"]} == {"urldoc"}
+
+
+def test_import_declared_partial_writes_only_successful_docs(tmp_path):
+    root, outbox = _make_outbox(tmp_path, with_file=True)
+
+    def _mut(d):
+        omitted = d["documents"].pop()
+        d["partial"] = True
+        d["omitted_documents"] = [
+            {"doc_id": omitted["doc_id"], "status": "failed", "error": "embedding_failed:boom"}
+        ]
+
+    _tamper_result_manifest(outbox, _mut)
+    corpus = tmp_path / "corpus"
+
+    summary = import_ingest_result(outbox, corpus_dir=corpus)
+
+    assert summary["ok"] is True
+    assert summary["imported"] is True
+    assert summary["partial"] is True
+    assert summary["omitted_doc_ids"] == ["filedoc"]
+    assert (corpus / "urldoc" / "analysis.json").is_file()
+    assert not (corpus / "filedoc").exists()
+    assert [d["doc_id"] for d in summary["documents"]] == ["urldoc"]
+
+
 def test_verify_rejects_unknown_doc(tmp_path):
     root, outbox = _make_outbox(tmp_path)
 

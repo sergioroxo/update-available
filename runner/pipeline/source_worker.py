@@ -11,9 +11,11 @@ Heavy LLM stages are stage-batched with a model unload between them (one heavy
 model resident at a time), guarded by a PID worker lock at the source-offload
 root. On full success it writes complete corpus-style document folders, a per-doc
 and root ``worker_report.json`` (no raw text), and an ``ingest_result``
-``result_manifest.json`` with exact document coverage, then moves the package to
-``outbox``. On any failure it writes only the root ``worker_report.json`` and
-moves the package to ``failed``.
+``result_manifest.json``, then moves the package to ``outbox``. If some
+documents succeed and others fail, it writes an importable partial
+``result_manifest.json`` for successful documents only, records failed documents
+in the root report, and still moves the package to ``outbox``. If no document
+succeeds, it writes only the root ``worker_report.json`` and moves to ``failed``.
 
 Hard boundaries:
   - constructs a package-local config (``corpus_dir = <package>/docs``); never
@@ -274,11 +276,13 @@ def run_source_worker(
                 doc["status"] = "failed"
                 doc["error"] = f"intake_preprocess_failed:{exc}"
                 doc["stages"]["preprocess"] = {"status": "failed"}
-        if any(d["status"] == "failed" for d in docs):
+        if not _any_success(docs):
             return _finalize_failed(processing_dir, offload_root, package_id, summary, docs)
 
         # ── Stage A: analysis (all docs) ──
         for doc in docs:
+            if doc["status"] == "failed":
+                continue
             started = time.perf_counter()
             try:
                 audit: dict = {}
@@ -303,11 +307,13 @@ def run_source_worker(
                 doc["error"] = f"analysis_failed:{exc}"
                 doc["stages"]["analysis"] = {"status": "failed", "model": analysis_alias}
         _record_unload(summary, "analysis", lambda: unload_analysis_fn(worker_config, llm))
-        if any(d["status"] == "failed" for d in docs):
+        if not _any_success(docs):
             return _finalize_failed(processing_dir, offload_root, package_id, summary, docs)
 
         # ── Stage B: enrichment (all docs) ──
         for doc in docs:
+            if doc["status"] == "failed":
+                continue
             started = time.perf_counter()
             try:
                 audit = {}
@@ -329,11 +335,13 @@ def run_source_worker(
                 doc["error"] = f"enrichment_failed:{exc}"
                 doc["stages"]["enrichment"] = {"status": "failed", "model": enrich_alias}
         _record_unload(summary, "enrichment", lambda: unload_enrichment_fn(worker_config, enrich_alias))
-        if any(d["status"] == "failed" for d in docs):
+        if not _any_success(docs):
             return _finalize_failed(processing_dir, offload_root, package_id, summary, docs)
 
         # ── Stage C: embedding (all docs) ──
         for doc in docs:
+            if doc["status"] == "failed":
+                continue
             started = time.perf_counter()
             try:
                 vector = embed_fn(doc["preprocess"].text, worker_config)
@@ -352,11 +360,13 @@ def run_source_worker(
                 doc["error"] = f"embedding_failed:{exc}"
                 doc["stages"]["embedding"] = {"status": "failed", "model": embed_alias}
         _record_unload(summary, "embedding", lambda: unload_embedding_fn(worker_config))
-        if any(d["status"] == "failed" for d in docs):
+        if not _any_success(docs):
             return _finalize_failed(processing_dir, offload_root, package_id, summary, docs)
 
         # ── Carry queue linkage + validate produced artifacts ──
         for doc in docs:
+            if doc["status"] == "failed":
+                continue
             src_item = processing_dir / "items" / doc["doc_id"] / offload_source.SOURCE_ITEM_NAME
             if src_item.is_file():
                 try:
@@ -369,7 +379,7 @@ def run_source_worker(
             if unexpected:
                 doc["status"] = "failed"
                 doc["error"] = "unexpected_pipeline_artifact:" + ",".join(unexpected)
-        if any(d["status"] == "failed" for d in docs):
+        if not _any_success(docs):
             return _finalize_failed(processing_dir, offload_root, package_id, summary, docs)
 
         return _finalize_success(processing_dir, offload_root, package_id, summary, docs)
@@ -425,6 +435,14 @@ def _doc_status(doc: dict) -> str:
     return "failed" if doc["status"] == "failed" else "succeeded"
 
 
+def _successful_docs(docs: list[dict]) -> list[dict]:
+    return [d for d in docs if d["status"] != "failed"]
+
+
+def _any_success(docs: list[dict]) -> bool:
+    return bool(_successful_docs(docs))
+
+
 def _root_report_payload(summary: dict, docs: list[dict], *, worker_status: str) -> dict:
     return {
         "package_id": summary["package_id"],
@@ -438,7 +456,7 @@ def _root_report_payload(summary: dict, docs: list[dict], *, worker_status: str)
         "documents": [
             {
                 "doc_id": d["doc_id"],
-                "status": _doc_status(d) if worker_status == "failed" else "succeeded",
+                "status": _doc_status(d) if worker_status in ("failed", "partial") else "succeeded",
                 "stages": d["stages"],
                 "error": d["error"],
             }
@@ -470,9 +488,18 @@ def _finalize_failed(processing_dir, offload_root, package_id, summary, docs) ->
 
 
 def _finalize_success(processing_dir, offload_root, package_id, summary, docs) -> dict:
-    """Write per-doc + root worker reports, the ingest_result manifest, then outbox."""
+    """Write successful docs, an ingest_result manifest, then move to outbox.
+
+    Failed docs are excluded from ``result_manifest.json`` (so import only writes
+    completed corpus folders) but remain in the root ``worker_report.json``.
+    """
+    succeeded_docs = _successful_docs(docs)
+    failed_docs = [d for d in docs if d["status"] == "failed"]
+    if not succeeded_docs:
+        return _finalize_failed(processing_dir, offload_root, package_id, summary, docs)
+
     result_documents = []
-    for doc in docs:
+    for doc in succeeded_docs:
         doc_dir = doc["doc_dir"]
         record = doc["record"]
         rel_prefix = f"docs/{doc['doc_id']}"
@@ -531,6 +558,16 @@ def _finalize_success(processing_dir, offload_root, package_id, summary, docs) -
         "package_id": package_id,
         "package_kind": offload_source.PACKAGE_KIND_INGEST,
         "produced_at": _now_iso(),
+        "partial": bool(failed_docs),
+        "omitted_documents": [
+            {
+                "doc_id": d["doc_id"],
+                "status": "failed",
+                "error": d["error"],
+                "stages": d["stages"],
+            }
+            for d in failed_docs
+        ],
         "documents": result_documents,
     }
     atomic_write_json(processing_dir / offload_source.INGEST_RESULT_MANIFEST_NAME, result_manifest)
@@ -538,13 +575,18 @@ def _finalize_success(processing_dir, offload_root, package_id, summary, docs) -
 
     atomic_write_json(
         processing_dir / "worker_report.json",
-        _root_report_payload(summary, docs, worker_status="succeeded"),
+        _root_report_payload(
+            summary, docs, worker_status=("partial" if failed_docs else "succeeded")
+        ),
     )
 
     summary["documents"] = [
-        {"doc_id": d["doc_id"], "status": "succeeded", "stages": d["stages"], "error": ""}
+        {"doc_id": d["doc_id"], "status": _doc_status(d), "stages": d["stages"], "error": d["error"]}
         for d in docs
     ]
+    summary["partial"] = bool(failed_docs)
+    summary["succeeded_count"] = len(succeeded_docs)
+    summary["failed_count"] = len(failed_docs)
 
     try:
         outbox_dir = offload_source.move_source_package_state(

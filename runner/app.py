@@ -14010,6 +14010,12 @@ def _render_source_import(config, root: Path) -> None:
             st.session_state[dryrun_key] = bool(summary.get("ok"))
             if summary.get("ok"):
                 st.success("Dry-run OK — import would proceed. Review below, then confirm.")
+                if summary.get("partial"):
+                    omitted = ", ".join(summary.get("omitted_doc_ids") or [])
+                    st.warning(
+                        "Partial result: only completed documents will be imported."
+                        + (f" Failed/omitted docs: {omitted}" if omitted else "")
+                    )
                 if summary.get("documents"):
                     st.write(summary["documents"])
             else:
@@ -14037,7 +14043,14 @@ def _render_source_import(config, root: Path) -> None:
             return
 
         st.session_state.pop(dryrun_key, None)
-        st.success(f"Imported `{summary.get('package_id', chosen)}` into the corpus.")
+        if summary.get("partial"):
+            omitted = ", ".join(summary.get("omitted_doc_ids") or [])
+            st.warning(
+                f"Imported completed docs from partial package `{summary.get('package_id', chosen)}`."
+                + (f" Failed/omitted docs: {omitted}" if omitted else "")
+            )
+        else:
+            st.success(f"Imported `{summary.get('package_id', chosen)}` into the corpus.")
         imported_doc_ids: list[str] = []
         for doc in summary.get("documents", []):
             bk = f" (backed up: {', '.join(doc['backups'])})" if doc.get("backups") else ""

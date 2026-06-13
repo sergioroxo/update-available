@@ -1087,14 +1087,22 @@ def _is_reviewed_corpus_doc(doc_dir: Path) -> bool:
     return False
 
 
-def verify_ingest_result(package_dir: Path, *, corpus_dir: Path) -> dict:
+def verify_ingest_result(
+    package_dir: Path,
+    *,
+    corpus_dir: Path,
+    allow_partial: bool = False,
+) -> dict:
     """Read-only full validation of a returned ``ingest_result`` package.
 
-    Confirms it is an ``outbox`` ingest_result whose result manifest covers
-    exactly the source manifest's doc IDs, with safe canonical paths, matching
+    Confirms it is an ``outbox`` ingest_result whose result manifest covers the
+    source manifest's doc IDs, with safe canonical paths, matching
     hashes/bytes, only allowed artifacts (incl. the per-doc local source copy),
-    no unexpected files, and valid core-artifact schemas. Never mutates anything.
-    ``ok`` is True only when there are no errors and no unexpected entries.
+    no unexpected files, and valid core-artifact schemas. By default coverage is
+    exact; when ``allow_partial`` is True, a manifest may omit source docs only
+    if it declares ``partial=true`` and lists each omitted doc under
+    ``omitted_documents`` with ``status=failed``. Never mutates anything. ``ok``
+    is True only when there are no errors and no unexpected entries.
     """
     package_dir = Path(package_dir)
     corpus_dir = Path(corpus_dir)
@@ -1103,6 +1111,8 @@ def verify_ingest_result(package_dir: Path, *, corpus_dir: Path) -> dict:
         "package_id": "",
         "ok": False,
         "lifecycle": None,
+        "partial": False,
+        "omitted_doc_ids": [],
         "documents": [],
         "errors": [],
         "unexpected": [],
@@ -1164,6 +1174,30 @@ def verify_ingest_result(package_dir: Path, *, corpus_dir: Path) -> dict:
     if not isinstance(documents, list) or not documents:
         report["errors"].append("result_manifest_has_no_documents")
         documents = []
+    report["partial"] = bool(rdata.get("partial"))
+    omitted_rows = rdata.get("omitted_documents") or []
+    omitted_failed_ids: set[str] = set()
+    if omitted_rows:
+        if not isinstance(omitted_rows, list):
+            report["errors"].append("omitted_documents_not_list")
+        else:
+            for row in omitted_rows:
+                if not isinstance(row, dict):
+                    report["errors"].append("omitted_document_not_object")
+                    continue
+                raw_omitted = str(row.get("doc_id") or "")
+                try:
+                    omitted_id = normalise_doc_id(raw_omitted)
+                except ValueError:
+                    report["errors"].append(f"unsafe_omitted_doc_id:{raw_omitted!r}")
+                    continue
+                if omitted_id not in expected_doc_ids:
+                    report["errors"].append(f"unknown_omitted_doc_id:{omitted_id}")
+                    continue
+                if str(row.get("status") or "") != "failed":
+                    report["errors"].append(f"omitted_doc_not_failed:{omitted_id}")
+                    continue
+                omitted_failed_ids.add(omitted_id)
 
     seen_doc_ids: set[str] = set()
     for drow in documents:
@@ -1266,9 +1300,24 @@ def verify_ingest_result(package_dir: Path, *, corpus_dir: Path) -> dict:
         })
         report["errors"].extend(f"{doc_id}:{e}" for e in doc_errors)
 
-    # Exact coverage: every expected doc must come back.
-    for missing in sorted(expected_doc_ids - seen_doc_ids):
-        report["errors"].append(f"missing_result_doc:{missing}")
+    # Coverage: every expected doc must come back unless this is an explicit,
+    # allowed partial result whose omitted docs are marked failed.
+    missing_doc_ids = expected_doc_ids - seen_doc_ids
+    if missing_doc_ids:
+        report["omitted_doc_ids"] = sorted(missing_doc_ids)
+        if not allow_partial:
+            for missing in sorted(missing_doc_ids):
+                report["errors"].append(f"missing_result_doc:{missing}")
+        elif not report["partial"]:
+            for missing in sorted(missing_doc_ids):
+                report["errors"].append(f"missing_result_doc:{missing}:partial_flag_not_set")
+        else:
+            for missing in sorted(missing_doc_ids - omitted_failed_ids):
+                report["errors"].append(f"missing_result_doc:{missing}:not_declared_failed")
+
+    extra_omitted = omitted_failed_ids & seen_doc_ids
+    for doc_id in sorted(extra_omitted):
+        report["errors"].append(f"omitted_doc_also_manifested:{doc_id}")
 
     report["ok"] = not report["errors"] and not report["unexpected"]
     return report
@@ -1437,6 +1486,7 @@ def import_ingest_result(
     corpus_dir: Path,
     dry_run: bool = False,
     force: bool = False,
+    allow_partial: bool = True,
 ) -> dict:
     """Validate a returned ingest_result package, then import into the live corpus.
 
@@ -1451,7 +1501,9 @@ def import_ingest_result(
     """
     package_dir = Path(package_dir)
     corpus_dir = Path(corpus_dir)
-    report = verify_ingest_result(package_dir, corpus_dir=corpus_dir)
+    report = verify_ingest_result(
+        package_dir, corpus_dir=corpus_dir, allow_partial=allow_partial
+    )
 
     summary: dict = {
         "package_dir": str(package_dir),
@@ -1459,6 +1511,8 @@ def import_ingest_result(
         "ok": report["ok"],
         "dry_run": dry_run,
         "force": force,
+        "partial": bool(report.get("partial")),
+        "omitted_doc_ids": list(report.get("omitted_doc_ids") or []),
         "imported": False,
         "lifecycle": report.get("lifecycle"),
         "errors": list(report["errors"]) + [f"unexpected:{u}" for u in report["unexpected"]],
