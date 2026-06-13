@@ -18,9 +18,12 @@
   "welcome": { "from": "Lume", "text": "hey {name} :) you're safe here" },
   "secondReply": { "from": "Branwen", "text": "{name}: we've all been there. promise" },
   "dm": [
-    "hi {name}. you must be the one the fellowship wrote to us about.",
-    "i'm glad you found your way here. i read what you typed — i used to feel exactly the same.",
-    "there's a group of us who meet, strugglers like you and me. it's where things finally started to change for me.",
+    "hi {name}.",
+    "you must be the one the fellowship wrote to us about.",
+    "i'm glad you found your way here.",
+    "i read what you typed. i used to feel exactly the same.",
+    "there's a group of us who meet. strugglers, like you and me.",
+    "it's where things finally started to change for me.",
     "no pressure at all. i just thought of you."
   ],
   "dmReply": "you don't have to decide anything tonight. i'm always here.",

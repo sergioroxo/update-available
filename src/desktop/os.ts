@@ -48,6 +48,10 @@ export class DesktopOS {
   irc: IrcApp | null = null;
   private toast: { text: string; t: number } | null = null;
   private kitToastShown = false;
+  private behindToastShown = false;
+  private behindToastAt = Infinity;
+  /** engine reads this to creep the cold (witness) side into peripheral vision */
+  hasUnseenWitness = false;
   dossierUnlocked = false;
   private dossierOpen = false;
   /** engine listens: pulse the flip affordance when the hook lands */
@@ -94,9 +98,18 @@ export class DesktopOS {
       this.irc = new IrcApp();
       this.irc.onHooked = () => {
         this.toast = { text: strings.desktop.logToast, t: 6 };
+        this.hasUnseenWitness = true; // the cold side begins to creep in
+        this.behindToastAt = this.t + 7; // a beat later: a reason to look back
         this.onFlipReady?.();
       };
     };
+    this.dirty = true;
+  }
+
+  /** the player has turned to the witness side — stop nudging them back */
+  markWitnessSeen(): void {
+    this.hasUnseenWitness = false;
+    this.behindToastAt = Infinity;
     this.dirty = true;
   }
 
@@ -136,6 +149,10 @@ export class DesktopOS {
     }
     if (this.phase === 'desktop' && this.kit) this.kit.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
+    if (!this.behindToastShown && this.t >= this.behindToastAt) {
+      this.behindToastShown = true;
+      this.toast = { text: strings.desktop.behindToast, t: 7 };
+    }
     if (this.toast) {
       this.toast.t -= dt;
       if (this.toast.t <= 0) this.toast = null;

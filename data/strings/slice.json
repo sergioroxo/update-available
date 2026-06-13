@@ -60,8 +60,9 @@
     "iconA": "A:\\",
     "iconIrc": "mIRC",
     "iconDossier": "Dossier",
-    "kitToast": "There is a disk in the envelope on your desk.",
+    "kitToast": "The brochure on your desk says: insert the enclosed disk to begin.",
     "logToast": "Logging to C:\\mirc\\logs\\#stillstruggling.log",
+    "behindToast": "Record filed. (see reverse)",
     "dossierUpdated": "Dossier updated"
   },
   "pause": {

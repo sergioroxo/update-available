@@ -69,3 +69,21 @@
 - Verified end-to-end in preview incl. the two money shots: mid-kit flip
   (system already waiting, subject not yet online) and post-DM flip with
   0 messages on file. Build + invariants clean.
+
+## 2026-06-12 — Round 11b: mIRC flow, afterplay, brochure (preview fixes)
+- irc.ts rewritten: TypeStream types lines char-by-char (~30 cps) with pauses;
+  word-WRAP with hanging indent (no more cut text); structured rows + shared
+  renderer (channel + DM). Rob's DM segmented into 7 short beats. Verified in
+  flat mode: lines unfold naturally, long lines wrap.
+- Afterplay: after the log toast, a second toast "Record filed. (see reverse)"
+  fires ~7s later; os.hasUnseenWitness drives a COLD peripheral creep
+  (engine: bluish edge layer pulsing) until the player turns; turning calls
+  os.markWitnessSeen(). Gives a diegetic reason to look back (Sérgio).
+- Brochure: kit prop reshaped to a tri-fold brochure holding the floppy; desk
+  toast now diegetic ("The brochure on your desk says: insert the enclosed
+  disk to begin.").
+- Names propagated: UN-WALK — TriedPath Fellowship (verified on the kit window).
+- Era 2/3/4 notes captured (MOODBOARD_ERA2: gay-man-first rationale, palette
+  = era-resonance not desaturation, 410prod PSX monitor preferred CC-BY +
+  no-style-mixing, Clippy-assistant, Era3=2010 YouTube/lesbian, Era4 trans +
+  LGB-anti-trans critical angle). Analysis prompt for external model added.

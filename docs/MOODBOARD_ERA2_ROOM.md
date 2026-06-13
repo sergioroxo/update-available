@@ -15,6 +15,13 @@ A different person from Era 1: an **adult man, early–mid 2000s**, inside the
 rather than recruited. The room should feel like Era 1's warmth has been
 **optimized away**: tidier, sparser, adult, a little airless.
 
+> **Why a gay man opens Era 2 (Sérgio):** gay men were the most *visible* and
+> directly targeted subjects of the ex-gay movement; lesbians were treated as a
+> "lesser issue" by the system. That asymmetry is itself a subject — the
+> erasure of women's same-sex desire feeds into **Era 3** (lesbian). Theory to
+> source via `docs/ANALYSIS_PROMPT_era_framing.md` (Erzen et al.). ⚑ evidence
+> before assertion.
+
 ## The era's targeting logic (from research — gives us the mechanics)
 
 The ex-gay 2000s ran on **accountability**, and that becomes the era's
@@ -36,15 +43,24 @@ Witness side here = a **compliance dashboard**: streak counters, confession
 logs, "accountability partner" notes, relapse flags. The horror upgrade from
 Era 1: in Era 1 the system filed you; in Era 2 **you file yourself, daily.**
 
-## Palette direction (to decide with Sérgio)
+## Palette direction (Sérgio: NOT fully desaturated)
 
-Era 1 = warm dusk juvenile. Era 2 proposal: **drain the warmth, add control.**
-- cooler, desaturated — institutional off-white, grey-blue, fluorescent green
-  CRT→LCD glow instead of cozy teal;
-- one sickly warm accent (a lamp that's trying) so it isn't pure cold;
-- the "tidier/emptier" rule: fewer props, everything squared-away, a wall
-  calendar/checklist instead of posters.
-- ⚑ Sérgio's call — this is a direction, not a decision.
+Sérgio's steer: don't drain it grey — the palette should **resonate with the
+era it depicts** (early–mid 2000s has its own colour memory). So Era 2 is not
+"cold = sad," it's *period-true and controlled*. More options to weigh:
+
+- **(A) Y2K/XP optimism curdled** — that bright Luna-blue + silver + beveled
+  gradients of Windows XP, clean and corporate; warmth replaced by *brand
+  cheer* that feels managed. The horror is how *upbeat* it is.
+- **(B) accountability beige** — magnolia walls, pine furniture, a churchy
+  "support group" warmth that's controlling rather than cozy; daylight, not
+  dusk.
+- **(C) drained/controlled** (my earlier pitch) — cooler, institutional, one
+  sickly warm accent. Keep as the *witness-side* palette rather than the whole
+  room.
+- ⚑ Sérgio decides; likely a blend (XP brand-cheer room + drained witness side).
+- The "tidier/emptier" rule still holds: fewer props, squared-away, a wall
+  checklist/accountability calendar instead of Era 1's posters.
 
 ## Reference (verified links)
 - [SPLC — "The Ministries: Key Ex-Gay Groups"](https://www.splcenter.org/resources/reports/ministries-key-ex-gay-groups/) — names, structures, accountability culture. ⚑ reference only; no real org in-world.
@@ -57,17 +73,32 @@ Era 1 = warm dusk juvenile. Era 2 proposal: **drain the warmth, add control.**
 |---|---|---|---|
 | Furniture (desk, chair, shelf, bed) | [Kenney Furniture Kit](https://kenney.nl/assets/furniture-kit) | CC0 | reuse the Era-1 kit; restyle palette |
 | Home interior fills | [Quaternius Ultimate House Interior](https://quaternius.com/packs/ultimatehomeinterior.html) | CC0 | 120+ models, FBX/OBJ/Blend (convert to GLB) |
-| Era-2 monitor (flat-ish / silver CRT) | [AjMolina "2000's Monitor" (Sketchfab)](https://sketchfab.com/3d-models/2000s-monitor-low-poly-free-f467f96f3488498e968acf369ca24990) | ⚑ license unconfirmed — verify | 1,330 tris, period-right |
-| Retro tower + monitor (PSX style) | [410prod "Retro Monitor & PC Tower"](https://sketchfab.com/3d-models/retro-monitor-pc-tower-psx-style-36b9d8a6018c493282916df39e149365) | ⚑ verify | matches our flat-shaded look |
+| **Era-2 PC (PREFERRED — Sérgio)** | [410prod "Retro Monitor & PC Tower" PSX-style](https://sketchfab.com/3d-models/retro-monitor-pc-tower-psx-style-36b9d8a6018c493282916df39e149365) | **CC-BY** (attribution) | "quite nice!!", 33 kB, matches our flat-shaded look |
+| Era-2 monitor (alt) | [AjMolina "2000's Monitor"](https://sketchfab.com/3d-models/2000s-monitor-low-poly-free-f467f96f3488498e968acf369ca24990) | ⚑ no license stated (assume free, verify) | nice style but **5 MB + watch for too many artifacts** |
 
-(Same as Era 1: licenses confirmed per file in `assets/LICENSES.md` at
-download; CC-BY fine with attribution in the colophon.)
+> **Asset decision (Sérgio):** prefer the **410prod PSX-style monitor+tower**
+> (light, CC-BY, loved). ⚑ **Do not mix art styles** — pick one low-poly
+> family per room and stick to it; the AjMolina monitor is a fallback only if
+> it can be restyled to match. Licenses per file in `assets/LICENSES.md`;
+> CC-BY attribution → colophon.
 
-## Open design questions (for a proper Era 2 milestone)
-1. Confirm the **year/setting** (~2004–06? XP era, broadband, support forums).
-2. Confirm **palette** direction (drained/controlled vs. another read).
-3. The era's **central app** — accountability/confession software as the
-   operable surface? (My strong rec, straight from the research.)
-4. Does the **Assistant** debut here as the accountability app? (Era 0–1 it's
-   absent by law; Era 2 is its natural arrival as the app-era helper.)
-5. Era 2's **person** — name/persona-card framing for the new login.
+## Open questions — Sérgio's answers (2026-06-12)
+1. **Year:** Era 2 = **early–mid 2000s**. → Era 3 ≈ **2010**.
+2. **Palette:** not full desaturation — *resonance with the era* (see options
+   A/B/C above); more to decide together.
+3. **Central app:** accountability/confession software — yes (the operable
+   surface; straight from the research).
+4. **Assistant debuts here** as a **play on Clippy** — the app-era helper
+   (absent in Eras 0–1 by law; this is its natural, cute-then-sterile arrival).
+5. **Era 2 person** — name/persona framing still open; suggestions to follow.
+
+## Forward notes — Era 3 & Era 4 (capture only)
+- **Era 3 (~2010, lesbian):** the **YouTube / ex-gay-documentary / testimony**
+  era — "formerly gay" influencer content, recommendation asymmetry, the
+  later detransition-narrative pipeline. Lesbian subject ties to the Era-2
+  erasure point. (Provisional research via the analysis prompt.)
+- **Era 4 (trans):** ⚑ hard line — never satirize the gender-exploratory
+  clinical debate. Critical angle Sérgio names: some **LGB organisations/
+  figures online have pushed anti-trans advocacy** — the piece must be
+  critical of that overlap *without* flattening the legitimate clinical
+  debate (two captions, unresolved; contested-scene rules).

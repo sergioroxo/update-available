@@ -102,6 +102,17 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
   } as CSSStyleDeclaration);
   document.body.appendChild(vignette);
 
+  // the cold creep: when the system has filed something unseen, the witness
+  // side bleeds into peripheral vision — a reason to turn around (Sérgio)
+  const coldCreep = document.createElement('div');
+  Object.assign(coldCreep.style, {
+    position: 'fixed', inset: '0', zIndex: '6', pointerEvents: 'none', opacity: '0',
+    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 46%, rgba(40,60,90,0.0) 60%, rgba(60,90,130,0.5) 100%)',
+    transition: 'opacity 0.6s'
+  } as CSSStyleDeclaration);
+  document.body.appendChild(coldCreep);
+  let coldPhase = 0;
+
   // S1.0 hint: shown while the machine waits dark
   const offHint = document.createElement('div');
   offHint.textContent = strings.off.hint;
@@ -293,7 +304,17 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
     const nowBack = isBackYaw();
     if (nowBack !== facingBack) {
       facingBack = nowBack;
+      if (facingBack) os.markWitnessSeen(); // turning around answers the nudge
       onCrossed(facingBack);
+    }
+
+    // cold creep: pulse the witness side into the edges while it goes unseen
+    if (os.hasUnseenWitness && !facingBack) {
+      coldPhase += dt;
+      const pulse = 0.32 + 0.16 * Math.sin(coldPhase * 2.2);
+      coldCreep.style.opacity = String(pulse);
+    } else {
+      coldCreep.style.opacity = '0';
     }
 
     // S1.0: the hint alone carries the beat (Sérgio: no blur needed)

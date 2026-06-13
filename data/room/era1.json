@@ -45,11 +45,12 @@
     { "id": "modem", "pos": [0.62, 0.77, 0.05], "size": [0.14, 0.05, 0.2], "color": "#D4D0C8" },
     { "id": "modemLed", "pos": [0.62, 0.77, 0.152], "size": [0.02, 0.012, 0.006], "color": "#008000", "emissive": true },
 
-    { "id": "kitEnvelope", "pos": [-0.42, 0.748, 0.14], "size": [0.24, 0.012, 0.16], "color": "#F5F4ED" },
-    { "id": "kitFloppy", "pos": [-0.4, 0.76, 0.11], "size": [0.09, 0.01, 0.09], "color": "#3A3A44" },
-    { "id": "kitFloppyLabel", "pos": [-0.4, 0.766, 0.1], "size": [0.06, 0.002, 0.05], "color": "#F5F4ED" },
-    { "id": "kitBooklet", "pos": [-0.6, 0.748, 0.02], "size": [0.16, 0.012, 0.22], "color": "#F5F4ED" },
-    { "id": "kitBookletBand", "pos": [-0.6, 0.755, -0.05], "size": [0.16, 0.002, 0.06], "color": "#008080" },
+    { "id": "kitBrochure", "pos": [-0.46, 0.747, 0.1], "size": [0.34, 0.012, 0.2], "color": "#F5F4ED" },
+    { "id": "kitBrochureFold", "pos": [-0.46, 0.7535, 0.1], "size": [0.002, 0.003, 0.2], "color": "#D8CDB4" },
+    { "id": "kitBrochurePanel", "pos": [-0.56, 0.7535, 0.1], "size": [0.11, 0.003, 0.2], "color": "#008080" },
+    { "id": "kitBrochureTitle", "pos": [-0.56, 0.7552, 0.04], "size": [0.08, 0.002, 0.05], "color": "#F5F4ED" },
+    { "id": "kitFloppy", "pos": [-0.38, 0.758, 0.12], "size": [0.09, 0.01, 0.09], "color": "#3A3A44" },
+    { "id": "kitFloppyLabel", "pos": [-0.38, 0.764, 0.11], "size": [0.06, 0.002, 0.05], "color": "#F5F4ED" },
 
     { "id": "lampFoot", "pos": [-0.62, 0.755, -0.3], "size": [0.14, 0.03, 0.14], "color": "#74492F" },
     { "id": "lampPole", "pos": [-0.62, 0.85, -0.3], "size": [0.035, 0.18, 0.035], "color": "#74492F" },
