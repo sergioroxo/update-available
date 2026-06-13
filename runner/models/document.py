@@ -374,6 +374,35 @@ FramingBalance = Literal["pro-dominant", "anti-dominant", "genuinely-mixed", "un
 
 _DOCUMENT_TYPES = frozenset(get_args(DocumentType))
 _DOCUMENT_FORMATS = frozenset(get_args(DocumentFormat))
+_NARRATIVE_REGISTERS = frozenset(get_args(NarrativeRegister))
+
+_DOCUMENT_TYPE_ALIASES = {
+    "unclassified": "Mixed",
+    "unknown": "Mixed",
+    "unclear": "Mixed",
+    "not_applicable": "Mixed",
+    "not-applicable": "Mixed",
+    "n/a": "Mixed",
+}
+
+_DOCUMENT_FORMAT_ALIASES = {
+    "unknown": "Other",
+    "unclassified": "Other",
+    "unclear": "Other",
+    "article": "Other",
+    "webpage": "Website-Page",
+    "web-page": "Website-Page",
+    "web page": "Website-Page",
+}
+
+_NARRATIVE_REGISTER_ALIASES = {
+    "unclassified": "Mixed",
+    "unknown": "Mixed",
+    "unclear": "Mixed",
+    "not_applicable": "Mixed",
+    "not-applicable": "Mixed",
+    "n/a": "Mixed",
+}
 
 
 class AnalysisResult(BaseModel):
@@ -469,6 +498,33 @@ class AnalysisResult(BaseModel):
             if isinstance(val, list) and len(val) == 1:
                 data[key] = val[0]
                 warnings.append(f"Unwrapped single-item list for scalar field '{key}'.")
+
+        # 4b. Repair common placeholder labels from local models. Blocked/empty
+        #     pages often produce "Unclassified"/"Unknown"; keep the record
+        #     reviewable instead of failing the whole batch.
+        for key in ("type", "primary_type", "secondary_type"):
+            val = data.get(key)
+            if isinstance(val, str) and val not in _DOCUMENT_TYPES:
+                alias = _DOCUMENT_TYPE_ALIASES.get(val.strip().lower())
+                if alias:
+                    data[key] = alias
+                    warnings.append(
+                        f"Mapped invalid document type '{val}' in '{key}' to '{alias}' for review."
+                    )
+        val = data.get("format")
+        if isinstance(val, str) and val not in _DOCUMENT_FORMATS:
+            alias = _DOCUMENT_FORMAT_ALIASES.get(val.strip().lower())
+            if alias:
+                data["format"] = alias
+                warnings.append(f"Mapped invalid format '{val}' to '{alias}' for review.")
+        val = data.get("narrative_register")
+        if isinstance(val, str) and val not in _NARRATIVE_REGISTERS:
+            alias = _NARRATIVE_REGISTER_ALIASES.get(val.strip().lower())
+            if alias:
+                data["narrative_register"] = alias
+                warnings.append(
+                    f"Mapped invalid narrative_register '{val}' to '{alias}' for review."
+                )
 
         # 5. Coerce list[str] fields: null→[], scalar string→[value].
         for key in (

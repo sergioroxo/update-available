@@ -187,6 +187,31 @@ def test_validate_response_marks_missing_confidence_score_as_derived():
     assert audit["score_derived_from_status"] is True
 
 
+def test_validate_response_repairs_blocked_placeholder_labels():
+    payload = _minimal_payload(
+        type="Unclassified",
+        format="Unknown",
+        narrative_register="Unclassified",
+        confidence={
+            "overall": 0.0,
+            "status": "low",
+            "reasons": ["Document text is empty or blocked"],
+        },
+        research_summary="Blocked placeholder awaiting capture.",
+    )
+    payload.pop("summary")
+
+    result = _validate_response(json.dumps(payload))
+
+    assert result.type == "Mixed"
+    assert result.format == "Other"
+    assert result.narrative_register == "Mixed"
+    assert result.needs_review is True
+    assert any("invalid document type 'Unclassified'" in w for w in result.normalisation_warnings)
+    assert any("invalid format 'Unknown'" in w for w in result.normalisation_warnings)
+    assert any("invalid narrative_register 'Unclassified'" in w for w in result.normalisation_warnings)
+
+
 # ---------------------------------------------------------------------------
 # analyze.run() -- llm_flag
 # ---------------------------------------------------------------------------
