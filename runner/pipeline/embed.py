@@ -20,6 +20,8 @@ from ..config import Config
 from .http_retry import call_with_http_retries
 
 _TIMEOUT = 120  # seconds — embedding a long document can be slow on first run
+_LITELM_EMBED_ATTEMPTS = 5
+_LITELM_EMBED_BACKOFF_SECONDS = 5.0
 
 
 def _call(ollama_base_url: str, model: str, text: str) -> list[float]:
@@ -62,7 +64,7 @@ def run_litelm(text: str, config: Config) -> list[float]:
         },
         json={"model": config.litelm_embedding_model, "input": text},
         timeout=_TIMEOUT,
-    ))
+    ), attempts=_LITELM_EMBED_ATTEMPTS, backoff_seconds=_LITELM_EMBED_BACKOFF_SECONDS)
     response.raise_for_status()
     return response.json()["data"][0]["embedding"]
 
