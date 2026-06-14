@@ -307,6 +307,14 @@ def test_source_existing_package_states_lists_local_lifecycle_presence(tmp_path)
     assert app_mod._source_existing_package_states(root, "missing") == []
 
 
+def test_can_archive_inbox_then_unpack_only_for_returned_outbox_collision():
+    assert app_mod._source_can_archive_inbox_then_unpack(["inbox"], "outbox") is True
+    assert app_mod._source_can_archive_inbox_then_unpack(["inbox"], "inbox") is False
+    assert app_mod._source_can_archive_inbox_then_unpack(["outbox"], "outbox") is False
+    assert app_mod._source_can_archive_inbox_then_unpack(["inbox", "archive"], "outbox") is False
+    assert app_mod._source_can_archive_inbox_then_unpack([], "outbox") is False
+
+
 def test_transfer_commands_build_up_worker_back(tmp_path):
     root = _build_inbox(tmp_path)
     pkg_dir = root / "inbox" / "src-ui"

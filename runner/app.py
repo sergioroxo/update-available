@@ -13398,6 +13398,13 @@ def _source_existing_package_states(source_offload_root: Path, package_id: str) 
     return [state for state in LIFECYCLE_STATES if (root / state / package_id).is_dir()]
 
 
+def _source_can_archive_inbox_then_unpack(existing_states: list[str], manifest_state: str) -> bool:
+    """True when a returned outbox archive is blocked only by the original local
+    inbox package. In that narrow case the UI can safely offer to move
+    ``inbox/<pkg>`` to ``archive/<pkg>`` before unpacking the returned outbox."""
+    return set(existing_states) == {"inbox"} and manifest_state == "outbox"
+
+
 def _mac_studio_offload_root() -> Path:
     return Path(os.getenv("MAC_STUDIO_OFFLOAD_ROOT", "/Users/cdn-ai/sogice-offload")).expanduser()
 
@@ -13572,7 +13579,7 @@ def _render_imported_doc_actions(config, doc_ids: list[str], *, key_prefix: str)
 
 def _render_source_received_archives(config, root: Path) -> None:
     """MacBook-side scanner for returned Syncthing/AirDrop archives."""
-    from runner.pipeline.offload_source import unpack_source_archive
+    from runner.pipeline.offload_source import move_source_package_state, unpack_source_archive
 
     incoming = _source_from_mac_studio_dir(mac_studio=False)
     st.markdown("#### Returned archives")
@@ -13609,6 +13616,39 @@ def _render_source_received_archives(config, root: Path) -> None:
                     + ", ".join(f"`{state}/`" for state in existing_states)
                     + ". Move/archive it from the lifecycle browser if you need to retry."
                 )
+                if _source_can_archive_inbox_then_unpack(
+                    existing_states, str(row.get("manifest_state") or "")
+                ):
+                    st.caption(
+                        "This looks like the original outgoing inbox copy blocking the "
+                        "returned outbox archive. This action keeps that original by "
+                        "moving it to `archive/`, then unpacks the returned package into `outbox/`."
+                    )
+                    if st.button(
+                        "Archive local inbox copy and unpack returned outbox",
+                        key=f"src_recv_archive_inbox_unpack_{row['package_id']}",
+                        disabled=bool(row["error"]),
+                    ):
+                        try:
+                            move_source_package_state(
+                                offload_root=root,
+                                package_id=row["package_id"],
+                                from_state="inbox",
+                                to_state="archive",
+                            )
+                            result = unpack_source_archive(
+                                Path(row["archive_path"]),
+                                source_offload_root=root,
+                                state="outbox",
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            st.error(f"Could not archive inbox copy and unpack returned archive:\n\n{exc}")
+                        else:
+                            st.success(
+                                f"Archived local inbox copy and unpacked `{result['package_id']}` "
+                                f"to `{result['package_dir']}`."
+                            )
+                            st.rerun()
             if st.button(
                 "Unpack into source_offload/outbox",
                 key=f"src_recv_unpack_{row['package_id']}",
