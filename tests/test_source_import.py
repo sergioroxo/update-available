@@ -202,6 +202,27 @@ def test_verify_rejects_hash_mismatch(tmp_path):
     assert any("hash_mismatch" in e for e in report["errors"])
 
 
+def test_verify_zero_byte_extracted_reports_empty_not_byte_mismatch(tmp_path):
+    root, outbox = _make_outbox(tmp_path)
+    extracted = outbox / "docs" / "urldoc" / "extracted.txt"
+    extracted.write_text("", encoding="utf-8")
+
+    def _mut(d):
+        for doc in d["documents"]:
+            if doc["doc_id"] == "urldoc":
+                for artifact in doc["artifacts"]:
+                    if artifact["label"] == "extracted.txt":
+                        artifact["sha256"] = offload_source.sha256_file(extracted)
+                        artifact["bytes"] = 0
+
+    _tamper_result_manifest(outbox, _mut)
+    report = verify_ingest_result(outbox, corpus_dir=tmp_path / "corpus")
+
+    assert report["ok"] is False
+    assert any("empty_extracted_text:extracted.txt" in e for e in report["errors"])
+    assert not any("bytes_mismatch:docs/urldoc/extracted.txt" in e for e in report["errors"])
+
+
 def test_verify_rejects_unexpected_file(tmp_path):
     root, outbox = _make_outbox(tmp_path)
     (outbox / "docs" / "urldoc" / "stray.json").write_text("{}", encoding="utf-8")

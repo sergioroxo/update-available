@@ -268,10 +268,15 @@ def run_source_worker(
                 local_copy = getattr(intake_result, "local_copy_path", "") or ""
                 doc["local_source_filename"] = Path(local_copy).name if local_copy else ""
                 doc["stages"]["intake"] = {"status": "succeeded", "source_kind": record.source_kind}
+                blocked_error = _preprocess_blocked_error(preprocess_result)
+                preprocess_status = "blocked" if blocked_error else "succeeded"
                 doc["stages"]["preprocess"] = {
-                    "status": "succeeded",
+                    "status": preprocess_status,
                     "duration_ms": int((time.perf_counter() - started) * 1000),
                 }
+                if blocked_error:
+                    doc["status"] = "failed"
+                    doc["error"] = blocked_error
             except Exception as exc:  # noqa: BLE001
                 doc["status"] = "failed"
                 doc["error"] = f"intake_preprocess_failed:{exc}"
@@ -441,6 +446,16 @@ def _successful_docs(docs: list[dict]) -> list[dict]:
 
 def _any_success(docs: list[dict]) -> bool:
     return bool(_successful_docs(docs))
+
+
+def _preprocess_blocked_error(preprocess_result) -> str:
+    quality = str(getattr(preprocess_result, "quality", "") or "").lower()
+    text = str(getattr(preprocess_result, "text", "") or "")
+    if quality == "blocked":
+        return "preprocess_blocked:capture_needed"
+    if not text.strip():
+        return "preprocess_empty_text:capture_needed"
+    return ""
 
 
 def _root_report_payload(summary: dict, docs: list[dict], *, worker_status: str) -> dict:

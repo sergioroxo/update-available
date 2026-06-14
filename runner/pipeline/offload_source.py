@@ -1252,7 +1252,12 @@ def verify_ingest_result(
                 continue
             if sha256_file(p) != str(arow.get("sha256", "")):
                 doc_errors.append(f"hash_mismatch:{safe_rel}")
-            if p.stat().st_size != int(arow.get("bytes", -1) or -1):
+            raw_bytes = arow.get("bytes", -1)
+            try:
+                expected_bytes = int(raw_bytes)
+            except (TypeError, ValueError):
+                expected_bytes = -1
+            if p.stat().st_size != expected_bytes:
                 doc_errors.append(f"bytes_mismatch:{safe_rel}")
             schema_err = _validate_ingest_artifact_schema(label, p)
             if schema_err:

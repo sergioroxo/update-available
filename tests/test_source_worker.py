@@ -48,7 +48,7 @@ def _worker_config(live_corpus: Path) -> types.SimpleNamespace:
     )
 
 
-def _stubs(events: list, *, fail_stage=None, fail_doc=None, extra_file=None):
+def _stubs(events: list, *, fail_stage=None, fail_doc=None, extra_file=None, blocked_doc=None):
     analysis = AnalysisResult.model_validate(_ANALYSIS_JSON)
 
     def fake_intake(*, source, tier, batch, config, force_doc_id, source_url):
@@ -77,13 +77,18 @@ def _stubs(events: list, *, fail_stage=None, fail_doc=None, extra_file=None):
         if fail_stage == "preprocess" and (fail_doc is None or intake.doc_id == fail_doc):
             raise RuntimeError("preprocess boom")
         d = Path(intake.local_dir)
-        (d / "extracted.txt").write_text(_RAW_TEXT_SENTINEL + " " + intake.doc_id, encoding="utf-8")
+        blocked = blocked_doc is not None and intake.doc_id == blocked_doc
+        text = "" if blocked else _RAW_TEXT_SENTINEL + " " + intake.doc_id
+        (d / "extracted.txt").write_text(text, encoding="utf-8")
         (d / "preprocess.json").write_text(
-            json.dumps({"doc_id": intake.doc_id, "quality": "high"}), encoding="utf-8"
+            json.dumps({"doc_id": intake.doc_id, "quality": "blocked" if blocked else "high"}),
+            encoding="utf-8",
         )
         if extra_file and (fail_doc is None or intake.doc_id == fail_doc):
             (d / extra_file).write_text("junk", encoding="utf-8")
-        return types.SimpleNamespace(doc_id=intake.doc_id, text=_RAW_TEXT_SENTINEL + " " + intake.doc_id)
+        return types.SimpleNamespace(
+            doc_id=intake.doc_id, text=text, quality=("blocked" if blocked else "high"),
+        )
 
     def fake_analyze(preprocess, *, llm, config, _audit):
         events.append(("analyze", preprocess.doc_id))
@@ -297,6 +302,45 @@ def test_partial_embedding_failure_moves_to_outbox_with_only_successful_docs(tmp
     assert report["worker_status"] == "partial"
     statuses = {d["doc_id"]: d["status"] for d in report["documents"]}
     assert statuses == {"urldoc": "succeeded", "filedoc": "failed"}
+
+
+def test_blocked_preprocess_doc_is_omitted_from_partial_outbox(tmp_path):
+    root, inbox = _build_source_inbox(tmp_path, with_file=True)
+    live = tmp_path / "live_corpus"; live.mkdir()
+    cfg = _worker_config(live)
+
+    summary = sw.run_source_worker(
+        inbox, cfg, **_stubs([], blocked_doc="filedoc")
+    )
+
+    assert summary["ok"] is True
+    assert summary["partial"] is True
+    outbox = root / "outbox" / "src-w"
+    manifest = json.loads((outbox / "result_manifest.json").read_text(encoding="utf-8"))
+    assert {d["doc_id"] for d in manifest["documents"]} == {"urldoc"}
+    assert manifest["omitted_documents"][0]["doc_id"] == "filedoc"
+    assert manifest["omitted_documents"][0]["error"] == "preprocess_blocked:capture_needed"
+    report = json.loads((outbox / "worker_report.json").read_text(encoding="utf-8"))
+    blocked = next(d for d in report["documents"] if d["doc_id"] == "filedoc")
+    assert blocked["status"] == "failed"
+    assert blocked["stages"]["preprocess"]["status"] == "blocked"
+    assert not (outbox / "docs" / "filedoc" / "analysis.json").exists()
+
+
+def test_all_blocked_docs_still_move_to_failed_without_manifest(tmp_path):
+    root, inbox = _build_source_inbox(tmp_path)
+    live = tmp_path / "live_corpus"; live.mkdir()
+    cfg = _worker_config(live)
+
+    summary = sw.run_source_worker(inbox, cfg, **_stubs([], blocked_doc="urldoc"))
+
+    assert summary["ok"] is False
+    assert summary["final_state"] == "failed"
+    failed = root / "failed" / "src-w"
+    assert failed.is_dir()
+    assert not (failed / "result_manifest.json").exists()
+    report = json.loads((failed / "worker_report.json").read_text(encoding="utf-8"))
+    assert report["documents"][0]["error"] == "preprocess_blocked:capture_needed"
 
 
 def test_intake_preprocess_failure_skips_later_stages(tmp_path):
