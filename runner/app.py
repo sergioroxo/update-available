@@ -13387,6 +13387,18 @@ def _source_transfer_folder_rows(folder_dir: Path) -> list[dict]:
     return rows
 
 
+def _source_reconcile_manifest_state(package_dir: Path, state: str) -> None:
+    """Rewrite a copied source package manifest to match its destination state."""
+    from runner.pipeline.atomic_io import atomic_write_json
+    from runner.pipeline.offload_source import SOURCE_MANIFEST_NAME, load_source_manifest
+
+    package_dir = Path(package_dir)
+    manifest = load_source_manifest(package_dir)
+    data = manifest.to_dict()
+    data["lifecycle_state"] = state
+    atomic_write_json(package_dir / SOURCE_MANIFEST_NAME, data)
+
+
 def _source_unpacked_package_exists(source_offload_root: Path, state: str, package_id: str) -> bool:
     return (Path(source_offload_root) / state / package_id).is_dir()
 
@@ -14295,6 +14307,7 @@ def page_mac_studio_worker():
                                 n for n in names if _source_transfer_ignored_member(n)
                             ],
                         )
+                        _source_reconcile_manifest_state(target, "inbox")
                     except Exception as exc:  # noqa: BLE001
                         st.error(f"Copy refused:\n\n{exc}")
                     else:

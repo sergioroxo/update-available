@@ -289,6 +289,20 @@ def test_source_transfer_folder_rows_reports_direct_package_folder(tmp_path):
     assert by_id["trial-folder"]["ok"] is False
 
 
+def test_source_reconcile_manifest_state_repairs_direct_copy(tmp_path):
+    root = _build_inbox(tmp_path)
+    pkg = root / "inbox" / "src-ui"
+
+    app_mod._source_reconcile_manifest_state(pkg, "outbox")
+    assert app_mod._source_transfer_folder_rows(root / "inbox")[0]["state"] == "outbox"
+
+    app_mod._source_reconcile_manifest_state(pkg, "inbox")
+
+    row = app_mod._source_transfer_folder_rows(root / "inbox")[0]
+    assert row["ok"] is True
+    assert row["state"] == "inbox"
+
+
 def test_source_unpacked_package_exists(tmp_path):
     root = _build_inbox(tmp_path)
     assert app_mod._source_unpacked_package_exists(root, "inbox", "src-ui") is True
