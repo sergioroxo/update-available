@@ -510,6 +510,21 @@ def test_cli_verify_exit_codes(monkeypatch, tmp_path):
     assert bad.exit_code == 1
 
 
+def test_cli_verify_tolerates_worker_retry_artifacts(monkeypatch, tmp_path):
+    cfg = _patch_config(monkeypatch, tmp_path)
+    runner = CliRunner()
+    runner.invoke(main.app, ["source-offload-export", "--url", "https://example.org/y", "--package-id", "cli-retry"])
+    pkg = cfg.exports_dir / "source_offload" / "inbox" / "cli-retry"
+    (pkg / "docs").mkdir()
+    (pkg / "result_manifest.json").write_text("{}", encoding="utf-8")
+    (pkg / "worker_report.json").write_text("{}", encoding="utf-8")
+
+    result = runner.invoke(main.app, ["source-offload-verify", str(pkg)])
+
+    assert result.exit_code == 0, result.output
+    assert "worker-owned retry artifacts" in result.output
+
+
 def test_cli_export_from_queue_does_not_mutate_queue(monkeypatch, tmp_path):
     """Exporting by --queue-id reads the queue but must not change it."""
     cfg = _patch_config(monkeypatch, tmp_path)

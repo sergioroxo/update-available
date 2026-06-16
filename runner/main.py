@@ -2648,9 +2648,10 @@ def source_offload_verify_cmd(
     coverage is exact, and no unexpected files are present. Never repairs, moves,
     or deletes anything, and calls no service. Exits non-zero on any problem.
     """
-    from .pipeline.offload_source import verify_source_package
+    from .pipeline.offload_source import verify_source_inputs, verify_source_package
 
     report = verify_source_package(package_dir)
+    input_report = verify_source_inputs(package_dir)
 
     console.print(f"\n[bold]Source package verify[/bold]  [dim]{report['package_dir']}[/dim]")
     if report["package_id"]:
@@ -2683,6 +2684,11 @@ def source_offload_verify_cmd(
 
     if report["ok"]:
         console.print("[green]✓ Source package verified — items, hashes, and coverage all match.[/green]")
+    elif input_report["ok"]:
+        console.print(
+            "[yellow]Strict verification found worker-owned retry artifacts, but "
+            "source inputs verified. The source worker will clean stale outputs at claim time.[/yellow]"
+        )
     else:
         console.print("[red]✗ Source package verification failed.[/red]")
         raise typer.Exit(1)
