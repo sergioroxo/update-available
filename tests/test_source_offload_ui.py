@@ -20,6 +20,7 @@ from runner.pipeline.offload_source import (
     archive_source_package,
     build_source_package,
     move_source_package_state,
+    verify_source_package,
 )
 from runner.pipeline.source_queue import QueueItem
 
@@ -303,6 +304,24 @@ def test_source_reconcile_manifest_state_repairs_direct_copy(tmp_path):
     assert row["state"] == "inbox"
 
 
+def test_source_worker_verify_report_tolerates_retry_outputs(tmp_path):
+    root = _build_inbox(tmp_path)
+    pkg = root / "inbox" / "src-ui"
+    (pkg / "docs").mkdir()
+    (pkg / INGEST_RESULT_MANIFEST_NAME).write_text("{}", encoding="utf-8")
+    (pkg / "worker_report.json").write_text("{}", encoding="utf-8")
+
+    strict = verify_source_package(pkg)
+    report = app_mod._source_worker_verify_report(pkg)
+
+    assert strict["ok"] is False
+    assert {"docs", INGEST_RESULT_MANIFEST_NAME, "worker_report.json"}.issubset(
+        set(strict["unexpected"])
+    )
+    assert report["ok"] is True
+    assert report["unexpected"] == []
+
+
 def test_source_unpacked_package_exists(tmp_path):
     root = _build_inbox(tmp_path)
     assert app_mod._source_unpacked_package_exists(root, "inbox", "src-ui") is True
@@ -376,6 +395,7 @@ def test_no_source_worker_launch_helper():
         if "source" in low and "worker" in low:
             assert name in {
                 "_source_cli_command",
+                "_source_worker_verify_report",
                 "_start_source_worker_job",
                 "_render_source_worker_job",
                 "_SOURCE_WORKER_DEFAULT_LLM",

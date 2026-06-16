@@ -13399,6 +13399,13 @@ def _source_reconcile_manifest_state(package_dir: Path, state: str) -> None:
     atomic_write_json(package_dir / SOURCE_MANIFEST_NAME, data)
 
 
+def _source_worker_verify_report(package_dir: Path) -> dict:
+    """Verify source inputs for a worker run, tolerating stale retry outputs."""
+    from runner.pipeline.offload_source import verify_source_inputs
+
+    return verify_source_inputs(Path(package_dir))
+
+
 def _source_unpacked_package_exists(source_offload_root: Path, state: str, package_id: str) -> bool:
     return (Path(source_offload_root) / state / package_id).is_dir()
 
@@ -14177,7 +14184,6 @@ def page_mac_studio_worker():
     from runner.pipeline.offload_source import (
         archive_source_package,
         unpack_source_archive,
-        verify_source_package,
     )
 
     st.title("🖥️ Mac Studio Worker")
@@ -14347,8 +14353,8 @@ def page_mac_studio_worker():
             )
             if st.button("Verify selected package", key=f"ms_verify_{chosen}"):
                 _render_offload_verify_report(
-                    verify_source_package(pkg_dir),
-                    title="Source package verification",
+                    _source_worker_verify_report(pkg_dir),
+                    title="Source inputs verification",
                 )
             disabled = bool(_offload_worker_lock_info(offload_root) or _read_app_job_lock())
             if st.button("Run source-worker", key=f"ms_run_{chosen}", disabled=disabled):
