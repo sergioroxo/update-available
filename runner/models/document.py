@@ -465,6 +465,28 @@ class AnalysisResult(BaseModel):
             data["secondary_type"] = data.get("primary_type") or data.get("type")
             warnings.append(f"Replaced invalid secondary_type '{secondary}' with primary/type value.")
 
+        # 2c. Some models put a document format (e.g. "NGO-Report") in the
+        #     stance/sensitivity ``type`` field. Preserve the format and infer a
+        #     conservative reviewable type from framing_balance when available.
+        typ = data.get("type")
+        if isinstance(typ, str) and typ in _DOCUMENT_FORMATS and typ not in _DOCUMENT_TYPES:
+            if not data.get("format") or data.get("format") == "Other":
+                data["format"] = typ
+                warnings.append(f"Moved format-like type '{typ}' into format.")
+            framing = str(data.get("framing_balance") or "").strip()
+            inferred_type = {
+                "pro-dominant": "Pro-SOGICE",
+                "anti-dominant": "Anti-SOGICE",
+                "genuinely-mixed": "Mixed",
+                "unclear": "Mixed",
+            }.get(framing, "Mixed")
+            data["type"] = inferred_type
+            data["needs_review"] = True
+            warnings.append(
+                f"Mapped format-like document type '{typ}' to '{inferred_type}' "
+                f"using framing_balance='{framing or 'unknown'}'; needs_review forced True."
+            )
+
         # 3. Remap nested confidence fields:
         #    .overall / .overall_score  → confidence.overall_score
         #    .field_scores / .field-level → field_confidence (top-level)
