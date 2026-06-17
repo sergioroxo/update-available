@@ -210,6 +210,55 @@ def test_package_rows_surface_broken_manifest(tmp_path):
     assert rows[0]["consistent"] is None
 
 
+def test_source_misplaced_return_rows_detects_result_in_inbox(tmp_path):
+    root = _build_inbox(tmp_path)
+    pkg = root / "inbox" / "src-ui"
+    (pkg / INGEST_RESULT_MANIFEST_NAME).write_text(
+        json.dumps({"package_kind": "ingest_result", "documents": []}),
+        encoding="utf-8",
+    )
+    app_mod._source_reconcile_manifest_state(pkg, "outbox")
+
+    rows = app_mod._source_misplaced_return_rows(root)
+
+    assert len(rows) == 1
+    assert rows[0]["package_id"] == "src-ui"
+    assert rows[0]["folder_state"] == "inbox"
+    assert rows[0]["manifest_state"] == "outbox"
+
+
+def test_source_repair_misplaced_return_quarantines_old_outbox(tmp_path):
+    root = _build_inbox(tmp_path)
+    move_source_package_state(offload_root=root, package_id="src-ui", from_state="inbox", to_state="processing")
+    old_outbox = move_source_package_state(
+        offload_root=root, package_id="src-ui", from_state="processing", to_state="outbox"
+    )
+    (old_outbox / INGEST_RESULT_MANIFEST_NAME).write_text(
+        json.dumps({"package_kind": "ingest_result", "documents": [{"doc_id": "old"}]}),
+        encoding="utf-8",
+    )
+
+    # Simulate a newer returned folder copied into the wrong local lifecycle dir.
+    import shutil
+
+    misplaced = root / "inbox" / "src-ui"
+    shutil.copytree(old_outbox, misplaced)
+    (misplaced / INGEST_RESULT_MANIFEST_NAME).write_text(
+        json.dumps({"package_kind": "ingest_result", "documents": [{"doc_id": "new"}]}),
+        encoding="utf-8",
+    )
+
+    repaired = app_mod._source_repair_misplaced_return(root, "src-ui", from_state="inbox")
+
+    assert repaired == root / "outbox" / "src-ui"
+    assert (root / "failed" / "src-ui").is_dir()
+    assert json.loads((root / "outbox" / "src-ui" / INGEST_RESULT_MANIFEST_NAME).read_text())[
+        "documents"
+    ][0]["doc_id"] == "new"
+    assert app_mod._source_package_rows(root)
+    assert app_mod._source_existing_package_states(root, "src-ui") == ["outbox", "failed"]
+
+
 # ---------------------------------------------------------------------------
 # Transfer command builders
 # ---------------------------------------------------------------------------

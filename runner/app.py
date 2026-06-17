@@ -13399,6 +13399,81 @@ def _source_reconcile_manifest_state(package_dir: Path, state: str) -> None:
     atomic_write_json(package_dir / SOURCE_MANIFEST_NAME, data)
 
 
+def _source_misplaced_return_rows(source_offload_root: Path) -> list[dict]:
+    """Find returned ingest_result packages that are not physically in outbox."""
+    from runner.pipeline.offload import LIFECYCLE_STATES
+    from runner.pipeline.offload_source import (
+        INGEST_RESULT_MANIFEST_NAME,
+        SOURCE_MANIFEST_NAME,
+        load_source_manifest,
+    )
+
+    root = Path(source_offload_root)
+    rows: list[dict] = []
+    for state in LIFECYCLE_STATES:
+        if state == "outbox":
+            continue
+        state_dir = root / state
+        if not state_dir.exists():
+            continue
+        for pkg in sorted(state_dir.iterdir()):
+            if not pkg.is_dir() or pkg.name.startswith("."):
+                continue
+            if not (pkg / INGEST_RESULT_MANIFEST_NAME).is_file():
+                continue
+            row = {
+                "package_id": pkg.name,
+                "folder_state": state,
+                "path": str(pkg),
+                "manifest_state": "",
+                "error": "",
+            }
+            try:
+                row["manifest_state"] = load_source_manifest(pkg).lifecycle_state
+                if not (pkg / SOURCE_MANIFEST_NAME).is_file():
+                    row["error"] = "source_manifest_not_found"
+            except Exception as exc:  # noqa: BLE001
+                row["error"] = str(exc)
+            rows.append(row)
+    return rows
+
+
+def _source_repair_misplaced_return(source_offload_root: Path, package_id: str, *, from_state: str) -> Path:
+    """Move a returned package from a wrong lifecycle folder into outbox.
+
+    If an old outbox copy with the same package id exists, move it to failed as
+    a quarantine first. Nothing is deleted.
+    """
+    from runner.pipeline.offload_source import (
+        INGEST_RESULT_MANIFEST_NAME,
+        validate_package_id,
+    )
+
+    root = Path(source_offload_root)
+    pkg_id = validate_package_id(package_id)
+    source = root / from_state / pkg_id
+    target = root / "outbox" / pkg_id
+    failed = root / "failed" / pkg_id
+    if from_state == "outbox":
+        return target
+    if not source.is_dir():
+        raise FileNotFoundError(source)
+    if not (source / INGEST_RESULT_MANIFEST_NAME).is_file():
+        raise ValueError(f"not_a_returned_ingest_result:{source}")
+    if target.exists():
+        if failed.exists():
+            raise FileExistsError(
+                f"{target} already exists and {failed} also exists; move one aside from the lifecycle browser first"
+            )
+        failed.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(target), str(failed))
+        _source_reconcile_manifest_state(failed, "failed")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(source), str(target))
+    _source_reconcile_manifest_state(target, "outbox")
+    return target
+
+
 def _source_worker_verify_report(package_dir: Path) -> dict:
     """Verify source inputs for a worker run, tolerating stale retry outputs."""
     from runner.pipeline.offload_source import verify_source_inputs
@@ -14031,6 +14106,57 @@ def _render_source_import(config, root: Path) -> None:
         "corpus import."
     )
     _render_source_received_archives(config, root)
+    misplaced = _source_misplaced_return_rows(root)
+    if misplaced:
+        st.markdown("#### Returned packages in the wrong local folder")
+        st.caption(
+            "These already contain Mac Studio results, but they are not physically "
+            "in `source_offload/outbox/`, so the import controls below will not "
+            "read them until they are repaired."
+        )
+        for row in misplaced:
+            with st.expander(
+                f"{row['package_id']} · currently in `{row['folder_state']}/` · "
+                f"manifest `{row.get('manifest_state') or '?'}`"
+            ):
+                st.caption(f"Path: `{row['path']}`")
+                if row.get("error"):
+                    st.error(row["error"])
+                else:
+                    st.warning(
+                        "This is a returned `ingest_result` package in the wrong "
+                        "lifecycle folder. Repair will move it into `outbox/` so "
+                        "it appears in the import selector."
+                    )
+                existing = _source_existing_package_states(root, row["package_id"])
+                if "outbox" in existing:
+                    st.info(
+                        "An older `outbox/` copy with the same package id exists. "
+                        "Repair will move that old copy to `failed/` first, then "
+                        "move this returned package into `outbox/`. Nothing is deleted."
+                    )
+                if "failed" in existing and "outbox" in existing:
+                    st.error(
+                        "Cannot auto-repair because both `outbox/` and `failed/` "
+                        "already contain this package id. Move one aside in the "
+                        "Lifecycle browser first."
+                    )
+                if st.button(
+                    "Repair: move returned package to outbox",
+                    key=f"src_repair_misplaced_{row['folder_state']}_{row['package_id']}",
+                    disabled=bool(row.get("error") or ("failed" in existing and "outbox" in existing)),
+                ):
+                    try:
+                        target = _source_repair_misplaced_return(
+                            root,
+                            row["package_id"],
+                            from_state=row["folder_state"],
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        st.error(f"Repair refused:\n\n{exc}")
+                    else:
+                        st.success(f"Moved returned package to `{target}`.")
+                        st.rerun()
     st.divider()
     st.markdown("#### Outbox packages ready to import")
     outbox_dir = root / "outbox"
