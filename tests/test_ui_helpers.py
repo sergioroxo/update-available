@@ -4,6 +4,7 @@ These tests cover pure-Python helpers that have no Streamlit dependency —
 they do not launch a browser or Streamlit session.
 """
 import pytest
+from pathlib import Path
 
 
 # ---------------------------------------------------------------------------
@@ -224,6 +225,124 @@ def test_batch_run_command_adds_priority_and_skip_preflight():
 
     assert cmd[cmd.index("--priority") + 1] == "high"
     assert "--skip-preflight" in cmd
+
+
+# ---------------------------------------------------------------------------
+# Document List workflow queue helpers
+# ---------------------------------------------------------------------------
+
+def _workflow_summary(**overrides):
+    import runner.app as app_mod
+
+    base = {
+        "doc_dir": Path("/tmp/doc"),
+        "analysis": {
+            "type": "Anti-SOGICE",
+            "confidence": {"overall_score": 0.91},
+            "flags": [],
+            "testimony_flag": False,
+        },
+        "uploaded": False,
+        "has_preprocess": True,
+        "has_extracted": True,
+        "has_enrichment": True,
+        "embedding_status": {"ok": True, "supabase_ok": False},
+        "offload_import": {},
+        "has_testimony_review": False,
+        "legal_review": {},
+        "analysis_review": {},
+    }
+    base.update(overrides)
+    return app_mod._document_workflow_summary(**base)
+
+
+def test_document_workflow_summary_marks_source_offload_and_ready_to_upload():
+    summary = _workflow_summary(
+        offload_import={
+            "package_kind": "ingest_result",
+            "package_id": "trial-q-009",
+            "imported_at": "2026-06-17T10:20:30+00:00",
+        }
+    )
+
+    assert summary["is_source_offload_import"] is True
+    assert summary["offload_package_id"] == "trial-q-009"
+    assert summary["ready_to_upload"] is True
+    assert "Source offload" in summary["labels"]
+    assert "Needs upload" in summary["labels"]
+
+
+def test_document_workflow_summary_missing_artifacts_blocks_ready_upload():
+    summary = _workflow_summary(has_enrichment=False, embedding_status={"ok": False, "supabase_ok": False})
+
+    assert summary["ready_to_upload"] is False
+    assert "missing_enrichment" in summary["reasons"]
+    assert "missing_embedding" in summary["reasons"]
+    assert any(label.startswith("Missing ") for label in summary["labels"])
+
+
+def test_document_workflow_summary_review_holds_are_visible():
+    summary = _workflow_summary(
+        analysis={
+            "type": "Regulatory-Policy-Document",
+            "confidence": {"overall_score": 0.62},
+            "flags": ["Flag: Testimony-Extraction-Required"],
+            "testimony_flag": True,
+            "needs_review": True,
+        }
+    )
+
+    assert "testimony_review" in summary["reasons"]
+    assert "legal_review" in summary["reasons"]
+    assert "analysis_review" in summary["reasons"]
+    assert summary["ready_to_upload"] is False
+
+
+def test_document_workflow_summary_uploaded_but_supabase_missing():
+    summary = _workflow_summary(uploaded=True, embedding_status={"ok": True, "supabase_ok": False})
+
+    assert "needs_upload" not in summary["reasons"]
+    assert "supabase_missing" in summary["reasons"]
+    assert summary["ready_to_upload"] is False
+
+
+@pytest.mark.parametrize(
+    ("workflow_filter", "expected"),
+    [
+        ("New source-offload imports", True),
+        ("Needs upload", True),
+        ("Ready to upload", True),
+        ("Needs review", False),
+        ("Missing artifacts", False),
+        ("Uploaded but Supabase missing", False),
+    ],
+)
+def test_doc_matches_workflow_filter_matrix(workflow_filter, expected):
+    import runner.app as app_mod
+
+    doc = {
+        "is_source_offload_import": True,
+        "needs_action_reasons": ["needs_upload"],
+        "ready_to_upload": True,
+    }
+
+    assert app_mod._doc_matches_workflow_filter(doc, workflow_filter) is expected
+
+
+def test_doc_workflow_badge_text_prioritises_actionable_labels():
+    import runner.app as app_mod
+
+    text = app_mod._doc_workflow_badge_text({
+        "needs_action_labels": [
+            "Source offload",
+            "Imported 2026-06-17",
+            "Needs upload",
+            "Analysis review",
+            "Missing enrichment",
+        ]
+    })
+
+    assert text == "Needs upload · Analysis review · Source offload"
 
 
 def test_panel_reset_clears_on_doc_switch():

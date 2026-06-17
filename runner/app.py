@@ -3491,6 +3491,21 @@ def page_document_list():
             ["All", "hook", "pathologizing", "active-conduct", "— (unset)"],
             key="doc_list_filter_intensity",
         )
+    workflow_col1, workflow_col2 = st.columns([1, 3])
+    with workflow_col1:
+        filter_workflow = st.selectbox(
+            "Workflow status",
+            [
+                "All",
+                "New source-offload imports",
+                "Needs upload",
+                "Ready to upload",
+                "Needs review",
+                "Missing artifacts",
+                "Uploaded but Supabase missing",
+            ],
+            key="doc_list_filter_workflow",
+        )
 
     filtered = docs
     if search_q:
@@ -3514,14 +3529,30 @@ def page_document_list():
             d for d in filtered
             if (d.get("rhetorical_intensity") or None) == _intensity_value
         ]
+    if filter_workflow != "All":
+        filtered = [
+            d for d in filtered
+            if _doc_matches_workflow_filter(d, filter_workflow)
+        ]
 
     sort_col1, sort_col2 = st.columns([1, 3])
     with sort_col1:
         sort_by = st.selectbox(
             "Sort by",
-            ["doc_id", "confidence ↓", "rhetorical_intensity", "analysis_saved_at ↓"],
+            [
+                "needs action first",
+                "source-offload imported_at ↓",
+                "doc_id",
+                "confidence ↓",
+                "rhetorical_intensity",
+                "analysis_saved_at ↓",
+            ],
         )
-    if sort_by == "confidence ↓":
+    if sort_by == "needs action first":
+        filtered = sorted(filtered, key=_doc_workflow_sort_key)
+    elif sort_by == "source-offload imported_at ↓":
+        filtered = sorted(filtered, key=lambda d: str(d.get("offload_imported_at") or ""), reverse=True)
+    elif sort_by == "confidence ↓":
         filtered = sorted(filtered, key=lambda d: d.get("confidence", 0), reverse=True)
     elif sort_by == "rhetorical_intensity":
         _ri_order = {"active-conduct": 0, "pathologizing": 1, "hook": 2, None: 3, "—": 3}
@@ -3696,11 +3727,19 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
 
         uploaded = (doc_dir / "sanity_record.json").exists()
         has_enrichment = (doc_dir / "enrichment.json").exists()
+        has_preprocess = (doc_dir / "preprocess.json").exists()
+        has_extracted = (doc_dir / "extracted.txt").exists() or (doc_dir / "extracted.md").exists()
         embedding_status = _local_embedding_status(doc_dir, config)
         media = _read_json_file(doc_dir / "media_metadata.json", {})
         general = media.get("general", {}) if isinstance(media, dict) else {}
         preprocess = _read_json_file(doc_dir / "preprocess.json", {})
         metadata = _read_json_file(doc_dir / "metadata.json", {})
+        offload_import = _read_json_file(doc_dir / "offload_import.json", {})
+        if not isinstance(offload_import, dict):
+            offload_import = {}
+        legal_review = legal_review_record(doc_dir)
+        analysis_review = analysis_review_record(doc_dir)
+        has_testimony_review = (doc_dir / "testimony_review.json").exists()
         latest_annotation, latest_review = _latest_annotation_dates(doc_dir)
         pending_second_opinions = _pending_second_opinion_summary(doc_dir)
         annotation_profiles = _annotation_profile_summary(doc_dir)
@@ -3718,6 +3757,19 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
         source_publication_date = _normalise_publication_date(str(source_publication_date or ""))
         document_date_text = _document_date_to_text(data.get("document_date") or {})
         display_publication_date = source_publication_date or document_date_text
+        workflow = _document_workflow_summary(
+            doc_dir=doc_dir,
+            analysis=data,
+            uploaded=uploaded,
+            has_preprocess=has_preprocess,
+            has_extracted=has_extracted,
+            has_enrichment=has_enrichment,
+            embedding_status=embedding_status,
+            offload_import=offload_import,
+            has_testimony_review=has_testimony_review,
+            legal_review=legal_review,
+            analysis_review=analysis_review,
+        )
 
         docs.append({
             "doc_id":      doc_dir.name,
@@ -3738,6 +3790,9 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             "document_date_text": document_date_text,
             "analysis_saved_at": metadata.get("saved_at") or _file_timestamp(doc_dir / "analysis.json"),
             "uploaded_at": _file_timestamp(doc_dir / "sanity_record.json"),
+            "offload_imported_at": workflow["offload_imported_at"],
+            "offload_package_id": workflow["offload_package_id"],
+            "is_source_offload_import": workflow["is_source_offload_import"],
             "latest_annotation_at": latest_annotation,
             "latest_review_at": latest_review,
             "pending_second_opinion_count": pending_second_opinions["count"],
@@ -3753,10 +3808,182 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
             "supabase_ok": embedding_status["supabase_ok"],
             "supabase_detail": embedding_status["supabase_detail"],
             "has_enrichment": has_enrichment,
+            "has_preprocess": has_preprocess,
+            "has_extracted": has_extracted,
+            "has_testimony_review": has_testimony_review,
+            "has_legal_review": bool(legal_review),
+            "has_analysis_review": bool(analysis_review),
+            "needs_action_reasons": workflow["reasons"],
+            "needs_action_labels": workflow["labels"],
+            "needs_action_count": workflow["action_count"],
+            "workflow_rank": workflow["rank"],
+            "ready_to_upload": workflow["ready_to_upload"],
             "harm": data.get("harm", []),
         })
 
     return docs
+
+
+def _document_workflow_summary(
+    *,
+    doc_dir: Path,
+    analysis: dict,
+    uploaded: bool,
+    has_preprocess: bool,
+    has_extracted: bool,
+    has_enrichment: bool,
+    embedding_status: dict,
+    offload_import: dict,
+    has_testimony_review: bool,
+    legal_review: dict,
+    analysis_review: dict,
+) -> dict:
+    """Return Document List workflow signals for one local corpus document.
+
+    This is deliberately local-file based: it does not call Sanity/Supabase and
+    can be unit-tested without Streamlit. The goal is to make the Document List
+    act like an operational queue after Mac Studio overnight runs.
+    """
+    reasons: list[str] = []
+    labels: list[str] = []
+
+    package_kind = str(offload_import.get("package_kind") or "")
+    is_source_offload_import = package_kind == "ingest_result"
+    offload_imported_at = str(offload_import.get("imported_at") or "")
+    offload_package_id = str(offload_import.get("package_id") or "")
+
+    if is_source_offload_import:
+        labels.append("Source offload")
+    if offload_imported_at:
+        labels.append(f"Imported {offload_imported_at[:10]}")
+
+    missing = []
+    if not has_preprocess:
+        missing.append("preprocess")
+    if not has_extracted:
+        missing.append("extracted text")
+    if not has_enrichment:
+        missing.append("enrichment")
+    if not embedding_status.get("ok"):
+        missing.append("embedding")
+    for name in missing:
+        reasons.append(f"missing_{name.replace(' ', '_')}")
+    if missing:
+        labels.append("Missing " + ", ".join(missing))
+
+    if testimony_override_available(analysis) and not has_testimony_review:
+        reasons.append("testimony_review")
+        labels.append("Testimony review")
+    if legal_review_available(analysis) and not legal_review:
+        reasons.append("legal_review")
+        labels.append("Legal review")
+    if analysis_review_marker_available(analysis) and not analysis_review:
+        reasons.append("analysis_review")
+        labels.append("Analysis review")
+
+    if not uploaded:
+        reasons.append("needs_upload")
+        labels.append("Needs upload")
+    elif embedding_status.get("ok") and not embedding_status.get("supabase_ok"):
+        reasons.append("supabase_missing")
+        labels.append("Supabase missing")
+
+    hard_review_reasons = {"testimony_review", "legal_review", "analysis_review"}
+    missing_blockers = {r for r in reasons if r.startswith("missing_")}
+    ready_to_upload = (
+        not uploaded
+        and not missing_blockers
+        and not (hard_review_reasons.intersection(reasons))
+    )
+
+    rank = 0
+    if hard_review_reasons.intersection(reasons) or missing_blockers:
+        rank = 0
+    elif ready_to_upload:
+        rank = 1
+    elif "supabase_missing" in reasons:
+        rank = 2
+    elif is_source_offload_import:
+        rank = 3
+    else:
+        rank = 4
+
+    return {
+        "is_source_offload_import": is_source_offload_import,
+        "offload_imported_at": offload_imported_at,
+        "offload_package_id": offload_package_id,
+        "reasons": reasons,
+        "labels": labels,
+        "action_count": len([r for r in reasons if r != "needs_upload"]),
+        "ready_to_upload": ready_to_upload,
+        "rank": rank,
+    }
+
+
+def _doc_matches_workflow_filter(doc: dict, workflow_filter: str) -> bool:
+    reasons = set(doc.get("needs_action_reasons") or [])
+    if workflow_filter == "New source-offload imports":
+        return bool(doc.get("is_source_offload_import"))
+    if workflow_filter == "Needs upload":
+        return "needs_upload" in reasons
+    if workflow_filter == "Ready to upload":
+        return bool(doc.get("ready_to_upload"))
+    if workflow_filter == "Needs review":
+        return bool({"testimony_review", "legal_review", "analysis_review"}.intersection(reasons))
+    if workflow_filter == "Missing artifacts":
+        return any(str(r).startswith("missing_") for r in reasons)
+    if workflow_filter == "Uploaded but Supabase missing":
+        return "supabase_missing" in reasons
+    return True
+
+
+def _doc_workflow_sort_key(doc: dict) -> tuple:
+    """Sort actionable, recent offload imports before settled documents."""
+    return (
+        int(doc.get("workflow_rank", 4)),
+        -int(doc.get("needs_action_count", 0)),
+        -_iso_timestamp_for_sort(doc.get("offload_imported_at") or doc.get("analysis_saved_at")),
+        str(doc.get("doc_id") or ""),
+    )
+
+
+def _iso_timestamp_for_sort(value) -> float:
+    text = str(value or "").strip()
+    if not text or text == "—":
+        return 0.0
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return 0.0
+
+
+def _doc_workflow_badge_text(doc: dict) -> str:
+    labels = list(doc.get("needs_action_labels") or [])
+    if not labels:
+        return ""
+    priority = [
+        "Needs upload",
+        "Testimony review",
+        "Legal review",
+        "Analysis review",
+        "Supabase missing",
+        "Source offload",
+    ]
+    ordered: list[str] = []
+    for wanted in priority:
+        for label in labels:
+            if label == wanted and label not in ordered:
+                ordered.append(label)
+    for label in labels:
+        if label.startswith("Missing ") and label not in ordered:
+            ordered.append(label)
+    if len(ordered) < 3:
+        for label in labels:
+            if label not in ordered and not label.startswith("Imported "):
+                ordered.append(label)
+            if len(ordered) >= 3:
+                break
+    return " · ".join(ordered[:3])
 
 
 def _set_doc_action_feedback(doc_id: str, level: str, message: str) -> None:
@@ -4349,10 +4576,13 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
     second_opinion_badge = ""
     if doc.get("pending_second_opinion_count"):
         second_opinion_badge = f" · Second opinions {doc['pending_second_opinion_count']} pending"
+    workflow_badges = _doc_workflow_badge_text(doc)
+    workflow_badge_text = f" · {workflow_badges}" if workflow_badges else ""
 
     header = (
         f"{conf_color} **{doc['doc_id']}** — {doc['type']} | {doc['format']} | "
-        f"{upload_badge}{embedding_badge}{enrich_badge}{media_badge}{annotation_badge}{second_opinion_badge}"
+        f"{upload_badge}{embedding_badge}{enrich_badge}{media_badge}{annotation_badge}"
+        f"{second_opinion_badge}{workflow_badge_text}"
     )
 
     _selected_from_inbox = st.session_state.get("doc_list_open_doc_id") == doc["doc_id"]
@@ -4371,6 +4601,8 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 f"{doc['pending_second_opinion_count']} second-opinion comparison(s) are still pending a researcher decision. "
                 f"Latest generated: {generated}. Resolve them in the second-opinion review panel before treating this analysis as settled."
             )
+        if doc.get("needs_action_labels"):
+            st.info("Workflow: " + " · ".join(doc["needs_action_labels"][:6]))
         col1, col2 = st.columns([2, 1])
         with col1:
             if doc["summary"]:
@@ -4380,6 +4612,8 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
         with col2:
             st.metric("Confidence", f"{conf:.2f} ({doc['conf_status']})")
             date_rows = [
+                f"Source-offload imported: {str(doc.get('offload_imported_at') or '—')[:19]}",
+                f"Offload package: {doc.get('offload_package_id') or '—'}",
                 f"Source published: {doc.get('source_publication_date') or '—'}",
                 f"Document date: {doc.get('document_date_text') or '—'}",
                 f"Analysed/saved: {str(doc.get('analysis_saved_at') or '—')[:19]}",
