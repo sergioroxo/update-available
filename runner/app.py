@@ -13401,7 +13401,6 @@ def _source_reconcile_manifest_state(package_dir: Path, state: str) -> None:
 
 def _source_misplaced_return_rows(source_offload_root: Path) -> list[dict]:
     """Find returned ingest_result packages that are not physically in outbox."""
-    from runner.pipeline.offload import LIFECYCLE_STATES
     from runner.pipeline.offload_source import (
         INGEST_RESULT_MANIFEST_NAME,
         SOURCE_MANIFEST_NAME,
@@ -13410,9 +13409,7 @@ def _source_misplaced_return_rows(source_offload_root: Path) -> list[dict]:
 
     root = Path(source_offload_root)
     rows: list[dict] = []
-    for state in LIFECYCLE_STATES:
-        if state == "outbox":
-            continue
+    for state in ("inbox", "processing"):
         state_dir = root / state
         if not state_dir.exists():
             continue
@@ -13603,6 +13600,68 @@ def _source_import_relink_preview(pkg_dir) -> list[dict]:
         return ingest_result_linkages(Path(pkg_dir))
     except Exception:  # noqa: BLE001
         return []
+
+
+def _source_worker_report_summary(pkg_dir) -> dict:
+    """Summarise successful vs failed docs from a returned source-worker report."""
+    pkg_dir = Path(pkg_dir)
+    report_path = pkg_dir / "worker_report.json"
+    source_path = pkg_dir / "source_manifest.json"
+    result_path = pkg_dir / "result_manifest.json"
+    summary = {
+        "worker_status": "",
+        "importable_doc_ids": [],
+        "failed": [],
+        "error": "",
+    }
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return summary
+    except Exception as exc:  # noqa: BLE001
+        summary["error"] = str(exc)
+        return summary
+
+    summary["worker_status"] = str(report.get("worker_status") or "")
+    source_by_doc: dict[str, dict] = {}
+    try:
+        source = json.loads(source_path.read_text(encoding="utf-8"))
+        source_by_doc = {
+            str(item.get("doc_id") or ""): item
+            for item in source.get("items", [])
+            if item.get("doc_id")
+        }
+    except Exception:
+        source_by_doc = {}
+
+    importable: set[str] = set()
+    try:
+        result = json.loads(result_path.read_text(encoding="utf-8"))
+        importable = {
+            str(doc.get("doc_id") or "")
+            for doc in result.get("documents", [])
+            if doc.get("doc_id")
+        }
+    except Exception:
+        importable = set()
+    summary["importable_doc_ids"] = sorted(importable)
+
+    failed: list[dict] = []
+    for doc in report.get("documents", []):
+        doc_id = str(doc.get("doc_id") or "")
+        status = str(doc.get("status") or "")
+        if status == "succeeded" and doc_id in importable:
+            continue
+        src = source_by_doc.get(doc_id, {})
+        failed.append({
+            "doc_id": doc_id,
+            "queue_item_id": src.get("queue_item_id", ""),
+            "source_url": src.get("url", ""),
+            "status": status or "omitted",
+            "error": str(doc.get("error") or "omitted_from_result_manifest"),
+        })
+    summary["failed"] = failed
+    return summary
 
 
 # ── Render helpers ─────────────────────────────────────────────────────────
@@ -14171,6 +14230,18 @@ def _render_source_import(config, root: Path) -> None:
 
     chosen = st.selectbox("Outbox package", options=[p.name for p in pkg_dirs], key="src_import_pkg")
     pkg_dir = outbox_dir / chosen
+
+    worker_summary = _source_worker_report_summary(pkg_dir)
+    failed_docs = worker_summary.get("failed") or []
+    if failed_docs:
+        st.warning(
+            f"Partial result: {len(worker_summary.get('importable_doc_ids') or [])} "
+            f"doc(s) are ready to import; {len(failed_docs)} failed/omitted doc(s) "
+            "will **not** be relinked as ingested. They remain in the Source Queue "
+            "for retry or manual capture."
+        )
+        with st.expander("Failed / omitted docs from worker report", expanded=True):
+            st.write(failed_docs)
 
     preview = _source_import_relink_preview(pkg_dir)
     if preview:

@@ -227,6 +227,41 @@ def test_source_misplaced_return_rows_detects_result_in_inbox(tmp_path):
     assert rows[0]["manifest_state"] == "outbox"
 
 
+def test_source_misplaced_return_rows_ignores_imported_and_archive_history(tmp_path):
+    root = _build_inbox(tmp_path)
+    move_source_package_state(offload_root=root, package_id="src-ui", from_state="inbox", to_state="processing")
+    outbox = move_source_package_state(
+        offload_root=root, package_id="src-ui", from_state="processing", to_state="outbox"
+    )
+    (outbox / INGEST_RESULT_MANIFEST_NAME).write_text(
+        json.dumps({"package_kind": "ingest_result", "documents": []}),
+        encoding="utf-8",
+    )
+    move_source_package_state(offload_root=root, package_id="src-ui", from_state="outbox", to_state="imported")
+
+    archived = root / "archive" / "archived-copy"
+    archived.mkdir(parents=True)
+    (archived / "source_manifest.json").write_text(
+        json.dumps({
+            "schema_version": 1,
+            "package_id": "archived-copy",
+            "package_kind": "source_package",
+            "lifecycle_state": "archive",
+            "created_at": "2026-01-01T00:00:00Z",
+            "retention_policy": {},
+            "privacy_policy": {},
+            "items": [],
+        }),
+        encoding="utf-8",
+    )
+    (archived / INGEST_RESULT_MANIFEST_NAME).write_text(
+        json.dumps({"package_kind": "ingest_result", "documents": []}),
+        encoding="utf-8",
+    )
+
+    assert app_mod._source_misplaced_return_rows(root) == []
+
+
 def test_source_repair_misplaced_return_quarantines_old_outbox(tmp_path):
     root = _build_inbox(tmp_path)
     move_source_package_state(offload_root=root, package_id="src-ui", from_state="inbox", to_state="processing")
@@ -257,6 +292,48 @@ def test_source_repair_misplaced_return_quarantines_old_outbox(tmp_path):
     ][0]["doc_id"] == "new"
     assert app_mod._source_package_rows(root)
     assert app_mod._source_existing_package_states(root, "src-ui") == ["outbox", "failed"]
+
+
+def test_source_worker_report_summary_lists_failed_queue_items(tmp_path):
+    root = _build_inbox(tmp_path, doc_id="okdoc")
+    pkg = root / "inbox" / "src-ui"
+    data = json.loads((pkg / "source_manifest.json").read_text())
+    data["items"].append({
+        **data["items"][0],
+        "doc_id": "baddoc",
+        "url": "https://example.org/bad",
+        "item_record_path": "items/baddoc/source_item.json",
+        "item_record_sha256": "0" * 64,
+        "queue_item_id": "qi_bad",
+        "url_hash": "hash_bad",
+    })
+    (pkg / "source_manifest.json").write_text(json.dumps(data), encoding="utf-8")
+    (pkg / INGEST_RESULT_MANIFEST_NAME).write_text(
+        json.dumps({"package_kind": "ingest_result", "documents": [{"doc_id": "okdoc"}]}),
+        encoding="utf-8",
+    )
+    (pkg / "worker_report.json").write_text(
+        json.dumps({
+            "worker_status": "partial",
+            "documents": [
+                {"doc_id": "okdoc", "status": "succeeded"},
+                {"doc_id": "baddoc", "status": "failed", "error": "preprocess_blocked:capture_needed"},
+            ],
+        }),
+        encoding="utf-8",
+    )
+
+    summary = app_mod._source_worker_report_summary(pkg)
+
+    assert summary["worker_status"] == "partial"
+    assert summary["importable_doc_ids"] == ["okdoc"]
+    assert summary["failed"] == [{
+        "doc_id": "baddoc",
+        "queue_item_id": "qi_bad",
+        "source_url": "https://example.org/bad",
+        "status": "failed",
+        "error": "preprocess_blocked:capture_needed",
+    }]
 
 
 # ---------------------------------------------------------------------------
@@ -444,6 +521,7 @@ def test_no_source_worker_launch_helper():
         if "source" in low and "worker" in low:
             assert name in {
                 "_source_cli_command",
+                "_source_worker_report_summary",
                 "_source_worker_verify_report",
                 "_start_source_worker_job",
                 "_render_source_worker_job",
