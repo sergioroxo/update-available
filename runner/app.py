@@ -231,6 +231,7 @@ def page_dashboard():
     if pending_upload_count:
         st.warning(f"{pending_upload_count} document(s) are saved locally but not uploaded yet. Go to Pending Upload.")
 
+    _render_system_health_panel(config)
     _dashboard_ingest_readiness(config)
 
     st.subheader("Corpus Sets")
@@ -329,6 +330,80 @@ def page_dashboard():
                     st.caption(e)
         else:
             st.success("Verify complete — all services responded.")
+
+
+def _render_system_health_panel(config, *, mac_studio: bool = False, source_offload_root=None, transfer_root=None):
+    st.subheader("System Health")
+    try:
+        from runner.pipeline.system_health import build_system_health
+        report = build_system_health(
+            config,
+            mac_studio=mac_studio,
+            source_offload_root=source_offload_root,
+            transfer_root=transfer_root,
+        )
+    except Exception as exc:
+        st.warning(f"System health check unavailable: {exc}")
+        return
+
+    status = report.get("status", "unknown")
+    if status == "ready":
+        st.success("System state looks coherent. No blockers found.")
+    elif status == "blocked":
+        st.error("System state has blockers. Fix these before relying on import/export results.")
+    else:
+        st.warning("System state needs attention, but no hard blocker was found.")
+
+    corpus = report.get("corpus", {})
+    source = report.get("source_offload", {})
+    transfer = report.get("transfer", {})
+    knowledge = report.get("knowledge", {})
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric("Corpus docs", corpus.get("documents", 0))
+    c2.metric("Pending upload", corpus.get("pending_upload", 0))
+    c3.metric("Failed offload packages", source.get("failed_count", 0))
+    c4.metric("Returned archives", transfer.get("returned_archive_count", 0))
+    c5.metric("Stale summaries", corpus.get("stale_archive_summary_count", 0))
+    c6.metric("KG edges", knowledge.get("edge_count", 0))
+
+    blockers = report.get("blockers") or []
+    actions = report.get("actions") or []
+    notes = report.get("notes") or []
+    if blockers or actions or notes:
+        with st.expander("System health details", expanded=bool(blockers)):
+            if blockers:
+                st.markdown("**Blockers**")
+                for item in blockers:
+                    st.error(item)
+            if actions:
+                st.markdown("**Next actions**")
+                for item in actions:
+                    st.info(item)
+            if notes:
+                st.markdown("**Notes**")
+                for item in notes:
+                    st.caption(item)
+            failed_rows = _source_failed_report_rows(report)
+            if failed_rows:
+                st.markdown("**Failed source-worker documents**")
+                st.dataframe(failed_rows, hide_index=True, width="stretch")
+            source_package_rows = _system_health_source_package_rows(report)
+            if source_package_rows:
+                st.markdown("**Source-offload packages by lifecycle**")
+                st.dataframe(source_package_rows, hide_index=True, width="stretch")
+            no_analysis_rows = _system_health_corpus_rows(report, "no_analysis_doc_rows")
+            if no_analysis_rows:
+                st.markdown("**Corpus folders without analysis**")
+                st.dataframe(no_analysis_rows, hide_index=True, width="stretch")
+            enrichment_rows = _system_health_corpus_rows(report, "enrichment_attention_rows")
+            if enrichment_rows:
+                st.markdown("**Enrichment review queue**")
+                st.dataframe(enrichment_rows, hide_index=True, width="stretch")
+            direct_transfer_rows = _system_health_direct_transfer_rows(report)
+            if direct_transfer_rows:
+                st.markdown("**Direct transfer folders**")
+                st.caption("These can work, but archive transfer is safer because it has a checksum.")
+                st.dataframe(direct_transfer_rows, hide_index=True, width="stretch")
 
 
 def _dashboard_ingest_readiness(config):
@@ -654,6 +729,8 @@ def page_corpus_intelligence():
     c3.metric("Uploaded", int(df["uploaded"].sum()))
     c4.metric("With annotations", int((df["annotationCount"] > 0).sum()))
 
+    _render_knowledge_exports_panel(config)
+
     with st.expander("Filters", expanded=True):
         f1, f2, f3, f4 = st.columns(4)
         with f1:
@@ -831,6 +908,307 @@ def page_corpus_intelligence():
             hide_index=True,
             width="stretch",
         )
+
+
+def _knowledge_export_dir(config) -> Path:
+    return Path(config.exports_dir) / "knowledge"
+
+
+def _knowledge_export_paths(config) -> dict[str, Path]:
+    root = _knowledge_export_dir(config)
+    return {
+        "document_profiles": root / "document_profiles.jsonl",
+        "nodes": root / "archive_nodes.csv",
+        "edges": root / "archive_edges.csv",
+        "graph": root / "archive_graph.json",
+    }
+
+
+def _knowledge_export_commands() -> dict[str, list[str]]:
+    return {
+        "profiles": [sys.executable, "-m", "runner", "archive-summary-export", "--refresh-sidecars"],
+        "graph": [sys.executable, "-m", "runner", "knowledge-graph-export"],
+        "graph_proposed": [sys.executable, "-m", "runner", "knowledge-graph-export", "--include-proposed"],
+    }
+
+
+def _knowledge_export_file_descriptions() -> list[dict[str, str]]:
+    return [
+        {
+            "File": "archive_summary.json",
+            "Where": "inside each corpus document folder",
+            "Use": "One derived index card for that document: source, dates, classification, review state, upload state, offload lineage, readiness.",
+        },
+        {
+            "File": "document_profiles.jsonl",
+            "Where": "exports/knowledge/",
+            "Use": "One JSON line per document. This is the easiest machine-readable table for audits, notebooks, and future agents.",
+        },
+        {
+            "File": "archive_nodes.csv",
+            "Where": "exports/knowledge/",
+            "Use": "Graph node table for documents, terms, entities, tactics, practices, countries, and other evidence nodes.",
+        },
+        {
+            "File": "archive_edges.csv",
+            "Where": "exports/knowledge/",
+            "Use": "Evidence edge table. Every edge carries provenance, review status, evidence strength, and source document fields.",
+        },
+        {
+            "File": "archive_graph.json",
+            "Where": "exports/knowledge/",
+            "Use": "The same graph as JSON for custom visualization, notebooks, and later GraphML/network tooling.",
+        },
+    ]
+
+
+def _knowledge_file_status_rows(paths: dict[str, Path]) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for path in paths.values():
+        exists = Path(path).exists()
+        modified = ""
+        if exists:
+            try:
+                modified = datetime.fromtimestamp(Path(path).stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+            except Exception:
+                modified = ""
+        rows.append({
+            "File": Path(path).name,
+            "Present": "yes" if exists else "no",
+            "Modified": modified,
+            "Path": str(path),
+        })
+    return rows
+
+
+def _source_failed_report_rows(report: dict) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    source = report.get("source_offload") or {}
+    for pkg in source.get("failed_reports") or []:
+        for doc in pkg.get("docs") or []:
+            rows.append({
+                "package_id": str(pkg.get("package_id") or ""),
+                "doc_id": str(doc.get("doc_id") or ""),
+                "queue_item_id": str(doc.get("queue_item_id") or ""),
+                "status": str(doc.get("status") or ""),
+                "error": str(doc.get("error") or "").splitlines()[0],
+                "source_url": str(doc.get("source_url") or ""),
+            })
+    return rows
+
+
+def _system_health_corpus_rows(report: dict, key: str) -> list[dict]:
+    corpus = report.get("corpus") or {}
+    rows = corpus.get(key) or []
+    return rows if isinstance(rows, list) else []
+
+
+def _system_health_direct_transfer_rows(report: dict) -> list[dict[str, str]]:
+    transfer = report.get("transfer") or {}
+    rows: list[dict[str, str]] = []
+    for item in transfer.get("direct_incoming_folders") or []:
+        if isinstance(item, dict):
+            rows.append({
+                "package_id": str(item.get("package_id") or ""),
+                "path": str(item.get("path") or ""),
+            })
+        else:
+            rows.append({"package_id": str(item), "path": ""})
+    return rows
+
+
+def _system_health_source_package_rows(report: dict) -> list[dict[str, str]]:
+    source = report.get("source_offload") or {}
+    by_state = source.get("packages_by_state") or {}
+    rows: list[dict[str, str]] = []
+    if not isinstance(by_state, dict):
+        return rows
+    for state in ("inbox", "processing", "outbox", "imported", "failed", "archive"):
+        for item in by_state.get(state) or []:
+            if not isinstance(item, dict):
+                continue
+            rows.append({
+                "package_id": str(item.get("package_id") or ""),
+                "folder_state": str(item.get("folder_state") or state),
+                "manifest_state": str(item.get("manifest_state") or ""),
+                "kind": str(item.get("kind") or ""),
+                "error": str(item.get("error") or ""),
+                "path": str(item.get("path") or ""),
+            })
+    return rows
+
+
+def _knowledge_profile_preview(path: Path, *, limit: int = 25) -> list[dict]:
+    rows: list[dict] = []
+    path = Path(path)
+    if not path.exists():
+        return rows
+    with path.open(encoding="utf-8") as fh:
+        for line in fh:
+            if len(rows) >= limit:
+                break
+            if not line.strip():
+                continue
+            try:
+                item = json.loads(line)
+            except Exception:
+                continue
+            source = item.get("source") or {}
+            content = item.get("content") or {}
+            classification = item.get("classification") or {}
+            readiness = item.get("readiness") or {}
+            publication = item.get("publication") or {}
+            rows.append({
+                "doc_id": item.get("doc_id", ""),
+                "trust_state": item.get("trust_state", ""),
+                "readiness": readiness.get("status", ""),
+                "uploaded": bool(publication.get("uploaded")),
+                "type": classification.get("type", ""),
+                "title": content.get("title", ""),
+                "next_actions": "; ".join(readiness.get("next_action_titles") or []),
+                "source_url": source.get("source_url", ""),
+            })
+    return rows
+
+
+def _knowledge_graph_preview(path: Path) -> dict:
+    from collections import Counter
+
+    path = Path(path)
+    if not path.exists():
+        return {}
+    try:
+        graph = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    nodes = graph.get("nodes") if isinstance(graph.get("nodes"), list) else []
+    edges = graph.get("edges") if isinstance(graph.get("edges"), list) else []
+    return {
+        "schema_version": graph.get("schema_version", ""),
+        "include_proposed": bool(graph.get("include_proposed")),
+        "node_count": len(nodes),
+        "edge_count": len(edges),
+        "node_types": dict(sorted(Counter(row.get("type", "") for row in nodes).items())),
+        "edge_types": dict(sorted(Counter(row.get("type", "") for row in edges).items())),
+        "evidence_strength": dict(sorted(Counter(row.get("evidence_strength", "") for row in edges).items())),
+    }
+
+
+def _run_knowledge_export_action(config, action: str) -> dict:
+    if action == "profiles":
+        from runner.pipeline import archive_summary
+        return archive_summary.export_document_profiles(
+            Path(config.corpus_dir),
+            Path(config.exports_dir),
+            config=config,
+            write_doc_summaries=True,
+        )
+    if action == "graph":
+        from runner.pipeline import knowledge_graph
+        return knowledge_graph.export_knowledge_graph(
+            Path(config.corpus_dir),
+            Path(config.exports_dir),
+            config=config,
+            include_proposed=False,
+        )
+    if action == "graph_proposed":
+        from runner.pipeline import knowledge_graph
+        return knowledge_graph.export_knowledge_graph(
+            Path(config.corpus_dir),
+            Path(config.exports_dir),
+            config=config,
+            include_proposed=True,
+        )
+    raise ValueError(f"unknown knowledge export action: {action}")
+
+
+def _render_knowledge_exports_panel(config) -> None:
+    paths = _knowledge_export_paths(config)
+    export_dir = _knowledge_export_dir(config)
+    existing = {name: path.exists() for name, path in paths.items()}
+
+    with st.expander("Knowledge exports", expanded=False):
+        st.caption(
+            "Build the derived archive summaries and evidence graph exports. "
+            "These are local files only — no Sanity, Supabase, model calls, or network."
+        )
+        st.info(
+            "`archive_summary.json` is a regenerable index card beside each document. "
+            "`document_profiles.jsonl` is the corpus-wide version: one JSON line per document. "
+            "The graph files are evidence exports for analysis and visualization, not publication."
+        )
+        st.write(f"Folder: `{export_dir}`")
+        with st.expander("What these files are"):
+            st.dataframe(_knowledge_export_file_descriptions(), hide_index=True, width="stretch")
+        if any(existing.values()):
+            st.dataframe(_knowledge_file_status_rows(paths), hide_index=True, width="stretch")
+        else:
+            st.info("No knowledge export files found yet. Run the commands below to create them.")
+
+        profile_rows = _knowledge_profile_preview(paths["document_profiles"], limit=25)
+        if profile_rows:
+            st.markdown("**Document profile preview**")
+            st.caption("First 25 rows from `document_profiles.jsonl`.")
+            st.dataframe(profile_rows, hide_index=True, width="stretch")
+
+        graph_preview = _knowledge_graph_preview(paths["graph"])
+        if graph_preview:
+            g1, g2 = st.columns(2)
+            g1.metric("Graph nodes", graph_preview["node_count"])
+            g2.metric("Graph edges", graph_preview["edge_count"])
+            with st.expander("Graph type counts"):
+                st.write("Node types")
+                st.json(graph_preview["node_types"])
+                st.write("Edge types")
+                st.json(graph_preview["edge_types"])
+                st.write("Evidence strength")
+                st.json(graph_preview["evidence_strength"])
+
+        cmds = _knowledge_export_commands()
+        st.markdown("**Build / refresh**")
+        b1, b2, b3 = st.columns(3)
+        if b1.button("Refresh profiles", key="kg_refresh_profiles"):
+            try:
+                result = _run_knowledge_export_action(config, "profiles")
+                st.success(f"Refreshed {result['count']} document profile(s).")
+                st.caption(f"Wrote `{result['path']}` and per-document `archive_summary.json` sidecars.")
+            except Exception as exc:
+                st.error(f"Could not refresh profiles: {exc}")
+        if b2.button("Refresh evidence graph", key="kg_refresh_graph"):
+            try:
+                result = _run_knowledge_export_action(config, "graph")
+                st.success(f"Refreshed graph: {result['node_count']} node(s), {result['edge_count']} edge(s).")
+                st.caption(f"Wrote `{result['graph_path']}`.")
+            except Exception as exc:
+                st.error(f"Could not refresh graph: {exc}")
+        if b3.button("Refresh with proposed", key="kg_refresh_graph_proposed"):
+            try:
+                result = _run_knowledge_export_action(config, "graph_proposed")
+                st.warning(
+                    f"Refreshed exploratory graph: {result['node_count']} node(s), {result['edge_count']} edge(s). "
+                    "This includes model-proposed/unreviewed material."
+                )
+            except Exception as exc:
+                st.error(f"Could not refresh exploratory graph: {exc}")
+
+        st.caption("Terminal equivalents:")
+        st.code(shlex.join(cmds["profiles"]), language="bash")
+        st.code(shlex.join(cmds["graph"]), language="bash")
+
+        with st.expander("Exploratory graph command"):
+            st.caption("Includes model-proposed/unreviewed edges. Use for discovery, not as reviewed evidence.")
+            st.code(shlex.join(cmds["graph_proposed"]), language="bash")
+
+        if st.button("Open knowledge export folder in Finder", key="open_knowledge_export_folder"):
+            try:
+                export_dir.mkdir(parents=True, exist_ok=True)
+                if sys.platform == "darwin":
+                    subprocess.run(["open", str(export_dir)], check=False)
+                    st.success(f"Opened `{export_dir}`")
+                else:
+                    st.info(f"Open this folder manually: `{export_dir}`")
+            except Exception as exc:
+                st.error(f"Could not open folder: {exc}")
 
 
 def _corpus_intelligence_rows(corpus_dir: Path) -> list[dict]:
@@ -14629,6 +15007,17 @@ def page_mac_studio_worker():
     offload_root = _mac_studio_offload_root()
     st.caption(f"Transfer root: `{transfer_root}`")
     st.caption(f"Mac Studio source-offload root: `{offload_root}`")
+
+    config = _load_config_safe()
+    if config:
+        _render_system_health_panel(
+            config,
+            mac_studio=True,
+            source_offload_root=offload_root,
+            transfer_root=transfer_root,
+        )
+    else:
+        st.warning("System health unavailable because runner/.env could not be loaded.")
 
     lock_info = _offload_worker_lock_info(offload_root)
     if lock_info:

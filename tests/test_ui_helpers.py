@@ -5,6 +5,7 @@ they do not launch a browser or Streamlit session.
 """
 import pytest
 from pathlib import Path
+from types import SimpleNamespace
 
 
 # ---------------------------------------------------------------------------
@@ -555,6 +556,225 @@ def test_source_queue_initial_priority_keeps_manual_add_only_choice():
 
     assert _source_queue_initial_priority("Add only", "high") == "high"
     assert _source_queue_initial_priority("Add only", "skip") == "skip"
+
+
+# ---------------------------------------------------------------------------
+# Knowledge export helpers
+# ---------------------------------------------------------------------------
+
+class _Config:
+    def __init__(self, exports_dir: Path):
+        self.exports_dir = exports_dir
+
+
+def test_knowledge_export_dir_uses_config_exports_dir(tmp_path):
+    import runner.app as app_mod
+
+    config = _Config(tmp_path / "exports")
+
+    assert app_mod._knowledge_export_dir(config) == tmp_path / "exports" / "knowledge"
+
+
+def test_knowledge_export_paths_are_named_outputs(tmp_path):
+    import runner.app as app_mod
+
+    paths = app_mod._knowledge_export_paths(_Config(tmp_path / "exports"))
+
+    assert paths == {
+        "document_profiles": tmp_path / "exports" / "knowledge" / "document_profiles.jsonl",
+        "nodes": tmp_path / "exports" / "knowledge" / "archive_nodes.csv",
+        "edges": tmp_path / "exports" / "knowledge" / "archive_edges.csv",
+        "graph": tmp_path / "exports" / "knowledge" / "archive_graph.json",
+    }
+
+
+def test_knowledge_export_commands_use_running_python_and_expected_cli():
+    import runner.app as app_mod
+
+    commands = app_mod._knowledge_export_commands()
+
+    assert commands["profiles"] == [
+        app_mod.sys.executable,
+        "-m",
+        "runner",
+        "archive-summary-export",
+        "--refresh-sidecars",
+    ]
+    assert commands["graph"] == [
+        app_mod.sys.executable,
+        "-m",
+        "runner",
+        "knowledge-graph-export",
+    ]
+    assert commands["graph_proposed"] == [
+        app_mod.sys.executable,
+        "-m",
+        "runner",
+        "knowledge-graph-export",
+        "--include-proposed",
+    ]
+    assert all(cmd[0] == app_mod.sys.executable for cmd in commands.values())
+    assert all(cmd[0] != "python3" for cmd in commands.values())
+
+
+def test_knowledge_export_file_descriptions_explain_primary_outputs():
+    import runner.app as app_mod
+
+    descriptions = app_mod._knowledge_export_file_descriptions()
+    files = {row["File"]: row for row in descriptions}
+
+    assert "archive_summary.json" in files
+    assert "document_profiles.jsonl" in files
+    assert "archive_nodes.csv" in files
+    assert "archive_edges.csv" in files
+    assert "archive_graph.json" in files
+    assert "one json line per document" in files["document_profiles.jsonl"]["Use"].lower()
+    assert "provenance" in files["archive_edges.csv"]["Use"]
+
+
+def test_knowledge_file_status_rows_include_modified_time(tmp_path):
+    import runner.app as app_mod
+
+    path = tmp_path / "document_profiles.jsonl"
+    path.write_text("{}\n", encoding="utf-8")
+
+    rows = app_mod._knowledge_file_status_rows({"document_profiles": path})
+
+    assert rows[0]["File"] == "document_profiles.jsonl"
+    assert rows[0]["Present"] == "yes"
+    assert rows[0]["Modified"]
+    assert rows[0]["Path"] == str(path)
+
+
+def test_source_failed_report_rows_flattens_failed_docs():
+    import runner.app as app_mod
+
+    report = {
+        "source_offload": {
+            "failed_reports": [{
+                "package_id": "trial-x",
+                "docs": [{
+                    "doc_id": "bad-doc",
+                    "queue_item_id": "qi_bad",
+                    "source_url": "https://example.org/bad",
+                    "status": "failed",
+                    "error": "analysis_failed:bad label\nfull trace omitted",
+                }],
+            }],
+        },
+    }
+
+    assert app_mod._source_failed_report_rows(report) == [{
+        "package_id": "trial-x",
+        "doc_id": "bad-doc",
+        "queue_item_id": "qi_bad",
+        "status": "failed",
+        "error": "analysis_failed:bad label",
+        "source_url": "https://example.org/bad",
+    }]
+
+
+def test_knowledge_profile_preview_flattens_jsonl_for_table(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    path = tmp_path / "document_profiles.jsonl"
+    path.write_text(
+        json.dumps({
+            "doc_id": "doc-a",
+            "trust_state": "uploaded",
+            "source": {"source_url": "https://example.org/a"},
+            "content": {"title": "Example A"},
+            "classification": {"type": "Anti-SOGICE"},
+            "readiness": {"status": "ready", "next_action_titles": ["Upload"]},
+            "publication": {"uploaded": True},
+        }) + "\n",
+        encoding="utf-8",
+    )
+
+    rows = app_mod._knowledge_profile_preview(path)
+
+    assert rows == [{
+        "doc_id": "doc-a",
+        "trust_state": "uploaded",
+        "readiness": "ready",
+        "uploaded": True,
+        "type": "Anti-SOGICE",
+        "title": "Example A",
+        "next_actions": "Upload",
+        "source_url": "https://example.org/a",
+    }]
+
+
+def test_knowledge_graph_preview_counts_nodes_and_edges(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    path = tmp_path / "archive_graph.json"
+    path.write_text(
+        json.dumps({
+            "schema_version": "archive-graph-v1.0",
+            "include_proposed": False,
+            "nodes": [
+                {"type": "document"},
+                {"type": "term"},
+                {"type": "term"},
+            ],
+            "edges": [
+                {"type": "attests_term", "evidence_strength": "classification_tag"},
+                {"type": "attests_term", "evidence_strength": "classification_tag"},
+                {"type": "partner", "evidence_strength": "quote_backed"},
+            ],
+        }),
+        encoding="utf-8",
+    )
+
+    preview = app_mod._knowledge_graph_preview(path)
+
+    assert preview["schema_version"] == "archive-graph-v1.0"
+    assert preview["node_count"] == 3
+    assert preview["edge_count"] == 3
+    assert preview["node_types"] == {"document": 1, "term": 2}
+    assert preview["edge_types"] == {"attests_term": 2, "partner": 1}
+    assert preview["evidence_strength"] == {"classification_tag": 2, "quote_backed": 1}
+
+
+def test_run_knowledge_export_action_refreshes_profiles(monkeypatch, tmp_path):
+    import runner.app as app_mod
+    from runner.pipeline import archive_summary
+
+    calls = []
+
+    def fake_export(corpus_dir, exports_dir, *, config, write_doc_summaries, **kwargs):
+        calls.append((corpus_dir, exports_dir, write_doc_summaries))
+        return {"count": 2, "path": str(exports_dir / "knowledge" / "document_profiles.jsonl")}
+
+    monkeypatch.setattr(archive_summary, "export_document_profiles", fake_export)
+    config = SimpleNamespace(corpus_dir=tmp_path / "corpus", exports_dir=tmp_path / "exports")
+
+    result = app_mod._run_knowledge_export_action(config, "profiles")
+
+    assert result["count"] == 2
+    assert calls == [(tmp_path / "corpus", tmp_path / "exports", True)]
+
+
+def test_run_knowledge_export_action_refreshes_graph(monkeypatch, tmp_path):
+    import runner.app as app_mod
+    from runner.pipeline import knowledge_graph
+
+    calls = []
+
+    def fake_export(corpus_dir, exports_dir, *, config, include_proposed, **kwargs):
+        calls.append((corpus_dir, exports_dir, include_proposed))
+        return {"node_count": 3, "edge_count": 4, "graph_path": str(exports_dir / "knowledge" / "archive_graph.json")}
+
+    monkeypatch.setattr(knowledge_graph, "export_knowledge_graph", fake_export)
+    config = SimpleNamespace(corpus_dir=tmp_path / "corpus", exports_dir=tmp_path / "exports")
+
+    result = app_mod._run_knowledge_export_action(config, "graph_proposed")
+
+    assert result["edge_count"] == 4
+    assert calls == [(tmp_path / "corpus", tmp_path / "exports", True)]
 
 
 # ---------------------------------------------------------------------------
@@ -1396,3 +1616,67 @@ def test_proposal_source_upload_issue_explains_missing_sanity_doc(tmp_path):
     doc_dir.mkdir(parents=True)
     (doc_dir / "sanity_record.json").write_text("{}", encoding="utf-8")
     assert _proposal_source_upload_issue(record, config) == ""
+
+
+# ---------------------------------------------------------------------------
+# System health UI helpers
+# ---------------------------------------------------------------------------
+
+def test_system_health_corpus_rows_returns_named_rows():
+    from runner.app import _system_health_corpus_rows
+
+    report = {"corpus": {"no_analysis_doc_rows": [{"doc_id": "doc-a"}]}}
+
+    assert _system_health_corpus_rows(report, "no_analysis_doc_rows") == [{"doc_id": "doc-a"}]
+    assert _system_health_corpus_rows(report, "missing") == []
+    assert _system_health_corpus_rows({"corpus": {"bad": "not-list"}}, "bad") == []
+
+
+def test_system_health_direct_transfer_rows_supports_new_and_legacy_shapes():
+    from runner.app import _system_health_direct_transfer_rows
+
+    report = {
+        "transfer": {
+            "direct_incoming_folders": [
+                {"package_id": "trial-a", "path": "/tmp/trial-a"},
+                "legacy-trial",
+            ]
+        }
+    }
+
+    assert _system_health_direct_transfer_rows(report) == [
+        {"package_id": "trial-a", "path": "/tmp/trial-a"},
+        {"package_id": "legacy-trial", "path": ""},
+    ]
+
+
+def test_system_health_source_package_rows_flattens_lifecycle_order():
+    from runner.app import _system_health_source_package_rows
+
+    report = {
+        "source_offload": {
+            "packages_by_state": {
+                "archive": [{"package_id": "pkg-z", "folder_state": "archive", "manifest_state": "outbox"}],
+                "inbox": [{"package_id": "pkg-a", "folder_state": "inbox", "manifest_state": "inbox"}],
+            }
+        }
+    }
+
+    assert _system_health_source_package_rows(report) == [
+        {
+            "package_id": "pkg-a",
+            "folder_state": "inbox",
+            "manifest_state": "inbox",
+            "kind": "",
+            "error": "",
+            "path": "",
+        },
+        {
+            "package_id": "pkg-z",
+            "folder_state": "archive",
+            "manifest_state": "outbox",
+            "kind": "",
+            "error": "",
+            "path": "",
+        },
+    ]

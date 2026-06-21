@@ -20,7 +20,7 @@ from rich.panel import Panel
 
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
-from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion
+from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion, archive_summary, knowledge_graph, system_health
 from .pipeline import search as search_mod
 from .pipeline.system_tools import tool_path
 
@@ -2989,6 +2989,263 @@ def export_csv_cmd(
     config = load_config(llm=None, require_services=False)
     out_path = Path(out) if out else None
     upload.export_corpus_csv(config, batch_id=batch_id, out_path=out_path)
+
+
+@app.command(name="archive-summary-build")
+def archive_summary_build_cmd(
+    doc_id: str = typer.Argument("", help="Document ID to summarize (omit for all corpus docs)"),
+    corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
+):
+    """Build regenerable per-document archive_summary.json profiles (KG-0)."""
+    config = load_config(llm=None, require_services=False)
+    corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    if doc_id:
+        doc_dir = corpus_dir / doc_id
+        if not doc_dir.is_dir():
+            console.print(Panel(str(doc_dir), title="[red]Document folder not found[/red]"))
+            raise typer.Exit(1)
+        out = archive_summary.write_archive_summary(doc_dir, config=config)
+        summary = archive_summary.read_json_safe(out, {})
+        console.print(f"[green]✓ Archive summary written[/green] [dim]{out}[/dim]")
+        console.print(
+            f"  doc_id={summary.get('doc_id')}  "
+            f"trust_state={summary.get('trust_state')}  "
+            f"readiness={summary.get('readiness', {}).get('status', '')}"
+        )
+        return
+
+    summaries = archive_summary.build_corpus_archive_summaries(
+        corpus_dir,
+        config=config,
+        write=True,
+    )
+    console.print(
+        f"[green]✓ Archive summaries written[/green] "
+        f"{len(summaries)} document(s) in [dim]{corpus_dir}[/dim]"
+    )
+
+
+@app.command(name="archive-summary-export")
+def archive_summary_export_cmd(
+    out: str = typer.Option("", "--out", help="Output JSONL path (default: exports/knowledge/document_profiles.jsonl)"),
+    corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
+    refresh_sidecars: bool = typer.Option(False, "--refresh-sidecars", help="Also write archive_summary.json beside each document"),
+):
+    """Export central document_profiles.jsonl from local corpus artifacts (KG-0)."""
+    config = load_config(llm=None, require_services=False)
+    corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    out_path = Path(out).expanduser() if out else None
+    result = archive_summary.export_document_profiles(
+        corpus_dir,
+        config.exports_dir,
+        config=config,
+        out_path=out_path,
+        write_doc_summaries=refresh_sidecars,
+    )
+    console.print(
+        f"[green]✓ Document profiles exported[/green] "
+        f"{result['count']} document(s) → [dim]{result['path']}[/dim]"
+    )
+    if refresh_sidecars:
+        console.print("[dim]Per-document archive_summary.json sidecars refreshed.[/dim]")
+
+
+@app.command(name="knowledge-graph-export")
+def knowledge_graph_export_cmd(
+    out_dir: str = typer.Option("", "--out-dir", help="Output directory (default: exports/knowledge)"),
+    corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
+    include_proposed: bool = typer.Option(False, "--include-proposed", help="Include model-proposed/unreviewed edges"),
+):
+    """Export KG-1 evidence graph CSV/JSON files from local corpus artifacts."""
+    config = load_config(llm=None, require_services=False)
+    corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    out_path = Path(out_dir).expanduser() if out_dir else None
+    result = knowledge_graph.export_knowledge_graph(
+        corpus_dir,
+        config.exports_dir,
+        config=config,
+        out_dir=out_path,
+        include_proposed=include_proposed,
+    )
+    console.print(
+        f"[green]✓ Knowledge graph exported[/green] "
+        f"{result['node_count']} node(s), {result['edge_count']} edge(s)"
+    )
+    console.print(f"  Nodes: [dim]{result['nodes_path']}[/dim]")
+    console.print(f"  Edges: [dim]{result['edges_path']}[/dim]")
+    console.print(f"  Graph: [dim]{result['graph_path']}[/dim]")
+    if include_proposed:
+        console.print("[yellow]Included model-proposed/unreviewed edges. Treat as discovery material, not reviewed evidence.[/yellow]")
+
+
+@app.command(name="system-health")
+def system_health_cmd(
+    json_output: bool = typer.Option(False, "--json", help="Print the full machine-readable health report"),
+    mac_studio: bool = typer.Option(False, "--mac-studio", help="Use Mac Studio default transfer paths"),
+    source_offload_root: str = typer.Option("", "--source-offload-root", help="Override source-offload lifecycle root"),
+    transfer_root: str = typer.Option("", "--transfer-root", help="Override shared transfer root"),
+):
+    """Summarize local corpus/offload/transfer/KG state without mutating anything."""
+    config = load_config(llm=None, require_services=False)
+    report = system_health.build_system_health(
+        config,
+        mac_studio=mac_studio,
+        source_offload_root=Path(source_offload_root).expanduser() if source_offload_root else None,
+        transfer_root=Path(transfer_root).expanduser() if transfer_root else None,
+    )
+    if json_output:
+        console.print_json(data=report)
+        return
+
+    status = report.get("status", "unknown")
+    colour = "green" if status == "ready" else "yellow" if status == "needs_attention" else "red"
+    console.print(Panel(status, title=f"[{colour}]System health[/{colour}]"))
+
+    for title, key, style in (
+        ("Blockers", "blockers", "red"),
+        ("Next actions", "actions", "yellow"),
+        ("Notes", "notes", "cyan"),
+    ):
+        items = report.get(key) or []
+        if not items:
+            continue
+        console.print(f"\n[bold]{title}[/bold]")
+        for item in items:
+            console.print(f"  [{style}]•[/{style}] {item}")
+
+    from rich.table import Table as RichTable
+
+    table = RichTable(title="Local state", show_lines=False)
+    table.add_column("Area")
+    table.add_column("Metric")
+    table.add_column("Value", justify="right")
+    corpus = report.get("corpus", {})
+    source = report.get("source_offload", {})
+    transfer = report.get("transfer", {})
+    knowledge = report.get("knowledge", {})
+    rows = [
+        ("Corpus", "documents", corpus.get("documents", 0)),
+        ("Corpus", "pending upload", corpus.get("pending_upload", 0)),
+        ("Corpus", "pending enrichment proposals", corpus.get("pending_enrichment_proposals", 0)),
+        ("Source offload", "failed packages", source.get("failed_count", 0)),
+        ("Source offload", "folder/manifest drift", source.get("inconsistent_count", 0)),
+        ("Transfer", "incoming archives", transfer.get("incoming_archive_count", 0)),
+        ("Transfer", "returned archives", transfer.get("returned_archive_count", 0)),
+        ("Knowledge", "document profiles", knowledge.get("document_profiles_count", 0)),
+        ("Knowledge", "graph nodes", knowledge.get("node_count", 0)),
+        ("Knowledge", "graph edges", knowledge.get("edge_count", 0)),
+    ]
+    for area, metric, value in rows:
+        table.add_row(area, metric, str(value))
+    console.print(table)
+
+    def _clip(value, limit: int = 88) -> str:
+        text = str(value or "")
+        return text if len(text) <= limit else text[: limit - 1] + "…"
+
+    failed_rows = []
+    for pkg in source.get("failed_reports") or []:
+        for doc in pkg.get("docs") or []:
+            failed_rows.append({
+                "package": pkg.get("package_id", ""),
+                "doc_id": doc.get("doc_id", ""),
+                "queue_item_id": doc.get("queue_item_id", ""),
+                "error": str(doc.get("error", "")).splitlines()[0],
+                "source_url": doc.get("source_url", ""),
+            })
+    if failed_rows:
+        t = RichTable(title="Failed source-worker documents", show_lines=False)
+        t.add_column("Package")
+        t.add_column("Doc")
+        t.add_column("Queue")
+        t.add_column("Error")
+        t.add_column("Source URL")
+        for row in failed_rows[:15]:
+            t.add_row(
+                _clip(row["package"], 24),
+                _clip(row["doc_id"], 16),
+                _clip(row["queue_item_id"], 12),
+                _clip(row["error"], 54),
+                _clip(row["source_url"], 64),
+            )
+        console.print(t)
+
+    package_rows = []
+    packages_by_state = source.get("packages_by_state") or {}
+    if isinstance(packages_by_state, dict):
+        for state in ("inbox", "processing", "outbox", "imported", "failed", "archive"):
+            for row in packages_by_state.get(state) or []:
+                if isinstance(row, dict):
+                    package_rows.append(row)
+    if package_rows:
+        t = RichTable(title="Source-offload packages by lifecycle", show_lines=False)
+        t.add_column("Package")
+        t.add_column("Folder")
+        t.add_column("Manifest")
+        t.add_column("Kind")
+        t.add_column("Issue")
+        for row in package_rows[:20]:
+            t.add_row(
+                _clip(row.get("package_id"), 28),
+                _clip(row.get("folder_state"), 12),
+                _clip(row.get("manifest_state"), 12),
+                _clip(row.get("kind"), 14),
+                _clip(row.get("error"), 40),
+            )
+        console.print(t)
+
+    no_analysis_rows = corpus.get("no_analysis_doc_rows") or []
+    if no_analysis_rows:
+        t = RichTable(title="Corpus folders without analysis", show_lines=False)
+        t.add_column("Doc")
+        t.add_column("Title/source")
+        t.add_column("Next action")
+        for row in no_analysis_rows[:15]:
+            title = row.get("title") or row.get("source") or ""
+            t.add_row(
+                _clip(row.get("doc_id"), 16),
+                _clip(title, 64),
+                _clip(row.get("next_action"), 80),
+            )
+        console.print(t)
+
+    enrichment_rows = corpus.get("enrichment_attention_rows") or []
+    if enrichment_rows:
+        t = RichTable(title="Enrichment review queue", show_lines=False)
+        t.add_column("Doc")
+        t.add_column("Pending", justify="right")
+        t.add_column("Approved", justify="right")
+        t.add_column("Title")
+        t.add_column("Next action")
+        for row in enrichment_rows[:20]:
+            t.add_row(
+                _clip(row.get("doc_id"), 16),
+                str(row.get("pending") or 0),
+                str(row.get("approved_unpushed") or 0),
+                _clip(row.get("title"), 52),
+                _clip(row.get("next_action"), 42),
+            )
+        console.print(t)
+
+    direct_rows = transfer.get("direct_incoming_folders") or []
+    if direct_rows:
+        t = RichTable(title="Direct transfer folders", show_lines=False)
+        t.add_column("Package")
+        t.add_column("Path")
+        t.add_column("Recommendation")
+        for row in direct_rows[:10]:
+            if isinstance(row, dict):
+                package_id = row.get("package_id", "")
+                path = row.get("path", "")
+            else:
+                package_id = str(row)
+                path = ""
+            t.add_row(
+                _clip(package_id, 24),
+                _clip(path, 80),
+                "Prefer archive transfer (.tar.gz + .sha256)",
+            )
+        console.print(t)
 
 
 @app.command(name="stats")
