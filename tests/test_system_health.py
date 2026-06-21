@@ -218,6 +218,8 @@ def test_system_health_reports_actionable_corpus_rows(tmp_path, monkeypatch):
     assert report["corpus"]["no_analysis_doc_rows"][0]["doc_id"] == "doc-a"
     assert report["corpus"]["no_analysis_doc_rows"][0]["partial_state"] == "stub_no_pipeline_artifacts"
     assert "stub folder" in report["corpus"]["no_analysis_doc_rows"][0]["next_action"]
+    assert report["corpus"]["active_no_analysis_docs"] == 1
+    assert report["corpus"]["discarded_no_analysis_docs"] == 0
     assert report["corpus"]["pending_upload_docs"] == ["doc-b"]
     assert report["corpus"]["enrichment_attention_rows"][0]["doc_id"] == "doc-b"
     assert report["corpus"]["enrichment_attention_rows"][0]["pending"] == 1
@@ -251,6 +253,8 @@ def test_system_health_classifies_incomplete_doc_states(tmp_path, monkeypatch):
         "intake_only": 1,
         "preprocessed_no_analysis": 1,
     }
+    assert report["corpus"]["active_no_analysis_docs"] == 2
+    assert report["corpus"]["discarded_no_analysis_docs"] == 1
 
 
 def test_system_health_flags_document_profile_count_mismatch(tmp_path, monkeypatch):

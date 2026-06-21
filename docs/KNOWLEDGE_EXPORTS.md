@@ -109,7 +109,8 @@ PY="$REPO/.venv/bin/python"
 `system-health` further classifies incomplete folders as `discarded`,
 `intake_only`, `preprocessed_no_analysis`, or `stub_no_pipeline_artifacts` so
 you can decide whether to retry analysis or simply archive/remove a stale
-partial folder.
+partial folder. Discarded incomplete folders are reported separately from
+active incomplete folders because they usually do not need pipeline retry.
 
 Every evidence edge carries provenance fields such as `doc_id`, `source_url`,
 `source_artifact`, `review_status`, `evidence_strength`, and `edge_basis`.

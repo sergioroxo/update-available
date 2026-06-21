@@ -3125,6 +3125,8 @@ def system_health_cmd(
     knowledge = report.get("knowledge", {})
     rows = [
         ("Corpus", "documents", corpus.get("documents", 0)),
+        ("Corpus", "active incomplete", corpus.get("active_no_analysis_docs", corpus.get("no_analysis_docs", 0))),
+        ("Corpus", "discarded incomplete", corpus.get("discarded_no_analysis_docs", 0)),
         ("Corpus", "pending upload", corpus.get("pending_upload", 0)),
         ("Corpus", "pending enrichment proposals", corpus.get("pending_enrichment_proposals", 0)),
         ("Source offload", "failed packages", source.get("failed_count", 0)),

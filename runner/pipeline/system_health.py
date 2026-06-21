@@ -149,6 +149,11 @@ def _corpus_health(config) -> dict:
         for row in rows
         if row.get("status") == STATUS_NO_DATA
     ]
+    incomplete_by_state = Counter(row["partial_state"] for row in no_analysis_rows)
+    active_no_analysis_rows = [
+        row for row in no_analysis_rows
+        if row["partial_state"] != "discarded"
+    ]
     pending_upload_docs = [
         p.name
         for p in doc_dirs
@@ -185,13 +190,15 @@ def _corpus_health(config) -> dict:
         "stale_archive_summary_docs": stale_summary_docs[:25],
         "latest_source_mtime": latest_source_mtime,
         "readiness": dict(sorted(status_counts.items())),
-        "incomplete_by_state": dict(sorted(Counter(row["partial_state"] for row in no_analysis_rows).items())),
+        "incomplete_by_state": dict(sorted(incomplete_by_state.items())),
         "readiness_rows": len(rows),
         "blocker_count": blockers,
         "quality_count": quality,
         "pending_enrichment_proposals": pending,
         "approved_unpushed_proposals": approved_unpushed,
         "no_analysis_docs": status_counts.get(STATUS_NO_DATA, 0),
+        "active_no_analysis_docs": len(active_no_analysis_rows),
+        "discarded_no_analysis_docs": incomplete_by_state.get("discarded", 0),
         "no_analysis_doc_rows": no_analysis_rows[:25],
         "pending_upload_docs": pending_upload_docs,
         "enrichment_attention_rows": enrichment_attention_rows,
@@ -453,8 +460,10 @@ def build_system_health(
         actions.append("Knowledge graph is older than document_profiles.jsonl; refresh the graph export.")
     if knowledge["edge_count"] and knowledge["evidence_strength"].get("", 0):
         actions.append("Knowledge graph is missing edge evidence-strength labels; refresh the graph export.")
-    if corpus["no_analysis_docs"]:
-        notes.append(f"{corpus['no_analysis_docs']} corpus folder(s) have no analysis.json yet.")
+    if corpus["active_no_analysis_docs"]:
+        notes.append(f"{corpus['active_no_analysis_docs']} active corpus folder(s) have no analysis.json yet.")
+    if corpus["discarded_no_analysis_docs"]:
+        notes.append(f"{corpus['discarded_no_analysis_docs']} discarded corpus folder(s) have no analysis.json; no retry needed.")
 
     if blockers:
         status = "blocked"
