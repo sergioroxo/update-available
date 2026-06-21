@@ -3198,12 +3198,14 @@ def system_health_cmd(
     if no_analysis_rows:
         t = RichTable(title="Corpus folders without analysis", show_lines=False)
         t.add_column("Doc")
+        t.add_column("State")
         t.add_column("Title/source")
         t.add_column("Next action")
         for row in no_analysis_rows[:15]:
             title = row.get("title") or row.get("source") or ""
             t.add_row(
                 _clip(row.get("doc_id"), 16),
+                _clip(row.get("partial_state"), 24),
                 _clip(title, 64),
                 _clip(row.get("next_action"), 80),
             )

@@ -79,6 +79,29 @@ def _doc_source_mtime(doc_dir: Path) -> float:
     return _latest_mtime(doc_dir / name for name in _SUMMARY_SOURCE_FILES)
 
 
+def _incomplete_doc_state(doc_dir: Path) -> tuple[str, str]:
+    """Classify a corpus folder that has no analysis.json into an action bucket."""
+    if (doc_dir / "discarded.json").exists():
+        return (
+            "discarded",
+            "Already marked discarded; no pipeline retry needed. Archive/remove the folder only if you want a cleaner corpus count.",
+        )
+    if (doc_dir / "preprocess.json").exists() or (doc_dir / "extracted.txt").exists() or (doc_dir / "extracted.md").exists():
+        return (
+            "preprocessed_no_analysis",
+            "Run/retry analysis, enrichment, and embedding; preprocessing artifacts already exist.",
+        )
+    if (doc_dir / "intake.json").exists():
+        return (
+            "intake_only",
+            "Run/retry preprocessing and analysis, or archive/remove this folder if it is a stale partial ingest.",
+        )
+    return (
+        "stub_no_pipeline_artifacts",
+        "Review/archive/remove this stub folder; it has no intake, preprocess, or analysis artifact.",
+    )
+
+
 def _transfer_root(*, mac_studio: bool = False, transfer_root: Path | str | None = None) -> Path:
     if transfer_root:
         return Path(transfer_root).expanduser()
@@ -114,12 +137,14 @@ def _corpus_health(config) -> dict:
     approved_unpushed = sum(int(row.get("approved_unpushed") or 0) for row in rows)
     blockers = sum(int(row.get("blocker_count") or 0) for row in rows)
     quality = sum(int(row.get("quality_count") or 0) for row in rows)
+    doc_by_id = {p.name: p for p in doc_dirs}
     no_analysis_rows = [
         {
             "doc_id": str(row.get("doc_id") or ""),
             "title": str(row.get("title") or ""),
             "source": str(row.get("source") or ""),
-            "next_action": "Run/retry analysis, or archive/remove this incomplete corpus folder if it is a stale partial ingest.",
+            "partial_state": _incomplete_doc_state(doc_by_id.get(str(row.get("doc_id") or ""), corpus_dir / str(row.get("doc_id") or "")))[0],
+            "next_action": _incomplete_doc_state(doc_by_id.get(str(row.get("doc_id") or ""), corpus_dir / str(row.get("doc_id") or "")))[1],
         }
         for row in rows
         if row.get("status") == STATUS_NO_DATA
@@ -160,6 +185,7 @@ def _corpus_health(config) -> dict:
         "stale_archive_summary_docs": stale_summary_docs[:25],
         "latest_source_mtime": latest_source_mtime,
         "readiness": dict(sorted(status_counts.items())),
+        "incomplete_by_state": dict(sorted(Counter(row["partial_state"] for row in no_analysis_rows).items())),
         "readiness_rows": len(rows),
         "blocker_count": blockers,
         "quality_count": quality,

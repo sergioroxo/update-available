@@ -216,11 +216,41 @@ def test_system_health_reports_actionable_corpus_rows(tmp_path, monkeypatch):
     report = system_health.build_system_health(config)
 
     assert report["corpus"]["no_analysis_doc_rows"][0]["doc_id"] == "doc-a"
-    assert "Run/retry analysis" in report["corpus"]["no_analysis_doc_rows"][0]["next_action"]
+    assert report["corpus"]["no_analysis_doc_rows"][0]["partial_state"] == "stub_no_pipeline_artifacts"
+    assert "stub folder" in report["corpus"]["no_analysis_doc_rows"][0]["next_action"]
     assert report["corpus"]["pending_upload_docs"] == ["doc-b"]
     assert report["corpus"]["enrichment_attention_rows"][0]["doc_id"] == "doc-b"
     assert report["corpus"]["enrichment_attention_rows"][0]["pending"] == 1
     assert report["corpus"]["enrichment_attention_rows"][0]["next_action"] == "Review 1 pending proposal(s)"
+
+
+def test_system_health_classifies_incomplete_doc_states(tmp_path, monkeypatch):
+    config = _cfg(tmp_path)
+    discarded = _doc(config.corpus_dir, "doc-discarded", analysis=False)
+    _write_json(discarded / "discarded.json", {"doc_id": "doc-discarded"})
+    intake_only = _doc(config.corpus_dir, "doc-intake", analysis=False)
+    _write_json(intake_only / "intake.json", {"doc_id": "doc-intake"})
+    preprocessed = _doc(config.corpus_dir, "doc-preprocessed", analysis=False)
+    _write_json(preprocessed / "preprocess.json", {"doc_id": "doc-preprocessed"})
+    monkeypatch.setenv("SOURCE_OFFLOAD_TRANSFER_ROOT", str(tmp_path / "transfer"))
+
+    report = system_health.build_system_health(config)
+
+    by_doc = {
+        row["doc_id"]: row
+        for row in report["corpus"]["no_analysis_doc_rows"]
+    }
+    assert by_doc["doc-discarded"]["partial_state"] == "discarded"
+    assert "no pipeline retry needed" in by_doc["doc-discarded"]["next_action"]
+    assert by_doc["doc-intake"]["partial_state"] == "intake_only"
+    assert "preprocessing and analysis" in by_doc["doc-intake"]["next_action"]
+    assert by_doc["doc-preprocessed"]["partial_state"] == "preprocessed_no_analysis"
+    assert "preprocessing artifacts already exist" in by_doc["doc-preprocessed"]["next_action"]
+    assert report["corpus"]["incomplete_by_state"] == {
+        "discarded": 1,
+        "intake_only": 1,
+        "preprocessed_no_analysis": 1,
+    }
 
 
 def test_system_health_flags_document_profile_count_mismatch(tmp_path, monkeypatch):
