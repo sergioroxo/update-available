@@ -48,6 +48,36 @@ def legacy_vocab_dir() -> Path:
     return Path(raw).expanduser() if raw else DEFAULT_LEGACY_VOCAB_DIR
 
 
+def registry_status(vocab_dir: Path | None = None) -> dict:
+    """Return diagnostic status for the legacy vocabulary backing the registry."""
+    configured_dir = vocab_dir or legacy_vocab_dir()
+    csv_path = configured_dir / VOCAB_CSV_NAME
+    env_value = os.getenv("SOGICE_LEGACY_VOCAB_DIR", "")
+    error = ""
+    dir_exists = False
+    csv_exists = False
+    try:
+        dir_exists = configured_dir.exists()
+        csv_exists = csv_path.exists()
+    except OSError as exc:
+        error = str(exc)
+    rows = load_tag_registry(configured_dir) if not error and csv_exists else []
+    return {
+        "available": bool(rows),
+        "env_var": "SOGICE_LEGACY_VOCAB_DIR",
+        "env_value": env_value,
+        "using_default": not bool(env_value),
+        "vocab_dir": str(configured_dir),
+        "csv_name": VOCAB_CSV_NAME,
+        "csv_path": str(csv_path),
+        "dir_exists": dir_exists,
+        "csv_exists": csv_exists,
+        "row_count": len(rows),
+        "searchable_categories": sorted(SEARCHABLE_CATEGORIES),
+        "error": error,
+    }
+
+
 def load_tag_registry(vocab_dir: Path | None = None) -> list[dict]:
     """Load legacy CSV rows plus local researcher overrides."""
     csv_path = (vocab_dir or legacy_vocab_dir()) / VOCAB_CSV_NAME

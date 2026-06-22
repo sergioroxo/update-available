@@ -6968,10 +6968,37 @@ def page_tag_registry():
         "Edits are saved locally as researcher overrides; they do not change Sanity schema."
     )
     try:
-        from runner.pipeline.tag_registry import OVERRIDES_PATH, load_tag_registry, save_tag_override
+        from runner.pipeline.tag_registry import OVERRIDES_PATH, load_tag_registry, registry_status, save_tag_override
     except Exception as exc:
         st.error(f"Could not load tag registry: {exc}")
         return
+
+    status = registry_status()
+    with st.expander("Registry source and enrichment-hint status", expanded=not status.get("available")):
+        s1, s2, s3 = st.columns(3)
+        s1.metric("Registry available", "yes" if status.get("available") else "no")
+        s2.metric("Searchable rows", int(status.get("row_count") or 0))
+        s3.metric("CSV present", "yes" if status.get("csv_exists") else "no")
+        st.caption(
+            "During enrichment, matching tags from this CSV are injected as connection hints, "
+            "not proof. If the registry is unavailable, enrichment still runs but loses these hints."
+        )
+        st.write(f"Expected CSV: `{status.get('csv_path', '')}`")
+        st.write(f"Configured by: `{status.get('env_var', 'SOGICE_LEGACY_VOCAB_DIR')}`")
+        if status.get("env_value"):
+            st.write(f"Current env value: `{status['env_value']}`")
+        else:
+            st.warning(
+                "No `SOGICE_LEGACY_VOCAB_DIR` is set, so the app is using the default historical cloud path. "
+                "Set it in `runner/.env` to a stable local folder containing the vocabulary CSV."
+            )
+        if status.get("error"):
+            st.error(f"Could not access registry path: {status['error']}")
+        if not status.get("csv_exists"):
+            st.code(
+                "SOGICE_LEGACY_VOCAB_DIR=/path/to/Old_Artifact_Bakcup",
+                language="bash",
+            )
 
     if st.button("Reload Tag Registry"):
         st.session_state.pop("tag_registry_rows", None)
@@ -6979,7 +7006,7 @@ def page_tag_registry():
         st.session_state.tag_registry_rows = load_tag_registry()
     rows = st.session_state.tag_registry_rows
     if not rows:
-        st.warning("No tag registry rows found.")
+        st.warning("No tag registry rows found. Check the source/status panel above.")
         return
 
     c1, c2, c3, c4 = st.columns(4)

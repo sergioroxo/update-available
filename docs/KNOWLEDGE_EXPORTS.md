@@ -224,6 +224,11 @@ The pipeline still works without that file. Enrichment simply loses the broad
 tag-registry hints, and the quality report will mark the registry layer as
 unavailable rather than failing the whole export.
 
+Streamlit also shows this directly: open **Tag Registry** and expand
+**Registry source and enrichment-hint status**. It shows the exact CSV path,
+whether the CSV is present, how many searchable rows loaded, and the env var to
+fix when the cloud/legacy path is missing.
+
 ## What To Look For Before Continuing Ingestion
 
 Run:
