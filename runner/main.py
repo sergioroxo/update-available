@@ -3293,20 +3293,33 @@ def research_digest_cmd(
     mac_studio: bool = typer.Option(False, "--mac-studio", help="Use Mac Studio default transfer paths"),
     source_offload_root: str = typer.Option("", "--source-offload-root", help="Override source-offload lifecycle root"),
     transfer_root: str = typer.Option("", "--transfer-root", help="Override shared transfer root"),
+    refresh_all: bool = typer.Option(False, "--refresh-all", help="Refresh profiles, graph, quality report, then digest"),
     refresh_quality: bool = typer.Option(False, "--refresh-quality", help="Refresh knowledge_quality.json before building the digest"),
     json_output: bool = typer.Option(False, "--json", help="Print the full digest JSON after writing it"),
 ):
     """Write a read-only research-work digest over queue/corpus/offload/KG state."""
     config = load_config(llm=None, require_services=False)
-    result = research_digest.write_research_digest(
-        config,
-        out_dir=Path(out_dir).expanduser() if out_dir else None,
-        stamp=stamp or None,
-        mac_studio=mac_studio,
-        source_offload_root=Path(source_offload_root).expanduser() if source_offload_root else None,
-        transfer_root=Path(transfer_root).expanduser() if transfer_root else None,
-        refresh_quality=refresh_quality,
-    )
+    common = {
+        "out_dir": Path(out_dir).expanduser() if out_dir else None,
+        "stamp": stamp or None,
+        "mac_studio": mac_studio,
+        "source_offload_root": Path(source_offload_root).expanduser() if source_offload_root else None,
+        "transfer_root": Path(transfer_root).expanduser() if transfer_root else None,
+    }
+    if refresh_all:
+        refreshed = research_digest.refresh_knowledge_and_digest(config, **common)
+        result = refreshed["digest"]
+        console.print(
+            f"[green]✓ Refreshed profiles, graph, quality report, and research digest[/green] "
+            f"({refreshed['profiles']['count']} profile(s), "
+            f"{refreshed['graph']['edge_count']} edge(s))"
+        )
+    else:
+        result = research_digest.write_research_digest(
+            config,
+            **common,
+            refresh_quality=refresh_quality,
+        )
     digest = result["digest"]
     health = digest.get("system_health") or {}
     queue = digest.get("queue") or {}

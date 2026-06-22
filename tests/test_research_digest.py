@@ -135,6 +135,36 @@ def test_research_digest_dedupes_similar_next_actions():
     assert actions == ["53 enrichment proposal(s) await review."]
 
 
+def test_refresh_knowledge_and_digest_runs_outputs_in_order(tmp_path, monkeypatch):
+    config = _config(tmp_path)
+    calls = []
+
+    def fake_profiles(corpus_dir, exports_dir, *, config, write_doc_summaries, **kwargs):
+        calls.append("profiles")
+        return {"count": 2, "path": str(exports_dir / "knowledge" / "document_profiles.jsonl")}
+
+    def fake_graph(corpus_dir, exports_dir, *, config, include_proposed, **kwargs):
+        calls.append("graph")
+        return {"node_count": 3, "edge_count": 4, "graph_path": str(exports_dir / "knowledge" / "archive_graph.json")}
+
+    def fake_quality(corpus_dir, exports_dir, *, config, **kwargs):
+        calls.append("quality")
+        return {"report": _fake_quality(), "profile_count": 2, "edge_count": 4, "path": str(exports_dir / "knowledge" / "knowledge_quality.json")}
+
+    monkeypatch.setattr(research_digest.archive_summary, "export_document_profiles", fake_profiles)
+    monkeypatch.setattr(research_digest.knowledge_graph, "export_knowledge_graph", fake_graph)
+    monkeypatch.setattr(research_digest.knowledge_quality, "write_knowledge_quality_report", fake_quality)
+    monkeypatch.setattr(research_digest.system_health, "build_system_health", lambda *a, **k: _fake_health())
+    monkeypatch.setattr(research_digest, "_load_quality", lambda *a, **k: _fake_quality())
+
+    result = research_digest.refresh_knowledge_and_digest(config, stamp="20260101T000000Z")
+
+    assert calls == ["profiles", "graph", "quality"]
+    assert result["profiles"]["count"] == 2
+    assert result["graph"]["edge_count"] == 4
+    assert result["digest"]["markdown_path"].endswith("20260101T000000Z_research_digest.md")
+
+
 def test_research_digest_cli_writes_digest(monkeypatch, tmp_path):
     config = _config(tmp_path)
     monkeypatch.setattr(main, "load_config", lambda *a, **k: config)
@@ -146,3 +176,32 @@ def test_research_digest_cli_writes_digest(monkeypatch, tmp_path):
     assert result.exit_code == 0, result.output
     assert "Research digest written" in result.output
     assert (config.exports_dir / "digests" / "20260101T000000Z_research_digest.md").exists()
+
+
+def test_research_digest_cli_refresh_all(monkeypatch, tmp_path):
+    config = _config(tmp_path)
+    monkeypatch.setattr(main, "load_config", lambda *a, **k: config)
+
+    def fake_refresh(config, **kwargs):
+        return {
+            "profiles": {"count": 2},
+            "graph": {"edge_count": 4},
+            "quality": {"profile_count": 2},
+            "digest": {
+                "markdown_path": str(config.exports_dir / "digests" / "digest.md"),
+                "json_path": str(config.exports_dir / "digests" / "digest.json"),
+                "digest": {
+                    "system_health": {"status": "ready"},
+                    "queue": {"counts_by_status": {}, "overnight_safe_count": 0},
+                    "next_actions": ["No immediate blockers or quality warnings found."],
+                },
+            },
+        }
+
+    monkeypatch.setattr(research_digest, "refresh_knowledge_and_digest", fake_refresh)
+
+    result = CliRunner().invoke(main.app, ["research-digest", "--refresh-all"])
+
+    assert result.exit_code == 0, result.output
+    assert "Refreshed profiles, graph, quality report, and research digest" in result.output
+    assert "Research digest written" in result.output

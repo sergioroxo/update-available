@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from runner.pipeline import knowledge_quality, source_queue, system_health
+from runner.pipeline import archive_summary, knowledge_graph, knowledge_quality, source_queue, system_health
 
 DIGEST_DIR = "digests"
 DIGEST_SCHEMA_VERSION = "research-digest-v1.0"
@@ -319,5 +319,57 @@ def write_research_digest(
     return {
         "json_path": str(json_path),
         "markdown_path": str(md_path),
+        "digest": digest,
+    }
+
+
+def refresh_knowledge_and_digest(
+    config,
+    *,
+    out_dir: Path | str | None = None,
+    stamp: str | None = None,
+    mac_studio: bool = False,
+    source_offload_root: Path | str | None = None,
+    transfer_root: Path | str | None = None,
+) -> dict:
+    """Refresh derived KG artifacts in order, then write the digest.
+
+    This is the safest "after import / before review" path:
+
+    1. per-document archive summaries + document_profiles.jsonl
+    2. evidence graph exports
+    3. knowledge_quality.json over the fresh exports
+    4. human-readable research digest
+    """
+    profiles = archive_summary.export_document_profiles(
+        Path(config.corpus_dir),
+        Path(config.exports_dir),
+        config=config,
+        write_doc_summaries=True,
+    )
+    graph = knowledge_graph.export_knowledge_graph(
+        Path(config.corpus_dir),
+        Path(config.exports_dir),
+        config=config,
+        include_proposed=False,
+    )
+    quality = knowledge_quality.write_knowledge_quality_report(
+        Path(config.corpus_dir),
+        Path(config.exports_dir),
+        config=config,
+    )
+    digest = write_research_digest(
+        config,
+        out_dir=out_dir,
+        stamp=stamp,
+        mac_studio=mac_studio,
+        source_offload_root=source_offload_root,
+        transfer_root=transfer_root,
+        refresh_quality=False,
+    )
+    return {
+        "profiles": profiles,
+        "graph": graph,
+        "quality": quality,
         "digest": digest,
     }

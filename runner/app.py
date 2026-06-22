@@ -1051,7 +1051,7 @@ def _research_digest_dir(config) -> Path:
 
 
 def _research_digest_command() -> list[str]:
-    return [sys.executable, "-m", "runner", "research-digest", "--refresh-quality"]
+    return [sys.executable, "-m", "runner", "research-digest", "--refresh-all"]
 
 
 def _latest_research_digest_paths(config) -> dict[str, Path]:
@@ -1088,7 +1088,7 @@ def _research_digest_preview(path: Path) -> dict:
 
 def _run_research_digest_action(config) -> dict:
     from runner.pipeline import research_digest
-    return research_digest.write_research_digest(config, refresh_quality=True)
+    return research_digest.refresh_knowledge_and_digest(config)
 
 
 def _render_research_digest_panel(config) -> None:
@@ -1117,11 +1117,16 @@ def _render_research_digest_panel(config) -> None:
         else:
             st.info("No research digest found yet. Generate one after refreshing knowledge exports.")
 
-        if st.button("Refresh research digest", key="refresh_research_digest"):
+        if st.button("Refresh profiles, graph, quality report, and digest", key="refresh_research_digest"):
             try:
                 result = _run_research_digest_action(config)
-                st.success(f"Wrote `{result['markdown_path']}`")
-                st.caption(f"JSON: `{result['json_path']}`")
+                digest = result["digest"]
+                st.success(
+                    f"Refreshed {result['profiles']['count']} profile(s), "
+                    f"{result['graph']['edge_count']} graph edge(s), and the research digest."
+                )
+                st.caption(f"Digest: `{digest['markdown_path']}`")
+                st.caption(f"JSON: `{digest['json_path']}`")
             except Exception as exc:
                 st.error(f"Could not refresh research digest: {exc}")
         st.caption("Terminal equivalent:")

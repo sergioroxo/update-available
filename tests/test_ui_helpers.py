@@ -634,7 +634,7 @@ def test_research_digest_command_uses_running_python():
         "-m",
         "runner",
         "research-digest",
-        "--refresh-quality",
+        "--refresh-all",
     ]
     assert command[0] != "python3"
 
@@ -845,6 +845,30 @@ def test_research_digest_preview_reads_digest_json(tmp_path):
     assert preview["queue_counts"] == {"ready_to_ingest": 2}
     assert preview["next_actions"] == ["Review pending enrichment."]
     assert preview["quality_recommendations"] == ["Zero-text docs found."]
+
+
+def test_run_research_digest_action_refreshes_full_workflow(monkeypatch, tmp_path):
+    import runner.app as app_mod
+    from runner.pipeline import research_digest
+
+    calls = []
+
+    def fake_refresh(config):
+        calls.append(config)
+        return {
+            "profiles": {"count": 2},
+            "graph": {"edge_count": 4},
+            "quality": {"profile_count": 2},
+            "digest": {"markdown_path": "/tmp/digest.md", "json_path": "/tmp/digest.json"},
+        }
+
+    monkeypatch.setattr(research_digest, "refresh_knowledge_and_digest", fake_refresh)
+    config = SimpleNamespace(corpus_dir=tmp_path / "corpus", exports_dir=tmp_path / "exports")
+
+    result = app_mod._run_research_digest_action(config)
+
+    assert result["graph"]["edge_count"] == 4
+    assert calls == [config]
 
 
 def test_run_knowledge_export_action_refreshes_profiles(monkeypatch, tmp_path):

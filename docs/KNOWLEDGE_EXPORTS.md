@@ -64,8 +64,12 @@ PY=/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest/.venv/bin/python
 "$PY" -m runner archive-summary-export --refresh-sidecars
 "$PY" -m runner knowledge-graph-export
 "$PY" -m runner knowledge-quality-report
-"$PY" -m runner research-digest --refresh-quality
+"$PY" -m runner research-digest --refresh-all
 ```
+
+For normal use after importing or ingesting new documents, the last command is
+enough: `research-digest --refresh-all` refreshes profiles, the evidence graph,
+the quality report, and the digest in the correct order.
 
 For an exploratory graph that includes model-proposed / unreviewed edges:
 
