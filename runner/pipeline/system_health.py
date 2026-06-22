@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -364,6 +366,73 @@ def _transfer_health(*, mac_studio: bool = False, transfer_root: Path | str | No
         "direct_incoming_folders": direct_incoming,
         "direct_incoming_folder_count": len(direct_incoming),
     }
+
+
+def plan_direct_transfer_folder_cleanup(
+    *,
+    mac_studio: bool = False,
+    transfer_root: Path | str | None = None,
+) -> dict:
+    """Plan a safe cleanup for legacy/direct source package transfer folders.
+
+    This is intentionally move-only. Directly synced package folders are risky
+    because partial sync can expose an incomplete tree; the archive path is the
+    preferred transfer mode. Cleanup moves those folders into ``older/`` so the
+    worklist stops treating them as actionable, without deleting research data.
+    """
+    health = _transfer_health(mac_studio=mac_studio, transfer_root=transfer_root)
+    root = Path(health["root"])
+    archive_dir = root / "older" / "direct-transfer-folders"
+    rows = []
+    for row in health.get("direct_incoming_folders") or []:
+        src = Path(str(row.get("path") or ""))
+        rows.append({
+            "package_id": str(row.get("package_id") or src.name),
+            "source": str(src),
+            "destination_parent": str(archive_dir),
+        })
+    return {
+        "root": str(root),
+        "incoming": health["to_mac_studio"],
+        "archive_dir": str(archive_dir),
+        "folders": rows,
+        "count": len(rows),
+    }
+
+
+def move_direct_transfer_folders_to_older(
+    *,
+    mac_studio: bool = False,
+    transfer_root: Path | str | None = None,
+) -> dict:
+    """Move direct transfer folders into ``older/`` and return a move ledger."""
+    plan = plan_direct_transfer_folder_cleanup(
+        mac_studio=mac_studio,
+        transfer_root=transfer_root,
+    )
+    if not plan["folders"]:
+        return {**plan, "moved": []}
+
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    destination_root = Path(plan["archive_dir"]) / stamp
+    moved = []
+    for row in plan["folders"]:
+        source = Path(row["source"])
+        if not source.exists() or not source.is_dir():
+            continue
+        destination = destination_root / source.name
+        suffix = 1
+        while destination.exists():
+            suffix += 1
+            destination = destination_root / f"{source.name}-{suffix}"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(source), str(destination))
+        moved.append({
+            "package_id": row["package_id"],
+            "source": str(source),
+            "destination": str(destination),
+        })
+    return {**plan, "moved": moved}
 
 
 def _knowledge_health(config) -> dict:

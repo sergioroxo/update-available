@@ -3286,6 +3286,59 @@ def system_health_cmd(
         console.print(t)
 
 
+@app.command(name="source-offload-cleanup-transfer")
+def source_offload_cleanup_transfer_cmd(
+    execute: bool = typer.Option(False, "--execute", help="Actually move direct transfer folders into older/"),
+    mac_studio: bool = typer.Option(False, "--mac-studio", help="Use Mac Studio default transfer paths"),
+    transfer_root: str = typer.Option("", "--transfer-root", help="Override shared transfer root"),
+):
+    """Move legacy direct package folders out of transfer/to-mac-studio.
+
+    \b
+    Default is a dry run. With --execute, folders are moved to:
+      <transfer-root>/older/direct-transfer-folders/<timestamp>/<package_id>/
+
+    Nothing is deleted. This clears stale direct-folder warnings while keeping
+    the original data available for inspection.
+    """
+    kwargs = {
+        "mac_studio": mac_studio,
+        "transfer_root": Path(transfer_root).expanduser() if transfer_root else None,
+    }
+    result = (
+        system_health.move_direct_transfer_folders_to_older(**kwargs)
+        if execute
+        else system_health.plan_direct_transfer_folder_cleanup(**kwargs)
+    )
+
+    title = "Direct transfer cleanup" + (" — moved" if execute else " — dry run")
+    console.print(Panel(f"{result['count']} direct folder(s) found", title=title))
+    console.print(f"Transfer root: [dim]{result['root']}[/dim]")
+    console.print(f"Incoming:      [dim]{result['incoming']}[/dim]")
+    console.print(f"Older folder:  [dim]{result['archive_dir']}[/dim]")
+
+    from rich.table import Table as RichTable
+
+    rows = result.get("moved") if execute else result.get("folders")
+    if rows:
+        table = RichTable(show_lines=False)
+        table.add_column("Package")
+        table.add_column("Source")
+        table.add_column("Destination")
+        for row in rows:
+            table.add_row(
+                str(row.get("package_id") or ""),
+                str(row.get("source") or ""),
+                str(row.get("destination") or row.get("destination_parent") or ""),
+            )
+        console.print(table)
+    else:
+        console.print("[green]No direct transfer folders need cleanup.[/green]")
+
+    if not execute and result["count"]:
+        console.print("[yellow]Dry run only. Re-run with --execute to move these folders into older/.[/yellow]")
+
+
 @app.command(name="research-digest")
 def research_digest_cmd(
     out_dir: str = typer.Option("", "--out-dir", help="Output directory (default: exports/digests)"),

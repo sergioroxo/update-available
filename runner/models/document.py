@@ -393,6 +393,39 @@ _DOCUMENT_FORMAT_ALIASES = {
     "webpage": "Website-Page",
     "web-page": "Website-Page",
     "web page": "Website-Page",
+    "blog post": "Blog-Post",
+    "news article": "News-Article",
+    "academic paper": "Academic-Paper",
+    "ngo report": "NGO-Report",
+    "ngo-report": "NGO-Report",
+    "watchdog report": "NGO-Report",
+    "watchdog profile": "NGO-Report",
+    "government report": "Government-Report",
+    "court judgment": "Court-Judgment",
+    "legislative submission": "Legislative-Submission",
+    "parliamentary debate": "Parliamentary-Debate",
+    "press release": "Press-Release",
+    "book chapter": "Book-Chapter",
+    "course material": "Course-Material",
+    "event program": "Event-Program",
+}
+
+_FORMAT_LIKE_TYPE_ALIASES = {
+    "blog post": "Blog-Post",
+    "news article": "News-Article",
+    "academic paper": "Academic-Paper",
+    "ngo report": "NGO-Report",
+    "ngo-report": "NGO-Report",
+    "watchdog report": "NGO-Report",
+    "watchdog profile": "NGO-Report",
+    "government report": "Government-Report",
+    "court judgment": "Court-Judgment",
+    "legislative submission": "Legislative-Submission",
+    "parliamentary debate": "Parliamentary-Debate",
+    "press release": "Press-Release",
+    "book chapter": "Book-Chapter",
+    "course material": "Course-Material",
+    "event program": "Event-Program",
 }
 
 _NARRATIVE_REGISTER_ALIASES = {
@@ -469,10 +502,14 @@ class AnalysisResult(BaseModel):
         #     stance/sensitivity ``type`` field. Preserve the format and infer a
         #     conservative reviewable type from framing_balance when available.
         typ = data.get("type")
-        if isinstance(typ, str) and typ in _DOCUMENT_FORMATS and typ not in _DOCUMENT_TYPES:
+        typ_format = None
+        if isinstance(typ, str):
+            stripped_typ = typ.strip()
+            typ_format = stripped_typ if stripped_typ in _DOCUMENT_FORMATS else _FORMAT_LIKE_TYPE_ALIASES.get(stripped_typ.lower())
+        if typ_format and typ_format not in _DOCUMENT_TYPES:
             if not data.get("format") or data.get("format") == "Other":
-                data["format"] = typ
-                warnings.append(f"Moved format-like type '{typ}' into format.")
+                data["format"] = typ_format
+                warnings.append(f"Moved format-like type '{typ}' into format as '{typ_format}'.")
             framing = str(data.get("framing_balance") or "").strip()
             inferred_type = {
                 "pro-dominant": "Pro-SOGICE",

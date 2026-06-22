@@ -204,6 +204,39 @@ def test_system_health_uses_explicit_transfer_root(tmp_path):
     }]
 
 
+def test_direct_transfer_cleanup_plan_is_move_only(tmp_path):
+    transfer = tmp_path / "transfer"
+    direct = transfer / "to-mac-studio" / "trial-folder"
+    direct.mkdir(parents=True)
+    (direct / "source_manifest.json").write_text("{}", encoding="utf-8")
+
+    plan = system_health.plan_direct_transfer_folder_cleanup(transfer_root=transfer)
+
+    assert plan["count"] == 1
+    assert plan["folders"][0]["package_id"] == "trial-folder"
+    assert plan["folders"][0]["source"] == str(direct)
+    assert plan["folders"][0]["destination_parent"] == str(transfer / "older" / "direct-transfer-folders")
+    assert direct.exists()
+
+
+def test_direct_transfer_cleanup_execute_moves_without_deleting(tmp_path):
+    config = _cfg(tmp_path)
+    transfer = tmp_path / "transfer"
+    direct = transfer / "to-mac-studio" / "trial-folder"
+    direct.mkdir(parents=True)
+    (direct / "source_manifest.json").write_text("{}", encoding="utf-8")
+
+    result = system_health.move_direct_transfer_folders_to_older(transfer_root=transfer)
+
+    assert len(result["moved"]) == 1
+    moved_to = Path(result["moved"][0]["destination"])
+    assert not direct.exists()
+    assert moved_to.exists()
+    assert (moved_to / "source_manifest.json").exists()
+    report = system_health.build_system_health(config, transfer_root=transfer)
+    assert report["transfer"]["direct_incoming_folder_count"] == 0
+
+
 def test_system_health_reports_actionable_corpus_rows(tmp_path, monkeypatch):
     config = _cfg(tmp_path)
     _doc(config.corpus_dir, "doc-a", analysis=False)

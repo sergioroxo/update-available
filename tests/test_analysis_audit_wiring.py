@@ -228,6 +228,22 @@ def test_validate_response_repairs_format_like_type_with_review_flag():
     assert any("format-like document type 'NGO-Report'" in w for w in result.normalisation_warnings)
 
 
+def test_validate_response_repairs_near_miss_format_like_type_with_review_flag():
+    payload = _minimal_payload(
+        type="Watchdog Profile",
+        format="Other",
+        framing_balance="anti-dominant",
+        confidence={"overall": 0.94, "status": "high", "reasons": ["clear"]},
+    )
+
+    result = _validate_response(json.dumps(payload))
+
+    assert result.type == "Anti-SOGICE"
+    assert result.format == "NGO-Report"
+    assert result.needs_review is True
+    assert any("format-like document type 'Watchdog Profile'" in w for w in result.normalisation_warnings)
+
+
 # ---------------------------------------------------------------------------
 # analyze.run() -- llm_flag
 # ---------------------------------------------------------------------------
