@@ -83,19 +83,23 @@ Treat that output as discovery material, not reviewed evidence.
 
 Use Streamlit first:
 
-1. Open **Corpus Intelligence**.
-2. Open **Knowledge exports**.
-3. Read the **Document profile preview** table.
-4. Check the graph node/edge counts and **Evidence strength** counts.
-5. Read **Quality audit preview**. This is the quickest answer to "can I trust
+1. Open **Dashboard** and read **Research Worklist**. This is the quickest
+   "what should I do next?" view.
+2. Click **Refresh worklist** after importing or changing documents. This
+   refreshes archive summaries, the evidence graph, the quality audit, and the
+   digest.
+3. Open **Corpus Intelligence** for the deeper audit.
+4. Open **Knowledge exports**.
+5. Read the **Document profile preview** table.
+6. Check the graph node/edge counts and **Evidence strength** counts.
+7. Read **Quality audit preview**. This is the quickest answer to "can I trust
    the extracted data enough to keep working?"
-6. Open **Documents needing attention** inside the quality preview. It lists the
+8. Open **Documents needing attention** inside the quality preview. It lists the
    concrete document IDs behind the warning counts: zero/low extracted text,
    acquisition challenges, missing core analysis tags, and enrichment proposals
    still awaiting review.
-7. Open **Research digest** for the daily worklist. It is the closest thing to
-   "what should I look at next?" without involving any model or autonomous
-   agent.
+9. Open **Research digest** in Corpus Intelligence when you want to read or
+   download the full Markdown/JSON digest.
 
 The **Research digest** panel is the main human-readable view. It renders the
 latest Markdown digest in the app and provides download buttons for the Markdown

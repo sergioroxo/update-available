@@ -231,6 +231,7 @@ def page_dashboard():
     if pending_upload_count:
         st.warning(f"{pending_upload_count} document(s) are saved locally but not uploaded yet. Go to Pending Upload.")
 
+    _render_dashboard_research_worklist(config)
     _render_system_health_panel(config)
     _dashboard_ingest_readiness(config)
 
@@ -330,6 +331,53 @@ def page_dashboard():
                     st.caption(e)
         else:
             st.success("Verify complete — all services responded.")
+
+
+def _dashboard_digest_action_rows(preview: dict, *, limit: int = 8) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for idx, action in enumerate(preview.get("next_actions") or [], start=1):
+        if len(rows) >= limit:
+            break
+        text = str(action).strip()
+        if not text:
+            continue
+        rows.append({
+            "Order": str(idx),
+            "Next action": text,
+        })
+    return rows
+
+
+def _render_dashboard_research_worklist(config) -> None:
+    st.subheader("Research Worklist")
+    paths = _latest_research_digest_paths(config)
+    preview = _research_digest_preview(paths["json"])
+    if preview:
+        w1, w2, w3 = st.columns(3)
+        w1.metric("Digest status", preview.get("status") or "unknown")
+        w2.metric("Safe queue candidates", preview.get("safe_candidates", 0))
+        w3.metric("Review-flagged queue", preview.get("review_flagged", 0))
+        st.caption(f"Latest digest: `{paths['markdown']}`")
+        rows = _dashboard_digest_action_rows(preview)
+        if rows:
+            st.dataframe(rows, hide_index=True, width="stretch")
+        else:
+            st.success("No digest next actions found.")
+    else:
+        st.info("No research digest found yet. Generate one to get a daily worklist.")
+
+    c1, c2 = st.columns([1, 3])
+    if c1.button("Refresh worklist", key="dashboard_refresh_research_digest"):
+        try:
+            result = _run_research_digest_action(config)
+            st.success(
+                f"Refreshed {result['profiles']['count']} profile(s), "
+                f"{result['graph']['edge_count']} graph edge(s), and the digest."
+            )
+            st.caption(f"Digest: `{result['digest']['markdown_path']}`")
+        except Exception as exc:
+            st.error(f"Could not refresh research worklist: {exc}")
+    c2.caption("This refreshes archive summaries, the evidence graph, the quality audit, and the digest.")
 
 
 def _render_system_health_panel(config, *, mac_studio: bool = False, source_offload_root=None, transfer_root=None):

@@ -867,6 +867,20 @@ def test_research_digest_preview_reads_digest_json(tmp_path):
     assert preview["quality_recommendations"] == ["Zero-text docs found."]
 
 
+def test_dashboard_digest_action_rows_limits_and_numbers_actions():
+    import runner.app as app_mod
+
+    rows = app_mod._dashboard_digest_action_rows(
+        {"next_actions": ["Review enrichment.", "", "Fix tag registry.", "Retry source worker."]},
+        limit=2,
+    )
+
+    assert rows == [
+        {"Order": "1", "Next action": "Review enrichment."},
+        {"Order": "3", "Next action": "Fix tag registry."},
+    ]
+
+
 def test_run_research_digest_action_refreshes_full_workflow(monkeypatch, tmp_path):
     import runner.app as app_mod
     from runner.pipeline import research_digest
