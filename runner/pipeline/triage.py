@@ -265,12 +265,20 @@ def extract_snippet(source: str, max_chars: int = _SNIPPET_CHARS) -> tuple[str, 
             fallback_note = "Trafilatura extraction returned no readable text"
 
         try:
-            import httpx
-            response = httpx.get(source, timeout=15, follow_redirects=True)
-            text = response.text.strip()
-            return text[:max_chars], f"{fallback_note}; fetched {len(text)} raw HTML chars"
-        except Exception as exc:
-            raise RuntimeError(f"{fallback_note}; direct fetch failed: {exc}") from exc
+            from runner.pipeline.acquire import acquire_url
+        except ImportError:
+            from .acquire import acquire_url
+
+        acquired = acquire_url(source, timeout=15)
+        if acquired.ok and acquired.html.strip():
+            text = acquired.html.strip()
+            return text[:max_chars], (
+                f"{fallback_note}; acquired {len(text)} raw HTML chars via "
+                f"{acquired.fetch_tool or 'acquisition fallback'}"
+            )
+
+        detail = acquired.challenge_signal or acquired.note or "no usable document body"
+        raise RuntimeError(f"{fallback_note}; acquisition failed: {detail}")
 
     text = Path(source).read_text(encoding="utf-8", errors="ignore")
     return text[:max_chars], f"Read {len(text)} chars from local file"

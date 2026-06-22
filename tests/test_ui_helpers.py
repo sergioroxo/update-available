@@ -876,8 +876,37 @@ def test_dashboard_digest_action_rows_limits_and_numbers_actions():
     )
 
     assert rows == [
-        {"Order": "1", "Next action": "Review enrichment."},
-        {"Order": "3", "Next action": "Fix tag registry."},
+        {"Order": "1", "Next action": "Review enrichment.", "Suggested page": "Lexicon"},
+        {"Order": "3", "Next action": "Fix tag registry.", "Suggested page": "Tag Registry"},
+    ]
+
+
+def test_dashboard_worklist_suggests_pages_for_live_action_types():
+    import runner.app as app_mod
+
+    actions = [
+        "1 direct package folder(s) in transfer/to-mac-studio; prefer .tar.gz + .sha256 archives.",
+        "53 enrichment proposal(s) await review.",
+        "5 document(s) are incomplete; use system-health to decide retry vs discard.",
+        "4 document(s) have zero extracted text.",
+        "9 analyzed document(s) are missing at least one core tag field.",
+        "Tag registry is unavailable for match auditing/enrichment hints: registry not found",
+        "10 queue item(s) look safe for source-offload export/overnight processing.",
+    ]
+
+    rows = app_mod._dashboard_digest_action_rows({"next_actions": actions}, limit=20)
+
+    assert [row["Suggested page"] for row in rows] == [
+        "Source Offload",
+        "Lexicon",
+        "Corpus Intelligence",
+        "Corpus Intelligence",
+        "Corpus Intelligence",
+        "Tag Registry",
+        "Source Offload",
+    ]
+    assert app_mod._dashboard_worklist_pages(rows) == [
+        "Source Offload", "Lexicon", "Corpus Intelligence", "Tag Registry",
     ]
 
 

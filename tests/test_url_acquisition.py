@@ -279,3 +279,75 @@ def test_regular_ingest_and_worker_share_acquire(monkeypatch, tmp_path):
     pstatus = json.loads((doc_dir / "preservation_status.json").read_text(encoding="utf-8"))
     assert pstatus["preservation_status"] == "capture_needed"
     assert pstatus["suggested_capture_route"] == "browsertrix"
+
+
+# ---------------------------------------------------------------------------
+# Triage snippet acquisition fallback
+# ---------------------------------------------------------------------------
+
+def test_triage_extract_snippet_uses_acquisition_fallback(monkeypatch):
+    from runner.models.document import PreprocessResult
+    from runner.pipeline import acquire as acquire_mod
+    from runner.pipeline import preprocess, triage
+
+    monkeypatch.setattr(
+        preprocess,
+        "_preprocess_url",
+        lambda url: PreprocessResult(
+            doc_id="",
+            tool_used="trafilatura",
+            quality="blocked",
+            text="",
+            acquisition={"note": "empty"},
+        ),
+    )
+    monkeypatch.setattr(
+        acquire_mod,
+        "acquire_url",
+        lambda url, timeout=15: AcquisitionResult(
+            ok=True,
+            html="<html><body>Recovered text for triage</body></html>",
+            fetch_tool="httpx",
+        ),
+    )
+
+    snippet, note = triage.extract_snippet("https://example.org/article")
+
+    assert "Recovered text for triage" in snippet
+    assert "acquired" in note
+    assert "via httpx" in note
+
+
+def test_triage_extract_snippet_reports_acquisition_failure_without_direct_fetch(monkeypatch):
+    from runner.models.document import PreprocessResult
+    from runner.pipeline import acquire as acquire_mod
+    from runner.pipeline import preprocess, triage
+
+    monkeypatch.setattr(
+        preprocess,
+        "_preprocess_url",
+        lambda url: PreprocessResult(
+            doc_id="",
+            tool_used="trafilatura",
+            quality="blocked",
+            text="",
+            acquisition={"note": "empty"},
+        ),
+    )
+    monkeypatch.setattr(
+        acquire_mod,
+        "acquire_url",
+        lambda url, timeout=15: AcquisitionResult(
+            ok=False,
+            fetch_tool="httpx",
+            note="trafilatura.fetch_url returned None; httpx GET failed: certificate verify failed",
+        ),
+    )
+
+    with pytest.raises(RuntimeError) as exc:
+        triage.extract_snippet("https://example.org/article")
+
+    message = str(exc.value)
+    assert "acquisition failed" in message
+    assert "certificate verify failed" in message
+    assert "direct fetch failed" not in message

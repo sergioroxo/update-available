@@ -333,6 +333,30 @@ def page_dashboard():
             st.success("Verify complete — all services responded.")
 
 
+def _dashboard_action_suggested_page(action: str) -> str:
+    text = str(action or "").lower()
+    if "tag registry" in text or "registry not found" in text or "registry is unavailable" in text:
+        return "Tag Registry"
+    if "enrichment proposal" in text or "review enrichment" in text or "lexicon" in text:
+        return "Lexicon"
+    if "transfer/" in text or "source-offload" in text or "source offload" in text or "package" in text:
+        return "Source Offload"
+    if "queue item" in text or "review-flagged queue" in text or "safe for source" in text:
+        return "Source Queue"
+    if (
+        "incomplete" in text
+        or "zero extracted text" in text
+        or "zero-text" in text
+        or "missing at least one core tag" in text
+        or "knowledge" in text
+        or "archive summary" in text
+    ):
+        return "Corpus Intelligence"
+    if "upload" in text:
+        return "Document List"
+    return "Dashboard"
+
+
 def _dashboard_digest_action_rows(preview: dict, *, limit: int = 8) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for idx, action in enumerate(preview.get("next_actions") or [], start=1):
@@ -344,8 +368,18 @@ def _dashboard_digest_action_rows(preview: dict, *, limit: int = 8) -> list[dict
         rows.append({
             "Order": str(idx),
             "Next action": text,
+            "Suggested page": _dashboard_action_suggested_page(text),
         })
     return rows
+
+
+def _dashboard_worklist_pages(rows: list[dict[str, str]]) -> list[str]:
+    page_order = [
+        "Source Offload", "Lexicon", "Corpus Intelligence", "Tag Registry",
+        "Source Queue", "Document List", "Review Inbox", "Dashboard",
+    ]
+    found = {row.get("Suggested page", "") for row in rows}
+    return [page for page in page_order if page in found and page != "Dashboard"]
 
 
 def _render_dashboard_research_worklist(config) -> None:
@@ -361,6 +395,14 @@ def _render_dashboard_research_worklist(config) -> None:
         rows = _dashboard_digest_action_rows(preview)
         if rows:
             st.dataframe(rows, hide_index=True, width="stretch")
+            pages = _dashboard_worklist_pages(rows)
+            if pages:
+                st.caption("Jump to the pages that match today’s worklist:")
+                cols = st.columns(min(len(pages), 4))
+                for idx, page_name in enumerate(pages):
+                    if cols[idx % len(cols)].button(f"Open {page_name}", key=f"dashboard_open_{page_name}"):
+                        st.session_state["_nav_to"] = page_name
+                        st.rerun()
         else:
             st.success("No digest next actions found.")
     else:
