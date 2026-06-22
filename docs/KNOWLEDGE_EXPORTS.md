@@ -78,6 +78,10 @@ Use Streamlit first:
 4. Check the graph node/edge counts and **Evidence strength** counts.
 5. Read **Quality audit preview**. This is the quickest answer to "can I trust
    the extracted data enough to keep working?"
+6. Open **Documents needing attention** inside the quality preview. It lists the
+   concrete document IDs behind the warning counts: zero/low extracted text,
+   acquisition challenges, missing core analysis tags, and enrichment proposals
+   still awaiting review.
 
 The files are written to your configured exports folder, not necessarily the
 repository folder. On Sergio's MacBook that is currently:

@@ -774,6 +774,34 @@ def test_knowledge_quality_preview_reads_quality_report(tmp_path):
     assert preview["recommendations"] == ["Review 3 pending proposal(s)."]
 
 
+def test_knowledge_quality_issue_tables_flatten_actionable_rows():
+    import runner.app as app_mod
+
+    tables = app_mod._knowledge_quality_issue_tables({
+        "extraction": {
+            "zero_text_docs": [{"doc_id": "doc-zero", "char_count": 0}],
+            "low_text_docs": [{"doc_id": "doc-low", "char_count": 250}],
+            "acquisition_challenge_docs": [{"doc_id": "doc-cf", "signal": "cf-mitigated"}],
+        },
+        "tag_coverage": {
+            "missing_core_tag_docs": [
+                {"doc_id": "doc-tags", "missing_fields": ["tactic", "harm"], "title": "Needs tags"}
+            ]
+        },
+        "enrichment": {"docs_needing_review": [{"doc_id": "doc-enrich", "pending": 4}]},
+        "tag_registry": {"top_docs": [{"doc_id": "doc-reg", "match_count": 9}]},
+    })
+
+    assert tables["zero_text_docs"][0]["doc_id"] == "doc-zero"
+    assert tables["low_text_docs"][0]["doc_id"] == "doc-low"
+    assert tables["acquisition_challenge_docs"][0]["doc_id"] == "doc-cf"
+    assert tables["missing_core_tag_docs"] == [
+        {"doc_id": "doc-tags", "missing_fields": "tactic, harm", "title": "Needs tags"}
+    ]
+    assert tables["enrichment_docs_needing_review"][0]["pending"] == 4
+    assert tables["tag_registry_top_docs"][0]["match_count"] == 9
+
+
 def test_run_knowledge_export_action_refreshes_profiles(monkeypatch, tmp_path):
     import runner.app as app_mod
     from runner.pipeline import archive_summary

@@ -1122,6 +1122,38 @@ def _knowledge_quality_preview(path: Path) -> dict:
     }
 
 
+def _knowledge_quality_issue_tables(preview: dict) -> dict[str, list[dict]]:
+    """Return concrete quality rows for Streamlit display.
+
+    The quality report is intentionally broad; this helper keeps the UI focused
+    on the documents a researcher can act on next.
+    """
+    extraction = preview.get("extraction") or {}
+    tag_coverage = preview.get("tag_coverage") or {}
+    enrichment = preview.get("enrichment") or {}
+    tag_registry = preview.get("tag_registry") or {}
+
+    missing_tags = []
+    for row in tag_coverage.get("missing_core_tag_docs") or []:
+        missing = row.get("missing_fields") or []
+        if not isinstance(missing, list):
+            missing = [missing]
+        missing_tags.append({
+            "doc_id": row.get("doc_id", ""),
+            "missing_fields": ", ".join(str(item) for item in missing if str(item).strip()),
+            "title": row.get("title", ""),
+        })
+
+    return {
+        "zero_text_docs": list(extraction.get("zero_text_docs") or []),
+        "low_text_docs": list(extraction.get("low_text_docs") or []),
+        "acquisition_challenge_docs": list(extraction.get("acquisition_challenge_docs") or []),
+        "missing_core_tag_docs": missing_tags,
+        "enrichment_docs_needing_review": list(enrichment.get("docs_needing_review") or []),
+        "tag_registry_top_docs": list(tag_registry.get("top_docs") or []),
+    }
+
+
 def _run_knowledge_export_action(config, action: str) -> dict:
     if action == "profiles":
         from runner.pipeline import archive_summary
@@ -1213,6 +1245,25 @@ def _render_knowledge_exports_panel(config) -> None:
             with st.expander("Quality recommendations"):
                 for item in quality_preview.get("recommendations") or []:
                     st.info(item)
+            issue_tables = _knowledge_quality_issue_tables(quality_preview)
+            with st.expander("Documents needing attention"):
+                shown = False
+                sections = [
+                    ("Zero extracted text", issue_tables["zero_text_docs"]),
+                    ("Low extracted text", issue_tables["low_text_docs"]),
+                    ("Acquisition challenges", issue_tables["acquisition_challenge_docs"]),
+                    ("Missing core analysis tags", issue_tables["missing_core_tag_docs"]),
+                    ("Pending enrichment review", issue_tables["enrichment_docs_needing_review"]),
+                    ("Top tag-registry match docs", issue_tables["tag_registry_top_docs"]),
+                ]
+                for title, rows in sections:
+                    if not rows:
+                        continue
+                    shown = True
+                    st.markdown(f"**{title}**")
+                    st.dataframe(rows, hide_index=True, width="stretch")
+                if not shown:
+                    st.success("No document-level quality issues found in this report.")
             with st.expander("Tag registry and enrichment audit"):
                 tag_registry = quality_preview.get("tag_registry") or {}
                 enrichment = quality_preview.get("enrichment") or {}
