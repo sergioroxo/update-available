@@ -1054,6 +1054,32 @@ def _research_digest_command() -> list[str]:
     return [sys.executable, "-m", "runner", "research-digest", "--refresh-all"]
 
 
+def _read_text_preview(path: Path, *, max_chars: int = 12000) -> str:
+    path = Path(path)
+    if not path.exists():
+        return ""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except Exception:
+        return ""
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars].rstrip() + "\n\n...[preview truncated]"
+
+
+def _download_mime_for_path(path: Path) -> str:
+    suffix = Path(path).suffix.lower()
+    if suffix == ".json":
+        return "application/json"
+    if suffix == ".jsonl":
+        return "application/x-jsonlines"
+    if suffix == ".csv":
+        return "text/csv"
+    if suffix == ".md":
+        return "text/markdown"
+    return "application/octet-stream"
+
+
 def _latest_research_digest_paths(config) -> dict[str, Path]:
     root = _research_digest_dir(config)
     json_files = sorted(root.glob("*_research_digest.json"), key=lambda p: p.stat().st_mtime, reverse=True) if root.exists() else []
@@ -1114,6 +1140,26 @@ def _render_research_digest_panel(config) -> None:
                     "queue_counts": preview.get("queue_counts"),
                     "quality_recommendations": preview.get("quality_recommendations"),
                 })
+            digest_text = _read_text_preview(paths["markdown"], max_chars=10000)
+            if digest_text:
+                with st.expander("Read latest digest Markdown", expanded=True):
+                    st.markdown(digest_text)
+                dl1, dl2 = st.columns(2)
+                dl1.download_button(
+                    "Download digest .md",
+                    data=digest_text.encode("utf-8"),
+                    file_name=paths["markdown"].name,
+                    mime="text/markdown",
+                    key="download_research_digest_md",
+                )
+                if paths["json"].exists():
+                    dl2.download_button(
+                        "Download digest .json",
+                        data=paths["json"].read_bytes(),
+                        file_name=paths["json"].name,
+                        mime="application/json",
+                        key="download_research_digest_json",
+                    )
         else:
             st.info("No research digest found yet. Generate one after refreshing knowledge exports.")
 
@@ -1131,6 +1177,8 @@ def _render_research_digest_panel(config) -> None:
                 st.error(f"Could not refresh research digest: {exc}")
         st.caption("Terminal equivalent:")
         st.code(shlex.join(_research_digest_command()), language="bash")
+        st.caption("Open the digest folder from Terminal:")
+        st.code(f"open {shlex.quote(str(_research_digest_dir(config)))}", language="bash")
 
 
 def _knowledge_profile_preview(path: Path, *, limit: int = 25) -> list[dict]:
@@ -1293,10 +1341,40 @@ def _render_knowledge_exports_panel(config) -> None:
             "The graph files are evidence exports for analysis and visualization, not publication."
         )
         st.write(f"Folder: `{export_dir}`")
+        st.caption(
+            "These files are in your configured data/export folder, not inside the git repo. "
+            "Use the open command or download buttons below if Finder is showing the wrong `exports` directory."
+        )
         with st.expander("What these files are"):
             st.dataframe(_knowledge_export_file_descriptions(), hide_index=True, width="stretch")
         if any(existing.values()):
             st.dataframe(_knowledge_file_status_rows(paths), hide_index=True, width="stretch")
+            with st.expander("Open or download the generated files", expanded=True):
+                st.code(f"open {shlex.quote(str(export_dir))}", language="bash")
+                st.caption(
+                    "`document_profiles.jsonl` is one JSON object per line. "
+                    "Use the preview table for reading, or download it for notebooks / future agent passes."
+                )
+                download_cols = st.columns(3)
+                for idx, path in enumerate(paths.values()):
+                    path = Path(path)
+                    if not path.exists():
+                        continue
+                    download_cols[idx % 3].download_button(
+                        f"Download {path.name}",
+                        data=path.read_bytes(),
+                        file_name=path.name,
+                        mime=_download_mime_for_path(path),
+                        key=f"download_knowledge_{path.name}",
+                    )
+                st.caption("Pretty-print the first JSONL profile in Terminal:")
+                st.code(
+                    "head -1 "
+                    + shlex.quote(str(paths["document_profiles"]))
+                    + " | "
+                    + shlex.join([sys.executable, "-m", "json.tool"]),
+                    language="bash",
+                )
         else:
             st.info("No knowledge export files found yet. Run the commands below to create them.")
 

@@ -97,6 +97,14 @@ Use Streamlit first:
    "what should I look at next?" without involving any model or autonomous
    agent.
 
+The **Research digest** panel is the main human-readable view. It renders the
+latest Markdown digest in the app and provides download buttons for the Markdown
+and JSON files.
+
+The **Knowledge exports** panel is the audit/data view. It shows a table preview
+of `document_profiles.jsonl`, graph counts, quality recommendations, and
+download buttons for every generated knowledge file.
+
 The files are written to your configured exports folder, not necessarily the
 repository folder. On Sergio's MacBook that is currently:
 
@@ -125,6 +133,14 @@ head -1 /Users/sergiogalvaoroxo/Documents/surviving-sogice-done/exports/knowledg
 # Latest human-readable digest
 ls -t /Users/sergiogalvaoroxo/Documents/surviving-sogice-done/exports/digests/*_research_digest.md | head -1
 ```
+
+In practice:
+
+- read the **digest Markdown** when deciding what to do next;
+- read **Knowledge exports → Document profile preview** when checking whether a
+  document's summary looks sensible;
+- use `document_profiles.jsonl` for future agents, notebooks, or graph tooling;
+- use `knowledge_quality.json` when auditing extraction/tag/enrichment quality.
 
 Use Terminal for a quick health check:
 
@@ -230,3 +246,26 @@ The system is in a good working state when:
 
 The health check is intentionally conservative. It does not fix anything by
 itself; it tells you where to look next.
+
+## Current Interpretation Pattern
+
+When the quality report says something like:
+
+- `incomplete` documents: these are corpus folders without `analysis.json`.
+  Use `system-health` to decide whether they are active partials to retry or
+  discarded stubs that can be ignored/archived.
+- `zero extracted text`: these need source/preprocess attention before their
+  summaries or graph nodes are meaningful.
+- `missing core analysis tags`: the document exists, but fields such as tactic,
+  practice, harm, actor, network, or term are sparse. This is a signal to review
+  analysis quality or enrichments, not an automatic failure.
+- `tag registry unavailable`: enrichment still works, but it loses the legacy
+  vocabulary hints used to notice known concepts.
+- `pending enrichment proposals`: these are the proposals awaiting researcher
+  review in Lexicon / Tag Registry-style review screens. They are not pushed to
+  Sanity unless explicitly approved and pushed.
+
+This is the coordination layer proposed in
+`docs/SOLO_RESEARCH_AGENT_SYSTEM_EXPLAINER.md`: deterministic first, researcher
+validation always, model/agent behavior only where it reduces work without
+erasing provenance.

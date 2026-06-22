@@ -639,6 +639,26 @@ def test_research_digest_command_uses_running_python():
     assert command[0] != "python3"
 
 
+def test_read_text_preview_reads_and_truncates(tmp_path):
+    import runner.app as app_mod
+
+    path = tmp_path / "digest.md"
+    path.write_text("abcdef", encoding="utf-8")
+
+    assert app_mod._read_text_preview(path, max_chars=20) == "abcdef"
+    assert app_mod._read_text_preview(path, max_chars=3) == "abc\n\n...[preview truncated]"
+    assert app_mod._read_text_preview(tmp_path / "missing.md") == ""
+
+
+def test_download_mime_for_known_knowledge_files():
+    import runner.app as app_mod
+
+    assert app_mod._download_mime_for_path(Path("document_profiles.jsonl")) == "application/x-jsonlines"
+    assert app_mod._download_mime_for_path(Path("archive_graph.json")) == "application/json"
+    assert app_mod._download_mime_for_path(Path("archive_edges.csv")) == "text/csv"
+    assert app_mod._download_mime_for_path(Path("research_digest.md")) == "text/markdown"
+
+
 def test_knowledge_export_file_descriptions_explain_primary_outputs():
     import runner.app as app_mod
 
