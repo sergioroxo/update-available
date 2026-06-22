@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import re
 from pathlib import Path
 
@@ -17,6 +18,7 @@ DEFAULT_LEGACY_VOCAB_DIR = Path(
     "SurvivingSOGICE/SurvivingSOGICE_Tagger/Old_Artifact_Bakcup"
 )
 OVERRIDES_PATH = _PROJECT_ROOT / "runner" / "data" / "tag_registry_overrides.json"
+VOCAB_CSV_NAME = "sogice_vocabulary_2026-04-03.csv"
 
 SEARCHABLE_CATEGORIES = {
     "Actor",
@@ -35,34 +37,52 @@ SEARCHABLE_CATEGORIES = {
 }
 
 
-def load_tag_registry(vocab_dir: Path = DEFAULT_LEGACY_VOCAB_DIR) -> list[dict]:
+def legacy_vocab_dir() -> Path:
+    """Return the configured legacy vocabulary directory.
+
+    The default lives in a cloud-synced university folder on the original
+    research machine. Letting the path come from the environment keeps local,
+    Mac Studio, and future cloned setups from blocking on that exact mount.
+    """
+    raw = os.getenv("SOGICE_LEGACY_VOCAB_DIR")
+    return Path(raw).expanduser() if raw else DEFAULT_LEGACY_VOCAB_DIR
+
+
+def load_tag_registry(vocab_dir: Path | None = None) -> list[dict]:
     """Load legacy CSV rows plus local researcher overrides."""
-    csv_path = vocab_dir / "sogice_vocabulary_2026-04-03.csv"
-    if not csv_path.exists():
+    csv_path = (vocab_dir or legacy_vocab_dir()) / VOCAB_CSV_NAME
+    try:
+        exists = csv_path.exists()
+    except OSError:
+        return []
+    if not exists:
         return []
 
     rows: list[dict] = []
-    with csv_path.open(encoding="utf-8-sig", newline="") as handle:
-        for raw in csv.DictReader(handle):
-            category = (raw.get("Category") or "").strip()
-            tag = (raw.get("Tag") or "").strip()
-            if category not in SEARCHABLE_CATEGORIES or not tag:
-                continue
-            normalized = _normalize_tag_label(tag)
-            if not normalized:
-                continue
-            rows.append({
-                "key": _tag_key(category, normalized),
-                "category": category,
-                "tag": normalized,
-                "definition": raw.get("Definition", ""),
-                "concept_cluster": raw.get("Concept Cluster", ""),
-                "connections": raw.get("Connections from Archive", ""),
-                "occurrences": _safe_int(raw.get("Occurrences")),
-                "custom": raw.get("Custom", ""),
-                "active": True,
-                "researcher_note": "",
-            })
+    try:
+        with csv_path.open(encoding="utf-8-sig", newline="") as handle:
+            for raw in csv.DictReader(handle):
+                category = (raw.get("Category") or "").strip()
+                tag = (raw.get("Tag") or "").strip()
+                if category not in SEARCHABLE_CATEGORIES or not tag:
+                    continue
+                normalized = _normalize_tag_label(tag)
+                if not normalized:
+                    continue
+                rows.append({
+                    "key": _tag_key(category, normalized),
+                    "category": category,
+                    "tag": normalized,
+                    "definition": raw.get("Definition", ""),
+                    "concept_cluster": raw.get("Concept Cluster", ""),
+                    "connections": raw.get("Connections from Archive", ""),
+                    "occurrences": _safe_int(raw.get("Occurrences")),
+                    "custom": raw.get("Custom", ""),
+                    "active": True,
+                    "researcher_note": "",
+                })
+    except OSError:
+        return []
 
     overrides = _load_overrides()
     for row in rows:
@@ -122,7 +142,11 @@ def format_matches_for_prompt(matches: list[dict], max_total: int = 80) -> str:
 
 
 def _load_overrides() -> dict:
-    if not OVERRIDES_PATH.exists():
+    try:
+        exists = OVERRIDES_PATH.exists()
+    except OSError:
+        return {}
+    if not exists:
         return {}
     try:
         return json.loads(OVERRIDES_PATH.read_text(encoding="utf-8"))

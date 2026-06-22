@@ -174,6 +174,19 @@ say "this document involves a tactic", while an enrichment proposal should say
 deferred graph material until retrieval grounding is enabled, so they do not
 inflate the pending enrichment review count.
 
+If `knowledge_quality.json` says the tag registry is unavailable, the most
+likely cause is that the legacy vocabulary folder is not mounted or is sitting
+behind a cloud-file-provider timeout. Set this in `runner/.env` to a stable
+local folder that contains `sogice_vocabulary_2026-04-03.csv`:
+
+```bash
+SOGICE_LEGACY_VOCAB_DIR=/path/to/Old_Artifact_Bakcup
+```
+
+The pipeline still works without that file. Enrichment simply loses the broad
+tag-registry hints, and the quality report will mark the registry layer as
+unavailable rather than failing the whole export.
+
 ## What To Look For Before Continuing Ingestion
 
 Run:
