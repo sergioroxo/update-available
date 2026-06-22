@@ -10361,56 +10361,112 @@ def _show_text_file(path: Path, language: str = "text") -> None:
 # Guide
 # ---------------------------------------------------------------------------
 
-def page_guide():
-    st.title("Guide")
+def _guide_markdown() -> str:
+    return """
+### Start here
 
-    st.markdown(
-        """
-### What this app does
+Use **Dashboard → Research Worklist** first. It is the daily cockpit: it
+summarizes source queue state, Mac Studio/source-offload state, corpus health,
+knowledge-export freshness, extraction quality, tag coverage, and pending
+enrichment work. Click **Refresh worklist** after imports or new ingests.
 
-The app is the ingestion cockpit. A document moves through five stages:
+Use **Corpus Intelligence → Knowledge exports** for the deeper audit:
+`archive_summary.json`, `document_profiles.jsonl`, the evidence graph, and
+`knowledge_quality.json`.
 
-1. **Intake** creates a document ID, detects source type, creates the local folder, and captures archive metadata when possible.
-2. **Extract** turns a URL, PDF, transcript, or file into readable text for review. URL ingests also keep a local `source.html` snapshot.
-3. **Analyze** sends the extracted text to the selected model and returns structured JSON.
-4. **Review** is where you edit and validate the JSON before it becomes part of the archive.
-5. **Upload / Enrich** writes reviewed documents to Sanity/Supabase and optionally proposes registry/document-asset updates.
-6. **Resolve proposals** approves or rejects enrichment findings. This queue is non-blocking, but approved terms, entities, tactics, practices, and claims should be pushed to Sanity when ready so future runs use the updated living lexicon and registries.
+### Normal MacBook workflow
 
-### Which page to use
+1. **Source Queue** — add/triage URLs and decide what is safe for unattended
+   processing. Review-flagged items need researcher attention before offload.
+2. **Source Offload → Export** — build a `source_package` for queue items,
+   ad-hoc URLs, files, or browser-saved snapshots.
+3. **Source Offload → Transfer & worker** — move the package to the Mac Studio
+   using archive transfer or the shared transfer folder.
+4. **Mac Studio Worker** — on the Mac Studio, unpack incoming archives, run
+   `source-worker`, and archive completed `outbox` packages back.
+5. **Source Offload → Import results** — on the MacBook, unpack returned
+   archives, dry-run import, then import into the live corpus. This relinks the
+   source queue only after the corpus import succeeds.
+6. **Document List / Review Inbox** — inspect imported docs, clear review holds
+   such as testimony/legal/low-confidence markers, and upload only when ready.
+7. **Lexicon / Tag Registry** — approve/reject enrichment proposals and check
+   registry hints. Tag registry matches are connection hints, not proof.
+8. **Dashboard → Refresh worklist** — rebuild summaries, graph, quality audit,
+   and digest so the next action list reflects the new state.
 
-- **Ingest Workbench**: run a new document through the pipeline.
-- **Document List**: browse local analyses and enrichment counts.
-- **Pending Upload**: find documents saved locally but not sent to Sanity.
-- **Lexicon**: inspect current terms, registry entities, approve/reject local proposals, preview seed lexicon imports, and push approved proposal records to Sanity.
-- **Tag Registry**: inspect/edit local tags used as enrichment connection hints.
-- **Testimony Review**: handle testimony flags, consent status, public-display decisions, and researcher notes.
-- **Activity Log**: see what happened for each document, including Wayback metadata and local HTML snapshots.
-- **Model Routing**: decide which model to use.
-- **Triage Tool**: quick routing only; it is not a substitute for ingestion.
+### Direct local ingest
 
-### Model choice
+Use **Ingest Workbench** for one-off local runs on the MacBook. It follows the
+same core stages: intake, preprocess/extract, analyze, enrich, review, upload.
+For long/heavy runs, prefer Source Offload so the Mac Studio does the model
+work.
 
-- Use `litelm` for normal web pages and most articles.
-- Use `litelm-heavy` for long PDFs, books, transcripts, or reports.
-- Use `litelm-reasoning` when relevance is ambiguous.
-- Use `claude` for legal/court/high-stakes final classification.
-- Use `local` only when the Mac Studio or APIs are unavailable.
+### What each page is for
+
+- **Dashboard**: daily worklist, system health, setup status, and service checks.
+- **Review Inbox**: cross-document review queues grouped by readiness.
+- **Corpus Intelligence**: corpus summaries, knowledge exports, graph/quality
+  audit, and the full research digest.
+- **Source Queue**: source backlog and triage state.
+- **Source Offload**: MacBook side of export/transfer/import.
+- **Mac Studio Worker**: Mac Studio side of unpack/run/archive.
+- **Document List**: inspect imported/analyzed documents and handle upload
+  readiness.
+- **Pending Upload**: documents saved locally but not uploaded to Sanity.
+- **Lexicon**: review enrichment proposals and push approved terms/entities/
+  tactics/practices/claims.
+- **Tag Registry**: inspect/edit broad vocabulary used as enrichment hints and
+  confirm the legacy CSV source path.
+- **Testimony Review**: consent/public-display decisions.
+- **Activity Log**: local artifacts, audit files, HTML snapshots, embeddings,
+  and provenance.
+
+### Model routing
+
+- Analysis route `litelm` normally uses the standard analysis alias.
+- Use `litelm-heavy` / `core-gemma` for heavier enrichment or long documents
+  when configured.
+- Embedding uses `research-embedding`.
+- Use **Model Routing** and **Mac Studio Node** when service/model state looks
+  wrong.
+
+### Tags, enrichment, and evidence
+
+There are three layers:
+
+1. **Analysis tags** in `analysis.json`: document-level classification fields
+   such as tactic, practice, harm, actor, network, term, country, and language.
+2. **Tag Registry matches**: broad legacy/local vocabulary injected into
+   enrichment prompts as hints. They help the model notice known concepts, but
+   are not evidence.
+3. **Enrichment proposals** in `enrichment.json`: reviewable terms/entities/
+   tactics/practices/claims. Approved quote-backed proposals become stronger
+   evidence graph edges.
+
+If the quality audit says the tag registry is unavailable, open **Tag Registry
+→ Registry source and enrichment-hint status** and set
+`SOGICE_LEGACY_VOCAB_DIR` in `runner/.env` to the folder containing
+`sogice_vocabulary_2026-04-03.csv`.
 
 ### Troubleshooting
 
-- If extraction is under 500 characters, the source may be blocked or mostly boilerplate. Paste text manually or download the source as a file.
-- If analysis fails, check the service status on Dashboard and confirm the required API key for the selected model is in `runner/.env`.
-- If upload fails, check Sanity/Supabase credentials and use Activity Log to verify the local `analysis.json` was saved.
-- If JSON validation fails, fix the specific field named in the error. Most failures are invalid controlled-vocabulary values or malformed arrays.
-- If the enrichment queue is growing, open Lexicon → Local Proposals. Approve/reject proposals and push approved records when you are ready.
-- If the starting lexicon needs to be loaded, open Lexicon → Seed Import Preview. Review the draft/validated recommendation, edit definitions if needed, select rows, and push them to Sanity.
-- If translations/regional terms need to be attached, open Lexicon → Variant Import Preview. Canonical terms must exist in Sanity before variants can attach.
-- If older tagger vocabulary needs review, open Lexicon → Legacy Vocabulary Preview. It imports pending April 2026 glossary entries as draft and skips rows already present in the current seed lexicon.
-- If broader tags need review, open Tag Registry. These tags are matched against document text during enrichment to suggest possible actors, networks, practices, tactics, harms, and evidence links.
-- If testimony upload is blocked, open Testimony Review and record consent status. Public display is allowed only with confirmed consent.
+- If extraction is empty or tiny, the source may be blocked, dynamic, or mostly
+  boilerplate. Use a browser-saved HTML/PDF snapshot attached to the queue item.
+- If a worker package fails, read its `worker_report.json`; failed documents are
+  not relinked as ingested.
+- If returned packages appear in the wrong folder, use Source Offload import
+  diagnostics or the archive/unpack flow rather than moving folders by hand.
+- If upload is blocked, check Document List / Review Inbox for testimony,
+  legal, low-confidence, embedding, or missing-artifact holds.
+- If Lexicon/Sanity mutations fail because a source document is missing, upload
+  the source document first, then push proposals.
+- If the worklist says knowledge exports are stale, click **Refresh worklist**.
 """
-    )
+
+
+def page_guide():
+    st.title("Guide")
+    st.markdown(_guide_markdown())
 
 
 # ---------------------------------------------------------------------------

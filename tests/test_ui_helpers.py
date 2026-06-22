@@ -881,6 +881,26 @@ def test_dashboard_digest_action_rows_limits_and_numbers_actions():
     ]
 
 
+def test_guide_markdown_covers_current_end_to_end_workflow():
+    import runner.app as app_mod
+
+    guide = app_mod._guide_markdown()
+
+    for phrase in [
+        "Dashboard → Research Worklist",
+        "Source Queue",
+        "Source Offload → Export",
+        "Mac Studio Worker",
+        "Source Offload → Import results",
+        "Document List / Review Inbox",
+        "Knowledge exports",
+        "Tag Registry matches",
+        "SOGICE_LEGACY_VOCAB_DIR",
+        "browser-saved HTML/PDF snapshot",
+    ]:
+        assert phrase in guide
+
+
 def test_run_research_digest_action_refreshes_full_workflow(monkeypatch, tmp_path):
     import runner.app as app_mod
     from runner.pipeline import research_digest
