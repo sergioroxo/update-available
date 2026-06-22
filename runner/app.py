@@ -729,6 +729,7 @@ def page_corpus_intelligence():
     c3.metric("Uploaded", int(df["uploaded"].sum()))
     c4.metric("With annotations", int((df["annotationCount"] > 0).sum()))
 
+    _render_research_digest_panel(config)
     _render_knowledge_exports_panel(config)
 
     with st.expander("Filters", expanded=True):
@@ -1043,6 +1044,88 @@ def _system_health_source_package_rows(report: dict) -> list[dict[str, str]]:
                 "path": str(item.get("path") or ""),
             })
     return rows
+
+
+def _research_digest_dir(config) -> Path:
+    return Path(config.exports_dir) / "digests"
+
+
+def _research_digest_command() -> list[str]:
+    return [sys.executable, "-m", "runner", "research-digest", "--refresh-quality"]
+
+
+def _latest_research_digest_paths(config) -> dict[str, Path]:
+    root = _research_digest_dir(config)
+    json_files = sorted(root.glob("*_research_digest.json"), key=lambda p: p.stat().st_mtime, reverse=True) if root.exists() else []
+    md_files = sorted(root.glob("*_research_digest.md"), key=lambda p: p.stat().st_mtime, reverse=True) if root.exists() else []
+    return {
+        "json": json_files[0] if json_files else root / "latest_research_digest.json",
+        "markdown": md_files[0] if md_files else root / "latest_research_digest.md",
+    }
+
+
+def _research_digest_preview(path: Path) -> dict:
+    path = Path(path)
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    health = payload.get("system_health") or {}
+    queue = payload.get("queue") or {}
+    quality = payload.get("knowledge_quality") or {}
+    return {
+        "generated_at": payload.get("generated_at", ""),
+        "status": health.get("status", ""),
+        "next_actions": payload.get("next_actions") or [],
+        "queue_counts": queue.get("counts_by_status") or {},
+        "safe_candidates": queue.get("overnight_safe_count", 0),
+        "review_flagged": queue.get("review_flagged_count", 0),
+        "quality_recommendations": quality.get("recommendations") or [],
+    }
+
+
+def _run_research_digest_action(config) -> dict:
+    from runner.pipeline import research_digest
+    return research_digest.write_research_digest(config, refresh_quality=True)
+
+
+def _render_research_digest_panel(config) -> None:
+    paths = _latest_research_digest_paths(config)
+    with st.expander("Research digest", expanded=False):
+        st.caption(
+            "A read-only daily coordination report over source queue, corpus, "
+            "Mac Studio transfer/offload state, and knowledge quality."
+        )
+        st.write(f"Folder: `{_research_digest_dir(config)}`")
+        preview = _research_digest_preview(paths["json"])
+        if preview:
+            d1, d2, d3 = st.columns(3)
+            d1.metric("Digest status", preview.get("status") or "unknown")
+            d2.metric("Safe queue candidates", preview.get("safe_candidates", 0))
+            d3.metric("Review-flagged queue", preview.get("review_flagged", 0))
+            st.caption(f"Latest digest: `{paths['markdown']}`")
+            with st.expander("Digest next actions"):
+                for item in preview.get("next_actions") or []:
+                    st.info(item)
+            with st.expander("Queue and quality snapshot"):
+                st.json({
+                    "queue_counts": preview.get("queue_counts"),
+                    "quality_recommendations": preview.get("quality_recommendations"),
+                })
+        else:
+            st.info("No research digest found yet. Generate one after refreshing knowledge exports.")
+
+        if st.button("Refresh research digest", key="refresh_research_digest"):
+            try:
+                result = _run_research_digest_action(config)
+                st.success(f"Wrote `{result['markdown_path']}`")
+                st.caption(f"JSON: `{result['json_path']}`")
+            except Exception as exc:
+                st.error(f"Could not refresh research digest: {exc}")
+        st.caption("Terminal equivalent:")
+        st.code(shlex.join(_research_digest_command()), language="bash")
 
 
 def _knowledge_profile_preview(path: Path, *, limit: int = 25) -> list[dict]:

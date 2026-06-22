@@ -22,6 +22,8 @@ Corpus-wide:
 - `exports/knowledge/archive_edges.csv`
 - `exports/knowledge/archive_graph.json`
 - `exports/knowledge/knowledge_quality.json`
+- `exports/digests/<timestamp>_research_digest.md`
+- `exports/digests/<timestamp>_research_digest.json`
 
 `archive_summary.json` is an index card beside the document. It summarizes
 source metadata, extracted content metadata, analysis classification, review
@@ -38,6 +40,10 @@ not a public claim of truth.
 `knowledge_quality.json` is the trust/readiness audit over those exports. It
 summarizes extraction quality, tag coverage, tag-registry matches, enrichment
 review load, and how much of the graph is quote-backed.
+
+The research digest is the human worklist. It combines `system-health`,
+`knowledge_quality.json`, source-queue counts, source-offload lifecycle state,
+and Mac Studio transfer state into a short Markdown report.
 
 ## How To Refresh
 
@@ -58,6 +64,7 @@ PY=/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest/.venv/bin/python
 "$PY" -m runner archive-summary-export --refresh-sidecars
 "$PY" -m runner knowledge-graph-export
 "$PY" -m runner knowledge-quality-report
+"$PY" -m runner research-digest --refresh-quality
 ```
 
 For an exploratory graph that includes model-proposed / unreviewed edges:
@@ -82,6 +89,9 @@ Use Streamlit first:
    concrete document IDs behind the warning counts: zero/low extracted text,
    acquisition challenges, missing core analysis tags, and enrichment proposals
    still awaiting review.
+7. Open **Research digest** for the daily worklist. It is the closest thing to
+   "what should I look at next?" without involving any model or autonomous
+   agent.
 
 The files are written to your configured exports folder, not necessarily the
 repository folder. On Sergio's MacBook that is currently:
@@ -107,6 +117,9 @@ head -1 /Users/sergiogalvaoroxo/Documents/surviving-sogice-done/exports/knowledg
 
 # Quality audit, pretty printed
 "$PY" -m json.tool /Users/sergiogalvaoroxo/Documents/surviving-sogice-done/exports/knowledge/knowledge_quality.json
+
+# Latest human-readable digest
+ls -t /Users/sergiogalvaoroxo/Documents/surviving-sogice-done/exports/digests/*_research_digest.md | head -1
 ```
 
 Use Terminal for a quick health check:

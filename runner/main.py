@@ -20,7 +20,7 @@ from rich.panel import Panel
 
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
-from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion, archive_summary, knowledge_graph, knowledge_quality, system_health
+from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion, archive_summary, knowledge_graph, knowledge_quality, system_health, research_digest
 from .pipeline import search as search_mod
 from .pipeline.system_tools import tool_path
 
@@ -3284,6 +3284,47 @@ def system_health_cmd(
                 "Prefer archive transfer (.tar.gz + .sha256)",
             )
         console.print(t)
+
+
+@app.command(name="research-digest")
+def research_digest_cmd(
+    out_dir: str = typer.Option("", "--out-dir", help="Output directory (default: exports/digests)"),
+    stamp: str = typer.Option("", "--stamp", help="Filename timestamp override for deterministic tests"),
+    mac_studio: bool = typer.Option(False, "--mac-studio", help="Use Mac Studio default transfer paths"),
+    source_offload_root: str = typer.Option("", "--source-offload-root", help="Override source-offload lifecycle root"),
+    transfer_root: str = typer.Option("", "--transfer-root", help="Override shared transfer root"),
+    refresh_quality: bool = typer.Option(False, "--refresh-quality", help="Refresh knowledge_quality.json before building the digest"),
+    json_output: bool = typer.Option(False, "--json", help="Print the full digest JSON after writing it"),
+):
+    """Write a read-only research-work digest over queue/corpus/offload/KG state."""
+    config = load_config(llm=None, require_services=False)
+    result = research_digest.write_research_digest(
+        config,
+        out_dir=Path(out_dir).expanduser() if out_dir else None,
+        stamp=stamp or None,
+        mac_studio=mac_studio,
+        source_offload_root=Path(source_offload_root).expanduser() if source_offload_root else None,
+        transfer_root=Path(transfer_root).expanduser() if transfer_root else None,
+        refresh_quality=refresh_quality,
+    )
+    digest = result["digest"]
+    health = digest.get("system_health") or {}
+    queue = digest.get("queue") or {}
+    console.print(
+        f"[green]✓ Research digest written[/green] "
+        f"status={health.get('status', 'unknown')} → [dim]{result['markdown_path']}[/dim]"
+    )
+    console.print(f"  JSON: [dim]{result['json_path']}[/dim]")
+    console.print(
+        f"  queue={queue.get('counts_by_status', {})}  "
+        f"safe_candidates={queue.get('overnight_safe_count', 0)}"
+    )
+    for item in digest.get("next_actions", [])[:8]:
+        console.print(f"  • {item}")
+    if json_output:
+        payload = dict(digest)
+        payload.pop("markdown", None)
+        console.print_json(data=payload)
 
 
 @app.command(name="stats")

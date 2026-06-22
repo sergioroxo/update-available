@@ -624,6 +624,21 @@ def test_knowledge_export_commands_use_running_python_and_expected_cli():
     assert all(cmd[0] != "python3" for cmd in commands.values())
 
 
+def test_research_digest_command_uses_running_python():
+    import runner.app as app_mod
+
+    command = app_mod._research_digest_command()
+
+    assert command == [
+        app_mod.sys.executable,
+        "-m",
+        "runner",
+        "research-digest",
+        "--refresh-quality",
+    ]
+    assert command[0] != "python3"
+
+
 def test_knowledge_export_file_descriptions_explain_primary_outputs():
     import runner.app as app_mod
 
@@ -800,6 +815,36 @@ def test_knowledge_quality_issue_tables_flatten_actionable_rows():
     ]
     assert tables["enrichment_docs_needing_review"][0]["pending"] == 4
     assert tables["tag_registry_top_docs"][0]["match_count"] == 9
+
+
+def test_research_digest_preview_reads_digest_json(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    path = tmp_path / "20260101T000000Z_research_digest.json"
+    path.write_text(
+        json.dumps({
+            "generated_at": "2026-01-01T00:00:00+00:00",
+            "next_actions": ["Review pending enrichment."],
+            "system_health": {"status": "needs_attention"},
+            "queue": {
+                "counts_by_status": {"ready_to_ingest": 2},
+                "overnight_safe_count": 2,
+                "review_flagged_count": 1,
+            },
+            "knowledge_quality": {"recommendations": ["Zero-text docs found."]},
+        }),
+        encoding="utf-8",
+    )
+
+    preview = app_mod._research_digest_preview(path)
+
+    assert preview["status"] == "needs_attention"
+    assert preview["safe_candidates"] == 2
+    assert preview["review_flagged"] == 1
+    assert preview["queue_counts"] == {"ready_to_ingest": 2}
+    assert preview["next_actions"] == ["Review pending enrichment."]
+    assert preview["quality_recommendations"] == ["Zero-text docs found."]
 
 
 def test_run_knowledge_export_action_refreshes_profiles(monkeypatch, tmp_path):
