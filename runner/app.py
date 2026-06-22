@@ -921,6 +921,7 @@ def _knowledge_export_paths(config) -> dict[str, Path]:
         "nodes": root / "archive_nodes.csv",
         "edges": root / "archive_edges.csv",
         "graph": root / "archive_graph.json",
+        "quality": root / "knowledge_quality.json",
     }
 
 
@@ -929,6 +930,7 @@ def _knowledge_export_commands() -> dict[str, list[str]]:
         "profiles": [sys.executable, "-m", "runner", "archive-summary-export", "--refresh-sidecars"],
         "graph": [sys.executable, "-m", "runner", "knowledge-graph-export"],
         "graph_proposed": [sys.executable, "-m", "runner", "knowledge-graph-export", "--include-proposed"],
+        "quality": [sys.executable, "-m", "runner", "knowledge-quality-report"],
     }
 
 
@@ -958,6 +960,11 @@ def _knowledge_export_file_descriptions() -> list[dict[str, str]]:
             "File": "archive_graph.json",
             "Where": "exports/knowledge/",
             "Use": "The same graph as JSON for custom visualization, notebooks, and later GraphML/network tooling.",
+        },
+        {
+            "File": "knowledge_quality.json",
+            "Where": "exports/knowledge/",
+            "Use": "Read-only audit of extraction quality, analysis tag coverage, tag-registry matches, enrichment review load, and graph evidence strength.",
         },
     ]
 
@@ -1094,6 +1101,27 @@ def _knowledge_graph_preview(path: Path) -> dict:
     }
 
 
+def _knowledge_quality_preview(path: Path) -> dict:
+    path = Path(path)
+    if not path.exists():
+        return {}
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(report, dict):
+        return {}
+    return {
+        "profiles": report.get("profiles") or {},
+        "extraction": report.get("extraction") or {},
+        "tag_coverage": report.get("tag_coverage") or {},
+        "tag_registry": report.get("tag_registry") or {},
+        "enrichment": report.get("enrichment") or {},
+        "graph": report.get("graph") or {},
+        "recommendations": report.get("recommendations") or [],
+    }
+
+
 def _run_knowledge_export_action(config, action: str) -> dict:
     if action == "profiles":
         from runner.pipeline import archive_summary
@@ -1118,6 +1146,13 @@ def _run_knowledge_export_action(config, action: str) -> dict:
             Path(config.exports_dir),
             config=config,
             include_proposed=True,
+        )
+    if action == "quality":
+        from runner.pipeline import knowledge_quality
+        return knowledge_quality.write_knowledge_quality_report(
+            Path(config.corpus_dir),
+            Path(config.exports_dir),
+            config=config,
         )
     raise ValueError(f"unknown knowledge export action: {action}")
 
@@ -1164,9 +1199,45 @@ def _render_knowledge_exports_panel(config) -> None:
                 st.write("Evidence strength")
                 st.json(graph_preview["evidence_strength"])
 
+        quality_preview = _knowledge_quality_preview(paths["quality"])
+        if quality_preview:
+            st.markdown("**Quality audit preview**")
+            profiles = quality_preview.get("profiles") or {}
+            extraction = quality_preview.get("extraction") or {}
+            graph_quality = quality_preview.get("graph") or {}
+            q1, q2, q3, q4 = st.columns(4)
+            q1.metric("Profiles", profiles.get("count", 0))
+            q2.metric("Incomplete", profiles.get("incomplete", 0))
+            q3.metric("Zero-text docs", len(extraction.get("zero_text_docs") or []))
+            q4.metric("Quote-backed edges", (graph_quality.get("evidence_strength") or {}).get("quote_backed", 0))
+            with st.expander("Quality recommendations"):
+                for item in quality_preview.get("recommendations") or []:
+                    st.info(item)
+            with st.expander("Tag registry and enrichment audit"):
+                tag_registry = quality_preview.get("tag_registry") or {}
+                enrichment = quality_preview.get("enrichment") or {}
+                tag_coverage = quality_preview.get("tag_coverage") or {}
+                st.caption(
+                    "Tag registry matches are used during enrichment as connection hints, not proof. "
+                    "Evidence graph edges from enrichment remain separate and quote-backed when possible."
+                )
+                st.json({
+                    "tag_registry": {
+                        "available": tag_registry.get("available"),
+                        "registry_rows": tag_registry.get("registry_rows"),
+                        "docs_scanned": tag_registry.get("docs_scanned"),
+                        "docs_with_matches": tag_registry.get("docs_with_matches"),
+                        "category_matches": tag_registry.get("category_matches"),
+                        "mode": tag_registry.get("mode"),
+                    },
+                    "analysis_tag_coverage": tag_coverage.get("fields"),
+                    "enrichment_lifecycle": enrichment.get("lifecycle"),
+                    "enrichment_family_counts": enrichment.get("family_counts"),
+                })
+
         cmds = _knowledge_export_commands()
         st.markdown("**Build / refresh**")
-        b1, b2, b3 = st.columns(3)
+        b1, b2, b3, b4 = st.columns(4)
         if b1.button("Refresh profiles", key="kg_refresh_profiles"):
             try:
                 result = _run_knowledge_export_action(config, "profiles")
@@ -1190,10 +1261,21 @@ def _render_knowledge_exports_panel(config) -> None:
                 )
             except Exception as exc:
                 st.error(f"Could not refresh exploratory graph: {exc}")
+        if b4.button("Refresh quality report", key="kg_refresh_quality"):
+            try:
+                result = _run_knowledge_export_action(config, "quality")
+                st.success(
+                    f"Refreshed quality report: {result['profile_count']} profile(s), "
+                    f"{result['edge_count']} edge(s)."
+                )
+                st.caption(f"Wrote `{result['path']}`.")
+            except Exception as exc:
+                st.error(f"Could not refresh quality report: {exc}")
 
         st.caption("Terminal equivalents:")
         st.code(shlex.join(cmds["profiles"]), language="bash")
         st.code(shlex.join(cmds["graph"]), language="bash")
+        st.code(shlex.join(cmds["quality"]), language="bash")
 
         with st.expander("Exploratory graph command"):
             st.caption("Includes model-proposed/unreviewed edges. Use for discovery, not as reviewed evidence.")

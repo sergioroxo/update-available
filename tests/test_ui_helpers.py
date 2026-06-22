@@ -585,6 +585,7 @@ def test_knowledge_export_paths_are_named_outputs(tmp_path):
         "nodes": tmp_path / "exports" / "knowledge" / "archive_nodes.csv",
         "edges": tmp_path / "exports" / "knowledge" / "archive_edges.csv",
         "graph": tmp_path / "exports" / "knowledge" / "archive_graph.json",
+        "quality": tmp_path / "exports" / "knowledge" / "knowledge_quality.json",
     }
 
 
@@ -613,6 +614,12 @@ def test_knowledge_export_commands_use_running_python_and_expected_cli():
         "knowledge-graph-export",
         "--include-proposed",
     ]
+    assert commands["quality"] == [
+        app_mod.sys.executable,
+        "-m",
+        "runner",
+        "knowledge-quality-report",
+    ]
     assert all(cmd[0] == app_mod.sys.executable for cmd in commands.values())
     assert all(cmd[0] != "python3" for cmd in commands.values())
 
@@ -628,8 +635,10 @@ def test_knowledge_export_file_descriptions_explain_primary_outputs():
     assert "archive_nodes.csv" in files
     assert "archive_edges.csv" in files
     assert "archive_graph.json" in files
+    assert "knowledge_quality.json" in files
     assert "one json line per document" in files["document_profiles.jsonl"]["Use"].lower()
     assert "provenance" in files["archive_edges.csv"]["Use"]
+    assert "extraction quality" in files["knowledge_quality.json"]["Use"].lower()
 
 
 def test_knowledge_file_status_rows_include_modified_time(tmp_path):
@@ -739,6 +748,32 @@ def test_knowledge_graph_preview_counts_nodes_and_edges(tmp_path):
     assert preview["evidence_strength"] == {"classification_tag": 2, "quote_backed": 1}
 
 
+def test_knowledge_quality_preview_reads_quality_report(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    path = tmp_path / "knowledge_quality.json"
+    path.write_text(
+        json.dumps({
+            "profiles": {"count": 2, "incomplete": 1},
+            "extraction": {"zero_text_docs": [{"doc_id": "doc-empty"}]},
+            "tag_coverage": {"fields": {"tactic": {"docs_with_values": 1}}},
+            "tag_registry": {"available": True, "mode": "connection_hints_not_proof"},
+            "enrichment": {"lifecycle": {"pending": 3}},
+            "graph": {"evidence_strength": {"quote_backed": 2}},
+            "recommendations": ["Review 3 pending proposal(s)."],
+        }),
+        encoding="utf-8",
+    )
+
+    preview = app_mod._knowledge_quality_preview(path)
+
+    assert preview["profiles"]["count"] == 2
+    assert preview["extraction"]["zero_text_docs"][0]["doc_id"] == "doc-empty"
+    assert preview["tag_registry"]["mode"] == "connection_hints_not_proof"
+    assert preview["recommendations"] == ["Review 3 pending proposal(s)."]
+
+
 def test_run_knowledge_export_action_refreshes_profiles(monkeypatch, tmp_path):
     import runner.app as app_mod
     from runner.pipeline import archive_summary
@@ -775,6 +810,25 @@ def test_run_knowledge_export_action_refreshes_graph(monkeypatch, tmp_path):
 
     assert result["edge_count"] == 4
     assert calls == [(tmp_path / "corpus", tmp_path / "exports", True)]
+
+
+def test_run_knowledge_export_action_refreshes_quality(monkeypatch, tmp_path):
+    import runner.app as app_mod
+    from runner.pipeline import knowledge_quality
+
+    calls = []
+
+    def fake_write(corpus_dir, exports_dir, *, config, **kwargs):
+        calls.append((corpus_dir, exports_dir))
+        return {"profile_count": 2, "edge_count": 5, "path": str(exports_dir / "knowledge" / "knowledge_quality.json")}
+
+    monkeypatch.setattr(knowledge_quality, "write_knowledge_quality_report", fake_write)
+    config = SimpleNamespace(corpus_dir=tmp_path / "corpus", exports_dir=tmp_path / "exports")
+
+    result = app_mod._run_knowledge_export_action(config, "quality")
+
+    assert result["edge_count"] == 5
+    assert calls == [(tmp_path / "corpus", tmp_path / "exports")]
 
 
 # ---------------------------------------------------------------------------

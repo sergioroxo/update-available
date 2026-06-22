@@ -567,11 +567,29 @@ into it, not the package tree.
 5. **Copy back**, then **MacBook** —
    `source-offload-unpack <pkg>.tar.gz --source-offload-root …/source_offload --state outbox`,
    then import from the **Import results** tab.
+6. **MacBook** — after import, open **Corpus Intelligence → Knowledge exports**
+   and refresh **profiles**, **evidence graph**, and **quality report**. This
+   updates each imported document's `archive_summary.json`, the central
+   `document_profiles.jsonl`, and the trust/readiness audit in
+   `knowledge_quality.json`.
 
 The Streamlit **Source Offload → Transfer & worker** tab shows these archive/unpack
 commands (display-only, alongside the rsync path) using the app's venv python
 locally and `MAC_STUDIO_PYTHON` for the Mac Studio side. **The app never runs
 `tar`, `shasum`, SSH, or rsync** — it only displays the commands.
+
+For the Mac Studio, use the worker-only app rather than the full MacBook
+research dashboard:
+
+```bash
+cd /Users/cdn-ai/surviving-sogice-ingest
+.venv/bin/python -m streamlit run runner/mac_studio_worker_app.py
+```
+
+That app scans the shared transfer folder, unpacks incoming archives into the
+Mac Studio source-offload `inbox`, runs `source-worker`, and archives completed
+`outbox` packages back to the transfer folder. It does not upload anything to
+Sanity/Supabase and it does not auto-delete packages.
 
 ## Next Implementation Slice
 

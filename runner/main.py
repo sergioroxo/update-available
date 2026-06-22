@@ -20,7 +20,7 @@ from rich.panel import Panel
 
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
-from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion, archive_summary, knowledge_graph, system_health
+from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion, archive_summary, knowledge_graph, knowledge_quality, system_health
 from .pipeline import search as search_mod
 from .pipeline.system_tools import tool_path
 
@@ -3076,6 +3076,40 @@ def knowledge_graph_export_cmd(
     console.print(f"  Graph: [dim]{result['graph_path']}[/dim]")
     if include_proposed:
         console.print("[yellow]Included model-proposed/unreviewed edges. Treat as discovery material, not reviewed evidence.[/yellow]")
+
+
+@app.command(name="knowledge-quality-report")
+def knowledge_quality_report_cmd(
+    out: str = typer.Option("", "--out", help="Output JSON path (default: exports/knowledge/knowledge_quality.json)"),
+    corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
+    prefer_live: bool = typer.Option(False, "--live", help="Rebuild from live corpus instead of preferring existing knowledge exports"),
+    json_output: bool = typer.Option(False, "--json", help="Print the full report JSON after writing it"),
+):
+    """Audit extracted text, tags, enrichment review load, and graph evidence quality."""
+    config = load_config(llm=None, require_services=False)
+    corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    out_path = Path(out).expanduser() if out else None
+    result = knowledge_quality.write_knowledge_quality_report(
+        corpus_dir,
+        config.exports_dir,
+        config=config,
+        out_path=out_path,
+        prefer_exports=not prefer_live,
+    )
+    report = result["report"]
+    console.print(
+        f"[green]✓ Knowledge quality report written[/green] "
+        f"{result['profile_count']} profile(s), {result['edge_count']} edge(s) → [dim]{result['path']}[/dim]"
+    )
+    console.print(
+        f"  trust={report['profiles']['trust_state']}  "
+        f"evidence={report['graph']['evidence_strength']}  "
+        f"pending_enrichment={report['enrichment']['lifecycle'].get('pending', 0)}"
+    )
+    for item in report.get("recommendations", [])[:8]:
+        console.print(f"  • {item}")
+    if json_output:
+        console.print_json(data=report)
 
 
 @app.command(name="system-health")
