@@ -18,6 +18,7 @@ Design rules:
 from __future__ import annotations
 
 import re
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -130,6 +131,25 @@ def _lower_headers(raw) -> dict:
     return out
 
 
+def _httpx_verify_arg():
+    """Return the certificate bundle argument for httpx GET fallback.
+
+    macOS virtualenvs can disagree about which CA bundle to use. Prefer an
+    explicit env override when present, then the certifi bundle if installed,
+    falling back to httpx defaults. This keeps verification ON; it only makes
+    the trusted CA path explicit.
+    """
+    for env_name in ("SSL_CERT_FILE", "REQUESTS_CA_BUNDLE"):
+        candidate = os.getenv(env_name, "").strip()
+        if candidate and Path(candidate).exists():
+            return candidate
+    try:
+        import certifi
+        return certifi.where()
+    except Exception:
+        return True
+
+
 # ---------------------------------------------------------------------------
 # Acquisition entry points
 # ---------------------------------------------------------------------------
@@ -187,6 +207,7 @@ def acquire_url(url: str, *, timeout: float = _DEFAULT_TIMEOUT) -> AcquisitionRe
     try:
         resp = httpx.get(
             url, timeout=timeout, follow_redirects=True, headers=_BROWSER_HEADERS,
+            verify=_httpx_verify_arg(),
         )
     except Exception as exc:  # noqa: BLE001
         return AcquisitionResult(

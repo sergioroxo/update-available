@@ -115,6 +115,24 @@ def test_acquire_url_httpx_fallback_success(monkeypatch):
     assert "Recovered via httpx" in acq.html
 
 
+def test_acquire_url_httpx_fallback_uses_explicit_verify_bundle(monkeypatch):
+    _patch_traf(monkeypatch, None)
+    captured = {}
+
+    def _get(url, **kw):
+        captured.update(kw)
+        return _Resp(200, "<html><p>Recovered via httpx</p></html>",
+                     headers={"server": "nginx"})
+
+    monkeypatch.setattr(acquire, "_httpx_verify_arg", lambda: "/tmp/certifi.pem")
+    monkeypatch.setitem(__import__("sys").modules, "httpx", types.SimpleNamespace(get=_get))
+
+    acq = acquire_url("https://example.org/a")
+
+    assert acq.ok is True
+    assert captured["verify"] == "/tmp/certifi.pem"
+
+
 def test_acquire_url_cloudflare_403_body_challenge(monkeypatch):
     _patch_traf(monkeypatch, None)
     _patch_httpx(monkeypatch, _Resp(503, "Attention Required! Cloudflare ray id 123",

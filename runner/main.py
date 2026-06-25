@@ -1339,7 +1339,7 @@ def queue_add(
                     f"{result.routing_reason[:55]}"
                 )
             except Exception as exc:
-                console.print(f"    [red]Triage failed: {exc}[/red]")
+                console.print(f"    [yellow]Triage held: {exc}[/yellow]")
 
 
 @app.command(name="queue-list")
@@ -1489,7 +1489,7 @@ def queue_triage(
             if not result.triage_succeeded:
                 # run() returned a fail-closed result (model/network/parse failure).
                 console.print(
-                    f"  [red]→ triage failed — not batch-safe[/red] "
+                    f"  [yellow]→ triage held — not batch-safe[/yellow] "
                     f"[dim]{result.routing_reason[:80]}[/dim]"
                 )
             else:
@@ -1501,10 +1501,10 @@ def queue_triage(
         except Exception as exc:
             # Snippet extraction (or any other step) raised. Persist a fail-closed
             # triage result so the row is never left at the default-safe state.
-            console.print(f"  [red]Triage failed: {exc}[/red]")
+            console.print(f"  [yellow]Triage held: {exc}[/yellow]")
             failed = triage_mod.TriageResult.failed(f"snippet/extraction error: {exc}")
             apply_triage_result(db, item.id, failed, model_name=model_name)
-            console.print("  [red]→ triage failed — not batch-safe[/red]")
+            console.print("  [yellow]→ triage held — not batch-safe[/yellow]")
 
     console.print(
         f"[green]Done.[/green] Use [dim]runner queue-list[/dim] to review. "
