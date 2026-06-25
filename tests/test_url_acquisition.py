@@ -35,6 +35,15 @@ class _Resp:
         self.url = url
 
 
+class _JsonResp(_Resp):
+    def __init__(self, status, payload, headers=None, url="https://archive.org/wayback/available"):
+        super().__init__(status, json.dumps(payload), headers=headers, url=url)
+        self._payload = payload
+
+    def json(self):
+        return self._payload
+
+
 def _patch_traf(monkeypatch, value):
     mod = types.SimpleNamespace(fetch_url=lambda url: value,
                                 extract=lambda *a, **k: "")
@@ -149,6 +158,72 @@ def test_acquire_url_httpx_error_is_not_raised(monkeypatch):
     assert acq.ok is False
     assert acq.challenge is False
     assert "httpx GET failed" in acq.note
+
+
+def test_acquire_url_ssl_failure_recovers_from_wayback(monkeypatch):
+    _patch_traf(monkeypatch, None)
+    calls = []
+
+    def _get(url, **kw):
+        calls.append(url)
+        if url == "https://example.org/broken-cert":
+            raise RuntimeError("[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed")
+        if url == acquire._WAYBACK_AVAILABLE_URL:
+            return _JsonResp(200, {
+                "archived_snapshots": {
+                    "closest": {
+                        "available": True,
+                        "url": "https://web.archive.org/web/20240102030405/https://example.org/broken-cert",
+                    }
+                }
+            })
+        if url == "https://web.archive.org/web/20240102030405id_/https://example.org/broken-cert":
+            return _Resp(200, "<html><p>Archived copy text</p></html>",
+                         headers={"server": "nginx"}, url=url)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setitem(__import__("sys").modules, "httpx", types.SimpleNamespace(get=_get))
+
+    acq = acquire_url("https://example.org/broken-cert")
+
+    assert acq.ok is True
+    assert acq.fetch_tool == "wayback-httpx"
+    assert acq.final_url.endswith("id_/https://example.org/broken-cert")
+    assert "Archived copy text" in acq.html
+    assert "httpx GET failed" in acq.note
+    assert "Wayback raw snapshot" in acq.note
+
+
+def test_acquire_url_challenge_recovers_from_wayback(monkeypatch):
+    _patch_traf(monkeypatch, None)
+
+    def _get(url, **kw):
+        if url == "https://example.org/challenged":
+            return _Resp(403, "<html>blocked</html>",
+                         headers={"cf-mitigated": "challenge", "server": "cloudflare"},
+                         url=url)
+        if url == acquire._WAYBACK_AVAILABLE_URL:
+            return _JsonResp(200, {
+                "archived_snapshots": {
+                    "closest": {
+                        "available": True,
+                        "url": "https://web.archive.org/web/20230101000000/https://example.org/challenged",
+                    }
+                }
+            })
+        if url == "https://web.archive.org/web/20230101000000id_/https://example.org/challenged":
+            return _Resp(200, "<html><p>Archived challenge-free page</p></html>",
+                         headers={"server": "nginx"}, url=url)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setitem(__import__("sys").modules, "httpx", types.SimpleNamespace(get=_get))
+
+    acq = acquire_url("https://example.org/challenged")
+
+    assert acq.ok is True
+    assert acq.challenge is False
+    assert acq.fetch_tool == "wayback-httpx"
+    assert "Archived challenge-free page" in acq.html
 
 
 def test_acquire_url_importerror_reports_underlying(monkeypatch):

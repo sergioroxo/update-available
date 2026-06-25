@@ -37,6 +37,7 @@ _BROWSER_HEADERS: dict[str, str] = {
 }
 
 _DEFAULT_TIMEOUT = 20.0
+_WAYBACK_AVAILABLE_URL = "https://archive.org/wayback/available"
 
 # HTTP statuses that, combined with Cloudflare markers, indicate a challenge.
 _CHALLENGE_STATUSES: frozenset[int] = frozenset({403, 429, 503})
@@ -150,6 +151,109 @@ def _httpx_verify_arg():
         return True
 
 
+def _wayback_raw_url(archive_url: str) -> str:
+    """Return a raw-content Wayback URL when possible.
+
+    ``id_`` suppresses the Wayback toolbar/rewrite shell, which is much safer
+    for extraction. If the shape is not recognised, return the archive URL.
+    """
+    match = re.match(r"^(https://web\.archive\.org/web/)(\d+)([a-z_]*?)/(.*)$", archive_url)
+    if not match:
+        return archive_url
+    prefix, timestamp, _modifier, original = match.groups()
+    return f"{prefix}{timestamp}id_/{original}"
+
+
+def _wayback_available_snapshot(httpx, url: str, *, timeout: float) -> tuple[str, str]:
+    """Return ``(raw_archive_url, note)`` for the closest public snapshot."""
+    try:
+        resp = httpx.get(
+            _WAYBACK_AVAILABLE_URL,
+            params={"url": url},
+            timeout=timeout,
+            follow_redirects=True,
+            headers=_BROWSER_HEADERS,
+            verify=_httpx_verify_arg(),
+        )
+    except Exception as exc:  # noqa: BLE001
+        return "", f"wayback availability failed: {exc}"
+
+    try:
+        data = resp.json()
+    except Exception as exc:  # noqa: BLE001
+        return "", f"wayback availability returned non-JSON status {getattr(resp, 'status_code', '?')}: {exc}"
+
+    closest = ((data.get("archived_snapshots") or {}).get("closest") or {})
+    available = closest.get("available")
+    snapshot_url = str(closest.get("url") or "").strip()
+    if available and snapshot_url:
+        return _wayback_raw_url(snapshot_url), "wayback closest snapshot found"
+    return "", "wayback closest snapshot unavailable"
+
+
+def _try_wayback_fallback(httpx, url: str, *, timeout: float, previous_note: str) -> AcquisitionResult | None:
+    archive_url, archive_note = _wayback_available_snapshot(httpx, url, timeout=timeout)
+    if not archive_url:
+        return AcquisitionResult(
+            ok=False,
+            final_url=url,
+            fetch_tool="wayback-httpx",
+            note=f"{previous_note}; {archive_note}",
+        )
+
+    try:
+        resp = httpx.get(
+            archive_url,
+            timeout=timeout,
+            follow_redirects=True,
+            headers=_BROWSER_HEADERS,
+            verify=_httpx_verify_arg(),
+        )
+    except Exception as exc:  # noqa: BLE001
+        return AcquisitionResult(
+            ok=False,
+            final_url=archive_url,
+            fetch_tool="wayback-httpx",
+            note=f"{previous_note}; {archive_note}; wayback fetch failed: {exc}",
+        )
+
+    headers = _lower_headers(resp.headers)
+    body = resp.text or ""
+    signal = classify_challenge(status=resp.status_code, headers=headers, body=body)
+    if signal:
+        return AcquisitionResult(
+            ok=False,
+            html=body,
+            final_url=str(resp.url),
+            http_status=resp.status_code,
+            headers=headers,
+            fetch_tool="wayback-httpx",
+            challenge=True,
+            challenge_signal=signal,
+            note=f"{previous_note}; {archive_note}; wayback snapshot classified a challenge ({signal}).",
+        )
+    if resp.status_code == 200 and body.strip():
+        return AcquisitionResult(
+            ok=True,
+            html=body,
+            final_url=str(resp.url),
+            http_status=200,
+            headers=headers,
+            fetch_tool="wayback-httpx",
+            note=f"{previous_note}; {archive_note}; fetched {len(body)} chars from Wayback raw snapshot.",
+        )
+    return AcquisitionResult(
+        ok=False,
+        html=body,
+        final_url=str(resp.url),
+        http_status=resp.status_code,
+        headers=headers,
+        fetch_tool="wayback-httpx",
+        note=f"{previous_note}; {archive_note}; wayback returned status {resp.status_code} with "
+             f"{len(body)} body chars (no usable document).",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Acquisition entry points
 # ---------------------------------------------------------------------------
@@ -210,7 +314,10 @@ def acquire_url(url: str, *, timeout: float = _DEFAULT_TIMEOUT) -> AcquisitionRe
             verify=_httpx_verify_arg(),
         )
     except Exception as exc:  # noqa: BLE001
-        return AcquisitionResult(
+        return _try_wayback_fallback(
+            httpx, url, timeout=timeout,
+            previous_note=f"{traf_note}; httpx GET failed: {exc}",
+        ) or AcquisitionResult(
             ok=False, final_url=url, fetch_tool="httpx",
             note=f"{traf_note}; httpx GET failed: {exc}",
         )
@@ -219,10 +326,16 @@ def acquire_url(url: str, *, timeout: float = _DEFAULT_TIMEOUT) -> AcquisitionRe
     body = resp.text or ""
     signal = classify_challenge(status=resp.status_code, headers=headers, body=body)
     if signal:
+        archived = _try_wayback_fallback(
+            httpx, url, timeout=timeout,
+            previous_note=f"{traf_note}; httpx classified a challenge ({signal})",
+        )
+        if archived and archived.ok:
+            return archived
         return AcquisitionResult(
             ok=False, html=body, final_url=str(resp.url), http_status=resp.status_code,
             headers=headers, fetch_tool="httpx", challenge=True, challenge_signal=signal,
-            note=f"{traf_note}; httpx classified a challenge ({signal}).",
+            note=(archived.note if archived else f"{traf_note}; httpx classified a challenge ({signal})."),
         )
     if resp.status_code == 200 and body.strip():
         return AcquisitionResult(
@@ -232,7 +345,13 @@ def acquire_url(url: str, *, timeout: float = _DEFAULT_TIMEOUT) -> AcquisitionRe
         )
     # Non-200 / empty body that isn't a recognised challenge — still a failed
     # fetch; route to capture but do not assert a challenge we can't prove.
-    return AcquisitionResult(
+    return _try_wayback_fallback(
+        httpx, url, timeout=timeout,
+        previous_note=(
+            f"{traf_note}; httpx returned status {resp.status_code} with "
+            f"{len(body)} body chars (no usable document)"
+        ),
+    ) or AcquisitionResult(
         ok=False, html=body, final_url=str(resp.url), http_status=resp.status_code,
         headers=headers, fetch_tool="httpx",
         note=f"{traf_note}; httpx returned status {resp.status_code} with "
