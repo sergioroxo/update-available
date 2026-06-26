@@ -13186,6 +13186,113 @@ def page_source_queue():
             _run_source_queue_triage(failed_triage_items[:int(retry_n)], label="Retrying failed triage")
             st.rerun()
 
+    # ── Suggested Mac Studio source-offload batch ─────────────────────────
+    if "sq_source_batch_package_id" not in st.session_state:
+        st.session_state["sq_source_batch_package_id"] = _source_batch_default_package_id()
+
+    with st.expander("🌙 Suggest Mac Studio source-offload batch", expanded=False):
+        st.caption(
+            "Automatically selects the next overnight-safe queue items using the same guarded "
+            "`batch-plan` rules, then builds a source-offload archive for the Mac Studio. "
+            "The queue is not marked ingested here."
+        )
+        if st.button("New package id", key="sq_source_batch_new_package_id"):
+            st.session_state["sq_source_batch_package_id"] = _source_batch_default_package_id()
+            st.rerun()
+
+        sb_cols = st.columns([1, 1, 3])
+        source_batch_limit = int(sb_cols[0].number_input(
+            "Items",
+            min_value=1,
+            max_value=MAX_BATCH_LIMIT,
+            value=min(10, MAX_BATCH_LIMIT),
+            step=1,
+            key="sq_source_batch_limit",
+            help=f"Maximum safe items to package. Hard cap is {MAX_BATCH_LIMIT}.",
+        ))
+        source_batch_priority = sb_cols[1].selectbox(
+            "Priority",
+            ["(all)", "high", "medium", "low"],
+            key="sq_source_batch_priority",
+            help="Optional priority filter for the suggested Mac Studio batch.",
+        )
+        source_package_id = sb_cols[2].text_input(
+            "Package ID",
+            key="sq_source_batch_package_id",
+            help="Created under source_offload/inbox and archived to the Syncthing transfer folder.",
+        ).strip()
+        source_priority_arg = "" if source_batch_priority == "(all)" else source_batch_priority
+        source_manifest = plan_batch(
+            db,
+            limit=source_batch_limit,
+            priority_filter=source_priority_arg,
+        )
+
+        source_mcols = st.columns(4)
+        source_mcols[0].metric("Candidates", source_manifest.total_candidates)
+        source_mcols[1].metric("Selected", source_manifest.total_included)
+        source_mcols[2].metric("Excluded", source_manifest.total_excluded)
+        source_mcols[3].metric("Limit", source_manifest.limit)
+        for note in source_manifest.notes:
+            st.warning(note)
+
+        if source_manifest.included:
+            st.dataframe(
+                _source_manifest_item_rows(source_manifest.included),
+                hide_index=True,
+                use_container_width=True,
+            )
+        else:
+            st.info("No safe queue items are available for a Mac Studio batch yet.")
+
+        if source_manifest.excluded:
+            with st.expander("Excluded items and reasons", expanded=False):
+                st.dataframe(
+                    _source_manifest_item_rows(source_manifest.excluded[:100]),
+                    hide_index=True,
+                    use_container_width=True,
+                )
+
+        transfer_out = _source_to_mac_studio_dir()
+        st.caption(
+            f"Archive destination: `{transfer_out}`. "
+            "The Mac Studio Worker page will see the `.tar.gz` once Syncthing finishes."
+        )
+        build_disabled = not source_manifest.included or not source_package_id
+        if st.button(
+            "Build source package archive for Mac Studio",
+            key="sq_source_batch_build_archive",
+            type="primary",
+            disabled=build_disabled,
+        ):
+            try:
+                result = _source_build_and_archive_batch(
+                    db,
+                    config,
+                    source_manifest,
+                    package_id=source_package_id,
+                    transfer_dir=transfer_out,
+                )
+            except Exception as exc:  # noqa: BLE001 — user-facing refusal
+                st.error(f"Could not build source-offload batch: {exc}")
+            else:
+                st.success(
+                    f"Built `{result['package_id']}` with {result['item_count']} item(s) "
+                    "and wrote the transfer archive."
+                )
+                st.code(
+                    "\n".join([
+                        f"Package: {result['package_dir']}",
+                        f"Archive: {result['archive_path']}",
+                        f"Checksum: {result['sha256_path']}",
+                    ]),
+                    language="text",
+                )
+                if result["warnings"]:
+                    for warning in result["warnings"]:
+                        st.warning(warning)
+                st.caption("Next: open the Mac Studio Worker page and unpack/run this package there.")
+
     # ── Batch workbench ───────────────────────────────────────────────────
     visible_select_keys = {item.id: f"sq_select_{item.id}" for item in items}
     selected_items = [
@@ -14215,6 +14322,82 @@ def _source_specs_from_selection(items, snapshot_paths: dict) -> list:
         if path:
             specs.append(_source_snapshot_spec(it, path))
     return specs
+
+
+def _source_batch_default_package_id(prefix: str = "source-batch") -> str:
+    """Return a stable-looking package id for suggested source-offload batches."""
+    return f"{prefix}-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
+
+
+def _source_manifest_item_rows(items) -> list[dict]:
+    """Rows for displaying a batch/offload manifest item list in Streamlit."""
+    return [
+        {
+            "item_id": item.item_id,
+            "priority": item.priority,
+            "llm": item.recommended_llm or "litelm",
+            "type": item.doc_type_hint or item.status,
+            "reason": item.exclusion_reason,
+            "url": item.url,
+        }
+        for item in items
+    ]
+
+
+def _source_build_and_archive_batch(
+    db,
+    config,
+    manifest,
+    *,
+    package_id: str,
+    transfer_dir: Path | str | None = None,
+) -> dict:
+    """Build a source package from a safe batch manifest and archive it.
+
+    This is the Mac Studio/source-offload equivalent of ``batch-plan``: it reads
+    queue rows selected by ``plan_batch()``, builds ``source_offload/inbox/<id>``,
+    then writes ``<id>.tar.gz`` + ``.sha256`` into the transfer folder. It does
+    not mutate the source queue and never launches a worker.
+    """
+    if not manifest.included:
+        raise ValueError("No eligible queue items in the batch manifest.")
+
+    from runner.pipeline.offload_source import archive_source_package, build_source_package
+    from runner.pipeline.source_queue import get_item
+
+    queue_items = []
+    missing: list[str] = []
+    for planned in manifest.included:
+        item = get_item(db, planned.item_id)
+        if item is None:
+            missing.append(planned.item_id)
+        else:
+            queue_items.append(item)
+    if missing:
+        raise ValueError(f"Queue item(s) disappeared before packaging: {', '.join(missing)}")
+
+    source_root = _source_offload_root(config)
+    package_manifest = build_source_package(
+        specs=_source_specs_from_queue_items(queue_items),
+        source_offload_root=source_root,
+        package_id=package_id.strip() or None,
+    )
+    package_dir = source_root / package_manifest.lifecycle_state / package_manifest.package_id
+    archive_info = archive_source_package(
+        package_dir,
+        output_dir=Path(transfer_dir) if transfer_dir is not None else _source_to_mac_studio_dir(),
+    )
+    return {
+        "package_id": package_manifest.package_id,
+        "item_count": len(package_manifest.items),
+        "queue_item_ids": [item.id for item in queue_items],
+        "package_dir": str(package_dir),
+        "archive_path": archive_info["archive_path"],
+        "sha256_path": archive_info["sha256_path"],
+        "sha256": archive_info["sha256"],
+        "bytes": archive_info["bytes"],
+        "warnings": archive_info.get("warnings", []),
+    }
 
 
 def _source_package_rows(source_offload_root) -> list[dict]:

@@ -337,6 +337,122 @@ def test_source_worker_report_summary_lists_failed_queue_items(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# Suggested source-offload batch builder
+# ---------------------------------------------------------------------------
+
+def _safe_triage(doc_type_hint="academic", recommended_llm="litelm", **flags):
+    from runner.models.triage import TriageResult
+
+    return TriageResult(
+        doc_type_hint=doc_type_hint,
+        complexity="moderate",
+        recommended_llm=recommended_llm,
+        routing_reason="safe test item",
+        triage_succeeded=True,
+        overnight_batch_safe=True,
+        suggested_process_route="standard",
+        **flags,
+    )
+
+
+def test_source_batch_default_package_id_has_safe_prefix():
+    pid = app_mod._source_batch_default_package_id("night")
+    assert pid.startswith("night-")
+    assert re.match(r"^night-\d{8}-\d{6}$", pid)
+
+
+def test_source_manifest_item_rows_are_display_ready():
+    from runner.pipeline.batch import ManifestItem
+
+    rows = app_mod._source_manifest_item_rows([
+        ManifestItem(
+            item_id="qi1",
+            url="https://example.org/a",
+            status="triaged",
+            priority="high",
+            batch_group="",
+            recommended_llm="",
+            doc_type_hint="academic",
+            included=True,
+            exclusion_reason="",
+        )
+    ])
+
+    assert rows == [{
+        "item_id": "qi1",
+        "priority": "high",
+        "llm": "litelm",
+        "type": "academic",
+        "reason": "",
+        "url": "https://example.org/a",
+    }]
+
+
+def test_source_build_and_archive_batch_uses_plan_and_does_not_mutate_queue(tmp_path):
+    from runner.pipeline.batch import plan_batch
+    from runner.pipeline.offload_source import inspect_source_archive
+    from runner.pipeline.source_queue import add_item, apply_triage_result, get_item
+
+    db = _make_db(tmp_path)
+    item_a = add_item(db, url="https://example.org/a", title="A")
+    item_b = add_item(db, url="https://example.org/b", title="B")
+    unsafe = add_item(db, url="https://example.org/unsafe", title="Unsafe")
+    assert item_a and item_b and unsafe
+    apply_triage_result(db, item_a.id, _safe_triage("academic"), model_name="triage")
+    apply_triage_result(db, item_b.id, _safe_triage("policy"), model_name="triage")
+    apply_triage_result(
+        db,
+        unsafe.id,
+        _safe_triage("legal", needs_legal_review=True),
+        model_name="triage",
+    )
+
+    manifest = plan_batch(db, limit=5)
+    config = type("Cfg", (), {"exports_dir": tmp_path / "exports"})()
+    out = tmp_path / "transfer" / "to-mac-studio"
+
+    result = app_mod._source_build_and_archive_batch(
+        db,
+        config,
+        manifest,
+        package_id="night-001",
+        transfer_dir=out,
+    )
+
+    assert result["package_id"] == "night-001"
+    assert result["item_count"] == 2
+    assert set(result["queue_item_ids"]) == {item_a.id, item_b.id}
+    assert (tmp_path / "exports" / "source_offload" / "inbox" / "night-001").is_dir()
+    assert Path(result["archive_path"]) == out / "night-001.tar.gz"
+    assert Path(result["sha256_path"]) == out / "night-001.tar.gz.sha256"
+    inspected = inspect_source_archive(Path(result["archive_path"]))
+    assert inspected["package_id"] == "night-001"
+    assert inspected["manifest_state"] == "inbox"
+    assert get_item(db, item_a.id).status == "triaged"
+    assert get_item(db, item_b.id).status == "triaged"
+    assert get_item(db, unsafe.id).status == "triaged"
+    db.close()
+
+
+def test_source_build_and_archive_batch_refuses_empty_manifest(tmp_path):
+    from runner.pipeline.batch import plan_batch
+
+    db = _make_db(tmp_path)
+    manifest = plan_batch(db, limit=5)
+    config = type("Cfg", (), {"exports_dir": tmp_path / "exports"})()
+
+    with pytest.raises(ValueError, match="No eligible"):
+        app_mod._source_build_and_archive_batch(
+            db,
+            config,
+            manifest,
+            package_id="empty",
+            transfer_dir=tmp_path / "transfer",
+        )
+    db.close()
+
+
+# ---------------------------------------------------------------------------
 # Transfer command builders
 # ---------------------------------------------------------------------------
 
