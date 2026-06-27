@@ -34,6 +34,7 @@ python-dotenv>=1.0
 
 # Streamlit UI
 streamlit>=1.35
+altair>=5.0
 pandas>=2.0
 
 # Utilities

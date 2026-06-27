@@ -873,7 +873,15 @@ def page_corpus_intelligence():
                 .sort_values("year")
             )
             if not year_counts.empty:
-                st.bar_chart(year_counts, x="year", y="documents")
+                try:
+                    st.bar_chart(year_counts, x="year", y="documents")
+                except ModuleNotFoundError as exc:
+                    if exc.name != "altair":
+                        raise
+                    st.dataframe(year_counts, hide_index=True, width="stretch")
+                    st.caption(
+                        "Chart fallback: install `altair` in the app environment to render the bar chart."
+                    )
             else:
                 st.caption("No publication years found in local metadata.")
 
