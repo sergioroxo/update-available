@@ -1812,6 +1812,10 @@ def batch_plan_cmd(
     batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Only inspect items in this batch group"),
     limit: int = typer.Option(10, "--limit", "-n", help="Maximum items to include (hard cap: 15)"),
     priority: Optional[str] = typer.Option(None, "--priority", "-p", help="Filter by priority: high | medium | low"),
+    mix_high: int = typer.Option(0, "--mix-high", help="Priority-mix quota for high-priority items"),
+    mix_medium: int = typer.Option(0, "--mix-medium", help="Priority-mix quota for medium-priority items"),
+    mix_low: int = typer.Option(0, "--mix-low", help="Priority-mix quota for low-priority items"),
+    max_per_host: int = typer.Option(0, "--max-per-host", help="Optional same-website cap; 0 disables it"),
     out: Optional[Path] = typer.Option(None, "--out", help="Write manifest JSON to this path (optional)"),
 ):
     """Dry-run batch plan: show which queue items are safe to process unattended.
@@ -1836,11 +1840,18 @@ def batch_plan_cmd(
 
     config = load_config(require_services=False)
     db = open_db(queue_db_path(config.corpus_dir))
+    priority_mix = {
+        "high": mix_high,
+        "medium": mix_medium,
+        "low": mix_low,
+    } if any((mix_high, mix_medium, mix_low)) else None
     manifest = plan_batch(
         db,
         batch_group=batch or "",
         limit=limit,
         priority_filter=priority or "",
+        priority_mix=priority_mix,
+        max_per_host=max_per_host,
     )
 
     console.print(f"\n[bold]Batch Plan[/bold]  [dim](generated {manifest.generated_at})[/dim]")
@@ -1848,6 +1859,8 @@ def batch_plan_cmd(
         f"  Candidates inspected: {manifest.total_candidates}"
         + (f"  |  batch group: [cyan]{manifest.batch_group_filter}[/cyan]" if manifest.batch_group_filter else "")
         + (f"  |  priority filter: [cyan]{manifest.priority_filter}[/cyan]" if manifest.priority_filter else "")
+        + (f"  |  mix: [cyan]{manifest.priority_mix}[/cyan]" if manifest.priority_mix else "")
+        + (f"  |  max/host: [cyan]{manifest.max_per_host}[/cyan]" if manifest.max_per_host else "")
     )
     console.print(
         f"  [green]Included: {manifest.total_included}[/green]"
@@ -1909,6 +1922,10 @@ def batch_run_cmd(
     batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Only process items in this batch group"),
     limit: int = typer.Option(10, "--limit", "-n", help="Maximum items to include (hard cap: 15)"),
     priority: Optional[str] = typer.Option(None, "--priority", "-p", help="Filter by priority: high | medium | low"),
+    mix_high: int = typer.Option(0, "--mix-high", help="Priority-mix quota for high-priority items"),
+    mix_medium: int = typer.Option(0, "--mix-medium", help="Priority-mix quota for medium-priority items"),
+    mix_low: int = typer.Option(0, "--mix-low", help="Priority-mix quota for low-priority items"),
+    max_per_host: int = typer.Option(0, "--max-per-host", help="Optional same-website cap; 0 disables it"),
     out_dir: Optional[Path] = typer.Option(None, "--out-dir", help="Directory for batch ledger JSON"),
     execute: bool = typer.Option(False, "--execute", help="Actually ingest included items. Omit for rehearsal only."),
     run_enrich: bool = typer.Option(True, "--enrich/--no-enrich", help="Run Stage 3c enrichment during each ingest"),
@@ -1940,11 +1957,18 @@ def batch_run_cmd(
 
     config = load_config(require_services=False)
     db = open_db(queue_db_path(config.corpus_dir))
+    priority_mix = {
+        "high": mix_high,
+        "medium": mix_medium,
+        "low": mix_low,
+    } if any((mix_high, mix_medium, mix_low)) else None
     manifest = plan_batch(
         db,
         batch_group=batch or "",
         limit=limit,
         priority_filter=priority or "",
+        priority_mix=priority_mix,
+        max_per_host=max_per_host,
     )
     batch_id = datetime.now(timezone.utc).strftime("batch-%Y%m%d-%H%M%S")
     ledger = build_batch_ledger(manifest, batch_id=batch_id, execute=execute)

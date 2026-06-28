@@ -263,6 +263,76 @@ def test_plan_batch_priority_ordering(db):
     assert priorities == ["high", "medium", "low"]
 
 
+def test_plan_batch_priority_mix_selects_requested_quotas(db):
+    for i in range(3):
+        item = add_item(db, f"https://high.example.org/{i}")
+        apply_triage_result(db, item.id, _safe_triage(doc_type_hint="legal"), model_name="m")
+    for i in range(3):
+        item = add_item(db, f"https://medium.example.org/{i}")
+        apply_triage_result(
+            db,
+            item.id,
+            _safe_triage(doc_type_hint="news", complexity="moderate"),
+            model_name="m",
+        )
+    for i in range(3):
+        item = add_item(db, f"https://low.example.org/{i}")
+        apply_triage_result(
+            db,
+            item.id,
+            _safe_triage(doc_type_hint="promotional", complexity="simple"),
+            model_name="m",
+        )
+
+    manifest = plan_batch(
+        db,
+        limit=6,
+        priority_mix={"high": 2, "medium": 2, "low": 1},
+    )
+
+    assert manifest.priority_mix == {"high": 2, "medium": 2, "low": 1}
+    assert [i.priority for i in manifest.included] == [
+        "high", "high", "medium", "medium", "low",
+    ]
+    assert len([e for e in manifest.excluded if e.exclusion_reason == "over_limit"]) == 4
+
+
+def test_plan_batch_priority_filter_ignores_priority_mix(db):
+    high = add_item(db, "https://example.org/high")
+    apply_triage_result(db, high.id, _safe_triage(doc_type_hint="legal"), model_name="m")
+    low = add_item(db, "https://example.org/low")
+    apply_triage_result(
+        db,
+        low.id,
+        _safe_triage(doc_type_hint="promotional", complexity="simple"),
+        model_name="m",
+    )
+
+    manifest = plan_batch(
+        db,
+        priority_filter="high",
+        priority_mix={"low": 5},
+    )
+
+    assert manifest.priority_mix == {}
+    assert [i.priority for i in manifest.included] == ["high"]
+    assert manifest.total_candidates == 1
+
+
+def test_plan_batch_same_host_cap_excludes_duplicate_host(db):
+    _add_safe_item(db, "https://example.org/a")
+    _add_safe_item(db, "https://www.example.org/b")
+    _add_safe_item(db, "https://other.example.org/c")
+
+    manifest = plan_batch(db, limit=5, max_per_host=1)
+
+    assert manifest.max_per_host == 1
+    assert manifest.total_included == 2
+    reasons = [e.exclusion_reason for e in manifest.excluded]
+    assert "same_host_limit:example.org" in reasons
+    assert any("same-website cap" in note for note in manifest.notes)
+
+
 def test_plan_batch_batch_group_filter(db):
     _add_safe_item(db, "https://example.org/a", batch_group="group-A")
     _add_safe_item(db, "https://example.org/b", batch_group="group-B")
@@ -350,6 +420,44 @@ def test_build_and_write_batch_ledger(db, tmp_path):
     assert data["execute"] is False
     assert data["items"][0]["status"] == "planned"
     assert data["manifest"]["total_included"] == 1
+
+
+def test_batch_plan_cli_accepts_priority_mix_and_host_cap(monkeypatch, tmp_path):
+    cfg = _patch_config(monkeypatch, tmp_path)
+    db = open_db(queue_db_path(cfg.corpus_dir))
+    high_a = add_item(db, "https://example.org/high-a")
+    apply_triage_result(db, high_a.id, _safe_triage(doc_type_hint="legal"), model_name="m")
+    high_b = add_item(db, "https://www.example.org/high-b")
+    apply_triage_result(db, high_b.id, _safe_triage(doc_type_hint="legal"), model_name="m")
+    low = add_item(db, "https://other.example.org/low")
+    apply_triage_result(
+        db,
+        low.id,
+        _safe_triage(doc_type_hint="promotional", complexity="simple"),
+        model_name="m",
+    )
+    out = tmp_path / "manifest.json"
+
+    result = CliRunner().invoke(
+        main.app,
+        [
+            "batch-plan",
+            "--mix-high", "2",
+            "--mix-low", "1",
+            "--max-per-host", "1",
+            "--out", str(out),
+        ],
+    )
+
+    assert result.exit_code == 0
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["priority_mix"] == {"high": 2, "low": 1}
+    assert data["max_per_host"] == 1
+    assert data["total_included"] == 2
+    assert any(
+        row["exclusion_reason"] == "same_host_limit:example.org"
+        for row in data["excluded"]
+    )
 
 
 def test_batch_run_without_execute_writes_rehearsal_ledger(monkeypatch, tmp_path):

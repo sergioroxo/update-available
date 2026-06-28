@@ -13208,32 +13208,89 @@ def page_source_queue():
             st.session_state["sq_source_batch_package_id"] = _source_batch_default_package_id()
             st.rerun()
 
-        sb_cols = st.columns([1, 1, 3])
-        source_batch_limit = int(sb_cols[0].number_input(
-            "Items",
-            min_value=1,
-            max_value=MAX_BATCH_LIMIT,
-            value=min(10, MAX_BATCH_LIMIT),
-            step=1,
-            key="sq_source_batch_limit",
-            help=f"Maximum safe items to package. Hard cap is {MAX_BATCH_LIMIT}.",
-        ))
-        source_batch_priority = sb_cols[1].selectbox(
-            "Priority",
-            ["(all)", "high", "medium", "low"],
-            key="sq_source_batch_priority",
-            help="Optional priority filter for the suggested Mac Studio batch.",
+        sb_cols = st.columns([1, 1, 1, 3])
+        source_batch_mode = sb_cols[0].selectbox(
+            "Selection",
+            ["Priority order", "Priority mix"],
+            key="sq_source_batch_mode",
+            help=(
+                "Priority order keeps the existing high→medium→low behavior. "
+                "Priority mix lets you deliberately sample across priority levels."
+            ),
         )
-        source_package_id = sb_cols[2].text_input(
+        source_host_cap = int(sb_cols[1].number_input(
+            "Max / website",
+            min_value=0,
+            max_value=MAX_BATCH_LIMIT,
+            value=0,
+            step=1,
+            key="sq_source_batch_host_cap",
+            help="0 allows clusters from the same hostname; 1 maximizes website diversity.",
+        ))
+        if source_batch_mode == "Priority order":
+            source_batch_limit = int(sb_cols[2].number_input(
+                "Items",
+                min_value=1,
+                max_value=MAX_BATCH_LIMIT,
+                value=min(10, MAX_BATCH_LIMIT),
+                step=1,
+                key="sq_source_batch_limit",
+                help=f"Maximum safe items to package. Hard cap is {MAX_BATCH_LIMIT}.",
+            ))
+            source_batch_priority = st.selectbox(
+                "Priority filter",
+                ["(all)", "high", "medium", "low"],
+                key="sq_source_batch_priority",
+                help="Optional priority filter for the suggested Mac Studio batch.",
+            )
+            source_priority_arg = "" if source_batch_priority == "(all)" else source_batch_priority
+            source_priority_mix = None
+        else:
+            mix_cols = st.columns(3)
+            source_priority_mix = {
+                "high": int(mix_cols[0].number_input(
+                    "High priority",
+                    min_value=0,
+                    max_value=MAX_BATCH_LIMIT,
+                    value=3,
+                    step=1,
+                    key="sq_source_batch_mix_high",
+                )),
+                "medium": int(mix_cols[1].number_input(
+                    "Medium priority",
+                    min_value=0,
+                    max_value=MAX_BATCH_LIMIT,
+                    value=4,
+                    step=1,
+                    key="sq_source_batch_mix_medium",
+                )),
+                "low": int(mix_cols[2].number_input(
+                    "Low priority",
+                    min_value=0,
+                    max_value=MAX_BATCH_LIMIT,
+                    value=3,
+                    step=1,
+                    key="sq_source_batch_mix_low",
+                )),
+            }
+            source_batch_limit = min(MAX_BATCH_LIMIT, sum(source_priority_mix.values()) or 1)
+            source_priority_arg = ""
+            st.caption(
+                f"Priority mix target: {source_priority_mix['high']} high, "
+                f"{source_priority_mix['medium']} medium, {source_priority_mix['low']} low "
+                f"(max {source_batch_limit} item(s))."
+            )
+        source_package_id = sb_cols[3].text_input(
             "Package ID",
             key="sq_source_batch_package_id",
             help="Created under source_offload/inbox and archived to the Syncthing transfer folder.",
         ).strip()
-        source_priority_arg = "" if source_batch_priority == "(all)" else source_batch_priority
         source_manifest = plan_batch(
             db,
             limit=source_batch_limit,
             priority_filter=source_priority_arg,
+            priority_mix=source_priority_mix,
+            max_per_host=source_host_cap,
         )
 
         source_mcols = st.columns(4)

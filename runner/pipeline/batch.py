@@ -20,6 +20,7 @@ from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple, TYPE_CHECKING
+from urllib.parse import urlparse
 
 from .atomic_io import atomic_write_json, atomic_write_text
 from .diagnostics import probe_health as _probe_health, ErrorKind as _DiagErrorKind
@@ -301,6 +302,8 @@ class BatchManifest:
     priority_filter: str     # "" = no filter applied
     limit: int               # effective limit used (after capping at MAX_BATCH_LIMIT)
     total_candidates: int    # items inspected from the queue
+    priority_mix: dict[str, int] = field(default_factory=dict)
+    max_per_host: int = 0     # 0 = no same-host cap
     included: list[ManifestItem] = field(default_factory=list)
     excluded: list[ManifestItem] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
@@ -374,6 +377,62 @@ def build_batch_ledger(
             for item in manifest.included
         ],
     )
+
+
+def _host_key(url: str) -> str:
+    """Return a conservative same-website key for batch diversity caps."""
+    host = (urlparse(url).hostname or "").lower().strip(".")
+    return host[4:] if host.startswith("www.") else host
+
+
+def _normalise_priority_mix(priority_mix: dict[str, int] | None, limit: int) -> dict[str, int]:
+    """Return positive high/medium/low quotas capped by the effective limit."""
+    if not priority_mix:
+        return {}
+    out: dict[str, int] = {}
+    remaining = limit
+    for priority in ("high", "medium", "low"):
+        try:
+            value = int(priority_mix.get(priority, 0))
+        except (TypeError, ValueError):
+            value = 0
+        value = max(0, min(value, remaining))
+        if value:
+            out[priority] = value
+            remaining -= value
+        if remaining <= 0:
+            break
+    return out
+
+
+def _select_with_host_cap(
+    candidates: list[ManifestItem],
+    *,
+    limit: int,
+    max_per_host: int = 0,
+) -> tuple[list[ManifestItem], list[ManifestItem]]:
+    """Select up to ``limit`` manifest items, optionally capping each hostname."""
+    selected: list[ManifestItem] = []
+    rejected: list[ManifestItem] = []
+    host_counts: dict[str, int] = {}
+    cap = max(0, int(max_per_host or 0))
+
+    for mi in candidates:
+        if len(selected) >= limit:
+            mi.exclusion_reason = "over_limit"
+            rejected.append(mi)
+            continue
+        host = _host_key(mi.url)
+        if cap and host and host_counts.get(host, 0) >= cap:
+            mi.exclusion_reason = f"same_host_limit:{host}"
+            rejected.append(mi)
+            continue
+        mi.included = True
+        selected.append(mi)
+        if cap and host:
+            host_counts[host] = host_counts.get(host, 0) + 1
+
+    return selected, rejected
 
 
 def write_batch_ledger(ledger: BatchLedger, out_dir: Path) -> Path:
@@ -555,13 +614,17 @@ def plan_batch(
     batch_group: str = "",
     limit: int = DEFAULT_BATCH_LIMIT,
     priority_filter: str = "",
+    priority_mix: dict[str, int] | None = None,
+    max_per_host: int = 0,
 ) -> BatchManifest:
     """Inspect the source queue and return a dry-run batch manifest.
 
     Applies exclusion_reason() (which mirrors is_overnight_safe()) to every
     candidate item. Safe items are sorted by priority (high → medium → low)
-    and capped at ``limit``. Items beyond the cap are reported in excluded
-    with reason "over_limit".
+    and capped at ``limit`` by default. When ``priority_mix`` is supplied, safe
+    items are selected by high/medium/low quotas instead. Items beyond the cap
+    are reported in excluded with reason "over_limit"; items blocked by a
+    same-website cap are reported as "same_host_limit:<hostname>".
 
     Parameters
     ----------
@@ -574,6 +637,12 @@ def plan_batch(
         Must be ≥ 1.
     priority_filter:
         If non-empty, only inspect items with this priority level.
+    priority_mix:
+        Optional explicit quotas, e.g. ``{"high": 3, "medium": 4, "low": 3}``.
+        Ignored when ``priority_filter`` is set.
+    max_per_host:
+        Optional same-website cap. ``0`` disables the cap; ``1`` means at most
+        one URL per normalized hostname (``www.`` stripped).
 
     Returns
     -------
@@ -581,6 +650,12 @@ def plan_batch(
         Read-only. No queue state is modified.
     """
     effective_limit = min(max(1, limit), MAX_BATCH_LIMIT)
+    effective_host_cap = max(0, int(max_per_host or 0))
+    effective_mix = (
+        {}
+        if priority_filter
+        else _normalise_priority_mix(priority_mix, effective_limit)
+    )
     generated_at = _now_utc()
 
     # Read a broad set from the queue — no status filter so we can surface
@@ -617,15 +692,33 @@ def plan_batch(
     # (list_items returns newest-first, so stable sort preserves that within tier).
     safe.sort(key=lambda x: _PRIORITY_ORDER.get(x.priority, 2))
 
-    # Apply limit — overflow items go to excluded with reason "over_limit".
-    included: list[ManifestItem] = safe[:effective_limit]
-    over_limit: list[ManifestItem] = safe[effective_limit:]
+    if effective_mix:
+        included = []
+        over_limit = []
+        for priority in ("high", "medium", "low"):
+            bucket = [mi for mi in safe if mi.priority == priority]
+            selected, rejected = _select_with_host_cap(
+                bucket,
+                limit=effective_mix.get(priority, 0),
+                max_per_host=effective_host_cap,
+            )
+            included.extend(selected)
+            over_limit.extend(rejected)
+        unrequested = [
+            mi for mi in safe
+            if mi.priority not in effective_mix and not mi.included and not mi.exclusion_reason
+        ]
+        for mi in unrequested:
+            mi.exclusion_reason = "over_limit"
+        over_limit.extend(unrequested)
+    else:
+        included, over_limit = _select_with_host_cap(
+            safe,
+            limit=effective_limit,
+            max_per_host=effective_host_cap,
+        )
 
-    for mi in included:
-        mi.included = True
-    for mi in over_limit:
-        mi.exclusion_reason = "over_limit"
-        excluded.append(mi)
+    excluded.extend(over_limit)
 
     # Build human-readable advisory notes.
     notes: list[str] = []
@@ -649,10 +742,18 @@ def plan_batch(
             f"{unsafe} item(s) excluded: triage flagged as not batch-safe"
         )
     if over_limit:
-        notes.append(
-            f"{len(over_limit)} safe item(s) deferred — over the batch limit "
-            f"({effective_limit}). Run again after reviewing this batch."
-        )
+        same_host = sum(1 for e in over_limit if e.exclusion_reason.startswith("same_host_limit:"))
+        over_cap = sum(1 for e in over_limit if e.exclusion_reason == "over_limit")
+        if over_cap:
+            notes.append(
+                f"{over_cap} safe item(s) deferred — over the batch limit "
+                f"({effective_limit}). Run again after reviewing this batch."
+            )
+        if same_host:
+            notes.append(
+                f"{same_host} safe item(s) deferred by the same-website cap "
+                f"(max {effective_host_cap} per host)."
+            )
 
     return BatchManifest(
         generated_at=generated_at,
@@ -660,6 +761,8 @@ def plan_batch(
         priority_filter=priority_filter,
         limit=effective_limit,
         total_candidates=len(candidates),
+        priority_mix=effective_mix,
+        max_per_host=effective_host_cap,
         included=included,
         excluded=excluded,
         notes=notes,
