@@ -228,6 +228,38 @@ def test_batch_run_command_adds_priority_and_skip_preflight():
     assert "--skip-preflight" in cmd
 
 
+def test_batch_run_command_adds_priority_mix_and_host_cap():
+    import runner.app as app_mod
+
+    cmd = app_mod._batch_run_command(
+        batch_group="pilot",
+        limit=10,
+        priority_mix={"high": 2, "medium": 3, "low": 1},
+        max_per_host=1,
+        execute=True,
+    )
+
+    assert cmd[cmd.index("--mix-high") + 1] == "2"
+    assert cmd[cmd.index("--mix-medium") + 1] == "3"
+    assert cmd[cmd.index("--mix-low") + 1] == "1"
+    assert cmd[cmd.index("--max-per-host") + 1] == "1"
+    assert "--priority" not in cmd
+
+
+def test_batch_run_command_priority_filter_suppresses_mix():
+    import runner.app as app_mod
+
+    cmd = app_mod._batch_run_command(
+        batch_group="pilot",
+        limit=10,
+        priority="high",
+        priority_mix={"low": 5},
+    )
+
+    assert cmd[cmd.index("--priority") + 1] == "high"
+    assert "--mix-low" not in cmd
+
+
 # ---------------------------------------------------------------------------
 # Document List workflow queue helpers
 # ---------------------------------------------------------------------------
@@ -582,6 +614,34 @@ def test_source_queue_initial_priority_keeps_manual_add_only_choice():
 
     assert _source_queue_initial_priority("Add only", "high") == "high"
     assert _source_queue_initial_priority("Add only", "skip") == "skip"
+
+
+def test_source_queue_hold_category_classifies_common_triage_failures():
+    from runner.app import (
+        _source_queue_hold_category,
+        _source_queue_hold_label,
+        _source_queue_hold_next_step,
+    )
+
+    assert _source_queue_hold_category(
+        "https://www.bitchute.com/video/abc",
+        "triage failed: acquisition failed: blocker_text",
+    ) == "video_needs_transcript"
+    assert _source_queue_hold_category(
+        "https://journal.example/a",
+        "triage failed: acquisition failed: cf-mitigated:challenge",
+    ) == "cloudflare"
+    assert _source_queue_hold_category(
+        "https://example.org/a",
+        "triage failed: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed",
+    ) == "ssl"
+    assert _source_queue_hold_category(
+        "https://example.org/a",
+        "triage failed: wayback closest snapshot unavailable",
+    ) == "wayback_unavailable"
+
+    assert "Cloudflare" in _source_queue_hold_label("cloudflare")
+    assert "snapshot" in _source_queue_hold_next_step("cloudflare")
 
 
 # ---------------------------------------------------------------------------

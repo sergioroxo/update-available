@@ -4925,9 +4925,11 @@ def _default_source_queue_batch_group() -> str:
 
 def _batch_run_command(
     *,
-    batch_group: str,
+    batch_group: str = "",
     limit: int,
     priority: str = "",
+    priority_mix: dict[str, int] | None = None,
+    max_per_host: int = 0,
     execute: bool = False,
     run_enrich: bool = True,
     enrich_model: str = "",
@@ -4938,13 +4940,23 @@ def _batch_run_command(
         "-m",
         "runner",
         "batch-run",
-        "--batch",
-        batch_group,
-        "--limit",
-        str(limit),
     ]
+    if batch_group:
+        command.extend(["--batch", batch_group])
+    command.extend(["--limit", str(limit)])
     if priority:
         command.extend(["--priority", priority])
+    elif priority_mix:
+        for priority_name, flag in (
+            ("high", "--mix-high"),
+            ("medium", "--mix-medium"),
+            ("low", "--mix-low"),
+        ):
+            value = int(priority_mix.get(priority_name, 0) or 0)
+            if value:
+                command.extend([flag, str(value)])
+    if max_per_host:
+        command.extend(["--max-per-host", str(max_per_host)])
     if execute:
         command.append("--execute")
     if not run_enrich:
@@ -5036,6 +5048,8 @@ def _start_batch_run_job(
     batch_group: str,
     limit: int,
     priority: str = "",
+    priority_mix: dict[str, int] | None = None,
+    max_per_host: int = 0,
     execute: bool = False,
     run_enrich: bool = True,
     enrich_model: str = "",
@@ -5059,6 +5073,8 @@ def _start_batch_run_job(
         batch_group=batch_group,
         limit=limit,
         priority=priority,
+        priority_mix=priority_mix,
+        max_per_host=max_per_host,
         execute=execute,
         run_enrich=run_enrich,
         enrich_model=enrich_model,
@@ -13113,6 +13129,101 @@ def _mr_candidates(doc_id: str, doc_dir: Path, config):
 # Source Queue page
 # ---------------------------------------------------------------------------
 
+def _source_queue_url_host(url: str) -> str:
+    try:
+        from urllib.parse import urlparse
+        return (urlparse(url).hostname or "").lower().removeprefix("www.")
+    except Exception:
+        return ""
+
+
+def _source_queue_is_videoish_url(url: str, source_type: str = "") -> bool:
+    host = _source_queue_url_host(url)
+    path = ""
+    try:
+        from urllib.parse import urlparse
+        path = (urlparse(url).path or "").lower()
+    except Exception:
+        pass
+    video_hosts = (
+        "youtube.com", "youtu.be", "vimeo.com", "rumble.com", "odysee.com",
+        "bitchute.com", "dailymotion.com", "facebook.com", "fb.watch",
+    )
+    return (
+        source_type == "video"
+        or host in video_hosts
+        or any(host.endswith(f".{h}") for h in video_hosts)
+        or "/watch" in path
+        or "/video/" in path
+    )
+
+
+def _source_queue_hold_category(url: str, routing_reason: str = "", source_type: str = "") -> str:
+    reason = (routing_reason or "").lower()
+    if _source_queue_is_videoish_url(url, source_type):
+        return "video_needs_transcript"
+    if "cf-mitigated:challenge" in reason or "cloudflare_http" in reason:
+        return "cloudflare"
+    if "blocker_text" in reason:
+        return "blocked_page"
+    if "certificate_verify_failed" in reason or "certificate verify failed" in reason or "[ssl:" in reason:
+        return "ssl"
+    if "wayback" in reason and ("unavailable" in reason or "failed" in reason):
+        return "wayback_unavailable"
+    if "status 403" in reason or "access denied" in reason:
+        return "http_blocked"
+    if "timed out" in reason or "timeout" in reason:
+        return "timeout"
+    if reason.startswith("triage failed:"):
+        return "triage_failed"
+    return ""
+
+
+def _source_queue_hold_label(category: str) -> str:
+    return {
+        "video_needs_transcript": "Media/video held: transcript or media metadata needed",
+        "cloudflare": "Held: Cloudflare/security challenge",
+        "blocked_page": "Held: blocker/login/challenge page detected",
+        "ssl": "Held: SSL/certificate fetch problem",
+        "wayback_unavailable": "Held: no usable Wayback fallback found",
+        "http_blocked": "Held: HTTP blocked/forbidden",
+        "timeout": "Held: fetch timed out",
+        "triage_failed": "Held: triage failed closed",
+    }.get(category, "Held for researcher review")
+
+
+def _source_queue_hold_next_step(category: str) -> str:
+    return {
+        "video_needs_transcript": (
+            "Use Media Review or attach a saved transcript/snapshot before unattended ingest."
+        ),
+        "cloudflare": (
+            "Do not retry blindly. Open in a browser, save a rendered HTML/PDF snapshot, "
+            "then export it through Source Offload as a queue snapshot."
+        ),
+        "blocked_page": (
+            "Open in a browser and confirm whether this is a login/challenge shell or a real page. "
+            "If real content is visible, save a snapshot and attach it to the queue item."
+        ),
+        "ssl": (
+            "Retry after confirming the venv CA bundle. If it still fails, use a saved browser snapshot "
+            "or Wayback/source file."
+        ),
+        "wayback_unavailable": (
+            "Try a browser snapshot, PDF, or an alternate archived URL. The automatic archive search found no usable capture."
+        ),
+        "http_blocked": (
+            "Use a browser-saved snapshot or another public representation; the server refused automated fetch."
+        ),
+        "timeout": (
+            "Retry once later; if it repeats, use a saved snapshot or alternate source."
+        ),
+        "triage_failed": (
+            "Retry triage after reviewing the reason, or add a researcher note/snapshot for more context."
+        ),
+    }.get(category, "Review this source manually before marking it ready.")
+
+
 def page_source_queue():
     st.title("📥 Source Queue")
 
@@ -13380,8 +13491,9 @@ def page_source_queue():
             "Triage does **not** ingest — it only updates queue metadata."
         )
         triage_n = triage_cols[1].number_input(
-            "Max", min_value=1, max_value=50, value=min(new_count, 10),
+            "Max", min_value=1, max_value=200, value=min(new_count, 50),
             key="sq_triage_n",
+            help="How many visible new items to triage in this click. Use filters/batches to keep long runs intentional.",
         )
         if triage_cols[0].button("⚡ Run triage on new items", key="sq_triage_btn"):
             _run_source_queue_triage([i for i in items if i.status == "new"][:int(triage_n)])
@@ -13398,9 +13510,10 @@ def page_source_queue():
             "Retry re-fetches each URL and asks the triage model again. It does not ingest."
         )
         retry_n = retry_cols[1].number_input(
-            "Retry max", min_value=1, max_value=50,
-            value=min(len(failed_triage_items), 10),
+            "Retry max", min_value=1, max_value=200,
+            value=min(len(failed_triage_items), 50),
             key="sq_retry_failed_n",
+            help="How many visible held/failed triage items to retry in this click.",
         )
         if retry_cols[0].button("🔁 Retry failed triage", key="sq_retry_failed_btn"):
             _run_source_queue_triage(failed_triage_items[:int(retry_n)], label="Retrying failed triage")
@@ -13581,7 +13694,7 @@ def page_source_queue():
 
     with st.expander("🧪 Batch selected queue items", expanded=bool(selected_items)):
         st.caption(
-            "Tick rows in the queue below, stamp them with a temporary batch group, "
+            "Tick rows manually or auto-fill a temporary batch group from safe queue items, "
             "then rehearse or run the batch from here. Live batch runs include enrichment by default."
         )
         saved_batch_rows = [
@@ -13691,6 +13804,95 @@ def page_source_queue():
             ),
         )
         priority_arg = "" if batch_priority == "(all)" else batch_priority
+        auto_cols = st.columns([1, 1, 2])
+        local_batch_mode = auto_cols[0].selectbox(
+            "Auto-fill mode",
+            ["Priority order", "Priority mix"],
+            key="sq_batch_auto_mode",
+            help=(
+                "Priority order uses the normal high→medium→low planner. Priority mix "
+                "samples deliberately across priority tiers."
+            ),
+        )
+        local_host_cap = int(auto_cols[1].number_input(
+            "Max / website",
+            min_value=0,
+            max_value=MAX_BATCH_LIMIT,
+            value=0,
+            step=1,
+            key="sq_batch_workbench_host_cap",
+            help="0 disables same-website diversity; 1 allows at most one URL per hostname.",
+        ))
+        local_priority_mix = None
+        if local_batch_mode == "Priority mix":
+            mix_cols = st.columns(3)
+            local_priority_mix = {
+                "high": int(mix_cols[0].number_input(
+                    "High priority",
+                    min_value=0,
+                    max_value=MAX_BATCH_LIMIT,
+                    value=3,
+                    step=1,
+                    key="sq_batch_workbench_mix_high",
+                )),
+                "medium": int(mix_cols[1].number_input(
+                    "Medium priority",
+                    min_value=0,
+                    max_value=MAX_BATCH_LIMIT,
+                    value=4,
+                    step=1,
+                    key="sq_batch_workbench_mix_medium",
+                )),
+                "low": int(mix_cols[2].number_input(
+                    "Low priority",
+                    min_value=0,
+                    max_value=MAX_BATCH_LIMIT,
+                    value=3,
+                    step=1,
+                    key="sq_batch_workbench_mix_low",
+                )),
+            }
+            batch_limit = min(MAX_BATCH_LIMIT, sum(local_priority_mix.values()) or 1)
+            priority_arg = ""
+            auto_cols[2].caption(
+                f"Auto-fill target: {local_priority_mix['high']} high, "
+                f"{local_priority_mix['medium']} medium, {local_priority_mix['low']} low "
+                f"(max {batch_limit} item(s))."
+            )
+        else:
+            auto_cols[2].caption(
+                "Auto-fill uses the same safety gates as batch-plan; it does not ingest."
+            )
+
+        auto_fill_disabled = not batch_group_name
+        if st.button(
+            "Auto-fill this batch group from safe queue",
+            key="sq_batch_auto_fill",
+            disabled=auto_fill_disabled,
+            help=(
+                "Selects safe queue items using the current priority/mix and max/website "
+                "settings, then writes this batch group onto those rows. It does not ingest."
+            ),
+        ):
+            auto_manifest = plan_batch(
+                db,
+                limit=batch_limit,
+                priority_filter=priority_arg,
+                priority_mix=local_priority_mix,
+                max_per_host=local_host_cap,
+            )
+            changed = 0
+            for manifest_item in auto_manifest.included:
+                if update_notes(db, manifest_item.item_id, batch_group=batch_group_name):
+                    changed += 1
+            if changed:
+                st.success(
+                    f"Auto-filled `{batch_group_name}` with {changed} safe item(s). "
+                    "Review the plan below, then run rehearsal or live batch."
+                )
+            else:
+                st.warning("No safe queue items were available for this auto-fill plan.")
+            st.rerun()
 
         assign_disabled = not selected_items or not batch_group_name
         if st.button(
@@ -13712,12 +13914,18 @@ def page_source_queue():
                 batch_group=batch_group_name,
                 limit=batch_limit,
                 priority_filter=priority_arg,
+                priority_mix=local_priority_mix,
+                max_per_host=local_host_cap,
             )
             mcols = st.columns(4)
             mcols[0].metric("Candidates", manifest.total_candidates)
             mcols[1].metric("Eligible", manifest.total_included)
             mcols[2].metric("Excluded", manifest.total_excluded)
             mcols[3].metric("Limit", manifest.limit)
+            if manifest.priority_mix:
+                st.caption(f"Priority mix: `{manifest.priority_mix}`")
+            if manifest.max_per_host:
+                st.caption(f"Same-website cap: max `{manifest.max_per_host}` per host")
             if manifest.notes:
                 for note in manifest.notes:
                     st.warning(note)
@@ -13748,6 +13956,8 @@ def page_source_queue():
                 batch_group=batch_group_name,
                 limit=batch_limit,
                 priority=priority_arg,
+                priority_mix=local_priority_mix,
+                max_per_host=local_host_cap,
                 execute=True,
                 run_enrich=include_enrich,
                 enrich_model=enrich_model if include_enrich else "",
@@ -13777,6 +13987,8 @@ def page_source_queue():
                     batch_group=batch_group_name,
                     limit=batch_limit,
                     priority=priority_arg,
+                    priority_mix=local_priority_mix,
+                    max_per_host=local_host_cap,
                     execute=False,
                     run_enrich=include_enrich,
                     enrich_model=enrich_model if include_enrich else "",
@@ -13796,6 +14008,8 @@ def page_source_queue():
                     batch_group=batch_group_name,
                     limit=batch_limit,
                     priority=priority_arg,
+                    priority_mix=local_priority_mix,
+                    max_per_host=local_host_cap,
                     execute=True,
                     run_enrich=include_enrich,
                     enrich_model=enrich_model if include_enrich else "",
@@ -13851,6 +14065,16 @@ def page_source_queue():
                                + (f"  ·  {item.triaged_at[:10]}" if item.triaged_at else ""))
                 if item.routing_reason:
                     st.caption(f"Triage reason: {item.routing_reason}")
+                hold_category = _source_queue_hold_category(
+                    item.url,
+                    item.routing_reason,
+                    item.source_type,
+                )
+                if hold_category and item.status in ("new", "triaged"):
+                    st.warning(
+                        f"**{_source_queue_hold_label(hold_category)}**  \n"
+                        f"{_source_queue_hold_next_step(hold_category)}"
+                    )
 
                 # Corpus association — prominent warning
                 if item.corpus_doc_id:

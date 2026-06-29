@@ -226,6 +226,113 @@ def test_acquire_url_challenge_recovers_from_wayback(monkeypatch):
     assert "Archived challenge-free page" in acq.html
 
 
+def test_acquire_url_challenge_recovers_from_wordpress_rest(monkeypatch):
+    _patch_traf(monkeypatch, None)
+
+    def _get(url, **kw):
+        if url == "https://example.org/2020/01/sample-post":
+            return _Resp(403, "<html>blocked</html>",
+                         headers={"cf-mitigated": "challenge", "server": "cloudflare"},
+                         url=url)
+        if url == "https://example.org/wp-json/wp/v2/posts?slug=sample-post":
+            return _JsonResp(200, [
+                {
+                    "id": 10,
+                    "link": "https://example.org/2020/01/sample-post/",
+                    "title": {"rendered": "Sample post"},
+                    "excerpt": {"rendered": "<p>Excerpt</p>"},
+                    "content": {"rendered": "<p>Recovered WordPress content</p>"},
+                }
+            ], headers={"server": "nginx"}, url=url)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setitem(__import__("sys").modules, "httpx", types.SimpleNamespace(get=_get))
+
+    acq = acquire_url("https://example.org/2020/01/sample-post")
+
+    assert acq.ok is True
+    assert acq.fetch_tool == "wordpress-rest"
+    assert acq.final_url == "https://example.org/2020/01/sample-post/"
+    assert "Recovered WordPress content" in acq.html
+
+
+def test_acquire_url_wayback_tries_url_variants(monkeypatch):
+    _patch_traf(monkeypatch, None)
+    seen_available_urls = []
+
+    def _get(url, **kw):
+        if url == "https://example.org/article":
+            raise RuntimeError("[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed")
+        if url == acquire._WAYBACK_AVAILABLE_URL:
+            candidate = kw.get("params", {}).get("url")
+            seen_available_urls.append(candidate)
+            if candidate == "http://www.example.org/article":
+                return _JsonResp(200, {
+                    "archived_snapshots": {
+                        "closest": {
+                            "available": True,
+                            "url": "https://web.archive.org/web/20190101000000/http://www.example.org/article",
+                        }
+                    }
+                })
+            return _JsonResp(200, {"archived_snapshots": {}})
+        if url == acquire._WAYBACK_CDX_URL:
+            return _JsonResp(200, [])
+        if url == "https://web.archive.org/web/20190101000000id_/http://www.example.org/article":
+            return _Resp(200, "<html><p>Variant archived text</p></html>",
+                         headers={"server": "nginx"}, url=url)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setitem(__import__("sys").modules, "httpx", types.SimpleNamespace(get=_get))
+
+    acq = acquire_url("https://example.org/article")
+
+    assert acq.ok is True
+    assert acq.fetch_tool == "wayback-httpx"
+    assert "Variant archived text" in acq.html
+    assert "http://www.example.org/article" in seen_available_urls
+
+
+def test_acquire_url_wayback_tries_cdx_after_bad_closest(monkeypatch):
+    _patch_traf(monkeypatch, None)
+
+    def _get(url, **kw):
+        if url == "https://example.org/old":
+            return _Resp(403, "Forbidden", headers={"server": "nginx"}, url=url)
+        if url == "https://example.org/wp-json/wp/v2/posts?slug=old":
+            return _Resp(404, "not found", headers={"server": "nginx"}, url=url)
+        if url == "https://example.org/wp-json/wp/v2/pages?slug=old":
+            return _Resp(404, "not found", headers={"server": "nginx"}, url=url)
+        if url == acquire._WAYBACK_AVAILABLE_URL:
+            return _JsonResp(200, {
+                "archived_snapshots": {
+                    "closest": {
+                        "available": True,
+                        "url": "https://web.archive.org/web/20240101000000/https://example.org/old",
+                    }
+                }
+            })
+        if url == acquire._WAYBACK_CDX_URL:
+            return _JsonResp(200, [
+                ["timestamp", "original", "statuscode", "mimetype"],
+                ["20200101000000", "https://example.org/old", "200", "text/html"],
+            ])
+        if url == "https://web.archive.org/web/20240101000000id_/https://example.org/old":
+            return _Resp(200, "Just a moment...", headers={"server": "cloudflare"}, url=url)
+        if url == "https://web.archive.org/web/20200101000000id_/https://example.org/old":
+            return _Resp(200, "<html><p>Older usable capture</p></html>",
+                         headers={"server": "nginx"}, url=url)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setitem(__import__("sys").modules, "httpx", types.SimpleNamespace(get=_get))
+
+    acq = acquire_url("https://example.org/old")
+
+    assert acq.ok is True
+    assert "Older usable capture" in acq.html
+    assert "CDX snapshot" in acq.note
+
+
 def test_acquire_url_importerror_reports_underlying(monkeypatch):
     import builtins
     real_import = builtins.__import__
@@ -409,6 +516,43 @@ def test_triage_extract_snippet_uses_acquisition_fallback(monkeypatch):
     assert "Recovered text for triage" in snippet
     assert "acquired" in note
     assert "via httpx" in note
+
+
+def test_triage_extract_snippet_uses_media_metadata_before_page_fetch(monkeypatch):
+    from runner.pipeline import triage
+
+    class FakeYoutubeDL:
+        def __init__(self, opts):
+            self.opts = opts
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def extract_info(self, url, download=False):
+            assert download is False
+            return {
+                "title": "A testimony video",
+                "uploader": "Example Channel",
+                "webpage_url": url,
+                "description": "A long description that gives triage enough routing signal.",
+                "tags": ["conversion therapy", "testimony"],
+            }
+
+    monkeypatch.setitem(
+        __import__("sys").modules,
+        "yt_dlp",
+        types.SimpleNamespace(YoutubeDL=FakeYoutubeDL),
+    )
+
+    snippet, note = triage.extract_snippet("https://www.bitchute.com/video/abc123")
+
+    assert "A testimony video" in snippet
+    assert "Example Channel" in snippet
+    assert "conversion therapy" in snippet
+    assert "yt-dlp" in note
 
 
 def test_triage_extract_snippet_reports_acquisition_failure_without_direct_fetch(monkeypatch):

@@ -64,6 +64,12 @@ _VIDEO_HOST_HINTS = (
     "youtube.com",
     "youtu.be",
     "vimeo.com",
+    "rumble.com",
+    "odysee.com",
+    "bitchute.com",
+    "dailymotion.com",
+    "facebook.com",
+    "fb.watch",
 )
 
 _BLOCKER_TEXT_RE = re.compile(
@@ -125,6 +131,81 @@ Workflow flag rules:
 """
 
 
+def _host_matches(host: str, hints: tuple[str, ...]) -> bool:
+    return host in hints or any(host.endswith(f".{h}") for h in hints)
+
+
+def _is_videoish_url(source: str) -> bool:
+    parsed = urlparse(source or "")
+    host = parsed.netloc.lower().removeprefix("www.")
+    path = parsed.path.lower()
+    if _host_matches(host, _VIDEO_HOST_HINTS):
+        return True
+    return "/watch" in path or "/video/" in path or path.endswith((".mp4", ".mov", ".webm", ".m4v"))
+
+
+def _text_from_yt_dlp_info(info: dict) -> str:
+    """Build a bounded triage snippet from public media metadata.
+
+    Triage needs routing signal, not the full media transcript. If subtitles are
+    unavailable or extraction is blocked, title/channel/description metadata is
+    still enough to route the item into media review instead of treating it like
+    a generic broken web page.
+    """
+    if not isinstance(info, dict):
+        return ""
+    parts: list[str] = []
+    title = str(info.get("title") or "").strip()
+    if title:
+        parts.append(f"Title: {title}")
+    uploader = str(info.get("uploader") or info.get("channel") or "").strip()
+    if uploader:
+        parts.append(f"Channel/uploader: {uploader}")
+    webpage_url = str(info.get("webpage_url") or info.get("original_url") or "").strip()
+    if webpage_url:
+        parts.append(f"Media URL: {webpage_url}")
+    duration = info.get("duration")
+    if duration:
+        parts.append(f"Duration seconds: {duration}")
+    categories = info.get("categories")
+    if isinstance(categories, list) and categories:
+        parts.append("Categories: " + ", ".join(str(c) for c in categories[:8] if c))
+    tags = info.get("tags")
+    if isinstance(tags, list) and tags:
+        parts.append("Tags: " + ", ".join(str(t) for t in tags[:18] if t))
+    description = str(info.get("description") or "").strip()
+    if description:
+        parts.append("Description:\n" + description)
+    return "\n\n".join(part for part in parts if part).strip()
+
+
+def _extract_media_metadata_snippet(source: str, max_chars: int) -> tuple[str, str]:
+    """Try public yt-dlp metadata before generic URL acquisition for media URLs."""
+    try:
+        import yt_dlp
+    except ImportError as exc:
+        raise RuntimeError(f"yt-dlp unavailable for media metadata: {exc}") from exc
+
+    opts = {
+        "skip_download": True,
+        "quiet": True,
+        "no_warnings": True,
+        "ignoreerrors": True,
+        "extract_flat": False,
+    }
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(source, download=False)
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"yt-dlp metadata extraction failed: {exc}") from exc
+    if not isinstance(info, dict):
+        raise RuntimeError("yt-dlp returned no media metadata")
+    text = _text_from_yt_dlp_info(info)
+    if not text:
+        raise RuntimeError("yt-dlp media metadata contained no triage text")
+    return text[:max_chars], f"Extracted media metadata with yt-dlp ({len(text)} chars)"
+
+
 def source_context_label(
     source: str,
     *,
@@ -153,7 +234,7 @@ def source_context_label(
             "source rationale when extraction text is blocked or boilerplate"
         )
 
-    if host in _VIDEO_HOST_HINTS or any(host.endswith(f".{h}") for h in _VIDEO_HOST_HINTS):
+    if _is_videoish_url(source):
         hints.append(
             "video platform URL; extraction may show page boilerplate; "
             "route as media/video and require transcript/media review when needed"
@@ -247,6 +328,13 @@ def extract_snippet(source: str, max_chars: int = _SNIPPET_CHARS) -> tuple[str, 
     back to a direct HTTP body only as a last resort.
     """
     if source.startswith(("http://", "https://")):
+        media_note = ""
+        if _is_videoish_url(source):
+            try:
+                return _extract_media_metadata_snippet(source, max_chars)
+            except Exception as exc:  # noqa: BLE001
+                media_note = f"Media metadata fallback failed: {exc}"
+
         try:
             from runner.pipeline.preprocess import _preprocess_url
         except ImportError:
@@ -263,6 +351,8 @@ def extract_snippet(source: str, max_chars: int = _SNIPPET_CHARS) -> tuple[str, 
             fallback_note = f"Trafilatura extraction failed: {exc}"
         else:
             fallback_note = "Trafilatura extraction returned no readable text"
+        if media_note:
+            fallback_note = f"{fallback_note}; {media_note}"
 
         try:
             from runner.pipeline.acquire import acquire_url
