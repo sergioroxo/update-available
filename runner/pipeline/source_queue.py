@@ -73,6 +73,21 @@ CREATE TABLE IF NOT EXISTS source_queue (
 CREATE INDEX IF NOT EXISTS idx_sq_status    ON source_queue (status);
 CREATE INDEX IF NOT EXISTS idx_sq_priority  ON source_queue (priority);
 CREATE INDEX IF NOT EXISTS idx_sq_batch     ON source_queue (batch_group);
+CREATE TABLE IF NOT EXISTS source_queue_triage_history (
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id                 TEXT NOT NULL,
+    triaged_at              TEXT NOT NULL,
+    model_name              TEXT NOT NULL DEFAULT '',
+    doc_type_hint           TEXT NOT NULL DEFAULT '',
+    recommended_llm         TEXT NOT NULL DEFAULT '',
+    routing_reason          TEXT NOT NULL DEFAULT '',
+    priority                TEXT NOT NULL DEFAULT '',
+    source_type             TEXT NOT NULL DEFAULT '',
+    overnight_batch_safe    INTEGER NOT NULL DEFAULT 0,
+    suggested_process_route TEXT NOT NULL DEFAULT '',
+    triage_succeeded        INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_sq_triage_history_item ON source_queue_triage_history (item_id, triaged_at DESC);
 """
 
 # Columns added after initial schema — handled by _migrate_db()
@@ -669,6 +684,10 @@ def apply_triage_result(
     """
     priority = priority_from_triage(triage_result)
     s_type = source_type_from_triage(triage_result)
+    now = _now()
+    overnight_safe = int(getattr(triage_result, "overnight_batch_safe", False))
+    suggested_route = getattr(triage_result, "suggested_process_route", "")
+    triage_succeeded = int(bool(getattr(triage_result, "triage_succeeded", False)))
     cur = db.execute(
         """UPDATE source_queue SET
                doc_type_hint          = ?,
@@ -697,15 +716,60 @@ def apply_triage_result(
             int(getattr(triage_result, "needs_media_review",      False)),
             int(getattr(triage_result, "needs_legal_review",      False)),
             # Fail closed: a triage object without this attribute is not safe.
-            int(getattr(triage_result, "overnight_batch_safe",    False)),
-            getattr(triage_result,     "suggested_process_route", ""),
-            _now(),
+            overnight_safe,
+            suggested_route,
+            now,
             model_name,
             item_id,
         ),
     )
+    if cur.rowcount:
+        db.execute(
+            """INSERT INTO source_queue_triage_history
+               (item_id, triaged_at, model_name, doc_type_hint, recommended_llm,
+                routing_reason, priority, source_type, overnight_batch_safe,
+                suggested_process_route, triage_succeeded)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                item_id,
+                now,
+                model_name,
+                triage_result.doc_type_hint,
+                triage_result.recommended_llm,
+                triage_result.routing_reason,
+                priority,
+                s_type,
+                overnight_safe,
+                suggested_route,
+                triage_succeeded,
+            ),
+        )
     db.commit()
     return cur.rowcount > 0
+
+
+def list_triage_history(
+    db: sqlite3.Connection,
+    item_id: str | None = None,
+    *,
+    limit: int = 50,
+) -> list[dict]:
+    """Return recent triage attempts, newest first.
+
+    History is append-only local provenance for researcher debugging. It is not
+    used by the batch gates; the current source_queue row remains authoritative.
+    """
+    where = ""
+    params: list = []
+    if item_id:
+        where = "WHERE item_id = ?"
+        params.append(item_id)
+    sql = (
+        "SELECT * FROM source_queue_triage_history "
+        f"{where} ORDER BY triaged_at DESC, id DESC LIMIT ?"
+    )
+    params.append(limit)
+    return [dict(row) for row in db.execute(sql, params).fetchall()]
 
 
 def mark_ingested(db: sqlite3.Connection, item_id: str, doc_id: str) -> bool:

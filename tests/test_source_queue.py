@@ -23,6 +23,7 @@ from runner.pipeline.source_queue import (
     detect_url_source_type,
     get_item,
     list_items,
+    list_triage_history,
     mark_ingested,
     normalise_url,
     open_db,
@@ -453,6 +454,13 @@ class TestApplyTriageResult:
         assert updated.recommended_llm == "claude"
         assert updated.routing_reason == "Court judgment — high accuracy needed"
         assert updated.priority == "high"  # legal + complex → high
+        history = list_triage_history(db, item.id)
+        assert len(history) == 1
+        assert history[0]["item_id"] == item.id
+        assert history[0]["model_name"] == ""
+        assert history[0]["routing_reason"] == "Court judgment — high accuracy needed"
+        assert history[0]["priority"] == "high"
+        assert history[0]["triage_succeeded"] == 0
 
     def test_promotional_simple_gets_low_priority(self, db):
         from types import SimpleNamespace
@@ -478,6 +486,59 @@ class TestApplyTriageResult:
         )
         apply_triage_result(db, item.id, triage)
         assert get_item(db, item.id).source_type == "social"
+
+    def test_triage_history_records_retries_newest_first(self, db):
+        from types import SimpleNamespace
+        item = add_item(db, "https://retry.com")
+        held = SimpleNamespace(
+            doc_type_hint="unknown",
+            recommended_llm="litelm",
+            routing_reason="triage failed: acquisition failed: cloudflare_http:403",
+            complexity="moderate",
+            overnight_batch_safe=False,
+            triage_succeeded=False,
+            suggested_process_route="manual-capture",
+        )
+        parsed = SimpleNamespace(
+            doc_type_hint="news",
+            recommended_llm="litelm",
+            routing_reason="Recovered by snapshot.",
+            complexity="simple",
+            overnight_batch_safe=True,
+            triage_succeeded=True,
+            suggested_process_route="source-offload",
+        )
+
+        apply_triage_result(db, item.id, held, model_name="litelm/triage")
+        apply_triage_result(db, item.id, parsed, model_name="litelm/triage")
+
+        history = list_triage_history(db, item.id)
+        assert len(history) == 2
+        assert history[0]["routing_reason"] == "Recovered by snapshot."
+        assert history[0]["triage_succeeded"] == 1
+        assert history[1]["routing_reason"].endswith("cloudflare_http:403")
+        assert history[1]["overnight_batch_safe"] == 0
+
+    def test_triage_history_limit_and_global_list(self, db):
+        from types import SimpleNamespace
+        item_a = add_item(db, "https://a-history.com")
+        item_b = add_item(db, "https://b-history.com")
+        triage = SimpleNamespace(
+            doc_type_hint="news",
+            recommended_llm="litelm",
+            routing_reason="ok",
+            complexity="simple",
+            overnight_batch_safe=True,
+            triage_succeeded=True,
+            suggested_process_route="source-offload",
+        )
+
+        apply_triage_result(db, item_a.id, triage, model_name="m1")
+        apply_triage_result(db, item_b.id, triage, model_name="m2")
+
+        assert len(list_triage_history(db, item_a.id, limit=1)) == 1
+        global_history = list_triage_history(db, limit=10)
+        assert {row["item_id"] for row in global_history} == {item_a.id, item_b.id}
 
 
 # ---------------------------------------------------------------------------

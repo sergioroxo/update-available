@@ -13246,6 +13246,7 @@ def page_source_queue():
             open_db, queue_db_path, add_items_from_text, list_items,
             update_status, update_priority, update_notes, delete_item,
             apply_triage_result, queue_stats, batch_groups,
+            list_triage_history,
             VALID_STATUSES, VALID_PRIORITIES,
         )
         from runner.pipeline.batch import plan_batch, MAX_BATCH_LIMIT
@@ -14065,6 +14066,25 @@ def page_source_queue():
                                + (f"  ·  {item.triaged_at[:10]}" if item.triaged_at else ""))
                 if item.routing_reason:
                     st.caption(f"Triage reason: {item.routing_reason}")
+                triage_history = list_triage_history(db, item.id, limit=8)
+                if triage_history:
+                    with st.expander(f"Triage history ({len(triage_history)} recent)", expanded=False):
+                        st.dataframe(
+                            [
+                                {
+                                    "when": row.get("triaged_at", "")[:19],
+                                    "model": row.get("model_name", ""),
+                                    "result": "parsed" if row.get("triage_succeeded") else "held",
+                                    "safe": bool(row.get("overnight_batch_safe")),
+                                    "priority": row.get("priority", ""),
+                                    "llm": row.get("recommended_llm", ""),
+                                    "reason": row.get("routing_reason", ""),
+                                }
+                                for row in triage_history
+                            ],
+                            hide_index=True,
+                            use_container_width=True,
+                        )
                 hold_category = _source_queue_hold_category(
                     item.url,
                     item.routing_reason,
