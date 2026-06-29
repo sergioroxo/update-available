@@ -13,7 +13,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 from ..config import Config
 from ..models.document import IntakeResult, PreprocessResult
@@ -124,14 +126,16 @@ def _preprocess_url(
     # the acquisition provenance sidecar.
     snapshot_meta: dict = {}
     if snapshot_dir is not None:
-        if acq.html:
+        if acq.html and acq.content_format == "html":
             snapshot_meta = _save_html_snapshot(acq.html, url, snapshot_dir)
+        elif acq.markdown or acq.html:
+            snapshot_meta = _save_markdown_snapshot(acq.markdown or acq.html, url, snapshot_dir)
         _save_acquisition_status(snapshot_dir, acq)
 
     acquisition_prov = acq.to_provenance()
 
     # ── Blocked / challenge / empty: do NOT crash — return a blocked result ──
-    if not acq.ok or not acq.html.strip():
+    if not acq.ok or not (acq.html.strip() or acq.markdown.strip()):
         return PreprocessResult(
             doc_id="",
             tool_used=acq.fetch_tool or "trafilatura",
@@ -139,6 +143,21 @@ def _preprocess_url(
             text="",
             markdown="",
             acquisition=acquisition_prov,
+            source_html_path=snapshot_meta.get("path", ""),
+            source_html_sha256=snapshot_meta.get("sha256", ""),
+        )
+
+    if acq.content_format == "markdown" and not acq.html.strip():
+        md = acq.markdown or acq.html
+        text = _plain_text_from_markdown(md)
+        return PreprocessResult(
+            doc_id="",
+            tool_used=acq.fetch_tool or "markdown",
+            quality=_rate_quality(text, acq.fetch_tool or "markdown"),
+            text=text,
+            markdown=md,
+            acquisition=acquisition_prov,
+            hostname=urlparse(url).netloc if url.startswith(("http://", "https://")) else "",
             source_html_path=snapshot_meta.get("path", ""),
             source_html_sha256=snapshot_meta.get("sha256", ""),
         )
@@ -163,7 +182,9 @@ def _preprocess_url(
         include_comments=True,
         include_tables=True,
         favor_recall=True,
-    ) or text
+    ) or acq.markdown or text
+    if not text.strip() and acq.markdown:
+        text = _plain_text_from_markdown(acq.markdown)
 
     # Full page intelligence extraction
     intel = _extract_page_intelligence(downloaded, base_url=url)
@@ -235,8 +256,58 @@ def _save_html_snapshot(html: str | bytes, source_url: str, doc_dir: Path) -> di
     return meta
 
 
+def _save_markdown_snapshot(markdown: str, source_url: str, doc_dir: Path) -> dict:
+    """Store a non-HTML acquired source, currently Crawl4AI markdown-only output."""
+    from datetime import datetime, timezone
+
+    md_bytes = markdown.encode("utf-8", errors="replace")
+    sha256 = hashlib.sha256(md_bytes).hexdigest()
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    snapshot = doc_dir / "source_markdown.md"
+    snapshot.write_text(markdown, encoding="utf-8", errors="replace")
+    meta = {
+        "source_url": source_url,
+        "path": str(snapshot),
+        "captured_at": datetime.now(timezone.utc).isoformat(),
+        "bytes": len(md_bytes),
+        "sha256": sha256,
+        "content_format": "markdown",
+    }
+    (doc_dir / "source_markdown.json").write_text(
+        json.dumps(meta, indent=2),
+        encoding="utf-8",
+    )
+    return meta
+
+
+def _plain_text_from_markdown(markdown: str) -> str:
+    """Cheap markdown-to-text fallback for model context.
+
+    This is intentionally conservative: it strips common Markdown markers while
+    preserving the words and line breaks that make quote lookup and LLM context
+    useful. It is not a public renderer.
+    """
+    text = re.sub(r"```.*?```", " ", markdown, flags=re.DOTALL)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    text = re.sub(r"!\[([^\]]*)\]\([^\)]*\)", r"\1", text)
+    text = re.sub(r"\[([^\]]+)\]\([^\)]*\)", r"\1", text)
+    text = re.sub(r"^\s{0,3}#{1,6}\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^\s{0,3}[-*+]\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^\s{0,3}>\s?", "", text, flags=re.MULTILINE)
+    text = re.sub(r"[*_~]{1,3}", "", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def _preprocess_pdf(path: Path) -> PreprocessResult:
     """Docling primary, Unstructured fallback."""
+    candidates: list[PreprocessResult] = []
+    import_errors: list[str] = []
+
+    def _maybe_return(candidate: PreprocessResult) -> PreprocessResult | None:
+        candidates.append(candidate)
+        return candidate if candidate.quality in {"high", "medium"} and candidate.text.strip() else None
+
     try:
         from docling.document_converter import DocumentConverter
         converter = DocumentConverter()
@@ -244,17 +315,18 @@ def _preprocess_pdf(path: Path) -> PreprocessResult:
         md   = doc.document.export_to_markdown()
         text = doc.document.export_to_text()
         quality = _rate_quality(text, "docling")
-        return PreprocessResult(
+        immediate = _maybe_return(PreprocessResult(
             doc_id="",
             tool_used="docling",
             quality=quality,
             text=text,
             markdown=md,
-        )
-    except ImportError:
-        pass
+        ))
+        if immediate:
+            return immediate
+    except ImportError as exc:
+        import_errors.append(f"docling: {exc}")
     except Exception as exc:
-        import sys
         print(f"[docling error] {exc} — falling back to unstructured", file=sys.stderr)
 
     # Unstructured fallback
@@ -263,17 +335,69 @@ def _preprocess_pdf(path: Path) -> PreprocessResult:
         elements = partition(filename=str(path))
         text = "\n\n".join(str(e) for e in elements)
         quality = _rate_quality(text, "unstructured")
-        return PreprocessResult(
+        immediate = _maybe_return(PreprocessResult(
             doc_id="",
             tool_used="unstructured",
             quality=quality,
             text=text,
+        ))
+        if immediate:
+            return immediate
+    except ImportError as exc:
+        import_errors.append(f"unstructured: {exc}")
+
+    markitdown = _preprocess_file_markitdown(path)
+    if markitdown:
+        immediate = _maybe_return(markitdown)
+        if immediate:
+            return immediate
+
+    if candidates:
+        return max(
+            candidates,
+            key=lambda item: ({"blocked": 0, "low": 1, "medium": 2, "high": 3}.get(item.quality, 0), len(item.text)),
         )
-    except ImportError:
+
+    if import_errors:
         raise RuntimeError(
-            "Neither docling nor unstructured is installed.\n"
-            "Run: pip install docling  (or pip install unstructured)"
+            "No document parser is available.\n"
+            "Install one of: docling, unstructured, or optional markitdown.\n"
+            f"Import errors: {'; '.join(import_errors)}"
         )
+    raise RuntimeError("Document preprocessing failed: no parser produced usable text.")
+
+
+def _preprocess_file_markitdown(path: Path) -> PreprocessResult | None:
+    """Optional MarkItDown fallback for local PDF/Office/HTML-like files.
+
+    MarkItDown is not a hard dependency because Crawl/browser/file conversion
+    stacks move quickly. If installed, it gives us markdown that is useful both
+    for analysis and future public/search/chatbot layers.
+    """
+    try:
+        from markitdown import MarkItDown
+    except Exception:
+        return None
+    try:
+        converted = MarkItDown().convert(str(path))
+    except Exception as exc:  # noqa: BLE001
+        print(f"[markitdown error] {exc} — falling back to prior parser output", file=sys.stderr)
+        return None
+    markdown = (
+        str(getattr(converted, "text_content", "") or "")
+        or str(getattr(converted, "markdown", "") or "")
+        or str(converted or "")
+    ).strip()
+    if not markdown:
+        return None
+    text = _plain_text_from_markdown(markdown)
+    return PreprocessResult(
+        doc_id="",
+        tool_used="markitdown",
+        quality=_rate_quality(text, "markitdown"),
+        text=text,
+        markdown=markdown,
+    )
 
 
 def _preprocess_video(source: str, config: Config | None = None) -> PreprocessResult:

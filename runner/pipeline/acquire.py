@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import re
 import os
+import asyncio
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
@@ -70,6 +71,8 @@ class AcquisitionResult:
 
     ok: bool
     html: str = ""
+    markdown: str = ""
+    content_format: str = "html"  # "html" | "markdown"
     final_url: str = ""
     http_status: int | None = None
     headers: dict = field(default_factory=dict)  # lowercased subset
@@ -86,7 +89,9 @@ class AcquisitionResult:
         """
         data = asdict(self)
         data["html_chars"] = len(self.html)
+        data["markdown_chars"] = len(self.markdown)
         data.pop("html", None)
+        data.pop("markdown", None)
         return data
 
 
@@ -477,6 +482,118 @@ def _try_wordpress_fallback(httpx, url: str, *, timeout: float, previous_note: s
     return None
 
 
+def _crawl4ai_enabled() -> bool:
+    """Explicit opt-in for the browser-rendered fallback.
+
+    Crawl4AI can start a local browser, so it is intentionally not part of the
+    default queue triage path. It uses the public page URL only: no cookies,
+    persistent profiles, proxies, stealth browser, or CAPTCHA solving.
+    """
+    return os.getenv("SOGICE_ENABLE_CRAWL4AI", "").lower() in {"1", "true", "yes", "on"}
+
+
+def _markdown_payload_to_text(markdown_obj) -> str:
+    if markdown_obj is None:
+        return ""
+    for attr in ("fit_markdown", "raw_markdown", "markdown", "text_content"):
+        value = getattr(markdown_obj, attr, None)
+        if value:
+            return str(value)
+    return str(markdown_obj) if markdown_obj else ""
+
+
+async def _crawl4ai_fetch_async(url: str) -> AcquisitionResult:
+    try:
+        from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
+    except Exception as exc:  # noqa: BLE001
+        return AcquisitionResult(
+            ok=False,
+            final_url=url,
+            fetch_tool="crawl4ai",
+            note=f"crawl4ai unavailable: {exc}",
+        )
+
+    try:
+        browser_config = BrowserConfig(headless=True, verbose=False)
+        run_config = CrawlerRunConfig(cache_mode=CacheMode.ENABLED)
+        try:
+            crawler_cm = AsyncWebCrawler(config=browser_config)
+        except TypeError:
+            crawler_cm = AsyncWebCrawler()
+        async with crawler_cm as crawler:
+            try:
+                result = await crawler.arun(url=url, config=run_config)
+            except TypeError:
+                result = await crawler.arun(url=url)
+    except Exception as exc:  # noqa: BLE001
+        return AcquisitionResult(
+            ok=False,
+            final_url=url,
+            fetch_tool="crawl4ai",
+            note=f"crawl4ai render failed: {exc}",
+        )
+
+    html = str(getattr(result, "html", "") or getattr(result, "cleaned_html", "") or "")
+    markdown = _markdown_payload_to_text(getattr(result, "markdown", ""))
+    body_for_challenge = html or markdown
+    signal = classify_challenge(status=getattr(result, "status_code", None), headers={}, body=body_for_challenge)
+    success = bool(getattr(result, "success", True))
+    final_url = str(getattr(result, "url", "") or getattr(result, "final_url", "") or url)
+    error = str(getattr(result, "error_message", "") or "")
+    if signal:
+        return AcquisitionResult(
+            ok=False,
+            html=html,
+            markdown=markdown,
+            content_format="html" if html else "markdown",
+            final_url=final_url,
+            fetch_tool="crawl4ai",
+            challenge=True,
+            challenge_signal=signal,
+            note=f"crawl4ai rendered a challenge/JS-wall ({signal}).",
+        )
+    if success and (html.strip() or markdown.strip()):
+        return AcquisitionResult(
+            ok=True,
+            html=html,
+            markdown=markdown,
+            content_format="html" if html.strip() else "markdown",
+            final_url=final_url,
+            fetch_tool="crawl4ai",
+            note=(
+                "Rendered with Crawl4AI public browser fallback "
+                f"({len(html)} html chars, {len(markdown)} markdown chars)."
+            ),
+        )
+    return AcquisitionResult(
+        ok=False,
+        html=html,
+        markdown=markdown,
+        content_format="html" if html else "markdown",
+        final_url=final_url,
+        fetch_tool="crawl4ai",
+        note=f"crawl4ai produced no usable document. {error}".strip(),
+    )
+
+
+def _try_crawl4ai_fallback(url: str, *, previous_note: str) -> AcquisitionResult | None:
+    if not _crawl4ai_enabled():
+        return None
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        result = asyncio.run(_crawl4ai_fetch_async(url))
+    else:
+        return AcquisitionResult(
+            ok=False,
+            final_url=url,
+            fetch_tool="crawl4ai",
+            note=f"{previous_note}; crawl4ai fallback skipped: existing event loop is running.",
+        )
+    result.note = f"{previous_note}; {result.note}".strip("; ")
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Acquisition entry points
 # ---------------------------------------------------------------------------
@@ -537,10 +654,18 @@ def acquire_url(url: str, *, timeout: float = _DEFAULT_TIMEOUT) -> AcquisitionRe
             verify=_httpx_verify_arg(),
         )
     except Exception as exc:  # noqa: BLE001
-        return _try_wayback_fallback(
+        archived = _try_wayback_fallback(
             httpx, url, timeout=timeout,
             previous_note=f"{traf_note}; httpx GET failed: {exc}",
-        ) or AcquisitionResult(
+        )
+        if archived and archived.ok:
+            return archived
+        crawled = _try_crawl4ai_fallback(
+            url, previous_note=(archived.note if archived else f"{traf_note}; httpx GET failed: {exc}")
+        )
+        if crawled and crawled.ok:
+            return crawled
+        return crawled or archived or AcquisitionResult(
             ok=False, final_url=url, fetch_tool="httpx",
             note=f"{traf_note}; httpx GET failed: {exc}",
         )
@@ -561,10 +686,19 @@ def acquire_url(url: str, *, timeout: float = _DEFAULT_TIMEOUT) -> AcquisitionRe
         )
         if archived and archived.ok:
             return archived
+        crawled = _try_crawl4ai_fallback(
+            url,
+            previous_note=(archived.note if archived else f"{traf_note}; httpx classified a challenge ({signal})"),
+        )
+        if crawled and crawled.ok:
+            return crawled
         return AcquisitionResult(
             ok=False, html=body, final_url=str(resp.url), http_status=resp.status_code,
             headers=headers, fetch_tool="httpx", challenge=True, challenge_signal=signal,
-            note=(archived.note if archived else f"{traf_note}; httpx classified a challenge ({signal})."),
+            note=(
+                crawled.note if crawled else
+                (archived.note if archived else f"{traf_note}; httpx classified a challenge ({signal}).")
+            ),
         )
     if resp.status_code == 200 and body.strip():
         return AcquisitionResult(
@@ -585,13 +719,25 @@ def acquire_url(url: str, *, timeout: float = _DEFAULT_TIMEOUT) -> AcquisitionRe
     )
     if wordpress and wordpress.ok:
         return wordpress
-    return _try_wayback_fallback(
+    archived = _try_wayback_fallback(
         httpx, url, timeout=timeout,
         previous_note=(
             f"{traf_note}; httpx returned status {resp.status_code} with "
             f"{len(body)} body chars (no usable document)"
         ),
-    ) or AcquisitionResult(
+    )
+    if archived and archived.ok:
+        return archived
+    crawled = _try_crawl4ai_fallback(
+        url,
+        previous_note=(
+            archived.note if archived else
+            f"{traf_note}; httpx returned status {resp.status_code} with {len(body)} body chars (no usable document)"
+        ),
+    )
+    if crawled and crawled.ok:
+        return crawled
+    return crawled or archived or AcquisitionResult(
         ok=False, html=body, final_url=str(resp.url), http_status=resp.status_code,
         headers=headers, fetch_tool="httpx",
         note=f"{traf_note}; httpx returned status {resp.status_code} with "

@@ -6,6 +6,7 @@ from runner.models.document import PreprocessResult
 from runner.pipeline.preprocess import (
     _audio_source_for_whisper,
     _media_metadata_from_ytdlp,
+    _preprocess_pdf,
     _preprocess_srt,
     _preprocess_video,
     _save_artifacts,
@@ -126,6 +127,32 @@ def test_preprocess_srt_preserves_timestamps_as_chunks(tmp_path):
     assert result.transcript_chunks[0]["text"] == "Hello there"
     assert "[00:00:03.000 --> 00:00:04.000] Second cue" in result.text
     assert result.transcript_versions[0]["kind"] == "uploaded_srt"
+
+
+def test_preprocess_file_uses_markitdown_when_primary_parsers_unavailable(monkeypatch, tmp_path):
+    src = tmp_path / "report.pdf"
+    src.write_bytes(b"%PDF-1.4 fake")
+
+    # Force the optional primary parser imports to fail even if installed in the
+    # developer environment; this keeps the test focused on the fallback.
+    monkeypatch.setitem(sys.modules, "docling", None)
+    monkeypatch.setitem(sys.modules, "unstructured", None)
+
+    class FakeMarkItDown:
+        def convert(self, path):
+            assert path == str(src)
+            return types.SimpleNamespace(
+                text_content="# Report\n\n" + ("This conversion therapy report has readable text. " * 80)
+            )
+
+    monkeypatch.setitem(sys.modules, "markitdown", types.SimpleNamespace(MarkItDown=FakeMarkItDown))
+
+    result = _preprocess_pdf(src)
+
+    assert result.tool_used == "markitdown"
+    assert result.quality in {"medium", "high"}
+    assert result.markdown.startswith("# Report")
+    assert "readable text" in result.text
 
 
 def test_deoverlap_caption_chunks_removes_youtube_rolling_window():

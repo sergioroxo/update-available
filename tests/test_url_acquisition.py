@@ -8,6 +8,7 @@ source-worker behavior.
 from __future__ import annotations
 
 import json
+import sys
 import types
 from pathlib import Path
 
@@ -122,6 +123,61 @@ def test_acquire_url_httpx_fallback_success(monkeypatch):
     assert acq.fetch_tool == "httpx"
     assert acq.http_status == 200
     assert "Recovered via httpx" in acq.html
+
+
+def test_crawl4ai_fallback_is_opt_in(monkeypatch):
+    monkeypatch.delenv("SOGICE_ENABLE_CRAWL4AI", raising=False)
+    assert acquire._try_crawl4ai_fallback("https://example.org/a", previous_note="empty") is None
+
+
+def test_crawl4ai_fallback_returns_markdown_and_html(monkeypatch):
+    monkeypatch.setenv("SOGICE_ENABLE_CRAWL4AI", "1")
+
+    class FakeBrowserConfig:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    class FakeCrawlerRunConfig:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    class FakeCrawler:
+        def __init__(self, config=None):
+            self.config = config
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def arun(self, url, config=None):
+            return types.SimpleNamespace(
+                success=True,
+                url=url,
+                html="<html><body><p>Rendered document body.</p></body></html>",
+                markdown="# Rendered\n\nRendered document body.",
+            )
+
+    monkeypatch.setitem(
+        sys.modules,
+        "crawl4ai",
+        types.SimpleNamespace(
+            AsyncWebCrawler=FakeCrawler,
+            BrowserConfig=FakeBrowserConfig,
+            CrawlerRunConfig=FakeCrawlerRunConfig,
+            CacheMode=types.SimpleNamespace(ENABLED="enabled"),
+        ),
+    )
+
+    acq = acquire._try_crawl4ai_fallback("https://example.org/a", previous_note="empty")
+
+    assert acq is not None
+    assert acq.ok is True
+    assert acq.fetch_tool == "crawl4ai"
+    assert acq.content_format == "html"
+    assert "Rendered document body" in acq.html
+    assert "Rendered" in acq.markdown
 
 
 def test_acquire_url_httpx_fallback_uses_explicit_verify_bundle(monkeypatch):
@@ -418,6 +474,35 @@ def test_preprocess_url_local_html_extracts(monkeypatch, tmp_path):
     assert result.quality in ("medium", "high")
     assert "Real saved article paragraph" in result.text
     assert result.acquisition["fetch_tool"] == "local_file"
+
+
+def test_preprocess_url_markdown_only_acquisition(monkeypatch, tmp_path):
+    from runner.pipeline import preprocess as pp
+    import runner.pipeline.acquire as acq_mod
+
+    monkeypatch.setattr(
+        acq_mod,
+        "acquire_url",
+        lambda url, **kw: AcquisitionResult(
+            ok=True,
+            markdown="# Rendered Title\n\n" + ("Rendered paragraph for the archive. " * 80),
+            content_format="markdown",
+            final_url=url,
+            fetch_tool="crawl4ai",
+            note="rendered",
+        ),
+    )
+
+    result = pp._preprocess_url("https://example.org/a", snapshot_dir=tmp_path)
+
+    assert result.tool_used == "crawl4ai"
+    assert result.quality in {"medium", "high"}
+    assert "Rendered paragraph" in result.text
+    assert result.markdown.startswith("# Rendered Title")
+    assert (tmp_path / "source_markdown.md").exists()
+    prov = json.loads((tmp_path / "acquisition.json").read_text(encoding="utf-8"))
+    assert prov["content_format"] == "markdown"
+    assert prov["markdown_chars"] > 0
 
 
 # ---------------------------------------------------------------------------
