@@ -3054,10 +3054,20 @@ def archive_summary_export_cmd(
     out: str = typer.Option("", "--out", help="Output JSONL path (default: exports/knowledge/document_profiles.jsonl)"),
     corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
     refresh_sidecars: bool = typer.Option(False, "--refresh-sidecars", help="Also write archive_summary.json beside each document"),
+    backfill_citation_units: bool = typer.Option(False, "--backfill-citation-units", help="Build missing citation_units.json sidecars from extracted.txt before export"),
 ):
     """Export central document_profiles.jsonl from local corpus artifacts (KG-0)."""
     config = load_config(llm=None, require_services=False)
     corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    if backfill_citation_units:
+        citation_result = archive_summary.backfill_citation_units(corpus_dir)
+        counts = citation_result["counts"]
+        console.print(
+            "[green]✓ Citation units checked[/green] "
+            f"written={counts.get('written', 0)}  "
+            f"existing={counts.get('exists', 0)}  "
+            f"missing_extracted={counts.get('missing_extracted', 0)}"
+        )
     out_path = Path(out).expanduser() if out else None
     result = archive_summary.export_document_profiles(
         corpus_dir,
@@ -3072,6 +3082,24 @@ def archive_summary_export_cmd(
     )
     if refresh_sidecars:
         console.print("[dim]Per-document archive_summary.json sidecars refreshed.[/dim]")
+
+
+@app.command(name="archive-citation-backfill")
+def archive_citation_backfill_cmd(
+    corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Regenerate existing citation_units.json files"),
+):
+    """Build citation_units.json sidecars from existing extracted.txt files."""
+    config = load_config(llm=None, require_services=False)
+    corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    result = archive_summary.backfill_citation_units(corpus_dir, overwrite=overwrite)
+    counts = result["counts"]
+    console.print(
+        "[green]✓ Citation units backfill complete[/green] "
+        f"written={counts.get('written', 0)}  "
+        f"existing={counts.get('exists', 0)}  "
+        f"missing_extracted={counts.get('missing_extracted', 0)}"
+    )
 
 
 @app.command(name="knowledge-graph-export")

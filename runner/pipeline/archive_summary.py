@@ -17,6 +17,11 @@ from urllib.parse import urlparse
 
 from runner.app_readiness import build_document_readiness, summarize_enrichment_lifecycle
 from runner.pipeline.audit import current_git_commit
+from runner.pipeline.citation_units import (
+    CITATION_UNITS_FILENAME,
+    build_citation_units,
+    citation_summary,
+)
 
 
 SCHEMA_VERSION = "archive-summary-v1.0"
@@ -27,6 +32,7 @@ DOCUMENT_PROFILES_JSONL = "document_profiles.jsonl"
 _ARTIFACT_FILES = {
     "intake": "intake.json",
     "preprocess": "preprocess.json",
+    "citation_units": CITATION_UNITS_FILENAME,
     "analysis": "analysis.json",
     "analysis_audit": "analysis_audit.json",
     "enrichment": "enrichment.json",
@@ -223,6 +229,7 @@ def build_archive_summary(doc_dir: Path, *, config=None, generated_at: str | Non
     testimony_review = read_json_safe(doc_dir / "testimony_review.json", {})
     offload_import = read_json_safe(doc_dir / "offload_import.json", {})
     source_item = read_json_safe(doc_dir / "source_item.json", {})
+    citation_units = read_json_safe(doc_dir / CITATION_UNITS_FILENAME, {})
 
     source_value = str(intake.get("source") or "").strip()
     source_url_candidates = [
@@ -279,6 +286,7 @@ def build_archive_summary(doc_dir: Path, *, config=None, generated_at: str | Non
             "preprocess_tool": str(preprocess.get("tool_used") or preprocess.get("tool") or "").strip(),
             "preprocess_quality": str(preprocess.get("quality") or "").strip(),
         },
+        "citation_units": citation_summary(citation_units),
         "classification": {
             "type": str(analysis.get("type") or "").strip(),
             "primary_type": str(analysis.get("primary_type") or "").strip(),
@@ -382,6 +390,47 @@ def write_archive_summary(doc_dir: Path, *, config=None) -> Path:
     out = Path(doc_dir) / SUMMARY_FILENAME
     out.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return out
+
+
+def write_citation_units_for_doc(doc_dir: Path, *, overwrite: bool = False) -> dict:
+    """Build ``citation_units.json`` from ``extracted.txt`` for one doc.
+
+    This is a deterministic backfill helper for existing corpus documents. It
+    never touches analysis/enrichment/upload state and skips docs without
+    extracted text.
+    """
+    doc_dir = Path(doc_dir)
+    extracted = doc_dir / "extracted.txt"
+    out = doc_dir / CITATION_UNITS_FILENAME
+    if not extracted.exists():
+        return {"doc_id": doc_dir.name, "status": "missing_extracted", "path": str(out)}
+    if out.exists() and not overwrite:
+        return {"doc_id": doc_dir.name, "status": "exists", "path": str(out)}
+    text = extracted.read_text(encoding="utf-8")
+    out.write_text(
+        json.dumps(
+            build_citation_units(text, doc_id=doc_dir.name, source_artifact="extracted.txt"),
+            indent=2,
+            ensure_ascii=False,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    return {"doc_id": doc_dir.name, "status": "written", "path": str(out)}
+
+
+def backfill_citation_units(corpus_dir: Path, *, overwrite: bool = False) -> dict:
+    """Write missing citation-unit sidecars for every corpus doc with text."""
+    results = [write_citation_units_for_doc(doc_dir, overwrite=overwrite) for doc_dir in iter_corpus_doc_dirs(corpus_dir)]
+    counts: dict[str, int] = {}
+    for item in results:
+        status = str(item.get("status") or "unknown")
+        counts[status] = counts.get(status, 0) + 1
+    return {
+        "ok": True,
+        "corpus_dir": str(Path(corpus_dir)),
+        "counts": counts,
+        "documents": results,
+    }
 
 
 def iter_corpus_doc_dirs(corpus_dir: Path):

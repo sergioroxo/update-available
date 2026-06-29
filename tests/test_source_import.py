@@ -18,6 +18,7 @@ from runner.models.document import AnalysisResult
 from runner.models.enrichment import EnrichmentResult
 from runner.pipeline import offload_source
 from runner.pipeline import source_worker as sw
+from runner.pipeline.citation_units import build_citation_units
 from runner.pipeline.offload_source import (
     SourceItemSpec,
     build_source_package,
@@ -70,11 +71,16 @@ def _stubs():
 
     def fake_preprocess(intake, *, config):
         d = Path(intake.local_dir)
-        (d / "extracted.txt").write_text("text for " + intake.doc_id, encoding="utf-8")
+        text = "text for " + intake.doc_id
+        (d / "extracted.txt").write_text(text, encoding="utf-8")
+        (d / "citation_units.json").write_text(
+            json.dumps(build_citation_units(text, doc_id=intake.doc_id)),
+            encoding="utf-8",
+        )
         (d / "preprocess.json").write_text(
             json.dumps({"doc_id": intake.doc_id, "quality": "high"}), encoding="utf-8"
         )
-        return types.SimpleNamespace(doc_id=intake.doc_id, text="text for " + intake.doc_id)
+        return types.SimpleNamespace(doc_id=intake.doc_id, text=text)
 
     return dict(
         intake_fn=fake_intake, preprocess_fn=fake_preprocess,
@@ -124,6 +130,8 @@ def test_verify_ok_on_fresh_package(tmp_path):
     report = verify_ingest_result(outbox, corpus_dir=corpus)
     assert report["ok"] is True, report["errors"] + report["unexpected"]
     assert {d["doc_id"] for d in report["documents"]} == {"urldoc", "filedoc"}
+    urldoc = next(d for d in report["documents"] if d["doc_id"] == "urldoc")
+    assert "citation_units.json" in {a["label"] for a in urldoc["artifacts"]}
 
 
 def test_verify_rejects_missing_result_doc(tmp_path):
@@ -178,6 +186,7 @@ def test_import_declared_partial_writes_only_successful_docs(tmp_path):
     assert summary["partial"] is True
     assert summary["omitted_doc_ids"] == ["filedoc"]
     assert (corpus / "urldoc" / "analysis.json").is_file()
+    assert (corpus / "urldoc" / "citation_units.json").is_file()
     assert not (corpus / "filedoc").exists()
     assert [d["doc_id"] for d in summary["documents"]] == ["urldoc"]
 

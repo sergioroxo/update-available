@@ -10,6 +10,7 @@ from runner.pipeline.archive_summary import (
     DOCUMENT_PROFILES_JSONL,
     KNOWLEDGE_EXPORT_DIR,
     SCHEMA_VERSION,
+    backfill_citation_units,
     build_archive_summary,
     build_corpus_archive_summaries,
     derive_trust_state,
@@ -17,6 +18,7 @@ from runner.pipeline.archive_summary import (
     read_json_safe,
     write_archive_summary,
 )
+from runner.pipeline.citation_units import build_citation_units
 
 
 class _Config:
@@ -106,6 +108,7 @@ def test_build_archive_summary_maps_core_fields(tmp_path):
     assert summary["doc_id"] == "doc-001"
     assert summary["source"]["hostname"] == "example.org"
     assert summary["content"]["title"] == "Example Article"
+    assert summary["citation_units"]["exists"] is False
     assert summary["classification"]["type"] == "Anti-SOGICE"
     assert summary["classification"]["analysis_model"] == "core-qwen"
     assert summary["publication"]["embedding_model"] == "research-embedding"
@@ -113,6 +116,49 @@ def test_build_archive_summary_maps_core_fields(tmp_path):
     assert "embedding" not in summary["publication"]
     assert summary["offload"]["queue_item_id"] == "q1"
     assert summary["trust_state"] == "model_proposed"
+
+
+def test_build_archive_summary_includes_citation_unit_summary(tmp_path):
+    config = _cfg(tmp_path)
+    doc = _make_doc(config.corpus_dir)
+    sidecar = build_citation_units("One paragraph.\n\nSecond paragraph.", doc_id=doc.name)
+    _write_json(doc / "citation_units.json", sidecar)
+
+    summary = build_archive_summary(doc, config=config)
+
+    assert "citation_units" in summary["artifacts_present"]
+    assert summary["citation_units"]["exists"] is True
+    assert summary["citation_units"]["schema_version"] == "citation-units-v1.0"
+    assert summary["citation_units"]["unit_count"] == 2
+    assert summary["citation_units"]["source_artifact"] == "extracted.txt"
+
+
+def test_backfill_citation_units_writes_missing_sidecars(tmp_path):
+    config = _cfg(tmp_path)
+    doc = _make_doc(config.corpus_dir)
+    (doc / "extracted.txt").write_text("One paragraph.\n\nSecond paragraph.", encoding="utf-8")
+
+    result = backfill_citation_units(config.corpus_dir)
+
+    assert result["counts"]["written"] == 1
+    sidecar = read_json_safe(doc / "citation_units.json", {})
+    assert sidecar["doc_id"] == doc.name
+    assert sidecar["unit_count"] == 2
+
+
+def test_backfill_citation_units_skips_existing_unless_overwrite(tmp_path):
+    config = _cfg(tmp_path)
+    doc = _make_doc(config.corpus_dir)
+    (doc / "extracted.txt").write_text("Fresh text.", encoding="utf-8")
+    _write_json(doc / "citation_units.json", {"schema_version": "old", "unit_count": 99})
+
+    skipped = backfill_citation_units(config.corpus_dir)
+    assert skipped["counts"]["exists"] == 1
+    assert read_json_safe(doc / "citation_units.json", {})["schema_version"] == "old"
+
+    overwritten = backfill_citation_units(config.corpus_dir, overwrite=True)
+    assert overwritten["counts"]["written"] == 1
+    assert read_json_safe(doc / "citation_units.json", {})["schema_version"] == "citation-units-v1.0"
 
 
 def test_build_archive_summary_does_not_treat_local_source_as_url(tmp_path):
@@ -314,3 +360,21 @@ def test_archive_summary_cli_export(monkeypatch, tmp_path):
     assert "Document profiles exported" in result.output
     assert (config.exports_dir / "knowledge" / "document_profiles.jsonl").exists()
     assert (config.corpus_dir / "doc-a" / "archive_summary.json").exists()
+
+
+def test_archive_summary_cli_export_can_backfill_citation_units(monkeypatch, tmp_path):
+    config = _cfg(tmp_path)
+    doc = _make_doc(config.corpus_dir, "doc-a")
+    (doc / "extracted.txt").write_text("Backfillable text.", encoding="utf-8")
+    monkeypatch.setattr("runner.main.load_config", lambda *a, **kw: config)
+
+    result = CliRunner().invoke(
+        app,
+        ["archive-summary-export", "--refresh-sidecars", "--backfill-citation-units"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Citation units checked" in result.output
+    assert (doc / "citation_units.json").exists()
+    summary = read_json_safe(doc / "archive_summary.json", {})
+    assert summary["citation_units"]["exists"] is True

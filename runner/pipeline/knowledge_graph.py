@@ -20,6 +20,7 @@ from runner.pipeline.archive_summary import (
     iter_corpus_doc_dirs,
     read_json_safe,
 )
+from runner.pipeline.citation_units import CITATION_UNITS_FILENAME, locate_quote
 
 
 GRAPH_SCHEMA_VERSION = "archive-graph-v1.0"
@@ -55,6 +56,13 @@ EDGE_FIELDS = [
     "source_artifact",
     "evidence_strength",
     "edge_basis",
+    "evidence_locator_status",
+    "evidence_unit_id",
+    "evidence_char_start",
+    "evidence_char_end",
+    "evidence_quote_hash",
+    "evidence_match_kind",
+    "evidence_source_artifact",
     "provisional",
 ]
 
@@ -159,6 +167,8 @@ def _add_node(nodes: dict[str, dict], node: dict) -> str:
 
 
 def _add_edge(edges: dict[str, dict], edge: dict) -> str:
+    citation_units = edge.pop("_citation_units", None)
+    edge = {**_edge_locator_fields(edge, citation_units), **edge}
     edge_id = edge.get("id") or _dedupe_key(
         edge.get("source"),
         edge.get("target"),
@@ -174,12 +184,43 @@ def _add_edge(edges: dict[str, dict], edge: dict) -> str:
     return edge_id
 
 
+def _edge_locator_fields(edge: dict, citation_units: dict | None) -> dict:
+    quote = str(edge.get("evidence_quote") or "").strip()
+    source_artifact = str(edge.get("source_artifact") or "")
+    if source_artifact == "analysis.json" and not quote:
+        status = "classification_only"
+        locator = {}
+    elif source_artifact == "archive_summary.json" and not quote:
+        status = "source_metadata"
+        locator = {}
+    else:
+        locator = locate_quote(citation_units, quote)
+        status = str(locator.get("status") or "")
+    return {
+        "evidence_locator_status": status,
+        "evidence_unit_id": str(locator.get("unit_id") or ""),
+        "evidence_char_start": _locator_value(locator.get("char_start")),
+        "evidence_char_end": _locator_value(locator.get("char_end")),
+        "evidence_quote_hash": str(locator.get("quote_hash") or ""),
+        "evidence_match_kind": str(locator.get("match_kind") or ""),
+        "evidence_source_artifact": str(locator.get("source_artifact") or ""),
+    }
+
+
+def _locator_value(value: Any) -> str:
+    if value in (None, ""):
+        return ""
+    return str(value)
+
+
 def _source_url_for_doc(summary: dict) -> str:
     source = summary.get("source") or {}
     return str(source.get("source_url") or "").strip()
 
 
 def _edge_evidence_strength(edge: dict) -> str:
+    if edge.get("source_artifact") == "archive_summary.json":
+        return "source_metadata"
     if str(edge.get("evidence_quote") or "").strip():
         return "quote_backed"
     if edge.get("source_artifact") == "analysis.json":
@@ -220,6 +261,40 @@ def _doc_node(summary: dict) -> dict:
         "source_url": _source_url_for_doc(summary),
         "provisional": "false",
     }
+
+
+def _add_source_domain_edge(summary: dict, nodes: dict[str, dict], edges: dict[str, dict]) -> None:
+    source = summary.get("source") or {}
+    hostname = str(source.get("hostname") or "").strip().lower()
+    doc_id = str(summary.get("doc_id") or "").strip()
+    if not hostname or not doc_id:
+        return
+    domain_node = _add_node(nodes, {
+        "id": _node_id("source_domain", hostname),
+        "label": hostname,
+        "type": "source_domain",
+        "doc_id": "",
+        "trust_state": "",
+        "review_status": "",
+        "sanity_id": "",
+        "source_url": "",
+        "provisional": "false",
+    })
+    _add_edge(edges, {
+        "source": f"document:{doc_id}",
+        "target": domain_node,
+        "type": "published_on_domain",
+        "source_type": "document",
+        "target_type": "source_domain",
+        "doc_id": doc_id,
+        "source_url": _source_url_for_doc(summary),
+        "evidence_quote": "",
+        "review_status": str(summary.get("trust_state") or ""),
+        "confidence": "",
+        "proposal_id": "",
+        "source_artifact": "archive_summary.json",
+        "provisional": "false",
+    })
 
 
 def _add_document_tag_edges(summary: dict, nodes: dict[str, dict], edges: dict[str, dict], *, include_proposed: bool) -> None:
@@ -306,6 +381,9 @@ def _add_enrichment_edges(
     enrichment = read_json_safe(Path(doc_dir) / "enrichment.json", {})
     if not isinstance(enrichment, dict):
         return
+    citation_units = read_json_safe(Path(doc_dir) / CITATION_UNITS_FILENAME, {})
+    if not isinstance(citation_units, dict):
+        citation_units = {}
     doc_id = str(enrichment.get("doc_id") or summary.get("doc_id") or Path(doc_dir).name)
     doc_node = f"document:{doc_id}"
     source_url = _source_url_for_doc(summary)
@@ -332,7 +410,10 @@ def _add_enrichment_edges(
             "source_url": source_url,
             "provisional": "true" if provisional else "false",
         })
-        common = _proposal_edge_common(doc_id, source_url, item, "enrichment.json:entity_proposals")
+        common = {
+            **_proposal_edge_common(doc_id, source_url, item, "enrichment.json:entity_proposals"),
+            "_citation_units": citation_units,
+        }
         _add_edge(edges, {
             "source": doc_node,
             "target": source_node,
@@ -434,7 +515,10 @@ def _add_enrichment_edges(
             "source_url": source_url,
             "provisional": "true" if provisional else "false",
         })
-        common = _proposal_edge_common(doc_id, source_url, item, "enrichment.json:lexicon_proposals")
+        common = {
+            **_proposal_edge_common(doc_id, source_url, item, "enrichment.json:lexicon_proposals"),
+            "_citation_units": citation_units,
+        }
         _add_edge(edges, {
             "source": doc_node,
             "target": term_node,
@@ -497,7 +581,10 @@ def _add_enrichment_edges(
             "source_type": "document",
             "target_type": "tactic",
             "evidence_quote": str(item.get("evidence_quote") or item.get("definition") or ""),
-            **_proposal_edge_common(doc_id, source_url, item, "enrichment.json:tactic_proposals"),
+            **{
+                **_proposal_edge_common(doc_id, source_url, item, "enrichment.json:tactic_proposals"),
+                "_citation_units": citation_units,
+            },
         })
 
     for item in enrichment.get("practice_descriptions") or []:
@@ -528,7 +615,10 @@ def _add_enrichment_edges(
             "source_type": "document",
             "target_type": "practice",
             "evidence_quote": str(item.get("harm_quote") or item.get("exact_description") or ""),
-            **_proposal_edge_common(doc_id, source_url, item, "enrichment.json:practice_descriptions"),
+            **{
+                **_proposal_edge_common(doc_id, source_url, item, "enrichment.json:practice_descriptions"),
+                "_citation_units": citation_units,
+            },
         })
 
     for item in enrichment.get("corpus_connections") or []:
@@ -555,7 +645,10 @@ def _add_enrichment_edges(
             "source_type": "document",
             "target_type": "document",
             "evidence_quote": str(item.get("evidence") or ""),
-            **_proposal_edge_common(doc_id, source_url, item, "enrichment.json:corpus_connections"),
+            **{
+                **_proposal_edge_common(doc_id, source_url, item, "enrichment.json:corpus_connections"),
+                "_citation_units": citation_units,
+            },
         })
 
 
@@ -566,6 +659,7 @@ def build_knowledge_graph(corpus_dir: Path, *, config=None, include_proposed: bo
     for doc_dir in iter_corpus_doc_dirs(corpus_dir):
         summary = build_archive_summary(doc_dir, config=config)
         _add_node(nodes, _doc_node(summary))
+        _add_source_domain_edge(summary, nodes, edges)
         _add_document_tag_edges(summary, nodes, edges, include_proposed=include_proposed)
         _add_enrichment_edges(doc_dir, summary, nodes, edges, include_proposed=include_proposed)
 

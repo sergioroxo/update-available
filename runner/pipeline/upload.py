@@ -27,6 +27,7 @@ from ..models.document import AnalysisResult, DocumentPackage, IntakeResult, Pag
 from ..clients import sanity as sanity_client
 from ..clients import supabase as supabase_client
 from .analyze import PROMPT_VERSION
+from .citation_units import CITATION_UNITS_FILENAME, build_citation_units
 from .doc_ids import resolve_doc_dir
 from .preprocess import _preprocess_metadata, repair_preprocess_metadata
 from .metadata_quality import (
@@ -230,6 +231,18 @@ def save_locally(
     if preprocess.markdown:
         (doc_dir / "extracted.md").write_text(preprocess.markdown, encoding="utf-8")
     (doc_dir / "extracted.txt").write_text(preprocess.text, encoding="utf-8")
+    (doc_dir / CITATION_UNITS_FILENAME).write_text(
+        json.dumps(
+            build_citation_units(
+                preprocess.text,
+                doc_id=intake.doc_id,
+                source_artifact="extracted.txt",
+            ),
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (doc_dir / "preprocess.json").write_text(
         json.dumps(_preprocess_metadata(preprocess), indent=2),
         encoding="utf-8",

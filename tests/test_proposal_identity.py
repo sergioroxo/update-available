@@ -31,6 +31,7 @@ from runner.pipeline.enrich import (
     _merge_existing_proposal_with_fresh,
     _merge_researcher_state,
     _normalize_enrichment_payload,
+    _normalized_tactic_key,
     _proposal_id_candidates,
     _proposal_semantic_key,
     save as enrich_save,
@@ -70,6 +71,25 @@ def _lex_item(term: str = "Test Term", action: str = "add_new", **kw) -> dict:
 
 def _entity_item(name: str = "Test Org", etype: str = "organization", **kw) -> dict:
     return {"action": "add_new", "entity_type": etype, "name": name, **kw}
+
+
+def test_tactic_identity_normalizes_spaces_hyphens_and_prefixes():
+    assert _normalized_tactic_key("Religious Freedom Shield") == "religious freedom shield"
+    assert _normalized_tactic_key("Religious-Freedom-Shield") == "religious freedom shield"
+    assert _normalized_tactic_key("Tactic: Religious-Freedom-Shield") == "religious freedom shield"
+
+    doc_id = "doc-tactic-key"
+    spaced = _generate_proposal_id(
+        "tactic",
+        doc_id,
+        {"action": "add_new", "tactic": "Religious Freedom Shield"},
+    )
+    hyphenated = _generate_proposal_id(
+        "tactic",
+        doc_id,
+        {"action": "add_new", "tactic": "Religious-Freedom-Shield"},
+    )
+    assert spaced == hyphenated
 
 
 def _pid_for_lex(doc_id: str, term: str, action: str = "add_new") -> str:

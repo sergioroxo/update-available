@@ -143,6 +143,10 @@ def test_refresh_knowledge_and_digest_runs_outputs_in_order(tmp_path, monkeypatc
         calls.append("profiles")
         return {"count": 2, "path": str(exports_dir / "knowledge" / "document_profiles.jsonl")}
 
+    def fake_backfill(corpus_dir, **kwargs):
+        calls.append("citation_units")
+        return {"counts": {"written": 1, "exists": 0, "missing_extracted": 0}}
+
     def fake_graph(corpus_dir, exports_dir, *, config, include_proposed, **kwargs):
         calls.append("graph")
         return {"node_count": 3, "edge_count": 4, "graph_path": str(exports_dir / "knowledge" / "archive_graph.json")}
@@ -151,6 +155,7 @@ def test_refresh_knowledge_and_digest_runs_outputs_in_order(tmp_path, monkeypatc
         calls.append("quality")
         return {"report": _fake_quality(), "profile_count": 2, "edge_count": 4, "path": str(exports_dir / "knowledge" / "knowledge_quality.json")}
 
+    monkeypatch.setattr(research_digest.archive_summary, "backfill_citation_units", fake_backfill)
     monkeypatch.setattr(research_digest.archive_summary, "export_document_profiles", fake_profiles)
     monkeypatch.setattr(research_digest.knowledge_graph, "export_knowledge_graph", fake_graph)
     monkeypatch.setattr(research_digest.knowledge_quality, "write_knowledge_quality_report", fake_quality)
@@ -159,7 +164,8 @@ def test_refresh_knowledge_and_digest_runs_outputs_in_order(tmp_path, monkeypatc
 
     result = research_digest.refresh_knowledge_and_digest(config, stamp="20260101T000000Z")
 
-    assert calls == ["profiles", "graph", "quality"]
+    assert calls == ["citation_units", "profiles", "graph", "quality"]
+    assert result["citation_units"]["counts"]["written"] == 1
     assert result["profiles"]["count"] == 2
     assert result["graph"]["edge_count"] == 4
     assert result["digest"]["markdown_path"].endswith("20260101T000000Z_research_digest.md")

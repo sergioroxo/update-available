@@ -567,13 +567,14 @@ into it, not the package tree.
 5. **Copy back**, then **MacBook** —
    `source-offload-unpack <pkg>.tar.gz --source-offload-root …/source_offload --state outbox`,
    then import from the **Import results** tab.
-6. **MacBook** — after import, open **Corpus Intelligence → Knowledge exports**
-   and refresh **profiles**, **evidence graph**, **quality report**, and
+6. **MacBook** — after import, open **Dashboard** and click **Refresh worklist**,
+   or open **Corpus Intelligence → Knowledge exports** and refresh citation
+   sidecars, **profiles**, **evidence graph**, **quality report**, and
    **research digest**. This
    updates each imported document's `archive_summary.json`, the central
-   `document_profiles.jsonl`, and the trust/readiness audit in
-   `knowledge_quality.json`, then writes a human-readable worklist under
-   `exports/digests/`.
+   `document_profiles.jsonl`, the quote locator fields in the evidence graph,
+   and the trust/readiness audit in `knowledge_quality.json`, then writes a
+   human-readable worklist under `exports/digests/`.
 
 The Streamlit **Source Offload → Transfer & worker** tab shows these archive/unpack
 commands (display-only, alongside the rsync path) using the app's venv python

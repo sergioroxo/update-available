@@ -41,6 +41,10 @@ try:
         infer_practice_fit,
     )
     from runner.pipeline.audit import current_git_commit, sha256_text, write_enrichment_audit
+    from runner.pipeline.citation_units import (
+        CITATION_UNITS_FILENAME,
+        attach_locators_to_enrichment_payload,
+    )
     from runner.pipeline.enrichment_lexicon import merge_enrichment_lexicon
     from runner.pipeline.http_retry import call_with_http_retries
     from runner.pipeline.sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
@@ -61,6 +65,10 @@ except ImportError:
         infer_practice_fit,
     )
     from .audit import current_git_commit, sha256_text, write_enrichment_audit  # type: ignore[no-redef]
+    from .citation_units import (  # type: ignore[no-redef]
+        CITATION_UNITS_FILENAME,
+        attach_locators_to_enrichment_payload,
+    )
     from .enrichment_lexicon import merge_enrichment_lexicon  # type: ignore[no-redef]
     from .http_retry import call_with_http_retries  # type: ignore[no-redef]
     from .sanity_reads import fetch_active_lexicon_terms, sanity_read_headers  # type: ignore[no-redef]
@@ -234,6 +242,20 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _normalized_tactic_key(value: str) -> str:
+    """Return a separator-insensitive key for tactic identity.
+
+    The model and the registry often alternate between display labels and
+    machine labels, e.g. ``Religious Freedom Shield`` and
+    ``Religious-Freedom-Shield``. Treat those as one concept for proposal
+    identity/merge purposes while preserving the human-facing label.
+    """
+    text = str(value or "").strip().lower()
+    text = re.sub(r"^tactic:\s*", "", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text).strip()
+    return re.sub(r"\s+", " ", text)
+
+
 def _proposal_semantic_key(family: str, item: dict) -> str:
     """Return the stable content component of a proposal's deterministic ID.
 
@@ -258,7 +280,7 @@ def _proposal_semantic_key(family: str, item: dict) -> str:
         return f"{action}\x00{etype}\x00{name}"
     if family == "tactic":
         action = (item.get("action") or "").strip()
-        tactic = (item.get("tactic") or "").lower().strip()
+        tactic = _normalized_tactic_key(item.get("tactic") or "")
         return f"{action}\x00{tactic}"
     if family == "practice":
         practice_id = (item.get("practice_id") or "").lower().strip()
@@ -283,7 +305,7 @@ def _legacy_proposal_semantic_key(family: str, item: dict) -> str:
         name = (item.get("name") or "").lower().strip()
         return f"{etype}\x00{name}"
     if family == "tactic":
-        return (item.get("tactic") or "").lower().strip()
+        return _normalized_tactic_key(item.get("tactic") or "")
     if family == "practice":
         return (item.get("practice_id") or "").lower().strip()
     if family == "claim":
@@ -640,6 +662,41 @@ def run(
             _audit["duration_ms"] = int((time.perf_counter() - _started) * 1000)
 
 
+def enrichment_payload_for_save(result: EnrichmentResult, doc_dir: Path) -> dict:
+    """Return enrichment JSON with best-effort quote locators attached.
+
+    Locator fields are derived from ``citation_units.json`` when available and
+    degrade to explicit ``not_found`` / ``missing_quote`` states for older docs.
+    They are attached at serialization time so the Pydantic model contract stays
+    stable while downstream graph/Wikia/chat layers get inspectable evidence.
+    """
+    payload = result.model_dump(by_alias=True)
+    citation_sidecar: dict = {}
+    sidecar_path = Path(doc_dir) / CITATION_UNITS_FILENAME
+    if sidecar_path.exists():
+        try:
+            loaded = json.loads(sidecar_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                citation_sidecar = loaded
+        except Exception:
+            citation_sidecar = {}
+    return attach_locators_to_enrichment_payload(payload, citation_sidecar)
+
+
+def enrichment_json_for_save(
+    result: EnrichmentResult,
+    doc_dir: Path,
+    *,
+    trailing_newline: bool = False,
+) -> str:
+    text = json.dumps(
+        enrichment_payload_for_save(result, doc_dir),
+        indent=2,
+        ensure_ascii=False,
+    )
+    return text + ("\n" if trailing_newline else "")
+
+
 def save(doc_id: str, result: EnrichmentResult, config: Config, *, _audit: dict | None = None) -> Path:
     """Write enrichment.json to the document's corpus directory.
 
@@ -675,7 +732,7 @@ def save(doc_id: str, result: EnrichmentResult, config: Config, *, _audit: dict 
         shutil.copy2(out, archive)
 
     result.run_type = "main"
-    out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
+    out.write_text(enrichment_json_for_save(result, doc_dir), encoding="utf-8")
     if _audit is not None:
         write_enrichment_audit(doc_dir, _audit, result)
     return out
@@ -687,7 +744,7 @@ def save_alt(doc_id: str, result: EnrichmentResult, config: Config, label: str =
     doc_dir.mkdir(parents=True, exist_ok=True)
     result.run_type = "alt"
     out = doc_dir / f"enrichment_{label}_{_timestamp()}.json"
-    out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
+    out.write_text(enrichment_json_for_save(result, doc_dir), encoding="utf-8")
     return out
 
 
@@ -821,8 +878,9 @@ def push_approved_to_sanity(doc_id: str, config: Config) -> dict:
             errors.append(f"statistical_claim/{prop.claim[:80]}: {exc}")
 
     # Persist updated state
-    out = config.corpus_dir / doc_id / "enrichment.json"
-    out.write_text(result.model_dump_json(indent=2, by_alias=True), encoding="utf-8")
+    doc_dir = config.corpus_dir / doc_id
+    out = doc_dir / "enrichment.json"
+    out.write_text(enrichment_json_for_save(result, doc_dir), encoding="utf-8")
 
     return {
         "lexicon": pushed_lexicon,
@@ -1074,7 +1132,7 @@ def _merge_enrichment_results(
     )
     merged.tactic_proposals = _dedupe(
         [item for result in results for item in result.tactic_proposals],
-        lambda item: (item.tactic.lower(), item.evidence_quote[:120]),
+        lambda item: (_normalized_tactic_key(item.tactic), item.evidence_quote[:120]),
     )
     merged.ingestion_queue = _dedupe(
         [item for result in results for item in result.ingestion_queue],

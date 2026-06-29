@@ -1,8 +1,8 @@
 """Deterministic research-work digest for the local ingestion system.
 
-This is intentionally not an agent. It performs no model calls and makes no
-state changes. It gathers the queue, corpus, source-offload, transfer, and
-knowledge-quality state into a compact daily coordination report.
+This is intentionally not an agent. It performs no model calls and only writes
+regenerable derived artifacts. It gathers the queue, corpus, source-offload,
+transfer, and knowledge-quality state into a compact daily coordination report.
 """
 from __future__ import annotations
 
@@ -336,11 +336,13 @@ def refresh_knowledge_and_digest(
 
     This is the safest "after import / before review" path:
 
-    1. per-document archive summaries + document_profiles.jsonl
-    2. evidence graph exports
-    3. knowledge_quality.json over the fresh exports
-    4. human-readable research digest
+    1. citation_units.json backfill from extracted.txt where missing
+    2. per-document archive summaries + document_profiles.jsonl
+    3. evidence graph exports
+    4. knowledge_quality.json over the fresh exports
+    5. human-readable research digest
     """
+    citation_units = archive_summary.backfill_citation_units(Path(config.corpus_dir))
     profiles = archive_summary.export_document_profiles(
         Path(config.corpus_dir),
         Path(config.exports_dir),
@@ -368,6 +370,7 @@ def refresh_knowledge_and_digest(
         refresh_quality=False,
     )
     return {
+        "citation_units": citation_units,
         "profiles": profiles,
         "graph": graph,
         "quality": quality,

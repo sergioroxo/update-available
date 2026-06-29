@@ -16,6 +16,7 @@ from runner.pipeline.knowledge_graph import (
     export_knowledge_graph,
     slugify,
 )
+from runner.pipeline.citation_units import build_citation_units, quote_hash
 
 
 class _Config:
@@ -148,6 +149,15 @@ def _write_enrichment(doc: Path, *, approved: bool = True, rejected: bool = Fals
     })
 
 
+def _write_citation_units(doc: Path) -> None:
+    text = (
+        "ADF is named in the article. They co-signed the statement.\n\n"
+        "The document uses life choices framing. Used interchangeably.\n\n"
+        "The article polices identity. The harm is minimized."
+    )
+    _write_json(doc / "citation_units.json", build_citation_units(text, doc_id=doc.name))
+
+
 def _edge_types(graph: dict) -> set[str]:
     return {edge["type"] for edge in graph["edges"]}
 
@@ -155,6 +165,7 @@ def _edge_types(graph: dict) -> set[str]:
 def test_slugify_normalizes_prefixed_labels():
     assert slugify("Tactic: Conspiracy Framing") == "conspiracy-framing"
     assert slugify("Life Choices!") == "life-choices"
+    assert slugify("Religious Freedom Shield") == slugify("Religious-Freedom-Shield")
 
 
 def test_display_label_strips_prefixes_and_normalizes_country_aliases():
@@ -171,8 +182,17 @@ def test_graph_includes_document_nodes_for_backlog_but_no_unreviewed_doc_tag_edg
 
     graph = build_knowledge_graph(config.corpus_dir, config=config)
 
-    assert {n["id"] for n in graph["nodes"]} == {"document:doc-model"}
-    assert graph["edges"] == []
+    assert {n["id"] for n in graph["nodes"]} == {
+        "document:doc-model",
+        "source_domain:example-org",
+    }
+    assert _edge_types(graph) == {"published_on_domain"}
+    edge = graph["edges"][0]
+    assert edge["source_artifact"] == "archive_summary.json"
+    assert edge["evidence_strength"] == "source_metadata"
+    assert edge["edge_basis"] == "local_artifact"
+    assert edge["evidence_locator_status"] == "source_metadata"
+    assert edge["provisional"] == "false"
 
 
 def test_graph_reviewed_doc_exports_document_tag_edges(tmp_path):
@@ -182,6 +202,10 @@ def test_graph_reviewed_doc_exports_document_tag_edges(tmp_path):
     graph = build_knowledge_graph(config.corpus_dir, config=config)
 
     assert "attests_tactic" in _edge_types(graph)
+    assert "published_on_domain" in _edge_types(graph)
+    domain = next(n for n in graph["nodes"] if n["type"] == "source_domain")
+    assert domain["id"] == "source_domain:example-org"
+    assert domain["provisional"] == "false"
     assert "mentions_country" in _edge_types(graph)
     assert any(n["id"] == "tactic:conspiracy-framing" for n in graph["nodes"])
     assert any(n["id"] == "function:disinformation-narrative" and n["label"] == "Disinformation-Narrative" for n in graph["nodes"])
@@ -210,6 +234,7 @@ def test_graph_exports_approved_enrichment_edges_by_default(tmp_path):
     config = _cfg(tmp_path)
     doc = _make_doc(config.corpus_dir, "doc-reviewed", reviewed=True)
     _write_enrichment(doc, approved=True)
+    _write_citation_units(doc)
 
     graph = build_knowledge_graph(config.corpus_dir, config=config)
     types = _edge_types(graph)
@@ -226,6 +251,23 @@ def test_graph_exports_approved_enrichment_edges_by_default(tmp_path):
     assert partner["confidence"] == "0.9"
     assert partner["evidence_strength"] == "quote_backed"
     assert partner["edge_basis"] == "enrichment_proposal"
+    assert partner["evidence_locator_status"] == "located"
+    assert partner["evidence_unit_id"].startswith("p0001-")
+    assert partner["evidence_quote_hash"] == quote_hash("They co-signed the statement.")
+    assert partner["evidence_source_artifact"] == "extracted.txt"
+
+
+def test_graph_degrades_when_quote_lacks_citation_sidecar(tmp_path):
+    config = _cfg(tmp_path)
+    doc = _make_doc(config.corpus_dir, "doc-reviewed", reviewed=True)
+    _write_enrichment(doc, approved=True)
+
+    graph = build_knowledge_graph(config.corpus_dir, config=config)
+
+    partner = next(e for e in graph["edges"] if e["type"] == "partner")
+    assert partner["evidence_strength"] == "quote_backed"
+    assert partner["evidence_locator_status"] == "not_found"
+    assert partner["evidence_unit_id"] == ""
 
 
 def test_graph_excludes_pending_enrichment_edges_by_default_but_includes_when_requested(tmp_path):

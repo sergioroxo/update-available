@@ -91,6 +91,7 @@ ALLOWED_INGEST_ARTIFACTS: frozenset[str] = frozenset({
     # Core pipeline outputs.
     "intake.json",
     "preprocess.json",
+    "citation_units.json",
     "extracted.txt",
     "extracted.md",
     "analysis.json",

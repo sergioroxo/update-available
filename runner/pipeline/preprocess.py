@@ -29,6 +29,7 @@ from .media_evidence import (
     discovery_seed_queue_from_media,
     duplicate_candidates_from_media,
 )
+from .citation_units import CITATION_UNITS_FILENAME, build_citation_units
 from .system_tools import ensure_tool_path_env, tool_path
 
 # Fallback constants — overridden by config or --max-chars CLI flag
@@ -1010,6 +1011,18 @@ def _save_artifacts(result: PreprocessResult, doc_dir: Path) -> None:
     if result.markdown:
         (doc_dir / "extracted.md").write_text(result.markdown, encoding="utf-8")
     (doc_dir / "extracted.txt").write_text(result.text, encoding="utf-8")
+    (doc_dir / CITATION_UNITS_FILENAME).write_text(
+        json.dumps(
+            build_citation_units(
+                result.text,
+                doc_id=result.doc_id,
+                source_artifact="extracted.txt",
+            ),
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     if result.media_metadata:
         (doc_dir / "media_metadata.json").write_text(
             json.dumps(result.media_metadata, indent=2),
@@ -1095,6 +1108,7 @@ def _preprocess_metadata(result: PreprocessResult) -> dict:
         "media_comments_path": "media_comments.json" if result.media_comments else "",
         "duplicate_candidates_path": "duplicate_candidates.json" if result.duplicate_candidates else "",
         "discovery_seed_queue_path": "discovery_seed_queue.json" if result.discovery_seed_queue else "",
+        "citation_units_path": CITATION_UNITS_FILENAME,
         "transcript_chunk_count": len(result.transcript_chunks),
         "transcript_version_count": len(result.transcript_versions),
         "media_comment_count": len(result.media_comments),

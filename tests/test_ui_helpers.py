@@ -485,6 +485,32 @@ def test_registry_match_key_normalises_accents_and_punctuation():
     assert _registry_match_key("  Religious-Freedom Shield ") == "religious freedom shield"
 
 
+def test_tactic_target_options_and_index_match_separator_variants():
+    from runner.app import (
+        _apply_tactic_target,
+        _tactic_target_index,
+        _tactic_target_options,
+    )
+
+    options = _tactic_target_options([
+        {"_id": "tactic-religious-freedom-shield", "tactic": "Religious-Freedom-Shield"},
+        {"_id": "tactic-network-laundering", "tactic": "Network Laundering"},
+    ])
+
+    assert [row["_id"] for row in options] == [
+        "tactic-network-laundering",
+        "tactic-religious-freedom-shield",
+    ]
+    assert _tactic_target_index(options, {"tactic": "Religious Freedom Shield"}) == 1
+    assert _tactic_target_index(options, {"existing_tactic_id": "tactic-network-laundering"}) == 0
+
+    item = {"tactic": "Religious Freedom Shield"}
+    _apply_tactic_target(item, options[1])
+    assert item["existing_tactic_id"] == "tactic-religious-freedom-shield"
+    assert item["existing_tactic_name"] == "Religious-Freedom-Shield"
+    assert item["tactic"] == "Religious-Freedom-Shield"
+
+
 def test_local_registry_evidence_matches_exact_and_similar():
     from runner.app import _local_registry_evidence_matches
 
@@ -594,12 +620,19 @@ def test_knowledge_export_commands_use_running_python_and_expected_cli():
 
     commands = app_mod._knowledge_export_commands()
 
+    assert commands["citation_units"] == [
+        app_mod.sys.executable,
+        "-m",
+        "runner",
+        "archive-citation-backfill",
+    ]
     assert commands["profiles"] == [
         app_mod.sys.executable,
         "-m",
         "runner",
         "archive-summary-export",
         "--refresh-sidecars",
+        "--backfill-citation-units",
     ]
     assert commands["graph"] == [
         app_mod.sys.executable,
@@ -622,6 +655,51 @@ def test_knowledge_export_commands_use_running_python_and_expected_cli():
     ]
     assert all(cmd[0] == app_mod.sys.executable for cmd in commands.values())
     assert all(cmd[0] != "python3" for cmd in commands.values())
+
+
+def test_citation_unit_status_counts_backfillable_and_missing_text_docs(tmp_path):
+    import runner.app as app_mod
+
+    corpus = tmp_path / "corpus"
+    doc_with_text = corpus / "doc-with-text"
+    doc_with_text.mkdir(parents=True)
+    (doc_with_text / "extracted.txt").write_text("First paragraph.", encoding="utf-8")
+
+    doc_ready = corpus / "doc-ready"
+    doc_ready.mkdir()
+    (doc_ready / "extracted.txt").write_text("Already indexed.", encoding="utf-8")
+    (doc_ready / "citation_units.json").write_text("{}", encoding="utf-8")
+
+    doc_missing_text = corpus / "doc-missing-text"
+    doc_missing_text.mkdir()
+
+    status = app_mod._citation_unit_status(SimpleNamespace(corpus_dir=corpus))
+
+    assert status["counts"] == {
+        "docs": 3,
+        "with_extracted": 2,
+        "with_citation_units": 1,
+        "missing_citation_units": 1,
+        "missing_extracted": 1,
+    }
+    assert {row["doc_id"]: row["action"] for row in status["rows"]} == {
+        "doc-with-text": "Backfill citation units",
+        "doc-missing-text": "Retry/re-ingest/discard document",
+    }
+
+
+def test_run_knowledge_export_action_backfills_citation_units(tmp_path):
+    import runner.app as app_mod
+
+    corpus = tmp_path / "corpus"
+    doc_dir = corpus / "doc-a"
+    doc_dir.mkdir(parents=True)
+    (doc_dir / "extracted.txt").write_text("A paragraph for evidence.", encoding="utf-8")
+
+    result = app_mod._run_knowledge_export_action(SimpleNamespace(corpus_dir=corpus), "citation_units")
+
+    assert result["counts"]["written"] == 1
+    assert (doc_dir / "citation_units.json").exists()
 
 
 def test_research_digest_command_uses_running_python():

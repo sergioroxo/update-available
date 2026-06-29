@@ -328,7 +328,11 @@ def run_source_worker(
                 )
                 atomic_write_text(
                     doc["doc_dir"] / "enrichment.json",
-                    result.model_dump_json(indent=2, by_alias=True) + "\n",
+                    enrich_mod.enrichment_json_for_save(
+                        result,
+                        doc["doc_dir"],
+                        trailing_newline=True,
+                    ),
                 )
                 write_enrichment_audit(doc["doc_dir"], audit, result)
                 doc["stages"]["enrichment"] = {

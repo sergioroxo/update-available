@@ -13,6 +13,7 @@ Its purpose is simple:
 
 Per document:
 
+- `corpus/<doc_id>/citation_units.json`
 - `corpus/<doc_id>/archive_summary.json`
 
 Corpus-wide:
@@ -28,6 +29,23 @@ Corpus-wide:
 `archive_summary.json` is an index card beside the document. It summarizes
 source metadata, extracted content metadata, analysis classification, review
 state, enrichment counts, upload state, offload lineage, and readiness.
+
+`citation_units.json` is a local evidence locator sidecar beside
+`extracted.txt`. It splits canonical extracted text into paragraph-like units
+with stable unit ids, character offsets, source artifact names, and text hashes.
+It is used to attach quote-backed enrichment and graph edges back to exact spans
+in `extracted.txt`. It is local provenance, not a public redaction policy.
+New ingests write it automatically. Existing docs can be backfilled without
+model calls:
+
+```bash
+python -m runner archive-citation-backfill
+python -m runner archive-summary-export --refresh-sidecars --backfill-citation-units
+python -m runner knowledge-graph-export
+```
+
+The Streamlit Dashboard **Refresh worklist** action runs the same derived
+backfill before rebuilding summaries, graph exports, quality, and the digest.
 
 `document_profiles.jsonl` is the same idea at corpus scale: one JSON object per
 line, one line per document. This is the easiest file to load into a notebook,
@@ -51,9 +69,15 @@ From Streamlit:
 
 1. Open **Corpus Intelligence**.
 2. Open **Knowledge exports**.
-3. Click **Refresh profiles**.
-4. Click **Refresh evidence graph**.
-5. Click **Refresh quality report**.
+3. Check **Evidence locator sidecars**.
+4. If **Can backfill** is greater than zero, click **Backfill citation units**.
+5. Click **Refresh profiles**.
+6. Click **Refresh evidence graph**.
+7. Click **Refresh quality report**.
+
+If **Missing text** is greater than zero, those document folders do not have
+`extracted.txt`. They cannot be fixed by citation-unit backfill or
+re-enrichment; they need retry, re-ingest/manual snapshot, or discard.
 
 From Terminal:
 
@@ -61,7 +85,8 @@ From Terminal:
 cd /Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest
 PY=/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest/.venv/bin/python
 
-"$PY" -m runner archive-summary-export --refresh-sidecars
+"$PY" -m runner archive-citation-backfill
+"$PY" -m runner archive-summary-export --refresh-sidecars --backfill-citation-units
 "$PY" -m runner knowledge-graph-export
 "$PY" -m runner knowledge-quality-report
 "$PY" -m runner research-digest --refresh-all
@@ -86,19 +111,21 @@ Use Streamlit first:
 1. Open **Dashboard** and read **Research Worklist**. This is the quickest
    "what should I do next?" view.
 2. Click **Refresh worklist** after importing or changing documents. This
-   refreshes archive summaries, the evidence graph, the quality audit, and the
-   digest.
+   backfills citation units where possible, refreshes archive summaries, the
+   evidence graph, the quality audit, and the digest.
 3. Open **Corpus Intelligence** for the deeper audit.
 4. Open **Knowledge exports**.
-5. Read the **Document profile preview** table.
-6. Check the graph node/edge counts and **Evidence strength** counts.
-7. Read **Quality audit preview**. This is the quickest answer to "can I trust
+5. Check **Evidence locator sidecars**. `Can backfill` is fixable by button;
+   `Missing text` means retry/re-ingest/discard.
+6. Read the **Document profile preview** table.
+7. Check the graph node/edge counts and **Evidence strength** counts.
+8. Read **Quality audit preview**. This is the quickest answer to "can I trust
    the extracted data enough to keep working?"
-8. Open **Documents needing attention** inside the quality preview. It lists the
+9. Open **Documents needing attention** inside the quality preview. It lists the
    concrete document IDs behind the warning counts: zero/low extracted text,
    acquisition challenges, missing core analysis tags, and enrichment proposals
    still awaiting review.
-9. Open **Research digest** in Corpus Intelligence when you want to read or
+10. Open **Research digest** in Corpus Intelligence when you want to read or
    download the full Markdown/JSON digest.
 
 The **Research digest** panel is the main human-readable view. It renders the
@@ -190,6 +217,14 @@ active incomplete folders because they usually do not need pipeline retry.
 
 Every evidence edge carries provenance fields such as `doc_id`, `source_url`,
 `source_artifact`, `review_status`, `evidence_strength`, and `edge_basis`.
+When `citation_units.json` is present, quote-backed edges also carry locator
+fields: `evidence_locator_status`, `evidence_unit_id`,
+`evidence_char_start`, `evidence_char_end`, `evidence_quote_hash`,
+`evidence_match_kind`, and `evidence_source_artifact`. Classification-only
+edges are explicitly marked `evidence_locator_status=classification_only`.
+Document source domains are exported as deterministic `source_domain` nodes with
+`published_on_domain` metadata edges. They are grouping/provenance anchors, not
+evidence of coordination, funding, or affinity.
 
 ## Tags And Enrichment
 

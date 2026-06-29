@@ -412,14 +412,16 @@ def _render_dashboard_research_worklist(config) -> None:
     if c1.button("Refresh worklist", key="dashboard_refresh_research_digest"):
         try:
             result = _run_research_digest_action(config)
+            citation_counts = result.get("citation_units", {}).get("counts", {})
             st.success(
                 f"Refreshed {result['profiles']['count']} profile(s), "
-                f"{result['graph']['edge_count']} graph edge(s), and the digest."
+                f"{result['graph']['edge_count']} graph edge(s), "
+                f"{citation_counts.get('written', 0)} citation sidecar(s), and the digest."
             )
             st.caption(f"Digest: `{result['digest']['markdown_path']}`")
         except Exception as exc:
             st.error(f"Could not refresh research worklist: {exc}")
-    c2.caption("This refreshes archive summaries, the evidence graph, the quality audit, and the digest.")
+    c2.caption("This refreshes citation sidecars, archive summaries, the evidence graph, the quality audit, and the digest.")
 
 
 def _render_system_health_panel(config, *, mac_studio: bool = False, source_offload_root=None, transfer_root=None):
@@ -1026,7 +1028,8 @@ def _knowledge_export_paths(config) -> dict[str, Path]:
 
 def _knowledge_export_commands() -> dict[str, list[str]]:
     return {
-        "profiles": [sys.executable, "-m", "runner", "archive-summary-export", "--refresh-sidecars"],
+        "citation_units": [sys.executable, "-m", "runner", "archive-citation-backfill"],
+        "profiles": [sys.executable, "-m", "runner", "archive-summary-export", "--refresh-sidecars", "--backfill-citation-units"],
         "graph": [sys.executable, "-m", "runner", "knowledge-graph-export"],
         "graph_proposed": [sys.executable, "-m", "runner", "knowledge-graph-export", "--include-proposed"],
         "quality": [sys.executable, "-m", "runner", "knowledge-quality-report"],
@@ -1085,6 +1088,47 @@ def _knowledge_file_status_rows(paths: dict[str, Path]) -> list[dict[str, str]]:
             "Path": str(path),
         })
     return rows
+
+
+def _citation_unit_status(config) -> dict:
+    """Summarize citation-unit sidecars without mutating corpus files."""
+    from runner.pipeline.citation_units import CITATION_UNITS_FILENAME
+
+    corpus_dir = Path(config.corpus_dir)
+    counts = {
+        "docs": 0,
+        "with_extracted": 0,
+        "with_citation_units": 0,
+        "missing_citation_units": 0,
+        "missing_extracted": 0,
+    }
+    rows: list[dict[str, str]] = []
+    if not corpus_dir.exists():
+        return {"counts": counts, "rows": rows}
+    for doc_dir in sorted(corpus_dir.iterdir()):
+        if not doc_dir.is_dir() or doc_dir.name.startswith("."):
+            continue
+        extracted = doc_dir / "extracted.txt"
+        citation_units = doc_dir / CITATION_UNITS_FILENAME
+        counts["docs"] += 1
+        has_extracted = extracted.exists()
+        has_citation = citation_units.exists()
+        if has_extracted:
+            counts["with_extracted"] += 1
+        else:
+            counts["missing_extracted"] += 1
+        if has_citation:
+            counts["with_citation_units"] += 1
+        if has_extracted and not has_citation:
+            counts["missing_citation_units"] += 1
+        if (has_extracted and not has_citation) or not has_extracted:
+            rows.append({
+                "doc_id": doc_dir.name,
+                "status": "missing citation_units.json" if has_extracted else "missing extracted.txt",
+                "action": "Backfill citation units" if has_extracted else "Retry/re-ingest/discard document",
+                "path": str(doc_dir),
+            })
+    return {"counts": counts, "rows": rows}
 
 
 def _source_failed_report_rows(report: dict) -> list[dict[str, str]]:
@@ -1265,9 +1309,11 @@ def _render_research_digest_panel(config) -> None:
             try:
                 result = _run_research_digest_action(config)
                 digest = result["digest"]
+                citation_counts = result.get("citation_units", {}).get("counts", {})
                 st.success(
                     f"Refreshed {result['profiles']['count']} profile(s), "
-                    f"{result['graph']['edge_count']} graph edge(s), and the research digest."
+                    f"{result['graph']['edge_count']} graph edge(s), "
+                    f"{citation_counts.get('written', 0)} citation sidecar(s), and the research digest."
                 )
                 st.caption(f"Digest: `{digest['markdown_path']}`")
                 st.caption(f"JSON: `{digest['json_path']}`")
@@ -1389,6 +1435,9 @@ def _knowledge_quality_issue_tables(preview: dict) -> dict[str, list[dict]]:
 
 
 def _run_knowledge_export_action(config, action: str) -> dict:
+    if action == "citation_units":
+        from runner.pipeline import archive_summary
+        return archive_summary.backfill_citation_units(Path(config.corpus_dir))
     if action == "profiles":
         from runner.pipeline import archive_summary
         return archive_summary.export_document_profiles(
@@ -1550,9 +1599,39 @@ def _render_knowledge_exports_panel(config) -> None:
                     "enrichment_family_counts": enrichment.get("family_counts"),
                 })
 
+        citation_status = _citation_unit_status(config)
+        citation_counts = citation_status["counts"]
+        st.markdown("**Evidence locator sidecars**")
+        st.caption(
+            "`citation_units.json` is generated from `extracted.txt`. "
+            "It gives evidence quotes stable paragraph/span IDs, offsets, and hashes for future graph, Wikia, and chatbot layers."
+        )
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Docs with text", citation_counts["with_extracted"])
+        c2.metric("Citation sidecars", citation_counts["with_citation_units"])
+        c3.metric("Can backfill", citation_counts["missing_citation_units"])
+        c4.metric("Missing text", citation_counts["missing_extracted"])
+        if citation_status["rows"]:
+            with st.expander("Citation / extraction gaps"):
+                st.dataframe(citation_status["rows"], hide_index=True, width="stretch")
+
         cmds = _knowledge_export_commands()
         st.markdown("**Build / refresh**")
-        b1, b2, b3, b4 = st.columns(4)
+        b0, b1, b2, b3, b4 = st.columns(5)
+        if b0.button("Backfill citation units", key="kg_backfill_citation_units"):
+            try:
+                result = _run_knowledge_export_action(config, "citation_units")
+                counts = result.get("counts") or {}
+                st.success(
+                    "Citation-unit backfill complete: "
+                    f"{counts.get('written', 0)} written, "
+                    f"{counts.get('exists', 0)} already present, "
+                    f"{counts.get('missing_extracted', 0)} missing extracted text."
+                )
+                if counts.get("missing_extracted", 0):
+                    st.info("Docs without `extracted.txt` need retry, re-ingest, or discard; citation units cannot be generated for empty text.")
+            except Exception as exc:
+                st.error(f"Could not backfill citation units: {exc}")
         if b1.button("Refresh profiles", key="kg_refresh_profiles"):
             try:
                 result = _run_knowledge_export_action(config, "profiles")
@@ -1588,6 +1667,7 @@ def _render_knowledge_exports_panel(config) -> None:
                 st.error(f"Could not refresh quality report: {exc}")
 
         st.caption("Terminal equivalents:")
+        st.code(shlex.join(cmds["citation_units"]), language="bash")
         st.code(shlex.join(cmds["profiles"]), language="bash")
         st.code(shlex.join(cmds["graph"]), language="bash")
         st.code(shlex.join(cmds["quality"]), language="bash")
@@ -2214,6 +2294,57 @@ def _apply_lexicon_target(item: dict, target: dict, *, action: str) -> None:
         if variant["variant_term"]:
             variants.insert(0, variant)
         item["variants"] = variants
+
+
+def _tactic_match_key(value: str) -> str:
+    text = str(value or "").strip().lower()
+    text = re.sub(r"^tactic:\s*", "", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text).strip()
+    return re.sub(r"\s+", " ", text)
+
+
+def _tactic_target_label(row: dict) -> str:
+    tactic = row.get("tactic") or row.get("_id") or "(untitled)"
+    return f"{tactic} · {row.get('_id', '')}"
+
+
+def _tactic_target_options(sanity_tactics: list[dict]) -> list[dict]:
+    rows: list[dict] = []
+    seen: set[str] = set()
+    for tactic in sanity_tactics or []:
+        tactic_id = str(tactic.get("_id") or "").strip()
+        label = str(tactic.get("tactic") or "").strip()
+        if not tactic_id or not label or tactic_id in seen:
+            continue
+        seen.add(tactic_id)
+        row = {
+            "_id": tactic_id,
+            "tactic": label,
+            "match_key": _tactic_match_key(label),
+        }
+        row["label"] = _tactic_target_label(row)
+        rows.append(row)
+    return sorted(rows, key=lambda row: row["tactic"].casefold())
+
+
+def _tactic_target_index(options: list[dict], item: dict) -> int:
+    target_id = str(item.get("existing_tactic_id") or item.get("sanity_id") or "").strip()
+    target_label = _tactic_match_key(item.get("existing_tactic_name") or item.get("tactic") or "")
+    if target_id:
+        for idx, option in enumerate(options):
+            if option["_id"] == target_id:
+                return idx
+    if target_label:
+        for idx, option in enumerate(options):
+            if option.get("match_key") == target_label:
+                return idx
+    return 0
+
+
+def _apply_tactic_target(item: dict, target: dict) -> None:
+    item["existing_tactic_id"] = target["_id"]
+    item["existing_tactic_name"] = target["tactic"]
+    item["tactic"] = target["tactic"]
 
 
 def _repair_known_lexicon_variant_for_review(item: dict) -> dict:
@@ -9681,6 +9812,40 @@ def _render_single_tactic_editor(record: dict) -> None:
                 "`enrich_existing` needs an existing Sanity tactic id. "
                 "Without it the proposal cannot safely attach evidence to the intended tactic."
             )
+        if item["action"] == "enrich_existing":
+            config = _load_config_safe()
+            if st.button("Reload existing Sanity tactics", key=f"{prefix}_reload_tactics"):
+                st.session_state.pop("tactic_entries", None)
+            if "tactic_entries" not in st.session_state:
+                try:
+                    from runner.clients.sanity import fetch_tactic_entries
+                    st.session_state.tactic_entries = fetch_tactic_entries(config) if config else []
+                except Exception as exc:
+                    st.session_state.tactic_entries = []
+                    st.caption(f"Could not load Sanity tactics: {exc}")
+            tactic_options = _tactic_target_options(st.session_state.get("tactic_entries", []))
+            if tactic_options:
+                target = st.selectbox(
+                    "Existing Sanity tactic",
+                    tactic_options,
+                    index=_tactic_target_index(tactic_options, item),
+                    format_func=lambda row: row["label"],
+                    key=f"{prefix}_existing_picker",
+                    help=(
+                        "Select the canonical tacticEntry to enrich. Spellings such as "
+                        "`Religious Freedom Shield` and `Religious-Freedom-Shield` are matched "
+                        "for lookup, but the real Sanity record remains explicit."
+                    ),
+                )
+                _apply_tactic_target(item, target)
+                st.caption(f"Will enrich `{target['tactic']}` (`{target['_id']}`).")
+            else:
+                item["existing_tactic_id"] = st.text_input(
+                    "Existing Sanity tactic id",
+                    value=item.get("existing_tactic_id", "") or "",
+                    key=f"{prefix}_existing_manual",
+                    help="Sanity tactics could not be loaded; paste the existing tacticEntry id manually.",
+                )
         item["tactic_level"] = st.selectbox(
             "Tactic level",
             ["structural", "sub-tactic", "campaign"],
@@ -9702,7 +9867,8 @@ def _render_single_tactic_editor(record: dict) -> None:
             key=f"{prefix}_secondary",
             help="Optional controlled Sanity cluster for tacticEntry.secondaryCluster.",
         )
-        item["existing_tactic_id"] = st.text_input("Existing Sanity tactic id", value=item.get("existing_tactic_id", "") or "", key=f"{prefix}_existing")
+        if item["action"] != "enrich_existing" and item.get("existing_tactic_id"):
+            st.caption(f"Existing tactic id kept on file: `{item['existing_tactic_id']}`")
 
     item["definition"] = st.text_area("Definition", value=item.get("definition", ""), height=100, key=f"{prefix}_definition")
     item["evidence_quote"] = st.text_area("Evidence quote", value=item.get("evidence_quote", ""), height=100, key=f"{prefix}_quote")
@@ -10422,7 +10588,9 @@ enrichment work. Click **Refresh worklist** after imports or new ingests.
 
 Use **Corpus Intelligence → Knowledge exports** for the deeper audit:
 `archive_summary.json`, `document_profiles.jsonl`, the evidence graph, and
-`knowledge_quality.json`.
+`knowledge_quality.json`. This is also where you can inspect and backfill
+`citation_units.json`, the local evidence-locator sidecar used to connect
+quotes back to stable spans in `extracted.txt`.
 
 ### Normal MacBook workflow
 
@@ -10437,26 +10605,30 @@ Use **Corpus Intelligence → Knowledge exports** for the deeper audit:
 5. **Source Offload → Import results** — on the MacBook, unpack returned
    archives, dry-run import, then import into the live corpus. This relinks the
    source queue only after the corpus import succeeds.
-6. **Document List / Review Inbox** — inspect imported docs, clear review holds
+6. **Dashboard → Refresh worklist** — refresh citation-unit sidecars, archive
+   summaries, evidence graph, quality audit, and the digest. New documents
+   should then appear in the current review/worklist state.
+7. **Document List / Review Inbox** — inspect imported docs, clear review holds
    such as testimony/legal/low-confidence markers, and upload only when ready.
-7. **Lexicon / Tag Registry** — approve/reject enrichment proposals and check
+8. **Lexicon / Tag Registry** — approve/reject enrichment proposals and check
    registry hints. Tag registry matches are connection hints, not proof.
-8. **Dashboard → Refresh worklist** — rebuild summaries, graph, quality audit,
-   and digest so the next action list reflects the new state.
+9. **Dashboard → Refresh worklist** again after review/upload/proposal work so
+   the next action list reflects the new state.
 
 ### Direct local ingest
 
 Use **Ingest Workbench** for one-off local runs on the MacBook. It follows the
 same core stages: intake, preprocess/extract, analyze, enrich, review, upload.
 For long/heavy runs, prefer Source Offload so the Mac Studio does the model
-work.
+work. Both regular ingest and source offload now create `citation_units.json`
+automatically when `extracted.txt` exists.
 
 ### What each page is for
 
 - **Dashboard**: daily worklist, system health, setup status, and service checks.
 - **Review Inbox**: cross-document review queues grouped by readiness.
 - **Corpus Intelligence**: corpus summaries, knowledge exports, graph/quality
-  audit, and the full research digest.
+  audit, evidence-locator sidecar status, and the full research digest.
 - **Source Queue**: source backlog and triage state.
 - **Source Offload**: MacBook side of export/transfer/import.
 - **Mac Studio Worker**: Mac Studio side of unpack/run/archive.
@@ -10470,6 +10642,33 @@ work.
 - **Testimony Review**: consent/public-display decisions.
 - **Activity Log**: local artifacts, audit files, HTML snapshots, embeddings,
   and provenance.
+
+### Evidence locators and knowledge exports
+
+The archive now has an evidence-locator layer:
+
+- `extracted.txt` is the canonical extracted text.
+- `citation_units.json` is generated from `extracted.txt`. It stores stable
+  paragraph/text-span IDs, character offsets, source artifact names, quote
+  hashes, and text hashes.
+- `archive_summary.json` summarizes each document, including whether citation
+  units exist.
+- `document_profiles.jsonl` is the corpus-wide version of those summaries.
+- `archive_graph.json` / `archive_edges.csv` use citation locators when a
+  quote-backed edge can be matched to `extracted.txt`.
+
+Use **Corpus Intelligence → Knowledge exports → Evidence locator sidecars** to
+see the current state:
+
+- **Can backfill** means the document has `extracted.txt` but lacks
+  `citation_units.json`; click **Backfill citation units**.
+- **Missing text** means the document has no `extracted.txt`; it needs retry,
+  re-ingest, manual snapshot, or discard. Re-enrichment alone will not fix it.
+
+Use **Dashboard → Refresh worklist** after imports, review changes, uploads, or
+proposal pushes. It backfills citation units where possible, refreshes archive
+summaries, rebuilds the evidence graph, writes the quality audit, and produces
+the human-readable research digest.
 
 ### Model routing
 
@@ -10493,6 +10692,16 @@ There are three layers:
    tactics/practices/claims. Approved quote-backed proposals become stronger
    evidence graph edges.
 
+Quote-backed enrichment proposals also try to attach an `evidence_locator`
+pointing back into `citation_units.json`. If the quote cannot be located, the
+proposal remains available but is marked as unlocated rather than pretending
+certainty.
+
+Tactic labels are matched separator-insensitively for identity/export purposes:
+`Religious Freedom Shield` and `Religious-Freedom-Shield` count as the same
+concept. In **Lexicon → Tactic Queue**, choose `enrich_existing` and use the
+**Existing Sanity tactic** dropdown rather than pasting tactic IDs by hand.
+
 If the quality audit says the tag registry is unavailable, open **Tag Registry
 → Registry source and enrichment-hint status** and set
 `SOGICE_LEGACY_VOCAB_DIR` in `runner/.env` to the folder containing
@@ -10506,6 +10715,9 @@ If the quality audit says the tag registry is unavailable, open **Tag Registry
   not relinked as ingested.
 - If returned packages appear in the wrong folder, use Source Offload import
   diagnostics or the archive/unpack flow rather than moving folders by hand.
+- If **Knowledge exports** says citation units are missing, click **Backfill
+  citation units**. If it says extracted text is missing, retry/re-ingest the
+  source or discard the stale partial document.
 - If upload is blocked, check Document List / Review Inbox for testimony,
   legal, low-confidence, embedding, or missing-artifact holds.
 - If Lexicon/Sanity mutations fail because a source document is missing, upload

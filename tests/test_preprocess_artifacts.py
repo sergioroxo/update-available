@@ -36,8 +36,13 @@ def test_save_artifacts_keeps_preprocess_json_metadata_only(tmp_path):
     assert "text" not in metadata
     assert "markdown" not in metadata
     assert metadata["outbound_link_count"] == 1
+    assert metadata["citation_units_path"] == "citation_units.json"
     assert (tmp_path / "extracted.txt").read_text() == "full extracted text"
     assert (tmp_path / "extracted.md").read_text() == "# Full extracted text"
+    citation_units = json.loads((tmp_path / "citation_units.json").read_text())
+    assert citation_units["doc_id"] == "doc-1"
+    assert citation_units["unit_count"] == 1
+    assert citation_units["units"][0]["char_start"] == 0
 
 
 def test_save_artifacts_writes_media_and_transcript_sidecars(tmp_path):
