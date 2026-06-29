@@ -1573,6 +1573,124 @@ def test_local_enrichment_proposal_records_repairs_known_lexicon_variants(tmp_pa
     assert records[0]["item"]["existing_entry_id"] == "lexicon-gender-dysphoria"
 
 
+def test_convert_lexicon_proposal_to_entity_creates_entity_and_rejects_lexicon(tmp_path):
+    import json
+    from runner.app import _convert_lexicon_proposal_to_entity
+
+    doc_dir = tmp_path / "9e6a34beb3c9"
+    doc_dir.mkdir()
+    enrichment_path = doc_dir / "enrichment.json"
+    enrichment_path.write_text(
+        json.dumps({
+            "lexicon_proposals": [
+                {
+                    "proposal_id": "prop-lexicon-trend",
+                    "action": "add_new",
+                    "term": "Transgender Trend",
+                    "language": "en",
+                    "definition_as_used": "A named campaign organization in the source.",
+                    "exact_quote": "Transgender Trend published guidance.",
+                    "model_confidence": 0.9,
+                    "researcher_confidence": 0.8,
+                }
+            ],
+            "entity_proposals": [],
+        }),
+        encoding="utf-8",
+    )
+
+    created = _convert_lexicon_proposal_to_entity(
+        enrichment_path,
+        0,
+        entity_type="organization",
+        registry_fit="registry_entity",
+        role_in_sogice="advocacy organization",
+        researcher_note="This is an organization, not a term.",
+    )
+
+    data = json.loads(enrichment_path.read_text(encoding="utf-8"))
+    assert created["name"] == "Transgender Trend"
+    assert created["entity_type"] == "organization"
+    assert created["registry_fit"] == "registry_entity"
+    assert created["self_description"] == "A named campaign organization in the source."
+    assert created["evidence_quote"] == "Transgender Trend published guidance."
+    assert created["model_confidence"] == 0.9
+    assert created["researcher_confidence"] == 0.8
+    assert created["approved"] is False
+    assert created["rejected"] is False
+    assert created["proposal_status"] == "pending"
+    assert created["proposal_id"].startswith("prop-")
+    assert created["source_lexicon_proposal_id"] == "prop-lexicon-trend"
+    assert "organization, not a term" in created["researcher_note"]
+    assert len(data["entity_proposals"]) == 1
+    assert data["lexicon_proposals"][0]["rejected"] is True
+    assert data["lexicon_proposals"][0]["approved"] is False
+    assert data["lexicon_proposals"][0]["proposal_status"] == "rejected"
+    assert data["lexicon_proposals"][0]["converted_to_entity_proposal_id"] == created["proposal_id"]
+    assert "Converted to entity proposal" in data["lexicon_proposals"][0]["researcher_note"]
+
+
+def test_convert_lexicon_proposal_to_entity_refuses_duplicate_active_entity(tmp_path):
+    import json
+    import pytest
+    from runner.app import _convert_lexicon_proposal_to_entity
+
+    doc_dir = tmp_path / "9e6a34beb3c9"
+    doc_dir.mkdir()
+    enrichment_path = doc_dir / "enrichment.json"
+    enrichment_path.write_text(
+        json.dumps({
+            "lexicon_proposals": [
+                {
+                    "action": "add_new",
+                    "term": "Transgender Trend",
+                    "exact_quote": "Transgender Trend appears here.",
+                }
+            ],
+            "entity_proposals": [
+                {
+                    "action": "add_new",
+                    "entity_type": "organization",
+                    "name": "transgender trend",
+                    "rejected": False,
+                }
+            ],
+        }),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="already exists"):
+        _convert_lexicon_proposal_to_entity(enrichment_path, 0, entity_type="organization")
+
+    data = json.loads(enrichment_path.read_text(encoding="utf-8"))
+    assert len(data["entity_proposals"]) == 1
+    assert data["lexicon_proposals"][0].get("rejected") is not True
+
+
+def test_entity_item_from_lexicon_proposal_supports_person_role(tmp_path):
+    from runner.app import _entity_item_from_lexicon_proposal
+
+    item = {
+        "term": "Jane Example",
+        "definition_as_used": "A named person.",
+        "exact_quote": "Jane Example spoke at the event.",
+    }
+
+    entity = _entity_item_from_lexicon_proposal(
+        item,
+        "doc123",
+        entity_type="person",
+        registry_fit="needs_review",
+        role_in_sogice="spokesperson",
+    )
+
+    assert entity["name"] == "Jane Example"
+    assert entity["entity_type"] == "person"
+    assert entity["registry_fit"] == "needs_review"
+    assert entity["role_in_sogice"] == "spokesperson"
+    assert entity["proposal_status"] == "pending"
+
+
 # ---------------------------------------------------------------------------
 # Bug fixes: registry summary table + "no evidence" caption
 # ---------------------------------------------------------------------------

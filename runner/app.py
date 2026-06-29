@@ -9575,6 +9575,65 @@ def _render_single_proposal_editor(record: dict) -> None:
             _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
             st.success("Rejected locally.")
 
+    with st.expander("Move this proposal to the Entity queue"):
+        st.caption(
+            "Use this when the model proposed an organization/person as a lexicon term. "
+            "This rejects the lexicon proposal locally and creates a new entity proposal "
+            "with the same source quote and confidence metadata. Nothing is pushed to Sanity."
+        )
+        move_cols = st.columns([1, 1])
+        with move_cols[0]:
+            entity_type = st.selectbox(
+                "Entity type",
+                ["organization", "person"],
+                key=f"{prefix}_move_entity_type",
+            )
+            registry_fit = st.selectbox(
+                "Registry fit",
+                _ENTITY_REGISTRY_FIT_OPTIONS,
+                format_func=lambda value: _ENTITY_REGISTRY_FIT_LABELS.get(value, value),
+                key=f"{prefix}_move_registry_fit",
+            )
+        with move_cols[1]:
+            if entity_type == "person":
+                role_in_sogice = st.selectbox(
+                    "Role in SOGICE",
+                    _PERSON_ROLE_OPTIONS,
+                    index=_option_index(_PERSON_ROLE_OPTIONS, "other"),
+                    key=f"{prefix}_move_role_select",
+                )
+            else:
+                role_in_sogice = st.text_input(
+                    "Role in SOGICE",
+                    value="",
+                    key=f"{prefix}_move_role_text",
+                    help="Optional short context for the organization, if known.",
+                )
+            move_note = st.text_area(
+                "Conversion note",
+                value="",
+                height=70,
+                key=f"{prefix}_move_note",
+                help="Optional note explaining why this belongs in the entity queue.",
+            )
+        if st.button("Move to Entity queue", key=f"{prefix}_move_to_entity"):
+            try:
+                created = _convert_lexicon_proposal_to_entity(
+                    record["path"],
+                    record["index"],
+                    item,
+                    entity_type=entity_type,
+                    registry_fit=registry_fit,
+                    role_in_sogice=role_in_sogice,
+                    researcher_note=move_note,
+                )
+                st.success(
+                    f"Created entity proposal `{created.get('name')}` and rejected the lexicon proposal locally. "
+                    "Open the Entity Queue to review and approve it."
+                )
+            except Exception as exc:
+                st.error(f"Could not move proposal: {exc}")
+
 
 def _render_proposal_confidence_editor(item: dict, prefix: str) -> None:
     model_confidence = _proposal_confidence(item, "model_confidence", "llm_confidence", "confidence")
@@ -10137,6 +10196,150 @@ def _local_enrichment_proposal_records(corpus_dir: Path, key: str = "lexicon_pro
                 "item": item,
             })
     return records
+
+
+def _append_note(existing: str, marker: str) -> str:
+    existing = (existing or "").strip()
+    marker = marker.strip()
+    if not marker:
+        return existing
+    if marker in existing:
+        return existing
+    return (existing + "\n" + marker).strip() if existing else marker
+
+
+def _entity_item_from_lexicon_proposal(
+    item: dict,
+    doc_id: str,
+    *,
+    entity_type: str = "organization",
+    registry_fit: str = "registry_entity",
+    role_in_sogice: str = "",
+    researcher_note: str = "",
+) -> dict:
+    if entity_type not in {"organization", "person"}:
+        raise ValueError(f"Unsupported entity_type: {entity_type}")
+    if registry_fit not in _ENTITY_REGISTRY_FIT_OPTIONS:
+        raise ValueError(f"Unsupported registry_fit: {registry_fit}")
+
+    name = str(item.get("term") or "").strip()
+    if not name:
+        raise ValueError("Lexicon proposal has no term to convert into an entity name.")
+
+    model_confidence = _proposal_confidence(item, "model_confidence", "llm_confidence", "confidence")
+    entity = {
+        "action": "add_new",
+        "entity_type": entity_type,
+        "name": name,
+        "registry_fit": registry_fit,
+        "registry_fit_rationale": (
+            "Researcher moved this proposal from the lexicon queue because it names "
+            "an organization/person rather than a discourse term."
+        ),
+        "self_description": item.get("definition_as_used") or item.get("accessible_definition") or "",
+        "activities_stated": [],
+        "geographic_scope": [],
+        "legal_entities_mentioned": [],
+        "claims_made": [],
+        "evidence_quote": item.get("exact_quote", ""),
+        "network_connections": [],
+        "key_individuals": [],
+        "affiliated_orgs": [],
+        "role_in_sogice": role_in_sogice,
+        "approved": False,
+        "rejected": False,
+        "pushed_to_sanity": False,
+        "sanity_id": None,
+        "researcher_note": _append_note(
+            researcher_note,
+            f"Converted from lexicon proposal `{item.get('proposal_id') or name}` for researcher review.",
+        ),
+        "proposal_status": "pending",
+        "source_lexicon_proposal_id": item.get("proposal_id"),
+        "source_lexicon_term": name,
+        "source_lexicon_action": item.get("action", ""),
+        "converted_from_family": "lexicon_proposals",
+        "converted_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if model_confidence is not None:
+        entity["model_confidence"] = model_confidence
+    researcher_confidence = _proposal_confidence(item, "researcher_confidence")
+    if researcher_confidence is not None:
+        entity["researcher_confidence"] = researcher_confidence
+    if item.get("confidence_rationale"):
+        entity["confidence_rationale"] = item.get("confidence_rationale")
+
+    try:
+        from runner.pipeline.enrich import _generate_proposal_id
+
+        entity["proposal_id"] = _generate_proposal_id("entity", doc_id, entity)
+    except Exception:
+        # Proposal IDs are helpful for merge stability, but the review tool should
+        # still repair a misplaced proposal if the enrichment module is unavailable.
+        entity["proposal_id"] = None
+    return entity
+
+
+def _active_entity_proposal_exists(proposals: list[dict], *, name: str, entity_type: str) -> bool:
+    wanted_name = name.strip().casefold()
+    wanted_type = entity_type.strip().casefold()
+    for proposal in proposals:
+        if not isinstance(proposal, dict) or proposal.get("rejected"):
+            continue
+        if str(proposal.get("name", "")).strip().casefold() != wanted_name:
+            continue
+        if str(proposal.get("entity_type", "")).strip().casefold() == wanted_type:
+            return True
+    return False
+
+
+def _convert_lexicon_proposal_to_entity(
+    path: Path,
+    index: int,
+    lexicon_item: dict | None = None,
+    *,
+    entity_type: str = "organization",
+    registry_fit: str = "registry_entity",
+    role_in_sogice: str = "",
+    researcher_note: str = "",
+) -> dict:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    lexicon_proposals = data.setdefault("lexicon_proposals", [])
+    if index >= len(lexicon_proposals):
+        raise IndexError(f"Proposal index {index} no longer exists in {path}")
+
+    current = dict(lexicon_item or lexicon_proposals[index])
+    doc_id = path.parent.name
+    entity = _entity_item_from_lexicon_proposal(
+        current,
+        doc_id,
+        entity_type=entity_type,
+        registry_fit=registry_fit,
+        role_in_sogice=role_in_sogice,
+        researcher_note=researcher_note,
+    )
+    entity_proposals = data.setdefault("entity_proposals", [])
+    if _active_entity_proposal_exists(entity_proposals, name=entity["name"], entity_type=entity_type):
+        raise ValueError(
+            f"An active {entity_type} entity proposal named {entity['name']!r} already exists in this enrichment file."
+        )
+
+    entity_proposals.append(entity)
+
+    marker = (
+        f"Converted to entity proposal `{entity.get('proposal_id') or entity['name']}` "
+        f"as {entity_type}; original lexicon proposal rejected locally."
+    )
+    current["approved"] = False
+    current["rejected"] = True
+    current["proposal_status"] = "rejected"
+    current["converted_to_entity_proposal_id"] = entity.get("proposal_id")
+    current["converted_to_entity_at"] = entity.get("converted_at")
+    current["researcher_note"] = _append_note(current.get("researcher_note", ""), marker)
+    lexicon_proposals[index] = current
+
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return entity
 
 
 def _update_enrichment_proposal(path: Path, key: str, index: int, item: dict) -> None:
