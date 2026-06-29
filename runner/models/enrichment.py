@@ -511,6 +511,8 @@ class PracticeDescription(ProposalConfidenceMixin):
         if not isinstance(data, dict):
             return data
         data = dict(data)
+        if data.get("harm_quote") is None:
+            data["harm_quote"] = ""
         if not data.get("practice_cluster"):
             data["practice_cluster"] = infer_practice_cluster(data)
         if not data.get("practice_fit"):

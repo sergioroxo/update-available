@@ -388,6 +388,160 @@ def test_source_manifest_item_rows_are_display_ready():
     }]
 
 
+def test_source_queue_triage_command_can_enable_crawl4ai():
+    import sys
+
+    plain = app_mod._source_queue_triage_command(limit=12, batch="batch-a", force=True)
+    assert plain == (
+        f"{sys.executable} -m runner queue-triage --limit 12 --batch batch-a --force"
+    )
+
+    rendered = app_mod._source_queue_triage_command(
+        limit=50,
+        batch="batch-a",
+        force=True,
+        use_crawl4ai=True,
+    )
+    assert rendered.startswith("SOGICE_ENABLE_CRAWL4AI=1 ")
+    assert "--force" in rendered
+    assert "--batch batch-a" in rendered
+
+
+def test_source_queue_snapshot_command_preserves_queue_id_mapping():
+    import sys
+
+    cmd = app_mod._source_queue_snapshot_command(
+        "qi123",
+        "/Users/me/Downloads/page.html",
+        "snapshot-qi123",
+    )
+
+    assert cmd == (
+        f"{sys.executable} -m runner source-offload-export "
+        "--queue-snapshot qi123:/Users/me/Downloads/page.html "
+        "--package-id snapshot-qi123"
+    )
+
+
+def test_source_split_book_command_uses_runner_venv_python():
+    import sys
+
+    cmd = app_mod._source_split_book_command(
+        "/Users/me/Downloads/book.pdf",
+        out_path="/Users/me/Downloads/book.split-preview.json",
+        min_chars=4500,
+        max_level=3,
+    )
+
+    assert cmd == (
+        f"{sys.executable} -m runner split-book /Users/me/Downloads/book.pdf "
+        "--min-chars 4500 --max-level 3 --out /Users/me/Downloads/book.split-preview.json"
+    )
+
+
+def test_source_parse_file_rows_supports_optional_source_url_and_title():
+    rows = app_mod._source_parse_file_rows(
+        """
+        /Users/me/Downloads/book.pdf | https://example.org/book | Book title
+        /Users/me/Downloads/article.md
+        """
+    )
+
+    assert rows == [
+        {
+            "file_path": "/Users/me/Downloads/book.pdf",
+            "source_url": "https://example.org/book",
+            "title": "Book title",
+        },
+        {
+            "file_path": "/Users/me/Downloads/article.md",
+            "source_url": "",
+            "title": "",
+        },
+    ]
+
+
+def test_source_specs_from_file_rows_adds_companion_source_url():
+    rows = [{
+        "file_path": "/Users/me/Downloads/book.pdf",
+        "source_url": "https://example.org/book",
+        "title": "Book title",
+    }]
+
+    specs = app_mod._source_specs_from_file_rows(rows)
+
+    assert len(specs) == 2
+    assert specs[0].source_kind == "file"
+    assert specs[0].url == "https://example.org/book"
+    assert specs[0].title == "Book title"
+    assert specs[1].source_kind == "url"
+    assert specs[1].url == "https://example.org/book"
+    assert specs[1].queue_item_id == ""
+
+
+def test_source_specs_from_file_rows_dedupes_explicit_companion_url():
+    rows = [{
+        "file_path": "/Users/me/Downloads/book.pdf",
+        "source_url": "https://example.org/book",
+        "title": "Book title",
+    }]
+
+    specs = app_mod._source_specs_from_file_rows(
+        rows,
+        explicit_urls=["https://example.org/book"],
+    )
+
+    assert len(specs) == 1
+    assert specs[0].source_kind == "file"
+
+
+def test_source_queue_history_category_and_rendered_policy(tmp_path):
+    from runner.pipeline.batch import ManifestItem, BatchManifest
+    from runner.pipeline.source_queue import add_item, apply_triage_result
+
+    db = _make_db(tmp_path)
+    rendered = add_item(db, "https://example.org/rendered")
+    ordinary = add_item(db, "https://example.org/ordinary")
+    assert rendered and ordinary
+    apply_triage_result(
+        db,
+        rendered.id,
+        _safe_triage("news"),
+        model_name="triage",
+        acquisition_note="Extracted 2200 chars with crawl4ai (quality: high)",
+    )
+    apply_triage_result(
+        db,
+        ordinary.id,
+        _safe_triage("news"),
+        model_name="triage",
+        acquisition_note="Extracted 2200 chars with trafilatura (quality: high)",
+    )
+
+    manifest = BatchManifest(
+        generated_at="now",
+        batch_group_filter="",
+        priority_filter="",
+        limit=2,
+        total_candidates=2,
+        included=[
+            ManifestItem(rendered.id, rendered.url, "triaged", "low", "", "litelm", "news", True, ""),
+            ManifestItem(ordinary.id, ordinary.url, "triaged", "low", "", "litelm", "news", True, ""),
+        ],
+    )
+
+    filtered = app_mod._source_manifest_apply_rendered_policy(
+        manifest,
+        db,
+        include_rendered=False,
+    )
+
+    assert [item.item_id for item in filtered.included] == [ordinary.id]
+    assert filtered.excluded[0].item_id == rendered.id
+    assert filtered.excluded[0].exclusion_reason == "rendered_fallback_excluded"
+    db.close()
+
+
 def test_source_build_and_archive_batch_uses_plan_and_does_not_mutate_queue(tmp_path):
     from runner.pipeline.batch import plan_batch
     from runner.pipeline.offload_source import inspect_source_archive

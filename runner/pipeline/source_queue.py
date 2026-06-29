@@ -78,6 +78,8 @@ CREATE TABLE IF NOT EXISTS source_queue_triage_history (
     item_id                 TEXT NOT NULL,
     triaged_at              TEXT NOT NULL,
     model_name              TEXT NOT NULL DEFAULT '',
+    acquisition_note        TEXT NOT NULL DEFAULT '',
+    rendered_fallback       INTEGER NOT NULL DEFAULT 0,
     doc_type_hint           TEXT NOT NULL DEFAULT '',
     recommended_llm         TEXT NOT NULL DEFAULT '',
     routing_reason          TEXT NOT NULL DEFAULT '',
@@ -99,6 +101,11 @@ _MIGRATIONS: list[tuple[str, str]] = [
     ("needs_legal_review",      "ALTER TABLE source_queue ADD COLUMN needs_legal_review INTEGER NOT NULL DEFAULT 0"),
     ("overnight_batch_safe",    "ALTER TABLE source_queue ADD COLUMN overnight_batch_safe INTEGER NOT NULL DEFAULT 1"),
     ("suggested_process_route", "ALTER TABLE source_queue ADD COLUMN suggested_process_route TEXT NOT NULL DEFAULT ''"),
+]
+
+_HISTORY_MIGRATIONS: list[tuple[str, str]] = [
+    ("acquisition_note",  "ALTER TABLE source_queue_triage_history ADD COLUMN acquisition_note TEXT NOT NULL DEFAULT ''"),
+    ("rendered_fallback", "ALTER TABLE source_queue_triage_history ADD COLUMN rendered_fallback INTEGER NOT NULL DEFAULT 0"),
 ]
 
 
@@ -239,6 +246,12 @@ def _migrate_db(conn: sqlite3.Connection) -> None:
     existing = {row[1] for row in conn.execute("PRAGMA table_info(source_queue)")}
     for col_name, alter_sql in _MIGRATIONS:
         if col_name not in existing:
+            conn.execute(alter_sql)
+    history_existing = {
+        row[1] for row in conn.execute("PRAGMA table_info(source_queue_triage_history)")
+    }
+    for col_name, alter_sql in _HISTORY_MIGRATIONS:
+        if col_name not in history_existing:
             conn.execute(alter_sql)
     conn.commit()
 
@@ -675,6 +688,7 @@ def apply_triage_result(
     triage_result,
     *,
     model_name: str = "",
+    acquisition_note: str = "",
 ) -> bool:
     """Write TriageResult fields to the queue row and set status=triaged.
 
@@ -688,6 +702,8 @@ def apply_triage_result(
     overnight_safe = int(getattr(triage_result, "overnight_batch_safe", False))
     suggested_route = getattr(triage_result, "suggested_process_route", "")
     triage_succeeded = int(bool(getattr(triage_result, "triage_succeeded", False)))
+    acquisition_note = str(acquisition_note or "")
+    rendered_fallback = int("crawl4ai" in acquisition_note.lower())
     cur = db.execute(
         """UPDATE source_queue SET
                doc_type_hint          = ?,
@@ -726,14 +742,16 @@ def apply_triage_result(
     if cur.rowcount:
         db.execute(
             """INSERT INTO source_queue_triage_history
-               (item_id, triaged_at, model_name, doc_type_hint, recommended_llm,
-                routing_reason, priority, source_type, overnight_batch_safe,
-                suggested_process_route, triage_succeeded)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               (item_id, triaged_at, model_name, acquisition_note, rendered_fallback,
+                doc_type_hint, recommended_llm, routing_reason, priority, source_type,
+                overnight_batch_safe, suggested_process_route, triage_succeeded)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 item_id,
                 now,
                 model_name,
+                acquisition_note,
+                rendered_fallback,
                 triage_result.doc_type_hint,
                 triage_result.recommended_llm,
                 triage_result.routing_reason,

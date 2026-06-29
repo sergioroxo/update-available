@@ -263,6 +263,27 @@ def test_enrichment_validate_response_practice_defaults_to_clusterable_evidence(
     assert "held as evidence" in practice.practice_fit_rationale
 
 
+def test_enrichment_validate_response_practice_null_harm_quote_is_empty_string():
+    raw = """
+    {
+      "practice_descriptions": [
+        {
+          "practice_id": "Practice: Behavioral-Reorientation",
+          "exact_description": "The source reviews behavioral reorientation techniques.",
+          "harm_stance": "not_mentioned",
+          "harm_quote": null
+        }
+      ]
+    }
+    """
+
+    result = _validate_response("doc-1", raw, "litelm")
+
+    practice = result.practice_descriptions[0]
+    assert practice.harm_quote == ""
+    assert practice.practice_fit == "needs_clustering"
+
+
 def test_enrichment_validate_response_practice_existing_id_is_existing_practice():
     raw = """
     {

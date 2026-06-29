@@ -13224,6 +13224,129 @@ def _source_queue_hold_next_step(category: str) -> str:
     }.get(category, "Review this source manually before marking it ready.")
 
 
+def _source_queue_hold_category_from_history(row: dict) -> str:
+    note = str(row.get("acquisition_note") or "")
+    reason = str(row.get("routing_reason") or "")
+    return _source_queue_hold_category("", f"{note}; {reason}", str(row.get("source_type") or ""))
+
+
+def _source_queue_triage_command(
+    *,
+    limit: int,
+    batch: str = "",
+    force: bool = False,
+    use_crawl4ai: bool = False,
+) -> str:
+    command = [sys.executable, "-m", "runner", "queue-triage", "--limit", str(max(1, int(limit)))]
+    if batch and batch != "(all)":
+        command.extend(["--batch", batch])
+    if force:
+        command.append("--force")
+    rendered = "SOGICE_ENABLE_CRAWL4AI=1 " if use_crawl4ai else ""
+    return rendered + shlex.join(command)
+
+
+def _source_queue_snapshot_command(item_id: str, snapshot_path: str, package_id: str = "") -> str:
+    mapping = f"{item_id}:{snapshot_path or '/path/to/browser-saved-page.html'}"
+    command = [sys.executable, "-m", "runner", "source-offload-export", "--queue-snapshot", mapping]
+    if package_id:
+        command.extend(["--package-id", package_id])
+    return shlex.join(command)
+
+
+def _source_split_book_command(
+    source_path: str,
+    *,
+    out_path: str = "",
+    min_chars: int = 3000,
+    max_level: int = 2,
+) -> str:
+    command = [
+        sys.executable,
+        "-m",
+        "runner",
+        "split-book",
+        source_path or "/path/to/book.pdf",
+        "--min-chars",
+        str(min_chars),
+        "--max-level",
+        str(max_level),
+    ]
+    if out_path.strip():
+        command.extend(["--out", out_path.strip()])
+    return shlex.join(command)
+
+
+def _source_parse_file_rows(text: str) -> list[dict[str, str]]:
+    """Parse bulk local-file rows for Source Offload.
+
+    Supported formats:
+      /path/to/book.pdf
+      /path/to/book.pdf | https://source-or-download-page.example | Optional title
+
+    The optional URL is stored as provenance/source_url for the file-backed item.
+    The Source Offload UI also packages it as a separate companion URL document
+    so landing/download pages can contribute context and network evidence.
+    """
+    rows: list[dict[str, str]] = []
+    for raw in (text or "").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        parts = [part.strip() for part in line.split("|")]
+        rows.append({
+            "file_path": parts[0],
+            "source_url": parts[1] if len(parts) > 1 else "",
+            "title": parts[2] if len(parts) > 2 else "",
+        })
+    return rows
+
+
+def _source_queue_latest_triage_history(db, item_id: str) -> dict:
+    rows = db.execute(
+        """
+        SELECT * FROM source_queue_triage_history
+        WHERE item_id = ?
+        ORDER BY triaged_at DESC, id DESC
+        LIMIT 1
+        """,
+        (item_id,),
+    ).fetchall()
+    return dict(rows[0]) if rows else {}
+
+
+def _source_queue_rendered_recovered(db, item_id: str) -> bool:
+    row = _source_queue_latest_triage_history(db, item_id)
+    if not row:
+        return False
+    if bool(row.get("rendered_fallback")):
+        return True
+    note = str(row.get("acquisition_note") or "").lower()
+    return "crawl4ai" in note or "rendered" in note
+
+
+def _source_manifest_apply_rendered_policy(manifest, db, *, include_rendered: bool):
+    """UI-only policy filter for batches containing Crawl4AI-rendered recoveries."""
+    if include_rendered:
+        return manifest
+    kept = []
+    deferred = []
+    for item in manifest.included:
+        if _source_queue_rendered_recovered(db, item.item_id):
+            item.included = False
+            item.exclusion_reason = "rendered_fallback_excluded"
+            deferred.append(item)
+        else:
+            kept.append(item)
+    if deferred:
+        manifest.included = kept
+        manifest.excluded = deferred + manifest.excluded
+        manifest.notes.append(
+            f"{len(deferred)} safe item(s) deferred because they required the rendered/Crawl4AI fallback."
+        )
+    return manifest
+
+
 def page_source_queue():
     st.title("📥 Source Queue")
 
@@ -13257,7 +13380,12 @@ def page_source_queue():
     db_path = queue_db_path(config.corpus_dir)
     db = open_db(db_path)
 
-    def _run_source_queue_triage(target_items, *, label: str = "Triaging") -> None:
+    def _run_source_queue_triage(
+        target_items,
+        *,
+        label: str = "Triaging",
+        use_crawl4ai: bool = False,
+    ) -> None:
         """Run queue triage for visible items and persist fail-closed results."""
         if not target_items:
             st.info("No queue items selected for triage.")
@@ -13272,32 +13400,50 @@ def page_source_queue():
         progress = st.progress(0, text=f"{label}…")
         parsed = 0
         failed = 0
-        for idx, item in enumerate(target_items):
-            progress.progress(
-                (idx + 1) / max(len(target_items), 1),
-                text=f"{label} {idx + 1}/{len(target_items)}: {item.url[:55]}",
-            )
-            try:
-                snippet, note = triage_mod.extract_snippet(item.url)
-                result = triage_mod.run(
-                    snippet,
-                    config,
-                    source_label=triage_mod.source_context_label(
-                        item.url,
-                        extraction_note=note,
-                        snippet=snippet,
-                        researcher_note=item.notes,
-                    ),
+        old_crawl = os.environ.get("SOGICE_ENABLE_CRAWL4AI")
+        if use_crawl4ai:
+            os.environ["SOGICE_ENABLE_CRAWL4AI"] = "1"
+        try:
+            for idx, item in enumerate(target_items):
+                progress.progress(
+                    (idx + 1) / max(len(target_items), 1),
+                    text=f"{label} {idx + 1}/{len(target_items)}: {item.url[:55]}",
                 )
-                apply_triage_result(db, item.id, result, model_name=model_name)
-                if result.triage_succeeded:
-                    parsed += 1
-                else:
+                try:
+                    snippet, note = triage_mod.extract_snippet(item.url)
+                    result = triage_mod.run(
+                        snippet,
+                        config,
+                        source_label=triage_mod.source_context_label(
+                            item.url,
+                            extraction_note=note,
+                            snippet=snippet,
+                            researcher_note=item.notes,
+                        ),
+                    )
+                    apply_triage_result(db, item.id, result, model_name=model_name, acquisition_note=note)
+                    if result.triage_succeeded:
+                        parsed += 1
+                    else:
+                        failed += 1
+                        st.warning(f"Triage failed closed for {item.id}: {result.routing_reason}")
+                except Exception as exc:
                     failed += 1
-                    st.warning(f"Triage failed closed for {item.id}: {result.routing_reason}")
-            except Exception as exc:
-                failed += 1
-                st.warning(f"Triage failed for {item.id}: {exc}")
+                    failed_result = triage_mod.TriageResult.failed(f"snippet/extraction error: {exc}")
+                    apply_triage_result(
+                        db,
+                        item.id,
+                        failed_result,
+                        model_name=model_name,
+                        acquisition_note=str(exc),
+                    )
+                    st.warning(f"Triage failed closed for {item.id}: {exc}")
+        finally:
+            if use_crawl4ai:
+                if old_crawl is None:
+                    os.environ.pop("SOGICE_ENABLE_CRAWL4AI", None)
+                else:
+                    os.environ["SOGICE_ENABLE_CRAWL4AI"] = old_crawl
         progress.empty()
         st.success(f"Triage complete with {model_name}: {parsed} parsed, {failed} failed closed.")
 
@@ -13371,9 +13517,29 @@ def page_source_queue():
                                          placeholder="optional free text")
 
         if add_mode == "Add and triage now":
+            import_use_crawl4ai = st.checkbox(
+                "Use Crawl4AI rendered-page fallback while triaging these new sources",
+                value=False,
+                key="sq_import_use_crawl4ai",
+                help=(
+                    "Opt-in browser rendering for public pages. Challenge/login/CAPTCHA pages "
+                    "are still held, not treated as source text."
+                ),
+            )
+            st.code(
+                _source_queue_triage_command(
+                    limit=max(1, len([line for line in pasted.splitlines() if line.strip()])),
+                    batch=imp_batch,
+                    force=False,
+                    use_crawl4ai=import_use_crawl4ai,
+                ),
+                language="bash",
+            )
             st.caption(
                 "Priority will be assigned by the triage model. If triage fails for a URL, it is marked `triaged` but fail-closed so you can review or retry it."
             )
+        else:
+            import_use_crawl4ai = False
 
         if st.button("Add to queue", type="primary", disabled=not pasted.strip()):
             with st.spinner("Adding…"):
@@ -13408,7 +13574,11 @@ def page_source_queue():
                     batch_group=imp_batch or None,
                     limit=added + dup_c + 10,
                 )
-                _run_source_queue_triage(new_items, label="Triaging new item")
+                _run_source_queue_triage(
+                    new_items,
+                    label="Triaging new item",
+                    use_crawl4ai=import_use_crawl4ai,
+                )
 
             st.rerun()
 
@@ -13442,7 +13612,7 @@ def page_source_queue():
     st.divider()
 
     # ── Filters ────────────────────────────────────────────────────────────
-    filter_cols = st.columns([2, 2, 3, 1])
+    filter_cols = st.columns([2, 2, 3, 2, 1])
     # Human-readable status labels for the filter
     _STATUS_LABELS = {
         "new": "🆕 new",
@@ -13466,7 +13636,25 @@ def page_source_queue():
     )
     batches = ["(all)"] + batch_groups(db)
     batch_filter = filter_cols[2].selectbox("Batch", batches, key="sq_filter_batch")
-    show_limit = filter_cols[3].number_input("Limit", min_value=10, max_value=2000,
+    hold_filter_options = [
+        "(all)",
+        "cloudflare",
+        "blocked_page",
+        "ssl",
+        "wayback_unavailable",
+        "http_blocked",
+        "timeout",
+        "video_needs_transcript",
+        "triage_failed",
+    ]
+    hold_filter = filter_cols[3].selectbox(
+        "Held category",
+        hold_filter_options,
+        format_func=lambda x: "(all)" if x == "(all)" else _source_queue_hold_label(x),
+        key="sq_filter_hold_category",
+        help="Filters visible rows by the current triage/acquisition hold reason.",
+    )
+    show_limit = filter_cols[4].number_input("Limit", min_value=10, max_value=2000,
                                               value=200, step=50, key="sq_limit")
 
     items = list_items(
@@ -13476,10 +13664,73 @@ def page_source_queue():
         batch_group=None if batch_filter == "(all)" else batch_filter,
         limit=int(show_limit),
     )
+    if hold_filter != "(all)":
+        items = [
+            item for item in items
+            if _source_queue_hold_category(item.url, item.routing_reason, item.source_type) == hold_filter
+        ]
 
     if not items:
         st.info("No items match the current filter.")
         return
+
+    with st.expander("Rendered fallback / terminal triage command", expanded=False):
+        use_crawl4ai_triage = st.checkbox(
+            "Use Crawl4AI rendered-page fallback for this triage/retry action",
+            value=False,
+            key="sq_use_crawl4ai_triage",
+            help=(
+                "Opt-in browser rendering for public pages where Trafilatura/httpx/Wayback fail. "
+                "It records provenance and still holds Cloudflare/CAPTCHA/login challenge pages."
+            ),
+        )
+        st.caption(
+            "Crawl4AI is useful for browser-rendered public pages. It is not a bypass for "
+            "Cloudflare challenges, CAPTCHAs, logins, or paywalls; those stay held for manual capture."
+        )
+        st.markdown("Copy-paste equivalent for new visible items:")
+        st.code(
+            _source_queue_triage_command(
+                limit=int(min(sum(1 for i in items if i.status == "new") or show_limit, show_limit)),
+                batch="" if batch_filter == "(all)" else batch_filter,
+                force=False,
+                use_crawl4ai=use_crawl4ai_triage,
+            ),
+            language="bash",
+        )
+        st.markdown("Copy-paste equivalent for retrying held/triaged items:")
+        st.code(
+            _source_queue_triage_command(
+                limit=int(show_limit),
+                batch="" if batch_filter == "(all)" else batch_filter,
+                force=True,
+                use_crawl4ai=use_crawl4ai_triage,
+            ),
+            language="bash",
+        )
+
+    recent_history = list_triage_history(db, limit=25)
+    if recent_history:
+        with st.expander("Recent triage attempts", expanded=False):
+            st.dataframe(
+                [
+                    {
+                        "when": row.get("triaged_at", "")[:19],
+                        "item": row.get("item_id", ""),
+                        "result": "parsed" if row.get("triage_succeeded") else "held",
+                        "held_category": _source_queue_hold_category_from_history(row),
+                        "rendered": bool(row.get("rendered_fallback")),
+                        "safe": bool(row.get("overnight_batch_safe")),
+                        "priority": row.get("priority", ""),
+                        "llm": row.get("recommended_llm", ""),
+                        "acquisition": row.get("acquisition_note", ""),
+                        "reason": row.get("routing_reason", ""),
+                    }
+                    for row in recent_history
+                ],
+                hide_index=True,
+                use_container_width=True,
+            )
 
     # ── Bulk triage button ──────────────────────────────────────────────────
     new_count = sum(1 for i in items if i.status == "new")
@@ -13497,7 +13748,10 @@ def page_source_queue():
             help="How many visible new items to triage in this click. Use filters/batches to keep long runs intentional.",
         )
         if triage_cols[0].button("⚡ Run triage on new items", key="sq_triage_btn"):
-            _run_source_queue_triage([i for i in items if i.status == "new"][:int(triage_n)])
+            _run_source_queue_triage(
+                [i for i in items if i.status == "new"][:int(triage_n)],
+                use_crawl4ai=use_crawl4ai_triage,
+            )
             st.rerun()
 
     failed_triage_items = [
@@ -13517,7 +13771,11 @@ def page_source_queue():
             help="How many visible held/failed triage items to retry in this click.",
         )
         if retry_cols[0].button("🔁 Retry failed triage", key="sq_retry_failed_btn"):
-            _run_source_queue_triage(failed_triage_items[:int(retry_n)], label="Retrying failed triage")
+            _run_source_queue_triage(
+                failed_triage_items[:int(retry_n)],
+                label="Retrying failed triage",
+                use_crawl4ai=use_crawl4ai_triage,
+            )
             st.rerun()
 
     # ── Suggested Mac Studio source-offload batch ─────────────────────────
@@ -13611,12 +13869,26 @@ def page_source_queue():
             key="sq_source_batch_package_id",
             help="Created under source_offload/inbox and archived to the Syncthing transfer folder.",
         ).strip()
+        include_rendered_source_batch = st.checkbox(
+            "Include Crawl4AI/rendered-fallback recovered items",
+            value=True,
+            key="sq_source_batch_include_rendered",
+            help=(
+                "Leave on for normal runs. Turn off for a conservative batch that excludes "
+                "otherwise-safe rows whose latest triage was recovered through browser rendering."
+            ),
+        )
         source_manifest = plan_batch(
             db,
             limit=source_batch_limit,
             priority_filter=source_priority_arg,
             priority_mix=source_priority_mix,
             max_per_host=source_host_cap,
+        )
+        source_manifest = _source_manifest_apply_rendered_policy(
+            source_manifest,
+            db,
+            include_rendered=include_rendered_source_batch,
         )
 
         source_mcols = st.columns(4)
@@ -13824,6 +14096,15 @@ def page_source_queue():
             key="sq_batch_workbench_host_cap",
             help="0 disables same-website diversity; 1 allows at most one URL per hostname.",
         ))
+        include_rendered_local_batch = st.checkbox(
+            "Include Crawl4AI/rendered-fallback recovered items",
+            value=True,
+            key="sq_batch_workbench_include_rendered",
+            help=(
+                "Leave on for normal runs. Turn off to keep this MacBook-local batch to "
+                "ordinary Trafilatura/httpx/Wayback triage recoveries only."
+            ),
+        )
         local_priority_mix = None
         if local_batch_mode == "Priority mix":
             mix_cols = st.columns(3)
@@ -13882,6 +14163,11 @@ def page_source_queue():
                 priority_mix=local_priority_mix,
                 max_per_host=local_host_cap,
             )
+            auto_manifest = _source_manifest_apply_rendered_policy(
+                auto_manifest,
+                db,
+                include_rendered=include_rendered_local_batch,
+            )
             changed = 0
             for manifest_item in auto_manifest.included:
                 if update_notes(db, manifest_item.item_id, batch_group=batch_group_name):
@@ -13917,6 +14203,11 @@ def page_source_queue():
                 priority_filter=priority_arg,
                 priority_mix=local_priority_mix,
                 max_per_host=local_host_cap,
+            )
+            manifest = _source_manifest_apply_rendered_policy(
+                manifest,
+                db,
+                include_rendered=include_rendered_local_batch,
             )
             mcols = st.columns(4)
             mcols[0].metric("Candidates", manifest.total_candidates)
@@ -14075,9 +14366,12 @@ def page_source_queue():
                                     "when": row.get("triaged_at", "")[:19],
                                     "model": row.get("model_name", ""),
                                     "result": "parsed" if row.get("triage_succeeded") else "held",
+                                    "held_category": _source_queue_hold_category_from_history(row),
+                                    "rendered": bool(row.get("rendered_fallback")),
                                     "safe": bool(row.get("overnight_batch_safe")),
                                     "priority": row.get("priority", ""),
                                     "llm": row.get("recommended_llm", ""),
+                                    "acquisition": row.get("acquisition_note", ""),
                                     "reason": row.get("routing_reason", ""),
                                 }
                                 for row in triage_history
@@ -14095,6 +14389,27 @@ def page_source_queue():
                         f"**{_source_queue_hold_label(hold_category)}**  \n"
                         f"{_source_queue_hold_next_step(hold_category)}"
                     )
+                    with st.expander("Manual capture / saved snapshot command", expanded=False):
+                        st.caption(
+                            "If the real content is visible in your browser, save it as HTML or PDF, "
+                            "then build a source-offload package that preserves this queue item and "
+                            "uses the saved file as the processable source."
+                        )
+                        snapshot_path = st.text_input(
+                            "Saved HTML/PDF path",
+                            value="",
+                            placeholder="/Users/sergiogalvaoroxo/Downloads/source-page.html",
+                            key=f"sq_snapshot_path_{item.id}",
+                        )
+                        snapshot_package = st.text_input(
+                            "Package ID",
+                            value=f"snapshot-{item.id}",
+                            key=f"sq_snapshot_package_{item.id}",
+                        )
+                        st.code(
+                            _source_queue_snapshot_command(item.id, snapshot_path, snapshot_package),
+                            language="bash",
+                        )
 
                 # Corpus association — prominent warning
                 if item.corpus_doc_id:
@@ -14148,7 +14463,11 @@ def page_source_queue():
                 if item.status in ("new", "triaged"):
                     if st.button("🔁 Retry triage", key=f"sq_retry_{item.id}",
                                   help="Fetch this URL and run triage again. Does not ingest."):
-                        _run_source_queue_triage([item], label="Retrying triage")
+                        _run_source_queue_triage(
+                            [item],
+                            label="Retrying triage",
+                            use_crawl4ai=use_crawl4ai_triage,
+                        )
                         st.rerun()
                     if st.button("✳️ Ready for ingest", key=f"sq_ready_{item.id}",
                                   help="Mark as approved — still requires running runner ingest"):
@@ -14806,6 +15125,25 @@ def _source_specs_from_queue_items(items) -> list:
     return specs
 
 
+def _source_companion_url_spec(url: str, *, title: str = "", notes: str = ""):
+    """Build an ad-hoc URL spec used as the source/landing-page companion.
+
+    It deliberately carries no queue_item_id/url_hash; if a saved PDF/file is
+    attached to a Source Queue row, the queue relink belongs to the file-backed
+    source, while this companion URL is ingested as separate contextual evidence.
+    """
+    from runner.pipeline import intake as intake_mod
+    from runner.pipeline.offload_source import SourceItemSpec
+
+    return SourceItemSpec(
+        source_kind="url",
+        declared_source_type=intake_mod._detect_source_type(url),
+        url=url,
+        title=title,
+        notes=notes,
+    )
+
+
 def _source_snapshot_spec(item, snapshot_path: str):
     """Map a queue item + a browser-saved snapshot path to a file-backed spec.
 
@@ -14832,16 +15170,56 @@ def _source_specs_from_selection(items, snapshot_paths: dict) -> list:
     """Build specs for a queue selection, honoring optional saved snapshots.
 
     ``snapshot_paths`` maps queue_item_id → local snapshot path. Items with a
-    non-empty mapped path become file-backed snapshot specs (worker processes the
-    saved file, not the blocked URL); the rest become ordinary URL specs. Raises
-    ValueError if a provided snapshot path does not exist.
+    non-empty mapped path become file-backed snapshot specs and also get a
+    separate ad-hoc companion URL spec. The queue relink remains attached to the
+    saved file, while the landing/download/source URL is independently ingested
+    as contextual network evidence. Raises ValueError if a provided snapshot path
+    does not exist.
     """
-    url_items = [it for it in items if not (snapshot_paths or {}).get(it.id, "").strip()]
-    specs = _source_specs_from_queue_items(url_items)
+    specs = []
     for it in items:
         path = (snapshot_paths or {}).get(it.id, "").strip()
         if path:
             specs.append(_source_snapshot_spec(it, path))
+            specs.append(_source_companion_url_spec(
+                it.url,
+                title=f"Source page for {getattr(it, 'title', '') or getattr(it, 'id', '')}",
+                notes=(
+                    "Companion URL for a file-backed Source Queue attachment. "
+                    f"Queue relink remains attached to queue item {getattr(it, 'id', '')}."
+                ),
+            ))
+        else:
+            specs.extend(_source_specs_from_queue_items([it]))
+    return specs
+
+
+def _source_specs_from_file_rows(file_rows: list[dict[str, str]], explicit_urls: list[str] | None = None) -> list:
+    """Build file specs and source-url companion specs from bulk file rows."""
+    from runner.pipeline import intake as intake_mod
+    from runner.pipeline.offload_source import SourceItemSpec
+
+    specs = []
+    seen_url_specs = {u.strip() for u in (explicit_urls or []) if u.strip()}
+    for row in file_rows:
+        file_path = row.get("file_path", "").strip()
+        source_url = row.get("source_url", "").strip()
+        title = row.get("title", "").strip()
+        specs.append(SourceItemSpec(
+            source_kind="file",
+            declared_source_type=intake_mod._detect_source_type(file_path),
+            file_path=file_path,
+            url=source_url,
+            title=title,
+            notes="File-backed source; source URL is ingested separately when provided.",
+        ))
+        if source_url and source_url not in seen_url_specs:
+            specs.append(_source_companion_url_spec(
+                source_url,
+                title=f"Source page for {title}" if title else "Source page for local file",
+                notes=f"Companion URL for local file: {Path(file_path).name}",
+            ))
+            seen_url_specs.add(source_url)
     return specs
 
 
@@ -15670,36 +16048,85 @@ def _render_source_export(config, root: Path) -> None:
             if ack:
                 chosen_ids += fsel
 
-    # Optional browser-saved snapshot per selected queue item (for blocked URLs).
+    # Optional saved file per selected queue item (for blocked URLs, PDFs, books).
     snapshot_paths: dict[str, str] = {}
     if chosen_ids:
-        with st.expander("Use browser-saved snapshot for blocked URL (Cloudflare / dynamic page)"):
+        with st.expander("Attach a saved file to selected queue items (PDF / book / browser snapshot)"):
             st.caption(
-                "If a selected URL is Cloudflare-challenged or JavaScript-rendered, save the "
-                "page manually in your browser (Save As → HTML, or Print → PDF) and give the "
-                "local file path here. The Mac Studio will **process that saved file** instead "
-                "of re-fetching the blocked URL, while the **original source URL and queue link "
-                "are preserved**. Leave blank to package the URL normally."
+                "Use this when the queue item points to a landing page, download button, DOI, "
+                "Cloudflare page, or other URL where you already have the real PDF/HTML/MD file. "
+                "The Mac Studio will **process the saved file** with the queue id preserved for "
+                "relinking, and it will also ingest the original URL as a separate companion "
+                "source for context/network evidence. Leave blank to package the URL normally."
             )
             id_to_e = {e["id"]: e for e in eligible}
             for cid in chosen_ids:
                 e = id_to_e.get(cid, {"url": ""})
                 snapshot_paths[cid] = st.text_input(
-                    f"Saved snapshot for {cid} — {e.get('url', '')[:60]}",
+                    f"Saved file for {cid} — {e.get('url', '')[:60]}",
                     key=f"src_export_snap_{cid}",
-                    placeholder="/path/to/saved.html  (optional)",
+                    placeholder="/path/to/source.pdf  (optional)",
                 ).strip()
 
     urls_text = st.text_area("Ad-hoc URLs (one per line, optional)", key="src_export_urls")
-    files_text = st.text_area("Local file paths (one per line, optional)", key="src_export_files")
+    files_text = st.text_area(
+        "Local PDFs / books / source files (one per line, optional)",
+        key="src_export_files",
+        help=(
+            "Use either `/path/to/file.pdf` or "
+            "`/path/to/file.pdf | https://source-or-download-page | Optional title`. "
+            "When a URL is provided, the package includes both the file and a separate "
+            "companion URL item so the landing/download page is not left unchecked."
+        ),
+        placeholder=(
+            "/Users/sergiogalvaoroxo/Downloads/book.pdf | https://example.org/book-page | Book title\n"
+            "/Users/sergiogalvaoroxo/Downloads/article.md"
+        ),
+    )
+    file_rows = _source_parse_file_rows(files_text)
+    if file_rows:
+        with st.expander("Book/report splitting preview commands"):
+            st.caption(
+                "`split-book` is a preview-only helper for long PDFs/EPUB/DOCX/MD files. "
+                "It extracts text using the same local preprocessing stack and proposes "
+                "sections; it does not ingest, analyze, enrich, or upload anything."
+            )
+            min_chars = st.number_input(
+                "Minimum characters per section",
+                min_value=500,
+                max_value=50000,
+                value=3000,
+                step=500,
+                key="src_export_split_min_chars",
+            )
+            max_level = st.selectbox(
+                "Heading depth",
+                options=[1, 2, 3],
+                index=1,
+                format_func=lambda v: f"H1-H{v}",
+                key="src_export_split_max_level",
+            )
+            for row in file_rows[:10]:
+                src = row["file_path"]
+                default_out = str(Path(src).with_suffix(".split-preview.json"))
+                st.code(
+                    _source_split_book_command(
+                        src,
+                        out_path=default_out,
+                        min_chars=int(min_chars),
+                        max_level=int(max_level),
+                    ),
+                    language="bash",
+                )
+            if len(file_rows) > 10:
+                st.caption(f"Showing split commands for first 10 of {len(file_rows)} files.")
     package_id = st.text_input(
         "Package ID (optional)", key="src_export_pkgid",
         placeholder="auto-generated if blank",
     ).strip()
 
     url_list = [x.strip() for x in urls_text.splitlines() if x.strip()]
-    file_list = [x.strip() for x in files_text.splitlines() if x.strip()]
-    has_input = bool(chosen_ids or url_list or file_list)
+    has_input = bool(chosen_ids or url_list or file_rows)
 
     if st.button("Build source package", disabled=not has_input, key="src_export_build"):
         from runner.pipeline import intake as intake_mod
@@ -15722,10 +16149,7 @@ def _render_source_export(config, root: Path) -> None:
             specs.append(SourceItemSpec(
                 source_kind="url", declared_source_type=intake_mod._detect_source_type(u), url=u,
             ))
-        for f in file_list:
-            specs.append(SourceItemSpec(
-                source_kind="file", declared_source_type=intake_mod._detect_source_type(f), file_path=f,
-            ))
+        specs.extend(_source_specs_from_file_rows(file_rows, explicit_urls=url_list))
 
         try:
             manifest = build_source_package(

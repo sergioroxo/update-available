@@ -278,6 +278,9 @@ def test_selection_specs_mix_url_and_snapshot(tmp_path):
     assert by_qid["b"].source_kind == "file"
     assert by_qid["b"].url == "https://blocked.example/b"   # original preserved
     assert by_qid["b"].file_path == str(snap)
+    companion = [s for s in specs if s.queue_item_id == "" and s.url == "https://blocked.example/b"]
+    assert len(companion) == 1
+    assert companion[0].source_kind == "url"
 
 
 def test_selection_specs_blank_snapshot_is_url(tmp_path):

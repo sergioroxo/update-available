@@ -509,15 +509,30 @@ class TestApplyTriageResult:
             suggested_process_route="source-offload",
         )
 
-        apply_triage_result(db, item.id, held, model_name="litelm/triage")
-        apply_triage_result(db, item.id, parsed, model_name="litelm/triage")
+        apply_triage_result(
+            db,
+            item.id,
+            held,
+            model_name="litelm/triage",
+            acquisition_note="trafilatura.fetch_url returned None; cloudflare_http:403",
+        )
+        apply_triage_result(
+            db,
+            item.id,
+            parsed,
+            model_name="litelm/triage",
+            acquisition_note="Extracted 3000 chars with crawl4ai (quality: high)",
+        )
 
         history = list_triage_history(db, item.id)
         assert len(history) == 2
         assert history[0]["routing_reason"] == "Recovered by snapshot."
         assert history[0]["triage_succeeded"] == 1
+        assert history[0]["rendered_fallback"] == 1
+        assert "crawl4ai" in history[0]["acquisition_note"]
         assert history[1]["routing_reason"].endswith("cloudflare_http:403")
         assert history[1]["overnight_batch_safe"] == 0
+        assert history[1]["rendered_fallback"] == 0
 
     def test_triage_history_limit_and_global_list(self, db):
         from types import SimpleNamespace

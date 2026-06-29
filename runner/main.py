@@ -1485,7 +1485,7 @@ def queue_triage(
                 ),
                 _audit=triage_audit,
             )
-            apply_triage_result(db, item.id, result, model_name=model_name)
+            apply_triage_result(db, item.id, result, model_name=model_name, acquisition_note=note)
             if not result.triage_succeeded:
                 # run() returned a fail-closed result (model/network/parse failure).
                 console.print(
@@ -1503,7 +1503,7 @@ def queue_triage(
             # triage result so the row is never left at the default-safe state.
             console.print(f"  [yellow]Triage held: {exc}[/yellow]")
             failed = triage_mod.TriageResult.failed(f"snippet/extraction error: {exc}")
-            apply_triage_result(db, item.id, failed, model_name=model_name)
+            apply_triage_result(db, item.id, failed, model_name=model_name, acquisition_note=str(exc))
             console.print("  [yellow]→ triage held — not batch-safe[/yellow]")
 
     console.print(
