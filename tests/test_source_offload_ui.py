@@ -461,6 +461,28 @@ def test_source_parse_file_rows_supports_optional_source_url_and_title():
     ]
 
 
+def test_source_parse_file_rows_strips_wrapping_quotes_and_file_scheme():
+    rows = app_mod._source_parse_file_rows(
+        """
+        '/Users/me/Downloads/Book With Spaces.pdf' | https://example.org/book
+        "file:///Users/me/Downloads/Article With Spaces.md"
+        """
+    )
+
+    assert rows == [
+        {
+            "file_path": "/Users/me/Downloads/Book With Spaces.pdf",
+            "source_url": "https://example.org/book",
+            "title": "",
+        },
+        {
+            "file_path": "/Users/me/Downloads/Article With Spaces.md",
+            "source_url": "",
+            "title": "",
+        },
+    ]
+
+
 def test_source_specs_from_file_rows_adds_companion_source_url():
     rows = [{
         "file_path": "/Users/me/Downloads/book.pdf",

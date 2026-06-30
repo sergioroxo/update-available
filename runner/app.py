@@ -13480,6 +13480,21 @@ def _source_split_book_command(
     return shlex.join(command)
 
 
+def _normalise_local_source_path(value: str) -> str:
+    """Normalise a researcher-pasted local file path without touching meaning.
+
+    Finder/Terminal copy-paste often leaves wrapping quotes around paths with
+    spaces. Those quotes are command syntax, not part of the filename; strip one
+    matching pair so Source Offload can find the actual file.
+    """
+    text = (value or "").strip()
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in {"'", '"'}:
+        text = text[1:-1].strip()
+    if text.startswith("file://"):
+        text = text[7:]
+    return text
+
+
 def _source_parse_file_rows(text: str) -> list[dict[str, str]]:
     """Parse bulk local-file rows for Source Offload.
 
@@ -13498,7 +13513,7 @@ def _source_parse_file_rows(text: str) -> list[dict[str, str]]:
             continue
         parts = [part.strip() for part in line.split("|")]
         rows.append({
-            "file_path": parts[0],
+            "file_path": _normalise_local_source_path(parts[0]),
             "source_url": parts[1] if len(parts) > 1 else "",
             "title": parts[2] if len(parts) > 2 else "",
         })
@@ -15359,7 +15374,7 @@ def _source_snapshot_spec(item, snapshot_path: str):
     from runner.pipeline import intake as intake_mod
     from runner.pipeline.offload_source import build_snapshot_spec
 
-    snap = _Path(snapshot_path).expanduser()
+    snap = _Path(_normalise_local_source_path(snapshot_path)).expanduser()
     if not snap.is_file():
         raise ValueError(f"Snapshot file not found: {snap}")
     return build_snapshot_spec(
