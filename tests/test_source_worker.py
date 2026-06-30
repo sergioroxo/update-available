@@ -266,7 +266,7 @@ def test_unload_order(tmp_path):
 # Failures
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("stage", ["preprocess", "analysis", "enrichment", "embedding"])
+@pytest.mark.parametrize("stage", ["preprocess", "analysis", "enrichment"])
 def test_failure_moves_to_failed_without_result_manifest(tmp_path, stage):
     summary, root, events, live = _run(tmp_path, fail_stage=stage)
     assert summary["ok"] is False
@@ -277,7 +277,7 @@ def test_failure_moves_to_failed_without_result_manifest(tmp_path, stage):
     assert not (failed / "result_manifest.json").exists()
 
 
-def test_partial_embedding_failure_moves_to_outbox_with_only_successful_docs(tmp_path):
+def test_embedding_failure_importable_with_pending_marker(tmp_path):
     root, inbox = _build_source_inbox(tmp_path, with_file=True)
     live = tmp_path / "live_corpus"; live.mkdir()
     cfg = _worker_config(live)
@@ -287,21 +287,58 @@ def test_partial_embedding_failure_moves_to_outbox_with_only_successful_docs(tmp
     )
 
     assert summary["ok"] is True
-    assert summary["partial"] is True
+    assert summary.get("partial") is False
     assert summary["final_state"] == "outbox"
-    assert summary["succeeded_count"] == 1
-    assert summary["failed_count"] == 1
+    assert summary["succeeded_count"] == 2
+    assert summary["failed_count"] == 0
     outbox = root / "outbox" / "src-w"
     assert (outbox / "result_manifest.json").is_file()
     manifest = json.loads((outbox / "result_manifest.json").read_text(encoding="utf-8"))
-    assert manifest["partial"] is True
-    assert {d["doc_id"] for d in manifest["documents"]} == {"urldoc"}
-    assert manifest["omitted_documents"][0]["doc_id"] == "filedoc"
-    assert "embedding_failed" in manifest["omitted_documents"][0]["error"]
+    assert manifest["partial"] is False
+    assert {d["doc_id"] for d in manifest["documents"]} == {"urldoc", "filedoc"}
+    assert manifest["omitted_documents"] == []
+    file_doc = next(d for d in manifest["documents"] if d["doc_id"] == "filedoc")
+    labels = {a["label"] for a in file_doc["artifacts"]}
+    assert "embedding_pending.json" in labels
+    assert "embedding.json" not in labels
+    pending = json.loads((outbox / "docs" / "filedoc" / "embedding_pending.json").read_text(encoding="utf-8"))
+    assert pending["status"] == "pending_retry"
+    assert "embedding_failed" in pending["error"]
     report = json.loads((outbox / "worker_report.json").read_text(encoding="utf-8"))
-    assert report["worker_status"] == "partial"
+    assert report["worker_status"] == "succeeded"
     statuses = {d["doc_id"]: d["status"] for d in report["documents"]}
-    assert statuses == {"urldoc": "succeeded", "filedoc": "failed"}
+    assert statuses == {"urldoc": "succeeded", "filedoc": "succeeded"}
+    file_report = next(d for d in report["documents"] if d["doc_id"] == "filedoc")
+    assert file_report["stages"]["embedding"]["status"] == "pending_retry"
+    verify = offload_source.verify_ingest_result(
+        outbox,
+        corpus_dir=tmp_path / "live_import_corpus",
+        allow_partial=True,
+    )
+    assert verify["ok"], verify["errors"]
+
+
+def test_verify_rejects_doc_missing_embedding_and_pending_marker(tmp_path):
+    summary, root, events, live = _run(tmp_path)
+    outbox = root / "outbox" / "src-w"
+    doc_dir = outbox / "docs" / "urldoc"
+    (doc_dir / "embedding.json").unlink()
+    manifest_path = outbox / "result_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["documents"][0]["artifacts"] = [
+        artifact for artifact in manifest["documents"][0]["artifacts"]
+        if artifact["label"] != "embedding.json"
+    ]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    verify = offload_source.verify_ingest_result(
+        outbox,
+        corpus_dir=tmp_path / "live_import_corpus",
+        allow_partial=True,
+    )
+
+    assert verify["ok"] is False
+    assert any("missing_required:embedding_or_pending" in err for err in verify["errors"])
 
 
 def test_blocked_preprocess_doc_is_omitted_from_partial_outbox(tmp_path):
@@ -357,11 +394,11 @@ def test_unexpected_pipeline_artifact_fails_package(tmp_path):
 
 
 def test_retry_after_failure_leaves_no_stale_audit_backups(tmp_path):
-    # Run 1: fail at embedding (analysis/enrichment audits get written).
+    # Run 1: fail after analysis so an analysis audit gets written.
     root, inbox = _build_source_inbox(tmp_path)
     live = tmp_path / "live_corpus"; live.mkdir()
     cfg = _worker_config(live)
-    s1 = sw.run_source_worker(inbox, cfg, **_stubs([], fail_stage="embedding"))
+    s1 = sw.run_source_worker(inbox, cfg, **_stubs([], fail_stage="enrichment"))
     assert s1["final_state"] == "failed"
     failed = root / "failed" / "src-w"
     assert (failed / "docs" / "urldoc" / "analysis_audit.json").is_file()

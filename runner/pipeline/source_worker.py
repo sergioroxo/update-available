@@ -365,9 +365,24 @@ def run_source_worker(
                     "duration_ms": int((time.perf_counter() - started) * 1000),
                 }
             except Exception as exc:  # noqa: BLE001
-                doc["status"] = "failed"
-                doc["error"] = f"embedding_failed:{exc}"
-                doc["stages"]["embedding"] = {"status": "failed", "model": embed_alias}
+                err = f"embedding_failed:{exc}"
+                atomic_write_json(doc["doc_dir"] / "embedding_pending.json", {
+                    "doc_id": doc["doc_id"],
+                    "model": embed_alias,
+                    "status": "pending_retry",
+                    "stage": "embedding",
+                    "error": err,
+                    "produced_at": _now_iso(),
+                    "note": (
+                        "Analysis and enrichment succeeded, but embedding generation failed. "
+                        "Import is allowed; regenerate/push the embedding from the MacBook "
+                        "before relying on Supabase semantic search for this document."
+                    ),
+                })
+                doc["stages"]["embedding"] = {
+                    "status": "pending_retry", "model": embed_alias,
+                    "error": err,
+                }
         _record_unload(summary, "embedding", lambda: unload_embedding_fn(worker_config))
         if not _any_success(docs):
             return _finalize_failed(processing_dir, offload_root, package_id, summary, docs)

@@ -99,6 +99,7 @@ ALLOWED_INGEST_ARTIFACTS: frozenset[str] = frozenset({
     "enrichment.json",
     "enrichment_audit.json",
     "embedding.json",
+    "embedding_pending.json",
     # Queue linkage passthrough + worker provenance.
     "source_item.json",
     "worker_report.json",
@@ -127,7 +128,6 @@ REQUIRED_INGEST_CORE: tuple[str, ...] = (
     "analysis_audit.json",
     "enrichment.json",
     "enrichment_audit.json",
-    "embedding.json",
     "source_item.json",
     "worker_report.json",
 )
@@ -1273,6 +1273,8 @@ def verify_ingest_result(
         for core in REQUIRED_INGEST_CORE:
             if core not in claimed_names:
                 doc_errors.append(f"missing_required:{core}")
+        if not ({"embedding.json", "embedding_pending.json"} & claimed_names):
+            doc_errors.append("missing_required:embedding_or_pending")
         if not ({"extracted.txt", "extracted.md"} & claimed_names):
             doc_errors.append("missing_required:extracted_text")
 

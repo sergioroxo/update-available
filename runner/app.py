@@ -6350,6 +6350,7 @@ def _local_embedding_status(doc_dir: Path, config) -> dict:
         "supabase_detail": "not checked",
     }
     emb_path = doc_dir / "embedding.json"
+    pending_path = doc_dir / "embedding_pending.json"
     if emb_path.exists():
         try:
             emb = json.loads(emb_path.read_text())
@@ -6361,6 +6362,14 @@ def _local_embedding_status(doc_dir: Path, config) -> dict:
                 status["detail"] += " | empty vector"
         except Exception as exc:
             status["detail"] = f"invalid embedding.json: {exc}"
+    elif pending_path.exists():
+        try:
+            pending = json.loads(pending_path.read_text(encoding="utf-8"))
+            model = pending.get("model") or "embedding"
+            error = str(pending.get("error") or "pending retry")
+            status["detail"] = f"pending retry: {model} | {error}"
+        except Exception as exc:
+            status["detail"] = f"pending retry marker unreadable: {exc}"
     if config:
         try:
             from runner.clients.supabase import _client as _sb_client
@@ -12264,7 +12273,7 @@ def _mr_artifact_completeness_panel(doc_id: str, doc_dir: Path):
         ("Extracted canonical text", "extracted.txt", "Required for analysis, enrichment, and research annotations."),
         ("Preprocess metadata", "preprocess.json", "Required for extraction provenance."),
         ("Main analysis", "analysis.json", "Required before upload/enrichment/research profiles."),
-        ("Embedding", "embedding.json", "Required for Supabase semantic search."),
+        ("Embedding", "embedding.json", "Required for Supabase semantic search. `embedding_pending.json` means analysis/enrichment succeeded and the embedding can be regenerated."),
         ("Media metadata", "media_metadata.json", "Required for media review and future public table fields."),
         ("Primary transcript chunks", "transcript_chunks.json", "Required for non-truncated timestamped annotation."),
         ("Transcript versions", "transcript_versions.json", "Needed for SRT/platform transcript comparison."),
@@ -12288,6 +12297,11 @@ def _mr_artifact_completeness_panel(doc_id: str, doc_dir: Path):
                 status = _embedding_payload_status(_mr_read_json(path, {}))
                 exists = status["ok"]
                 detail = status["detail"]
+            elif (doc_dir / "embedding_pending.json").exists():
+                pending = _mr_read_json(doc_dir / "embedding_pending.json", {})
+                model = pending.get("model") or "embedding"
+                error = str(pending.get("error") or "pending retry")
+                detail = f"pending retry: {model} | {error}"
             else:
                 detail = "missing"
         else:
