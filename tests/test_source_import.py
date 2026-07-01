@@ -280,6 +280,22 @@ def test_import_happy_path_writes_corpus_and_provenance(tmp_path):
     assert (corpus / "filedoc" / "source.pdf").is_file()
 
 
+def test_import_rewrites_file_intake_source_to_corpus_copy(tmp_path):
+    root, outbox = _make_outbox(tmp_path, with_file=True)
+    corpus = tmp_path / "corpus"
+    summary = import_ingest_result(outbox, corpus_dir=corpus)
+    assert summary["imported"] is True
+
+    doc = corpus / "filedoc"
+    intake = json.loads((doc / "intake.json").read_text(encoding="utf-8"))
+    expected = str(doc / "source.pdf")
+    assert intake["source"] == expected
+    assert "sogice-offload" not in intake["source"]
+    prov = json.loads((doc / "offload_import.json").read_text(encoding="utf-8"))
+    fields = {(r["file"], r["field"]) for r in prov["path_rewrites"]}
+    assert ("intake.json", "source") in fields
+
+
 def test_import_dry_run_writes_nothing(tmp_path):
     root, outbox = _make_outbox(tmp_path)
     corpus = tmp_path / "corpus"

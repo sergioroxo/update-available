@@ -1362,7 +1362,7 @@ def ingest_result_linkages(package_dir: Path) -> list[dict]:
 # Keys are imported artifact filenames; values are dotted field paths within the
 # JSON that hold a local filesystem path.
 _IMPORT_LOCAL_PATH_FIELDS: dict[str, tuple[str, ...]] = {
-    "intake.json": ("local_copy_path",),
+    "intake.json": ("source", "local_copy_path"),
     "preprocess.json": ("source_html_path",),
     "html_snapshot.json": ("path",),
     "preservation_status.json": ("local_html_path",),
