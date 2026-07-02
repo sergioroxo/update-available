@@ -29,6 +29,10 @@ const POWER_BTN = { x: 0.19, y: 0.895, z: 0.03 };
 const KIT_FLOPPY = { x: -0.34, y: 0.762, z: 0.12 };
 const DRAG_PITCH_MAX = 55;
 
+interface AppOptions {
+  reinterp?: boolean;
+}
+
 function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.Texture {
   const tex = new pc.Texture(app.graphicsDevice, {
     width: source.width,
@@ -58,7 +62,7 @@ function makeScreenEntity(name: string, tex: pc.Texture, w: number, h: number): 
   return e;
 }
 
-export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
+export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}): pc.Application {
   const app = new pc.Application(canvasEl, {
     graphicsDeviceOptions: { antialias: false, alpha: false }
   });
@@ -70,7 +74,7 @@ export function startApp(canvasEl: HTMLCanvasElement): pc.Application {
   buildEra1Room(app);
 
   // ── the two surfaces ──
-  const os = new DesktopOS();
+  const os = new DesktopOS({ reinterp: options.reinterp === true });
   const witness = new WitnessCanvas();
 
   const frontTex = makeScreenTexture(app, os.canvas);

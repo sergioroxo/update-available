@@ -25,9 +25,14 @@ const BOOT_LINES: ReadonlyArray<string> = strings.boot.lines;
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
+interface DesktopOSOptions {
+  reinterp?: boolean;
+}
+
 export class DesktopOS {
   readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
+  private readonly reinterp: boolean;
   dirty = true;
 
   private phase: Phase = 'warning';
@@ -63,7 +68,8 @@ export class DesktopOS {
   /** engine listens: hide the physical floppy once it is in the drive */
   onKitInserted?: () => void;
 
-  constructor() {
+  constructor(options: DesktopOSOptions = {}) {
+    this.reinterp = options.reinterp === true;
     this.canvas = document.createElement('canvas');
     this.canvas.width = ERA1_CANVAS.width * RENDER_SCALE;
     this.canvas.height = ERA1_CANVAS.height * RENDER_SCALE;
@@ -181,7 +187,19 @@ export class DesktopOS {
       case 'desktop': this.drawDesktop(W, H); break;
       case 'left': this.drawLeft(W, H); break;
     }
+    if (this.reinterp) this.drawReinterpMarker(W);
     if (this.paused) this.drawPause(W, H);
+  }
+
+  private drawReinterpMarker(W: number): void {
+    const { ctx } = this;
+    const x = W - 20;
+    const y = 6;
+    ui.px(ctx, x, y, 14, 10, ERA1.greyDark);
+    ui.px(ctx, x + 1, y + 1, 12, 8, ERA1.black);
+    ui.px(ctx, x + 2, y + 2, 3, 6, ERA1.warn);
+    ui.px(ctx, x + 6, y + 2, 3, 6, ERA1.ok);
+    ui.px(ctx, x + 10, y + 2, 2, 6, ERA1.titleBlue);
   }
 
   private drawSplash(W: number, H: number): void {

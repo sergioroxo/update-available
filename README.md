@@ -27,8 +27,13 @@ tailscale serve --https=443 localhost:5173   # gives an HTTPS URL
 ```
 
 ### Flat fallback
-`?flat=1` (planned) renders the desktop canvas alone — for classrooms,
-low-end machines, and archival.
+`?flat=1` renders the desktop canvas alone — for classrooms, low-end
+machines, and archival.
+
+### Reinterpretation worktree
+This branch carries the isolated reinterpretation build. `?reinterp=1`
+enables reinterpretation-only hooks; without that flag the shipped path is
+the regression baseline. For flat preview, use `?flat=1&reinterp=1`.
 
 ## Structure
 

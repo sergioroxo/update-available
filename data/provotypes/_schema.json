@@ -1,0 +1,33 @@
+{
+  "title": "Reinterpretation Provotype",
+  "type": "object",
+  "required": [
+    "id",
+    "era",
+    "register",
+    "failure",
+    "cuts"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "era": { "type": "string" },
+    "register": {
+      "type": "string",
+      "enum": ["operable", "felt", "respite"]
+    },
+    "failure": {
+      "type": "string",
+      "enum": ["silence", "glitch"]
+    },
+    "cuts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["festival", "full", "side-quest"]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": true
+}

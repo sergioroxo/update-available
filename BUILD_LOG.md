@@ -109,3 +109,4 @@
   Era 3; Era 2 assistant = desktop accountability sw; finale = EU 2027
   Recommendation non-binding, confirmed).
 - 2026-07-02 — Reinterp Session 0: created isolated `reinterp` worktree, synced reinterp docs, installed dependencies there, verified `npm test`, `npm run build`, and HTTP 200 for `/` plus `/?flat=1&reinterp=1`.
+- 2026-07-02 — Reinterp Session 1/R0: added `?reinterp=1` mount flag, flag-only debug marker/data hook, `data/provotypes/_schema.json`, and `data/panels/`; verified tests, build, flagged flat preview, and no-flag baselines.

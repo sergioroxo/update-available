@@ -9,11 +9,15 @@ import { WitnessCanvas } from '../witness/intake';
 import { ledger } from '../state/ledger';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 
-export function startFlat(canvasEl: HTMLCanvasElement): void {
+interface FlatOptions {
+  reinterp?: boolean;
+}
+
+export function startFlat(canvasEl: HTMLCanvasElement, options: FlatOptions = {}): void {
   const ctx = canvasEl.getContext('2d');
   if (!ctx) throw new Error('2D context unavailable');
 
-  const os = new DesktopOS();
+  const os = new DesktopOS({ reinterp: options.reinterp === true });
   const witness = new WitnessCanvas();
   let facingBack = false;
   let flipCount = 0;
