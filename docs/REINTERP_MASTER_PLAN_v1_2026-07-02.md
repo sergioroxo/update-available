@@ -807,6 +807,109 @@ session starts by syncing any newer `REINTERP_*/CHATGPT_*/CODEX_PROMPT_REINTERP_
 from the original folder into the worktree** — Fable maintains plans in the original folder (its domain);
 builds happen in the worktree; the sync step keeps one direction of truth.
 
+# FEEDBACK ROUND 6 — the Nine Rooms research landed: the alcove grid is complete (2026-07-02)
+
+*Reply: `Pc_Simulation/Sources/Deep Research/Documentary Research Notes for the Alcove Apparatus.md`.
+With this, every cell of the 4-era × 4-identity grid has a documented anchor or an honest absence — the
+◆7 alcove rule now has its data. C7 (the "eight undesigned alcoves" gap) is closed at research level.*
+
+## R6-1 · The alcove anchors (candidate objects per cell — briefs to be written in Stage B)
+- **Lesbian '97 (high-med conf):** a marked-up page of *Understanding the Roots of Lesbianism* with
+  "emotional dependency" underlined. Pattern: *relentless reinterpretation* — every bond, haircut, habit
+  becomes etiological evidence. (Direct lineage into Vera's own 2016 mechanics — the polish bench is this
+  pattern, platformized.)
+- **Lesbian '03 (high conf):** a Love Won Out tape/CD "The Condition of Female Homosexuality," or a used
+  *Restoring Sexual Identity* with a Portland Fellowship insert. Pattern: a *programme*, friendlier
+  packaging, "safe as a woman."
+- **Gay man '16 (high conf):** a HOPE 2016 badge / printed session sheet ("How Transformation Happens"
+  beside "The Father Heart of God"). Pattern: no more cure-promise — "sexual wholeness," manage, testify,
+  stay accountable.
+- **Gay man present (high conf):** a smartphone showing a private-group join page (Brothers-Road-like
+  community / coaching brand). Pattern: **"algorithm first, coach second, private group third"** — which
+  rhymes exactly with Maya's E4 funnel: a free cross-cluster echo. **Creative call candidate:** the
+  purity-tech side-channel (Covenant Eyes' current SSA content) means the present gay-man alcove could
+  show **Restorify's own descendant** — the piece's invented Era-2 brand resurfacing as a present-day
+  purity app. Rebrand-not-death told through our own fiction; flag for Sérgio.
+- **Trans woman '97 (medium conf):** a photocopied Exodus referral list with "transsexuals/transvestites"
+  highlighted. **Sparse by design** — routed into male mentoring as "severe male deviance," never met as
+  a woman.
+- **Trans woman '03 (medium conf):** a "homosexual continuum" counselling diagram. Folding + moral drama
+  (the era's rhetoric casts transfemininity as spiritual warning-figure — Leach's Lucifer imagery,
+  dossier-only).
+- **Trans woman '16 (medium conf):** a screen on the HOPE 2016 audio page ("What is Gender & How Can One
+  be Gender Secure?" beside Denise Shick family-testimony tracks; Heyer-era regret content circulating).
+  **Staging instruction from the research:** the apparatus addresses parents/pastors/audiences *around*
+  trans women, not trans women as subjects — so her alcove can stage material *about* her circulating
+  while she is absent from its address. Devastating and honest.
+- **Trans man '97/'03:** *erasure — stage as absence* (re-confirmed); '16: the parent/family resource
+  stack "starts naming him, but still wrongly"; present: the recovery/detrans/parent-support ecosystem.
+  (Content still BLOCKED per R10; the grid cell is filled, the copy is not unlocked.)
+
+## R6-2 · Trans-man device: Sérgio now has FOUR researched options (unblocks his deferral #1)
+The original **folder/case-file** plus three researched alternatives, each with its reader-check risk:
+1. **The routing form** (best-supported): he is repeatedly misrouted through others' tracks ('96 referral
+   categories → LWO male/female etiology tracks → RHN ministry buckets → present "males"/"women" course
+   lanes). Risk: too bureaucratic — must show *repeated* re-routing, not one clerical error.
+2. **The clothing checkpoint** (strongest embodied): a recurring packing list / dress note / garment used
+   to force re-feminisation across eras. Risk: collapsing trans-masc experience into butch-lesbian
+   stereotype — the staging must indict the institutional MISREADING, not equate the identities.
+3. **The etiological worksheet**: one recurring worksheet whose title mutates ("female masculinity" →
+   "roots" → "gender confusion" → "differential diagnosis"). Risk: over-clinical — works only if family/
+   church/counsellor/school all visibly write on the same body.
+**Fable recommendation (his call, trans-masc reader gate unchanged):** the **routing-form/folder family
+as the spine** (it and the original folder are near-kin — pick whichever texture he prefers), with **one
+clothing-checkpoint beat in a single era** for embodiment — so neither device carries everything and both
+risks stay managed. The DEVICE decision is now makeable; the COPY stays gated (G1).
+
+## R6-3 · The forced-binarisation motif — one instance per era, verified (feeds F4 / the tinted room)
+'90s: the ministry pathway itself (a mentor of the same "anatomic sex" required before anything else).
+'00s: paired male/female conference tracks — you enter only by translation into one side. '10s: ministry
+buckets (male / female / transgender / parents). Present: separate on-demand courses for "males" and
+"women." **The motif is buildable as one recurring one-beat interface per era** — and if the tinted room
+wins, its white-center zone now has four documented instantiations to draw from.
+
+## R6-4 · Guards (could-not-verify, carried)
+No preserved '97 women's mailing-list artifact (the book page is the artifact); no bespoke '03
+trans-woman-only curriculum (folding IS the finding); no trans-woman-branded Setting Captives Free track
+(don't invent one); no single present-day cross-network form that visibly binarises a trans-masc person
+(stage the *ecosystem*, not a fabricated form).
+
+## R6-5 · What this unblocks, in order
+1. **Sérgio picks the trans-man device** (R6-2) and reacts to the Restorify-descendant idea (R6-1).
+2. **Fable round: the assistant-as-guide spec** (next per R5-2 — it shapes how alcoves are *reached*, so
+   it precedes the briefs).
+3. **Fable round: the twelve alcove briefs** (the trans-man sketch's format, one page per identity-line)
+   — needs 1 + 2 and the 3-vs-4 lean.
+Research queue after this: only the gated global-transphobia pass + Sonnet chores remain (§R5-2).
+
+# FEEDBACK ROUND 7 — device lean · Lamby's real-world descendant · Session 1 shipped (2026-07-02)
+
+## R7-1 · Trans-man device: Sérgio LEANS CLOTHING CHECKPOINT
+Recorded as a lean, not a lock. The alcove-briefs round designs the clothing checkpoint as the spine
+(recurring packing list / dress note / garment forcing re-feminisation across eras), possibly with the
+routing form as ONE supporting beat (inverting the earlier Fable hybrid). Consequence: the device's known
+risk — collapsing trans-masc experience into butch-lesbian stereotype — is now the PRIMARY item for the
+trans-masculine reader (G1): the staging must indict the institutional misreading, never equate the
+identities. Copy remains fully gated.
+
+## R7-2 · The Restorify descendant: CONFIRMED — and reality validated it
+Sérgio's yes, with a research gift: a real Christian AI app exists — **"Creed: Your Bible Chat Buddy"**
+with **"Lenny — your tiny sheep companion and virtual best friend"** `[VERIFY SOURCE — Sonnet chore:
+confirm app + exact marketing wording]`. Reality has independently produced Lamby. Decisions:
+- The present-day gay-man alcove shows **Restorify's descendant as an AI purity app with a
+  Lamby-descendant companion** — the assistant lineage (Lamby → Lambient → Echo) gains a present-day
+  cousin, reconnecting the thread through the experience as Sérgio asked.
+- **Rails:** Creed/Lenny is a real product → **dossier/provenance-panel only**; the in-piece app is an
+  invented composite inside our own brand lineage (never a Creed likeness or name-alike).
+- **This is documentary validation of F1's assistant-as-guide thesis** — the friendly-companion-as-
+  apparatus is not our metaphor, it's the live market. Feed it into the assistant-as-guide spec round.
+
+## R7-3 · Session 1 (R0) shipped
+Codex: sync commit `61f61d0`, then `90947c9` — `?reinterp=1` plumbing through main/flat/3D/DesktopOS,
+flag-only marker + `data-reinterp` test hook, `data/provotypes/_schema.json` + `data/panels/` created,
+tests/build green, flagged vs no-flag baselines verified, Leave verified, worktree clean. Next: Session
+2 (R1, provotype framework). The doc-sync convention worked as designed.
+
 # TOP RECOMMENDATION
 
 **Greenlight R0 → R1 → R2: the fork, the provotype framework, and the pillow provotype inside the shipped
