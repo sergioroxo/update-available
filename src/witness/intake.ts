@@ -38,8 +38,9 @@ export class WitnessCanvas {
     this.t += dt;
     this.dirty = true;
     // the wall is dormant until the system has a record on you —
-    // it wakes the moment the disk goes in (S1.2)
-    if (ledger.records.includes('kit-inserted')) {
+    // it wakes the moment the disk goes in (S1.2), or a provotype is filed
+    // (reinterp build: both are a first record on the subject)
+    if (ledger.records.includes('kit-inserted') || ledger.provotypes.length > 0) {
       this.draw();
     } else {
       this.drawDormant();
@@ -134,6 +135,21 @@ export class WitnessCanvas {
     setFont(ctx, 9);
     ctx.fillStyle = '#333344';
     ctx.fillText(s.file, bx + 22, by + 6);
+
+    // reinterpretation session log — one cold line per provotype filed.
+    // Both outcomes appear (abandonment is not invisible). Copy comes from the
+    // provotype's own data (resolved at file time), never composed here.
+    // Baseline never populates ledger.provotypes, so this block is inert there.
+    if (ledger.provotypes.length > 0) {
+      setFont(ctx, 8);
+      ctx.fillStyle = DIM;
+      ctx.fillText(s.sessionLog, 28, 262);
+      setFont(ctx, 9);
+      ledger.provotypes.forEach((p, i) => {
+        ctx.fillStyle = p.outcome === 'abandoned' ? '#cc8855' : INK;
+        ctx.fillText(p.witness || `${p.id}: ${p.outcome}`, 28, 276 + i * 12);
+      });
+    }
 
     // footer
     px(ctx, 0, H - 22, W, 22, PANEL);

@@ -1,23 +1,31 @@
 {
   "title": "Reinterpretation Provotype",
+  "_doc": "R1 framework schema. A provotype is one reusable grammar: diegetic invitation -> short frame -> interactive vignette (states) -> dossier-grade debrief. Leave/Pause always live. No score/streak/timer/win-lose. See docs/CODEX_PROMPT_REINTERP_R0_R2_2026-07-02.md Session R1 + master plan R1/§R3-4.",
   "type": "object",
   "required": [
     "id",
     "era",
     "register",
     "failure",
-    "cuts"
+    "cuts",
+    "invitation",
+    "frame",
+    "states",
+    "debrief",
+    "ledgerTags"
   ],
   "properties": {
-    "id": { "type": "string" },
-    "era": { "type": "string" },
+    "id": { "type": "string", "description": "beat id — addressable so data/paths.json can sequence cuts (master plan §R3-4)" },
+    "era": { "type": "string", "description": "theme namespace, e.g. era1 — selects the palette/chrome tokens the runtime renders with" },
     "register": {
       "type": "string",
-      "enum": ["operable", "felt", "respite"]
+      "enum": ["operable", "felt", "respite"],
+      "description": "scene register law (CLAUDE.md). R1 slice uses operable | felt only"
     },
     "failure": {
       "type": "string",
-      "enum": ["silence", "glitch"]
+      "enum": ["silence", "glitch"],
+      "description": "the two failure shapes (diamond-5) — schema-level; per-provotype behavior built later"
     },
     "cuts": {
       "type": "array",
@@ -26,7 +34,83 @@
         "enum": ["festival", "full", "side-quest"]
       },
       "minItems": 1,
-      "uniqueItems": true
+      "uniqueItems": true,
+      "description": "which composed sequences this beat belongs to; data/paths.json orders them"
+    },
+    "invitation": {
+      "type": "object",
+      "description": "the diegetic assistant lines that offer the provotype — provotypes are NEVER queued by the frame",
+      "required": ["lines", "accept"],
+      "properties": {
+        "from": { "type": "string", "description": "assistant persona offering it (Helpy -> Aski -> Sol -> Ami)" },
+        "lines": { "type": "array", "items": { "type": "string" } },
+        "accept": { "type": "string", "description": "the button that begins the exercise" }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "description": "at most 2 sentences framing the vignette",
+      "required": ["text", "continue"],
+      "properties": {
+        "text": { "type": "string" },
+        "continue": { "type": "string" }
+      }
+    },
+    "states": {
+      "type": "array",
+      "description": "the vignette's click states; each is prompt -> choose -> system response (+ optional felt line)",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["prompt", "buttons", "response"],
+        "properties": {
+          "prompt": { "type": "string" },
+          "buttons": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "response": { "type": "string", "description": "the system's reply — click-confirm only, never a score" },
+          "felt": { "type": "string", "description": "optional bare line from the person's side (register: felt)" }
+        }
+      }
+    },
+    "debrief": {
+      "type": "object",
+      "description": "provenance panel — dossier-grade. Every source carries status + a PLAYER-VISIBLE confidence label",
+      "required": ["body", "sources"],
+      "properties": {
+        "body": { "type": "array", "items": { "type": "string" } },
+        "close": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["status", "confidence", "text"],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["documentary", "contested", "speculative"],
+                "description": "REQUIRED — build fails without it (CLAUDE.md)"
+              },
+              "confidence": {
+                "type": "string",
+                "description": "player-visible; the candidates are NOT uniformly solid (source-grounding report)"
+              },
+              "text": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "ledgerTags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "tags merged into the in-memory ledger on completion"
+    },
+    "witness": {
+      "type": "object",
+      "description": "the cold-side line filed per outcome (both completed and abandoned are filed — abandonment is not invisible)",
+      "properties": {
+        "completed": { "type": "string" },
+        "abandoned": { "type": "string" }
+      }
     }
   },
   "additionalProperties": true

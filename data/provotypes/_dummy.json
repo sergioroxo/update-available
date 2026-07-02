@@ -1,0 +1,78 @@
+{
+  "_doc": "PLACEHOLDER — R1 framework scaffold, NOT shippable content. Exists only to prove the provotype runtime round-trips (invitation -> frame -> 3 states -> debrief -> exit) behind ?reinterp=1. Delete or replace once real provotypes (R2 pillow onward) exist. Sérgio voice pass pending; no real sources cited.",
+  "id": "dummy",
+  "era": "era1",
+  "register": "operable",
+  "failure": "silence",
+  "cuts": ["side-quest"],
+  "invitation": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+    "from": "Helpy",
+    "lines": [
+      "I set aside a short session for you today.",
+      "It only takes a minute. Would you like to begin?"
+    ],
+    "accept": "Begin"
+  },
+  "frame": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending; frame is at most two sentences",
+    "text": "This is a placeholder exercise used to prove the runtime. Follow the prompts; nothing here is real content.",
+    "continue": "Continue"
+  },
+  "states": [
+    {
+      "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+      "prompt": "Placeholder prompt one. Confirm to continue.",
+      "buttons": ["Confirm", "Not sure"],
+      "response": "Placeholder response one registered.",
+      "felt": "I don't know what this is for."
+    },
+    {
+      "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+      "prompt": "Placeholder prompt two. Confirm again.",
+      "buttons": ["Confirm", "Not sure"],
+      "response": "Placeholder response two registered.",
+      "felt": "I said it the way you asked."
+    },
+    {
+      "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+      "prompt": "Placeholder prompt three. Confirm to finish.",
+      "buttons": ["Confirm", "Not sure"],
+      "response": "Placeholder response three registered. Nothing changed."
+    }
+  ],
+  "debrief": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending; no real sources cited here",
+    "body": [
+      "This screen is where a real provotype names what it dramatized.",
+      "Each source below carries a status and a confidence label — both are shown to the player, never flattened."
+    ],
+    "close": "Close",
+    "sources": [
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Placeholder documentary source. [VERIFY SOURCE]"
+      },
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "status": "contested",
+        "confidence": "medium",
+        "text": "Placeholder contested source. [VERIFY SOURCE]"
+      },
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "status": "speculative",
+        "confidence": "low",
+        "text": "Placeholder speculative source. [VERIFY SOURCE]"
+      }
+    ]
+  },
+  "ledgerTags": ["provotype:dummy"],
+  "witness": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+    "completed": "session: completed · outcome: none",
+    "abandoned": "session: left unfinished · flagged"
+  }
+}

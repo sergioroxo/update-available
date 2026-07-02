@@ -10,8 +10,11 @@ import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import * as ui from './theme/chrome';
 import { IrcApp } from './apps/irc';
 import { KitApp } from './apps/kit';
+import { ProvotypeApp, type Provotype } from './apps/provotype';
 import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
+import reinterpStrings from '../../data/strings/reinterp.json';
+import dummyProvotypeData from '../../data/provotypes/_dummy.json';
 
 type Phase = 'warning' | 'off' | 'boot' | 'splash' | 'name' | 'desktop' | 'left';
 
@@ -53,6 +56,8 @@ export class DesktopOS {
   // desktop
   kit: KitApp | null = null;
   irc: IrcApp | null = null;
+  /** the reinterpretation provotype runtime — reachable behind ?reinterp=1 only */
+  provotype: ProvotypeApp | null = null;
   private toast: { text: string; t: number } | null = null;
   private kitToastShown = false;
   private behindToastShown = false;
@@ -121,6 +126,14 @@ export class DesktopOS {
     this.dirty = true;
   }
 
+  /** open the reinterpretation provotype (diegetic invitation lives inside it) */
+  private openProvotype(): void {
+    if (!this.reinterp || this.provotype) return;
+    this.provotype = new ProvotypeApp(dummyProvotypeData as unknown as Provotype);
+    this.provotype.onClose = () => { this.provotype = null; this.dirty = true; };
+    this.dirty = true;
+  }
+
   private setPhase(p: Phase): void {
     this.phase = p;
     this.phaseT = 0;
@@ -157,6 +170,7 @@ export class DesktopOS {
     }
     if (this.phase === 'desktop' && this.kit) this.kit.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
+    if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
     if (!this.behindToastShown && this.t >= this.behindToastAt) {
       this.behindToastShown = true;
       this.toast = { text: strings.desktop.behindToast, t: 7 };
@@ -311,10 +325,15 @@ export class DesktopOS {
     if (!this.kit) this.drawIcon(10, 8, strings.desktop.iconA, true, 'icon-a');
     if (this.irc) this.drawIcon(10, 8, strings.desktop.iconIrc, true, 'icon-irc');
     this.drawIcon(10, 56, strings.desktop.iconDossier, this.dossierUnlocked, 'icon-dossier');
+    // reinterpretation-only: the provotype launcher (the invitation is inside it)
+    if (this.reinterp && !this.provotype) {
+      this.drawIcon(10, 104, reinterpStrings.launcherIcon, true, 'icon-provotype');
+    }
     // windows
     if (this.kit?.open) this.kit.draw(ctx);
     if (this.irc?.open) this.irc.draw(ctx, this.caretOn());
     if (this.dossierOpen) this.drawDossier(W, H);
+    if (this.provotype?.open) this.provotype.draw(ctx);
     // taskbar
     ui.bevel(ctx, 0, H - 22, W, 22, true);
     ui.button(ctx, 3, H - 19, 50, 16, 'MENU', {});
@@ -394,6 +413,7 @@ export class DesktopOS {
 
   // ── input ──────────────────────────────────────────────────────────────
   handleMove(x: number, y: number): void {
+    if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     const id = hit ? hit.id : '';
     if (id !== this.hover) { this.hover = id; this.dirty = true; }
@@ -411,6 +431,8 @@ export class DesktopOS {
       this.powerOn();
       return;
     }
+    // the provotype is modal while open — it owns the desktop's clicks
+    if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleClick(x, y); return; }
     if (hit) {
       switch (hit.id) {
         case 'continue': this.setPhase('off'); break;
@@ -420,6 +442,7 @@ export class DesktopOS {
         case 'icon-irc': if (this.irc) this.irc.open = true; break;
         case 'icon-dossier': this.dossierOpen = true; break;
         case 'dossier-close': this.dossierOpen = false; break;
+        case 'icon-provotype': this.openProvotype(); break;
       }
       this.dirty = true;
       return;

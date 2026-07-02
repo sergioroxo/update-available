@@ -1,0 +1,16 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Reinterpretation-only framework chrome (structural labels + window titles). Content lives in each data/provotypes/*.json; this file is only the shell the runtime draws around it. Read behind ?reinterp=1 only.",
+  "launcherIcon": "Session",
+  "leave": "Leave",
+  "pause": "Pause",
+  "resume": "Resume",
+  "paused": "— paused —",
+  "next": "Next",
+  "windowTitle": {
+    "invitation": "Assistant",
+    "frame": "Today's session",
+    "vignette": "Today's session",
+    "debrief": "About this"
+  },
+  "debriefHeading": "Where this comes from"
+}

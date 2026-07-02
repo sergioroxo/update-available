@@ -88,7 +88,8 @@
     "statusValue": "IDENTIFIED",
     "file": "FILE RECORD",
     "footer": "READ ONLY — THIS PANEL DOES NOT RESPOND TO YOU",
-    "hint": "press the flip control to return"
+    "hint": "press the flip control to return",
+    "sessionLog": "ASSIGNED SESSIONS"
   },
   "dossier": {
     "title": "Dossier — card 1 of 1",

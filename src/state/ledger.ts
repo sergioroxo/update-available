@@ -20,6 +20,13 @@ export interface Ledger {
   };
   updates: { toEra: number; remindLaterCount: number; eulaScrollPct: number }[];
   respite: { streamOpenSeconds: number; songsPlayed: string[] };
+  /**
+   * Reinterpretation provotypes filed this session (reinterp build only).
+   * Both completed and abandoned are recorded — abandonment is not invisible.
+   * `witness` is the cold-side line, resolved from the provotype's own data so
+   * display text stays in data/ (CLAUDE.md). In-memory only, like everything here.
+   */
+  provotypes: { id: string; outcome: 'completed' | 'abandoned'; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -31,7 +38,8 @@ const fresh = (): Ledger => ({
   session: { path: 'full', switched: false },
   assistant: { dismissals: 0, acceptedSuggestions: [], ignored: [], nightSessions: 0 },
   updates: [],
-  respite: { streamOpenSeconds: 0, songsPlayed: [] }
+  respite: { streamOpenSeconds: 0, songsPlayed: [] },
+  provotypes: []
 });
 
 export let ledger: Ledger = fresh();
