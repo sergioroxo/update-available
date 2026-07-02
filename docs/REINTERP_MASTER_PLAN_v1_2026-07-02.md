@@ -766,6 +766,47 @@ ask, is now standing:
   tinted trans room + the cluster shell, running in parallel with the 2D slice, feeding the geometry doc.
   It's in the session queue as a parallel track, not a blocker.
 
+# FEEDBACK ROUND 5 — the full-build map, the research backlog, Session 0 (2026-07-02)
+
+## R5-1 · Confirmed intent: THE WHOLE EXPERIENCE, staged
+The pillow slice is the proof-of-feel, not the destination. The full reinterpreted experience is the
+target, built in four stages so nothing waits on everything:
+- **STAGE A — the provotype spine, in shipped context (NOW, unblocked):** build sessions 1–5 (flag →
+  framework → pillow → graying task → Origin Story Intake) + the moodboard pass in parallel. Output:
+  the new grammar playable end-to-end inside the existing eras.
+- **STAGE B — the restructure specs (Fable rounds, fed by research):** cross-cluster storyline design per
+  era (needs the Nine Rooms research below); the **assistant-as-guide spec** (including the assistant-law
+  revision only Sérgio can rule on — F1's open gap); the Sides-chart wiring spec (Round-4 corrections
+  binding); the **witness-record migration spec** (where Ethics #10's traceability surfaces once the
+  board de-emphasizes). Each spec = one Fable round; each unblocks build sessions.
+- **STAGE C — the spatial build (GATED on the in-headset playtest):** cluster geometry doc → the E4
+  cluster (or the tinted-room variant, per the 3-vs-4 decision) → E1–3 cluster retrofit → the
+  restructured Close (point-cloud flat version first, VR breakout after).
+- **STAGE D — content completion (gated on ethics reads + assets):** R6 Exploratory Care Planner; the
+  LGB-to-T content in its home; the trans-man alcove when unblocked; TRANSCENDANCE audio + stream;
+  panels/dossier copy passes; **Festival/Full path composition** (`data/paths.json` — by then every
+  element carries its `cuts` tag, so the two cuts are an authoring job, not an engineering one); the
+  audio direction pass per cluster.
+
+## R5-2 · The research backlog (what remains, and which tool does each)
+| Research ask | Tool | Status |
+|---|---|---|
+| **The Nine Rooms** — per-era content for every NON-lead identity (lesbian '97/'03, gay man '16/present, trans woman '97/'03/'16, + trans-man device ALTERNATIVES per Sérgio's deferral) — the single biggest gap for the full build | ChatGPT Deep Research | **PROMPT READY** → `CHATGPT_DEEPRESEARCH_NINE_ROOMS_2026-07-02.md` |
+| Assistant-as-guide precedents (diegetic guides embodying the antagonist system) + the ≤5-lines law revision | Fable round (dramaturgy) + Sonnet spot-checks | next Fable round after Nine Rooms lands |
+| Global/European transphobia + LGB-to-T material for the tinted room | ChatGPT Deep Research | write AFTER the G4 early ethics read + the 3-vs-4 lean firms up (order matters: gate first) |
+| Festival/guided-VR throughput evidence (unverified in Round 2) | Sonnet 5 attempt; accept `speculative` if it fails again | anytime, low stakes |
+| Citation chores (URL pinning, `[VERIFY SOURCE]` cleanups, name-collision checks) | Sonnet 5 | ongoing, batch as they accumulate |
+| Audio direction per cluster | Fable/Codex pass + Sérgio's Sonauto work | Stage D |
+
+## R5-3 · Session 0 logged + the doc-sync convention (workflow seam fixed)
+Codex completed Session 0 (2026-07-02): worktree at `/Users/sergiogalvaoroxo/update-available-reinterp`
+on branch `reinterp`, doc set copied, tests/build green, `?flat=1&reinterp=1` serving, commit `8a04d7a`,
+shipped folder untouched. **The worktree's `docs/reinterp/01_SESSION_LOG.md` is now the LIVE log**; the
+copy in the original folder is a pointer only. New convention (now in `00_START_HERE.md`): **every build
+session starts by syncing any newer `REINTERP_*/CHATGPT_*/CODEX_PROMPT_REINTERP_*` docs + `00_START_HERE`
+from the original folder into the worktree** — Fable maintains plans in the original folder (its domain);
+builds happen in the worktree; the sync step keeps one direction of truth.
+
 # TOP RECOMMENDATION
 
 **Greenlight R0 → R1 → R2: the fork, the provotype framework, and the pillow provotype inside the shipped

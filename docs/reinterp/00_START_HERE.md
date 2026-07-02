@@ -42,6 +42,12 @@ build work happens in `/Users/sergiogalvaoroxo/update-available-reinterp/`.
   (Festival/Full cuts are composed later via `data/paths.json` — nothing hardcoded to one order).
 
 ## Session protocol (every session, no exceptions)
+0. **DOC SYNC first:** Fable maintains the plan docs in the ORIGINAL folder
+   (`/Users/sergiogalvaoroxo/update-available/docs/`). Copy into this worktree any files there that are
+   newer than the worktree's copies, matching: `REINTERP_*.md`, `CHATGPT_DEEPRESEARCH_*.md`,
+   `CODEX_PROMPT_REINTERP_*.md`, `docs/reinterp/00_START_HERE.md`. Commit the sync on `reinterp` before
+   starting work. (Never sync the other direction; never edit the original folder.) The worktree's
+   `01_SESSION_LOG.md` is the live log — do NOT overwrite it from the original.
 1. Read this file + the session log. Confirm which session you are running.
 2. Do ONE session's scope. Do not run ahead into the next item even if it's tempting.
 3. Verify in the preview (`?flat=1&reinterp=1` for 2D work) before calling anything done. Also verify the
