@@ -27,11 +27,29 @@ export interface ProvotypeSource {
   confidence: string;
   text: string;
 }
+/**
+ * A tagged, registering option (R2/§R8-5 framework addition). Choices REGISTER
+ * to the ledger — they never branch the content. `goto`, when present, is a
+ * navigation instruction (a state index, or `"debrief"`) taken immediately on
+ * click instead of the default show-response-then-advance flow; this is how
+ * the pillow's Repeat/Finish gate works without introducing narrative forks.
+ */
+export interface ProvotypeChoice {
+  label: string;
+  ledgerTag?: string;
+  response?: string;
+  goto?: number | 'debrief';
+}
 export interface ProvotypeState {
   prompt: string;
-  buttons: string[];
+  /** legacy simple confirm buttons (R1 dummy) — no tagging, no goto */
+  buttons?: string[];
+  /** R2 addition: tagged/registering options, optionally overriding the response or navigating directly */
+  choices?: ProvotypeChoice[];
   response: string;
   felt?: string;
+  /** restrained low-poly pose shown alongside the response — see drawFigure. Never juiced. */
+  animPose?: 'lift' | 'exhale' | 'strike';
 }
 export interface Provotype {
   id: string;
@@ -52,7 +70,11 @@ interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 // window geometry — one modal on the era desktop; constant so the fixed
 // Leave/Pause row never moves between phases.
-const WIN = { x: 36, y: 24, w: 440, h: 300 } as const;
+// h=336 (was 300) — the pillow's 4-source debrief needs the room; no scroll
+// input exists (click/tap only), so the fixed window must simply be tall
+// enough for the longest debrief instead. Capped below the era desktop's
+// taskbar (H=384, taskbar from H-22) so the window never overlaps it.
+const WIN = { x: 36, y: 24, w: 440, h: 336 } as const;
 const ROW_Y = WIN.y + WIN.h - 28; // the fixed button row
 const STATUS_COLOR: Record<ProvotypeSource['status'], string> = {
   documentary: ERA1.ok,
@@ -82,13 +104,33 @@ export class ProvotypeApp {
   private phase: Phase = 'invitation';
   private stateIndex = 0;
   private showResponse = false;
+  /** per-choice response override for the current state, if any (R2 addition) */
+  private lastResponse?: string;
   private reachedDebrief = false;
   private filed = false;
   private paused = false;
   private hover = '';
   private hits: Hit[] = [];
+  /** internal only — never rendered as a score (master plan §R2-2) */
+  private reps = 0;
+  private readonly hasAnim: boolean;
 
-  constructor(private readonly data: Provotype) {}
+  constructor(private readonly data: Provotype) {
+    this.hasAnim = data.states.some(s => !!s.animPose);
+  }
+
+  /** does this state have any pre-response tap/choice at all? */
+  private hasOptions(state: ProvotypeState): boolean {
+    return (!!state.choices && state.choices.length > 0) || (!!state.buttons && state.buttons.length > 0);
+  }
+
+  /** move to a state by index; states with no options reveal their response immediately */
+  private enterState(idx: number): void {
+    this.stateIndex = idx;
+    this.lastResponse = undefined;
+    this.showResponse = !this.hasOptions(this.data.states[idx]);
+    this.dirty = true;
+  }
 
   update(_dt: number): void {
     // no timers, no animation loop in R1 — the framework is click-driven.
@@ -105,11 +147,17 @@ export class ProvotypeApp {
     const bodyTop = c.y + 8;
     const bodyMaxW = c.w - 24;
     const bodyX = c.x + 12;
+    // reserve a quiet panel on the right for the restrained pose (pillow only)
+    const FIGURE_W = 78;
+    const vignetteMaxW = this.hasAnim ? bodyMaxW - FIGURE_W : bodyMaxW;
 
     switch (this.phase) {
       case 'invitation': this.drawInvitation(ctx, bodyX, bodyTop, bodyMaxW); break;
       case 'frame': this.drawFrame(ctx, bodyX, bodyTop, bodyMaxW); break;
-      case 'vignette': this.drawVignette(ctx, bodyX, bodyTop, bodyMaxW); break;
+      case 'vignette':
+        this.drawVignette(ctx, bodyX, bodyTop, vignetteMaxW);
+        if (this.hasAnim) this.drawFigure(ctx, c.x + c.w - FIGURE_W - 4, bodyTop);
+        break;
       case 'debrief': this.drawDebrief(ctx, bodyX, bodyTop, bodyMaxW); break;
     }
 
@@ -152,8 +200,9 @@ export class ProvotypeApp {
     y += 8;
 
     if (!this.showResponse) {
-      // the choices — each click-confirm advances; no choice is "right"
-      st.buttons.forEach((label, i) => {
+      // the options — each click-confirm registers; no choice is "right"
+      const labels = st.choices ? st.choices.map(c => c.label) : (st.buttons ?? []);
+      labels.forEach((label, i) => {
         const bw = Math.min(220, Math.max(120, ctx.measureText(label).width + 28));
         const by = y + i * 28;
         ui.button(ctx, x, by, bw, 22, label, { hover: this.hover === `choice:${i}` });
@@ -163,8 +212,9 @@ export class ProvotypeApp {
     }
 
     // the system's reply — flat, unrewarding by design
+    const response = this.lastResponse ?? st.response;
     ctx.fillStyle = ERA1.greyDark;
-    for (const w of wrap(ctx, st.response, maxW)) { ctx.fillText(w, x, y); y += 15; }
+    for (const w of wrap(ctx, response, maxW)) { ctx.fillText(w, x, y); y += 15; }
     if (st.felt) {
       y += 8;
       ui.setFont(ctx, 10); // the person's bare line — dim, unstyled, never juiced
@@ -174,34 +224,77 @@ export class ProvotypeApp {
     this.primary(ctx, chrome.next);
   }
 
+  /**
+   * The restrained low-poly pose (master plan §R2-2 design law): a few
+   * blocky positions, no rhythm, no impact lines, no screen shake. It must
+   * NOT feel like a satisfying swing — administrative, not kinaesthetic.
+   */
+  private drawFigure(ctx: CanvasRenderingContext2D, x: number, top: number): void {
+    const st = this.data.states[this.stateIndex];
+    const pose = this.showResponse ? st.animPose : undefined;
+    const w = 74, h = 92;
+    ui.px(ctx, x, top, w, h, ERA1.paper);
+    ui.px(ctx, x, top, w, 1, ERA1.silver);
+    ui.px(ctx, x, top, 1, h, ERA1.silver);
+    ui.px(ctx, x, top + h - 1, w, 1, ERA1.silver);
+    ui.px(ctx, x + w - 1, top, 1, h, ERA1.silver);
+
+    const headX = x + 30, headY = top + 18;
+    const torsoX = x + 28, torsoY = top + 30, torsoW = 14, torsoH = 24;
+    ui.px(ctx, headX, headY, 10, 10, ERA1.greyDark);
+    ui.px(ctx, torsoX, torsoY, torsoW, torsoH, ERA1.greyDark);
+
+    // the pillow — a soft low block, never struck with force lines
+    const pillowX = x + 16, pillowY = top + 62;
+    const pillowH = pose === 'strike' ? 9 : 11; // the barest give, not an impact
+    ui.px(ctx, pillowX, pillowY, 26, pillowH, ERA1.beige);
+
+    // the arm — three still positions, no interpolation, no bounce
+    switch (pose) {
+      case 'lift':
+        ui.px(ctx, x + 44, top + 22, 4, 16, ERA1.greyDark);
+        ui.px(ctx, x + 46, top + 20, 12, 3, ERA1.grey); // the racket, raised
+        break;
+      case 'exhale':
+        ui.px(ctx, x + 44, top + 34, 4, 14, ERA1.greyDark);
+        break;
+      case 'strike':
+        ui.px(ctx, x + 40, top + 46, 4, 16, ERA1.greyDark);
+        ui.px(ctx, x + 38, top + 58, 12, 3, ERA1.grey); // the racket, at rest on the pillow
+        break;
+      default:
+        ui.px(ctx, x + 44, top + 34, 4, 14, ERA1.greyDark); // idle
+    }
+  }
+
   private drawDebrief(ctx: CanvasRenderingContext2D, x: number, top: number, maxW: number): void {
     let y = top;
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
     for (const line of this.data.debrief.body) {
-      for (const w of wrap(ctx, line, maxW)) { ctx.fillText(w, x, y); y += 14; }
-      y += 3;
+      for (const w of wrap(ctx, line, maxW)) { ctx.fillText(w, x, y); y += 12; }
+      y += 2;
     }
-    y += 4;
+    y += 2;
     ui.px(ctx, x, y, maxW, 1, ERA1.silver);
-    y += 8;
+    y += 6;
     ui.setFont(ctx, 8);
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(chrome.debriefHeading, x, y);
-    y += 14;
+    y += 12;
 
     for (const src of this.data.debrief.sources) {
-      ui.setFont(ctx, 9);
+      ui.setFont(ctx, 8);
       ctx.fillStyle = STATUS_COLOR[src.status];
       ctx.fillText(src.status, x, y);
       const sw = ctx.measureText(src.status).width;
       ctx.fillStyle = ERA1.greyDark;
       ctx.fillText(`· ${src.confidence} confidence`, x + sw + 6, y);
-      y += 12;
-      ui.setFont(ctx, 9);
+      y += 10;
+      ui.setFont(ctx, 8);
       ctx.fillStyle = ERA1.black;
-      for (const w of wrap(ctx, src.text, maxW - 8)) { ctx.fillText(w, x + 8, y); y += 12; }
-      y += 4;
+      for (const w of wrap(ctx, src.text, maxW - 8)) { ctx.fillText(w, x + 8, y); y += 10; }
+      y += 2;
     }
     this.primary(ctx, this.data.debrief.close ?? chrome.next);
   }
@@ -251,13 +344,34 @@ export class ProvotypeApp {
     if (hit.id === 'leave') { this.exit(); return; }
     if (hit.id === 'pause') { this.paused = true; this.dirty = true; return; }
     if (hit.id === 'primary') { this.advance(); return; }
-    if (hit.id.startsWith('choice:')) { this.choose(); return; }
+    if (hit.id.startsWith('choice:')) { this.choose(Number(hit.id.split(':')[1])); return; }
   }
 
-  private choose(): void {
+  private choose(i: number): void {
+    const st = this.data.states[this.stateIndex];
+    const chosen = st.choices?.[i];
+    if (chosen?.ledgerTag) this.registerTag(chosen.ledgerTag);
+    if (chosen?.goto !== undefined) {
+      // the meaningful choice (e.g. Repeat/Finish) — no choice is "correct";
+      // this only decides how much longer the same content repeats.
+      if (chosen.goto === 'debrief') {
+        this.phase = 'debrief';
+        this.reachedDebrief = true;
+        this.dirty = true;
+      } else {
+        if (chosen.goto <= this.stateIndex) this.reps++; // internal only — never shown as a score
+        this.enterState(chosen.goto);
+      }
+      return;
+    }
     // no choice is scored or "correct" — the confirm only surfaces the reply
+    this.lastResponse = chosen?.response;
     this.showResponse = true;
     this.dirty = true;
+  }
+
+  private registerTag(tag: string): void {
+    if (!ledger.tags.includes(tag)) ledger.tags.push(tag);
   }
 
   private advance(): void {
@@ -265,13 +379,11 @@ export class ProvotypeApp {
       case 'invitation': this.phase = 'frame'; break;
       case 'frame':
         this.phase = 'vignette';
-        this.stateIndex = 0;
-        this.showResponse = false;
+        this.enterState(0);
         break;
       case 'vignette':
         if (this.stateIndex < this.data.states.length - 1) {
-          this.stateIndex++;
-          this.showResponse = false;
+          this.enterState(this.stateIndex + 1);
         } else {
           this.phase = 'debrief';
           this.reachedDebrief = true;
@@ -296,7 +408,8 @@ export class ProvotypeApp {
     this.filed = true;
     const outcome: 'completed' | 'abandoned' = this.reachedDebrief ? 'completed' : 'abandoned';
     const witness = this.data.witness?.[outcome] ?? '';
-    ledger.provotypes.push({ id: this.data.id, outcome, witness });
+    // reps: counted internally only (master plan §R2-2) — never rendered as a score
+    ledger.provotypes.push({ id: this.data.id, outcome, witness, reps: this.reps });
     if (outcome === 'completed') {
       for (const tag of this.data.ledgerTags) {
         if (!ledger.tags.includes(tag)) ledger.tags.push(tag);

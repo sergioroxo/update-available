@@ -62,12 +62,31 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["prompt", "buttons", "response"],
+        "required": ["prompt", "response"],
         "properties": {
           "prompt": { "type": "string" },
-          "buttons": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "buttons": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "legacy simple confirm buttons (R1) — no tagging, no navigation" },
+          "choices": {
+            "type": "array",
+            "description": "R2/§R8-5 framework addition: tagged, REGISTERING options — they never branch the content, only how it's filed",
+            "items": {
+              "type": "object",
+              "required": ["label"],
+              "properties": {
+                "label": { "type": "string" },
+                "ledgerTag": { "type": "string", "description": "merged into the in-memory ledger the moment this choice is made" },
+                "response": { "type": "string", "description": "optional per-choice response line, overriding the state's shared response" },
+                "goto": { "description": "optional immediate navigation: a state index (for a repeat/loop-back gate) or the literal 'debrief'", "type": ["integer", "string"] }
+              }
+            }
+          },
           "response": { "type": "string", "description": "the system's reply — click-confirm only, never a score" },
-          "felt": { "type": "string", "description": "optional bare line from the person's side (register: felt)" }
+          "felt": { "type": "string", "description": "optional bare line from the person's side (register: felt)" },
+          "animPose": {
+            "type": "string",
+            "enum": ["lift", "exhale", "strike"],
+            "description": "R2 addition: a restrained, non-interpolated low-poly pose shown with the response. No rhythm, no impact lines, no swing satisfaction (master plan §R2-2)."
+          }
         }
       }
     },

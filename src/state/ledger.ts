@@ -26,7 +26,7 @@ export interface Ledger {
    * `witness` is the cold-side line, resolved from the provotype's own data so
    * display text stays in data/ (CLAUDE.md). In-memory only, like everything here.
    */
-  provotypes: { id: string; outcome: 'completed' | 'abandoned'; witness: string }[];
+  provotypes: { id: string; outcome: 'completed' | 'abandoned'; witness: string; reps?: number }[];
 }
 
 const fresh = (): Ledger => ({

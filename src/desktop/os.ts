@@ -14,7 +14,7 @@ import { ProvotypeApp, type Provotype } from './apps/provotype';
 import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
-import dummyProvotypeData from '../../data/provotypes/_dummy.json';
+import pillowProvotypeData from '../../data/provotypes/pillow.json';
 
 type Phase = 'warning' | 'off' | 'boot' | 'splash' | 'name' | 'desktop' | 'left';
 
@@ -129,7 +129,7 @@ export class DesktopOS {
   /** open the reinterpretation provotype (diegetic invitation lives inside it) */
   private openProvotype(): void {
     if (!this.reinterp || this.provotype) return;
-    this.provotype = new ProvotypeApp(dummyProvotypeData as unknown as Provotype);
+    this.provotype = new ProvotypeApp(pillowProvotypeData as unknown as Provotype);
     this.provotype.onClose = () => { this.provotype = null; this.dirty = true; };
     this.dirty = true;
   }

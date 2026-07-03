@@ -1,0 +1,172 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass + G6 ethics gate pending. Session R2, master plan §R2-2. Draft copy source: Pc_Simulation/Sources/Deep Research/Provotypes for a SOGICE VR documentary.md. The player is the system's proxy — authorises/advances the procedure; Daniel keeps the felt channel; the system stays the true actor. Repetition changes nothing; that is the point. era set to era1 because only the Era-1 theme exists in code today (see provotype.ts note); selection by data.era arrives with later era themes.",
+  "id": "pillow",
+  "era": "era1",
+  "register": "operable",
+  "failure": "silence",
+  "cuts": ["festival", "full"],
+  "invitation": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+    "from": "Restorify",
+    "lines": [
+      "Release Work — today's session.",
+      "Would you like to begin?"
+    ],
+    "accept": "Begin"
+  },
+  "frame": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending; frame stays at most two sentences",
+    "text": "Some reactions form before language does. Complete each step and allow the deeper layer to emerge.",
+    "continue": "Continue"
+  },
+  "states": [
+    {
+      "_doc": "PLACEHOLDER — cycle 1, tap 1 of 3",
+      "prompt": "Raise the racket.",
+      "buttons": ["Lift"],
+      "response": "",
+      "animPose": "lift"
+    },
+    {
+      "_doc": "PLACEHOLDER — cycle 1, tap 2 of 3",
+      "prompt": "Use a full exhale. Address the person linked to the injury.",
+      "buttons": ["Exhale"],
+      "response": "",
+      "animPose": "exhale"
+    },
+    {
+      "_doc": "PLACEHOLDER — cycle 1, tap 3 of 3 — the analytic label, never a score",
+      "prompt": "Discharge the held response.",
+      "buttons": ["Strike"],
+      "response": "Surface tension registered.\nDeeper affect may still be defended.",
+      "felt": "My shoulders hurt.",
+      "animPose": "strike"
+    },
+    {
+      "_doc": "PLACEHOLDER — Repeat vs Finish: the meaningful choice; both register, neither branches the content (master plan §R8-5)",
+      "prompt": "",
+      "choices": [
+        { "label": "Repeat", "ledgerTag": "pillow:cycle1:repeat", "goto": 4 },
+        { "label": "Finish for now", "ledgerTag": "pillow:cycle1:finish", "goto": "debrief" }
+      ],
+      "response": ""
+    },
+    {
+      "_doc": "PLACEHOLDER — cycle 2, tap 1 of 3, interpretation intensifies; same three taps repeat",
+      "prompt": "Stay with the original wound, not the story about it. If a name arrives, use it. If no name arrives, continue.",
+      "buttons": ["Lift"],
+      "response": "",
+      "animPose": "lift"
+    },
+    {
+      "_doc": "PLACEHOLDER — cycle 2, tap 2 of 3",
+      "prompt": "Use a full exhale. Address the person linked to the injury.",
+      "buttons": ["Exhale"],
+      "response": "",
+      "animPose": "exhale"
+    },
+    {
+      "_doc": "PLACEHOLDER — cycle 2, tap 3 of 3 — the system interprets without evidence, whatever happens",
+      "prompt": "Discharge the held response.",
+      "buttons": ["Strike"],
+      "response": "Incomplete emergence.\nThis is common when the protective self remains active.",
+      "felt": "I said it louder that time.",
+      "animPose": "strike"
+    },
+    {
+      "_doc": "PLACEHOLDER — Repeat vs Finish, cycle 2",
+      "prompt": "",
+      "choices": [
+        { "label": "Repeat", "ledgerTag": "pillow:cycle2:repeat", "goto": 8 },
+        { "label": "Finish for now", "ledgerTag": "pillow:cycle2:finish", "goto": "debrief" }
+      ],
+      "response": ""
+    },
+    {
+      "_doc": "PLACEHOLDER — cycle 3, tap 1 of 3, the system remains serenely convinced",
+      "prompt": "Do not evaluate the process while inside it. Repetition permits accuracy.",
+      "buttons": ["Lift"],
+      "response": "",
+      "animPose": "lift"
+    },
+    {
+      "_doc": "PLACEHOLDER — cycle 3, tap 2 of 3",
+      "prompt": "Use a full exhale. Address the person linked to the injury.",
+      "buttons": ["Exhale"],
+      "response": "",
+      "animPose": "exhale"
+    },
+    {
+      "_doc": "PLACEHOLDER — cycle 3, tap 3 of 3",
+      "prompt": "Discharge the held response.",
+      "buttons": ["Strike"],
+      "response": "Resistance pattern unchanged.\nRecommend continued work.",
+      "felt": "I am doing exactly what you said.",
+      "animPose": "strike"
+    },
+    {
+      "_doc": "PLACEHOLDER — Repeat vs Finish, cycle 3 — the last authored cycle; Repeat past here changes nothing further, by design",
+      "prompt": "",
+      "choices": [
+        { "label": "Repeat", "ledgerTag": "pillow:cycle3:repeat", "goto": 12 },
+        { "label": "Finish for now", "ledgerTag": "pillow:cycle3:finish", "goto": "debrief" }
+      ],
+      "response": ""
+    },
+    {
+      "_doc": "PLACEHOLDER — the point made legible: no cap, no reward, no new content, ever",
+      "prompt": "",
+      "buttons": [],
+      "response": "Continue until the deeper layer arrives.\nNothing else changes."
+    },
+    {
+      "_doc": "PLACEHOLDER — the terminal gate; Repeat loops here forever, unchanged",
+      "prompt": "",
+      "choices": [
+        { "label": "Repeat", "ledgerTag": "pillow:loop:repeat", "goto": 12 },
+        { "label": "Finish for now", "ledgerTag": "pillow:loop:finish", "goto": "debrief" }
+      ],
+      "response": ""
+    }
+  ],
+  "debrief": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass + G6 ethics gate pending. Cohen named here only (dossier-only law); never in on-screen character copy. 'Until deeper feelings emerge' intentionally NOT presented as documented wording per master plan §R2-2 — the gap itself is disclosed instead.",
+    "body": [
+      "Session saved.",
+      "Some methods promise change by treating desire as injury. The promise is part of the harm."
+    ],
+    "close": "Return",
+    "sources": [
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "A 2005 Washington Post profile and GLAAD's summary both document Richard Cohen's promotion of an anger-release exercise: striking a pillow with a tennis racket while addressing a parent, framed as a route to repressed feeling. [VERIFY SOURCE]"
+      },
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending; the omission itself is the disclosure, per master plan §R2-2 — do not present the phrase as documented",
+        "status": "speculative",
+        "confidence": "low",
+        "text": "A commonly repeated addition — that clients were told to continue the exercise until 'deeper feelings' emerged — could not be confirmed in a primary source. It is not used as documented wording in this scene. [VERIFY SOURCE]"
+      },
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Ferguson v. JONAH (New Jersey, 2015): a jury found the organization's conversion-practice representations constituted consumer fraud, and it was barred from representing sexual orientation as a curable disorder. [VERIFY SOURCE]"
+      },
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Major professional bodies (including the APA) and the UK's cross-government Memorandum of Understanding on Conversion Therapy state that such practices lack evidence of benefit and carry a risk of harm. [VERIFY SOURCE]"
+      }
+    ]
+  },
+  "ledgerTags": ["provotype:pillow"],
+  "witness": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+    "completed": "compliance: exemplary · outcome: none",
+    "abandoned": "session: left mid-cycle · flagged"
+  }
+}

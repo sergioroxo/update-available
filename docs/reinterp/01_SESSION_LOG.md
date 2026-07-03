@@ -1,23 +1,61 @@
 # REINTERP SESSION LOG — append-only; newest at the top of DONE
 
 ## NEXT UP
-**Session 3 — R2 (the pillow: "Somatic Reprocessing", Era 2)**. Spec:
-`docs/CODEX_PROMPT_REINTERP_R0_R2_2026-07-02.md`, Session R2 + draft copy in
-`Pc_Simulation/Sources/Deep Research/Provotypes for a SOGICE VR documentary.md`. Build ON the R1 framework
-(`data/provotypes/pillow.json` + `src/desktop/apps/provotype.ts` — the runtime already round-trips). All
-copy PLACEHOLDER (`_doc: "PLACEHOLDER — Sérgio voice pass + G6 ethics gate pending"`); restrained low-poly
-click-confirm animation (no swing satisfaction, design law §R2-2); failure shape = silence; Cohen
-dossier-only; provenance omits the unverified "until deeper feelings emerge" phrase. Note for R2: the
-framework currently treats every choice button as a single confirm→response advance (no per-choice
-branching) — enough for the pillow's Lift/Exhale/Strike + Repeat/Finish, but confirm before relying on it.
+**Session 4 — R7 (the graying task, Era 1)**, once its build spec exists (Fable writes it after this
+session ships — `00_START_HERE.md` queue item 4). Do NOT improvise this; it needs its own spec first
+(master plan §R3-1). Character-creation opening (queue item 6) also needs a Fable-written spec (§R8-2) —
+do not start.
 
-## BLOCKED / WAITING
-- Pillow copy voice pass (Sérgio) — build proceeds with PLACEHOLDER; final copy lands whenever ready.
-- G6 ethics/religious-trauma read of the pillow — Sérgio scheduling.
+## BLOCKED / WAITING (unchanged from before this session, plus one addition)
+- Pillow copy voice pass (Sérgio) — build shipped with PLACEHOLDER; final copy lands whenever ready.
+- G6 ethics/religious-trauma read of the pillow — Sérgio scheduling. Nothing in this build should be
+  treated as cleared pending that read.
 - In-headset playtest date (A11 gate) — gates ALL spatial sessions.
-- R7 build spec — Fable writes it after R2 ships.
+- R7 build spec — Fable writes it after this session (R2) shipped. It has now shipped.
 
 ## DONE
+*(2026-07-03 · Session 3 — R2 the pillow ("Somatic Reprocessing", Era 2). Built
+`data/provotypes/pillow.json` on the R1 framework: diegetic invitation (Restorify — "Release Work —
+today's session"), 2-sentence frame, three escalating Lift/Exhale/Strike cycles (system responses
+"Surface tension registered…" → "Incomplete emergence…" → "Resistance pattern unchanged…", Daniel's
+minimal `felt` lines, restrained low-poly pose on Daniel's side per tap — no rhythm, no impact lines, no
+swing satisfaction), a Repeat/Finish decision after every cycle, and an unwinnable terminal state ("Continue
+until the deeper layer arrives. Nothing else changes.") that Repeat loops on forever, verified idempotent.
+Player is the system's proxy throughout (authorises/advances; Daniel keeps the `felt` channel; Cohen named
+nowhere except the debrief). Debrief/provenance card: 4 sources, each `status` + player-visible
+`confidence` — Cohen/pillow-racket exercise (documentary, WaPo 2005 + GLAAD), the exact phrase "until
+deeper feelings emerge" (speculative, disclosed as unconfirmed and NOT used as documented wording per
+master plan §R2-2), Ferguson v. JONAH consumer-fraud finding (documentary), APA/UK Memorandum of
+Understanding no-evidence line (documentary). Every string carries
+`_doc: "PLACEHOLDER — Sérgio voice pass + G6 ethics gate pending"`.
+**Framework addition (§R8-5, routed from Session 2):** `ProvotypeState.choices[]` —
+`{label, ledgerTag?, response?, goto?}`. Choices register a ledger tag the moment they're clicked and may
+override the state's shared response line; `goto` (a state index, or the literal `"debrief"`) lets a
+choice navigate immediately instead of the generic show-response-then-Next flow — this is how Repeat/Finish
+works without introducing narrative branching (states with no `buttons`/`choices` at all now auto-reveal
+their response on entry, which is how the terminal "nothing else changes" line displays with no tap
+needed). Legacy `buttons: string[]` (R1 dummy) still works unchanged. `data/provotypes/_schema.json`
+extended to document `choices`/`goto`/`animPose`; `_dummy.json` untouched. `src/desktop/os.ts`'s launcher
+now opens `pillow.json` (was `_dummy.json`). `ledger.provotypes[]` gained an optional `reps` field —
+counted internally each time Repeat is chosen, never rendered as a score (master plan §R2-2).
+**Bug found and fixed during verification:** the debrief window (fixed height, no scroll — click/tap only)
+clipped the 4th provenance source behind the fixed Leave/Pause row. Fixed by growing `WIN.h` from 300→336
+(kept below the era desktop's taskbar) and tightening `drawDebrief`'s line/gap spacing; re-verified all 4
+sources render fully above the fixed row.
+Verification: `npm test` + `npm run build` green (pre-existing Vite chunk-size warning only). Full
+playthrough driven in the browser at `?flat=1&reinterp=1` on a dedicated dev server for this worktree
+(`npm run dev -- --port 5174 --strictPort`, since the shared preview tooling only knows the main
+worktree's `dev` config) — invitation (Restorify) → frame → cycle 1 (Lift/Exhale/Strike, response, felt,
+pose) → Repeat → cycle 2 (escalated prompt, same three taps) → Repeat → cycle 3 → Repeat into the terminal
+loop → confirmed a second Repeat there re-shows the identical screen (nothing changes) → Finish for now →
+provenance card (all 4 sources, statuses, confidence, [VERIFY SOURCE]) → Return → clean exit to desktop,
+Session icon still present/relaunchable. Leave verified mid-cycle (exits cleanly; the outcome files as
+`abandoned` per the existing R1 filing logic — not independently re-inspected via the witness UI this
+session, since the flip/witness view is gated behind the Era-1 kit/IRC flow, explicitly out of scope here).
+No-flag baseline `?flat=1` re-checked end-to-end through name entry to desktop: no reinterp marker, no
+Session icon, console clean. All copy PLACEHOLDER; no ethics/creative calls made — G6 read still pending
+per BLOCKED below.)*
+
 *(2026-07-03 · Parallel Codex task — R9-4 Lamby rig prototype. Built a standalone route
 `?lambyrig=1` mounted from `src/main.ts` into `src/lambyrig/lambyRig.ts`, with no DesktopOS,
 `provotype.ts`, `data/provotypes/`, boot/profile/lighting/beginner-panel/ceiling/witness integration
