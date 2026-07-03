@@ -1,3 +1,13 @@
+# ⛔ RETIRED — DO NOT RUN (Sérgio, Round 15, 2026-07-03)
+
+*Sérgio's call: this whole line of process/logistics research was a misuse of resources — "there is
+enough information online to talk about the Transmasculine realities... consider more ethical questions
+after actually delivering a project." Ethics-process work (consultant sourcing mechanics, compensation
+norms, engagement structure) is deferred wholesale until the project is deliverable and being tested with
+people. The content laws themselves (satire targets the apparatus, detransition never vilified, register
+laws) still bind at build time as always — they cost nothing and are not what this prompt was about.
+Kept on disk for the record only.*
+
 # Prompt for ChatGPT Deep Research — how a sensitivity/cultural consultant engagement actually functions (paste below the line)
 
 *Sérgio: this replaces Ask 2 from the previous consult-sourcing prompt, which came back empty (the prior

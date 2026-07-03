@@ -431,160 +431,10 @@ anywhere Round 12+ supersedes them. Read the archive only when the original reas
 matters, not as part of the normal per-round read — see `docs/reinterp/03_COORDINATION.md` and
 `04_FABLE_ROUND_PROMPT.md` for the current read order.*
 
-# FEEDBACK ROUND 12 — the pillow doesn't land · full experience for Oct 19 · 3-room fluid trans cluster (2026-07-03)
+# FEEDBACK ROUNDS 12–13 — ARCHIVED (moved out 2026-07-03, Round 16)
 
-*Sérgio played the pillow (`?flat=1&reinterp=1`) and answered the Round-11 decision queue. This round
-makes the single biggest scope call in the thread so far — read R12-2 and R12-5 carefully; they reorder
-everything downstream.*
-
-## R12-1 · The pillow doesn't land — diagnosed, not just noted
-Sérgio: didn't understand the logic/aesthetics; missing connection to real-world logic and narrative
-immersive benefit; wants more storytelling elements explored. Verified against the actual shipped code
-(`pillow.json` + `provotype.ts`, commit `fcaca92`) rather than guessed at — full diagnosis in
-**`docs/REINTERP_PROVOTYPE_EMBODIMENT_ANALYSIS_2026-07-03.md`** (new deliverable, this round). Summary: the
-vignette is architecturally identical to an ordinary desktop app window (no room, no environment); Daniel's
-`felt` voice is three lines total in the dimmest text on screen (R2-2's "bare, unstyled" law overcorrected
-into "nearly invisible"); no in-scene stakes ("who is Dad, why today"); the debrief's sourced-citation
-rigor is right but is currently asked to *also* carry the scene's emotional close. **This is a framework-
-level problem, not a copy problem** — `provotype.ts` is the one grammar every future provotype (R4/R5/R6)
-inherits, so it repeats and compounds if not fixed before more content is built on it. **Call: PAUSE new
-provotype content (R4/R5/R6) until the revision directions in the embodiment analysis are built and
-re-felt on the pillow itself.** The proxy framing, density law, and two-failure-shape taxonomy are
-unaffected — this is presentation/embodiment, not a content or ethics revision.
-
-## R12-2 · THE TARGET CHANGES: Oct 19 = the FULL experience, not a trimmed cut (supersedes R11-2)
-Sérgio, plainly: the WIP presentation should be the full experience, always fully realized — the Festival
-cut is a faster path THROUGH the same built material, not a smaller build. **Both Festival and Full ship
-for Oct 19**; this dual-version comparison is itself a research aspect of the article he's writing around
-the project (F3/R2-7's Festival-vs-Full divergence stops being a design nicety and becomes a documented
-research artifact). This retires R11-2's proposed trimmed WIP scope (opening + E1 tutorial + first-reveal +
-pillow only) — that was scoped as a fallback, not the ambition.
-**PM flag, stated plainly (not smoothed over):** this is an enormous scope increase against a ~3.5-month
-window. "Full experience" as previously specified is ALL FOUR STAGES (A provotype spine, B restructure
-specs, C spatial/radial build, D content completion) with final voice copy — see R12-5 for the resequencing
-this requires and the one hard dependency (G1) that cannot be compressed by working faster.
-
-## R12-3 · Cluster count: LEANS 3 rooms, trans room MULTIDIMENSIONAL/fluid — a third option, not a lock
-Resolves the long-open 3-vs-4 question (F4/R2-6) differently than either prior option. Not the static
-pink/blue/white-center tinted room (R3-3/R4-3) — Sérgio's new image: a trans room that **shapes and flows**
-between trans-woman-led, trans-man-led, and non-binary-led configurations, and **sometimes holds all three
-at once**. This is closer to a dynamic/data-driven "active facet" than fixed geometry. **Marked as a LEAN,
-not locked** (his own word: "more inclined to"). Consequences:
-- The R6-1 Nine Rooms research (trans-woman anchors per era, trans-man device options, the per-era
-  forced-binarisation motif) still supplies the content for each facet — nothing there is wasted, it just
-  needs a facet-switching shell instead of a fixed split.
-- **Open mechanism question, routed to the decision queue (R12-6 Q2):** what determines which facet is
-  dominant when — era-driven default weighting (R6-1 already gives each era a natural lean), player path,
-  cross-cluster storyline sends (F1), or a scripted convergence at specific load-bearing beats (candidate:
-  the forced-binarisation motif, or an E4-adjacent convergence)? Needs a geometry doc before Codex/Opus can
-  build it — this is now urgent, not a Stage-C-later item, per R12-2.
-- G1 (trans-man content, all three zones) and G5 (the flag beat) still bind in full, unchanged by this
-  spatial resolution — see R12-4's flagged conflict.
-
-## R12-4 · Ethics readers: Sérgio says defer — flagged conflict with R12-2/R12-3, not silently accepted
-Sérgio's answer to the standing decision-queue item: readers can wait, "more relevant necessities" first.
-**Naming the conflict plainly, per this role's mandate:** R12-3's fluid trans room explicitly wants
-trans-man content (one of its three facets) inside the Oct-19 full build (R12-2). G1 is a hard block on
-ALL trans-man material (device, TM4 interactivity, placement, LGB-thread home) pending the
-trans-masculine-reader consult specifically — it is not a "build faster" gate, it is a "someone outside
-this team has to read it" gate, and that consult takes real calendar time independent of anyone's build
-velocity. **If trans-man content is meant to ship in the Oct-19 full build, the reader consult cannot
-start "later" — it needs to start now, or the trans-man facet ships as greybox/absent while the other two
-facets ship with content, which is a legitimate outcome but should be a chosen one, not a surprise in
-October.** Restated as decision-queue Q1 below; not resolved unilaterally here.
-
-## R12-5 · Roadmap resequencing this target requires (PM call, needs Sérgio's confirm)
-The phased roadmap (§3) sequenced Stage C (spatial) behind Stages A/B, gated originally on the headset
-playtest, then unblocked-but-still-later by R11-1's browser-first call. **R12-2 removes "later" as an
-option** — Stage C (radial/fluid-cluster geometry + build), Stage B's remaining specs (Opening & Flow,
-assistant-as-guide, Sides-chart wiring, witness-record migration), and Stage D (content completion,
-Festival/Full path composition via `paths.json`) all need to run toward the same Oct-19 date instead of in
-sequence. Proposed reordering (his to confirm or amend):
-1. **Now, in parallel:** (a) the pillow revision (R12-1) — small, proves the embodiment fix before it
-   propagates; (b) the fluid-trans-cluster geometry doc (R12-3's open mechanism, once Q2 answers) — the
-   single largest unstarted spatial design item; (c) the Opening & Flow spec (already owed, now blocking
-   more than it was) — Fable writes both specs.
-2. **As soon as (a) proves out:** resume R4/R5/R6 provotype content on the revised grammar, AND start the
-   alcove content briefs (R6-1 data → the 12-cell grid, now reshaped by R12-3 into 3 clusters with a
-   fluid trans room) — these can run on Sonnet/Opus in parallel once specs exist.
-2. **Immediately, separately:** the trans-masculine reader consult (R12-4) — start the sourcing/outreach
-   now regardless of build sequencing, since it's the one item calendar time can't compress.
-3. **Content completion (Stage D)** becomes an ongoing parallel lane, not a final phase — `paths.json`
-   cuts-tagging was already built into the schema from R1 (R3-4), so Festival/Full composition is
-   authoring, not engineering, and can start as soon as enough beats exist to sequence.
-**What doesn't change:** the shipped build stays untouched; G1–G12 bind regardless of deadline pressure;
-placeholder copy stays placeholder until Sérgio's voice pass — a full-scope build does not mean a
-voice-finished build, and that distinction should stay explicit going into the WIP presentation.
-
-## R12-6 · Decision queue this round produced (see below, restated compactly)
-Q1 (trans-man reader timing, R12-4), Q2 (fluid-room mechanism, R12-3), Q3 (confirm/amend the resequencing,
-R12-5).
-
-# FEEDBACK ROUND 13 — pacing correction, era vision for the fluid trans room, Session 3-revision shipped (2026-07-03)
-
-## R13-1 · Pacing correction: depth over deadline (binding on how Fable operates, not just this round)
-Sérgio, plainly: "we have so much time until October... don't overfixate on the end date, fixate on
-making this project good, detailed and actually an immersive storytelling experience." This corrects
-R12-2/R12-5's urgency framing — the full-experience target (R12-2) stands, but the SCHEDULE PRESSURE
-Fable applied to it (pushing reader outreach and resequencing as immediate/urgent) overshot what he
-actually wants. **Standing correction, logged to memory**: name schedule risk once, plainly, when it's
-real — then default to recommending the deeper/more thorough path, not the faster one, when the two are
-in tension. Also: he wants **actual creative vision from Fable**, not only organization/reconciliation of
-others' research — explicitly invited this round ("fluid creativity but always curious and imaginative of
-future potentials — this is creative vision needed from you as well").
-
-## R13-2 · Trans-man reader consult: deep-analysis prompt sent, execution deferred (answers R12-4/Q1)
-Not urgent (per R13-1) — but the prep work ships now so it's ready whenever scheduled. New doc:
-**`docs/CHATGPT_DEEPRESEARCH_TRANSMAN_CONSULT_SOURCING_2026-07-03.md`** — sources real routes to a paid
-trans-masculine reader (professional cultural-consultant services, academic/Nordic trans-studies networks,
-university-adjacent channels), compensation/process norms, AND deepens the documentary material inside
-G1's three zones specifically so the eventual consult has real substance to react to, not a blank page.
-**R12-4's conflict is resolved this way**: the reader consult ITSELF is deferred, but the sourcing +
-material-deepening work is not — this satisfies both "no rush" and "don't let this quietly stall."
-
-## R13-3 · Era-by-era creative vision for the fluid trans room (answers R12-3's Q2 as a proposal, not a lock)
-New doc: **`docs/REINTERP_TRANS_REALITY_ERA_VISION_2026-07-03.md`** — Fable's creative-direction pass, not
-just research reconciliation. Core argument: the four eras read as an escalating story on their own — the
-apparatus's trans category moves from **absence (E1)** → **a strong trans-feminine anchor with structural
-trans-man erasure (E2)** → **the era the room can finally hold all three facets at once, because 2016 is
-exactly when the apparatus's own sorting categories multiply (the Sides chart AND the ministry "buckets"
-both differentiate in the same year — flagged as a deliberate rhyme, not a coincidence)** → **present-day,
-where the question becomes whether Maya's own full lead room already IS the trans-feminine facet, leaving
-the alcove to hold only trans-man (G1-gated) and non-binary (buildable now) orbiting her**. Proposes a
-switching mechanism: **era-driven default weighting, pullable toward a non-default facet by cross-cluster
-sends or sustained gaze, with "all three at once" reserved for earned convergence (E3 primarily, possibly
-recurring at the Close)** — data-driven by construction, nothing hardcoded. **All trans-masculine-specific
-content in this doc is design vision only — G1-gated before build**, per standing law; trans-feminine and
-non-binary material can move toward build sooner (still G6 + voice-pass gated, not G1-blocked).
-
-## R13-4 · Session 3-revision shipped: the pillow embodiment fixes (Sonnet 5, commit `607a542`)
-Applied the embodiment analysis's §4 directions exactly as scope-fenced: room/environment backdrop for the
-vignette + a new `close` phase (translucent overlay over a low-poly room corner, not ordinary app chrome);
-Daniel's `felt` line gets its own dedicated beat (system voice fully absent, bumped 10pt→11pt); one
-grounding stakes-line in the frame (who "Dad" is, why today); a new `close` phase separating the narrative
-landing from the sourced debrief. Ledger/witness filing, proxy framing, density law untouched — confirmed
-by Sonnet's own diff read before committing. `npm test`/`npm run build` green; genuine before/after
-screenshots via a stash/pop round-trip against the shipped commit; session log + BUILD_LOG updated in the
-worktree. **Two small flagged follow-ups, routed to lane E (Sonnet chore, anytime):** (1)
-`data/provotypes/_schema.json` doesn't yet document the new `close` object — no runtime validator reads
-it, nothing's broken, but it should sync; (2) a `.claude/launch.json` `reinterp-dev` port-5174 config was
-added to the ORIGINAL folder (not the worktree) because that's where this session's preview tooling reads
-from — noted for future sessions, no action needed.
-**Gate note, unchanged by Sonnet's technical verification**: acceptance is by Sérgio's feel, not by a
-build session's own read of its work — the hold on R4/R5/R6 stays until Sérgio plays the REVISED pillow
-himself (`?flat=1&reinterp=1`, worktree, port 5174) and confirms it lands.
-
-## R13-5 · Environments prioritized — a moodboard pass dispatched now (answers R12-5/Q3's item c)
-Sérgio: the environments are the resource-intensive part and worth building toward now rather than later,
-independent of the deadline question (R13-1) — and he flagged available session budget as a reason not to
-hold back. **Call: don't wait for a full geometry doc before starting visual/spatial exploration** — a
-moodboard pass can run in parallel and INFORM the geometry doc rather than follow it (this brings forward
-R4-4's "styling agents make sense once the geometry doc exists" — the era-vision doc (R13-3) now supplies
-enough creative direction to start one). Dispatched this round (see dispatch board): a Sonnet moodboard
-pass per house convention (`MOODBOARD_*.md`) translating R13-3's era-by-era vision into concrete
-spatial/lighting/object direction (era palette tokens fixed, never invented — composition and silhouette
-are the moodboard's job), and an Opus first-pass geometry sketch for the fluid trans room using R13-3 §3's
-switching mechanism as its brief.
+*Moved to `docs/REINTERP_MASTER_PLAN_ARCHIVE_ROUNDS_12-13_2026-07-03.md` per the standing
+~600-line practice. Live rounds below: 14+.*
 
 # FEEDBACK ROUND 14 — R4/R5/R6 unpaused, era vision confirmed + sharpened, trans-man consult reconciled, doc restructure (2026-07-03)
 
@@ -675,6 +525,101 @@ lookup-only — not part of the normal per-round read. **Standing practice going
 oldest rounds whenever the live doc passes ~600–700 lines, keeping only the last 2–3 rounds live. Also
 adopted: Fable's own round responses should link to the docs it writes/edits rather than restate their
 content in the chat — the files are the durable record, the chat should summarize.
+
+# FEEDBACK ROUND 15 — resource discipline, role restructure, the geometry doc lands (2026-07-03)
+
+## R15-1 · Resource correction (Sérgio, plainly): stop spending on ethics-process meta-work
+Sérgio, annoyed and right to be: asking Deep Research about consultancy pricing/engagement mechanics was
+a waste of his money. **The `CHATGPT_DEEPRESEARCH_CONSULT_ENGAGEMENT_MECHANICS_2026-07-03.md` prompt is
+RETIRED unrun** (marked ⛔ in the doc). His call, logged as the standing rule: **the project's resources go
+to creative/build work; ethics-PROCESS logistics (reader sourcing mechanics, compensation research,
+engagement structure) are deferred wholesale until the project is deliverable and being tested with real
+people.** There is enough public material on transmasculine realities to design from — and the research
+already run (Nine Rooms, the consult reply's era-asymmetry + device sharpening) covers the content side.
+What this does NOT change, at zero cost: the content register laws (satire targets the apparatus,
+detransition never vilified, respite never a trap, G-numbered content gates on copy) bind at build time
+exactly as before — they're discipline, not spend. What it DOES change: no more research passes, briefs,
+or dispatch items about the consult process itself; the G1 hold on trans-masc COPY converts from
+"pending consult" to "pending Sérgio's own go-ahead at testing time" — his gate to open, on his schedule.
+
+## R15-2 · Role restructure (Sérgio's call): Fable authors design; Opus + Sonnet build
+- **Fable 5 = the designer.** Design/geometry/flow/spec docs come from Fable directly — not dispatched to
+  Opus. (The geometry doc went to Opus this round and came back well — but that lane assignment was wrong
+  going forward; Fable conducts the needs.)
+- **Opus 4.8 = hard code** (architecture, spatial systems, complex builds — from Fable's specs).
+- **Sonnet 5 = code and content too** (well-specified builds, data sessions, chores — the volume lane).
+- **Per-round paste-ready prompt list**: every Fable round response now ENDS with a "READY TO PASTE"
+  section — one complete prompt block per active lane, inline in the chat response, so Sérgio never has
+  to assemble a prompt from a template + a spec reference himself. `05_HOW_TO_RUN_A_SESSION.md` stays as
+  the standing mechanics reference; the per-round prompts live in the round response itself.
+
+## R15-3 · The fluid-room geometry doc landed (Opus, `docs/REINTERP_FLUID_TRANS_ROOM_GEOMETRY_2026-07-03.md`)
+Reconciled and ACCEPTED as the working geometry, pending Sérgio's read: **one niche, three facet-states —
+not three sub-rooms.** Facets are states of a single lateral-arc alcove resolved in place by light + one
+hero object + an era-palette skin (the ◆2 spotlight law applied to meaning instead of position). Switching
+is data-driven (per-era facet table: weights + pull triggers — era default, cross-cluster send, decaying
+non-latched gaze). It sits inside the ceiling-witness cluster cleanly (niche at the colder ±110° arc; E4
+flips it forward as Maya's lead room). **Honest budget verdict adopted: "all three at once" fits only as a
+transient E3 spotlight beat borrowing hero budget from the dimmed ring — never a steady state**; facet
+swaps are material/light toggles on shared meshes. Trans-masc station renders greybox until Sérgio opens
+the gate (per R15-1's reframing). Opus flagged seven open questions; the three load-bearing ones are in
+the decision queue (convergence readability, gaze-pull gamification risk, two-lit-plus-greybox E3
+honesty). Next build step when Sérgio approves the doc: Opus prototypes the niche greybox behind
+`?reinterp=1`.
+
+## R15-4 · Fable deliverable this round: the OPENING & FLOW SPEC
+Written as `docs/REINTERP_OPENING_AND_FLOW_SPEC_2026-07-03.md` — the longest-owed design doc, and the one
+the pillow's "missing narrative logic" verdict (R14-1) actually depends on. Consolidates R9-1's opening
+sequence + R8-1's flow model + R11-3's visual anchors into one buildable beat-by-beat spec with the
+browser/VR logistics table per beat, profile-element proposals (the R11-3 Q1 ask), and the Lamby-rig
+integration points. Sonnet R4 (Origin Story Intake) was still running when this round closed — its result
+reconciles next round.
+
+# FEEDBACK ROUND 16 — geometry approved (gating stripped) · browser IS the 3D room · R4 shipped + revision queued · the logo (2026-07-03)
+
+## R16-1 · Geometry doc APPROVED; the trans-masc gating fully removed
+Sérgio read `REINTERP_FLUID_TRANS_ROOM_GEOMETRY_2026-07-03.md`: "overall looks okay" — and he began
+stripping the leftover consult-gating language himself. Fable finished that cleanup in the doc (all
+[G1]/greybox-until-consult/gated-flag remnants removed; §5's old "convergence honesty" question is moot):
+**all three facets build at full fidelity; the only copy gate anywhere is Sérgio's own voice pass, same as
+every line in the piece.** The greybox prototype is GO (updated prompt in the Round-16 paste list).
+
+## R16-2 · Opening & Flow: seven binding revisions (folded into the spec as §0-REV)
+The big one first, stated as law: **THE BROWSER VERSION IS THE 3D ROOM — `?flat=1` is NOT the browser
+experience.** Browser players control and explore the full 360° space (drag-look) and see the desktop
+action ON the monitor IN the room, never full-screen. Flat is a testing/adjusting tool and fallback only —
+building against it "would remove full intention of this becoming a WebXR experience." Every
+opening/spatial build session verifies in the 3D browser view from now on; `?flat=1` stays as regression
+baseline. The rest: platform select = start-up button or auto-detect (may show both); O2 camera behavior
+unified across platforms; **new AUTO-CAM / CONDUCTED MODE start-up option** (camera pans to each beat's
+position — accessibility for movement-limited VR players + a more conducted experience for anyone);
+browser camera controls = drag + arrow keys + shortcuts (R reset, F flip — a deliberate,
+camera-only revision of click/tap-only; content verbs stay click/tap); O8 update ritual plays on the
+monitor in the room and the room morphs, identical on both platforms; the logo is Fable's to design.
+
+## R16-3 · The logo: draft v1 delivered
+`docs/REINTERP_LOGO_SPEC_2026-07-03.md` — a low-poly pseudo-3D downward update-arrow, two orange face
+tones + dark extrusion sides + heavy black outline, **the arrow tip fractured off** (the apparatus's own
+icon, broken where it points at the person); stacked all-caps wordmark, second line one tone darker.
+Construction rules + extractable SVG + four v2 questions in the spec. Awaiting Sérgio's reaction.
+
+## R16-4 · Session R4 shipped (Sonnet, commit `6d4ffa4`) — revision chore queued from Sérgio's play
+The Origin Story Intake works (invitation → 5 questions → felt beats → silence terminal → close →
+debrief; baseline clean; a debrief-overflow bug found+fixed in-session). Sérgio likes the questions/form.
+His corrections → one Sonnet revision chore (paste list): (1) layout errors; (2) **too much text
+overall — trim**; (3) **the source-origin display does not belong player-facing here** — the debrief
+keeps its `status`/source data in the DATA (build law, unchanged) but stops rendering the provenance
+detail in the scene (where the documentary record surfaces player-facing is a Fable design question now
+queued — candidate: the existing Dossier surface, not the provotype close); (4) a leftover "brochure"
+string still shows in the table. Also logged from the session: a soft `cuts`-scope note (resolvable later
+via `paths.json`, no code change) and a tooling note (claude-in-chrome focus stalls; `preview_*` on the
+worktree port is the reliable path).
+
+## R16-5 · Sequencing note
+OP-1 (opening beats) was NOT run — correctly, since its prompt predated R16-2's browser-is-3D law. The
+revised OP-1 is now an **Opus** session (it's 3D/camera/engine work under the new law, not a desktop-canvas
+content session). Sonnet takes the R4 revision chore instead. Rounds 12–13 archived per the ~600-line
+standing practice (`REINTERP_MASTER_PLAN_ARCHIVE_ROUNDS_12-13_2026-07-03.md`).
 
 # TOP RECOMMENDATION
 
