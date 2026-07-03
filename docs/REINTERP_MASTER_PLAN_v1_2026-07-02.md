@@ -1076,6 +1076,151 @@ direction/specs/prompts/reconciliation · Opus 4.8 = architecture sessions · So
 verification (cost lane) · Codex 5.5 = parallel-safe prototypes · Deep Research = sourcing · Sérgio =
 author of record, runs all prompts, owns all gates.
 
+# FEEDBACK ROUND 11 — browser-first, the October 19 target, two sessions shipped (2026-07-02)
+
+## R11-1 · BROWSER-FIRST (decision — reframes the spatial gate)
+Sérgio: the browser version is how most people will experience the piece — it must work *really well*;
+VR stays always-integrated but is **validated afterwards**. Consequences:
+- **Spatial work is no longer hard-blocked on the headset playtest.** Stage C may proceed
+  **browser-first** (drag-look), provided everything is built VR-compatible by construction (seated
+  grammar, gaze/click only, Quest budgets, no VR-breaking assumptions) so the later headset pass is
+  *validation*, not rework.
+- The headset validation becomes a **scheduled checkpoint before Oct 19** (cluster legibility, ceiling
+  comfort, A11 morph call) instead of a precondition for starting.
+- The Opening & Flow spec leads with the browser experience per beat, VR column second.
+
+## R11-2 · THE TARGET: Work-in-Progress presentation, **October 19, 2026**
+The Festival-cut question has its answer: the WIP presentation is the milestone. **Proposed WIP scope
+(Sérgio to confirm):** a browser build of — the opening sequence (logo/disclaimer → window-lit room →
+lights on → Lamby-OS boot chime → profile creation with the known name → Lamby-as-Clippy login) →
+restructured Era 1 as the tutorial room (touch-to-discover, the graying task, the diary canon) → the
+first-reveal moment (ceiling presence + dim alcoves wake at first filing) → the E1→E2 update opening to
+the next rooms (greybox alcoves acceptable) → the pillow in Era 2. Provotypes carry `cuts` tags from
+birth, so the WIP cut is composable. Everything else (full clusters, Era 3–4 restructure, the Close)
+shows as design material, not build.
+
+## R11-3 · Decision-queue results
+- **Q1 (profile elements):** Sérgio asks for suggestions; visual anchors locked: the ROOM first,
+  centered on screen; **the desk lamp illuminating more than is real — symbolic** (the lamp is already
+  canon's one constant object across eras — the opening now begins in its light). → element proposals
+  land in the Opening & Flow spec; routing proposal: identical-routing ("we know what this really is"),
+  alternative noted.
+- **Q2 (names):** draft candidates — and **the era programs follow the same naming ritual** as the
+  assistants (his note). → guide spec delivers both name slates.
+- **Q4 (ethics readers):** honest "don't know yet." → PM action: propose concrete sourcing routes
+  (UiB/Center for Digital Narrative networks; SurvivingSOGICE project contacts; Norwegian queer orgs;
+  compensated reads) in a short brief Sérgio can act on. The pillow (G6) binds first.
+- **Q3 (playtest):** superseded by R11-1 — becomes the pre-Oct-19 validation checkpoint.
+
+## R11-4 · Sessions shipped
+- **Session 3 / R2 — the pillow (Sonnet 5, commit `fcaca92`).** Full three-cycle Lift/Exhale/Strike with
+  restrained pose (no swing satisfaction), escalating responses, **provably idempotent terminal loop**,
+  4-source provenance card; framework addition `states[].choices[]` (ledgerTag + optional response +
+  goto — registers, never branches, exactly per §R8-5); found + fixed a debrief clipping bug; Leave
+  mid-cycle verified; baseline clean. **→ SÉRGIO: play it (`?flat=1&reinterp=1`) — acceptance is by
+  feel; voice-pass notes while playing.**
+- **Lane B — the Lamby rig (Codex 5.5, commit `d66ac3e`).** Procedural Lamby-as-Clippy behind
+  `?lambyrig=1`: idle/blink/point/appear-disappear, cheerful→clinical→sterile moods, Era-1 tokens.
+  **Verdict adopted: procedural for the integrated Lamby pass; sprites reserved for authored close-up/
+  transformation beats** (which fits R9-2's "Tamagotchi Lamby transforms" — those transformation beats
+  are the sprite budget).
+- Parallel-lane note: Sonnet correctly left Codex's in-flight `src/lambyrig/` untouched — the file-fence
+  system worked under real concurrency.
+
+## R11-5 · Fable round prompt (separate chat)
+Standing bootstrap prompt for running Fable rounds in a fresh chat: **`docs/reinterp/04_FABLE_ROUND_PROMPT.md`**
+(persistent memory carries over automatically in this project folder; the prompt supplies the read order
++ role + output contract, and Sérgio pastes his round report below it).
+
+# FEEDBACK ROUND 12 — the pillow doesn't land · full experience for Oct 19 · 3-room fluid trans cluster (2026-07-03)
+
+*Sérgio played the pillow (`?flat=1&reinterp=1`) and answered the Round-11 decision queue. This round
+makes the single biggest scope call in the thread so far — read R12-2 and R12-5 carefully; they reorder
+everything downstream.*
+
+## R12-1 · The pillow doesn't land — diagnosed, not just noted
+Sérgio: didn't understand the logic/aesthetics; missing connection to real-world logic and narrative
+immersive benefit; wants more storytelling elements explored. Verified against the actual shipped code
+(`pillow.json` + `provotype.ts`, commit `fcaca92`) rather than guessed at — full diagnosis in
+**`docs/REINTERP_PROVOTYPE_EMBODIMENT_ANALYSIS_2026-07-03.md`** (new deliverable, this round). Summary: the
+vignette is architecturally identical to an ordinary desktop app window (no room, no environment); Daniel's
+`felt` voice is three lines total in the dimmest text on screen (R2-2's "bare, unstyled" law overcorrected
+into "nearly invisible"); no in-scene stakes ("who is Dad, why today"); the debrief's sourced-citation
+rigor is right but is currently asked to *also* carry the scene's emotional close. **This is a framework-
+level problem, not a copy problem** — `provotype.ts` is the one grammar every future provotype (R4/R5/R6)
+inherits, so it repeats and compounds if not fixed before more content is built on it. **Call: PAUSE new
+provotype content (R4/R5/R6) until the revision directions in the embodiment analysis are built and
+re-felt on the pillow itself.** The proxy framing, density law, and two-failure-shape taxonomy are
+unaffected — this is presentation/embodiment, not a content or ethics revision.
+
+## R12-2 · THE TARGET CHANGES: Oct 19 = the FULL experience, not a trimmed cut (supersedes R11-2)
+Sérgio, plainly: the WIP presentation should be the full experience, always fully realized — the Festival
+cut is a faster path THROUGH the same built material, not a smaller build. **Both Festival and Full ship
+for Oct 19**; this dual-version comparison is itself a research aspect of the article he's writing around
+the project (F3/R2-7's Festival-vs-Full divergence stops being a design nicety and becomes a documented
+research artifact). This retires R11-2's proposed trimmed WIP scope (opening + E1 tutorial + first-reveal +
+pillow only) — that was scoped as a fallback, not the ambition.
+**PM flag, stated plainly (not smoothed over):** this is an enormous scope increase against a ~3.5-month
+window. "Full experience" as previously specified is ALL FOUR STAGES (A provotype spine, B restructure
+specs, C spatial/radial build, D content completion) with final voice copy — see R12-5 for the resequencing
+this requires and the one hard dependency (G1) that cannot be compressed by working faster.
+
+## R12-3 · Cluster count: LEANS 3 rooms, trans room MULTIDIMENSIONAL/fluid — a third option, not a lock
+Resolves the long-open 3-vs-4 question (F4/R2-6) differently than either prior option. Not the static
+pink/blue/white-center tinted room (R3-3/R4-3) — Sérgio's new image: a trans room that **shapes and flows**
+between trans-woman-led, trans-man-led, and non-binary-led configurations, and **sometimes holds all three
+at once**. This is closer to a dynamic/data-driven "active facet" than fixed geometry. **Marked as a LEAN,
+not locked** (his own word: "more inclined to"). Consequences:
+- The R6-1 Nine Rooms research (trans-woman anchors per era, trans-man device options, the per-era
+  forced-binarisation motif) still supplies the content for each facet — nothing there is wasted, it just
+  needs a facet-switching shell instead of a fixed split.
+- **Open mechanism question, routed to the decision queue (R12-6 Q2):** what determines which facet is
+  dominant when — era-driven default weighting (R6-1 already gives each era a natural lean), player path,
+  cross-cluster storyline sends (F1), or a scripted convergence at specific load-bearing beats (candidate:
+  the forced-binarisation motif, or an E4-adjacent convergence)? Needs a geometry doc before Codex/Opus can
+  build it — this is now urgent, not a Stage-C-later item, per R12-2.
+- G1 (trans-man content, all three zones) and G5 (the flag beat) still bind in full, unchanged by this
+  spatial resolution — see R12-4's flagged conflict.
+
+## R12-4 · Ethics readers: Sérgio says defer — flagged conflict with R12-2/R12-3, not silently accepted
+Sérgio's answer to the standing decision-queue item: readers can wait, "more relevant necessities" first.
+**Naming the conflict plainly, per this role's mandate:** R12-3's fluid trans room explicitly wants
+trans-man content (one of its three facets) inside the Oct-19 full build (R12-2). G1 is a hard block on
+ALL trans-man material (device, TM4 interactivity, placement, LGB-thread home) pending the
+trans-masculine-reader consult specifically — it is not a "build faster" gate, it is a "someone outside
+this team has to read it" gate, and that consult takes real calendar time independent of anyone's build
+velocity. **If trans-man content is meant to ship in the Oct-19 full build, the reader consult cannot
+start "later" — it needs to start now, or the trans-man facet ships as greybox/absent while the other two
+facets ship with content, which is a legitimate outcome but should be a chosen one, not a surprise in
+October.** Restated as decision-queue Q1 below; not resolved unilaterally here.
+
+## R12-5 · Roadmap resequencing this target requires (PM call, needs Sérgio's confirm)
+The phased roadmap (§3) sequenced Stage C (spatial) behind Stages A/B, gated originally on the headset
+playtest, then unblocked-but-still-later by R11-1's browser-first call. **R12-2 removes "later" as an
+option** — Stage C (radial/fluid-cluster geometry + build), Stage B's remaining specs (Opening & Flow,
+assistant-as-guide, Sides-chart wiring, witness-record migration), and Stage D (content completion,
+Festival/Full path composition via `paths.json`) all need to run toward the same Oct-19 date instead of in
+sequence. Proposed reordering (his to confirm or amend):
+1. **Now, in parallel:** (a) the pillow revision (R12-1) — small, proves the embodiment fix before it
+   propagates; (b) the fluid-trans-cluster geometry doc (R12-3's open mechanism, once Q2 answers) — the
+   single largest unstarted spatial design item; (c) the Opening & Flow spec (already owed, now blocking
+   more than it was) — Fable writes both specs.
+2. **As soon as (a) proves out:** resume R4/R5/R6 provotype content on the revised grammar, AND start the
+   alcove content briefs (R6-1 data → the 12-cell grid, now reshaped by R12-3 into 3 clusters with a
+   fluid trans room) — these can run on Sonnet/Opus in parallel once specs exist.
+2. **Immediately, separately:** the trans-masculine reader consult (R12-4) — start the sourcing/outreach
+   now regardless of build sequencing, since it's the one item calendar time can't compress.
+3. **Content completion (Stage D)** becomes an ongoing parallel lane, not a final phase — `paths.json`
+   cuts-tagging was already built into the schema from R1 (R3-4), so Festival/Full composition is
+   authoring, not engineering, and can start as soon as enough beats exist to sequence.
+**What doesn't change:** the shipped build stays untouched; G1–G12 bind regardless of deadline pressure;
+placeholder copy stays placeholder until Sérgio's voice pass — a full-scope build does not mean a
+voice-finished build, and that distinction should stay explicit going into the WIP presentation.
+
+## R12-6 · Decision queue this round produced (see below, restated compactly)
+Q1 (trans-man reader timing, R12-4), Q2 (fluid-room mechanism, R12-3), Q3 (confirm/amend the resequencing,
+R12-5).
+
 # TOP RECOMMENDATION
 
 **Greenlight R0 → R1 → R2: the fork, the provotype framework, and the pillow provotype inside the shipped
