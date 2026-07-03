@@ -14,6 +14,7 @@ import { WitnessCanvas } from '../witness/intake';
 import { ledger } from '../state/ledger';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { buildEra1Room } from '../room/era1room';
+import { mountStartupOverlay } from '../desktop/opening';
 import strings from '../../data/strings/slice.json';
 
 const FLIP_SECONDS = 0.9;
@@ -28,6 +29,9 @@ const POWER_BTN = { x: 0.19, y: 0.895, z: 0.03 };
 /** the Starter Kit floppy on the desk (S1.2 insert beat) — in the leaflet pocket */
 const KIT_FLOPPY = { x: -0.34, y: 0.762, z: 0.12 };
 const DRAG_PITCH_MAX = 55;
+/** O1 establishing framing (reinterp): pulled back, room-wide, window-lit */
+const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
+const CAM_MOVE_SECONDS = 1.4; // O2 establishing → desk pan
 
 interface AppOptions {
   reinterp?: boolean;
@@ -136,6 +140,26 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   let facingBack = false;
   let flipCount = 0;
   let drag: { x: number; y: number } | null = null;
+
+  // reinterp only: camera POSITION + a smoothstep move for the O2 desk pan and
+  // the R (reset-view) shortcut. `conducted` = auto-cam ON: the move ignores
+  // drag/keys (accessibility, §0-REV-4); OFF = it's just the default framing
+  // the player can grab away from at any time.
+  const camPos = new pc.Vec3(EYE.x, EYE.y, EYE.z);
+  interface CamMove { fx: number; fy: number; fz: number; fp: number; fyaw: number;
+    tx: number; ty: number; tz: number; tp: number; tyaw: number; t: number; dur: number; conducted: boolean; }
+  let camMove: CamMove | null = null;
+  let autoCam = false;
+
+  function startCamMove(to: { x: number; y: number; z: number; pitch: number; yaw: number },
+                        dur: number, conducted: boolean): void {
+    const dyaw = ((to.yaw - camYaw + 540) % 360) - 180; // shortest signed rotation
+    camMove = { fx: camPos.x, fy: camPos.y, fz: camPos.z, fp: camPitch, fyaw: camYaw,
+      tx: to.x, ty: to.y, tz: to.z, tp: to.pitch, tyaw: camYaw + dyaw, t: 0, dur, conducted };
+    tween = null;
+  }
+  /** grabbing/keying the view cancels a non-conducted move (the player left it) */
+  function nudgeCamera(): void { if (camMove && !camMove.conducted) camMove = null; }
 
   const isBackYaw = (): boolean => {
     const n = ((camYaw % 360) + 360) % 360;
@@ -263,6 +287,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     }
     drag = { x: e.clientX, y: e.clientY };
     tween = null; // grabbing the view cancels the assist
+    nudgeCamera(); // …and a non-conducted O2/reset move
     try { canvasEl.setPointerCapture(e.pointerId); } catch { /* synthetic pointers */ }
   });
   canvasEl.addEventListener('pointermove', (e) => {
@@ -285,6 +310,35 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
       e.preventDefault();
       return;
     }
+    // reinterp browser CAMERA controls (§0-REV-5): arrow keys always steer the
+    // view; R/F are shortcuts, but only when no phase is capturing typed text —
+    // camera only, never a content verb. Non-reinterp keeps the shipped path.
+    if (options.reinterp && !os.paused) {
+      const k = e.key;
+      if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown') {
+        nudgeCamera();
+        if (!camMove) {
+          if (k === 'ArrowLeft') camYaw += 6;
+          else if (k === 'ArrowRight') camYaw -= 6;
+          else if (k === 'ArrowUp') camPitch = Math.min(DRAG_PITCH_MAX, camPitch + 5);
+          else camPitch = Math.max(-DRAG_PITCH_MAX, camPitch - 5);
+        }
+        e.preventDefault();
+        return;
+      }
+      if (!os.isCapturingText) {
+        if (k === 'r' || k === 'R') { // reset to the desk framing
+          startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, 0.7, false);
+          e.preventDefault();
+          return;
+        }
+        if ((k === 'f' || k === 'F') && os.inDesktop) { // flip (only meaningful in-desktop)
+          doFlip();
+          e.preventDefault();
+          return;
+        }
+      }
+    }
     if (facingBack) { // Esc returns; everything else is swallowed
       if (e.key === 'Escape') doFlip();
       e.preventDefault();
@@ -303,6 +357,20 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
         tween = null;
       }
       camPitch += (0 - camPitch) * Math.min(1, dt * 6); // level out during the swing
+    }
+    if (options.reinterp) {
+      if (camMove) {
+        camMove.t += dt;
+        const k = Math.min(1, camMove.t / camMove.dur);
+        const s = k * k * (3 - 2 * k); // smoothstep
+        camPos.x = camMove.fx + (camMove.tx - camMove.fx) * s;
+        camPos.y = camMove.fy + (camMove.ty - camMove.fy) * s;
+        camPos.z = camMove.fz + (camMove.tz - camMove.fz) * s;
+        camPitch = camMove.fp + (camMove.tp - camMove.fp) * s;
+        camYaw = camMove.fyaw + (camMove.tyaw - camMove.fyaw) * s;
+        if (k >= 1) camMove = null;
+      }
+      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
     camera.setLocalEulerAngles(camPitch, camYaw, 0);
 
@@ -336,6 +404,44 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
 
     if (os.inDesktop) flipBtn.style.display = 'block';
   });
+
+  // ── reinterp opening (O1): window-lit room behind the start-screen overlay ──
+  function setLight(id: string, intensity: number): void {
+    const e = app.root.findByName(`light-${id}`);
+    if (e instanceof pc.Entity && e.light) e.light.intensity = intensity;
+  }
+  function applyWindowLight(): void { // O1: lit only by the window, monitor dark
+    setLight('roomFill', 0.08);
+    setLight('lamp', 0.0);
+    setLight('screenGlow', 0.0);
+    setLight('witnessCold', 0.12);
+  }
+  function applyLightsOn(): void { // O2: a warm ordinary click; the lamp over-throws
+    setLight('roomFill', 1.0);
+    setLight('lamp', 2.6);      // more than physically real — symbolic (R11-3 anchor)
+    setLight('screenGlow', 0.22);
+    setLight('witnessCold', 0.9);
+  }
+
+  if (options.reinterp) {
+    applyWindowLight();
+    camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
+    camPitch = ESTABLISH.pitch;
+    camYaw = 0;
+    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    const overlay = mountStartupOverlay({
+      onContinue: (choices) => {
+        autoCam = choices.autoCam;
+        overlay.destroy();
+        applyLightsOn();                 // O2: room lights + lamp over-throw
+        // O2: framed camera moves establishing → desk (conducted under auto-cam,
+        // otherwise the default framing the player can drag away from).
+        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, CAM_MOVE_SECONDS, autoCam);
+        os.beginReinterpOpening();        // boot on the monitor → O3 profile
+      },
+      onLeave: () => { os.leaveNow(); }
+    });
+  }
 
   app.start();
   return app;

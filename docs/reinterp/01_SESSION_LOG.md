@@ -1,13 +1,26 @@
 # REINTERP SESSION LOG — append-only; newest at the top of DONE
 
 ## NEXT UP
-**R5 — the femininity homework ('16)**, per master plan archive §R5, following the same room-presence/
-felt-beat/close-phase grammar this session used (revision commit 607a542). Ready per Round 14's R14-1
-unpause (R4/R5/R6 no longer gated on the pillow's resolution). **R7 (the graying task, Era 1)** still
-needs its own build spec first (master plan §R3-1) — do NOT improvise it. Character-creation opening
-(queue item 6) also needs a Fable-written spec (§R8-2) — do not start.
+Two live tracks, for Fable/Sérgio to sequence:
+- **Opening continuation** — this session shipped **OP-1 (O1–O3)** per the OPENING & FLOW SPEC build order
+  (§4). Next in that track: **OP-2 (Opus): O4 Lamby integration** (extract the `?lambyrig=1` procedural rig
+  into the OS as the resident assistant with mood/line/anchor + dismissal/logging), then **OP-3 (Sonnet):
+  O5–O7 wiring** (beginner panel, dark-surround tonality, first-filing reveal hooks). The opening now lands
+  cleanly on the shipped Era-1 desktop, so both build on real ground.
+- **R5 — the femininity homework ('16)**, per master plan archive §R5, on the same room-presence/felt-beat/
+  close-phase grammar (commit 607a542). Ready per Round 14's R14-1 unpause.
+**R7 (the graying task, Era 1)** still needs its own build spec first (master plan §R3-1) — do NOT improvise.
 
-## BLOCKED / WAITING (unchanged from before this session, plus one addition)
+## BLOCKED / WAITING (carried forward, plus the opening additions)
+- **Opening copy voice pass (Sérgio)** — OP-1 shipped with PLACEHOLDER throughout `data/strings/opening.json`
+  (disclaimer, boot, chips/goals/icons, re-captions). → **FABLE ROUND question:** the O3 chip/goal/icon SETS
+  and the pre-filled name ("Daniel" placeholder) are register demonstrations only (spec §5.1) — Fable/Sérgio
+  choose the final set (criterion: each chip must be able to RETURN, recontextualised, in the witness record
+  or an assistant line) and the pre-fill source. Nothing in the opening is final copy.
+- **VR in-scene O1 (future, not blocking):** O1's start screen is a browser DOM overlay (correct for the
+  browser-first scope: "build VR-compatible, validate later"). VR players can't see DOM, so a headset build
+  will need an in-scene (world-space) equivalent of the disclaimer + start-up options. Flagged for the VR
+  validation pass; out of scope this session by the brief.
 - Pillow copy voice pass (Sérgio) — build shipped with PLACEHOLDER; final copy lands whenever ready.
 - Origin Story Intake copy voice pass (Sérgio) — same, build shipped with PLACEHOLDER throughout.
 - G6/G7 ethics read of both the pillow and the Origin Story Intake — Sérgio scheduling. Nothing in
@@ -27,6 +40,58 @@ needs its own build spec first (master plan §R3-1) — do NOT improvise it. Cha
   is broken, but it should be synced whenever a session has schema-only bandwidth.
 
 ## DONE
+*(2026-07-04 · Session 5 — OP-1, opening beats O1–O3 behind `?reinterp=1`, in the 3D room
+(`docs/REINTERP_OPENING_AND_FLOW_SPEC_2026-07-03.md` §1; §0-REV binding). This is the character-creation
+opening that queue item 6 / master plan §R8-2 flagged as needing a Fable spec first — that spec now exists
+(the OPENING & FLOW SPEC, synced this session), so it was built per its §4 build order (OP-1 = Sonnet-scoped;
+run here) rather than improvised. **Doc sync first** (commit 62cf82c): master plan v1 R12–14, the Opening &
+Flow spec, logo spec, fluid-trans-room geometry, archive R12–13, coordination R14–15, Fable round prompt;
+the retired consult-mechanics research; `01_SESSION_LOG.md` left untouched per protocol.
+**Architecture (all reinterp-gated; no-flag path byte-for-byte unchanged):** the shipped opening
+(warning→off→boot→splash→name→desktop) is untouched; behind the flag four new DesktopOS phases
+(`r_dark`/`r_boot`/`r_profile`/`r_recap`) REPLACE it. O1 is a NON-diegetic DOM overlay (`src/desktop/opening.ts`,
+new) laid OVER the 3D room — deliberately NOT on the monitor, since the spec needs the window-lit room visible
+behind the disclaimer with the monitor dark; the container is pointer-events:none so drag/arrow look-around
+still reaches the canvas. While O1 is up the monitor sits in `r_dark`; the engine owns the overlay, the lights,
+and the camera. O2/O3 render on the monitor canvas (the one UI surface). Flat mode (`?flat=1`, the testing
+fallback) has no room/overlay, so it skips O1 and calls `beginReinterpOpening()` straight into the O2/O3 canvas
+content — "desktop canvas alone" per §0-REV-1.
+**O1 (`src/engine/app.ts`):** logo placeholder slot (asset per REINTERP_LOGO_SPEC later) + disclaimer (existing
+4s-arm law, in the overlay) + start-up options: platform select (browser/VR — both shown; swaps the controls
+hint) and the auto-cam/conducted toggle (§0-REV-4). Room lit only by window light (roomFill/lamp/screenGlow
+dimmed at startup), monitor dark. Leave works from the first frame (overlay Leave → new public
+`os.leaveNow()` → wipe + exit note). **O2 (Continue):** room lights on + desk-lamp symbolic over-throw
+(intensity 2.6, more than real — R11-3 anchor); framed camera smoothstep-pans establishing→desk (new camera
+POSITION move + shortest-path yaw). Under auto-cam ON the pan is conducted (drag/keys can't interrupt it);
+under OFF it's the default framing the player can drag away from (§0-REV-3). LambyOS "this computer was made
+for you" boot crawls on the monitor. **O3:** name PRE-FILLED (never typed — "they already know your name"),
+pixel-icon grid (6 era-token objects drawn in code), three get-to-know-you chips (pick-3, live counter), one
+insisted goal (no neutral option) plus an "I'd rather not say" that files as a choice too (Ethics #10 symmetry);
+then the profile-complete screen re-captioning every pick in the system's categories (diary→"self-monitoring:
+enabled", the goal→"orientation: flagged for correction", etc. — the thesis in ten seconds). Picks → in-memory
+`ledger.tags` (`profile:icon:*`/`profile:chip:*`/`profile:goal:*`) in `commitProfile()`, written the moment
+the recap opens; routing is IDENTICAL regardless of picks (recap Enter → the shipped desktop). **§0-REV-5
+camera controls:** drag + arrow keys + R (reset view) + F (flip), reinterp-gated, camera-only; R/F suppressed
+whenever a phase captures typed text (new `os.isCapturingText`) so a later IRC beat never loses a letter — the
+opening captures none, so they're free there. All copy in `data/strings/opening.json` (new, PLACEHOLDER).
+**One placeholder polish during verification:** the moon icon first rendered as a solid block (an offset-rect
+carve in a non-bg colour); redrawn as a clear C-crescent — content-only, no code-path change.
+**Verification:** `npm test` + `npm run build` green (pre-existing chunk-size warning only). Full
+O1→O3→desktop playthrough driven IN THE 3D BROWSER VIEW on the worktree dev server (:5174) via the
+`preview_*` managed browser (navigated to the worktree port, then synthetic pointer/keyboard dispatch — the
+per-session recommended path; a small world→screen projection inverted the monitor coords since the camera
+sits straight-on at the desk). Screenshots captured: start screen (room behind, monitor dark), options
+(Headset + auto-cam On, controls hint swapped to the VR line), boot (lamp over-throw + "made for you"), profile
+(3/3 chips + goal + armed "That's me"), re-caption, and the landing desktop. Auto-cam ON confirmed as a
+conducted dock at the desk; auto-cam OFF confirmed interruptible (a drag mid-pan left the camera under free
+control); drag-look, arrow-pan, and R-reset all confirmed; Leave-from-disclaimer confirmed (wipe + "Nothing was
+kept."). Baselines re-checked clean: `?flat=1&reinterp=1` shows the opening on the canvas alone; `?flat=1`
+shows the unchanged shipped warning; no-flag `/` shows the shipped 3D warning with NO overlay, NO `data-reinterp`,
+NO reinterp marker, default room lighting. Ledger `tags` are not independently observable in-browser without a
+debug hook (consistent with prior sessions' witness-only observability); they're written in the same
+`commitProfile()` that opens the correctly re-captioned recap, so the recap content is the proxy evidence.
+No ethics/creative calls made — opening copy + the chip/goal/icon final set routed → FABLE ROUND (see BLOCKED).)*
+
 *(2026-07-03 · Session 4 — R4, the Origin Story Intake ('97, Era 1). Built
 `data/provotypes/origin_intake_e1.json` on the REVISED provotype grammar (room-presence/felt-beat/
 close-phase pattern from commit 607a542, not the pre-revision pillow shape) — `provotype.ts` left

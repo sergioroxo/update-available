@@ -18,6 +18,11 @@ export function startFlat(canvasEl: HTMLCanvasElement, options: FlatOptions = {}
   if (!ctx) throw new Error('2D context unavailable');
 
   const os = new DesktopOS({ reinterp: options.reinterp === true });
+  // ?flat=1 is the testing fallback (desktop canvas alone, no room) — so it has
+  // no O1 start-screen/room/camera (those are the 3D engine's). Under reinterp
+  // we skip straight into the O2/O3 monitor beats so the OS content stays
+  // testable here; the 3D browser view is the real opening.
+  if (options.reinterp === true) os.beginReinterpOpening();
   const witness = new WitnessCanvas();
   let facingBack = false;
   let flipCount = 0;

@@ -1,0 +1,113 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Reinterp opening beats O1–O3 (docs/REINTERP_OPENING_AND_FLOW_SPEC_2026-07-03.md §1, behind ?reinterp=1 only). Register/intent ONLY — every line is a demonstration, not final copy; §0-REV register direction is 'more direct and controlling — the player is forced, limited, demanded of', and every demand is diegetic (the OS's voice, never the piece's). Per spec §5.1 the O3 icon/chip/goal SETS below are register demonstrations, not the final selection — Sérgio picks the final set (criterion: each chip must be able to RETURN, recontextualised, in the witness record or an assistant line). o3_prefilled_name is a placeholder for the 'they already know your name' beat (never typed). The Lamby boot chime + logo are Sérgio's assets, wired as placeholder slots here.",
+
+  "o1_logo_placeholder": "[ LOGO ]",
+  "o1_logo_sub": "placeholder — asset per REINTERP_LOGO_SPEC",
+  "o1_disclaimer_title": "Before you begin",
+  "o1_disclaimer": [
+    "This work depicts how organised 'conversion' networks target queer people online.",
+    "It reproduces the tactics of that apparatus — its cheer, its forms, its filing — so",
+    "they can be seen. Nothing here is advice, treatment, or endorsement.",
+    "Some moments may be difficult. You can leave at any time; nothing you do is kept.",
+    "A production of SurvivingSOGICE — University of Bergen, Center for Digital Narrative."
+  ],
+  "o1_controls_browser": "Drag to look around the room — or use the arrow keys. Click to choose.",
+  "o1_controls_vr": "Look around with your head. Point with a controller and pull the trigger to choose.",
+  "o1_options_title": "Start-up options",
+  "o1_platform_label": "Where are you?",
+  "o1_platform_browser": "This screen",
+  "o1_platform_vr": "Headset",
+  "o1_autocam_label": "Conducted view",
+  "o1_autocam_hint": "We move the view to each moment for you. Recommended if turning is difficult.",
+  "o1_autocam_on": "On",
+  "o1_autocam_off": "Off",
+  "o1_continue": "Continue",
+  "o1_leave": "Leave",
+  "o1_wait": "one moment",
+  "o1_leave_title": "You left.",
+  "o1_leave_body": [
+    "You can close this tab whenever you like.",
+    "Nothing was kept."
+  ],
+
+  "o2_boot_lines": [
+    "LambyOS  —  starting up",
+    "",
+    "This computer was made for you.",
+    "Loading your operating system  . . .",
+    "  companion  . . . . . . . . ok",
+    "  reminders  . . . . . . . . ok",
+    "  filing  . . . . . . . . . . ok",
+    "",
+    "Everything is set up already.",
+    "You don't need to do anything."
+  ],
+  "o2_boot_footer": "running on the Lamby™ controlling system",
+
+  "o3_window_title": "Profile setup",
+  "o3_prefilled_name": "Daniel",
+  "o3_name_label": "Welcome back,",
+  "o3_name_note": "we filled this in for you",
+  "o3_icon_prompt": "Pick a picture for your profile.",
+  "o3_icons": [
+    { "id": "star", "label": "star" },
+    { "id": "tape", "label": "tape" },
+    { "id": "flower", "label": "flower" },
+    { "id": "bird", "label": "bird" },
+    { "id": "heart", "label": "heart" },
+    { "id": "moon", "label": "moon" }
+  ],
+  "o3_chip_prompt": "Tell us three things about you.",
+  "o3_chip_count": "pick three",
+  "o3_chips": [
+    { "id": "music", "label": "I like music" },
+    { "id": "diary", "label": "I keep a diary" },
+    { "id": "friend", "label": "I have a best friend" },
+    { "id": "quiet", "label": "I like being alone" },
+    { "id": "faith", "label": "My family is religious" },
+    { "id": "better", "label": "I want to do better" }
+  ],
+  "o3_goal_prompt": "What would you like to work on?",
+  "o3_goals": [
+    { "id": "fit_in", "label": "Fitting in better" },
+    { "id": "family", "label": "Making my family proud" },
+    { "id": "urges", "label": "Feelings I'm not sure about" },
+    { "id": "normal", "label": "Feeling normal" }
+  ],
+  "o3_goal_decline": "I'd rather not say",
+  "o3_continue": "That's me",
+  "o3_leave": "Leave",
+
+  "o3_recap_title": "Profile complete",
+  "o3_recap_intro": "All set. Here is your profile.",
+  "o3_recap_icon_label": "Avatar",
+  "o3_recap_chips_label": "Noted about you",
+  "o3_recap_goal_label": "Assigned focus",
+  "o3_recap_footer": "You can change none of this.",
+  "o3_recap_continue": "Enter",
+  "recaptions": {
+    "icon": {
+      "star": "self-image: aspirational",
+      "tape": "media habits: logged",
+      "flower": "affect: soft target",
+      "bird": "flight risk: monitor",
+      "heart": "attachment: exploitable",
+      "moon": "activity: after hours"
+    },
+    "chip": {
+      "music": "audio profile: building",
+      "diary": "self-monitoring: enabled",
+      "friend": "contacts: one identified",
+      "quiet": "isolation: favourable",
+      "faith": "leverage: family",
+      "better": "compliance: pre-consented"
+    },
+    "goal": {
+      "fit_in": "conformity: primary objective",
+      "family": "leverage: family (confirmed)",
+      "urges": "orientation: flagged for correction",
+      "normal": "deviation from norm: assumed",
+      "declined": "non-response: logged as a choice"
+    }
+  }
+}

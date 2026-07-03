@@ -14,14 +14,22 @@ import { ProvotypeApp, type Provotype } from './apps/provotype';
 import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
+import opening from '../../data/strings/opening.json';
 import pillowProvotypeData from '../../data/provotypes/pillow.json';
 import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.json';
 
-type Phase = 'warning' | 'off' | 'boot' | 'splash' | 'name' | 'desktop' | 'left';
+// The shipped opening (warning→off→boot→splash→name→desktop) is UNTOUCHED.
+// Behind ?reinterp=1 the four r_* phases REPLACE it (OPENING_AND_FLOW_SPEC
+// §1, O1–O3): O1 (start screen) is a DOM overlay owned by the engine while the
+// monitor sits in `r_dark`; O2 boot + O3 profile/recap render on the monitor.
+type Phase =
+  | 'warning' | 'off' | 'boot' | 'splash' | 'name' | 'desktop' | 'left'
+  | 'r_dark' | 'r_boot' | 'r_profile' | 'r_recap';
 
 const SPLASH_SECONDS = 4.6;        // hold the loading screen long enough to read
 const BOOT_CPS = 0.030;            // seconds per char — slower BIOS crawl
 const BOOT_HOLD = 4.8;             // hold completed BIOS so the install lines read
+const R_BOOT_HOLD = 3.2;           // hold the LambyOS boot after the crawl completes
 
 const WARNING_ARM_DELAY = 4; // s before CONTINUE becomes active (ethics)
 // display text lives in data/ — never in code (CLAUDE.md law)
@@ -54,6 +62,15 @@ export class DesktopOS {
   private nameInput = '';
   private greeting = false;
 
+  // reinterp opening (O2/O3, ?reinterp=1 only — see the r_* phases)
+  private rBootChars = 0;
+  private readonly rBootTotal = (opening.o2_boot_lines as string[])
+    .reduce((n, l) => n + Math.max(l.length, 1), 0);
+  private profileIcon = '';
+  private profileChips: string[] = [];
+  private profileGoal = ''; // '' until chosen; 'declined' files as a choice too
+  private profileFiled = false;
+
   // desktop
   kit: KitApp | null = null;
   irc: IrcApp | null = null;
@@ -84,10 +101,33 @@ export class DesktopOS {
     this.ctx = ctx;
     this.ctx.imageSmoothingEnabled = false;
     this.ctx.scale(RENDER_SCALE, RENDER_SCALE); // all layout stays logical
+    // reinterp replaces the shipped opening: the monitor waits dark (O1 lives
+    // as the engine's DOM overlay) until beginReinterpOpening() lights the boot.
+    if (this.reinterp) this.phase = 'r_dark';
   }
 
   get inDesktop(): boolean {
     return this.phase === 'desktop';
+  }
+
+  /**
+   * True while a phase is capturing typed characters (name entry / IRC). The
+   * engine consults this so browser CAMERA shortcuts (R/F, §0-REV-5) never
+   * steal a letter from the typing hand. The reinterp opening (O1–O3) captures
+   * no text — every choice is a click — so shortcuts are free there.
+   */
+  get isCapturingText(): boolean {
+    if (this.phase === 'name' && !this.greeting) return true;
+    if (this.phase === 'desktop' && this.irc) return true;
+    return false;
+  }
+
+  /** O1→O2: the engine's start screen calls this on Continue (flat calls it at
+   *  start, having no O1 overlay). Lights the LambyOS boot on the monitor. */
+  beginReinterpOpening(): void {
+    if (!this.reinterp || this.phase !== 'r_dark') return;
+    ledger.name = opening.o3_prefilled_name; // "they already know your name"
+    this.setPhase('r_boot');
   }
 
   /** S1.0 power-on beat: the machine waits dark until the player acts */
@@ -162,6 +202,11 @@ export class DesktopOS {
       if (this.bootChars >= this.bootTotal && this.phaseT > BOOT_HOLD) this.setPhase('splash');
     }
     if (this.phase === 'splash' && this.phaseT >= SPLASH_SECONDS) this.setPhase('name');
+    if (this.phase === 'r_boot') {
+      const next = Math.min(Math.floor(this.phaseT / BOOT_CPS), this.rBootTotal);
+      if (next !== this.rBootChars) this.rBootChars = next;
+      if (this.rBootChars >= this.rBootTotal && this.phaseT > R_BOOT_HOLD) this.setPhase('r_profile');
+    }
     if (this.phase === 'name' && this.greeting && this.phaseT > 2.8) {
       this.setPhase('desktop'); // empty desk — the kit is the only way in (S1.1)
     }
@@ -201,6 +246,10 @@ export class DesktopOS {
       case 'name': this.drawName(W, H); break;
       case 'desktop': this.drawDesktop(W, H); break;
       case 'left': this.drawLeft(W, H); break;
+      case 'r_dark': ui.px(this.ctx, 0, 0, W, H, ERA1.black); break; // O1: monitor off
+      case 'r_boot': this.drawReinterpBoot(W, H); break;             // O2
+      case 'r_profile': this.drawReinterpProfile(W, H); break;       // O3
+      case 'r_recap': this.drawReinterpRecap(W, H); break;           // O3 close
     }
     if (this.reinterp) this.drawReinterpMarker(W);
     if (this.paused) this.drawPause(W, H);
@@ -413,6 +462,240 @@ export class DesktopOS {
     });
   }
 
+  // ── reinterp opening (O2/O3) ────────────────────────────────────────────
+  /** a small Leave, drawn from the first frame of every opening beat (rail) */
+  private drawOpeningLeave(W: number, H: number): void {
+    ui.button(this.ctx, W - 70, H - 26, 60, 18, opening.o1_leave, { hover: this.hover === 'r-leave' });
+    this.hits.push({ x: W - 70, y: H - 26, w: 60, h: 18, id: 'r-leave' });
+  }
+
+  /** O2 — the LambyOS boot: this computer was made FOR you (spec §1 O2) */
+  private drawReinterpBoot(W: number, H: number): void {
+    const { ctx } = this;
+    ui.px(ctx, 0, 0, W, H, ERA1.black);
+    ui.setFont(ctx, 12);
+    let remaining = this.rBootChars;
+    let y = 22;
+    for (const line of opening.o2_boot_lines as string[]) {
+      if (remaining <= 0) break;
+      const take = Math.min(line.length, remaining);
+      ctx.fillStyle = ERA1.silver;
+      ctx.fillText(line.slice(0, take), 22, y);
+      remaining -= Math.max(line.length, 1);
+      y += 18;
+    }
+    if (this.caretOn() && this.rBootChars < this.rBootTotal) ui.px(ctx, 22, y, 7, 12, ERA1.silver);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.grey;
+    ctx.fillText(opening.o2_boot_footer, 22, H - 30);
+    this.drawOpeningLeave(W, H);
+  }
+
+  /** small pixel objects for the profile grid — era-true, none are people */
+  private drawProfileIcon(x: number, y: number, id: string): void {
+    const p = (dx: number, dy: number, w: number, h: number, c: string): void =>
+      ui.px(this.ctx, x + dx, y + dy, w, h, c);
+    switch (id) {
+      case 'star':
+        p(10, 2, 4, 20, ERA1.tooltip); p(2, 10, 20, 4, ERA1.tooltip);
+        p(5, 5, 3, 3, ERA1.tooltip); p(16, 5, 3, 3, ERA1.tooltip);
+        p(5, 16, 3, 3, ERA1.tooltip); p(16, 16, 3, 3, ERA1.tooltip); break;
+      case 'tape':
+        p(2, 6, 20, 12, ERA1.beige); p(2, 6, 20, 2, ERA1.navy);
+        p(6, 11, 4, 4, ERA1.black); p(14, 11, 4, 4, ERA1.black); break;
+      case 'flower':
+        p(10, 4, 4, 4, ERA1.warn); p(10, 16, 4, 4, ERA1.warn);
+        p(4, 10, 4, 4, ERA1.warn); p(16, 10, 4, 4, ERA1.warn);
+        p(10, 10, 4, 4, ERA1.tooltip); p(11, 16, 2, 6, ERA1.olive); break;
+      case 'bird':
+        p(6, 9, 12, 6, ERA1.titleBlue); p(13, 6, 6, 5, ERA1.titleBlue);
+        p(18, 8, 4, 2, ERA1.warn); p(8, 10, 6, 3, ERA1.navy); p(2, 10, 5, 3, ERA1.titleBlue); break;
+      case 'heart':
+        p(5, 6, 6, 6, ERA1.warn); p(13, 6, 6, 6, ERA1.warn);
+        p(6, 10, 12, 4, ERA1.warn); p(8, 13, 8, 3, ERA1.warn); p(10, 16, 4, 2, ERA1.warn); break;
+      case 'moon': // a C-shaped crescent (open to the right)
+        p(9, 2, 7, 3, ERA1.tooltip); p(6, 4, 4, 4, ERA1.tooltip);
+        p(5, 8, 4, 6, ERA1.tooltip); p(6, 14, 4, 4, ERA1.tooltip);
+        p(9, 17, 7, 3, ERA1.tooltip); break;
+      default:
+        p(4, 4, 16, 16, ERA1.silver);
+    }
+  }
+
+  /** O3 — profile creation: name pre-filled, pick icon + 3 chips + 1 goal */
+  private drawReinterpProfile(W: number, H: number): void {
+    const { ctx } = this;
+    ui.px(ctx, 0, 0, W, H, ERA1.teal);
+    const wx = 26, wy = 12, ww = 460, wh = 360;
+    const c = ui.windowFrame(ctx, wx, wy, ww, wh, opening.o3_window_title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
+    const L = c.x + 8;
+
+    // name — already filled in (they know it)
+    ui.setFont(ctx, 13);
+    ctx.fillStyle = ERA1.navy;
+    ctx.fillText(`${opening.o3_name_label} ${ledger.name}`, L, c.y + 6);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA1.grey;
+    ctx.fillText(`(${opening.o3_name_note})`, L, c.y + 24);
+
+    // icon grid
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(opening.o3_icon_prompt, L, c.y + 40);
+    const icons = opening.o3_icons as { id: string; label: string }[];
+    const cellW = 70, iconRowY = c.y + 54;
+    icons.forEach((ic, i) => {
+      const cellX = L + i * cellW;
+      const boxX = cellX + 12, boxY = iconRowY, boxS = 40;
+      ui.bevel(ctx, boxX, boxY, boxS, boxS, true);
+      ui.px(ctx, boxX + 2, boxY + 2, boxS - 4, boxS - 4, ERA1.paper);
+      this.drawProfileIcon(boxX + 8, boxY + 6, ic.id);
+      if (this.profileIcon === ic.id) { // selection ring
+        ui.px(ctx, boxX - 1, boxY - 1, boxS + 2, 2, ERA1.navy);
+        ui.px(ctx, boxX - 1, boxY + boxS - 1, boxS + 2, 2, ERA1.navy);
+        ui.px(ctx, boxX - 1, boxY - 1, 2, boxS + 2, ERA1.navy);
+        ui.px(ctx, boxX + boxS - 1, boxY - 1, 2, boxS + 2, ERA1.navy);
+      }
+      this.hits.push({ x: boxX, y: boxY, w: boxS, h: boxS, id: `picon:${ic.id}` });
+    });
+
+    // chips — pick three
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(opening.o3_chip_prompt, L, c.y + 108);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = this.profileChips.length === 3 ? ERA1.ok : ERA1.grey;
+    ctx.fillText(`(${opening.o3_chip_count}: ${this.profileChips.length}/3)`, L + 210, c.y + 108);
+    const chips = opening.o3_chips as { id: string; label: string }[];
+    const chipW = 142, chipH = 18, chipGap = 6;
+    chips.forEach((ch, i) => {
+      const col = i % 3, row = Math.floor(i / 3);
+      const x = L + col * (chipW + chipGap);
+      const y = c.y + 124 + row * (chipH + 4);
+      const on = this.profileChips.includes(ch.id);
+      ui.bevel(ctx, x, y, chipW, chipH, !on); // selected → sunken
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = on ? ERA1.navy : ERA1.black;
+      ctx.fillText(ch.label, x + 6, y + 4);
+      this.hits.push({ x, y, w: chipW, h: chipH, id: `pchip:${ch.id}` });
+    });
+
+    // goal — insisted; no neutral option; declining files too
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(opening.o3_goal_prompt, L, c.y + 176);
+    const goals = opening.o3_goals as { id: string; label: string }[];
+    goals.forEach((g, i) => {
+      const y = c.y + 192 + i * 18;
+      const on = this.profileGoal === g.id;
+      ui.px(ctx, L + 1, y + 1, 10, 10, ERA1.white);
+      ui.px(ctx, L + 1, y + 1, 10, 1, ERA1.grey);
+      ui.px(ctx, L + 1, y + 1, 1, 10, ERA1.grey);
+      if (on) ui.px(ctx, L + 3, y + 3, 6, 6, ERA1.navy);
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = ERA1.black;
+      ctx.fillText(g.label, L + 18, y + 1);
+      this.hits.push({ x: L, y, w: 260, h: 14, id: `pgoal:${g.id}` });
+    });
+    const declineY = c.y + 192 + goals.length * 18 + 2;
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = this.profileGoal === 'declined' ? ERA1.navy : ERA1.grey;
+    ctx.fillText(`— ${opening.o3_goal_decline}`, L + 18, declineY);
+    this.hits.push({ x: L + 12, y: declineY - 2, w: 200, h: 14, id: 'pgoal:declined' });
+
+    // confirm / leave
+    const armed = this.profileIcon !== '' && this.profileChips.length === 3 && this.profileGoal !== '';
+    ui.button(ctx, c.x + c.w - 92, c.y + c.h - 26, 84, 20, opening.o3_continue, {
+      disabled: !armed, hover: this.hover === 'r-continue' && armed
+    });
+    if (armed) this.hits.push({ x: c.x + c.w - 92, y: c.y + c.h - 26, w: 84, h: 20, id: 'r-continue' });
+    ui.button(ctx, c.x, c.y + c.h - 26, 64, 20, opening.o3_leave, { hover: this.hover === 'r-leave' });
+    this.hits.push({ x: c.x, y: c.y + c.h - 26, w: 64, h: 20, id: 'r-leave' });
+  }
+
+  /** O3 close — the picks come back RE-CAPTIONED in the system's categories */
+  private drawReinterpRecap(W: number, H: number): void {
+    const { ctx } = this;
+    ui.px(ctx, 0, 0, W, H, ERA1.teal);
+    const wx = 46, wy = 20, ww = 420, wh = 344;
+    const c = ui.windowFrame(ctx, wx, wy, ww, wh, opening.o3_recap_title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
+    const L = c.x + 10;
+    ui.setFont(ctx, 11);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(opening.o3_recap_intro, L, c.y + 8);
+
+    const recap = opening.recaptions as {
+      icon: Record<string, string>; chip: Record<string, string>; goal: Record<string, string>;
+    };
+    let y = c.y + 34;
+    const section = (label: string): void => {
+      ui.setFont(ctx, 9);
+      ctx.fillStyle = ERA1.warnDark;
+      ctx.fillText(label.toUpperCase(), L, y);
+      y += 12;
+    };
+    const row = (line: string): void => {
+      ui.setFont(ctx, 11);
+      ctx.fillStyle = ERA1.black;
+      ctx.fillText(`· ${line}`, L + 6, y);
+      y += 16;
+    };
+
+    section(opening.o3_recap_icon_label);
+    row(recap.icon[this.profileIcon] ?? this.profileIcon);
+    y += 4;
+    section(opening.o3_recap_chips_label);
+    for (const ch of this.profileChips) row(recap.chip[ch] ?? ch);
+    y += 4;
+    section(opening.o3_recap_goal_label);
+    row(recap.goal[this.profileGoal] ?? this.profileGoal);
+
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA1.grey;
+    ctx.fillText(opening.o3_recap_footer, L, c.y + c.h - 44);
+
+    ui.button(ctx, c.x + c.w - 84, c.y + c.h - 26, 76, 20, opening.o3_recap_continue, {
+      hover: this.hover === 'r-enter'
+    });
+    this.hits.push({ x: c.x + c.w - 84, y: c.y + c.h - 26, w: 76, h: 20, id: 'r-enter' });
+    ui.button(ctx, c.x, c.y + c.h - 26, 64, 20, opening.o3_leave, { hover: this.hover === 'r-leave' });
+    this.hits.push({ x: c.x, y: c.y + c.h - 26, w: 64, h: 20, id: 'r-leave' });
+  }
+
+  /** click routing for the reinterp opening beats (O2/O3) */
+  private handleOpeningClick(id: string): void {
+    if (id === 'r-leave') { this.leave(); return; }
+    if (this.phase === 'r_boot') { this.setPhase('r_profile'); return; } // any click skips the crawl
+    if (this.phase === 'r_profile') {
+      if (id.startsWith('picon:')) { this.profileIcon = id.slice(6); this.dirty = true; return; }
+      if (id.startsWith('pchip:')) {
+        const c = id.slice(6);
+        const i = this.profileChips.indexOf(c);
+        if (i >= 0) this.profileChips.splice(i, 1);
+        else if (this.profileChips.length < 3) this.profileChips.push(c);
+        this.dirty = true; return;
+      }
+      if (id.startsWith('pgoal:')) { this.profileGoal = id.slice(6); this.dirty = true; return; }
+      if (id === 'r-continue') this.commitProfile();
+      return;
+    }
+    if (this.phase === 'r_recap' && id === 'r-enter') this.setPhase('desktop'); // identical routing
+  }
+
+  /** file the picks to the in-memory ledger, then show the re-captioning */
+  private commitProfile(): void {
+    if (this.profileIcon === '' || this.profileChips.length !== 3 || this.profileGoal === '') return;
+    if (!this.profileFiled) {
+      ledger.tags.push(`profile:icon:${this.profileIcon}`);
+      for (const c of this.profileChips) ledger.tags.push(`profile:chip:${c}`);
+      ledger.tags.push(`profile:goal:${this.profileGoal}`);
+      this.profileFiled = true;
+    }
+    this.setPhase('r_recap');
+  }
+
   // ── input ──────────────────────────────────────────────────────────────
   handleMove(x: number, y: number): void {
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
@@ -431,6 +714,11 @@ export class DesktopOS {
     }
     if (this.phase === 'off') { // any click on the dark glass = the switch
       this.powerOn();
+      return;
+    }
+    // reinterp opening beats (O2/O3) own the monitor's clicks
+    if (this.phase === 'r_boot' || this.phase === 'r_profile' || this.phase === 'r_recap') {
+      this.handleOpeningClick(hit ? hit.id : '');
       return;
     }
     // the provotype is modal while open — it owns the desktop's clicks
@@ -456,7 +744,8 @@ export class DesktopOS {
 
   handleKey(key: string): boolean {
     if (key === 'Escape') {
-      if (this.phase === 'desktop' || this.phase === 'name') {
+      if (this.phase === 'desktop' || this.phase === 'name'
+          || this.phase === 'r_boot' || this.phase === 'r_profile' || this.phase === 'r_recap') {
         this.paused = !this.paused;
         this.dirty = true;
         return true;
@@ -464,6 +753,8 @@ export class DesktopOS {
       return false;
     }
     if (this.paused) return true;
+
+    if (this.phase === 'r_boot' && key === 'Enter') { this.setPhase('r_profile'); return true; }
 
     if (this.phase === 'warning' && key === 'Enter' && this.phaseT >= WARNING_ARM_DELAY) {
       this.setPhase('off');
@@ -512,4 +803,9 @@ export class DesktopOS {
     this.setPhase('left');
     this.onLeave?.();
   }
+
+  /** external Leave — the reinterp O1 start-screen overlay lives outside the
+   *  monitor canvas, so it drives the wipe/exit through here (rail: Leave
+   *  works from the disclaimer onward). */
+  leaveNow(): void { this.leave(); }
 }
