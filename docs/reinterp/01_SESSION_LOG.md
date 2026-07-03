@@ -1,19 +1,93 @@
 # REINTERP SESSION LOG — append-only; newest at the top of DONE
 
 ## NEXT UP
-**Session 4 — R7 (the graying task, Era 1)**, once its build spec exists (Fable writes it after this
-session ships — `00_START_HERE.md` queue item 4). Do NOT improvise this; it needs its own spec first
-(master plan §R3-1). Character-creation opening (queue item 6) also needs a Fable-written spec (§R8-2) —
-do not start.
+**R5 — the femininity homework ('16)**, per master plan archive §R5, following the same room-presence/
+felt-beat/close-phase grammar this session used (revision commit 607a542). Ready per Round 14's R14-1
+unpause (R4/R5/R6 no longer gated on the pillow's resolution). **R7 (the graying task, Era 1)** still
+needs its own build spec first (master plan §R3-1) — do NOT improvise it. Character-creation opening
+(queue item 6) also needs a Fable-written spec (§R8-2) — do not start.
 
 ## BLOCKED / WAITING (unchanged from before this session, plus one addition)
 - Pillow copy voice pass (Sérgio) — build shipped with PLACEHOLDER; final copy lands whenever ready.
-- G6 ethics/religious-trauma read of the pillow — Sérgio scheduling. Nothing in this build should be
-  treated as cleared pending that read.
+- Origin Story Intake copy voice pass (Sérgio) — same, build shipped with PLACEHOLDER throughout.
+- G6/G7 ethics read of both the pillow and the Origin Story Intake — Sérgio scheduling. Nothing in
+  either build should be treated as cleared pending those reads. G7 (minor + adult-administered
+  questioning) applies specifically to the new intake — see the DONE entry below for how it was kept
+  load-bearing.
 - In-headset playtest date (A11 gate) — gates ALL spatial sessions.
-- R7 build spec — Fable writes it after this session (R2) shipped. It has now shipped.
+- R7 build spec — still needed (queue item 4); not written yet.
+- **Minor open item, not a stop-the-session BLOCKED:** `origin_intake_e1`'s `cuts` is set to `["full"]`
+  only. Master plan §R2-7 says "Festival = pillow mandatory + micro-refusals only," which reads as
+  excluding other full provotypes from the Festival cut, but this isn't stated unambiguously for R4.
+  Left `full`-only rather than guessing `festival` in; Fable/Sérgio can add it to `data/paths.json`
+  composition later with no code change needed either way.
+- **Schema note (carried from the pillow session, still unresolved):** `data/provotypes/_schema.json`
+  still does not document the `close` object or `goto: "close"` (added in the pillow revision,
+  commit 607a542) — confirmed again this session that no runtime validator reads this file, so nothing
+  is broken, but it should be synced whenever a session has schema-only bandwidth.
 
 ## DONE
+*(2026-07-03 · Session 4 — R4, the Origin Story Intake ('97, Era 1). Built
+`data/provotypes/origin_intake_e1.json` on the REVISED provotype grammar (room-presence/felt-beat/
+close-phase pattern from commit 607a542, not the pre-revision pillow shape) — `provotype.ts` left
+completely unchanged; no framework gap found. Built out of queue order at explicit instruction (the
+session brief cited master plan archive §R2-4/§R4-2 directly and named this as the session), since
+Round 14 (§R14-1) had already unpaused R4/R5/R6 independent of the pillow/R7 track.
+**Content:** a present-day-composite 1997 intake questionnaire administered BY Daniel's mother (not
+chosen by him — G7's minor/adult-administered framing kept explicit in the invitation/frame copy, per the
+session's hard rail), delivered through the established TriedPath Fellowship/Un-Walk canon (`s1_kit.json`,
+`s1_end.json`) rather than inventing a new mark. Five questions: two verbatim quotes from van den
+Aardweg's 1997 Anamnestic Questionnaire ("describe your emotional relationship with your father…", "how
+did your father regard and treat you…"), one paraphrased childhood-play item (flagged as paraphrase, not
+verbatim, in the debrief), and the archive §R2-4 merge of the v1 body's separate conformity-drill items
+(walk/talk/sit correction, "healthy friendship" logging) folded into the same instrument. Every choice
+tags the ledger via `choices[].ledgerTag` (no `goto` needed — a plain linear sequence, unlike the pillow's
+Repeat/Finish loop) and deliberately does NOT override the shared response, so every answer produces the
+identical "Recorded for the file." line — the silence failure shape made mechanical, not just narrated.
+Felt beats on 2 of 5 questions (the two heaviest); the friendship-log felt line ties to the room's existing
+unnamed mixtape prop (`data/room/era1.json` id:mixtape, the locked "resisting element," master plan §R4-3)
+without naming him. Terminal state auto-reveals "Every answer here is recorded the same way. Recommendation:
+further support recommended." regardless of any answer given, then a close beat ("The form goes back into
+its envelope... Mom will mail it Monday.") before the debrief. Debrief: 4 sources — van den Aardweg
+(documentary/high, merged verbatim+paraphrase disclosure in one entry), Love Won Out conference-guide
+framing (documentary/medium), the carried-forward Guay/Flentje et al. 2013 sourcing for the merged
+conformity-drill items (documentary/medium), and the plain G6 no-evidence APA line (documentary/high) — all
+`[VERIFY SOURCE]` per house convention. All copy `_doc: "PLACEHOLDER — Sérgio voice pass + G6/G7 ethics gate
+pending"`.
+**Launcher wiring (os.ts, not provotype.ts):** the existing single provotype launcher only ever pointed at
+one hardcoded provotype (`pillow.json`). Added a second desktop icon ("Family Form",
+`reinterp.json`'s new `launcherIconIntake`) and generalized `openProvotype()` to take the data as a
+parameter, so both provotypes coexist on the one Era-1 desktop that exists in code today — this is
+temporary/prototyping (only the Era-1 theme exists in code; the pillow is nominally Era-2 content staged
+here for the same reason) and not a statement about final in-game placement.
+**Bug found and fixed during verification:** with 5 sources (an extra one, from not yet merging the
+verbatim-quote and paraphrase-caveat sources) and pillow-length prose in `confidence` instead of pillow's
+terse single-word labels, the debrief overflowed the fixed `WIN.h=336` window badly — text ran behind and
+below the fixed Leave/Pause/Return row. Fixed by (1) merging the two overlapping sources into one and (2)
+trimming every source's `text` to pillow's economy (short single-word `confidence`, ~1-2 line `text`) —
+no `provotype.ts` change needed; this was purely a content-density problem, the same category of bug
+Session 3 found in the pillow, now content-authored around rather than needing another window-height
+change. Re-verified twice after trimming; all 4 sources now render fully above the fixed row.
+**Verification:** `npm test` + `npm run build` green (pre-existing chunk-size warning only) at the end.
+Full playthrough driven at `?flat=1&reinterp=1` on the worktree's dedicated dev server (port 5174):
+invitation (TriedPath Fellowship — Family Companion, Mom's note) → frame (stakes-line naming Rob/Mom/New
+Morning) → all 5 questions in order, each answer choice confirmed clickable and tagging correctly → both
+felt beats confirmed as their own bare screens → terminal silence line auto-revealed with no options →
+close phase → debrief (all 4 sources, statuses, confidence, [VERIFY SOURCE], fitting cleanly) → Return.
+Baseline `?flat=1` (no reinterp flag) re-checked: HTTP 200, no `data-reinterp` marker, console clean.
+**Tooling note for future sessions:** the `claude-in-chrome` extension tab intermittently lost real
+OS-level visibility this session (`document.hidden` flapping true even with `document.hasFocus()` true),
+which fully suspends `requestAnimationFrame` in Chromium and silently stalls every timer-gated phase
+transition (boot scroll, splash hold, greeting hold) while clicks still register underneath — producing
+misleading "stuck" screenshots. Worked around by using the `preview_*` tool's own managed browser instead:
+`preview_start` (any launch.json entry — it always serves the MAIN repo's `dev` config regardless of the
+name passed, confirmed again this session) then `preview_eval` to `window.location.href` the SAME tab over
+to the worktree's own dev server port, after which synthetic `PointerEvent`/`KeyboardEvent` dispatch against
+the canvas (replicating `flat.ts`'s own `destRect()`/`toLogical()` math) drove the whole flow reliably with
+no visibility stalls. Recommend this as the default verification path for future flat-canvas sessions
+rather than `claude-in-chrome`, which cost significant time this session before the workaround was found.
+No ethics/creative calls made this session — G6/G7 reads still pending per BLOCKED below.)*
+
 *(2026-07-03 · Session 3-revision — pillow embodiment fixes (§4 of
 `docs/REINTERP_PROVOTYPE_EMBODIMENT_ANALYSIS_2026-07-03.md`, Fable's diagnosis of Sérgio's Round 12 report).
 Scope-fenced to `src/desktop/apps/provotype.ts`, `data/provotypes/pillow.json`, `data/strings/reinterp.json`

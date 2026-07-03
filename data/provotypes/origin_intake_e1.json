@@ -1,0 +1,130 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass + G6/G7 ethics gate pending. Session R4 (master plan §R4 body + archive §R2-4/§R4-2), built on the revised R2 grammar (room/felt-beat/close-phase pattern, commit 607a542) — NOT the pre-revision pillow shape. G7 load-bearing: Daniel is a minor (16, per data/dialog/s1_end.json's packet.AGE) and his mother administers this at her own initiative, not his; the frame/invitation copy must keep that explicit, never soften it into something he chose. Questions 1-2 quote van den Aardweg's 1997 Anamnestic Questionnaire verbatim (archive §R4-2); question 3 paraphrases a documented category in the same instrument (childhood play patterns) rather than reproducing exact original wording — flagged in the debrief, not presented as a direct quote. Questions 4-5 are the archive §R2-4 merge: the v1 body's separate 'teen gender-conformity drill' (walk/talk/sit correction, 'healthy friendship' logging) folded into this same instrument as its present-tense half. In-world org stays the established TriedPath Fellowship / 'New Morning' canon (data/dialog/s1_kit.json, s1_end.json) rather than inventing a new mark; real names (van den Aardweg, Love Won Out) are dossier-only per CLAUDE.md. era set to era1 (only theme in code); register operable (interactive instrument) though the content is grave throughout — no charm, no satire, per G6/G7.",
+  "id": "origin_intake_e1",
+  "era": "era1",
+  "register": "operable",
+  "failure": "silence",
+  "cuts": ["full"],
+  "invitation": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending. Kit/booklet grammar (s1_kit idiom), not a Restorify-style digital assistant persona — this is 1997, paper, handed over by Mom.",
+    "from": "TriedPath Fellowship — Family Companion",
+    "lines": [
+      "Mom left this on your desk, a note clipped to the front page.",
+      "\"Please answer honestly, sweetheart — it's so they can help you.\""
+    ],
+    "accept": "Begin"
+  },
+  "frame": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending; frame stays at most two sentences. Stakes-line per the revised grammar: names who is asking, why, and that refusal is not really available — the minor-status/adult-administered fact is load-bearing (G7), not incidental.",
+    "text": "This is the Family Companion form the fellowship sent after Mom talked to Rob. She wants it done before New Morning, and she'll check.",
+    "continue": "Continue"
+  },
+  "states": [
+    {
+      "_doc": "PLACEHOLDER — verbatim, van den Aardweg's Anamnestic Questionnaire (The Battle for Normality, 1997)",
+      "prompt": "Describe your emotional relationship with your father.",
+      "choices": [
+        { "label": "Close", "ledgerTag": "intake:father_bond:close" },
+        { "label": "Distant", "ledgerTag": "intake:father_bond:distant" },
+        { "label": "I don't want to answer", "ledgerTag": "intake:father_bond:declined" }
+      ],
+      "response": "Recorded for the file."
+    },
+    {
+      "_doc": "PLACEHOLDER — verbatim, van den Aardweg's Anamnestic Questionnaire; felt beat here per the revised grammar (§4)",
+      "prompt": "How did your father regard and treat you as far as your sexual identity was concerned?",
+      "choices": [
+        { "label": "He never said anything.", "ledgerTag": "intake:father_regard:silent" },
+        { "label": "He was disappointed.", "ledgerTag": "intake:father_regard:disappointed" },
+        { "label": "I don't know.", "ledgerTag": "intake:father_regard:unknown" }
+      ],
+      "response": "Recorded for the file.",
+      "felt": "I don't actually know what he thought. I never got to ask."
+    },
+    {
+      "_doc": "PLACEHOLDER — paraphrase, NOT a direct quote (see debrief source note): a documented category in the same 1997 instrument (avoidance of boys' rough play, doll play), reworded for this screen rather than reproduced verbatim.",
+      "prompt": "As a boy, did you avoid rough games — war, sports, fighting — and prefer quieter play, including with dolls?",
+      "choices": [
+        { "label": "Yes", "ledgerTag": "intake:play_pattern:yes" },
+        { "label": "No", "ledgerTag": "intake:play_pattern:no" },
+        { "label": "Sometimes", "ledgerTag": "intake:play_pattern:sometimes" }
+      ],
+      "response": "Recorded for the file."
+    },
+    {
+      "_doc": "PLACEHOLDER — archive §R2-4 merge: the conformity-drill's present-tense half, folded into this instrument (walk/talk/sit correction).",
+      "prompt": "This week, did you correct how you walk, talk, and sit when you noticed yourself slipping?",
+      "choices": [
+        { "label": "Every time I noticed.", "ledgerTag": "intake:drill_posture:consistent" },
+        { "label": "Some of the time.", "ledgerTag": "intake:drill_posture:partial" },
+        { "label": "I forgot most days.", "ledgerTag": "intake:drill_posture:forgot" }
+      ],
+      "response": "Recorded for the file."
+    },
+    {
+      "_doc": "PLACEHOLDER — archive §R2-4 merge: the conformity-drill's other present-tense half ('healthy friendship' logging). Felt beat ties to the room's mixtape prop (data/room/era1.json id:mixtape) — the unnamed resisting element (master plan §R4-3, locked) — without naming him, consistent with his established unnamed status.",
+      "prompt": "List one \"healthy friendship\" you pursued this week, and one attachment you stepped back from.",
+      "choices": [
+        { "label": "I have one to report.", "ledgerTag": "intake:friendship_log:reported" },
+        { "label": "I don't have one this week.", "ledgerTag": "intake:friendship_log:none" },
+        { "label": "I'd rather not say.", "ledgerTag": "intake:friendship_log:declined" }
+      ],
+      "response": "Recorded for the file.",
+      "felt": "He has a name. I'm not writing it down."
+    },
+    {
+      "_doc": "PLACEHOLDER — the silence failure shape made legible: every prior answer, whatever it was, produced this same line. No options here — it auto-reveals (provotype.ts enterState).",
+      "prompt": "",
+      "buttons": [],
+      "response": "Every answer here is recorded the same way.\nRecommendation: further support recommended."
+    }
+  ],
+  "close": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending. Near-wordless, felt register, still in the room, per the revised grammar (§4) — the debrief's documentary function stays separate, after this.",
+    "lines": [
+      "The form goes back into its envelope, addressed to the fellowship.",
+      "Mom will mail it Monday."
+    ],
+    "continue": "Continue"
+  },
+  "debrief": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass + G6/G7 ethics gate pending. Real names (van den Aardweg, Love Won Out) dossier-only per CLAUDE.md, never in on-screen family/character copy.",
+    "body": [
+      "Every combination of answers leads to the same referral. The instrument isn't listening — it's confirming a conclusion it already reached.",
+      "This is a documented practice, not a hypothetical one, and its premises are not supported by evidence."
+    ],
+    "close": "Return",
+    "sources": [
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending. Merges the two verbatim lines and the childhood-play paraphrase into one entry (was two sources; merged, then further shortened, to fit the fixed debrief window — flagged in the session log). Full nuance (composite delivery context, paraphrase-not-verbatim caveat) lives here in _doc; the on-screen text keeps only what fits.",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Van den Aardweg's \"Anamnestic Questionnaire\" (1997) is a real clinical instrument; two prompts quote it directly. The childhood-play question paraphrases it, not verbatim. [VERIFY SOURCE]"
+      },
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "status": "documentary",
+        "confidence": "medium",
+        "text": "Love Won Out published conference-guide material instructing parents and schools to monitor a child's gendered behavior; this scene's framing draws on that. [VERIFY SOURCE]"
+      },
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending; carries forward the original v1 R4 sourcing basis for the merged conformity-drill items (walk/talk/sit, friendship logging)",
+        "status": "documentary",
+        "confidence": "medium",
+        "text": "The behavioral-monitoring questions are composited from survivor testimony (e.g., Guay) and clinical literature (Flentje et al., 2013), not one surviving worksheet. [VERIFY SOURCE]"
+      },
+      {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending; the plain no-evidence statement G6 requires",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Major professional bodies (including the APA) state conversion practices lack evidence of benefit, and this instrument's causal premises are unsupported. [VERIFY SOURCE]"
+      }
+    ]
+  },
+  "ledgerTags": ["provotype:origin_intake_e1"],
+  "witness": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+    "completed": "compliance: exemplary · outcome: further support recommended",
+    "abandoned": "intake: incomplete · flagged"
+  }
+}

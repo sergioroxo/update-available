@@ -15,6 +15,7 @@ import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
 import pillowProvotypeData from '../../data/provotypes/pillow.json';
+import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.json';
 
 type Phase = 'warning' | 'off' | 'boot' | 'splash' | 'name' | 'desktop' | 'left';
 
@@ -126,10 +127,10 @@ export class DesktopOS {
     this.dirty = true;
   }
 
-  /** open the reinterpretation provotype (diegetic invitation lives inside it) */
-  private openProvotype(): void {
+  /** open a reinterpretation provotype (diegetic invitation lives inside it) */
+  private openProvotype(data: Provotype): void {
     if (!this.reinterp || this.provotype) return;
-    this.provotype = new ProvotypeApp(pillowProvotypeData as unknown as Provotype);
+    this.provotype = new ProvotypeApp(data);
     this.provotype.onClose = () => { this.provotype = null; this.dirty = true; };
     this.dirty = true;
   }
@@ -325,9 +326,10 @@ export class DesktopOS {
     if (!this.kit) this.drawIcon(10, 8, strings.desktop.iconA, true, 'icon-a');
     if (this.irc) this.drawIcon(10, 8, strings.desktop.iconIrc, true, 'icon-irc');
     this.drawIcon(10, 56, strings.desktop.iconDossier, this.dossierUnlocked, 'icon-dossier');
-    // reinterpretation-only: the provotype launcher (the invitation is inside it)
+    // reinterpretation-only: the provotype launchers (the invitation is inside each)
     if (this.reinterp && !this.provotype) {
       this.drawIcon(10, 104, reinterpStrings.launcherIcon, true, 'icon-provotype');
+      this.drawIcon(10, 152, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
     }
     // windows
     if (this.kit?.open) this.kit.draw(ctx);
@@ -442,7 +444,8 @@ export class DesktopOS {
         case 'icon-irc': if (this.irc) this.irc.open = true; break;
         case 'icon-dossier': this.dossierOpen = true; break;
         case 'dossier-close': this.dossierOpen = false; break;
-        case 'icon-provotype': this.openProvotype(); break;
+        case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
+        case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;
       }
       this.dirty = true;
       return;
