@@ -1,0 +1,54 @@
+{
+  "_doc": "PLACEHOLDER — the fluid trans niche facet TABLE (docs/REINTERP_FLUID_TRANS_ROOM_GEOMETRY_2026-07-03.md §1.3/§2.1). Read behind ?reinterp=1 only. Weights select which facet is foregrounded; `pull` perturbs them; `convergence.allowed` lights all three (the earned E3 triptych). NOTE: no `gated` field — the consult-gating was retired Round 16 (doc §2.3/Q4); all three facets build at EQUAL fidelity, Sérgio's voice pass is the only gate. The niche GEOMETRY lives in src/room/fluidNiche.ts (geometry/layout is .ts per 00_START_HERE); display copy lives in data/strings/; this file is weights + trigger config + the niche anchor only. E1 is what renders in code today; later eras are carried for the R9 cluster-morph (facet logic is position-independent, §3.2). `hero` ids are placeholder object slots (the apparatus's own sorting instruments, §1.3) — no display text. `pull.sends` are STUBS (no runtime cross-cluster wiring this session).",
+  "niche": {
+    "azimuthDeg": -110,
+    "center": [2.02, 1.16, 1.47],
+    "_note": "±110° rear-lateral (colder, doc §3.1) — one azimuth, N states (§1.1). Exact coords chosen against the east wall in the clear gap between the shelf (z~0.75) and the door (z~2.2). Stations spread ~±0.30m along z (≈±7° from EYE, inside the ±15° single-gaze cone, §1.2)."
+  },
+  "stations": ["transfem", "transmasc", "nonbinary"],
+  "eras": {
+    "e1": {
+      "_state": "near-dark, structural-only (§1.3) — no facet foregrounded; the darkness IS the content",
+      "default": "none",
+      "convergence": { "allowed": false },
+      "facets": {
+        "transfem":  { "weight": 0.0, "hero": "mentorAssignmentPlacard", "tier": "fog", "register": "operable" },
+        "transmasc": { "weight": 0.0, "hero": "mentorAssignmentPlacard", "tier": "fog", "register": "operable" },
+        "nonbinary": { "weight": 0.0, "hero": null, "tier": "fog", "register": "operable" }
+      },
+      "pull": { "gaze": { "dwellMs": 2500, "delta": 0.4, "decay": true, "latched": false }, "sends": [] }
+    },
+    "e2": {
+      "_state": "leans trans-feminine (§1.3); trans-masc = fog/erasure; non-binary not yet legible",
+      "default": "transfem",
+      "convergence": { "allowed": false },
+      "facets": {
+        "transfem":  { "weight": 1.0, "hero": "continuumCounsellingDiagram", "tier": "hero", "register": "operable" },
+        "transmasc": { "weight": 0.4, "hero": "erasureSilhouette", "tier": "fog", "register": "operable" },
+        "nonbinary": { "weight": 0.0, "hero": null, "tier": "fog", "register": "operable" }
+      },
+      "pull": { "gaze": { "dwellMs": 2500, "delta": 0.4, "decay": true, "latched": false }, "sends": ["daniel.accountability_web"] }
+    },
+    "e3": {
+      "_state": "all three at once, EARNED (§1.4) — the only three-hero moment; borrows the ring (§3.3)",
+      "default": "all",
+      "convergence": { "allowed": true, "tieBand": 0.15 },
+      "facets": {
+        "transfem":  { "weight": 1.0, "hero": "hope2016AudioPage",  "tier": "hero", "register": "felt" },
+        "transmasc": { "weight": 1.0, "hero": "namingStackStillWrong", "tier": "hero", "register": "operable" },
+        "nonbinary": { "weight": 1.0, "hero": "sortingBuckets",      "tier": "hero", "register": "operable" }
+      },
+      "pull": { "gaze": { "dwellMs": 2500, "delta": 0.4, "decay": true, "latched": false }, "sends": ["vera.lesbian_transmasc_dilemma"] }
+    },
+    "e4": {
+      "_state": "trans-fem-LED = Maya's front room IS the facet (§3.2); niche carries only the secondary presences",
+      "default": "nonbinary",
+      "convergence": { "allowed": false },
+      "facets": {
+        "transmasc": { "weight": 0.5, "hero": "optionalPhone",       "tier": "set", "register": "operable" },
+        "nonbinary": { "weight": 1.0, "hero": "segregatedCourses",    "tier": "hero", "register": "operable" }
+      },
+      "pull": { "gaze": { "dwellMs": 2500, "delta": 0.4, "decay": true, "latched": false }, "sends": [] }
+    }
+  }
+}

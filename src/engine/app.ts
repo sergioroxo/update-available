@@ -14,6 +14,7 @@ import { WitnessCanvas } from '../witness/intake';
 import { ledger } from '../state/ledger';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { buildEra1Room } from '../room/era1room';
+import { buildFluidNiche, type FacetState } from '../room/fluidNiche';
 import { mountStartupOverlay } from '../desktop/opening';
 import strings from '../../data/strings/slice.json';
 
@@ -35,6 +36,8 @@ const CAM_MOVE_SECONDS = 1.4; // O2 establishing → desk pan
 
 interface AppOptions {
   reinterp?: boolean;
+  /** ?facet= debug override for the fluid trans niche (reinterp only) */
+  facet?: FacetState;
 }
 
 function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.Texture {
@@ -76,6 +79,15 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   app.scene.ambientLight = new pc.Color(0.16, 0.15, 0.15);
 
   buildEra1Room(app);
+
+  // ── the fluid trans niche (greybox, reinterp only) ──
+  // One lateral-arc alcove of facet-states. This session renders the E1 room,
+  // so the default is E1's near-dark ('none'); ?facet= forces a state for
+  // review. A later session wires gaze/send pulls to niche.setFacet().
+  if (options.reinterp === true) {
+    const niche = buildFluidNiche(app);
+    niche.setFacet(options.facet ?? 'none');
+  }
 
   // ── the two surfaces ──
   const os = new DesktopOS({ reinterp: options.reinterp === true });

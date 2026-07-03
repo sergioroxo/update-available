@@ -17,6 +17,11 @@ const query = new URLSearchParams(window.location.search);
 const reinterp = query.get('reinterp') === '1';
 if (reinterp) document.documentElement.dataset.reinterp = '1';
 
+// ?facet=tw|tm|nb|all — debug override forcing a fluid-niche facet state
+// (reinterp + 3D only; ignored by flat). No param = the era default.
+const FACET_CODES = { tw: 'transfem', tm: 'transmasc', nb: 'nonbinary', all: 'all' } as const;
+const facet = FACET_CODES[query.get('facet') as keyof typeof FACET_CODES];
+
 // ?lambyrig=1 — standalone procedural assistant rig lab; no OS integration.
 if (query.get('lambyrig') === '1') {
   startLambyRig(canvas);
@@ -24,5 +29,5 @@ if (query.get('lambyrig') === '1') {
 } else if (query.get('flat') === '1') {
   startFlat(canvas, { reinterp });
 } else {
-  startApp(canvas, { reinterp });
+  startApp(canvas, { reinterp, facet });
 }

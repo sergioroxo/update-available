@@ -9,6 +9,12 @@ Two live tracks, for Fable/Sérgio to sequence:
   cleanly on the shipped Era-1 desktop, so both build on real ground.
 - **R5 — the femininity homework ('16)**, per master plan archive §R5, on the same room-presence/felt-beat/
   close-phase grammar (commit 607a542). Ready per Round 14's R14-1 unpause.
+- **Fluid niche continuation** — this session shipped the GREYBOX (one alcove, 3 equal-fidelity facet
+  states, `setFacet` seam). Its next steps belong to R9 (the radial-cluster shell): wire the gaze-dwell +
+  cross-cluster send pulls into `niche.setFacet` (currently DATA STUBS in `fluid_niche.json`), instantiate
+  the later-era tables (E2/E3/E4 already in the JSON), and the moodboard dressing pass (R13-5). The §5 open
+  questions (azimuth ±110 vs ±70, E3 convergence readability, gaze-pull without gamification) are headset/
+  Sérgio calls that ride the A11 gate.
 **R7 (the graying task, Era 1)** still needs its own build spec first (master plan §R3-1) — do NOT improvise.
 
 ## BLOCKED / WAITING (carried forward, plus the opening additions)
@@ -40,6 +46,54 @@ Two live tracks, for Fable/Sérgio to sequence:
   is broken, but it should be synced whenever a session has schema-only bandwidth.
 
 ## DONE
+*(2026-07-04 · Session 6 — the fluid trans niche GREYBOX behind `?reinterp=1`, in the 3D room
+(`docs/REINTERP_FLUID_TRANS_ROOM_GEOMETRY_2026-07-03.md` — built EXACTLY its proposal, no redesigns).
+**Doc sync:** verified the doc set was already current (Session 5's sync had pulled the de-gated geometry doc;
+diff-clean against the original this session). Confirmed the geometry doc is the RETIRED-gating version
+(line 181–182: "the consult-gating is retired; Sérgio's own pass is the gate") — the appendix §6 still
+carries an historical `gated`/greybox mention, but §2.3/Q4's de-gate is the binding current statement and
+wins, per the brief. Nothing to copy, so NO sync commit was made (an empty sync commit would be noise).
+**What shipped:** ONE shallow alcove on the ±110° rear-lateral arc (doc §3.1) — I placed it at **-110°**, on
+the east wall in the clear gap between the existing bookshelf (z~0.75) and door (z~2.2), anchored from
+`fluid_niche.json`'s `niche.center` = [2.02, 1.16, 1.47]. It holds THREE facet stations (transfem /
+transmasc / nonbinary) at **EQUAL fidelity** — the Round-16 de-gate (§2.3): no two-lit-plus-greybox split,
+the trans-masc station builds identically to the others. Facets are STATES of one volume, not places you go
+(§1.1): one azimuth, N states, resolved in place. **Quest discipline (§4.3, honored):** the three stations
+share the box mesh and just TWO station skins — a fog "unresolved silhouette" (greyDark, the default) and a
+hero "resolved/lit" (silver emissive) — foregrounding a facet SWAPS the material by reference (never a spawn)
+and toggles that station's small warm omni light on. **Draw-call cost (reported per rail): +8 box meshes**
+(5 structural — backing/lintel/sill/2 jambs — in one shared cool `tealDark` structural material; + 3 station
+boxes sharing the fog↔hero pair), so **3 materials total** for the whole niche (meets §4.3's "two station
+skins + one structural, not six"), plus **3 omni facet-lights** (off until foregrounded; lights aren't draw
+calls). Facet objects are PLACEHOLDER blocks (hero-object SLOTS); no copy, no textures.
+**Data (`data/room/fluid_niche.json`, new):** the per-era facet TABLES (E1–E4) in the doc's §2.1 shape —
+`default`/`convergence`/per-facet `weight`+`hero`+`tier`+`register` + `pull{gaze,sends}` — with **NO `gated`
+field** (removed per the de-gate). E1 = `default:"none"` (near-dark, all fog); E2 leans transfem; E3
+`default:"all"` + `convergence.allowed` (the earned triptych); E4 omits transfem (Maya's front room IS it)
+and carries the optional trans-masc phone. Only E1 renders in code today; later eras are carried for R9. The
+`pull` triggers and `sends` are **DATA STUBS** — no runtime gaze/send wiring this session (brief: "stub the
+send interface only"). Geometry/layout lives in `src/room/fluidNiche.ts` (00_START_HERE: geometry in `.ts`),
+the table in JSON, per the doc's split.
+**Code:** `src/room/fluidNiche.ts` (new — builder + `setFacet(state)`, the single runtime seam a later
+session wires gaze/send into); `src/engine/app.ts` (build the niche behind `options.reinterp`, apply the
+forced/`?facet` state or E1 default); `src/main.ts` (`?facet=tw|tm|nb|all` → `transfem|transmasc|nonbinary|
+all`, reinterp+3D only). All reinterp-gated; the niche is only ever constructed when `reinterp===true`.
+**File fence honored:** `data/provotypes/`, `src/desktop/apps/provotype.ts`, `data/strings/reinterp.json`
+untouched (the parallel Sonnet session owns them). No witness/ceiling/desktop-canvas/cross-cluster work.
+**Verification:** `npm test` + `npm run build` green (pre-existing chunk-size warning only). All five states
+driven IN THE 3D BROWSER VIEW (drag + arrow-key look, NOT `?flat=1`) on the worktree dev server (:5174) via
+the `preview_*` managed browser, screenshot each: **none** (E1 near-dark — 3 dark fog blocks in the cool
+recess), **tw** (left station silver-lit, others fog), **tm** (middle lit), **nb** (right lit), **all** (all
+three lit — the E3 convergence triptych). Baselines re-checked: no-flag `/` shows the east wall bare between
+shelf and door (NO niche; `data-reinterp` null) and the shipped 3D warning; `?flat=1` shows the unchanged
+shipped warning; console clean on both. **Camera-control note for future spatial sessions:** the niche sits
+at azimuth ≈ -110° from EYE; a reliable framing recipe in the 3D view is Continue → let the O2 pan settle →
+press R (reset to desk) → ~18× ArrowRight then ~7× ArrowLeft + 2× ArrowDown. The straight `?facet=` +
+one-shot yaw math was finicky because of the O1→O2 pan interaction; R-then-relative-turn was deterministic.
+**No ethics/creative/design calls made** — the niche's exact placement is provisional greybox (chosen
+against existing props; final placement → moodboard/R9), and the §5 open questions (azimuth, convergence
+readability, gaze-pull gamification) remain headset/Sérgio/A11 calls, routed → FABLE ROUND.)*
+
 *(2026-07-04 · Session 5 — OP-1, opening beats O1–O3 behind `?reinterp=1`, in the 3D room
 (`docs/REINTERP_OPENING_AND_FLOW_SPEC_2026-07-03.md` §1; §0-REV binding). This is the character-creation
 opening that queue item 6 / master plan §R8-2 flagged as needing a Fable spec first — that spec now exists
