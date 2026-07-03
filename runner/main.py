@@ -14,6 +14,7 @@ Usage:
 """
 from typing import List, Optional
 from pathlib import Path
+import os
 import typer
 from rich.console import Console
 from rich.panel import Panel

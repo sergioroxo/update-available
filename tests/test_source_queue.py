@@ -59,6 +59,12 @@ def db(corpus_dir: Path) -> sqlite3.Connection:
 # URL normalisation
 # ---------------------------------------------------------------------------
 
+def test_runner_main_imports_os_for_queue_triage_env_toggle():
+    import runner.main as main_mod
+
+    assert hasattr(main_mod, "os")
+
+
 class TestNormaliseUrl:
     def test_lowercase_scheme_and_host(self):
         assert normalise_url("HTTPS://Example.COM/path") == "https://example.com/path"

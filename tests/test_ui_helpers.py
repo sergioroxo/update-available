@@ -2487,3 +2487,34 @@ def test_source_queue_visible_history_map_empty_ids_is_empty():
     db = sqlite3.connect(":memory:")
 
     assert app_mod._source_queue_visible_history_map(db, []) == {}
+
+
+def test_source_queue_recent_triage_logs_newest_first(tmp_path, monkeypatch):
+    import runner.app as app_mod
+
+    monkeypatch.setattr(app_mod, "_project_root", tmp_path)
+    log_dir = tmp_path / "exports" / "app_jobs"
+    log_dir.mkdir(parents=True)
+    older = log_dir / "20260703T100000Z_source-queue-triage-added.log"
+    newer = log_dir / "20260703T110000Z_source-queue-triage-added.log"
+    other = log_dir / "20260703T120000Z_longform_review.log"
+    older.write_text("older", encoding="utf-8")
+    newer.write_text("newer", encoding="utf-8")
+    other.write_text("ignore", encoding="utf-8")
+    older.touch()
+    newer.touch()
+
+    logs = app_mod._source_queue_recent_triage_logs(limit=5)
+
+    assert logs[0] == newer
+    assert logs[1] == older
+    assert other not in logs
+
+
+def test_source_queue_log_looks_failed_detects_traceback_and_ollama_errors():
+    import runner.app as app_mod
+
+    assert app_mod._source_queue_log_looks_failed("Traceback\nNameError: name 'os' is not defined")
+    assert app_mod._source_queue_log_looks_failed("litellm.APIConnectionError: Ollama_chatException")
+    assert app_mod._source_queue_log_looks_failed("error starting llama-server")
+    assert not app_mod._source_queue_log_looks_failed("Done. Use runner queue-list to review.")

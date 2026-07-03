@@ -14614,6 +14614,60 @@ def _source_queue_visible_history_map(db, item_ids: list[str], *, limit_per_item
     return {item_id: history for item_id, history in grouped.items() if history}
 
 
+def _source_queue_recent_triage_logs(limit: int = 5) -> list[Path]:
+    log_dir = _project_root / "exports" / "app_jobs"
+    if not log_dir.exists():
+        return []
+    logs = [
+        path for path in log_dir.glob("*source-queue-triage*.log")
+        if path.is_file()
+    ]
+    return sorted(logs, key=lambda path: path.stat().st_mtime, reverse=True)[:limit]
+
+
+def _source_queue_log_looks_failed(text: str) -> bool:
+    lowered = text.lower()
+    return any(
+        marker in lowered
+        for marker in (
+            "traceback",
+            "nameerror",
+            "api connection error",
+            "apiconnectionerror",
+            "ollama_chatexception",
+            "source queue triage exited with code",
+            "error starting llama-server",
+            "received model group",
+        )
+    )
+
+
+def _render_source_queue_recent_triage_logs() -> bool:
+    logs = _source_queue_recent_triage_logs(limit=5)
+    if not logs:
+        return False
+    latest_tail = _job_log_tail(logs[0], limit=10000)
+    latest_failed = _source_queue_log_looks_failed(latest_tail)
+    if latest_failed:
+        st.error(
+            "The most recent Source Queue triage log contains an error. "
+            "Open the log below before retrying."
+        )
+    with st.expander("Recent Source Queue triage logs", expanded=latest_failed):
+        for idx, log_path in enumerate(logs, 1):
+            tail = _job_log_tail(log_path, limit=10000)
+            label = f"{idx}. {log_path.name}"
+            if _source_queue_log_looks_failed(tail):
+                label += " · possible failure"
+            with st.expander(label, expanded=idx == 1 and latest_failed):
+                st.caption(f"Log: `{log_path}`")
+                if tail:
+                    st.code(tail, language="text")
+                else:
+                    st.caption("Log file is empty.")
+    return True
+
+
 def _source_queue_rendered_recovered(db, item_id: str) -> bool:
     row = _source_queue_latest_triage_history(db, item_id)
     if not row:
@@ -14783,6 +14837,8 @@ def page_source_queue():
             _format_app_job_lock(active_heavy_job)
             + " Source Queue add/review remains available; starting triage waits for this model job."
         )
+    if not triage_status_rendered:
+        _render_source_queue_recent_triage_logs()
 
     # ── Fast add panel ─────────────────────────────────────────────────────
     st.subheader("Add sources")
@@ -14809,6 +14865,15 @@ def page_source_queue():
         quick_batch = quick_cols[1].text_input("Batch group", key="sq_quick_batch")
         quick_tags = quick_cols[2].text_input("Tags", key="sq_quick_tags")
         quick_notes = quick_cols[3].text_input("Notes", key="sq_quick_notes")
+        quick_triage_max = st.number_input(
+            "Max items to triage now",
+            min_value=1,
+            max_value=200,
+            value=25,
+            step=5,
+            key="sq_quick_triage_max",
+            help="Only used by Add + start triage. Extra added rows remain in the queue as new.",
+        )
         quick_use_crawl4ai = st.checkbox(
             "Use Crawl4AI rendered-page fallback if triaging",
             value=False,
@@ -14853,17 +14918,23 @@ def page_source_queue():
                     " No matching new/triaged queue rows were available to triage."
                 )
             else:
+                selected_candidates = triage_candidates[: int(quick_triage_max)]
                 try:
                     st.session_state[triage_job_key] = _start_source_queue_triage_job(
-                        item_ids=[item.id for item in triage_candidates],
-                        limit=len(triage_candidates),
+                        item_ids=[item.id for item in selected_candidates],
+                        limit=len(selected_candidates),
                         force=True,
                         use_crawl4ai=quick_use_crawl4ai,
                         label="source-queue-triage-added",
                     )
                     st.session_state["source_queue_add_message"] += (
-                        f" Started background triage for {len(triage_candidates)} matching item(s)."
+                        f" Started background triage for {len(selected_candidates)} matching item(s)."
                     )
+                    if len(triage_candidates) > len(selected_candidates):
+                        st.session_state["source_queue_add_message"] += (
+                            f" {len(triage_candidates) - len(selected_candidates)} extra matching item(s) "
+                            "were left as new for the next triage run."
+                        )
                 except RuntimeError as exc:
                     st.session_state["source_queue_add_message"] += f" Triage was not started: {exc}"
         st.rerun()
