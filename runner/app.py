@@ -14572,6 +14572,14 @@ def page_source_queue():
     add_message = st.session_state.pop("source_queue_add_message", "")
     if add_message:
         st.info(add_message)
+    if not st.session_state.get("_sq_limit_initialized_for_fast_add"):
+        try:
+            current_limit = int(st.session_state.get("sq_limit", 50) or 50)
+        except (TypeError, ValueError):
+            current_limit = 50
+        if current_limit > 100:
+            st.session_state["sq_limit"] = 50
+        st.session_state["_sq_limit_initialized_for_fast_add"] = True
 
     def _run_source_queue_triage(
         target_items,
@@ -14654,8 +14662,61 @@ def page_source_queue():
 
     st.divider()
 
+    # ── Fast add panel ─────────────────────────────────────────────────────
+    st.subheader("Quick add sources")
+    st.caption(
+        "This form only writes rows to the local Source Queue. It does not fetch, triage, "
+        "call LiteLLM, contact the Mac Studio, or start a background job."
+    )
+    with st.form("sq_quick_add_form", clear_on_submit=True):
+        quick_pasted = st.text_area(
+            "URLs / source lines",
+            height=120,
+            placeholder=(
+                "https://example.org/source-a\n"
+                "https://example.org/source-b\n"
+                "# Lines starting with # are skipped"
+            ),
+        )
+        quick_cols = st.columns([1, 1, 1, 2])
+        quick_priority = quick_cols[0].selectbox(
+            "Priority",
+            ["medium", "high", "low", "skip"],
+            key="sq_quick_priority",
+        )
+        quick_batch = quick_cols[1].text_input("Batch group", key="sq_quick_batch")
+        quick_tags = quick_cols[2].text_input("Tags", key="sq_quick_tags")
+        quick_notes = quick_cols[3].text_input("Notes", key="sq_quick_notes")
+        quick_submit = st.form_submit_button(
+            "Add sources only",
+            type="primary",
+        )
+    if quick_submit:
+        added, dup_q, dup_c = add_items_from_text(
+            db,
+            quick_pasted,
+            config.corpus_dir,
+            priority=quick_priority,
+            tags=quick_tags,
+            batch_group=quick_batch,
+            notes=quick_notes,
+        )
+        parts = []
+        if added:
+            parts.append(f"{added} added")
+        if dup_c:
+            parts.append(f"{dup_c} already in corpus; association noted")
+        if dup_q:
+            parts.append(f"{dup_q} already in queue")
+        st.session_state["source_queue_add_message"] = (
+            "Source Queue updated: " + "; ".join(parts)
+            if parts else
+            "No valid URLs found in the pasted text."
+        )
+        st.rerun()
+
     # ── Import panel ───────────────────────────────────────────────────────
-    with st.expander("➕ Add sources", expanded=stats["total"] == 0):
+    with st.expander("➕ Advanced add sources with optional background triage", expanded=False):
         st.caption(
             "Paste URLs — one per line, CSV, Zotero RIS (UR  - …), "
             "BibTeX (url = {…}), or tab-separated URL\\tTitle. "
@@ -14874,7 +14935,7 @@ def page_source_queue():
         help="Filters visible rows by the current triage/acquisition hold reason.",
     )
     show_limit = filter_cols[4].number_input("Limit", min_value=10, max_value=2000,
-                                              value=200, step=50, key="sq_limit")
+                                              value=50, step=50, key="sq_limit")
 
     items = list_items(
         db,
