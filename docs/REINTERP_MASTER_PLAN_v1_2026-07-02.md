@@ -910,6 +910,172 @@ flag-only marker + `data-reinterp` test hook, `data/provotypes/_schema.json` + `
 tests/build green, flagged vs no-flag baselines verified, Leave verified, worktree clean. Next: Session
 2 (R1, provotype framework). The doc-sync convention worked as designed.
 
+# FEEDBACK ROUND 8 — the flow model · character creation · the ceiling witness · Sonnet strategy (2026-07-02)
+
+## R8-1 · THE FLOW & PROGRESSION MODEL (answers "what is the thought process here?")
+The macro shape of the reinterpreted experience: **one screen → one room → a cluster → all rooms → the
+network.** The scale expands exactly as the thesis widens: one person → four identities → countless →
+the constellation.
+1. **Boot + CHARACTER CREATION (new opening — Sérgio, Round 8; replaces name-typing).** The player
+   assembles a character from selections (click/chip-based — more VR-safe than the old typed name; canon
+   already anticipated this: ERA1_LOGIC S1.0 noted "later: reframed as profile/account creation").
+   **The consent-theater-zero beat:** whatever the player creates, the system immediately re-files it —
+   your self-description becomes input for someone else's categories, and the apparatus routes you where
+   it already decided you belong. Needs its own spec (R8-2) — NOT bolted into a build session.
+2. **Era 1 opens as ONE lit room** (the teen's, as built). The cluster exists but dark — architecture
+   felt as hum and shadow, not shown. Intimacy first; the piece earns the plural.
+3. **The first filing = the first reveal.** When the witness system first files the player (the kit
+   insertion — the existing wake trigger), the space acknowledges plurality: the ceiling presence (R8-3)
+   wakes, and the three alcoves become dimly legible for the first time. The reveal IS the lesson:
+   *you are one of the files; the apparatus was always processing others.*
+4. **Each update ritual re-clusters.** From Era 2 on, the radial cluster is the standing grammar — lead
+   room shifts per era, alcove content updates per the grid (R6-1), and the guide (assistant lineage)
+   begins carrying cross-cluster errands (Era 3's lead sends you to another identity's alcove because the
+   attacks share infrastructure — the anchors from Round 2/6).
+5. **Era 4 converges** — the cluster tightens around Maya (or the tinted room, per the 3-vs-4 decision);
+   the alcoves feed the finale instead of sitting beside it.
+6. **The Close zooms out**: room-slits cyclorama (canon) → the four calm panels → `Restart as you are.`
+   → the point-cloud network (F6). One room became every room became the constellation.
+
+**How the current build sessions serve this (answers Sérgio's doubt honestly):** Stage A is building the
+FURNITURE before the house — deliberately, because the house (all spatial work) is gated on the headset
+playtest. Every provotype is a data file tagged `era` + `cuts` + identity-context; when the cluster shell
+exists (Stage C), the same provotypes redistribute into alcoves without rebuild. The flag, the framework,
+the ledger/witness plumbing are cluster-portable by construction. What was genuinely missing until this
+round was the FLOW SPEC connecting them — this section is its first draft, and the geometry doc (Stage C
+step 1) is its second half. If the restructure needs to feel more real sooner, the accelerable item is
+paper, not code: the flow/geometry spec can be written now without touching the playtest gate.
+
+## R8-2 · Character creation — decided in principle, spec needed (new Stage B item)
+DECIDED (Sérgio): the reinterp version opens with creating a character, not typing a name. Spec
+questions before any build session touches it:
+- **What is assembled?** (name from selections? presentation/look? a few self-description chips?) —
+  every element must be something the system can later re-caption (the creation IS the first data).
+- **Who is the player creating?** Themselves-as-input, or authoring the era's persona? (Perspective-
+  taking implications — Imagine-Self vs Imagine-Other, the Round-2-corrected framing.)
+- **Does creation feed routing?** (Connects to the 3-vs-4 decision: does what you make influence which
+  room lights first, or does the apparatus route you identically regardless — "we know what this really
+  is"? The second is more on-thesis; the first is more player-legible. Tension to resolve on purpose.)
+- **Rails already answered:** in-memory only (ledger law); click/chip only (VR-safe — selections beat
+  typing); the created character is filed by the witness from second one (Ethics #10: traceable).
+→ Its own Fable spec round, then ONE build session. **Not in Session 3** — the pillow session stays
+scope-fenced; bolting an opening-flow change into it is how builds go sideways.
+
+## R8-3 · The ceiling witness — ADOPTED AS LEANING DESIGN (and it solves C3)
+Sérgio's proposal: the witness lives on the **ceiling** — the system looking down at you. Verdict:
+dramaturgically strong (in a religious-trauma context, the watcher occupying heaven's position is a
+sharp, on-thesis image — the apparatus sits where God was) and it **resolves the C3 geometry collision**:
+with the witness overhead, the full 360° horizontal band frees up for the lead room + alcoves. The
+division of labor that makes it work ergonomically:
+- **Ceiling = PRESENCE, never reading.** Light, grid-glow, the eye-motif lineage (dossier punch-hole →
+  webcam LED → Aero glass → wellness dots), a hum. Sustained upward gaze is ergonomically costly in VR —
+  so nothing up there ever requires reading; a *glance* is the ask (one bodily gesture, like the turn was).
+- **The RECORD stays legible elsewhere** — presented by the assistants (F1's migration) and in flat-mode
+  surfaces. Ethics #10's traceability lives in the readable layer, not overhead.
+- **The wake moment:** the ceiling presence first activates at the first filing (R8-1 step 3) — the
+  player *feels* the look before they can inspect the record.
+- **Flat fallback:** `?flat=1` keeps the flip/record surface; the ceiling is a 3D-space privilege.
+- **Gate:** in-headset comfort check joins the A11 playtest scope (glance frequency, neck cost).
+
+## R8-4 · Sonnet 5 build strategy (standing option, now with a template)
+Session prompts for Sonnet 5 live as a fill-in template: `docs/reinterp/02_SONNET_SESSION_TEMPLATE.md` —
+maximally explicit, tightly scope-fenced, with the verification recipe spelled out (Sonnet performs best
+with narrow, concrete session specs; architecture-shaping stays with Opus/Codex). Standing division:
+**architecture sessions → Opus 4.8/Codex · well-specified content/data sessions → Sonnet 5 · verification
+chores → Sonnet 5.** Now that the framework exists (Session 2), the pillow is a content session —
+Sonnet-eligible.
+
+## R8-5 · Session 2 (R1) logged + the routed design question ANSWERED
+Opus 4.8 shipped the framework (sync `10d6fc9`, build `fc3686f`): data-driven runtime (invitation →
+frame → states → dossier-grade debrief with player-visible confidence), ledger+witness integration,
+reinterp-gated launcher, 44 headless assertions + full browser round-trip, baseline clean, main untouched.
+**Routed question — "the framework advances on any choice; no per-choice branching":** the answer is the
+piece's own established pattern (Sérgio's Thought Audit decision, 2026-06-14): **choices REGISTER, they
+don't branch.** The framework needs per-choice **ledger/witness tagging** (`states[].choices[].ledgerTag`
++ optional per-choice response line), NOT narrative branching. The pillow needs it (Repeat vs Finish file
+differently), the graying task needs it (decline ≠ comply in the record), the Origin Story Intake needs it
+(every answer accepted, each tagged). → folded into Session 3's scope as a small framework addition.
+
+# FEEDBACK ROUND 9 — the opening brief · Lamby-OS · dual-platform priority · parallel Codex work (2026-07-02)
+
+*Sérgio's creative-direction brief for the opening — captured faithfully as DIRECTION, not build
+structure (his caveat). It resolves most of §R8-2 and makes one canon revision explicit.*
+
+## R9-1 · The opening sequence (Sérgio's brief, verbatim in spirit)
+1. **Pre-experience:** logo (to be made) + disclaimer; the room visible, lit ONLY by window light. This
+   is the controls moment (VR: try the remotes; browser: how to control) — outside the fiction.
+2. **Start:** the room's lights turn ON; the computer boots. **New fiction: the computer was made FOR
+   you, running a new operating system based on the Lamby controlling system.** Boot sound: playful,
+   condescending-childish, primitive polyphonic MIDI Lamby chime (asset: Sérgio/Sonauto lineage).
+3. **Profile creation — THEY ALREADY KNOW YOUR NAME.** The "tailored experience" as creative
+   interpretation of system pressure: the player doesn't type a name (the system has it); they pick some
+   elements — icon image, a few get-to-know-you items. *(Resolves R8-2 Q1 and inverts the old
+   name-typing beautifully: consent theater zero = personalization you never provided.)*
+4. **On login, Lamby-as-Clippy is ALREADY INSTALLED** — Clippy-styled, animated (sprite animations, or
+   procedural canvas like the TV-evangelism build — R9-4 prototypes this).
+5. **Register note (from his trial feedback):** the experience must be **more direct and controlling** —
+   the player forced/limited by the system, demanded of. Feeds the assistant-as-guide spec directly.
+6. **The rest of the space sits in darker tonality** — elements visible but not understood; the
+   narrative pushes ROTATION and exploration of the other storylines' elements.
+7. **A beginner panel states the premise up front:** you will follow the lives of 3/4 different people
+   through time — an exploration of different realities and perspectives, NOT a childhood-to-adulthood
+   voyage. (The museum "short orienting panel," now canon for the opening.)
+8. **Fluid spaces:** Era 1 stays the focused single-room tutorial ("you need to touch stuff to see
+   there's elements around you"); the E1→E2 transition = the update in the SAME room, which then quickly
+   opens to the next rooms. (Refines R8-1 steps 3–4: the cluster reveal completes at the first update,
+   not before.)
+
+## R9-2 · The canon revision this makes explicit (recorded, deliberate)
+Canon law: "The Assistant: **absent in Stages 0–1**." The reinterp version deliberately revises this —
+**Lamby is present from boot, as the OS itself.** This IS the F1 assistant-law revision, now made by
+Sérgio in practice, coherent with "the same system escorts all four victims" (his c3) and with the
+more-controlling register. Consequences routed to the assistant-as-guide spec:
+- Do the per-era assistant names (Helpy→Aski→Sol→Ami™ / Lambient / Echo) become **Lamby variants per
+  era**, or does the lineage survive with Lamby as the constant beneath it? (Open — questions register.)
+- The remaining protections stay until he revises them explicitly: **never during `felt` beats; never
+  jokes at the victim; dismissal works and is logged** — being ever-present makes these MORE
+  load-bearing, not less.
+- The **Tamagotchi Lamby transforms into other things** across the piece (his note); the knowledge
+  gathered from the different narratives transforms into other narrative elements. (Open design item —
+  guide spec.)
+
+## R9-3 · Dual-platform flow is now a first-class constraint
+His instruction: browser + VR logistics will LIMIT the flow — design them first, not after. The next
+Fable round is therefore the **OPENING & FLOW SPEC**: the R9-1 sequence + R8-1 model + a
+browser-vs-VR logistics table per beat (what "rotate to explore" means with drag-look; what the
+controls-tutorial moment is on each platform; how `?flat=1` degrades the cluster; where the ceiling
+witness reads on a monitor). The ceiling refinement from this round joins it: **the witness fades/blurs
+into an overhead panel styled to each era's aesthetics** — beautiful, era-resonant, presence-not-reading;
+tried in the headset at the playtest.
+
+## R9-4 · Parallel Codex task (runs WITHOUT touching Session 3's files): the Lamby rig prototype
+Session 3 (Sonnet, pillow) owns `provotype.ts` / `data/provotypes/` / the os.ts launcher area. The
+parallel-safe, high-value Codex task is the thing Sérgio explicitly asked to explore: **can
+Lamby-as-Clippy be procedural canvas code (like the TV-evangelism build) instead of authored sprites?**
+Scope: a standalone, reinterp-gated test route (`?lambyrig=1`) rendering a code-drawn animated Lamby —
+idle breathing, blink, point/gesture, an appear/disappear, 2–3 mood variants (cheer → sterile) — era-1
+palette tokens, FILTER_NEAREST discipline, no os.ts integration yet (integration comes with the opening
+spec). Deliverable: the rig + a one-page verdict (procedural vs sprite recommendation + cost).
+**Deferred with it:** the boot sequence, profile creation, lighting states, beginner panel — all wait for
+the Opening & Flow spec (do not improvise them).
+
+# FEEDBACK ROUND 10 — Lamby-variant lineage locked · Fable becomes project coordinator (2026-07-02)
+
+## R10-1 · The assistant lineage = Lamby variants per era (LOCKED)
+Sérgio: keep the Lamby-variant names. The per-era assistant is one continuous Lamby-based system wearing
+era-appropriate versions (canon already had Lamby '03 and Lambient '16; E1 needs a proto-Lamby name; E4's
+Echo becomes a Lamby descendant — the Creed/"Lenny" finding validates the whole line). Name candidates
+to be drafted in the assistant-as-guide spec for Sérgio's pick (his naming ritual). The standing
+protections remain until he explicitly revises them: never during `felt`, never jokes at the victim,
+dismissal always works and is logged.
+
+## R10-2 · Coordination system established
+Fable 5 is project coordinator/PM. Roles, the round protocol, the live dispatch board, and the decision
+queue now live in **`docs/reinterp/03_COORDINATION.md`** — updated by Fable every round. Lanes: Fable =
+direction/specs/prompts/reconciliation · Opus 4.8 = architecture sessions · Sonnet 5 = content sessions +
+verification (cost lane) · Codex 5.5 = parallel-safe prototypes · Deep Research = sourcing · Sérgio =
+author of record, runs all prompts, owns all gates.
+
 # TOP RECOMMENDATION
 
 **Greenlight R0 → R1 → R2: the fork, the provotype framework, and the pillow provotype inside the shipped

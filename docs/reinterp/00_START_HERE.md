@@ -65,9 +65,10 @@ build work happens in `/Users/sergiogalvaoroxo/update-available-reinterp/`.
 | 0 | Worktree setup + doc sync | this file, above | one-time |
 | 1 | R0 — `?reinterp=1` flag + `data/provotypes/` + `data/panels/` namespaces | `docs/CODEX_PROMPT_REINTERP_R0_R2_2026-07-02.md`, Session R0 | |
 | 2 | R1 — provotype framework (frame → vignette → debrief runtime) | same doc, Session R1 | include `cuts` metadata in the schema |
-| 3 | R2 — the pillow ("Somatic Reprocessing", Era 2) | same doc, Session R2 + draft copy in `Pc_Simulation/Sources/Deep Research/Provotypes for a SOGICE VR documentary.md` | all copy PLACEHOLDER |
+| 3 | R2 — the pillow ("Somatic Reprocessing", Era 2) **+ small framework addition: per-choice ledger/witness tagging** (`states[].choices[].ledgerTag` + optional per-choice response line — choices REGISTER, never branch; master plan §R8-5) | same doc, Session R2 + draft copy in `Pc_Simulation/Sources/Deep Research/Provotypes for a SOGICE VR documentary.md` | all copy PLACEHOLDER; Sonnet-eligible (see `02_SONNET_SESSION_TEMPLATE.md`) |
 | 4 | R7 — the graying task (E1) | master plan §R3-1 (needs its own build spec first → FABLE ROUND writes it after R2 ships) | mixtape = the resisting element (locked) |
 | 5 | R4 — Origin Story Intake ('97) | master plan R4 + §R4-2 (van den Aardweg 1997 wording, documentary) | after R7 |
+| 6 | Character-creation opening (E1: replaces name-typing) | master plan §R8-2 — **spec does not exist yet**; Fable round writes it after Sérgio answers the R8-2 questions | do NOT improvise this |
 | — | PARALLEL (not a build session): moodboard pass — tinted trans room + cluster shell | house convention `docs/MOODBOARD_*_ROOM.md`; brief → FABLE ROUND | feeds the geometry doc; does NOT block 1–5 |
 | ⛔ | GATED — all spatial work (radial shell, tinted-room build, point-cloud VR) | gated on Sérgio's in-headset playtest (A11 gate) | do not start |
 | ⛔ | BLOCKED — trans-man alcove content, R6 drafting, R11 drafting | ethics gates G1/G2/G3/G4 (master plan §4) | do not start |
