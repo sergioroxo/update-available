@@ -5690,10 +5690,20 @@ def _render_longform_review_job(job_key: str) -> bool:
             f"Longform review is running in the background "
             f"(PID {job.get('pid')}). You can keep using the app."
         )
-        c1, c2 = st.columns([1, 1])
+        st.caption(
+            "Completed sections are appended to `longform_section_analyses.jsonl` as they finish. "
+            "Stopping now may lose only the section currently being reviewed."
+        )
+        c1, c2, c3 = st.columns([1, 1, 1])
         if c1.button("Refresh longform review status", key=f"{job_key}_refresh"):
             st.rerun()
-        if c2.button("Forget this status card", key=f"{job_key}_forget_running"):
+        if c2.button("Stop now (keep completed sections)", key=f"{job_key}_stop_running"):
+            message = _request_stop_app_job(job)
+            _clear_app_job_lock(job)
+            st.session_state.pop(job_key, None)
+            st.warning(message)
+            st.rerun()
+        if c3.button("Forget this status card", key=f"{job_key}_forget_running"):
             st.session_state.pop(job_key, None)
             st.rerun()
         tail = _job_log_tail(log_path)
@@ -6041,8 +6051,12 @@ def _render_longform_panel(doc_id: str, doc_dir: Path) -> None:
         )
         no_overwrite = r3.checkbox(
             "Keep existing section analyses",
-            value=False,
+            value=True,
             key=f"longform_review_no_overwrite_{doc_id}",
+            help=(
+                "Recommended for resume. Existing section rows are preserved and skipped. "
+                "Unchecked means rebuild the section-analysis file from scratch."
+            ),
         )
         review_cmd = _longform_review_command(
             doc_id,
@@ -6071,6 +6085,54 @@ def _render_longform_panel(doc_id: str, doc_dir: Path) -> None:
             except Exception as exc:
                 st.error(f"Could not start longform review: {exc}")
             st.rerun()
+
+        can_synthesize = (
+            bool(review_status["section_count"])
+            and review_status["sections_reviewed"] == review_status["section_count"]
+            and review_status["sections_failed"] == 0
+        )
+        synthesis_cmd = _longform_review_command(
+            doc_id,
+            llm=review_llm,
+            max_section_chars=max_section_chars,
+            section_limit=0,
+            no_overwrite=True,
+        )
+        with st.expander("Final synthesis from saved section analyses", expanded=can_synthesize and not review_status["has_synthesis"]):
+            st.caption(
+                "Runs the whole-book/report synthesis from the saved `longform_section_analyses.jsonl`. "
+                "It keeps existing section analyses and does not rerun successful sections."
+            )
+            st.code(shlex.join(synthesis_cmd), language="bash")
+            if not can_synthesize:
+                st.warning(
+                    "Final synthesis needs every section to have a successful saved analysis. "
+                    "Current status: "
+                    f"{review_status['sections_reviewed']}/{review_status['section_count'] or 0} succeeded, "
+                    f"{review_status['sections_failed']} failed."
+                )
+                if review_status["sections_failed"]:
+                    st.caption(
+                        "Current resume mode skips failed rows too. A later retry-failed workflow should handle those "
+                        "without rebuilding the whole book."
+                    )
+            if st.button(
+                "Build / refresh final synthesis",
+                key=f"longform_review_synthesis_{doc_id}",
+                disabled=bool(_read_app_job_lock()) or not can_synthesize,
+            ):
+                try:
+                    st.session_state[job_key] = _start_longform_review_job(
+                        doc_id,
+                        llm=review_llm,
+                        max_section_chars=max_section_chars,
+                        section_limit=0,
+                        no_overwrite=True,
+                    )
+                    st.success("Final longform synthesis started in the background.")
+                except Exception as exc:
+                    st.error(f"Could not start final synthesis: {exc}")
+                st.rerun()
 
         title_line = status["title"] or "—"
         if status["title_source"] or status["title_review_state"]:

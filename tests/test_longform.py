@@ -390,6 +390,107 @@ def test_run_longform_review_with_fake_model_writes_section_and_synthesis(tmp_pa
     assert synthesis["synthesis"]["archive_abstract"] == "A full-book synthesis."
 
 
+def test_run_longform_review_no_overwrite_can_synthesize_from_saved_sections(tmp_path):
+    config = _cfg(tmp_path)
+    doc = _make_doc(config.corpus_dir)
+    rows = [
+        {
+            "block_id": "doc-book-p0001-b0001",
+            "page_index": 0,
+            "page_label": "1",
+            "text": "A" * 6200,
+        },
+        {
+            "block_id": "doc-book-p0002-b0001",
+            "page_index": 1,
+            "page_label": "2",
+            "text": "B" * 6200,
+        },
+    ]
+    (doc / "text_blocks.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    _write_json(doc / "bibliographic.json", {
+        "titles": {"main": {"value": "Saved Sections Example"}},
+    })
+    _write_json(doc / "longform_quality.json", {"char_count": 12400})
+
+    def first_model(system, user, llm, model, cfg):
+        if "SECTION ANALYSES JSON" in user:
+            return {
+                "archive_abstract": "Initial synthesis.",
+                "full_document_summary": "Both sections are reviewed.",
+                "coverage_statement": "All sections reviewed.",
+                "section_overview": [],
+                "bibliographic_needs": [],
+                "key_arguments": [],
+                "sogice_contribution": [],
+                "actors_networks": [],
+                "lexicon_candidates": [],
+                "tactics_practices": [],
+                "evidence_highlights": [],
+                "limitations": [],
+            }
+        return {
+            "section_summary": "Saved section analysis.",
+            "sogice_relevance": "context",
+            "key_arguments": [],
+            "actors": [],
+            "terms": [],
+            "tactics": [],
+            "practices": [],
+            "evidence_quotes": [],
+            "limitations": [],
+        }
+
+    first = longform_review.run_longform_review(
+        doc,
+        config=config,
+        llm="litelm-heavy",
+        max_section_chars=7000,
+        model_call=first_model,
+    )
+    assert first["sections_reviewed"] == 2
+    assert first["synthesis_status"] == "succeeded"
+    (doc / "longform_synthesis.json").unlink()
+
+    second_calls = []
+
+    def synthesis_only_model(system, user, llm, model, cfg):
+        second_calls.append(user)
+        assert "SECTION ANALYSES JSON" in user
+        return {
+            "archive_abstract": "Rebuilt synthesis from saved rows.",
+            "full_document_summary": "No section rerun was needed.",
+            "coverage_statement": "All saved sections used.",
+            "section_overview": [],
+            "bibliographic_needs": [],
+            "key_arguments": [],
+            "sogice_contribution": [],
+            "actors_networks": [],
+            "lexicon_candidates": [],
+            "tactics_practices": [],
+            "evidence_highlights": [],
+            "limitations": [],
+        }
+
+    second = longform_review.run_longform_review(
+        doc,
+        config=config,
+        llm="litelm-heavy",
+        max_section_chars=7000,
+        overwrite=False,
+        model_call=synthesis_only_model,
+    )
+
+    assert second["sections_reviewed"] == 2
+    assert second["synthesis_status"] == "succeeded"
+    assert len(second_calls) == 1
+    synthesis = read_json_safe(doc / "longform_synthesis.json", {})
+    assert synthesis["synthesis"]["archive_abstract"] == "Rebuilt synthesis from saved rows."
+
+
 def test_longform_review_cli_dry_run_builds_sections(monkeypatch, tmp_path):
     config = _cfg(tmp_path)
     doc = _make_doc(config.corpus_dir)
