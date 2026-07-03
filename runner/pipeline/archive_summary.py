@@ -45,6 +45,15 @@ _ARTIFACT_FILES = {
     "testimony_review": "testimony_review.json",
     "offload_import": "offload_import.json",
     "source_item": "source_item.json",
+    "longform_source": "longform_source.json",
+    "bibliographic": "bibliographic.json",
+    "page_map": "page_map.jsonl",
+    "text_blocks": "text_blocks.jsonl",
+    "longform_quality": "longform_quality.json",
+    "longform_sections": "longform_sections.json",
+    "longform_section_analyses": "longform_section_analyses.jsonl",
+    "longform_candidates": "longform_candidates.json",
+    "longform_synthesis": "longform_synthesis.json",
 }
 
 _ENRICHMENT_FAMILIES = (
@@ -156,6 +165,71 @@ def _manual_overrides(analysis: dict) -> dict:
     return overrides if isinstance(overrides, dict) else {}
 
 
+def _longform_summary(
+    *,
+    source: dict,
+    bibliographic: dict,
+    quality: dict,
+    sections: dict,
+    candidates: dict,
+    synthesis: dict,
+    section_analyses_count: int,
+    page_map_exists: bool,
+    text_blocks_exists: bool,
+) -> dict:
+    exists = bool(
+        source
+        or bibliographic
+        or quality
+        or sections
+        or candidates
+        or synthesis
+        or section_analyses_count
+        or page_map_exists
+        or text_blocks_exists
+    )
+    representation = source.get("representation") if isinstance(source.get("representation"), dict) else {}
+    title = bibliographic.get("titles", {}).get("main", {}) if isinstance(bibliographic.get("titles"), dict) else {}
+    synthesis_payload = synthesis.get("synthesis") if isinstance(synthesis.get("synthesis"), dict) else {}
+    return {
+        "exists": exists,
+        "schema_version": str(
+            quality.get("schema_version")
+            or source.get("schema_version")
+            or bibliographic.get("schema_version")
+            or ""
+        ),
+        "item_type": str(bibliographic.get("item_type") or ""),
+        "title": str(title.get("value") or "") if isinstance(title, dict) else "",
+        "representation_type": str(representation.get("type") or ""),
+        "extraction_method": str(quality.get("extraction_method") or representation.get("extraction_method") or ""),
+        "page_count": _int(quality.get("page_count") or representation.get("page_count")),
+        "block_count": _int(quality.get("block_count") or representation.get("block_count")),
+        "char_count": _int(quality.get("char_count") or representation.get("char_count")),
+        "warning_count": len(quality.get("warnings") or []) if isinstance(quality.get("warnings"), list) else 0,
+        "review_state": str(quality.get("review_state") or bibliographic.get("review_state") or ""),
+        "has_page_map": page_map_exists,
+        "has_text_blocks": text_blocks_exists,
+        "has_sections": bool(sections),
+        "section_count": _int(sections.get("section_count")),
+        "section_analyses_count": section_analyses_count,
+        "candidate_count": _int(candidates.get("candidate_count")),
+        "candidate_counts_by_family": candidates.get("counts_by_family") if isinstance(candidates.get("counts_by_family"), dict) else {},
+        "has_synthesis": bool(synthesis_payload),
+        "synthesis_status": "succeeded" if synthesis_payload else str(synthesis.get("status") or ""),
+        "analysis_scope": str(synthesis.get("analysis_scope") or ""),
+    }
+
+
+def _jsonl_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    try:
+        return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+    except Exception:
+        return 0
+
+
 def _is_review_status_reviewed(review_status: dict) -> bool:
     if not isinstance(review_status, dict):
         return False
@@ -230,6 +304,12 @@ def build_archive_summary(doc_dir: Path, *, config=None, generated_at: str | Non
     offload_import = read_json_safe(doc_dir / "offload_import.json", {})
     source_item = read_json_safe(doc_dir / "source_item.json", {})
     citation_units = read_json_safe(doc_dir / CITATION_UNITS_FILENAME, {})
+    longform_source = read_json_safe(doc_dir / "longform_source.json", {})
+    bibliographic = read_json_safe(doc_dir / "bibliographic.json", {})
+    longform_quality = read_json_safe(doc_dir / "longform_quality.json", {})
+    longform_sections = read_json_safe(doc_dir / "longform_sections.json", {})
+    longform_candidates = read_json_safe(doc_dir / "longform_candidates.json", {})
+    longform_synthesis = read_json_safe(doc_dir / "longform_synthesis.json", {})
 
     source_value = str(intake.get("source") or "").strip()
     source_url_candidates = [
@@ -287,6 +367,17 @@ def build_archive_summary(doc_dir: Path, *, config=None, generated_at: str | Non
             "preprocess_quality": str(preprocess.get("quality") or "").strip(),
         },
         "citation_units": citation_summary(citation_units),
+        "longform": _longform_summary(
+            source=longform_source if isinstance(longform_source, dict) else {},
+            bibliographic=bibliographic if isinstance(bibliographic, dict) else {},
+            quality=longform_quality if isinstance(longform_quality, dict) else {},
+            sections=longform_sections if isinstance(longform_sections, dict) else {},
+            candidates=longform_candidates if isinstance(longform_candidates, dict) else {},
+            synthesis=longform_synthesis if isinstance(longform_synthesis, dict) else {},
+            section_analyses_count=_jsonl_count(doc_dir / "longform_section_analyses.jsonl"),
+            page_map_exists=(doc_dir / "page_map.jsonl").exists(),
+            text_blocks_exists=(doc_dir / "text_blocks.jsonl").exists(),
+        ),
         "classification": {
             "type": str(analysis.get("type") or "").strip(),
             "primary_type": str(analysis.get("primary_type") or "").strip(),

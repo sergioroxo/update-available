@@ -33,6 +33,32 @@ def test_load_tag_registry_returns_empty_for_missing_path(tmp_path):
     assert tag_registry.load_tag_registry(tmp_path / "missing") == []
 
 
+def test_custom_tag_rows_load_without_legacy_csv(tmp_path, monkeypatch):
+    overrides_path = tmp_path / "tag_registry_overrides.json"
+    monkeypatch.setattr(tag_registry, "OVERRIDES_PATH", overrides_path)
+
+    key = tag_registry.save_custom_tag(
+        "Tactic",
+        "Longform Religious Framing",
+        {
+            "definition": "A model-proposed longform candidate.",
+            "occurrences": 3,
+            "connections": "section-a: quote",
+        },
+    )
+
+    rows = tag_registry.load_tag_registry(tmp_path / "missing")
+
+    assert key == "Tactic:longform-religious-framing"
+    assert len(rows) == 1
+    assert rows[0]["key"] == key
+    assert rows[0]["category"] == "Tactic"
+    assert rows[0]["tag"] == "Longform Religious Framing"
+    assert rows[0]["definition"] == "A model-proposed longform candidate."
+    assert rows[0]["occurrences"] == 3
+    assert rows[0]["custom"] == "longform"
+
+
 def test_registry_status_reports_missing_csv(tmp_path, monkeypatch):
     monkeypatch.delenv("SOGICE_LEGACY_VOCAB_DIR", raising=False)
 
@@ -45,6 +71,18 @@ def test_registry_status_reports_missing_csv(tmp_path, monkeypatch):
     assert status["dir_exists"] is True
     assert status["csv_exists"] is False
     assert status["row_count"] == 0
+
+
+def test_registry_status_counts_custom_rows_without_csv(tmp_path, monkeypatch):
+    overrides_path = tmp_path / "tag_registry_overrides.json"
+    monkeypatch.setattr(tag_registry, "OVERRIDES_PATH", overrides_path)
+    tag_registry.save_custom_tag("Actor", "Longform Actor", {"definition": "Candidate actor"})
+
+    status = tag_registry.registry_status(tmp_path)
+
+    assert status["available"] is True
+    assert status["csv_exists"] is False
+    assert status["row_count"] == 1
 
 
 def test_registry_status_reports_available_rows(tmp_path, monkeypatch):

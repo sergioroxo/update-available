@@ -20,7 +20,7 @@ from rich.panel import Panel
 
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
-from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion, archive_summary, knowledge_graph, knowledge_quality, system_health, research_digest
+from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion, archive_summary, knowledge_graph, knowledge_quality, system_health, research_digest, longform, longform_review, embedding_repair
 from .pipeline import search as search_mod
 from .pipeline.system_tools import tool_path
 
@@ -1443,6 +1443,16 @@ def queue_triage(
     limit: int = typer.Option(10, "--limit", "-n", help="Maximum items to triage in one run"),
     batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Triage only items in this batch group"),
     force: bool = typer.Option(False, "--force", help="Re-triage items already in 'triaged' status"),
+    item_ids: Optional[List[str]] = typer.Option(
+        None,
+        "--item-id",
+        help="Triage this exact queue item ID; repeat for multiple IDs.",
+    ),
+    use_crawl4ai: bool = typer.Option(
+        False,
+        "--use-crawl4ai",
+        help="Enable the optional Crawl4AI rendered-page fallback for this run.",
+    ),
 ):
     """Run fast triage on new source-queue items.
 
@@ -1450,61 +1460,95 @@ def queue_triage(
     priority / recommended_llm / doc_type_hint in the queue.
     """
     from .pipeline.source_queue import (
-        open_db, queue_db_path, list_items, apply_triage_result
+        open_db, queue_db_path, list_items, get_item, apply_triage_result
     )
     from .pipeline import triage as triage_mod
 
     config = load_config(require_services=False)
     db = open_db(queue_db_path(config.corpus_dir))
 
-    status_filter = None if force else "new"
-    candidates = list_items(db, status=status_filter, batch_group=batch, limit=limit)
-    if force:
-        candidates = [i for i in candidates if i.status in ("new", "triaged")]
+    if item_ids:
+        seen_ids: set[str] = set()
+        candidates = []
+        for raw_id in item_ids:
+            item_id = raw_id.strip()
+            if not item_id or item_id in seen_ids:
+                continue
+            seen_ids.add(item_id)
+            item = get_item(db, item_id)
+            if item is None:
+                console.print(f"[yellow]Queue item not found: {item_id}[/yellow]")
+                continue
+            candidates.append(item)
+        allowed_statuses = {"new", "triaged"} if force else {"new"}
+        skipped = [i for i in candidates if i.status not in allowed_statuses]
+        candidates = [i for i in candidates if i.status in allowed_statuses]
+        for item in skipped:
+            console.print(
+                f"[dim]Skipping {item.id}: status={item.status}; "
+                f"{'use --force to retry triaged rows' if item.status == 'triaged' and not force else 'not triageable'}.[/dim]"
+            )
+    else:
+        status_filter = None if force else "new"
+        candidates = list_items(db, status=status_filter, batch_group=batch, limit=limit)
+        if force:
+            candidates = [i for i in candidates if i.status in ("new", "triaged")]
 
     if not candidates:
         console.print("[dim]No new items to triage.[/dim]")
         return
 
     model_name = "litelm/triage" if config.litelm_base_url else config.local_analysis_model
-    console.print(f"[cyan]Triaging {len(candidates)} item(s) with {model_name}...[/cyan]")
-    for i, item in enumerate(candidates, 1):
-        console.print(f"[dim]({i}/{len(candidates)})[/dim] {item.url[:80]}")
-        try:
-            snippet, note = triage_mod.extract_snippet(item.url)
-            console.print(f"  [dim]{note[:60]}[/dim]")
-            triage_audit: dict = {}
-            result = triage_mod.run(
-                snippet,
-                config,
-                source_label=triage_mod.source_context_label(
-                    item.url,
-                    extraction_note=note,
-                    snippet=snippet,
-                    researcher_note=item.notes,
-                ),
-                _audit=triage_audit,
-            )
-            apply_triage_result(db, item.id, result, model_name=model_name, acquisition_note=note)
-            if not result.triage_succeeded:
-                # run() returned a fail-closed result (model/network/parse failure).
-                console.print(
-                    f"  [yellow]→ triage held — not batch-safe[/yellow] "
-                    f"[dim]{result.routing_reason[:80]}[/dim]"
+    old_crawl = os.environ.get("SOGICE_ENABLE_CRAWL4AI")
+    if use_crawl4ai:
+        os.environ["SOGICE_ENABLE_CRAWL4AI"] = "1"
+        console.print("[dim]Crawl4AI rendered fallback enabled for this run.[/dim]")
+
+    try:
+        console.print(f"[cyan]Triaging {len(candidates)} item(s) with {model_name}...[/cyan]")
+        for i, item in enumerate(candidates, 1):
+            console.print(f"[dim]({i}/{len(candidates)})[/dim] {item.id}  {item.url[:80]}")
+            try:
+                snippet, note = triage_mod.extract_snippet(item.url)
+                console.print(f"  [dim]{note[:60]}[/dim]")
+                triage_audit: dict = {}
+                result = triage_mod.run(
+                    snippet,
+                    config,
+                    source_label=triage_mod.source_context_label(
+                        item.url,
+                        extraction_note=note,
+                        snippet=snippet,
+                        researcher_note=item.notes,
+                    ),
+                    _audit=triage_audit,
                 )
+                apply_triage_result(db, item.id, result, model_name=model_name, acquisition_note=note)
+                if not result.triage_succeeded:
+                    # run() returned a fail-closed result (model/network/parse failure).
+                    console.print(
+                        f"  [yellow]→ triage held — not batch-safe[/yellow] "
+                        f"[dim]{result.routing_reason[:80]}[/dim]"
+                    )
+                else:
+                    console.print(
+                        f"  → [cyan]{result.doc_type_hint}[/cyan]  "
+                        f"[yellow]{result.recommended_llm}[/yellow]  "
+                        f"{result.routing_reason[:60]}"
+                    )
+            except Exception as exc:
+                # Snippet extraction (or any other step) raised. Persist a fail-closed
+                # triage result so the row is never left at the default-safe state.
+                console.print(f"  [yellow]Triage held: {exc}[/yellow]")
+                failed = triage_mod.TriageResult.failed(f"snippet/extraction error: {exc}")
+                apply_triage_result(db, item.id, failed, model_name=model_name, acquisition_note=str(exc))
+                console.print("  [yellow]→ triage held — not batch-safe[/yellow]")
+    finally:
+        if use_crawl4ai:
+            if old_crawl is None:
+                os.environ.pop("SOGICE_ENABLE_CRAWL4AI", None)
             else:
-                console.print(
-                    f"  → [cyan]{result.doc_type_hint}[/cyan]  "
-                    f"[yellow]{result.recommended_llm}[/yellow]  "
-                    f"{result.routing_reason[:60]}"
-                )
-        except Exception as exc:
-            # Snippet extraction (or any other step) raised. Persist a fail-closed
-            # triage result so the row is never left at the default-safe state.
-            console.print(f"  [yellow]Triage held: {exc}[/yellow]")
-            failed = triage_mod.TriageResult.failed(f"snippet/extraction error: {exc}")
-            apply_triage_result(db, item.id, failed, model_name=model_name, acquisition_note=str(exc))
-            console.print("  [yellow]→ triage held — not batch-safe[/yellow]")
+                os.environ["SOGICE_ENABLE_CRAWL4AI"] = old_crawl
 
     console.print(
         f"[green]Done.[/green] Use [dim]runner queue-list[/dim] to review. "
@@ -3102,6 +3146,92 @@ def archive_citation_backfill_cmd(
     )
 
 
+@app.command(name="longform-build")
+def longform_build_cmd(
+    doc_id: str = typer.Argument(..., help="Corpus document ID to inspect as a longform source"),
+    corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
+    no_overwrite: bool = typer.Option(False, "--no-overwrite", help="Do not replace existing longform sidecars"),
+):
+    """Build regenerable longform sidecars for a book/report/PDF document."""
+    config = load_config(llm=None, require_services=False)
+    corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    doc_dir = corpus_dir / doc_id
+    if not doc_dir.is_dir():
+        console.print(Panel(str(doc_dir), title="[red]Document folder not found[/red]"))
+        raise typer.Exit(1)
+    try:
+        result = longform.build_longform_sidecars(doc_dir, overwrite=not no_overwrite)
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Longform build failed[/red]"))
+        raise typer.Exit(1)
+
+    quality = result.get("quality", {})
+    extraction = result.get("extraction", {})
+    console.print(f"[green]✓ Longform sidecars built[/green] [dim]{doc_dir}[/dim]")
+    console.print(
+        f"  doc_id={result.get('doc_id')}  "
+        f"method={extraction.get('method', '')}  "
+        f"pages={extraction.get('page_count', 0)}  "
+        f"blocks={extraction.get('block_count', 0)}  "
+        f"chars={extraction.get('char_count', 0)}"
+    )
+    if quality.get("warnings"):
+        console.print("[yellow]Warnings:[/yellow] " + "; ".join(str(w) for w in quality.get("warnings", [])))
+    for path in result.get("paths", {}).values():
+        console.print(f"  [dim]{path}[/dim]")
+
+
+@app.command(name="longform-review")
+def longform_review_cmd(
+    doc_id: str = typer.Argument(..., help="Corpus document ID to review as a longform source"),
+    llm: str = typer.Option("litelm-heavy", "--llm", help="LLM route: litelm-heavy | litelm | claude | local-heavy"),
+    model: str = typer.Option("", "--model", help="Override model alias/name for the selected LLM route"),
+    corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
+    max_section_chars: int = typer.Option(30000, "--max-section-chars", help="Approximate maximum characters per review section"),
+    section_limit: int = typer.Option(0, "--section-limit", help="Review only the first N sections; 0 means all"),
+    no_overwrite: bool = typer.Option(False, "--no-overwrite", help="Keep existing section analyses and review only missing sections"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Build sections and print counts without model calls"),
+):
+    """Run section-level longform review and a synthesis sidecar."""
+    config = load_config(llm=llm, require_services=not dry_run)
+    corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    doc_dir = corpus_dir / doc_id
+    if not doc_dir.is_dir():
+        console.print(Panel(str(doc_dir), title="[red]Document folder not found[/red]"))
+        raise typer.Exit(1)
+    try:
+        result = longform_review.run_longform_review(
+            doc_dir,
+            config=config,
+            llm=llm,
+            model=model or None,
+            max_section_chars=max_section_chars,
+            section_limit=section_limit,
+            overwrite=not no_overwrite,
+            dry_run=dry_run,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Longform review failed[/red]"))
+        raise typer.Exit(1)
+
+    if dry_run:
+        console.print(
+            f"[green]✓ Longform sections prepared[/green] "
+            f"{result.get('section_count', 0)} section(s); "
+            f"{result.get('sections_selected', 0)} selected for this run"
+        )
+    else:
+        console.print(
+            f"[green]✓ Longform review complete[/green] "
+            f"{result.get('sections_reviewed', 0)}/{result.get('section_count', 0)} section(s) reviewed; "
+            f"synthesis={result.get('synthesis_status', 'unknown')}"
+        )
+        if result.get("sections_failed"):
+            console.print(f"[yellow]Section failures:[/yellow] {result['sections_failed']}")
+    for path in result.get("paths", {}).values():
+        console.print(f"  [dim]{path}[/dim]")
+
+
 @app.command(name="knowledge-graph-export")
 def knowledge_graph_export_cmd(
     out_dir: str = typer.Option("", "--out-dir", help="Output directory (default: exports/knowledge)"),
@@ -3772,6 +3902,69 @@ def embed_test(
         ),
         title="Embedding Dimension Test ✓" if dim == 4096 else "Embedding Dimension Test — MISMATCH",
     ))
+
+
+@app.command(name="embedding-gaps")
+def embedding_gaps():
+    """List corpus documents with missing/empty embeddings or pending retry markers."""
+    config = load_config()
+    rows = embedding_repair.embedding_gap_rows(config.corpus_dir)
+    if not rows:
+        console.print("[green]No local embedding gaps found.[/green]")
+        return
+    console.print(f"[yellow]{len(rows)} document(s) need embedding repair:[/yellow]")
+    for row in rows:
+        marker = "pending" if row["pending"] else "missing"
+        extracted = "extracted.txt" if row["has_extracted_text"] else "no extracted.txt"
+        detail = row["pending_error"][:180] if row["pending_error"] else ""
+        console.print(f"  • [bold]{row['doc_id']}[/bold]  {marker}  {extracted}")
+        if detail:
+            console.print(f"    [dim]{detail}[/dim]")
+
+
+@app.command(name="embedding-repair")
+def embedding_repair_cmd(
+    doc_id: str = typer.Argument(..., help="Corpus document ID to repair."),
+    route: str = typer.Option(
+        "auto",
+        "--route",
+        help="Embedding route: auto | litelm | mac-studio-ollama | local",
+    ),
+    overwrite: bool = typer.Option(
+        True,
+        "--overwrite/--no-overwrite",
+        help="Overwrite an existing embedding.json.",
+    ),
+    push_supabase: bool = typer.Option(
+        False,
+        "--push-supabase",
+        help="Also upsert the repaired embedding to Supabase. Does not upload to Sanity.",
+    ),
+):
+    """Repair a missing/pending local embedding for one corpus document."""
+    allowed = {"auto", "litelm", "mac-studio-ollama", "local"}
+    if route not in allowed:
+        console.print(f"[red]Unknown route: {route}. Expected one of: {', '.join(sorted(allowed))}[/red]")
+        raise typer.Exit(2)
+    config = load_config()
+    result = embedding_repair.repair_embedding(
+        doc_id,
+        config,
+        route=route,  # type: ignore[arg-type]
+        overwrite=overwrite,
+        push_supabase=push_supabase,
+    )
+    if result.ok:
+        console.print(f"[green]✓ {result.message}[/green]")
+        console.print(f"  doc_id={doc_id} model={result.model} dimension={result.dimension}")
+    else:
+        console.print(f"[red]✗ {result.message}[/red]")
+    if result.attempts:
+        console.print("[dim]Attempts:[/dim]")
+        for attempt in result.attempts:
+            console.print(f"  - {attempt}")
+    if not result.ok:
+        raise typer.Exit(1)
 
 
 @app.command(name="litelm-test")

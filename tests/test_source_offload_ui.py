@@ -402,9 +402,22 @@ def test_source_queue_triage_command_can_enable_crawl4ai():
         force=True,
         use_crawl4ai=True,
     )
-    assert rendered.startswith("SOGICE_ENABLE_CRAWL4AI=1 ")
+    assert rendered.startswith(f"{sys.executable} -m runner queue-triage")
     assert "--force" in rendered
     assert "--batch batch-a" in rendered
+    assert "--use-crawl4ai" in rendered
+
+    exact = app_mod._source_queue_triage_command(
+        limit=99,
+        force=True,
+        use_crawl4ai=True,
+        item_ids=["abc12345", "def67890"],
+    )
+    assert "--limit" not in exact
+    assert "--item-id abc12345" in exact
+    assert "--item-id def67890" in exact
+    assert "--force" in exact
+    assert "--use-crawl4ai" in exact
 
 
 def test_source_queue_snapshot_command_preserves_queue_id_mapping():

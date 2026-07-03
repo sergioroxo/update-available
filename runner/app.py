@@ -17,12 +17,14 @@ Pages:
   Triage Tool      — paste a snippet and get a model recommendation
 """
 from __future__ import annotations
+from collections import Counter
 import difflib
 import json
 import os
 import re
 import shutil
 import shlex
+import signal
 import subprocess
 import sys
 import unicodedata
@@ -228,6 +230,8 @@ def page_dashboard():
         "local/Sanity/Supabase state."
     )
 
+    _render_ingestion_operations_panel(config)
+
     if pending_upload_count:
         st.warning(f"{pending_upload_count} document(s) are saved locally but not uploaded yet. Go to Pending Upload.")
 
@@ -380,6 +384,152 @@ def _dashboard_worklist_pages(rows: list[dict[str, str]]) -> list[str]:
     ]
     found = {row.get("Suggested page", "") for row in rows}
     return [page for page in page_order if page in found and page != "Dashboard"]
+
+
+def _safe_git_value(args: list[str], *, cwd: Path | None = None) -> str:
+    try:
+        proc = subprocess.run(
+            ["git", *args],
+            cwd=cwd or _project_root,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except Exception:
+        return ""
+    if proc.returncode != 0:
+        return ""
+    return proc.stdout.strip()
+
+
+def _runtime_environment_snapshot(config) -> dict[str, str | int]:
+    status = _safe_git_value(["status", "--short"])
+    dirty_files = len([line for line in status.splitlines() if line.strip()])
+    return {
+        "repo": str(_project_root),
+        "branch": _safe_git_value(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown",
+        "commit": _safe_git_value(["rev-parse", "--short", "HEAD"]) or "unknown",
+        "dirty_files": dirty_files,
+        "python": sys.executable,
+        "cwd": os.getcwd(),
+        "corpus_dir": str(getattr(config, "corpus_dir", "")),
+        "exports_dir": str(getattr(config, "exports_dir", "")),
+        "app_jobs_dir": str(_project_root / "exports" / "app_jobs"),
+    }
+
+
+def _operation_boundary_rows() -> list[dict[str, str]]:
+    return [
+        {
+            "State / artifact": "Source Queue item",
+            "Not the same as": "Ingested corpus document",
+            "Researcher action": "Triage, approve for offload, or hold for manual capture.",
+        },
+        {
+            "State / artifact": "Source offload package",
+            "Not the same as": "Imported analysis result",
+            "Researcher action": "Unpack/run/archive on Mac Studio, then import returned outbox.",
+        },
+        {
+            "State / artifact": "Imported corpus document",
+            "Not the same as": "Published Sanity/Supabase record",
+            "Researcher action": "Review readiness, fix blockers, then upload explicitly.",
+        },
+        {
+            "State / artifact": "Longform sidecars/review",
+            "Not the same as": "Canonical analysis.json replacement",
+            "Researcher action": "Use as deeper evidence and candidate proposal review material.",
+        },
+        {
+            "State / artifact": "Tag Registry hint",
+            "Not the same as": "Approved enrichment proposal or Sanity registry entry",
+            "Researcher action": "Treat as a connection hint until reviewed with source evidence.",
+        },
+        {
+            "State / artifact": "Evidence graph export",
+            "Not the same as": "Public graph / chatbot truth layer",
+            "Researcher action": "Publish only reviewed/uploaded/quote-backed subsets later.",
+        },
+    ]
+
+
+def _recent_app_job_log_rows(limit: int = 8, log_dir: Path | None = None) -> list[dict[str, str | int]]:
+    root = log_dir or (_project_root / "exports" / "app_jobs")
+    if not root.exists():
+        return []
+    rows: list[dict[str, str | int]] = []
+    paths = sorted(
+        [path for path in root.glob("*.log") if path.is_file()],
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    for path in paths[: max(0, limit)]:
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+        rows.append({
+            "name": path.name,
+            "modified": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(timespec="seconds"),
+            "bytes": stat.st_size,
+            "path": str(path),
+            "tail": _job_log_tail(path, limit=1200),
+        })
+    return rows
+
+
+def _render_ingestion_operations_panel(config) -> None:
+    st.subheader("Operations Control Plane")
+    st.warning(
+        "The biggest hidden risk is not a single broken extractor or model. "
+        "This is now a research operations system: queue state, package state, "
+        "corpus state, review state, and publication state are separate. Most "
+        "future breakage will come from mixing those states or losing sight of "
+        "which machine/path/job produced an artifact."
+    )
+
+    _render_active_app_job_lock_panel(expanded=False)
+
+    with st.expander("State boundaries that prevent accidental trust leaks", expanded=False):
+        st.dataframe(_operation_boundary_rows(), hide_index=True, width="stretch")
+
+    with st.expander("Runtime, paths, and git state", expanded=False):
+        snapshot = _runtime_environment_snapshot(config)
+        st.dataframe(
+            [{"Setting": key, "Value": value} for key, value in snapshot.items()],
+            hide_index=True,
+            width="stretch",
+        )
+        if int(snapshot.get("dirty_files", 0) or 0):
+            st.caption(
+                "Dirty files are expected during active development, but record them before "
+                "interpreting a run as reproducible."
+            )
+
+    logs = _recent_app_job_log_rows()
+    with st.expander("Recent background job logs", expanded=False):
+        if not logs:
+            st.caption("No app job logs found yet.")
+        else:
+            st.dataframe(
+                [
+                    {key: row[key] for key in ("name", "modified", "bytes", "path")}
+                    for row in logs
+                ],
+                hide_index=True,
+                width="stretch",
+            )
+            chosen = st.selectbox(
+                "Inspect log tail",
+                [str(row["name"]) for row in logs],
+                key="dashboard_recent_log_tail",
+            )
+            selected = next((row for row in logs if row["name"] == chosen), None)
+            if selected:
+                st.code(str(selected.get("tail") or ""), language="text")
+
+    runbook = _project_root / "docs" / "INGESTION_OPERATIONS_RUNBOOK.md"
+    st.caption(f"Runbook: `{runbook}`")
 
 
 def _render_dashboard_research_worklist(config) -> None:
@@ -1784,6 +1934,225 @@ def _read_json_file(path: Path, default):
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return default
+
+
+def _read_jsonl_preview(path: Path, *, limit: int = 12) -> list[dict]:
+    if not path.exists():
+        return []
+    rows: list[dict] = []
+    try:
+        with path.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                if len(rows) >= limit:
+                    break
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    value = json.loads(line)
+                except Exception:
+                    continue
+                if isinstance(value, dict):
+                    rows.append(value)
+    except Exception:
+        return []
+    return rows
+
+
+def _document_longform_status(doc_dir: Path) -> dict:
+    """Return local longform sidecar status for a corpus document.
+
+    Pure helper for the Streamlit panel. It never calls models, never writes,
+    and treats missing sidecars as normal: a document can be a longform
+    candidate before the researcher chooses to build the derived files.
+    """
+    doc_dir = Path(doc_dir)
+    source_candidates = [
+        doc_dir / name
+        for name in ("source.pdf", "source.epub", "source.docx", "source.doc", "source.odt", "source.md", "source.txt")
+        if (doc_dir / name).exists()
+    ]
+    source_artifact = source_candidates[0] if source_candidates else None
+
+    analysis = _read_json_file(doc_dir / "analysis.json", {})
+    fmt = str(analysis.get("format") or "").lower() if isinstance(analysis, dict) else ""
+    typ = str(analysis.get("type") or "").lower() if isinstance(analysis, dict) else ""
+    candidate = bool(source_artifact) or any(token in fmt or token in typ for token in ("book", "report", "pdf", "article"))
+
+    source = _read_json_file(doc_dir / "longform_source.json", {})
+    biblio = _read_json_file(doc_dir / "bibliographic.json", {})
+    quality = _read_json_file(doc_dir / "longform_quality.json", {})
+    preprocess = _read_json_file(doc_dir / "preprocess.json", {})
+    analysis_audit = _read_json_file(doc_dir / "analysis_audit.json", {})
+    page_map = doc_dir / "page_map.jsonl"
+    text_blocks = doc_dir / "text_blocks.jsonl"
+    has_sidecars = bool(source or biblio or quality or page_map.exists() or text_blocks.exists())
+
+    representation = source.get("representation") if isinstance(source.get("representation"), dict) else {}
+    titles = biblio.get("titles") if isinstance(biblio.get("titles"), dict) else {}
+    title = titles.get("main") if isinstance(titles.get("main"), dict) else {}
+    identifiers = biblio.get("identifiers") if isinstance(biblio.get("identifiers"), dict) else {}
+    creators = biblio.get("creators") if isinstance(biblio.get("creators"), list) else []
+    first_blocks = (
+        biblio.get("metadata_candidates", {}).get("first_text_blocks", [])
+        if isinstance(biblio.get("metadata_candidates"), dict)
+        else []
+    )
+    if not first_blocks:
+        first_blocks = [
+            {
+                "text": str(row.get("text") or "")[:500],
+                "page_label": str(row.get("page_label") or ""),
+                "page_index": row.get("page_index"),
+                "block_id": str(row.get("block_id") or ""),
+            }
+            for row in _read_jsonl_preview(text_blocks, limit=12)
+        ]
+
+    warnings = quality.get("warnings") if isinstance(quality.get("warnings"), list) else []
+    next_actions = quality.get("next_actions") if isinstance(quality.get("next_actions"), list) else []
+    preprocess_char_count = int(preprocess.get("char_count") or preprocess.get("text_char_count") or 0) if isinstance(preprocess, dict) else 0
+    analysis_input_char_count = int(analysis_audit.get("input_char_count") or 0) if isinstance(analysis_audit, dict) else 0
+    longform_char_count = int(quality.get("char_count") or representation.get("char_count") or 0)
+    baseline_chars = analysis_input_char_count or preprocess_char_count
+    stale_reasons: list[str] = []
+    if longform_char_count and baseline_chars and longform_char_count > max(baseline_chars * 1.5, baseline_chars + 5000):
+        stale_reasons.append(
+            f"longform text ({longform_char_count:,} chars) is much larger than the text used for current analysis ({baseline_chars:,} chars)"
+        )
+    if "longform_text_count_differs_from_preprocess" in warnings:
+        stale_reasons.append("longform text count differs from preprocess text count")
+    return {
+        "candidate": candidate,
+        "has_sidecars": has_sidecars,
+        "source_artifact": str(source_artifact) if source_artifact else "",
+        "source_artifact_name": source_artifact.name if source_artifact else "",
+        "title": str(title.get("value") or ""),
+        "title_source": str(title.get("source") or ""),
+        "title_review_state": str(title.get("review_state") or ""),
+        "creators": [str(item.get("name") or "") for item in creators if isinstance(item, dict) and str(item.get("name") or "").strip()],
+        "isbns": [str(item) for item in identifiers.get("isbn", [])] if isinstance(identifiers.get("isbn"), list) else [],
+        "item_type": str(biblio.get("item_type") or ""),
+        "representation_type": str(representation.get("type") or ""),
+        "extraction_method": str(quality.get("extraction_method") or representation.get("extraction_method") or ""),
+        "page_count": int(quality.get("page_count") or representation.get("page_count") or 0),
+        "block_count": int(quality.get("block_count") or representation.get("block_count") or 0),
+        "char_count": longform_char_count,
+        "preprocess_char_count": preprocess_char_count,
+        "analysis_input_char_count": analysis_input_char_count,
+        "analysis_likely_partial": bool(stale_reasons),
+        "analysis_staleness_reasons": stale_reasons,
+        "missing_text_page_count": int(quality.get("missing_text_page_count") or 0),
+        "warnings": [str(item) for item in warnings],
+        "next_actions": [str(item) for item in next_actions],
+        "first_blocks": first_blocks[:12] if isinstance(first_blocks, list) else [],
+        "paths": {
+            "longform_source": str(doc_dir / "longform_source.json"),
+            "bibliographic": str(doc_dir / "bibliographic.json"),
+            "page_map": str(page_map),
+            "text_blocks": str(text_blocks),
+            "longform_quality": str(doc_dir / "longform_quality.json"),
+        },
+    }
+
+
+def _document_longform_review_status(doc_dir: Path) -> dict:
+    """Return status for deep longform review sidecars."""
+    doc_dir = Path(doc_dir)
+    sections = _read_json_file(doc_dir / "longform_sections.json", {})
+    section_rows = _read_jsonl_preview(doc_dir / "longform_section_analyses.jsonl", limit=10000)
+    candidates = _read_json_file(doc_dir / "longform_candidates.json", {})
+    synthesis = _read_json_file(doc_dir / "longform_synthesis.json", {})
+    section_count = int(sections.get("section_count") or len(sections.get("sections") or []) or 0) if isinstance(sections, dict) else 0
+    succeeded = len([row for row in section_rows if row.get("status") == "succeeded"])
+    failed = len([row for row in section_rows if row.get("status") == "failed"])
+    synthesis_payload = synthesis.get("synthesis") if isinstance(synthesis.get("synthesis"), dict) else {}
+    return {
+        "has_sections": bool(sections),
+        "has_section_analyses": bool(section_rows),
+        "has_synthesis": bool(synthesis_payload),
+        "section_count": section_count,
+        "sections_reviewed": succeeded,
+        "sections_failed": failed,
+        "synthesis_status": "succeeded" if synthesis_payload else str(synthesis.get("status") or "missing"),
+        "candidate_count": int(candidates.get("candidate_count") or 0) if isinstance(candidates, dict) else 0,
+        "candidate_counts_by_family": candidates.get("counts_by_family") if isinstance(candidates.get("counts_by_family"), dict) else {},
+        "archive_abstract": str(synthesis_payload.get("archive_abstract") or ""),
+        "coverage_statement": str(synthesis_payload.get("coverage_statement") or ""),
+        "paths": {
+            "sections": str(doc_dir / "longform_sections.json"),
+            "section_analyses": str(doc_dir / "longform_section_analyses.jsonl"),
+            "candidates": str(doc_dir / "longform_candidates.json"),
+            "synthesis": str(doc_dir / "longform_synthesis.json"),
+        },
+    }
+
+
+def _longform_candidate_rows(corpus_dir: Path) -> list[dict]:
+    """Collect model-proposed longform candidates across corpus docs."""
+    rows: list[dict] = []
+    if not corpus_dir.exists():
+        return rows
+    for path in sorted(corpus_dir.glob("*/longform_candidates.json")):
+        payload = _read_json_file(path, {})
+        candidates = payload.get("candidates") if isinstance(payload, dict) else []
+        if not isinstance(candidates, list):
+            continue
+        for item in candidates:
+            if not isinstance(item, dict):
+                continue
+            evidence = item.get("evidence") if isinstance(item.get("evidence"), list) else []
+            rows.append({
+                "doc_id": path.parent.name,
+                "candidate_id": item.get("candidate_id") or "",
+                "family": item.get("family") or "",
+                "label": item.get("label") or "",
+                "normalized_label": item.get("normalized_label") or "",
+                "count": int(item.get("count") or 0),
+                "confidence": item.get("confidence"),
+                "review_state": item.get("review_state") or "model_proposed",
+                "candidate_actions": item.get("candidate_actions") or [],
+                "definitions": item.get("definitions") or [],
+                "evidence": evidence,
+                "source_path": str(path),
+            })
+    rows.sort(key=lambda row: (str(row["family"]), -int(row["count"]), str(row["label"]).lower()))
+    return rows
+
+
+def _longform_candidate_tag_category(family: str) -> str:
+    return {
+        "lexicon": "Term (discovered)",
+        "tactic": "Tactic",
+        "practice": "Practice",
+        "entity": "Actor",
+    }.get(str(family or "").lower(), "Term (discovered)")
+
+
+def _longform_candidate_to_tag_updates(candidate: dict) -> dict:
+    definitions = candidate.get("definitions") if isinstance(candidate.get("definitions"), list) else []
+    evidence = candidate.get("evidence") if isinstance(candidate.get("evidence"), list) else []
+    definition = next((str(item).strip() for item in definitions if str(item).strip()), "")
+    evidence_bits = []
+    for item in evidence[:5]:
+        if not isinstance(item, dict):
+            continue
+        quote = str(item.get("quote_or_note") or "").strip()
+        if quote:
+            where = str(item.get("section_id") or "").strip()
+            evidence_bits.append(f"{where}: {quote}" if where else quote)
+    return {
+        "definition": definition,
+        "concept_cluster": "Longform candidate",
+        "connections": "\n".join(evidence_bits),
+        "occurrences": int(candidate.get("count") or 0),
+        "researcher_note": (
+            f"Promoted from longform candidate register for {candidate.get('doc_id', '')}. "
+            "Model-proposed; researcher should confirm before using as evidence."
+        ),
+        "active": True,
+        "custom": "longform",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -5014,6 +5383,8 @@ def _write_app_job_lock(job: dict) -> None:
         "started_at": job.get("started_at", ""),
         "log_path": job.get("log_path", ""),
         "command": job.get("command", ""),
+        "item_count": job.get("item_count", ""),
+        "label": job.get("label", ""),
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
@@ -5111,6 +5482,35 @@ def _job_log_tail(path: Path, limit: int = 2400) -> str:
     return text[-limit:]
 
 
+def _render_active_app_job_lock_panel(*, expanded: bool = False) -> bool:
+    """Render the persisted app job lock when session_state lost the process.
+
+    Streamlit reruns normally keep the Popen object in session_state, but browser
+    reloads or server restarts can lose that object while the child process is
+    still alive. The lock file is the recoverable source of truth.
+    """
+    active = _read_app_job_lock()
+    if not active:
+        return False
+    with st.expander("Active background job / terminal log", expanded=expanded):
+        st.warning(_format_app_job_lock(active))
+        if active.get("command"):
+            st.caption("Command")
+            st.code(str(active["command"]), language="bash")
+        log_path = Path(str(active.get("log_path") or ""))
+        tail = _job_log_tail(log_path, limit=6000) if log_path else ""
+        if tail:
+            st.caption("Latest terminal output")
+            st.code(tail, language="text")
+        if log_path:
+            st.caption(f"Log: `{log_path}`")
+        st.caption(
+            "This panel is recovered from the app job lock. If the PID no longer exists, "
+            "the lock is cleared automatically on refresh."
+        )
+    return True
+
+
 def _start_complement_enrichment_job(doc_id: str, key_prefix: str) -> dict:
     """Start merge-aware enrichment without blocking the Streamlit app."""
     active = _read_app_job_lock()
@@ -5147,6 +5547,127 @@ def _start_complement_enrichment_job(doc_id: str, key_prefix: str) -> dict:
     }
     _write_app_job_lock(job)
     return job
+
+
+def _longform_review_command(
+    doc_id: str,
+    *,
+    llm: str = "litelm-heavy",
+    max_section_chars: int = 30000,
+    section_limit: int = 0,
+    no_overwrite: bool = False,
+) -> list[str]:
+    command = [
+        sys.executable,
+        "-m",
+        "runner",
+        "longform-review",
+        doc_id,
+        "--llm",
+        llm,
+        "--max-section-chars",
+        str(max_section_chars),
+    ]
+    if section_limit:
+        command.extend(["--section-limit", str(section_limit)])
+    if no_overwrite:
+        command.append("--no-overwrite")
+    return command
+
+
+def _start_longform_review_job(
+    doc_id: str,
+    *,
+    llm: str = "litelm-heavy",
+    max_section_chars: int = 30000,
+    section_limit: int = 0,
+    no_overwrite: bool = False,
+) -> dict:
+    """Start a deep longform review without blocking Streamlit."""
+    active = _read_app_job_lock()
+    if active:
+        raise RuntimeError(
+            _format_app_job_lock(active)
+            + " Wait for it to finish before starting another heavy model job."
+        )
+    safe_doc_id = re.sub(r"[^a-zA-Z0-9_.-]+", "-", doc_id).strip("-") or "doc"
+    started = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    log_dir = _project_root / "exports" / "app_jobs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{started}_{safe_doc_id}_longform_review.log"
+    command = _longform_review_command(
+        doc_id,
+        llm=llm,
+        max_section_chars=max_section_chars,
+        section_limit=section_limit,
+        no_overwrite=no_overwrite,
+    )
+    with log_path.open("w", encoding="utf-8") as log_file:
+        log_file.write(f"$ {shlex.join(command)}\n\n")
+        log_file.flush()
+        proc = subprocess.Popen(
+            command,
+            cwd=_project_root,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    job = {
+        "process": proc,
+        "pid": proc.pid,
+        "started_at": started,
+        "log_path": str(log_path),
+        "command": shlex.join(command),
+        "kind": "longform-review",
+        "mode": llm,
+    }
+    _write_app_job_lock(job)
+    return job
+
+
+def _render_longform_review_job(job_key: str) -> bool:
+    job = st.session_state.get(job_key)
+    if not job:
+        return False
+    proc = job.get("process")
+    returncode = proc.poll() if proc is not None else None
+    log_path = Path(job.get("log_path", ""))
+
+    if returncode is None:
+        st.info(
+            f"Longform review is running in the background "
+            f"(PID {job.get('pid')}). You can keep using the app."
+        )
+        c1, c2 = st.columns([1, 1])
+        if c1.button("Refresh longform review status", key=f"{job_key}_refresh"):
+            st.rerun()
+        if c2.button("Forget this status card", key=f"{job_key}_forget_running"):
+            st.session_state.pop(job_key, None)
+            st.rerun()
+        tail = _job_log_tail(log_path)
+        if tail:
+            with st.expander("Longform review log tail", expanded=False):
+                st.code(tail, language="text")
+        st.caption(f"Log: `{log_path}`")
+        return True
+
+    if returncode == 0:
+        st.success(
+            "Longform review finished. Refresh/reopen the document to inspect "
+            "section analyses; a synthesis appears after all sections are reviewed."
+        )
+    else:
+        st.error(f"Longform review exited with code {returncode}.")
+    _clear_app_job_lock(job)
+    tail = _job_log_tail(log_path)
+    if tail:
+        with st.expander("Longform review log tail", expanded=returncode != 0):
+            st.code(tail, language="text")
+    st.caption(f"Log: `{log_path}`")
+    if st.button("Clear longform review status", key=f"{job_key}_clear_done"):
+        st.session_state.pop(job_key, None)
+        st.rerun()
+    return False
 
 
 def _render_complement_enrichment_job(job_key: str) -> bool:
@@ -5333,6 +5854,215 @@ def _render_complement_enrichment_action(
                 "message": f"Could not start background enrichment: {exc}",
             }
         st.rerun()
+
+
+def _render_longform_panel(doc_id: str, doc_dir: Path) -> None:
+    status = _document_longform_status(doc_dir)
+    review_status = _document_longform_review_status(doc_dir)
+    if not status["candidate"] and not status["has_sidecars"]:
+        return
+
+    label = "📚 Longform book/report analysis"
+    if status["has_sidecars"]:
+        bits = []
+        if status["page_count"]:
+            bits.append(f"{status['page_count']} page(s)")
+        if status["block_count"]:
+            bits.append(f"{status['block_count']} block(s)")
+        if status["warnings"]:
+            bits.append(f"{len(status['warnings'])} warning(s)")
+        if bits:
+            label += " — " + " · ".join(bits)
+    else:
+        label += " — sidecars not built"
+
+    with st.expander(label, expanded=bool(status["warnings"]) or not status["has_sidecars"]):
+        st.caption(
+            "Local-only derived sidecars for long PDFs/books/reports. This builds page maps, "
+            "text blocks, bibliographic candidates, and extraction-quality warnings. It does "
+            "not run analysis/enrichment, upload, or change reviewed proposals."
+        )
+        cmd = [sys.executable, "-m", "runner", "longform-build", doc_id]
+        st.code(shlex.join(cmd), language="bash")
+
+        if status["source_artifact_name"]:
+            st.caption(f"Source artifact: `{status['source_artifact_name']}`")
+
+        cols = st.columns(5)
+        cols[0].metric("Pages", status["page_count"] or "—")
+        cols[1].metric("Text blocks", status["block_count"] or "—")
+        cols[2].metric("Characters", f"{status['char_count']:,}" if status["char_count"] else "—")
+        cols[3].metric("Missing text pages", status["missing_text_page_count"])
+        cols[4].metric("Warnings", len(status["warnings"]))
+
+        if status["analysis_likely_partial"]:
+            st.error(
+                "Current `analysis.json` is likely partial or stale for this longform document. "
+                + "; ".join(status["analysis_staleness_reasons"])
+                + ". Treat the existing document summary as a short-source analysis until a longform synthesis pass is run."
+            )
+            st.caption(
+                f"Current analysis input chars: `{status['analysis_input_char_count'] or status['preprocess_char_count'] or 0:,}` · "
+                f"Longform extracted chars: `{status['char_count']:,}`"
+            )
+
+        if st.button(
+            "Build / refresh longform sidecars",
+            key=f"longform_build_{doc_id}",
+            type="primary" if not status["has_sidecars"] else "secondary",
+        ):
+            try:
+                from runner.pipeline import archive_summary, longform
+
+                result = longform.build_longform_sidecars(doc_dir, overwrite=True)
+                archive_summary.write_archive_summary(doc_dir, config=_load_config_safe())
+                extraction = result.get("extraction", {})
+                st.success(
+                    "Longform sidecars refreshed: "
+                    f"{extraction.get('page_count', 0)} page(s), "
+                    f"{extraction.get('block_count', 0)} block(s), "
+                    f"{extraction.get('char_count', 0):,} char(s)."
+                )
+            except Exception as exc:
+                st.error(f"Longform build failed: {exc}")
+            st.rerun()
+
+        if not status["has_sidecars"]:
+            st.info("No longform sidecars exist yet. Build them to inspect the book/report structure.")
+            return
+
+        st.divider()
+        st.markdown("**Deep longform review**")
+        st.caption(
+            "Runs section-by-section model review and then writes a book/report synthesis sidecar. "
+            "It does not overwrite `analysis.json`, enrichment proposals, embeddings, Sanity, or Supabase."
+        )
+        review_cols = st.columns(5)
+        review_cols[0].metric("Sections", review_status["section_count"] or "—")
+        review_cols[1].metric("Reviewed", review_status["sections_reviewed"])
+        review_cols[2].metric("Failed", review_status["sections_failed"])
+        review_cols[3].metric("Candidates", review_status["candidate_count"])
+        review_cols[4].metric("Synthesis", review_status["synthesis_status"])
+        if review_status["candidate_count"]:
+            family_bits = [
+                f"{family}: {count}"
+                for family, count in sorted(review_status["candidate_counts_by_family"].items())
+                if count
+            ]
+            if family_bits:
+                st.caption("Candidate register: " + " · ".join(family_bits))
+
+        if review_status["archive_abstract"]:
+            st.markdown("**Longform archive abstract**")
+            st.write(review_status["archive_abstract"])
+            if review_status["coverage_statement"]:
+                st.caption("Coverage: " + review_status["coverage_statement"])
+
+        review_llm = st.selectbox(
+            "Review model route",
+            ["litelm-heavy", "litelm", "litelm-reasoning", "claude", "local-heavy"],
+            index=0,
+            key=f"longform_review_llm_{doc_id}",
+            help="Use the heavy route for full books when available.",
+        )
+        r1, r2, r3 = st.columns([1, 1, 1])
+        max_section_chars = int(
+            r1.number_input(
+                "Max chars / section",
+                min_value=5000,
+                max_value=80000,
+                value=30000,
+                step=5000,
+                key=f"longform_review_chars_{doc_id}",
+            )
+        )
+        section_limit = int(
+            r2.number_input(
+                "Section limit",
+                min_value=0,
+                max_value=100,
+                value=0,
+                step=1,
+                key=f"longform_review_limit_{doc_id}",
+                help="0 means review all sections. Use 1-2 for a smoke test.",
+            )
+        )
+        no_overwrite = r3.checkbox(
+            "Keep existing section analyses",
+            value=False,
+            key=f"longform_review_no_overwrite_{doc_id}",
+        )
+        review_cmd = _longform_review_command(
+            doc_id,
+            llm=review_llm,
+            max_section_chars=max_section_chars,
+            section_limit=section_limit,
+            no_overwrite=no_overwrite,
+        )
+        st.code(shlex.join(review_cmd), language="bash")
+        job_key = f"longform_review_job_{doc_id}"
+        _render_longform_review_job(job_key)
+        if st.button(
+            "Start deep longform review",
+            key=f"longform_review_start_{doc_id}",
+            disabled=bool(_read_app_job_lock()),
+        ):
+            try:
+                st.session_state[job_key] = _start_longform_review_job(
+                    doc_id,
+                    llm=review_llm,
+                    max_section_chars=max_section_chars,
+                    section_limit=section_limit,
+                    no_overwrite=no_overwrite,
+                )
+                st.success("Longform review started in the background.")
+            except Exception as exc:
+                st.error(f"Could not start longform review: {exc}")
+            st.rerun()
+
+        title_line = status["title"] or "—"
+        if status["title_source"] or status["title_review_state"]:
+            title_line += f"  ·  `{status['title_source'] or 'unknown source'}` / `{status['title_review_state'] or 'unknown review state'}`"
+        st.markdown(f"**Title candidate:** {title_line}")
+        if status["creators"]:
+            st.markdown("**Creator candidates:** " + ", ".join(status["creators"]))
+        if status["isbns"]:
+            st.markdown("**ISBN candidates:** " + ", ".join(f"`{isbn}`" for isbn in status["isbns"]))
+        if status["item_type"] or status["representation_type"] or status["extraction_method"]:
+            st.caption(
+                f"Item type: `{status['item_type'] or 'unknown'}` · "
+                f"Representation: `{status['representation_type'] or 'unknown'}` · "
+                f"Extractor: `{status['extraction_method'] or 'unknown'}`"
+            )
+
+        if status["warnings"]:
+            st.warning("Longform quality warnings: " + "; ".join(status["warnings"]))
+        if status["next_actions"]:
+            st.info("Next actions: " + "; ".join(status["next_actions"]))
+
+        if status["first_blocks"]:
+            st.markdown("**First extracted text blocks / metadata candidates**")
+            rows = []
+            for block in status["first_blocks"][:12]:
+                if not isinstance(block, dict):
+                    continue
+                rows.append({
+                    "page": block.get("page_label") or (
+                        str(int(block.get("page_index")) + 1)
+                        if isinstance(block.get("page_index"), int)
+                        else ""
+                    ),
+                    "block_id": block.get("block_id", ""),
+                    "text": str(block.get("text") or "")[:300],
+                })
+            if rows:
+                st.dataframe(rows, hide_index=True, width="stretch")
+
+        with st.expander("Longform sidecar files", expanded=False):
+            for name, path in status["paths"].items():
+                p = Path(path)
+                present = "present" if p.exists() else "missing"
+                st.caption(f"`{name}`: `{present}` — {path}")
 
 
 def _render_review_overrides(doc_id: str, doc_dir: Path) -> None:
@@ -5604,6 +6334,8 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
         needs_recon = not src["title"]["preprocess"] or not src["language"]["preprocess"]
         with st.expander("Metadata sources / reconciliation", expanded=needs_recon):
             _render_metadata_reconciliation(doc["doc_id"], corpus_dir / doc["doc_id"], _load_config_safe())
+
+        _render_longform_panel(doc["doc_id"], corpus_dir / doc["doc_id"])
 
         # Readiness / Next Actions + provenance (date, languages, entity IDs, …)
         _prov_cfg = _load_config_safe()
@@ -6390,58 +7122,21 @@ def _local_embedding_status(doc_dir: Path, config) -> dict:
 def _generate_and_push_embedding(doc_id: str, corpus_dir: Path, config) -> tuple[bool, str]:
     if not config:
         return False, "Could not load config."
-    doc_dir = corpus_dir / doc_id
     try:
-        extracted = (doc_dir / "extracted.txt").read_text(encoding="utf-8")
-        from runner.pipeline import embed as _embed
-        from runner.clients import supabase as _sb
+        from runner.pipeline.embedding_repair import repair_embedding
 
-        attempts: list[str] = []
-        vec: list[float] = []
-        if getattr(config, "litelm_base_url", ""):
-            try:
-                vec = _embed.run_litelm(extracted, config)
-                attempts.append(f"LiteLLM {config.litelm_embedding_model}: ok ({len(vec)}d)")
-            except Exception as exc:
-                attempts.append(f"LiteLLM {config.litelm_embedding_model}: failed: {exc}")
-
-        if not vec and getattr(config, "litelm_ollama_base_url", ""):
-            try:
-                vec = _embed._call(
-                    config.litelm_ollama_base_url,
-                    config.litelm_ollama_embedding_model,
-                    extracted,
-                )
-                attempts.append(f"Mac Studio Ollama {config.litelm_ollama_embedding_model}: ok ({len(vec)}d)")
-            except Exception as exc:
-                attempts.append(f"Mac Studio Ollama {config.litelm_ollama_embedding_model}: failed: {exc}")
-
-        if not vec:
-            try:
-                vec = _embed.run(extracted, config)
-                attempts.append(f"Local Ollama {config.embedding_model}: ok ({len(vec)}d)")
-            except Exception as exc:
-                attempts.append(f"Local Ollama {config.embedding_model}: failed: {exc}")
-
-        if not vec:
-            return False, "Embedding generation failed. Attempts:\n" + "\n".join(f"- {item}" for item in attempts)
-        _embed.save(doc_id, vec, config)
-
-        from runner.models.document import AnalysisResult as _AR
-
-        analysis_data = json.loads((doc_dir / "analysis.json").read_text())
-        ar = _AR.model_validate(analysis_data)
-        intake_data = json.loads((doc_dir / "intake.json").read_text()) if (doc_dir / "intake.json").exists() else {}
-        _sb.upsert_embedding(
+        result = repair_embedding(
             doc_id,
-            vec,
-            ar,
             config,
-            tier=str(intake_data.get("tier", "")),
-            language=intake_data.get("language", ""),
-            embedding_model=config.embedding_model,
+            route="auto",
+            overwrite=True,
+            push_supabase=True,
         )
-        return True, f"Embedding generated ({len(vec)}d) and pushed to Supabase.\n" + "\n".join(attempts)
+        details = "\n".join(f"- {item}" for item in result.attempts)
+        message = result.message
+        if details:
+            message += "\n" + details
+        return result.ok, message
     except Exception as exc:
         return False, f"Embedding generation/push failed: {exc}"
 
@@ -7221,8 +7916,9 @@ def page_tag_registry():
         "This is the broader tag vocabulary used as enrichment signal material: actors, networks, practices, tactics, harms, evidence types, formats, countries, and terms. "
         "Edits are saved locally as researcher overrides; they do not change Sanity schema."
     )
+    config = _load_config_safe()
     try:
-        from runner.pipeline.tag_registry import OVERRIDES_PATH, load_tag_registry, registry_status, save_tag_override
+        from runner.pipeline.tag_registry import OVERRIDES_PATH, load_tag_registry, registry_status, save_custom_tag, save_tag_override
     except Exception as exc:
         st.error(f"Could not load tag registry: {exc}")
         return
@@ -7268,6 +7964,9 @@ def page_tag_registry():
     c2.metric("Categories", len({row["category"] for row in rows}))
     c3.metric("Active", sum(1 for row in rows if row.get("active", True)))
     c4.metric("With connections", sum(1 for row in rows if row.get("connections")))
+
+    if config is not None:
+        _render_longform_candidate_registry(config.corpus_dir, save_custom_tag)
 
     categories = sorted({row["category"] for row in rows})
     col1, col2 = st.columns([1, 2])
@@ -7346,6 +8045,93 @@ def _render_tag_editor(row: dict, save_tag_override) -> None:
             save_tag_override(key, updates)
             row.update(updates)
             st.success("Saved local tag override.")
+
+
+def _render_longform_candidate_registry(corpus_dir: Path, save_custom_tag) -> None:
+    candidates = _longform_candidate_rows(corpus_dir)
+    with st.expander("📚 Longform review candidates", expanded=False):
+        st.caption(
+            "These are model-proposed candidates aggregated from deep longform review sections. "
+            "They are not registry facts and they are not pushed to Sanity from here. "
+            "Saving one creates a local Tag Registry hint for future enrichment/review; "
+            "a Sanity record still requires the normal proposal approval/push flow."
+        )
+        if not candidates:
+            st.info("No longform candidate registers found yet. Run deep longform review on a book/report first.")
+            return
+        counts = Counter(str(row["family"]) for row in candidates)
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Candidates", len(candidates))
+        c2.metric("Terms", counts.get("lexicon", 0))
+        c3.metric("Tactics", counts.get("tactic", 0))
+        c4.metric("Practices / actors", counts.get("practice", 0) + counts.get("entity", 0))
+
+        families = ["(all)"] + sorted(counts)
+        family_filter = st.selectbox("Candidate family", families, key="tag_longform_family")
+        search = st.text_input("Search longform candidates", key="tag_longform_search")
+        visible = candidates
+        if family_filter != "(all)":
+            visible = [row for row in visible if row["family"] == family_filter]
+        if search.strip():
+            needle = search.lower().strip()
+            visible = [
+                row for row in visible
+                if needle in str(row["label"]).lower()
+                or needle in " ".join(str(item) for item in row.get("definitions", [])).lower()
+            ]
+        st.dataframe(
+            [
+                {
+                    "doc_id": row["doc_id"],
+                    "family": row["family"],
+                    "label": row["label"],
+                    "count": row["count"],
+                    "confidence": row["confidence"],
+                    "actions": ", ".join(row.get("candidate_actions") or []),
+                }
+                for row in visible[:300]
+            ],
+            hide_index=True,
+            width="stretch",
+        )
+        if not visible:
+            return
+        options = [
+            f"{row['family']} · {row['label']} · {row['doc_id']} · n={row['count']}"
+            for row in visible
+        ]
+        selected = st.selectbox("Inspect candidate", options, key="tag_longform_selected")
+        candidate = visible[options.index(selected)]
+        st.markdown(f"**{candidate['label']}**")
+        if candidate.get("definitions"):
+            st.write("Definitions / roles:")
+            for definition in candidate["definitions"][:5]:
+                st.markdown(f"- {definition}")
+        if candidate.get("evidence"):
+            with st.expander("Evidence snippets", expanded=True):
+                for item in candidate["evidence"][:8]:
+                    st.caption(f"{item.get('section_id', '')} · {item.get('page_start', '')}-{item.get('page_end', '')}")
+                    st.code(str(item.get("quote_or_note") or ""), language="text")
+
+        category = _longform_candidate_tag_category(str(candidate["family"]))
+        st.caption(f"Suggested local Tag Registry category: `{category}`")
+        st.info(
+            "Saving here means: local enrichment hint only. It will help future enrichment detect "
+            "the term/tactic/practice/actor, but it does not create or push a Sanity registry record."
+        )
+        if st.button("Save as local enrichment hint (not Sanity)", key="tag_longform_promote"):
+            try:
+                key = save_custom_tag(
+                    category,
+                    str(candidate["label"]),
+                    _longform_candidate_to_tag_updates(candidate),
+                )
+            except Exception as exc:
+                st.error(f"Could not save candidate: {exc}")
+            else:
+                st.session_state.pop("tag_registry_rows", None)
+                st.success(f"Saved local tag override `{key}`. Reload Tag Registry to see it in the table.")
+                st.rerun()
 
 
 def _render_seed_lexicon_import(config) -> None:
@@ -10957,6 +11743,9 @@ If the quality audit says the tag registry is unavailable, open **Tag Registry
 def page_guide():
     st.title("Guide")
     st.markdown(_guide_markdown())
+    runbook_path = _project_root / "docs" / "INGESTION_OPERATIONS_RUNBOOK.md"
+    with st.expander("Ingestion operations runbook", expanded=False):
+        _show_text_file(runbook_path, language="markdown")
 
 
 # ---------------------------------------------------------------------------
@@ -13453,14 +14242,178 @@ def _source_queue_triage_command(
     batch: str = "",
     force: bool = False,
     use_crawl4ai: bool = False,
+    item_ids: list[str] | None = None,
 ) -> str:
-    command = [sys.executable, "-m", "runner", "queue-triage", "--limit", str(max(1, int(limit)))]
+    command = [sys.executable, "-m", "runner", "queue-triage"]
+    clean_item_ids = [str(item_id).strip() for item_id in (item_ids or []) if str(item_id).strip()]
+    if clean_item_ids:
+        for item_id in clean_item_ids:
+            command.extend(["--item-id", item_id])
+    else:
+        command.extend(["--limit", str(max(1, int(limit)))])
     if batch and batch != "(all)":
         command.extend(["--batch", batch])
     if force:
         command.append("--force")
-    rendered = "SOGICE_ENABLE_CRAWL4AI=1 " if use_crawl4ai else ""
-    return rendered + shlex.join(command)
+    if use_crawl4ai:
+        command.append("--use-crawl4ai")
+    return shlex.join(command)
+
+
+def _source_queue_triage_command_args(
+    *,
+    limit: int,
+    batch: str = "",
+    force: bool = False,
+    use_crawl4ai: bool = False,
+    item_ids: list[str] | None = None,
+) -> list[str]:
+    return shlex.split(
+        _source_queue_triage_command(
+            limit=limit,
+            batch=batch,
+            force=force,
+            use_crawl4ai=use_crawl4ai,
+            item_ids=item_ids,
+        )
+    )
+
+
+def _start_source_queue_triage_job(
+    *,
+    item_ids: list[str],
+    limit: int,
+    batch: str = "",
+    force: bool = False,
+    use_crawl4ai: bool = False,
+    label: str = "source-queue-triage",
+) -> dict:
+    """Start source-queue triage without blocking Streamlit."""
+    active = _read_app_job_lock()
+    if active:
+        raise RuntimeError(
+            _format_app_job_lock(active)
+            + " Wait for it to finish before starting another model/fetch job."
+        )
+    clean_item_ids = [str(item_id).strip() for item_id in item_ids if str(item_id).strip()]
+    if not clean_item_ids:
+        raise RuntimeError("No queue item IDs selected for triage.")
+    safe_label = re.sub(r"[^a-zA-Z0-9_.-]+", "-", label).strip("-") or "source-queue-triage"
+    started = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    log_dir = _project_root / "exports" / "app_jobs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{started}_{safe_label}.log"
+    command = _source_queue_triage_command_args(
+        limit=limit,
+        batch=batch,
+        force=force,
+        use_crawl4ai=use_crawl4ai,
+        item_ids=clean_item_ids,
+    )
+    rendered_command = _source_queue_triage_command(
+        limit=limit,
+        batch=batch,
+        force=force,
+        use_crawl4ai=use_crawl4ai,
+        item_ids=clean_item_ids,
+    )
+    with log_path.open("w", encoding="utf-8") as log_file:
+        log_file.write(f"$ {rendered_command}\n\n")
+        log_file.flush()
+        proc = subprocess.Popen(
+            command,
+            cwd=_project_root,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    job = {
+        "process": proc,
+        "pid": proc.pid,
+        "started_at": started,
+        "log_path": str(log_path),
+        "command": rendered_command,
+        "kind": "source-queue-triage",
+        "mode": "crawl4ai" if use_crawl4ai else "standard",
+        "item_count": len(clean_item_ids),
+        "label": safe_label,
+    }
+    _write_app_job_lock(job)
+    return job
+
+
+def _render_source_queue_triage_job(job_key: str) -> bool:
+    job = st.session_state.get(job_key)
+    if not job:
+        return False
+    proc = job.get("process")
+    returncode = proc.poll() if proc is not None else None
+    log_path = Path(job.get("log_path", ""))
+    if returncode is None:
+        st.info(
+            f"Source Queue triage is running in the background "
+            f"(PID {job.get('pid')}, {job.get('item_count', '?')} item(s)). "
+            "You can keep using the app; refresh this status to see the latest terminal output."
+        )
+        c1, c2, c3 = st.columns([1, 1, 1])
+        if c1.button("Refresh triage status", key=f"{job_key}_refresh"):
+            st.rerun()
+        if c2.button("Stop triage job", key=f"{job_key}_stop_running"):
+            message = _request_stop_app_job(job)
+            _clear_app_job_lock(job)
+            st.session_state.pop(job_key, None)
+            st.session_state["source_queue_triage_stop_message"] = message
+            st.rerun()
+        if c3.button("Forget this status card", key=f"{job_key}_forget_running"):
+            st.session_state.pop(job_key, None)
+            st.rerun()
+        tail = _job_log_tail(log_path, limit=6000)
+        if tail:
+            with st.expander("Triage terminal log tail", expanded=True):
+                st.code(tail, language="text")
+        st.caption(f"Log: `{log_path}`")
+        return True
+
+    if returncode == 0:
+        st.success("Source Queue triage finished. Refresh the page or filters to see updated rows.")
+    else:
+        st.error(f"Source Queue triage exited with code {returncode}.")
+    _clear_app_job_lock(job)
+    tail = _job_log_tail(log_path, limit=6000)
+    if tail:
+        with st.expander("Triage terminal log tail", expanded=returncode != 0):
+            st.code(tail, language="text")
+    st.caption(f"Log: `{log_path}`")
+    if st.button("Clear triage status", key=f"{job_key}_clear_done"):
+        st.session_state.pop(job_key, None)
+        st.rerun()
+    return False
+
+
+def _request_stop_app_job(job: dict) -> str:
+    proc = job.get("process")
+    pid = job.get("pid")
+    if proc is not None:
+        try:
+            if proc.poll() is None:
+                proc.terminate()
+                return f"Stop requested for {job.get('kind', 'job')} PID {proc.pid}."
+            return f"{job.get('kind', 'job')} already finished."
+        except Exception as exc:
+            return f"Could not stop process object: {exc}"
+    try:
+        pid_int = int(pid or 0)
+    except (TypeError, ValueError):
+        return "No valid process id to stop."
+    if pid_int <= 0:
+        return "No valid process id to stop."
+    if not _pid_is_running(pid_int):
+        return f"Process PID {pid_int} is no longer running."
+    try:
+        os.kill(pid_int, signal.SIGTERM)
+    except Exception as exc:
+        return f"Could not stop PID {pid_int}: {exc}"
+    return f"Stop requested for PID {pid_int}."
 
 
 def _source_queue_snapshot_command(item_id: str, snapshot_path: str, package_id: str = "") -> str:
@@ -13602,6 +14555,7 @@ def page_source_queue():
             update_status, update_priority, update_notes, delete_item,
             apply_triage_result, queue_stats, batch_groups,
             list_triage_history,
+            normalise_url, parse_pasted_urls,
             VALID_STATUSES, VALID_PRIORITIES,
         )
         from runner.pipeline.batch import plan_batch, MAX_BATCH_LIMIT
@@ -13611,6 +14565,13 @@ def page_source_queue():
 
     db_path = queue_db_path(config.corpus_dir)
     db = open_db(db_path)
+    triage_job_key = "source_queue_triage_job"
+    stop_message = st.session_state.pop("source_queue_triage_stop_message", "")
+    if stop_message:
+        st.warning(stop_message)
+    add_message = st.session_state.pop("source_queue_add_message", "")
+    if add_message:
+        st.info(add_message)
 
     def _run_source_queue_triage(
         target_items,
@@ -13749,6 +14710,15 @@ def page_source_queue():
                                          placeholder="optional free text")
 
         if add_mode == "Add and triage now":
+            confirm_auto_triage = st.checkbox(
+                "Start background triage immediately after adding",
+                value=False,
+                key="sq_confirm_auto_triage_after_add",
+                help=(
+                    "Leave unchecked when you only want to add sources. Checking this starts "
+                    "network fetching and model triage after the URLs are written to the queue."
+                ),
+            )
             import_use_crawl4ai = st.checkbox(
                 "Use Crawl4AI rendered-page fallback while triaging these new sources",
                 value=False,
@@ -13771,6 +14741,7 @@ def page_source_queue():
                 "Priority will be assigned by the triage model. If triage fails for a URL, it is marked `triaged` but fail-closed so you can review or retry it."
             )
         else:
+            confirm_auto_triage = False
             import_use_crawl4ai = False
 
         if st.button("Add to queue", type="primary", disabled=not pasted.strip()):
@@ -13800,17 +14771,33 @@ def page_source_queue():
             else:
                 st.warning("No valid URLs found in the pasted text.")
 
-            if add_mode == "Add and triage now" and (added + dup_c) > 0:
-                new_items = list_items(
-                    db, status="new",
-                    batch_group=imp_batch or None,
-                    limit=added + dup_c + 10,
+            if add_mode == "Add and triage now" and not confirm_auto_triage and (added + dup_c) > 0:
+                st.session_state["source_queue_add_message"] = (
+                    "Added to Source Queue only. Background triage was not started because "
+                    "the confirmation checkbox was not selected."
                 )
-                _run_source_queue_triage(
-                    new_items,
-                    label="Triaging new item",
-                    use_crawl4ai=import_use_crawl4ai,
-                )
+
+            if add_mode == "Add and triage now" and confirm_auto_triage and (added + dup_c) > 0:
+                pasted_urls = {normalise_url(url) for url in parse_pasted_urls(pasted)}
+                new_items = [
+                    item for item in list_items(db, status="new", batch_group=None, limit=5000)
+                    if normalise_url(item.url) in pasted_urls
+                ]
+                if new_items:
+                    try:
+                        st.session_state[triage_job_key] = _start_source_queue_triage_job(
+                            item_ids=[item.id for item in new_items],
+                            limit=len(new_items),
+                            force=False,
+                            use_crawl4ai=import_use_crawl4ai,
+                            label="source-queue-triage-new",
+                        )
+                        st.success(
+                            f"Started background triage for {len(new_items)} newly pasted item(s). "
+                            "Watch the status/log card below."
+                        )
+                    except RuntimeError as exc:
+                        st.error(str(exc))
 
             st.rerun()
 
@@ -13920,23 +14907,30 @@ def page_source_queue():
             "Crawl4AI is useful for browser-rendered public pages. It is not a bypass for "
             "Cloudflare challenges, CAPTCHAs, logins, or paywalls; those stay held for manual capture."
         )
+        preview_new_items = [i for i in items if i.status == "new"][:int(show_limit)]
+        preview_retry_items = [
+            i for i in items
+            if i.status == "triaged" and not i.overnight_batch_safe and str(i.routing_reason or "").strip()
+        ][:int(show_limit)]
         st.markdown("Copy-paste equivalent for new visible items:")
         st.code(
             _source_queue_triage_command(
-                limit=int(min(sum(1 for i in items if i.status == "new") or show_limit, show_limit)),
+                limit=len(preview_new_items) or int(show_limit),
                 batch="" if batch_filter == "(all)" else batch_filter,
                 force=False,
                 use_crawl4ai=use_crawl4ai_triage,
+                item_ids=[item.id for item in preview_new_items],
             ),
             language="bash",
         )
-        st.markdown("Copy-paste equivalent for retrying held/triaged items:")
+        st.markdown("Copy-paste equivalent for retrying visible held/triaged items:")
         st.code(
             _source_queue_triage_command(
-                limit=int(show_limit),
+                limit=len(preview_retry_items) or int(show_limit),
                 batch="" if batch_filter == "(all)" else batch_filter,
                 force=True,
                 use_crawl4ai=use_crawl4ai_triage,
+                item_ids=[item.id for item in preview_retry_items],
             ),
             language="bash",
         )
@@ -13964,6 +14958,10 @@ def page_source_queue():
                 use_container_width=True,
             )
 
+    if not _render_source_queue_triage_job(triage_job_key):
+        _render_active_app_job_lock_panel(expanded=False)
+    triage_locked = bool(_read_app_job_lock())
+
     # ── Bulk triage button ──────────────────────────────────────────────────
     new_count = sum(1 for i in items if i.status == "new")
     if new_count:
@@ -13979,19 +14977,72 @@ def page_source_queue():
             key="sq_triage_n",
             help="How many visible new items to triage in this click. Use filters/batches to keep long runs intentional.",
         )
-        if triage_cols[0].button("⚡ Run triage on new items", key="sq_triage_btn"):
-            _run_source_queue_triage(
-                [i for i in items if i.status == "new"][:int(triage_n)],
-                use_crawl4ai=use_crawl4ai_triage,
-            )
+        if triage_cols[0].button(
+            "⚡ Run triage on new items",
+            key="sq_triage_btn",
+            disabled=triage_locked,
+            help="Starts a background triage job and shows a live terminal log tail.",
+        ):
+            target = [i for i in items if i.status == "new"][:int(triage_n)]
+            try:
+                st.session_state[triage_job_key] = _start_source_queue_triage_job(
+                    item_ids=[item.id for item in target],
+                    limit=len(target),
+                    force=False,
+                    use_crawl4ai=use_crawl4ai_triage,
+                    label="source-queue-triage-visible-new",
+                )
+            except RuntimeError as exc:
+                st.error(str(exc))
             st.rerun()
 
     failed_triage_items = [
         i for i in items
-        if i.status == "triaged" and str(i.routing_reason).startswith("triage failed:")
+        if i.status == "triaged" and not i.overnight_batch_safe and str(i.routing_reason or "").strip()
     ]
     if failed_triage_items:
-        retry_cols = st.columns([4, 1])
+        st.warning(
+            f"{len(failed_triage_items)} visible triaged item(s) are held / not batch-safe. "
+            "Retrying them is safe: failures stay held, and successful rows become usable suggestions."
+        )
+        held_counts = Counter(
+            _source_queue_hold_category(item.url, item.routing_reason, item.source_type) or "other"
+            for item in failed_triage_items
+        )
+        with st.expander("Held triage categories and retry command", expanded=False):
+            st.dataframe(
+                [
+                    {
+                        "held_category": _source_queue_hold_label(category) if category != "other" else "Other held triage",
+                        "count": count,
+                        "next_step": _source_queue_hold_next_step(category) if category != "other" else "Review the routing reason before retrying.",
+                    }
+                    for category, count in sorted(held_counts.items())
+                ],
+                hide_index=True,
+                use_container_width=True,
+            )
+            retry_use_crawl4ai_preview = st.checkbox(
+                "Use Crawl4AI rendered-page fallback for this held/failed retry",
+                value=use_crawl4ai_triage,
+                key="sq_retry_failed_use_crawl4ai",
+                help=(
+                    "Useful for public pages that need JavaScript rendering. It does not bypass "
+                    "Cloudflare challenges, CAPTCHAs, logins, or paywalls."
+                ),
+            )
+            retry_preview_items = failed_triage_items[: min(len(failed_triage_items), int(show_limit))]
+            st.code(
+                _source_queue_triage_command(
+                    limit=len(retry_preview_items) or 1,
+                    force=True,
+                    use_crawl4ai=retry_use_crawl4ai_preview,
+                    item_ids=[item.id for item in retry_preview_items],
+                ),
+                language="bash",
+            )
+
+        retry_cols = st.columns([3, 1, 1])
         retry_cols[0].caption(
             f"**{len(failed_triage_items)} failed triage item(s) visible.** "
             "Retry re-fetches each URL and asks the triage model again. It does not ingest."
@@ -14002,12 +15053,29 @@ def page_source_queue():
             key="sq_retry_failed_n",
             help="How many visible held/failed triage items to retry in this click.",
         )
-        if retry_cols[0].button("🔁 Retry failed triage", key="sq_retry_failed_btn"):
-            _run_source_queue_triage(
-                failed_triage_items[:int(retry_n)],
-                label="Retrying failed triage",
-                use_crawl4ai=use_crawl4ai_triage,
-            )
+        retry_use_crawl4ai = retry_cols[2].checkbox(
+            "Crawl4AI",
+            value=st.session_state.get("sq_retry_failed_use_crawl4ai", use_crawl4ai_triage),
+            key="sq_retry_failed_use_crawl4ai_inline",
+            help="Use rendered-page fallback for this retry.",
+        )
+        if retry_cols[0].button(
+            "🔁 Retry held/failed triage",
+            key="sq_retry_failed_btn",
+            disabled=triage_locked,
+            help="Starts a background retry job for visible held/failed triage rows.",
+        ):
+            target = failed_triage_items[:int(retry_n)]
+            try:
+                st.session_state[triage_job_key] = _start_source_queue_triage_job(
+                    item_ids=[item.id for item in target],
+                    limit=len(target),
+                    force=True,
+                    use_crawl4ai=retry_use_crawl4ai,
+                    label="source-queue-triage-retry-held",
+                )
+            except RuntimeError as exc:
+                st.error(str(exc))
             st.rerun()
 
     # ── Suggested Mac Studio source-offload batch ─────────────────────────
@@ -14694,12 +15762,18 @@ def page_source_queue():
                 # Status transitions
                 if item.status in ("new", "triaged"):
                     if st.button("🔁 Retry triage", key=f"sq_retry_{item.id}",
-                                  help="Fetch this URL and run triage again. Does not ingest."):
-                        _run_source_queue_triage(
-                            [item],
-                            label="Retrying triage",
-                            use_crawl4ai=use_crawl4ai_triage,
-                        )
+                                  disabled=triage_locked,
+                                  help="Start a background retry job for this URL. Does not ingest."):
+                        try:
+                            st.session_state[triage_job_key] = _start_source_queue_triage_job(
+                                item_ids=[item.id],
+                                limit=1,
+                                force=True,
+                                use_crawl4ai=use_crawl4ai_triage,
+                                label=f"source-queue-triage-{item.id}",
+                            )
+                        except RuntimeError as exc:
+                            st.error(str(exc))
                         st.rerun()
                     if st.button("✳️ Ready for ingest", key=f"sq_ready_{item.id}",
                                   help="Mark as approved — still requires running runner ingest"):

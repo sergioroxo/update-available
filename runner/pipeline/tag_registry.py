@@ -61,7 +61,7 @@ def registry_status(vocab_dir: Path | None = None) -> dict:
         csv_exists = csv_path.exists()
     except OSError as exc:
         error = str(exc)
-    rows = load_tag_registry(configured_dir) if not error and csv_exists else []
+    rows = load_tag_registry(configured_dir) if not error else []
     return {
         "available": bool(rows),
         "env_var": "SOGICE_LEGACY_VOCAB_DIR",
@@ -81,43 +81,63 @@ def registry_status(vocab_dir: Path | None = None) -> dict:
 def load_tag_registry(vocab_dir: Path | None = None) -> list[dict]:
     """Load legacy CSV rows plus local researcher overrides."""
     csv_path = (vocab_dir or legacy_vocab_dir()) / VOCAB_CSV_NAME
+    rows: list[dict] = []
     try:
         exists = csv_path.exists()
     except OSError:
-        return []
-    if not exists:
-        return []
+        exists = False
 
-    rows: list[dict] = []
-    try:
-        with csv_path.open(encoding="utf-8-sig", newline="") as handle:
-            for raw in csv.DictReader(handle):
-                category = (raw.get("Category") or "").strip()
-                tag = (raw.get("Tag") or "").strip()
-                if category not in SEARCHABLE_CATEGORIES or not tag:
-                    continue
-                normalized = _normalize_tag_label(tag)
-                if not normalized:
-                    continue
-                rows.append({
-                    "key": _tag_key(category, normalized),
-                    "category": category,
-                    "tag": normalized,
-                    "definition": raw.get("Definition", ""),
-                    "concept_cluster": raw.get("Concept Cluster", ""),
-                    "connections": raw.get("Connections from Archive", ""),
-                    "occurrences": _safe_int(raw.get("Occurrences")),
-                    "custom": raw.get("Custom", ""),
-                    "active": True,
-                    "researcher_note": "",
-                })
-    except OSError:
-        return []
+    if exists:
+        try:
+            with csv_path.open(encoding="utf-8-sig", newline="") as handle:
+                for raw in csv.DictReader(handle):
+                    category = (raw.get("Category") or "").strip()
+                    tag = (raw.get("Tag") or "").strip()
+                    if category not in SEARCHABLE_CATEGORIES or not tag:
+                        continue
+                    normalized = _normalize_tag_label(tag)
+                    if not normalized:
+                        continue
+                    rows.append({
+                        "key": _tag_key(category, normalized),
+                        "category": category,
+                        "tag": normalized,
+                        "definition": raw.get("Definition", ""),
+                        "concept_cluster": raw.get("Concept Cluster", ""),
+                        "connections": raw.get("Connections from Archive", ""),
+                        "occurrences": _safe_int(raw.get("Occurrences")),
+                        "custom": raw.get("Custom", ""),
+                        "active": True,
+                        "researcher_note": "",
+                    })
+        except OSError:
+            rows = []
 
     overrides = _load_overrides()
+    seen_keys: set[str] = set()
     for row in rows:
+        seen_keys.add(row["key"])
         if row["key"] in overrides:
             row.update(overrides[row["key"]])
+    for key, override in sorted(overrides.items()):
+        if key in seen_keys or not isinstance(override, dict):
+            continue
+        category = str(override.get("category") or "").strip()
+        tag = _normalize_tag_label(str(override.get("tag") or "").strip())
+        if category not in SEARCHABLE_CATEGORIES or not tag:
+            continue
+        rows.append({
+            "key": key,
+            "category": category,
+            "tag": tag,
+            "definition": override.get("definition", ""),
+            "concept_cluster": override.get("concept_cluster", ""),
+            "connections": override.get("connections", ""),
+            "occurrences": _safe_int(str(override.get("occurrences", 0))),
+            "custom": override.get("custom", "local"),
+            "active": bool(override.get("active", True)),
+            "researcher_note": override.get("researcher_note", ""),
+        })
     return rows
 
 
@@ -126,6 +146,32 @@ def save_tag_override(key: str, updates: dict) -> None:
     overrides[key] = {**overrides.get(key, {}), **updates}
     OVERRIDES_PATH.parent.mkdir(parents=True, exist_ok=True)
     OVERRIDES_PATH.write_text(json.dumps(overrides, indent=2), encoding="utf-8")
+
+
+def save_custom_tag(category: str, tag: str, updates: dict | None = None) -> str:
+    """Create/update a local-only registry row.
+
+    Custom tags are stored in the overrides file so they survive app reloads and
+    participate in enrichment hint matching. They remain local evidence signals;
+    this does not create a Sanity record or schema entry.
+    """
+    category = category.strip()
+    tag = _normalize_tag_label(tag)
+    if category not in SEARCHABLE_CATEGORIES:
+        raise ValueError(f"Unsupported tag category: {category}")
+    if not tag:
+        raise ValueError("Tag label is required")
+    key = _tag_key(category, tag)
+    payload = {
+        "category": category,
+        "tag": tag,
+        "active": True,
+        "custom": "longform",
+    }
+    if updates:
+        payload.update(updates)
+    save_tag_override(key, payload)
+    return key
 
 
 def detect_tag_matches(text: str, max_per_category: int = 20) -> list[dict]:

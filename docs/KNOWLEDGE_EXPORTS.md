@@ -15,6 +15,17 @@ Per document:
 
 - `corpus/<doc_id>/citation_units.json`
 - `corpus/<doc_id>/archive_summary.json`
+- optional longform sidecars for books/reports/PDFs:
+  - `corpus/<doc_id>/longform_source.json`
+  - `corpus/<doc_id>/bibliographic.json`
+  - `corpus/<doc_id>/page_map.jsonl`
+  - `corpus/<doc_id>/text_blocks.jsonl`
+  - `corpus/<doc_id>/longform_quality.json`
+  - optional deep-review sidecars for longform sources:
+    - `corpus/<doc_id>/longform_sections.json`
+    - `corpus/<doc_id>/longform_section_analyses.jsonl`
+    - `corpus/<doc_id>/longform_candidates.json`
+    - `corpus/<doc_id>/longform_synthesis.json`
 
 Corpus-wide:
 
@@ -29,6 +40,10 @@ Corpus-wide:
 `archive_summary.json` is an index card beside the document. It summarizes
 source metadata, extracted content metadata, analysis classification, review
 state, enrichment counts, upload state, offload lineage, and readiness.
+When longform sidecars exist, it also reports a compact `longform` section with
+item type, representation type, extraction method, page/block/character counts,
+warning counts, whether page-map/text-block files are present, and whether a
+section-level deep review/synthesis has been generated.
 
 `citation_units.json` is a local evidence locator sidecar beside
 `extracted.txt`. It splits canonical extracted text into paragraph-like units
@@ -95,6 +110,38 @@ PY=/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest/.venv/bin/python
 For normal use after importing or ingesting new documents, the last command is
 enough: `research-digest --refresh-all` refreshes profiles, the evidence graph,
 the quality report, and the digest in the correct order.
+
+For a long PDF/book/report that already exists in the corpus, build the first
+page-aware longform sidecars before refreshing summaries:
+
+```bash
+"$PY" -m runner longform-build <doc_id>
+"$PY" -m runner archive-summary-build <doc_id>
+```
+
+This writes only derived local sidecars. It does not call models, upload to
+Sanity/Supabase, or change enrichment proposals. If page-aware PDF extraction is
+not available, it safely falls back to `extracted.txt` and records that warning
+in `longform_quality.json`.
+
+To run the deeper book/report review, use `longform-review` after
+`longform-build`:
+
+```bash
+"$PY" -m runner longform-review <doc_id> --dry-run
+"$PY" -m runner longform-review <doc_id> --llm litelm-heavy
+```
+
+`--dry-run` only creates the section map and reports how many sections the
+document will become. The live command reviews each section and then writes a
+whole-document synthesis. It writes `longform_sections.json`,
+`longform_section_analyses.jsonl`, `longform_candidates.json`, and
+`longform_synthesis.json`. `longform_candidates.json` aggregates model-proposed
+terms, actors, tactics, and practices with section counts, confidence values
+when supplied, and evidence snippets. It is a review register, not a Lexicon or
+Tag Registry write. The command does not overwrite `analysis.json`, enrichment
+proposals, embeddings, Sanity, or Supabase. Use `--section-limit 1` or
+`--section-limit 2` for a smoke test.
 
 For an exploratory graph that includes model-proposed / unreviewed edges:
 

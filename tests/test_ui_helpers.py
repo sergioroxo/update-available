@@ -1048,6 +1048,78 @@ def test_dashboard_worklist_suggests_pages_for_live_action_types():
     ]
 
 
+def test_operation_boundary_rows_name_the_critical_state_splits():
+    import runner.app as app_mod
+
+    rows = app_mod._operation_boundary_rows()
+    artifacts = {row["State / artifact"]: row["Not the same as"] for row in rows}
+
+    assert artifacts["Source Queue item"] == "Ingested corpus document"
+    assert artifacts["Imported corpus document"] == "Published Sanity/Supabase record"
+    assert artifacts["Tag Registry hint"] == "Approved enrichment proposal or Sanity registry entry"
+    assert artifacts["Evidence graph export"] == "Public graph / chatbot truth layer"
+
+
+def test_runtime_environment_snapshot_is_safe_when_git_unavailable(monkeypatch, tmp_path):
+    import runner.app as app_mod
+
+    monkeypatch.setattr(app_mod, "_safe_git_value", lambda _args, cwd=None: "")
+    monkeypatch.chdir(tmp_path)
+    config = SimpleNamespace(corpus_dir=tmp_path / "corpus", exports_dir=tmp_path / "exports")
+
+    snapshot = app_mod._runtime_environment_snapshot(config)
+
+    assert snapshot["branch"] == "unknown"
+    assert snapshot["commit"] == "unknown"
+    assert snapshot["dirty_files"] == 0
+    assert snapshot["corpus_dir"] == str(tmp_path / "corpus")
+    assert snapshot["exports_dir"] == str(tmp_path / "exports")
+    assert snapshot["python"] == app_mod.sys.executable
+
+
+def test_runtime_environment_snapshot_counts_dirty_files(monkeypatch, tmp_path):
+    import runner.app as app_mod
+
+    def fake_git(args, cwd=None):
+        if args == ["status", "--short"]:
+            return " M runner/app.py\n?? docs/runbook.md\n"
+        if args == ["rev-parse", "--abbrev-ref", "HEAD"]:
+            return "feature/hardening"
+        if args == ["rev-parse", "--short", "HEAD"]:
+            return "abc1234"
+        return ""
+
+    monkeypatch.setattr(app_mod, "_safe_git_value", fake_git)
+    config = SimpleNamespace(corpus_dir=tmp_path / "corpus", exports_dir=tmp_path / "exports")
+
+    snapshot = app_mod._runtime_environment_snapshot(config)
+
+    assert snapshot["branch"] == "feature/hardening"
+    assert snapshot["commit"] == "abc1234"
+    assert snapshot["dirty_files"] == 2
+
+
+def test_recent_app_job_log_rows_sort_and_include_tail(tmp_path):
+    import os
+    import runner.app as app_mod
+
+    old = tmp_path / "old.log"
+    new = tmp_path / "new.log"
+    ignored = tmp_path / "not-log.txt"
+    old.write_text("old log", encoding="utf-8")
+    new.write_text("first\nsecond\nthird", encoding="utf-8")
+    ignored.write_text("ignore", encoding="utf-8")
+    os.utime(old, (100, 100))
+    os.utime(new, (200, 200))
+
+    rows = app_mod._recent_app_job_log_rows(limit=2, log_dir=tmp_path)
+
+    assert [row["name"] for row in rows] == ["new.log", "old.log"]
+    assert rows[0]["bytes"] == len("first\nsecond\nthird")
+    assert rows[0]["tail"].endswith("third")
+    assert all(str(row["path"]).endswith(".log") for row in rows)
+
+
 def test_guide_markdown_covers_current_end_to_end_workflow():
     import runner.app as app_mod
 
@@ -1066,6 +1138,17 @@ def test_guide_markdown_covers_current_end_to_end_workflow():
         "browser-saved HTML/PDF snapshot",
     ]:
         assert phrase in guide
+
+
+def test_operations_runbook_exists_and_explains_state_boundaries():
+    runbook = Path("docs/INGESTION_OPERATIONS_RUNBOOK.md")
+
+    text = runbook.read_text(encoding="utf-8")
+
+    assert "Source Queue row" in text
+    assert "Imported corpus folder" in text
+    assert "Evidence graph export" in text
+    assert "AI proposes; researcher validates; archive preserves provenance" in text
 
 
 def test_run_research_digest_action_refreshes_full_workflow(monkeypatch, tmp_path):
@@ -2170,3 +2253,184 @@ def test_system_health_source_package_rows_flattens_lifecycle_order():
             "path": "",
         },
     ]
+
+
+# ---------------------------------------------------------------------------
+# Longform document UI helpers
+# ---------------------------------------------------------------------------
+
+def test_document_longform_status_reads_sidecars(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    doc_dir = tmp_path / "doc-book"
+    doc_dir.mkdir()
+    (doc_dir / "source.pdf").write_bytes(b"%PDF")
+    (doc_dir / "analysis.json").write_text(json.dumps({"format": "Book"}), encoding="utf-8")
+    (doc_dir / "preprocess.json").write_text(json.dumps({"char_count": 22046}), encoding="utf-8")
+    (doc_dir / "analysis_audit.json").write_text(json.dumps({"input_char_count": 22046}), encoding="utf-8")
+    (doc_dir / "longform_source.json").write_text(json.dumps({
+        "representation": {
+            "type": "mixed_pdf",
+            "page_count": 242,
+            "block_count": 2296,
+            "char_count": 451616,
+            "extraction_method": "pymupdf",
+        }
+    }), encoding="utf-8")
+    (doc_dir / "bibliographic.json").write_text(json.dumps({
+        "item_type": "book",
+        "titles": {"main": {"value": "Healing Homosexuality", "source": "first_page_candidate", "review_state": "needs_review"}},
+        "creators": [{"name": "Joseph Nicolosi"}],
+        "identifiers": {"isbn": ["0876683405"]},
+        "metadata_candidates": {
+            "first_text_blocks": [{
+                "text": "HEALING HOMOSEXUALITY",
+                "page_label": "2",
+                "block_id": "b0002_002",
+            }]
+        },
+    }), encoding="utf-8")
+    (doc_dir / "longform_quality.json").write_text(json.dumps({
+        "extraction_method": "pymupdf",
+        "page_count": 242,
+        "block_count": 2296,
+        "char_count": 451616,
+        "missing_text_page_count": 10,
+        "warnings": ["10_page(s)_without_native_text"],
+        "next_actions": ["Check whether OCR is needed."],
+    }), encoding="utf-8")
+    (doc_dir / "page_map.jsonl").write_text("{}\n", encoding="utf-8")
+    (doc_dir / "text_blocks.jsonl").write_text("{}\n", encoding="utf-8")
+
+    status = app_mod._document_longform_status(doc_dir)
+
+    assert status["candidate"] is True
+    assert status["has_sidecars"] is True
+    assert status["title"] == "Healing Homosexuality"
+    assert status["title_review_state"] == "needs_review"
+    assert status["creators"] == ["Joseph Nicolosi"]
+    assert status["isbns"] == ["0876683405"]
+    assert status["item_type"] == "book"
+    assert status["representation_type"] == "mixed_pdf"
+    assert status["page_count"] == 242
+    assert status["block_count"] == 2296
+    assert status["missing_text_page_count"] == 10
+    assert status["warnings"] == ["10_page(s)_without_native_text"]
+    assert status["first_blocks"][0]["text"] == "HEALING HOMOSEXUALITY"
+    assert status["analysis_likely_partial"] is True
+    assert "451,616" in status["analysis_staleness_reasons"][0]
+    assert status["analysis_input_char_count"] == 22046
+
+
+def test_document_longform_status_marks_pdf_candidate_before_sidecars(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    doc_dir = tmp_path / "doc-new"
+    doc_dir.mkdir()
+    (doc_dir / "source.pdf").write_bytes(b"%PDF")
+    (doc_dir / "analysis.json").write_text(json.dumps({"format": "Book"}), encoding="utf-8")
+
+    status = app_mod._document_longform_status(doc_dir)
+
+    assert status["candidate"] is True
+    assert status["has_sidecars"] is False
+    assert status["source_artifact_name"] == "source.pdf"
+    assert status["page_count"] == 0
+
+
+def test_read_jsonl_preview_skips_bad_rows(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    path = tmp_path / "text_blocks.jsonl"
+    path.write_text(
+        json.dumps({"block_id": "a"}) + "\n"
+        "not json\n"
+        + json.dumps({"block_id": "b"}) + "\n",
+        encoding="utf-8",
+    )
+
+    assert app_mod._read_jsonl_preview(path, limit=5) == [{"block_id": "a"}, {"block_id": "b"}]
+
+
+def test_longform_candidate_rows_surface_review_register(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    doc_dir = tmp_path / "doc-book"
+    doc_dir.mkdir()
+    (doc_dir / "longform_candidates.json").write_text(json.dumps({
+        "candidates": [{
+            "candidate_id": "longform-tactic-gender-essentialism",
+            "family": "tactic",
+            "label": "Gender essentialism",
+            "normalized_label": "gender-essentialism",
+            "count": 2,
+            "confidence": 0.87,
+            "review_state": "model_proposed",
+            "candidate_actions": ["tag_candidate"],
+            "definitions": ["Treats gender roles as fixed."],
+            "evidence": [{"section_id": "sec-1", "quote_or_note": "fixed gender roles"}],
+        }]
+    }), encoding="utf-8")
+
+    rows = app_mod._longform_candidate_rows(tmp_path)
+
+    assert len(rows) == 1
+    assert rows[0]["doc_id"] == "doc-book"
+    assert rows[0]["family"] == "tactic"
+    assert rows[0]["label"] == "Gender essentialism"
+    assert rows[0]["count"] == 2
+    assert rows[0]["source_path"].endswith("longform_candidates.json")
+
+
+def test_longform_candidate_to_tag_updates_preserves_evidence():
+    import runner.app as app_mod
+
+    candidate = {
+        "family": "lexicon",
+        "definitions": ["A repeated book term."],
+        "count": 4,
+        "evidence": [
+            {"section_id": "s1", "quote_or_note": "first quote"},
+            {"section_id": "s2", "quote_or_note": "second quote"},
+        ],
+    }
+
+    assert app_mod._longform_candidate_tag_category("lexicon") == "Term (discovered)"
+    assert app_mod._longform_candidate_tag_category("entity") == "Actor"
+    updates = app_mod._longform_candidate_to_tag_updates(candidate)
+
+    assert updates["definition"] == "A repeated book term."
+    assert updates["occurrences"] == 4
+    assert "s1: first quote" in updates["connections"]
+    assert "Model-proposed" in updates["researcher_note"]
+
+
+def test_app_job_lock_preserves_recovery_metadata(tmp_path, monkeypatch):
+    import os
+    import runner.app as app_mod
+
+    lock_path = tmp_path / "active_llm_job.json"
+    monkeypatch.setattr(app_mod, "_app_job_lock_path", lambda: lock_path)
+
+    app_mod._write_app_job_lock({
+        "pid": os.getpid(),
+        "kind": "source-queue-triage",
+        "mode": "crawl4ai",
+        "started_at": "20260703T120000Z",
+        "log_path": "/tmp/triage.log",
+        "command": "python -m runner queue-triage --item-id abc --use-crawl4ai",
+        "item_count": 2,
+        "label": "retry-held",
+    })
+
+    lock = app_mod._read_app_job_lock()
+
+    assert lock["kind"] == "source-queue-triage"
+    assert lock["mode"] == "crawl4ai"
+    assert lock["item_count"] == 2
+    assert lock["label"] == "retry-held"
+    assert lock["command"].endswith("--use-crawl4ai")

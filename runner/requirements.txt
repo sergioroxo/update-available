@@ -7,6 +7,7 @@ httpx>=0.27
 
 # Document parsing
 docling>=2.0
+PyMuPDF>=1.24
 unstructured[pdf,html]>=0.14
 trafilatura>=1.9
 

@@ -102,7 +102,16 @@ def test_write_persists_only_whitelisted_fields(lock_path):
     }
     app_mod._write_app_job_lock(job)
     raw = json.loads(lock_path.read_text(encoding="utf-8"))
-    assert set(raw.keys()) == {"pid", "kind", "mode", "started_at", "log_path", "command"}
+    assert set(raw.keys()) == {
+        "pid",
+        "kind",
+        "mode",
+        "started_at",
+        "log_path",
+        "command",
+        "item_count",
+        "label",
+    }
     assert "process" not in raw
     assert "secret" not in raw
 
@@ -206,3 +215,65 @@ def test_remote_service_error_note_generic_passthrough():
 def test_remote_service_error_note_no_detail():
     note = app_mod._remote_service_error_note("LiteLLM", "https://host:4000", None)
     assert note == "LiteLLM: unreachable"
+
+
+# ---------------------------------------------------------------------------
+# _request_stop_app_job
+# ---------------------------------------------------------------------------
+
+class _FakeRunningProcess:
+    pid = 12345
+
+    def __init__(self):
+        self.terminated = False
+
+    def poll(self):
+        return None
+
+    def terminate(self):
+        self.terminated = True
+
+
+class _FakeFinishedProcess:
+    pid = 12345
+
+    def poll(self):
+        return 0
+
+    def terminate(self):  # pragma: no cover - should not be called
+        raise AssertionError("terminate should not be called")
+
+
+def test_request_stop_app_job_terminates_live_process_object():
+    proc = _FakeRunningProcess()
+
+    message = app_mod._request_stop_app_job({"process": proc, "kind": "source-queue-triage"})
+
+    assert proc.terminated is True
+    assert "Stop requested" in message
+    assert "12345" in message
+
+
+def test_request_stop_app_job_reports_finished_process_object():
+    message = app_mod._request_stop_app_job({"process": _FakeFinishedProcess(), "kind": "source-queue-triage"})
+
+    assert "already finished" in message
+
+
+def test_request_stop_app_job_kills_pid_from_recovered_lock(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(app_mod, "_pid_is_running", lambda _pid: True)
+    monkeypatch.setattr(app_mod.os, "kill", lambda pid, sig: calls.append((pid, sig)))
+
+    message = app_mod._request_stop_app_job({"pid": "999", "kind": "source-queue-triage"})
+
+    assert calls == [(999, app_mod.signal.SIGTERM)]
+    assert "999" in message
+
+
+def test_request_stop_app_job_handles_stale_or_invalid_pid(monkeypatch):
+    monkeypatch.setattr(app_mod, "_pid_is_running", lambda _pid: False)
+
+    assert "No valid process id" in app_mod._request_stop_app_job({"pid": ""})
+    assert "no longer running" in app_mod._request_stop_app_job({"pid": "999"})
