@@ -14,6 +14,51 @@ do not start.
 - R7 build spec — Fable writes it after this session (R2) shipped. It has now shipped.
 
 ## DONE
+*(2026-07-03 · Session 3-revision — pillow embodiment fixes (§4 of
+`docs/REINTERP_PROVOTYPE_EMBODIMENT_ANALYSIS_2026-07-03.md`, Fable's diagnosis of Sérgio's Round 12 report).
+Scope-fenced to `src/desktop/apps/provotype.ts`, `data/provotypes/pillow.json`, `data/strings/reinterp.json`
+only — the ledger/witness filing logic, the proxy framing, and the density law were NOT touched. Four
+changes, all data/presentation, no new sources, no ethics/creative calls:
+1. **Room/environment presence for the vignette + a new close phase.** Added `drawRoomBackdrop` (a quiet,
+   abstracted low-poly corner — wall/floor/window/bed/lamp, ERA1 tokens only, deliberately not a
+   reconstruction of the Brothers Road reference photo, G9) and `drawOverlayPanel` (a translucent card that
+   leaves the room visible in the margins) to `provotype.ts`. Only the `vignette`/`close` phases render this
+   way; `invitation`/`frame`/`debrief` keep the ordinary `ui.windowFrame` chrome unchanged.
+2. **Daniel's felt line gets its own beat.** New `feltRevealed` state + a dedicated felt-only screen (system
+   voice fully absent, one breath, 11pt ERA1.grey — bumped from 10pt per the analysis's "bare vs. nearly
+   invisible" note) inserted between the response reveal and the state advance, for any state carrying
+   `felt`. States without `felt` (Lift/Exhale, the terminal line) are unaffected — verified.
+3. **One grounding stakes-line in the frame.** `pillow.json`'s frame text now names who "Dad" is to Daniel
+   and why today ("Today continues last week's work on the ache your father caused...") in the system's own
+   confident register (not hedged — the system's certainty about a false premise is the point), still ≤2
+   sentences.
+4. **A new `close` phase separates the narrative landing from the sourced debrief.** Added to the `Phase`
+   union and the `Provotype` interface (optional `close?: {lines, continue}`, so R1-era data without it still
+   falls straight to debrief); all four Repeat/Finish `goto: "debrief"` choices in `pillow.json` now route to
+   `goto: "close"` first ("The room is quiet again." — felt register, still in the room, no chrome), then its
+   own primary button proceeds to the unchanged `debrief`. `reinterp.json` gained a `windowTitle.close` entry
+   (required once `close` joined the `Phase` union, since `chrome.windowTitle[this.phase]` is indexed by the
+   full union — unused at render time since `close` never calls `ui.windowFrame`, but needed to type-check).
+**Verification:** `npm test` + `npm run build` green (pre-existing chunk-size warning only) both before and
+after a `git stash`/`stash pop` round-trip used to capture genuine before/after screenshots. Full playthrough
+driven at `?flat=1&reinterp=1` on the worktree's dedicated dev server (added a `reinterp-dev` config, port
+5174, to the ORIGINAL folder's `.claude/launch.json` — the preview tooling reads launch configs from the
+session root, not the worktree; this was the missing piece the prior session's note flagged) — synthetic
+`pointerdown`/`pointerup` dispatch computed against the live `destRect()` math (canvas is letterboxed within
+a full-viewport backing store; a naive canvas-rect-fraction click is NOT reliable and produced one confusing
+misclick earlier in this session before the destRect-based helper was written). Verified end-to-end: frame
+(stakes-line) → vignette cycle 1 (Lift/Exhale/Strike, room visible, response-then-felt as two separate
+screens) → Repeat/Finish choice (unaffected) → Finish → **close** ("The room is quiet again.") → Continue →
+debrief (unchanged, all 4 sources render) → Return → clean exit, Session icon still present/relaunchable.
+No-flag baseline re-checked: no console errors. Before/after screenshots captured via a temporary
+`git stash` of the three edited files (reverted, screenshotted the shipped R2 chrome + generic frame text,
+then `stash pop` restored this session's changes) — confirms the chrome-vs-room-presence and
+frame-stakes-line changes against the actual prior build, not just the diagnosis doc's description.
+**Schema note (out of scope, flagging for later sync):** `data/provotypes/_schema.json` was NOT updated
+(scope-fenced) — it does not yet document the new `close` object or the `goto: "close"` choice value. No
+runtime validator reads this file (confirmed — it's documentation only), so nothing is broken, but a future
+session should sync it.)*
+
 *(2026-07-03 · Session 3 — R2 the pillow ("Somatic Reprocessing", Era 2). Built
 `data/provotypes/pillow.json` on the R1 framework: diegetic invitation (Restorify — "Release Work —
 today's session"), 2-sentence frame, three escalating Lift/Exhale/Strike cycles (system responses

@@ -1,5 +1,5 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass + G6 ethics gate pending. Session R2, master plan §R2-2. Draft copy source: Pc_Simulation/Sources/Deep Research/Provotypes for a SOGICE VR documentary.md. The player is the system's proxy — authorises/advances the procedure; Daniel keeps the felt channel; the system stays the true actor. Repetition changes nothing; that is the point. era set to era1 because only the Era-1 theme exists in code today (see provotype.ts note); selection by data.era arrives with later era themes.",
+  "_doc": "PLACEHOLDER — Sérgio voice pass + G6 ethics gate pending. Session R2, master plan §R2-2. Draft copy source: Pc_Simulation/Sources/Deep Research/Provotypes for a SOGICE VR documentary.md. The player is the system's proxy — authorises/advances the procedure; Daniel keeps the felt channel; the system stays the true actor. Repetition changes nothing; that is the point. era set to era1 because only the Era-1 theme exists in code today (see provotype.ts note); selection by data.era arrives with later era themes. REVISED 2026-07-03 (embodiment §4, scope-fenced session): room/environment presence for the vignette+close phases (provotype.ts, no new files), frame carries one grounding stakes-line, felt lines moved to their own beat, a new close beat separates the narrative landing from the sourced debrief. No new sources, no content/ethics calls made — presentation only.",
   "id": "pillow",
   "era": "era1",
   "register": "operable",
@@ -15,8 +15,8 @@
     "accept": "Begin"
   },
   "frame": {
-    "_doc": "PLACEHOLDER — Sérgio voice pass pending; frame stays at most two sentences",
-    "text": "Some reactions form before language does. Complete each step and allow the deeper layer to emerge.",
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending; frame stays at most two sentences. Revised per embodiment analysis §4 (grounding stakes-line): names who 'Dad' is to Daniel and why today, in the system's own confident register — not a hedge, since the system's certainty about a false premise is the point.",
+    "text": "Today continues last week's work on the ache your father caused. Complete each step and allow the deeper layer to emerge.",
     "continue": "Continue"
   },
   "states": [
@@ -47,7 +47,7 @@
       "prompt": "",
       "choices": [
         { "label": "Repeat", "ledgerTag": "pillow:cycle1:repeat", "goto": 4 },
-        { "label": "Finish for now", "ledgerTag": "pillow:cycle1:finish", "goto": "debrief" }
+        { "label": "Finish for now", "ledgerTag": "pillow:cycle1:finish", "goto": "close" }
       ],
       "response": ""
     },
@@ -78,7 +78,7 @@
       "prompt": "",
       "choices": [
         { "label": "Repeat", "ledgerTag": "pillow:cycle2:repeat", "goto": 8 },
-        { "label": "Finish for now", "ledgerTag": "pillow:cycle2:finish", "goto": "debrief" }
+        { "label": "Finish for now", "ledgerTag": "pillow:cycle2:finish", "goto": "close" }
       ],
       "response": ""
     },
@@ -109,7 +109,7 @@
       "prompt": "",
       "choices": [
         { "label": "Repeat", "ledgerTag": "pillow:cycle3:repeat", "goto": 12 },
-        { "label": "Finish for now", "ledgerTag": "pillow:cycle3:finish", "goto": "debrief" }
+        { "label": "Finish for now", "ledgerTag": "pillow:cycle3:finish", "goto": "close" }
       ],
       "response": ""
     },
@@ -124,11 +124,16 @@
       "prompt": "",
       "choices": [
         { "label": "Repeat", "ledgerTag": "pillow:loop:repeat", "goto": 12 },
-        { "label": "Finish for now", "ledgerTag": "pillow:loop:finish", "goto": "debrief" }
+        { "label": "Finish for now", "ledgerTag": "pillow:loop:finish", "goto": "close" }
       ],
       "response": ""
     }
   ],
+  "close": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending. New per embodiment analysis §4: the narrative/emotional landing, separated from the sourced debrief that follows it. Near-wordless by design; register felt (no system voice, no charm, no mechanics) — still rendered in the room, not in dossier chrome.",
+    "lines": ["The room is quiet again."],
+    "continue": "Continue"
+  },
   "debrief": {
     "_doc": "PLACEHOLDER — Sérgio voice pass + G6 ethics gate pending. Cohen named here only (dossier-only law); never in on-screen character copy. 'Until deeper feelings emerge' intentionally NOT presented as documented wording per master plan §R2-2 — the gap itself is disclosed instead.",
     "body": [

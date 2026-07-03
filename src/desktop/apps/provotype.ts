@@ -38,7 +38,7 @@ export interface ProvotypeChoice {
   label: string;
   ledgerTag?: string;
   response?: string;
-  goto?: number | 'debrief';
+  goto?: number | 'debrief' | 'close';
 }
 export interface ProvotypeState {
   prompt: string;
@@ -60,12 +60,20 @@ export interface Provotype {
   invitation: { from?: string; lines: string[]; accept: string };
   frame: { text: string; continue: string };
   states: ProvotypeState[];
+  /**
+   * Embodiment revision (§4, REINTERP_PROVOTYPE_EMBODIMENT_ANALYSIS_2026-07-03):
+   * a short, near-wordless narrative beat between the vignette's end and the
+   * sourced debrief — the felt/emotional landing, kept separate from the
+   * debrief's documentary function. Optional so R1-era data (the dummy) still
+   * works unchanged; when absent, the runtime falls straight to debrief.
+   */
+  close?: { lines: string[]; continue?: string };
   debrief: { body: string[]; close?: string; sources: ProvotypeSource[] };
   ledgerTags: string[];
   witness?: { completed?: string; abandoned?: string };
 }
 
-type Phase = 'invitation' | 'frame' | 'vignette' | 'debrief';
+type Phase = 'invitation' | 'frame' | 'vignette' | 'close' | 'debrief';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 // window geometry — one modal on the era desktop; constant so the fixed
@@ -106,6 +114,8 @@ export class ProvotypeApp {
   private showResponse = false;
   /** per-choice response override for the current state, if any (R2 addition) */
   private lastResponse?: string;
+  /** §4: the felt line gets its own beat — true once the response screen has been advanced past once */
+  private feltRevealed = false;
   private reachedDebrief = false;
   private filed = false;
   private paused = false;
@@ -128,6 +138,7 @@ export class ProvotypeApp {
   private enterState(idx: number): void {
     this.stateIndex = idx;
     this.lastResponse = undefined;
+    this.feltRevealed = false;
     this.showResponse = !this.hasOptions(this.data.states[idx]);
     this.dirty = true;
   }
@@ -141,8 +152,19 @@ export class ProvotypeApp {
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
     const title = chrome.windowTitle[this.phase];
-    const c = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, title, true);
-    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
+    // §4: the vignette (and its narrative close) render IN THE ROOM — an
+    // environment behind/around the interaction, with the UI as an overlay —
+    // instead of ordinary Win95 app-window chrome. Invitation/frame/debrief
+    // (the system's own surfaces, and the sourced dossier) keep the chrome.
+    const isRoomPhase = this.phase === 'vignette' || this.phase === 'close';
+    let c: ui.ContentRect;
+    if (isRoomPhase) {
+      this.drawRoomBackdrop(ctx, WIN.x, WIN.y, WIN.w, WIN.h);
+      c = this.drawOverlayPanel(ctx, WIN.x, WIN.y, WIN.w, WIN.h);
+    } else {
+      c = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, title, true);
+      ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
+    }
 
     const bodyTop = c.y + 8;
     const bodyMaxW = c.w - 24;
@@ -158,11 +180,69 @@ export class ProvotypeApp {
         this.drawVignette(ctx, bodyX, bodyTop, vignetteMaxW);
         if (this.hasAnim) this.drawFigure(ctx, c.x + c.w - FIGURE_W - 4, bodyTop);
         break;
+      case 'close': this.drawClose(ctx, bodyX, bodyTop, bodyMaxW); break;
       case 'debrief': this.drawDebrief(ctx, bodyX, bodyTop, bodyMaxW); break;
     }
 
     this.drawFixedRow(ctx);
     if (this.paused) this.drawPaused(ctx, c);
+  }
+
+  /**
+   * §4: a quiet, low-poly corner of Daniel's room — flat blocks only, ERA1
+   * tokens only (Soft Lo-Fi: cozy, underdefined edges, never horror-dark).
+   * Deliberately abstracted, not a reconstruction of any reference photograph
+   * (G9 — the Brothers Road image is never traced). This is what "the vignette
+   * is happening somewhere" looks like without a new asset pipeline.
+   */
+  private drawRoomBackdrop(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    ui.px(ctx, x, y, w, h, ERA1.paper); // the wall
+    const floorH = Math.round(h * 0.22);
+    ui.px(ctx, x, y + h - floorH, w, floorH, ERA1.silver); // the floor
+
+    // a window, upper-left — the night outside, unremarked
+    const winX = x + 24, winY = y + 20, winW = 84, winH = 64;
+    ui.px(ctx, winX, winY, winW, winH, ERA1.tealDark);
+    ui.px(ctx, winX + winW / 2 - 1, winY, 2, winH, ERA1.silver);
+    ui.px(ctx, winX, winY + winH / 2 - 1, winW, 2, ERA1.silver);
+
+    // the bed corner, lower-left — where this is happening
+    const bedY = y + h - floorH - 34;
+    ui.px(ctx, x + 12, bedY, 96, 34, ERA1.beige);
+    ui.px(ctx, x + 12, bedY, 96, 6, ERA1.white); // the pillow, at the head
+
+    // the lamp, lower-right — the one warm constant (era-spanning motif)
+    const lampX = x + w - 54, lampY = y + h - floorH - 30;
+    ui.px(ctx, lampX, lampY, 6, 28, ERA1.greyDark);
+    ui.px(ctx, lampX - 10, lampY - 4, 26, 10, ERA1.tooltip);
+
+    // a thin outline — a bounded surface, never Win95 chrome
+    ui.px(ctx, x, y, w, 1, ERA1.silver);
+    ui.px(ctx, x, y, 1, h, ERA1.silver);
+    ui.px(ctx, x, y + h - 1, w, 1, ERA1.silver);
+    ui.px(ctx, x + w - 1, y, 1, h, ERA1.silver);
+  }
+
+  /**
+   * §4: the interaction floats as a translucent card over the room rather
+   * than filling it — margins stay visible so the environment reads as
+   * present, not replaced. Returns a ContentRect so the existing body-layout
+   * math (bodyTop/bodyMaxW/bodyX) needs no further change.
+   */
+  private drawOverlayPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): ui.ContentRect {
+    const pad = 14;
+    const topGap = 30; // the wall + window stay visible above the card
+    const px_ = x + pad;
+    const py_ = y + topGap;
+    const pw = w - pad * 2;
+    const ph = (y + h - 28) - py_ - 6; // stop above the fixed Leave/Pause row
+    ctx.fillStyle = 'rgba(245,244,237,0.92)';
+    ctx.fillRect(px_, py_, pw, ph);
+    ui.px(ctx, px_, py_, pw, 1, ERA1.silver);
+    ui.px(ctx, px_, py_, 1, ph, ERA1.silver);
+    ui.px(ctx, px_, py_ + ph - 1, pw, 1, ERA1.silver);
+    ui.px(ctx, px_ + pw - 1, py_, 1, ph, ERA1.silver);
+    return { x: px_ + 10, y: py_ + 8, w: pw - 20, h: ph - 16, closeBox: { x: 0, y: 0, w: 0, h: 0 } };
   }
 
   private drawInvitation(ctx: CanvasRenderingContext2D, x: number, top: number, maxW: number): void {
@@ -193,6 +273,19 @@ export class ProvotypeApp {
 
   private drawVignette(ctx: CanvasRenderingContext2D, x: number, top: number, maxW: number): void {
     const st = this.data.states[this.stateIndex];
+
+    // §4: Daniel's felt line gets its own beat — the system's paragraph is
+    // gone from the screen entirely for this one breath, not just visually
+    // de-emphasized underneath it.
+    if (this.showResponse && this.feltRevealed && st.felt) {
+      ui.setFont(ctx, 11); // bare, unstyled — but no longer the smallest text on screen
+      ctx.fillStyle = ERA1.grey;
+      let fy = top + 34;
+      for (const w of wrap(ctx, st.felt, maxW)) { ctx.fillText(w, x, fy); fy += 15; }
+      this.primary(ctx, chrome.next);
+      return;
+    }
+
     ui.setFont(ctx, 11);
     ctx.fillStyle = ERA1.black;
     let y = top;
@@ -211,17 +304,30 @@ export class ProvotypeApp {
       return;
     }
 
-    // the system's reply — flat, unrewarding by design
+    // the system's reply — flat, unrewarding by design. (felt now lives in
+    // its own beat above, once the player advances past this screen.)
     const response = this.lastResponse ?? st.response;
     ctx.fillStyle = ERA1.greyDark;
     for (const w of wrap(ctx, response, maxW)) { ctx.fillText(w, x, y); y += 15; }
-    if (st.felt) {
-      y += 8;
-      ui.setFont(ctx, 10); // the person's bare line — dim, unstyled, never juiced
-      ctx.fillStyle = ERA1.grey;
-      for (const w of wrap(ctx, st.felt, maxW)) { ctx.fillText(w, x, y); y += 14; }
-    }
     this.primary(ctx, chrome.next);
+  }
+
+  /**
+   * §4: the narrative close — a short, near-wordless beat between the
+   * vignette's end and the sourced debrief. Still in the room (register:
+   * felt — no system voice, no charm, no mechanics); the debrief afterward
+   * is where the documentary/dossier function lives, separately.
+   */
+  private drawClose(ctx: CanvasRenderingContext2D, x: number, top: number, maxW: number): void {
+    const cl = this.data.close;
+    ui.setFont(ctx, 11);
+    ctx.fillStyle = ERA1.grey;
+    let y = top + 30;
+    for (const line of cl?.lines ?? []) {
+      for (const w of wrap(ctx, line, maxW)) { ctx.fillText(w, x, y); y += 15; }
+      y += 4;
+    }
+    this.primary(ctx, cl?.continue ?? chrome.next);
   }
 
   /**
@@ -354,9 +460,9 @@ export class ProvotypeApp {
     if (chosen?.goto !== undefined) {
       // the meaningful choice (e.g. Repeat/Finish) — no choice is "correct";
       // this only decides how much longer the same content repeats.
-      if (chosen.goto === 'debrief') {
-        this.phase = 'debrief';
-        this.reachedDebrief = true;
+      if (chosen.goto === 'debrief' || chosen.goto === 'close') {
+        this.phase = chosen.goto;
+        this.reachedDebrief = true; // finishing the vignette is "completed" whether or not the debrief is opened next
         this.dirty = true;
       } else {
         if (chosen.goto <= this.stateIndex) this.reps++; // internal only — never shown as a score
@@ -381,14 +487,24 @@ export class ProvotypeApp {
         this.phase = 'vignette';
         this.enterState(0);
         break;
-      case 'vignette':
+      case 'vignette': {
+        const st = this.data.states[this.stateIndex];
+        // §4: the response screen and the felt screen are two separate taps —
+        // the first advance past a response reveals felt; only the second
+        // actually moves the vignette forward.
+        if (this.showResponse && st.felt && !this.feltRevealed) {
+          this.feltRevealed = true;
+          break;
+        }
         if (this.stateIndex < this.data.states.length - 1) {
           this.enterState(this.stateIndex + 1);
         } else {
-          this.phase = 'debrief';
+          this.phase = 'close';
           this.reachedDebrief = true;
         }
         break;
+      }
+      case 'close': this.phase = 'debrief'; break;
       case 'debrief': this.exit(); break;
     }
     this.dirty = true;
