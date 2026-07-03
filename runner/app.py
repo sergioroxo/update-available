@@ -5341,6 +5341,10 @@ def _app_job_lock_path() -> Path:
     return _project_root / "exports" / "app_jobs" / "active_llm_job.json"
 
 
+def _source_queue_triage_lock_path() -> Path:
+    return _project_root / "exports" / "app_jobs" / "source_queue_triage_job.json"
+
+
 def _pid_is_running(pid: int | str | None) -> bool:
     try:
         pid_int = int(pid or 0)
@@ -5391,6 +5395,54 @@ def _write_app_job_lock(job: dict) -> None:
 
 def _clear_app_job_lock(job: dict | None = None) -> None:
     path = _app_job_lock_path()
+    if not path.exists():
+        return
+    if not job:
+        path.unlink(missing_ok=True)
+        return
+    try:
+        current = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        path.unlink(missing_ok=True)
+        return
+    if str(current.get("pid", "")) == str(job.get("pid", "")):
+        path.unlink(missing_ok=True)
+
+
+def _read_source_queue_triage_lock() -> dict | None:
+    """Return the active Source Queue triage job, clearing stale lock files."""
+    path = _source_queue_triage_lock_path()
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        path.unlink(missing_ok=True)
+        return None
+    if _pid_is_running(data.get("pid")):
+        return data
+    path.unlink(missing_ok=True)
+    return None
+
+
+def _write_source_queue_triage_lock(job: dict) -> None:
+    path = _source_queue_triage_lock_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "pid": job.get("pid"),
+        "kind": job.get("kind", "source-queue-triage"),
+        "mode": job.get("mode", ""),
+        "started_at": job.get("started_at", ""),
+        "log_path": job.get("log_path", ""),
+        "command": job.get("command", ""),
+        "item_count": job.get("item_count", ""),
+        "label": job.get("label", ""),
+    }
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _clear_source_queue_triage_lock(job: dict | None = None) -> None:
+    path = _source_queue_triage_lock_path()
     if not path.exists():
         return
     if not job:
@@ -14289,11 +14341,17 @@ def _start_source_queue_triage_job(
     label: str = "source-queue-triage",
 ) -> dict:
     """Start source-queue triage without blocking Streamlit."""
-    active = _read_app_job_lock()
-    if active:
+    active_triage = _read_source_queue_triage_lock()
+    if active_triage:
         raise RuntimeError(
-            _format_app_job_lock(active)
-            + " Wait for it to finish before starting another model/fetch job."
+            _format_app_job_lock(active_triage)
+            + " Use the Source Queue triage status card to refresh, stop, or clear it."
+        )
+    active_heavy_job = _read_app_job_lock()
+    if active_heavy_job:
+        raise RuntimeError(
+            _format_app_job_lock(active_heavy_job)
+            + " Add/review remains available, but queue triage should wait for that model job to finish."
         )
     clean_item_ids = [str(item_id).strip() for item_id in item_ids if str(item_id).strip()]
     if not clean_item_ids:
@@ -14338,29 +14396,56 @@ def _start_source_queue_triage_job(
         "item_count": len(clean_item_ids),
         "label": safe_label,
     }
-    _write_app_job_lock(job)
+    _write_source_queue_triage_lock(job)
     return job
 
 
 def _render_source_queue_triage_job(job_key: str) -> bool:
     job = st.session_state.get(job_key)
+    recovered_from_lock = False
     if not job:
-        return False
+        job = _read_source_queue_triage_lock()
+        if not job:
+            return False
+        recovered_from_lock = True
     proc = job.get("process")
-    returncode = proc.poll() if proc is not None else None
     log_path = Path(job.get("log_path", ""))
+    if proc is None:
+        if not _pid_is_running(job.get("pid")):
+            _clear_source_queue_triage_lock(job)
+            st.session_state.pop(job_key, None)
+            st.warning(
+                "Recovered a stale Source Queue triage status. The recorded process is no longer running, "
+                "so the triage lock was cleared."
+            )
+            tail = _job_log_tail(log_path, limit=6000)
+            if tail:
+                with st.expander("Last triage terminal log tail", expanded=True):
+                    st.code(tail, language="text")
+            return False
+        returncode = None
+        recovered_from_lock = True
+    else:
+        returncode = proc.poll()
     if returncode is None:
-        st.info(
-            f"Source Queue triage is running in the background "
-            f"(PID {job.get('pid')}, {job.get('item_count', '?')} item(s)). "
-            "You can keep using the app; refresh this status to see the latest terminal output."
-        )
+        if recovered_from_lock:
+            st.warning(
+                f"Source Queue triage appears to be running from a recovered lock "
+                f"(PID {job.get('pid')}, {job.get('item_count', '?')} item(s)). "
+                "This usually means Streamlit refreshed while the background process kept running."
+            )
+        else:
+            st.info(
+                f"Source Queue triage is running in the background "
+                f"(PID {job.get('pid')}, {job.get('item_count', '?')} item(s)). "
+                "You can keep using the app; refresh this status to see the latest terminal output."
+            )
         c1, c2, c3 = st.columns([1, 1, 1])
         if c1.button("Refresh triage status", key=f"{job_key}_refresh"):
             st.rerun()
         if c2.button("Stop triage job", key=f"{job_key}_stop_running"):
             message = _request_stop_app_job(job)
-            _clear_app_job_lock(job)
+            _clear_source_queue_triage_lock(job)
             st.session_state.pop(job_key, None)
             st.session_state["source_queue_triage_stop_message"] = message
             st.rerun()
@@ -14378,7 +14463,7 @@ def _render_source_queue_triage_job(job_key: str) -> bool:
         st.success("Source Queue triage finished. Refresh the page or filters to see updated rows.")
     else:
         st.error(f"Source Queue triage exited with code {returncode}.")
-    _clear_app_job_lock(job)
+    _clear_source_queue_triage_lock(job)
     tail = _job_log_tail(log_path, limit=6000)
     if tail:
         with st.expander("Triage terminal log tail", expanded=returncode != 0):
@@ -14498,6 +14583,35 @@ def _source_queue_latest_triage_history(db, item_id: str) -> dict:
         (item_id,),
     ).fetchall()
     return dict(rows[0]) if rows else {}
+
+
+def _source_queue_visible_history_map(db, item_ids: list[str], *, limit_per_item: int = 8) -> dict[str, list[dict]]:
+    """Bulk-load recent triage history for visible queue rows.
+
+    The Source Queue page can show dozens of collapsed row expanders. Streamlit
+    still executes those blocks while rendering, so querying history once per
+    row makes the page feel like it is "doing triage" when it is only painting
+    the UI. This keeps the UI read path bounded to one query.
+    """
+    clean_ids = [str(item_id).strip() for item_id in item_ids if str(item_id).strip()]
+    if not clean_ids:
+        return {}
+    placeholders = ",".join("?" for _ in clean_ids)
+    rows = db.execute(
+        f"""
+        SELECT * FROM source_queue_triage_history
+        WHERE item_id IN ({placeholders})
+        ORDER BY item_id ASC, triaged_at DESC, id DESC
+        """,
+        clean_ids,
+    ).fetchall()
+    grouped: dict[str, list[dict]] = {item_id: [] for item_id in clean_ids}
+    for row in rows:
+        data = dict(row)
+        item_id = str(data.get("item_id") or "")
+        if len(grouped.setdefault(item_id, [])) < limit_per_item:
+            grouped[item_id].append(data)
+    return {item_id: history for item_id, history in grouped.items() if history}
 
 
 def _source_queue_rendered_recovered(db, item_id: str) -> bool:
@@ -14662,11 +14776,19 @@ def page_source_queue():
 
     st.divider()
 
+    triage_status_rendered = _render_source_queue_triage_job(triage_job_key)
+    active_heavy_job = _read_app_job_lock()
+    if active_heavy_job:
+        st.warning(
+            _format_app_job_lock(active_heavy_job)
+            + " Source Queue add/review remains available; starting triage waits for this model job."
+        )
+
     # ── Fast add panel ─────────────────────────────────────────────────────
-    st.subheader("Quick add sources")
+    st.subheader("Add sources")
     st.caption(
-        "This form only writes rows to the local Source Queue. It does not fetch, triage, "
-        "call LiteLLM, contact the Mac Studio, or start a background job."
+        "Add sources without leaving this page. Choose **Add only** when you are collecting; "
+        "choose **Add + start triage** when you want the queue to fetch snippets and organize them now."
     )
     with st.form("sq_quick_add_form", clear_on_submit=True):
         quick_pasted = st.text_area(
@@ -14687,11 +14809,18 @@ def page_source_queue():
         quick_batch = quick_cols[1].text_input("Batch group", key="sq_quick_batch")
         quick_tags = quick_cols[2].text_input("Tags", key="sq_quick_tags")
         quick_notes = quick_cols[3].text_input("Notes", key="sq_quick_notes")
-        quick_submit = st.form_submit_button(
-            "Add sources only",
-            type="primary",
+        quick_use_crawl4ai = st.checkbox(
+            "Use Crawl4AI rendered-page fallback if triaging",
+            value=False,
+            key="sq_quick_use_crawl4ai",
+            help=(
+                "Opt-in browser rendering for public pages where static extraction fails. "
+                "Challenge/login/CAPTCHA pages are still held for manual capture."
+            ),
         )
-    if quick_submit:
+        quick_submit_add = st.form_submit_button("Add only")
+        quick_submit_triage = st.form_submit_button("Add + start triage", type="primary")
+    if quick_submit_add or quick_submit_triage:
         added, dup_q, dup_c = add_items_from_text(
             db,
             quick_pasted,
@@ -14713,6 +14842,30 @@ def page_source_queue():
             if parts else
             "No valid URLs found in the pasted text."
         )
+        if quick_submit_triage and (added or dup_q or dup_c):
+            pasted_urls = {normalise_url(url) for url in parse_pasted_urls(quick_pasted)}
+            triage_candidates = [
+                item for item in list_items(db, status=None, batch_group=None, limit=10000)
+                if normalise_url(item.url) in pasted_urls and item.status in {"new", "triaged"}
+            ]
+            if not triage_candidates:
+                st.session_state["source_queue_add_message"] += (
+                    " No matching new/triaged queue rows were available to triage."
+                )
+            else:
+                try:
+                    st.session_state[triage_job_key] = _start_source_queue_triage_job(
+                        item_ids=[item.id for item in triage_candidates],
+                        limit=len(triage_candidates),
+                        force=True,
+                        use_crawl4ai=quick_use_crawl4ai,
+                        label="source-queue-triage-added",
+                    )
+                    st.session_state["source_queue_add_message"] += (
+                        f" Started background triage for {len(triage_candidates)} matching item(s)."
+                    )
+                except RuntimeError as exc:
+                    st.session_state["source_queue_add_message"] += f" Triage was not started: {exc}"
         st.rerun()
 
     # ── Import panel ───────────────────────────────────────────────────────
@@ -14953,6 +15106,11 @@ def page_source_queue():
     if not items:
         st.info("No items match the current filter.")
         return
+    visible_triage_history = _source_queue_visible_history_map(
+        db,
+        [item.id for item in items],
+        limit_per_item=8,
+    )
 
     with st.expander("Rendered fallback / terminal triage command", expanded=False):
         use_crawl4ai_triage = st.checkbox(
@@ -15019,9 +15177,9 @@ def page_source_queue():
                 use_container_width=True,
             )
 
-    if not _render_source_queue_triage_job(triage_job_key):
+    if not triage_status_rendered:
         _render_active_app_job_lock_panel(expanded=False)
-    triage_locked = bool(_read_app_job_lock())
+    triage_locked = bool(_read_source_queue_triage_lock()) or bool(_read_app_job_lock())
 
     # ── Bulk triage button ──────────────────────────────────────────────────
     new_count = sum(1 for i in items if i.status == "new")
@@ -15718,7 +15876,7 @@ def page_source_queue():
                                + (f"  ·  {item.triaged_at[:10]}" if item.triaged_at else ""))
                 if item.routing_reason:
                     st.caption(f"Triage reason: {item.routing_reason}")
-                triage_history = list_triage_history(db, item.id, limit=8)
+                triage_history = visible_triage_history.get(item.id, [])
                 if triage_history:
                     with st.expander(f"Triage history ({len(triage_history)} recent)", expanded=False):
                         st.dataframe(

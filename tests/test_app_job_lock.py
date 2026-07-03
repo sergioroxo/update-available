@@ -25,6 +25,13 @@ def lock_path(tmp_path, monkeypatch):
     return p
 
 
+@pytest.fixture
+def triage_lock_path(tmp_path, monkeypatch):
+    p = tmp_path / "app_jobs" / "source_queue_triage_job.json"
+    monkeypatch.setattr(app_mod, "_source_queue_triage_lock_path", lambda: p)
+    return p
+
+
 # ---------------------------------------------------------------------------
 # _pid_is_running
 # ---------------------------------------------------------------------------
@@ -177,6 +184,57 @@ def test_clear_corrupt_lock_removes_file(lock_path):
     lock_path.write_text("{bad", encoding="utf-8")
     app_mod._clear_app_job_lock({"pid": os.getpid()})
     assert not lock_path.exists()
+
+
+# ---------------------------------------------------------------------------
+# Source Queue triage lock
+# ---------------------------------------------------------------------------
+
+def test_source_queue_triage_lock_roundtrip_live_pid(triage_lock_path):
+    app_mod._write_source_queue_triage_lock({
+        "process": object(),
+        "pid": os.getpid(),
+        "kind": "source-queue-triage",
+        "mode": "crawl4ai",
+        "started_at": "T",
+        "log_path": "/tmp/triage.log",
+        "command": "runner queue-triage --limit 10",
+        "item_count": 10,
+        "label": "source-queue-triage-test",
+    })
+
+    data = app_mod._read_source_queue_triage_lock()
+
+    assert data is not None
+    assert data["pid"] == os.getpid()
+    assert data["kind"] == "source-queue-triage"
+    assert data["mode"] == "crawl4ai"
+    assert data["item_count"] == 10
+    assert "process" not in data
+
+
+def test_source_queue_triage_lock_clears_stale_pid(triage_lock_path, monkeypatch):
+    app_mod._write_source_queue_triage_lock({"pid": os.getpid(), "kind": "source-queue-triage"})
+    monkeypatch.setattr(app_mod, "_pid_is_running", lambda _pid: False)
+
+    assert app_mod._read_source_queue_triage_lock() is None
+    assert not triage_lock_path.exists()
+
+
+def test_clear_source_queue_triage_lock_matching_pid_removes_file(triage_lock_path):
+    app_mod._write_source_queue_triage_lock({"pid": os.getpid(), "kind": "source-queue-triage"})
+
+    app_mod._clear_source_queue_triage_lock({"pid": os.getpid()})
+
+    assert not triage_lock_path.exists()
+
+
+def test_clear_source_queue_triage_lock_non_matching_pid_keeps_file(triage_lock_path):
+    app_mod._write_source_queue_triage_lock({"pid": os.getpid(), "kind": "source-queue-triage"})
+
+    app_mod._clear_source_queue_triage_lock({"pid": os.getpid() + 1})
+
+    assert triage_lock_path.exists()
 
 
 # ---------------------------------------------------------------------------

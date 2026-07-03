@@ -4,6 +4,7 @@ These tests cover pure-Python helpers that have no Streamlit dependency —
 they do not launch a browser or Streamlit session.
 """
 import pytest
+import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -2434,3 +2435,55 @@ def test_app_job_lock_preserves_recovery_metadata(tmp_path, monkeypatch):
     assert lock["item_count"] == 2
     assert lock["label"] == "retry-held"
     assert lock["command"].endswith("--use-crawl4ai")
+
+
+def test_source_queue_visible_history_map_groups_and_limits_rows():
+    import runner.app as app_mod
+
+    db = sqlite3.connect(":memory:")
+    db.row_factory = sqlite3.Row
+    db.execute(
+        """
+        CREATE TABLE source_queue_triage_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_id TEXT NOT NULL,
+            triaged_at TEXT NOT NULL,
+            model_name TEXT,
+            triage_succeeded INTEGER,
+            overnight_batch_safe INTEGER,
+            priority TEXT,
+            recommended_llm TEXT,
+            acquisition_note TEXT,
+            routing_reason TEXT
+        )
+        """
+    )
+    db.executemany(
+        """
+        INSERT INTO source_queue_triage_history (
+            item_id, triaged_at, model_name, triage_succeeded,
+            overnight_batch_safe, priority, recommended_llm,
+            acquisition_note, routing_reason
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            ("a", "2026-07-03T12:00:00Z", "m3", 0, 0, "low", "triage", "blocked", "held"),
+            ("a", "2026-07-03T11:00:00Z", "m2", 1, 1, "high", "triage", "ok", "parsed"),
+            ("a", "2026-07-03T10:00:00Z", "m1", 1, 1, "medium", "triage", "ok", "parsed"),
+            ("b", "2026-07-03T09:00:00Z", "m1", 1, 1, "medium", "triage", "ok", "parsed"),
+        ],
+    )
+
+    result = app_mod._source_queue_visible_history_map(db, ["a", "b", "missing"], limit_per_item=2)
+
+    assert list(result.keys()) == ["a", "b"]
+    assert [row["model_name"] for row in result["a"]] == ["m3", "m2"]
+    assert result["b"][0]["priority"] == "medium"
+
+
+def test_source_queue_visible_history_map_empty_ids_is_empty():
+    import runner.app as app_mod
+
+    db = sqlite3.connect(":memory:")
+
+    assert app_mod._source_queue_visible_history_map(db, []) == {}
