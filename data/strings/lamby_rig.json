@@ -1,0 +1,29 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Standalone Lamby rig prototype copy for ?lambyrig=1 only; not production dialogue and not integrated into the OS.",
+  "title": "Lamby Rig Lab",
+  "subtitle": "procedural canvas rig — placeholder test surface",
+  "moodHeading": "Mood",
+  "actionHeading": "Animation",
+  "moods": {
+    "cheerful": "Cheer",
+    "clinical": "Clinical",
+    "sterile": "Sterile"
+  },
+  "actions": {
+    "idle": "Idle",
+    "point": "Point",
+    "appear": "Appear",
+    "disappear": "Vanish"
+  },
+  "bubble": {
+    "cheerful": "Hi! I am already installed.",
+    "clinical": "Let us keep this helpful.",
+    "sterile": "Assistance state: compliant."
+  },
+  "status": {
+    "idle": "idle breathing + blink loop",
+    "point": "gesture test: Lamby points without sprite frames",
+    "appear": "appear test: pixel reveal mask",
+    "disappear": "disappear test: reverse reveal mask"
+  }
+}

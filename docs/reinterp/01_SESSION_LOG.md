@@ -18,6 +18,34 @@ branching) — enough for the pillow's Lift/Exhale/Strike + Repeat/Finish, but c
 - R7 build spec — Fable writes it after R2 ships.
 
 ## DONE
+*(2026-07-03 · Parallel Codex task — R9-4 Lamby rig prototype. Built a standalone route
+`?lambyrig=1` mounted from `src/main.ts` into `src/lambyrig/lambyRig.ts`, with no DesktopOS,
+`provotype.ts`, `data/provotypes/`, boot/profile/lighting/beginner-panel/ceiling/witness integration
+changes. The rig is fully procedural canvas: era-1 palette tokens only, nearest-neighbor scaled canvas,
+integer layout, code-drawn Clippy-style Lamby/paperclip body, idle breathing, timed blink, point gesture,
+appear and disappear reveal masks, and three moods (`cheerful`, `clinical`, `sterile`). Text lives in
+`data/strings/lamby_rig.json` with `_doc: "PLACEHOLDER — Sérgio voice pass pending..."`. URL params
+support deterministic QA frames, e.g. `?lambyrig=1&mood=sterile&action=disappear`; canvas buttons also
+cycle moods/actions by click/tap only. Screenshots saved outside the repo: `/tmp/lamby-rig-01-cheerful-idle.png`,
+`/tmp/lamby-rig-02-clinical-idle.png`, `/tmp/lamby-rig-03-sterile-idle.png`,
+`/tmp/lamby-rig-04-cheerful-blink.png`, `/tmp/lamby-rig-05-cheerful-point.png`,
+`/tmp/lamby-rig-06-clinical-appear.png`, `/tmp/lamby-rig-07-sterile-disappear.png`.
+
+Verdict: **procedural is feasible and recommended for the first integrated Lamby-as-Clippy pass.** It
+already gives the needed OS-assistant grammar: blink, breath, point, appear/disappear, and mood shift
+without sprite asset management, and it can inherit era palettes/line discipline cheaply. Estimated cost
+to productionize procedurally: 1 focused build session to extract the rig API (mood/action/line/anchor),
+plus 1 polish pass for final silhouette, per-era variant names, and VR monitor readability. Sprite route:
+better only if Sérgio wants plush/high-authored acting (turnarounds, smear frames, singing, complex
+transformations); estimated cost is an asset pass per mood/action set plus integration and atlas QA, with
+more iteration overhead whenever the assistant lineage changes. Recommendation: keep the final OS guide
+procedural through the Opening & Flow spec; reserve authored sprites for one-off transformation/close-up
+beats if the procedural silhouette starts feeling too mechanical. Verification: `npm test` passed;
+`npm run build` passed with the existing Vite chunk-size warning; in-app Browser showed all seven frames
+with no console errors; click proof changed the canvas controls to
+`?lambyrig=1&mood=clinical&action=point`; baseline `/` and `/?flat=1` had no `data-lambyrig`, no overlay,
+and no console errors.)*
+
 *(2026-07-02 · Session 2 — R1 provotype framework. Built the one reusable grammar as a data-driven
 runtime `src/desktop/apps/provotype.ts`: diegetic assistant INVITATION → ≤2-sentence FRAME → interactive
 VIGNETTE (click states: prompt → choose → system response + optional bare `felt` line) → dossier-grade

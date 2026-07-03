@@ -35,6 +35,10 @@ This branch carries the isolated reinterpretation build. `?reinterp=1`
 enables reinterpretation-only hooks; without that flag the shipped path is
 the regression baseline. For flat preview, use `?flat=1&reinterp=1`.
 
+### Standalone prototypes
+`?lambyrig=1` opens the isolated Lamby rig lab. It is a canvas-only procedural
+prototype for the assistant-as-guide work and is not integrated into the OS.
+
 ## Structure
 
 ```
