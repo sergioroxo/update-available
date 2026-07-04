@@ -14,7 +14,10 @@ import { WitnessCanvas } from '../witness/intake';
 import { ledger } from '../state/ledger';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { buildEra1Room } from '../room/era1room';
-import { buildFluidNiche, type FacetState } from '../room/fluidNiche';
+import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
+import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
+import { buildClusterShell, type ClusterShell, type EraKey } from '../room/cluster';
+import { buildPointCloud, type PointCloud } from '../room/pointCloud';
 import { mountStartupOverlay } from '../desktop/opening';
 import strings from '../../data/strings/slice.json';
 
@@ -38,6 +41,14 @@ interface AppOptions {
   reinterp?: boolean;
   /** ?facet= debug override for the fluid trans niche (reinterp only) */
   facet?: FacetState;
+  /** ?era=2|3|4 — jump cluster + rig to an era's open state (review tool) */
+  era?: EraKey;
+  /** ?morph=2|3|4 — play the E1→EN morph live, 4s after load (review tool) */
+  morphDemo?: EraKey;
+  /** ?close=1 — the point-cloud Close, room dark (review tool) */
+  close?: boolean;
+  /** ?reveal=1 — the O7 first-filing reveal state (review tool) */
+  reveal?: boolean;
 }
 
 function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.Texture {
@@ -83,13 +94,21 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
 
   buildEra1Room(app, options.reinterp === true);
 
-  // ── the fluid trans niche (greybox, reinterp only) ──
-  // One lateral-arc alcove of facet-states. This session renders the E1 room,
-  // so the default is E1's near-dark ('none'); ?facet= forces a state for
-  // review. A later session wires gaze/send pulls to niche.setFacet().
+  // ── the fluid trans niche + the cluster shell (reinterp only) ──
+  // The niche is one lateral-arc alcove of facet-states (?facet= forces one
+  // for review). Around it, the CLUSTER SHELL: the mirrored west alcove, the
+  // aperture scrims (sealed → dim → open), the per-era light rigs, and the
+  // ceiling witness — plus the point-cloud Close, built once, dormant.
+  let niche: FluidNiche | null = null;
+  let ceiling: CeilingWitness | null = null;
+  let cluster: ClusterShell | null = null;
+  let cloud: PointCloud | null = null;
   if (options.reinterp === true) {
-    const niche = buildFluidNiche(app);
+    niche = buildFluidNiche(app);
     niche.setFacet(options.facet ?? 'none');
+    ceiling = buildCeilingWitness(app);
+    cluster = buildClusterShell(app, niche, ceiling);
+    cloud = buildPointCloud(app);
   }
 
   // ── the two surfaces ──
@@ -165,6 +184,20 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     tx: number; ty: number; tz: number; tp: number; tyaw: number; t: number; dur: number; conducted: boolean; }
   let camMove: CamMove | null = null;
   let autoCam = false;
+  // O7 reveal choreography: seconds until the tilt returns to level; whether
+  // the tilt ran conducted (autoCam) — a free tilt cedes to the player's drag
+  let revealReturn = -1;
+  let revealConducted = false;
+  let morphDemoIn = -1; // ?morph= review: seconds until the live morph plays
+
+  // the gaze-dwell facet pull (geometry doc §2.2 #3) — ambient and reversible:
+  // a facet resolves WHILE you look and recedes when you don't; nothing accrues,
+  // nothing displays, nothing completes (never latched — the frame never plays)
+  const gazeDir = new pc.Vec3();
+  const COS_GAZE = Math.cos((12 * Math.PI) / 180); // one-station gaze cone
+  let dwellFacet: FacetState | null = null;
+  let dwellMs = 0;
+  let gazeFg: FacetState | null = null;
 
   function startCamMove(to: { x: number; y: number; z: number; pitch: number; yaw: number },
                         dur: number, conducted: boolean): void {
@@ -174,7 +207,10 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     tween = null;
   }
   /** grabbing/keying the view cancels a non-conducted move (the player left it) */
-  function nudgeCamera(): void { if (camMove && !camMove.conducted) camMove = null; }
+  function nudgeCamera(): void {
+    if (camMove && !camMove.conducted) camMove = null;
+    if (revealReturn > 0 && !revealConducted) revealReturn = -1; // the player took over
+  }
 
   const isBackYaw = (): boolean => {
     const n = ((camYaw % 360) + 360) % 360;
@@ -276,11 +312,21 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     return Math.sqrt(cx * cx + cy * cy + cz * cz) < radius;
   }
 
-  // the disk leaves the desk when it enters the drive
+  // the disk leaves the desk when it enters the drive — and, in reinterp, the
+  // insertion is the FIRST FILING (O7): the ceiling presence wakes, the alcoves
+  // become dimly legible for the first time, and the camera acknowledges the
+  // ceiling with a brief upward tilt (half a second, not a cutscene; conducted
+  // only under auto-cam, otherwise the player's drag overrides it).
   os.onKitInserted = () => {
     for (const id of ['kitFloppy', 'kitFloppyLabel', 'kitFloppyShutter']) {
       const ent = app.root.findByName(id);
       if (ent instanceof pc.Entity) ent.enabled = false;
+    }
+    if (cluster && cluster.state === 'sealed') {
+      cluster.reveal();
+      revealConducted = autoCam;
+      startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: 34, yaw: camYaw }, 0.55, autoCam);
+      revealReturn = 1.7;
     }
   };
 
@@ -389,6 +435,59 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     }
     camera.setLocalEulerAngles(camPitch, camYaw, 0);
 
+    // ── cluster / ceiling / Close + the O7 choreography (reinterp only) ──
+    if (options.reinterp) {
+      if (revealReturn > 0) {
+        revealReturn -= dt;
+        if (revealReturn <= 0) { // level back out after the upward glance
+          startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: 0, yaw: camYaw }, 0.7, revealConducted);
+        }
+      }
+      if (morphDemoIn > 0) {
+        morphDemoIn -= dt;
+        if (morphDemoIn <= 0 && cluster && options.morphDemo) cluster.morphToEra(options.morphDemo, true);
+      }
+      cluster?.update(dt);
+      ceiling?.update(dt);
+      cloud?.update(dt);
+
+      // gaze-dwell: only once the cluster has been revealed (the E1 dark-
+      // surround law), never under a ?facet= override, and only for facets the
+      // era's table marks promotable (tier hero|set — fog stays unresolved)
+      if (niche && cluster && !options.facet && cluster.state !== 'sealed' && !options.close) {
+        const table = cluster.eraTable();
+        const gz = table?.pull.gaze;
+        if (table && gz && table.default !== 'all') {
+          const fwd = camera.forward;
+          let best: FacetState | null = null;
+          let bestDot = COS_GAZE;
+          for (const s of niche.stations) {
+            gazeDir.sub2(s.pos, camPos).normalize();
+            const d = gazeDir.dot(fwd);
+            if (d > bestDot) { bestDot = d; best = s.facet; }
+          }
+          const entry = best ? table.facets[best] : undefined;
+          if (best && entry && (entry.tier === 'hero' || entry.tier === 'set') && best !== table.default) {
+            dwellMs = dwellFacet === best ? dwellMs + dt * 1000 : dt * 1000;
+            dwellFacet = best;
+            if (dwellMs >= gz.dwellMs && gazeFg !== best) {
+              niche.setFacet(best);
+              gazeFg = best;
+              const tag = `niche:dwell:${best}`; // Ethics #10 — the player's own act
+              if (!ledger.tags.includes(tag)) ledger.tags.push(tag);
+            }
+          } else if (dwellMs > 0 && gz.decay) {
+            dwellMs -= dt * 1000;
+            if (dwellMs <= 0) {
+              dwellMs = 0;
+              dwellFacet = null;
+              if (gazeFg) { niche.setFacet(table.default as FacetState); gazeFg = null; } // recedes; never latched
+            }
+          }
+        }
+      }
+    }
+
     const nowBack = isBackYaw();
     if (nowBack !== facingBack) {
       facingBack = nowBack;
@@ -407,7 +506,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     }
 
     // S1.0: the hint alone carries the beat (Sérgio: no blur needed)
-    if (os.isOff !== offShown) {
+    if (!options.close && os.isOff !== offShown) {
       offShown = os.isOff;
       offHint.style.opacity = offShown ? '1' : '0';
     }
@@ -450,23 +549,54 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   }
 
   if (options.reinterp) {
-    applyWindowLight();
-    camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
-    camPitch = ESTABLISH.pitch;
-    camYaw = 0;
-    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
-    const overlay = mountStartupOverlay({
-      onContinue: (choices) => {
-        autoCam = choices.autoCam;
-        overlay.destroy();
-        applyLightsOn();                 // O2: room lights + lamp over-throw
-        // O2: framed camera moves establishing → desk (conducted under auto-cam,
-        // otherwise the default framing the player can drag away from).
-        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, CAM_MOVE_SECONDS, autoCam);
-        os.beginReinterpOpening();        // boot on the monitor → O3 profile
-      },
-      onLeave: () => { os.leaveNow(); }
-    });
+    // review tools (?close / ?era / ?reveal / ?morph) bypass the O1 overlay —
+    // they exist to look at 3D states, not to play the opening
+    if (options.close && cluster && cloud) {
+      // the Close: the room goes dark and gives way to the constellation
+      cluster.applyRig('close', false);
+      for (const id of ['era1-room', 'fluid-niche', 'cluster-shell', 'ceiling-witness', 'desktop-screen', 'witness-screen']) {
+        const e = app.root.findByName(id);
+        if (e instanceof pc.Entity) e.enabled = false;
+      }
+      cloud.show();
+      camPos.set(EYE.x, EYE.y, EYE.z);
+      camPitch = 6;
+      camYaw = 0;
+      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    } else if (options.era && cluster) {
+      cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
+      if (options.facet && niche) niche.setFacet(options.facet); // override wins
+      camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
+      camPitch = ESTABLISH.pitch;
+      camYaw = 0;
+      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    } else if ((options.reveal || options.morphDemo) && cluster) {
+      applyLightsOn();          // E1 lit state…
+      cluster.reveal();         // …already past the first filing (O7)
+      if (options.morphDemo) morphDemoIn = 4.0; // then the update opens the world
+      camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
+      camPitch = ESTABLISH.pitch;
+      camYaw = 0;
+      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    } else {
+      applyWindowLight();
+      camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
+      camPitch = ESTABLISH.pitch;
+      camYaw = 0;
+      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      const overlay = mountStartupOverlay({
+        onContinue: (choices) => {
+          autoCam = choices.autoCam;
+          overlay.destroy();
+          applyLightsOn();                 // O2: room lights + lamp over-throw
+          // O2: framed camera moves establishing → desk (conducted under auto-cam,
+          // otherwise the default framing the player can drag away from).
+          startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, CAM_MOVE_SECONDS, autoCam);
+          os.beginReinterpOpening();        // boot on the monitor → O3 profile
+        },
+        onLeave: () => { os.leaveNow(); }
+      });
+    }
   }
 
   app.start();

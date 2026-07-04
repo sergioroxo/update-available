@@ -1,0 +1,95 @@
+{
+  "_doc": "PLACEHOLDER — the radial CLUSTER SHELL: west alcove anchor, aperture scrims, ceiling-witness geometry, per-era cluster states, the per-era LIGHT RIGS (the cold-light-winning arc, REINTERP_3D_STYLE_DIRECTION §1-2), and the point-cloud Close parameters. Read behind ?reinterp=1 only. COLOR LAW: every hex here already exists in data/room/era1.json — rebalanced/reused, never invented; when era2+ theme palettes land in src/desktop/theme/, the e2-e4 rig hues re-derive from them (flagged, do not treat these as final art). Occupant ids are non-display slugs (which identity's alcove this is per era — E4's exact split is a cluster-morph content call, see _note). Cluster states: sealed (E1 pre-reveal: architecture felt as shadow) → dim (O7 first-filing: dimly legible) → open (E2+: the radial grammar as the new normal).",
+  "westAlcove": {
+    "azimuthDeg": 110,
+    "center": [-2.02, 1.16, 1.47],
+    "_note": "Mirror of the fluid niche's -110° arc, west wall, in the clear gap left of the bed's head wall run. Holds the OTHER non-lead identity per era (3-cluster lean). E4: the trans niche flips forward as Maya's room (geometry doc §3.2); which of gayman/lesbian this alcove carries in E4 vs a paired presence is a cluster-morph content question — id below is a working default, not canon.",
+    "occupantByEra": { "e1": "none", "e2": "lesbian", "e3": "gayman", "e4": "gayman" }
+  },
+  "scrims": [
+    { "id": "scrim-east", "pos": [1.90, 1.20, 1.47], "size": [0.02, 1.10, 1.12] },
+    { "id": "scrim-west", "pos": [-1.90, 1.20, 1.47], "size": [0.02, 1.10, 1.12] }
+  ],
+  "scrimOpacity": { "sealed": 0.94, "dim": 0.55, "open": 0.0 },
+  "ceilingWitness": {
+    "_note": "R8-3: presence only — light/eye-motif, NEVER reading. A square iris (pixel discipline: 90° geometry) recessed in the ceiling over the room's center; a pale sourceless wash when awake. Dormant until the O7 first filing.",
+    "center": [0, 2.695, 1.5],
+    "oculusSize": 1.06,
+    "ringSide": 0.72,
+    "ringThickness": 0.07,
+    "pupilSize": 0.22,
+    "ringColor": "#AABBCC",
+    "wash": { "color": "#AABBCC", "intensity": 0.5, "range": 4.8, "y": 2.42 },
+    "wakeSeconds": 3.0,
+    "breath": { "period": 7.0, "depth": 0.10 }
+  },
+  "states": { "e1": "sealed", "e2": "open", "e3": "open", "e4": "open" },
+  "rigs": {
+    "_note": "Per-era light targets for the era1.json light ids + scene ambient. The arc: E1 lamp-dominant night (~70/30 warm, Session 7 values restated) → E2 office-grade fluorescent (~50/50, managed, shadows short) → E3 platform pastel (near-shadowless diffuse, the lamp a leftover) → E4 interface-lit near-dark (the cold has won; the lamp survives as the one warm pocket). 'close' kills the room for the point-cloud inversion.",
+    "e1": {
+      "ambient": [0.17, 0.14, 0.11],
+      "lights": {
+        "roomFill": { "intensity": 0.85 },
+        "lamp": { "intensity": 2.9, "range": 5.6 },
+        "screenGlow": { "intensity": 0.32 },
+        "moonlight": { "intensity": 0.14 },
+        "witnessCold": { "intensity": 0.5 }
+      }
+    },
+    "e2": {
+      "ambient": [0.3, 0.3, 0.27],
+      "lights": {
+        "roomFill": { "intensity": 1.35, "color": "#D4D0C8" },
+        "lamp": { "intensity": 1.15, "range": 2.6 },
+        "screenGlow": { "intensity": 0.55, "color": "#8899BB" },
+        "moonlight": { "intensity": 0.05 },
+        "witnessCold": { "intensity": 0.95 }
+      }
+    },
+    "e3": {
+      "ambient": [0.33, 0.27, 0.28],
+      "lights": {
+        "roomFill": { "intensity": 1.05, "color": "#D9A8A0" },
+        "lamp": { "intensity": 0.75, "range": 2.0 },
+        "screenGlow": { "intensity": 0.65, "color": "#8899BB" },
+        "moonlight": { "intensity": 0.0 },
+        "witnessCold": { "intensity": 0.65, "color": "#8899BB" }
+      }
+    },
+    "e4": {
+      "ambient": [0.05, 0.05, 0.07],
+      "lights": {
+        "roomFill": { "intensity": 0.1, "color": "#8899BB" },
+        "lamp": { "intensity": 0.95, "range": 1.5 },
+        "screenGlow": { "intensity": 1.45, "color": "#8899BB" },
+        "moonlight": { "intensity": 0.06 },
+        "witnessCold": { "intensity": 0.4 }
+      }
+    },
+    "close": {
+      "ambient": [0.02, 0.02, 0.03],
+      "lights": {
+        "roomFill": { "intensity": 0 },
+        "lamp": { "intensity": 0 },
+        "screenGlow": { "intensity": 0 },
+        "moonlight": { "intensity": 0 },
+        "witnessCold": { "intensity": 0 }
+      }
+    }
+  },
+  "pointCloud": {
+    "_note": "The Close's constellation (R1 confirmed; Gephi-style reference, Round 2): warm orange/yellow NODES on a cool blue LINK-WEB, dense center + scattered satellites, labels sub-legible (here: none at all). The inversion: the warm-node/cool-web split differentiates it from the Watcher's cold data grammar — the lamp's temperature at network scale. Hues = the lamp pool (#F7C775/#EFA13F), the moon face (#F3EAD8), the moonlight blue (#6C7BA8).",
+    "center": [0, 1.45, 0.7],
+    "innerClear": 0.7,
+    "coreRadius": 1.45,
+    "outerRadius": 3.2,
+    "coreCount": 230,
+    "satelliteCount": 90,
+    "nodeSize": 0.016,
+    "warm": ["#F7C775", "#EFA13F", "#F3EAD8"],
+    "link": "#6C7BA8",
+    "linkOpacity": 0.55,
+    "driftDegPerSec": 0.9,
+    "fadeSeconds": 2.2
+  }
+}

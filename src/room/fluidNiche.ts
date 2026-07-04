@@ -49,6 +49,8 @@ export interface FluidNiche {
   /** foreground a facet (or 'all' = the E3 triptych, 'none' = E1 near-dark) —
    *  a material/light toggle on shared meshes; the send/gaze seam calls this */
   setFacet(state: FacetState): void;
+  /** station world positions, for the gaze-dwell resolver (§2.2 #3) */
+  readonly stations: { facet: FacetState; pos: pc.Vec3 }[];
 }
 
 export function buildFluidNiche(app: pc.Application): FluidNiche {
@@ -109,5 +111,11 @@ export function buildFluidNiche(app: pc.Application): FluidNiche {
     });
   }
 
-  return { setFacet };
+  return {
+    setFacet,
+    stations: STATIONS.map((facet, i) => ({
+      facet,
+      pos: new pc.Vec3(cx - 0.04, cy - 0.05, cz + STATION_DZ[i])
+    }))
+  };
 }
