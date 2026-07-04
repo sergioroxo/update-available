@@ -16,49 +16,49 @@ model_list:
   # ── Default analysis (--llm litelm) ─────────────────────────────────────
   - model_name: core-qwen
     litellm_params:
-      model: ollama_chat/qwen3.6:35b-a3b
+      model: ollama_chat/qwen3.6:35b-mlx
       api_base: http://localhost:11434
       max_tokens: 8192
 
   # ── Heavy / long docs (--llm litelm-heavy) ──────────────────────────────
   - model_name: core-gemma
     litellm_params:
-      model: ollama_chat/gemma4:31b-it
+      model: ollama_chat/gemma4:31b-mlx
       api_base: http://localhost:11434
       max_tokens: 8192
 
   # ── Reasoning / ambiguous (--llm litelm-reasoning) ──────────────────────
   - model_name: review-qwen
     litellm_params:
-      model: ollama_chat/qwen3.6:27b
+      model: ollama_chat/qwen3.6:27b-mlx
       api_base: http://localhost:11434
       max_tokens: 8192
 
   # ── Second-opinion enrichment (--second-opinion) ────────────────────────
   - model_name: review-gemma
     litellm_params:
-      model: ollama_chat/gemma4:26b-a4b-it
+      model: ollama_chat/gemma4:26b-mlx
       api_base: http://localhost:11434
       max_tokens: 8192
 
   # ── Fast pre-screen (--triage) ───────────────────────────────────────────
   - model_name: triage
     litellm_params:
-      model: ollama_chat/gemma4:e4b-it
+      model: ollama_chat/gemma4:12b-mlx
       api_base: http://localhost:11434
       max_tokens: 4096
 
-  # ── Stage 3c enrichment (same weights as core-qwen) ─────────────────────
+  # ── Stage 3c enrichment (same weights as core-gemma) ────────────────────
   - model_name: lexicon-llm
     litellm_params:
-      model: ollama_chat/qwen3.6:35b-a3b
+      model: ollama_chat/gemma4:31b-mlx
       api_base: http://localhost:11434
       max_tokens: 8192
 
   # ── Structured extraction ────────────────────────────────────────────────
   - model_name: coder
     litellm_params:
-      model: ollama_chat/qwen3-coder:30b-a3b-instruct
+      model: ollama_chat/qwen3-coder:30b-mlx
       api_base: http://localhost:11434
       max_tokens: 8192
 

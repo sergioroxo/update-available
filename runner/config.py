@@ -3,7 +3,24 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+_RUNNER_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _RUNNER_DIR.parent
+
+
+def _refresh_dotenv() -> None:
+    """Reload project env files so Streamlit reruns pick up edits.
+
+    ``runner/.env`` is the normal local configuration file for this project.
+    Streamlit keeps one Python process alive across reruns, so relying on a
+    module-import-time ``load_dotenv()`` leaves old LaunchAgent/shell values in
+    place after the user edits ``runner/.env``. Refreshing here makes the app
+    reflect the file on reload. During pytest, monkeypatched environment values
+    should stay authoritative.
+    """
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return
+    load_dotenv(_PROJECT_ROOT / ".env", override=False)
+    load_dotenv(_RUNNER_DIR / ".env", override=True)
 
 
 @dataclass
@@ -89,6 +106,8 @@ def load_config(llm: str | None = None, require_services: bool = True) -> Config
     upload-doc / status / export never need an LLM key — pass llm=None.
     Local review commands can pass require_services=False to avoid requiring
     Sanity/Supabase credentials for purely filesystem work."""
+
+    _refresh_dotenv()
 
     always_required = ["SANITY_PROJECT_ID", "SANITY_DATASET",
                        "SANITY_WRITE_TOKEN", "SUPABASE_URL", "SUPABASE_SERVICE_KEY"]
