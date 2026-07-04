@@ -1443,7 +1443,7 @@ def queue_list(
 def queue_triage(
     limit: int = typer.Option(10, "--limit", "-n", help="Maximum items to triage in one run"),
     batch: Optional[str] = typer.Option(None, "--batch", "-b", help="Triage only items in this batch group"),
-    force: bool = typer.Option(False, "--force", help="Re-triage items already in 'triaged' status"),
+    force: bool = typer.Option(False, "--force", help="Re-triage items already in 'triaged' or 'ready_to_ingest' status"),
     item_ids: Optional[List[str]] = typer.Option(
         None,
         "--item-id",
@@ -1481,19 +1481,19 @@ def queue_triage(
                 console.print(f"[yellow]Queue item not found: {item_id}[/yellow]")
                 continue
             candidates.append(item)
-        allowed_statuses = {"new", "triaged"} if force else {"new"}
+        allowed_statuses = {"new", "triaged", "ready_to_ingest"} if force else {"new"}
         skipped = [i for i in candidates if i.status not in allowed_statuses]
         candidates = [i for i in candidates if i.status in allowed_statuses]
         for item in skipped:
             console.print(
                 f"[dim]Skipping {item.id}: status={item.status}; "
-                f"{'use --force to retry triaged rows' if item.status == 'triaged' and not force else 'not triageable'}.[/dim]"
+                f"{'use --force to retry reviewed rows' if item.status in {'triaged', 'ready_to_ingest'} and not force else 'not triageable'}.[/dim]"
             )
     else:
         status_filter = None if force else "new"
         candidates = list_items(db, status=status_filter, batch_group=batch, limit=limit)
         if force:
-            candidates = [i for i in candidates if i.status in ("new", "triaged")]
+            candidates = [i for i in candidates if i.status in ("new", "triaged", "ready_to_ingest")]
 
     if not candidates:
         console.print("[dim]No new items to triage.[/dim]")

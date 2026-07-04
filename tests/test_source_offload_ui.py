@@ -420,6 +420,65 @@ def test_source_queue_triage_command_can_enable_crawl4ai():
     assert "--use-crawl4ai" in exact
 
 
+def test_source_queue_retriage_candidate_ids_group_visible_priorities_and_held():
+    from types import SimpleNamespace
+
+    items = [
+        SimpleNamespace(id="new1", status="new", priority="medium", overnight_batch_safe=False, routing_reason=""),
+        SimpleNamespace(id="low1", status="triaged", priority="low", overnight_batch_safe=True, routing_reason="ok"),
+        SimpleNamespace(id="med1", status="triaged", priority="medium", overnight_batch_safe=True, routing_reason="ok"),
+        SimpleNamespace(id="held1", status="triaged", priority="medium", overnight_batch_safe=False, routing_reason="cloudflare"),
+        SimpleNamespace(id="ready1", status="ready_to_ingest", priority="low", overnight_batch_safe=True, routing_reason="ok"),
+        SimpleNamespace(id="done1", status="ingested", priority="low", overnight_batch_safe=True, routing_reason="ok"),
+    ]
+
+    assert app_mod._source_queue_retriage_candidate_ids(items, "visible") == [
+        "new1",
+        "low1",
+        "med1",
+        "held1",
+        "ready1",
+    ]
+    assert app_mod._source_queue_retriage_candidate_ids(items, "low") == ["low1", "ready1"]
+    assert app_mod._source_queue_retriage_candidate_ids(items, "medium") == ["med1", "held1"]
+    assert app_mod._source_queue_retriage_candidate_ids(items, "held") == ["held1"]
+    assert app_mod._source_queue_retriage_candidate_ids(items, "visible", limit=2) == ["new1", "low1"]
+
+
+def test_source_queue_triage_comparison_rows_marks_changed_attempts():
+    rows = app_mod._source_queue_triage_comparison_rows({
+        "abc": [
+            {
+                "triaged_at": "2026-07-04T10:00:00+00:00",
+                "model_name": "litelm/triage",
+                "priority": "high",
+                "overnight_batch_safe": 1,
+                "doc_type_hint": "academic",
+            },
+            {
+                "triaged_at": "2026-07-03T10:00:00+00:00",
+                "model_name": "litelm/triage-old",
+                "priority": "low",
+                "overnight_batch_safe": 0,
+                "doc_type_hint": "news",
+            },
+        ],
+        "single": [
+            {
+                "triaged_at": "2026-07-04T10:00:00+00:00",
+                "model_name": "litelm/triage",
+                "priority": "medium",
+            }
+        ],
+    })
+
+    assert len(rows) == 1
+    assert rows[0]["item"] == "abc"
+    assert rows[0]["new_priority"] == "high"
+    assert rows[0]["previous_priority"] == "low"
+    assert rows[0]["changed"] is True
+
+
 def test_source_queue_snapshot_command_preserves_queue_id_mapping():
     import sys
 

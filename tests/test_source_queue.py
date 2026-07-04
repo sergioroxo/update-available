@@ -7,8 +7,10 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from typer.testing import CliRunner
 
 from runner.pipeline.source_queue import (
     VALID_PRIORITIES,
@@ -63,6 +65,47 @@ def test_runner_main_imports_os_for_queue_triage_env_toggle():
     import runner.main as main_mod
 
     assert hasattr(main_mod, "os")
+
+
+def test_queue_triage_force_retries_ready_to_ingest_item(corpus_dir, monkeypatch):
+    import runner.main as main_mod
+    from runner.pipeline import triage as triage_mod
+
+    db = open_db(queue_db_path(corpus_dir))
+    item = add_item(db, "https://example.org/reviewed")
+    update_status(db, item.id, "ready_to_ingest")
+
+    monkeypatch.setattr(
+        main_mod,
+        "load_config",
+        lambda require_services=False: SimpleNamespace(
+            corpus_dir=corpus_dir,
+            litelm_base_url="http://127.0.0.1:4000",
+            local_analysis_model="local",
+        ),
+    )
+    monkeypatch.setattr(triage_mod, "extract_snippet", lambda url: ("source snippet", "trafilatura"))
+    monkeypatch.setattr(
+        triage_mod,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(
+            triage_succeeded=True,
+            doc_type_hint="academic",
+            recommended_llm="litelm",
+            routing_reason="Rechecked with newer triage model.",
+            complexity="moderate",
+            overnight_batch_safe=True,
+            suggested_process_route="source-offload",
+        ),
+    )
+
+    result = CliRunner().invoke(main_mod.app, ["queue-triage", "--item-id", item.id, "--force"])
+
+    assert result.exit_code == 0, result.output
+    updated = get_item(db, item.id)
+    assert updated.status == "triaged"
+    assert updated.doc_type_hint == "academic"
+    assert list_triage_history(db, item.id)[0]["model_name"] == "litelm/triage"
 
 
 class TestNormaliseUrl:

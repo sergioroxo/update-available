@@ -14450,6 +14450,80 @@ def _source_queue_triage_command_args(
     )
 
 
+_SOURCE_QUEUE_RETRIAGE_STATUSES: frozenset[str] = frozenset({"new", "triaged", "ready_to_ingest"})
+
+
+def _source_queue_item_label(item) -> str:
+    title = f" · {item.title[:60]}" if getattr(item, "title", "") else ""
+    return (
+        f"{item.id} · {getattr(item, 'priority', '')} · {getattr(item, 'status', '')} · "
+        f"{getattr(item, 'doc_type_hint', '')}{title} · {getattr(item, 'url', '')[:90]}"
+    )
+
+
+def _source_queue_retriage_candidate_ids(
+    items,
+    group: str,
+    *,
+    limit: int = 50,
+) -> list[str]:
+    """Return queue ids for intentional visible-row re-triage groups."""
+    clean_limit = max(1, int(limit))
+    result: list[str] = []
+    for item in items:
+        status = getattr(item, "status", "")
+        if status not in _SOURCE_QUEUE_RETRIAGE_STATUSES:
+            continue
+        priority = getattr(item, "priority", "")
+        routing_reason = str(getattr(item, "routing_reason", "") or "").strip()
+        safe = bool(getattr(item, "overnight_batch_safe", False))
+        if group == "visible":
+            include = True
+        elif group == "low":
+            include = priority == "low" and status in {"triaged", "ready_to_ingest"}
+        elif group == "medium":
+            include = priority == "medium" and status in {"triaged", "ready_to_ingest"}
+        elif group == "held":
+            include = status == "triaged" and not safe and bool(routing_reason)
+        else:
+            include = False
+        if include:
+            result.append(str(item.id))
+        if len(result) >= clean_limit:
+            break
+    return result
+
+
+def _source_queue_triage_comparison_rows(history_map: dict[str, list[dict]]) -> list[dict]:
+    """Build newest-vs-previous triage rows for model-change review."""
+    rows: list[dict] = []
+    for item_id, history in history_map.items():
+        if len(history) < 2:
+            continue
+        newest = history[0]
+        previous = history[1]
+        rows.append({
+            "item": item_id,
+            "new_when": str(newest.get("triaged_at", ""))[:19],
+            "new_model": newest.get("model_name", ""),
+            "new_priority": newest.get("priority", ""),
+            "new_safe": bool(newest.get("overnight_batch_safe")),
+            "new_type": newest.get("doc_type_hint", ""),
+            "previous_when": str(previous.get("triaged_at", ""))[:19],
+            "previous_model": previous.get("model_name", ""),
+            "previous_priority": previous.get("priority", ""),
+            "previous_safe": bool(previous.get("overnight_batch_safe")),
+            "previous_type": previous.get("doc_type_hint", ""),
+            "changed": (
+                newest.get("model_name") != previous.get("model_name")
+                or newest.get("priority") != previous.get("priority")
+                or bool(newest.get("overnight_batch_safe")) != bool(previous.get("overnight_batch_safe"))
+                or newest.get("doc_type_hint") != previous.get("doc_type_hint")
+            ),
+        })
+    return rows
+
+
 def _start_source_queue_triage_job(
     *,
     item_ids: list[str],
@@ -15367,9 +15441,142 @@ def page_source_queue():
                 use_container_width=True,
             )
 
+    comparison_rows = _source_queue_triage_comparison_rows(visible_triage_history)
+    if comparison_rows:
+        changed_rows = [row for row in comparison_rows if row["changed"]]
+        with st.expander(
+            f"Re-triage comparison for visible rows ({len(changed_rows)} changed)",
+            expanded=False,
+        ):
+            st.caption(
+                "Newest triage attempt compared with the previous attempt. This is useful after "
+                "changing the triage model, because low/medium/high, safety, and route can legitimately change."
+            )
+            st.dataframe(
+                comparison_rows,
+                hide_index=True,
+                use_container_width=True,
+            )
+
     if not triage_status_rendered:
         _render_active_app_job_lock_panel(expanded=False)
     triage_locked = bool(_read_source_queue_triage_lock()) or bool(_read_app_job_lock())
+
+    # ── Intentional re-triage controls ─────────────────────────────────────
+    retriable_visible_ids = _source_queue_retriage_candidate_ids(
+        items,
+        "visible",
+        limit=int(show_limit),
+    )
+    if retriable_visible_ids:
+        with st.expander("🔁 Re-triage existing queue rows", expanded=False):
+            st.caption(
+                "Use this after changing the triage model or extraction fallback. Every run is append-only in "
+                "`source_queue_triage_history`, so you can compare old and new recommendations."
+            )
+            rt_cols = st.columns([2, 1, 1])
+            retriage_max = int(rt_cols[0].number_input(
+                "Maximum rows for quick actions",
+                min_value=1,
+                max_value=200,
+                value=min(50, len(retriable_visible_ids)),
+                step=5,
+                key="sq_retriage_max",
+                help="Quick buttons only act on visible rows and stop at this limit.",
+            ))
+            retriage_use_crawl4ai = rt_cols[1].checkbox(
+                "Crawl4AI",
+                value=st.session_state.get("sq_use_crawl4ai_triage", False),
+                key="sq_retriage_use_crawl4ai",
+                help="Use rendered-page fallback during this re-triage run.",
+            )
+            rt_cols[2].metric("Visible triageable", len(retriable_visible_ids))
+
+            retriable_by_id = {item.id: item for item in items if item.id in retriable_visible_ids}
+            selected_retriage_ids = st.multiselect(
+                "Select visible rows to re-triage",
+                options=retriable_visible_ids,
+                format_func=lambda item_id: _source_queue_item_label(retriable_by_id[item_id]),
+                key="sq_retriage_selected_ids",
+                help="Includes visible rows in new, triaged, and ready-for-ingest states. Ingested/skipped rows are not re-triaged.",
+            )
+            selected_command_ids = selected_retriage_ids[:retriage_max]
+            if selected_command_ids:
+                st.code(
+                    _source_queue_triage_command(
+                        limit=len(selected_command_ids),
+                        force=True,
+                        use_crawl4ai=retriage_use_crawl4ai,
+                        item_ids=selected_command_ids,
+                    ),
+                    language="bash",
+                )
+            selected_disabled = triage_locked or not selected_command_ids
+            if st.button(
+                "Re-triage selected",
+                key="sq_retriage_selected_btn",
+                disabled=selected_disabled,
+                type="primary",
+                help="Starts a background triage job for the selected visible rows.",
+            ):
+                try:
+                    st.session_state[triage_job_key] = _start_source_queue_triage_job(
+                        item_ids=selected_command_ids,
+                        limit=len(selected_command_ids),
+                        force=True,
+                        use_crawl4ai=retriage_use_crawl4ai,
+                        label="source-queue-retriage-selected",
+                    )
+                except RuntimeError as exc:
+                    st.error(str(exc))
+                st.rerun()
+
+            quick_groups = [
+                ("low", "Re-triage visible low"),
+                ("medium", "Re-triage visible medium"),
+                ("held", "Re-triage visible held/failed"),
+            ]
+            st.markdown("Quick re-triage groups")
+            show_quick_commands = st.checkbox(
+                "Show copy-paste commands for quick groups",
+                value=False,
+                key="sq_retriage_show_quick_commands",
+            )
+            quick_cols = st.columns(3)
+            for idx, (group, label) in enumerate(quick_groups):
+                group_ids = _source_queue_retriage_candidate_ids(
+                    items,
+                    group,
+                    limit=retriage_max,
+                )
+                quick_cols[idx].caption(f"{len(group_ids)} row(s)")
+                if quick_cols[idx].button(
+                    label,
+                    key=f"sq_retriage_quick_{group}",
+                    disabled=triage_locked or not group_ids,
+                    help="Starts a background re-triage job for this visible quick group.",
+                ):
+                    try:
+                        st.session_state[triage_job_key] = _start_source_queue_triage_job(
+                            item_ids=group_ids,
+                            limit=len(group_ids),
+                            force=True,
+                            use_crawl4ai=retriage_use_crawl4ai,
+                            label=f"source-queue-retriage-{group}",
+                        )
+                    except RuntimeError as exc:
+                        st.error(str(exc))
+                    st.rerun()
+                if show_quick_commands and group_ids:
+                    quick_cols[idx].code(
+                        _source_queue_triage_command(
+                            limit=len(group_ids),
+                            force=True,
+                            use_crawl4ai=retriage_use_crawl4ai,
+                            item_ids=group_ids,
+                        ),
+                        language="bash",
+                    )
 
     # ── Bulk triage button ──────────────────────────────────────────────────
     new_count = sum(1 for i in items if i.status == "new")
