@@ -17,8 +17,10 @@ import { buildEra1Room } from '../room/era1room';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { buildClusterShell, type ClusterShell, type EraKey } from '../room/cluster';
-import { buildPointCloud, type PointCloud } from '../room/pointCloud';
+import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { mountStartupOverlay } from '../desktop/opening';
+import { mountDebugPanel } from '../debug/panel';
+import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
 
 const FLIP_SECONDS = 0.9;
@@ -35,7 +37,11 @@ const KIT_FLOPPY = { x: -0.34, y: 0.762, z: 0.12 };
 const DRAG_PITCH_MAX = 55;
 /** O1 establishing framing (reinterp): pulled back, room-wide, window-lit */
 const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
-const CAM_MOVE_SECONDS = 1.4; // O2 establishing → desk pan
+// O2 establishing → desk pan: slow enough to read as travel through the room,
+// not a cut (Sérgio, Round 18: 1.4s "is so fast it makes no sense"), and it
+// starts a beat AFTER the lights land so the two events stay legible.
+const CAM_MOVE_SECONDS = 3.6;
+const CAM_MOVE_DELAY_MS = 700;
 
 interface AppOptions {
   reinterp?: boolean;
@@ -126,6 +132,14 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   back.setLocalPosition(WITNESS.x, WITNESS.y, WITNESS.z);
   back.setLocalEulerAngles(90, 180, 0); // faces -Z (the chair, once turned)
   app.root.addChild(back);
+  if (options.reinterp === true) {
+    // Round 18: the old rear witness furniture is gone (ceiling witness carries
+    // presence) — the legible record shrinks to a wall TERMINAL on the south
+    // spine, between the bays (Ethics #10 stays on a flat surface).
+    const wt = clusterData.witnessTerminal;
+    back.setLocalPosition(wt.pos[0], wt.pos[1], wt.pos[2]);
+    back.setLocalScale(wt.w, 1, wt.h);
+  }
 
   const camera = new pc.Entity('camera');
   camera.addComponent('camera', {
@@ -548,21 +562,29 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     setLight('witnessCold', 0.50);         // the cold rear, dimmed so the front stays warm
   }
 
+  /** the Close: the room goes dark and gives way to the constellation —
+   *  shared by the ?close=1 review param and the debug panel's button */
+  function enterClose(): void {
+    if (!cluster || !cloud || cloud.visible) return;
+    cluster.applyRig('close', false);
+    for (const id of ['era1-room', 'fluid-niche', 'cluster-shell', 'ceiling-witness', 'desktop-screen', 'witness-screen']) {
+      const e = app.root.findByName(id);
+      if (e instanceof pc.Entity) e.enabled = false;
+    }
+    // Round 18: never black — the constellation sits in a night-blue sky
+    if (camera.camera) camera.camera.clearColor = closeBackdropColor();
+    cloud.show();
+    camPos.set(EYE.x, EYE.y, EYE.z);
+    camPitch = 6;
+    camYaw = 0;
+    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+  }
+
   if (options.reinterp) {
     // review tools (?close / ?era / ?reveal / ?morph) bypass the O1 overlay —
     // they exist to look at 3D states, not to play the opening
     if (options.close && cluster && cloud) {
-      // the Close: the room goes dark and gives way to the constellation
-      cluster.applyRig('close', false);
-      for (const id of ['era1-room', 'fluid-niche', 'cluster-shell', 'ceiling-witness', 'desktop-screen', 'witness-screen']) {
-        const e = app.root.findByName(id);
-        if (e instanceof pc.Entity) e.enabled = false;
-      }
-      cloud.show();
-      camPos.set(EYE.x, EYE.y, EYE.z);
-      camPitch = 6;
-      camYaw = 0;
-      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      enterClose();
     } else if (options.era && cluster) {
       cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
@@ -589,14 +611,29 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
           autoCam = choices.autoCam;
           overlay.destroy();
           applyLightsOn();                 // O2: room lights + lamp over-throw
-          // O2: framed camera moves establishing → desk (conducted under auto-cam,
-          // otherwise the default framing the player can drag away from).
-          startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, CAM_MOVE_SECONDS, autoCam);
-          os.beginReinterpOpening();        // boot on the monitor → O3 profile
+          // O2: the lights land first; a beat later the framed camera TRAVELS
+          // establishing → desk, slow enough to read as movement through the
+          // room (conducted under auto-cam, otherwise the default framing the
+          // player can drag away from).
+          window.setTimeout(() => {
+            startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, CAM_MOVE_SECONDS, autoCam);
+            os.beginReinterpOpening();      // boot on the monitor → O3 profile
+          }, CAM_MOVE_DELAY_MS);
         },
         onLeave: () => { os.leaveNow(); }
       });
     }
+  }
+
+  // dev travel panel (?debug=1 — the shipped build's system, ported; Round 18)
+  if (options.reinterp) {
+    mountDebugPanel(os, {
+      onEra: (era) => cluster?.morphToEra(era, true),
+      onReveal: () => cluster?.reveal(),
+      onClose: enterClose,
+      onFacet: (f) => niche?.setFacet(f),
+      onFlip: doFlip
+    });
   }
 
   app.start();

@@ -51,47 +51,62 @@ export function mountStartupOverlay(opts: OverlayOptions): StartupOverlay {
   const card = document.createElement('div');
   Object.assign(card.style, {
     pointerEvents: 'auto',
-    width: 'min(680px, 92vw)', maxHeight: '92vh', overflowY: 'auto',
-    boxSizing: 'border-box', padding: '22px 26px',
-    background: 'rgba(14,12,10,0.86)', border: `2px solid ${INK}`,
-    boxShadow: `0 0 0 2px ${ORANGE_DIM}, 0 12px 40px rgba(0,0,0,0.6)`,
-    borderRadius: '4px'
+    width: 'min(560px, 92vw)', maxHeight: '90vh', overflowY: 'auto',
+    boxSizing: 'border-box', padding: '28px 32px',
+    background: 'rgba(12,11,9,0.92)', border: `1px solid ${ORANGE_DIM}`,
+    boxShadow: '0 16px 48px rgba(0,0,0,0.65)',
+    borderRadius: '6px', textAlign: 'left'
   } as CSSStyleDeclaration);
   root.appendChild(card);
+
+  /** thin section rule — the card's whole vertical rhythm hangs on these */
+  const rule = (m: string): HTMLElement => {
+    const r = document.createElement('div');
+    Object.assign(r.style, { borderTop: '1px solid rgba(169,84,15,0.35)', margin: m } as CSSStyleDeclaration);
+    return r;
+  };
 
   // ── logo placeholder slot (asset per REINTERP_LOGO_SPEC, dropped in later) ──
   const logo = document.createElement('div');
   Object.assign(logo.style, {
-    textAlign: 'center', marginBottom: '18px',
+    textAlign: 'center', margin: '0 0 6px',
     color: ORANGE, textShadow: `1px 1px 0 ${INK}`,
-    fontSize: '30px', fontWeight: '700', letterSpacing: '3px'
+    fontSize: '26px', fontWeight: '700', letterSpacing: '4px', lineHeight: '1.2'
   } as CSSStyleDeclaration);
   logo.textContent = opening.o1_logo_placeholder;
   const logoSub = document.createElement('div');
   Object.assign(logoSub.style, {
-    fontSize: '10px', color: '#7a726a', letterSpacing: '1px', marginTop: '4px'
+    fontSize: '10px', color: '#7a726a', letterSpacing: '2px', marginTop: '4px',
+    fontWeight: '400', textTransform: 'uppercase'
   } as CSSStyleDeclaration);
   logoSub.textContent = opening.o1_logo_sub;
   logo.appendChild(logoSub);
   card.appendChild(logo);
+  card.appendChild(rule('16px 0 18px'));
 
   // ── disclaimer / content warning ──
   const dTitle = document.createElement('div');
-  Object.assign(dTitle.style, { fontWeight: '700', marginBottom: '8px', color: '#f2ede1' } as CSSStyleDeclaration);
+  Object.assign(dTitle.style, {
+    fontWeight: '700', marginBottom: '10px', color: '#f2ede1',
+    fontSize: '13px', letterSpacing: '2px', textTransform: 'uppercase'
+  } as CSSStyleDeclaration);
   dTitle.textContent = opening.o1_disclaimer_title;
   card.appendChild(dTitle);
 
   for (const line of opening.o1_disclaimer as string[]) {
     const p = document.createElement('div');
-    Object.assign(p.style, { fontSize: '13px', lineHeight: '1.5', color: '#d7d0c2' } as CSSStyleDeclaration);
+    Object.assign(p.style, {
+      fontSize: '13px', lineHeight: '1.65', color: '#d7d0c2', margin: '0 0 8px'
+    } as CSSStyleDeclaration);
     p.textContent = line;
     card.appendChild(p);
   }
 
   const controls = document.createElement('div');
   Object.assign(controls.style, {
-    marginTop: '14px', padding: '8px 10px', fontSize: '12px',
-    color: '#cbb98f', background: 'rgba(255,255,255,0.04)', borderLeft: `3px solid ${ORANGE_DIM}`
+    margin: '14px 0 0', padding: '9px 12px', fontSize: '12px', lineHeight: '1.5',
+    color: '#cbb98f', background: 'rgba(255,255,255,0.04)', borderLeft: `3px solid ${ORANGE_DIM}`,
+    borderRadius: '0 3px 3px 0'
   } as CSSStyleDeclaration);
   const setControlsHint = (): void => {
     controls.textContent = choices.platform === 'vr'
@@ -101,25 +116,32 @@ export function mountStartupOverlay(opts: OverlayOptions): StartupOverlay {
   card.appendChild(controls);
 
   // ── start-up options ──
+  card.appendChild(rule('18px 0 14px'));
   const opTitle = document.createElement('div');
   Object.assign(opTitle.style, {
-    marginTop: '18px', marginBottom: '8px', fontSize: '11px',
+    marginBottom: '10px', fontSize: '11px', fontWeight: '700',
     letterSpacing: '2px', color: '#8f867a', textTransform: 'uppercase'
   } as CSSStyleDeclaration);
   opTitle.textContent = opening.o1_options_title;
   card.appendChild(opTitle);
 
-  /** a labelled row of mutually-exclusive pill buttons */
+  /** a labelled row of mutually-exclusive pill buttons — label left, pills
+   *  right, one line (wraps only when the card is genuinely narrow) */
   function pillRow(label: string, hint: string | null,
                    buttons: { text: string; on: () => boolean; pick: () => void }[]): HTMLElement {
     const wrap = document.createElement('div');
-    Object.assign(wrap.style, { marginBottom: '12px' } as CSSStyleDeclaration);
+    Object.assign(wrap.style, { margin: '0 0 10px' } as CSSStyleDeclaration);
+    const line = document.createElement('div');
+    Object.assign(line.style, {
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      gap: '12px', flexWrap: 'wrap'
+    } as CSSStyleDeclaration);
     const lab = document.createElement('div');
-    Object.assign(lab.style, { fontSize: '12px', marginBottom: '4px', color: '#d7d0c2' } as CSSStyleDeclaration);
+    Object.assign(lab.style, { fontSize: '12.5px', color: '#d7d0c2' } as CSSStyleDeclaration);
     lab.textContent = label;
-    wrap.appendChild(lab);
+    line.appendChild(lab);
     const rowEl = document.createElement('div');
-    Object.assign(rowEl.style, { display: 'flex', gap: '8px', flexWrap: 'wrap' } as CSSStyleDeclaration);
+    Object.assign(rowEl.style, { display: 'flex', gap: '6px', flexWrap: 'wrap' } as CSSStyleDeclaration);
     const els: { el: HTMLButtonElement; on: () => boolean }[] = [];
     const paint = (): void => {
       for (const { el, on } of els) {
@@ -141,10 +163,13 @@ export function mountStartupOverlay(opts: OverlayOptions): StartupOverlay {
       els.push({ el, on: b.on });
       rowEl.appendChild(el);
     }
-    wrap.appendChild(rowEl);
+    line.appendChild(rowEl);
+    wrap.appendChild(line);
     if (hint) {
       const h = document.createElement('div');
-      Object.assign(h.style, { fontSize: '11px', color: '#8f867a', marginTop: '4px' } as CSSStyleDeclaration);
+      Object.assign(h.style, {
+        fontSize: '11px', lineHeight: '1.5', color: '#8f867a', marginTop: '4px'
+      } as CSSStyleDeclaration);
       h.textContent = hint;
       wrap.appendChild(h);
     }
@@ -165,34 +190,39 @@ export function mountStartupOverlay(opts: OverlayOptions): StartupOverlay {
   ]));
 
   // ── continue / leave (Leave works from here on, forever) ──
+  card.appendChild(rule('16px 0 16px'));
   const actions = document.createElement('div');
   Object.assign(actions.style, {
-    display: 'flex', alignItems: 'center', gap: '12px', marginTop: '18px'
-  } as CSSStyleDeclaration);
-
-  const cont = document.createElement('button');
-  cont.textContent = opening.o1_continue;
-  Object.assign(cont.style, {
-    pointerEvents: 'auto', cursor: 'not-allowed', font: 'inherit', fontWeight: '700',
-    padding: '8px 22px', border: `2px solid ${INK}`, borderRadius: '3px',
-    background: '#5a534a', color: '#2a2620'
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px'
   } as CSSStyleDeclaration);
 
   const leave = document.createElement('button');
   leave.textContent = opening.o1_leave;
   Object.assign(leave.style, {
     pointerEvents: 'auto', cursor: 'pointer', font: 'inherit', fontSize: '12px',
-    padding: '8px 16px', border: '1px solid #4a4038', borderRadius: '3px',
+    padding: '9px 16px', border: '1px solid #4a4038', borderRadius: '3px',
     background: 'transparent', color: '#cbb98f'
   } as CSSStyleDeclaration);
 
+  const contWrap = document.createElement('div');
+  Object.assign(contWrap.style, {
+    display: 'flex', alignItems: 'center', gap: '10px'
+  } as CSSStyleDeclaration);
   const wait = document.createElement('span');
   Object.assign(wait.style, { fontSize: '11px', color: '#7a726a' } as CSSStyleDeclaration);
   wait.textContent = `(${opening.o1_wait})`;
+  const cont = document.createElement('button');
+  cont.textContent = opening.o1_continue;
+  Object.assign(cont.style, {
+    pointerEvents: 'auto', cursor: 'not-allowed', font: 'inherit', fontWeight: '700',
+    fontSize: '13px', padding: '9px 26px', border: `2px solid ${INK}`, borderRadius: '3px',
+    background: '#5a534a', color: '#2a2620', letterSpacing: '1px'
+  } as CSSStyleDeclaration);
+  contWrap.appendChild(wait);
+  contWrap.appendChild(cont);
 
-  actions.appendChild(cont);
   actions.appendChild(leave);
-  actions.appendChild(wait);
+  actions.appendChild(contWrap);
   card.appendChild(actions);
 
   const arm = (): void => {

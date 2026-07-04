@@ -2,8 +2,8 @@
   "_doc": "PLACEHOLDER — the fluid trans niche facet TABLE (docs/REINTERP_FLUID_TRANS_ROOM_GEOMETRY_2026-07-03.md §1.3/§2.1). Read behind ?reinterp=1 only. Weights select which facet is foregrounded; `pull` perturbs them; `convergence.allowed` lights all three (the earned E3 triptych). NOTE: no `gated` field — the consult-gating was retired Round 16 (doc §2.3/Q4); all three facets build at EQUAL fidelity, Sérgio's voice pass is the only gate. The niche GEOMETRY lives in src/room/fluidNiche.ts (geometry/layout is .ts per 00_START_HERE); display copy lives in data/strings/; this file is weights + trigger config + the niche anchor only. E1 is what renders in code today; later eras are carried for the R9 cluster-morph (facet logic is position-independent, §3.2). `hero` ids are placeholder object slots (the apparatus's own sorting instruments, §1.3) — no display text. `pull.sends` are STUBS (no runtime cross-cluster wiring this session).",
   "niche": {
     "azimuthDeg": -110,
-    "center": [2.02, 1.16, 1.47],
-    "_note": "±110° rear-lateral (colder, doc §3.1) — one azimuth, N states (§1.1). Exact coords chosen against the east wall in the clear gap between the shelf (z~0.75) and the door (z~2.2). Stations spread ~±0.30m along z (≈±7° from EYE, inside the ±15° single-gaze cone, §1.2)."
+    "center": [4.22, 1.16, 2.8],
+    "_note": "Round 18: the niche RELOCATES into the EAST ROOM-BAY (data/room/cluster.json bays) — the trans-fluid room the player sees through the east aperture. Same one-azimuth/N-states grammar (§1.1), now set against the bay's back wall (x 4.36) instead of carved into the old east wall (which collided with the shelf and the shipped door — the Round-18 'error on the wall'). Stations still spread ±0.24m along z, read in one gaze cone through the aperture."
   },
   "stations": ["transfem", "transmasc", "nonbinary"],
   "eras": {

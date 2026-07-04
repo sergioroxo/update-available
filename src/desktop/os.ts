@@ -696,6 +696,46 @@ export class DesktopOS {
     this.setPhase('r_recap');
   }
 
+  // ── debug: jump between reinterp beats (dev panel; gated by ?debug=1) ────
+  // Ported from the shipped build's debugJump grammar, scoped to the beats
+  // this worktree's OS actually has. Never reachable without the flag.
+  debugJump(beat: string): void {
+    this.paused = false;
+    switch (beat) {
+      case 'off': this.setPhase('off'); break;
+      case 'boot':
+        ledger.name = opening.o3_prefilled_name;
+        this.rBootChars = 0;
+        this.setPhase('r_boot');
+        break;
+      case 'profile': this.setPhase('r_profile'); break;
+      case 'recap': {
+        // the recap needs picks on file — fill from the real option sets
+        const icons = opening.o3_icons as { id: string }[];
+        const chips = opening.o3_chips as { id: string }[];
+        const goals = opening.o3_goals as { id: string }[];
+        if (this.profileIcon === '') this.profileIcon = icons[0]?.id ?? 'icon';
+        while (this.profileChips.length < 3 && chips[this.profileChips.length]) {
+          this.profileChips.push(chips[this.profileChips.length].id);
+        }
+        if (this.profileGoal === '') this.profileGoal = goals[0]?.id ?? 'declined';
+        this.setPhase('r_recap');
+        break;
+      }
+      case 'desktop': this.setPhase('desktop'); break;
+      case 'kit': this.setPhase('desktop'); if (!this.kit) this.insertKit(); break;
+      case 'pillow':
+        this.setPhase('desktop');
+        this.openProvotype(pillowProvotypeData as unknown as Provotype);
+        break;
+      case 'intake':
+        this.setPhase('desktop');
+        this.openProvotype(originIntakeProvotypeData as unknown as Provotype);
+        break;
+    }
+    this.dirty = true;
+  }
+
   // ── input ──────────────────────────────────────────────────────────────
   handleMove(x: number, y: number): void {
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
