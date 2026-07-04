@@ -15,9 +15,18 @@ Two live tracks, for Fable/Sérgio to sequence:
   the later-era tables (E2/E3/E4 already in the JSON), and the moodboard dressing pass (R13-5). The §5 open
   questions (azimuth ±110 vs ±70, E3 convergence readability, gaze-pull without gamification) are headset/
   Sérgio calls that ride the A11 gate.
+- **E1 style-pass continuation** — this session shipped **V1** (the two-temperature rig + material split +
+  hero/set/fog) per the 3D STYLE DIRECTION build order (§5). Next in that track: **V2 (Sonnet, after Sérgio
+  reacts): prop dressing** — the fog-tier clutter set, poster patches, bed softening, data-driven placement
+  (and, if Sérgio wants it, literal beveled geometry for the "soft" personal props, which V1 expressed as
+  colour-muting only). **V3+ (later):** the E2/E3/E4 rigs when those rooms exist.
 **R7 (the graying task, Era 1)** still needs its own build spec first (master plan §R3-1) — do NOT improvise.
 
 ## BLOCKED / WAITING (carried forward, plus the opening additions)
+- **E1 style-pass feel pass (Sérgio, → FABLE ROUND)** — V1 shipped with placeholder-grade warmth by eye.
+  Sérgio judges: the exact ~70/30 warm/cool balance; whether the lamp's amber pool is a touch hot on the
+  near west wall; whether the material-mute amounts read "soft" enough or want literal beveled geometry (V2).
+  Nothing here is a final look — "visual passes are cheap to redo" (style doc §5).
 - **Opening copy voice pass (Sérgio)** — OP-1 shipped with PLACEHOLDER throughout `data/strings/opening.json`
   (disclaimer, boot, chips/goals/icons, re-captions). → **FABLE ROUND question:** the O3 chip/goal/icon SETS
   and the pre-filled name ("Daniel" placeholder) are register demonstrations only (spec §5.1) — Fable/Sérgio
@@ -46,6 +55,51 @@ Two live tracks, for Fable/Sérgio to sequence:
   is broken, but it should be synced whenever a session has schema-only bandwidth.
 
 ## DONE
+*(2026-07-04 · Session 7 — the E1 room STYLE PASS (V1) behind `?reinterp=1`, in the 3D room
+(`docs/REINTERP_3D_STYLE_DIRECTION_2026-07-04.md` §2-E1; §1's rules governing). Visuals only — no new props
+(that's V2), no E2+, no ceiling, no desktop canvas, no copy, no mechanic. **Doc sync** committed first
+(`c72c3e0`): the new binding art-direction doc + logo-spec/master-plan-v1/coordination refreshes;
+`01_SESSION_LOG.md` untouched per protocol.
+**What shipped (all reinterp-gated; no-flag byte-identical):**
+1. **The two-temperature rig (§2-E1), in `src/engine/app.ts`.** "Two lights fight for one room": warm = life,
+   cool = the system. I did NOT invent colours — every hue is the room's existing approved value (era1.json);
+   I rebalanced INTENSITY/RANGE for ~70/30 warm. O2 `applyLightsOn` now extends the lamp's over-throw to the
+   WHOLE room — lamp intensity 2.9 and range 3.4→5.6 so its amber pool washes past the desk (Quest-safe:
+   faked with light falloff, no realtime shadows), warm `roomFill` 0.85, the monitor's `screenGlow` as the
+   only true cold INTERIOR source (0.32), a soft moon-blue window wash (`moonlight` 0.14), and the cold rear
+   dimmed (`witnessCold` 0.9→0.50) so the front stays warm. O1 `applyWindowLight` is the pre-power moon-wash
+   alone (cool, low, cozy-dark — NOT horror-dark). Reinterp scene ambient warmed to (0.17,0.14,0.11).
+2. **The material split (§1 rule 2), in `src/room/era1room.ts` (new optional `reinterp` param).** Per-prop
+   classify + treat, by id: **hero** (crt*/kit* = monitor + starter kit) crisp/colour-true + a faint
+   self-emissive (×0.10) so they stay the most-defined objects; **system** (tower/keyboard/mouse/modem)
+   colour-true; **personal** (bed/mattress/blanket/pillow/posters/boombox/mixtape/books/cdStack/curtains/rug)
+   MUTED — desaturated ~0.32, warm-nudged, darkened, so edges don't fully resolve; **fog** (soda can,
+   homework pile) muted hardest (~0.50); **set** (desk/shelf/door/chair/lamp structure/shell/window frames)
+   left colour-true. Emissive props (window/moon/LEDs/lampshade) skipped so glows survive. Vertex-color/flat
+   only, no textures — the "soft" is COLOUR, not geometry (literal larger bevels deferred to V2, flagged).
+3. **Hero/set/fog per §2-E1** (hero ≤3: monitor, kit; the "diary" is a desktop-canvas object, not a room prop,
+   so not present here).
+4. **The niche stays the cold sliver (§3/§4).** UNCHANGED from Session 6 — the `tealDark` recess (coldest
+   palette value) reads clearly as *draft-under-a-door* against the newly-warmed wall WITHOUT any added
+   relight, so I added NO niche light and left the near-dark E1 state exactly as built (`fluidNiche.ts`
+   untouched). Confirmed by screenshot.
+**Counts (rail):** LIGHTS — 5 room lights (lamp + roomFill = warm-dominant; moonlight + screenGlow +
+witnessCold = cool accents) + 3 dormant niche facet-lights (off in E1 near-dark) = **8 total, no new lights
+added**. DRAW CALLS — 86 room props + 8 niche + 2 screens = **96, UNCHANGED** (material/light-only pass, zero
+new geometry). No realtime shadows (Quest law honored — the pool is falloff, not a shadow).
+**Verification:** `npm test` + `npm run build` green (pre-existing chunk-size warning only). Walked O1→O2 IN
+THE 3D BROWSER VIEW (drag + arrow-key look, per §0-REV; worktree dev server :5174 via the `preview_*` managed
+browser) with screenshots: **O1** window-light establishing (cool moon wash behind the disclaimer, room dim
+but cozy-safe); **O2** the desk under the amber lamp pool with the cool moon window directly above it (both
+temperatures in one frame) + the crisp true-teal starter-kit floppy on the warm desk; **soft-vs-crisp** (a
+frame of muted dusty posters beside the crisp true-beige PC tower; another of the crisp CRT/tower/modem vs the
+muted soda-can/homework); **the niche's cold teal sliver** against the warm amber wall (near-dark stations
+intact). Baselines re-checked: no-flag `/` shows the shipped room with posters UN-muted + default lighting
+(`data-reinterp` null, no overlay) and `?flat=1` shows the unchanged shipped warning; console clean on both.
+**No ethics/design calls made** — the whole look is a feel judgment for Sérgio ("warmth by eye, not numbers")
+and routes → FABLE ROUND: the 70/30 balance, a possibly-hot lamp pool on the near west wall, and whether the
+colour-mute reads "soft" enough or wants literal beveled geometry in V2.)*
+
 *(2026-07-04 · Session 6 — the fluid trans niche GREYBOX behind `?reinterp=1`, in the 3D room
 (`docs/REINTERP_FLUID_TRANS_ROOM_GEOMETRY_2026-07-03.md` — built EXACTLY its proposal, no redesigns).
 **Doc sync:** verified the doc set was already current (Session 5's sync had pulled the de-gated geometry doc;

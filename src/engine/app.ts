@@ -77,8 +77,11 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   app.setCanvasResolution(pc.RESOLUTION_AUTO);
   window.addEventListener('resize', () => app.resizeCanvas());
   app.scene.ambientLight = new pc.Color(0.16, 0.15, 0.15);
+  // reinterp E1 style pass (§2-E1): warm the ambient a touch so the floor/shell
+  // read cozy under the lamp's dominance — baseline ambient is untouched.
+  if (options.reinterp === true) app.scene.ambientLight = new pc.Color(0.17, 0.14, 0.11);
 
-  buildEra1Room(app);
+  buildEra1Room(app, options.reinterp === true);
 
   // ── the fluid trans niche (greybox, reinterp only) ──
   // One lateral-arc alcove of facet-states. This session renders the E1 room,
@@ -417,22 +420,33 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     if (os.inDesktop) flipBtn.style.display = 'block';
   });
 
-  // ── reinterp opening (O1): window-lit room behind the start-screen overlay ──
-  function setLight(id: string, intensity: number): void {
+  // ── the E1 two-temperature rig (§2-E1) — TWO LIGHTS FIGHT FOR ONE ROOM ──
+  // Warm = life (lamp + fill), cool = the system (moon window + monitor + the
+  // cold rear). Target ~70% warm / 30% cool in the lit state. Every colour here
+  // is the room's EXISTING approved hue (era1.json) — rebalanced, not invented.
+  // O1 (pre-power) is the cool moon-wash alone; O2 lights the lamp and lets its
+  // amber pool over-throw the WHOLE room (Quest: faked with range/falloff, no
+  // shadows). Only in reinterp; the shipped flow keeps era1.json values.
+  function setLight(id: string, intensity: number, range?: number): void {
     const e = app.root.findByName(`light-${id}`);
-    if (e instanceof pc.Entity && e.light) e.light.intensity = intensity;
+    if (e instanceof pc.Entity && e.light) {
+      e.light.intensity = intensity;
+      if (range !== undefined) e.light.range = range;
+    }
   }
-  function applyWindowLight(): void { // O1: lit only by the window, monitor dark
-    setLight('roomFill', 0.08);
+  function applyWindowLight(): void { // O1: night, pre-power — the moon wash only
+    setLight('roomFill', 0.10);
     setLight('lamp', 0.0);
     setLight('screenGlow', 0.0);
-    setLight('witnessCold', 0.12);
+    setLight('moonlight', 0.16);   // cool, soft, low — the window carries O1
+    setLight('witnessCold', 0.10);
   }
-  function applyLightsOn(): void { // O2: a warm ordinary click; the lamp over-throws
-    setLight('roomFill', 1.0);
-    setLight('lamp', 2.6);      // more than physically real — symbolic (R11-3 anchor)
-    setLight('screenGlow', 0.22);
-    setLight('witnessCold', 0.9);
+  function applyLightsOn(): void { // O2: the lamp owns the room; cool stays an accent
+    setLight('roomFill', 0.85);            // warm ambient fill (life)
+    setLight('lamp', 2.9, 5.6);            // amber pool over-throwing wider than real
+    setLight('screenGlow', 0.32);          // the monitor — the only true cold INTERIOR source
+    setLight('moonlight', 0.14);           // moon-blue window wash, soft/low
+    setLight('witnessCold', 0.50);         // the cold rear, dimmed so the front stays warm
   }
 
   if (options.reinterp) {
