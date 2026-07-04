@@ -8,7 +8,7 @@ within the triage model's token budget. Called when --triage flag is passed to
 `runner ingest`.
 
 Model routing:
-  Mac Studio available  → "triage" LiteLLM alias (gemma4:e4b)
+  Mac Studio available  → "triage" LiteLLM alias (currently gemma4:12b-mlx)
   Mac Studio unavailable → local qwen3.5:9b fallback
   Both fail             → return safe default (litelm / moderate)
 """

@@ -940,5 +940,5 @@ class DocumentPackage:
     analysis: AnalysisResult
     embedding: list[float]
     embedding_model: str
-    llm_used: str                          # "claude" | "gemma4:e4b" | "both"
+    llm_used: str                          # "claude" | "litelm" | "litelm-heavy" | "both"
     local_dir: Path

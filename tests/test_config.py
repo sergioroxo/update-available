@@ -66,3 +66,26 @@ def test_load_config_reads_optional_sanity_read_token(monkeypatch, tmp_path):
     config = load_config()
 
     assert config.sanity_read_token == "sanity-read-only-token"
+
+
+def test_load_config_defaults_to_current_mac_studio_mlx_route_tags(monkeypatch, tmp_path):
+    for key in SERVICE_ENV:
+        monkeypatch.delenv(key, raising=False)
+    for key in [
+        "LITELM_OLLAMA_TRIAGE_MODEL",
+        "LITELM_OLLAMA_ANALYSIS_MODEL",
+        "LITELM_OLLAMA_ANALYSIS_MODEL_HEAVY",
+        "LITELM_OLLAMA_ANALYSIS_MODEL_REASONING",
+        "LITELM_OLLAMA_EMBEDDING_MODEL",
+    ]:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("CORPUS_DIR", str(tmp_path / "corpus"))
+    monkeypatch.setenv("EXPORTS_DIR", str(tmp_path / "exports"))
+
+    config = load_config(require_services=False)
+
+    assert config.litelm_ollama_triage_model == "gemma4:12b-mlx"
+    assert config.litelm_ollama_analysis_model == "qwen3.6:35b-mlx"
+    assert config.litelm_ollama_analysis_model_heavy == "gemma4:31b-mlx"
+    assert config.litelm_ollama_analysis_model_reasoning == "qwen3.6:27b-mlx"
+    assert config.litelm_ollama_embedding_model == "qwen3-embedding:8b"

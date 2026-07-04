@@ -2,7 +2,7 @@
 Stage 3c — Enrichment pass.
 
 Runs after the main analysis (Stage 3b). Calls the 'lexicon-llm' LiteLLM alias
-(qwen3.6:35b-a3b on Mac Studio) with the full enrichment prompt, injecting:
+(currently gemma4:31b-mlx on Mac Studio) with the full enrichment prompt, injecting:
   - Current lexicon terms from Sanity
   - Current entity registry from Sanity
   - Main analysis result summary

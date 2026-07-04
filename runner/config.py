@@ -40,10 +40,11 @@ class Config:
     litelm_ollama_base_url: str = ""        # optional direct Ollama URL for model unloads
     mac_studio_model_control_url: str = ""  # optional tiny control service for safe unloads
     mac_studio_model_control_token: str = "" # optional bearer token for the control service
+    litelm_ollama_triage_model: str = "gemma4:12b-mlx" # actual Ollama model behind triage
     litelm_ollama_embedding_model: str = "qwen3-embedding:8b" # actual Ollama model behind research-embedding
-    litelm_ollama_analysis_model: str = "qwen3.6:35b-a3b"
-    litelm_ollama_analysis_model_heavy: str = "gemma4:31b"
-    litelm_ollama_analysis_model_reasoning: str = "qwen3.6:27b"
+    litelm_ollama_analysis_model: str = "qwen3.6:35b-mlx"
+    litelm_ollama_analysis_model_heavy: str = "gemma4:31b-mlx"
+    litelm_ollama_analysis_model_reasoning: str = "qwen3.6:27b-mlx"
 
     # Truncation limits (chars). Claude default is conservative due to API cost.
     # Local models have large context windows so LOCAL_TRUNCATION_LIMIT can be
@@ -147,10 +148,11 @@ def load_config(llm: str | None = None, require_services: bool = True) -> Config
         litelm_ollama_base_url=os.getenv("LITELM_OLLAMA_BASE_URL", "") or os.getenv("MAC_STUDIO_OLLAMA_URL", ""),
         mac_studio_model_control_url=os.getenv("MAC_STUDIO_MODEL_CONTROL_URL", ""),
         mac_studio_model_control_token=os.getenv("MAC_STUDIO_MODEL_CONTROL_TOKEN", ""),
+        litelm_ollama_triage_model=os.getenv("LITELM_OLLAMA_TRIAGE_MODEL", "gemma4:12b-mlx"),
         litelm_ollama_embedding_model=os.getenv("LITELM_OLLAMA_EMBEDDING_MODEL", "qwen3-embedding:8b"),
-        litelm_ollama_analysis_model=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL", "qwen3.6:35b-a3b"),
-        litelm_ollama_analysis_model_heavy=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL_HEAVY", "gemma4:31b"),
-        litelm_ollama_analysis_model_reasoning=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL_REASONING", "qwen3.6:27b"),
+        litelm_ollama_analysis_model=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL", "qwen3.6:35b-mlx"),
+        litelm_ollama_analysis_model_heavy=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL_HEAVY", "gemma4:31b-mlx"),
+        litelm_ollama_analysis_model_reasoning=os.getenv("LITELM_OLLAMA_ANALYSIS_MODEL_REASONING", "qwen3.6:27b-mlx"),
         truncation_limit=int(os.getenv("TRUNCATION_LIMIT", "24000")),
         truncation_limit_local=int(os.getenv("TRUNCATION_LIMIT_LOCAL", "1000000")),
         truncation_head_chars=int(os.getenv("TRUNCATION_HEAD_CHARS", "16000")),

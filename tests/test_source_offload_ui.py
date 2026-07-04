@@ -479,6 +479,40 @@ def test_source_queue_triage_comparison_rows_marks_changed_attempts():
     assert rows[0]["changed"] is True
 
 
+def test_model_route_rows_show_stable_aliases_and_mlx_backing_models():
+    from types import SimpleNamespace
+
+    config = SimpleNamespace(
+        litelm_analysis_model="core-qwen",
+        litelm_analysis_model_heavy="core-gemma",
+        litelm_analysis_model_reasoning="review-qwen",
+        litelm_enrichment_model="lexicon-llm",
+        litelm_enrichment_model_alt="core-gemma",
+        litelm_embedding_model="research-embedding",
+        litelm_ollama_triage_model="gemma4:12b-mlx",
+        litelm_ollama_analysis_model="qwen3.6:35b-mlx",
+        litelm_ollama_analysis_model_heavy="gemma4:31b-mlx",
+        litelm_ollama_analysis_model_reasoning="qwen3.6:27b-mlx",
+        litelm_ollama_embedding_model="qwen3-embedding:8b",
+    )
+
+    rows = app_mod._model_route_rows(config)
+    by_process = {row["process"]: row for row in rows}
+
+    assert by_process["Triage"]["LiteLLM alias"] == "triage"
+    assert by_process["Triage"]["expected Ollama model"] == "gemma4:12b-mlx"
+    assert by_process["Analysis"]["route"] == "litelm"
+    assert by_process["Analysis"]["LiteLLM alias"] == "core-qwen"
+    assert by_process["Analysis"]["expected Ollama model"] == "qwen3.6:35b-mlx"
+    assert by_process["Analysis / longform heavy"]["route"] == "litelm-heavy"
+    assert by_process["Analysis / longform heavy"]["LiteLLM alias"] == "core-gemma"
+    assert by_process["Analysis / longform heavy"]["expected Ollama model"] == "gemma4:31b-mlx"
+    assert by_process["Enrichment"]["LiteLLM alias"] == "lexicon-llm"
+    assert by_process["Enrichment"]["expected Ollama model"] == "gemma4:31b-mlx"
+    assert by_process["Embedding"]["LiteLLM alias"] == "research-embedding"
+    assert by_process["Embedding"]["expected Ollama model"] == "qwen3-embedding:8b"
+
+
 def test_source_queue_snapshot_command_preserves_queue_id_mapping():
     import sys
 

@@ -12017,9 +12017,9 @@ def page_model_routing():
             "`--llm openrouter`",
         ],
         "Actual model": [
-            "core-qwen (qwen3.6:35b-a3b)",
-            "core-gemma (gemma4:31b)",
-            "review-qwen (qwen3.6:27b)",
+            "core-qwen (qwen3.6:35b-mlx)",
+            "core-gemma (gemma4:31b-mlx)",
+            "review-qwen (qwen3.6:27b-mlx)",
             "claude-sonnet-4-6",
             "qwen3.5:9b",
             "gemma-4-26B-A4B-it",
@@ -12063,7 +12063,7 @@ def page_model_routing():
 
     st.subheader("Enrichment model (Stage 3c)")
     st.info(
-        "Stage 3c always uses **lexicon-llm** on Mac Studio (`qwen3.6:35b-a3b`).  \n"
+        "Stage 3c uses **lexicon-llm** on Mac Studio (`gemma4:31b-mlx` in the current LiteLLM YAML).  \n"
         "Run with: `python -m runner ingest <url> --enrich`  \n"
         "Or on an existing doc: `python -m runner enrich <doc_id>`"
     )
@@ -12071,7 +12071,7 @@ def page_model_routing():
     st.subheader("Triage model (Stage 0.5)")
     st.info(
         "Fast pre-screen to recommend which model to use.  \n"
-        "Uses **triage** LiteLLM alias (`gemma4:e4b` on Mac Studio).  \n"
+        "Uses **triage** LiteLLM alias (`gemma4:12b-mlx` on Mac Studio).  \n"
         "Run with: `python -m runner ingest <url> --triage`"
     )
 
@@ -12135,7 +12135,7 @@ def page_triage_tool():
     with col2:
         st.markdown("### What happens")
         st.markdown(
-            "The **triage model** (`gemma4:e4b` on Mac Studio, or local qwen3.5:9b) "
+            "The **triage model** (`gemma4:12b-mlx` on Mac Studio, or local qwen3.5:9b) "
             "reads your snippet and recommends:\n"
             "- Which `--llm` flag to use\n"
             "- Document type hint\n"
@@ -14453,14 +14453,6 @@ def _source_queue_triage_command_args(
 _SOURCE_QUEUE_RETRIAGE_STATUSES: frozenset[str] = frozenset({"new", "triaged", "ready_to_ingest"})
 
 
-def _source_queue_item_label(item) -> str:
-    title = f" · {item.title[:60]}" if getattr(item, "title", "") else ""
-    return (
-        f"{item.id} · {getattr(item, 'priority', '')} · {getattr(item, 'status', '')} · "
-        f"{getattr(item, 'doc_type_hint', '')}{title} · {getattr(item, 'url', '')[:90]}"
-    )
-
-
 def _source_queue_retriage_candidate_ids(
     items,
     group: str,
@@ -14522,6 +14514,61 @@ def _source_queue_triage_comparison_rows(history_map: dict[str, list[dict]]) -> 
             ),
         })
     return rows
+
+
+def _model_route_rows(config) -> list[dict[str, str]]:
+    """Display the model routing contract used by Streamlit/CLI/worker paths."""
+    return [
+        {
+            "process": "Triage",
+            "route": "queue-triage / Source Queue triage",
+            "LiteLLM alias": "triage",
+            "expected Ollama model": getattr(config, "litelm_ollama_triage_model", "gemma4:12b-mlx"),
+            "notes": "Configured in LiteLLM YAML; stored in history as litelm/triage.",
+        },
+        {
+            "process": "Analysis",
+            "route": "litelm",
+            "LiteLLM alias": getattr(config, "litelm_analysis_model", "core-qwen"),
+            "expected Ollama model": getattr(config, "litelm_ollama_analysis_model", "qwen3.6:35b-mlx"),
+            "notes": "Default ingest/source-worker analysis route.",
+        },
+        {
+            "process": "Analysis / longform heavy",
+            "route": "litelm-heavy",
+            "LiteLLM alias": getattr(config, "litelm_analysis_model_heavy", "core-gemma"),
+            "expected Ollama model": getattr(config, "litelm_ollama_analysis_model_heavy", "gemma4:31b-mlx"),
+            "notes": "Books, long reports, and intentionally heavy analysis.",
+        },
+        {
+            "process": "Second opinion / reasoning",
+            "route": "litelm-reasoning",
+            "LiteLLM alias": getattr(config, "litelm_analysis_model_reasoning", "review-qwen"),
+            "expected Ollama model": getattr(config, "litelm_ollama_analysis_model_reasoning", "qwen3.6:27b-mlx"),
+            "notes": "Ambiguous or evidence-weighing passes.",
+        },
+        {
+            "process": "Enrichment",
+            "route": "--enrich-model",
+            "LiteLLM alias": getattr(config, "litelm_enrichment_model", "lexicon-llm"),
+            "expected Ollama model": getattr(config, "litelm_ollama_analysis_model_heavy", "gemma4:31b-mlx"),
+            "notes": "Lexicon/entity/tactic/practice extraction. Usually lexicon-llm -> Gemma heavy.",
+        },
+        {
+            "process": "Alternate enrichment",
+            "route": "--enrich-model",
+            "LiteLLM alias": getattr(config, "litelm_enrichment_model_alt", "core-gemma"),
+            "expected Ollama model": getattr(config, "litelm_ollama_analysis_model_heavy", "gemma4:31b-mlx"),
+            "notes": "Second-opinion enrichment fallback.",
+        },
+        {
+            "process": "Embedding",
+            "route": "litelm embedding",
+            "LiteLLM alias": getattr(config, "litelm_embedding_model", "research-embedding"),
+            "expected Ollama model": getattr(config, "litelm_ollama_embedding_model", "qwen3-embedding:8b"),
+            "notes": "Used by ingest/source-worker and embedding repair.",
+        },
+    ]
 
 
 def _start_source_queue_triage_job(
@@ -15021,6 +15068,17 @@ def page_source_queue():
     cols[4].metric("📦 Ingested", by_s.get("ingested", 0))
     cols[5].metric("⏭ Skipped", by_s.get("skipped", 0))
 
+    with st.expander("Model routes used by triage, ingest, enrichment, longform, and embedding", expanded=False):
+        st.caption(
+            "Streamlit and the CLI pass stable route/alias names. The Mac Studio LiteLLM YAML maps those aliases "
+            "to the actual MLX Ollama model tags."
+        )
+        st.dataframe(
+            _model_route_rows(config),
+            hide_index=True,
+            use_container_width=True,
+        )
+
     st.divider()
 
     triage_status_rendered = _render_source_queue_triage_job(triage_job_key)
@@ -15375,6 +15433,12 @@ def page_source_queue():
         [item.id for item in items],
         limit_per_item=8,
     )
+    visible_triage_select_keys = {item.id: f"sq_triage_select_{item.id}" for item in items}
+    selected_retriage_items = [
+        item for item in items
+        if item.status in _SOURCE_QUEUE_RETRIAGE_STATUSES
+        and bool(st.session_state.get(visible_triage_select_keys[item.id], False))
+    ]
 
     with st.expander("Rendered fallback / terminal triage command", expanded=False):
         use_crawl4ai_triage = st.checkbox(
@@ -15471,6 +15535,7 @@ def page_source_queue():
     if retriable_visible_ids:
         with st.expander("🔁 Re-triage existing queue rows", expanded=False):
             st.caption(
+                "Tick the **Triage** checkbox on queue rows below, then run re-triage here. "
                 "Use this after changing the triage model or extraction fallback. Every run is append-only in "
                 "`source_queue_triage_history`, so you can compare old and new recommendations."
             )
@@ -15492,15 +15557,46 @@ def page_source_queue():
             )
             rt_cols[2].metric("Visible triageable", len(retriable_visible_ids))
 
-            retriable_by_id = {item.id: item for item in items if item.id in retriable_visible_ids}
-            selected_retriage_ids = st.multiselect(
-                "Select visible rows to re-triage",
-                options=retriable_visible_ids,
-                format_func=lambda item_id: _source_queue_item_label(retriable_by_id[item_id]),
-                key="sq_retriage_selected_ids",
-                help="Includes visible rows in new, triaged, and ready-for-ingest states. Ingested/skipped rows are not re-triaged.",
-            )
-            selected_command_ids = selected_retriage_ids[:retriage_max]
+            select_cols = st.columns([1, 1, 1, 1, 2])
+            if select_cols[0].button("Select visible", key="sq_retriage_select_visible"):
+                for item_id in retriable_visible_ids[:retriage_max]:
+                    st.session_state[visible_triage_select_keys[item_id]] = True
+                st.rerun()
+            for group, label, col in [
+                ("low", "Select low", select_cols[1]),
+                ("medium", "Select medium", select_cols[2]),
+                ("held", "Select held", select_cols[3]),
+            ]:
+                if col.button(label, key=f"sq_retriage_select_{group}"):
+                    for item_id in _source_queue_retriage_candidate_ids(items, group, limit=retriage_max):
+                        st.session_state[visible_triage_select_keys[item_id]] = True
+                    st.rerun()
+            if select_cols[4].button("Clear triage checks", key="sq_retriage_clear_checks"):
+                for key in visible_triage_select_keys.values():
+                    st.session_state[key] = False
+                st.rerun()
+
+            selected_command_ids = [item.id for item in selected_retriage_items][:retriage_max]
+            if selected_retriage_items:
+                st.caption(
+                    f"{len(selected_retriage_items)} visible row(s) checked for re-triage. "
+                    f"This run will use the first {len(selected_command_ids)} by the current limit."
+                )
+                st.dataframe(
+                    [
+                        {
+                            "item_id": item.id,
+                            "priority": item.priority,
+                            "status": item.status,
+                            "safe": bool(item.overnight_batch_safe),
+                            "type": item.doc_type_hint,
+                            "url": item.url,
+                        }
+                        for item in selected_retriage_items[:retriage_max]
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
             if selected_command_ids:
                 st.code(
                     _source_queue_triage_command(
@@ -15550,23 +15646,6 @@ def page_source_queue():
                     limit=retriage_max,
                 )
                 quick_cols[idx].caption(f"{len(group_ids)} row(s)")
-                if quick_cols[idx].button(
-                    label,
-                    key=f"sq_retriage_quick_{group}",
-                    disabled=triage_locked or not group_ids,
-                    help="Starts a background re-triage job for this visible quick group.",
-                ):
-                    try:
-                        st.session_state[triage_job_key] = _start_source_queue_triage_job(
-                            item_ids=group_ids,
-                            limit=len(group_ids),
-                            force=True,
-                            use_crawl4ai=retriage_use_crawl4ai,
-                            label=f"source-queue-retriage-{group}",
-                        )
-                    except RuntimeError as exc:
-                        st.error(str(exc))
-                    st.rerun()
                 if show_quick_commands and group_ids:
                     quick_cols[idx].code(
                         _source_queue_triage_command(
@@ -16373,6 +16452,15 @@ def page_source_queue():
                     "Batch",
                     key=visible_select_keys[item.id],
                     help="Tick this row, then use 'Batch selected queue items' above.",
+                )
+                st.checkbox(
+                    "Triage",
+                    key=visible_triage_select_keys[item.id],
+                    disabled=item.id not in retriable_visible_ids,
+                    help=(
+                        "Tick this row, then use 'Re-triage existing queue rows' above. "
+                        "This is separate from ingest batching."
+                    ),
                 )
 
                 # Status transitions
