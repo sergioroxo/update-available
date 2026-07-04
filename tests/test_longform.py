@@ -491,6 +491,154 @@ def test_run_longform_review_no_overwrite_can_synthesize_from_saved_sections(tmp
     assert synthesis["synthesis"]["archive_abstract"] == "Rebuilt synthesis from saved rows."
 
 
+def test_run_longform_review_no_overwrite_keeps_saved_section_plan(tmp_path):
+    config = _cfg(tmp_path)
+    doc = _make_doc(config.corpus_dir)
+    rows = [
+        {
+            "block_id": "doc-book-p0001-b0001",
+            "page_index": 0,
+            "page_label": "1",
+            "text": "A" * 6200,
+        },
+        {
+            "block_id": "doc-book-p0002-b0001",
+            "page_index": 1,
+            "page_label": "2",
+            "text": "B" * 6200,
+        },
+    ]
+    (doc / "text_blocks.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    first = longform_review.run_longform_review(
+        doc,
+        config=config,
+        llm="litelm-heavy",
+        max_section_chars=7000,
+        dry_run=True,
+    )
+    assert first["section_count"] == 2
+
+    second = longform_review.run_longform_review(
+        doc,
+        config=config,
+        llm="litelm-heavy",
+        max_section_chars=35000,
+        overwrite=False,
+        dry_run=True,
+    )
+    assert second["section_count"] == 2
+    sections = read_json_safe(doc / "longform_sections.json", {})
+    assert sections["max_section_chars"] == 7000
+
+
+def test_run_longform_review_retry_failed_reruns_only_failed_section(tmp_path):
+    config = _cfg(tmp_path)
+    doc = _make_doc(config.corpus_dir)
+    rows = [
+        {
+            "block_id": "doc-book-p0001-b0001",
+            "page_index": 0,
+            "page_label": "1",
+            "text": "A" * 6200,
+        },
+        {
+            "block_id": "doc-book-p0002-b0001",
+            "page_index": 1,
+            "page_label": "2",
+            "text": "B" * 6200,
+        },
+    ]
+    (doc / "text_blocks.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    _write_json(doc / "bibliographic.json", {
+        "titles": {"main": {"value": "Retry Failed Example"}},
+    })
+
+    def first_model(system, user, llm, model, cfg):
+        if "doc-book-section-001" in user:
+            return '{"section_summary": "broken"'
+        return {
+            "section_summary": "Second section succeeded.",
+            "sogice_relevance": "context",
+            "key_arguments": [],
+            "actors": [],
+            "terms": [],
+            "tactics": [],
+            "practices": [],
+            "evidence_quotes": [],
+            "limitations": [],
+        }
+
+    first = longform_review.run_longform_review(
+        doc,
+        config=config,
+        llm="litelm-heavy",
+        max_section_chars=7000,
+        model_call=first_model,
+    )
+    assert first["sections_reviewed"] == 1
+    assert first["sections_failed"] == 1
+    assert first["synthesis_status"] == "skipped"
+
+    retry_calls = []
+
+    def retry_model(system, user, llm, model, cfg):
+        retry_calls.append(user)
+        if "SECTION ANALYSES JSON" in user:
+            return {
+                "archive_abstract": "Retry synthesis.",
+                "full_document_summary": "All sections now succeeded.",
+                "coverage_statement": "Complete.",
+                "section_overview": [],
+                "bibliographic_needs": [],
+                "key_arguments": [],
+                "sogice_contribution": [],
+                "actors_networks": [],
+                "lexicon_candidates": [],
+                "tactics_practices": [],
+                "evidence_highlights": [],
+                "limitations": [],
+            }
+        assert "doc-book-section-001" in user
+        return {
+            "section_summary": "First section succeeded on retry.",
+            "sogice_relevance": "context",
+            "key_arguments": [],
+            "actors": [],
+            "terms": [],
+            "tactics": [],
+            "practices": [],
+            "evidence_quotes": [],
+            "limitations": [],
+        }
+
+    second = longform_review.run_longform_review(
+        doc,
+        config=config,
+        llm="litelm-heavy",
+        max_section_chars=35000,
+        overwrite=False,
+        retry_failed=True,
+        model_call=retry_model,
+    )
+
+    assert second["sections_reviewed"] == 2
+    assert second["sections_failed"] == 0
+    assert second["stale_section_rows"] == 0
+    assert second["synthesis_status"] == "succeeded"
+    assert len(retry_calls) == 2
+    section_rows = _read_jsonl(doc / "longform_section_analyses.jsonl")
+    assert [row["status"] for row in section_rows] == ["succeeded", "succeeded"]
+    assert section_rows[0]["section_id"] == "doc-book-section-002"
+    assert section_rows[1]["section_id"] == "doc-book-section-001"
+
+
 def test_longform_review_cli_dry_run_builds_sections(monkeypatch, tmp_path):
     config = _cfg(tmp_path)
     doc = _make_doc(config.corpus_dir)

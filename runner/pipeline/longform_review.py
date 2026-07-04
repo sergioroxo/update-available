@@ -75,6 +75,44 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     )
 
 
+def section_map(sections_payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Return current section definitions keyed by stable section id."""
+    sections = sections_payload.get("sections") if isinstance(sections_payload, dict) else []
+    if not isinstance(sections, list):
+        return {}
+    return {
+        str(section.get("section_id")): section
+        for section in sections
+        if isinstance(section, dict) and section.get("section_id")
+    }
+
+
+def row_matches_section(row: dict[str, Any], sections_by_id: dict[str, dict[str, Any]]) -> bool:
+    """Whether a saved section-analysis row belongs to the current section plan."""
+    section = sections_by_id.get(str(row.get("section_id") or ""))
+    if not section:
+        return False
+    row_hash = str(row.get("text_hash") or "")
+    section_hash = str(section.get("text_hash") or "")
+    return bool(row_hash and section_hash and row_hash == section_hash)
+
+
+def filter_rows_for_section_plan(
+    rows: list[dict[str, Any]],
+    sections_payload: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Split saved rows into reusable and stale rows for a section plan."""
+    sections_by_id = section_map(sections_payload)
+    usable: list[dict[str, Any]] = []
+    stale: list[dict[str, Any]] = []
+    for row in rows:
+        if row_matches_section(row, sections_by_id):
+            usable.append(row)
+        else:
+            stale.append(row)
+    return usable, stale
+
+
 def build_longform_sections(
     doc_dir: Path,
     *,
@@ -514,6 +552,7 @@ def run_longform_review(
     max_section_chars: int = 30000,
     section_limit: int = 0,
     overwrite: bool = True,
+    retry_failed: bool = False,
     dry_run: bool = False,
     model_call: ModelCall | None = None,
 ) -> dict[str, Any]:
@@ -522,17 +561,23 @@ def run_longform_review(
     if not (doc_dir / TEXT_BLOCKS_FILENAME).exists():
         build_longform_sidecars(doc_dir, overwrite=False)
 
-    sections_payload = build_longform_sections(doc_dir, max_section_chars=max_section_chars)
-    sections = list(sections_payload.get("sections") or [])
-    sections_for_run = sections[:section_limit] if section_limit and section_limit > 0 else sections
     sections_path = doc_dir / SECTIONS_FILENAME
     analyses_path = doc_dir / SECTION_ANALYSES_FILENAME
     synthesis_path = doc_dir / SYNTHESIS_FILENAME
     candidates_path = doc_dir / CANDIDATES_FILENAME
+
+    if sections_path.exists() and not overwrite:
+        sections_payload = read_json_safe(sections_path, {})
+        if not sections_payload.get("sections"):
+            sections_payload = build_longform_sections(doc_dir, max_section_chars=max_section_chars)
+    else:
+        sections_payload = build_longform_sections(doc_dir, max_section_chars=max_section_chars)
+    sections = list(sections_payload.get("sections") or [])
     biblio = read_json_safe(doc_dir / BIBLIOGRAPHIC_FILENAME, {})
 
     write_json(sections_path, sections_payload)
     if dry_run:
+        sections_for_run = sections[:section_limit] if section_limit and section_limit > 0 else sections
         return {
             "doc_id": doc_dir.name,
             "dry_run": True,
@@ -543,12 +588,39 @@ def run_longform_review(
 
     call = model_call or default_model_call
     rows: list[dict[str, Any]] = []
+    stale_rows: list[dict[str, Any]] = []
+    sections_by_id = section_map(sections_payload)
+    retry_ids: set[str] = set()
     if analyses_path.exists() and not overwrite:
-        rows = read_jsonl(analyses_path)
+        saved_rows = read_jsonl(analyses_path)
+        rows, stale_rows = filter_rows_for_section_plan(saved_rows, sections_payload)
+        if retry_failed:
+            retry_ids = {
+                str(row.get("section_id") or "")
+                for row in rows
+                if row.get("status") == "failed"
+            }
+            rows = [row for row in rows if str(row.get("section_id") or "") not in retry_ids]
+            write_jsonl(analyses_path, rows + stale_rows)
     else:
         analyses_path.write_text("", encoding="utf-8")
 
-    existing_ids = {str(row.get("section_id")) for row in rows}
+    if retry_failed:
+        sections_for_run = [
+            section
+            for section in sections
+            if str(section.get("section_id") or "") in retry_ids
+        ]
+        if section_limit and section_limit > 0:
+            sections_for_run = sections_for_run[:section_limit]
+    else:
+        sections_for_run = sections[:section_limit] if section_limit and section_limit > 0 else sections
+
+    existing_ids = {
+        str(row.get("section_id"))
+        for row in rows
+        if row.get("status") == "succeeded" and row_matches_section(row, sections_by_id)
+    }
     requested_model = _model_name_for_llm(llm, config, model)
     provider = _provider_for_llm(llm)
     for section in sections_for_run:
@@ -589,7 +661,16 @@ def run_longform_review(
         with analyses_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-    succeeded = [row for row in rows if row.get("status") == "succeeded"]
+    succeeded = [
+        row
+        for row in rows
+        if row.get("status") == "succeeded" and row_matches_section(row, sections_by_id)
+    ]
+    failed = [
+        row
+        for row in rows
+        if row.get("status") == "failed" and row_matches_section(row, sections_by_id)
+    ]
     candidates = build_candidates(succeeded, doc_id=doc_dir.name)
     write_json(candidates_path, candidates)
     synthesis_status = "skipped"
@@ -638,7 +719,8 @@ def run_longform_review(
         "doc_id": doc_dir.name,
         "section_count": len(sections),
         "sections_reviewed": len(succeeded),
-        "sections_failed": len([row for row in rows if row.get("status") == "failed"]),
+        "sections_failed": len(failed),
+        "stale_section_rows": len(stale_rows),
         "synthesis_status": synthesis_status,
         "paths": {
             "sections": str(sections_path),

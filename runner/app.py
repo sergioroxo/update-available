@@ -2064,8 +2064,15 @@ def _document_longform_review_status(doc_dir: Path) -> dict:
     candidates = _read_json_file(doc_dir / "longform_candidates.json", {})
     synthesis = _read_json_file(doc_dir / "longform_synthesis.json", {})
     section_count = int(sections.get("section_count") or len(sections.get("sections") or []) or 0) if isinstance(sections, dict) else 0
-    succeeded = len([row for row in section_rows if row.get("status") == "succeeded"])
-    failed = len([row for row in section_rows if row.get("status") == "failed"])
+    try:
+        from runner.pipeline.longform_review import filter_rows_for_section_plan
+
+        usable_rows, stale_rows = filter_rows_for_section_plan(section_rows, sections if isinstance(sections, dict) else {})
+    except Exception:
+        usable_rows = section_rows
+        stale_rows = []
+    succeeded = len([row for row in usable_rows if row.get("status") == "succeeded"])
+    failed = len([row for row in usable_rows if row.get("status") == "failed"])
     synthesis_payload = synthesis.get("synthesis") if isinstance(synthesis.get("synthesis"), dict) else {}
     return {
         "has_sections": bool(sections),
@@ -2074,6 +2081,7 @@ def _document_longform_review_status(doc_dir: Path) -> dict:
         "section_count": section_count,
         "sections_reviewed": succeeded,
         "sections_failed": failed,
+        "stale_section_rows": len(stale_rows),
         "synthesis_status": "succeeded" if synthesis_payload else str(synthesis.get("status") or "missing"),
         "candidate_count": int(candidates.get("candidate_count") or 0) if isinstance(candidates, dict) else 0,
         "candidate_counts_by_family": candidates.get("counts_by_family") if isinstance(candidates.get("counts_by_family"), dict) else {},
@@ -5608,6 +5616,7 @@ def _longform_review_command(
     max_section_chars: int = 30000,
     section_limit: int = 0,
     no_overwrite: bool = False,
+    retry_failed: bool = False,
 ) -> list[str]:
     command = [
         sys.executable,
@@ -5624,6 +5633,8 @@ def _longform_review_command(
         command.extend(["--section-limit", str(section_limit)])
     if no_overwrite:
         command.append("--no-overwrite")
+    if retry_failed:
+        command.append("--retry-failed")
     return command
 
 
@@ -5634,6 +5645,7 @@ def _start_longform_review_job(
     max_section_chars: int = 30000,
     section_limit: int = 0,
     no_overwrite: bool = False,
+    retry_failed: bool = False,
 ) -> dict:
     """Start a deep longform review without blocking Streamlit."""
     active = _read_app_job_lock()
@@ -5653,6 +5665,7 @@ def _start_longform_review_job(
         max_section_chars=max_section_chars,
         section_limit=section_limit,
         no_overwrite=no_overwrite,
+        retry_failed=retry_failed,
     )
     with log_path.open("w", encoding="utf-8") as log_file:
         log_file.write(f"$ {shlex.join(command)}\n\n")
@@ -6005,6 +6018,13 @@ def _render_longform_panel(doc_id: str, doc_dir: Path) -> None:
         review_cols[2].metric("Failed", review_status["sections_failed"])
         review_cols[3].metric("Candidates", review_status["candidate_count"])
         review_cols[4].metric("Synthesis", review_status["synthesis_status"])
+        if review_status.get("stale_section_rows"):
+            st.warning(
+                f"{review_status['stale_section_rows']} saved section-analysis row(s) do not match "
+                "the current section plan. This usually happens when `Max chars / section` changed "
+                "after some sections were reviewed. Resume with the original section size, or rebuild "
+                "the review without keeping existing rows."
+            )
         if review_status["candidate_count"]:
             family_bits = [
                 f"{family}: {count}"
@@ -6086,10 +6106,47 @@ def _render_longform_panel(doc_id: str, doc_dir: Path) -> None:
                 st.error(f"Could not start longform review: {exc}")
             st.rerun()
 
+        retry_failed_cmd = _longform_review_command(
+            doc_id,
+            llm=review_llm,
+            max_section_chars=max_section_chars,
+            section_limit=section_limit,
+            no_overwrite=True,
+            retry_failed=True,
+        )
+        with st.expander("Retry failed section analyses", expanded=bool(review_status["sections_failed"])):
+            st.caption(
+                "Removes failed rows from the saved section-analysis file and reruns only those sections. "
+                "Successful section analyses are kept. If Section limit is 0, all failed sections are retried; "
+                "otherwise only that many failed sections are retried."
+            )
+            st.code(shlex.join(retry_failed_cmd), language="bash")
+            if not review_status["sections_failed"]:
+                st.info("No failed section rows match the current section plan.")
+            if st.button(
+                "Retry failed section(s)",
+                key=f"longform_review_retry_failed_{doc_id}",
+                disabled=bool(_read_app_job_lock()) or not bool(review_status["sections_failed"]),
+            ):
+                try:
+                    st.session_state[job_key] = _start_longform_review_job(
+                        doc_id,
+                        llm=review_llm,
+                        max_section_chars=max_section_chars,
+                        section_limit=section_limit,
+                        no_overwrite=True,
+                        retry_failed=True,
+                    )
+                    st.success("Retry of failed longform section(s) started in the background.")
+                except Exception as exc:
+                    st.error(f"Could not start retry: {exc}")
+                st.rerun()
+
         can_synthesize = (
             bool(review_status["section_count"])
             and review_status["sections_reviewed"] == review_status["section_count"]
             and review_status["sections_failed"] == 0
+            and not review_status.get("stale_section_rows")
         )
         synthesis_cmd = _longform_review_command(
             doc_id,

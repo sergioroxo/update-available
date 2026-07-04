@@ -3191,6 +3191,7 @@ def longform_review_cmd(
     max_section_chars: int = typer.Option(30000, "--max-section-chars", help="Approximate maximum characters per review section"),
     section_limit: int = typer.Option(0, "--section-limit", help="Review only the first N sections; 0 means all"),
     no_overwrite: bool = typer.Option(False, "--no-overwrite", help="Keep existing section analyses and review only missing sections"),
+    retry_failed: bool = typer.Option(False, "--retry-failed", help="Retry failed section-analysis rows while keeping successful rows"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Build sections and print counts without model calls"),
 ):
     """Run section-level longform review and a synthesis sidecar."""
@@ -3209,6 +3210,7 @@ def longform_review_cmd(
             max_section_chars=max_section_chars,
             section_limit=section_limit,
             overwrite=not no_overwrite,
+            retry_failed=retry_failed,
             dry_run=dry_run,
         )
     except Exception as exc:
@@ -3229,6 +3231,11 @@ def longform_review_cmd(
         )
         if result.get("sections_failed"):
             console.print(f"[yellow]Section failures:[/yellow] {result['sections_failed']}")
+        if result.get("stale_section_rows"):
+            console.print(
+                f"[yellow]Stale section rows ignored:[/yellow] {result['stale_section_rows']} "
+                "(section plan changed; rerun with the original max-section-chars or rebuild without --no-overwrite)"
+            )
     for path in result.get("paths", {}).values():
         console.print(f"  [dim]{path}[/dim]")
 
