@@ -621,6 +621,46 @@ revised OP-1 is now an **Opus** session (it's 3D/camera/engine work under the ne
 content session). Sonnet takes the R4 revision chore instead. Rounds 12–13 archived per the ~600-line
 standing practice (`REINTERP_MASTER_PLAN_ARCHIVE_ROUNDS_12-13_2026-07-03.md`).
 
+# FEEDBACK ROUND 17 — logo v1 rejected · OP-1 + niche greybox shipped · the 3D style direction (2026-07-04)
+
+## R17-1 · Logo v1 REJECTED ("make something completely different") → v2: THE LAMP
+New concept in `docs/REINTERP_LOGO_SPEC_2026-07-03.md` (v1 kept for the record): the desk lamp — canon's
+constant object — casting an impossibly wide cone of warm light, the wordmark inside the pool, **the last
+letters ("ED.") falling just outside the cone, unlit** — the light fails exactly at the word "FAILED."
+Same low-poly/dual-orange/black-outline construction. Awaiting reaction (v3 questions in the spec).
+
+## R17-2 · Session 5 (OP-1, Opus, commits `62cf82c`+`aa39aa7`) reconciled
+Opening O1–O3 live in the 3D room: O1 DOM overlay (logo slot, disclaimer, platform select, conducted-view
+toggle) over the window-lit room; O2 conducted pan + lights-on + lamp over-throw + LambyOS boot on the
+monitor; O3 pre-filled name, icon grid, chips, insisted goal, and the re-caption screen (picks returned as
+surveillance categories, "You can change none of this.") → identical routing to the desktop. Auto-cam
+ON/OFF verified (drag interrupts the pan); R/F/arrow camera controls; Leave-from-disclaimer wipes; all
+baselines clean. Architecture calls accepted: O1 as non-diegetic DOM overlay (room must be visible behind
+it); flat mode skips O1. **Routed items now owned by Fable/Sérgio:** (a) the O3 chip/goal/icon FINAL SET +
+the pre-fill name source — proposal due from Fable with the voice pass (criterion stands: every chip must
+be able to return recontextualized); (b) VR needs an in-scene O1 equivalent (DOM invisible in-headset) —
+correctly deferred to the VR validation pass.
+
+## R17-3 · Session 6 (fluid-niche greybox, Opus, commit `1c464ce`) reconciled
+Built exactly to the de-gated geometry doc: one alcove at −110° (east wall), three equal-fidelity facet
+stations as states of one volume (shared fog/hero materials swapped by reference + per-station omni
+lights), per-era tables in `data/room/fluid_niche.json` (no `gated` field), `?facet=` debug override, all
+five states verified in the 3D view, baselines clean, +8 meshes / 3 materials / 3 lights. **Carried:**
+placement is provisional greybox (final placement rides the style/moodboard work, §R17-4); the geometry
+doc's §5 headset questions ride the A11 validation checkpoint.
+
+## R17-4 · THE 3D STYLE DIRECTION (Sérgio's ask this round; Fable deliverable)
+`docs/REINTERP_3D_STYLE_DIRECTION_2026-07-04.md` — the art-direction doc. The governing idea: **two
+lights fight for one room** — warm light is life (the lamp), cool light is the system (monitor, niche,
+ceiling witness); definition follows the cold light (the system's instruments are the crispest objects);
+**the era arc is the cold light slowly winning** — each era's room lighting derives from its OS theme, so
+the world gradually becomes the interface (F5's digital-vs-physical arc, spatialized) — until the Close's
+point-cloud puts the warm temperature at cosmic scale (the warm light wins after all). Per-era rigs
+specified (E1 lamp-dominant night → E2 fluorescent managed daylight + first screen-tint on paper → E3
+shadowless platform pastel + the dilemma object lit by both temperatures at once → E4 interface-lit
+silhouettes with one surviving warm pocket). Build order: V1 = E1 style pass (Opus, prompt in the round
+response) → V2 prop dressing (Sonnet, after Sérgio reacts) → per-era rigs as rooms exist.
+
 # TOP RECOMMENDATION
 
 **Greenlight R0 → R1 → R2: the fork, the provotype framework, and the pillow provotype inside the shipped

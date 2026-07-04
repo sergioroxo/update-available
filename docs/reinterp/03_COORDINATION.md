@@ -42,26 +42,25 @@ Prior-round docs: era vision
 pillow diagnosis
 [`REINTERP_PROVOTYPE_EMBODIMENT_ANALYSIS_2026-07-03.md`](../REINTERP_PROVOTYPE_EMBODIMENT_ANALYSIS_2026-07-03.md).
 
-## DISPATCH BOARD (2026-07-03 · Round 16 — browser IS the 3D room; greybox GO; paste prompts in the round response)
+## DISPATCH BOARD (2026-07-04 · Round 17 — the 3D style push)
 | Lane | Who | Task | Status |
 |---|---|---|---|
-| A | Sonnet 5 | **R4 revision chore** — layout errors, trim text, remove player-facing source-origin display, fix leftover "brochure" string | READY — paste list |
-| B | Opus 4.8 | **Fluid-niche greybox** per the approved (and de-gated) geometry doc | READY — paste list |
-| B | Opus 4.8 | **Session OP-1 (revised)** — opening beats O1–O3 in the 3D room per spec §0-REV (browser = 3D room law; auto-cam option; platform select) — moved from Sonnet to Opus (it's camera/engine work now) | READY — paste list |
-| C | Fable 5 (next round) | **Assistant-as-guide spec** + **where the documentary record surfaces player-facing** (R16-4's routed question — the provotype close no longer renders provenance; the Dossier surface is the candidate home) + logo v2 from Sérgio's notes | due next round |
-| A | Sonnet 5 | R5 femininity homework · moodboard pass · Creed/Lenny + `_schema.json` chores | READY — paste list on request |
-| D | Deep Research | *(creative/documentary questions only — nothing queued)* | idle |
+| B | Opus 4.8 | **V1 — E1 room style pass** per `REINTERP_3D_STYLE_DIRECTION_2026-07-04.md` §2-E1 (two-temperature rig, soft-vs-crisp material split, hero/set/fog, niche as cold sliver) | READY — paste list in the round response |
+| A | Sonnet 5 | **R4 revision chore** (layout, trim, remove player-facing provenance, "brochure" string) — from Round 16, still pending | READY — paste list in Round-16 response, unchanged |
+| C | Fable 5 (next round) | **Assistant-as-guide spec** · documentary-record surfacing answer · O3 chip/goal/icon set proposal (with the voice pass) · logo v3 from Sérgio's v2 reaction | due |
+| A | Sonnet 5 | V2 prop dressing (after Sérgio reacts to V1) · R5 · Creed/Lenny + `_schema.json` chores | queued |
+| D | Deep Research | *(nothing queued)* | idle |
 
-**Done:** Session 0 (`8a04d7a`) · R0 flag (`90947c9`) · R1 framework (`fc3686f`) · R2 pillow (`fcaca92`) ·
-Lamby rig (`d66ac3e`) · pillow embodiment fixes (`607a542`) · **R4 Origin Story Intake (Sonnet `6d4ffa4`)** ·
-geometry doc (approved R16, de-gated) · Opening & Flow spec (+ §0-REV) · logo draft v1
-(`REINTERP_LOGO_SPEC_2026-07-03.md`).
+**Done:** Sessions 0–6 — flag (`90947c9`) · framework (`fc3686f`) · pillow (`fcaca92`) + embodiment fixes
+(`607a542`) · Lamby rig (`d66ac3e`) · R4 intake (`6d4ffa4`) · **OP-1 opening O1–O3 (Opus `aa39aa7`)** ·
+**fluid-niche greybox (Opus `1c464ce`)** · geometry doc · Opening & Flow spec · 3D style direction
+(`REINTERP_3D_STYLE_DIRECTION_2026-07-04.md`) · logo v2 lamp concept.
 
 ## DECISION QUEUE (for Sérgio)
-1. **React to the logo draft v1** (`REINTERP_LOGO_SPEC_2026-07-03.md`) — its four v2 questions: orange
-   temperature; tip-fracture vs full crack; stacked vs horizontal lockup; typeface direction.
-2. Run the three paste prompts (R4 revision → Sonnet; greybox + OP-1 → Opus) in any order — they're
-   file-fenced against each other.
+1. **React to the 3D style direction's governing idea** (§1: two lights fight for one room; the room
+   gradually inherits the interface) — it steers every visual pass from here.
+2. **React to logo v2 (the lamp)** — concept yes/no before any refinement.
+3. E1 warmth reference images, if any (words are enough).
 
 ## Standing rules (carried from the plan, so no prompt has to restate them)
 Shipped build never touched · everything behind `?reinterp=1` · all copy PLACEHOLDER until Sérgio ·

@@ -1,4 +1,35 @@
-# LOGO SPEC + DRAFT v1 — "YOUR UPDATE HAS FAILED."
+# LOGO SPEC — "YOUR UPDATE HAS FAILED."
+
+> **v1 (the fractured arrow, below) REJECTED — Sérgio, Round 17 (2026-07-04): "make something completely
+> different." Kept for the record only.**
+
+## DRAFT v2 — THE LAMP (current)
+
+A completely different concept: **the desk lamp** — canon's one constant object across all four eras, the
+thing the opening literally begins inside the light of. A low-poly lamp (two orange face tones, dark
+extrusion tones, heavy black outline, same construction discipline as v1) casts an **impossibly wide cone
+of warm light** — "illuminating more than is real," the O2 beat as a mark. The wordmark sits INSIDE the
+lit pool — except the last letters ("ED.") which fall just outside the cone and render in the dark,
+unlit tone. The light doesn't quite reach the end of the sentence: the promise fails exactly at the word
+"FAILED."
+
+Why this over the arrow: it's an object owned by the piece (not generic software iconography); it's warm
+(the piece's thesis light — see `REINTERP_3D_STYLE_DIRECTION_2026-07-04.md` §1's two-temperature rule,
+which this logo quietly states); and the failure is rendered as light falling short rather than a thing
+breaking — quieter, stranger, more ours.
+
+**Construction rules:** same family as v1 — dual-tone orange facets (#F59B23/#E07E12), dark sides
+(#A9540F), black outline (#161616), no gradients (the cone is one flat translucent polygon, #F7D9A4 at
+~55%); the unlit letters use a dimmed brown-orange (#6B4A26), never grey. Lockup: lamp left, cone
+sweeping right over the stacked wordmark.
+
+**v3 questions for Sérgio:** (1) does the lamp concept land, or different object entirely (the CRT? the
+window? Lamby?); (2) cone contains the words (current) vs cone AS the background of the whole lockup;
+(3) same typeface questions as before.
+
+---
+
+## v1 (REJECTED) — the fractured arrow, for the record
 
 *2026-07-03 · Fable 5 (design author). Per Sérgio's Round-16 direction: dual-toned, pseudo-3D low-poly,
 orange with black outline. This is DRAFT v1 for reaction — the mark, the construction rules, and the SVG
