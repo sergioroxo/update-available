@@ -55,7 +55,14 @@ export interface FluidNiche {
 
 export function buildFluidNiche(app: pc.Application): FluidNiche {
   const root = new pc.Entity('fluid-niche');
-  const [cx, cy, cz] = niche.niche.center as number[];
+  const [ax, ay, az] = niche.niche.center as number[];
+  const yawDeg = (niche.niche as { yawDeg?: number }).yawDeg ?? 0;
+  // children are authored in the niche's LOCAL frame (facing -x); the root
+  // carries the world anchor + yaw (Session 12: the niche stands on the east
+  // wedge's back wall, rotated to face the hub like everything in that room)
+  root.setLocalPosition(ax, ay, az);
+  root.setLocalEulerAngles(0, yawDeg, 0);
+  const cx = 0, cy = 0, cz = 0;
 
   // ── three shared materials (§4.3: two station skins + one structural) ──
   const structuralMat = new pc.StandardMaterial(); // cool dark recess (colder = witness-adjacent)
@@ -113,9 +120,11 @@ export function buildFluidNiche(app: pc.Application): FluidNiche {
 
   return {
     setFacet,
+    // world positions for the gaze resolver (the root is rotated, so read them
+    // back from the placed entities rather than recomputing the math here)
     stations: STATIONS.map((facet, i) => ({
       facet,
-      pos: new pc.Vec3(cx - 0.04, cy - 0.05, cz + STATION_DZ[i])
+      pos: stationEnts[i].getPosition().clone()
     }))
   };
 }

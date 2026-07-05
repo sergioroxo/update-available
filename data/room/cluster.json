@@ -1,7 +1,7 @@
 {
-  "_doc": "PLACEHOLDER — the radial cluster's CONDUCTION data: per-era light rigs (the cold-light-winning arc), the ceiling witness geometry, the witness record plane's E1 anchor, and the point-cloud Close parameters. The SPACE itself (walls, rooms, door, terminal frame, Maya's desk, the lamp carry) lives in data/room/reinterp_deltas.json and transforms via src/room/clusterMorph.ts — the shipped EraMorph grammar, ported (Round 21). COLOR LAW: every hex here already exists in data/room/era1.json; e2-e4 rig hues re-derive when era2+ theme palettes land. zoneFill = the two dressed rooms' accent omnis (light-zoneE pink / light-zoneW teal); mayaGlow = Maya's E4 interface light.",
+  "_doc": "PLACEHOLDER — the radial cluster's CONDUCTION data: per-era light rigs (the cold-light-winning arc), the ceiling witness geometry, the witness record plane's E1 anchor, and the point-cloud Close parameters. The SPACE itself (the hexagon, the three wedge rooms, door, terminal frame, Maya's desk, the lamp carry) lives in data/room/reinterp_deltas.json and transforms via src/room/clusterMorph.ts — the shipped EraMorph grammar, ported (Rounds 21-22). COLOR LAW: every hex here already exists in data/room/era1.json; e2-e4 rig hues re-derive when era2+ theme palettes land. zoneFill = the two wedge rooms' accent omnis (light-zoneE = the trans-facet room / light-zoneW = the parallel-tracks bay); mayaGlow = Maya's E4 interface light.",
   "witnessTerminal": {
-    "_note": "the witness record plane's E1 position (4:3, same canvas); from r2 on it rides the spine to z 5.405 (cluster.ts PLANE_Z)",
+    "_note": "the witness record plane's E1 position (4:3, same canvas); from r2 on it rides the spine to z 3.865 (cluster.ts PLANE_Z — the hexagon's rear face)",
     "pos": [-0.9, 1.5, 3.69],
     "w": 1.12,
     "h": 0.84

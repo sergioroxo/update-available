@@ -18,6 +18,10 @@ export interface PropDef {
   size: [number, number, number] | number[];
   color: string;
   emissive?: boolean;
+  /** y-rotation in degrees. Radial-cluster wedges only (each side room is
+   *  rectilinear in its own frame, rotated whole to its 120° facing); the
+   *  base E1 room stays axis-aligned. */
+  yaw?: number;
 }
 
 interface LightDef {
@@ -109,6 +113,7 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
   e.addComponent('render', { type: 'box' });
   e.setLocalPosition(p.pos[0], p.pos[1], p.pos[2]);
   e.setLocalScale(p.size[0], p.size[1], p.size[2]);
+  if (p.yaw) e.setLocalEulerAngles(0, p.yaw, 0);
   if (e.render) e.render.material = material;
   room.root.addChild(e);
   const h: PropHandle = { entity: e, material, emissive: !!p.emissive };

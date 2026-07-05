@@ -14,6 +14,8 @@ interface DebugOpts {
   onClose?: () => void;
   onFacet?: (facet: 'transfem' | 'transmasc' | 'nonbinary' | 'all' | 'none') => void;
   onFlip?: () => void;
+  /** dev-only camera jump: hub position + exact yaw/pitch (review screenshots) */
+  onCamProbe?: (yaw: number, pitch: number) => void;
 }
 
 const OS_BEATS: Array<[string, string]> = [
@@ -29,6 +31,10 @@ const OS_BEATS: Array<[string, string]> = [
 
 export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   if (new URLSearchParams(window.location.search).get('debug') !== '1') return;
+  if (opts.onCamProbe) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__camProbe = opts.onCamProbe;
+  }
 
   const panel = document.createElement('div');
   Object.assign(panel.style, {

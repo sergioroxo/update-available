@@ -27,12 +27,18 @@ player should be able to describe every transition as "the room got [brighter/fl
    flicker, hold — like office lights, not a sunrise (rig crossfade ✅, retimed stepped).
 3. **The window turns off (2s).** Moon and night-blue pane swap to a flat daylight gray (V2 prop swap).
    The moon is not seen again in the piece.
-4. **The WALLS LEAVE (Round 21 revision — built S11, superseding the scrim shutters).** The shipped
-   morph effect, ported: the east/west walls SLIDE AND STRETCH outward, the spine recedes with the
-   door and the record terminal, and the two dressed rooms cascade in prop-by-prop where the walls
-   stood (diagonal sweep, soft glitch — scale jitter + emissive flicker, no strobe). Short piers
-   remain on the old wall lines: the memory of the wall. The zone lights come up at 4.2s, *before*
-   the lead room's rig settles — the other rooms were ready first. That order is the thesis.
+4. **The WALLS LEAVE — the wedge cluster arrives (Round 22 revision — built S12, per Sérgio's
+   drawing; supersedes S11's piers).** The shipped morph effect, ported: the east/west walls vanish
+   under the glitch, the window wall slides back, the spine recedes with the door and the record
+   terminal — and the space resolves as a HEXAGON aligned to three 120° facings, hub = the chair.
+   Every 120° turn now faces a perpendicular back wall: a whole room in front of you (front = the
+   lead room, Daniel's furniture re-sorted forward; west = the parallel-tracks bay; east = the
+   trans-facet room with the niche). FURNITURE is the limiter between rooms — a bookcase run and
+   chest on the front-west boundary, a wardrobe-closet and dresser on the front-east, low shelves
+   flanking the rear sight channel (door + terminal, kept clear for E4). Props cascade in
+   prop-by-prop (diagonal sweep, soft glitch — scale jitter + emissive flicker, no strobe). The
+   zone lights come up at 4.2s, *before* the lead room's rig settles — the other rooms were ready
+   first. That order is the thesis.
 5. **The guide transforms (≤10s, on the monitor):** Lambert's paper texture pixelates into Lamby's
    bounce (OP-2 sprite beat). First line only after the room settles.
 6. **The desk has already changed** (during the dark hold): CRT stays (2003), but kit brochure →

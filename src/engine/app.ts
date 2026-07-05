@@ -640,6 +640,9 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   if (options.reinterp) {
     mountDebugPanel(os, {
       onEra: (era) => driveMorph(era),
+      // dev camera jump (?debug=1 only): window.__camProbe(yaw, pitch) puts the
+      // eye at the hub facing exactly there — how review screenshots are taken
+      onCamProbe: (yaw, pitch) => { camYaw = yaw; camPitch = pitch; camPos.set(EYE.x, EYE.y, EYE.z); },
       onReveal: () => cluster?.reveal(),
       onClose: enterClose,
       onFacet: (f) => niche?.setFacet(f),

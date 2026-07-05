@@ -1,12 +1,13 @@
 /**
- * The radial cluster CONDUCTOR (v3 — Sérgio Round 21). The space itself now
- * lives in DATA (data/room/reinterp_deltas.json) and transforms through the
- * ported shipped morph (clusterMorph.ts): at T1 the walls of Daniel's room
- * SLIDE AND STRETCH outward, the spine recedes with the door and the record
- * terminal, and two fully-dressed rooms cascade in where the walls stood —
- * so that facing any direction reads as A ROOM, not a diorama (his reference;
- * no central disc — "too impersonal"). Short piers remain on the old wall
- * lines: the memory of the wall.
+ * The radial cluster CONDUCTOR (v4 — Sérgio Round 22, his wedge drawing). The
+ * space lives in DATA (data/room/reinterp_deltas.json) and transforms through
+ * the ported shipped morph (clusterMorph.ts). The open space is a HEXAGON
+ * aligned to the three 120° facings, hub = the player's chair: every 120° turn
+ * faces a perpendicular back wall — a whole room in front of you (front = the
+ * lead room, west = the parallel-tracks bay, east = the trans-facet room), and
+ * FURNITURE is the limiter between rooms (bookcase run / wardrobe / dressers —
+ * no interior walls). The rear face is the spine (door + record terminal) with
+ * a clear sight channel; at E4 the TURN faces it and Maya's desk rises there.
  *
  * This module keeps only conduction: the per-era LIGHT RIGS (crossfaded — the
  * cold light winning), the T1 staged timeline (lamp hold → ballast → cascade →
@@ -42,7 +43,7 @@ const RIG_FADE_SECONDS = 2.5;
 /** space-state index per era (reinterp_deltas.json fold: r1 → r2 → r4) */
 const STATE_FOR_ERA: Record<EraKey, number> = { e1: 0, e2: 1, e3: 1, e4: 2 };
 /** the witness record plane's home per spatial state (rides the spine) */
-const PLANE_Z: [number, number] = [3.685, 5.405];
+const PLANE_Z: [number, number] = [3.685, 3.865];
 
 function hex(c: string): pc.Color {
   const n = parseInt(c.slice(1), 16);
@@ -86,9 +87,9 @@ export function buildClusterShell(
     root.addChild(e);
     return e;
   };
-  zoneLights.push(mkLight('light-zoneE', [2.9, 2.2, 3.6], '#D9A8A0', 2.8)); // the pink room
-  zoneLights.push(mkLight('light-zoneW', [-2.9, 2.2, 3.6], '#5DCAA5', 2.8)); // the teal room
-  const mayaGlow = mkLight('light-mayaGlow', [-0.2, 1.35, 4.8], '#8899BB', 2.4);
+  zoneLights.push(mkLight('light-zoneE', [1.73, 2.2, 1.7], '#E8B7C8', 2.8)); // east wedge: the trans-facet room
+  zoneLights.push(mkLight('light-zoneW', [-1.73, 2.2, 1.7], '#D9A8A0', 2.8)); // west wedge: the parallel-tracks bay
+  const mayaGlow = mkLight('light-mayaGlow', [-0.15, 1.5, 3.3], '#8899BB', 2.4);
   void mayaGlow; // rig-driven by id
 
   // ── the O7 light-leak seams: thin pale strips at the base of the walls —
@@ -120,7 +121,7 @@ export function buildClusterShell(
   const lampHome = lampLight ? lampLight.getLocalPosition().clone() : null;
   function carryLampLight(to: boolean): void {
     if (!lampLight || !lampHome) return;
-    if (to) lampLight.setLocalPosition(-0.85, 1.08, 4.98);
+    if (to) lampLight.setLocalPosition(-0.55, 1.08, 3.42);
     else lampLight.setLocalPosition(lampHome.x, lampHome.y, lampHome.z);
   }
 

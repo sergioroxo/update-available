@@ -36,7 +36,7 @@ const DELTA_LIST: Delta[] = SPACE_STATES.map(
   s => (deltas as unknown as Record<string, Delta>)[s]
 );
 
-interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean }
+interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number }
 
 interface Plan {
   h: PropHandle;
@@ -64,7 +64,7 @@ export class ClusterMorph {
   private targetsFor(idx: number): Map<string, PropTarget> {
     const m = new Map<string, PropTarget>();
     for (const d of (era1 as unknown as { props: PropDef[] }).props) {
-      m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true });
+      m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0 });
     }
     for (let i = 0; i <= idx; i++) {
       const delta = DELTA_LIST[i];
@@ -77,7 +77,7 @@ export class ClusterMorph {
       }
       for (const id of delta.remove ?? []) { const t = m.get(id); if (t) t.present = false; }
       for (const def of delta.add ?? []) {
-        m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true });
+        m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0 });
       }
     }
     return m;
@@ -86,7 +86,7 @@ export class ClusterMorph {
   private spawnTarget(id: string, t: PropTarget): PropHandle {
     return spawnProp(this.room, {
       id, pos: t.pos as [number, number, number], size: t.size as [number, number, number],
-      color: t.color, emissive: t.emissive
+      color: t.color, emissive: t.emissive, yaw: t.yaw
     });
   }
 
@@ -98,6 +98,7 @@ export class ClusterMorph {
     h.material.update();
     h.entity.setLocalPosition(t.pos[0], t.pos[1], t.pos[2]);
     h.entity.setLocalScale(t.size[0], t.size[1], t.size[2]);
+    h.entity.setLocalEulerAngles(0, t.yaw, 0); // yaw never animates; it snaps with the fold
   }
 
   /** snap the whole space to a state (debug jumps; deterministic, reversible) */
