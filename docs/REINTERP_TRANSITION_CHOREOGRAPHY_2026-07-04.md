@@ -27,8 +27,12 @@ player should be able to describe every transition as "the room got [brighter/fl
    flicker, hold — like office lights, not a sunrise (rig crossfade ✅, retimed stepped).
 3. **The window turns off (2s).** Moon and night-blue pane swap to a flat daylight gray (V2 prop swap).
    The moon is not seen again in the piece.
-4. **The scrims LIFT (2.2s, ✅ built).** Both apertures open as shutters. The bays light *before* the
-   lead room finishes — the other rooms were ready first. That order is the thesis.
+4. **The WALLS LEAVE (Round 21 revision — built S11, superseding the scrim shutters).** The shipped
+   morph effect, ported: the east/west walls SLIDE AND STRETCH outward, the spine recedes with the
+   door and the record terminal, and the two dressed rooms cascade in prop-by-prop where the walls
+   stood (diagonal sweep, soft glitch — scale jitter + emissive flicker, no strobe). Short piers
+   remain on the old wall lines: the memory of the wall. The zone lights come up at 4.2s, *before*
+   the lead room's rig settles — the other rooms were ready first. That order is the thesis.
 5. **The guide transforms (≤10s, on the monitor):** Lambert's paper texture pixelates into Lamby's
    bounce (OP-2 sprite beat). First line only after the room settles.
 6. **The desk has already changed** (during the dark hold): CRT stays (2003), but kit brochure →

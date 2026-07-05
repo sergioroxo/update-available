@@ -1,26 +1,7 @@
 {
-  "_doc": "PLACEHOLDER — the radial THREE-ROOM cluster (Sérgio, Round 18: 'see all the 3 rooms around you'). Read behind ?reinterp=1 only. The E1 lead room keeps the front; TWO ROOM-BAYS open off the east/west rear arcs (trans-fluid bay east, companion-identity bay west); the south wall becomes the spine — a real recessed door + the witness record shrunk to a wall terminal (the old rear witness furniture is hidden in reinterp: the ceiling witness carries presence, the terminal carries the legible record, Ethics #10). Openings are covered by SCRIMS: sealed (E1 — reads as wall in shadow) → dim (O7 — the bays become dimly legible) → open (E2+ — the scrim lifts like a shutter). COLOR LAW: every hex here already exists in data/room/era1.json — reused, never invented; e2-e4 rig hues re-derive when era2+ theme palettes land. Cluster states: sealed | dim | open.",
-  "hiddenShippedProps": [
-    "door", "doorKnob", "witnessPanelFrame", "filingCabinet", "filingHandle1",
-    "filingHandle2", "filingHandle3", "coldDesk", "coldDeskBase", "indexCard",
-    "floorWitnessDark", "wallEast", "wallWest", "wallSouth"
-  ],
-  "bays": {
-    "_note": "Two room volumes beyond the (rebuilt, segmented) east/west walls, z 1.9-3.7, interior ceiling 2.5. The fluid trans niche RELOCATES into the east bay (fluid_niche.json anchor). The west bay holds the other non-lead identity per era (non-display slugs; E4 split = open content call).",
-    "zRange": [1.9, 3.7],
-    "depth": 2.2,
-    "ceilingY": 2.5,
-    "east": { "occupant": "trans-fluid" },
-    "west": { "occupantByEra": { "e1": "none", "e2": "lesbian", "e3": "gayman", "e4": "gayman" } }
-  },
-  "scrims": [
-    { "id": "scrim-east", "pos": [2.11, 1.3, 2.8], "size": [0.02, 2.6, 1.4] },
-    { "id": "scrim-west", "pos": [-2.11, 1.3, 2.8], "size": [0.02, 2.6, 1.4] }
-  ],
-  "scrimOpacity": { "sealed": 0.96, "dim": 0.55, "open": 0.0 },
-  "door": { "_note": "the room's real door — recessed in the south spine wall", "x": 1.2 },
+  "_doc": "PLACEHOLDER — the radial cluster's CONDUCTION data: per-era light rigs (the cold-light-winning arc), the ceiling witness geometry, the witness record plane's E1 anchor, and the point-cloud Close parameters. The SPACE itself (walls, rooms, door, terminal frame, Maya's desk, the lamp carry) lives in data/room/reinterp_deltas.json and transforms via src/room/clusterMorph.ts — the shipped EraMorph grammar, ported (Round 21). COLOR LAW: every hex here already exists in data/room/era1.json; e2-e4 rig hues re-derive when era2+ theme palettes land. zoneFill = the two dressed rooms' accent omnis (light-zoneE pink / light-zoneW teal); mayaGlow = Maya's E4 interface light.",
   "witnessTerminal": {
-    "_note": "the shrunk witness record surface on the south spine (4:3, same canvas)",
+    "_note": "the witness record plane's E1 position (4:3, same canvas); from r2 on it rides the spine to z 5.405 (cluster.ts PLANE_Z)",
     "pos": [-0.9, 1.5, 3.69],
     "w": 1.12,
     "h": 0.84
@@ -37,12 +18,11 @@
     "wakeSeconds": 3.0,
     "breath": { "period": 7.0, "depth": 0.10 }
   },
-  "states": { "e1": "sealed", "e2": "open", "e3": "open", "e4": "open" },
   "rigs": {
-    "_note": "Per-era light targets for the era1.json light ids + scene ambient. The arc: E1 lamp-dominant night (~70/30 warm) → E2 office-grade fluorescent (~50/50, managed) → E3 platform pastel (near-shadowless diffuse, the lamp a leftover) → E4 interface-lit near-dark (the cold has won; the lamp survives as the one warm pocket, CARRIED to Maya's desk). 'hold' = T1's lamp-only breath (choreography §T1.1). 'close' kills the room for the point-cloud inversion. bayFill = the per-bay interior omnis; mayaGlow = Maya's interface light (built in cluster.ts).",
+    "_note": "Per-era light targets for the era1.json light ids + scene ambient. The arc: E1 lamp-dominant night (~70/30 warm) → E2 office-grade fluorescent (~50/50, managed) → E3 platform pastel (near-shadowless diffuse, the lamp a leftover) → E4 interface-lit near-dark (the cold has won; the lamp survives as the one warm pocket, CARRIED to Maya's desk). 'hold' = T1's lamp-only breath (choreography §T1.1). 'close' kills the room for the point-cloud inversion.",
     "hold": {
       "ambient": [0.05, 0.04, 0.03],
-      "bayFill": 0.0,
+      "zoneFill": 0.0,
       "lights": {
         "roomFill": { "intensity": 0.0 },
         "lamp": { "intensity": 2.9, "range": 5.6 },
@@ -54,7 +34,7 @@
     },
     "e1": {
       "ambient": [0.17, 0.14, 0.11],
-      "bayFill": 0.0,
+      "zoneFill": 0.0,
       "lights": {
         "roomFill": { "intensity": 0.85 },
         "lamp": { "intensity": 2.9, "range": 5.6 },
@@ -66,43 +46,43 @@
     },
     "e2": {
       "ambient": [0.3, 0.3, 0.27],
-      "bayFill": 0.9,
+      "zoneFill": 0.9,
       "lights": {
-        "roomFill": { "intensity": 1.35, "color": "#D4D0C8" },
+        "roomFill": { "intensity": 1.35, "color": "#D4D0C8", "range": 8.0 },
         "lamp": { "intensity": 1.15, "range": 2.6 },
         "screenGlow": { "intensity": 0.55, "color": "#8899BB" },
         "moonlight": { "intensity": 0.05 },
-        "witnessCold": { "intensity": 0.95 },
+        "witnessCold": { "intensity": 0.95, "range": 4.6 },
         "mayaGlow": { "intensity": 0.0 }
       }
     },
     "e3": {
       "ambient": [0.33, 0.27, 0.28],
-      "bayFill": 0.75,
+      "zoneFill": 0.75,
       "lights": {
-        "roomFill": { "intensity": 1.05, "color": "#D9A8A0" },
+        "roomFill": { "intensity": 1.05, "color": "#D9A8A0", "range": 8.0 },
         "lamp": { "intensity": 0.75, "range": 2.0 },
         "screenGlow": { "intensity": 0.65, "color": "#8899BB" },
         "moonlight": { "intensity": 0.0 },
-        "witnessCold": { "intensity": 0.65, "color": "#8899BB" },
+        "witnessCold": { "intensity": 0.65, "color": "#8899BB", "range": 4.6 },
         "mayaGlow": { "intensity": 0.0 }
       }
     },
     "e4": {
       "ambient": [0.05, 0.05, 0.07],
-      "bayFill": 0.28,
+      "zoneFill": 0.28,
       "lights": {
-        "roomFill": { "intensity": 0.1, "color": "#8899BB" },
+        "roomFill": { "intensity": 0.1, "color": "#8899BB", "range": 8.0 },
         "lamp": { "intensity": 0.95, "range": 1.5 },
         "screenGlow": { "intensity": 0.35, "color": "#8899BB" },
         "moonlight": { "intensity": 0.0 },
-        "witnessCold": { "intensity": 0.4 },
+        "witnessCold": { "intensity": 0.4, "range": 4.6 },
         "mayaGlow": { "intensity": 1.35 }
       }
     },
     "close": {
       "ambient": [0.02, 0.02, 0.03],
-      "bayFill": 0.0,
+      "zoneFill": 0.0,
       "lights": {
         "roomFill": { "intensity": 0 },
         "lamp": { "intensity": 0 },

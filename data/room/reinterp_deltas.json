@@ -1,0 +1,108 @@
+{
+  "_doc": "PLACEHOLDER — the reinterp SPACE STATES as ordered deltas over data/room/era1.json (the shipped EraMorph grammar, ported: the room is a deterministic function of the state; each state folds over the previous). r1 = reinterp E1 (witness furniture out, real door + terminal on a repainted spine). r2 = THE CLUSTER (Sérgio Round 21, per his reference: the walls SLIDE AND STRETCH outward, the spine recedes with the door, and two fully-dressed rooms stand where the walls were — east room pink/present with the phone + ring light, west room teal/2016 with the laptop + webcam; short piers remain where the old walls stood; each room has its own rug — NO central disc motif, 'too impersonal': whichever way you face, you see a room). r4 = E4 (Maya's desk rises at the rear center beside the terminal, the LAMP MOVES to her desk — 30 years on — and the window goes dark for good). COLOR LAW: every hex exists in era1.json. Zone-dressing-to-identity mapping is PROVISIONAL greybox (east carries the fluid niche per fluid_niche.json; per-era occupant re-dressing is a content lane). All 'sign' props are wordless emissive panels — no text in the room, ever.",
+  "r1": {
+    "remove": [
+      "wallSouth", "door", "doorKnob", "witnessPanelFrame", "filingCabinet",
+      "filingHandle1", "filingHandle2", "filingHandle3", "coldDesk",
+      "coldDeskBase", "indexCard", "floorWitnessDark"
+    ],
+    "add": [
+      { "id": "spineWall", "pos": [0, 1.35, 3.72], "size": [4.26, 2.7, 0.04], "color": "#E6D2BC" },
+      { "id": "spineDoorLintel", "pos": [1.2, 2.13, 3.695], "size": [1.0, 0.1, 0.07], "color": "#A8917B" },
+      { "id": "spineDoorJambL", "pos": [0.73, 1.04, 3.695], "size": [0.08, 2.08, 0.07], "color": "#A8917B" },
+      { "id": "spineDoorJambR", "pos": [1.67, 1.04, 3.695], "size": [0.08, 2.08, 0.07], "color": "#A8917B" },
+      { "id": "spineDoorPanel", "pos": [1.2, 1.02, 3.705], "size": [0.86, 2.04, 0.05], "color": "#B89B7E" },
+      { "id": "spineDoorKnob", "pos": [0.87, 1.0, 3.67], "size": [0.035, 0.035, 0.035], "color": "#8A5A3B" },
+      { "id": "terminalFrame", "pos": [-0.9, 1.5, 3.705], "size": [1.26, 0.98, 0.03], "color": "#1A1A24" }
+    ]
+  },
+  "r2": {
+    "props": {
+      "wallEast": { "pos": [3.63, 1.35, 2.36], "size": [0.04, 2.7, 6.16] },
+      "wallWest": { "pos": [-3.63, 1.35, 2.36], "size": [0.04, 2.7, 6.16] },
+      "ceiling": { "pos": [0, 2.71, 2.36], "size": [7.3, 0.02, 6.16] },
+      "floor": { "pos": [0, -0.01, 2.36], "size": [7.3, 0.02, 6.16] },
+      "spineWall": { "pos": [0, 1.35, 5.44], "size": [7.3, 2.7, 0.04] },
+      "spineDoorLintel": { "pos": [1.2, 2.13, 5.415] },
+      "spineDoorJambL": { "pos": [0.73, 1.04, 5.415] },
+      "spineDoorJambR": { "pos": [1.67, 1.04, 5.415] },
+      "spineDoorPanel": { "pos": [1.2, 1.02, 5.425] },
+      "spineDoorKnob": { "pos": [0.87, 1.0, 5.39] },
+      "terminalFrame": { "pos": [-0.9, 1.5, 5.425] },
+      "windowPane": { "color": "#D4D0C8" }
+    },
+    "remove": ["moon"],
+    "add": [
+      { "id": "pierE", "pos": [2.13, 1.25, 2.3], "size": [0.06, 2.5, 0.8], "color": "#E6D2BC" },
+      { "id": "pierW", "pos": [-2.13, 1.25, 2.3], "size": [0.06, 2.5, 0.8], "color": "#E6D2BC" },
+
+      { "id": "zeRug", "pos": [2.7, 0.005, 3.7], "size": [2.0, 0.01, 2.4], "color": "#D4A0A0" },
+      { "id": "zeDesk", "pos": [2.65, 0.72, 2.9], "size": [1.2, 0.04, 0.6], "color": "#8A5A3B" },
+      { "id": "zeDeskBase", "pos": [2.65, 0.36, 2.9], "size": [1.0, 0.68, 0.5], "color": "#74492F" },
+      { "id": "zePhoneStand", "pos": [2.5, 0.77, 2.85], "size": [0.12, 0.06, 0.08], "color": "#44464F" },
+      { "id": "zePhone", "pos": [2.5, 0.97, 2.85], "size": [0.16, 0.3, 0.02], "color": "#8899BB", "emissive": true },
+      { "id": "zeRingBase", "pos": [2.95, 0.76, 2.85], "size": [0.14, 0.04, 0.14], "color": "#44464F" },
+      { "id": "zeRingPole", "pos": [2.95, 0.95, 2.85], "size": [0.03, 0.4, 0.03], "color": "#44464F" },
+      { "id": "zeRingT", "pos": [2.95, 1.39, 2.85], "size": [0.3, 0.04, 0.03], "color": "#F3EAD8", "emissive": true },
+      { "id": "zeRingB", "pos": [2.95, 1.11, 2.85], "size": [0.3, 0.04, 0.03], "color": "#F3EAD8", "emissive": true },
+      { "id": "zeRingL", "pos": [2.81, 1.25, 2.85], "size": [0.04, 0.24, 0.03], "color": "#F3EAD8", "emissive": true },
+      { "id": "zeRingR", "pos": [3.09, 1.25, 2.85], "size": [0.04, 0.24, 0.03], "color": "#F3EAD8", "emissive": true },
+      { "id": "zeBedFrame", "pos": [3.25, 0.18, 4.5], "size": [0.75, 0.28, 1.9], "color": "#A07B52" },
+      { "id": "zeMattress", "pos": [3.25, 0.36, 4.5], "size": [0.68, 0.1, 1.82], "color": "#F0E5D4" },
+      { "id": "zeBlanket", "pos": [3.25, 0.43, 4.75], "size": [0.7, 0.05, 1.2], "color": "#D4A0A0" },
+      { "id": "zeSideTable", "pos": [3.3, 0.3, 3.35], "size": [0.4, 0.6, 0.4], "color": "#8A5A3B" },
+      { "id": "zeLampFoot", "pos": [3.3, 0.64, 3.35], "size": [0.1, 0.08, 0.1], "color": "#74492F" },
+      { "id": "zeLampShade", "pos": [3.3, 0.76, 3.35], "size": [0.14, 0.1, 0.14], "color": "#EFA13F", "emissive": true },
+      { "id": "zeShelf", "pos": [3.56, 1.5, 2.6], "size": [0.06, 0.05, 0.7], "color": "#8A5A3B" },
+      { "id": "zePlantA", "pos": [3.5, 1.62, 2.45], "size": [0.1, 0.14, 0.1], "color": "#9FD8CB" },
+      { "id": "zePlantB", "pos": [3.5, 1.58, 2.75], "size": [0.08, 0.1, 0.08], "color": "#A8B49A" },
+      { "id": "zeBoxA", "pos": [2.2, 0.14, 4.9], "size": [0.35, 0.28, 0.35], "color": "#C9A8A0" },
+      { "id": "zeBoxB", "pos": [2.2, 0.36, 4.9], "size": [0.3, 0.16, 0.3], "color": "#9FB4C0" },
+      { "id": "zeSign", "pos": [3.6, 1.95, 4.3], "size": [0.05, 0.42, 0.42], "color": "#E8B7C8", "emissive": true },
+      { "id": "zeStrip", "pos": [3.6, 2.45, 3.7], "size": [0.04, 0.05, 2.6], "color": "#EFA13F", "emissive": true },
+
+      { "id": "zwRug", "pos": [-2.7, 0.005, 3.7], "size": [2.0, 0.01, 2.4], "color": "#9FB4C0" },
+      { "id": "zwDesk", "pos": [-2.65, 0.72, 3.0], "size": [1.3, 0.04, 0.65], "color": "#8A5A3B" },
+      { "id": "zwDeskLegL", "pos": [-3.2, 0.36, 3.0], "size": [0.08, 0.68, 0.55], "color": "#74492F" },
+      { "id": "zwDeskLegR", "pos": [-2.1, 0.36, 3.0], "size": [0.08, 0.68, 0.55], "color": "#74492F" },
+      { "id": "zwLaptopBase", "pos": [-2.65, 0.755, 3.0], "size": [0.42, 0.025, 0.3], "color": "#44464F" },
+      { "id": "zwLaptopScreen", "pos": [-2.65, 0.93, 3.12], "size": [0.4, 0.28, 0.02], "color": "#5DCAA5", "emissive": true },
+      { "id": "zwWebcam", "pos": [-2.65, 1.09, 3.12], "size": [0.05, 0.04, 0.03], "color": "#2C2C34" },
+      { "id": "zwLampArm", "pos": [-3.1, 0.85, 2.9], "size": [0.03, 0.22, 0.03], "color": "#2C2C34" },
+      { "id": "zwLampNeck", "pos": [-3.05, 0.97, 2.95], "size": [0.12, 0.03, 0.03], "color": "#2C2C34" },
+      { "id": "zwLampHead", "pos": [-2.98, 0.95, 3.0], "size": [0.09, 0.06, 0.09], "color": "#2C2C34" },
+      { "id": "zwBookA", "pos": [-2.3, 0.79, 2.95], "size": [0.22, 0.05, 0.16], "color": "#C9A8A0" },
+      { "id": "zwBookB", "pos": [-2.3, 0.85, 2.95], "size": [0.2, 0.05, 0.15], "color": "#9FB4C0" },
+      { "id": "zwBookC", "pos": [-2.32, 0.9, 2.95], "size": [0.18, 0.04, 0.14], "color": "#A8B49A" },
+      { "id": "zwChairSeat", "pos": [-2.65, 0.45, 2.35], "size": [0.42, 0.06, 0.42], "color": "#44464F" },
+      { "id": "zwChairBack", "pos": [-2.65, 0.75, 2.12], "size": [0.4, 0.5, 0.05], "color": "#2C2C34" },
+      { "id": "zwChairPost", "pos": [-2.65, 0.24, 2.35], "size": [0.06, 0.36, 0.06], "color": "#2C2C34" },
+      { "id": "zwBedFrame", "pos": [-3.25, 0.18, 4.5], "size": [0.75, 0.28, 1.9], "color": "#A07B52" },
+      { "id": "zwMattress", "pos": [-3.25, 0.36, 4.5], "size": [0.68, 0.1, 1.82], "color": "#F0E5D4" },
+      { "id": "zwBlanket", "pos": [-3.25, 0.43, 4.75], "size": [0.7, 0.05, 1.2], "color": "#9FB4C0" },
+      { "id": "zwNightTable", "pos": [-3.3, 0.25, 3.4], "size": [0.35, 0.5, 0.35], "color": "#8A5A3B" },
+      { "id": "zwNightCube", "pos": [-3.3, 0.58, 3.4], "size": [0.12, 0.12, 0.12], "color": "#5DCAA5", "emissive": true },
+      { "id": "zwShelf", "pos": [-3.56, 1.5, 3.0], "size": [0.06, 0.05, 0.7], "color": "#8A5A3B" },
+      { "id": "zwShelfBookA", "pos": [-3.5, 1.62, 2.85], "size": [0.08, 0.18, 0.06], "color": "#C9A8A0" },
+      { "id": "zwShelfBookB", "pos": [-3.5, 1.6, 3.1], "size": [0.08, 0.15, 0.06], "color": "#A8B49A" },
+      { "id": "zwSign", "pos": [-3.6, 1.95, 4.3], "size": [0.05, 0.42, 0.42], "color": "#008080", "emissive": true }
+    ]
+  },
+  "r4": {
+    "props": {
+      "windowPane": { "color": "#15151F" },
+      "lampFoot": { "pos": [-0.85, 0.755, 5.02] },
+      "lampPole": { "pos": [-0.85, 0.85, 5.02] },
+      "lampShade": { "pos": [-0.85, 0.97, 5.02] }
+    },
+    "add": [
+      { "id": "mayaDesk", "pos": [-0.2, 0.72, 5.02], "size": [1.1, 0.04, 0.55], "color": "#8A5A3B" },
+      { "id": "mayaDeskBase", "pos": [-0.2, 0.36, 5.06], "size": [0.9, 0.68, 0.42], "color": "#74492F" },
+      { "id": "mayaScreen", "pos": [-0.2, 1.13, 5.24], "size": [0.62, 0.36, 0.03], "color": "#2C3A5C", "emissive": true },
+      { "id": "mayaScreenFoot", "pos": [-0.2, 0.78, 5.22], "size": [0.16, 0.08, 0.1], "color": "#1A1A24" },
+      { "id": "mayaPhone", "pos": [0.14, 0.752, 4.96], "size": [0.045, 0.008, 0.09], "color": "#1A1A24" },
+      { "id": "mayaChair", "pos": [-0.2, 0.45, 4.54], "size": [0.42, 0.06, 0.42], "color": "#44464F" },
+      { "id": "mayaChairPost", "pos": [-0.2, 0.24, 4.54], "size": [0.06, 0.36, 0.06], "color": "#2C2C34" }
+    ]
+  }
+}

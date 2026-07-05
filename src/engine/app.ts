@@ -98,7 +98,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   // read cozy under the lamp's dominance — baseline ambient is untouched.
   if (options.reinterp === true) app.scene.ambientLight = new pc.Color(0.17, 0.14, 0.11);
 
-  buildEra1Room(app, options.reinterp === true);
+  const room = buildEra1Room(app, options.reinterp === true);
 
   // ── the fluid trans niche + the cluster shell (reinterp only) ──
   // The niche is one lateral-arc alcove of facet-states (?facet= forces one
@@ -113,7 +113,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     niche = buildFluidNiche(app);
     niche.setFacet(options.facet ?? 'none');
     ceiling = buildCeilingWitness(app);
-    cluster = buildClusterShell(app, niche, ceiling);
+    cluster = buildClusterShell(app, room, niche, ceiling);
     cloud = buildPointCloud(app);
   }
 

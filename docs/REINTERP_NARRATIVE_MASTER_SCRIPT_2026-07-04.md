@@ -109,7 +109,7 @@ lands here.
 |---|---|---|---|---|
 | e1.b01_kit | the mailed kit on the desk: brochure + floppy (physical-media threshold, F5 canon) | operable | FEST FULL | ✅ shipped |
 | e1.b02_install | insert floppy → TriedPath "Un-Walk" installs | operable | FEST FULL | ✅ shipped; **= the O7 trigger** |
-| e1.b03_reveal | **the first filing = the first reveal**: ceiling wakes, apertures dim in, half-second upward glance | operable | FEST FULL | ✅ S8/S9 |
+| e1.b03_reveal | **the first filing = the first reveal**: ceiling wakes, light-leak seams appear under the walls (there is something beyond them), half-second upward glance | operable | FEST FULL | ✅ S8/S9/S11 |
 | e1.b04_irc | #TriedPath, Rob's welcome, the hook | operable | FEST FULL | ✅ shipped |
 | e1.b05_intake | **Origin Story Intake** — Mom administers the '97 questionnaire; silence shape | operable | FULL | ✅ S4 (R4) |
 | e1.b06_graying | **the graying task**: the guide asks you to FIND apparatus objects (bible, camp brochure, struggler's diary); each find grays a queer prop; **the mixtape resists** (glitch #1) | operable | FEST-short FULL | build R7; demand strength = ◆N1 (open q #11) |
