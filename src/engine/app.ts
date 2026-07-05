@@ -222,8 +222,52 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   }
   /** grabbing/keying the view cancels a non-conducted move (the player left it) */
   function nudgeCamera(): void {
-    if (camMove && !camMove.conducted) camMove = null;
+    if (camMove && !camMove.conducted) { camMove = null; camQueue = []; }
     if (revealReturn > 0 && !revealConducted) revealReturn = -1; // the player took over
+  }
+
+  // ── the DOLLY (Sérgio, Round 23): the browser camera lives in SEATS, one per
+  // room, each a fixed composed framing (the desk centered, like the E1 view).
+  // Moving between rooms is a two-phase dolly: pull back to the hub — you SEE
+  // you're surrounded by the rooms — swing, then push in to the next seat.
+  // Head-drag past a room boundary re-seats on release; arrow keys step rooms;
+  // R homes. Sealed E1 keeps the shipped single-seat behavior. Browser only —
+  // in VR the head is the camera and the rooms simply surround you. ──
+  /** hub → seat distance: every seat frames its WHOLE room (desk centered);
+   *  the rear stays nearest the hub so terminal + door + Maya hold together */
+  const seatDist = (yaw: number): number => (yaw === 180 ? 0.6 : 0.95);
+  const HUB_XZ = { x: 0, z: 0.7 };          // the chair — the cluster's center
+  const DOLLY_MID_Y = 1.5;                  // slight rise through the pull-back
+  let seatYaw = 0;                          // current seat (0 | 120 | 180 | 240)
+  let camQueue: { pose: { x: number; y: number; z: number; pitch: number; yaw: number };
+    dur: number; conducted: boolean }[] = [];
+
+  const angDist = (a: number, b: number): number =>
+    Math.abs((((a - b) % 360) + 540) % 360 - 180);
+
+  function seatPose(yaw: number): { x: number; y: number; z: number; pitch: number; yaw: number } {
+    if (yaw === 0) return { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 };
+    const a = (yaw * Math.PI) / 180;
+    const d = seatDist(yaw);
+    return { x: HUB_XZ.x - Math.sin(a) * d, y: EYE.y + 0.12,
+      z: HUB_XZ.z - Math.cos(a) * d, pitch: -4, yaw };
+  }
+  /** seats available now (CCW order); the rear seat faces the record + door */
+  function seatYaws(): number[] {
+    return cluster && cluster.state !== 'sealed' ? [0, 120, 180, 240] : [0];
+  }
+  function dollyTo(toYaw: number, totalDur: number, conducted: boolean): void {
+    const from = seatYaw;
+    seatYaw = toYaw;
+    if (angDist(camYaw, toYaw) < 1 && !camMove && camQueue.length === 0) return; // already there
+    const d = (((toYaw - from) % 360) + 540) % 360 - 180;
+    camQueue = [
+      { pose: { x: HUB_XZ.x, y: DOLLY_MID_Y, z: HUB_XZ.z, pitch: -6, yaw: from + d / 2 },
+        dur: totalDur * 0.45, conducted },
+      { pose: seatPose(toYaw), dur: totalDur * 0.55, conducted }
+    ];
+    const next = camQueue.shift();
+    if (next) startCamMove(next.pose, next.dur, next.conducted);
   }
 
   const isBackYaw = (): boolean => {
@@ -376,7 +420,20 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     const p = toDesktop(e);
     if (p) os.handleMove(p.x, p.y);
   });
-  canvasEl.addEventListener('pointerup', () => { drag = null; });
+  canvasEl.addEventListener('pointerup', () => {
+    drag = null;
+    // dolly-follow (Round 23): releasing a head-turn nearer another room's
+    // facing travels there — "when the person turns their head it follows
+    // the path of the camera". A small turn inside the room stays free.
+    if (options.reinterp && !facingBack && !camMove) {
+      const seats = seatYaws();
+      if (seats.length > 1 && angDist(camYaw, seatYaw) > 55) {
+        let best = seatYaw;
+        for (const s of seats) if (angDist(camYaw, s) < angDist(camYaw, best)) best = s;
+        if (best !== seatYaw) dollyTo(best, 1.6, false);
+      }
+    }
+  });
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     // F2, not a letter: printable keys must always reach the typing hand
@@ -391,19 +448,38 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     if (options.reinterp && !os.paused) {
       const k = e.key;
       if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown') {
-        nudgeCamera();
-        if (!camMove) {
-          if (k === 'ArrowLeft') camYaw += 6;
-          else if (k === 'ArrowRight') camYaw -= 6;
-          else if (k === 'ArrowUp') camPitch = Math.min(DRAG_PITCH_MAX, camPitch + 5);
-          else camPitch = Math.max(-DRAG_PITCH_MAX, camPitch - 5);
+        const seats = seatYaws();
+        if (seats.length > 1 && (k === 'ArrowLeft' || k === 'ArrowRight')) {
+          // open cluster: left/right = dolly to the adjacent room (Round 23)
+          if (!camMove || !camMove.conducted) {
+            let i = seats.indexOf(seatYaw);
+            if (i < 0) { // era snap left us off-list: nearest seat by angle
+              i = 0;
+              for (let j = 1; j < seats.length; j++) {
+                if (angDist(seatYaw, seats[j]) < angDist(seatYaw, seats[i])) i = j;
+              }
+            }
+            const next = k === 'ArrowLeft'
+              ? seats[(i + 1) % seats.length]
+              : seats[(i - 1 + seats.length) % seats.length];
+            dollyTo(next, 1.8, false);
+          }
+        } else {
+          nudgeCamera();
+          if (!camMove) {
+            if (k === 'ArrowLeft') camYaw += 6;
+            else if (k === 'ArrowRight') camYaw -= 6;
+            else if (k === 'ArrowUp') camPitch = Math.min(DRAG_PITCH_MAX, camPitch + 5);
+            else camPitch = Math.max(-DRAG_PITCH_MAX, camPitch - 5);
+          }
         }
         e.preventDefault();
         return;
       }
       if (!os.isCapturingText) {
-        if (k === 'r' || k === 'R') { // reset to the era's home framing (E4: the TURN's facing)
-          startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: cluster ? cluster.homeYaw : 0 }, 0.7, false);
+        if (k === 'r' || k === 'R') { // reset to the era's home seat (E4: the TURN's facing)
+          if (seatYaws().length > 1 && cluster) dollyTo(cluster.homeYaw, 1.4, false);
+          else startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: cluster ? cluster.homeYaw : 0 }, 0.7, false);
           e.preventDefault();
           return;
         }
@@ -443,7 +519,11 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
         camPos.z = camMove.fz + (camMove.tz - camMove.fz) * s;
         camPitch = camMove.fp + (camMove.tp - camMove.fp) * s;
         camYaw = camMove.fyaw + (camMove.tyaw - camMove.fyaw) * s;
-        if (k >= 1) camMove = null;
+        if (k >= 1) {
+          camMove = null;
+          const next = camQueue.shift(); // the dolly's second leg (hub → seat)
+          if (next) startCamMove(next.pose, next.dur, next.conducted);
+        }
       }
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
@@ -569,7 +649,11 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     if (!cluster) return;
     cluster.morphToEra(era, true);
     if (era === 'e4') {
-      startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: 0, yaw: 180 }, 2.8, autoCam);
+      // THE TURN as a dolly: pull back through the center of thirty years of
+      // rooms, swing 180°, settle at Maya's seat facing the record
+      dollyTo(180, 2.8, autoCam);
+    } else if (seatYaws().length > 1 && seatYaw !== cluster.homeYaw) {
+      dollyTo(cluster.homeYaw, 1.8, false); // era jumps re-seat at the lead room
     }
   }
 
@@ -599,9 +683,12 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     } else if (options.era && cluster) {
       cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
-      camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
-      camPitch = ESTABLISH.pitch;
-      camYaw = cluster.homeYaw; // E4 boots already turned (the TURN's facing)
+      // boot SEATED at the era's home room (E4 boots already turned — the TURN)
+      seatYaw = cluster.homeYaw;
+      const sp = seatPose(seatYaw);
+      camPos.set(sp.x, sp.y, sp.z);
+      camPitch = sp.pitch;
+      camYaw = sp.yaw;
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else if ((options.reveal || options.morphDemo) && cluster) {
       applyLightsOn();          // E1 lit state…
@@ -640,9 +727,16 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   if (options.reinterp) {
     mountDebugPanel(os, {
       onEra: (era) => driveMorph(era),
-      // dev camera jump (?debug=1 only): window.__camProbe(yaw, pitch) puts the
-      // eye at the hub facing exactly there — how review screenshots are taken
-      onCamProbe: (yaw, pitch) => { camYaw = yaw; camPitch = pitch; camPos.set(EYE.x, EYE.y, EYE.z); },
+      // dev camera jump (?debug=1 only): window.__camProbe(yaw, pitch) teleports
+      // to that facing's SEAT pose — how review screenshots are taken
+      onCamProbe: (yaw, pitch) => {
+        seatYaw = yaw;
+        const sp = seatPose(yaw);
+        camPos.set(sp.x, sp.y, sp.z);
+        camYaw = sp.yaw;
+        camPitch = pitch !== 0 ? pitch : sp.pitch;
+        camMove = null; camQueue = [];
+      },
       onReveal: () => cluster?.reveal(),
       onClose: enterClose,
       onFacet: (f) => niche?.setFacet(f),

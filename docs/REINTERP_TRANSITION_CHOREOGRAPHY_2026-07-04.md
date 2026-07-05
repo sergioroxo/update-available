@@ -93,9 +93,13 @@ continuous care" — the rooms stop being destinations because the feed comes to
 2. **Lights go out by category** (4 steps, 2s each): first the window (gone entirely — blank wall or
    drawn blind, V2), then the room fill, then the pastel, then the screens *except one*: the east
    niche flips FORWARD (geometry doc §3.2) — its glow becomes the brightest thing.
-3. **THE TURN (◆N3, needs Sérgio's yes):** the restart re-anchors the home facing 180°. In VR: the one
-   bodily ask, spent at the piece's heaviest hinge. In browser: a conducted slow 180° pan (auto-cam)
-   or the R-reset now homing to the new facing. The player ends facing the former witness side —
+3. **THE TURN (◆N3, LOCKED; browser grammar revised Round 23 — the DOLLY):** the restart re-anchors
+   the home facing 180°. In VR: the one bodily ask, spent at the piece's heaviest hinge. In browser
+   the camera now lives in SEATS — one composed framing per room — and moving between rooms is a
+   two-phase dolly (pull back to the hub, where you SEE you're surrounded by the rooms; swing; push
+   in to the next seat; head-drag past a room boundary re-seats on release, arrow keys step rooms).
+   The TURN is that dolly at its heaviest: pull back through the center of thirty years of rooms,
+   swing 180°, settle at Maya's seat. The player ends facing the former witness side —
    **Maya's interface-lit desk sits on the south spine beside the witness terminal.** The person and
    the record share a wall for the whole final act.
 4. **The old front room stays behind you** — silhouetted, fog-tier, the lamp still on back there,
