@@ -39,7 +39,19 @@
   },
   "states": { "e1": "sealed", "e2": "open", "e3": "open", "e4": "open" },
   "rigs": {
-    "_note": "Per-era light targets for the era1.json light ids + scene ambient. The arc: E1 lamp-dominant night (~70/30 warm) → E2 office-grade fluorescent (~50/50, managed) → E3 platform pastel (near-shadowless diffuse, the lamp a leftover) → E4 interface-lit near-dark (the cold has won; the lamp survives as the one warm pocket). 'close' kills the room for the point-cloud inversion. bayFill = the per-bay interior omnis (built in cluster.ts).",
+    "_note": "Per-era light targets for the era1.json light ids + scene ambient. The arc: E1 lamp-dominant night (~70/30 warm) → E2 office-grade fluorescent (~50/50, managed) → E3 platform pastel (near-shadowless diffuse, the lamp a leftover) → E4 interface-lit near-dark (the cold has won; the lamp survives as the one warm pocket, CARRIED to Maya's desk). 'hold' = T1's lamp-only breath (choreography §T1.1). 'close' kills the room for the point-cloud inversion. bayFill = the per-bay interior omnis; mayaGlow = Maya's interface light (built in cluster.ts).",
+    "hold": {
+      "ambient": [0.05, 0.04, 0.03],
+      "bayFill": 0.0,
+      "lights": {
+        "roomFill": { "intensity": 0.0 },
+        "lamp": { "intensity": 2.9, "range": 5.6 },
+        "screenGlow": { "intensity": 0.1 },
+        "moonlight": { "intensity": 0.0 },
+        "witnessCold": { "intensity": 0.0 },
+        "mayaGlow": { "intensity": 0.0 }
+      }
+    },
     "e1": {
       "ambient": [0.17, 0.14, 0.11],
       "bayFill": 0.0,
@@ -48,7 +60,8 @@
         "lamp": { "intensity": 2.9, "range": 5.6 },
         "screenGlow": { "intensity": 0.32 },
         "moonlight": { "intensity": 0.14 },
-        "witnessCold": { "intensity": 0.5 }
+        "witnessCold": { "intensity": 0.5 },
+        "mayaGlow": { "intensity": 0.0 }
       }
     },
     "e2": {
@@ -59,7 +72,8 @@
         "lamp": { "intensity": 1.15, "range": 2.6 },
         "screenGlow": { "intensity": 0.55, "color": "#8899BB" },
         "moonlight": { "intensity": 0.05 },
-        "witnessCold": { "intensity": 0.95 }
+        "witnessCold": { "intensity": 0.95 },
+        "mayaGlow": { "intensity": 0.0 }
       }
     },
     "e3": {
@@ -70,7 +84,8 @@
         "lamp": { "intensity": 0.75, "range": 2.0 },
         "screenGlow": { "intensity": 0.65, "color": "#8899BB" },
         "moonlight": { "intensity": 0.0 },
-        "witnessCold": { "intensity": 0.65, "color": "#8899BB" }
+        "witnessCold": { "intensity": 0.65, "color": "#8899BB" },
+        "mayaGlow": { "intensity": 0.0 }
       }
     },
     "e4": {
@@ -79,9 +94,10 @@
       "lights": {
         "roomFill": { "intensity": 0.1, "color": "#8899BB" },
         "lamp": { "intensity": 0.95, "range": 1.5 },
-        "screenGlow": { "intensity": 1.45, "color": "#8899BB" },
-        "moonlight": { "intensity": 0.06 },
-        "witnessCold": { "intensity": 0.4 }
+        "screenGlow": { "intensity": 0.35, "color": "#8899BB" },
+        "moonlight": { "intensity": 0.0 },
+        "witnessCold": { "intensity": 0.4 },
+        "mayaGlow": { "intensity": 1.35 }
       }
     },
     "close": {
@@ -92,7 +108,8 @@
         "lamp": { "intensity": 0 },
         "screenGlow": { "intensity": 0 },
         "moonlight": { "intensity": 0 },
-        "witnessCold": { "intensity": 0 }
+        "witnessCold": { "intensity": 0 },
+        "mayaGlow": { "intensity": 0 }
       }
     }
   },

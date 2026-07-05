@@ -402,8 +402,8 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
         return;
       }
       if (!os.isCapturingText) {
-        if (k === 'r' || k === 'R') { // reset to the desk framing
-          startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, 0.7, false);
+        if (k === 'r' || k === 'R') { // reset to the era's home framing (E4: the TURN's facing)
+          startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: cluster ? cluster.homeYaw : 0 }, 0.7, false);
           e.preventDefault();
           return;
         }
@@ -459,7 +459,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
       }
       if (morphDemoIn > 0) {
         morphDemoIn -= dt;
-        if (morphDemoIn <= 0 && cluster && options.morphDemo) cluster.morphToEra(options.morphDemo, true);
+        if (morphDemoIn <= 0 && cluster && options.morphDemo) driveMorph(options.morphDemo);
       }
       cluster?.update(dt);
       ceiling?.update(dt);
@@ -562,6 +562,17 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     setLight('witnessCold', 0.50);         // the cold rear, dimmed so the front stays warm
   }
 
+  /** animated era morph + the TURN: E4's restart re-anchors the home facing
+   *  180° (◆N3 LOCKED — "let's be bold, we need emotion"): a slow conducted
+   *  pan under auto-cam, a takeable default otherwise */
+  function driveMorph(era: EraKey): void {
+    if (!cluster) return;
+    cluster.morphToEra(era, true);
+    if (era === 'e4') {
+      startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: 0, yaw: 180 }, 2.8, autoCam);
+    }
+  }
+
   /** the Close: the room goes dark and gives way to the constellation —
    *  shared by the ?close=1 review param and the debug panel's button */
   function enterClose(): void {
@@ -590,7 +601,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
       camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
       camPitch = ESTABLISH.pitch;
-      camYaw = 0;
+      camYaw = cluster.homeYaw; // E4 boots already turned (the TURN's facing)
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else if ((options.reveal || options.morphDemo) && cluster) {
       applyLightsOn();          // E1 lit state…
@@ -628,7 +639,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   // dev travel panel (?debug=1 — the shipped build's system, ported; Round 18)
   if (options.reinterp) {
     mountDebugPanel(os, {
-      onEra: (era) => cluster?.morphToEra(era, true),
+      onEra: (era) => driveMorph(era),
       onReveal: () => cluster?.reveal(),
       onClose: enterClose,
       onFacet: (f) => niche?.setFacet(f),

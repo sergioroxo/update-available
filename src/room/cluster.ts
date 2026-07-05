@@ -66,6 +66,8 @@ function box(name: string, pos: number[], size: number[], mat: pc.Material): pc.
 export interface ClusterShell {
   readonly state: ClusterState;
   readonly era: EraKey;
+  /** the home facing: 0° until E4, 180° after the TURN (locked ◆N3) */
+  readonly homeYaw: number;
   /** O7: sealed → dim + ceiling wake — the first-filing reveal */
   reveal(): void;
   /** the O8 seam: crossfade rig + open apertures + re-arm the niche table */
@@ -177,6 +179,32 @@ export function buildClusterShell(
   root.addChild(box('witness-terminal-frame',
     [wt.pos[0], wt.pos[1], 3.705], [wt.w + 0.14, wt.h + 0.14, 0.03], darkMat));
 
+  // ── 4b. Maya's E4 desk — the TURN's destination (choreography §T3, LOCKED
+  // Round 20: "let's be bold, we need emotion"). On the south spine beside the
+  // terminal: the person and the record share a wall for the whole final act.
+  // Greybox; hidden until e4. The lamp is CARRIED here (30 years on).
+  const mayaScreenMat = new pc.StandardMaterial();
+  mayaScreenMat.useLighting = false;
+  mayaScreenMat.diffuse = new pc.Color(0, 0, 0);
+  mayaScreenMat.emissive = hex('#2C3A5C'); // interface-lit sliver (windowPane hue)
+  mayaScreenMat.update();
+  const mayaRoot = new pc.Entity('maya-set');
+  mayaRoot.addChild(box('maya-desk', [-0.2, 0.72, 3.30], [1.1, 0.04, 0.55], woodMat));
+  mayaRoot.addChild(box('maya-desk-base', [-0.2, 0.36, 3.34], [0.9, 0.68, 0.42], woodMat));
+  mayaRoot.addChild(box('maya-screen', [-0.2, 1.13, 3.52], [0.62, 0.36, 0.03], mayaScreenMat));
+  mayaRoot.addChild(box('maya-screen-foot', [-0.2, 0.78, 3.5], [0.16, 0.08, 0.1], darkMat));
+  mayaRoot.addChild(box('maya-phone', [0.14, 0.752, 3.24], [0.045, 0.008, 0.09], darkMat));
+  mayaRoot.addChild(box('maya-chair', [-0.2, 0.45, 2.82], [0.42, 0.06, 0.42], woodMat));
+  mayaRoot.addChild(box('maya-chair-post', [-0.2, 0.24, 2.82], [0.06, 0.36, 0.06], woodMat));
+  mayaRoot.enabled = false;
+  root.addChild(mayaRoot);
+  const mayaGlow = new pc.Entity('light-mayaGlow');
+  mayaGlow.addComponent('light', {
+    type: 'omni', color: hex('#8899BB'), intensity: 0, range: 2.4, castShadows: false
+  });
+  mayaGlow.setLocalPosition(-0.2, 1.35, 3.05);
+  root.addChild(mayaGlow);
+
   // ── 5. the aperture scrims (translucent shutters; lerped, never realloc) ──
   interface Scrim { ent: pc.Entity; mat: pc.StandardMaterial; baseY: number }
   const scrims: Scrim[] = (clusterData.scrims as { id: string; pos: number[]; size: number[] }[]).map(s => {
@@ -195,6 +223,54 @@ export function buildClusterShell(
   // ── state ──
   let state: ClusterState = 'sealed';
   let era: EraKey = 'e1';
+
+  // ── the window's era states (choreography: T1 takes the moon, T3 takes the
+  // window entirely — daylight never returns) ──
+  type WindowState = 'night' | 'day' | 'gone';
+  let winState: WindowState = 'night';
+  function setWindow(next: WindowState): void {
+    if (next === winState) return;
+    winState = next;
+    const pane = app.root.findByName('windowPane');
+    const moon = app.root.findByName('moon');
+    if (pane instanceof pc.Entity && pane.render) {
+      const m = pane.render.material as pc.StandardMaterial;
+      m.emissive = hex(next === 'night' ? '#2C3A5C' : next === 'day' ? '#D4D0C8' : '#15151F');
+      m.update();
+    }
+    if (moon instanceof pc.Entity) moon.enabled = next === 'night';
+  }
+
+  // ── the lamp carry (T3): same object, moved to Maya's desk — nobody turned
+  // it off in 30 years. Instant reposition now; the authored travel beat is a
+  // later polish pass. Originals cached so debug era-jumps restore cleanly. ──
+  const LAMP_CARRY: Record<string, number[]> = {
+    lampFoot: [-0.72, 0.755, 3.30],
+    lampPole: [-0.72, 0.85, 3.30],
+    lampShade: [-0.72, 0.97, 3.30],
+    'light-lamp': [-0.72, 1.08, 3.24]
+  };
+  const lampHome: Record<string, pc.Vec3> = {};
+  let lampCarried = false;
+  function carryLamp(to: boolean): void {
+    if (to === lampCarried) return;
+    lampCarried = to;
+    for (const id of Object.keys(LAMP_CARRY)) {
+      const e = app.root.findByName(id);
+      if (!(e instanceof pc.Entity)) continue;
+      if (!(id in lampHome)) lampHome[id] = e.getLocalPosition().clone();
+      const p = to ? LAMP_CARRY[id] : [lampHome[id].x, lampHome[id].y, lampHome[id].z];
+      e.setLocalPosition(p[0], p[1], p[2]);
+    }
+  }
+
+  // ── the choreography timeline (T1's staged arrival; future T2/T3 beats) ──
+  let timeline: { t: number; fn: () => void }[] = [];
+  let timelineT = 0;
+  function schedule(events: { t: number; fn: () => void }[]): void {
+    timeline = [...events].sort((a, b) => a.t - b.t);
+    timelineT = 0;
+  }
   let scrimFrom = clusterData.scrimOpacity.sealed;
   let scrimTo = scrimFrom;
   let scrimT = 1; // 1 = settled
@@ -272,6 +348,7 @@ export function buildClusterShell(
   return {
     get state(): ClusterState { return state; },
     get era(): EraKey { return era; },
+    get homeYaw(): number { return era === 'e4' ? 180 : 0; },
 
     reveal(): void {
       if (state !== 'sealed') return;
@@ -285,7 +362,39 @@ export function buildClusterShell(
     },
 
     morphToEra(toEra: EraKey, animate: boolean): void {
+      const fromEra = era;
       era = toEra;
+      mayaRoot.enabled = toEra === 'e4';
+      carryLamp(toEra === 'e4');
+
+      // T1, choreographed (choreography doc §T1): hold on the lamp → ballast
+      // stages → the bays light FIRST → the moon does not survive → settle.
+      if (animate && fromEra === 'e1' && toEra === 'e2') {
+        applyRig('hold', false);
+        const setLight = (id: string, i: number): void => {
+          const e = app.root.findByName(`light-${id}`);
+          if (e instanceof pc.Entity && e.light) e.light.intensity = i;
+        };
+        schedule([
+          { t: 3.0, fn: () => setLight('roomFill', 0.55) },   // ballast: clunk
+          { t: 3.18, fn: () => setLight('roomFill', 0.05) },
+          { t: 3.6, fn: () => setLight('roomFill', 0.95) },   // flicker
+          { t: 3.78, fn: () => setLight('roomFill', 0.1) },
+          { t: 4.2, fn: () => {                                // the other rooms were ready first
+            for (const bl of bayLights) if (bl.light) bl.light.intensity = 0.9;
+            state = 'open';
+            setScrimTarget(clusterData.scrimOpacity.open, true);
+            ceiling.wake();
+          } },
+          { t: 5.0, fn: () => setWindow('day') },              // the moon, gone
+          { t: 5.3, fn: () => { applyRig('e2', true); applyOccupant(); } }
+        ]);
+        const t1 = eraTable();
+        niche.setFacet((t1?.default ?? 'none') as FacetState);
+        return;
+      }
+
+      setWindow(toEra === 'e1' ? 'night' : toEra === 'e4' ? 'gone' : 'day');
       const targetState = (clusterData.states as Record<EraKey, ClusterState>)[toEra] ?? 'open';
       applyRig(toEra, animate);
       if (targetState === 'open' && state !== 'open') {
@@ -308,6 +417,13 @@ export function buildClusterShell(
     eraTable,
 
     update(dt: number): void {
+      if (timeline.length) {
+        timelineT += dt;
+        while (timeline.length && timeline[0].t <= timelineT) {
+          const ev = timeline.shift();
+          if (ev) ev.fn();
+        }
+      }
       if (scrimT < 1) {
         scrimT = Math.min(1, scrimT + dt / SCRIM_FADE_SECONDS);
         const k = scrimT * scrimT * (3 - 2 * scrimT);
