@@ -32,7 +32,15 @@ const OS_BEATS: Array<[string, string]> = [
   ['Desktop', 'desktop'],
   ['Insert kit → O7', 'kit'],
   ['Provotype — pillow', 'pillow'],
-  ['Provotype — intake', 'intake']
+  ['Provotype — intake', 'intake'],
+  ['T1 ritual · update → E2', 'update2'],
+  ['T2 ritual · update → E3', 'update3'],
+  ['T3 ritual · update → E4', 'update4'],
+  ['Final · Restart as you are', 'closeUpdate'],
+  ['Offer send s1 (desktop)', 'send-s1'],
+  ['Offer send s2 (desktop)', 'send-s2'],
+  ['Offer send s3 (desktop)', 'send-s3'],
+  ['Offer send s4 (desktop)', 'send-s4']
 ];
 
 /** eras with the room + identity + year they now lead (Round 24 model) */

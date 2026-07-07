@@ -20,6 +20,7 @@ import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness
 import { buildClusterShell, type ClusterShell, type EraKey } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
+import { createSpine, type Spine } from '../narrative/spine';
 import { mountStartupOverlay } from '../desktop/opening';
 import { mountDebugPanel } from '../debug/panel';
 import clusterData from '../../data/room/cluster.json';
@@ -146,6 +147,35 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   // ── the two surfaces ──
   const os = new DesktopOS({ reinterp: options.reinterp === true });
+  if (new URLSearchParams(window.location.search).get('debug') === '1') {
+    // ?debug=1 OS probe (review aid, like __ledger): drive monitor clicks in
+    // logical canvas coords without the world→screen projection dance
+    (window as { __os?: DesktopOS }).__os = os;
+  }
+
+  // ── the NARRATIVE SPINE (reinterp; real playthroughs only, not review
+  // params): the script's beat conductor — era updates on documented
+  // failures, send summonses, the bare final restart → the Close. The OS
+  // performs; the engine moves the space; the spine decides when. ──
+  let spine: Spine | null = null;
+  const reviewMode = !!(options.era || options.close || options.reveal || options.morphDemo);
+  if (options.reinterp === true) {
+    if (!reviewMode) spine = createSpine(os, { onClose: () => enterClose() });
+    os.onEraShift = (era) => {
+      if (era === 'close') return; // the spine's onClose owns the constellation
+      driveMorph(era as EraKey);
+      spine?.onEra(era);
+    };
+    os.onSendResolve = (id, outcome) => {
+      sendRt?.fire(id, outcome);
+      if (outcome === 'visited') {
+        const yaw = sendRt?.targetYaw(id);
+        // the summons resolves as a TURN — the dolly carries you to the
+        // named room (takeable: not conducted; the player keeps the camera)
+        if (yaw !== null && yaw !== undefined) dollyTo(yaw, 2.4, false);
+      }
+    };
+  }
   const witness = new WitnessCanvas();
 
   const frontTex = makeScreenTexture(app, os.canvas);
@@ -618,6 +648,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       cluster?.update(dt);
       ceiling?.update(dt);
       cloud?.update(dt);
+      spine?.update(dt);
 
       // gaze-dwell: only once the cluster has been revealed (the E1 dark-
       // surround law), never under a ?facet= override, and only for facets the

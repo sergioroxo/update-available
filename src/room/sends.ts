@@ -43,6 +43,8 @@ export interface SendRuntime {
   /** send ids in script order (debug panel buttons) */
   readonly ids: { id: string; label: string }[];
   fire(id: string, outcome: SendOutcome): void;
+  /** where the summons points: a bay's seat yaw, or Room 3 (270) for a facet */
+  targetYaw(id: string): number | null;
 }
 
 export function createSendRuntime(room: RoomHandles, niche: FluidNiche | null): SendRuntime {
@@ -71,6 +73,13 @@ export function createSendRuntime(room: RoomHandles, niche: FluidNiche | null): 
 
   return {
     ids: defs.map(d => ({ id: d.id, label: d.label })),
+
+    targetYaw(id: string): number | null {
+      const def = byId.get(id);
+      if (!def) return null;
+      if (def.target.kind === 'bay') return def.target.yaw ?? null;
+      return 270; // every facet lives in Room 3 (east)
+    },
 
     fire(id: string, outcome: SendOutcome): void {
       const def = byId.get(id);

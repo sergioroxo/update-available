@@ -11,6 +11,8 @@ import * as ui from './theme/chrome';
 import { IrcApp } from './apps/irc';
 import { KitApp } from './apps/kit';
 import { ProvotypeApp, type Provotype } from './apps/provotype';
+import { UpdateApp, type UpdateKey } from './apps/update';
+import sendsData from '../../data/sends.json';
 import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
@@ -76,6 +78,14 @@ export class DesktopOS {
   irc: IrcApp | null = null;
   /** the reinterpretation provotype runtime — reachable behind ?reinterp=1 only */
   provotype: ProvotypeApp | null = null;
+  /** the era-update ritual (spine-armed; never player-triggered) */
+  updateApp: UpdateApp | null = null;
+  /** a live send OFFER (master script §4) — icon + summons window on the desktop */
+  private sendOffer: { id: string; open: boolean } | null = null;
+  /** engine listens: the update restart landed — morph the space to `era` */
+  onEraShift?: (era: string) => void;
+  /** engine listens: the player answered a summons (visit dollies the camera) */
+  onSendResolve?: (id: string, outcome: 'visited' | 'declined') => void;
   private toast: { text: string; t: number } | null = null;
   private kitToastShown = false;
   private behindToastShown = false;
@@ -175,6 +185,69 @@ export class DesktopOS {
     this.dirty = true;
   }
 
+  /** ARM an era update (the spine calls this on a documented failure —
+   *  never the player; SCRIPT_UPDATE v0.5 §1). Modal over the desktop. */
+  armUpdate(key: UpdateKey): void {
+    if (!this.reinterp || this.updateApp) return;
+    this.updateApp = new UpdateApp(key);
+    this.updateApp.onComplete = (toEra) => {
+      this.updateApp = null;
+      this.dirty = true;
+      this.onEraShift?.(toEra);
+    };
+    this.dirty = true;
+  }
+
+  get updateArmed(): boolean {
+    return this.updateApp !== null;
+  }
+
+  /** a SEND offer lands (script §4: a summons, not a door). An icon appears;
+   *  its window carries the reason + Turn-and-look / Not-now. Both file. */
+  offerSend(id: string): void {
+    if (!this.reinterp || this.sendOffer) return;
+    const def = (sendsData as unknown as { sends: { id: string; offer: { icon: string } }[] })
+      .sends.find(s => s.id === id);
+    if (!def) return;
+    this.sendOffer = { id, open: false };
+    this.toast = { text: def.offer.icon, t: 6 };
+    this.dirty = true;
+  }
+
+  get sendOfferPending(): boolean {
+    return this.sendOffer !== null;
+  }
+
+  private resolveSend(outcome: 'visited' | 'declined'): void {
+    if (!this.sendOffer) return;
+    const id = this.sendOffer.id;
+    this.sendOffer = null;
+    this.dirty = true;
+    this.onSendResolve?.(id, outcome);
+  }
+
+  private drawSendOffer(W: number, H: number): void {
+    if (!this.sendOffer) return;
+    const def = (sendsData as unknown as {
+      sends: { id: string; offer: { icon: string; lines: string[]; go: string; decline: string } }[];
+    }).sends.find(s => s.id === this.sendOffer?.id);
+    if (!def) return;
+    if (!this.sendOffer.open) {
+      this.drawIcon(10, 200, def.offer.icon, true, 'icon-send');
+      return;
+    }
+    const dw = 300; const dh = 150;
+    const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
+    const c = ui.windowFrame(this.ctx, dx, dy, dw, dh, def.offer.icon, true);
+    ui.setFont(this.ctx, 9);
+    this.ctx.fillStyle = ERA1.black;
+    def.offer.lines.forEach((line, i) => this.ctx.fillText(line, c.x + 10, c.y + 6 + i * 12));
+    ui.button(this.ctx, c.x + c.w - 110, c.y + c.h - 26, 102, 18, def.offer.go, {});
+    ui.button(this.ctx, c.x + 8, c.y + c.h - 26, 70, 18, def.offer.decline, {});
+    this.hits.push({ x: c.x + c.w - 110, y: c.y + c.h - 26, w: 102, h: 18, id: 'send-go' });
+    this.hits.push({ x: c.x + 8, y: c.y + c.h - 26, w: 70, h: 18, id: 'send-decline' });
+  }
+
   private setPhase(p: Phase): void {
     this.phase = p;
     this.phaseT = 0;
@@ -217,6 +290,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.kit) this.kit.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
+    if (this.phase === 'desktop' && this.updateApp) this.updateApp.update(dt);
     if (!this.behindToastShown && this.t >= this.behindToastAt) {
       this.behindToastShown = true;
       this.toast = { text: strings.desktop.behindToast, t: 7 };
@@ -385,6 +459,9 @@ export class DesktopOS {
     if (this.irc?.open) this.irc.draw(ctx, this.caretOn());
     if (this.dossierOpen) this.drawDossier(W, H);
     if (this.provotype?.open) this.provotype.draw(ctx);
+    this.drawSendOffer(W, H);
+    // the update ritual is SYSTEM-modal — it draws over everything
+    if (this.updateApp?.open && this.updateApp.visible) this.updateApp.draw(ctx);
     // taskbar
     ui.bevel(ctx, 0, H - 22, W, 22, true);
     ui.button(ctx, 3, H - 19, 50, 16, 'MENU', {});
@@ -732,6 +809,14 @@ export class DesktopOS {
         this.setPhase('desktop');
         this.openProvotype(originIntakeProvotypeData as unknown as Provotype);
         break;
+      case 'update2': this.setPhase('desktop'); this.armUpdate('u2'); break;
+      case 'update3': this.setPhase('desktop'); this.armUpdate('u3'); break;
+      case 'update4': this.setPhase('desktop'); this.armUpdate('u4'); break;
+      case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
+      case 'send-s1': this.setPhase('desktop'); this.offerSend('s1'); break;
+      case 'send-s2': this.setPhase('desktop'); this.offerSend('s2'); break;
+      case 'send-s3': this.setPhase('desktop'); this.offerSend('s3'); break;
+      case 'send-s4': this.setPhase('desktop'); this.offerSend('s4'); break;
     }
     this.dirty = true;
   }
@@ -761,6 +846,12 @@ export class DesktopOS {
       this.handleOpeningClick(hit ? hit.id : '');
       return;
     }
+    // the update ritual is SYSTEM-modal while visible — it owns every click
+    if (this.phase === 'desktop' && this.updateApp?.open && this.updateApp.visible) {
+      this.updateApp.handleClick(x, y);
+      this.dirty = true;
+      return;
+    }
     // the provotype is modal while open — it owns the desktop's clicks
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleClick(x, y); return; }
     if (hit) {
@@ -774,6 +865,9 @@ export class DesktopOS {
         case 'dossier-close': this.dossierOpen = false; break;
         case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
         case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;
+        case 'icon-send': if (this.sendOffer) { this.sendOffer.open = true; this.toast = null; } break;
+        case 'send-go': this.resolveSend('visited'); break;
+        case 'send-decline': this.resolveSend('declined'); break;
       }
       this.dirty = true;
       return;
