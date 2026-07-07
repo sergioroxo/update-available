@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from runner.pipeline import tag_registry
+
+
+@pytest.fixture(autouse=True)
+def _isolate_local_overrides(tmp_path, monkeypatch):
+    """Keep researcher-local tag overrides from leaking into unit tests."""
+    monkeypatch.setattr(tag_registry, "OVERRIDES_PATH", tmp_path / "tag_registry_overrides.json")
 
 
 def test_load_tag_registry_uses_env_vocab_dir(tmp_path, monkeypatch):

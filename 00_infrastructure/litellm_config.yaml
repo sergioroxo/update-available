@@ -58,7 +58,7 @@ model_list:
   # ── Structured extraction ────────────────────────────────────────────────
   - model_name: coder
     litellm_params:
-      model: ollama_chat/qwen3-coder:30b-mlx
+      model: ollama_chat/qwen3-coder:30b
       api_base: http://localhost:11434
       max_tokens: 8192
 

@@ -1,0 +1,13 @@
+{
+  "Actor:father-john": {
+    "category": "Actor",
+    "tag": "Father John",
+    "active": true,
+    "custom": "longform",
+    "definition": "Group member/Priest",
+    "concept_cluster": "Longform candidate",
+    "connections": "f975709247a9-section-013: Discusses the 'false self' of the obedient priest, childhood molestation, and views gay culture as 'craziness' (pp. 183-184, 188).\nf975709247a9-section-014: Father John continued, 'One thing I've learned here is to fight back against passivity... Before, I would just fall into my pornography addiction.' (p. 194)\nf975709247a9-section-015: Intervenes in group discussions to provide guidance and congratulates Roger on his realizations (p. 207-208).\nf975709247a9-section-004: A 52-year-old Roman Catholic priest struggling with a 'double life' involving pornography and sex with men.\nf975709247a9-section-005: A priest struggling with homosexuality who describes his journey of 'healing' and his struggle with pornography (pp. 57-64).",
+    "occurrences": 8,
+    "researcher_note": "Promoted from longform candidate register for f975709247a9. Model-proposed; researcher should confirm before using as evidence."
+  }
+}

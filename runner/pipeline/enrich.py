@@ -1454,7 +1454,7 @@ def _format_lexicon_prompt_line(term: dict) -> str:
 
 def _fetch_entity_registry(config: Config) -> list[dict]:
     import httpx
-    query = '*[_type in ["organization","person"]]{ _type, name }'
+    query = '*[_type in ["organization","person"]]{ _id, _type, name, fullName, countryOfOrigin, website }'
     url = (
         f"https://{config.sanity_project_id}.api.sanity.io"
         f"/v2024-01-01/data/query/{config.sanity_dataset}"

@@ -657,7 +657,7 @@ def _dashboard_ingest_readiness(config):
     missing_dates = [doc for doc in docs if not doc.get("publication_date")]
     embedding_gaps = [
         doc for doc in docs
-        if not doc.get("embedding_ok") or not doc.get("supabase_ok")
+        if not doc.get("embedding_ok") or doc.get("supabase_ok") is False
     ]
     missing_recommended = [
         row for row in intel_rows
@@ -2128,6 +2128,14 @@ def _longform_candidate_rows(corpus_dir: Path) -> list[dict]:
     return rows
 
 
+def _longform_candidate_rows_for_doc(doc_dir: Path) -> list[dict]:
+    """Collect model-proposed longform candidates for one corpus document."""
+    return [
+        row for row in _longform_candidate_rows(doc_dir.parent)
+        if row.get("doc_id") == doc_dir.name
+    ]
+
+
 def _longform_candidate_tag_category(family: str) -> str:
     return {
         "lexicon": "Term (discovered)",
@@ -2161,6 +2169,222 @@ def _longform_candidate_to_tag_updates(candidate: dict) -> dict:
         "active": True,
         "custom": "longform",
     }
+
+
+def _longform_candidate_primary_text(candidate: dict) -> tuple[str, str]:
+    definitions = candidate.get("definitions") if isinstance(candidate.get("definitions"), list) else []
+    evidence = candidate.get("evidence") if isinstance(candidate.get("evidence"), list) else []
+    definition = next((str(item).strip() for item in definitions if str(item).strip()), "")
+    quote = ""
+    for item in evidence:
+        if isinstance(item, dict):
+            quote = str(item.get("quote_or_note") or "").strip()
+            if quote:
+                break
+    return definition, quote
+
+
+def _proposal_id_for_longform_candidate(family: str, doc_id: str, item: dict) -> str | None:
+    try:
+        from runner.pipeline.enrich import _generate_proposal_id
+
+        return _generate_proposal_id(family, doc_id, item)
+    except Exception:
+        return None
+
+
+def _longform_candidate_to_enrichment_item(
+    candidate: dict,
+    *,
+    target_family: str,
+    entity_type: str = "person",
+) -> tuple[str, dict]:
+    doc_id = str(candidate.get("doc_id") or "").strip()
+    label = str(candidate.get("label") or "").strip()
+    if not doc_id:
+        raise ValueError("Candidate has no source document ID.")
+    if not label:
+        raise ValueError("Candidate has no label.")
+
+    definition, quote = _longform_candidate_primary_text(candidate)
+    now = datetime.now(timezone.utc).isoformat()
+    base_note = (
+        f"Created from longform candidate `{candidate.get('candidate_id') or label}`. "
+        "Model-proposed; researcher must review before treating as registry evidence."
+    )
+    confidence = candidate.get("confidence")
+    common = {
+        "approved": False,
+        "rejected": False,
+        "pushed_to_sanity": False,
+        "sanity_id": None,
+        "researcher_note": base_note,
+        "proposal_status": "pending",
+        "source_longform_candidate_id": candidate.get("candidate_id") or "",
+        "source_longform_family": candidate.get("family") or "",
+        "source_longform_count": int(candidate.get("count") or 0),
+        "converted_from_family": "longform_candidates",
+        "converted_at": now,
+    }
+    if confidence is not None:
+        common["model_confidence"] = confidence
+
+    if target_family == "lexicon_proposals":
+        item = {
+            **common,
+            "action": "add_new",
+            "term": label,
+            "language": "en",
+            "proposed_cluster": "Unknown",
+            "function": "Unknown",
+            "exact_quote": quote,
+            "definition_as_used": definition,
+            "usage_register": "neutral",
+            "variants": [],
+            "relationships": [],
+            "co_occurring_terms": [],
+            "existing_entry_id": None,
+            "existing_entry_term": None,
+            "merge_target_id": None,
+        }
+        item["proposal_id"] = _proposal_id_for_longform_candidate("lexicon", doc_id, item)
+        return target_family, item
+
+    if target_family == "entity_proposals":
+        if entity_type not in {"person", "organization"}:
+            raise ValueError("Entity proposal target must be person or organization.")
+        item = {
+            **common,
+            "action": "add_new",
+            "entity_type": entity_type,
+            "name": label,
+            "registry_fit": "needs_review",
+            "registry_fit_rationale": (
+                "Created from a longform review candidate. Confirm whether this belongs "
+                "in the organization/person registry before pushing."
+            ),
+            "self_description": definition,
+            "activities_stated": [],
+            "geographic_scope": [],
+            "legal_entities_mentioned": [],
+            "claims_made": [],
+            "evidence_quote": quote,
+            "network_connections": [],
+            "key_individuals": [],
+            "affiliated_orgs": [],
+            "role_in_sogice": definition if entity_type == "person" else "",
+            "existing_entity_id": None,
+        }
+        item["proposal_id"] = _proposal_id_for_longform_candidate("entity", doc_id, item)
+        return target_family, item
+
+    if target_family == "tactic_proposals":
+        item = {
+            **common,
+            "action": "add_new",
+            "tactic": label,
+            "definition": definition,
+            "evidence_quote": quote,
+            "primary_cluster": "Unknown",
+            "secondary_cluster": "Unknown",
+            "tactic_level": "sub-tactic",
+            "existing_tactic_id": None,
+        }
+        item["proposal_id"] = _proposal_id_for_longform_candidate("tactic", doc_id, item)
+        return target_family, item
+
+    if target_family == "practice_descriptions":
+        item = {
+            **common,
+            "practice_id": f"Practice: {label}",
+            "exact_description": quote or definition or label,
+            "practice_fit": "candidate_evidence",
+            "practice_cluster": "",
+            "practice_fit_rationale": "Created from longform review candidate; keep as evidence until clustered or promoted.",
+            "existing_practice_id": None,
+            "harm_stance": "not_mentioned",
+            "harm_quote": "",
+        }
+        item["proposal_id"] = _proposal_id_for_longform_candidate("practice", doc_id, item)
+        return target_family, item
+
+    raise ValueError(f"Unsupported proposal family: {target_family}")
+
+
+def _longform_default_proposal_family(candidate_family: str) -> str:
+    return {
+        "lexicon": "lexicon_proposals",
+        "entity": "entity_proposals",
+        "tactic": "tactic_proposals",
+        "practice": "practice_descriptions",
+    }.get(str(candidate_family or "").lower(), "lexicon_proposals")
+
+
+def _active_lexicon_proposal_exists(proposals: list[dict], *, term: str) -> bool:
+    wanted = term.strip().casefold()
+    for proposal in proposals:
+        if not isinstance(proposal, dict) or proposal.get("rejected"):
+            continue
+        if str(proposal.get("term") or "").strip().casefold() == wanted:
+            return True
+    return False
+
+
+def _active_practice_proposal_exists(proposals: list[dict], *, practice_id: str) -> bool:
+    wanted = practice_id.strip().casefold()
+    for proposal in proposals:
+        if not isinstance(proposal, dict) or proposal.get("rejected"):
+            continue
+        if str(proposal.get("practice_id") or "").strip().casefold() == wanted:
+            return True
+    return False
+
+
+def _create_longform_candidate_enrichment_proposal(
+    corpus_dir: Path,
+    candidate: dict,
+    *,
+    target_family: str,
+    entity_type: str = "person",
+) -> dict:
+    doc_id = str(candidate.get("doc_id") or "").strip()
+    if not doc_id:
+        raise ValueError("Candidate has no source document ID.")
+    doc_dir = corpus_dir / doc_id
+    if not doc_dir.exists():
+        raise ValueError(f"Source document not found: {doc_id}")
+    enrich_path = doc_dir / "enrichment.json"
+    data = _read_json_file(enrich_path, {})
+    if not isinstance(data, dict):
+        data = {}
+    for key in (
+        "lexicon_proposals",
+        "entity_proposals",
+        "tactic_proposals",
+        "practice_descriptions",
+        "statistical_claims",
+        "ingestion_queue",
+        "corpus_connections",
+    ):
+        data.setdefault(key, [])
+
+    key, item = _longform_candidate_to_enrichment_item(
+        candidate,
+        target_family=target_family,
+        entity_type=entity_type,
+    )
+    if key == "lexicon_proposals" and _active_lexicon_proposal_exists(data[key], term=item["term"]):
+        raise ValueError(f"An active lexicon proposal named {item['term']!r} already exists.")
+    if key == "entity_proposals" and _active_entity_proposal_exists(data[key], name=item["name"], entity_type=item["entity_type"]):
+        raise ValueError(f"An active entity proposal named {item['name']!r} already exists.")
+    if key == "tactic_proposals" and _active_tactic_proposal_exists(data[key], tactic=item["tactic"]):
+        raise ValueError(f"An active tactic proposal named {item['tactic']!r} already exists.")
+    if key == "practice_descriptions" and _active_practice_proposal_exists(data[key], practice_id=item["practice_id"]):
+        raise ValueError(f"An active practice proposal named {item['practice_id']!r} already exists.")
+
+    data[key].append(item)
+    enrich_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return {"path": str(enrich_path), "key": key, "item": item}
 
 
 # ---------------------------------------------------------------------------
@@ -2722,6 +2946,85 @@ def _apply_tactic_target(item: dict, target: dict) -> None:
     item["existing_tactic_id"] = target["_id"]
     item["existing_tactic_name"] = target["tactic"]
     item["tactic"] = target["tactic"]
+
+
+def _entity_target_label(row: dict) -> str:
+    name = row.get("name") or row.get("_id") or "(unnamed entity)"
+    entity_type = str(row.get("_type") or row.get("entity_type") or "entity").replace("organization", "org")
+    return f"{name} · {entity_type} · {row.get('_id', '')}"
+
+
+def _entity_target_options(sanity_entities: list[dict], *, current_id: str = "") -> list[dict]:
+    """Return stable entity picker options from Sanity registry rows.
+
+    The first option is an explicit empty choice so ``enrich_existing`` can be
+    saved without pretending a target exists. If the current saved id is not in
+    the fetched registry, keep it as a fallback row instead of silently dropping
+    researcher state.
+    """
+    rows: list[dict] = [{
+        "_id": "",
+        "_type": "",
+        "name": "— choose an existing entity —",
+        "label": "— choose an existing entity —",
+        "missing_from_registry": False,
+    }]
+    seen: set[str] = set()
+    for entity in sanity_entities or []:
+        entity_id = str(entity.get("_id") or entity.get("id") or entity.get("sanity_id") or "").strip()
+        name = str(entity.get("name") or entity.get("fullName") or "").strip()
+        if not entity_id or not name or entity_id in seen:
+            continue
+        seen.add(entity_id)
+        row = {
+            "_id": entity_id,
+            "_type": str(entity.get("_type") or entity.get("entity_type") or "").strip(),
+            "name": name,
+            "fullName": str(entity.get("fullName") or "").strip(),
+            "countryOfOrigin": entity.get("countryOfOrigin") or entity.get("country_of_origin") or "",
+            "website": entity.get("website") or entity.get("website_url") or "",
+            "missing_from_registry": False,
+        }
+        row["label"] = _entity_target_label(row)
+        rows.append(row)
+    current_id = str(current_id or "").strip()
+    if current_id and current_id not in seen:
+        rows.append({
+            "_id": current_id,
+            "_type": "",
+            "name": current_id,
+            "label": f"{current_id} · current saved id not returned by registry",
+            "missing_from_registry": True,
+        })
+    return [rows[0]] + sorted(rows[1:], key=lambda row: str(row["label"]).casefold())
+
+
+def _entity_target_index(options: list[dict], item: dict) -> int:
+    target_id = str(item.get("existing_entity_id") or item.get("sanity_id") or "").strip()
+    if target_id:
+        for idx, option in enumerate(options):
+            if option.get("_id") == target_id:
+                return idx
+    target_name = str(item.get("existing_entity_name") or item.get("name") or "").strip().casefold()
+    if target_name:
+        for idx, option in enumerate(options):
+            if str(option.get("name") or "").strip().casefold() == target_name:
+                return idx
+    return 0
+
+
+def _apply_entity_target(item: dict, target: dict) -> None:
+    target_id = str(target.get("_id") or "").strip()
+    if not target_id:
+        item["existing_entity_id"] = None
+        item.pop("existing_entity_name", None)
+        return
+    item["existing_entity_id"] = target_id
+    item["existing_entity_name"] = target.get("name") or target_id
+    entity_type = str(target.get("_type") or "").strip()
+    if entity_type in {"organization", "person"}:
+        item["entity_type"] = entity_type
+
 
 
 def _repair_known_lexicon_variant_for_review(item: dict) -> dict:
@@ -4739,7 +5042,30 @@ def page_document_list():
         st.info(f"Corpus directory does not exist yet: {corpus_dir}")
         return
 
-    docs = _load_local_docs(corpus_dir)
+    active_heavy_job = _read_app_job_lock()
+    active_triage_job = _read_source_queue_triage_lock()
+    if active_heavy_job or active_triage_job:
+        with st.expander("Active background work", expanded=True):
+            if active_heavy_job:
+                st.warning(_format_app_job_lock(active_heavy_job))
+            if active_triage_job:
+                st.info(_format_app_job_lock(active_triage_job))
+
+    check_supabase_live = st.checkbox(
+        "Check Supabase rows while loading",
+        value=False,
+        key="doc_list_check_supabase_live",
+        help=(
+            "Off by default so Document List stays responsive on slow networks. "
+            "Turn it on when you specifically need to find uploaded docs with missing Supabase rows."
+        ),
+    )
+    if not check_supabase_live:
+        st.caption(
+            "Supabase row checks are skipped for this view. Local embedding files are still checked."
+        )
+
+    docs = _load_local_docs(corpus_dir, check_supabase=check_supabase_live)
     if not docs:
         st.info("No documents found in local corpus. Run `python -m runner ingest <url>` to add one.")
         return
@@ -4813,6 +5139,10 @@ def page_document_list():
             if (d.get("rhetorical_intensity") or None) == _intensity_value
         ]
     if filter_workflow != "All":
+        if filter_workflow == "Uploaded but Supabase missing" and not check_supabase_live:
+            st.warning(
+                "Turn on **Check Supabase rows while loading** to use the Supabase-missing filter."
+            )
         filtered = [
             d for d in filtered
             if _doc_matches_workflow_filter(d, filter_workflow)
@@ -4844,6 +5174,21 @@ def page_document_list():
         filtered = sorted(filtered, key=lambda d: str(d.get("analysis_saved_at") or ""), reverse=True)
 
     st.caption(f"Showing {len(filtered)} of {len(docs)} documents")
+
+    display_mode = st.radio(
+        "Display mode",
+        ["One document at a time (recommended)", "Expanded cards"],
+        horizontal=True,
+        key="doc_list_display_mode",
+        help=(
+            "The recommended mode renders only one full document panel. Expanded cards can be slower "
+            "because Streamlit executes every card body even when collapsed."
+        ),
+    )
+
+    summary_rows = _doc_list_summary_rows(filtered)
+    if summary_rows:
+        st.dataframe(summary_rows, hide_index=True, width="stretch")
 
     # ── Export ────────────────────────────────────────────────────────────
     with st.expander("Export batch to JSON"):
@@ -4934,8 +5279,38 @@ def page_document_list():
                 else:
                     st.error(r.stderr[-2000:] or r.stdout[-2000:])
 
-    for doc in filtered:
-        _render_doc_card(doc, corpus_dir)
+    if not filtered:
+        st.info("No documents match the current filters.")
+        return
+
+    if display_mode.startswith("One document"):
+        selected_doc_id = st.session_state.get("doc_list_open_doc_id")
+        doc_ids = [doc["doc_id"] for doc in filtered]
+        default_index = doc_ids.index(selected_doc_id) if selected_doc_id in doc_ids else 0
+        selected_id = st.selectbox(
+            "Open document",
+            doc_ids,
+            index=default_index,
+            format_func=lambda doc_id: _doc_select_label(next(d for d in filtered if d["doc_id"] == doc_id)),
+            key="doc_list_selected_doc_id",
+        )
+        selected_doc = next(doc for doc in filtered if doc["doc_id"] == selected_id)
+        st.session_state["doc_list_open_doc_id"] = selected_id
+        _render_doc_card(selected_doc, corpus_dir, force_expanded=True)
+    else:
+        max_cards = st.number_input(
+            "Maximum full cards to render",
+            min_value=1,
+            max_value=max(1, len(filtered)),
+            value=min(10, len(filtered)),
+            step=1,
+            key="doc_list_max_cards",
+            help="Rendering many full cards can be slow because each card computes readiness and sidecar panels.",
+        )
+        if len(filtered) > max_cards:
+            st.info(f"Rendering the first {max_cards} document card(s). Narrow filters or increase the limit to see more.")
+        for doc in filtered[: int(max_cards)]:
+            _render_doc_card(doc, corpus_dir)
 
 
 def _app_document_sets_dir(corpus_dir: Path) -> Path:
@@ -4985,7 +5360,7 @@ def _pending_second_opinion_summary(doc_dir: Path) -> dict:
     return {"count": len(pending), "latest_generated_at": latest}
 
 
-def _load_local_docs(corpus_dir: Path) -> list[dict]:
+def _load_local_docs(corpus_dir: Path, *, check_supabase: bool = False) -> list[dict]:
     docs = []
     config = _load_config_safe()
     for doc_dir in sorted(corpus_dir.iterdir()):
@@ -5012,7 +5387,7 @@ def _load_local_docs(corpus_dir: Path) -> list[dict]:
         has_enrichment = (doc_dir / "enrichment.json").exists()
         has_preprocess = (doc_dir / "preprocess.json").exists()
         has_extracted = (doc_dir / "extracted.txt").exists() or (doc_dir / "extracted.md").exists()
-        embedding_status = _local_embedding_status(doc_dir, config)
+        embedding_status = _local_embedding_status(doc_dir, config, check_supabase=check_supabase)
         media = _read_json_file(doc_dir / "media_metadata.json", {})
         general = media.get("general", {}) if isinstance(media, dict) else {}
         preprocess = _read_json_file(doc_dir / "preprocess.json", {})
@@ -5167,7 +5542,7 @@ def _document_workflow_summary(
     if not uploaded:
         reasons.append("needs_upload")
         labels.append("Needs upload")
-    elif embedding_status.get("ok") and not embedding_status.get("supabase_ok"):
+    elif embedding_status.get("ok") and embedding_status.get("supabase_ok") is False:
         reasons.append("supabase_missing")
         labels.append("Supabase missing")
 
@@ -5267,6 +5642,60 @@ def _doc_workflow_badge_text(doc: dict) -> str:
             if len(ordered) >= 3:
                 break
     return " · ".join(ordered[:3])
+
+
+def _doc_embedding_status_label(doc: dict) -> str:
+    """Human-readable embedding/Supabase status for compact document lists."""
+    supabase_ok = doc.get("supabase_ok")
+    if supabase_ok is True:
+        return "Supabase OK"
+    if doc.get("embedding_ok") and supabase_ok is False:
+        return "Supabase missing"
+    if doc.get("embedding_ok"):
+        return "Local embedding OK"
+    return "Embedding missing"
+
+
+def _doc_embedding_badge(doc: dict) -> str:
+    label = _doc_embedding_status_label(doc)
+    if label == "Supabase OK":
+        return " · Supabase OK"
+    if label == "Supabase missing":
+        return " · Supabase missing"
+    if label == "Local embedding OK":
+        return " · Local embedding"
+    return " · Embedding missing"
+
+
+def _doc_select_label(doc: dict) -> str:
+    source = str(doc.get("source") or "").strip()
+    if len(source) > 72:
+        source = source[:69] + "..."
+    bits = [
+        str(doc.get("doc_id") or ""),
+        str(doc.get("type") or "Unknown"),
+        _doc_embedding_status_label(doc),
+        "uploaded" if doc.get("uploaded") else "local",
+    ]
+    if source:
+        bits.append(source)
+    return " | ".join(bits)
+
+
+def _doc_list_summary_rows(docs: list[dict]) -> list[dict]:
+    rows = []
+    for doc in docs:
+        rows.append({
+            "Doc ID": doc.get("doc_id", ""),
+            "Type": doc.get("type", "Unknown"),
+            "Workflow": _doc_workflow_badge_text(doc) or "—",
+            "Upload": "Sanity" if doc.get("uploaded") else "Local only",
+            "Embedding": _doc_embedding_status_label(doc),
+            "Confidence": f"{float(doc.get('confidence') or 0):.2f}",
+            "Date": doc.get("publication_date") or "—",
+            "Source": doc.get("source") or "",
+        })
+    return rows
 
 
 def _set_doc_action_feedback(doc_id: str, level: str, message: str) -> None:
@@ -6033,6 +6462,32 @@ def _render_longform_panel(doc_id: str, doc_dir: Path) -> None:
             ]
             if family_bits:
                 st.caption("Candidate register: " + " · ".join(family_bits))
+            doc_candidates = _longform_candidate_rows_for_doc(doc_dir)
+            if doc_candidates:
+                with st.expander("Review candidates found in this longform document", expanded=True):
+                    st.caption(
+                        "These are model-proposed candidates from the section reviews. "
+                        "Use Tag Registry → Longform review candidates to save them as local enrichment hints; "
+                        "that still does not push anything to Sanity."
+                    )
+                    st.dataframe(
+                        [
+                            {
+                                "family": row["family"],
+                                "label": row["label"],
+                                "count": row["count"],
+                                "confidence": row["confidence"],
+                                "actions": ", ".join(row.get("candidate_actions") or []),
+                            }
+                            for row in doc_candidates[:200]
+                        ],
+                        hide_index=True,
+                        width="stretch",
+                    )
+                    nav_cols = st.columns([1, 3])
+                    if nav_cols[0].button("Open Tag Registry", key=f"longform_candidates_open_tag_registry_{doc_id}"):
+                        st.session_state["_nav_to"] = "Tag Registry"
+                        st.rerun()
 
         if review_status["archive_abstract"]:
             st.markdown("**Longform archive abstract**")
@@ -6047,6 +6502,12 @@ def _render_longform_panel(doc_id: str, doc_dir: Path) -> None:
             key=f"longform_review_llm_{doc_id}",
             help="Use the heavy route for full books when available.",
         )
+        if str(review_llm).startswith("litelm") and not _model_runtime_unload_configured(_load_config_safe()):
+            st.warning(
+                "This route uses Mac Studio LiteLLM, but the app does not see a configured model-unload path. "
+                "For full books, that can leave Qwen/Gemma/embedding models resident and push the machine into swap. "
+                "Use Mac Studio Worker/offload or configure `MAC_STUDIO_MODEL_CONTROL_URL` before large runs."
+            )
         r1, r2, r3 = st.columns([1, 1, 1])
         max_section_chars = int(
             r1.number_input(
@@ -6384,11 +6845,11 @@ def _render_review_overrides(doc_id: str, doc_dir: Path) -> None:
                 st.rerun()
 
 
-def _render_doc_card(doc: dict, corpus_dir: Path):
+def _render_doc_card(doc: dict, corpus_dir: Path, *, force_expanded: bool = False):
     conf = doc["confidence"]
     conf_color = "🟢" if conf >= 0.85 else "🟡" if conf >= 0.70 else "🔴"
     upload_badge = "☁️ Sanity" if doc["uploaded"] else "💾 Local"
-    embedding_badge = " · Supabase" if doc.get("supabase_ok") else " · Embedding missing"
+    embedding_badge = _doc_embedding_badge(doc)
     enrich_badge = " ✨ Enriched" if doc["has_enrichment"] else ""
     media_badge = " · Media" if doc.get("is_media") else ""
     annotation_count = len(doc.get("annotation_profiles") or [])
@@ -6410,7 +6871,7 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
 
     _selected_from_inbox = st.session_state.get("doc_list_open_doc_id") == doc["doc_id"]
 
-    with st.expander(header, expanded=_selected_from_inbox):
+    with st.expander(header, expanded=force_expanded or _selected_from_inbox):
         _render_doc_action_feedback(doc["doc_id"])
         if _has_high_harm(doc.get("harm", [])):
             high_harm_labels = sorted(_HIGH_HARM_INDICATORS.intersection(doc["harm"]))
@@ -6463,8 +6924,13 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 )
             if not doc.get("embedding_ok"):
                 st.warning(f"Local embedding is missing or empty: {doc.get('embedding_detail')}")
-            elif not doc.get("supabase_ok"):
+            elif doc.get("supabase_ok") is False:
                 st.warning(f"No Supabase embedding row found: {doc.get('supabase_detail')}")
+            elif doc.get("supabase_ok") is None:
+                st.info(
+                    "Supabase row was not checked in this view. Turn on "
+                    "`Check Supabase rows while loading` if you need live row status."
+                )
 
         # Show enrichment summary if available
         enrich_path = corpus_dir / doc["doc_id"] / "enrichment.json"
@@ -6577,10 +7043,18 @@ def _render_doc_card(doc: dict, corpus_dir: Path):
                 else:
                     st.error(message)
                 st.rerun()
-        elif uploaded and not supabase_ok:
-            # Embedding exists locally + Sanity record written, but Supabase row is missing
-            if st.button("Push embedding to Supabase", key=f"push_supa_{doc['doc_id']}",
-                         help="Embedding exists locally; Supabase row is missing. Re-uploads to Sanity + Supabase."):
+        elif uploaded and supabase_ok is not True:
+            # Embedding exists locally + Sanity record written; Supabase is missing or not checked.
+            supabase_button_label = (
+                "Push embedding to Supabase"
+                if supabase_ok is False
+                else "Push/refresh embedding in Supabase"
+            )
+            if st.button(
+                supabase_button_label,
+                key=f"push_supa_{doc['doc_id']}",
+                help="Embedding exists locally. Re-runs upload-doc so Sanity/Supabase metadata are refreshed.",
+            ):
                 with st.spinner("Pushing to Supabase…"):
                     r = __import__("subprocess").run(
                         [sys.executable, "-m", "runner", "upload-doc", doc["doc_id"]],
@@ -7245,11 +7719,11 @@ def _render_document_analysis_tags(doc_id: str, doc_dir: Path) -> None:
                     st.warning(str(warning))
 
 
-def _local_embedding_status(doc_dir: Path, config) -> dict:
+def _local_embedding_status(doc_dir: Path, config, *, check_supabase: bool = True) -> dict:
     status = {
         "ok": False,
         "detail": "missing embedding.json",
-        "supabase_ok": False,
+        "supabase_ok": None,
         "supabase_detail": "not checked",
     }
     emb_path = doc_dir / "embedding.json"
@@ -7273,7 +7747,7 @@ def _local_embedding_status(doc_dir: Path, config) -> dict:
             status["detail"] = f"pending retry: {model} | {error}"
         except Exception as exc:
             status["detail"] = f"pending retry marker unreadable: {exc}"
-    if config:
+    if config and check_supabase:
         try:
             from runner.clients.supabase import _client as _sb_client
 
@@ -7287,6 +7761,8 @@ def _local_embedding_status(doc_dir: Path, config) -> dict:
                 status["supabase_detail"] = "no row found"
         except Exception as exc:
             status["supabase_detail"] = f"check failed: {exc}"
+    elif not check_supabase:
+        status["supabase_detail"] = "not checked in this view"
     return status
 
 
@@ -8290,19 +8766,68 @@ def _render_longform_candidate_registry(corpus_dir: Path, save_custom_tag) -> No
             "Saving here means: local enrichment hint only. It will help future enrichment detect "
             "the term/tactic/practice/actor, but it does not create or push a Sanity registry record."
         )
-        if st.button("Save as local enrichment hint (not Sanity)", key="tag_longform_promote"):
-            try:
-                key = save_custom_tag(
-                    category,
-                    str(candidate["label"]),
-                    _longform_candidate_to_tag_updates(candidate),
+        hint_col, proposal_col = st.columns(2)
+        with hint_col:
+            if st.button("Save as local enrichment hint (not Sanity)", key="tag_longform_promote"):
+                try:
+                    key = save_custom_tag(
+                        category,
+                        str(candidate["label"]),
+                        _longform_candidate_to_tag_updates(candidate),
+                    )
+                except Exception as exc:
+                    st.error(f"Could not save candidate: {exc}")
+                else:
+                    st.session_state.pop("tag_registry_rows", None)
+                    st.success(f"Saved local tag override `{key}`. Reload Tag Registry to see it in the table.")
+                    st.rerun()
+        with proposal_col:
+            family_options = {
+                "Lexicon term": "lexicon_proposals",
+                "Entity / actor": "entity_proposals",
+                "Tactic": "tactic_proposals",
+                "Practice evidence": "practice_descriptions",
+            }
+            default_family = _longform_default_proposal_family(str(candidate["family"]))
+            labels = list(family_options)
+            default_index = list(family_options.values()).index(default_family) if default_family in family_options.values() else 0
+            proposal_label = st.selectbox(
+                "Create review proposal as",
+                labels,
+                index=default_index,
+                key="tag_longform_proposal_family",
+            )
+            target_family = family_options[proposal_label]
+            entity_type = "person"
+            if target_family == "entity_proposals":
+                entity_type = st.selectbox(
+                    "Entity type",
+                    ["person", "organization"],
+                    key="tag_longform_entity_type",
+                    help="Use person for named individuals, organization for groups/projects/networks.",
                 )
-            except Exception as exc:
-                st.error(f"Could not save candidate: {exc}")
-            else:
-                st.session_state.pop("tag_registry_rows", None)
-                st.success(f"Saved local tag override `{key}`. Reload Tag Registry to see it in the table.")
-                st.rerun()
+            if st.button("Create local proposal for review", key="tag_longform_create_proposal"):
+                try:
+                    created = _create_longform_candidate_enrichment_proposal(
+                        corpus_dir,
+                        candidate,
+                        target_family=target_family,
+                        entity_type=entity_type,
+                    )
+                except Exception as exc:
+                    st.error(f"Could not create proposal: {exc}")
+                else:
+                    target_queue = {
+                        "lexicon_proposals": "Lexicon Queue",
+                        "entity_proposals": "Entity Queue",
+                        "tactic_proposals": "Tactic Queue",
+                        "practice_descriptions": "Practice Evidence",
+                    }.get(created["key"], "Local Proposals")
+                    st.session_state["lexicon_active_section"] = "Local Proposals"
+                    st.session_state["local_proposal_active_queue"] = target_queue
+                    st.session_state["_nav_to"] = "Lexicon"
+                    st.success(f"Created `{candidate['label']}` in {target_queue}.")
+                    st.rerun()
 
 
 def _render_seed_lexicon_import(config) -> None:
@@ -10600,6 +11125,51 @@ def _render_single_proposal_editor(record: dict) -> None:
             except Exception as exc:
                 st.error(f"Could not move proposal: {exc}")
 
+    with st.expander("Move this proposal to the Tactic queue"):
+        st.caption(
+            "Use this when the model proposed a tactic/framing pattern as a lexicon term. "
+            "This rejects the lexicon proposal locally and creates a pending tactic proposal "
+            "with the same source quote and confidence metadata. Nothing is pushed to Sanity."
+        )
+        tactic_cols = st.columns([1, 1])
+        with tactic_cols[0]:
+            tactic_cluster = _controlled_select(
+                "Primary cluster",
+                item.get("proposed_cluster", "Unknown"),
+                _LEXICON_CLUSTERS,
+                key=f"{prefix}_move_tactic_cluster",
+            )
+        with tactic_cols[1]:
+            tactic_level = st.selectbox(
+                "Tactic level",
+                ["structural", "sub-tactic", "campaign"],
+                index=_option_index(["structural", "sub-tactic", "campaign"], "sub-tactic"),
+                key=f"{prefix}_move_tactic_level",
+            )
+        tactic_note = st.text_area(
+            "Conversion note",
+            value="",
+            height=70,
+            key=f"{prefix}_move_tactic_note",
+            help="Optional note explaining why this belongs in the tactic queue.",
+        )
+        if st.button("Move to Tactic queue", key=f"{prefix}_move_to_tactic"):
+            try:
+                created = _convert_lexicon_proposal_to_tactic(
+                    record["path"],
+                    record["index"],
+                    item,
+                    primary_cluster=tactic_cluster,
+                    tactic_level=tactic_level,
+                    researcher_note=tactic_note,
+                )
+                st.success(
+                    f"Created tactic proposal `{created.get('tactic')}` and rejected the lexicon proposal locally. "
+                    "Open Tag Registry → Tactics to review and approve it."
+                )
+            except Exception as exc:
+                st.error(f"Could not move proposal: {exc}")
+
 
 def _render_proposal_confidence_editor(item: dict, prefix: str) -> None:
     model_confidence = _proposal_confidence(item, "model_confidence", "llm_confidence", "confidence")
@@ -10659,6 +11229,45 @@ def _render_single_entity_editor(record: dict) -> None:
             index=_option_index(["add_new", "enrich_existing"], item.get("action", "add_new")),
             key=f"{prefix}_action",
         )
+        st.caption(_ENRICHMENT_ACTION_HELP.get(item["action"], ""))
+        if item["action"] == "enrich_existing":
+            config = _load_config_safe()
+            if st.button("Reload existing entities", key=f"{prefix}_reload_entities"):
+                st.session_state.pop("entity_registry", None)
+            if "entity_registry" not in st.session_state:
+                try:
+                    from runner.pipeline.enrich import _fetch_entity_registry
+
+                    st.session_state.entity_registry = _fetch_entity_registry(config) if config else []
+                except Exception as exc:
+                    st.session_state.entity_registry = []
+                    st.caption(f"Could not load Sanity entities: {exc}")
+            entity_options = _entity_target_options(
+                st.session_state.get("entity_registry", []),
+                current_id=str(item.get("existing_entity_id") or ""),
+            )
+            if len(entity_options) > 1:
+                target = st.selectbox(
+                    "Existing Sanity entity",
+                    entity_options,
+                    index=_entity_target_index(entity_options, item),
+                    format_func=lambda row: row["label"],
+                    key=f"{prefix}_existing_entity_picker",
+                    help=(
+                        "Select the existing organization/person registry record this proposal should enrich. "
+                        "This writes `existing_entity_id` locally; nothing is pushed until you approve and push."
+                    ),
+                )
+                _apply_entity_target(item, target)
+                if target.get("_id"):
+                    st.caption(f"Will enrich `{target.get('name')}` (`{target['_id']}`).")
+            else:
+                item["existing_entity_id"] = st.text_input(
+                    "Existing Sanity entity id",
+                    value=item.get("existing_entity_id", "") or "",
+                    key=f"{prefix}_existing_manual",
+                    help="Sanity entities could not be loaded; paste the existing organization/person id manually.",
+                )
         current_fit = _entity_registry_fit(item)
         item["registry_fit"] = st.selectbox(
             "Registry fit",
@@ -10722,8 +11331,11 @@ def _render_single_entity_editor(record: dict) -> None:
             "Country of origin",
             value=item.get("country_of_origin", ""),
             key=f"{prefix}_country",
-            help="ISO country code or full country name where the entity is based or registered (e.g. 'NO', 'Germany'). "
-                 "Confirm against the source document or the entity's own website before approving.",
+            help=(
+                "Use the legal registration or headquarters country when known. For Europe-wide or international "
+                "organizations, record the HQ/registration here and put operating scope such as `Europe-wide`, "
+                "`EU`, or `international` in the note/geographic scope. Leave blank if the source does not support it."
+            ),
         )
     with c4:
         item["website_url"] = st.text_input(
@@ -10791,6 +11403,73 @@ def _render_single_entity_editor(record: dict) -> None:
     if item.get("key_individuals"):
         st.write("**Key individuals:**")
         st.dataframe(item["key_individuals"], width="stretch")
+
+    with st.expander("Move this entity proposal to another queue"):
+        st.caption(
+            "Use this when the model put a term, tactic, or practice evidence item in the Entity queue. "
+            "This creates a new local proposal in the selected queue and rejects the original entity proposal. "
+            "Nothing is pushed to Sanity."
+        )
+        target_family_label = st.selectbox(
+            "Move to",
+            ["Lexicon term", "Tactic", "Practice evidence"],
+            key=f"{prefix}_move_family",
+        )
+        target_family = {
+            "Lexicon term": "lexicon_proposals",
+            "Tactic": "tactic_proposals",
+            "Practice evidence": "practice_descriptions",
+        }[target_family_label]
+        move_cluster = "Unknown"
+        move_level = "sub-tactic"
+        if target_family == "tactic_proposals":
+            move_cols = st.columns([1, 1])
+            with move_cols[0]:
+                move_cluster = _controlled_select(
+                    "Primary cluster",
+                    "Unknown",
+                    _LEXICON_CLUSTERS,
+                    key=f"{prefix}_move_tactic_cluster",
+                )
+            with move_cols[1]:
+                move_level = st.selectbox(
+                    "Tactic level",
+                    ["structural", "sub-tactic", "campaign"],
+                    index=_option_index(["structural", "sub-tactic", "campaign"], "sub-tactic"),
+                    key=f"{prefix}_move_tactic_level",
+                )
+        move_note = st.text_area(
+            "Conversion note",
+            value="",
+            height=70,
+            key=f"{prefix}_move_note",
+            help="Optional note explaining why this belongs in the selected queue.",
+        )
+        if st.button("Move proposal", key=f"{prefix}_move_to_family"):
+            try:
+                created = _convert_entity_proposal_to_family(
+                    record["path"],
+                    record["index"],
+                    item,
+                    target_family=target_family,
+                    primary_cluster=move_cluster,
+                    tactic_level=move_level,
+                    researcher_note=move_note,
+                )
+                label = (
+                    created.get("term")
+                    or created.get("tactic")
+                    or created.get("practice_id")
+                    or created.get("proposal_id")
+                    or "new proposal"
+                )
+                st.success(
+                    f"Created `{label}` in {target_family_label} and rejected the entity proposal locally. "
+                    "Open the relevant queue to review it."
+                )
+            except Exception as exc:
+                st.error(f"Could not move proposal: {exc}")
+
     _render_proposal_confidence_editor(item, prefix)
 
     b1, b2, b3, b4 = st.columns(4)
@@ -11246,6 +11925,64 @@ def _entity_item_from_lexicon_proposal(
     return entity
 
 
+def _tactic_item_from_lexicon_proposal(
+    item: dict,
+    doc_id: str,
+    *,
+    primary_cluster: str = "Unknown",
+    tactic_level: str = "sub-tactic",
+    researcher_note: str = "",
+) -> dict:
+    if primary_cluster not in _LEXICON_CLUSTERS:
+        raise ValueError(f"Unsupported primary_cluster: {primary_cluster}")
+    if tactic_level not in {"structural", "sub-tactic", "campaign"}:
+        raise ValueError(f"Unsupported tactic_level: {tactic_level}")
+
+    tactic = str(item.get("term") or "").strip()
+    if not tactic:
+        raise ValueError("Lexicon proposal has no term to convert into a tactic label.")
+
+    model_confidence = _proposal_confidence(item, "model_confidence", "llm_confidence", "confidence")
+    tactic_item = {
+        "action": "add_new",
+        "tactic": tactic,
+        "primary_cluster": primary_cluster,
+        "secondary_cluster": "Unknown",
+        "tactic_level": tactic_level,
+        "definition": item.get("definition_as_used") or item.get("accessible_definition") or "",
+        "evidence_quote": item.get("exact_quote", ""),
+        "approved": False,
+        "rejected": False,
+        "pushed_to_sanity": False,
+        "sanity_id": None,
+        "researcher_note": _append_note(
+            researcher_note,
+            f"Converted from lexicon proposal `{item.get('proposal_id') or tactic}` for researcher review.",
+        ),
+        "proposal_status": "pending",
+        "source_lexicon_proposal_id": item.get("proposal_id"),
+        "source_lexicon_term": tactic,
+        "source_lexicon_action": item.get("action", ""),
+        "converted_from_family": "lexicon_proposals",
+        "converted_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if model_confidence is not None:
+        tactic_item["model_confidence"] = model_confidence
+    researcher_confidence = _proposal_confidence(item, "researcher_confidence")
+    if researcher_confidence is not None:
+        tactic_item["researcher_confidence"] = researcher_confidence
+    if item.get("confidence_rationale"):
+        tactic_item["confidence_rationale"] = item.get("confidence_rationale")
+
+    try:
+        from runner.pipeline.enrich import _generate_proposal_id
+
+        tactic_item["proposal_id"] = _generate_proposal_id("tactic", doc_id, tactic_item)
+    except Exception:
+        tactic_item["proposal_id"] = None
+    return tactic_item
+
+
 def _active_entity_proposal_exists(proposals: list[dict], *, name: str, entity_type: str) -> bool:
     wanted_name = name.strip().casefold()
     wanted_type = entity_type.strip().casefold()
@@ -11255,6 +11992,17 @@ def _active_entity_proposal_exists(proposals: list[dict], *, name: str, entity_t
         if str(proposal.get("name", "")).strip().casefold() != wanted_name:
             continue
         if str(proposal.get("entity_type", "")).strip().casefold() == wanted_type:
+            return True
+    return False
+
+
+def _active_tactic_proposal_exists(proposals: list[dict], *, tactic: str) -> bool:
+    wanted = tactic.strip().casefold().replace("-", " ")
+    for proposal in proposals:
+        if not isinstance(proposal, dict) or proposal.get("rejected"):
+            continue
+        candidate = str(proposal.get("tactic", "")).strip().casefold().replace("-", " ")
+        if candidate == wanted:
             return True
     return False
 
@@ -11306,6 +12054,224 @@ def _convert_lexicon_proposal_to_entity(
 
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
     return entity
+
+
+def _convert_lexicon_proposal_to_tactic(
+    path: Path,
+    index: int,
+    lexicon_item: dict | None = None,
+    *,
+    primary_cluster: str = "Unknown",
+    tactic_level: str = "sub-tactic",
+    researcher_note: str = "",
+) -> dict:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    lexicon_proposals = data.setdefault("lexicon_proposals", [])
+    if index >= len(lexicon_proposals):
+        raise IndexError(f"Proposal index {index} no longer exists in {path}")
+
+    current = dict(lexicon_item or lexicon_proposals[index])
+    doc_id = path.parent.name
+    tactic = _tactic_item_from_lexicon_proposal(
+        current,
+        doc_id,
+        primary_cluster=primary_cluster,
+        tactic_level=tactic_level,
+        researcher_note=researcher_note,
+    )
+    tactic_proposals = data.setdefault("tactic_proposals", [])
+    if _active_tactic_proposal_exists(tactic_proposals, tactic=tactic["tactic"]):
+        raise ValueError(f"An active tactic proposal named {tactic['tactic']!r} already exists in this enrichment file.")
+
+    tactic_proposals.append(tactic)
+
+    marker = (
+        f"Converted to tactic proposal `{tactic.get('proposal_id') or tactic['tactic']}`; "
+        "original lexicon proposal rejected locally."
+    )
+    current["approved"] = False
+    current["rejected"] = True
+    current["proposal_status"] = "rejected"
+    current["converted_to_tactic_proposal_id"] = tactic.get("proposal_id")
+    current["converted_to_tactic_at"] = tactic.get("converted_at")
+    current["researcher_note"] = _append_note(current.get("researcher_note", ""), marker)
+    lexicon_proposals[index] = current
+
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return tactic
+
+
+def _converted_entity_common(current: dict, *, target_family: str, researcher_note: str = "") -> dict:
+    now = datetime.now(timezone.utc).isoformat()
+    marker = (
+        f"Converted from entity proposal `{current.get('proposal_id') or current.get('name') or ''}`. "
+        "Model-proposed; researcher must review before treating as registry evidence."
+    )
+    note = _append_note(current.get("researcher_note", ""), marker)
+    if researcher_note:
+        note = _append_note(note, researcher_note)
+    common = {
+        "approved": False,
+        "rejected": False,
+        "pushed_to_sanity": False,
+        "sanity_id": None,
+        "proposal_status": "pending",
+        "researcher_note": note,
+        "converted_from_family": "entity_proposals",
+        "converted_from_proposal_id": current.get("proposal_id"),
+        "converted_at": now,
+    }
+    model_confidence = _proposal_confidence(current, "model_confidence", "llm_confidence", "confidence")
+    if model_confidence is not None:
+        common["model_confidence"] = model_confidence
+    researcher_confidence = _proposal_confidence(current, "researcher_confidence")
+    if researcher_confidence is not None:
+        common["researcher_confidence"] = researcher_confidence
+    if current.get("confidence_rationale"):
+        common["confidence_rationale"] = current.get("confidence_rationale")
+    common["target_family"] = target_family
+    return common
+
+
+def _lexicon_item_from_entity_proposal(current: dict, doc_id: str, *, researcher_note: str = "") -> dict:
+    label = str(current.get("name") or "").strip()
+    item = {
+        **_converted_entity_common(current, target_family="lexicon_proposals", researcher_note=researcher_note),
+        "action": "add_new",
+        "term": label,
+        "language": "en",
+        "proposed_cluster": "Unknown",
+        "function": "Unknown",
+        "exact_quote": current.get("evidence_quote", ""),
+        "definition_as_used": current.get("self_description") or current.get("role_in_sogice") or label,
+        "accessible_definition": "",
+        "usage_register": "neutral",
+        "variants": [],
+        "relationships": [],
+        "co_occurring_terms": [],
+        "existing_entry_id": None,
+        "existing_entry_term": None,
+        "merge_target_id": None,
+    }
+    try:
+        from runner.pipeline.enrich import _generate_proposal_id
+
+        item["proposal_id"] = _generate_proposal_id("lexicon", doc_id, item)
+    except Exception:
+        item["proposal_id"] = None
+    return item
+
+
+def _tactic_item_from_entity_proposal(
+    current: dict,
+    doc_id: str,
+    *,
+    primary_cluster: str = "Unknown",
+    tactic_level: str = "sub-tactic",
+    researcher_note: str = "",
+) -> dict:
+    label = str(current.get("name") or "").strip()
+    item = {
+        **_converted_entity_common(current, target_family="tactic_proposals", researcher_note=researcher_note),
+        "action": "add_new",
+        "tactic": label,
+        "definition": current.get("self_description") or current.get("role_in_sogice") or label,
+        "evidence_quote": current.get("evidence_quote", ""),
+        "primary_cluster": primary_cluster,
+        "secondary_cluster": "Unknown",
+        "tactic_level": tactic_level,
+        "existing_tactic_id": None,
+    }
+    try:
+        from runner.pipeline.enrich import _generate_proposal_id
+
+        item["proposal_id"] = _generate_proposal_id("tactic", doc_id, item)
+    except Exception:
+        item["proposal_id"] = None
+    return item
+
+
+def _practice_item_from_entity_proposal(current: dict, doc_id: str, *, researcher_note: str = "") -> dict:
+    label = str(current.get("name") or "").strip()
+    item = {
+        **_converted_entity_common(current, target_family="practice_descriptions", researcher_note=researcher_note),
+        "practice_id": f"Practice: {label}",
+        "exact_description": current.get("evidence_quote") or current.get("self_description") or label,
+        "practice_fit": "candidate_evidence",
+        "practice_cluster": "",
+        "practice_fit_rationale": "Converted from an entity proposal; keep as evidence until clustered or promoted.",
+        "existing_practice_id": None,
+        "harm_stance": "not_mentioned",
+        "harm_quote": "",
+    }
+    try:
+        from runner.pipeline.enrich import _generate_proposal_id
+
+        item["proposal_id"] = _generate_proposal_id("practice", doc_id, item)
+    except Exception:
+        item["proposal_id"] = None
+    return item
+
+
+def _convert_entity_proposal_to_family(
+    path: Path,
+    index: int,
+    entity_item: dict | None = None,
+    *,
+    target_family: str,
+    primary_cluster: str = "Unknown",
+    tactic_level: str = "sub-tactic",
+    researcher_note: str = "",
+) -> dict:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    entity_proposals = data.setdefault("entity_proposals", [])
+    if index >= len(entity_proposals):
+        raise IndexError(f"Proposal index {index} no longer exists in {path}")
+
+    current = dict(entity_item or entity_proposals[index])
+    doc_id = path.parent.name
+    if target_family == "lexicon_proposals":
+        created = _lexicon_item_from_entity_proposal(current, doc_id, researcher_note=researcher_note)
+        target = data.setdefault("lexicon_proposals", [])
+        if _active_lexicon_proposal_exists(target, term=created["term"]):
+            raise ValueError(f"An active lexicon proposal named {created['term']!r} already exists in this enrichment file.")
+    elif target_family == "tactic_proposals":
+        created = _tactic_item_from_entity_proposal(
+            current,
+            doc_id,
+            primary_cluster=primary_cluster,
+            tactic_level=tactic_level,
+            researcher_note=researcher_note,
+        )
+        target = data.setdefault("tactic_proposals", [])
+        if _active_tactic_proposal_exists(target, tactic=created["tactic"]):
+            raise ValueError(f"An active tactic proposal named {created['tactic']!r} already exists in this enrichment file.")
+    elif target_family == "practice_descriptions":
+        created = _practice_item_from_entity_proposal(current, doc_id, researcher_note=researcher_note)
+        target = data.setdefault("practice_descriptions", [])
+        if _active_practice_proposal_exists(target, practice_id=created["practice_id"]):
+            raise ValueError(
+                f"An active practice evidence item named {created['practice_id']!r} already exists in this enrichment file."
+            )
+    else:
+        raise ValueError(f"Unsupported target family: {target_family}")
+
+    target.append(created)
+    marker = (
+        f"Converted to {target_family} proposal `{created.get('proposal_id') or created.get('term') or created.get('tactic') or created.get('practice_id')}`; "
+        "original entity proposal rejected locally."
+    )
+    current["approved"] = False
+    current["rejected"] = True
+    current["proposal_status"] = "rejected"
+    current[f"converted_to_{target_family}_id"] = created.get("proposal_id")
+    current["converted_to_family"] = target_family
+    current["converted_at"] = created.get("converted_at")
+    current["researcher_note"] = _append_note(current.get("researcher_note", ""), marker)
+    entity_proposals[index] = current
+
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return created
 
 
 def _update_enrichment_proposal(path: Path, key: str, index: int, item: dict) -> None:
@@ -14571,6 +15537,94 @@ def _model_route_rows(config) -> list[dict[str, str]]:
     ]
 
 
+def _model_runtime_preflight_rows(config) -> list[dict[str, str]]:
+    """Return local, no-network model runtime safety checks for Streamlit pages.
+
+    LiteLLM can be reachable while the underlying Ollama unload path is not. In
+    that state the app may successfully call analysis/enrichment/embedding but
+    leave several large models resident in memory. This helper is intentionally
+    local/static so Source Queue rendering never hangs on network probes.
+    """
+    litelm_url = str(getattr(config, "litelm_base_url", "") or "").strip()
+    model_control_url = str(getattr(config, "mac_studio_model_control_url", "") or "").strip()
+    direct_ollama_url = str(getattr(config, "litelm_ollama_base_url", "") or "").strip()
+    has_model_control = bool(model_control_url) and "<" not in model_control_url
+    has_direct_ollama = bool(direct_ollama_url) and "<" not in direct_ollama_url
+    unload_path = (
+        "model-control"
+        if has_model_control
+        else "direct Ollama"
+        if has_direct_ollama
+        else "missing"
+    )
+    unload_status = (
+        "configured"
+        if (has_model_control or has_direct_ollama)
+        else "not configured"
+    )
+    unload_detail = (
+        model_control_url
+        if has_model_control
+        else direct_ollama_url
+        if has_direct_ollama
+        else "Set MAC_STUDIO_MODEL_CONTROL_URL, or LITELM_OLLAMA_BASE_URL / MAC_STUDIO_OLLAMA_URL."
+    )
+    app_job_lock = _read_app_job_lock()
+    triage_lock = _read_source_queue_triage_lock()
+    return [
+        {
+            "check": "LiteLLM inference endpoint",
+            "status": "configured" if litelm_url else "not configured",
+            "value": litelm_url or "Set LITELM_BASE_URL.",
+            "why it matters": "Needed for triage, analysis, enrichment, longform, and embedding routes that use litelm*.",
+        },
+        {
+            "check": "Model unload path",
+            "status": unload_status,
+            "value": f"{unload_path}: {unload_detail}",
+            "why it matters": "Needed to evict Qwen/Gemma/embedding models between stages and avoid swap pressure.",
+        },
+        {
+            "check": "Current heavy-job lock",
+            "status": "active" if app_job_lock else "clear",
+            "value": _format_app_job_lock(app_job_lock) if app_job_lock else "No longform/media/heavy app job lock.",
+            "why it matters": "Prevents starting another large local/remote model job while one is already running.",
+        },
+        {
+            "check": "Source Queue triage lock",
+            "status": "active" if triage_lock else "clear",
+            "value": _format_app_job_lock(triage_lock) if triage_lock else "No background queue triage job lock.",
+            "why it matters": "Prevents invisible duplicate triage runs.",
+        },
+    ]
+
+
+def _model_runtime_unload_configured(config) -> bool:
+    model_control_url = str(getattr(config, "mac_studio_model_control_url", "") or "").strip()
+    direct_ollama_url = str(getattr(config, "litelm_ollama_base_url", "") or "").strip()
+    return (
+        (bool(model_control_url) and "<" not in model_control_url)
+        or (bool(direct_ollama_url) and "<" not in direct_ollama_url)
+    )
+
+
+def _render_model_runtime_preflight(config, *, expanded: bool = False) -> None:
+    rows = _model_runtime_preflight_rows(config)
+    unload_ok = _model_runtime_unload_configured(config)
+    with st.expander("Model runtime / unload preflight", expanded=expanded or not unload_ok):
+        st.caption(
+            "This is a local configuration check. It does not ping the Mac Studio, "
+            "so Source Queue stays responsive. Use Mac Studio Node → Doctor for live network tests."
+        )
+        st.dataframe(rows, hide_index=True, width="stretch")
+        if not unload_ok:
+            st.warning(
+                "LiteLLM may still run, but no unload path is configured. Heavy routes can leave "
+                "multiple Ollama models resident and cause swap. Prefer Mac Studio Worker/offload, "
+                "or configure `MAC_STUDIO_MODEL_CONTROL_URL` before long local Streamlit jobs."
+            )
+
+
 def _start_source_queue_triage_job(
     *,
     item_ids: list[str],
@@ -15078,6 +16132,7 @@ def page_source_queue():
             hide_index=True,
             use_container_width=True,
         )
+    _render_model_runtime_preflight(config)
 
     st.divider()
 
@@ -18095,6 +19150,12 @@ def _render_source_export(config, root: Path) -> None:
     )
     file_rows = _source_parse_file_rows(files_text)
     if file_rows:
+        st.info(
+            "Parsed local file rows. When a source URL is provided after `|`, the package sends "
+            "both items: the file is analyzed as the main source, and the URL is ingested separately "
+            "as contextual/network evidence. Do not wrap Finder paths in quotes; the app strips them "
+            "when possible, but raw paths are safest."
+        )
         with st.expander("Book/report splitting preview commands"):
             st.caption(
                 "`split-book` is a preview-only helper for long PDFs/EPUB/DOCX/MD files. "

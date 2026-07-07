@@ -340,6 +340,60 @@ def test_document_workflow_summary_uploaded_but_supabase_missing():
     assert summary["ready_to_upload"] is False
 
 
+def test_document_workflow_summary_supabase_not_checked_is_not_marked_missing():
+    summary = _workflow_summary(uploaded=True, embedding_status={"ok": True, "supabase_ok": None})
+
+    assert "needs_upload" not in summary["reasons"]
+    assert "supabase_missing" not in summary["reasons"]
+    assert summary["ready_to_upload"] is False
+
+
+@pytest.mark.parametrize(
+    ("doc", "expected"),
+    [
+        ({"embedding_ok": False, "supabase_ok": None}, "Embedding missing"),
+        ({"embedding_ok": True, "supabase_ok": None}, "Local embedding OK"),
+        ({"embedding_ok": True, "supabase_ok": False}, "Supabase missing"),
+        ({"embedding_ok": True, "supabase_ok": True}, "Supabase OK"),
+    ],
+)
+def test_doc_embedding_status_label_distinguishes_local_and_supabase_states(doc, expected):
+    import runner.app as app_mod
+
+    assert app_mod._doc_embedding_status_label(doc) == expected
+
+
+def test_doc_list_summary_rows_include_embedding_and_workflow_state():
+    import runner.app as app_mod
+
+    rows = app_mod._doc_list_summary_rows([
+        {
+            "doc_id": "abc123",
+            "type": "Anti-SOGICE",
+            "needs_action_labels": ["Needs upload", "Source offload"],
+            "uploaded": False,
+            "embedding_ok": True,
+            "supabase_ok": None,
+            "confidence": 0.91,
+            "publication_date": "2020-01-02",
+            "source": "https://example.test/doc",
+        }
+    ])
+
+    assert rows == [
+        {
+            "Doc ID": "abc123",
+            "Type": "Anti-SOGICE",
+            "Workflow": "Needs upload · Source offload",
+            "Upload": "Local only",
+            "Embedding": "Local embedding OK",
+            "Confidence": "0.91",
+            "Date": "2020-01-02",
+            "Source": "https://example.test/doc",
+        }
+    ]
+
+
 @pytest.mark.parametrize(
     ("workflow_filter", "expected"),
     [
@@ -1751,6 +1805,90 @@ def test_convert_lexicon_proposal_to_entity_refuses_duplicate_active_entity(tmp_
     assert data["lexicon_proposals"][0].get("rejected") is not True
 
 
+def test_convert_lexicon_proposal_to_tactic_creates_tactic_and_rejects_lexicon(tmp_path):
+    import json
+    from runner.app import _convert_lexicon_proposal_to_tactic
+
+    doc_dir = tmp_path / "9e6a34beb3c9"
+    doc_dir.mkdir()
+    enrichment_path = doc_dir / "enrichment.json"
+    enrichment_path.write_text(
+        json.dumps({
+            "lexicon_proposals": [
+                {
+                    "proposal_id": "prop-lexicon-shield",
+                    "action": "add_new",
+                    "term": "Religious Freedom Shield",
+                    "language": "en",
+                    "definition_as_used": "Uses religious liberty rhetoric to protect anti-LGBTQ policy.",
+                    "exact_quote": "They framed it as religious freedom.",
+                    "model_confidence": 0.86,
+                    "researcher_confidence": 0.75,
+                }
+            ],
+            "tactic_proposals": [],
+        }),
+        encoding="utf-8",
+    )
+
+    created = _convert_lexicon_proposal_to_tactic(
+        enrichment_path,
+        0,
+        primary_cluster="Policy-Resistance",
+        tactic_level="sub-tactic",
+        researcher_note="This is a tactic pattern, not only a term.",
+    )
+
+    data = json.loads(enrichment_path.read_text(encoding="utf-8"))
+    assert created["tactic"] == "Religious Freedom Shield"
+    assert created["primary_cluster"] == "Policy-Resistance"
+    assert created["definition"] == "Uses religious liberty rhetoric to protect anti-LGBTQ policy."
+    assert created["evidence_quote"] == "They framed it as religious freedom."
+    assert created["approved"] is False
+    assert created["proposal_status"] == "pending"
+    assert created["source_lexicon_proposal_id"] == "prop-lexicon-shield"
+    assert len(data["tactic_proposals"]) == 1
+    assert data["lexicon_proposals"][0]["rejected"] is True
+    assert data["lexicon_proposals"][0]["proposal_status"] == "rejected"
+    assert data["lexicon_proposals"][0]["converted_to_tactic_proposal_id"] == created["proposal_id"]
+
+
+def test_convert_lexicon_proposal_to_tactic_refuses_duplicate_active_tactic(tmp_path):
+    import json
+    import pytest
+    from runner.app import _convert_lexicon_proposal_to_tactic
+
+    doc_dir = tmp_path / "9e6a34beb3c9"
+    doc_dir.mkdir()
+    enrichment_path = doc_dir / "enrichment.json"
+    enrichment_path.write_text(
+        json.dumps({
+            "lexicon_proposals": [
+                {
+                    "action": "add_new",
+                    "term": "Religious Freedom Shield",
+                    "exact_quote": "religious freedom shield",
+                }
+            ],
+            "tactic_proposals": [
+                {
+                    "action": "add_new",
+                    "tactic": "Religious-Freedom-Shield",
+                    "rejected": False,
+                }
+            ],
+        }),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="already exists"):
+        _convert_lexicon_proposal_to_tactic(enrichment_path, 0)
+
+    data = json.loads(enrichment_path.read_text(encoding="utf-8"))
+    assert len(data["tactic_proposals"]) == 1
+    assert data["lexicon_proposals"][0].get("rejected") is not True
+
+
 def test_entity_item_from_lexicon_proposal_supports_person_role(tmp_path):
     from runner.app import _entity_item_from_lexicon_proposal
 
@@ -2387,6 +2525,38 @@ def test_longform_candidate_rows_surface_review_register(tmp_path):
     assert rows[0]["source_path"].endswith("longform_candidates.json")
 
 
+def test_longform_candidate_rows_for_doc_filters_to_current_doc(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    first = tmp_path / "doc-book"
+    second = tmp_path / "doc-other"
+    first.mkdir()
+    second.mkdir()
+    (first / "longform_candidates.json").write_text(json.dumps({
+        "candidates": [{
+            "family": "lexicon",
+            "label": "Reparative therapy",
+            "count": 4,
+            "confidence": 0.9,
+        }]
+    }), encoding="utf-8")
+    (second / "longform_candidates.json").write_text(json.dumps({
+        "candidates": [{
+            "family": "entity",
+            "label": "Other org",
+            "count": 1,
+            "confidence": 0.7,
+        }]
+    }), encoding="utf-8")
+
+    rows = app_mod._longform_candidate_rows_for_doc(first)
+
+    assert len(rows) == 1
+    assert rows[0]["doc_id"] == "doc-book"
+    assert rows[0]["label"] == "Reparative therapy"
+
+
 def test_longform_candidate_to_tag_updates_preserves_evidence():
     import runner.app as app_mod
 
@@ -2408,6 +2578,99 @@ def test_longform_candidate_to_tag_updates_preserves_evidence():
     assert updates["occurrences"] == 4
     assert "s1: first quote" in updates["connections"]
     assert "Model-proposed" in updates["researcher_note"]
+
+
+def test_longform_candidate_to_enrichment_item_creates_entity_proposal():
+    import runner.app as app_mod
+
+    candidate = {
+        "doc_id": "f975709247a9",
+        "candidate_id": "longform-entity-father-john",
+        "family": "entity",
+        "label": "Father John",
+        "count": 8,
+        "confidence": 0.82,
+        "definitions": ["Roman Catholic priest discussed in the group material."],
+        "evidence": [{"section_id": "section-004", "quote_or_note": "Father John described a double life."}],
+    }
+
+    key, item = app_mod._longform_candidate_to_enrichment_item(
+        candidate,
+        target_family="entity_proposals",
+        entity_type="person",
+    )
+
+    assert key == "entity_proposals"
+    assert item["name"] == "Father John"
+    assert item["entity_type"] == "person"
+    assert item["registry_fit"] == "needs_review"
+    assert item["self_description"] == "Roman Catholic priest discussed in the group material."
+    assert item["evidence_quote"] == "Father John described a double life."
+    assert item["role_in_sogice"] == "Roman Catholic priest discussed in the group material."
+    assert item["model_confidence"] == 0.82
+    assert item["proposal_status"] == "pending"
+    assert item["source_longform_candidate_id"] == "longform-entity-father-john"
+    assert item["proposal_id"].startswith("prop-")
+
+
+def test_create_longform_candidate_enrichment_proposal_writes_to_enrichment_json(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    doc_dir = tmp_path / "f975709247a9"
+    doc_dir.mkdir()
+    candidate = {
+        "doc_id": "f975709247a9",
+        "candidate_id": "longform-entity-father-john",
+        "family": "entity",
+        "label": "Father John",
+        "count": 8,
+        "confidence": 0.82,
+        "definitions": ["Roman Catholic priest discussed in the group material."],
+        "evidence": [{"section_id": "section-004", "quote_or_note": "Father John described a double life."}],
+    }
+
+    created = app_mod._create_longform_candidate_enrichment_proposal(
+        tmp_path,
+        candidate,
+        target_family="entity_proposals",
+        entity_type="person",
+    )
+
+    assert created["key"] == "entity_proposals"
+    data = json.loads((doc_dir / "enrichment.json").read_text(encoding="utf-8"))
+    assert len(data["entity_proposals"]) == 1
+    assert data["entity_proposals"][0]["name"] == "Father John"
+    assert data["entity_proposals"][0]["evidence_quote"] == "Father John described a double life."
+    assert data["lexicon_proposals"] == []
+
+
+def test_create_longform_candidate_enrichment_proposal_refuses_duplicate_entity(tmp_path):
+    import json
+    import pytest
+    import runner.app as app_mod
+
+    doc_dir = tmp_path / "f975709247a9"
+    doc_dir.mkdir()
+    (doc_dir / "enrichment.json").write_text(json.dumps({
+        "entity_proposals": [{"name": "Father John", "entity_type": "person", "rejected": False}]
+    }), encoding="utf-8")
+    candidate = {
+        "doc_id": "f975709247a9",
+        "family": "entity",
+        "label": "Father John",
+    }
+
+    with pytest.raises(ValueError, match="already exists"):
+        app_mod._create_longform_candidate_enrichment_proposal(
+            tmp_path,
+            candidate,
+            target_family="entity_proposals",
+            entity_type="person",
+        )
+
+    data = json.loads((doc_dir / "enrichment.json").read_text(encoding="utf-8"))
+    assert len(data["entity_proposals"]) == 1
 
 
 def test_app_job_lock_preserves_recovery_metadata(tmp_path, monkeypatch):
@@ -2518,3 +2781,106 @@ def test_source_queue_log_looks_failed_detects_traceback_and_ollama_errors():
     assert app_mod._source_queue_log_looks_failed("litellm.APIConnectionError: Ollama_chatException")
     assert app_mod._source_queue_log_looks_failed("error starting llama-server")
     assert not app_mod._source_queue_log_looks_failed("Done. Use runner queue-list to review.")
+
+
+def test_entity_target_options_include_ids_and_current_missing_id():
+    import runner.app as app_mod
+
+    options = app_mod._entity_target_options(
+        [
+            {"_id": "organization-narth", "_type": "organization", "name": "NARTH"},
+            {"_id": "person-joseph-nicolosi", "_type": "person", "name": "Joseph Nicolosi"},
+        ],
+        current_id="organization-existing-only",
+    )
+
+    ids = [row["_id"] for row in options]
+    assert ids[0] == ""
+    assert "organization-narth" in ids
+    assert "person-joseph-nicolosi" in ids
+    assert "organization-existing-only" in ids
+    missing = next(row for row in options if row["_id"] == "organization-existing-only")
+    assert missing["missing_from_registry"] is True
+
+
+def test_apply_entity_target_sets_existing_id_and_type():
+    import runner.app as app_mod
+
+    item = {"name": "NARTH", "entity_type": "person"}
+    app_mod._apply_entity_target(
+        item,
+        {"_id": "organization-narth", "_type": "organization", "name": "NARTH"},
+    )
+
+    assert item["existing_entity_id"] == "organization-narth"
+    assert item["existing_entity_name"] == "NARTH"
+    assert item["entity_type"] == "organization"
+
+
+def test_entity_target_index_prefers_existing_entity_id():
+    import runner.app as app_mod
+
+    options = app_mod._entity_target_options([
+        {"_id": "organization-narth", "_type": "organization", "name": "NARTH"},
+        {"_id": "organization-courage", "_type": "organization", "name": "Courage"},
+    ])
+
+    assert app_mod._entity_target_index(options, {"existing_entity_id": "organization-courage"}) == [
+        row["_id"] for row in options
+    ].index("organization-courage")
+
+
+def test_convert_entity_proposal_to_lexicon_rejects_original(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    doc_dir = tmp_path / "doc-1"
+    doc_dir.mkdir()
+    enrichment_path = doc_dir / "enrichment.json"
+    enrichment_path.write_text(json.dumps({
+        "entity_proposals": [{
+            "name": "Transgender Trend",
+            "entity_type": "organization",
+            "self_description": "A phrase used as a trend frame.",
+            "evidence_quote": "transgender trend",
+            "model_confidence": 0.8,
+        }],
+        "lexicon_proposals": [],
+    }), encoding="utf-8")
+
+    created = app_mod._convert_entity_proposal_to_family(
+        enrichment_path,
+        0,
+        target_family="lexicon_proposals",
+        researcher_note="Wrong family.",
+    )
+    data = json.loads(enrichment_path.read_text(encoding="utf-8"))
+
+    assert created["term"] == "Transgender Trend"
+    assert data["lexicon_proposals"][0]["term"] == "Transgender Trend"
+    assert data["entity_proposals"][0]["rejected"] is True
+    assert data["entity_proposals"][0]["proposal_status"] == "rejected"
+
+
+def test_convert_entity_proposal_to_tactic_normalizes_duplicate_check(tmp_path):
+    import json
+    import runner.app as app_mod
+
+    doc_dir = tmp_path / "doc-1"
+    doc_dir.mkdir()
+    enrichment_path = doc_dir / "enrichment.json"
+    enrichment_path.write_text(json.dumps({
+        "entity_proposals": [{
+            "name": "Religious Freedom Shield",
+            "entity_type": "organization",
+            "evidence_quote": "religious freedom",
+        }],
+        "tactic_proposals": [{"tactic": "Religious-Freedom-Shield"}],
+    }), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="active tactic proposal"):
+        app_mod._convert_entity_proposal_to_family(
+            enrichment_path,
+            0,
+            target_family="tactic_proposals",
+        )

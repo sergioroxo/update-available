@@ -513,6 +513,44 @@ def test_model_route_rows_show_stable_aliases_and_mlx_backing_models():
     assert by_process["Embedding"]["expected Ollama model"] == "qwen3-embedding:8b"
 
 
+def test_model_runtime_preflight_rows_warn_when_unload_missing(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(app_mod, "_read_app_job_lock", lambda: None)
+    monkeypatch.setattr(app_mod, "_read_source_queue_triage_lock", lambda: None)
+    config = SimpleNamespace(
+        litelm_base_url="https://studio.example:4000",
+        mac_studio_model_control_url="",
+        litelm_ollama_base_url="",
+    )
+
+    rows = app_mod._model_runtime_preflight_rows(config)
+    by_check = {row["check"]: row for row in rows}
+
+    assert by_check["LiteLLM inference endpoint"]["status"] == "configured"
+    assert by_check["Model unload path"]["status"] == "not configured"
+    assert app_mod._model_runtime_unload_configured(config) is False
+
+
+def test_model_runtime_preflight_rows_accept_model_control(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(app_mod, "_read_app_job_lock", lambda: None)
+    monkeypatch.setattr(app_mod, "_read_source_queue_triage_lock", lambda: None)
+    config = SimpleNamespace(
+        litelm_base_url="https://studio.example:4000",
+        mac_studio_model_control_url="https://studio.example:11555",
+        litelm_ollama_base_url="",
+    )
+
+    rows = app_mod._model_runtime_preflight_rows(config)
+    by_check = {row["check"]: row for row in rows}
+
+    assert by_check["Model unload path"]["status"] == "configured"
+    assert "model-control" in by_check["Model unload path"]["value"]
+    assert app_mod._model_runtime_unload_configured(config) is True
+
+
 def test_source_queue_snapshot_command_preserves_queue_id_mapping():
     import sys
 
