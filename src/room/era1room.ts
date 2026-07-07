@@ -11,6 +11,7 @@
  */
 import * as pc from 'playcanvas';
 import layout from '../../data/room/era1.json';
+import { hasModel, spawnModel } from './assets';
 
 export interface PropDef {
   id: string;
@@ -18,10 +19,13 @@ export interface PropDef {
   size: [number, number, number] | number[];
   color: string;
   emissive?: boolean;
-  /** y-rotation in degrees. Radial-cluster wedges only (each side room is
-   *  rectilinear in its own frame, rotated whole to its 120° facing); the
-   *  base E1 room stays axis-aligned. */
+  /** y-rotation in degrees. Side rooms are rectilinear in their own frame,
+   *  rotated whole to their facing (90/270); the base E1 room stays axis-aligned. */
   yaw?: number;
+  /** OPTIONAL: a real low-poly model key (assets pipeline, docs/ASSET_PIPELINE.md).
+   *  If the model is loaded, this prop spawns the MESH (recolored to `color`);
+   *  otherwise it falls back to the box defined by `size`. */
+  model?: string;
 }
 
 interface LightDef {
@@ -38,6 +42,9 @@ export interface PropHandle {
   entity: pc.Entity;
   material: pc.StandardMaterial;
   emissive: boolean;
+  /** set when this prop is a real model (wrapper entity) — the morph must NOT
+   *  drive its pos/scale/color (the model self-places); only its presence. */
+  model?: string;
 }
 
 export interface RoomHandles {
@@ -97,7 +104,8 @@ function styleMaterial(material: pc.StandardMaterial, id: string): void {
   }
 }
 
-/** build one prop box + its handle (the morph system spawns through this too) */
+/** build one prop + its handle (the morph system spawns through this too). A
+ *  prop with a loaded `model` becomes a real low-poly MESH; otherwise a box. */
 export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
   const material = new pc.StandardMaterial();
   if (p.emissive) {
@@ -109,14 +117,28 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
     if (room.reinterp) styleMaterial(material, p.id); // §2-E1 soft/crisp split
   }
   material.update();
-  const e = new pc.Entity(p.id);
-  e.addComponent('render', { type: 'box' });
-  e.setLocalPosition(p.pos[0], p.pos[1], p.pos[2]);
-  e.setLocalScale(p.size[0], p.size[1], p.size[2]);
-  if (p.yaw) e.setLocalEulerAngles(0, p.yaw, 0);
-  if (e.render) e.render.material = material;
+
+  // real-model path (asset pipeline, reinterp only) — the model self-places
+  // (scaled + centered on pos); otherwise fall back to the box from `size`.
+  let e: pc.Entity | null = null;
+  let isModel = false;
+  if (room.reinterp && p.model && hasModel(p.model)) {
+    e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0);
+    if (e) { e.name = p.id; isModel = true; }
+  }
+  if (!e) {
+    e = new pc.Entity(p.id);
+    e.addComponent('render', { type: 'box' });
+    if (e.render) e.render.material = material;
+  }
+  if (!isModel) {
+    e.setLocalPosition(p.pos[0], p.pos[1], p.pos[2]);
+    e.setLocalScale(p.size[0], p.size[1], p.size[2]);
+    if (p.yaw) e.setLocalEulerAngles(0, p.yaw, 0);
+  }
   room.root.addChild(e);
   const h: PropHandle = { entity: e, material, emissive: !!p.emissive };
+  if (isModel) h.model = p.model;
   room.props.set(p.id, h);
   return h;
 }

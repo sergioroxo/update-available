@@ -1,0 +1,11 @@
+{
+  "_doc": "Model manifest for the asset pipeline (src/room/assets.ts; docs/ASSET_PIPELINE.md). Each entry maps a `model` key (used by props in era1.json / reinterp_deltas.json) to a GLB file in assets/models/. EMPTY by design right now — with no entries, every prop renders as its colored box (current look, nothing breaks). Drop CC0 low-poly GLBs into public/assets/models/ (served at /assets/models/), list them here, and add `\"model\": \"<key>\"` to the matching props to swap boxes → real meshes. Palette law holds: models are recolored FLAT in code, no textures. Kit + licenses tracked in assets/LICENSES.md.",
+  "models": [
+    { "key": "bed", "file": "bedSingle.glb", "scale": 1.9, "yaw": 0, "cx": 0.67, "cz": -0.56, "baseY": 0 },
+    { "key": "desk", "file": "desk.glb", "scale": [2.4, 1.9, 2.3], "yaw": 0, "cx": 0.36, "cz": -0.18, "baseY": 0 },
+    { "key": "chair", "file": "chairDesk.glb", "scale": 1.9, "yaw": 180, "cx": 0.17, "cz": -0.16, "baseY": 0 },
+    { "key": "bookcase", "file": "bookcaseOpen.glb", "scale": 1.9, "yaw": 0, "cx": 0.2, "cz": -0.13, "baseY": 0 },
+    { "key": "rug", "file": "rugRectangle.glb", "scale": 1.9, "yaw": 0, "cx": 0.78, "cz": -0.46, "baseY": 0 },
+    { "key": "nightstand", "file": "sideTable.glb", "scale": 1.9, "yaw": 0, "cx": 0.26, "cz": -0.1, "baseY": 0 }
+  ]
+}

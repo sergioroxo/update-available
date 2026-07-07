@@ -107,6 +107,13 @@ export function buildFluidNiche(app: pc.Application): FluidNiche {
   });
 
   app.root.addChild(root);
+  // Round 24: the niche's anchor is stranded at the OLD hexagon-wedge coords, so
+  // in the three-room layout it floats in the Room 1↔Room 3 doorway. There is no
+  // clean free wall for it in the new Room 3 (shelf + bed take both side walls),
+  // and Phase C rebuilds it in place as Sérgio's color-coded trans-flag facets
+  // (pink/blue/white with a back-and-forth morph wave). Until then, `hidden`
+  // keeps it OUT of the sightline without deleting the facet system.
+  if ((niche.niche as { hidden?: boolean }).hidden) root.enabled = false;
 
   function setFacet(state: FacetState): void {
     STATIONS.forEach((facet, i) => {

@@ -1,5 +1,5 @@
 {
-  "_doc": "PLACEHOLDER — the reinterp SPACE STATES as ordered deltas over data/room/era1.json (the shipped EraMorph grammar). Session 12 (Sérgio Round 22, his wedge drawing): the space is a HEXAGON ALIGNED TO THE THREE 120° FACINGS, hub = the player's chair (0, ·, 0.7). Each 120° turn faces a perpendicular back wall — desk in front of you, the rest of that room around it. FURNITURE IS THE LIMITER between rooms (bookcase run, wardrobe-closet, dressers — no interior walls). r1 = reinterp E1 (witness furniture out; real door + record terminal on a repainted spine). r2 = THE CLUSTER opens at T1 (per the narrative master script): front wedge = the LEAD room (Daniel's, later Vera's — his furniture re-sorts forward as the space is re-partitioned); WEST wedge (yaw 120) = the parallel-tracks bay (sends s1/s3; Daniel's boxes land here at E3); EAST wedge (yaw 240) = the trans-facet room (sends s2/s4; the fluid niche stands on its back wall via fluid_niche.json). The rear face (180°) is the SPINE — door + terminal — kept clear as a sight channel between the two rear bays. r4 = E4: Maya's desk rises IN the channel beside the terminal (the person and the record share a wall), the LAMP moves to her desk, the window goes dark for good. Every side room's screen faces the HUB — the player reads each room over its occupant's shoulder. COLOR LAW: every hex exists in era1.json. yaw = y-rotation degrees (wedges are rectilinear in their own frame, rotated whole — the only non-90° angles in the piece, structural). Session 13 (Round 23): both side wedges are FULL ROOMS at the lead room's density (window+curtains+posters+headboard bed+4-leg desk+shelf); limiter furniture moved OUT of the seat sightlines — tall wardrobes flat against the shared 60/300 faces, only chest-height runs (h 0.55) near the middle, and the rooms' own beds bound the rear. Generator recipe: scratchpad gen_radial2.mjs; nudge world numbers here freely. All 'sign' props are wordless emissive panels — no text in the room, ever.",
+  "_doc": "Session 15 (Sérgio Round 24): THREE INTIMATE ROOMS THAT AGE, one shell. r1 = reinterp E1 (witness furniture out; spine door + record terminal). r2 = T1 \"the room OPENS, it does not explode\": Room 1 (Daniel, gay) keeps its EXACT E1 walls/desk/front-wall distance; its side walls become DOORWAYS revealing Room 2 (west/Vera, lesbian) and Room 3 (east/Maya, trans) — two adjacent intimate bedrooms at the SAME scale, axis-aligned (90° only), each read at E1 desk-intimacy when the camera dollies in. r4 = E4: the focus is Room 3 (Maya = the trans room evolved — NOT a separate desk; ◆N3 TURN retargets here); windows go dark for good. Rooms built from ONE local bedroom template (scratchpad/gen_rooms.mjs) placed per room — bed on a side wall, door away from the bed, clean CRT. COLOR LAW: every hex from era1.json family. Phase A: E3 shares the E2 state; per-era aging of all three rooms = Phase B.",
   "r1": {
     "remove": [
       "wallSouth",
@@ -38,7 +38,7 @@
           3.695
         ],
         "size": [
-          1.0,
+          1,
           0.1,
           0.07
         ],
@@ -90,7 +90,7 @@
         "id": "spineDoorKnob",
         "pos": [
           0.87,
-          1.0,
+          1,
           3.67
         ],
         "size": [
@@ -118,255 +118,68 @@
   },
   "r2": {
     "props": {
-      "wallNorth": {
-        "pos": [
-          0,
-          1.35,
-          -2.5
-        ],
-        "size": [
-          3.76,
-          2.7,
-          0.04
-        ]
-      },
       "windowPane": {
-        "pos": [
-          -0.95,
-          1.55,
-          -2.47
-        ],
         "color": "#D4D0C8"
       },
-      "winFrameTop": {
+      "mixtape": {
         "pos": [
-          -0.95,
           1.98,
-          -2.46
-        ]
-      },
-      "winFrameBottom": {
-        "pos": [
-          -0.95,
-          1.12,
-          -2.46
-        ]
-      },
-      "winFrameLeft": {
-        "pos": [
-          -1.33,
-          1.55,
-          -2.46
-        ]
-      },
-      "winFrameRight": {
-        "pos": [
-          -0.57,
-          1.55,
-          -2.46
-        ]
-      },
-      "curtainLeft": {
-        "pos": [
-          -1.43,
-          1.5,
-          -2.42
-        ]
-      },
-      "curtainRight": {
-        "pos": [
-          -0.47,
-          1.5,
-          -2.42
-        ]
-      },
-      "poster1": {
-        "pos": [
-          0.95,
-          1.62,
-          -2.475
-        ]
-      },
-      "poster2": {
-        "pos": [
-          1.32,
-          1.45,
-          -2.475
-        ]
-      },
-      "floor": {
-        "pos": [
-          0,
-          -0.01,
-          0.7
-        ],
-        "size": [
-          7.6,
-          0.02,
-          7.6
-        ]
-      },
-      "ceiling": {
-        "pos": [
-          0,
-          2.71,
-          0.7
-        ],
-        "size": [
-          7.6,
-          0.02,
-          7.6
-        ]
-      },
-      "spineWall": {
-        "pos": [
-          0,
-          1.35,
-          3.9
-        ],
-        "size": [
-          3.76,
-          2.7,
-          0.04
-        ]
-      },
-      "spineDoorLintel": {
-        "pos": [
-          1.2,
-          2.13,
-          3.875
-        ]
-      },
-      "spineDoorJambL": {
-        "pos": [
-          0.73,
-          1.04,
-          3.875
-        ]
-      },
-      "spineDoorJambR": {
-        "pos": [
-          1.67,
-          1.04,
-          3.875
-        ]
-      },
-      "spineDoorPanel": {
-        "pos": [
-          1.2,
-          1.02,
-          3.885
-        ]
-      },
-      "spineDoorKnob": {
-        "pos": [
-          0.87,
-          1.0,
-          3.85
-        ]
-      },
-      "terminalFrame": {
-        "pos": [
-          -0.9,
-          1.5,
-          3.885
+          1.16,
+          0.9
         ]
       },
       "bedFrame": {
         "pos": [
-          -1.3,
+          -1.72,
           0.18,
-          -1.5
+          2.78
+        ],
+        "size": [
+          0.78,
+          0.28,
+          1.55
         ]
       },
       "mattress": {
         "pos": [
-          -1.3,
+          -1.72,
           0.36,
-          -1.5
+          2.78
+        ],
+        "size": [
+          0.72,
+          0.1,
+          1.48
         ]
       },
       "blanket": {
         "pos": [
-          -1.3,
+          -1.72,
           0.43,
-          -1.2
+          3.05
+        ],
+        "size": [
+          0.74,
+          0.05,
+          0.9
         ]
       },
       "pillow": {
         "pos": [
-          -1.3,
+          -1.72,
           0.44,
-          -2.23
-        ]
-      },
-      "shelfBack": {
-        "pos": [
-          1.6,
-          1.05,
-          -1.1
-        ]
-      },
-      "shelfBoard1": {
-        "pos": [
-          1.48,
-          0.62,
-          -1.1
-        ]
-      },
-      "shelfBoard2": {
-        "pos": [
-          1.48,
-          1.08,
-          -1.1
-        ]
-      },
-      "shelfBoard3": {
-        "pos": [
-          1.48,
-          1.54,
-          -1.1
-        ]
-      },
-      "book1": {
-        "pos": [
-          1.48,
-          1.21,
-          -1.3
-        ]
-      },
-      "book2": {
-        "pos": [
-          1.48,
-          1.2,
-          -1.2
-        ]
-      },
-      "book3": {
-        "pos": [
-          1.48,
-          1.67,
-          -1.25
-        ]
-      },
-      "cdStack": {
-        "pos": [
-          1.48,
-          0.71,
-          -0.9
-        ]
-      },
-      "mixtape": {
-        "pos": [
-          1.48,
-          1.11,
-          -0.8
+          2.12
+        ],
+        "size": [
+          0.5,
+          0.09,
+          0.32
         ]
       }
     },
     "remove": [
-      "wallEast",
       "wallWest",
+      "wallEast",
       "moon",
       "boombox",
       "boomboxSpeakerL",
@@ -375,509 +188,494 @@
     ],
     "add": [
       {
-        "id": "hexW60",
+        "id": "w1doorFront",
         "pos": [
-          -2.771,
+          -2.13,
           1.35,
-          -0.9
+          -0.42
         ],
         "size": [
-          3.76,
+          0.05,
           2.7,
-          0.04
+          0.6
+        ],
+        "color": "#E6D2BC"
+      },
+      {
+        "id": "w1doorBack",
+        "pos": [
+          -2.13,
+          1.35,
+          3.32
+        ],
+        "size": [
+          0.05,
+          2.7,
+          0.8
+        ],
+        "color": "#E6D2BC"
+      },
+      {
+        "id": "w1doorLintel",
+        "pos": [
+          -2.13,
+          2.42,
+          1.4
+        ],
+        "size": [
+          0.05,
+          0.56,
+          3.1
+        ],
+        "color": "#E6D2BC"
+      },
+      {
+        "id": "e1doorFront",
+        "pos": [
+          2.13,
+          1.35,
+          -0.42
+        ],
+        "size": [
+          0.05,
+          2.7,
+          0.6
+        ],
+        "color": "#E6D2BC"
+      },
+      {
+        "id": "e1doorBack",
+        "pos": [
+          2.13,
+          1.35,
+          3.32
+        ],
+        "size": [
+          0.05,
+          2.7,
+          0.8
+        ],
+        "color": "#E6D2BC"
+      },
+      {
+        "id": "e1doorLintel",
+        "pos": [
+          2.13,
+          2.42,
+          1.4
+        ],
+        "size": [
+          0.05,
+          0.56,
+          3.1
+        ],
+        "color": "#E6D2BC"
+      },
+      {
+        "id": "w_floor",
+        "pos": [
+          -3.88,
+          0,
+          0.7
+        ],
+        "size": [
+          3.5,
+          0.04,
+          3.7
+        ],
+        "color": "#C9A07A",
+        "yaw": 90
+      },
+      {
+        "id": "w_ceil",
+        "pos": [
+          -3.88,
+          2.68,
+          0.7
+        ],
+        "size": [
+          3.5,
+          0.04,
+          3.7
+        ],
+        "color": "#E2CFBA",
+        "yaw": 90
+      },
+      {
+        "id": "w_wallDesk",
+        "pos": [
+          -5.71,
+          1.34,
+          0.7
+        ],
+        "size": [
+          3.5,
+          2.68,
+          0.06
         ],
         "color": "#E6D2BC",
-        "yaw": 60
+        "yaw": 90
       },
       {
-        "id": "hexW120",
+        "id": "w_wallL",
         "pos": [
-          -2.771,
-          1.35,
-          2.3
+          -3.88,
+          1.34,
+          2.45
         ],
         "size": [
-          3.76,
-          2.7,
-          0.04
+          0.06,
+          2.68,
+          3.7
         ],
         "color": "#E6D2BC",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "hexW240",
+        "id": "w_wallR",
         "pos": [
-          2.771,
-          1.35,
-          2.3
+          -3.88,
+          1.34,
+          -1.05
         ],
         "size": [
-          3.76,
-          2.7,
-          0.04
+          0.06,
+          2.68,
+          3.7
         ],
         "color": "#E6D2BC",
-        "yaw": 240
+        "yaw": 90
       },
       {
-        "id": "hexW300",
+        "id": "w_lintel",
         "pos": [
-          2.771,
-          1.35,
-          -0.9
+          -2.05,
+          2.43,
+          0.7
         ],
         "size": [
-          3.76,
-          2.7,
-          0.04
+          3.5,
+          0.5,
+          0.06
         ],
         "color": "#E6D2BC",
-        "yaw": 300
+        "yaw": 90
       },
       {
-        "id": "limWWardrobe",
+        "id": "w_winPane",
         "pos": [
-          -2.109,
-          0.975,
-          -1.557
-        ],
-        "size": [
-          1.05,
-          1.95,
-          0.45
-        ],
-        "color": "#8A5A3B",
-        "yaw": 60
-      },
-      {
-        "id": "limWShelf",
-        "pos": [
-          -2.965,
-          0.625,
-          -0.204
-        ],
-        "size": [
-          0.9,
-          1.25,
-          0.32
-        ],
-        "color": "#A07B52",
-        "yaw": 60
-      },
-      {
-        "id": "limEWardrobe",
-        "pos": [
-          2.109,
-          0.975,
-          -1.557
-        ],
-        "size": [
-          1.05,
-          1.95,
-          0.45
-        ],
-        "color": "#8A5A3B",
-        "yaw": 300
-      },
-      {
-        "id": "limEShelf",
-        "pos": [
-          2.965,
-          0.625,
-          -0.204
-        ],
-        "size": [
-          0.9,
-          1.25,
-          0.32
-        ],
-        "color": "#A07B52",
-        "yaw": 300
-      },
-      {
-        "id": "limWChest",
-        "pos": [
-          -1.775,
-          0.275,
-          -0.325
-        ],
-        "size": [
-          0.85,
-          0.55,
-          0.4
-        ],
-        "color": "#A07B52",
-        "yaw": 150
-      },
-      {
-        "id": "limWBox",
-        "pos": [
-          -1.775,
-          0.62,
-          -0.325
-        ],
-        "size": [
-          0.34,
-          0.14,
-          0.3
-        ],
-        "color": "#C9A8A0",
-        "yaw": 150
-      },
-      {
-        "id": "limEChest",
-        "pos": [
-          1.775,
-          0.275,
-          -0.325
-        ],
-        "size": [
-          0.85,
-          0.55,
-          0.4
-        ],
-        "color": "#A07B52",
-        "yaw": 30
-      },
-      {
-        "id": "limEBox",
-        "pos": [
-          1.775,
-          0.62,
-          -0.325
-        ],
-        "size": [
-          0.3,
-          0.14,
-          0.26
-        ],
-        "color": "#D4D0C8",
-        "yaw": 30
-      },
-      {
-        "id": "wbWinPane",
-        "pos": [
-          -2.445,
+          -5.67,
           1.62,
-          2.805
+          1.55
         ],
         "size": [
-          0.72,
-          0.66,
+          0.7,
+          0.62,
           0.03
         ],
         "color": "#D4D0C8",
         "emissive": true,
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbWinTop",
+        "id": "w_winTop",
         "pos": [
-          -2.437,
-          1.99,
-          2.8
+          -5.66,
+          1.96,
+          1.55
         ],
         "size": [
-          0.8,
+          0.78,
           0.06,
           0.05
         ],
         "color": "#A8917B",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbWinBottom",
+        "id": "w_winBot",
         "pos": [
-          -2.437,
-          1.25,
-          2.8
+          -5.66,
+          1.28,
+          1.55
         ],
         "size": [
-          0.8,
+          0.78,
           0.06,
           0.05
         ],
         "color": "#A8917B",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbWinL",
+        "id": "w_winL",
         "pos": [
-          -2.247,
+          -5.66,
           1.62,
-          3.129
+          1.92
         ],
         "size": [
           0.06,
-          0.8,
+          0.72,
           0.05
         ],
         "color": "#A8917B",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbWinR",
+        "id": "w_winR",
         "pos": [
-          -2.627,
+          -5.66,
           1.62,
-          2.471
+          1.18
         ],
         "size": [
           0.06,
-          0.8,
+          0.72,
           0.05
         ],
         "color": "#A8917B",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbCurtL",
+        "id": "w_curtL",
         "pos": [
-          -2.171,
-          1.58,
-          3.2
+          -5.62,
+          1.6,
+          1.98
         ],
         "size": [
-          0.13,
-          0.98,
-          0.06
-        ],
-        "color": "#9FB4C0",
-        "yaw": 120
-      },
-      {
-        "id": "wbCurtR",
-        "pos": [
-          -2.651,
-          1.58,
-          2.369
-        ],
-        "size": [
-          0.13,
-          0.98,
-          0.06
-        ],
-        "color": "#9FB4C0",
-        "yaw": 120
-      },
-      {
-        "id": "wbPosterA",
-        "pos": [
-          -3.02,
-          1.72,
-          1.809
-        ],
-        "size": [
-          0.38,
-          0.5,
-          0.02
-        ],
-        "color": "#9FB4C0",
-        "yaw": 120
-      },
-      {
-        "id": "wbPosterB",
-        "pos": [
-          -3.23,
-          1.62,
-          1.445
-        ],
-        "size": [
-          0.24,
-          0.32,
-          0.02
+          0.12,
+          0.9,
+          0.05
         ],
         "color": "#A8B49A",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbSign",
+        "id": "w_curtR",
         "pos": [
-          -3.412,
-          2.18,
-          1.111
+          -5.62,
+          1.6,
+          1.12
+        ],
+        "size": [
+          0.12,
+          0.9,
+          0.05
+        ],
+        "color": "#A8B49A",
+        "yaw": 90
+      },
+      {
+        "id": "w_poster",
+        "pos": [
+          -5.67,
+          1.6,
+          -0.22
         ],
         "size": [
           0.5,
-          0.36,
-          0.04
+          0.6,
+          0.02
         ],
-        "color": "#9FB4C0",
+        "color": "#D4A0A0",
+        "yaw": 90
+      },
+      {
+        "id": "w_sign",
+        "pos": [
+          -5.67,
+          2.16,
+          0.2
+        ],
+        "size": [
+          0.4,
+          0.26,
+          0.03
+        ],
+        "color": "#A8B49A",
         "emissive": true,
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbRug",
+        "id": "w_desk",
         "pos": [
-          -1.732,
-          0.005,
-          1.7
+          -5.28,
+          0,
+          0.7
         ],
         "size": [
-          2.2,
-          0.01,
-          1.9
-        ],
-        "color": "#B98563",
-        "yaw": 120
-      },
-      {
-        "id": "wbDesk",
-        "pos": [
-          -2.122,
-          0.73,
-          1.925
-        ],
-        "size": [
-          1.3,
-          0.05,
-          0.62
+          1.4,
+          0.75,
+          0.6
         ],
         "color": "#8A5A3B",
-        "yaw": 120
+        "yaw": 90,
+        "model": "desk"
       },
       {
-        "id": "wbLegFL",
+        "id": "w_chair",
         "pos": [
-          -1.605,
-          0.36,
-          2.32
+          -4.6,
+          0,
+          0.7
         ],
         "size": [
-          0.06,
-          0.72,
-          0.06
+          0.5,
+          0.9,
+          0.5
         ],
-        "color": "#74492F",
-        "yaw": 120
+        "color": "#8A5A3B",
+        "yaw": 90,
+        "model": "chair"
       },
       {
-        "id": "wbLegFR",
+        "id": "w_bed",
         "pos": [
-          -2.205,
-          0.36,
-          1.28
+          -4.23,
+          0,
+          -0.45
         ],
         "size": [
-          0.06,
-          0.72,
-          0.06
-        ],
-        "color": "#74492F",
-        "yaw": 120
-      },
-      {
-        "id": "wbLegBL",
-        "pos": [
-          -2.038,
-          0.36,
-          2.57
-        ],
-        "size": [
-          0.06,
-          0.72,
-          0.06
-        ],
-        "color": "#74492F",
-        "yaw": 120
-      },
-      {
-        "id": "wbLegBR",
-        "pos": [
-          -2.638,
-          0.36,
-          1.53
-        ],
-        "size": [
-          0.06,
-          0.72,
-          0.06
-        ],
-        "color": "#74492F",
-        "yaw": 120
-      },
-      {
-        "id": "wbCrtBody",
-        "pos": [
-          -2.269,
           1.05,
-          2.01
+          0.5,
+          2.05
+        ],
+        "color": "#C98F8F",
+        "yaw": 90,
+        "model": "bed"
+      },
+      {
+        "id": "w_nightstand",
+        "pos": [
+          -3.03,
+          0,
+          -0.5
+        ],
+        "size": [
+          0.4,
+          0.5,
+          0.4
+        ],
+        "color": "#A07B52",
+        "yaw": 90,
+        "model": "nightstand"
+      },
+      {
+        "id": "w_bookcase",
+        "pos": [
+          -4.28,
+          0,
+          2.25
+        ],
+        "size": [
+          0.75,
+          1.7,
+          0.5
+        ],
+        "color": "#8A5A3B",
+        "yaw": 90,
+        "model": "bookcase"
+      },
+      {
+        "id": "w_rug",
+        "pos": [
+          -4.03,
+          0,
+          0.7
+        ],
+        "size": [
+          1.6,
+          0.02,
+          1.5
+        ],
+        "color": "#B98563",
+        "yaw": 90,
+        "model": "rug"
+      },
+      {
+        "id": "w_crtBody",
+        "pos": [
+          -5.43,
+          1.08,
+          0.7
+        ],
+        "size": [
+          0.5,
+          0.42,
+          0.4
+        ],
+        "color": "#D8CDB4",
+        "yaw": 90
+      },
+      {
+        "id": "w_crtBezel",
+        "pos": [
+          -5.21,
+          1.08,
+          0.7
         ],
         "size": [
           0.46,
           0.38,
-          0.34
+          0.03
         ],
-        "color": "#D8CDB4",
-        "yaw": 120
+        "color": "#2C2C34",
+        "yaw": 90
       },
       {
-        "id": "wbCrtFace",
+        "id": "w_crtScreen",
         "pos": [
-          -2.113,
-          1.05,
-          1.92
+          -5.195,
+          1.08,
+          0.7
         ],
         "size": [
-          0.4,
-          0.32,
+          0.34,
+          0.28,
           0.02
-        ],
-        "color": "#D8CDB4",
-        "yaw": 120
-      },
-      {
-        "id": "wbCrtScreen",
-        "pos": [
-          -2.104,
-          1.05,
-          1.915
-        ],
-        "size": [
-          0.3,
-          0.24,
-          0.015
         ],
         "color": "#5DCAA5",
         "emissive": true,
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbCrtFoot",
+        "id": "w_crtFoot",
         "pos": [
-          -2.252,
-          0.79,
-          2
+          -5.38,
+          0.8,
+          0.7
         ],
         "size": [
-          0.28,
-          0.07,
-          0.28
+          0.3,
+          0.06,
+          0.3
         ],
         "color": "#CFC4AA",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbKeyboard",
+        "id": "w_keyboard",
         "pos": [
-          -1.888,
-          0.765,
-          1.79
+          -5.1,
+          0.755,
+          0.7
         ],
         "size": [
           0.42,
-          0.025,
+          0.03,
           0.14
         ],
         "color": "#C9BFA6",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbMouse",
+        "id": "w_mouse",
         "pos": [
-          -2.055,
-          0.765,
-          1.54
+          -5.1,
+          0.755,
+          0.36
         ],
         "size": [
           0.06,
@@ -885,745 +683,594 @@
           0.09
         ],
         "color": "#C9BFA6",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbDeskItemA",
+        "id": "w_doorPanel",
         "pos": [
-          -1.897,
-          0.775,
-          2.315
+          -2.93,
+          1.02,
+          2.42
         ],
         "size": [
-          0.3,
-          0.1,
-          0.18
-        ],
-        "color": "#44464F",
-        "yaw": 120
-      },
-      {
-        "id": "wbDeskItemA2",
-        "pos": [
-          -1.897,
-          0.845,
-          2.315
-        ],
-        "size": [
-          0.07,
-          0.012,
-          0.045
-        ],
-        "color": "#E8D48A",
-        "yaw": 120
-      },
-      {
-        "id": "wbDeskItemB",
-        "pos": [
-          -2.433,
-          0.765,
-          1.585
-        ],
-        "size": [
-          0.26,
-          0.02,
-          0.18
-        ],
-        "color": "#F5F4ED",
-        "yaw": 120
-      },
-      {
-        "id": "wbChairSeat",
-        "pos": [
-          -1.542,
-          0.46,
-          1.59
-        ],
-        "size": [
-          0.44,
           0.05,
-          0.44
+          2.04,
+          0.86
         ],
-        "color": "#8A5A3B",
-        "yaw": 120
+        "color": "#B89B7E",
+        "yaw": 90
       },
       {
-        "id": "wbChairBack",
+        "id": "w_doorKnob",
         "pos": [
-          -1.351,
-          0.72,
-          1.48
+          -3.26,
+          1,
+          2.36
         ],
         "size": [
-          0.42,
-          0.4,
-          0.05
+          0.04,
+          0.04,
+          0.04
         ],
         "color": "#8A5A3B",
-        "yaw": 120
+        "yaw": 90
       },
       {
-        "id": "wbChairPost",
+        "id": "e_floor",
         "pos": [
-          -1.542,
-          0.23,
-          1.59
+          3.88,
+          0,
+          0.7
+        ],
+        "size": [
+          3.5,
+          0.04,
+          3.7
+        ],
+        "color": "#C9A07A",
+        "yaw": 270
+      },
+      {
+        "id": "e_ceil",
+        "pos": [
+          3.88,
+          2.68,
+          0.7
+        ],
+        "size": [
+          3.5,
+          0.04,
+          3.7
+        ],
+        "color": "#E2CFBA",
+        "yaw": 270
+      },
+      {
+        "id": "e_wallDesk",
+        "pos": [
+          5.71,
+          1.34,
+          0.7
+        ],
+        "size": [
+          3.5,
+          2.68,
+          0.06
+        ],
+        "color": "#E6D2BC",
+        "yaw": 270
+      },
+      {
+        "id": "e_wallL",
+        "pos": [
+          3.88,
+          1.34,
+          -1.05
         ],
         "size": [
           0.06,
-          0.4,
-          0.06
+          2.68,
+          3.7
         ],
-        "color": "#74492F",
-        "yaw": 120
+        "color": "#E6D2BC",
+        "yaw": 270
       },
       {
-        "id": "wbBedHead",
+        "id": "e_wallR",
         "pos": [
-          -1.966,
-          0.55,
-          3.394
+          3.88,
+          1.34,
+          2.45
         ],
         "size": [
-          0.8,
-          0.55,
-          0.06
+          0.06,
+          2.68,
+          3.7
         ],
-        "color": "#A07B52",
-        "yaw": 120
+        "color": "#E6D2BC",
+        "yaw": 270
       },
       {
-        "id": "wbBedFrame",
+        "id": "e_lintel",
         "pos": [
-          -1.187,
-          0.2,
-          2.944
+          2.05,
+          2.43,
+          0.7
         ],
         "size": [
-          0.78,
-          0.3,
-          1.8
-        ],
-        "color": "#A07B52",
-        "yaw": 120
-      },
-      {
-        "id": "wbMattress",
-        "pos": [
-          -1.187,
-          0.4,
-          2.944
-        ],
-        "size": [
-          0.7,
-          0.1,
-          1.72
-        ],
-        "color": "#F0E5D4",
-        "yaw": 120
-      },
-      {
-        "id": "wbBlanket",
-        "pos": [
-          -1.014,
-          0.47,
-          2.844
-        ],
-        "size": [
-          0.72,
-          0.05,
-          1.15
-        ],
-        "color": "#9FB4C0",
-        "yaw": 120
-      },
-      {
-        "id": "wbPillow",
-        "pos": [
-          -1.75,
-          0.48,
-          3.269
-        ],
-        "size": [
+          3.5,
           0.5,
-          0.09,
-          0.3
+          0.06
         ],
-        "color": "#F5EDDC",
-        "yaw": 120
+        "color": "#E6D2BC",
+        "yaw": 270
       },
       {
-        "id": "wbCase",
+        "id": "e_winPane",
         "pos": [
-          -3.123,
-          0.7,
-          1.291
-        ],
-        "size": [
-          0.8,
-          1.4,
-          0.3
-        ],
-        "color": "#8A5A3B",
-        "yaw": 120
-      },
-      {
-        "id": "wbCaseTopA",
-        "pos": [
-          -3.023,
-          1.51,
-          1.464
-        ],
-        "size": [
-          0.09,
-          0.22,
-          0.18
-        ],
-        "color": "#C9A8A0",
-        "yaw": 120
-      },
-      {
-        "id": "wbCaseTopB",
-        "pos": [
-          -3.093,
-          1.5,
-          1.343
-        ],
-        "size": [
-          0.09,
-          0.2,
-          0.18
-        ],
-        "color": "#9FB4C0",
-        "yaw": 120
-      },
-      {
-        "id": "wbCaseTopC",
-        "pos": [
-          -3.183,
-          1.47,
-          1.187
-        ],
-        "size": [
-          0.12,
-          0.14,
-          0.18
-        ],
-        "color": "#A8B49A",
-        "yaw": 120
-      },
-      {
-        "id": "wbCaseObj",
-        "pos": [
-          -3.273,
-          1.48,
-          1.031
-        ],
-        "size": [
-          0.1,
-          0.16,
-          0.1
-        ],
-        "color": "#2C2C34",
-        "yaw": 120
-      },
-      {
-        "id": "ebWinPane",
-        "pos": [
-          2.22,
+          5.67,
           1.62,
-          3.194
+          -0.15
         ],
         "size": [
-          0.72,
-          0.66,
+          0.7,
+          0.62,
           0.03
         ],
         "color": "#D4D0C8",
         "emissive": true,
-        "yaw": 240
+        "yaw": 270
       },
       {
-        "id": "ebWinTop",
+        "id": "e_winTop",
         "pos": [
-          2.212,
-          1.99,
-          3.189
-        ],
-        "size": [
-          0.8,
-          0.06,
-          0.05
-        ],
-        "color": "#A8917B",
-        "yaw": 240
-      },
-      {
-        "id": "ebWinBottom",
-        "pos": [
-          2.212,
-          1.25,
-          3.189
-        ],
-        "size": [
-          0.8,
-          0.06,
-          0.05
-        ],
-        "color": "#A8917B",
-        "yaw": 240
-      },
-      {
-        "id": "ebWinL",
-        "pos": [
-          2.402,
-          1.62,
-          2.86
-        ],
-        "size": [
-          0.06,
-          0.8,
-          0.05
-        ],
-        "color": "#A8917B",
-        "yaw": 240
-      },
-      {
-        "id": "ebWinR",
-        "pos": [
-          2.022,
-          1.62,
-          3.518
-        ],
-        "size": [
-          0.06,
-          0.8,
-          0.05
-        ],
-        "color": "#A8917B",
-        "yaw": 240
-      },
-      {
-        "id": "ebCurtL",
-        "pos": [
-          2.426,
-          1.58,
-          2.759
-        ],
-        "size": [
-          0.13,
-          0.98,
-          0.06
-        ],
-        "color": "#E8B7C8",
-        "yaw": 240
-      },
-      {
-        "id": "ebCurtR",
-        "pos": [
-          1.946,
-          1.58,
-          3.59
-        ],
-        "size": [
-          0.13,
-          0.98,
-          0.06
-        ],
-        "color": "#E8B7C8",
-        "yaw": 240
-      },
-      {
-        "id": "ebPosterA",
-        "pos": [
-          3.495,
-          1.72,
-          0.986
-        ],
-        "size": [
-          0.38,
-          0.5,
-          0.02
-        ],
-        "color": "#E8B7C8",
-        "yaw": 240
-      },
-      {
-        "id": "ebPosterB",
-        "pos": [
-          3.285,
-          2.02,
-          1.35
-        ],
-        "size": [
-          0.24,
-          0.32,
-          0.02
-        ],
-        "color": "#9FD8CB",
-        "yaw": 240
-      },
-      {
-        "id": "ebSign",
-        "pos": [
-          2.612,
-          2.18,
-          2.497
-        ],
-        "size": [
-          0.5,
-          0.36,
-          0.04
-        ],
-        "color": "#E8B7C8",
-        "emissive": true,
-        "yaw": 240
-      },
-      {
-        "id": "ebRug",
-        "pos": [
-          1.732,
-          0.005,
-          1.7
-        ],
-        "size": [
-          2.2,
-          0.01,
-          1.9
-        ],
-        "color": "#D4A0A0",
-        "yaw": 240
-      },
-      {
-        "id": "ebDesk",
-        "pos": [
-          2.122,
-          0.73,
-          1.925
-        ],
-        "size": [
-          1.3,
-          0.05,
-          0.62
-        ],
-        "color": "#8A5A3B",
-        "yaw": 240
-      },
-      {
-        "id": "ebLegFL",
-        "pos": [
-          2.205,
-          0.36,
-          1.28
-        ],
-        "size": [
-          0.06,
-          0.72,
-          0.06
-        ],
-        "color": "#74492F",
-        "yaw": 240
-      },
-      {
-        "id": "ebLegFR",
-        "pos": [
-          1.605,
-          0.36,
-          2.32
-        ],
-        "size": [
-          0.06,
-          0.72,
-          0.06
-        ],
-        "color": "#74492F",
-        "yaw": 240
-      },
-      {
-        "id": "ebLegBL",
-        "pos": [
-          2.638,
-          0.36,
-          1.53
-        ],
-        "size": [
-          0.06,
-          0.72,
-          0.06
-        ],
-        "color": "#74492F",
-        "yaw": 240
-      },
-      {
-        "id": "ebLegBR",
-        "pos": [
-          2.038,
-          0.36,
-          2.57
-        ],
-        "size": [
-          0.06,
-          0.72,
-          0.06
-        ],
-        "color": "#74492F",
-        "yaw": 240
-      },
-      {
-        "id": "ebLapBase",
-        "pos": [
-          2.165,
-          0.77,
-          1.95
-        ],
-        "size": [
-          0.44,
-          0.03,
-          0.3
-        ],
-        "color": "#44464F",
-        "yaw": 240
-      },
-      {
-        "id": "ebLapScreen",
-        "pos": [
-          2.269,
-          0.95,
-          2.01
-        ],
-        "size": [
-          0.42,
-          0.3,
-          0.02
-        ],
-        "color": "#5DCAA5",
-        "emissive": true,
-        "yaw": 240
-      },
-      {
-        "id": "ebLapCam",
-        "pos": [
-          2.269,
-          1.12,
-          2.01
-        ],
-        "size": [
-          0.05,
-          0.03,
-          0.025
-        ],
-        "color": "#2C2C34",
-        "yaw": 240
-      },
-      {
-        "id": "ebPhone",
-        "pos": [
-          1.825,
-          0.762,
-          2.239
-        ],
-        "size": [
-          0.09,
-          0.012,
-          0.17
-        ],
-        "color": "#1A1A24",
-        "yaw": 240
-      },
-      {
-        "id": "ebDeskItemA",
-        "pos": [
-          2.347,
-          0.775,
-          1.535
-        ],
-        "size": [
-          0.28,
-          0.06,
-          0.2
-        ],
-        "color": "#F5F4ED",
-        "yaw": 240
-      },
-      {
-        "id": "ebDeskItemA2",
-        "pos": [
-          2.347,
-          0.825,
-          1.535
-        ],
-        "size": [
-          0.26,
-          0.02,
-          0.19
-        ],
-        "color": "#E8B7C8",
-        "yaw": 240
-      },
-      {
-        "id": "ebDeskItemB",
-        "pos": [
-          1.983,
-          0.765,
-          2.365
-        ],
-        "size": [
-          0.3,
-          0.1,
-          0.22
-        ],
-        "color": "#D4D0C8",
-        "yaw": 240
-      },
-      {
-        "id": "ebChairSeat",
-        "pos": [
-          1.542,
-          0.46,
-          1.59
-        ],
-        "size": [
-          0.44,
-          0.05,
-          0.44
-        ],
-        "color": "#8A5A3B",
-        "yaw": 240
-      },
-      {
-        "id": "ebChairBack",
-        "pos": [
-          1.351,
-          0.72,
-          1.48
-        ],
-        "size": [
-          0.42,
-          0.4,
-          0.05
-        ],
-        "color": "#8A5A3B",
-        "yaw": 240
-      },
-      {
-        "id": "ebChairPost",
-        "pos": [
-          1.542,
-          0.23,
-          1.59
-        ],
-        "size": [
-          0.06,
-          0.4,
-          0.06
-        ],
-        "color": "#74492F",
-        "yaw": 240
-      },
-      {
-        "id": "ebBedHead",
-        "pos": [
-          1.966,
-          0.55,
-          3.394
-        ],
-        "size": [
-          0.8,
-          0.55,
-          0.06
-        ],
-        "color": "#A07B52",
-        "yaw": 240
-      },
-      {
-        "id": "ebBedFrame",
-        "pos": [
-          1.187,
-          0.2,
-          2.944
+          5.66,
+          1.96,
+          -0.15
         ],
         "size": [
           0.78,
-          0.3,
-          1.8
+          0.06,
+          0.05
         ],
-        "color": "#A07B52",
-        "yaw": 240
+        "color": "#A8917B",
+        "yaw": 270
       },
       {
-        "id": "ebMattress",
+        "id": "e_winBot",
         "pos": [
-          1.187,
-          0.4,
-          2.944
+          5.66,
+          1.28,
+          -0.15
         ],
         "size": [
-          0.7,
-          0.1,
-          1.72
+          0.78,
+          0.06,
+          0.05
         ],
-        "color": "#F0E5D4",
-        "yaw": 240
+        "color": "#A8917B",
+        "yaw": 270
       },
       {
-        "id": "ebBlanket",
+        "id": "e_winL",
         "pos": [
-          1.014,
-          0.47,
-          2.844
+          5.66,
+          1.62,
+          -0.52
         ],
         "size": [
+          0.06,
           0.72,
-          0.05,
-          1.15
+          0.05
+        ],
+        "color": "#A8917B",
+        "yaw": 270
+      },
+      {
+        "id": "e_winR",
+        "pos": [
+          5.66,
+          1.62,
+          0.22
+        ],
+        "size": [
+          0.06,
+          0.72,
+          0.05
+        ],
+        "color": "#A8917B",
+        "yaw": 270
+      },
+      {
+        "id": "e_curtL",
+        "pos": [
+          5.62,
+          1.6,
+          -0.58
+        ],
+        "size": [
+          0.12,
+          0.9,
+          0.05
         ],
         "color": "#E8B7C8",
-        "yaw": 240
+        "yaw": 270
       },
       {
-        "id": "ebPillow",
+        "id": "e_curtR",
         "pos": [
-          1.75,
-          0.48,
-          3.269
+          5.62,
+          1.6,
+          0.28
+        ],
+        "size": [
+          0.12,
+          0.9,
+          0.05
+        ],
+        "color": "#E8B7C8",
+        "yaw": 270
+      },
+      {
+        "id": "e_poster",
+        "pos": [
+          5.67,
+          1.6,
+          1.62
         ],
         "size": [
           0.5,
-          0.09,
-          0.3
+          0.6,
+          0.02
         ],
-        "color": "#F5EDDC",
-        "yaw": 240
+        "color": "#9FB4C0",
+        "yaw": 270
       },
       {
-        "id": "ebPlantPot",
+        "id": "e_sign",
         "pos": [
-          3.356,
-          0.14,
-          0.848
+          5.67,
+          2.16,
+          1.2
         ],
         "size": [
-          0.2,
-          0.28,
-          0.2
+          0.4,
+          0.26,
+          0.03
         ],
-        "color": "#74492F",
-        "yaw": 240
+        "color": "#9FB4C0",
+        "emissive": true,
+        "yaw": 270
       },
       {
-        "id": "ebPlant",
+        "id": "e_desk",
         "pos": [
-          3.356,
-          0.44,
-          0.848
+          5.28,
+          0,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.75,
+          0.6
+        ],
+        "color": "#8A5A3B",
+        "yaw": 270,
+        "model": "desk"
+      },
+      {
+        "id": "e_chair",
+        "pos": [
+          4.6,
+          0,
+          0.7
+        ],
+        "size": [
+          0.5,
+          0.9,
+          0.5
+        ],
+        "color": "#8A5A3B",
+        "yaw": 270,
+        "model": "chair"
+      },
+      {
+        "id": "e_bed",
+        "pos": [
+          4.23,
+          0,
+          1.85
+        ],
+        "size": [
+          1.05,
+          0.5,
+          2.05
+        ],
+        "color": "#E8B7C8",
+        "yaw": 270,
+        "model": "bed"
+      },
+      {
+        "id": "e_nightstand",
+        "pos": [
+          3.03,
+          0,
+          1.9
+        ],
+        "size": [
+          0.4,
+          0.5,
+          0.4
+        ],
+        "color": "#A07B52",
+        "yaw": 270,
+        "model": "nightstand"
+      },
+      {
+        "id": "e_bookcase",
+        "pos": [
+          4.28,
+          0,
+          -0.85
+        ],
+        "size": [
+          0.75,
+          1.7,
+          0.5
+        ],
+        "color": "#8A5A3B",
+        "yaw": 270,
+        "model": "bookcase"
+      },
+      {
+        "id": "e_rug",
+        "pos": [
+          4.03,
+          0,
+          0.7
+        ],
+        "size": [
+          1.6,
+          0.02,
+          1.5
+        ],
+        "color": "#D4A0A0",
+        "yaw": 270,
+        "model": "rug"
+      },
+      {
+        "id": "e_crtBody",
+        "pos": [
+          5.43,
+          1.08,
+          0.7
+        ],
+        "size": [
+          0.5,
+          0.42,
+          0.4
+        ],
+        "color": "#D8CDB4",
+        "yaw": 270
+      },
+      {
+        "id": "e_crtBezel",
+        "pos": [
+          5.21,
+          1.08,
+          0.7
+        ],
+        "size": [
+          0.46,
+          0.38,
+          0.03
+        ],
+        "color": "#2C2C34",
+        "yaw": 270
+      },
+      {
+        "id": "e_crtScreen",
+        "pos": [
+          5.195,
+          1.08,
+          0.7
+        ],
+        "size": [
+          0.34,
+          0.28,
+          0.02
+        ],
+        "color": "#6FB8D8",
+        "emissive": true,
+        "yaw": 270
+      },
+      {
+        "id": "e_crtFoot",
+        "pos": [
+          5.38,
+          0.8,
+          0.7
         ],
         "size": [
           0.3,
-          0.32,
+          0.06,
           0.3
         ],
-        "color": "#9FD8CB",
-        "yaw": 240
+        "color": "#CFC4AA",
+        "yaw": 270
+      },
+      {
+        "id": "e_keyboard",
+        "pos": [
+          5.1,
+          0.755,
+          0.7
+        ],
+        "size": [
+          0.42,
+          0.03,
+          0.14
+        ],
+        "color": "#C9BFA6",
+        "yaw": 270
+      },
+      {
+        "id": "e_mouse",
+        "pos": [
+          5.1,
+          0.755,
+          1.04
+        ],
+        "size": [
+          0.06,
+          0.02,
+          0.09
+        ],
+        "color": "#C9BFA6",
+        "yaw": 270
+      },
+      {
+        "id": "e_doorPanel",
+        "pos": [
+          2.93,
+          1.02,
+          -1.02
+        ],
+        "size": [
+          0.05,
+          2.04,
+          0.86
+        ],
+        "color": "#B89B7E",
+        "yaw": 270
+      },
+      {
+        "id": "e_doorKnob",
+        "pos": [
+          3.26,
+          1,
+          -0.96
+        ],
+        "size": [
+          0.04,
+          0.04,
+          0.04
+        ],
+        "color": "#8A5A3B",
+        "yaw": 270
+      }
+    ]
+  },
+  "r3": {
+    "props": {
+      "blanket": {
+        "color": "#C8C4BC"
+      },
+      "w_curtL": {
+        "color": "#C8B8D0"
+      },
+      "w_curtR": {
+        "color": "#C8B8D0"
+      },
+      "w_poster": {
+        "color": "#B8D0C8"
+      },
+      "w_crtScreen": {
+        "color": "#BFE0DA"
+      },
+      "e_crtScreen": {
+        "color": "#8FC4E0"
+      }
+    },
+    "remove": [],
+    "add": [
+      {
+        "id": "movingBox1",
+        "pos": [
+          0.72,
+          0.2,
+          1.15
+        ],
+        "size": [
+          0.5,
+          0.4,
+          0.5
+        ],
+        "color": "#B89B7E"
+      },
+      {
+        "id": "movingBox2",
+        "pos": [
+          1.02,
+          0.15,
+          1.45
+        ],
+        "size": [
+          0.4,
+          0.3,
+          0.4
+        ],
+        "color": "#A8917B"
+      },
+      {
+        "id": "w_plant_pot",
+        "pos": [
+          -2.88,
+          0.28,
+          -0.65
+        ],
+        "size": [
+          0.22,
+          0.26,
+          0.22
+        ],
+        "color": "#74492F",
+        "yaw": 90
+      },
+      {
+        "id": "w_plant_top",
+        "pos": [
+          -2.88,
+          0.55,
+          -0.65
+        ],
+        "size": [
+          0.32,
+          0.3,
+          0.32
+        ],
+        "color": "#A8B49A",
+        "yaw": 90
+      },
+      {
+        "id": "e_folders",
+        "pos": [
+          5.16,
+          0.79,
+          1.06
+        ],
+        "size": [
+          0.3,
+          0.07,
+          0.22
+        ],
+        "color": "#F5F4ED",
+        "yaw": 270
+      },
+      {
+        "id": "e_folderAskew",
+        "pos": [
+          5.14,
+          0.85,
+          1.1
+        ],
+        "size": [
+          0.28,
+          0.02,
+          0.2
+        ],
+        "color": "#E8B7C8",
+        "yaw": 270
       }
     ]
   },
@@ -1632,133 +1279,55 @@
       "windowPane": {
         "color": "#15151F"
       },
+      "w_winPane": {
+        "color": "#15151F"
+      },
+      "e_winPane": {
+        "color": "#15151F"
+      },
+      "e_crtScreen": {
+        "color": "#2C3A5C"
+      },
       "lampFoot": {
         "pos": [
-          -0.55,
-          0.755,
-          3.45
+          5.15,
+          0.78,
+          1.5
         ]
       },
       "lampPole": {
         "pos": [
-          -0.55,
-          0.85,
-          3.45
+          5.15,
+          0.9,
+          1.5
         ]
       },
       "lampShade": {
         "pos": [
-          -0.55,
-          0.97,
-          3.45
+          5.15,
+          1.02,
+          1.5
         ]
-      },
-      "wbWinPane": {
-        "color": "#15151F"
-      },
-      "ebWinPane": {
-        "color": "#15151F"
       }
     },
+    "remove": [
+      "terminalFrame"
+    ],
     "add": [
       {
-        "id": "mayaDesk",
+        "id": "e_phone",
         "pos": [
-          -0.15,
-          0.72,
-          3.5
+          4.9,
+          0.77,
+          1.12
         ],
         "size": [
-          1.1,
-          0.04,
-          0.55
+          0.09,
+          0.012,
+          0.17
         ],
-        "color": "#8A5A3B"
-      },
-      {
-        "id": "mayaDeskBase",
-        "pos": [
-          -0.15,
-          0.36,
-          3.54
-        ],
-        "size": [
-          0.9,
-          0.68,
-          0.42
-        ],
-        "color": "#74492F"
-      },
-      {
-        "id": "mayaScreen",
-        "pos": [
-          -0.15,
-          1.13,
-          3.68
-        ],
-        "size": [
-          0.62,
-          0.36,
-          0.03
-        ],
-        "color": "#2C3A5C",
-        "emissive": true
-      },
-      {
-        "id": "mayaScreenFoot",
-        "pos": [
-          -0.15,
-          0.78,
-          3.66
-        ],
-        "size": [
-          0.16,
-          0.08,
-          0.1
-        ],
-        "color": "#1A1A24"
-      },
-      {
-        "id": "mayaPhone",
-        "pos": [
-          0.28,
-          0.752,
-          3.42
-        ],
-        "size": [
-          0.045,
-          0.008,
-          0.09
-        ],
-        "color": "#1A1A24"
-      },
-      {
-        "id": "mayaChair",
-        "pos": [
-          -0.15,
-          0.45,
-          3.0
-        ],
-        "size": [
-          0.42,
-          0.06,
-          0.42
-        ],
-        "color": "#44464F"
-      },
-      {
-        "id": "mayaChairPost",
-        "pos": [
-          -0.15,
-          0.24,
-          3.0
-        ],
-        "size": [
-          0.06,
-          0.36,
-          0.06
-        ],
-        "color": "#2C2C34"
+        "color": "#1A1A24",
+        "yaw": 270
       }
     ]
   }

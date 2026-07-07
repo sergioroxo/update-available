@@ -4,7 +4,8 @@
     "azimuthDeg": -120,
     "center": [2.973, 1.16, 1.55],
     "yawDeg": 330,
-    "_note": "Session 12 (Round 22 wedge layout): the niche stands on the EAST WEDGE'S back wall (the trans-facet room, hexagon face at 240°), rotated to face the hub (yawDeg 330 = wedge 240 + 90; the niche's local facing axis is -x). In E1 it sits beyond the small room's east wall, so it is invisible until T1's cascade opens the hexagon — the niche is simply THERE when the room becomes plural. Same one-azimuth/N-states grammar (§1.1); stations spread ±0.24m along the wall, read in one gaze cone from the hub at the -120° facing."
+    "hidden": true,
+    "_note": "HIDDEN (Round 24): these coords are the OLD hexagon east-wedge back wall; in the new three-room layout they land in the Room 1↔Room 3 doorway (the teal 'floating bookshelf' Sérgio spotted). Phase C rebuilds the niche IN PLACE inside Room 3 as the color-coded trans-flag facets (pink transfem / blue transmasc / white nonbinary) with a gentle back-and-forth morph wave, timing per the master script. Set hidden:false + new center/yaw once that design lands. The facet system (setFacet, gaze table) stays live underneath."
   },
   "stations": ["transfem", "transmasc", "nonbinary"],
   "eras": {

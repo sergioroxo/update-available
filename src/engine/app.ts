@@ -14,6 +14,7 @@ import { WitnessCanvas } from '../witness/intake';
 import { ledger } from '../state/ledger';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { buildEra1Room } from '../room/era1room';
+import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { buildClusterShell, type ClusterShell, type EraKey } from '../room/cluster';
@@ -86,7 +87,7 @@ function makeScreenEntity(name: string, tex: pc.Texture, w: number, h: number): 
   return e;
 }
 
-export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}): pc.Application {
+export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}): Promise<pc.Application> {
   const app = new pc.Application(canvasEl, {
     graphicsDeviceOptions: { antialias: false, alpha: false }
   });
@@ -98,6 +99,15 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   // read cozy under the lamp's dominance — baseline ambient is untouched.
   if (options.reinterp === true) app.scene.ambientLight = new pc.Color(0.17, 0.14, 0.11);
 
+  if (new URLSearchParams(window.location.search).get('debug') === '1') {
+    (window as { __app?: pc.Application }).__app = app; // ?debug=1 scene-graph probe
+  }
+  // asset pipeline: preload real low-poly models BEFORE building the room, so
+  // props with a `model` key spawn meshes. Only for reinterp — the shipped
+  // baseline uses boxes, so loading models there is wasted work (and avoids the
+  // vite dev-server public-file race on the pages that don't need them).
+  if (options.reinterp === true) await preloadModels(app);
+
   const room = buildEra1Room(app, options.reinterp === true);
 
   // ── the fluid trans niche + the cluster shell (reinterp only) ──
@@ -105,6 +115,10 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   // for review). Around it, the CLUSTER SHELL: the mirrored west alcove, the
   // aperture scrims (sealed → dim → open), the per-era light rigs, and the
   // ceiling witness — plus the point-cloud Close, built once, dormant.
+  // ?layout=x — the disposition of the 360° space (Sérgio, Round 24). T (default)
+  // keeps the back as a WALL (door + record spine). X opens that back into a 4th
+  // ARM toward the ending. Same three room interiors; only the back changes.
+  const layout: 'x' | 't' = new URLSearchParams(window.location.search).get('layout') === 'x' ? 'x' : 't';
   let niche: FluidNiche | null = null;
   let ceiling: CeilingWitness | null = null;
   let cluster: ClusterShell | null = null;
@@ -113,7 +127,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     niche = buildFluidNiche(app);
     niche.setFacet(options.facet ?? 'none');
     ceiling = buildCeilingWitness(app);
-    cluster = buildClusterShell(app, room, niche, ceiling);
+    cluster = buildClusterShell(app, room, niche, ceiling, layout);
     cloud = buildPointCloud(app);
   }
 
@@ -189,13 +203,39 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   let flipCount = 0;
   let drag: { x: number; y: number } | null = null;
 
+  // ?debug=1: publish "where am I" (era + which room the view is in) so the
+  // debug panel can show a live readout — the answer to "which version/room?".
+  const debugOn = new URLSearchParams(window.location.search).get('debug') === '1';
+  const ROOM_LABEL: Record<number, string> = {
+    0: 'Room 1 · front (gay)', 90: 'Room 2 · west (lesbian)',
+    180: 'spine · door + record', 270: 'Room 3 · east (trans)'
+  };
+  let lastNow = '';
+  function publishNow(): void {
+    if (!debugOn) return;
+    const eraU = (cluster ? cluster.era : 'e1').toUpperCase();
+    let room = 'Room 1 · front (gay)';
+    if (cluster && cluster.state !== 'sealed') {
+      let best = 0;
+      for (const y of [0, 90, 180, 270]) if (angDist(camYaw, y) < angDist(camYaw, best)) best = y;
+      room = ROOM_LABEL[best];
+    }
+    const s = `${eraU} · ${room}`;
+    if (s !== lastNow) { lastNow = s; (window as { __reinterpNow?: string }).__reinterpNow = s; }
+  }
+
   // reinterp only: camera POSITION + a smoothstep move for the O2 desk pan and
   // the R (reset-view) shortcut. `conducted` = auto-cam ON: the move ignores
   // drag/keys (accessibility, §0-REV-4); OFF = it's just the default framing
   // the player can grab away from at any time.
   const camPos = new pc.Vec3(EYE.x, EYE.y, EYE.z);
+  // A move is a linear tween by default; a dolly passes a `via` waypoint and the
+  // path becomes a single quadratic-bezier ARC bowing through it — one eased
+  // curve, continuous velocity end-to-end (no mid-swing stop; VR-comfortable).
   interface CamMove { fx: number; fy: number; fz: number; fp: number; fyaw: number;
-    tx: number; ty: number; tz: number; tp: number; tyaw: number; t: number; dur: number; conducted: boolean; }
+    tx: number; ty: number; tz: number; tp: number; tyaw: number;
+    vx: number; vy: number; vz: number; arc: boolean;
+    t: number; dur: number; conducted: boolean; }
   let camMove: CamMove | null = null;
   let autoCam = false;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
@@ -214,15 +254,24 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   let gazeFg: FacetState | null = null;
 
   function startCamMove(to: { x: number; y: number; z: number; pitch: number; yaw: number },
-                        dur: number, conducted: boolean): void {
+                        dur: number, conducted: boolean,
+                        via?: { x: number; y: number; z: number }): void {
     const dyaw = ((to.yaw - camYaw + 540) % 360) - 180; // shortest signed rotation
-    camMove = { fx: camPos.x, fy: camPos.y, fz: camPos.z, fp: camPitch, fyaw: camYaw,
-      tx: to.x, ty: to.y, tz: to.z, tp: to.pitch, tyaw: camYaw + dyaw, t: 0, dur, conducted };
+    const fx = camPos.x, fy = camPos.y, fz = camPos.z;
+    // `via` is the bezier CONTROL point (raised, back from center): the path bows
+    // up-and-over toward it, so mid-travel you rise above the space and see the
+    // three rooms, then settle at the desk — the pull-back/push-in in one stroke
+    const vx = via ? via.x : 0;
+    const vy = via ? via.y : 0;
+    const vz = via ? via.z : 0;
+    camMove = { fx, fy, fz, fp: camPitch, fyaw: camYaw,
+      tx: to.x, ty: to.y, tz: to.z, tp: to.pitch, tyaw: camYaw + dyaw,
+      vx, vy, vz, arc: !!via, t: 0, dur, conducted };
     tween = null;
   }
   /** grabbing/keying the view cancels a non-conducted move (the player left it) */
   function nudgeCamera(): void {
-    if (camMove && !camMove.conducted) { camMove = null; camQueue = []; }
+    if (camMove && !camMove.conducted) { camMove = null; }
     if (revealReturn > 0 && !revealConducted) revealReturn = -1; // the player took over
   }
 
@@ -233,41 +282,44 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
   // Head-drag past a room boundary re-seats on release; arrow keys step rooms;
   // R homes. Sealed E1 keeps the shipped single-seat behavior. Browser only —
   // in VR the head is the camera and the rooms simply surround you. ──
-  /** hub → seat distance: every seat frames its WHOLE room (desk centered);
-   *  the rear stays nearest the hub so terminal + door + Maya hold together */
-  const seatDist = (yaw: number): number => (yaw === 180 ? 0.6 : 0.95);
-  const HUB_XZ = { x: 0, z: 0.7 };          // the chair — the cluster's center
-  const DOLLY_MID_Y = 1.5;                  // slight rise through the pull-back
-  let seatYaw = 0;                          // current seat (0 | 120 | 180 | 240)
-  let camQueue: { pose: { x: number; y: number; z: number; pitch: number; yaw: number };
-    dur: number; conducted: boolean }[] = [];
+  // The dolly's pull-back CONTROL point: raised and slightly back from the hub,
+  // so travel between rooms bows up-and-back (you rise over the space and see the
+  // three rooms) before pushing into the next desk. Used directly as the bezier
+  // control (not a pass-through) — clean arcs now that rooms sit on the x-axis.
+  const DOLLY_CTRL = { x: 0, y: 1.98, z: 1.15 };
+  let seatYaw = 0;                          // current seat (0 = R1 | 90 = R2 west | 270 = R3 east)
 
   const angDist = (a: number, b: number): number =>
     Math.abs((((a - b) % 360) + 540) % 360 - 180);
 
+  /** each room's SEAT — the desk framed at E1 intimacy (eye ~0.8 m from the
+   *  screen, level), identical to the E1 view the player already trusts. Room 1
+   *  faces the north desk (yaw 0); Room 2 sits at its west desk (yaw 90); Room 3
+   *  at its east desk (yaw 270). All three desks read the same closeness. */
   function seatPose(yaw: number): { x: number; y: number; z: number; pitch: number; yaw: number } {
-    if (yaw === 0) return { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 };
-    const a = (yaw * Math.PI) / 180;
-    const d = seatDist(yaw);
-    return { x: HUB_XZ.x - Math.sin(a) * d, y: EYE.y + 0.12,
-      z: HUB_XZ.z - Math.cos(a) * d, pitch: -4, yaw };
+    switch (((yaw % 360) + 360) % 360) {
+      case 90:  return { x: -4.4, y: EYE.y, z: 0.7, pitch: 0, yaw: 90 };  // Room 2 (west)
+      case 270: return { x: 4.4, y: EYE.y, z: 0.7, pitch: 0, yaw: 270 };  // Room 3 (east)
+      case 180: return { x: EYE.x, y: EYE.y, z: 0.7, pitch: 0, yaw: 180 }; // spine (door + record) — review only
+      default:  return { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }; // Room 1 (front)
+    }
   }
-  /** seats available now (CCW order); the rear seat faces the record + door */
+  /** the three rooms the dolly seats in — Room 1 (0), Room 2 west (90), Room 3
+   *  east (270). The spine (180: door + record terminal) is a channel you can
+   *  turn to look at, never a room. E4 uses the same three; its home is Room 3
+   *  (Maya = the trans room evolved), set by cluster.homeYaw = 270. */
   function seatYaws(): number[] {
-    return cluster && cluster.state !== 'sealed' ? [0, 120, 180, 240] : [0];
+    if (!cluster || cluster.state === 'sealed') return [0];
+    // X-layout opens the back into a 4th arm (180) — a real seat toward the
+    // ending. T keeps the back a wall, so 180 stays a channel, not a seat.
+    return layout === 'x' ? [0, 90, 180, 270] : [0, 90, 270];
   }
   function dollyTo(toYaw: number, totalDur: number, conducted: boolean): void {
-    const from = seatYaw;
     seatYaw = toYaw;
-    if (angDist(camYaw, toYaw) < 1 && !camMove && camQueue.length === 0) return; // already there
-    const d = (((toYaw - from) % 360) + 540) % 360 - 180;
-    camQueue = [
-      { pose: { x: HUB_XZ.x, y: DOLLY_MID_Y, z: HUB_XZ.z, pitch: -6, yaw: from + d / 2 },
-        dur: totalDur * 0.45, conducted },
-      { pose: seatPose(toYaw), dur: totalDur * 0.55, conducted }
-    ];
-    const next = camQueue.shift();
-    if (next) startCamMove(next.pose, next.dur, next.conducted);
+    if (angDist(camYaw, toYaw) < 1 && !camMove) return; // already there
+    // one continuous arc: seat → up-and-back over the space (you SEE all three
+    // rooms) → the next desk. Single eased curve = no stop-and-go at the center.
+    startCamMove(seatPose(toYaw), totalDur, conducted, DOLLY_CTRL);
   }
 
   const isBackYaw = (): boolean => {
@@ -430,7 +482,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
       if (seats.length > 1 && angDist(camYaw, seatYaw) > 55) {
         let best = seatYaw;
         for (const s of seats) if (angDist(camYaw, s) < angDist(camYaw, best)) best = s;
-        if (best !== seatYaw) dollyTo(best, 1.6, false);
+        if (best !== seatYaw) dollyTo(best, 2.6, false);
       }
     }
   });
@@ -462,7 +514,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
             const next = k === 'ArrowLeft'
               ? seats[(i + 1) % seats.length]
               : seats[(i - 1 + seats.length) % seats.length];
-            dollyTo(next, 1.8, false);
+            dollyTo(next, 2.6, false);
           }
         } else {
           nudgeCamera();
@@ -478,7 +530,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
       }
       if (!os.isCapturingText) {
         if (k === 'r' || k === 'R') { // reset to the era's home seat (E4: the TURN's facing)
-          if (seatYaws().length > 1 && cluster) dollyTo(cluster.homeYaw, 1.4, false);
+          if (seatYaws().length > 1 && cluster) dollyTo(cluster.homeYaw, 2.2, false);
           else startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: cluster ? cluster.homeYaw : 0 }, 0.7, false);
           e.preventDefault();
           return;
@@ -513,21 +565,27 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
       if (camMove) {
         camMove.t += dt;
         const k = Math.min(1, camMove.t / camMove.dur);
-        const s = k * k * (3 - 2 * k); // smoothstep
-        camPos.x = camMove.fx + (camMove.tx - camMove.fx) * s;
-        camPos.y = camMove.fy + (camMove.ty - camMove.fy) * s;
-        camPos.z = camMove.fz + (camMove.tz - camMove.fz) * s;
+        // arcs use smootherstep (zero velocity AND acceleration at the ends — no
+        // jerk as the dolly settles); plain tweens keep the lighter smoothstep
+        const s = camMove.arc ? k * k * k * (k * (k * 6 - 15) + 10) : k * k * (3 - 2 * k);
+        if (camMove.arc) { // quadratic bezier through the hub control point
+          const u = 1 - s;
+          camPos.x = u * u * camMove.fx + 2 * u * s * camMove.vx + s * s * camMove.tx;
+          camPos.y = u * u * camMove.fy + 2 * u * s * camMove.vy + s * s * camMove.ty;
+          camPos.z = u * u * camMove.fz + 2 * u * s * camMove.vz + s * s * camMove.tz;
+        } else {
+          camPos.x = camMove.fx + (camMove.tx - camMove.fx) * s;
+          camPos.y = camMove.fy + (camMove.ty - camMove.fy) * s;
+          camPos.z = camMove.fz + (camMove.tz - camMove.fz) * s;
+        }
         camPitch = camMove.fp + (camMove.tp - camMove.fp) * s;
         camYaw = camMove.fyaw + (camMove.tyaw - camMove.fyaw) * s;
-        if (k >= 1) {
-          camMove = null;
-          const next = camQueue.shift(); // the dolly's second leg (hub → seat)
-          if (next) startCamMove(next.pose, next.dur, next.conducted);
-        }
+        if (k >= 1) camMove = null;
       }
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
     camera.setLocalEulerAngles(camPitch, camYaw, 0);
+    publishNow(); // ?debug=1 live "you are here" readout
 
     // ── cluster / ceiling / Close + the O7 choreography (reinterp only) ──
     if (options.reinterp) {
@@ -649,11 +707,12 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
     if (!cluster) return;
     cluster.morphToEra(era, true);
     if (era === 'e4') {
-      // THE TURN as a dolly: pull back through the center of thirty years of
-      // rooms, swing 180°, settle at Maya's seat facing the record
-      dollyTo(180, 2.8, autoCam);
+      // THE TURN as a dolly — the piece's slowest, heaviest move: rise up over
+      // thirty years of rooms and settle into Room 3, Maya's room (the trans
+      // room evolved; ◆N3 retargeted from the old spine desk, Round 24)
+      dollyTo(270, 4.5, autoCam);
     } else if (seatYaws().length > 1 && seatYaw !== cluster.homeYaw) {
-      dollyTo(cluster.homeYaw, 1.8, false); // era jumps re-seat at the lead room
+      dollyTo(cluster.homeYaw, 2.4, false); // era jumps re-seat at the lead room
     }
   }
 
@@ -735,7 +794,7 @@ export function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}):
         camPos.set(sp.x, sp.y, sp.z);
         camYaw = sp.yaw;
         camPitch = pitch !== 0 ? pitch : sp.pitch;
-        camMove = null; camQueue = [];
+        camMove = null;
       },
       onReveal: () => cluster?.reveal(),
       onClose: enterClose,

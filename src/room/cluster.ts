@@ -40,10 +40,16 @@ interface RigLight { intensity: number; range?: number; color?: string }
 interface Rig { ambient: number[]; zoneFill: number; lights: Record<string, RigLight> }
 
 const RIG_FADE_SECONDS = 2.5;
-/** space-state index per era (reinterp_deltas.json fold: r1 → r2 → r4) */
-const STATE_FOR_ERA: Record<EraKey, number> = { e1: 0, e2: 1, e3: 1, e4: 2 };
-/** the witness record plane's home per spatial state (rides the spine) */
+/** space-state index per era (reinterp_deltas.json fold: r1 → r2 → r3 → r4).
+ *  Each era now has its OWN state, so the three rooms age era-to-era. */
+const STATE_FOR_ERA: Record<EraKey, number> = { e1: 0, e2: 1, e3: 2, e4: 3 };
+/** the witness record plane's z on the spine (E1 vs open). At E4 it leaves the
+ *  spine entirely and migrates beside Room 3 — see migrateTerminal(). */
 const PLANE_Z: [number, number] = [3.685, 3.865];
+/** E4: the record shares Room 3's wall beside Maya's desk (east). The person
+ *  and the record finally share a wall — the TURN's promise, unified. */
+const TERMINAL_E4 = { pos: [5.66, 1.5, 1.75] as [number, number, number], yaw: 270 };
+const TERMINAL_SPINE_YAW = 180;
 
 function hex(c: string): pc.Color {
   const n = parseInt(c.slice(1), 16);
@@ -53,7 +59,8 @@ function hex(c: string): pc.Color {
 export interface ClusterShell {
   readonly state: ClusterState;
   readonly era: EraKey;
-  /** the home facing: 0° until E4, 180° after the TURN (locked ◆N3) */
+  /** the home facing: 0° (Room 1) until E4, then 270° — Room 3, Maya's room
+   *  (the trans room evolved). The TURN travels here (◆N3 retargeted, Round 24). */
   readonly homeYaw: number;
   /** O7: sealed → dim + ceiling wake — the first-filing reveal */
   reveal(): void;
@@ -70,13 +77,29 @@ export function buildClusterShell(
   app: pc.Application,
   room: RoomHandles,
   niche: FluidNiche,
-  ceiling: CeilingWitness
+  ceiling: CeilingWitness,
+  layout: 'x' | 't' = 't'
 ): ClusterShell {
   const root = new pc.Entity('cluster-shell');
+
+  // X-layout: the back spine is not a wall but a 4th ARM to the ending. We open
+  // it by hiding the spine wall + door (the record terminal stays, hovering at
+  // the threshold to the ending). The morph toggles box scale/pos, never
+  // `enabled`, so hiding by `enabled` survives every state change. Re-assert
+  // after each morph in case a prop was (re)spawned. (T leaves the spine solid.)
+  function applyLayout(): void {
+    if (layout !== 'x') return;
+    for (const id of ['spineWall', 'spineDoorPanel', 'spineDoorLintel',
+      'spineDoorJambL', 'spineDoorJambR', 'spineDoorKnob']) {
+      const h = room.props.get(id);
+      if (h) h.entity.enabled = false;
+    }
+  }
 
   // ── the space morph (ported shipped effect) — start in the r1 state ──
   const morph = new ClusterMorph(room);
   morph.snapTo(0);
+  applyLayout();
 
   // ── zone accent lights (rig-driven; the two rooms' own temperatures) ──
   const zoneLights: pc.Entity[] = [];
@@ -87,9 +110,9 @@ export function buildClusterShell(
     root.addChild(e);
     return e;
   };
-  zoneLights.push(mkLight('light-zoneE', [1.73, 2.2, 1.7], '#E8B7C8', 2.8)); // east wedge: the trans-facet room
-  zoneLights.push(mkLight('light-zoneW', [-1.73, 2.2, 1.7], '#D9A8A0', 2.8)); // west wedge: the parallel-tracks bay
-  const mayaGlow = mkLight('light-mayaGlow', [-0.15, 1.5, 3.3], '#8899BB', 2.4);
+  zoneLights.push(mkLight('light-zoneE', [3.88, 2.15, 0.7], '#E8B7C8', 5.4)); // Room 3 (east): the trans room / Maya
+  zoneLights.push(mkLight('light-zoneW', [-3.88, 2.15, 0.7], '#D9A8A0', 5.4)); // Room 2 (west): the lesbian room / Vera
+  const mayaGlow = mkLight('light-mayaGlow', [4.4, 1.35, 0.7], '#8899BB', 3.0); // Room 3 interface light (E4)
   void mayaGlow; // rig-driven by id
 
   // ── the O7 light-leak seams: thin pale strips at the base of the walls —
@@ -116,22 +139,39 @@ export function buildClusterShell(
   let state: ClusterState = 'sealed';
   let era: EraKey = 'e1';
 
-  // the lamp LIGHT follows its carried props (r4 moves the lamp to Maya's desk)
+  // the lamp LIGHT follows its carried props (change #10 — the warm thread). The
+  // lamp lives in Room 1 for E1–E3; at E4 its props move to Maya's desk (r4
+  // delta) and the light rides with them to Room 3. Nobody turned it off in 30
+  // years — the one constant, now warming the last room.
   const lampLight = room.lights.get('lamp');
   const lampHome = lampLight ? lampLight.getLocalPosition().clone() : null;
   function carryLampLight(to: boolean): void {
     if (!lampLight || !lampHome) return;
-    if (to) lampLight.setLocalPosition(-0.55, 1.08, 3.42);
+    if (to) lampLight.setLocalPosition(5.15, 1.15, 1.5); // Maya's desk (Room 3), clear of the monitor
     else lampLight.setLocalPosition(lampHome.x, lampHome.y, lampHome.z);
   }
 
-  // the witness record plane rides the spine (app owns the entity; we steer z)
+  // the witness record plane rides the spine (app owns the entity; we steer z).
+  // At E4 it MIGRATES off the spine to Room 3's wall beside Maya's desk — the
+  // person and the record share a wall (the TURN's promise, unified).
   let planeLerp: { from: number; to: number; t: number; dur: number } | null = null;
   function setPlaneZ(z: number): void {
     const e = app.root.findByName('witness-screen');
     if (e instanceof pc.Entity) {
       const p = e.getLocalPosition();
       e.setLocalPosition(p.x, p.y, z);
+    }
+  }
+  function migrateTerminal(toRoom3: boolean): void {
+    const e = app.root.findByName('witness-screen');
+    if (!(e instanceof pc.Entity)) return;
+    if (toRoom3) {
+      e.setLocalPosition(TERMINAL_E4.pos[0], TERMINAL_E4.pos[1], TERMINAL_E4.pos[2]);
+      e.setLocalEulerAngles(90, TERMINAL_E4.yaw, 0); // face -x, into Room 3
+    } else {
+      const t = clusterData.witnessTerminal;
+      e.setLocalPosition(t.pos[0], t.pos[1], t.pos[2]);
+      e.setLocalEulerAngles(90, TERMINAL_SPINE_YAW, 0); // back to the spine
     }
   }
 
@@ -200,7 +240,7 @@ export function buildClusterShell(
   return {
     get state(): ClusterState { return state; },
     get era(): EraKey { return era; },
-    get homeYaw(): number { return era === 'e4' ? 180 : 0; },
+    get homeYaw(): number { return era === 'e4' ? 270 : era === 'e3' ? 90 : 0; },
 
     reveal(): void {
       if (state !== 'sealed') return;
@@ -216,6 +256,7 @@ export function buildClusterShell(
       const toIdx = STATE_FOR_ERA[toEra];
       seamsOff();
       carryLampLight(toEra === 'e4');
+      migrateTerminal(toEra === 'e4');
 
       // T1, choreographed (choreography doc §T1): hold on the lamp → the
       // cascade rolls the space open under the ballast stages → settle.
@@ -237,10 +278,12 @@ export function buildClusterShell(
             for (const zl of zoneLights) if (zl.light) zl.light.intensity = 0.9;
             ceiling.wake();
           } },
-          { t: 5.3, fn: () => applyRig('e2', true) }
+          { t: 5.3, fn: () => applyRig('e2', true) },
+          { t: 5.4, fn: () => applyLayout() } // X: keep the back arm open post-cascade
         ]);
         const t1 = eraTable();
         niche.setFacet((t1?.default ?? 'none') as FacetState);
+        applyLayout();
         return;
       }
 
@@ -256,6 +299,7 @@ export function buildClusterShell(
       planeLerp = null;
       const table = eraTable();
       niche.setFacet((table?.default ?? 'none') as FacetState);
+      applyLayout(); // X: re-assert the open back arm after the fold
     },
 
     applyRig,

@@ -29,14 +29,17 @@ interface Delta {
   add?: PropDef[];
 }
 
-/** the ordered fold: base era1.json → r1 → r2 → r4 */
-export const SPACE_STATES = ['r1', 'r2', 'r4'] as const;
+/** the ordered fold: base era1.json → r1 (E1) → r2 (E2) → r3 (E3) → r4 (E4).
+ *  Each state ages the three rooms one era on (Round 24, Phase B): r3 closes
+ *  Room 1 (Daniel transferred) + brings Room 2 forward (Vera, 2016), r4 lands
+ *  Room 3 in the present (Maya). A missing/empty state folds as a no-op. */
+export const SPACE_STATES = ['r1', 'r2', 'r3', 'r4'] as const;
 export type SpaceState = typeof SPACE_STATES[number];
 const DELTA_LIST: Delta[] = SPACE_STATES.map(
   s => (deltas as unknown as Record<string, Delta>)[s]
 );
 
-interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number }
+interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string }
 
 interface Plan {
   h: PropHandle;
@@ -64,7 +67,7 @@ export class ClusterMorph {
   private targetsFor(idx: number): Map<string, PropTarget> {
     const m = new Map<string, PropTarget>();
     for (const d of (era1 as unknown as { props: PropDef[] }).props) {
-      m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0 });
+      m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model });
     }
     for (let i = 0; i <= idx; i++) {
       const delta = DELTA_LIST[i];
@@ -77,7 +80,7 @@ export class ClusterMorph {
       }
       for (const id of delta.remove ?? []) { const t = m.get(id); if (t) t.present = false; }
       for (const def of delta.add ?? []) {
-        m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0 });
+        m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model });
       }
     }
     return m;
@@ -86,12 +89,15 @@ export class ClusterMorph {
   private spawnTarget(id: string, t: PropTarget): PropHandle {
     return spawnProp(this.room, {
       id, pos: t.pos as [number, number, number], size: t.size as [number, number, number],
-      color: t.color, emissive: t.emissive, yaw: t.yaw
+      color: t.color, emissive: t.emissive, yaw: t.yaw, model: t.model
     });
   }
 
-  /** set a prop instantly to a target (colour/pos/scale) */
+  /** set a prop instantly to a target (colour/pos/scale). MODEL props place
+   *  themselves (a wrapper the morph must not distort) — only their presence
+   *  is toggled here. */
   private applyTarget(h: PropHandle, t: PropTarget): void {
+    if (h.model) { h.entity.enabled = t.present; return; }
     const col = h.emissive ? h.material.emissive : h.material.diffuse;
     col.copy(hex(t.color));
     if (!h.emissive) h.material.emissive.set(0, 0, 0);
@@ -113,7 +119,9 @@ export class ClusterMorph {
     }
     for (const [id, h] of this.room.props) {
       const t = targets.get(id);
-      if (!t || !t.present) h.entity.setLocalScale(0, 0, 0);
+      const absent = !t || !t.present;
+      if (h.model) h.entity.enabled = !absent; // models toggle presence, never scale-to-0
+      else if (absent) h.entity.setLocalScale(0, 0, 0);
     }
   }
 
@@ -138,8 +146,11 @@ export class ClusterMorph {
         const seed = tp?.present ? tp : tn;
         if (!seed) continue;
         h = this.spawnTarget(id, seed);
-        if (!tp?.present) h.entity.setLocalScale(0, 0, 0); // grows in from nothing
+        if (!h.model && !tp?.present) h.entity.setLocalScale(0, 0, 0); // grows in from nothing
       }
+      // MODEL props don't animate (a wrapper the morph must not distort): snap
+      // their presence to the target and skip the pos/scale cascade.
+      if (h.model) { h.entity.enabled = !!tn?.present; continue; }
       const toPresent = !!tn?.present;
       const toColor = toPresent && tn ? hex(tn.color) : (h.emissive ? h.material.emissive : h.material.diffuse).clone();
       const toPos = toPresent && tn ? new pc.Vec3(tn.pos[0], tn.pos[1], tn.pos[2]) : h.entity.getLocalPosition().clone();

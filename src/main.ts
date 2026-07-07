@@ -39,5 +39,5 @@ if (query.get('lambyrig') === '1') {
 } else if (query.get('flat') === '1') {
   startFlat(canvas, { reinterp });
 } else {
-  startApp(canvas, { reinterp, facet, era, morphDemo, close, reveal });
+  void startApp(canvas, { reinterp, facet, era, morphDemo, close, reveal });
 }

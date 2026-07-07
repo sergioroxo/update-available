@@ -1,12 +1,15 @@
 /**
- * Debug panel (dev only) — jump between beats and spatial states to review the
- * reinterp build without playing it through. PORTED from the shipped build's
- * panel (Sérgio, Round 18: "copy the Debug button system from the previous
- * version so we can travel around"), rescoped to this worktree's beats +
- * the cluster/rig/Close states. Gated behind ?debug=1 so it never ships to
- * players. Toggle with the backtick (`) key or the hide/⚙ buttons.
+ * Debug panel (dev only, ?debug=1) — travel the reinterp build without playing
+ * it through. Round 24: rebuilt for LEGIBILITY (Sérgio couldn't tell which
+ * version/room he was in — he was on a stale server). It now shows a BUILD TAG,
+ * a live "you are here" readout (era + room), clearly-labelled era + room jumps,
+ * and a links list of every review URL + the controls. Toggle with backtick (`)
+ * or the hide/⚙ buttons.
  */
 import { DesktopOS } from '../desktop/os';
+
+/** bump this each build so the panel says which version is on screen */
+const BUILD_TAG = 'S15 · three rooms that age';
 
 interface DebugOpts {
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
@@ -14,7 +17,7 @@ interface DebugOpts {
   onClose?: () => void;
   onFacet?: (facet: 'transfem' | 'transmasc' | 'nonbinary' | 'all' | 'none') => void;
   onFlip?: () => void;
-  /** dev-only camera jump: hub position + exact yaw/pitch (review screenshots) */
+  /** dev-only camera jump: seat pose at an exact yaw (review screenshots) */
   onCamProbe?: (yaw: number, pitch: number) => void;
 }
 
@@ -29,6 +32,38 @@ const OS_BEATS: Array<[string, string]> = [
   ['Provotype — intake', 'intake']
 ];
 
+/** eras with the room + identity + year they now lead (Round 24 model) */
+const ERAS: Array<['e1' | 'e2' | 'e3' | 'e4', string]> = [
+  ['e1', 'E1 1997 · Room 1 (gay teen)'],
+  ['e2', 'E2 2003 · Room 1 adult + rooms open'],
+  ['e3', 'E3 2016 · Room 2 (lesbian)'],
+  ['e4', 'E4 now · Room 3 (trans)']
+];
+
+/** the three rooms (+ the spine) as seat yaws for the camera jump */
+const ROOMS: Array<[string, number]> = [
+  ['→ Room 1 · front (gay)', 0],
+  ['→ Room 2 · west (lesbian)', 90],
+  ['→ Room 3 · east (trans)', 270],
+  ['→ spine · door + record', 180]
+];
+
+/** review URLs — the "all the options" links Sérgio asked for */
+const LINKS: Array<[string, string]> = [
+  ['E1 · opening + sealed room', '?reinterp=1&debug=1'],
+  ['E2 · rooms open', '?reinterp=1&era=2&debug=1'],
+  ['E3 · Vera leads', '?reinterp=1&era=3&debug=1'],
+  ['E4 · Maya leads (the TURN)', '?reinterp=1&era=4&debug=1'],
+  ['O7 · first-filing reveal', '?reinterp=1&reveal=1&debug=1'],
+  ['T1 · watch E1→E2 morph', '?reinterp=1&morph=2&debug=1'],
+  ['T2 · watch E2→E3 morph', '?reinterp=1&morph=3&debug=1'],
+  ['T3 · watch E3→E4 morph', '?reinterp=1&morph=4&debug=1'],
+  ['Close · point cloud', '?reinterp=1&close=1&debug=1'],
+  ['Layout T · back = wall', '?reinterp=1&era=2&debug=1'],
+  ['Layout X · back = ending arm', '?reinterp=1&era=2&debug=1&layout=x'],
+  ['Flat 2D fallback', '?flat=1&reinterp=1']
+];
+
 export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   if (new URLSearchParams(window.location.search).get('debug') !== '1') return;
   if (opts.onCamProbe) {
@@ -39,14 +74,12 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   const panel = document.createElement('div');
   Object.assign(panel.style, {
     position: 'fixed', top: '8px', left: '8px', zIndex: '9999',
-    background: 'rgba(16,18,26,0.92)', color: '#cdd3df',
+    background: 'rgba(16,18,26,0.94)', color: '#cdd3df',
     font: '11px/1.4 monospace', padding: '8px', borderRadius: '6px',
-    border: '1px solid #3a4154', maxHeight: '92vh', overflowY: 'auto',
-    width: '150px', userSelect: 'none'
+    border: '1px solid #3a4154', maxHeight: '94vh', overflowY: 'auto',
+    width: '208px', userSelect: 'none'
   } as CSSStyleDeclaration);
 
-  // a tiny re-open pill, shown only when the panel is hidden (backtick is a
-  // dead key on many EU layouts, so the panel must be hideable by mouse too)
   const pill = document.createElement('button');
   pill.textContent = '⚙ debug';
   Object.assign(pill.style, {
@@ -62,7 +95,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
 
   const title = document.createElement('div');
   Object.assign(title.style, {
-    fontWeight: 'bold', marginBottom: '6px', color: '#8fb6ff',
+    fontWeight: 'bold', marginBottom: '2px', color: '#8fb6ff',
     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
   } as CSSStyleDeclaration);
   const titleText = document.createElement('span');
@@ -78,6 +111,22 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   title.appendChild(hideBtn);
   panel.appendChild(title);
 
+  // BUILD TAG — which version is on screen (answers "which one am I looking at?")
+  const build = document.createElement('div');
+  build.textContent = 'build: ' + BUILD_TAG;
+  build.style.cssText = 'color:#ffd48f;font-size:10px;margin-bottom:4px';
+  panel.appendChild(build);
+
+  // live "you are here": era + room, polled from the app (?debug=1)
+  const now = document.createElement('div');
+  now.style.cssText = 'color:#8fffc0;font-size:10px;margin-bottom:6px;min-height:13px';
+  now.textContent = 'here: —';
+  panel.appendChild(now);
+  window.setInterval(() => {
+    const s = (window as { __reinterpNow?: string }).__reinterpNow;
+    now.textContent = 'here: ' + (s ?? '— (open a room)');
+  }, 250);
+
   const mkBtn = (label: string, fn: () => void): HTMLButtonElement => {
     const b = document.createElement('button');
     b.textContent = label;
@@ -92,15 +141,18 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     panel.appendChild(b);
     return b;
   };
+  const heading = (text: string): void => {
+    const h = document.createElement('div');
+    h.textContent = text;
+    h.style.cssText = 'color:#7f8aa3;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;margin:8px 0 2px';
+    panel.appendChild(h);
+  };
   const sep = (): void => {
     const d = document.createElement('div');
     d.style.cssText = 'border-top:1px solid #39405270;margin:6px 0';
     panel.appendChild(d);
   };
 
-  // 📷 dev screenshot — download the visible canvas as a timestamped PNG.
-  // Dev-only (?debug=1); a local canvas → object-URL download — no network,
-  // no storage.
   const shotBtn = mkBtn('📷 screenshot', () => {
     const cv = document.querySelector('canvas');
     if (!cv) return;
@@ -116,7 +168,6 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   });
   shotBtn.style.color = '#8fffc0';
 
-  // flat ⇄ 3D toggle — reload with/without ?flat=1 (keeps ?debug=1 + ?reinterp=1)
   const isFlat = new URLSearchParams(window.location.search).get('flat') === '1';
   const modeBtn = mkBtn(isFlat ? '🖥 → 3D room' : '▭ → Flat 2D', () => {
     const p = new URLSearchParams(window.location.search);
@@ -125,23 +176,24 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     window.location.search = p.toString();
   });
   modeBtn.style.color = '#ffd48f';
-  sep();
 
-  for (const [label, beat] of OS_BEATS) mkBtn(label, () => os.debugJump(beat));
-
-  if (opts.onReveal || opts.onEra || opts.onClose) {
-    sep();
-    if (opts.onReveal) mkBtn('Reveal (O7 state)', opts.onReveal);
-    if (opts.onEra) {
-      mkBtn('Era 1 rig', () => opts.onEra?.('e1'));
-      mkBtn('Era 2 — morph open', () => opts.onEra?.('e2'));
-      mkBtn('Era 3 — morph open', () => opts.onEra?.('e3'));
-      mkBtn('Era 4 — morph open', () => opts.onEra?.('e4'));
-    }
-    if (opts.onClose) mkBtn('Close — point cloud', opts.onClose);
+  // ── ERA (time): change which era the three rooms are aged to ──
+  if (opts.onEra || opts.onReveal || opts.onClose) {
+    heading('era — the rooms age');
+    if (opts.onReveal) mkBtn('O7 · first-filing reveal', opts.onReveal);
+    if (opts.onEra) for (const [era, label] of ERAS) mkBtn(label, () => opts.onEra?.(era));
+    if (opts.onClose) mkBtn('Close · point cloud', opts.onClose);
   }
+
+  // ── ROOM (place): jump the camera to a room's desk seat ──
+  if (opts.onCamProbe) {
+    heading('room — jump the camera');
+    for (const [label, yaw] of ROOMS) mkBtn(label, () => opts.onCamProbe?.(yaw, 0));
+  }
+
+  // ── the trans room's facets (Room 3) ──
   if (opts.onFacet) {
-    sep();
+    heading('room 3 facet (trans)');
     mkBtn('Facet — trans-fem', () => opts.onFacet?.('transfem'));
     mkBtn('Facet — trans-masc', () => opts.onFacet?.('transmasc'));
     mkBtn('Facet — non-binary', () => opts.onFacet?.('nonbinary'));
@@ -149,14 +201,41 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     mkBtn('Facet — none (E1)', () => opts.onFacet?.('none'));
   }
   if (opts.onFlip) {
-    sep();
-    mkBtn('Flip ⟲ (witness)', opts.onFlip);
+    heading('witness');
+    mkBtn('Flip ⟲ (turn to record)', opts.onFlip);
   }
 
+  // ── OS beats (the 2D desktop states) ──
+  heading('os beats (the monitor)');
+  for (const [label, beat] of OS_BEATS) mkBtn(label, () => os.debugJump(beat));
+
+  // ── LINKS: every review URL as a clickable link (Sérgio's ask) ──
+  heading('open a state (links)');
+  for (const [label, href] of LINKS) {
+    const a = document.createElement('a');
+    a.textContent = label;
+    a.href = href;
+    Object.assign(a.style, {
+      display: 'block', margin: '2px 0', color: '#8fb6ff', textDecoration: 'none',
+      font: '10px monospace', padding: '1px 2px'
+    } as CSSStyleDeclaration);
+    a.addEventListener('mouseenter', () => { a.style.textDecoration = 'underline'; });
+    a.addEventListener('mouseleave', () => { a.style.textDecoration = 'none'; });
+    panel.appendChild(a);
+  }
+
+  // ── CONTROLS reference ──
+  heading('controls');
+  const ctrls = document.createElement('div');
+  ctrls.style.cssText = 'color:#9aa3b8;font-size:10px;line-height:1.5';
+  ctrls.innerHTML =
+    'drag = look around<br>← → = move between rooms<br>R = home room · F = flip to record<br>` = show/hide this panel';
+  panel.appendChild(ctrls);
+
+  sep();
   document.body.appendChild(panel);
   document.body.appendChild(pill);
 
-  // toggle on backtick by physical key (Backquote) so dead-key layouts work
   window.addEventListener('keydown', (e) => {
     if (e.key === '`' || e.code === 'Backquote') {
       show(panel.style.display === 'none');
