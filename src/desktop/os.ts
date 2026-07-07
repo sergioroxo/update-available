@@ -44,6 +44,14 @@ interface DesktopOSOptions {
   reinterp?: boolean;
 }
 
+export interface OpeningProfileSnapshot {
+  active: boolean;
+  icon: string;
+  chips: string[];
+  goal: string;
+  filed: boolean;
+}
+
 export class DesktopOS {
   readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
@@ -102,6 +110,8 @@ export class DesktopOS {
   onLeave?: () => void;
   /** engine listens: hide the physical floppy once it is in the drive */
   onKitInserted?: () => void;
+  /** engine listens: mirror O3's live selections onto the rear cork/record plane */
+  onOpeningProfileChange?: (snapshot: OpeningProfileSnapshot) => void;
 
   constructor(options: DesktopOSOptions = {}) {
     this.reinterp = options.reinterp === true;
@@ -274,6 +284,22 @@ export class DesktopOS {
     this.phase = p;
     this.phaseT = 0;
     this.dirty = true;
+    this.emitOpeningProfile();
+  }
+
+  openingProfileSnapshot(): OpeningProfileSnapshot {
+    return {
+      active: this.reinterp && (this.phase === 'r_boot' || this.phase === 'r_profile' || this.phase === 'r_recap'),
+      icon: this.profileIcon,
+      chips: [...this.profileChips],
+      goal: this.profileGoal,
+      filed: this.profileFiled
+    };
+  }
+
+  private emitOpeningProfile(): void {
+    if (!this.reinterp) return;
+    this.onOpeningProfileChange?.(this.openingProfileSnapshot());
   }
 
   /** the witness flip completed its return — card #1 unlocks */
@@ -772,15 +798,26 @@ export class DesktopOS {
     if (id === 'r-leave') { this.leave(); return; }
     if (this.phase === 'r_boot') { this.setPhase('r_profile'); return; } // any click skips the crawl
     if (this.phase === 'r_profile') {
-      if (id.startsWith('picon:')) { this.profileIcon = id.slice(6); this.dirty = true; return; }
+      if (id.startsWith('picon:')) {
+        this.profileIcon = id.slice(6);
+        this.emitOpeningProfile();
+        this.dirty = true;
+        return;
+      }
       if (id.startsWith('pchip:')) {
         const c = id.slice(6);
         const i = this.profileChips.indexOf(c);
         if (i >= 0) this.profileChips.splice(i, 1);
         else if (this.profileChips.length < 3) this.profileChips.push(c);
+        this.emitOpeningProfile();
         this.dirty = true; return;
       }
-      if (id.startsWith('pgoal:')) { this.profileGoal = id.slice(6); this.dirty = true; return; }
+      if (id.startsWith('pgoal:')) {
+        this.profileGoal = id.slice(6);
+        this.emitOpeningProfile();
+        this.dirty = true;
+        return;
+      }
       if (id === 'r-continue') this.commitProfile();
       return;
     }

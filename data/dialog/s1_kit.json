@@ -10,7 +10,7 @@
     "(c) 1996 TriedPath Fellowship",
     "loading companion ..."
   ],
-  "midiNote": "hymn.mid — now playing",
+  "midiNote": "companion cassette insert",
   "pages": [
     {
       "title": "Welcome, friend",
@@ -44,8 +44,8 @@
         "You were not meant to carry this alone.",
         "",
         "STEP TWO — Listen.",
-        "Play tape one of your companion cassette now,",
-        "and let the words rest on you as you read.",
+        "Read tape one of your companion cassette now,",
+        "and let the words rest here on the screen.",
         "",
         "STEP THREE — Fellowship.",
         "Strugglers who walk together, arrive together."
@@ -55,8 +55,6 @@
       "title": "Tape one — a prayer for the journey",
       "prayer": true,
       "lines": [
-        "(tape hiss)",
-        "",
         "Lord, you see this child at the doorway,",
         "carrying what they did not choose",
         "and do not have to keep.",
@@ -65,9 +63,7 @@
         "and voices of the right kind,",
         "and the courage to be made new.",
         "We thank you for the work",
-        "you are beginning tonight.",
-        "",
-        "(tape ends)"
+        "you are beginning tonight."
       ]
     },
     {

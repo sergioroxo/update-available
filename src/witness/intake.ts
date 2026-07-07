@@ -4,16 +4,26 @@
  * player actually did). Register law: this surface is SHARP and cold —
  * surveillance is high-definition. It never responds to input.
  */
-import { ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
+import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont } from '../desktop/theme/chrome';
 import { ledger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
+import opening from '../../data/strings/opening.json';
 
 const INK = '#aabbcc';
 const DIM = '#556677';
 const PANEL = '#0d0d1a';
 const FIELD = '#0a0a15';
 const LINE = '#222244';
+const HARDEN_SECONDS = 2.2;
+
+interface OpeningProfileSnapshot {
+  active: boolean;
+  icon: string;
+  chips: string[];
+  goal: string;
+  filed: boolean;
+}
 
 export class WitnessCanvas {
   readonly canvas: HTMLCanvasElement;
@@ -22,6 +32,8 @@ export class WitnessCanvas {
   /** message count is sampled at flip time so the record reads as "filed" */
   messagesOnFile = 0;
   dirty = true;
+  private openingProfile: OpeningProfileSnapshot = { active: false, icon: '', chips: [], goal: '', filed: false };
+  private hardenT = HARDEN_SECONDS;
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -34,13 +46,35 @@ export class WitnessCanvas {
     this.ctx.scale(RENDER_SCALE, RENDER_SCALE); // layout stays logical
   }
 
+  setOpeningProfile(profile: OpeningProfileSnapshot): void {
+    const wasFiled = this.openingProfile.filed;
+    this.openingProfile = {
+      active: profile.active,
+      icon: profile.icon,
+      chips: [...profile.chips],
+      goal: profile.goal,
+      filed: profile.filed
+    };
+    if (!wasFiled && profile.filed) this.hardenT = 0;
+    this.dirty = true;
+  }
+
   update(dt: number): void {
     this.t += dt;
     this.dirty = true;
-    // the wall is dormant until the system has a record on you —
-    // it wakes the moment the disk goes in (S1.2), or a provotype is filed
-    // (reinterp build: both are a first record on the subject)
-    if (ledger.records.includes('kit-inserted') || ledger.provotypes.length > 0 || ledger.sends.length > 0) {
+    if (this.hardenT < HARDEN_SECONDS) this.hardenT = Math.min(HARDEN_SECONDS, this.hardenT + dt);
+    const profileLines = this.profileRecaptionLines();
+    // R26: the same rear-wall surface begins as the warm O3 cork board, then
+    // hardens into the cold record. Once filed, the existing intake content
+    // remains the authority; profile clicks merely add traceable filed lines.
+    if (this.openingProfile.active && !this.openingProfile.filed) {
+      this.drawCorkBoard();
+    } else if (this.hardenT < HARDEN_SECONDS) {
+      this.drawHardening();
+    } else if (
+      ledger.records.includes('kit-inserted') || ledger.provotypes.length > 0
+      || ledger.sends.length > 0 || profileLines.length > 0
+    ) {
       this.draw();
     } else {
       this.drawDormant();
@@ -76,6 +110,116 @@ export class WitnessCanvas {
     ctx.fillText(value, vx + 6, y + 3);
   }
 
+  private optionLabel(kind: 'icon' | 'chip' | 'goal', id: string): string {
+    if (id === 'declined') return opening.o3_goal_decline;
+    const key = kind === 'icon' ? 'o3_icons' : kind === 'chip' ? 'o3_chips' : 'o3_goals';
+    const found = (opening[key] as { id: string; label: string }[]).find(o => o.id === id);
+    return found?.label ?? id;
+  }
+
+  private profileRecaptionLines(): string[] {
+    const recap = opening.recaptions as {
+      icon: Record<string, string>; chip: Record<string, string>; goal: Record<string, string>;
+    };
+    const lines: string[] = [];
+    for (const tag of ledger.tags) {
+      if (tag.startsWith('profile:icon:')) {
+        const id = tag.slice('profile:icon:'.length);
+        lines.push(recap.icon[id] ?? id);
+      } else if (tag.startsWith('profile:chip:')) {
+        const id = tag.slice('profile:chip:'.length);
+        lines.push(recap.chip[id] ?? id);
+      } else if (tag.startsWith('profile:goal:')) {
+        const id = tag.slice('profile:goal:'.length);
+        lines.push(recap.goal[id] ?? id);
+      }
+    }
+    return lines;
+  }
+
+  private tagsValue(): string {
+    const profileLines = this.profileRecaptionLines();
+    const other = ledger.tags.filter(t => !t.startsWith('profile:'));
+    const parts = [...profileLines, ...other];
+    return parts.join(', ') || '—';
+  }
+
+  private drawPinnedNote(x: number, y: number, w: number, h: number, title: string, body: string, filled: boolean): void {
+    const { ctx } = this;
+    px(ctx, x, y, w, h, filled ? ERA1.paper : ERA1.beige);
+    px(ctx, x, y, w, 1, ERA1.warnDark);
+    px(ctx, x, y, 1, h, ERA1.warnDark);
+    px(ctx, x, y + h - 1, w, 1, ERA1.olive);
+    px(ctx, x + w - 1, y, 1, h, ERA1.olive);
+    px(ctx, x + Math.round(w / 2) - 2, y - 3, 5, 5, filled ? ERA1.warn : ERA1.grey);
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(title, x + 6, y + 6);
+    setFont(ctx, 10);
+    ctx.fillStyle = filled ? ERA1.black : ERA1.grey;
+    ctx.fillText(body || opening.o3_board_empty, x + 6, y + 22);
+  }
+
+  private drawCorkBoard(): void {
+    const { ctx } = this;
+    const W = ERA1_CANVAS.width;
+    const H = ERA1_CANVAS.height;
+    px(ctx, 0, 0, W, H, ERA1.olive);
+    for (let y = 0; y < H; y += 12) {
+      for (let x = (y / 12) % 2 === 0 ? 0 : 6; x < W; x += 12) px(ctx, x, y, 2, 2, ERA1.beige);
+    }
+    px(ctx, 12, 12, W - 24, H - 24, ERA1.beige);
+    px(ctx, 12, 12, W - 24, 2, ERA1.warnDark);
+    px(ctx, 12, H - 14, W - 24, 2, ERA1.warnDark);
+    px(ctx, 12, 12, 2, H - 24, ERA1.warnDark);
+    px(ctx, W - 14, 12, 2, H - 24, ERA1.warnDark);
+    setFont(ctx, 12);
+    ctx.fillStyle = ERA1.warnDark;
+    ctx.fillText(opening.o3_board_title, 28, 28);
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(opening.o3_board_hint, W - 202, H - 28);
+
+    this.drawPinnedNote(
+      34, 58, 136, 64,
+      opening.o3_board_icon_label,
+      this.optionLabel('icon', this.openingProfile.icon),
+      this.openingProfile.icon !== ''
+    );
+    const chips = this.openingProfile.chips.map(c => this.optionLabel('chip', c));
+    for (let i = 0; i < 3; i++) {
+      this.drawPinnedNote(
+        202, 54 + i * 74, 190, 56,
+        `${opening.o3_board_chip_label} ${i + 1}`,
+        chips[i] ?? '',
+        chips[i] !== undefined
+      );
+    }
+    this.drawPinnedNote(
+      54, 178, 150, 72,
+      opening.o3_board_goal_label,
+      this.openingProfile.goal ? this.optionLabel('goal', this.openingProfile.goal) : '',
+      this.openingProfile.goal !== ''
+    );
+  }
+
+  private drawHardening(): void {
+    this.drawCorkBoard();
+    const { ctx } = this;
+    const W = ERA1_CANVAS.width;
+    const H = ERA1_CANVAS.height;
+    const k = this.hardenT / HARDEN_SECONDS;
+    const bands = Math.floor(k * 9);
+    for (let i = 0; i < bands; i++) {
+      const y = 18 + i * 34;
+      px(ctx, 22, y, W - 44, 18, PANEL);
+      px(ctx, 22, y + 18, W - 44, 1, LINE);
+    }
+    setFont(ctx, 10);
+    ctx.fillStyle = k > 0.45 ? INK : ERA1.warnDark;
+    ctx.fillText(opening.o3_board_hardening, 28, H - 50);
+  }
+
   private draw(): void {
     const { ctx } = this;
     const W = ERA1_CANVAS.width;
@@ -109,7 +253,7 @@ export class WitnessCanvas {
         : s.notOnline,
       106
     );
-    this.field(s.tags, ledger.tags.join(', ') || '—', 128, ledger.tags.length ? '#cc8855' : INK);
+    this.field(s.tags, this.tagsValue(), 128, ledger.tags.length ? '#cc8855' : INK);
     this.field(s.status, s.statusValue, 150, '#cc8855');
 
     // the index card — the name copied into the era's filing artifact
@@ -141,12 +285,14 @@ export class WitnessCanvas {
     // never invisible, Ethics #10; the cross-reference lines MESH into the
     // same record, ◆N2). Copy comes from each item's own data (resolved at
     // file time), never composed here. Baseline never populates either.
-    if (ledger.provotypes.length > 0 || ledger.sends.length > 0) {
+    const profileLines = this.profileRecaptionLines();
+    if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;
       ctx.fillText(s.sessionLog, 28, 262);
       setFont(ctx, 9);
       const lines: { text: string; color: string }[] = [
+        ...profileLines.map(text => ({ text, color: INK })),
         ...ledger.provotypes.map(p => ({
           text: p.witness || `${p.id}: ${p.outcome}`,
           color: p.outcome === 'abandoned' ? '#cc8855' : INK

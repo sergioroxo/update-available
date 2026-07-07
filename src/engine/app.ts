@@ -177,6 +177,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     };
   }
   const witness = new WitnessCanvas();
+  if (options.reinterp === true) {
+    os.onOpeningProfileChange = (profile) => witness.setOpeningProfile(profile);
+    witness.setOpeningProfile(os.openingProfileSnapshot());
+  }
 
   const frontTex = makeScreenTexture(app, os.canvas);
   const front = makeScreenEntity('desktop-screen', frontTex, SCREEN.w, SCREEN.h);

@@ -1,7 +1,7 @@
 /**
  * The Starter Kit (S1.2–S1.4, register: operable) — the era's routing
- * artifact. A period shovelware autorun: booklet pages on screen, the hymn
- * indicator, the prayer subtitled, and a final page whose only real button
+ * artifact. A period shovelware autorun: booklet pages on screen, the cassette
+ * insert indicator, the prayer printed, and a final page whose only real button
  * is the one that sends you to the channel. All wording in
  * data/dialog/s1_kit.json (⚑ draft, Sérgio approves).
  */
@@ -87,21 +87,19 @@ export class KitApp {
     }
 
     const p = kit.pages[this.page];
-    // the hymn indicator — dim, constant, period-true
+    // the cassette insert indicator — dim, constant, period-true; no audio yet
     ui.setFont(ctx, 8);
     ctx.fillStyle = ERA1.olive;
-    ctx.fillText(`♪ ${kit.midiNote}`, c.x + c.w - 150, c.y + 4);
+    ctx.fillText(kit.midiNote, c.x + c.w - 150, c.y + 4);
     // page title
     ui.setFont(ctx, 13);
     ctx.fillStyle = ERA1.navy;
     ctx.fillText(p.title, c.x + 14, c.y + 18);
-    // body — the prayer page reads as subtitles (grey, slower voice)
+    // body — the prayer page reads as a printed cassette insert
     ui.setFont(ctx, 10);
     const prayer = 'prayer' in p && p.prayer === true;
     p.lines.forEach((line, i) => {
-      ctx.fillStyle = prayer
-        ? (line.startsWith('(') ? ERA1.grey : ERA1.greyDark)
-        : ERA1.black;
+      ctx.fillStyle = prayer ? ERA1.greyDark : ERA1.black;
       ctx.fillText(line, c.x + 14, c.y + 42 + i * 14);
     });
     // pager
