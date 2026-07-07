@@ -34,6 +34,7 @@ const BOOT_HOLD = 4.8;             // hold completed BIOS so the install lines r
 const R_BOOT_HOLD = 3.2;           // hold the LambyOS boot after the crawl completes
 
 const WARNING_ARM_DELAY = 4; // s before CONTINUE becomes active (ethics)
+const ESCALATION_FALLBACK = 24; // s after the hook: Rob escalates even if the player never flips (main-parity)
 // display text lives in data/ — never in code (CLAUDE.md law)
 const BOOT_LINES: ReadonlyArray<string> = strings.boot.lines;
 
@@ -90,6 +91,7 @@ export class DesktopOS {
   private kitToastShown = false;
   private behindToastShown = false;
   private behindToastAt = Infinity;
+  private escalationFallbackAt = Infinity; // Rob escalates on this deadline if the player never flips
   /** engine reads this to creep the cold (witness) side into peripheral vision */
   hasUnseenWitness = false;
   dossierUnlocked = false;
@@ -127,8 +129,9 @@ export class DesktopOS {
    * no text — every choice is a click — so shortcuts are free there.
    */
   get isCapturingText(): boolean {
+    // only the name entry types now — the IRC is lurk-only/press-only, so the
+    // camera shortcuts (R/F) stay free while it's open (main-parity)
     if (this.phase === 'name' && !this.greeting) return true;
-    if (this.phase === 'desktop' && this.irc) return true;
     return false;
   }
 
@@ -165,15 +168,34 @@ export class DesktopOS {
         this.hasUnseenWitness = true; // the cold side begins to creep in
         this.behindToastAt = this.t + 7; // a beat later: a reason to look back
         this.onFlipReady?.();
+        // the flip EARNS the escalation (main's resolved design): Rob only
+        // pushes the residential program after you've turned and witnessed the
+        // record — with a fallback so a player who never turns still advances.
+        this.escalationFallbackAt = this.t + ESCALATION_FALLBACK;
+      };
+      // the whole Rob exchange complete = the E1 → E2 trigger (the hook is
+      // fully set). Files the record the spine reads to arm the T1 update.
+      this.irc.onEscalationDone = () => {
+        if (!ledger.records.includes('escalation-done')) ledger.records.push('escalation-done');
+        this.dirty = true;
       };
     };
     this.dirty = true;
   }
 
-  /** the player has turned to the witness side — stop nudging them back */
+  /** the residential pitch begins — after the witness flip, or on the fallback */
+  private escalate(): void {
+    this.escalationFallbackAt = Infinity;
+    this.irc?.beginEscalation();
+    this.dirty = true;
+  }
+
+  /** the player has turned to the witness side — stop nudging them back, and
+   *  let Rob escalate (turning to witness the record is what earns it) */
   markWitnessSeen(): void {
     this.hasUnseenWitness = false;
     this.behindToastAt = Infinity;
+    if (this.irc && !this.irc.escalationActive) this.escalate();
     this.dirty = true;
   }
 
@@ -289,6 +311,10 @@ export class DesktopOS {
     }
     if (this.phase === 'desktop' && this.kit) this.kit.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
+    // the fallback: if the player never turns to witness the record, Rob
+    // escalates anyway once the deadline passes (main-parity — the flip is
+    // the earned path, not a hard gate)
+    if (this.t >= this.escalationFallbackAt) this.escalate();
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
     if (this.phase === 'desktop' && this.updateApp) this.updateApp.update(dt);
     if (!this.behindToastShown && this.t >= this.behindToastAt) {
@@ -911,13 +937,11 @@ export class DesktopOS {
       if (key === 'Enter') { this.kit.advance(); return true; }
       return key.length === 1; // reading, not typing — swallow strays
     }
-    if (this.phase === 'desktop' && this.irc) {
-      if (key === 'Enter') { this.irc.submit(); return true; }
-      if (key === 'Backspace') { this.irc.backspace(); return true; }
-      if (key.toLowerCase() === 'd' && this.dossierUnlocked && this.irc.userMessageCount === 0) {
-        // 'd' opens the dossier only when not mid-typing — typing wins
-      }
-      if (key.length === 1) { this.irc.typeChar(key); return true; }
+    // the IRC is lurk-only + press-only now (main-parity): no free typing
+    // anywhere (VR: no keyboard dependency). Swallow strays while it's open so
+    // camera shortcuts never fire mid-read; the reply is a click, not a key.
+    if (this.phase === 'desktop' && this.irc?.open) {
+      return key.length === 1;
     }
     return false;
   }

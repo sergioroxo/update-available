@@ -255,8 +255,11 @@ export function buildClusterShell(
     reveal(): void {
       if (state !== 'sealed') return;
       state = 'dim';
-      for (const s of seams) s.enabled = true; // light under the walls — others exist
-      ceiling.wake();
+      // R26: the wall light-leak seams ("white bars at floor level") and the
+      // overhead ceiling-witness wake are RETIRED from the three-room build —
+      // they were the radial-era "something beyond the walls" hint, now
+      // redundant (the doorways do that job) and reading as clutter. The reveal
+      // is kept as a pure STATE change so gaze/send gating still works.
     },
 
     morphToEra(toEra: EraKey, animate: boolean): void {

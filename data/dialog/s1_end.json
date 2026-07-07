@@ -1,22 +1,54 @@
 {
-  "_doc": "Era-1 ending content S1.7–ritual (ERA1_ENDING_SCRIPT_v2). Register per beat. ⚑ ALL DRAFT for Sérgio. Names: TriedPath Fellowship / 'New Morning' residential. The reply chips ARE the narrowed inner voice (v0.8 §3): they change the witness label, never the outcome. Wiring (PacketApp/DiaryApp/ritual phase + glitch overlay) is the next build; this is the approved text, ready.",
-
+  "_doc": "Era-1 ending — escalation ported from MAIN's resolved turn-by-turn schema (Session 18): Rob says a line, the player replies with a GIVEN line (reply buttons, the narrowed inner voice), each reply changes only the witness LABEL never the outcome (v0.8 §3). Lurk-only channel, press-only DM — no free typing (VR: no keyboard). The packet/diary/ritual/close blocks below are the OLD reinterp schema, NOT read by the ported irc.ts (which fires onEscalationDone → the reinterp update ritual instead); they stay as reference until the full Era-1-ending content-merge (Codex B5). ⚑ ALL DRAFT for Sérgio.",
   "escalation": {
-    "dm": [
-      "i've been thinking about you. how are things at home?",
-      "some of us are meeting in person. a proper program — two weeks, away from all the noise.",
-      "it's residential. people your age, the same struggle. it changed my life.",
-      "i spoke with your mother. she's relieved, honestly. she wants this for you.",
-      "everything's arranged. you don't have to carry the decision — it's already made."
-    ],
-    "chips": [
-      { "text": "I don't know if I'm ready.", "witness": "hesitant — reassure" },
-      { "text": "What is it, exactly?", "witness": "seeking detail — minimize" },
-      { "text": "Did you really talk to my mum?", "witness": "boundary probe — affirm trust" },
-      { "text": "I don't want to go.", "witness": "resistant — proceed; consent on file" }
+    "turns": [
+      {
+        "rob": "i've been thinking about you. how are things at home?",
+        "replies": [
+          {
+            "text": "things have been hard lately.",
+            "witness": "disclosed distress — receptive, log it"
+          }
+        ]
+      },
+      {
+        "rob": "some of us are meeting in person. a proper program — two weeks, away from all the noise.",
+        "replies": [
+          {
+            "text": "what is it, exactly?",
+            "witness": "seeking detail — minimize"
+          }
+        ]
+      },
+      {
+        "rob": "it's residential. people your age, the same struggle. it changed my life.",
+        "replies": [
+          {
+            "text": "i don't know if i'm ready.",
+            "witness": "hesitant — reassure"
+          }
+        ]
+      },
+      {
+        "rob": "i spoke with your mother. she's relieved, honestly. she wants this for you.",
+        "replies": [
+          {
+            "text": "you talked to my mum?",
+            "witness": "boundary probe — affirm trust"
+          }
+        ]
+      },
+      {
+        "rob": "everything's arranged. you don't have to carry the decision — it's already made.",
+        "replies": [
+          {
+            "text": "i don't want to go.",
+            "witness": "resistant — proceed; consent already on file"
+          }
+        ]
+      }
     ]
   },
-
   "packet": {
     "windowTitle": "TriedPath Fellowship — Placement",
     "lines": [
@@ -39,14 +71,12 @@
     "ok": "OK",
     "deadButton": "Ask a question"
   },
-
   "diary": {
     "fileTitle": "DIARY.TXT — Notepad",
     "prompt": "(press to write what's true)",
     "entry": "I know who I am, I just can't be it — but I will, even if they don't accept me.",
     "committed": "you wrote it down. for a second, the screen does not know what to do with you."
   },
-
   "ritual": {
     "notification": "An update is installing. Do not turn off your computer.",
     "eulaBold": [

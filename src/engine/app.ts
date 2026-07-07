@@ -468,22 +468,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return Math.sqrt(cx * cx + cy * cy + cz * cz) < radius;
   }
 
-  // the disk leaves the desk when it enters the drive — and, in reinterp, the
-  // insertion is the FIRST FILING (O7): the ceiling presence wakes, the alcoves
-  // become dimly legible for the first time, and the camera acknowledges the
-  // ceiling with a brief upward tilt (half a second, not a cutscene; conducted
-  // only under auto-cam, otherwise the player's drag overrides it).
+  // the disk leaves the desk when it enters the drive. In reinterp the insertion
+  // is the FIRST FILING (O7) — it flips cluster state so the witness record wakes
+  // — but the old radial-era flourishes (an upward camera glance at the ceiling
+  // presence + wall light-leak seams) are REMOVED (Sérgio R26: "the camera goes
+  // up to nothing"). The reveal is now a quiet state change; the three-room O7
+  // reconception is a Codex design lane (the doorways ARE the widening).
   os.onKitInserted = () => {
     for (const id of ['kitFloppy', 'kitFloppyLabel', 'kitFloppyShutter']) {
       const ent = app.root.findByName(id);
       if (ent instanceof pc.Entity) ent.enabled = false;
     }
-    if (cluster && cluster.state === 'sealed') {
-      cluster.reveal();
-      revealConducted = autoCam;
-      startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: 34, yaw: camYaw }, 0.55, autoCam);
-      revealReturn = 1.7;
-    }
+    if (cluster && cluster.state === 'sealed') cluster.reveal();
   };
 
   canvasEl.addEventListener('pointerdown', (e) => {

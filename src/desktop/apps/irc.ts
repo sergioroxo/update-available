@@ -8,17 +8,21 @@ import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import dialog from '../../../data/dialog/s1_irc.json';
+import end from '../../../data/dialog/s1_end.json';
 
 interface Line { from: string; text: string }
 
 // pacing tuned for reading, not speed — most of the audience reads English as
 // a second language (Sérgio). Slow type, generous holds so each line can land.
-const TYPE_CPS = 17;          // characters per second — unhurried typing
-const HOLD_CHANNEL = 1.8;     // pause after a channel line finishes
-const HOLD_DM = 3.2;          // pause after a DM line — time to read Rob fully
+const CPS_CHANNEL = 22;       // the room chatters at a livelier clip
+const CPS_DM = 13;            // Rob types slowly and deliberately (Sérgio: don't cut)
+const HOLD_CHANNEL = 1.5;     // short pause between room lines
+const HOLD_DM = 3.6;          // long pause after a DM line — time to read Rob fully
 const AMBIENT_START = 1.4;    // s before the room starts talking
-const DM_DELAY = 4.5;         // s after the 2nd user message
-const DM_LURKER_DELAY = 32;   // the DM comes even if you never speak (v0.7 §6)
+// Rob does NOT message until the room's ambient chatter has finished (the last
+// line is the x-files exchange); otherwise his window covers the channel mid-
+// conversation (Sérgio). This is the one true gate — speaking no longer races it.
+const DM_AFTER_AMBIENT = 2.6; // s of quiet after the room settles, then Rob
 
 /** a stream that types queued lines out one character at a time */
 class TypeStream {
@@ -27,7 +31,7 @@ class TypeStream {
   private cur: Line | null = null;
   private shown = 0;
   private hold = 0;
-  constructor(private readonly holdAfter: number) {}
+  constructor(private readonly holdAfter: number, private readonly cps: number) {}
 
   queueLine(l: Line): void { this.queue.push(l); }
   /** a line the player typed appears whole — they already wrote it */
@@ -40,7 +44,7 @@ class TypeStream {
   update(dt: number): boolean {
     let changed = false;
     if (this.cur) {
-      this.shown += TYPE_CPS * dt;
+      this.shown += this.cps * dt;
       changed = true;
       if (this.shown >= this.cur.text.length) {
         this.done.push(this.cur);
@@ -63,19 +67,29 @@ export class IrcApp {
   dmOpen = false;
   focus: 'channel' | 'dm' = 'channel';
 
-  private channel = new TypeStream(HOLD_CHANNEL);
-  private dm = new TypeStream(HOLD_DM);
-  private input = '';
-  private dmInput = '';
+  private channel = new TypeStream(HOLD_CHANNEL, CPS_CHANNEL);
+  private dm = new TypeStream(HOLD_DM, CPS_DM);
   private t = 0;
   private ambientFed = false;
-  private userMessages = 0;
-  private dmAt = DM_LURKER_DELAY;
+  private dmReadyAt = Infinity; // set once the room's ambient chatter settles
   private dmFed = false;
-  private dmReplied = false;
   onHooked?: () => void;
   private hooked = false;
   dirty = true;
+
+  // S1.7 escalation — Rob's residential pitch is now a TURN-BY-TURN exchange:
+  // Rob types a line, you reply with the line you're given (the narrowed voice),
+  // Rob continues. The reply only sets the witness label, never the outcome. The
+  // reply box renders OUTSIDE the chat window so it never covers the transcript.
+  private escalating = false;
+  private escTurn = -1;            // index of the current exchange
+  private escRobPending = false;   // Rob's line for this turn is still typing
+  private escAwaitingReply = false;// the reply box is live, awaiting the click
+  private escDone = false;         // all turns spoken
+  private escEndAt = Infinity;     // a beat after the last reply, then the packet
+  private escFired = false;
+  private replyRects: Array<{ x: number; y: number; w: number; h: number }> = [];
+  onEscalationDone?: () => void;
 
   private fill(text: string): string {
     return text.replace('{name}', ledger.name);
@@ -90,8 +104,14 @@ export class IrcApp {
     }
     if (this.channel.update(dt)) this.dirty = true;
 
-    // the DM (by name, even for lurkers) feeds once its time comes
-    if (!this.dmFed && this.t >= this.dmAt) {
+    // once the room has finished talking (the x-files line is the last ambient),
+    // and after a short quiet, Rob's DM is allowed to open — never before, so it
+    // cannot cover a live conversation
+    if (this.ambientFed && this.dmReadyAt === Infinity
+        && this.channel.idle && this.channel.done.length >= dialog.ambient.length) {
+      this.dmReadyAt = this.t + DM_AFTER_AMBIENT;
+    }
+    if (!this.dmFed && this.t >= this.dmReadyAt) {
       this.dmFed = true;
       this.dmOpen = true;
       this.focus = 'dm';
@@ -107,44 +127,80 @@ export class IrcApp {
       if (!ledger.tags.includes('pastoral-referral')) ledger.tags.push('pastoral-referral');
       this.onHooked?.();
     }
-  }
 
-  submit(): void {
-    if (this.focus === 'channel' && this.input.trim()) {
-      this.channel.pushWhole({ from: ledger.name, text: this.input.trim() });
-      this.input = '';
-      this.userMessages++;
-      if (this.userMessages === 1) {
-        this.channel.queueLine({ from: dialog.welcome.from, text: this.fill(dialog.welcome.text) });
-      } else if (this.userMessages === 2) {
-        this.channel.queueLine({ from: dialog.secondReply.from, text: this.fill(dialog.secondReply.text) });
-        this.dmAt = Math.min(this.dmAt, this.t + DM_DELAY); // speaking only hastens it
-      }
+    // S1.7 — once Rob's line for this turn finishes typing, offer the reply
+    if (this.escalating && this.escRobPending && this.dm.idle) {
+      this.escRobPending = false;
+      this.escAwaitingReply = true;
       this.dirty = true;
-    } else if (this.focus === 'dm' && this.dmInput.trim()) {
-      this.dm.pushWhole({ from: ledger.name, text: this.dmInput.trim() });
-      this.dmInput = '';
-      if (!this.dmReplied && this.hooked) {
-        this.dmReplied = true;
-        this.dm.queueLine({ from: 'MentorRob', text: dialog.dmReply });
-      }
-      this.dirty = true;
+    }
+    // a beat after the final reply, hand off to the placement packet
+    if (this.escDone && !this.escFired && this.t >= this.escEndAt) {
+      this.escFired = true;
+      this.onEscalationDone?.();
     }
   }
 
-  typeChar(ch: string): void {
-    if (this.focus === 'channel' && this.input.length < 60) this.input += ch;
-    else if (this.focus === 'dm' && this.dmInput.length < 60) this.dmInput += ch;
+  /** debug: jump straight to the hooked state — the room + DM appear at once */
+  debugHook(): void {
+    this.ambientFed = true;
+    for (const l of dialog.ambient) this.channel.pushWhole(l);
+    this.dmFed = true;
+    this.dmOpen = true;
+    this.focus = 'dm';
+    if (this.dm.done.length === 0) {
+      for (const line of dialog.dm) this.dm.pushWhole({ from: 'MentorRob', text: this.fill(line) });
+    }
+    if (!this.hooked) {
+      this.hooked = true;
+      if (!ledger.records.includes('mirc-log')) ledger.records.push('mirc-log');
+      if (!ledger.tags.includes('pastoral-referral')) ledger.tags.push('pastoral-referral');
+      this.onHooked?.();
+    }
     this.dirty = true;
   }
 
-  backspace(): void {
-    if (this.focus === 'channel') this.input = this.input.slice(0, -1);
-    else this.dmInput = this.dmInput.slice(0, -1);
+  /** the hook has been fully witnessed — Rob now pushes the residential program */
+  beginEscalation(): void {
+    if (this.escalating || !this.hooked) return;
+    this.escalating = true;
+    this.dmOpen = true;
+    this.focus = 'dm';
+    this.advanceEscTurn();
     this.dirty = true;
   }
 
-  get userMessageCount(): number { return this.userMessages; }
+  /** queue Rob's next line, or — if the conversation is spent — end it */
+  private advanceEscTurn(): void {
+    this.escTurn++;
+    const turns = end.escalation.turns;
+    if (this.escTurn >= turns.length) {
+      this.escDone = true;
+      this.escEndAt = this.t + 2.4;
+      return;
+    }
+    this.dm.queueLine({ from: 'MentorRob', text: this.fill(turns[this.escTurn].rob) });
+    this.escRobPending = true;
+    this.escAwaitingReply = false;
+  }
+
+  /** the player says the line they were given — it changes only the label */
+  private chooseReply(i: number): void {
+    const reply = end.escalation.turns[this.escTurn].replies[i];
+    this.dm.pushWhole({ from: ledger.name, text: reply.text });
+    ledger.records.push(`escalation-reply:${reply.witness}`);
+    if (!ledger.tags.includes('consent-on-file')) ledger.tags.push('consent-on-file');
+    this.escAwaitingReply = false;
+    this.advanceEscTurn();
+    this.dirty = true;
+  }
+
+  get escalationActive(): boolean { return this.escalating; }
+
+  // The channel is lurk-only and the DM is press-only — there is no free typing
+  // anywhere (Sérgio: no keyboard dependency in VR). You are watched; you reply
+  // with the words you are given. The witness still files you as a silent lurker.
+  get userMessageCount(): number { return 0; }
 
   // ── drawing ────────────────────────────────────────────────────────────
   /** greedy word-wrap to a pixel width */
@@ -207,10 +263,11 @@ export class IrcApp {
   }
 
   draw(ctx: CanvasRenderingContext2D, caretOn: boolean): void {
+    // the channel is lurk-only — no input field; the chat fills the window
     const c = ui.windowFrame(ctx, 14, 30, 400, 290, `${dialog.channel} — IRC`, this.focus === 'channel');
-    ui.px(ctx, c.x, c.y, c.w, c.h - 22, ERA1.black);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     const listW = 78;
-    ui.px(ctx, c.x + c.w - listW, c.y, listW, c.h - 22, ERA1.tealDark);
+    ui.px(ctx, c.x + c.w - listW, c.y, listW, c.h, ERA1.tealDark);
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.silver;
     [...dialog.users, ledger.name].forEach((u, i) => {
@@ -219,22 +276,50 @@ export class IrcApp {
 
     ui.setFont(ctx, 9);
     const chRows = this.rows(ctx, this.channel, c.w - listW - 12,
-      (f) => (f === ledger.name ? ERA1.tooltip : ERA1.ok), ERA1.silver, caretOn).slice(-19);
+      (f) => (f === ledger.name ? ERA1.tooltip : ERA1.ok), ERA1.silver, caretOn).slice(-22);
     this.renderRows(ctx, chRows, c.x + 4, c.y + 4);
-    ui.inputField(ctx, c.x, c.y + c.h - 20, c.w, 18, this.input, caretOn && this.focus === 'channel');
 
     if (this.dmOpen) {
       const d = ui.windowFrame(ctx, 170, 140, 300, 170, dialog.dmTitle, this.focus === 'dm');
       ui.px(ctx, d.x, d.y, d.w, d.h - 22, ERA1.paper);
       ui.setFont(ctx, 9);
+      // the transcript scrolls; the reply takes the type area at the bottom (press-
+      // only, no type box — Sérgio). When Rob is mid-line, the area is just empty.
       const dmRows = this.rows(ctx, this.dm, d.w - 12,
         (f) => (f === ledger.name ? ERA1.navy : ERA1.warnDark), ERA1.black, caretOn).slice(-9);
       this.renderRows(ctx, dmRows, d.x + 4, d.y + 4);
-      ui.inputField(ctx, d.x, d.y + d.h - 20, d.w, 18, this.dmInput, caretOn && this.focus === 'dm');
+      if (this.escAwaitingReply) this.drawReplyTray(ctx, d.x, d.y + d.h - 20, d.w);
     }
   }
 
+  /** the line(s) the player can say, in the type area at the bottom of the DM */
+  private drawReplyTray(ctx: CanvasRenderingContext2D, x: number, y: number, w: number): void {
+    const replies = end.escalation.turns[this.escTurn].replies;
+    this.replyRects = this.replyGeometry(replies.length, x, y, w);
+    ui.setFont(ctx, 10);
+    replies.forEach((r, i) => {
+      const rect = this.replyRects[i];
+      ui.button(ctx, rect.x, rect.y, rect.w, rect.h, '', { hover: false });
+      ctx.fillStyle = ERA1.navy;
+      ctx.fillText(r.text, rect.x + 8, rect.y + 5);
+    });
+  }
+
+  private replyGeometry(
+    n: number, x: number, y: number, w: number
+  ): Array<{ x: number; y: number; w: number; h: number }> {
+    const h = 18;
+    if (n <= 1) return [{ x, y, w, h }];
+    const gap = 6; const cw = (w - gap * (n - 1)) / n;
+    return Array.from({ length: n }, (_, i) => ({ x: x + i * (cw + gap), y, w: cw, h }));
+  }
+
   handleClick(x: number, y: number): void {
+    // the reply box is the only live control during the exchange
+    if (this.escAwaitingReply) {
+      const idx = this.replyRects.findIndex(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
+      if (idx >= 0) { this.chooseReply(idx); return; }
+    }
     if (this.dmOpen && x >= 170 && x <= 470 && y >= 140 && y <= 310) this.focus = 'dm';
     else if (x >= 14 && x <= 414 && y >= 30 && y <= 320) this.focus = 'channel';
     this.dirty = true;

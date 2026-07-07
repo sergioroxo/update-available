@@ -40,7 +40,7 @@
       "key": "bookcase",
       "file": "bookcaseOpen.glb",
       "scale": 1.9,
-      "yaw": 0,
+      "yaw": 180,
       "cx": 0.2,
       "cz": -0.13,
       "baseY": 0

@@ -82,9 +82,11 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
 
       switch (step) {
         case 'e1':
-          // PLACEHOLDER T1 trigger (real one = e1.b09, main-drift): the system
-          // has a record (kit filed) and a session on file (one provotype)
-          if (ledger.records.includes('kit-inserted') && ledger.provotypes.length >= 1) {
+          // T1 trigger: the Rob escalation has run to completion (the hook is
+          // fully set — 'escalation-done' filed by the IRC). This replaces the
+          // old kit+provotype placeholder; the real diary-glitch beat (e1.b09,
+          // main-drift) will front-run this when the content-merge lands.
+          if (ledger.records.includes('escalation-done')) {
             step = 'e1_armed';
             t = 0;
           }

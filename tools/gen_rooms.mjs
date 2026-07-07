@@ -60,8 +60,9 @@ function template(idy) {
     // bed against the RIGHT wall (+X), long axis along Z (headboard to the back)
     ['bed', [1.15, 0, -0.35], [1.05, 0.5, 2.05], bl, false, 'bed'],
     ['nightstand', [1.2, 0, 0.85], [0.4, 0.5, 0.4], P.bedFrame, false, 'nightstand'],
-    // bookcase against the LEFT wall (-X)
-    ['bookcase', [-1.55, 0, -0.4], [0.75, 1.7, 0.5], P.desk, false, 'bookcase'],
+    // bookcase against the LEFT wall (-X); pulled ~7cm off the wall plane so
+    // the (yaw-180) back sits flush and doesn't poke through (R26 fix)
+    ['bookcase', [-1.48, 0, -0.4], [0.75, 1.7, 0.5], P.desk, false, 'bookcase'],
     // rug (a thin model, laid on the floor)
     ['rug', [0, 0.0, -0.15], [1.6, 0.02, 1.5], idy.rugColor ?? P.rug, false, 'rug'],
     // clean CRT (period-correct 2003), still a box hero, facing +Z toward the seat

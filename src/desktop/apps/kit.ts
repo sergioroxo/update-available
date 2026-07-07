@@ -109,8 +109,11 @@ export class KitApp {
     ctx.fillStyle = ERA1.grey;
     ctx.fillText(`${this.page + 1} / ${kit.pages.length}`, c.x + 14, c.y + c.h - 22);
     const last = this.page === kit.pages.length - 1;
+    // no BACK: the path only runs forward — the victim can't go back (Sérgio
+    // R26). The control stays visible but permanently greyed (the affordance
+    // of return is shown to be dead, not hidden).
     ui.button(ctx, c.x + c.w - 180, c.y + c.h - 28, 60, 20, 'BACK', {
-      disabled: this.page === 0, hover: false
+      disabled: true, hover: false
     });
     if (last) {
       const label = 'connect' in p && typeof p.connect === 'string' ? p.connect : 'NEXT';
@@ -132,11 +135,7 @@ export class KitApp {
     const cw = dw - 8; const ch = dh - 25;
     const by = cy + ch - 28;
     if (y >= by && y <= by + 20) {
-      if (x >= cx + cw - 180 && x <= cx + cw - 120 && this.page > 0) {
-        this.page--;
-        this.dirty = true;
-        return;
-      }
+      // BACK is dead (no going back, R26) — only NEXT/connect advances
       if (x >= cx + cw - 112 && x <= cx + cw - 12) {
         this.advance();
         return;
