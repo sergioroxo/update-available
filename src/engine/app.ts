@@ -19,6 +19,7 @@ import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluid
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { buildClusterShell, type ClusterShell, type EraKey } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
+import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { mountStartupOverlay } from '../desktop/opening';
 import { mountDebugPanel } from '../debug/panel';
 import clusterData from '../../data/room/cluster.json';
@@ -56,6 +57,8 @@ interface AppOptions {
   close?: boolean;
   /** ?reveal=1 — the O7 first-filing reveal state (review tool) */
   reveal?: boolean;
+  /** ?nobatch=1 — disable static batching (A/B perf comparison, review tool) */
+  nobatch?: boolean;
 }
 
 function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.Texture {
@@ -101,6 +104,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   if (new URLSearchParams(window.location.search).get('debug') === '1') {
     (window as { __app?: pc.Application }).__app = app; // ?debug=1 scene-graph probe
+    // ?debug=1 ledger probe (read-only review aid): prior sessions could only
+    // verify filings via the witness surface as a proxy — this closes that gap.
+    // Debug-gated; the in-memory-only invariant is about persistence, and this
+    // neither persists nor transmits anything.
+    (window as { __ledger?: () => unknown }).__ledger = () => JSON.parse(JSON.stringify(ledger));
   }
   // asset pipeline: preload real low-poly models BEFORE building the room, so
   // props with a `model` key spawn meshes. Only for reinterp — the shipped
@@ -123,12 +131,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let ceiling: CeilingWitness | null = null;
   let cluster: ClusterShell | null = null;
   let cloud: PointCloud | null = null;
+  let sendRt: SendRuntime | null = null;
   if (options.reinterp === true) {
     niche = buildFluidNiche(app);
     niche.setFacet(options.facet ?? 'none');
     ceiling = buildCeilingWitness(app);
-    cluster = buildClusterShell(app, room, niche, ceiling, layout);
+    cluster = buildClusterShell(app, room, niche, ceiling, layout, options.nobatch !== true);
     cloud = buildPointCloud(app);
+    // the SEND seam (master script §4) — no beat fires it in this worktree
+    // yet (the trigger beats ride the content-merge lane); the debug panel
+    // carries review buttons so the filing/carry-back path stays testable
+    sendRt = createSendRuntime(room, niche);
   }
 
   // ── the two surfaces ──
@@ -222,6 +235,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     const s = `${eraU} · ${room}`;
     if (s !== lastNow) { lastNow = s; (window as { __reinterpNow?: string }).__reinterpNow = s; }
+    // the Quest budget, live (WEBXR_PERFORMANCE_NOTES: ~50–100): last frame's
+    // draw-call total, for the panel readout + batching A/B (?nobatch=1)
+    (window as { __drawCalls?: number }).__drawCalls = app.stats.drawCalls.total;
   }
 
   // reinterp only: camera POSITION + a smoothstep move for the O2 desk pan and
@@ -799,7 +815,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onReveal: () => cluster?.reveal(),
       onClose: enterClose,
       onFacet: (f) => niche?.setFacet(f),
-      onFlip: doFlip
+      onFlip: doFlip,
+      sends: sendRt?.ids,
+      onSend: (id, outcome) => sendRt?.fire(id, outcome)
     });
   }
 

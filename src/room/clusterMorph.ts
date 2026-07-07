@@ -41,6 +41,55 @@ const DELTA_LIST: Delta[] = SPACE_STATES.map(
 
 interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string }
 
+/** fold base + deltas 0..idx → each prop's full target state (module-level so
+ *  the static-set computation shares the exact same fold the morph runs) */
+function foldTargets(idx: number): Map<string, PropTarget> {
+  const m = new Map<string, PropTarget>();
+  for (const d of (era1 as unknown as { props: PropDef[] }).props) {
+    m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model });
+  }
+  for (let i = 0; i <= idx; i++) {
+    const delta = DELTA_LIST[i];
+    if (!delta) continue;
+    for (const [id, o] of Object.entries(delta.props ?? {})) {
+      const t = m.get(id); if (!t) continue;
+      if (o.color) t.color = o.color;
+      if (o.pos) t.pos = [...o.pos];
+      if (o.size) t.size = [...o.size];
+    }
+    for (const id of delta.remove ?? []) { const t = m.get(id); if (t) t.present = false; }
+    for (const def of delta.add ?? []) {
+      m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model });
+    }
+  }
+  return m;
+}
+
+/**
+ * The ids whose folded target is IDENTICAL in every space state: present from
+ * r1 through r4 with the same color/pos/size/yaw, and not a real model. These
+ * props never change across thirty years, so (a) the static batcher may own
+ * them (src/room/batching.ts — the Quest draw-call chore) and (b) the morph
+ * skips them entirely. Visible consequence, flagged in the session log: the
+ * cascade's glitch-flicker no longer brushes the props that DON'T change —
+ * only the changing world glitches over; the constants hold still.
+ */
+export function constantPropIds(): Set<string> {
+  const folds = SPACE_STATES.map((_, i) => foldTargets(i));
+  const sig = (t: PropTarget | undefined): string =>
+    t && t.present ? JSON.stringify([t.color, t.pos, t.size, t.yaw]) : 'ABSENT';
+  const out = new Set<string>();
+  const first = folds[0];
+  for (const [id, t0] of first) {
+    if (!t0.present || t0.model) continue;
+    const s0 = sig(t0);
+    if (folds.every(f => sig(f.get(id)) === s0)) out.add(id);
+  }
+  return out;
+}
+
+const STATIC_IDS = constantPropIds();
+
 interface Plan {
   h: PropHandle;
   fromColor: pc.Color; toColor: pc.Color;
@@ -65,25 +114,7 @@ export class ClusterMorph {
 
   /** fold base + deltas 0..idx → each prop's full target state */
   private targetsFor(idx: number): Map<string, PropTarget> {
-    const m = new Map<string, PropTarget>();
-    for (const d of (era1 as unknown as { props: PropDef[] }).props) {
-      m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model });
-    }
-    for (let i = 0; i <= idx; i++) {
-      const delta = DELTA_LIST[i];
-      if (!delta) continue;
-      for (const [id, o] of Object.entries(delta.props ?? {})) {
-        const t = m.get(id); if (!t) continue;
-        if (o.color) t.color = o.color;
-        if (o.pos) t.pos = [...o.pos];
-        if (o.size) t.size = [...o.size];
-      }
-      for (const id of delta.remove ?? []) { const t = m.get(id); if (t) t.present = false; }
-      for (const def of delta.add ?? []) {
-        m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model });
-      }
-    }
-    return m;
+    return foldTargets(idx);
   }
 
   private spawnTarget(id: string, t: PropTarget): PropHandle {
@@ -114,10 +145,16 @@ export class ClusterMorph {
     const targets = this.targetsFor(idx);
     for (const [id, t] of targets) {
       if (!t.present) continue;
-      const h = this.room.props.get(id) ?? this.spawnTarget(id, t);
+      const h = this.room.props.get(id);
+      if (!h) { this.spawnTarget(id, t); continue; } // first spawn places itself
+      // constants never change AND may be owned by the static batcher — the
+      // morph must not touch their transform/material (a batched entity's
+      // transform edits would silently diverge from the baked batch)
+      if (STATIC_IDS.has(id)) continue;
       this.applyTarget(h, t);
     }
     for (const [id, h] of this.room.props) {
+      if (STATIC_IDS.has(id)) continue; // constants are always present
       const t = targets.get(id);
       const absent = !t || !t.present;
       if (h.model) h.entity.enabled = !absent; // models toggle presence, never scale-to-0
@@ -139,6 +176,7 @@ export class ClusterMorph {
     const targets = this.targetsFor(idx);
     const ids = new Set<string>([...prev.keys(), ...targets.keys()]);
     for (const id of ids) {
+      if (STATIC_IDS.has(id)) continue; // constants hold still through the cascade
       const tn = targets.get(id);
       const tp = prev.get(id);
       let h = this.room.props.get(id);

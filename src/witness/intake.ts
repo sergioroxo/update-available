@@ -40,7 +40,7 @@ export class WitnessCanvas {
     // the wall is dormant until the system has a record on you —
     // it wakes the moment the disk goes in (S1.2), or a provotype is filed
     // (reinterp build: both are a first record on the subject)
-    if (ledger.records.includes('kit-inserted') || ledger.provotypes.length > 0) {
+    if (ledger.records.includes('kit-inserted') || ledger.provotypes.length > 0 || ledger.sends.length > 0) {
       this.draw();
     } else {
       this.drawDormant();
@@ -136,18 +136,29 @@ export class WitnessCanvas {
     ctx.fillStyle = '#333344';
     ctx.fillText(s.file, bx + 22, by + 6);
 
-    // reinterpretation session log — one cold line per provotype filed.
-    // Both outcomes appear (abandonment is not invisible). Copy comes from the
-    // provotype's own data (resolved at file time), never composed here.
-    // Baseline never populates ledger.provotypes, so this block is inert there.
-    if (ledger.provotypes.length > 0) {
+    // reinterpretation session log — one cold line per provotype filed, and
+    // one per SEND event (offered/visited/declined all appear — declining is
+    // never invisible, Ethics #10; the cross-reference lines MESH into the
+    // same record, ◆N2). Copy comes from each item's own data (resolved at
+    // file time), never composed here. Baseline never populates either.
+    if (ledger.provotypes.length > 0 || ledger.sends.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;
       ctx.fillText(s.sessionLog, 28, 262);
       setFont(ctx, 9);
-      ledger.provotypes.forEach((p, i) => {
-        ctx.fillStyle = p.outcome === 'abandoned' ? '#cc8855' : INK;
-        ctx.fillText(p.witness || `${p.id}: ${p.outcome}`, 28, 276 + i * 12);
+      const lines: { text: string; color: string }[] = [
+        ...ledger.provotypes.map(p => ({
+          text: p.witness || `${p.id}: ${p.outcome}`,
+          color: p.outcome === 'abandoned' ? '#cc8855' : INK
+        })),
+        ...ledger.sends.map(sd => ({
+          text: sd.witness || `${sd.id}: ${sd.outcome}`,
+          color: sd.outcome === 'declined' ? '#cc8855' : INK
+        }))
+      ];
+      lines.forEach((l, i) => {
+        ctx.fillStyle = l.color;
+        ctx.fillText(l.text, 28, 276 + i * 12);
       });
     }
 

@@ -1,5 +1,5 @@
 {
-  "_doc": "PLACEHOLDER — the fluid trans niche facet TABLE (docs/REINTERP_FLUID_TRANS_ROOM_GEOMETRY_2026-07-03.md §1.3/§2.1). Read behind ?reinterp=1 only. Weights select which facet is foregrounded; `pull` perturbs them; `convergence.allowed` lights all three (the earned E3 triptych). NOTE: no `gated` field — the consult-gating was retired Round 16 (doc §2.3/Q4); all three facets build at EQUAL fidelity, Sérgio's voice pass is the only gate. The niche GEOMETRY lives in src/room/fluidNiche.ts (geometry/layout is .ts per 00_START_HERE); display copy lives in data/strings/; this file is weights + trigger config + the niche anchor only. E1 is what renders in code today; later eras are carried for the R9 cluster-morph (facet logic is position-independent, §3.2). `hero` ids are placeholder object slots (the apparatus's own sorting instruments, §1.3) — no display text. `pull.sends` are STUBS (no runtime cross-cluster wiring this session).",
+  "_doc": "PLACEHOLDER — the fluid trans niche facet TABLE (docs/REINTERP_FLUID_TRANS_ROOM_GEOMETRY_2026-07-03.md §1.3/§2.1). Read behind ?reinterp=1 only. Weights select which facet is foregrounded; `pull` perturbs them; `convergence.allowed` lights all three (the earned E3 triptych). NOTE: no `gated` field — the consult-gating was retired Round 16 (doc §2.3/Q4); all three facets build at EQUAL fidelity, Sérgio's voice pass is the only gate. The niche GEOMETRY lives in src/room/fluidNiche.ts (geometry/layout is .ts per 00_START_HERE); display copy lives in data/strings/; this file is weights + trigger config + the niche anchor only. E1 is what renders in code today; later eras are carried for the R9 cluster-morph (facet logic is position-independent, §3.2). `hero` ids are placeholder object slots (the apparatus's own sorting instruments, §1.3) — no display text. `pull.sends` reference the canonical send ids in data/sends.json (the S16 send seam, src/room/sends.ts) — the facet-target sends s2/s4 foreground this niche when visited.",
   "niche": {
     "azimuthDeg": -120,
     "center": [2.973, 1.16, 1.55],
@@ -29,7 +29,7 @@
         "transmasc": { "weight": 0.4, "hero": "erasureSilhouette", "tier": "fog", "register": "operable" },
         "nonbinary": { "weight": 0.0, "hero": null, "tier": "fog", "register": "operable" }
       },
-      "pull": { "gaze": { "dwellMs": 2500, "delta": 0.4, "decay": true, "latched": false }, "sends": ["daniel.accountability_web"] }
+      "pull": { "gaze": { "dwellMs": 2500, "delta": 0.4, "decay": true, "latched": false }, "sends": ["s2"] }
     },
     "e3": {
       "_state": "all three at once, EARNED (§1.4) — the only three-hero moment; borrows the ring (§3.3)",
@@ -40,7 +40,7 @@
         "transmasc": { "weight": 1.0, "hero": "namingStackStillWrong", "tier": "hero", "register": "operable" },
         "nonbinary": { "weight": 1.0, "hero": "sortingBuckets",      "tier": "hero", "register": "operable" }
       },
-      "pull": { "gaze": { "dwellMs": 2500, "delta": 0.4, "decay": true, "latched": false }, "sends": ["vera.lesbian_transmasc_dilemma"] }
+      "pull": { "gaze": { "dwellMs": 2500, "delta": 0.4, "decay": true, "latched": false }, "sends": ["s4"] }
     },
     "e4": {
       "_state": "trans-fem-LED = Maya's front room IS the facet (§3.2); niche carries only the secondary presences",

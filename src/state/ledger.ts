@@ -27,6 +27,13 @@ export interface Ledger {
    * display text stays in data/ (CLAUDE.md). In-memory only, like everything here.
    */
   provotypes: { id: string; outcome: 'completed' | 'abandoned'; witness: string; reps?: number }[];
+  /**
+   * Cross-cluster sends filed this session (reinterp build only; master
+   * script §4). Symmetric by law (Ethics #10): offered, visited, AND declined
+   * all file — declining is never invisible. `witness` is the cold-side line,
+   * resolved from data/sends.json, never composed in TS. In-memory only.
+   */
+  sends: { id: string; outcome: 'offered' | 'visited' | 'declined'; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -39,7 +46,8 @@ const fresh = (): Ledger => ({
   assistant: { dismissals: 0, acceptedSuggestions: [], ignored: [], nightSessions: 0 },
   updates: [],
   respite: { streamOpenSeconds: 0, songsPlayed: [] },
-  provotypes: []
+  provotypes: [],
+  sends: []
 });
 
 export let ledger: Ledger = fresh();

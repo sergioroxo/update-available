@@ -1,0 +1,58 @@
+{
+  "_doc": "PLACEHOLDER — the four cross-cluster SENDS (REINTERP_NARRATIVE_MASTER_SCRIPT §3 s1–s4, §4 law: 'a send is a summons, not a door'). This file is STRUCTURE + placeholder witness copy: offer → (visit | decline), every outcome files symmetrically (Ethics #10 both ways); visit foregrounds the target and lands the carry-back (◆N2 RESOLVED: physical desk object AND terminal cross-reference line). The BEATS that fire these (pillow filing, polish queue, accountability escalation) are content sessions — runtime here is the seam they will call (src/room/sends.ts) plus ?debug=1 review buttons. Every display string below awaits Sérgio's voice pass.",
+  "sends": [
+    {
+      "id": "s1",
+      "era": "e2",
+      "label": "s1 · Daniel → women's track ('03)",
+      "target": { "kind": "bay", "yaw": 90 },
+      "carryBack": { "_doc": "the paired-track pamphlet on Daniel's desk (greybox paper; placement provisional → moodboard)", "pos": [0.45, 0.752, -0.2], "size": [0.16, 0.012, 0.22], "color": "#ECE7D8" },
+      "witness": {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "offered": "cross-ref offered: companion module, women's track",
+        "visited": "cross-reference: companion module viewed — files linked",
+        "declined": "referral declined — noted"
+      }
+    },
+    {
+      "id": "s2",
+      "era": "e2",
+      "label": "s2 · Daniel → severer classification ('03)",
+      "target": { "kind": "facet", "facet": "transfem" },
+      "extraTags": ["send:continuum"],
+      "carryBack": { "_doc": "the referral slip on Daniel's desk (greybox paper; placement provisional → moodboard)", "pos": [-0.52, 0.752, -0.22], "size": [0.12, 0.012, 0.18], "color": "#D8CDB4" },
+      "witness": {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "offered": "pattern match: severer classification — referral drafted",
+        "visited": "classification reviewed by subject — slip issued",
+        "declined": "referral declined — noted"
+      }
+    },
+    {
+      "id": "s3",
+      "era": "e3",
+      "label": "s3 · Vera → the recycled phrasing ('16)",
+      "target": { "kind": "bay", "yaw": 0 },
+      "carryBack": { "_doc": "the HOPE 2016 session sheet on Vera's desk (greybox paper; placement provisional → moodboard). Target yaw 0 = Daniel's closed Room 1 under the three-room model (the radial-era 'west bay' retargeted with R24, same basis as the ◆N3 retarget — flagged for Fable/Sérgio confirmation).", "pos": [-5.2, 0.79, 0.42], "size": [0.16, 0.012, 0.22], "color": "#ECE7D8" },
+      "witness": {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending. The script's continuity punch belongs here: the dormant earlier file reopens as 'referenced material'.",
+        "offered": "cross-ref offered: source of recycled phrasing",
+        "visited": "dormant file reopened — referenced material",
+        "declined": "referral declined — noted"
+      }
+    },
+    {
+      "id": "s4",
+      "era": "e3",
+      "label": "s4 · Vera → THE DILEMMA (no cell)",
+      "target": { "kind": "facet", "facet": "transmasc" },
+      "carryBack": null,
+      "witness": {
+        "_doc": "PLACEHOLDER — Sérgio voice pass pending. The beat ends bare (script s4); no carry-back object is named for it — recommendation pending Fable round: the misfiled folder IS the carry-back.",
+        "offered": "no cell available — routed for manual inspection",
+        "visited": "borderland case inspected — unresolved",
+        "declined": "referral declined — noted"
+      }
+    }
+  ]
+}

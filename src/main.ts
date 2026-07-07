@@ -31,6 +31,8 @@ const era = ERA_CODES[query.get('era') as keyof typeof ERA_CODES];
 const morphDemo = ERA_CODES[query.get('morph') as keyof typeof ERA_CODES];
 const close = query.get('close') === '1';
 const reveal = query.get('reveal') === '1';
+// ?nobatch=1 — disable static batching (draw-call A/B; review tool only)
+const nobatch = query.get('nobatch') === '1';
 
 // ?lambyrig=1 — standalone procedural assistant rig lab; no OS integration.
 if (query.get('lambyrig') === '1') {
@@ -39,5 +41,5 @@ if (query.get('lambyrig') === '1') {
 } else if (query.get('flat') === '1') {
   startFlat(canvas, { reinterp });
 } else {
-  void startApp(canvas, { reinterp, facet, era, morphDemo, close, reveal });
+  void startApp(canvas, { reinterp, facet, era, morphDemo, close, reveal, nobatch });
 }

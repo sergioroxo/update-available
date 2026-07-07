@@ -9,7 +9,7 @@
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'S15 · three rooms that age';
+const BUILD_TAG = 'S16 · batched + send seams';
 
 interface DebugOpts {
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
@@ -19,6 +19,9 @@ interface DebugOpts {
   onFlip?: () => void;
   /** dev-only camera jump: seat pose at an exact yaw (review screenshots) */
   onCamProbe?: (yaw: number, pitch: number) => void;
+  /** the send seam (master script §4) — review buttons until beats fire it */
+  sends?: { id: string; label: string }[];
+  onSend?: (id: string, outcome: 'offered' | 'visited' | 'declined') => void;
 }
 
 const OS_BEATS: Array<[string, string]> = [
@@ -122,9 +125,20 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   now.style.cssText = 'color:#8fffc0;font-size:10px;margin-bottom:6px;min-height:13px';
   now.textContent = 'here: —';
   panel.appendChild(now);
+  // draw calls vs the Quest budget (~50–100, WEBXR_PERFORMANCE_NOTES) + how
+  // many props the static batcher folded away (?nobatch=1 to compare raw)
+  const perf = document.createElement('div');
+  perf.style.cssText = 'color:#9fb4c0;font-size:10px;margin-bottom:6px;min-height:13px';
+  perf.textContent = 'draw calls: —';
+  panel.appendChild(perf);
   window.setInterval(() => {
     const s = (window as { __reinterpNow?: string }).__reinterpNow;
     now.textContent = 'here: ' + (s ?? '— (open a room)');
+    const w = window as { __drawCalls?: number; __batchedProps?: number };
+    if (w.__drawCalls !== undefined) {
+      perf.textContent = `draw calls: ${w.__drawCalls}` +
+        (w.__batchedProps ? ` · batched props: ${w.__batchedProps}` : ' · UNBATCHED');
+    }
   }, 250);
 
   const mkBtn = (label: string, fn: () => void): HTMLButtonElement => {
@@ -203,6 +217,36 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   if (opts.onFlip) {
     heading('witness');
     mkBtn('Flip ⟲ (turn to record)', opts.onFlip);
+  }
+
+  // ── SENDS (master script §4) — fire the seam the beats will call; every
+  // outcome files to the record (flip to see the cross-reference lines) ──
+  if (opts.onSend && opts.sends?.length) {
+    heading('sends — the summons seam');
+    for (const { id, label } of opts.sends) {
+      const row = document.createElement('div');
+      row.style.cssText = 'margin:2px 0';
+      const lab = document.createElement('div');
+      lab.textContent = label;
+      lab.style.cssText = 'color:#9aa3b8;font-size:9px;margin-bottom:1px';
+      row.appendChild(lab);
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:2px';
+      const short = { offered: 'offer', visited: 'visit', declined: 'decline' } as const;
+      for (const outcome of ['offered', 'visited', 'declined'] as const) {
+        const b = document.createElement('button');
+        b.textContent = short[outcome];
+        Object.assign(b.style, {
+          flex: '1', background: '#222838', color: '#cdd3df',
+          border: '1px solid #39405270', font: '9px monospace',
+          padding: '2px 0', cursor: 'pointer', borderRadius: '3px'
+        } as CSSStyleDeclaration);
+        b.addEventListener('click', () => opts.onSend?.(id, outcome));
+        btns.appendChild(b);
+      }
+      row.appendChild(btns);
+      panel.appendChild(row);
+    }
   }
 
   // ── OS beats (the 2D desktop states) ──

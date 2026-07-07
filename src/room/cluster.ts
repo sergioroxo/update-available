@@ -18,7 +18,8 @@
  */
 import * as pc from 'playcanvas';
 import type { RoomHandles } from './era1room';
-import { ClusterMorph } from './clusterMorph';
+import { ClusterMorph, constantPropIds } from './clusterMorph';
+import { batchStaticProps } from './batching';
 import clusterData from '../../data/room/cluster.json';
 import nicheData from '../../data/room/fluid_niche.json';
 import type { FluidNiche, FacetState } from './fluidNiche';
@@ -78,7 +79,8 @@ export function buildClusterShell(
   room: RoomHandles,
   niche: FluidNiche,
   ceiling: CeilingWitness,
-  layout: 'x' | 't' = 't'
+  layout: 'x' | 't' = 't',
+  batch = true
 ): ClusterShell {
   const root = new pc.Entity('cluster-shell');
 
@@ -100,6 +102,14 @@ export function buildClusterShell(
   const morph = new ClusterMorph(room);
   morph.snapTo(0);
   applyLayout();
+
+  // ── the Quest draw-call chore: the props constant across ALL space states
+  // share materials and bake into one static batch group (the morph skips
+  // them, so the batch can never go stale). ?nobatch=1 = the A/B escape. ──
+  if (batch) {
+    const joined = batchStaticProps(app, room, constantPropIds());
+    (window as { __batchedProps?: number }).__batchedProps = joined;
+  }
 
   // ── zone accent lights (rig-driven; the two rooms' own temperatures) ──
   const zoneLights: pc.Entity[] = [];
