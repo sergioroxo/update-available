@@ -34,6 +34,7 @@ function template(idy) {
         sg = idy.sign, ba = idy.bookA, bb = idy.bookB;
   return [
     // shell (opening on +Z: no wall there, only a lintel)
+    // shell (opening on +Z: no wall there, only a lintel)
     ['floor',    [0, 0.0, 0],     [3.5, 0.04, 3.7], P.floor],
     ['ceil',     [0, 2.68, 0],    [3.5, 0.04, 3.7], P.ceil],
     ['wallDesk', [0, 1.34, -1.83], [3.5, 2.68, 0.06], P.wall],
@@ -54,8 +55,8 @@ function template(idy) {
     // on their floor pos; recolored flat. `size` is the box-fallback footprint.
     // desk against the desk wall, facing +Z (toward the seat)
     ['desk', [0, 0, -1.4], [1.4, 0.75, 0.6], P.desk, false, 'desk'],
-    // chair facing the desk
-    ['chair', [0, 0, -0.72], [0.5, 0.9, 0.5], P.desk, false, 'chair'],
+    // chair facing the desk — pulled slightly out so the model never clips it
+    ['chair', [0, 0, -0.6], [0.5, 0.75, 0.5], P.desk, false, 'chair'],
     // bed against the RIGHT wall (+X), long axis along Z (headboard to the back)
     ['bed', [1.15, 0, -0.35], [1.05, 0.5, 2.05], bl, false, 'bed'],
     ['nightstand', [1.2, 0, 0.85], [0.4, 0.5, 0.4], P.bedFrame, false, 'nightstand'],
@@ -105,11 +106,17 @@ const room3 = place('e', template(maya), 3.88, 0.7, 270);
 
 // Room 1's side walls become DOORWAYS (stubs + lintel; big central opening).
 // west wall was (-2.13,1.35,1.5)[0.04,2.7,4.44] z[-0.72,3.72]; mirror east.
+// Round 25 ("black strip next to the entrance"): the opening must stay INSIDE
+// the side room's own span (its walls run world-z -1.05..2.45 at ±2.05), or
+// the cut opens onto the room's outer wall face and the void beyond it. The
+// opening is now z -0.12..2.42 (was ..2.92), and a small cap closes the 8 cm
+// pocket between the two wall planes north of Room 1's front wall.
 function doorway(prefix, x) {
   return [
     { id: prefix + 'Front', pos: [x, 1.35, -0.42], size: [0.05, 2.7, 0.6], color: P.wall },
-    { id: prefix + 'Back', pos: [x, 1.35, 3.32], size: [0.05, 2.7, 0.8], color: P.wall },
-    { id: prefix + 'Lintel', pos: [x, 2.42, 1.4], size: [0.05, 0.56, 3.1], color: P.wall }
+    { id: prefix + 'Back', pos: [x, 1.35, 3.07], size: [0.05, 2.7, 1.3], color: P.wall },
+    { id: prefix + 'Lintel', pos: [x, 2.42, 1.15], size: [0.05, 0.56, 2.54], color: P.wall },
+    { id: prefix + 'Cap', pos: [x + (x > 0 ? -0.04 : 0.04), 1.35, -0.885], size: [0.13, 2.7, 0.33], color: P.wall }
   ];
 }
 const openWest = doorway('w1door', -2.13);
@@ -144,7 +151,19 @@ const deltas = {
       // the mixtape survives the packed boombox, moved to Room 1's shelf (it
       // resists graying — the warm thread's first waypoint)
       windowPane: { color: '#D4D0C8' },
-      mixtape: { pos: [1.98, 1.16, 0.9] },
+      // Room 1's shelf stood in the EAST DOORWAY once its wall left (Sérgio
+      // Round 25: "still a shelf in the middle of the space") — the whole
+      // shelf group rides back to the east-rear wall stub, books and all;
+      // the mixtape's waypoint moves with it.
+      shelfBack: { pos: [2.1, 1.05, 3.3] },
+      shelfBoard1: { pos: [1.98, 0.62, 3.3] },
+      shelfBoard2: { pos: [1.98, 1.08, 3.3] },
+      shelfBoard3: { pos: [1.98, 1.54, 3.3] },
+      book1: { pos: [1.98, 1.21, 3.1] },
+      book2: { pos: [1.98, 1.2, 3.2] },
+      book3: { pos: [1.98, 1.67, 3.15] },
+      cdStack: { pos: [1.98, 0.71, 3.45] },
+      mixtape: { pos: [1.98, 1.16, 3.38] },
       // Room 1's bed moves BACK out of the west doorway (Sérgio: "the bed on
       // Era-1 can't be there, it stands in front of the opening for the other
       // room") — tucked to the back-left corner, shortened, clearing the seated
