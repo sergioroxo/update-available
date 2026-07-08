@@ -1,12 +1,12 @@
 /**
- * The ceiling witness — PRESENCE ONLY (R8-3, adopted; style direction §3).
+ * The ceiling witness — retired/dormant presence shell (R26 B4).
  * The watcher occupies heaven's position: a square iris recessed into the
  * ceiling (90°-step pixel discipline — no curves) and, once awake, a pale
  * SOURCELESS wash from above — light with no lamp, the only light in the
  * piece that casts no shadows even in fiction. It NEVER reads, never shows
  * text; the legible record stays with the assistants + flat surfaces
- * (Ethics #10). Dormant until the O7 first filing wakes it; awake it
- * breathes — a slow intensity swell, presence without address.
+ * (Ethics #10). The wall cork/record surface now carries the witness lineage,
+ * so the cluster no longer wakes this overhead iris during reveal or updates.
  *
  * Geometry + wash parameters live in data/room/cluster.json (ceilingWitness);
  * all hues are existing era1.json values. Behind ?reinterp=1 only.
@@ -31,9 +31,9 @@ function box(name: string, pos: number[], size: number[], mat: pc.Material): pc.
 }
 
 export interface CeilingWitness {
-  /** begin the slow fade-in (O7 first-filing; idempotent) */
+  /** legacy hook; currently unused so the overhead iris stays dormant */
   wake(): void;
-  /** jump straight to fully awake (debug/era overrides — no animation) */
+  /** legacy hook; currently unused so the overhead iris stays dormant */
   wakeInstant(): void;
   readonly awake: boolean;
   update(dt: number): void;

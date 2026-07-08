@@ -123,7 +123,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // The niche is one lateral-arc alcove of facet-states (?facet= forces one
   // for review). Around it, the CLUSTER SHELL: the mirrored west alcove, the
   // aperture scrims (sealed → dim → open), the per-era light rigs, and the
-  // ceiling witness — plus the point-cloud Close, built once, dormant.
+  // dormant ceiling-witness shell — plus the point-cloud Close, built once.
   // ?layout=x — the disposition of the 360° space (Sérgio, Round 24). T (default)
   // keeps the back as a WALL (door + record spine). X opens that back into a 4th
   // ARM toward the ending. Same three room interiors; only the back changes.
@@ -198,9 +198,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   back.setLocalEulerAngles(90, 180, 0); // faces -Z (the chair, once turned)
   app.root.addChild(back);
   if (options.reinterp === true) {
-    // Round 18: the old rear witness furniture is gone (ceiling witness carries
-    // presence) — the legible record shrinks to a wall TERMINAL on the south
-    // spine, between the bays (Ethics #10 stays on a flat surface).
+    // R26 B4: the legible record stays on the wall TERMINAL on the south
+    // spine. The overhead ceiling witness remains dormant; witness role and
+    // lineage live on the cork/record wall surface.
     const wt = clusterData.witnessTerminal;
     back.setLocalPosition(wt.pos[0], wt.pos[1], wt.pos[2]);
     back.setLocalScale(wt.w, 1, wt.h);

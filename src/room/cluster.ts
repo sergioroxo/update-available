@@ -11,7 +11,7 @@
  *
  * This module keeps only conduction: the per-era LIGHT RIGS (crossfaded — the
  * cold light winning), the T1 staged timeline (lamp hold → ballast → cascade →
- * settle), the O7 reveal (light-leak seams + ceiling wake), the E4 TURN's
+ * settle), the O7 reveal state, the E4 TURN's
  * homeYaw, the lamp LIGHT following its carried props, the witness plane's
  * spine ride, and the niche facet defaults. Light is the narrator; the props
  * belong to the morph.
@@ -63,7 +63,7 @@ export interface ClusterShell {
   /** the home facing: 0° (Room 1) until E4, then 270° — Room 3, Maya's room
    *  (the trans room evolved). The TURN travels here (◆N3 retargeted, Round 24). */
   readonly homeYaw: number;
-  /** O7: sealed → dim + ceiling wake — the first-filing reveal */
+  /** O7: sealed → dim — the first-filing reveal */
   reveal(): void;
   /** the O8 seam: cascade the space + crossfade the rig + re-arm the niche */
   morphToEra(era: EraKey, animate: boolean): void;
@@ -78,7 +78,7 @@ export function buildClusterShell(
   app: pc.Application,
   room: RoomHandles,
   niche: FluidNiche,
-  ceiling: CeilingWitness,
+  _ceiling: CeilingWitness,
   layout: 'x' | 't' = 't',
   batch = true
 ): ClusterShell {
@@ -256,10 +256,9 @@ export function buildClusterShell(
       if (state !== 'sealed') return;
       state = 'dim';
       // R26: the wall light-leak seams ("white bars at floor level") and the
-      // overhead ceiling-witness wake are RETIRED from the three-room build —
-      // they were the radial-era "something beyond the walls" hint, now
-      // redundant (the doorways do that job) and reading as clutter. The reveal
-      // is kept as a pure STATE change so gaze/send gating still works.
+      // overhead ceiling-witness wake are retired from the three-room build.
+      // The wall record now carries the witness lineage, so reveal is a pure
+      // state change for gaze/send gating.
     },
 
     morphToEra(toEra: EraKey, animate: boolean): void {
@@ -289,7 +288,6 @@ export function buildClusterShell(
           { t: 3.78, fn: () => setLight('roomFill', 0.1) },
           { t: 4.2, fn: () => {                                // the other rooms were ready first
             for (const zl of zoneLights) if (zl.light) zl.light.intensity = 0.9;
-            ceiling.wake();
           } },
           { t: 5.3, fn: () => applyRig('e2', true) },
           { t: 5.4, fn: () => applyLayout() } // X: keep the back arm open post-cascade
@@ -307,7 +305,6 @@ export function buildClusterShell(
       }
       applyRig(toEra, animate);
       state = toIdx >= 1 ? 'open' : 'sealed';
-      if (toIdx >= 1) { if (animate) ceiling.wake(); else ceiling.wakeInstant(); }
       setPlaneZ(PLANE_Z[toIdx >= 1 ? 1 : 0]);
       planeLerp = null;
       const table = eraTable();
