@@ -152,6 +152,16 @@ export class WitnessCanvas {
     return parts.join(', ') || '—';
   }
 
+  private endingRecordLines(): string[] {
+    const e = strings.witness.endingRecords;
+    const lines: string[] = [];
+    if (ledger.records.includes('enrollment-acknowledged')) lines.push(e.enrollment);
+    if (ledger.records.includes('diary-committed')) lines.push(e.diary);
+    if (ledger.records.includes('deletion-failed')) lines.push(e.deletion);
+    if (ledger.records.includes('diary-glitch')) lines.push(e.glitch);
+    return lines;
+  }
+
   private drawPinnedNote(x: number, y: number, w: number, h: number, title: string, body: string, filled: boolean): void {
     const { ctx } = this;
     px(ctx, x, y, w, h, filled ? ERA1.paper : ERA1.beige);
@@ -297,7 +307,8 @@ export class WitnessCanvas {
     // same record, ◆N2). Copy comes from each item's own data (resolved at
     // file time), never composed here. Baseline never populates either.
     const profileLines = this.profileRecaptionLines();
-    if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0) {
+    const endingLines = this.endingRecordLines();
+    if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0 || endingLines.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;
       ctx.fillText(s.sessionLog, 28, 262);
@@ -311,7 +322,8 @@ export class WitnessCanvas {
         ...ledger.sends.map(sd => ({
           text: sd.witness || `${sd.id}: ${sd.outcome}`,
           color: sd.outcome === 'declined' ? '#cc8855' : INK
-        }))
+        })),
+        ...endingLines.map(text => ({ text, color: '#cc8855' }))
       ];
       lines.forEach((l, i) => {
         ctx.fillStyle = l.color;

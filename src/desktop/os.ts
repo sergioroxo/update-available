@@ -10,6 +10,8 @@ import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import * as ui from './theme/chrome';
 import { IrcApp } from './apps/irc';
 import { KitApp } from './apps/kit';
+import { PacketApp } from './apps/packet';
+import { DiaryApp } from './apps/diary';
 import { ProvotypeApp, type Provotype } from './apps/provotype';
 import { UpdateApp, type UpdateKey } from './apps/update';
 import sendsData from '../../data/sends.json';
@@ -85,6 +87,8 @@ export class DesktopOS {
   // desktop
   kit: KitApp | null = null;
   irc: IrcApp | null = null;
+  packet: PacketApp | null = null;
+  diary: DiaryApp | null = null;
   /** the reinterpretation provotype runtime — reachable behind ?reinterp=1 only */
   provotype: ProvotypeApp | null = null;
   /** the era-update ritual (spine-armed; never player-triggered) */
@@ -100,6 +104,7 @@ export class DesktopOS {
   private behindToastShown = false;
   private behindToastAt = Infinity;
   private escalationFallbackAt = Infinity; // Rob escalates on this deadline if the player never flips
+  private diaryPendingAt = Infinity; // soft beat between the packet and the diary
   /** engine reads this to creep the cold (witness) side into peripheral vision */
   hasUnseenWitness = false;
   dossierUnlocked = false;
@@ -112,6 +117,8 @@ export class DesktopOS {
   onKitInserted?: () => void;
   /** engine listens: mirror O3's live selections onto the rear cork/record plane */
   onOpeningProfileChange?: (snapshot: OpeningProfileSnapshot) => void;
+  /** engine listens: a soft full-frame glitch — warm for the person's breakout */
+  onGlitch?: (kind: 'person' | 'system') => void;
 
   constructor(options: DesktopOSOptions = {}) {
     this.reinterp = options.reinterp === true;
@@ -183,12 +190,9 @@ export class DesktopOS {
         // record — with a fallback so a player who never turns still advances.
         this.escalationFallbackAt = this.t + ESCALATION_FALLBACK;
       };
-      // the whole Rob exchange complete = the E1 → E2 trigger (the hook is
-      // fully set). Files the record the spine reads to arm the T1 update.
-      this.irc.onEscalationDone = () => {
-        if (!ledger.records.includes('escalation-done')) ledger.records.push('escalation-done');
-        this.dirty = true;
-      };
+      // S1.7 → S1.8: the chosen reply summons the placement packet. The diary
+      // glitch, not the IRC, is the true E1 → T1 trigger.
+      this.irc.onEscalationDone = () => this.openPacket();
     };
     this.dirty = true;
   }
@@ -197,6 +201,32 @@ export class DesktopOS {
   private escalate(): void {
     this.escalationFallbackAt = Infinity;
     this.irc?.beginEscalation();
+    this.dirty = true;
+  }
+
+  /** S1.8 — the enrollment form appears; OK leads after a quiet beat to DIARY.TXT */
+  private openPacket(): void {
+    if (this.packet || this.diary) return;
+    this.packet = new PacketApp();
+    this.packet.onAck = () => {
+      this.packet = null;
+      this.diaryPendingAt = this.t + 1.0;
+      this.dirty = true;
+    };
+    this.dirty = true;
+  }
+
+  /** S1.85 — the deletion fails; the person's glitch arms the real T1 update */
+  private openDiary(): void {
+    if (this.diary) return;
+    this.diaryPendingAt = Infinity;
+    this.diary = new DiaryApp();
+    this.diary.onBreakout = () => this.onGlitch?.('person');
+    this.diary.onDone = () => {
+      this.diary = null;
+      if (!ledger.records.includes('diary-glitch')) ledger.records.push('diary-glitch');
+      this.dirty = true;
+    };
     this.dirty = true;
   }
 
@@ -343,6 +373,9 @@ export class DesktopOS {
     }
     if (this.phase === 'desktop' && this.kit) this.kit.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
+    if (this.phase === 'desktop' && this.packet) this.packet.update(dt);
+    if (this.phase === 'desktop' && this.diary) this.diary.update(dt);
+    if (this.phase === 'desktop' && !this.diary && this.t >= this.diaryPendingAt) this.openDiary();
     // the fallback: if the player never turns to witness the record, Rob
     // escalates anyway once the deadline passes (main-parity — the flip is
     // the earned path, not a hard gate)
@@ -515,6 +548,8 @@ export class DesktopOS {
     // windows
     if (this.kit?.open) this.kit.draw(ctx);
     if (this.irc?.open) this.irc.draw(ctx, this.caretOn());
+    if (this.packet?.open) this.packet.draw(ctx);
+    if (this.diary?.open) this.diary.draw(ctx);
     if (this.dossierOpen) this.drawDossier(W, H);
     if (this.provotype?.open) this.provotype.draw(ctx);
     this.drawSendOffer(W, H);
@@ -880,6 +915,16 @@ export class DesktopOS {
       }
       case 'desktop': this.setPhase('desktop'); break;
       case 'kit': this.setPhase('desktop'); if (!this.kit) this.insertKit(); break;
+      case 'packet': this.setPhase('desktop'); this.openPacket(); break;
+      case 'diary': this.setPhase('desktop'); this.openDiary(); break;
+      case 'diaryGlitch':
+        this.setPhase('desktop');
+        this.packet = null;
+        this.diary = null;
+        if (!ledger.records.includes('deletion-failed')) ledger.records.push('deletion-failed');
+        if (!ledger.records.includes('diary-glitch')) ledger.records.push('diary-glitch');
+        this.onGlitch?.('person');
+        break;
       case 'pillow':
         this.setPhase('desktop');
         this.openProvotype(pillowProvotypeData as unknown as Provotype);
@@ -933,6 +978,8 @@ export class DesktopOS {
     }
     // the provotype is modal while open — it owns the desktop's clicks
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleClick(x, y); return; }
+    if (this.phase === 'desktop' && this.diary?.open) { this.diary.press(); return; }
+    if (this.phase === 'desktop' && this.packet?.open) { this.packet.handleClick(x, y); return; }
     if (hit) {
       switch (hit.id) {
         case 'continue': this.setPhase('off'); break;
@@ -989,6 +1036,14 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.kit?.open) {
       if (key === 'Enter') { this.kit.advance(); return true; }
       return key.length === 1; // reading, not typing — swallow strays
+    }
+    if (this.phase === 'desktop' && this.diary?.open) {
+      if (key === 'Enter') { this.diary.press(); return true; }
+      return key.length === 1;
+    }
+    if (this.phase === 'desktop' && this.packet?.open) {
+      if (key === 'Enter') return true; // click/tap OK; no keyboard dependency
+      return key.length === 1;
     }
     // the IRC is lurk-only + press-only now (main-parity): no free typing
     // anywhere (VR: no keyboard dependency). Swallow strays while it's open so

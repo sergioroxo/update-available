@@ -9,7 +9,7 @@
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'R26 B1 · cork board witness';
+const BUILD_TAG = 'R26 B2 · diary glitch trigger';
 
 interface DebugOpts {
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
@@ -31,6 +31,9 @@ const OS_BEATS: Array<[string, string]> = [
   ['O3 — Re-caption', 'recap'],
   ['Desktop', 'desktop'],
   ['Insert kit → O7', 'kit'],
+  ['Packet · placement form', 'packet'],
+  ['Diary · deletion beat', 'diary'],
+  ['Diary glitch → T1', 'diaryGlitch'],
   ['Provotype — pillow', 'pillow'],
   ['Provotype — intake', 'intake'],
   ['T1 ritual · update → E2', 'update2'],

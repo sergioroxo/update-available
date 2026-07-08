@@ -11,11 +11,10 @@
  *   restart → the Close.
  *
  * LAWS HONORED: updates fire only on documented system failures, never by
- * the player (v0.5 §1) — the spine's E1 trigger is a PLACEHOLDER (kit + one
- * provotype filed) until the real trigger beat (e1.b09, the diary-delete
- * failure) arrives with the content-merge lane; each later trigger is the
- * era's own failure analog, equally placeholder-flagged. Sends are summons,
- * not doors (§4): the OS offers, the player answers or declines, both file.
+ * the player (v0.5 §1). E1 now uses the resolved e1.b09 trigger: the diary
+ * delete fails, the person's glitch files, and only then does T1 arm. Each
+ * later trigger is the era's own failure analog, still placeholder-flagged.
+ * Sends are summons, not doors (§4): the OS offers, the player answers or declines, both file.
  * The frame never plays: everything the spine does surfaces DIEGETICALLY
  * (system dialogs, desktop icons) — no quest popups in the piece's voice.
  *
@@ -25,7 +24,7 @@ import { ledger } from '../state/ledger';
 import type { DesktopOS } from '../desktop/os';
 import type { UpdateKey } from '../desktop/apps/update';
 
-const T1_DELAY = 12;    // s after the E1 trigger condition before the notice
+const T1_DELAY = 1.2;   // s after DIARY.TXT's breakout hold before the notice
 const SEND_DELAY = 9;   // s into an era before its first summons
 const SEND_GAP = 6;     // s after one send resolves before the next
 const UPDATE_GAP = 8;   // s after an era's beats exhaust before its failure
@@ -82,11 +81,9 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
 
       switch (step) {
         case 'e1':
-          // T1 trigger: the Rob escalation has run to completion (the hook is
-          // fully set — 'escalation-done' filed by the IRC). This replaces the
-          // old kit+provotype placeholder; the real diary-glitch beat (e1.b09,
-          // main-drift) will front-run this when the content-merge lands.
-          if (ledger.records.includes('escalation-done')) {
+          // T1 trigger: the system tried to erase DIARY.TXT and failed. That
+          // is the documented failure beat for E1, not the player "failing."
+          if (ledger.records.includes('diary-glitch')) {
             step = 'e1_armed';
             t = 0;
           }

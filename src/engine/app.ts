@@ -235,6 +235,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   document.body.appendChild(coldCreep);
   let coldPhase = 0;
 
+  // DIARY.TXT breakout: a soft, warm full-frame wash when the system fails to
+  // delete the person's words. No strobe; it decays over the diary hold, then
+  // the spine arms the update ritual.
+  const glitch = document.createElement('div');
+  Object.assign(glitch.style, {
+    position: 'fixed', inset: '0', zIndex: '7', pointerEvents: 'none', opacity: '0',
+    background: 'radial-gradient(ellipse at center, rgba(255,220,140,0.18) 0%, rgba(180,80,60,0.24) 58%, rgba(70,120,180,0.35) 100%)'
+  } as CSSStyleDeclaration);
+  document.body.appendChild(glitch);
+  let glitchT = 0;
+  let glitchDur = 0;
+  os.onGlitch = (kind) => {
+    glitch.style.background = kind === 'person'
+      ? 'radial-gradient(ellipse at center, rgba(255,220,140,0.18) 0%, rgba(180,80,60,0.24) 58%, rgba(70,120,180,0.35) 100%)'
+      : 'radial-gradient(ellipse at center, rgba(130,180,255,0.18) 0%, rgba(60,90,150,0.34) 68%, rgba(0,0,0,0.48) 100%)';
+    glitchDur = kind === 'person' ? 2.8 : 2.0;
+    glitchT = glitchDur;
+  };
+
   // S1.0 hint: shown while the machine waits dark
   const offHint = document.createElement('div');
   offHint.textContent = strings.off.hint;
@@ -706,6 +725,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     } else {
       coldPhase = 0;
       coldCreep.style.opacity = '0';
+    }
+
+    if (glitchT > 0) {
+      glitchT = Math.max(0, glitchT - dt);
+      const k = glitchT / Math.max(glitchDur, 0.001);
+      glitch.style.opacity = (0.82 * k).toFixed(3);
+      glitch.style.transform = `translateY(${(Math.sin(glitchT * 60) * 1.5 * k).toFixed(2)}px)`;
+    } else if (glitch.style.opacity !== '0') {
+      glitch.style.opacity = '0';
+      glitch.style.transform = 'translateY(0)';
     }
 
     // S1.0: the hint alone carries the beat (Sérgio: no blur needed)

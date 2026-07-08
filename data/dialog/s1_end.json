@@ -1,54 +1,41 @@
 {
-  "_doc": "Era-1 ending — escalation ported from MAIN's resolved turn-by-turn schema (Session 18): Rob says a line, the player replies with a GIVEN line (reply buttons, the narrowed inner voice), each reply changes only the witness LABEL never the outcome (v0.8 §3). Lurk-only channel, press-only DM — no free typing (VR: no keyboard). The packet/diary/ritual/close blocks below are the OLD reinterp schema, NOT read by the ported irc.ts (which fires onEscalationDone → the reinterp update ritual instead); they stay as reference until the full Era-1-ending content-merge (Codex B5). ⚑ ALL DRAFT for Sérgio.",
+  "_doc": "PLACEHOLDER — Era-1 ending content S1.7–ritual (ERA1_ENDING_SCRIPT_v2). Register per beat. ⚑ ALL DRAFT for Sérgio. Names: TriedPath Fellowship / 'New Morning' residential. Escalation is now a TURN-BY-TURN exchange (Sérgio): Rob says a line, the player replies with a given line (the narrowed inner voice), Rob continues. Each reply only changes the witness LABEL, never the outcome (v0.8 §3). The reply box sits OUTSIDE the chat window so it never covers what you read. The diary now has a deletion beat: the system flags the truth as 'dangerous', tries to erase it, fails — that failure is the person's glitch (glitch doctrine: the system cannot overwrite a person), and it covers the room change.",
+
   "escalation": {
     "turns": [
       {
         "rob": "i've been thinking about you. how are things at home?",
         "replies": [
-          {
-            "text": "things have been hard lately.",
-            "witness": "disclosed distress — receptive, log it"
-          }
+          { "text": "things have been hard lately.", "witness": "disclosed distress — receptive, log it" }
         ]
       },
       {
         "rob": "some of us are meeting in person. a proper program — two weeks, away from all the noise.",
         "replies": [
-          {
-            "text": "what is it, exactly?",
-            "witness": "seeking detail — minimize"
-          }
+          { "text": "what is it, exactly?", "witness": "seeking detail — minimize" }
         ]
       },
       {
         "rob": "it's residential. people your age, the same struggle. it changed my life.",
         "replies": [
-          {
-            "text": "i don't know if i'm ready.",
-            "witness": "hesitant — reassure"
-          }
+          { "text": "i don't know if i'm ready.", "witness": "hesitant — reassure" }
         ]
       },
       {
         "rob": "i spoke with your mother. she's relieved, honestly. she wants this for you.",
         "replies": [
-          {
-            "text": "you talked to my mum?",
-            "witness": "boundary probe — affirm trust"
-          }
+          { "text": "you talked to my mum?", "witness": "boundary probe — affirm trust" }
         ]
       },
       {
         "rob": "everything's arranged. you don't have to carry the decision — it's already made.",
         "replies": [
-          {
-            "text": "i don't want to go.",
-            "witness": "resistant — proceed; consent already on file"
-          }
+          { "text": "i don't want to go.", "witness": "resistant — proceed; consent already on file" }
         ]
       }
     ]
   },
+
   "packet": {
     "windowTitle": "TriedPath Fellowship — Placement",
     "lines": [
@@ -57,7 +44,7 @@
       "PARTICIPANT ......... {name}",
       "AGE ................. 16",
       "REFERRED BY ......... pastoral contact (online)",
-      "PROGRAM ............. \"New Morning\" residential · 14 days",
+      "PROGRAM ............. \"The Turning\" residential · 14 days",
       "LOCATION ............ partner house, abroad",
       "DEPARTURE ........... Saturday",
       "",
@@ -71,14 +58,34 @@
     "ok": "OK",
     "deadButton": "Ask a question"
   },
+
   "diary": {
+    "_doc": "PLACEHOLDER — Opens as TWO windows (Sérgio): a 'before departure' note (the system's assignment) + the DIARY.TXT notepad. The trap: you write the TRUTH instead of compliant encouragement, the system flags it 'dangerous' and tries to delete it (two steps: flag+wait, then a slow erase), the deletion FAILS near the end — freeze + screen split, the truth reasserts in green — and it jumps STRAIGHT into the update ritual (no quiet captions). All ⚑ DRAFT.",
     "fileTitle": "DIARY.TXT — Notepad",
-    "prompt": "(press to write what's true)",
+    "noteTitle": "before you go",
+    "note": [
+      "Write a message to yourself,",
+      "to read when you return.",
+      "Support yourself on the journey ahead."
+    ],
+    "prompt": "a message to yourself — to read when you get back",
+    "writeHint": "(press to write)",
     "entry": "I know who I am, I just can't be it — but I will, even if they don't accept me.",
-    "committed": "you wrote it down. for a second, the screen does not know what to do with you."
+    "flagged": "ENTRY FLAGGED — content marked dangerous",
+    "scanning": "reviewing entry…",
+    "deleting": "Removing flagged content…",
+    "retrying": "Removal stalled — the words won't take.",
+    "held": "It cannot be removed.",
+    "keepHint": "(press to keep it)"
   },
+
   "ritual": {
-    "notification": "An update is installing. Do not turn off your computer.",
+    "_doc": "PLACEHOLDER — Runs straight off the diary glitch (Sérgio): error cascade ('a new update is needed', replicating the Error-999 stack) → loading update + progress bar → terms of care (EULA) → changelog. No power-down beat.",
+    "error": "a new update is needed",
+    "errorRetry": "Retry",
+    "errorCancel": "Cancel",
+    "loading": "loading update…",
+    "eulaTitle": "TERMS OF CARE",
     "eulaBold": [
       "By continuing you accept the terms of care.",
       "You agree the program corrects in your best interest."
@@ -91,6 +98,19 @@
       "· enrollment added to your record",
       "· \"cure\" is still available",
       "· new: ongoing accountability"
-    ]
+    ],
+    "changelogButton": "RESTART"
+  },
+
+  "close": {
+    "_doc": "PLACEHOLDER — Slice close after the ritual — DRAFT. The update 'succeeds' administratively; the person it overwrote did not consent to becoming someone else. Hands off to Era 2 (not yet built). The subtitle is the master title in miniature (glitch doctrine).",
+    "lines": [
+      "PHASE/2 2000 is ready.",
+      "",
+      "The next session begins as someone new.",
+      "What you wrote down does not migrate."
+    ],
+    "subtitle": "Nothing to update. Change has failed.",
+    "tag": "— end of Era 1 —"
   }
 }
