@@ -17,6 +17,7 @@ mix art styles between rooms).
 | bookcase | bookcaseOpen.glb | Kenney Furniture Kit | CC0 | no | |
 | rug | rugRectangle.glb | Kenney Furniture Kit | CC0 | no | |
 | nightstand | sideTable.glb | Kenney Furniture Kit | CC0 | no | |
+| opening_corkboard | wallCorkboardCreativeTrio.glb | Poly Pizza — "Wall Corkboard" by CreativeTrio | CC0 1.0 | no | geometry only; material overridden flat in code |
 | _(staged)_ | lampSquareTable.glb, pottedPlant.glb | Kenney Furniture Kit | CC0 | no | copied, not yet wired |
 
 Kit: **Kenney Furniture Kit** (https://kenney.nl/assets/furniture-kit), CC0 — no

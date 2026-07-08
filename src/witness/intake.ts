@@ -33,12 +33,12 @@ export interface StartupBoardChoices {
 type StartupBoardAction = 'continue' | 'leave' | 'handled' | null;
 
 const STARTUP_HITS = {
-  browser: { x: 304, y: 210, w: 76, h: 22 },
-  vr: { x: 390, y: 210, w: 64, h: 22 },
-  autoOn: { x: 346, y: 246, w: 40, h: 22 },
-  autoOff: { x: 396, y: 246, w: 40, h: 22 },
-  leave: { x: 42, y: 248, w: 72, h: 24 },
-  continue: { x: 370, y: 248, w: 104, h: 24 }
+  browser: { x: 258, y: 216, w: 84, h: 22 },
+  vr: { x: 354, y: 216, w: 68, h: 22 },
+  autoOn: { x: 318, y: 238, w: 44, h: 22 },
+  autoOff: { x: 374, y: 238, w: 44, h: 22 },
+  leave: { x: 44, y: 260, w: 72, h: 22 },
+  continue: { x: 384, y: 260, w: 94, h: 22 }
 } as const;
 
 export class WitnessCanvas {
@@ -266,91 +266,61 @@ export class WitnessCanvas {
     ctx.fillText(label, box.x + Math.max(4, Math.round((box.w - tw) / 2)), box.y + 7);
   }
 
-  private drawStartupPhoto(x: number, y: number, caption: string, tint: string): void {
-    const { ctx } = this;
-    px(ctx, x, y, 54, 66, ERA1.paper);
-    px(ctx, x + 5, y + 6, 44, 36, tint);
-    px(ctx, x + 16, y + 17, 8, 10, ERA1.beige);
-    px(ctx, x + 28, y + 17, 8, 10, ERA1.tooltip);
-    px(ctx, x + 13, y + 28, 26, 12, ERA1.greyDark);
-    px(ctx, x + 25, y - 3, 5, 5, ERA1.warn);
-    setFont(ctx, 7);
-    ctx.fillStyle = ERA1.black;
-    ctx.fillText(this.fitText(caption, 46), x + 5, y + 50);
-  }
-
-  private drawStartupScrap(x: number, y: number, w: number, h: number, label: string, fill: string, pinColor: string = ERA1.warn): void {
-    const { ctx } = this;
-    px(ctx, x, y, w, h, fill);
-    px(ctx, x, y, w, 1, ERA1.olive);
-    px(ctx, x, y + h - 1, w, 1, ERA1.warnDark);
-    px(ctx, x + Math.round(w / 2) - 2, y - 3, 5, 5, pinColor);
-    setFont(ctx, 8);
-    ctx.fillStyle = ERA1.black;
-    ctx.fillText(this.fitText(label, w - 8), x + 4, y + 8);
-  }
-
   private drawStartupBoard(): void {
     const { ctx } = this;
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
-    px(ctx, 0, 0, W, H, '#9b6a3d');
-    for (let y = 0; y < H; y += 10) {
-      for (let x = (y / 10) % 2 === 0 ? 4 : 10; x < W; x += 16) px(ctx, x, y, 2, 2, '#d8bb82');
+    px(ctx, 0, 0, W, H, '#efe2bf');
+    for (let y = 8; y < H; y += 18) {
+      for (let x = (y / 18) % 2 === 0 ? 12 : 24; x < W; x += 34) px(ctx, x, y, 1, 1, '#d3bc86');
     }
-    px(ctx, 6, 6, W - 12, 7, '#6f4323');
-    px(ctx, 6, H - 13, W - 12, 7, '#4e2d17');
-    px(ctx, 6, 6, 7, H - 12, '#8b5a32');
-    px(ctx, W - 13, 6, 7, H - 12, '#4e2d17');
-
-    this.drawStartupScrap(34, 24, 64, 28, (opening.o1_board_stickers as string[])[0], '#d8c5df', '#315db5');
-    this.drawStartupScrap(390, 28, 76, 30, (opening.o1_board_stickers as string[])[1], '#b9d7a0', '#2f9c51');
-    this.drawStartupScrap(414, 64, 54, 24, (opening.o1_board_stickers as string[])[2], '#efcf4a', '#2f9c51');
-    this.drawStartupScrap(34, 205, 86, 30, (opening.o1_board_clippings as { title: string }[])[1].title, '#e7dcc5', '#315db5');
-    this.drawStartupScrap(380, 155, 94, 34, `${(opening.o1_board_clippings as { title: string }[])[0].title}: ${(opening.o1_board_clippings as { body: string }[])[0].body}`, '#e7dcc5', '#315db5');
-    this.drawStartupPhoto(38, 94, (opening.o1_board_polaroids as { caption: string }[])[0].caption, '#b88b4e');
-    this.drawStartupPhoto(410, 92, (opening.o1_board_polaroids as { caption: string }[])[2].caption, '#b7c4b7');
-    this.drawStartupPhoto(430, 190, (opening.o1_board_polaroids as { caption: string }[])[3].caption, '#caa08b');
-
-    px(ctx, 124, 24, 264, 30, ERA1.paper);
-    px(ctx, 130, 22, 6, 6, ERA1.grey);
-    px(ctx, 374, 22, 6, 6, ERA1.grey);
+    px(ctx, 0, 0, W, 1, ERA1.warnDark);
+    px(ctx, 0, H - 1, W, 1, ERA1.warnDark);
+    px(ctx, 0, 0, 1, H, ERA1.warnDark);
+    px(ctx, W - 1, 0, 1, H, ERA1.warnDark);
+    px(ctx, 142, 18, 228, 30, ERA1.paper);
+    px(ctx, 150, 16, 6, 6, '#d0a315');
+    px(ctx, 356, 16, 6, 6, '#d0a315');
     setFont(ctx, 16);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(opening.o1_disclaimer_title.toUpperCase(), 172, 34);
+    setFont(ctx, 7);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(opening.o1_board_logo_edge, 314, 12);
 
-    px(ctx, 76, 64, 360, 112, ERA1.paper);
-    px(ctx, 76, 64, 360, 1, ERA1.beige);
-    px(ctx, 76, 175, 360, 1, ERA1.warnDark);
-    px(ctx, 85, 61, 6, 6, ERA1.warn);
-    px(ctx, 426, 61, 6, 6, '#315db5');
+    px(ctx, 58, 58, 396, 124, ERA1.paper);
+    px(ctx, 58, 58, 396, 1, ERA1.beige);
+    px(ctx, 58, 181, 396, 1, ERA1.warnDark);
+    px(ctx, 67, 55, 6, 6, ERA1.warn);
+    px(ctx, 444, 55, 6, 6, '#315db5');
     setFont(ctx, 9);
     ctx.fillStyle = ERA1.black;
-    let yy = 78;
+    let yy = 72;
     for (const line of opening.o1_disclaimer as string[]) {
-      yy = this.drawWrapped(line, 94, yy, 310, 13, 3) + 4;
-      if (yy > 154) break;
+      yy = this.drawWrapped(line, 74, yy, 352, 13, 3) + 4;
+      if (yy > 160) break;
     }
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText((opening.o1_board_margin_notes as string[])[0], 292, 159);
+    ctx.fillText((opening.o1_board_margin_notes as string[])[0], 304, 164);
 
-    px(ctx, 84, 182, 348, 18, '#e7d1a6');
-    px(ctx, 84, 182, 4, 18, ERA1.warnDark);
+    px(ctx, 58, 188, 396, 16, '#e7d1a6');
+    px(ctx, 58, 188, 4, 16, ERA1.warnDark);
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(
       this.startup.platform === 'vr' ? opening.o1_controls_vr : opening.o1_controls_browser,
-      94,
-      188
+      70,
+      193
     );
 
     setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
-    ctx.fillText(opening.o1_options_title, 102, 211);
+    ctx.fillText(opening.o1_options_title, 58, 207);
+    px(ctx, 58, 219, 396, 1, '#bca36e');
     setFont(ctx, 8);
-    ctx.fillText(opening.o1_platform_label, 140, 218);
-    ctx.fillText(opening.o1_autocam_label, 170, 254);
+    ctx.fillText(opening.o1_platform_label, 74, 222);
+    ctx.fillText(opening.o1_autocam_label, 74, 244);
     this.drawStartupButton(opening.o1_platform_browser, STARTUP_HITS.browser, this.startup.platform === 'browser');
     this.drawStartupButton(opening.o1_platform_vr, STARTUP_HITS.vr, this.startup.platform === 'vr');
     this.drawStartupButton(opening.o1_autocam_on, STARTUP_HITS.autoOn, this.startup.autoCam);

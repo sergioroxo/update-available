@@ -18,6 +18,7 @@ import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { buildClusterShell, type ClusterShell, type EraKey } from '../room/cluster';
+import { buildOpeningBoardDressing } from '../room/openingBoardDressing';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { createSpine, type Spine } from '../narrative/spine';
@@ -41,7 +42,8 @@ const DRAG_PITCH_MAX = 55;
 const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
 /** O1 begins on the spine wall cork board; Continue turns you to the PC. */
 const OPENING_WALL_VIEW = { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 180 };
-const OPENING_WALL_BOARD = { x: 0, y: 1.5, z: 3.69, w: 1.86, h: 1.395 };
+/** O1's interactive paper sheet, pinned over the physical cork board dressing. */
+const OPENING_WALL_BOARD = { x: 0, y: 1.43, z: 3.565, w: 1.5, h: 1.125 };
 // O2 establishing → desk pan: slow enough to read as travel through the room,
 // not a cut (Sérgio, Round 18: 1.4s "is so fast it makes no sense"), and it
 // starts a beat AFTER the lights land so the two events stay legible.
@@ -147,6 +149,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // carries review buttons so the filing/carry-back path stays testable
     sendRt = createSendRuntime(room, niche);
   }
+  const openingBoardDressing = options.reinterp === true ? buildOpeningBoardDressing(app) : null;
 
   // ── the two surfaces ──
   const os = new DesktopOS({ reinterp: options.reinterp === true });
@@ -368,9 +371,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (active) {
       placeOpeningWallBoard();
       setTerminalFrameVisible(false);
+      openingBoardDressing?.setVisible(true);
     } else {
       restoreWitnessSurface();
       setTerminalFrameVisible(true);
+      openingBoardDressing?.setVisible(false);
     }
   }
 
