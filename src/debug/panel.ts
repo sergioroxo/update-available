@@ -9,7 +9,7 @@
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'R26 perf · batching phase 2';
+const BUILD_TAG = 'R26 O1 · cork-board opening';
 
 interface DebugOpts {
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;

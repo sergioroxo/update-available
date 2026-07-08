@@ -27,6 +27,55 @@
     "You can close this tab whenever you like.",
     "Nothing was kept."
   ],
+  "o1_board_logo_edge": "[ LOGO PLACEHOLDER ] — per Reinterp_Logo_Spec",
+  "o1_board_margin_notes": [
+    "This all sounds so normal...",
+    "Who decides what's hard?",
+    "same wall · before filing"
+  ],
+  "o1_board_stickers": [
+    "90s",
+    "zine culture",
+    "Question everything",
+    "safe space?",
+    "normal?"
+  ],
+  "o1_board_tickets": [
+    "Local Band Showcase — 1995",
+    "Youth Night · bring a friend"
+  ],
+  "o1_board_polaroids": [
+    {
+      "caption": "'96 summer concert"
+    },
+    {
+      "caption": "last day of school"
+    },
+    {
+      "caption": "brochure couple"
+    },
+    {
+      "caption": "The New Path · day 4"
+    }
+  ],
+  "o1_board_clippings": [
+    {
+      "title": "Family Renewal Weekend",
+      "body": "smiles · testimony · matching shirts"
+    },
+    {
+      "title": "Digital Narratives",
+      "body": "about broader topic"
+    },
+    {
+      "title": "Care brochure",
+      "body": "questions become forms"
+    }
+  ],
+  "o1_board_tape_labels": [
+    "R.E.M. songs",
+    "home movie"
+  ],
   "o2_boot_lines": [
     "LambyOS  —  starting up",
     "",
