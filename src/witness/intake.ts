@@ -107,7 +107,15 @@ export class WitnessCanvas {
     px(ctx, vx + vw - 1, y, 1, 16, LINE);
     setFont(ctx, 10);
     ctx.fillStyle = valueColor;
-    ctx.fillText(value, vx + 6, y + 3);
+    ctx.fillText(this.fitText(value, vw - 12), vx + 6, y + 3);
+  }
+
+  private fitText(value: string, maxWidth: number): string {
+    const { ctx } = this;
+    if (ctx.measureText(value).width <= maxWidth) return value;
+    let out = value;
+    while (out.length > 3 && ctx.measureText(`${out}...`).width > maxWidth) out = out.slice(0, -1);
+    return `${out}...`;
   }
 
   private optionLabel(kind: 'icon' | 'chip' | 'goal', id: string): string {
@@ -168,20 +176,23 @@ export class WitnessCanvas {
     for (let y = 0; y < H; y += 12) {
       for (let x = (y / 12) % 2 === 0 ? 0 : 6; x < W; x += 12) px(ctx, x, y, 2, 2, ERA1.beige);
     }
-    px(ctx, 12, 12, W - 24, H - 24, ERA1.beige);
-    px(ctx, 12, 12, W - 24, 2, ERA1.warnDark);
-    px(ctx, 12, H - 14, W - 24, 2, ERA1.warnDark);
-    px(ctx, 12, 12, 2, H - 24, ERA1.warnDark);
-    px(ctx, W - 14, 12, 2, H - 24, ERA1.warnDark);
+    px(ctx, 8, 8, W - 16, 6, ERA1.warnDark);
+    px(ctx, 8, H - 14, W - 16, 6, ERA1.warnDark);
+    px(ctx, 8, 8, 6, H - 16, ERA1.warnDark);
+    px(ctx, W - 14, 8, 6, H - 16, ERA1.warnDark);
+    px(ctx, 18, 18, W - 36, H - 36, ERA1.olive);
+    for (let y = 24; y < H - 24; y += 10) {
+      for (let x = 24 + ((y / 10) % 3) * 3; x < W - 24; x += 15) px(ctx, x, y, 1, 1, ERA1.tooltip);
+    }
     setFont(ctx, 12);
-    ctx.fillStyle = ERA1.warnDark;
+    ctx.fillStyle = ERA1.tooltip;
     ctx.fillText(opening.o3_board_title, 28, 28);
     setFont(ctx, 8);
-    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillStyle = ERA1.beige;
     ctx.fillText(opening.o3_board_hint, W - 202, H - 28);
 
     this.drawPinnedNote(
-      34, 58, 136, 64,
+      42, 62, 136, 64,
       opening.o3_board_icon_label,
       this.optionLabel('icon', this.openingProfile.icon),
       this.openingProfile.icon !== ''
@@ -189,14 +200,14 @@ export class WitnessCanvas {
     const chips = this.openingProfile.chips.map(c => this.optionLabel('chip', c));
     for (let i = 0; i < 3; i++) {
       this.drawPinnedNote(
-        202, 54 + i * 74, 190, 56,
+        220, 56 + i * 74, 190, 56,
         `${opening.o3_board_chip_label} ${i + 1}`,
         chips[i] ?? '',
         chips[i] !== undefined
       );
     }
     this.drawPinnedNote(
-      54, 178, 150, 72,
+      66, 188, 150, 72,
       opening.o3_board_goal_label,
       this.openingProfile.goal ? this.optionLabel('goal', this.openingProfile.goal) : '',
       this.openingProfile.goal !== ''

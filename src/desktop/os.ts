@@ -302,6 +302,12 @@ export class DesktopOS {
     this.onOpeningProfileChange?.(this.openingProfileSnapshot());
   }
 
+  private clearProfileTags(): void {
+    for (let i = ledger.tags.length - 1; i >= 0; i--) {
+      if (ledger.tags[i].startsWith('profile:')) ledger.tags.splice(i, 1);
+    }
+  }
+
   /** the witness flip completed its return — card #1 unlocks */
   unlockDossier(): void {
     if (this.dossierUnlocked) return;
@@ -848,7 +854,15 @@ export class DesktopOS {
         this.rBootChars = 0;
         this.setPhase('r_boot');
         break;
-      case 'profile': this.setPhase('r_profile'); break;
+      case 'profile':
+        ledger.name = opening.o3_prefilled_name;
+        this.clearProfileTags();
+        this.profileIcon = '';
+        this.profileChips = [];
+        this.profileGoal = '';
+        this.profileFiled = false;
+        this.setPhase('r_profile');
+        break;
       case 'recap': {
         // the recap needs picks on file — fill from the real option sets
         const icons = opening.o3_icons as { id: string }[];
@@ -859,7 +873,9 @@ export class DesktopOS {
           this.profileChips.push(chips[this.profileChips.length].id);
         }
         if (this.profileGoal === '') this.profileGoal = goals[0]?.id ?? 'declined';
-        this.setPhase('r_recap');
+        this.clearProfileTags();
+        this.profileFiled = false;
+        this.commitProfile();
         break;
       }
       case 'desktop': this.setPhase('desktop'); break;

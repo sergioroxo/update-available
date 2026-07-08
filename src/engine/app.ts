@@ -178,7 +178,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   }
   const witness = new WitnessCanvas();
   if (options.reinterp === true) {
-    os.onOpeningProfileChange = (profile) => witness.setOpeningProfile(profile);
+    os.onOpeningProfileChange = (profile) => {
+      witness.setOpeningProfile(profile);
+      const terminalFrame = room.props.get('terminalFrame')?.entity;
+      if (terminalFrame) terminalFrame.enabled = !(profile.active && !profile.filed);
+    };
     witness.setOpeningProfile(os.openingProfileSnapshot());
   }
 
