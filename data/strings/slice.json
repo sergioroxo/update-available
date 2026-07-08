@@ -63,7 +63,28 @@
     "kitToast": "The brochure on your desk says: insert the enclosed disk to begin.",
     "logToast": "Logging to C:\\mirc\\logs\\#stillstruggling.log",
     "behindToast": "Record filed. (see reverse)",
-    "dossierUpdated": "Dossier updated"
+    "dossierUpdated": "Dossier updated",
+    "eraSkins": {
+      "_doc": "PLACEHOLDER — minimal per-era desktop shells after updates. Labels only; no mechanics or final copy. Uses existing Era-1 palette colors until the full per-era theme pass lands.",
+      "e2": {
+        "clock": "2003",
+        "brand": "Restorify 2003",
+        "status": "journey file migrated · accountability online",
+        "icons": ["Restorify", "Care Log", "Dossier"]
+      },
+      "e3": {
+        "clock": "2016",
+        "brand": "GracePlatform",
+        "status": "community profile migrated · testimony tools ready",
+        "icons": ["GracePlatform", "Testimony", "Dossier"]
+      },
+      "e4": {
+        "clock": "NOW",
+        "brand": "Continuity of Care",
+        "status": "ambient service active · recommendations enabled",
+        "icons": ["Settle", "Continuity", "Dossier"]
+      }
+    }
   },
   "pause": {
     "title": "PAUSED",

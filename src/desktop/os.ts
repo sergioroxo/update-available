@@ -29,6 +29,7 @@ import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.js
 type Phase =
   | 'warning' | 'off' | 'boot' | 'splash' | 'name' | 'desktop' | 'left'
   | 'r_dark' | 'r_boot' | 'r_profile' | 'r_recap';
+type DesktopEra = 'e1' | 'e2' | 'e3' | 'e4';
 
 const SPLASH_SECONDS = 4.6;        // hold the loading screen long enough to read
 const BOOT_CPS = 0.030;            // seconds per char — slower BIOS crawl
@@ -89,6 +90,7 @@ export class DesktopOS {
   irc: IrcApp | null = null;
   packet: PacketApp | null = null;
   diary: DiaryApp | null = null;
+  private desktopEra: DesktopEra = 'e1';
   /** the reinterpretation provotype runtime — reachable behind ?reinterp=1 only */
   provotype: ProvotypeApp | null = null;
   /** the era-update ritual (spine-armed; never player-triggered) */
@@ -254,10 +256,60 @@ export class DesktopOS {
     this.updateApp = new UpdateApp(key);
     this.updateApp.onComplete = (toEra) => {
       this.updateApp = null;
+      this.setDesktopEra(toEra);
       this.dirty = true;
       this.onEraShift?.(toEra);
     };
     this.dirty = true;
+  }
+
+  /** The room morphs by era; this keeps the monitor from remaining 1997. */
+  setDesktopEra(era: string): void {
+    if (era !== 'e2' && era !== 'e3' && era !== 'e4') return;
+    this.desktopEra = era;
+    this.retireEra1Windows();
+    this.toast = { text: this.eraSkin().status, t: 6 };
+    this.dirty = true;
+  }
+
+  private retireEra1Windows(): void {
+    this.kit = null;
+    this.irc = null;
+    this.packet = null;
+    this.diary = null;
+    this.provotype = null;
+    this.sendOffer = null;
+    this.dossierOpen = false;
+    this.kitToastShown = true;
+    this.behindToastShown = true;
+    this.behindToastAt = Infinity;
+    this.escalationFallbackAt = Infinity;
+    this.diaryPendingAt = Infinity;
+    this.hasUnseenWitness = false;
+  }
+
+  private eraSkin(): { clock: string; brand: string; status: string; icons: string[] } {
+    if (this.desktopEra === 'e1') {
+      return {
+        clock: strings.desktop.clock,
+        brand: strings.splash.title,
+        status: '',
+        icons: [strings.desktop.iconA, strings.desktop.iconIrc, strings.desktop.iconDossier]
+      };
+    }
+    const skins = strings.desktop.eraSkins as unknown as Record<string, {
+      clock: string; brand: string; status: string; icons: string[];
+    }>;
+    return skins[this.desktopEra];
+  }
+
+  private desktopColors(): { bg: string; panel: string; text: string } {
+    switch (this.desktopEra) {
+      case 'e2': return { bg: ERA1.titleBlue, panel: ERA1.navy, text: ERA1.white };
+      case 'e3': return { bg: ERA1.beige, panel: ERA1.olive, text: ERA1.black };
+      case 'e4': return { bg: ERA1.black, panel: ERA1.greyDark, text: ERA1.silver };
+      default: return { bg: ERA1.teal, panel: ERA1.navy, text: ERA1.black };
+    }
   }
 
   get updateArmed(): boolean {
@@ -535,15 +587,22 @@ export class DesktopOS {
 
   private drawDesktop(W: number, H: number): void {
     const { ctx } = this;
-    ui.px(ctx, 0, 0, W, H, ERA1.teal);
-    // icons — the channel only exists once the kit has routed you there
-    if (!this.kit) this.drawIcon(10, 8, strings.desktop.iconA, true, 'icon-a');
-    if (this.irc) this.drawIcon(10, 8, strings.desktop.iconIrc, true, 'icon-irc');
-    this.drawIcon(10, 56, strings.desktop.iconDossier, this.dossierUnlocked, 'icon-dossier');
-    // reinterpretation-only: the provotype launchers (the invitation is inside each)
-    if (this.reinterp && !this.provotype) {
-      this.drawIcon(10, 104, reinterpStrings.launcherIcon, true, 'icon-provotype');
-      this.drawIcon(10, 152, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
+    const skin = this.eraSkin();
+    const colors = this.desktopColors();
+    ui.px(ctx, 0, 0, W, H, colors.bg);
+
+    if (this.desktopEra === 'e1') {
+      // icons — the channel only exists once the kit has routed you there
+      if (!this.kit) this.drawIcon(10, 8, strings.desktop.iconA, true, 'icon-a');
+      if (this.irc) this.drawIcon(10, 8, strings.desktop.iconIrc, true, 'icon-irc');
+      this.drawIcon(10, 56, strings.desktop.iconDossier, this.dossierUnlocked, 'icon-dossier');
+      // reinterpretation-only: the provotype launchers (the invitation is inside each)
+      if (this.reinterp && !this.provotype) {
+        this.drawIcon(10, 104, reinterpStrings.launcherIcon, true, 'icon-provotype');
+        this.drawIcon(10, 152, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
+      }
+    } else {
+      this.drawEraDesktopChrome(W, skin, colors);
     }
     // windows
     if (this.kit?.open) this.kit.draw(ctx);
@@ -560,7 +619,7 @@ export class DesktopOS {
     ui.button(ctx, 3, H - 19, 50, 16, 'MENU', {});
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
-    ctx.fillText(strings.desktop.clock, W - 38, H - 16);
+    ctx.fillText(skin.clock, W - 44, H - 16);
     // toast
     if (this.toast) {
       ui.setFont(ctx, 9);
@@ -575,15 +634,43 @@ export class DesktopOS {
     }
   }
 
+  private drawEraDesktopChrome(
+    W: number,
+    skin: { brand: string; status: string; icons: string[] },
+    colors: { panel: string; text: string }
+  ): void {
+    const { ctx } = this;
+    ui.px(ctx, 26, 24, W - 52, 44, colors.panel);
+    ui.setFont(ctx, 16);
+    ctx.fillStyle = colors.text;
+    ctx.fillText(skin.brand, 42, 34);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = this.desktopEra === 'e4' ? ERA1.grey : ERA1.paper;
+    ctx.fillText(skin.status, 42, 56);
+    skin.icons.forEach((label, i) => {
+      const id = i === 2 ? 'icon-dossier' : `icon-era-${i}`;
+      this.drawIcon(12, 92 + i * 48, label, i === 2 ? this.dossierUnlocked : true, id);
+    });
+  }
+
   private drawIcon(x: number, y: number, label: string, enabled: boolean, id: string): void {
     const { ctx } = this;
     ui.px(ctx, x + 8, y, 20, 16, enabled ? ERA1.beige : ERA1.tealDark);
     ui.px(ctx, x + 8, y, 20, 4, enabled ? ERA1.navy : ERA1.tealDark);
     ui.setFont(ctx, 9);
     ctx.fillStyle = enabled ? ERA1.white : ERA1.tealDark;
-    const tw = ctx.measureText(label).width;
-    ctx.fillText(label, Math.round(x + 18 - tw / 2), y + 20);
+    const fitted = this.fitIconLabel(label, 62);
+    const tw = ctx.measureText(fitted).width;
+    ctx.fillText(fitted, Math.round(x + 18 - tw / 2), y + 20);
     if (enabled) this.hits.push({ x, y, w: 38, h: 32, id });
+  }
+
+  private fitIconLabel(label: string, maxWidth: number): string {
+    const { ctx } = this;
+    if (ctx.measureText(label).width <= maxWidth) return label;
+    let out = label;
+    while (out.length > 4 && ctx.measureText(`${out}...`).width > maxWidth) out = out.slice(0, -1);
+    return `${out}...`;
   }
 
   private drawDossier(W: number, H: number): void {
@@ -991,6 +1078,8 @@ export class DesktopOS {
         case 'dossier-close': this.dossierOpen = false; break;
         case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
         case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;
+        case 'icon-era-0':
+        case 'icon-era-1': this.toast = { text: this.eraSkin().status, t: 5 }; break;
         case 'icon-send': if (this.sendOffer) { this.sendOffer.open = true; this.toast = null; } break;
         case 'send-go': this.resolveSend('visited'); break;
         case 'send-decline': this.resolveSend('declined'); break;

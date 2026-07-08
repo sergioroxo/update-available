@@ -785,6 +785,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  pan under auto-cam, a takeable default otherwise */
   function driveMorph(era: EraKey): void {
     if (!cluster) return;
+    os.setDesktopEra(era);
     cluster.morphToEra(era, true);
     if (era === 'e4') {
       // THE TURN as a dolly — the piece's slowest, heaviest move: rise up over
@@ -820,6 +821,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (options.close && cluster && cloud) {
       enterClose();
     } else if (options.era && cluster) {
+      os.setDesktopEra(options.era);
       cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
       // boot SEATED at the era's home room (E4 boots already turned — the TURN)
