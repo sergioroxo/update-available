@@ -19,7 +19,7 @@
 import * as pc from 'playcanvas';
 import type { RoomHandles } from './era1room';
 import { ClusterMorph, constantPropIds } from './clusterMorph';
-import { batchStaticProps } from './batching';
+import { batchStaticProps, batchSettledProps, clearSettledBatch, type SettledBatchHandle } from './batching';
 import clusterData from '../../data/room/cluster.json';
 import nicheData from '../../data/room/fluid_niche.json';
 import type { FluidNiche, FacetState } from './fluidNiche';
@@ -99,16 +99,44 @@ export function buildClusterShell(
   }
 
   // ── the space morph (ported shipped effect) — start in the r1 state ──
+  const staticIds = constantPropIds();
   const morph = new ClusterMorph(room);
   morph.snapTo(0);
   applyLayout();
 
-  // ── the Quest draw-call chore: the props constant across ALL space states
-  // share materials and bake into one static batch group (the morph skips
-  // them, so the batch can never go stale). ?nobatch=1 = the A/B escape. ──
+  // ── the Quest draw-call chore: constants bake once; variable box props bake
+  // only after a state settles, then unbake before the next morph so live
+  // transforms/materials remain truthful. ?nobatch=1 = the A/B escape. ──
+  let staticJoined = 0;
+  let settledBatch: SettledBatchHandle | null = null;
+  let settledJoined = 0;
+  let pendingSettledRebatch = false;
+  function publishBatchStats(): void {
+    const w = window as { __batchedProps?: number; __staticBatchedProps?: number; __settledBatchedProps?: number };
+    w.__staticBatchedProps = staticJoined;
+    w.__settledBatchedProps = settledJoined;
+    w.__batchedProps = staticJoined + settledJoined;
+  }
+  function clearSettled(): void {
+    settledBatch = clearSettledBatch(app, room, settledBatch);
+    settledJoined = 0;
+    publishBatchStats();
+  }
+  function rebuildSettled(): void {
+    if (!batch) return;
+    clearSettled();
+    settledBatch = batchSettledProps(app, room, staticIds);
+    settledJoined = settledBatch?.joined ?? 0;
+    publishBatchStats();
+  }
+  function beginMorphedStateBatch(): void {
+    if (!batch) return;
+    clearSettled();
+    pendingSettledRebatch = true;
+  }
   if (batch) {
-    const joined = batchStaticProps(app, room, constantPropIds());
-    (window as { __batchedProps?: number }).__batchedProps = joined;
+    staticJoined = batchStaticProps(app, room, staticIds);
+    rebuildSettled();
   }
 
   // ── zone accent lights (rig-driven; the two rooms' own temperatures) ──
@@ -281,7 +309,10 @@ export function buildClusterShell(
         state = 'open';
         planeLerp = { from: PLANE_Z[0], to: PLANE_Z[1], t: -3.0, dur: 5.2 }; // rides the cascade
         schedule([
-          { t: 3.0, fn: () => morph.goToState(1, true) },     // the walls begin to leave
+          { t: 3.0, fn: () => {                                // the walls begin to leave
+            beginMorphedStateBatch();
+            morph.goToState(1, true);
+          } },
           { t: 3.0, fn: () => setLight('roomFill', 0.55) },   // ballast: clunk
           { t: 3.18, fn: () => setLight('roomFill', 0.05) },
           { t: 3.6, fn: () => setLight('roomFill', 0.95) },   // flicker
@@ -300,8 +331,13 @@ export function buildClusterShell(
 
       // every other transition: cascade only when stepping one state forward
       // (E3→E4 = Maya's desk + the lamp carry resolve in), snap otherwise
+      let rebuildAfterLayout = false;
       if (toIdx !== fromIdx || !animate) {
-        morph.goToState(toIdx, animate && toIdx === fromIdx + 1);
+        const willAnimate = animate && toIdx === fromIdx + 1;
+        if (willAnimate) beginMorphedStateBatch();
+        else clearSettled();
+        morph.goToState(toIdx, willAnimate);
+        rebuildAfterLayout = !willAnimate;
       }
       applyRig(toEra, animate);
       state = toIdx >= 1 ? 'open' : 'sealed';
@@ -310,6 +346,7 @@ export function buildClusterShell(
       const table = eraTable();
       niche.setFacet((table?.default ?? 'none') as FacetState);
       applyLayout(); // X: re-assert the open back arm after the fold
+      if (rebuildAfterLayout) rebuildSettled();
     },
 
     applyRig,
@@ -324,6 +361,11 @@ export function buildClusterShell(
         }
       }
       morph.update(dt);
+      if (pendingSettledRebatch && !morph.running) {
+        pendingSettledRebatch = false;
+        applyLayout();
+        rebuildSettled();
+      }
       if (planeLerp) {
         planeLerp.t += dt;
         const k = Math.max(0, Math.min(1, planeLerp.t / planeLerp.dur));

@@ -9,7 +9,7 @@
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'R26 B5 · era desktop skins';
+const BUILD_TAG = 'R26 perf · batching phase 2';
 
 interface DebugOpts {
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
@@ -145,10 +145,18 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   window.setInterval(() => {
     const s = (window as { __reinterpNow?: string }).__reinterpNow;
     now.textContent = 'here: ' + (s ?? '— (open a room)');
-    const w = window as { __drawCalls?: number; __batchedProps?: number };
+    const w = window as {
+      __drawCalls?: number;
+      __batchedProps?: number;
+      __staticBatchedProps?: number;
+      __settledBatchedProps?: number;
+    };
     if (w.__drawCalls !== undefined) {
+      const split = w.__batchedProps
+        ? ` · batched props: ${w.__batchedProps} (${w.__staticBatchedProps ?? 0} static + ${w.__settledBatchedProps ?? 0} settled)`
+        : ' · UNBATCHED';
       perf.textContent = `draw calls: ${w.__drawCalls}` +
-        (w.__batchedProps ? ` · batched props: ${w.__batchedProps}` : ' · UNBATCHED');
+        split;
     }
   }, 250);
 
