@@ -25,6 +25,22 @@ interface OpeningProfileSnapshot {
   filed: boolean;
 }
 
+export interface StartupBoardChoices {
+  platform: 'browser' | 'vr';
+  autoCam: boolean;
+}
+
+type StartupBoardAction = 'continue' | 'leave' | 'handled' | null;
+
+const STARTUP_HITS = {
+  browser: { x: 304, y: 210, w: 76, h: 22 },
+  vr: { x: 390, y: 210, w: 64, h: 22 },
+  autoOn: { x: 346, y: 246, w: 40, h: 22 },
+  autoOff: { x: 396, y: 246, w: 40, h: 22 },
+  leave: { x: 42, y: 248, w: 72, h: 24 },
+  continue: { x: 370, y: 248, w: 104, h: 24 }
+} as const;
+
 export class WitnessCanvas {
   readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
@@ -34,6 +50,12 @@ export class WitnessCanvas {
   dirty = true;
   private openingProfile: OpeningProfileSnapshot = { active: false, icon: '', chips: [], goal: '', filed: false };
   private hardenT = HARDEN_SECONDS;
+  private startup = {
+    active: false,
+    armed: false,
+    platform: 'browser' as 'browser' | 'vr',
+    autoCam: false
+  };
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -59,6 +81,31 @@ export class WitnessCanvas {
     this.dirty = true;
   }
 
+  setStartupBoard(active: boolean, armed: boolean): void {
+    this.startup.active = active;
+    this.startup.armed = armed;
+    this.dirty = true;
+  }
+
+  startupChoices(): StartupBoardChoices {
+    return { platform: this.startup.platform, autoCam: this.startup.autoCam };
+  }
+
+  handleStartupClick(x: number, y: number): StartupBoardAction {
+    if (!this.startup.active) return null;
+    const inBox = (b: { x: number; y: number; w: number; h: number }): boolean =>
+      x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
+    if (inBox(STARTUP_HITS.browser)) this.startup.platform = 'browser';
+    else if (inBox(STARTUP_HITS.vr)) this.startup.platform = 'vr';
+    else if (inBox(STARTUP_HITS.autoOn)) this.startup.autoCam = true;
+    else if (inBox(STARTUP_HITS.autoOff)) this.startup.autoCam = false;
+    else if (inBox(STARTUP_HITS.leave)) return 'leave';
+    else if (inBox(STARTUP_HITS.continue) && this.startup.armed) return 'continue';
+    else return null;
+    this.dirty = true;
+    return 'handled';
+  }
+
   update(dt: number): void {
     this.t += dt;
     this.dirty = true;
@@ -67,7 +114,9 @@ export class WitnessCanvas {
     // R26: the same rear-wall surface begins as the warm O3 cork board, then
     // hardens into the cold record. Once filed, the existing intake content
     // remains the authority; profile clicks merely add traceable filed lines.
-    if (this.openingProfile.active && !this.openingProfile.filed) {
+    if (this.startup.active) {
+      this.drawStartupBoard();
+    } else if (this.openingProfile.active && !this.openingProfile.filed) {
       this.drawCorkBoard();
     } else if (this.hardenT < HARDEN_SECONDS) {
       this.drawHardening();
@@ -176,6 +225,143 @@ export class WitnessCanvas {
     setFont(ctx, 10);
     ctx.fillStyle = filled ? ERA1.black : ERA1.grey;
     ctx.fillText(body || opening.o3_board_empty, x + 6, y + 22);
+  }
+
+  private drawWrapped(text: string, x: number, y: number, maxWidth: number, lineHeight: number, maxLines = 8): number {
+    const { ctx } = this;
+    const words = text.split(' ');
+    let line = '';
+    let yy = y;
+    let lines = 0;
+    for (const word of words) {
+      const test = line ? `${line} ${word}` : word;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        ctx.fillText(line, x, yy);
+        yy += lineHeight;
+        lines++;
+        line = word;
+        if (lines >= maxLines) return yy;
+      } else {
+        line = test;
+      }
+    }
+    if (line && lines < maxLines) {
+      ctx.fillText(line, x, yy);
+      yy += lineHeight;
+    }
+    return yy;
+  }
+
+  private drawStartupButton(label: string, box: { x: number; y: number; w: number; h: number }, active: boolean, enabled = true): void {
+    const { ctx } = this;
+    const bg = !enabled ? ERA1.grey : active ? ERA1.warn : ERA1.paper;
+    px(ctx, box.x, box.y, box.w, box.h, bg);
+    px(ctx, box.x, box.y, box.w, 1, ERA1.warnDark);
+    px(ctx, box.x, box.y, 1, box.h, ERA1.warnDark);
+    px(ctx, box.x, box.y + box.h - 1, box.w, 1, ERA1.olive);
+    px(ctx, box.x + box.w - 1, box.y, 1, box.h, ERA1.olive);
+    setFont(ctx, label.length > 10 ? 8 : 9);
+    ctx.fillStyle = enabled ? ERA1.black : ERA1.greyDark;
+    const tw = ctx.measureText(label).width;
+    ctx.fillText(label, box.x + Math.max(4, Math.round((box.w - tw) / 2)), box.y + 7);
+  }
+
+  private drawStartupPhoto(x: number, y: number, caption: string, tint: string): void {
+    const { ctx } = this;
+    px(ctx, x, y, 54, 66, ERA1.paper);
+    px(ctx, x + 5, y + 6, 44, 36, tint);
+    px(ctx, x + 16, y + 17, 8, 10, ERA1.beige);
+    px(ctx, x + 28, y + 17, 8, 10, ERA1.tooltip);
+    px(ctx, x + 13, y + 28, 26, 12, ERA1.greyDark);
+    px(ctx, x + 25, y - 3, 5, 5, ERA1.warn);
+    setFont(ctx, 7);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(this.fitText(caption, 46), x + 5, y + 50);
+  }
+
+  private drawStartupScrap(x: number, y: number, w: number, h: number, label: string, fill: string, pinColor: string = ERA1.warn): void {
+    const { ctx } = this;
+    px(ctx, x, y, w, h, fill);
+    px(ctx, x, y, w, 1, ERA1.olive);
+    px(ctx, x, y + h - 1, w, 1, ERA1.warnDark);
+    px(ctx, x + Math.round(w / 2) - 2, y - 3, 5, 5, pinColor);
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(this.fitText(label, w - 8), x + 4, y + 8);
+  }
+
+  private drawStartupBoard(): void {
+    const { ctx } = this;
+    const W = ERA1_CANVAS.width;
+    const H = ERA1_CANVAS.height;
+    px(ctx, 0, 0, W, H, '#9b6a3d');
+    for (let y = 0; y < H; y += 10) {
+      for (let x = (y / 10) % 2 === 0 ? 4 : 10; x < W; x += 16) px(ctx, x, y, 2, 2, '#d8bb82');
+    }
+    px(ctx, 6, 6, W - 12, 7, '#6f4323');
+    px(ctx, 6, H - 13, W - 12, 7, '#4e2d17');
+    px(ctx, 6, 6, 7, H - 12, '#8b5a32');
+    px(ctx, W - 13, 6, 7, H - 12, '#4e2d17');
+
+    this.drawStartupScrap(34, 24, 64, 28, (opening.o1_board_stickers as string[])[0], '#d8c5df', '#315db5');
+    this.drawStartupScrap(390, 28, 76, 30, (opening.o1_board_stickers as string[])[1], '#b9d7a0', '#2f9c51');
+    this.drawStartupScrap(414, 64, 54, 24, (opening.o1_board_stickers as string[])[2], '#efcf4a', '#2f9c51');
+    this.drawStartupScrap(34, 205, 86, 30, (opening.o1_board_clippings as { title: string }[])[1].title, '#e7dcc5', '#315db5');
+    this.drawStartupScrap(380, 155, 94, 34, `${(opening.o1_board_clippings as { title: string }[])[0].title}: ${(opening.o1_board_clippings as { body: string }[])[0].body}`, '#e7dcc5', '#315db5');
+    this.drawStartupPhoto(38, 94, (opening.o1_board_polaroids as { caption: string }[])[0].caption, '#b88b4e');
+    this.drawStartupPhoto(410, 92, (opening.o1_board_polaroids as { caption: string }[])[2].caption, '#b7c4b7');
+    this.drawStartupPhoto(430, 190, (opening.o1_board_polaroids as { caption: string }[])[3].caption, '#caa08b');
+
+    px(ctx, 124, 24, 264, 30, ERA1.paper);
+    px(ctx, 130, 22, 6, 6, ERA1.grey);
+    px(ctx, 374, 22, 6, 6, ERA1.grey);
+    setFont(ctx, 16);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(opening.o1_disclaimer_title.toUpperCase(), 172, 34);
+
+    px(ctx, 76, 64, 360, 112, ERA1.paper);
+    px(ctx, 76, 64, 360, 1, ERA1.beige);
+    px(ctx, 76, 175, 360, 1, ERA1.warnDark);
+    px(ctx, 85, 61, 6, 6, ERA1.warn);
+    px(ctx, 426, 61, 6, 6, '#315db5');
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA1.black;
+    let yy = 78;
+    for (const line of opening.o1_disclaimer as string[]) {
+      yy = this.drawWrapped(line, 94, yy, 310, 13, 3) + 4;
+      if (yy > 154) break;
+    }
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText((opening.o1_board_margin_notes as string[])[0], 292, 159);
+
+    px(ctx, 84, 182, 348, 18, '#e7d1a6');
+    px(ctx, 84, 182, 4, 18, ERA1.warnDark);
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(
+      this.startup.platform === 'vr' ? opening.o1_controls_vr : opening.o1_controls_browser,
+      94,
+      188
+    );
+
+    setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(opening.o1_options_title, 102, 211);
+    setFont(ctx, 8);
+    ctx.fillText(opening.o1_platform_label, 140, 218);
+    ctx.fillText(opening.o1_autocam_label, 170, 254);
+    this.drawStartupButton(opening.o1_platform_browser, STARTUP_HITS.browser, this.startup.platform === 'browser');
+    this.drawStartupButton(opening.o1_platform_vr, STARTUP_HITS.vr, this.startup.platform === 'vr');
+    this.drawStartupButton(opening.o1_autocam_on, STARTUP_HITS.autoOn, this.startup.autoCam);
+    this.drawStartupButton(opening.o1_autocam_off, STARTUP_HITS.autoOff, !this.startup.autoCam);
+    this.drawStartupButton(opening.o1_leave, STARTUP_HITS.leave, false);
+    this.drawStartupButton(opening.o1_continue, STARTUP_HITS.continue, true, this.startup.armed);
+    if (!this.startup.armed) {
+      setFont(ctx, 7);
+      ctx.fillStyle = ERA1.greyDark;
+      ctx.fillText(`(${opening.o1_wait})`, STARTUP_HITS.continue.x + 30, STARTUP_HITS.continue.y - 8);
+    }
   }
 
   private drawCorkBoard(): void {

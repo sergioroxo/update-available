@@ -21,7 +21,6 @@ import { buildClusterShell, type ClusterShell, type EraKey } from '../room/clust
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { createSpine, type Spine } from '../narrative/spine';
-import { mountStartupOverlay } from '../desktop/opening';
 import { mountDebugPanel } from '../debug/panel';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
@@ -40,11 +39,15 @@ const KIT_FLOPPY = { x: -0.34, y: 0.762, z: 0.12 };
 const DRAG_PITCH_MAX = 55;
 /** O1 establishing framing (reinterp): pulled back, room-wide, window-lit */
 const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
+/** O1 begins on the spine wall cork board; Continue turns you to the PC. */
+const OPENING_WALL_VIEW = { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 180 };
+const OPENING_WALL_BOARD = { x: 0, y: 1.5, z: 3.69, w: 1.86, h: 1.395 };
 // O2 establishing → desk pan: slow enough to read as travel through the room,
 // not a cut (Sérgio, Round 18: 1.4s "is so fast it makes no sense"), and it
 // starts a beat AFTER the lights land so the two events stay legible.
 const CAM_MOVE_SECONDS = 3.6;
 const CAM_MOVE_DELAY_MS = 700;
+const STARTUP_ARM_SECONDS = 4.0;
 
 interface AppOptions {
   reinterp?: boolean;
@@ -180,8 +183,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (options.reinterp === true) {
     os.onOpeningProfileChange = (profile) => {
       witness.setOpeningProfile(profile);
-      const terminalFrame = room.props.get('terminalFrame')?.entity;
-      if (terminalFrame) terminalFrame.enabled = !(profile.active && !profile.filed);
+      setTerminalFrameVisible(!(profile.active && !profile.filed));
     };
     witness.setOpeningProfile(os.openingProfileSnapshot());
   }
@@ -197,13 +199,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   back.setLocalPosition(WITNESS.x, WITNESS.y, WITNESS.z);
   back.setLocalEulerAngles(90, 180, 0); // faces -Z (the chair, once turned)
   app.root.addChild(back);
+  const terminalFrame = room.props.get('terminalFrame')?.entity;
+  const setTerminalFrameVisible = (visible: boolean): void => {
+    if (terminalFrame) terminalFrame.enabled = visible;
+  };
+  const restoreWitnessSurface = (): void => {
+    if (options.reinterp !== true) return;
+    const wt = clusterData.witnessTerminal;
+    back.setLocalPosition(wt.pos[0], wt.pos[1], wt.pos[2]);
+    back.setLocalScale(wt.w, 1, wt.h);
+  };
+  const placeOpeningWallBoard = (): void => {
+    back.setLocalPosition(OPENING_WALL_BOARD.x, OPENING_WALL_BOARD.y, OPENING_WALL_BOARD.z);
+    back.setLocalScale(OPENING_WALL_BOARD.w, 1, OPENING_WALL_BOARD.h);
+  };
   if (options.reinterp === true) {
     // R26 B4: the legible record stays on the wall TERMINAL on the south
     // spine. The overhead ceiling witness remains dormant; witness role and
     // lineage live on the cork/record wall surface.
-    const wt = clusterData.witnessTerminal;
-    back.setLocalPosition(wt.pos[0], wt.pos[1], wt.pos[2]);
-    back.setLocalScale(wt.w, 1, wt.h);
+    restoreWitnessSurface();
   }
 
   const camera = new pc.Entity('camera');
@@ -311,6 +325,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     t: number; dur: number; conducted: boolean; }
   let camMove: CamMove | null = null;
   let autoCam = false;
+  let openingWallActive = false;
+  let openingWallT = 0;
+  let openingWallArmed = false;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
   // the tilt ran conducted (autoCam) — a free tilt cedes to the player's drag
   let revealReturn = -1;
@@ -342,6 +359,32 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       vx, vy, vz, arc: !!via, t: 0, dur, conducted };
     tween = null;
   }
+
+  function setOpeningWall(active: boolean): void {
+    openingWallActive = active;
+    openingWallT = 0;
+    openingWallArmed = false;
+    witness.setStartupBoard(active, false);
+    if (active) {
+      placeOpeningWallBoard();
+      setTerminalFrameVisible(false);
+    } else {
+      restoreWitnessSurface();
+      setTerminalFrameVisible(true);
+    }
+  }
+
+  function continueFromOpeningWall(): void {
+    const choices = witness.startupChoices();
+    autoCam = choices.autoCam;
+    setOpeningWall(false);
+    applyLightsOn();                 // O2: room lights + lamp over-throw
+    os.beginReinterpOpening();        // boot on the monitor → O3 profile
+    window.setTimeout(() => {
+      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, CAM_MOVE_SECONDS, true);
+    }, CAM_MOVE_DELAY_MS);
+  }
+
   /** grabbing/keying the view cancels a non-conducted move (the player left it) */
   function nudgeCamera(): void {
     if (camMove && !camMove.conducted) { camMove = null; }
@@ -479,6 +522,26 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return { x: u * ERA1_CANVAS.width, y: v * ERA1_CANVAS.height };
   }
 
+  /** screen px → witness/wall canvas logical px (the spine plane, facing -Z) */
+  function toWitness(e: MouseEvent): { x: number; y: number } | null {
+    const ray = screenRay(e);
+    if (!ray) return null;
+    const p = back.getLocalPosition();
+    const s = back.getLocalScale();
+    const dz = ray.p1.z - ray.p0.z;
+    if (Math.abs(dz) < 1e-6) return null;
+    const t = (p.z - ray.p0.z) / dz;
+    if (t < 0 || t > 1) return null;
+    const wx = ray.p0.x + (ray.p1.x - ray.p0.x) * t;
+    const wy = ray.p0.y + (ray.p1.y - ray.p0.y) * t;
+    // The spine plane faces -Z, so its visible horizontal axis is mirrored
+    // relative to the front monitor plane.
+    const u = 0.5 - (wx - p.x) / s.x;
+    const v = 0.5 - (wy - p.y) / s.z;
+    if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+    return { x: u * ERA1_CANVAS.width, y: v * ERA1_CANVAS.height };
+  }
+
   function rayHitsPoint(e: MouseEvent, p: { x: number; y: number; z: number }, radius: number): boolean {
     const ray = screenRay(e);
     if (!ray) return false;
@@ -510,6 +573,27 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   };
 
   canvasEl.addEventListener('pointerdown', (e) => {
+    if (openingWallActive) {
+      const p = toWitness(e);
+      if (p) {
+        const action = witness.handleStartupClick(p.x, p.y);
+        if (action === 'continue') {
+          continueFromOpeningWall();
+          return;
+        }
+        if (action === 'leave') {
+          os.leaveNow();
+          setOpeningWall(false);
+          return;
+        }
+        if (action === 'handled') return;
+        if (action === null && openingWallArmed) {
+          continueFromOpeningWall();
+          return;
+        }
+        if (action === null) return;
+      }
+    }
     if (!facingBack) {
       if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
@@ -658,6 +742,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
     // ── cluster / ceiling / Close + the O7 choreography (reinterp only) ──
     if (options.reinterp) {
+      if (openingWallActive && !openingWallArmed) {
+        openingWallT += dt;
+        if (openingWallT >= STARTUP_ARM_SECONDS) {
+          openingWallArmed = true;
+          witness.setStartupBoard(true, true);
+        }
+      }
       if (revealReturn > 0) {
         revealReturn -= dt;
         if (revealReturn <= 0) { // level back out after the upward glance
@@ -841,26 +932,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else {
       applyWindowLight();
-      camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
-      camPitch = ESTABLISH.pitch;
-      camYaw = 0;
+      if (options.reinterp === true) {
+        setOpeningWall(true);
+        camPos.set(OPENING_WALL_VIEW.x, OPENING_WALL_VIEW.y, OPENING_WALL_VIEW.z);
+        camPitch = OPENING_WALL_VIEW.pitch;
+        camYaw = OPENING_WALL_VIEW.yaw;
+      } else {
+        camPos.set(EYE.x, EYE.y, EYE.z);
+        camPitch = 0;
+        camYaw = 0;
+      }
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
-      const overlay = mountStartupOverlay({
-        onContinue: (choices) => {
-          autoCam = choices.autoCam;
-          overlay.destroy();
-          applyLightsOn();                 // O2: room lights + lamp over-throw
-          // O2: the lights land first; a beat later the framed camera TRAVELS
-          // establishing → desk, slow enough to read as movement through the
-          // room (conducted under auto-cam, otherwise the default framing the
-          // player can drag away from).
-          window.setTimeout(() => {
-            startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, CAM_MOVE_SECONDS, autoCam);
-            os.beginReinterpOpening();      // boot on the monitor → O3 profile
-          }, CAM_MOVE_DELAY_MS);
-        },
-        onLeave: () => { os.leaveNow(); }
-      });
     }
   }
 
