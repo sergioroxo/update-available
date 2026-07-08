@@ -6,7 +6,7 @@ interface OpeningBoardDressing {
   setVisible: (visible: boolean) => void;
 }
 
-const BOARD = { x: 0, y: 1.5, z: 3.66, w: 2.06, h: 1.48 };
+const BOARD = { x: -0.86, y: 1.5, z: 3.66, w: 2.06, h: 1.48 };
 const FRONT_Z = BOARD.z - 0.045;
 
 function color(hex: string): pc.Color {
@@ -42,7 +42,7 @@ function pin(name: string, parent: pc.Entity, x: number, y: number, hex: string)
   e.addComponent('render', { type: 'sphere' });
   e.setLocalPosition(x, y, FRONT_Z - 0.018);
   e.setLocalScale(0.022, 0.022, 0.008);
-  if (e.render) e.render.material = material(hex);
+  if (e.render) e.render.material = material(hex, true);
   parent.addChild(e);
 }
 
@@ -71,7 +71,7 @@ function polaroid(parent: pc.Entity, name: string, u: number, v: number, tint: s
 }
 
 function flattenMaterials(root: pc.Entity): void {
-  const cork = material('#b17845');
+  const cork = material('#b17845', true);
   root.forEach((node) => {
     const ent = node as pc.Entity;
     if (ent.render) ent.render.material = cork;
@@ -97,6 +97,17 @@ export function buildOpeningBoardDressing(app: pc.Application): OpeningBoardDres
     box('opening-board-fallback-frame-left', root, [BOARD.x - BOARD.w / 2 - 0.035, BOARD.y, BOARD.z], [0.07, BOARD.h + 0.1, 0.08], '#8b5a32');
     box('opening-board-fallback-frame-right', root, [BOARD.x + BOARD.w / 2 + 0.035, BOARD.y, BOARD.z], [0.07, BOARD.h + 0.1, 0.08], '#4e2d17');
   }
+
+  const boardGlow = new pc.Entity('opening-board-glow');
+  boardGlow.addComponent('light', {
+    type: 'omni',
+    color: color('#F3EAD8'),
+    intensity: 1.35,
+    range: 2.4,
+    castShadows: false
+  });
+  boardGlow.setLocalPosition(BOARD.x, BOARD.y + 0.12, BOARD.z - 0.42);
+  root.addChild(boardGlow);
 
   // The margins are suggestive apparatus material, not evidence: no real logos,
   // no real people, and no readable survivor-adjacent testimony.

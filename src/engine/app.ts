@@ -40,10 +40,10 @@ const KIT_FLOPPY = { x: -0.34, y: 0.762, z: 0.12 };
 const DRAG_PITCH_MAX = 55;
 /** O1 establishing framing (reinterp): pulled back, room-wide, window-lit */
 const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
-/** O1 begins on the spine wall cork board; Continue turns you to the PC. */
-const OPENING_WALL_VIEW = { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 180 };
+/** O1 begins looking at the spine-wall cork board, offset from the doorway. */
+const OPENING_WALL_VIEW = { x: -0.86, y: EYE.y, z: EYE.z, pitch: 0, yaw: 180 };
 /** O1's interactive paper sheet, pinned over the physical cork board dressing. */
-const OPENING_WALL_BOARD = { x: 0, y: 1.43, z: 3.565, w: 1.5, h: 1.125 };
+const OPENING_WALL_BOARD = { x: -0.86, y: 1.43, z: 3.565, w: 1.5, h: 1.125 };
 // O2 establishing → desk pan: slow enough to read as travel through the room,
 // not a cut (Sérgio, Round 18: 1.4s "is so fast it makes no sense"), and it
 // starts a beat AFTER the lights land so the two events stay legible.
@@ -862,11 +862,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
   }
   function applyWindowLight(): void { // O1: night, pre-power — the moon wash only
-    setLight('roomFill', 0.10);
+    setLight('roomFill', 0.28);
     setLight('lamp', 0.0);
     setLight('screenGlow', 0.0);
-    setLight('moonlight', 0.16);   // cool, soft, low — the window carries O1
-    setLight('witnessCold', 0.10);
+    setLight('moonlight', 0.26);   // cool, soft, low — the window carries O1
+    setLight('witnessCold', 0.42);
   }
   function applyLightsOn(): void { // O2: the lamp owns the room; cool stays an accent
     setLight('roomFill', 0.85);            // warm ambient fill (life)
