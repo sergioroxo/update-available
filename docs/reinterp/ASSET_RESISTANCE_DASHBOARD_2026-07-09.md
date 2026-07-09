@@ -20,6 +20,7 @@ or wording-bearing still goes through FABLE ROUND.
 - `Radio.glb` — Quaternius. Strong low-poly object for a period desk or respite shelf.
 - `electronic.undefined-glb/Boombox.glb`, `Headphones.glb`, `Speakers.glb`, `Laptop.glb`, `Pc.glb`, `Computer.glb` — useful for device-aging passes.
 - `Monitor.glb`, `Computer 90s` license entry — useful only after attribution/license handling.
+- Newly added media/tech candidates seen after the follow-up asset drop: `VHS Tape Basic.glb`, `VHS Tape.glb`, `Cassette tape.glb`, `Cassete Tape.glb`, `Casette Player.glb`, `CD.glb`, `DVD.glb`, `DVD Case.glb`, `CD with case.glb`, `MP3 player.glb`, `Thumb drive.glb`, `smartPhone.glb`, `Flat Monitor modern.glb`, `Computer Screen.glb`, `Hifi stereo.glb`, `Boom box.glb`.
 
 ### Warm / Ordinary Room Dressing
 - `Household Props 001-glb/Potted Plant.glb`
@@ -28,6 +29,12 @@ or wording-bearing still goes through FABLE ROUND.
 - `Household Props 001-glb/Books.glb`
 - `Household Props 001-glb/Desk Lamp.glb`
 - `Household Props 001-glb/Rubber Duck.glb`
+- Newly added warmth/resistance candidates seen after the follow-up asset drop:
+  `Rubber Duck.glb`, `Cup Tea.glb`, `Mug With Office Tool.glb`,
+  `Houseplant.glb`, `Houseplant (1).glb`, `Houseplant (2).glb`,
+  `Potted Plant.glb`, `Potted Plant (1).glb`, `Pearl bracelet.glb`,
+  `Necklace.glb`, `ORIGAMI.glb`, `Empty Picture Frame.glb`, `Folder.glb`,
+  `Wall Art 06.glb`, `Rock band poster.glb`.
 
 These are good candidates for softness, continuity, and resistance because they
 are ordinary objects. The key is to avoid making them feel like game rewards.

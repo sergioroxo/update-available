@@ -49,6 +49,7 @@ interface DesktopOSOptions {
 
 export interface OpeningProfileSnapshot {
   active: boolean;
+  stage: 'inactive' | 'boot' | 'profile' | 'recap';
   icon: string;
   chips: string[];
   goal: string;
@@ -370,8 +371,13 @@ export class DesktopOS {
   }
 
   openingProfileSnapshot(): OpeningProfileSnapshot {
+    const stage = this.phase === 'r_boot' ? 'boot'
+      : this.phase === 'r_profile' ? 'profile'
+        : this.phase === 'r_recap' ? 'recap'
+          : 'inactive';
     return {
-      active: this.reinterp && (this.phase === 'r_boot' || this.phase === 'r_profile' || this.phase === 'r_recap'),
+      active: this.reinterp && stage !== 'inactive',
+      stage,
       icon: this.profileIcon,
       chips: [...this.profileChips],
       goal: this.profileGoal,

@@ -19,6 +19,7 @@ const HARDEN_SECONDS = 2.2;
 
 interface OpeningProfileSnapshot {
   active: boolean;
+  stage: 'inactive' | 'boot' | 'profile' | 'recap';
   icon: string;
   chips: string[];
   goal: string;
@@ -48,7 +49,14 @@ export class WitnessCanvas {
   /** message count is sampled at flip time so the record reads as "filed" */
   messagesOnFile = 0;
   dirty = true;
-  private openingProfile: OpeningProfileSnapshot = { active: false, icon: '', chips: [], goal: '', filed: false };
+  private openingProfile: OpeningProfileSnapshot = {
+    active: false,
+    stage: 'inactive',
+    icon: '',
+    chips: [],
+    goal: '',
+    filed: false
+  };
   private hardenT = HARDEN_SECONDS;
   private startup = {
     active: false,
@@ -72,6 +80,7 @@ export class WitnessCanvas {
     const wasFiled = this.openingProfile.filed;
     this.openingProfile = {
       active: profile.active,
+      stage: profile.stage,
       icon: profile.icon,
       chips: [...profile.chips],
       goal: profile.goal,
@@ -211,13 +220,8 @@ export class WitnessCanvas {
     return lines;
   }
 
-  private drawPinnedNote(x: number, y: number, w: number, h: number, title: string, body: string, filled: boolean): void {
+  private drawPinnedNote(x: number, y: number, w: number, _h: number, title: string, body: string, filled: boolean): void {
     const { ctx } = this;
-    px(ctx, x, y, w, h, filled ? ERA1.paper : ERA1.beige);
-    px(ctx, x, y, w, 1, ERA1.warnDark);
-    px(ctx, x, y, 1, h, ERA1.warnDark);
-    px(ctx, x, y + h - 1, w, 1, ERA1.olive);
-    px(ctx, x + w - 1, y, 1, h, ERA1.olive);
     px(ctx, x + Math.round(w / 2) - 2, y - 3, 5, 5, filled ? ERA1.warn : ERA1.grey);
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.greyDark;
@@ -254,12 +258,10 @@ export class WitnessCanvas {
 
   private drawStartupButton(label: string, box: { x: number; y: number; w: number; h: number }, active: boolean, enabled = true): void {
     const { ctx } = this;
-    const bg = !enabled ? ERA1.grey : active ? ERA1.warn : ERA1.paper;
-    px(ctx, box.x, box.y, box.w, box.h, bg);
-    px(ctx, box.x, box.y, box.w, 1, ERA1.warnDark);
-    px(ctx, box.x, box.y, 1, box.h, ERA1.warnDark);
-    px(ctx, box.x, box.y + box.h - 1, box.w, 1, ERA1.olive);
-    px(ctx, box.x + box.w - 1, box.y, 1, box.h, ERA1.olive);
+    if (active) {
+      px(ctx, box.x, box.y + box.h - 2, box.w, 2, ERA1.warnDark);
+      px(ctx, box.x - 2, box.y - 2, 4, 4, ERA1.warn);
+    }
     setFont(ctx, label.length > 10 ? 8 : 9);
     ctx.fillStyle = enabled ? ERA1.black : ERA1.greyDark;
     const tw = ctx.measureText(label).width;
@@ -272,7 +274,6 @@ export class WitnessCanvas {
     const H = ERA1_CANVAS.height;
     ctx.clearRect(0, 0, W, H);
 
-    px(ctx, 142, 18, 228, 30, ERA1.paper);
     px(ctx, 150, 16, 6, 6, '#d0a315');
     px(ctx, 356, 16, 6, 6, '#d0a315');
     setFont(ctx, 16);
@@ -282,9 +283,6 @@ export class WitnessCanvas {
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(opening.o1_board_logo_edge, 314, 12);
 
-    px(ctx, 58, 58, 396, 124, '#f3ead3');
-    px(ctx, 58, 58, 396, 1, ERA1.beige);
-    px(ctx, 58, 181, 396, 1, ERA1.warnDark);
     px(ctx, 67, 55, 6, 6, ERA1.warn);
     px(ctx, 444, 55, 6, 6, '#315db5');
     setFont(ctx, 9);
@@ -298,7 +296,6 @@ export class WitnessCanvas {
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText((opening.o1_board_margin_notes as string[])[0], 304, 164);
 
-    px(ctx, 58, 188, 396, 16, '#e7d1a6');
     px(ctx, 58, 188, 4, 16, ERA1.warnDark);
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.black;
@@ -312,7 +309,6 @@ export class WitnessCanvas {
     ctx.fillStyle = ERA1.black;
     ctx.fillText(opening.o1_options_title, 58, 207);
     px(ctx, 58, 219, 396, 1, '#bca36e');
-    px(ctx, 58, 228, 396, 54, 'rgba(239, 226, 191, 0.82)');
     setFont(ctx, 8);
     ctx.fillText(opening.o1_platform_label, 74, 222);
     ctx.fillText(opening.o1_autocam_label, 74, 244);
@@ -335,13 +331,11 @@ export class WitnessCanvas {
     const H = ERA1_CANVAS.height;
     ctx.clearRect(0, 0, W, H);
 
-    px(ctx, 22, 16, 154, 26, ERA1.paper);
     px(ctx, 30, 13, 5, 5, '#d0a315');
     setFont(ctx, 12);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(opening.o3_board_title, 34, 28);
 
-    px(ctx, W - 198, H - 40, 174, 20, '#e7d1a6');
     px(ctx, W - 190, H - 43, 5, 5, '#315db5');
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.greyDark;

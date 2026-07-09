@@ -18,7 +18,7 @@ import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { buildClusterShell, type ClusterShell, type EraKey } from '../room/cluster';
-import { buildOpeningBoardDressing } from '../room/openingBoardDressing';
+import { buildOpeningBoardDressing, type OpeningBoardMode } from '../room/openingBoardDressing';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { createSpine, type Spine } from '../narrative/spine';
@@ -192,12 +192,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (options.reinterp === true) {
     os.onOpeningProfileChange = (profile) => {
       witness.setOpeningProfile(profile);
-      if (profile.active) showOpeningSurface();
-      else if (!openingWallActive) {
-        restoreWitnessSurface();
-        openingBoardDressing?.setVisible(false);
+      if (profile.active) {
+        showOpeningSurface(profile.stage === 'boot' ? 'intro' : 'profile');
+      } else if (!openingWallActive) {
+        showOpeningSurface('witness');
       }
-      setTerminalFrameVisible(!profile.active);
+      setTerminalFrameVisible(false);
     };
     witness.setOpeningProfile(os.openingProfileSnapshot());
   }
@@ -227,10 +227,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     back.setLocalPosition(OPENING_WALL_BOARD.x, OPENING_WALL_BOARD.y, OPENING_WALL_BOARD.z);
     back.setLocalScale(OPENING_WALL_BOARD.w, 1, OPENING_WALL_BOARD.h);
   };
-  const showOpeningSurface = (): void => {
+  const showOpeningSurface = (mode: OpeningBoardMode): void => {
     if (options.reinterp !== true) return;
     placeOpeningWallBoard();
     setTerminalFrameVisible(false);
+    openingBoardDressing?.setMode(mode);
     openingBoardDressing?.setVisible(true);
   };
   if (options.reinterp === true) {
@@ -386,18 +387,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     openingWallArmed = false;
     witness.setStartupBoard(active, false);
     if (active) {
-      showOpeningSurface();
+      showOpeningSurface('intro');
     } else {
-      restoreWitnessSurface();
-      setTerminalFrameVisible(true);
-      openingBoardDressing?.setVisible(false);
+      showOpeningSurface('witness');
     }
   }
 
   function continueFromOpeningWall(): void {
     const choices = witness.startupChoices();
     autoCam = choices.autoCam;
-    setOpeningWall(false);
+    openingWallActive = false;
+    openingWallT = 0;
+    openingWallArmed = false;
+    witness.setStartupBoard(false, false);
+    showOpeningSurface('intro');
     applyLightsOn();                 // O2: room lights + lamp over-throw
     os.beginReinterpOpening();        // boot on the monitor → O3 profile
     window.setTimeout(() => {
@@ -876,12 +879,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (range !== undefined) e.light.range = range;
     }
   }
-  function applyWindowLight(): void { // O1: same warm room start; only the monitor stays dark
-    setLight('roomFill', 0.85);
-    setLight('lamp', 2.9, 5.6);
+  function applyWindowLight(): void { // O1: warm room fill, but the desk lamp cannot "project" onto the rear board
+    setLight('roomFill', 0.22);
+    setLight('lamp', 0.0);
     setLight('screenGlow', 0.0);
     setLight('moonlight', 0.14);
-    setLight('witnessCold', 0.50);
+    setLight('witnessCold', 0.12);
   }
   function applyLightsOn(): void { // O2: the lamp owns the room; cool stays an accent
     setLight('roomFill', 0.85);            // warm ambient fill (life)
@@ -913,7 +916,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function enterClose(): void {
     if (!cluster || !cloud || cloud.visible) return;
     cluster.applyRig('close', false);
-    for (const id of ['era1-room', 'fluid-niche', 'cluster-shell', 'ceiling-witness', 'desktop-screen', 'witness-screen']) {
+    for (const id of [
+      'era1-room',
+      'fluid-niche',
+      'cluster-shell',
+      'ceiling-witness',
+      'desktop-screen',
+      'witness-screen',
+      'opening-board-dressing'
+    ]) {
       const e = app.root.findByName(id);
       if (e instanceof pc.Entity) e.enabled = false;
     }
