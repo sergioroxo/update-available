@@ -879,12 +879,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (range !== undefined) e.light.range = range;
     }
   }
-  function applyWindowLight(): void { // O1: warm room fill, but the desk lamp cannot "project" onto the rear board
-    setLight('roomFill', 0.22);
-    setLight('lamp', 0.0);
+  function applyWindowLight(): void { // O1: warm room start; the corkboard asset itself is unlit/non-reflective
+    setLight('roomFill', 0.85);
+    setLight('lamp', 2.9, 5.6);
     setLight('screenGlow', 0.0);
     setLight('moonlight', 0.14);
-    setLight('witnessCold', 0.12);
+    setLight('witnessCold', 0.50);
   }
   function applyLightsOn(): void { // O2: the lamp owns the room; cool stays an accent
     setLight('roomFill', 0.85);            // warm ambient fill (life)
