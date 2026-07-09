@@ -894,12 +894,26 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     setLight('witnessCold', 0.50);         // the cold rear, dimmed so the front stays warm
   }
 
+  // the opening's physical cork-board frame sits fixed at Room 1's ORIGINAL
+  // spine coordinates (built once, never carried by the morph). It backs the
+  // same flat surface as the witness terminal everywhere the terminal stays
+  // on that spine (E1-E3) — but at E4 the terminal MIGRATES to Maya's wall
+  // (cluster.ts migrateTerminal), leaving this frame behind as an empty,
+  // contentless prop on Room 1's now-vacated wall. Hide it whenever the
+  // terminal is away from the spine; restore it if a review jump returns
+  // to an earlier era (the frame belongs wherever the flat plane still does).
+  function setOpeningBoardVisibleForEra(era: EraKey): void {
+    const dressing = app.root.findByName('opening-board-dressing');
+    if (dressing instanceof pc.Entity) dressing.enabled = era !== 'e4';
+  }
+
   /** animated era morph + the TURN: E4's restart re-anchors the home facing
    *  180° (◆N3 LOCKED — "let's be bold, we need emotion"): a slow conducted
    *  pan under auto-cam, a takeable default otherwise */
   function driveMorph(era: EraKey): void {
     if (!cluster) return;
     os.setDesktopEra(era);
+    setOpeningBoardVisibleForEra(era);
     cluster.morphToEra(era, true);
     if (era === 'e4') {
       // THE TURN as a dolly — the piece's slowest, heaviest move: rise up over
@@ -944,6 +958,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       enterClose();
     } else if (options.era && cluster) {
       os.setDesktopEra(options.era);
+      setOpeningBoardVisibleForEra(options.era);
       cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
       // boot SEATED at the era's home room (E4 boots already turned — the TURN)
