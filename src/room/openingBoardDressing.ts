@@ -98,19 +98,9 @@ export function buildOpeningBoardDressing(app: pc.Application): OpeningBoardDres
     box('opening-board-fallback-frame-right', root, [BOARD.x + BOARD.w / 2 + 0.035, BOARD.y, BOARD.z], [0.07, BOARD.h + 0.1, 0.08], '#4e2d17');
   }
 
-  const boardGlow = new pc.Entity('opening-board-glow');
-  boardGlow.addComponent('light', {
-    type: 'omni',
-    color: color('#F3EAD8'),
-    intensity: 1.35,
-    range: 2.4,
-    castShadows: false
-  });
-  boardGlow.setLocalPosition(BOARD.x, BOARD.y + 0.12, BOARD.z - 0.42);
-  root.addChild(boardGlow);
-
   // The margins are suggestive apparatus material, not evidence: no real logos,
-  // no real people, and no readable survivor-adjacent testimony.
+  // no real people, and no readable survivor-adjacent testimony. O1 and O3 use
+  // this same physical surface; the witness canvas only supplies paper overlays.
   flatPaper(root, 'opening-note-safe', 0.18, 0.22, 0.24, 0.12, '#b9d7a0', '#2f9c51');
   flatPaper(root, 'opening-note-normal', 0.83, 0.25, 0.22, 0.12, '#efcf4a', '#315db5');
   flatPaper(root, 'opening-note-before-after', 0.15, 0.72, 0.28, 0.14, '#e7dcc5', '#315db5');

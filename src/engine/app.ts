@@ -42,7 +42,7 @@ const DRAG_PITCH_MAX = 55;
 const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
 /** O1 begins looking at the spine-wall cork board, offset from the doorway. */
 const OPENING_WALL_VIEW = { x: -0.86, y: EYE.y, z: EYE.z, pitch: 0, yaw: 180 };
-/** O1's interactive paper sheet, pinned over the physical cork board dressing. */
+/** O1/O3's transparent paper overlay, pinned over the physical cork board. */
 const OPENING_WALL_BOARD = { x: -0.86, y: 1.43, z: 3.565, w: 1.5, h: 1.125 };
 // O2 establishing → desk pan: slow enough to read as travel through the room,
 // not a cut (Sérgio, Round 18: 1.4s "is so fast it makes no sense"), and it
@@ -82,12 +82,18 @@ function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.T
   return tex;
 }
 
-function makeScreenEntity(name: string, tex: pc.Texture, w: number, h: number): pc.Entity {
+function makeScreenEntity(name: string, tex: pc.Texture, w: number, h: number, transparent = false): pc.Entity {
   const material = new pc.StandardMaterial();
   material.useLighting = false;
   material.diffuse = new pc.Color(0, 0, 0);
   material.emissiveMap = tex;
   material.emissive = new pc.Color(1, 1, 1);
+  if (transparent) {
+    material.opacityMap = tex;
+    material.opacityMapChannel = 'a';
+    material.blendType = pc.BLEND_NORMAL;
+    material.depthWrite = false;
+  }
   material.update();
   const e = new pc.Entity(name);
   e.addComponent('render', { type: 'plane' });
@@ -186,7 +192,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (options.reinterp === true) {
     os.onOpeningProfileChange = (profile) => {
       witness.setOpeningProfile(profile);
-      setTerminalFrameVisible(!(profile.active && !profile.filed));
+      if (profile.active) showOpeningSurface();
+      else if (!openingWallActive) {
+        restoreWitnessSurface();
+        openingBoardDressing?.setVisible(false);
+      }
+      setTerminalFrameVisible(!profile.active);
     };
     witness.setOpeningProfile(os.openingProfileSnapshot());
   }
@@ -198,7 +209,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   app.root.addChild(front);
 
   const backTex = makeScreenTexture(app, witness.canvas);
-  const back = makeScreenEntity('witness-screen', backTex, WITNESS.w, WITNESS.h);
+  const back = makeScreenEntity('witness-screen', backTex, WITNESS.w, WITNESS.h, options.reinterp === true);
   back.setLocalPosition(WITNESS.x, WITNESS.y, WITNESS.z);
   back.setLocalEulerAngles(90, 180, 0); // faces -Z (the chair, once turned)
   app.root.addChild(back);
@@ -215,6 +226,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const placeOpeningWallBoard = (): void => {
     back.setLocalPosition(OPENING_WALL_BOARD.x, OPENING_WALL_BOARD.y, OPENING_WALL_BOARD.z);
     back.setLocalScale(OPENING_WALL_BOARD.w, 1, OPENING_WALL_BOARD.h);
+  };
+  const showOpeningSurface = (): void => {
+    if (options.reinterp !== true) return;
+    placeOpeningWallBoard();
+    setTerminalFrameVisible(false);
+    openingBoardDressing?.setVisible(true);
   };
   if (options.reinterp === true) {
     // R26 B4: the legible record stays on the wall TERMINAL on the south
@@ -369,9 +386,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     openingWallArmed = false;
     witness.setStartupBoard(active, false);
     if (active) {
-      placeOpeningWallBoard();
-      setTerminalFrameVisible(false);
-      openingBoardDressing?.setVisible(true);
+      showOpeningSurface();
     } else {
       restoreWitnessSurface();
       setTerminalFrameVisible(true);
@@ -861,12 +876,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (range !== undefined) e.light.range = range;
     }
   }
-  function applyWindowLight(): void { // O1: night, pre-power — the moon wash only
-    setLight('roomFill', 0.28);
-    setLight('lamp', 0.0);
+  function applyWindowLight(): void { // O1: same warm room start; only the monitor stays dark
+    setLight('roomFill', 0.85);
+    setLight('lamp', 2.9, 5.6);
     setLight('screenGlow', 0.0);
-    setLight('moonlight', 0.26);   // cool, soft, low — the window carries O1
-    setLight('witnessCold', 0.42);
+    setLight('moonlight', 0.14);
+    setLight('witnessCold', 0.50);
   }
   function applyLightsOn(): void { // O2: the lamp owns the room; cool stays an accent
     setLight('roomFill', 0.85);            // warm ambient fill (life)

@@ -270,14 +270,8 @@ export class WitnessCanvas {
     const { ctx } = this;
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
-    px(ctx, 0, 0, W, H, '#efe2bf');
-    for (let y = 8; y < H; y += 18) {
-      for (let x = (y / 18) % 2 === 0 ? 12 : 24; x < W; x += 34) px(ctx, x, y, 1, 1, '#d3bc86');
-    }
-    px(ctx, 0, 0, W, 1, ERA1.warnDark);
-    px(ctx, 0, H - 1, W, 1, ERA1.warnDark);
-    px(ctx, 0, 0, 1, H, ERA1.warnDark);
-    px(ctx, W - 1, 0, 1, H, ERA1.warnDark);
+    ctx.clearRect(0, 0, W, H);
+
     px(ctx, 142, 18, 228, 30, ERA1.paper);
     px(ctx, 150, 16, 6, 6, '#d0a315');
     px(ctx, 356, 16, 6, 6, '#d0a315');
@@ -288,7 +282,7 @@ export class WitnessCanvas {
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(opening.o1_board_logo_edge, 314, 12);
 
-    px(ctx, 58, 58, 396, 124, ERA1.paper);
+    px(ctx, 58, 58, 396, 124, '#f3ead3');
     px(ctx, 58, 58, 396, 1, ERA1.beige);
     px(ctx, 58, 181, 396, 1, ERA1.warnDark);
     px(ctx, 67, 55, 6, 6, ERA1.warn);
@@ -318,6 +312,7 @@ export class WitnessCanvas {
     ctx.fillStyle = ERA1.black;
     ctx.fillText(opening.o1_options_title, 58, 207);
     px(ctx, 58, 219, 396, 1, '#bca36e');
+    px(ctx, 58, 228, 396, 54, 'rgba(239, 226, 191, 0.82)');
     setFont(ctx, 8);
     ctx.fillText(opening.o1_platform_label, 74, 222);
     ctx.fillText(opening.o1_autocam_label, 74, 244);
@@ -338,24 +333,19 @@ export class WitnessCanvas {
     const { ctx } = this;
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
-    px(ctx, 0, 0, W, H, ERA1.olive);
-    for (let y = 0; y < H; y += 12) {
-      for (let x = (y / 12) % 2 === 0 ? 0 : 6; x < W; x += 12) px(ctx, x, y, 2, 2, ERA1.beige);
-    }
-    px(ctx, 8, 8, W - 16, 6, ERA1.warnDark);
-    px(ctx, 8, H - 14, W - 16, 6, ERA1.warnDark);
-    px(ctx, 8, 8, 6, H - 16, ERA1.warnDark);
-    px(ctx, W - 14, 8, 6, H - 16, ERA1.warnDark);
-    px(ctx, 18, 18, W - 36, H - 36, ERA1.olive);
-    for (let y = 24; y < H - 24; y += 10) {
-      for (let x = 24 + ((y / 10) % 3) * 3; x < W - 24; x += 15) px(ctx, x, y, 1, 1, ERA1.tooltip);
-    }
+    ctx.clearRect(0, 0, W, H);
+
+    px(ctx, 22, 16, 154, 26, ERA1.paper);
+    px(ctx, 30, 13, 5, 5, '#d0a315');
     setFont(ctx, 12);
-    ctx.fillStyle = ERA1.tooltip;
-    ctx.fillText(opening.o3_board_title, 28, 28);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(opening.o3_board_title, 34, 28);
+
+    px(ctx, W - 198, H - 40, 174, 20, '#e7d1a6');
+    px(ctx, W - 190, H - 43, 5, 5, '#315db5');
     setFont(ctx, 8);
-    ctx.fillStyle = ERA1.beige;
-    ctx.fillText(opening.o3_board_hint, W - 202, H - 28);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(opening.o3_board_hint, W - 190, H - 32);
 
     this.drawPinnedNote(
       42, 62, 136, 64,
