@@ -123,7 +123,7 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
   let e: pc.Entity | null = null;
   let isModel = false;
   if (room.reinterp && p.model && hasModel(p.model)) {
-    e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0);
+    e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0, p.color);
     if (e) { e.name = p.id; isModel = true; }
   }
   if (!e) {

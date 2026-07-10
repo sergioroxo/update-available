@@ -167,8 +167,14 @@ const danielBoxes = [
 const bedMoved = [
   { id: 'bedMoved', pos: [-1.72, 0, 2.78], size: [0.78, 0.5, 1.55], color: '#A07B52', model: 'bed' }
 ];
+// Session 25 (R28-0 bug fix): pos.x pulled from 2.0 -> 1.7. The bookcase
+// model's real footprint (models.json's bookcase entry: scale 1.9 applied to
+// bookcaseOpen.glb) is ~0.76m deep, not the 0.5m the box-fallback `size`
+// implied — at x=2.0 the mesh straddled the east wall/doorway plane (x≈2.13)
+// instead of sitting flush against its room-side face (measured live via the
+// entity's own render AABB, not guessed).
 const bookcaseMoved = [
-  { id: 'bookcaseMoved', pos: [2.0, 0, 3.3], size: [0.75, 1.7, 0.5], color: '#8A5A3B', model: 'bookcase' }
+  { id: 'bookcaseMoved', pos: [1.7, 0, 3.3], size: [0.75, 1.7, 0.5], color: '#8A5A3B', model: 'bookcase' }
 ];
 // r3's "Room 1 bed -> dust sheet" beat used to be a `blanket` recolor; a model
 // prop never repaints (native GLB material always wins), so the same visual

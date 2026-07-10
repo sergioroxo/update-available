@@ -55,18 +55,64 @@ function loadOne(app: pc.Application, entry: ModelEntry): Promise<boolean> {
 
 export function hasModel(key: string): boolean { return containers.has(key); }
 
+function hexToColor(hex: string): pc.Color {
+  const n = parseInt(hex.slice(1), 16);
+  return new pc.Color(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+}
+
+const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+
+/** how far a model's native diffuse is pulled toward the authored prop colour.
+ *  Not a flat override (that would lose the kit's own subtle multi-tone
+ *  shading between parts) — a strong blend so a too-light native material
+ *  (Sérgio: "the bookcase colour is too light") reads as the intended,
+ *  clearly-darker-than-the-wall tone while keeping some native shading. */
+const TINT_STRENGTH = 0.8;
+
+/**
+ * Recolour a spawned model's OWN materials toward `colorHex` (bug: model props
+ * previously ignored their data `color` entirely — native GLB materials were
+ * kept verbatim, so e.g. the bookcase read pale/washed-out instead of the
+ * authored warm brown). Every mesh instance gets a freshly CLONED material —
+ * never mutate the shared/canonical container material, which every other
+ * instance of the same model key (e.g. every bookcase in the room) still
+ * references (same clone-before-mutate rule as room/batching.ts's
+ * clearSettledBatch). */
+function tintModel(root: pc.Entity, colorHex: string): void {
+  const tint = hexToColor(colorHex);
+  root.forEach((node) => {
+    const ent = node as pc.Entity;
+    if (!ent.render) return;
+    for (const mi of ent.render.meshInstances) {
+      const src = mi.material as pc.StandardMaterial | undefined;
+      if (!src) continue;
+      const clone = src.clone() as pc.StandardMaterial;
+      const d = clone.diffuse;
+      clone.diffuse = new pc.Color(
+        lerp(d.r, tint.r, TINT_STRENGTH),
+        lerp(d.g, tint.g, TINT_STRENGTH),
+        lerp(d.b, tint.b, TINT_STRENGTH)
+      );
+      clone.update();
+      mi.material = clone;
+    }
+  });
+}
+
 /**
  * Spawn a loaded model at world `pos`, facing `propYaw` (+ the model's own yaw
  * correction). Kenney furniture is authored ~half real-world scale and off its
  * pivot, so the manifest carries `scale` + the native center (`cx`,`cz`,`baseY`)
  * measured from the GLB. We put the model inside a WRAPPER: the model child is
  * shifted so its centre sits at the wrapper origin and its base at the floor;
- * the wrapper is then placed + rotated. Native materials are KEPT (Kenney's own
- * subtle low-poly tones — Sérgio: "only if very subtle" multi-tone). The wrapper
- * is what the room/morph transforms — its scale is 1, so the morph can't distort
- * the mesh. Returns null if the model isn't loaded (caller falls back to a box).
+ * the wrapper is then placed + rotated. Native materials are KEPT AS THE BASE
+ * (Kenney's own subtle low-poly tones — Sérgio: "only if very subtle"
+ * multi-tone) and, when the prop carries a `colorHex`, TINTED toward it
+ * (`tintModel`) rather than replaced outright. The wrapper is what the
+ * room/morph transforms — its scale is 1, so the morph can't distort the mesh.
+ * Returns null if the model isn't loaded (caller falls back to a box).
  */
-export function spawnModel(key: string, pos: number[], propYaw: number): pc.Entity | null {
+export function spawnModel(key: string, pos: number[], propYaw: number, colorHex?: string): pc.Entity | null {
   const asset = containers.get(key);
   const res = asset?.resource as { instantiateRenderEntity?: () => pc.Entity } | undefined;
   if (!res?.instantiateRenderEntity) return null;
@@ -79,6 +125,7 @@ export function spawnModel(key: string, pos: number[], propYaw: number): pc.Enti
   const [sx, sy, sz] = Array.isArray(s) ? s : [s, s, s];
   model.setLocalScale(sx, sy, sz);
   model.setLocalPosition(-m.cx * sx, -m.baseY * sy, -m.cz * sz);
+  if (colorHex) tintModel(model, colorHex);
 
   const wrap = new pc.Entity(`model-${key}`);
   wrap.addChild(model);
