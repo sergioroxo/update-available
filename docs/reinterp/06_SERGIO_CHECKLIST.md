@@ -179,6 +179,18 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
   build session.
 
+- **D20 (2026-07-10)** — Era-doc mining done at Sérgio's direction:
+  `docs/REINTERP_ERA_MINING_R28_2026-07-10.md` (10 finds). Headlines: the
+  shipped Era-2 already contains the love interest (CALEB: romance → live
+  redaction → streak death → returns as the messenger) — import, don't invent;
+  **Lamby's Song audio already exists in the repo** (E2 leitmotif produced);
+  the evangelist infomercial + jingle = Tape B, fully scripted; witness-
+  symmetry doctrine adopted piece-wide; conductor lineage locked end-to-end
+  (side-messages → Lamby → Lambient → Echo); Era-4's "Room Rewrites You" and
+  the cyclorama finale fit the reinterp's real 3D rooms better than the
+  shipped build's screen. Sérgio's audio queue SHRINKS to: singing prayer +
+  mixtape tracks (+ optional broken-music-box render).
+
 ## B. CHECKS OWED BY SÉRGIO (your queue — orders it however you like)
 
 - [ ] **C3 voice-pass read of the full Era-1 chain** (kit → IRC → escalation →
