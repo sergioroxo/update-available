@@ -101,6 +101,20 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   behind an input abstraction but only browser input ships now — headset feel
   is an A11 item. **Your feel-test of this prototype is the check** (already in
   section B).
+  **→ BUILT + VERIFIED same day** (commit `f304aa3`, Session 26; Fable
+  re-verified live: E2 offers exactly one marker, a player-driven click cuts
+  cleanly spine → Room 2 with no intermediate frames, availability flips to
+  offer the way back, gaze never arms anything, tests + build green).
+- **D13 (2026-07-10)** — Honest finding from R28-1: there are only THREE real
+  camera seats in the whole cluster (one desk per room), so the node graph is
+  thin — E2 offers 1 destination, E3/E4 offer 2. The movement MECHANIC now
+  works, but the exploration your R28 direction wants ("people be able to
+  explore") needs MORE nodes per room (bed corner, bookcase, doorway
+  thresholds, the respite corner, the ending arm). Adding nodes = new camera
+  poses = spatial-feel work. Decision: Fable will draft the node-map per room
+  as part of the conductor spec (R28-2) — markers at doorways rather than at
+  chairs is already flagged by the builder as the V2 shape. Node positions
+  get judged in your feel-test + A11.
 - **D11 (2026-07-10)** — Opening cork PANEL retired as onboarding (your call
   ratified); the board's witness lineage (cork → filed record) SURVIVES.
   Replacement = orienting card (non-diegetic) + game menu + Lamby-conducted
