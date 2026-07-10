@@ -158,6 +158,21 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   should offer more options, like how to use the buttons") IS the game menu —
   Esc/pause opens the non-diegetic menu with controls help. Strike 2
   (assistant caps) remains the only law still pending.
+- **D18 CORRECTED (2026-07-10)** — no singing-prayer audio exists yet; ALL tape
+  audio is to-be-generated. Fable researched + drafted the Suno/Sonauto prompts
+  (spec Appendix A: prayer, companion bed, publicity bed, mixtape tracks, Lamby
+  E2 chime — all original material, cassette character, clean-vs-degraded
+  audio doctrine: system audio clean, human tapes degraded). Sérgio runs them;
+  nothing blocks on it (builds ship with placeholder hiss).
+- **D19 (2026-07-10)** — **R28-2 GUIDED NARRATIVE SPEC written**:
+  `docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md`. The flow-level
+  implementation of your playtest direction: per-era emotional laws (E1 =
+  being found, E2 = homecoming), the E1 side-message guide thread (pre-Lamby,
+  per Q5), the 3-tape system (companion+prayer / period publicity / Daniel's
+  mixtape-that-resists), the belongings beat with kept-objects-survive-unaged
+  payoff, E2 homecoming staging + Lamby debut, the love-interest thread
+  (SPEC-ONLY, gated on your read), side-quest taxonomy applied. Build lanes
+  R28-2a…e sequenced inside.
 - **D11 (2026-07-10)** — Opening cork PANEL retired as onboarding (your call
   ratified); the board's witness lineage (cork → filed record) SURVIVES.
   Replacement = orienting card (non-diegetic) + game menu + Lamby-conducted
@@ -182,6 +197,14 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   ≤2 lines/beat** and **(4) frame-never-plays extended to the new menu**.
   These two gate the opening rebuild (the conductor teaches the verbs) and
   master plan v2 — a one-line "yes to 2 and 4" (or amendments) unblocks both.
+- [ ] **R28-2 spec glance** — read §§2–5 of
+  `docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md` (side-messages,
+  tapes, belongings beat, homecoming staging): strike/amend, then say go for
+  R28-2a. The love-interest thread (§5) especially needs your read before any
+  build.
+- [ ] **Run the audio prompts** — spec Appendix A, five prompt sets for
+  Suno/Sonauto (prayer first — it's the emotional anchor). Generate 2–3
+  candidates each, drop files anywhere convenient; builds don't block on this.
 - [ ] **R28 §4 opening glance** — confirm the three-layer replacement (card /
   menu / conductor-taught verbs) matches what you meant by "helps you
   understand the game and the overall space" before the rebuild session runs.
