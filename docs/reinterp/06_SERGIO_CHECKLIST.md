@@ -86,9 +86,21 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   era's Lamby-variant conducts (offers destinations), side quests = the
   unoffered nodes. Build queue reordered (R28-0…4 before C2). Doc consolidation
   into MASTER_PLAN_v2 planned after the §5 strikes below.
-- **D10 (2026-07-10)** — Bookcase bug (sideways + too light) dispatched as
-  R28-0: yaw fix + a generic model-tint capability so model props honor their
-  authored colors. Sonnet building; Fable verifies.
+- **D10 (2026-07-10)** — Bookcase bug dispatched as R28-0. **→ CLOSED same day**
+  (commit `9ca4078`). Real bugs: model props ignored their authored colors
+  entirely, and both bookcases straddled the wall plane (measured, not guessed).
+  Now: generic tint capability (all model props honor their colors — desk, lamp
+  and plant visibly warmer too) + bookcase pulled off the wall. Fable-verified
+  live: wood-brown, proud of the wall, facing the room; baseline clean.
+- **D12 (2026-07-10)** — R28-1 movement prototype dispatched (Sonnet): floor
+  markers at the existing camera seats, click-to-move with a short blink/fade,
+  NEVER gaze-triggered, era-gated node lists in data (E1 = tight leash inside
+  Room 1; E2+ = cross-room nodes as rooms open), scripted camera moves (O2 pan,
+  update dollies, the TURN) always take precedence, one dismissable PLACEHOLDER
+  instruction line on first availability. VR thumbstick wiring is scaffolded
+  behind an input abstraction but only browser input ships now — headset feel
+  is an A11 item. **Your feel-test of this prototype is the check** (already in
+  section B).
 - **D11 (2026-07-10)** — Opening cork PANEL retired as onboarding (your call
   ratified); the board's witness lineage (cork → filed record) SURVIVES.
   Replacement = orienting card (non-diegetic) + game menu + Lamby-conducted
