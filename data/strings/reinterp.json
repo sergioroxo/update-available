@@ -1,5 +1,6 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Reinterpretation-only framework chrome (structural labels + window titles). Content lives in each data/provotypes/*.json; this file is only the shell the runtime draws around it. Read behind ?reinterp=1 only. launcherIconIntake added Session R4 — a second, distinguishable desktop icon so both provotypes coexist on the one Era-1 desktop that exists in code today (both remain reachable for review/testing; not a statement about final placement, which data/paths.json composes later).",
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Reinterpretation-only framework chrome (structural labels + window titles). Content lives in each data/provotypes/*.json; this file is only the shell the runtime draws around it. Read behind ?reinterp=1 only. launcherIconIntake added Session R4 — a second, distinguishable desktop icon so both provotypes coexist on the one Era-1 desktop that exists in code today (both remain reachable for review/testing; not a statement about final placement, which data/paths.json composes later). movementHint added Session R28-1 (the movement prototype, src/engine/app.ts) — the ONE non-diegetic instruction line shown once per page load, the first time a click-to-move marker becomes available; frame voice, plain, no charm (this is chrome, not the conductor).",
+  "movementHint": "Click a marker to move.",
   "launcherIcon": "Session",
   "launcherIconIntake": "Family Form",
   "leave": "Leave",

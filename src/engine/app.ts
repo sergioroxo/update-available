@@ -21,10 +21,12 @@ import { buildClusterShell, type ClusterShell, type EraKey } from '../room/clust
 import { buildOpeningBoardDressing, type OpeningBoardMode } from '../room/openingBoardDressing';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
+import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { mountDebugPanel } from '../debug/panel';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
+import reinterpStrings from '../../data/strings/reinterp.json';
 
 const FLIP_SECONDS = 0.9;
 /** the CRT's visible screen (meters, 4:3) — bezels in era1.json sit flush */
@@ -50,6 +52,15 @@ const OPENING_WALL_BOARD = { x: -0.86, y: 1.43, z: 3.565, w: 1.5, h: 1.125 };
 const CAM_MOVE_SECONDS = 3.6;
 const CAM_MOVE_DELAY_MS = 700;
 const STARTUP_ARM_SECONDS = 4.0;
+// R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
+// a click-to-move marker's hit radius is a touch larger than its visual disc
+// (0.22m, movementNodes.ts) — the same "forgiving after arm" click generosity
+// the O1 wall click already uses. The blink is a CUT, never a tween: fade to
+// black, THEN move the camera, THEN fade back — no smooth travel (Sérgio's
+// explicit law: gaze must stay free, and a blink can never look like a dolly).
+const MARKER_HIT_RADIUS = 0.32;
+const BLINK_OUT_SECONDS = 0.13;
+const BLINK_IN_SECONDS = 0.22;
 
 interface AppOptions {
   reinterp?: boolean;
@@ -144,6 +155,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let cluster: ClusterShell | null = null;
   let cloud: PointCloud | null = null;
   let sendRt: SendRuntime | null = null;
+  let movementNodes: MovementNodes | null = null;
   if (options.reinterp === true) {
     niche = buildFluidNiche(app);
     niche.setFacet(options.facet ?? 'none');
@@ -154,6 +166,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // yet (the trigger beats ride the content-merge lane); the debug panel
     // carries review buttons so the filing/carry-back path stays testable
     sendRt = createSendRuntime(room, niche);
+    // R28-1: the movement node graph (floor markers at the existing camera
+    // seats). Geometry/gating only — the camera cut lives in requestMove().
+    movementNodes = buildMovementNodes(app);
   }
   const openingBoardDressing = options.reinterp === true ? buildOpeningBoardDressing(app) : null;
 
@@ -289,6 +304,44 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     glitchT = glitchDur;
   };
 
+  // R28-1 movement prototype (reinterp only — baseline/`?flat=1` must stay
+  // byte-identical, so neither element is even CREATED outside the flag):
+  // the blink-cut overlay (opaque black, above the glitch wash), driven
+  // manually every frame like the other overlays here (no CSS transition, so
+  // it can never race the per-frame camera cut it straddles); and the
+  // one-time, dismissable, non-diegetic movement hint (frame voice, plain —
+  // "the frame never plays" still holds: this is chrome, not the fiction).
+  let blinkOverlay: HTMLDivElement | null = null;
+  let moveHint: HTMLDivElement | null = null;
+  function dismissMoveHint(): void {
+    if (moveHintDismissed || !moveHint) return;
+    moveHintDismissed = true;
+    moveHint.style.opacity = '0';
+    moveHint.style.pointerEvents = 'none';
+  }
+  if (options.reinterp === true) {
+    blinkOverlay = document.createElement('div');
+    Object.assign(blinkOverlay.style, {
+      position: 'fixed', inset: '0', zIndex: '8', pointerEvents: 'none', opacity: '0',
+      background: '#000'
+    } as CSSStyleDeclaration);
+    document.body.appendChild(blinkOverlay);
+
+    moveHint = document.createElement('div');
+    moveHint.textContent = (reinterpStrings as { movementHint?: string }).movementHint ?? 'Click a marker to move.';
+    Object.assign(moveHint.style, {
+      position: 'fixed', left: '50%', bottom: '9%', transform: 'translateX(-50%)',
+      zIndex: '9', background: 'rgba(10,10,14,0.78)', color: '#cdd3df',
+      font: '12px monospace', padding: '6px 12px', borderRadius: '4px',
+      opacity: '0', pointerEvents: 'none', transition: 'opacity 0.4s', cursor: 'pointer'
+    } as CSSStyleDeclaration);
+    document.body.appendChild(moveHint);
+    moveHint.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      dismissMoveHint();
+    });
+  }
+
   // S1.0 hint: shown while the machine waits dark
   const offHint = document.createElement('div');
   offHint.textContent = strings.off.hint;
@@ -354,6 +407,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let revealReturn = -1;
   let revealConducted = false;
   let morphDemoIn = -1; // ?morph= review: seconds until the live morph plays
+
+  // R28-1 movement prototype: the blink transition state. `blinkPhase` null =
+  // idle; 'out' = fading to black (the cut itself lands at the END of 'out',
+  // never mid-fade — a blink shows nothing moving); 'in' = fading back from
+  // the new seat. `blinkT` counts seconds within the current phase.
+  let blinkPhase: 'out' | 'in' | null = null;
+  let blinkT = 0;
+  let blinkTargetNode: string | null = null;
+  let moveHintShown = false;
+  let moveHintDismissed = false;
 
   // the gaze-dwell facet pull (geometry doc §2.2 #3) — ambient and reversible:
   // a facet resolves WHILE you look and recedes when you don't; nothing accrues,
@@ -459,6 +522,61 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // one continuous arc: seat → up-and-back over the space (you SEE all three
     // rooms) → the next desk. Single eased curve = no stop-and-go at the center.
     startCamMove(seatPose(toYaw), totalDur, conducted, DOLLY_CTRL);
+  }
+
+  /** true while a SCRIPTED move owns the camera/space: any camera tween/dolly
+   *  in flight, a cluster morph cascade running, or the pre-fiction opening
+   *  wall. R28-1's "scripted moves always win" law: markers hide and clicks
+   *  are ignored for the whole superset (a stricter guard than the minimum
+   *  the brief lists — simpler than telling apart every dolly's cause, and it
+   *  can never let a marker click land mid-transition). */
+  function scriptedBusy(): boolean {
+    return !!camMove || (cluster?.busy ?? false) || openingWallActive;
+  }
+
+  /** the actual seat CUT — no tween, no arc, just the target pose, called at
+   *  the bottom of the blink's fade-to-black. */
+  function performSeatCut(nodeId: string): void {
+    const node = movementNodes?.find(nodeId);
+    if (!node) return;
+    seatYaw = node.seatYaw;
+    const sp = seatPose(node.seatYaw);
+    camPos.set(sp.x, sp.y, sp.z);
+    camPitch = sp.pitch;
+    camYaw = sp.yaw;
+    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    camera.setLocalEulerAngles(camPitch, camYaw, 0);
+    camMove = null;
+    tween = null;
+  }
+
+  /**
+   * R28-1's ONE input seam (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
+   * every way of choosing a destination — today's mouse click, tomorrow's
+   * Quest thumbstick-highlight + trigger/A confirm (xr-standard mapping) —
+   * routes through here. NEVER called from a gaze/hover path (that is the
+   * explicit Sérgio law this session is built around): only a discrete
+   * "confirm" input may call this. A pending call is dropped, not queued, if
+   * a scripted move starts first — scripted moves always win.
+   */
+  function requestMove(nodeId: string): void {
+    if (!options.reinterp || !cluster || !movementNodes) return;
+    if (blinkPhase !== null) return; // a blink is already running
+    if (scriptedBusy()) return; // scripted moves always win
+    const node = movementNodes.find(nodeId);
+    if (!node) return;
+    if (!movementNodes.available(cluster.era, seatYaw).some(n => n.id === nodeId)) return; // not offered
+    dismissMoveHint();
+    blinkTargetNode = nodeId;
+    blinkPhase = 'out';
+    blinkT = 0;
+  }
+  if (debugOn) {
+    // ?debug=1 review aid (like __camProbe): drive a marker move from the
+    // console/tests without needing a real click-and-ray-hit.
+    (window as { __requestMove?: (id: string) => void }).__requestMove = requestMove;
+    (window as { __movementNodes?: () => string[] }).__movementNodes =
+      () => (cluster && movementNodes ? movementNodes.available(cluster.era, seatYaw).map(n => n.id) : []);
   }
 
   const isBackYaw = (): boolean => {
@@ -626,6 +744,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         os.insertKit(); // S1.2 — you put the disk in yourself
         return;
       }
+      // R28-1: click-to-move, NEVER gaze-to-move — this pointerdown ray/hit
+      // test is the ONLY thing that can arm a marker; looking at one (however
+      // long) never does. Only test markers actually being offered right now
+      // (movementNodes.available already excludes the current seat).
+      if (movementNodes && cluster && !scriptedBusy()) {
+        for (const n of movementNodes.available(cluster.era, seatYaw)) {
+          if (rayHitsPoint(e, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) {
+            requestMove(n.id);
+            return;
+          }
+        }
+      }
       const p = toDesktop(e);
       if (p) { // the monitor is the UI; everywhere else is the room
         os.handleClick(p.x, p.y);
@@ -787,6 +917,40 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       cloud?.update(dt);
       spine?.update(dt);
 
+      // R28-1 movement prototype: the blink timer + marker visibility. The
+      // cut happens at the BOTTOM of the 'out' fade (screen is fully black),
+      // never mid-fade — no smooth travel, ever.
+      if (blinkPhase === 'out') {
+        blinkT += dt;
+        const k = Math.min(1, blinkT / BLINK_OUT_SECONDS);
+        if (blinkOverlay) blinkOverlay.style.opacity = k.toFixed(3);
+        if (k >= 1) {
+          if (blinkTargetNode) performSeatCut(blinkTargetNode);
+          blinkTargetNode = null;
+          blinkPhase = 'in';
+          blinkT = 0;
+        }
+      } else if (blinkPhase === 'in') {
+        blinkT += dt;
+        const k = Math.min(1, blinkT / BLINK_IN_SECONDS);
+        if (blinkOverlay) blinkOverlay.style.opacity = (1 - k).toFixed(3);
+        if (k >= 1) {
+          blinkPhase = null;
+          if (blinkOverlay) blinkOverlay.style.opacity = '0';
+        }
+      }
+      if (cluster && movementNodes) {
+        const busy = scriptedBusy() || blinkPhase !== null;
+        movementNodes.refresh(cluster.era, seatYaw, busy);
+        if (!moveHintShown && !moveHintDismissed && !busy && moveHint) {
+          if (movementNodes.available(cluster.era, seatYaw).length > 0) {
+            moveHintShown = true;
+            moveHint.style.opacity = '1';
+            moveHint.style.pointerEvents = 'auto';
+          }
+        }
+      }
+
       // gaze-dwell: only once the cluster has been revealed (the E1 dark-
       // surround law), never under a ?facet= override, and only for facets the
       // era's table marks promotable (tier hero|set — fog stays unresolved)
@@ -937,7 +1101,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       'ceiling-witness',
       'desktop-screen',
       'witness-screen',
-      'opening-board-dressing'
+      'opening-board-dressing',
+      'movement-nodes'
     ]) {
       const e = app.root.findByName(id);
       if (e instanceof pc.Entity) e.enabled = false;

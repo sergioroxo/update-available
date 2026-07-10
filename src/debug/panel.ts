@@ -9,7 +9,7 @@
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'R27 O1/O3 · cork asset reset';
+const BUILD_TAG = 'R28-1 · movement prototype';
 
 interface DebugOpts {
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
@@ -292,7 +292,8 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   const ctrls = document.createElement('div');
   ctrls.style.cssText = 'color:#9aa3b8;font-size:10px;line-height:1.5';
   ctrls.innerHTML =
-    'drag = look around<br>← → = move between rooms<br>R = home room · F = flip to record<br>` = show/hide this panel';
+    'drag = look around<br>← → = move between rooms<br>R = home room · F = flip to record<br>' +
+    'click a floor marker = blink-jump there (R28-1)<br>` = show/hide this panel';
   panel.appendChild(ctrls);
 
   sep();

@@ -71,6 +71,10 @@ export interface ClusterShell {
   applyRig(name: string, animate: boolean): void;
   /** the era's niche facet table (fluid_niche.json), for the gaze resolver */
   eraTable(): NicheEraTable | undefined;
+  /** true while a scripted space transition is in flight (the T1-style
+   *  timeline OR a morph cascade) — R28-1: movement markers hide for this,
+   *  same "scripted moves always win" rule the camera dolly already honors. */
+  readonly busy: boolean;
   update(dt: number): void;
 }
 
@@ -279,6 +283,7 @@ export function buildClusterShell(
     get state(): ClusterState { return state; },
     get era(): EraKey { return era; },
     get homeYaw(): number { return era === 'e4' ? 270 : era === 'e3' ? 90 : 0; },
+    get busy(): boolean { return morph.running || timeline.length > 0; },
 
     reveal(): void {
       if (state !== 'sealed') return;
