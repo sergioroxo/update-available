@@ -6,6 +6,29 @@ conversion-practice (SOGICE) networks target queer people online. Design
 docs: `docs/` (read PRODUCTION_SCRIPT_v0.3 + SCRIPT_UPDATE_v0.4–v0.6 before
 narrative work; ETHICS_CONSTRAINTS.md before ANY content work).
 
+## REINTERP AMENDMENTS (R28, struck by Sérgio 2026-07-10 — apply ONLY behind
+## `?reinterp=1`; the shipped build's laws below stay exactly as written)
+Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
+1. **Movement (revises "no locomotion ever"):** the player turns but never
+   walks — movement = player-initiated jumps between fixed seats (click the
+   floor marker / VR thumbstick-select + trigger-confirm, blink cut, never
+   gaze-triggered, never smooth travel) plus scripted sends. One seat per
+   room; rotation IS the exploration; cross-room jumps are system-sent tasks
+   from Era 3 on. The turn remains the signature bodily ask.
+2. **Guidance (revises the Assistant caps):** Era 1 has NO assistant
+   character — only impersonal system side-messages (short hints that help
+   navigate and PREPARE the user for Lamby). The Lamby character-conductor
+   debuts with the Era-2 update and conducts thereafter, ≤2 lines per
+   conduction beat. Unchanged and non-negotiable: never during `felt` scenes,
+   never jokes at the victim, never delivers Dossier text, dismissal always
+   works and is logged.
+3. **Input (revises "click/tap only"):** click/tap + the movement press
+   (above) + Esc/pause opening the game menu. Still no free-text keyboard, no
+   timers, no chords.
+4. **The frame (unchanged, clarified):** the non-diegetic game menu
+   (Esc/pause: resume, restart, controls help, credits/attributions, leave)
+   is frame-voice — functional and undecorated. The frame still never plays.
+
 ## Stack & architecture (decided — do not re-litigate)
 - PlayCanvas **as npm package** + Vite + TypeScript. No cloud editor. Static
   build, deployable to GitHub Pages (`base: './'`).

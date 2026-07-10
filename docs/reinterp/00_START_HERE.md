@@ -33,7 +33,9 @@ build work happens in `/Users/sergiogalvaoroxo/update-available-reinterp/`.
 - Without `?reinterp=1`, the piece renders EXACTLY like the shipped build (regression baseline).
 - `npm test` (no-network/no-storage invariants) + `npm run build` green at the end of every session.
 - No fetch/XHR/storage; in-memory ledger only. Click/tap only — no keyboard, timer, score, streak,
-  win/lose UI ever. All display text in `data/` JSON; geometry/layout in `.ts`.
+  win/lose UI ever — AMENDED R28 (see CLAUDE.md "REINTERP AMENDMENTS"): + the movement press (marker
+  click / VR trigger) and Esc/pause for the game menu. All display text in `data/` JSON;
+  geometry/layout in `.ts`.
 - New display text carries `_doc: "PLACEHOLDER — Sérgio voice pass pending"` plus any ethics-gate flag
   the plan names (G1–G12, see master plan §4). Never finalize copy.
 - Real people/orgs: dossier/provenance-panel only. No reproduction of real reference photography.

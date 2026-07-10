@@ -139,9 +139,13 @@ salvage lines move to the card/conductor; the rest retires. Build order: R28-3 s
 | Law (CLAUDE.md today) | Proposed revision | Status |
 |---|---|---|
 | "No locomotion ever — the only bodily ask is the turn" | No *free* locomotion — the player turns but never walks physically; movement = remote-press jumps between spaces, blink/fade transition. Comfort re-verified at A11. | **✅ STRUCK by Sérgio 2026-07-10** ("yes no locomotion, the player turns around but doesn't walk physically, only with the remote to jump between spaces") |
-| Assistant "absent in Stages 0–1; ≤5 lines per stage" | Conductor present from boot; ≤2 lines per conduction beat, no stage cap. All other assistant laws unchanged. | pending |
+| Assistant "absent in Stages 0–1; ≤5 lines per stage" | **RESOLVED AS AMENDED by Sérgio 2026-07-10:** Era 1 has NO Lamby character — only impersonal system side-messages ("clues just to help and navigate and also prepare the user for Lamby"). The character-conductor debuts with the E2 update; ≤2 lines per conduction beat thereafter. Felt-absence, no-jokes, no-dossier, dismissal laws all kept. (Supersedes R9's "Lamby-as-Clippy already installed at login" — LambyOS the BRAND is present from boot; Lamby the CHARACTER is not.) | **✅ STRUCK (amended)** |
 | "Click/tap only" | Click/tap + the movement action (VR: thumbstick-select + trigger/A confirm per the §2 input mapping; browser: click the node marker). Still no keyboard, no timers, no chords. | **✅ STRUCK by Sérgio 2026-07-10** (joystick explicitly welcomed; exact button mapping device-verified at A11 across Quest + other WebXR devices + desktop) |
-| "The frame never plays" | Unchanged — and explicitly extended: the new game menu is frame-voice, functional, undecorated. | pending |
+| "The frame never plays" | Unchanged — and explicitly extended: the new game menu is frame-voice, functional, undecorated. | **✅ STRUCK (adopted-in-substance via Sérgio's Esc-menu request)** |
+
+**All four strikes resolved 2026-07-10 → CLAUDE.md now carries the "REINTERP
+AMENDMENTS (R28)" block; the opening rebuild spec (R28-3) and MASTER_PLAN_v2
+consolidation are unblocked.**
 
 ## §6 Doc reorganization ("they all fit and not fit together")
 

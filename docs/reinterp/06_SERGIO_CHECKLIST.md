@@ -200,15 +200,23 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 
 ## C. OPEN QUESTIONS (answer inline, in chat, or by voice — whatever's cheapest)
 
-- **Q4 — the cassettes (D17):** confirm the content mix (music compilation /
-  prayer-hymn / period conversion-program publicity — all three as separate
-  tapes?), and whether Fable should draft the tape scripts now as PLACEHOLDER
-  for your pass. Prayer/hymn content sits under G1, so nothing gets scripted
-  there without your explicit go. Audio production tool is yours to pick
-  (Sonauto/Suno-class — Ollama won't make audio).
-- **Q5 — §5 strike 2 (the last pending law):** conductor present from boot,
-  ≤2 lines per conduction beat, all other assistant protections kept. Yes/no/
-  amend — this is the one line still gating the opening rebuild spec.
+*(none open — all answered; see below)*
+
+### Answered
+- **Q4 — cassettes** *(ANSWERED YES 2026-07-10)*: tapes as optional
+  reduce/expand narrative triggers ("it triggers separate things" — they're
+  narrative-tributary side quests). The existing **singing-prayer** recording
+  is the emotional anchor tape. Fable drafts the tape scripts (PLACEHOLDER,
+  prayer wording deferred to Sérgio per G1, period publicity carries
+  [VERIFY SOURCE]) → executed as **D18** in the R28-2 spec.
+- **Q5 — assistant law** *(ANSWERED 2026-07-10, as an amendment)*: **there is
+  NO Lamby character in Era 1** — E1 guidance = impersonal system
+  side-messages (short clues that help navigate and PREPARE the user for
+  Lamby); the Lamby character-conductor debuts with the E2 update. This
+  supersedes R9's "Lamby-as-Clippy already installed at login" (LambyOS the
+  brand boots; Lamby the character comes later). All four §5 strikes now
+  resolved → CLAUDE.md carries the "REINTERP AMENDMENTS (R28)" block; the
+  opening rebuild spec + MASTER_PLAN_v2 are unblocked.
 
 ### Answered
 - **Q1 — R8-2 character-creation opening** *(ANSWERED 2026-07-10 + found moot)*:
