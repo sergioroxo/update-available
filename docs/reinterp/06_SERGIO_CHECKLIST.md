@@ -79,6 +79,21 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   as `docs/reinterp/COPY_INVENTORY_E1..E4.md` + `_CROSS.md`, by a Haiku sweep,
   reviewed by Fable before you use them. Each entry has a blank "voice pass:"
   line for you to fill directly in the file.
+- **D9 (2026-07-10)** — **ROUND 28 RESTRUCTURE adopted** from Sérgio's live
+  feedback (movement too harsh / co-guided / menu+instructions / logic broke /
+  opening not working). Full plan: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
+  Core design: **conducted movement** — remote-driven node-to-node moves, the
+  era's Lamby-variant conducts (offers destinations), side quests = the
+  unoffered nodes. Build queue reordered (R28-0…4 before C2). Doc consolidation
+  into MASTER_PLAN_v2 planned after the §5 strikes below.
+- **D10 (2026-07-10)** — Bookcase bug (sideways + too light) dispatched as
+  R28-0: yaw fix + a generic model-tint capability so model props honor their
+  authored colors. Sonnet building; Fable verifies.
+- **D11 (2026-07-10)** — Opening cork PANEL retired as onboarding (your call
+  ratified); the board's witness lineage (cork → filed record) SURVIVES.
+  Replacement = orienting card (non-diegetic) + game menu + Lamby-conducted
+  three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
+  build session.
 
 ## B. CHECKS OWED BY SÉRGIO (your queue — orders it however you like)
 
@@ -92,6 +107,18 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 - [ ] **[VERIFY SOURCE] queue** — Fable will generate the consolidated list of
   every uncited claim as a section here (see Q3 below); until then, know it's
   accumulating.
+- [ ] **R28 §5 LAW STRIKES (top priority — gates the opening rebuild + master
+  plan v2):** four CLAUDE.md revisions await your strike-through in
+  `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md` §5 — (1) no-locomotion →
+  conducted node-to-node movement; (2) assistant caps → conductor-from-boot,
+  ≤2 lines/beat; (3) click-only → +one movement press; (4) frame-never-plays
+  extended to the new menu. Strike = adopt; comment = renegotiate.
+- [ ] **R28 §4 opening glance** — confirm the three-layer replacement (card /
+  menu / conductor-taught verbs) matches what you meant by "helps you
+  understand the game and the overall space" before the rebuild session runs.
+- [ ] **R28-1 movement feel-test** — when the movement prototype lands, drive
+  it in the browser for 5 minutes: is player-initiated node movement the fix
+  for the harshness you felt? Your verdict steers everything after it.
 - [ ] **D8 / prop library policy** — Room 1 shipped with Kenney-only props;
   your new GLB library was mostly declined (license + one-art-family rule).
   If you WANT those props in (the 90s computer, radio, cassettes…), say so —
