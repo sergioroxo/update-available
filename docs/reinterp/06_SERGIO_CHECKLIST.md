@@ -107,12 +107,12 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 - [ ] **[VERIFY SOURCE] queue** — Fable will generate the consolidated list of
   every uncited claim as a section here (see Q3 below); until then, know it's
   accumulating.
-- [ ] **R28 §5 LAW STRIKES (top priority — gates the opening rebuild + master
-  plan v2):** four CLAUDE.md revisions await your strike-through in
-  `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md` §5 — (1) no-locomotion →
-  conducted node-to-node movement; (2) assistant caps → conductor-from-boot,
-  ≤2 lines/beat; (3) click-only → +one movement press; (4) frame-never-plays
-  extended to the new menu. Strike = adopt; comment = renegotiate.
+- [ ] **R28 §5 LAW STRIKES — 2 of 4 done (2026-07-10):** ✅ (1) no-locomotion →
+  remote-jump movement STRUCK; ✅ (3) click-only → +joystick/movement action
+  STRUCK. Still pending your word: **(2) assistant caps → conductor-from-boot,
+  ≤2 lines/beat** and **(4) frame-never-plays extended to the new menu**.
+  These two gate the opening rebuild (the conductor teaches the verbs) and
+  master plan v2 — a one-line "yes to 2 and 4" (or amendments) unblocks both.
 - [ ] **R28 §4 opening glance** — confirm the three-layer replacement (card /
   menu / conductor-taught verbs) matches what you meant by "helps you
   understand the game and the overall space" before the rebuild session runs.

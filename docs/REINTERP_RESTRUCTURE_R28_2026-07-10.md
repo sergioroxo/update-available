@@ -33,20 +33,50 @@ Points 1, 2, 4, and 6 are not four asks — they are one design. Naming it so we
 **The player always steers; the system curates where steering can take you.
 Movement-as-permission.**
 
-- **Node-graph movement.** The rooms' existing camera seats become *nodes*. The remote's
-  one button (browser: click a floor marker) advances you to the node you're looking at —
-  a short blink/fade, never smooth locomotion (VR comfort; the harshness Sérgio felt is
-  fixed by *player-initiated timing*, not by animating the travel).
+- **Node-graph movement — deliberate input, NEVER gaze-triggered** *(R28-b, Sérgio)*: the
+  rooms' existing camera seats become *nodes*, and you jump between them only on an
+  explicit remote action — a short blink/fade, never smooth locomotion. Gaze must stay
+  free for EXPLORING: if looking at a marker armed movement, every curious glance would
+  threaten a teleport — an immersion break. Looking is safe; moving is a hand act.
+- **Input mapping (R28-b; to be device-verified at A11):**
+  - *Quest 3 / WebXR* (`xr-standard` gamepad mapping, standardized across Meta Touch,
+    Pico, etc.): **thumbstick** to highlight/cycle the available destination markers
+    (Sérgio: "since we assume the remote in the hand we can use the joystick — maybe
+    extra layers to gameplay"), **trigger or A** to confirm the jump. Controller *ray*
+    pointing can substitute for the thumbstick where a marker is in view. Optional
+    thumbstick snap-turn (90° steps) as a comfort assist — decide in headset.
+  - *Desktop browser:* click the destination marker (mouse = the remote's analog);
+    drag-to-look unchanged.
+  - The joystick's "extra gameplay layers" (beyond destination choice) are noted as open
+    design space — nothing else binds to it yet; anything new must clear the same
+    comfort + no-score laws.
+- **The era relocation flow (R28-b, Sérgio — this is how the three-rooms model breathes):**
+  - **Era 1** lives in ONE room (Room 1, the tutorial focus — R9 canon kept).
+  - **E1→E2:** the update ages the SAME room; Era 2's narrative then opens the
+    connections to the other "rooms/universes of SOGICE" — the conversion experiences
+    *multiply* — and exploration between rooms becomes possible (the T1 morph's opened
+    doorways already exist for exactly this).
+  - **E2→E3:** Era 2 ENDS by *sending you* to the lesbian room — Era 3 starts THERE.
+    The update doesn't just reskin; it relocates your home base. (The cross-cluster
+    send mechanism in `data/…/sends.json` is the plumbing this reuses.)
+  - **E3→E4:** by the same grammar, Era 3's end delivers you to Room 3 (Maya's,
+    trans-led), where Era 4 already lives per R24. Home base migrates R1 → R2 → R3
+    across the piece; the room you're IN ages around you, the others stay explorable.
 - **The conductor offers destinations.** Each era's assistant proposes where to go next —
   "come, let's get you settled" — and the *set of offered nodes* is the system's
   instrument. This is `operable` register: the offer may charm, glitter, play. Refusing an
   offer always works (dismissal law) and is filed (ledger law).
-- **Side quests are the OFF-menu nodes.** Places the conductor never lists — the respite
-  corner, the resistance objects (duck/mug/plant per the asset dashboard), the mixtape —
-  are reachable but unoffered, discovered by *looking*. Mini-beats (the graying task, the
-  provotypes) hang on nodes. This gives Sérgio's "interactive play" WITHOUT the frame ever
-  gamifying: there is no quest log; there are only places the system did and didn't
-  mention.
+- **Side quests, two kinds (R28-b, Sérgio: "not all off the main narrative"):**
+  - **Narrative tributaries** — side content that MUST make sense to the main narrative:
+    it feeds the record, echoes in a later beat, or deepens a storyline (the graying
+    task, provotypes, cross-cluster sends). These the conductor may eventually
+    acknowledge — they're part of the story's water system.
+  - **Ambient presences** — things that are "just there": the resistance objects
+    (duck/mug/plant), the respite corner, the mixtape. Never offered, never acknowledged,
+    never rewarded. Their meaning is that the system ignores them.
+  - Both kinds hang on nodes and are discovered by *looking*; neither gets a quest log.
+    The `cuts: side-quest` tag already in the schema carries the first kind; the second
+    kind isn't content metadata at all — it's set dressing with a spine.
 - **The thesis is in the mechanic.** You always pressed the button; it always chose the
   options. Consent theater in navigation form. And it ages: E1 = tight leash (two nodes,
   tutorial); E2–E3 = a widening, managed itinerary; E4 = "go anywhere" — because by then,
@@ -106,12 +136,12 @@ salvage lines move to the card/conductor; the rest retires. Build order: R28-3 s
 
 ## §5 Law revisions requested (Sérgio strikes in 06_SERGIO_CHECKLIST.md; then Fable edits CLAUDE.md)
 
-| Law (CLAUDE.md today) | Proposed revision |
-|---|---|
-| "No locomotion ever — the only bodily ask is the turn" | No *free* locomotion. Conducted node-to-node movement, player-initiated, blink/fade transition. The turn remains the one bodily ask. Comfort re-verified at A11. |
-| Assistant "absent in Stages 0–1; ≤5 lines per stage" | Conductor present from boot; ≤2 lines per conduction beat, no stage cap. All other assistant laws unchanged. |
-| "Click/tap only" | Click/tap + the one movement press (VR: point-and-press; browser: click the node marker). Still no keyboard, no timers, no chords. |
-| "The frame never plays" | Unchanged — and explicitly extended: the new game menu is frame-voice, functional, undecorated. |
+| Law (CLAUDE.md today) | Proposed revision | Status |
+|---|---|---|
+| "No locomotion ever — the only bodily ask is the turn" | No *free* locomotion — the player turns but never walks physically; movement = remote-press jumps between spaces, blink/fade transition. Comfort re-verified at A11. | **✅ STRUCK by Sérgio 2026-07-10** ("yes no locomotion, the player turns around but doesn't walk physically, only with the remote to jump between spaces") |
+| Assistant "absent in Stages 0–1; ≤5 lines per stage" | Conductor present from boot; ≤2 lines per conduction beat, no stage cap. All other assistant laws unchanged. | pending |
+| "Click/tap only" | Click/tap + the movement action (VR: thumbstick-select + trigger/A confirm per the §2 input mapping; browser: click the node marker). Still no keyboard, no timers, no chords. | **✅ STRUCK by Sérgio 2026-07-10** (joystick explicitly welcomed; exact button mapping device-verified at A11 across Quest + other WebXR devices + desktop) |
+| "The frame never plays" | Unchanged — and explicitly extended: the new game menu is frame-voice, functional, undecorated. | pending |
 
 ## §6 Doc reorganization ("they all fit and not fit together")
 
