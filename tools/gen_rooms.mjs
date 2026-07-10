@@ -142,6 +142,41 @@ const danielBoxes = [
   { id: 'movingBox1', pos: [0.72, 0.2, 1.15], size: [0.5, 0.4, 0.5], color: '#B89B7E' },
   { id: 'movingBox2', pos: [1.02, 0.15, 1.45], size: [0.4, 0.3, 0.4], color: '#A8917B' }
 ];
+// Session 24 (C1, Room 1 full modelization): Room 1's own desk/chair/bed/
+// shelf/rug now get the same Kenney treatment the side rooms carry — but
+// UNLIKE the side rooms (which are pure reinterp additions with no baseline
+// counterpart), Room 1's furniture lives in era1.json, which the BASELINE
+// (non-reinterp) build ALSO renders — models only ever spawn when
+// `room.reinterp` is true (src/room/assets.ts / era1room.ts), so era1.json
+// itself must stay byte-identical to the shipped multi-box assemblies (CI +
+// CLAUDE.md hard rail: no-flag/`?flat=1` render exactly as shipped). The
+// swap therefore happens ENTIRELY inside r1 (hand-maintained in
+// reinterp_deltas.json, reinterp-only territory): r1.remove retires
+// deskTop/deskLeg*/chairSeat/chairBack/chairPost/bedFrame/mattress/blanket/
+// pillow/shelfBack/shelfBoard*/rug, and r1.add spawns deskModel/chairModel/
+// bedModel/bookcaseModel/rugModel in their place. (book1-3/cdStack/mixtape
+// stay as-is, unmodeled, riding on top of bookcaseModel.)
+// Model props are also position-frozen once spawned (clusterMorph only ever
+// toggles their `.enabled`, never their transform — see clusterMorph.ts's
+// `applyTarget`/`goToState`), so the R25 "shelf/bed move out of the new
+// doorway" relocation can no longer be expressed as a `props` pos override
+// on the same id. Instead: r2 REMOVES the r1-added 'bedModel'/'bookcaseModel'
+// and ADDS a fresh model prop under a new id at the relocated spot — the
+// same remove+add-under-a-new-id shape every other era-crossing model
+// already uses (a model prop simply reappears once at its target, no slide).
+const bedMoved = [
+  { id: 'bedMoved', pos: [-1.72, 0, 2.78], size: [0.78, 0.5, 1.55], color: '#A07B52', model: 'bed' }
+];
+const bookcaseMoved = [
+  { id: 'bookcaseMoved', pos: [2.0, 0, 3.3], size: [0.75, 1.7, 0.5], color: '#8A5A3B', model: 'bookcase' }
+];
+// r3's "Room 1 bed -> dust sheet" beat used to be a `blanket` recolor; a model
+// prop never repaints (native GLB material always wins), so the same visual
+// cue is preserved as a thin raw box draped over bedMoved's footprint instead
+// of trying to retint the mesh.
+const bedDustSheet = [
+  { id: 'bedDustSheet', pos: [-1.72, 0.44, 2.78], size: [0.82, 0.05, 1.6], color: '#C8C4BC' }
+];
 
 const deltas = {
   _doc: 'Session 15 (Sérgio Round 24): THREE INTIMATE ROOMS THAT AGE, one shell. r1 = reinterp E1 (witness furniture out; spine door + record terminal). r2 = T1 "the room OPENS, it does not explode": Room 1 (Daniel, gay) keeps its EXACT E1 walls/desk/front-wall distance; its side walls become DOORWAYS revealing Room 2 (west/Vera, lesbian) and Room 3 (east/Maya, trans) — two adjacent intimate bedrooms at the SAME scale, axis-aligned (90° only), each read at E1 desk-intimacy when the camera dollies in. r4 = E4: the focus is Room 3 (Maya = the trans room evolved — NOT a separate desk; ◆N3 TURN retargets here); windows go dark for good. Rooms built from ONE local bedroom template (scratchpad/gen_rooms.mjs) placed per room — bed on a side wall, door away from the bed, clean CRT. COLOR LAW: every hex from era1.json family. Phase A: E3 shares the E2 state; per-era aging of all three rooms = Phase B.',
@@ -153,43 +188,38 @@ const deltas = {
       // resists graying — the warm thread's first waypoint)
       windowPane: { color: '#D4D0C8' },
       // Room 1's shelf stood in the EAST DOORWAY once its wall left (Sérgio
-      // Round 25: "still a shelf in the middle of the space") — the whole
-      // shelf group rides back to the east-rear wall stub, books and all;
-      // the mixtape's waypoint moves with it.
-      shelfBack: { pos: [2.1, 1.05, 3.3] },
-      shelfBoard1: { pos: [1.98, 0.62, 3.3] },
-      shelfBoard2: { pos: [1.98, 1.08, 3.3] },
-      shelfBoard3: { pos: [1.98, 1.54, 3.3] },
+      // Round 25: "still a shelf in the middle of the space") — the books/CD/
+      // mixtape decorations (still raw boxes, not modeled) ride back to the
+      // east-rear wall stub with it; the bookcase MODEL itself moves via the
+      // remove+add-new-id below since model props can't be re-positioned in
+      // place (see the C1 note above bedMoved/bookcaseMoved).
       book1: { pos: [1.98, 1.21, 3.1] },
       book2: { pos: [1.98, 1.2, 3.2] },
       book3: { pos: [1.98, 1.67, 3.15] },
       cdStack: { pos: [1.98, 0.71, 3.45] },
-      mixtape: { pos: [1.98, 1.16, 3.38] },
-      // Room 1's bed moves BACK out of the west doorway (Sérgio: "the bed on
-      // Era-1 can't be there, it stands in front of the opening for the other
-      // room") — tucked to the back-left corner, shortened, clearing the seated
-      // sightline into Room 2. (T-layout constraint; the X-layout frees a wall.)
-      bedFrame: { pos: [-1.72, 0.18, 2.78], size: [0.78, 0.28, 1.55] },
-      mattress: { pos: [-1.72, 0.36, 2.78], size: [0.72, 0.1, 1.48] },
-      blanket: { pos: [-1.72, 0.43, 3.05], size: [0.74, 0.05, 0.9] },
-      pillow: { pos: [-1.72, 0.44, 2.12], size: [0.5, 0.09, 0.32] }
+      mixtape: { pos: [1.98, 1.16, 3.38] }
     },
-    remove: ['wallWest', 'wallEast', 'moon', 'boombox', 'boomboxSpeakerL', 'boomboxSpeakerR', 'boomboxDeck'],
-    add: [...openWest, ...openEast, ...room2, ...room3]
+    remove: ['wallWest', 'wallEast', 'moon', 'boombox', 'boomboxSpeakerL', 'boomboxSpeakerR', 'boomboxDeck', 'bedModel', 'bookcaseModel'],
+    // Room 1's bed moves BACK out of the west doorway (Sérgio: "the bed on
+    // Era-1 can't be there, it stands in front of the opening for the other
+    // room") — tucked to the back-left corner, shortened, clearing the seated
+    // sightline into Room 2. (T-layout constraint; the X-layout frees a wall.)
+    add: [...openWest, ...openEast, ...room2, ...room3, ...bedMoved, ...bookcaseMoved]
   },
   // r3 = E3 (2016): Room 1 closes (Daniel "transferred" — moving boxes, the bed
   // under a dust sheet); Room 2 comes forward as Vera's (pastel, a plant); Room
   // 3 keeps evolving (the misfiled folders). Focus dollies to Room 2 (yaw 90).
   r3: {
     props: {
-      blanket: { color: '#C8C4BC' },                 // Room 1 bed → dust sheet
       w_curtL: { color: '#C8B8D0' }, w_curtR: { color: '#C8B8D0' }, // Room 2 → 2016 pastel
       w_poster: { color: '#B8D0C8' },
       w_crtScreen: { color: '#BFE0DA' },             // platform-pale
       e_crtScreen: { color: '#8FC4E0' }
     },
     remove: [],
-    add: [...danielBoxes, ...veraPlant, ...mayaFolders]
+    // Room 1 bed -> dust sheet: bedDustSheet is a plain box, not a recolor of
+    // the (now-modeled) bed, since model props never repaint (see the C1 note).
+    add: [...danielBoxes, ...veraPlant, ...mayaFolders, ...bedDustSheet]
   },
   // r4 = E4 (present): Room 3 leads (Maya) — the lamp props ride to her desk
   // (the warm thread's end), a phone lands, the interface screen; every window

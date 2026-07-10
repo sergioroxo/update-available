@@ -71,6 +71,15 @@
       "cx": 0,
       "cz": 0.002,
       "baseY": 0.263
+    },
+    {
+      "key": "plant",
+      "file": "pottedPlant.glb",
+      "scale": 1.9,
+      "yaw": 0,
+      "cx": 0,
+      "cz": 0,
+      "baseY": 0
     }
   ]
 }

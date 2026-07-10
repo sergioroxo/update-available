@@ -13,7 +13,24 @@
       "coldDesk",
       "coldDeskBase",
       "indexCard",
-      "floorWitnessDark"
+      "floorWitnessDark",
+      "deskTop",
+      "deskLegFL",
+      "deskLegFR",
+      "deskLegBL",
+      "deskLegBR",
+      "chairSeat",
+      "chairBack",
+      "chairPost",
+      "bedFrame",
+      "mattress",
+      "blanket",
+      "pillow",
+      "shelfBack",
+      "shelfBoard1",
+      "shelfBoard2",
+      "shelfBoard3",
+      "rug"
     ],
     "add": [
       {
@@ -113,6 +130,96 @@
           0.03
         ],
         "color": "#1A1A24"
+      },
+      {
+        "id": "deskModel",
+        "pos": [
+          0,
+          0,
+          -0.1
+        ],
+        "size": [
+          1.5,
+          0.75,
+          0.7
+        ],
+        "color": "#8A5A3B",
+        "model": "desk"
+      },
+      {
+        "id": "chairModel",
+        "pos": [
+          0,
+          0,
+          0.55
+        ],
+        "size": [
+          0.5,
+          0.75,
+          0.5
+        ],
+        "color": "#8A5A3B",
+        "model": "chair"
+      },
+      {
+        "id": "bedModel",
+        "pos": [
+          -1.72,
+          0,
+          1.15
+        ],
+        "size": [
+          0.78,
+          0.5,
+          1.95
+        ],
+        "color": "#A07B52",
+        "model": "bed"
+      },
+      {
+        "id": "bookcaseModel",
+        "pos": [
+          2,
+          0,
+          0.75
+        ],
+        "size": [
+          0.75,
+          1.7,
+          0.5
+        ],
+        "color": "#8A5A3B",
+        "model": "bookcase"
+      },
+      {
+        "id": "rugModel",
+        "pos": [
+          0,
+          0,
+          0.85
+        ],
+        "size": [
+          1.5,
+          0.02,
+          1.1
+        ],
+        "color": "#B98563",
+        "model": "rug"
+      },
+      {
+        "id": "plantModel",
+        "pos": [
+          -1.75,
+          0,
+          -0.35
+        ],
+        "size": [
+          0.22,
+          0.3,
+          0.22
+        ],
+        "color": "#A8B49A",
+        "model": "plant"
       }
     ]
   },
@@ -120,34 +227,6 @@
     "props": {
       "windowPane": {
         "color": "#D4D0C8"
-      },
-      "shelfBack": {
-        "pos": [
-          2.1,
-          1.05,
-          3.3
-        ]
-      },
-      "shelfBoard1": {
-        "pos": [
-          1.98,
-          0.62,
-          3.3
-        ]
-      },
-      "shelfBoard2": {
-        "pos": [
-          1.98,
-          1.08,
-          3.3
-        ]
-      },
-      "shelfBoard3": {
-        "pos": [
-          1.98,
-          1.54,
-          3.3
-        ]
       },
       "book1": {
         "pos": [
@@ -183,54 +262,6 @@
           1.16,
           3.38
         ]
-      },
-      "bedFrame": {
-        "pos": [
-          -1.72,
-          0.18,
-          2.78
-        ],
-        "size": [
-          0.78,
-          0.28,
-          1.55
-        ]
-      },
-      "mattress": {
-        "pos": [
-          -1.72,
-          0.36,
-          2.78
-        ],
-        "size": [
-          0.72,
-          0.1,
-          1.48
-        ]
-      },
-      "blanket": {
-        "pos": [
-          -1.72,
-          0.43,
-          3.05
-        ],
-        "size": [
-          0.74,
-          0.05,
-          0.9
-        ]
-      },
-      "pillow": {
-        "pos": [
-          -1.72,
-          0.44,
-          2.12
-        ],
-        "size": [
-          0.5,
-          0.09,
-          0.32
-        ]
       }
     },
     "remove": [
@@ -240,7 +271,9 @@
       "boombox",
       "boomboxSpeakerL",
       "boomboxSpeakerR",
-      "boomboxDeck"
+      "boomboxDeck",
+      "bedModel",
+      "bookcaseModel"
     ],
     "add": [
       {
@@ -1242,14 +1275,41 @@
         ],
         "color": "#8A5A3B",
         "yaw": 270
+      },
+      {
+        "id": "bedMoved",
+        "pos": [
+          -1.72,
+          0,
+          2.78
+        ],
+        "size": [
+          0.78,
+          0.5,
+          1.55
+        ],
+        "color": "#A07B52",
+        "model": "bed"
+      },
+      {
+        "id": "bookcaseMoved",
+        "pos": [
+          2,
+          0,
+          3.3
+        ],
+        "size": [
+          0.75,
+          1.7,
+          0.5
+        ],
+        "color": "#8A5A3B",
+        "model": "bookcase"
       }
     ]
   },
   "r3": {
     "props": {
-      "blanket": {
-        "color": "#C8C4BC"
-      },
       "w_curtL": {
         "color": "#C8B8D0"
       },
@@ -1355,6 +1415,20 @@
         ],
         "color": "#E8B7C8",
         "yaw": 270
+      },
+      {
+        "id": "bedDustSheet",
+        "pos": [
+          -1.72,
+          0.44,
+          2.78
+        ],
+        "size": [
+          0.82,
+          0.05,
+          1.6
+        ],
+        "color": "#C8C4BC"
       }
     ]
   },
