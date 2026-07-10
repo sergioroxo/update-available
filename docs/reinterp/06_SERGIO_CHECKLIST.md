@@ -115,6 +115,49 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   as part of the conductor spec (R28-2) — markers at doorways rather than at
   chairs is already flagged by the builder as the V2 shape. Node positions
   get judged in your feel-test + A11.
+  **→ SUPERSEDED by Sérgio's answer (same day):** one camera position per room
+  IS the design — rotation in place is the exploration; cross-room jumps are
+  SYSTEM-SENT TASKS starting at Era 3 ("the system sends you there to do tasks
+  and learn about each experience"). No extra nodes needed. The guided/task
+  structure is also how the piece de-centers the gay narrative: E3 starts
+  lesbian-led, E4 trans-led.
+- **D14 (2026-07-10)** — Sérgio's full playtest triage dispatched as R28-0c
+  (13 items): bookcase 90° rotation (both instances — Session 25's "rotation
+  fine" conclusion was wrong, both were sideways), bed wall-clipping, boombox
+  onto a shelf, marker clicks stealing prop clicks (his shelf click teleported
+  him), markers now E3+ only, E2 keeps walls CLOSED (rooms open moves to
+  E2→E3), remind-later return must replay the full ritual (his run skipped
+  EULA/changelog — the breakage beats got lost), diary "(press to keep it)"
+  cutoff, Rob's stale "i read what you typed" line, floppy-disk guidance
+  (prompt + static highlight — it's a guided experience), CRT light error at
+  E2 load, witness-board clipping + the bare "undone board" state, and killing
+  every non-marker way to move rooms (the "gaze jump" he still felt).
+- **D15 (2026-07-10)** — **E2 = HOMECOMING** (Sérgio's framing, adopted as the
+  era's emotional law): Daniel COMES BACK from the placement — the E1→E2
+  update must read as passage of time and finally returning home; the
+  love-interest era; the ex-gay ministries' breakage as the symbolic backdrop.
+  The morph staging + E2 conductor beats get spec'd to this in R28-2. This is
+  why E2 stays a closed single room (D14's wall change).
+- **D16 (2026-07-10)** — "Remind me later" = the **collect-your-belongings
+  beat** (Sérgio's proposal, adopted for spec): deferring the update grants
+  time in the room to gather/keep things (ties to the packet's "bring anything
+  from before" and the graying-task lineage — his "clear off the room" idea);
+  pressing Update now keeps it short. The "works once" law stays. Fable specs
+  the beat in R28-2; the mechanic must never become a score/checklist.
+- **D17 (2026-07-10)** — **Cassette system reinstated** (deliberately reverses
+  the B3 removal): the kit's companion cassette becomes REAL — physical tape
+  prop(s) + the boombox as the player-facing player, multiple tapes = a
+  multi-step audio beat with proper sound design. Content candidates per
+  Sérgio: period music compilation, prayers/hymns, conversion-program
+  publicity of the era. G1 gate applies to prayer/hymn content; period
+  publicity claims need KB verification before scripting. Production order:
+  Fable drafts tape SCRIPTS (PLACEHOLDER) → Sérgio's pass → audio production
+  (note: Ollama is text-only — audio wants your Sonauto/Suno-class lineage,
+  same as the Lamby chime). See Q4 below.
+- **R28 §5 strike 4 recorded as ADOPTED-in-substance:** your Esc request ("it
+  should offer more options, like how to use the buttons") IS the game menu —
+  Esc/pause opens the non-diegetic menu with controls help. Strike 2
+  (assistant caps) remains the only law still pending.
 - **D11 (2026-07-10)** — Opening cork PANEL retired as onboarding (your call
   ratified); the board's witness lineage (cork → filed record) SURVIVES.
   Replacement = orienting card (non-diegetic) + game menu + Lamby-conducted
@@ -157,7 +200,15 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 
 ## C. OPEN QUESTIONS (answer inline, in chat, or by voice — whatever's cheapest)
 
-*(none open right now — answered items move below)*
+- **Q4 — the cassettes (D17):** confirm the content mix (music compilation /
+  prayer-hymn / period conversion-program publicity — all three as separate
+  tapes?), and whether Fable should draft the tape scripts now as PLACEHOLDER
+  for your pass. Prayer/hymn content sits under G1, so nothing gets scripted
+  there without your explicit go. Audio production tool is yours to pick
+  (Sonauto/Suno-class — Ollama won't make audio).
+- **Q5 — §5 strike 2 (the last pending law):** conductor present from boot,
+  ≤2 lines per conduction beat, all other assistant protections kept. Yes/no/
+  amend — this is the one line still gating the opening rebuild spec.
 
 ### Answered
 - **Q1 — R8-2 character-creation opening** *(ANSWERED 2026-07-10 + found moot)*:
