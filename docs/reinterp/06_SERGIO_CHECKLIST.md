@@ -30,6 +30,21 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   hero-tier discipline (≤3 hero objects), desk anchors (`POWER_BTN`/`KIT_FLOPPY`)
   re-measured against the model desk per the R27 warning. Fable verifies live
   before the lane closes.
+  **→ CLOSED same day** (commit `1c74425`, Session 24). Sonnet self-verified
+  with real pointer events + numeric per-era probes; Fable re-verified live:
+  full 360° sweep at `?reinterp=1` (desk/CRT/tower/kit-floppy/bookcase/door/
+  cork board all correct, Soft Lo-Fi reads right), baseline `/` clean (zero
+  console errors, zero .glb loads, no reinterp markers). Notable: the agent
+  caught + prevented a baseline regression mid-session (`era1.json` is shared;
+  the swap now lives entirely in the reinterp-only delta). Draw calls 47/60.
+- **D8 (2026-07-10)** — Room 1 used only the already-staged Kenney family; the
+  C1 agent DECLINED most of the new `Pc_Simulation/Assests` props (Computer
+  90s, Radio, cassettes, Books, Desk Lamp…) on license (CC-BY), tier-discipline,
+  or single-art-family grounds — reasoning logged in `assets/LICENSES.md`.
+  Fable upholds this for now: one art family keeps the rooms coherent, and the
+  D6 attribution surface isn't built yet. **But this partly overrides Sérgio's
+  curation intent** (he assembled that library 2 days before) → check item
+  added in section B; his call overrules.
 - **D3 (2026-07-10)** — C2 (layout-X ending arm) will be built by Fable
   directly, INCLUDING the spatial-feel calls (point-cloud node density,
   brightness, the "glow in the dark star set" entry through the 4th arm) that
@@ -77,6 +92,13 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 - [ ] **[VERIFY SOURCE] queue** — Fable will generate the consolidated list of
   every uncited claim as a section here (see Q3 below); until then, know it's
   accumulating.
+- [ ] **D8 / prop library policy** — Room 1 shipped with Kenney-only props;
+  your new GLB library was mostly declined (license + one-art-family rule).
+  If you WANT those props in (the 90s computer, radio, cassettes…), say so —
+  it's an art-direction call: either accept mixed families per set-dressing
+  tier, or we restyle. Screenshot the current Room 1 at `?reinterp=1` to judge.
+- [ ] **Voice passes per era** — `COPY_INVENTORY_E2/E3/E4.md` are ~20 min each;
+  `E1` + `CROSS` are the big sittings. Write into the "voice pass:" lines.
 - [ ] **D-item reviews above** — batch-review section A whenever; nothing there
   is time-critical except that unreviewed decisions compound.
 
