@@ -188,3 +188,36 @@ Call 1-800-NEW-YOU8. Operators of grace are standing by!
 If it still runs long: generate, then use Suno's crop/trim on the best 30s — the jingle only
 needs one clean chorus + tag. Instrumental pass: same style + empty-chorus trick or the
 `[Instrumental]` tag, for the karaoke bed.
+
+### §7b REVISED PLAN (Sérgio 2026-07-11: Suno insists on ~1 minute → we design FOR 60s)
+
+Accept the minute. The commercial becomes 60s and the VO sits ON the jingle. Generate TWO
+takes from the same prompt: **(a) the vocal take** (chorus sung) and **(b) the instrumental**
+— assembly uses the instrumental as the bed under all VO and cuts to the vocal take for the
+chorus + tag. You only generate; the cutting is a build-side job (I'll script the assembly
+with the degradation pass).
+
+**The 60-second cue sheet (when each voice enters — retimed from s2_media.json):**
+
+| time | audio | on screen |
+|---|---|---|
+| 0.0–1.2 | static burst → instrumental bed fades in LOW | static → studio |
+| 1.2 | **ANN 1** "Tired of feeling like yourself?" | host set |
+| 4.5 | **DALE 1** "I know that ache, friend…" | Pastor Dale portrait |
+| 8.5 | **DALE 2** "The world says it's who you are…" | — |
+| 13.5 | **ANN 2** "Introducing… the New You Program." (bed rises) | brand card |
+| 16.5 | **MARCUS 1** "I tried everything…" | BEFORE portrait |
+| 20.5 | **MARCUS 2** "…Now I'm flourishing." | AFTER portrait |
+| 24.5 | **DALE 3** "Three gentle steps…" | steps card |
+| 29.5 | **DALE 4** "Won't you come home…" (bed swells) | — |
+| 33.5–41.5 | **VOCAL CHORUS** — no VO — karaoke bouncing ball | karaoke bar |
+| 41.5 | **ANN 3** "Operators of grace are standing by. Call now!" (bed vamps) | phone card |
+| 45.0 | **ANN 4** "Three easy payments of yourself…" | fine print starburst |
+| 49.0–57.0 | **VOCAL TAG** ("The New Yoooou!") held under → **ANN 5 disclaimer** mumbled
+  UNDER the held note from ~51.5, trailing off | speed-crawl fine print |
+| 57.0–60.0 | snap to static; a small `✓ viewed` ticks on the record | static |
+
+Your VO takes don't need to match these lengths exactly — the sheet flexes ±1s per slot at
+assembly; just keep each line inside ~4s (the disclaimer inside ~6s). The jingle prompt
+stays as §7 wrote it; if Suno's minute has a verse before the chorus, that verse section of
+the INSTRUMENTAL becomes the 0–33s bed — which is exactly what we want.
