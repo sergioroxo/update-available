@@ -137,14 +137,53 @@ tapes, three different narrative jobs:
 for CASSETTE-SOURCED character; if the tool can't do lo-fi, we degrade in post (a hiss/EQ
 pass can be scripted locally). Generate 2–3 candidates each; you pick.*
 
-**A1 — The singing prayer (Tape A's final segment; the emotional anchor)**
+**A1 — The singing prayer (Tape A's final segment; the emotional anchor) — REVISED
+2026-07-11 per Sérgio: the lyrics must carry the piece's edge, not just period realism.**
+The satire mechanism (per the tone law — satire lives inside the perpetrator's
+self-presentation and must collapse): perfect, sweet hymn grammar whose literal content is
+self-erasure. It sounds like devotion; on a second listen it is annihilation sung gladly.
+The wool/lamb imagery quietly seeds the Lamby lineage.
+
+*Style prompt:*
 > A cappella congregational singing, small church group of mixed voices, one uncertain
 > teenage male voice slightly separate from the group, slow simple original hymn melody in a
 > minor key resolving to major, recorded on a cheap 1990s cassette recorder in a carpeted
 > room, close and intimate, slightly muffled, tape hiss, no instruments, no reverb tail,
-> 60–90 seconds.
-*(Lyrics: leave the tool's default nonsense/humming for the candidates — Sérgio's words get
-sung/re-generated once written. G1: final framing is his call.)*
+> 60–90 seconds. On the final line the group drops away and the teenage voice finishes
+> almost alone.
+
+*Lyrics (PLACEHOLDER draft — G1: Sérgio's pass is final; the double edge is the point):*
+```
+[Verse 1]
+Fold my hands the way you showed me,
+keep my eyes upon the floor;
+all the songs I used to sing —
+I don't sing them anymore.
+
+[Chorus]
+Make me new, make me right,
+take the wrong of me tonight.
+I'll be still, I'll be clean,
+I'll be anyone but me.
+
+[Verse 2]
+Wash the part of me that wanders
+till it's white as any wool;
+if I empty out my pockets
+you can fill me till I'm full.
+
+[Bridge]
+Shepherd, count me with the others,
+let me match, let me belong —
+if I'm quiet, if I'm careful,
+no one has to know I'm wrong.
+
+[Final chorus — group fades, the boy's voice alone on the last line]
+Make me new, make me right,
+take the wrong of me tonight.
+I'll be still, I'll be clean…
+I'll be anyone but me.
+```
 
 **A2 — Tape A bed (the companion-tape voice bed, if the tool does spoken word poorly, we
 record VO separately and only generate the bed)**

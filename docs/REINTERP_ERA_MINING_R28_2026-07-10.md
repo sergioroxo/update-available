@@ -44,15 +44,16 @@ wound) → collapse → residue → the E2→E3 update sends you to Room 2. What
 the shipped build couldn't: the room itself grieves (aged props, the kept belongings un-aged) and
 the witness side lives on a wall you physically turn to.
 
-## FIND #2 — Lamby's Song ALREADY EXISTS as audio. The E2 leitmotif is produced.
+## FIND #2 — Lamby's audio exists — CORRECTED by Sérgio 2026-07-11: it's now a 30s JINGLE.
 
-`assets/audio/lamby-song.{ogg,mp3}` + timed `.lrc` + `data/dialog/lamby_song.json` — Sérgio's
-2026-06-15 Sonauto render ("Lamby Knows What Goes On Inside"), sweet lullaby decaying into the
-dark drop. The Era-2 storytelling pass ranked "wire the song" #2 of all adjustments — *the era is
-written around a song that doesn't play yet.* The reinterp inherits this whole: sweet loop under
-the check-in ritual; the broken-music-box turn at the collapse (a second degraded render was
-spec'd in ERA2_AUDIO_DIRECTION — prompt exists if wanted). **Corrects R28-2 Appendix A: A5 (Lamby
-chime) may not be needed at all — the song's opening bars can be the debut sting.**
+The full "Lamby Knows What Goes On Inside" song was replaced by a **30-second jingle**:
+`/Users/sergiogalvaoroxo/Pc_Simulation/Gemini_Jingles/Chase_The_Clouds.mp3`. Implications:
+the E2 leitmotif is the jingle (loopable under the check-in ritual; its opening bars = Lamby's
+debut sting, so Appendix A5 stays unnecessary); the "song returns BROKEN at the collapse" beat
+survives by degrading the same jingle (slow/detune/music-box render — the broken-version prompt
+in ERA2_AUDIO_DIRECTION adapts directly, or we degrade in post). The old repo assets
+(`assets/audio/lamby-song.*`) are superseded — do not wire them; import Chase_The_Clouds into
+the repo (with license/provenance noted in assets/LICENSES.md) when the E2 audio lane opens.
 
 ## FIND #3 — The evangelist commercial + jingle = Tape B / the E2 broadcast, fully scripted.
 
@@ -61,11 +62,17 @@ infomercial ("THE NEW YOU PROGRAM — a ministry of Restorify™"): 10-shot scri
 karaoke chorus, the mumbled-disclaimer punchline ("your old self may not be recoverable"), skip-
 is-filed interaction, canvas-only build technique (scanlines/RGB-split/tracking bars), and a
 finished Suno style+lyrics prompt — grounded in the 1998 "Truth in Love" campaign + televangelist
-infomercial grammar (sources listed). **This supersedes R28-2's Appendix A3 draft.** Reinterp
-placement options (Sérgio's pick): (a) E2 Restorify interruption pop-up as designed, (b) reframed
-as the E1 kit's publicity TAPE content (period-shifted to '90s radio-spot grammar), or (c) both —
-seed на E1 tape, full infomercial at E2. Recommendation: (c) — the same campaign heard on tape in
-'97 and seen polished on-screen in '03 IS the rebrand thesis in miniature.
+infomercial grammar (sources listed). **This supersedes R28-2's Appendix A3 draft.**
+**CONFIRMED 2026-07-11: the commercial is ALREADY AUTHORED as data** — the shipped build's
+`data/dialog/s2_media.json` holds the full 48s infomercial (NetVision Player window, PASTOR DALE /
+MARCUS / ANNOUNCER voices, per-scene sync points, karaoke line, skip-is-filed, all PLACEHOLDER +
+ethics-framed). **Assessment (Sérgio asked "is this the best option?"): yes — port it.** It's the
+most production-ready narrative asset in either build: writing done, ethics framing done, audio
+prompt done; the reinterp only needs the player surface and the trigger. Reinterp placement
+recommendation stands: (c) both — the SAME campaign heard as a crackly radio-spot on the E1 kit
+tape (Tape B, short) and seen as the polished on-screen infomercial at E2 (ported s2_media.json)
+— the rebrand thesis in miniature. The E1 tape version needs only a period-shifted script pass
+(same brand lineage, '97 AM-radio grammar).
 
 ## FIND #4 — The witness-symmetry doctrine: adopt piece-wide, immediately.
 
@@ -107,6 +114,17 @@ queue can send the player to ANOTHER room to "review context," making the cross-
 narrative rather than free-roam. The GAMIFY doc's **Option B "Spot the off-script"** (pattern-
 memory: the system trains your eye to flag warmth, then Mira's card enters the strip and you
 almost flag her) is the strongest mechanic and is click-only/VR-safe — reserve it for the E3 lane.
+**REVISION REQUIRED (Sérgio 2026-07-11): rethink Era 3 to carry the trans-masculine/butch
+reality**, not a purely lesbian frame. This converges with the already-locked open-questions item
+2h: the E3 lesbian/trans-masculine dilemma connective beat (the butch/FTM borderland, documented
+from the late 1990s, sharpening in 2016) — in the reinterp's spatial model, Room 2's E3 arc is
+exactly where that borderland lives: the moderation/polish apparatus that disciplines masculine
+women is the same apparatus that polices trans men ("just a confused butch" / "a lost lesbian" —
+the two-way misfiling). The SisterSignal material adapts rather than transfers whole: the polish
+pass and the off-script beats must show the forced-binarisation squeeze from BOTH directions.
+E3 spec (when that lane opens) = SisterSignal spine + 2h's borderland beat + the trans-masc
+sourcing routes already ranked in the open-questions register. G1 gate: trans-masc reader before
+any content ships.
 
 ## FIND #8 — Era 4's centerpiece was built for a screen; the reinterp gives it a room.
 
