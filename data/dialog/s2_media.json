@@ -1,0 +1,35 @@
+{
+  "_doc": "ERA-2 fake TV-evangelist 'testimony' INFOMERCIAL — an interrupt that surfaces after the first Restorify realignment. Dark mirror of TRANSCENDANCE; prototype for its canvas. A real scripted infomercial: a storyline with named composite 'voices' (PASTOR DALE the host, MARCUS a 'graduate', an ANNOUNCER, a CROWD) staged as shots. ALL copy PLACEHOLDER pending Sérgio's argumentation pass + trans/detrans/religious-trauma reader pass. Satire targets the SELLER's salesmanship ONLY, never queer people / survivors / the composite 'testimony'. Invented ministry/brand/number/people — no real orgs/likenesses/verbatim testimony. Real apparatus echoed (1998 'Truth in Love'; Robert Tilton 'Success-N-Life') documented in docs/ERA2_EVANGELIST_COMMERCIAL_SCRIPT_2026-06-30.md, [VERIFY SOURCE]. Voices (jingle + VO) are external bundled audio, TODO — the dialogue below is what they get timed to; per-scene 'at' seconds are the sync points. REINTERP PORT NOTE (R28-2a session, per ERA_MINING FIND #3 'port it'): copied verbatim from the shipped build's data/dialog/s2_media.json. The reinterp CANVAS PLAYER + E2 trigger are NOT built yet — that is the logged next-up lane (skip files 'avoidant', completion files 'testimony viewed', one surface inside the E2 desktop, audio slots empty). Nothing reads this file in the reinterp runtime yet.",
+  "windowTitle": "NetVision Player",
+  "brand": "THE NEW YOU",
+  "ministry": "★ a ministry of Restorify™ ★",
+  "phone": "1-800-NEW-YOU8",
+  "cta": "3 easy payments of yourself",
+  "timestamp": "▶ SP  11·14·2003",
+  "before": "BEFORE",
+  "after": "AFTER",
+  "karaoke": "the new you — brighter, lighter, good as true!",
+  "skip": "skip ▶▶",
+  "chyrons": {
+    "PASTOR DALE": "PASTOR DALE · New You Ministries",
+    "MARCUS": "MARCUS · Program graduate, 14 mo.",
+    "ANNOUNCER": "",
+    "CROWD": ""
+  },
+  "duration": 48,
+  "scenes": [
+    { "at": 0.0,  "shot": "static",    "speaker": "",           "line": "" },
+    { "at": 1.2,  "shot": "host",      "speaker": "ANNOUNCER",   "line": "Tired of feeling like yourself?" },
+    { "at": 4.5,  "shot": "host",      "speaker": "PASTOR DALE", "line": "I know that ache, friend. I carried it too." },
+    { "at": 8.5,  "shot": "host",      "speaker": "PASTOR DALE", "line": "The world says it's who you are. We say — it's a weight you can set down." },
+    { "at": 13.5, "shot": "brand",     "speaker": "ANNOUNCER",   "line": "Introducing… the New You Program." },
+    { "at": 16.5, "shot": "testimony", "speaker": "MARCUS",      "line": "I tried everything. I thought this was just me.", "grade": "before" },
+    { "at": 20.5, "shot": "testimony", "speaker": "MARCUS",      "line": "Then Pastor Dale showed me the Program. Now I'm flourishing.", "grade": "after" },
+    { "at": 24.5, "shot": "host",      "speaker": "PASTOR DALE", "line": "Three gentle steps: confess it, submit it, let us hold it for you." },
+    { "at": 29.5, "shot": "crowd",     "speaker": "PASTOR DALE", "line": "Won't you come home — to the self He meant you to be?" },
+    { "at": 33.5, "shot": "crowd",     "speaker": "CROWD",       "line": "the new you — brighter, lighter, good as true!", "karaoke": true },
+    { "at": 38.5, "shot": "offer",     "speaker": "ANNOUNCER",   "line": "Operators of grace are standing by. Call now!" },
+    { "at": 42.5, "shot": "offer",     "speaker": "ANNOUNCER",   "line": "Three easy payments of yourself. Supplies of you may run dry." },
+    { "at": 45.5, "shot": "static",    "speaker": "ANNOUNCER",   "line": "…not therapy, not a cure… your old self may not be recoverable…" }
+  ]
+}

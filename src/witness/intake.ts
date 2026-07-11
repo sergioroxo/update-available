@@ -132,6 +132,7 @@ export class WitnessCanvas {
     } else if (
       ledger.records.includes('kit-inserted') || ledger.provotypes.length > 0
       || ledger.sends.length > 0 || profileLines.length > 0
+      || ledger.guidance.length > 0 || ledger.records.includes('profile-initialized')
     ) {
       this.draw();
     } else {
@@ -479,11 +480,21 @@ export class WitnessCanvas {
     // file time), never composed here. Baseline never populates either.
     const profileLines = this.profileRecaptionLines();
     const endingLines = this.endingRecordLines();
-    if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0 || endingLines.length > 0) {
+    // R28-2a: guidance responses appear like every other filed thing —
+    // followed in ink, declined in the same amber as abandoned/declined
+    // elsewhere (witness symmetry: ignoring guidance is never invisible).
+    // The first-touch line (FIND #5) leads the log: it was filed first.
+    const firstTouchLines = ledger.records.includes('profile-initialized')
+      ? [opening.witness_profile_init]
+      : [];
+    if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0
+        || endingLines.length > 0 || ledger.guidance.length > 0 || firstTouchLines.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;
       ctx.fillText(s.sessionLog, 28, 262);
       setFont(ctx, 9);
+      const pinned: { text: string; color: string }[] =
+        firstTouchLines.map(text => ({ text, color: DIM }));
       const lines: { text: string; color: string }[] = [
         ...profileLines.map(text => ({ text, color: INK })),
         ...ledger.provotypes.map(p => ({
@@ -494,9 +505,18 @@ export class WitnessCanvas {
           text: sd.witness || `${sd.id}: ${sd.outcome}`,
           color: sd.outcome === 'declined' ? '#cc8855' : INK
         })),
+        ...ledger.guidance.map(g => ({
+          text: g.witness || `${g.id}: ${g.outcome}`,
+          color: g.outcome === 'declined' ? '#cc8855' : INK
+        })),
         ...endingLines.map(text => ({ text, color: '#cc8855' }))
       ];
-      lines.forEach((l, i) => {
+      // the well between the log heading and the footer holds ~7 rows. The
+      // FIRST filing stays pinned at the top for the whole session (FIND #5:
+      // the record never forgets your first click); the rest shows the most
+      // recent filings (the CLASSIFICATION field still carries the profile).
+      const shown = [...pinned, ...lines.slice(-(7 - pinned.length))];
+      shown.forEach((l, i) => {
         ctx.fillStyle = l.color;
         ctx.fillText(l.text, 28, 276 + i * 12);
       });

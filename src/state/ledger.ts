@@ -34,6 +34,14 @@ export interface Ledger {
    * resolved from data/sends.json, never composed in TS. In-memory only.
    */
   sends: { id: string; outcome: 'offered' | 'visited' | 'declined'; witness: string }[];
+  /**
+   * Era-1 side-message guidance responses (reinterp build only; R28-2a,
+   * witness symmetry per ERA_MINING FIND #4). Followed AND declined both
+   * file — ignoring guidance is never invisible. `witness` is the cold-side
+   * line, resolved from data/dialog/s1_guide.json at file time, never
+   * composed in TS. In-memory only, like everything here.
+   */
+  guidance: { id: string; outcome: 'followed' | 'declined'; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -47,7 +55,8 @@ const fresh = (): Ledger => ({
   updates: [],
   respite: { streamOpenSeconds: 0, songsPlayed: [] },
   provotypes: [],
-  sends: []
+  sends: [],
+  guidance: []
 });
 
 export let ledger: Ledger = fresh();

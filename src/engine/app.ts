@@ -183,6 +183,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ?debug=1 OS probe (review aid, like __ledger): drive monitor clicks in
     // logical canvas coords without the world→screen projection dance
     (window as { __os?: DesktopOS }).__os = os;
+    // ?debug=1 guide probe (R28-2a, read-only): the active side-message + the
+    // retired set, so reviews can watch the thread without screenshot-chasing.
+    (window as { __guide?: () => unknown }).__guide = () =>
+      os.guide ? os.guide.snapshot() : null;
   }
 
   // ── the NARRATIVE SPINE (reinterp; real playthroughs only, not review
@@ -318,18 +322,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // "the frame never plays" still holds: this is chrome, not the fiction).
   let blinkOverlay: HTMLDivElement | null = null;
   let moveHint: HTMLDivElement | null = null;
-  let floppyHint: HTMLDivElement | null = null;
   function dismissMoveHint(): void {
     if (moveHintDismissed || !moveHint) return;
     moveHintDismissed = true;
     moveHint.style.opacity = '0';
     moveHint.style.pointerEvents = 'none';
-  }
-  function dismissFloppyHint(): void {
-    if (floppyHintDismissed || !floppyHint) return;
-    floppyHintDismissed = true;
-    floppyHint.style.opacity = '0';
-    floppyHint.style.pointerEvents = 'none';
   }
   if (options.reinterp === true) {
     blinkOverlay = document.createElement('div');
@@ -352,26 +349,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       e.stopPropagation();
       dismissMoveHint();
     });
-
-    // R28-0c (item 10, Sérgio: "guide the player to the floppy — it's a
-    // guided experience"): a small dismissable status line, shown while the
-    // desktop is up and the kit hasn't been inserted yet — same frame-voice
-    // register and dismiss pattern as moveHint, but its own line (not tied
-    // to movement) so the two never compete for the same message.
-    floppyHint = document.createElement('div');
-    floppyHint.textContent = (reinterpStrings as { floppyHint?: string }).floppyHint
-      ?? 'Insert the floppy disk on the desk to begin.';
-    Object.assign(floppyHint.style, {
-      position: 'fixed', left: '50%', bottom: '20%', transform: 'translateX(-50%)',
-      zIndex: '9', background: 'rgba(10,10,14,0.78)', color: '#cdd3df',
-      font: '12px monospace', padding: '6px 12px', borderRadius: '4px',
-      opacity: '0', pointerEvents: 'none', transition: 'opacity 0.4s', cursor: 'pointer'
-    } as CSSStyleDeclaration);
-    document.body.appendChild(floppyHint);
-    floppyHint.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      dismissFloppyHint();
-    });
+    // R28-2a: the old floppyHint DOM one-off (R28-0c item 10) is gone — Era-1
+    // guidance now lives in the DIEGETIC side-message thread (the OS taskbar
+    // status well, data/dialog/s1_guide.json). moveHint stays the ONE piece
+    // of non-diegetic frame chrome, visually distinct by law.
   }
 
   // S1.0 hint: shown while the machine waits dark
@@ -449,8 +430,43 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let blinkTargetNode: string | null = null;
   let moveHintShown = false;
   let moveHintDismissed = false;
-  let floppyHintDismissed = false;
-  let floppyEmphasisOn = false; // tracks the CURRENT applied emissive lift state (item 10)
+
+  // R28-2a: prop emphasis follows the ACTIVE side-message (data key
+  // `emphasis`, resolved to prop ids here — geometry stays in .ts). This
+  // generalizes R28-0c item 10's floppy lift: a STATIC brightness lift (no
+  // pulse, no glow halo — Soft Lo-Fi) on the props the current guidance
+  // points at, restored to their exact prior emissive when it retires.
+  const EMPHASIS_PROPS: Record<string, string[]> = {
+    floppy: ['kitFloppy', 'kitFloppyLabel', 'kitFloppyShutter'],
+    boombox: ['boombox', 'boomboxSpeakerL', 'boomboxSpeakerR', 'boomboxDeck']
+  };
+  const EMPHASIS_FRAC = 0.32; // of the prop's own diffuse — never a new light
+  let appliedEmphasis: string | null = null;
+  const emphasisRestore = new Map<string, pc.Color>();
+  function setPropEmphasis(key: string | null): void {
+    if (key === appliedEmphasis) return;
+    if (appliedEmphasis) {
+      for (const id of EMPHASIS_PROPS[appliedEmphasis] ?? []) {
+        const h = room.props.get(id);
+        const orig = emphasisRestore.get(id);
+        if (!h || h.emissive || !orig) continue;
+        h.material.emissive = orig;
+        h.material.update();
+      }
+      emphasisRestore.clear();
+    }
+    appliedEmphasis = key;
+    if (key) {
+      for (const id of EMPHASIS_PROPS[key] ?? []) {
+        const h = room.props.get(id);
+        if (!h || h.emissive) continue; // never touch true emissives (LEDs etc.)
+        emphasisRestore.set(id, h.material.emissive.clone());
+        const d = h.material.diffuse;
+        h.material.emissive = new pc.Color(d.r * EMPHASIS_FRAC, d.g * EMPHASIS_FRAC, d.b * EMPHASIS_FRAC);
+        h.material.update();
+      }
+    }
+  }
 
   // the gaze-dwell facet pull (geometry doc §2.2 #3) — ambient and reversible:
   // a facet resolves WHILE you look and recedes when you don't; nothing accrues,
@@ -978,29 +994,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         }
       }
 
-      // R28-0c (item 10, Sérgio: "guide the player to the floppy"): the hint
-      // line + a STATIC (no pulse, no glow halo — Soft Lo-Fi) brightness lift
-      // on the physical floppy while it waits uninserted; both retire the
-      // instant os.kit exists (dismissFloppyHint mirrors that moment, not a
-      // timer). The floppy already carries a faint hero-tier self-emissive
-      // (styleMaterial, era1room.ts, 10% of its diffuse) — this only raises
-      // that same fraction, it never invents a new light or replaces color.
-      const wantFloppyEmphasis = os.inDesktop && !os.kit;
-      if (floppyHint && !floppyHintDismissed) {
-        floppyHint.style.opacity = wantFloppyEmphasis ? '1' : '0';
-        floppyHint.style.pointerEvents = wantFloppyEmphasis ? 'auto' : 'none';
-      }
-      if (wantFloppyEmphasis !== floppyEmphasisOn) {
-        floppyEmphasisOn = wantFloppyEmphasis;
-        const frac = wantFloppyEmphasis ? 0.32 : 0.10; // 0.10 = the existing hero baseline
-        for (const id of ['kitFloppy', 'kitFloppyLabel', 'kitFloppyShutter']) {
-          const h = room.props.get(id);
-          if (!h || h.emissive) continue;
-          const d = h.material.diffuse;
-          h.material.emissive = new pc.Color(d.r * frac, d.g * frac, d.b * frac);
-          h.material.update();
-        }
-      }
+      // R28-2a: the active side-message's prop emphasis (data-driven; replaces
+      // the R28-0c item-10 hardwired floppy lift — same visual mechanism).
+      setPropEmphasis(os.guide?.activeEmphasis ?? null);
 
       // gaze-dwell: only once the cluster has been revealed (the E1 dark-
       // surround law), never under a ?facet= override, and only for facets the

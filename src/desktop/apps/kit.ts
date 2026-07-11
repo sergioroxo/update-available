@@ -25,6 +25,18 @@ export class KitApp {
   private page = 0;
   private connected = false;
 
+  // read-only state for the R28-2a guide-thread conditions (narrative/guide.ts)
+  get reading(): boolean { return this.phase === 'pages'; }
+  get dialing(): boolean { return this.phase === 'dialing'; }
+  get pageIndex(): number { return this.page; }
+  get onPrayerPage(): boolean {
+    const p = kit.pages[this.page] as { prayer?: boolean };
+    return this.phase === 'pages' && p.prayer === true;
+  }
+  get onConnectPage(): boolean {
+    return this.phase === 'pages' && this.page === kit.pages.length - 1;
+  }
+
   update(dt: number): void {
     this.t += dt;
     if (this.phase === 'autorun' && this.t >= AUTORUN_SECONDS) {

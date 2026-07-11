@@ -14,6 +14,7 @@ import { PacketApp } from './apps/packet';
 import { DiaryApp } from './apps/diary';
 import { ProvotypeApp, type Provotype } from './apps/provotype';
 import { UpdateApp, type UpdateKey } from './apps/update';
+import { GuideThread } from '../narrative/guide';
 import sendsData from '../../data/sends.json';
 import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
@@ -96,6 +97,8 @@ export class DesktopOS {
   provotype: ProvotypeApp | null = null;
   /** the era-update ritual (spine-armed; never player-triggered) */
   updateApp: UpdateApp | null = null;
+  /** R28-2a: the Era-1 side-message guide thread (reinterp only, pre-Lamby) */
+  guide: GuideThread | null = null;
   /** a live send OFFER (master script §4) — icon + summons window on the desktop */
   private sendOffer: { id: string; open: boolean } | null = null;
   /** engine listens: the update restart landed — morph the space to `era` */
@@ -135,7 +138,15 @@ export class DesktopOS {
     this.ctx.scale(RENDER_SCALE, RENDER_SCALE); // all layout stays logical
     // reinterp replaces the shipped opening: the monitor waits dark (O1 lives
     // as the engine's DOM overlay) until beginReinterpOpening() lights the boot.
-    if (this.reinterp) this.phase = 'r_dark';
+    if (this.reinterp) {
+      this.phase = 'r_dark';
+      this.guide = new GuideThread(this);
+    }
+  }
+
+  /** the current desktop era — read by the guide-thread conditions */
+  get era(): DesktopEra {
+    return this.desktopEra;
   }
 
   get inDesktop(): boolean {
@@ -425,7 +436,11 @@ export class DesktopOS {
     if (this.phase === 'name' && this.greeting && this.phaseT > 2.8) {
       this.setPhase('desktop'); // empty desk — the kit is the only way in (S1.1)
     }
-    if (this.phase === 'desktop' && !this.kit && !this.kitToastShown && this.phaseT > 6) {
+    // reinterp: the guide thread's floppy side-message carries this nudge
+    // (R28-2a) — two simultaneous "insert the disk" surfaces would compete.
+    // The shipped baseline keeps its toast exactly as-is.
+    if (this.phase === 'desktop' && !this.kit && !this.kitToastShown && this.phaseT > 6
+        && !this.reinterp) {
       this.kitToastShown = true;
       this.toast = { text: strings.desktop.kitToast, t: 8 };
     }
@@ -440,6 +455,8 @@ export class DesktopOS {
     if (this.t >= this.escalationFallbackAt) this.escalate();
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
     if (this.phase === 'desktop' && this.updateApp) this.updateApp.update(dt);
+    // R28-2a: the guide is condition-driven only (no timers) — one tick per frame
+    if (this.phase === 'desktop' && this.guide) this.guide.update();
     if (!this.behindToastShown && this.t >= this.behindToastAt) {
       this.behindToastShown = true;
       this.toast = { text: strings.desktop.behindToast, t: 7 };
@@ -626,6 +643,19 @@ export class DesktopOS {
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(skin.clock, W - 44, H - 16);
+    // R28-2a: the side-message guide line (data/dialog/s1_guide.json) — the
+    // apparatus's own status voice (register: operable), NOT frame chrome.
+    // It lives in the taskbar's sunken status well, one terse line at a time,
+    // Era 1 only (Lamby conducts from E2). Not clickable, never a popup.
+    if (this.reinterp && this.desktopEra === 'e1') {
+      ui.bevel(ctx, 58, H - 19, W - 108, 16, false);
+      const guideLine = this.guide?.activeText;
+      if (guideLine) {
+        ui.setFont(ctx, 9);
+        ctx.fillStyle = ERA1.greyDark;
+        ctx.fillText(guideLine, 64, H - 16);
+      }
+    }
     // toast
     if (this.toast) {
       ui.setFont(ctx, 9);
@@ -933,12 +963,14 @@ export class DesktopOS {
     if (this.phase === 'r_boot') { this.setPhase('r_profile'); return; } // any click skips the crawl
     if (this.phase === 'r_profile') {
       if (id.startsWith('picon:')) {
+        this.fileFirstProfileTouch();
         this.profileIcon = id.slice(6);
         this.emitOpeningProfile();
         this.dirty = true;
         return;
       }
       if (id.startsWith('pchip:')) {
+        this.fileFirstProfileTouch();
         const c = id.slice(6);
         const i = this.profileChips.indexOf(c);
         if (i >= 0) this.profileChips.splice(i, 1);
@@ -947,6 +979,7 @@ export class DesktopOS {
         this.dirty = true; return;
       }
       if (id.startsWith('pgoal:')) {
+        this.fileFirstProfileTouch();
         this.profileGoal = id.slice(6);
         this.emitOpeningProfile();
         this.dirty = true;
@@ -956,6 +989,18 @@ export class DesktopOS {
       return;
     }
     if (this.phase === 'r_recap' && id === 'r-enter') this.setPhase('desktop'); // identical routing
+  }
+
+  /**
+   * FIND #5 (ERA_MINING R28): the FIRST filing lands within seconds of the
+   * experience starting — the very first profile pick files immediately, not
+   * batched at commitProfile. The most innocent click is already evidence;
+   * the witness session log shows it later as its own line (intake.ts).
+   */
+  private fileFirstProfileTouch(): void {
+    if (!ledger.records.includes('profile-initialized')) {
+      ledger.records.push('profile-initialized');
+    }
   }
 
   /** file the picks to the in-memory ledger, then show the re-captioning */

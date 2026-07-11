@@ -1,5 +1,5 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Reinterp opening beats O1–O3 (docs/REINTERP_OPENING_AND_FLOW_SPEC_2026-07-03.md §1, behind ?reinterp=1 only). R26 adds the missing cork-board lineage: the same rear-wall surface starts as O3's warm pinned profile board, then hardens into the cold witness record. Register/intent ONLY — every line is a demonstration, not final copy; §0-REV register direction is 'more direct and controlling — the player is forced, limited, demanded of', and every demand is diegetic (the OS's voice, never the piece's). Per spec §5.1 the O3 icon/chip/goal SETS below are register demonstrations, not the final selection — Sérgio picks the final set (criterion: each chip must be able to RETURN, recontextualised, in the witness record or an assistant line). o3_prefilled_name is a placeholder for the 'they already know your name' beat (never typed). The Lamby boot chime + logo are Sérgio's assets, wired as placeholder slots here.",
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Reinterp opening beats O1–O3 (docs/REINTERP_OPENING_AND_FLOW_SPEC_2026-07-03.md §1, behind ?reinterp=1 only). R26 adds the missing cork-board lineage: the same rear-wall surface starts as O3's warm pinned profile board, then hardens into the cold witness record. Register/intent ONLY — every line is a demonstration, not final copy; §0-REV register direction is 'more direct and controlling — the player is forced, limited, demanded of', and every demand is diegetic (the OS's voice, never the piece's). Per spec §5.1 the O3 icon/chip/goal SETS below are register demonstrations, not the final selection — Sérgio picks the final set (criterion: each chip must be able to RETURN, recontextualised, in the witness record or an assistant line). o3_prefilled_name is a placeholder for the 'they already know your name' beat (never typed). The Lamby boot chime + logo are Sérgio's assets, wired as placeholder slots here. witness_profile_init added R28-2a (ERA_MINING FIND #5): the cold-side line for the record filed on the profile's very FIRST pick — it lands in the ledger the moment the first icon/chip/goal is touched (not at commit) and later leads the witness session log; the most innocent click is already evidence.",
   "o1_logo_placeholder": "[ LOGO ]",
   "o1_logo_sub": "placeholder — asset per REINTERP_LOGO_SPEC",
   "o1_disclaimer_title": "Before you begin",
@@ -175,6 +175,7 @@
   "o3_board_chip_label": "about you",
   "o3_board_goal_label": "work on",
   "o3_board_hardening": "filing profile...",
+  "witness_profile_init": "local profile initialized — before any confirmation",
   "o3_continue": "That's me",
   "o3_leave": "Leave",
   "o3_recap_title": "Profile complete",
