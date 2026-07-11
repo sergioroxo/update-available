@@ -127,6 +127,38 @@ Delivery note: everything gets the §4 degradation pass afterward, so aim for CH
 quality. The disclaimer line (Announcer #5) is the punchline of the whole piece — speed it up,
 flatten it, let it trail off.
 
+### §6b Hugging Face fields (Qwen3-TTS and description-driven models) — paste-ready
+
+Sérgio is using huggingface.co/spaces/Qwen/Qwen3-TTS (and similar). Those interfaces want
+**Text to Synthesize + Language + Voice Description** per generation. Language = **English**
+for all. One generation per line (text from §6), with these descriptions:
+
+**ANNOUNCER (lines 1–4):**
+> Adult male American English TV-commercial announcer, bright and polished, always audibly
+> smiling, fast confident pacing, punchy emphasis, compressed broadcast tone, 2000s
+> infomercial energy.
+
+**ANNOUNCER (line 5, the disclaimer — its own description):**
+> Adult male American English, very fast flat legal-disclaimer read, monotone, mumbled,
+> quiet, words run together, trailing off at the end.
+
+**PASTOR DALE:**
+> Middle-aged male American English, warm low pastoral voice, slow and unhurried, gentle
+> and reassuring, soft southern US inflection, intimate close-microphone feel, too kind.
+
+**MARCUS:**
+> Young adult male American English, earnest and hopeful, slightly nervous, rehearsed
+> sincerity as if repeating a story he has told many times, medium pacing, a small smile
+> in the voice.
+
+**Other HF spaces worth trying if Qwen3-TTS fights you** (all free demos): **Parler-TTS**
+(built exactly around natural-language voice descriptions — the blocks above paste straight
+in), **Kokoro-82M** (very consistent, preset voices — good if you want the same voice across
+many lines), **F5-TTS / XTTS-v2** (voice cloning from a short reference clip — only if you
+want to record one line yourself and clone it), **Chatterbox** (expressive, good emotion
+control). Consistency tip: generate ALL of a character's lines in one sitting with the same
+description/voice/seed, or the voice will drift between lines.
+
 ## §7 The jingle, REVISED (Sérgio 2026-07-11: "more hyper, shorter — it's making a 2-minute song")
 
 The fix is mostly in the LYRICS: Suno sizes the song to the lyric sheet, so the full
