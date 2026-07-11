@@ -214,9 +214,13 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   tapes, belongings beat, homecoming staging): strike/amend, then say go for
   R28-2a. The love-interest thread (§5) especially needs your read before any
   build.
-- [ ] **Run the audio prompts** — spec Appendix A, five prompt sets for
-  Suno/Sonauto (prayer first — it's the emotional anchor). Generate 2–3
-  candidates each, drop files anywhere convenient; builds don't block on this.
+- [ ] **Run the audio prompts** — START HERE:
+  `docs/REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md` (paste-ready Suno AND
+  Sonauto versions of the prayer fitted to each tool's limits, the
+  solo-boy-ending trick, the VO voice menu — note: Ollama can't do voices;
+  edge-tts/Kokoro/ElevenLabs-free can — and the degradation pass that makes
+  every take period-authentic). Queue by narrative value: prayer → jingle +
+  instrumental → VO cast → mixtape. Builds don't block on any of it.
 - [ ] **R28 §4 opening glance** — confirm the three-layer replacement (card /
   menu / conductor-taught verbs) matches what you meant by "helps you
   understand the game and the overall space" before the rebuild session runs.
