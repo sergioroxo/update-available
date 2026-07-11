@@ -9,7 +9,7 @@
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'R28-1 · movement prototype';
+const BUILD_TAG = 'R28-0c · Sérgio playtest fixes';
 
 interface DebugOpts {
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
@@ -49,7 +49,7 @@ const OS_BEATS: Array<[string, string]> = [
 /** eras with the room + identity + year they now lead (Round 24 model) */
 const ERAS: Array<['e1' | 'e2' | 'e3' | 'e4', string]> = [
   ['e1', 'E1 1997 · Room 1 (gay teen)'],
-  ['e2', 'E2 2003 · Room 1 adult + rooms open'],
+  ['e2', 'E2 2003 · Room 1 adult'],
   ['e3', 'E3 2016 · Room 2 (lesbian)'],
   ['e4', 'E4 now · Room 3 (trans)']
 ];
@@ -65,8 +65,8 @@ const ROOMS: Array<[string, number]> = [
 /** review URLs — the "all the options" links Sérgio asked for */
 const LINKS: Array<[string, string]> = [
   ['E1 · opening + sealed room', '?reinterp=1&debug=1'],
-  ['E2 · rooms open', '?reinterp=1&era=2&debug=1'],
-  ['E3 · Vera leads', '?reinterp=1&era=3&debug=1'],
+  ['E2 · Room 1 adult (closed)', '?reinterp=1&era=2&debug=1'],
+  ['E3 · rooms open, Vera leads', '?reinterp=1&era=3&debug=1'],
   ['E4 · Maya leads (the TURN)', '?reinterp=1&era=4&debug=1'],
   ['O7 · first-filing reveal', '?reinterp=1&reveal=1&debug=1'],
   ['T1 · watch E1→E2 morph', '?reinterp=1&morph=2&debug=1'],
@@ -292,8 +292,8 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   const ctrls = document.createElement('div');
   ctrls.style.cssText = 'color:#9aa3b8;font-size:10px;line-height:1.5';
   ctrls.innerHTML =
-    'drag = look around<br>← → = move between rooms<br>R = home room · F = flip to record<br>' +
-    'click a floor marker = blink-jump there (R28-1)<br>` = show/hide this panel';
+    'drag / ← → = look around (never moves rooms)<br>R = home room · F = flip to record<br>' +
+    'click a floor marker = blink-jump there (R28-1, markers E3+)<br>` = show/hide this panel';
   panel.appendChild(ctrls);
 
   sep();

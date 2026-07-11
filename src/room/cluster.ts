@@ -10,8 +10,10 @@
  * a clear sight channel; at E4 the TURN faces it and Maya's desk rises there.
  *
  * This module keeps only conduction: the per-era LIGHT RIGS (crossfaded — the
- * cold light winning), the T1 staged timeline (lamp hold → ballast → cascade →
- * settle), the O7 reveal state, the E4 TURN's
+ * cold light winning), the T1-style staged timeline (lamp hold → ballast →
+ * cascade → settle — as of Session 27/R28-0c this plays on the E2→E3 update,
+ * since E2 is Daniel's closed homecoming room and the space opens one update
+ * later, D14/D15), the O7 reveal state, the E4 TURN's
  * homeYaw, the lamp LIGHT following its carried props, the witness plane's
  * spine ride, and the niche facet defaults. Light is the narrator; the props
  * belong to the morph.
@@ -45,8 +47,15 @@ const RIG_FADE_SECONDS = 2.5;
  *  Each era now has its OWN state, so the three rooms age era-to-era. */
 const STATE_FOR_ERA: Record<EraKey, number> = { e1: 0, e2: 1, e3: 2, e4: 3 };
 /** the witness record plane's z on the spine (E1 vs open). At E4 it leaves the
- *  spine entirely and migrates beside Room 3 — see migrateTerminal(). */
-const PLANE_Z: [number, number] = [3.685, 3.865];
+ *  spine entirely and migrates beside Room 3 — see migrateTerminal(). Session
+ *  27 (R28-0c, item 12): these used to be 3.685/3.865 — BOTH already deeper
+ *  than the physical opening-board cork frame's own near face (measured live
+ *  AABB: ~3.649), so the flat plane fell fully BEHIND that fixed 3D prop the
+ *  instant any era transition ran, reading as a bare cork board with random
+ *  floating sticky notes and nothing behind them (the frame's own baked
+ *  decoration, unmasked). Pulled both values in front of that face with a
+ *  safety margin so the record plane is never occluded by the frame prop. */
+const PLANE_Z: [number, number] = [3.60, 3.62];
 /** E4: the record shares Room 3's wall beside Maya's desk (east). The person
  *  and the record finally share a wall — the TURN's promise, unified. */
 const TERMINAL_E4 = { pos: [5.66, 1.5, 1.75] as [number, number, number], yaw: 270 };
@@ -303,10 +312,17 @@ export function buildClusterShell(
       carryLampLight(toEra === 'e4');
       migrateTerminal(toEra === 'e4');
 
-      // T1, choreographed (choreography doc §T1): hold on the lamp → the
+      // T2, choreographed (choreography doc §T1 — the SAME staged timeline,
+      // moved here from the E1→E2 transition Session 27/R28-0c per Sérgio's
+      // D14/D15 direction: E2 is Daniel's closed homecoming room; the walls
+      // stay shut until the E2→E3 update, so this is where "the room OPENS,
+      // it does not explode" actually happens now): hold on the lamp → the
       // cascade rolls the space open under the ballast stages → settle.
-      if (animate && fromEra === 'e1' && toEra === 'e2') {
-        applyRig('hold', false);
+      if (animate && fromEra === 'e2' && toEra === 'e3') {
+        applyRig('hold', true); // Session 27 (item 11): animated, not an instant
+        // snap — an un-eased jump straight to the 'hold' rig hit the CRT's own
+        // screenGlow light (E2's 0.38 → hold's 0.1) in a single frame, right as
+        // the update notice appeared, reading as a lighting glitch on the monitor.
         const setLight = (id: string, i: number): void => {
           const e = app.root.findByName(`light-${id}`);
           if (e instanceof pc.Entity && e.light) e.light.intensity = i;
@@ -316,7 +332,7 @@ export function buildClusterShell(
         schedule([
           { t: 3.0, fn: () => {                                // the walls begin to leave
             beginMorphedStateBatch();
-            morph.goToState(1, true);
+            morph.goToState(2, true);
           } },
           { t: 3.0, fn: () => setLight('roomFill', 0.55) },   // ballast: clunk
           { t: 3.18, fn: () => setLight('roomFill', 0.05) },
@@ -325,7 +341,7 @@ export function buildClusterShell(
           { t: 4.2, fn: () => {                                // the other rooms were ready first
             for (const zl of zoneLights) if (zl.light) zl.light.intensity = 0.9;
           } },
-          { t: 5.3, fn: () => applyRig('e2', true) },
+          { t: 5.3, fn: () => applyRig('e3', true) },
           { t: 5.4, fn: () => applyLayout() } // X: keep the back arm open post-cascade
         ]);
         const t1 = eraTable();

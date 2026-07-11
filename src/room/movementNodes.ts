@@ -37,6 +37,12 @@ export interface MovementNodes {
    *  `suppressed` = true while any scripted camera move runs (O2 pan, update
    *  dollies/cascades, the TURN, enterClose) or the opening wall is up. */
   refresh(era: EraKey, currentYaw: number, suppressed: boolean): void;
+  /** R28-0c (item 4): the marker's ACTUAL live entity.enabled state, not just
+   *  the logical `available()` list — a defence-in-depth check so a stray
+   *  click can never arm a marker that isn't really visible this frame (e.g.
+   *  a one-frame gap between a scripted move starting and refresh() catching
+   *  up). A click must hit BOTH the offered list AND the live disc. */
+  isVisible(id: string): boolean;
 }
 
 const MARKER_DIAMETER = 0.44; // 0.22m radius disc — small, quiet
@@ -89,6 +95,7 @@ export function buildMovementNodes(app: pc.Application): MovementNodes {
     refresh(era, currentYaw, suppressed) {
       const shown = suppressed ? new Set<string>() : new Set(available(era, currentYaw).map(n => n.id));
       for (const [id, e] of entities) e.enabled = shown.has(id);
-    }
+    },
+    isVisible: (id) => entities.get(id)?.enabled ?? false
   };
 }

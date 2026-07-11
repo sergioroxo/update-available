@@ -33,7 +33,12 @@ const ERASE_2 = 0.40;         // attempt 2 — the system gets LESS far (it's lo
 const BREAKOUT_HOLD = 3.0;    // the split holds, then jumps into the update
 
 const NOTE = { x: 128, y: 26, w: 366, h: 70 };
-const PAD = { x: 108, y: 104, w: 384, h: 178 };
+// R28-0c (item 8): h was 178 — the 'resist' footer draws TWO lines
+// ("Removal stalled…"/held + "(press to keep it)") plus a progress bar below
+// the wrapped entry text, and the second line's baseline (c.y + c.h - 12)
+// sat close enough to the window's own bottom bevel to clip on-screen (his
+// screenshot). +18px gives both lines and the bar clearance inside the frame.
+const PAD = { x: 108, y: 104, w: 384, h: 196 };
 
 export class DiaryApp {
   open = true;

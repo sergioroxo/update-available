@@ -94,10 +94,16 @@ function place(prefix, tpl, ox, oz, F) {
   });
 }
 
-// identity palettes
-const vera = { screen: '#5DCAA5', curtain: '#A8B49A', poster: '#D4A0A0',
+// identity palettes. Session 27 (R28-0c, item 6): the side rooms are now BORN
+// at r3 (2016) — the rooms-open step moved from T1/E2 to T2/E3 — so Vera's
+// curtain/poster/screen carry the 2016 pastel values DIRECTLY (they used to be
+// '#A8B49A'/'#D4A0A0'/'#5DCAA5' 2003 values recolored by a later r3.props
+// pass; that recolor was a silent runtime no-op for same-state adds — the
+// fold applies `props` before `add` within one delta — and the room checker
+// rightly fails it). Maya's screen likewise starts at its 2016 '#8FC4E0'.
+const vera = { screen: '#BFE0DA', curtain: '#C8B8D0', poster: '#B8D0C8',
   blanket: '#C98F8F', sign: '#A8B49A', bookA: '#C9A8A0', bookB: '#A8B49A', rugColor: '#B98563' };
-const maya = { screen: '#6FB8D8', curtain: '#E8B7C8', poster: '#9FB4C0',
+const maya = { screen: '#8FC4E0', curtain: '#E8B7C8', poster: '#9FB4C0',
   blanket: '#E8B7C8', sign: '#9FB4C0', bookA: '#E8B7C8', bookB: '#9FB4C0', rugColor: '#D4A0A0' };
 
 // Room 2 = west (Vera), faces -X: F=90, opening (+Z, lz=+1.83) → worldX -2.05
@@ -164,8 +170,16 @@ const danielBoxes = [
 // and ADDS a fresh model prop under a new id at the relocated spot — the
 // same remove+add-under-a-new-id shape every other era-crossing model
 // already uses (a model prop simply reappears once at its target, no slide).
+// Session 27 (R28-0c bug fix): pos re-measured against the bed model's real
+// AABB (~1.08m x ~2.14m, not the box-fallback 0.78m x 1.55m) — the old
+// [-1.72, .., 2.78] both poked ~0.13m through the outer wall plane in X
+// (clipping) AND spilled ~0.71m into the open west-doorway gap in Z (blocking
+// it). New position pulls the bed 0.19m further off the wall (X) so it sits
+// flush against wallWest's inner face instead of through it, and shifts it
+// 0.15m toward the spine (Z) so it sits flush against the spine wall instead
+// of blocking the doorway threshold or poking through the spine.
 const bedMoved = [
-  { id: 'bedMoved', pos: [-1.72, 0, 2.78], size: [0.78, 0.5, 1.55], color: '#A07B52', model: 'bed' }
+  { id: 'bedMoved', pos: [-1.55, 0, 2.63], size: [0.78, 0.5, 1.55], color: '#A07B52', model: 'bed' }
 ];
 // Session 25 (R28-0 bug fix): pos.x pulled from 2.0 -> 1.7. The bookcase
 // model's real footprint (models.json's bookcase entry: scale 1.9 applied to
@@ -173,27 +187,55 @@ const bedMoved = [
 // implied — at x=2.0 the mesh straddled the east wall/doorway plane (x≈2.13)
 // instead of sitting flush against its room-side face (measured live via the
 // entity's own render AABB, not guessed).
+// Session 27 (R28-0c bug fix): Session 25's "rotation is fine" call was wrong
+// — bookcaseModel/bookcaseMoved were both SIDEWAYS (their long ~0.76m axis
+// ran across the wall instead of along it; measured live: at yaw 0/180 the
+// footprint is 0.76m wide in X / 0.475m in Z — backwards for a run against a
+// wall on the X axis). `yaw: 90` swaps that (0.475m deep in X / 0.76m wide in
+// Z, matching the wall run), and pos.x is re-measured for the NEW (shallower)
+// depth: wallEast's inner face sits at x≈2.105-2.11, so pos.x = 2.11 - half
+// of the new 0.475m depth (0.2375) ≈ 1.87 (was 1.7, tuned for the old/wrong
+// depth of 0.76m).
 const bookcaseMoved = [
-  { id: 'bookcaseMoved', pos: [1.7, 0, 3.3], size: [0.75, 1.7, 0.5], color: '#8A5A3B', model: 'bookcase' }
+  { id: 'bookcaseMoved', pos: [1.87, 0, 3.3], size: [0.75, 1.7, 0.5], color: '#8A5A3B', model: 'bookcase', yaw: 90 }
 ];
 // r3's "Room 1 bed -> dust sheet" beat used to be a `blanket` recolor; a model
 // prop never repaints (native GLB material always wins), so the same visual
 // cue is preserved as a thin raw box draped over bedMoved's footprint instead
 // of trying to retint the mesh.
+// Session 27: pos re-measured with bedMoved (below) — was floating past the
+// spine wall on one end and blocking the west doorway opening on the other
+// (the bed model's real footprint is ~1.08m x ~2.14m, not the 0.78m x 1.55m
+// the box-fallback `size` implied); size shrunk to roughly match the real
+// (smaller in Z than assumed) bed footprint instead of overhanging it.
 const bedDustSheet = [
-  { id: 'bedDustSheet', pos: [-1.72, 0.44, 2.78], size: [0.82, 0.05, 1.6], color: '#C8C4BC' }
+  { id: 'bedDustSheet', pos: [-1.55, 0.44, 2.63], size: [0.85, 0.05, 1.1], color: '#C8C4BC' }
 ];
 
 const deltas = {
-  _doc: 'Session 15 (Sérgio Round 24): THREE INTIMATE ROOMS THAT AGE, one shell. r1 = reinterp E1 (witness furniture out; spine door + record terminal). r2 = T1 "the room OPENS, it does not explode": Room 1 (Daniel, gay) keeps its EXACT E1 walls/desk/front-wall distance; its side walls become DOORWAYS revealing Room 2 (west/Vera, lesbian) and Room 3 (east/Maya, trans) — two adjacent intimate bedrooms at the SAME scale, axis-aligned (90° only), each read at E1 desk-intimacy when the camera dollies in. r4 = E4: the focus is Room 3 (Maya = the trans room evolved — NOT a separate desk; ◆N3 TURN retargets here); windows go dark for good. Rooms built from ONE local bedroom template (scratchpad/gen_rooms.mjs) placed per room — bed on a side wall, door away from the bed, clean CRT. COLOR LAW: every hex from era1.json family. Phase A: E3 shares the E2 state; per-era aging of all three rooms = Phase B.',
+  _doc: 'Session 15 (Sérgio Round 24), restructured Session 27 (R28-0c, D14/D15): THREE INTIMATE ROOMS THAT AGE, one shell. r1 = reinterp E1 (witness furniture out; spine door + record terminal). r2 = E2, HOMECOMING (D15): Daniel comes back to the SAME closed Room 1, aged — the walls do NOT open here (Sérgio: "at Era 2 the room ages but stays CLOSED"). r3 = T2 "the room OPENS, it does not explode" (moved from T1/E2): Room 1 (Daniel, gay) keeps its EXACT E1 walls/desk/front-wall distance; its side walls become DOORWAYS revealing Room 2 (west/Vera, lesbian) and Room 3 (east/Maya, trans) — two adjacent intimate bedrooms at the SAME scale, axis-aligned (90° only), each read at E1 desk-intimacy when the camera dollies in — AND Room 1 closes (Daniel "transferred") in the same state. r4 = E4: the focus is Room 3 (Maya = the trans room evolved — NOT a separate desk; ◆N3 TURN retargets here); windows go dark for good. Rooms built from ONE local bedroom template (scratchpad/gen_rooms.mjs) placed per room — bed on a side wall, door away from the bed, clean CRT. COLOR LAW: every hex from era1.json family.',
   r1: null, // filled from the existing r1 below
+  // r2 = E2 (2003), HOMECOMING: the SAME Room 1, aged, but still CLOSED — no
+  // doorways, no side rooms yet (Sérgio/D14/D15: the walls open at E2→E3, not
+  // E1→E2). Aging cue only: window → day, moon gone, the teen gear (boombox)
+  // packed away — the mixtape survives on the still-present bookcase (it
+  // resists graying — the warm thread's first waypoint).
   r2: {
     props: {
-      // E2 = the same room, aged: window → day, moon gone (choreography §T1.3);
-      // the mixtape survives the packed boombox, moved to Room 1's shelf (it
-      // resists graying — the warm thread's first waypoint)
-      windowPane: { color: '#D4D0C8' },
-      // Room 1's shelf stood in the EAST DOORWAY once its wall left (Sérgio
+      windowPane: { color: '#D4D0C8' }
+    },
+    remove: ['moon', 'boombox', 'boomboxSpeakerL', 'boomboxSpeakerR', 'boomboxDeck'],
+    add: []
+  },
+  // r3 = E3 (2016), the T2 update's cascade: the rooms OPEN (moved here from
+  // the old T1/E2 spot) AND Room 1 closes in the same step (Daniel
+  // "transferred" — moving boxes, the bed under a dust sheet) while Room 2
+  // comes forward as Vera's (pastel, a plant); Room 3 keeps evolving (the
+  // misfiled folders). Focus dollies to Room 2 (yaw 90).
+  r3: {
+    props: {
+      windowPane: { color: '#D4D0C8' }, // carries the E2 aging forward (fold safety if r2 is ever skipped)
+      // Room 1's shelf stands in the EAST DOORWAY once its wall leaves (Sérgio
       // Round 25: "still a shelf in the middle of the space") — the books/CD/
       // mixtape decorations (still raw boxes, not modeled) ride back to the
       // east-rear wall stub with it; the bookcase MODEL itself moves via the
@@ -204,28 +246,19 @@ const deltas = {
       book3: { pos: [1.98, 1.67, 3.15] },
       cdStack: { pos: [1.98, 0.71, 3.45] },
       mixtape: { pos: [1.98, 1.16, 3.38] }
+      // (the side rooms' 2016 pastels are baked into the vera/maya identity
+      // palettes above — the rooms are BORN here at r3, so recoloring them in
+      // this same state's props would be a silent no-op; see the palette note)
     },
-    remove: ['wallWest', 'wallEast', 'moon', 'boombox', 'boomboxSpeakerL', 'boomboxSpeakerR', 'boomboxDeck', 'bedModel', 'bookcaseModel'],
+    remove: ['wallWest', 'wallEast', 'bedModel', 'bookcaseModel'],
     // Room 1's bed moves BACK out of the west doorway (Sérgio: "the bed on
     // Era-1 can't be there, it stands in front of the opening for the other
     // room") — tucked to the back-left corner, shortened, clearing the seated
     // sightline into Room 2. (T-layout constraint; the X-layout frees a wall.)
-    add: [...openWest, ...openEast, ...room2, ...room3, ...bedMoved, ...bookcaseMoved]
-  },
-  // r3 = E3 (2016): Room 1 closes (Daniel "transferred" — moving boxes, the bed
-  // under a dust sheet); Room 2 comes forward as Vera's (pastel, a plant); Room
-  // 3 keeps evolving (the misfiled folders). Focus dollies to Room 2 (yaw 90).
-  r3: {
-    props: {
-      w_curtL: { color: '#C8B8D0' }, w_curtR: { color: '#C8B8D0' }, // Room 2 → 2016 pastel
-      w_poster: { color: '#B8D0C8' },
-      w_crtScreen: { color: '#BFE0DA' },             // platform-pale
-      e_crtScreen: { color: '#8FC4E0' }
-    },
-    remove: [],
-    // Room 1 bed -> dust sheet: bedDustSheet is a plain box, not a recolor of
-    // the (now-modeled) bed, since model props never repaint (see the C1 note).
-    add: [...danielBoxes, ...veraPlant, ...mayaFolders, ...bedDustSheet]
+    // Room 1 bed -> dust sheet in the same step: bedDustSheet is a plain box,
+    // not a recolor of the (now-modeled) bed, since model props never repaint.
+    add: [...openWest, ...openEast, ...room2, ...room3, ...bedMoved, ...bookcaseMoved,
+      ...danielBoxes, ...veraPlant, ...mayaFolders, ...bedDustSheet]
   },
   // r4 = E4 (present): Room 3 leads (Maya) — the lamp props ride to her desk
   // (the warm thread's end), a phone lands, the interface screen; every window

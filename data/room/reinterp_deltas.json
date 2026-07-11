@@ -1,6 +1,56 @@
 {
-  "_doc": "Session 15 (Sérgio Round 24): THREE INTIMATE ROOMS THAT AGE, one shell. r1 = reinterp E1 (witness furniture out; spine door + record terminal). r2 = T1 \"the room OPENS, it does not explode\": Room 1 (Daniel, gay) keeps its EXACT E1 walls/desk/front-wall distance; its side walls become DOORWAYS revealing Room 2 (west/Vera, lesbian) and Room 3 (east/Maya, trans) — two adjacent intimate bedrooms at the SAME scale, axis-aligned (90° only), each read at E1 desk-intimacy when the camera dollies in. r4 = E4: the focus is Room 3 (Maya = the trans room evolved — NOT a separate desk; ◆N3 TURN retargets here); windows go dark for good. Rooms built from ONE local bedroom template (scratchpad/gen_rooms.mjs) placed per room — bed on a side wall, door away from the bed, clean CRT. COLOR LAW: every hex from era1.json family. Phase A: E3 shares the E2 state; per-era aging of all three rooms = Phase B.",
+  "_doc": "Session 15 (Sérgio Round 24), restructured Session 27 (R28-0c, D14/D15): THREE INTIMATE ROOMS THAT AGE, one shell. r1 = reinterp E1 (witness furniture out; spine door + record terminal). r2 = E2, HOMECOMING (D15): Daniel comes back to the SAME closed Room 1, aged — the walls do NOT open here (Sérgio: \"at Era 2 the room ages but stays CLOSED\"). r3 = T2 \"the room OPENS, it does not explode\" (moved from T1/E2): Room 1 (Daniel, gay) keeps its EXACT E1 walls/desk/front-wall distance; its side walls become DOORWAYS revealing Room 2 (west/Vera, lesbian) and Room 3 (east/Maya, trans) — two adjacent intimate bedrooms at the SAME scale, axis-aligned (90° only), each read at E1 desk-intimacy when the camera dollies in — AND Room 1 closes (Daniel \"transferred\") in the same state. r4 = E4: the focus is Room 3 (Maya = the trans room evolved — NOT a separate desk; ◆N3 TURN retargets here); windows go dark for good. Rooms built from ONE local bedroom template (scratchpad/gen_rooms.mjs) placed per room — bed on a side wall, door away from the bed, clean CRT. COLOR LAW: every hex from era1.json family.",
   "r1": {
+    "props": {
+      "boombox": {
+        "pos": [
+          1.9,
+          0.76,
+          0.55
+        ],
+        "size": [
+          0.18,
+          0.24,
+          0.42
+        ]
+      },
+      "boomboxSpeakerL": {
+        "pos": [
+          1.805,
+          0.76,
+          0.4
+        ],
+        "size": [
+          0.02,
+          0.1,
+          0.1
+        ]
+      },
+      "boomboxSpeakerR": {
+        "pos": [
+          1.805,
+          0.76,
+          0.7
+        ],
+        "size": [
+          0.02,
+          0.1,
+          0.1
+        ]
+      },
+      "boomboxDeck": {
+        "pos": [
+          1.805,
+          0.79,
+          0.55
+        ],
+        "size": [
+          0.015,
+          0.06,
+          0.1
+        ]
+      }
+    },
     "remove": [
       "wallSouth",
       "door",
@@ -164,7 +214,7 @@
       {
         "id": "bedModel",
         "pos": [
-          -1.72,
+          -1.53,
           0,
           1.15
         ],
@@ -179,7 +229,7 @@
       {
         "id": "bookcaseModel",
         "pos": [
-          1.7,
+          1.87,
           0,
           0.75
         ],
@@ -189,7 +239,8 @@
           0.5
         ],
         "color": "#8A5A3B",
-        "model": "bookcase"
+        "model": "bookcase",
+        "yaw": 90
       },
       {
         "id": "rugModel",
@@ -224,6 +275,21 @@
     ]
   },
   "r2": {
+    "props": {
+      "windowPane": {
+        "color": "#D4D0C8"
+      }
+    },
+    "remove": [
+      "moon",
+      "boombox",
+      "boomboxSpeakerL",
+      "boomboxSpeakerR",
+      "boomboxDeck"
+    ],
+    "add": []
+  },
+  "r3": {
     "props": {
       "windowPane": {
         "color": "#D4D0C8"
@@ -267,11 +333,6 @@
     "remove": [
       "wallWest",
       "wallEast",
-      "moon",
-      "boombox",
-      "boomboxSpeakerL",
-      "boomboxSpeakerR",
-      "boomboxDeck",
       "bedModel",
       "bookcaseModel"
     ],
@@ -566,7 +627,7 @@
           0.9,
           0.05
         ],
-        "color": "#A8B49A",
+        "color": "#C8B8D0",
         "yaw": 90
       },
       {
@@ -581,7 +642,7 @@
           0.9,
           0.05
         ],
-        "color": "#A8B49A",
+        "color": "#C8B8D0",
         "yaw": 90
       },
       {
@@ -596,7 +657,7 @@
           0.6,
           0.02
         ],
-        "color": "#D4A0A0",
+        "color": "#B8D0C8",
         "yaw": 90
       },
       {
@@ -753,7 +814,7 @@
           0.28,
           0.02
         ],
-        "color": "#5DCAA5",
+        "color": "#BFE0DA",
         "emissive": true,
         "yaw": 90
       },
@@ -1197,7 +1258,7 @@
           0.28,
           0.02
         ],
-        "color": "#6FB8D8",
+        "color": "#8FC4E0",
         "emissive": true,
         "yaw": 270
       },
@@ -1279,9 +1340,9 @@
       {
         "id": "bedMoved",
         "pos": [
-          -1.72,
+          -1.55,
           0,
-          2.78
+          2.63
         ],
         "size": [
           0.78,
@@ -1294,7 +1355,7 @@
       {
         "id": "bookcaseMoved",
         "pos": [
-          1.7,
+          1.87,
           0,
           3.3
         ],
@@ -1304,30 +1365,9 @@
           0.5
         ],
         "color": "#8A5A3B",
-        "model": "bookcase"
-      }
-    ]
-  },
-  "r3": {
-    "props": {
-      "w_curtL": {
-        "color": "#C8B8D0"
+        "model": "bookcase",
+        "yaw": 90
       },
-      "w_curtR": {
-        "color": "#C8B8D0"
-      },
-      "w_poster": {
-        "color": "#B8D0C8"
-      },
-      "w_crtScreen": {
-        "color": "#BFE0DA"
-      },
-      "e_crtScreen": {
-        "color": "#8FC4E0"
-      }
-    },
-    "remove": [],
-    "add": [
       {
         "id": "movingBox1",
         "pos": [
@@ -1419,14 +1459,14 @@
       {
         "id": "bedDustSheet",
         "pos": [
-          -1.72,
+          -1.55,
           0.44,
-          2.78
+          2.63
         ],
         "size": [
-          0.82,
+          0.85,
           0.05,
-          1.6
+          1.1
         ],
         "color": "#C8C4BC"
       }

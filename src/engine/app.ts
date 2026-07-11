@@ -53,12 +53,17 @@ const CAM_MOVE_SECONDS = 3.6;
 const CAM_MOVE_DELAY_MS = 700;
 const STARTUP_ARM_SECONDS = 4.0;
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
-// a click-to-move marker's hit radius is a touch larger than its visual disc
-// (0.22m, movementNodes.ts) — the same "forgiving after arm" click generosity
-// the O1 wall click already uses. The blink is a CUT, never a tween: fade to
-// black, THEN move the camera, THEN fade back — no smooth travel (Sérgio's
-// explicit law: gaze must stay free, and a blink can never look like a dolly).
-const MARKER_HIT_RADIUS = 0.32;
+// the blink is a CUT, never a tween: fade to black, THEN move the camera,
+// THEN fade back — no smooth travel (Sérgio's explicit law: gaze must stay
+// free, and a blink can never look like a dolly).
+// R28-0c (item 4) fix: this used to be 0.32 — bigger than the visual disc's
+// own 0.22m radius (movementNodes.ts's MARKER_DIAMETER/2) — so a click aimed
+// at scenery near/above a marker's floor point (e.g. shelf items on the
+// bookcase) could register as a marker hit and steal the click, teleporting
+// the player instead of interacting with the prop. The hit radius now MATCHES
+// the visible disc exactly: a click only arms a marker if it actually lands
+// on the disc you can see.
+const MARKER_HIT_RADIUS = 0.22;
 const BLINK_OUT_SECONDS = 0.13;
 const BLINK_IN_SECONDS = 0.22;
 
@@ -313,11 +318,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // "the frame never plays" still holds: this is chrome, not the fiction).
   let blinkOverlay: HTMLDivElement | null = null;
   let moveHint: HTMLDivElement | null = null;
+  let floppyHint: HTMLDivElement | null = null;
   function dismissMoveHint(): void {
     if (moveHintDismissed || !moveHint) return;
     moveHintDismissed = true;
     moveHint.style.opacity = '0';
     moveHint.style.pointerEvents = 'none';
+  }
+  function dismissFloppyHint(): void {
+    if (floppyHintDismissed || !floppyHint) return;
+    floppyHintDismissed = true;
+    floppyHint.style.opacity = '0';
+    floppyHint.style.pointerEvents = 'none';
   }
   if (options.reinterp === true) {
     blinkOverlay = document.createElement('div');
@@ -339,6 +351,26 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     moveHint.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       dismissMoveHint();
+    });
+
+    // R28-0c (item 10, Sérgio: "guide the player to the floppy — it's a
+    // guided experience"): a small dismissable status line, shown while the
+    // desktop is up and the kit hasn't been inserted yet — same frame-voice
+    // register and dismiss pattern as moveHint, but its own line (not tied
+    // to movement) so the two never compete for the same message.
+    floppyHint = document.createElement('div');
+    floppyHint.textContent = (reinterpStrings as { floppyHint?: string }).floppyHint
+      ?? 'Insert the floppy disk on the desk to begin.';
+    Object.assign(floppyHint.style, {
+      position: 'fixed', left: '50%', bottom: '20%', transform: 'translateX(-50%)',
+      zIndex: '9', background: 'rgba(10,10,14,0.78)', color: '#cdd3df',
+      font: '12px monospace', padding: '6px 12px', borderRadius: '4px',
+      opacity: '0', pointerEvents: 'none', transition: 'opacity 0.4s', cursor: 'pointer'
+    } as CSSStyleDeclaration);
+    document.body.appendChild(floppyHint);
+    floppyHint.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      dismissFloppyHint();
     });
   }
 
@@ -417,6 +449,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let blinkTargetNode: string | null = null;
   let moveHintShown = false;
   let moveHintDismissed = false;
+  let floppyHintDismissed = false;
+  let floppyEmphasisOn = false; // tracks the CURRENT applied emissive lift state (item 10)
 
   // the gaze-dwell facet pull (geometry doc §2.2 #3) — ambient and reversible:
   // a facet resolves WHILE you look and recedes when you don't; nothing accrues,
@@ -744,22 +778,31 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         os.insertKit(); // S1.2 — you put the disk in yourself
         return;
       }
+      // R28-0c (item 4): the monitor/OS click is checked BEFORE markers — prop
+      // and OS interactions must win over a marker when both could match a
+      // click (Sérgio: a shelf-item click teleported him instead of doing
+      // nothing/interacting). toDesktop() only matches the narrow monitor
+      // plane, so this reorder costs nothing on the far more common case
+      // (clicking a marker on the floor, nowhere near the screen).
+      const p = toDesktop(e);
+      if (p) { // the monitor is the UI; everywhere else is the room
+        os.handleClick(p.x, p.y);
+        return;
+      }
       // R28-1: click-to-move, NEVER gaze-to-move — this pointerdown ray/hit
       // test is the ONLY thing that can arm a marker; looking at one (however
       // long) never does. Only test markers actually being offered right now
-      // (movementNodes.available already excludes the current seat).
+      // (movementNodes.available already excludes the current seat) AND
+      // actually visible this frame (isVisible — defence in depth alongside
+      // the tightened MARKER_HIT_RADIUS, item 4).
       if (movementNodes && cluster && !scriptedBusy()) {
         for (const n of movementNodes.available(cluster.era, seatYaw)) {
+          if (!movementNodes.isVisible(n.id)) continue;
           if (rayHitsPoint(e, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) {
             requestMove(n.id);
             return;
           }
         }
-      }
-      const p = toDesktop(e);
-      if (p) { // the monitor is the UI; everywhere else is the room
-        os.handleClick(p.x, p.y);
-        return;
       }
     }
     drag = { x: e.clientX, y: e.clientY };
@@ -780,17 +823,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   });
   canvasEl.addEventListener('pointerup', () => {
     drag = null;
-    // dolly-follow (Round 23): releasing a head-turn nearer another room's
-    // facing travels there — "when the person turns their head it follows
-    // the path of the camera". A small turn inside the room stays free.
-    if (options.reinterp && !facingBack && !camMove) {
-      const seats = seatYaws();
-      if (seats.length > 1 && angDist(camYaw, seatYaw) > 55) {
-        let best = seatYaw;
-        for (const s of seats) if (angDist(camYaw, s) < angDist(camYaw, best)) best = s;
-        if (best !== seatYaw) dollyTo(best, 2.6, false);
-      }
-    }
+    // R28-0c (item 13, Sérgio: "the camera still jumps rooms from look/drag
+    // input"): the old dolly-follow ("releasing a head-turn nearer another
+    // room's facing travels there") was a non-marker way to change seats —
+    // under options.reinterp, room-to-room movement is ONLY requestMove
+    // (markers) or a scripted beat (sends/updates/the TURN); drag is
+    // look-in-place only, full stop. The shipped (non-reinterp) baseline
+    // never had this behavior to begin with, so nothing changes there.
   });
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -806,30 +845,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (options.reinterp && !os.paused) {
       const k = e.key;
       if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown') {
-        const seats = seatYaws();
-        if (seats.length > 1 && (k === 'ArrowLeft' || k === 'ArrowRight')) {
-          // open cluster: left/right = dolly to the adjacent room (Round 23)
-          if (!camMove || !camMove.conducted) {
-            let i = seats.indexOf(seatYaw);
-            if (i < 0) { // era snap left us off-list: nearest seat by angle
-              i = 0;
-              for (let j = 1; j < seats.length; j++) {
-                if (angDist(seatYaw, seats[j]) < angDist(seatYaw, seats[i])) i = j;
-              }
-            }
-            const next = k === 'ArrowLeft'
-              ? seats[(i + 1) % seats.length]
-              : seats[(i - 1 + seats.length) % seats.length];
-            dollyTo(next, 2.6, false);
-          }
-        } else {
-          nudgeCamera();
-          if (!camMove) {
-            if (k === 'ArrowLeft') camYaw += 6;
-            else if (k === 'ArrowRight') camYaw -= 6;
-            else if (k === 'ArrowUp') camPitch = Math.min(DRAG_PITCH_MAX, camPitch + 5);
-            else camPitch = Math.max(-DRAG_PITCH_MAX, camPitch - 5);
-          }
+        // R28-0c (item 13): arrow keys are look-in-place ONLY, every era —
+        // the old "left/right = dolly to the adjacent room" (Round 23) was a
+        // non-marker way to change seats, which Sérgio flagged as the camera
+        // still "gaze/arrow jumping" rooms. Under options.reinterp, the ONLY
+        // way to change seats is requestMove (markers) or a scripted beat
+        // (sends/updates/the TURN) — never a raw keypress.
+        nudgeCamera();
+        if (!camMove) {
+          if (k === 'ArrowLeft') camYaw += 6;
+          else if (k === 'ArrowRight') camYaw -= 6;
+          else if (k === 'ArrowUp') camPitch = Math.min(DRAG_PITCH_MAX, camPitch + 5);
+          else camPitch = Math.max(-DRAG_PITCH_MAX, camPitch - 5);
         }
         e.preventDefault();
         return;
@@ -948,6 +975,30 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
             moveHint.style.opacity = '1';
             moveHint.style.pointerEvents = 'auto';
           }
+        }
+      }
+
+      // R28-0c (item 10, Sérgio: "guide the player to the floppy"): the hint
+      // line + a STATIC (no pulse, no glow halo — Soft Lo-Fi) brightness lift
+      // on the physical floppy while it waits uninserted; both retire the
+      // instant os.kit exists (dismissFloppyHint mirrors that moment, not a
+      // timer). The floppy already carries a faint hero-tier self-emissive
+      // (styleMaterial, era1room.ts, 10% of its diffuse) — this only raises
+      // that same fraction, it never invents a new light or replaces color.
+      const wantFloppyEmphasis = os.inDesktop && !os.kit;
+      if (floppyHint && !floppyHintDismissed) {
+        floppyHint.style.opacity = wantFloppyEmphasis ? '1' : '0';
+        floppyHint.style.pointerEvents = wantFloppyEmphasis ? 'auto' : 'none';
+      }
+      if (wantFloppyEmphasis !== floppyEmphasisOn) {
+        floppyEmphasisOn = wantFloppyEmphasis;
+        const frac = wantFloppyEmphasis ? 0.32 : 0.10; // 0.10 = the existing hero baseline
+        for (const id of ['kitFloppy', 'kitFloppyLabel', 'kitFloppyShutter']) {
+          const h = room.props.get(id);
+          if (!h || h.emissive) continue;
+          const d = h.material.diffuse;
+          h.material.emissive = new pc.Color(d.r * frac, d.g * frac, d.b * frac);
+          h.material.update();
         }
       }
 
@@ -1123,7 +1174,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       enterClose();
     } else if (options.era && cluster) {
       os.setDesktopEra(options.era);
-      setOpeningBoardVisibleForEra(options.era);
+      // R28-0c (item 12b): review jumps skip O1/O3 entirely, so there is never
+      // any real content (profile pins, filed record) for the physical
+      // cork-board dressing to frame — setOpeningBoardVisibleForEra() would
+      // force it visible anyway (true for e1-e3), reading as a bare "undone"
+      // board with only the model's own baked decorative sticky notes on it.
+      // Review jumps hide the dressing outright instead; the real O1→O3→E1
+      // playthrough path (continueFromOpeningWall → onOpeningProfileChange)
+      // is unaffected and still shows/hides it correctly by stage.
+      const dressing = app.root.findByName('opening-board-dressing');
+      if (dressing instanceof pc.Entity) dressing.enabled = false;
       cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
       // boot SEATED at the era's home room (E4 boots already turned — the TURN)

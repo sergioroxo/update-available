@@ -69,7 +69,16 @@ export class UpdateApp {
   }
 
   update(dt: number): void {
-    this.t += dt;
+    // R28-0c (item 7): clamp a single frame's dt. Sérgio's "remind later"
+    // ritual report ("it went straight to installing, no EULA/changelog felt
+    // lost") is consistent with the browser tab losing focus during the 40s
+    // deferral (or install/restart's own short holds) and rAF delivering one
+    // giant catch-up frame on return — without a clamp, that single tick can
+    // silently satisfy an entire phase's timer (install/restart) before the
+    // player ever sees it render even once. Capping dt costs nothing on a
+    // normal 60fps frame; it only changes behavior after a real stall/gap.
+    const MAX_DT = 0.1;
+    this.t += Math.min(dt, MAX_DT);
     if (this.phase === 'reminded' && this.t >= REMIND_SECONDS) {
       this.phase = 'notify'; // it returns — and this time there is no later
       this.t = 0;
