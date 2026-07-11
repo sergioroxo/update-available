@@ -221,3 +221,29 @@ Your VO takes don't need to match these lengths exactly — the sheet flexes ±1
 assembly; just keep each line inside ~4s (the disclaimer inside ~6s). The jingle prompt
 stays as §7 wrote it; if Suno's minute has a verse before the chorus, that verse section of
 the INSTRUMENTAL becomes the 0–33s bed — which is exactly what we want.
+
+### §7c FINAL APPROACH (Sérgio 2026-07-11): loopable instrumental FIRST, jingle as a remix
+
+Decision: stop fighting for one perfect jingle. **Two assets, built in order:**
+
+**Asset 1 — the loopable instrumental bed (generate this first; it's the foundation):**
+```
+Instrumental 2000s contemporary christian praise-pop advertising bed, upbeat and bright,
+major key, acoustic guitar strum, twinkly piano, tambourine, light drums, 110 BPM, written
+to LOOP SEAMLESSLY - no intro, no outro, no fade, no key change, constant cheerful energy
+throughout, 30 to 60 seconds, instrumental only. no vocals, no choir, no build-ups, no drops
+```
+Loopable = the commercial (and any future use — Restorify hold music, the E2 desktop
+ambience) can enter and exit it at ANY point, and VO can run as long as it runs.
+
+**Asset 2 — the sung hook, remixed FROM the bed:** use Suno's Cover/Extend on your best
+bed take with ONLY the chorus lyrics (The New You! four lines + the held tag) so the sung
+hook is in the same key/tempo/sound family — a 10–15s stinger we drop onto the loop at the
+karaoke moment (33.5s in the §7b cue sheet) and at the end tag. If Cover fights you,
+generate it standalone with: "short sung advertising jingle hook, 2000s christian praise-pop,
+earnest choir and bright lead, big singable, 10-15 seconds, same feel as an existing upbeat
+acoustic-and-piano bed, ends clean on a held note."
+
+Assembly then = loop bed under everything + VO per the §7b cue sheet + hook stinger at the
+chorus and tag + degradation pass. Maximum flexibility, no dependence on Suno's song-length
+whims.

@@ -196,6 +196,14 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   auto-boot; a room-caption surface guides the first press). Options: (a) keep
   auto-boot, thread starts at the floppy (as built); (b) restore the power
   beat with a room caption. Deliberately NOT improvised — say a or b.
+  **→ ANSWERED (a) by Sérgio 2026-07-11: auto-boot, guidance starts at the
+  floppy. CLOSED as built — no change needed.**
+- **D23 (2026-07-11)** — Infomercial audio architecture (Sérgio's call,
+  adopted): a LOOPABLE INSTRUMENTAL BED is the base asset (enter/exit at any
+  point; reusable as Restorify ambience), with the sung "New You" hook as a
+  separate 10–15s stinger remixed FROM the bed (Suno Cover/Extend) and dropped
+  at the karaoke + tag moments. Prompts in the audio guide §7c. Supersedes the
+  single-jingle approach.
 - **D20 (2026-07-10)** — Era-doc mining done at Sérgio's direction:
   `docs/REINTERP_ERA_MINING_R28_2026-07-10.md` (10 finds). Headlines: the
   shipped Era-2 already contains the love interest (CALEB: romance → live
