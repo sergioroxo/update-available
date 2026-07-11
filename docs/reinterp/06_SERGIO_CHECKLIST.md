@@ -179,6 +179,23 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
   build session.
 
+- **D21 (2026-07-11)** — R28-2a SHIPPED + FULLY VERIFIED (Sessions 28–29,
+  commits `ac99c52` + `a767af4`): the Era-1 side-message guide thread
+  (floppy→kit→tape→channel→packet→diary→update, one active at a time,
+  witness-symmetric filings, first profile click files instantly, the last
+  message seeds Lamby's debut). The "O1 Continue broken" scare was a test-
+  harness artifact (backgrounded tab suspends the arm timer) — the build was
+  innocent; your real mouse was never affected. **Your check:** the guidance
+  strings + their witness-line wording (followed/declined per message) live in
+  `data/dialog/s1_guide.json` — newer than the copy inventory, so voice-pass
+  them directly in that file.
+- **D22 (2026-07-11, Session 28's discovered question — YOUR CALL):** the
+  guided thread's spec opens with a "power on" beat, but the reinterp opening
+  AUTO-BOOTS after O1 (and a dark monitor can't carry its own status line).
+  Restoring a true power-on beat needs a small choreography change (don't
+  auto-boot; a room-caption surface guides the first press). Options: (a) keep
+  auto-boot, thread starts at the floppy (as built); (b) restore the power
+  beat with a room caption. Deliberately NOT improvised — say a or b.
 - **D20 (2026-07-10)** — Era-doc mining done at Sérgio's direction:
   `docs/REINTERP_ERA_MINING_R28_2026-07-10.md` (10 finds). Headlines: the
   shipped Era-2 already contains the love interest (CALEB: romance → live
