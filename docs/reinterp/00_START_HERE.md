@@ -8,9 +8,9 @@ place. Sérgio (project lead, non-coder) directs; you execute one session at a t
 1. This file.
 2. `../../CLAUDE.md` — the standing orders. Hard invariants, register laws, aesthetic laws. Binding.
 3. `../ETHICS_CONSTRAINTS.md` — binding before ANY content work.
-4. `../REINTERP_MASTER_PLAN_v1_2026-07-02.md` — the plan of record. Read the calls table (◆), the
-   roadmap (R0–R11), and ALL feedback rounds (F1–F9, R2-*, R3-*, R4-*) — later rounds supersede earlier
-   items where marked. Do not act from the v1 body alone.
+4. `../REINTERP_MASTER_PLAN_v2_2026-07-12.md` — **THE PLAN OF RECORD** (consolidates Rounds 1–28;
+   where any older doc disagrees, v2 wins; its §10 maps what's superseded). The old v1 + its archive
+   rounds remain the decision HISTORY only — consult them for "why", never for "what's current".
 5. `01_SESSION_LOG.md` — what's done, what's next. **Your session = the top item of NEXT UP, unless
    Sérgio says otherwise.**
 6. The build spec for the current phase (per the queue below).

@@ -179,6 +179,17 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
   build session.
 
+- **D28 (2026-07-12)** — **MASTER_PLAN_v2 WRITTEN** — the consolidation you
+  asked for ("the documents all fit and not fit together"):
+  `docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md`. One current-truth document:
+  the piece in one page, consolidated laws, the space, the guidance lineage
+  (side-messages→Lamby→Lambient→Echo), the full era-by-era flow (E1 built ·
+  E2 scripted · E3/E4 spines set), the update grammar with the EULA verb
+  ladder, audio doctrine + asset state, content pipelines, the live build
+  queue, and a supersession map. `00_START_HERE`'s read order now points to
+  v2 — new sessions read FOUR docs instead of forty. **Your check: skim §1
+  and §5 — if the one-page version of the piece doesn't match the piece in
+  your head, that mismatch is the most valuable thing you can tell me.**
 - **D25 (2026-07-12)** — **THE E2 HOMECOMING SCRIPT written** (the era's real
   narrative): `docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md`. Beats
   S2R.0–S2R.7: the silent return (kept objects un-aged, 2003 daylight), **the
