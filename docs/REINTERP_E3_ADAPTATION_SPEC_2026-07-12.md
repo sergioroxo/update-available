@@ -138,8 +138,64 @@ All three keep: flag/bury complicity → the trained eye → the refusal → the
 counter-current → Malta as the breaking point → the Flourish rebrand. The sends-as-tasks
 (S3R.3) and Noa's two-edge survive unchanged in any of them.
 
-## What Sérgio owes this spec
-1. **Pick the mechanic: Option 1 / 2 / 3** (or mix — e.g., 1 with 3's audio for Mira only).
-2. A read: does Noa carrying the borderland feel right, or does she split into two people?
-3. The felt beats (S3R.4, the counter-current voices) — yours.
-4. Trans-masc reader gate before E3-iii content ships.
+---
+
+## R29-b DEEP REVISION (2026-07-12) — THE THREE-SCREEN ROOM (supersedes the R29 options)
+
+*Sérgio's correction: the R29 options (pinboard/shelf/switchboard) were ANALOG — but the
+whole research is how TECHNOLOGY shapes SOGICE, and 2016 is a specific technological
+moment. Rethought from the technology:*
+
+**The era's tech truth:** between 2003 and 2016 the machine stopped being a place you sit.
+It became every screen you own. SOGICE's 2016 form is PLATFORM governance: ambient
+(notifications follow you), outsourced (the targeted person does the moderation, unpaid),
+and surface-split (the same community renders differently on a dashboard, a feed, a DM).
+The era's horror isn't a device — it's that there is no longer anywhere in the room the
+system isn't.
+
+**The design: Room 2 has THREE devices, and they are three SEATS.**
+This is the structural beat the whole movement system has been waiting for: E1/E2 = one
+seat per room (the machine is a place); **E3 = three device-seats inside one room** (the
+machine is everywhere you sit); E4 = the room itself speaks (no seat is safe). The seat
+count per era IS the thesis. Conducted movement gets its first INTRA-room nodes here, and
+the multiplication is dramaturgy, not convenience.
+
+- **THE LAPTOP (desk seat)** — GraceQueue, the moderation dashboard. The work verb:
+  approve / soften / bury. The pattern-training strip lives here; Noa's two-edge
+  contradiction fires here. This is where the system makes you useful.
+- **THE TABLET (sofa/bed seat)** — True Daughters as the COMMUNITY reads it: the feed.
+  No verbs but scroll and witness. The consequence surface: a story you buried on the
+  laptop is simply *absent* here — the feed is clean, and you know why. (Complicity made
+  visible without a single line of text. This is where Malta breaks in too — news enters
+  the era where reading happens.)
+- **THE PHONE (nightstand seat)** — DMs and notifications. The intimate device: **Noa's
+  ask arrives here** (S3R.4 relocates), reply-chips only. And after the refusal, the
+  system's pings chase you here — the device that held the warm thing becomes the one
+  that won't go quiet.
+
+**The loop:** tasks arrive → laptop work → the tablet shows what the room now looks like
+→ the phone holds what the room costs. Mira's card: the system marks BURY on the laptop;
+`Let it stand` is the refusal — and **the turn plays across all three screens at once**
+(metrics dive on the laptop, cold replies bloom on the tablet, the phone pings and pings
+— ambient governance showing its teeth; the player physically turns among them). The
+counter-current lands where solidarity lives: the phone.
+
+**Continuity payoffs:** Lambient's lamb-marks are on ALL THREE screens — the E2 dispersal
+("companion process — could not be removed. migrating.") landed everywhere; the player
+recognizes the fragments. The cross-room sends (S3R.3) still fire from the laptop's queue.
+The witness wall still carries the record — the fourth surface, the one the player turns
+their back on to use the other three.
+
+**Production notes:** tablet + phone = the same offscreen-canvas renderer at smaller
+resolutions (the tech exists; budget = two more render textures, dirty-flag discipline);
+two new intra-room seat nodes (data-driven, nodes.json already supports arbitrary
+markers); device models — Sérgio's library has Laptop.glb / smartPhone.glb (license check
+per the D6/D8 policy, or Kenney-family equivalents). Micro-verbs per device keep each
+sitting short and playful; no reading walls.
+
+## What Sérgio owes this spec (updated)
+1. **The three-screen room: yes / amend.** (It absorbs the R29 options; the pinboard
+   survives only as the tablet-feed's visual grammar if wanted.)
+2. Does Noa carrying the borderland feel right, or split into two people?
+3. The felt beats (Noa's phone DM, the counter-current voices) — yours.
+4. Trans-masc reader gate before the two-edge content ships.
