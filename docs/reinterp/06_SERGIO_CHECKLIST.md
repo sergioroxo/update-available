@@ -179,6 +179,29 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
   build session.
 
+- **D25 (2026-07-12)** — **THE E2 HOMECOMING SCRIPT written** (the era's real
+  narrative): `docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md`. Beats
+  S2R.0–S2R.7: the silent return (kept objects un-aged, 2003 daylight), **the
+  power press relocated to E2** (in '97 the machine booted for you; in '03
+  Daniel turns it on himself — voluntary return IS the era), Lamby's 2-line
+  debut, the streak that "counted while he was away," the CALEB thread
+  (warm chat → live redaction → streak death → Caleb returns as the
+  messenger), the New You infomercial placement, the collapse with the broken
+  jingle, the residue line, the send to Room 2. **YOUR GATE: read S2R.3 (the
+  Caleb beat) — the one new ethics territory; yes/amend before its build lane
+  runs.** Operable copy is PLACEHOLDER-drafted; Caleb's words + the felt beats
+  are yours alone.
+- **D26 (2026-07-12)** — Sérgio's music-video structure for The New You
+  registered as CANON (audio guide §7d): female announcer, in-song talking
+  sections, SATB chorus, and the triple "Call now!" ending — the satire-
+  collapse in musical form, protect it in any edit. Single-generation route;
+  §7c loop+stinger stays as fallback. His verse/chorus lyrics enter the canon
+  as HIS draft.
+- **D27 (2026-07-12)** — R28-2c belongings beat dispatched (Sonnet): remind-
+  me-later opens the gathering (guide-system message, no checklist/counter),
+  click props to keep, kept objects survive the E1→E2 morph UN-AGED (the
+  homecoming payoff), final-state-only filings, refusing to gather is a valid
+  filed answer, update-now = "belongings: processed."
 - **D21 (2026-07-11)** — R28-2a SHIPPED + FULLY VERIFIED (Sessions 28–29,
   commits `ac99c52` + `a767af4`): the Era-1 side-message guide thread
   (floppy→kit→tape→channel→packet→diary→update, one active at a time,

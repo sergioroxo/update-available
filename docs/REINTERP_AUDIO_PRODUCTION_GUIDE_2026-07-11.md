@@ -247,3 +247,28 @@ acoustic-and-piano bed, ends clean on a held note."
 Assembly then = loop bed under everything + VO per the §7b cue sheet + hook stinger at the
 chorus and tag + degradation pass. Maximum flexibility, no dependence on Suno's song-length
 whims.
+
+### §7d THE MUSIC-VIDEO STRUCTURE (Sérgio 2026-07-12 — CANON for the commercial's shape)
+
+Sérgio authored the full production-number structure (single Suno generation with in-song
+talking sections — v4.5+ handles `[Talking]` role tags): grand piano/brass/driving kit
+intro → **FEMALE announcer** ("Tired of feeling like yourself?") → Pastor Dale (male,
+pastoral, two lines) → dual announcer brand reveal → Marcus testimony → Dale's three steps
++ altar call → **Verse 1** (baritone female, high energy: "Feeling lost and incomplete
+inside…") → **SATB chorus + strings swell** ("Yes, discover the new you") → announcer
+"Three easy payments of yourself." → **the ending: sustained belt, repetitive, unsettling —
+"Operators of grace are standing by. Call now! Call now! [really high] Call now!"**
+
+Notes of record:
+- **The announcer is now FEMALE** (and dual-voice on the brand reveal) — supersedes the
+  §6/§6b male-announcer casting for any line the SONG carries; the separate TTS
+  announcer files remain useful for the on-screen commercial's non-sung moments and the
+  mumbled disclaimer (which this structure deliberately leaves OUT of the song — keep it
+  as VO under the final static, per the cue sheet).
+- The triple "Call now!" with the really-high ending is the satire-collapse in musical
+  form — the cheer pushed until it breaks. Protect it in any edit.
+- Verse/chorus lyrics here are Sérgio's — they enter the copy canon as his draft, not
+  PLACEHOLDER-for-Sérgio.
+- If the single-generation route fights Suno (talking sections drifting), §7c's two-asset
+  loop+stinger approach remains the fallback; the on-screen scene timings re-derive from
+  whichever audio wins (the s2_media.json `at` values are retimed at assembly, as always).
