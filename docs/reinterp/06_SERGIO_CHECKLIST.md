@@ -179,6 +179,20 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
   build session.
 
+- **D29 (2026-07-12)** — **THE E3 ADAPTATION SPEC written**:
+  `docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md`. Your borderland revision
+  made structural: **Noa Field deepened to carry the butch/trans-masc
+  borderland** (her locked name already says it — "unclassifiable data
+  field"); the era's hardest surface is the TWO-EDGE POLISH BENCH — the same
+  testimony flagged "soften her presentation" AND "gender confusion —
+  exploratory mentorship," both rendered, neither endorsed, Noa never
+  resolved (the piece never answers for her). Moderation tasks become the
+  system-sent cross-room jumps (archive review → Daniel's aged Room 1;
+  referral follow-up → a half-lit Room 3 facet preview that seeds E4). Malta
+  2016 + the Flourish rebrand close the era. **Your reads: (1) Noa carrying
+  the borderland vs. splitting into two people; (2) the felt beats are yours;
+  (3) trans-masc reader gate before E3-iii content.** E3-i/ii are mechanical
+  and can start when E2's lanes clear.
 - **D28 (2026-07-12)** — **MASTER_PLAN_v2 WRITTEN** — the consolidation you
   asked for ("the documents all fit and not fit together"):
   `docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md`. One current-truth document:
