@@ -15,6 +15,7 @@ import { DiaryApp } from './apps/diary';
 import { ProvotypeApp, type Provotype } from './apps/provotype';
 import { UpdateApp, type UpdateKey } from './apps/update';
 import { GuideThread } from '../narrative/guide';
+import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
 import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
@@ -99,6 +100,8 @@ export class DesktopOS {
   updateApp: UpdateApp | null = null;
   /** R28-2a: the Era-1 side-message guide thread (reinterp only, pre-Lamby) */
   guide: GuideThread | null = null;
+  /** R28-2c: the belongings beat (T1's gathering window), reinterp only */
+  belongings: BelongingsSystem | null = null;
   /** a live send OFFER (master script §4) — icon + summons window on the desktop */
   private sendOffer: { id: string; open: boolean } | null = null;
   /** engine listens: the update restart landed — morph the space to `era` */
@@ -141,6 +144,7 @@ export class DesktopOS {
     if (this.reinterp) {
       this.phase = 'r_dark';
       this.guide = new GuideThread(this);
+      this.belongings = new BelongingsSystem();
     }
   }
 
@@ -272,6 +276,15 @@ export class DesktopOS {
       this.dirty = true;
       this.onEraShift?.(toEra);
     };
+    // R28-2c: the belongings beat lives on the T1 notice only (key 'u2') —
+    // u3/u4/close are untouched, their own gathering beats are a later lane
+    // (E2 homecoming script S2R.7 names one at u3, not this session's scope).
+    if (key === 'u2' && this.belongings) {
+      const belongings = this.belongings;
+      this.updateApp.onRemindLaterUsed = () => belongings.openWindow();
+      this.updateApp.onWindowClosed = () => belongings.closeWindow();
+      this.updateApp.onUpdateNowDirect = () => belongings.fileProcessed();
+    }
     this.dirty = true;
   }
 

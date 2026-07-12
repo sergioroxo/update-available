@@ -24,6 +24,7 @@ import { ClusterMorph, constantPropIds } from './clusterMorph';
 import { batchStaticProps, batchSettledProps, clearSettledBatch, type SettledBatchHandle } from './batching';
 import clusterData from '../../data/room/cluster.json';
 import nicheData from '../../data/room/fluid_niche.json';
+import belongingsData from '../../data/room/belongings.json';
 import type { FluidNiche, FacetState } from './fluidNiche';
 import type { CeilingWitness } from './ceilingWitness';
 
@@ -41,6 +42,17 @@ export interface NicheEraTable {
 
 interface RigLight { intensity: number; range?: number; color?: string }
 interface Rig { ambient: number[]; zoneFill: number; lights: Record<string, RigLight> }
+
+/** R28-2c (the belongings beat): props the player may KEEP are excluded from
+ *  BOTH batching groups below (not just the morph's own STATIC_IDS check) —
+ *  a shared-material batch would cross-contaminate the per-item "kept" warm
+ *  lift onto any OTHER prop of the identical colour signature (a real risk
+ *  here: book2 and tapeB share `#9FB4C0`, tapeA/cdStack/modem share
+ *  `#D4D0C8`). Excluding ~7 props costs a handful of extra draw calls, well
+ *  inside the Quest budget, in exchange for guaranteed-independent materials. */
+const BELONGINGS_IDS = new Set(
+  (belongingsData as unknown as { eligible: { id: string }[] }).eligible.map((e) => e.id)
+);
 
 const RIG_FADE_SECONDS = 2.5;
 /** space-state index per era (reinterp_deltas.json fold: r1 → r2 → r3 → r4).
@@ -80,6 +92,10 @@ export interface ClusterShell {
   applyRig(name: string, animate: boolean): void;
   /** the era's niche facet table (fluid_niche.json), for the gaze resolver */
   eraTable(): NicheEraTable | undefined;
+  /** R28-2c (the belongings beat): freeze these prop ids at their exact r1/
+   *  E1 fold through every later morph — the payoff plumbing for the T1
+   *  gathering window. Idempotent; safe to call before every era shift. */
+  setKeptIds(ids: ReadonlySet<string>): void;
   /** true while a scripted space transition is in flight (the T1-style
    *  timeline OR a morph cascade) — R28-1: movement markers hide for this,
    *  same "scripted moves always win" rule the camera dolly already honors. */
@@ -150,7 +166,10 @@ export function buildClusterShell(
   function rebuildSettled(): void {
     if (!batch) return;
     clearSettled();
-    settledBatch = batchSettledProps(app, room, staticIds);
+    // R28-2c: belongings-eligible props are ALSO excluded here (reusing the
+    // "staticIds" skip check inside batchSettledProps), never joining the
+    // settled group regardless of kept state — see BELONGINGS_IDS above.
+    settledBatch = batchSettledProps(app, room, new Set([...staticIds, ...BELONGINGS_IDS]));
     settledJoined = settledBatch?.joined ?? 0;
     publishBatchStats();
   }
@@ -160,7 +179,9 @@ export function buildClusterShell(
     pendingSettledRebatch = true;
   }
   if (batch) {
-    staticJoined = batchStaticProps(app, room, staticIds);
+    // R28-2c: belongings-eligible props never join the permanent static
+    // group either, even if their fold happens to be identical everywhere.
+    staticJoined = batchStaticProps(app, room, new Set([...staticIds].filter((id) => !BELONGINGS_IDS.has(id))));
     rebuildSettled();
   }
 
@@ -384,6 +405,7 @@ export function buildClusterShell(
 
     applyRig,
     eraTable,
+    setKeptIds(ids: ReadonlySet<string>): void { morph.setKeptIds(ids); },
 
     update(dt: number): void {
       if (timeline.length) {

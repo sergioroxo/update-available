@@ -55,6 +55,15 @@ export class UpdateApp {
   private remindUsed = false;
   private completed = false;
   private readonly ledgerEntry: { toEra: number; remindLaterCount: number; eulaScrollPct: number };
+  /** R28-2c (the belongings beat) — os.ts wires these for key 'u2' only.
+   *  Generic here (costs nothing unused) so u3/u4/close stay untouched. */
+  onRemindLaterUsed?: () => void;
+  /** fires the instant the notice RETURNS (reminded → notify) — the
+   *  gathering window's close, not the eventual era shift. */
+  onWindowClosed?: () => void;
+  /** fires ONLY when "Update now" is pressed on the FIRST notify screen,
+   *  i.e. remind-later was never used — the gathering window never opened. */
+  onUpdateNowDirect?: () => void;
 
   constructor(key: UpdateKey) {
     this.key = key;
@@ -82,6 +91,7 @@ export class UpdateApp {
     if (this.phase === 'reminded' && this.t >= REMIND_SECONDS) {
       this.phase = 'notify'; // it returns — and this time there is no later
       this.t = 0;
+      this.onWindowClosed?.(); // R28-2c: the gathering window closes here
     }
     if (this.phase === 'install' && this.t >= INSTALL_SECONDS) {
       this.phase = 'restart';
@@ -204,6 +214,10 @@ export class UpdateApp {
       const by = cy + ch - 26;
       if (y >= by && y <= by + 18) {
         if (x >= cx + cw - 96 && x <= cx + cw - 8) {
+          // R28-2c: "Update now" pressed while remind-later was NEVER used
+          // this instance = the gathering window never opened at all (the
+          // short path, spec §4). Fires before the phase changes.
+          if (!this.remindUsed) this.onUpdateNowDirect?.();
           if (this.s.eula) { this.phase = 'eula'; this.t = 0; } else { this.beginInstall(); }
           return;
         }
@@ -212,6 +226,7 @@ export class UpdateApp {
           this.ledgerEntry.remindLaterCount += 1;
           this.phase = 'reminded';
           this.t = 0;
+          this.onRemindLaterUsed?.(); // R28-2c: the gathering window opens
         }
       }
       return;

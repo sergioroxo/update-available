@@ -1,0 +1,14 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2c (docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md §4): the belongings beat. 'Remind me later' on the T1 update notice (src/desktop/apps/update.ts, key u2) opens a gathering window; the player clicks eligible Room-1 props to KEEP them before the era turns (src/narrative/belongings.ts owns the state machine; src/engine/app.ts's BELONGINGS_HIT owns the click geometry, CLAUDE.md rail: geometry in .ts, text in data/). `eligible` is the data-driven set Fable chose (5-8 small props, NOT desk/CRT/furniture per the rail): the mixtape (THE designed candidate, Tape C — already canon, never files under its OWN tape-outcome law but its keeping DOES file here, a separate act), tapeA/tapeB (the other two Session-30 cassettes), the plant, two book props, and the poster as the 'polaroid-ish decor' stand-in (no literal polaroid prop exists yet in Room 1). `label` is the human-readable name substituted into `keptTemplate` at window-close (one line per kept item, e.g. 'kept: the mixtape'). `processedLine` files once, only on the Update-Now-DIRECT path (the gathering window never opened at all — spec §4 rule 3). The gathering-window PROMPT text itself ('departure scheduled...') and its own gathered/declined witness pair live in data/dialog/s1_guide.json's `belongings` side-message (reused EXISTING guide system, R28-2a) — this file does not duplicate that pair.",
+  "eligible": [
+    { "id": "mixtape", "label": "the mixtape" },
+    { "id": "tapeA", "label": "the companion tape" },
+    { "id": "tapeB", "label": "the broadcast tape" },
+    { "id": "plantModel", "label": "the plant" },
+    { "id": "book1", "label": "a paperback" },
+    { "id": "book2", "label": "a schoolbook" },
+    { "id": "poster1", "label": "the poster" }
+  ],
+  "keptTemplate": "kept: {label}",
+  "processedLine": "belongings: processed"
+}

@@ -87,6 +87,20 @@ const TAPE_SLOT_PROP: Record<TapeId, string> = {
   tapeA: 'tapeAInSlot', tapeB: 'tapeBInSlot', tapeC: 'tapeCInSlot'
 };
 const TAPE_SHELF_PROP: Record<TapeId, string> = { tapeA: 'tapeA', tapeB: 'tapeB', tapeC: 'mixtape' };
+/** R28-2c: the belongings beat's click geometry (data/room/belongings.json
+ *  names WHICH ids are eligible + their labels; this stays in .ts per the
+ *  layout-in-code rail). The three tapes reuse TAPE_SHELF's own points
+ *  exactly (mixtape = Tape C's shelf spot) rather than duplicating them;
+ *  the plant/books/poster are fixed room props with no other click zone. */
+const BELONGINGS_HIT: Record<string, { p: { x: number; y: number; z: number }; r: number }> = {
+  mixtape: { p: TAPE_SHELF.tapeC, r: TAPE_HIT_RADIUS },
+  tapeA: { p: TAPE_SHELF.tapeA, r: TAPE_HIT_RADIUS },
+  tapeB: { p: TAPE_SHELF.tapeB, r: TAPE_HIT_RADIUS },
+  plantModel: { p: { x: -1.75, y: 0.15, z: -0.35 }, r: 0.18 },
+  book1: { p: { x: 1.98, y: 1.21, z: 0.55 }, r: 0.12 },
+  book2: { p: { x: 1.98, y: 1.2, z: 0.65 }, r: 0.12 },
+  poster1: { p: { x: 0.95, y: 1.62, z: -0.695 }, r: 0.22 }
+};
 
 interface AppOptions {
   reinterp?: boolean;
@@ -533,6 +547,94 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
   }
 
+  // R28-2c: the belongings beat's visual mark — a PERSISTENT warm lift on a
+  // kept prop, distinct from setPropEmphasis above in both mechanism-detail
+  // and meaning: that one is the SYSTEM's transient ask (one active guide
+  // message, restores on retire); this is the PLAYER's own mark (one per
+  // kept item, holds until un-kept, never restores on its own). Kept props
+  // are excluded from BOTH batch groups in cluster.ts specifically so this
+  // is always safe to mutate in place — no shared-material cross-talk with
+  // an unrelated same-colour prop (book2/tapeB share a hex, for instance).
+  // Model props (the plant) get the SAME lift on each of their own already-
+  // per-instance-cloned mesh materials (src/room/assets.ts's tintModel).
+  const KEPT_LIFT = 0.16;
+  const keptMarked = new Set<string>();
+  const keptMarkOrigins = new Map<string, pc.Color[]>();
+  function forEachMeshInstance(entity: pc.Entity, fn: (mi: pc.MeshInstance) => void): void {
+    entity.forEach((node) => {
+      const ent = node as pc.Entity;
+      if (ent.render) for (const mi of ent.render.meshInstances) fn(mi);
+    });
+  }
+  function liftColor(c: pc.Color): pc.Color {
+    return new pc.Color(
+      Math.min(1, c.r + KEPT_LIFT),
+      Math.min(1, c.g + KEPT_LIFT * 0.6),
+      Math.min(1, c.b + KEPT_LIFT * 0.2)
+    );
+  }
+  // R28-2c fix: REASSERT the lift every frame while kept, rather than
+  // apply-once — the cluster morph's own applyTarget()/snapTo() legitimately
+  // zeroes a non-emissive prop's emissive on every fold (that is how EVERY
+  // other prop's transient tints are cleared between states), which would
+  // otherwise silently wipe the player's kept-mark the moment any morph
+  // (even a frozen/exempted one's own settle-snap) next touches the prop.
+  // Reapplying from the ONE captured origin each frame is idempotent and
+  // self-healing against that, at negligible cost (≤7 props, once/frame).
+  function applyKeptMark(id: string, on: boolean): void {
+    const h = room.props.get(id);
+    if (!h) return;
+    if (h.model) {
+      if (on) {
+        if (!keptMarkOrigins.has(id)) {
+          const saved: pc.Color[] = [];
+          forEachMeshInstance(h.entity, (mi) => saved.push((mi.material as pc.StandardMaterial).emissive.clone()));
+          keptMarkOrigins.set(id, saved);
+        }
+        const origins = keptMarkOrigins.get(id)!;
+        let i = 0;
+        forEachMeshInstance(h.entity, (mi) => {
+          const mat = mi.material as pc.StandardMaterial;
+          mat.emissive = liftColor(origins[i] ?? mat.emissive);
+          i++;
+          mat.update();
+        });
+        keptMarked.add(id);
+      } else if (keptMarked.has(id)) {
+        const saved = keptMarkOrigins.get(id);
+        let i = 0;
+        forEachMeshInstance(h.entity, (mi) => {
+          const mat = mi.material as pc.StandardMaterial;
+          if (saved && saved[i]) mat.emissive = saved[i].clone();
+          i++;
+          mat.update();
+        });
+        keptMarkOrigins.delete(id);
+        keptMarked.delete(id);
+      }
+      return;
+    }
+    if (h.emissive) return; // never touch true emissives (none of the eligible set are)
+    if (on) {
+      if (!keptMarkOrigins.has(id)) keptMarkOrigins.set(id, [h.material.emissive.clone()]);
+      const origin = keptMarkOrigins.get(id)![0];
+      h.material.emissive = liftColor(origin);
+      h.material.update();
+      keptMarked.add(id);
+    } else if (keptMarked.has(id)) {
+      const saved = keptMarkOrigins.get(id);
+      if (saved && saved[0]) h.material.emissive = saved[0].clone();
+      h.material.update();
+      keptMarkOrigins.delete(id);
+      keptMarked.delete(id);
+    }
+  }
+  function syncBelongingsMarks(): void {
+    const b = os.belongings;
+    if (!b) return;
+    for (const id of b.eligible) applyKeptMark(id, b.isKept(id));
+  }
+
   // R28-2b: the tape system's PHYSICAL side — never move a prop's position at
   // runtime (that would silently desync from the settled static batch, see
   // cluster.ts's own note); insert/eject is expressed the SAME way the kit
@@ -898,6 +1000,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         os.insertKit(); // S1.2 — you put the disk in yourself
         return;
       }
+      // R28-2c: the belongings beat — ONLY while the gathering window is
+      // open (T1's "Remind me later"). Checked BEFORE the tape/boombox block
+      // below so a click on a tape's shelf spot KEEPS it during the window,
+      // rather than inserting it into the boombox (the departure moment, not
+      // a listening one); the boombox's own play/pause zone is untouched.
+      // Un-eligible clicks fall through untouched (return only on a real hit).
+      const belongings = os.belongings;
+      if (belongings?.windowOpen) {
+        let kept = false;
+        for (const [id, hit] of Object.entries(BELONGINGS_HIT)) {
+          if (rayHitsPoint(e, hit.p, hit.r)) {
+            belongings.toggle(id);
+            kept = true;
+            break;
+          }
+        }
+        if (kept) return;
+      }
       // R28-2b: the three tapes + the boombox — Era-1 only (the boombox
       // itself leaves the room at E2; driveMorph() resets tape state on every
       // era shift, see below). A tape already inserted has no shelf entity
@@ -1126,6 +1246,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // R28-2a: the active side-message's prop emphasis (data-driven; replaces
       // the R28-0c item-10 hardwired floppy lift — same visual mechanism).
       setPropEmphasis(os.guide?.activeEmphasis ?? null);
+      // R28-2c: kept-item marks (persistent, player-authored — see above)
+      syncBelongingsMarks();
 
       // R28-2b: the tape system's own clock (a tape playing back IS a clock,
       // unlike the guide thread's pure condition polling) — os.paused freezes
@@ -1281,6 +1403,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       syncTapeProps();
       syncTapeAudio();
     }
+    // R28-2c: re-assert the kept set before every morph (idempotent) — the
+    // belongings beat's payoff plumbing. Kept props are frozen at their exact
+    // r1/E1 fold through this and every later era shift; un-kept eligible
+    // props age/retire exactly as reinterp_deltas.json already dictates.
+    if (os.belongings) cluster.setKeptIds(os.belongings.kept);
     os.setDesktopEra(era);
     setOpeningBoardVisibleForEra(era);
     cluster.morphToEra(era, true);

@@ -287,6 +287,19 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   the cyclorama finale fit the reinterp's real 3D rooms better than the
   shipped build's screen. Sérgio's audio queue SHRINKS to: singing prayer +
   mixtape tracks (+ optional broken-music-box render).
+- **D30 (2026-07-12)** — R28-2c, the belongings beat: the eligible-item list
+  Fable chose for `data/room/belongings.json` (7 of the spec's 5–8) —
+  **the mixtape** (Tape C, designed candidate), **tapeA** (companion tape),
+  **tapeB** (broadcast tape), **the plant**, **book1** ("a paperback"),
+  **book2** ("a schoolbook"), **the poster** (`poster1` — stood in for the
+  spec's "polaroid-ish decor" since no literal photo/polaroid prop exists in
+  Room 1 yet). All labels/witness text PLACEHOLDER, per the rail. Also a
+  judgment call, not an ethics gate: the pre-existing `update` guide
+  message's retirement condition now differs by path — pressing "Remind me
+  later" retires it immediately (freeing the guide's slot for the new
+  `belongings` message), while the direct "Update now" path still waits for
+  the actual era shift, exactly as Session 29 verified. Strike/amend either;
+  full narrative context in `01_SESSION_LOG.md`'s Session 31 (R28-2c) entry.
 
 ## B. CHECKS OWED BY SÉRGIO (your queue — orders it however you like)
 

@@ -14,6 +14,13 @@
  * The guide is condition-driven only — no timers (click/tap law: nothing
  * here may pressure the clock). It runs only while the Era-1 desktop is up;
  * Lamby conducts from Era 2 on (that lane is R28-2d, not this file).
+ *
+ * R28-2c adds the `belongings` message (the T1 gathering window opened by
+ * "Remind me later" — src/narrative/belongings.ts owns the kept-item state;
+ * this file only resolves its trigger/done/expire against that class). Its
+ * followed/declined witness lines cover "gathered at all" vs "declined to
+ * gather" — the per-item `kept: <label>` lines are filed separately by
+ * BelongingsSystem.closeWindow(), not through this thread.
  */
 import { ledger } from '../state/ledger';
 import type { DesktopOS } from '../desktop/os';
@@ -52,7 +59,19 @@ const CONDITIONS: Record<string, Condition> = {
   diaryOpen: (os) => os.diary?.open === true,
   diaryDone: () => ledger.records.includes('diary-glitch'),
   updateArmed: (os) => os.updateArmed,
-  eraShifted: (os) => os.era !== 'e1'
+  eraShifted: (os) => os.era !== 'e1',
+  // R28-2c (the belongings beat): the 'update' message's job is to preface
+  // the T1 notice before the player has engaged with it at all — once they
+  // do (either "Update now" straight away, which eventually shifts the era,
+  // OR "Remind me later", which opens the gathering window right away), it
+  // has served its purpose and hands the guide's one-active-message slot to
+  // 'belongings'. Renamed from a bare `eraShifted` check so the direct
+  // Update-Now path (no remind) is UNCHANGED — it still only retires when
+  // the era actually shifts, exactly as verified in Session 29's playthrough.
+  updateEngaged: (os) => os.era !== 'e1' || os.belongings?.windowOpen === true,
+  belongingsWindowOpen: (os) => os.belongings?.windowOpen === true,
+  belongingsGathered: (os) => os.belongings?.finalized === true && (os.belongings?.kept.size ?? 0) > 0,
+  belongingsDeclined: (os) => os.belongings?.finalized === true && (os.belongings?.kept.size ?? 0) === 0
 };
 
 export class GuideThread {

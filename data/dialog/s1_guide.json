@@ -1,5 +1,5 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2a (docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md §2): Era 1's impersonal side-message guide thread — the pre-Lamby conductor. Register law: terse imperative, never 'I', never praise, the apparatus's own status voice (operable). One active message max; it retires on compliance and the next eligible one surfaces; no queue, no checklist, no progress. Rendered in the Era-1 taskbar status well (src/desktop/os.ts), NOT the non-diegetic DOM chrome movementHint uses. Fields: `trigger`/`done`/`expire` are CONDITION KEYS resolved by the registry in src/narrative/guide.ts (content lives here, conditions in code); `emphasis` names a prop-emphasis set the engine lifts while the message is active (floppy = the kit disk, boombox = the tape player on the bookcase shelf); `witness.followed`/`witness.declined` are the cold-side lines filed to ledger.guidance BOTH ways (witness symmetry, ERA_MINING FIND #4 — there is no response that isn't data; declined copy must stay quiet, not scolding). The `tape` message's done key (tapePlayed) has no in-build source until R28-2b ships the tape system — by design it can only expire (filed as skipped) this build. The final `update` entry is the Lamby seed (spec §2: E2's debut lands as this promised 'improvement'). NOTE for Fable/Sérgio: the spec thread opens with a 'power on' beat, but the reinterp opening auto-boots after O1 Continue (OPENING_AND_FLOW_SPEC §1), so no power message exists here — see 06_SERGIO_CHECKLIST.",
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2a (docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md §2): Era 1's impersonal side-message guide thread — the pre-Lamby conductor. Register law: terse imperative, never 'I', never praise, the apparatus's own status voice (operable). One active message max; it retires on compliance and the next eligible one surfaces; no queue, no checklist, no progress. Rendered in the Era-1 taskbar status well (src/desktop/os.ts), NOT the non-diegetic DOM chrome movementHint uses. Fields: `trigger`/`done`/`expire` are CONDITION KEYS resolved by the registry in src/narrative/guide.ts (content lives here, conditions in code); `emphasis` names a prop-emphasis set the engine lifts while the message is active (floppy = the kit disk, boombox = the tape player on the bookcase shelf); `witness.followed`/`witness.declined` are the cold-side lines filed to ledger.guidance BOTH ways (witness symmetry, ERA_MINING FIND #4 — there is no response that isn't data; declined copy must stay quiet, not scolding). The `tape` message's done key (tapePlayed) has no in-build source until R28-2b ships the tape system — by design it can only expire (filed as skipped) this build. The final `update` entry is the Lamby seed (spec §2: E2's debut lands as this promised 'improvement'); its `done` key is `updateEngaged` (R28-2c), not a bare era check — it retires the instant the player engages the T1 notice AT ALL (Update-now OR Remind-later), so 'belongings' can take the guide's one-active-message slot during the gathering window; the direct Update-Now path is unchanged (still waits for the actual era shift, since remind was never used). The new `belongings` entry (R28-2c, §4) is the T1 gathering-window prompt: trigger fires when 'Remind me later' opens the window (src/narrative/belongings.ts), done/expire read the FINAL kept-state at window-close (gathered at all vs declined to gather) — the per-item `kept: <label>` lines are filed separately (data/room/belongings.json), not through this message. NOTE for Fable/Sérgio: the spec thread opens with a 'power on' beat, but the reinterp opening auto-boots after O1 Continue (OPENING_AND_FLOW_SPEC §1), so no power message exists here — see 06_SERGIO_CHECKLIST.",
   "beat": "e1.guide",
   "cuts": ["festival", "full"],
   "sideMessages": [
@@ -69,11 +69,22 @@
     {
       "id": "update",
       "trigger": "updateArmed",
-      "done": "eraShifted",
+      "done": "updateEngaged",
       "text": "assistance will be improved in the next version.",
       "witness": {
         "followed": "guidance: update — accepted",
         "declined": "guidance: update — deferred"
+      }
+    },
+    {
+      "id": "belongings",
+      "trigger": "belongingsWindowOpen",
+      "done": "belongingsGathered",
+      "expire": "belongingsDeclined",
+      "text": "departure scheduled. take what you are taking.",
+      "witness": {
+        "followed": "belongings: gathered",
+        "declined": "belongings: did not gather"
       }
     }
   ]

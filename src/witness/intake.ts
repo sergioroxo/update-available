@@ -488,7 +488,8 @@ export class WitnessCanvas {
       ? [opening.witness_profile_init]
       : [];
     if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0
-        || endingLines.length > 0 || ledger.guidance.length > 0 || firstTouchLines.length > 0) {
+        || endingLines.length > 0 || ledger.guidance.length > 0 || ledger.belongings.length > 0
+        || firstTouchLines.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;
       ctx.fillText(s.sessionLog, 28, 262);
@@ -509,6 +510,11 @@ export class WitnessCanvas {
           text: g.witness || `${g.id}: ${g.outcome}`,
           color: g.outcome === 'declined' ? '#cc8855' : INK
         })),
+        // R28-2c: the belongings beat — one line per kept item, or one
+        // "processed" line on the Update-Now-direct path. Un-kept eligible
+        // items file nothing (silence is the record's answer), so there is
+        // no un-kept branch to render here.
+        ...ledger.belongings.map(b => ({ text: b.witness || `${b.id}: ${b.outcome}`, color: INK })),
         ...endingLines.map(text => ({ text, color: '#cc8855' }))
       ];
       // the well between the log heading and the footer holds ~7 rows. The

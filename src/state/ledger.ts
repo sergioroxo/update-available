@@ -54,6 +54,18 @@ export interface Ledger {
    * only, like everything here.
    */
   tapes: { id: string; outcome: 'playedThrough' | 'stoppedMidway'; witness: string }[];
+  /**
+   * The belongings beat (reinterp build only; R28-2c, docs/REINTERP_R28-2_
+   * GUIDED_NARRATIVE_SPEC_2026-07-10.md §4). One `kept: <label>` line per
+   * item kept in the T1 gathering window (un-kept eligible items file
+   * nothing — silence is the record's answer), OR one `processed` line if
+   * the window never opened (Update-Now taken directly). The gathering
+   * act itself ("gathered at all" vs "declined to gather") files through
+   * `guidance` instead (the guide thread's own belongings message) — not
+   * duplicated here. `witness` resolved from data/room/belongings.json at
+   * file time, never composed in TS. In-memory only, like everything here.
+   */
+  belongings: { id: string; outcome: 'kept' | 'processed'; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -69,7 +81,8 @@ const fresh = (): Ledger => ({
   provotypes: [],
   sends: [],
   guidance: [],
-  tapes: []
+  tapes: [],
+  belongings: []
 });
 
 export let ledger: Ledger = fresh();

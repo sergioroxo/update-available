@@ -13,6 +13,10 @@
  * glitch, scale jitter + emissive flicker, no strobe) or SNAPS (debug jumps,
  * fully reversible — jumping back restores the small room, the moon, the
  * walls). Lights are NOT morphed here — the cluster's era rigs own them.
+ *
+ * R28-2c: `setKeptIds()` (called by src/room/cluster.ts, driven by the
+ * belongings beat) exempts specific prop ids from every fold beyond r1 —
+ * the payoff for the T1 gathering window, kept objects survive un-aged.
  */
 import * as pc from 'playcanvas';
 import { RoomHandles, PropHandle, PropDef, hex, spawnProp } from './era1room';
@@ -106,15 +110,35 @@ export class ClusterMorph {
   private t = 0;
   private plans: Plan[] = [];
   private state = 0; // index into SPACE_STATES
+  /** R28-2c (the belongings beat): props the player marked KEPT are exempt
+   *  from every fold beyond r1 — they keep their EXACT E1 color/pos/presence
+   *  through every later era, frozen at the moment of departure (spec §4:
+   *  "the one thing... exactly as he left it"). Un-kept eligible props age/
+   *  retire exactly as the data already dictates — this is a pure ADDITIVE
+   *  override, never touched unless the belongings beat sets it. */
+  private keptIds = new Set<string>();
 
   constructor(private readonly room: RoomHandles) {}
 
   get running(): boolean { return this.active; }
   get stateName(): SpaceState { return SPACE_STATES[this.state]; }
 
-  /** fold base + deltas 0..idx → each prop's full target state */
+  setKeptIds(ids: ReadonlySet<string>): void {
+    this.keptIds = new Set(ids);
+  }
+
+  /** fold base + deltas 0..idx → each prop's full target state, then freeze
+   *  any KEPT id back to its r1 (E1) target regardless of idx. */
   private targetsFor(idx: number): Map<string, PropTarget> {
-    return foldTargets(idx);
+    const targets = foldTargets(idx);
+    if (idx > 0 && this.keptIds.size > 0) {
+      const r1 = foldTargets(0);
+      for (const id of this.keptIds) {
+        const t = r1.get(id);
+        if (t) targets.set(id, { ...t });
+      }
+    }
+    return targets;
   }
 
   private spawnTarget(id: string, t: PropTarget): PropHandle {
@@ -176,7 +200,11 @@ export class ClusterMorph {
     const targets = this.targetsFor(idx);
     const ids = new Set<string>([...prev.keys(), ...targets.keys()]);
     for (const id of ids) {
-      if (STATIC_IDS.has(id)) continue; // constants hold still through the cascade
+      // constants AND kept props hold still through the cascade (a kept
+      // prop's frozen r1 target is already its live transform — nothing to
+      // animate, and skipping avoids even the cosmetic glitch-flicker
+      // brushing the one thing that isn't changing, R28-2c).
+      if (STATIC_IDS.has(id) || this.keptIds.has(id)) continue;
       const tn = targets.get(id);
       const tp = prev.get(id);
       let h = this.room.props.get(id);
