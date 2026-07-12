@@ -3,16 +3,18 @@
   "r1": {
     "props": {
       "boombox": {
+        "_doc": "Session 32 (R28-2b-ii): Sérgio's live-playtest fix — the box-built boombox read misaligned/clipping the shelf's front-left support (confirmed: its old z-span [0.34,0.76] exceeded the bookcase unit's measured z-min 0.37, and its x-depth sat close to the shelf's front lip). TRYING the real cassettePlayer.glb model (CC-BY, D6-clear, see models.json) first per the brief; pos re-measured against the bookcase's actual rendered AABB (x:[1.623,2.098] depth, z:[0.37,1.13] width) so the model sits centered in depth and with real clearance on both shelf edges. `model` is only honored in reinterp (era1room.ts spawnProp) — `size`/`pos` below remain the fallback-box geometry if the model fails to load, so this is a safe two-layer change.",
         "pos": [
-          1.9,
+          1.86,
           0.76,
-          0.55
+          0.62
         ],
         "size": [
           0.18,
-          0.24,
-          0.42
-        ]
+          0.2,
+          0.36
+        ],
+        "model": "cassettePlayer"
       },
       "boomboxSpeakerL": {
         "pos": [
@@ -21,10 +23,11 @@
           0.4
         ],
         "size": [
-          0.02,
-          0.1,
-          0.1
-        ]
+          0.001,
+          0.001,
+          0.001
+        ],
+        "_doc": "Session 32: zeroed — the cassettePlayer.glb model (wired on the `boombox` prop above) is a single mesh that already reads as one complete object; this box would otherwise float beside/through it as a leftover fallback-era detail."
       },
       "boomboxSpeakerR": {
         "pos": [
@@ -33,10 +36,11 @@
           0.7
         ],
         "size": [
-          0.02,
-          0.1,
-          0.1
-        ]
+          0.001,
+          0.001,
+          0.001
+        ],
+        "_doc": "Session 32: zeroed, same reason as boomboxSpeakerL."
       },
       "boomboxDeck": {
         "pos": [
@@ -45,10 +49,11 @@
           0.55
         ],
         "size": [
-          0.015,
-          0.06,
-          0.1
-        ]
+          0.001,
+          0.001,
+          0.001
+        ],
+        "_doc": "Session 32: zeroed, same reason as boomboxSpeakerL."
       },
       "mixtape": {
         "pos": [

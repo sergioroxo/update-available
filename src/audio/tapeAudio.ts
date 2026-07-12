@@ -22,10 +22,36 @@ const AUDIO_BASE = 'assets/audio/';
  *  Add a line here (and drop the file in public/assets/audio/) whenever a
  *  real recording lands — nothing else needs to change. */
 const REGISTRY: Record<string, string> = {
-  'tape-hiss.mp3': `${AUDIO_BASE}tape-hiss.mp3`
+  'tape-hiss.mp3': `${AUDIO_BASE}tape-hiss.mp3`,
+  // R28-2b-ii (Session 32): Sérgio's real tape-side recordings, degraded via
+  // tools/degrade_audio.sh --tape97 (assets/audio/ keeps the pristine + the
+  // degraded master together; only the degraded file is ever registered here
+  // — SYSTEM audio stays clean, HUMAN/TAPE audio never runs undegraded).
+  'family_design_solutions_tape97.mp3': `${AUDIO_BASE}family_design_solutions_tape97.mp3`, // Tape C track 1 (mixtape)
+  'fold_my_hands_tape97.mp3': `${AUDIO_BASE}fold_my_hands_tape97.mp3`, // Tape A's prayer segment
+  // Tape B — SWAPPABLE CANDIDATE (Sérgio is producing alternate versions of
+  // the broadcast jingle). Swap by generating a new degraded/wrapped file
+  // with tools/degrade_audio.sh, adding ONE line here, and pointing
+  // data/dialog/s1_tapes.json's tapeB segments at the new filename — nothing
+  // else changes, same missing-file-safe registry pattern as everywhere else.
+  'discover_the_new_you_tape97_radio.mp3': `${AUDIO_BASE}discover_the_new_you_tape97_radio.mp3`
 };
 
 const HISS_FILE = 'tape-hiss.mp3';
+
+/**
+ * R28-2b-ii (Session 32): Sérgio's live-playtest note — "the tape hiss is too
+ * loud." Two gains, not one: the bed is a genuinely quiet floor (~-18dB, well
+ * under any real clip) when nothing else is playing (ambient room presence
+ * for tapes with no recording yet, e.g. Tape A's welcome/instruction
+ * segments), and it DUCKS even further whenever a real degraded clip is
+ * playing — the clip's own file already carries its own hiss floor mixed in
+ * by tools/degrade_audio.sh's --tape97 preset, so a full-strength LIVE hiss
+ * bed on top of that would double it. Ducking (not stopping) keeps the room
+ * tone continuous under a clip rather than cutting in/out.
+ */
+const HISS_VOLUME_IDLE = 0.12; // no clip playing — the ambient floor
+const HISS_VOLUME_DUCKED = 0.03; // a real clip is playing — nearly inaudible, avoids doubling the clip's own baked-in hiss
 
 export function isAudioAvailable(name: string | null | undefined): boolean {
   return !!name && name in REGISTRY;
@@ -49,6 +75,7 @@ export class TapeAudioBus {
       this.hiss = new Audio(REGISTRY[HISS_FILE]);
       this.hiss.loop = true;
       this.hiss.muted = this.muted;
+      this.hiss.volume = HISS_VOLUME_IDLE;
     }
     return this.hiss;
   }
@@ -63,10 +90,13 @@ export class TapeAudioBus {
     this.setClip(clipName);
   }
 
-  /** swap (or clear) the named clip without touching the hiss bed */
+  /** swap (or clear) the named clip without touching the hiss bed's playback
+   *  (only its gain — see HISS_VOLUME_IDLE/DUCKED above). */
   setClip(clipName?: string | null): void {
     if (this.clip) { this.clip.pause(); this.clip = null; }
-    if (!this.wantPlaying || !isAudioAvailable(clipName)) return;
+    const playingRealClip = this.wantPlaying && isAudioAvailable(clipName);
+    if (this.hiss) this.hiss.volume = playingRealClip ? HISS_VOLUME_DUCKED : HISS_VOLUME_IDLE;
+    if (!playingRealClip) return;
     const url = REGISTRY[clipName as string];
     this.clip = new Audio(url);
     this.clip.muted = this.muted;

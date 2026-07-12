@@ -80,6 +80,16 @@
       "cx": 0,
       "cz": 0,
       "baseY": 0
+    },
+    {
+      "key": "cassettePlayer",
+      "file": "cassettePlayer.glb",
+      "_doc": "Session 32 (R28-2b-ii): Sérgio's live-playtest fix for the box-built boombox reading misaligned on the Room 1 shelf. 'Casette Player' by Jason Toff, CC-BY via Poly Pizza (assets/LICENSES.md + docs/reinterp/ATTRIBUTIONS.md) — usable per D6. Native GLB bbox measured directly (single mesh, no viewer available): min[-0.378,-0.161,-0.334] max[0.362,0.049,0.157], so cx/cz/baseY below are that box's exact center/base, and `scale` is non-uniform to bring it down to a small period cassette-player footprint on the shelf (NOT a full twin-speaker boombox shape — the source model reads as a handheld deck). yaw is a first guess (0); re-check against a fresh screenshot before treating as final.",
+      "scale": [0.55, 0.72, 0.37],
+      "yaw": 0,
+      "cx": -0.0076,
+      "cz": -0.0885,
+      "baseY": -0.1614
     }
   ]
 }

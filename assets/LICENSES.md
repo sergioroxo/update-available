@@ -20,6 +20,7 @@ mix art styles between rooms).
 | opening_corkboard | wallCorkboardCreativeTrio.glb | Poly Pizza — "Wall Corkboard" by CreativeTrio | CC0 1.0 | no | geometry only; material overridden flat in code |
 | plant | pottedPlant.glb | Kenney Furniture Kit | CC0 | no | Room 1 (C1), new r1-only dressing (windowsill corner) |
 | _(staged)_ | lampSquareTable.glb | Kenney Furniture Kit | CC0 | no | copied, not yet wired |
+| cassettePlayer | cassettePlayer.glb | "Casette Player" by Jason Toff, via Poly Pizza (https://poly.pizza/m/8Yu2_1Hfq4z) | CC-BY 3.0 | **yes** — see `docs/reinterp/ATTRIBUTIONS.md` | Session 32 (R28-2b-ii): Sérgio's live-playtest fix for the box-built `boombox` prop reading misaligned/clipping the Room 1 shelf's front-left support. Replaces ONLY the `boombox` prop's fallback box in reinterp (`data/room/reinterp_deltas.json` r1 — the `boomboxSpeakerL/R`/`boomboxDeck` sub-boxes are zeroed-out alongside it, since the single-mesh model already reads as one complete object); non-reinterp/baseline untouched. Native GLB bbox measured directly (no 3D viewer available) and used to compute `cx`/`cz`/`baseY` in `data/room/models.json` (scale non-uniform: `[0.55, 0.72, 0.37]`) — verified in-browser (oblique screenshot, no clipping, sits flush and centered) but not yet foreground-reviewed by Sérgio; treat the exact yaw/scale as a first pass, not final. `assets/Assests/"Boom box.glb"` (also CC-BY, Poly by Google) was evaluated first and declined: it unpacks as a 147-mesh, huge-coordinate-range file (looks like an unrelated bulk/scene export, not a single clean boombox prop) — flagged in case a cleaner single-object export turns up later. |
 
 Kit: **Kenney Furniture Kit** (https://kenney.nl/assets/furniture-kit), CC0 — no
 attribution required. Authored at ~half real-world scale (pipeline applies ×1.9);
@@ -76,12 +77,23 @@ from the shipped baseline in every mode; only `personal`/`set` FURNITURE
 | File | Source | License | Attribution needed | Notes |
 |---|---|---|---|---|
 | tape-hiss.mp3 | self-generated (Session 30, R28-2b) | n/a — original, made for this project | no | `public/assets/audio/tape-hiss.mp3`, 6s mono loop. Generated locally with ffmpeg (`anoisesrc=color=pink`, band-limited 300Hz–6.5kHz, quiet gain, short in/out fades for a click-free loop point — no external source, no download). Placeholder ambience under the Era-1 tape system's captions (src/narrative/tapes.ts) until real recordings land per `docs/REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md`. Command used: `ffmpeg -f lavfi -i "anoisesrc=color=pink:sample_rate=44100:duration=6:seed=42" -af "highpass=f=300,lowpass=f=6500,volume=0.18,afade=t=in:st=0:d=0.08,afade=t=out:st=5.92:d=0.08" -ac 1 -c:a libmp3lame -q:a 4 public/assets/audio/tape-hiss.mp3`. |
+| family_design_solutions.mp3 / family_design_solutions_tape97.mp3 | Sérgio's own Suno/Treblo generation, delivered 2026-07-12 (`Pc_Simulation/Sources/Jingle_Brand New/Family Design Solutions - Family Design Solutions - Treblo.mp3`) | project-original (Sérgio's generation, not a real recording artist/label) | no | Pristine copy + `_tape97`-degraded master both live in `assets/audio/` (source pair); only the degraded file is served at runtime (`public/assets/audio/family_design_solutions_tape97.mp3`, registered in `src/audio/tapeAudio.ts`). Real duration 206.66s. This is **Tape C track 1** (Daniel's mixtape) in `data/dialog/s1_tapes.json` — lyrics from the accompanying `family_design_solutions.txt` (LRC word-timestamps), captioned line-by-line, synced to the real audio. Degraded via `tools/degrade_audio.sh --tape97` (Session 32). No real band/label reproduced — Sérgio's own generation, project-original. His own listen/voice pass over the final mix/wording is still pending. |
+| discover_the_new_you.mp3 / discover_the_new_you_tape97_radio.mp3 | Sérgio's own Suno/Treblo generation, delivered 2026-07-12 (`Pc_Simulation/Sources/Jingle_Brand New/Discover_The_New_You.mp3`) | project-original | no | **SWAPPABLE CANDIDATE** — Sérgio is producing alternate versions of this broadcast jingle; this is the current one wired in. Pristine + degraded pair in `assets/audio/`; the degraded, `--wrap`-bookended file (tuning-static head 1.3s / tail 1.0s, so it reads as a captured off-air '97 broadcast) is what's served (`public/assets/audio/discover_the_new_you_tape97_radio.mp3`). Real song duration 28.63s (wrapped total 30.93s). This is **Tape B** (broadcast) in `s1_tapes.json` — lyrics from `discover_the_new_you.txt`, captioned line-by-line via its LRC timestamps. Swapping to a new Sérgio version requires only: re-run `tools/degrade_audio.sh`, add one registry line, repoint the `audio` field in the data — nothing else changes. |
+| fold_my_hands.mp3 / fold_my_hands_tape97.mp3 | Sérgio's own Suno generation, delivered 2026-07-11 (`Pc_Simulation/Trials Songs/Prayer/Fold My Hands.mp3`) | project-original | no | Pristine + degraded pair in `assets/audio/`; degraded file served at runtime (`public/assets/audio/fold_my_hands_tape97.mp3`). Real duration 139.12s. This is **Tape A's final (prayer) segment** in `s1_tapes.json` — lyrics from the accompanying `Fold My Hands.txt` (Verse 1/Chorus/Verse 2/Bridge/Final Chorus, no internal timestamps — captions evenly distributed across the real duration, approximate by design). Formerly G1-gated as a bracketed stage-direction-only caption (no lyrics reproduced); now that Sérgio has delivered the actual sung words, they are wired as his canon draft text — his own voice pass over the exact wording is still pending, not an ethics gate anymore. |
 
-The prayer ("Fold My Hands"), the jingle, the VO cast, and the mixtape tracks
-(`docs/REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md`) are NOT in the repo yet
-— Sérgio generates/delivers them externally; import happens in a later build
-lane (one row here + one registry line in `src/audio/tapeAudio.ts` each, per
-the same missing-file-safe pattern the model manifest already uses).
+All three degraded via `tools/degrade_audio.sh --tape97` (Session 32, R28-2b-ii)
+— see that script's header for the exact filter chain (band-limit, cassette
+wow, hiss floor, soft saturation) and its `--vhs03` sibling preset (available,
+not used on these three files). Per the audio production guide's §4 doctrine,
+SYSTEM audio stays clean; anything heard as coming off one of the Era-1
+cassettes is always degraded first.
+
+The jingle (the other candidate takes) and the full VO cast
+(`docs/REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md` §6/§7) are NOT in the
+repo yet — Sérgio generates/delivers them externally; import happens in a
+later build lane (one row here + one registry line in
+`src/audio/tapeAudio.ts` each, per the same missing-file-safe pattern the
+model manifest already uses).
 
 ## Candidate kits (researched — Sérgio's call)
 

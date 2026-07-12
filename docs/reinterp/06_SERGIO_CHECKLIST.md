@@ -351,6 +351,29 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   the actual era shift, exactly as Session 29 verified. Strike/amend either;
   full narrative context in `01_SESSION_LOG.md`'s Session 31 (R28-2c) entry.
 
+- **D36 (2026-07-12)** — R28-2b-ii, real tape audio wired (Session 32): your
+  three delivered Suno/Treblo tracks (Family Design Solutions, Discover The
+  New You, Fold My Hands) are degraded (`tools/degrade_audio.sh --tape97`,
+  a new production-only ffmpeg tool, plus a `--vhs03` sibling preset and a
+  `--wrap` tuning-static modifier) and wired into Tape C track 1, Tape B, and
+  Tape A's prayer segment respectively, with captions time-synced from their
+  lyric sheets. **Listen-test the three tapes** — captions are auto-timed
+  (precise for the two tracks with word-level LRC data, evenly-spaced
+  approximation for Fold My Hands, which has none) and may want retiming by
+  ear. Tape B is a SWAPPABLE CANDIDATE — more versions of that jingle are
+  coming; swapping needs one line in `src/audio/tapeAudio.ts` + one filename
+  change in `data/dialog/s1_tapes.json`. Also folded in from your live
+  playtest feedback mid-session: the live hiss bed was too loud (now ducks
+  from a 0.12 idle floor to 0.03 whenever a real clip plays — both numbers
+  are ear-judgment placeholders, please listen and say if they need
+  retuning) and the box-built boombox was clipping the Room 1 shelf's
+  front-left support (re-measured the shelf's real bounding box and swapped
+  in a real CC-BY model, `cassettePlayer.glb` by Jason Toff via Poly Pizza —
+  attribution now lives in the new `docs/reinterp/ATTRIBUTIONS.md`, which
+  didn't exist before this session; its exact scale/position is a first-pass
+  screenshot judgment, not yet foreground-reviewed by you). Full detail in
+  `01_SESSION_LOG.md`'s Session 32 entry.
+
 ## B. CHECKS OWED BY SÉRGIO (your queue — orders it however you like)
 
 - [ ] **C3 voice-pass read of the full Era-1 chain** (kit → IRC → escalation →

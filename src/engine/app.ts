@@ -654,21 +654,36 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // the audio bus only reacts to STATE CHANGES (play started/stopped, the
   // active segment's own named clip changed) — never polled blindly, so a
   // missing per-segment audio name never even attempts a request.
+  //
+  // R28-2b-ii (Session 32) BUG FIX: this used to key the "did the clip
+  // change" check off the SEGMENT id, not the audio FILENAME. That was
+  // harmless while every segment's `audio` was null (Session 30's build),
+  // but once a single real recording spans many caption segments (e.g. Tape
+  // C's ~30 lyric-timed captions all naming the same
+  // family_design_solutions_tape97.mp3), comparing by segment id called
+  // setClip() — which tears down and recreates the <audio> element — on
+  // EVERY caption change, restarting the same song from 0:00 every few
+  // seconds. Comparing by the resolved audio name instead means the clip
+  // is only (re)started when the actual file changes; a null-audio tape
+  // (Tape B's ad-copy-era captions, still true for any segment without a
+  // recording) behaves exactly as before.
   let tapesWasPlaying = false;
-  let tapesLastSegmentId: string | null = null;
+  let tapesLastAudioName: string | null = null;
   function syncTapeAudio(): void {
     if (!tapes || !tapeAudio) return;
     if (tapes.isPlaying && !tapesWasPlaying) {
-      tapeAudio.start(tapes.activeSegment?.audio ?? null);
-      tapesLastSegmentId = tapes.activeSegment?.id ?? null;
+      const name = tapes.activeSegment?.audio ?? null;
+      tapeAudio.start(name);
+      tapesLastAudioName = name;
     } else if (!tapes.isPlaying && tapesWasPlaying) {
       tapeAudio.stop();
-      tapesLastSegmentId = null;
+      tapesLastAudioName = null;
     } else if (tapes.isPlaying) {
       const seg = tapes.activeSegment;
-      if (seg && seg.id !== tapesLastSegmentId) {
-        tapeAudio.setClip(seg.audio ?? null);
-        tapesLastSegmentId = seg.id;
+      const name = seg?.audio ?? null;
+      if (name !== tapesLastAudioName) {
+        tapeAudio.setClip(name);
+        tapesLastAudioName = name;
       }
     }
     tapesWasPlaying = tapes.isPlaying;
