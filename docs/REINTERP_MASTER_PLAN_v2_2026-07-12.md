@@ -157,6 +157,22 @@ glitch → cyclorama slits → four era panels → the global Close.
 update has failed.", the dossier reframe, the one uninstalled update, `Restart as you are.`
 The unfinished line (x.b3) stays Sérgio's alone. Point-cloud entered through the X arm (C2).
 
+## §5b THE CONTINUITY THREADS (how it all fits together — added at Sérgio's ask, R29-c)
+
+Six threads run the length of the piece; every era beat should be traceable to at least one.
+
+| Thread | E1 '97 | E2 '03 | E3 '16 | E4 now | Close |
+|---|---|---|---|---|---|
+| **The watcher** | impersonal side-messages | Lamby installed; uninstall FAILS ("could not be removed. migrating.") | the fragments = Lambient's marks on every device | Echo — the voice | named, witnessed, refused |
+| **The board** | cork board files YOU → the record wall | the dashboard | the feed IS the board; Vera made its keeper | Maya's wall (the TURN) | the constellation |
+| **The machine** | one CRT, booted FOR you | same machine; YOU press return | three devices — every seat is a screen | the room itself speaks | the room renamed, not closed |
+| **The name/file** | "they already know your name"; first click files | `subject migrated — file retained` | Vera moderates OTHERS' files; Daniel's archived | the deadname the record won't release; Maya the name it can't file | "Nothing about you was broken" |
+| **The warm objects** | mixtape resists the gray; tapes; kept belongings survive un-aged | the kept thing exactly as left; Caleb through the crack | the counter-current; what the drawer can't hold | TRANSCENDANCE — `NO CATEGORY FOUND` | plays clean |
+| **The law outside** | (none — 1997 silence) | the ministries collapse | **Malta 2016** → the Flourish rebrand | bans provoke "affirmation is the conversion" | the bans that DID pass, beside the survivors |
+
+Rule of thumb for every future beat: if it doesn't sit on a thread, it's decoration; if it
+contradicts one, it's wrong.
+
 ## §6 UPDATES AS TRANSITIONS (the ritual grammar, consolidated)
 
 Notification ("Remind me later" works once → the belongings beat) → EULA (scroll, one live

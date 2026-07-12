@@ -179,6 +179,19 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
   build session.
 
+- **D35 (2026-07-12, R29-c round)** — Your four E3 answers folded in: the
+  **THREE-SCREEN ROOM is the E3 architecture of record**; the split-character
+  option is drafted concretely so your "maybe 2" has something real to judge —
+  **ASH ROWE** (Ash = the name the form can't parse; Rowe = the row it can't
+  complete) carries the borderland, Noa stays Mira's advocate, one line each
+  in the counter-current; my REC = split. **Felt-beat DRAFTS written at your
+  delegation** (Noa's DM, the counter-current cards, Mira's thank-you — all
+  DRAFT-FOR-SÉRGIO in the E3 spec §FELT; your verify is the pass). And "how
+  it all fits" = **the CONTINUITY THREADS table** (master plan §5b): six
+  threads — watcher/board/machine/name/warm-objects/law — each traced E1→
+  Close, with the rule: a beat that sits on no thread is decoration; one that
+  contradicts a thread is wrong. **Your checks: pick Noa-carries vs Ash
+  split; verify the felt drafts; skim §5b.**
 - **D30 (2026-07-12, R29 round)** — Your era-by-era direction, all applied:
   E2's return press is now the waiting screen ("Welcome back, Daniel. Press to
   continue with reboot" — the machine expected him); the infomercial is

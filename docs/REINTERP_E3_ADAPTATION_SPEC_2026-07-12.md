@@ -193,9 +193,65 @@ markers); device models — Sérgio's library has Laptop.glb / smartPhone.glb (l
 per the D6/D8 policy, or Kenney-family equivalents). Micro-verbs per device keep each
 sitting short and playful; no reading walls.
 
-## What Sérgio owes this spec (updated)
-1. **The three-screen room: yes / amend.** (It absorbs the R29 options; the pinboard
-   survives only as the tablet-feed's visual grammar if wanted.)
-2. Does Noa carrying the borderland feel right, or split into two people?
-3. The felt beats (Noa's phone DM, the counter-current voices) — yours.
-4. Trans-masc reader gate before the two-edge content ships.
+## Sérgio's round (2026-07-12) — answers folded in
+1. **THE THREE-SCREEN ROOM: ADOPTED** ("I really like the 3 device"). It is now the E3
+   architecture of record; the R29 options are superseded (the pinboard survives only as
+   the tablet feed's visual grammar if ever wanted).
+2. **Noa vs. split: leaning SPLIT, undecided.** Both shapes are now drafted below (§SPLIT);
+   the beats are written so either drops in without rework.
+3. **Felt beats: Fable drafts, Sérgio verifies** (his delegation, this round). Drafts below
+   (§FELT) — marked DRAFT-FOR-SÉRGIO; his verify is the pass, his rewrite always wins.
+4. Trans-masc reader gate: UNCHANGED (ethics-held; not waived).
+
+## §SPLIT — the two-character option, made concrete (so the choice is real)
+
+If Noa splits, the borderland is carried by a NEW composite in the naming grammar
+(Vale / Field / Lane →): **ASH ROWE** — Ash (a name the form's gender field can't parse),
+Rowe (= a data ROW: the row the form can't complete). Division of labor:
+- **Noa Field** keeps her verified shipped role clean: Mira's advocate, the DM, the ask.
+- **Ash Rowe** carries the two-edge polish contradiction (S3R.2): Ash's testimony is the
+  one the soften-module and the clarity-review module both fire on. Ash never states what
+  the system demands to know; the piece never answers for them. Ash gets ONE later beat:
+  a single line in the counter-current (§FELT below) — the person the form couldn't
+  complete, standing with the person the room tried to bury.
+- Cost/benefit vs. Noa-carries-it: the split keeps each character ONE thing (legibility;
+  Sérgio's "one character, too many jobs" lesson from the shipped Lamby review), at the
+  price of one more name to hold. RECOMMENDATION: split — the E3 cast is a NETWORK by
+  design, and networks are allowed one more node.
+
+## §FELT — draft beats (DRAFT-FOR-SÉRGIO; PLACEHOLDER `_doc` on every line at build time)
+
+**S3R.4 — Noa's DM (the phone; Lambient absent; short, alive, specific):**
+> noa: vera. you awake?
+> noa: they moved mira's story to review. it'll be in your queue tomorrow.
+> noa: she wrote it the way it happened. that's all she did.
+> noa: i'm not asking you to fight anyone.
+> noa: i'm asking you to not be the one who puts her in the drawer.
+*(If Noa carries the borderland instead of Ash, add one line before the last: "you know
+how they file things like her. like me." — the whole borderland in six words. If Ash
+exists, the line moves to Ash's counter-current card instead, reworked below.)*
+Reply-chips (register, never branch): "i'll read it myself" / "i can't promise" / (say
+nothing — silence files too).
+
+**S3R.6 — the counter-current (cards/pings arriving on the phone, one at a time, unhurried):**
+> "i read it before they took it down. i needed it. — m."
+> "you let it stand. i'll remember that longer than any of this room."
+> "they can rename the group again. they can't rename us."
+> mira: "you didn't bury me. whatever happens now — thank you."
+> *(and, if Ash exists)* ash: "they never worked out which box i go in. turns out neither
+> box was the point. thank you for leaving her whole."
+*(Lambient has no stamp for any of these. The system's silence here is the row it can't
+fill.)*
+
+## §FIT — how it all fits together (Sérgio's ask #4; the full map lives in
+MASTER_PLAN_v2 §5b, added this round)
+
+E3's threads in one paragraph: the **fragments** from E2's failed uninstall ("companion
+process — could not be removed. migrating.") are the lamb-marks on all three E3 devices —
+Lamby didn't die, it dispersed. The **board lineage** continues: the cork board that filed
+Daniel became the record wall; at E3 the feed IS the board and Vera is made its keeper;
+at E4 it becomes Maya's wall; at the Close, the constellation. The **sends** that E3's
+laptop generates are the same summons seam E1 built. **Malta** (the era's hopeful truth)
+is what forces the Flourish rebrand — which is the u4 update — which delivers the player
+to Room 3, where the referral filed in S3R.3(b) is already waiting for Maya. Nothing in
+E3 is new machinery: it is E1's filing + E2's dispersal, multiplied into every screen.
