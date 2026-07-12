@@ -137,16 +137,21 @@ pattern-memory mechanic (mining FIND #7) is reserved for this era. Malta 2016 ap
 name (source CONFIRMED) as the hopeful legal beat; the legal heat forces the
 SisterSignal→Flourish rebrand = the u4 trigger.
 
-**ERA 4 — THE ROOM REWRITES YOU (now, Maya, Room 3) — DIRECTION SET, spec after E3.**
-The shipped centerpiece, SPATIALIZED (the reinterp's rooms do what the shipped screen
-faked): tap Maya's real objects → each re-captioned as pathology; the Soft Lock (affirming
-paths never forbidden, only friction-delayed); Echo's Shrinking Choice ("Choose a careful
-pause" — the meaning-gap framing, never "Pause transition"); the deadname beat (Maya is
-the name it can't file); TRANSCENDANCE the uncaptionable dance-stream respite (`NO CATEGORY
-FOUND` = the glitch origin; AI doesn't save Maya — the COMMUNITY does). Hard rails: Ethics
-#7 (never satirize the genuine exploratory clinical debate), detransition never vilified,
-trans reader passes before ship. The finale: the glitch escapes the screen → the cyclorama
-slits → the four era panels → the global Close.
+**ERA 4 — THE ROOM REWRITES YOU (now, Maya, Room 3) — DIRECTION REVISED (Sérgio,
+2026-07-12): AUDIO-FIRST.** The era is carried by **spoken conversations with the AI** —
+Echo is a VOICE (the digital-voice aesthetic is the point: the apparatus finally sounds
+like a person), the player responds by chip (input law). Two foregrounded vectors:
+**deadnaming** (the system speaks the old name aloud — the un-overwritable-name beat
+inverted; Maya is the name it can't file) and **the LGB-anti-trans split** ("transing away
+the gay" — the coalition weaponizing gay rights against trans people; sourced per the
+ERA4 source spine, dossier-side referents, composites playable). The room still rewrites
+(objects re-captioned — spoken now, not just labeled), the Soft Lock and the Shrinking
+Choice survive as CONVERSATIONAL patterns (the narrowing happens in what Echo offers you
+to say). **TRANSCENDANCE stays** — the uncaptionable dance-stream respite, `NO CATEGORY
+FOUND`, the community not the AI as what saves. Hard rails unchanged: Ethics #7,
+detransition never vilified, trans reader passes. Production note: Echo's voice = TTS by
+design (the §7 doctrine bends here deliberately — Echo is clean, TOO clean). Finale:
+glitch → cyclorama slits → four era panels → the global Close.
 
 **THE CLOSE — unchanged canon:** survivors speak first, TRANSCENDANCE plays clean, "Your
 update has failed.", the dossier reframe, the one uninstalled update, `Restart as you are.`

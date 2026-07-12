@@ -179,6 +179,43 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
   build session.
 
+- **D30 (2026-07-12, R29 round)** — Your era-by-era direction, all applied:
+  E2's return press is now the waiting screen ("Welcome back, Daniel. Press to
+  continue with reboot" — the machine expected him); the infomercial is
+  reframed as **LAMBY'S INTERVENTION VIDEO** after the Caleb relapse, breaking
+  down glitchy at its end with Caleb's message arriving through the wreck
+  (E2 script S2R.4 revised); E4 is now **AUDIO-FIRST** (Echo speaks — TTS by
+  design, too clean; deadnaming + the LGB-anti-trans split foregrounded;
+  TRANSCENDANCE kept; master plan §5 revised). Session 32 dispatched: your
+  three real audio files wired into the tapes (mixtape = Family Design
+  Solutions w/ subtitle captions; Tape B = Discover The New You framed as
+  taped-off-the-radio, SWAPPABLE while you make versions; Tape A prayer =
+  Fold My Hands) + the ffmpeg degradation tool (--tape97/--vhs03).
+- **D31 (2026-07-12) — "LAMBY NEVER LEAVES" (your "let's think about this",
+  proposed):** at the u3 install: "Restorify — removed." then smaller:
+  "companion process — could not be removed. migrating." — Lamby fragments
+  into the marks that become Lambient's badges at E3. The collapse scattered
+  the apparatus into everything = WHY the rooms open. Strike to adopt, or
+  amend (E2 script S2R.7).
+- **D32 (2026-07-12) — E3 mechanics options searched (your ask):** three
+  room-native replacements for the screen-bound queue in the E3 spec's R29
+  addendum. **REC: Option 1, THE PINBOARD ROOM** — the community physically
+  on Room 2's wall; moderating = moving cards by hand; the drawer is the
+  bury; leaving Mira's card pinned IS the refusal; and it completes the board
+  lineage (the cork board that filed you → the board you curate → Maya's wall
+  → the constellation). Options 2 (welcome shelf) and 3 (voice switchboard)
+  written up too. **Pick 1/2/3 or a mix.** Malta stays the breaking point.
+- **D33 (2026-07-12) — belongings cast change (your idea, adopted pending
+  props):** add the **rainbow duck** (already the canon ambient-resistance
+  object) and a **teddy bear with the REJECTION beat** — one kept item the
+  ritual refuses: "item unsuitable for the next phase" — the system reaching
+  even into what you take. Filed, of course. Needs the two props + one beat;
+  queued for the E2 staging lane. Confirm the teddy-rejection reading.
+- **D34 (2026-07-12) — O1 FULL REVAMP brief written for Codex** (your ask —
+  a NEW interpretation, not a rework):
+  `docs/reinterp/CODEX_BRIEF_O1_REVAMP_2026-07-12.md`. Design-first, 2–3
+  fresh takes, best one greyboxed behind `?o1=v2` so you A/B against the
+  current board. Paste it into a Codex session whenever.
 - **D29 (2026-07-12)** — **THE E3 ADAPTATION SPEC written**:
   `docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md`. Your borderland revision
   made structural: **Noa Field deepened to carry the butch/trans-masc

@@ -23,11 +23,11 @@ un-aged (the mixtape is the designed candidate). **The monitor is OFF. Nothing s
 caption, no hint, no music.** The player can turn, look, move to the seat. The silence
 holds until the player acts.
 
-**The beat's one mechanic — the power press, relocated from E1 (resolves the D22 spirit):**
-in '97 the machine booted FOR you (a system made for you). In '03, **Daniel turns it on
-himself.** The first act of the era is voluntary return. Nothing marks this as a choice —
-no prompt, no glow (the E1 guidance era is over; the player knows this verb). The horror
-arrives retroactively: he came home and plugged himself back in.
+**The beat's one mechanic — the return press (REVISED per Sérgio 2026-07-12):** the
+monitor is not dead — it holds one dim line, waiting (PLACEHOLDER): *"Welcome back,
+Daniel. Press to continue with reboot."* It knew he was coming home. The player presses;
+the era begins. Still a voluntary return — but the system was already expecting him, which
+is worse. (Supersedes the unmarked power press; the machine's patience IS the horror.)
 
 ## S2R.1 — LAMBY *(operable · the conductor debuts — ≤2 lines per beat, law)*
 
@@ -70,12 +70,24 @@ Witness side across the beat: the chat filed as `contact: flagged`, the redactio
 `intervention: successful`, the comfort as `support: provided`. The record's cheerfulness
 about it is the collapse-material later.
 
-## S2R.4 — THE NEW YOU *(operable · the infomercial)*
+## S2R.4 — THE NEW YOU *(operable · REVISED per Sérgio 2026-07-12: Lamby's intervention video)*
 
-"Recommended after realignment": the **New You Program** interruption plays (the ported
-`s2_media.json` + Sérgio's music-video structure — female announcer, Pastor Dale, Marcus,
-the SATB "Call now! Call now! Call now!" ending). Skippable after ~5s; skip files
-`avoidant — re-serve later`, watching files `susceptibility ↑`. Either way classified.
+Repositioned and reframed: the video is **Lamby's response to the S2R.3 relapse** — after
+the redaction and the streak death, Lamby (≤2 lines, PLACEHOLDER): *"Don't be discouraged,
+Daniel. I found something that helped others like you."* → the **New You Program** video
+plays as Lamby's recommended recovery content (the ported `s2_media.json` visuals +
+Sérgio's music-video structure — female announcer, Pastor Dale, Marcus, the SATB triple
+"Call now!"). It's entertaining AND it's the educational payload: the era's coercion
+grammar on full display — the victim-blaming frame ("tired of feeling like yourself?"),
+testimony-as-sales, selfhood as a payment plan. Skippable after ~5s; skip files
+`avoidant — re-serve later`, watching files `susceptibility ↑`.
+
+**The break (Sérgio's staging, adopted):** near its end the video goes WRONG — the tape
+degrades, the triple "Call now!" loops and warps, the smiles hold too long, the signal
+tears (the existing glitch grammar, warm-corrupt not strobe) — and **through the broken
+signal, Caleb's message arrives** (the block lifting early, or its first crack). The
+apparatus's showpiece breaking down IS the collapse's opening note: S2R.5 begins inside
+the wreck of Lamby's own promotional video.
 
 ## S2R.5 — THE COLLAPSE *(operable → felt)*
 
@@ -97,13 +109,24 @@ input law), the era's diary-echo: **"Then it was never me that was broken…"** 
 canon). The witness side files nothing here — or rather: it shows a gap it could not
 classify. The mixtape (if kept) is playable in this beat; the system says nothing about it.
 
-## S2R.7 — THE SEND *(operable · E2→E3)*
+## S2R.7 — THE SEND *(operable · E2→E3 · + "LAMBY NEVER LEAVES", Sérgio 2026-07-12)*
 
 The u3 update ritual (notification → EULA → changelog → restart; "Remind me later" works
 once, and the belongings beat triggers again — what do you take from THIS life?). The
 changelog migrates the collapsed program into the platform era, and **the restart delivers
 the player to Room 2** — Vera's era begins where Daniel's ends. The last thing filed under
 Daniel's name: `subject migrated — file retained`.
+
+**The dispersal (adopted as the era's closing image, per Sérgio: "as if Lamby never went
+away or got deleted — it is still there"):** the ministries' collapse doesn't kill the
+watcher; it FREES it into multitude. During the u3 install, one quiet beat (PLACEHOLDER
+staging): the uninstaller reports *"Restorify — removed."* then, a line lower, smaller:
+*"companion process — could not be removed. migrating."* Lamby's silhouette fragments into
+the many small marks that will be Lambient's badges/stamps at E3. The program died; the
+watching dispersed — SOGICE transformed into a multitude of actions. This is the piece's
+explanation for WHY the rooms open at E2→E3: the collapse scattered the apparatus into
+everything. ⚑ Sérgio flagged "let's think about this" — this staging is the proposal;
+strike or amend in the checklist (D31).
 
 ---
 

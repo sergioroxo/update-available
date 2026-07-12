@@ -100,7 +100,46 @@ doesn't owe anyone.
 | E3-v | Mira/Noa beats + the turn + counter-current (felt copy = Sérgio) |
 | E3-vi | u4 ritual + relocation to Room 3 |
 
+---
+
+## R29 ADDENDUM (2026-07-12) — the mechanics rethink Sérgio asked for
+
+*His verdict: the screen-bound moderation queue + "I won't bury her story" doesn't function
+well as built elsewhere — keep the flagging, the complicity, the breakage, and Malta, but
+use THE ROOM and make it playful, not reading-limited. Three options searched; REC = 1.*
+
+**OPTION 1 — THE PINBOARD ROOM ★ RECOMMENDED.** The community lives on Room 2's WALL: a
+big warm pinboard of member cards (testimony snippets, polaroid-style portraits, letters —
+the community physically present in the room). Vera keeps the wall "gentle" — with her
+hands: click a card to read it; drag/click it FORWARD (featured), or DOWN into the drawer
+below (buried). The drawer is the bury — a real place in the room, and it fills. Lambient
+lives ON the cards (lamb stamps, verified badges). Noa's two-edge = two contradictory
+system stamps ON one card. Mira's card: the system marks it for the drawer; **leaving it
+pinned is the refusal** — physical, visible, permanent in the space. When the room turns,
+the wall sours card by card (stamps go cold, metrics crawl the frame edges); the
+counter-current = new warm cards PINNING THEMSELVES around Mira's.
+*Why it wins:* it completes the piece's board lineage — the cork board that filed YOU (E1)
+becomes the board YOU curate (E3) becomes Maya's wall (E4) becomes the constellation
+(Close). The moderation verb becomes spatial hand-work (playful, click-only, VR-natural);
+reading shrinks to card-sized; the choice is a thing you can stand in front of.
+
+**OPTION 2 — THE WELCOME SHELF.** Testimonies as OBJECTS on a display shelf ("the room's
+face"); polishing = physically swapping a member's true object for its "acceptable" twin
+(flannel folded away, the softer thing set out); burying = shelf → storage box. Same
+verbs, object-grammar instead of cards. Cheaper to read, weaker at showing a CROWD.
+
+**OPTION 3 — THE SIGNAL SWITCHBOARD.** SisterSignal literalized: a rack in the room
+routing member VOICES (audio-first — rhymes with E4's audio direction); patch a voice
+through or mute it; off-script voices crackle warm; muting is the bury. The most toy-like
+and the most production-heavy (needs many voice assets); strongest sensory contrast
+(warm crackle vs clean system chimes).
+
+All three keep: flag/bury complicity → the trained eye → the refusal → the turn →
+counter-current → Malta as the breaking point → the Flourish rebrand. The sends-as-tasks
+(S3R.3) and Noa's two-edge survive unchanged in any of them.
+
 ## What Sérgio owes this spec
-1. A read: does Noa carrying the borderland feel right, or does she split into two people?
-2. The felt beats (S3R.4, the counter-current voices) — yours.
-3. Greenlight to start E3-i/ii (mechanical, reader-gate not yet needed) whenever E2's lanes clear.
+1. **Pick the mechanic: Option 1 / 2 / 3** (or mix — e.g., 1 with 3's audio for Mira only).
+2. A read: does Noa carrying the borderland feel right, or does she split into two people?
+3. The felt beats (S3R.4, the counter-current voices) — yours.
+4. Trans-masc reader gate before E3-iii content ships.
