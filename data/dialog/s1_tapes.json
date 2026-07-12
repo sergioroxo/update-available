@@ -1,0 +1,149 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2b (docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md §3, the tapes): three cassette props on the Room 1 bookcase shelf, played through the boombox (src/narrative/tapes.ts owns the state machine + witness filing; src/engine/app.ts wires the physical click + the room-caption DOM + audio). Segments are `{ id, at, caption, kind, audio }` — `at` is seconds from PLAY start (ambient playback advancing captions on its own clock, NOT a player-facing deadline — no scrubbing/progress UI exists, per the click/tap law); `audio` optionally names a future bundled filename (src/audio/tapeAudio.ts's registry) — an unregistered name is simply never requested (no console error), so real files can drop in later by adding one registry line + the file itself, exactly like src/room/assets.ts's model manifest. WITNESS SYMMETRY (binding, ERA_MINING FIND #4, R28-2 spec §3/§6): Tape A and Tape B file 'playedThrough' (reached the tail after their last segment) or 'stoppedMidway' (play started — elapsedSec > 0 — then stopped/ejected/era-shifted before the tail) to ledger.tapes; a tape that is never pressed to PLAY (inserting it alone does not count) files NOTHING — unplayed media gets no response, same doctrine as the guide thread. Tape C (the mixtape) carries NO `witness` field at all (null) and src/narrative/tapes.ts enforces in CODE, not just by omitting data here, that it never reaches ledger.tapes and never sets the 'tape-played' ledger record the guide's `tape` side-message (s1_guide.json) waits on — playing your own mixtape is not compliance (R28-2 spec §6's ambient-presence law: the system's silence about it IS its meaning). Tape A's prayer segment is intentionally a bracketed stage-direction caption, not sung lyrics — the actual words are G1-gated, Sérgio's alone (spec §3); this file only reserves the beat and its (empty) audio slot. Tape B's ad-style captions are a period '97 AM-radio-spot shift of the already-authored data/dialog/s2_media.json campaign (same invented ministry/brand — 'THE NEW YOU', a ministry of Restorify™ — no real orgs/likenesses/verbatim testimony), grounded per docs/ERA2_EVANGELIST_COMMERCIAL_SCRIPT_2026-06-30.md (1998 'Truth in Love' + televangelist-infomercial grammar) — every campaign-claim caption carries its own [VERIFY SOURCE] below. cutting/beat metadata per the rails.",
+  "beat": "e1.tapes",
+  "cuts": ["festival", "full"],
+  "tapes": [
+    {
+      "id": "tapeA",
+      "label": "companion",
+      "_doc": "PLACEHOLDER. The kit's official cassette (R28-2 spec §3): welcome + program instructions read warmly, ending on the reserved singing-prayer slot. Filed both ways (played-through/stopped-midway) — this IS the guide thread's `tape` side-message satisfied (s1_guide.json's `tapePlayed`).",
+      "witness": {
+        "playedThrough": "tape: companion — played through",
+        "stoppedMidway": "tape: companion — stopped midway"
+      },
+      "segments": [
+        {
+          "id": "a-welcome",
+          "at": 0,
+          "kind": "welcome",
+          "caption": "Welcome. You are not alone tonight.",
+          "audio": null,
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending."
+        },
+        {
+          "id": "a-instruction-1",
+          "at": 14,
+          "kind": "instruction",
+          "caption": "Listen for your name when the roll of testimonies is read.",
+          "audio": null,
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending."
+        },
+        {
+          "id": "a-instruction-2",
+          "at": 30,
+          "kind": "instruction",
+          "caption": "Repeat the covenant quietly to yourself as it is read.",
+          "audio": null,
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending."
+        },
+        {
+          "id": "a-turn",
+          "at": 46,
+          "kind": "transition",
+          "caption": "Side one ends here. Turn the tape for the closing prayer.",
+          "audio": null,
+          "_doc": "PLACEHOLDER — period cassette detail (side-turn), Sérgio voice pass pending."
+        },
+        {
+          "id": "a-prayer",
+          "at": 60,
+          "kind": "prayer",
+          "caption": "(the group begins to sing, close and warm.)",
+          "audio": null,
+          "_doc": "PLACEHOLDER — G1 GATE: the prayer's sung words are Sérgio's alone (spec §3/Appendix A1 draft already exists in docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md and docs/REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md, delivered externally as 'Fold My Hands' but not yet imported into this repo). This session deliberately reserves the beat with a bracketed stage-direction caption ONLY, not the lyrics themselves, and leaves `audio` empty by design ('caption segments only, audio slot empty' per the build brief) — do not populate either without Sérgio's explicit pass."
+        }
+      ]
+    },
+    {
+      "id": "tapeB",
+      "label": "broadcast",
+      "_doc": "PLACEHOLDER. A 1997 AM-radio-spot cut of the same campaign data/dialog/s2_media.json plays whole at E2 (FIND #3: 'the SAME campaign heard as a crackly radio-spot on the E1 kit tape... and seen as the polished on-screen infomercial at E2' — the rebrand thesis in miniature). Shorter than the TV version (~35s vs 48s) since a radio spot has no picture to fill. Filed both ways — also satisfies the guide's `tape` message like Tape A.",
+      "witness": {
+        "playedThrough": "tape: broadcast — played through",
+        "stoppedMidway": "tape: broadcast — stopped midway"
+      },
+      "segments": [
+        {
+          "id": "b-jingle",
+          "at": 0,
+          "kind": "jingle",
+          "caption": "[JINGLE] The New You — a ministry of Restorify.",
+          "audio": null,
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending. [VERIFY SOURCE] — invented brand (Restorify), period jingle-advert grammar per docs/ERA2_EVANGELIST_COMMERCIAL_SCRIPT_2026-06-30.md / EVANGELIST_JINGLE_PROMPT."
+        },
+        {
+          "id": "b-ad-1",
+          "at": 5,
+          "kind": "ad",
+          "caption": "[ANNOUNCER] Tired of feeling like yourself?",
+          "audio": null,
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending. [VERIFY SOURCE] — period-shifted from data/dialog/s2_media.json's scene at 1.2s ('Tired of feeling like yourself?'), grounded per the 1998 'Truth in Love' campaign + televangelist-infomercial grammar (ERA2_EVANGELIST_COMMERCIAL_SCRIPT_2026-06-30.md)."
+        },
+        {
+          "id": "b-testimony",
+          "at": 10,
+          "kind": "testimony",
+          "caption": "[CALLER] I thought this was just how I was made.",
+          "audio": null,
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending. [VERIFY SOURCE] — composite invented caller testimony, no real person/verbatim survivor account; styled on s2_media.json's MARCUS 'before' line."
+        },
+        {
+          "id": "b-ad-2",
+          "at": 16,
+          "kind": "ad",
+          "caption": "[PASTOR] Three gentle steps: confess it, submit it, let us hold it for you.",
+          "audio": null,
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending. [VERIFY SOURCE] — period-shifted from data/dialog/s2_media.json's PASTOR DALE 'three gentle steps' line, same grounding."
+        },
+        {
+          "id": "b-cta",
+          "at": 23,
+          "kind": "ad",
+          "caption": "[ANNOUNCER] Operators of grace are standing by. Call now.",
+          "audio": null,
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending. [VERIFY SOURCE] — period-shifted from data/dialog/s2_media.json's ANNOUNCER call-to-action line, same grounding."
+        },
+        {
+          "id": "b-disclaimer",
+          "at": 29,
+          "kind": "disclaimer",
+          "caption": "[ANNOUNCER, FAST] …not therapy, not a cure… results not guaranteed…",
+          "audio": null,
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending. [VERIFY SOURCE] — period-shifted from data/dialog/s2_media.json's mumbled-disclaimer punchline ('your old self may not be recoverable'), same grounding; the punchline of the whole spot, kept fast/flattened per the production guide's delivery note."
+        }
+      ]
+    },
+    {
+      "id": "tapeC",
+      "label": "mixtape",
+      "_doc": "PLACEHOLDER. Daniel's own tape — his music, his life before (R28-2 spec §3, 'already canon'; ERA_MINING §6 names it an AMBIENT PRESENCE, not a narrative tributary). BINDING: `witness` is deliberately null (no playedThrough/stoppedMidway lines exist to resolve) and src/narrative/tapes.ts hard-codes that playing tapeC NEVER pushes to ledger.tapes and NEVER sets the 'tape-played' ledger record — the system does not acknowledge this tape under any circumstance, including full playback. This is enforced in code (a data author cannot accidentally make Tape C file just by adding a witness object here — the tapeId check comes first).",
+      "witness": null,
+      "segments": [
+        {
+          "id": "c-track-1",
+          "at": 0,
+          "kind": "music",
+          "caption": "(track one — jangly guitars, home-taped off the radio.)",
+          "audio": null,
+          "_doc": "PLACEHOLDER — no real song/DJ voice reproduced (copyright + no-real-orgs law); original music only, per Appendix A4's prompt draft. Bracketed stage-direction caption, not lyrics."
+        },
+        {
+          "id": "c-track-2",
+          "at": 20,
+          "kind": "music",
+          "caption": "(track two — the one he rewinds to hear again.)",
+          "audio": null,
+          "_doc": "PLACEHOLDER — same law as c-track-1; Appendix A4's 'synth-pop slow song, tender' candidate."
+        },
+        {
+          "id": "c-track-3",
+          "at": 40,
+          "kind": "music",
+          "caption": "(track three — a DJ's voice clipped off at the start.)",
+          "audio": null,
+          "_doc": "PLACEHOLDER — same law as c-track-1."
+        }
+      ]
+    }
+  ]
+}

@@ -71,6 +71,18 @@ from the shipped baseline in every mode; only `personal`/`set` FURNITURE
 (desk/chair/bed/bookcase/rug) plus one new `personal`-tier dressing item
 (plant) carry Kenney meshes, matching the side rooms exactly.
 
+## Audio
+
+| File | Source | License | Attribution needed | Notes |
+|---|---|---|---|---|
+| tape-hiss.mp3 | self-generated (Session 30, R28-2b) | n/a — original, made for this project | no | `public/assets/audio/tape-hiss.mp3`, 6s mono loop. Generated locally with ffmpeg (`anoisesrc=color=pink`, band-limited 300Hz–6.5kHz, quiet gain, short in/out fades for a click-free loop point — no external source, no download). Placeholder ambience under the Era-1 tape system's captions (src/narrative/tapes.ts) until real recordings land per `docs/REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md`. Command used: `ffmpeg -f lavfi -i "anoisesrc=color=pink:sample_rate=44100:duration=6:seed=42" -af "highpass=f=300,lowpass=f=6500,volume=0.18,afade=t=in:st=0:d=0.08,afade=t=out:st=5.92:d=0.08" -ac 1 -c:a libmp3lame -q:a 4 public/assets/audio/tape-hiss.mp3`. |
+
+The prayer ("Fold My Hands"), the jingle, the VO cast, and the mixtape tracks
+(`docs/REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md`) are NOT in the repo yet
+— Sérgio generates/delivers them externally; import happens in a later build
+lane (one row here + one registry line in `src/audio/tapeAudio.ts` each, per
+the same missing-file-safe pattern the model manifest already uses).
+
 ## Candidate kits (researched — Sérgio's call)
 
 - **Kenney Furniture Kit** — https://kenney.nl/assets/furniture-kit — **CC0** —

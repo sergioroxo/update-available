@@ -49,6 +49,13 @@
           0.06,
           0.1
         ]
+      },
+      "mixtape": {
+        "pos": [
+          1.75,
+          0.646,
+          0.7
+        ]
       }
     },
     "remove": [
@@ -271,6 +278,76 @@
         ],
         "color": "#A8B49A",
         "model": "plant"
+      },
+      {
+        "id": "tapeA",
+        "pos": [
+          1.75,
+          0.646,
+          0.4
+        ],
+        "size": [
+          0.07,
+          0.012,
+          0.045
+        ],
+        "color": "#D4D0C8"
+      },
+      {
+        "id": "tapeB",
+        "pos": [
+          1.75,
+          0.646,
+          0.55
+        ],
+        "size": [
+          0.07,
+          0.012,
+          0.045
+        ],
+        "color": "#9FB4C0"
+      },
+      {
+        "id": "tapeAInSlot",
+        "pos": [
+          1.78,
+          0.82,
+          0.55
+        ],
+        "size": [
+          0.07,
+          0.012,
+          0.045
+        ],
+        "color": "#D4D0C8"
+      },
+      {
+        "id": "tapeBInSlot",
+        "pos": [
+          1.78,
+          0.82,
+          0.55
+        ],
+        "size": [
+          0.07,
+          0.012,
+          0.045
+        ],
+        "color": "#9FB4C0"
+      },
+      {
+        "id": "tapeCInSlot",
+        "pos": [
+          1.78,
+          0.82,
+          0.55
+        ],
+        "size": [
+          0.07,
+          0.012,
+          0.045
+        ],
+        "color": "#E8D48A"
       }
     ]
   },
@@ -285,7 +362,12 @@
       "boombox",
       "boomboxSpeakerL",
       "boomboxSpeakerR",
-      "boomboxDeck"
+      "boomboxDeck",
+      "tapeA",
+      "tapeB",
+      "tapeAInSlot",
+      "tapeBInSlot",
+      "tapeCInSlot"
     ],
     "add": []
   },

@@ -42,6 +42,18 @@ export interface Ledger {
    * composed in TS. In-memory only, like everything here.
    */
   guidance: { id: string; outcome: 'followed' | 'declined'; witness: string }[];
+  /**
+   * Era-1 tape outcomes (reinterp build only; R28-2b). Witness symmetry per
+   * ERA_MINING FIND #4 IS NOT uniform here by design: Tapes A/B file
+   * played-through/stopped-midway (never-touched files nothing — unplayed
+   * media gets no response, same doctrine as guidance); Tape C (Daniel's own
+   * mixtape) NEVER appears in this array under any outcome — its meaning is
+   * that the system ignores it (R28-2 spec §3/§6, ambient-presence law),
+   * enforced in src/narrative/tapes.ts, not just by convention here.
+   * `witness` resolved from data/dialog/s1_tapes.json at file time. In-memory
+   * only, like everything here.
+   */
+  tapes: { id: string; outcome: 'playedThrough' | 'stoppedMidway'; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -56,7 +68,8 @@ const fresh = (): Ledger => ({
   respite: { streamOpenSeconds: 0, songsPlayed: [] },
   provotypes: [],
   sends: [],
-  guidance: []
+  guidance: [],
+  tapes: []
 });
 
 export let ledger: Ledger = fresh();

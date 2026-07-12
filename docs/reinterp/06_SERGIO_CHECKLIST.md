@@ -198,6 +198,30 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   beat with a room caption. Deliberately NOT improvised — say a or b.
   **→ ANSWERED (a) by Sérgio 2026-07-11: auto-boot, guidance starts at the
   floppy. CLOSED as built — no change needed.**
+- **D24 (2026-07-12)** — R28-2b SHIPPED + FULLY VERIFIED (Session 30): the
+  three-tape system (props on the Room 1 bookcase shelf, boombox play/stop,
+  data-driven captions, witness-symmetric filing). Judgment calls made without
+  waiting on you (flagged, not buried): (1) **mixtape (Tape C) repositioned**
+  from its old desk-side spot to sit beside the two new tapes on the shelf,
+  reinterp-only (`data/room/reinterp_deltas.json` r1 override) — era1.json
+  itself, and the shipped baseline, are untouched; (2) **tape colors**: A
+  (companion) `#D4D0C8` pale grey-beige, B (broadcast) `#9FB4C0` blue-grey,
+  reused from the existing era1 palette family, no new hex; (3) **replay
+  semantics**: stopping and pressing play again on the SAME tape RESUMES from
+  where it left off (no rewind-on-stop) — a cassette holds its position; (4)
+  **witness filing is once-per-tape-ever**: the first decisive outcome
+  (played-through or stopped-midway) is permanent — replaying a stopped tape
+  to completion later does NOT upgrade/refile it. All four are easy to revisit
+  if they read wrong in a headset pass. **Your check:** every caption in
+  `data/dialog/s1_tapes.json` is PLACEHOLDER — Tape A's prayer segment is
+  deliberately a bracketed stage-direction ("the group begins to sing"), not
+  sung lyrics (G1 gate — your words, whenever you write them); Tape B's ad
+  captions carry `[VERIFY SOURCE]` per line (period-shifted from the already-
+  authored `s2_media.json` infomercial). The self-generated tape-hiss loop
+  (`public/assets/audio/tape-hiss.mp3`, documented in `assets/LICENSES.md`) is
+  a placeholder — your Suno/Sonauto files (prayer, jingle, mixtape tracks)
+  drop into per-segment `audio` slots later, one registry line each in
+  `src/audio/tapeAudio.ts`, no other code changes needed.
 - **D23 (2026-07-11)** — Infomercial audio architecture (Sérgio's call,
   adopted): a LOOPABLE INSTRUMENTAL BED is the base asset (enter/exit at any
   point; reusable as Restorify ambience), with the sung "New You" hook as a

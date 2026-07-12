@@ -117,6 +117,18 @@ export function buildClusterShell(
   morph.snapTo(0);
   applyLayout();
 
+  // R28-2b (the three-tape system): the "inserted" markers start hidden —
+  // nothing is in the boombox at boot. src/narrative/tapes.ts + the engine's
+  // click handler toggle these via `.enabled` only, matching the kit-floppy
+  // precedent (app.ts's onKitInserted) — NEVER by moving a prop's position,
+  // which would silently desync from the settled static batch below (it
+  // bakes world transforms once per era state and only re-derives on
+  // enable/disable, per batching.ts's own documented law).
+  for (const id of ['tapeAInSlot', 'tapeBInSlot', 'tapeCInSlot']) {
+    const h = room.props.get(id);
+    if (h) h.entity.enabled = false;
+  }
+
   // ── the Quest draw-call chore: constants bake once; variable box props bake
   // only after a state settles, then unbake before the next morph so live
   // transforms/materials remain truthful. ?nobatch=1 = the A/B escape. ──

@@ -23,6 +23,8 @@ import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/po
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
+import { TapeSystem, type TapeId } from '../narrative/tapes';
+import { TapeAudioBus } from '../audio/tapeAudio';
 import { mountDebugPanel } from '../debug/panel';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
@@ -66,6 +68,25 @@ const STARTUP_ARM_SECONDS = 4.0;
 const MARKER_HIT_RADIUS = 0.22;
 const BLINK_OUT_SECONDS = 0.13;
 const BLINK_IN_SECONDS = 0.22;
+/** R28-2b: the three cassette shelf spots (tapeA/tapeB are new props; tapeC
+ *  is the existing `mixtape` prop, repositioned in reinterp_deltas.json's r1
+ *  override to sit beside them) and the boombox's own click zone — the
+ *  physical geometry lives here in code (CLAUDE.md: layout in .ts, display
+ *  text in data/); the state machine + captions live in data/dialog/
+ *  s1_tapes.json + src/narrative/tapes.ts. */
+const TAPE_SHELF: Record<TapeId, { x: number; y: number; z: number }> = {
+  tapeA: { x: 1.75, y: 0.646, z: 0.4 },
+  tapeB: { x: 1.75, y: 0.646, z: 0.55 },
+  tapeC: { x: 1.75, y: 0.646, z: 0.7 }
+};
+const TAPE_HIT_RADIUS = 0.07; // stays under half the 0.15m shelf spacing — no ambiguity between tapes
+const BOOMBOX_HIT = { x: 1.9, y: 0.76, z: 0.55 };
+const BOOMBOX_HIT_RADIUS = 0.22;
+/** the visual "docked" spot, just in front of the boombox's own deck plate */
+const TAPE_SLOT_PROP: Record<TapeId, string> = {
+  tapeA: 'tapeAInSlot', tapeB: 'tapeBInSlot', tapeC: 'tapeCInSlot'
+};
+const TAPE_SHELF_PROP: Record<TapeId, string> = { tapeA: 'tapeA', tapeB: 'tapeB', tapeC: 'mixtape' };
 
 interface AppOptions {
   reinterp?: boolean;
@@ -161,6 +182,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let cloud: PointCloud | null = null;
   let sendRt: SendRuntime | null = null;
   let movementNodes: MovementNodes | null = null;
+  // R28-2b: the tape system's pure logic (src/narrative/tapes.ts, mirrors
+  // guide.ts's split) + its audio bus (src/audio/tapeAudio.ts). Both are
+  // Era-1-only in effect (the boombox itself leaves the room at E2), but the
+  // objects live for the app's lifetime — driveMorph() resets them on every
+  // era shift rather than tearing them down.
+  let tapes: TapeSystem | null = null;
+  let tapeAudio: TapeAudioBus | null = null;
   if (options.reinterp === true) {
     niche = buildFluidNiche(app);
     niche.setFacet(options.facet ?? 'none');
@@ -174,6 +202,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // R28-1: the movement node graph (floor markers at the existing camera
     // seats). Geometry/gating only — the camera cut lives in requestMove().
     movementNodes = buildMovementNodes(app);
+    tapes = new TapeSystem();
+    tapeAudio = new TapeAudioBus();
   }
   const openingBoardDressing = options.reinterp === true ? buildOpeningBoardDressing(app) : null;
 
@@ -187,6 +217,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // retired set, so reviews can watch the thread without screenshot-chasing.
     (window as { __guide?: () => unknown }).__guide = () =>
       os.guide ? os.guide.snapshot() : null;
+    // R28-2b tape probe (read-only, like __guide/__ledger)
+    (window as { __tapes?: () => unknown }).__tapes = () =>
+      tapes ? tapes.snapshot() : null;
   }
 
   // ── the NARRATIVE SPINE (reinterp; real playthroughs only, not review
@@ -322,6 +355,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // "the frame never plays" still holds: this is chrome, not the fiction).
   let blinkOverlay: HTMLDivElement | null = null;
   let moveHint: HTMLDivElement | null = null;
+  let tapeCaption: HTMLDivElement | null = null;
+  let tapeMuteBtn: HTMLButtonElement | null = null;
   function dismissMoveHint(): void {
     if (moveHintDismissed || !moveHint) return;
     moveHintDismissed = true;
@@ -351,8 +386,38 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     });
     // R28-2a: the old floppyHint DOM one-off (R28-0c item 10) is gone — Era-1
     // guidance now lives in the DIEGETIC side-message thread (the OS taskbar
-    // status well, data/dialog/s1_guide.json). moveHint stays the ONE piece
-    // of non-diegetic frame chrome, visually distinct by law.
+    // status well, data/dialog/s1_guide.json). moveHint was the first piece
+    // of non-diegetic frame chrome; R28-2b adds two more, same law (the frame
+    // never PLAYS — this is captioning/accessibility chrome around a diegetic
+    // object, not a system voice): the tape system's HARD RAIL forbids new
+    // desktop-canvas UI this session, so segment captions (subtitle-style,
+    // for the tapes playing in the room) and a small global mute toggle live
+    // here as fixed DOM, exactly like moveHint, never on the monitor texture.
+    tapeCaption = document.createElement('div');
+    Object.assign(tapeCaption.style, {
+      position: 'fixed', left: '50%', bottom: '4%', transform: 'translateX(-50%)',
+      zIndex: '9', background: 'rgba(10,10,14,0.78)', color: '#e8dcc0',
+      font: 'italic 12px monospace', padding: '5px 12px', borderRadius: '4px',
+      maxWidth: '70%', textAlign: 'center',
+      opacity: '0', pointerEvents: 'none', transition: 'opacity 0.3s'
+    } as CSSStyleDeclaration);
+    document.body.appendChild(tapeCaption);
+
+    tapeMuteBtn = document.createElement('button');
+    tapeMuteBtn.textContent = 'mute';
+    Object.assign(tapeMuteBtn.style, {
+      position: 'fixed', right: '3%', top: '3%', zIndex: '9',
+      background: 'rgba(10,10,14,0.78)', color: '#cdd3df', border: '1px solid #444',
+      font: '11px monospace', padding: '4px 10px', borderRadius: '4px',
+      opacity: '0', pointerEvents: 'none', transition: 'opacity 0.3s', cursor: 'pointer'
+    } as CSSStyleDeclaration);
+    document.body.appendChild(tapeMuteBtn);
+    tapeMuteBtn.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      if (!tapeAudio || !tapeMuteBtn) return;
+      tapeAudio.setMuted(!tapeAudio.isMuted);
+      tapeMuteBtn.textContent = tapeAudio.isMuted ? 'unmute' : 'mute';
+    });
   }
 
   // S1.0 hint: shown while the machine waits dark
@@ -466,6 +531,45 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         h.material.update();
       }
     }
+  }
+
+  // R28-2b: the tape system's PHYSICAL side — never move a prop's position at
+  // runtime (that would silently desync from the settled static batch, see
+  // cluster.ts's own note); insert/eject is expressed the SAME way the kit
+  // floppy already hides itself — toggling `.enabled` on a pre-placed pair
+  // (the shelf box vs. its own "docked" marker at the boombox).
+  function syncTapeProps(): void {
+    if (!tapes) return;
+    const cur = tapes.inserted;
+    (Object.keys(TAPE_SHELF) as TapeId[]).forEach((id) => {
+      const shelfH = room.props.get(TAPE_SHELF_PROP[id]);
+      const slotH = room.props.get(TAPE_SLOT_PROP[id]);
+      if (shelfH) shelfH.entity.enabled = id !== cur;
+      if (slotH) slotH.entity.enabled = id === cur;
+    });
+  }
+
+  // the audio bus only reacts to STATE CHANGES (play started/stopped, the
+  // active segment's own named clip changed) — never polled blindly, so a
+  // missing per-segment audio name never even attempts a request.
+  let tapesWasPlaying = false;
+  let tapesLastSegmentId: string | null = null;
+  function syncTapeAudio(): void {
+    if (!tapes || !tapeAudio) return;
+    if (tapes.isPlaying && !tapesWasPlaying) {
+      tapeAudio.start(tapes.activeSegment?.audio ?? null);
+      tapesLastSegmentId = tapes.activeSegment?.id ?? null;
+    } else if (!tapes.isPlaying && tapesWasPlaying) {
+      tapeAudio.stop();
+      tapesLastSegmentId = null;
+    } else if (tapes.isPlaying) {
+      const seg = tapes.activeSegment;
+      if (seg && seg.id !== tapesLastSegmentId) {
+        tapeAudio.setClip(seg.audio ?? null);
+        tapesLastSegmentId = seg.id;
+      }
+    }
+    tapesWasPlaying = tapes.isPlaying;
   }
 
   // the gaze-dwell facet pull (geometry doc §2.2 #3) — ambient and reversible:
@@ -794,6 +898,31 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         os.insertKit(); // S1.2 — you put the disk in yourself
         return;
       }
+      // R28-2b: the three tapes + the boombox — Era-1 only (the boombox
+      // itself leaves the room at E2; driveMorph() resets tape state on every
+      // era shift, see below). A tape already inserted has no shelf entity
+      // left to click (syncTapeProps disabled it), so this can never re-fire
+      // on the same tape; checked BEFORE the boombox so an overlapping radius
+      // never steals a shelf click (same precedence law as item 4 below).
+      if (tapes && os.inDesktop && os.era === 'e1') {
+        let tapeHandled = false;
+        for (const id of Object.keys(TAPE_SHELF) as TapeId[]) {
+          if (tapes.inserted === id) continue;
+          if (rayHitsPoint(e, TAPE_SHELF[id], TAPE_HIT_RADIUS)) {
+            tapes.insert(id);
+            syncTapeProps();
+            syncTapeAudio();
+            tapeHandled = true;
+            break;
+          }
+        }
+        if (tapeHandled) return;
+        if (rayHitsPoint(e, BOOMBOX_HIT, BOOMBOX_HIT_RADIUS)) {
+          tapes.togglePlay();
+          syncTapeAudio();
+          return;
+        }
+      }
       // R28-0c (item 4): the monitor/OS click is checked BEFORE markers — prop
       // and OS interactions must win over a marker when both could match a
       // click (Sérgio: a shelf-item click teleported him instead of doing
@@ -998,6 +1127,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // the R28-0c item-10 hardwired floppy lift — same visual mechanism).
       setPropEmphasis(os.guide?.activeEmphasis ?? null);
 
+      // R28-2b: the tape system's own clock (a tape playing back IS a clock,
+      // unlike the guide thread's pure condition polling) — os.paused freezes
+      // it exactly like it freezes everything else (Esc/pause law).
+      if (tapes) {
+        tapes.update(dt, os.paused);
+        syncTapeAudio();
+        tapeAudio?.setGamePaused(os.paused);
+        if (tapeCaption) {
+          const cap = tapes.activeCaption;
+          tapeCaption.textContent = cap ?? '';
+          tapeCaption.style.opacity = cap ? '1' : '0';
+        }
+        if (tapeMuteBtn) {
+          const show = !!tapes.inserted;
+          tapeMuteBtn.style.opacity = show ? '1' : '0';
+          tapeMuteBtn.style.pointerEvents = show ? 'auto' : 'none';
+        }
+      }
+
       // gaze-dwell: only once the cluster has been revealed (the E1 dark-
       // surround law), never under a ?facet= override, and only for facets the
       // era's table marks promotable (tier hero|set — fog stays unresolved)
@@ -1123,6 +1271,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  pan under auto-cam, a takeable default otherwise */
   function driveMorph(era: EraKey): void {
     if (!cluster) return;
+    // R28-2b: every era shift resets the tape system BEFORE the morph removes
+    // the physical props — an in-flight play is an abrupt stop (filed like
+    // any other outcome, nothing hidden), and the shelf/slot entities return
+    // to their "nothing inserted" baseline so a later debug jump back to E1
+    // never finds a tape stuck invisible from a stale `.enabled` toggle.
+    if (tapes) {
+      tapes.handleEraShift();
+      syncTapeProps();
+      syncTapeAudio();
+    }
     os.setDesktopEra(era);
     setOpeningBoardVisibleForEra(era);
     cluster.morphToEra(era, true);

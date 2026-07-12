@@ -160,8 +160,12 @@ const danielBoxes = [
 // reinterp_deltas.json, reinterp-only territory): r1.remove retires
 // deskTop/deskLeg*/chairSeat/chairBack/chairPost/bedFrame/mattress/blanket/
 // pillow/shelfBack/shelfBoard*/rug, and r1.add spawns deskModel/chairModel/
-// bedModel/bookcaseModel/rugModel in their place. (book1-3/cdStack/mixtape
-// stay as-is, unmodeled, riding on top of bookcaseModel.)
+// bedModel/bookcaseModel/rugModel in their place. (book1-3/cdStack stay
+// as-is, unmodeled, riding on top of bookcaseModel; Session 30 gives
+// mixtape — Tape C — its own r1.props.pos override, moved from era1.json's
+// old desk-side spot to sit on the shelf beside the new tapeA/tapeB props
+// and the boombox, per R28-2b — era1.json itself is untouched, so the
+// shipped baseline's mixtape position is unaffected.)
 // Model props are also position-frozen once spawned (clusterMorph only ever
 // toggles their `.enabled`, never their transform — see clusterMorph.ts's
 // `applyTarget`/`goToState`), so the R25 "shelf/bed move out of the new
@@ -220,11 +224,18 @@ const deltas = {
   // E1→E2). Aging cue only: window → day, moon gone, the teen gear (boombox)
   // packed away — the mixtape survives on the still-present bookcase (it
   // resists graying — the warm thread's first waypoint).
+  // Session 30 (R28-2b, the three-tape system): tapeA/tapeB (the system's
+  // companion + broadcast tapes) and their tapeAInSlot/tapeBInSlot/
+  // tapeCInSlot "inserted" markers are Era-1-only apparatus — they leave with
+  // the boombox at E2, same as the player-facing player itself. mixtape
+  // (Tape C) is NOT in this list — it survives, unfiled, per its own
+  // ambient-presence law (docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC §3).
   r2: {
     props: {
       windowPane: { color: '#D4D0C8' }
     },
-    remove: ['moon', 'boombox', 'boomboxSpeakerL', 'boomboxSpeakerR', 'boomboxDeck'],
+    remove: ['moon', 'boombox', 'boomboxSpeakerL', 'boomboxSpeakerR', 'boomboxDeck',
+      'tapeA', 'tapeB', 'tapeAInSlot', 'tapeBInSlot', 'tapeCInSlot'],
     add: []
   },
   // r3 = E3 (2016), the T2 update's cascade: the rooms OPEN (moved here from
