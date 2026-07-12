@@ -32,6 +32,14 @@ interface UpdateStrings {
   agree?: string;
   installTitle?: string;
   changelog: string[] | null;
+  /** THE DISPERSAL (u3 today; data-driven, optional): uninstall-report lines
+   *  shown after the changelog finishes typing. A line prefixed '~' renders
+   *  small and dim — the quiet line carries the thesis ("companion process —
+   *  could not be removed. migrating.") — and triggers the fragment beat: the
+   *  companion mark scattering into the pieces that become Lambient at E3. */
+  uninstall?: string[];
+  /** per-update install length override (u3 needs room for the dispersal) */
+  installSeconds?: number;
   restarting: string;
 }
 
@@ -93,7 +101,7 @@ export class UpdateApp {
       this.t = 0;
       this.onWindowClosed?.(); // R28-2c: the gathering window closes here
     }
-    if (this.phase === 'install' && this.t >= INSTALL_SECONDS) {
+    if (this.phase === 'install' && this.t >= (this.s.installSeconds ?? INSTALL_SECONDS)) {
       this.phase = 'restart';
       this.t = 0;
     }
@@ -176,11 +184,44 @@ export class UpdateApp {
         ctx.fillStyle = line.startsWith('-') ? ERA1.warn : line.startsWith('=') ? ERA1.grey : ERA1.silver;
         ctx.fillText(line, 40, 62 + i * 16);
       }
+      // THE DISPERSAL (data-driven; u3 carries it): the uninstall report,
+      // after the changelog finishes typing. Plain lines type on like the
+      // changelog; a '~' line renders SMALL and DIM (the quiet line is the
+      // thesis), and beside it the companion mark fragments — one block
+      // scattering into the small marks that become Lambient's badges at E3.
+      if (this.s.uninstall) {
+        const clDone = this.s.changelog.length * 0.8 + 0.9;
+        const baseY = 62 + this.s.changelog.length * 16 + 14;
+        const shownU = Math.min(this.s.uninstall.length, Math.floor(Math.max(0, this.t - clDone) / 1.1));
+        for (let i = 0; i < shownU; i++) {
+          const raw = this.s.uninstall[i];
+          const quiet = raw.startsWith('~');
+          ui.setFont(ctx, quiet ? 8 : 10);
+          ctx.fillStyle = quiet ? ERA1.greyDark : ERA1.silver;
+          ctx.fillText(quiet ? raw.slice(1).trim() : raw, quiet ? 52 : 40, baseY + i * 15);
+          if (quiet) {
+            // the fragment beat: eased scatter along FIXED offsets (no
+            // per-frame randomness — pixel discipline), integer positions.
+            const FRAG: [number, number][] = [
+              [10, -6], [16, 3], [7, 9], [-8, 7], [-13, -4], [4, -12], [-3, 13]
+            ];
+            const start = clDone + (i + 1) * 1.1;
+            const p = Math.min(1, Math.max(0, (this.t - start) / 2.2));
+            const e = 1 - (1 - p) * (1 - p); // ease-out
+            const ax = 40; const ay = baseY + i * 15 - 6; // anchor left of the quiet line
+            if (p < 1) ui.px(ctx, ax, ay, Math.max(1, Math.round(5 * (1 - e))), Math.max(1, Math.round(5 * (1 - e))), ERA1.grey);
+            for (const [fx, fy] of FRAG) {
+              ui.px(ctx, ax + 2 + Math.round(fx * e), ay + 2 + Math.round(fy * e), 2, 2, e > 0.85 ? ERA1.greyDark : ERA1.grey);
+            }
+          }
+        }
+        ui.setFont(ctx, 10);
+      }
       // progress + the glitch: the bar stutters near the end (soft, no strobe)
       const bw = 220; const bx = Math.round((W - bw) / 2); const by = H - 70;
       ui.px(ctx, bx - 1, by - 1, bw + 2, 12, ERA1.greyDark);
       ui.px(ctx, bx, by, bw, 10, ERA1.black);
-      let k = Math.min(1, this.t / INSTALL_SECONDS);
+      let k = Math.min(1, this.t / (this.s.installSeconds ?? INSTALL_SECONDS));
       if (k > 0.72 && k < 0.96 && Math.random() < 0.3) k -= 0.05 * Math.random(); // the stutter
       ui.px(ctx, bx, by + 1, Math.round(bw * k), 8, ERA1.titleBlue);
       return;
