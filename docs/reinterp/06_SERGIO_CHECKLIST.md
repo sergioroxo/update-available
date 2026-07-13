@@ -179,6 +179,16 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
   build session.
 
+- **D37 (2026-07-13)** — **ECHO SCRIPT DRAFT v1 written** (twelve units, enough
+  to hear the era): `docs/REINTERP_E4_ECHO_SCRIPT_DRAFT_2026-07-13.md`. The
+  deadname beats escalate by WARMTH (the apology grows while the record
+  hardens); the chip foreclosure is visible U7→U10, with the correction chip
+  ("my name is Maya") disappearing for exactly ONE unit — the era's darkest
+  moment — then returning LIVE inside the careful-pause screen as the thread
+  out; Echo's only broken sentence is the last one, cut mid-word by
+  TRANSCENDANCE's `NO CATEGORY FOUND`. **Your verify: the four checks listed
+  at the doc's end (Echo never villainous, warmth-escalation, visible
+  foreclosure, curation-targeted split) — not line-by-line taste yet.**
 - **D35 (2026-07-12, R29-c round)** — Your four E3 answers folded in: the
   **THREE-SCREEN ROOM is the E3 architecture of record**; the split-character
   option is drafted concretely so your "maybe 2" has something real to judge —
