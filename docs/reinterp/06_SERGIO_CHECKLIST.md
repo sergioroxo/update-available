@@ -197,6 +197,27 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   pass, cheap to redo) and the daylight values (`cluster.json`'s e2 rig:
   moonlight 0.05→0.3 intensity, night-blue→`#F3EAD8`) are both judgment calls,
   not locked; all copy PLACEHOLDER as ever.
+- **D39 (2026-07-13)** — **ECHO KEPT, as Lamby's final form** (your "wasn't it
+  supposed to stay closer to Lamby?" answered structurally): Echo IS the
+  lineage's end — the dispersal fragments reassembled into pure voice, no body
+  left; the mask coming off IS the E4 thesis. Legibility added: Echo's arrival
+  shows the lamb-fragments reassembling into its waveform mark, and the
+  witness record carries the chain ("companion process v4: echo — migrated
+  from lambient"). Minimal footprint law carried forward: same ≤2-lines-per-
+  beat discipline as Lamby. Strike to approve.
+- **D40 (2026-07-13)** — Echo's VOICE production plan: audition timbre on
+  HF/Qwen (2–3 candidates, description in the E4 design §4), then Fable has a
+  batch pipeline built (`tools/gen_echo_tts`, Kokoro local = free +
+  deterministic + regenerable) so all ~50 lines generate in one command after
+  your voice pass. No paid tools needed.
+- **D41 (2026-07-13)** — Session 35 dispatched: the New You infomercial
+  PLAYER (NetVision window, VHS chrome, silhouettes, karaoke ball, the fine-
+  print crawl) with S2R.4's BREAK built in — the video wrecks itself at the
+  end ("Call now! Call n—", freeze, static) and a first crack of Caleb's
+  message surfaces through the static (fragment only; the full thread stays
+  gated). Provisional trigger = after the first check-in, via Lamby's offer;
+  moves to post-redaction when the Caleb lane builds. Audio slot empty —
+  your song completes it.
 - **D37 (2026-07-13)** — **ECHO SCRIPT DRAFT v1 written** (twelve units, enough
   to hear the era): `docs/REINTERP_E4_ECHO_SCRIPT_DRAFT_2026-07-13.md`. The
   deadname beats escalate by WARMTH (the apology grows while the record
