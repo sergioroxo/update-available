@@ -99,7 +99,11 @@ const BELONGINGS_HIT: Record<string, { p: { x: number; y: number; z: number }; r
   plantModel: { p: { x: -1.75, y: 0.15, z: -0.35 }, r: 0.18 },
   book1: { p: { x: 1.98, y: 1.21, z: 0.55 }, r: 0.12 },
   book2: { p: { x: 1.98, y: 1.2, z: 0.65 }, r: 0.12 },
-  poster1: { p: { x: 0.95, y: 1.62, z: -0.695 }, r: 0.22 }
+  poster1: { p: { x: 0.95, y: 1.62, z: -0.695 }, r: 0.22 },
+  // D33 (Session 34): two small new shelf props, added to the eligible set —
+  // positions match their era1.json prop entries exactly.
+  teddyBox: { p: { x: 1.98, y: 0.71, z: 0.5 }, r: 0.14 },
+  rainbowDuck: { p: { x: 1.98, y: 1.6, z: 0.38 }, r: 0.12 }
 };
 
 interface AppOptions {
@@ -1389,6 +1393,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     setLight('moonlight', 0.14);           // moon-blue window wash, soft/low
     setLight('witnessCold', 0.50);         // the cold rear, dimmed so the front stays warm
   }
+  // NOTE (Session 34): per-era lighting from E2 on is NOT owned here — it is
+  // data/room/cluster.json's `rigs` table, applied by cluster.ts's applyRig()
+  // at the end of every morphToEra() call (clusterMorph.ts's own header is
+  // explicit: "Lights are NOT morphed here — the cluster's era rigs own
+  // them"). The S2R.0a daylight cue (2003 DAYLIGHT replacing E1's night/lamp
+  // rig) is implemented THERE (the `e2` rig's `moonlight` target), not as a
+  // parallel function here — an app.ts-side override would only be clobbered
+  // moments later by applyRig(toEra, animate) inside cluster.morphToEra().
 
   // the opening's physical cork-board frame sits fixed at Room 1's ORIGINAL
   // spine coordinates (built once, never carried by the morph). It backs the
@@ -1425,6 +1437,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (os.belongings) cluster.setKeptIds(os.belongings.kept);
     os.setDesktopEra(era);
     setOpeningBoardVisibleForEra(era);
+    // S2R.0a: cluster.morphToEra() below calls applyRig(era, animate), which
+    // owns the E2 daylight cue (data/room/cluster.json's `e2` rig) in the
+    // SAME morph beat as the room aging — see the note above applyLightsOn().
     cluster.morphToEra(era, true);
     if (era === 'e4') {
       // THE TURN as a dolly — the piece's slowest, heaviest move: rise up over
@@ -1469,7 +1484,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (options.close && cluster && cloud) {
       enterClose();
     } else if (options.era && cluster) {
-      os.setDesktopEra(options.era);
+      // `settled`: a review jump wants the room's SETTLED state, not the
+      // S2R.0/S2R.1 arrival narrative (silence → Lamby) — same spirit as
+      // skipping O1/O3 below.
+      os.setDesktopEra(options.era, true);
+      // lighting: cluster.morphToEra(options.era, false) below applies that
+      // era's rig (data/room/cluster.json), which owns lighting from E2 on.
       // R28-0c (item 12b): review jumps skip O1/O3 entirely, so there is never
       // any real content (profile pins, filed record) for the physical
       // cork-board dressing to frame — setOpeningBoardVisibleForEra() would

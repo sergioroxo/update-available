@@ -489,6 +489,7 @@ export class WitnessCanvas {
       : [];
     if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0
         || endingLines.length > 0 || ledger.guidance.length > 0 || ledger.belongings.length > 0
+        || ledger.lamby.length > 0 || ledger.checkins.length > 0
         || firstTouchLines.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;
@@ -515,6 +516,16 @@ export class WitnessCanvas {
         // items file nothing (silence is the record's answer), so there is
         // no un-kept branch to render here.
         ...ledger.belongings.map(b => ({ text: b.witness || `${b.id}: ${b.outcome}`, color: INK })),
+        // S2R.0/S2R.1 (Session 34): the return press + Lamby's debut outcome —
+        // dismissed renders in the same amber as other declined/abandoned
+        // lines (witness symmetry: dismissing the assistant is never invisible).
+        ...ledger.lamby.map(l => ({
+          text: l.witness || `${l.id}: ${l.outcome}`,
+          color: l.outcome === 'dismissed' ? '#cc8855' : INK
+        })),
+        // S2R.2: every Daily Realignment chip files its own tag — none is a
+        // branch, so all render the same ink (register, not judgement).
+        ...ledger.checkins.map(c => ({ text: c.witness || `${c.id}`, color: INK })),
         ...endingLines.map(text => ({ text, color: '#cc8855' }))
       ];
       // the well between the log heading and the footer holds ~7 rows. The

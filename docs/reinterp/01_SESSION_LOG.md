@@ -55,6 +55,117 @@ Two live tracks, for Fable/Sérgio to sequence:
   is broken, but it should be synced whenever a session has schema-only bandwidth.
 
 ## DONE
+*(2026-07-13 · Session 34 (R28-2d-i/ii) — the E2 homecoming staging + Lamby's debut, per
+`docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md` S2R.0–S2R.2 (Sérgio's 2026-07-12 revision: the
+return press, not an unmarked power-on). Scope: S2R.0 (the return, felt/bare), S2R.1 (Lamby's debut,
+operable), S2R.2 (the Restorify check-in shell), + D33's two new belongings props. S2R.3+ (Caleb) stays
+gated, untouched.
+
+**S2R.0 — 2003 DAYLIGHT + THE SILENCE.** A real conflict was found and fixed mid-session: the first
+implementation added a parallel `applyDaylight()` function in `src/engine/app.ts`, following the O1/O2
+`applyWindowLight`/`applyLightsOn` pattern the brief pointed at — but numeric probing showed its values
+were being immediately overwritten. `src/room/cluster.ts`'s `applyRig()` (fed by `data/room/cluster.json`'s
+PRE-EXISTING per-era `rigs` table — a complete, already-designed E1→E4 lighting arc the brief's author
+apparently didn't have in view) runs at the end of every `cluster.morphToEra()` call, moments after
+`driveMorph()`'s own light call, and clusterMorph.ts's own header is explicit: "Lights are NOT morphed
+here — the cluster's era rigs own them." Fix: reverted the app.ts function/wiring entirely and instead
+added ONE field to the authoritative rig — `cluster.json`'s `e2` rig's `moonlight` target gained
+`intensity: 0.05 → 0.3` and a colour (era1.json's own `moon`-prop hue, `#F3EAD8`, reused per this file's
+own COLOR LAW comment, replacing the inherited night-blue `#6C7BA8`). `lamp`/`roomFill`/`screenGlow`/
+`witnessCold` were left exactly as the pre-existing e2 rig already had them (lamp was already reduced
+2.9→1.3, satisfying "lamp glow reduced" without a second change). THE SILENCE: `src/desktop/os.ts`'s
+`setDesktopEra()` now takes an `E2Stage` ('silence'→'lambyBoot'→'lambyGreeting'→'active'); entering e2 via
+the real ritual lands in 'silence' (monitor holds ONLY the one dim two-line waiting screen, no toast, no
+taskbar, no icons — `drawDesktop()` branches out to a new `drawE2Arrival()` before any of the old chrome
+code runs); a `?era=` review jump instead passes `settled: true` and lands straight in 'active' (review
+tools want the settled room, not the arrival narrative — same spirit as the existing O1/O3 skip). Also
+fixed: `guide.update()` (the Era-1 side-message thread) is now gated to `desktopEra === 'e1'` — previously
+ungated, so it could keep evaluating/filing in the background past E2 even though its RENDERING was
+already E1-gated; now it freezes cleanly the instant the era shifts, closing the "verify it doesn't leak"
+ask definitively rather than by rendering-gate coincidence alone.
+
+**S2R.1 — LAMBY'S DEBUT.** The return press (any click during 'silence') files
+`return: pressed — the reboot completed` and advances to a brief "Restorify — finishing installation…"
+beat (`LAMBY_BOOT_HOLD` 1.6s), then Lamby appears: a small canvas-drawn lamb mark (`drawLambyMark`, ERA1
+palette only — white/beige/paper/black/greyDark, no new hex, ~24×20px, deliberately blocky/small per the
+brief), exactly two lines (data, PLACEHOLDER) and two chips (Begin/Not now). Begin files
+`assistant: begun — first greeting` and opens Restorify directly; Not now files
+`assistant: dismissed — first greeting` (+ `ledger.assistant.dismissals` incremented, reusing the existing
+counter) and returns to the ordinary era-2 desktop WITHOUT opening Restorify — dismissal always works, is
+always logged (R28 amendment 2). E2's own desktop skin already names its first icon "Restorify"
+(`data/strings/slice.json` eraSkins.e2, pre-existing) — that EXISTING icon is now the door Lamby's law
+promises ("does not return until the player opens Restorify themselves"); a first pass duplicated a second
+icon before this was noticed and fixed (removed; `icon-era-0` now branches to `openRestorify()` only when
+`desktopEra === 'e2'`, e3/e4's icon-era-0 unaffected).
+
+**S2R.2 — THE CHECK-IN (shell only).** New `src/desktop/apps/restorify.ts` (`RestorifyApp`, follows the
+existing per-app pattern — packet.ts/diary.ts/provotype.ts): the 412-day purity streak
+("includes supervised period") front and center, "How is your walk today?" + 4 chips (Steady/Struggling/
+Grateful/Tired), each filing its own `ledger.checkins` tag (register, never branch — no Thought Audit,
+no webcam, no Caleb, no streak death, per the session's explicit shell-only scope) + a Close button.
+Reopens via the Restorify icon.
+
+**D33 (props):** `teddyBox` and `rainbowDuck` added to `data/room/era1.json` (small, set-tier — deliberately
+NOT added to `era1room.ts`'s personal-tier id list, so they classify 'set'/crisp by the existing default,
+matching the brief's "set-tier" instruction with no code change) and to `data/room/belongings.json`'s
+eligible list (now 9 items — past the original 5–8 range named in the R28-2c session; flagged here rather
+than silently exceeded) + `src/engine/app.ts`'s `BELONGINGS_HIT` click zones. The teddy's colour reuses
+book1's already-approved dusty-rose hue; the duck's yellow (`#FFD24C`) is the ONE new hex this session —
+the brief's own explicit "canon rainbow colors" exception for this one prop. The REJECTION beat is NOT
+this session (per brief + D33's own text).
+
+**New ledger surface:** `ledger.lamby: {id, outcome: 'returned'|'begun'|'dismissed', witness}[]` and
+`ledger.checkins: {id, witness}[]`, both rendered into the EXISTING witness session-log list in
+`src/witness/intake.ts` (no new dashboard) — `dismissed` renders in the same amber as other
+declined/abandoned lines (witness symmetry).
+
+**VERIFIED (real browser, worldToScreen-projected PointerEvents + `window.__app.fire('update', dt)` to
+hand-step past the rAF-suspension harness artifact — recurred again this session, `document.hidden` stayed
+true throughout, and this time a fresh navigation also briefly reported `window.innerWidth/innerHeight` as
+0 until one real synthetic `computer` click "woke" the tab; noted below for future sessions):** drove a
+REAL O1 clear (witness-plane Continue via `toWitness()`-inverted world position → `worldToScreen` →
+dispatched `PointerEvent`, not a debug skip) → real O3 profile (icon/3 chips/goal, hit-tested via the same
+`window.__os.hits` array the click router itself reads) → real Era-1 desktop (`profile-initialized` filed
+via genuine clicks) → debug-jump `update2` to ARM the real T1 ritual (debug beats sanctioned post-O1 by the
+brief) → Remind Later → kept `teddyBox`+`rainbowDuck`+`mixtape` via real world-position clicks on their
+`BELONGINGS_HIT` zones → pumped past `REMIND_SECONDS` (450 iterations × dt=1, needed because `UpdateApp`
+internally clamps each tick to `MAX_DT=0.1`) → window closed, `ledger.belongings` filed exactly
+`kept: the mixtape` / `kept: the teddy bear` / `kept: the rainbow duck` → Update Now → EULA (2pp) → I Agree
+→ install/restart pumped → **E2 reached, numerically confirmed the lighting swap** (before: lamp
+intensity 2.9 / moonlight `#6c7ba8` @0.14; after: lamp 1.3 / moonlight `#f3ead8` @0.3 — matches the
+authored e2 rig exactly, both via the real ritual AND the `?era=2` review-jump path) → `e2Stage` correctly
+'silence' → screenshot confirms the waiting-screen line renders exactly ("Welcome back, Daniel." /
+"Press to continue with reboot.") with NO taskbar/icons/toast, room visibly warm-daylit (screenshot
+before/after comparison) → return press files + advances → "Restorify — finishing installation…" renders
+→ Lamby's debut renders (mark + exactly 2 lines + 2 chips) → drove BOTH branches: dismiss (files
+`dismissed`, Restorify stays closed, icon present) in one run, Begin (files `begun`, opens Restorify
+directly) in a second full fresh run → Restorify shell renders (412 days / supervised-period note / 4
+chips) → filed a chip (`check-in: struggling` in run 1, `check-in: grateful` in run 2) → Close → the
+Restorify icon reopens it (confirmed both runs, and confirmed the earlier duplicate-icon bug is gone —
+desktop now shows exactly Restorify/Care Log/Dossier, no repeat). Baselines `/` and `?flat=1` swept clean
+before AND after all changes (zero console errors, one canvas, no reinterp globals, no NEW `.glb`/network
+activity). `npm test` + `npm run build` green throughout every checkpoint, including after the mid-session
+lighting-architecture revert.
+
+**NOT independently re-verified this session:** e3/e4's own rigs (untouched, no reason to suspect
+regression, but not re-probed); the guide-thread era-gate fix's effect on a genuine (non-debug-jumped) full
+E1 guide progression followed by an E2 arrival in the SAME run (the belongings/ritual test above used
+`debugJump('update2')` to reach the ritual quickly, per the brief's sanctioned post-O1 debug-beat allowance,
+which meant the E1 guide thread was still mid-sequence ("floppy" active) when the era shifted — confirms
+the FREEZE behavior works as designed, but doesn't exercise a case where the guide had already reached
+"belongings" naturally before the shift).
+
+**FABLE/SÉRGIO CHECK:**
+1. The Lamby mark's look (`drawLambyMark` in `src/desktop/os.ts`) — a small blocky lamb face, ERA1 palette
+   only, first pass, cheap to redo per the aesthetic laws.
+2. The daylight tuning (`cluster.json`'s e2 rig: moonlight 0.05→0.3 / night-blue→`#F3EAD8`) — a judgment
+   call on how strong the daylight cue should read; `lamp`/`roomFill`/etc. were deliberately left at the
+   pre-existing e2 rig's own values rather than relitigated.
+3. D33's eligible-belongings count now 9 (was 7, capped at 5–8 by the original R28-2c spec) — flagged per
+   that item's own instruction to note rather than silently exceed.
+4. The duck's one new hex (`#FFD24C`) — the brief's own named exception ("canon rainbow colors"); everything
+   else reuses already-approved hues.)*
+
 *(2026-07-12 · Session 31 (R28-2c) — the belongings beat, per docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md §4. "Remind me later" on the T1 notice (`u2`) now opens a gathering window: a new `belongings` entry in `data/dialog/s1_guide.json` surfaces via the EXISTING guide system (R28-2a) — trigger `belongingsWindowOpen`, done `belongingsGathered`, expire `belongingsDeclined`, all new condition keys added to `src/narrative/guide.ts`'s registry, resolved against the new `src/narrative/belongings.ts` (`BelongingsSystem`, mirrors tapes.ts's content/logic split). The pre-existing `update` message's `done` key was renamed `eraShifted` → `updateEngaged` (`os.era !== 'e1' || os.belongings?.windowOpen`) so it hands the guide's one-active-message slot to `belongings` the instant remind-later is pressed, WITHOUT changing the direct-Update-Now path's timing (still waits for the actual era shift, unchanged from Session 29's verified flow). Eligible set (`data/room/belongings.json`, documented `_doc`'d, 7 items — within the 5-8 brief): `mixtape` (Tape C, the designed candidate), `tapeA`/`tapeB` (the other two Session-30 cassettes), `plantModel`, `book1`/`book2`, `poster1` (the closest existing stand-in for "polaroid-ish decor" — no literal polaroid prop exists yet). Clicking an eligible prop during the window toggles it (`os.belongings.toggle`, gated in `src/engine/app.ts`'s pointerdown handler BEFORE the tape/boombox block so a shelf click keeps rather than inserts during the window); un-keeping is free, never filed. At window-close (`BelongingsSystem.closeWindow()`, wired to `UpdateApp.onWindowClosed`) the FINAL kept set files one `kept: <label>` line each (silence for un-kept items); the guide's own belongings message files the separate gathered-at-all/declined-to-gather line. The Update-Now-DIRECT path (remind-later never pressed, wired to a new `UpdateApp.onUpdateNowDirect`) files only `belongings: processed`. New `ledger.belongings` array (typed, witness-symmetric like `guidance`/`tapes`), rendered in `src/witness/intake.ts`'s session log alongside the others.
 
 **The payoff plumbing (built now, staged for later):** `src/room/clusterMorph.ts`'s `ClusterMorph.setKeptIds()` freezes any kept prop's fold to its exact r1/E1 target (color/pos/size/presence) at every subsequent era state — un-kept eligible props age/retire exactly as `reinterp_deltas.json` already dictates, unchanged. `src/room/cluster.ts` exposes this on `ClusterShell`; `src/engine/app.ts`'s `driveMorph()` re-asserts `os.belongings.kept` before every morph (idempotent). **Bug found and fixed during verification:** the kept-prop visual mark (a persistent warm emissive lift, distinct mechanism from the guide's transient `setPropEmphasis`) was being silently wiped by the morph's own `applyTarget()` — which legitimately zeroes a non-emissive prop's emissive on every fold (that is how transient tints clear between states elsewhere) — so a kept prop lost its mark the instant any subsequent morph touched it, even though its color/position stayed correctly frozen. Fixed by making `applyKeptMark()` (`src/engine/app.ts`) reassert the lift from a once-captured origin every frame while kept, rather than apply-once; confirmed self-healing in the browser (see verification). Separately, eligible props are excluded from BOTH of `cluster.ts`'s static/settled batch groups (not just the morph's own `STATIC_IDS`) — real color collisions exist in the room data (`book2`/`tapeB` both `#9FB4C0`; `tapeA`/`cdStack`/`modem` all `#D4D0C8`) that would otherwise share a canonical material post-batch and cross-contaminate the kept-mark onto an unrelated prop; verified no cross-talk (book2's emissive stayed `[0,0,0]` while tapeA/mixtape were lifted).

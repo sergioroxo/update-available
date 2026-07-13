@@ -66,6 +66,22 @@ export interface Ledger {
    * file time, never composed in TS. In-memory only, like everything here.
    */
   belongings: { id: string; outcome: 'kept' | 'processed'; witness: string }[];
+  /**
+   * S2R.0/S2R.1 (R28-2d-i/ii, Session 34): the E2 arrival — the return press
+   * (the machine waited; the player pressed anyway) and Lamby's debut
+   * greeting outcome. Both directions of the greeting file (begun/dismissed
+   * — dismissal always works and is always logged, CLAUDE.md R28 amendment
+   * 2). `witness` resolved from data/dialog/s2_lamby.json at file time, never
+   * composed in TS. In-memory only, like everything here.
+   */
+  lamby: { id: string; outcome: 'returned' | 'begun' | 'dismissed'; witness: string }[];
+  /**
+   * S2R.2 (R28-2d-ii): the Restorify Daily Realignment check-in. Every chip
+   * is accepted (register, never branch — master plan §5b); each files its
+   * own witness tag. `witness` resolved from data/dialog/s2_lamby.json.
+   * In-memory only, like everything here.
+   */
+  checkins: { id: string; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -82,7 +98,9 @@ const fresh = (): Ledger => ({
   sends: [],
   guidance: [],
   tapes: [],
-  belongings: []
+  belongings: [],
+  lamby: [],
+  checkins: []
 });
 
 export let ledger: Ledger = fresh();

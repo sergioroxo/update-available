@@ -9,7 +9,7 @@
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'R28-2a · side-message guide';
+const BUILD_TAG = 'R28-2d-i/ii · E2 homecoming + Lamby debut';
 
 interface DebugOpts {
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
@@ -37,6 +37,9 @@ const OS_BEATS: Array<[string, string]> = [
   ['Provotype — pillow', 'pillow'],
   ['Provotype — intake', 'intake'],
   ['T1 ritual · update → E2', 'update2'],
+  ['S2R.0 · E2 silence (waiting)', 'e2Silence'],
+  ['S2R.1 · Lamby debut', 'e2Lamby'],
+  ['S2R.2 · Restorify check-in', 'e2Restorify'],
   ['T2 ritual · update → E3', 'update3'],
   ['T3 ritual · update → E4', 'update4'],
   ['Final · Restart as you are', 'closeUpdate'],

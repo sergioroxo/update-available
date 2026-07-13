@@ -14,6 +14,7 @@ import { PacketApp } from './apps/packet';
 import { DiaryApp } from './apps/diary';
 import { ProvotypeApp, type Provotype } from './apps/provotype';
 import { UpdateApp, type UpdateKey } from './apps/update';
+import { RestorifyApp } from './apps/restorify';
 import { GuideThread } from '../narrative/guide';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
@@ -21,8 +22,17 @@ import { ledger, wipeLedger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
 import opening from '../../data/strings/opening.json';
+import lambyStrings from '../../data/dialog/s2_lamby.json';
 import pillowProvotypeData from '../../data/provotypes/pillow.json';
 import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.json';
+
+/** S2R.0/S2R.1 (R28-2d-i/ii): the E2 arrival sub-state machine, only
+ *  meaningful while desktopEra === 'e2'. 'silence' = the waiting screen (felt
+ *  · bare, S2R.0c); 'lambyBoot' = the brief "finishing installation…" beat;
+ *  'lambyGreeting' = Lamby's debut (operable, ≤2 lines, law); 'active' = the
+ *  ordinary era-2 desktop (icons + taskbar), Restorify reachable by icon. */
+type E2Stage = 'silence' | 'lambyBoot' | 'lambyGreeting' | 'active';
+const LAMBY_BOOT_HOLD = 1.6; // s — the "finishing installation…" beat's hold
 
 // The shipped opening (warning→off→boot→splash→name→desktop) is UNTOUCHED.
 // Behind ?reinterp=1 the four r_* phases REPLACE it (OPENING_AND_FLOW_SPEC
@@ -102,6 +112,11 @@ export class DesktopOS {
   guide: GuideThread | null = null;
   /** R28-2c: the belongings beat (T1's gathering window), reinterp only */
   belongings: BelongingsSystem | null = null;
+  /** S2R.0/S2R.1: the E2 arrival sub-stage (silence → lambyBoot → lambyGreeting → active) */
+  private e2Stage: E2Stage = 'silence';
+  private e2StageT = 0;
+  /** S2R.2: the Restorify check-in window (opened by Begin, or the desktop icon) */
+  restorify: RestorifyApp | null = null;
   /** a live send OFFER (master script §4) — icon + summons window on the desktop */
   private sendOffer: { id: string; open: boolean } | null = null;
   /** engine listens: the update restart landed — morph the space to `era` */
@@ -288,11 +303,23 @@ export class DesktopOS {
     this.dirty = true;
   }
 
-  /** The room morphs by era; this keeps the monitor from remaining 1997. */
-  setDesktopEra(era: string): void {
+  /** The room morphs by era; this keeps the monitor from remaining 1997.
+   *  `settled`: skip the E2 arrival narrative (silence → Lamby) and land
+   *  directly in the ordinary desktop — for `?era=` review jumps only; the
+   *  real update ritual and the debug "era — the rooms age" jump both want
+   *  the real S2R.0/S2R.1 beats to play. */
+  setDesktopEra(era: string, settled = false): void {
     if (era !== 'e2' && era !== 'e3' && era !== 'e4') return;
+    const entering = this.desktopEra !== era;
     this.desktopEra = era;
     this.retireEra1Windows();
+    if (era === 'e2' && entering) {
+      // S2R.0c: THE SILENCE — nothing speaks, not even the era-status toast.
+      // The monitor holds only the S2R.0 waiting-screen line until pressed.
+      this.e2Stage = settled ? 'active' : 'silence';
+      this.e2StageT = 0;
+      if (!settled) { this.dirty = true; return; } // no toast, no chrome — the silence holds
+    }
     this.toast = { text: this.eraSkin().status, t: 6 };
     this.dirty = true;
   }
@@ -311,6 +338,56 @@ export class DesktopOS {
     this.escalationFallbackAt = Infinity;
     this.diaryPendingAt = Infinity;
     this.hasUnseenWitness = false;
+    if (this.desktopEra !== 'e2') this.restorify = null; // leaving e2 closes Restorify
+  }
+
+  /** the E2 arrival's own click routing (silence / lambyBoot / lambyGreeting) */
+  private handleE2ArrivalClick(id: string): void {
+    if (this.e2Stage === 'silence') {
+      // THE RETURN PRESS (S2R.0, revised): the machine was already waiting —
+      // any press on the dark glass advances it, same grammar as S1.0's
+      // power press. Files once, immediately.
+      this.fileLambyRecord('returned', 'return-press', lambyStrings.witness.returnPressed);
+      this.e2Stage = 'lambyBoot';
+      this.e2StageT = 0;
+      this.dirty = true;
+      return;
+    }
+    if (this.e2Stage === 'lambyBoot') return; // the beat resolves on its own (no click-through)
+    if (this.e2Stage === 'lambyGreeting') {
+      if (id === 'lamby-begin') { this.beginRestorify(true); return; }
+      if (id === 'lamby-dismiss') { this.dismissLamby(); return; }
+    }
+  }
+
+  /** file an S2R.0/S2R.1 record — witness resolved from data, never composed here */
+  private fileLambyRecord(outcome: 'returned' | 'begun' | 'dismissed', id: string, witness: string): void {
+    ledger.lamby.push({ id, outcome, witness });
+  }
+
+  /** Begin (from the greeting) or the Restorify icon (later) both land here */
+  private openRestorify(): void {
+    if (!this.restorify) this.restorify = new RestorifyApp();
+    this.restorify.open = true;
+    this.dirty = true;
+  }
+
+  /** Lamby's "Begin" chip: files the greeting as begun, then opens Restorify */
+  private beginRestorify(fromGreeting: boolean): void {
+    if (fromGreeting) this.fileLambyRecord('begun', 'first-greeting', lambyStrings.witness.lambyBegun);
+    this.e2Stage = 'active';
+    this.e2StageT = 0;
+    this.openRestorify();
+  }
+
+  /** DISMISSAL LAW (R28 amendment 2): always works, always files. Lamby does
+   *  not return until the player opens Restorify themselves (the icon). */
+  private dismissLamby(): void {
+    this.fileLambyRecord('dismissed', 'first-greeting', lambyStrings.witness.lambyDismissed);
+    ledger.assistant.dismissals += 1;
+    this.e2Stage = 'active';
+    this.e2StageT = 0;
+    this.dirty = true;
   }
 
   private eraSkin(): { clock: string; brand: string; status: string; icons: string[] } {
@@ -468,8 +545,23 @@ export class DesktopOS {
     if (this.t >= this.escalationFallbackAt) this.escalate();
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
     if (this.phase === 'desktop' && this.updateApp) this.updateApp.update(dt);
-    // R28-2a: the guide is condition-driven only (no timers) — one tick per frame
-    if (this.phase === 'desktop' && this.guide) this.guide.update();
+    // R28-2a: the guide is condition-driven only (no timers) — one tick per
+    // frame. Era-1-only (CLAUDE.md R28 amendment 2: Lamby conducts from E2 —
+    // the guide thread must not go on evaluating/filing once the era has
+    // moved past it, even though its rendering was already E1-gated below).
+    if (this.phase === 'desktop' && this.desktopEra === 'e1' && this.guide) this.guide.update();
+    // S2R.0/S2R.1: the E2 arrival's own transient beats. 'silence' holds until
+    // pressed (no timer — click-only, rail); 'lambyBoot' is a brief system
+    // beat ("Restorify — finishing installation…") that resolves on its own,
+    // same pacing family as the BIOS/LambyOS boot holds above.
+    if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
+      this.e2StageT += dt;
+      if (this.e2Stage === 'lambyBoot' && this.e2StageT > LAMBY_BOOT_HOLD) {
+        this.e2Stage = 'lambyGreeting';
+        this.e2StageT = 0;
+        this.dirty = true;
+      }
+    }
     if (!this.behindToastShown && this.t >= this.behindToastAt) {
       this.behindToastShown = true;
       this.toast = { text: strings.desktop.behindToast, t: 7 };
@@ -622,6 +714,13 @@ export class DesktopOS {
   }
 
   private drawDesktop(W: number, H: number): void {
+    // S2R.0/S2R.1: the E2 arrival owns the WHOLE monitor until it settles —
+    // no taskbar, no icons, no toast (the silence law; the Lamby beats are
+    // transient conduction, not ordinary desktop chrome).
+    if (this.desktopEra === 'e2' && this.e2Stage !== 'active') {
+      this.drawE2Arrival(W, H);
+      return;
+    }
     const { ctx } = this;
     const skin = this.eraSkin();
     const colors = this.desktopColors();
@@ -647,6 +746,7 @@ export class DesktopOS {
     if (this.diary?.open) this.diary.draw(ctx);
     if (this.dossierOpen) this.drawDossier(W, H);
     if (this.provotype?.open) this.provotype.draw(ctx);
+    if (this.restorify?.open) this.restorify.draw(ctx);
     this.drawSendOffer(W, H);
     // the update ritual is SYSTEM-modal — it draws over everything
     if (this.updateApp?.open && this.updateApp.visible) this.updateApp.draw(ctx);
@@ -697,9 +797,74 @@ export class DesktopOS {
     ctx.fillStyle = this.desktopEra === 'e4' ? ERA1.grey : ERA1.paper;
     ctx.fillText(skin.status, 42, 56);
     skin.icons.forEach((label, i) => {
-      const id = i === 2 ? 'icon-dossier' : `icon-era-${i}`;
+      // S2R.1 dismissal law: Lamby does not return until the player opens
+      // Restorify themselves — E2's own first icon IS already named
+      // "Restorify" (data/strings/slice.json eraSkins.e2), so that existing
+      // icon is the door, present for the rest of era 2 regardless of how
+      // the debut resolved (begun or dismissed). No duplicate icon added.
+      const id = this.desktopEra === 'e2' && i === 0 ? 'icon-restorify'
+        : i === 2 ? 'icon-dossier' : `icon-era-${i}`;
       this.drawIcon(12, 92 + i * 48, label, i === 2 ? this.dossierUnlocked : true, id);
     });
+  }
+
+  /** S2R.0/S2R.1 — the E2 arrival: silence → "finishing installation…" →
+   *  Lamby's debut. Owns the whole monitor (no taskbar/icons) until it
+   *  settles into the ordinary era-2 desktop. */
+  private drawE2Arrival(W: number, H: number): void {
+    const { ctx } = this;
+    ui.px(ctx, 0, 0, W, H, ERA1.black);
+    if (this.e2Stage === 'silence') {
+      // felt · bare (S2R.0c): one dim line, nothing else — no hint, no music.
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = ERA1.greyDark;
+      ctx.fillText(lambyStrings.returnLine1, 22, Math.round(H / 2) - 10);
+      ctx.fillText(lambyStrings.returnLine2, 22, Math.round(H / 2) + 8);
+      return;
+    }
+    if (this.e2Stage === 'lambyBoot') {
+      ui.setFont(ctx, 11);
+      ctx.fillStyle = ERA1.silver;
+      ctx.fillText(lambyStrings.installingLine, 22, Math.round(H / 2));
+      return;
+    }
+    // 'lambyGreeting'
+    this.drawLambyGreeting(W, H);
+  }
+
+  /** a small, canvas-drawn lamb mark — E2 skin palette only (ERA1 tokens),
+   *  charming-not-cute-overload, deliberately blocky (pixel discipline). */
+  private drawLambyMark(x: number, y: number): void {
+    const { ctx } = this;
+    ui.px(ctx, x + 4, y + 3, 20, 15, ERA1.beige);   // fleece, shaded
+    ui.px(ctx, x + 2, y + 5, 22, 11, ERA1.white);   // fleece, lit
+    ui.px(ctx, x + 6, y + 1, 10, 5, ERA1.white);    // top poof
+    ui.px(ctx, x + 8, y + 8, 10, 8, ERA1.paper);    // face patch
+    ui.px(ctx, x + 10, y + 11, 2, 2, ERA1.black);   // eyes
+    ui.px(ctx, x + 14, y + 11, 2, 2, ERA1.black);
+    ui.px(ctx, x + 2, y + 15, 4, 4, ERA1.greyDark); // hooves
+    ui.px(ctx, x + 18, y + 15, 4, 4, ERA1.greyDark);
+  }
+
+  /** S2R.1 — Lamby's debut. Exactly two lines (law), two chips: Begin /
+   *  dismiss. Dismissal always works and is always logged. */
+  private drawLambyGreeting(W: number, H: number): void {
+    const { ctx } = this;
+    ui.px(ctx, 0, 0, W, H, ERA1.tealDark);
+    const dw = 300; const dh = 130;
+    const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, lambyStrings.lambyWindowTitle, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
+    this.drawLambyMark(c.x + 6, c.y + 6);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(lambyStrings.lambyLine1, c.x + 40, c.y + 10);
+    ctx.fillText(lambyStrings.lambyLine2, c.x + 40, c.y + 28);
+    const by = c.y + c.h - 26;
+    ui.button(ctx, c.x + c.w - 96, by, 88, 18, lambyStrings.lambyBegin, { hover: this.hover === 'lamby-begin' });
+    ui.button(ctx, c.x + 8, by, 96, 18, lambyStrings.lambyDismiss, { hover: this.hover === 'lamby-dismiss' });
+    this.hits.push({ x: c.x + c.w - 96, y: by, w: 88, h: 18, id: 'lamby-begin' });
+    this.hits.push({ x: c.x + 8, y: by, w: 96, h: 18, id: 'lamby-dismiss' });
   }
 
   private drawIcon(x: number, y: number, label: string, enabled: boolean, id: string): void {
@@ -1085,6 +1250,29 @@ export class DesktopOS {
         this.openProvotype(originIntakeProvotypeData as unknown as Provotype);
         break;
       case 'update2': this.setPhase('desktop'); this.armUpdate('u2'); break;
+      // S2R.0/S2R.1/S2R.2 review shortcuts (Session 34) — jump straight to a
+      // sub-stage of the E2 arrival without driving the whole update ritual.
+      case 'e2Silence':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.e2Stage = 'silence';
+        this.e2StageT = 0;
+        this.restorify = null;
+        this.dirty = true;
+        break;
+      case 'e2Lamby':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.e2Stage = 'lambyGreeting';
+        this.e2StageT = 0;
+        this.dirty = true;
+        break;
+      case 'e2Restorify':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.e2Stage = 'active';
+        this.openRestorify();
+        break;
       case 'update3': this.setPhase('desktop'); this.armUpdate('u3'); break;
       case 'update4': this.setPhase('desktop'); this.armUpdate('u4'); break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
@@ -1099,6 +1287,7 @@ export class DesktopOS {
   // ── input ──────────────────────────────────────────────────────────────
   handleMove(x: number, y: number): void {
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
+    if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleMove(x, y); return; }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     const id = hit ? hit.id : '';
     if (id !== this.hover) { this.hover = id; this.dirty = true; }
@@ -1127,10 +1316,19 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
+    // S2R.0/S2R.1: the E2 arrival owns every click until it settles — the
+    // silence advances on ANY press (the return press, S1.0-power-press
+    // grammar), the boot beat is not clickable through (it resolves on its
+    // own), and the greeting's own two chips are hit-tested normally.
+    if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
+      this.handleE2ArrivalClick(hit ? hit.id : '');
+      return;
+    }
     // the provotype is modal while open — it owns the desktop's clicks
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.diary?.open) { this.diary.press(); return; }
     if (this.phase === 'desktop' && this.packet?.open) { this.packet.handleClick(x, y); return; }
+    if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleClick(x, y); return; }
     if (hit) {
       switch (hit.id) {
         case 'continue': this.setPhase('off'); break;
@@ -1144,6 +1342,7 @@ export class DesktopOS {
         case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;
         case 'icon-era-0':
         case 'icon-era-1': this.toast = { text: this.eraSkin().status, t: 5 }; break;
+        case 'icon-restorify': this.openRestorify(); break;
         case 'icon-send': if (this.sendOffer) { this.sendOffer.open = true; this.toast = null; } break;
         case 'send-go': this.resolveSend('visited'); break;
         case 'send-decline': this.resolveSend('declined'); break;

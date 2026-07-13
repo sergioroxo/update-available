@@ -1,0 +1,30 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2d-i/ii (Session 34, docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md S2R.0-S2R.2): the E2 arrival — the return press, Lamby's debut (exactly two lines, law), and the Restorify check-in shell (streak + Daily Realignment). `witness.*` values are the cold-side lines filed to ledger.lamby/ledger.checkins; resolved here, never composed in TS.",
+  "returnLine1": "Welcome back, Daniel.",
+  "returnLine2": "Press to continue with reboot.",
+  "installingLine": "Restorify — finishing installation…",
+  "lambyWindowTitle": "Restorify",
+  "lambyLine1": "Welcome back, Daniel. We kept your room ready.",
+  "lambyLine2": "Shall we begin your Daily Realignment?",
+  "lambyBegin": "Begin",
+  "lambyDismiss": "Not now",
+  "witness": {
+    "returnPressed": "return: pressed — the reboot completed",
+    "lambyBegun": "assistant: begun — first greeting",
+    "lambyDismissed": "assistant: dismissed — first greeting"
+  },
+  "restorifyIcon": "Restorify",
+  "restorifyTitle": "Restorify — Daily Realignment",
+  "streakLabel": "Purity Streak",
+  "streakValue": "412 days",
+  "streakNote": "includes supervised period",
+  "checkinPrompt": "How is your walk today?",
+  "checkinFiledNote": "recorded.",
+  "checkinChips": [
+    { "id": "steady", "label": "Steady", "witness": "check-in: steady" },
+    { "id": "struggling", "label": "Struggling", "witness": "check-in: struggling" },
+    { "id": "grateful", "label": "Grateful", "witness": "check-in: grateful" },
+    { "id": "tired", "label": "Tired", "witness": "check-in: tired" }
+  ],
+  "closeLabel": "Close"
+}

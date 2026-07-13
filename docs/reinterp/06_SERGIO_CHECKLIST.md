@@ -179,6 +179,24 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   three-verb setup (look/move/interact). Spec in R28 §4 — glance before the
   build session.
 
+- **D38 (2026-07-13, Session 34)** — **THE E2 ARRIVAL BUILT** (R28-2d-i/ii,
+  `docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md` S2R.0–S2R.2, feel-testable
+  end-to-end now): 2003 daylight lands in the E1→E2 morph beat (`data/room/
+  cluster.json`'s `e2` rig — the window light recolors from night-blue to a
+  warm daytime hue and comes up from near-off to a real presence; the lamp was
+  already reduced); THE SILENCE holds (no side-messages, no hints, monitor
+  dark) until the return press ("Welcome back, Daniel. Press to continue with
+  reboot." — the machine was already waiting); Lamby debuts (a small
+  canvas-drawn lamb mark, exactly two lines, Begin/dismiss chips); dismissal
+  always works and files, Lamby does not return until the Restorify desktop
+  icon is opened by hand; Restorify's shell shows the 412-day purity streak +
+  Daily Realignment chips (register, never branch). D33's two props (teddy
+  bear box, rainbow duck) landed as part of this session's eligible-belongings
+  set — see D33 below; the REJECTION beat there is still open. **Your checks:**
+  the Lamby mark's look (small, canvas-drawn, charming-not-cute — a first
+  pass, cheap to redo) and the daylight values (`cluster.json`'s e2 rig:
+  moonlight 0.05→0.3 intensity, night-blue→`#F3EAD8`) are both judgment calls,
+  not locked; all copy PLACEHOLDER as ever.
 - **D37 (2026-07-13)** — **ECHO SCRIPT DRAFT v1 written** (twelve units, enough
   to hear the era): `docs/REINTERP_E4_ECHO_SCRIPT_DRAFT_2026-07-13.md`. The
   deadname beats escalate by WARMTH (the apology grows while the record
@@ -234,6 +252,13 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   ritual refuses: "item unsuitable for the next phase" — the system reaching
   even into what you take. Filed, of course. Needs the two props + one beat;
   queued for the E2 staging lane. Confirm the teddy-rejection reading.
+  **→ PROPS LANDED (Session 34, 2026-07-13):** both added to `data/room/
+  era1.json` (small, set-tier, palette colors — the duck's yellow is the ONE
+  new hex this session, the explicit "canon rainbow" exception) and to
+  `data/room/belongings.json`'s eligible set (now 9 items, past the original
+  5–8 range — flagged, not silently exceeded). **The REJECTION beat is still
+  open** — not this session's scope; your teddy-rejection reading is still
+  owed whenever that lane opens.
 - **D34 (2026-07-12) — O1 FULL REVAMP brief written for Codex** (your ask —
   a NEW interpretation, not a rework):
   `docs/reinterp/CODEX_BRIEF_O1_REVAMP_2026-07-12.md`. Design-first, 2–3
