@@ -1,5 +1,5 @@
 {
-  "_doc": "ERA-2 fake TV-evangelist 'testimony' INFOMERCIAL — an interrupt that surfaces after the first Restorify realignment. Dark mirror of TRANSCENDANCE; prototype for its canvas. A real scripted infomercial: a storyline with named composite 'voices' (PASTOR DALE the host, MARCUS a 'graduate', an ANNOUNCER, a CROWD) staged as shots. ALL copy PLACEHOLDER pending Sérgio's argumentation pass + trans/detrans/religious-trauma reader pass. Satire targets the SELLER's salesmanship ONLY, never queer people / survivors / the composite 'testimony'. Invented ministry/brand/number/people — no real orgs/likenesses/verbatim testimony. Real apparatus echoed (1998 'Truth in Love'; Robert Tilton 'Success-N-Life') documented in docs/ERA2_EVANGELIST_COMMERCIAL_SCRIPT_2026-06-30.md, [VERIFY SOURCE]. Voices (jingle + VO) are external bundled audio, TODO — the dialogue below is what they get timed to; per-scene 'at' seconds are the sync points. REINTERP PORT NOTE (R28-2a session, per ERA_MINING FIND #3 'port it'): copied verbatim from the shipped build's data/dialog/s2_media.json. The reinterp CANVAS PLAYER + E2 trigger are NOT built yet — that is the logged next-up lane (skip files 'avoidant', completion files 'testimony viewed', one surface inside the E2 desktop, audio slots empty). Nothing reads this file in the reinterp runtime yet.",
+  "_doc": "ERA-2 fake TV-evangelist 'testimony' INFOMERCIAL — an interrupt that surfaces after the first Restorify realignment. Dark mirror of TRANSCENDANCE; prototype for its canvas. A real scripted infomercial: a storyline with named composite 'voices' (PASTOR DALE the host, MARCUS a 'graduate', an ANNOUNCER, a CROWD) staged as shots. ALL copy PLACEHOLDER pending Sérgio's argumentation pass + trans/detrans/religious-trauma reader pass. Satire targets the SELLER's salesmanship ONLY, never queer people / survivors / the composite 'testimony'. Invented ministry/brand/number/people — no real orgs/likenesses/verbatim testimony. Real apparatus echoed (1998 'Truth in Love'; Robert Tilton 'Success-N-Life') documented in docs/ERA2_EVANGELIST_COMMERCIAL_SCRIPT_2026-06-30.md, [VERIFY SOURCE]. Voices (jingle + VO) are external bundled audio, TODO — the dialogue below is what they get timed to; per-scene 'at' seconds are the sync points, RETIMED later when Sérgio's song lands (§7b-§7d of the audio production guide) — drive all timing from this data, never hardcode it. REINTERP PORT NOTE (R28-2a session, per ERA_MINING FIND #3 'port it'): copied verbatim from the shipped build's data/dialog/s2_media.json. R28-2d-iv (Session 35): the reinterp NetVision Player (src/desktop/apps/netvision.ts) now reads this file — repositioned per docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md S2R.4 as Lamby's post-relapse recommendation, not a bare interrupt. `breakStutter`/`breakNoticeText`/`witness`/`audioTrack`/`skipDelaySeconds` are NEW fields this session, all PLACEHOLDER. The break choreography (which scene freezes, how noise/tracking ramp) is a build-time judgment call, not scripted per-frame here — see BUILD LOG / session log.",
   "windowTitle": "NetVision Player",
   "brand": "THE NEW YOU",
   "ministry": "★ a ministry of Restorify™ ★",
@@ -10,11 +10,23 @@
   "after": "AFTER",
   "karaoke": "the new you — brighter, lighter, good as true!",
   "skip": "skip ▶▶",
+  "skipDelaySeconds": 5,
   "chyrons": {
     "PASTOR DALE": "PASTOR DALE · New You Ministries",
     "MARCUS": "MARCUS · Program graduate, 14 mo.",
     "ANNOUNCER": "",
     "CROWD": ""
+  },
+  "_doc_break": "R28-2d-iv (Session 35): THE BREAK — near the video's end the tape degrades (noise density climbs, tracking bands roll, the CTA visually loops/stutters, the last portrait freezes), then tears to static; through the static, one line renders — a first crack of Caleb's message (S2R.3/S2R.5, still gated/unbuilt as its own thread — this is only the fragment surfacing, never the full message). `breakStutter` replaces the spoken line during the loop choreography; `breakNoticeText` is what renders through the static; `mediaClosedTag` is the file label named in the build brief. All PLACEHOLDER, felt-adjacent per the brief's instruction to keep it bare.",
+  "breakStutter": "Call now! Call now! Call n—",
+  "breakNoticeText": "1 new message — C___",
+  "mediaClosedTag": "media: interrupted — signal lost",
+  "audioTrack": "new_you_program_song.mp3",
+  "witness": {
+    "watched": "testimony viewed → susceptibility ↑",
+    "skipped": "ad skipped → avoidant — re-serve later",
+    "interrupted": "media: interrupted — signal lost",
+    "declined": "media: offer declined — not now"
   },
   "duration": 48,
   "scenes": [

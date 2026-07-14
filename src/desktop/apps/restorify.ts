@@ -20,6 +20,10 @@ const DW = 300; const DH = 210;
 export class RestorifyApp {
   open = true;
   dirty = true;
+  /** R28-2d-iv (S2R.4): fires once, right after a check-in chip is filed —
+   *  os.ts uses this to decide whether Lamby's video offer should surface
+   *  (provisional trigger: after the FIRST completed check-in). */
+  onCheckinFiled?: () => void;
 
   private hits: Hit[] = [];
   private hover = '';
@@ -97,6 +101,7 @@ export class RestorifyApp {
         this.lastChip = chip.id;
         ledger.checkins.push({ id: chip.id, witness: chip.witness });
         this.dirty = true;
+        this.onCheckinFiled?.();
       }
     }
   }

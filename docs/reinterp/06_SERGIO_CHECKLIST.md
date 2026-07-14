@@ -218,6 +218,49 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   gated). Provisional trigger = after the first check-in, via Lamby's offer;
   moves to post-redaction when the Caleb lane builds. Audio slot empty —
   your song completes it.
+- **D42 (2026-07-14, Session 35)** — **D41 BUILT: THE NETVISION PLAYER**
+  (`src/desktop/apps/netvision.ts`, R28-2d-iv). Lamby offers the video (≤2
+  lines, chips Watch/Not now) right after the FIRST completed Restorify
+  check-in — "Not now" files and never re-offers this session. The player
+  renders `data/dialog/s2_media.json`'s 13 scenes on the NetVision window:
+  scanlines, cheap offset-tint "RGB-split" text, sparse tape noise, VHS
+  chrome (▶ SP + burned-in timestamp), lower-thirds, before/after stamps,
+  composite non-likeness silhouette busts (blocky pixel figures, single/trio
+  for host/testimony/crowd shots), the karaoke bouncing ball on the chorus.
+  THE BREAK (driven from the last 2 scripted scenes, never hardcoded):
+  noise density climbs, a rolling tracking band appears, the CTA/offer card
+  FREEZES (captured once, held "too long") while its line stutters
+  ("Call now! Call now! Call n—", data-driven), then tears to full static;
+  through the static, one clean/unfringed line renders — "1 new message —
+  C___" (Caleb's message-fragment; the thread itself stays gated/untouched).
+  The player then auto-closes; a small persistent mark stays in the E2
+  taskbar's status well ("the notification mark persisting quietly").
+  Skip (after `skipDelaySeconds`, data-driven) files `ad skipped → avoidant`;
+  watching to the break files `testimony viewed → susceptibility ↑` PLUS a
+  separate `media: interrupted — signal lost`. New `ledger.media` array,
+  witness-symmetric, rendered in the witness session log. Audio: reuses the
+  existing `TapeAudioBus` (tapes.ts's boombox is already torn down by the
+  E2 era-shift, so the two never contend); `audioTrack:
+  "new_you_program_song.mp3"` is deliberately NOT in tapeAudio.ts's
+  REGISTRY yet — ambient hiss plays alone, zero console errors, confirmed
+  in-browser (network log shows only tape-hiss.mp3 requested). One
+  REGISTRY line + retimed `at`s finish it once your song lands. **Your
+  checks (judgment calls, not locked):** (a) the silhouette look — blocky
+  pixel head/shoulder busts, no faces, single figure for host/testimony,
+  three for crowd; (b) THE BREAK's choreography — I froze whichever
+  scene was active at the break's start (the offer/CTA card, since the
+  ported data's last two scenes are offer→static, not a smiling portrait)
+  rather than literally freezing a "portrait" shot as the spec's prose
+  suggested — flagging the deviation rather than burying it; (c) the
+  stutter's flicker rate (~2.5s cycle, text-length change only, no
+  luminance flash — kept well under any strobe/photosensitivity concern);
+  (d) the "cheap RGB-split" is implemented as ±1px offset-tinted text
+  redraws (per §A's own suggested technique), not per-pixel channel
+  extraction — cheaper, matches the doc's letter. Verified live
+  (browser): the full offer→watch→break→static→notification→close chain,
+  the skip path, the decline path (files + never re-offers), and the
+  no-flag/`?flat=1` baselines swept clean before and after. `npm test` +
+  `npm run build` green throughout.
 - **D37 (2026-07-13)** — **ECHO SCRIPT DRAFT v1 written** (twelve units, enough
   to hear the era): `docs/REINTERP_E4_ECHO_SCRIPT_DRAFT_2026-07-13.md`. The
   deadname beats escalate by WARMTH (the apology grows while the record

@@ -9,7 +9,7 @@
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'R28-2d-i/ii · E2 homecoming + Lamby debut';
+const BUILD_TAG = 'R28-2d-iv · NetVision Player (New You infomercial)';
 
 interface DebugOpts {
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
@@ -40,6 +40,10 @@ const OS_BEATS: Array<[string, string]> = [
   ['S2R.0 · E2 silence (waiting)', 'e2Silence'],
   ['S2R.1 · Lamby debut', 'e2Lamby'],
   ['S2R.2 · Restorify check-in', 'e2Restorify'],
+  ['S2R.4 · Lamby offers the video', 'netvisionOffer'],
+  ['S2R.4 · NetVision Player (start)', 'netvision'],
+  ['S2R.4 · NetVision — THE BREAK', 'netvisionBreak'],
+  ['S2R.4 · NetVision — static/notice', 'netvisionStatic'],
   ['T2 ritual · update → E3', 'update3'],
   ['T3 ritual · update → E4', 'update4'],
   ['Final · Restart as you are', 'closeUpdate'],

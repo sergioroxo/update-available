@@ -15,6 +15,7 @@ import { DiaryApp } from './apps/diary';
 import { ProvotypeApp, type Provotype } from './apps/provotype';
 import { UpdateApp, type UpdateKey } from './apps/update';
 import { RestorifyApp } from './apps/restorify';
+import { NetVisionPlayerApp } from './apps/netvision';
 import { GuideThread } from '../narrative/guide';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
@@ -23,6 +24,7 @@ import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
 import opening from '../../data/strings/opening.json';
 import lambyStrings from '../../data/dialog/s2_lamby.json';
+import mediaStrings from '../../data/dialog/s2_media.json';
 import pillowProvotypeData from '../../data/provotypes/pillow.json';
 import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.json';
 
@@ -117,6 +119,19 @@ export class DesktopOS {
   private e2StageT = 0;
   /** S2R.2: the Restorify check-in window (opened by Begin, or the desktop icon) */
   restorify: RestorifyApp | null = null;
+  /** S2R.4 (R28-2d-iv): Lamby's video offer — small popup, ≤2 lines + 2 chips.
+   *  Provisional trigger: after the FIRST completed Restorify check-in (the
+   *  FINAL trigger moves to the Caleb/S2R.3 relapse beat once that lane
+   *  builds — documented in the session log, not decided here). */
+  private netvisionOfferOpen = false;
+  private netvisionOfferedThisSession = false;
+  /** the NetVision Player itself (the New You Program video) */
+  netvision: NetVisionPlayerApp | null = null;
+  /** THE BREAK's residue: a small, non-interactive persistent mark once the
+   *  video tears to static and Caleb's message-fragment surfaces through it —
+   *  "the notification mark persisting quietly" (brief). The Caleb thread
+   *  proper stays gated/untouched; this is only the visual residue. */
+  private calebNotificationVisible = false;
   /** a live send OFFER (master script §4) — icon + summons window on the desktop */
   private sendOffer: { id: string; open: boolean } | null = null;
   /** engine listens: the update restart landed — morph the space to `era` */
@@ -338,7 +353,11 @@ export class DesktopOS {
     this.escalationFallbackAt = Infinity;
     this.diaryPendingAt = Infinity;
     this.hasUnseenWitness = false;
-    if (this.desktopEra !== 'e2') this.restorify = null; // leaving e2 closes Restorify
+    if (this.desktopEra !== 'e2') {
+      this.restorify = null; // leaving e2 closes Restorify
+      this.netvisionOfferOpen = false;
+      this.netvision = null;
+    }
   }
 
   /** the E2 arrival's own click routing (silence / lambyBoot / lambyGreeting) */
@@ -367,9 +386,64 @@ export class DesktopOS {
 
   /** Begin (from the greeting) or the Restorify icon (later) both land here */
   private openRestorify(): void {
-    if (!this.restorify) this.restorify = new RestorifyApp();
+    if (!this.restorify) {
+      this.restorify = new RestorifyApp();
+      this.restorify.onCheckinFiled = () => this.maybeOfferNetVision();
+    }
     this.restorify.open = true;
     this.dirty = true;
+  }
+
+  /** S2R.4: Lamby offers the video after the FIRST completed check-in (this
+   *  session's provisional trigger — see the class-field comment). Fires at
+   *  most once per session; "Not now" never re-offers this session either. */
+  private maybeOfferNetVision(): void {
+    if (this.netvisionOfferedThisSession) return;
+    if (ledger.checkins.length !== 1) return;
+    this.netvisionOfferedThisSession = true;
+    this.netvisionOfferOpen = true;
+    this.dirty = true;
+  }
+
+  private handleNetvisionOfferClick(id: string): void {
+    if (id === 'netvision-watch') {
+      this.netvisionOfferOpen = false;
+      this.openNetVision();
+      return;
+    }
+    if (id === 'netvision-notnow') {
+      this.netvisionOfferOpen = false;
+      ledger.media.push({ id: 'offer', outcome: 'declined', witness: lambyStrings.videoOfferDeclined });
+      this.dirty = true;
+    }
+  }
+
+  private openNetVision(): void {
+    this.netvision = new NetVisionPlayerApp();
+    this.netvision.onClosed = (result) => {
+      this.netvision = null;
+      if (result === 'interrupted') this.calebNotificationVisible = true;
+      this.dirty = true;
+    };
+    this.dirty = true;
+  }
+
+  private drawNetvisionOffer(W: number, H: number): void {
+    const { ctx } = this;
+    const dw = 300; const dh = 130;
+    const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, lambyStrings.videoOfferWindowTitle, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
+    this.drawLambyMark(c.x + 6, c.y + 6);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(lambyStrings.videoOfferLine1, c.x + 40, c.y + 10);
+    ctx.fillText(lambyStrings.videoOfferLine2, c.x + 40, c.y + 28);
+    const by = c.y + c.h - 26;
+    ui.button(ctx, c.x + c.w - 86, by, 78, 18, lambyStrings.videoOfferWatch, { hover: this.hover === 'netvision-watch' });
+    ui.button(ctx, c.x + 8, by, 96, 18, lambyStrings.videoOfferNotNow, { hover: this.hover === 'netvision-notnow' });
+    this.hits.push({ x: c.x + c.w - 86, y: by, w: 78, h: 18, id: 'netvision-watch' });
+    this.hits.push({ x: c.x + 8, y: by, w: 96, h: 18, id: 'netvision-notnow' });
   }
 
   /** Lamby's "Begin" chip: files the greeting as begun, then opens Restorify */
@@ -545,6 +619,7 @@ export class DesktopOS {
     if (this.t >= this.escalationFallbackAt) this.escalate();
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
     if (this.phase === 'desktop' && this.updateApp) this.updateApp.update(dt);
+    if (this.phase === 'desktop' && this.netvision) this.netvision.update(dt);
     // R28-2a: the guide is condition-driven only (no timers) — one tick per
     // frame. Era-1-only (CLAUDE.md R28 amendment 2: Lamby conducts from E2 —
     // the guide thread must not go on evaluating/filing once the era has
@@ -748,6 +823,10 @@ export class DesktopOS {
     if (this.provotype?.open) this.provotype.draw(ctx);
     if (this.restorify?.open) this.restorify.draw(ctx);
     this.drawSendOffer(W, H);
+    // S2R.4: Lamby's video offer, then the player itself (over Restorify, but
+    // still under the system-modal update ritual below)
+    if (this.netvisionOfferOpen) this.drawNetvisionOffer(W, H);
+    if (this.netvision?.open) this.netvision.draw(ctx);
     // the update ritual is SYSTEM-modal — it draws over everything
     if (this.updateApp?.open && this.updateApp.visible) this.updateApp.draw(ctx);
     // taskbar
@@ -768,6 +847,15 @@ export class DesktopOS {
         ctx.fillStyle = ERA1.greyDark;
         ctx.fillText(guideLine, 64, H - 16);
       }
+    }
+    // THE BREAK's residue (S2R.4): a quiet, non-interactive mark — "the
+    // notification mark persisting quietly" — same status-well spot as the
+    // guide line (mutually exclusive era, no layout clash).
+    if (this.reinterp && this.desktopEra === 'e2' && this.calebNotificationVisible) {
+      ui.bevel(ctx, 58, H - 19, W - 108, 16, false);
+      ui.setFont(ctx, 9);
+      ctx.fillStyle = ERA1.tooltip;
+      ctx.fillText(mediaStrings.breakNoticeText, 64, H - 16);
     }
     // toast
     if (this.toast) {
@@ -1273,6 +1361,39 @@ export class DesktopOS {
         this.e2Stage = 'active';
         this.openRestorify();
         break;
+      // S2R.4 (Session 35) review shortcuts — the video offer and the player
+      // itself, without hand-driving a real check-in first.
+      case 'netvisionOffer':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.e2Stage = 'active';
+        this.openRestorify();
+        this.netvisionOfferedThisSession = false;
+        this.netvisionOfferOpen = true;
+        break;
+      case 'netvision':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.e2Stage = 'active';
+        this.netvisionOfferOpen = false;
+        this.openNetVision();
+        break;
+      case 'netvisionBreak':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.e2Stage = 'active';
+        this.netvisionOfferOpen = false;
+        this.openNetVision();
+        this.netvision?.debugSeek(mediaStrings.duration - 3);
+        break;
+      case 'netvisionStatic':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.e2Stage = 'active';
+        this.netvisionOfferOpen = false;
+        this.openNetVision();
+        this.netvision?.debugSeek(mediaStrings.duration);
+        break;
       case 'update3': this.setPhase('desktop'); this.armUpdate('u3'); break;
       case 'update4': this.setPhase('desktop'); this.armUpdate('u4'); break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
@@ -1286,6 +1407,7 @@ export class DesktopOS {
 
   // ── input ──────────────────────────────────────────────────────────────
   handleMove(x: number, y: number): void {
+    if (this.phase === 'desktop' && this.netvision?.open) { this.netvision.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleMove(x, y); return; }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
@@ -1322,6 +1444,13 @@ export class DesktopOS {
     // own), and the greeting's own two chips are hit-tested normally.
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
       this.handleE2ArrivalClick(hit ? hit.id : '');
+      return;
+    }
+    // S2R.4: the video player, then Lamby's offer — both own every click
+    // while present, ahead of Restorify sitting underneath either of them.
+    if (this.phase === 'desktop' && this.netvision?.open) { this.netvision.handleClick(x, y); return; }
+    if (this.phase === 'desktop' && this.netvisionOfferOpen) {
+      this.handleNetvisionOfferClick(hit ? hit.id : '');
       return;
     }
     // the provotype is modal while open — it owns the desktop's clicks

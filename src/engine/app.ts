@@ -693,6 +693,27 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     tapesWasPlaying = tapes.isPlaying;
   }
 
+  // R28-2d-iv (Session 35): the NetVision Player reuses the SAME tapeAudio
+  // bus (there is only ever one boombox-shaped audio bus in the room, and by
+  // the time the E2 desktop's video can be open, the Era-1 boombox has
+  // already been torn down by the era shift — see tapes.ts's
+  // handleEraShift() — so the two never contend for it). Its track name
+  // (`audioTrack` in data/dialog/s2_media.json) is deliberately NOT in
+  // tapeAudio.ts's REGISTRY yet — the missing-file-safe pattern means the
+  // ambient hiss bed plays alone, with zero console errors, until Sérgio's
+  // song lands and one REGISTRY line is added.
+  let netvisionWasPlaying = false;
+  function syncNetvisionAudio(): void {
+    if (!os.netvision || !tapeAudio) return;
+    const playing = os.netvision.isPlaying;
+    if (playing && !netvisionWasPlaying) {
+      tapeAudio.start(os.netvision.trackName);
+    } else if (!playing && netvisionWasPlaying) {
+      tapeAudio.stop();
+    }
+    netvisionWasPlaying = playing;
+  }
+
   // the gaze-dwell facet pull (geometry doc §2.2 #3) — ambient and reversible:
   // a facet resolves WHILE you look and recedes when you don't; nothing accrues,
   // nothing displays, nothing completes (never latched — the frame never plays)
@@ -1286,6 +1307,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           tapeMuteBtn.style.pointerEvents = show ? 'auto' : 'none';
         }
       }
+      // R28-2d-iv: the NetVision Player's audio slot — same bus, same
+      // Esc/pause law (the tapes block above already re-asserts
+      // setGamePaused every frame the bus exists; this only needs the sync).
+      syncNetvisionAudio();
 
       // gaze-dwell: only once the cluster has been revealed (the E1 dark-
       // surround law), never under a ?facet= override, and only for facets the

@@ -55,6 +55,141 @@ Two live tracks, for Fable/Sérgio to sequence:
   is broken, but it should be synced whenever a session has schema-only bandwidth.
 
 ## DONE
+*(2026-07-14 · Session 35 (R28-2d-iv) — the NetVision Player (the "New You Program" faux-VHS
+infomercial), per `docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md` S2R.4 (REVISED: Lamby's
+post-relapse recommendation, not a bare interrupt) and `docs/ERA2_EVANGELIST_COMMERCIAL_SCRIPT_
+2026-06-30.md` §A (canvas technique). Scope: the trigger (provisional — after the FIRST
+completed Restorify check-in, since Caleb/S2R.3 is gated/unbuilt), the player itself, and THE
+BREAK.
+
+**THE TRIGGER.** `src/desktop/apps/restorify.ts` gained `onCheckinFiled` (fires once a check-in
+chip is filed); `src/desktop/os.ts`'s `openRestorify()` wires it to `maybeOfferNetVision()`,
+which fires ONLY when `ledger.checkins.length === 1` and only once per session
+(`netvisionOfferedThisSession`). Lamby's offer (`drawNetvisionOffer`, inline in os.ts, same
+small-popup shape as the S2R.1 greeting) shows exactly two lines (data,
+`data/dialog/s2_lamby.json`'s new `videoOffer*` fields) + Watch/Not now chips. "Not now" files
+`ledger.media` (`{id:'offer', outcome:'declined', witness:'media: offer declined — not now'}`)
+and the offer never reappears this session (verified: filing a SECOND check-in after declining
+does not reopen it). "Watch" opens the player. The FINAL trigger (post-Caleb-redaction) is
+explicitly NOT this session's call — documented here and in the data's own `_doc`, not decided.
+
+**THE PLAYER.** New `src/desktop/apps/netvision.ts` (`NetVisionPlayerApp`), reading the
+already-ported `data/dialog/s2_media.json` (13 scenes, `duration: 48`) — drives ALL timing from
+`scene.at` values (never hardcoded), per the brief's explicit instruction that these get retimed
+later against Sérgio's song. Renders on the NetVision window (near-fullscreen on the 512×384 E2
+desktop): VHS chrome (▶ SP + burned-in timestamp), scanlines (every 3px), sparse tape noise
+(baseline density + climbing during the break), an occasional rolling tracking-desync band,
+lower-thirds (chyron + line, from `data.chyrons`), composite NON-likeness silhouettes (blocky
+pixel head/shoulder busts — one for host/testimony shots, three for crowd shots — built from
+plain `ui.px` rects, no new hex, no faces), before/after stamps, a brand card, a phone/CTA offer
+card, and the karaoke bar + bouncing ball on the chorus scene. The "cheap RGB-split" (§A) is
+implemented as the doc's own suggested technique — the same text redrawn ±1px offset, tinted
+red/blue at low alpha (`fringeText()`) — not per-pixel channel extraction; applied to all video
+in-frame text, deliberately NOT to the window chrome itself or to the final notification line
+(kept clean — the one moment of clarity in the wreck). Skip appears after
+`data.skipDelaySeconds` (5s); skipping files `ad skipped → avoidant — re-serve later` and closes
+immediately.
+
+**THE BREAK**, driven from the last TWO scripted scenes (`scenes[length-2].at` — never a
+hardcoded second count, per the brief): past that point, tape-noise density ramps 0→~0.85 over
+the remaining span, a tracking band rolls continuously, and the currently-showing scene FREEZES
+(captured once at the break's start, never advanced again — "held too long") while its line is
+replaced with `data.breakStutter` ("Call now! Call now! Call n—"), itself given a slow
+(~2.5s-cycle) text-length flicker for a "stutter" read — a length change only, never a
+luminance/flash, kept well under any strobe/photosensitivity concern. Past 60% of the break's
+own span the signal tears to full static (dense random dots, no scene content). At the video's
+own `duration`, the outcome files (`watched` — "testimony viewed → susceptibility ↑" — PLUS a
+separate `interrupted` — "media: interrupted — signal lost", the wreck itself is filed apart
+from the viewer's own choice) and the player holds on static for ~2.6s; through it, one line
+renders UNFRINGED (`data.breakNoticeText`, "1 new message — C___" — the first crack of Caleb's
+message; the thread itself stays gated/untouched, this is only the fragment). The player then
+auto-closes; `os.ts` sets `calebNotificationVisible`, rendering a small persistent, non-
+interactive mark in the E2 taskbar's status well (same spot the E1 guide line uses — mutually
+exclusive era, no clash) — "the notification mark persisting quietly."
+
+**LEDGER + WITNESS.** New `ledger.media: {id, outcome: 'declined'|'watched'|'skipped'|
+'interrupted', witness}[]` (`src/state/ledger.ts`), witness-symmetric like every other array
+here; rendered into the existing witness session-log list (`src/witness/intake.ts`) —
+declined/skipped render in the same amber as other declined/abandoned lines, watched/interrupted
+in ink.
+
+**AUDIO.** Reuses the EXISTING `TapeAudioBus` (`src/audio/tapeAudio.ts`) rather than a second
+instance — by the time the E2 desktop can show the player, the Era-1 boombox has already been
+torn down by the era shift (`tapes.ts`'s `handleEraShift()`), so the two never contend for the
+bus. `src/engine/app.ts` gained `syncNetvisionAudio()` (mirrors the existing `syncTapeAudio()`
+pattern) called every frame alongside it. `data.audioTrack` ("new_you_program_song.mp3") is
+deliberately NOT added to `tapeAudio.ts`'s REGISTRY — Session 30's missing-file-safe pattern
+means it is never requested; the ambient hiss bed plays alone. Verified in-browser: network log
+shows only `tape-hiss.mp3` requested, zero console errors.
+
+**Debug (`?debug=1`):** four new OS beats — `netvisionOffer`, `netvision`, `netvisionBreak`
+(seeks to `duration - 3`), `netvisionStatic` (seeks to `duration`) — plus `NetVisionPlayerApp
+.debugSeek()` for direct playhead jumps, so review never has to hand-step ~40s of ordinary
+playback. `BUILD_TAG` bumped to `R28-2d-iv · NetVision Player (New You infomercial)`.
+
+**VERIFIED (real browser, `?reinterp=1&debug=1`, `window.__os`/`window.__ledger()`/direct
+`os.canvas` pixel-sampling at the real 3× RENDER_SCALE backing store — this session found the O1
+DOM-overlay dismiss unreliable via screenshot-space clicks inside the automation harness, so
+verification drove application state directly through the SAME methods the real click router
+calls (`os.handleClick`, `os.restorify.handleClick`, `os.netvision.handleClick`,
+`os.debugJump`), which is the documented harness workaround, not a bypass of the logic under
+test):** fresh load → `npm test` + `npm run build` green → baselines `/` and `/?flat=1` swept
+clean before AND after (one canvas, no reinterp globals, zero console errors, zero unexpected
+network requests) → `debugJump('e2Restorify')` → filed a real check-in via `os.restorify
+.handleClick` at its own reported hit rect → Lamby's offer appeared (`os.netvisionOfferOpen`,
+its hits present in `os.hits`) → drove BOTH branches: "Not now" (files `offer:declined`, offer
+never reopens after a second check-in filed in the same run) in one pass, "Watch" (opens
+`os.netvision`) in a fresh pass → pixel-sampled the open player: the chrome rec-dot at exactly
+`#c42020`, the studio background at exactly `#f5f4ed`, the lower-third navy band at exactly
+`#000080`, the skip button's beige bevel body, the karaoke bar's black band — all at the real 3×
+canvas-backing coordinates → clicked the real skip hit rect via `os.netvision.handleClick`,
+confirmed `ledger.media` filed exactly `{video, skipped, "ad skipped → avoidant — re-serve
+later"}` and the player closed → fresh player, `debugSeek` into the break window: noise-dot
+density measurably higher (124/2800 sampled non-background points vs. the floor), the frozen
+offer card holding constant → seeked to `duration - 0.2`: full static confirmed by pixel sample
+→ `debugSeek(duration)` + ticked: `ledger.media` gained BOTH `watched` ("testimony viewed →
+susceptibility ↑") and `video-break`/`interrupted` ("media: interrupted — signal lost") in the
+same tick → ticked through the 2.6s static hold: player auto-closed
+(`os.netvision === null`), `os.calebNotificationVisible === true`, and a live pixel-scan of the
+E2 taskbar's status well found the exact tooltip-yellow (`#ffffcc`) text color at the expected
+position, confirming the persistent mark actually renders (not just the flag). E1 spot-check:
+`debugJump('kit')` after all of the above still reaches `era: 'e1'` with `os.kit` open and
+`os.netvision`/`os.netvisionOfferOpen` both untouched — no cross-era leakage.
+
+**NOT independently re-verified this session:** a fully real (non-debug-jumped) O1→O3→kit→IRC→
+packet→diary→T1-ritual→E2 run ending in a genuine (not debug-armed) check-in — this session
+reused Session 34's own debug-jump entry points (`e2Restorify`) per that session's own sanctioned
+post-O1 debug-beat allowance, consistent with how Session 34 itself verified S2R.0–S2R.2. The O1
+DOM-overlay's own dismiss-by-click was not made to work reliably in this harness session (see
+verification note above); this doesn't affect confidence in the shipped code, only in how it was
+exercised here, and is flagged for whoever next needs a literal from-`o1_leave`-onward click
+trace.
+
+**FABLE/SÉRGIO CHECK (judgment calls made, not buried):**
+1. The silhouette look (`drawBust` in `netvision.ts`) — blocky pixel head/shoulder busts, no
+   faces, single figure for host/testimony shots, three side-by-side for crowd shots. First pass,
+   cheap to redo (three `ui.px` rects per bust).
+2. THE BREAK's choreography, specifically WHICH scene freezes: the brief's prose says "freeze
+   the last portrait frame," but the ported `s2_media.json`'s actual last two scenes are
+   `offer`→`static`, not a smiling portrait — so this session freezes whichever scene (the
+   offer/CTA card, in practice) was active at the break's own start, rather than searching
+   backward for a literal portrait shot. Flagging the deviation from the brief's literal wording
+   rather than silently reinterpreting it.
+3. The stutter's flicker timing (~2.5s cycle, chosen to stay well clear of any strobe/
+   photosensitivity concern per the glitch doctrine) and the tearing threshold (60% of the
+   break's own span) are both pacing judgment calls, not measured against reference footage.
+4. The "cheap RGB-split" implementation (offset-tinted text redraws) versus true per-pixel
+   channel splitting — chosen for cost and because §A's own doc text suggests exactly this
+   technique; flagging in case Sérgio pictured something closer to real chromatic aberration on
+   the imagery itself.
+5. The persistent taskbar notification's placement (the same status-well rect the E1 guide line
+   already uses) is a layout convenience, not a considered design decision on its own.
+
+**BLOCKED: none.** No ethics/content decisions made — all new display text (Lamby's offer lines,
+the break's stutter/notification strings, all witness lines) carries the same PLACEHOLDER framing
+already established for this era's copy; the Caleb thread proper, final copy, and session-log
+history were not touched.)*
+
 *(2026-07-13 · Session 34 (R28-2d-i/ii) — the E2 homecoming staging + Lamby's debut, per
 `docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md` S2R.0–S2R.2 (Sérgio's 2026-07-12 revision: the
 return press, not an unmarked power-on). Scope: S2R.0 (the return, felt/bare), S2R.1 (Lamby's debut,

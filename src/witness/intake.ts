@@ -489,7 +489,7 @@ export class WitnessCanvas {
       : [];
     if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0
         || endingLines.length > 0 || ledger.guidance.length > 0 || ledger.belongings.length > 0
-        || ledger.lamby.length > 0 || ledger.checkins.length > 0
+        || ledger.lamby.length > 0 || ledger.checkins.length > 0 || ledger.media.length > 0
         || firstTouchLines.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;
@@ -526,6 +526,14 @@ export class WitnessCanvas {
         // S2R.2: every Daily Realignment chip files its own tag — none is a
         // branch, so all render the same ink (register, not judgement).
         ...ledger.checkins.map(c => ({ text: c.witness || `${c.id}`, color: INK })),
+        // S2R.4 (Session 35): the NetVision Player offer + outcome — declining
+        // the offer and skipping the video both render in the same amber as
+        // other declined/abandoned lines (witness symmetry: either response
+        // is data); watching to THE BREAK renders in ink like everything else.
+        ...ledger.media.map(m => ({
+          text: m.witness || `${m.id}: ${m.outcome}`,
+          color: (m.outcome === 'declined' || m.outcome === 'skipped') ? '#cc8855' : INK
+        })),
         ...endingLines.map(text => ({ text, color: '#cc8855' }))
       ];
       // the well between the log heading and the footer holds ~7 rows. The

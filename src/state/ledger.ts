@@ -82,6 +82,18 @@ export interface Ledger {
    * In-memory only, like everything here.
    */
   checkins: { id: string; witness: string }[];
+  /**
+   * S2R.4 (R28-2d-iv, Session 35): Lamby's video offer (the NetVision Player,
+   * "The New You Program") + the video's own outcome. `declined` files when
+   * the offer's "Not now" chip is pressed (the offer does not repeat this
+   * session); `watched`/`skipped` file the player's own outcome (witness
+   * symmetry: either response is data); `interrupted` files separately at
+   * THE BREAK — the video's own showpiece failure, distinct from the
+   * viewer's choice. `witness` resolved from data/dialog/s2_media.json or
+   * s2_lamby.json at file time, never composed in TS. In-memory only, like
+   * everything here.
+   */
+  media: { id: string; outcome: 'declined' | 'watched' | 'skipped' | 'interrupted'; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -100,7 +112,8 @@ const fresh = (): Ledger => ({
   tapes: [],
   belongings: [],
   lamby: [],
-  checkins: []
+  checkins: [],
+  media: []
 });
 
 export let ledger: Ledger = fresh();

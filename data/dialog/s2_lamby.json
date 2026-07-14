@@ -1,5 +1,5 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2d-i/ii (Session 34, docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md S2R.0-S2R.2): the E2 arrival — the return press, Lamby's debut (exactly two lines, law), and the Restorify check-in shell (streak + Daily Realignment). `witness.*` values are the cold-side lines filed to ledger.lamby/ledger.checkins; resolved here, never composed in TS.",
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2d-i/ii (Session 34, docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md S2R.0-S2R.2): the E2 arrival — the return press, Lamby's debut (exactly two lines, law), and the Restorify check-in shell (streak + Daily Realignment). `witness.*` values are the cold-side lines filed to ledger.lamby/ledger.checkins; resolved here, never composed in TS. R28-2d-iv (Session 35): `videoOffer*` fields added — per S2R.4's revision, Lamby offers the New You Program video AFTER the first completed check-in (the FINAL trigger is the Caleb/S2R.3 relapse beat, still gated; this is the provisional trigger, documented as such). Exactly two lines (law); `videoOfferDeclined` files when 'Not now' is pressed — the offer does not repeat this session.",
   "returnLine1": "Welcome back, Daniel.",
   "returnLine2": "Press to continue with reboot.",
   "installingLine": "Restorify — finishing installation…",
@@ -13,6 +13,12 @@
     "lambyBegun": "assistant: begun — first greeting",
     "lambyDismissed": "assistant: dismissed — first greeting"
   },
+  "videoOfferWindowTitle": "Restorify",
+  "videoOfferLine1": "Don't be discouraged, Daniel.",
+  "videoOfferLine2": "I found something that helped others like you.",
+  "videoOfferWatch": "Watch",
+  "videoOfferNotNow": "Not now",
+  "videoOfferDeclined": "media: offer declined — not now",
   "restorifyIcon": "Restorify",
   "restorifyTitle": "Restorify — Daily Realignment",
   "streakLabel": "Purity Streak",
