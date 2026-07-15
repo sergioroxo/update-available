@@ -1,0 +1,8 @@
+{
+  "_doc": "PLACEHOLDER — R28-3 (minimal version), docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §4 layer 1. The premise line is the session brief's own wording (R9-canonized by Sérgio). contentNote deliberately overlaps with O1's own disclaimer (data/strings/opening.json's o1_disclaimer) — this session leaves O1 unchanged per its brief; flagged in 01_SESSION_LOG.md Session 36 as resolving once the O1 revamp (docs/reinterp/CODEX_BRIEF_O1_REVAMP_2026-07-12.md) lands.",
+  "premise": "You will follow different lives through thirty years of one machine.",
+  "contentNote": "This depicts how organised \"conversion\" networks target queer people online — in their own tactics and language. You can leave at any time; nothing you do is kept.",
+  "controlsLine": "Browser: drag to look, click to choose. Headset: look with your head, point and pull the trigger.",
+  "continueLabel": "Continue",
+  "wait": "one moment"
+}

@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "node tools/check-invariants.mjs && node tools/check-rooms.mjs",
     "rooms": "node tools/gen_rooms.mjs",
+    "gen-attributions": "node tools/gen_attributions.mjs",
     "export-atlases": "bash tools/export-atlases.sh"
   },
   "dependencies": {

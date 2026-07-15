@@ -8,6 +8,8 @@
 import { startApp } from './engine/app';
 import { startFlat } from './flat/flat';
 import { startLambyRig } from './lambyrig/lambyRig';
+import { mountGameMenu } from './desktop/gameMenu';
+import { mountOrientingCard } from './desktop/orientingCard';
 import './state/ledger'; // installs the beforeunload wipe
 
 const canvas = document.getElementById('app') as HTMLCanvasElement | null;
@@ -33,13 +35,39 @@ const close = query.get('close') === '1';
 const reveal = query.get('reveal') === '1';
 // ?nobatch=1 — disable static batching (draw-call A/B; review tool only)
 const nobatch = query.get('nobatch') === '1';
+// review-tool jumps (?era=/?morph=/?close=/?reveal=) exist to look at 3D
+// states, not to play the opening — app.ts already bypasses O1's own
+// overlay for these same four params (see startApp's options.reinterp
+// branch); the pre-fiction orienting card is one layer earlier and follows
+// the same convention rather than adding an extra click in front of a
+// review jump.
+const reviewMode = !!(era || morphDemo || close || reveal);
 
-// ?lambyrig=1 — standalone procedural assistant rig lab; no OS integration.
+function launch(): void {
+  // ?flat=1 — the universal version: desktop canvas alone, no WebGL, no room
+  if (query.get('flat') === '1') startFlat(canvas as HTMLCanvasElement, { reinterp });
+  else void startApp(canvas as HTMLCanvasElement, { reinterp, facet, era, morphDemo, close, reveal, nobatch });
+}
+
+// ?lambyrig=1 — standalone procedural assistant rig lab; no OS integration,
+// no orienting card/game menu (out of scope for that dev tool).
 if (query.get('lambyrig') === '1') {
   startLambyRig(canvas);
-// ?flat=1 — the universal version: desktop canvas alone, no WebGL, no room
-} else if (query.get('flat') === '1') {
-  startFlat(canvas, { reinterp });
+} else if (reinterp) {
+  // R28-4: the game menu (Esc + the persistent corner glyph) mounts FIRST,
+  // before either engine starts and before the orienting card below — the
+  // hard "Esc/pause works from every state" law (CLAUDE.md REINTERP
+  // AMENDMENTS §3/§4) includes the pre-fiction card itself.
+  mountGameMenu();
+  if (reviewMode) {
+    launch();
+  } else {
+    // R28-3 (minimal): the orienting card precedes O1 on a fresh load only.
+    const card = mountOrientingCard(() => {
+      card.destroy();
+      launch();
+    });
+  }
 } else {
-  void startApp(canvas, { reinterp, facet, era, morphDemo, close, reveal, nobatch });
+  launch();
 }

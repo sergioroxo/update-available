@@ -12,6 +12,7 @@ import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 import { WitnessCanvas } from '../witness/intake';
 import { ledger } from '../state/ledger';
+import { gameMenuBus } from '../state/gameMenuBus';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { buildEra1Room } from '../room/era1room';
 import { preloadModels } from '../room/assets';
@@ -227,6 +228,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   // ── the two surfaces ──
   const os = new DesktopOS({ reinterp: options.reinterp === true });
+  // R28-4: hand the game menu's Leave button the real leave flow once it
+  // exists — before this (e.g. during the pre-fiction orienting card),
+  // gameMenuBus.leaveEngine is null and the menu falls back to a reload
+  // (src/desktop/gameMenu.ts).
+  if (options.reinterp === true) gameMenuBus.leaveEngine = () => os.leaveNow();
   if (new URLSearchParams(window.location.search).get('debug') === '1') {
     // ?debug=1 OS probe (review aid, like __ledger): drive monitor clicks in
     // logical canvas coords without the world→screen projection dance
@@ -1139,7 +1145,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     // F2, not a letter: printable keys must always reach the typing hand
-    if (e.key === 'F2' && os.inDesktop && !os.paused) {
+    if (e.key === 'F2' && os.inDesktop && !os.paused && !gameMenuBus.isOpen) {
       doFlip();
       e.preventDefault();
       return;
@@ -1147,7 +1153,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // reinterp browser CAMERA controls (§0-REV-5): arrow keys always steer the
     // view; R/F are shortcuts, but only when no phase is capturing typed text —
     // camera only, never a content verb. Non-reinterp keeps the shipped path.
-    if (options.reinterp && !os.paused) {
+    // R28-4: gate this whole block on the game menu too, so a stray keypress
+    // while paused never leaves a hidden camera mutation to snap into view on
+    // Resume (note: Escape itself never reaches this listener at all while
+    // the menu exists — src/desktop/gameMenu.ts intercepts it in the capture
+    // phase — so no separate Escape guard is needed here).
+    if (options.reinterp && !os.paused && !gameMenuBus.isOpen) {
       const k = e.key;
       if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown') {
         // R28-0c (item 13): arrow keys are look-in-place ONLY, every era —
@@ -1190,6 +1201,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   // ── frame loop ──
   app.on('update', (dt: number) => {
+    // R28-4 — THE GAME MENU hard-freezes the whole per-frame body: camera
+    // tweens/dollies, the era-morph cascade, movement blink, tape/NetVision
+    // audio clocks, os.update() (every ritual/kit/irc/diary/update timer) —
+    // all of it lives inside this one callback, so skipping it wholesale is
+    // both the simplest and the safest pause (nothing partially advances;
+    // resuming just continues on the next real frame's ordinary small dt —
+    // no accumulated-time jump, since we never buffer a skipped delta; the
+    // engine's own dt is computed per-tick regardless of what we do with it).
+    if (options.reinterp && gameMenuBus.isOpen) return;
     if (tween !== null) {
       const dir = Math.sign(tween - camYaw);
       camYaw += dir * (180 / FLIP_SECONDS) * dt;

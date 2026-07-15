@@ -1,0 +1,25 @@
+{
+  "_doc": "PLACEHOLDER — R28-4 game menu (CLAUDE.md REINTERP AMENDMENTS §4, docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §4 layer 2). Frame-voice text is functional and near-final by nature (menu labels, the static controls list) — but still Sérgio's to confirm, especially restartConfirmBody's exact wording and whether the pauseGlyphSymbol reads right at a glance (a plain 'II' first pass, cheap to swap for an icon later).",
+  "pauseGlyphSymbol": "II",
+  "pauseGlyphLabel": "Menu (Esc)",
+  "title": "Menu",
+  "resume": "Resume",
+  "restart": "Restart",
+  "controls": "Controls",
+  "credits": "Credits & attributions",
+  "leave": "Leave",
+  "back": "Back",
+  "restartConfirmTitle": "Restart?",
+  "restartConfirmBody": "This wipes everything and returns you to the start. Nothing you do is ever kept, either way.",
+  "restartConfirmYes": "Yes, restart",
+  "restartConfirmNo": "Cancel",
+  "controlsTitle": "Controls",
+  "controlsLines": [
+    "Drag to look around.",
+    "Click a marker to move.",
+    "Click to interact.",
+    "Esc — or this menu's corner button — pauses."
+  ],
+  "creditsTitle": "Credits & attributions",
+  "creditsNone": "No third-party assets to credit yet."
+}

@@ -8,6 +8,7 @@ import { DesktopOS } from '../desktop/os';
 import { WitnessCanvas } from '../witness/intake';
 import { ledger } from '../state/ledger';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
+import { gameMenuBus } from '../state/gameMenuBus';
 
 interface FlatOptions {
   reinterp?: boolean;
@@ -18,6 +19,10 @@ export function startFlat(canvasEl: HTMLCanvasElement, options: FlatOptions = {}
   if (!ctx) throw new Error('2D context unavailable');
 
   const os = new DesktopOS({ reinterp: options.reinterp === true });
+  // R28-4: same Leave hook as the 3D engine (src/engine/app.ts) — see its
+  // comment; gameMenuBus.leaveEngine stays null (menu falls back to a
+  // reload) until this line runs.
+  if (options.reinterp === true) gameMenuBus.leaveEngine = () => os.leaveNow();
   // ?flat=1 is the testing fallback (desktop canvas alone, no room) — so it has
   // no O1 start-screen/room/camera (those are the 3D engine's). Under reinterp
   // we skip straight into the O2/O3 monitor beats so the OS content stays
@@ -105,7 +110,7 @@ export function startFlat(canvasEl: HTMLCanvasElement, options: FlatOptions = {}
   });
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (e.key === 'F2' && os.inDesktop && !os.paused) {
+    if (e.key === 'F2' && os.inDesktop && !os.paused && !gameMenuBus.isOpen) {
       doFlip();
       e.preventDefault();
       return;
@@ -122,6 +127,14 @@ export function startFlat(canvasEl: HTMLCanvasElement, options: FlatOptions = {}
   function frame(now: number): void {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
+    // R28-4: same hard freeze as the 3D engine (src/engine/app.ts) — skip the
+    // whole per-frame body while the game menu is open. `last` above still
+    // advances every tick regardless, so resuming never sees an
+    // accumulated-time jump.
+    if (options.reinterp && gameMenuBus.isOpen) {
+      requestAnimationFrame(frame);
+      return;
+    }
     os.update(dt);
     witness.update(dt);
     ctx!.imageSmoothingEnabled = false;
