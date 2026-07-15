@@ -197,6 +197,18 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   pass, cheap to redo) and the daylight values (`cluster.json`'s e2 rig:
   moonlight 0.05→0.3 intensity, night-blue→`#F3EAD8`) are both judgment calls,
   not locked; all copy PLACEHOLDER as ever.
+- **D43 (2026-07-13)** — **THE GAME MENU + ORIENTING CARD shipped** (Session
+  36, commit `b4b36b0`; built by Sonnet, verified + closed out by Fable after
+  another session-limit interruption). Your Esc ask is real: pause from
+  anywhere via Esc or the "II" glyph — Resume / Restart (confirm + ledger
+  wipe) / Controls / **Credits & attributions** (rendering the CC-BY table
+  from ATTRIBUTIONS.md via a new generator — that standing item is closed) /
+  Leave. Frame-voice throughout, and the menu NEVER files — the frame never
+  plays. Plus the pre-fiction orienting card ("You will follow different
+  lives through thirty years of one machine."), 4s-armed, shown once.
+  **Your checks: the card's wording (it's the piece's first sentence now),
+  glyph placement, and one thing I couldn't independently re-verify — pause
+  DURING an update ritual and confirm it resumes cleanly.**
 - **D39 (2026-07-13)** — **ECHO KEPT, as Lamby's final form** (your "wasn't it
   supposed to stay closer to Lamby?" answered structurally): Echo IS the
   lineage's end — the dispersal fragments reassembled into pure voice, no body
