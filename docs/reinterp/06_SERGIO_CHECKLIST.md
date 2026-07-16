@@ -236,6 +236,34 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   you're the one who'll feel it in-headset eventually; (3) nothing
   ethics-bearing here — no borderland/Noa/Mira/Ash content in this session,
   by design.**
+- **D45 (2026-07-16, Session 38)** — **THE GRACEQUEUE PATTERN STRIP + CARD SET
+  shipped** (E3-ii; your drafted cards are now playable). Sign in on Vera's
+  laptop → the moderation queue: one card at a time, big type; the strip runs
+  1→5→2→6→3→7→4 so on-script and off-script alternate (the training curve);
+  the system auto-flags the three warm cards (tone review / doctrinal
+  question / contact risk) and the two buttons are honest about power —
+  [Move to review] is tinted and marked "▲ system suggests", [Let it stand]
+  is plain, "your call". MIRA enters only after you have filed two flags —
+  the eye is trained before it is tested — with the system band reading
+  "bury recommended — may confuse newer sisters"; letting her stand files
+  the era's glitch line ("I won't bury her story.") in the record's refusal
+  amber and sets the state flag the later turn/counter-current beats will
+  read (S3R.6 not built, by scope). THE TABLET is now the complicity
+  surface: stories you approved appear with hearts + lamb-badges; stories
+  you buried are simply absent; Mira, if you let her stand, pins to the top
+  with "12 replies" (no thread yet). No scores, no streaks, no progress
+  counter anywhere. All copy PLACEHOLDER (your card voices transcribed
+  verbatim from the draft doc — your pass pending, especially Renata and
+  Mira per the draft's own note). Verified across two full runs (both Mira
+  outcomes); session was split by an account-limit outage mid-verification
+  (WIP commit protected the tree; resumed and fully verified same day).
+  **Your checks: (1) the Mira gate TIMING — she enters MID-strip the moment
+  the second flag files (maximum heat), not at the strip's end; one data
+  change flips this if it reads wrong; (2) the queue's type sizes on your
+  screen (Session 37's readability rule applies); (3) the tablet fits ~4
+  cards and a full warm feed overflows below the glass — a scroll pass is
+  flagged, not built; (4) the done-screen line ("You're caught up.") is new
+  placeholder copy, not from your draft.**
 - **D39 (2026-07-13)** — **ECHO KEPT, as Lamby's final form** (your "wasn't it
   supposed to stay closer to Lamby?" answered structurally): Echo IS the
   lineage's end — the dispersal fragments reassembled into pure voice, no body

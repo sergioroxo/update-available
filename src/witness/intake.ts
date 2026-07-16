@@ -490,7 +490,8 @@ export class WitnessCanvas {
     if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0
         || endingLines.length > 0 || ledger.guidance.length > 0 || ledger.belongings.length > 0
         || ledger.lamby.length > 0 || ledger.checkins.length > 0 || ledger.media.length > 0
-        || ledger.era3Arrival.length > 0 || firstTouchLines.length > 0) {
+        || ledger.era3Arrival.length > 0 || ledger.graceQueue.length > 0
+        || firstTouchLines.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;
       ctx.fillText(s.sessionLog, 28, 262);
@@ -538,6 +539,17 @@ export class WitnessCanvas {
         // fragments settling visibly across every device (register, not a
         // choice, so it always renders in the same ink as an ordinary filing).
         ...ledger.era3Arrival.map(a => ({ text: a.witness, color: INK })),
+        // S3R.1/S3R.5 (Session 38): the GraceQueue moderation record — every
+        // card action files, witness-symmetrically. 'approved'/'reviewed'
+        // (compliance with the system's suggestion) render in ink; 'stood'
+        // (the player declined the suggestion — including Mira's "I won't
+        // bury her story.") renders in the same amber as every other
+        // refusal/deviation line here (the record marks noncompliance, it
+        // never hides it). No counts, no scores — just the lines.
+        ...ledger.graceQueue.map(g => ({
+          text: g.witness || `card ${g.cardId}: ${g.outcome}`,
+          color: g.outcome === 'stood' ? '#cc8855' : INK
+        })),
         ...endingLines.map(text => ({ text, color: '#cc8855' }))
       ];
       // the well between the log heading and the footer holds ~7 rows. The
