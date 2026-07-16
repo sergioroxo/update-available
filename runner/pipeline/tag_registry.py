@@ -174,13 +174,22 @@ def save_custom_tag(category: str, tag: str, updates: dict | None = None) -> str
     return key
 
 
-def detect_tag_matches(text: str, max_per_category: int = 20) -> list[dict]:
-    """Return tag registry labels that appear in the document text."""
+def detect_tag_matches(
+    text: str,
+    max_per_category: int = 20,
+    *,
+    registry_rows: list[dict] | None = None,
+) -> list[dict]:
+    """Return registry labels found in text using one immutable row snapshot.
+
+    Callers recording provenance can pass the same loaded rows they fingerprint,
+    avoiding a second disk read that could observe a different registry version.
+    """
     haystack = f" {text.lower()} "
     matches: list[dict] = []
     counts: dict[str, int] = {}
     seen_labels: set[str] = set()
-    for row in load_tag_registry():
+    for row in registry_rows if registry_rows is not None else load_tag_registry():
         if not row.get("active", True):
             continue
         tag = row["tag"]

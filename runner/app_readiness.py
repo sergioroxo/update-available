@@ -429,7 +429,9 @@ def _get_source_url(doc_dir: Path) -> str:
     return ""
 
 
-def collect_corpus_readiness(corpus_dir: Path, *, config=None) -> list[dict]:
+def collect_corpus_readiness(
+    corpus_dir: Path, *, config=None, doc_ids: set[str] | None = None,
+) -> list[dict]:
     """Scan ``corpus_dir`` and return one summary row per document directory.
 
     Each row is a plain ``dict`` with::
@@ -447,6 +449,10 @@ def collect_corpus_readiness(corpus_dir: Path, *, config=None) -> list[dict]:
         source               — source URL or path (from intake.json)
         next_action_title    — title of the first blocker or quality item
 
+    ``doc_ids`` optionally limits the scan to exact directory identities.  It
+    is used by the bounded Review Inbox so selecting a maximum-15 workflow does
+    not rescan thousands of unrelated documents.
+
     Rows are sorted by ``doc_id`` (directory name) for a stable, reproducible
     order independent of filesystem ordering.
 
@@ -457,9 +463,21 @@ def collect_corpus_readiness(corpus_dir: Path, *, config=None) -> list[dict]:
     if not corpus_dir.exists():
         return []
 
+    selected = None if doc_ids is None else {
+        str(value) for value in doc_ids if str(value)
+    }
+    if selected is None:
+        candidates = sorted(corpus_dir.iterdir())
+    else:
+        # Document IDs are exact single directory names, never paths.
+        candidates = sorted(
+            corpus_dir / doc_id for doc_id in selected
+            if Path(doc_id).name == doc_id and doc_id not in {".", ".."}
+        )
+
     rows: list[dict] = []
-    for doc_dir in sorted(corpus_dir.iterdir()):
-        if not doc_dir.is_dir() or doc_dir.name.startswith("."):
+    for doc_dir in candidates:
+        if not doc_dir.is_dir() or doc_dir.is_symlink() or doc_dir.name.startswith("."):
             continue
 
         readiness = build_document_readiness(doc_dir, config=config)

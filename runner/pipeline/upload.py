@@ -11,10 +11,11 @@ Sanity writes use httpx via clients/sanity.py.
 Supabase writes use supabase-py via clients/supabase.py.
 """
 from __future__ import annotations
+import hashlib
 import json
 import socket
 import time as _time
-from dataclasses import fields
+from dataclasses import asdict, fields
 from pathlib import Path
 
 from rich.console import Console
@@ -39,6 +40,59 @@ from .metadata_quality import (
 _ONTOLOGY_VERSION = "v3.0"
 
 console = Console()
+
+
+def paired_analysis_audit_path(artifact_path: Path) -> Path:
+    """Return the non-colliding audit sidecar path for an alternate analysis."""
+    artifact_path = Path(artifact_path)
+    return artifact_path.with_name(f"audit_{artifact_path.name}")
+
+
+def write_paired_analysis_audit(
+    artifact_path: Path,
+    run_meta: dict,
+    analysis: AnalysisResult,
+    *,
+    doc_id: str,
+) -> Path:
+    """Persist content-free provenance beside an alternate analysis artifact.
+
+    Alternate runs must not replace ``analysis_audit.json`` because that file
+    describes the canonical ``analysis.json``.  The ``audit_`` prefix also
+    keeps this sidecar out of existing ``analysis_alt_*.json`` discovery.
+    """
+    from .audit import AnalysisRunMeta, current_git_commit
+
+    artifact_path = Path(artifact_path)
+    known = {field.name for field in fields(AnalysisRunMeta)}
+    filtered = {key: value for key, value in (run_meta or {}).items() if key in known}
+    error_count = len(filtered.get("errors") or [])
+    filtered["errors"] = (
+        [f"{error_count} run error(s) recorded; details omitted from content-free sidecar"]
+        if error_count else []
+    )
+    meta = asdict(AnalysisRunMeta(**filtered))
+    meta["git_commit"] = meta.get("git_commit") or current_git_commit()
+    sidecar = paired_analysis_audit_path(artifact_path)
+    payload = {
+        "schema_version": "paired-analysis-audit-v1",
+        "doc_id": doc_id,
+        "artifact_file": artifact_path.name,
+        "artifact_sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+        "prompt_version": PROMPT_VERSION,
+        "ontology_version": _ONTOLOGY_VERSION,
+        "run_type": "alt",
+        **meta,
+        "confidence_score": analysis.confidence.overall_score,
+        "confidence_status": analysis.confidence.status,
+        "doc_type": analysis.type,
+        "needs_review": analysis.needs_review,
+        "testimony_flag": analysis.testimony_flag,
+        "candidate_terms_count": len(analysis.candidate_terms),
+        "evidence_count": len(analysis.evidence),
+    }
+    sidecar.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+    return sidecar
 
 
 class _EmbeddingStatusCache:
@@ -104,7 +158,7 @@ _LEGAL_SENSITIVE_TYPES: frozenset[str] = frozenset(
 
 
 def requires_consent_gate(analysis: AnalysisResult, triage_result=None) -> bool:
-    """Return True if this document requires a testimony consent gate before upload.
+    """Return True when testimony review/publication controls are required.
 
     Fires when ANY of:
       - analysis.testimony_flag is set
@@ -123,6 +177,74 @@ def requires_consent_gate(analysis: AnalysisResult, triage_result=None) -> bool:
     if triage_result is not None and getattr(triage_result, "needs_testimony_review", False):
         return True
     return False
+
+
+def archive_upload_disposition_for_testimony(
+    intake: IntakeResult,
+    analysis: AnalysisResult,
+    triage_result=None,
+    testimony_review: dict | None = None,
+) -> str:
+    """Classify the safe remote-archive action for testimony-related material.
+
+    Sanity document ingestion and public testimony authorization are distinct:
+
+    - ``not_testimony`` / ``reviewed`` may upload normally;
+    - ``unverified_pending_review`` may upload only as the existing unverified
+      archive record. Publication remains blocked by ``publication_gate``;
+    - ``blocked_refused_or_withdrawn`` must not be written remotely.
+
+    This never authorizes publication or promotion of testimony excerpts.
+    """
+    if not requires_consent_gate(analysis, triage_result):
+        return "not_testimony"
+    resolution = reconcile_testimony_consent(
+        getattr(intake, "testimony_consent", ""),
+        (testimony_review or {}).get("consent_status"),
+    )
+    status = resolution["effective_status"]
+    if status == "confirmed":
+        return "reviewed"
+    if status in {"refused", "withdrawn"}:
+        return "blocked_refused_or_withdrawn"
+    return "unverified_pending_review"
+
+
+def reconcile_testimony_consent(intake_status, review_status=None) -> dict:
+    """Reconcile the two persisted consent signals without hiding conflicts.
+
+    Either source can carry an older decision, so a refusal/withdrawal in
+    either file always wins. Other disagreements remain pending until the
+    researcher reconciles the records. This helper intentionally does not
+    infer public-display permission.
+    """
+    allowed = {"confirmed", "pending", "unclear", "refused", "withdrawn"}
+    intake_value = str(intake_status or "").strip().lower()
+    review_value = str(review_status or "").strip().lower()
+    if intake_value not in allowed:
+        intake_value = ""
+    if review_value not in allowed:
+        review_value = ""
+    present = [value for value in (intake_value, review_value) if value]
+    disagreement = len(set(present)) > 1
+    terminal = next(
+        (value for value in present if value in {"withdrawn", "refused"}),
+        "",
+    )
+    if terminal:
+        effective = terminal
+    elif disagreement:
+        effective = "pending"
+    elif "confirmed" in present:
+        effective = "confirmed"
+    else:
+        effective = "pending"
+    return {
+        "intake_status": intake_value or "missing",
+        "review_status": review_value or "missing",
+        "effective_status": effective,
+        "disagreement": disagreement,
+    }
 
 
 def requires_legal_review(analysis: AnalysisResult, triage_result=None) -> bool:
@@ -159,7 +281,8 @@ def run(
     # G2-b: cross-check the persisted triage flags against analysis at the hard
     # testimony backstop. Tolerant of a missing file (returns None).
     _triage = load_triage_result(intake.doc_id, config)
-    _enforce_testimony_upload_gate(intake, analysis, _triage)
+    _review = _read_json(config.corpus_dir / intake.doc_id / "testimony_review.json")
+    _enforce_testimony_upload_gate(intake, analysis, _triage, _review)
     _repair_analysis_date_from_source(analysis, preprocess)
     pkg = DocumentPackage(
         intake=intake,
@@ -169,6 +292,7 @@ def run(
         embedding_model=config.embedding_model,
         llm_used=llm_used,
         local_dir=config.corpus_dir / intake.doc_id,
+        testimony_review_required=requires_consent_gate(analysis, _triage),
     )
     save_locally(intake, preprocess, embedding, analysis, config, llm_used=llm_used, _audit=_audit)
     sanity_id = sanity_client.write_document(
@@ -769,6 +893,7 @@ def upload_saved(
             json.dumps(_stamp_analysis_dict(analysis), indent=2), encoding="utf-8"
         )
 
+    _triage = load_triage_result(doc_id, config)
     pkg = DocumentPackage(
         intake=intake,
         preprocess=preprocess,
@@ -777,10 +902,11 @@ def upload_saved(
         embedding_model=_resolved_embedding_model,
         llm_used=metadata.get("llm_used", "unknown"),
         local_dir=doc_dir,
+        testimony_review_required=requires_consent_gate(analysis, _triage),
     )
-    # G2-b: testimony backstop cross-checks persisted triage flags (hard gate).
-    _triage = load_triage_result(doc_id, config)
-    _enforce_testimony_upload_gate(intake, analysis, _triage)
+    # G2-b: testimony backstop cross-checks persisted triage flags.
+    _review = _read_json(doc_dir / "testimony_review.json")
+    _enforce_testimony_upload_gate(intake, analysis, _triage, _review)
 
     sanity_id = sanity_client.write_document(
         pkg, config, force_reviewed=force_sanity_overwrite
@@ -1440,12 +1566,37 @@ def _enforce_testimony_upload_gate(
     intake: IntakeResult,
     analysis: AnalysisResult,
     triage_result=None,
+    testimony_review: dict | None = None,
 ) -> None:
-    if not requires_consent_gate(analysis, triage_result):
+    disposition = archive_upload_disposition_for_testimony(
+        intake, analysis, triage_result, testimony_review
+    )
+    resolution = reconcile_testimony_consent(
+        intake.testimony_consent,
+        (testimony_review or {}).get("consent_status"),
+    )
+    if resolution["disagreement"]:
+        console.print(Panel(
+            "Consent records disagree and must be reconciled in Testimony Review.\n\n"
+            f"intake.json: [bold]{resolution['intake_status']}[/bold]\n"
+            f"testimony_review.json: [bold]{resolution['review_status']}[/bold]\n"
+            f"Safe effective state: [bold]{resolution['effective_status']}[/bold]",
+            title="[yellow]Testimony Consent Records Disagree[/yellow]",
+        ))
+    if disposition in {"not_testimony", "reviewed"}:
         return
-    if intake.testimony_consent == "confirmed":
+    status = resolution["effective_status"]
+    if disposition == "unverified_pending_review":
+        console.print(Panel(
+            "This testimony-related document will be uploaded only as an "
+            "[bold]unverified archive record[/bold].\n\n"
+            f"Current consent/review status: [bold]{status}[/bold]\n"
+            "Testimony review remains pending. Public display, public excerpts, "
+            "verification, and publication remain blocked until the researcher "
+            "completes Testimony Review.",
+            title="[yellow]Archive Upload — Testimony Review Pending[/yellow]",
+        ))
         return
-    status = intake.testimony_consent or "missing"
     type_note = ""
     if analysis.type in _CONSENT_GATED_TYPES and not analysis.testimony_flag:
         type_note = f"\n\nDocument type is [bold]{analysis.type}[/bold] — consent gate applies regardless of testimony_flag."
@@ -1457,10 +1608,12 @@ def _enforce_testimony_upload_gate(
     ):
         type_note = "\n\nTriage flagged this source for testimony review — consent gate applies even though analysis did not set testimony_flag."
     console.print(Panel(
-        "This document requires consent confirmation before upload.\n\n"
+        "This document records refused or withdrawn testimony consent and cannot "
+        "be written to the remote archive.\n\n"
         f"Current consent status: [bold]{status}[/bold]\n"
-        "Upload is blocked. Confirm consent through the ingest review flow before uploading."
+        "Upload is blocked. Review suppression/redaction requirements before any "
+        "later remote action."
         + type_note,
-        title="[yellow]Consent Gate — Upload Blocked[/yellow]",
+        title="[red]Consent Refused/Withdrawn — Upload Blocked[/red]",
     ))
     raise typer.Exit(1)

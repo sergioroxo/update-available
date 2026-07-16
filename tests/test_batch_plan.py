@@ -39,6 +39,7 @@ from runner.pipeline.source_queue import (
     get_item,
     open_db,
     queue_db_path,
+    update_source_file_attachment,
     update_status,
 )
 from runner.pipeline.batch import (
@@ -154,6 +155,40 @@ def test_exclusion_reason_special_review_flags(db, flag):
     )
     loaded = get_item(db, item.id)
     assert exclusion_reason(loaded) == f"needs_review:{flag}"
+
+
+def test_exclusion_reason_requires_source_file_when_missing(db):
+    item = add_item(db, "https://doi.org/10.1234/source")
+    apply_triage_result(db, item.id, _safe_triage(), model_name="litelm/triage")
+
+    loaded = get_item(db, item.id)
+
+    assert loaded.needs_source_file is True
+    assert exclusion_reason(loaded) == "needs_attachment:source_file"
+
+
+def test_exclusion_reason_allows_source_file_when_attached(db, tmp_path):
+    pdf = tmp_path / "source.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    item = add_item(db, "https://doi.org/10.1234/source")
+    apply_triage_result(db, item.id, _safe_triage(), model_name="litelm/triage")
+    update_source_file_attachment(db, item.id, source_file_path=str(pdf))
+
+    loaded = get_item(db, item.id)
+
+    assert exclusion_reason(loaded) == ""
+
+
+def test_plan_batch_excludes_missing_attached_source_file(db):
+    item = add_item(db, "https://doi.org/10.1234/source")
+    apply_triage_result(db, item.id, _safe_triage(), model_name="litelm/triage")
+    update_source_file_attachment(db, item.id, source_file_path="/no/such/source.pdf")
+
+    manifest = plan_batch(db)
+
+    assert manifest.total_included == 0
+    assert manifest.excluded[0].exclusion_reason == "source_file_not_found"
+    assert any("attached source file was not found locally" in note for note in manifest.notes)
 
 
 # ---------------------------------------------------------------------------

@@ -24,7 +24,7 @@ These define what each stage does. Do not collapse them.
 
 Use the phrase **role-specialized staged intelligence** when describing the
 architecture in documentation or methodology materials. Each AI stage has a
-bounded role, typed output, audit trail, and human review gate. The system is
+bounded role, typed output, audit trail, and risk-appropriate gate. The system is
 designed to be inspectable and protective for a solo researcher, not autonomous.
 
 | Stage | Role | Lexicon context |
@@ -32,9 +32,32 @@ designed to be inspectable and protective for a solo researcher, not autonomous.
 | **Triage (0.5)** | Routing intelligence: doc type, complexity, model, splitting needed, media/testimony/legal flags, overnight-batch safety | None (snippet only) |
 | **Analysis (3b)** | Classification and summary: type, tactic, evidence, confidence, summary | Compact orientation lexicon -- validated + researcher-trusted draft terms, cap 200. Excludes unreviewed candidates. |
 | **Enrichment (3c)** | Lexicon/registry intelligence: propose terms/entities/tactics/practices, connect to existing entries before proposing new | Full lexicon -- draft + validated + entity registry |
-| **Human review** | Methodological layer: validate, reject, edit, preserve provenance | N/A -- researcher decides |
+| **Human review** | Methodological exception/promotion layer: sensitive cases, key documents, sampled audits, canonical concepts/claims, corrections | N/A -- researcher governs |
 
 The pipeline proposes. The researcher decides. The archive records.
+
+### Scale policy (July 2026 clarification)
+
+The sentence above applies to **canonical promotion and consequential
+decisions**, not to every document description. A solo researcher cannot
+adjudicate thousands of records.
+
+- The long tail may remain AI-described and provisional. Public summaries and
+  document-level tags may use the `ai_disclosed_summary_tags` lane when source,
+  citation, prompt/model/lexicon/retrieval provenance, audit state,
+  uncertainty, and a correction pathway are visible.
+- Testimony/consent, legal interpretation, canonical identity, network/funding
+  assertions, claim-verification verdicts, and curated research arguments use
+  the `researcher_verified` lane.
+- Confidence calibration is **not** a corpus-wide labeling gate and no review
+  threshold should be derived from model self-confidence. Maintain a small,
+  deliberately selected anchor set and re-run it after material model, prompt,
+  lexicon, retrieval, or extraction changes. Escalate disagreements, not every
+  agreement.
+- Open models provide broad background knowledge. The lexicon supplies the
+  project's controlled, multilingual, historically situated vocabulary. The
+  corpus improves later runs only when approved memory, retrieval, corrections,
+  and versioned reprocessing are actually fed back into the pipeline.
 
 ---
 
@@ -159,19 +182,20 @@ Use `vector(4096)` in Supabase. Drop and recreate the table if it was created wi
 - [x] `runner queue [doc_id]` — show ingestion candidates from enrichment.json
 - [x] `runner doctor` — pre-flight check before first ingest
 - [x] `runner split-book <path_or_url> --preview` — preview PDF/book sections without ingesting (TASK E complete, commit `74a35f847`)
-- [ ] **End-to-end test**: one URL ingested + uploaded to Sanity + Supabase ← **next milestone**
+- [x] **End-to-end operation**: live corpus contains analyzed/uploaded documents; continue verifying cross-system drift with `runner verify`
 
 ### Phase 0.5 — Pilot Batch
 - [x] **G1:** Triage fails closed; untriaged queue items are not overnight-safe (`9a58cc807`)
 - [x] **G2:** Ingest cross-checks triage + analysis testimony/legal flags; headless holds locally (`7b39ea090` → `1e50d7558`)
 - [x] **G3:** Guard `write_document` against overwriting reviewed Sanity document records (`3bdfe91ae`)
 - [ ] **G4:** Add prompt hashes/git commit/runtime params/duration/derived-score flag/triage audit to provenance ← **next**
-- [ ] **G5:** Suppress or ground enrichment `corpus_connections` until vector retrieval is wired
-- [ ] **TASK F:** Batch Runner — technically unblocked by G1/G2; recommended after G4–G5
+- [x] **G5 safety half:** ungrounded enrichment `corpus_connections` are suppressed
+- [ ] **G5 feedback half:** wire retrieved document IDs/quotes into analysis and enrichment
+- [x] **TASK F:** Guarded Batch Runner exists; use system/anchor audits rather than universal human adjudication
 - [ ] Pull and verify local models: `ollama pull qwen3.5:9b` + `gemma-4-26B-A4B-it` (check RAM)
-- [ ] Run 10–20 documents covering all 6 languages + all tiers
-- [ ] Calibrate confidence thresholds (baseline: high ≥0.85, medium 0.70–0.84, low <0.70)
-- [ ] Calibrate validation triggers
+- [ ] Select a durable anchor set covering key sources, hard cases, languages, formats, and stakes
+- [ ] Implement repeatable anchor re-reading with current lexicon, retrieval, independent model comparison, and evidence audit
+- [ ] Evaluate second-opinion/audit triggers from anchor failures; do not derive truth thresholds from model self-confidence
 - [ ] Test lexicon Track B (approve ≥5 candidate terms)
 - [ ] Test model-agnostic export + reimport
 - [ ] Measure RAM/time for `gemma-4-26B-A4B-it` to settle Q23

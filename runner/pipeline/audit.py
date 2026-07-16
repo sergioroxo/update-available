@@ -70,6 +70,7 @@ class AnalysisRunMeta:
     """
     llm_flag: str = ""              # --llm flag value, e.g. "litelm"
     model: str = ""                 # resolved model alias, e.g. "core-qwen"
+    provider_resolved_model: str = "" # provider response identity when exposed
     input_char_count: int = 0       # len(preprocess.text) sent to the model
     input_truncated: bool = False   # whether _maybe_truncate fired
     lexicon_terms_available: int = 0 # count fetched from Sanity before the analysis cap
@@ -79,8 +80,15 @@ class AnalysisRunMeta:
     prompt_template_sha256: str = "" # hash of bare prompt template before injections
     git_commit: str = ""             # current repo commit, best effort
     model_parameters: dict = field(default_factory=dict)
+    input_receipt: dict = field(default_factory=dict)
+    comparison_run: dict = field(default_factory=dict)
+    attempt_history: list[dict] = field(default_factory=list)
+    lexicon_fingerprint: str = ""
+    tag_registry_fingerprint: str = ""
+    policy_fingerprint: str = ""
     duration_ms: int = 0
     raw_response_chars: int = 0      # len(raw_json) returned by the model
+    raw_response_sha256: str = ""     # response identity only; response text is never persisted
     validation_path: str = ""       # "outside_think_tags" | "inside_think_tags" | "raw"
     validation_attempts: int = 0    # extraction paths tried before success
     score_derived_from_status: bool = False
@@ -96,6 +104,7 @@ class EnrichmentRunMeta:
     """
     llm_flag: str = ""
     model: str = ""
+    provider_resolved_model: str = ""
     input_char_count: int = 0
     # Stage 3c research-memory lexicon source counts (schema v4). Records how much
     # of each memory layer was injected so the lexicon coverage is auditable.
@@ -111,7 +120,20 @@ class EnrichmentRunMeta:
     prompt_template_sha256: str = ""
     git_commit: str = ""
     model_parameters: dict = field(default_factory=dict)
+    input_receipt: dict = field(default_factory=dict)
+    whole_doc_input_receipt: dict = field(default_factory=dict)
+    lexicon_fingerprint: str = ""
+    provisional_memory_fingerprint: str = ""
+    provisional_memory_clusters_injected: int = 0
+    provisional_memory_cluster_ids: list[str] = field(default_factory=list)
+    provisional_memory_retrieval_method: str = ""
+    provisional_memory_error: str = ""
+    tag_registry_fingerprint: str = ""
+    policy_fingerprint: str = ""
+    govuk_definition_memory: dict = field(default_factory=dict)
     duration_ms: int = 0
+    raw_response_chars: int = 0
+    raw_response_sha256: str = ""
     validation_path: str = ""
     validation_attempts: int = 0
     normalization_repairs: int = 0

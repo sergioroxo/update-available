@@ -4,6 +4,7 @@ These tests cover pure-Python helpers that have no Streamlit dependency —
 they do not launch a browser or Streamlit session.
 """
 import pytest
+import os
 import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
@@ -151,6 +152,41 @@ def test_open_document_from_inbox_sets_navigation_and_clears_filters():
     assert mock_ss["_nav_to"] == "Document List"
     assert mock_ss["page"] == "Document List"
     assert mock_ss["nav_page"] == "Review Inbox"
+
+
+def test_document_set_loader_ignores_unrelated_internal_json(tmp_path):
+    import json
+    from runner.app import _app_document_sets_dir, _app_list_document_sets
+
+    root = _app_document_sets_dir(tmp_path)
+    (root / "testimony_candidates.json").write_text(
+        json.dumps({"schema_version": "testimony-candidates-v0.1", "candidate_count": 2}),
+        encoding="utf-8",
+    )
+    (root / "valid.json").write_text(
+        json.dumps({"name": "key_sources", "docIds": ["doc-abc", "abc"]}),
+        encoding="utf-8",
+    )
+
+    rows = _app_list_document_sets(tmp_path)
+
+    assert rows == [{"name": "key_sources", "docIds": ["abc"]}]
+
+
+def test_document_set_loader_normalises_legacy_shape(tmp_path):
+    import json
+    from runner.app import _app_document_sets_dir, _app_list_document_sets
+
+    root = _app_document_sets_dir(tmp_path)
+    (root / "legacy.json").write_text(
+        json.dumps({"set_name": "Legacy Set", "doc_ids": ["doc-one", "two"]}),
+        encoding="utf-8",
+    )
+
+    rows = _app_list_document_sets(tmp_path)
+
+    assert rows[0]["name"] == "Legacy_Set"
+    assert rows[0]["docIds"] == ["one", "two"]
 
 
 def test_batch_run_command_live_includes_execute_and_enrich_by_default():
@@ -330,6 +366,74 @@ def test_document_workflow_summary_review_holds_are_visible():
     assert "legal_review" in summary["reasons"]
     assert "analysis_review" in summary["reasons"]
     assert summary["ready_to_upload"] is False
+
+
+def test_document_workflow_summary_testimony_pending_allows_unverified_archive_upload():
+    summary = _workflow_summary(
+        analysis={
+            "type": "Pro-SOGICE",
+            "confidence": {"overall_score": 0.9},
+            "flags": ["Flag: Testimony-Extraction-Required"],
+            "testimony_flag": True,
+            "needs_review": False,
+        }
+    )
+
+    assert "testimony_review" in summary["reasons"]
+    assert "Testimony review pending (publication hold)" in summary["labels"]
+    assert summary["ready_to_upload"] is True
+
+
+def test_document_workflow_summary_testimony_refusal_blocks_archive_upload():
+    summary = _workflow_summary(
+        analysis={"type": "Testimony", "testimony_flag": True, "flags": []},
+        has_testimony_review=True,
+        testimony_state={"state": "blocked", "disagreement": True},
+    )
+    assert "testimony_upload_blocked" in summary["reasons"]
+    assert any("archive upload blocked" in label for label in summary["labels"])
+    assert summary["ready_to_upload"] is False
+
+
+def test_document_workflow_summary_shows_confirmed_publication_hold():
+    summary = _workflow_summary(
+        analysis={"type": "Testimony", "testimony_flag": True, "flags": []},
+        has_testimony_review=True,
+        testimony_state={"state": "confirmed_publication_hold", "disagreement": False},
+    )
+    assert "testimony_publication_hold" in summary["reasons"]
+    assert "Consent confirmed; public display held" in summary["labels"]
+    assert summary["ready_to_upload"] is True
+
+
+def test_document_workflow_summary_surfaces_consent_record_conflict():
+    summary = _workflow_summary(
+        analysis={"type": "Testimony", "testimony_flag": True, "flags": []},
+        has_testimony_review=True,
+        testimony_state={"state": "conflict_pending", "disagreement": True},
+    )
+    assert "testimony_review" in summary["reasons"]
+    assert "Testimony consent records disagree (publication hold)" in summary["labels"]
+    assert summary["ready_to_upload"] is True
+
+
+def test_document_testimony_state_does_not_treat_review_file_as_clearance():
+    import runner.app as app_mod
+
+    pending = app_mod._document_testimony_state(
+        {"type": "Testimony", "testimony_flag": False, "flags": []},
+        {"testimony_consent": "pending"},
+        {"reviewed": True, "consent_status": "pending", "public_display": False},
+    )
+    assert pending["state"] == "pending"
+
+    blocked = app_mod._document_testimony_state(
+        {"type": "Testimony", "testimony_flag": False, "flags": []},
+        {"testimony_consent": "confirmed"},
+        {"reviewed": True, "consent_status": "withdrawn", "public_display": True},
+    )
+    assert blocked["state"] == "blocked"
+    assert blocked["disagreement"] is True
 
 
 def test_document_workflow_summary_uploaded_but_supabase_missing():
@@ -662,6 +766,7 @@ def test_source_queue_initial_priority_lets_triage_decide():
 
     assert _source_queue_initial_priority("Add and triage now", "high") == "medium"
     assert _source_queue_initial_priority("Add and triage now", "skip") == "medium"
+    assert _source_queue_initial_priority("Add + queue triage", "high") == "medium"
 
 
 def test_source_queue_initial_priority_keeps_manual_add_only_choice():
@@ -669,6 +774,37 @@ def test_source_queue_initial_priority_keeps_manual_add_only_choice():
 
     assert _source_queue_initial_priority("Add only", "high") == "high"
     assert _source_queue_initial_priority("Add only", "skip") == "skip"
+
+
+def test_source_queue_submission_candidates_only_triages_new_rows():
+    from types import SimpleNamespace
+    from runner.app import _source_queue_submission_candidates
+
+    rows = [
+        SimpleNamespace(id="new", status="new"),
+        SimpleNamespace(id="triaged", status="triaged"),
+        SimpleNamespace(id="ready", status="ready_to_ingest"),
+        SimpleNamespace(id="ingested", status="ingested"),
+    ]
+
+    candidates, already_routed = _source_queue_submission_candidates(rows)
+
+    assert [row.id for row in candidates] == ["new"]
+    assert [row.id for row in already_routed] == ["triaged", "ready", "ingested"]
+
+
+def test_workflow_ui_fingerprint_changes_with_selection_or_policy():
+    from runner.app import _workflow_ui_input_fingerprint
+
+    base = dict(
+        batch_group="batch-a", selected_item_ids=None, limit=3,
+        purpose="Study", questions=["Question?"], model_policy="triage_recommended",
+        disclosure_mode="internal_research", audit_sample_rule="exceptions",
+    )
+    first = _workflow_ui_input_fingerprint(**base)
+    assert _workflow_ui_input_fingerprint(**{**base, "purpose": "Changed"}) != first
+    assert _workflow_ui_input_fingerprint(**{**base, "selected_item_ids": ["abc"]}) != first
+    assert _workflow_ui_input_fingerprint(**{**base, "disclosure_mode": "external_safe"}) != first
 
 
 def test_source_queue_hold_category_classifies_common_triage_failures():
@@ -2330,6 +2466,25 @@ def test_proposal_source_upload_issue_explains_missing_sanity_doc(tmp_path):
     assert _proposal_source_upload_issue(record, config) == ""
 
 
+def test_proposal_source_upload_issue_verifies_remote_sanity_doc(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from runner.app import _proposal_source_upload_issue
+
+    config = SimpleNamespace(corpus_dir=tmp_path / "corpus")
+    record = {"doc_id": "abc"}
+    doc_dir = config.corpus_dir / "abc"
+    doc_dir.mkdir(parents=True)
+    (doc_dir / "sanity_record.json").write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr("runner.clients.sanity.sanity_document_exists", lambda doc_id, config: False)
+
+    issue = _proposal_source_upload_issue(record, config, verify_remote=True)
+
+    assert "local `sanity_record.json` exists" in issue
+    assert "Sanity does not contain `doc-abc`" in issue
+
+
 # ---------------------------------------------------------------------------
 # System health UI helpers
 # ---------------------------------------------------------------------------
@@ -2752,6 +2907,20 @@ def test_source_queue_visible_history_map_empty_ids_is_empty():
     assert app_mod._source_queue_visible_history_map(db, []) == {}
 
 
+def test_source_queue_new_candidate_ids_returns_only_new_in_order():
+    import runner.app as app_mod
+
+    rows = [
+        SimpleNamespace(id="a", status="triaged"),
+        SimpleNamespace(id="b", status="new"),
+        SimpleNamespace(id="c", status="new"),
+        SimpleNamespace(id="d", status="ready_to_ingest"),
+    ]
+
+    assert app_mod._source_queue_new_candidate_ids(rows, limit=1) == ["b"]
+    assert app_mod._source_queue_new_candidate_ids(rows, limit=10) == ["b", "c"]
+
+
 def test_source_queue_recent_triage_logs_newest_first(tmp_path, monkeypatch):
     import runner.app as app_mod
 
@@ -2760,17 +2929,21 @@ def test_source_queue_recent_triage_logs_newest_first(tmp_path, monkeypatch):
     log_dir.mkdir(parents=True)
     older = log_dir / "20260703T100000Z_source-queue-triage-added.log"
     newer = log_dir / "20260703T110000Z_source-queue-triage-added.log"
+    retriage = log_dir / "20260703T113000Z_source-queue-retriage-selected.log"
     other = log_dir / "20260703T120000Z_longform_review.log"
     older.write_text("older", encoding="utf-8")
     newer.write_text("newer", encoding="utf-8")
+    retriage.write_text("retriage", encoding="utf-8")
     other.write_text("ignore", encoding="utf-8")
-    older.touch()
-    newer.touch()
+    os.utime(older, (100, 100))
+    os.utime(newer, (200, 200))
+    os.utime(retriage, (300, 300))
 
     logs = app_mod._source_queue_recent_triage_logs(limit=5)
 
-    assert logs[0] == newer
-    assert logs[1] == older
+    assert logs[0] == retriage
+    assert logs[1] == newer
+    assert logs[2] == older
     assert other not in logs
 
 
@@ -2781,6 +2954,133 @@ def test_source_queue_log_looks_failed_detects_traceback_and_ollama_errors():
     assert app_mod._source_queue_log_looks_failed("litellm.APIConnectionError: Ollama_chatException")
     assert app_mod._source_queue_log_looks_failed("error starting llama-server")
     assert not app_mod._source_queue_log_looks_failed("Done. Use runner queue-list to review.")
+
+
+def test_workflow_canary_step_rows_shows_safe_planner_boundary():
+    import runner.app as app_mod
+
+    steps = app_mod._workflow_canary_step_rows({
+        "disposition": "planned_not_authorized",
+        "execution_state": "proposal_recorded",
+        "event_history_valid": True,
+        "grant_recorded": False,
+        "preservation_recorded": False,
+        "execution_started_recorded": False,
+        "terminal_outcome": "",
+        "lease_released": False,
+        "recovery_check_required": False,
+    })
+
+    assert len(steps) == 7
+    assert "not authorized" in steps[0]["Status"]
+    assert steps[1]["Status"] == "Available"
+    assert steps[2]["Status"] == "Not granted"
+    assert "Pending explicit" in steps[4]["Status"]
+
+
+@pytest.mark.parametrize("overrides", [
+    {"event_history_valid": False},
+    {"disposition": "held_prerequisite"},
+    {"execution_state": "lease_acquired", "grant_recorded": True},
+    {"execution_state": "lease_released", "grant_recorded": True},
+])
+def test_workflow_canary_execution_eligible_hides_unsafe_or_stale_commands(overrides):
+    import runner.app as app_mod
+
+    row = {
+        "event_history_valid": True,
+        "disposition": "planned_not_authorized",
+        "execution_state": "proposal_recorded",
+        "grant_recorded": False,
+        **overrides,
+    }
+
+    assert app_mod._workflow_canary_execution_eligible(row) is False
+
+
+def test_workflow_canary_step_rows_shows_success_and_fresh_replan():
+    import runner.app as app_mod
+
+    steps = app_mod._workflow_canary_step_rows({
+        "disposition": "planned_not_authorized",
+        "execution_state": "lease_released",
+        "event_history_valid": True,
+        "grant_recorded": True,
+        "preservation_recorded": True,
+        "execution_started_recorded": True,
+        "terminal_outcome": "succeeded",
+        "lease_released": True,
+        "recovery_check_required": False,
+    })
+
+    assert steps[3]["Status"] == "Recorded"
+    assert "grant finished: succeeded" in steps[0]["Status"]
+    assert steps[4]["Status"] == "Complete: succeeded"
+    assert steps[5]["Status"].startswith("Ready:")
+    assert steps[6]["Status"].startswith("Required:")
+
+
+def test_workflow_canary_step_rows_fails_closed_on_invalid_history():
+    import runner.app as app_mod
+
+    steps = app_mod._workflow_canary_step_rows({
+        "disposition": "planned_not_authorized",
+        "execution_state": "inconsistent_event_history",
+        "event_history_valid": False,
+        "grant_recorded": True,
+        "terminal_outcome": "succeeded",
+    })
+
+    assert steps[0]["Status"].startswith("Blocked:")
+    assert steps[1]["Status"] == "Blocked"
+    assert steps[2]["Status"] == "Untrusted / blocked"
+    assert "succeeded" not in steps[4]["Status"]
+
+
+@pytest.mark.parametrize("disposition", [
+    "held_prerequisite", "satisfied_existing", "human_required",
+])
+def test_workflow_canary_step_rows_never_offers_execution_for_nonplanned_rows(disposition):
+    import runner.app as app_mod
+
+    steps = app_mod._workflow_canary_step_rows({
+        "disposition": disposition,
+        "execution_state": "proposal_recorded",
+        "event_history_valid": True,
+        "grant_recorded": False,
+        "terminal_outcome": "",
+    })
+
+    assert steps[1]["Status"] == "Blocked"
+    assert steps[2]["Status"] == "Not eligible"
+    assert steps[4]["Status"] == "Not eligible from this plan"
+    assert steps[5]["Status"] == "Not applicable to this plan row"
+
+
+@pytest.mark.parametrize(("outcome", "expected_build", "expected_evidence"), [
+    ("failed", "Failed:", "Ready: verify failure"),
+    ("recovery_hold", "Held:", "Held: verify recovery"),
+])
+def test_workflow_canary_step_rows_does_not_call_failure_complete(
+    outcome, expected_build, expected_evidence,
+):
+    import runner.app as app_mod
+
+    steps = app_mod._workflow_canary_step_rows({
+        "disposition": "planned_not_authorized",
+        "execution_state": "lease_released",
+        "event_history_valid": True,
+        "grant_recorded": True,
+        "preservation_recorded": True,
+        "execution_started_recorded": outcome == "failed",
+        "terminal_outcome": outcome,
+        "lease_released": True,
+        "recovery_check_required": False,
+    })
+
+    assert steps[4]["Status"].startswith(expected_build)
+    assert not steps[4]["Status"].startswith("Complete:")
+    assert steps[5]["Status"].startswith(expected_evidence)
 
 
 def test_entity_target_options_include_ids_and_current_missing_id():

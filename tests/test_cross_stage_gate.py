@@ -118,13 +118,12 @@ def test_consent_gate_single_positional_arg_still_supported():
 # _enforce_testimony_upload_gate -- triage cross-check at the backstop
 # ---------------------------------------------------------------------------
 
-def test_enforce_blocks_triage_testimony_only_when_consent_missing(tmp_path):
+def test_enforce_allows_triage_testimony_as_unverified_when_review_missing(tmp_path):
     intake = _intake(tmp_path, consent="")
     analysis = _analysis("Anti-SOGICE")  # analysis itself is not testimony
-    with pytest.raises(click.exceptions.Exit):
-        _enforce_testimony_upload_gate(
-            intake, analysis, _triage(needs_testimony_review=True)
-        )
+    _enforce_testimony_upload_gate(
+        intake, analysis, _triage(needs_testimony_review=True)
+    )
 
 
 def test_enforce_passes_triage_testimony_only_when_consent_confirmed(tmp_path):
@@ -196,8 +195,9 @@ def _capture_enforce(monkeypatch):
     returns the dict that will hold the captured value."""
     captured: dict = {}
 
-    def _fake_enforce(intake, analysis, triage_result=None):
+    def _fake_enforce(intake, analysis, triage_result=None, testimony_review=None):
         captured["triage_result"] = triage_result
+        captured["testimony_review"] = testimony_review
 
     monkeypatch.setattr(upload_mod, "_enforce_testimony_upload_gate", _fake_enforce)
     return captured

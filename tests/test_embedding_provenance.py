@@ -83,7 +83,7 @@ def _run_upload_saved_capture_model(tmp_path: Path, doc_id: str, config: _Config
     def _fake_write_document(pkg, config, **kwargs):
         return "sanity-id-fake"
 
-    def _fake_enforce(intake, analysis, triage_result=None):
+    def _fake_enforce(intake, analysis, triage_result=None, testimony_review=None):
         pass
 
     with (

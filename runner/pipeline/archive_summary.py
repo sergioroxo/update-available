@@ -24,7 +24,7 @@ from runner.pipeline.citation_units import (
 )
 
 
-SCHEMA_VERSION = "archive-summary-v1.0"
+SCHEMA_VERSION = "archive-summary-v1.1"
 SUMMARY_FILENAME = "archive_summary.json"
 KNOWLEDGE_EXPORT_DIR = "knowledge"
 DOCUMENT_PROFILES_JSONL = "document_profiles.jsonl"
@@ -43,6 +43,10 @@ _ARTIFACT_FILES = {
     "review_status": "review_status.json",
     "legal_review": "legal_review.json",
     "testimony_review": "testimony_review.json",
+    "testimony_candidates": "testimony_candidates.json",
+    "testimony_candidate_reviews": "testimony_candidate_reviews.json",
+    "testimony_segment_analyses": "testimony_segment_analyses.jsonl",
+    "testimony_segments": "testimony_segments.json",
     "offload_import": "offload_import.json",
     "source_item": "source_item.json",
     "longform_source": "longform_source.json",
@@ -54,6 +58,7 @@ _ARTIFACT_FILES = {
     "longform_section_analyses": "longform_section_analyses.jsonl",
     "longform_candidates": "longform_candidates.json",
     "longform_synthesis": "longform_synthesis.json",
+    "tag_projection": "tag_projection.json",
 }
 
 _ENRICHMENT_FAMILIES = (
@@ -221,6 +226,70 @@ def _longform_summary(
     }
 
 
+def _testimony_candidate_summary(candidates: dict, reviews: dict) -> dict:
+    if not isinstance(candidates, dict):
+        candidates = {}
+    if not isinstance(reviews, dict):
+        reviews = {}
+    review_items = reviews.get("reviews") if isinstance(reviews.get("reviews"), dict) else {}
+    public_ready = 0
+    approved = 0
+    if isinstance(review_items, dict):
+        for item in review_items.values():
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("review_state") or "") in {"approved", "public_approved"}:
+                approved += 1
+            if item.get("public_display") is True or str(item.get("public_readiness") or "") == "public_display_approved":
+                public_ready += 1
+    return {
+        "exists": bool(candidates),
+        "schema_version": str(candidates.get("schema_version") or ""),
+        "candidate_count": _int(candidates.get("candidate_count")),
+        "counts_by_type": candidates.get("counts_by_type") if isinstance(candidates.get("counts_by_type"), dict) else {},
+        "counts_by_speaker_position": (
+            candidates.get("counts_by_speaker_position")
+            if isinstance(candidates.get("counts_by_speaker_position"), dict)
+            else {}
+        ),
+        "reviewed_count": len(review_items) if isinstance(review_items, dict) else 0,
+        "approved_count": approved,
+        "public_ready_count": public_ready,
+        "default_public_display": bool(
+            (candidates.get("public_policy") or {}).get("default_public_display")
+            if isinstance(candidates.get("public_policy"), dict)
+            else False
+        ),
+    }
+
+
+def _testimony_segment_summary(segments_payload: dict, *, analyses_count: int = 0) -> dict:
+    segments = segments_payload.get("segments") if isinstance(segments_payload.get("segments"), list) else []
+    segment_type_counts: dict[str, int] = {}
+    public_ready = 0
+    high_sensitivity = 0
+    for segment in segments:
+        if not isinstance(segment, dict):
+            continue
+        kind = str(segment.get("segment_type") or "unclear")
+        segment_type_counts[kind] = segment_type_counts.get(kind, 0) + 1
+        public = segment.get("public_recommendation") if isinstance(segment.get("public_recommendation"), dict) else {}
+        if public.get("public_display") is True or str(public.get("public_readiness") or "") == "public_display_approved":
+            public_ready += 1
+        if str(public.get("sensitivity") or "").lower() == "high":
+            high_sensitivity += 1
+    return {
+        "exists": bool(segments_payload) or analyses_count > 0,
+        "schema_version": str(segments_payload.get("schema_version") or ""),
+        "analysis_count": _int(segments_payload.get("analysis_count") or analyses_count),
+        "segment_count": _int(segments_payload.get("segment_count") or len(segments)),
+        "counts_by_segment_type": dict(sorted(segment_type_counts.items())),
+        "public_ready_count": public_ready,
+        "high_sensitivity_count": high_sensitivity,
+        "contains_sensitive_text": False,
+    }
+
+
 def _jsonl_count(path: Path) -> int:
     if not path.exists():
         return 0
@@ -301,6 +370,9 @@ def build_archive_summary(doc_dir: Path, *, config=None, generated_at: str | Non
     review_status = read_json_safe(doc_dir / "review_status.json", {})
     legal_review = read_json_safe(doc_dir / "legal_review.json", {})
     testimony_review = read_json_safe(doc_dir / "testimony_review.json", {})
+    testimony_candidates = read_json_safe(doc_dir / "testimony_candidates.json", {})
+    testimony_candidate_reviews = read_json_safe(doc_dir / "testimony_candidate_reviews.json", {})
+    testimony_segments = read_json_safe(doc_dir / "testimony_segments.json", {})
     offload_import = read_json_safe(doc_dir / "offload_import.json", {})
     source_item = read_json_safe(doc_dir / "source_item.json", {})
     citation_units = read_json_safe(doc_dir / CITATION_UNITS_FILENAME, {})
@@ -310,6 +382,7 @@ def build_archive_summary(doc_dir: Path, *, config=None, generated_at: str | Non
     longform_sections = read_json_safe(doc_dir / "longform_sections.json", {})
     longform_candidates = read_json_safe(doc_dir / "longform_candidates.json", {})
     longform_synthesis = read_json_safe(doc_dir / "longform_synthesis.json", {})
+    tag_projection = read_json_safe(doc_dir / "tag_projection.json", {})
 
     source_value = str(intake.get("source") or "").strip()
     source_url_candidates = [
@@ -367,6 +440,14 @@ def build_archive_summary(doc_dir: Path, *, config=None, generated_at: str | Non
             "preprocess_quality": str(preprocess.get("quality") or "").strip(),
         },
         "citation_units": citation_summary(citation_units),
+        "testimony_candidates": _testimony_candidate_summary(
+            testimony_candidates if isinstance(testimony_candidates, dict) else {},
+            testimony_candidate_reviews if isinstance(testimony_candidate_reviews, dict) else {},
+        ),
+        "testimony_segments": _testimony_segment_summary(
+            testimony_segments if isinstance(testimony_segments, dict) else {},
+            analyses_count=_jsonl_count(doc_dir / "testimony_segment_analyses.jsonl"),
+        ),
         "longform": _longform_summary(
             source=longform_source if isinstance(longform_source, dict) else {},
             bibliographic=bibliographic if isinstance(bibliographic, dict) else {},
@@ -437,6 +518,13 @@ def build_archive_summary(doc_dir: Path, *, config=None, generated_at: str | Non
             "enrichment_model": str(enrichment.get("enrichment_model") or enrichment_audit.get("enrichment_model") or "").strip(),
             "enrichment_git_commit": str(enrichment_audit.get("git_commit") or "").strip(),
             "corpus_connections_suppressed": bool(enrichment_audit.get("corpus_connections_suppressed")),
+        },
+        "tag_projection": {
+            "exists": bool(tag_projection),
+            "schema_version": str(tag_projection.get("schema_version") or "") if isinstance(tag_projection, dict) else "",
+            "memory_fingerprint": str(tag_projection.get("memory_fingerprint") or "") if isinstance(tag_projection, dict) else "",
+            "normalized_tag_count": len(tag_projection.get("tags") or []) if isinstance(tag_projection, dict) else 0,
+            "provisional_tag_count": len(tag_projection.get("draft_memory_tags") or []) if isinstance(tag_projection, dict) else 0,
         },
         "readiness": {
             "status": readiness.status,

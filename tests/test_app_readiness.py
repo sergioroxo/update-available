@@ -460,6 +460,27 @@ class TestCollectCorpusReadiness:
         result = collect_corpus_readiness(tmp_path)
         assert [r["doc_id"] for r in result] == ["aaa_doc", "mmm_doc", "zzz_doc"]
 
+    def test_exact_doc_id_limit_scans_only_selected_batch_documents(self, tmp_path):
+        for name in ["doc-a", "doc-b", "doc-c"]:
+            (tmp_path / name).mkdir()
+        result = collect_corpus_readiness(
+            tmp_path, doc_ids={"doc-c", "doc-a"},
+        )
+        assert [row["doc_id"] for row in result] == ["doc-a", "doc-c"]
+
+    def test_doc_id_limit_rejects_path_like_values(self, tmp_path):
+        (tmp_path / "safe").mkdir()
+        result = collect_corpus_readiness(
+            tmp_path, doc_ids={"safe", "../outside", "nested/value"},
+        )
+        assert [row["doc_id"] for row in result] == ["safe"]
+
+    def test_doc_id_limit_does_not_follow_symlinked_document_directory(self, tmp_path):
+        outside = tmp_path.parent / f"{tmp_path.name}-outside"
+        outside.mkdir()
+        (tmp_path / "linked").symlink_to(outside, target_is_directory=True)
+        assert collect_corpus_readiness(tmp_path, doc_ids={"linked"}) == []
+
     def test_corrupt_json_tolerated(self, tmp_path):
         doc_dir = tmp_path / "corrupt"
         doc_dir.mkdir()

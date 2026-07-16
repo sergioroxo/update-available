@@ -1,0 +1,39 @@
+{
+  "schema_version": "pdf-index-roots-v1.0",
+  "policy": {
+    "read_only_sources": true,
+    "copy_source_files": false,
+    "delete_source_files": false,
+    "hydrate_cloud_placeholders": false
+  },
+  "roots": [
+    {"label": "PhD local", "path": "/Users/sergiogalvaoroxo/Documents/PhD", "enabled": true},
+    {"label": "Articles", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Articles", "enabled": true},
+    {"label": "Australia", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Australia", "enabled": true},
+    {"label": "Books", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Books", "enabled": true},
+    {"label": "Brazil", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Brazil", "enabled": true},
+    {"label": "Canada", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Canada", "enabled": true},
+    {"label": "European Union", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/European Union", "enabled": true},
+    {"label": "Ex-Gay Articles Conversion", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Ex-Gay Articles:Conversion", "enabled": true},
+    {"label": "France", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/France", "enabled": true},
+    {"label": "Germany", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Germany", "enabled": true},
+    {"label": "Global", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Global", "enabled": true},
+    {"label": "Greece", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Greece", "enabled": true},
+    {"label": "Hungary", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Hungary", "enabled": true},
+    {"label": "Ireland", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Ireland", "enabled": true},
+    {"label": "Italy", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Italy", "enabled": true},
+    {"label": "Malta", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Malta", "enabled": true},
+    {"label": "Multiple", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Multiple", "enabled": true},
+    {"label": "Norway", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Norway", "enabled": true},
+    {"label": "Poland", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Poland", "enabled": true},
+    {"label": "Portugal", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Portugal", "enabled": true},
+    {"label": "Reports", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Reports", "enabled": true},
+    {"label": "Romania", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Romenia", "enabled": true},
+    {"label": "Russia", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Russia", "enabled": true},
+    {"label": "Slovakia", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Slovakia", "enabled": true},
+    {"label": "Turkey", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Turkey", "enabled": true},
+    {"label": "UK", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/UK", "enabled": true},
+    {"label": "Ukraine", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/Ukraine", "enabled": true},
+    {"label": "US", "path": "/Users/sergiogalvaoroxo/Library/CloudStorage/OneDrive-UniversityofBergen/SurvivingSOGICE/US", "enabled": true}
+  ]
+}

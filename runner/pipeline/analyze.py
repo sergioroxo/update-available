@@ -25,9 +25,56 @@ from ..config import Config
 from ..models.document import AnalysisResult, PreprocessResult
 from .audit import current_git_commit, sha256_text
 from .http_retry import call_with_http_retries
+from .input_receipt import build_resolved_input_receipt, canonical_fingerprint
 from .sanity_reads import fetch_analysis_orientation_terms
 
 PROMPT_VERSION = "ingestion-v3.3"
+
+
+def _record_analysis_input_receipt(
+    audit: dict | None,
+    preprocess: PreprocessResult,
+    system_input: str,
+    user_input: str,
+) -> None:
+    if audit is None:
+        return
+    audit["input_receipt"] = build_resolved_input_receipt(
+        stage="analysis",
+        extracted_text=preprocess.text,
+        system_input=system_input,
+        user_input=user_input,
+        resolved_model=str(audit.get("model") or ""),
+        model_parameters=audit.get("model_parameters") or {},
+        lexicon_fingerprint=str(audit.get("lexicon_fingerprint") or ""),
+        provisional_memory_fingerprint=canonical_fingerprint({
+            "used": False, "reason": "provisional memory is not an Analysis input"
+        }),
+        tag_registry_fingerprint=str(audit.get("tag_registry_fingerprint") or ""),
+        policy_fingerprint=str(audit.get("policy_fingerprint") or ""),
+        provider_resolved_model=str(audit.get("provider_resolved_model") or ""),
+    )
+
+
+def _record_failed_attempt(audit: dict | None, *, label: str, exc: Exception) -> None:
+    """Retain content-free fallback provenance without persisting exception text.
+
+    Model validation exceptions used to include a response excerpt.  A fallback
+    audit must therefore never copy ``str(exc)`` into a durable sidecar.
+    """
+    if audit is None:
+        return
+    receipt = audit.get("input_receipt") if isinstance(audit.get("input_receipt"), dict) else {}
+    audit.setdefault("attempt_history", []).append({
+        "label": label,
+        "model": str(audit.get("model") or ""),
+        "input_receipt": dict(receipt),
+        "validation_path": str(audit.get("validation_path") or "failed"),
+        "validation_attempts": int(audit.get("validation_attempts") or 0),
+        "raw_response_chars": int(audit.get("raw_response_chars") or 0),
+        "raw_response_sha256": str(audit.get("raw_response_sha256") or ""),
+        "error_code": f"{type(exc).__name__}:model_attempt_failed",
+    })
 
 
 @dataclass
@@ -109,26 +156,31 @@ def run(
         if llm == "openrouter":
             return _analyze_with_openrouter(preprocess, config, _audit=_audit)
         if llm == "both":
-            # Thread _audit to the primary (Claude) result only; comparison run is display-only.
+            comparison_audit: dict | None = {} if _audit is not None else None
             claude_result = _analyze_with_claude(preprocess, config, _audit=_audit)
-            local_result  = _analyze_with_ollama(preprocess, config, config.local_analysis_model)
+            local_result = run(preprocess, "local", config, _audit=comparison_audit)
+            if _audit is not None:
+                _audit["comparison_run"] = comparison_audit or {}
             return DualAnalysisResult(primary=claude_result, comparison=local_result)
         if llm == "prefer-local":
             try:
                 result = _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
                 if result.confidence.status == "low":
+                    _record_failed_attempt(
+                        _audit,
+                        label="prefer-local-low-confidence",
+                        exc=RuntimeError("low confidence"),
+                    )
                     return _analyze_with_claude(preprocess, config, _audit=_audit)
                 return result
             except Exception as exc:
-                if _audit is not None:
-                    _audit.setdefault("errors", []).append(f"prefer-local primary failed: {exc}")
+                _record_failed_attempt(_audit, label="prefer-local-primary", exc=exc)
                 return _analyze_with_claude(preprocess, config, _audit=_audit)
         if llm == "prefer-claude":
             try:
                 return _analyze_with_claude(preprocess, config, _audit=_audit)
             except Exception as exc:
-                if _audit is not None:
-                    _audit.setdefault("errors", []).append(f"prefer-claude primary failed: {exc}")
+                _record_failed_attempt(_audit, label="prefer-claude-primary", exc=exc)
                 return _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
         raise ValueError(f"Unknown LLM option: {llm!r}")
     finally:
@@ -193,6 +245,7 @@ def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit
             "max_tokens": config.claude_output_tokens,
             "system_cache_control": "ephemeral",
         }
+        _record_analysis_input_receipt(_audit, preprocess, static_prompt + "\n" + dynamic_prompt, user_message)
 
     response = client.messages.create(
         model=config.claude_model,
@@ -210,6 +263,11 @@ def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit
     raw_json = response.content[0].text
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
+        _audit["raw_response_sha256"] = sha256_text(raw_json)
+        _audit["provider_resolved_model"] = str(getattr(response, "model", "") or "")
+        _record_analysis_input_receipt(
+            _audit, preprocess, static_prompt + "\n" + dynamic_prompt, user_message
+        )
     return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
@@ -231,6 +289,7 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
             "format": "json",
             "think": False,
         }
+        _record_analysis_input_receipt(_audit, preprocess, system_prompt, user_message)
 
     response = call_with_http_retries(lambda: httpx.post(
         f"{config.ollama_base_url}/api/chat",
@@ -264,6 +323,9 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
         )
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
+        _audit["raw_response_sha256"] = sha256_text(raw_json)
+        _audit["provider_resolved_model"] = str(response.json().get("model") or model)
+        _record_analysis_input_receipt(_audit, preprocess, system_prompt, user_message)
     return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
@@ -282,6 +344,7 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
             "temperature": 0.1,
             "max_tokens": config.local_output_tokens,
         }
+        _record_analysis_input_receipt(_audit, preprocess, system_prompt, user_message)
 
     response = call_with_http_retries(lambda: httpx.post(
         f"{config.litelm_base_url}/v1/chat/completions",
@@ -301,9 +364,13 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
         timeout=600,
     ))
     response.raise_for_status()
-    raw_json = response.json()["choices"][0]["message"]["content"]
+    response_payload = response.json()
+    raw_json = response_payload["choices"][0]["message"]["content"]
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
+        _audit["raw_response_sha256"] = sha256_text(raw_json)
+        _audit["provider_resolved_model"] = str(response_payload.get("model") or "")
+        _record_analysis_input_receipt(_audit, preprocess, system_prompt, user_message)
     return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
@@ -326,6 +393,7 @@ def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _a
         _audit["model_parameters"] = {
             "temperature": 0.1,
         }
+        _record_analysis_input_receipt(_audit, preprocess, system_prompt, user_message)
 
     response = httpx.post(
         "https://openrouter.ai/api/v1/chat/completions",
@@ -346,9 +414,13 @@ def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _a
         timeout=300,
     )
     response.raise_for_status()
-    raw_json = response.json()["choices"][0]["message"]["content"]
+    response_payload = response.json()
+    raw_json = response_payload["choices"][0]["message"]["content"]
     if _audit is not None:
         _audit["raw_response_chars"] = len(raw_json)
+        _audit["raw_response_sha256"] = sha256_text(raw_json)
+        _audit["provider_resolved_model"] = str(response_payload.get("model") or "")
+        _record_analysis_input_receipt(_audit, preprocess, system_prompt, user_message)
     return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
@@ -366,6 +438,21 @@ def _build_system_prompt_with_lexicon(
 
     _LEXICON_INJECTION_CAP = 200
     terms_available = len(terms)
+
+    if _audit is not None:
+        identity_rows = [
+            {
+                "id": term.get("_id"), "term": term.get("term"), "status": term.get("status"),
+                "cluster": term.get("proposedCluster"), "function": term.get("function"),
+                "variants": term.get("multilingualVariants") or [],
+            }
+            for term in terms
+        ]
+        _audit["lexicon_fingerprint"] = canonical_fingerprint(identity_rows)
+        _audit["tag_registry_fingerprint"] = canonical_fingerprint({
+            "used": False, "reason": "tag registry is not an Analysis input"
+        })
+        _audit["policy_fingerprint"] = sha256_text(base)
 
     if not terms:
         if _audit is not None:
@@ -567,8 +654,6 @@ def _validate_response(raw_json: str, *, _audit: dict | None = None) -> Analysis
         "Increase LOCAL_OUTPUT_TOKENS or the LiteLLM model max_tokens setting."
     ) if looks_truncated else ""
 
-    validation_detail = f"\nValidation error: {last_error}" if last_error else ""
-
     if _audit is not None:
         _audit["validation_path"] = "failed"
         _audit["validation_attempts"] = _attempts
@@ -577,8 +662,8 @@ def _validate_response(raw_json: str, *, _audit: dict | None = None) -> Analysis
         )
 
     raise ValueError(
-        f"Could not extract valid JSON from model response.{hint}{validation_detail}\n"
-        f"Raw response (first 2000 chars): {original[:2000]}"
+        f"Could not extract valid JSON from model response.{hint} "
+        f"Response fingerprint: {sha256_text(original)}; characters: {len(original)}."
     )
 
 

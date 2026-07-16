@@ -19,6 +19,7 @@ Pages:
 from __future__ import annotations
 from collections import Counter
 import difflib
+import hashlib
 import json
 import os
 import re
@@ -27,6 +28,7 @@ import shlex
 import signal
 import subprocess
 import sys
+import time
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
@@ -84,6 +86,7 @@ def main():
         "Dashboard",
         "Review Inbox",
         "Corpus Intelligence",
+        "Source Identity",
         "Source Queue",
         "Source Offload",
         "Ingest Workbench",
@@ -132,6 +135,14 @@ def main():
         page_review_inbox()
     elif page == "Corpus Intelligence":
         page_corpus_intelligence()
+    elif page == "Source Identity":
+        from runner.source_identity_ui import render_source_identity_page
+
+        config = _load_config_safe()
+        if config:
+            render_source_identity_page(config)
+        else:
+            st.error("Could not load local corpus configuration.")
     elif page == "Source Queue":
         page_source_queue()
     elif page == "Source Offload":
@@ -832,8 +843,9 @@ def _open_document_from_inbox(doc_id: str) -> None:
 def page_review_inbox():
     st.title("Review Inbox")
     st.caption(
-        "Corpus-wide review status — what to work on next, grouped by readiness. "
-        "All checks read local files only; no network calls. "
+        "Document readiness plus optional exact batch-bound grouped dossiers. "
+        "The existing corpus-wide queue remains the default. All checks read local files only; "
+        "no network calls. "
         "Open a document to use the repair widgets (entity ID resolver, "
         "connection-type dropdown, Complement enrichment)."
     )
@@ -848,13 +860,34 @@ def page_review_inbox():
         st.info(f"Corpus directory does not exist yet: {corpus_dir}")
         return
 
-    rows = collect_corpus_readiness(corpus_dir, config=config)
+    try:
+        from runner.review_inbox_ui import render_batch_review_inbox
+        batch_scope = render_batch_review_inbox(config)
+    except Exception as exc:
+        st.error(f"Batch dossier review failed closed: {exc}")
+        batch_scope = {"selected": False, "doc_ids": None, "label": "Entire corpus"}
+
+    rows = collect_corpus_readiness(
+        corpus_dir,
+        config=config,
+        doc_ids=batch_scope.get("doc_ids") if batch_scope.get("selected") else None,
+    )
     if not rows:
-        st.info(
-            "No documents found in local corpus. "
-            "Run `python -m runner ingest <url>` to add one."
-        )
+        if batch_scope.get("selected"):
+            st.info("The selected workflow has no linked local document directories yet.")
+        else:
+            st.info(
+                "No documents found in local corpus. "
+                "Run `python -m runner ingest <url>` to add one."
+            )
         return
+
+    if batch_scope.get("selected"):
+        st.subheader(f"Document readiness · {batch_scope.get('label')}")
+        st.caption(
+            "The groups below are the existing Review Inbox, limited to the exact linked "
+            "documents in this frozen workflow."
+        )
 
     # ── Summary counts ────────────────────────────────────────────────────
     _counts = {
@@ -936,7 +969,10 @@ def page_review_inbox():
         st.write("")  # spacer between groups
 
     st.divider()
-    st.caption(f"Scanned {len(rows)} document(s) from `{corpus_dir}`")
+    scope_label = str(batch_scope.get("label") or "Entire corpus")
+    st.caption(
+        f"Scanned {len(rows)} document(s) from `{corpus_dir}` · scope: `{scope_label}`"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -2208,8 +2244,9 @@ def _longform_candidate_to_enrichment_item(
 
     definition, quote = _longform_candidate_primary_text(candidate)
     now = datetime.now(timezone.utc).isoformat()
+    source_label = str(candidate.get("source_kind") or "longform candidate")
     base_note = (
-        f"Created from longform candidate `{candidate.get('candidate_id') or label}`. "
+        f"Created from {source_label} `{candidate.get('candidate_id') or label}`. "
         "Model-proposed; researcher must review before treating as registry evidence."
     )
     confidence = candidate.get("confidence")
@@ -2223,7 +2260,7 @@ def _longform_candidate_to_enrichment_item(
         "source_longform_candidate_id": candidate.get("candidate_id") or "",
         "source_longform_family": candidate.get("family") or "",
         "source_longform_count": int(candidate.get("count") or 0),
-        "converted_from_family": "longform_candidates",
+        "converted_from_family": candidate.get("converted_from_family") or "longform_candidates",
         "converted_at": now,
     }
     if confidence is not None:
@@ -3946,6 +3983,7 @@ def _workbench_resume(config, doc_id: str, stage: str) -> None:
         "analysis":       analysis_result,
         "analysis_json":  analysis_json,
         "analysis_valid": analysis_valid,
+        "analysis_audit": None,
         "uploaded":       False,
     })
     loaded = []
@@ -3985,6 +4023,7 @@ def _blank_ingest_state() -> dict:
         "analysis": None,
         "analysis_json": "",
         "analysis_valid": False,
+        "analysis_audit": None,
         "enrichment": None,
         "uploaded": False,
     }
@@ -4045,6 +4084,7 @@ def _workbench_intake(config, source: str, tier: str, batch: str, source_url: st
         "analysis": None,
         "analysis_json": "",
         "analysis_valid": False,
+        "analysis_audit": None,
         "enrichment": None,
         "uploaded": False,
     })
@@ -4170,6 +4210,7 @@ def _render_pre_analysis_transcript_upload(config) -> None:
                     "analysis": None,
                     "analysis_json": "",
                     "analysis_valid": False,
+                    "analysis_audit": None,
                     "enrichment": None,
                     "uploaded": False,
                 })
@@ -4206,6 +4247,7 @@ def _workbench_preprocess(config, max_chars: int | None) -> None:
         "analysis": None,
         "analysis_json": "",
         "analysis_valid": False,
+        "analysis_audit": None,
         "enrichment": None,
         "uploaded": False,
     })
@@ -4219,12 +4261,18 @@ def _workbench_analyze(config, llm: str) -> None:
     preprocess_result = st.session_state.ingest["preprocess"]
     embedding_vector: list = []
     comparison_result = None
+    analysis_audit: dict = {}
 
     # ── Step 1: LLM Analysis ────────────────────────────────────────────────
     st.markdown("**Step 1 of 2 — LLM Analysis**")
     with st.spinner(f"Sending document to `{llm}` for classification…"):
         try:
-            result = analyze.run(preprocess_result, llm=llm, config=config)
+            result = analyze.run(
+                preprocess_result,
+                llm=llm,
+                config=config,
+                _audit=analysis_audit,
+            )
         except Exception as exc:
             err_msg = str(exc)
             st.error(f"Analysis failed: {err_msg}")
@@ -4284,6 +4332,7 @@ def _workbench_analyze(config, llm: str) -> None:
         "analysis": result,
         "analysis_json": result.model_dump_json(indent=2),
         "analysis_valid": True,
+        "analysis_audit": analysis_audit,
         "enrichment": None,
         "uploaded": False,
     })
@@ -4415,12 +4464,32 @@ def _render_analysis_editor(config, llm: str) -> None:
                 pass
 
     c1, c2, c3, c4 = st.columns(4)
-    testimony_blocked = _testimony_requires_review(
+    testimony_review_pending = _testimony_requires_review(
         st.session_state.ingest["intake"].doc_id,
         st.session_state.ingest.get("analysis"),
         config,
     )
+    testimony_blocked = _testimony_archive_upload_blocked(
+        st.session_state.ingest["intake"].doc_id,
+        st.session_state.ingest.get("analysis"),
+        config,
+    )
+    testimony_disagreement = _testimony_consent_disagreement(
+        st.session_state.ingest["intake"].doc_id,
+        st.session_state.ingest.get("analysis"),
+        config,
+    )
+    if testimony_disagreement:
+        st.warning(
+            "`intake.json` and `testimony_review.json` record different testimony consent states. "
+            "The safer state is being enforced; reconcile the records in Testimony Review."
+        )
     if testimony_blocked:
+        st.error(
+            "Remote archive upload is blocked because testimony consent is refused or withdrawn. "
+            "Review suppression/redaction requirements before any later remote action."
+        )
+    elif testimony_review_pending:
         _analysis_obj = st.session_state.ingest.get("analysis")
         _doc_type = getattr(_analysis_obj, "type", "") or ""
         _type_note = (
@@ -4428,10 +4497,10 @@ def _render_analysis_editor(config, llm: str) -> None:
             if _doc_type in upload._CONSENT_GATED_TYPES
             else ""
         )
-        st.warning(
-            "Upload is blocked — consent review required before this document can be uploaded."
+        st.info(
+            "Archive upload is allowed as an **unverified Sanity record**, while testimony review remains pending."
             + _type_note
-            + " Complete Testimony Review and confirm consent status."
+            + " Public display, excerpts, verification, and publication remain blocked until Testimony Review is completed."
         )
     with c1:
         if st.button("Validate JSON"):
@@ -4458,6 +4527,7 @@ def _render_analysis_editor(config, llm: str) -> None:
                     final,
                     config=config,
                     llm_used=llm,
+                    _audit=st.session_state.ingest.get("analysis_audit"),
                 )
                 st.success(f"Saved locally: {saved}")
                 if (saved / "media_metadata.json").exists():
@@ -4471,7 +4541,12 @@ def _render_analysis_editor(config, llm: str) -> None:
                 with st.expander("Copy error details"):
                     st.code(err_msg)
     with c3:
-        if st.button("Upload", disabled=(not st.session_state.ingest.get("analysis_valid") or testimony_blocked)):
+        upload_label = (
+            "Upload privately to Sanity (unverified)"
+            if testimony_review_pending and not testimony_blocked
+            else "Upload"
+        )
+        if st.button(upload_label, disabled=(not st.session_state.ingest.get("analysis_valid") or testimony_blocked)):
             try:
                 final = AnalysisResult.model_validate(json.loads(st.session_state.ingest["analysis_json"]))
                 upload.run(
@@ -4481,6 +4556,7 @@ def _render_analysis_editor(config, llm: str) -> None:
                     final,
                     config=config,
                     llm_used=llm,
+                    _audit=st.session_state.ingest.get("analysis_audit"),
                 )
                 st.session_state.ingest["uploaded"] = True
                 if st.session_state.ingest.get("embedding"):
@@ -4894,7 +4970,12 @@ def _render_second_opinion_comparison(config, doc_id: str, comparison: dict) -> 
                 st.info(f"Decision note: {comparison['researcher_note']}")
             return
 
-        note = st.text_input("Decision note", key=f"second_note_{filename}")
+        note = st.text_area(
+            "Decision note",
+            key=f"second_note_{filename}",
+            height=90,
+            help="Researcher-authored reasoning. Do not paste sensitive raw testimony unless external writing-assistance use is permitted.",
+        )
         d1, d2 = st.columns(2)
         with d1:
             if st.button("Keep original", key=f"keep_original_{filename}"):
@@ -5226,7 +5307,7 @@ def page_document_list():
             key="doc_set_selected",
         )
         set_name = st.text_input("Set name", key="doc_set_name", placeholder="e.g. youtube_sample_01")
-        set_desc = st.text_input("Description", key="doc_set_desc")
+        set_desc = st.text_area("Description", key="doc_set_desc", height=90)
         if st.button("Save selected as set", key="doc_set_save"):
             if not set_name.strip():
                 st.error("Give the set a name first.")
@@ -5344,9 +5425,31 @@ def _app_list_document_sets(corpus_dir: Path) -> list[dict]:
     rows = []
     for path in sorted(_app_document_sets_dir(corpus_dir).glob("*.json")):
         try:
-            rows.append(json.loads(path.read_text(encoding="utf-8")))
+            payload = json.loads(path.read_text(encoding="utf-8"))
         except Exception:
             continue
+        if not isinstance(payload, dict):
+            continue
+        doc_ids = payload.get("docIds")
+        if not isinstance(doc_ids, list):
+            doc_ids = payload.get("doc_ids")
+        if not isinstance(doc_ids, list):
+            # Internal/derived JSON can never become a document set merely by
+            # landing in this folder.  In particular, testimony_candidates.json
+            # has no set name or document-id list and previously crashed the UI.
+            continue
+        name = str(payload.get("name") or payload.get("set_name") or path.stem).strip()
+        if not name:
+            continue
+        rows.append({
+            **payload,
+            "name": _app_safe_set_name(name),
+            "docIds": list(dict.fromkeys(
+                str(doc_id).removeprefix("doc-")
+                for doc_id in doc_ids
+                if str(doc_id).strip()
+            )),
+        })
     return rows
 
 
@@ -5397,7 +5500,9 @@ def _load_local_docs(corpus_dir: Path, *, check_supabase: bool = False) -> list[
             offload_import = {}
         legal_review = legal_review_record(doc_dir)
         analysis_review = analysis_review_record(doc_dir)
-        has_testimony_review = (doc_dir / "testimony_review.json").exists()
+        testimony_review = _read_json_file(doc_dir / "testimony_review.json", {})
+        has_testimony_review = bool(testimony_review)
+        testimony_state = _document_testimony_state(data, intake, testimony_review)
         latest_annotation, latest_review = _latest_annotation_dates(doc_dir)
         pending_second_opinions = _pending_second_opinion_summary(doc_dir)
         annotation_profiles = _annotation_profile_summary(doc_dir)
@@ -5427,6 +5532,7 @@ def _load_local_docs(corpus_dir: Path, *, check_supabase: bool = False) -> list[
             has_testimony_review=has_testimony_review,
             legal_review=legal_review,
             analysis_review=analysis_review,
+            testimony_state=testimony_state,
         )
 
         docs.append({
@@ -5469,6 +5575,11 @@ def _load_local_docs(corpus_dir: Path, *, check_supabase: bool = False) -> list[
             "has_preprocess": has_preprocess,
             "has_extracted": has_extracted,
             "has_testimony_review": has_testimony_review,
+            "testimony_review_pending": testimony_state["state"] in {
+                "pending", "conflict_pending", "confirmed_publication_hold"
+            },
+            "testimony_upload_blocked": testimony_state["state"] == "blocked",
+            "testimony_state": testimony_state["state"],
             "has_legal_review": bool(legal_review),
             "has_analysis_review": bool(analysis_review),
             "needs_action_reasons": workflow["reasons"],
@@ -5495,6 +5606,7 @@ def _document_workflow_summary(
     has_testimony_review: bool,
     legal_review: dict,
     analysis_review: dict,
+    testimony_state: dict | None = None,
 ) -> dict:
     """Return Document List workflow signals for one local corpus document.
 
@@ -5529,9 +5641,23 @@ def _document_workflow_summary(
     if missing:
         labels.append("Missing " + ", ".join(missing))
 
-    if testimony_override_available(analysis) and not has_testimony_review:
+    testimony_state = testimony_state or (
+        {"state": "pending", "disagreement": False}
+        if testimony_override_available(analysis) and not has_testimony_review
+        else {"state": "not_required", "disagreement": False}
+    )
+    if testimony_state["state"] == "blocked":
+        reasons.append("testimony_upload_blocked")
+        labels.append("Testimony consent refused/withdrawn (archive upload blocked)")
+    elif testimony_state["state"] == "conflict_pending":
         reasons.append("testimony_review")
-        labels.append("Testimony review")
+        labels.append("Testimony consent records disagree (publication hold)")
+    elif testimony_state["state"] == "pending":
+        reasons.append("testimony_review")
+        labels.append("Testimony review pending (publication hold)")
+    elif testimony_state["state"] == "confirmed_publication_hold":
+        reasons.append("testimony_publication_hold")
+        labels.append("Consent confirmed; public display held")
     if legal_review_available(analysis) and not legal_review:
         reasons.append("legal_review")
         labels.append("Legal review")
@@ -5546,7 +5672,7 @@ def _document_workflow_summary(
         reasons.append("supabase_missing")
         labels.append("Supabase missing")
 
-    hard_review_reasons = {"testimony_review", "legal_review", "analysis_review"}
+    hard_review_reasons = {"legal_review", "analysis_review", "testimony_upload_blocked"}
     missing_blockers = {r for r in reasons if r.startswith("missing_")}
     ready_to_upload = (
         not uploaded
@@ -5774,12 +5900,815 @@ def _batch_run_command(
     return command
 
 
+def _recent_batch_ledgers(config, limit: int = 20) -> list[Path]:
+    root = Path(config.exports_dir) / "batch_ledgers"
+    if not root.exists():
+        return []
+    return sorted(
+        root.glob("*_ledger.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )[:limit]
+
+
+def _compile_batch_outcome_action(config, ledger_path: Path) -> dict:
+    from runner.pipeline.batch_outcome import compile_batch_outcome
+
+    return compile_batch_outcome(
+        ledger_path,
+        Path(config.corpus_dir),
+        Path(config.exports_dir) / "batch_outcomes",
+        policy_path=_project_root / "runner" / "data" / "batch_outcome_policy.json",
+    )
+
+
+def _generate_batch_review_pack_action(config, outcome_path: Path) -> dict:
+    from runner.pipeline.review_pack import generate_review_pack
+
+    return generate_review_pack(
+        Path(config.corpus_dir),
+        Path(config.exports_dir) / "review_packs",
+        outcome_path=Path(outcome_path),
+    )
+
+
+def _write_batch_tag_projection_sidecars_action(config, outcome: dict) -> dict:
+    from runner.pipeline.provisional_memory import build_tag_projections
+
+    memory_meta = outcome.get("provisional_memory") or {}
+    memory_path = Path(str(memory_meta.get("path") or ""))
+    if not memory_path.is_file():
+        raise FileNotFoundError("The provisional-memory snapshot is missing; compile the batch again.")
+    memory = json.loads(memory_path.read_text(encoding="utf-8"))
+    doc_ids = {
+        str(item.get("doc_id") or "") for item in outcome.get("items") or []
+        if isinstance(item, dict) and item.get("doc_id")
+    }
+    return build_tag_projections(
+        Path(config.corpus_dir),
+        memory,
+        Path(config.exports_dir) / "tag_projections" / str(outcome.get("batch_id") or "batch") / "latest_tag_projections.json",
+        doc_ids=doc_ids,
+        write_doc_sidecars=True,
+    )
+
+
+def _plan_workflow_batch_action(
+    config, db, *, batch_group: str, limit: int, purpose: str, questions: list[str],
+    selected_item_ids: list[str] | None = None,
+    model_policy: str = "triage_recommended",
+    remote_write_policy: str = "none",
+    disclosure_mode: str = "internal_research",
+    audit_sample_rule: str = "exceptions_and_researcher_selected",
+) -> dict:
+    from runner.pipeline.workflow_batch import WorkflowPolicy, plan_workflow_batch, write_workflow_batch
+    from runner.pipeline.specialist_dispatch import build_dispatch_plan, write_dispatch_plan
+
+    workflow_id = datetime.now(timezone.utc).strftime("workflow-%Y%m%d-%H%M%S")
+    manifest = plan_workflow_batch(
+        db,
+        workflow_batch_id=workflow_id,
+        selected_item_ids=selected_item_ids,
+        batch_group=batch_group,
+        limit=limit,
+        policy=WorkflowPolicy(
+            research_purpose=purpose,
+            research_questions=questions,
+            model_policy=model_policy,
+            remote_write_policy=remote_write_policy,
+            disclosure_mode=disclosure_mode,
+            audit_sample_rule=audit_sample_rule,
+        ),
+    )
+    manifest_path = write_workflow_batch(
+        manifest, Path(config.exports_dir) / "workflow_batches"
+    )
+    dispatch = build_dispatch_plan(manifest, Path(config.corpus_dir))
+    dispatch_path = write_dispatch_plan(
+        dispatch,
+        Path(config.exports_dir) / "specialist_dispatch",
+        workflow_manifest=manifest,
+        corpus_dir=Path(config.corpus_dir),
+    )
+    return {
+        "manifest": manifest,
+        "manifest_path": manifest_path,
+        "dispatch": dispatch,
+        "dispatch_path": dispatch_path,
+    }
+
+
+def _workflow_ui_input_fingerprint(
+    *, batch_group: str, selected_item_ids: list[str] | None, limit: int,
+    purpose: str, questions: list[str], model_policy: str,
+    disclosure_mode: str, audit_sample_rule: str,
+) -> str:
+    payload = {
+        "batch_group": batch_group if not selected_item_ids else "",
+        "selected_item_ids": list(dict.fromkeys(selected_item_ids or [])),
+        "limit": int(limit),
+        "purpose": purpose,
+        "questions": questions,
+        "model_policy": model_policy,
+        "remote_write_policy": "none",
+        "disclosure_mode": disclosure_mode,
+        "audit_sample_rule": audit_sample_rule,
+    }
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+
+
+def _plan_workflow_attempts_action(
+    config,
+    *,
+    workflow: dict,
+    dispatch: dict,
+    selected_item_ids: list[str] | None = None,
+    selected_stages: list[str] | None = None,
+) -> dict:
+    """Create local planner evidence and an append-only ledger; execute nothing."""
+    from runner.pipeline.workflow_attestation import build_workflow_attestation, write_workflow_attestation
+    from runner.pipeline.workflow_attempts import (
+        build_attempt_plan,
+        persist_attempt_plan,
+        reconcile_attempt_plan,
+        write_attempt_plan,
+    )
+
+    normalized_stages = list(dict.fromkeys(selected_stages or []))
+    if not normalized_stages:
+        raise ValueError("The researcher-facing planner requires at least one explicit stage")
+    corpus_dir = Path(config.corpus_dir)
+    attestation_root = Path(config.exports_dir) / "workflow_attestations"
+    attempts_root = Path(config.exports_dir) / "workflow_attempts"
+    ledger_path = attempts_root / "attempts.sqlite3"
+    hash_cache = {}
+    attestation = build_workflow_attestation(workflow, dispatch, corpus_dir)
+    attestation_path = write_workflow_attestation(
+        attestation,
+        attestation_root,
+        workflow=workflow,
+        dispatch=dispatch,
+        corpus_dir=corpus_dir,
+    )
+    selected_ids = list(dict.fromkeys(selected_item_ids or []))
+    plan = build_attempt_plan(
+        workflow,
+        dispatch,
+        attestation,
+        corpus_dir,
+        mode="run_selected" if selected_ids else "run_missing",
+        selected_item_ids=selected_ids,
+        selected_stages=normalized_stages,
+        hash_cache=hash_cache,
+    )
+    plan_path = write_attempt_plan(
+        plan,
+        attempts_root,
+        workflow=workflow,
+        dispatch=dispatch,
+        attestation=attestation,
+        corpus_dir=corpus_dir,
+        hash_cache=hash_cache,
+    )
+    persistence = persist_attempt_plan(
+        plan,
+        ledger_path,
+        workflow=workflow,
+        dispatch=dispatch,
+        attestation=attestation,
+        corpus_dir=corpus_dir,
+        hash_cache=hash_cache,
+    )
+    reconciliation = reconcile_attempt_plan(
+        plan,
+        ledger_path,
+        workflow=workflow,
+        dispatch=dispatch,
+        attestation=attestation,
+        corpus_dir=corpus_dir,
+        hash_cache=hash_cache,
+    )
+    if not reconciliation["ok"]:
+        raise ValueError("The append-only attempt ledger did not reconcile with the new plan")
+    return {
+        "attestation": attestation,
+        "attestation_path": attestation_path,
+        "plan": plan,
+        "plan_path": plan_path,
+        "ledger_path": ledger_path,
+        "persistence": persistence,
+        "reconciliation": reconciliation,
+    }
+
+
+def _render_workflow_batch_panel(
+    config, db, *, batch_group: str, limit: int, key_prefix: str,
+    selected_item_ids: list[str] | None = None,
+) -> None:
+    from runner.pipeline.workflow_templates import load_templates, save_template
+
+    with st.expander("Workflow batch: select before routing", expanded=False):
+        st.caption(
+            "Plans at most 15 Source Queue rows including specialist-flagged sources. "
+            "It reuses existing triage, executes no model or pipeline stage, and makes no remote writes."
+        )
+        templates_path = Path(config.exports_dir) / "workflow_templates" / "templates.json"
+        templates = load_templates(templates_path)
+        template_by_name = {row["name"]: row for row in templates}
+        template_name = st.selectbox(
+            "Reusable research template",
+            list(template_by_name),
+            key=f"{key_prefix}_workflow_template",
+        )
+        if st.button("Apply template", key=f"{key_prefix}_workflow_apply_template"):
+            template = template_by_name[template_name]
+            st.session_state[f"{key_prefix}_workflow_purpose"] = template["research_purpose"]
+            st.session_state[f"{key_prefix}_workflow_questions"] = "\n".join(template["research_questions"])
+            st.session_state[f"{key_prefix}_workflow_model_policy"] = template["model_policy"]
+            st.session_state[f"{key_prefix}_workflow_disclosure"] = template["disclosure_mode"]
+            st.session_state[f"{key_prefix}_workflow_audit_rule"] = template["audit_sample_rule"]
+            st.rerun()
+
+        purpose = st.text_area(
+            "Research purpose", key=f"{key_prefix}_workflow_purpose",
+            placeholder="Why are these sources being processed together?", height=90,
+        )
+        questions_text = st.text_area(
+            "Batch research questions (one per line)",
+            key=f"{key_prefix}_workflow_questions", height=90,
+        )
+        policy_cols = st.columns(3)
+        model_policy = policy_cols[0].selectbox(
+            "Model policy", ["triage_recommended", "local_preferred", "researcher_selected"],
+            key=f"{key_prefix}_workflow_model_policy",
+        )
+        disclosure_mode = policy_cols[1].selectbox(
+            "Disclosure", ["internal_research", "external_safe"],
+            key=f"{key_prefix}_workflow_disclosure",
+        )
+        audit_key = f"{key_prefix}_workflow_audit_rule"
+        st.session_state.setdefault(audit_key, "exceptions_and_researcher_selected")
+        audit_sample_rule = policy_cols[2].text_input("Audit sample rule", key=audit_key)
+        save_cols = st.columns([2, 1])
+        new_template_name = save_cols[0].text_input(
+            "Save current settings as", key=f"{key_prefix}_workflow_new_template_name",
+            placeholder="My recurring batch question",
+        )
+        if save_cols[1].button(
+            "Save template", key=f"{key_prefix}_workflow_save_template",
+            disabled=not bool(new_template_name.strip()),
+        ):
+            try:
+                save_template(templates_path, {
+                    "name": new_template_name,
+                    "research_purpose": purpose,
+                    "research_questions": [line.strip() for line in questions_text.splitlines() if line.strip()],
+                    "model_policy": model_policy,
+                    "remote_write_policy": "none",
+                    "disclosure_mode": disclosure_mode,
+                    "audit_sample_rule": audit_sample_rule,
+                })
+            except Exception as exc:
+                st.error(f"Template was not saved: {exc}")
+            else:
+                st.success(f"Saved reusable template `{new_template_name.strip()}`.")
+
+        explicit_ids = list(dict.fromkeys(selected_item_ids or []))
+        selection_options = ["Checked rows", "Saved batch group"] if explicit_ids else ["Saved batch group"]
+        selection_mode = st.radio(
+            "Workflow selection", selection_options, horizontal=True,
+            key=f"{key_prefix}_workflow_selection_mode",
+        )
+        use_explicit = selection_mode == "Checked rows"
+        if use_explicit:
+            st.caption(
+                f"Using {len(explicit_ids)} checked row(s), including specialist-held rows. "
+                "This does not rewrite their saved batch group."
+            )
+        if len(explicit_ids) > 15:
+            st.error("A workflow batch can contain at most 15 checked rows. Clear some row selections first.")
+        plan_disabled = (
+            len(explicit_ids) > 15
+            or (use_explicit and not explicit_ids)
+            or (not use_explicit and not bool(batch_group))
+        )
+        questions = [line.strip() for line in questions_text.splitlines() if line.strip()]
+        effective_ids = explicit_ids if use_explicit else None
+        effective_limit = len(explicit_ids) if use_explicit else limit
+        ui_input_fingerprint = _workflow_ui_input_fingerprint(
+            batch_group=batch_group,
+            selected_item_ids=effective_ids,
+            limit=effective_limit,
+            purpose=purpose,
+            questions=questions,
+            model_policy=model_policy,
+            disclosure_mode=disclosure_mode,
+            audit_sample_rule=audit_sample_rule,
+        )
+        if st.button(
+            "Plan workflow routes",
+            key=f"{key_prefix}_workflow_plan",
+            disabled=plan_disabled,
+        ):
+            try:
+                result = _plan_workflow_batch_action(
+                    config, db, batch_group=batch_group,
+                    limit=effective_limit,
+                    purpose=purpose,
+                    questions=questions,
+                    selected_item_ids=effective_ids,
+                    model_policy=model_policy,
+                    remote_write_policy="none",
+                    disclosure_mode=disclosure_mode,
+                    audit_sample_rule=audit_sample_rule,
+                )
+            except Exception as exc:
+                st.error(f"Workflow planning failed: {exc}")
+            else:
+                result["ui_input_fingerprint"] = ui_input_fingerprint
+                st.session_state[f"{key_prefix}_workflow_result"] = result
+        result = st.session_state.get(f"{key_prefix}_workflow_result")
+        if not result:
+            return
+        if result.get("ui_input_fingerprint") != ui_input_fingerprint:
+            st.info("The selection or research policy changed. Plan workflow routes again to refresh this result.")
+            return
+        manifest = result["manifest"]
+        summary = manifest["summary"]
+        st.success(
+            f"Selected {summary['selected']} source(s): {summary['ordinary']} ordinary, "
+            f"{summary['attended_base']} attended, {summary['technical_hold']} technical hold(s)."
+        )
+        st.dataframe(
+            [{
+                "Queue item": item["queue_item_id"],
+                "Title/source": item["title"] or item["url"],
+                "Base route": item["base_route"],
+                "Specialists": ", ".join(item["specialist_routes"]) or "—",
+                "Prerequisites": "; ".join(item["prerequisites"]) or "—",
+                "Next action": item["next_action"],
+            } for item in manifest["items"]],
+            hide_index=True, use_container_width=True,
+        )
+        dispatch_rows = [
+            {
+                "Queue item": row["queue_item_id"],
+                "Document": row["doc_id"] or "not ingested",
+                "Base status": row["base_status"],
+                "Specialist status": ", ".join(
+                    f"{plan['route']}:{plan['status']}" for plan in row["specialists"]
+                ) or "not applicable",
+                "Next action": row["next_action"],
+            }
+            for row in result["dispatch"]["items"]
+        ]
+        st.markdown("**Dry-run specialist dispatch**")
+        st.dataframe(dispatch_rows, hide_index=True, use_container_width=True)
+        st.caption(f"Workflow plan: `{result['manifest_path']}`")
+        st.caption(f"Dispatch plan: `{result['dispatch_path']}`")
+        st.warning("This is planning only. Existing specialist commands were not executed.")
+
+        st.markdown("**Append-only attempt planner**")
+        st.caption(
+            "Optionally record which existing local stages are runnable, satisfied, held, or human-owned. "
+            "This creates local evidence only. A later stage stays held until its prerequisite finishes "
+            "and you create a fresh plan."
+        )
+        item_labels = {
+            row["queue_item_id"]: row["title"] or row["url"] or row["queue_item_id"]
+            for row in manifest["items"]
+        }
+        attempt_item_ids = st.multiselect(
+            "Limit attempt plan to workflow items (empty means all)",
+            list(item_labels),
+            format_func=lambda value: item_labels[value],
+            key=f"{key_prefix}_attempt_item_ids",
+        )
+        specialist_routes = sorted({
+            str(value["route"])
+            for row in result["dispatch"]["items"]
+            for value in row.get("specialists") or []
+        })
+        stage_options = ["local_base", *[f"specialist:{route}" for route in specialist_routes]]
+        safe_stage_defaults = [
+            value for value in stage_options if value != "specialist:longform"
+        ]
+        attempt_stages = st.multiselect(
+            "Stages to record (longform is opt-in)",
+            stage_options,
+            default=safe_stage_defaults,
+            key=f"{key_prefix}_attempt_stages",
+        )
+        attempt_ui_key = hashlib.sha256(json.dumps({
+            "workflow_fingerprint": manifest["evidence_fingerprint"],
+            "dispatch_fingerprint": result["dispatch"]["evidence_fingerprint"],
+            "selected_item_ids": attempt_item_ids,
+            "selected_stages": attempt_stages,
+        }, sort_keys=True).encode("utf-8")).hexdigest()
+        longform_selected = "specialist:longform" in attempt_stages
+        longform_confirmed = False
+        if longform_selected:
+            st.caption(
+                "Longform planning may hash a large local source to bind the proposal. "
+                "The action shows a progress spinner and never copies the source."
+            )
+            longform_confirmed = st.checkbox(
+                "Include longform source hashing in this planner action",
+                key=f"{key_prefix}_attempt_longform_confirm",
+            )
+        elif not attempt_stages:
+            st.info("Select at least one stage to create a planner ledger.")
+        if st.button(
+            "Create planner-only attempt ledger",
+            key=f"{key_prefix}_attempt_plan",
+            disabled=not attempt_stages or (longform_selected and not longform_confirmed),
+        ):
+            try:
+                with st.spinner("Validating current evidence and hashing only declared stage inputs…"):
+                    attempt_result = _plan_workflow_attempts_action(
+                        config,
+                        workflow=manifest,
+                        dispatch=result["dispatch"],
+                        selected_item_ids=attempt_item_ids,
+                        selected_stages=attempt_stages,
+                    )
+            except Exception as exc:
+                st.error(f"Attempt planning failed closed: {exc}")
+            else:
+                attempt_result["workflow_fingerprint"] = manifest["evidence_fingerprint"]
+                attempt_result["dispatch_fingerprint"] = result["dispatch"]["evidence_fingerprint"]
+                attempt_result["ui_request_key"] = attempt_ui_key
+                st.session_state[f"{key_prefix}_attempt_result"] = attempt_result
+
+        attempt_result = st.session_state.get(f"{key_prefix}_attempt_result")
+        if not attempt_result:
+            return
+        if (
+            attempt_result.get("workflow_fingerprint") != manifest["evidence_fingerprint"]
+            or attempt_result.get("dispatch_fingerprint") != result["dispatch"]["evidence_fingerprint"]
+            or attempt_result.get("ui_request_key") != attempt_ui_key
+        ):
+            st.info("The workflow evidence or attempt selection changed. Create a fresh attempt plan before using this ledger view.")
+            return
+        attempt_plan = attempt_result["plan"]
+        attempt_summary = attempt_plan["summary"]
+        try:
+            from runner.pipeline.workflow_attempts import list_attempts
+            ledger_rows = list_attempts(Path(attempt_result["ledger_path"]), limit=1000)
+            execution_by_attempt = {
+                str(row["attempt_id"]): row for row in ledger_rows
+            }
+        except Exception as exc:
+            execution_by_attempt = {}
+            st.warning(f"Execution-state projection could not be verified: {exc}")
+        st.success(
+            f"Recorded {attempt_summary['rows']} planner row(s): "
+            f"{attempt_summary['planned_not_authorized']} proposed, "
+            f"{attempt_summary['held_prerequisite']} held, "
+            f"{attempt_summary['human_required']} human-owned."
+        )
+        st.dataframe(
+            [{
+                "Item": row["queue_item_id"],
+                "Order": f"{row['item_ordinal']}.{row['route_sequence']}",
+                "Stage": row["stage"],
+                "Planner state": row["disposition"],
+                "Execution state": execution_by_attempt.get(
+                    row["attempt_id"], {},
+                ).get("execution_state", "unavailable"),
+                "Terminal outcome": execution_by_attempt.get(
+                    row["attempt_id"], {},
+                ).get("terminal_outcome", "") or "—",
+                "Input evidence": row["stage_input_status"],
+                "Depends on": ", ".join(value[:20] for value in row["depends_on_attempt_ids"]) or "—",
+                "Inert proposal": row["command"][3] if row["command"] else "—",
+            } for row in attempt_plan["rows"]],
+            hide_index=True,
+            use_container_width=True,
+        )
+        testimony_rows = [
+            row for row in attempt_plan["rows"]
+            if row.get("stage") == "testimony-candidates-build"
+        ]
+        if testimony_rows:
+            canary_labels = {
+                row["attempt_id"]: f"{row['queue_item_id']} · {row['attempt_id']}"
+                for row in testimony_rows
+            }
+            selected_attempt_id = st.selectbox(
+                "Inspect planned testimony canary",
+                list(canary_labels),
+                format_func=lambda value: canary_labels[value],
+                key=f"{key_prefix}_planned_canary_attempt",
+            )
+            projection = execution_by_attempt.get(selected_attempt_id, {})
+            selected_row = next(
+                row for row in testimony_rows if row["attempt_id"] == selected_attempt_id
+            )
+            st.dataframe(
+                _workflow_canary_step_rows({**selected_row, **projection}),
+                hide_index=True,
+                use_container_width=True,
+            )
+            preflight_ready = _workflow_canary_execution_eligible({
+                **selected_row, **projection,
+            })
+            if st.button(
+                "Validate selected testimony canary (read only)",
+                key=f"{key_prefix}_planned_canary_preflight",
+                disabled=not preflight_ready,
+                help="Checks bound files, fingerprints, output target, and ledger without granting or running anything.",
+            ):
+                try:
+                    from runner.pipeline.workflow_execution import preflight_selected_testimony_attempt
+                    preflight = preflight_selected_testimony_attempt(
+                        attempt_plan,
+                        selected_attempt_id,
+                        Path(attempt_result["ledger_path"]),
+                        workflow=manifest,
+                        dispatch=result["dispatch"],
+                        attestation=attempt_result["attestation"],
+                        corpus_dir=Path(config.corpus_dir),
+                        evidence_root=Path(config.exports_dir) / "workflow_executions",
+                    )
+                except Exception as exc:
+                    st.error(f"Read-only canary preflight refused: {exc}")
+                else:
+                    st.session_state[f"{key_prefix}_planned_canary_preflight_result"] = {
+                        "attempt_id": selected_attempt_id,
+                        **preflight,
+                    }
+            preflight_result = st.session_state.get(
+                f"{key_prefix}_planned_canary_preflight_result", {}
+            )
+            if preflight_result.get("attempt_id") == selected_attempt_id:
+                st.success(
+                    "Read-only preflight passed against the evidence at check time. Execution "
+                    "rechecks every current input. No grant, model call, sidecar write, upload, "
+                    "or publication occurred."
+                )
+            command_base = [
+                sys.executable, "-m", "runner", "workflow-testimony-canary",
+                str(attempt_result["plan_path"]),
+                str(result["manifest_path"]),
+                str(result["dispatch_path"]),
+                str(attempt_result["attestation_path"]),
+                "--attempt-id", selected_attempt_id,
+                "--ledger", str(attempt_result["ledger_path"]),
+                "--evidence-root", str(Path(config.exports_dir) / "workflow_executions"),
+            ]
+            with st.expander("Canary commands and safety boundary", expanded=False):
+                if preflight_ready:
+                    st.caption("Read-only preflight (safe next check):")
+                    st.code(shlex.join(command_base), language="bash")
+                    st.caption("One-use deterministic execution (only after inspecting the exact attempt):")
+                    st.code(
+                        shlex.join([*command_base, "--execute", "--confirm-attempt", selected_attempt_id]),
+                        language="bash",
+                    )
+                else:
+                    st.warning(
+                        "No execution command is shown: this attempt is held, untrusted, already granted, "
+                        "or terminal. Create a fresh valid proposal instead of rerunning it."
+                    )
+                if projection.get("recovery_check_required"):
+                    st.caption(
+                        "Nonterminal grant recovery — use only after confirming no execution process "
+                        "is active; this does not rerun the adapter:"
+                    )
+                    st.code(shlex.join([
+                        sys.executable, "-m", "runner", "workflow-testimony-recover",
+                        str(attempt_result["plan_path"]), "--attempt-id", selected_attempt_id,
+                        "--confirm-attempt", selected_attempt_id,
+                        "--ledger", str(attempt_result["ledger_path"]),
+                        "--evidence-root", str(Path(config.exports_dir) / "workflow_executions"),
+                    ]), language="bash")
+                if projection.get("terminal_recorded"):
+                    st.caption("Read-only execution-evidence verification:")
+                    st.code(shlex.join([
+                        sys.executable, "-m", "runner", "workflow-testimony-evidence-verify",
+                        str(attempt_result["plan_path"]), "--attempt-id", selected_attempt_id,
+                        "--ledger", str(attempt_result["ledger_path"]),
+                        "--evidence-root", str(Path(config.exports_dir) / "workflow_executions"),
+                    ]), language="bash")
+        st.caption(f"Attestation: `{attempt_result['attestation_path']}`")
+        st.caption(f"Attempt plan: `{attempt_result['plan_path']}`")
+        st.caption(f"Append-only ledger: `{attempt_result['ledger_path']}`")
+        st.warning(
+            "This Streamlit panel cannot execute a proposal. Planner rows remain non-authorizing; "
+            "the separate execution-state columns report any append-only canary events recorded elsewhere. "
+            "No model, import, upload, or publication action is available here."
+        )
+
+
+def _render_batch_outcome_panel(config, *, key_prefix: str) -> None:
+    ledgers = _recent_batch_ledgers(config)
+    with st.expander("Batch outcome and re-audit", expanded=False):
+        st.caption(
+            "Compile one deterministic exception list from a completed batch. "
+            "This reads local evidence only; it does not call a model, execute a route, or publish."
+        )
+        if not ledgers:
+            st.info("No batch ledgers exist yet. Run a rehearsal or live batch first.")
+            return
+        selected = st.selectbox(
+            "Batch ledger",
+            ledgers,
+            format_func=lambda path: path.name,
+            key=f"{key_prefix}_outcome_ledger",
+        )
+        if st.button("Compile / re-audit outcome", key=f"{key_prefix}_compile_outcome"):
+            try:
+                result = _compile_batch_outcome_action(config, selected)
+            except Exception as exc:
+                st.error(f"Outcome compilation failed: {exc}")
+            else:
+                st.session_state[f"{key_prefix}_batch_outcome"] = result
+
+        result = st.session_state.get(f"{key_prefix}_batch_outcome")
+        if not result:
+            return
+        outcome = result.get("outcome") or {}
+        if Path(str(outcome.get("ledger_path") or "")) != Path(selected).resolve():
+            st.info("The selected ledger has changed. Compile it before using the displayed outcome.")
+            return
+        if result.get("reused"):
+            st.info("Evidence and policy are unchanged; the existing audit snapshot was reused.")
+        else:
+            st.success("A new immutable batch audit snapshot was created.")
+        counts = (outcome.get("summary") or {}).get("outcome_counts") or {}
+        if counts:
+            st.dataframe(
+                [{"Outcome": name, "Documents": count} for name, count in sorted(counts.items())],
+                hide_index=True,
+                use_container_width=True,
+            )
+        summary = outcome.get("summary") or {}
+        review_counts = summary.get("review_lane_counts") or {}
+        specialist_counts = summary.get("specialist_route_counts") or {}
+        if review_counts:
+            st.markdown("**Research attention**")
+            st.dataframe(
+                [{"Lane": name, "Documents": count} for name, count in sorted(review_counts.items())],
+                hide_index=True, use_container_width=True,
+            )
+        if specialist_counts or summary.get("routed_holds"):
+            st.markdown("**Specialist routing**")
+            st.dataframe(
+                [
+                    {"Route": name, "Documents": count}
+                    for name, count in sorted(specialist_counts.items())
+                ] + ([{
+                    "Route": "triage-held before base processing",
+                    "Documents": int(summary.get("routed_holds") or 0),
+                }] if summary.get("routed_holds") else []),
+                hide_index=True, use_container_width=True,
+            )
+        stage_counts = summary.get("stage_status_counts") or {}
+        if stage_counts:
+            with st.expander("Processing stages", expanded=False):
+                st.dataframe(
+                    [
+                        {"Stage": stage_name, "Status": status, "Documents": count}
+                        for stage_name, values in sorted(stage_counts.items())
+                        for status, count in sorted(values.items())
+                    ],
+                    hide_index=True, use_container_width=True,
+                )
+        selected_groups = (outcome.get("review_plan") or {}).get("selected_groups") or []
+        deferred_groups = (outcome.get("review_plan") or {}).get("deferred_human_candidate_groups") or 0
+        if selected_groups:
+            with st.expander(f"Grouped human exceptions ({len(selected_groups)})", expanded=False):
+                st.dataframe(
+                    [{
+                        "Family": group.get("family_label"),
+                        "Concept": group.get("label"),
+                        "Documents": group.get("document_count"),
+                        "Evidence": group.get("evidence_count"),
+                        "Why": "; ".join(group.get("priority_reasons") or []),
+                    } for group in selected_groups],
+                    hide_index=True, use_container_width=True,
+                )
+                if deferred_groups:
+                    st.warning(f"{deferred_groups} additional human-candidate group(s) are deferred, not downgraded to AI-managed work.")
+        changes = (outcome.get("changes_from_previous") or {}).get("changed") or []
+        if changes:
+            st.warning(f"{len(changes)} document route(s) changed since the preceding audit.")
+            st.dataframe(changes, hide_index=True, use_container_width=True)
+        st.caption(f"Audit: `{result.get('outcome_path', '')}`")
+        st.caption(f"Readable report: `{result.get('markdown_path', '')}`")
+        memory_meta = outcome.get("provisional_memory") or {}
+        if memory_meta:
+            with st.expander("Provisional memory and normalized tag projection", expanded=False):
+                memory_summary = memory_meta.get("summary") or {}
+                m1, m2, m3 = st.columns(3)
+                m1.metric("Draft records", int(memory_summary.get("draft_records") or 0))
+                m2.metric("Recurring provisional", int(memory_summary.get("recurring_provisional") or 0))
+                m3.metric("Conflicted", int(memory_summary.get("conflicted_provisional") or 0))
+                st.caption(f"Memory snapshot: `{memory_meta.get('path', '')}`")
+                st.caption(f"Dry-run tag projection: `{(outcome.get('tag_projection') or {}).get('path', '')}`")
+                confirm_projection = st.checkbox(
+                    "I understand this writes only derived tag_projection.json sidecars; original Analysis and Enrichment remain unchanged.",
+                    key=f"{key_prefix}_confirm_tag_projection",
+                )
+                if st.button(
+                    "Write derived tag projections",
+                    key=f"{key_prefix}_write_tag_projections",
+                    disabled=not confirm_projection,
+                ):
+                    try:
+                        projection_result = _write_batch_tag_projection_sidecars_action(config, outcome)
+                    except Exception as exc:
+                        st.error(f"Tag projection write failed: {exc}")
+                    else:
+                        st.success(
+                            f"Wrote derived projections for {projection_result['projection']['document_count']} document(s)."
+                        )
+        privacy_mode = st.selectbox(
+            "Review Pack sharing mode",
+            ["private_local", "external_safe"],
+            format_func=lambda value: "Private local (full evidence)" if value == "private_local" else "External-safe (sensitive contents withheld)",
+            key=f"{key_prefix}_review_pack_privacy",
+        )
+        review_questions_text = st.text_area(
+            "Optional Review Pack questions (one per line)",
+            key=f"{key_prefix}_review_pack_questions",
+            height=90,
+        )
+        if st.button("Generate Codex Review Pack", key=f"{key_prefix}_generate_review_pack"):
+            try:
+                from runner.pipeline.review_pack import generate_review_pack
+                questions = [line.strip() for line in review_questions_text.splitlines() if line.strip()]
+                pack_result = generate_review_pack(
+                    Path(config.corpus_dir),
+                    Path(config.exports_dir) / "review_packs",
+                    outcome_path=Path(result.get("outcome_path", "")),
+                    review_questions=questions or None,
+                    privacy_mode=privacy_mode,
+                )
+            except Exception as exc:
+                st.error(f"Review Pack generation failed: {exc}")
+            else:
+                st.session_state[f"{key_prefix}_review_pack"] = pack_result
+        pack_result = st.session_state.get(f"{key_prefix}_review_pack")
+        if pack_result:
+            pack = pack_result.get("pack") or {}
+            st.success(
+                f"Review Pack ready for {pack.get('document_count', 0)} document(s). "
+                "No model was called and nothing was published."
+            )
+            st.caption(f"Markdown: `{pack_result.get('markdown_path', '')}`")
+            st.caption(f"JSON: `{pack_result.get('json_path', '')}`")
+            markdown_path = Path(str(pack_result.get("markdown_path") or ""))
+            json_path = Path(str(pack_result.get("json_path") or ""))
+            download_cols = st.columns(2)
+            if markdown_path.is_file():
+                download_cols[0].download_button(
+                    "Download Markdown",
+                    data=markdown_path.read_bytes(),
+                    file_name=markdown_path.name,
+                    mime="text/markdown",
+                    key=f"{key_prefix}_download_review_pack_md",
+                )
+            if json_path.is_file():
+                download_cols[1].download_button(
+                    "Download JSON",
+                    data=json_path.read_bytes(),
+                    file_name=json_path.name,
+                    mime="application/json",
+                    key=f"{key_prefix}_download_review_pack_json",
+                )
+
+
 def _app_job_lock_path() -> Path:
     return _project_root / "exports" / "app_jobs" / "active_llm_job.json"
 
 
 def _source_queue_triage_lock_path() -> Path:
     return _project_root / "exports" / "app_jobs" / "source_queue_triage_job.json"
+
+
+def _model_job_lease_path() -> Path:
+    return _project_root / "exports" / "app_jobs" / "active_llm_job.lease"
+
+
+def _acquire_model_job_lease() -> int:
+    from runner.pipeline.triage_jobs import acquire_worker_lock
+
+    try:
+        fd = acquire_worker_lock(_model_job_lease_path())
+    except RuntimeError as exc:
+        raise RuntimeError("Another model job acquired the shared resource lease. Please wait.") from exc
+    os.set_inheritable(fd, True)
+    return fd
+
+
+def _release_model_job_lease(fd: int) -> None:
+    from runner.pipeline.triage_jobs import release_worker_lock
+
+    release_worker_lock(_model_job_lease_path(), fd)
 
 
 def _pid_is_running(pid: int | str | None) -> bool:
@@ -5815,6 +6744,8 @@ def _read_app_job_lock() -> dict | None:
 
 
 def _write_app_job_lock(job: dict) -> None:
+    from runner.pipeline.atomic_io import atomic_write_json
+
     path = _app_job_lock_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -5827,7 +6758,7 @@ def _write_app_job_lock(job: dict) -> None:
         "item_count": job.get("item_count", ""),
         "label": job.get("label", ""),
     }
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    atomic_write_json(path, payload)
 
 
 def _clear_app_job_lock(job: dict | None = None) -> None:
@@ -5940,16 +6871,28 @@ def _start_batch_run_job(
         enrich_model=enrich_model,
         skip_preflight=skip_preflight,
     )
-    with log_path.open("w", encoding="utf-8") as log_file:
-        log_file.write(f"$ {shlex.join(command)}\n\n")
-        log_file.flush()
-        proc = subprocess.Popen(
-            command,
-            cwd=_project_root,
-            stdout=log_file,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
+    lease_fd = _acquire_model_job_lease() if execute else None
+    try:
+        with log_path.open("w", encoding="utf-8") as log_file:
+            log_file.write(f"$ {shlex.join(command)}\n\n")
+            log_file.flush()
+            proc = subprocess.Popen(
+                command,
+                cwd=_project_root,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                text=True,
+                pass_fds=(lease_fd,) if lease_fd is not None else (),
+            )
+        if lease_fd is not None:
+            # The child inherited the lease; closing only the parent's copy
+            # keeps the flock held until the model process exits.
+            os.close(lease_fd)
+            lease_fd = None
+    except Exception:
+        if lease_fd is not None:
+            _release_model_job_lease(lease_fd)
+        raise
     job = {
         "process": proc,
         "pid": proc.pid,
@@ -6015,16 +6958,21 @@ def _start_complement_enrichment_job(doc_id: str, key_prefix: str) -> dict:
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"{started}_{safe_prefix}_{safe_doc_id}_enrich.log"
     command = _complement_enrichment_command(doc_id)
-    with log_path.open("w", encoding="utf-8") as log_file:
-        log_file.write(f"$ {shlex.join(command)}\n\n")
-        log_file.flush()
-        proc = subprocess.Popen(
-            command,
-            cwd=_project_root,
-            stdout=log_file,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
+    lease_fd = _acquire_model_job_lease()
+    try:
+        with log_path.open("w", encoding="utf-8") as log_file:
+            log_file.write(f"$ {shlex.join(command)}\n\n")
+            log_file.flush()
+            proc = subprocess.Popen(
+                command, cwd=_project_root, stdout=log_file,
+                stderr=subprocess.STDOUT, text=True, pass_fds=(lease_fd,),
+            )
+        os.close(lease_fd)
+        lease_fd = None
+    except Exception:
+        if lease_fd is not None:
+            _release_model_job_lease(lease_fd)
+        raise
     job = {
         "process": proc,
         "pid": proc.pid,
@@ -6096,16 +7044,21 @@ def _start_longform_review_job(
         no_overwrite=no_overwrite,
         retry_failed=retry_failed,
     )
-    with log_path.open("w", encoding="utf-8") as log_file:
-        log_file.write(f"$ {shlex.join(command)}\n\n")
-        log_file.flush()
-        proc = subprocess.Popen(
-            command,
-            cwd=_project_root,
-            stdout=log_file,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
+    lease_fd = _acquire_model_job_lease()
+    try:
+        with log_path.open("w", encoding="utf-8") as log_file:
+            log_file.write(f"$ {shlex.join(command)}\n\n")
+            log_file.flush()
+            proc = subprocess.Popen(
+                command, cwd=_project_root, stdout=log_file,
+                stderr=subprocess.STDOUT, text=True, pass_fds=(lease_fd,),
+            )
+        os.close(lease_fd)
+        lease_fd = None
+    except Exception:
+        if lease_fd is not None:
+            _release_model_job_lease(lease_fd)
+        raise
     job = {
         "process": proc,
         "pid": proc.pid,
@@ -7013,7 +7966,19 @@ def _render_doc_card(doc: dict, corpus_dir: Path, *, force_expanded: bool = Fals
                     st.session_state["_nav_to"] = "Media Review"
                     st.rerun()
             if not doc["uploaded"]:
-                if st.button("⬆ Upload to Sanity", key=f"upload_{doc['doc_id']}", type="primary"):
+                upload_label = (
+                    "⬆ Upload privately to Sanity (unverified)"
+                    if doc.get("testimony_review_pending")
+                    else "⬆ Upload to Sanity"
+                )
+                if doc.get("testimony_upload_blocked"):
+                    upload_label = "Upload blocked — testimony consent refused/withdrawn"
+                if st.button(
+                    upload_label,
+                    key=f"upload_{doc['doc_id']}",
+                    type="primary",
+                    disabled=bool(doc.get("testimony_upload_blocked")),
+                ):
                     with st.spinner("Uploading…"):
                         r = __import__("subprocess").run(
                             [sys.executable, "-m", "runner", "upload-doc", doc["doc_id"]],
@@ -8003,6 +8968,7 @@ def _render_sanity_lexicon_tab(config) -> None:
         func = term_entry.get("function") or "—"
         freq = term_entry.get("frequency") or 0
         dossier = term_entry.get("evidenceDossier") or []
+        authority_sources = term_entry.get("sourceAttestations") or []
         confirmed_count = sum(1 for e in dossier if e.get("confirmed"))
         pending_count = len(dossier) - confirmed_count
 
@@ -8014,6 +8980,29 @@ def _render_sanity_lexicon_tab(config) -> None:
             def_text = term_entry.get("draftDefinition") or term_entry.get("accessibleDefinition") or ""
             if def_text:
                 st.caption(def_text[:300])
+
+            if authority_sources:
+                with st.expander(
+                    f"Authority sources ({len(authority_sources)})",
+                    expanded=False,
+                ):
+                    st.caption(
+                        "These preserve a named source's terminology and definition summary. "
+                        "They do not automatically validate the archive term."
+                    )
+                    for source in authority_sources:
+                        source_term = source.get("sourceTerm") or term_name
+                        publisher = source.get("publisher") or "Named source"
+                        review_state = source.get("reviewState") or "source_attested_unreviewed"
+                        st.markdown(f"**{source_term}** · {publisher} · `{review_state}`")
+                        if source.get("sourceDefinitionSummary"):
+                            st.write(source["sourceDefinitionSummary"])
+                        if source.get("sourceUrl"):
+                            st.link_button(
+                                "Open authority source",
+                                source["sourceUrl"],
+                                key=f"authority_{term_entry.get('_id')}_{source.get('_key')}",
+                            )
 
             if not dossier:
                 st.caption("No evidence records yet.")
@@ -8442,6 +9431,7 @@ def page_lexicon():
         "Sanity Lexicon",
         "Entity Registry",
         "Local Proposals",
+        "GOV.UK Source Glossary",
         "Seed Import Preview",
         "Variant Import Preview",
         "Legacy Vocabulary Preview",
@@ -8482,6 +9472,9 @@ def page_lexicon():
     elif selected_section == "Local Proposals":
         _render_local_proposal_queue(config)
 
+    elif selected_section == "GOV.UK Source Glossary":
+        _render_govuk_source_glossary(config)
+
     elif selected_section == "Seed Import Preview":
         _render_seed_lexicon_import(config)
 
@@ -8504,8 +9497,8 @@ def page_lexicon():
 
     elif selected_section == "Seed Docs":
         st.info(
-            "Seed lexicon import policy: entries with clear definition and source evidence can become validated; "
-            "entries without source URL/evidence should enter Sanity as draft so new ingestions can collect validating evidence and regional variants."
+            "Seed lexicon import policy: every seed enters as draft. Source evidence establishes an attestation, "
+            "while canonical validation and Analysis-orientation trust require separate explicit researcher decisions."
         )
         seed_files = {
             "Lexicon seed document (v2.1)": _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.1.md",
@@ -8830,10 +9823,97 @@ def _render_longform_candidate_registry(corpus_dir: Path, save_custom_tag) -> No
                     st.rerun()
 
 
+def _render_govuk_source_glossary(config) -> None:
+    from runner.pipeline.govuk_glossary import (
+        load_manifest,
+        manifest_fingerprint,
+        sanity_authority_rows,
+        seed_memory_terms,
+    )
+
+    try:
+        payload = load_manifest()
+        memory_rows = seed_memory_terms()
+    except Exception as exc:
+        st.error(f"The GOV.UK glossary manifest is invalid and has been disabled: {exc}")
+        return
+    st.subheader("GOV.UK 2021 source glossary")
+    st.markdown(
+        "All **35 official source terms** are now stored in a versioned local manifest and are available "
+        "to Enrichment as `seed_draft` reference memory. The compact source definitions are injected only "
+        "when a matching term appears, with hard context limits."
+    )
+    st.warning(
+        "These are **source-attested, not archive-validated**. The GOV.UK report establishes how that report "
+        "uses the wording; it does not automatically validate a universal definition, a SOGICE relationship, "
+        "or public publication. Draft trust for Analysis is also a separate decision."
+    )
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Official source terms", len(payload["terms"]))
+    c2.metric("Canonical draft concepts", len(memory_rows))
+    c3.metric("Analysis-trusted automatically", 0)
+    st.caption(
+        f"Manifest `{manifest_fingerprint(payload)[:16]}…` · {payload['source']['publication_date']} · "
+        f"{payload['source']['licence']}"
+    )
+    st.markdown(f"[Open the official glossary]({payload['source']['url']})")
+    st.dataframe(
+        [
+            {
+                "Source term": row["source_term"],
+                "Canonical mapping": row["canonical_term"],
+                "Mapping": row["mapping"],
+                "Source attested": "yes",
+                "Analysis trusted": "no",
+                "Archive policy default": "draft / separate review",
+                "Researcher summary of source definition": row["source_definition"],
+            }
+            for row in payload["terms"]
+        ],
+        width="stretch",
+        hide_index=True,
+    )
+    with st.expander("What still needs a researcher decision", expanded=True):
+        st.markdown(
+            "1. **Source attestation:** already recorded locally with URL, publisher, date, licence, and definition.\n"
+            "2. **Trust for Analysis orientation:** remains off unless you explicitly enable a draft in Sanity.\n"
+            "3. **Canonical archive validation:** remains a separate evidence-backed decision in Sanity Lexicon.\n\n"
+            "The authority sync below is non-destructive: it creates missing drafts and appends missing source "
+            "attestations, but never replaces definitions, evidence, validation status, or Analysis trust."
+        )
+    st.divider()
+    st.markdown("**Optional Sanity authority sync**")
+    st.caption(
+        "This is a live write to Sanity. It materialises the 33 canonical draft concepts and all 35 source "
+        "attestations. It does not validate terms, enable Analysis trust, or overwrite existing definitions."
+    )
+    confirmed = st.checkbox(
+        "I understand this adds/updates draft source attestations in Sanity",
+        key="govuk_authority_sync_confirm",
+    )
+    if st.button(
+        "Sync GOV.UK attestations to Sanity",
+        disabled=not confirmed,
+        key="govuk_authority_sync_run",
+    ):
+        try:
+            from runner.clients.sanity import sync_authority_lexicon_rows
+
+            result = sync_authority_lexicon_rows(sanity_authority_rows(), config)
+        except Exception as exc:
+            st.error(f"GOV.UK authority sync stopped before completion: {exc}")
+        else:
+            st.success(
+                f"Authority sync complete: {result['created']} created, {result['updated']} updated, "
+                f"{result['unchanged']} unchanged. Canonical validation and Analysis trust were not changed."
+            )
+
+
 def _render_seed_lexicon_import(config) -> None:
     st.info(
         "Preview the local Markdown lexicon before it enters Sanity. "
-        "Validated is recommended only when an entry has a definition plus explicit source evidence; otherwise it imports as draft."
+        "A source verifies that the source used a term; it does not by itself validate the archive's canonical definition. "
+        "Seed entries therefore default to draft and require a separate researcher validation decision."
     )
     seed_path = _project_root / "00_infrastructure" / "SOGICE_Lexicon_v2.1.md"
     if not seed_path.exists():
@@ -8888,7 +9968,7 @@ def _render_seed_lexicon_import(config) -> None:
         disabled=["term", "recommended_status", "cluster", "function", "has_source", "pushed_to_sanity"],
         column_config={
             "import_entry": st.column_config.CheckboxColumn("Import"),
-            "status": st.column_config.SelectboxColumn("Status", options=["draft", "validated"]),
+            "status": st.column_config.SelectboxColumn("Status", options=["draft"]),
         },
         key="seed_lexicon_editor",
     )
@@ -8910,6 +9990,7 @@ def _render_seed_lexicon_import(config) -> None:
             st.write("\n".join(checklist_errors[:30]))
     if st.button("Push selected seed entries to Sanity", type="primary", disabled=(not selected_for_import or bool(checklist_errors))):
         pushed = 0
+        deferred_variants: list[str] = []
         errors: list[str] = []
         for row in selected_for_import:
             try:
@@ -9210,8 +10291,8 @@ def _render_legacy_entry_editor(rows: list[dict], index: int) -> None:
             row["language"] = st.text_input("Language", value=row.get("language", "unknown"), key=f"{prefix}_language")
             row["status"] = st.selectbox(
                 "Import status",
-                ["draft", "validated"],
-                index=_option_index(["draft", "validated"], row.get("status", "draft")),
+                ["draft"],
+                index=0,
                 key=f"{prefix}_status",
             )
             row["proposed_cluster"] = st.text_input("Cluster", value=row.get("proposed_cluster", ""), key=f"{prefix}_cluster")
@@ -9384,9 +10465,10 @@ def _render_seed_entry_editor(rows: list[dict], index: int) -> None:
             row["term"] = st.text_input("Term", value=row.get("term", ""), key=f"{prefix}_term")
             row["status"] = st.selectbox(
                 "Import status",
-                ["draft", "validated"],
-                index=_option_index(["draft", "validated"], row.get("status", "draft")),
+                ["draft"],
+                index=0,
                 key=f"{prefix}_status",
+                help="Seed import creates drafts only. Canonical validation is a separate researcher action in Sanity Lexicon.",
             )
             row["proposed_cluster"] = st.text_input("Cluster", value=row.get("proposed_cluster", ""), key=f"{prefix}_cluster")
             row["function"] = st.text_input("Function", value=row.get("function", ""), key=f"{prefix}_function")
@@ -9454,11 +10536,12 @@ def _parse_seed_lexicon(path: Path) -> list[dict]:
     entries: list[dict] = []
     current_heading: tuple[str, str] | None = None
     current_lines: list[str] = []
+    current_section = ""
     heading_re = re.compile(r"^\*\*(.+?)\*\*(?:\s*\((.*?)\))?\s*$")
     inline_re = re.compile(r"^\*\*(.+?)\*\*\s+—\s+(.+)$")
 
     def flush() -> None:
-        if not current_heading:
+        if not current_heading or current_section == "SECTION 13":
             return
         entry = _parse_seed_entry(current_heading[0], current_heading[1], current_lines)
         if entry:
@@ -9466,6 +10549,15 @@ def _parse_seed_lexicon(path: Path) -> list[dict]:
 
     for line in text.splitlines():
         stripped = line.strip()
+        section_match = re.match(r"^##\s+(SECTION\s+\d+)\b", stripped)
+        if section_match:
+            flush()
+            current_heading = None
+            current_lines = []
+            current_section = section_match.group(1)
+            continue
+        if current_section == "SECTION 13":
+            continue
         inline_match = inline_re.match(stripped)
         heading_match = heading_re.match(stripped)
         if inline_match:
@@ -9572,8 +10664,12 @@ def _parse_seed_entry(term: str, expansion: str, lines: list[str]) -> dict | Non
     )
 
     has_source_evidence = bool(source_url or source_note)
-    recommended_status = "validated" if definition and has_source_evidence else "draft"
-    reason = "definition plus source evidence" if recommended_status == "validated" else "needs source evidence from ingested documents"
+    recommended_status = "draft"
+    reason = (
+        "source-attested draft; canonical archive validation is a separate researcher decision"
+        if has_source_evidence
+        else "draft needs source evidence from ingested documents"
+    )
     accessible_definition = _plain_first_sentence(definition)
 
     return {
@@ -10201,9 +11297,17 @@ def _proposal_display_position(record: dict) -> int:
 
 def _source_queue_initial_priority(add_mode: str, selected_priority: str) -> str:
     """Return the priority saved before optional immediate source-queue triage."""
-    if add_mode == "Add and triage now":
+    if "triage" in (add_mode or "").lower():
         return "medium"
     return selected_priority
+
+
+def _source_queue_submission_candidates(rows: list) -> tuple[list, list]:
+    """Split exact submitted rows into model-work and already-routed groups."""
+    return (
+        [row for row in rows if getattr(row, "status", "") == "new"],
+        [row for row in rows if getattr(row, "status", "") != "new"],
+    )
 
 
 def _proposal_confidence(item: dict, *keys: str):
@@ -10258,7 +11362,7 @@ def _proposal_source_doc_uploaded(corpus_dir: Path, doc_id: str) -> bool:
     return bool(doc_id and (corpus_dir / doc_id / "sanity_record.json").exists())
 
 
-def _proposal_source_upload_issue(record: dict, config) -> str:
+def _proposal_source_upload_issue(record: dict, config, *, verify_remote: bool = False) -> str:
     """Human-readable reason a proposal cannot reference its source document yet."""
     doc_id = str(record.get("doc_id") or "")
     if not doc_id:
@@ -10268,6 +11372,21 @@ def _proposal_source_upload_issue(record: dict, config) -> str:
             f"source document `{doc_id}` is not uploaded to Sanity yet. "
             f"Upload it first (`python -m runner upload-doc {doc_id}`), then push this proposal."
         )
+    if verify_remote:
+        sanity_ref = doc_id if doc_id.startswith("doc-") else f"doc-{doc_id}"
+        try:
+            from runner.clients.sanity import sanity_document_exists
+            if not sanity_document_exists(doc_id, config):
+                return (
+                    f"local `sanity_record.json` exists, but Sanity does not contain `{sanity_ref}`. "
+                    f"Re-run `python -m runner upload-doc {doc_id}` to recreate the source document, "
+                    "or inspect/remove the stale local `sanity_record.json` before pushing proposals."
+                )
+        except Exception as exc:  # noqa: BLE001 - surfaced as a preflight failure
+            return (
+                f"could not verify `{sanity_ref}` exists in Sanity before pushing: {exc}. "
+                "Check Sanity credentials/network, then retry."
+            )
     return ""
 
 
@@ -10459,7 +11578,7 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
                 continue
-            source_issue = _proposal_source_upload_issue(record, config)
+            source_issue = _proposal_source_upload_issue(record, config, verify_remote=True)
             if source_issue:
                 errors.append(f"{record['doc_id']} / {item.get('term', '?')}: {source_issue}")
                 continue
@@ -10481,6 +11600,13 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
                 item["sanity_id"] = sanity_id
                 item["proposal_status"] = "pushed"
                 item["researcher_note"] = (item.get("researcher_note", "") + "\nPushed to Sanity as draft.").strip()
+                if item.get("variant_push_deferred"):
+                    variants = ", ".join(item.get("deferred_variant_terms") or []) or "proposed variants"
+                    item["researcher_note"] = (
+                        item["researcher_note"]
+                        + f"\nVariant relationship deferred for separate review: {variants}."
+                    )
+                    deferred_variants.append(f"{item.get('term', '?')}: {variants}")
                 _update_enrichment_proposal(record["path"], "lexicon_proposals", record["index"], item)
                 pushed += 1
                 pushed_ids.append(sanity_id)
@@ -10496,6 +11622,11 @@ def _render_lexicon_queue(config, records: list[dict]) -> None:
             lex_url = _sanity_studio_section_url(config, "lexiconEntry")
             if lex_url:
                 st.markdown(f"[Verify in Sanity Studio → lexiconEntry ↗]({lex_url})")
+        if deferred_variants:
+            st.warning(
+                "Document evidence was attached, but these variant relationships still need "
+                "a separate variant decision: " + "; ".join(deferred_variants)
+            )
         if errors:
             st.error("\n".join(errors))
 
@@ -10551,7 +11682,7 @@ def _render_entity_queue(config, records: list[dict]) -> None:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
                 continue
-            source_issue = _proposal_source_upload_issue(record, config)
+            source_issue = _proposal_source_upload_issue(record, config, verify_remote=True)
             if source_issue:
                 errors.append(f"{record['doc_id']} / {item.get('name', '?')}: {source_issue}")
                 continue
@@ -10634,7 +11765,7 @@ def _render_tactic_queue(config, records: list[dict]) -> None:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
                 continue
-            source_issue = _proposal_source_upload_issue(record, config)
+            source_issue = _proposal_source_upload_issue(record, config, verify_remote=True)
             if source_issue:
                 errors.append(f"{record['doc_id']} / {item.get('tactic', '?')}: {source_issue}")
                 continue
@@ -10757,7 +11888,7 @@ def _render_practice_queue(config, records: list[dict]) -> None:
                 item = record["item"]
                 if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
                     continue
-                source_issue = _proposal_source_upload_issue(record, config)
+                source_issue = _proposal_source_upload_issue(record, config, verify_remote=True)
                 if source_issue:
                     errors.append(f"{record['doc_id']} / {item.get('practice_id', '?')}: {source_issue}")
                     continue
@@ -10854,7 +11985,7 @@ def _render_claim_queue(config, records: list[dict]) -> None:
             item = record["item"]
             if not item.get("approved") or item.get("rejected") or item.get("pushed_to_sanity"):
                 continue
-            source_issue = _proposal_source_upload_issue(record, config)
+            source_issue = _proposal_source_upload_issue(record, config, verify_remote=True)
             if source_issue:
                 errors.append(f"{record['doc_id']} / {item.get('claim', '?')[:80]}: {source_issue}")
                 continue
@@ -12422,97 +13553,273 @@ def page_testimony_review():
         st.error("Could not load config. Check runner/.env.")
         return
 
+    st.warning(
+        "Privacy note: Grammarly and other browser writing assistants are external services. "
+        "The writing boxes use standard multi-line browser fields, but do not paste raw testimony, "
+        "exact quotations, names, or sensitive case notes into them unless your research agreement "
+        "explicitly permits that service."
+    )
+    _render_testimony_source_intake(config)
+
+    build_col, export_col = st.columns([2, 3])
+    with build_col:
+        candidate_docs = sorted({
+            path.parent.name
+            for name in ("testimony_candidates.json", "analysis.json", "enrichment.json")
+            for path in config.corpus_dir.glob(f"*/{name}")
+        })
+        refresh_doc = st.selectbox(
+            "Candidate register to check",
+            candidate_docs,
+            key="testimony_refresh_doc",
+            help="Checks one document in memory first; it does not rewrite all 4,000 documents.",
+        ) if candidate_docs else ""
+        if st.button("Preview candidate refresh", disabled=not refresh_doc):
+            try:
+                from runner.pipeline import testimony_candidates
+                preview = testimony_candidates.preview_testimony_candidate_refresh(
+                    config.corpus_dir / refresh_doc
+                )
+                st.session_state["testimony_refresh_preview"] = preview
+            except Exception as exc:
+                st.error(f"Could not preview testimony candidates: {exc}")
+            else:
+                st.success("Read-only comparison complete.")
+        preview = st.session_state.get("testimony_refresh_preview") or {}
+        if preview and preview.get("doc_id") == refresh_doc:
+            st.caption(
+                f"Saved {preview.get('saved_count', 0)} → current {preview.get('current_count', 0)}; "
+                f"add {len(preview.get('added_ids', []))}, remove {len(preview.get('removed_ids', []))}, "
+                f"change {len(preview.get('changed_ids', []))}."
+            )
+            if preview.get("removed_ids"):
+                st.warning(
+                    "Removed leads remain addressable: the full prior register is archived in "
+                    "testimony_candidate_history.jsonl and decisions remain in "
+                    "testimony_candidate_reviews.json."
+                )
+            if st.button(
+                "Apply this document refresh",
+                key="testimony_refresh_apply",
+                disabled=not bool(preview.get("is_stale")),
+            ):
+                from runner.pipeline.testimony_candidates import (
+                    apply_testimony_candidate_refresh,
+                    testimony_candidate_source_fingerprint,
+                )
+                doc_dir = config.corpus_dir / refresh_doc
+                current_fingerprint = testimony_candidate_source_fingerprint(doc_dir)
+                if current_fingerprint != preview.get("source_fingerprint"):
+                    st.error(
+                        "Analysis/enrichment changed after this preview. Nothing was written; "
+                        "run Preview candidate refresh again."
+                    )
+                else:
+                    apply_testimony_candidate_refresh(doc_dir, preview)
+                    st.session_state.pop("testimony_refresh_preview", None)
+                    st.success(f"Refreshed only {refresh_doc}.")
+                    st.rerun()
+    with export_col:
+        st.caption(
+            "Candidate extraction is local and derived from analysis, longform review, enrichment, "
+            "and citation units. A candidate is an AI lead, not confirmed testimony. Preview is read-only; "
+            "apply refreshes only the selected document and never publishes."
+        )
+    _render_testimony_review_body(config)
+
+
+def _render_testimony_source_intake(config) -> None:
+    """Stage a testimony-bearing file and hand it to the existing triage queue."""
+    with st.expander("1 · Add a file that may contain testimony", expanded=False):
+        st.markdown(
+            "Upload creates one private, content-addressed working copy. It **does not analyse, "
+            "publish, or bypass triage**. The new Source Queue row remains `new`; run Triage there "
+            "before sending it to the existing batch/ingestion workflow."
+        )
+        uploaded = st.file_uploader(
+            "Source file",
+            type=["pdf", "docx", "odt", "epub", "txt", "md", "html", "htm", "rtf"],
+            key="testimony_source_upload",
+            help="Maximum 75 MB. Your original file is never changed.",
+        )
+        source_url = st.text_input(
+            "Original source URL (optional)",
+            key="testimony_source_url",
+            help="Keep the publication/download page as provenance when you have it.",
+        )
+        notes = st.text_area(
+            "Research note (optional)",
+            key="testimony_source_note",
+            height=80,
+            help="Researcher-authored note only; avoid sensitive testimony text if a browser writing assistant is active.",
+        )
+        if st.button("Stage file and add to Source Queue", key="testimony_source_stage", disabled=uploaded is None):
+            try:
+                from runner.pipeline.research_upload import stage_research_source
+                from runner.pipeline import source_queue
+
+                clean_source_url = source_url.strip()
+                if clean_source_url and not clean_source_url.startswith(("http://", "https://")):
+                    raise ValueError("Original source URL must be blank or start with http:// or https://.")
+                staged = stage_research_source(
+                    uploaded.getvalue(),
+                    uploaded.name,
+                    Path(config.exports_dir) / "researcher_uploads",
+                )
+                queue_url = clean_source_url or staged["path"]
+                db = source_queue.open_db(source_queue.queue_db_path(config.corpus_dir))
+                try:
+                    item = source_queue.add_item(
+                        db,
+                        queue_url,
+                        title=Path(uploaded.name).stem,
+                        notes=("May contain testimony. " + notes.strip()).strip(),
+                        tags="testimony-source",
+                        batch_group="testimony-review",
+                        status="new",
+                    )
+                    if item is None:
+                        matches = source_queue.get_items_by_urls(db, [queue_url])
+                        item = matches[0] if matches else None
+                    if item is None:
+                        raise RuntimeError("The staged file could not be linked to a Source Queue row.")
+                    existing_attachment = str(getattr(item, "source_file_path", "") or "").strip()
+                    if existing_attachment and Path(existing_attachment).resolve() != Path(staged["path"]).resolve():
+                        raise ValueError(
+                            "That source URL already has a different attached file. Nothing was replaced; "
+                            "review the existing Source Queue row before changing its source bundle."
+                        )
+                    source_queue.update_source_file_attachment(
+                        db,
+                        item.id,
+                        needs_source_file=False,
+                        source_file_path=staged["path"],
+                        source_file_relation="testimony_source",
+                        source_file_url=clean_source_url,
+                        source_file_note="Private staged copy; triage required before processing.",
+                    )
+                    db.execute(
+                        "UPDATE source_queue SET needs_testimony_review = 1, overnight_batch_safe = 0 WHERE id = ?",
+                        (item.id,),
+                    )
+                    db.commit()
+                finally:
+                    db.close()
+            except Exception as exc:
+                st.error(f"Could not stage the testimony source: {exc}")
+            else:
+                duplicate_note = " (identical staged copy already existed)" if staged["duplicate"] else ""
+                st.success(
+                    f"Added Source Queue row {item.id}{duplicate_note}. Next: open Source Queue and run Triage; "
+                    "the testimony review flag prevents unattended processing."
+                )
+                if st.button("Open Source Queue", key="testimony_source_open_queue"):
+                    st.session_state["_nav_to"] = "Source Queue"
+                    st.rerun()
+
+def _render_testimony_review_body(config) -> None:
     rows = _testimony_review_rows(config.corpus_dir)
+    candidate_rows = _testimony_candidate_rows(config.corpus_dir)
     if not rows:
-        st.info("No testimony-flagged documents or testimony excerpts found locally.")
-        return
+        if not candidate_rows:
+            st.info("No testimony-flagged documents or testimony candidates found locally.")
+            return
+        st.info("No document-level testimony gates found, but testimony candidates exist below.")
 
     st.info(
         "Testimony defaults to consentStatus=unclear and publicDisplay=false. "
-        "Upload is blocked for testimony-flagged workbench documents until a review exists."
+        "A document may be uploaded to Sanity as an unverified archive record while review is pending. "
+        "Public display, excerpts, verification, and publication remain blocked. Refused or withdrawn consent blocks remote upload."
     )
-    st.dataframe(rows, width="stretch", hide_index=True)
+    if rows:
+        st.dataframe(rows, width="stretch", hide_index=True)
 
-    selected = st.selectbox("Review document", [row["doc_id"] for row in rows])
-    # U3: clear any pending consent-form state when the selected document changes
-    _panel_reset_on_doc_change("testimony", selected, ["_testimony_consent_pending"])
-
-    doc_dir = config.corpus_dir / selected
-    analysis = _load_json_if_exists(doc_dir / "analysis.json") or {}
-    existing = _load_json_if_exists(_testimony_review_path(config, selected)) or {}
-
-    st.subheader(selected)
-    st.write(analysis.get("summary", ""))
-    assets = [
-        asset for asset in analysis.get("extractable_assets", [])
-        if asset.get("asset_type") == "testimony_excerpt"
-    ]
-    if assets:
-        st.write("**Testimony excerpts detected:**")
-        st.dataframe(assets, width="stretch")
-
-    _CONSENT_OPTIONS = ["unclear", "pending", "confirmed", "refused", "withdrawn"]
-    consent = st.selectbox(
-        "Consent status",
-        _CONSENT_OPTIONS,
-        index=_option_index(_CONSENT_OPTIONS, existing.get("consent_status", "unclear")),
-    )
-    public_display = st.checkbox("Allow public display", value=bool(existing.get("public_display", False)))
-    public_excerpt = st.text_area("Public excerpt (optional, max 200 words)", value=existing.get("public_excerpt", ""), height=120)
-    notes = st.text_area("Researcher notes", value=existing.get("notes", ""), height=120)
-
-    if consent == "withdrawn" and (doc_dir / "sanity_record.json").exists():
-        st.warning(
-            "**Consent withdrawn — this document may already be live in Sanity.** "
-            "A `sanity_record.json` exists locally, indicating it was previously uploaded. "
-            "You must manually review the Sanity record, redact or remove any testimony content, "
-            "and patch `meta.testimonyConsent` to `withdrawn`. Do not re-upload without researcher sign-off."
-        )
-
-    if public_display and consent != "confirmed":
-        st.error("Public display requires confirmed consent.")
-
-    if st.button("Save Testimony Review", disabled=(public_display and consent != "confirmed")):
-        payload = {
-            "doc_id": selected,
-            "consent_status": consent,
-            "consent_source": existing.get("consent_source", "unknown"),
-            "public_display": public_display,
-            "public_excerpt": public_excerpt,
-            "notes": notes,
-            "reviewed": True,
-            "reviewed_by": "researcher",
-            "reviewed_at": datetime.now(timezone.utc).isoformat(),
-        }
-        _testimony_review_path(config, selected).write_text(json.dumps(payload, indent=2), encoding="utf-8")
-
-        # Sync consent status to intake.json so the upload gate can read it.
-        # The upload gate checks intake.testimony_consent, not testimony_review.json.
-        try:
-            from runner.pipeline.intake import update_intake_consent
-            # Only sync recognised 5-value consent states; skip "withdrawn" (revoked) — that
-            # should remain as-is in intake.json; the gate will block upload regardless.
-            if consent in ("confirmed", "pending", "unclear", "refused", "withdrawn"):
-                update_intake_consent(selected, consent, config)
-        except Exception:
-            pass  # intake.json may not exist for older ingest records; not fatal
-
-        if consent == "confirmed":
-            st.success(
-                f"Saved testimony_review.json and updated intake.json → consent: **{consent}**. "
-                "Upload gate will now pass for this document."
-            )
-        elif consent in ("refused", "withdrawn"):
-            st.warning(
-                f"Saved testimony_review.json and updated intake.json → consent: **{consent}**. "
-                "Upload is blocked. If already uploaded to Sanity, manually patch "
-                "`meta.testimonyConsent` and redact any public-facing content."
-            )
+    tabs = st.tabs(["Document consent gate", "Testimony candidates"])
+    with tabs[0]:
+        if not rows:
+            st.info("No document-level testimony gate is currently active.")
         else:
-            st.info(
-                f"Saved testimony_review.json and updated intake.json → consent: **{consent}**. "
-                "Upload will remain blocked until consent is confirmed."
+            selected = st.selectbox("Review document", [row["doc_id"] for row in rows])
+            # U3: clear any pending consent-form state when the selected document changes
+            _panel_reset_on_doc_change("testimony", selected, ["_testimony_consent_pending"])
+
+            doc_dir = config.corpus_dir / selected
+            analysis = _load_json_if_exists(doc_dir / "analysis.json") or {}
+            existing = _load_json_if_exists(_testimony_review_path(config, selected)) or {}
+
+            st.subheader(selected)
+            st.write(analysis.get("summary", ""))
+            assets = [
+                asset for asset in analysis.get("extractable_assets", [])
+                if asset.get("asset_type") == "testimony_excerpt"
+            ]
+            if assets:
+                st.write("**Testimony excerpts detected:**")
+                st.dataframe(assets, width="stretch")
+
+            _CONSENT_OPTIONS = ["unclear", "pending", "confirmed", "refused", "withdrawn"]
+            consent = st.selectbox(
+                "Consent status",
+                _CONSENT_OPTIONS,
+                index=_option_index(_CONSENT_OPTIONS, existing.get("consent_status", "unclear")),
             )
+            public_display = st.checkbox("Allow public display", value=bool(existing.get("public_display", False)))
+            public_excerpt = st.text_area("Public excerpt (optional, max 200 words)", value=existing.get("public_excerpt", ""), height=120)
+            notes = st.text_area("Researcher notes", value=existing.get("notes", ""), height=120)
+
+            if consent == "withdrawn" and (doc_dir / "sanity_record.json").exists():
+                st.warning(
+                    "**Consent withdrawn — this document may already be live in Sanity.** "
+                    "A `sanity_record.json` exists locally, indicating it was previously uploaded. "
+                    "You must manually review the Sanity record, redact or remove any testimony content, "
+                    "and patch `meta.testimonyConsent` to `withdrawn`. Do not re-upload without researcher sign-off."
+                )
+
+            if public_display and consent != "confirmed":
+                st.error("Public display requires confirmed consent.")
+
+            if st.button("Save Testimony Review", disabled=(public_display and consent != "confirmed")):
+                payload = {
+                    "doc_id": selected,
+                    "consent_status": consent,
+                    "consent_source": existing.get("consent_source", "unknown"),
+                    "public_display": public_display,
+                    "public_excerpt": public_excerpt,
+                    "notes": notes,
+                    "reviewed": True,
+                    "reviewed_by": "researcher",
+                    "reviewed_at": datetime.now(timezone.utc).isoformat(),
+                }
+                _testimony_review_path(config, selected).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+                # Sync consent status to intake.json so the upload gate can read it.
+                # The upload gate checks intake.testimony_consent, not testimony_review.json.
+                try:
+                    from runner.pipeline.intake import update_intake_consent
+                    if consent in ("confirmed", "pending", "unclear", "refused", "withdrawn"):
+                        update_intake_consent(selected, consent, config)
+                except Exception:
+                    pass  # intake.json may not exist for older ingest records; not fatal
+
+                if consent == "confirmed":
+                    st.success(
+                        f"Saved testimony_review.json and updated intake.json → consent: **{consent}**. "
+                        "The document remains eligible for archive upload; public-display permission follows the saved review choices."
+                    )
+                elif consent in ("refused", "withdrawn"):
+                    st.warning(
+                        f"Saved testimony_review.json and updated intake.json → consent: **{consent}**. "
+                        "Upload is blocked. If already uploaded to Sanity, manually patch "
+                        "`meta.testimonyConsent` and redact any public-facing content."
+                    )
+                else:
+                    st.info(
+                        f"Saved testimony_review.json and updated intake.json → consent: **{consent}**. "
+                        "Unverified archive upload remains allowed, but public display and publication stay blocked."
+                    )
+
+    with tabs[1]:
+        _render_testimony_candidate_review(config.corpus_dir, candidate_rows)
 
 
 def _testimony_review_rows(corpus_dir: Path) -> list[dict]:
@@ -12528,15 +13835,27 @@ def _testimony_review_rows(corpus_dir: Path) -> list[dict]:
             asset for asset in assets
             if asset.get("asset_type") == "testimony_excerpt"
         ]
-        if not analysis.get("testimony_flag") and not testimony_assets:
+        testimony_types = {
+            analysis.get("type"), analysis.get("primary_type"), analysis.get("secondary_type")
+        }
+        if (
+            not analysis.get("testimony_flag")
+            and not testimony_assets
+            and not testimony_types.intersection({"Testimony", "Survivor-Network-Material"})
+        ):
             continue
         review = _load_json_if_exists(doc_dir / "testimony_review.json") or {}
+        intake = _load_json_if_exists(doc_dir / "intake.json") or {}
+        state = _document_testimony_state(analysis, intake, review)
         rows.append({
             "doc_id": doc_dir.name,
             "type": analysis.get("type", "?"),
             "testimony_flag": analysis.get("testimony_flag", False),
             "testimony_excerpts": len(testimony_assets),
             "consent_status": review.get("consent_status", "unreviewed"),
+            "intake_consent": intake.get("testimony_consent", "missing") or "missing",
+            "archive_state": state["state"],
+            "consent_disagreement": state.get("disagreement", False),
             "public_display": review.get("public_display", False),
             "reviewed": review.get("reviewed", False),
         })
@@ -12547,12 +13866,510 @@ def _testimony_review_path(config, doc_id: str) -> Path:
     return config.corpus_dir / doc_id / "testimony_review.json"
 
 
-def _testimony_requires_review(doc_id: str, analysis, config) -> bool:
-    """Return True when the document requires consent review before upload.
+def _testimony_candidate_reviews_path(doc_dir: Path) -> Path:
+    return Path(doc_dir) / "testimony_candidate_reviews.json"
 
-    Mirrors upload.requires_consent_gate: gates on testimony_flag and on
-    document type, so typed Testimony / Survivor-Network-Material documents
-    cannot bypass the gate by omitting testimony_flag.
+
+def _testimony_candidate_rows(corpus_dir: Path) -> list[dict]:
+    rows: list[dict] = []
+    for path in sorted(Path(corpus_dir).glob("*/testimony_candidates.json")):
+        payload = _load_json_if_exists(path) or {}
+        reviews = _load_json_if_exists(path.parent / "testimony_candidate_reviews.json") or {}
+        review_map = reviews.get("reviews") if isinstance(reviews.get("reviews"), dict) else {}
+        for candidate in payload.get("candidates") or []:
+            if not isinstance(candidate, dict):
+                continue
+            cid = str(candidate.get("candidate_id") or "")
+            review = review_map.get(cid, {}) if isinstance(review_map, dict) else {}
+            public = candidate.get("public") if isinstance(candidate.get("public"), dict) else {}
+            rows.append({
+                **candidate,
+                "doc_id": path.parent.name,
+                "candidate_id": cid,
+                "review_decision": review.get("review_state", candidate.get("review_state", "model_proposed")),
+                "review_public_display": review.get("public_display", public.get("public_display", False)),
+                "review_public_readiness": review.get("public_readiness", public.get("public_readiness", "")),
+                "review_public_excerpt": review.get("public_excerpt", public.get("public_excerpt", "")),
+                "review_notes": review.get("notes", ""),
+            })
+    return rows
+
+
+def _render_testimony_candidate_review(corpus_dir: Path, candidate_rows: list[dict]) -> None:
+    st.subheader("2 · Verify AI testimony leads")
+    st.caption(
+        "A candidate is an AI lead, not confirmed testimony and not a validated lexicon/entity record. "
+        "They can represent survivor testimony, ex-gay promotional stories, clinical case stories, "
+        "founder memory, media excerpts, or institutional witness material. Confirm the source excerpt first."
+    )
+    if not candidate_rows:
+        st.info("No testimony candidate sidecars found. Use Build / refresh testimony candidates first.")
+        return
+
+    counts = Counter(str(row.get("testimony_type") or "unclear_testimony") for row in candidate_rows)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Candidates", len(candidate_rows))
+    c2.metric("Survivor", counts.get("survivor_testimony", 0))
+    c3.metric("Ex-gay / promo", counts.get("ex_gay_promotional_testimony", 0))
+    c4.metric("Clinical cases", counts.get("clinical_case_story", 0))
+
+    family_options = ["(all)"] + sorted(counts)
+    selected_type = st.selectbox("Filter by testimony type", family_options, key="testimony_candidate_type_filter")
+    search = st.text_input("Search candidates", key="testimony_candidate_search")
+    visible = candidate_rows
+    if selected_type != "(all)":
+        visible = [row for row in visible if row.get("testimony_type") == selected_type]
+    if search.strip():
+        needle = search.lower().strip()
+        visible = [
+            row for row in visible
+            if needle in str(row.get("extracted_text") or "").lower()
+            or needle in str(row.get("summary") or "").lower()
+            or needle in str(row.get("doc_id") or "").lower()
+        ]
+
+    st.dataframe(
+        [
+            {
+                "doc_id": row.get("doc_id"),
+                "type": row.get("testimony_type"),
+                "speaker": row.get("speaker_position"),
+                "function": row.get("narrative_function"),
+                "review": row.get("review_decision"),
+                "public": row.get("review_public_readiness"),
+                "source": row.get("source_artifact"),
+            }
+            for row in visible[:400]
+        ],
+        width="stretch",
+        hide_index=True,
+    )
+    if not visible:
+        return
+
+    _render_testimony_document_deep_review_controls(corpus_dir, visible)
+
+    options = [
+        f"{row.get('doc_id')} · {row.get('testimony_type')} · {row.get('candidate_id')}"
+        for row in visible
+    ]
+    selected = st.selectbox("Open candidate", options, key="testimony_candidate_selected")
+    candidate = visible[options.index(selected)]
+    doc_dir = Path(corpus_dir) / str(candidate.get("doc_id"))
+
+    try:
+        from runner.pipeline.testimony_deep_review import context_for_candidate
+        located_context = context_for_candidate(doc_dir, candidate)
+        evidence_ready = True
+        evidence_message = (
+            f"Located in {located_context.get('source')} near characters "
+            f"{located_context.get('char_start')}–{located_context.get('char_end')}."
+        )
+    except Exception as exc:
+        evidence_ready = False
+        evidence_message = str(exc)
+
+    deep_payload = _load_json_if_exists(doc_dir / "testimony_segments.json") or {}
+    deep_rows = [
+        row for row in deep_payload.get("segments", [])
+        if isinstance(row, dict) and str(row.get("candidate_id") or "") == str(candidate.get("candidate_id") or "")
+    ]
+    st.dataframe(
+        [
+            {"Step": "Source evidence", "Status": "ready" if evidence_ready else "hold", "What it means": evidence_message},
+            {"Step": "AI deep extraction", "Status": "complete" if deep_rows else "not run", "What it means": f"{len(deep_rows)} AI-extracted segment(s), still requiring researcher review" if deep_rows else "Run only after source evidence is located."},
+            {"Step": "Researcher decision", "Status": str(candidate.get("review_decision") or "pending"), "What it means": "Confirms/rejects this lead; publication remains separate."},
+            {"Step": "Vocabulary/entity routing", "Status": "review separately", "What it means": "Terms, actors, tactics and practices go to their own Local Proposal queues."},
+        ],
+        width="stretch",
+        hide_index=True,
+    )
+
+    st.markdown(f"**{candidate.get('testimony_type')}** · `{candidate.get('candidate_id')}`")
+    st.caption(
+        f"Source: `{candidate.get('source_artifact')}` / `{candidate.get('source_kind')}` · "
+        f"Model: `{(candidate.get('model_attribution') or {}).get('model', '')}`"
+    )
+    if candidate.get("summary"):
+        st.write(candidate.get("summary"))
+    if candidate.get("extracted_text") or candidate.get("evidence_quote"):
+        st.code(str(candidate.get("extracted_text") or candidate.get("evidence_quote") or ""), language="text")
+    linked_rows = []
+    for field, destination in (
+        ("linked_terms", "Lexicon Queue"), ("linked_tactics", "Tactic Queue"),
+        ("linked_practices", "Practice Evidence"), ("linked_actors", "Entity Queue"),
+    ):
+        for value in candidate.get(field, []) or []:
+            linked_rows.append({"AI-linked item": str(value), "Review destination": destination})
+    if linked_rows:
+        st.markdown("**AI-linked vocabulary and actors — not validated here**")
+        st.dataframe(linked_rows, width="stretch", hide_index=True)
+        destinations = sorted({row["Review destination"] for row in linked_rows})
+        route = st.selectbox("Open review queue", destinations, key="testimony_linked_destination")
+        if st.button("Go to selected proposal queue", key="testimony_linked_open"):
+            st.session_state["lexicon_active_section"] = "Local Proposals"
+            st.session_state["local_proposal_active_queue"] = route
+            st.session_state["_nav_to"] = "Lexicon"
+            st.rerun()
+    with st.expander("Technical provenance (locator, raw links, public defaults)", expanded=False):
+        st.json({
+            "evidence_locator": candidate.get("evidence_locator", {}),
+            "linked": {
+                "terms": candidate.get("linked_terms", []),
+                "tactics": candidate.get("linked_tactics", []),
+                "practices": candidate.get("linked_practices", []),
+                "actors": candidate.get("linked_actors", []),
+            },
+            "public": candidate.get("public", {}),
+            "section": candidate.get("section", {}),
+        })
+
+    try:
+        from runner.pipeline.testimony_candidates import PUBLIC_READINESS, SPEAKER_POSITIONS, TESTIMONY_TYPES
+    except Exception:
+        TESTIMONY_TYPES = ("survivor_testimony", "ex_gay_promotional_testimony", "clinical_case_story", "unclear_testimony")
+        SPEAKER_POSITIONS = ("unknown",)
+        PUBLIC_READINESS = ("private_review_required", "research_only", "public_excerpt_candidate", "public_display_approved")
+
+    review_state_options = ["model_proposed", "approved", "rejected", "research_only", "needs_deep_review", "public_approved"]
+    decision = st.selectbox(
+        "Review decision",
+        review_state_options,
+        index=_option_index(review_state_options, str(candidate.get("review_decision") or "model_proposed")),
+        key="testimony_candidate_review_state",
+    )
+    type_value = _controlled_select(
+        "Testimony type",
+        str(candidate.get("testimony_type") or "unclear_testimony"),
+        list(TESTIMONY_TYPES),
+        key="testimony_candidate_type",
+    )
+    speaker = _controlled_select(
+        "Speaker position",
+        str(candidate.get("speaker_position") or "unknown"),
+        list(SPEAKER_POSITIONS),
+        key="testimony_candidate_speaker",
+    )
+    public_readiness = _controlled_select(
+        "Public readiness",
+        str(candidate.get("review_public_readiness") or "private_review_required"),
+        list(PUBLIC_READINESS),
+        key="testimony_candidate_public_readiness",
+    )
+    public_display = st.checkbox(
+        "Allow public display for this candidate",
+        value=bool(candidate.get("review_public_display")),
+        key="testimony_candidate_public_display",
+    )
+    public_excerpt = st.text_area(
+        "Public excerpt / redacted public text",
+        value=str(candidate.get("review_public_excerpt") or ""),
+        height=120,
+        key="testimony_candidate_public_excerpt",
+    )
+    notes = st.text_area(
+        "Researcher notes",
+        value=str(candidate.get("review_notes") or ""),
+        height=100,
+        key="testimony_candidate_notes",
+    )
+    if public_display and public_readiness != "public_display_approved":
+        st.warning("Public display should normally use `public_display_approved` readiness.")
+    if st.button("Save Candidate Review", key="testimony_candidate_save"):
+        path = _testimony_candidate_reviews_path(doc_dir)
+        payload = _load_json_if_exists(path) or {
+            "schema_version": "testimony-candidate-reviews-v0.1",
+            "doc_id": doc_dir.name,
+            "reviews": {},
+        }
+        reviews = payload.setdefault("reviews", {})
+        reviews[str(candidate.get("candidate_id"))] = {
+            "candidate_id": candidate.get("candidate_id"),
+            "review_state": decision,
+            "testimony_type": type_value,
+            "speaker_position": speaker,
+            "public_readiness": public_readiness,
+            "public_display": public_display,
+            "public_excerpt": public_excerpt,
+            "notes": notes,
+            "reviewed_by": "researcher",
+            "reviewed_at": datetime.now(timezone.utc).isoformat(),
+        }
+        path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        st.success(f"Saved testimony candidate review to {path}.")
+        st.rerun()
+
+    st.divider()
+    st.markdown("### 3 · Extract testimony segments")
+    if not evidence_ready:
+        st.error(
+            "Deep analysis is blocked because the quoted evidence is not present in the canonical extracted text. "
+            "Preview and apply a candidate refresh, or correct the extraction first. No model will receive this lead."
+        )
+    _render_testimony_deep_review_controls(doc_dir, candidate, evidence_ready=evidence_ready)
+
+
+def _render_testimony_document_deep_review_controls(corpus_dir: Path, visible_rows: list[dict]) -> None:
+    with st.expander("Run deep testimony review for a whole document", expanded=False):
+        st.caption(
+            "Use this for books, reports, and documents with many candidate segments. "
+            "It runs the deep pass for every testimony candidate in the selected document and skips "
+            "already-succeeded candidates unless you choose overwrite."
+        )
+        doc_ids = sorted({
+            str(row.get("doc_id") or "")
+            for row in visible_rows
+            if str(row.get("doc_id") or "")
+        })
+        if not doc_ids:
+            st.info("No visible candidate documents to review.")
+            return
+        doc_id = st.selectbox("Document to review", doc_ids, key="testimony_deep_doc_id")
+        doc_dir = Path(corpus_dir) / doc_id
+        config = _load_config_safe()
+        if not config:
+            return
+        try:
+            from runner.pipeline import testimony_deep_review
+
+            status = testimony_deep_review.deep_review_status(doc_dir)
+        except Exception as exc:
+            st.error(f"Could not read deep-review status: {exc}")
+            return
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Candidates", status.get("candidate_count", 0))
+        c2.metric("Reviewed", status.get("reviewed_count", 0))
+        c3.metric("Pending", status.get("pending_count", 0))
+        c4.metric("Segments", status.get("segment_count", 0))
+        if status.get("failed_count"):
+            st.warning(
+                f"{status.get('failed_count')} previous candidate review(s) failed. "
+                "A normal run retries failed/pending candidates; overwrite also re-runs succeeded candidates."
+            )
+
+        llm = st.selectbox(
+            "Deep review model",
+            ["litelm-heavy", "litelm", "litelm-reasoning", "claude", "local-heavy"],
+            key="testimony_deep_doc_llm",
+        )
+        limit = st.number_input(
+            "Candidate limit (0 = all pending candidates)",
+            min_value=0,
+            max_value=max(0, int(status.get("candidate_count", 0))),
+            value=0,
+            step=1,
+            key="testimony_deep_doc_limit",
+        )
+        overwrite = st.checkbox(
+            "Overwrite existing deep analyses for this document",
+            value=False,
+            key="testimony_deep_doc_overwrite",
+        )
+        cmd = (
+            f"{shlex.quote(sys.executable)} -m runner testimony-deep-review {shlex.quote(doc_id)} "
+            f"--llm {shlex.quote(llm)}"
+            + (f" --limit {int(limit)}" if int(limit) > 0 else "")
+            + (" --overwrite" if overwrite else "")
+        )
+        st.code(cmd, language="bash")
+        disabled = int(status.get("candidate_count", 0)) == 0
+        if st.button(
+            "Run deep testimony analysis for all candidates in this document",
+            key="testimony_deep_doc_run",
+            disabled=disabled,
+        ):
+            try:
+                result = testimony_deep_review.run_testimony_deep_review(
+                    Path(doc_dir),
+                    config=config,
+                    llm=llm,
+                    limit=int(limit),
+                    overwrite=overwrite,
+                )
+            except Exception as exc:
+                st.error(f"Document-level deep testimony review failed: {exc}")
+            else:
+                st.success(
+                    f"Deep review finished: {result.get('analyses_count', 0)} reviewed candidate(s), "
+                    f"{result.get('segment_count', 0)} extracted segment(s), "
+                    f"{result.get('failed_count', 0)} failure(s)."
+                )
+                st.rerun()
+
+
+def _render_testimony_deep_review_controls(doc_dir: Path, candidate: dict, *, evidence_ready: bool = True) -> None:
+    st.markdown("**Deep testimony segment review**")
+    segments_payload = _load_json_if_exists(Path(doc_dir) / "testimony_segments.json") or {}
+    candidate_id = str(candidate.get("candidate_id") or "")
+    segment_rows = [
+        row for row in segments_payload.get("segments", [])
+        if isinstance(row, dict) and str(row.get("candidate_id") or "") == candidate_id
+    ]
+    if segment_rows:
+        st.success(f"{len(segment_rows)} extracted testimony segment(s) already available for this candidate.")
+        for row in segment_rows:
+            with st.expander(
+                f"{row.get('segment_type', 'segment')} · {row.get('mediation', 'unclear')} · confidence={row.get('confidence')}",
+                expanded=False,
+            ):
+                if row.get("testimony_text"):
+                    st.code(str(row.get("testimony_text")), language="text")
+                st.write(row.get("summary") or "")
+                st.json({
+                    "speaker": {
+                        "label": row.get("speaker_label"),
+                        "position": row.get("speaker_position"),
+                    },
+                    "practice_descriptions": row.get("practice_descriptions", []),
+                    "lexicon_terms": row.get("lexicon_terms", []),
+                    "tactics": row.get("tactics", []),
+                    "actors": row.get("actors", []),
+                    "public_recommendation": row.get("public_recommendation", {}),
+                    "evidence_locator": row.get("evidence_locator", {}),
+                })
+        _render_testimony_segment_proposal_bridge(Path(doc_dir), segment_rows)
+    else:
+        st.info("No deep segment analysis has been run for this candidate yet.")
+
+    config = _load_config_safe()
+    if not config:
+        return
+    llm = st.selectbox(
+        "Deep review model",
+        ["litelm-heavy", "litelm", "litelm-reasoning", "claude", "local-heavy"],
+        key=f"testimony_deep_llm_{candidate_id}",
+    )
+    overwrite = st.checkbox(
+        "Overwrite existing deep analysis for this candidate",
+        value=False,
+        key=f"testimony_deep_overwrite_{candidate_id}",
+    )
+    cmd = (
+        f"{shlex.quote(sys.executable)} -m runner testimony-deep-review {shlex.quote(doc_dir.name)} "
+        f"--candidate-id {shlex.quote(candidate_id)} --llm {shlex.quote(llm)}"
+        + (" --overwrite" if overwrite else "")
+    )
+    st.code(cmd, language="bash")
+    if st.button(
+        "Run deep testimony analysis for this candidate",
+        key=f"testimony_deep_run_{candidate_id}",
+        disabled=not evidence_ready,
+    ):
+        try:
+            from runner.pipeline import testimony_deep_review
+
+            result = testimony_deep_review.run_testimony_deep_review(
+                Path(doc_dir),
+                config=config,
+                candidate_id=candidate_id,
+                llm=llm,
+                overwrite=overwrite,
+            )
+        except Exception as exc:
+            st.error(f"Deep testimony review failed: {exc}")
+        else:
+            st.success(
+                f"Deep review finished: {result.get('segment_count', 0)} total segment(s), "
+                f"{result.get('failed_count', 0)} failure(s), "
+                f"{result.get('evidence_hold_count', 0)} evidence hold(s)."
+            )
+            st.rerun()
+
+
+def _testimony_segment_proposal_candidates(doc_dir: Path, segment_rows: list[dict]) -> list[dict]:
+    candidates: list[dict] = []
+    family_specs = (
+        ("lexicon_terms", "lexicon", "term", "definition_as_used"),
+        ("tactics", "tactic", "name", "description"),
+        ("practice_descriptions", "practice", "practice", "description"),
+        ("actors", "entity", "name", "role"),
+    )
+    for segment in segment_rows:
+        locator = segment.get("evidence_locator") if isinstance(segment.get("evidence_locator"), dict) else {}
+        if locator.get("status") != "located":
+            continue
+        segment_id = str(segment.get("segment_id") or "")
+        for source_key, family, label_key, definition_key in family_specs:
+            for index, item in enumerate(segment.get(source_key) or []):
+                item = item if isinstance(item, dict) else {label_key: str(item)}
+                label = str(item.get(label_key) or item.get("label") or "").strip()
+                if not label:
+                    continue
+                quote = str(item.get("evidence") or segment.get("testimony_text") or "").strip()
+                candidates.append({
+                    "candidate_id": f"{segment_id}:{source_key}:{index}",
+                    "doc_id": doc_dir.name,
+                    "family": family,
+                    "label": label,
+                    "definitions": [str(item.get(definition_key) or item.get("definition") or "").strip()],
+                    "evidence": [{
+                        "section_id": segment_id,
+                        "quote_or_note": quote,
+                    }],
+                    "count": 1,
+                    "confidence": item.get("confidence") or segment.get("confidence"),
+                    "source_kind": "deep testimony segment",
+                    "converted_from_family": "testimony_segments",
+                })
+    return candidates
+
+
+def _render_testimony_segment_proposal_bridge(doc_dir: Path, segment_rows: list[dict]) -> None:
+    candidates = _testimony_segment_proposal_candidates(doc_dir, segment_rows)
+    st.markdown("**4 · Send extracted concepts to their review queues**")
+    st.caption(
+        "This creates a pending, unapproved local proposal. It does not validate a term, "
+        "change the canonical lexicon, or push anything to Sanity."
+    )
+    if not candidates:
+        st.info("No source-located segment concepts are available to route.")
+        return
+    labels = [f"{row['family']} · {row['label']}" for row in candidates]
+    selected_label = st.selectbox("Extracted concept", labels, key=f"testimony_segment_concept_{doc_dir.name}")
+    candidate = candidates[labels.index(selected_label)]
+    target_family = {
+        "lexicon": "lexicon_proposals",
+        "entity": "entity_proposals",
+        "tactic": "tactic_proposals",
+        "practice": "practice_descriptions",
+    }[candidate["family"]]
+    entity_type = "person"
+    if target_family == "entity_proposals":
+        entity_type = st.selectbox(
+            "Entity type",
+            ["person", "organization"],
+            key=f"testimony_segment_entity_type_{doc_dir.name}",
+        )
+    if st.button("Create pending local proposal", key=f"testimony_segment_create_{doc_dir.name}"):
+        try:
+            created = _create_longform_candidate_enrichment_proposal(
+                doc_dir.parent,
+                candidate,
+                target_family=target_family,
+                entity_type=entity_type,
+            )
+        except Exception as exc:
+            st.error(f"Could not create local proposal: {exc}")
+            return
+        target_queue = {
+            "lexicon_proposals": "Lexicon Queue",
+            "entity_proposals": "Entity Queue",
+            "tactic_proposals": "Tactic Queue",
+            "practice_descriptions": "Practice Evidence",
+        }[created["key"]]
+        st.session_state["lexicon_active_section"] = "Local Proposals"
+        st.session_state["local_proposal_active_queue"] = target_queue
+        st.session_state["_nav_to"] = "Lexicon"
+        st.success(f"Created `{candidate['label']}` as pending in {target_queue}.")
+        st.rerun()
+
+
+def _testimony_requires_review(doc_id: str, analysis, config) -> bool:
+    """Return True when testimony review remains pending.
+
+    Pending review does not block an unverified archive upload; it remains a
+    publication/public-display hold.
     """
     from runner.pipeline.upload import requires_consent_gate
 
@@ -12560,9 +14377,73 @@ def _testimony_requires_review(doc_id: str, analysis, config) -> bool:
         return False
     if not requires_consent_gate(analysis):
         return False
-    path = _testimony_review_path(config, doc_id)
-    data = _load_json_if_exists(path)
-    return not bool(data and data.get("reviewed"))
+    review = _load_json_if_exists(_testimony_review_path(config, doc_id)) or {}
+    intake = _load_json_if_exists(config.corpus_dir / doc_id / "intake.json") or {}
+    state = _document_testimony_state(
+        analysis.model_dump() if hasattr(analysis, "model_dump") else analysis,
+        intake,
+        review,
+    )
+    return state["state"] in {"pending", "conflict_pending", "confirmed_publication_hold"}
+
+
+def _testimony_archive_upload_blocked(doc_id: str, analysis, config) -> bool:
+    """Block remote archive writes only for refused or withdrawn consent."""
+    from runner.pipeline.upload import requires_consent_gate
+
+    if not analysis or not requires_consent_gate(analysis):
+        return False
+    review = _load_json_if_exists(_testimony_review_path(config, doc_id)) or {}
+    intake = _load_json_if_exists(config.corpus_dir / doc_id / "intake.json") or {}
+    state = _document_testimony_state(
+        analysis.model_dump() if hasattr(analysis, "model_dump") else analysis,
+        intake,
+        review,
+    )
+    return state["state"] == "blocked"
+
+
+def _testimony_consent_disagreement(doc_id: str, analysis, config) -> bool:
+    if not analysis:
+        return False
+    review = _load_json_if_exists(_testimony_review_path(config, doc_id)) or {}
+    intake = _load_json_if_exists(config.corpus_dir / doc_id / "intake.json") or {}
+    state = _document_testimony_state(
+        analysis.model_dump() if hasattr(analysis, "model_dump") else analysis,
+        intake,
+        review,
+    )
+    return bool(state.get("disagreement"))
+
+
+def _document_testimony_state(analysis: dict, intake: dict, review: dict) -> dict:
+    """Return the explicit local testimony state used by Document List."""
+    from runner.pipeline.upload import reconcile_testimony_consent
+
+    analysis = analysis or {}
+    types = {
+        analysis.get("type"), analysis.get("primary_type"), analysis.get("secondary_type")
+    }
+    if not testimony_override_available(analysis) and not types.intersection(
+        {"Testimony", "Survivor-Network-Material"}
+    ):
+        return {"state": "not_required", "disagreement": False}
+    resolution = reconcile_testimony_consent(
+        (intake or {}).get("testimony_consent"),
+        (review or {}).get("consent_status"),
+    )
+    effective = resolution["effective_status"]
+    if effective in {"refused", "withdrawn"}:
+        state = "blocked"
+    elif resolution["disagreement"]:
+        state = "conflict_pending"
+    elif effective != "confirmed":
+        state = "pending"
+    elif not bool((review or {}).get("public_display", False)):
+        state = "confirmed_publication_hold"
+    else:
+        state = "confirmed_public"
+    return {**resolution, "state": state}
 
 
 def _load_json_if_exists(path: Path) -> dict | None:
@@ -12742,6 +14623,22 @@ Use **Corpus Intelligence → Knowledge exports** for the deeper audit:
 `knowledge_quality.json`. This is also where you can inspect and backfill
 `citation_units.json`, the local evidence-locator sidecar used to connect
 quotes back to stable spans in `extracted.txt`.
+
+### Scaled research model
+
+The target workflow is **AI-managed long tail + human exception/promotion
+queue**, not per-document adjudication. The researcher adds/contextualizes
+sources, approves a batch policy, handles one compiled exception list, promotes
+important memory, and curates research/story outputs.
+
+Today, triage flags special routes and the guarded batch runner excludes
+testimony/legal/media/long-form items from unattended execution. The Source
+Queue can now compile an immutable, policy-versioned batch outcome and dry-run
+route plan. The next workflow milestone is a **guarded outcome executor** in
+confirmation mode, followed by retrieval-aware Enrichment.
+
+The full proposed process is documented in
+`docs/RESEARCHER_WORKFLOW_V2.md`.
 
 ### Normal MacBook workflow
 
@@ -15452,6 +17349,19 @@ def _source_queue_retriage_candidate_ids(
     return result
 
 
+def _source_queue_new_candidate_ids(items, *, limit: int = 50) -> list[str]:
+    """Return queue ids for new/untriaged rows in display order."""
+    clean_limit = max(1, int(limit))
+    result: list[str] = []
+    for item in items:
+        if getattr(item, "status", "") != "new":
+            continue
+        result.append(str(item.id))
+        if len(result) >= clean_limit:
+            break
+    return result
+
+
 def _source_queue_triage_comparison_rows(history_map: dict[str, list[dict]]) -> list[dict]:
     """Build newest-vs-previous triage rows for model-change review."""
     rows: list[dict] = []
@@ -15625,6 +17535,121 @@ def _render_model_runtime_preflight(config, *, expanded: bool = False) -> None:
             )
 
 
+def _ensure_durable_triage_worker(config, *, item_count: int = 0, label: str = "source-queue-triage") -> dict:
+    """Start the single durable worker, or return the active worker record."""
+    from runner.pipeline.triage_jobs import (
+        acquire_worker_lock,
+        active_lock,
+        lock_is_held,
+        release_worker_lock,
+    )
+    safe_label = re.sub(r"[^a-zA-Z0-9_.-]+", "-", label).strip("-") or "source-queue-triage"
+    started = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    log_dir = _project_root / "exports" / "app_jobs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{started}_{safe_label}.log"
+    command = [sys.executable, "-m", "runner.main", "triage-jobs-run"]
+    rendered_command = shlex.join(command)
+    worker_lock_path = log_dir / "source_queue_triage_worker.lock"
+    launch_lock_path = log_dir / "source_queue_triage_launcher.lock"
+    launch_fd = acquire_worker_lock(launch_lock_path)
+    try:
+        worker_held = lock_is_held(worker_lock_path)
+        worker = active_lock(worker_lock_path) if worker_held else None
+        if worker_held:
+            worker = worker or {}
+            active_triage = _read_source_queue_triage_lock() or {
+                "pid": worker.get("pid"), "kind": "source-queue-triage",
+                "started_at": worker.get("started_at", ""), "log_path": "",
+                "command": rendered_command, "item_count": item_count,
+                "label": safe_label,
+            }
+            return active_triage
+        with log_path.open("w", encoding="utf-8") as log_file:
+            log_file.write(f"$ {rendered_command}\n\n")
+            log_file.flush()
+            proc = subprocess.Popen(
+                command,
+                cwd=_project_root,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                text=True,
+                start_new_session=True,
+            )
+            # Keep the launcher flock until the child either owns the durable
+            # worker flock or exits. This closes the Popen→worker-lock window.
+            worker_ready = False
+            for _ in range(500):
+                if lock_is_held(worker_lock_path) or proc.poll() is not None:
+                    worker_ready = True
+                    break
+                time.sleep(0.02)
+            if not worker_ready:
+                try:
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                finally:
+                    raise RuntimeError("Durable triage worker did not acquire its lock within 10 seconds")
+    finally:
+        release_worker_lock(launch_lock_path, launch_fd)
+    job = {
+        "process": proc,
+        "pid": proc.pid,
+        "started_at": started,
+        "log_path": str(log_path),
+        "command": rendered_command,
+        "kind": "source-queue-triage",
+        "mode": "durable",
+        "item_count": item_count,
+        "label": safe_label,
+    }
+    _write_source_queue_triage_lock(job)
+    return job
+
+
+def _resume_durable_triage_worker(config) -> dict | None:
+    """Resume queued/interrupted durable triage whenever Source Queue opens."""
+    from runner.pipeline.triage_jobs import open_jobs_db, queue_counts, triage_jobs_db_path
+
+    jobs_path = triage_jobs_db_path(config.corpus_dir)
+    if not jobs_path.is_file():
+        return None
+    jobs_db = open_jobs_db(jobs_path)
+    try:
+        counts = queue_counts(jobs_db)
+    finally:
+        jobs_db.close()
+    pending = sum(counts.get(status, 0) for status in ("queued", "running", "waiting"))
+    if not pending:
+        return None
+    return _ensure_durable_triage_worker(config, item_count=pending, label="source-queue-triage-resume")
+
+
+def _durable_triage_queue_state(config) -> dict:
+    from runner.pipeline.triage_jobs import list_jobs, open_jobs_db, queue_counts, triage_jobs_db_path
+
+    path = triage_jobs_db_path(config.corpus_dir)
+    if not path.is_file():
+        return {"counts": {}, "recent": []}
+    db = open_jobs_db(path)
+    try:
+        return {"counts": queue_counts(db), "recent": list_jobs(db, limit=8)}
+    finally:
+        db.close()
+
+
+def _cancel_running_durable_triage(*, include_queued: bool = False) -> int:
+    from runner.pipeline.triage_jobs import cancel_active_jobs, open_jobs_db, triage_jobs_db_path
+
+    config = _load_config_safe()
+    if config is None:
+        return 0
+    db = open_jobs_db(triage_jobs_db_path(config.corpus_dir))
+    try:
+        return cancel_active_jobs(db, include_queued=include_queued)
+    finally:
+        db.close()
+
+
 def _start_source_queue_triage_job(
     *,
     item_ids: list[str],
@@ -15634,64 +17659,44 @@ def _start_source_queue_triage_job(
     use_crawl4ai: bool = False,
     label: str = "source-queue-triage",
 ) -> dict:
-    """Start source-queue triage without blocking Streamlit."""
-    active_triage = _read_source_queue_triage_lock()
-    if active_triage:
-        raise RuntimeError(
-            _format_app_job_lock(active_triage)
-            + " Use the Source Queue triage status card to refresh, stop, or clear it."
-        )
-    active_heavy_job = _read_app_job_lock()
-    if active_heavy_job:
-        raise RuntimeError(
-            _format_app_job_lock(active_heavy_job)
-            + " Add/review remains available, but queue triage should wait for that model job to finish."
-        )
+    """Durably enqueue triage and ensure one resumable worker is active."""
+    from runner.pipeline.triage_jobs import enqueue_triage_job, open_jobs_db, triage_jobs_db_path
+    from runner.pipeline.triage_jobs import source_history_tokens
+    from runner.pipeline.source_queue import queue_db_path
+
     clean_item_ids = [str(item_id).strip() for item_id in item_ids if str(item_id).strip()]
     if not clean_item_ids:
         raise RuntimeError("No queue item IDs selected for triage.")
-    safe_label = re.sub(r"[^a-zA-Z0-9_.-]+", "-", label).strip("-") or "source-queue-triage"
-    started = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    log_dir = _project_root / "exports" / "app_jobs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-    log_path = log_dir / f"{started}_{safe_label}.log"
-    command = _source_queue_triage_command_args(
-        limit=limit,
-        batch=batch,
-        force=force,
-        use_crawl4ai=use_crawl4ai,
-        item_ids=clean_item_ids,
-    )
-    rendered_command = _source_queue_triage_command(
-        limit=limit,
-        batch=batch,
-        force=force,
-        use_crawl4ai=use_crawl4ai,
-        item_ids=clean_item_ids,
-    )
-    with log_path.open("w", encoding="utf-8") as log_file:
-        log_file.write(f"$ {rendered_command}\n\n")
-        log_file.flush()
-        proc = subprocess.Popen(
-            command,
-            cwd=_project_root,
-            stdout=log_file,
-            stderr=subprocess.STDOUT,
-            text=True,
+    config = _load_config_safe()
+    if config is None:
+        raise RuntimeError("Configuration unavailable; triage request was not queued.")
+    jobs_db = open_jobs_db(triage_jobs_db_path(config.corpus_dir))
+    try:
+        queued = enqueue_triage_job(
+            jobs_db,
+            clean_item_ids[:max(1, int(limit))],
+            force=force,
+            use_crawl4ai=use_crawl4ai,
+            label=label,
+            baseline_tokens=source_history_tokens(
+                queue_db_path(config.corpus_dir), clean_item_ids[:max(1, int(limit))]
+            ),
         )
-    job = {
-        "process": proc,
-        "pid": proc.pid,
-        "started_at": started,
-        "log_path": str(log_path),
-        "command": rendered_command,
-        "kind": "source-queue-triage",
-        "mode": "crawl4ai" if use_crawl4ai else "standard",
-        "item_count": len(clean_item_ids),
-        "label": safe_label,
+    finally:
+        jobs_db.close()
+    if not queued["queued_ids"]:
+        active_triage = _read_source_queue_triage_lock()
+        if active_triage:
+            return {**active_triage, "already_queued": len(queued["duplicate_ids"])}
+        raise RuntimeError(f"{len(queued['duplicate_ids'])} selected item(s) are already queued for triage.")
+    job = _ensure_durable_triage_worker(
+        config, item_count=len(queued["queued_ids"]), label=label,
+    )
+    return {
+        **job,
+        "queued_job_id": queued["job_id"],
+        "duplicate_item_count": len(queued["duplicate_ids"]),
     }
-    _write_source_queue_triage_lock(job)
-    return job
 
 
 def _render_source_queue_triage_job(job_key: str) -> bool:
@@ -15737,11 +17742,14 @@ def _render_source_queue_triage_job(job_key: str) -> bool:
         c1, c2, c3 = st.columns([1, 1, 1])
         if c1.button("Refresh triage status", key=f"{job_key}_refresh"):
             st.rerun()
-        if c2.button("Stop triage job", key=f"{job_key}_stop_running"):
+        if c2.button("Stop and cancel pending triage", key=f"{job_key}_stop_running"):
+            cancelled = _cancel_running_durable_triage(include_queued=True)
             message = _request_stop_app_job(job)
             _clear_source_queue_triage_lock(job)
             st.session_state.pop(job_key, None)
-            st.session_state["source_queue_triage_stop_message"] = message
+            st.session_state["source_queue_triage_stop_message"] = (
+                f"{message} Cancelled {cancelled} active or queued durable item job(s)."
+            )
             st.rerun()
         if c3.button("Forget this status card", key=f"{job_key}_forget_running"):
             st.session_state.pop(job_key, None)
@@ -15772,6 +17780,14 @@ def _render_source_queue_triage_job(job_key: str) -> bool:
 def _request_stop_app_job(job: dict) -> str:
     proc = job.get("process")
     pid = job.get("pid")
+    if job.get("kind") == "source-queue-triage":
+        try:
+            pid_int = int(getattr(proc, "pid", None) or pid or 0)
+            if pid_int > 0 and _pid_is_running(pid_int):
+                os.killpg(os.getpgid(pid_int), signal.SIGTERM)
+                return f"Stop requested for durable triage process group {pid_int}."
+        except Exception as exc:
+            return f"Could not stop durable triage process group: {exc}"
     if proc is not None:
         try:
             if proc.poll() is None:
@@ -15866,6 +17882,36 @@ def _source_parse_file_rows(text: str) -> list[dict[str, str]]:
     return rows
 
 
+def _source_file_row_preview_rows(file_rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    """Human preview for local file rows before source package build."""
+    rows: list[dict[str, str]] = []
+    for idx, row in enumerate(file_rows, start=1):
+        file_path = row.get("file_path", "").strip()
+        source_url = row.get("source_url", "").strip()
+        path = Path(file_path).expanduser()
+        exists = path.is_file()
+        rows.append({
+            "row": str(idx),
+            "package item": "file",
+            "will analyze": file_path,
+            "status": "found" if exists else "missing",
+            "source/provenance URL": source_url or "—",
+            "queue relink": "ad-hoc file" if not source_url else "file keeps source URL provenance",
+            "note": row.get("title", "").strip(),
+        })
+        if source_url:
+            rows.append({
+                "row": str(idx),
+                "package item": "companion URL",
+                "will analyze": source_url,
+                "status": "will fetch on worker",
+                "source/provenance URL": source_url,
+                "queue relink": "ad-hoc URL",
+                "note": "Landing/download/source page is analyzed separately for context and network evidence.",
+            })
+    return rows
+
+
 def _source_queue_latest_triage_history(db, item_id: str) -> dict:
     rows = db.execute(
         """
@@ -15912,10 +17958,12 @@ def _source_queue_recent_triage_logs(limit: int = 5) -> list[Path]:
     log_dir = _project_root / "exports" / "app_jobs"
     if not log_dir.exists():
         return []
-    logs = [
-        path for path in log_dir.glob("*source-queue-triage*.log")
+    logs = {
+        path
+        for pattern in ("*source-queue-triage*.log", "*source-queue-retriage*.log")
+        for path in log_dir.glob(pattern)
         if path.is_file()
-    ]
+    }
     return sorted(logs, key=lambda path: path.stat().st_mtime, reverse=True)[:limit]
 
 
@@ -15936,8 +17984,12 @@ def _source_queue_log_looks_failed(text: str) -> bool:
     )
 
 
-def _render_source_queue_recent_triage_logs() -> bool:
-    logs = _source_queue_recent_triage_logs(limit=5)
+def _render_source_queue_recent_triage_logs(*, exclude_path: Path | None = None) -> bool:
+    excluded = Path(exclude_path).resolve() if exclude_path else None
+    logs = [
+        path for path in _source_queue_recent_triage_logs(limit=6)
+        if excluded is None or path.resolve() != excluded
+    ][:5]
     if not logs:
         return False
     latest_tail = _job_log_tail(logs[0], limit=10000)
@@ -15947,7 +17999,7 @@ def _render_source_queue_recent_triage_logs() -> bool:
             "The most recent Source Queue triage log contains an error. "
             "Open the log below before retrying."
         )
-    with st.expander("Recent Source Queue triage logs", expanded=latest_failed):
+    with st.expander("Triage terminal log history", expanded=latest_failed):
         for idx, log_path in enumerate(logs, 1):
             tail = _job_log_tail(log_path, limit=10000)
             label = f"{idx}. {log_path.name}"
@@ -15960,6 +18012,172 @@ def _render_source_queue_recent_triage_logs() -> bool:
                 else:
                     st.caption("Log file is empty.")
     return True
+
+
+def _workflow_canary_execution_eligible(row: dict) -> bool:
+    """True only for an untouched, semantically valid, planner-only proposal."""
+    return (
+        row.get("event_history_valid") is True
+        and row.get("disposition") == "planned_not_authorized"
+        and row.get("execution_state") == "proposal_recorded"
+        and row.get("grant_recorded") is not True
+    )
+
+
+def _workflow_canary_step_rows(row: dict) -> list[dict[str, str]]:
+    """Project one validated testimony attempt into researcher-facing steps."""
+    valid = bool(row.get("event_history_valid"))
+    disposition = str(row.get("disposition") or "")
+    eligible = valid and disposition == "planned_not_authorized"
+    planner_ready = _workflow_canary_execution_eligible(row)
+    granted = valid and bool(row.get("grant_recorded"))
+    preserved = valid and bool(row.get("preservation_recorded"))
+    started = valid and bool(row.get("execution_started_recorded"))
+    terminal = str(row.get("terminal_outcome") or "") if valid else ""
+    released = valid and bool(row.get("lease_released"))
+    recovery_check_required = valid and bool(row.get("recovery_check_required"))
+
+    if not valid:
+        plan_status = "Blocked: ledger history is inconsistent"
+    elif disposition == "planned_not_authorized" and granted and terminal:
+        plan_status = f"Original proposal; one-use grant finished: {terminal}"
+    elif disposition == "planned_not_authorized" and granted:
+        plan_status = "Original proposal; one-use grant recorded (nonterminal)"
+    elif disposition == "planned_not_authorized":
+        plan_status = "Ready proposal: recorded but not authorized"
+    elif disposition in {"satisfied", "satisfied_existing"}:
+        plan_status = "Satisfied: required artifact already exists"
+    elif disposition == "human_required":
+        plan_status = "Human decision required"
+    elif disposition == "held_prerequisite":
+        plan_status = "Held: prerequisite must finish before a fresh plan"
+    else:
+        plan_status = f"Not execution-eligible: {disposition or 'not planned'}"
+
+    if not valid:
+        build_status = "Blocked: execution history is untrusted"
+    elif not eligible:
+        build_status = "Not eligible from this plan"
+    elif recovery_check_required:
+        build_status = "Nonterminal grant: running or interrupted; do not rerun"
+    elif terminal == "succeeded":
+        build_status = "Complete: succeeded"
+    elif terminal == "failed":
+        build_status = "Failed: prior sidecar restored and evidence recorded"
+    elif terminal == "recovery_hold":
+        build_status = "Held: recovery evidence requires researcher review"
+    elif started:
+        build_status = "Running or interrupted"
+    elif granted:
+        build_status = "Granted; adapter not yet recorded as started"
+    else:
+        build_status = "Pending explicit one-use confirmation"
+
+    if not valid:
+        evidence_status = "Blocked: execution history is untrusted"
+    elif not eligible:
+        evidence_status = "Not applicable to this plan row"
+    elif terminal == "succeeded" and released:
+        evidence_status = "Ready: verify output receipt and archived evidence"
+    elif terminal == "failed" and released:
+        evidence_status = "Ready: verify failure receipt and exact restoration evidence"
+    elif terminal == "recovery_hold" and released:
+        evidence_status = "Held: verify recovery receipt and corpus hold"
+    elif recovery_check_required:
+        evidence_status = "Check active execution; recover only if the run is interrupted"
+    elif terminal:
+        evidence_status = "Terminal event recorded; lease release incomplete"
+    else:
+        evidence_status = "Pending execution outcome"
+
+    if not valid:
+        replan_status = "Blocked until ledger integrity is restored"
+    elif not eligible:
+        replan_status = "Not applicable to this plan row"
+    elif terminal == "succeeded" and released:
+        replan_status = "Required: re-attest and create a fresh downstream plan"
+    elif terminal in {"failed", "recovery_hold"}:
+        replan_status = "Held for researcher review and a fresh plan"
+    else:
+        replan_status = "Pending verified terminal outcome"
+
+    return [
+        {"Step": "1. Plan + bind evidence", "Status": plan_status, "Action": "Planner only; cannot execute"},
+        {"Step": "2. Read-only preflight", "Status": "Available" if planner_ready and not granted else "Passed or no longer applicable" if granted else "Blocked", "Action": "Validate current inputs"},
+        {"Step": "3. One-use grant + lock", "Status": "Untrusted / blocked" if not valid else "Not eligible" if not eligible else "Recorded" if granted else "Not granted", "Action": "Exact attempt confirmation required"},
+        {"Step": "4. Preserve prior sidecar", "Status": "Untrusted / blocked" if not valid else "Not applicable" if not eligible else "Recorded" if preserved else "Not recorded", "Action": "Automatic before build"},
+        {"Step": "5. Deterministic candidate build", "Status": build_status, "Action": "Local sidecar only; no model or remote write"},
+        {"Step": "6. Verify or recover evidence", "Status": evidence_status, "Action": "Read-only verify, or recovery without rerun"},
+        {"Step": "7. Re-attest + re-plan", "Status": replan_status, "Action": "Required before downstream work"},
+    ]
+
+
+def _render_research_workflow_overview(config) -> None:
+    """Keep the complete researcher flow and durable attempt state visible."""
+    with st.expander("Research workflow: all steps and durable canary status", expanded=False):
+        st.caption(
+            "This is the adjustment layer over the existing pipeline. It does not replace the "
+            "4,000 completed triage decisions or silently execute, promote, upload, or publish anything."
+        )
+        st.dataframe([
+            {"Order": 1, "Step": "Add source + metadata", "Where": "Source Queue", "Automation": "Duplicate checks and durable triage request"},
+            {"Order": 2, "Step": "Triage route + priority", "Where": "Source Queue", "Automation": "Model suggestion with history and terminal log"},
+            {"Order": 3, "Step": "Select workflow batch (maximum 15)", "Where": "Workflow batch", "Automation": "Reuse triage; plan only missing work"},
+            {"Order": 4, "Step": "Acquire, preserve, extract, create citation units", "Where": "Source Offload / Ingest Workbench", "Automation": "Existing base-pipeline stages; attempt plans only report readiness"},
+            {"Order": 5, "Step": "Analysis", "Where": "Ingest Workbench", "Automation": "Existing first model pass with auditable evidence"},
+            {"Order": 6, "Step": "Enrichment", "Where": "Ingest Workbench", "Automation": "Existing complementary pass; draft terms and tags remain proposals"},
+            {"Order": 7, "Step": "Embeddings", "Where": "Existing ingest pipeline / semantic search", "Automation": "Generated from extracted text; direct ingest and source-worker order differ, and semantic search requires a valid embedding"},
+            {"Order": 8, "Step": "Specialist annotations", "Where": "Media / Testimony / longform review", "Automation": "Only routes flagged by triage and analysis"},
+            {"Order": 9, "Step": "Compile batch outcome", "Where": "Batch outcome and re-audit", "Automation": "Deterministic exceptions and draft-term/tag evidence"},
+            {"Order": 10, "Step": "Review draft records", "Where": "Review Inbox / Lexicon / Tag Registry", "Automation": "Current manual review surfaces; grouped decision consolidation is still pending"},
+            {"Order": 11, "Step": "Generate bounded Review Pack", "Where": "Codex Review Packs", "Automation": "Evidence, citations, provenance, and questions"},
+            {"Order": 12, "Step": "Private remote upload", "Where": "Pending Upload", "Automation": "Separate researcher gate for Sanity/Supabase"},
+            {"Order": 13, "Step": "Public release", "Where": "Publication workflow", "Automation": "Separate human decision; never implied by private upload"},
+        ], hide_index=True, use_container_width=True)
+
+        ledger_path = Path(config.exports_dir) / "workflow_attempts" / "attempts.sqlite3"
+        try:
+            from runner.pipeline.workflow_attempts import list_attempts
+            attempts = list_attempts(ledger_path, limit=100)
+        except Exception as exc:
+            st.warning(f"Durable workflow-attempt status could not be verified: {exc}")
+            return
+        if not attempts:
+            st.info("No durable workflow attempts yet. Create a workflow plan below when a batch is ready.")
+            return
+        st.markdown("**Recent durable workflow attempts**")
+        st.dataframe([{
+            "Item": row["queue_item_id"],
+            "Attempt ID": row["attempt_id"],
+            "Stage": row["stage"],
+            "Planner": row["disposition"],
+            "Execution": row["execution_state"],
+            "Outcome": row["terminal_outcome"] or "—",
+            "Events valid": "yes" if row["event_history_valid"] else "NO — blocked",
+        } for row in attempts], hide_index=True, use_container_width=True)
+        canaries = [row for row in attempts if row.get("stage") == "testimony-candidates-build"]
+        if canaries:
+            labels = {
+                row["attempt_id"]: f"{row['queue_item_id']} · {row['attempt_id']}"
+                for row in canaries
+            }
+            selected_id = st.selectbox(
+                "Inspect testimony canary steps",
+                list(labels),
+                format_func=lambda value: labels[value],
+                key="source_queue_durable_canary_attempt",
+            )
+            selected = next(row for row in canaries if row["attempt_id"] == selected_id)
+            st.dataframe(
+                _workflow_canary_step_rows(selected),
+                hide_index=True,
+                use_container_width=True,
+            )
+        st.caption(f"Append-only ledger: `{ledger_path}`")
+        st.warning(
+            "Status is visible here, but execution remains separately gated. A planner row is never "
+            "authorization, and an invalid event history blocks derived status."
+        )
 
 
 def _source_queue_rendered_recovered(db, item_id: str) -> bool:
@@ -16017,7 +18235,8 @@ def page_source_queue():
             update_status, update_priority, update_notes, delete_item,
             apply_triage_result, queue_stats, batch_groups,
             list_triage_history,
-            normalise_url, parse_pasted_urls,
+            update_source_file_attachment,
+            normalise_url, parse_pasted_urls, get_items_by_urls,
             VALID_STATUSES, VALID_PRIORITIES,
         )
         from runner.pipeline.batch import plan_batch, MAX_BATCH_LIMIT
@@ -16028,6 +18247,12 @@ def page_source_queue():
     db_path = queue_db_path(config.corpus_dir)
     db = open_db(db_path)
     triage_job_key = "source_queue_triage_job"
+    try:
+        resumed_job = _resume_durable_triage_worker(config)
+        if resumed_job and triage_job_key not in st.session_state:
+            st.session_state[triage_job_key] = resumed_job
+    except Exception as exc:
+        st.warning(f"Durable triage queue could not resume automatically: {exc}")
     stop_message = st.session_state.pop("source_queue_triage_stop_message", "")
     if stop_message:
         st.warning(stop_message)
@@ -16143,14 +18368,37 @@ def page_source_queue():
             _format_app_job_lock(active_heavy_job)
             + " Source Queue add/review remains available; starting triage waits for this model job."
         )
-    if not triage_status_rendered:
-        _render_source_queue_recent_triage_logs()
+    visible_job = st.session_state.get(triage_job_key) or {}
+    visible_log = Path(visible_job["log_path"]) if visible_job.get("log_path") else None
+    _render_source_queue_recent_triage_logs(exclude_path=visible_log)
+    durable_state = _durable_triage_queue_state(config)
+    durable_counts = durable_state["counts"]
+    pending_durable = sum(durable_counts.get(status, 0) for status in ("queued", "running", "waiting"))
+    if pending_durable:
+        st.info(
+            f"Durable triage queue: {pending_durable} request(s) pending/running. "
+            "They resume automatically after model-resource locks clear; you do not need to submit them again."
+        )
+    if durable_state["recent"]:
+        with st.expander("Durable triage request history", expanded=False):
+            st.dataframe(
+                [{
+                    "Request": row["id"], "Status": row["status"],
+                    "Items": len(row["item_ids"]), "Attempts": row["attempt_count"],
+                    "Created": row["created_at"], "Last error/wait": row["last_error"],
+                } for row in durable_state["recent"]],
+                hide_index=True, use_container_width=True,
+            )
+    _render_research_workflow_overview(config)
+    from runner.processing_queue_ui import render_processing_queue
+    render_processing_queue(config, key_prefix="source_queue_processing")
 
     # ── Fast add panel ─────────────────────────────────────────────────────
     st.subheader("Add sources")
     st.caption(
-        "Add sources without leaving this page. Choose **Add only** when you are collecting; "
-        "choose **Add + start triage** when you want the queue to fetch snippets and organize them now."
+        "The normal action records each source and immediately queues triage so its priority and "
+        "processing route are assigned. **Add only** is the exception for collecting material that "
+        "must intentionally remain untriaged."
     )
     with st.form("sq_quick_add_form", clear_on_submit=True):
         quick_pasted = st.text_area(
@@ -16162,15 +18410,21 @@ def page_source_queue():
                 "# Lines starting with # are skipped"
             ),
         )
-        quick_cols = st.columns([1, 1, 1, 2])
+        quick_cols = st.columns([1, 1, 1])
         quick_priority = quick_cols[0].selectbox(
             "Priority",
             ["medium", "high", "low", "skip"],
             key="sq_quick_priority",
+            help="Used by Add only. When triage is queued, the model recommendation replaces this provisional value.",
         )
         quick_batch = quick_cols[1].text_input("Batch group", key="sq_quick_batch")
         quick_tags = quick_cols[2].text_input("Tags", key="sq_quick_tags")
-        quick_notes = quick_cols[3].text_input("Notes", key="sq_quick_notes")
+        quick_notes = st.text_area(
+            "Research notes",
+            key="sq_quick_notes",
+            height=80,
+            help="Researcher-authored context in a standard multi-line browser field.",
+        )
         quick_triage_max = st.number_input(
             "Max items to triage now",
             min_value=1,
@@ -16189,14 +18443,17 @@ def page_source_queue():
                 "Challenge/login/CAPTCHA pages are still held for manual capture."
             ),
         )
+        quick_submit_triage = st.form_submit_button("Add + queue triage", type="primary")
         quick_submit_add = st.form_submit_button("Add only")
-        quick_submit_triage = st.form_submit_button("Add + start triage", type="primary")
     if quick_submit_add or quick_submit_triage:
         added, dup_q, dup_c = add_items_from_text(
             db,
             quick_pasted,
             config.corpus_dir,
-            priority=quick_priority,
+            priority=_source_queue_initial_priority(
+                "Add and triage now" if quick_submit_triage else "Add only",
+                quick_priority,
+            ),
             tags=quick_tags,
             batch_group=quick_batch,
             notes=quick_notes,
@@ -16214,14 +18471,14 @@ def page_source_queue():
             "No valid URLs found in the pasted text."
         )
         if quick_submit_triage and (added or dup_q or dup_c):
-            pasted_urls = {normalise_url(url) for url in parse_pasted_urls(quick_pasted)}
-            triage_candidates = [
-                item for item in list_items(db, status=None, batch_group=None, limit=10000)
-                if normalise_url(item.url) in pasted_urls and item.status in {"new", "triaged"}
-            ]
+            pasted_urls = parse_pasted_urls(quick_pasted)
+            matching_rows = get_items_by_urls(db, pasted_urls)
+            # Never spend another model call on an already-triaged duplicate.
+            # Intentional re-triage remains available in the dedicated controls.
+            triage_candidates, already_routed = _source_queue_submission_candidates(matching_rows)
             if not triage_candidates:
                 st.session_state["source_queue_add_message"] += (
-                    " No matching new/triaged queue rows were available to triage."
+                    " No new rows required triage; existing matching sources kept their current routing."
                 )
             else:
                 selected_candidates = triage_candidates[: int(quick_triage_max)]
@@ -16229,17 +18486,21 @@ def page_source_queue():
                     st.session_state[triage_job_key] = _start_source_queue_triage_job(
                         item_ids=[item.id for item in selected_candidates],
                         limit=len(selected_candidates),
-                        force=True,
+                        force=False,
                         use_crawl4ai=quick_use_crawl4ai,
                         label="source-queue-triage-added",
                     )
                     st.session_state["source_queue_add_message"] += (
-                        f" Started background triage for {len(selected_candidates)} matching item(s)."
+                        f" Queued triage for {len(selected_candidates)} new item(s); route assignment follows automatically."
                     )
+                    if already_routed:
+                        st.session_state["source_queue_add_message"] += (
+                            f" {len(already_routed)} existing matching item(s) kept their current route."
+                        )
                     if len(triage_candidates) > len(selected_candidates):
                         st.session_state["source_queue_add_message"] += (
                             f" {len(triage_candidates) - len(selected_candidates)} extra matching item(s) "
-                            "were left as new for the next triage run."
+                            "were left as new. Use **Continue triage for all new queue items** below to process them without pasting again."
                         )
                 except RuntimeError as exc:
                     st.session_state["source_queue_add_message"] += f" Triage was not started: {exc}"
@@ -16275,7 +18536,7 @@ def page_source_queue():
             ),
         )
 
-        imp_col1, imp_col2, imp_col3, imp_col4 = st.columns(4)
+        imp_col1, imp_col2, imp_col3 = st.columns(3)
         if add_mode == "Add and triage now":
             imp_col1.selectbox(
                 "Priority",
@@ -16297,8 +18558,12 @@ def page_source_queue():
                                          placeholder="e.g. UN sources")
         imp_tags = imp_col3.text_input("Tags", key="sq_import_tags",
                                         placeholder="e.g. sogice,legal")
-        imp_notes = imp_col4.text_input("Notes", key="sq_import_notes",
-                                         placeholder="optional free text")
+        imp_notes = st.text_area(
+            "Research notes",
+            key="sq_import_notes",
+            placeholder="optional researcher-authored context",
+            height=80,
+        )
 
         if add_mode == "Add and triage now":
             confirm_auto_triage = st.checkbox(
@@ -16479,6 +18744,61 @@ def page_source_queue():
             item for item in items
             if _source_queue_hold_category(item.url, item.routing_reason, item.source_type) == hold_filter
         ]
+
+    triage_locked = bool(_read_source_queue_triage_lock()) or bool(_read_app_job_lock())
+    all_new_items = list_items(db, status="new", batch_group=None, limit=10000)
+    all_new_count = len(all_new_items)
+    if all_new_count:
+        with st.expander("Continue triage for all new queue items", expanded=not items):
+            st.caption(
+                f"There are **{all_new_count} new/untriaged item(s)** in the queue, including rows that may be hidden by filters. "
+                "This continues triage from the backlog; you do not need to paste the URLs again."
+            )
+            continue_cols = st.columns([2, 1, 1])
+            continue_n = int(continue_cols[0].number_input(
+                "Max new items",
+                min_value=1,
+                max_value=min(500, max(1, all_new_count)),
+                value=min(200, all_new_count),
+                step=25,
+                key="sq_continue_new_triage_n",
+                help="How many new/untriaged queue rows to process from the whole queue, independent of visible filters.",
+            ))
+            continue_use_crawl4ai = continue_cols[1].checkbox(
+                "Crawl4AI",
+                value=st.session_state.get("sq_use_crawl4ai_triage", False),
+                key="sq_continue_new_triage_crawl4ai",
+                help="Use rendered-page fallback for this continuation run.",
+            )
+            continue_ids = _source_queue_new_candidate_ids(all_new_items, limit=continue_n)
+            continue_cols[2].metric("Will triage", len(continue_ids))
+            st.code(
+                _source_queue_triage_command(
+                    limit=len(continue_ids) or 1,
+                    force=False,
+                    use_crawl4ai=continue_use_crawl4ai,
+                    item_ids=continue_ids,
+                ),
+                language="bash",
+            )
+            if st.button(
+                "Continue triage on new queue items",
+                key="sq_continue_new_triage_btn",
+                disabled=triage_locked or not continue_ids,
+                type="primary",
+                help="Starts a background triage job for new/untriaged rows across the whole queue.",
+            ):
+                try:
+                    st.session_state[triage_job_key] = _start_source_queue_triage_job(
+                        item_ids=continue_ids,
+                        limit=len(continue_ids),
+                        force=False,
+                        use_crawl4ai=continue_use_crawl4ai,
+                        label="source-queue-triage-all-new",
+                    )
+                except RuntimeError as exc:
+                    st.error(str(exc))
+                st.rerun()
 
     if not items:
         st.info("No items match the current filter.")
@@ -17286,9 +19606,29 @@ def page_source_queue():
                     hide_index=True,
                     use_container_width=True,
                 )
-            elif not selected_items:
+            if manifest.excluded:
+                missing_file_reasons = {
+                    "needs_attachment:source_file",
+                    "source_file_not_found",
+                }
+                missing_file_count = sum(
+                    1 for item in manifest.excluded
+                    if item.exclusion_reason in missing_file_reasons
+                )
+                if missing_file_count:
+                    st.warning(
+                        f"{missing_file_count} selected/planned item(s) need a source-file fix before batching. "
+                        "Open the row's Source bundle panel, attach/download the PDF or source file, then re-run rehearsal."
+                    )
+                with st.expander("Excluded rows and reasons", expanded=bool(missing_file_count)):
+                    st.dataframe(
+                        _source_manifest_item_rows(manifest.excluded[:100]),
+                        hide_index=True,
+                        use_container_width=True,
+                    )
+            if not manifest.included and not selected_items:
                 st.info("Tick queue rows below, then assign them to this batch group.")
-            else:
+            elif not manifest.included:
                 st.warning(
                     "No eligible items in this batch group yet. Assign checked rows, "
                     "or triage/review the excluded items first."
@@ -17361,6 +19701,24 @@ def page_source_queue():
                 "Live mode runs preflight checks, ingests eligible items, uploads them, "
                 "and runs enrichment when Enrich is checked."
             )
+            _render_workflow_batch_panel(
+                config,
+                db,
+                batch_group=batch_group_name,
+                limit=batch_limit,
+                key_prefix=job_key,
+                selected_item_ids=[item.id for item in selected_items],
+            )
+
+        if not batch_group_name and selected_items:
+            _render_workflow_batch_panel(
+                config,
+                db,
+                batch_group="",
+                limit=min(15, len(selected_items)),
+                key_prefix="sq_explicit_workflow",
+                selected_item_ids=[item.id for item in selected_items],
+            )
 
     # ── Queue table ────────────────────────────────────────────────────────
     _STATUS_EMOJI = {
@@ -17384,6 +19742,10 @@ def page_source_queue():
             header += f"  ⚠️ corpus: `{item.corpus_doc_id}`"
         elif item.batch_group:
             header += f"  `{item.batch_group}`"
+        if item.needs_source_file and not item.source_file_path:
+            header += "  📎 needs file"
+        elif item.source_file_path:
+            header += "  📎 file attached"
 
         with st.expander(header, expanded=False):
             meta_col, action_col = st.columns([3, 1])
@@ -17407,6 +19769,16 @@ def page_source_queue():
                                + (f"  ·  {item.triaged_at[:10]}" if item.triaged_at else ""))
                 if item.routing_reason:
                     st.caption(f"Triage reason: {item.routing_reason}")
+                if item.needs_source_file and not item.source_file_path:
+                    st.warning(
+                        "📎 This source is marked as needing a local/full-text file before Mac Studio batching. "
+                        "Attach the PDF/DOC/EPUB below, or clear the requirement if the URL itself is enough."
+                    )
+                elif item.source_file_path:
+                    st.success(
+                        f"📎 Attached source file: `{item.source_file_path}`. "
+                        "Mac Studio source-offload batches will process this file and also include the URL as a companion source."
+                    )
                 triage_history = visible_triage_history.get(item.id, [])
                 if triage_history:
                     with st.expander(f"Triage history ({len(triage_history)} recent)", expanded=False):
@@ -17460,6 +19832,78 @@ def page_source_queue():
                             _source_queue_snapshot_command(item.id, snapshot_path, snapshot_package),
                             language="bash",
                         )
+
+                with st.expander("Source bundle / attached PDF or file", expanded=bool(item.needs_source_file and not item.source_file_path)):
+                    st.caption(
+                        "Use this when the queue URL is a landing page, DOI, Google Books page, journal page, "
+                        "or direct download link but the actual analyzable source is a local PDF/DOC/EPUB. "
+                        "When attached, Source Offload sends the file to the Mac Studio and also ingests the URL separately as context."
+                    )
+                    attach_cols = st.columns([1, 1])
+                    attach_needed = attach_cols[0].checkbox(
+                        "Require file before batching",
+                        value=bool(item.needs_source_file),
+                        key=f"sq_attach_needed_{item.id}",
+                        help="When checked, batch planning excludes this row until a local file path is saved.",
+                    )
+                    relation_options = [
+                        "full_text_pdf",
+                        "full_text_file",
+                        "downloaded_pdf",
+                        "saved_snapshot",
+                        "supplement",
+                        "metadata_companion",
+                    ]
+                    current_relation = item.source_file_relation or (
+                        "full_text_pdf" if item.source_type == "pdf" else "full_text_file"
+                    )
+                    relation_index = (
+                        relation_options.index(current_relation)
+                        if current_relation in relation_options else 1
+                    )
+                    attach_relation = attach_cols[1].selectbox(
+                        "Relationship",
+                        relation_options,
+                        index=relation_index,
+                        key=f"sq_attach_relation_{item.id}",
+                    )
+                    attach_path = st.text_input(
+                        "Local file path on this MacBook",
+                        value=item.source_file_path or "",
+                        placeholder="/Users/sergiogalvaoroxo/Downloads/full-text.pdf",
+                        key=f"sq_attach_path_{item.id}",
+                    )
+                    attach_source_url = st.text_input(
+                        "Direct file/source URL (optional)",
+                        value=item.source_file_url or "",
+                        placeholder="https://publisher.example/full-text.pdf",
+                        key=f"sq_attach_source_url_{item.id}",
+                        help="Optional direct PDF/download URL. The queue URL above remains the landing/context URL.",
+                    )
+                    attach_note = st.text_area(
+                        "Attachment note",
+                        value=item.source_file_note or "",
+                        placeholder="Downloaded from publisher page; full book PDF.",
+                        key=f"sq_attach_note_{item.id}",
+                        height=80,
+                    )
+                    attach_path_norm = _normalise_local_source_path(attach_path)
+                    if attach_path_norm and not Path(attach_path_norm).expanduser().is_file():
+                        st.warning(
+                            "The path does not exist locally yet. If it is in OneDrive/iCloud, download it first "
+                            "or mark it as always available on this device."
+                        )
+                    if st.button("Save source bundle", key=f"sq_attach_save_{item.id}"):
+                        update_source_file_attachment(
+                            db,
+                            item.id,
+                            needs_source_file=attach_needed,
+                            source_file_path=attach_path_norm,
+                            source_file_relation=attach_relation,
+                            source_file_url=attach_source_url,
+                            source_file_note=attach_note,
+                        )
+                        st.rerun()
 
                 # Corpus association — prominent warning
                 if item.corpus_doc_id:
@@ -18166,8 +20610,48 @@ def _source_offload_eligible_items(db) -> list[dict]:
             "source_type": item.source_type, "flags": flags,
             "flagged": bool(flags), "exclusion_reason": exclusion_reason(item),
             "corpus_doc_id": item.corpus_doc_id,
+            "needs_source_file": item.needs_source_file,
+            "source_file_path": item.source_file_path,
         })
     return out
+
+
+def _source_queue_file_spec(item):
+    """Build a file-backed spec from a Source Queue row's attached file."""
+    from runner.pipeline import intake as intake_mod
+    from runner.pipeline.offload_source import SourceItemSpec
+
+    file_path = _normalise_local_source_path(getattr(item, "source_file_path", "") or "")
+    candidate_source_url = (
+        getattr(item, "source_file_url", "") or getattr(item, "url", "") or ""
+    ).strip()
+    source_url = candidate_source_url if candidate_source_url.startswith(("http://", "https://")) else ""
+    relation = getattr(item, "source_file_relation", "") or "full_text_file"
+    notes = " ".join(
+        part for part in [
+            f"Queue-attached source file ({relation}).",
+            getattr(item, "source_file_note", "") or "",
+            f"Landing/source queue URL: {getattr(item, 'url', '')}" if getattr(item, "url", "") else "",
+            getattr(item, "notes", "") or "",
+        ]
+        if part
+    )
+    return SourceItemSpec(
+        source_kind="file",
+        declared_source_type=intake_mod._detect_source_type(file_path),
+        file_path=file_path,
+        url=source_url,
+        queue_item_id=getattr(item, "id", "") or "",
+        url_hash=getattr(item, "url_hash", "") or "",
+        title=getattr(item, "title", "") or "",
+        notes=notes,
+        priority=getattr(item, "priority", "") or "",
+        recommended_llm=getattr(item, "recommended_llm", "") or "",
+        overnight_batch_safe=bool(getattr(item, "overnight_batch_safe", True)),
+        tags=getattr(item, "tags", "") or "",
+        doc_type_hint=getattr(item, "doc_type_hint", "") or "",
+        suggested_process_route=getattr(item, "suggested_process_route", "") or "",
+    )
 
 
 def _source_specs_from_queue_items(items) -> list:
@@ -18177,6 +20661,23 @@ def _source_specs_from_queue_items(items) -> list:
 
     specs = []
     for item in items:
+        if getattr(item, "source_file_path", ""):
+            specs.append(_source_queue_file_spec(item))
+            queue_url = str(getattr(item, "url", "") or "").strip()
+            attached_url = str(getattr(item, "source_file_url", "") or "").strip()
+            companion_url = (
+                queue_url if queue_url.startswith(("http://", "https://")) else attached_url
+            )
+            if companion_url.startswith(("http://", "https://")):
+                specs.append(_source_companion_url_spec(
+                    companion_url,
+                    title=f"Source page for {getattr(item, 'title', '') or getattr(item, 'id', '')}",
+                    notes=(
+                        "Companion URL for a queue-attached source file. "
+                        f"Queue relink remains attached to queue item {getattr(item, 'id', '')}."
+                    ),
+                ))
+            continue
         specs.append(SourceItemSpec(
             source_kind="url",
             declared_source_type=intake_mod._detect_source_type(item.url),
@@ -18760,16 +21261,21 @@ def _start_source_worker_job(
         sys.executable, "-m", "runner", "source-worker", str(package_dir),
         "--llm", llm, "--enrich-model", enrich_model,
     ]
-    with log_path.open("w", encoding="utf-8") as log_file:
-        log_file.write(f"$ {shlex.join(command)}\n\n")
-        log_file.flush()
-        proc = subprocess.Popen(
-            command,
-            cwd=_project_root,
-            stdout=log_file,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
+    lease_fd = _acquire_model_job_lease()
+    try:
+        with log_path.open("w", encoding="utf-8") as log_file:
+            log_file.write(f"$ {shlex.join(command)}\n\n")
+            log_file.flush()
+            proc = subprocess.Popen(
+                command, cwd=_project_root, stdout=log_file,
+                stderr=subprocess.STDOUT, text=True, pass_fds=(lease_fd,),
+            )
+        os.close(lease_fd)
+        lease_fd = None
+    except Exception:
+        if lease_fd is not None:
+            _release_model_job_lease(lease_fd)
+        raise
     job = {
         "process": proc,
         "pid": proc.pid,
@@ -19138,10 +21644,10 @@ def _render_source_export(config, root: Path) -> None:
         "Local PDFs / books / source files (one per line, optional)",
         key="src_export_files",
         help=(
-            "Use either `/path/to/file.pdf` or "
-            "`/path/to/file.pdf | https://source-or-download-page | Optional title`. "
-            "When a URL is provided, the package includes both the file and a separate "
-            "companion URL item so the landing/download page is not left unchecked."
+            "One row per local file. Use `/path/to/file.pdf` for file-only analysis, or "
+            "`/path/to/file.pdf | https://source-or-download-page | Optional title` when the PDF/book "
+            "has a landing page, DOI, Google Books page, download page, or source URL. "
+            "With a URL, the package includes two items: the file itself and a separate companion URL."
         ),
         placeholder=(
             "/Users/sergiogalvaoroxo/Downloads/book.pdf | https://example.org/book-page | Book title\n"
@@ -19156,6 +21662,16 @@ def _render_source_export(config, root: Path) -> None:
             "as contextual/network evidence. Do not wrap Finder paths in quotes; the app strips them "
             "when possible, but raw paths are safest."
         )
+        preview_rows = _source_file_row_preview_rows(file_rows)
+        if preview_rows:
+            st.markdown("**What will be sent**")
+            st.dataframe(preview_rows, hide_index=True, width="stretch")
+            missing_files = [row for row in preview_rows if row["package item"] == "file" and row["status"] == "missing"]
+            if missing_files:
+                st.warning(
+                    "One or more local files are missing or still cloud-only. "
+                    "Open/download them locally in Finder before building the source package."
+                )
         with st.expander("Book/report splitting preview commands"):
             st.caption(
                 "`split-book` is a preview-only helper for long PDFs/EPUB/DOCX/MD files. "

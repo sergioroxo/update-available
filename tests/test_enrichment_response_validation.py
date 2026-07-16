@@ -68,7 +68,7 @@ def test_enrichment_validate_response_repairs_out_of_range_confidence():
     assert result.lexicon_proposals[0].model_confidence == 1.0
 
 
-def test_enrichment_validate_response_reports_unrepairable_validation_details():
+def test_enrichment_validate_response_reports_content_free_failure_identity():
     raw = """
     {
       "lexicon_proposals": [
@@ -86,8 +86,11 @@ def test_enrichment_validate_response_reports_unrepairable_validation_details():
         _validate_response("doc-1", raw, "litelm")
 
     message = str(excinfo.value)
-    assert "Validation details" in message
-    assert "attestation_tier" in message
+    assert "Response fingerprint:" in message
+    assert "characters:" in message
+    assert "attestation_tier" not in message
+    assert "bad-tier" not in message
+    assert "homosexuality as disorder" not in message
 
 
 def test_enrichment_validate_response_accepts_legacy_documented_attestation_tier():

@@ -23,7 +23,9 @@ from runner.pipeline.source_queue import (
     batch_groups,
     delete_item,
     detect_url_source_type,
+    exclusion_reason,
     get_item,
+    get_items_by_urls,
     list_items,
     list_triage_history,
     mark_ingested,
@@ -33,8 +35,10 @@ from runner.pipeline.source_queue import (
     priority_from_triage,
     queue_db_path,
     queue_stats,
+    source_file_requirement_for_url,
     update_notes,
     update_priority,
+    update_source_file_attachment,
     update_status,
     url_hash,
 )
@@ -142,6 +146,80 @@ class TestUrlHash:
 
     def test_hash_length(self):
         assert len(url_hash("https://example.com")) == 24
+
+
+class TestSourceFileRequirements:
+    def test_pdf_url_requests_source_file(self):
+        needed, reason = source_file_requirement_for_url("https://example.org/report.pdf")
+
+        assert needed is True
+        assert reason == "file_like_url:.pdf"
+
+    def test_doi_url_requests_source_file(self):
+        needed, reason = source_file_requirement_for_url("https://doi.org/10.1234/example")
+
+        assert needed is True
+        assert reason.startswith("likely_full_text_landing:")
+
+    def test_regular_webpage_does_not_request_source_file(self):
+        needed, reason = source_file_requirement_for_url("https://example.org/blog-post")
+
+        assert needed is False
+        assert reason == ""
+
+    def test_added_pdf_row_is_flagged_until_attachment_saved(self, db):
+        item = add_item(db, "https://example.org/report.pdf")
+
+        loaded = get_item(db, item.id)
+        assert loaded.needs_source_file is True
+        assert loaded.source_file_relation == "full_text_file"
+        assert loaded.source_file_note == "file_like_url:.pdf"
+        assert loaded.source_file_path == ""
+
+    def test_update_source_file_attachment_unblocks_requirement(self, db, tmp_path):
+        pdf = tmp_path / "report.pdf"
+        pdf.write_bytes(b"%PDF-1.4")
+        item = add_item(db, "https://doi.org/10.1234/example")
+
+        ok = update_source_file_attachment(
+            db,
+            item.id,
+            needs_source_file=True,
+            source_file_path=str(pdf),
+            source_file_relation="full_text_pdf",
+            source_file_url="https://publisher.example/report.pdf",
+            source_file_note="Downloaded full text.",
+        )
+
+        assert ok is True
+        loaded = get_item(db, item.id)
+        assert loaded.needs_source_file is True
+        assert loaded.source_file_path == str(pdf)
+        assert loaded.source_file_relation == "full_text_pdf"
+        assert loaded.source_file_url == "https://publisher.example/report.pdf"
+
+    def test_missing_attached_source_file_stays_excluded(self, db):
+        item = add_item(db, "https://doi.org/10.1234/example")
+        update_source_file_attachment(
+            db,
+            item.id,
+            needs_source_file=True,
+            source_file_path="/no/such/full-text.pdf",
+        )
+        triage = SimpleNamespace(
+            doc_type_hint="academic",
+            recommended_llm="litelm",
+            routing_reason="safe test item",
+            complexity="moderate",
+            triage_succeeded=True,
+            overnight_batch_safe=True,
+            suggested_process_route="standard",
+        )
+        apply_triage_result(db, item.id, triage, model_name="litelm/triage")
+
+        loaded = get_item(db, item.id)
+
+        assert exclusion_reason(loaded) == "source_file_not_found"
 
 
 # ---------------------------------------------------------------------------
@@ -398,6 +476,22 @@ class TestListItems:
 
     def test_get_item_missing_returns_none(self, db):
         assert get_item(db, "notexist") is None
+
+    def test_get_items_by_urls_uses_normalized_identity_and_input_order(self, db):
+        first = add_item(db, "https://EXAMPLE.org/first/")
+        second = add_item(db, "https://example.org/second")
+
+        found = get_items_by_urls(db, [
+            "https://example.org/second#fragment",
+            "https://example.org/first",
+            "https://example.org/second",
+            "https://example.org/missing",
+        ])
+
+        assert [item.id for item in found] == [second.id, first.id]
+
+    def test_get_items_by_urls_empty_input(self, db):
+        assert get_items_by_urls(db, []) == []
 
 
 # ---------------------------------------------------------------------------

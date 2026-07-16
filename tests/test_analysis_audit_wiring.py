@@ -12,6 +12,7 @@ All HTTP calls are monkeypatched; no real network or LLM traffic.
 """
 from __future__ import annotations
 
+import ast
 import json
 import sys
 import types
@@ -164,6 +165,16 @@ def test_validate_response_failed_path_populates_errors():
     assert audit["validation_attempts"] >= 1
     assert len(audit["errors"]) >= 1
     assert "Could not extract" in audit["errors"][0]
+
+
+def test_validate_response_failure_never_echoes_sensitive_model_output():
+    secret = "PRIVATE TESTIMONY: survivor full name and address"
+    audit: dict = {}
+    with pytest.raises(ValueError) as excinfo:
+        _validate_response(secret, _audit=audit)
+    assert secret not in str(excinfo.value)
+    assert secret not in json.dumps(audit)
+    assert "Response fingerprint:" in str(excinfo.value)
 
 
 def test_validate_response_no_audit_unchanged_behavior():
@@ -503,3 +514,38 @@ def test_save_locally_lexicon_zero_when_absent_from_audit(tmp_path):
     assert payload["lexicon_terms_available"] == 0
     assert payload["lexicon_terms_injected"] == 0
     assert payload["lexicon_injection_cap"] == 0
+
+
+def test_workbench_threads_analysis_audit_through_run_save_and_upload():
+    app_path = Path(__file__).parents[1] / "runner" / "app.py"
+    tree = ast.parse(app_path.read_text(encoding="utf-8"))
+    functions = {
+        node.name: node
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+    analyze_function = functions["_workbench_analyze"]
+    analyze_calls = [
+        node for node in ast.walk(analyze_function)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "run"
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "analyze"
+    ]
+    assert len(analyze_calls) == 1
+    assert any(keyword.arg == "_audit" for keyword in analyze_calls[0].keywords)
+    assert "analysis_audit" in ast.unparse(analyze_function)
+
+    editor_function = functions["_render_analysis_editor"]
+    upload_calls = [
+        node for node in ast.walk(editor_function)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr in {"save_locally", "run"}
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "upload"
+    ]
+    assert {node.func.attr for node in upload_calls} == {"save_locally", "run"}
+    assert all(any(keyword.arg == "_audit" for keyword in node.keywords) for node in upload_calls)

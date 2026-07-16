@@ -13,6 +13,7 @@ All HTTP calls are monkeypatched; no real network or LLM traffic.
 """
 from __future__ import annotations
 
+import ast
 import json
 import types
 from pathlib import Path
@@ -220,6 +221,16 @@ def test_validate_response_failed_path_populates_errors():
     assert audit["validation_attempts"] >= 1
     assert len(audit["errors"]) >= 1
     assert "Could not extract" in audit["errors"][0]
+
+
+def test_validate_response_failure_never_echoes_sensitive_model_output():
+    secret = "PRIVATE TESTIMONY: survivor full name and address"
+    audit: dict = {}
+    with pytest.raises(ValueError) as excinfo:
+        _validate_response("doc-1", secret, "litelm", _audit=audit)
+    assert secret not in str(excinfo.value)
+    assert secret not in json.dumps(audit)
+    assert "Response fingerprint:" in str(excinfo.value)
 
 
 def test_validate_response_no_audit_unchanged_behavior():
@@ -522,6 +533,35 @@ def test_chunked_enrichment_records_failed_chunk(monkeypatch, tmp_path):
     failed = [c for c in audit["chunks"] if not c["succeeded"]]
     assert len(failed) >= 1
     assert failed[0]["error"] is not None
+
+
+def test_chunked_enrichment_never_persists_failed_response_or_exception_text(monkeypatch, tmp_path):
+    secret = "PRIVATE TESTIMONY: do not persist this excerpt"
+    calls = [0]
+
+    def _one_failure(llm, sp, um, config, model=None, *, _audit=None):
+        calls[0] += 1
+        if calls[0] == 1:
+            raise ValueError(secret)
+        return _enrichment_json()
+
+    monkeypatch.setattr(enrich, "_call_enrichment_model", _one_failure)
+    monkeypatch.setattr(enrich, "_build_system_prompt", lambda *a: "sys")
+    monkeypatch.setattr(enrich, "_build_user_message", lambda *a, **kw: "usr")
+
+    audit: dict = {}
+    result = enrich._run_chunked_enrichment(
+        doc_id="doc-1",
+        preprocess=_preprocess("word " * 5000),
+        analysis=_analysis(),
+        config=_config(tmp_path),
+        llm="litelm",
+        model=None,
+        first_error=ValueError(secret),
+        _audit=audit,
+    )
+    assert secret not in json.dumps(audit)
+    assert secret not in result.researcher_notes
 
 
 def test_chunked_enrichment_no_audit_unchanged_behavior(monkeypatch, tmp_path):
@@ -940,3 +980,67 @@ def test_workbench_enrich_no_audit_file_when_audit_is_none(tmp_path):
     enrich.save(doc_id, _make_result(doc_id), cfg)   # no _audit kwarg
 
     assert not (doc_dir / "enrichment_audit.json").exists()
+
+
+def test_cli_alternate_enrichment_threads_distinct_audit_to_save_alt(tmp_path, monkeypatch):
+    from runner import main as runner_main
+
+    doc_id = "doc-cli-alt-audit"
+    doc_dir = tmp_path / doc_id
+    doc_dir.mkdir()
+    (doc_dir / "analysis.json").write_text(
+        _analysis().model_dump_json(), encoding="utf-8",
+    )
+    (doc_dir / "extracted.txt").write_text("source text", encoding="utf-8")
+    cfg = types.SimpleNamespace(
+        corpus_dir=tmp_path,
+        litelm_enrichment_model="core-gemma",
+        litelm_enrichment_model_alt="review-gemma",
+    )
+    monkeypatch.setattr(runner_main, "load_config", lambda llm: cfg)
+    audits = []
+
+    def _run(doc_id, preprocess, analysis, *, config, llm, model, _audit):
+        assert _audit is not None
+        _audit.update({"model": model or "core-gemma", "input_receipt": {"exact": True}})
+        audits.append(_audit)
+        return _make_result(doc_id)
+
+    saved = {}
+    monkeypatch.setattr(runner_main.enrich, "run", _run)
+    monkeypatch.setattr(runner_main.enrich, "save", lambda *a, _audit, **k: doc_dir / "enrichment.json")
+
+    def _save_alt(*args, _audit, **kwargs):
+        saved["audit"] = _audit
+        return doc_dir / "enrichment_review-gemma.json"
+
+    monkeypatch.setattr(runner_main.enrich, "save_alt", _save_alt)
+    monkeypatch.setattr(runner_main.ollama_memory, "unload_litelm_enrichment", lambda *a, **k: True)
+
+    runner_main.enrich_doc(
+        doc_id=doc_id,
+        llm="litelm",
+        model=None,
+        second_opinion=True,
+        yes=True,
+    )
+
+    assert len(audits) == 2
+    assert audits[0] is not audits[1]
+    assert saved["audit"] is audits[1]
+    assert saved["audit"]["model"] == "review-gemma"
+
+
+def test_all_cli_save_alt_calls_persist_their_audit_dict():
+    main_path = Path(__file__).parents[1] / "runner" / "main.py"
+    tree = ast.parse(main_path.read_text(encoding="utf-8"))
+    calls = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "save_alt"
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "enrich"
+    ]
+    assert len(calls) == 2
+    assert all(any(keyword.arg == "_audit" for keyword in node.keywords) for node in calls)

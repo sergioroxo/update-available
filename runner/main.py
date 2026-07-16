@@ -14,6 +14,7 @@ Usage:
 """
 from typing import List, Optional
 from pathlib import Path
+import json
 import os
 import typer
 from rich.console import Console
@@ -21,11 +22,13 @@ from rich.panel import Panel
 
 from .config import load_config
 from .pipeline import embed  # imported directly so embed-test works without full config
-from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion, archive_summary, knowledge_graph, knowledge_quality, system_health, research_digest, longform, longform_review, embedding_repair
+from .pipeline import intake, preprocess, analyze, enrich, review, triage, upload, ollama_memory, research_annotate, related_search, media_review, screenshots, second_opinion, archive_summary, knowledge_graph, knowledge_quality, system_health, research_digest, longform, longform_review, testimony_candidates, testimony_deep_review, embedding_repair
 from .pipeline import search as search_mod
 from .pipeline.system_tools import tool_path
+from .research_ops import app as research_app
 
 app = typer.Typer(name="runner", add_completion=False)
+app.add_typer(research_app, name="research")
 console = Console()
 
 
@@ -271,11 +274,19 @@ def ingest(
                 console.print(f"[green]Enrichment saved → {saved}[/green]")
             if second_opinion and enrich_llm.startswith("litelm"):
                 alt_model = config.litelm_enrichment_model_alt
+                _alt_enrich_audit: dict = {}
                 alt = enrich.run(
                     intake_result.doc_id, preprocess_result, final_analysis,
                     config=config, llm=enrich_llm, model=alt_model,
+                    _audit=_alt_enrich_audit,
                 )
-                alt_saved = enrich.save_alt(intake_result.doc_id, alt, config, label=alt_model.replace("/", "-"))
+                alt_saved = enrich.save_alt(
+                    intake_result.doc_id,
+                    alt,
+                    config,
+                    label=alt_model.replace("/", "-"),
+                    _audit=_alt_enrich_audit,
+                )
                 console.print(f"[green]Second-opinion enrichment saved → {alt_saved}[/green]")
         except Exception as exc:
             console.print(Panel(f"[red]Enrichment failed: {exc}[/red]", title="Stage 3c error"))
@@ -507,8 +518,23 @@ def enrich_doc(
         console.print(f"[green]Enrichment saved → {saved}[/green]")
         if second_opinion and llm.startswith("litelm"):
             alt_model = config.litelm_enrichment_model_alt
-            alt = enrich.run(doc_id, preprocess, analysis, config=config, llm=llm, model=alt_model)
-            alt_saved = enrich.save_alt(doc_id, alt, config, label=alt_model.replace("/", "-"))
+            _alt_enrich_audit: dict = {}
+            alt = enrich.run(
+                doc_id,
+                preprocess,
+                analysis,
+                config=config,
+                llm=llm,
+                model=alt_model,
+                _audit=_alt_enrich_audit,
+            )
+            alt_saved = enrich.save_alt(
+                doc_id,
+                alt,
+                config,
+                label=alt_model.replace("/", "-"),
+                _audit=_alt_enrich_audit,
+            )
             console.print(f"[green]Second-opinion enrichment saved → {alt_saved}[/green]")
     else:
         console.print("[yellow]Enrichment skipped.[/yellow]")
@@ -1557,6 +1583,75 @@ def queue_triage(
     )
 
 
+@app.command(name="triage-jobs-run")
+def triage_jobs_run_cmd(
+    once: bool = typer.Option(False, "--once", help="Return instead of waiting when a heavy model job is active"),
+    poll_seconds: float = typer.Option(5.0, "--poll-seconds", min=0.1, help="Seconds between heavy-job lock checks"),
+):
+    """Drain the durable Source Queue triage ledger with one atomic worker."""
+    from .pipeline.triage_jobs import (
+        acquire_worker_lock,
+        open_jobs_db,
+        recover_interrupted_jobs,
+        release_worker_lock,
+        run_queued_jobs,
+        triage_jobs_db_path,
+    )
+    from .pipeline.source_queue import queue_db_path
+
+    config = load_config(require_services=False)
+    jobs_path = triage_jobs_db_path(config.corpus_dir)
+    worker_lock = Path(__file__).resolve().parent.parent / "exports" / "app_jobs" / "source_queue_triage_worker.lock"
+    heavy_lock = Path(__file__).resolve().parent.parent / "exports" / "app_jobs" / "active_llm_job.json"
+    model_lease = Path(__file__).resolve().parent.parent / "exports" / "app_jobs" / "active_llm_job.lease"
+    try:
+        fd = acquire_worker_lock(worker_lock)
+    except RuntimeError as exc:
+        console.print(f"[dim]{exc}[/dim]")
+        return
+    db = open_jobs_db(jobs_path)
+    try:
+        recovered = recover_interrupted_jobs(db)
+        result = run_queued_jobs(
+            db,
+            project_root=Path(__file__).resolve().parent.parent,
+            heavy_lock_path=heavy_lock,
+            poll_seconds=poll_seconds,
+            once=once,
+            source_queue_path=queue_db_path(config.corpus_dir),
+            model_lease_path=model_lease,
+        )
+    finally:
+        db.close()
+        release_worker_lock(worker_lock, fd)
+    console.print(
+        f"[green]Durable triage worker finished[/green]: processed={result.get('processed', 0)} "
+        f"failed={result.get('failed', 0)} recovered={recovered} waiting={result.get('waiting', 0)}"
+    )
+
+
+@app.command(name="triage-jobs-list")
+def triage_jobs_list_cmd(
+    limit: int = typer.Option(30, "--limit", "-n", min=1),
+):
+    """Show recent durable Source Queue triage requests."""
+    from .pipeline.triage_jobs import list_jobs, open_jobs_db, queue_counts, triage_jobs_db_path
+
+    config = load_config(require_services=False)
+    db = open_jobs_db(triage_jobs_db_path(config.corpus_dir))
+    try:
+        rows = list_jobs(db, limit=limit)
+        counts = queue_counts(db)
+    finally:
+        db.close()
+    console.print(f"[bold]Durable triage jobs[/bold] {counts}")
+    for row in rows:
+        console.print(
+            f"  {row['id']} {row['status']} items={len(row['item_ids'])} "
+            f"attempts={row['attempt_count']} {row['last_error'][:80]}"
+        )
+
+
 @app.command(name="queue-mark")
 def queue_mark(
     item_id: str = typer.Argument(..., help="Queue item ID (8-char, from queue-list)"),
@@ -2147,6 +2242,672 @@ def batch_run_cmd(
     console.print(f"[dim]Report → {report_path}[/dim]")
 
 
+@app.command(name="batch-outcome")
+def batch_outcome_cmd(
+    ledger: Path = typer.Argument(
+        ..., help="Existing batch ledger, worker_report, or result_manifest JSON"
+    ),
+    policy: Optional[Path] = typer.Option(
+        None,
+        "--policy",
+        help="Versioned routing policy JSON (default: runner/data/batch_outcome_policy.json)",
+    ),
+    out_dir: Optional[Path] = typer.Option(
+        None,
+        "--out-dir",
+        help="Audit output root (default: <exports_dir>/batch_outcomes)",
+    ),
+):
+    """Compile an immutable, dry-run outcome and route plan for processed work.
+
+    This command is local and deterministic. It performs no model calls,
+    corpus mutations, uploads, or remote writes. Re-running unchanged evidence
+    reuses its snapshot; changing evidence or policy creates a new audit that
+    records outcome differences from the preceding snapshot.
+    """
+    from .pipeline.batch_outcome import compile_batch_outcome
+
+    config = load_config(require_services=False)
+    default_policy = Path(__file__).parent / "data" / "batch_outcome_policy.json"
+    selected_policy = policy or default_policy
+    output_root = out_dir or (config.exports_dir / "batch_outcomes")
+    try:
+        result = compile_batch_outcome(
+            ledger,
+            config.corpus_dir,
+            output_root,
+            policy_path=selected_policy,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Batch outcome compilation refused[/red]"))
+        raise typer.Exit(1)
+
+    outcome = result["outcome"]
+    counts = outcome["summary"]["outcome_counts"]
+    console.print(f"\n[bold]Batch Outcome[/bold]  [dim]{outcome['audit_id']}[/dim]")
+    console.print(
+        f"  Accounted for: [green]{outcome['summary']['accounted_for']}[/green] / "
+        f"{outcome['summary']['expected_items']}"
+    )
+    for name, count in sorted(counts.items()):
+        console.print(f"  {name}: {count}")
+    if result["reused"]:
+        console.print("[dim]Unchanged evidence and policy — reused existing audit snapshot.[/dim]")
+    changes = outcome["changes_from_previous"]["changed"]
+    if changes:
+        console.print(f"[yellow]{len(changes)} outcome(s) changed since the previous audit.[/yellow]")
+    console.print(f"[dim]Outcome → {result['outcome_path']}[/dim]")
+    console.print(f"[dim]Report  → {result['markdown_path']}[/dim]")
+    console.print(f"[dim]Routes  → {result['route_plan_path']}[/dim]")
+    console.print("[bold]No routes were executed and nothing was published.[/bold]")
+
+
+@app.command(name="workflow-batch-plan")
+def workflow_batch_plan_cmd(
+    item_id: Optional[list[str]] = typer.Option(None, "--item-id", help="Explicit Source Queue ID; repeat up to 15 times"),
+    batch_group: str = typer.Option("", "--batch", "-b", help="Select from this existing Source Queue batch group"),
+    limit: int = typer.Option(15, "--limit", "-n", help="Maximum selected sources; hard cap 15"),
+    purpose: str = typer.Option("", "--purpose", help="Batch research purpose"),
+    question: Optional[list[str]] = typer.Option(None, "--question", help="Batch research question; repeat as needed"),
+    remote_write_policy: str = typer.Option("none", "--remote-write-policy", help="none or private_upload"),
+    disclosure_mode: str = typer.Option("internal_research", "--disclosure-mode", help="internal_research or external_safe"),
+    out_dir: Optional[Path] = typer.Option(None, "--out-dir", help="Output root (default: <exports>/workflow_batches)"),
+):
+    """Plan at most 15 sources before ordinary/specialist routing; execute nothing."""
+    from datetime import datetime, timezone
+    from .pipeline.source_queue import open_db_readonly, queue_db_path
+    from .pipeline.workflow_batch import WorkflowPolicy, plan_workflow_batch, write_workflow_batch
+
+    if not item_id and not batch_group:
+        console.print("[red]Provide explicit --item-id values or an existing --batch group.[/red]")
+        raise typer.Exit(1)
+    config = load_config(require_services=False)
+    db = open_db_readonly(queue_db_path(config.corpus_dir))
+    workflow_id = datetime.now(timezone.utc).strftime("workflow-%Y%m%d-%H%M%S")
+    try:
+        manifest = plan_workflow_batch(
+            db,
+            workflow_batch_id=workflow_id,
+            selected_item_ids=list(item_id or []) if item_id else None,
+            batch_group=batch_group,
+            limit=limit,
+            policy=WorkflowPolicy(
+                research_purpose=purpose,
+                research_questions=list(question or []),
+                remote_write_policy=remote_write_policy,
+                disclosure_mode=disclosure_mode,
+            ),
+        )
+        path = write_workflow_batch(
+            manifest, out_dir or (config.exports_dir / "workflow_batches")
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Workflow batch plan refused[/red]"))
+        raise typer.Exit(1)
+    finally:
+        db.close()
+    summary = manifest["summary"]
+    console.print(f"\n[bold]Workflow Batch[/bold]  [dim]{workflow_id}[/dim]")
+    console.print(
+        f"  selected={summary['selected']} ordinary={summary['ordinary']} "
+        f"attended={summary['attended_base']} holds={summary['technical_hold']} "
+        f"specialist routes={summary['specialist_routes']}"
+    )
+    console.print(f"[dim]Plan → {path}[/dim]")
+    console.print("[bold]Dry run only: triage was reused; nothing was executed or published.[/bold]")
+
+
+@app.command(name="specialist-plan")
+def specialist_plan_cmd(
+    workflow_manifest: Path = typer.Argument(..., help="workflow-batch-v1.0 JSON plan"),
+    out_dir: Optional[Path] = typer.Option(None, "--out-dir", help="Output root (default: <exports>/specialist_dispatch)"),
+):
+    """Create a dry-run specialist plan over existing pipeline tools."""
+    from .pipeline.specialist_dispatch import build_dispatch_plan, write_dispatch_plan
+
+    config = load_config(require_services=False)
+    try:
+        manifest = json.loads(workflow_manifest.read_text(encoding="utf-8"))
+        plan = build_dispatch_plan(manifest, config.corpus_dir)
+        path = write_dispatch_plan(
+            plan,
+            out_dir or (config.exports_dir / "specialist_dispatch"),
+            workflow_manifest=manifest,
+            corpus_dir=config.corpus_dir,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Specialist plan refused[/red]"))
+        raise typer.Exit(1)
+    console.print(f"\n[bold]Specialist Dispatch Plan[/bold]  [dim]{plan['workflow_batch_id']}[/dim]")
+    console.print(
+        f"  items={plan['summary']['items']} routes={plan['summary']['specialist_routes']} "
+        f"blocked/human={plan['summary']['blocked_or_human']}"
+    )
+    console.print(f"[dim]Plan → {path}[/dim]")
+    console.print("[bold]Dry run only: no command, model, lock, upload, or publication action ran.[/bold]")
+
+
+@app.command(name="workflow-mixed-verify")
+def workflow_mixed_verify_cmd(
+    workflow_manifest: Path = typer.Argument(..., help="workflow-batch-v1.0 JSON plan"),
+    dispatch_plan: Path = typer.Argument(..., help="specialist-dispatch-plan-v1.0 JSON plan"),
+    out_dir: Optional[Path] = typer.Option(None, "--out-dir", help="Default: <exports>/workflow_rehearsals"),
+):
+    """Verify bounded mixed-route coverage; execute and authorize nothing."""
+    from .pipeline.mixed_rehearsal import verify_mixed_rehearsal, write_mixed_rehearsal
+
+    config = load_config(require_services=False)
+    try:
+        workflow = json.loads(workflow_manifest.read_text(encoding="utf-8"))
+        dispatch = json.loads(dispatch_plan.read_text(encoding="utf-8"))
+        report = verify_mixed_rehearsal(workflow, dispatch, corpus_dir=config.corpus_dir)
+        path = write_mixed_rehearsal(
+            report,
+            out_dir or (config.exports_dir / "workflow_rehearsals"),
+            workflow=workflow,
+            dispatch=dispatch,
+            corpus_dir=config.corpus_dir,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Mixed rehearsal refused[/red]"))
+        raise typer.Exit(1)
+    console.print(f"[bold]Mixed workflow rehearsal[/bold] coverage={report['routing_coverage_passed']}")
+    for route in report["required_routes"]:
+        console.print(f"  {route}: {len(report['route_items'].get(route, []))}")
+    for error in report["errors"]:
+        console.print(f"[yellow]  {error}[/yellow]")
+    console.print(f"[dim]Report → {path}[/dim]")
+    console.print("[bold]Execution readiness was not assessed and execution is not authorized.[/bold]")
+    if not report["routing_coverage_passed"]:
+        raise typer.Exit(1)
+
+
+@app.command(name="workflow-attest")
+def workflow_attest_cmd(
+    workflow_manifest: Path = typer.Argument(..., help="workflow-batch-v1.0 JSON plan"),
+    dispatch_plan: Path = typer.Argument(..., help="specialist-dispatch-plan-v1.0 JSON plan"),
+    out_dir: Optional[Path] = typer.Option(None, "--out-dir", help="Default: <exports>/workflow_attestations"),
+):
+    """Attest one current workflow/dispatch bundle; authorize nothing."""
+    from .pipeline.workflow_attestation import build_workflow_attestation, write_workflow_attestation
+
+    config = load_config(require_services=False)
+    try:
+        workflow = json.loads(workflow_manifest.read_text(encoding="utf-8"))
+        dispatch = json.loads(dispatch_plan.read_text(encoding="utf-8"))
+        attestation = build_workflow_attestation(workflow, dispatch, config.corpus_dir)
+        path = write_workflow_attestation(
+            attestation,
+            out_dir or (config.exports_dir / "workflow_attestations"),
+            workflow=workflow,
+            dispatch=dispatch,
+            corpus_dir=config.corpus_dir,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Workflow attestation refused[/red]"))
+        raise typer.Exit(1)
+    console.print(f"[bold]Workflow planning attestation[/bold]  [dim]{attestation['workflow_batch_id']}[/dim]")
+    console.print(
+        f"  items={attestation['summary']['items']} "
+        f"routes={', '.join(attestation['observed_routes']) or 'none'}"
+    )
+    console.print(f"[dim]Attestation → {path}[/dim]")
+    console.print("[bold]Planning evidence only: execution readiness was not assessed or authorized.[/bold]")
+
+
+@app.command(name="workflow-attempt-plan")
+def workflow_attempt_plan_cmd(
+    workflow_manifest: Path = typer.Argument(..., help="workflow-batch-v1.0 JSON plan"),
+    dispatch_plan: Path = typer.Argument(..., help="specialist-dispatch-plan-v1.0 JSON plan"),
+    attestation_path: Path = typer.Argument(..., help="workflow-planning-attestation-v1.0 JSON"),
+    mode: str = typer.Option("run_missing", "--mode", help="run_missing, run_selected, retry_failed, or resume_interrupted"),
+    item_id: Optional[list[str]] = typer.Option(None, "--item-id", help="Queue item ID; repeat to select a subset"),
+    stage: Optional[list[str]] = typer.Option(None, "--stage", help="Planner stage or specialist:<route>; repeat as needed"),
+    out_dir: Optional[Path] = typer.Option(None, "--out-dir", help="Default: <exports>/workflow_attempts"),
+    ledger: Optional[Path] = typer.Option(None, "--ledger", help="Append-only SQLite ledger path"),
+):
+    """Record inert, dependency-aware attempt proposals; never run them."""
+    from .pipeline.workflow_attempts import build_attempt_plan, persist_attempt_plan, write_attempt_plan
+
+    config = load_config(require_services=False)
+    output_root = out_dir or (config.exports_dir / "workflow_attempts")
+    ledger_path = ledger or (output_root / "attempts.sqlite3")
+    hash_cache = {}
+    try:
+        workflow = json.loads(workflow_manifest.read_text(encoding="utf-8"))
+        dispatch = json.loads(dispatch_plan.read_text(encoding="utf-8"))
+        attestation = json.loads(attestation_path.read_text(encoding="utf-8"))
+        plan = build_attempt_plan(
+            workflow,
+            dispatch,
+            attestation,
+            config.corpus_dir,
+            mode=mode,
+            selected_item_ids=list(item_id or []),
+            selected_stages=list(stage or []),
+            hash_cache=hash_cache,
+        )
+        path = write_attempt_plan(
+            plan,
+            output_root,
+            workflow=workflow,
+            dispatch=dispatch,
+            attestation=attestation,
+            corpus_dir=config.corpus_dir,
+            hash_cache=hash_cache,
+        )
+        persistence = persist_attempt_plan(
+            plan,
+            ledger_path,
+            workflow=workflow,
+            dispatch=dispatch,
+            attestation=attestation,
+            corpus_dir=config.corpus_dir,
+            hash_cache=hash_cache,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Workflow attempt planning refused[/red]"))
+        raise typer.Exit(1)
+    console.print(f"[bold]Planner-only workflow attempts[/bold]  [dim]{plan['workflow_batch_id']}[/dim]")
+    console.print(
+        f"  rows={plan['summary']['rows']} proposed={plan['summary']['planned_not_authorized']} "
+        f"held={plan['summary']['held_prerequisite']} human={plan['summary']['human_required']}"
+    )
+    console.print(
+        f"  ledger inserted={persistence['inserted']} reused={persistence['reused']} "
+        f"events={persistence['events_inserted']}"
+    )
+    console.print(f"[dim]Plan   → {path}[/dim]")
+    console.print(f"[dim]Ledger → {ledger_path}[/dim]")
+    console.print("[bold]No stored command was run; execution_authorized=false.[/bold]")
+
+
+@app.command(name="workflow-attempt-reconcile")
+def workflow_attempt_reconcile_cmd(
+    attempt_plan: Path = typer.Argument(..., help="workflow-attempt-plan-v1.0 JSON"),
+    workflow_manifest: Path = typer.Argument(..., help="workflow-batch-v1.0 JSON plan"),
+    dispatch_plan: Path = typer.Argument(..., help="specialist-dispatch-plan-v1.0 JSON plan"),
+    attestation_path: Path = typer.Argument(..., help="workflow-planning-attestation-v1.0 JSON"),
+    ledger: Optional[Path] = typer.Option(None, "--ledger", help="Append-only SQLite ledger path"),
+):
+    """Read and verify one stored plan against its append-only ledger."""
+    from .pipeline.workflow_attempts import reconcile_attempt_plan
+
+    config = load_config(require_services=False)
+    ledger_path = ledger or (config.exports_dir / "workflow_attempts" / "attempts.sqlite3")
+    try:
+        plan = json.loads(attempt_plan.read_text(encoding="utf-8"))
+        workflow = json.loads(workflow_manifest.read_text(encoding="utf-8"))
+        dispatch = json.loads(dispatch_plan.read_text(encoding="utf-8"))
+        attestation = json.loads(attestation_path.read_text(encoding="utf-8"))
+        result = reconcile_attempt_plan(
+            plan,
+            ledger_path,
+            workflow=workflow,
+            dispatch=dispatch,
+            attestation=attestation,
+            corpus_dir=config.corpus_dir,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Workflow attempt reconciliation refused[/red]"))
+        raise typer.Exit(1)
+    console.print(
+        f"[bold]Attempt ledger reconciliation[/bold] expected={result['expected']} "
+        f"consistent={result['consistent']} ok={result['ok']}"
+    )
+    if result["missing"] or result["inconsistent"] or result["unexpected"]:
+        console.print(
+            f"  missing={len(result['missing'])} inconsistent={len(result['inconsistent'])} "
+            f"unexpected={len(result['unexpected'])}"
+        )
+        raise typer.Exit(1)
+    console.print("[bold]Read-only verification complete; nothing was executed or changed.[/bold]")
+
+
+@app.command(name="workflow-attempt-list")
+def workflow_attempt_list_cmd(
+    ledger: Optional[Path] = typer.Option(None, "--ledger", help="Append-only SQLite ledger path"),
+    limit: int = typer.Option(100, "--limit", help="Maximum rows to display (1–1000)"),
+):
+    """Display immutable planner attempts without changing their state."""
+    from rich.table import Table as RichTable
+    from .pipeline.workflow_attempts import list_attempts
+
+    config = load_config(require_services=False)
+    ledger_path = ledger or (config.exports_dir / "workflow_attempts" / "attempts.sqlite3")
+    try:
+        rows = list_attempts(ledger_path, limit=limit)
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Workflow attempt listing refused[/red]"))
+        raise typer.Exit(1)
+    table = RichTable(title="Workflow attempt intents and append-only execution state")
+    for name in ("Item", "Attempt ID", "Seq", "Stage", "Planner", "Execution", "Terminal", "Events valid", "Input"):
+        table.add_column(name)
+    for row in rows:
+        table.add_row(
+            str(row["queue_item_id"]),
+            str(row["attempt_id"]),
+            f"{row['item_ordinal']}.{row['route_sequence']}",
+            str(row["stage"]),
+            str(row["disposition"]),
+            str(row["execution_state"]),
+            str(row["terminal_outcome"] or "-"),
+            "yes" if row["event_history_valid"] else "NO",
+            str(row["stage_input_status"]),
+        )
+    console.print(table)
+    eligible_canaries = [
+        row for row in rows
+        if row["stage"] == "testimony-candidates-build"
+        and row["disposition"] == "planned_not_authorized"
+        and row["execution_state"] == "proposal_recorded"
+        and row["event_history_valid"]
+    ]
+    for row in eligible_canaries:
+        console.print(
+            "[bold cyan]Copyable testimony canary attempt ID:[/bold cyan] "
+            f"{row['attempt_id']}"
+        )
+    console.print(f"[dim]Ledger → {ledger_path}[/dim]")
+    console.print(
+        "[bold]Read-only display. Planner authorization remains false; recorded grants/outcomes "
+        "are shown separately from validated append-only events.[/bold]"
+    )
+
+
+@app.command(name="workflow-testimony-canary")
+def workflow_testimony_canary_cmd(
+    attempt_plan: Path = typer.Argument(..., help="workflow-attempt-plan-v1.0 JSON"),
+    workflow_manifest: Path = typer.Argument(..., help="workflow-batch-v1.0 JSON plan"),
+    dispatch_plan: Path = typer.Argument(..., help="specialist-dispatch-plan-v1.0 JSON plan"),
+    attestation_path: Path = typer.Argument(..., help="workflow-planning-attestation-v1.0 JSON"),
+    attempt_id: str = typer.Option(..., "--attempt-id", help="Exact testimony-candidates-build attempt ID"),
+    ledger: Optional[Path] = typer.Option(None, "--ledger", help="Append-only SQLite ledger path"),
+    evidence_root: Optional[Path] = typer.Option(None, "--evidence-root", help="Immutable local execution evidence root"),
+    execute: bool = typer.Option(False, "--execute", help="Perform the deterministic local sidecar build"),
+    confirm_attempt: str = typer.Option("", "--confirm-attempt", help="Repeat the exact attempt ID to authorize one use"),
+):
+    """Dry-run one deterministic testimony canary; execute only with exact confirmation."""
+    from .pipeline.workflow_execution import (
+        execute_testimony_candidates_attempt,
+        preflight_selected_testimony_attempt,
+    )
+
+    config = load_config(require_services=False)
+    ledger_path = ledger or (config.exports_dir / "workflow_attempts" / "attempts.sqlite3")
+    execution_root = evidence_root or (config.exports_dir / "workflow_executions")
+    try:
+        plan = json.loads(attempt_plan.read_text(encoding="utf-8"))
+        workflow = json.loads(workflow_manifest.read_text(encoding="utf-8"))
+        dispatch = json.loads(dispatch_plan.read_text(encoding="utf-8"))
+        attestation = json.loads(attestation_path.read_text(encoding="utf-8"))
+        if not execute:
+            result = preflight_selected_testimony_attempt(
+                plan, attempt_id, ledger_path,
+                workflow=workflow, dispatch=dispatch, attestation=attestation,
+                corpus_dir=config.corpus_dir, evidence_root=execution_root,
+            )
+        else:
+            if confirm_attempt != attempt_id:
+                raise ValueError("--execute requires --confirm-attempt with the exact attempt ID")
+            result = execute_testimony_candidates_attempt(
+                plan, attempt_id, ledger_path,
+                workflow=workflow, dispatch=dispatch, attestation=attestation,
+                corpus_dir=config.corpus_dir, evidence_root=execution_root,
+                authorize_local_sidecar=True, confirmed_attempt_id=confirm_attempt,
+            )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Testimony canary refused[/red]"))
+        raise typer.Exit(1)
+    if not execute:
+        console.print("[bold]Testimony canary preflight[/bold]  [green]ready[/green]")
+        console.print(f"  attempt={result['attempt_id']} doc={result['doc_id']}")
+        console.print(f"  adapter={result['adapter_version']} input={result['input_fingerprint'][:12]}")
+        console.print("[bold]Dry run only: no grant, sidecar write, model call, or remote write occurred.[/bold]")
+        return
+    if result.get("ok"):
+        console.print("[bold green]Deterministic testimony candidate sidecar committed and verified.[/bold green]")
+        console.print(f"  attempt={result['attempt_id']} run={result['run_id']}")
+        console.print(f"[dim]Receipt → {result['receipt_path']}[/dim]")
+        console.print("[yellow]Re-attest and re-plan before running the next stage.[/yellow]")
+        return
+    console.print(Panel(
+        f"status={result.get('status')} error={result.get('error', {}).get('message', '')}\n"
+        f"execution_committed={result.get('execution_committed', False)} "
+        f"verification_ok={result.get('verification_ok', False)}",
+        title="[red]Testimony canary requires recovery or audit[/red]",
+    ))
+    raise typer.Exit(1)
+
+
+@app.command(name="workflow-testimony-recover")
+def workflow_testimony_recover_cmd(
+    attempt_plan: Path = typer.Argument(..., help="workflow-attempt-plan-v1.0 JSON"),
+    attempt_id: str = typer.Option(..., "--attempt-id", help="Exact interrupted attempt ID"),
+    confirm_attempt: str = typer.Option(..., "--confirm-attempt", help="Repeat the exact interrupted attempt ID"),
+    ledger: Optional[Path] = typer.Option(None, "--ledger", help="Append-only SQLite ledger path"),
+    evidence_root: Optional[Path] = typer.Option(None, "--evidence-root", help="Immutable local execution evidence root"),
+):
+    """Seal an interrupted testimony canary without rerunning its adapter."""
+    from .pipeline.workflow_execution import recover_interrupted_testimony_attempt
+
+    config = load_config(require_services=False)
+    ledger_path = ledger or (config.exports_dir / "workflow_attempts" / "attempts.sqlite3")
+    execution_root = evidence_root or (config.exports_dir / "workflow_executions")
+    try:
+        plan = json.loads(attempt_plan.read_text(encoding="utf-8"))
+        result = recover_interrupted_testimony_attempt(
+            plan, attempt_id, ledger_path,
+            corpus_dir=config.corpus_dir, evidence_root=execution_root,
+            confirmed_attempt_id=confirm_attempt,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Testimony recovery refused[/red]"))
+        raise typer.Exit(1)
+    console.print(f"[bold]Testimony recovery[/bold] status={result['status']}")
+    console.print(f"  attempt={result['attempt_id']} run={result['run_id']}")
+    console.print("[bold]The deterministic adapter was not rerun.[/bold]")
+    if result["status"] == "recovery_hold":
+        console.print("[yellow]An explicit corpus hold now blocks downstream testimony review.[/yellow]")
+
+
+@app.command(name="workflow-testimony-evidence-verify")
+def workflow_testimony_evidence_verify_cmd(
+    attempt_plan: Path = typer.Argument(..., help="workflow-attempt-plan-v1.0 JSON"),
+    attempt_id: str = typer.Option(..., "--attempt-id", help="Exact executed attempt ID"),
+    ledger: Optional[Path] = typer.Option(None, "--ledger", help="Append-only SQLite ledger path"),
+    evidence_root: Optional[Path] = typer.Option(None, "--evidence-root", help="Immutable local execution evidence root"),
+):
+    """Read-only verification of execution events, receipts, archives, and current output."""
+    from .pipeline.workflow_execution import verify_testimony_execution_evidence
+
+    config = load_config(require_services=False)
+    ledger_path = ledger or (config.exports_dir / "workflow_attempts" / "attempts.sqlite3")
+    execution_root = evidence_root or (config.exports_dir / "workflow_executions")
+    try:
+        plan = json.loads(attempt_plan.read_text(encoding="utf-8"))
+        result = verify_testimony_execution_evidence(
+            plan, attempt_id, ledger_path,
+            corpus_dir=config.corpus_dir, evidence_root=execution_root,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Execution evidence verification failed[/red]"))
+        raise typer.Exit(1)
+    if not result.get("terminal"):
+        console.print(Panel(
+            f"state={result.get('state')} run={result.get('run_id')}\n"
+            "The event prefix is internally valid but execution has no terminal receipt. "
+            "Use workflow-testimony-recover; do not rerun the adapter.",
+            title="[yellow]Execution evidence is incomplete[/yellow]",
+        ))
+        raise typer.Exit(1)
+    outcome = str((result.get("receipt") or {}).get("status") or "unknown")
+    style = "green" if outcome == "succeeded" else "yellow"
+    console.print(
+        f"[bold {style}]Execution evidence verified[/bold {style}] "
+        f"outcome={outcome} state={result['state']} run={result['run_id']}"
+    )
+    console.print("[bold]Read-only verification complete; no adapter or remote write ran.[/bold]")
+
+
+@app.command(name="review-pack")
+def review_pack_cmd(
+    outcome: Optional[Path] = typer.Argument(
+        None, help="Compiled batch_outcome.json (omit when using --set)"
+    ),
+    document_set: str = typer.Option(
+        "", "--set", help="Existing local document-set name"
+    ),
+    question: Optional[list[str]] = typer.Option(
+        None, "--question", help="Review question; repeat for several questions"
+    ),
+    out_dir: Optional[Path] = typer.Option(
+        None, "--out-dir", help="Output root (default: <exports_dir>/review_packs)"
+    ),
+    privacy_mode: str = typer.Option(
+        "private_local", "--privacy-mode",
+        help="private_local or external_safe",
+    ),
+):
+    """Compose a bounded local Markdown + JSON Review Pack.
+
+    The command reads existing analysis, enrichment, citations, provenance, and
+    specialist sidecars. It performs no model calls, corpus mutations, review
+    decisions, uploads, or publication writes.
+    """
+    from .pipeline.review_pack import generate_review_pack
+
+    config = load_config(require_services=False)
+    if bool(outcome) == bool(document_set):
+        console.print("[red]Provide exactly one batch outcome path or --set name.[/red]")
+        raise typer.Exit(1)
+    set_path = None
+    if document_set:
+        try:
+            set_path = _set_path(config, document_set)
+        except ValueError as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(1)
+        if not set_path.is_file():
+            console.print(f"[red]No document set named {document_set!r}.[/red]")
+            raise typer.Exit(1)
+    try:
+        result = generate_review_pack(
+            config.corpus_dir,
+            out_dir or (config.exports_dir / "review_packs"),
+            outcome_path=outcome,
+            document_set_path=set_path,
+            review_questions=list(question or []) or None,
+            privacy_mode=privacy_mode,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Review Pack generation refused[/red]"))
+        raise typer.Exit(1)
+    pack = result["pack"]
+    console.print(f"\n[bold]Codex Review Pack[/bold]  [dim]{pack['pack_id']}[/dim]")
+    console.print(f"  Documents: [green]{pack['document_count']}[/green]")
+    if result["reused"]:
+        console.print("[dim]Unchanged evidence and questions — reused existing pack.[/dim]")
+    console.print(f"[dim]JSON     → {result['json_path']}[/dim]")
+    console.print(f"[dim]Markdown → {result['markdown_path']}[/dim]")
+    console.print("[bold]No model was called and nothing was approved or published.[/bold]")
+
+
+@app.command(name="compilation-repair")
+def compilation_repair_cmd(
+    batch_id: str = typer.Argument(..., help="Exact Batch Outcome batch ID"),
+):
+    """Repoint a damaged latest manifest to valid immutable history; delete nothing."""
+    from .pipeline.compilation_manifest import repair_latest_completed
+
+    config = load_config(require_services=False)
+    try:
+        result = repair_latest_completed(config.exports_dir, batch_id)
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Compilation repair refused[/red]"))
+        raise typer.Exit(1)
+    console.print(f"[green]Latest completed compilation repaired[/green] → {result['latest_path']}")
+    console.print("[bold]No source, corpus, remote, or immutable artifact was deleted or changed.[/bold]")
+
+
+@app.command(name="compilation-reindex")
+def compilation_reindex_cmd():
+    """Rebuild the local completed-compilation index; delete nothing."""
+    from .pipeline.compilation_manifest import rebuild_compilation_index
+
+    config = load_config(require_services=False)
+    result = rebuild_compilation_index(config.exports_dir)
+    console.print(
+        f"[green]Compilation index rebuilt[/green] "
+        f"({len(result['index']['completed_compilations'])} completed) → {result['path']}"
+    )
+    console.print("[bold]No source, corpus, remote, or immutable artifact was deleted or changed.[/bold]")
+
+
+@app.command(name="pdf-index")
+def pdf_index_cmd(
+    roots: Optional[Path] = typer.Option(
+        None,
+        "--roots",
+        help="Approved read-only root configuration (default: runner/data/pdf_index_roots.json)",
+    ),
+    db: Optional[Path] = typer.Option(
+        None,
+        "--db",
+        help="Index database path (default: <exports_dir>/pdf_index/pdf_assets.sqlite3)",
+    ),
+    write: bool = typer.Option(
+        False,
+        "--write",
+        help="Write/update the small index database. Source PDFs remain untouched.",
+    ),
+    inspect_local: bool = typer.Option(
+        False,
+        "--inspect-local",
+        help="Hash and read PDF metadata for local files only; OneDrive dataless placeholders are skipped.",
+    ),
+):
+    """Inventory approved PDF folders without copying or changing source files.
+
+    The default is a metadata-only dry run and does not create a database.
+    ``--write`` persists paths and derived metadata only. ``--inspect-local``
+    must be explicit because reading cloud placeholders can trigger downloads;
+    detected OneDrive dataless files are always skipped.
+    """
+    from .pipeline.pdf_asset_index import scan_pdf_index
+
+    config = load_config(require_services=False)
+    roots_path = roots or (Path(__file__).parent / "data" / "pdf_index_roots.json")
+    db_path = db or (Path(config.exports_dir) / "pdf_index" / "pdf_assets.sqlite3")
+    try:
+        result = scan_pdf_index(
+            roots_path,
+            db_path=db_path,
+            write=write,
+            inspect_local=inspect_local,
+        )
+    except (ValueError, OSError) as exc:
+        console.print(Panel(str(exc), title="[red]PDF index refused[/red]"))
+        raise typer.Exit(1)
+
+    mode = "index written" if write else "dry run"
+    console.print(f"\n[bold]PDF Asset Index[/bold]  [dim]{mode}[/dim]")
+    console.print(f"  PDFs found:          {result['pdfs']}")
+    console.print(f"  Locally available:   {result['local']}")
+    console.print(f"  Cloud placeholders:  {result['cloud_placeholders']}")
+    console.print(f"  Hashed:              {result['hashed']}")
+    console.print(f"  PDF metadata read:   {result['inspected']}")
+    for row in result["roots"]:
+        console.print(
+            f"  [dim]{row['label']}[/dim]: {row['pdfs']} PDF(s) — {row['status']}"
+        )
+    if write:
+        console.print(f"[green]Index database → {result['db_path']}[/green]")
+    else:
+        console.print("[yellow]Dry run only. Add --write to update the database.[/yellow]")
+    console.print("[bold]No PDF was copied, moved, renamed, or deleted.[/bold]")
+
+
 @app.command(name="offload-export")
 def offload_export_cmd(
     doc_ids: List[str] = typer.Argument(
@@ -2592,23 +3353,66 @@ def source_offload_export_cmd(
                 if item is None:
                     console.print(Panel(f"Queue item not found: {qid}", title="[red]Export refused[/red]"))
                     raise typer.Exit(1)
-                specs.append(
-                    SourceItemSpec(
-                        source_kind="url",
-                        declared_source_type=intake_mod._detect_source_type(item.url),
-                        url=item.url,
-                        queue_item_id=item.id,
-                        url_hash=item.url_hash,
-                        title=item.title,
-                        notes=item.notes,
-                        priority=item.priority,
-                        recommended_llm=item.recommended_llm,
-                        overnight_batch_safe=item.overnight_batch_safe,
-                        tags=item.tags,
-                        doc_type_hint=item.doc_type_hint,
-                        suggested_process_route=item.suggested_process_route,
+                if getattr(item, "source_file_path", ""):
+                    source_url = (getattr(item, "source_file_url", "") or item.url).strip()
+                    relation = getattr(item, "source_file_relation", "") or "full_text_file"
+                    notes = " ".join(
+                        part for part in [
+                            f"Queue-attached source file ({relation}).",
+                            getattr(item, "source_file_note", "") or "",
+                            f"Landing/source queue URL: {item.url}",
+                            item.notes,
+                        ]
+                        if part
                     )
-                )
+                    specs.append(
+                        SourceItemSpec(
+                            source_kind="file",
+                            declared_source_type=intake_mod._detect_source_type(item.source_file_path),
+                            file_path=item.source_file_path,
+                            url=source_url,
+                            queue_item_id=item.id,
+                            url_hash=item.url_hash,
+                            title=item.title,
+                            notes=notes,
+                            priority=item.priority,
+                            recommended_llm=item.recommended_llm,
+                            overnight_batch_safe=item.overnight_batch_safe,
+                            tags=item.tags,
+                            doc_type_hint=item.doc_type_hint,
+                            suggested_process_route=item.suggested_process_route,
+                        )
+                    )
+                    specs.append(
+                        SourceItemSpec(
+                            source_kind="url",
+                            declared_source_type=intake_mod._detect_source_type(item.url),
+                            url=item.url,
+                            title=f"Source page for {item.title or item.id}",
+                            notes=(
+                                "Companion URL for a queue-attached source file. "
+                                f"Queue relink remains attached to queue item {item.id}."
+                            ),
+                        )
+                    )
+                else:
+                    specs.append(
+                        SourceItemSpec(
+                            source_kind="url",
+                            declared_source_type=intake_mod._detect_source_type(item.url),
+                            url=item.url,
+                            queue_item_id=item.id,
+                            url_hash=item.url_hash,
+                            title=item.title,
+                            notes=item.notes,
+                            priority=item.priority,
+                            recommended_llm=item.recommended_llm,
+                            overnight_batch_safe=item.overnight_batch_safe,
+                            tags=item.tags,
+                            doc_type_hint=item.doc_type_hint,
+                            suggested_process_route=item.suggested_process_route,
+                        )
+                    )
 
             # Browser-saved snapshots attached to queue items: 'QID:/path/to/file'.
             for mapping in queue_snapshot:
@@ -3145,6 +3949,94 @@ def archive_citation_backfill_cmd(
         f"existing={counts.get('exists', 0)}  "
         f"missing_extracted={counts.get('missing_extracted', 0)}"
     )
+
+
+@app.command(name="testimony-candidates-build")
+def testimony_candidates_build_cmd(
+    doc_id: str = typer.Argument("", help="Document ID to scan (omit for all corpus docs)"),
+    corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
+    export: bool = typer.Option(False, "--export", help="Also write exports/review/testimony_candidates.jsonl"),
+):
+    """Build reviewable testimony candidate sidecars from local artifacts."""
+    config = load_config(llm=None, require_services=False)
+    corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    if doc_id:
+        doc_dir = corpus_dir / doc_id
+        if not doc_dir.is_dir():
+            console.print(Panel(str(doc_dir), title="[red]Document folder not found[/red]"))
+            raise typer.Exit(1)
+        out = testimony_candidates.write_testimony_candidates(doc_dir)
+        payload = archive_summary.read_json_safe(out, {})
+        console.print(
+            f"[green]✓ Testimony candidates written[/green] [dim]{out}[/dim]\n"
+            f"  doc_id={doc_id}  candidates={payload.get('candidate_count', 0)}"
+        )
+    else:
+        payloads = testimony_candidates.build_corpus_testimony_candidates(corpus_dir, write=True)
+        total = sum(int(payload.get("candidate_count") or 0) for payload in payloads)
+        console.print(
+            f"[green]✓ Testimony candidates written[/green] "
+            f"{total} candidate(s) across {len(payloads)} document(s)"
+        )
+    if export:
+        result = testimony_candidates.export_testimony_candidates(
+            corpus_dir,
+            config.exports_dir,
+            refresh_sidecars=False,
+        )
+        console.print(
+            f"[green]✓ Testimony candidate export written[/green] "
+            f"{result['candidate_count']} candidate(s) → [dim]{result['path']}[/dim]"
+        )
+
+
+@app.command(name="testimony-deep-review")
+def testimony_deep_review_cmd(
+    doc_id: str = typer.Argument(..., help="Corpus document ID with testimony candidates"),
+    candidate_id: str = typer.Option("", "--candidate-id", help="Review only one testimony candidate id"),
+    llm: str = typer.Option("litelm-heavy", "--llm", help="LLM route: litelm-heavy | litelm | litelm-reasoning | claude | local-heavy"),
+    model: str = typer.Option("", "--model", help="Override model alias/name for the selected LLM route"),
+    corpus_root: str = typer.Option("", "--corpus-root", help="Override corpus directory"),
+    limit: int = typer.Option(0, "--limit", help="Review only the first N selected candidates; 0 means all"),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Re-run candidates even if a succeeded row already exists"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print candidate counts without model calls"),
+):
+    """Run model-assisted testimony segment extraction for review candidates."""
+    config = load_config(llm=llm, require_services=not dry_run)
+    corpus_dir = Path(corpus_root).expanduser() if corpus_root else config.corpus_dir
+    doc_dir = corpus_dir / doc_id
+    if not doc_dir.is_dir():
+        console.print(Panel(str(doc_dir), title="[red]Document folder not found[/red]"))
+        raise typer.Exit(1)
+    try:
+        result = testimony_deep_review.run_testimony_deep_review(
+            doc_dir,
+            config=config,
+            candidate_id=candidate_id or None,
+            llm=llm,
+            model=model or None,
+            limit=limit,
+            overwrite=overwrite,
+            dry_run=dry_run,
+        )
+    except Exception as exc:
+        console.print(Panel(str(exc), title="[red]Testimony deep review failed[/red]"))
+        raise typer.Exit(1)
+    if dry_run:
+        console.print(
+            f"[green]✓ Testimony deep review prepared[/green] "
+            f"{result.get('candidate_count', 0)} candidate(s); "
+            f"{result.get('selected_count', 0)} selected for this run"
+        )
+    else:
+        console.print(
+            f"[green]✓ Testimony deep review complete[/green] "
+            f"{result.get('analyses_count', 0)} analysis row(s); "
+            f"{result.get('segment_count', 0)} extracted segment(s); "
+            f"failures={result.get('failed_count', 0)}"
+        )
+    for path in result.get("paths", {}).values():
+        console.print(f"  [dim]{path}[/dim]")
 
 
 @app.command(name="longform-build")
@@ -4804,6 +5696,37 @@ def seed_exclusion_clauses_cmd(
         f"{summary['failed']} failed "
         f"(of {summary['total_clauses']} clauses total)"
     )
+
+
+@app.command(name="source-identity")
+def source_identity_cmd(
+    doc_id: str = typer.Option("", "--doc-id", help="Preview one corpus document; default is the local corpus."),
+    write: bool = typer.Option(False, "--write", help="Save a content-addressed local snapshot under exports/review/source_identity."),
+):
+    """Build the Phase 11 source-identity projection without triage/model/remote calls."""
+    from .pipeline.source_identity import build_identity_snapshot, write_identity_snapshot
+
+    config = load_config(require_services=False)
+    snapshot = build_identity_snapshot(
+        config.corpus_dir,
+        doc_ids=[doc_id] if doc_id else None,
+    )
+    counts = snapshot["count_summary"]
+    console.print(
+        f"[bold]Source identity preview[/bold] — {counts['document_count']} document(s), "
+        f"{counts['byte_identity_group_count']} byte group(s), "
+        f"{counts['unresolved_relationship_count']} pending relationship suggestion(s)."
+    )
+    console.print(
+        "[yellow]These are descriptive document/source-family measures, not independent attestations. "
+        "No documents were merged.[/yellow]"
+    )
+    console.print(f"Fingerprint: {snapshot['snapshot_fingerprint']}")
+    if write:
+        path = write_identity_snapshot(snapshot, config.exports_dir)
+        console.print(f"[green]Saved immutable snapshot:[/green] {path}")
+    else:
+        console.print("[dim]Read-only preview. Add --write to save the local projection.[/dim]")
 
 
 if __name__ == "__main__":

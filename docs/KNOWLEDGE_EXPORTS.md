@@ -26,6 +26,12 @@ Per document:
     - `corpus/<doc_id>/longform_section_analyses.jsonl`
     - `corpus/<doc_id>/longform_candidates.json`
     - `corpus/<doc_id>/longform_synthesis.json`
+- optional testimony sidecars:
+  - `corpus/<doc_id>/testimony_candidates.json`
+  - `corpus/<doc_id>/testimony_candidate_reviews.json`
+  - optional model-assisted deep-review sidecars:
+    - `corpus/<doc_id>/testimony_segment_analyses.jsonl`
+    - `corpus/<doc_id>/testimony_segments.json`
 
 Corpus-wide:
 
@@ -34,6 +40,7 @@ Corpus-wide:
 - `exports/knowledge/archive_edges.csv`
 - `exports/knowledge/archive_graph.json`
 - `exports/knowledge/knowledge_quality.json`
+- `exports/review/testimony_candidates.jsonl`
 - `exports/digests/<timestamp>_research_digest.md`
 - `exports/digests/<timestamp>_research_digest.json`
 
@@ -61,6 +68,62 @@ python -m runner knowledge-graph-export
 
 The Streamlit Dashboard **Refresh worklist** action runs the same derived
 backfill before rebuilding summaries, graph exports, quality, and the digest.
+
+`testimony_candidates.json` is a public-aware but private-by-default review
+register. It derives candidate testimony passages from existing analysis,
+longform review, enrichment, and citation-unit artifacts. It classifies each
+candidate as survivor testimony, ex-gay promotional testimony, clinical case
+story, parent/family testimony, institutional witness, media excerpt, founder
+or perpetrator memory, or unclear testimony. Each record carries source
+artifact, model attribution when available, quote hash/locator fields, linked
+terms/tactics/practices/actors, and explicit public-readiness fields.
+
+Candidates are **not** public facts. They default to
+`public_display=false`, `public_readiness=private_review_required`, and
+`consent_status=unclear`. Researcher decisions are stored separately in
+`testimony_candidate_reviews.json`, so a solo researcher can approve, reject,
+mark research-only, or mark a redacted public excerpt without losing the model
+attribution/provenance trail.
+
+To build or refresh the testimony review layer:
+
+```bash
+python -m runner testimony-candidates-build --export
+```
+
+In Streamlit, open **Testimony Review** and click **Build / refresh testimony
+candidates**. This does not upload to Sanity or Supabase.
+
+`testimony_segment_analyses.jsonl` is the model-assisted second pass over those
+candidates. It asks whether each candidate is actual testimony, mediated
+testimony, a clinical case story, perpetrator/movement memory, or only
+contextual material about testimony. It extracts segment text, summaries,
+practices, lexicon terms, tactics, actors, mediation type, evidence locator
+fields, and a private-by-default public-readiness recommendation.
+
+`testimony_segments.json` is the consolidated review surface built from the
+JSONL rows. `archive_summary.json` reports only counts and public-readiness
+metadata for this layer; it does not copy sensitive testimony text into the
+summary.
+
+To run the model-assisted testimony pass for one document:
+
+```bash
+python -m runner testimony-deep-review <doc_id> --dry-run
+python -m runner testimony-deep-review <doc_id> --llm litelm-heavy
+```
+
+For books and long reports, run this at the **document** level after the
+longform review has produced section-level evidence. Omitting `--candidate-id`
+reviews all candidates for that document and skips already-succeeded candidates
+unless `--overwrite` is passed. Candidate-by-candidate review is still available
+for surgical retries.
+
+In Streamlit, open **Testimony Review** → **Testimony candidates**. Use **Run
+deep testimony review for a whole document** for books/reports with many
+candidates, or open a single candidate and use **Run deep testimony analysis for
+this candidate**. This is a local model/review pass only. It does not approve,
+upload, or publish the segment.
 
 `document_profiles.jsonl` is the same idea at corpus scale: one JSON object per
 line, one line per document. This is the easiest file to load into a notebook,

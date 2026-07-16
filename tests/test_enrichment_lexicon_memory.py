@@ -40,6 +40,24 @@ def test_seed_memory_surfaces_gender_dysphoria_with_variants():
     assert "Geschlechtsdysphorie" in variant_terms
 
 
+def test_seed_memory_surfaces_govuk_glossary_reference_terms():
+    terms = elx.seed_lexicon_terms()
+    by_term = {t["term"].lower(): t for t in terms}
+
+    assert "conversion therapy" in by_term
+    assert "gender identity change efforts" in by_term
+    assert "unwanted same-sex attraction" in by_term
+
+    conversion = by_term["conversion therapy"]
+    assert conversion["source"] == "seed"
+    assert conversion["proposedCluster"] == "Non-SOGICE"
+    assert "GOV.UK conversion therapy evidence assessment glossary" in conversion["sourceNote"]
+
+    ussa = by_term["unwanted same-sex attraction"]
+    assert ussa["proposedCluster"] == "SSA-Rhetoric"
+    assert ussa["function"] == "Euphemism"
+
+
 def test_legacy_memory_surfaces_terms():
     terms = elx.legacy_lexicon_terms()
     assert terms, "Legacy glossary should yield draft memory terms"
@@ -77,6 +95,10 @@ def test_merge_sanity_wins_dedupe_over_seed():
     # Lower-priority seed variants still enrich the winning Sanity concept.
     variant_terms = {v["variantTerm"] for v in gd[0]["multilingualVariants"]}
     assert "disforia di genere" in variant_terms
+    assert any(
+        row.get("sourceId") == "govuk-2021-gender-dysphoria"
+        for row in gd[0].get("sourceAttestations", [])
+    )
 
 
 def test_merge_seed_wins_over_legacy():
@@ -209,6 +231,21 @@ def test_build_system_prompt_populates_audit_lexicon_counts(monkeypatch):
     assert audit["lexicon_terms_seed"] == 3
     assert audit["lexicon_terms_legacy"] == 1
     assert audit["lexicon_terms_injected"] == 6
+
+
+def test_govuk_definition_memory_matches_full_document_not_only_analysis(monkeypatch):
+    monkeypatch.setattr(enrich, "_fetch_lexicon_entries", lambda c: [])
+    monkeypatch.setattr(enrich, "_fetch_entity_registry", lambda c: [])
+
+    prompt = enrich._build_system_prompt(
+        _config(),
+        _analysis(),
+        retrieval_grounded=False,
+        source_text="The source repeatedly describes unwanted same-sex attraction.",
+    )
+
+    assert "<govuk_glossary_reference_data>" in prompt
+    assert "Unwanted Same-Sex Attraction" in prompt
 
 
 def test_lexicon_counts_persist_in_enrichment_audit_json(tmp_path):

@@ -47,6 +47,12 @@ try:
     )
     from runner.pipeline.enrichment_lexicon import merge_enrichment_lexicon
     from runner.pipeline.http_retry import call_with_http_retries
+    from runner.pipeline.input_receipt import (
+        build_aggregate_input_receipt,
+        build_resolved_input_receipt,
+        canonical_fingerprint,
+    )
+    from runner.pipeline.provisional_memory import enrichment_memory_context
     from runner.pipeline.sanity_reads import fetch_active_lexicon_terms, sanity_read_headers
 except ImportError:
     from ..config import Config  # type: ignore[no-redef]
@@ -71,6 +77,12 @@ except ImportError:
     )
     from .enrichment_lexicon import merge_enrichment_lexicon  # type: ignore[no-redef]
     from .http_retry import call_with_http_retries  # type: ignore[no-redef]
+    from .input_receipt import (  # type: ignore[no-redef]
+        build_aggregate_input_receipt,
+        build_resolved_input_receipt,
+        canonical_fingerprint,
+    )
+    from .provisional_memory import enrichment_memory_context  # type: ignore[no-redef]
     from .sanity_reads import fetch_active_lexicon_terms, sanity_read_headers  # type: ignore[no-redef]
 
 PROMPT_VERSION = "enrichment-v1.1"
@@ -82,6 +94,29 @@ _PROMPT_FILE = (
 )
 
 _SYSTEM_PROMPT: str | None = None
+
+
+def _record_enrichment_input_receipt(
+    audit: dict | None,
+    extracted_text: str,
+    system_input: str,
+    user_input: str,
+) -> None:
+    if audit is None:
+        return
+    audit["input_receipt"] = build_resolved_input_receipt(
+        stage="enrichment",
+        extracted_text=extracted_text,
+        system_input=system_input,
+        user_input=user_input,
+        resolved_model=str(audit.get("model") or ""),
+        model_parameters=audit.get("model_parameters") or {},
+        lexicon_fingerprint=str(audit.get("lexicon_fingerprint") or ""),
+        provisional_memory_fingerprint=str(audit.get("provisional_memory_fingerprint") or ""),
+        tag_registry_fingerprint=str(audit.get("tag_registry_fingerprint") or ""),
+        policy_fingerprint=str(audit.get("policy_fingerprint") or ""),
+        provider_resolved_model=str(audit.get("provider_resolved_model") or ""),
+    )
 
 _LEXICON_ACTIONS = {"add_new", "add_variant", "add_evidence", "add_definition", "merge_into"}
 _GENDER_DYSPHORIA_CANONICAL_ID = "lexicon-gender-dysphoria"
@@ -609,14 +644,20 @@ def run(
             "retrieval_not_wired" if not retrieval_grounded else ""
         )
 
-    system_prompt = _build_system_prompt_for_run(config, analysis, retrieval_grounded, _audit)
-    user_message  = _build_user_message(doc_id, preprocess)
+    system_prompt = _build_system_prompt_for_run(
+        config, analysis, retrieval_grounded, _audit, source_text=preprocess.text,
+    )
+    user_message  = _build_user_message(doc_id, preprocess, _audit=_audit)
     if _audit is not None:
         _audit["prompt_sha256"] = sha256_text(system_prompt)
         _audit["prompt_template_sha256"] = sha256_text(_load_system_prompt())
 
     try:
         raw = _call_enrichment_model(llm, system_prompt, user_message, config, model, _audit=_audit)
+        if _audit is not None:
+            _audit["raw_response_chars"] = len(raw)
+            _audit["raw_response_sha256"] = sha256_text(raw)
+        _record_enrichment_input_receipt(_audit, preprocess.text, system_prompt, user_message)
 
         # Use a separate dict for the whole-document validation attempt.  If it
         # fails and we fall through to the chunked fallback, we do NOT want the
@@ -726,7 +767,7 @@ def save(doc_id: str, result: EnrichmentResult, config: Config, *, _audit: dict 
         except Exception as exc:
             if _audit is not None:
                 _audit.setdefault("errors", []).append(
-                    f"P3 merge skipped (non-fatal): {exc}"
+                    f"P3 merge skipped (non-fatal): {type(exc).__name__}"
                 )
         archive = doc_dir / f"enrichment_{_timestamp()}.json"
         shutil.copy2(out, archive)
@@ -738,13 +779,81 @@ def save(doc_id: str, result: EnrichmentResult, config: Config, *, _audit: dict 
     return out
 
 
-def save_alt(doc_id: str, result: EnrichmentResult, config: Config, label: str = "alt") -> Path:
-    """Write a comparison enrichment result without touching enrichment.json."""
+def save_alt(
+    doc_id: str,
+    result: EnrichmentResult,
+    config: Config,
+    label: str = "alt",
+    *,
+    _audit: dict | None = None,
+) -> Path:
+    """Write a comparison enrichment and its content-free audit sidecar."""
     doc_dir = config.corpus_dir / doc_id
     doc_dir.mkdir(parents=True, exist_ok=True)
     result.run_type = "alt"
     out = doc_dir / f"enrichment_{label}_{_timestamp()}.json"
     out.write_text(enrichment_json_for_save(result, doc_dir), encoding="utf-8")
+    if _audit is not None:
+        # Keep alternate provenance paired without replacing the canonical
+        # enrichment_audit.json or entering enrichment_*.json history scans.
+        from dataclasses import asdict, fields as dataclass_fields
+        try:
+            from runner.pipeline.audit import EnrichmentRunMeta
+        except ImportError:
+            from .audit import EnrichmentRunMeta
+
+        known = {field.name for field in dataclass_fields(EnrichmentRunMeta)}
+        filtered = {key: value for key, value in _audit.items() if key in known}
+        error_count = len(filtered.get("errors") or [])
+        filtered["errors"] = (
+            [f"{error_count} run error(s) recorded; details omitted from content-free sidecar"]
+            if error_count else []
+        )
+        meta = asdict(EnrichmentRunMeta(**filtered))
+        if isinstance(meta.get("chunks"), list):
+            meta["chunks"] = [
+                {
+                    key: chunk.get(key)
+                    for key in (
+                        "index", "char_count", "succeeded", "model",
+                        "validation_path", "validation_attempts",
+                        "normalization_repairs", "input_receipt",
+                    )
+                    if key in chunk
+                }
+                for chunk in meta["chunks"]
+                if isinstance(chunk, dict)
+            ]
+        if meta.get("provisional_memory_error"):
+            meta["provisional_memory_error"] = "error detail omitted from content-free sidecar"
+        govuk_receipt = meta.get("govuk_definition_memory")
+        if isinstance(govuk_receipt, dict) and govuk_receipt.get("error"):
+            meta["govuk_definition_memory"] = {
+                **govuk_receipt,
+                "error": "error detail omitted from content-free sidecar",
+            }
+        audit_path = out.with_name(f"audit_{out.name}")
+        audit_payload = {
+            "schema_version": "paired-enrichment-audit-v1",
+            "doc_id": doc_id,
+            "artifact_file": out.name,
+            "artifact_sha256": hashlib.sha256(out.read_bytes()).hexdigest(),
+            "prompt_version": result.enrichment_prompt_version,
+            "run_type": "alt",
+            **meta,
+            "enrichment_model": result.enrichment_model,
+            "lexicon_proposals_count": len(result.lexicon_proposals),
+            "entity_proposals_count": len(result.entity_proposals),
+            "tactic_proposals_count": len(result.tactic_proposals),
+            "ingestion_queue_count": len(result.ingestion_queue),
+            "corpus_connections_count": len(result.corpus_connections),
+            "practice_descriptions_count": len(result.practice_descriptions),
+            "statistical_claims_count": len(result.statistical_claims),
+        }
+        audit_path.write_text(
+            json.dumps(audit_payload, indent=2, default=str),
+            encoding="utf-8",
+        )
     return out
 
 
@@ -992,7 +1101,9 @@ def _run_chunked_enrichment(
     *,
     _audit: dict | None = None,
 ) -> EnrichmentResult:
-    system_prompt = _build_system_prompt_for_run(config, analysis, retrieval_grounded, _audit)
+    system_prompt = _build_system_prompt_for_run(
+        config, analysis, retrieval_grounded, _audit, source_text=preprocess.text,
+    )
     chunks = _chunk_text(preprocess.text)
     results: list[EnrichmentResult] = []
     errors: list[str] = []
@@ -1001,19 +1112,21 @@ def _run_chunked_enrichment(
         _audit["chunked"] = True
         _audit["chunk_count"] = len(chunks)
         _audit["chunks"] = []
+        _audit["whole_doc_input_receipt"] = _audit.pop("input_receipt", {})
         # Preserve the whole-doc failure as context, but keep it out of errors
         # so the final audit is truthful about whether the run succeeded.
-        _audit["whole_doc_fallback_reason"] = str(first_error)[:500]
+        _audit["whole_doc_fallback_reason"] = "response_validation_failed"
 
     for index, chunk in enumerate(chunks, start=1):
+        chunk_entry: dict | None = None
+        _chunk_audit: dict | None = {} if _audit is not None else None
         user_message = _build_user_message(
             doc_id,
             preprocess,
             text_override=chunk,
             chunk_label=f"section {index} of {len(chunks)}",
+            _audit=_chunk_audit,
         )
-        chunk_entry: dict | None = None
-        _chunk_audit: dict | None = {} if _audit is not None else None
         if _chunk_audit is not None:
             _chunk_audit["prompt_sha256"] = _audit.get("prompt_sha256", "")
             _chunk_audit["prompt_template_sha256"] = _audit.get("prompt_template_sha256", "")
@@ -1032,6 +1145,21 @@ def _run_chunked_enrichment(
             raw = _call_enrichment_model(
                 llm, system_prompt, user_message, config, model, _audit=_chunk_audit
             )
+            if _chunk_audit is not None:
+                _chunk_audit["raw_response_chars"] = len(raw)
+                _chunk_audit["raw_response_sha256"] = sha256_text(raw)
+            if _chunk_audit is not None:
+                for key in (
+                    "lexicon_fingerprint", "provisional_memory_fingerprint",
+                    "policy_fingerprint",
+                ):
+                    _chunk_audit.setdefault(key, _audit.get(key, "") if _audit else "")
+            _record_enrichment_input_receipt(_chunk_audit, chunk, system_prompt, user_message)
+            if chunk_entry is not None and _chunk_audit is not None:
+                # Retain the exact request identity even when response validation
+                # subsequently fails; only succeeded chunks contribute to the
+                # aggregate output receipt below.
+                chunk_entry["input_receipt"] = _chunk_audit.get("input_receipt") or {}
             results.append(_validate_response_for_run(
                 doc_id,
                 raw,
@@ -1046,15 +1174,23 @@ def _run_chunked_enrichment(
                 chunk_entry["validation_attempts"] = _chunk_audit.get("validation_attempts")
                 chunk_entry["normalization_repairs"] = _chunk_audit.get("normalization_repairs", 0)
         except Exception as exc:
-            errors.append(f"chunk {index}/{len(chunks)}: {exc}")
+            error_code = f"{type(exc).__name__}:chunk_enrichment_failed"
+            errors.append(f"chunk {index}/{len(chunks)}: {error_code}")
             if chunk_entry is not None:
-                chunk_entry["error"] = str(exc)
+                chunk_entry["error"] = error_code
                 if _chunk_audit is not None:
                     chunk_entry["model"] = _chunk_audit.get("model")
                     chunk_entry["validation_path"] = _chunk_audit.get("validation_path")
                     chunk_entry["validation_attempts"] = _chunk_audit.get("validation_attempts")
         if _audit is not None and chunk_entry is not None:
             _audit["chunks"].append(chunk_entry)
+
+    if _audit is not None:
+        _audit["input_receipt"] = build_aggregate_input_receipt(
+            preprocess.text,
+            _audit["chunks"],
+            stage="enrichment",
+        )
 
     if not results:
         detail = "\n".join(errors[:5])
@@ -1065,9 +1201,8 @@ def _run_chunked_enrichment(
                 f"All {len(chunks)} chunks failed enrichment"
             )
         raise ValueError(
-            f"Whole-document enrichment failed, and chunked enrichment also failed.\n"
-            f"Original error: {first_error}\n"
-            f"Chunk errors:\n{detail}"
+            f"Whole-document enrichment failed, and all {len(chunks)} chunk attempts failed. "
+            f"Failure codes: {detail}"
         )
 
     # Chunked run succeeded — write a truthful top-level audit state.
@@ -1180,6 +1315,8 @@ def _build_system_prompt_for_run(
     analysis: AnalysisResult,
     retrieval_grounded: bool,
     _audit: dict | None = None,
+    *,
+    source_text: str = "",
 ) -> str:
     """Build the enrichment prompt while tolerating older test doubles."""
     try:
@@ -1188,6 +1325,7 @@ def _build_system_prompt_for_run(
             analysis,
             retrieval_grounded=retrieval_grounded,
             _audit=_audit,
+            source_text=source_text,
         )
     except TypeError:
         try:
@@ -1206,8 +1344,13 @@ def _build_system_prompt(
     *,
     retrieval_grounded: bool = False,
     _audit: dict | None = None,
+    source_text: str = "",
 ) -> str:
     base = _load_system_prompt()
+    if _audit is not None:
+        _audit["policy_fingerprint"] = sha256_text(base)
+        _audit["lexicon_fingerprint"] = canonical_fingerprint({"available": False})
+        _audit["provisional_memory_fingerprint"] = canonical_fingerprint({"available": False})
 
     lexicon_block = "(not available — Sanity query failed)"
     entity_block  = "(not available — Sanity query failed)"
@@ -1225,6 +1368,16 @@ def _build_system_prompt(
     try:
         terms, _lex_counts = merge_enrichment_lexicon(sanity_terms)
         if _audit is not None:
+            _audit["lexicon_fingerprint"] = canonical_fingerprint([
+                {
+                    "term": term.get("term"), "status": term.get("status"),
+                    "cluster": term.get("proposedCluster"), "function": term.get("function"),
+                    "variants": term.get("multilingualVariants") or [],
+                    "source": term.get("source"),
+                    "sourceAttestations": term.get("sourceAttestations") or [],
+                }
+                for term in terms
+            ])
             _audit["lexicon_terms_sanity"] = _lex_counts.get("sanity", 0)
             _audit["lexicon_terms_seed"] = _lex_counts.get("seed", 0)
             _audit["lexicon_terms_legacy"] = _lex_counts.get("legacy", 0)
@@ -1235,6 +1388,29 @@ def _build_system_prompt(
                 for t in terms
             ) or "(none yet)"
         )
+        # Definitions are not injected wholesale. Select only GOV.UK source
+        # terms already present in the first-pass analysis, cap the block, and
+        # label it as this report's usage rather than archive truth.
+        try:
+            from runner.pipeline.govuk_glossary import select_definition_memory
+
+            analysis_payload = (
+                analysis.model_dump() if hasattr(analysis, "model_dump")
+                else analysis.dict() if hasattr(analysis, "dict")
+                else analysis
+            )
+            analysis_text = json.dumps(analysis_payload, ensure_ascii=False, default=str)
+            memory = select_definition_memory(source_text or analysis_text)
+            if memory.get("block"):
+                lexicon_block += "\n\n" + memory["block"]
+            if _audit is not None:
+                _audit["govuk_definition_memory"] = memory.get("receipt") or {}
+        except Exception as exc:
+            if _audit is not None:
+                _audit["govuk_definition_memory"] = {
+                    "available": False,
+                    "error_type": type(exc).__name__,
+                }
     except Exception:
         pass
 
@@ -1256,6 +1432,36 @@ def _build_system_prompt(
             "Return corpus_connections as an empty array []. Do not invent doc_ids."
         )
 
+    provisional_block = "(no provisional corpus-memory snapshot available)"
+    try:
+        from .processing_projection import discover_latest_completed_artifact
+        memory_record = discover_latest_completed_artifact(
+            Path(config.exports_dir), "provisional_memory",
+            legacy_path=Path(config.exports_dir) / "provisional_memory" / "latest_provisional_memory.json",
+        )
+        memory = memory_record["payload"] if memory_record else {}
+        analysis_payload = analysis.model_dump(mode="json")
+        memory_context = enrichment_memory_context(memory, analysis_payload)
+        provisional_block = memory_context["prompt_block"]
+        if _audit is not None:
+            _audit["provisional_memory_fingerprint"] = memory_context["memory_fingerprint"]
+            _audit["provisional_memory_clusters_injected"] = memory_context["selected_cluster_count"]
+            _audit["provisional_memory_cluster_ids"] = memory_context["selected_cluster_ids"]
+            _audit["provisional_memory_retrieval_method"] = memory_context["retrieval_method"]
+            _audit["provisional_memory_visibility_mode"] = (
+                memory_record.get("visibility_mode") if memory_record else "unavailable"
+            )
+            _audit["provisional_memory_visibility_disclosure"] = (
+                memory_record.get("disclosure") if memory_record else
+                "No completed compilation memory is visible."
+            )
+    except Exception as exc:
+        if _audit is not None:
+            _audit["provisional_memory_error"] = type(exc).__name__
+            _audit["provisional_memory_fingerprint"] = canonical_fingerprint({
+                "available": False, "error_type": type(exc).__name__
+            })
+
     injection = (
         f"\n\nCURRENT LEXICON MEMORY — match new wording against these known concepts. "
         f"Each line is tagged by source: [Sanity validated] and [Sanity draft] are live "
@@ -1265,6 +1471,8 @@ def _build_system_prompt(
         f"{lexicon_block}\n\n"
         f"CURRENT ENTITY REGISTRY (do not re-propose — use enrich_existing if found):\n"
         f"{entity_block}\n\n"
+        f"PROVISIONAL CORPUS MEMORY (retrieval hints, never canonical truth):\n"
+        f"{provisional_block}\n\n"
         f"RELATED CORPUS DOCUMENTS:\n{related_docs_block}\n\n"
         f"MAIN ANALYSIS RESULT:\n{_summarise_analysis(analysis)}"
     )
@@ -1276,6 +1484,8 @@ def _build_user_message(
     preprocess: PreprocessResult,
     text_override: str | None = None,
     chunk_label: str | None = None,
+    *,
+    _audit: dict | None = None,
 ) -> str:
     lines = [f"DOCUMENT ID: {doc_id}"]
     if chunk_label:
@@ -1296,12 +1506,21 @@ def _build_user_message(
     text = preprocess.text if text_override is None else text_override
     tag_block = ""
     try:
-        from runner.pipeline.tag_registry import detect_tag_matches, format_matches_for_prompt
+        from runner.pipeline.tag_registry import detect_tag_matches, format_matches_for_prompt, load_tag_registry
     except ImportError:
-        from .tag_registry import detect_tag_matches, format_matches_for_prompt
+        from .tag_registry import detect_tag_matches, format_matches_for_prompt, load_tag_registry
     try:
-        tag_block = format_matches_for_prompt(detect_tag_matches(text))
-    except Exception:
+        registry_rows = load_tag_registry()
+        if _audit is not None:
+            _audit["tag_registry_fingerprint"] = canonical_fingerprint(registry_rows)
+        tag_block = format_matches_for_prompt(
+            detect_tag_matches(text, registry_rows=registry_rows)
+        )
+    except Exception as exc:
+        if _audit is not None:
+            _audit["tag_registry_fingerprint"] = canonical_fingerprint({
+                "available": False, "error_type": type(exc).__name__
+            })
         tag_block = ""
 
     tag_section = (
@@ -1932,19 +2151,16 @@ def _validate_response(
             _audit["normalization_repairs"] = _audit.get("normalization_repairs", 0) + _repairs
         return result
 
-    detail = ""
-    if validation_errors:
-        detail = "\nValidation details:\n" + "\n---\n".join(validation_errors[-3:])
-
     if _audit is not None:
         _audit["validation_path"] = "failed"
         _audit["validation_attempts"] = _attempts
+        _audit["raw_response_chars"] = len(original)
+        _audit["raw_response_sha256"] = sha256_text(original)
         _audit.setdefault("errors", []).append(
             f"Could not extract valid EnrichmentResult JSON after {_attempts} attempt(s)"
         )
 
     raise ValueError(
-        f"Could not extract valid EnrichmentResult JSON.\n"
-        f"{detail}\n"
-        f"Raw response (first 2 000 chars): {original[:2000]}"
+        "Could not extract valid EnrichmentResult JSON. "
+        f"Response fingerprint: {sha256_text(original)}; characters: {len(original)}."
     )

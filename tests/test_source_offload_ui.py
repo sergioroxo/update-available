@@ -627,6 +627,53 @@ def test_source_parse_file_rows_strips_wrapping_quotes_and_file_scheme():
     ]
 
 
+def test_source_file_row_preview_rows_shows_file_and_companion_url(tmp_path):
+    pdf = tmp_path / "book.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    rows = app_mod._source_file_row_preview_rows([
+        {
+            "file_path": str(pdf),
+            "source_url": "https://example.org/book",
+            "title": "Book title",
+        }
+    ])
+
+    assert rows == [
+        {
+            "row": "1",
+            "package item": "file",
+            "will analyze": str(pdf),
+            "status": "found",
+            "source/provenance URL": "https://example.org/book",
+            "queue relink": "file keeps source URL provenance",
+            "note": "Book title",
+        },
+        {
+            "row": "1",
+            "package item": "companion URL",
+            "will analyze": "https://example.org/book",
+            "status": "will fetch on worker",
+            "source/provenance URL": "https://example.org/book",
+            "queue relink": "ad-hoc URL",
+            "note": "Landing/download/source page is analyzed separately for context and network evidence.",
+        },
+    ]
+
+
+def test_source_file_row_preview_rows_flags_missing_file():
+    rows = app_mod._source_file_row_preview_rows([
+        {
+            "file_path": "/tmp/definitely-not-here.pdf",
+            "source_url": "",
+            "title": "",
+        }
+    ])
+
+    assert rows[0]["package item"] == "file"
+    assert rows[0]["status"] == "missing"
+    assert len(rows) == 1
+
+
 def test_source_specs_from_file_rows_adds_companion_source_url():
     rows = [{
         "file_path": "/Users/me/Downloads/book.pdf",
@@ -659,6 +706,39 @@ def test_source_specs_from_file_rows_dedupes_explicit_companion_url():
 
     assert len(specs) == 1
     assert specs[0].source_kind == "file"
+
+
+def test_source_specs_from_queue_items_uses_attached_file_and_companion_url(tmp_path):
+    pdf = tmp_path / "book.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    item = QueueItem(
+        id="qi_book",
+        url="https://books.example/landing",
+        url_hash="hash_book",
+        title="Book",
+        source_type="webpage",
+        doc_type_hint="academic",
+        priority="high",
+        recommended_llm="litelm-heavy",
+        overnight_batch_safe=True,
+        source_file_path=str(pdf),
+        source_file_relation="full_text_pdf",
+        source_file_url="https://books.example/book.pdf",
+        source_file_note="Downloaded full text.",
+    )
+
+    specs = app_mod._source_specs_from_queue_items([item])
+
+    assert len(specs) == 2
+    assert specs[0].source_kind == "file"
+    assert specs[0].file_path == str(pdf)
+    assert specs[0].url == "https://books.example/book.pdf"
+    assert specs[0].queue_item_id == "qi_book"
+    assert specs[0].url_hash == "hash_book"
+    assert "Landing/source queue URL: https://books.example/landing" in specs[0].notes
+    assert specs[1].source_kind == "url"
+    assert specs[1].url == "https://books.example/landing"
+    assert specs[1].queue_item_id == ""
 
 
 def test_source_queue_history_category_and_rendered_policy(tmp_path):

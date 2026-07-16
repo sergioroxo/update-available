@@ -294,7 +294,7 @@ def fetch_lexicon_terms(config: Config) -> list[dict]:
         '*[_type == "lexiconEntry" && status in ["candidate","draft","validated"]]'
         '|order(term asc)'
         '{ _id, term, status, proposedCluster, function, draftDefinition, accessibleDefinition, '
-        'frequency, firstSeen, lastSeen, multilingualVariants, '
+        'frequency, firstSeen, lastSeen, multilingualVariants, sourceAttestations, '
         'evidenceDossier[]{ _key, "docRef": documentRef._ref, excerpt, exactQuote, '
         'definitionAsUsed, language, stanceProfile, usageRegister, coOccurringTerms, '
         'relationshipNotes, modelConfidence, researcherConfidence, confidenceRationale, '
@@ -591,7 +591,66 @@ def write_lexicon_draft_from_proposal(
         doc["multilingualVariants"] = variants
 
     if action == "add_new":
-        mutations = [{"createOrReplace": doc}]
+        # A mistaken add_new collision must never erase an existing definition,
+        # authority attestation, evidence dossier, approval, or trust status.
+        # The proposal remains safely materialised only when the canonical id is
+        # absent; existing records require an explicit add_evidence/variant/
+        # definition action instead.
+        existing = _fetch_document_by_id(
+            sanity_id,
+            config,
+            "{ _id, _rev, evidenceDossier[]{ _key }, multilingualVariants[]{ _key } }",
+        )
+        if existing:
+            # A model can propose add_new for a canonical term that already
+            # exists (including an authority-seeded draft).  Preserve every
+            # canonical field, but do not lose this document's evidence.
+            if not evidence_item:
+                raise RuntimeError(
+                    f"Lexicon entry {sanity_id} already exists and this add_new "
+                    "proposal has no exact evidence quote. Defer it or review it "
+                    "as add_evidence/add_variant; nothing was written."
+                )
+            evidence_keys = {
+                str(item.get("_key") or "")
+                for item in (existing.get("evidenceDossier") or [])
+                if isinstance(item, dict)
+            }
+            variant_keys = {
+                str(item.get("_key") or "")
+                for item in (existing.get("multilingualVariants") or [])
+                if isinstance(item, dict)
+            }
+            missing_variants = [item for item in variants if item.get("_key") not in variant_keys]
+            if missing_variants:
+                # Evidence is safe to attach automatically, but a variant is a
+                # separate canonical relationship decision. Surface that fact
+                # to the caller instead of implying the whole proposal landed.
+                proposal["variant_push_deferred"] = True
+                proposal["deferred_variant_terms"] = [
+                    item.get("variantTerm") for item in missing_variants if item.get("variantTerm")
+                ]
+            if evidence_item.get("_key") in evidence_keys and not missing_variants:
+                return sanity_id
+            patch = {
+                "id": sanity_id,
+                "setIfMissing": {
+                    "evidenceDossier": [],
+                    "multilingualVariants": [],
+                    "languagesSeen": [],
+                },
+                "set": {"lastSeen": now_iso, "lastReanalyzed": now_iso},
+            }
+            if existing.get("_rev"):
+                patch["ifRevisionID"] = existing["_rev"]
+            # Sanity supports only one insert operation per patch, so keep the
+            # evidence write isolated and revision-guarded. Variants can be
+            # reviewed separately if the same collision also proposed them.
+            if evidence_item.get("_key") not in evidence_keys:
+                patch["insert"] = {"after": "evidenceDossier[-1]", "items": [evidence_item]}
+            mutations = [{"patch": patch}]
+        else:
+            mutations = [{"createIfNotExists": doc}]
     else:
         # Materialise the canonical entry first if it does not yet exist. The
         # target may be a curated seed/legacy draft that the researcher never
@@ -1008,15 +1067,13 @@ def append_extractable_asset_from_proposal(
 
 
 def write_seed_lexicon_entry(entry: dict, config: Config) -> str:
-    """Create or replace a lexiconEntry imported from the seed lexicon."""
+    """Create a missing seed draft without replacing any existing lexicon record."""
     now_iso = datetime.now(timezone.utc).isoformat()
     term = (entry.get("term") or "").strip()
     if not term:
         raise ValueError("Cannot write seed lexicon entry without a term")
 
-    status = entry.get("status") or entry.get("recommended_status") or "draft"
-    if status not in {"candidate", "draft", "validated", "rejected"}:
-        status = "draft"
+    status = "validated" if entry.get("researcher_confirmed_validation") is True else "draft"
 
     source_bits = [
         "Seed import from SOGICE_Lexicon_v2.1.md.",
@@ -1040,8 +1097,7 @@ def write_seed_lexicon_entry(entry: dict, config: Config) -> str:
         "function": _clean_unknown(entry.get("function")),
         "draftDefinition": entry.get("draft_definition") or entry.get("definition") or "",
         "accessibleDefinition": entry.get("accessible_definition") or "",
-        "approvedBy": "researcher",
-        "approvedAt": now_iso,
+        "includeInAnalysisLexicon": False,
         "evidenceDossier": [],
         "frequency": int(entry.get("frequency") or 0),
         "languagesSeen": entry.get("languages_seen") or ([entry.get("language")] if entry.get("language") else []),
@@ -1053,16 +1109,153 @@ def write_seed_lexicon_entry(entry: dict, config: Config) -> str:
                 "model": "seed-lexicon-import",
                 "recommendation": "confirm" if status == "validated" else "revise",
                 "reasoning": " ".join(bit for bit in source_bits if bit),
-                "resolvedByResearcher": status in {"draft", "validated"},
+                "resolvedByResearcher": status == "validated",
             }
         ],
     }
+    if status == "validated":
+        doc["approvedBy"] = "researcher"
+        doc["approvedAt"] = now_iso
 
-    result = _mutate([{"createOrReplace": doc}], config)
+    # createIfNotExists is retry-safe and race-safe. Existing definitions,
+    # evidence, approvals, variants, statistics, and orientation trust survive.
+    result = _mutate([{"createIfNotExists": doc}], config)
     try:
         return result["results"][0]["id"]
     except (KeyError, IndexError):
         raise RuntimeError(f"Unexpected Sanity response for seed lexicon write:\n{result}")
+
+
+def sync_authority_lexicon_rows(entries: list[dict], config: Config) -> dict:
+    """Idempotently attach authority attestations without replacing live terms.
+
+    Existing definitions, evidence, validation status, approvals, variants, and
+    Analysis-orientation trust are never overwritten. Missing canonical records
+    are created as untrusted drafts; source attestation is not canonical
+    validation.
+    """
+    # Fetch full attestation state in one bounded query. A read failure stops the
+    # sync before any mutation so retry/idempotency remains inspectable.
+    query = (
+        '*[_type == "lexiconEntry"]'
+        '{ _id, _rev, term, status, draftDefinition, sourceAttestations[]{ '
+        '_key, sourceId, sourceTerm, sourceDefinitionSummary, definitionRepresentation, '
+        'sourceUrl, publicationDate, publisher, licence, reviewState, attestationFingerprint } }'
+    )
+    url = (
+        f"https://{config.sanity_project_id}.api.sanity.io"
+        f"/v2024-01-01/data/query/{config.sanity_dataset}"
+    )
+    headers = {"Authorization": f"Bearer {config.sanity_write_token}"}
+    response = httpx.get(url, params={"query": query}, headers=headers, timeout=10)
+    response.raise_for_status()
+    live_rows = response.json().get("result", [])
+    existing = {
+        str(row.get("_id") or ""): row for row in live_rows if isinstance(row, dict)
+    }
+
+    mutations: list[dict] = []
+    created = 0
+    updated = 0
+    unchanged = 0
+    for entry in entries:
+        term = str(entry.get("term") or "").strip()
+        sanity_id = _sanity_id_or_fallback(
+            entry.get("sanity_id"), f"lexicon-{_slugify(term)}",
+        )
+        if not term or not sanity_id:
+            raise ValueError("Authority lexicon rows require a term and stable Sanity id")
+        attestations = [
+            dict(item) for item in (entry.get("sourceAttestations") or [])
+            if isinstance(item, dict) and item.get("sourceId")
+        ]
+        if sanity_id not in existing:
+            mutations.append({"createIfNotExists": {
+                "_id": sanity_id,
+                "_type": "lexiconEntry",
+                "term": term,
+                "status": "draft",
+                "includeInAnalysisLexicon": False,
+                "proposedCluster": _clean_unknown(entry.get("proposedCluster")),
+                "function": _clean_unknown(entry.get("function")),
+                "draftDefinition": entry.get("draftDefinition") or "",
+                "sourceAttestations": attestations,
+                "evidenceDossier": [],
+                "frequency": 0,
+            }})
+            created += 1
+            continue
+
+        live = existing[sanity_id]
+        live_attestations = [
+            item for item in (live.get("sourceAttestations") or []) if isinstance(item, dict)
+        ]
+        live_by_id: dict[str, dict] = {}
+        for item in live_attestations:
+            source_id = str(item.get("sourceId") or "")
+            if source_id in live_by_id:
+                raise RuntimeError(
+                    f"Lexicon entry {sanity_id} has duplicate authority sourceId {source_id}; "
+                    "resolve it in Sanity before syncing."
+                )
+            live_by_id[source_id] = item
+        missing = [item for item in attestations if str(item.get("sourceId")) not in live_by_id]
+        set_if_missing = {
+            "sourceAttestations": [],
+            "draftDefinition": entry.get("draftDefinition") or "",
+        }
+        patch: dict = {
+            "id": sanity_id,
+            "setIfMissing": set_if_missing,
+        }
+        if live.get("_rev"):
+            patch["ifRevisionID"] = live["_rev"]
+        authority_fields = (
+            "sourceTerm", "sourceDefinitionSummary", "definitionRepresentation",
+            "sourceUrl", "publicationDate", "publisher", "licence",
+            "attestationFingerprint",
+        )
+        refreshed = 0
+        set_fields: dict[str, object] = {}
+        for incoming in attestations:
+            source_id = str(incoming.get("sourceId") or "")
+            current = live_by_id.get(source_id)
+            if not current:
+                continue
+            incoming_fp = incoming.get("attestationFingerprint")
+            current_fp = current.get("attestationFingerprint")
+            if incoming_fp and incoming_fp != current_fp:
+                selector = f'sourceAttestations[sourceId=="{source_id}"]'
+                for field in authority_fields:
+                    if field in incoming:
+                        set_fields[f"{selector}.{field}"] = incoming[field]
+                refreshed += 1
+        if set_fields:
+            patch["set"] = set_fields
+        if missing:
+            patch["insert"] = {"after": "sourceAttestations[-1]", "items": missing}
+            updated += 1
+        elif refreshed or not live.get("draftDefinition"):
+            updated += 1
+        else:
+            unchanged += 1
+        mutations.append({"patch": patch})
+
+    if mutations:
+        _mutate(mutations, config)
+        try:
+            from runner.pipeline.sanity_reads import clear_lexicon_cache
+        except ImportError:
+            from ..pipeline.sanity_reads import clear_lexicon_cache
+        clear_lexicon_cache()
+    return {
+        "attempted": len(entries),
+        "created": created,
+        "updated": updated,
+        "unchanged": unchanged,
+        "canonical_validation_changed": False,
+        "analysis_trust_changed": False,
+    }
 
 
 def write_seed_lexicon_variant(variant: dict, config: Config) -> str:
@@ -1473,6 +1666,13 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
     now_iso  = datetime.now(timezone.utc).isoformat()
     ingested_at = intake.ingested_at or now_iso
     analysed_at = _analysis_processing_date(pkg, now_iso)
+    testimony_related = bool(pkg.testimony_review_required) or bool(analysis.testimony_flag) or bool({
+        analysis.type, analysis.primary_type, analysis.secondary_type,
+    } & {"Testimony", "Survivor-Network-Material"})
+    testimony_review = _load_testimony_review(pkg.local_dir)
+    testimony_safety = _testimony_safety_state(
+        intake.testimony_consent, testimony_review
+    )
 
     # Omit None URL values — Sanity url fields cannot be null
     meta: dict = {
@@ -1499,8 +1699,12 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         meta["sourceUrl"] = source_url
     if intake.archive_url:
         meta["archiveUrl"] = intake.archive_url
-    if analysis.testimony_flag and intake.testimony_consent:
-        meta["testimonyConsent"] = intake.testimony_consent
+    if testimony_related:
+        meta["testimonyConsent"] = (
+            "confirmed" if testimony_safety["effective_status"] == "confirmed"
+            else "refused" if testimony_safety["effective_status"] in {"refused", "withdrawn"}
+            else "pending"
+        )
 
     provenance: dict = {
         "accessedVia": "direct",
@@ -1695,7 +1899,16 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         "referencedUrls": _build_referenced_urls(prep),
 
         "testimonyFlag": analysis.testimony_flag,
-        "needsReview":   analysis.needs_review,
+        "needsReview":   bool(
+            analysis.needs_review
+            or (
+                testimony_related
+                and (
+                    testimony_safety["effective_status"] != "confirmed"
+                    or not testimony_safety["public_display"]
+                )
+            )
+        ),
 
         "validation": {
             "status": "not_validated",
@@ -1705,9 +1918,40 @@ def _build_sanity_document(pkg: DocumentPackage) -> dict:
         media_metadata = dict(prep.media_metadata)
         media_metadata.pop("rawYtDlpMetadata", None)
         doc["mediaMetadata"] = _with_array_keys(_drop_empty(media_metadata), prefix="media")
-    testimony_review = _load_testimony_review(pkg.local_dir)
     if testimony_review:
-        doc["testimonyReview"] = testimony_review
+        safe_review = dict(testimony_review)
+        safe_review["consentStatus"] = {
+            "confirmed": "obtained",
+            "refused": "refused",
+            "withdrawn": "withdrawn",
+        }.get(testimony_safety["effective_status"], "pending")
+        if testimony_safety["effective_status"] != "confirmed":
+            safe_review["publicDisplay"] = False
+            safe_review["publicExcerpt"] = ""
+        if testimony_safety["disagreement"]:
+            conflict_note = (
+                "Consent records disagree between intake.json and "
+                "testimony_review.json; researcher reconciliation required."
+            )
+            safe_review["notes"] = " ".join(
+                part for part in (safe_review.get("notes", ""), conflict_note) if part
+            )
+        doc["testimonyReview"] = safe_review
+    elif testimony_related:
+        consent_map = {
+            "confirmed": "obtained",
+            "refused": "refused",
+            "withdrawn": "withdrawn",
+            "unclear": "unclear",
+            "pending": "pending",
+        }
+        doc["testimonyReview"] = {
+            "consentStatus": consent_map.get(intake.testimony_consent, "pending"),
+            "consentSource": "unknown",
+            "publicDisplay": False,
+            "publicExcerpt": "",
+            "notes": "Testimony review pending; archive record is unverified and not cleared for public testimony display.",
+        }
 
     if prep.language_detected:
         doc["content"]["languageDetected"] = prep.language_detected
@@ -1823,14 +2067,47 @@ def _load_testimony_review(doc_dir) -> dict:
         "refused":    "refused",
         "withdrawn":  "withdrawn",
     }
-    return {
+    payload = {
         "consentStatus": consent_map.get(data.get("consent_status"), data.get("consent_status", "pending")),
         "consentSource": data.get("consent_source", "unknown"),
-        "reviewedBy": data.get("reviewed_by", "researcher"),
+        "reviewedBy": data.get("reviewed_by", ""),
         "reviewedAt": data.get("reviewed_at", ""),
         "publicDisplay": bool(data.get("public_display", False)),
         "publicExcerpt": data.get("public_excerpt", ""),
         "notes": data.get("notes", ""),
+    }
+    return {key: value for key, value in payload.items() if value not in {None, ""}}
+
+
+def _testimony_safety_state(intake_status, review: dict) -> dict:
+    """Resolve consent for the outgoing record and retain public-display hold."""
+    reverse = {
+        "obtained": "confirmed",
+        "confirmed": "confirmed",
+        "pending": "pending",
+        "unclear": "unclear",
+        "refused": "refused",
+        "withdrawn": "withdrawn",
+    }
+    intake_value = str(intake_status or "").strip().lower()
+    review_value = reverse.get(str((review or {}).get("consentStatus") or "").strip().lower(), "")
+    allowed = {"confirmed", "pending", "unclear", "refused", "withdrawn"}
+    intake_value = intake_value if intake_value in allowed else ""
+    present = [value for value in (intake_value, review_value) if value]
+    disagreement = len(set(present)) > 1
+    terminal = next((v for v in present if v in {"withdrawn", "refused"}), "")
+    if terminal:
+        effective = terminal
+    elif disagreement:
+        effective = "pending"
+    elif "confirmed" in present:
+        effective = "confirmed"
+    else:
+        effective = "pending"
+    return {
+        "effective_status": effective,
+        "disagreement": disagreement,
+        "public_display": bool((review or {}).get("publicDisplay", False)),
     }
 
 
@@ -1978,6 +2255,12 @@ def _query(query: str, config: Config, params: dict | None = None) -> list[dict]
 def _fetch_document_by_id(doc_id: str, config: Config, projection: str) -> dict | None:
     result = _query(f'*[_id == $doc_id][0]{projection}', config, {"doc_id": doc_id})
     return result if isinstance(result, dict) else None
+
+
+def sanity_document_exists(doc_id: str, config: Config) -> bool:
+    """Return True when a Sanity document exists for a local or Sanity doc id."""
+    ref = _sogice_document_ref(doc_id)
+    return bool(_fetch_document_by_id(ref, config, "{ _id }"))
 
 
 def _mutate(mutations: list[dict], config: Config) -> dict:

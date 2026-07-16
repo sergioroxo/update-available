@@ -1,0 +1,49 @@
+{
+  "policy_version": "batch-outcome-policy-v2.1",
+  "description": "Local consolidation for the real Analysis + Enrichment workflows.",
+  "required_capture_artifacts": [
+    "intake.json",
+    "preprocess.json"
+  ],
+  "required_analysis_artifacts": [
+    "analysis.json",
+    "analysis_audit.json"
+  ],
+  "required_enrichment_artifacts": [
+    "enrichment.json"
+  ],
+  "testimony_types": [
+    "Testimony",
+    "Survivor-Network"
+  ],
+  "legal_types": [
+    "Legal-Instrument",
+    "Regulatory-Policy-Document"
+  ],
+  "specialist_flags": [
+    "needs_media_review",
+    "needs_testimony_review",
+    "needs_legal_review",
+    "needs_book_splitting"
+  ],
+  "proposal_fields": [
+    "lexicon_proposals",
+    "entity_proposals",
+    "tactic_proposals",
+    "practice_descriptions",
+    "statistical_claims",
+    "ingestion_queue",
+    "corpus_connections"
+  ],
+  "review_group_limit": 25,
+  "recurrence_threshold": 3,
+  "failed_ledger_statuses": [
+    "failed"
+  ],
+  "deferred_ledger_statuses": [
+    "planned",
+    "not_executed",
+    "running",
+    "routed_hold"
+  ]
+}

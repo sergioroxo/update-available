@@ -45,6 +45,39 @@ export default {
       type: 'string',
       description: 'Required before a term can reach validated status. Powers the public SOGICE Wikipedia.',
     },
+    {
+      name: 'sourceAttestations',
+      title: 'Authority Source Attestations',
+      description:
+        'Definitions and mappings attested by named sources. Source attestation does not itself validate the archive term.',
+      type: 'array',
+      of: [{
+        type: 'object',
+        fields: [
+          { name: 'sourceId', title: 'Stable Source ID', type: 'string' },
+          { name: 'sourceTerm', title: 'Term in Source', type: 'string' },
+          { name: 'sourceDefinitionSummary', title: 'Source Definition Summary', type: 'text', rows: 3 },
+          { name: 'definitionRepresentation', title: 'Definition Representation', type: 'string' },
+          { name: 'sourceUrl', title: 'Source URL', type: 'url' },
+          { name: 'publicationDate', title: 'Publication Date', type: 'date' },
+          { name: 'publisher', title: 'Publisher', type: 'string' },
+          { name: 'licence', title: 'Licence', type: 'string' },
+          {
+            name: 'attestationFingerprint',
+            title: 'Attestation Fingerprint',
+            type: 'string',
+            readOnly: true,
+            description: 'Detects a revised source summary or provenance record without changing researcher review state.',
+          },
+          {
+            name: 'reviewState',
+            title: 'Review State',
+            type: 'string',
+            options: { list: ['source_attested_unreviewed', 'researcher_confirmed_source'] },
+          },
+        ],
+      }],
+    },
 
     // ── Approval ────────────────────────────────────────────────
     {

@@ -942,3 +942,4 @@ class DocumentPackage:
     embedding_model: str
     llm_used: str                          # "claude" | "litelm" | "litelm-heavy" | "both"
     local_dir: Path
+    testimony_review_required: bool = False  # includes triage-only testimony routing

@@ -101,6 +101,11 @@ _MIGRATIONS: list[tuple[str, str]] = [
     ("needs_legal_review",      "ALTER TABLE source_queue ADD COLUMN needs_legal_review INTEGER NOT NULL DEFAULT 0"),
     ("overnight_batch_safe",    "ALTER TABLE source_queue ADD COLUMN overnight_batch_safe INTEGER NOT NULL DEFAULT 1"),
     ("suggested_process_route", "ALTER TABLE source_queue ADD COLUMN suggested_process_route TEXT NOT NULL DEFAULT ''"),
+    ("needs_source_file",       "ALTER TABLE source_queue ADD COLUMN needs_source_file INTEGER NOT NULL DEFAULT 0"),
+    ("source_file_path",        "ALTER TABLE source_queue ADD COLUMN source_file_path TEXT NOT NULL DEFAULT ''"),
+    ("source_file_relation",    "ALTER TABLE source_queue ADD COLUMN source_file_relation TEXT NOT NULL DEFAULT ''"),
+    ("source_file_url",         "ALTER TABLE source_queue ADD COLUMN source_file_url TEXT NOT NULL DEFAULT ''"),
+    ("source_file_note",        "ALTER TABLE source_queue ADD COLUMN source_file_note TEXT NOT NULL DEFAULT ''"),
 ]
 
 _HISTORY_MIGRATIONS: list[tuple[str, str]] = [
@@ -119,6 +124,7 @@ _BOOL_COLUMNS: frozenset[str] = frozenset({
     "needs_media_review",
     "needs_legal_review",
     "overnight_batch_safe",
+    "needs_source_file",
 })
 
 
@@ -148,6 +154,12 @@ class QueueItem:
     needs_legal_review: bool = False
     overnight_batch_safe: bool = True
     suggested_process_route: str = ""
+    # Source bundle / attached artifact metadata.
+    needs_source_file: bool = False
+    source_file_path: str = ""
+    source_file_relation: str = ""
+    source_file_url: str = ""
+    source_file_note: str = ""
 
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> "QueueItem":
@@ -225,6 +237,10 @@ def exclusion_reason(item: QueueItem) -> str:
     for flag in _SPECIAL_REVIEW_FLAGS:
         if getattr(item, flag, False):
             return f"needs_review:{flag}"
+    if item.needs_source_file and not item.source_file_path.strip():
+        return "needs_attachment:source_file"
+    if item.source_file_path.strip() and not Path(item.source_file_path).expanduser().is_file():
+        return "source_file_not_found"
     return ""
 
 
@@ -235,6 +251,16 @@ def exclusion_reason(item: QueueItem) -> str:
 def queue_db_path(corpus_dir: Path) -> Path:
     """Return the queue DB path adjacent to the corpus directory."""
     return corpus_dir.parent / "source_queue.db"
+
+
+def open_db_readonly(path: Path) -> sqlite3.Connection:
+    """Open an existing Source Queue without migrations or write capability."""
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f"Source Queue database not found: {path}")
+    conn = sqlite3.connect(f"file:{path.resolve()}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def _migrate_db(conn: sqlite3.Connection) -> None:
@@ -354,6 +380,63 @@ def detect_url_source_type(url: str) -> str:
     if url.startswith(("http://", "https://")):
         return "webpage"
     return "unknown"
+
+
+_FILE_LIKE_EXTENSIONS: frozenset[str] = frozenset({
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
+    ".odt", ".ods", ".odp", ".epub", ".rtf",
+})
+
+_ACADEMIC_OR_REPOSITORY_HOST_MARKERS: tuple[str, ...] = (
+    "doi.org",
+    "jstor.org",
+    "sciencedirect.com",
+    "springer.com",
+    "link.springer.com",
+    "tandfonline.com",
+    "wiley.com",
+    "onlinelibrary.wiley.com",
+    "sagepub.com",
+    "cambridge.org",
+    "oup.com",
+    "academic.oup.com",
+    "projecteuclid.org",
+    "researchgate.net",
+    "semanticscholar.org",
+    "books.google.",
+    "worldcat.org",
+    "archive.org/details/",
+    "digitalcommons.",
+    "repository.",
+    "hdl.handle.net",
+)
+
+
+def source_file_requirement_for_url(url: str, source_type: str = "") -> tuple[bool, str]:
+    """Return whether a queue row should ask for a local/source file.
+
+    This is deliberately heuristic and local-only: it does not fetch the URL.
+    It nudges the researcher to attach the full-text artifact for PDFs, office
+    docs, books, DOIs, and common academic/repository landing pages so source
+    offload can process the actual document while preserving the landing page.
+    """
+    raw = (url or "").strip()
+    if not raw:
+        return False, ""
+    parsed = urlparse(raw)
+    host = parsed.netloc.lower()
+    path = parsed.path.lower()
+    ext = Path(path).suffix.lower()
+    stype = (source_type or detect_url_source_type(raw) or "").lower()
+    if ext in _FILE_LIKE_EXTENSIONS or stype in {"pdf", "docx"}:
+        return True, f"file_like_url:{ext or stype}"
+    haystack = f"{host}{path}"
+    for marker in _ACADEMIC_OR_REPOSITORY_HOST_MARKERS:
+        if marker in haystack:
+            return True, f"likely_full_text_landing:{marker}"
+    if "/doi/" in path or "/article/" in path or "/chapter/" in path:
+        return True, "likely_academic_landing"
+    return False, ""
 
 
 # Private alias used internally (keeps backward compat with old callers)
@@ -535,12 +618,17 @@ def add_item(
 
     item_id = str(uuid.uuid4())[:8]
     now = _now()
+    detected_source_type = detect_url_source_type(url)
+    needs_source_file, source_file_note = source_file_requirement_for_url(
+        url,
+        detected_source_type,
+    )
     item = QueueItem(
         id=item_id,
         url=url,
         url_hash=h,
         title=title,
-        source_type=detect_url_source_type(url),
+        source_type=detected_source_type,
         priority=priority,
         notes=notes,
         tags=tags,
@@ -548,19 +636,24 @@ def add_item(
         status=status,
         added_at=now,
         corpus_doc_id=corpus_doc_id,
+        needs_source_file=needs_source_file,
+        source_file_relation="full_text_file" if needs_source_file else "",
+        source_file_note=source_file_note,
     )
     db.execute(
         """INSERT INTO source_queue
            (id, url, url_hash, title, source_type, doc_type_hint, priority,
             recommended_llm, routing_reason, notes, tags, batch_group,
-            status, added_at, triaged_at, corpus_doc_id, triage_model_used)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            status, added_at, triaged_at, corpus_doc_id, triage_model_used,
+            needs_source_file, source_file_relation, source_file_note)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             item.id, item.url, item.url_hash, item.title, item.source_type,
             item.doc_type_hint, item.priority, item.recommended_llm,
             item.routing_reason, item.notes, item.tags, item.batch_group,
             item.status, item.added_at, item.triaged_at, item.corpus_doc_id,
-            item.triage_model_used,
+            item.triage_model_used, int(item.needs_source_file),
+            item.source_file_relation, item.source_file_note,
         ),
     )
     db.commit()
@@ -628,6 +721,29 @@ def get_item(db: sqlite3.Connection, item_id: str) -> Optional[QueueItem]:
         "SELECT * FROM source_queue WHERE id = ?", (item_id,)
     ).fetchone()
     return QueueItem.from_row(row) if row else None
+
+
+def get_items_by_urls(db: sqlite3.Connection, urls: list[str]) -> list[QueueItem]:
+    """Return queue rows matching URLs, preserving first-seen input order.
+
+    Uses the indexed normalized URL hash instead of scanning an arbitrary queue
+    window, so quick submission remains reliable after the queue exceeds the UI
+    display limits.
+    """
+    ordered_hashes = list(dict.fromkeys(url_hash(url) for url in urls if str(url).strip()))
+    if not ordered_hashes:
+        return []
+    found: dict[str, QueueItem] = {}
+    # Stay below SQLite's common 999-variable limit for large imports.
+    for start in range(0, len(ordered_hashes), 500):
+        chunk = ordered_hashes[start:start + 500]
+        placeholders = ",".join("?" for _ in chunk)
+        rows = db.execute(
+            f"SELECT * FROM source_queue WHERE url_hash IN ({placeholders})",
+            chunk,
+        ).fetchall()
+        found.update((row["url_hash"], QueueItem.from_row(row)) for row in rows)
+    return [found[value] for value in ordered_hashes if value in found]
 
 
 def list_items(
@@ -825,6 +941,40 @@ def update_notes(
     values = [v for _, v in pairs] + [item_id]
     cur = db.execute(
         f"UPDATE source_queue SET {set_clause} WHERE id = ?", values
+    )
+    db.commit()
+    return cur.rowcount > 0
+
+
+def update_source_file_attachment(
+    db: sqlite3.Connection,
+    item_id: str,
+    *,
+    needs_source_file: Optional[bool] = None,
+    source_file_path: Optional[str] = None,
+    source_file_relation: Optional[str] = None,
+    source_file_url: Optional[str] = None,
+    source_file_note: Optional[str] = None,
+) -> bool:
+    """Patch the queue-level source bundle / attached-file metadata."""
+    pairs: list[tuple[str, object]] = []
+    if needs_source_file is not None:
+        pairs.append(("needs_source_file", int(bool(needs_source_file))))
+    if source_file_path is not None:
+        pairs.append(("source_file_path", source_file_path.strip()))
+    if source_file_relation is not None:
+        pairs.append(("source_file_relation", source_file_relation.strip()))
+    if source_file_url is not None:
+        pairs.append(("source_file_url", source_file_url.strip()))
+    if source_file_note is not None:
+        pairs.append(("source_file_note", source_file_note.strip()))
+    if not pairs:
+        return False
+    set_clause = ", ".join(f"{col} = ?" for col, _ in pairs)
+    values = [v for _, v in pairs] + [item_id]
+    cur = db.execute(
+        f"UPDATE source_queue SET {set_clause} WHERE id = ?",
+        values,
     )
     db.commit()
     return cur.rowcount > 0

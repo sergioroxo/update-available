@@ -54,7 +54,7 @@ def fetch_active_lexicon_terms(config: Config, ttl_seconds: float = _LEXICON_CAC
 
     query = (
         '*[_type == "lexiconEntry" && status in ["draft","validated"]]'
-        '{ term, status, proposedCluster, function, multilingualVariants }'
+        '{ term, status, proposedCluster, function, multilingualVariants, sourceAttestations }'
     )
     terms = _sanity_get(config, query)
     _LEXICON_CACHE[cache_key] = (now, terms)

@@ -410,6 +410,7 @@ class TestNewDraftFlag:
             return {"results": [{"id": "lexicon-pastoral-care"}]}
 
         monkeypatch.setattr(sanity_client, "_mutate", fake_mutate)
+        monkeypatch.setattr(sanity_client, "_fetch_document_by_id", lambda *a, **k: None)
 
         sanity_client.write_lexicon_draft_from_proposal(
             self._make_proposal(), "doc-abc123", object()
@@ -417,7 +418,7 @@ class TestNewDraftFlag:
 
         assert len(captured_mutations) == 1
         mutation = captured_mutations[0][0]
-        doc = mutation["createOrReplace"]
+        doc = mutation["createIfNotExists"]
         assert "includeInAnalysisLexicon" in doc, (
             "includeInAnalysisLexicon must be explicitly set on new lexicon entries"
         )
@@ -436,12 +437,13 @@ class TestNewDraftFlag:
             "_mutate",
             lambda m, c: captured.append(m) or {"results": [{"id": "x"}]},
         )
+        monkeypatch.setattr(sanity_client, "_fetch_document_by_id", lambda *a, **k: None)
 
         sanity_client.write_lexicon_draft_from_proposal(
             self._make_proposal(), "doc-abc123", object()
         )
 
-        doc = captured[0][0]["createOrReplace"]
+        doc = captured[0][0]["createIfNotExists"]
         assert doc["status"] == "draft"
         assert doc["includeInAnalysisLexicon"] is False
 
@@ -455,12 +457,13 @@ class TestNewDraftFlag:
             "_mutate",
             lambda m, c: captured.append(m) or {"results": [{"id": "x"}]},
         )
+        monkeypatch.setattr(sanity_client, "_fetch_document_by_id", lambda *a, **k: None)
 
         sanity_client.write_lexicon_draft_from_proposal(
             self._make_proposal(), "doc-abc123", object()
         )
 
-        doc = captured[0][0]["createOrReplace"]
+        doc = captured[0][0]["createIfNotExists"]
         flag = doc["includeInAnalysisLexicon"]
         assert flag is False and isinstance(flag, bool), (
             f"Expected Python False (bool), got {flag!r} ({type(flag).__name__})"

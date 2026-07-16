@@ -162,3 +162,36 @@ def test_enrichment_save_alt_never_touches_main_file_and_marks_run_type(tmp_path
     assert alt["enrichment_model"] == "core-gemma"
     history = enrich.list_history("doc-1", config)
     assert history[0]["run_type"] == "alt"
+
+
+def test_enrichment_save_alt_persists_content_free_paired_audit(tmp_path):
+    config = _Config(corpus_dir=tmp_path)
+    audit = {
+        "llm_flag": "litelm",
+        "model": "core-gemma",
+        "input_receipt": {
+            "schema_version": "resolved-model-input-v1",
+            "exact": True,
+            "request_sha256": "a" * 64,
+            "extracted_text_sha256": "b" * 64,
+        },
+        "errors": ["sensitive testimony must not leak"],
+        "chunks": [{"index": 0, "char_count": 20, "succeeded": False, "error": "raw source text"}],
+    }
+    alt_path = enrich.save_alt(
+        "doc-1",
+        EnrichmentResult(doc_id="doc-1", enrichment_model="core-gemma"),
+        config,
+        label="core-gemma",
+        _audit=audit,
+    )
+
+    audit_path = alt_path.with_name(f"audit_{alt_path.name}")
+    payload = json.loads(audit_path.read_text(encoding="utf-8"))
+    assert payload["artifact_file"] == alt_path.name
+    assert len(payload["artifact_sha256"]) == 64
+    assert payload["input_receipt"]["exact"] is True
+    serialized = audit_path.read_text(encoding="utf-8")
+    assert "sensitive testimony" not in serialized
+    assert "raw source text" not in serialized
+    assert len(enrich.list_history("doc-1", config)) == 1

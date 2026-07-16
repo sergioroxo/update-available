@@ -816,6 +816,176 @@ Carried forward from PRD v2.0 §6.4–6.5:
 
 ---
 
+## SECTION 13 — GOV.UK CONVERSION THERAPY GLOSSARY REFERENCE TERMS
+
+> **Superseded source transcription (retained for history only).** This older adapted list is not an exact transcription: it omitted official terms and included local archive terms. The seed parser now ignores this section. The authoritative 35-term, source-scoped record is `govuk_conversion_therapy_glossary_2021.json`; local terms such as Aromantic, Detransition, Gender Variance, and LGBTQ+ must not be cited as exact terms from this GOV.UK page.
+
+Curated baseline terminology from the UK Government conversion therapy evidence assessment glossary. These entries are seed/reference terms for disambiguation, triage, enrichment, and later lexicon validation. They are not automatically SOGICE tactics. Validate stance and corpus use before public publication.
+
+**Aromantic**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes people who experience little or no romantic attraction, or experience romantic attraction in non-normative ways.
+- Related: Asexual, LGBTQ+
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Asexual**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes people who experience little or no sexual attraction, or experience sexual attraction in non-normative ways.
+- Related: Aromantic, LGBTQ+
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Bisexual**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes attraction to more than one gender.
+- Related: LGBTQ+, Gay, Lesbian, Pansexual
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Cisgender**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes people whose gender identity aligns with the sex they were assigned at birth.
+- Related: Transgender, Gender Identity
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Conversion Therapy**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Umbrella term for interventions or practices seeking to change, suppress, or eliminate sexual orientation or gender identity.
+- Related: SOGICE, Conversion Practices, Reparative Therapy, SOCE, GICE
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Detransition**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes stopping or reversing some or all aspects of a social, medical, or legal gender transition.
+- Related: Transition, Desistance, Anti-Trans/ROGD
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Ex-gay**
+- Cluster: SSA-Rhetoric | Function: Testimonial Marketing
+- Definition: Identity and movement term used by some people or organizations claiming that same-sex attraction can be changed, overcome, or left behind.
+- Related: Ex-Gay Movement, Ex-Gay Ministry, Changed, Unwanted Same-Sex Attraction, SOCE
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Ex-gay Ministry**
+- Cluster: Pastoral-Coercion | Function: Promotional Recruitment
+- Definition: Religious or ministry setting organized around ex-gay identity, testimony, counselling, pastoral support, or change-oriented practice.
+- Related: Ex-gay, Ex-Gay Movement, Pastoral Care, Change Story
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Ex-gay Movement**
+- Cluster: SSA-Rhetoric | Function: Promotional Recruitment
+- Definition: Networked religious, therapeutic, or advocacy movement promoting ex-gay identity, testimony, or sexual-orientation change.
+- Related: Ex-gay, Ex-gay Ministry, SOCE, Testimony-as-Proof
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Gay**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes people attracted to people of the same gender; often used for men, and sometimes as a broader umbrella term.
+- Related: Homosexual, Lesbian, Bisexual, LGBTQ+
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Gender Identity**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: A person's internal sense of their gender.
+- Related: Transgender, Non-binary, Gender Incongruence, Gender Reassignment
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Gender Identity Change Efforts**
+- Cluster: Anti-Trans/ROGD | Function: Pseudo-Diagnostic
+- Definition: Practices or interventions seeking to change, suppress, or redirect a person's gender identity.
+- Related: GICE, Conversion Therapy, SOGICE, Gender Exploratory Therapy
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Gender Incongruence**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Clinical term for incongruence between experienced gender and assigned sex, used in some diagnostic and healthcare contexts.
+- Related: Gender Dysphoria, Gender Identity, Transgender
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Gender Reassignment**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: UK legal and equality-law term connected to transition or proposing to transition.
+- Related: Transgender, Gender Identity, Transition
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Gender Variance**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes gender expression, identity, or experience that differs from dominant gender norms.
+- Related: Gender Diverse, Non-binary, Transgender, Gender Identity
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Heterosexual**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes attraction to people of a different gender.
+- Related: Homosexual, Sexual Orientation, SOCE
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Homosexual**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Clinical or historical term for same-sex attraction; corpus use may be neutral, medicalized, stigmatizing, or anti-LGBTQ+ depending on context.
+- Related: Gay, Lesbian, Same-Sex Attraction, SSA, SOCE
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Intersex**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Umbrella term for variations in sex characteristics that do not fit typical binary definitions.
+- Related: LGBTQ+, SOGIESC
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Lesbian**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes women attracted to women.
+- Related: Gay, Bisexual, LGBTQ+
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**LGBTQ+**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Umbrella acronym for lesbian, gay, bisexual, transgender, queer/questioning, and additional sexual, gender, and sex-characteristic minorities.
+- Related: Lesbian, Gay, Bisexual, Transgender, Queer, Intersex, Asexual, Aromantic
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Non-binary**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes gender identities that are not exclusively male or female.
+- Related: Transgender, Gender Identity, Gender Variance
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Pansexual**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Describes attraction that is not limited by gender.
+- Related: Bisexual, LGBTQ+
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Queer**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Reclaimed umbrella term for sexual and gender minorities; context determines whether use is self-descriptive, academic, political, or hostile.
+- Related: LGBTQ+, Gay, Lesbian, Bisexual, Transgender
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Reparative Therapy**
+- Cluster: Pseudo-Science | Function: Pseudo-Diagnostic
+- Definition: Change-oriented therapeutic framework claiming homosexuality or gender variance can be repaired, resolved, or redirected.
+- Related: Conversion Therapy, SOCE, Unwanted Same-Sex Attraction, Reparative Therapy Logic
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Sexual Orientation Change Efforts**
+- Cluster: Pseudo-Science | Function: Pseudo-Diagnostic
+- Definition: Clinical or research term for efforts seeking to change, suppress, or redirect sexual orientation.
+- Related: SOCE, Conversion Therapy, Reparative Therapy, Ex-gay
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Transgender**
+- Cluster: Non-SOGICE | Function: Unknown
+- Definition: Umbrella term for people whose gender identity differs from the sex assigned at birth.
+- Related: Gender Identity, Non-binary, Gender Reassignment, Cisgender
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+**Unwanted Same-Sex Attraction**
+- Cluster: SSA-Rhetoric | Function: Euphemism
+- Definition: SOGICE and pastoral/therapeutic phrase framing same-sex attraction as unwanted, distressing, and suitable for suppression or change.
+- Related: USSA, Same-Sex Attraction, Ex-gay, SOCE, Reparative Therapy
+- Source: GOV.UK conversion therapy evidence assessment glossary — https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/appendix-1-glossary
+
+---
+
 *SOGICE Lexicon v2.1 · May 2026 · SurvivingSOGICE PhD Research Archive · University of Bergen*
 *Living document — grows with every ingestion batch*
 *Companion: SOGICE_Ontology_v3.0.md · PRD_v3.1.md · Claude_Ingestion_Prompt ingestion-v3.3*

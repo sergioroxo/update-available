@@ -49,6 +49,7 @@ def test_write_media_metadata_update_adds_array_keys(monkeypatch):
         return {"results": [{"id": "doc-1"}]}
 
     monkeypatch.setattr(sanity, "_mutate", fake_mutate)
+    monkeypatch.setattr(sanity, "_fetch_document_by_id", lambda *a, **k: None)
 
     sanity.write_media_metadata_update(
         "doc-1",
@@ -134,6 +135,7 @@ def test_lexicon_write_preserves_full_evidence_dossier(monkeypatch):
         return {"results": [{"id": "lexicon-pastoral-care"}]}
 
     monkeypatch.setattr(sanity, "_mutate", fake_mutate)
+    monkeypatch.setattr(sanity, "_fetch_document_by_id", lambda *a, **k: None)
 
     sanity.write_lexicon_draft_from_proposal(
         {
@@ -156,7 +158,7 @@ def test_lexicon_write_preserves_full_evidence_dossier(monkeypatch):
         _Config(),
     )
 
-    evidence = calls[0][0]["createOrReplace"]["evidenceDossier"][0]
+    evidence = calls[0][0]["createIfNotExists"]["evidenceDossier"][0]
     assert evidence["exactQuote"] == "This is pastoral care, not conversion therapy."
     assert evidence["definitionAsUsed"] == "A euphemistic frame for SOGICE."
     assert evidence["usageRegister"] == "euphemistic"

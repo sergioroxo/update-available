@@ -741,6 +741,21 @@ def plan_batch(
         notes.append(
             f"{unsafe} item(s) excluded: triage flagged as not batch-safe"
         )
+    missing_attachment = sum(
+        1 for e in excluded if e.exclusion_reason == "needs_attachment:source_file"
+    )
+    if missing_attachment:
+        notes.append(
+            f"{missing_attachment} item(s) excluded: source/PDF file attachment required before batching"
+        )
+    missing_source_file = sum(
+        1 for e in excluded if e.exclusion_reason == "source_file_not_found"
+    )
+    if missing_source_file:
+        notes.append(
+            f"{missing_source_file} item(s) excluded: attached source file was not found locally; "
+            "download cloud-only OneDrive/iCloud files or fix the saved path before batching"
+        )
     if over_limit:
         same_host = sum(1 for e in over_limit if e.exclusion_reason.startswith("same_host_limit:"))
         over_cap = sum(1 for e in over_limit if e.exclusion_reason == "over_limit")

@@ -43,12 +43,19 @@ def run_second_opinion(
     original = AnalysisResult.model_validate_json(analysis_path.read_text(encoding="utf-8"))
     preprocess = _load_preprocess_for_second_opinion(doc_id, doc_dir)
     analyze.enrich_preprocess_from_intake(preprocess, doc_dir / "intake.json")
-    alt = analyze.run(preprocess, llm=llm, config=config)
+    alt_audit: dict[str, Any] = {}
+    alt = analyze.run(preprocess, llm=llm, config=config, _audit=alt_audit)
 
     timestamp = _timestamp()
     model_label = _safe_label(_model_label_for_llm(llm, config))
     alt_path = doc_dir / f"analysis_alt_{model_label}_{timestamp}.json"
     alt_path.write_text(json.dumps(_stamp_analysis_dict(alt), indent=2), encoding="utf-8")
+    audit_path = upload.write_paired_analysis_audit(
+        alt_path,
+        alt_audit,
+        alt,
+        doc_id=doc_id,
+    )
 
     comparison = build_analysis_comparison(
         doc_id=doc_id,
@@ -66,6 +73,7 @@ def run_second_opinion(
     return {
         "doc_id": doc_id,
         "alt_path": alt_path,
+        "audit_path": audit_path,
         "comparison_path": comparison_path,
         "comparison": comparison,
     }

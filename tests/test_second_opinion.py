@@ -56,7 +56,7 @@ def test_run_second_opinion_saves_alt_and_comparison_without_overwrite(tmp_path,
     monkeypatch.setattr(
         second_opinion.analyze,
         "run",
-        lambda preprocess, llm, config: _analysis("Pro-SOGICE", 0.88),
+        lambda preprocess, llm, config, **kwargs: _analysis("Pro-SOGICE", 0.88),
     )
 
     payload = second_opinion.run_second_opinion("doc-1", config, llm="litelm-reasoning")
@@ -71,6 +71,40 @@ def test_run_second_opinion_saves_alt_and_comparison_without_overwrite(tmp_path,
     assert comparison["second_opinion_model"] == "review-qwen"
 
 
+def test_second_opinion_persists_content_free_paired_audit(tmp_path, monkeypatch):
+    config = _Config(corpus_dir=tmp_path)
+    doc_dir = _doc(tmp_path)
+    (doc_dir / "extracted.txt").write_text("sensitive testimony", encoding="utf-8")
+
+    def _run(preprocess, llm, config, *, _audit=None):
+        assert _audit is not None
+        _audit.update({
+            "llm_flag": llm,
+            "model": "review-qwen",
+            "input_receipt": {
+                "schema_version": "resolved-model-input-v1",
+                "exact": True,
+                "request_sha256": "a" * 64,
+                "extracted_text_sha256": "b" * 64,
+            },
+        })
+        return _analysis("Pro-SOGICE", 0.88)
+
+    monkeypatch.setattr(second_opinion.analyze, "run", _run)
+    payload = second_opinion.run_second_opinion(
+        "doc-1", config, llm="litelm-reasoning",
+    )
+
+    audit_path = payload["audit_path"]
+    assert audit_path.name == f"audit_{payload['alt_path'].name}"
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    assert audit["artifact_file"] == payload["alt_path"].name
+    assert len(audit["artifact_sha256"]) == 64
+    assert audit["input_receipt"]["exact"] is True
+    assert "sensitive testimony" not in audit_path.read_text(encoding="utf-8")
+    assert not list(doc_dir.glob("analysis_alt_*audit*.json"))
+
+
 def test_keep_original_records_decision_without_overwrite(tmp_path, monkeypatch):
     config = _Config(corpus_dir=tmp_path)
     doc_dir = _doc(tmp_path)
@@ -78,7 +112,7 @@ def test_keep_original_records_decision_without_overwrite(tmp_path, monkeypatch)
     monkeypatch.setattr(
         second_opinion.analyze,
         "run",
-        lambda preprocess, llm, config: _analysis("Pro-SOGICE", 0.88),
+        lambda preprocess, llm, config, **kwargs: _analysis("Pro-SOGICE", 0.88),
     )
     payload = second_opinion.run_second_opinion("doc-1", config, llm="litelm-reasoning")
 
@@ -101,7 +135,7 @@ def test_adopt_alt_archives_original_and_promotes_alt(tmp_path, monkeypatch):
     monkeypatch.setattr(
         second_opinion.analyze,
         "run",
-        lambda preprocess, llm, config: _analysis("Pro-SOGICE", 0.88),
+        lambda preprocess, llm, config, **kwargs: _analysis("Pro-SOGICE", 0.88),
     )
     payload = second_opinion.run_second_opinion("doc-1", config, llm="litelm-reasoning")
 
@@ -125,7 +159,7 @@ def test_edited_decision_validates_and_promotes_edited_json(tmp_path, monkeypatc
     monkeypatch.setattr(
         second_opinion.analyze,
         "run",
-        lambda preprocess, llm, config: _analysis("Pro-SOGICE", 0.88),
+        lambda preprocess, llm, config, **kwargs: _analysis("Pro-SOGICE", 0.88),
     )
     payload = second_opinion.run_second_opinion("doc-1", config, llm="litelm-reasoning")
     edited = _analysis("Anti-SOGICE", 0.91)

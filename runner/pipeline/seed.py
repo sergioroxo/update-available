@@ -49,6 +49,7 @@ _SECTION_CLUSTER_MAP = {
     "SECTION 10": "Non-SOGICE",   # migration/asylum
     "SECTION 11": "Unknown",      # multilingual table — parsed separately
     "SECTION 12": "Unknown",      # terms requiring documentation
+    "SECTION 13": "Non-SOGICE",   # GOV.UK glossary reference terms
 }
 
 # Language codes for multilingual terms in term names like "(IT)", "(DE)"
@@ -79,6 +80,7 @@ def parse_lexicon_md(path: Path | None = None) -> list[dict]:
     raw = (path or _LEXICON_FILE).read_text(encoding="utf-8")
     entries: list[dict] = []
     current_cluster = "Unknown"
+    current_section = ""
 
     lines = raw.splitlines()
     i = 0
@@ -87,10 +89,10 @@ def parse_lexicon_md(path: Path | None = None) -> list[dict]:
 
         # Track section header for cluster
         if line.startswith("## SECTION"):
-            for key, cluster in _SECTION_CLUSTER_MAP.items():
-                if key in line:
-                    current_cluster = cluster
-                    break
+            section_match = re.match(r"^##\s+(SECTION\s+\d+)\b", line)
+            if section_match:
+                current_section = section_match.group(1)
+                current_cluster = _SECTION_CLUSTER_MAP.get(current_section, "Unknown")
             i += 1
             continue
 
@@ -245,7 +247,11 @@ def parse_lexicon_md(path: Path | None = None) -> list[dict]:
             if "|" in term_name or len(term_name) < 2:
                 continue
 
-            entries.append(entry)
+            # Section 13 is superseded by the exact, versioned 35-term GOV.UK
+            # source manifest. Keeping it out here prevents legacy adaptations
+            # from being misrepresented as exact source terms or duplicated.
+            if current_section != "SECTION 13":
+                entries.append(entry)
             continue
 
         i += 1
@@ -365,12 +371,15 @@ def seed_lexicon(
     summary = {"attempted": len(entries), "created": 0, "skipped": 0, "errors": []}
 
     existing_ids: set[str] = set()
-    if not force and not dry_run:
+    if not dry_run:
         try:
             existing = sanity_client.fetch_lexicon_terms(config)
             existing_ids = {e.get("_id", "") for e in existing}
-        except Exception:
-            existing_ids = set()
+        except Exception as exc:
+            summary["errors"].append(
+                f"Live lexicon comparison failed; import stopped before mutations: {exc}"
+            )
+            return summary
 
     for entry in entries:
         term = entry["term"]
@@ -1091,6 +1100,9 @@ def _slugify(s: str) -> str:
 
 
 def _parse_cluster(raw: str) -> str:
+    raw = str(raw or "").strip()
+    if raw in _VALID_CLUSTERS:
+        return raw
     # May be "SSA-Rhetoric / Pseudo-Science" — take first
     first = raw.split("/")[0].strip()
     return first if first in _VALID_CLUSTERS else "Unknown"

@@ -343,6 +343,11 @@ items/<doc_id>/source.<ext>        # local file-backed items only
   manifest. No fetch and **no blob** is stored — the Mac Studio re-fetches in S2.
 - **File items** copy the source file in as `source.<ext>` and record its
   SHA-256 + byte size.
+- **Queue-attached file items** are created from Source Queue rows whose
+  **Source bundle / attached PDF or file** field points at a local PDF/DOC/EPUB
+  or saved snapshot. The file-backed item keeps the queue linkage
+  (`queue_item_id` / `url_hash`) so import can relink the original row, while a
+  separate companion URL item can preserve and analyze the landing/source page.
 - The manifest preserves `queue_item_id`, `url_hash`, source URL, declared type,
   and priority/safety hints. It carries **no absolute MacBook paths** (those, if
   ever needed for recovery, belong in a private per-machine export ledger that is

@@ -11,7 +11,12 @@ from runner.models.document import (
     PreprocessResult,
 )
 from runner.pipeline import analyze
-from runner.pipeline.upload import _enforce_testimony_upload_gate, requires_consent_gate
+from runner.pipeline.upload import (
+    _enforce_testimony_upload_gate,
+    requires_consent_gate,
+    archive_upload_disposition_for_testimony,
+    reconcile_testimony_consent,
+)
 
 
 def _analysis() -> AnalysisResult:
@@ -156,6 +161,52 @@ def test_build_sanity_document_adds_testimony_consent_when_flagged(tmp_path):
     assert doc["meta"]["testimonyConsent"] == "confirmed"
 
 
+def test_build_sanity_document_marks_pending_testimony_as_unverified_hold(tmp_path):
+    intake = _make_intake(tmp_path)
+    pkg = DocumentPackage(
+        intake=intake,
+        preprocess=PreprocessResult(
+            doc_id=intake.doc_id, tool_used="docling", quality="high", text="text",
+        ),
+        analysis=_testimony_analysis(),
+        embedding=[],
+        embedding_model="embedding-model",
+        llm_used="litelm",
+        local_dir=tmp_path,
+    )
+
+    doc = _build_sanity_document(pkg)
+
+    assert doc["workflowStatus"] == "unverified"
+    assert doc["needsReview"] is True
+    assert doc["meta"]["testimonyConsent"] == "pending"
+    assert doc["testimonyReview"]["consentStatus"] == "pending"
+    assert doc["testimonyReview"]["publicDisplay"] is False
+    assert doc["testimonyReview"]["publicExcerpt"] == ""
+    assert "reviewedBy" not in doc["testimonyReview"]
+
+
+def test_build_sanity_document_preserves_triage_only_testimony_hold(tmp_path):
+    intake = _make_intake(tmp_path)
+    pkg = DocumentPackage(
+        intake=intake,
+        preprocess=PreprocessResult(
+            doc_id=intake.doc_id, tool_used="docling", quality="high", text="text",
+        ),
+        analysis=_typed_analysis("Anti-SOGICE"),
+        embedding=[],
+        embedding_model="embedding-model",
+        llm_used="litelm",
+        local_dir=tmp_path,
+        testimony_review_required=True,
+    )
+
+    doc = _build_sanity_document(pkg)
+    assert doc["workflowStatus"] == "unverified"
+    assert doc["needsReview"] is True
+    assert doc["testimonyReview"]["consentStatus"] == "pending"
+
+
 def test_build_sanity_document_maps_media_metadata_without_raw_snapshot(tmp_path):
     intake = IntakeResult(
         doc_id="doc-1",
@@ -276,27 +327,28 @@ def test_requires_consent_gate_on_primary_type():
 
 # ── _enforce_testimony_upload_gate ──────────────────────────────────────────
 
-def test_testimony_upload_gate_blocks_missing_consent(tmp_path):
+def test_testimony_archive_upload_allows_missing_review_as_unverified(tmp_path):
     intake = _make_intake(tmp_path)
-    with pytest.raises(click.exceptions.Exit):
-        _enforce_testimony_upload_gate(intake, _testimony_analysis())
+    analysis = _testimony_analysis()
+    assert archive_upload_disposition_for_testimony(intake, analysis) == "unverified_pending_review"
+    _enforce_testimony_upload_gate(intake, analysis)
 
 
-def test_gate_blocks_testimony_type_without_flag(tmp_path):
-    """type=Testimony must be blocked even when testimony_flag is False."""
+def test_gate_allows_unverified_testimony_type_without_flag(tmp_path):
+    """type=Testimony retains review controls even when testimony_flag is False."""
     intake = _make_intake(tmp_path)
     analysis = _typed_analysis("Testimony")
     assert analysis.testimony_flag is False
-    with pytest.raises(click.exceptions.Exit):
-        _enforce_testimony_upload_gate(intake, analysis)
+    assert archive_upload_disposition_for_testimony(intake, analysis) == "unverified_pending_review"
+    _enforce_testimony_upload_gate(intake, analysis)
 
 
-def test_gate_blocks_survivor_network_type(tmp_path):
-    """type=Survivor-Network-Material must be blocked without confirmed consent."""
+def test_gate_allows_unverified_survivor_network_type(tmp_path):
+    """Pending review permits archive sync but not public release."""
     intake = _make_intake(tmp_path)
     analysis = _typed_analysis("Survivor-Network-Material")
-    with pytest.raises(click.exceptions.Exit):
-        _enforce_testimony_upload_gate(intake, analysis)
+    assert archive_upload_disposition_for_testimony(intake, analysis) == "unverified_pending_review"
+    _enforce_testimony_upload_gate(intake, analysis)
 
 
 def test_gate_passes_with_confirmed_consent(tmp_path):
@@ -331,6 +383,81 @@ def test_testimony_gate_blocks_refused_consent(tmp_path):
 
     with pytest.raises(click.exceptions.Exit):
         _enforce_testimony_upload_gate(intake, _testimony_analysis())
+
+
+def test_testimony_consent_reconciliation_blocks_if_either_record_withdraws(tmp_path):
+    intake = _make_intake(tmp_path)
+    intake.testimony_consent = "confirmed"
+    review = {"consent_status": "withdrawn", "reviewed": True}
+
+    resolution = reconcile_testimony_consent("confirmed", "withdrawn")
+    assert resolution["effective_status"] == "withdrawn"
+    assert resolution["disagreement"] is True
+    assert archive_upload_disposition_for_testimony(
+        intake, _testimony_analysis(), testimony_review=review
+    ) == "blocked_refused_or_withdrawn"
+    with pytest.raises(click.exceptions.Exit):
+        _enforce_testimony_upload_gate(
+            intake, _testimony_analysis(), testimony_review=review
+        )
+
+
+def test_testimony_consent_nonterminal_disagreement_is_pending(tmp_path):
+    intake = _make_intake(tmp_path)
+    intake.testimony_consent = "confirmed"
+    review = {"consent_status": "pending", "reviewed": True}
+
+    resolution = reconcile_testimony_consent("confirmed", "pending")
+    assert resolution["effective_status"] == "pending"
+    assert resolution["disagreement"] is True
+    assert archive_upload_disposition_for_testimony(
+        intake, _testimony_analysis(), testimony_review=review
+    ) == "unverified_pending_review"
+
+
+def test_sanity_needs_review_when_consent_confirmed_but_public_display_held(tmp_path):
+    intake = _make_intake(tmp_path)
+    intake.testimony_consent = "confirmed"
+    (tmp_path / "testimony_review.json").write_text(json.dumps({
+        "consent_status": "confirmed",
+        "public_display": False,
+        "reviewed": True,
+    }))
+    pkg = DocumentPackage(
+        intake=intake,
+        preprocess=PreprocessResult(doc_id=intake.doc_id, tool_used="manual", quality="high", text="text"),
+        analysis=_testimony_analysis(), embedding=[], embedding_model="m",
+        llm_used="litelm", local_dir=tmp_path,
+    )
+
+    doc = _build_sanity_document(pkg)
+    assert doc["meta"]["testimonyConsent"] == "confirmed"
+    assert doc["testimonyReview"]["publicDisplay"] is False
+    assert doc["needsReview"] is True
+
+
+def test_sanity_conflicting_consent_fails_closed_and_surfaces_note(tmp_path):
+    intake = _make_intake(tmp_path)
+    intake.testimony_consent = "confirmed"
+    (tmp_path / "testimony_review.json").write_text(json.dumps({
+        "consent_status": "refused",
+        "public_display": True,
+        "public_excerpt": "must not escape",
+        "reviewed": True,
+    }))
+    pkg = DocumentPackage(
+        intake=intake,
+        preprocess=PreprocessResult(doc_id=intake.doc_id, tool_used="manual", quality="high", text="text"),
+        analysis=_testimony_analysis(), embedding=[], embedding_model="m",
+        llm_used="litelm", local_dir=tmp_path,
+    )
+
+    doc = _build_sanity_document(pkg)
+    assert doc["meta"]["testimonyConsent"] == "refused"
+    assert doc["testimonyReview"]["publicDisplay"] is False
+    assert doc["testimonyReview"]["publicExcerpt"] == ""
+    assert "disagree" in doc["testimonyReview"]["notes"]
+    assert doc["needsReview"] is True
 
 
 def test_prompt_version_imported_from_single_source():

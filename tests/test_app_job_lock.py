@@ -322,11 +322,13 @@ def test_request_stop_app_job_kills_pid_from_recovered_lock(monkeypatch):
     calls = []
 
     monkeypatch.setattr(app_mod, "_pid_is_running", lambda _pid: True)
-    monkeypatch.setattr(app_mod.os, "kill", lambda pid, sig: calls.append((pid, sig)))
+    monkeypatch.setattr(app_mod.os, "getpgid", lambda pid: pid)
+    monkeypatch.setattr(app_mod.os, "killpg", lambda pid, sig: calls.append((pid, sig)))
 
     message = app_mod._request_stop_app_job({"pid": "999", "kind": "source-queue-triage"})
 
     assert calls == [(999, app_mod.signal.SIGTERM)]
+    assert "process group" in message
     assert "999" in message
 
 

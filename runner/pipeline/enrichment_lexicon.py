@@ -28,8 +28,10 @@ from pathlib import Path
 
 try:
     from runner.pipeline import seed as seed_module
+    from runner.pipeline.govuk_glossary import seed_memory_terms as govuk_seed_memory_terms
 except ImportError:  # pragma: no cover - import shim
     from . import seed as seed_module  # type: ignore[no-redef]
+    from .govuk_glossary import seed_memory_terms as govuk_seed_memory_terms
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _LEGACY_GLOSSARY = _PROJECT_ROOT / "03_data" / "sogice_glossary_2026-04-03.json"
@@ -63,7 +65,7 @@ def seed_lexicon_terms() -> list[dict]:
     """Curated seed-draft terms with their multilingual variants attached.
 
     Shaped like a Sanity term dict so the prompt formatter is uniform:
-    ``{term, status, proposedCluster, function, multilingualVariants, source}``
+    ``{term, status, proposedCluster, function, multilingualVariants, source, sourceNote}``
     with ``status='seed_draft'`` and ``source='seed'``. Pure; ``[]`` on failure.
     """
     try:
@@ -103,6 +105,7 @@ def seed_lexicon_terms() -> list[dict]:
             "function": entry.get("function") or "Unknown",
             "multilingualVariants": variants_by_id.get(cid, []),
             "source": "seed",
+            "sourceNote": entry.get("source_note") or "",
         })
 
     # Canonicals that exist only in the §11 multilingual table (no standalone term
@@ -119,6 +122,34 @@ def seed_lexicon_terms() -> list[dict]:
             "multilingualVariants": variants_by_id.get(cid, []),
             "source": "seed",
         })
+
+    # Structured authority manifest. It is source-attested reference memory,
+    # not researcher validation and not automatically trusted by Analysis.
+    try:
+        govuk_rows = govuk_seed_memory_terms()
+    except Exception:
+        govuk_rows = []
+    by_canonical = {canonical_key(row.get("term", "")): row for row in terms}
+    for govuk_row in govuk_rows:
+        cid = canonical_key(govuk_row.get("term", ""))
+        existing = by_canonical.get(cid)
+        if existing is None:
+            terms.append(govuk_row)
+            by_canonical[cid] = govuk_row
+            continue
+        if existing.get("proposedCluster") in {None, "", "Unknown"}:
+            existing["proposedCluster"] = govuk_row.get("proposedCluster") or "Unknown"
+        if existing.get("function") in {None, ""}:
+            existing["function"] = govuk_row.get("function") or "Unknown"
+        if not existing.get("sourceNote"):
+            existing["sourceNote"] = govuk_row.get("sourceNote") or ""
+        _merge_variants(existing, govuk_row)
+        attestations = existing.setdefault("sourceAttestations", [])
+        seen_attestations = {str(row.get("sourceId") or "") for row in attestations if isinstance(row, dict)}
+        for attestation in govuk_row.get("sourceAttestations") or []:
+            if str(attestation.get("sourceId") or "") not in seen_attestations:
+                attestations.append(attestation)
+                seen_attestations.add(str(attestation.get("sourceId") or ""))
 
     return terms
 
@@ -231,6 +262,7 @@ def merge_enrichment_lexicon(
                 continue
             if cid in seen:
                 _merge_variants(by_id.get(cid), term)
+                _merge_source_attestations(by_id.get(cid), term)
                 continue
             seen.add(cid)
             merged.append(term)
@@ -279,3 +311,21 @@ def _merge_variants(target: dict | None, lower_priority: dict) -> None:
         if key[0] and key not in seen:
             existing.append(row)
             seen.add(key)
+
+
+def _merge_source_attestations(target: dict | None, lower_priority: dict) -> None:
+    """Preserve authority provenance even when a live Sanity row wins dedupe."""
+    if not target:
+        return
+    existing = target.setdefault("sourceAttestations", [])
+    seen = {
+        str(row.get("sourceId") or row.get("source_id") or "")
+        for row in existing if isinstance(row, dict)
+    }
+    for row in lower_priority.get("sourceAttestations") or []:
+        if not isinstance(row, dict):
+            continue
+        source_id = str(row.get("sourceId") or row.get("source_id") or "")
+        if source_id and source_id not in seen:
+            existing.append(dict(row))
+            seen.add(source_id)
