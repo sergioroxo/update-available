@@ -17,6 +17,23 @@ export function setFont(ctx: CanvasRenderingContext2D, size = 12): void {
   ctx.textBaseline = 'top';
 }
 
+/** Word-wrap to a max pixel width using the ctx's CURRENT font — era-agnostic,
+ *  ported verbatim from the shipped (non-reinterp) build's identical helper so
+ *  Era-3+ modules (which draw longer testimony/system text than Era 1's short
+ *  labels) don't reinvent it. Pure function, no color/theme dependency. */
+export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? cur + ' ' + w : w;
+    if (cur && ctx.measureText(test).width > maxWidth) { lines.push(cur); cur = w; }
+    else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
 /** Raised (or sunken) 3D bevel on a silver body. */
 export function bevel(
   ctx: CanvasRenderingContext2D,

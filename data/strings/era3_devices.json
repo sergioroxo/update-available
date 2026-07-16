@@ -1,23 +1,8 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Session 37 (E3-i, THE THREE-SCREEN ROOM foundation, docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's R29-b deep revision). This is the FOUNDATION only: the laptop shows the SisterSignal login/desktop SHELL (no GraceQueue moderation content yet — that is E3-iii+, gated on the trans-masc reader per the adaptation spec); the tablet shows a static True Daughters feed shell (4 placeholder cards, no scroll wired yet); the phone shows a lock/notification shell (no DM thread yet — Noa's ask per S3R.4 arrives with E3-v). All copy here is throwaway scaffolding, not the era's real voice.",
-  "laptop": {
-    "os": "SisterSignal",
-    "loginGreeting": "Welcome back, Vera.",
-    "loginSub": "Sign in to continue moderating.",
-    "signIn": "Sign in",
-    "desktopWelcome": "GraceQueue — arriving soon.",
-    "taskbarLabel": "SisterSignal"
-  },
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Session 37 (E3-i, THE THREE-SCREEN ROOM foundation) built the static shells; Session 38 (E3-ii, the GraceQueue pattern strip + card set) wires the laptop to src/room/graceQueueLite.ts (its own sign-in/queue/done copy now lives in data/dialog/s3_queue.json, not here — the `laptop` object below was retired this session, superseded) and makes the tablet feed DATA-DRIVEN from the same s3_queue.json (the static 4-card `posts` placeholder was retired — the feed is now computed from ledger.graceQueue's resolved outcomes; `tablet.quiet`/`heartGlyph`/`verifiedBadge`/`miraCommentsTeaser` live in s3_queue.json, only `tablet.appName`/`feedHeading` stay here as the app's own chrome). The phone remains the static lock/notification shell (unchanged this session — Noa's ask per S3R.4 arrives with E3-v).",
   "tablet": {
     "appName": "True Daughters",
-    "feedHeading": "Your feed",
-    "posts": [
-      { "author": "a member", "text": "PLACEHOLDER — a testimony snippet goes here.", "time": "2h" },
-      { "author": "a member", "text": "PLACEHOLDER — a second testimony snippet.", "time": "5h" },
-      { "author": "a member", "text": "PLACEHOLDER — a third, warmer, off-script line.", "time": "1d" },
-      { "author": "a member", "text": "PLACEHOLDER — a fourth, the kind the queue approves of.", "time": "2d" }
-    ],
-    "verifiedBadge": "verified"
+    "feedHeading": "Your feed"
   },
   "phone": {
     "lockClock": "9:41",

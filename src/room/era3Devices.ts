@@ -1,26 +1,32 @@
 /**
- * THE THREE-SCREEN ROOM — foundation only (Session 37, E3-i).
- * docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's R29-b DEEP REVISION:
- * "between 2003 and 2016 the machine stopped being a place you sit. It
- * became every screen you own." Room 2 (Vera, 2016) gets three device
- * screens — the laptop (desk), the tablet (bed), the phone (nightstand) —
- * each its own offscreen canvas textured onto its own plane, the SAME
- * technique src/engine/screenTexture.ts already gives the desktop monitor
- * and the witness wall (never duplicated, only reused at smaller sizes for
- * the tablet/phone per the spec's production note).
+ * THE THREE-SCREEN ROOM (Session 37, E3-i foundation; Session 38, E3-ii wires
+ * the laptop + tablet). docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's
+ * R29-b DEEP REVISION: "between 2003 and 2016 the machine stopped being a
+ * place you sit. It became every screen you own." Room 2 (Vera, 2016) gets
+ * three device screens — the laptop (desk), the tablet (bed), the phone
+ * (nightstand) — each its own offscreen canvas textured onto its own plane,
+ * the SAME technique src/engine/screenTexture.ts already gives the desktop
+ * monitor and the witness wall (never duplicated, only reused at smaller
+ * sizes for the tablet/phone per the spec's production note).
  *
- * SCOPE THIS SESSION (explicitly NOT the full arc — see the spec's build
- * lanes E3-i..vi): the laptop shows the SisterSignal login/desktop SHELL
- * (era3.ts theme) — GraceQueue itself (the shipped moderation app, ported
- * from the ORIGINAL non-reinterp repo's src/desktop/apps/graceQueue.ts) is
- * NOT wired in yet, that is E3-iii+, gated on the trans-masc reader. The
- * tablet is a static True Daughters feed shell (4 placeholder cards, no
- * scroll). The phone is a lock/notification shell (no DM thread — Noa's ask
- * per S3R.4 arrives with E3-v). All content is STATIC: drawn once per screen
- * at construction, uploaded once when era-gating first makes it visible,
- * never redrawn after — Quest budget discipline (two extra render textures,
- * dirty-flagged, never re-dirtied by a ticking clock or animation this
- * session; production notes explicitly ask for dirty-only uploads).
+ * SESSION 38 (E3-ii, the GraceQueue pattern strip + card set): the laptop now
+ * runs src/room/graceQueueLite.ts behind its "Sign in" — the reinterp-built
+ * moderation loop (ONE card at a time, big type, no crowding, per Session
+ * 37's own maximized-UI lesson), NOT a straight port of the shipped
+ * (non-reinterp) build's dense graceQueue.ts, though it borrows that file's
+ * documented lane grammar (member/system/Lambient bands) verbatim per the
+ * brief. The tablet is now DATA-DRIVEN from the same data/dialog/s3_queue.json
+ * the laptop reads: approved cards appear with hearts + lamb-badges; cards
+ * sent to review are simply ABSENT; Mira's card, if let stand, pins to the
+ * top with a one-line comments teaser. The phone is UNCHANGED (still Session
+ * 37's static lock/notification shell — Noa's ask per S3R.4 arrives E3-v).
+ *
+ * DIRTY DISCIPLINE (Quest budget law): the laptop/tablet no longer draw only
+ * once — they redraw+re-upload exactly when `graceQueueLite.version` changes
+ * (a real state change: sign-in, approve, move-to-review, let-it-stand),
+ * never on a ticking clock or per-frame. The phone still draws once and never
+ * again, per Session 37's original law (nothing about it changes this
+ * session).
  *
  * Lambient's marks (the E2 dispersal payoff, master plan §5b "the watcher"
  * thread): a tiny badge on all three screens, drawn from the SAME fixed
@@ -32,10 +38,12 @@ import * as pc from 'playcanvas';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import { setFont } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
-import { ERA3 } from '../desktop/theme/era3';
+import { ERA3, drawLambMark } from '../desktop/theme/era3';
 import { ledger } from '../state/ledger';
 import type { EraKey } from './cluster';
+import { GraceQueueLite } from './graceQueueLite';
 import d from '../../data/strings/era3_devices.json';
+import q from '../../data/dialog/s3_queue.json';
 
 const LOGICAL = {
   laptop: { w: 512, h: 384, scale: 3 },
@@ -111,50 +119,21 @@ function makeCanvas(logicalW: number, logicalH: number, scale: number): { canvas
   return { canvas, ctx };
 }
 
-/** Lambient's mark, settled (no animation) — the same seven fixed offsets
- *  Session 33's uninstall-report scatter used, drawn small and static: the
- *  fragments have already arrived, per u3's own "migrating." line. `scale`
- *  keeps the footprint tiny (~8x8px) regardless of which screen it sits on. */
-function drawLambMark(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1): void {
-  const FRAG: [number, number][] = [
-    [10, -6], [16, 3], [7, 9], [-8, 7], [-13, -4], [4, -12], [-3, 13]
-  ];
-  aero.px(ctx, x, y, Math.max(1, Math.round(2 * scale)), Math.max(1, Math.round(2 * scale)), ERA3.grey);
-  for (const [fx, fy] of FRAG) {
-    aero.px(
-      ctx,
-      x + Math.round(fx * 0.32 * scale),
-      y + Math.round(fy * 0.32 * scale),
-      Math.max(1, Math.round(1.6 * scale)),
-      Math.max(1, Math.round(1.6 * scale)),
-      ERA3.greyDk
-    );
-  }
-}
+// drawLambMark moved to ../desktop/theme/era3.ts (Session 38, imported above)
+// so both this module AND graceQueueLite.ts can use it without a circular
+// import between the two (era3Devices.ts already imports GraceQueueLite;
+// graceQueueLite.ts needs the same corner mark for its sign-in screen — a
+// shared theme-level home avoids the cycle).
 
-function drawLaptopShell(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-  aero.wallpaper(ctx, W, H);
-  aero.taskbar(ctx, W, H, d.phone.lockClock);
-  // Sérgio's live readability note (Session 37): a 2016 app runs MAXIMIZED —
-  // the window now fills the canvas margin-to-margin (was a small centered
-  // box floating in a sea of wallpaper) and every line is set noticeably
-  // bigger, matching the bigger physical screen this now renders onto.
-  const MARGIN = 14; const TASKBAR_H = 28;
-  const winW = W - MARGIN * 2; const winH = H - TASKBAR_H - MARGIN - 8;
-  const c = aero.windowFrame(ctx, MARGIN, 8, winW, winH, d.laptop.os);
-  aero.px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
-  setFont(ctx, 26);
-  ctx.fillStyle = ERA3.titleText;
-  ctx.fillText(d.laptop.loginGreeting, c.x + 24, c.y + 40);
-  setFont(ctx, 15);
-  ctx.fillStyle = ERA3.grey;
-  ctx.fillText(d.laptop.loginSub, c.x + 24, c.y + 78);
-  aero.button(ctx, c.x + 24, c.y + c.h - 70, 220, 42, d.laptop.signIn, { primary: true, tone: 'good', size: 16 });
-  // corner badge — Lambient's mark, top-right of the window
-  drawLambMark(ctx, c.x + c.w - 20, c.y + 10, 1.6);
-}
-
-function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+/** the tablet — the SAME room as readers see it (S3R.1 spec). Session 38:
+ *  fully DATA-DRIVEN from graceQueueLite's resolved outcomes: approved cards
+ *  render with hearts + a lamb-badge (the system's own endorsement); cards
+ *  sent to review are simply ABSENT (complicity made visible without a line
+ *  of text); Mira's card, if let stand, pins to the top with a one-line
+ *  comments teaser and NO badge (the system never blessed her — it just
+ *  failed to remove her). Before any queue action, the feed is honestly
+ *  quiet (nothing has been resolved yet). */
+function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number, feed: import('./graceQueueLite').TabletFeedItem[]): void {
   aero.px(ctx, 0, 0, W, H, ERA3.glass);
   aero.px(ctx, 0, 0, W, 26, ERA3.accent);
   setFont(ctx, 12);
@@ -163,16 +142,22 @@ function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number): v
   setFont(ctx, 10);
   ctx.fillStyle = ERA3.greyDk;
   ctx.fillText(d.tablet.feedHeading, 8, 32);
+
+  if (feed.length === 0) {
+    setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
+    ctx.fillText(q.tablet.quiet, 8, 60);
+    return;
+  }
+
   let y = 48;
-  const cardH = 58;
-  (d.tablet.posts as Array<{ author: string; text: string; time: string }>).forEach((post, i) => {
+  const cardH = 62;
+  feed.forEach((post) => {
+    const spine = post.miraTop ? ERA3.accent : ERA3.memberSpine;
     aero.px(ctx, 6, y, W - 12, cardH - 6, ERA3.memberBand);
-    aero.px(ctx, 6, y, 3, cardH - 6, ERA3.memberSpine);
+    aero.px(ctx, 6, y, 3, cardH - 6, spine);
     setFont(ctx, 9);
     ctx.fillStyle = ERA3.ink;
     ctx.fillText(post.author, 14, y + 6);
-    ctx.fillStyle = ERA3.grey;
-    ctx.fillText(post.time, W - 14 - ctx.measureText(post.time).width, y + 6);
     setFont(ctx, 9);
     ctx.fillStyle = ERA3.greyDk;
     const words = post.text.split(' ');
@@ -183,13 +168,20 @@ function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number): v
       else line = test;
     }
     if (line) ctx.fillText(line, 14, ly);
-    // ONE post carries Lambient's verified-badge (the dispersal, on the
-    // community's own feed) — the first card, so it's always on-screen
-    if (i === 0) {
-      setFont(ctx, 8);
+    // the system's own endorsement: hearts + lamb-badge (on-script/approved
+    // only — an off-script card that was let stand gets neither)
+    if (post.badged) {
+      setFont(ctx, 8); ctx.fillStyle = ERA3.rose;
+      ctx.fillText(q.tablet.heartGlyph, 14, y + cardH - 16);
+      const hw = ctx.measureText(q.tablet.heartGlyph).width;
       ctx.fillStyle = ERA3.lambTag;
-      ctx.fillText(d.tablet.verifiedBadge, 14, y + cardH - 16);
-      drawLambMark(ctx, 14 + ctx.measureText(d.tablet.verifiedBadge).width + 6, y + cardH - 20, 0.7);
+      ctx.fillText(q.tablet.verifiedBadge, 14 + hw + 4, y + cardH - 16);
+      drawLambMark(ctx, 14 + hw + 4 + ctx.measureText(q.tablet.verifiedBadge).width + 6, y + cardH - 20, 0.7);
+    }
+    // Mira's comments teaser — one line, no thread this session
+    if (post.miraTop) {
+      setFont(ctx, 8); ctx.fillStyle = ERA3.accent;
+      ctx.fillText(q.tablet.miraCommentsTeaser, 14, y + cardH - 16);
     }
     y += cardH;
   });
@@ -235,24 +227,100 @@ function wrapPlain(ctx: CanvasRenderingContext2D, text: string, maxW: number): s
 }
 
 export interface Era3Devices {
-  /** call once a frame — uploads any still-dirty screen texture (each
-   *  screen only redraws/uploads ONCE, the first frame it becomes visible;
-   *  static placeholder content never re-dirties itself, per budget law). */
+  /** call once a frame — uploads any screen whose content just changed. The
+   *  phone still draws/uploads exactly ONCE (Session 37's original law,
+   *  unchanged); the laptop/tablet now re-check `graceQueueLite.version`
+   *  each tick and redraw+re-upload ONLY when it has actually moved (a real
+   *  queue action) — never on a ticking clock, per Quest budget discipline. */
   tick(dt: number): void;
   /** era-gate the three screens (and fire the once-only arrival witness
    *  line the first time era reaches e3+). Call from driveMorph() and the
    *  ?era= review-jump path alongside the room's own era toggles. */
   setEra(era: EraKey): void;
+  /** screen px → world ray (from app.ts's own screenRay()) → the laptop
+   *  plane's logical canvas coords, generalized for ANY plane orientation
+   *  (the laptop's vertical euler differs from the tablet/phone's flat
+   *  screen-up planes, so this can't reuse app.ts's toDesktop()'s
+   *  fixed-axis shortcut). Returns null if the ray misses the laptop
+   *  entirely, or the laptop screen isn't visible/enabled this era. Routes
+   *  straight into GraceQueueLite's own handleClick — the laptop is the
+   *  ONLY device with verbs this session (tablet/phone have none yet). */
+  handleLaptopPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean;
   /** ?debug=1 review aid only (like __os/__tapes) — the raw offscreen
    *  canvases, for pixel-probing the shell content/lamb-marks without
    *  screenshot-chasing the 3D projection. */
   debugCanvases(): Record<'laptop' | 'tablet' | 'phone', HTMLCanvasElement>;
+  /** ?debug=1 review aid only (like __os) — the live GraceQueueLite
+   *  instance, so a review can drive/inspect the queue in logical laptop-
+   *  canvas coordinates without the world→screen projection dance. */
+  debugQueue(): GraceQueueLite;
+}
+
+/** general ray↔plane hit test for a `makeScreenEntity` plane (which spans
+ *  local X × local Z, scaled to world w × h, default face normal +Y) at ANY
+ *  world orientation — computed from the entity's own world transform
+ *  columns rather than assuming a fixed axis-aligned plane (app.ts's
+ *  toDesktop()/toWitness() both hardcode one axis each; the three Era-3
+ *  screens don't share a single orientation, so this can't reuse either).
+ *  column0/1/2 = the entity's rotated+scaled local X/Y/Z basis vectors
+ *  (Mat4.data is column-major: indices 0-2, 4-6, 8-10; 12-14 = translation —
+ *  the same convention Session 37's own euler-facing note used to verify a
+ *  plane's normal sign). Returns logical pixel coords or null if the ray
+ *  misses the plane's bounds. */
+function hitPlane(entity: pc.Entity, wWorld: number, hWorld: number, logicalW: number, logicalH: number, ray: { p0: pc.Vec3; p1: pc.Vec3 }): { x: number; y: number } | null {
+  const m = entity.getWorldTransform().data;
+  const cx = m[12], cy = m[13], cz = m[14];
+  const rightX = m[0], rightY = m[1], rightZ = m[2];
+  const normX = m[4], normY = m[5], normZ = m[6];
+  const heightX = m[8], heightY = m[9], heightZ = m[10];
+
+  const dx = ray.p1.x - ray.p0.x, dy = ray.p1.y - ray.p0.y, dz = ray.p1.z - ray.p0.z;
+  const denom = dx * normX + dy * normY + dz * normZ;
+  if (Math.abs(denom) < 1e-9) return null;
+  const t = ((cx - ray.p0.x) * normX + (cy - ray.p0.y) * normY + (cz - ray.p0.z) * normZ) / denom;
+  if (t < 0 || t > 1) return null;
+
+  const px = ray.p0.x + dx * t, py = ray.p0.y + dy * t, pz = ray.p0.z + dz * t;
+  const ddx = px - cx, ddy = py - cy, ddz = pz - cz;
+
+  const rightLen = Math.hypot(rightX, rightY, rightZ) || 1;
+  const heightLen = Math.hypot(heightX, heightY, heightZ) || 1;
+  const lx = (ddx * rightX + ddy * rightY + ddz * rightZ) / rightLen;   // world-length along local X, in [-w/2, w/2]
+  const lz = (ddx * heightX + ddy * heightY + ddz * heightZ) / heightLen; // world-length along local Z, in [-h/2, h/2]
+
+  const u = lx / wWorld + 0.5;
+  // v: empirically calibrated in-browser (Session 38) against the laptop's
+  // real screen — a real click on the visually-lower "Sign in" button
+  // resolved to a logical y in the canvas's TOP half with `0.5 - lz/hWorld`,
+  // so the sign here is `+`, not the `-` a naive mirror-of-toWitness() guess
+  // would suggest. Session 37's own euler-facing note flagged exactly this:
+  // "probing... rather than guessing" when a plane's orientation isn't a
+  // simple shared-room yaw. Re-verify if PLACEMENT.laptop's euler ever changes.
+  const v = 0.5 + lz / hWorld;
+  if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+  return { x: u * logicalW, y: v * logicalH };
 }
 
 export function buildEra3Devices(app: pc.Application): Era3Devices {
-  const screens: { name: keyof typeof PLACEMENT; canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; tex: pc.Texture; entity: pc.Entity; dirty: boolean }[] = [];
+  type Screen = {
+    name: keyof typeof PLACEMENT;
+    canvas: HTMLCanvasElement;
+    ctx: CanvasRenderingContext2D;
+    tex: pc.Texture;
+    entity: pc.Entity;
+    dirty: boolean;
+    logical: { w: number; h: number };
+    /** if present, checked each tick; the screen redraws+re-uploads ONLY
+     *  when this value has changed since the last tick (dirty discipline —
+     *  never a bare per-frame redraw). Screens without one (the phone) draw
+     *  once at construction and never again, per Session 37's original law. */
+    versionOf?: () => number;
+    lastVersion?: number;
+  };
+  const screens: Screen[] = [];
+  const graceQueueLite = new GraceQueueLite();
 
-  function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void): void {
+  function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);
     draw(ctx, logical.w, logical.h);
     const tex = makeScreenTexture(app, canvas);
@@ -262,11 +330,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     entity.setLocalEulerAngles(place.euler.x, place.euler.y, place.euler.z);
     entity.enabled = false; // setEra() decides visibility
     app.root.addChild(entity);
-    screens.push({ name, canvas, ctx, tex, entity, dirty: true });
+    screens.push({ name, canvas, ctx, tex, entity, dirty: true, logical: { w: logical.w, h: logical.h }, versionOf: opts.versionOf, lastVersion: opts.versionOf ? opts.versionOf() : undefined });
   }
 
-  add('laptop', LOGICAL.laptop, drawLaptopShell);
-  add('tablet', LOGICAL.tablet, drawTabletShell);
+  add('laptop', LOGICAL.laptop, (ctx, w, h) => graceQueueLite.draw(ctx, w, h), { versionOf: () => graceQueueLite.version });
+  add('tablet', LOGICAL.tablet, (ctx, w, h) => drawTabletShell(ctx, w, h, graceQueueLite.tabletFeed()), { versionOf: () => graceQueueLite.version });
   add('phone', LOGICAL.phone, drawPhoneShell);
 
   let arrived = false;
@@ -274,6 +342,13 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   return {
     tick(): void {
       for (const s of screens) {
+        if (s.versionOf && s.lastVersion !== s.versionOf()) {
+          s.lastVersion = s.versionOf();
+          s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
+          if (s.name === 'laptop') graceQueueLite.draw(s.ctx, s.logical.w, s.logical.h);
+          else if (s.name === 'tablet') drawTabletShell(s.ctx, s.logical.w, s.logical.h, graceQueueLite.tabletFeed());
+          s.dirty = true;
+        }
         if (s.dirty) { s.tex.upload(); s.dirty = false; }
       }
     },
@@ -287,10 +362,22 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         }
       }
     },
+    handleLaptopPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
+      const laptop = screens.find(s => s.name === 'laptop');
+      if (!laptop || !laptop.entity.enabled) return false;
+      const place = PLACEMENT.laptop;
+      const hitPt = hitPlane(laptop.entity, place.size.w, place.size.h, laptop.logical.w, laptop.logical.h, ray);
+      if (!hitPt) return false;
+      graceQueueLite.handleClick(hitPt.x, hitPt.y);
+      return true;
+    },
     debugCanvases(): Record<'laptop' | 'tablet' | 'phone', HTMLCanvasElement> {
       const out = {} as Record<'laptop' | 'tablet' | 'phone', HTMLCanvasElement>;
       for (const s of screens) out[s.name] = s.canvas;
       return out;
+    },
+    debugQueue(): GraceQueueLite {
+      return graceQueueLite;
     }
   };
 }

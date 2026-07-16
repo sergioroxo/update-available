@@ -189,6 +189,31 @@ export function tag(
   return x + w + 4;
 }
 
+/** Lambient's mark, settled (no animation) — the same seven fixed offsets
+ *  Session 33's uninstall-report scatter used (src/desktop/apps/update.ts),
+ *  drawn small and static: the fragments have already arrived, per u3's own
+ *  "migrating." line. `scale` keeps the footprint tiny (~8x8px) regardless of
+ *  which screen it sits on. Lives here (not in src/room/era3Devices.ts, its
+ *  original Session 37 home) since Session 38's src/room/graceQueueLite.ts
+ *  also needs it and importing it FROM era3Devices.ts would create a
+ *  circular dependency (era3Devices.ts imports GraceQueueLite). */
+export function drawLambMark(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1): void {
+  const FRAG: [number, number][] = [
+    [10, -6], [16, 3], [7, 9], [-8, 7], [-13, -4], [4, -12], [-3, 13]
+  ];
+  px(ctx, x, y, Math.max(1, Math.round(2 * scale)), Math.max(1, Math.round(2 * scale)), ERA3.grey);
+  for (const [fx, fy] of FRAG) {
+    px(
+      ctx,
+      x + Math.round(fx * 0.32 * scale),
+      y + Math.round(fy * 0.32 * scale),
+      Math.max(1, Math.round(1.6 * scale)),
+      Math.max(1, Math.round(1.6 * scale)),
+      ERA3.greyDk
+    );
+  }
+}
+
 /** Sunken white field with an optional single line of text. */
 export function field(
   ctx: CanvasRenderingContext2D,

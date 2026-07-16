@@ -222,6 +222,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // the raw offscreen canvases, for pixel-probing shell content/lamb-marks
     (window as { __era3Devices?: () => unknown }).__era3Devices = () =>
       era3Devices ? era3Devices.debugCanvases() : null;
+    // Session 38 (E3-ii) GraceQueue probe (review aid, like __os): the live
+    // instance, so a review can drive its handleClick(x,y) in logical
+    // laptop-canvas coordinates directly, without the world→screen
+    // projection dance — mirrors __os's own established convention exactly.
+    (window as { __graceQueue?: () => unknown }).__graceQueue = () =>
+      era3Devices ? era3Devices.debugQueue() : null;
   }
 
   // ── the NARRATIVE SPINE (reinterp; real playthroughs only, not review
@@ -1080,6 +1086,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (p) { // the monitor is the UI; everywhere else is the room
         os.handleClick(p.x, p.y);
         return;
+      }
+      // Session 38 (E3-ii): the laptop's own screen (Room 2's era3Devices
+      // plane, a DIFFERENT plane from the shared Room-1 monitor above) —
+      // same precedence rule as the monitor check just above it: a screen
+      // click must win over a marker click before markers are even tested.
+      // handleLaptopPointer does its own generalized plane-ray hit test
+      // (the laptop's vertical euler isn't the fixed axis toDesktop()
+      // assumes) and returns false (never consumed) when the ray misses the
+      // plane or the screen isn't visible this era, so this never steals a
+      // click meant for a movement marker on the floor.
+      if (era3Devices) {
+        const ray = screenRay(e);
+        if (ray && era3Devices.handleLaptopPointer(ray)) return;
       }
       // R28-1: click-to-move, NEVER gaze-to-move — this pointerdown ray/hit
       // test is the ONLY thing that can arm a marker; looking at one (however

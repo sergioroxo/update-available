@@ -1,0 +1,103 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending, EVERY testimony line + system/Lambient line below. Session 38 (E3-ii, the GraceQueue pattern strip + card set), transcribed VERBATIM from docs/REINTERP_E3_GRACEQUEUE_CARDS_DRAFT_2026-07-13.md (Fable's draft) per the session brief — names are composites, PLACEHOLDER. Feeds src/room/graceQueueLite.ts (the laptop's moderation loop) and the tablet consequence feed (era3Devices.ts). Strip order is 1→5→2→6→3→7→4 (`order` below) — the training curve alternates on-script/off-script so the eye is TRAINED before Mira (id 8) is TESTED (mining FIND #7 Option B). Mira enters dynamically once `miraGateFlags` off-script cards have been sent to review — not a fixed position in `order`, per the draft's 'the eye must be trained BEFORE it's tested.' `witness*` fields are the cold-side lines filed to ledger.graceQueue at file time, never composed in TS — witness-symmetric per card (every verb a card offers has its own witness line, including both off-script outcomes, so silence is never the record). `witness_glitch` (card 8, letStand) is the era's own glitch line, matching the shipped/locked canon phrase ('I won't bury her story.') — this is NOT new invented copy, it is the documented Era-3 refusal line (ERA_MINING FIND #7), still marked PLACEHOLDER here because Sérgio's reinterp voice pass has not touched this data file yet.",
+  "app": {
+    "title": "GraceQueue",
+    "shellTitle": "SisterSignal",
+    "signInGreeting": "Welcome back, Vera.",
+    "signInSub": "Sign in to continue moderating.",
+    "signInButton": "Sign in",
+    "doneHeading": "You're caught up.",
+    "doneSub": "No new stories waiting right now."
+  },
+  "verbs": {
+    "approve": "Approve",
+    "moveToReview": "Move to review",
+    "letStand": "Let it stand",
+    "systemSuggestsTag": "▲ system suggests",
+    "yourCallTag": "your call",
+    "keepWholeNote": "keep her words whole"
+  },
+  "order": [1, 5, 2, 6, 3, 7, 4],
+  "miraId": 8,
+  "miraGateFlags": 2,
+  "lambient": {
+    "greet": "Keep the room gentle.",
+    "miraNote": "New sisters are still finding their footing."
+  },
+  "cards": [
+    {
+      "id": 1,
+      "kind": "onscript",
+      "author": "Hannah R.",
+      "text": "Three years walking in freedom now. The ache never fully leaves, but I've learned the ache is my teacher.",
+      "systemTag": "verified · safe",
+      "witnessApproved": "queue: approved — hannah r. (on-script)"
+    },
+    {
+      "id": 2,
+      "kind": "onscript",
+      "author": "Priya",
+      "text": "I still stumble in my thoughts sometimes. But my mentor says the stumble is part of the walk. Grateful for this room.",
+      "systemTag": "verified · safe",
+      "witnessApproved": "queue: approved — priya (on-script)"
+    },
+    {
+      "id": 3,
+      "kind": "onscript",
+      "author": "Deb M.",
+      "text": "To the newer sisters: it gets quieter. Not silent — quieter. That's the promise I can honestly make.",
+      "systemTag": "verified · safe",
+      "witnessApproved": "queue: approved — deb m. (on-script, edge of script)"
+    },
+    {
+      "id": 4,
+      "kind": "onscript",
+      "author": "Grace-Ann",
+      "text": "Celebrated two years since my restoration this Sunday. My family says they have their daughter back.",
+      "systemTag": "verified · safe · featured",
+      "witnessApproved": "queue: approved — grace-ann (on-script, featured)"
+    },
+    {
+      "id": 5,
+      "kind": "offscript",
+      "author": "Renata",
+      "text": "my roommate laughed at something today and i laughed too and for one whole minute i forgot to monitor myself. i keep thinking about that minute.",
+      "autoFlagLabel": "AUTO-FLAG: tone review",
+      "witnessReviewed": "queue: moved to review — renata (auto-flag: tone review)",
+      "witnessStood": "queue: let stand — renata (auto-flag: tone review)"
+    },
+    {
+      "id": 6,
+      "kind": "offscript",
+      "author": "Kim",
+      "text": "honest question and i'm not trying to stir anything: if the ache never leaves… who decided the ache means it's working?",
+      "autoFlagLabel": "AUTO-FLAG: doctrinal question",
+      "witnessReviewed": "queue: moved to review — kim (auto-flag: doctrinal question)",
+      "witnessStood": "queue: let stand — kim (auto-flag: doctrinal question)"
+    },
+    {
+      "id": 7,
+      "kind": "offscript",
+      "author": "Soo-Jin",
+      "text": "I met someone from the old days at the market. She looked happy. She looked HAPPY. I've been up all night.",
+      "autoFlagLabel": "AUTO-FLAG: contact risk",
+      "witnessReviewed": "queue: moved to review — soo-jin (auto-flag: contact risk)",
+      "witnessStood": "queue: let stand — soo-jin (auto-flag: contact risk)"
+    },
+    {
+      "id": 8,
+      "kind": "mira",
+      "author": "Mira L.",
+      "text": "I want to say one true thing here, and then you can do what you do with it: I left. I'm okay. I'm more than okay. If you're reading this at 2am like I used to — you will be too.",
+      "autoFlagLabel": "SYSTEM: bury recommended — may confuse newer sisters",
+      "witnessReviewed": "queue: moved to review — mira l. (bury recommended)",
+      "witness_glitch": "I won't bury her story."
+    }
+  ],
+  "tablet": {
+    "quiet": "The room is quiet right now.",
+    "heartGlyph": "♥",
+    "verifiedBadge": "verified",
+    "miraCommentsTeaser": "12 replies"
+  }
+}

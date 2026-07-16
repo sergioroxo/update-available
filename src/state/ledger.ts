@@ -105,6 +105,24 @@ export interface Ledger {
    * In-memory only, like everything here.
    */
   era3Arrival: { witness: string }[];
+  /**
+   * S3R.1/S3R.5 (Session 38, E3-ii — the GraceQueue pattern strip + card set,
+   * docs/REINTERP_E3_GRACEQUEUE_CARDS_DRAFT_2026-07-13.md): every card action
+   * in the laptop's moderation loop files here, witness-symmetrically (both
+   * off-script outcomes — reviewed AND stood — are data, never silence). No
+   * scores/streaks/progress count are ever derived from this array (CLAUDE.md
+   * law) — it exists purely as the record. `witness` resolved from
+   * data/dialog/s3_queue.json at file time, never composed in TS.
+   */
+  graceQueue: { cardId: number; outcome: 'approved' | 'reviewed' | 'stood'; witness: string }[];
+  /**
+   * S3R.5 (the Mira choice): true once Mira's card has been let stand — a
+   * state flag for the LATER turn/counter-current beats (S3R.6, not this
+   * session's scope; this session only sets the flag + files the glitch
+   * line above in `graceQueue`). Never true on 'reviewed' (bury). Persists
+   * for the rest of the session once set (S3R.6 will read it, not clear it).
+   */
+  graceQueueMiraStood: boolean;
 }
 
 const fresh = (): Ledger => ({
@@ -125,7 +143,9 @@ const fresh = (): Ledger => ({
   lamby: [],
   checkins: [],
   media: [],
-  era3Arrival: []
+  era3Arrival: [],
+  graceQueue: [],
+  graceQueueMiraStood: false
 });
 
 export let ledger: Ledger = fresh();
