@@ -107,9 +107,28 @@ const maya = { screen: '#8FC4E0', curtain: '#E8B7C8', poster: '#9FB4C0',
   blanket: '#E8B7C8', sign: '#9FB4C0', bookA: '#E8B7C8', bookB: '#9FB4C0', rugColor: '#D4A0A0' };
 
 // Room 2 = west (Vera), faces -X: F=90, opening (+Z, lz=+1.83) → worldX -2.05
-const room2 = place('w', template(vera), -3.88, 0.7, 90);
+const room2Raw = place('w', template(vera), -3.88, 0.7, 90);
 // Room 3 = east (Maya), faces +X: F=270, opening → worldX +2.05
 const room3 = place('e', template(maya), 3.88, 0.7, 270);
+
+// Session 37 (E3-i) live fix, Sérgio's readability note: 2016 Room 2 gets a
+// FLAT PANEL, not the shared template's small period-1997/2003 CRT — this is
+// both period-correct (SisterSignal/GraceQueue is a 2016 desktop, not a CRT
+// terminal) and a legibility fix (a wider, closer screen for era3Devices.ts's
+// laptop shell to render onto). Room 1/3 keep the shared CRT unchanged (out
+// of this session's scope). Dark bezel reuses '#2C2C34' (already approved
+// this session for the tablet/phone devices) instead of the CRT's beige
+// plastic — visually distinct AND no new hex. Pulled ~0.4m closer to the
+// chair than the old CRT sat (Sérgio: "bias closer") — verified clear of the
+// desk model's own footprint in-browser this session (see the session log).
+const CRT_IDS = ['w_crtBody', 'w_crtBezel', 'w_crtScreen', 'w_crtFoot'];
+const room2 = room2Raw.filter((p) => !CRT_IDS.includes(p.id));
+const flatPanel = place('w', [
+  ['flatPanelBody',   [0, 1.1, -1.15],  [0.62, 0.38, 0.035], '#2C2C34'],
+  ['flatPanelScreen', [0, 1.1, -1.125], [0.56, 0.32, 0.02],  vera.screen, true],
+  ['flatPanelStand',  [0, 0.83, -1.05], [0.14, 0.16, 0.1],   '#2C2C34'],
+  ['flatPanelFoot',   [0, 0.755, -1.0], [0.32, 0.03, 0.16],  '#2C2C34']
+], -3.88, 0.7, 90);
 
 // Room 1's side walls become DOORWAYS (stubs + lintel; big central opening).
 // west wall was (-2.13,1.35,1.5)[0.04,2.7,4.44] z[-0.72,3.72]; mirror east.
@@ -136,6 +155,25 @@ const openEast = doorway('e1door', 2.13);
 const veraPlant = place('w', [
   ['plant_pot', [1.35, 0.28, 1.0], [0.22, 0.26, 0.22], '#74492F'],
   ['plant_top', [1.35, 0.55, 1.0], [0.32, 0.3, 0.32], '#A8B49A']
+], -3.88, 0.7, 90);
+// Session 37 (E3-i, THE THREE-SCREEN ROOM foundation): the tablet (on the
+// bed) and the phone (on the nightstand) — thin box-props in the room's own
+// idiom (raw boxes, same palette as crtBezel — no new hex), sitting exactly
+// where src/room/era3Devices.ts's PLACEMENT puts its matching screen plane
+// (a hair above, e.g. local y 0.55 vs the plane's 0.565, so the plane reads
+// as the device's lit face and never z-fights the body underneath). The
+// laptop needs no new prop: it reuses the template's existing crtBody/
+// crtBezel/crtScreen/crtFoot/keyboard/mouse assembly already on the desk
+// (era3Devices.ts's laptop screen plane sits in that same crtScreen gap).
+const veraTablet = place('w', [
+  ['tabletDevice', [1.0, 0.55, 0.3], [0.16, 0.015, 0.22], '#2C2C34']
+], -3.88, 0.7, 90);
+// Session 37 in-browser fix: the nightstand model's REAL AABB (measured live,
+// not the box-fallback `size`) tops out around y=0.73 — nearly 0.2m taller
+// than the box implied — so the phone's y is raised to rest ON its real top
+// surface instead of embedding inside its body.
+const veraPhone = place('w', [
+  ['phoneDevice', [1.0, 0.74, 0.85], [0.07, 0.012, 0.14], '#2C2C34']
 ], -3.88, 0.7, 90);
 const mayaFolders = place('e', [
   ['folders', [0.36, 0.79, -1.28], [0.3, 0.07, 0.22], '#F5F4ED'],
@@ -268,8 +306,8 @@ const deltas = {
     // sightline into Room 2. (T-layout constraint; the X-layout frees a wall.)
     // Room 1 bed -> dust sheet in the same step: bedDustSheet is a plain box,
     // not a recolor of the (now-modeled) bed, since model props never repaint.
-    add: [...openWest, ...openEast, ...room2, ...room3, ...bedMoved, ...bookcaseMoved,
-      ...danielBoxes, ...veraPlant, ...mayaFolders, ...bedDustSheet]
+    add: [...openWest, ...openEast, ...room2, ...flatPanel, ...room3, ...bedMoved, ...bookcaseMoved,
+      ...danielBoxes, ...veraPlant, ...veraTablet, ...veraPhone, ...mayaFolders, ...bedDustSheet]
   },
   // r4 = E4 (present): Room 3 leads (Maya) — the lamp props ride to her desk
   // (the warm thread's end), a phone lands, the interface screen; every window

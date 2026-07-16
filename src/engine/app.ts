@@ -27,6 +27,8 @@ import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
 import { TapeAudioBus } from '../audio/tapeAudio';
 import { mountDebugPanel } from '../debug/panel';
+import { makeScreenTexture, makeScreenEntity } from './screenTexture';
+import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
@@ -123,41 +125,6 @@ interface AppOptions {
   nobatch?: boolean;
 }
 
-function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.Texture {
-  const tex = new pc.Texture(app.graphicsDevice, {
-    width: source.width,
-    height: source.height,
-    format: pc.PIXELFORMAT_RGBA8,
-    mipmaps: false,
-    minFilter: pc.FILTER_NEAREST,
-    magFilter: pc.FILTER_NEAREST,
-    addressU: pc.ADDRESS_CLAMP_TO_EDGE,
-    addressV: pc.ADDRESS_CLAMP_TO_EDGE
-  });
-  tex.setSource(source);
-  return tex;
-}
-
-function makeScreenEntity(name: string, tex: pc.Texture, w: number, h: number, transparent = false): pc.Entity {
-  const material = new pc.StandardMaterial();
-  material.useLighting = false;
-  material.diffuse = new pc.Color(0, 0, 0);
-  material.emissiveMap = tex;
-  material.emissive = new pc.Color(1, 1, 1);
-  if (transparent) {
-    material.opacityMap = tex;
-    material.opacityMapChannel = 'a';
-    material.blendType = pc.BLEND_NORMAL;
-    material.depthWrite = false;
-  }
-  material.update();
-  const e = new pc.Entity(name);
-  e.addComponent('render', { type: 'plane' });
-  e.setLocalScale(w, 1, h);
-  if (e.render) e.render.material = material;
-  return e;
-}
-
 export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}): Promise<pc.Application> {
   const app = new pc.Application(canvasEl, {
     graphicsDeviceOptions: { antialias: false, alpha: false }
@@ -208,6 +175,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // era shift rather than tearing them down.
   let tapes: TapeSystem | null = null;
   let tapeAudio: TapeAudioBus | null = null;
+  let era3Devices: Era3Devices | null = null;
   if (options.reinterp === true) {
     niche = buildFluidNiche(app);
     niche.setFacet(options.facet ?? 'none');
@@ -223,6 +191,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     movementNodes = buildMovementNodes(app);
     tapes = new TapeSystem();
     tapeAudio = new TapeAudioBus();
+    // Session 37 (E3-i): THE THREE-SCREEN ROOM foundation — Room 2's laptop/
+    // tablet/phone screens. Era-gated (setEra() below, alongside the room's
+    // own era toggles); the movement nodes above (r2-tablet/r2-phone,
+    // data/room/nodes.json) share this module's DEVICE_SEAT_POSES as their
+    // authored source.
+    era3Devices = buildEra3Devices(app);
   }
   const openingBoardDressing = options.reinterp === true ? buildOpeningBoardDressing(app) : null;
 
@@ -244,6 +218,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // R28-2b tape probe (read-only, like __guide/__ledger)
     (window as { __tapes?: () => unknown }).__tapes = () =>
       tapes ? tapes.snapshot() : null;
+    // Session 37 (E3-i) device-screen probe (read-only, like __os/__tapes):
+    // the raw offscreen canvases, for pixel-probing shell content/lamb-marks
+    (window as { __era3Devices?: () => unknown }).__era3Devices = () =>
+      era3Devices ? era3Devices.debugCanvases() : null;
   }
 
   // ── the NARRATIVE SPINE (reinterp; real playthroughs only, not review
@@ -842,7 +820,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const node = movementNodes?.find(nodeId);
     if (!node) return;
     seatYaw = node.seatYaw;
-    const sp = seatPose(node.seatYaw);
+    // Session 37 (E3-i): an intra-room device seat (the tablet/phone) carries
+    // its own exact camera pose — seatPose(seatYaw) is only a fallback for
+    // the three base room seats, which have no `pose` of their own.
+    const sp = node.pose ?? seatPose(node.seatYaw);
     camPos.set(sp.x, sp.y, sp.z);
     camPitch = sp.pitch;
     camYaw = sp.yaw;
@@ -1406,6 +1387,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (os.dirty) { frontTex.upload(); os.dirty = false; }
     witness.update(dt);
     if (witness.dirty) { backTex.upload(); witness.dirty = false; }
+    era3Devices?.tick(dt); // Session 37: uploads each device screen once, the first dirty frame
 
     if (os.inDesktop) flipBtn.style.display = 'block';
   });
@@ -1482,6 +1464,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (os.belongings) cluster.setKeptIds(os.belongings.kept);
     os.setDesktopEra(era);
     setOpeningBoardVisibleForEra(era);
+    era3Devices?.setEra(era); // Session 37: the three device screens, e3+ only
     // S2R.0a: cluster.morphToEra() below calls applyRig(era, animate), which
     // owns the E2 daylight cue (data/room/cluster.json's `e2` rig) in the
     // SAME morph beat as the room aging — see the note above applyLightsOn().
@@ -1509,7 +1492,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       'desktop-screen',
       'witness-screen',
       'opening-board-dressing',
-      'movement-nodes'
+      'movement-nodes',
+      'era3-device-laptop',
+      'era3-device-tablet',
+      'era3-device-phone'
     ]) {
       const e = app.root.findByName(id);
       if (e instanceof pc.Entity) e.enabled = false;
@@ -1546,6 +1532,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const dressing = app.root.findByName('opening-board-dressing');
       if (dressing instanceof pc.Entity) dressing.enabled = false;
       cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
+      era3Devices?.setEra(options.era); // Session 37: review jumps era-gate the device screens too
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
       // boot SEATED at the era's home room (E4 boots already turned — the TURN)
       seatYaw = cluster.homeYaw;

@@ -209,6 +209,33 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   **Your checks: the card's wording (it's the piece's first sentence now),
   glyph placement, and one thing I couldn't independently re-verify — pause
   DURING an update ritual and confirm it resumes cleanly.**
+- **D44 (2026-07-16, Session 37)** — **THE THREE-SCREEN ROOM foundation
+  shipped** (E3-i, per the R29-b deep revision you adopted: "I really like
+  the 3 device"). Room 2 (Vera, 2016) now has three working device seats —
+  laptop (the desk), tablet (on the bed), phone (on the nightstand) — each
+  its own screen, reached by clicking its floor marker (the same
+  click-to-move seam as the cross-room jumps). Content this session is a
+  SHELL only: the laptop shows a SisterSignal login screen (no GraceQueue
+  yet — that's next, gated on the trans-masc reader per the adaptation
+  spec), the tablet a static True Daughters feed (4 placeholder posts), the
+  phone a lock screen with one notification. Lambient's mark (the same
+  scatter from the E2 dispersal) appears small on all three. All copy
+  PLACEHOLDER. **MID-SESSION FIX (same day, your live note from a
+  screenshot — "THE SCREEN READS TOO SMALL"):** the laptop's monitor was
+  originally the room's shared 1997/2003-scale CRT (no new geometry) — this
+  is now REPLACED, Room 2 only, with a period-correct 2016 flat panel (dark
+  bezel, wider screen, pulled ~0.19m closer); the SisterSignal window now
+  runs maximized with much bigger text (was a small centered box); the
+  tablet/phone seats are pulled in to ~0.6-0.65m viewing distance (was
+  ~1.3m). Re-verified live after the fix — draw calls still 27-35,
+  budget-safe. **Your checks: (1) the readability fix itself — your
+  screenshot was the acceptance test, so a final look decides if this
+  lands or needs another pass; (2) the seat poses/distances (FABLE/SÉRGIO
+  CHECK values — computed then screenshot-tuned, not measured; listed in
+  the session log) — they read comfortably in my own browser pass but
+  you're the one who'll feel it in-headset eventually; (3) nothing
+  ethics-bearing here — no borderland/Noa/Mira/Ash content in this session,
+  by design.**
 - **D39 (2026-07-13)** — **ECHO KEPT, as Lamby's final form** (your "wasn't it
   supposed to stay closer to Lamby?" answered structurally): Echo IS the
   lineage's end — the dispersal fragments reassembled into pure voice, no body

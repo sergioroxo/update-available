@@ -1,0 +1,35 @@
+{
+  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Session 37 (E3-i, THE THREE-SCREEN ROOM foundation, docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's R29-b deep revision). This is the FOUNDATION only: the laptop shows the SisterSignal login/desktop SHELL (no GraceQueue moderation content yet — that is E3-iii+, gated on the trans-masc reader per the adaptation spec); the tablet shows a static True Daughters feed shell (4 placeholder cards, no scroll wired yet); the phone shows a lock/notification shell (no DM thread yet — Noa's ask per S3R.4 arrives with E3-v). All copy here is throwaway scaffolding, not the era's real voice.",
+  "laptop": {
+    "os": "SisterSignal",
+    "loginGreeting": "Welcome back, Vera.",
+    "loginSub": "Sign in to continue moderating.",
+    "signIn": "Sign in",
+    "desktopWelcome": "GraceQueue — arriving soon.",
+    "taskbarLabel": "SisterSignal"
+  },
+  "tablet": {
+    "appName": "True Daughters",
+    "feedHeading": "Your feed",
+    "posts": [
+      { "author": "a member", "text": "PLACEHOLDER — a testimony snippet goes here.", "time": "2h" },
+      { "author": "a member", "text": "PLACEHOLDER — a second testimony snippet.", "time": "5h" },
+      { "author": "a member", "text": "PLACEHOLDER — a third, warmer, off-script line.", "time": "1d" },
+      { "author": "a member", "text": "PLACEHOLDER — a fourth, the kind the queue approves of.", "time": "2d" }
+    ],
+    "verifiedBadge": "verified"
+  },
+  "phone": {
+    "lockClock": "9:41",
+    "lockDate": "PLACEHOLDER — date",
+    "notificationApp": "Messenger",
+    "notificationPreview": "PLACEHOLDER — a notification preview line.",
+    "notificationTime": "now"
+  },
+  "witnessArrival": "companion process v3: lambient — distributed",
+  "nodeLabels": {
+    "laptop": "the laptop",
+    "tablet": "the tablet",
+    "phone": "the phone"
+  }
+}

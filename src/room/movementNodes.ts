@@ -21,7 +21,26 @@ import type { EraKey } from './cluster';
 
 export interface MovementNode {
   id: string;
+  /** the ROOM-level seat this node's jump lands "at" for `available()`'s
+   *  current-seat gating (never offer a marker for where you already are).
+   *  Base room seats (r1-desk/r2-desk/r3-desk) use the real seatPose() yaws
+   *  (0/90/270) — the number that also drives the camera cut when `pose`
+   *  (below) is absent. Session 37 (E3-i): INTRA-room device seats (the
+   *  tablet/phone) reuse this same field purely as a unique comparison key
+   *  (out-of-range pseudo-yaws, e.g. 91/92) so each device can be excluded
+   *  independently once you're sitting at it — they never feed seatPose(),
+   *  since `pose` always wins for them. See src/engine/app.ts's
+   *  performSeatCut()/requestMove(). */
   seatYaw: number;
+  /** Session 37 (E3-i): the exact camera pose for an INTRA-room seat (a
+   *  device inside a room that already has its own base seatPose() entry) —
+   *  when present, performSeatCut() uses this directly instead of deriving a
+   *  pose from `seatYaw` via seatPose(). Absent for the three base room
+   *  seats (r1-desk/r2-desk/r3-desk), which still resolve through
+   *  seatPose(seatYaw) as before. FABLE/SÉRGIO CHECK: these numbers are
+   *  spatial-feel judgment calls, not measured facts — see nodes.json's
+   *  per-node comment and the Session 37 log entry for how they were tuned. */
+  pose?: { x: number; y: number; z: number; pitch: number; yaw: number };
   label: string;
   marker: [number, number, number];
   eras: EraKey[];

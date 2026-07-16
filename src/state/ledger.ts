@@ -94,6 +94,17 @@ export interface Ledger {
    * everything here.
    */
   media: { id: string; outcome: 'declined' | 'watched' | 'skipped' | 'interrupted'; witness: string }[];
+  /**
+   * S3R.0 (Session 37, E3-i — THE THREE-SCREEN ROOM foundation): fires once,
+   * the moment the player first arrives at Era 3 and any device wakes — the
+   * fragments from E2's failed uninstall ("companion process — could not be
+   * removed. migrating.") becoming visible again, now distributed across all
+   * three screens (master plan §5b, "the watcher" thread). At most one entry
+   * ever (guarded in src/room/era3Devices.ts). `witness` resolved from
+   * data/strings/era3_devices.json at file time, never composed in TS.
+   * In-memory only, like everything here.
+   */
+  era3Arrival: { witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -113,7 +124,8 @@ const fresh = (): Ledger => ({
   belongings: [],
   lamby: [],
   checkins: [],
-  media: []
+  media: [],
+  era3Arrival: []
 });
 
 export let ledger: Ledger = fresh();
