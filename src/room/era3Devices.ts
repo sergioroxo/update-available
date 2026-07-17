@@ -45,10 +45,32 @@ import { GraceQueueLite } from './graceQueueLite';
 import d from '../../data/strings/era3_devices.json';
 import q from '../../data/dialog/s3_queue.json';
 
+/** Session 39 (E3 screen-format pass): each canvas's logical resolution is
+ *  now chosen to MATCH its panel plane's world aspect exactly (a fixed
+ *  logical-px-per-metre density on both axes — no non-uniform stretch is
+ *  possible when w/h here equals PLACEMENT[name].size.w/h exactly).
+ *
+ *  laptop: PLACEMENT.laptop.size = 0.52 × 0.30m → 26:15 (~1.733:1, the 2016
+ *  flat panel's real widescreen shape). Session 37 left this at the OLD
+ *  CRT-era 512×384 (4:3) — a canvas built for a squarer screen, enlarged
+ *  onto the new wide plane, so every pixel was stretched ~30% wider than
+ *  tall. Fixed at 676×390 = 26k×15k for k=26: 676/0.52 = 390/0.30 = 1300
+ *  logical px/m on both axes — square pixels, natively widescreen, no
+ *  re-derivation needed elsewhere (hitPlane() already takes logical w/h as
+ *  params, so click routing scales automatically — see hitPlane below).
+ *  tablet: PLACEMENT.tablet.size = 0.16 × 0.22m → 8:11 (0.7273). Was
+ *  220×300 (0.7333) — a ~0.8% mismatch, small but real. Fixed at 216×297
+ *  (=16k×22k, k=13.5→ use 8k×11k, k=27): 216/0.16 = 297/0.22 = 1350 px/m,
+ *  size kept close to the original for continuity (feed-overflow behaviour
+ *  documented in Session 38 is unaffected, not this session's scope).
+ *  phone: PLACEMENT.phone.size = 0.07 × 0.14m → exactly 1:2. Was 140×260
+ *  (0.538) — the most visibly squashed of the three. Width 140 already
+ *  matched (0.07 × 2000px/m); only height was wrong. Fixed at 140×280
+ *  (140/0.07 = 280/0.14 = 2000 px/m). */
 const LOGICAL = {
-  laptop: { w: 512, h: 384, scale: 3 },
-  tablet: { w: 220, h: 300, scale: 2 },
-  phone: { w: 140, h: 260, scale: 2 }
+  laptop: { w: 676, h: 390, scale: 3 },
+  tablet: { w: 216, h: 297, scale: 2 },
+  phone: { w: 140, h: 280, scale: 2 }
 } as const;
 
 /** Room 2 (Vera, west) world placements — Session 37 FABLE/SÉRGIO CHECK:

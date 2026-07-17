@@ -264,6 +264,27 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   cards and a full warm feed overflows below the glass — a scroll pass is
   flagged, not built; (4) the done-screen line ("You're caught up.") is new
   placeholder copy, not from your draft.**
+- **D46 (2026-07-17, Session 39)** — **E3 SCREENS RE-LAID-OUT FOR THEIR REAL
+  FORMATS — your readability re-check.** Your report was exact: after the
+  Session 37 flat-panel swap, the laptop's image had only been ENLARGED — the
+  canvas still composed for the old squarer CRT shape and was stretched onto
+  the wide panel (every pixel ~30% wider than tall). Fixed at the root: each
+  device's offscreen canvas now matches its panel's real shape natively —
+  laptop widescreen (26:15, the 2016 panel), tablet ~3:4, phone exactly 1:2 —
+  square pixels everywhere, nothing stretched. And the GraceQueue/SisterSignal
+  screens are now COMPOSED for widescreen: the card, the system band, and the
+  verbs sit in one centered reading column (~50-char testimony lines) with
+  real margins both sides, instead of text pinned left with dead space right;
+  the Lambient foot band stays full-width like window chrome. Layout only —
+  not one word of card copy or data changed, Mira's gate and the tablet
+  consequences verified intact, the whole strip re-driven with real clicks
+  after the change. **Your checks: (1) the acceptance test is yours again —
+  a look at the laptop card view on your screen: does it now read as
+  DESIGNED for the wide panel (not zoomed)?; (2) type sizes after the
+  re-grid — the queue's card text should feel the same size as Session 38
+  tuned it; if not, one number per device changes it (flagged in the session
+  log); (3) tablet/phone are minor shape corrections only — a glance
+  suffices.**
 - **D39 (2026-07-13)** — **ECHO KEPT, as Lamby's final form** (your "wasn't it
   supposed to stay closer to Lamby?" answered structurally): Echo IS the
   lineage's end — the dispersal fragments reassembled into pure voice, no body

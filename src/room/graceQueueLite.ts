@@ -183,30 +183,46 @@ export class GraceQueueLite {
   }
 
   private drawSignIn(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    // Session 39 (E3 screen-format pass): the laptop's canvas is now natively
+    // widescreen (see era3Devices.ts's LOGICAL.laptop) — a fixed comfortable
+    // content column, centered in the window, instead of pinning text to the
+    // left edge and leaving the new width as dead space on the right.
+    const CONTENT_W = Math.min(480, c.w - 48);
+    const cx = c.x + (c.w - CONTENT_W) / 2;
     setFont(ctx, 26); ctx.fillStyle = ERA3.titleText;
-    ctx.fillText(q.app.signInGreeting, c.x + 24, c.y + 40);
+    ctx.fillText(q.app.signInGreeting, cx, c.y + 40);
     setFont(ctx, 15); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(q.app.signInSub, c.x + 24, c.y + 78);
-    const bx = c.x + 24; const by = c.y + c.h - 70; const bw = 220; const bh = 42;
+    ctx.fillText(q.app.signInSub, cx, c.y + 78);
+    const bx = cx; const by = c.y + c.h - 70; const bw = 220; const bh = 42;
     aero.button(ctx, bx, by, bw, bh, q.app.signInButton, { primary: true, tone: 'good', size: 16 });
     this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'signin' });
-    // Lambient's mark, top-right of the sign-in window (Session 37's original
-    // placement, carried forward — the fragments already arrived here too)
+    // Lambient's mark, top-right of the sign-in WINDOW (not the content
+    // column) — Session 37's original placement, carried forward.
     drawLambMark(ctx, c.x + c.w - 20, c.y + 10, 1.6);
   }
 
   private drawDone(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const CONTENT_W = Math.min(480, c.w - 48);
+    const cx = c.x + (c.w - CONTENT_W) / 2;
     setFont(ctx, 22); ctx.fillStyle = ERA3.titleText;
-    ctx.fillText(q.app.doneHeading, c.x + 24, c.y + 40);
+    ctx.fillText(q.app.doneHeading, cx, c.y + 40);
     setFont(ctx, 14); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(q.app.doneSub, c.x + 24, c.y + 72);
+    ctx.fillText(q.app.doneSub, cx, c.y + 72);
     this.drawLambientLane(ctx, c, this.lambLine);
   }
 
   private drawCard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     const card = this.currentId != null ? CARD_BY_ID.get(this.currentId) : undefined;
     if (!card) return;
-    const x = c.x + 10; const w = c.w - 20;
+    // Session 39: a fixed comfortable reading column (unchanged from the
+    // pre-widescreen tuning), centered in the now-wider window rather than
+    // stretched to fill it — "sensible margins... not full-bleed stretched
+    // text" per the session brief. The system band + action row below reuse
+    // this same x/w, so they stay aligned as one column; the Lambient foot
+    // lane deliberately stays a full-width footer (window chrome, not the
+    // reading column).
+    const CARD_W = Math.min(480, c.w - 40);
+    const x = c.x + (c.w - CARD_W) / 2; const w = CARD_W;
 
     // the MEMBER lane — big, roomy, one card only
     const cardH = 150;
