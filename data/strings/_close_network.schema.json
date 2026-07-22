@@ -1,0 +1,66 @@
+{
+  "title": "The Close constellation — the project's knowledge network",
+  "_doc": "PROPOSED (2026-07-22, awaiting Sérgio) — the target shape for data/strings/close_network.json, which is today a flat list of 24 hand-typed labels. The Close's point cloud is canonically 'symbolically drawn from the data/connections used to make this immersive experience itself' (master plan F6) and its hub nodes carry 'the network of knowledge the piece itself is built from' (src/room/pointCloud.ts). Today the mesh's TOPOLOGY does not honour that: node positions are seeded-random, links join near neighbours by spatial proximity only, and labels are assigned to whichever nodes happened to render largest. This schema makes the network real. NOTHING has been migrated — see the criteria doc and Sérgio's approval before data moves. THE ETHICS RULE THAT SHAPES THIS FILE: a node's visible `label` is ALWAYS authored, never copied from a dossier source's `text`, because those texts name real people and legal cases while this surface's own standing rule is 'No survivor names, no real individuals — sources and structures only.' Derivation supplies structure and status; wording stays Sérgio's.",
+  "type": "object",
+  "required": ["sergioPass", "nodes", "edges"],
+  "properties": {
+    "sergioPass": {
+      "type": "boolean",
+      "description": "FALSE until Sérgio's wording/ethics pass. While false, nodes with status 'unrated' are REPORTED by tools/check-spec.mjs. The moment it is true, any 'unrated' node is a hard CI failure — the flag is the whole gate, so it is the only thing he has to flip."
+    },
+    "nodes": {
+      "type": "array",
+      "description": "The stars. Two populations merged: 'authored' (the PhD frame, ethics constraints, research passes — things no code can infer) and 'derived' (dossier sources already carrying a status). A derived node's identity and status come from the build; only its label is human.",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "origin", "status"],
+        "properties": {
+          "id": { "type": "string", "description": "stable slug — edges reference it, so renaming a label never breaks the graph" },
+          "label": {
+            "type": "string",
+            "description": "THE VISIBLE TEXT, always authored by Sérgio. Never auto-filled from a source's `text` field (see the ethics rule in _doc). A derived node awaiting a label carries the empty string and is reported, not invented."
+          },
+          "origin": {
+            "type": "string",
+            "enum": ["authored", "derived"],
+            "description": "'derived' nodes are regenerated from data/provotypes/*.json debrief sources and must not be hand-edited except for their label; 'authored' nodes are Sérgio's and are never touched by tooling."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["documentary", "contested", "speculative", "unrated"],
+            "description": "Same vocabulary as the dossier law (CLAUDE.md), because these ARE those sources. Intended to drive node BRIGHTNESS in the Close: documentary burns bright, contested dimmer, speculative faintest — the honesty of the research becomes the last image the player sees, and the piece closes by admitting what it does not know. 'unrated' is a pre-pass sentinel only, legal while sergioPass is false."
+          },
+          "confidence": { "type": "string", "description": "player-visible confidence label, carried over from the dossier source where one exists" },
+          "kind": {
+            "type": "string",
+            "enum": ["source", "research", "scene", "frame"],
+            "description": "'source' = documentary anchor; 'research' = a deep-research pass; 'scene' = a provotype/beat the sources ground; 'frame' = the PhD/project frame (SurvivingSOGICE, ethics constraints). Hubs should be frame + heavily-cited sources."
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "false where the source text still carries [VERIFY SOURCE]. An unverified node must never render as a bright documentary star — that would be the piece's own uncited claim, in its final image."
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "The web. ONLY relations that are already RECORDED somewhere in the build — writing them down asserts nothing new. The generative case: source S appears in provotype P's debrief ⇒ S grounds P. Interpretive links between sources ('NARTH influenced GETA') are research claims and belong to Sérgio, never to a generator.",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "relation"],
+        "properties": {
+          "from": { "type": "string", "description": "node id" },
+          "to": { "type": "string", "description": "node id" },
+          "relation": {
+            "type": "string",
+            "enum": ["grounds", "informs", "supersedes"],
+            "description": "'grounds' = this source is cited by that scene (derivable, non-interpretive); 'informs' = a research pass fed this scene; 'supersedes' = one decision replaced another — the relation that would have caught the R28-versus-shipped drift, and the reason this graph doubles as the tracking system the 84 docs never gave us."
+          },
+          "origin": { "type": "string", "enum": ["authored", "derived"], "description": "as for nodes — derived edges are regenerated and must not be hand-edited" }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}
