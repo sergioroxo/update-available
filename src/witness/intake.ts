@@ -6,15 +6,17 @@
  */
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont } from '../desktop/theme/chrome';
+import { COLD_BOARD, FLAG, RECORD } from '../desktop/theme/witness';
 import { ledger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import opening from '../../data/strings/opening.json';
 
-const INK = '#aabbcc';
-const DIM = '#556677';
-const PANEL = '#0d0d1a';
-const FIELD = '#0a0a15';
-const LINE = '#222244';
+// Local aliases onto the witness palette (src/desktop/theme/witness.ts).
+const INK = RECORD.ink;
+const DIM = RECORD.dim;
+const PANEL = RECORD.panel;
+const FIELD = RECORD.field;
+const LINE = RECORD.line;
 const HARDEN_SECONDS = 2.2;
 
 interface OpeningProfileSnapshot {
@@ -145,14 +147,14 @@ export class WitnessCanvas {
     const { ctx } = this;
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
-    px(ctx, 0, 0, W, H, '#05050a');
+    px(ctx, 0, 0, W, H, RECORD.voidBg);
     const pulse = Math.floor(this.t * 0.8) % 2 === 0;
     setFont(ctx, 10);
-    ctx.fillStyle = pulse ? '#15151f' : '#1d1d2c';
+    ctx.fillStyle = pulse ? RECORD.pulseOn : RECORD.pulseOff;
     ctx.fillText(strings.witness.dormant, Math.round(W / 2) - 10, Math.round(H / 2) - 5);
   }
 
-  private field(label: string, value: string, y: number, valueColor = INK): void {
+  private field(label: string, value: string, y: number, valueColor: string = INK): void {
     const { ctx } = this;
     setFont(ctx, 9);
     ctx.fillStyle = DIM;
@@ -290,8 +292,8 @@ export class WitnessCanvas {
 
     px(ctx, 145, 21, 228, 30, 'rgba(0, 0, 0, 0.16)');
     px(ctx, 142, 18, 228, 30, ERA1.paper);
-    px(ctx, 150, 16, 6, 6, '#d0a315');
-    px(ctx, 356, 16, 6, 6, '#d0a315');
+    px(ctx, 150, 16, 6, 6, COLD_BOARD.pinGold);
+    px(ctx, 356, 16, 6, 6, COLD_BOARD.pinGold);
     setFont(ctx, 16);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(opening.o1_disclaimer_title.toUpperCase(), 172, 34);
@@ -300,11 +302,11 @@ export class WitnessCanvas {
     ctx.fillText(opening.o1_board_logo_edge, 314, 12);
 
     px(ctx, 61, 62, 396, 124, 'rgba(0, 0, 0, 0.18)');
-    px(ctx, 58, 58, 396, 124, '#f3ead3');
+    px(ctx, 58, 58, 396, 124, COLD_BOARD.paper);
     px(ctx, 58, 58, 396, 1, ERA1.beige);
     px(ctx, 58, 181, 396, 1, ERA1.warnDark);
     px(ctx, 67, 55, 6, 6, ERA1.warn);
-    px(ctx, 444, 55, 6, 6, '#315db5');
+    px(ctx, 444, 55, 6, 6, COLD_BOARD.pinBlue);
     setFont(ctx, 9);
     ctx.fillStyle = ERA1.black;
     let yy = 72;
@@ -317,12 +319,12 @@ export class WitnessCanvas {
     ctx.fillText((opening.o1_board_margin_notes as string[])[0], 304, 164);
 
     px(ctx, 40, 190, 440, 92, 'rgba(0, 0, 0, 0.18)');
-    px(ctx, 36, 186, 440, 92, '#ead6ad');
+    px(ctx, 36, 186, 440, 92, COLD_BOARD.band);
     px(ctx, 36, 186, 440, 1, ERA1.warnDark);
     px(ctx, 36, 277, 440, 1, ERA1.warnDark);
-    px(ctx, 44, 192, 5, 5, '#d0a315');
-    px(ctx, 468, 192, 5, 5, '#315db5');
-    px(ctx, 52, 192, 408, 14, '#e7d1a6');
+    px(ctx, 44, 192, 5, 5, COLD_BOARD.pinGold);
+    px(ctx, 468, 192, 5, 5, COLD_BOARD.pinBlue);
+    px(ctx, 52, 192, 408, 14, COLD_BOARD.strip);
     px(ctx, 52, 192, 4, 14, ERA1.warnDark);
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.black;
@@ -335,7 +337,7 @@ export class WitnessCanvas {
     setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(opening.o1_options_title, 52, 207);
-    px(ctx, 52, 219, 408, 1, '#bca36e');
+    px(ctx, 52, 219, 408, 1, COLD_BOARD.rule);
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(opening.o1_platform_label, 74, 222);
@@ -361,14 +363,14 @@ export class WitnessCanvas {
 
     px(ctx, 25, 19, 154, 26, 'rgba(0, 0, 0, 0.16)');
     px(ctx, 22, 16, 154, 26, ERA1.paper);
-    px(ctx, 30, 13, 5, 5, '#d0a315');
+    px(ctx, 30, 13, 5, 5, COLD_BOARD.pinGold);
     setFont(ctx, 12);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(opening.o3_board_title, 34, 28);
 
     px(ctx, W - 195, H - 37, 174, 20, 'rgba(0, 0, 0, 0.14)');
-    px(ctx, W - 198, H - 40, 174, 20, '#e7d1a6');
-    px(ctx, W - 190, H - 43, 5, 5, '#315db5');
+    px(ctx, W - 198, H - 40, 174, 20, COLD_BOARD.strip);
+    px(ctx, W - 190, H - 43, 5, 5, COLD_BOARD.pinBlue);
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(opening.o3_board_hint, W - 190, H - 32);
@@ -419,7 +421,7 @@ export class WitnessCanvas {
     const H = ERA1_CANVAS.height;
     const s = strings.witness;
 
-    px(ctx, 0, 0, W, H, '#05050a');
+    px(ctx, 0, 0, W, H, RECORD.voidBg);
     // header
     px(ctx, 0, 0, W, 24, PANEL);
     px(ctx, 0, 24, W, 1, LINE);
@@ -437,7 +439,7 @@ export class WitnessCanvas {
       s.trustedContact,
       ledger.tags.includes('pastoral-referral') ? s.trustedMade : s.trustedAssigned,
       84,
-      ledger.tags.includes('pastoral-referral') ? '#cc8855' : INK
+      ledger.tags.includes('pastoral-referral') ? FLAG : INK
     );
     this.field(
       s.channelLog,
@@ -446,17 +448,17 @@ export class WitnessCanvas {
         : s.notOnline,
       106
     );
-    this.field(s.tags, this.tagsValue(), 128, ledger.tags.length ? '#cc8855' : INK);
-    this.field(s.status, s.statusValue, 150, '#cc8855');
+    this.field(s.tags, this.tagsValue(), 128, ledger.tags.length ? FLAG : INK);
+    this.field(s.status, s.statusValue, 150, FLAG);
 
     // the index card — the name copied into the era's filing artifact
     const cx = 28; const cy = 190; const cw = 200; const ch = 64;
-    px(ctx, cx, cy, cw, ch, '#15151f');
+    px(ctx, cx, cy, cw, ch, RECORD.pulseOn);
     px(ctx, cx, cy, cw, 1, LINE);
     px(ctx, cx, cy, 1, ch, LINE);
     px(ctx, cx, cy + ch - 1, cw, 1, LINE);
     px(ctx, cx + cw - 1, cy, 1, ch, LINE);
-    for (let i = 1; i < 4; i++) px(ctx, cx + 8, cy + 14 + i * 12, cw - 16, 1, '#1d1d2c');
+    for (let i = 1; i < 4; i++) px(ctx, cx + 8, cy + 14 + i * 12, cw - 16, 1, RECORD.pulseOff);
     setFont(ctx, 10);
     ctx.fillStyle = INK;
     ctx.fillText(ledger.name, cx + 10, cy + 16);
@@ -466,11 +468,11 @@ export class WitnessCanvas {
 
     // dead FILE button — no raised bevel; it looks inert because it is
     const bx = W - 140; const by = 212;
-    px(ctx, bx, by, 110, 22, '#15151f');
+    px(ctx, bx, by, 110, 22, RECORD.pulseOn);
     px(ctx, bx, by, 110, 1, LINE);
     px(ctx, bx, by, 1, 22, LINE);
     setFont(ctx, 9);
-    ctx.fillStyle = '#333344';
+    ctx.fillStyle = RECORD.cardLine;
     ctx.fillText(s.file, bx + 22, by + 6);
 
     // reinterpretation session log — one cold line per provotype filed, and
@@ -502,15 +504,15 @@ export class WitnessCanvas {
         ...profileLines.map(text => ({ text, color: INK })),
         ...ledger.provotypes.map(p => ({
           text: p.witness || `${p.id}: ${p.outcome}`,
-          color: p.outcome === 'abandoned' ? '#cc8855' : INK
+          color: p.outcome === 'abandoned' ? FLAG : INK
         })),
         ...ledger.sends.map(sd => ({
           text: sd.witness || `${sd.id}: ${sd.outcome}`,
-          color: sd.outcome === 'declined' ? '#cc8855' : INK
+          color: sd.outcome === 'declined' ? FLAG : INK
         })),
         ...ledger.guidance.map(g => ({
           text: g.witness || `${g.id}: ${g.outcome}`,
-          color: g.outcome === 'declined' ? '#cc8855' : INK
+          color: g.outcome === 'declined' ? FLAG : INK
         })),
         // R28-2c: the belongings beat — one line per kept item, or one
         // "processed" line on the Update-Now-direct path. Un-kept eligible
@@ -522,7 +524,7 @@ export class WitnessCanvas {
         // lines (witness symmetry: dismissing the assistant is never invisible).
         ...ledger.lamby.map(l => ({
           text: l.witness || `${l.id}: ${l.outcome}`,
-          color: l.outcome === 'dismissed' ? '#cc8855' : INK
+          color: l.outcome === 'dismissed' ? FLAG : INK
         })),
         // S2R.2: every Daily Realignment chip files its own tag — none is a
         // branch, so all render the same ink (register, not judgement).
@@ -533,7 +535,7 @@ export class WitnessCanvas {
         // is data); watching to THE BREAK renders in ink like everything else.
         ...ledger.media.map(m => ({
           text: m.witness || `${m.id}: ${m.outcome}`,
-          color: (m.outcome === 'declined' || m.outcome === 'skipped') ? '#cc8855' : INK
+          color: (m.outcome === 'declined' || m.outcome === 'skipped') ? FLAG : INK
         })),
         // S3R.0 (Session 37): the three-screen room's arrival, once — Lambient's
         // fragments settling visibly across every device (register, not a
@@ -548,9 +550,9 @@ export class WitnessCanvas {
         // never hides it). No counts, no scores — just the lines.
         ...ledger.graceQueue.map(g => ({
           text: g.witness || `card ${g.cardId}: ${g.outcome}`,
-          color: g.outcome === 'stood' ? '#cc8855' : INK
+          color: g.outcome === 'stood' ? FLAG : INK
         })),
-        ...endingLines.map(text => ({ text, color: '#cc8855' }))
+        ...endingLines.map(text => ({ text, color: FLAG }))
       ];
       // the well between the log heading and the footer holds ~7 rows. The
       // FIRST filing stays pinned at the top for the whole session (FIND #5:
@@ -571,7 +573,7 @@ export class WitnessCanvas {
     ctx.fillText(s.footer, 16, H - 16);
     const pulse = Math.floor(this.t * 1.5) % 2 === 0;
     if (pulse) {
-      ctx.fillStyle = '#445566';
+      ctx.fillStyle = RECORD.footer;
       ctx.fillText(s.hint, W - 180, H - 16);
     }
   }

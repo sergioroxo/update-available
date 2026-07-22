@@ -16,8 +16,16 @@ vertical slice.
 npm install
 npm run dev          # → http://localhost:5173
 npm run build        # type-check + static build to dist/
-npm test             # no-network / no-storage invariant check
+npm test             # no-network / no-storage invariants + room fold + spec laws
 ```
+
+`npm test` runs three checkers in `tools/`:
+
+| checker | defends |
+|---|---|
+| `check-invariants.mjs` | no runtime network, no storage of user input |
+| `check-rooms.mjs` | the room deltas fold cleanly over the base room |
+| `check-spec.mjs` | dossier `status`, felt-scene purity, `tier`/`register` vocabulary, the ≤3-hero Quest budget, and a palette ratchet |
 
 ### Quest 3 loop
 ```bash
