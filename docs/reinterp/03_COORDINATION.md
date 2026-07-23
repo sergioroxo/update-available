@@ -30,37 +30,50 @@ DECISION QUEUE, (d) any new research prompt docs. State lives in files, not in a
 master plan (decisions) · worktree `01_SESSION_LOG` (build state) · this file (dispatch) · Fable's
 persistent memory (cross-session continuity).
 
-## DOC MAP (updated Round 14)
-Master plan is now v1 body + Rounds 12–14 only; Rounds 1–11 live in
-[`REINTERP_MASTER_PLAN_ARCHIVE_ROUNDS_1-11_2026-07-02.md`](../REINTERP_MASTER_PLAN_ARCHIVE_ROUNDS_1-11_2026-07-02.md)
-(reference only). **New: [`05_HOW_TO_RUN_A_SESSION.md`](05_HOW_TO_RUN_A_SESSION.md)** — plain-language
-"how do I actually start a session with X model" guide, with paste-ready filled prompts for this round's
-ready dispatch items. Also new: the focused consult-mechanics prompt
-[`CHATGPT_DEEPRESEARCH_CONSULT_ENGAGEMENT_MECHANICS_2026-07-03.md`](../CHATGPT_DEEPRESEARCH_CONSULT_ENGAGEMENT_MECHANICS_2026-07-03.md).
-Prior-round docs: era vision
-[`REINTERP_TRANS_REALITY_ERA_VISION_2026-07-03.md`](../REINTERP_TRANS_REALITY_ERA_VISION_2026-07-03.md),
-pillow diagnosis
-[`REINTERP_PROVOTYPE_EMBODIMENT_ANALYSIS_2026-07-03.md`](../REINTERP_PROVOTYPE_EMBODIMENT_ANALYSIS_2026-07-03.md).
+## DOC MAP (updated R29, 2026-07-23)
+**Read order:** `CLAUDE.md` → `docs/ETHICS_CONSTRAINTS.md` →
+[`REINTERP_MASTER_PLAN_v2_2026-07-12.md`](../REINTERP_MASTER_PLAN_v2_2026-07-12.md) (PLAN OF RECORD) →
+the tail of [`01_SESSION_LOG.md`](01_SESSION_LOG.md). Every other doc's lifecycle status lives in
+[`08_STATUS_REGISTER.md`](08_STATUS_REGISTER.md) — the R29 one-page register (docs / code / data /
+sources, four separate axes) — until the S41 STATUS-header pass makes the headers themselves the truth.
+*This board sat frozen at Round 17 (2026-07-04) for nineteen days while the project reached R29 — that
+drift is the subject of R29 and the reason the register + checker now exist.*
 
-## DISPATCH BOARD (2026-07-04 · Round 17 — the 3D style push)
+## DISPATCH BOARD (2026-07-23 · R29 — the tracking round)
 | Lane | Who | Task | Status |
 |---|---|---|---|
-| B | Opus 4.8 | **V1 — E1 room style pass** per `REINTERP_3D_STYLE_DIRECTION_2026-07-04.md` §2-E1 (two-temperature rig, soft-vs-crisp material split, hero/set/fog, niche as cold sliver) | READY — paste list in the round response |
-| A | Sonnet 5 | **R4 revision chore** (layout, trim, remove player-facing provenance, "brochure" string) — from Round 16, still pending | READY — paste list in Round-16 response, unchanged |
-| C | Fable 5 (next round) | **Assistant-as-guide spec** · documentary-record surfacing answer · O3 chip/goal/icon set proposal (with the voice pass) · logo v3 from Sérgio's v2 reaction | due |
-| A | Sonnet 5 | V2 prop dressing (after Sérgio reacts to V1) · R5 · Creed/Lenny + `_schema.json` chores | queued |
-| D | Deep Research | *(nothing queued)* | idle |
+| A | Sonnet 5 | **S40 — R28 §4 layer 3 + retire the startup-options panel** (the impersonal side-messages teach LOOK/INTERACT per D48's arbitration; the panel `intake.ts` still serves dies; the cork board's witness-lineage role and O3 profile survive) | READY — paste prompt in the R29 round response |
+| A | Sonnet 5 | **S41 — the tracking build**: `STATUS:` headers on all 83 docs (from the register §1), check-spec **C5** (ratchet + supersession-target + `KILLS:` assertions), `tools/doc-status-report.mjs`; chore: `pointCloud.ts` label cap 28→32 | READY — after S40 or parallel (disjoint files) |
+| B | Haiku/Sonnet | **S42 — generate checklist §D**: the piece-wide `[VERIFY SOURCE]` queue from `data/` (promised since Q3, never generated) | READY — cheap, parallel-safe |
+| C | Fable (next round) | **C2 layout-X ending arm + Close entry spec** (v2 §9 item 7) · fold R29 queue changes into v2 §9 | due |
+| — | Sonnet 5 | E2 back half: Caleb thread → collapse → residue → send (v2 §9 items 4–5) | GATED on Sérgio's S2R.3 read |
+| D | Deep Research | *(nothing queued — TRANSMAN_CONSULT_SOURCING optional-run is Sérgio's call, see 07)* | idle |
 
-**Done:** Sessions 0–6 — flag (`90947c9`) · framework (`fc3686f`) · pillow (`fcaca92`) + embodiment fixes
-(`607a542`) · Lamby rig (`d66ac3e`) · R4 intake (`6d4ffa4`) · **OP-1 opening O1–O3 (Opus `aa39aa7`)** ·
-**fluid-niche greybox (Opus `1c464ce`)** · geometry doc · Opening & Flow spec · 3D style direction
-(`REINTERP_3D_STYLE_DIRECTION_2026-07-04.md`) · logo v2 lamp concept.
+**Done through R29:** Sessions 0–39 + the 2026-07-22 tooling pair — E1 complete and verified
+end-to-end · E2 built through the infomercial+dispersal (S31–35, back half Caleb-gated) · opening
+layers 1–2 (S36) · E3 three-screen foundation + GraceQueue strip + screen-format pass (S37–39) ·
+E3 sends scripted · spec-law CI gate (`check-spec.mjs`, closed a false "CI-enforced" claim) ·
+palette 157→51 · Close-graph schema+criteria (nothing migrated) · the R29 status register
+(`08_STATUS_REGISTER.md`). Full record: the session log.
 
-## DECISION QUEUE (for Sérgio)
-1. **React to the 3D style direction's governing idea** (§1: two lights fight for one room; the room
-   gradually inherits the interface) — it steers every visual pass from here.
-2. **React to logo v2 (the lamp)** — concept yes/no before any refinement.
-3. E1 warmth reference images, if any (words are enough).
+## DECISION QUEUE (for Sérgio — fewest, ordered by what they unblock)
+1. **The Caleb read (E2 script S2R.3)** — still THE gate on Era 2's emotional core and now the
+   longest-standing blocker in the queue (items 4–5 of the build queue wait on it). ~10 min.
+2. **Schedule the source-verification pass before Oct 19?** All 8 dossier sources are unverified;
+   S42 will surface the full piece-wide list. REC: one ~2h sitting once S42's queue lands — it
+   un-gates the constellation's brightness idea and firms the u2/u3/u4 trigger groundings.
+3. **`opening.ts` (the dead DOM overlay):** retire, or keep-with-header? REC: retire — its claimed
+   VR future is already better served by the physicalized in-scene board; git history keeps the code.
+4. **The Close's procedural links** — the final frame draws proximity-decoration while the captions
+   claim provenance ("the network of knowledge the piece itself is built from"), in a piece whose rule
+   is "cite only sources verified in the knowledge base." Either bless it as explicitly figurative
+   (caption wording softens at your voice pass) or adopt the derived graph when the dossier grows
+   dense enough to justify it (schema ready; today it derives a shallow 8-source fan, honestly thin).
+   Copy is yours either way.
+5. **Ratify (or veto) two D48 arbitrations** made under autonomous mode: (a) E1's verb-teacher is the
+   impersonal side-message system, NOT Lamby (R28 §4's pre-amendment wording loses to CLAUDE.md
+   amendment 2); (b) the startup-options panel retires in the same session that ships layer 3, never
+   before (no onboarding gap).
 
 ## Standing rules (carried from the plan, so no prompt has to restate them)
 Shipped build never touched · everything behind `?reinterp=1` · all copy PLACEHOLDER until Sérgio ·

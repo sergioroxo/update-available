@@ -1,60 +1,83 @@
 # REINTERP SESSION LOG — append-only; newest at the top of DONE
 
-## NEXT UP
-Two live tracks, for Fable/Sérgio to sequence:
-- **Opening continuation** — this session shipped **OP-1 (O1–O3)** per the OPENING & FLOW SPEC build order
-  (§4). Next in that track: **OP-2 (Opus): O4 Lamby integration** (extract the `?lambyrig=1` procedural rig
-  into the OS as the resident assistant with mood/line/anchor + dismissal/logging), then **OP-3 (Sonnet):
-  O5–O7 wiring** (beginner panel, dark-surround tonality, first-filing reveal hooks). The opening now lands
-  cleanly on the shipped Era-1 desktop, so both build on real ground.
-- **R5 — the femininity homework ('16)**, per master plan archive §R5, on the same room-presence/felt-beat/
-  close-phase grammar (commit 607a542). Ready per Round 14's R14-1 unpause.
-- **Fluid niche continuation** — this session shipped the GREYBOX (one alcove, 3 equal-fidelity facet
-  states, `setFacet` seam). Its next steps belong to R9 (the radial-cluster shell): wire the gaze-dwell +
-  cross-cluster send pulls into `niche.setFacet` (currently DATA STUBS in `fluid_niche.json`), instantiate
-  the later-era tables (E2/E3/E4 already in the JSON), and the moodboard dressing pass (R13-5). The §5 open
-  questions (azimuth ±110 vs ±70, E3 convergence readability, gaze-pull without gamification) are headset/
-  Sérgio calls that ride the A11 gate.
-- **E1 style-pass continuation** — this session shipped **V1** (the two-temperature rig + material split +
-  hero/set/fog) per the 3D STYLE DIRECTION build order (§5). Next in that track: **V2 (Sonnet, after Sérgio
-  reacts): prop dressing** — the fog-tier clutter set, poster patches, bed softening, data-driven placement
-  (and, if Sérgio wants it, literal beveled geometry for the "soft" personal props, which V1 expressed as
-  colour-muting only). **V3+ (later):** the E2/E3/E4 rigs when those rooms exist.
-**R7 (the graying task, Era 1)** still needs its own build spec first (master plan §R3-1) — do NOT improvise.
+## NEXT UP (rebuilt R29, 2026-07-23 — the old list had been frozen since ~Session 6 while DONE grew;
+## that drift is documented in `08_STATUS_REGISTER.md` §5. Top item = your session unless Sérgio says otherwise.)
+1. **S40 — R28 §4 layer 3 + retire the startup-options panel.** The missing third layer of the opening
+   rebuild: the E1 impersonal side-message system (`s1_guide.json` + `guide.ts`) teaches LOOK (find the
+   lamp) and INTERACT (the power button) ahead of the existing floppy thread — NOT Lamby (CLAUDE.md
+   amendment 2 wins over R28 §4's pre-amendment wording; arbitration D48). MOVE stays with the existing
+   movement-hint at first marker offer (E1 has zero nodes by design). Same session REMOVES the
+   R28-§4-dead "Start-up options" panel (`intake.ts` setStartupBoard/handleStartupClick/drawStartupBoard
+   + the four `app.ts` call sites) — the cork board's witness-lineage role and the O3 profile pinning
+   SURVIVE; only the onboarding panel dies. Paste prompt in the R29 round response.
+2. **S41 — the tracking build** (parallel-safe with S40, disjoint files): `STATUS:` headers on all 83
+   docs per `08_STATUS_REGISTER.md` §1; check-spec **C5** (headerless-doc ratchet + superseded-by
+   target existence + opt-in `KILLS: src/<path>#<symbol>` assertions); read-only
+   `tools/doc-status-report.mjs`. Chore rider: `pointCloud.ts` label cap 28→32.
+3. **S42 — generate checklist §D** (Haiku-grade): sweep `data/` for every `[VERIFY SOURCE]` + uncited
+   claim, populate `06_SERGIO_CHECKLIST.md` §D as the consolidated queue for Sérgio's source sitting.
+4. **E2 back half** (GATED on Sérgio's S2R.3 Caleb read): Caleb thread → collapse → residue → the u3
+   send to Room 2, per the homecoming script S2R.3–S2R.7 and v2 §9 items 4–5.
+5. **E3 sends build** — `REINTERP_E3_SENDS_SCRIPTS_2026-07-13.md` is scripted, unbuilt (tasks as travel).
+6. **C2 layout-X ending arm + Close entry** — Fable spec next round, then build.
+7. **R7 graying task (E1)** — STILL needs its build spec first (owed by Fable; unowned since the
+   original queue). Do NOT improvise.
 
-## BLOCKED / WAITING (carried forward, plus the opening additions)
-- **E1 style-pass feel pass (Sérgio, → FABLE ROUND)** — V1 shipped with placeholder-grade warmth by eye.
-  Sérgio judges: the exact ~70/30 warm/cool balance; whether the lamp's amber pool is a touch hot on the
-  near west wall; whether the material-mute amounts read "soft" enough or want literal beveled geometry (V2).
-  Nothing here is a final look — "visual passes are cheap to redo" (style doc §5).
-- **Opening copy voice pass (Sérgio)** — OP-1 shipped with PLACEHOLDER throughout `data/strings/opening.json`
-  (disclaimer, boot, chips/goals/icons, re-captions). → **FABLE ROUND question:** the O3 chip/goal/icon SETS
-  and the pre-filled name ("Daniel" placeholder) are register demonstrations only (spec §5.1) — Fable/Sérgio
-  choose the final set (criterion: each chip must be able to RETURN, recontextualised, in the witness record
-  or an assistant line) and the pre-fill source. Nothing in the opening is final copy.
-- **VR in-scene O1 (future, not blocking):** O1's start screen is a browser DOM overlay (correct for the
-  browser-first scope: "build VR-compatible, validate later"). VR players can't see DOM, so a headset build
-  will need an in-scene (world-space) equivalent of the disclaimer + start-up options. Flagged for the VR
-  validation pass; out of scope this session by the brief.
-- Pillow copy voice pass (Sérgio) — build shipped with PLACEHOLDER; final copy lands whenever ready.
-- Origin Story Intake copy voice pass (Sérgio) — same, build shipped with PLACEHOLDER throughout.
-- G6/G7 ethics read of both the pillow and the Origin Story Intake — Sérgio scheduling. Nothing in
-  either build should be treated as cleared pending those reads. G7 (minor + adult-administered
-  questioning) applies specifically to the new intake — see the DONE entry below for how it was kept
-  load-bearing.
-- In-headset playtest date (A11 gate) — gates ALL spatial sessions.
-- R7 build spec — still needed (queue item 4); not written yet.
-- **Minor open item, not a stop-the-session BLOCKED:** `origin_intake_e1`'s `cuts` is set to `["full"]`
-  only. Master plan §R2-7 says "Festival = pillow mandatory + micro-refusals only," which reads as
-  excluding other full provotypes from the Festival cut, but this isn't stated unambiguously for R4.
-  Left `full`-only rather than guessing `festival` in; Fable/Sérgio can add it to `data/paths.json`
-  composition later with no code change needed either way.
-- **Schema note (carried from the pillow session, still unresolved):** `data/provotypes/_schema.json`
-  still does not document the `close` object or `goto: "close"` (added in the pillow revision,
-  commit 607a542) — confirmed again this session that no runtime validator reads this file, so nothing
-  is broken, but it should be synced whenever a session has schema-only bandwidth.
+## BLOCKED / WAITING (pruned R29 — resolved items struck to DONE, the rest carried)
+- **Sérgio's live queue** is `07_WAITING_ON_SERGIO.md` (audio, the Caleb read, feel-tests, voice
+  passes) and the decision queue in `03_COORDINATION.md`. Not duplicated here.
+- **A11 in-headset playtest date** — still gates all remaining spatial tiers + batching-3. The
+  longest-standing structural gate; every week it waits the gated pile grows.
+- **G6/G7 ethics read** of the pillow + Origin Story Intake — Sérgio scheduling; neither build is
+  cleared until then.
+- **All voice passes** — everything ships `_doc: PLACEHOLDER`; per-era inventories + the newer data
+  files listed in v2 §8.
+- **Source verification** — 8/8 dossier sources unverified `[VERIFY SOURCE]`; consolidated queue
+  arrives with S42; decision on scheduling the sitting is queue item 2 in `03_COORDINATION.md`.
+- **`opening.ts` retirement** — decision item 3 in the queue (REC retire); S41 headers mark it
+  `dead` either way pending the call.
+- **Minor open item (carried):** `origin_intake_e1`'s `cuts: ["full"]`-only vs the Festival-cut
+  wording of master-plan §R2-7 — composition call, zero code impact, whenever convenient.
+- *(Pruned as stale this round: the OP-2/OP-3 opening track (superseded by R28 §4 + Session 36);
+  the R5 femininity homework as phrased (absorbed into the E3 adaptation spec's borderland);
+  the `_schema.json` close/goto sync note (done — the schema documents both and check-spec C1 now
+  reads it); the "VR in-scene O1" note (the board IS in-scene since the Session-21 physicalization;
+  what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-23 · R29 — THE TRACKING ROUND (Fable 5, coordination only — no code, no copy).
+Sérgio's direction: "this has been so hard to track that even you got confused — this needs a
+better system." Every claim in the R29 brief was re-verified against files before acting (the
+brief's author was wrong twice the prior session); all six findings CONFIRMED, none needed
+amendment, and finding #6's "Era 1 needs a rebuild" phrasing appears nowhere outside its own
+correction records — no leak. NEW: `08_STATUS_REGISTER.md` — the one-page four-population
+status register (docs 83 / code / data / sources, four SEPARATE axes) with §5 carrying the
+adopted tracking mechanism (D47: STATUS headers + check-spec C5 ratchet + opt-in KILLS
+assertions + doc-status-report; honest limit stated — checkers catch dead symbols, not dead
+jobs). THE ENFORCEMENT AUDIT the brief asked for ("assume the false CI claim is not the only
+instance"): it was the only one — no-network/no-storage are genuinely enforced by
+check-invariants.mjs; every other CLAUDE.md law without a checker is a human-read law and
+correctly claims no CI. THE DRIFT MAP, quantified: the failure class is "planned, partially
+done, assumed complete," and the verified instances are R28 §4 layer 3 (unbuilt), R28 §6's own
+consolidation (v2 written; the supersession headers + 03's board + 04's read-order pointer
+never landed — 03/04 frozen at Round 17/v1 for NINETEEN days), checklist §D (header created,
+queue never generated), and this log's own NEXT UP (frozen at ~Session-6 content while
+00_START_HERE told every new session to trust it — the likely mechanism of the cork-panel
+incident). All four repaired this round: 03 board+queue rebuilt to R29, 04 now points at v2,
+NEXT UP rebuilt above (S40–S42 + gated lanes), BLOCKED pruned (stale OP-2/OP-3 track, the
+already-synced _schema.json note, the obsolete VR-DOM-O1 note — the board IS in-scene since
+Session 21). ARBITRATIONS (D48, ratify/veto): E1's verb-teacher is the impersonal side-message
+system, not Lamby (CLAUDE.md amendment 2 postdates and beats R28 §4's wording; MOVE rides the
+existing movement-hint since E1 has zero nodes by design); the startup-options panel retires in
+the SAME session layer 3 ships (no onboarding gap) — the cork board + O3 profile + witness
+lineage survive untouched. 07_WAITING updated (the source pass added with an honest ~2h
+estimate for the 8 dossier sources; queue tail refreshed to R29). Decisions surfaced, not made:
+Caleb read (still the top gate), source-pass scheduling before Oct 19, opening.ts retire-REC,
+the Close's figurative-vs-derived links (its captions currently claim provenance the drawing
+doesn't have — Sérgio's dramaturgy + copy call). Dispatched: S40 (layer 3 + panel retirement),
+S41 (headers + C5 + slice 28→32 chore), S42 (generate checklist §D). No engine, data, or
+display-copy changes; npm test untouched and green by construction.)*
+
 *(2026-07-14 · Session 35 (R28-2d-iv) — the NetVision Player (the "New You Program" faux-VHS
 infomercial), per `docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md` S2R.4 (REVISED: Lamby's
 post-relapse recommendation, not a bare interrupt) and `docs/ERA2_EVANGELIST_COMMERCIAL_SCRIPT_

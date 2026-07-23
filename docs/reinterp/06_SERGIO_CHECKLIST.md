@@ -285,6 +285,36 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   tuned it; if not, one number per device changes it (flagged in the session
   log); (3) tablet/phone are minor shape corrections only — a glance
   suffices.**
+- **D47 (2026-07-23, R29)** — **THE TRACKING SYSTEM adopted (your header proposal,
+  improved).** Your diagnosis ("this has been so hard to track that even you got
+  confused") drove the round; the register is `docs/reinterp/08_STATUS_REGISTER.md`.
+  Adopted: (1) a one-line `STATUS:` header on every doc (`live` / `superseded-by
+  <file>` / `history-only`); (2) check-spec **C5** — headerless-doc count as a
+  RATCHET (the C4 idiom: fails on growth, nags downward — this is what makes the
+  migration incremental instead of the heroic pass R28 §6 promised and didn't
+  finish), `superseded-by` targets must exist, and opt-in `KILLS:
+  src/<path>#<symbol>` lines that fail CI if a doc-declared-dead symbol is still
+  referenced; (3) read-only `tools/doc-status-report.mjs`. Stated limit: a checker
+  catches a dead SYMBOL, not a dead JOB — partitions like the cork board's (the
+  onboarding dies, the witness surface survives) still need a human sentence, now
+  forced into one greppable place. Kept strictly SEPARATE from the provenance
+  graph (the Close/dossier axis) — different questions, never one "status" field.
+  Why R28 §6 failed, on the record: one-shot consolidation with no failure signal
+  for the tedious half — v2 got written, the 40 headers and the 03/04 pointer
+  updates didn't, and nothing broke, so nobody noticed for nineteen days. Build =
+  S41. Strike to approve; process call made under autonomous mode (D1).
+- **D48 (2026-07-23, R29)** — **TWO ARBITRATIONS for the S40 opening-layer-3 build**
+  (ratify or veto — both are plan-consistency calls, not new design): (a) R28 §4
+  layer 3 says "Lamby walks you through" the three verbs, but it was written hours
+  before your Q5 strike (NO Lamby character in E1); the amendment wins — in E1 the
+  verb-teacher is the IMPERSONAL side-message system (`s1_guide.json`), which is
+  also already the built vehicle. Lamby still gets his conducted-tour moment — at
+  his actual E2 debut. MOVE isn't teachable in E1 (zero nodes by design, R28-1);
+  the existing movement-hint at first marker offer carries it. (b) The
+  R28-§4-dead "Start-up options" panel retires IN THE SAME SESSION layer 3 ships,
+  never before — so there is no gap where the piece has neither the old onboarding
+  nor the new. The cork board itself, its O3 profile pinning, and its
+  witness-lineage role are untouched — only the onboarding panel dies.
 - **D39 (2026-07-13)** — **ECHO KEPT, as Lamby's final form** (your "wasn't it
   supposed to stay closer to Lamby?" answered structurally): Echo IS the
   lineage's end — the dispersal fragments reassembled into pure voice, no body

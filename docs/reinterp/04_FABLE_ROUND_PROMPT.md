@@ -15,9 +15,10 @@ project has loaded — trust it, then verify against the files, which are the so
    carries the compressed decision record across rounds. Verify against files, don't re-derive from them.
 2. `docs/reinterp/03_COORDINATION.md` — your role, the team lanes, the round protocol, the live
    dispatch board and decision queue. You maintain this file.
-3. `docs/REINTERP_MASTER_PLAN_v1_2026-07-02.md` — the v1 body + the most recent feedback rounds (older
-   rounds are archived out, see below). Later rounds supersede earlier items where marked. You append a
-   new dated round each session.
+3. `docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md` — THE PLAN OF RECORD (where any older doc disagrees,
+   v2 wins; its §10 maps supersessions). v1 + its archives are decision HISTORY only. *(Corrected R29 —
+   this line pointed at v1 for nineteen days after v2 shipped; `08_STATUS_REGISTER.md` now tracks doc
+   lifecycle, and the S41 STATUS-header pass will make such drift a CI failure.)*
 4. `/Users/sergiogalvaoroxo/update-available-reinterp/docs/reinterp/01_SESSION_LOG.md` — the live build
    state in the worktree (absolute path; it is outside this folder).
 5. `CLAUDE.md` + `docs/ETHICS_CONSTRAINTS.md` — the standing laws. The gate list is master plan §4.

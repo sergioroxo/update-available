@@ -1,4 +1,4 @@
-# WAITING ON SÉRGIO — the live parallel-work list (2026-07-13)
+# WAITING ON SÉRGIO — the live parallel-work list (updated R29, 2026-07-23)
 
 *One page, kept current by Fable. Everything the build is waiting for from you, ordered by
 what it unblocks. Nothing here BLOCKS the machine — agents keep building around these —
@@ -17,9 +17,22 @@ but each item you clear opens a gated lane or finalizes an asset. Detail lives i
    description; you pick, my pipeline batches everything after (D40).
 5. *(optional)* the broken Chase-The-Clouds render (the degradation preset covers it if not).
 
+## THE SOURCE PASS (new R29 — an ethics standing item, now with an honest estimate)
+5b. **Verify the dossier sources** — all 8 across the two real provotypes carry
+   `[VERIFY SOURCE]`, i.e. none is your-checked yet (CLAUDE.md law). Honest estimate:
+   **one ~2h sitting** for the 8 (each is a named, findable claim — van den Aardweg 1997,
+   Love Won Out guides, Ferguson v. JONAH, the APA/UK-MoU positions, the WaPo/GLAAD pillow
+   profile); the piece-wide queue (u2/u3/u4 trigger groundings, Tape B period spots) adds
+   maybe another hour and its consolidated list is being generated into
+   `06_SERGIO_CHECKLIST.md` §D (S42). Until this pass: no constellation node may render
+   as a bright documentary star, and the update triggers stay provisional (Malta 2016 is
+   the only CONFIRMED). Decision on scheduling it before Oct 19 is queue item 2 in
+   `03_COORDINATION.md`.
+
 ## READS THAT OPEN GATES (each ~5–10 min)
 6. **The Caleb beat** — E2 script S2R.3. THE gate on Era 2's emotional core (the redaction,
-   the streak death, Caleb's return). Yes/amend.
+   the streak death, Caleb's return). Yes/amend. **Still the single highest-leverage item
+   on this page (unchanged since 2026-07-13 — the E2 back half waits on it).**
 7. **The E2 homecoming feel-test** — play E1→E2 (D38): daylight, silence, "Welcome back,
    Daniel," Lamby, dismissal, the streak. Your verdict tunes everything after it.
 8. **Noa vs. Ash Rowe** — does Noa carry the borderland, or does Ash exist? (D35/§SPLIT;
@@ -37,9 +50,11 @@ but each item you clear opens a gated lane or finalizes an asset. Detail lives i
 15. Standing strikes whenever: D31 (dispersal staging), D39 (Echo lineage), D8 (prop-library
     policy), the E1 voice-pass sittings (COPY_INVENTORY files + s1_guide.json).
 
-## NOT YOURS, JUST VISIBILITY (the machine's own queue)
-E3-i three-screen foundation (building now, your screen-size fix folded in) → GraceQueue
-card set + pattern strip (E3-ii; card draft in progress by Fable) → the Caleb lane the
-moment #6 clears → collapse/residue/send (needs Caleb) → C2 ending arm (Fable) → E4 lanes
-after the Echo verify. The A11 in-headset playtest remains the only structural gate with
-no workaround — schedule it when you can.
+## NOT YOURS, JUST VISIBILITY (the machine's own queue — R29 state)
+E3 foundation + GraceQueue strip + screen-format pass are DONE (Sessions 37–39). Now:
+S40 opening layer 3 + startup-panel retirement → S41 tracking build (STATUS headers +
+checker) → S42 source-queue generation → the Caleb lane the moment #6 clears →
+collapse/residue/send (needs Caleb) → E3 sends build → C2 ending arm (Fable spec next
+round) → E4 lanes after the Echo verify. Full status picture: `08_STATUS_REGISTER.md`.
+The A11 in-headset playtest remains the only structural gate with no workaround —
+schedule it when you can.
