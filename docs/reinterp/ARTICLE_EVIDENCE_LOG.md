@@ -13,7 +13,7 @@ pull OUT the handful of things from that sprawl (and from live conversation, lik
 actually citable in an academic paper about human-AI co-creative authorship in VR storytelling. Anyone
 (Fable, a Sonnet session, Sérgio) who notices a moment worth keeping for the article should add it here
 in a few sentences, not leave it buried in a session-log paragraph. This doc is NOT the abstract or the
-paper — Sérgio writes those himself; this is the raw material.
+paper — co-created (Claude drafts, Sérgio finalizes, 2026-07-24 norm); this is the raw material.
 
 ## Screenshot / visual-evidence practice (going forward)
 

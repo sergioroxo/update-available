@@ -130,7 +130,7 @@ No notification, no EULA — the one transition the SYSTEM does not run. On Maya
    temperature to the constellation (the nodes are its hue; style doc: the warm light winning at
    cosmic scale).
 3. **The cloud (✅ S8/S9):** night-blue sky, warm nodes, cool web, the knowledge-network labels.
-   Slow drift. No guide. No UI. The unfinished line (x.b3) renders when Sérgio writes it.
+   Slow drift. No guide. No UI. The unfinished line (x.b3) is co-created — Claude drafts, Sérgio finalizes it (2026-07-24 norm).
 **Sound:** the fan hum resolving into a sustained warm chord (Sonauto); first true silence underneath.
 
 ---

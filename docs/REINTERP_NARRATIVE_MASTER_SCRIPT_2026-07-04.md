@@ -7,8 +7,9 @@ dramatically, and every beat tagged for the two cuts. The assistant-as-guide spe
 the guide is the narrative's delivery mechanism, designed with it, per Sérgio's Round-19 instruction.
 Everything else (OP-2, V2, R5, remaining builds) implements this document.*
 
-*ALL display copy in this doc is PLACEHOLDER register-demonstration. Sérgio owns every survivor-adjacent
-line, all dossier wording, and each ◆ decision. Companion docs this round:
+*ALL display copy in this doc is PLACEHOLDER register-demonstration. Survivor-adjacent lines are
+CO-CREATED (2026-07-24: Claude drafts, Sérgio reviews/rewrites); Sérgio finalizes all wording,
+dossier phrasing, and each ◆ decision. Companion docs this round:
 [REINTERP_TRANSITION_CHOREOGRAPHY_2026-07-04.md](REINTERP_TRANSITION_CHOREOGRAPHY_2026-07-04.md) ·
 [REINTERP_WITNESS_TERMINAL_DRAMATURGY_2026-07-04.md](REINTERP_WITNESS_TERMINAL_DRAMATURGY_2026-07-04.md).
 Grounding: R6-1 alcove grid, R8-1 flow model, the era-vision doc, the fluid-room geometry doc, the

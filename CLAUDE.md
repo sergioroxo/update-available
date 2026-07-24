@@ -96,5 +96,9 @@ triggered by documented system failures, never by the player.
 - Definition of done: `npm run dev` works; `npm test` passes; README current;
   one line appended to BUILD_LOG.md; in-headset note for XR-touching changes.
 - Sources: anything uncited carries `[VERIFY SOURCE]` until Sérgio checks it.
-- Sérgio (project lead, non-coder) directs and edits; he owns all
-  survivor-adjacent text, dossier wording, and ethics judgment calls.
+- Sérgio (project lead, non-coder) directs. **Survivor-adjacent and felt text is
+  CO-CREATED (revised 2026-07-24): Claude drafts (marked PLACEHOLDER-draft),
+  Sérgio reviews, rewrites, and co-creates — his edit wins.** He still owns final
+  wording, dossier phrasing, and every ethics judgment call. The change is that
+  felt/poetic beats get a real draft to react to, not a blank "Sérgio writes
+  this" — drafting-then-reviewing is also how the flow gets tested.

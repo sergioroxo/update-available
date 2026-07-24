@@ -4,7 +4,8 @@ STATUS: live
 *Fable, 2026-07-10, from Sérgio's playtest direction (see 06_SERGIO_CHECKLIST.md D14–D18 and
 `REINTERP_RESTRUCTURE_R28_2026-07-10.md`). This is the flow-level answer to his verdicts: MORE
 GUIDED, MORE EMOTIONALLY DRIVEN, DIRECT WITH THE USER, side quests that make sense to the
-narrative. All display copy herein is OUTLINE/PLACEHOLDER — Sérgio owns wording. Ethics gates
+narrative. All display copy herein is OUTLINE/PLACEHOLDER — co-created (Claude drafts, Sérgio
+finalizes wording, 2026-07-24). Ethics gates
 marked inline. Build lanes at §7.*
 
 **The governing principle:** the system is direct because *directing you is what it does*.

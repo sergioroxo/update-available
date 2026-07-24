@@ -63,7 +63,7 @@ doesn't owe anyone.
   state: the borderland referral landed here; the room is half-lit, not yet the player's;
   it foreshadows E4 without opening it). Each send is refusable (filed); each return is
   free movement.
-- **S3R.4 NOA'S ASK** *(felt — Sérgio writes)*: the DM. Noa, specific and alive, asks Vera
+- **S3R.4 NOA'S ASK** *(felt — Claude drafts, Sérgio reviews/co-creates)*: the DM. Noa, specific and alive, asks Vera
   to protect Mira's story. Brief: a person who has spent the era being corrected in two
   directions asking, plainly, that ONE story be left whole. Lambient absent.
 - **S3R.5 THE CHOICE** *(operable framing, the player's hands)*: Mira's card in the queue.

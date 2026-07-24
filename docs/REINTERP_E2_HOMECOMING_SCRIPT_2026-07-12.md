@@ -4,7 +4,8 @@ STATUS: live
 *Fable, 2026-07-12. The Era-2 narrative for the reinterp, built from Sérgio's homecoming law
 (D15), the era mining (Caleb thread, Restorify spine, collapse composite — FIND #1), and the
 R28 conducted grammar. ALL copy below is PLACEHOLDER-draft for the `operable` register and
-BRIEF-ONLY for `felt` beats (Sérgio writes those). Ethics: the Caleb thread is new
+PLACEHOLDER-draft for `felt` beats too (co-creation norm 2026-07-24: Claude drafts, Sérgio
+reviews/rewrites — see `REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md`). Ethics: the Caleb thread is new
 intimacy-under-surveillance territory — THIS DOCUMENT is the read Sérgio gates it on (spec
 §5 promise kept). Beat ids S2R.x; every beat carries `cuts` metadata at build time.*
 
@@ -56,9 +57,10 @@ Adapted whole from the shipped design (mining FIND #1) — the love interest, S�
 
 - A chat window (period messenger) pings: **Caleb** — the fellow "struggler" from the
   placement; they held hands at the retreat. The conversation is warm, specific, alive.
-  *(felt: Lamby is ABSENT from this window; no satire; Sérgio writes these lines — the
-  brief is: two people who survived the same thing, planning to meet, neither saying the
-  bigger word yet.)* Player advances via reply-chips (register-not-branch).
+  *(felt: Lamby is ABSENT from this window; no satire; Claude drafts, Sérgio reviews/co-creates
+  — DRAFTED in `REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md`; the brief is: two people who
+  survived the same thing, planning to meet, neither saying the bigger word yet.)* Player
+  advances via reply-chips (register-not-branch).
 - Mid-warmth: **Lamby's ACCOUNTABILITY ALERT** fires *(operable)* — the chat is redacted
   LIVE, line by line: `Content Blocked Until Further Evaluation`. Flag rendered:
   `HOMOSEXUAL CONDUCT`. **The streak dies on screen: 412 → 0.** PLACEHOLDER for the two

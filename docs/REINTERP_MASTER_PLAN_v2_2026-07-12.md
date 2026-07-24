@@ -60,7 +60,8 @@ system's shared infrastructure is what connects them (cross-cluster sends).
   Currently BLOCKED: trans-man alcove content, R6, R11. Currently GATED on reads: the
   Caleb thread (E2 script S2R.3), G6/G7 provotype content, the A11 in-headset playtest
   (all remaining spatial tiers + batching-3).
-- **Sérgio owns:** all voice/copy finalization (everything ships `_doc: PLACEHOLDER` until
+- **Sérgio owns:** all voice/copy FINALIZATION and ethics calls — but felt/survivor-adjacent
+  text is now CO-CREATED (2026-07-24): Claude drafts, Sérgio reviews/rewrites (everything ships `_doc: PLACEHOLDER` until
   his pass), all felt-register writing, all ethics calls, the headset test. His trial
   observations override any logged decision.
 
