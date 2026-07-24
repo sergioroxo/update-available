@@ -82,7 +82,16 @@ export class GuideThread {
 
   constructor(os: DesktopOS) {
     this.os = os;
-    this.messages = (guideData as unknown as { sideMessages: SideMessage[] }).sideMessages;
+    // R28 §4 layer 3 / D48 (S40): 'look' and 'interact' lead the array (they
+    // teach ahead of 'floppy') but they run BEFORE the monitor ever boots —
+    // this class only ever updates once os.phase === 'desktop' (see
+    // src/desktop/os.ts), which is strictly after them. src/engine/app.ts
+    // runs a small parallel filer for those two while the room view is still
+    // up (real gaze-at-lamp + a real power-button click), then hands off to
+    // this thread at 'floppy' once the desktop is live. Excluded here so this
+    // class's own iteration never wastes a pass on conditions it can't see.
+    this.messages = (guideData as unknown as { sideMessages: SideMessage[] })
+      .sideMessages.filter((m) => m.id !== 'look' && m.id !== 'interact');
   }
 
   private cond(key: string | undefined): boolean {

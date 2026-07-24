@@ -29,9 +29,11 @@ import { TapeAudioBus } from '../audio/tapeAudio';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity } from './screenTexture';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
+import type { SideMessage } from '../narrative/guide';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
+import guideData from '../../data/dialog/s1_guide.json';
 
 const FLIP_SECONDS = 0.9;
 /** the CRT's visible screen (meters, 4:3) — bezels in era1.json sit flush */
@@ -47,16 +49,23 @@ const KIT_FLOPPY = { x: -0.34, y: 0.762, z: 0.12 };
 const DRAG_PITCH_MAX = 55;
 /** O1 establishing framing (reinterp): pulled back, room-wide, window-lit */
 const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
-/** O1 begins looking at the spine-wall cork board, offset from the doorway. */
-const OPENING_WALL_VIEW = { x: -0.86, y: EYE.y, z: EYE.z, pitch: 0, yaw: 180 };
 /** O1/O3's transparent paper overlay, pinned over the physical cork board. */
 const OPENING_WALL_BOARD = { x: -0.86, y: 1.43, z: 3.565, w: 1.5, h: 1.125 };
-// O2 establishing → desk pan: slow enough to read as travel through the room,
-// not a cut (Sérgio, Round 18: 1.4s "is so fast it makes no sense"), and it
-// starts a beat AFTER the lights land so the two events stay legible.
-const CAM_MOVE_SECONDS = 3.6;
-const CAM_MOVE_DELAY_MS = 700;
-const STARTUP_ARM_SECONDS = 4.0;
+/** the lampShade prop (era1.json) — LOOK's "find the lamp" gaze target. */
+const LAMP_POS = { x: -0.62, y: 0.97, z: -0.28 };
+// R28 §4 layer 3 / D48 (S40): the two pre-boot teaching side-messages (LOOK,
+// INTERACT) get real time to land before auto-boot fires regardless — the
+// "optional early power-press" resolution (Sérgio, 2026-07-24): nothing is
+// REQUIRED (D22's auto-boot stays intact; E2's "Daniel presses power himself"
+// contrast, D38, stays legible), but a real power button is clickable during
+// this window, so INTERACT teaches something honestly real.
+const PRE_BOOT_AUTOBOOT_SECONDS = 9.0;
+/** the two pre-boot entries at the front of s1_guide.json's sideMessages —
+ *  read directly here (not via narrative/guide.ts's GuideThread, which is
+ *  desktop-phase-gated in src/desktop/os.ts) since LOOK/INTERACT must show
+ *  BEFORE the monitor boots, while the room view is still up. */
+const PRE_BOOT_MESSAGES = (guideData as unknown as { sideMessages: SideMessage[] })
+  .sideMessages.filter((m) => m.id === 'look' || m.id === 'interact');
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
 // the blink is a CUT, never a tween: fade to black, THEN move the camera,
 // THEN fade back — no smooth travel (Sérgio's explicit law: gaze must stay
@@ -228,6 +237,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // projection dance — mirrors __os's own established convention exactly.
     (window as { __graceQueue?: () => unknown }).__graceQueue = () =>
       era3Devices ? era3Devices.debugQueue() : null;
+    // R28 §4 layer 3 / D48 (S40) pre-boot probe (read-only, like __guide):
+    // the LOOK/INTERACT window has no desktop-canvas surface to eyeball
+    // (the monitor is dark), so this closes the same review gap __ledger did.
+    (window as { __preBoot?: () => unknown }).__preBoot = () =>
+      ({ active: preBootActive, step: preBootStep, t: preBootT });
   }
 
   // ── the NARRATIVE SPINE (reinterp; real playthroughs only, not review
@@ -259,7 +273,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       witness.setOpeningProfile(profile);
       if (profile.active) {
         showOpeningSurface(profile.stage === 'boot' ? 'intro' : 'profile');
-      } else if (!openingWallActive) {
+      } else if (!preBootActive) {
         showOpeningSurface('witness');
       }
       setTerminalFrameVisible(false);
@@ -363,6 +377,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // "the frame never plays" still holds: this is chrome, not the fiction).
   let blinkOverlay: HTMLDivElement | null = null;
   let moveHint: HTMLDivElement | null = null;
+  let preBootHint: HTMLDivElement | null = null;
   let tapeCaption: HTMLDivElement | null = null;
   let tapeMuteBtn: HTMLButtonElement | null = null;
   function dismissMoveHint(): void {
@@ -379,19 +394,32 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     } as CSSStyleDeclaration);
     document.body.appendChild(blinkOverlay);
 
-    moveHint = document.createElement('div');
-    moveHint.textContent = (reinterpStrings as { movementHint?: string }).movementHint ?? 'Click a marker to move.';
-    Object.assign(moveHint.style, {
+    // shared by moveHint and preBootHint below — one literal, never invented
+    // twice (spec-law C4 palette ratchet).
+    const HINT_CHROME = {
       position: 'fixed', left: '50%', bottom: '9%', transform: 'translateX(-50%)',
       zIndex: '9', background: 'rgba(10,10,14,0.78)', color: '#cdd3df',
       font: '12px monospace', padding: '6px 12px', borderRadius: '4px',
-      opacity: '0', pointerEvents: 'none', transition: 'opacity 0.4s', cursor: 'pointer'
-    } as CSSStyleDeclaration);
+      opacity: '0', pointerEvents: 'none', transition: 'opacity 0.4s'
+    };
+
+    moveHint = document.createElement('div');
+    moveHint.textContent = (reinterpStrings as { movementHint?: string }).movementHint ?? 'Click a marker to move.';
+    Object.assign(moveHint.style, { ...HINT_CHROME, cursor: 'pointer' } as CSSStyleDeclaration);
     document.body.appendChild(moveHint);
     moveHint.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       dismissMoveHint();
     });
+
+    // R28 §4 layer 3 / D48 (S40): LOOK/INTERACT's captions — same non-diegetic
+    // frame-chrome pattern as moveHint (a dark, un-booted monitor has no
+    // diegetic surface to carry them on; see the guide.ts constructor comment
+    // for why these two live outside the desktop guide thread's own taskbar
+    // rendering).
+    preBootHint = document.createElement('div');
+    Object.assign(preBootHint.style, { ...HINT_CHROME } as CSSStyleDeclaration);
+    document.body.appendChild(preBootHint);
     // R28-2a: the old floppyHint DOM one-off (R28-0c item 10) is gone — Era-1
     // guidance now lives in the DIEGETIC side-message thread (the OS taskbar
     // status well, data/dialog/s1_guide.json). moveHint was the first piece
@@ -485,9 +513,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     t: number; dur: number; conducted: boolean; }
   let camMove: CamMove | null = null;
   let autoCam = false;
-  let openingWallActive = false;
-  let openingWallT = 0;
-  let openingWallArmed = false;
+  // R28 §4 layer 3 / D48 (S40): the pre-boot LOOK/INTERACT teaching window —
+  // replaces the old "opening wall" board-look gate (that board's own content,
+  // drawStartupBoard, is retired; see src/witness/intake.ts). `preBootStep`
+  // mirrors the guide thread's one-active-message law: 0 = LOOK showing,
+  // 1 = INTERACT showing, 2 = both resolved (window closing/closed).
+  let preBootActive = false;
+  let preBootT = 0;
+  let preBootStep: 0 | 1 | 2 = 0;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
   // the tilt ran conducted (autoCam) — a free tilt cedes to the player's drag
   let revealReturn = -1;
@@ -709,6 +742,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // nothing displays, nothing completes (never latched — the frame never plays)
   const gazeDir = new pc.Vec3();
   const COS_GAZE = Math.cos((12 * Math.PI) / 180); // one-station gaze cone
+  const LAMP_POS_VEC = new pc.Vec3(LAMP_POS.x, LAMP_POS.y, LAMP_POS.z); // LOOK's gaze target
   let dwellFacet: FacetState | null = null;
   let dwellMs = 0;
   let gazeFg: FacetState | null = null;
@@ -730,31 +764,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     tween = null;
   }
 
-  function setOpeningWall(active: boolean): void {
-    openingWallActive = active;
-    openingWallT = 0;
-    openingWallArmed = false;
-    witness.setStartupBoard(active, false);
-    if (active) {
-      showOpeningSurface('intro');
-    } else {
-      showOpeningSurface('witness');
-    }
+  /** witness-symmetric filing for the two pre-boot messages — same shape as
+   *  GuideThread.retire() in src/narrative/guide.ts, duplicated in miniature
+   *  here because this window runs before that class is ever instantiated. */
+  function filePreBootMessage(id: 'look' | 'interact', outcome: 'followed' | 'declined'): void {
+    const data = PRE_BOOT_MESSAGES.find((m) => m.id === id);
+    if (!data) return;
+    ledger.guidance.push({ id, outcome, witness: data.witness[outcome] });
   }
 
-  function continueFromOpeningWall(): void {
-    const choices = witness.startupChoices();
-    autoCam = choices.autoCam;
-    openingWallActive = false;
-    openingWallT = 0;
-    openingWallArmed = false;
-    witness.setStartupBoard(false, false);
+  /** the auto-boot itself — fires unconditionally once the window's timer
+   *  runs out, or immediately if the player presses the power button early
+   *  (the "optional early power-press" resolution — nothing is required). */
+  function beginBoot(): void {
+    if (!preBootActive) return;
+    preBootActive = false;
+    preBootStep = 2;
     showOpeningSurface('intro');
-    applyLightsOn();                 // O2: room lights + lamp over-throw
-    os.beginReinterpOpening();        // boot on the monitor → O3 profile
-    window.setTimeout(() => {
-      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, CAM_MOVE_SECONDS, true);
-    }, CAM_MOVE_DELAY_MS);
+    applyLightsOn();           // O2: room lights + lamp over-throw + monitor glow
+    os.beginReinterpOpening();  // boot on the monitor → O3 profile
   }
 
   /** grabbing/keying the view cancels a non-conducted move (the player left it) */
@@ -817,7 +845,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  the brief lists — simpler than telling apart every dolly's cause, and it
    *  can never let a marker click land mid-transition). */
   function scriptedBusy(): boolean {
-    return !!camMove || (cluster?.busy ?? false) || openingWallActive;
+    return !!camMove || (cluster?.busy ?? false) || preBootActive;
   }
 
   /** the actual seat CUT — no tween, no arc, just the target pose, called at
@@ -952,26 +980,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return { x: u * ERA1_CANVAS.width, y: v * ERA1_CANVAS.height };
   }
 
-  /** screen px → witness/wall canvas logical px (the spine plane, facing -Z) */
-  function toWitness(e: MouseEvent): { x: number; y: number } | null {
-    const ray = screenRay(e);
-    if (!ray) return null;
-    const p = back.getLocalPosition();
-    const s = back.getLocalScale();
-    const dz = ray.p1.z - ray.p0.z;
-    if (Math.abs(dz) < 1e-6) return null;
-    const t = (p.z - ray.p0.z) / dz;
-    if (t < 0 || t > 1) return null;
-    const wx = ray.p0.x + (ray.p1.x - ray.p0.x) * t;
-    const wy = ray.p0.y + (ray.p1.y - ray.p0.y) * t;
-    // The spine plane faces -Z, so its visible horizontal axis is mirrored
-    // relative to the front monitor plane.
-    const u = 0.5 - (wx - p.x) / s.x;
-    const v = 0.5 - (wy - p.y) / s.z;
-    if (u < 0 || u > 1 || v < 0 || v > 1) return null;
-    return { x: u * ERA1_CANVAS.width, y: v * ERA1_CANVAS.height };
-  }
-
   function rayHitsPoint(e: MouseEvent, p: { x: number; y: number; z: number }, radius: number): boolean {
     const ray = screenRay(e);
     if (!ray) return false;
@@ -1003,26 +1011,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   };
 
   canvasEl.addEventListener('pointerdown', (e) => {
-    if (openingWallActive) {
-      const p = toWitness(e);
-      if (p) {
-        const action = witness.handleStartupClick(p.x, p.y);
-        if (action === 'continue') {
-          continueFromOpeningWall();
-          return;
-        }
-        if (action === 'leave') {
-          os.leaveNow();
-          setOpeningWall(false);
-          return;
-        }
-        if (action === 'handled') return;
-        if (action === null && openingWallArmed) {
-          continueFromOpeningWall();
-          return;
-        }
-        if (action === null) return;
-      }
+    // optional early power-press (D48/S40): real and clickable during the
+    // pre-boot LOOK/INTERACT window — pressing it boots immediately and
+    // files INTERACT as followed; leaving it alone still auto-boots on the
+    // window's own timer (nothing required — D22/D38 stay intact).
+    if (preBootActive && rayHitsPoint(e, POWER_BTN, 0.08)) {
+      if (preBootStep === 0) filePreBootMessage('look', 'declined');
+      filePreBootMessage('interact', 'followed');
+      beginBoot();
+      return;
     }
     if (!facingBack) {
       if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
@@ -1247,12 +1244,32 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
     // ── cluster / ceiling / Close + the O7 choreography (reinterp only) ──
     if (options.reinterp) {
-      if (openingWallActive && !openingWallArmed) {
-        openingWallT += dt;
-        if (openingWallT >= STARTUP_ARM_SECONDS) {
-          openingWallArmed = true;
-          witness.setStartupBoard(true, true);
+      // R28 §4 layer 3 / D48 (S40): LOOK ("find the lamp") resolves the
+      // instant the player's gaze crosses the lamp — reuses the niche gaze
+      // cone (COS_GAZE), no dwell required; this is a discovery beat, not a
+      // challenge. INTERACT resolves only via the power-button click above.
+      // Either way, or neither, the window closes on its own timer.
+      if (preBootActive) {
+        preBootT += dt;
+        if (preBootStep === 0) {
+          gazeDir.sub2(LAMP_POS_VEC, camPos).normalize();
+          if (gazeDir.dot(camera.forward) > COS_GAZE) {
+            filePreBootMessage('look', 'followed');
+            preBootStep = 1;
+          }
         }
+        if (preBootT >= PRE_BOOT_AUTOBOOT_SECONDS) {
+          if (preBootStep === 0) filePreBootMessage('look', 'declined');
+          if (preBootStep <= 1) filePreBootMessage('interact', 'declined');
+          beginBoot();
+        }
+        if (preBootHint) {
+          const msg = PRE_BOOT_MESSAGES[preBootStep];
+          preBootHint.textContent = msg?.text ?? '';
+          preBootHint.style.opacity = msg ? '1' : '0';
+        }
+      } else if (preBootHint && preBootHint.style.opacity !== '0') {
+        preBootHint.style.opacity = '0';
       }
       if (revealReturn > 0) {
         revealReturn -= dt;
@@ -1569,18 +1586,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camYaw = 0;
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else {
+      // fresh load (past the DOM pre-fiction orienting card, D43): straight
+      // into the room, seated — no intermediate board-look gate any more
+      // (R28 §4/D48, S40). The pre-boot LOOK/INTERACT window opens here.
       applyWindowLight();
-      if (options.reinterp === true) {
-        setOpeningWall(true);
-        camPos.set(OPENING_WALL_VIEW.x, OPENING_WALL_VIEW.y, OPENING_WALL_VIEW.z);
-        camPitch = OPENING_WALL_VIEW.pitch;
-        camYaw = OPENING_WALL_VIEW.yaw;
-      } else {
-        camPos.set(EYE.x, EYE.y, EYE.z);
-        camPitch = 0;
-        camYaw = 0;
-      }
+      camPos.set(EYE.x, EYE.y, EYE.z);
+      camPitch = 0;
+      camYaw = 0;
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      preBootActive = true;
+      preBootT = 0;
+      preBootStep = 0;
     }
   }
 
