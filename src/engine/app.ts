@@ -19,7 +19,6 @@ import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { buildClusterShell, type ClusterShell, type EraKey } from '../room/cluster';
-import { buildOpeningBoardDressing, type OpeningBoardMode } from '../room/openingBoardDressing';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
@@ -29,11 +28,9 @@ import { TapeAudioBus } from '../audio/tapeAudio';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity } from './screenTexture';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
-import type { SideMessage } from '../narrative/guide';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
-import guideData from '../../data/dialog/s1_guide.json';
 
 const FLIP_SECONDS = 0.9;
 /** the CRT's visible screen (meters, 4:3) — bezels in era1.json sit flush */
@@ -42,30 +39,26 @@ const SCREEN = { w: 0.4, h: 0.3, x: 0, y: 1.08, z: 0 };
 const WITNESS = { w: 1.6, h: 1.2, x: 0, y: 1.5, z: 3.4 };
 /** seated eye position at the desk */
 const EYE = { x: 0, y: 1.16, z: 0.7 };
-/** the power button on the CRT (S1.0 power-on beat) */
+/** the power button on the CRT (S1.0 power-on beat — the SHIPPED build's own
+ *  gesture, `os.isOff`; reinterp never enters that phase, and its own optional
+ *  early power-press is retired, decision doc §3) */
 const POWER_BTN = { x: 0.19, y: 0.895, z: 0.03 };
 /** the Starter Kit floppy on the desk (S1.2 insert beat) — in the leaflet pocket */
 const KIT_FLOPPY = { x: -0.34, y: 0.762, z: 0.12 };
 const DRAG_PITCH_MAX = 55;
 /** O1 establishing framing (reinterp): pulled back, room-wide, window-lit */
 const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
-/** O1/O3's transparent paper overlay, pinned over the physical cork board. */
-const OPENING_WALL_BOARD = { x: -0.86, y: 1.43, z: 3.565, w: 1.5, h: 1.125 };
-/** the lampShade prop (era1.json) — LOOK's "find the lamp" gaze target. */
-const LAMP_POS = { x: -0.62, y: 0.97, z: -0.28 };
-// R28 §4 layer 3 / D48 (S40): the two pre-boot teaching side-messages (LOOK,
-// INTERACT) get real time to land before auto-boot fires regardless — the
-// "optional early power-press" resolution (Sérgio, 2026-07-24): nothing is
-// REQUIRED (D22's auto-boot stays intact; E2's "Daniel presses power himself"
-// contrast, D38, stays legible), but a real power button is clickable during
-// this window, so INTERACT teaches something honestly real.
-const PRE_BOOT_AUTOBOOT_SECONDS = 9.0;
-/** the two pre-boot entries at the front of s1_guide.json's sideMessages —
- *  read directly here (not via narrative/guide.ts's GuideThread, which is
- *  desktop-phase-gated in src/desktop/os.ts) since LOOK/INTERACT must show
- *  BEFORE the monitor boots, while the room view is still up. */
-const PRE_BOOT_MESSAGES = (guideData as unknown as { sideMessages: SideMessage[] })
-  .sideMessages.filter((m) => m.id === 'look' || m.id === 'interact');
+// ── THE WAKE (docs/REINTERP_OPENING_DECISION_2026-07-24.md §3, Sérgio) ──
+// Logging in at the interim panel IS the entry gesture: you arrive to a room
+// lit only by the window, the main light comes up as if someone had flipped
+// the switch on the way in, and the machine boots by itself. Nothing is asked
+// of the player — this REPLACES S40's optional early power-press outright
+// (D22's auto-boot was always the closed decision; E2's "Daniel turns it on
+// himself" contrast, D38, gets its passivity back, undiluted).
+/** the room as you find it, before the switch — moonlight only */
+const WAKE_DARK_SECONDS = 1.2;
+/** the switch itself: lamp + fill come up, moon recedes */
+const WAKE_RAMP_SECONDS = 1.8;
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
 // the blink is a CUT, never a tween: fade to black, THEN move the camera,
 // THEN fade back — no smooth travel (Sérgio's explicit law: gaze must stay
@@ -207,7 +200,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // authored source.
     era3Devices = buildEra3Devices(app);
   }
-  const openingBoardDressing = options.reinterp === true ? buildOpeningBoardDressing(app) : null;
+  // (the in-room cork board that used to be built here is RETIRED — decision
+  // doc §1, Sérgio: "I would've liked the cork board to actually work, but
+  // there've been so many issues with the design of it that I don't think
+  // it's worth it." The wall keeps one surface, the record's own plane.)
 
   // ── the two surfaces ──
   const os = new DesktopOS({ reinterp: options.reinterp === true });
@@ -237,11 +233,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // projection dance — mirrors __os's own established convention exactly.
     (window as { __graceQueue?: () => unknown }).__graceQueue = () =>
       era3Devices ? era3Devices.debugQueue() : null;
-    // R28 §4 layer 3 / D48 (S40) pre-boot probe (read-only, like __guide):
-    // the LOOK/INTERACT window has no desktop-canvas surface to eyeball
-    // (the monitor is dark), so this closes the same review gap __ledger did.
-    (window as { __preBoot?: () => unknown }).__preBoot = () =>
-      ({ active: preBootActive, step: preBootStep, t: preBootT });
+    // THE WAKE probe (read-only, like __guide; replaces S40's __preBoot):
+    // the wake has no desktop-canvas surface to eyeball (the monitor is dark
+    // until it ends), so this closes the same review gap __ledger did —
+    // `k` is the light ramp, 0 = as-you-found-it, 1 = lit.
+    (window as { __wake?: () => unknown }).__wake = () =>
+      ({ active: wakeActive, t: wakeT, k: wakeLightK(wakeT) });
   }
 
   // ── the NARRATIVE SPINE (reinterp; real playthroughs only, not review
@@ -269,13 +266,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   }
   const witness = new WitnessCanvas();
   if (options.reinterp === true) {
+    // The rear wall is ONE surface for the whole of Era 1 (its opening-board
+    // footprint and the witness terminal's are the same rectangle — see
+    // data/room/cluster.json's witnessTerminal note), so nothing has to be
+    // re-placed per stage any more now the cork frame is gone: the plane sits
+    // where restoreWitnessSurface() puts it and simply changes what it shows
+    // (dormant through O3 → hardening on the first filing → the cold record).
     os.onOpeningProfileChange = (profile) => {
       witness.setOpeningProfile(profile);
-      if (profile.active) {
-        showOpeningSurface(profile.stage === 'boot' ? 'intro' : 'profile');
-      } else if (!preBootActive) {
-        showOpeningSurface('witness');
-      }
       setTerminalFrameVisible(false);
     };
     witness.setOpeningProfile(os.openingProfileSnapshot());
@@ -302,21 +300,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     back.setLocalPosition(wt.pos[0], wt.pos[1], wt.pos[2]);
     back.setLocalScale(wt.w, 1, wt.h);
   };
-  const placeOpeningWallBoard = (): void => {
-    back.setLocalPosition(OPENING_WALL_BOARD.x, OPENING_WALL_BOARD.y, OPENING_WALL_BOARD.z);
-    back.setLocalScale(OPENING_WALL_BOARD.w, 1, OPENING_WALL_BOARD.h);
-  };
-  const showOpeningSurface = (mode: OpeningBoardMode): void => {
-    if (options.reinterp !== true) return;
-    placeOpeningWallBoard();
-    setTerminalFrameVisible(false);
-    openingBoardDressing?.setMode(mode);
-    openingBoardDressing?.setVisible(true);
-  };
   if (options.reinterp === true) {
     // R26 B4: the legible record stays on the wall TERMINAL on the south
     // spine. The overhead ceiling witness remains dormant; witness role and
-    // lineage live on the cork/record wall surface.
+    // lineage live on this one wall surface — which, since the cork board's
+    // retirement (decision doc §1/§5), begins DORMANT rather than warm: the
+    // lineage's warm first note is now the lit room + "complete your profile,
+    // Daniel" (Sérgio confirmed 2026-07-24), and this plane's job is the cold
+    // half of the arc — it wakes by hardening, on the first filing.
     restoreWitnessSurface();
   }
 
@@ -377,7 +368,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // "the frame never plays" still holds: this is chrome, not the fiction).
   let blinkOverlay: HTMLDivElement | null = null;
   let moveHint: HTMLDivElement | null = null;
-  let preBootHint: HTMLDivElement | null = null;
   let tapeCaption: HTMLDivElement | null = null;
   let tapeMuteBtn: HTMLButtonElement | null = null;
   function dismissMoveHint(): void {
@@ -394,8 +384,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     } as CSSStyleDeclaration);
     document.body.appendChild(blinkOverlay);
 
-    // shared by moveHint and preBootHint below — one literal, never invented
-    // twice (spec-law C4 palette ratchet).
+    // moveHint's own chrome, kept as one shared literal (spec-law C4 palette
+    // ratchet) — the tape caption below reuses the pattern, not the object.
     const HINT_CHROME = {
       position: 'fixed', left: '50%', bottom: '9%', transform: 'translateX(-50%)',
       zIndex: '9', background: 'rgba(10,10,14,0.78)', color: '#cdd3df',
@@ -412,14 +402,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       dismissMoveHint();
     });
 
-    // R28 §4 layer 3 / D48 (S40): LOOK/INTERACT's captions — same non-diegetic
-    // frame-chrome pattern as moveHint (a dark, un-booted monitor has no
-    // diegetic surface to carry them on; see the guide.ts constructor comment
-    // for why these two live outside the desktop guide thread's own taskbar
-    // rendering).
-    preBootHint = document.createElement('div');
-    Object.assign(preBootHint.style, { ...HINT_CHROME } as CSSStyleDeclaration);
-    document.body.appendChild(preBootHint);
+    // (S40's `preBootHint` caption is gone with the LOOK/INTERACT window —
+    // the interim panel's controls display teaches both verbs now, for both
+    // platforms, before anything starts. Session 44's log has the reasoning.)
     // R28-2a: the old floppyHint DOM one-off (R28-0c item 10) is gone — Era-1
     // guidance now lives in the DIEGETIC side-message thread (the OS taskbar
     // status well, data/dialog/s1_guide.json). moveHint was the first piece
@@ -513,14 +498,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     t: number; dur: number; conducted: boolean; }
   let camMove: CamMove | null = null;
   let autoCam = false;
-  // R28 §4 layer 3 / D48 (S40): the pre-boot LOOK/INTERACT teaching window —
-  // replaces the old "opening wall" board-look gate (that board's own content,
-  // drawStartupBoard, is retired; see src/witness/intake.ts). `preBootStep`
-  // mirrors the guide thread's one-active-message law: 0 = LOOK showing,
-  // 1 = INTERACT showing, 2 = both resolved (window closing/closed).
-  let preBootActive = false;
-  let preBootT = 0;
-  let preBootStep: 0 | 1 | 2 = 0;
+  // THE WAKE (decision doc §3): true from the moment the player logs in at
+  // the interim panel until the light has finished coming up and the machine
+  // has booted itself. It replaces S40's LOOK/INTERACT pre-boot window and
+  // its optional power-press outright — nothing here is a gate, and there is
+  // nothing for the player to find or press.
+  let wakeActive = false;
+  let wakeT = 0;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
   // the tilt ran conducted (autoCam) — a free tilt cedes to the player's drag
   let revealReturn = -1;
@@ -742,7 +726,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // nothing displays, nothing completes (never latched — the frame never plays)
   const gazeDir = new pc.Vec3();
   const COS_GAZE = Math.cos((12 * Math.PI) / 180); // one-station gaze cone
-  const LAMP_POS_VEC = new pc.Vec3(LAMP_POS.x, LAMP_POS.y, LAMP_POS.z); // LOOK's gaze target
   let dwellFacet: FacetState | null = null;
   let dwellMs = 0;
   let gazeFg: FacetState | null = null;
@@ -764,24 +747,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     tween = null;
   }
 
-  /** witness-symmetric filing for the two pre-boot messages — same shape as
-   *  GuideThread.retire() in src/narrative/guide.ts, duplicated in miniature
-   *  here because this window runs before that class is ever instantiated. */
-  function filePreBootMessage(id: 'look' | 'interact', outcome: 'followed' | 'declined'): void {
-    const data = PRE_BOOT_MESSAGES.find((m) => m.id === id);
-    if (!data) return;
-    ledger.guidance.push({ id, outcome, witness: data.witness[outcome] });
+  /** the light ramp, as a 0..1 curve over the wake's own clock: a beat of the
+   *  room as you found it, then the switch, smoothstepped so the lamp swells
+   *  rather than snaps (a snap would read as a bug; this reads as a hand). */
+  function wakeLightK(t: number): number {
+    const k = Math.max(0, Math.min(1, (t - WAKE_DARK_SECONDS) / WAKE_RAMP_SECONDS));
+    return k * k * (3 - 2 * k);
   }
 
-  /** the auto-boot itself — fires unconditionally once the window's timer
-   *  runs out, or immediately if the player presses the power button early
-   *  (the "optional early power-press" resolution — nothing is required). */
-  function beginBoot(): void {
-    if (!preBootActive) return;
-    preBootActive = false;
-    preBootStep = 2;
-    showOpeningSurface('intro');
-    applyLightsOn();           // O2: room lights + lamp over-throw + monitor glow
+  /** the end of the wake: the room is lit and the machine boots ITSELF —
+   *  unconditional, unpressable, the only path in (decision doc §3). */
+  function finishWake(): void {
+    if (!wakeActive) return;
+    wakeActive = false;
+    applyLightsOn();            // the lit state, exactly (no drift from the ramp)
     os.beginReinterpOpening();  // boot on the monitor → O3 profile
   }
 
@@ -845,7 +824,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  the brief lists — simpler than telling apart every dolly's cause, and it
    *  can never let a marker click land mid-transition). */
   function scriptedBusy(): boolean {
-    return !!camMove || (cluster?.busy ?? false) || preBootActive;
+    return !!camMove || (cluster?.busy ?? false) || wakeActive;
   }
 
   /** the actual seat CUT — no tween, no arc, just the target pose, called at
@@ -1011,16 +990,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   };
 
   canvasEl.addEventListener('pointerdown', (e) => {
-    // optional early power-press (D48/S40): real and clickable during the
-    // pre-boot LOOK/INTERACT window — pressing it boots immediately and
-    // files INTERACT as followed; leaving it alone still auto-boots on the
-    // window's own timer (nothing required — D22/D38 stay intact).
-    if (preBootActive && rayHitsPoint(e, POWER_BTN, 0.08)) {
-      if (preBootStep === 0) filePreBootMessage('look', 'declined');
-      filePreBootMessage('interact', 'followed');
-      beginBoot();
-      return;
-    }
     if (!facingBack) {
       if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
@@ -1244,32 +1213,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
     // ── cluster / ceiling / Close + the O7 choreography (reinterp only) ──
     if (options.reinterp) {
-      // R28 §4 layer 3 / D48 (S40): LOOK ("find the lamp") resolves the
-      // instant the player's gaze crosses the lamp — reuses the niche gaze
-      // cone (COS_GAZE), no dwell required; this is a discovery beat, not a
-      // challenge. INTERACT resolves only via the power-button click above.
-      // Either way, or neither, the window closes on its own timer.
-      if (preBootActive) {
-        preBootT += dt;
-        if (preBootStep === 0) {
-          gazeDir.sub2(LAMP_POS_VEC, camPos).normalize();
-          if (gazeDir.dot(camera.forward) > COS_GAZE) {
-            filePreBootMessage('look', 'followed');
-            preBootStep = 1;
-          }
-        }
-        if (preBootT >= PRE_BOOT_AUTOBOOT_SECONDS) {
-          if (preBootStep === 0) filePreBootMessage('look', 'declined');
-          if (preBootStep <= 1) filePreBootMessage('interact', 'declined');
-          beginBoot();
-        }
-        if (preBootHint) {
-          const msg = PRE_BOOT_MESSAGES[preBootStep];
-          preBootHint.textContent = msg?.text ?? '';
-          preBootHint.style.opacity = msg ? '1' : '0';
-        }
-      } else if (preBootHint && preBootHint.style.opacity !== '0') {
-        preBootHint.style.opacity = '0';
+      // THE WAKE (decision doc §3): the light comes up on its own, then the
+      // machine boots on its own. The player may drag-to-look throughout —
+      // the wake owns the lights, never the camera, so entering a room and
+      // looking around it are the same motion.
+      if (wakeActive) {
+        wakeT += dt;
+        applyRoomLight(wakeLightK(wakeT));
+        if (wakeT >= WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS) finishWake();
       }
       if (revealReturn > 0) {
         revealReturn -= dt;
@@ -1442,19 +1393,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (range !== undefined) e.light.range = range;
     }
   }
-  function applyWindowLight(): void { // O1: warm room start; the corkboard asset itself is unlit/non-reflective
-    setLight('roomFill', 0.85);
-    setLight('lamp', 2.9, 5.6);
-    setLight('screenGlow', 0.0);
-    setLight('moonlight', 0.14);
-    setLight('witnessCold', 0.50);
+  /** the wake's one dial, k = 0 (the room as you find it: moonlight through
+   *  the window, lamp cold, monitor dark) … 1 (the O2 lit state, unchanged
+   *  from what shipped: the lamp owns the room, cool stays an accent). The
+   *  two temperatures still FIGHT — this just decides how far each one has
+   *  got. k = 1 is byte-identical to the old applyLightsOn() values. */
+  function applyRoomLight(k: number): void {
+    setLight('roomFill', 0.05 + k * 0.80);   // warm ambient fill (life)
+    setLight('lamp', k * 2.9, 5.6);          // amber pool over-throwing wider than real
+    setLight('screenGlow', k * 0.32);        // the monitor — the only true cold INTERIOR source
+    setLight('moonlight', 0.42 - k * 0.28);  // the window: the only light before the switch
+    setLight('witnessCold', 0.12 + k * 0.38); // the cold rear, dimmed so the front stays warm
   }
-  function applyLightsOn(): void { // O2: the lamp owns the room; cool stays an accent
-    setLight('roomFill', 0.85);            // warm ambient fill (life)
-    setLight('lamp', 2.9, 5.6);            // amber pool over-throwing wider than real
-    setLight('screenGlow', 0.32);          // the monitor — the only true cold INTERIOR source
-    setLight('moonlight', 0.14);           // moon-blue window wash, soft/low
-    setLight('witnessCold', 0.50);         // the cold rear, dimmed so the front stays warm
+  function applyLightsOn(): void { // O2: the lit state
+    applyRoomLight(1);
   }
   // NOTE (Session 34): per-era lighting from E2 on is NOT owned here — it is
   // data/room/cluster.json's `rigs` table, applied by cluster.ts's applyRig()
@@ -1464,19 +1416,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // rig) is implemented THERE (the `e2` rig's `moonlight` target), not as a
   // parallel function here — an app.ts-side override would only be clobbered
   // moments later by applyRig(toEra, animate) inside cluster.morphToEra().
-
-  // the opening's physical cork-board frame sits fixed at Room 1's ORIGINAL
-  // spine coordinates (built once, never carried by the morph). It backs the
-  // same flat surface as the witness terminal everywhere the terminal stays
-  // on that spine (E1-E3) — but at E4 the terminal MIGRATES to Maya's wall
-  // (cluster.ts migrateTerminal), leaving this frame behind as an empty,
-  // contentless prop on Room 1's now-vacated wall. Hide it whenever the
-  // terminal is away from the spine; restore it if a review jump returns
-  // to an earlier era (the frame belongs wherever the flat plane still does).
-  function setOpeningBoardVisibleForEra(era: EraKey): void {
-    const dressing = app.root.findByName('opening-board-dressing');
-    if (dressing instanceof pc.Entity) dressing.enabled = era !== 'e4';
-  }
 
   /** animated era morph + the TURN: E4's restart re-anchors the home facing
    *  180° (◆N3 LOCKED — "let's be bold, we need emotion"): a slow conducted
@@ -1499,7 +1438,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // props age/retire exactly as reinterp_deltas.json already dictates.
     if (os.belongings) cluster.setKeptIds(os.belongings.kept);
     os.setDesktopEra(era);
-    setOpeningBoardVisibleForEra(era);
     era3Devices?.setEra(era); // Session 37: the three device screens, e3+ only
     // S2R.0a: cluster.morphToEra() below calls applyRig(era, animate), which
     // owns the E2 daylight cue (data/room/cluster.json's `e2` rig) in the
@@ -1527,7 +1465,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       'ceiling-witness',
       'desktop-screen',
       'witness-screen',
-      'opening-board-dressing',
       'movement-nodes',
       'era3-device-laptop',
       'era3-device-tablet',
@@ -1557,16 +1494,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       os.setDesktopEra(options.era, true);
       // lighting: cluster.morphToEra(options.era, false) below applies that
       // era's rig (data/room/cluster.json), which owns lighting from E2 on.
-      // R28-0c (item 12b): review jumps skip O1/O3 entirely, so there is never
-      // any real content (profile pins, filed record) for the physical
-      // cork-board dressing to frame — setOpeningBoardVisibleForEra() would
-      // force it visible anyway (true for e1-e3), reading as a bare "undone"
-      // board with only the model's own baked decorative sticky notes on it.
-      // Review jumps hide the dressing outright instead; the real O1→O3→E1
-      // playthrough path (continueFromOpeningWall → onOpeningProfileChange)
-      // is unaffected and still shows/hides it correctly by stage.
-      const dressing = app.root.findByName('opening-board-dressing');
-      if (dressing instanceof pc.Entity) dressing.enabled = false;
       cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
       era3Devices?.setEra(options.era); // Session 37: review jumps era-gate the device screens too
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
@@ -1586,17 +1513,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camYaw = 0;
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else {
-      // fresh load (past the DOM pre-fiction orienting card, D43): straight
-      // into the room, seated — no intermediate board-look gate any more
-      // (R28 §4/D48, S40). The pre-boot LOOK/INTERACT window opens here.
-      applyWindowLight();
+      // fresh load (past the interim log-in panel): straight into the room,
+      // seated, in the dark — and then the room WAKES on its own (decision
+      // doc §3). No board-look gate, no power button, no teaching window.
+      applyRoomLight(0);
       camPos.set(EYE.x, EYE.y, EYE.z);
       camPitch = 0;
       camYaw = 0;
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
-      preBootActive = true;
-      preBootT = 0;
-      preBootStep = 0;
+      wakeActive = true;
+      wakeT = 0;
     }
   }
 

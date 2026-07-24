@@ -82,10 +82,11 @@ system's shared infrastructure is what connects them (cross-cluster sends).
   the ending arm — the Close's point-cloud "glow in the dark star set" is entered THROUGH
   the arm under X (C2, Fable's build lane). The E4 finale carries the cyclorama concept
   (mining FIND #10): slits-of-countless-rooms resolving into the four walkable era panels.
-- **The witness lineage (one surface, transforming):** warm cork board you pin your profile
-  to (opening) → hardened cold intake record (first filing) → the era dashboards → Maya's
-  shared wall (E4, the TURN) → the Close's constellation. The overhead ceiling iris is
-  retired.
+- **The witness lineage (one surface, transforming):** ~~warm cork board you pin your profile
+  to (opening)~~ → **the lit room + "complete your profile, Daniel"** (the warm first note since
+  the cork board's retirement — `REINTERP_OPENING_DECISION_2026-07-24.md` §1/§5, built S44) →
+  hardened cold intake record (first filing) → the era dashboards → Maya's shared wall (E4, the
+  TURN) → the Close's constellation. The overhead ceiling iris is retired.
 
 ## §4 THE GUIDANCE LINEAGE (the conductor evolves; its form IS each era's thesis)
 
@@ -102,8 +103,9 @@ victim, never delivers Dossier text, dismissal always works and is always logged
 ## §5 THE FLOW, ERA BY ERA
 
 **ERA 1 — BEING FOUND (1997, Daniel, Room 1) — BUILT, verified.**
-O1 orienting board (disclaimer + start-up, on the physical cork board) → auto-boot (D22:
-guidance starts at the floppy) → O3 profile ("they already know your name"; first click
+~~O1 orienting board (disclaimer + start-up, on the physical cork board)~~ **the interim LOG-IN
+panel (project + VR/desktop controls + log-in; `REINTERP_OPENING_DECISION_2026-07-24.md`, built
+S44) → the room WAKES (light up + auto-boot, D22 intact, no power-press)** → O3 profile ("they already know your name"; first click
 files instantly) → the side-message guide thread (floppy → kit → tape → channel → packet →
 diary → update) → the kit (booklet + THE THREE TAPES on the shelf: A companion w/ the
 "Fold My Hands" prayer slot · B broadcast (New You radio spots, [VERIFY SOURCE]) · C

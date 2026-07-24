@@ -6,7 +6,7 @@
  */
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont } from '../desktop/theme/chrome';
-import { COLD_BOARD, FLAG, RECORD } from '../desktop/theme/witness';
+import { FLAG, RECORD } from '../desktop/theme/witness';
 import { ledger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import opening from '../../data/strings/opening.json';
@@ -75,16 +75,18 @@ export class WitnessCanvas {
     this.dirty = true;
     if (this.hardenT < HARDEN_SECONDS) this.hardenT = Math.min(HARDEN_SECONDS, this.hardenT + dt);
     const profileLines = this.profileRecaptionLines();
-    // R26: the same rear-wall surface begins as the warm O3 cork board, then
-    // hardens into the cold record. Once filed, the existing intake content
-    // remains the authority; profile clicks merely add traceable filed lines.
-    // (R28 §4/D48, S40: the "Start-up options" onboarding panel that used to
-    // render here first — drawStartupBoard/setStartupBoard/handleStartupClick
-    // — is retired; the DOM pre-fiction orienting card is the disclaimer/
-    // controls surface now. This board starts at drawDormant() and only wakes
-    // once the O3 profile pinning begins.)
+    // The witness lineage's warm→cold arc, as of the opening decision
+    // (docs/REINTERP_OPENING_DECISION_2026-07-24.md §1/§5, Sérgio): the cork
+    // board is RETIRED — this wall never renders warm any more. The warm
+    // first note is the lit room plus "complete your profile, Daniel"; this
+    // surface sleeps through all of that (drawDormant) and wakes by
+    // HARDENING, on the first filing, into the cold record it stays. Once
+    // filed, the intake content is the authority; profile clicks merely add
+    // traceable filed lines. (S40 retired the "Start-up options" panel that
+    // used to render here first; the interim log-in panel is the
+    // disclaimer/controls surface now.)
     if (this.openingProfile.active && !this.openingProfile.filed) {
-      this.drawCorkBoard();
+      this.drawDormant();
     } else if (this.hardenT < HARDEN_SECONDS) {
       this.drawHardening();
     } else if (
@@ -135,13 +137,6 @@ export class WitnessCanvas {
     return `${out}...`;
   }
 
-  private optionLabel(kind: 'icon' | 'chip' | 'goal', id: string): string {
-    if (id === 'declined') return opening.o3_goal_decline;
-    const key = kind === 'icon' ? 'o3_icons' : kind === 'chip' ? 'o3_chips' : 'o3_goals';
-    const found = (opening[key] as { id: string; label: string }[]).find(o => o.id === id);
-    return found?.label ?? id;
-  }
-
   private profileRecaptionLines(): string[] {
     const recap = opening.recaptions as {
       icon: Record<string, string>; chip: Record<string, string>; goal: Record<string, string>;
@@ -179,68 +174,12 @@ export class WitnessCanvas {
     return lines;
   }
 
-  private drawPinnedNote(x: number, y: number, w: number, h: number, title: string, body: string, filled: boolean): void {
-    const { ctx } = this;
-    px(ctx, x + 2, y + 3, w, h, 'rgba(0, 0, 0, 0.22)');
-    px(ctx, x, y, w, h, filled ? ERA1.paper : ERA1.beige);
-    px(ctx, x, y, w, 1, ERA1.warnDark);
-    px(ctx, x, y, 1, h, ERA1.warnDark);
-    px(ctx, x, y + h - 1, w, 1, ERA1.olive);
-    px(ctx, x + w - 1, y, 1, h, ERA1.olive);
-    px(ctx, x + Math.round(w / 2) - 2, y - 3, 5, 5, filled ? ERA1.warn : ERA1.grey);
-    setFont(ctx, 8);
-    ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(title, x + 6, y + 6);
-    setFont(ctx, 10);
-    ctx.fillStyle = filled ? ERA1.black : ERA1.grey;
-    ctx.fillText(body || opening.o3_board_empty, x + 6, y + 22);
-  }
-
-  private drawCorkBoard(): void {
-    const { ctx } = this;
-    const W = ERA1_CANVAS.width;
-    const H = ERA1_CANVAS.height;
-    ctx.clearRect(0, 0, W, H);
-
-    px(ctx, 25, 19, 154, 26, 'rgba(0, 0, 0, 0.16)');
-    px(ctx, 22, 16, 154, 26, ERA1.paper);
-    px(ctx, 30, 13, 5, 5, COLD_BOARD.pinGold);
-    setFont(ctx, 12);
-    ctx.fillStyle = ERA1.black;
-    ctx.fillText(opening.o3_board_title, 34, 28);
-
-    px(ctx, W - 195, H - 37, 174, 20, 'rgba(0, 0, 0, 0.14)');
-    px(ctx, W - 198, H - 40, 174, 20, COLD_BOARD.strip);
-    px(ctx, W - 190, H - 43, 5, 5, COLD_BOARD.pinBlue);
-    setFont(ctx, 8);
-    ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(opening.o3_board_hint, W - 190, H - 32);
-
-    this.drawPinnedNote(
-      42, 62, 136, 64,
-      opening.o3_board_icon_label,
-      this.optionLabel('icon', this.openingProfile.icon),
-      this.openingProfile.icon !== ''
-    );
-    const chips = this.openingProfile.chips.map(c => this.optionLabel('chip', c));
-    for (let i = 0; i < 3; i++) {
-      this.drawPinnedNote(
-        220, 56 + i * 74, 190, 56,
-        `${opening.o3_board_chip_label} ${i + 1}`,
-        chips[i] ?? '',
-        chips[i] !== undefined
-      );
-    }
-    this.drawPinnedNote(
-      66, 188, 150, 72,
-      opening.o3_board_goal_label,
-      this.openingProfile.goal ? this.optionLabel('goal', this.openingProfile.goal) : '',
-      this.openingProfile.goal !== ''
-    );
-  }
-
+  /** the wake: the dormant wall bands over into the cold record, once, on
+   *  the first filing. This is the lineage's warm→cold hinge — the warm side
+   *  now lives in the room (lit lamp) and on the monitor (the profile you
+   *  were just completing), never here. */
   private drawHardening(): void {
-    this.drawCorkBoard();
+    this.drawDormant();
     const { ctx } = this;
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;

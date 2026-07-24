@@ -1,4 +1,22 @@
 STATUS: live
+BUILT: Session 44 (2026-07-24) — all four calls shipped; see docs/reinterp/01_SESSION_LOG.md.
+KILLS: src/main.ts#mountStartupOverlay
+KILLS: src/engine/app.ts#buildOpeningBoardDressing
+KILLS: src/engine/app.ts#OpeningBoardMode
+KILLS: src/engine/app.ts#showOpeningSurface
+KILLS: src/engine/app.ts#setOpeningBoardVisibleForEra
+KILLS: src/engine/app.ts#filePreBootMessage
+KILLS: src/engine/app.ts#PRE_BOOT_MESSAGES
+KILLS: src/witness/intake.ts#drawCorkBoard
+KILLS: src/witness/intake.ts#drawPinnedNote
+*(On the anchoring: check-spec C5 requires the `src/<path>` in a KILLS line to EXIST on disk — a
+line pointing at a deleted file fails the checker rather than passing it. `src/desktop/opening.ts`
+and `src/room/openingBoardDressing.ts` are DELETED (Session 44), so the symbols they used to export
+are anchored above to the file that used to reach them — `main.ts` for the overlay, `app.ts` for the
+board dressing. The assertion still does the job it was written for: CI fails the moment any file
+under `src/` mentions one of these names again. The two `intake.ts` entries are ordinary in-file
+kills. Known limit: a symbol re-introduced INSIDE its anchor file is not caught, since C5 exempts
+the declaring file.)*
 
 # THE OPENING — decided 2026-07-24 (Sérgio, in-session; no Fable round needed)
 *Sérgio chose this directly rather than routing to Fable. It SUPERSEDES the opening design in
@@ -43,8 +61,8 @@ whole front door: you **log in → the room wakes by itself** (main light on + c
   interim/login panel. Layer 3's "teach the verbs" is absorbed: the *entry* verb is taught by the
   panel's controls display + the auto-wake; LOOK/INTERACT as in-room diegetic side-messages (S40's
   `s1_guide.json` look/interact) may still run inside the now-lit room, but they no longer gate
-  entry. **Open for a build session to confirm:** do LOOK/INTERACT survive as ambient teaching, or
-  retire with the power-press?
+  entry. ~~**Open for a build session to confirm:** do LOOK/INTERACT survive as ambient teaching, or
+  retire with the power-press?~~ **ANSWERED (S44): retired** — see "Open for Sérgio" item 2 below.
 - **S40 (2026-07-24)** → its optional power-press is superseded by auto-boot; its cork-board
   preservation is superseded by full retirement. S40's panel-retirement and side-message plumbing
   stand.
@@ -71,7 +89,20 @@ intake record on first filing, as before. The cork board's retirement costs the 
   clicks (opening state machine, per S40's note).
 
 ## Open for Sérgio
-1. The witness-lineage warm-note relocation above — confirm or redirect.
-2. LOOK/INTERACT side-messages: keep as ambient in-room teaching, or retire with the power-press?
-3. Anything the controls display must show beyond the basics (VR: look + point + trigger;
-   desktop: drag + click) — snap-turn? Leave? your call on how much.
+1. ~~The witness-lineage warm-note relocation above — confirm or redirect.~~ **CONFIRMED** by
+   Sérgio 2026-07-24 (see the section above); built and verified in Session 44.
+2. ~~LOOK/INTERACT side-messages: keep as ambient in-room teaching, or retire with the
+   power-press?~~ **RETIRED** — the build session's call (Session 44, reasoning in the session
+   log): LOOK's target (the lamp) is now lit BY the wake rather than pointed at, INTERACT's only
+   real referent was the power button this decision deletes, and the interim panel teaches both
+   verbs for both platforms before anything starts. Both entries are gone from
+   `data/dialog/s1_guide.json`; the guide thread now opens on `floppy`. **Reversible** if you want
+   ambient teaching back — say so and it returns as ungated in-room side-messages.
+3. Anything the controls display must show beyond the basics — it currently lists, per platform:
+   look (drag / head-turn), choose (click / point+trigger), move to a floor marker, and the menu
+   (Esc or the corner glyph / the headset menu button), plus one line saying you never walk and
+   nothing is timed. **Still yours:** the exact wording (all PLACEHOLDER), and whether it should
+   also name snap-turn or the ⟲ turn control.
+4. **New, small:** the panel's own copy — the project blurb (`about`), the log-in label ("Log in"),
+   and the leave state ("You left. / Nothing was kept.") are Claude drafts in frame voice, awaiting
+   your pass. `data/strings/orientingCard.json`.

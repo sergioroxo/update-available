@@ -35,8 +35,9 @@ STATUS: live
   files listed in v2 §8.
 - **Source verification** — 8/8 dossier sources unverified `[VERIFY SOURCE]`; consolidated queue
   arrives with S42; decision on scheduling the sitting is queue item 2 in `03_COORDINATION.md`.
-- **`opening.ts` retirement** — decision item 3 in the queue (REC retire); S41 headers mark it
-  `dead` either way pending the call.
+- ~~**`opening.ts` retirement**~~ — RESOLVED: Sérgio retired the cork board outright
+  (`REINTERP_OPENING_DECISION_2026-07-24.md`); `opening.ts` and `openingBoardDressing.ts` are
+  deleted as of Session 44.
 - **Minor open item (carried):** `origin_intake_e1`'s `cuts: ["full"]`-only vs the Festival-cut
   wording of master-plan §R2-7 — composition call, zero code impact, whenever convenient.
 - *(Pruned as stale this round: the OP-2/OP-3 opening track (superseded by R28 §4 + Session 36);
@@ -46,6 +47,107 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-24 · Session 44 — THE OPENING REBUILT, per `docs/REINTERP_OPENING_DECISION_2026-07-24.md`
+(Sérgio's four calls, binding; supersedes R28 §4 and reverses part of Session 40). The build had
+been contradicting its own decision since S40 shipped an optional early power-press hours before
+Sérgio replaced it with auto-boot + lights-on; only one of the two exists now.
+**What shipped:**
+**(1) The interim LOG-IN panel** (`src/desktop/orientingCard.ts` + `data/strings/orientingCard.json`,
+a rewrite of the minimal orienting card, D43): title/attribution, the premise, a project blurb, the
+content note, then a real CONTROLS DISPLAY — two columns, **both platforms always shown, never a
+device sniff** ("On this computer": drag to look, click to choose, click a floor marker to move,
+Esc/corner button for the menu · "In a headset": head-turn, point+trigger, point+trigger at a
+marker, the menu button), plus one line stating you never walk and nothing is timed. That is the
+accessibility surface the decision asked for: everything the piece will ever ask of a body, in
+plain type, before anything starts. The ethics arm-delay is unchanged (4s, `ARM_DELAY_MS`, the same
+law the shipped O1 uses) — "Log in" is `disabled` until it arms, then goes warm. **Leave always
+works** and, before the engine exists (`gameMenuBus.leaveEngine` is still null there), it now wipes
+the ledger and leaves an INERT page — deliberately not a reload, since a reload would put the
+player back at the same door, which is not what "leave" means. Frame voice throughout: plain type,
+no charm; the panel's greys are one local `FRAME` object rather than scattered literals (C4).
+**(2) ENTRY = THE ROOM WAKES** (`src/engine/app.ts`). Logging in drops you into the room seated, in
+the dark — moonlight through the window only — and then, unasked, the light comes up and the
+machine boots itself: `applyRoomLight(k)` is one dial from the as-you-found-it state (k=0) to the
+O2 lit state (k=1, **byte-identical to the old `applyLightsOn()` values** — the two-temperature rig
+is untouched, this only decides how far each light has got), ramped `WAKE_DARK_SECONDS = 1.2` of
+held dark then `WAKE_RAMP_SECONDS = 1.8` of smoothstepped rise, then `finishWake()` calls
+`os.beginReinterpOpening()`. Total 3.0s and nothing to find or press. S40's `preBootActive/T/Step`,
+`PRE_BOOT_MESSAGES`, `filePreBootMessage`, `preBootHint`, the LOOK gaze-cone check, `LAMP_POS` and
+the optional power-press branch in `pointerdown` are all DELETED. The shipped build's own S1.0
+`os.isOff` power button is untouched (reinterp never enters that phase). `__preBoot` → `__wake`
+(same read-only `?debug=1` convention).
+**(3) THE CORK BOARD IS RETIRED, fully.** Deleted: `src/desktop/opening.ts` (~440 lines, zero
+callers since Session 27) and `src/room/openingBoardDressing.ts` (the in-scene wall board +
+fallback frame boxes). Removed from `app.ts`: `OPENING_WALL_BOARD`, `placeOpeningWallBoard`,
+`showOpeningSurface`, `setOpeningBoardVisibleForEra`, the `enterClose` hide-list entry and the
+review-jump dressing-disable. **This cost nothing in placement**: the opening board's footprint and
+`cluster.json`'s `witnessTerminal` are the same rectangle, so `restoreWitnessSurface()` alone now
+covers every stage. Removed from `intake.ts`: `drawCorkBoard`, `drawPinnedNote`, `optionLabel` —
+the wall renders DORMANT through the whole O3 profile and hardens on the first filing, so
+`drawHardening()` now bands over `drawDormant()` instead of over cork. Five now-dead pinned-note
+caption keys left `data/strings/opening.json` (`o3_board_title/hint/empty/icon_label/chip_label`);
+`o3_board_hardening` stays — still read, still the hardening caption. **Nine `KILLS:` lines** on
+the decision doc's header (C5). Note the C5 constraint, hit for real: **the checker requires a
+KILLS path to EXIST on disk**, so a deleted file cannot be named — the two deleted modules' symbols
+are anchored to the file that used to reach them (`main.ts`, `app.ts`), which still fails CI the
+moment anything under `src/` says those names again. Proven by mutation: appending a comment
+mentioning `drawCorkBoard` to `movementNodes.ts` failed the check, naming the file; reverted clean.
+**(4) DECIDED — LOOK/INTERACT retired** (the decision doc's open question 2, left to this session):
+both entries are gone from `data/dialog/s1_guide.json` and the guide thread now opens on `floppy`.
+Reasoning: LOOK's target (the lamp) is now **lit by the wake** rather than pointed at — the beat is
+performed instead of instructed; INTERACT's only honest referent was the power button this decision
+deletes, so keeping it would caption an act the player can no longer perform; and the interim panel
+teaches both verbs, for both platforms, before anything starts — keeping ambient DOM hints saying
+the same thing would be the frame speaking twice ("the frame never plays"). Reversible in one
+commit if Sérgio wants ambient teaching back; flagged for him in the decision doc.
+**VERIFIED (real browser, real clicks, `?reinterp=1`):** panel renders with both control blocks →
+"Log in" arms at 4s ("one moment" → "The room is dark until you do.") → a real click on it starts
+the engine → **`__wake()` went `{active:true,t:0,k:0}` → `{active:false,t:3.02,k:1}` with nobody
+touching anything, `__os.phase` `r_dark` → `r_boot`, `ledger.name` "Daniel"** — the lights-up is
+visible in successive screenshots (dark room + dark monitor → warm lamp-lit room) → boot crawl ran
+itself to `r_profile` → O3 "Welcome back, Daniel (we filled this in for you)" verbatim as before →
+**five real ray-projected clicks on the monitor mesh** picked icon/3 chips/goal (`profile-initialized`
+filed on the FIRST pick, FIND #5 intact, tags still empty) → "That's me" filed all five tags →
+`r_recap` → a real click on Enter reached `desktop` with `__guide()` reading `{active:"floppy",
+retired:[]}` and `ledger.guidance` EMPTY (nothing left to teach or file). **The rear wall,
+screenshotted at 180° mid-profile: no cork board, no frame, no board model — a dark dormant plane
+on a lit wall**; after the commit, the same wall reads the cold INTAKE RECORD (SUBJECT Daniel,
+CLASSIFICATION carrying the profile, session log led by the pinned "local profile initialized —
+before any confirmation"). Menu-over-panel works (the corner glyph opened the game menu on top of
+the log-in panel; Resume returned); the panel's Leave produced "You left. / Nothing was kept." with
+no engine ever started. Baselines `/` and `?flat=1` both unaffected — the shipped "BEFORE YOU
+BEGIN" screen, zero reinterp DOM (`card:false, glyph:false`), zero console errors anywhere.
+`npm test` + `npm run build` green throughout.
+**HARNESS NOTE (S40's problem, worked around and stated plainly):** the sandboxed Browser pane —
+and the real Chrome tab too — report `document.visibilityState: "hidden"`, which suspends
+`requestAnimationFrame`; S40 could not drive its success paths for this reason. This session drove
+them by **patching `window.requestAnimationFrame` in the PAGE (a debug intervention, no source
+change) onto a `MessageChannel` pump**, after which the engine ran at real-time and every path
+above was driven with genuine clicks. What I could NOT capture: the 2.2s hardening ANIMATION's
+intermediate frames — a screenshot round-trip in this harness exceeds 2.2s, so I have the dormant
+state before and the cold record after, twice, with a clean console, but no photo of the bands
+sweeping in. The transition necessarily ran (`drawHardening` is the only route between those two
+states). A real foregrounded window would show it.
+**Loose ends (flagged, not silently left):** (a) `data/room/models.json` still lists
+`opening_corkboard` → `wallCorkboardCreativeTrio.glb`, so the retired board's model is still
+PRELOADED though nothing spawns it — one line + one asset, out of this session's file fence.
+(b) `src/desktop/theme/board.ts` (the cork/pine palette) is now orphaned — `opening.ts` was its only
+consumer; theme files are exempt from C4 so nothing fails, but it is dead. (c) `narrative/guide.ts`
+still filters `look`/`interact` by id; harmless (they no longer exist in the data) but its comment
+now points at machinery this session deleted — `guide.ts` was outside the file fence. (d) The
+palette ratchet says `44 < 51 — tighten HEX_BASELINE to 44`, earned by the two deleted files;
+`tools/check-spec.mjs` was outside the fence, so the note stands for the next session that owns it.
+(e) The game menu's own `controlsLines` (desktop-only) should eventually read the panel's two
+blocks — `gameMenu.json` was out of fence.
+**REPO NOTE (worth knowing, not a problem now):** the two file DELETIONS were staged early in this
+session with `git rm`, and a CONCURRENT session (S43, the Lamby rig) committed while this one was
+still working — its commit `a1d92ef` swept the two staged deletions in with it. So `opening.ts` and
+`openingBoardDressing.ts` are recorded as deleted under the S43 commit message rather than this
+one, and `a1d92ef` in isolation is a broken tree (it deletes a module `app.ts` still imported at
+that commit); the commit below restores consistency. Nothing was lost, and no S44 source edit was
+swept. Parallel sessions should stage nothing until they commit, or commit by explicit path.
+**BLOCKED: none.**)*
+
 *(2026-07-24 · Session 41 — the tracking build (D47's mechanism, made real), per NEXT UP item 2:
 **parallel-safe with Session 40** (disjoint files — this session never touched `app.ts`/`guide.ts`/
 `intake.ts`/any `data/` file). **(1) STATUS headers on all 84 `docs/**.md`:** classified every doc
