@@ -671,7 +671,21 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 - **Q3 — copy inventory format** *(ANSWERED 2026-07-10)*: per-era files →
   executed as **D7** above.
 
-## D. VERIFY-SOURCE QUEUE (generated 2026-07-24 — sweep of every JSON file in `data/`
+## D. VERIFY-SOURCE QUEUE
+> **⚑ UPDATE 2026-07-24 — the research pass is DONE.** Sérgio ran the Deep Research prompt
+> (`docs/CHATGPT_DEEPRESEARCH_SOURCE_VERIFICATION_2026-07-24.md`); results are converted into
+> required build changes in **`docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md`**. Headline: every
+> claim survived, but **six need rewording** (C1 Ferguson v. JONAH conflates jury verdict with
+> injunction · C2 APA 2009 covers orientation only, cite 2021 for gender identity · C3 van den
+> Aardweg is not a *validated* clinical instrument · C4 Love Won Out said parents, not schools ·
+> C5 the pillow gap is narrower — only "deeper" is unsourced · C6 Truth in Love was print, not TV).
+> **What's left for Sérgio: approve/rewrite C1–C6.** The rows below stay as the original sweep.
+>
+> Also resolved 2026-07-24: **Tape B** confirmed fine as invented content (no source owed) ·
+> **`_dummy.json`** confirmed non-shippable scaffold, out of scope · **Malta** reverified
+> (use Parliament of Malta + legislation.mt Chapter 567, *not* the NATLEX record).
+
+*(generated 2026-07-24 — sweep of every JSON file in `data/`
 for `[VERIFY SOURCE]` tags AND factual claims with no tag at all. Sit top-to-bottom;
 each row is one thing to check. Nothing here has been reworded, retagged, or
 status-assigned by this sweep — that stays your call per ETHICS_CONSTRAINTS.md #13/#14.)

@@ -49,13 +49,14 @@ whole front door: you **log in → the room wakes by itself** (main light on + c
   preservation is superseded by full retirement. S40's panel-retirement and side-message plumbing
   stand.
 
-## The one consequence Sérgio should confirm (my read, not yet his call)
+## ✅ CONFIRMED by Sérgio 2026-07-24 (was: the one open consequence)
 The cork board was the **warm first note of the witness lineage** (MASTER_PLAN_v2: "warm cork you
 pin your profile to → cold filed record → dashboards → Maya's wall → constellation"). With it
 gone, the natural replacement is: **the lit room + "complete your profile, Daniel" IS the warm
 state**, which then hardens to the cold intake record on first filing. That keeps the lineage's
-warm→cold arc intact with the new front door. **Sérgio: is that the intended reading, or does the
-warmth relocate elsewhere?** (Only real open question here.)
+warm→cold arc intact with the new front door. **Sérgio confirmed this reading (2026-07-24):** the
+lit room + "complete your profile, Daniel" IS the lineage's warm first note; it hardens to the cold
+intake record on first filing, as before. The cork board's retirement costs the lineage nothing.
 
 ## Build shape (for the session that implements it)
 - The interim panel: extend the existing orienting-card surface (`orientingCard.ts`) — richer
