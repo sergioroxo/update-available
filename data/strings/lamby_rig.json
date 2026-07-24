@@ -7,7 +7,8 @@
   "moods": {
     "cheerful": "Cheer",
     "clinical": "Clinical",
-    "sterile": "Sterile"
+    "sterile": "Sterile",
+    "sad": "Sad"
   },
   "actions": {
     "idle": "Idle",
@@ -18,7 +19,8 @@
   "bubble": {
     "cheerful": "Hi! I am already installed.",
     "clinical": "Let us keep this helpful.",
-    "sterile": "Assistance state: compliant."
+    "sterile": "Assistance state: compliant.",
+    "sad": "I caught it in time."
   },
   "status": {
     "idle": "idle breathing + blink loop",

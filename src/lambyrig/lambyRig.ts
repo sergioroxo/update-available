@@ -10,7 +10,7 @@ import { ERA1, ERA1_CANVAS } from '../desktop/theme/era1';
 import * as ui from '../desktop/theme/chrome';
 import copy from '../../data/strings/lamby_rig.json';
 
-type Mood = 'cheerful' | 'clinical' | 'sterile';
+type Mood = 'cheerful' | 'clinical' | 'sterile' | 'sad';
 type Action = 'idle' | 'point' | 'appear' | 'disappear';
 
 interface Hit {
@@ -23,11 +23,11 @@ interface Hit {
 
 const W = ERA1_CANVAS.width;
 const H = ERA1_CANVAS.height;
-const MOODS: Mood[] = ['cheerful', 'clinical', 'sterile'];
+const MOODS: Mood[] = ['cheerful', 'clinical', 'sterile', 'sad'];
 const ACTIONS: Action[] = ['idle', 'point', 'appear', 'disappear'];
 
 function isMood(value: string | null): value is Mood {
-  return value === 'cheerful' || value === 'clinical' || value === 'sterile';
+  return value === 'cheerful' || value === 'clinical' || value === 'sterile' || value === 'sad';
 }
 
 function isAction(value: string | null): value is Action {
@@ -52,6 +52,7 @@ class LambyRig {
   private action: Action;
   private last = performance.now();
   private elapsed = 0;
+  private moodStart = 0;
 
   constructor(
     private readonly canvasEl: HTMLCanvasElement,
@@ -125,7 +126,10 @@ class LambyRig {
     if (!p) return;
     const hit = this.hits.find(h => p.x >= h.x && p.x <= h.x + h.w && p.y >= h.y && p.y <= h.y + h.h);
     if (!hit) return;
-    if (hit.id.startsWith('mood:')) this.mood = hit.id.slice(5) as Mood;
+    if (hit.id.startsWith('mood:')) {
+      this.mood = hit.id.slice(5) as Mood;
+      this.moodStart = this.elapsed;
+    }
     if (hit.id.startsWith('action:')) this.action = hit.id.slice(7) as Action;
     this.replaceUrl();
   }
@@ -198,7 +202,7 @@ class LambyRig {
     ctx.fillText(copy.moodHeading, x, y);
     let bx = x;
     for (const m of MOODS) {
-      const w = m === 'cheerful' ? 72 : 66;
+      const w = m === 'cheerful' ? 72 : m === 'sad' ? 50 : 66;
       ui.button(ctx, bx, y + 16, w, 20, copy.moods[m], { hover: this.hover === `mood:${m}`, disabled: this.mood === m });
       this.hits.push({ x: bx, y: y + 16, w, h: 20, id: `mood:${m}` });
       bx += w + 8;
@@ -218,22 +222,36 @@ class LambyRig {
 
   private drawLamby(ctx: CanvasRenderingContext2D, cx: number, cy: number, t: number): void {
     const phase = t % 3.2;
-    const breath = this.action === 'idle' ? Math.round(Math.sin(t * 3.3)) : 0;
     const point = this.action === 'point' ? Math.round(8 + Math.sin(t * 7) * 2) : 0;
     const reveal = this.revealAmount(t);
-    const y = cy + breath;
+    const drift = this.idleDrift(t);
+    const bounce = this.appearBounce(t);
+    const deflate = this.deflateAmount(t);
+    const x = cx + drift.dx;
+    const y = cy + drift.dy;
+
     ctx.save();
     ctx.beginPath();
     ctx.rect(40, Math.round(52 + (1 - reveal) * 212), 432, Math.round(212 * reveal));
     ctx.clip();
     ctx.globalAlpha = this.action === 'disappear' ? Math.max(0.22, reveal) : 1;
 
-    this.drawShadow(ctx, cx, y + 70);
-    this.drawPaperclip(ctx, cx, y, point);
-    this.drawBody(ctx, cx, y);
-    this.drawFace(ctx, cx, y, phase);
-    this.drawGesture(ctx, cx, y, point);
-    this.drawBubble(ctx, cx + 54, y - 70);
+    // squash-stretch (appear) + deflate (sad) share this transform, anchored
+    // near the hooves so the puppet compresses toward the ground, not the sky.
+    const anchorY = y + 60;
+    ctx.save();
+    ctx.translate(x, anchorY);
+    ctx.scale(bounce.sx, bounce.sy * (1 - deflate.squash));
+    ctx.translate(-x, -anchorY + deflate.sink);
+
+    this.drawShadow(ctx, x, y + 70);
+    this.drawPaperclip(ctx, x, y, point);
+    this.drawBody(ctx, x, y);
+    this.drawFace(ctx, x, y, phase);
+    this.drawGesture(ctx, x, y, point);
+    ctx.restore();
+
+    this.drawBubble(ctx, x + 54, y - 70 + deflate.sink * 0.4);
     ctx.restore();
   }
 
@@ -244,6 +262,34 @@ class LambyRig {
     return 1;
   }
 
+  /** Slow ambient sway during idle — the "little fidget," not a full breath cycle.
+   *  Held still (not sad-appropriate to fidget) once the sad hold has settled. */
+  private idleDrift(t: number): { dx: number; dy: number } {
+    if (this.action !== 'idle' || this.mood === 'sad') return { dx: 0, dy: 0 };
+    return { dx: Math.sin(t * 0.9) * 1.6, dy: Math.sin(t * 1.6 + 1.2) * 1.2 };
+  }
+
+  /** Clippy-style pop: overshoot on the way up, a squash on landing, then settle. */
+  private appearBounce(t: number): { sx: number; sy: number } {
+    if (this.action !== 'appear') return { sx: 1, sy: 1 };
+    const local = (t % 3.2) / 3.2;
+    if (local >= 0.6) return { sx: 1, sy: 1 };
+    const p = local / 0.6;
+    const wave = Math.sin(p * Math.PI * 2.5) * (1 - p);
+    return { sx: 1 - wave * 0.16, sy: 1 + wave * 0.24 };
+  }
+
+  /** The shame mechanism (S2R.3C): a slow sink-and-hold, not a scold — the
+   *  apparatus looks hurt and stays that way. A faint tremor once settled
+   *  keeps it reading as held breath, not a frozen sprite. */
+  private deflateAmount(t: number): { squash: number; sink: number } {
+    if (this.mood !== 'sad') return { squash: 0, sink: 0 };
+    const u = Math.min(1, (t - this.moodStart) / 0.65);
+    const eased = 1 - Math.pow(1 - u, 3);
+    const tremor = u >= 1 ? Math.sin(t * 1.1) * 0.4 : 0;
+    return { squash: 0.1 * eased, sink: 6 * eased + tremor };
+  }
+
   private drawShadow(ctx: CanvasRenderingContext2D, cx: number, y: number): void {
     ui.px(ctx, cx - 48, y, 96, 6, ERA1.greyDark);
     ui.px(ctx, cx - 34, y + 6, 68, 3, ERA1.black);
@@ -252,7 +298,7 @@ class LambyRig {
   private drawPaperclip(ctx: CanvasRenderingContext2D, cx: number, cy: number, point: number): void {
     const x = cx - 84;
     const y = cy - 28;
-    const wire = this.mood === 'sterile' ? ERA1.grey : ERA1.silver;
+    const wire = this.mood === 'sterile' ? ERA1.grey : this.mood === 'sad' ? ERA1.greyDark : ERA1.silver;
     // squared "paperclip" loop behind Lamby: Clippy grammar without a sprite.
     ui.px(ctx, x, y, 38, 3, wire);
     ui.px(ctx, x, y, 3, 64, wire);
@@ -265,7 +311,7 @@ class LambyRig {
 
   private drawBody(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
     const wool = this.mood === 'sterile' ? ERA1.silver : ERA1.white;
-    const shade = this.mood === 'cheerful' ? ERA1.beige : ERA1.grey;
+    const shade = this.mood === 'cheerful' ? ERA1.beige : this.mood === 'sad' ? ERA1.greyDark : ERA1.grey;
     const fleece = [
       [-36, -20, 16], [-18, -34, 17], [2, -36, 18], [23, -30, 16],
       [38, -13, 17], [32, 10, 18], [12, 22, 19], [-12, 24, 18],
@@ -298,6 +344,11 @@ class LambyRig {
       ui.px(ctx, cx + 5, cy - 12, 8, 7, ink);
       ui.px(ctx, cx - 10, cy - 10, 4, 3, ERA1.silver);
       ui.px(ctx, cx + 7, cy - 10, 4, 3, ERA1.silver);
+    } else if (this.mood === 'sad') {
+      // downcast, heavy-lidded — not scolding, just looking away. The shame
+      // reads through avoidance, not an expression aimed at the player.
+      ui.px(ctx, cx - 12, cy - 8, 8, 2, ink);
+      ui.px(ctx, cx + 5, cy - 8, 8, 2, ink);
     } else {
       ui.px(ctx, cx - 11, cy - 11, 5, 5, ink);
       ui.px(ctx, cx + 7, cy - 11, 5, 5, ink);
@@ -310,6 +361,11 @@ class LambyRig {
       ui.px(ctx, cx - 3, mouthY + 2, 7, 2, ink);
     } else if (this.mood === 'clinical') {
       ui.px(ctx, cx - 6, mouthY, 12, 2, ink);
+    } else if (this.mood === 'sad') {
+      // flat line, corners hooked down — a plain frown, no melodrama.
+      ui.px(ctx, cx - 7, mouthY, 14, 2, ink);
+      ui.px(ctx, cx - 8, mouthY + 2, 2, 2, ink);
+      ui.px(ctx, cx + 6, mouthY + 2, 2, 2, ink);
     } else {
       ui.px(ctx, cx - 8, mouthY - 1, 16, 2, ink);
       ui.px(ctx, cx - 8, mouthY + 3, 16, 1, ERA1.grey);
@@ -323,6 +379,12 @@ class LambyRig {
       ui.px(ctx, cx + 38, cy - 9, 38 + point, 5, arm);
       ui.px(ctx, cx + 76 + point, cy - 12, 8, 11, hoof);
       ui.px(ctx, cx + 84 + point, cy - 9, 14, 3, hoof);
+      return;
+    }
+    if (this.mood === 'sad') {
+      // arm hangs, not rests — the droop reads before the face does.
+      ui.px(ctx, cx + 34, cy + 16, 10, 22, arm);
+      ui.px(ctx, cx + 32, cy + 36, 10, 9, hoof);
       return;
     }
     ui.px(ctx, cx + 36, cy + 4, 24, 5, arm);
