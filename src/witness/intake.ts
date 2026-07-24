@@ -272,6 +272,7 @@ export class WitnessCanvas {
     if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0
         || endingLines.length > 0 || ledger.guidance.length > 0 || ledger.belongings.length > 0
         || ledger.lamby.length > 0 || ledger.checkins.length > 0 || ledger.media.length > 0
+        || ledger.caleb.length > 0
         || ledger.era3Arrival.length > 0 || ledger.graceQueue.length > 0
         || firstTouchLines.length > 0) {
       setFont(ctx, 8);
@@ -316,6 +317,21 @@ export class WitnessCanvas {
         ...ledger.media.map(m => ({
           text: m.witness || `${m.id}: ${m.outcome}`,
           color: (m.outcome === 'declined' || m.outcome === 'skipped') ? FLAG : INK
+        })),
+        // S2R.3–S2R.6 (Session 45): the Caleb thread. Symmetric by law — a
+        // reply files, and so does reading without replying (`held` renders
+        // in the same amber as every other refusal here). The COMMIT-PRESS
+        // renders amber because it is the thing the apparatus flagged: the
+        // wanting was the conduct. The system's own acts (`intervened`) file
+        // in ordinary ink, in its own cheerful vocabulary — that cheerfulness
+        // is the collapse-material later. The RESIDUE is the one line the
+        // record cannot classify: it renders DIM, as the gap it is, and never
+        // carries the committed sentence itself.
+        ...ledger.caleb.map(cb => ({
+          text: cb.witness || `${cb.id}: ${cb.outcome}`,
+          color: cb.outcome === 'residue' ? DIM
+            : (cb.outcome === 'held' || cb.outcome === 'committed' || cb.outcome === 'dismissed')
+              ? FLAG : INK
         })),
         // S3R.0 (Session 37): the three-screen room's arrival, once — Lambient's
         // fragments settling visibly across every device (register, not a

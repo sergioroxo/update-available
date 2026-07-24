@@ -71,6 +71,14 @@ const DW = 460; const DH = 340; // near-fullscreen on the 512×384 E2 desktop
 const STATIC_HOLD_SECONDS = 2.6; // the static + notification-fragment hold before auto-close
 const NOISE_FLOOR = 0.03; // sparse per-frame tape noise, present even outside the break
 
+export interface NetVisionOptions {
+  /** S2R.4 (revised, Session 45): the skip does not arm instantly — Lamby is
+   *  SHOWING you this, so leaving is a social act rather than a UI
+   *  convenience. os.ts passes data/dialog/s2_caleb.json's 15s; the data
+   *  file's own `skipDelaySeconds` remains the fallback for any other caller. */
+  skipDelaySeconds?: number;
+}
+
 export class NetVisionPlayerApp {
   open = true;
   dirty = true;
@@ -86,8 +94,13 @@ export class NetVisionPlayerApp {
   private hits: Hit[] = [];
   private hover = '';
 
+  private readonly skipAt: number;
   private readonly scenes: Scene[] = M.scenes;
   private readonly duration: number = M.duration;
+
+  constructor(options: NetVisionOptions = {}) {
+    this.skipAt = options.skipDelaySeconds ?? M.skipDelaySeconds;
+  }
   /** THE BREAK begins at the second-to-last scripted scene — "drive from the
    *  last 2 scenes" (brief), never a hardcoded second count. */
   private readonly breakStart: number = this.scenes.length >= 2
@@ -123,6 +136,12 @@ export class NetVisionPlayerApp {
 
   private inBreak(): boolean {
     return this.elapsed >= this.breakStart;
+  }
+
+  /** THE BREAK, readable from outside: os.ts uses it to let Caleb back in
+   *  through the corner toasts while the showpiece is failing (S2R.4). */
+  get inBreakNow(): boolean {
+    return this.open && this.stage === 'playing' && this.inBreak();
   }
 
   /** 0 at the break's start → 1 at the video's own end (duration) */
@@ -183,7 +202,7 @@ export class NetVisionPlayerApp {
 
   /** the skip ▶▶ — appears after skipDelaySeconds (data-driven) */
   skip(): void {
-    if (this.stage !== 'playing' || this.elapsed < M.skipDelaySeconds) return;
+    if (this.stage !== 'playing' || this.elapsed < this.skipAt) return;
     this.fileOutcome('skipped');
     this.close('skipped');
   }
@@ -217,7 +236,7 @@ export class NetVisionPlayerApp {
 
     if (this.stage === 'staticHold') this.drawNotificationFragment(ctx, a);
 
-    if (this.stage === 'playing' && this.elapsed >= M.skipDelaySeconds) {
+    if (this.stage === 'playing' && this.elapsed >= this.skipAt) {
       const sw = 56; const sh = 14;
       const sx = a.x + a.w - sw - 4; const sy = a.y + 4;
       ui.button(ctx, sx, sy, sw, sh, M.skip, { hover: this.hover === 'skip' });

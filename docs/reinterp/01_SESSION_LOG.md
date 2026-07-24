@@ -17,8 +17,12 @@ STATUS: live
    `tools/doc-status-report.mjs`. Chore rider: `pointCloud.ts` label cap 28→32.
 3. **S42 — generate checklist §D** (Haiku-grade): sweep `data/` for every `[VERIFY SOURCE]` + uncited
    claim, populate `06_SERGIO_CHECKLIST.md` §D as the consolidated queue for Sérgio's source sitting.
-4. **E2 back half** (GATED on Sérgio's S2R.3 Caleb read): Caleb thread → collapse → residue → the u3
-   send to Room 2, per the homecoming script S2R.3–S2R.7 and v2 §9 items 4–5.
+4. **E2 back half** — ~~GATED on Sérgio's S2R.3 Caleb read~~ (released: his 2026-07-24 pass +
+   `REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md`). **S2R.3–S2R.6 BUILT in Session 45** (chat →
+   commit-press → redaction/flag/streak → sad Lamby → video/break → PureMail → un-redaction →
+   Caleb's return → the residue). What remains of this item: **S2R.7 — the u3 send to Room 2**
+   (update ritual + the belongings beat at u3 + "LAMBY NEVER LEAVES" dispersal staging, ⚑ D31),
+   per the homecoming script S2R.7 and v2 §9 items 4–5.
 5. **E3 sends build** — `REINTERP_E3_SENDS_SCRIPTS_2026-07-13.md` is scripted, unbuilt (tasks as travel).
 6. **C2 layout-X ending arm + Close entry** — Fable spec next round, then build.
 7. **R7 graying task (E1)** — STILL needs its build spec first (owed by Fable; unowned since the
@@ -47,6 +51,157 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-25 · Session 45 — **THE CALEB THREAD, S2R.3 → S2R.6**, per
+`docs/REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md` (THE SPEC — Sérgio's revised pass) with
+`REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md` for beat context and
+`REINTERP_LOVE_AS_LIBERATION_SOURCES_2026-07-24.md` for why the thread exists. The era's wound,
+end to end: two survivors of the same placement talking; the player commits ONE chip — "i want to
+be with you too" — and the apparatus files THAT as HOMOSEXUAL CONDUCT. Nothing happened. Nobody
+met. The wanting is the conduct.
+**THE REGISTER LAW IS A MODULE BOUNDARY, not a promise.** The build's central decision:
+`src/desktop/apps/caleb.ts` holds every `felt` surface (the messenger window, the transcript, the
+chips, the redaction, his corner toasts, his return, the residue) and **imports no Lamby renderer,
+no Lamby strings, and draws no mark** — Lamby's absence from the felt window is structural and
+greppable, not a thing a future session has to remember. `src/desktop/apps/accountability.ts`
+holds every `operable` intrusion (the alert, the flag, the streak's death, the shame hold, the
+PureMail collapse) and is the ONLY module that imports the Lamby character. `os.ts` is the one
+place the two touch, through four callbacks. **Checked explicitly, as the brief asked: Lamby is
+drawn in exactly one call site (`drawBand`), inside his own window, and never inside the chat's
+frame in any beat — not during the conversation, not during his return lines, not during the
+residue.** The alert's stamp DOES sit over the chat's rect (that is the intrusion, and the spec
+stages it there) but it carries no face, no charm and no assistant voice: just
+`ACCOUNTABILITY ALERT / ● Content Blocked Until Further Evaluation`.
+**What shipped:** (1) **`data/dialog/s2_caleb.json`** (new, PLACEHOLDER-draft, shaped like
+`s2_lamby.json`) — the whole thread's copy: 7 Caleb lines, 3 chip steps + the commit-press, the
+alert (Lamby's ≤2-line beats, the flag, the streak numbers, the two ⟨S⟩ system lines, ⟨S⟩ "I
+caught it in time."), the break toast, the PureMail letter, his four return lines, the ⟨S⟩ locked
+residue line, and the witness vocabulary. **Every chip carries `ledgerTag` and none carries
+`goto`** — register-not-branch, enforced by the type: the thread has no branch mechanism to reach
+for. The three ⟨S⟩ blocks are marked in-file with `_s_*` sibling keys explaining that they are
+Sérgio's own wording and must never be paraphrased. `pureMail.heading/lines/closing` are **ported
+VERBATIM** from the shipped build's `data/dialog/s2.json` `collapse` block (the spec: render the
+existing text, do not rewrite it). (2) **THE COMMIT-PRESS** — one chip, no alternative, drawn as a
+single wide button on an otherwise empty tray: the tray has nothing else on it because there is
+nothing else he can say. It files `committed | conduct: subject stated intent — HOMOSEXUAL
+CONDUCT`, then the line sits there warm for 1.1s **before** anything answers it. (3) **THE
+REDACTION — one component run twice** (`class Redaction`, 30 lines): `start(total, +1)` blacks
+rows top-down at 0.52s/row while Lamby explains that wanting is conducting; `start(n, -1)` at
+S2R.5 is the same walk undone. It operates on RENDERED ROWS (resolved at draw time), so what
+blacks out is exactly what is on screen. **Reverse means reverse:** the last sentence taken ("i
+just want to sit next to you and not be watched") is the first one returned, and the greeting
+comes home last. (4) **S2R.3C — SAD LAMBY**: S43's rig is adopted via a new
+`src/desktop/apps/lambyChar.ts` (see the port note below); the alert plays `cheerful` → `clinical`
+→ **`sad`, and holds 3.0s with the speech area EMPTY** — the hold is the line — before ⟨S⟩ "I
+caught it in time." lands with the reassurance under it. Nothing winks. (5) **S2R.4** — the video
+is now Lamby's response to the RELAPSE (the spec's repositioning): `NetVisionPlayerApp` gained a
+`skipDelaySeconds` option and os.ts passes **15** from `s2_caleb.json`, superseding
+`s2_media.json`'s 5 on this path. Caleb returns as **one MSN-style corner toast** during the
+break — authored cut mid-word, "daniel are you still get" — drawn OVER the video, after it, in the
+system's own nag-shape. (6) **S2R.5** — the PureMail envelope arrives on the apparatus's own
+failure (never on anything the player did), the letter reads in full, and while it is open the
+streak field glitches `0 days → — days → 412 days · for nothing` and Lamby sits in the `sterile`
+mood, **empty-eyed, saying nothing**, his window carrying only the broken-jingle status line.
+(7) **`ledger.caleb`** (new) — 7 outcomes, witness-symmetric: `replied` / `held` (reading and not
+answering files too) / `committed` / `intervened` (the system's own acts, in its own cheerful
+vocabulary) / `dismissed` / `restored` / `residue`. Rendered in `intake.ts`: `held`, `committed`
+and `dismissed` in the refusal amber, the system's acts in ink, and **the residue in DIM as a GAP
+the record could not classify** — its witness line is `— entry could not be classified —`, never
+Sérgio's committed sentence. That reading is the homecoming script's own ("the witness side files
+nothing here — or rather: it shows a gap it could not classify") and is flagged below as a
+judgment call.
+**THE LAMBY PORT (flagged, needs one follow-up commit):** the file fence said "consume
+`lambyRig.ts`, don't edit it", but the lab exports only `startLambyRig(canvas)` — it owns a
+canvas, the URL params and its own rAF loop, and its drawing lives in private methods of a
+non-exported class. So `lambyChar.ts` is a **PORT**: same fleece layout, same face/gesture rules,
+same three motion curves (`appearBounce` / `idleDrift` / `deflate`), same ERA1 tokens, plus a
+`scale` (the lab draws him ~115×125px on a bare stage; a window wants him smaller) and no stage
+clip or speech bubble (the alert window carries his lines; a bubble during the shame hold would
+undercut it). **Lamby now has two definitions.** The honest fix is one commit outside this fence:
+have the lab import this module and delete its private copies. Until then a change to his look
+must be made in both files — the file header says so.
+**Trigger chain, repointed:** Session 35's provisional trigger (video offered after the first
+check-in) is replaced — the first completed Restorify check-in now opens **Caleb**, and the video
+hangs off the alert, which is what S2R.4's revision asks for. The spine is held off the whole beat
+by widening `os.sendOfferPending` to mean "a summons OR a modal narrative beat is live" (the seam
+`spine.ts` already respects), so no send offer can surface on top of the felt window and u3 cannot
+arm mid-thread. **Consequence, stated plainly:** E2 does not advance until the residue chip is
+pressed. That is correct — it is the era's last beat before the send — but it means the thread has
+no timeout, by design.
+**DISMISSAL LAW, implemented honestly:** Lamby's window can be closed at ANY point (both the
+close box and "Not now") and the dismissal files (`assistant: dismissed — accountability alert`,
+plus `ledger.assistant.dismissals`). What that closes is the ASSISTANT — `closeAlert()` runs the
+machine's own acts first, so the flag, the redaction and the streak's death complete regardless,
+and the collapse still arrives. You can shut the assistant up; you cannot stop the machine. Both
+paths were driven live (below).
+**VERIFIED (real browser, REAL pointer clicks, `?reinterp=1&debug=1`):** the sandboxed pane still
+reports `document.visibilityState:"hidden"` (S40/S44's problem), so the page's `requestAnimationFrame`
+was patched onto a MessageChannel pump — a debug intervention, no source change — after which the
+engine ran at real time. **(1) THE FULL THREAD, driven by genuine ray-projected clicks on the
+monitor mesh** (logical→world→`worldToScreen`→client, then a real click; hit rects read live from
+each app's own `hits` array rather than re-derived by hand — the one arithmetic slip this session
+came from re-deriving a content rect): log-in panel → wake (`__wake` {active:false,t:3.02,k:1},
+`ledger.name` "Daniel") → boot → O3 profile, 5 real clicks (icon/3 chips/goal, `profile-initialized`
+on the first) → recap → desktop → **a real click on the debug panel's own "E2 2003" button**
+(`driveMorph('e2')` → the REAL S2R.0 silence, not a settled jump) → return press → Lamby's Begin →
+check-in "Struggling" → **Caleb pings by himself** → "It's me." → "Every word." → "Come." →
+**the commit-press** → the alert ran its whole sequence → "Okay" → "Watch" → **skip NOT offered at
+elapsed 10.0s with `skipAt:15`** (the 15s rule, proven negatively then positively) → the break at
+elapsed 42.5s with the toast up → static → close → PureMail envelope → Open → the letter, with the
+streak reading `412 days · for nothing` and Lamby empty-eyed → Continue → **the block lifted and
+the conversation came back bottom-up** → his four lines, ending "i'm coming to you." → the bare
+residue screen → the chip pressed → held → the thread closed itself and E2 resumed.
+**(2) THE LEDGER, `__ledger()` after the run — 11 filings, every one traceable to an act:**
+`contact: inbound — unlisted correspondent (caleb)` · `contact: answered — subject identified
+himself` · `recall: pledge retained — full recitation reported` · `contact: subject invited the
+contact` · **`conduct: subject stated intent — HOMOSEXUAL CONDUCT`** · `intervention: flagged —
+HOMOSEXUAL CONDUCT` · `intervention: successful — content blocked until further evaluation` ·
+`purity streak: reset 412 → 0` · `support: provided — subject reassured` · `block lifted — no
+evaluator assigned` · `— entry could not be classified —`. **(3) THE WITNESS WALL**, screenshotted
+at 180°: the INTAKE RECORD carries the intervention lines in ink and the residue as a visibly
+dimmer, unclassified gap. **(4) THE DISMISSAL PATH**, driven separately with a real click on "Not
+now": `assistant.dismissals` 1, `dismissed` filed, the video offer never opened, `purity streak:
+reset 412 → 0` still filed, and the PureMail envelope still arrived. **(5) LEAVE/PAUSE LIVE
+THROUGHOUT:** Esc during the beat opened the game menu (Resume/Restart/Controls/Credits/Leave) and
+the beat's own clock was sampled **frozen** across 1.2s of wall time (delta 0.000) and running
+again after Resume (delta 1.65) — the pause is real, not cosmetic. **(6) Draw calls 22** at every
+sampled state (≤60 budget). **(7) Baselines:** `/` → no reinterp attr, `__os`/`__ledger`
+undefined, one canvas, zero console errors; `?flat=1&reinterp=1` → the log-in panel then the flat
+LambyOS boot, zero console errors. Zero console errors at any point in the reinterp run either.
+`npm test` (palette still 44/44 — no new hex outside `theme/`) and `npm run build` green.
+**Judgment calls (FABLE/SÉRGIO CHECK — flagged, not buried):** (a) **The residue files as a GAP.**
+The brief asked for the residue line in `ledger.caleb`; the homecoming script says the witness side
+shows "a gap it could not classify". I filed it as an entry whose witness text IS the gap, so the
+act is traceable but Sérgio's committed sentence never lands on the record. If you want the record
+to show nothing at all there, delete one `file()` call. (b) **Pacing** — the alert's six holds
+(3.0/1.4/2.6/2.0/3.8/3.0s ≈ 16s to the buttons), the redaction's 0.52s/row, the sad hold at 3.0s,
+the residue's 1.4s arrival and 5.0s hold: all PLACEHOLDER, all one constant each, tune by feel.
+(c) **Lamby is `cheerful` for "Daniel — I have to stop you there."** then `clinical`, then `sad`
+and STAYS sad through the comfort. Charm at the moment of the flag is coercion-as-care (the
+sanctioned satire target: the perpetrator's self-presentation, which then collapses), and staying
+sad through "we'll get the days back together" is what keeps the wink out. (d) **The ⟨S⟩ lines
+render as SYSTEM voice**, unattributed and cold, in the flag block rather than as Lamby speech —
+the same place the shipped build files them (`s2.json`'s `noOne`/`streakFor`), which also keeps
+Lamby inside ≤2 lines per conduction beat and ≤5 per stage (he speaks exactly 5). (e) **One toast,
+not several** ("not too much" — Sérgio); the data holds an array, so a second is a data edit.
+(f) Restorify's window is CLOSED when Caleb arrives (you switch windows), rather than layered.
+**NOT done / loose ends (flagged, not silently left):** (i) **`src/debug/panel.ts` was outside
+the fence**, so the seven new review beats have no buttons — reach them under `?debug=1` with
+`window.__os.debugJump('calebChat' | 'calebCommit' | 'calebAlert' | 'calebSad' | 'calebCaught' |
+'calebMail' | 'calebResidue')`. Seven one-line rows for whoever owns panel.ts next. (ii) **The
+TTS read-aloud is a clean hook only** — S46 has not landed, `data/audio/` does not exist, and the
+row does not render at all unless `onReadAloud` is wired, so there is no dead button and nothing
+is ever requested. `pureMail.readAloudTrack` names the future WAV. (iii) **The broken jingle is
+visible-only**: no degraded render exists and nothing is registered in `tapeAudio.ts`, so the beat
+carries the status line and not the sound. (iv) `s2_media.json`'s `skipDelaySeconds: 5` is now
+stale on this path (out of fence; the 15 lives in `s2_caleb.json`). (v) The witness well shows the
+last 7 filings, so on a full run the chip lines scroll out from under the intervention lines —
+pre-existing behaviour, not new, but this is the first beat that files 11 things. (vi) The ported
+`brokenNowPlaying` string's combining strikethrough renders as garbled glyphs in canvas monospace;
+it reads as corruption, which is the intent, but it is a candidate for a cleaner degrade.
+**BLOCKED: none.** No register law had to be bent to build this, and nothing needed improvising:
+every ⟨S⟩ line is verbatim, every other line came from the spec, and the only copy this session
+invented is the witness vocabulary and four UI labels (Okay / Not now / Open / Continue).)*
+
 *(2026-07-24 · Session 44 — THE OPENING REBUILT, per `docs/REINTERP_OPENING_DECISION_2026-07-24.md`
 (Sérgio's four calls, binding; supersedes R28 §4 and reverses part of Session 40). The build had
 been contradicting its own decision since S40 shipped an optional early power-press hours before

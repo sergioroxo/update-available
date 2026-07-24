@@ -16,6 +16,8 @@ import { ProvotypeApp, type Provotype } from './apps/provotype';
 import { UpdateApp, type UpdateKey } from './apps/update';
 import { RestorifyApp } from './apps/restorify';
 import { NetVisionPlayerApp } from './apps/netvision';
+import { CalebThreadApp } from './apps/caleb';
+import { AccountabilityApp } from './apps/accountability';
 import { GuideThread } from '../narrative/guide';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
@@ -25,6 +27,7 @@ import reinterpStrings from '../../data/strings/reinterp.json';
 import opening from '../../data/strings/opening.json';
 import lambyStrings from '../../data/dialog/s2_lamby.json';
 import mediaStrings from '../../data/dialog/s2_media.json';
+import calebStrings from '../../data/dialog/s2_caleb.json';
 import pillowProvotypeData from '../../data/provotypes/pillow.json';
 import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.json';
 
@@ -35,6 +38,10 @@ import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.js
  *  ordinary era-2 desktop (icons + taskbar), Restorify reachable by icon. */
 type E2Stage = 'silence' | 'lambyBoot' | 'lambyGreeting' | 'active';
 const LAMBY_BOOT_HOLD = 1.6; // s — the "finishing installation…" beat's hold
+/** S2R.5: s of ordinary desktop between the video beat ending and the
+ *  PureMail envelope. The collapse is triggered by the apparatus's own
+ *  documented failure, never by the player — the delay is only pacing. */
+const PUREMAIL_DELAY = 2.4;
 
 // The shipped opening (warning→off→boot→splash→name→desktop) is UNTOUCHED.
 // Behind ?reinterp=1 the four r_* phases REPLACE it (OPENING_AND_FLOW_SPEC
@@ -127,6 +134,17 @@ export class DesktopOS {
   private netvisionOfferedThisSession = false;
   /** the NetVision Player itself (the New You Program video) */
   netvision: NetVisionPlayerApp | null = null;
+  /** S2R.3–S2R.6 (Session 45): the Caleb thread's FELT surfaces — the
+   *  messenger window, the redaction, his return, the residue commit. Lamby
+   *  is never drawn inside any of them (the law is a module boundary: this
+   *  object's module imports no Lamby renderer at all). */
+  caleb: CalebThreadApp | null = null;
+  /** every OPERABLE intrusion on that window — the accountability alert, the
+   *  flag, the streak's death, the shame hold, and the PureMail collapse. */
+  accountability: AccountabilityApp | null = null;
+  private calebOpenedThisSession = false;
+  /** when the collapse's envelope lands (Infinity = not armed) */
+  private pureMailAt = Infinity;
   /** THE BREAK's residue: a small, non-interactive persistent mark once the
    *  video tears to static and Caleb's message-fragment surfaces through it —
    *  "the notification mark persisting quietly" (brief). The Caleb thread
@@ -357,6 +375,9 @@ export class DesktopOS {
       this.restorify = null; // leaving e2 closes Restorify
       this.netvisionOfferOpen = false;
       this.netvision = null;
+      this.caleb = null;
+      this.accountability = null;
+      this.pureMailAt = Infinity;
     }
   }
 
@@ -388,20 +409,66 @@ export class DesktopOS {
   private openRestorify(): void {
     if (!this.restorify) {
       this.restorify = new RestorifyApp();
-      this.restorify.onCheckinFiled = () => this.maybeOfferNetVision();
+      this.restorify.onCheckinFiled = () => this.maybeOpenCaleb();
     }
     this.restorify.open = true;
     this.dirty = true;
   }
 
-  /** S2R.4: Lamby offers the video after the FIRST completed check-in (this
-   *  session's provisional trigger — see the class-field comment). Fires at
-   *  most once per session; "Not now" never re-offers this session either. */
-  private maybeOfferNetVision(): void {
-    if (this.netvisionOfferedThisSession) return;
+  /** S2R.3: Caleb pings after the FIRST completed check-in. This replaces
+   *  Session 35's provisional trigger for the video: per the S2R.4 revision
+   *  the New You Program is Lamby's RESPONSE TO THE RELAPSE, not a reward for
+   *  checking in, so the video now hangs off the alert instead. Fires at most
+   *  once per session. */
+  private maybeOpenCaleb(): void {
+    if (this.calebOpenedThisSession) return;
     if (ledger.checkins.length !== 1) return;
-    this.netvisionOfferedThisSession = true;
-    this.netvisionOfferOpen = true;
+    this.calebOpenedThisSession = true;
+    this.openCaleb();
+  }
+
+  /** S2R.3A — the messenger window (felt). The apparatus is not in it. */
+  private openCaleb(): void {
+    if (this.caleb) return;
+    if (this.restorify) this.restorify.open = false; // he takes the screen
+    const thread = new CalebThreadApp();
+    this.caleb = thread;
+    thread.onCommit = () => this.openAccountabilityAlert();
+    thread.onThreadDone = () => {
+      this.caleb = null;
+      this.accountability = null;
+      this.dirty = true;
+    };
+    this.dirty = true;
+  }
+
+  /** S2R.3B/C — the commit-press has landed, and the apparatus answers it.
+   *  This is the ONLY place the two registers touch: the felt module never
+   *  imports the operable one, and vice versa. */
+  private openAccountabilityAlert(): void {
+    if (this.accountability) return;
+    const alert = new AccountabilityApp();
+    this.accountability = alert;
+    if (this.caleb) alert.setChatRect(this.caleb.windowRect);
+    alert.onRedactionStart = () => this.caleb?.beginRedaction();
+    alert.onAlertDone = (dismissed) => {
+      // S2R.4: "I found something that helped others like you." If Lamby was
+      // dismissed instead, the offer never comes — the era does not chase —
+      // but the collapse still arrives: it was never the player's to trigger.
+      if (dismissed || this.netvisionOfferedThisSession) this.pureMailAt = this.t + PUREMAIL_DELAY;
+      else {
+        this.netvisionOfferedThisSession = true;
+        this.netvisionOfferOpen = true;
+      }
+      this.dirty = true;
+    };
+    alert.onMailClosed = () => {
+      // S2R.5 — the block LIFTS: the same component, run in reverse
+      this.accountability?.liftStamp();
+      this.caleb?.clearToasts();
+      this.caleb?.beginRestore();
+      this.dirty = true;
+    };
     this.dirty = true;
   }
 
@@ -414,15 +481,22 @@ export class DesktopOS {
     if (id === 'netvision-notnow') {
       this.netvisionOfferOpen = false;
       ledger.media.push({ id: 'offer', outcome: 'declined', witness: lambyStrings.videoOfferDeclined });
+      if (this.caleb) this.pureMailAt = this.t + PUREMAIL_DELAY;
       this.dirty = true;
     }
   }
 
   private openNetVision(): void {
-    this.netvision = new NetVisionPlayerApp();
+    // S2R.4 (revised): the skip arms at 15s, not instantly — Lamby is SHOWING
+    // you this, so leaving is a social act rather than a UI convenience. The
+    // value lives in data/dialog/s2_caleb.json and supersedes s2_media.json's.
+    this.netvision = new NetVisionPlayerApp({
+      skipDelaySeconds: calebStrings.video.skipDelaySeconds
+    });
     this.netvision.onClosed = (result) => {
       this.netvision = null;
       if (result === 'interrupted') this.calebNotificationVisible = true;
+      if (this.caleb) this.pureMailAt = this.t + PUREMAIL_DELAY;
       this.dirty = true;
     };
     this.dirty = true;
@@ -504,8 +578,12 @@ export class DesktopOS {
     this.dirty = true;
   }
 
+  /** The spine reads this as "hold your breath" (src/narrative/spine.ts). It
+   *  now covers a live summons OR a modal narrative beat: a send offer must
+   *  never surface on top of S2R.3's felt window, and u3 must not arm while
+   *  the Caleb thread is still running. */
   get sendOfferPending(): boolean {
-    return this.sendOffer !== null;
+    return this.sendOffer !== null || this.caleb !== null;
   }
 
   private resolveSend(outcome: 'visited' | 'declined'): void {
@@ -620,6 +698,18 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
     if (this.phase === 'desktop' && this.updateApp) this.updateApp.update(dt);
     if (this.phase === 'desktop' && this.netvision) this.netvision.update(dt);
+    // S2R.3–S2R.6: the person's window and the apparatus's answer to it
+    if (this.phase === 'desktop' && this.caleb) this.caleb.update(dt);
+    if (this.phase === 'desktop' && this.accountability) this.accountability.update(dt);
+    // THE BREAK (S2R.4): while the apparatus's own showpiece tears itself
+    // apart, Caleb arrives through the corner-toast shape the system uses to
+    // nag him. Pushed once — the toast object guards re-entry.
+    if (this.phase === 'desktop' && this.netvision?.inBreakNow) this.caleb?.pushBreakToast();
+    if (this.t >= this.pureMailAt) {
+      this.pureMailAt = Infinity;
+      this.accountability?.openMail();
+      this.dirty = true;
+    }
     // R28-2a: the guide is condition-driven only (no timers) — one tick per
     // frame. Era-1-only (CLAUDE.md R28 amendment 2: Lamby conducts from E2 —
     // the guide thread must not go on evaluating/filing once the era has
@@ -796,6 +886,12 @@ export class DesktopOS {
       this.drawE2Arrival(W, H);
       return;
     }
+    // S2R.6 — THE RESIDUE (respite → felt): the quiet after owns the whole
+    // monitor. No guide, no UI, no apparatus — not even the taskbar.
+    if (this.caleb?.ownsScreen) {
+      this.caleb.draw(this.ctx);
+      return;
+    }
     const { ctx } = this;
     const skin = this.eraSkin();
     const colors = this.desktopColors();
@@ -822,11 +918,18 @@ export class DesktopOS {
     if (this.dossierOpen) this.drawDossier(W, H);
     if (this.provotype?.open) this.provotype.draw(ctx);
     if (this.restorify?.open) this.restorify.draw(ctx);
+    // S2R.3: the person's window FIRST (felt), then every intrusion on it
+    // (operable) drawn over it. Lamby lives only in the second of these two
+    // calls — he is never drawn inside the chat's frame, in any beat.
+    if (this.caleb?.open) this.caleb.draw(ctx);
+    if (this.accountability) this.accountability.draw(ctx);
     this.drawSendOffer(W, H);
     // S2R.4: Lamby's video offer, then the player itself (over Restorify, but
     // still under the system-modal update ritual below)
     if (this.netvisionOfferOpen) this.drawNetvisionOffer(W, H);
     if (this.netvision?.open) this.netvision.draw(ctx);
+    // …and his toasts arrive OVER the video: the crack in the showpiece
+    if (this.caleb?.open) this.caleb.drawToasts(ctx);
     // the update ritual is SYSTEM-modal — it draws over everything
     if (this.updateApp?.open && this.updateApp.visible) this.updateApp.draw(ctx);
     // taskbar
@@ -1394,6 +1497,48 @@ export class DesktopOS {
         this.openNetVision();
         this.netvision?.debugSeek(mediaStrings.duration);
         break;
+      // S2R.3–S2R.6 (Session 45) review shortcuts. Each one drives the REAL
+      // path (the same chips file, the same acts fire) — it only skips the
+      // waiting. `src/debug/panel.ts` was outside this session's file fence,
+      // so these have no buttons yet: reach them with
+      // `window.__os.debugJump('calebChat')` under ?debug=1.
+      case 'calebChat':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2', true);
+        this.e2Stage = 'active';
+        this.calebOpenedThisSession = true;
+        this.openCaleb();
+        break;
+      case 'calebCommit':
+        this.debugJump('calebChat');
+        this.caleb?.debugFastForwardToCommit();
+        break;
+      case 'calebAlert':
+        this.debugJump('calebCommit');
+        this.caleb?.debugCommit();
+        this.openAccountabilityAlert();
+        break;
+      case 'calebSad':
+        this.debugJump('calebAlert');
+        this.caleb?.debugSealNow();
+        this.accountability?.debugStep('sad');
+        break;
+      case 'calebCaught':
+        this.debugJump('calebAlert');
+        this.caleb?.debugSealNow();
+        this.accountability?.debugStep('caught');
+        break;
+      case 'calebMail':
+        this.debugJump('calebAlert');
+        this.caleb?.debugSealNow();
+        this.accountability?.debugStep('caught');
+        this.accountability?.openMail();
+        break;
+      case 'calebResidue':
+        this.debugJump('calebChat');
+        this.caleb?.debugFastForwardToCommit();
+        this.caleb?.debugResidue();
+        break;
       case 'update3': this.setPhase('desktop'); this.armUpdate('u3'); break;
       case 'update4': this.setPhase('desktop'); this.armUpdate('u4'); break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
@@ -1408,6 +1553,8 @@ export class DesktopOS {
   // ── input ──────────────────────────────────────────────────────────────
   handleMove(x: number, y: number): void {
     if (this.phase === 'desktop' && this.netvision?.open) { this.netvision.handleMove(x, y); return; }
+    if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleMove(x, y); return; }
+    if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleMove(x, y); return; }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
@@ -1446,6 +1593,8 @@ export class DesktopOS {
       this.handleE2ArrivalClick(hit ? hit.id : '');
       return;
     }
+    // S2R.6: the residue owns the whole monitor while it is up
+    if (this.phase === 'desktop' && this.caleb?.ownsScreen) { this.caleb.handleClick(x, y); return; }
     // S2R.4: the video player, then Lamby's offer — both own every click
     // while present, ahead of Restorify sitting underneath either of them.
     if (this.phase === 'desktop' && this.netvision?.open) { this.netvision.handleClick(x, y); return; }
@@ -1453,6 +1602,10 @@ export class DesktopOS {
       this.handleNetvisionOfferClick(hit ? hit.id : '');
       return;
     }
+    // S2R.3: the apparatus's intrusion sits over the conversation, so it is
+    // asked first; the chat's own chips answer underneath it.
+    if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleClick(x, y); return; }
+    if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleClick(x, y); return; }
     // the provotype is modal while open — it owns the desktop's clicks
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.diary?.open) { this.diary.press(); return; }

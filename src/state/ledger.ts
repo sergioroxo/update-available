@@ -95,6 +95,32 @@ export interface Ledger {
    */
   media: { id: string; outcome: 'declined' | 'watched' | 'skipped' | 'interrupted'; witness: string }[];
   /**
+   * S2R.3–S2R.6 (Session 45, THE CALEB THREAD): every act in the era's wound,
+   * filed witness-symmetrically — answering a chip files, and so does reading
+   * it and saying nothing (`held`); the system's own interventions file in
+   * its own cheerful vocabulary (`intervened`: the flag, the redaction, the
+   * streak's death, the "support" it provides for the wound it just made);
+   * dismissing the assistant files (`dismissed`, CLAUDE.md's dismissal law);
+   * the block lifting files (`restored`).
+   *
+   * `committed` is the COMMIT-PRESS — "i want to be with you too", the one
+   * chip with no alternative. Nothing happened, nobody met: the record's own
+   * line for it is what makes the beat's thesis exact.
+   *
+   * `residue` is the second commit-press (S2R.6) and is deliberately NOT a
+   * classification: its `witness` is the GAP the record could not classify
+   * (homecoming script S2R.6), never Sérgio's locked line itself — the
+   * apparatus is no longer there to file that one.
+   *
+   * `witness` resolved from data/dialog/s2_caleb.json at file time, never
+   * composed in TS. In-memory only, like everything here.
+   */
+  caleb: {
+    id: string;
+    outcome: 'replied' | 'held' | 'committed' | 'intervened' | 'dismissed' | 'restored' | 'residue';
+    witness: string;
+  }[];
+  /**
    * S3R.0 (Session 37, E3-i — THE THREE-SCREEN ROOM foundation): fires once,
    * the moment the player first arrives at Era 3 and any device wakes — the
    * fragments from E2's failed uninstall ("companion process — could not be
@@ -143,6 +169,7 @@ const fresh = (): Ledger => ({
   lamby: [],
   checkins: [],
   media: [],
+  caleb: [],
   era3Arrival: [],
   graceQueue: [],
   graceQueueMiraStood: false
