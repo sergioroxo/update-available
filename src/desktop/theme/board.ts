@@ -1,6 +1,20 @@
 /**
- * THE CORK BOARD — the warm side's material palette (O1, the pre-fiction
- * opening surface). LAW: import these, never invent colors (CLAUDE.md).
+ * THE CORK BOARD — the warm side's material palette.
+ *
+ * ⚑ STATUS 2026-07-24: REFERENCE-ONLY, mostly dormant. The warm cork board this
+ * described was RETIRED with the opening rebuild (S44,
+ * `docs/REINTERP_OPENING_DECISION_2026-07-24.md`) — the front door is now the
+ * non-diegetic log-in panel, and the room wakes instead of showing a board.
+ * Two values are still live: `./witness.ts` imports PAPER.band and PIN.blue for
+ * the COLD record's own board-like rendering (they were byte-identical across
+ * the warm/cold pair, so the cold side cites the warm source rather than
+ * duplicating it). The other seven groups have no live consumer.
+ * Kept, not deleted, because: the values document what the retired surface WAS,
+ * the cold side's citation of them is the witness lineage's last trace of the
+ * warm board, and deleting them would strand witness.ts's two imports. If a
+ * future session wants this gone, move those two values into witness.ts first.
+ *
+ * LAW (unchanged for anything still using it): import these, never invent colors.
  *
  * Extracted from `src/desktop/opening.ts`, where 55 colors had accumulated at
  * their call sites. Every value here is EXACTLY what that file already drew —
