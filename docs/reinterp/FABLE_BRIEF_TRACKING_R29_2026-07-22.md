@@ -1,4 +1,5 @@
 # FABLE 5 ROUND PROMPT — R29: STATUS, NEXT STEPS, AND FIXING THE TRACKING
+STATUS: history-only
 *Paste everything below the rule into a NEW Fable 5 chat, in `/Users/sergiogalvaoroxo/update-available`
 (the ORIGINAL folder — Fable's persistent memory lives there). Written 2026-07-22 by Opus 4.8 from a
 tooling session in the worktree; commits `ee70a2c` and `d7053e6` on branch `reinterp`.*

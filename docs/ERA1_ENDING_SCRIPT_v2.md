@@ -1,4 +1,5 @@
 # ERA 1 ENDING — script draft v2 (S1.7 → diary → S1.9 → first UPDATE)
+STATUS: live
 
 *2026-06-12 · v2 folds in Sérgio's round-11 notes (glitch doctrine, the diary,
 chips-as-inner-voice, per-era embodiment, new names, EULA "corrects"). Canon

@@ -1,4 +1,5 @@
 # Moodboard groundwork — Era 2 room ("the accountable years")
+STATUS: live
 
 *2026-06-12 · early material to design Era 2 FROM, gathered at Sérgio's request
 ("collect assets… so we can all better adjust and make it fit the narrative").

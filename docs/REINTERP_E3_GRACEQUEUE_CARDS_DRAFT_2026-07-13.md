@@ -1,4 +1,5 @@
 # REINTERP E3 — GRACEQUEUE CARD SET, draft v1 (2026-07-13)
+STATUS: live
 
 *Fable. The moderation queue's content — what Vera actually reads and files. Feeds E3-ii
 (the pattern-memory strip) and the tablet feed. ALL DRAFT/PLACEHOLDER for Sérgio's pass.

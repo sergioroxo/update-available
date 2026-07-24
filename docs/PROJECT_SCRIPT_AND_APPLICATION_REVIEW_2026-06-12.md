@@ -1,4 +1,5 @@
 # Project Script and Application Review
+STATUS: history-only
 
 For: Claude / future AI collaborators  
 Project: `YOUR UPDATE HAS FAILED` / PC Simulator / SurvivingSOGICE  

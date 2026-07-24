@@ -1,4 +1,5 @@
 # REINTERP ERA-DOC MINING — what the shipped-build era docs give the R28 restructure (2026-07-10)
+STATUS: live
 
 *Fable, at Sérgio's direction: "read them and extract the best ideas… they were adjusted to another
 type of experience that wasn't as dynamic, but they have content that could be quite relevant."

@@ -1,4 +1,5 @@
 # COPY INVENTORY — ERA 4 (NOW / AMBIENT)
+STATUS: live
 
 **Total entries: 21 | Placeholders remaining: 20**
 

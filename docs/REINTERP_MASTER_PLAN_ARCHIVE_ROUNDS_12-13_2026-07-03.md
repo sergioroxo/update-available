@@ -1,4 +1,5 @@
 # REINTERP MASTER PLAN — ARCHIVE: FEEDBACK ROUNDS 12–13 (2026-07-03)
+STATUS: history-only
 
 *Archived 2026-07-03 per the standing ~600-line practice (Round 14). Full unedited text, reference
 only. Decisions carried forward in Fable's memory and in Rounds 14+ where superseded. Rounds 1–11:

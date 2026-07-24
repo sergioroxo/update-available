@@ -1,4 +1,5 @@
 # PC Simulator — Script Update v0.4 · "UPDATE AVAILABLE"
+STATUS: live
 
 *Status: **PROPOSAL** (2026-06-10). Layered on
 [PRODUCTION_SCRIPT_v0.3.md](PRODUCTION_SCRIPT_v0.3.md) (Assistant, Paths,

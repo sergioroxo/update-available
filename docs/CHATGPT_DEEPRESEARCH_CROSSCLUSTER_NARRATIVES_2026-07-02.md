@@ -1,4 +1,5 @@
 # Prompt for ChatGPT Deep Research — cross-cluster narratives, cluster count, and perspective-taking (paste below the line)
+STATUS: history-only
 
 *Sérgio: paste everything under the rule into ChatGPT Deep Research. Background: this feeds Feedback
 Round 1 of `docs/REINTERP_MASTER_PLAN_v1_2026-07-02.md` (F1, F2, F4) — the restructure where each era's

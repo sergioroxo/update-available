@@ -1,4 +1,5 @@
 # WebXR performance notes (Quest 3 target)
+STATUS: live
 
 *2026-07-06. Distilled from the resources Sérgio sent, mapped to THIS project.
 Not switching engines (we stay PlayCanvas + WebXR); these inform the batching /

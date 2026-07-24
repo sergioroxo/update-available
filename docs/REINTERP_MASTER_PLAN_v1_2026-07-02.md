@@ -1,4 +1,5 @@
 # REINTERPRETATION MASTER PLAN v1 — synthesis + isolated-build roadmap
+STATUS: superseded-by docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md
 
 *2026-07-02 · Claude (Fable 5) as creative director / narrative-systems architect, answering
 `docs/FABLE5_PROMPT_MASTER_IMPLEMENTATION_PLAN_2026-07-02.md`. Reconciles the shipped canon (E1–3 built,

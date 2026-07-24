@@ -193,12 +193,12 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   // Text drawn once into a canvas atlas in the label colour; the material's
   // grayscale emissive + opacity carry the fade. PLACEHOLDER wording —
   // Sérgio's pass owns every line (close_network.json).
-  const labels = (network.labels as string[]).slice(0, 28);
+  const labels = (network.labels as string[]).slice(0, 32);
   const hubOrder = nodes
     .map((n, i) => ({ i, s: n[3] ?? 1, core: i < P.coreCount }))
     .sort((a, b) => (Number(b.core) - Number(a.core)) || (b.s - a.s))
     .slice(0, labels.length);
-  const ATLAS = 1024;
+  const ATLAS = 1152; // 32 rows * ROW — the 32-label cap this atlas must fit
   const ROW = 36;
   const atlas = document.createElement('canvas');
   atlas.width = ATLAS;

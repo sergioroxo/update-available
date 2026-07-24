@@ -1,4 +1,5 @@
 # CODEX BRIEF — R26 (2026-07-08) · Era-1 playtest fixes + the missing opening
+STATUS: history-only
 
 *Prepared by Fable 5 from Sérgio's R26 Era-1 playtest. SUPERSEDES the forward
 lanes of `CODEX_BRIEF_S17_2026-07-07.md` where they overlap; that brief's

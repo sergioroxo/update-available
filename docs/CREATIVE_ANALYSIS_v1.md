@@ -1,4 +1,5 @@
 # PC Simulator — Creative Analysis & Potentials v1.0
+STATUS: history-only
 
 *Status: **PROPOSAL / ANALYSIS** (2026-06-10). Requested by Sérgio: a creative
 overview, an honest review of the ArenaAI trial, new ideas argued **for and

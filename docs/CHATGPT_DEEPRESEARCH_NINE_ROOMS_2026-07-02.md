@@ -1,4 +1,5 @@
 # Prompt for ChatGPT Deep Research — the Nine Rooms: every non-lead identity, every era (paste below the line)
+STATUS: history-only
 
 *Sérgio: paste everything under the rule into ChatGPT Deep Research. This is the biggest remaining
 research gap for the full build (`REINTERP_MASTER_PLAN_v1_2026-07-02.md` §R5-2): the lead rooms are

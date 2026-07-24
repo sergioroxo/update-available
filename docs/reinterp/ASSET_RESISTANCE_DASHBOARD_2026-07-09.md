@@ -1,4 +1,5 @@
 # Asset + Resistance Object Dashboard — 2026-07-09
+STATUS: history-only
 
 Source folder reviewed this turn:
 `/Users/sergiogalvaoroxo/Pc_Simulation/Assests`

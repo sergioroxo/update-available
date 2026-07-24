@@ -1,4 +1,5 @@
 # ATTRIBUTIONS — CC-BY assets requiring on-record credit
+STATUS: live
 
 *Established by D6 (`06_SERGIO_CHECKLIST.md`, 2026-07-10): CC-BY assets are
 usable in the build; their attribution lives here PLUS a non-diegetic credits

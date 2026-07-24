@@ -1,4 +1,5 @@
 # SONNET 5 SESSION PROMPT TEMPLATE — cost-effective build sessions
+STATUS: live
 
 *Fable fills this per session; Sérgio pastes the result into a Sonnet 5 session opened in the WORKTREE
 folder (`/Users/sergiogalvaoroxo/update-available-reinterp`). Sonnet performs best with narrow, explicit,

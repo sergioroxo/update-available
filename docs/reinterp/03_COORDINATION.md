@@ -1,4 +1,5 @@
 # COORDINATION SYSTEM — roles, protocol, and the live dispatch board
+STATUS: live
 
 *Established 2026-07-02 (master plan Round 10). Fable 5 is project coordinator/PM: it maintains this
 board, writes every prompt, reconciles every result, and asks Sérgio the decisions. Sérgio runs the

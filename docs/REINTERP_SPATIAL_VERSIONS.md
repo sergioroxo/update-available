@@ -1,4 +1,5 @@
 # The spatial versions — how to check them all
+STATUS: live
 
 *2026-07-06 (Round 24). Sérgio: "we should be able to check all versions… to
 better understand the best solutions." Every 360° layout we've tried is preserved

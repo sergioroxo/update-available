@@ -1,4 +1,5 @@
 # REINTERP AUDIO PRODUCTION GUIDE — the prayer, the VO, the tools (2026-07-11)
+STATUS: live
 
 *Fable, for Sérgio. Practical, paste-ready. Tool limits checked against current (2026) docs.
 Companion to `REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md` Appendix A and

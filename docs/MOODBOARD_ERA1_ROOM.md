@@ -1,4 +1,5 @@
 # Moodboard — Era 1 room ("the room, 1997")
+STATUS: live
 
 *2026-06-12 · prepared by Claude (Fable 5, Claude Code) for Sérgio's taste calls
 before the room milestone. References verified by live web search this session;

@@ -1,4 +1,5 @@
 # Provotypes — a new design layer (v1)
+STATUS: live
 
 *2026-07-02 · EXPLORATORY, versioned addition — does NOT replace or delete
 `docs/REINTERP_MECHANICS_AND_ENDING_NOTES_2026-07-02.md`; it extends and reframes two items in it (the

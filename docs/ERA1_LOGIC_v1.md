@@ -1,4 +1,5 @@
 # ERA 1 LOGIC v1 — "The help arrives before you ask for it"
+STATUS: live
 
 *2026-06-12 · the iterable script for Era 1 (~1995–99). This is the working
 document Sérgio asked for: the narrative logic of the era, every object's

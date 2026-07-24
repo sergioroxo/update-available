@@ -1,4 +1,5 @@
 # CODEX BRIEF — O1 opening revamp: a NEW interpretation (2026-07-12)
+STATUS: history-only
 
 *Prepared by Fable at Sérgio's direction: "the board is not working well, it needs a full
 revamp — make a NEW interpretation for the idea, do NOT reuse what already exists."

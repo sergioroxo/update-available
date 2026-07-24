@@ -1,4 +1,5 @@
 # SCRIPT UPDATE v0.8 — Round 11: the glitch doctrine, the diary, per-era embodiment
+STATUS: live
 
 *2026-06-12 · Claude (Fable 5) recording Sérgio's round-11 decisions on the
 Era-1 ending. These are project-wide canon, not just Era-1 detail. Beat-level

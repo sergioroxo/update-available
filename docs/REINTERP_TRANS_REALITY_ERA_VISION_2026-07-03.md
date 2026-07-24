@@ -1,4 +1,5 @@
 # TRANS REALITY, ERA BY ERA — creative vision for the fluid trans room
+STATUS: live
 
 *2026-07-03 · Fable 5, creative director. Routed from Sérgio's Round 12 report: explore what's most
 important/relevant about trans reality per era as the narrative is built, "fluid creativity but always

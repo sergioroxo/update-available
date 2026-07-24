@@ -25,7 +25,7 @@ npm test             # no-network / no-storage invariants + room fold + spec law
 |---|---|
 | `check-invariants.mjs` | no runtime network, no storage of user input |
 | `check-rooms.mjs` | the room deltas fold cleanly over the base room |
-| `check-spec.mjs` | dossier `status`, felt-scene purity, `tier`/`register` vocabulary, the ≤3-hero Quest budget, and a palette ratchet |
+| `check-spec.mjs` | dossier `status`, felt-scene purity, `tier`/`register` vocabulary, the ≤3-hero Quest budget, a palette ratchet, and doc lifecycle tracking (`STATUS:` headers, supersession links, opt-in `KILLS:` assertions — see `docs/reinterp/08_STATUS_REGISTER.md` §5) |
 
 ### Quest 3 loop
 ```bash

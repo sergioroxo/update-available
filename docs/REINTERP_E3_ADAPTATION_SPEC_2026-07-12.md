@@ -1,4 +1,5 @@
 # REINTERP E3 — THE ROOM YOU KEEP CLEAN (adaptation spec, 2026-07-12)
+STATUS: live
 
 *Fable. Adapts the shipped Era-3 (ERA3_SPEC_LOCKED, verified arc) into the reinterp's Room 2,
 per Sérgio's revision: "rethink to make more sense with also the trans reality of the

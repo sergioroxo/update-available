@@ -1,4 +1,5 @@
 # R28-2 — THE GUIDED NARRATIVE SPEC (Era 1 → Era 2)
+STATUS: live
 
 *Fable, 2026-07-10, from Sérgio's playtest direction (see 06_SERGIO_CHECKLIST.md D14–D18 and
 `REINTERP_RESTRUCTURE_R28_2026-07-10.md`). This is the flow-level answer to his verdicts: MORE

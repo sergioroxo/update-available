@@ -1,4 +1,5 @@
 # Deep-research brief for ChatGPT (use Deep Research mode) — Provotypes: source material + precedent
+STATUS: history-only
 
 *Sérgio: paste everything under the rule into ChatGPT's Deep Research. This collects and verifies the
 factual/source material a new "provotype" design layer needs — see

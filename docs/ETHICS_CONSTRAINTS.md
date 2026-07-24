@@ -1,4 +1,5 @@
 # Ethics constraints (distilled for the build)
+STATUS: live
 
 *Distilled from `Pc_Simulation/ETHICS_AND_CARE.md` (the authority — consult
 it for anything not covered). ⚑ = likely needs institutional ethics review.*

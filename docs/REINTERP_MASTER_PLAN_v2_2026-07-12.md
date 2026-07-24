@@ -1,4 +1,5 @@
 # REINTERP MASTER PLAN v2 — the current truth (2026-07-12)
+STATUS: live
 
 *Fable, consolidating Rounds 1–28 + Sessions 0–31 into ONE document, per Sérgio's direction
 ("the ideas and documents all fit and not fit together — reorganize") and the R28 §6 plan.

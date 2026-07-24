@@ -1,4 +1,5 @@
 # Analysis prompt — era framing & the gendered visibility of conversion practice
+STATUS: history-only
 
 *To run in **ChatGPT or regular Claude with web/research enabled** (NOT Codex —
 this is theory/literature, not code). Paste the block below. Bring the result

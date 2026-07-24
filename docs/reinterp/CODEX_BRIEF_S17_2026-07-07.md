@@ -1,4 +1,5 @@
 # CODEX BRIEF — review + build lanes after Session 17 (2026-07-07)
+STATUS: history-only
 
 *Prepared by Fable 5 for Codex, at Sérgio's instruction. Two jobs: (A) REVIEW the
 Session 16–17 work; (B) BUILD the scoped lanes below. Read

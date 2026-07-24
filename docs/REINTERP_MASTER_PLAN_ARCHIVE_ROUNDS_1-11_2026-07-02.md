@@ -1,4 +1,5 @@
 # REINTERP MASTER PLAN — ARCHIVE: FEEDBACK ROUNDS 1–11 (2026-07-02)
+STATUS: history-only
 
 *Archived 2026-07-03 for token-usage/flow reasons (the live master plan doc had grown to ~37k
 tokens, past comfortable single-read size). This is the FULL, unedited text of Rounds 1–11 —

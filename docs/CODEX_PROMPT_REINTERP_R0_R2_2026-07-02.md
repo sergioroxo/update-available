@@ -1,4 +1,5 @@
 # Prompt for Codex — reinterpretation build, phase R0→R2 (fork · flag · provotype framework · pillow)
+STATUS: history-only
 
 *Sérgio: hand this to the coding agent. It implements the first slice of
 `docs/REINTERP_MASTER_PLAN_v1_2026-07-02.md` (read it, especially §2, R0–R2, §R2-1/§R2-2, §R3-4).

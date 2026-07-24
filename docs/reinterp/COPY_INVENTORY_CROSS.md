@@ -1,4 +1,5 @@
 # COPY INVENTORY — CROSS-ERA & CHROME
+STATUS: live
 
 **Total entries: 88 | Placeholders remaining: 71**
 

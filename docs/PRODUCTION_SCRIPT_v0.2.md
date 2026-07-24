@@ -1,4 +1,5 @@
 # PC Simulator — Production Script v0.2 (Browser + Quest 3)
+STATUS: superseded-by docs/PRODUCTION_SCRIPT_v0.3.md
 
 *SurvivingSOGICE · Experience Layer · University of Bergen, CDN*
 *Status: **PROPOSAL** (2026-06-10) — derived from [NARRATIVE_SCRIPT_v0.1.md](../NARRATIVE_SCRIPT_v0.1.md),

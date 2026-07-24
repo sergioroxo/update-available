@@ -1,4 +1,5 @@
 # Prompt for ChatGPT Deep Research — sourcing the trans-masculine reader consult (paste below the line)
+STATUS: history-only
 
 *Sérgio: paste everything under the rule into ChatGPT Deep Research. This doesn't need to run urgently —
 there's real time before October — but getting it back early means the consult (whenever you schedule it)

@@ -1,4 +1,5 @@
 # WAITING ON SÉRGIO — the live parallel-work list (updated R29, 2026-07-23)
+STATUS: live
 
 *One page, kept current by Fable. Everything the build is waiting for from you, ordered by
 what it unblocks. Nothing here BLOCKS the machine — agents keep building around these —

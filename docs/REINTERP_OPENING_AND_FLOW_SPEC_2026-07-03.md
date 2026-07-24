@@ -1,4 +1,5 @@
 # OPENING & FLOW SPEC — beat-by-beat, browser-first, VR-integrated
+STATUS: superseded-by docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md
 
 *2026-07-03 · Fable 5 (design author, per Round 15's role restructure). Consolidates Sérgio's opening
 brief (archive R9-1), the flow model (archive R8-1), the visual anchors and naming notes (archive R11-3),

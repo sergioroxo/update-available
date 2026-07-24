@@ -1,4 +1,5 @@
 # CODEX BRIEF — R27 review results + plan of action (2026-07-09)
+STATUS: history-only
 
 *Prepared by Fable 5 after live-reviewing the 9-commit batch since
 `CODEX_BRIEF_R26_VERIFIED_2026-07-08.md` (dd971c9 through 71e1bba). Read

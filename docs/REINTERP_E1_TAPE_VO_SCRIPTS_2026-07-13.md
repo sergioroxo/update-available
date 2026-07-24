@@ -1,4 +1,5 @@
 # REINTERP E1 — TAPE VO SCRIPTS (Tape A companion voice · Tape B '97 radio spots)
+STATUS: live
 
 *Fable, 2026-07-13. The two remaining Era-1 audio scripts. Tape A = the program's own
 companion cassette (the voice that came in the mail with the kit); Tape B = the taped-off-

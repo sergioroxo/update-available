@@ -1,4 +1,5 @@
 # The Fluid Trans Room — Geometry Design (first pass)
+STATUS: superseded-by docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md
 
 **Status:** DESIGN PROPOSAL ONLY (doc-first, paper only).
 **Date:** 2026-07-03

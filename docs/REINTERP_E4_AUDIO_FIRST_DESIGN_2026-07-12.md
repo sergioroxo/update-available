@@ -1,4 +1,5 @@
 # REINTERP E4 — AUDIO-FIRST: how to actually make it (design, 2026-07-12)
+STATUS: live
 
 *Fable, per Sérgio: "this should all be audio based on the conversations with the AI, focus
 on deadnaming, focus on the LGB community being transphobes; keep TRANSCENDANCE." This is

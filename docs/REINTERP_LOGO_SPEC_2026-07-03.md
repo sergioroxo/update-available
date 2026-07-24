@@ -1,4 +1,5 @@
 # LOGO SPEC — "YOUR UPDATE HAS FAILED."
+STATUS: live
 
 > **v1 (the fractured arrow, below) REJECTED — Sérgio, Round 17 (2026-07-04): "make something completely
 > different." Kept for the record only.**

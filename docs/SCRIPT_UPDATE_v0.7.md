@@ -1,4 +1,5 @@
 # SCRIPT UPDATE v0.7 — Round 8: the Starter Kit, the flat low-poly pivot, title lock
+STATUS: live
 
 *2026-06-12 · Claude (Fable 5, Claude Code) recording Sérgio's decisions made
 in response to the Codex review (`update-available/docs/

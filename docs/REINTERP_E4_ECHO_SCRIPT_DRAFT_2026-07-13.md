@@ -1,4 +1,5 @@
 # REINTERP E4 — ECHO SCRIPT, DRAFT v1 (for Sérgio's verify, 2026-07-13)
+STATUS: live
 
 *Fable. Twelve conversation units — enough to HEAR the era before the full ~50-line set is
 written. Per the E4 audio-first design: Echo is one clean TTS voice, calm, unhurried,

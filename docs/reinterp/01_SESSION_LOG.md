@@ -1,4 +1,5 @@
 # REINTERP SESSION LOG — append-only; newest at the top of DONE
+STATUS: live
 
 ## NEXT UP (rebuilt R29, 2026-07-23 — the old list had been frozen since ~Session 6 while DONE grew;
 ## that drift is documented in `08_STATUS_REGISTER.md` §5. Top item = your session unless Sérgio says otherwise.)
@@ -45,6 +46,169 @@
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-24 · Session 41 — the tracking build (D47's mechanism, made real), per NEXT UP item 2:
+**parallel-safe with Session 40** (disjoint files — this session never touched `app.ts`/`guide.ts`/
+`intake.ts`/any `data/` file). **(1) STATUS headers on all 84 `docs/**.md`:** classified every doc
+against `08_STATUS_REGISTER.md` §1 (60 top-level + 24 `docs/reinterp/`, one more than the register's
+approximate "23" — `FABLE_BRIEF_TRACKING_R29` counted this time) and inserted `STATUS: live` /
+`STATUS: history-only` / `STATUS: superseded-by <path>` as the line immediately after each doc's H1
+title, via a one-off scratch script (cross-checked against `find docs -name "*.md"` before running —
+0 missing, 0 typos) so all 84 landed in one pass without hand-editing each file. Result: 50 live, 8
+superseded-by, 26 history-only, 0 UNREVIEWED — matches the register exactly. Nothing else in any doc
+touched (`git diff --stat` shows exactly one inserted line per file). One partition preserved as
+written: `REINTERP_LOGO_SPEC` and `REINTERP_TRANSMAN_ALCOVE_DESIGN` both stayed `STATUS: live` per the
+register's own instruction that an internal v1/v2 split or a G1-BLOCKED note is not the same thing as
+superseded. **(2) check-spec C5**, three checks added in the C1–C4 idiom: (a) headerless-or-UNREVIEWED
+doc count as a RATCHET, baseline frozen at 0 (all 84 headered this round — matches `npm test`'s own
+`docs headerless 0/0` line); (b) every `superseded-by` target checked to exist on disk (8 links, all
+resolve — `BUILDING_GUIDE.md`'s points at repo-root `CLAUDE.md`, not under `docs/`, and that resolves
+too); (c) opt-in `KILLS: src/<path>#<symbol>` lines, checked against every `.ts` file under `src/`
+outside the declaring file. **Every failure mode proven by real mutation-and-revert** (not just read
+by eye): deleted `ATTRIBUTIONS.md`'s STATUS line → caught (headerless 1/0) → reverted, `git diff`
+empty; set it to `STATUS: UNREVIEWED` → caught (same ratchet) → reverted clean; pointed
+`BUILDING_GUIDE.md` at a nonexistent target → caught (b) → reverted clean; appended
+`KILLS: src/state/ledger.ts#wipeLedger` (a real, still-used export) → caught (c), naming the three
+real call sites (`gameMenu.ts`, `os.ts`, `gameMenuBus.ts`) → reverted; appended a KILLS line for a
+fabricated symbol referenced nowhere → correctly PASSED (proving the check doesn't just always fail) →
+reverted; appended a KILLS line pointing at a nonexistent file → caught → reverted. Final
+`diff /tmp/ATTRIBUTIONS.md.bak docs/reinterp/ATTRIBUTIONS.md` came back identical before moving on.
+**(3) `tools/doc-status-report.mjs`** (new, read-only, not wired into `npm test` or `package.json` —
+confirmed by grep): walks `docs/**.md`, buckets by STATUS, prints the same 50/8/26/0/0 split C5
+computes — the generated view of the register's §1 table. **(4) Chore rider —
+`src/room/pointCloud.ts`:** `labels.slice(0, 28)` → `slice(0, 32)` (the merged-node count the register
+flagged as silently dropping 4 labels). Checked the atlas BEFORE committing to the number, not after:
+the label atlas was `1024×1024` with `ROW = 36`px rows — `Math.floor(1024/36) = 28`, i.e. 28 was
+already the atlas's true ceiling, not an arbitrary cut; raising the slice to 32 without touching the
+atlas would have silently overflowed the texture (row 31 at `v1 = 1152/1024 = 1.125`, past `1.0`,
+clamped/garbled under `CLAMP_TO_EDGE`). Fixed the actual constraint instead of the symptom:
+`ATLAS = 1152` (exactly `32 × ROW`, confirmed via direct calculation in the running page —
+`lastRowV1 = 1.0` exactly at the boundary, `rowsThatFit = 32`). Verified two ways, not just tsc:
+`npm run build` green (no new warnings), and a live `?reinterp=1&close=1` browser session (the
+dedicated Close review flag) showed the constellation's labels rendering legibly at the new atlas size
+(`chart 2016`, `...guide 2022`, `Exodus referral`, `Survivi...`) with no clipping or UV garbling —
+`close_network.json` only carries 24 labels today so this is forward capacity, not a visible change,
+but the capacity is now real instead of assumed. **(5) README** — the `check-spec.mjs` checker-table
+row extended to mention doc lifecycle tracking (STATUS headers / supersession / opt-in KILLS),
+pointing at `08_STATUS_REGISTER.md` §5; `doc-status-report.mjs` deliberately NOT added as its own row
+since it's not an `npm test` checker (the row it lives under says "three checkers" and that count is
+still true). **VERIFIED:** `npm test` green throughout (`invariants OK`; `rooms OK`, 140 props at E4;
+`spec OK` — palette 51/51 unchanged, `docs headerless 0/0, 8 supersession links, 0 KILLS assertion(s)
+all clear`); `npm run build` green; `tools/doc-status-report.mjs` output cross-checked line-for-line
+against the register's §1 counts. **NOT touched, per this session's own file scope:**
+`src/desktop/opening.ts`, any `data/` file, `package.json`, and Session 40's in-flight files
+(`app.ts`/`guide.ts`/`intake.ts`/`s1_guide.json`) — this session's `git diff --stat` for those four is
+empty. **BLOCKED: none.**)*
+
+*(2026-07-24 · Session 40 — R28 §4 layer 3 (LOOK/INTERACT pre-boot teaching) + retiring the
+R28-§4-dead startup-options panel, per D48's arbitration and `01_SESSION_LOG.md` NEXT UP item 1.
+**A real conflict surfaced before any code was written, and Sérgio resolved it live in this
+session (not logged as BLOCKED — direct chat access, not the async queue):** the brief's
+"INTERACT (the power button)" collided with two ALREADY-CLOSED, binding decisions — D22
+(2026-07-11, closed: E1 auto-boots, no player-pressable power button, "no change needed") and
+D38's E2 Homecoming thesis, which is built entirely on that passivity ("in '97 the machine
+booted for you; in '03 Daniel turns it on himself — voluntary return IS the era"). A second,
+purely mechanical conflict sat under it: the acceptance text places LOOK/INTERACT BEFORE O3
+profile, but `GuideThread` only ever runs once `os.phase === 'desktop'` (`src/desktop/os.ts`
+line ~627) — strictly AFTER O3 — and `os.ts` is outside this session's file scope. Verified both
+against the actual code (grep + read, not memory) before surfacing either. Presented Sérgio three
+concrete options via AskUserQuestion; he picked **"optional early power-press"**: auto-boot still
+fires unconditionally on its own timer (nothing required — D22 and D38 stay intact exactly as
+written), but a real, clickable power button is live during the window, so INTERACT is honestly
+teachable rather than describing an act the player can never perform.
+**What shipped:** (1) **The panel retirement** (`src/witness/intake.ts`): removed
+`drawStartupBoard`/`setStartupBoard`/`handleStartupClick`/`drawStartupButton`/`StartupBoardChoices`/
+`StartupBoardAction`/`STARTUP_HITS`/`this.startup` and the now-orphaned `drawWrapped` helper;
+`WitnessCanvas.update()`'s cascade now starts at the O3 cork-board check, falling to
+`drawDormant()` until profile pinning begins. Documented what the panel showed before removal (a
+duplicate "BEFORE YOU BEGIN" disclaimer + the dead "Start-up options / This screen / Headset /
+Conducted view" widget) via a live `?reinterp=1` screenshot, per the brief's own instruction.
+`openingBoardDressing.ts`, the O3 profile pinning, and the witness-lineage hardening are
+completely untouched — the partition holds. (2) **The pre-boot window** (`src/engine/app.ts`):
+`setOpeningWall`/`continueFromOpeningWall`/the `openingWallActive` gate collapse into
+`beginBoot()` + `filePreBootMessage()`; the camera now goes straight from the DOM orienting card
+to the seated EYE pose (no more intermediate board-look detour — nothing was left to look at
+once the board's canvas content died). `PRE_BOOT_MESSAGES` reads the first two `s1_guide.json`
+entries directly (LOOK/INTERACT never enter `GuideThread`'s own iteration — its constructor now
+explicitly filters them out, with a comment pointing here, since that class can't run this early).
+LOOK's "find the lamp" reuses the EXISTING niche gaze-cone math verbatim (`camera.forward` dotted
+against a normalized direction-to-lamp, `COS_GAZE` threshold, no dwell — a discovery beat, not a
+challenge). INTERACT's power press reuses the EXISTING `rayHitsPoint`+`POWER_BTN` hit-test
+verbatim (same constant, same radius, same primitive the shipped S1.0 beat and `os.isOff` already
+use elsewhere — just a new `preBootActive` guard instead of `os.isOff`, since reinterp E1 never
+sets that phase). `PRE_BOOT_AUTOBOOT_SECONDS = 9.0`. Both messages' captions render via a new
+non-diegetic DOM caption (`preBootHint`, same fixed-position frame-chrome pattern as the existing
+`moveHint`/`tapeCaption` — the monitor is dark pre-boot, so there is no diegetic taskbar surface to
+carry them, same reasoning D22 already gave for why a power-on beat needed a caption). Both
+elements now share one `HINT_CHROME` style object (was two independent literals) so the palette
+ratchet (C4) doesn't regress on a color moveHint already owns. (3) Dead-code cleanup that fell out
+of the above: `toWitness()` (only caller was the removed board-click branch), `OPENING_WALL_VIEW`,
+`CAM_MOVE_SECONDS`/`CAM_MOVE_DELAY_MS`/`STARTUP_ARM_SECONDS` (the camera dolly to EYE they drove no
+longer exists — EYE is now the starting pose, not a destination). (4) New `s1_guide.json` entries
+`look`/`interact` (PLACEHOLDER text, per the brief), documented inline as the one exception to the
+file's trigger/done-are-registry-keys convention (their conditions are DOCUMENTATION ONLY — the
+real logic lives in app.ts, not guide.ts's CONDITIONS map). (5) A new `window.__preBoot()` debug
+probe (`?debug=1`, read-only), following the exact existing `__os`/`__guide`/`__ledger` convention
+— the window has no visible surface to eyeball, same gap `__ledger` closed for filings.
+**VERIFIED (real browser, live clicks, `?reinterp=1` — an in-app-pane harness quirk is noted
+below, not a debugJump substitute):** (1) The dead panel is GONE: fresh load goes DOM orienting
+card → straight into the dark pre-boot room, zero intermediate board screen. (2) LOOK's caption
+("look around. find the lamp.") renders correctly, at the right moment, over the correct dark-
+monitor room view. (3) Camera drag-to-look responds to real pointer input during the window
+(confirmed by a real rotation changing the rendered view). (4) **The declined/timeout path,
+proven definitively via the new `__preBoot()` + existing `__ledger()` probes, not just
+screenshots:** left alone for the full 9s, `__preBoot()` read
+`{active:false, step:2, t:9.06}` and `__ledger().guidance` read EXACTLY
+`[{id:"look",outcome:"declined",witness:"guidance: look — no response"},
+{id:"interact",outcome:"declined",witness:"guidance: interact — no response"}]` —
+witness-symmetric, matching the data file verbatim, both ways. `__os.phase` read `"r_boot"` in
+the same probe: `beginBoot()` fired correctly. (5) The downstream chain past that is UNCHANGED
+and confirmed working: boot crawl plays, reaches O3 profile with "Welcome back, Daniel (we filled
+this in for you)" verbatim as before — my changes never touch `os.ts`'s r_boot/r_profile/desktop
+logic. (6) Baselines: `/` and `?flat=1` both show their own pre-existing shipped "BEFORE YOU
+BEGIN" content-warning screen (a DIFFERENT, untouched surface — not `drawStartupBoard`, which was
+reinterp-exclusive machinery), zero console errors on either. (7) `npm test` + `npm run build`
+green throughout (one interim spec-law failure, self-caught and fixed: `preBootHint`'s first draft
+duplicated `#cdd3df` as a second hex literal, breaking the C4 palette ratchet at 52 vs baseline
+51 — fixed by sharing one `HINT_CHROME` constant with `moveHint` instead of repeating the color;
+back to 51/51).
+**NOT independently verified live (flagged, not buried):** the FOLLOWED half of each message —
+real gaze-at-lamp success and a real power-button click — could not be driven repeatably in this
+harness: the Browser pane's `document.visibilityState` reports `"hidden"` permanently (confirmed
+via probe), which fully stops `requestAnimationFrame` except for a handful of ticks pumped by each
+screenshot capture; a `left_click_drag` gesture and directly-dispatched synthetic
+`pointerdown`/`pointermove`/`pointerup` sequences both rotated the camera exactly once each,
+then stopped responding to further drags in the same session (root cause not isolated — possibly
+stale pointer-capture state from the first synthetic gesture). This is the same class of artifact
+D21 already named ("backgrounded tab suspends the arm timer... your real mouse was never
+affected") and is why the declined path above leans on ledger probes rather than a screenshot of
+the "followed" text. Risk assessed LOW: both success paths call primitives already proven correct
+elsewhere in this exact codebase under real play (the niche gaze-cone math; `rayHitsPoint`+
+`POWER_BTN`, shared with the shipped S1.0 beat) — the only genuinely new logic is
+`filePreBootMessage`/`beginBoot`'s bookkeeping, and its DECLINED branch (same code path, same
+`beginBoot()` call) is now proven. Recommend a real-device or real-Chrome-window pass (this
+harness's `document.visibilityState` limitation is specific to the in-app Browser pane; a normal
+foregrounded browser window would not have this problem) to close the gap — not blocking, since
+the worst case if either success path were somehow broken is silent under-delivery of flavor text,
+never a stuck or broken game (the timeout always fires regardless).
+**Judgment calls (flagged, not buried):** (a) `PRE_BOOT_AUTOBOOT_SECONDS = 9.0` is a placeholder
+guess (enough real time to plausibly read two short lines) — easy to retune, one constant. (b)
+LOOK's gaze cone reuses `COS_GAZE` (12°) and requires zero dwell — a single frame of the right
+facing resolves it; if this reads as too twitchy/easy in a real pass, a short dwell (mirroring the
+niche system's `dwellMs`) is a small, contained addition. (c) The camera no longer visits
+`OPENING_WALL_VIEW`/the physical board at all before boot — previously a deliberate (if now-dead)
+beat; the board's 3D dressing (`openingBoardDressing.ts`) still gets its normal `'intro'` mode call
+the instant `os.beginReinterpOpening()` fires (via the pre-existing `onOpeningProfileChange`
+callback, unchanged), so nothing about ITS behavior regressed — only the forced camera detour to
+look at it pre-boot is gone, which is the intended effect of killing the panel that lived there.
+**BLOCKED: none** (the one real blocker found — the INTERACT/D22/D38 conflict — was resolved live
+in this session via direct question to Sérgio, not deferred).*
+*(2026-07-24 · Chore session — populated `06_SERGIO_CHECKLIST.md` §D (the VERIFY-SOURCE queue,
+placeholder since 2026-07-10): swept every JSON in `data/` for `[VERIFY SOURCE]` tags and
+untagged factual claims — all 8 provotype debrief sources (`pillow.json`, `origin_intake_e1.json`),
+`s2_media.json`'s apparatus echo, and the three update-trigger grounding claims from D5 (none of
+which carry a tag in `data/` itself, unlike the dossiers); flagged one stale cross-reference
+(D24's Tape B `[VERIFY SOURCE]` claim, superseded by D36's real lyrics). No data/ files touched,
+no wording changed, no statuses assigned — table only.)*
 *(2026-07-23 · R29 — THE TRACKING ROUND (Fable 5, coordination only — no code, no copy).
 Sérgio's direction: "this has been so hard to track that even you got confused — this needs a
 better system." Every claim in the R29 brief was re-verified against files before acting (the

@@ -1,4 +1,5 @@
 # PC Simulator — Production Script v0.3 (the Assistant, Paths, the developed Offer)
+STATUS: live
 
 *SurvivingSOGICE · Experience Layer · University of Bergen, CDN*
 *Status: **PROPOSAL** (2026-06-10). Supersedes the open decisions of

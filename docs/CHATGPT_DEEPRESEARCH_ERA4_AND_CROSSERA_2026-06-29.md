@@ -1,4 +1,5 @@
 # Deep-research brief for ChatGPT (use Deep Research mode) — Era 4 + cross-era education
+STATUS: history-only
 
 *Sérgio: paste everything under the rule into ChatGPT's **Deep Research**. It returns sourced material we
 fold into `docs/EVOLUTION_TIMELINE_AND_SOURCES.md` (the panels' source-of-truth) and use to (re)tune each

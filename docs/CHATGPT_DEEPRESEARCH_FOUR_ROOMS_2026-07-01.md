@@ -1,4 +1,5 @@
 # Deep-research brief for ChatGPT (use Deep Research mode) — Four-rooms reinterpretation
+STATUS: history-only
 ## (trans-man canon gap + LGB/trans distancing pattern + spatial/exhibition precedent)
 
 *Sérgio: paste everything under the rule into ChatGPT's **Deep Research**. It returns sourced material for

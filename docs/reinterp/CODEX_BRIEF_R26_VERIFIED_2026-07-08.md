@@ -1,4 +1,5 @@
 # CODEX BRIEF — R26 VERIFICATION + next lanes (2026-07-08, follow-up)
+STATUS: history-only
 
 *Prepared by Fable 5. Codex's Sessions 19–21 (commits 74f456e, 77e468a, 363306d) built
 B1 (cork-board opening) and B2 (diary-glitch ending) from `CODEX_BRIEF_R26_2026-07-08.md`,

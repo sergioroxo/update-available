@@ -1,4 +1,5 @@
 # REINTERP RESTRUCTURE — ROUND 28 (2026-07-10)
+STATUS: live
 
 *Sérgio's live-trial direction + Fable's unification. Status: DIRECTION ADOPTED under the
 autonomous-mode agreement (see `docs/reinterp/06_SERGIO_CHECKLIST.md` D1); the law revisions

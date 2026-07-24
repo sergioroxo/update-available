@@ -1,4 +1,5 @@
 # FOR SÉRGIO — decisions made, checks owed, questions open
+STATUS: live
 
 *Living register, maintained by Fable. Established 2026-07-10 at Sérgio's direction:
 Fable now makes creative/dramaturgy decisions autonomously instead of blocking on
@@ -670,6 +671,52 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 - **Q3 — copy inventory format** *(ANSWERED 2026-07-10)*: per-era files →
   executed as **D7** above.
 
-## D. VERIFY-SOURCE QUEUE (generated, pending — see B/Q3)
+## D. VERIFY-SOURCE QUEUE (generated 2026-07-24 — sweep of every JSON file in `data/`
+for `[VERIFY SOURCE]` tags AND factual claims with no tag at all. Sit top-to-bottom;
+each row is one thing to check. Nothing here has been reworded, retagged, or
+status-assigned by this sweep — that stays your call per ETHICS_CONSTRAINTS.md #13/#14.)
 
-*(placeholder — populated by an upcoming Haiku/Sonnet sweep of `data/`)*
+### D.1 Provotype debrief sources (8 total — the only place `status:` fields exist)
+
+| File | Claim | Dossier status | What verifying it takes |
+|---|---|---|---|
+| `data/provotypes/pillow.json:149` | Richard Cohen promoted an anger-release exercise (striking a pillow with a tennis racket, addressing a parent) — per a 2005 Washington Post profile and a GLAAD summary. | documentary (confidence: high) | URL check — find and re-read the WaPo profile + the GLAAD summary; confirm both describe this exercise as stated. |
+| `data/provotypes/pillow.json:155` | The commonly-repeated addition ("continue until deeper feelings emerge") could **not** be confirmed in a primary source — the gap itself is what's disclosed, not used as scripted wording. | speculative (confidence: low) | Judgment call — this is already a documented non-claim (a disclosed absence); confirm you're comfortable with the "gap disclosed" framing rather than treating it as something still owed a source. |
+| `data/provotypes/pillow.json:161` | *Ferguson v. JONAH* (New Jersey, 2015): a jury found the org's conversion-practice representations constituted consumer fraud; JONAH was barred from representing sexual orientation as curable. | documentary (confidence: high) | URL check — verify case name, jurisdiction, year, and the fraud/bar finding against a primary or reputable secondary source. |
+| `data/provotypes/pillow.json:167` | Major professional bodies (incl. APA) and the UK's cross-government Memorandum of Understanding on Conversion Therapy state such practices lack evidence of benefit and carry risk of harm. | documentary (confidence: high) | URL check — confirm APA position statement wording + the UK MoU exists and says this; both are public documents. |
+| `data/provotypes/origin_intake_e1.json:102` | Van den Aardweg's "Anamnestic Questionnaire" (1997) is a real clinical instrument; two prompts in the scene quote it directly, one paraphrases (the childhood-play question). | documentary (confidence: unspecified — check field) | KB lookup — confirm the instrument exists under this name/year, then a judgment call on whether the two "direct quotes" actually match its text and the third is fairly called a paraphrase. |
+| `data/provotypes/origin_intake_e1.json:108` | Love Won Out published conference-guide material instructing parents/schools to monitor a child's gendered behavior; this scene's framing draws on that. | documentary | URL/KB lookup — locate the conference-guide material and confirm it instructs behavioral monitoring as described. |
+| `data/provotypes/origin_intake_e1.json:114` | The behavioral-monitoring questions are composited from survivor testimony (e.g., "Guay") and clinical literature (Flentje et al., 2013) — not one surviving worksheet. | documentary | KB lookup — confirm the Flentje et al. 2013 citation is real and on-topic, and that "Guay" is a documented survivor account already in the KB (name currently unqualified — first/last, publication, where it lives). |
+| `data/provotypes/origin_intake_e1.json:120` | Major professional bodies (incl. APA) state conversion practices lack evidence of benefit; this instrument's causal premises are unsupported. | documentary | Same APA position-statement check as the pillow.json row above — likely one verification serves both. |
+
+### D.2 Other `[VERIFY SOURCE]` tags outside the provotype dossiers
+
+| File | Claim | Dossier status | What verifying it takes |
+|---|---|---|---|
+| `data/dialog/s2_media.json:2` (file-level `_doc`) | The New You infomercial echoes real apparatus: 1998 "Truth in Love" and Robert Tilton's "Success-N-Life" — documented in `docs/ERA2_EVANGELIST_COMMERCIAL_SCRIPT_2026-06-30.md`. | none — this is a `_doc` production note, not a dossier card; no `status` field exists for it. | URL/KB lookup — check the named doc actually cites both apparatus, then confirm those two real programs against a primary source (broadcast archive, press coverage) before treating the echo as grounded. |
+| `data/provotypes/_dummy.json:56,62,68` | Three placeholder lines ("Placeholder documentary/contested/speculative source") — schema-demonstration scaffolding, not narrative content. | documentary/contested/speculative (all literally placeholder text) | None — judgment call only: confirm this file is scaffolding never shipped to the player, so it doesn't belong in a source-verification pass at all. |
+| `data/strings/_close_network.schema.json:41` | Not a claim — a schema *description* explaining that a Close-constellation node must not render bright while its source text still carries `[VERIFY SOURCE]`. | n/a (mechanism, not content) | None — flagged only so it isn't mistaken for a 9th real source; the schema itself is PROPOSED/unmigrated per [[close-constellation-as-knowledge-graph]] and has no live nodes yet. |
+
+### D.3 Update triggers (`data/strings/updates.json`) — claims with NO tag anywhere in `data/`
+
+The data file itself (`u2`/`u3`/`u4`) is pure narrative copy — no `[VERIFY SOURCE]` tag
+and no `status` field exists on any trigger, unlike the provotype dossiers. The real-world
+grounding for each trigger is asserted only in this checklist's own **D5** entry above, not
+in `data/`. Listed here because the task brief named them explicitly as in-scope.
+
+| Trigger | Claim (per D5, not in data/) | Dossier status | What verifying it takes |
+|---|---|---|---|
+| u2 (1997→2003) | "The ~2000 public collapses of ex-gay figureheads" as the documentary grounding candidate for the diary-glitch trigger. | none — untagged in data/, and D5 itself marks it `[VERIFY SOURCE]` | KB lookup — identify which specific figurehead collapse(s) c. 2000 the KB already documents (if any) before this can ground u2; currently a candidate, not a confirmed source. |
+| u3 (2003→2016) | Exodus International's 2013 shutdown + public apology grounds "the accountability network is no longer able to vouch for itself." | none — untagged in data/; D5 marks it `[VERIFY SOURCE — likely already in KB]` | KB lookup only — D5's own note says this is probably already sourced elsewhere in the KB; confirm and, if so, this row closes fast. |
+| u4 (2016→now) | Malta 2016 (Act LV of 2016, first European nationwide ban) grounds the u4 install; D5 claims this is "cleared in shipped `s3.json` `_sourceDoc`." | none in this file — D5 asserts it was already CONFIRMED in the **shipped build's** `s3.json`, which does not exist in this reinterp worktree (`data/dialog/s3_queue.json` here is the unrelated E3 GraceQueue file). | Judgment call — the shipped-build file this claim depends on isn't present to re-check from inside `data/`; either pull it from the shipped repo/branch to confirm, or treat Act LV of 2016 as needing a fresh URL check here. |
+| u4 (2016→now) | App-store removals of conversion-therapy apps c. 2019, proposed as a candidate addition to u4's grounding. | none — untagged; D5 marks it `[VERIFY SOURCE]` | URL check — Apple/Google both pulled specific named apps in 2018–2019 press coverage; confirm dates and which apps before citing "c. 2019" as fact. |
+
+### D.4 Adjacent note (not a new claim — a stale cross-reference caught in this sweep)
+
+This checklist's own **D24** (2026-07-12) says "Tape B's ad captions carry `[VERIFY SOURCE]`
+per line (period-shifted from … `s2_media.json`)." That was true of the file **at the time**.
+`data/dialog/s1_tapes.json`'s Tape B segments were replaced in **D36** (Session 32) with your
+delivered "Discover The New You" song lyrics — the current file has **zero** `[VERIFY SOURCE]`
+tags on Tape B, because it's now invented/original jingle lyrics rather than a documentary
+ad-copy claim. Not a gap to verify — a judgment call to confirm: are you fine with Tape B now
+reading as pure invented content (no real-world claim to source), superseding D24's framing?

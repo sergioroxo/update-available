@@ -1,4 +1,5 @@
 # FABLE 5 ROUND PROMPT — paste everything below the rule into a NEW Fable 5 chat
+STATUS: live
 
 *Sérgio: open a new Fable 5 session in `/Users/sergiogalvaoroxo/update-available` (the ORIGINAL folder —
 Fable's persistent memory lives with this project and loads automatically). Paste the block below, then

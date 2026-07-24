@@ -1,4 +1,5 @@
 # Trans-man alcove — cross-era design sketch (four-rooms reinterpretation thread)
+STATUS: live
 
 *2026-07-02 · EXPLORATORY — part of the four-rooms/radial-spotlight reinterpretation thread, not yet
 decided for build. Do not treat as canon alongside the shipped E1–3 / spec'd E4. Cross-refs:

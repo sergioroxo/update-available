@@ -1,4 +1,5 @@
 # COPY INVENTORY — ERA 3 (2016)
+STATUS: live
 
 **Total entries: 21 | Placeholders remaining: 20**
 

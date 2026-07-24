@@ -1,4 +1,5 @@
 # PC Simulator — Script Update v0.5 · "UPDATE FAILED"
+STATUS: live
 
 *Status: **PROPOSAL** (2026-06-10). Layered on
 [SCRIPT_UPDATE_v0.4.md](SCRIPT_UPDATE_v0.4.md) /

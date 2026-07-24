@@ -1,4 +1,5 @@
 # THE NARRATIVE MASTER SCRIPT — beat map + the guide (v1)
+STATUS: superseded-by docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md
 
 *2026-07-04 · Fable 5 (design author). The story spine of the reinterpreted experience: every beat per
 era, every cross-cluster send, where each built mechanic lands, what each update ritual means

@@ -1,4 +1,5 @@
 # REINTERP BUILD SYSTEM — start here (for ANY model: Opus 4.8, Sonnet 5, Codex, Fable)
+STATUS: live
 
 *You are building the REINTERPRETATION VERSION of "YOUR UPDATE HAS FAILED." on an isolated copy. The
 shipped version (Eras 1–3 built, Era 4 spec'd) is the funded, exhibitable asset and is NEVER touched in

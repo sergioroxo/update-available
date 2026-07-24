@@ -1,4 +1,5 @@
 # Mechanics + ending notes, organized (2026-07-02)
+STATUS: history-only
 
 *Sérgio dropped a batch of raw notes spanning several different parts of the piece — the global Close, a
 new collectible mechanic, a physical prop, and period-texture details. This doc sorts them into named

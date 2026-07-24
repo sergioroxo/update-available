@@ -1,4 +1,5 @@
 # Asset pipeline — real low-poly models
+STATUS: live
 
 *2026-07-06 (Round 24). Sérgio: "I want only real low-poly models… add asset
 pipeline." This is the plumbing that swaps box-furniture for real CC0 low-poly

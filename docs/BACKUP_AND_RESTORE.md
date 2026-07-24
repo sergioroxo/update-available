@@ -1,4 +1,5 @@
 # Backup & Restore — plain-language guide
+STATUS: live
 
 This project lives in three places, so it is hard to lose:
 

@@ -1,4 +1,5 @@
 # ⛔ RETIRED — DO NOT RUN (Sérgio, Round 15, 2026-07-03)
+STATUS: history-only
 
 *Sérgio's call: this whole line of process/logistics research was a misuse of resources — "there is
 enough information online to talk about the Transmasculine realities... consider more ethical questions

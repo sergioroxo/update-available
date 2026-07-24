@@ -1,4 +1,5 @@
 # REINTERP E2 — THE HOMECOMING (beat script, R28-2d source of truth)
+STATUS: live
 
 *Fable, 2026-07-12. The Era-2 narrative for the reinterp, built from Sérgio's homecoming law
 (D15), the era mining (Caleb thread, Restorify spine, collapse composite — FIND #1), and the

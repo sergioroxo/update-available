@@ -1,4 +1,5 @@
 # 3D ENVIRONMENT — STYLE & CREATIVE DIRECTION v1
+STATUS: live
 
 *2026-07-04 · Fable 5 (design author). The art-direction doc for the reinterp 3D world — the creative
 argument first, then era-by-era execution, then what builds when. Inherits and never bends: Soft Lo-Fi

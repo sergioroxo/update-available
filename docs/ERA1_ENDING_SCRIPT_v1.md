@@ -1,4 +1,5 @@
 # ERA 1 ENDING — script draft v1 (S1.7 → S1.9 → first UPDATE)
+STATUS: superseded-by docs/ERA1_ENDING_SCRIPT_v2.md
 
 *2026-06-12 · the iterable script for the close of Era 1, for Sérgio to read,
 edit, and approve BEFORE it is built. Implements SCRIPT_UPDATE_v0.7 §8–§9

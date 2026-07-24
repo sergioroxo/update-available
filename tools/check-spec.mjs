@@ -8,17 +8,30 @@
  * data/provotypes/ at all. A law that is documented as enforced and isn't is
  * worse than an unwritten one: it buys confidence nobody paid for.
  *
- * Four checks, each defending a law that is GREEN today (this locks the current
+ * Five checks, each defending a law that is GREEN today (this locks the current
  * state, it does not ask for new work):
  *   C1 dossier/provotype schema — every source carries a status + confidence
  *   C2 felt-scene purity — no assistant offers a `felt` scene (tone laws)
  *   C3 tier/register vocabulary + the Quest budget of <=3 hero objects per scene
  *   C4 palette discipline — hex literals outside src/desktop/theme/, as a RATCHET
+ *   C5 doc lifecycle tracking — STATUS headers, supersession links, opt-in KILLS
  *
  * C4 ratchets rather than fails outright: ~157 literals predate the law's
  * enforcement. Failing on all of them would get this file deleted by Friday.
  * It fails on growth and nags downward. See tools/check-invariants.mjs for the
  * two invariants that DO fail absolutely (network, storage).
+ *
+ * C5 (added R29, D47/08_STATUS_REGISTER.md §5): the register's own diagnosis
+ * was that a hand-maintained "what's current" page drifts silently — nothing
+ * breaks when it goes stale, so nobody notices. The fix mirrors C4's ratchet
+ * idiom rather than a one-shot pass: every docs/**.md carries a `STATUS:` line
+ * as its first body line (`live` / `history-only` / `superseded-by <path>` /
+ * honest `UNREVIEWED`); missing-or-UNREVIEWED count is ratcheted so the
+ * migration can land incrementally and never silently regress; every
+ * `superseded-by` target is checked to actually exist; and an opt-in `KILLS:
+ * src/<path>#<symbol>` line lets a doc claim a symbol dead, failing CI if that
+ * symbol is still referenced outside its own file — catching exactly the
+ * "planned, partially done, assumed complete" gap the register was written for.
  *
  * Failure text names the law, not just the field — Sérgio reads these.
  */
@@ -173,6 +186,91 @@ if (hexCount > HEX_BASELINE) {
   notes.push(`palette improved: ${hexCount} < baseline ${HEX_BASELINE} — tighten HEX_BASELINE to ${hexCount} in tools/check-spec.mjs`);
 }
 
+// ── C5: doc lifecycle tracking (STATUS headers, supersession, opt-in KILLS) ──
+/**
+ * Ratchet baseline: docs missing a STATUS header, or honestly left
+ * UNREVIEWED, in docs/**.md. Frozen at adoption (S41, all 84 docs headered).
+ * Lower this number when it drops; never raise it without a note saying
+ * which doc regressed and why.
+ */
+const HEADERLESS_BASELINE = 0;
+
+const STATUS_LINE = /^STATUS:\s*(live|history-only|UNREVIEWED|superseded-by\s+(\S+))\s*$/;
+const KILLS_LINE = /^KILLS:\s*(src\/\S+?)#(\S+)\s*$/;
+
+let headerlessCount = 0;
+const supersededTargets = []; // { where, target }
+const killsClaims = [];       // { where, path, symbol }
+
+(function walkMd(dir) {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) {
+      walkMd(p);
+      continue;
+    }
+    if (!name.endsWith('.md')) continue;
+    const where = rel(p);
+    const lines = readFileSync(p, 'utf8').split('\n');
+    const headerLine = lines.slice(0, 3).find((l) => STATUS_LINE.test(l.trim()));
+    if (!headerLine) {
+      headerlessCount++;
+      continue;
+    }
+    const m = headerLine.trim().match(STATUS_LINE);
+    if (m[1] === 'UNREVIEWED') {
+      headerlessCount++; // honest, but still an open item — same ratchet as missing
+    } else if (m[1].startsWith('superseded-by')) {
+      supersededTargets.push({ where, target: m[2] });
+    }
+    for (const line of lines) {
+      const km = line.trim().match(KILLS_LINE);
+      if (km) killsClaims.push({ where, path: km[1], symbol: km[2] });
+    }
+  }
+})(join(ROOT, 'docs'));
+
+if (headerlessCount > HEADERLESS_BASELINE) {
+  errors.push(`doc tracking: ${headerlessCount} docs/**.md missing a STATUS header (or left UNREVIEWED), ` +
+    `baseline is ${HEADERLESS_BASELINE}. Add \`STATUS: live | history-only | superseded-by <path>\` as the ` +
+    `first body line, per 08_STATUS_REGISTER.md §1 — or write UNREVIEWED honestly if the status is genuinely unknown.`);
+} else if (headerlessCount < HEADERLESS_BASELINE) {
+  notes.push(`doc tracking improved: ${headerlessCount} < baseline ${HEADERLESS_BASELINE} — ` +
+    `tighten HEADERLESS_BASELINE to ${headerlessCount} in tools/check-spec.mjs`);
+}
+
+for (const { where, target } of supersededTargets) {
+  if (!existsSync(join(ROOT, target))) {
+    errors.push(`${where}: STATUS superseded-by "${target}" but that file does not exist on disk.`);
+  }
+}
+
+for (const { where, path: killPath, symbol } of killsClaims) {
+  const killAbs = join(ROOT, killPath);
+  if (!existsSync(killAbs)) {
+    errors.push(`${where}: KILLS ${killPath}#${symbol} but ${killPath} does not exist on disk.`);
+    continue;
+  }
+  const referencedIn = [];
+  (function walkSrcForSymbol(dir) {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) {
+        walkSrcForSymbol(p);
+        continue;
+      }
+      if (!/\.ts$/.test(name)) continue;
+      if (rel(p) === killPath) continue; // the declaring file may reference itself freely
+      const content = readFileSync(p, 'utf8');
+      if (new RegExp(`\\b${symbol}\\b`).test(content)) referencedIn.push(rel(p));
+    }
+  })(join(ROOT, 'src'));
+  if (referencedIn.length) {
+    errors.push(`${where}: KILLS ${killPath}#${symbol} but it is still referenced outside its own file: ` +
+      `${referencedIn.join(', ')}. The doc claims this symbol is dead — it isn't.`);
+  }
+}
+
 // ── report ───────────────────────────────────────────────────────────────────
 if (errors.length) {
   console.error('spec-law check FAILED:');
@@ -182,5 +280,7 @@ if (errors.length) {
 for (const n of notes) console.log('spec-law note: ' + n);
 console.log(
   `spec OK: ${provotypeCount} provotypes carry dossier status + confidence; ` +
-  `${heroScenes} scenes within the ${MAX_HERO_PER_SCENE}-hero budget; palette ${hexCount}/${HEX_BASELINE}`
+  `${heroScenes} scenes within the ${MAX_HERO_PER_SCENE}-hero budget; palette ${hexCount}/${HEX_BASELINE}; ` +
+  `docs headerless ${headerlessCount}/${HEADERLESS_BASELINE}, ${supersededTargets.length} supersession links, ` +
+  `${killsClaims.length} KILLS assertion(s) all clear`
 );

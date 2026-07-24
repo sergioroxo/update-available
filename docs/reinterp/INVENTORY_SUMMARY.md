@@ -1,4 +1,5 @@
 # COPY INVENTORY — SESSION SUMMARY
+STATUS: live
 
 **Generated: 2026-07-10 | Reinterp branch sweep**
 

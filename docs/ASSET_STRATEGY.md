@@ -1,4 +1,5 @@
 # Asset strategy — no Aseprite required (decided 2026-06-12)
+STATUS: live
 
 Sérgio does not use Aseprite. Assets come from three channels; the
 `export-atlases` pipeline stays for the day a pixel artist joins, but nothing

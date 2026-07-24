@@ -1,4 +1,5 @@
 # HOW TO RUN A SESSION — plain-language operator's guide (added Round 14, 2026-07-03)
+STATUS: live
 
 *For Sérgio. Answers the standing question: "how do I actually get Opus/Sonnet/Codex to do something?"
 No coding knowledge assumed.*

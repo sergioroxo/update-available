@@ -1,4 +1,5 @@
 # THE WITNESS TERMINAL — dramaturgy of the record (v1)
+STATUS: history-only
 
 *2026-07-04 · Fable 5 (design author). Session 9 built the surface (the shrunk record terminal on the
 south spine, same witness canvas); this doc is what the record SAYS, when it is readable, and how

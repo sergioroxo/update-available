@@ -1,4 +1,5 @@
 # TRANSITION CHOREOGRAPHY — the three updates + the Close, staged (v1)
+STATUS: live
 
 *2026-07-04 · Fable 5 (design author). The creative design of the piece's signature 3D moments: what
 the player sees, hears, and LOSES at each era transition. The mechanics exist (Session 8's

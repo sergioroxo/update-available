@@ -1,4 +1,5 @@
 # Reinterpretation analysis — "four rooms" (identity-led spatial redesign)
+STATUS: superseded-by docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md
 
 *2026-07-01. Prepared by Claude (Sonnet 5) at Sérgio's request, as an idea-reinterpretation pass — no
 code or data touched. Purpose: capture the analysis, the proposal as it clarified through discussion, the

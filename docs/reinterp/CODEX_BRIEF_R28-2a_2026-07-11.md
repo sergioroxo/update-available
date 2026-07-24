@@ -1,4 +1,5 @@
 # BUILD BRIEF — R28-2a: the side-message guide system (+ stretch: the infomercial port)
+STATUS: history-only
 
 *Prepared by Fable 2026-07-11 for any capable build model (Opus 4.8 / Codex / Sonnet 5 in a
 fresh session). Sérgio may paste this whole file as the session prompt. One session's scope;

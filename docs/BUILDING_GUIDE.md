@@ -1,4 +1,5 @@
 # PC Simulator — Building Guide v1.0
+STATUS: superseded-by CLAUDE.md
 
 *Companion to [PRODUCTION_SCRIPT_v0.2.md](PRODUCTION_SCRIPT_v0.2.md). Status:
 **PROPOSAL** (2026-06-10). Audience: Sérgio (non-coder, directing AI

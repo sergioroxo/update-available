@@ -1,4 +1,5 @@
 # PROVOTYPE EMBODIMENT ANALYSIS — why the pillow doesn't land, and what the grammar needs
+STATUS: history-only
 
 *2026-07-03 · Fable 5, routed from Sérgio's Round 12 report ("didn't understand the logic and aesthetics
 of it, misses the connection with real-world logic and narrative storytelling immersive benefits").

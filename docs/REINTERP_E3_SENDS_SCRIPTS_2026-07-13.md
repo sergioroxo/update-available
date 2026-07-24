@@ -1,4 +1,5 @@
 # REINTERP E3 — THE SENDS, scripted (S3R.3: tasks as travel · 2026-07-13)
+STATUS: live
 
 *Fable. The two system-sent cross-room tasks that make E3's movement narrative — the
 player leaves Room 2 on the SYSTEM'S errands and comes back changed. Feeds build lane

@@ -1,4 +1,5 @@
 # PC Simulator — Script Update v0.6 · "The Last Update" (the Close)
+STATUS: live
 
 *Status: **PROPOSAL** (2026-06-12). Layered on
 [SCRIPT_UPDATE_v0.5.md](SCRIPT_UPDATE_v0.5.md). Answers Sérgio's round-four

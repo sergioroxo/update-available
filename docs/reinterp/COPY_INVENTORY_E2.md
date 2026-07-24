@@ -1,4 +1,5 @@
 # COPY INVENTORY — ERA 2 (2003)
+STATUS: live
 
 **Total entries: 21 | Placeholders remaining: 20**
 

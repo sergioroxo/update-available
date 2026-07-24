@@ -1,4 +1,5 @@
 # STATUS REGISTER — every population, by status (R29, 2026-07-23)
+STATUS: live
 
 *Fable. The one page Sérgio asked for ("this has been so hard to track that even you got
 confused — this needs a better system"). Four populations, FOUR SEPARATE AXES — a doc's

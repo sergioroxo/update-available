@@ -1,4 +1,5 @@
 # Prompt for ChatGPT Deep Research — the Sides taxonomy + remaining archival asks (paste below the line)
+STATUS: history-only
 
 *Sérgio: paste everything under the rule into ChatGPT Deep Research. Background: feeds
 `REINTERP_MASTER_PLAN_v1_2026-07-02.md` §R3-2 (the Side A/B/X/Y per-era chart device) and closes the two
