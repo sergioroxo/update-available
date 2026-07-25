@@ -102,13 +102,21 @@ const BLINK_IN_SECONDS = 0.22;
  *  physical geometry lives here in code (CLAUDE.md: layout in .ts, display
  *  text in data/); the state machine + captions live in data/dialog/
  *  s1_tapes.json + src/narrative/tapes.ts. */
+// Session 49 (finding 2): re-sited to match the props' new home in
+// data/room/reinterp_deltas.json r1 — the three tapes now sit at the cassette
+// player's own base height (0.766) in the open shelf run BESIDE it, because the
+// real cassettePlayer.glb is deep enough (z[0.529,0.711]) that two of them used
+// to be hidden underneath it. These points ARE the click geometry: they must
+// stay identical to the prop positions in that file.
 const TAPE_SHELF: Record<TapeId, { x: number; y: number; z: number }> = {
-  tapeA: { x: 1.75, y: 0.646, z: 0.4 },
-  tapeB: { x: 1.75, y: 0.646, z: 0.55 },
-  tapeC: { x: 1.75, y: 0.646, z: 0.7 }
+  tapeA: { x: 1.74, y: 0.766, z: 0.79 },
+  tapeB: { x: 1.74, y: 0.766, z: 0.94 },
+  tapeC: { x: 1.74, y: 0.766, z: 1.09 }
 };
 const TAPE_HIT_RADIUS = 0.07; // stays under half the 0.15m shelf spacing — no ambiguity between tapes
-const BOOMBOX_HIT = { x: 1.9, y: 0.76, z: 0.55 };
+/** the player's measured AABB is x[1.656,2.063] y[0.76,0.911] z[0.529,0.711];
+ *  this sits at its centre so the whole object is clickable */
+const BOOMBOX_HIT = { x: 1.86, y: 0.83, z: 0.62 };
 const BOOMBOX_HIT_RADIUS = 0.22;
 /** the visual "docked" spot, just in front of the boombox's own deck plate */
 const TAPE_SLOT_PROP: Record<TapeId, string> = {
@@ -554,13 +562,28 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // generalizes R28-0c item 10's floppy lift: a STATIC brightness lift (no
   // pulse, no glow halo — Soft Lo-Fi) on the props the current guidance
   // points at, restored to their exact prior emissive when it retires.
+  // Session 49 (finding 2): `boombox` now names ONE id — `boomboxModel`, the
+  // real cassettePlayer.glb (data/room/reinterp_deltas.json r1). The four box
+  // props it replaces (boombox + the three zeroed speaker/deck details) are
+  // gone from the room, so pointing at them lifted nothing that existed.
   const EMPHASIS_PROPS: Record<string, string[]> = {
     floppy: ['kitFloppy', 'kitFloppyLabel', 'kitFloppyShutter'],
-    boombox: ['boombox', 'boomboxSpeakerL', 'boomboxSpeakerR', 'boomboxDeck']
+    boombox: ['boomboxModel']
   };
-  const EMPHASIS_FRAC = 0.32; // of the prop's own diffuse — never a new light
+  // of the prop's own diffuse — never a new light. Session 49 raised this from
+  // 0.32: measured on the shelf, 0.32 of a ~0.27 diffuse added ~0.09 emissive
+  // to a dark object 1.9m away in a lamp-lit room, and before/after screenshots
+  // were indistinguishable. The guidance said "the player is on the shelf" and
+  // nothing on the shelf changed. Still a static lift — no pulse, no halo, no
+  // new light source (Soft Lo-Fi); it just has to be visible to do its job.
+  // 0.55/0.06 was picked by eye against the lamp-lit shelf: 0.32 was invisible,
+  // 0.85 read as a glowing object (a new light, which the doctrine forbids).
+  const EMPHASIS_FRAC = 0.55;
+  /** …and a floor, so a very dark prop still reads as lifted at all */
+  const EMPHASIS_FLOOR = 0.06;
   let appliedEmphasis: string | null = null;
-  const emphasisRestore = new Map<string, pc.Color>();
+  /** id → the exact prior emissive of EVERY material that prop renders with */
+  const emphasisRestore = new Map<string, pc.Color[]>();
   function setPropEmphasis(key: string | null): void {
     if (key === appliedEmphasis) return;
     if (appliedEmphasis) {
@@ -568,8 +591,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const h = room.props.get(id);
         const orig = emphasisRestore.get(id);
         if (!h || h.emissive || !orig) continue;
-        h.material.emissive = orig;
-        h.material.update();
+        h.materials.forEach((m, i) => {
+          if (!orig[i]) return;
+          m.emissive = orig[i];
+          m.update();
+        });
       }
       emphasisRestore.clear();
     }
@@ -578,10 +604,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       for (const id of EMPHASIS_PROPS[key] ?? []) {
         const h = room.props.get(id);
         if (!h || h.emissive) continue; // never touch true emissives (LEDs etc.)
-        emphasisRestore.set(id, h.material.emissive.clone());
-        const d = h.material.diffuse;
-        h.material.emissive = new pc.Color(d.r * EMPHASIS_FRAC, d.g * EMPHASIS_FRAC, d.b * EMPHASIS_FRAC);
-        h.material.update();
+        // `materials`, never `material`: a MODEL prop's `material` is an orphan
+        // nothing renders, which is exactly why this lift used to be invisible
+        // on the boombox (src/room/era1room.ts's PropHandle doc).
+        emphasisRestore.set(id, h.materials.map(m => m.emissive.clone()));
+        for (const m of h.materials) {
+          const d = m.diffuse;
+          m.emissive = new pc.Color(
+            Math.min(1, d.r * EMPHASIS_FRAC + EMPHASIS_FLOOR),
+            Math.min(1, d.g * EMPHASIS_FRAC + EMPHASIS_FLOOR),
+            Math.min(1, d.b * EMPHASIS_FRAC + EMPHASIS_FLOOR)
+          );
+          m.update();
+        }
       }
     }
   }

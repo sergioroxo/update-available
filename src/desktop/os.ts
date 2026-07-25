@@ -502,17 +502,53 @@ export class DesktopOS {
     this.dirty = true;
   }
 
-  private drawNetvisionOffer(W: number, H: number): void {
+  /**
+   * Lamby's two-line dialog — ONE layout, used by his debut (S2R.1) and by the
+   * video offer (S2R.4), because they are the same window and used to carry the
+   * same bug.
+   *
+   * Session 49 (finding 3, Sérgio: "Welcome back Daniel… renders out of frame"):
+   * both drew their lines with a bare `fillText` at a fixed inset inside a
+   * 300px-wide frame. That leaves 252px of room, and BOTH first lines are wider
+   * than that — "Welcome back, Daniel. We kept your room ready." measures 277px
+   * and "I found something that helped others like you." 277px — so each spilled
+   * ~25px (about four characters) past the window's right bevel and onto the
+   * desktop behind it. The window was centred on the monitor the whole time; it
+   * was the TEXT that was out of its frame.
+   *
+   * Fixed twice over, because every string here is still PLACEHOLDER pending
+   * Sérgio's voice pass and a layout that merely just-fits is a trap: the frame
+   * is wider, AND the lines wrap to the real measured width. A wrapped line is
+   * still ONE line of Lamby speech — the ≤2-lines-per-conduction-beat law is
+   * about utterances, not rendered rows.
+   */
+  private drawLambyDialog(
+    W: number, H: number, title: string, line1: string, line2: string
+  ): ui.ContentRect {
     const { ctx } = this;
-    const dw = 300; const dh = 130;
+    const dw = 348; const dh = 138;
     const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
-    const c = ui.windowFrame(ctx, dx, dy, dw, dh, lambyStrings.videoOfferWindowTitle, true);
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, title, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     this.drawLambyMark(c.x + 6, c.y + 6);
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
-    ctx.fillText(lambyStrings.videoOfferLine1, c.x + 40, c.y + 10);
-    ctx.fillText(lambyStrings.videoOfferLine2, c.x + 40, c.y + 28);
+    const textX = c.x + 40;
+    const maxW = c.w - 40 - 8; // the mark's column, and a margin off the bevel
+    let row = 0;
+    for (const line of [line1, line2]) {
+      for (const wrapped of ui.wrapText(ctx, line, maxW)) {
+        ctx.fillText(wrapped, textX, c.y + 10 + row * 13);
+        row++;
+      }
+    }
+    return c;
+  }
+
+  private drawNetvisionOffer(W: number, H: number): void {
+    const { ctx } = this;
+    const c = this.drawLambyDialog(W, H, lambyStrings.videoOfferWindowTitle,
+      lambyStrings.videoOfferLine1, lambyStrings.videoOfferLine2);
     const by = c.y + c.h - 26;
     ui.button(ctx, c.x + c.w - 86, by, 78, 18, lambyStrings.videoOfferWatch, { hover: this.hover === 'netvision-watch' });
     ui.button(ctx, c.x + 8, by, 96, 18, lambyStrings.videoOfferNotNow, { hover: this.hover === 'netvision-notnow' });
@@ -1042,15 +1078,8 @@ export class DesktopOS {
   private drawLambyGreeting(W: number, H: number): void {
     const { ctx } = this;
     ui.px(ctx, 0, 0, W, H, ERA1.tealDark);
-    const dw = 300; const dh = 130;
-    const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
-    const c = ui.windowFrame(ctx, dx, dy, dw, dh, lambyStrings.lambyWindowTitle, true);
-    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
-    this.drawLambyMark(c.x + 6, c.y + 6);
-    ui.setFont(ctx, 10);
-    ctx.fillStyle = ERA1.black;
-    ctx.fillText(lambyStrings.lambyLine1, c.x + 40, c.y + 10);
-    ctx.fillText(lambyStrings.lambyLine2, c.x + 40, c.y + 28);
+    const c = this.drawLambyDialog(W, H, lambyStrings.lambyWindowTitle,
+      lambyStrings.lambyLine1, lambyStrings.lambyLine2);
     const by = c.y + c.h - 26;
     ui.button(ctx, c.x + c.w - 96, by, 88, 18, lambyStrings.lambyBegin, { hover: this.hover === 'lamby-begin' });
     ui.button(ctx, c.x + 8, by, 96, 18, lambyStrings.lambyDismiss, { hover: this.hover === 'lamby-dismiss' });

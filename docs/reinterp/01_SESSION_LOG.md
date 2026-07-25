@@ -51,6 +51,108 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-25 · Session 49 — **THE E1/E2 INTERACTION DIAGNOSTIC**, per the S49 prompt
+(findings 2, 3, 6 of `docs/REINTERP_PLAYTHROUGH_NOTES_2026-07-25.md`). Diagnose first, fix
+second. The headline: **Sérgio was right about all three, and the code was right too — every
+system he called "not working" was fully built, and every one of them was invisible,
+mis-framed, or unreachable by the path he took.** Nothing was rebuilt; three visibility bugs
+were fixed. All verified with REAL CLICKS from a fresh `?reinterp=1`.
+
+### Finding 2 — THE E1 PROPS · verdict: **FIXED (the logic always worked; you could not see or
+### reach it)**
+The tape system is complete and correct. Proven before touching anything: a real click on a
+shelf tape inserted it (`__tapes().inserted`), a real click on the player started it
+(`playing:true`, elapsed advancing, the caption line rendering), and `tape-played` landed in
+`ledger.records` — which is exactly the key `guide.ts`'s `tapePlayed` condition waits on, so
+the `tape` side-message can retire as *followed*. **guide.ts's own comment — "tapePlayed waits
+for the R28-2b tape system" — is stale; R28-2b shipped in Session 32.** What was actually
+wrong was three separate visual failures stacked on the same object:
+1. **⚑ THE REAL ONE: the boombox model never applied, and could not have.** Session 32's
+   live-playtest fix set `"model": "cassettePlayer"` on an r1 **override** in
+   `reinterp_deltas.json`. But `clusterMorph.ts`'s fold declares overrides as
+   `{color?, pos?, size?}` and copies only those three — **`model` is silently dropped**. The
+   folded target therefore kept the base's (absent) model and the prop rendered as its
+   fallback BOX: an anonymous dark-grey block, 1.9 m away, in a lamp-lit room. The 418KB
+   `cassettePlayer.glb` was downloaded on every load (it is in `__modelsLoaded`) and never
+   used. Session 32's fix has been dead for 17 sessions. **Fixed in data, using this file's own
+   existing grammar** — overrides still cannot introduce a model, but `add` entries can
+   (`foldTargets` passes `def.model`, `spawnTarget` spawns it), which is how
+   deskModel/chairModel/bookcaseModel already work: the four box props are now `remove`d at r1
+   and a `boomboxModel` replaces them at Session 32's own measured pose. It reads as a cassette
+   deck now, with a lid and controls.
+2. **Its three detail props had been zeroed for a model that never arrived.** Session 32 set
+   `boomboxSpeakerL/R` and `boomboxDeck` to size 0.001 *because* the model was going to
+   replace them. It didn't — so the box lost the only features that made it read as a player.
+   Gone with the boxes.
+3. **The `emphasis: boombox` prop-lift was imperceptible.** It fired (the fallback box's
+   handle material IS its rendered one), but `EMPHASIS_FRAC` 0.32 of a ~0.27 diffuse added
+   ~0.09 emissive to a dark object at 1.9 m — before/after screenshots were indistinguishable.
+   So the guidance said "the player is on the shelf" and nothing on the shelf changed. Raised
+   to 0.55 + a 0.06 floor, picked by eye against the lit shelf (0.85 read as a glowing object,
+   which the doctrine forbids — still a static lift, no pulse, no halo, no new light).
+**A latent trap fixed on the way:** `PropHandle.material` is an ORPHAN for model props —
+`spawnProp` builds a StandardMaterial and only ever assigns it to the *box* path, so anything
+lighting a prop through `handle.material` worked on boxes and silently did nothing on models.
+`PropHandle` now also carries `materials` (the box's one, or the model's own per-instance
+clones), and the emphasis reads that. Without this, fixing (1) would have *broken* (3).
+**Also repositioned, because the model exposed it:** the real player is far deeper than the box
+(measured AABB x[1.656,2.063] z[0.529,0.711], base y0.76), so **two of the three tapes sat
+underneath it**, invisible from the seat — and their y0.646 predated r1 removing the box
+shelfBoards for `bookcaseModel`, so it matched no real surface. All three now sit at the
+player's own base height in the open shelf run beside it, with `TAPE_SHELF` (the click
+geometry, in app.ts) moved to match exactly. The docked-tape spots moved onto the player's top
+deck for the same reason — y0.82 now falls *inside* the model, so an inserted tape vanished.
+**Re-verified after every change with real clicks:** tape inserted, player toggled, caption
+running, `tape-played` filed, the inserted tape visibly gone from the shelf and sitting on the
+deck. **The prayer** Sérgio named is the kit booklet's prayer page — not a prop; it is what
+*triggers* the tape message (`kitPrayerPage`), and it works. Nothing here was unbuilt.
+
+### Finding 3 — E2 FRAMING · verdict: **FIXED**
+"Welcome back, Daniel. We kept your room ready." is 46 characters = **276.9px** drawn into a
+300px-wide window that leaves **252px** — so ~25px (about four characters) spilled past the
+right bevel onto the desktop behind it. The window was centred on the monitor the whole time;
+it was the TEXT that was out of its frame. **The same bug sat in the video-offer window**,
+which uses identical geometry: "I found something that helped others like you." measures
+277.0px into the same 252px. Both are now drawn by ONE shared `drawLambyDialog` helper, fixed
+twice over — the frame is wider (348px) **and** the lines wrap to the real measured width,
+because every string here is still PLACEHOLDER pending Sérgio's voice pass and a layout that
+merely just-fits is a trap. A wrapped line is still one line of Lamby *speech*: the
+≤2-lines-per-conduction-beat law is about utterances, not rendered rows. No copy was touched
+(`s2_lamby.json` was outside this session's fence, and layout was the right place to fix it
+anyway). Verified in the live linear path, both windows.
+
+### Finding 6 — THE REVIEW PATH · verdict: **ALREADY WORKED — the review path was misleading,
+### exactly as suspected. Nothing was missing and nothing was built.**
+Confirmed by playing it. From `e2Silence` — the era's true start — the whole chain runs by
+ordinary clicking, and I drove every step with real clicks: **S2R.0 silence → click → Lamby's
+debut → Begin → Restorify's Daily Realignment (four chips) → ONE check-in ("steady", filed to
+`ledger.checkins`) → the Caleb thread opens BY ITSELF (`maybeOpenCaleb` fires on the first
+completed check-in) → commit-press → the accountability alert → Okay → THE VIDEO OFFER → Watch
+→ the New You Program playing (stage `playing`, all 13 scenes).** So both things Sérgio
+reported as missing sit on that chain, a couple of clicks apart; landing inside the Caleb
+thread simply skips past them, and neither is on screen there. **Made discoverable rather than
+merely documented:** the panel's `e2Silence` button is now labelled **"S2R.0 · silence — ⏵
+LINEAR ENTRY (play from here)"**, with the full chain written out above it in `panel.ts`, so a
+reviewer never has to infer it from button order. No video content was built or changed.
+
+**Verification:** `npm test` + `npm run build` green. Baselines re-checked by real load: `/`
+(shipped, non-reinterp) boots seated with the content warning and the untouched box room — the
+boombox change is an r1 delta and `model` is only honored under reinterp, so the shipped build
+cannot see it; `?flat=1&reinterp=1` boots normally. **Harness note for the next session:** the
+Browser pane's click tool reports a screenshot size ~5% larger than the coordinate space it
+actually clicks in — calibrate once by hovering a known hit rect and reading back
+`event.clientX/Y` (a hover that misses leaves `os.hover` empty), then divide projected client
+coords by that factor. Two mis-clicks were spent discovering this.
+**Files touched:** `data/room/reinterp_deltas.json`, `src/room/era1room.ts`,
+`src/engine/app.ts`, `src/desktop/os.ts`, `src/debug/panel.ts`,
+`docs/reinterp/01_SESSION_LOG.md` — inside the S49 fence.
+**Observed, NOT fixed (out of scope, logged so it isn't lost):** `cdStack` (era1.json, pos
+y0.71 / half-height 0.07) still sits at the OLD box-shelf height and is now ~12cm sunk into the
+bookcase model's shelf — the same class of bug as the tapes' y0.646, in a prop no finding
+named. One data line whenever someone is in that file. Also: `guide.ts`'s stale "waits for the
+R28-2b tape system" comment should be deleted next time that file is open.
+**BLOCKED: none.**)*
+
 *(2026-07-25 · Session 48 — **THE PACING & POLISH PASS**, per the S48 prompt in
 `docs/REINTERP_PLAYTHROUGH_NOTES_2026-07-25.md` (THE SPEC — Sérgio's own playthrough). His
 governing note: the Caleb thread was timed to be VERIFIABLE, not to be READ, and everything

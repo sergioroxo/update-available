@@ -42,9 +42,39 @@ export interface PropHandle {
   entity: pc.Entity;
   material: pc.StandardMaterial;
   emissive: boolean;
+  /**
+   * EVERY material this prop actually renders with.
+   *
+   * For a box prop that is exactly `[material]`. For a MODEL prop it is the
+   * model's own per-instance materials (assets.ts `tintModel` clones one per
+   * mesh instance, so writing to them touches this prop and nothing else) —
+   * and `material` is then an ORPHAN that nothing renders.
+   *
+   * Session 49 (finding 2): that orphan was a real trap. Anything that lit a
+   * prop by writing to `handle.material` — the guide's `emphasis` prop-lift is
+   * the live case — worked on boxes and silently did nothing on models, with
+   * no error and no visible difference. Read this array instead; it is correct
+   * for both kinds.
+   */
+  materials: pc.StandardMaterial[];
   /** set when this prop is a real model (wrapper entity) — the morph must NOT
    *  drive its pos/scale/color (the model self-places); only its presence. */
   model?: string;
+}
+
+/** the model's real, already-cloned materials (assets.ts tints a clone per
+ *  mesh instance, so these are this prop's alone — safe to write to) */
+function modelMaterials(wrapper: pc.Entity): pc.StandardMaterial[] {
+  const out: pc.StandardMaterial[] = [];
+  wrapper.forEach((node) => {
+    const ent = node as pc.Entity;
+    if (!ent.render) return;
+    for (const mi of ent.render.meshInstances) {
+      const m = mi.material as pc.StandardMaterial | undefined;
+      if (m && !out.includes(m)) out.push(m);
+    }
+  });
+  return out;
 }
 
 export interface RoomHandles {
@@ -137,7 +167,14 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
     if (p.yaw) e.setLocalEulerAngles(0, p.yaw, 0);
   }
   room.root.addChild(e);
-  const h: PropHandle = { entity: e, material, emissive: !!p.emissive };
+  const h: PropHandle = {
+    entity: e,
+    material,
+    emissive: !!p.emissive,
+    // a box renders with `material`; a model renders with its own tinted
+    // clones and leaves `material` an orphan (see PropHandle.materials)
+    materials: isModel ? modelMaterials(e) : [material]
+  };
   if (isModel) h.model = p.model;
   room.props.set(p.id, h);
   return h;

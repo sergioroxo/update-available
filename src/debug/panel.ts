@@ -58,7 +58,17 @@ const OS_BEATS: BeatRow[] = [
   { label: 'T1 ritual · update → E2', id: 'update2' },
 
   { heading: 'E2 · 2003 — Lamby arrives (Room 1, adult)' },
-  { label: 'S2R.0 · silence (waiting)', id: 'e2Silence' },
+  // Session 49 (finding 6): every button below jumps INTO the middle of E2.
+  // Sérgio reported the video and the check-in as "missing" after landing
+  // inside the Caleb thread, where neither is on screen — both are built and
+  // both are reachable, but only by PLAYING forward. `e2Silence` is the era's
+  // true start, so it is the one button from which the whole chain runs by
+  // ordinary clicking: silence → click → Lamby's debut → Begin → Restorify →
+  // ONE check-in → Caleb opens by itself → commit-press → the alert → Okay →
+  // the video offer → Watch → the New You Program. Verified end-to-end with
+  // real clicks in Session 49; the label says so, so a reviewer never has to
+  // infer it from the button order.
+  { label: 'S2R.0 · silence — ⏵ LINEAR ENTRY (play from here)', id: 'e2Silence' },
   { label: 'S2R.1 · Lamby debut', id: 'e2Lamby' },
   { label: 'S2R.2 · Restorify check-in', id: 'e2Restorify' },
   { label: 'S2R.3 · Caleb — chat opens', id: 'calebChat' },
