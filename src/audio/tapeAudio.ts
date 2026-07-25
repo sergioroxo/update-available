@@ -34,7 +34,12 @@ const REGISTRY: Record<string, string> = {
   // with tools/degrade_audio.sh, adding ONE line here, and pointing
   // data/dialog/s1_tapes.json's tapeB segments at the new filename — nothing
   // else changes, same missing-file-safe registry pattern as everywhere else.
-  'discover_the_new_you_tape97_radio.mp3': `${AUDIO_BASE}discover_the_new_you_tape97_radio.mp3`
+  'discover_the_new_you_tape97_radio.mp3': `${AUDIO_BASE}discover_the_new_you_tape97_radio.mp3`,
+  // S46: build-time TTS (tools/tts/render.py, Supertonic) — Lamby's voice reading
+  // its own death notice (S2R.5's PureMail apology). APPARATUS audio, so unlike
+  // the tape entries above it never goes through degrade_audio.sh (that pass is
+  // for HUMAN/TAPE audio only, per that script's own doctrine comment).
+  'lamby_puremail_apology.wav': `${AUDIO_BASE}lamby_puremail_apology.wav`
 };
 
 const HISS_FILE = 'tape-hiss.mp3';
@@ -136,4 +141,17 @@ export class TapeAudioBus {
       this.clip?.play().catch(() => { /* see start() */ });
     }
   }
+}
+
+/**
+ * One-shot playback for a single named clip, outside any boombox bus — e.g.
+ * a "read aloud" button (S46: data/dialog/s2_caleb.json's `pureMail.readAloudTrack`
+ * hook). Same missing-file-safe pattern as everywhere else in this module: an
+ * unregistered name is simply never requested, never thrown, never logged.
+ */
+export function playOnce(name: string | null | undefined): HTMLAudioElement | null {
+  if (!isAudioAvailable(name)) return null;
+  const audio = new Audio(REGISTRY[name as string]);
+  audio.play().catch(() => { /* autoplay policy or a headless harness — never a thrown error */ });
+  return audio;
 }

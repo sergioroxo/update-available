@@ -51,6 +51,47 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-25 · Session 46 — **THE BUILD-TIME TTS PIPELINE**, per the S46 build-queue prompt
+(`BUILD_QUEUE_S43-S47_2026-07-24.md`) and the audio production guide
+(`REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md`). Kept entirely off the no-runtime-network
+invariant: synthesis happens once, offline, on a developer's machine; the shipped build only ever
+plays a static committed WAV.*
+**Shipped:** `tools/tts/render.py` (new) — a Python CLI over the `supertonic` PyPI package
+(ONNX, CPU, Supertonic 3). Text is resolved LIVE from each manifest entry's `data/dialog/*.json`
+source at render time (never copy-pasted into the manifest), so the spoken line can never drift
+from the authored text. **The ethics boundary is enforced in code, not just documented**: the
+script refuses to render any entry whose `register` isn't `"apparatus"` — synthesize the
+machine, never the person, never a `felt` survivor-side line — with the refusal message pointing
+back at its own header. `data/audio/tts_manifest.json` (new) carries the first entry: S2R.5's
+PureMail apology, read in **Lamby's voice** — the apparatus reading its own death notice in the
+cheerful assistant timbre, doubling as the future read-aloud accessibility layer, text sourced
+from `data/dialog/s2_caleb.json`'s `pureMail` block (heading + lines + closing), already ported
+verbatim there. `src/audio/tapeAudio.ts` gained the registry entry
+(`lamby_puremail_apology.wav`, commented as APPARATUS audio — it skips
+`degrade_audio.sh`'s tape pass, HUMAN/TAPE-only by that script's own doctrine) and a new
+`playOnce(name)` export: one-shot playback outside the boombox hiss bus, same missing-file-safe
+pattern as the rest of the module, for the still-unwired `pureMail.readAloudTrack` button (UI
+files were outside this session's fence). `npm run tts` added as the local-only alias; a README
+section documents the one-time `pip install supertonic` step.
+**Verified for real, not just built:** ran the full pipeline end to end. Two false starts, neither
+a defect in the tool itself: a `run_in_background` misuse (backgrounding python with `&` *inside*
+a script that was itself already backgrounded killed the download when the outer shell exited)
+killed the first attempt mid-download; the retry hit a `huggingface_hub` tmp-dir race on a
+redundant integrity re-check and needed one bare rerun once the ~415MB cache was already
+populated on disk. The committed `public/assets/audio/lamby_puremail_apology.wav` is a real 30.8s
+16-bit/44.1kHz mono WAV. Loaded it through the actual dev server and decoded it with the browser's
+own WebAudio API (`decodeAudioData` → 30.811s, byte-exact match), then imported `tapeAudio.ts`
+live in-page and called `isAudioAvailable`/`playOnce` directly: the real clip played (`currentTime`
+advancing under real playback) and a fabricated missing name returned `null` — zero console
+errors either way. `npm test` and `npx tsc --noEmit` green throughout.
+**Explicitly not done this session (fenced out):** the read-aloud UI button itself (`src/desktop/`
+was out of scope) — `playOnce` and the registry entry are the hook, wiring is a follow-up. The
+apology's audio is APPARATUS-side only; no `felt` line was touched, per the boundary above.
+**Extends to:** (a) the read-aloud accessibility layer for long in-world text generally — same
+registry pattern, same `playOnce`, next session adds buttons; (b) a future full Lambient speaking
+voice — same manifest shape, new entries, same enforced ethics gate.
+**BLOCKED: none.**)*
+
 *(2026-07-25 · Session 45 — **THE CALEB THREAD, S2R.3 → S2R.6**, per
 `docs/REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md` (THE SPEC — Sérgio's revised pass) with
 `REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md` for beat context and

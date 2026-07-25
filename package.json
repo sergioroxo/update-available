@@ -11,7 +11,8 @@
     "test": "node tools/check-invariants.mjs && node tools/check-rooms.mjs && node tools/check-spec.mjs",
     "rooms": "node tools/gen_rooms.mjs",
     "gen-attributions": "node tools/gen_attributions.mjs",
-    "export-atlases": "bash tools/export-atlases.sh"
+    "export-atlases": "bash tools/export-atlases.sh",
+    "tts": "python3 tools/tts/render.py --manifest data/audio/tts_manifest.json"
   },
   "dependencies": {
     "playcanvas": "^2.6.0"

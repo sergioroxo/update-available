@@ -27,6 +27,16 @@ npm test             # no-network / no-storage invariants + room fold + spec law
 | `check-rooms.mjs` | the room deltas fold cleanly over the base room |
 | `check-spec.mjs` | dossier `status`, felt-scene purity, `tier`/`register` vocabulary, the ≤3-hero Quest budget, a palette ratchet, and doc lifecycle tracking (`STATUS:` headers, supersession links, opt-in `KILLS:` assertions — see `docs/reinterp/08_STATUS_REGISTER.md` §5) |
 
+### Build-time voice lines (offline, never runtime)
+Some apparatus/system lines (never survivor-side lines) are voiced with a local
+TTS pass and committed as ordinary `.wav` assets — see `tools/tts/render.py`
+for setup and the ethics boundary. One-time local step, not part of `npm run
+build`:
+```bash
+pip install supertonic   # first synthesis call auto-downloads model weights, ~415MB, once, outside the repo
+npm run tts -- --id lamby_puremail_apology
+```
+
 ### Quest 3 loop
 ```bash
 npm run dev -- --host

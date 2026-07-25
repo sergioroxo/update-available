@@ -1,0 +1,20 @@
+{
+  "_doc": "Build-time TTS manifest, read by tools/tts/render.py. Each entry is one committed WAV. `source.fields` are dotted paths into the named JSON file (a trailing `[]` joins an array field with spaces) — text is resolved AT RENDER TIME from the narrative data, never copy-pasted here, so the spoken line can never drift from the authored text. `register` MUST be \"apparatus\" — render.py refuses anything else; see its header for the ethics boundary (synthesize the machine, never the person; no TTS on `felt` survivor-side lines).",
+
+  "entries": [
+    {
+      "id": "lamby_puremail_apology",
+      "_doc": "S2R.5 (docs/REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md) — the PureMail apology, read aloud in LAMBY'S VOICE: the apparatus reading its own death notice in the cheerful assistant timbre. Text is data/dialog/s2_caleb.json's pureMail block (heading + lines + closing), PORTED VERBATIM there from the shipped build per that file's own doc comment — do not rewrite it here or there.",
+      "register": "apparatus",
+      "voice": "F2",
+      "lang": "en",
+      "speed": 1.0,
+      "steps": 10,
+      "outFile": "public/assets/audio/lamby_puremail_apology.wav",
+      "source": {
+        "file": "data/dialog/s2_caleb.json",
+        "fields": ["pureMail.heading", "pureMail.lines[]", "pureMail.closing"]
+      }
+    }
+  ]
+}
