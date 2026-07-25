@@ -24,33 +24,77 @@ interface DebugOpts {
   onSend?: (id: string, outcome: 'offered' | 'visited' | 'declined') => void;
 }
 
-const OS_BEATS: Array<[string, string]> = [
-  ['Off (power)', 'off'],
-  ['O2 — LambyOS boot', 'boot'],
-  ['O3 — Profile', 'profile'],
-  ['O3 — Re-caption', 'recap'],
-  ['Desktop', 'desktop'],
-  ['Insert kit → O7', 'kit'],
-  ['Packet · placement form', 'packet'],
-  ['Diary · deletion beat', 'diary'],
-  ['Diary glitch → T1', 'diaryGlitch'],
-  ['Provotype — pillow', 'pillow'],
-  ['Provotype — intake', 'intake'],
-  ['T1 ritual · update → E2', 'update2'],
-  ['S2R.0 · E2 silence (waiting)', 'e2Silence'],
-  ['S2R.1 · Lamby debut', 'e2Lamby'],
-  ['S2R.2 · Restorify check-in', 'e2Restorify'],
-  ['S2R.4 · Lamby offers the video', 'netvisionOffer'],
-  ['S2R.4 · NetVision Player (start)', 'netvision'],
-  ['S2R.4 · NetVision — THE BREAK', 'netvisionBreak'],
-  ['S2R.4 · NetVision — static/notice', 'netvisionStatic'],
-  ['T2 ritual · update → E3', 'update3'],
-  ['T3 ritual · update → E4', 'update4'],
-  ['Final · Restart as you are', 'closeUpdate'],
-  ['Offer send s1 (desktop)', 'send-s1'],
-  ['Offer send s2 (desktop)', 'send-s2'],
-  ['Offer send s3 (desktop)', 'send-s3'],
-  ['Offer send s4 (desktop)', 'send-s4']
+/**
+ * Every debugJump id `src/desktop/os.ts` accepts, one labelled button each,
+ * grouped and ordered as the piece's own spine (S50, per
+ * docs/REINTERP_PLAYTHROUGH_NOTES_2026-07-25.md "ROOT CAUSE FOUND"): the panel
+ * IS the project lead's map, so a gap here reads as missing content when it
+ * isn't. Ids are enumerated from os.ts's debugJump switch directly, not from
+ * any notes doc — the notes doc's own count (~51, and a `tape` id) was wrong;
+ * `tape` is a profile-ICON case in a different switch (drawProfileIcon), not a
+ * debugJump id, so there is nothing to add a button for.
+ *
+ * check-spec **C6** (tools/check-spec.mjs) parses this file textually for
+ * every `id: '...'` below plus OS_BEAT_EXCLUSIONS, and fails the build if
+ * os.ts's debugJump accepts an id that appears in neither — so this list
+ * cannot silently drift behind the build again. Keep entries as `{ id: '...' }`
+ * object literals (not tuples) so that parse stays simple.
+ */
+type BeatRow = { heading: string } | { label: string; id: string };
+
+const OS_BEATS: BeatRow[] = [
+  { heading: 'E1 · 1997 — boot → arrival (Room 1, gay teen)' },
+  { label: 'Off (power)', id: 'off' },
+  { label: 'O2 — LambyOS boot', id: 'boot' },
+  { label: 'O3 — Profile', id: 'profile' },
+  { label: 'O3 — Re-caption', id: 'recap' },
+  { label: 'Desktop', id: 'desktop' },
+  { label: 'Insert kit → O7', id: 'kit' },
+  { label: 'Packet · placement form', id: 'packet' },
+  { label: 'Diary · deletion beat', id: 'diary' },
+  { label: 'Diary glitch → T1', id: 'diaryGlitch' },
+  { label: 'Provotype — pillow', id: 'pillow' },
+  { label: 'Provotype — intake', id: 'intake' },
+  { label: 'T1 ritual · update → E2', id: 'update2' },
+
+  { heading: 'E2 · 2003 — Lamby arrives (Room 1, adult)' },
+  { label: 'S2R.0 · silence (waiting)', id: 'e2Silence' },
+  { label: 'S2R.1 · Lamby debut', id: 'e2Lamby' },
+  { label: 'S2R.2 · Restorify check-in', id: 'e2Restorify' },
+  { label: 'S2R.3 · Caleb — chat opens', id: 'calebChat' },
+  { label: 'S2R.3 · Caleb — commits', id: 'calebCommit' },
+  { label: 'S2R.3B · Caleb — apparatus alert', id: 'calebAlert' },
+  { label: 'S2R.3C · Caleb — sad Lamby hold', id: 'calebSad' },
+  { label: 'S2R.3C · Caleb — caught', id: 'calebCaught' },
+  { label: 'S2R.4 · Lamby offers the video', id: 'netvisionOffer' },
+  { label: 'S2R.4 · NetVision Player (start)', id: 'netvision' },
+  { label: 'S2R.4 · NetVision — THE BREAK', id: 'netvisionBreak' },
+  { label: 'S2R.4 · NetVision — static/notice', id: 'netvisionStatic' },
+  { label: 'S2R.5 · Caleb — PureMail envelope arrives', id: 'calebMail' },
+  { label: 'S2R.6 · Caleb — the residue (quiet after)', id: 'calebResidue' },
+  { label: 'T2 ritual · update → E3', id: 'update3' },
+
+  { heading: 'E3 → E4 (Room 2 lesbian → Room 3 trans)' },
+  { label: 'T3 ritual · update → E4', id: 'update4' },
+
+  { heading: 'Close' },
+  { label: 'Final · Restart as you are', id: 'closeUpdate' },
+
+  { heading: 'Sends — desktop offer review' },
+  { label: 'Offer send s1 (desktop)', id: 'send-s1' },
+  { label: 'Offer send s2 (desktop)', id: 'send-s2' },
+  { label: 'Offer send s3 (desktop)', id: 'send-s3' },
+  { label: 'Offer send s4 (desktop)', id: 'send-s4' }
+];
+
+/**
+ * debugJump ids that intentionally have NO panel button — each entry needs a
+ * one-line reason. C6 requires every id os.ts's debugJump accepts to be
+ * either above (OS_BEATS) or here; currently empty because every id os.ts
+ * accepts already has a button above.
+ */
+const OS_BEAT_EXCLUSIONS: string[] = [
+  // (none — see the comment above OS_BEATS)
 ];
 
 /** eras with the room + identity + year they now lead (Round 24 model) */
@@ -275,9 +319,15 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     }
   }
 
-  // ── OS beats (the 2D desktop states) ──
+  // ── OS beats (the 2D desktop states) ── grouped/ordered as the piece's spine;
+  // see the comment above OS_BEATS for how this stays complete (C6).
   heading('os beats (the monitor)');
-  for (const [label, beat] of OS_BEATS) mkBtn(label, () => os.debugJump(beat));
+  const excluded = new Set(OS_BEAT_EXCLUSIONS);
+  for (const row of OS_BEATS) {
+    if ('heading' in row) { heading(row.heading); continue; }
+    if (excluded.has(row.id)) continue; // documented exclusion wins if ever double-listed
+    mkBtn(row.label, () => os.debugJump(row.id));
+  }
 
   // ── LINKS: every review URL as a clickable link (Sérgio's ask) ──
   heading('open a state (links)');

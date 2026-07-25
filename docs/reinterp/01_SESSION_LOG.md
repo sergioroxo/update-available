@@ -51,6 +51,53 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-25 · Session 50 — **THE REVIEW PANEL, REBUILT**, per the S50 prompt (the
+"ROOT CAUSE FOUND" section of `REINTERP_PLAYTHROUGH_NOTES_2026-07-25.md`): the `?debug=1`
+panel — Sérgio's own map of the piece — had drifted behind `os.ts`'s debugJump switch, and
+the gap was exactly where the Caleb thread lives, so a reviewer reasonably read the panel as
+"check-in → video" with no Caleb. Fixed the map, then made the drift structurally impossible.*
+**What shipped:** (1) Enumerated debugJump's real ids straight from `os.ts` (brace-matched
+scan of the `debugJump(beat)` method, not any notes doc): **33** ids, not the notes doc's
+"~51" — and no `tape` id exists at all (`tape` is a profile-ICON case in a different switch,
+`drawProfileIcon`, so the notes doc's "E1 tape beat" claim was simply wrong; nothing to add a
+button for). (2) Rebuilt `OS_BEATS` in `src/debug/panel.ts` as a single ordered list with
+inline era/scene headings — E1 (boot → profile → recap → desktop → kit → packet → diary →
+diaryGlitch → pillow → intake → T1) → E2 (S2R.0 silence → S2R.1 Lamby → S2R.2 check-in →
+S2R.3 Caleb chat/commits/alert/sad/caught → S2R.4 the four NetVision beats → S2R.5 PureMail →
+S2R.6 residue → T2) → E3→E4 (T3) → Close (Final) → Sends — covering **all 33** ids; the seven
+Caleb ids (`calebChat/Commit/Alert/Sad/Caught/Mail/Residue`) now have buttons, labelled with
+the precise S2R numbers taken from `accountability.ts`/`caleb.ts`'s own doc comments (S2R.5 for
+the PureMail arrival, S2R.6 for the residue — the notes doc's "all seven are S2R.3" was
+shorthand, not literal). No exclusions were needed — every id os.ts accepts now has a button,
+so `OS_BEAT_EXCLUSIONS` ships empty (a documented escape hatch, not currently used). (3) Added
+check-spec **C6**: brace-matches `debugJump`'s body in `os.ts` for every `case '...'` id,
+parses `panel.ts`'s `OS_BEATS`/`OS_BEAT_EXCLUSIONS` for every `id: '...'`, and fails if either
+side has an id the other doesn't know — plus a reverse check for stale exclusions. Proved both
+failure modes by real mutation-and-revert (renamed an id in panel.ts → C6 failed naming the
+exact id; added a stale exclusion → C6 failed naming that too; reverted both, green again).
+README's checker table got the new row. **Verified live (real clicks, `?reinterp=1&debug=1`,
+MessageChannel rAF pump since the sandboxed tab reports `hidden` and suspends real rAF):**
+every one of the 33 beats was clicked and landed correctly. Two nuances surfaced, neither a
+panel bug nor in this session's scope to fix (logging per the brief): (a) `os.ts`'s
+`openCaleb()` guards on `this.caleb` already existing, and `offerSend()` guards on
+`this.sendOffer` already existing — so chaining several Caleb or send debug-jumps back-to-back
+in ONE live session without a reload can read as landing wrong (e.g. `calebResidue` read back
+`phase:'sealed'` instead of `'residue'` when fired right after four prior Caleb jumps on the
+same instance); tested each of those beats in isolation on a fresh reload instead and all
+landed exactly right (`calebResidue`: phase `residue`, `ownsScreen: true`, the "Then it was
+never me that was broken…" line rendering alone on a dark monitor; `send-s2/s3/s4`: each sets
+`sendOffer.id` correctly on a fresh load). Sérgio reviewing one beat at a time (or reloading
+between beats in the same family) will never hit this — it only shows up when chaining. (b)
+`netvisionBreak`/`netvisionStatic` seek to `duration-3`/`duration` respectively, so a few real
+seconds of tool round-trip between the click and the state check let the video reach its
+natural end and close before I looked — re-checked both with an immediate state read right
+after the jump and both land exactly as designed (`open:true, stage:'playing'`, positioned at
+the intended point). `npm test` and `npm run build` green throughout.*
+**NOT done (explicitly out of scope):** no beat's behaviour was changed; any jump that reads
+as broken on a real playthrough (none found here) stays logged for S48/S49, not fixed here.
+**Files touched:** `src/debug/panel.ts`, `tools/check-spec.mjs`, `README.md`,
+`docs/reinterp/01_SESSION_LOG.md` — exactly the S50 fence, `src/desktop/os.ts` untouched.
+
 *(2026-07-25 · Session 46 — **THE BUILD-TIME TTS PIPELINE**, per the S46 build-queue prompt
 (`BUILD_QUEUE_S43-S47_2026-07-24.md`) and the audio production guide
 (`REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md`). Kept entirely off the no-runtime-network

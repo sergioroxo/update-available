@@ -8,13 +8,15 @@
  * data/provotypes/ at all. A law that is documented as enforced and isn't is
  * worse than an unwritten one: it buys confidence nobody paid for.
  *
- * Five checks, each defending a law that is GREEN today (this locks the current
+ * Six checks, each defending a law that is GREEN today (this locks the current
  * state, it does not ask for new work):
  *   C1 dossier/provotype schema — every source carries a status + confidence
  *   C2 felt-scene purity — no assistant offers a `felt` scene (tone laws)
  *   C3 tier/register vocabulary + the Quest budget of <=3 hero objects per scene
  *   C4 palette discipline — hex literals outside src/desktop/theme/, as a RATCHET
  *   C5 doc lifecycle tracking — STATUS headers, supersession links, opt-in KILLS
+ *   C6 debug panel completeness — every debugJump id os.ts accepts has a panel
+ *      button or a documented exclusion
  *
  * C4 ratchets rather than fails outright: ~157 literals predate the law's
  * enforcement. Failing on all of them would get this file deleted by Friday.
@@ -32,6 +34,18 @@
  * src/<path>#<symbol>` line lets a doc claim a symbol dead, failing CI if that
  * symbol is still referenced outside its own file — catching exactly the
  * "planned, partially done, assumed complete" gap the register was written for.
+ *
+ * C6 (added S50, docs/REINTERP_PLAYTHROUGH_NOTES_2026-07-25.md "ROOT CAUSE
+ * FOUND"): the `?debug=1` panel is Sérgio's own map of the piece, and it had
+ * silently drifted behind `src/desktop/os.ts`'s debugJump switch — the OS
+ * accepted ids (all seven Caleb/S2R.3–S2R.6 beats) the panel never surfaced,
+ * so a reviewer reasonably concluded content was missing when it wasn't. Like
+ * C4/C5, this is a completeness check on a hand-maintained surface that
+ * nothing else forces to stay current: it parses os.ts's debugJump switch for
+ * every `case '...'` id (source of truth, not any notes doc) and parses
+ * panel.ts's OS_BEATS/OS_BEAT_EXCLUSIONS for every id it declares reachable or
+ * explicitly excluded, then fails if either side has an id the other doesn't
+ * know about — a silent gap, or a stale exclusion, both fail loud instead.
  *
  * Failure text names the law, not just the field — Sérgio reads these.
  */
@@ -271,6 +285,59 @@ for (const { where, path: killPath, symbol } of killsClaims) {
   }
 }
 
+// ── C6: debug panel completeness (the review surface must not silently drift) ─
+const OS_PATH = join(ROOT, 'src/desktop/os.ts');
+const PANEL_PATH = join(ROOT, 'src/debug/panel.ts');
+const osSrc = readFileSync(OS_PATH, 'utf8');
+const panelSrc = readFileSync(PANEL_PATH, 'utf8');
+
+/** every `case '<id>':` inside the debugJump(beat) method body only (brace-
+ * matched, so other switches in the file — e.g. profile-icon ids — can't leak in). */
+function debugJumpIds(src) {
+  const marker = 'debugJump(beat: string): void {';
+  const start = src.indexOf(marker);
+  if (start === -1) throw new Error('C6: "debugJump(beat: string): void {" not found in os.ts — renamed/moved?');
+  let depth = 0, end = -1;
+  for (let i = start + marker.length - 1; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  if (end === -1) throw new Error('C6: could not find the end of debugJump(beat) — brace mismatch?');
+  const body = src.slice(start, end);
+  return new Set([...body.matchAll(/case '([^']+)':/g)].map((m) => m[1]));
+}
+
+/** every `id: '<id>'` panel.ts declares in its OS_BEATS rows. */
+function panelBeatIds(src) {
+  return new Set([...src.matchAll(/\bid:\s*'([^']+)'/g)].map((m) => m[1]));
+}
+
+/** every id listed in panel.ts's OS_BEAT_EXCLUSIONS array. */
+function panelExclusionIds(src) {
+  const start = src.indexOf('const OS_BEAT_EXCLUSIONS');
+  if (start === -1) throw new Error('C6: OS_BEAT_EXCLUSIONS not found in panel.ts');
+  const end = src.indexOf('];', start);
+  if (end === -1) throw new Error('C6: OS_BEAT_EXCLUSIONS array is not closed with "];" in panel.ts');
+  return new Set([...src.slice(start, end).matchAll(/'([^']+)'/g)].map((m) => m[1]));
+}
+
+const osIds = debugJumpIds(osSrc);
+const panelIds = panelBeatIds(panelSrc);
+const exclusionIds = panelExclusionIds(panelSrc);
+
+const uncovered = [...osIds].filter((id) => !panelIds.has(id) && !exclusionIds.has(id));
+if (uncovered.length) {
+  errors.push(`debug panel: os.ts's debugJump accepts ${uncovered.join(', ')} with no panel button in ` +
+    `src/debug/panel.ts and no entry in its OS_BEAT_EXCLUSIONS. The panel is Sérgio's map of the piece ` +
+    `(docs/REINTERP_PLAYTHROUGH_NOTES_2026-07-25.md, "ROOT CAUSE FOUND") — a silent gap here reads as ` +
+    `missing content when it isn't. Add a button, or add the id to OS_BEAT_EXCLUSIONS with a one-line reason.`);
+}
+const staleExclusions = [...exclusionIds].filter((id) => !osIds.has(id));
+if (staleExclusions.length) {
+  errors.push(`debug panel: src/debug/panel.ts's OS_BEAT_EXCLUSIONS lists ${staleExclusions.join(', ')}, ` +
+    `which os.ts's debugJump no longer accepts — remove the stale exclusion.`);
+}
+
 // ── report ───────────────────────────────────────────────────────────────────
 if (errors.length) {
   console.error('spec-law check FAILED:');
@@ -282,5 +349,6 @@ console.log(
   `spec OK: ${provotypeCount} provotypes carry dossier status + confidence; ` +
   `${heroScenes} scenes within the ${MAX_HERO_PER_SCENE}-hero budget; palette ${hexCount}/${HEX_BASELINE}; ` +
   `docs headerless ${headerlessCount}/${HEADERLESS_BASELINE}, ${supersededTargets.length} supersession links, ` +
-  `${killsClaims.length} KILLS assertion(s) all clear`
+  `${killsClaims.length} KILLS assertion(s) all clear; ` +
+  `debug panel covers all ${osIds.size} debugJump ids (${exclusionIds.size} excluded)`
 );
