@@ -35,6 +35,17 @@ const REGISTRY: Record<string, string> = {
   // data/dialog/s1_tapes.json's tapeB segments at the new filename — nothing
   // else changes, same missing-file-safe registry pattern as everywhere else.
   'discover_the_new_you_tape97_radio.mp3': `${AUDIO_BASE}discover_the_new_you_tape97_radio.mp3`,
+  // S51: Sérgio's real 1:54 song, the E2 NetVision infomercial's actual
+  // soundtrack (data/dialog/s2_media.json's `audioTrack`, whose scene timings
+  // ARE this file's line timings). Degraded with degrade_audio.sh's NEW
+  // --tape03 preset and deliberately NOT --wrap'd — two corrections to the
+  // `…_tape97_radio` entry above, which he heard and rejected for this spot:
+  // the diegetic source is a VHS, not a broadcast (so no dial-tuning bursts,
+  // which would also have shifted every caption by their 1.3s head offset),
+  // and its hiss was "a bit too much" (--tape03's floor measures 10.4 dB
+  // under --tape97's at matched program loudness). The `…_radio` file stays
+  // registered — it is still correct for Tape B, the Era-1 '97 radio spot.
+  'discover_the_new_you_infomercial_tape03.mp3': `${AUDIO_BASE}discover_the_new_you_infomercial_tape03.mp3`,
   // S46: build-time TTS (tools/tts/render.py, Supertonic) — Lamby's voice reading
   // its own death notice (S2R.5's PureMail apology). APPARATUS audio, so unlike
   // the tape entries above it never goes through degrade_audio.sh (that pass is
@@ -62,6 +73,32 @@ export function isAudioAvailable(name: string | null | undefined): boolean {
   return !!name && name in REGISTRY;
 }
 
+/** The live bus, if one has been constructed. src/engine/app.ts owns
+ *  construction and drives it every frame; this module-scope handle exists
+ *  ONLY for releaseBus() below. Safe because this file's whole model is
+ *  already "there is only ever one bus" (see TapeAudioBus's own doc). */
+let liveBus: TapeAudioBus | null = null;
+
+/**
+ * Put the bus down — stop the named clip AND the hiss bed — for a desktop app
+ * that owns the bus for exactly as long as its window is open.
+ *
+ * WHY THIS EXISTS (S51): src/engine/app.ts's syncNetvisionAudio() opens with
+ * `if (!os.netvision || !tapeAudio) return;`, and os.ts nulls that reference the
+ * instant the player closes — so the sync's own `tapeAudio.stop()` branch is
+ * unreachable. Nobody noticed while `audioTrack` named a file that did not
+ * exist and the clip slot was always silent. Now that a real 1:54 song is
+ * registered it is audible: skipping the video at 15s left the jingle singing
+ * over the desktop for another minute and a half (verified in-build, which is
+ * how this was found). The tidiest fix is one line in that sync function, but
+ * app.ts belongs to another session this round — so the app that owns the clip
+ * releases it itself. Harmless if the app.ts fix later lands: stopping an
+ * already-stopped bus is a no-op, and `stop()` is idempotent.
+ */
+export function releaseBus(): void {
+  liveBus?.stop();
+}
+
 /**
  * One bus per boombox (there is only ever one in the room): a looping hiss
  * bed plus at most one named clip layered on top. Respects a global mute and
@@ -74,6 +111,10 @@ export class TapeAudioBus {
   private muted = false;
   private wantPlaying = false; // the bus's own intent, independent of game-pause
   private gamePaused = false; // last-known state, so a per-frame caller never spams play()/pause()
+
+  constructor() {
+    liveBus = this; // see releaseBus() — one bus, and a closing app must be able to put it down
+  }
 
   private ensureHiss(): HTMLAudioElement {
     if (!this.hiss) {

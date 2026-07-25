@@ -1684,3 +1684,138 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   **Every `[VERIFY SOURCE]` tag in all four touched files is still present — this session cleared
   none.** `npm test` green (check-spec C1 unaffected: every source still carries a valid
   `status`/`confidence`). **BLOCKED: none.**
+
+- 2026-07-25 — Reinterp Session 51 (Opus 5, S51 — THE NEW YOU VIDEO, REBUILT TO THE SONG, per
+  `docs/REINTERP_NEW_YOU_VIDEO_SPEC_2026-07-25.md`, whose timing table was authoritative): Sérgio's
+  playthrough #2 — "the video itself is very not related to the content of the song, and also the
+  song doesn't yet play" — had one root cause, and this session closed it. The video is now the
+  song. **Nothing was restyled:** the scanlines, the offset-tint RGB-split, the tape noise, the
+  tracking bands, the freeze/stutter/tear and the VHS chrome are Session 35's, untouched.
+  **What shipped:**
+  1. **THE TRACK, AND A TAPE PRESET TO MATCH.** `tools/degrade_audio.sh` gained a third preset,
+     **`--tape03`** — the same 2003 deck as `--vhs03`, voiced for GENERATION LOSS instead of for
+     noise, which is what Sérgio's two complaints actually asked for ("makes no logic here" for a
+     radio treatment on a VHS source; the noise "a bit too much"). It keeps what reads as a dub of
+     a dub (band loss ~55 Hz–9.5 kHz, a slow shallow wobble `f=0.25:d=0.004`, soft tanh saturation,
+     the compand volume ride) and removes the interference: **no mains hum at all** (`--vhs03` runs
+     0.5) and a hiss floor of `0.010 × 0.25` against `--tape97`'s `0.022 × 0.40`. **Measured, not
+     asserted** — silence pushed through each preset: `--tape97` −61.0 dB mean, `--vhs03` −54.3 dB,
+     **`--tape03` −71.4 dB**, i.e. **10.4 dB less static** than the tape preset and 17 dB less than
+     the VHS one. The band is a touch wider and the wobble shallower than `--tape97`'s on purpose:
+     this preset carries long-form music whose sung words the karaoke has to stay legible against,
+     and `--tape97`'s warble smears a lyric. Also new: a **`MAKEUP_DB`** stage applied to the
+     PROGRAM branch only, before the hiss is mixed in, so level can be restored without lifting the
+     noise floor — the compand costs ~8 dB and the first render came out at −21.0 LUFS, which read
+     as "the tape is barely there" rather than as tape. At `+6 dB` the file sits at **−15.0 LUFS**,
+     level with the old radio asset's −14.8, with the floor far underneath. The two original presets
+     get `MAKEUP_DB=0` and their filter graphs are literally unchanged (the `volume` filter is only
+     appended when a preset asks for it). Deliberately **NOT `--wrap`'d**: the dial-tuning bursts
+     are the broadcast gesture, and they would also have shifted every caption by their 1.3s head
+     offset. `public/assets/audio/discover_the_new_you_infomercial_tape03.mp3` (2.5 MB) is
+     registered in `src/audio/tapeAudio.ts` and named by `s2_media.json`'s `audioTrack`. Source
+     master stays outside the repo (Sérgio's `Trials Songs/Infomercial/`); the exact command is in
+     the script's header. **Duration is byte-identical to the master, 113.879979s** — verified with
+     ffprobe, because the captions ARE the master's line timings and a preset that resampled would
+     silently desync all 31 of them. The `…_tape97_radio` entry stays registered: it is still
+     correct for Tape B, the Era-1 '97 radio spot.
+  2. **THE DATA IS NOW A CAPTION TRACK, NOT A SCRIPT.** `data/dialog/s2_media.json`: 13 invented
+     paraphrases on invented timings across a made-up 48s → **31 scenes on the song's own line
+     timings, `duration: 114`**. Every lyric is the song as sung, transcribed from Sérgio's
+     line-timed file; the invented "brighter, lighter, good as true" is gone (the song says "It's a
+     brighter, lighter way"), and with it the top-level `karaoke` string that carried it, since each
+     chorus scene now holds its own sung line. **Order fixed:** "Three easy payments of yourself"
+     (88.25) precedes "Operators of grace are standing by" (91.70). A new `_docS51` records that
+     these `at`s must be re-derived from the lyric files, never hand-nudged, if the song is ever
+     re-rendered. The lyric lines are **no longer PLACEHOLDER** — they are Sérgio's own song; the
+     surrounding apparatus copy (`cta`, `phone`, `ministry`, `timestamp`, the witness lines, the
+     disclaimer) still is.
+  3. **THE THREE STEPS GOT THEIR COUNTDOWN.** "Confess it" (43.21) / "Submit it" (44.29) / "Let us
+     hold it for you" (45.11) are ~1s apart in the song and were compressed into one line. New
+     `steps` shot: a teal card where the rows **accumulate one per beat**, and rows not yet reached
+     are dim bars rather than text — the checklist visibly has more coming without spoiling the ask,
+     and **no copy is invented for the card**: every word on it is an authored `line` from the data,
+     read back out of the scenes array (the numerals are the only addition). The full list then
+     holds 4.1s, which is the actual ask sitting on screen.
+  4. **THE BREAK FIRES ON THE REAL TRIPLE.** The song ends on "Call now" at 100.30 / 100.60 /
+     105.32 — the break the staging always described was written into the music. Data now carries
+     **`break: true`** and **`tear: true`** flags; Session 35's "second-to-last scene" rule survives
+     only as the fallback for data without them, so this is still never a hardcoded second count.
+     The stutter's cadence is the song's too: the three call scenes are its **re-fire beats** —
+     each sung "Call now" restores the full string and it erodes a few characters between them, the
+     way a dub loses the end of a word (Session 35 flipped it on a blind 0.4s timer with nothing to
+     sync to). Everything else is as built: the CTA card freezes captured-once, noise and tracking
+     bands ramp, the tear goes to full static, Caleb's fragment renders clean through it, auto-close
+     after 2.6s. **No new glitch vocabulary.** One deliberate refusal: the spec's tear (105.32) to
+     outro (~108) gap could read as an intermittent tear, but alternating a bright card with static
+     at a few Hz is exactly the luminance flicker this module's header forbids on photosensitivity
+     grounds, so the tear stays a clean cut to static.
+  5. **KARAOKE, PER WORD — the full word-timed route, not the per-line fallback.** Each chorus scene
+     carries `words: [[t, word], …]` from Sérgio's WORD-timed lyric file (58.51 → 79.69). The ball
+     sits on the word being sung and the line fills in behind it (sung prefix in `tooltip`, unsung
+     in `silver`, one overdraw in the same font/position — no new colors). Words are located **in
+     the authored line** by indexed search rather than by re-joining the word list, so punctuation
+     and spacing stay exactly as written. A scene without `words` still works: it falls back to the
+     old linear sweep. Per-word was affordable, so per-line was not used.
+  6. **THE TWO INSTRUMENTAL GAPS ARE SHOTS.** 79–88: the crowd holds the chorus climax, then a
+     brand card at 81.60 and the phone card at 85.00, so the sting at 88.25 lands on a card that is
+     already placidly showing the number. 92–100: the offer card holds through the sustained "by",
+     then 97.60 cuts to a calm crowd wide — so the break at 100.30 interrupts something placid,
+     which is what the spec asked the gaps to buy.
+  **Three invisibility bugs found and fixed on the way (all pre-existing, all E1/E2-diagnostic in
+  shape — content that existed in the data and rendered nowhere):** (a) `brand` and `offer` shots
+  never drew their lower third, so "Introducing the new you program" and both 2003 offer lines had
+  **no subtitle at all** — the cards' big text is the brand/phone, so the line needs its own band.
+  (b) The **disclaimer was never drawn**: it has been a `static`-shot line in the data since Session
+  35, and the tear branch returned static and nothing else. It now crawls right-to-left through the
+  wreck at a rate derived from its own scene `at` and the video's `duration`, so it always finishes
+  exactly as the tape runs out (the audio guide §7d keeps the disclaimer out of the song on
+  purpose — it is screen-only fine print). (c) A lower third with **nothing to carry** (an
+  instrumental shot; the CROWD's chorus, which has no chyron) was still being laid down as an empty
+  navy slab under the karaoke bar; it is now simply not drawn.
+  **⚑ ONE REAL AUDIO BUG, FOUND ONLY BECAUSE THE TRACK IS NOW REAL, FIXED WITHOUT TOUCHING THE
+  FORBIDDEN FILE.** `src/engine/app.ts`'s `syncNetvisionAudio()` opens `if (!os.netvision …) return;`
+  and `os.ts` nulls that reference the instant the player closes — so its own `tapeAudio.stop()`
+  branch is **unreachable**. Nobody could notice while `audioTrack` named a file that never existed
+  and the clip slot was always silent. **Verified in-build:** with the real 1:54 track registered,
+  skipping at 15s closed the window and left the song singing over the desktop (`currentTime` 19.8 →
+  25.6 with the player closed). The tidy fix is one line in that function, but `app.ts` is S52's
+  file this round, so instead `src/audio/tapeAudio.ts` gained a documented **`releaseBus()`** (a
+  module-scope handle to the one bus this file's model already assumes) which `netvision.ts` calls
+  from `close()` — the app that owns the clip puts it down. Idempotent and harmless if the `app.ts`
+  fix later lands. **Follow-ups logged, not done (both in files this session may not touch):**
+  `app.ts` never resets `netvisionWasPlaying`, so a SECOND open in one page load gets no audio
+  (real play offers the video once per session, so this is debug-only today); and `os.ts`'s
+  `netvisionBreak` debug jump seeks `duration - 3`, which used to be inside the break and with
+  `duration: 114` now lands at 111s, deep in the tear rather than at the break's start (100.30) —
+  a one-line change in os.ts, worth doing so the S50 debug map does not rot.
+  **VERIFIED — WATCHED WHOLE, AT REAL SPEED, WITH THE TRACK PLAYING.** One continuous run,
+  `?reinterp=1&debug=1`, real click through "Log in" (which is also the autoplay gesture), sampled
+  every 200 ms for the full 114s: media 0.01 → 113.94 over 114.13s of wall clock (ratio 1.006 —
+  real speed, not stepped). **The track plays, proven rather than assumed** (a missing file degrades
+  silently here, which is the whole reason this was never caught): the live `<audio>` element is
+  `discover_the_new_you_infomercial_tape03.mp3`, `paused: false`, `error: null`, `readyState: 4`,
+  decoded `duration: 113.879979`, `currentTime` advancing, and at the end it sits at **113.88 — the
+  full length, nothing cut off**. **The subtitles land on the sung words:** all 31 scene changes
+  fired within **0.13s** of their own lyric timestamp measured against the audio's own clock (most
+  within 0.05s; the sampler's interval is 0.2s, so the residual is mostly measurement
+  quantisation), and video-vs-audio drift stayed between 0.01 and 0.15s across the whole run with
+  no growth — the captions and the voice share the engine's dt, no sync channel needed. Spot
+  values: "Tired of feeling like yourself?" at ct 5.92; "Confess it" 43.22; "Feeling lost and
+  incomplete inside" 58.56; "It's a brighter, lighter way" 70.68; **"Three easy payments of
+  yourself" 88.21 then "Operators of grace are standing by" 91.63 — in that order**; **the break at
+  ct 100.30 exactly**, the second call 100.50, **the tear at 105.33**; disclaimer 108.56; static
+  hold entered at ct 113.88 (the audio's exact end) and auto-closed 2.6s later. **Skip arms at 15s**
+  — absent in the 5.9s frame, present from 15s on, and `skip()` files `skipped` and closes.
+  Screenshots at real speed through the run (karaoke, offer card with its new subtitle, the break's
+  frozen stuttering CTA, the tear with the crawl), plus frame-stepped review shots for the beats a
+  screenshot round-trip could not catch live — the steps card at 43.9 ("1 Confess it" alone) and
+  46.2 (all three), the karaoke at 72.92 with "It's a brighter, lighter" lit and "way" still dim
+  0.37s before it is sung, the crawl mid-travel, and the static hold's "1 new message — C___".
+  I cannot hear audio in this harness; the "reads as tape, not radio, with less static" claim rests
+  on the measured floors above and on the preset's construction (no dial-tuning wrap, no hum), and
+  is Sérgio's ear to confirm. **The Caleb break toast did not appear on the debug path** — the
+  `netvision` debug jump does not instantiate `os.caleb`, so `pushBreakToast()` has nothing to push
+  into; the mechanism is unchanged from Session 35 and `caleb.ts` was not touched, but the toast is
+  worth re-checking on the real S2R.3 trigger path. Baselines `/` and `?flat=1` both load clean with
+  zero console errors, content-note gate intact. `npm test` green (check-spec's 33 debugJump ids
+  still covered) and `npm run build` green. **BLOCKED: none.**

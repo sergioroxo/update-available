@@ -9,8 +9,8 @@
 # and the Session 32 brief): SYSTEM audio (jingles/VO as heard on-screen at
 # their native era) stays clean; HUMAN/TAPE audio (anything heard as coming
 # off a physical cassette — the Era-1 tape system, src/narrative/tapes.ts)
-# ALWAYS goes through this pass first. Two presets, tuned to read as two
-# different eras of consumer tape:
+# ALWAYS goes through this pass first. Three presets, tuned to read as three
+# different eras/uses of consumer tape:
 #
 #   --tape97   1990s cassette recorder: narrow band (~80 Hz–8 kHz), a touch of
 #              cassette wow (slow pitch wobble), a soft hiss floor mixed
@@ -19,10 +19,25 @@
 #              less wow, plus a faint 50 Hz mains-hum tinge (this project's
 #              home institution is European — 50 Hz, not 60 Hz) alongside its
 #              own hiss floor.
+#   --tape03   S51: the SAME 2003 deck as --vhs03, voiced for GENERATION LOSS
+#              rather than for noise. Sérgio, on the E2 infomercial's audio:
+#              the radio-wrapped asset "makes no logic here" (the diegetic
+#              source is a VHS, not a broadcast) and its noise is "a bit too
+#              much". So this preset keeps everything that reads as a dub of a
+#              dub — band loss, a slow shallow wobble, soft saturation, the
+#              volume ride — and takes the INTERFERENCE out: no mains hum at
+#              all, and a hiss floor ~11 dB under --tape97's. Band is a touch
+#              wider (~55 Hz–9.5 kHz) and the wobble shallower than --tape97's
+#              because this preset carries long-form MUSIC with SUNG WORDS the
+#              on-screen karaoke has to stay legible against; --tape97's warble
+#              smears a lyric. Never --wrap this one: the dial-tuning bursts
+#              are the broadcast gesture, and they also shift every caption
+#              timing by their head offset.
 #
 # USAGE
 #   tools/degrade_audio.sh --tape97 IN.mp3 OUT.mp3
 #   tools/degrade_audio.sh --vhs03  IN.mp3 OUT.mp3
+#   tools/degrade_audio.sh --tape03 IN.mp3 OUT.mp3
 #   tools/degrade_audio.sh --tape97 IN.mp3 OUT.mp3 --wrap
 #
 #   --wrap   bookends the degraded audio with a short "tuning across the
@@ -45,11 +60,20 @@
 #     assets/audio/discover_the_new_you_tape97_radio.mp3 --wrap
 #   tools/degrade_audio.sh --tape97 assets/audio/fold_my_hands.mp3 \
 #     assets/audio/fold_my_hands_tape97.mp3
+#
+# Session 51 (the New You video, rebuilt to the real song) — the source is
+# Sérgio's master, kept outside the repo; only the degraded file is committed:
+#   tools/degrade_audio.sh --tape03 \
+#     "$HOME/Pc_Simulation/Trials Songs/Infomercial/Discover the New You_Infomercial.mp3" \
+#     public/assets/audio/discover_the_new_you_infomercial_tape03.mp3
+# NO --wrap, deliberately: the on-screen scene timings in data/dialog/s2_media.json
+# are the song's own line timings, so the degraded file MUST stay sample-aligned
+# with the master (this preset changes no durations — verify with ffprobe).
 
 set -euo pipefail
 
 if [[ $# -lt 3 ]]; then
-  echo "usage: $0 --tape97|--vhs03 IN OUT [--wrap]" >&2
+  echo "usage: $0 --tape97|--vhs03|--tape03 IN OUT [--wrap]" >&2
   exit 1
 fi
 
@@ -78,6 +102,7 @@ case "$PRESET" in
     SATURATE="asoftclip=type=tanh:param=0.7"
     HISS_COLOR="pink"; HISS_AMP=0.022; HISS_WEIGHT=0.40
     HUM_WEIGHT=0
+    MAKEUP_DB=0
     ;;
   --vhs03)
     HP=40; LP=10000
@@ -85,15 +110,38 @@ case "$PRESET" in
     SATURATE="asoftclip=type=tanh:param=0.45"
     HISS_COLOR="white"; HISS_AMP=0.012; HISS_WEIGHT=0.30
     HUM_WEIGHT=0.5
+    MAKEUP_DB=0
+    ;;
+  --tape03)
+    # generation loss, not interference (see the header). Hiss energy here is
+    # 0.010 × 0.25 = 0.0025 against --tape97's 0.022 × 0.40 = 0.0088 — about
+    # 11 dB quieter — and HUM_WEIGHT is 0, not --vhs03's 0.5.
+    HP=55; LP=9500
+    VIBRATO="vibrato=f=0.25:d=0.004"
+    SATURATE="asoftclip=type=tanh:param=0.35"
+    HISS_COLOR="pink"; HISS_AMP=0.010; HISS_WEIGHT=0.25
+    HUM_WEIGHT=0
+    # the compand's volume ride costs ~8 dB of program level, which on a
+    # 2-minute piece reads as "the tape is barely there" rather than as tape.
+    # Make it up on the PROGRAM branch only, BEFORE the hiss is mixed in, so
+    # the noise floor stays exactly where it was measured: the result sits at
+    # roughly the old radio asset's loudness with a floor far under it.
+    MAKEUP_DB=6
     ;;
   *)
-    echo "error: unknown preset $PRESET (use --tape97 or --vhs03)" >&2
+    echo "error: unknown preset $PRESET (use --tape97, --vhs03 or --tape03)" >&2
     exit 1
     ;;
 esac
 
 COMPAND="compand=attacks=0.01:decays=0.2:points=-80/-80|-40/-30|-20/-15|-5/-8|0/-6:soft-knee=6"
 VOICE_CHAIN="highpass=f=${HP},lowpass=f=${LP},${VIBRATO},${COMPAND},${SATURATE}"
+# make-up gain, program branch only (never applied to the hiss/hum branches, so
+# raising level never raises the noise floor). Appended only when a preset asks
+# for it, so the two original presets' filter graphs are untouched.
+if [[ "${MAKEUP_DB:-0}" != "0" ]]; then
+  VOICE_CHAIN="${VOICE_CHAIN},volume=${MAKEUP_DB}dB"
+fi
 
 degrade_core() {
   local in="$1" out="$2"

@@ -11,34 +11,52 @@
  * occasional tracking-desync bands, VHS chrome, lower-thirds, a karaoke bar.
  * All copy is data-driven (data/dialog/s2_media.json), all PLACEHOLDER.
  *
- * THE BREAK (near the end, driven from the last two scenes in the data):
- * noise density climbs, tracking bands roll continuously, the CTA/offer
- * card FREEZES (captured once, held "too long" rather than advancing) while
- * its line stutters ("Call now! Call now! Call n—", data-driven), then the
- * signal tears to full static; through the static one line renders — a
- * first crack of Caleb's message (felt-adjacent, kept bare, NOT the gated
- * Caleb thread itself). The player then closes on its own; os.ts leaves a
- * quiet persistent notification mark. Warm-corrupt throughout, never strobe
- * (glitch doctrine + photosensitivity) — the text "stutter" changes STRING
- * LENGTH, not luminance/flash, and stays well under any flicker-rate concern.
+ * THE BREAK (data-flagged, `break: true` — see below): noise density climbs,
+ * tracking bands roll continuously, the CTA/offer card FREEZES (captured once,
+ * held "too long" rather than advancing) while its line stutters ("Call now!
+ * Call now! Call n—", data-driven), then the signal tears to full static;
+ * through the static one line renders — a first crack of Caleb's message
+ * (felt-adjacent, kept bare, NOT the gated Caleb thread itself). The player
+ * then closes on its own; os.ts leaves a quiet persistent notification mark.
+ * Warm-corrupt throughout, never strobe (glitch doctrine + photosensitivity) —
+ * the text "stutter" changes STRING LENGTH, not luminance/flash, and stays
+ * well under any flicker-rate concern.
  *
- * Audio: calls into the tapeAudio-style registry (src/audio/tapeAudio.ts)
- * with `audioTrack` — a filename that does not exist in the registry yet, so
- * nothing is ever requested (Session 30's missing-file-safe pattern) and the
- * ambient hiss bed plays alone. One file + retimed `at`s finish it later.
+ * S51 — THE SONG IS REAL NOW, AND IT DRIVES EVERYTHING. Sérgio's 1:54 track
+ * exists, is degraded (--tape03) and registered, and every `at` in
+ * data/dialog/s2_media.json is that recording's own line timing. So:
+ *   · Audio: `audioTrack` now resolves in src/audio/tapeAudio.ts's REGISTRY,
+ *     so the clip actually plays under the hiss bed (src/engine/app.ts starts
+ *     the bus the frame the player opens — both clocks start together, and
+ *     this module's `elapsed` is the engine's own dt, so the captions track
+ *     the voice without a sync channel between them).
+ *   · The break no longer sits at "the second-to-last scene" (that rule
+ *     survives only as a fallback). The song ENDS on the triple "Call now",
+ *     and the data flags `break`/`tear` on those beats — the music drives the
+ *     wreck, including the stutter's re-fire cadence.
+ *   · The karaoke ball tracks SUNG WORDS, from each chorus scene's `words`.
+ * No new glitch vocabulary was invented for any of it.
  */
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
+import { releaseBus } from '../../audio/tapeAudio';
 import media from '../../../data/dialog/s2_media.json';
 
 interface Scene {
   at: number;
-  shot: 'static' | 'host' | 'brand' | 'testimony' | 'crowd' | 'offer';
+  shot: 'static' | 'host' | 'brand' | 'testimony' | 'crowd' | 'offer' | 'steps';
   speaker: string;
   line: string;
   grade?: 'before' | 'after';
   karaoke?: boolean;
+  /** S51: [seconds, word] from the song's WORD-timed lyric file — chorus
+   *  scenes only. Absent = the karaoke ball falls back to a linear sweep. */
+  words?: [number, string][];
+  /** S51: THE BREAK starts on this scene (the song's first "Call now") */
+  break?: boolean;
+  /** S51: the signal tears to static here (the song's last "Call now") */
+  tear?: boolean;
 }
 
 interface MediaData {
@@ -50,7 +68,6 @@ interface MediaData {
   timestamp: string;
   before: string;
   after: string;
-  karaoke: string;
   skip: string;
   skipDelaySeconds: number;
   chyrons: Record<string, string>;
@@ -101,11 +118,27 @@ export class NetVisionPlayerApp {
   constructor(options: NetVisionOptions = {}) {
     this.skipAt = options.skipDelaySeconds ?? M.skipDelaySeconds;
   }
-  /** THE BREAK begins at the second-to-last scripted scene — "drive from the
-   *  last 2 scenes" (brief), never a hardcoded second count. */
-  private readonly breakStart: number = this.scenes.length >= 2
-    ? this.scenes[this.scenes.length - 2].at
-    : Math.max(this.duration - 5, 0);
+  /** THE BREAK begins where the data says it does — S51: the scene flagged
+   *  `break`, which is the song's first "Call now". Session 35's original rule
+   *  (the second-to-last scripted scene) is kept as the fallback for data that
+   *  carries no flag; either way it is never a hardcoded second count. */
+  private readonly breakStart: number = this.scenes.find(s => s.break)?.at
+    ?? (this.scenes.length >= 2
+      ? this.scenes[this.scenes.length - 2].at
+      : Math.max(this.duration - 5, 0));
+
+  /** where the signal tears to static — S51: the scene flagged `tear` (the
+   *  song's LAST "Call now"), else Session 35's 60%-through-the-break point. */
+  private readonly tearAt: number = this.scenes.find(s => s.tear)?.at
+    ?? this.breakStart + (this.duration - this.breakStart) * 0.6;
+
+  /** the beats the frozen CTA's stutter re-fires on: every voiced scene from
+   *  the break onward that belongs to the held card (so the on-screen loop
+   *  stutters when the VOICE does — the song's triple). The trailing static
+   *  disclaimer scene is not one of them. */
+  private readonly stutterBeats: number[] = this.scenes
+    .filter(s => s.at >= this.breakStart && !!s.line && s.shot !== 'static')
+    .map(s => s.at);
 
   /** true while the ambient hiss bed (+ the not-yet-real song, once it
    *  lands) should be playing — read each frame by the engine layer. */
@@ -160,11 +193,18 @@ export class NetVisionPlayerApp {
   }
 
   /** text length changes only (never a luminance/flash) — soft, warm-corrupt,
-   *  well under any strobe concern; the stutter is already IN the data string */
+   *  well under any strobe concern; the stutter is already IN the data string.
+   *  S51: the cadence is the SONG's. Each "Call now" in the audio re-fires the
+   *  full string; between calls it erodes a few characters at a time, the way
+   *  a dub loses the end of a word. (Session 35 flipped it on a blind 0.4s
+   *  timer, which had nothing to sync to.) */
   private breakStutterDisplay(): string {
     const full = M.breakStutter;
-    const cut = Math.floor(this.elapsed / 0.4) % 2 === 0;
-    return cut ? full : full.slice(0, Math.max(6, full.length - 8));
+    let beat = this.breakStart;
+    for (const b of this.stutterBeats) if (b <= this.elapsed) beat = b;
+    const age = Math.max(this.elapsed - beat, 0);
+    const eroded = full.length - Math.floor(Math.max(age - 0.35, 0) / 0.45) * 3;
+    return full.slice(0, Math.max(6, eroded));
   }
 
   update(dt: number): void {
@@ -197,6 +237,10 @@ export class NetVisionPlayerApp {
 
   private close(result: 'watched' | 'skipped' | 'interrupted'): void {
     this.open = false;
+    // the song does not outlive the window — S51, see releaseBus()'s own note:
+    // os.ts drops its reference to this player the moment onClosed fires, which
+    // is why app.ts's audio sync can no longer reach the bus to stop it.
+    releaseBus();
     this.onClosed?.(result);
   }
 
@@ -217,9 +261,14 @@ export class NetVisionPlayerApp {
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     const a: Rect = c;
 
-    const tearing = this.inBreak() && this.breakProgress() >= 0.6;
+    const tearing = this.elapsed >= this.tearAt;
     if (this.stage === 'staticHold' || tearing) {
       this.drawStatic(ctx, a);
+      // the fine print the SONG doesn't carry: it crawls through the wreck
+      // (audio guide §7d keeps the disclaimer out of the music deliberately).
+      // Before S51 this scene existed in the data but was never drawn — the
+      // tear branch returned static and nothing else.
+      if (this.stage === 'playing') this.drawDisclaimerCrawl(ctx, a);
     } else {
       const scene = this.renderScene();
       if (scene) {
@@ -277,9 +326,24 @@ export class NetVisionPlayerApp {
         return;
       case 'brand':
         this.drawBrandCard(ctx, a);
+        // S51: the card's big text is the BRAND, so the spoken/sung line still
+        // needs its lower third. Before S51 a card shot dropped its line
+        // entirely — "Introducing the new you program" was captioned nowhere.
+        this.drawLowerThird(ctx, a, scene, override);
         return;
       case 'offer':
         this.drawOfferCard(ctx, a, override);
+        // likewise: the card's big text is the PHONE NUMBER, and the offer
+        // shots now carry the sting ("Three easy payments of yourself").
+        this.drawLowerThird(ctx, a, scene, override);
+        return;
+      case 'steps':
+        // S51: "Confess it" / "Submit it" / "Let us hold it for you" are ~1s
+        // apart in the song, so they get a beat each and accumulate on one
+        // card like a countdown. The card carries the words at size, so its
+        // lower third shows the chyron only.
+        this.drawStepsCard(ctx, a, scene);
+        this.drawLowerThird(ctx, a, scene, override, false);
         return;
       default: {
         // host / testimony / crowd — a warm studio set + composite silhouette(s)
@@ -301,36 +365,80 @@ export class NetVisionPlayerApp {
           this.fringeText(ctx, scene.grade === 'before' ? M.before : M.after, a.x + 10, a.y + 10,
             scene.grade === 'before' ? ERA1.warnDark : ERA1.ok);
         }
-        this.drawLowerThird(ctx, a, scene, override);
-        if (scene.karaoke && !this.inBreak()) this.drawKaraoke(ctx, a, scene);
+        // a karaoke scene's line is already the karaoke bar's text — one
+        // subtitle, not two stacked copies of the same lyric
+        const sung = !!scene.karaoke && !this.inBreak();
+        this.drawLowerThird(ctx, a, scene, override, !sung);
+        if (sung) this.drawKaraoke(ctx, a, scene);
       }
     }
   }
 
-  private drawLowerThird(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene, override?: string): void {
+  /** `showLine: false` = something else on screen already carries this scene's
+   *  line (the karaoke bar, the steps card), so the band shows the chyron only.
+   *  S51: a band with NOTHING to carry — an instrumental shot, or the CROWD's
+   *  chorus, which has no chyron — isn't drawn at all rather than laid down as
+   *  an empty navy slab. */
+  private drawLowerThird(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene, override?: string,
+                         showLine = true): void {
+    const chyron = scene.speaker ? (M.chyrons[scene.speaker] ?? '') : '';
+    const line = override ?? (showLine ? scene.line : '');
+    if (!chyron && !line) return;
     const barY = a.y + a.h - 34;
     ui.px(ctx, a.x, barY, a.w, 34, ERA1.navy);
     ui.px(ctx, a.x, barY, a.w, 2, ERA1.titleBlue);
-    const chyron = scene.speaker ? (M.chyrons[scene.speaker] ?? '') : '';
     ui.setFont(ctx, 10);
     if (chyron) this.fringeText(ctx, chyron, a.x + 8, barY + 4, ERA1.white);
     ui.setFont(ctx, 9);
-    const line = override ?? scene.line;
     if (line) this.fringeText(ctx, line, a.x + 8, barY + 18, ERA1.tooltip);
   }
 
+  /**
+   * The karaoke bar. S51: the bouncing ball tracks the SUNG WORDS, from the
+   * scene's `words` (the song's word-timed lyric file) — it sits on the word
+   * being sung and the line fills in behind it, which is what a karaoke bar
+   * has always claimed to do. Session 35 swept it linearly across an invented
+   * paraphrase; there was nothing for it to be right about. A scene with no
+   * `words` still works: it falls back to that linear sweep.
+   */
   private drawKaraoke(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene): void {
     const barY = a.y + a.h - 60;
     ui.px(ctx, a.x, barY, a.w, 22, ERA1.black);
     ui.setFont(ctx, 11);
-    ctx.fillStyle = ERA1.tooltip;
-    const text = M.karaoke;
+    const text = scene.line;
+    if (!text) return;
     const tw = ctx.measureText(text).width;
     const tx = a.x + (a.w - tw) / 2;
-    this.fringeText(ctx, text, tx, barY + 4, ERA1.tooltip);
-    const span = Math.max(this.nextSceneAt(scene) - scene.at, 0.5);
-    const frac = Math.min(Math.max((this.elapsed - scene.at) / span, 0), 1);
-    const ballX = tx + frac * tw;
+    // the line, not yet sung
+    this.fringeText(ctx, text, tx, barY + 4, ERA1.silver);
+
+    let ballX = tx;
+    const words = scene.words;
+    if (words && words.length) {
+      // locate each word IN the authored line (never re-join the word list —
+      // the line is the copy of record), so punctuation/spacing stay as written
+      let cursor = 0; let active = -1;
+      const at: { start: number; end: number }[] = [];
+      for (const [, w] of words) {
+        const i = text.indexOf(w, cursor);
+        const start = i < 0 ? cursor : i;
+        at.push({ start, end: start + w.length });
+        cursor = start + w.length;
+      }
+      for (let i = 0; i < words.length; i++) if (words[i][0] <= this.elapsed) active = i;
+      if (active >= 0) {
+        // sung so far, drawn over the dim line in the same font/position
+        const prefix = text.slice(0, at[active].end);
+        this.fringeText(ctx, prefix, tx, barY + 4, ERA1.tooltip);
+        const wordStart = tx + ctx.measureText(text.slice(0, at[active].start)).width;
+        const wordW = ctx.measureText(text.slice(at[active].start, at[active].end)).width;
+        ballX = wordStart + wordW / 2;
+      }
+    } else {
+      const span = Math.max(this.nextSceneAt(scene) - scene.at, 0.5);
+      const frac = Math.min(Math.max((this.elapsed - scene.at) / span, 0), 1);
+      ballX = tx + frac * tw;
+    }
     const bounce = Math.abs(Math.sin(this.elapsed * 8)) * 6;
     ui.px(ctx, ballX - 2, barY - 8 - bounce, 4, 4, ERA1.warn);
   }
@@ -343,6 +451,31 @@ export class NetVisionPlayerApp {
     ui.setFont(ctx, 10);
     const mw = ctx.measureText(M.ministry).width;
     this.fringeText(ctx, M.ministry, a.x + (a.w - mw) / 2, a.y + a.h / 2 + 6, ERA1.white);
+  }
+
+  /**
+   * The three steps, accumulating one per beat (S51 — they are ~1s apart in
+   * the song). Rows not yet reached are dim bars, not text: the checklist
+   * visibly has more to come without spoiling the ask, and no copy is invented
+   * for it — every word on this card is an authored `line` from the data.
+   */
+  private drawStepsCard(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene): void {
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.tealDark);
+    const steps = this.scenes.filter(s => s.shot === 'steps');
+    const current = steps.indexOf(scene);
+    const rowH = 26;
+    const top = a.y + Math.round((a.h - 34 - steps.length * rowH) / 2);
+    for (let i = 0; i < steps.length; i++) {
+      const y = top + i * rowH;
+      ui.setFont(ctx, 14);
+      if (i <= current) {
+        this.fringeText(ctx, `${i + 1}`, a.x + 40, y, ERA1.warn);
+        this.fringeText(ctx, steps[i].line, a.x + 62, y, ERA1.tooltip);
+      } else {
+        ui.px(ctx, a.x + 40, y + 6, 14, 2, ERA1.grey);
+        ui.px(ctx, a.x + 62, y + 6, 120, 2, ERA1.grey);
+      }
+    }
   }
 
   private drawOfferCard(ctx: CanvasRenderingContext2D, a: Rect, override?: string): void {
@@ -367,6 +500,31 @@ export class NetVisionPlayerApp {
       ctx.fillStyle = Math.random() < 0.5 ? ERA1.white : ERA1.grey;
       ctx.fillRect(x, y, 1, 1);
     }
+  }
+
+  /**
+   * The disclaimer, crawling through the static (S51). Fine print behaves like
+   * fine print: it moves, right to left, at whatever rate finishes exactly as
+   * the tape runs out — so the rate comes from the data (its scene `at` and the
+   * video's `duration`), never a magic number. Kept small and grey: legible if
+   * you chase it, which is the point of the joke and of the apparatus.
+   */
+  private drawDisclaimerCrawl(ctx: CanvasRenderingContext2D, a: Rect): void {
+    const scene = this.activeScene();
+    if (!scene || scene.shot !== 'static' || !scene.line) return;
+    ui.setFont(ctx, 9);
+    const tw = ctx.measureText(scene.line).width;
+    const travel = a.w + tw;
+    const span = Math.max(this.duration - scene.at, 0.5);
+    const frac = Math.min(Math.max((this.elapsed - scene.at) / span, 0), 1);
+    const x = a.x + a.w - frac * travel;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(a.x, a.y, a.w, a.h);
+    ctx.clip();
+    ctx.fillStyle = ERA1.silver;
+    ctx.fillText(scene.line, Math.round(x), a.y + a.h - 52);
+    ctx.restore();
   }
 
   private drawScanlines(ctx: CanvasRenderingContext2D, a: Rect): void {
