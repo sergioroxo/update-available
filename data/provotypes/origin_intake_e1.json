@@ -97,27 +97,36 @@
     "sources": [
       {
         "_doc": "PLACEHOLDER — Sérgio voice pass pending. Merges the two verbatim lines and the childhood-play paraphrase into one entry (was two sources; merged, then further shortened, to fit the fixed debrief window — flagged in the session log). Full nuance (composite delivery context, paraphrase-not-verbatim caveat) lives here in _doc; the on-screen text keeps only what fits.",
+        "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
         "status": "documentary",
         "confidence": "high",
-        "text": "Van den Aardweg's \"Anamnestic Questionnaire\" (1997) is a real clinical instrument; two prompts quote it directly. The childhood-play question paraphrases it, not verbatim. [VERIFY SOURCE]"
+        "text": "Van den Aardweg's \"Anamnestic Questionnaire\" (1997) is real — a self-history questionnaire published in his self-therapy guide. It was presented as clinical; it was never validated, standardized, or recognized as a diagnostic instrument. Two prompts quote it directly; the childhood-play question paraphrases it. [VERIFY SOURCE]",
+        "urls": ["https://exgaycalling.com/wp-content/uploads/2020/03/Battle-For-Normality-The-Dr.-Gerard-van-den-Aardweg.pdf"],
+        "_urlsDoc": "The Anamnestic Questionnaire is pp.117-124 of this PDF (search 'Anamnestic'). Quote-diff run S47 2026-07-25 — see session log for the full comparison against the scene's states[0]/states[1] prompts (not rewritten this session; Sérgio's call per the task brief)."
       },
       {
         "_doc": "PLACEHOLDER — Sérgio voice pass pending",
+        "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
         "status": "documentary",
         "confidence": "medium",
-        "text": "Love Won Out published conference-guide material instructing parents and schools to monitor a child's gendered behavior; this scene's framing draws on that. [VERIFY SOURCE]"
+        "text": "Love Won Out's published conference guide taught parents to treat childhood gender nonconformity as a warning sign and to intervene — enlisting relatives, coaches and teachers. A separate session taught parents to scrutinize school curricula. This scene's framing draws on both. [VERIFY SOURCE]",
+        "urls": ["https://upload.wikimedia.org/wikipedia/commons/a/ae/Love_Won_Out_Conference_Guide.pdf"]
       },
       {
         "_doc": "PLACEHOLDER — Sérgio voice pass pending; carries forward the original v1 R4 sourcing basis for the merged conformity-drill items (walk/talk/sit, friendship logging)",
+        "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
         "status": "documentary",
         "confidence": "medium",
-        "text": "The behavioral-monitoring questions are composited from survivor testimony (e.g., Guay) and clinical literature (Flentje et al., 2013), not one surviving worksheet. [VERIFY SOURCE]"
+        "text": "The behavioral-monitoring questions are composited — not one surviving worksheet — from published survivor testimony (James Guay, TIME, 2014) and clinical literature (Flentje, Heck & Cochran, \"Sexual Reorientation Therapy Interventions: Perspectives of Ex-Ex-Gay Individuals,\" Journal of Gay & Lesbian Mental Health 17:3, 2013), whose findings reflect a self-selected qualitative sample. [VERIFY SOURCE]",
+        "urls": ["https://time.com/2986440/sexual-conversion-therapy-gay/", "https://cdn.ca9.uscourts.gov/datastore/general/2013/02/04/13-15023_Amicus_brief_by_Survivors_of_Sexual_Orientation_Change_Efforts.pdf", "https://doi.org/10.1080/19359705.2013.773268"]
       },
       {
         "_doc": "PLACEHOLDER — Sérgio voice pass pending; the plain no-evidence statement G6 requires",
+        "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
         "status": "documentary",
         "confidence": "high",
-        "text": "Major professional bodies (including the APA) state conversion practices lack evidence of benefit, and this instrument's causal premises are unsupported. [VERIFY SOURCE]"
+        "text": "Professional bodies state these practices lack evidence of benefit and carry risk of harm: the APA's 2009 review of sexual-orientation change efforts, its 2021 resolutions covering both orientation and gender identity, and the UK's cross-government Memorandum of Understanding on Conversion Therapy (2015; extended to gender identity in 2017). This instrument's causal premises are unsupported. [VERIFY SOURCE]",
+        "urls": ["https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf", "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf", "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf", "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF"]
       }
     ]
   },

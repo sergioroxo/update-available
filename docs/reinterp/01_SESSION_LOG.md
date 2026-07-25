@@ -1611,3 +1611,76 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
 **BLOCKED: none.**
 
 - 2026-07-24 — Reinterp Session 43 (Sonnet 5, S43 Lamby mark redesign): the required `sad` mood + a real motion vocabulary, extending the existing rig lab (`src/lambyrig/lambyRig.ts`, `?lambyrig=1`) rather than starting over. **What shipped:** (1) A fourth mood `sad` added throughout (`Mood` type, `MOODS`, `isMood`, mood-button width) — droopy closed/downcast eyes (not a blink, a hold), a plain hooked-corner frown, one arm let to hang rather than rest, muted greyDark shading on the wool and a greyDark paperclip wire, all mapped from `data/strings/lamby_rig.json`'s new `moods.sad`/`bubble.sad` — the bubble line is Sérgio's own `⟨S⟩` "I caught it in time." from `REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md` §S2R.3C, not a Claude invention, since that line is already his and directly names this beat. (2) Motion vocabulary, built as geometry (no `ctx.rotate` anywhere in the file, matching the codebase's existing no-rotation convention — CLAUDE.md's "90°-step rotations only" read as "don't fake arbitrary rotation," so tilt/lean is achieved by pixel-offset drawing, never by transform rotation): `appearBounce()` — a decaying sine overshoot on `sx`/`sy` during the `appear` cycle's rising phase, giving the classic Clippy pop-and-settle instead of a flat clip-mask reveal; `idleDrift()` — a small continuous sway (~±1.6px) during `idle`, silenced when `mood==='sad'` because stillness is the point of the hold; `deflateAmount()` — on switching to `sad` (tracked via a new `moodStart` timestamp set in `handleClick`), a 0.65s eased sink-and-squash (up to 6px down, 10% vertical compression) that holds, then carries a faint ±0.4px tremor so the held pose reads as breath, not a frozen frame. All three compose through one `ctx.save()/scale()/translate()` wrapping shadow+paperclip+body+face+gesture (bubble text drawn outside the transform so it never warps). (3) `data/strings/lamby_rig.json` gained `moods.sad`/`bubble.sad` only — still `_doc`-flagged PLACEHOLDER, still not integrated into any production surface. **Explicitly not done (S45's job, per the brief's file fence):** `src/desktop/os.ts` untouched — the rig stays standalone. **Verified live:** `?lambyrig=1&mood=sad&action=idle` screenshotted and judged by eye — reads as crestfallen/hurt, not sinister or joking (avoidant downcast eyes + plain frown + one dropped arm, no tears, no exaggerated brow); `?lambyrig=1&mood=cheerful&action=appear` screenshotted mid-cycle showing the squash-then-settle silhouette actually rising with a visible compress/overshoot, not a flat wipe; existing moods/actions re-screenshotted (cheerful+idle) to confirm the pre-existing character read is unchanged in style, only in motion. Baseline `?flat=1` loaded clean, zero console errors. `npm test` (palette ratchet actually improved, 49 < baseline 51 — ratchet ok) and `npm run build` both green.
+
+- 2026-07-25 — Reinterp Session 47 (Sonnet 5, S47 dossier corrections): applied the SUGGESTED
+  precision corrections from `docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md` (C1–C6) to the
+  dossier sources, as PROPOSED text awaiting Sérgio — per his 2026-07-24 instruction ("just make
+  the prompt and later we can check"), this session clears nothing. **What changed (diff list for
+  his review):**
+  - `data/provotypes/pillow.json` — `debrief.sources[1]` (the "deeper feelings" gap): reworded to
+    Cohen's actual documented instruction ("until some thoughts or feelings emerge") with the WaPo
+    URL added; `status` left `speculative` (unchanged) — the appendix's suggested
+    `speculative→contested` upgrade is a MEANING change (it asserts the instruction is
+    primary-sourced enough to stop disclosing it as unconfirmed), not a precision fix, so it was
+    **not applied** — flagged here for his call, per the brief's "if a correction changes what a
+    claim MEANS, do not apply it" instruction. `sources[2]` (Ferguson v. JONAH): reworded to the
+    three-stage version (pre-trial ruling → 25 June 2015 jury verdict → December 2015 settlement;
+    the jury did not itself impose the bar), NJ court opinion + SPLC docket URLs added. `sources[3]`
+    (APA/MoU): reworded to name the 2009 review (orientation only) vs. the 2021 resolutions
+    (orientation + gender identity) vs. MoU v1 2015/v2 2017 editions; four URLs added. All three
+    marked `"_proposed"`.
+  - `data/provotypes/origin_intake_e1.json` — `debrief.sources[0]` (van den Aardweg): reworded from
+    "a real clinical instrument" to "presented as clinical; never validated, standardized, or
+    recognized as a diagnostic instrument," PDF URL added. `sources[1]` (Love Won Out): reworded
+    from merged "parents/schools... monitor a child" to the two actual separate sessions (parents
+    told to treat gender nonconformity as a warning sign and intervene; a SEPARATE session told
+    parents to scrutinize school curricula — no instruction to schools to surveil children was
+    found), conference-guide URL added. `sources[2]` (Guay/Flentje): reworded to carry James Guay's
+    full name/publication (TIME, 2014) and the full Flentje/Heck/Cochran citation, three URLs
+    added. `sources[3]` (APA scope, shared claim with pillow): same 2009/2021/MoU precision as
+    above, four URLs added. All four marked `"_proposed"`.
+  - `data/strings/updates.json` — no display copy changed (none of `notify`/`eula`/`changelog`
+    asserted the imprecise claims). Added a `"_sourceGrounding"` doc field to each of `u2`
+    (Paulk photographed 19 Sept 2000, removed as Exodus board chair 3 Oct 2000 — explicitly NOT
+    "Exodus collapsed in 2000"), `u3` (Chambers's apology + the Exodus board's closure decision,
+    both 19 June 2013, not just "in 2013"), and `u4` (Malta Act LV of 2016, published 9 Dec 2016,
+    Chapter 567 — cite Parliament of Malta + legislation.mt, not the NATLEX record — plus the
+    app-store removals, corrected to ONE app, Living Hope Ministries, not "several apps"), each
+    with URLs and `"_proposed"`.
+  - `data/dialog/s2_media.json` — added a sibling `"_sourceNote"` field (the file-level `_doc`'s
+    existing "Real apparatus echoed" clause is left untouched, not edited in place) with the C6
+    correction: Truth in Love was principally a NEWSPAPER campaign (first full-page ad, NYT, 13
+    July 1998), not a TV infomercial; Success-N-Life supplies the FORMAT only and was never a
+    conversion program; the combination is framed explicitly as an authorial design choice, not a
+    historical claim. Two URLs added, marked `"_proposed"`.
+  - `docs/reinterp/06_SERGIO_CHECKLIST.md` §D — added a dated callout under the existing 2026-07-24
+    update noting which D.1/D.2/D.3 rows now have corrected-and-proposed text in the files, without
+    checking any row off (nothing is cleared).
+  **Van den Aardweg quote-diff (the brief's "ALSO" item), reported not applied:** fetched the
+  source PDF (`exgaycalling.com/.../Battle-For-Normality-...pdf`, via the PDF-tools MCP after
+  WebFetch failed on the scanned-image PDF) and read pp.117–124, the Anamnestic Questionnaire in
+  full (19 items). Diffed against `origin_intake_e1.json`'s `states[0]`/`states[1]` prompts:
+  - `states[0]` ("Describe your emotional relationship with your father.") is a **verbatim
+    substring** of the real item 1's opening clause ("Describe your emotional relationship with
+    your father while you were growing up. Which of the following characteristics apply..."), but
+    it is a **truncated fragment** — it stops before "while you were growing up" and drops the
+    item's full multi-part elaboration (the characteristic-list prompt, the "up to
+    puberty.../afterward..." period split).
+  - `states[1]` ("How did your father regard and treat you as far as your sexual identity was
+    concerned?") is an **exact verbatim match** of real item **9**'s first sentence, not item 2
+    (real item 2 is a different question — "What did I think... my father thought of me?").
+  - So: the debrief's "two prompts quote it directly" is accurate as far as it goes (both are true
+    verbatim substrings, not paraphrases), but two things aren't currently disclosed anywhere: (a)
+    both quotes are truncated fragments of longer multi-part items, not full items, and (b) the two
+    "quoted" screen questions correspond to real items 1 and 9 — not adjacent, with seven other
+    items skipped between them — rather than the instrument's actual items 1 and 2. Neither changes
+    whether the quotes are accurate, but both are precision Sérgio may want reflected either in the
+    debrief text or in a fuller `_doc` note. **Scene copy (`states[]` prompts) was NOT rewritten** —
+    per the brief, that's his call, not this session's.
+  - The already-flagged childhood-play paraphrase (`states[2]`) was spot-checked against real item
+    17 ("For men: Did you as a boy play with soldiers, war toys, etc.? For women: Did you play with
+    dolls, stuffed animals?") and confirmed to already read correctly as a paraphrase, not a
+    verbatim quote — no discrepancy, no change needed.
+  **Every `[VERIFY SOURCE]` tag in all four touched files is still present — this session cleared
+  none.** `npm test` green (check-spec C1 unaffected: every source still carries a valid
+  `status`/`confidence`). **BLOCKED: none.**

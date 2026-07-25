@@ -684,6 +684,22 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 > Also resolved 2026-07-24: **Tape B** confirmed fine as invented content (no source owed) ·
 > **`_dummy.json`** confirmed non-shippable scaffold, out of scope · **Malta** reverified
 > (use Parliament of Malta + legislation.mt Chapter 567, *not* the NATLEX record).
+>
+> **⚑ UPDATE 2026-07-25 (S47) — corrections C1–C6 applied to the files as PROPOSED, not cleared.**
+> Every row below still carries its `[VERIFY SOURCE]` tag; nothing is cleared by this session —
+> that stays Sérgio's call (ETHICS_CONSTRAINTS #13/#14). What changed: D.1's four `pillow.json`
+> rows (`:149` unchanged/no correction owed, `:155`/`:161`/`:167` reworded) and four
+> `origin_intake_e1.json` rows (`:102`/`:108`/`:114`/`:120` reworded) each gained corrected text,
+> source URLs, and an `"_proposed"` marker for in-file review — see
+> `docs/reinterp/01_SESSION_LOG.md` for the exact diff list. D.2's `s2_media.json:2` row gained a
+> sibling `_sourceNote` field with the C6-corrected text (newspaper not TV) — the original `_doc`
+> clause it names is left untouched. D.3's u2/u3/u4 rows each gained a `_sourceGrounding` field
+> with the hard dates/named cases from the results doc (Paulk, Chambers, Malta, the one app) — the
+> player-facing copy in `updates.json` was not touched, since none of it asserted the imprecise
+> claims being corrected. **Also this session:** the van den Aardweg quote-diff D.1's `:102` row
+> asks for is done and reported in the session log — states[0]/[1]'s "direct quotes" are verbatim
+> substrings of real items 1 and 9 (not adjacent items, and truncated/partial), not rewritten here
+> (that's flagged for Sérgio, not applied).
 
 *(generated 2026-07-24 — sweep of every JSON file in `data/`
 for `[VERIFY SOURCE]` tags AND factual claims with no tag at all. Sit top-to-bottom;

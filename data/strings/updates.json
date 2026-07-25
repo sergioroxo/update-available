@@ -47,7 +47,12 @@
       "= your goal: unchanged",
       "- nothing is ever removed"
     ],
-    "restarting": "Restarting…"
+    "restarting": "Restarting…",
+    "_sourceGrounding": {
+      "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
+      "text": "Documentary grounding candidate for the 1997→2003 update trigger: John Paulk, public face of the 1998 ex-gay advertising campaign, was photographed at a Washington, D.C. gay bar 19 September 2000; Exodus International removed him as board chair 3 October 2000 and placed him under disciplinary supervision. This is a documented public scandal and organizational discipline — NOT a claim that Exodus itself collapsed in 2000; no display string here makes that claim. [VERIFY SOURCE]",
+      "urls": ["https://www.christianitytoday.com/2000/10/ex-gay-leader-disciplined-for-gay-bar-visit/", "https://lgbpsychology.org/html/Paulk-Southern%20Voice.html"]
+    }
   },
   "u3": {
     "toEra": "e3",
@@ -103,7 +108,12 @@
       "~ companion process — could not be removed. migrating."
     ],
     "installSeconds": 11.5,
-    "restarting": "Restarting…"
+    "restarting": "Restarting…",
+    "_sourceGrounding": {
+      "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
+      "text": "Documentary grounding for the 2003→2016 update trigger: Alan Chambers's public apology (\"I Am Sorry\") and Exodus International's board decision to close the organization were both announced 19 June 2013 — use the date, not \"in 2013.\" [VERIFY SOURCE]",
+      "urls": ["https://web.archive.org/web/20130622031108/http://exodusinternational.org/2013/06/i-am-sorry", "https://www.christianitytoday.com/2013/06/alan-chambers-apologizes-to-gay-community-exodus/", "https://www.latimes.com/local/lanow/la-me-ln-exodus-ministry-to-shut-down-20130619-story.html"]
+    }
   },
   "u4": {
     "toEra": "e4",
@@ -151,7 +161,12 @@
       "= the goal: still on file",
       "- the light is the interface"
     ],
-    "restarting": "Restarting…"
+    "restarting": "Restarting…",
+    "_sourceGrounding": {
+      "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
+      "text": "Documentary grounding for the 2016→now update trigger: Malta's Act LV of 2016 (first European nationwide conversion-practice ban), passed December 2016, published 9 December 2016, now consolidated as Chapter 567. Cite Parliament of Malta + legislation.mt Chapter 567 — NOT the ILO NATLEX record, which Deep Research flags as ambiguously indexed. Separately, app-store removals of conversion-therapy apps (2018-2019) are documented as ONE app — Living Hope Ministries — pulled by Apple (21 Dec 2018), Microsoft (~Dec 2018), Amazon (by 21 Mar 2019) and Google (28 Mar 2019). Do not write \"several conversion-therapy apps.\" [VERIFY SOURCE]",
+      "urls": ["https://www.parlament.mt/12th-leg/bills-12th/bill-no-167/", "https://legislation.mt/eli/cap/567/eng", "https://www.dallasnews.com/news/2018/12/21/there-s-not-an-app-for-that-apple-removes-arlington-ministry-s-app-after-anti-conversion-therapy-group-complaint/", "https://www.theverge.com/2019/3/29/18286906/google-conversion-therapy-app-play-store-remove"]
+    }
   },
   "close": {
     "toEra": "close",
