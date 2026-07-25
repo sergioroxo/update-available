@@ -51,6 +51,132 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-25 · Session 48 — **THE PACING & POLISH PASS**, per the S48 prompt in
+`docs/REINTERP_PLAYTHROUGH_NOTES_2026-07-25.md` (THE SPEC — Sérgio's own playthrough). His
+governing note: the Caleb thread was timed to be VERIFIABLE, not to be READ, and everything
+runs too fast. **I watched the whole thread at real speed and read along, then tuned.**
+
+**HOW IT WAS WATCHED (stated plainly, because the brief made this the acceptance test).** Real
+wall-clock, real pointer clicks on the monitor mesh, in `?reinterp=1&debug=1` — the MessageChannel
+rAF pump (the sandboxed tab reports `hidden`, which suspends real rAF; the pump ran at a measured
+124 fps of REAL time, so every second below is a real second), and every chip/button click was a
+real `computer` click mapped through `camera.worldToScreen()` from the live hit rects on
+`__os.caleb.hits` / `__os.accountability.hits`, never a re-derived window rect. **The one debug
+call in the whole run was `debugJump('calebChat')` to ARRIVE at the thread's first beat; nothing
+inside the thread was jumped, fast-forwarded or scripted** — the chips were pressed when I had
+finished reading, the holds were sat through, the video was watched to its break. Full run:
+**≈6 minutes**. The two beats too short to catch between tool round-trips (the PureMail entrance,
+2.8s; the residue's pre-tear, 1.9s) were captured afterwards by freezing the pump and stepping it
+with a synthetic advancing timestamp — screenshots at p = 0.15 / 0.39 / 0.75 of the entrance and
+p = 0.24 / 0.46 of the dissolve.
+
+**1 · PACE — every timing constant now lives in ONE place, and it is not TypeScript.**
+`data/dialog/s2_caleb.json` gained a `pacing` block; `caleb.ts` and `accountability.ts` now hold
+**zero numbers of their own** and read it. Sérgio tunes the thread's breath without opening a
+`.ts` file, and the block's `_doc` carries the reasoning (including the rule of thumb I actually
+used while watching: ~12–13 characters of dwell per second, plus a beat to feel it). Measured
+dwells from the real-speed run, against the old values:
+| beat | was | now (measured) |
+|---|---|---|
+| Caleb's typing | 24 cps | **11 cps** (19 chars → 1.63s; 47 → 4.27s; 83 → 7.55s) |
+| between his lines | 1.05s | **1.9s** (chat) / **2.8s** (his return) |
+| chips appear after his line | same frame | **+0.9s**, and **+2.2s** before he types back after a reply |
+| the commit-press lands | 1.1s | **2.81s** of the line sitting there warm |
+| alert `stop` (2 lines, 103 ch) | 3.0s | **6.5s** (+3.2s more while `block` holds the same text = 9.7s) |
+| alert `wanting` (70 ch + the flag) | 2.6s | **7.51s** |
+| streak 412 → 0 | 1.3s fall / 2.0s hold | **2.2s fall / 4.5s hold** |
+| the two ⟨S⟩ system lines (89 ch) | 3.8s | **8.51s** |
+| the SAD HOLD before ⟨S⟩ "I caught it in time." | 3.0s | **5.51s** |
+| quiet after the un-redaction, before his first return line | 0s | **3.50s** |
+| after his last line ("i'm coming to you.") | 2.6s | **7.31s** |
+| the residue's arrival | 1.4s cut | **4.2s dissolve + 3.0s of bare dark** |
+| the committed line stands | 5.0s | **6.5s** |
+**Judged by reading, not by counters:** every beat above was legible at real speed, and the two
+that carry no text are legible as silences — the falling counter is the line at `streak`, and the
+empty speech area is the line at `sad`. The redaction (15 rendered rows × 0.52s = 7.8s) still
+finishes *inside* the alert, at the end of `wanting`, so the conversation is gone before the
+system stops explaining why. **No copy was changed anywhere.**
+
+**2 · THE GLITCH INTO PUREMAIL (was missing).** The envelope no longer appears — it TEARS in, in
+the apparatus's own warm-corrupt vocabulary: a `MailPhase: 'arriving'` runs 2.8s as (a) a band of
+corrupt signal opening from a hairline to the card's full height, then (b) the envelope resolving
+inside the tear as the noise decays off it, like a tape finding its tracking. Same grammar as the
+video's break — 3px scanlines, sparse tape noise, one 2.4s rolling tracking band. `amount` moves
+only NOISE DENSITY and band alpha, monotonically: **no luminance jump, no flash, never a strobe.**
+The Open button is drawn but not clickable until the signal has locked.
+
+**3 · THE RESIDUE'S SLOW DISSOLVE (was missing).** "Then it was never me that was broken…" now
+ARRIVES instead of cutting. The dissolve starts while the chat is still on screen (riding the
+felt module's only over-everything draw pass), the whole desktop corrupts for 1.9s, the surface
+changes at the TEAR — where the noise is densest, so the swap is never seen as a cut — and the
+remaining 2.3s plays out over the bare dark field with the noise thinning to nothing. Then 3.0s
+of genuinely empty screen, and only then does the line fade up over 1.1s. The press cross-fades
+to the standing line rather than swapping it. It reads as something settling, not as an effect.
+
+**4 · LAMBY READS AS A SHEEP — and there is now only ONE Lamby.** ⚑ The duplication was fixed
+FIRST, as the brief demanded: `lambyRig.ts` no longer carries its own copy of the pose math and
+drawing methods (S45 had to PORT them because the lab exported only `startLambyRig`); it now
+imports `drawLambyChar` from `src/desktop/apps/lambyChar.ts`, which is the single definition. The
+lab keeps only what is genuinely the lab's — the stage, the controls, the `disappear` reveal wipe,
+the speech bubble (the game's alert window carries Lamby's lines in its own type area, so it never
+wants one), plus a `loopAppear` flag because the lab replays the pop and the game plays it once.
+THEN the restyle, once, in that one file: drooping stepped ears rooted behind a smaller rimmed
+face patch, a pale muzzle carrying the nose and every mood's existing mouth 3px lower, a lamb's
+topknot over the brow, and a second ring of crown bumps so the fleece reads curly rather than
+cloudy. **The motion vocabulary and the moods are untouched** — the appear pop, the idle fidget,
+the sad deflate-and-hold and every per-mood face rule are exactly S43's, because the cadence is
+the part Sérgio said already worked. The Clippy paperclip stays (lineage, not animal). Era-1
+tokens only, integer positions, no `ctx.rotate` — the ears droop by STEPPING. **Verified in BOTH
+surfaces from the one module:** `?lambyrig=1` (cheerful and sad, at 4× zoom) and the in-game
+alert band at scale 0.68 (cheerful → clinical → sad → sterile across the live run).
+
+**5 · THE OPENING DESCENT (new, adopted).** Entry now begins above the room: `?reinterp=1` boots
+the camera at y 5.6 looking down at −78°, and it falls to the seat over 7.5s, then settles to
+level over 3.6s, and only THEN does S44's wake start (light ramp → the machine boots itself). It
+ADDS to the wake, it does not replace it. **The comfort law is enforced structurally, and I
+measured it rather than asserting it:** phase 1 translates with the pitch pinned, phase 2 rotates
+with the position pinned, and a frame-by-frame trace of the whole descent recorded
+**0 frames in which both were moving**. Peak speeds: **1.1 m/s** vertical, **41°/s** pitch, both
+smootherstep (zero velocity AND acceleration at every seam). The `ceiling` slab is a closed box,
+so it is disabled for the fall and restored the moment the camera passes under it — while you are
+still looking down at the floor, so the roof is never seen returning. **Skippable by anything:**
+any pointerdown or keypress lands you in the seat at once — verified from BOTH phases (mid-fall
+y 4.93 → 1.16 with the ceiling restored, and mid-settle pitch −78 → 0), each handing straight to
+the wake. `?descent=0` turns it off.
+
+**⚑ FLAGGED FOR THE A11 IN-HEADSET PASS (this is the honest limit of what I could check).** There
+is **no XR entry point in this build at all** — no `app.xr`, no session start, nothing (grepped).
+So the descent's VR behaviour could not be tested here, only reasoned about: in a headset the XR
+manager drives the camera transform, so the forced pitch would be overridden and the move should
+reduce to a pure, slow, straight vertical translation with the player's own head free — the
+safest possible form. **That reasoning is not a test.** The descent is the one piece of artificial
+locomotion in a piece whose entire bodily law is "you never walk", and it must be judged in the
+headset before it is trusted. `?descent=0` exists for that A/B.
+
+**Two things I noticed and did NOT fix (out of fence, logged not touched):** (a) a `debugJump`
+that skips the O3 profile beat leaves `ledger.name` empty, so the transcript renders `-:` instead
+of `daniel:` — a review-path artifact only, never reachable on the linear path; (b) disabling the
+ceiling for the descent forces a batcher regeneration, so draw calls read ~85 for the opening
+seconds before settling back to 21 — one transient at boot with nothing else on screen, but worth
+a glance during the Quest pass. Also re-confirmed S50's own note: chaining several Caleb debug
+jumps in ONE session without a reload produces bogus states (I hit it once with `calebResidue`
+after `calebMail`); on a fresh load every jump lands correctly.
+
+**Verification:** `npm test` and `npm run build` green. Baselines confirmed unaffected by real
+load — `/` (shipped, non-reinterp) boots seated at the desk with the content warning, no descent,
+no `data-reinterp`; `?flat=1&reinterp=1` renders the desktop canvas alone and boots normally. No
+console errors from the app in any run.
+**Files touched:** `data/dialog/s2_caleb.json` (the `pacing` block only — no copy),
+`src/desktop/apps/caleb.ts`, `src/desktop/apps/accountability.ts`, `src/desktop/apps/lambyChar.ts`,
+`src/lambyrig/lambyRig.ts`, `src/engine/app.ts` (the descent only),
+`docs/reinterp/01_SESSION_LOG.md` — exactly the S48 fence.
+**Follow-up owed (one line):** the warm-corrupt glitch helper now exists twice — once in
+`caleb.ts`, once in `accountability.ts` — because `netvision.ts` keeps it private and was outside
+this fence, and because `caleb.ts` is `felt` and may not import the operable module in any case.
+Both copies say so in their headers. **If a third copy is ever needed, that is the moment to
+extract `src/desktop/theme/glitch.ts` and have all three read it.**
+**BLOCKED: none.**)*
+
 *(2026-07-25 · Session 50 — **THE REVIEW PANEL, REBUILT**, per the S50 prompt (the
 "ROOT CAUSE FOUND" section of `REINTERP_PLAYTHROUGH_NOTES_2026-07-25.md`): the `?debug=1`
 panel — Sérgio's own map of the piece — had drifted behind `os.ts`'s debugJump switch, and

@@ -1,29 +1,35 @@
 /**
- * LAMBY, THE CHARACTER — the production renderer (Session 45, S2R.3C).
+ * LAMBY, THE CHARACTER — THE ONE DEFINITION (Session 45; de-duplicated and
+ * restyled in Session 48).
  *
  * S43 built the Clippy-lineage rig (moods `cheerful | clinical | sterile |
  * sad`, the appear-bounce, the idle drift, and the sad DEFLATE that the shame
  * beat depends on) inside the standalone rig lab, `src/lambyrig/lambyRig.ts`
- * + `?lambyrig=1`, and deliberately did not adopt it — "S45 does that".
+ * + `?lambyrig=1`. S45 could not import it — the lab exported only
+ * `startLambyRig(canvas)` and kept its drawing in private methods of a
+ * non-exported class — so it PORTED the character here and flagged the
+ * duplication. **Session 48 closed it: this module is now the single source,
+ * and the lab imports `drawLambyChar` from it.** There is one Lamby. A change
+ * to his look is made here and shows up in `?lambyrig=1` and in the game at
+ * the same time; that is exactly how S48's restyle was verified.
  *
- * This file is that adoption. The lab's drawing and pose math are PORTED here
- * verbatim in behaviour (same fleece layout, same face/gesture rules, same
- * three motion curves, same era-1 tokens — no invented colors, no ctx.rotate),
- * with two changes the production surface needs and the lab did not:
+ * What the production surface needs and the lab did not:
  *   1. a `scale` — the lab draws Lamby at ~115×125 logical px on a bare stage;
  *      a window on the 512×384 desktop wants him smaller and placed;
  *   2. no stage clip and no speech bubble — the alert window carries Lamby's
  *      lines in its own type area, so a cartoon bubble would say it twice
- *      (and a bubble during the sad hold would undercut the hold).
+ *      (and a bubble during the sad hold would undercut the hold). The lab
+ *      keeps both of those around this call, where they belong.
  *
- * WHY A PORT AND NOT AN IMPORT: the lab exports only `startLambyRig(canvas)`,
- * which owns a whole canvas, the URL params and its own rAF loop; its drawing
- * lives in private methods of a non-exported class. Extracting them would mean
- * editing `lambyRig.ts`, which this session's file fence forbids ("consume it,
- * don't edit it"). The honest follow-up is one commit: have the lab import
- * THIS module and delete its private copies, so the character has exactly one
- * definition. Flagged in the session log — until then, a change to Lamby's
- * look must be made in both files.
+ * S48 — HE READS AS A SHEEP (Sérgio: "I love the new Lamby and the cadence,
+ * but it should look more like a Sheep/Lamb"). SILHOUETTE AND TEXTURE ONLY:
+ * drooping ears, a muzzle, a lamb's topknot, wool curls and a tail puff. The
+ * MOTION VOCABULARY AND THE MOODS ARE UNTOUCHED — the appear pop, the idle
+ * fidget, the sad deflate-and-hold and every per-mood face rule are exactly
+ * what S43 authored, because the cadence is the part that already worked. The
+ * Clippy paperclip stays too: it is the lineage quotation, not the animal.
+ * Era-1 palette tokens only (no invented colors), integer positions, no
+ * ctx.rotate — the ears droop by STEPPING, the way a 1997 sprite would.
  *
  * REGISTER: Lamby is `operable` and only ever `operable`. He is never drawn
  * inside a `felt` window (the Caleb chat, his return lines, the residue) —
@@ -33,7 +39,7 @@ import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 
 export type LambyMood = 'cheerful' | 'clinical' | 'sterile' | 'sad';
-export type LambyAction = 'idle' | 'point' | 'appear';
+export type LambyAction = 'idle' | 'point' | 'appear' | 'disappear';
 
 export interface LambyPose {
   mood: LambyMood;
@@ -42,8 +48,11 @@ export interface LambyPose {
   t: number;
   /** the `t` at which the current mood was set — drives the sad deflate */
   moodStart: number;
-  /** 1 = the rig lab's size (~115 wide × 125 tall logical px) */
+  /** 1 = the rig lab's size (~118 wide × 125 tall logical px) */
   scale?: number;
+  /** the rig lab LOOPS the appear pop so it can be watched over and over;
+   *  production plays it once and settles. Lab-only. */
+  loopAppear?: boolean;
 }
 
 const CYCLE = 3.2; // s — the lab's animation cycle (blink phase + appear pop)
@@ -58,7 +67,7 @@ function idleDrift(p: LambyPose): { dx: number; dy: number } {
 /** Clippy-style pop: overshoot on the way up, a squash on landing, then settle. */
 function appearBounce(p: LambyPose): { sx: number; sy: number } {
   if (p.action !== 'appear') return { sx: 1, sy: 1 };
-  const local = Math.min(p.t, CYCLE) / CYCLE;
+  const local = p.loopAppear ? (p.t % CYCLE) / CYCLE : Math.min(p.t, CYCLE) / CYCLE;
   if (local >= 0.6) return { sx: 1, sy: 1 };
   const q = local / 0.6;
   const wave = Math.sin(q * Math.PI * 2.5) * (1 - q);
@@ -101,9 +110,27 @@ function drawPaperclip(ctx: CanvasRenderingContext2D, cx: number, cy: number, mo
   ui.px(ctx, x + 17, y + 51, 19 + Math.floor(point / 2), 3, wire);
 }
 
+/** the wool tone and its shadow, per mood — S43's exact choices, kept */
+function woolTones(mood: LambyMood): { wool: string; shade: string } {
+  return {
+    wool: mood === 'sterile' ? ERA1.silver : ERA1.white,
+    shade: mood === 'cheerful' ? ERA1.beige : mood === 'sad' ? ERA1.greyDark : ERA1.grey
+  };
+}
+
+/** the face patch and its ears are DARKER than the fleece, the way a lamb's
+ *  are — that contrast is most of what makes him read as an animal at 100px */
+function faceTones(mood: LambyMood): { face: string; muzzle: string; ink: string; edge: string } {
+  return {
+    face: mood === 'sterile' ? ERA1.silver : ERA1.beige,
+    muzzle: mood === 'sterile' ? ERA1.beige : ERA1.paper,
+    ink: mood === 'sterile' ? ERA1.greyDark : ERA1.black,
+    edge: mood === 'sterile' ? ERA1.grey : ERA1.greyDark
+  };
+}
+
 function drawBody(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood: LambyMood): void {
-  const wool = mood === 'sterile' ? ERA1.silver : ERA1.white;
-  const shade = mood === 'cheerful' ? ERA1.beige : mood === 'sad' ? ERA1.greyDark : ERA1.grey;
+  const { wool, shade } = woolTones(mood);
   const fleece = [
     [-36, -20, 16], [-18, -34, 17], [2, -36, 18], [23, -30, 16],
     [38, -13, 17], [32, 10, 18], [12, 22, 19], [-12, 24, 18],
@@ -113,19 +140,60 @@ function drawBody(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood: L
   for (const [dx, dy, r] of fleece) circle(ctx, cx + dx + 2, cy + dy + 2, r);
   ctx.fillStyle = wool;
   for (const [dx, dy, r] of fleece) circle(ctx, cx + dx, cy + dy, r);
+  // S48: a second, smaller ring of bumps around the crown — the fleece's own
+  // scallop, doubled, so the silhouette reads CURLY rather than cloudy. Fixed
+  // positions, never random: the wool must not shimmer between frames.
+  const curls = [
+    [-30, -30, 8], [-11, -42, 9], [11, -42, 9], [30, -26, 8], [42, -4, 8]
+  ] as const;
+  ctx.fillStyle = shade;
+  for (const [dx, dy, r] of curls) circle(ctx, cx + dx + 1, cy + dy + 2, r);
+  ctx.fillStyle = wool;
+  for (const [dx, dy, r] of curls) circle(ctx, cx + dx, cy + dy, r);
   ui.px(ctx, cx - 29, cy + 34, 9, 24, ERA1.greyDark);
   ui.px(ctx, cx + 18, cy + 34, 9, 24, ERA1.greyDark);
   ui.px(ctx, cx - 34, cy + 56, 17, 5, ERA1.black);
   ui.px(ctx, cx + 13, cy + 56, 17, 5, ERA1.black);
 }
 
+/**
+ * S48 — THE EARS. Drawn between the body and the face so their roots go
+ * behind the face patch and read as attached. They droop by STEPPING down and
+ * out (no ctx.rotate, 1997 rules); each is outlined by laying the same blocks
+ * down one pixel bigger in the edge tone first.
+ */
+function drawEars(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood: LambyMood): void {
+  const { face, edge } = faceTones(mood);
+  // rooted high, beside the brow, and HANGING — four steps out and down, each
+  // a little narrower, so the pair reads as weight rather than as brackets
+  const left = [
+    [-22, -14, 10, 7], [-27, -8, 10, 7], [-31, -1, 9, 7], [-33, 6, 8, 6]
+  ] as const;
+  const blocks: [number, number, number, number][] = [];
+  for (const [dx, dy, w, h] of left) {
+    blocks.push([dx, dy, w, h]);
+    blocks.push([-dx - w, dy, w, h]); // mirrored, so the pair is exact
+  }
+  for (const [dx, dy, w, h] of blocks) ui.px(ctx, cx + dx - 1, cy + dy - 1, w + 2, h + 2, edge);
+  for (const [dx, dy, w, h] of blocks) ui.px(ctx, cx + dx, cy + dy, w, h, face);
+}
+
 function drawFace(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood: LambyMood, phase: number): void {
-  const face = mood === 'sterile' ? ERA1.beige : ERA1.paper;
-  const ink = mood === 'sterile' ? ERA1.greyDark : ERA1.black;
+  const { face, muzzle, ink, edge } = faceTones(mood);
+  const { wool, shade } = woolTones(mood);
+  // a head, not a helmet: smaller than S45's patch and rimmed, so it separates
+  // from the fleece instead of being a hole in it
+  ctx.fillStyle = edge;
+  circle(ctx, cx, cy - 4, 21);
   ctx.fillStyle = face;
-  circle(ctx, cx, cy - 8, 24);
-  ui.px(ctx, cx - 27, cy - 14, 8, 17, face);
-  ui.px(ctx, cx + 19, cy - 14, 8, 17, face);
+  circle(ctx, cx, cy - 4, 20);
+  // S48 — THE TOPKNOT: a curl of fleece over the brow, where a lamb's is.
+  ctx.fillStyle = shade;
+  circle(ctx, cx - 6, cy - 21, 9);
+  circle(ctx, cx + 7, cy - 23, 8);
+  ctx.fillStyle = wool;
+  circle(ctx, cx - 7, cy - 22, 9);
+  circle(ctx, cx + 6, cy - 24, 8);
   const blink = phase > 2.72 && phase < 2.88;
   if (blink) {
     ui.px(ctx, cx - 12, cy - 9, 8, 2, ink);
@@ -146,7 +214,18 @@ function drawFace(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood: L
     ui.px(ctx, cx - 10, cy - 10, 2, 2, ERA1.white);
     ui.px(ctx, cx + 8, cy - 10, 2, 2, ERA1.white);
   }
-  const mouthY = cy + 8;
+  // S48 — THE MUZZLE. A pale rounded snout below the eyes, carrying the nose
+  // and the mouth: with the ears, it is what turns a face into an animal's.
+  // Every mood's mouth is S43's exact shape, only carried 3px lower onto it.
+  ctx.fillStyle = edge;
+  circle(ctx, cx, cy + 8, 11);
+  ui.px(ctx, cx - 11, cy + 3, 22, 11, edge);
+  ctx.fillStyle = muzzle;
+  circle(ctx, cx, cy + 8, 10);
+  ui.px(ctx, cx - 10, cy + 4, 20, 9, muzzle);
+  ui.px(ctx, cx - 3, cy + 3, 7, 3, ink);   // the nose
+  ui.px(ctx, cx - 2, cy + 6, 5, 2, ink);
+  const mouthY = cy + 11;
   if (mood === 'cheerful') {
     ui.px(ctx, cx - 5, mouthY, 11, 2, ink);
     ui.px(ctx, cx - 3, mouthY + 2, 7, 2, ink);
@@ -184,7 +263,7 @@ function drawGesture(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood
 
 /**
  * Draw Lamby centred on (cx, cy) — the same anchor the rig lab uses, so poses
- * transfer 1:1. At scale 1 he occupies roughly cx-59…cx+55, cy-54…cy+70.
+ * transfer 1:1. At scale 1 he occupies roughly cx-59…cx+55, cy-56…cy+70.
  */
 export function drawLambyChar(ctx: CanvasRenderingContext2D, cx: number, cy: number, pose: LambyPose): void {
   const s = pose.scale ?? 1;
@@ -211,6 +290,7 @@ export function drawLambyChar(ctx: CanvasRenderingContext2D, cx: number, cy: num
   drawShadow(ctx, x, y + 70);
   drawPaperclip(ctx, x, y, pose.mood, point);
   drawBody(ctx, x, y, pose.mood);
+  drawEars(ctx, x, y, pose.mood);   // roots go behind the face patch
   drawFace(ctx, x, y, pose.mood, phase);
   drawGesture(ctx, x, y, pose.mood, pose.action, point);
   ctx.restore();

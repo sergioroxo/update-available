@@ -39,17 +39,21 @@ interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 const THREAD = caleb.thread as unknown as ThreadStep[];
 
-// Pacing, tuned for reading rather than speed (the audience mostly reads
-// English as a second language — Sérgio). Nothing here is a deadline: the
-// player is never asked to answer within a time, and the chips wait forever.
-const CPS = 24;             // characters per second — Caleb types like a person
-const HOLD = 1.05;          // s between his lines
-const OPEN_DELAY = 0.8;     // s of quiet after the window appears
-const COMMIT_LANDS = 1.1;   // s the committed line sits there, warm, before the alert
-const RETURN_DONE_HOLD = 2.6; // s after his last line before the residue surfaces
-const RESIDUE_ARRIVE = 1.4; // s of bare quiet before the one chip appears
-const RESIDUE_HOLD = 5.0;   // s the committed line is allowed to just stand there
-const TOAST_LIFE = 14;      // s a corner toast stays up (cleared early by the collapse)
+// ── PACING — ALL OF IT LIVES IN data/dialog/s2_caleb.json's `pacing` BLOCK ──
+// Session 48 moved every timing constant out of here so Sérgio can tune the
+// thread's breath without hunting through TypeScript. Read that block's `_doc`
+// before changing anything; this file deliberately holds NO numbers of its own.
+// Nothing here is a deadline — the player is never asked to answer within a
+// time, and the chips wait forever.
+const P = caleb.pacing;
+const CHAT = P.chat;
+const RET = P.return;
+const RES = P.residue;
+/** where in the dissolve the desktop gives way to the bare field — the noise
+ *  is at its densest here, so the change of surface is never seen as a cut */
+const DISSOLVE_TEAR = 0.45;
+/** s for the residue line to fade up, and for the pressed line to replace it */
+const LINE_FADE = 1.1;
 
 /** the messenger window (felt). The accountability stamp needs this rect.
  *  Sized so the WHOLE conversation fits without scrolling — the redaction has
@@ -74,7 +78,7 @@ class Redaction {
   private t = 0;
   private total = 0;
   /** s per row — slow enough to watch a sentence disappear, fast enough to hurt */
-  private static readonly STEP = 0.52;
+  private static readonly STEP = P.redactionRowSeconds;
 
   start(total: number, dir: 1 | -1): void {
     this.total = total;
@@ -111,16 +115,26 @@ class Redaction {
   get cleared(): boolean { return this.n === 0; }
 }
 
-/** a queue that types Caleb's lines out one character at a time */
+/**
+ * A queue that types Caleb's lines out one character at a time — he is a
+ * person at a keyboard, not a printer, so the rate is deliberately hand-speed
+ * (`pacing.chat.typingCharsPerSecond`) and it doubles as the reader's pace.
+ * `gap` is the pause AFTER a finished line and differs by beat: the chat
+ * breathes at one rate, his four return lines at a slower one.
+ */
 class TypeStream {
   private queue: string[] = [];
   private cur: string | null = null;
   private shown = 0;
   private hold = 0;
+  /** s of quiet after a finished line, before the next one starts typing */
+  gap = CHAT.lineGapSeconds;
   onLine?: (text: string) => void;
 
   push(text: string): void { this.queue.push(text); }
   reset(): void { this.queue = []; this.cur = null; this.shown = 0; this.hold = 0; }
+  /** an EXTRA beat before the next line — he takes a moment (after a reply) */
+  pause(seconds: number): void { this.hold = Math.max(this.hold, seconds); }
   get idle(): boolean { return !this.cur && this.queue.length === 0 && this.hold <= 0; }
   get partial(): string | null {
     return this.cur ? this.cur.slice(0, Math.floor(this.shown)) : null;
@@ -128,11 +142,11 @@ class TypeStream {
 
   update(dt: number): boolean {
     if (this.cur) {
-      this.shown += CPS * dt;
+      this.shown += CHAT.typingCharsPerSecond * dt;
       if (this.shown >= this.cur.length) {
         const done = this.cur;
         this.cur = null;
-        this.hold = HOLD;
+        this.hold = this.gap;
         this.onLine?.(done);
       }
       return true;
@@ -145,6 +159,48 @@ class TypeStream {
     }
     return false;
   }
+}
+
+/**
+ * THE APPARATUS'S GLITCH GRAMMAR, borrowed for the residue's dissolve.
+ *
+ * Deliberately the SAME vocabulary as the video's break in
+ * src/desktop/apps/netvision.ts — scanlines on a 3px cadence, sparse tape
+ * noise, one slow rolling tracking band — and no new effect. Warm-corrupt,
+ * never strobe: `amount` moves the DENSITY of the noise and the alpha of the
+ * band, and both ramp monotonically. Nothing here ever changes the screen's
+ * luminance abruptly, so there is no flicker-rate concern at any `amount`.
+ *
+ * WHY IT IS COPIED AND NOT IMPORTED: netvision.ts keeps this as private
+ * methods and is outside this session's file fence, and this module is `felt`
+ * — it may not import the operable side (see the header). accountability.ts
+ * carries the same twelve lines for the PureMail entrance. If a third copy
+ * ever appears, that is the moment to extract `src/desktop/theme/glitch.ts`
+ * and have all three read it.
+ */
+function glitchWash(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  amount: number, t: number
+): void {
+  if (amount <= 0.01) return;
+  ctx.fillStyle = `rgba(0,0,0,${(0.16 * amount).toFixed(3)})`;
+  for (let sy = y; sy < y + h; sy += 3) ctx.fillRect(x, sy, w, 1);
+  const count = Math.round(amount * amount * 900);
+  for (let i = 0; i < count; i++) {
+    const nx = x + Math.floor(Math.random() * w);
+    const ny = y + Math.floor(Math.random() * h);
+    // dark-dominant: the quietest moment in the piece stays dark, not bright
+    ctx.fillStyle = Math.random() < 0.66 ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
+    ctx.fillRect(nx, ny, 1, Math.random() < 0.3 ? 2 : 1);
+  }
+  const bandH = 6;
+  const frac = (t % 3.6) / 3.6; // slower than the video's 2.4s roll — this one settles
+  const by = y + Math.round(frac * (h - bandH));
+  ctx.fillStyle = `rgba(20,20,24,${(0.55 * amount).toFixed(3)})`;
+  ctx.fillRect(x, by, w, bandH);
+  ctx.fillStyle = `rgba(230,230,235,${(0.22 * amount).toFixed(3)})`;
+  ctx.fillRect(x + 3, by + bandH, Math.max(w - 6, 0), 1);
 }
 
 export type CalebPhase = 'chat' | 'sealed' | 'restoring' | 'returning' | 'residue' | 'done';
@@ -167,13 +223,24 @@ export class CalebThreadApp {
   private step = -1;
   private awaiting: Chip[] | null = null;
   private awaitingCommit = false;
+  /** chips do not land the instant his line finishes — they arrive a beat
+   *  later, so the sentence is read before the answers are weighed */
+  private pendingChips: Chip[] | null = null;
+  private pendingCommit = false;
+  private chipsAt = Infinity;
   private t = 0;
-  private startAt = OPEN_DELAY;
+  private startAt = CHAT.openDelaySeconds;
   private commitAt = Infinity;
   private returnSettleAt = Infinity;
+  private returnStartAt = Infinity;
+  /** THE DISSOLVE (S2R.6): `t` at which the slow glitch dissolve began, or -1.
+   *  It starts while the chat is still on screen and runs THROUGH the change
+   *  of surface — see drawToasts()/drawResidue(). */
+  private dissolveAt = -1;
   private residueAt = Infinity;
   private residueDoneAt = Infinity;
   private residueCommitted = false;
+  private residueCommittedAt = Infinity;
   private toasts: { text: string; life: number }[] = [];
   private hits: Hit[] = [];
   private hover = '';
@@ -191,7 +258,8 @@ export class CalebThreadApp {
     this.file('opened', 'intervened', caleb.witness.contactOpened);
   }
 
-  /** the whole monitor belongs to the residue beat (respite: no UI, no chrome) */
+  /** the whole monitor belongs to the residue beat (respite: no UI, no chrome).
+   *  It flips at the dissolve's TEAR, not at its start — see DISSOLVE_TEAR. */
   get ownsScreen(): boolean { return this.phase === 'residue'; }
   /** the felt window's rect — the operable stamp is positioned against it */
   get windowRect(): { x: number; y: number; w: number; h: number } { return { ...WIN }; }
@@ -231,7 +299,7 @@ export class CalebThreadApp {
     if (this.toasts.length > 0) return;
     const line = (caleb.toasts.lines as { id: string; text: string }[])[0];
     if (!line) return;
-    this.toasts.push({ text: line.text, life: TOAST_LIFE });
+    this.toasts.push({ text: line.text, life: P.toastLifeSeconds });
     this.dirty = true;
   }
 
@@ -254,7 +322,15 @@ export class CalebThreadApp {
 
     if (this.redaction.update(dt)) this.dirty = true;
     if (this.phase === 'restoring' && !this.redaction.running && this.redaction.cleared) {
+      // the block has lifted — but he does not answer the instant it does.
+      // The lead-in is the quiet where you realise the words are back.
       this.phase = 'returning';
+      this.returnStartAt = this.t + RET.leadInSeconds;
+      this.dirty = true;
+    }
+    if (this.t >= this.returnStartAt) {
+      this.returnStartAt = Infinity;
+      this.stream.gap = RET.lineGapSeconds; // his four lines get more room than the chat did
       for (const line of caleb.return.lines as string[]) this.stream.push(line);
       this.dirty = true;
     }
@@ -262,8 +338,17 @@ export class CalebThreadApp {
     if (this.phase === 'chat' && this.step < 0 && this.t >= this.startAt) this.advance();
     if (this.stream.update(dt)) this.dirty = true;
 
+    // the chips land a beat after the line they answer, never on the same frame
+    if (this.pendingChips && this.t >= this.chipsAt) {
+      this.awaiting = this.pendingChips;
+      this.awaitingCommit = this.pendingCommit;
+      this.pendingChips = null;
+      this.chipsAt = Infinity;
+      this.dirty = true;
+    }
+
     if (this.phase === 'chat' && this.step >= 0 && !this.awaiting && !this.awaitingCommit
-        && this.stream.idle) {
+        && !this.pendingChips && this.stream.idle) {
       this.advance();
     }
 
@@ -275,19 +360,29 @@ export class CalebThreadApp {
     }
 
     if (this.phase === 'returning' && this.stream.idle && this.returnSettleAt === Infinity
+        && this.returnStartAt === Infinity
         && this.returnLineCount >= (caleb.return.lines as string[]).length) {
-      this.returnSettleAt = this.t + RETURN_DONE_HOLD;
+      this.returnSettleAt = this.t + RET.settleSeconds;
     }
     if (this.t >= this.returnSettleAt) {
       this.returnSettleAt = Infinity;
       this.onReturnSettled?.();
-      this.phase = 'residue';
-      this.residueAt = this.t + RESIDUE_ARRIVE;
+      // S2R.6 arrives as a slow glitch DISSOLVE, never a cut: the dissolve
+      // starts here, over the chat still on screen, and the surface changes
+      // underneath it at the tear (see drawToasts/drawResidue).
+      this.dissolveAt = this.t;
+      this.residueAt = this.t + RES.dissolveSeconds + RES.arriveSeconds;
       this.dirty = true;
     }
-    if (this.phase === 'residue' && !this.residueCommitted && this.t >= this.residueAt) {
-      this.dirty = true; // the chip has arrived; it waits as long as it needs to
+    if (this.dissolveAt >= 0 && this.phase === 'returning'
+        && this.t - this.dissolveAt >= RES.dissolveSeconds * DISSOLVE_TEAR) {
+      this.phase = 'residue';
+      this.dirty = true;
     }
+    // the dissolve, the line's fade-in and the commit cross-fade all need
+    // every frame; nothing else in this beat does
+    if (this.phase === 'residue' && this.t < this.residueAt + LINE_FADE) this.dirty = true;
+    if (this.residueCommitted && this.t < this.residueCommittedAt + LINE_FADE) this.dirty = true;
     if (this.t >= this.residueDoneAt) {
       this.residueDoneAt = Infinity;
       this.phase = 'done';
@@ -297,14 +392,22 @@ export class CalebThreadApp {
     }
   }
 
+  /** 0..1 across the whole dissolve; -1 when there isn't one running */
+  private get dissolveK(): number {
+    if (this.dissolveAt < 0) return -1;
+    const k = (this.t - this.dissolveAt) / RES.dissolveSeconds;
+    return k >= 1 ? -1 : Math.max(0, k);
+  }
+
   /** walk the authored thread: his lines queue to type; a chip step waits */
   private advance(): void {
     this.step++;
     const s = THREAD[this.step];
     if (!s) return;
     if (s.chips) {
-      if (s.commit) this.awaitingCommit = true;
-      this.awaiting = s.chips;
+      this.pendingChips = s.chips;
+      this.pendingCommit = !!s.commit;
+      this.chipsAt = this.t + CHAT.chipsArriveSeconds;
       this.dirty = true;
       return;
     }
@@ -318,10 +421,13 @@ export class CalebThreadApp {
     if (chip.say) this.msgs.push({ from: 'you', text: chip.say });
     if (wasCommit) {
       this.file(chip.id, 'committed', chip.ledgerTag);
-      this.commitAt = this.t + COMMIT_LANDS; // it lands, warm, before anything answers it
+      // it lands, warm, and is allowed to just sit there before anything
+      // answers it — the pause is what makes the flag land ON the wanting
+      this.commitAt = this.t + CHAT.commitLandsSeconds;
     } else {
       this.file(chip.id, chip.say ? 'replied' : 'held', chip.ledgerTag);
       this.advance();
+      this.stream.pause(CHAT.replyGapSeconds); // he reads it before he types back
     }
     this.dirty = true;
   }
@@ -329,9 +435,10 @@ export class CalebThreadApp {
   private commitResidue(): void {
     if (this.residueCommitted) return;
     this.residueCommitted = true;
+    this.residueCommittedAt = this.t;
     // the record shows a GAP it could not classify — never the line itself
     this.file('residue', 'residue', caleb.witness.residue);
-    this.residueDoneAt = this.t + RESIDUE_HOLD;
+    this.residueDoneAt = this.t + RES.holdSeconds;
     this.dirty = true;
   }
 
@@ -435,8 +542,17 @@ export class CalebThreadApp {
     });
   }
 
-  /** the corner toasts — drawn LAST by os.ts, over the apparatus's own video */
+  /** the corner toasts — drawn LAST by os.ts, over the apparatus's own video.
+   *  This is also the felt module's ONLY over-everything pass, so the first
+   *  half of the residue's dissolve rides it: the desktop has to corrupt while
+   *  it is still on screen, and this is the one call that happens after it is
+   *  drawn (the second half lives in drawResidue, which owns the screen). */
   drawToasts(ctx: CanvasRenderingContext2D): void {
+    const k = this.dissolveK;
+    if (k >= 0 && this.phase !== 'residue') {
+      glitchWash(ctx, 0, 0, ERA1_CANVAS.width, ERA1_CANVAS.height,
+        Math.min(1, k / DISSOLVE_TEAR), this.t);
+    }
     if (this.toasts.length === 0) return;
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
@@ -455,15 +571,33 @@ export class CalebThreadApp {
   }
 
   /** S2R.6 — the quiet after. No guide, no UI, no apparatus: the monitor holds
-   *  one truth and the player commits it himself. Never revealed as a trap. */
+   *  one truth and the player commits it himself. Never revealed as a trap.
+   *
+   *  The beat ARRIVES rather than cuts: the second half of the dissolve plays
+   *  out over this bare field, the noise thinning to nothing — something
+   *  settling, not an effect — and only then, after a stretch of genuinely
+   *  empty screen, does the line fade up. */
   private drawResidue(ctx: CanvasRenderingContext2D): void {
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
     ui.px(ctx, 0, 0, W, H, ERA1.tealDark);
+    const k = this.dissolveK;
+    if (k >= 0) {
+      glitchWash(ctx, 0, 0, W, H,
+        Math.max(0, 1 - (k - DISSOLVE_TEAR) / (1 - DISSOLVE_TEAR)), this.t);
+    }
     if (this.t < this.residueAt) return; // a beat of nothing at all first
 
     const line = caleb.residue.line;
-    if (!this.residueCommitted) {
+    const up = Math.min(1, (this.t - this.residueAt) / LINE_FADE);
+    // the press replaces the offered line with the standing one — a cross-fade,
+    // because a hard swap here would read as a UI state change, not a truth
+    const pressed = this.residueCommitted
+      ? Math.min(1, (this.t - this.residueCommittedAt) / LINE_FADE) : 0;
+
+    if (pressed < 1) {
+      ctx.save();
+      ctx.globalAlpha = up * (1 - pressed);
       ui.setFont(ctx, 11);
       const tw = ctx.measureText(line).width;
       const bw = Math.round(tw) + 40;
@@ -473,13 +607,21 @@ export class CalebThreadApp {
       ui.setFont(ctx, 11);
       ctx.fillStyle = this.hover === 'residue' ? ERA1.navy : ERA1.black;
       ctx.fillText(line, bx + 20, by + 7);
-      this.hits.push({ x: bx, y: by, w: bw, h: 26, id: 'residue' });
-      return;
+      ctx.restore();
+      // it only takes a click once it is actually legible
+      if (!this.residueCommitted && up > 0.5) {
+        this.hits.push({ x: bx, y: by, w: bw, h: 26, id: 'residue' });
+      }
     }
-    ui.setFont(ctx, 13);
-    ctx.fillStyle = ERA1.paper;
-    const tw = ctx.measureText(line).width;
-    ctx.fillText(line, Math.round((W - tw) / 2), Math.round(H / 2) - 6);
+    if (pressed > 0) {
+      ctx.save();
+      ctx.globalAlpha = pressed;
+      ui.setFont(ctx, 13);
+      ctx.fillStyle = ERA1.paper;
+      const tw = ctx.measureText(line).width;
+      ctx.fillText(line, Math.round((W - tw) / 2), Math.round(H / 2) - 6);
+      ctx.restore();
+    }
   }
 
   // ── input ──────────────────────────────────────────────────────────────
@@ -506,6 +648,8 @@ export class CalebThreadApp {
     this.startAt = Infinity;
     this.stream.reset();
     this.msgs.length = 0;
+    this.pendingChips = null;
+    this.chipsAt = Infinity;
     for (let i = 0; i < THREAD.length; i++) {
       const s = THREAD[i];
       this.step = i;
@@ -540,10 +684,14 @@ export class CalebThreadApp {
     this.dirty = true;
   }
 
-  /** ?debug=1 — straight to the quiet after (S2R.6) */
+  /** ?debug=1 — straight to the quiet after (S2R.6). It arms the REAL
+   *  dissolve rather than cutting to the field, because the dissolve IS the
+   *  beat now: a jump that skipped it would show the one thing this beat is
+   *  not (a cut). */
   debugResidue(): void {
-    this.phase = 'residue';
-    this.residueAt = this.t + 0.2;
+    this.phase = 'returning';
+    this.dissolveAt = this.t;
+    this.residueAt = this.t + RES.dissolveSeconds + RES.arriveSeconds;
     this.dirty = true;
   }
 }

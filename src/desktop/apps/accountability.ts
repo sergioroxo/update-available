@@ -43,24 +43,74 @@ import { ledger } from '../../state/ledger';
 import { drawLambyChar, type LambyMood } from './lambyChar';
 import caleb from '../../../data/dialog/s2_caleb.json';
 
+const calebPacing = caleb.pacing;
+
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 type AlertStep = 'stop' | 'block' | 'wanting' | 'streak' | 'system' | 'sad' | 'caught' | 'closed';
-type MailPhase = 'none' | 'envelope' | 'letter' | 'closed';
+type MailPhase = 'none' | 'arriving' | 'envelope' | 'letter' | 'closed';
 
-/** PLACEHOLDER pacing — Sérgio tunes these by feel, like every other hold in
- *  the piece. The sad hold is the one that matters: long enough to feel like
- *  guilt, short enough not to read as a cutscene (his note, spec §S2R.3C). */
+// ── PACING — ALL OF IT LIVES IN data/dialog/s2_caleb.json's `pacing` BLOCK ──
+// Session 48 moved every timing constant out of here so Sérgio can tune the
+// thread's breath without hunting through TypeScript. This module holds no
+// numbers of its own; read that block's `_doc` before changing anything.
+// The alert's dwells are the load-bearing ones: this is the beat that NAMES
+// THE FLAG, and if its text cannot be read, the thesis is lost.
+const A = calebPacing.alert;
+const MAIL = calebPacing.mail;
 const HOLD: Record<Exclude<AlertStep, 'caught' | 'closed'>, number> = {
-  stop: 3.0,
-  block: 1.4,
-  wanting: 2.6,
-  streak: 2.0,
-  system: 3.8,
-  sad: 3.0
+  stop: A.stopSeconds,
+  block: A.blockSeconds,
+  wanting: A.wantingSeconds,
+  streak: A.streakSeconds,
+  system: A.systemSeconds,
+  sad: A.sadHoldSeconds
 };
-const STREAK_FALL = 1.3; // s for the counter to run 412 → 0
-const GLITCH_STEP = 1.1; // s per state of the dying streak field (S2R.5)
+const STREAK_FALL = A.streakFallSeconds;   // s for the counter to run 412 → 0
+const GLITCH_STEP = MAIL.streakGlitchStepSeconds; // s per state of the dying field (S2R.5)
+const MAIL_ARRIVE = MAIL.arriveGlitchSeconds;     // s of the envelope's glitch entrance
+/** where in the entrance the tear resolves into the actual envelope card */
+const MAIL_LOCK = 0.34;
+
+/**
+ * THE APPARATUS'S OWN WARM-CORRUPT GLITCH GRAMMAR (S2R.5's entrance).
+ *
+ * Deliberately the SAME vocabulary as the video's break in
+ * src/desktop/apps/netvision.ts — scanlines on a 3px cadence, sparse tape
+ * noise, one rolling tracking band — and no new effect. `amount` moves only
+ * the DENSITY of the noise and the alpha of the band, and it ramps
+ * monotonically, so the screen's luminance never jumps: warm-corrupt, NEVER
+ * strobe (glitch doctrine + photosensitivity).
+ *
+ * WHY IT IS COPIED AND NOT IMPORTED: netvision.ts keeps this as private
+ * methods and is outside this session's file fence. src/desktop/apps/caleb.ts
+ * carries the same twelve lines for the residue's dissolve, and cannot import
+ * them from here in any case — it is `felt` and imports nothing operable. If a
+ * third copy ever appears, extract `src/desktop/theme/glitch.ts`.
+ */
+function glitchWash(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  amount: number, t: number
+): void {
+  if (amount <= 0.01) return;
+  ctx.fillStyle = `rgba(0,0,0,${(0.16 * amount).toFixed(3)})`;
+  for (let sy = y; sy < y + h; sy += 3) ctx.fillRect(x, sy, w, 1);
+  const count = Math.round(amount * amount * 620);
+  for (let i = 0; i < count; i++) {
+    const nx = x + Math.floor(Math.random() * w);
+    const ny = y + Math.floor(Math.random() * h);
+    ctx.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
+    ctx.fillRect(nx, ny, 1, Math.random() < 0.3 ? 2 : 1);
+  }
+  const bandH = 6;
+  const frac = (t % 2.4) / 2.4; // the video's own roll period
+  const by = y + Math.round(frac * (h - bandH));
+  ctx.fillStyle = `rgba(20,20,24,${(0.55 * amount).toFixed(3)})`;
+  ctx.fillRect(x, by, w, bandH);
+  ctx.fillStyle = `rgba(230,230,235,${(0.22 * amount).toFixed(3)})`;
+  ctx.fillRect(x + 3, by + bandH, Math.max(w - 6, 0), 1);
+}
 
 /** the apparatus's band, along the bottom of the monitor — it pushes up from
  *  under the conversation rather than covering it: the redaction has to be
@@ -91,6 +141,7 @@ export class AccountabilityApp {
   private streakT = -1;      // >= 0 once the counter is falling
   private streakDead = false;
   private mail: MailPhase = 'none';
+  private mailT = 0;   // s since the envelope began tearing its way in
   private glitchT = 0;
   private chat = { x: 8, y: 10, w: 420, h: 222 };
   private hits: Hit[] = [];
@@ -98,11 +149,13 @@ export class AccountabilityApp {
 
   /** while true the beat owns the monitor's clicks (over the chat, under the
    *  system-modal update ritual) */
-  get modal(): boolean { return this.step !== 'closed' || this.mail === 'envelope' || this.mail === 'letter'; }
+  get modal(): boolean { return this.step !== 'closed' || this.mailOpen; }
   /** the stamp outlives the alert: it sits on the chat until the block lifts */
   get stampVisible(): boolean { return this.stamped; }
   get alertRunning(): boolean { return this.step !== 'closed'; }
-  get mailOpen(): boolean { return this.mail === 'envelope' || this.mail === 'letter'; }
+  get mailOpen(): boolean {
+    return this.mail === 'arriving' || this.mail === 'envelope' || this.mail === 'letter';
+  }
 
   setChatRect(r: { x: number; y: number; w: number; h: number }): void { this.chat = { ...r }; }
 
@@ -137,10 +190,14 @@ export class AccountabilityApp {
     this.dirty = true;
   }
 
-  /** S2R.5 — the envelope arrives */
+  /** S2R.5 — the envelope arrives. It does NOT simply appear: the apparatus is
+   *  failing, so its own signal tears and the message comes through the tear,
+   *  in the warm-corrupt grammar the New You video broke in half an hour ago.
+   *  Same vocabulary, slower, and the letter is what survives it. */
   openMail(): void {
     if (this.mail !== 'none') return;
-    this.mail = 'envelope';
+    this.mail = 'arriving';
+    this.mailT = 0;
     this.step = 'closed'; // by the collapse the assistant has always finished talking
     this.setMood('sterile'); // empty-eyed: the inner watcher losing its outer god
     this.glitchT = 0;
@@ -153,6 +210,11 @@ export class AccountabilityApp {
     if (this.streakT >= 0 && this.streakT < STREAK_FALL) {
       this.streakT = Math.min(STREAK_FALL, this.streakT + dt);
       if (this.streakT >= STREAK_FALL) this.streakDead = true;
+      this.dirty = true;
+    }
+    if (this.mail === 'arriving') {
+      this.mailT += dt;
+      if (this.mailT >= MAIL_ARRIVE) this.mail = 'envelope';
       this.dirty = true;
     }
     if (this.mail === 'letter') { this.glitchT += dt; this.dirty = true; }
@@ -209,7 +271,8 @@ export class AccountabilityApp {
     this.hits = [];
     if (this.stamped) this.drawStamp(ctx);
     if (this.step !== 'closed' || this.mailOpen) this.drawBand(ctx);
-    if (this.mail === 'envelope') this.drawEnvelope(ctx);
+    if (this.mail === 'arriving') this.drawMailArrival(ctx);
+    if (this.mail === 'envelope') this.drawEnvelope(ctx, true);
     if (this.mail === 'letter') this.drawLetter(ctx);
   }
 
@@ -339,10 +402,46 @@ export class AccountabilityApp {
     this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'alert-dismiss' });
   }
 
-  private drawEnvelope(ctx: CanvasRenderingContext2D): void {
+  /** the envelope's rect, shared by the entrance and the card itself */
+  private static readonly MAILBOX = { w: 300, h: 116, y: 60 } as const;
+
+  /**
+   * THE ENTRANCE (S2R.5). Two movements, one grammar:
+   *  1. the TEAR — a band of corrupt signal opens where the message will be,
+   *     growing from a hairline to the card's full height. Nothing readable,
+   *     no frame yet: the apparatus's picture is coming apart, and something
+   *     is arriving through the gap;
+   *  2. the LOCK — the envelope resolves inside the tear and the noise decays
+   *     off it, like a tape finding its tracking.
+   * Density ramps both ways. Never a flash, never a strobe.
+   */
+  private drawMailArrival(ctx: CanvasRenderingContext2D): void {
     const W = ERA1_CANVAS.width;
-    const dw = 300; const dh = 116;
-    const dx = Math.round((W - dw) / 2); const dy = 60;
+    const { w: dw, h: dh, y: dy } = AccountabilityApp.MAILBOX;
+    const dx = Math.round((W - dw) / 2);
+    const p = Math.min(1, this.mailT / MAIL_ARRIVE);
+
+    if (p < MAIL_LOCK) {
+      const k = p / MAIL_LOCK;
+      const bh = Math.max(2, Math.round(dh * k * k));
+      const by = Math.round(dy + (dh - bh) / 2);
+      ui.px(ctx, dx, by, dw, bh, ERA1.black);
+      ui.px(ctx, dx, by, dw, 1, ERA1.grey);
+      ui.px(ctx, dx, by + bh - 1, dw, 1, ERA1.silver);
+      glitchWash(ctx, dx, by, dw, bh, 1, this.t);
+      return;
+    }
+    this.drawEnvelope(ctx, false);
+    const settle = 1 - (p - MAIL_LOCK) / (1 - MAIL_LOCK);
+    glitchWash(ctx, dx, dy, dw, dh, settle, this.t);
+  }
+
+  /** `interactive` is false while the entrance is still resolving — the Open
+   *  button is drawn but cannot be pressed through the noise. */
+  private drawEnvelope(ctx: CanvasRenderingContext2D, interactive: boolean): void {
+    const W = ERA1_CANVAS.width;
+    const { w: dw, h: dh, y: dy } = AccountabilityApp.MAILBOX;
+    const dx = Math.round((W - dw) / 2);
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, caleb.pureMail.inboxTitle, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
     ui.setFont(ctx, 9);
@@ -357,7 +456,7 @@ export class AccountabilityApp {
     ctx.fillText(caleb.pureMail.subject, c.x + 60, c.y + 39);
     const bx = c.x + c.w - 84; const by = c.y + c.h - 26;
     ui.button(ctx, bx, by, 76, 20, caleb.pureMail.openLabel, { hover: this.hover === 'mail-open' });
-    this.hits.push({ x: bx, y: by, w: 76, h: 20, id: 'mail-open' });
+    if (interactive) this.hits.push({ x: bx, y: by, w: 76, h: 20, id: 'mail-open' });
   }
 
   private drawLetter(ctx: CanvasRenderingContext2D): void {

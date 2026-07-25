@@ -1,6 +1,57 @@
 {
   "_doc": "S2R.3–S2R.6 — THE CALEB THREAD (Session 45), built from docs/REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md (THE SPEC, Sérgio's revised pass) with docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md for the beat context. ALL display text is PLACEHOLDER-draft under the co-creation norm (Claude drafts, Sérgio reviews/rewrites — his edit wins) EXCEPT the lines marked `_s` below, which are Sérgio's own wording carried VERBATIM from the spec's ⟨S⟩ marks and must never be paraphrased: `alert.systemLines`, `alert.caughtLine`, `residue.line`. REGISTER MAP (do not violate): `window`/`thread`/`toasts`/`return`/`residue` are FELT — Lamby is absent from every one of them, no satire, no mechanics, nothing scored; `alert` and `pureMail` are OPERABLE — the apparatus may charm, and it collapses. Chips carry `ledgerTag` and NEVER `goto`: they register HOW Daniel engaged, they never fork the story (register-not-branch). The last chip is the COMMIT-PRESS: one chip, no alternative — the player must say the bigger word, and that press is what the apparatus files as conduct (the conduct is the wanting; nothing happened, nobody met). It rhymes on purpose with `residue.line`, the second commit-press, which the system is no longer there to file. Caleb is INVENTED and INFORMED BY the documented pattern in docs/REINTERP_LOVE_AS_LIBERATION_SOURCES_2026-07-24.md — never a replication of any real person; real names live on the Close's provenance cards only, never in his mouth. The placement he names — 'New Morning', the TriedPath Fellowship residential — is Era-1 canon (data/dialog/s1_kit.json / s1_end.json). `pureMail.heading`/`lines`/`closing` are PORTED VERBATIM from the shipped build's data/dialog/s2.json `collapse` block (the perpetrators-as-fellow-victims composite, already Sérgio-steered from ERA2_RESEARCH §A) — the spec says render the existing text, do not rewrite it. `witness.*` are the cold-side lines filed to ledger.caleb, resolved here and never composed in TS; they are witness-SYMMETRIC (engagement and reticence both file, the residue files only as a gap the record could not classify). `video.skipDelaySeconds` = 15 supersedes data/dialog/s2_media.json's 5, per the spec's revision (Lamby is SHOWING you this; leaving is a social act, not a UI convenience) — s2_media.json was outside this session's file fence, so its stale value stays there unread by this path. `pureMail.readAloudTrack` is a HOOK ONLY: S46's build-time TTS pipeline (Supertonic, apparatus voice) has not landed, no audio file exists, nothing is ever requested.",
 
+  "pacing": {
+    "_doc": "⏱ THE ONE TIMING BLOCK (Session 48). EVERY number the Caleb thread waits on lives here, in seconds, so the pace can be tuned WITHOUT reading TypeScript — src/desktop/apps/caleb.ts and src/desktop/apps/accountability.ts both read this object and hold no timing constants of their own. WHY IT WAS RETIMED: Session 45 set these to make each beat VERIFIABLE — a session driving the thread with scripted clicks wants it brisk — and Sérgio's 2026-07-25 playthrough found the whole thread runs too fast to be READ. These values are for a FIRST-TIME HUMAN READER whose English is often a second language. Rule of thumb used while watching it at real speed: a line needs roughly 12–13 characters of dwell per second to be read comfortably, PLUS a beat afterwards to feel it — so a 70-character line wants ~6s on screen, not ~3s. NOTHING HERE IS A DEADLINE: the player is never asked to answer within a time, the chips wait forever, and Leave/pause stay live throughout (ethics #4). Raise any number freely; the only ones that interact are `chat.lineGapSeconds` (the pause between his lines) and `chat.replyGapSeconds` (the longer pause after the player answers), which stack when he replies to a chip.",
+
+    "chat": {
+      "_doc": "S2R.3A — the conversation. `typingCharsPerSecond` is Caleb TYPING, not a reveal effect: he is a person at a keyboard in 2003, so it should read as a hand, not a printer.",
+      "typingCharsPerSecond": 11,
+      "openDelaySeconds": 1.8,
+      "lineGapSeconds": 1.9,
+      "chipsArriveSeconds": 0.9,
+      "replyGapSeconds": 2.2,
+      "commitLandsSeconds": 2.8
+    },
+
+    "redactionRowSeconds": 0.52,
+    "_doc_redaction": "s per transcript row for the blackout AND for its reverse at S2R.5 — one component run twice, so this single number times both. Slow enough to watch a sentence disappear; the whole walk must still finish comfortably inside the alert's own run (see `alert` below), or the stamp lands before the conversation is gone.",
+
+    "alert": {
+      "_doc": "S2R.3B/C — THE ACCOUNTABILITY ALERT. This is the beat that NAMES THE FLAG; if its text cannot be read, the thesis is lost (Sérgio, playthrough finding 5). Each value is the dwell on one step of the alert, and the step's own text is what sets it: `stop` carries two lines (~103 characters), `wanting` one long one (~70) plus the flag rendering for the first time, `system` the two ⟨S⟩ lines (~89). `streak` and `sad` show NO text — the falling counter and then the hold are the line — so those two are timed by feel, not by reading. `sadHoldSeconds` answers Sérgio's open question ('how long before I caught it in time?'): long enough to feel like guilt, short enough not to read as a cutscene.",
+      "stopSeconds": 6.5,
+      "blockSeconds": 3.2,
+      "wantingSeconds": 7.5,
+      "streakSeconds": 4.5,
+      "systemSeconds": 8.5,
+      "sadHoldSeconds": 5.5,
+      "streakFallSeconds": 2.2
+    },
+
+    "mail": {
+      "_doc": "S2R.5 — the collapse. `arriveGlitchSeconds` is the envelope's ENTRANCE: it no longer just appears, it tears in through the apparatus's own warm-corrupt glitch grammar (the same vocabulary as the video's break — scanlines, tape noise, one rolling tracking band; density ramps, never a flash, never a strobe). `streakGlitchStepSeconds` paces the dying streak field while the letter is open — '0 days' → '— days' → '412 days · for nothing' — and the last state is the punchline, so each one has to be legible on its own.",
+      "arriveGlitchSeconds": 2.8,
+      "streakGlitchStepSeconds": 1.8
+    },
+
+    "return": {
+      "_doc": "S2R.5 — his four lines after the block lifts. They need room to LAND (playthrough finding 8): `leadInSeconds` is the quiet between the un-redaction finishing and his first line starting to type, `lineGapSeconds` the space between the four, `settleSeconds` the silence after the last one before anything else happens at all.",
+      "leadInSeconds": 3.4,
+      "lineGapSeconds": 2.8,
+      "settleSeconds": 4.5
+    },
+
+    "residue": {
+      "_doc": "S2R.6 — the quietest moment in the piece. `dissolveSeconds` is the slow glitch dissolve that carries the desktop away and leaves the bare field (a settling, not an effect — same grammar as the mail's entrance, run slower and quieter). `arriveSeconds` is the bare dark AFTER the dissolve and BEFORE the line surfaces: nothing at all on screen, on purpose. `holdSeconds` is how long the committed line is allowed to just stand there once the player has pressed it.",
+      "dissolveSeconds": 4.2,
+      "arriveSeconds": 3.0,
+      "holdSeconds": 6.5
+    },
+
+    "toastLifeSeconds": 14,
+    "_doc_toast": "how long Caleb's corner toast stays up during the video's break (cleared early by the collapse)."
+  },
+
   "window": {
     "title": "HopeRestored Messenger",
     "contact": "caleb",

@@ -59,6 +59,29 @@ const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
 const WAKE_DARK_SECONDS = 1.2;
 /** the switch itself: lamp + fill come up, moon recedes */
 const WAKE_RAMP_SECONDS = 1.8;
+// ── THE OPENING DESCENT (S48; Sérgio's 2026-07-25 playthrough, finding 1) ──
+// Entry begins ABOVE the room: a slow, Google-Earth-like fall through the dark
+// into a room lit only by its window, and then a settle into the seat. It ADDS
+// to the wake — descend → settle → the light comes up → the machine boots — it
+// does not replace it, and it asks nothing of the player.
+//
+// COMFORT LAW (CLAUDE.md's turn-only body; §0-REV-4's accessibility rule). The
+// two motions NEVER overlap: phase 1 TRANSLATES straight down with the pitch
+// pinned at DESCENT_FROM.pitch, phase 2 ROTATES to level with the position
+// pinned. Both are smootherstep — zero velocity AND zero acceleration at every
+// seam — so there is no start jolt, no mid-fall speed change and no stop. No
+// roll, no yaw, no field-of-view games. Any input (click, drag, key) lands you
+// in the seat at once.
+// ⚑ VR IS THE RISK CASE: in a headset this is artificial locomotion, the one
+// thing the piece otherwise never does. It is deliberately slow, short, and
+// straight; it MUST still be judged in the A11 in-headset pass, and
+// `?descent=0` turns it off for that A/B (and for anyone who does not want it).
+/** where the fall starts: above the ceiling, looking almost straight down */
+const DESCENT_FROM = { y: 5.6, pitch: -78 };
+const DESCENT_FALL_SECONDS = 7.5;   // ≈1.1 m/s at its fastest, eased at both ends
+const DESCENT_SETTLE_SECONDS = 3.6; // ≈41°/s at its fastest, with the body still
+/** era1.json's ceiling slab sits at y 2.71 — the roof comes back on below it */
+const CEILING_Y = 2.71;
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
 // the blink is a CUT, never a tween: fade to black, THEN move the camera,
 // THEN fade back — no smooth travel (Sérgio's explicit law: gaze must stay
@@ -505,6 +528,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // nothing for the player to find or press.
   let wakeActive = false;
   let wakeT = 0;
+  // THE OPENING DESCENT (see the constants above): 'fall' translates, 'settle'
+  // rotates, and they never run at the same time. null = not descending.
+  let descentPhase: 'fall' | 'settle' | null = null;
+  let descentT = 0;
+  let ceilingHidden = false;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
   // the tilt ran conducted (autoCam) — a free tilt cedes to the player's drag
   let revealReturn = -1;
@@ -755,6 +783,49 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return k * k * (3 - 2 * k);
   }
 
+  /** the ceiling slab is a closed box, so it would hide the room from above.
+   *  It is off for the fall and comes back the moment the camera is under it —
+   *  and at that moment you are still looking down at the floor, so the roof is
+   *  never seen returning. */
+  function setCeiling(on: boolean): void {
+    const h = room.props.get('ceiling');
+    if (!h) return;
+    h.entity.enabled = on;
+    ceilingHidden = !on;
+  }
+
+  /** the fall, then the settle. Never both. */
+  function updateDescent(dt: number): void {
+    descentT += dt;
+    if (descentPhase === 'fall') {
+      const k = Math.min(1, descentT / DESCENT_FALL_SECONDS);
+      const s = k * k * k * (k * (k * 6 - 15) + 10); // smootherstep: no jolt at either end
+      camPos.y = DESCENT_FROM.y + (EYE.y - DESCENT_FROM.y) * s;
+      if (ceilingHidden && camPos.y < CEILING_Y - 0.25) setCeiling(true);
+      if (k >= 1) { descentPhase = 'settle'; descentT = 0; }
+      return;
+    }
+    const k = Math.min(1, descentT / DESCENT_SETTLE_SECONDS);
+    const s = k * k * k * (k * (k * 6 - 15) + 10);
+    camPitch = DESCENT_FROM.pitch * (1 - s);
+    if (k >= 1) endDescent();
+  }
+
+  /** land in the seat and hand over to the wake. Also the SKIP: any input at
+   *  all calls this, so the descent can never trap or nauseate anyone. */
+  function endDescent(): void {
+    if (!descentPhase) return;
+    descentPhase = null;
+    setCeiling(true);
+    camPos.set(EYE.x, EYE.y, EYE.z);
+    camPitch = 0;
+    camYaw = 0;
+    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    camera.setLocalEulerAngles(camPitch, camYaw, 0);
+    wakeActive = true;   // …and only now does the room wake (decision doc §3)
+    wakeT = 0;
+  }
+
   /** the end of the wake: the room is lit and the machine boots ITSELF —
    *  unconditional, unpressable, the only path in (decision doc §3). */
   function finishWake(): void {
@@ -990,6 +1061,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   };
 
   canvasEl.addEventListener('pointerdown', (e) => {
+    // S48: the descent is SKIPPABLE, always and by anything. The first press
+    // lands you in the seat and does nothing else — it is a way out of the
+    // move, not a click on the room underneath it.
+    if (descentPhase) { endDescent(); return; }
     if (!facingBack) {
       if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
@@ -1110,6 +1185,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   });
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // S48: any key skips the descent too (Escape excepted — the game menu
+    // intercepts that in the capture phase and never reaches here)
+    if (descentPhase) { endDescent(); return; }
     // F2, not a letter: printable keys must always reach the typing hand
     if (e.key === 'F2' && os.inDesktop && !os.paused && !gameMenuBus.isOpen) {
       doFlip();
@@ -1186,6 +1264,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camPitch += (0 - camPitch) * Math.min(1, dt * 6); // level out during the swing
     }
     if (options.reinterp) {
+      // the descent owns the camera outright while it runs — it is the one
+      // move in the piece the player did not ask for, so it is also the one
+      // that yields instantly to any input (endDescent).
+      if (descentPhase) updateDescent(dt);
       if (camMove) {
         camMove.t += dt;
         const k = Math.min(1, camMove.t / camMove.dur);
@@ -1513,16 +1595,29 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camYaw = 0;
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else {
-      // fresh load (past the interim log-in panel): straight into the room,
-      // seated, in the dark — and then the room WAKES on its own (decision
-      // doc §3). No board-look gate, no power button, no teaching window.
+      // fresh load (past the interim log-in panel): the room is already there,
+      // dark, and you come DOWN into it (S48) — then it WAKES on its own
+      // (decision doc §3). No board-look gate, no power button, no teaching
+      // window; nothing to press at any point.
       applyRoomLight(0);
-      camPos.set(EYE.x, EYE.y, EYE.z);
-      camPitch = 0;
+      const wantDescent = new URLSearchParams(window.location.search).get('descent') !== '0';
       camYaw = 0;
+      if (wantDescent) {
+        setCeiling(false);
+        camPos.set(EYE.x, DESCENT_FROM.y, EYE.z);
+        camPitch = DESCENT_FROM.pitch;
+        descentPhase = 'fall';
+        descentT = 0;
+      } else {
+        camPos.set(EYE.x, EYE.y, EYE.z);
+        camPitch = 0;
+        wakeActive = true;
+        wakeT = 0;
+      }
+      // the facing is committed HERE, not left to the first per-frame pass —
+      // otherwise the opening frame renders level and the pitch snaps on frame 2
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
-      wakeActive = true;
-      wakeT = 0;
+      camera.setLocalEulerAngles(camPitch, camYaw, 0);
     }
   }
 

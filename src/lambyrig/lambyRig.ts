@@ -5,13 +5,24 @@
  * animated procedurally on canvas with era-1 palette discipline? It is mounted
  * by `?lambyrig=1` and deliberately does not touch DesktopOS, provotypes, or
  * any OS launcher surface.
+ *
+ * ⚑ SESSION 48 — THE LAB NO LONGER OWNS THE CHARACTER. It used to carry its
+ * own private copy of the pose math and every drawing method, which S45 then
+ * PORTED into `src/desktop/apps/lambyChar.ts` for the game: two Lambys, and a
+ * restyle that had to be made twice or silently diverge. The character now has
+ * exactly ONE definition — `drawLambyChar` — and this lab imports it. What
+ * stays here is what is genuinely the LAB's: the stage, the mood/action
+ * controls, the `disappear` reveal wipe, and the speech bubble (the game's
+ * alert window carries Lamby's lines in its own type area, so it never wants
+ * one). Change his look in lambyChar.ts and both surfaces change together.
  */
 import { ERA1, ERA1_CANVAS } from '../desktop/theme/era1';
 import * as ui from '../desktop/theme/chrome';
+import { drawLambyChar, type LambyMood, type LambyAction } from '../desktop/apps/lambyChar';
 import copy from '../../data/strings/lamby_rig.json';
 
-type Mood = 'cheerful' | 'clinical' | 'sterile' | 'sad';
-type Action = 'idle' | 'point' | 'appear' | 'disappear';
+type Mood = LambyMood;
+type Action = LambyAction;
 
 interface Hit {
   x: number;
@@ -220,15 +231,16 @@ class LambyRig {
     }
   }
 
+  /** the lab's stage business AROUND the shared character: the reveal wipe,
+   *  the disappear fade, and the bubble. The puppet itself — pose math,
+   *  silhouette, moods — is drawLambyChar's, and only its. */
   private drawLamby(ctx: CanvasRenderingContext2D, cx: number, cy: number, t: number): void {
-    const phase = t % 3.2;
-    const point = this.action === 'point' ? Math.round(8 + Math.sin(t * 7) * 2) : 0;
     const reveal = this.revealAmount(t);
-    const drift = this.idleDrift(t);
-    const bounce = this.appearBounce(t);
-    const deflate = this.deflateAmount(t);
-    const x = cx + drift.dx;
-    const y = cy + drift.dy;
+    const sink = this.mood === 'sad'
+      ? 6 * (1 - Math.pow(1 - Math.min(1, (t - this.moodStart) / 0.65), 3)) : 0;
+    const drift = this.action === 'idle' && this.mood !== 'sad'
+      ? { dx: Math.sin(t * 0.9) * 1.6, dy: Math.sin(t * 1.6 + 1.2) * 1.2 }
+      : { dx: 0, dy: 0 };
 
     ctx.save();
     ctx.beginPath();
@@ -236,22 +248,17 @@ class LambyRig {
     ctx.clip();
     ctx.globalAlpha = this.action === 'disappear' ? Math.max(0.22, reveal) : 1;
 
-    // squash-stretch (appear) + deflate (sad) share this transform, anchored
-    // near the hooves so the puppet compresses toward the ground, not the sky.
-    const anchorY = y + 60;
-    ctx.save();
-    ctx.translate(x, anchorY);
-    ctx.scale(bounce.sx, bounce.sy * (1 - deflate.squash));
-    ctx.translate(-x, -anchorY + deflate.sink);
+    drawLambyChar(ctx, cx, cy, {
+      mood: this.mood,
+      action: this.action,
+      t,
+      moodStart: this.moodStart,
+      loopAppear: true // the lab replays the pop; the game plays it once
+    });
 
-    this.drawShadow(ctx, x, y + 70);
-    this.drawPaperclip(ctx, x, y, point);
-    this.drawBody(ctx, x, y);
-    this.drawFace(ctx, x, y, phase);
-    this.drawGesture(ctx, x, y, point);
-    ctx.restore();
-
-    this.drawBubble(ctx, x + 54, y - 70 + deflate.sink * 0.4);
+    // the bubble rides the character's own idle drift and sad sink so it stays
+    // attached — the two values are read back from the same curves, not re-timed
+    this.drawBubble(ctx, cx + drift.dx + 54, cy + drift.dy - 70 + sink * 0.4);
     ctx.restore();
   }
 
@@ -260,135 +267,6 @@ class LambyRig {
     if (this.action === 'appear') return Math.min(1, local * 2.2);
     if (this.action === 'disappear') return Math.max(0, 1 - local * 2.2);
     return 1;
-  }
-
-  /** Slow ambient sway during idle — the "little fidget," not a full breath cycle.
-   *  Held still (not sad-appropriate to fidget) once the sad hold has settled. */
-  private idleDrift(t: number): { dx: number; dy: number } {
-    if (this.action !== 'idle' || this.mood === 'sad') return { dx: 0, dy: 0 };
-    return { dx: Math.sin(t * 0.9) * 1.6, dy: Math.sin(t * 1.6 + 1.2) * 1.2 };
-  }
-
-  /** Clippy-style pop: overshoot on the way up, a squash on landing, then settle. */
-  private appearBounce(t: number): { sx: number; sy: number } {
-    if (this.action !== 'appear') return { sx: 1, sy: 1 };
-    const local = (t % 3.2) / 3.2;
-    if (local >= 0.6) return { sx: 1, sy: 1 };
-    const p = local / 0.6;
-    const wave = Math.sin(p * Math.PI * 2.5) * (1 - p);
-    return { sx: 1 - wave * 0.16, sy: 1 + wave * 0.24 };
-  }
-
-  /** The shame mechanism (S2R.3C): a slow sink-and-hold, not a scold — the
-   *  apparatus looks hurt and stays that way. A faint tremor once settled
-   *  keeps it reading as held breath, not a frozen sprite. */
-  private deflateAmount(t: number): { squash: number; sink: number } {
-    if (this.mood !== 'sad') return { squash: 0, sink: 0 };
-    const u = Math.min(1, (t - this.moodStart) / 0.65);
-    const eased = 1 - Math.pow(1 - u, 3);
-    const tremor = u >= 1 ? Math.sin(t * 1.1) * 0.4 : 0;
-    return { squash: 0.1 * eased, sink: 6 * eased + tremor };
-  }
-
-  private drawShadow(ctx: CanvasRenderingContext2D, cx: number, y: number): void {
-    ui.px(ctx, cx - 48, y, 96, 6, ERA1.greyDark);
-    ui.px(ctx, cx - 34, y + 6, 68, 3, ERA1.black);
-  }
-
-  private drawPaperclip(ctx: CanvasRenderingContext2D, cx: number, cy: number, point: number): void {
-    const x = cx - 84;
-    const y = cy - 28;
-    const wire = this.mood === 'sterile' ? ERA1.grey : this.mood === 'sad' ? ERA1.greyDark : ERA1.silver;
-    // squared "paperclip" loop behind Lamby: Clippy grammar without a sprite.
-    ui.px(ctx, x, y, 38, 3, wire);
-    ui.px(ctx, x, y, 3, 64, wire);
-    ui.px(ctx, x, y + 61, 46, 3, wire);
-    ui.px(ctx, x + 43, y + 22, 3, 42, wire);
-    ui.px(ctx, x + 17, y + 22, 29, 3, wire);
-    ui.px(ctx, x + 17, y + 22, 3, 32, wire);
-    ui.px(ctx, x + 17, y + 51, 19 + Math.floor(point / 2), 3, wire);
-  }
-
-  private drawBody(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
-    const wool = this.mood === 'sterile' ? ERA1.silver : ERA1.white;
-    const shade = this.mood === 'cheerful' ? ERA1.beige : this.mood === 'sad' ? ERA1.greyDark : ERA1.grey;
-    const fleece = [
-      [-36, -20, 16], [-18, -34, 17], [2, -36, 18], [23, -30, 16],
-      [38, -13, 17], [32, 10, 18], [12, 22, 19], [-12, 24, 18],
-      [-34, 10, 18], [-44, -8, 15], [0, -8, 34]
-    ] as const;
-    ctx.fillStyle = shade;
-    for (const [dx, dy, r] of fleece) circle(ctx, cx + dx + 2, cy + dy + 2, r);
-    ctx.fillStyle = wool;
-    for (const [dx, dy, r] of fleece) circle(ctx, cx + dx, cy + dy, r);
-    // little hooves, blocky and deliberately puppet-like
-    ui.px(ctx, cx - 29, cy + 34, 9, 24, ERA1.greyDark);
-    ui.px(ctx, cx + 18, cy + 34, 9, 24, ERA1.greyDark);
-    ui.px(ctx, cx - 34, cy + 56, 17, 5, ERA1.black);
-    ui.px(ctx, cx + 13, cy + 56, 17, 5, ERA1.black);
-  }
-
-  private drawFace(ctx: CanvasRenderingContext2D, cx: number, cy: number, phase: number): void {
-    const face = this.mood === 'sterile' ? ERA1.beige : ERA1.paper;
-    const ink = this.mood === 'sterile' ? ERA1.greyDark : ERA1.black;
-    ctx.fillStyle = face;
-    circle(ctx, cx, cy - 8, 24);
-    ui.px(ctx, cx - 27, cy - 14, 8, 17, face);
-    ui.px(ctx, cx + 19, cy - 14, 8, 17, face);
-    const blink = phase > 2.72 && phase < 2.88;
-    if (blink) {
-      ui.px(ctx, cx - 12, cy - 9, 8, 2, ink);
-      ui.px(ctx, cx + 5, cy - 9, 8, 2, ink);
-    } else if (this.mood === 'sterile') {
-      ui.px(ctx, cx - 12, cy - 12, 8, 7, ink);
-      ui.px(ctx, cx + 5, cy - 12, 8, 7, ink);
-      ui.px(ctx, cx - 10, cy - 10, 4, 3, ERA1.silver);
-      ui.px(ctx, cx + 7, cy - 10, 4, 3, ERA1.silver);
-    } else if (this.mood === 'sad') {
-      // downcast, heavy-lidded — not scolding, just looking away. The shame
-      // reads through avoidance, not an expression aimed at the player.
-      ui.px(ctx, cx - 12, cy - 8, 8, 2, ink);
-      ui.px(ctx, cx + 5, cy - 8, 8, 2, ink);
-    } else {
-      ui.px(ctx, cx - 11, cy - 11, 5, 5, ink);
-      ui.px(ctx, cx + 7, cy - 11, 5, 5, ink);
-      ui.px(ctx, cx - 10, cy - 10, 2, 2, ERA1.white);
-      ui.px(ctx, cx + 8, cy - 10, 2, 2, ERA1.white);
-    }
-    const mouthY = cy + 8;
-    if (this.mood === 'cheerful') {
-      ui.px(ctx, cx - 5, mouthY, 11, 2, ink);
-      ui.px(ctx, cx - 3, mouthY + 2, 7, 2, ink);
-    } else if (this.mood === 'clinical') {
-      ui.px(ctx, cx - 6, mouthY, 12, 2, ink);
-    } else if (this.mood === 'sad') {
-      // flat line, corners hooked down — a plain frown, no melodrama.
-      ui.px(ctx, cx - 7, mouthY, 14, 2, ink);
-      ui.px(ctx, cx - 8, mouthY + 2, 2, 2, ink);
-      ui.px(ctx, cx + 6, mouthY + 2, 2, 2, ink);
-    } else {
-      ui.px(ctx, cx - 8, mouthY - 1, 16, 2, ink);
-      ui.px(ctx, cx - 8, mouthY + 3, 16, 1, ERA1.grey);
-    }
-  }
-
-  private drawGesture(ctx: CanvasRenderingContext2D, cx: number, cy: number, point: number): void {
-    const arm = this.mood === 'sterile' ? ERA1.grey : ERA1.silver;
-    const hoof = this.mood === 'sterile' ? ERA1.greyDark : ERA1.black;
-    if (this.action === 'point') {
-      ui.px(ctx, cx + 38, cy - 9, 38 + point, 5, arm);
-      ui.px(ctx, cx + 76 + point, cy - 12, 8, 11, hoof);
-      ui.px(ctx, cx + 84 + point, cy - 9, 14, 3, hoof);
-      return;
-    }
-    if (this.mood === 'sad') {
-      // arm hangs, not rests — the droop reads before the face does.
-      ui.px(ctx, cx + 34, cy + 16, 10, 22, arm);
-      ui.px(ctx, cx + 32, cy + 36, 10, 9, hoof);
-      return;
-    }
-    ui.px(ctx, cx + 36, cy + 4, 24, 5, arm);
-    ui.px(ctx, cx + 58, cy + 2, 8, 10, hoof);
   }
 
   private drawBubble(ctx: CanvasRenderingContext2D, x: number, y: number): void {
@@ -422,10 +300,4 @@ class LambyRig {
     if (cur) lines.push(cur);
     return lines;
   }
-}
-
-function circle(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
-  ctx.beginPath();
-  ctx.arc(Math.round(x), Math.round(y), Math.round(r), 0, Math.PI * 2);
-  ctx.fill();
 }
