@@ -16,6 +16,7 @@ import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
+import { drawLambyChar } from './lambyChar';
 
 export type UpdateKey = 'u2' | 'u3' | 'u4' | 'close';
 type UpdatePhase = 'notify' | 'reminded' | 'eula' | 'install' | 'restart';
@@ -35,8 +36,9 @@ interface UpdateStrings {
   /** THE DISPERSAL (u3 today; data-driven, optional): uninstall-report lines
    *  shown after the changelog finishes typing. A line prefixed '~' renders
    *  small and dim — the quiet line carries the thesis ("companion process —
-   *  could not be removed. migrating.") — and triggers the fragment beat: the
-   *  companion mark scattering into the pieces that become Lambient at E3. */
+   *  could not be removed. RENAMED.") — and triggers the fragment beat: LAMBY
+   *  HIMSELF thinning out of the report while the pieces that become
+   *  Lambient's badges at E3 travel out along the FRAG offsets below. */
   uninstall?: string[];
   /** per-update install length override (u3 needs room for the dispersal) */
   installSeconds?: number;
@@ -46,6 +48,32 @@ interface UpdateStrings {
 const REMIND_SECONDS = 40;   // PLACEHOLDER pacing — the one deferral the system allows
 const INSTALL_SECONDS = 7.5; // changelog types on + the glitch window
 const RESTART_SECONDS = 2.2; // dark beat before the world changes
+
+/**
+ * THE DISPERSAL's seven marks (D31, struck by Sérgio 2026-07-25 after the
+ * GPAHE check — docs/REINTERP_D31_DISPERSAL_EVIDENCE_2026-07-25.md).
+ *
+ * These exact offsets are the piece's shared fragment grammar: Session 33
+ * authored them here for the uninstall report, and `drawLambMark` in
+ * src/desktop/theme/era3.ts renders the SAME seven, SETTLED, as Lambient's
+ * badge on all three of Room 2's screens (src/room/era3Devices.ts) — "the
+ * fragments have already migrated and arrived, per u3's own line". So the
+ * marks that leave here are literally the marks that arrive there; changing
+ * one list without the other breaks a payoff that already ships. They are
+ * FIXED (no per-frame randomness — pixel discipline) and there are SEVEN of
+ * them, fewer and smaller than the thing they came out of: the beat is
+ * survival by scattering, not omnipotence (GPAHE 2023 finds deplatforming
+ * partly worked, and the piece's own laws forbid an all-powerful apparatus).
+ */
+const FRAG: readonly (readonly [number, number])[] = [
+  [10, -6], [16, 3], [7, 9], [-8, 7], [-13, -4], [4, -12], [-3, 13]
+];
+/** the marks travel about one puppet-width out, then stop */
+const FRAG_SPREAD = 3.0;
+const DISPERSAL_SECONDS = 3.4; // the whole fragmenting, start to settled
+const DISPERSAL_HOLD = 0.9;    // he simply stands there first — then he goes
+const LAMBY_SCALE = 0.5;
+const LAMBY_AT = { x: 150, y: 248 }; // under the report, clear of the progress bar
 
 const ERA_NUM: Record<string, number> = { e2: 2, e3: 3, e4: 4, close: 5 };
 
@@ -187,35 +215,25 @@ export class UpdateApp {
       // THE DISPERSAL (data-driven; u3 carries it): the uninstall report,
       // after the changelog finishes typing. Plain lines type on like the
       // changelog; a '~' line renders SMALL and DIM (the quiet line is the
-      // thesis), and beside it the companion mark fragments — one block
-      // scattering into the small marks that become Lambient's badges at E3.
+      // thesis — "could not be removed. RENAMED."), and under the report
+      // LAMBY HIMSELF comes apart into the marks that become Lambient's
+      // badges at E3. Nothing in the copy explains it; the staging is the
+      // argument (session brief item 6c).
       if (this.s.uninstall) {
         const clDone = this.s.changelog.length * 0.8 + 0.9;
         const baseY = 62 + this.s.changelog.length * 16 + 14;
         const shownU = Math.min(this.s.uninstall.length, Math.floor(Math.max(0, this.t - clDone) / 1.1));
+        let quietAt = -1;
         for (let i = 0; i < shownU; i++) {
           const raw = this.s.uninstall[i];
           const quiet = raw.startsWith('~');
           ui.setFont(ctx, quiet ? 8 : 10);
           ctx.fillStyle = quiet ? ERA1.greyDark : ERA1.silver;
           ctx.fillText(quiet ? raw.slice(1).trim() : raw, quiet ? 52 : 40, baseY + i * 15);
-          if (quiet) {
-            // the fragment beat: eased scatter along FIXED offsets (no
-            // per-frame randomness — pixel discipline), integer positions.
-            const FRAG: [number, number][] = [
-              [10, -6], [16, 3], [7, 9], [-8, 7], [-13, -4], [4, -12], [-3, 13]
-            ];
-            const start = clDone + (i + 1) * 1.1;
-            const p = Math.min(1, Math.max(0, (this.t - start) / 2.2));
-            const e = 1 - (1 - p) * (1 - p); // ease-out
-            const ax = 40; const ay = baseY + i * 15 - 6; // anchor left of the quiet line
-            if (p < 1) ui.px(ctx, ax, ay, Math.max(1, Math.round(5 * (1 - e))), Math.max(1, Math.round(5 * (1 - e))), ERA1.grey);
-            for (const [fx, fy] of FRAG) {
-              ui.px(ctx, ax + 2 + Math.round(fx * e), ay + 2 + Math.round(fy * e), 2, 2, e > 0.85 ? ERA1.greyDark : ERA1.grey);
-            }
-          }
+          if (quiet && quietAt < 0) quietAt = clDone + (i + 1) * 1.1;
         }
         ui.setFont(ctx, 10);
+        if (quietAt >= 0) this.drawDispersal(ctx, this.t - quietAt);
       }
       // progress + the glitch: the bar stutters near the end (soft, no strobe)
       const bw = 220; const bx = Math.round((W - bw) / 2); const by = H - 70;
@@ -235,6 +253,57 @@ export class UpdateApp {
         ctx.fillText(this.s.restarting, Math.round(W / 2) - 30, Math.round(H / 2));
       }
     }
+  }
+
+  /**
+   * THE DISPERSAL (S2R.7 item 6 · D31 struck 2026-07-25). `age` is seconds
+   * since the quiet line landed.
+   *
+   * The staging, in order: he STANDS there for a moment under the report that
+   * has just said he could not be removed — `sterile`, the drained mood, not
+   * the cheerful one he arrived in — and then he thins out while seven small
+   * marks travel out of him along the shared FRAG offsets and settle. What
+   * leaves is smaller and fewer than what stood there (3px → 2px, seven marks
+   * out of a whole puppet): the apparatus survives by scattering, and loses
+   * something doing it. It never grows, never multiplies, never fills the
+   * screen — an omnipotent version would be both unsourced (GPAHE 2023:
+   * deplatforming partly worked) and against the piece's own laws.
+   *
+   * He is not drawn inside anything `felt`: this is the install screen, the
+   * system's own surface, register `operable` from top to bottom.
+   */
+  private drawDispersal(ctx: CanvasRenderingContext2D, age: number): void {
+    if (age < 0) return;
+    const p = Math.min(1, Math.max(0, (age - DISPERSAL_HOLD) / DISPERSAL_SECONDS));
+    const e = 1 - (1 - p) * (1 - p); // ease-out: fast to leave, slow to settle
+    const cx = LAMBY_AT.x;
+    const cy = LAMBY_AT.y;
+    if (e < 1) {
+      ctx.save();
+      ctx.globalAlpha = 1 - e;
+      drawLambyChar(ctx, cx, cy, {
+        mood: 'sterile', action: 'idle', t: age, moodStart: 0, scale: LAMBY_SCALE
+      });
+      ctx.restore();
+    }
+    for (const [fx, fy] of FRAG) {
+      const s = Math.max(1, Math.round(3 - e)); // 3px leaving → 2px settled
+      ui.px(
+        ctx,
+        cx + Math.round(fx * FRAG_SPREAD * e),
+        cy + Math.round(fy * FRAG_SPREAD * e),
+        s, s,
+        e > 0.85 ? ERA1.greyDark : ERA1.grey
+      );
+    }
+  }
+
+  /** review aid (?debug=1 only, src/debug/panel.ts): skip the notice and the
+   *  terms and land on the install screen, where the dispersal plays. Never
+   *  reachable in play — the ritual's own clicks are the only way through it. */
+  debugSkipToInstall(): void {
+    this.phase = this.s.changelog ? 'install' : 'restart';
+    this.t = 0;
   }
 
   /** click routing — logical canvas coordinates (mirrors the draw geometry) */

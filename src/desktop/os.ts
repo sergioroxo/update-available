@@ -352,18 +352,32 @@ export class DesktopOS {
     this.updateApp = new UpdateApp(key);
     this.updateApp.onComplete = (toEra) => {
       this.updateApp = null;
+      // S2R.7 item 5 — THE LAST FILING UNDER DANIEL'S NAME. It lands at the
+      // restart, not at the notice: the record files the migration when the
+      // migration happens. Witness-symmetric in the plainest sense — the
+      // system's own act, filed in the system's own cold register, with no
+      // player choice anywhere near it (src/witness/intake.ts renders it, the
+      // line itself lives in data/strings/updates.json).
+      if (key === 'u3' && !ledger.records.includes('subject-migrated')) {
+        ledger.records.push('subject-migrated');
+      }
       this.setDesktopEra(toEra);
       this.dirty = true;
       this.onEraShift?.(toEra);
     };
-    // R28-2c: the belongings beat lives on the T1 notice only (key 'u2') —
-    // u3/u4/close are untouched, their own gathering beats are a later lane
-    // (E2 homecoming script S2R.7 names one at u3, not this session's scope).
-    if (key === 'u2' && this.belongings) {
+    // R28-2c/S2R.7: the belongings beat runs ONCE PER DEPARTURE — pass 1 on
+    // the T1 notice (u2, the teenager leaves for the placement), pass 2 on the
+    // u3 notice ("what do you take from THIS life?", the adult's migration).
+    // Same wiring, same window, a different pass number; u4/close have no
+    // gathering (there is no room left to gather from — the apparatus is
+    // ambient by then, and the final restart is bare by law).
+    const pass = key === 'u2' ? 1 : key === 'u3' ? 2 : 0;
+    if (pass !== 0 && this.belongings) {
       const belongings = this.belongings;
-      this.updateApp.onRemindLaterUsed = () => belongings.openWindow();
+      const p = pass as 1 | 2;
+      this.updateApp.onRemindLaterUsed = () => belongings.openWindow(p);
       this.updateApp.onWindowClosed = () => belongings.closeWindow();
-      this.updateApp.onUpdateNowDirect = () => belongings.fileProcessed();
+      this.updateApp.onUpdateNowDirect = () => belongings.fileProcessed(p);
     }
     this.dirty = true;
   }
@@ -470,6 +484,22 @@ export class DesktopOS {
     thread.onThreadDone = () => {
       this.caleb = null;
       this.accountability = null;
+      // S2R.7 — THE RESIDUE LEADS SOMEWHERE. The thread's end is the era's
+      // end: from here the spine (src/narrative/spine.ts) reads the residue
+      // filing off the ledger and takes the era to its u3 close, exactly the
+      // way E1's `diary-glitch` record arms T1. Two things happen at this
+      // seam, and neither is the update itself — the update is armed by the
+      // apparatus's own documented failure (S2R.5's collapse), never here:
+      //   1. any UNANSWERED summons is withdrawn. The network that issued the
+      //      referral has just told the player it can no longer vouch for
+      //      itself; its errands do not outlive it. Nothing is filed for the
+      //      withdrawal because nothing was ever filed for the offer (offers
+      //      only file through src/room/sends.ts on an ANSWER) — so this
+      //      cannot put a decision in the record the player never made.
+      //   2. the desktop goes quiet. No toast, no assistant, no chrome event:
+      //      the era says nothing else in its own voice after the residue.
+      this.sendOffer = null;
+      this.toast = null;
       this.dirty = true;
     };
     this.dirty = true;
@@ -1614,6 +1644,14 @@ export class DesktopOS {
         this.caleb?.debugResidue();
         break;
       case 'update3': this.setPhase('desktop'); this.armUpdate('u3'); break;
+      // S2R.7: the dispersal lives inside u3's INSTALL screen, several clicks
+      // and ~40s of deferral deep into the ritual — this lands on it directly
+      // so the beat can be reviewed without playing the notice and the terms
+      // through every time. Review only; play always takes the long way.
+      case 'u3Dispersal':
+        this.debugJump('update3');
+        this.updateApp?.debugSkipToInstall();
+        break;
       case 'update4': this.setPhase('desktop'); this.armUpdate('u4'); break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
       case 'send-s1': this.setPhase('desktop'); this.offerSend('s1'); break;

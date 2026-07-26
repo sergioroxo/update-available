@@ -1134,10 +1134,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // rather than inserting it into the boombox (the departure moment, not
       // a listening one); the boombox's own play/pause zone is untouched.
       // Un-eligible clicks fall through untouched (return only on a real hit).
+      // S2R.7: the same geometry serves BOTH gathering passes (u2's departure
+      // and u3's migration) — r2 moves none of the second pass's props, so no
+      // per-era hit table is needed. Only what the CURRENT pass offers is
+      // clickable: an object already kept in pass 1 is frozen, and its click
+      // falls through untouched rather than being silently swallowed.
       const belongings = os.belongings;
       if (belongings?.windowOpen) {
         let kept = false;
+        const offered = belongings.offered; // one set per click, not per prop
         for (const [id, hit] of Object.entries(BELONGINGS_HIT)) {
+          if (!offered.has(id)) continue;
           if (rayHitsPoint(e, hit.p, hit.r)) {
             belongings.toggle(id);
             kept = true;

@@ -83,7 +83,14 @@ const OS_BEATS: BeatRow[] = [
   { label: 'S2R.4 · NetVision — static/notice', id: 'netvisionStatic' },
   { label: 'S2R.5 · Caleb — PureMail envelope arrives', id: 'calebMail' },
   { label: 'S2R.6 · Caleb — the residue (quiet after)', id: 'calebResidue' },
-  { label: 'T2 ritual · update → E3', id: 'update3' },
+  // S2R.7 (Session 58) — the era's ending. `update3` is the whole ritual from
+  // its notice (Remind me later → the second belongings gathering → terms →
+  // install → restart into Room 2); `u3Dispersal` lands straight on the
+  // install screen where Lamby comes apart, since that beat is otherwise ~40s
+  // of deferral deep. The residue that CAUSES all of this is `calebResidue`
+  // above — play from there to see the era close on its own.
+  { label: 'S2R.7 · T2 ritual · update → E3 (+ 2nd belongings pass)', id: 'update3' },
+  { label: 'S2R.7 · THE DISPERSAL (u3 install: removed / RENAMED)', id: 'u3Dispersal' },
 
   { heading: 'E3 → E4 (Room 2 lesbian → Room 3 trans)' },
   { label: 'T3 ritual · update → E4', id: 'update4' },

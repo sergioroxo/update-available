@@ -12,5 +12,11 @@
     { "id": "rainbowDuck", "label": "the rainbow duck" }
   ],
   "keptTemplate": "kept: {label}",
-  "processedLine": "belongings: processed"
+  "processedLine": "belongings: processed",
+  "secondPass": {
+    "_doc": "PLACEHOLDER — Sérgio voice pass pending. S2R.7 (Session 58): THE SECOND GATHERING, on the u3 notice — 'what do you take from THIS life?' Same room, six years on: the E1 pass was a teenager's departure, this one is an adult's MIGRATION, so the objects are the SAME objects (no new ids, no new click geometry — src/engine/app.ts's BELONGINGS_HIT already covers every id here, and data/room/reinterp_deltas.json's r2 fold moves none of them) and only the RECORD's phrasing changes. `eligible` is therefore the first-pass set MINUS tapeA/tapeB, which r2 removes from the room along with the boombox — an object that is not there cannot be taken. Ids already kept in the first pass are filtered out at runtime (src/narrative/belongings.ts): they are already frozen at their r1 fold and are not offered a second time. Labels are NOT duplicated here — they resolve from `eligible` above, so a label can never drift between the two passes.",
+    "eligible": ["mixtape", "plantModel", "book1", "book2", "poster1", "teddyBox", "rainbowDuck"],
+    "keptTemplate": "retained at migration: {label}",
+    "processedLine": "belongings: processed at migration"
+  }
 }

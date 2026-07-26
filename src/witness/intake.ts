@@ -10,6 +10,7 @@ import { FLAG, RECORD } from '../desktop/theme/witness';
 import { ledger } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import opening from '../../data/strings/opening.json';
+import updates from '../../data/strings/updates.json';
 
 // Local aliases onto the witness palette (src/desktop/theme/witness.ts).
 const INK = RECORD.ink;
@@ -93,6 +94,11 @@ export class WitnessCanvas {
       ledger.records.includes('kit-inserted') || ledger.provotypes.length > 0
       || ledger.sends.length > 0 || profileLines.length > 0
       || ledger.guidance.length > 0 || ledger.records.includes('profile-initialized')
+      // S2R.7: the migration filing wakes the record on its own. In an
+      // ordinary playthrough something above is always true long before u3,
+      // but the record must never sleep through a filing it has made — and
+      // a review that enters at E2 is exactly the case that proves it.
+      || ledger.records.includes('subject-migrated')
     ) {
       this.draw();
     } else {
@@ -162,6 +168,19 @@ export class WitnessCanvas {
     const other = ledger.tags.filter(t => !t.startsWith('profile:'));
     const parts = [...profileLines, ...other];
     return parts.join(', ') || '—';
+  }
+
+  /** S2R.7 item 5 — THE LAST FILING UNDER DANIEL'S NAME. One line, filed by
+   *  the u3 restart itself (src/desktop/os.ts pushes the `subject-migrated`
+   *  record), copy resolved from data/strings/updates.json like every other
+   *  display string. It renders in ordinary INK, not the amber the record
+   *  keeps for refusals: nobody refused anything here. The subject moved; the
+   *  file stayed. That is the whole of what the record has to say about the
+   *  end of a life it spent six years annotating. */
+  private migrationLines(): string[] {
+    if (!ledger.records.includes('subject-migrated')) return [];
+    const u3 = (updates as unknown as Record<string, { migrationFiling?: string }>).u3;
+    return u3?.migrationFiling ? [u3.migrationFiling] : [];
   }
 
   private endingRecordLines(): string[] {
@@ -269,7 +288,9 @@ export class WitnessCanvas {
     const firstTouchLines = ledger.records.includes('profile-initialized')
       ? [opening.witness_profile_init]
       : [];
-    if (profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0
+    const migrationLines = this.migrationLines();
+    if (migrationLines.length > 0
+        || profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0
         || endingLines.length > 0 || ledger.guidance.length > 0 || ledger.belongings.length > 0
         || ledger.lamby.length > 0 || ledger.checkins.length > 0 || ledger.media.length > 0
         || ledger.caleb.length > 0
@@ -333,6 +354,10 @@ export class WitnessCanvas {
             : (cb.outcome === 'held' || cb.outcome === 'committed' || cb.outcome === 'dismissed')
               ? FLAG : INK
         })),
+        // S2R.7 (Session 58): the migration filing — chronologically the last
+        // thing filed under Daniel's name, so it sits here, after the Caleb
+        // thread and before the E3 arrival that follows it on screen.
+        ...migrationLines.map(text => ({ text, color: INK })),
         // S3R.0 (Session 37): the three-screen room's arrival, once — Lambient's
         // fragments settling visibly across every device (register, not a
         // choice, so it always renders in the same ink as an ordinary filing).

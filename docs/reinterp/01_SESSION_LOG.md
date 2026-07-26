@@ -3,13 +3,12 @@ STATUS: live
 
 ## NEXT UP (rebuilt 2026-07-25 — items 1-3 of the R29 list all shipped, S40/S41/S42; the list had
 ## gone stale again the same way, so it is pruned here. Top item = your session unless Sérgio says so.)
-1. **S57 — S2R.7: ERA 2 ENDS.** ⚑ THE PRIORITY. Era 2's climax leads nowhere: after the residue line,
-   `os.ts`'s `onThreadDone` nulls the thread and drops the player on a desktop to wait for a send and a
-   timer. Give the era its ending — the u3 ritual (notification → EULA → changelog → restart), the
-   belongings beat firing a second time ("what do you take from THIS life?"), the restart delivering the
-   player to Room 2, and `subject migrated — file retained` as the last filing under Daniel's name.
-   The dispersal (item 6) needs Sérgio's D31 strike first. Full prompt +  reasoning:
-   `docs/REINTERP_EXPERIENCE_PRIORITY_2026-07-25.md`.
+1. ~~**S57 — S2R.7: ERA 2 ENDS.**~~ **SHIPPED 2026-07-26 (Session 58, below)** — the residue now
+   retires the send lane and arms the era's own close, the u3 ritual runs the established grammar,
+   the belongings beat fires a second time as a MIGRATION, the restart lands the player in Room 2,
+   `subject migrated — file retained` is in the record, and the dispersal is built (D31 struck).
+   ⚑ One carried chore, not narrative: that session's shell died before the FINAL `npm test` /
+   `npm run build` and before any commit — re-run both and commit the listed pathspecs.
 2. **E3 sends build** — `REINTERP_E3_SENDS_SCRIPTS_2026-07-13.md` is scripted, unbuilt (tasks as travel).
    E3's equivalent connective tissue; do this after E2 actually closes.
 3. **C2 layout-X ending arm + Close entry** — needs a spec first.
@@ -2217,3 +2216,144 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   **Not touched, on purpose:** `BUILD_LOG.md` (CLAUDE.md's usual workflow line) — outside this
   session's stated file fence and not named in its acceptance criteria, unlike the debug panel.
   **BLOCKED: none.**
+
+- 2026-07-26 — Reinterp Session 58 (Opus 5, build-queue tag **S57 — S2R.7: ERA 2 ENDS**; logged as
+  Session 58 to keep this log's own numbering sequential, the queue tag kept for cross-reference).
+  **The problem, per `docs/REINTERP_EXPERIENCE_PRIORITY_2026-07-25.md`: Era 2's climax led nowhere.**
+  After the residue line, `onThreadDone` nulled the thread and returned the player to a desktop to
+  wait for a send to resolve and a timer to elapse. The era did not end; it stopped. It ends now.
+
+  ### 1. THE DRAMATURGY CALL — how the residue connects to the ending, and why
+  The brief asked for this to be argued rather than assumed, so: **the residue does not satisfy the
+  s2 gate — it RETIRES the send lane.** Three options were live. (a) Force `u3` the instant the
+  residue lands: rejected outright — the residue is a player press, and an update that follows a
+  press by one frame reads as *caused by the player*, which SCRIPT_UPDATE v0.5 §1 forbids and which
+  would also make the piece's most private moment into a button that advances the plot. (b) Treat
+  the residue as satisfying `sendResolved('s2')`: rejected — it files a resolution the player never
+  gave, and it leaves the apparatus still running errands after it has announced its own collapse.
+  (c) **Adopted:** the residue moves the spine into a new `e2_residue` step, and `RESIDUE_GAP` (6s,
+  PLACEHOLDER) later the era's own failure notice arrives.
+  **Why (c) is right, in the piece's own terms.** E1 already has exactly this grammar and it is the
+  one everyone agreed on: the deletion fails, `diary-glitch` files, and only *then* does T1 arm — the
+  spine reads a RECORD, not a click. E2 now matches: the accountability network collapsed on screen
+  in S2R.5 (that is the documented failure, and it has already happened by the time the residue is
+  reachable), the person says the thing the record could not classify, and the machine — which has
+  no evaluator left to assign — finally notices its own end. The player's press does not summon the
+  update; it exhausts the era, and the update is what is left. Mechanically the spine watches
+  `ledger.caleb.some(c => c.outcome === 'residue')` from *any* of the three E2 send steps, so the
+  ending is reachable whether the thread ran before, during, or after a summons.
+  **The corollary, and it is a real beat:** an UNANSWERED summons is withdrawn at the same seam
+  (`onThreadDone` nulls `sendOffer`, and clears the toast). The route sheet was an errand of a
+  network that has just told the player it can no longer vouch for itself; its errands do not
+  outlive it. Nothing is filed for the withdrawal — `src/room/sends.ts` only files on an ANSWER, so
+  there was never an `offered` line to contradict, and this cannot put a decision in the record that
+  the player never made. Verified live: the `icon-send` on the desktop disappears the moment the
+  thread ends, and `u3` arms ~6s later with `ledger.sends` still empty.
+
+  ### 2-3. THE u3 RITUAL + THE SECOND BELONGINGS PASS
+  No parallel machinery: `armUpdate` now wires the SAME three `UpdateApp` callbacks for `u3` that
+  `u2` has had since R28-2c, with a pass number (1 = u2, 2 = u3). `src/narrative/belongings.ts`
+  became pass-aware rather than being instantiated twice, because the second gathering is the same
+  room and the same objects six years on: the kept set is CUMULATIVE (pass 1's keeps stay frozen —
+  `clusterMorph` freezes every kept id at its r1 fold, and `reinterp_deltas.json`'s r2 fold moves
+  none of the second pass's props, so one freeze rule serves both passes and `clusterMorph.ts`
+  needed no change), while the OFFER is per-pass. `data/room/belongings.json` gains a `secondPass`
+  block: the first-pass set minus `tapeA`/`tapeB` (r2 removes both from the room along with the
+  boombox — an object that is not there cannot be taken), no duplicated labels (they resolve from
+  `eligible`, so they can never drift), and its own witness phrasing —  **`retained at migration:
+  {label}`** and `belongings: processed at migration`. That is where the "different life" lives: the
+  E1 pass was a teenager's departure and the record called it *kept*; this is an adult's migration
+  and the record calls it *retained*. Ids already kept in pass 1 are filtered out of `offered` at
+  runtime — you are not offered a second time what you already took. `app.ts`'s click loop now tests
+  `offered` before toggling, so a frozen prop's click falls through instead of being swallowed.
+  **File-fence note:** `data/room/belongings.json` was not on the session's list, but item 3 cannot
+  be built without it under CLAUDE.md's own data-over-code rail (the alternative was hard-coding the
+  second-pass copy in TypeScript, which the rail forbids). Flagged here rather than stepped past
+  silently. `src/room/cluster.ts` reads only the top-level `eligible` array for its batching
+  exclusions and is unaffected — the second-pass ids are a subset of it, which is *why* the beat
+  needs no new geometry or batching change.
+
+  ### 4-5. ROOM 2, AND THE LAST FILING
+  The relocation needed no new code and got none: `driveMorph('e3')` already dollies to
+  `cluster.homeYaw`, which is 90 — Room 2, west, Vera's. Verified rather than assumed (camera lands
+  at exactly `[-4.4, 1.16, 0.7]`, yaw 90, facing the laptop's "Welcome back, Vera."). The filing is
+  new: `os.ts` pushes `subject-migrated` when u3's restart completes (at the MIGRATION, not at the
+  notice), `data/strings/updates.json` carries the line, and `src/witness/intake.ts` renders it in
+  ordinary INK — not the amber the record keeps for refusals, because nobody refused anything here.
+  It sits after the Caleb thread and before the E3 arrival line, which is its true chronology. One
+  extra line in intake: the migration filing also WAKES the record if nothing else has (an ordinary
+  playthrough has woken it long before, but the record must never sleep through a filing it made —
+  and a review entering at E2 is exactly the case that proves it).
+
+  ### 6. THE DISPERSAL — built, and REUSED, not invented
+  D31 was struck by Sérgio 2026-07-25 after the GPAHE check. As the brief said, the beat was half
+  built: Session 33's uninstall-report scatter in `update.ts` and Lambient's SETTLED badge in
+  `era3.ts`/`era3Devices.ts` already share one seven-offset FRAG list, and E3's code already
+  referenced a u3 line that had never been written. Only the DEPARTURE was missing.
+  **What shipped:** the copy adopts the sourced wording — `"Restorify — removed."` then, smaller and
+  dimmer, `"companion process — could not be removed. RENAMED."` (GPAHE's documented mechanism is
+  renaming: NARTH → ATCSI 2014, medical-sounding relabelling to evade moderation — better sourced
+  than "migrating" and it rhymes with the piece's own update-as-survival grammar). The anchor is no
+  longer an abstract 5px block: it is **Lamby**, drawn through the shared `drawLambyChar` (imported,
+  not copied — `lambyChar.ts` untouched), `sterile` mood, standing under the report that has just
+  said he could not be removed, and then thinning to nothing while the seven marks travel out along
+  the SAME FRAG offsets and settle. `installSeconds` 11.5 → 13.5 so the beat is not cut off by the
+  restart. The FRAG list is now a documented module constant with the cross-reference written down
+  in both directions, so nobody edits one copy again.
+  **The three binding constraints, and how each is met.** (a) *Survival by scattering, never
+  omnipotence:* seven marks, no more; they SHRINK as they go (3px leaving → 2px settled) and stop —
+  what disperses is smaller and fewer than what stood there. Nothing multiplies, nothing fills the
+  screen. (b) *No real organisations in the fiction:* the scene names only Restorify and
+  GracePlatform; GPAHE's real companies stay in `_dispersalGrounding` (provenance in data), which is
+  new and carries the 2023 contested-ground caveat — deplatforming partly worked — alongside the
+  status suggestion `documentary`. (c) *Don't explain it in copy, stage it:* the changelog was left
+  as it was. The argument is made by the staging — the uninstaller reports success, and the thing it
+  removed is standing there coming apart into the marks the player will meet on every screen in the
+  next room.
+
+  ### Verified — a LINEAR play with real clicks, E2 arrival → standing in Room 2
+  Real pointer clicks and real key presses throughout (the sandboxed pane suspends rAF, so frames
+  were advanced with a synchronous stepper — no source change, and every click was a genuine
+  `left_click` on the composited page). Route: `debugJump('update2')` to arm E1's own ending (the
+  only shortcut; everything from the E2 arrival on is played) → u2 notice → **Update now** (files
+  `belongings: processed` — the first pass's DIRECT path) → EULA → Read on → I Agree → install →
+  restart → **E2 arrival**: daylight room, dark monitor, *"Welcome back, Daniel. Press to continue
+  with reboot."* → the return press → Lamby's debut → **Begin** → Restorify, 412-day streak →
+  check-in *Struggling* → Caleb opens by itself → four chips (`It's me` / `Every word` / `Come` /
+  the commit-press) → the accountability alert, `HOMOSEXUAL CONDUCT`, streak 412 → 0, the sad hold →
+  **Okay** → Lamby offers the video → **Watch** → the New You Program to THE BREAK
+  (`media: interrupted`) → PureMail *"We have to stop… Restorify is closing."* with the streak dying
+  to *"412 days · for nothing"* → **Continue** → the block lifts, his four lines → **the residue**,
+  *"Then it was never me that was broken…"*, pressed → `— entry could not be classified —` files →
+  **the unanswered route sheet vanishes** → ~6s of nothing → **u3's notice** → **Remind me later** →
+  the second gathering: turned in place with the arrow keys and clicked the **poster** and the
+  **mixtape** in the aged room (both took the warm kept-lift, `#291808`; an un-kept book stayed
+  `#000000`) → the notice returned after its one deferral and filed *"retained at migration: the
+  mixtape"* / *"…the poster"* → **Update now** → GracePlatform terms → I Agree → **the install**:
+  changelog, `Restorify — removed.`, `companion process — could not be removed. RENAMED.`, Lamby
+  standing, then gone, seven marks settled → restart → **Room 2**, camera at Vera's seat, the laptop
+  reading *"Welcome back, Vera. Sign in to continue moderating."* with Lambient's settled mark in
+  its corner — the fragments that had just left, arrived, in the same playthrough.
+  The witness record was read by instrumenting its own canvas rather than eyeballing a distant
+  plane; it renders, in order: `belongings: processed at migration` · **`subject migrated — file
+  retained`** · `companion process v3: lambient — distributed`.
+  Also verified: the new `u3Dispersal` debug jump lands directly on the install screen; check-spec
+  C6 counts 35 debugJump ids with a button for each.
+  **⚑ TOOLING GAP — READ THIS BEFORE TRUSTING THE GREEN.** `npx tsc --noEmit` and `npm test`
+  (invariants + rooms + spec, all green, panel covers 35/35) were run after every source change
+  EXCEPT the last two — the four-line witness-wake condition in `src/witness/intake.ts` and a
+  one-line hoist of the offered-set out of `app.ts`'s belongings click loop — because this session's
+  shell died partway through (every `Bash` call, down to `echo`, returned exit 1) and never
+  recovered. Both are trivial (a boolean added to an existing `else if`; a `const` lifted out of a
+  `for`), both introduce no new symbol, and Vite compiled and hot-reloaded both in the running dev
+  server — the verified witness-record read above and a re-run of the pass-2 prop click (real click,
+  `kept: ['poster1']`) are both from the reloaded build. But **`npm test` and `npm run build` have
+  NOT been re-run on the final tree, and nothing is committed** — the same shell failure blocks
+  `git commit`. Next session (or Sérgio): run `npm test && npm run build`, then commit with explicit
+  pathspecs:
+  `src/desktop/apps/update.ts src/desktop/os.ts src/narrative/spine.ts src/narrative/belongings.ts
+  src/witness/intake.ts src/engine/app.ts src/debug/panel.ts data/strings/updates.json
+  data/room/belongings.json docs/reinterp/01_SESSION_LOG.md`.
+  **BLOCKED: none narratively.** Everything in scope 1-6 shipped. The only open items are Sérgio's
+  own: the voice pass on all new copy (all PLACEHOLDER-draft), and `_dispersalGrounding`'s
+  `[VERIFY SOURCE]` queue entry.
