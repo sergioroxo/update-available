@@ -1911,3 +1911,104 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   errors — unaffected by every change above (all reinterp-gated). `npm test` (rooms/invariants/spec
   all green — `check-rooms.mjs`'s double-add guard is what caught the remove+add mixtape attempt
   before it shipped) and `npm run build` (tsc + vite) green throughout. **BLOCKED: none.**
+
+- 2026-07-26 — Reinterp Session 53 (Opus 5, S53 — THE ENTRANCE, REFINED, per the S53 prompt in
+  `docs/REINTERP_NEW_YOU_VIDEO_SPEC_2026-07-25.md`): Sérgio played S48's descent and wanted it
+  softer. His words: "I would like to see a little bit of transparency on the beginning screen and
+  also feel like the zoom in to place should be more in a curve, it can start a bit down in the
+  room, not centered with the chair, that way we 'enter' the room and the camera also rotates to be
+  in front of the screen, not so mechanical of going down to the seat and up to the screen, that
+  way it can slowly flow." The descent is rebuilt and measured. The transparency is built but
+  **dormant, and the reason is a decision that is his** — see BLOCKED at the end.
+  **1 · THE DESCENT IS ONE CURVE NOW.** S48's shape (fall straight down from y 5.6 ABOVE the roof
+  at a pinned −78°, then rotate level on the spot — two marks) is gone. Entry now begins INSIDE the
+  room, high on the door side at **(1.52, 2.18, 2.62), pitch −30°, yaw 44°** — off-centre from the
+  chair, aimed across at the moonlit window, which is the only light in the room before the wake —
+  and flies a single eased bezier to the seat while the aim swings round to the monitor. Position
+  and orientation are driven by **the same `s`**, so they resolve together by construction rather
+  than by sequencing. It is not a bespoke crane any more: it is one use of `startCamMove(…, via)`,
+  **the same arc primitive the room-to-room dolly already flies** (`DOLLY_CTRL`), so the front door
+  and the piece's own travel now share one curve implementation. `updateDescent()` and its clock
+  are deleted; the move is a `camMove` and is landed by one line the frame the arc resolves, so
+  there is no still beat between arriving and the light coming up. Then S44's wake, untouched.
+  **2 · THE FRAME TRACE CAUGHT ME PUTTING THE CONTROL POINT IN THE WRONG PLACE.** First pass bowed
+  by **0.028 m across a 2.653 m chord** — i.e. a straight line. The control point sat *between* the
+  two ends, which only re-times a move; the offset that bends it has to be PERPENDICULAR to the
+  chord. Recomputed as an explicit perpendicular offset (up, and out toward the door side):
+  measured sagitta **0.519 m**, path length 2.903 m against the 2.653 m chord. The comment on
+  `DESCENT_VIA` records the trap so the next person does not re-set it by eye.
+  **3 · ⚑ THE COMFORT LAW — WHAT CHANGED, AND WHAT IT COST.** S48 enforced comfort STRUCTURALLY:
+  it measured "0 frames in which both were moving". **S53 deliberately reverses that** — the brief
+  asked for simultaneous resolution, and simultaneous translation+rotation is precisely the VR
+  sickness trigger — so the entire budget went into rates instead. Measured from a real
+  frame-by-frame trace of the whole move (4,901 frames sampled after the engine's own update, poses
+  read off the live camera entity via `window.__app`):
+  | | S48 (separated) | S53 (simultaneous) |
+  |---|---|---|
+  | peak linear | 1.1 m/s | **0.497 m/s** |
+  | peak yaw rate | — (pinned) | **8.25 °/s** |
+  | peak pitch rate | 41 °/s | **5.62 °/s** |
+  | peak combined angular | 41 °/s | **9.99 °/s** |
+  | max abs roll | 0 | **0.0000 °** |
+  | frames with both moving | 0 | **99.1 %** (0 position-only; 11 angle-only, all threshold
+  artifacts in the eased tails) |
+  So it moves the body **2.2× slower** and turns the head **4.1× slower** than the version that
+  avoided overlapping them, never stops, never reverses (0 yaw reversals — the shortest signed
+  path), and never rolls. Start and end poses land exactly on their targets ((1.52, 2.18, 2.62) →
+  (0, 1.16, 0.7) / 0 / 0 / 0). Duration 10s parameter, **9.68s of continuous motion** measured.
+  Smootherstep throughout, so velocity AND acceleration are zero at both ends.
+  **A free improvement:** because the path now peaks at **y 2.227 m**, under the ceiling slab's
+  2.70 m underside, the ceiling is never hidden and never restored. `setCeiling()`, `ceilingHidden`
+  and `CEILING_Y` are deleted with it — and so is the batcher churn S48 logged as a follow-up
+  (draw calls read **22–23 through the whole move**, against the ~85 transient S48 measured at
+  boot). Checked that nothing else needed the roof off: the only other high camera pose is
+  `ESTABLISH` at y 1.62, well under it.
+  **4 · TRANSPARENCY ON THE PANEL — built, legible, and currently invisible.** The backdrop is no
+  longer an opaque slab: it is a **radial veil** (rgba(8,8,10) at 0.86 across the middle where the
+  card sits, thinning to 0.55 at the corners, so the space reads AROUND the panel and never under
+  the type) over `blur(3px)`, and the card itself is rgba(16,16,20,**0.90**) over `blur(12px)`.
+  Where `backdrop-filter` is unsupported the whole thing goes near-opaque instead (0.96/0.82/0.98)
+  rather than trusting alpha alone — readability wins, per the brief, and this panel is an
+  accessibility surface carrying the content note and both platforms' controls.
+  **Legibility measured, not asserted:** against a worst-case bright backdrop the card composites
+  to rgb(17,18,22) versus its old flat rgb(16,16,20), so body text `#dfe3ea` goes **14.8 → 14.7:1**
+  and the faintest text on the panel (`#6f7480`) goes **4.08 → 4.04:1** — a ~1 % change (contrast
+  computed from the composite; the blur is what does the real work, the alpha barely moves).
+  Verified visually by injecting a deliberately bright, busy stand-in behind the panel (a moonlight
+  disc plus a warm floor gradient — brighter than the real dark room would ever be): the space
+  reads clearly at the periphery and every word stays crisp. Screenshotted.
+  **⚑ BLOCKED (partial, and honestly so): the veil has nothing to reveal yet.** `src/main.ts` calls
+  `startApp` **inside this panel's own continue callback**, so no 3D room exists behind it — today
+  the veil reveals the page's black, and the change is invisible in the build. Making it what
+  Sérgio asked for needs (a) a start-order change in `main.ts` so the engine renders the moonlit
+  room first — **outside this session's file fence** — and (b) deferring the descent until the
+  panel is dismissed, or it plays out behind the panel and is over before you log in. I did not
+  improvise across the fence, and there is a second reason to leave it: **it is an ethics call that
+  is Sérgio's, not a build session's.** Rendering the fiction's space behind the content note means
+  the piece has visually begun before that note has been acknowledged, against ETHICS_CONSTRAINTS
+  #4's "content warning up front" and the 4s arm-delay that exists to make it sit there. It is very
+  possibly the right call — a dark, still room behind a legible note is hardly the experience
+  starting — but it is his to make. **Everything on this side of the fence is done and waiting:**
+  the moment the room is behind the panel, the treatment is already correct.
+  **VERIFICATION.** Watched at real speed through the real front door (real pointer click on "Log
+  in", MessageChannel rAF pump because the sandboxed tab reports `hidden`): the entrance reads as
+  one flowing move — you come in high by the door, the room swings past, and the desk arrives under
+  you as the view settles on the monitor; then the light comes up and the machine boots itself,
+  S44's wake unchanged. **Skip verified from genuine mid-flight** (pump slowed to ~0.4× so the move
+  could be caught between tool round-trips — a state test, not a pacing one): camera at
+  (0.207, 1.41, 0.782) pitch −3.11 yaw 4.55 with the wake not yet started, one click, and it lands
+  on the exact seat pose with the wake running to completion (k=1, t=3.0s). **`?descent=0` still
+  works** — seated immediately at (0, 1.16, 0.7), wake completes, no arc. Baselines unaffected by
+  real load: `/` (shipped, non-reinterp) boots seated at the desk with its own content warning and
+  no panel; `?flat=1&reinterp=1` shows the panel with the arm-delay intact ("one moment", Log in
+  disabled). Zero console errors in every run. `npm test` and `npm run build` green.
+  **⚑ VR REMAINS UNVERIFIED, PLAINLY.** There is still no XR entry point in this build, so nothing
+  here was judged in a headset — the rates above are an argument for comfort, **not a test of it**,
+  and this is still the piece's only artificial locomotion in a work whose bodily law is "you never
+  walk". It must be judged in the A11 in-headset pass; `?descent=0` is the A/B.
+  **One follow-up, out of fence:** removing two hex literals dropped the palette ratchet to 42, and
+  `tools/check-spec.mjs` now prints "tighten HEX_BASELINE to 42" (a note, not a failure — `npm test`
+  is green). That file is not in this session's fence, so the baseline is left at 44.
+  **Files touched:** `src/engine/app.ts` (the descent only), `src/desktop/orientingCard.ts`,
+  `docs/reinterp/01_SESSION_LOG.md`. `data/strings/orientingCard.json` was in the fence but needed
+  no copy change. **BLOCKED: the transparency's other half, as described above.**

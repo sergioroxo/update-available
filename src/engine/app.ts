@@ -59,29 +59,58 @@ const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
 const WAKE_DARK_SECONDS = 1.2;
 /** the switch itself: lamp + fill come up, moon recedes */
 const WAKE_RAMP_SECONDS = 1.8;
-// ── THE OPENING DESCENT (S48; Sérgio's 2026-07-25 playthrough, finding 1) ──
-// Entry begins ABOVE the room: a slow, Google-Earth-like fall through the dark
-// into a room lit only by its window, and then a settle into the seat. It ADDS
-// to the wake — descend → settle → the light comes up → the machine boots — it
-// does not replace it, and it asks nothing of the player.
+// ── THE OPENING DESCENT (S48, rebuilt in S53 from Sérgio's second playthrough)
+// Entry begins INSIDE the room, up near the door corner in the dark, and drifts
+// in along ONE curve until it is sitting at the desk. It ADDS to the wake —
+// arrive → the light comes up → the machine boots — it does not replace it, and
+// it asks nothing of the player.
 //
-// COMFORT LAW (CLAUDE.md's turn-only body; §0-REV-4's accessibility rule). The
-// two motions NEVER overlap: phase 1 TRANSLATES straight down with the pitch
-// pinned at DESCENT_FROM.pitch, phase 2 ROTATES to level with the position
-// pinned. Both are smootherstep — zero velocity AND zero acceleration at every
-// seam — so there is no start jolt, no mid-fall speed change and no stop. No
-// roll, no yaw, no field-of-view games. Any input (click, drag, key) lands you
-// in the seat at once.
-// ⚑ VR IS THE RISK CASE: in a headset this is artificial locomotion, the one
-// thing the piece otherwise never does. It is deliberately slow, short, and
-// straight; it MUST still be judged in the A11 in-headset pass, and
-// `?descent=0` turns it off for that A/B (and for anyone who does not want it).
-/** where the fall starts: above the ceiling, looking almost straight down */
-const DESCENT_FROM = { y: 5.6, pitch: -78 };
-const DESCENT_FALL_SECONDS = 7.5;   // ≈1.1 m/s at its fastest, eased at both ends
-const DESCENT_SETTLE_SECONDS = 3.6; // ≈41°/s at its fastest, with the body still
-/** era1.json's ceiling slab sits at y 2.71 — the roof comes back on below it */
-const CEILING_Y = 2.71;
+// S53 (his words): "the zoom in to place should be more in a curve, it can start
+// a bit down in the room, not centered with the chair, that way we 'enter' the
+// room and the camera also rotates to be in front of the screen, not so
+// mechanical of going down to the seat and up to the screen, that way it can
+// slowly flow." So the S48 shape — fall straight down from y 5.6 above the roof
+// at a pinned −78°, THEN rotate level on the spot — is gone. It is now a single
+// eased bezier that resolves POSITION AND AIM TOGETHER: it starts off-centre
+// (the door side, not over the chair), under the ceiling rather than above it,
+// and it arcs in while the view swings off the moonlit window and settles on the
+// monitor. One `s`, one curve, one arrival — see startCamMove/DOLLY_CTRL, which
+// is the same primitive the room-to-room dolly already flies; the front door is
+// now literally one use of the piece's own arc, not a bespoke two-phase crane.
+// Starting under the roof also means the ceiling slab is never hidden and never
+// restored (S48 had to, and logged the batcher churn it cost at boot).
+//
+// COMFORT LAW (CLAUDE.md's turn-only body; §0-REV-4's accessibility rule).
+// ⚑ Translation and rotation NOW OVERLAP, which is exactly the combination that
+// provokes VR sickness, so the whole budget went into keeping the rates low
+// instead of into separating the phases: measured peaks are 0.43 m/s and
+// 9.1°/s (S48's separated version peaked at 1.1 m/s and 41°/s — this moves the
+// body slower AND turns the head four times slower, while never stopping).
+// Smootherstep throughout: zero velocity AND zero acceleration at both ends, no
+// start jolt, no mid-move speed change, no arrival bump. Yaw takes the shortest
+// signed path, so it cannot wind the long way round. No roll, ever, and no
+// field-of-view games. Any input (click, drag, key) lands you in the seat at once.
+// ⚑ VR IS STILL THE RISK CASE: in a headset this remains the one piece of
+// artificial locomotion in a work whose entire bodily law is "you never walk".
+// It MUST be judged in the A11 in-headset pass; `?descent=0` turns it off for
+// that A/B (and for anyone who does not want it).
+/** where the entrance begins: inside the room, high on the DOOR side (the door
+ *  is at x 2.1, z 2.2), off-centre from the chair, aimed down and across at the
+ *  moonlit window — the room's only light before the wake */
+const DESCENT_FROM = { x: 1.52, y: 2.18, z: 2.62, pitch: -30, yaw: 44 };
+/** the bezier CONTROL point (same role as DOLLY_CTRL): it holds the path high
+ *  and out over the floor through the middle of the move, so the camera curls
+ *  in over its own right shoulder and settles, rather than sliding down the
+ *  diagonal between two marks.
+ *  ⚑ The offset that matters is the one PERPENDICULAR to the straight line from
+ *  DESCENT_FROM to the seat. A control point placed "between" the two ends bows
+ *  nothing however far along it sits — it only re-times the move. (First pass
+ *  here did exactly that and the frame trace caught it: 0.028 m of bow across a
+ *  2.65 m chord, i.e. a straight line.) This one is offset 0.52 m perpendicular
+ *  — up, and out toward the door side — measured as 0.50 m of real sagitta. */
+const DESCENT_VIA = { x: 1.03, y: 2.45, z: 1.03 };
+/** one continuous move, slow enough to read as drifting in and sitting down */
+const DESCENT_SECONDS = 10;
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
 // the blink is a CUT, never a tween: fade to black, THEN move the camera,
 // THEN fade back — no smooth travel (Sérgio's explicit law: gaze must stay
@@ -536,11 +565,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // nothing for the player to find or press.
   let wakeActive = false;
   let wakeT = 0;
-  // THE OPENING DESCENT (see the constants above): 'fall' translates, 'settle'
-  // rotates, and they never run at the same time. null = not descending.
-  let descentPhase: 'fall' | 'settle' | null = null;
-  let descentT = 0;
-  let ceilingHidden = false;
+  // THE OPENING DESCENT (see the constants above). S53: no phases left to
+  // track — the move IS a single camMove arc, so this is just "is the front
+  // door still playing", read by the skip handlers and by the landing check.
+  let descentActive = false;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
   // the tilt ran conducted (autoCam) — a free tilt cedes to the player's drag
   let revealReturn = -1;
@@ -818,40 +846,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return k * k * (3 - 2 * k);
   }
 
-  /** the ceiling slab is a closed box, so it would hide the room from above.
-   *  It is off for the fall and comes back the moment the camera is under it —
-   *  and at that moment you are still looking down at the floor, so the roof is
-   *  never seen returning. */
-  function setCeiling(on: boolean): void {
-    const h = room.props.get('ceiling');
-    if (!h) return;
-    h.entity.enabled = on;
-    ceilingHidden = !on;
-  }
-
-  /** the fall, then the settle. Never both. */
-  function updateDescent(dt: number): void {
-    descentT += dt;
-    if (descentPhase === 'fall') {
-      const k = Math.min(1, descentT / DESCENT_FALL_SECONDS);
-      const s = k * k * k * (k * (k * 6 - 15) + 10); // smootherstep: no jolt at either end
-      camPos.y = DESCENT_FROM.y + (EYE.y - DESCENT_FROM.y) * s;
-      if (ceilingHidden && camPos.y < CEILING_Y - 0.25) setCeiling(true);
-      if (k >= 1) { descentPhase = 'settle'; descentT = 0; }
-      return;
-    }
-    const k = Math.min(1, descentT / DESCENT_SETTLE_SECONDS);
-    const s = k * k * k * (k * (k * 6 - 15) + 10);
-    camPitch = DESCENT_FROM.pitch * (1 - s);
-    if (k >= 1) endDescent();
-  }
-
-  /** land in the seat and hand over to the wake. Also the SKIP: any input at
-   *  all calls this, so the descent can never trap or nauseate anyone. */
+  /** land in the seat and hand over to the wake — called both when the arc
+   *  finishes on its own and as the SKIP: any input at all calls this, so the
+   *  descent can never trap or nauseate anyone. Snapping to the exact seat pose
+   *  is a no-op at the natural end (the arc resolves there) and the whole point
+   *  of the skip. */
   function endDescent(): void {
-    if (!descentPhase) return;
-    descentPhase = null;
-    setCeiling(true);
+    if (!descentActive) return;
+    descentActive = false;
+    camMove = null; // drop the arc wherever it had got to
     camPos.set(EYE.x, EYE.y, EYE.z);
     camPitch = 0;
     camYaw = 0;
@@ -1099,7 +1102,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S48: the descent is SKIPPABLE, always and by anything. The first press
     // lands you in the seat and does nothing else — it is a way out of the
     // move, not a click on the room underneath it.
-    if (descentPhase) { endDescent(); return; }
+    if (descentActive) { endDescent(); return; }
     if (!facingBack) {
       if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
@@ -1222,7 +1225,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     // S48: any key skips the descent too (Escape excepted — the game menu
     // intercepts that in the capture phase and never reaches here)
-    if (descentPhase) { endDescent(); return; }
+    if (descentActive) { endDescent(); return; }
     // F2, not a letter: printable keys must always reach the typing hand
     if (e.key === 'F2' && os.inDesktop && !os.paused && !gameMenuBus.isOpen) {
       doFlip();
@@ -1301,8 +1304,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (options.reinterp) {
       // the descent owns the camera outright while it runs — it is the one
       // move in the piece the player did not ask for, so it is also the one
-      // that yields instantly to any input (endDescent).
-      if (descentPhase) updateDescent(dt);
+      // that yields instantly to any input (endDescent). S53: it IS a camMove
+      // now, so it needs no clock of its own; it is landed below, the frame
+      // the arc resolves.
       if (camMove) {
         camMove.t += dt;
         const k = Math.min(1, camMove.t / camMove.dur);
@@ -1323,6 +1327,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         camYaw = camMove.fyaw + (camMove.tyaw - camMove.fyaw) * s;
         if (k >= 1) camMove = null;
       }
+      // the front door landed (the arc above just resolved on the seat) — hand
+      // over to S44's wake, same frame, so there is no still beat between
+      // arriving and the light starting to come up.
+      if (descentActive && !camMove) endDescent();
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
     camera.setLocalEulerAngles(camPitch, camYaw, 0);
@@ -1638,11 +1646,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const wantDescent = new URLSearchParams(window.location.search).get('descent') !== '0';
       camYaw = 0;
       if (wantDescent) {
-        setCeiling(false);
-        camPos.set(EYE.x, DESCENT_FROM.y, EYE.z);
+        // S53: one arc, off-centre → the seat, aim resolving with position.
+        // The pose is committed BEFORE startCamMove because that function reads
+        // the live camera as the curve's start (and takes the shortest yaw).
+        camPos.set(DESCENT_FROM.x, DESCENT_FROM.y, DESCENT_FROM.z);
         camPitch = DESCENT_FROM.pitch;
-        descentPhase = 'fall';
-        descentT = 0;
+        camYaw = DESCENT_FROM.yaw;
+        descentActive = true;
+        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 },
+          DESCENT_SECONDS, true, DESCENT_VIA);
       } else {
         camPos.set(EYE.x, EYE.y, EYE.z);
         camPitch = 0;

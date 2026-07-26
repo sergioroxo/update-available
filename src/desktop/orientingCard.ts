@@ -33,14 +33,47 @@ import { wipeLedger } from '../state/ledger';
 const ARM_DELAY_MS = 4000; // the ethics arm-delay: "enter" can never be instant
 
 /**
+ * S53 — TRANSPARENCY. Sérgio, second playthrough: "I would like to see a little
+ * bit of transparency on the beginning screen… that way we 'enter' the room."
+ * The panel is no longer an opaque slab over the whole viewport: the backdrop
+ * is a VEIL (a radial one — densest behind the card where the type sits,
+ * thinning toward the edges, so whatever is behind reads at the periphery
+ * where nothing has to be read), and the card itself sits at 0.90 over a blur.
+ *
+ * READABILITY WINS, per the brief, and it is bought twice over: the blur
+ * destroys any competing detail behind the type before the alpha is even
+ * considered, and where `backdrop-filter` is unsupported the whole thing simply
+ * goes near-opaque instead of trusting alpha alone. This panel carries the
+ * content note and the controls; it is an accessibility surface first.
+ *
+ * ⚑ DORMANT TODAY — and this is the honest state of it, not an oversight.
+ * src/main.ts starts the engine only in this panel's own continue callback, so
+ * there is nothing rendering behind it yet: the veil currently reveals the
+ * page's black. It becomes what Sérgio asked for the moment the moonlit room
+ * is drawn behind the panel, which needs a start-order change in main.ts (out
+ * of this session's file fence) AND a decision that is his, not a build
+ * session's: the fiction's space would then exist on screen BEHIND the content
+ * note, before that note has been acknowledged (ETHICS_CONSTRAINTS #4 — the
+ * warning is "up front", with the 4s arm-delay). See the S53 session-log entry.
+ */
+const SUPPORTS_BLUR = typeof CSS !== 'undefined'
+  && typeof CSS.supports === 'function'
+  && (CSS.supports('backdrop-filter', 'blur(2px)') || CSS.supports('-webkit-backdrop-filter', 'blur(2px)'));
+/** veil density behind the card / at the edges, and the card's own alpha —
+ *  all raised toward opaque when there is no blur to protect the type */
+const VEIL_CORE = SUPPORTS_BLUR ? 0.86 : 0.96;
+const VEIL_EDGE = SUPPORTS_BLUR ? 0.55 : 0.82;
+const CARD_ALPHA = SUPPORTS_BLUR ? 0.90 : 0.98;
+
+/**
  * The frame's own palette — plain greys, one warm accent for the single live
  * action. Declared once here (CLAUDE.md pixel discipline is about the era
  * palettes in src/desktop/theme/; this DOM chrome is deliberately outside the
  * fiction and outside those palettes, exactly like src/desktop/gameMenu.ts).
  */
 const FRAME = {
-  backdrop: '#08080a',
-  panel: '#101014',
+  backdropRGB: '8, 8, 10',
+  panelRGB: '16, 16, 20',
   edge: '#383840',
   rule: '#26262e',
   ink: '#f2f4f8',
@@ -68,16 +101,32 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
     position: 'fixed', inset: '0', zIndex: '900', // below the game menu (1000) — Esc still shows on top
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     overflowY: 'auto', padding: '24px 16px', boxSizing: 'border-box',
-    background: FRAME.backdrop,
+    // the veil: densest across the middle where the card sits, thinning to the
+    // corners — the space reads around the panel, never under the type
+    background: `radial-gradient(ellipse at center, `
+      + `rgba(${FRAME.backdropRGB}, ${VEIL_CORE}) 0%, `
+      + `rgba(${FRAME.backdropRGB}, ${VEIL_CORE}) 38%, `
+      + `rgba(${FRAME.backdropRGB}, ${VEIL_EDGE}) 100%)`,
     font: '14px "Courier New", monospace', color: FRAME.body
   } as CSSStyleDeclaration);
+  if (SUPPORTS_BLUR) {
+    root.style.backdropFilter = 'blur(3px)';
+    root.style.setProperty('-webkit-backdrop-filter', 'blur(3px)');
+  }
 
   const card = document.createElement('div');
   Object.assign(card.style, {
     width: 'min(660px, 96vw)', margin: 'auto', boxSizing: 'border-box',
     padding: '30px 34px',
-    background: FRAME.panel, border: `1px solid ${FRAME.edge}`, borderRadius: '2px'
+    background: `rgba(${FRAME.panelRGB}, ${CARD_ALPHA})`,
+    border: `1px solid ${FRAME.edge}`, borderRadius: '2px'
   } as CSSStyleDeclaration);
+  if (SUPPORTS_BLUR) {
+    // a heavier blur than the veil's: behind the words, nothing behind the
+    // words survives as detail — only as light
+    card.style.backdropFilter = 'blur(12px)';
+    card.style.setProperty('-webkit-backdrop-filter', 'blur(12px)');
+  }
   root.appendChild(card);
 
   const line = (text: string, style: Partial<CSSStyleDeclaration>): HTMLDivElement => {
