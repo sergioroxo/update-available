@@ -20,10 +20,23 @@ import * as pc from 'playcanvas';
 import modelManifest from '../../data/room/models.json';
 
 type Scale = number | [number, number, number];
-interface ModelEntry { key: string; file: string; scale?: Scale; yaw?: number; cx?: number; cz?: number; baseY?: number }
+interface ModelEntry {
+  key: string; file: string; scale?: Scale; yaw?: number; cx?: number; cz?: number; baseY?: number;
+  /** [pitch(x), roll(z)] in degrees — a fixed correction for a model authored
+   *  lying in an orientation the prop's own Y-only `yaw` can never reach (a
+   *  face pointing straight up, say). Applied about the model's own
+   *  recentered pivot, before `yaw`. 90°-steps only, per the aesthetic law. */
+  tilt?: [number, number];
+  /** manual re-seat after `tilt` — rotating a shape around its pivot can
+   *  leave that pivot at the shape's new side/edge rather than its base, so
+   *  this nudges the tilted shape back onto the shelf/floor. [dx, dy] in the
+   *  model's own scaled units; measured live against the real mesh (no 3D
+   *  viewer in this pipeline — same method every prior model entry used). */
+  tiltOffset?: [number, number];
+}
 
 const containers = new Map<string, pc.Asset>();
-const meta = new Map<string, { scale: Scale; yaw: number; cx: number; cz: number; baseY: number }>();
+const meta = new Map<string, { scale: Scale; yaw: number; cx: number; cz: number; baseY: number; tilt?: [number, number]; tiltOffset?: [number, number] }>();
 
 /** preload the manifest's models. Empty manifest → instant no-op (boxes stay). */
 export async function preloadModels(app: pc.Application): Promise<void> {
@@ -44,7 +57,8 @@ function loadOne(app: pc.Application, entry: ModelEntry): Promise<boolean> {
     asset.once('load', () => {
       containers.set(entry.key, asset);
       meta.set(entry.key, { scale: entry.scale ?? 1, yaw: entry.yaw ?? 0,
-        cx: entry.cx ?? 0, cz: entry.cz ?? 0, baseY: entry.baseY ?? 0 });
+        cx: entry.cx ?? 0, cz: entry.cz ?? 0, baseY: entry.baseY ?? 0,
+        tilt: entry.tilt, tiltOffset: entry.tiltOffset });
       resolve(true);
     });
     asset.once('error', () => resolve(false)); // missing/invalid → retry, then box fallback
@@ -93,6 +107,12 @@ function tintModel(root: pc.Entity, colorHex: string): void {
         lerp(d.g, tint.g, TINT_STRENGTH),
         lerp(d.b, tint.b, TINT_STRENGTH)
       );
+      // no-textures law (CLAUDE.md aesthetic laws): every model this pipeline
+      // has carried so far ships flat/vertex-color materials already, so this
+      // never fired — but an imported GLB is not guaranteed to, and a tinted
+      // diffuseMap would just multiply the tint OVER the texture rather than
+      // replacing it. Strip it so `tint` always lands as a flat color.
+      clone.diffuseMap = null;
       clone.update();
       mi.material = clone;
     }
@@ -127,8 +147,22 @@ export function spawnModel(key: string, pos: number[], propYaw: number, colorHex
   model.setLocalPosition(-m.cx * sx, -m.baseY * sy, -m.cz * sz);
   if (colorHex) tintModel(model, colorHex);
 
+  // `tilt` rotates the already-recentered model around its own pivot (fixed
+  // at this entity's origin) — a correction `yaw` alone can't express, since
+  // yaw only ever turns the prop around the vertical axis. See ModelEntry's
+  // doc for why `tiltOffset` is then needed too.
+  let inner: pc.Entity = model;
+  if (m.tilt) {
+    const tiltWrap = new pc.Entity(`model-${key}-tilt`);
+    tiltWrap.addChild(model);
+    tiltWrap.setLocalEulerAngles(m.tilt[0], 0, m.tilt[1]);
+    const [dx, dy] = m.tiltOffset ?? [0, 0];
+    tiltWrap.setLocalPosition(dx, dy, 0);
+    inner = tiltWrap;
+  }
+
   const wrap = new pc.Entity(`model-${key}`);
-  wrap.addChild(model);
+  wrap.addChild(inner);
   wrap.setLocalEulerAngles(0, propYaw + m.yaw, 0);
   wrap.setLocalPosition(pos[0], pos[1], pos[2]);
   return wrap;

@@ -1819,3 +1819,95 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   worth re-checking on the real S2R.3 trigger path. Baselines `/` and `?flat=1` both load clean with
   zero console errors, content-note gate intact. `npm test` green (check-spec's 33 debugJump ids
   still covered) and `npm run build` green. **BLOCKED: none.**
+- 2026-07-26 — Reinterp Session 54 (Sonnet 5, S54 — the shelf, played for real: Sérgio's four direct
+  findings after S49 made the cassette player real). **Finding 1, THE BOOMBOX FACED THE CEILING —
+  fixed.** The native `cassettePlayer.glb` is authored to lie flat, controls up, like a desk
+  dictaphone — S32/S49 never noticed because the box-fallback geometry it replaced never carried a
+  "face." No `yaw` value can turn a face pointing straight up toward a seated player; `yaw` only ever
+  spins a prop around the vertical axis. Rather than special-case one model, `src/room/assets.ts`
+  gained a general `tilt`/`tiltOffset` pair on `ModelEntry` — `tilt` rotates the model around its own
+  already-recentered pivot (a wrapper entity, so the existing `cx`/`cz`/`baseY` centering math needs
+  no change), `tiltOffset` re-seats the rotated shape afterward (rotating a shape around a
+  bottom-center pivot moves that pivot to a SIDE of the new orientation, not its new base — the same
+  live-AABB-measurement method every model prop in this pipeline already uses, no 3D viewer, just
+  `entity.forEach(e => e.render.meshInstances[i].aabb)` unioned). `cassettePlayer` now carries
+  `tilt: [0, 90]` (swings the +Y control face to -X, toward the Room-1 seat) and a re-measured
+  `scale.x` (0.55→0.40, since standing the unit upright makes its native LENGTH the vertical axis,
+  and at 0.55 the top cleared the real shelf-2 board by nothing — measured live AABB top y1.167
+  against a ceiling just above; at 0.40, top y1.056, clear). Verified live: oblique screenshots from
+  the actual Room-1 seat (debug-jumped, then real ArrowRight turns, never a free/debug camera) show
+  the speaker grille, tape-door window, reel hubs, and transport buttons facing the player, resting
+  on the shelf with clearance above.
+  **Finding 2, THE TAPES HAD NO MODEL — fixed, all three.** Checked the curated
+  `Pc_Simulation/Assests` library as directed (the exact move that found `cassettePlayer.glb`
+  unused in S49): two "cassette tape" GLBs exist. `"Cassette tape.glb"` is a 14-mesh,
+  huge-coordinate-range file — the same bulk/scene-export shape Session 32 already declined once for
+  `"Boom box.glb"` — declined again. `"Cassete Tape.glb"` is ONE clean 908-vertex mesh, CC-BY (Poly
+  by Google) via Poly Pizza — used, mirroring the cassettePlayer precedent (CC-BY usable per D6 with
+  attribution). It carries a native 2048×2048 `baseColorTexture` (an `obj2gltf` export artifact) that
+  the no-textures law forbids shipping; rather than just hiding it behind `tintModel`'s tint (which
+  would still ship 1.44MB of unused image data — real weight on a Quest-budget build for zero visual
+  benefit), stripped it at import time with `@gltf-transform`'s Node API (geometry + a flat
+  placeholder color, no images/textures/samplers) — 1.47MB → 25.7KB. `tintModel` (`src/room/assets.ts`)
+  also now clears `diffuseMap` on every tinted clone as a standing guard, so a future imported model
+  with a real texture can never silently show through a tint again. The mesh is authored standing on
+  its long edge (native bbox min[-4.337,0.134,-0.480] max[4.486,5.549,0.470] — length already
+  horizontal, but width stands vertical where thickness should); `tilt: [90, 0]` in the new
+  `cassetteTape` manifest entry (`data/room/models.json`) lays it flat, and per-axis `scale` hits the
+  tapes' existing target footprint (0.07×0.012×0.045, the box size tapeA/tapeB/mixtape already
+  authored). Wired onto `tapeA`/`tapeB`/`tapeAInSlot`/`tapeBInSlot`/`tapeCInSlot` directly (all
+  `add`-introduced props, so `model` just worked). `mixtape` was harder: it is an era1.json BASELINE
+  prop, spawned as a box by `era1room.ts`'s initial pass before any reinterp fold ever runs, and
+  `clusterMorph.ts`'s fold only ever copied `color`/`pos`/`size` out of a `props` override — the exact
+  silent-drop bug Session 32 hit with the boombox override, still true today for every OTHER baseline
+  prop. Fixed at the root rather than worked around: `foldTargets` now also copies `model` out of a
+  `props` override, and `ClusterMorph.snapTo` gained a one-time box→model upgrade path (destroy the
+  live box entity, re-spawn the same id through the model-aware `spawnTarget`) for exactly this case.
+  Deliberately did NOT give mixtape a fresh id the way boombox got `boomboxModel` — mixtape is a
+  `belongings.json`-eligible KEEPSAKE (the ledger/kept-glow/click geometry all key off the literal id
+  `mixtape`) that ALSO relocates at r3 (a different shelf, once Room 1's bookcase leaves); a
+  remove+add-new-id there would have raced the belongings "kept freeze" (which re-asserts the r1
+  target under the ORIGINAL id) into showing two tapes at once whenever mixtape was kept, and
+  separately `tools/check-rooms.mjs`'s double-add check rejects a remove+add of the same id within
+  one state outright (tried it first; caught by `npm test`, not by guessing). So `applyTarget`'s
+  model branch (and `goToState`'s animated-cascade equivalent) now also re-applies POSITION on every
+  fold, not just presence — safe to do live because model props are explicitly excluded from both of
+  `batching.ts`'s static/settled groups, so there is no baked batch to desync. Verified live: `mixtape`
+  jumped E1→E3 keeps the `cassetteTape` model and moves to r3's shelf position; with `mixtape` marked
+  KEPT first, the same jump freezes it at the r1 position instead (single object, no duplicate).
+  Licensing: added `cassetteTape` to `assets/LICENSES.md`'s model table (+ updated the C1
+  furnishing-pass note it reverses) and `docs/reinterp/ATTRIBUTIONS.md` — both outside this session's
+  stated file list, but touched anyway as an unavoidable consequence of importing a new CC-BY asset
+  under the project's own "no asset lands in the build without a row" rule; flagging the deviation
+  here rather than silently overstepping OR shipping an unlicensed asset undocumented.
+  **Finding 3, TAPES DIDN'T LEAVE THE SHELF ON INSERT — was already correct in code, re-verified, one
+  real bug found and fixed along the way.** `app.ts`'s `syncTapeProps()` (toggle the shelf box's
+  `.enabled` off / the docked twin's `.enabled` on) was already wired at both the insert click and
+  every era shift; direct entity-state probes proved insert/swap/eject all already worked exactly as
+  specced before touching anything. What Sérgio actually saw was Finding 1's fallout: `tapeAInSlot`/
+  `tapeBInSlot`/`tapeCInSlot` sat at S49's `(1.86, 0.917, 0.62)` — the OLD boombox's top-deck surface —
+  which the boombox rotation turned into a point INSIDE the now-upright unit's solid body (measured
+  live AABB x[1.784,1.936] y[0.760,1.056] z[0.529,0.711]), so an inserted tape really did vanish, just
+  not for the reason it looked like. Moved the three InSlot props to `(1.75, 0.85, 0.62)` — just
+  clear of the unit's own front face, at the height of the visible cassette-door/reel detail.
+  Re-verified with real clicks (computed on-screen position from the seat camera's own
+  `worldToScreen`, dispatched pointerdown/pointerup, never `os.debugJump` for the tape logic itself):
+  tapeA inserted → visibly gone from the shelf, visible at the deck; tapeB clicked next → tapeA
+  returns to its shelf slot, tapeB now docked; tapeC (mixtape) clicked → same swap. All three cycle
+  cleanly.
+  **Finding 4, the two loose ends — both closed.** `cdStack` (era1.json baseline, y0.71) targeted the
+  OLD box-shelf's top (0.64); the REAL bookcaseModel's bottom shelf surface is y0.76 (the same shelf
+  boombox/tapeA/tapeB/mixtape already measure against). New r1 override: y0.83, landing cdStack's
+  base back at 0.76 — the ~12cm S49 estimated by eye. `teddyBox` sits on the identical old baseline
+  and likely has the same sink, but S49 only logged cdStack; left untouched and re-flagged in
+  `reinterp_deltas.json` rather than silently also fixed, since it wasn't named in this session's
+  scope. `guide.ts`'s stale comment ("tapePlayed waits for the R28-2b tape system," which shipped in
+  Session 32) deleted from both its doc-comment and inline-comment copies.
+  **Verified, all real-click/real-screenshot from the actual seat, never a debug camera:** boombox
+  orientation (oblique screenshots), all three tape models resting flush on the shelf (live AABB:
+  base y0.760–0.772, matching the shelf surface exactly), insert/eject/swap for all three tapes,
+  mixtape's r3 relocation with and without belongings "kept" (no duplicate), cdStack's corrected
+  height. Baseline `/` and `?flat=1`: no `data-reinterp`, no `.glb` network requests, zero console
+  errors — unaffected by every change above (all reinterp-gated). `npm test` (rooms/invariants/spec
+  all green — `check-rooms.mjs`'s double-add guard is what caught the remove+add mixtape attempt
+  before it shipped) and `npm run build` (tsc + vite) green throughout. **BLOCKED: none.**

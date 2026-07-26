@@ -28,7 +28,11 @@ const PROP_DUR = 1.3;      // s each element takes to resolve
 const GLITCH_FRAC = 0.42;  // fraction of a prop's transition spent glitching
 
 interface Delta {
-  props?: Record<string, { color?: string; pos?: number[]; size?: number[] }>;
+  // `model` here (Session 54): a baseline era1.json prop can now be upgraded
+  // to a real mesh through its OWN override rather than needing a fresh
+  // remove+add id — see foldTargets' props loop below and ClusterMorph.snapTo's
+  // box→model upgrade for the runtime half of this.
+  props?: Record<string, { color?: string; pos?: number[]; size?: number[]; model?: string }>;
   remove?: string[];
   add?: PropDef[];
 }
@@ -60,6 +64,7 @@ function foldTargets(idx: number): Map<string, PropTarget> {
       if (o.color) t.color = o.color;
       if (o.pos) t.pos = [...o.pos];
       if (o.size) t.size = [...o.size];
+      if (o.model) t.model = o.model;
     }
     for (const id of delta.remove ?? []) { const t = m.get(id); if (t) t.present = false; }
     for (const def of delta.add ?? []) {
@@ -149,10 +154,19 @@ export class ClusterMorph {
   }
 
   /** set a prop instantly to a target (colour/pos/scale). MODEL props place
-   *  themselves (a wrapper the morph must not distort) — only their presence
-   *  is toggled here. */
+   *  themselves (a wrapper the morph must not distort) — presence toggles
+   *  here, and so does the wrapper's POSITION (a `props` override may still
+   *  relocate a model prop across eras, e.g. a keepable item that ages onto
+   *  a different shelf — see reinterp_deltas.json's mixtape); scale/yaw never
+   *  do, since those come from the model's own manifest entry, not `size`.
+   *  Safe to move live: model props never join batching.ts's static/settled
+   *  groups (both explicitly skip `h.model`), so there is no batch to desync. */
   private applyTarget(h: PropHandle, t: PropTarget): void {
-    if (h.model) { h.entity.enabled = t.present; return; }
+    if (h.model) {
+      h.entity.enabled = t.present;
+      if (t.present) h.entity.setLocalPosition(t.pos[0], t.pos[1], t.pos[2]);
+      return;
+    }
     const col = h.emissive ? h.material.emissive : h.material.diffuse;
     col.copy(hex(t.color));
     if (!h.emissive) h.material.emissive.set(0, 0, 0);
@@ -169,12 +183,29 @@ export class ClusterMorph {
     const targets = this.targetsFor(idx);
     for (const [id, t] of targets) {
       if (!t.present) continue;
-      const h = this.room.props.get(id);
+      let h = this.room.props.get(id);
       if (!h) { this.spawnTarget(id, t); continue; } // first spawn places itself
       // constants never change AND may be owned by the static batcher — the
       // morph must not touch their transform/material (a batched entity's
       // transform edits would silently diverge from the baked batch)
       if (STATIC_IDS.has(id)) continue;
+      // a baseline era1.json prop (spawned as a BOX by era1room.ts's initial
+      // pass, before this fold ever runs) whose target has since grown a
+      // `model` via its own `props` override — e.g. mixtape (Session 54).
+      // foldTargets now copies `model` out of an override too, but the RUNTIME
+      // half still needs this: the id already has a live BOX handle from that
+      // initial pass, so the normal 'first spawn places itself' branch above
+      // never sees it. Re-spawn the SAME id as the real mesh, once, the first
+      // time its fold ever asks for a model — the id must stay stable
+      // (belongings.json/the ledger/app.ts's click geometry all key off
+      // `mixtape` by name), so this can never be a fresh id the way every
+      // other model prop (added via `add`, never pre-existing) already is.
+      if (t.model && !h.model) {
+        h.entity.destroy();
+        this.room.props.delete(id);
+        h = this.spawnTarget(id, t);
+        continue;
+      }
       this.applyTarget(h, t);
     }
     for (const [id, h] of this.room.props) {
@@ -215,8 +246,14 @@ export class ClusterMorph {
         if (!h.model && !tp?.present) h.entity.setLocalScale(0, 0, 0); // grows in from nothing
       }
       // MODEL props don't animate (a wrapper the morph must not distort): snap
-      // their presence to the target and skip the pos/scale cascade.
-      if (h.model) { h.entity.enabled = !!tn?.present; continue; }
+      // their presence AND position (see applyTarget's own note — a model
+      // prop can still relocate across eras) to the target, skipping the
+      // pos/scale cascade.
+      if (h.model) {
+        h.entity.enabled = !!tn?.present;
+        if (tn?.present) h.entity.setLocalPosition(tn.pos[0], tn.pos[1], tn.pos[2]);
+        continue;
+      }
       const toPresent = !!tn?.present;
       const toColor = toPresent && tn ? hex(tn.color) : (h.emissive ? h.material.emissive : h.material.diffuse).clone();
       const toPos = toPresent && tn ? new pc.Vec3(tn.pos[0], tn.pos[1], tn.pos[2]) : h.entity.getLocalPosition().clone();

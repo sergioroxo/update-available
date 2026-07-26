@@ -42,7 +42,7 @@ type Condition = (os: DesktopOS) => boolean;
  * The thin condition registry (brief: conditions in code, content in data).
  * Every key resolves against existing OS/ledger state; an unknown key is
  * simply never true, so data may safely name conditions ahead of the code
- * that makes them fire (tapePlayed waits for the R28-2b tape system).
+ * that makes them fire.
  */
 const CONDITIONS: Record<string, Condition> = {
   desktopIdle: (os) => os.inDesktop && os.era === 'e1' && !os.kit,
@@ -53,7 +53,7 @@ const CONDITIONS: Record<string, Condition> = {
   kitPrayerPage: (os) => os.kit?.onPrayerPage === true,
   kitConnectPage: (os) => os.kit?.onConnectPage === true,
   kitConnecting: (os) => os.kit?.dialing === true || ledger.records.includes('went-online'),
-  tapePlayed: () => ledger.records.includes('tape-played'), // R28-2b files this
+  tapePlayed: () => ledger.records.includes('tape-played'),
   packetOpen: (os) => os.packet?.open === true,
   packetAcked: () => ledger.records.includes('enrollment-acknowledged'),
   diaryOpen: (os) => os.diary?.open === true,

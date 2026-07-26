@@ -84,12 +84,26 @@
     {
       "key": "cassettePlayer",
       "file": "cassettePlayer.glb",
-      "_doc": "Session 32 (R28-2b-ii): Sérgio's live-playtest fix for the box-built boombox reading misaligned on the Room 1 shelf. 'Casette Player' by Jason Toff, CC-BY via Poly Pizza (assets/LICENSES.md + docs/reinterp/ATTRIBUTIONS.md) — usable per D6. Native GLB bbox measured directly (single mesh, no viewer available): min[-0.378,-0.161,-0.334] max[0.362,0.049,0.157], so cx/cz/baseY below are that box's exact center/base, and `scale` is non-uniform to bring it down to a small period cassette-player footprint on the shelf (NOT a full twin-speaker boombox shape — the source model reads as a handheld deck). yaw is a first guess (0); re-check against a fresh screenshot before treating as final.",
-      "scale": [0.55, 0.72, 0.37],
+      "_doc": "Session 32 (R28-2b-ii): Sérgio's live-playtest fix for the box-built boombox reading misaligned on the Room 1 shelf. 'Casette Player' by Jason Toff, CC-BY via Poly Pizza (assets/LICENSES.md + docs/reinterp/ATTRIBUTIONS.md) — usable per D6. Native GLB bbox measured directly (single mesh, no viewer available): min[-0.378,-0.161,-0.334] max[0.362,0.049,0.157], so cx/cz/baseY below are that box's exact center/base, and `scale` is non-uniform to bring it down to a small period cassette-player footprint on the shelf (NOT a full twin-speaker boombox shape — the source model reads as a handheld deck). Session 54 (Sérgio's live playtest): the model's own +Y face carries the deck/speakers/buttons — the native mesh is authored to lie flat and be operated from above, like a desk dictaphone, not to stand with a face outward — so at yaw 0 the whole control face pointed at the ceiling and no `yaw` value (Y-axis only) could ever fix it. `tilt` [0 pitch, 90 roll] swings that +Y face to -X (toward the Room-1 seat, measured live: the camera's own forward at this seat is +X); `scale.x` (native length, now the vertical axis after the tilt) was cut 0.55→0.40 so the now-upright unit clears the real shelf-2 board above it (measured live AABB at 0.55: top y1.167, well past the shelf; at 0.40: top y1.056, clear). `tiltOffset` re-centers the tilted shape at the shelf's x1.86 and re-seats its base at the shelf surface y0.76 (rotating around the recentered pivot leaves the pivot at the new shape's SIDE, not its base — same class of correction the tape shelf spots already needed, see reinterp_deltas.json's mixtape/tapeA/tapeB docs). All four numbers measured live via the union of `render.meshInstances[].aabb`, no 3D viewer, per this pipeline's standing method.",
+      "scale": [0.40, 0.72, 0.37],
       "yaw": 0,
       "cx": -0.0076,
       "cz": -0.0885,
-      "baseY": -0.1614
+      "baseY": -0.1614,
+      "tilt": [0, 90],
+      "tiltOffset": [0.0756, 0.148]
+    },
+    {
+      "key": "cassetteTape",
+      "file": "cassetteTape.glb",
+      "_doc": "Session 54: the three Era-1 tapes (tapeA/tapeB/mixtape + their InSlot docked twins) were plain untextured boxes for 17 sessions, per assets/LICENSES.md's C1 asset-review note ('Cassette tape variants — both local copies are CC-BY (Poly by Google); declined, mixtape stays a raw box'). Revisited this session on Sérgio's direct instruction (mirroring the cassettePlayer precedent: CC-BY, usable per D6 with attribution) now that a real tape shape is worth the license line. Two local copies exist (Pc_Simulation/Assests): 'Cassette tape.glb' (14 meshes, huge unrelated coordinate range — the same bulk/scene-export shape Session 32 already declined once for 'Boom box.glb') and 'Cassete Tape.glb' (ONE clean mesh, 908 verts) — used the latter, same tie-breaker as the boombox. Native GLB bbox measured directly: min[-4.337,0.134,-0.480] max[4.486,5.549,0.470] — authored STANDING UPRIGHT (length along native X already horizontal-ready, but its short THICKNESS axis is native Z while its WIDTH stands vertical on native Y), the opposite problem from the boombox but the same fix shape: `tilt` [90,0] rotates native Z (thickness) onto world Y and native Y (width) onto world Z, laying the tape flat the way it actually rests on a shelf. `scale` is per-axis to hit the tapes' existing target footprint (0.07 × 0.012 × 0.045, the box size every tapeA/tapeB/mixtape prop already authors) off the measured native extents (length 8.823, width 5.415, thickness 0.951). cx/baseY/cz are the native bbox's per-axis CENTER (not an edge) — tiltOffset (measured live, same method as cassettePlayer above) does the final centering + shelf-rest correction. The source GLB carries a 2048×2048 baseColorTexture (obj2gltf output) — stripped at import time with `@gltf-transform` (geometry-only re-export, 1.47MB → 25.7KB) rather than shipped and hidden behind `tintModel`'s new diffuseMap strip, since the no-textures law is about what SHIPS, not just what renders; the per-prop `color` (tapeA/tapeB/mixtape already each carry their own hex) supplies the flat tint the same way every other model prop does. Attribution recorded in assets/LICENSES.md + docs/reinterp/ATTRIBUTIONS.md.",
+      "scale": [0.007933, 0.00831, 0.012618],
+      "yaw": 0,
+      "cx": 0.0745,
+      "cz": -0.005,
+      "baseY": 2.8415,
+      "tilt": [90, 0],
+      "tiltOffset": [0, 0]
     }
   ]
 }

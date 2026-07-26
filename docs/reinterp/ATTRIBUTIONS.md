@@ -12,6 +12,7 @@ source list it will read from once built. CC0 assets need no entry here (see
 | Asset | Creator | License | Used as | First used |
 |---|---|---|---|---|
 | "Casette Player" | Jason Toff, via Poly Pizza (https://poly.pizza/m/8Yu2_1Hfq4z) | CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/) | Room 1 (Era 1) boombox model, reinterp only | Session 32 (2026-07-12) |
+| "Cassette tape" | Poly by Google, via Poly Pizza (https://poly.pizza/m/aR5ot8Z7_-v) | CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/) | Room 1 (Era 1) tapeA/tapeB/mixtape models, reinterp only | Session 54 (2026-07-26) |
 
 **Action item (not yet built):** the in-game non-diegetic credits surface
 (pause/game menu → "credits/attributions", per CLAUDE.md's REINTERP
