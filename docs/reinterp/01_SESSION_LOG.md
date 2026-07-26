@@ -1,32 +1,25 @@
 # REINTERP SESSION LOG — append-only; newest at the top of DONE
 STATUS: live
 
-## NEXT UP (rebuilt R29, 2026-07-23 — the old list had been frozen since ~Session 6 while DONE grew;
-## that drift is documented in `08_STATUS_REGISTER.md` §5. Top item = your session unless Sérgio says otherwise.)
-1. **S40 — R28 §4 layer 3 + retire the startup-options panel.** The missing third layer of the opening
-   rebuild: the E1 impersonal side-message system (`s1_guide.json` + `guide.ts`) teaches LOOK (find the
-   lamp) and INTERACT (the power button) ahead of the existing floppy thread — NOT Lamby (CLAUDE.md
-   amendment 2 wins over R28 §4's pre-amendment wording; arbitration D48). MOVE stays with the existing
-   movement-hint at first marker offer (E1 has zero nodes by design). Same session REMOVES the
-   R28-§4-dead "Start-up options" panel (`intake.ts` setStartupBoard/handleStartupClick/drawStartupBoard
-   + the four `app.ts` call sites) — the cork board's witness-lineage role and the O3 profile pinning
-   SURVIVE; only the onboarding panel dies. Paste prompt in the R29 round response.
-2. **S41 — the tracking build** (parallel-safe with S40, disjoint files): `STATUS:` headers on all 83
-   docs per `08_STATUS_REGISTER.md` §1; check-spec **C5** (headerless-doc ratchet + superseded-by
-   target existence + opt-in `KILLS: src/<path>#<symbol>` assertions); read-only
-   `tools/doc-status-report.mjs`. Chore rider: `pointCloud.ts` label cap 28→32.
-3. **S42 — generate checklist §D** (Haiku-grade): sweep `data/` for every `[VERIFY SOURCE]` + uncited
-   claim, populate `06_SERGIO_CHECKLIST.md` §D as the consolidated queue for Sérgio's source sitting.
-4. **E2 back half** — ~~GATED on Sérgio's S2R.3 Caleb read~~ (released: his 2026-07-24 pass +
-   `REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md`). **S2R.3–S2R.6 BUILT in Session 45** (chat →
-   commit-press → redaction/flag/streak → sad Lamby → video/break → PureMail → un-redaction →
-   Caleb's return → the residue). What remains of this item: **S2R.7 — the u3 send to Room 2**
-   (update ritual + the belongings beat at u3 + "LAMBY NEVER LEAVES" dispersal staging, ⚑ D31),
-   per the homecoming script S2R.7 and v2 §9 items 4–5.
-5. **E3 sends build** — `REINTERP_E3_SENDS_SCRIPTS_2026-07-13.md` is scripted, unbuilt (tasks as travel).
-6. **C2 layout-X ending arm + Close entry** — Fable spec next round, then build.
-7. **R7 graying task (E1)** — STILL needs its build spec first (owed by Fable; unowned since the
-   original queue). Do NOT improvise.
+## NEXT UP (rebuilt 2026-07-25 — items 1-3 of the R29 list all shipped, S40/S41/S42; the list had
+## gone stale again the same way, so it is pruned here. Top item = your session unless Sérgio says so.)
+1. **S57 — S2R.7: ERA 2 ENDS.** ⚑ THE PRIORITY. Era 2's climax leads nowhere: after the residue line,
+   `os.ts`'s `onThreadDone` nulls the thread and drops the player on a desktop to wait for a send and a
+   timer. Give the era its ending — the u3 ritual (notification → EULA → changelog → restart), the
+   belongings beat firing a second time ("what do you take from THIS life?"), the restart delivering the
+   player to Room 2, and `subject migrated — file retained` as the last filing under Daniel's name.
+   The dispersal (item 6) needs Sérgio's D31 strike first. Full prompt +  reasoning:
+   `docs/REINTERP_EXPERIENCE_PRIORITY_2026-07-25.md`.
+2. **E3 sends build** — `REINTERP_E3_SENDS_SCRIPTS_2026-07-13.md` is scripted, unbuilt (tasks as travel).
+   E3's equivalent connective tissue; do this after E2 actually closes.
+3. **C2 layout-X ending arm + Close entry** — needs a spec first.
+4. **R7 graying task (E1)** — STILL needs its build spec (owed, unowned since the original queue).
+   Do NOT improvise.
+5. **Small, already-logged:** the log-in panel transparency unblock (Sérgio approved 2026-07-25 —
+   needs the `main.ts` start-order change AND the descent held until enter, or the arc plays out unseen
+   behind the panel); S51's `netvisionBreak` debug jump seeks `duration − 3`, which at the new 114s
+   length lands at 111s — deep in the tear rather than at the break's start, so the break can't be
+   reviewed properly; `netvisionWasPlaying` never resets (second open in one page load gets no audio).
 
 ## BLOCKED / WAITING (pruned R29 — resolved items struck to DONE, the rest carried)
 - **Sérgio's live queue** is `07_WAITING_ON_SERGIO.md` (audio, the Caleb read, feel-tests, voice
