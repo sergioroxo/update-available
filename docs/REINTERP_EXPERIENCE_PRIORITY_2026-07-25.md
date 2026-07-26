@@ -134,6 +134,15 @@ SCOPE — S2R.7, per the homecoming script:
    medical-sounding language to evade moderation. It is better sourced than "migrating" AND it
    rhymes with the piece's own update-as-survival grammar.) Lamby's silhouette then fragments into
    the many small marks that become Lambient's badges at E3.
+   ⚑ THE DISPERSAL IS ALREADY HALF BUILT — REUSE, DO NOT INVENT. Verified 2026-07-25:
+   `src/room/era3Devices.ts` renders "Lambient's marks (the E2 dispersal payoff)… drawn from the
+   SAME fixed FRAG offset grammar Session 33 used for the uninstall-report scatter
+   (src/desktop/apps/update.ts) — here rendered SETTLED (no animation; THE FRAGMENTS HAVE ALREADY
+   MIGRATED AND ARRIVED, PER u3'S OWN LINE)." So: the scatter grammar EXISTS in update.ts, the
+   ARRIVAL exists at E3, and E3's code already refers to a u3 line that has never been written.
+   Only the DEPARTURE is missing. Read both files first and reuse the SAME FRAG offsets, so the
+   fragments that leave at u3 are literally the ones that arrive at E3. Building a new scatter
+   would break a payoff that is already shipping.
    THREE CONSTRAINTS ON THIS BEAT, all binding:
    a. Stage it as SURVIVAL BY SCATTERING, never as omnipotence. GPAHE 2023 found deplatforming
       partly WORKED. An all-powerful apparatus would be both inaccurate and against the piece's own
@@ -148,11 +157,15 @@ LAWS: updates are triggered by documented system failures, NEVER by the player (
 §1) — the collapse already happened in S2R.5, so the trigger is the apparatus's own failure, not the
 player's action. All new copy ships PLACEHOLDER-draft. Leave/pause live throughout. Nothing scored.
 
-FILES YOU MAY TOUCH: src/desktop/os.ts, src/narrative/spine.ts, src/narrative/belongings.ts,
+FILES YOU MAY TOUCH: src/desktop/apps/update.ts (THE UPDATE RITUAL LIVES HERE — essential for
+items 2 and 6), src/desktop/os.ts, src/narrative/spine.ts, src/narrative/belongings.ts,
 data/strings/updates.json, data/dialog/s2_caleb.json (the seam only, not the felt copy),
 src/witness/intake.ts (the migration filing), src/engine/app.ts (relocation/belongings geometry),
-docs/reinterp/01_SESSION_LOG.md. NOT: src/desktop/apps/caleb.ts or accountability.ts (the felt
-modules are settled — S45's register boundary is load-bearing), data/provotypes/**, any dossier text.
+src/debug/panel.ts (any new beat — C6 fails otherwise), docs/reinterp/01_SESSION_LOG.md.
+READ/IMPORT ONLY, DO NOT EDIT: src/desktop/apps/lambyChar.ts (consume drawLambyChar; it is shared
+with the rig lab and Just Change), src/room/era3Devices.ts (read it to match the arrival).
+NOT: src/desktop/apps/caleb.ts or accountability.ts (the felt modules are settled — S45's register
+boundary is load-bearing), data/provotypes/**, any dossier text.
 
 ACCEPTANCE: played LINEARLY with real clicks from the E2 arrival through to standing in Room 2 —
 check-in → Caleb → commit → alert → video → PureMail → residue → the era ends → u3 ritual →

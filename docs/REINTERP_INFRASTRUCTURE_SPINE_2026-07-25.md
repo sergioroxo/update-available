@@ -76,10 +76,26 @@ strong, say it; where it is contested, use `contested`.**
 - GPAHE, *Conversion Therapy Online: The Ecosystem in 2023* — https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/
 - In-project: `docs/ChatGPT analysis.md` (already GPAHE-cited)
 
+## ✅ DECIDED — E4 names the SERVICES, not the brands (Sérgio, 2026-07-25)
+> "I think we can build E4 to name not the brands but the services, truly expanding and exploring
+> how digital SOGICE is, and that's the whole point of this experience."
+
+**So E4's brief is now explicit:** name the KINDS of service the apparatus rides — search, video,
+payments, a voice in the room, a wellness app, a recommendation feed — with **invented marks**, and
+explore them properly rather than gesturing at "ambient care". This is not set dressing; per Sérgio
+it is *the whole point of the experience*, so E4 should be the fullest exploration of how digital
+SOGICE actually works, not its faintest.
+
+**The line this keeps clean:** the SERVICE TYPE is real and documented (GPAHE: search engines,
+video monetisation, payment processors, voice assistants); the BRAND is invented. So the piece can
+say *"the search field"*, *"the donate button"*, *"the assistant that answers when you speak"* —
+truthfully, with citations — and never name Google, YouTube, PayPal or Alexa outside a dossier card.
+Real names stay in provenance; the mechanism goes in the room.
+
+*Design consequence, restated because it is the good one:* E4's surfaces are **ordinary services
+that happen to carry it**. The horror is not volume — it is that the apparatus became
+indistinguishable from utilities.
+
 ## Open (Sérgio, when convenient)
-1. **How explicit does E4 get?** The strongest version names the *kinds* of service (search, video,
-   payments, a voice in the room) with invented marks. Too explicit risks lecturing; too oblique and
-   the documented spine is invisible. Your voice pass will settle this — flagging it so it isn't
-   decided by default.
-2. Whether the infrastructure sources become **their own Close cluster** or fold into the era
+1. Whether the infrastructure sources become **their own Close cluster** or fold into the era
    clusters already sketched in the constellation brief.
