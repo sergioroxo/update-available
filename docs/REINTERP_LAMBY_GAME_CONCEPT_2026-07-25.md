@@ -125,10 +125,64 @@ reuses one surface four times.
 
 ---
 
-## Open for Sérgio
-1. **Part 1 greenlight** — new public artifact under the project's name; your ethics call.
-2. **Stage 1 in both places** — confirm you want the 1997 game inside the WebXR too (point 4). It's
-   the strongest link between piece and promo.
-3. **Part 2: E1 precursor** (my recommendation) — or E2-start if you'd rather play it safe?
-4. **Part 2 scope** — E1-only, or the ages-with-him version across all four eras?
-5. **Just Change hosting** — its own repo + GitHub Pages, or a page on an existing project site?
+## ✅ ALL DECIDED — Sérgio, 2026-07-25
+1. **Part 1 GREENLIT** — "truly like it." Build spec: `docs/JUST_CHANGE_BUILD_SPEC_2026-07-25.md`.
+2. **Stage 1 in both places: YES** — the 1997 game ships inside the WebXR on the Era-1 machine too.
+3. **Part 2 placement: E1 PRECURSOR, adopted.**
+4. **Part 2 scope: E1 ONLY for now.** His reasoning, recorded because it's the right instinct: the
+   ages-with-him version is "very interesting" but "makes the easter egg very expanded on the
+   narrative… we first need to fix other narrative elements before developing the easter egg as wide
+   on all Eras." **Open to it later if it earns real narrative connections** — not closed, deferred.
+   *Design consequence: build the E1 rig so a later era-aware variant is possible, but do not
+   scaffold for it now. No speculative generality.*
+5. **Hosting: its own repo + GitHub Pages.**
+6. Song rights: **cleared, no copyright issues.**
+
+---
+
+# S55 — THE E1 EASTER EGG: lamby_rig.exe · Sonnet 5, high effort
+
+```
+Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
+?reinterp=1). Read CLAUDE.md (register laws + "the frame never plays"), docs/ETHICS_CONSTRAINTS.md,
+docs/REINTERP_LAMBY_GAME_CONCEPT_2026-07-25.md Part 2 (THE SPEC — Sérgio adopted the E1-precursor
+placement), src/lambyrig/lambyRig.ts, src/desktop/os.ts, and the tail of 01_SESSION_LOG.md.
+
+THE IDEA: the player finds the apparatus's own puppet-rigging tool — on a 1997 machine, BEFORE Lamby
+the character exists (per the R28 amendment, Era 1 has no Lamby, only impersonal system messages).
+So you meet the rigging software before the puppet. It pays off twice later: you recognise Lamby at
+his E2 debut knowing he was built, and at S2R.3C's shame beat you will have already moved the sad
+slider yourself, an era earlier, out of curiosity.
+
+SCOPE:
+1. An unremarked file on the ERA-1 desktop — `lamby_rig.exe` or an unlabelled icon — that opens the
+   existing rig lab as an in-fiction surface. Reuse src/lambyrig/lambyRig.ts; do not fork it.
+2. ⚑ IN E1 IT IS NOT CHARMING YET. This is the tone requirement that makes the placement work:
+   it must read as an UNFINISHED DEV ARTIFACT someone left on the disk — placeholder labels, a
+   half-drawn lamb that doesn't animate well, no polish. E1's register is grave; a playful rig lab
+   would break it. The charm arrives in E2, and the player will then know where charm comes from.
+   (This crude Lamby is deliberately the same one as JUST CHANGE's Stage 1 — keep them consistent.)
+3. FINDING IT IS NEVER REWARDED. No achievement, no acknowledgement, no quest log, no assistant
+   remark, no score. The frame never plays. It is simply there for whoever looks.
+4. Register `operable` (a system surface — it may glitter within E1's limits). It must NEVER be
+   reachable during a `felt` scene; check that explicitly and say so in the log.
+5. Opening it is filed to the ledger like any other act (witness symmetry) — but never remarked on
+   in the fiction.
+6. SCOPE DISCIPLINE (Sérgio, point 4): E1 ONLY. The "rig ages across all four eras" variant is
+   DEFERRED, not adopted — he wants other narrative elements fixed first. Build so a later era-aware
+   variant stays possible, but add NO scaffolding, config, or abstraction for it now.
+
+FILES YOU MAY TOUCH: src/desktop/os.ts, src/lambyrig/lambyRig.ts, src/desktop/apps/ (if the launcher
+needs a small surface), data/strings/lamby_rig.json, docs/reinterp/01_SESSION_LOG.md. NOT:
+src/desktop/apps/caleb.ts or accountability.ts, src/engine/app.ts, src/witness/intake.ts,
+data/provotypes/**, any dossier text.
+
+ACCEPTANCE: the file is findable on the E1 desktop but never advertised; opening it shows the crude
+1997-era rig; it is unreachable during any felt scene (state this explicitly); nothing is rewarded or
+acknowledged; the ledger records the opening silently. Verified with real clicks from a fresh
+?reinterp=1. Add its beat to the debug panel (check-spec C6 will fail otherwise — the panel must
+cover every jump). npm test + npm run build green; baselines unaffected.
+GIT DISCIPLINE (mandatory): explicit pathspecs only — `git commit -- <your files>`; never bare
+`git commit` or `git add -A`; check `git status --short` first.
+Blocked ≠ improvise: STOP and log BLOCKED.
+```

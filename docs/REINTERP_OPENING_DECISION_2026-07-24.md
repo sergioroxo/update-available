@@ -88,6 +88,28 @@ intake record on first filing, as before. The cork board's retirement costs the 
 - `npm test` + `npm run build` green; baselines `/` and `?flat=1` unaffected; verify with real
   clicks (opening state machine, per S40's note).
 
+## ✅ TRANSPARENCY UNBLOCKED — Sérgio, 2026-07-25
+S53 built the log-in panel's transparency (verified legible: worst-case contrast 14.8→14.7:1 body,
+4.08→4.04:1 faintest) but it **reveals nothing**, because `main.ts` calls `startApp` *inside this
+panel's own continue callback* — no room exists behind it yet. S53 correctly stopped, flagging it as
+an ethics call rather than a build one: rendering the room behind the content note means the piece is
+visually present before that note is acknowledged.
+
+**Sérgio's ruling:** *"I would assume that us seeing a bit of the space is not the start of the
+experience."* → **APPROVED.** A dark, still, moonlit room behind a legible note is not the experience
+beginning; the 4s arm-delay and the note both still hold.
+
+**What a session must now do** (needs `main.ts`, outside S53's fence):
+1. Move engine start ahead of the panel so a room exists behind it — moonlit, static.
+2. **Hold the descent until the player presses enter.** The arc must NOT play out behind the panel;
+   the entrance is the *response* to logging in, and spending it unseen would waste the whole gesture.
+3. Keep every word legible — if the live room costs readability where the injected stand-in didn't,
+   back the veil off and say so. The content note wins over atmosphere.
+4. Re-verify: the note is fully readable, the arm-delay still gates enter, `?descent=0` still works.
+
+*(Sérgio also noted he hasn't seen screenshots of this — worth showing him the panel-over-room once
+it exists, since the transparency was judged against an injected stand-in rather than the real room.)*
+
 ## Open for Sérgio
 1. ~~The witness-lineage warm-note relocation above — confirm or redirect.~~ **CONFIRMED** by
    Sérgio 2026-07-24 (see the section above); built and verified in Session 44.

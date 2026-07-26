@@ -17,14 +17,10 @@ The tapes are the second half of the same problem: they're small flat rectangles
 off the shelf. They don't read as objects you can pick up, so the interaction is invisible even
 though it works (S49 proved the whole insert/eject chain fires).
 
-## ⚑ One flag before building — the 45° number vs. the aesthetic law
-CLAUDE.md's pixel discipline says **"90°-step rotations only."** Sérgio's "drop 45 degrees to the
-right" describes the *look he wants* (lay it down), not necessarily a literal 45° value — and from
-the screenshot the unit is currently upright, so laying it flat is a **90°** move, not 45°.
-**Build toward the GOAL — a boombox resting horizontally on its base, face to the seat — and verify
-by eye from the seat pose.** If the correct result genuinely needs a non-90° tilt, that's a conscious
-deviation from the law: do it, and say so explicitly in the log so Sérgio can accept or reject it.
-Don't silently break the law, and don't blindly apply 45° if 90° is what the object needs.
+## ✅ RESOLVED — it is 90°, not 45°
+Sérgio (2026-07-25): *"Yes I meant 90 degrees not 45."* So there is no conflict with CLAUDE.md's
+pixel discipline (**"90°-step rotations only"**) — laying the unit flat is a clean 90° move and the
+law holds. Build it as a **90° rotation**; verify by eye from the seat pose.
 
 ---
 
@@ -42,11 +38,11 @@ swap with real clicks). Everything here is about how these objects READ and whet
 understands they can be touched. Do not re-engineer working logic.
 
 SCOPE:
-1. LAY THE BOOMBOX DOWN. Goal: it rests HORIZONTALLY on its base — landscape, wider than tall,
-   handle up, speakers flanking the centre deck — with its face toward the Room-1 seat. Use S52's
-   existing tilt/tiltOffset mechanism; don't add a parallel one. See the 45°-vs-90° flag in the spec
-   doc: build toward the look, verify by eye from the actual seat pose, and if you need a non-90°
-   value say so in the log as a deliberate deviation.
+1. LAY THE BOOMBOX DOWN — a clean 90° ROTATION (Sérgio confirmed 90°, not 45°, so the aesthetic
+   law's 90°-step rule holds and no deviation is needed). Goal: it rests HORIZONTALLY on its base —
+   landscape, wider than tall, handle up, speakers flanking the centre deck — with its face toward
+   the Room-1 seat. Use S52's existing tilt/tiltOffset mechanism; don't add a parallel one. Verify
+   by eye from the actual seat pose.
 2. RE-MEASURE THE DOCKED-TAPE SPOT AFTER ROTATING. S52 learned this the hard way: it moved the
    boombox and the docked tape ended up INSIDE the solid body. The dock must sit on the new front
    face, visible from the seat.
