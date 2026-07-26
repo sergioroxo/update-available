@@ -2107,3 +2107,37 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   console errors, `__modelsLoaded` undefined — unaffected (everything above is reinterp-gated).
   `npm test` (rooms/invariants/spec green) and `npm run build` (tsc + vite) green throughout.
   **BLOCKED: none.**
+- 2026-07-26 — Reinterp Session 56 (Sonnet 5, live follow-up on Session 55, same conversation):
+  Sérgio's annotated screenshot, right after S55 shipped: "the boombax is too up," a circled
+  "floating yellow tape," and "the tapes need to be slight rotated, so they can all fit inside the
+  frame of the shelf." **Root cause of the float: `y0.76`, inherited unquestioned from Session 32
+  through every subsequent shelf-prop fix (S49, S54, S55), was never actually measured against the
+  bookcaseOpen.glb's own geometry — just against the cassette player's OWN model AABB, which nobody
+  cross-checked against the shelf it was supposed to be resting on.** Measured it directly this
+  time: `mesh.getPositions()` on the bookcase's single merged mesh, transformed by the entity's
+  world matrix, bucketed by Y. Four boards turned up at y[0.190,0.247], [0.646,0.703], [1.102,1.159],
+  [1.558,1.615]. Cross-checked against `book1` (era1.json, correctly placed for 17+ sessions and
+  never once questioned): its base (1.10) matches board 3's top (1.102) almost exactly, confirming
+  the method. The boombox/tapes/cdStack/teddyBox shelf is bounded by the NEXT board down — floor
+  0.703, not 0.76. Every prop on this shelf had been floating 5.7cm above its real surface since
+  Session 32; it only became visible once the boombox stopped being a thin tower (S54) and started
+  reading as a real object (S55) with a real base to compare against the shelf line. Dropped
+  `boomboxModel`/`tapeA`/`tapeB`/`mixtape`/`cdStack`/`teddyBox` all by exactly 0.057 and
+  `TAPE_SHELF`/`BOOMBOX_HIT` (`src/engine/app.ts`) to match. **The rotation:** gave
+  `tapeA`/`tapeB`/`mixtape` a small `yaw: 8` — the Room-1 seat sits at an angle to this shelf spot,
+  so a perfectly axis-aligned tape shows its face square down the shelf's own line rather than
+  toward the player; 8° (the rough middle of the 5-11° a per-tape "look at the seat" calculation
+  gives for the three different z-positions) turns them enough to read as facing the seat without
+  fanning them out individually. This needed a second real fix, not just data: `mixtape` reaches the
+  room through a `props` OVERRIDE (it is a baseline era1.json prop, not an `add`), and
+  `clusterMorph.ts`'s `foldTargets` silently dropped `yaw` out of overrides exactly the way it used
+  to drop `model` before Session 55 fixed that — caught immediately because mixtape's yaw was still
+  reading 0 live after the data change, while `add`-based `tapeA`/`tapeB` (which always supported
+  `yaw`) picked theirs up first try. Added `yaw` to `Delta.props`'s type and copy loop alongside
+  `model`. **Verified live, real values not console-only tweaks:** all three tapes read
+  `getLocalEulerAngles().y === 8` after a fresh reload; every shelf prop's AABB base sits at exactly
+  y0.703; insert/eject/swap re-tested for tapeA and tapeC (mixtape) after the move (native
+  `PointerEvent` dispatch, as established last session); screenshots before/after show the whole
+  shelf sitting flush with no gap and each tape reading a thin turned edge rather than a flat
+  card-on. Baseline `/` re-checked fresh: no `data-reinterp`, no console errors, `__modelsLoaded`
+  undefined. `npm test` and `npm run build` green. **BLOCKED: none.**

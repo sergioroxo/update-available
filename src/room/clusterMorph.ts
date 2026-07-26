@@ -32,7 +32,10 @@ interface Delta {
   // to a real mesh through its OWN override rather than needing a fresh
   // remove+add id — see foldTargets' props loop below and ClusterMorph.snapTo's
   // box→model upgrade for the runtime half of this.
-  props?: Record<string, { color?: string; pos?: number[]; size?: number[]; model?: string }>;
+  // `yaw` (Session 56): same story — a `props` override silently dropped it
+  // exactly like `model` used to, so mixtape's small "face the seat" turn
+  // (data/room/reinterp_deltas.json) did nothing until this was added too.
+  props?: Record<string, { color?: string; pos?: number[]; size?: number[]; model?: string; yaw?: number }>;
   remove?: string[];
   add?: PropDef[];
 }
@@ -65,6 +68,7 @@ function foldTargets(idx: number): Map<string, PropTarget> {
       if (o.pos) t.pos = [...o.pos];
       if (o.size) t.size = [...o.size];
       if (o.model) t.model = o.model;
+      if (o.yaw !== undefined) t.yaw = o.yaw;
     }
     for (const id of delta.remove ?? []) { const t = m.get(id); if (t) t.present = false; }
     for (const def of delta.add ?? []) {
@@ -180,10 +184,19 @@ export class ClusterMorph {
    *  themselves (a wrapper the morph must not distort) — presence toggles
    *  here, and so does the wrapper's POSITION (a `props` override may still
    *  relocate a model prop across eras, e.g. a keepable item that ages onto
-   *  a different shelf — see reinterp_deltas.json's mixtape); scale/yaw never
-   *  do, since those come from the model's own manifest entry, not `size`.
-   *  Safe to move live: model props never join batching.ts's static/settled
-   *  groups (both explicitly skip `h.model`), so there is no batch to desync. */
+   *  a different shelf — see reinterp_deltas.json's mixtape); scale never
+   *  does, since that comes from the model's own manifest entry, not `size`.
+   *  `yaw` is baked into the wrap's rotation once, at `spawnModel()` time
+   *  (combined there with the manifest's own fixed yaw correction — see
+   *  assets.ts), so a `props` override changing `yaw` only takes effect if
+   *  it's already live in the fold at the moment this prop first spawns as a
+   *  model (true for mixtape's own small "face the seat" turn: the override
+   *  applies from r1, same fold where its box→model upgrade happens). A model
+   *  prop that needed to change yaw on a LATER fold would need this branch
+   *  extended to re-set it — not needed by anything today. Safe to move
+   *  position live either way: model props never join batching.ts's
+   *  static/settled groups (both explicitly skip `h.model`), so there is no
+   *  batch to desync. */
   private applyTarget(h: PropHandle, t: PropTarget): void {
     if (h.model) {
       h.entity.enabled = t.present;

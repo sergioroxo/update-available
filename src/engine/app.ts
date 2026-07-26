@@ -144,16 +144,24 @@ const BLINK_IN_SECONDS = 0.22;
 // footprint, reading as "in front of" the player rather than beside it
 // (Sérgio's live screenshot review). x1.86 matches the boombox's own depth;
 // z0.87/0.97/1.07 starts clear of its new z-max (0.824) instead of overlapping.
+// Session 56: y0.766→0.709 for every point below. The bookcaseOpen.glb shelf
+// board this whole run rests on was never actually measured directly before —
+// `mesh.getPositions()` transformed by the entity's world matrix, bucketed by
+// Y, puts its top at 0.703, not the 0.76 every session since 32 inherited.
+// Cross-checked against book1 (undisputed correct for 17+ sessions): its own
+// base (1.10) matches a DIFFERENT board in the same mesh (top at 1.102)
+// almost exactly, confirming the method. Every prop on this shelf had been
+// floating 5.7cm above its real surface the whole time.
 const TAPE_SHELF: Record<TapeId, { x: number; y: number; z: number }> = {
-  tapeA: { x: 1.86, y: 0.766, z: 0.87 },
-  tapeB: { x: 1.86, y: 0.766, z: 0.97 },
-  tapeC: { x: 1.86, y: 0.766, z: 1.07 }
+  tapeA: { x: 1.86, y: 0.709, z: 0.87 },
+  tapeB: { x: 1.86, y: 0.709, z: 0.97 },
+  tapeC: { x: 1.86, y: 0.709, z: 1.07 }
 };
 const TAPE_HIT_RADIUS = 0.045; // stays under half the 0.10m shelf spacing (Session 55) — no ambiguity between tapes
-/** the boombox's measured AABB (Session 55, post-rotation): x[1.785,1.936]
- *  y[0.760,0.942] z[0.417,0.824]; this sits at its centre so the whole
- *  object is clickable */
-const BOOMBOX_HIT = { x: 1.86, y: 0.85, z: 0.62 };
+/** the boombox's measured AABB (Session 56, post-rotation + shelf-height fix):
+ *  x[1.785,1.936] y[0.703,0.885] z[0.417,0.824]; this sits at its centre so
+ *  the whole object is clickable */
+const BOOMBOX_HIT = { x: 1.86, y: 0.793, z: 0.62 };
 const BOOMBOX_HIT_RADIUS = 0.21;
 /** the visual "docked" spot, just in front of the boombox's own deck plate */
 const TAPE_SLOT_PROP: Record<TapeId, string> = {
