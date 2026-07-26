@@ -52,17 +52,24 @@ adds material; this one makes the material that already exists *land*.
    `"companion process — could not be removed. migrating."` Lamby's silhouette fragments into the
    many small marks that become Lambient's badges at E3. *The program died; the watching dispersed.*
 
-## ⚑ One decision is owed before that last part — D31
-Sérgio flagged the dispersal staging on 2026-07-12 with *"let's think about this"* and it has sat
-since. It is **a proposal, not an approved beat**, and it carries real weight — it is the era's
-closing image AND the piece's stated reason the rooms open at E2→E3.
+## ✅ D31 — STRUCK AND ADOPTED (Sérgio, 2026-07-25)
+He asked whether the GPAHE reports helped decide it. They did, decisively: the dispersal is
+**documented history, not a dramatic invention** — GPAHE records that after Exodus's 2013 shutdown
+the movement survived by *rebranding* and *decentralizing* "from centralized structures to networks
+of independent affiliates," and the project's own KB already cited GPAHE saying "the rhetoric did
+not disappear. It migrated into platform-native forms."
 
-**Sérgio: strike or amend D31.** Items 1–4 above can be built without it; item 5 cannot. If you'd
-rather not decide now, S57 builds 1–4 and leaves a clean seam for the dispersal.
+**Adopted with three refinements** (see `REINTERP_D31_DISPERSAL_EVIDENCE_2026-07-25.md`):
+- the line becomes **"could not be removed — RENAMED"** (GPAHE's documented mechanism: NARTH→ATCSI
+  2014, medical-sounding relabelling to evade moderation) — better sourced than "migrating", and it
+  rhymes with the piece's own update-as-survival grammar;
+- staged as **survival by scattering, never omnipotence** (2023: deplatforming partly worked);
+- real organisations stay **dossier-only**; the fiction keeps its invented marks.
 
-*(My read, offered not assumed: the dispersal is the strongest idea in the E2 script — "the program
-died; the watching dispersed" is the whole thesis of the piece in six words, and it earns the
-rooms opening rather than just announcing it. I'd build it.)*
+**And the reason the rooms open got sharper** — Sérgio also adopted the general-purpose
+infrastructure finding as the piece's documented spine (`REINTERP_INFRASTRUCTURE_SPINE_2026-07-25.md`).
+The rooms don't open because the apparatus multiplied; they open because it **stopped being a place
+you go to**. His words: it "does help with the D31 of changing the way the rooms open up."
 
 ## After that, in order
 1. **E3 sends build** — `REINTERP_E3_SENDS_SCRIPTS_2026-07-13.md` is scripted and unbuilt. E3's
@@ -118,12 +125,24 @@ SCOPE — S2R.7, per the homecoming script:
    relocation grammar exists (the sends seam, movementNodes) — reuse it.
 5. THE LAST FILING under Daniel's name: `subject migrated — file retained`. Witness-symmetric, in
    the record's own cold register.
-6. ⚑ THE DISPERSAL — BUILD ONLY IF SÉRGIO HAS STRUCK D31. Check
-   docs/reinterp/06_SERGIO_CHECKLIST.md for his call before building it. If struck/approved: during
-   the install, "Restorify — removed." then, a line lower and smaller, "companion process — could
-   not be removed. migrating." — and Lamby's silhouette fragments into the many small marks that
-   become Lambient's badges at E3. If D31 is still open, BUILD ITEMS 1-5 AND LEAVE A CLEAN SEAM for
-   it; do not improvise the era's closing image.
+6. ⚑ THE DISPERSAL — BUILD IT. D31 was STRUCK by Sérgio 2026-07-25 after the GPAHE check, WITH
+   refinements; read docs/REINTERP_D31_DISPERSAL_EVIDENCE_2026-07-25.md and
+   docs/REINTERP_INFRASTRUCTURE_SPINE_2026-07-25.md before staging it.
+   During the install: "Restorify — removed." then, a line lower and smaller,
+   "companion process — could not be removed. RENAMED." (the adopted wording — GPAHE's documented
+   mechanism is RENAMING, not vague migration: NARTH became ATCSI in 2014, and providers relabel in
+   medical-sounding language to evade moderation. It is better sourced than "migrating" AND it
+   rhymes with the piece's own update-as-survival grammar.) Lamby's silhouette then fragments into
+   the many small marks that become Lambient's badges at E3.
+   THREE CONSTRAINTS ON THIS BEAT, all binding:
+   a. Stage it as SURVIVAL BY SCATTERING, never as omnipotence. GPAHE 2023 found deplatforming
+      partly WORKED. An all-powerful apparatus would be both inaccurate and against the piece's own
+      laws (the respite is never a trap; the Close is solidarity, not defeat).
+   b. NO REAL ORGANISATIONS IN THE FICTION. GPAHE names real companies; they belong to dossier and
+      provenance surfaces only. The scene keeps its invented marks (Restorify → GracePlatform).
+   c. The changelog may now say what actually happened — the program didn't end, it moved into the
+      platform — and that claim carries `status: documentary`. This is also WHY the rooms open:
+      the apparatus stopped being a place you go to. Don't explain it in copy; stage it.
 
 LAWS: updates are triggered by documented system failures, NEVER by the player (SCRIPT_UPDATE v0.5
 §1) — the collapse already happened in S2R.5, so the trigger is the apparatus's own failure, not the

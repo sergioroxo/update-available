@@ -415,8 +415,16 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   Solutions w/ subtitle captions; Tape B = Discover The New You framed as
   taped-off-the-radio, SWAPPABLE while you make versions; Tape A prayer =
   Fold My Hands) + the ffmpeg degradation tool (--tape97/--vhs03).
-- **D31 (2026-07-12) — "LAMBY NEVER LEAVES" (your "let's think about this",
-  proposed):** at the u3 install: "Restorify — removed." then smaller:
+- **D31 (2026-07-12) — "LAMBY NEVER LEAVES" — ✅ STRUCK / ADOPTED by Sérgio
+  2026-07-25** ("let's add the changes from the evidence"), after the GPAHE
+  check he requested. Adopted WITH the evidence refinements: the uninstaller's
+  line becomes *"could not be removed — RENAMED"* (GPAHE's documented mechanism:
+  NARTH→ATCSI 2014, and medical-sounding relabelling to evade moderation), the
+  beat carries `status: documentary`, real orgs stay dossier-only, and it is
+  staged as **survival by scattering, never omnipotence** (2023: deplatforming
+  partly worked). **S57 now BUILDS item 6 rather than leaving a seam.**
+  Original proposal text follows.
+  **(was:)** at the u3 install: "Restorify — removed." then smaller:
   "companion process — could not be removed. migrating." — Lamby fragments
   into the marks that become Lambient's badges at E3. The collapse scattered
   the apparatus into everything = WHY the rooms open. Strike to adopt, or
