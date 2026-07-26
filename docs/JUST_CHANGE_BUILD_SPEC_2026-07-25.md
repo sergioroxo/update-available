@@ -29,6 +29,24 @@ Vite + TypeScript + 2D canvas, no framework. Deploy to GitHub Pages (`base: './'
 **Reuse `lambyChar.ts`** from the parent repo (S48 made it the single source of truth) so the toy and
 the piece share one Lamby by construction — vendor it in, and note the sync point in the README.
 
+## ⚑ Repo state — build as an ADDITION, not a from-scratch assumption
+*Sérgio 2026-07-25: "that is still being built, so the prompt should work for an addition."*
+The Just Change repo may already exist and be part-built. **The session must look first and adapt:**
+if the repo/project already exists, ADD these stages into its existing structure and conventions
+(its stack, its naming, its build config) rather than reorganising it; only scaffold from scratch if
+there is genuinely nothing there. Do not overwrite existing work, and do not "fix" conventions that
+are simply different from this spec's suggestions — the spec describes the GAME, not the file layout.
+
+## ⚑ The end card's WebXR spot — build it to survive not-yet-shipped
+*Sérgio: "The end card should have a promotional spot for the WebXR but since it's not finished it's
+hard to know if it's direct, but hopefully yes."*
+So: **reserve a real promotional slot** for *YOUR UPDATE HAS FAILED* — title, one-line description,
+and the SurvivingSOGICE / University of Bergen framing — that **works today without a live link**
+and becomes a direct link the moment the experience ships.
+Practically: put the destination in **ONE constant** (e.g. `WEBXR_URL`), and have the card render a
+non-clickable "coming soon"-style block when it's empty and a real link when it's set. **Never ship a
+dead link**, and never scatter the URL through the code — flipping it live must be a one-line change.
+
 ## Audio
 `~/Pc_Simulation/Testing/Lamby Song/` — *"Always Your Lamby — Lamby Knows What Goes on Inside
 (Inside Dream Remix)"* by **Treblo**, 4:45, with a word-timed `.lrc` and an `.ogg` + `.mp3`.
@@ -97,7 +115,12 @@ READ FIRST (in the parent project at /Users/sergiogalvaoroxo/update-available-re
 - CLAUDE.md and docs/ETHICS_CONSTRAINTS.md  ← the laws travel with the project's name
 - src/lambyrig/lambyRig.ts + src/desktop/apps/lambyChar.ts  ← the Lamby you will reuse
 
-SETUP: new repo (Vite + TypeScript + 2D canvas, no framework), `base: './'` for GitHub Pages.
+SETUP — LOOK BEFORE YOU SCAFFOLD. The Just Change project may ALREADY EXIST and be part-built.
+Inspect it first. If it exists, ADD these four stages into its existing structure and follow its
+conventions (stack, naming, build config); do not reorganise it, do not overwrite existing work, and
+do not "fix" conventions that merely differ from this spec — the spec describes the GAME, not the
+file layout. Only scaffold from scratch if there is genuinely nothing there: Vite + TypeScript + 2D
+canvas, no framework, `base: './'` for GitHub Pages.
 Vendor in lambyChar.ts rather than reimplementing Lamby, and record the sync point in the README.
 
 SCOPE — four stages, one continuous 4:45 song, per the spec's stage table:
@@ -123,9 +146,14 @@ HARD LAWS (all enforced, no exceptions):
   what it is. If a joke would land on a queer person rather than on the system, cut it.
 - The mascot's charm MUST collapse in Stage 4. Do not leave it un-undercut.
 
-END CARD: what the game was about, statused provenance, links to the WebXR experience and to
-SurvivingSOGICE (University of Bergen, Center for Digital Narrative), the line "nothing you did here
-was kept", and a prominent credit to Treblo for the song.
+END CARD: what the game was about, statused provenance, the line "nothing you did here was kept",
+a prominent credit to Treblo for the song, and a link to SurvivingSOGICE (University of Bergen,
+Center for Digital Narrative).
+⚑ PLUS a reserved PROMOTIONAL SLOT for the WebXR piece "YOUR UPDATE HAS FAILED" — it is not finished
+yet, so build the slot to work WITHOUT a live URL and to become a real link later with a one-line
+change. Put the destination in a single constant (e.g. WEBXR_URL); render a non-clickable
+"coming soon" block when it is empty, a real link when it is set. NEVER ship a dead link, and never
+scatter the URL through the code.
 
 ACCEPTANCE: all four stages playable end to end with the song running; you have PLAYED IT YOURSELF
 at real speed and can state that each stage reads as its genre and that Stage 4 lands as both a joke
