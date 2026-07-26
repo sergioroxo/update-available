@@ -18,6 +18,7 @@ import { RestorifyApp } from './apps/restorify';
 import { NetVisionPlayerApp } from './apps/netvision';
 import { CalebThreadApp } from './apps/caleb';
 import { AccountabilityApp } from './apps/accountability';
+import { LambyRigFileApp } from './apps/lambyRigFile';
 import { GuideThread } from '../narrative/guide';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
@@ -115,6 +116,11 @@ export class DesktopOS {
   private desktopEra: DesktopEra = 'e1';
   /** the reinterpretation provotype runtime — reachable behind ?reinterp=1 only */
   provotype: ProvotypeApp | null = null;
+  /** S55 — lamby_rig.exe, the Era-1 easter egg (the puppet-rigging tool,
+   *  found BEFORE Lamby the character exists). E1-only, reinterp-only, never
+   *  advertised. See src/desktop/apps/lambyRigFile.ts's header for the rules
+   *  this field's own gating (e1DesktopIdle, below) exists to satisfy. */
+  private lambyRigFile: LambyRigFileApp | null = null;
   /** the era-update ritual (spine-armed; never player-triggered) */
   updateApp: UpdateApp | null = null;
   /** R28-2a: the Era-1 side-message guide thread (reinterp only, pre-Lamby) */
@@ -313,6 +319,32 @@ export class DesktopOS {
     this.dirty = true;
   }
 
+  /** true only when the Era-1 desktop is otherwise bare — no kit/irc/packet/
+   *  diary/provotype window open. `lamby_rig.exe` (S55) is drawn AND
+   *  hit-tested only while this holds, so it can never be seen or clicked
+   *  during a `felt` scene (the IRC channel, the placement packet, both
+   *  register: felt — src/desktop/apps/irc.ts, packet.ts) or over any other
+   *  E1 window. This is stricter than the click-priority ordering alone
+   *  would require (that ordering already makes it unREACHABLE while those
+   *  windows are open) — it also keeps it from merely being VISIBLE behind a
+   *  felt window that doesn't cover the whole screen (the packet form does
+   *  not), which the click ordering alone would not have prevented. */
+  private e1DesktopIdle(): boolean {
+    return !this.kit?.open && !this.irc?.open && !this.packet?.open && !this.diary?.open
+      && !this.provotype && !this.lambyRigFile;
+  }
+
+  /** S55 — opens the found file. Never rewarded (no toast, no assistant
+   *  remark); filed to the ledger like any other one-off act, and only ever
+   *  once per session (a second open is not a second "discovery"). */
+  private openLambyRigFile(): void {
+    if (!this.reinterp || this.lambyRigFile) return;
+    this.lambyRigFile = new LambyRigFileApp();
+    this.lambyRigFile.onClose = () => { this.lambyRigFile = null; this.dirty = true; };
+    if (!ledger.records.includes('lamby-rig-opened')) ledger.records.push('lamby-rig-opened');
+    this.dirty = true;
+  }
+
   /** ARM an era update (the spine calls this on a documented failure —
    *  never the player; SCRIPT_UPDATE v0.5 §1). Modal over the desktop. */
   armUpdate(key: UpdateKey): void {
@@ -363,6 +395,7 @@ export class DesktopOS {
     this.packet = null;
     this.diary = null;
     this.provotype = null;
+    this.lambyRigFile = null; // S55 — E1-only scope; the file has no E2+ existence
     this.sendOffer = null;
     this.dossierOpen = false;
     this.kitToastShown = true;
@@ -732,6 +765,7 @@ export class DesktopOS {
     // the earned path, not a hard gate)
     if (this.t >= this.escalationFallbackAt) this.escalate();
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
+    if (this.phase === 'desktop' && this.lambyRigFile?.open) this.lambyRigFile.update(dt);
     if (this.phase === 'desktop' && this.updateApp) this.updateApp.update(dt);
     if (this.phase === 'desktop' && this.netvision) this.netvision.update(dt);
     // S2R.3–S2R.6: the person's window and the apparatus's answer to it
@@ -943,6 +977,12 @@ export class DesktopOS {
         this.drawIcon(10, 104, reinterpStrings.launcherIcon, true, 'icon-provotype');
         this.drawIcon(10, 152, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
       }
+      // S55 — lamby_rig.exe: an unremarked file, never advertised, drawn only
+      // on the otherwise-bare E1 desktop (see e1DesktopIdle's doc comment for
+      // why that gate exists, not just click-priority).
+      if (this.reinterp && this.e1DesktopIdle()) {
+        this.drawIcon(10, 200, 'lamby_rig.exe', true, 'icon-lambyrig');
+      }
     } else {
       this.drawEraDesktopChrome(W, skin, colors);
     }
@@ -953,6 +993,7 @@ export class DesktopOS {
     if (this.diary?.open) this.diary.draw(ctx);
     if (this.dossierOpen) this.drawDossier(W, H);
     if (this.provotype?.open) this.provotype.draw(ctx);
+    if (this.lambyRigFile?.open) this.lambyRigFile.draw(ctx);
     if (this.restorify?.open) this.restorify.draw(ctx);
     // S2R.3: the person's window FIRST (felt), then every intrusion on it
     // (operable) drawn over it. Lamby lives only in the second of these two
@@ -1469,6 +1510,10 @@ export class DesktopOS {
         this.setPhase('desktop');
         this.openProvotype(originIntakeProvotypeData as unknown as Provotype);
         break;
+      case 'lambyRig':
+        this.setPhase('desktop');
+        this.openLambyRigFile();
+        break;
       case 'update2': this.setPhase('desktop'); this.armUpdate('u2'); break;
       // S2R.0/S2R.1/S2R.2 review shortcuts (Session 34) — jump straight to a
       // sub-stage of the E2 arrival without driving the whole update ritual.
@@ -1585,6 +1630,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
+    if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleMove(x, y); return; }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     const id = hit ? hit.id : '';
@@ -1637,6 +1683,8 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleClick(x, y); return; }
     // the provotype is modal while open — it owns the desktop's clicks
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleClick(x, y); return; }
+    // S55 — lamby_rig.exe is modal while open, same pattern as the provotype
+    if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.diary?.open) { this.diary.press(); return; }
     if (this.phase === 'desktop' && this.packet?.open) { this.packet.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleClick(x, y); return; }
@@ -1651,6 +1699,7 @@ export class DesktopOS {
         case 'dossier-close': this.dossierOpen = false; break;
         case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
         case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;
+        case 'icon-lambyrig': this.openLambyRigFile(); break;
         case 'icon-era-0':
         case 'icon-era-1': this.toast = { text: this.eraSkin().status, t: 5 }; break;
         case 'icon-restorify': this.openRestorify(); break;

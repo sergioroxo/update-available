@@ -2141,3 +2141,86 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   shelf sitting flush with no gap and each tape reading a thin turned edge rather than a flat
   card-on. Baseline `/` re-checked fresh: no `data-reinterp`, no console errors, `__modelsLoaded`
   undefined. `npm test` and `npm run build` green. **BLOCKED: none.**
+
+- 2026-07-26 — Reinterp Session 57 (Sonnet 5, build-queue tag **S55 — THE E1 EASTER EGG:
+  lamby_rig.exe**, per `docs/REINTERP_LAMBY_GAME_CONCEPT_2026-07-25.md` Part 2, Sérgio's adopted
+  "E1 precursor" placement — note the build-queue's own "S55" collides with this log's already-used
+  Session 55/56 numbers from an unrelated thread; logged here as Session 57 to keep the log's own
+  numbering sequential, the queue tag kept alongside it for cross-reference). **The idea, in one
+  line:** the player finds the apparatus's own puppet-rigging tool on the 1997 machine, BEFORE Lamby
+  the character exists (R28 amendment: Era 1 has only impersonal system messages) — so the tool is
+  met before the puppet, and pays off twice later (recognition at Lamby's E2 debut; the sad slider
+  the player will have already pulled themselves, an era early, by the time S2R.3C's shame-hold
+  asks for it).
+  **What shipped:**
+  (1) `src/lambyrig/lambyRig.ts` refactored (not forked): the window's actual content — stage,
+  puppet, caption, mood/action controls — is now `export class LambyRigPanel`, drawing inside a
+  caller-owned `ui.ContentRect` exactly the way every other windowed app in this codebase draws
+  inside its own `ui.windowFrame()` call. The standalone `?lambyrig=1` lab is now a thin host
+  (canvas/resize/pointer-mapping/URL-params/rAF loop only) that owns one `LambyRigPanel` instance;
+  pixel output and behavior are unchanged (verified: same window position 24,10, same controls, same
+  URL-param mood/action restore). `RIG_WINDOW_H` dropped 360→344 (a shared constant, not a fork) —
+  the standalone lab has no taskbar so this is invisible there; it is exactly the headroom the
+  desktop-embedded copy needs to clear the OS's taskbar strip (H-22=362) with a few px to spare, and
+  I checked the arithmetic against the actual lowest hit-target (the action-button row bottoms out
+  at logical y=349, comfortably inside both the new window bottom at 354 and the taskbar at 362).
+  (2) New `src/desktop/apps/lambyRigFile.ts` — `LambyRigFileApp`, the found-file host: draws its own
+  `ui.windowFrame` (title = the SAME `data/strings/lamby_rig.json` copy the standalone lab already
+  uses — "Lamby Rig Lab" / "procedural canvas rig — placeholder test surface" / per-action lines
+  like "gesture test: Lamby points without sprite frames" — I read this copy against the brief's
+  "not charming yet, reads as an unfinished dev artifact" requirement and judged it ALREADY there:
+  dev-test vocabulary, no assistant warmth, no changes made to the file), then delegates the content
+  to the same `LambyRigPanel`. Own close box, own hover/click hit-testing, own `update(dt)` clock for
+  the idle-drift/appear-cycle animation.
+  (3) `src/desktop/os.ts`: one new private field (`lambyRigFile`), `openLambyRigFile()` (creates the
+  app + files `ledger.records.push('lamby-rig-opened')` once, guarded — never a second "discovery"),
+  and a new private `e1DesktopIdle()` gate. **The register-safety mechanism, stated explicitly per
+  the brief:** the desktop icon (`lamby_rig.exe`, drawn at (10,200) among the ordinary E1 icon
+  column, no distinct styling) is drawn AND hit-tested ONLY when `e1DesktopIdle()` is true — i.e.
+  when NONE of kit/irc/packet/diary/provotype/the rig file itself are open. `src/desktop/apps/irc.ts`
+  and `packet.ts` are `register: felt` by their own header comments; diary.ts carries no formal tag
+  but is thematically load-bearing, so it's included in the same gate for safety. This is stricter
+  than click-priority ordering alone would require (that ordering already makes the icon
+  unREACHABLE while those windows are open, since each intercepts clicks before the generic icon
+  switch is ever reached) — it was needed because `packet.ts`'s window (396×300, centered at
+  x:58-454) does NOT cover the icon's position (x:10-48) at all, so without the extra gate the icon
+  would sit fully VISIBLE, just unclickable, behind a `felt` scene. Confirmed both problem and fix
+  live (see Verified). The icon and window are wired into `retireEra1Windows()` (nulled on any era
+  shift — E1-only scope, no scaffolding for the "ages with him" variant per Sérgio's point 4) and
+  into the existing `update`/`draw`/`handleMove`/`handleClick` chains at the same priority as the
+  provotype launcher.
+  (4) `src/debug/panel.ts` — one button added (`{ label: 'lamby_rig.exe — the E1 easter egg (found,
+  not advertised)', id: 'lambyRig' }`) and the matching `case 'lambyRig'` in `os.ts`'s `debugJump`.
+  **This file was outside the brief's stated file-fence list, but the brief's own ACCEPTANCE section
+  explicitly requires it** ("Add its beat to the debug panel (check-spec C6 will fail otherwise —
+  the panel must cover every jump)") — treated as the more specific, later instruction, and the
+  change is dev-only tooling, not narrative/dossier content. Flagging it here rather than silently
+  stepping past the file list.
+  **Never rewarded, never remarked (verified, not just written):** `openLambyRigFile()` never touches
+  `this.toast`, never calls the guide thread, never fires any assistant line — reading the method
+  confirms this, and a live check (`window.__ledger().records` after opening) showed only the one
+  plain string appended, with no toast fired by the call. `src/witness/intake.ts` (outside this
+  session's file fence, left untouched on purpose) has no branch for `'lamby-rig-opened'`, so the
+  tag sits in the cold record and surfaces in no on-screen witness text — filed like `kit-inserted`/
+  `went-online`/`diary-glitch`, remarked on by nothing.
+  **Verified with real clicks, `?flat=1` fresh (a genuine playthrough, not a debug jump), screenshots
+  at each step:** orienting card → O2 boot (click-to-skip) → O3 profile (icon + 3 chips + a goal,
+  "That's me" armed) → recap → Enter → the ordinary E1 desktop, where the new icon sits truncated to
+  `lamby_ri...` in the normal icon column, indistinguishable in styling from `A:\`/`Dossier`/
+  `Session`/`Family Form` next to it. Clicked it: the "Lamby Rig Lab" window opened showing the
+  shared puppet on its grid stage. Clicked **Sad**: the puppet sank into the same deflate-and-hold as
+  the standalone lab, bubble read **"I caught it in time."** — Sérgio's own S2R.3C line, confirming
+  the exact payoff mechanic the brief describes (the player pulls this slider themselves, an era
+  before the game ever asks for the emotion). Separately, in a `?reinterp=1&debug=1` (3D engine)
+  session with `window.__os`/`window.__ledger()` exposed: confirmed `e1DesktopIdle()` returns `true`
+  on a bare desktop and `false` with `irc`, `packet`, or `diary` open (the felt-scene check the brief
+  asked to be stated explicitly — stated here, and machine-checked, not just asserted); confirmed
+  opening the file pushes exactly one `'lamby-rig-opened'` tag and a second open call is a no-op
+  (idempotent, `recordsCount` stays 1); confirmed closing nulls the instance; confirmed
+  `setDesktopEra('e2', true)` nulls a still-open instance (the E1-only scope holds across an era
+  shift, not just at rest). `npx tsc --noEmit`, `npm test` (debug panel now covers 34 ids, 0
+  excluded; palette ratchet note: 42 < baseline 44, unrelated improvement, left untightened —
+  `tools/check-spec.mjs` is outside this session's file fence) and `npm run build` all green.
+  **Not touched, on purpose:** `BUILD_LOG.md` (CLAUDE.md's usual workflow line) — outside this
+  session's stated file fence and not named in its acceptance criteria, unlike the debug panel.
+  **BLOCKED: none.**

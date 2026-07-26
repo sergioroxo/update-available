@@ -55,6 +55,7 @@ const OS_BEATS: BeatRow[] = [
   { label: 'Diary glitch → T1', id: 'diaryGlitch' },
   { label: 'Provotype — pillow', id: 'pillow' },
   { label: 'Provotype — intake', id: 'intake' },
+  { label: 'lamby_rig.exe — the E1 easter egg (found, not advertised)', id: 'lambyRig' },
   { label: 'T1 ritual · update → E2', id: 'update2' },
 
   { heading: 'E2 · 2003 — Lamby arrives (Room 1, adult)' },
