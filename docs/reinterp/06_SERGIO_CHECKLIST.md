@@ -421,6 +421,21 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   into the marks that become Lambient's badges at E3. The collapse scattered
   the apparatus into everything = WHY the rooms open. Strike to adopt, or
   amend (E2 script S2R.7).
+  **⚑ EVIDENCE ADDED 2026-07-25 (Sérgio asked whether GPAHE helps decide this —
+  it does): the beat is DOCUMENTED, not invented.** GPAHE's "The Players" records
+  that after Exodus's 2013 shutdown the movement survived by *rebranding* and
+  *decentralizing* "from centralized structures to networks of independent
+  affiliates"; "The Ecosystem" finds the digital form "decentralizes authority —
+  individual practitioners and small nonprofits reach global audiences without
+  traditional institutional oversight." The project's OWN knowledge base already
+  cites this (`docs/ChatGPT analysis.md`: "the rhetoric did not disappear. It
+  migrated into platform-native forms"). Recommendation: **STRIKE — adopt**, and
+  the beat can carry `status: documentary`. Refinement offered: GPAHE's mechanism
+  is *renaming* (NARTH→ATCSI, 2014; "reintegrative therapy" to evade moderation),
+  so *"could not be removed — renamed"* may beat *"migrating"*. Full analysis,
+  incl. two cautions (Exodus Global Alliance is real and currently operating, so
+  dossier-only; and 2023 shows deplatforming PARTLY worked, so don't stage it as
+  omnipotence): `docs/REINTERP_D31_DISPERSAL_EVIDENCE_2026-07-25.md`.
 - **D32 (2026-07-12) — E3 mechanics options searched (your ask):** three
   room-native replacements for the screen-bound queue in the E3 spec's R29
   addendum. **REC: Option 1, THE PINBOARD ROOM** — the community physically
