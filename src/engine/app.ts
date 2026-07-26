@@ -137,16 +137,24 @@ const BLINK_IN_SECONDS = 0.22;
 // real cassettePlayer.glb is deep enough (z[0.529,0.711]) that two of them used
 // to be hidden underneath it. These points ARE the click geometry: they must
 // stay identical to the prop positions in that file.
+// Session 55: re-sited AGAIN, x1.74→1.86 and z spacing 0.15→0.10. The boombox's
+// own re-rotation (models.json's cassettePlayer `tilt`) turned it from a thin
+// vertical tower into a wide landscape box (measured live AABB x[1.785,1.936]
+// z[0.417,0.824]) — at the old x1.74 the tapes sat shallower than that new
+// footprint, reading as "in front of" the player rather than beside it
+// (Sérgio's live screenshot review). x1.86 matches the boombox's own depth;
+// z0.87/0.97/1.07 starts clear of its new z-max (0.824) instead of overlapping.
 const TAPE_SHELF: Record<TapeId, { x: number; y: number; z: number }> = {
-  tapeA: { x: 1.74, y: 0.766, z: 0.79 },
-  tapeB: { x: 1.74, y: 0.766, z: 0.94 },
-  tapeC: { x: 1.74, y: 0.766, z: 1.09 }
+  tapeA: { x: 1.86, y: 0.766, z: 0.87 },
+  tapeB: { x: 1.86, y: 0.766, z: 0.97 },
+  tapeC: { x: 1.86, y: 0.766, z: 1.07 }
 };
-const TAPE_HIT_RADIUS = 0.07; // stays under half the 0.15m shelf spacing — no ambiguity between tapes
-/** the player's measured AABB is x[1.656,2.063] y[0.76,0.911] z[0.529,0.711];
- *  this sits at its centre so the whole object is clickable */
-const BOOMBOX_HIT = { x: 1.86, y: 0.83, z: 0.62 };
-const BOOMBOX_HIT_RADIUS = 0.22;
+const TAPE_HIT_RADIUS = 0.045; // stays under half the 0.10m shelf spacing (Session 55) — no ambiguity between tapes
+/** the boombox's measured AABB (Session 55, post-rotation): x[1.785,1.936]
+ *  y[0.760,0.942] z[0.417,0.824]; this sits at its centre so the whole
+ *  object is clickable */
+const BOOMBOX_HIT = { x: 1.86, y: 0.85, z: 0.62 };
+const BOOMBOX_HIT_RADIUS = 0.21;
 /** the visual "docked" spot, just in front of the boombox's own deck plate */
 const TAPE_SLOT_PROP: Record<TapeId, string> = {
   tapeA: 'tapeAInSlot', tapeB: 'tapeBInSlot', tapeC: 'tapeCInSlot'

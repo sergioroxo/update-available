@@ -82,8 +82,28 @@ function foldTargets(idx: number): Map<string, PropTarget> {
  * skips them entirely. Visible consequence, flagged in the session log: the
  * cascade's glitch-flicker no longer brushes the props that DON'T change —
  * only the changing world glitches over; the constants hold still.
+ *
+ * Session 55 bug fix: a baseline era1.json prop can be spawned once
+ * (era1room.ts, using the RAW baseline) and THEN get a `props` override at r1
+ * that never changes again through r2/r3/r4 (e.g. teddyBox's shelf-height
+ * fix) — every fold from r1 on agrees with itself, so this check called it
+ * "constant" and the morph's `snapTo`/`goToState` then skip applying ANY
+ * target to it at all (the "first spawn places itself, everything after is
+ * skipped" rule), leaving it stuck at era1.json's PRE-override spawn forever
+ * — the override silently never took effect, the exact class of bug Session
+ * 32/54 already hit twice for `model` specifically, this time for `pos`.
+ * `foldTargets(-1)` (the loop body never runs when idx is -1) is the pure
+ * pre-delta baseline; a prop that exists there must ALSO match it, not just
+ * match itself across r1-r4, to count as constant. Ids introduced fresh via
+ * `add` (deskModel, tapeA, …) have no baseline entry at all — `b` is
+ * `undefined` for them below and the extra check is skipped, so their
+ * existing (correct) behavior is untouched. This is exactly why cdStack's own
+ * r1 override never hit the bug (its r3 override gives it a genuinely
+ * different fold, already excluded by the r1-r4 comparison) while teddyBox's
+ * did — both are baseline props, only one happened to also change later.
  */
 export function constantPropIds(): Set<string> {
+  const baseline = foldTargets(-1);
   const folds = SPACE_STATES.map((_, i) => foldTargets(i));
   const sig = (t: PropTarget | undefined): string =>
     t && t.present ? JSON.stringify([t.color, t.pos, t.size, t.yaw]) : 'ABSENT';
@@ -92,7 +112,10 @@ export function constantPropIds(): Set<string> {
   for (const [id, t0] of first) {
     if (!t0.present || t0.model) continue;
     const s0 = sig(t0);
-    if (folds.every(f => sig(f.get(id)) === s0)) out.add(id);
+    if (!folds.every(f => sig(f.get(id)) === s0)) continue;
+    const b = baseline.get(id);
+    if (b && sig(b) !== s0) continue;
+    out.add(id);
   }
   return out;
 }

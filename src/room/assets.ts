@@ -22,11 +22,17 @@ import modelManifest from '../../data/room/models.json';
 type Scale = number | [number, number, number];
 interface ModelEntry {
   key: string; file: string; scale?: Scale; yaw?: number; cx?: number; cz?: number; baseY?: number;
-  /** [pitch(x), roll(z)] in degrees — a fixed correction for a model authored
-   *  lying in an orientation the prop's own Y-only `yaw` can never reach (a
-   *  face pointing straight up, say). Applied about the model's own
-   *  recentered pivot, before `yaw`. 90°-steps only, per the aesthetic law. */
-  tilt?: [number, number];
+  /** [pitch(x), yaw(y), roll(z)] in degrees — a fixed correction for a model
+   *  authored lying in an orientation the prop's own placement `yaw` (Y-axis
+   *  only) can never reach on its own. A single axis can only ever swap TWO
+   *  of the model's three native extents between world axes (S54's boombox:
+   *  pitch/roll alone could put its face toward the seat OR keep its long
+   *  axis horizontal, never both — reaching a landscape orientation with the
+   *  face still toward the player needed a genuine compound rotation, this
+   *  tilt-yaw plus roll). Applied about the model's own recentered pivot,
+   *  before the prop's own placement `yaw`. 90°-steps only, per the
+   *  aesthetic law — each axis is still a 90°-multiple, just composed. */
+  tilt?: [number, number, number];
   /** manual re-seat after `tilt` — rotating a shape around its pivot can
    *  leave that pivot at the shape's new side/edge rather than its base, so
    *  this nudges the tilted shape back onto the shelf/floor. [dx, dy] in the
@@ -36,7 +42,7 @@ interface ModelEntry {
 }
 
 const containers = new Map<string, pc.Asset>();
-const meta = new Map<string, { scale: Scale; yaw: number; cx: number; cz: number; baseY: number; tilt?: [number, number]; tiltOffset?: [number, number] }>();
+const meta = new Map<string, { scale: Scale; yaw: number; cx: number; cz: number; baseY: number; tilt?: [number, number, number]; tiltOffset?: [number, number] }>();
 
 /** preload the manifest's models. Empty manifest → instant no-op (boxes stay). */
 export async function preloadModels(app: pc.Application): Promise<void> {
@@ -155,7 +161,7 @@ export function spawnModel(key: string, pos: number[], propYaw: number, colorHex
   if (m.tilt) {
     const tiltWrap = new pc.Entity(`model-${key}-tilt`);
     tiltWrap.addChild(model);
-    tiltWrap.setLocalEulerAngles(m.tilt[0], 0, m.tilt[1]);
+    tiltWrap.setLocalEulerAngles(m.tilt[0], m.tilt[1], m.tilt[2]);
     const [dx, dy] = m.tiltOffset ?? [0, 0];
     tiltWrap.setLocalPosition(dx, dy, 0);
     inner = tiltWrap;

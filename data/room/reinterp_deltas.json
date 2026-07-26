@@ -3,21 +3,29 @@
   "r1": {
     "props": {
       "cdStack": {
-        "_doc": "Session 49 logged this and left it (its own finding-2 note, verbatim): 'cdStack (era1.json, pos y0.71 / half-height 0.07) still sits at the OLD box-shelf height and is now ~12cm sunk into the bookcase model's shelf — the same class of bug as the tapes' y0.646.' Session 54 fixes it: cdStack's base (0.71-0.07=0.64) targeted the OLD box shelfBoard1's top; the REAL bookcaseModel's bottom shelf surface is y0.76 (the same shared shelf boombox/tapeA/tapeB/mixtape already measure against — one shelf run, several props). New y0.83 puts cdStack's base back at 0.76, +0.12 from the old 0.71, matching the ~12cm S49 estimated by eye. teddyBox sits on the same old shelfBoard1 baseline and likely has the identical sink, but S49 only logged cdStack — left as-is, out of this session's stated scope, and re-flagged here rather than silently also touched.",
+        "_doc": "Session 49 logged this and left it (its own finding-2 note, verbatim): 'cdStack (era1.json, pos y0.71 / half-height 0.07) still sits at the OLD box-shelf height and is now ~12cm sunk into the bookcase model's shelf — the same class of bug as the tapes' y0.646.' Session 54 fixes it: cdStack's base (0.71-0.07=0.64) targeted the OLD box shelfBoard1's top; the REAL bookcaseModel's bottom shelf surface is y0.76 (the same shared shelf boombox/tapeA/tapeB/mixtape already measure against — one shelf run, several props). New y0.83 puts cdStack's base back at 0.76, +0.12 from the old 0.71, matching the ~12cm S49 estimated by eye. teddyBox sits on the same old shelfBoard1 baseline and had the identical sink — flagged then, fixed now below (Session 55), since this session is already re-measuring this exact shelf. Session 55 ALSO moved x/z (1.98,0.9 → 2.02,0.62): its old z0.9 sat squarely in the middle of the three shelf tapes' new z-run (0.87-1.07 — the boombox's own Session 55 re-rotation widened its footprint and pushed the tapes into that space, see tapeA's _doc), and cdStack's box very nearly fully occluded tapeA from the seat (confirmed live: toggling cdStack.enabled off/on in-browser made tapeA go from invisible to visible). The shelf run only has ~0.3m free after the boombox — not enough for 3 legible tapes AND a 0.12m cdStack side by side — so cdStack moves to a second depth track instead, tucked behind the boombox (x2.02, near the bookcase's own back wall at x2.098, z0.62 matching the boombox's own z-centre) rather than competing for the same front row. It is not belongings-eligible (unlike teddyBox) so sitting mostly hidden behind the boombox costs no interaction, only its own visibility as background dressing.",
+        "pos": [
+          2.02,
+          0.83,
+          0.62
+        ]
+      },
+      "teddyBox": {
+        "_doc": "Session 55: same bug as cdStack above, same fix. era1.json's y0.71 (half-height 0.06) targets the OLD box-shelf's top (base 0.65); the real bookcaseModel shelf surface is y0.76. New y0.82 puts the base back at 0.76.",
         "pos": [
           1.98,
-          0.83,
-          0.9
+          0.82,
+          0.5
         ]
       },
       "mixtape": {
-        "_doc": "Session 49 (finding 2): moved CLEAR of the cassette player and onto its shelf surface (full story on tapeA's own _doc below). Session 54: gave it `model: cassetteTape` too — a FIRST for a `props` override (every other model prop up to now was introduced via `add`, since Session 32's boombox override silently dropped `model`). Fixed properly this time, at the root: clusterMorph.ts's `foldTargets` now also copies `o.model` out of a `props` override, and `ClusterMorph.snapTo` re-spawns an EXISTING baseline id as the real mesh the first time its fold asks for one (mixtape was spawned as a box by era1room.ts's initial pass, long before this fold ever runs, so `spawnTarget`'s normal 'first spawn places itself' path never sees it). Kept as an override rather than a remove+add (the tapeA/tapeB pattern) on purpose: mixtape is both a belongings.json-eligible KEEPSAKE (its id must stay literally 'mixtape' for the ledger/kept-glow/click geometry) and a prop that RELOCATES at r3 (see that state's own props.mixtape) — a remove+add-new-id there would have raced the belongings 'kept freeze' (which re-asserts the r1 target under the ORIGINAL id) into showing two tapes at once, and tools/check-rooms.mjs's double-add check rejects remove+add of the SAME id within one state outright. `applyTarget`'s model branch now also re-applies position on every fold (previously model props were position-frozen after spawn), which is what lets r3's override actually move it.",
+        "_doc": "Session 49 (finding 2): moved CLEAR of the cassette player and onto its shelf surface (full story on tapeA's own _doc below). Session 54: gave it `model: cassetteTape` too — a FIRST for a `props` override (every other model prop up to now was introduced via `add`, since Session 32's boombox override silently dropped `model`). Fixed properly this time, at the root: clusterMorph.ts's `foldTargets` now also copies `o.model` out of a `props` override, and `ClusterMorph.snapTo` re-spawns an EXISTING baseline id as the real mesh the first time its fold asks for one (mixtape was spawned as a box by era1room.ts's initial pass, long before this fold ever runs, so `spawnTarget`'s normal 'first spawn places itself' path never sees it). Kept as an override rather than a remove+add (the tapeA/tapeB pattern) on purpose: mixtape is both a belongings.json-eligible KEEPSAKE (its id must stay literally 'mixtape' for the ledger/kept-glow/click geometry) and a prop that RELOCATES at r3 (see that state's own props.mixtape) — a remove+add-new-id there would have raced the belongings 'kept freeze' (which re-asserts the r1 target under the ORIGINAL id) into showing two tapes at once, and tools/check-rooms.mjs's double-add check rejects remove+add of the SAME id within one state outright. `applyTarget`'s model branch now also re-applies position on every fold (previously model props were position-frozen after spawn), which is what lets r3's override actually move it. Session 55: `model` swapped `cassetteTape`→`cassetteTapeShelf` (data/room/models.json) — standing upright instead of lying flat, so it reads as a thing to pick up rather than a chip of debris. `pos` ALSO moved this round (x1.74→1.86, z1.09→1.07): the boombox's own Session 55 re-rotation changed its footprint from a thin vertical tower (x~1.78-1.94, barely into the shelf's z-run) to a wide landscape box (same x-depth, but z0.42-0.82) — at the tapes' old x1.74 they sat shallower than (visually 'in front of') the now-much-wider boombox instead of beside it; matching x1.86 puts every shelf object at the same depth, and mixtape's z nudges from 1.09 to 1.07 to keep clear of tapeB's new z0.97 slot (see tapeA/tapeB's own _doc for the full re-layout).",
         "pos": [
-          1.74,
+          1.86,
           0.766,
-          1.09
+          1.07
         ],
-        "model": "cassetteTape"
+        "model": "cassetteTapeShelf"
       }
     },
     "remove": [
@@ -248,9 +256,9 @@
       {
         "id": "tapeA",
         "pos": [
-          1.74,
+          1.86,
           0.766,
-          0.79
+          0.87
         ],
         "size": [
           0.07,
@@ -258,15 +266,15 @@
           0.045
         ],
         "color": "#D4D0C8",
-        "model": "cassetteTape",
-        "_doc": "Session 49 (finding 2): moved CLEAR of the cassette player and onto its shelf surface. The old spot (x1.75 y0.646 z0.4/0.55/0.7) predated two changes: r1 removes the box shelfBoards and adds bookcaseModel, so y0.646 no longer matched any real surface; and the real cassettePlayer.glb is far deeper than the box it replaced (measured AABB x[1.656,2.063] z[0.529,0.711], base y0.76), so two of the three tapes sat tucked underneath it and could not be seen from the seat at all. They now sit at the player's own base height, in the open shelf run beside it (z>0.711 is screen-RIGHT of the player from the Room-1 seat). Keep in step with TAPE_SHELF in src/engine/app.ts — that is the click geometry and it must match these points exactly. Session 54: `model` added (data/room/models.json's `cassetteTape`, tinted this prop's own `color` same as every other model prop) — `size` stays as the fallback-box geometry if the GLB ever fails to load."
+        "model": "cassetteTapeShelf",
+        "_doc": "Session 49 (finding 2): moved CLEAR of the cassette player and onto its shelf surface. The old spot (x1.75 y0.646 z0.4/0.55/0.7) predated two changes: r1 removes the box shelfBoards and adds bookcaseModel, so y0.646 no longer matched any real surface; and the real cassettePlayer.glb is far deeper than the box it replaced (measured AABB x[1.656,2.063] z[0.529,0.711], base y0.76), so two of the three tapes sat tucked underneath it and could not be seen from the seat at all. They now sit at the player's own base height, in the open shelf run beside it (z>0.711 is screen-RIGHT of the player from the Room-1 seat). Keep in step with TAPE_SHELF in src/engine/app.ts — that is the click geometry and it must match these points exactly. Session 54: `model` added (`cassetteTape`, tinted this prop's own `color` same as every other model prop) — `size` stays as the fallback-box geometry if the GLB ever fails to load. Session 55: `model` swapped to `cassetteTapeShelf` (data/room/models.json) — standing upright instead of lying flat, per Sérgio's 'a bit bigger and displayed in a way that would make sense to use them.' `pos` ALSO moved (x1.74→1.86, z0.79→0.87): Sérgio's live screenshot review caught the tapes reading as sitting IN FRONT of the boombox rather than beside it — true once the boombox's own Session 55 re-rotation widened its footprint to z0.42–0.82 while the tapes stayed at their old x1.74 (shallower than the boombox's x1.78–1.94, i.e. closer to the seat). Matching x1.86 puts every shelf object at the same depth; z0.87 clears the boombox's new z-max (0.82) with a small margin instead of overlapping it. TAPE_SHELF in app.ts moved to match — that is the click geometry and it must stay in step."
       },
       {
         "id": "tapeB",
         "pos": [
-          1.74,
+          1.86,
           0.766,
-          0.94
+          0.97
         ],
         "size": [
           0.07,
@@ -274,14 +282,14 @@
           0.045
         ],
         "color": "#9FB4C0",
-        "model": "cassetteTape",
-        "_doc": "Session 49 (finding 2): moved CLEAR of the cassette player and onto its shelf surface. The old spot (x1.75 y0.646 z0.4/0.55/0.7) predated two changes: r1 removes the box shelfBoards and adds bookcaseModel, so y0.646 no longer matched any real surface; and the real cassettePlayer.glb is far deeper than the box it replaced (measured AABB x[1.656,2.063] z[0.529,0.711], base y0.76), so two of the three tapes sat tucked underneath it and could not be seen from the seat at all. They now sit at the player's own base height, in the open shelf run beside it (z>0.711 is screen-RIGHT of the player from the Room-1 seat). Keep in step with TAPE_SHELF in src/engine/app.ts — that is the click geometry and it must match these points exactly. Session 54: `model` added, same as tapeA."
+        "model": "cassetteTapeShelf",
+        "_doc": "Session 49 (finding 2): moved CLEAR of the cassette player and onto its shelf surface. The old spot (x1.75 y0.646 z0.4/0.55/0.7) predated two changes: r1 removes the box shelfBoards and adds bookcaseModel, so y0.646 no longer matched any real surface; and the real cassettePlayer.glb is far deeper than the box it replaced (measured AABB x[1.656,2.063] z[0.529,0.711], base y0.76), so two of the three tapes sat tucked underneath it and could not be seen from the seat at all. They now sit at the player's own base height, in the open shelf run beside it (z>0.711 is screen-RIGHT of the player from the Room-1 seat). Keep in step with TAPE_SHELF in src/engine/app.ts — that is the click geometry and it must match these points exactly. Session 54: `model` added, same as tapeA. Session 55: `model` swapped to `cassetteTapeShelf`, and `pos` moved (x1.74→1.86, z0.94→0.97), same re-layout reasoning as tapeA — see its own _doc."
       },
       {
         "id": "tapeAInSlot",
         "pos": [
           1.75,
-          0.85,
+          0.9,
           0.62
         ],
         "size": [
@@ -291,13 +299,13 @@
         ],
         "color": "#D4D0C8",
         "model": "cassetteTape",
-        "_doc": "Session 49: the DOCKED spot — a tape sitting in the player. Moved onto the cassettePlayer.glb's top deck (its measured AABB tops out at y0.911); the old y0.82 was authored against the box-built boombox and now falls INSIDE the real model, so an inserted tape simply vanished. Session 54: `model` added, same as the shelf tapes — and re-measured again, because rotating the boombox to face the player (models.json's cassettePlayer `tilt`) turned Session 49's y0.917 top-deck spot into empty air over a now-vertical unit whose real AABB is x[1.784,1.936] y[0.760,1.056] z[0.529,0.711]; the old (1.86,0.917,0.62) sat INSIDE that solid body, not on a deck. Moved to (1.75,0.85,0.62): just clear of the unit's own front face (x1.784) at roughly the height of the visible cassette-door/reel detail, so the docked tape reads as sitting at the deck rather than vanishing into or through it."
+        "_doc": "Session 49: the DOCKED spot — a tape sitting in the player. Moved onto the cassettePlayer.glb's top deck (its measured AABB tops out at y0.911); the old y0.82 was authored against the box-built boombox and now falls INSIDE the real model, so an inserted tape simply vanished. Session 54: `model` added, same as the shelf tapes — and re-measured again, because rotating the boombox to face the player (models.json's cassettePlayer `tilt`) turned Session 49's y0.917 top-deck spot into empty air over a now-vertical unit whose real AABB is x[1.784,1.936] y[0.760,1.056] z[0.529,0.711]; the old (1.86,0.917,0.62) sat INSIDE that solid body, not on a deck. Moved to (1.75,0.85,0.62): just clear of the unit's own front face (x1.784) at roughly the height of the visible cassette-door/reel detail. Session 55: y re-measured a third time — Session 55's boombox re-rotation kept the same front face (x1.784-ish) but moved the deck window from the middle of the front face to its UPPER portion (the compound tilt that laid the unit down also put its transport buttons at the BOTTOM edge, confirmed by looking, not just measuring — see models.json's cassettePlayer _doc). y0.85→0.9 tracks the window up; x1.75/z0.62 unchanged, still just clear of the front face and centered on it. This model stays the FLAT `cassetteTape` orientation (not the shelf tapes' new standing `cassetteTapeShelf`) — a tape sliding lengthwise into a deck is the one place lying flat is the physically correct pose, not a legibility problem to fix."
       },
       {
         "id": "tapeBInSlot",
         "pos": [
           1.75,
-          0.85,
+          0.9,
           0.62
         ],
         "size": [
@@ -307,13 +315,13 @@
         ],
         "color": "#9FB4C0",
         "model": "cassetteTape",
-        "_doc": "Session 49: the DOCKED spot — a tape sitting in the player. Moved onto the cassettePlayer.glb's top deck (its measured AABB tops out at y0.911); the old y0.82 was authored against the box-built boombox and now falls INSIDE the real model, so an inserted tape simply vanished. Session 54: `model` added, same as the shelf tapes — and re-measured again, because rotating the boombox to face the player (models.json's cassettePlayer `tilt`) turned Session 49's y0.917 top-deck spot into empty air over a now-vertical unit whose real AABB is x[1.784,1.936] y[0.760,1.056] z[0.529,0.711]; the old (1.86,0.917,0.62) sat INSIDE that solid body, not on a deck. Moved to (1.75,0.85,0.62): just clear of the unit's own front face (x1.784) at roughly the height of the visible cassette-door/reel detail, so the docked tape reads as sitting at the deck rather than vanishing into or through it."
+        "_doc": "Session 49: the DOCKED spot — a tape sitting in the player. Moved onto the cassettePlayer.glb's top deck (its measured AABB tops out at y0.911); the old y0.82 was authored against the box-built boombox and now falls INSIDE the real model, so an inserted tape simply vanished. Session 54: `model` added, same as the shelf tapes — and re-measured again, because rotating the boombox to face the player (models.json's cassettePlayer `tilt`) turned Session 49's y0.917 top-deck spot into empty air over a now-vertical unit whose real AABB is x[1.784,1.936] y[0.760,1.056] z[0.529,0.711]; the old (1.86,0.917,0.62) sat INSIDE that solid body, not on a deck. Moved to (1.75,0.85,0.62): just clear of the unit's own front face (x1.784) at roughly the height of the visible cassette-door/reel detail. Session 55: y re-measured a third time — Session 55's boombox re-rotation kept the same front face (x1.784-ish) but moved the deck window from the middle of the front face to its UPPER portion (the compound tilt that laid the unit down also put its transport buttons at the BOTTOM edge, confirmed by looking, not just measuring — see models.json's cassettePlayer _doc). y0.85→0.9 tracks the window up; x1.75/z0.62 unchanged, still just clear of the front face and centered on it. This model stays the FLAT `cassetteTape` orientation (not the shelf tapes' new standing `cassetteTapeShelf`) — a tape sliding lengthwise into a deck is the one place lying flat is the physically correct pose, not a legibility problem to fix."
       },
       {
         "id": "tapeCInSlot",
         "pos": [
           1.75,
-          0.85,
+          0.9,
           0.62
         ],
         "size": [
@@ -323,7 +331,7 @@
         ],
         "color": "#E8D48A",
         "model": "cassetteTape",
-        "_doc": "Session 49: the DOCKED spot — a tape sitting in the player. Moved onto the cassettePlayer.glb's top deck (its measured AABB tops out at y0.911); the old y0.82 was authored against the box-built boombox and now falls INSIDE the real model, so an inserted tape simply vanished. Session 54: `model` added, same as the shelf tapes — and re-measured again, because rotating the boombox to face the player (models.json's cassettePlayer `tilt`) turned Session 49's y0.917 top-deck spot into empty air over a now-vertical unit whose real AABB is x[1.784,1.936] y[0.760,1.056] z[0.529,0.711]; the old (1.86,0.917,0.62) sat INSIDE that solid body, not on a deck. Moved to (1.75,0.85,0.62): just clear of the unit's own front face (x1.784) at roughly the height of the visible cassette-door/reel detail, so the docked tape reads as sitting at the deck rather than vanishing into or through it."
+        "_doc": "Session 49: the DOCKED spot — a tape sitting in the player. Moved onto the cassettePlayer.glb's top deck (its measured AABB tops out at y0.911); the old y0.82 was authored against the box-built boombox and now falls INSIDE the real model, so an inserted tape simply vanished. Session 54: `model` added, same as the shelf tapes — and re-measured again, because rotating the boombox to face the player (models.json's cassettePlayer `tilt`) turned Session 49's y0.917 top-deck spot into empty air over a now-vertical unit whose real AABB is x[1.784,1.936] y[0.760,1.056] z[0.529,0.711]; the old (1.86,0.917,0.62) sat INSIDE that solid body, not on a deck. Moved to (1.75,0.85,0.62): just clear of the unit's own front face (x1.784) at roughly the height of the visible cassette-door/reel detail. Session 55: y re-measured a third time — Session 55's boombox re-rotation kept the same front face (x1.784-ish) but moved the deck window from the middle of the front face to its UPPER portion (the compound tilt that laid the unit down also put its transport buttons at the BOTTOM edge, confirmed by looking, not just measuring — see models.json's cassettePlayer _doc). y0.85→0.9 tracks the window up; x1.75/z0.62 unchanged, still just clear of the front face and centered on it. This model stays the FLAT `cassetteTape` orientation (not the shelf tapes' new standing `cassetteTapeShelf`) — a tape sliding lengthwise into a deck is the one place lying flat is the physically correct pose, not a legibility problem to fix."
       },
       {
         "id": "boomboxModel",

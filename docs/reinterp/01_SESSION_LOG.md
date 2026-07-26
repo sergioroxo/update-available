@@ -2012,3 +2012,98 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   **Files touched:** `src/engine/app.ts` (the descent only), `src/desktop/orientingCard.ts`,
   `docs/reinterp/01_SESSION_LOG.md`. `data/strings/orientingCard.json` was in the fence but needed
   no copy change. **BLOCKED: the transparency's other half, as described above.**
+- 2026-07-26 — Reinterp Session 55 (Sonnet 5, per `docs/REINTERP_S54_BOOMBOX_TAPES_2026-07-25.md` —
+  that doc calls the prior boombox/tape session "S52"; this repo's own log has it as Session 54
+  above, so this entry is numbered 55 to avoid a duplicate heading rather than reusing "S54").
+  Sérgio's second pass, from a live screenshot: the boombox now faced the seat but stood on its end
+  ("it should be horizontal... drop 90 degrees"), the tapes floated as unreadable flat chips, and
+  (caught only after a first attempt, mid-session, from a SECOND screenshot) that attempt landed the
+  boombox UPSIDE DOWN with the tapes reading as sitting in front of it rather than beside it —
+  Sérgio's direct correction is folded into the account below rather than presented as if it were
+  right the first time.
+  **1. THE BOOMBOX LAID DOWN, THEN CORRECTED RIGHT-SIDE UP.** Session 54's `tilt: [0, 0, 90]`
+  (roll only) faced the unit at the seat but also swapped its native LENGTH (the widest dimension)
+  onto the vertical axis — a single-axis rotation can only ever swap two of three extents, so facing
+  the seat and staying landscape are mutually exclusive without a genuine compound rotation. Checked
+  exhaustively, live, rather than hand-deriving Euler order (this pipeline has no 3D viewer): all 64
+  `[pitch,yaw,roll]` 90°-multiples, unioning `render.meshInstances[].aabb` to find the 16 whose
+  extent-triple matches "landscape, face outward," then `Quat.transformVector` on the native face
+  normal to confirm which 8 of those actually point at -X (the seat). `tilt: [0, 90, 90]` was the
+  first of those 8 tried — width>height>depth, genuinely boombox-shaped — and a first screenshot
+  read fine at a glance. Sérgio's follow-up screenshot caught what the geometry check alone could
+  not distinguish: 8 of those 16 candidates land the model's OWN top face on world +Y, the other 8
+  on -Y, and only one set is right-side-up — `[0, 90, 90]` had the transport buttons at the TOP edge
+  and the deck/speaker face at the bottom. `tilt: [0, 270, 90]` is the same shape and facing with
+  that one axis flipped; confirmed this time by looking at a screenshot, not just by measuring:
+  buttons along the bottom edge, deck window and grille above. `scale` stayed at Session 32's
+  original `[0.55, 0.72, 0.37]` (Session 54's 0.55→0.40 cut only existed to shrink the axis that
+  rotation had wrongly made vertical).
+  **2. THE TAPES: BIGGER, STANDING, A SEPARATE MANIFEST KEY.** A cassette lying flat shows only its
+  short width-edge to a seated player — its length recedes straight into the shelf depth and
+  vanishes in perspective, which is why three real cassette-shaped meshes still read as flat debris.
+  Standing them upright instead — found the same exhaustive-search way, `tilt: [90, 180, 270]` on
+  the SAME `cassetteTape.glb` — presents each tape's full label face (length × width) rather than
+  its spine, like cassettes shelved in a rack. Scale grew to a footprint 0.018×0.09×0.055 (~30%
+  bigger than Session 54's flat size, proportioned to a real cassette stood on its short edge). This
+  needed a NEW manifest key, `cassetteTapeShelf` (`data/room/models.json`), rather than editing
+  `cassetteTape` in place: the docked tape (mid-insertion into a front-loading deck) is the one place
+  a cassette genuinely SHOULD lie flat, length-first — legibility was never its problem, so it kept
+  the original flat `cassetteTape` entry unchanged, re-measured only for position (below).
+  `tapeA`/`tapeB`/`mixtape` (`data/room/reinterp_deltas.json`) now carry `model: cassetteTapeShelf`.
+  **3. RE-LAID OUT THE WHOLE SHELF, NOT JUST THE TAPES.** Righting the boombox widened its own
+  z-footprint from a thin tower (barely into the shelf's z-run) to z[0.417,0.824] — at the tapes'
+  old x1.74 they now sat shallower than that footprint (closer to the seat), reading as in FRONT of
+  the boombox rather than beside it, exactly as Sérgio described. Moved tapeA/tapeB/mixtape to
+  x1.86 (matching the boombox's own depth) and z0.87/0.97/1.07 (clear of the boombox's new z-max).
+  That, in turn, put them in the SAME z-territory `cdStack` already occupied (z0.9, from era1.json,
+  untouched since Session 32) — confirmed live by toggling `cdStack.enabled` off/on, which took
+  tapeA from invisible to visible. The shelf run only has ~0.3m free after the boombox, not enough
+  for 3 legible tapes AND a 0.12m cdStack side by side, so cdStack moved to a SECOND depth track
+  instead (x2.02, z0.62) — tucked behind the boombox near the bookcase's own back wall, not
+  competing for the front row. It is not belongings-eligible, so hiding it behind an opaque prop
+  costs nothing but its own visibility as background dressing. `TAPE_SHELF`/`TAPE_HIT_RADIUS`/
+  `BOOMBOX_HIT`/`BOOMBOX_HIT_RADIUS` (`src/engine/app.ts`) re-measured to match — per the brief,
+  this is the third session running where a position change invalidated the click geometry, so it
+  gets checked every time now as a matter of course, not just when something visibly breaks.
+  **4. THE DOCKED-TAPE SPOT, RE-MEASURED TWICE** (once per boombox rotation this session): the
+  flipped orientation moved the deck window from the middle of the front face to its upper portion,
+  so `tapeAInSlot`/`tapeBInSlot`/`tapeCInSlot`'s y moved 0.85→0.9 to track it; x/z (1.75/0.62)
+  stayed, still just clear of the front face.
+  **5. teddyBox's shelf-sink fixed — and a REAL, pre-existing architectural bug found and fixed
+  along the way.** Same class of bug as Session 54's cdStack fix (era1.json's y0.71 targets the old
+  box-shelf's top; the real surface is y0.76): added a `props` override, same shape as cdStack's.
+  It silently did nothing — teddyBox stayed at 0.71 after every reload. Root cause, found by
+  comparing against cdStack (whose own override DID work): `clusterMorph.ts`'s `constantPropIds()`
+  marks a prop "constant" (and the morph then SKIPS ever applying a target to it, per the "first
+  spawn places itself, everything after is skipped" rule) if its folded target is identical across
+  r1-r4 — but it never checked that against era1.json's OWN pre-fold baseline. A baseline prop
+  spawned once by `era1room.ts` (using the RAW baseline, before any fold runs) that gets a `props`
+  override at r1 which is then NEVER touched again in r2/r3/r4 folds identically r1-through-r4 —
+  "constant" by the old test — while its LIVE entity is still sitting at the pre-override baseline
+  the whole time, because the very check that would apply the override is the one being skipped.
+  cdStack dodged this by luck: it has its OWN r3 override (a different shelf, a different era),
+  so its r1 and r3 folds genuinely differ and it was never misclassified. Fixed at the root:
+  `constantPropIds()` now also folds in `foldTargets(-1)` (the pure pre-delta baseline) and requires
+  a prop's baseline signature to match too, when a baseline entry exists at all — ids introduced
+  fresh via `add` (deskModel, tapeA, …) have no baseline entry, so the extra check is skipped for
+  them and their existing correct behavior is untouched (verified live: draw-call/batch counts
+  unchanged, 46 static + 10 settled, same as before this fix). This is a real latent bug independent
+  of this session — any future baseline prop given a one-shot, never-revisited `props` override
+  would hit it — flagged here in case another prop somewhere is silently frozen the same way.
+  **Housekeeping (from the brief's list, both explicitly out of this session's fence, left alone):**
+  the palette ratchet is a pre-existing 42 (a prior session's fix, not this one's); `netvisionWasPlaying`/
+  `netvisionBreak`'s debug-jump seek in `app.ts`/`os.ts` are audio/debug-jump logic, not the
+  "prop/click geometry only" carve-out this session's `app.ts` access was scoped to, and `os.ts`
+  isn't in the fence at all.
+  **Verified, all real-click/real-screenshot from the actual seat, never a debug camera:** boombox
+  landscape + right-side-up (screenshots before and after the flip correction), all three tapes
+  standing, distinctly colored, and clearly separated from cdStack (screenshots with cdStack
+  toggled both ways to isolate the fix); insert/eject/swap re-tested for all three tapes after
+  every geometry change (native `PointerEvent` dispatch at the seat camera's own `worldToScreen`
+  output, in native canvas pixels — the screenshot tool's own coordinate space proved inconsistent
+  mid-session and was abandoned for clicks, kept only for visual review); every prop's live AABB
+  base at exactly y0.760 (boombox, tapeA/B/mixtape, cdStack, teddyBox — one shelf, one surface,
+  confirmed numerically, not just by eye). Baselines `/` and `?flat=1`: no `data-reinterp`, no
+  console errors, `__modelsLoaded` undefined — unaffected (everything above is reinterp-gated).
+  `npm test` (rooms/invariants/spec green) and `npm run build` (tsc + vite) green throughout.
+  **BLOCKED: none.**
