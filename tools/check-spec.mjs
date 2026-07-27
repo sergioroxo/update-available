@@ -8,8 +8,8 @@
  * data/provotypes/ at all. A law that is documented as enforced and isn't is
  * worse than an unwritten one: it buys confidence nobody paid for.
  *
- * Six checks, each defending a law that is GREEN today (this locks the current
- * state, it does not ask for new work):
+ * Seven checks, each defending a law that is GREEN today (this locks the
+ * current state, it does not ask for new work):
  *   C1 dossier/provotype schema — every source carries a status + confidence
  *   C2 felt-scene purity — no assistant offers a `felt` scene (tone laws)
  *   C3 tier/register vocabulary + the Quest budget of <=3 hero objects per scene
@@ -17,6 +17,8 @@
  *   C5 doc lifecycle tracking — STATUS headers, supersession links, opt-in KILLS
  *   C6 debug panel completeness — every debugJump id os.ts accepts has a panel
  *      button or a documented exclusion
+ *   C7 authoring-marker leak detector — player-visible strings in data/
+ *      carrying a note-to-self, as a RATCHET (see below)
  *
  * C4 ratchets rather than fails outright: ~157 literals predate the law's
  * enforcement. Failing on all of them would get this file deleted by Friday.
@@ -46,6 +48,45 @@
  * panel.ts's OS_BEATS/OS_BEAT_EXCLUSIONS for every id it declares reachable or
  * explicitly excluded, then fails if either side has an id the other doesn't
  * know about — a silent gap, or a stale exclusion, both fail loud instead.
+ *
+ * C7 (added S58, docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md ROOT CAUSE #2):
+ * `data/strings/slice.json`'s dossier card rendered `"NOTE: [researcher note —
+ * Sérgio's voice, to write]"` straight to the player — a note-to-self, not
+ * content, breaking the fiction and putting the author's name inside the
+ * piece. Same lesson as C5/C6: a thing that CAN leak silently, will. C7 walks
+ * every data/**.json file and recurses every string value, flagging any that
+ * contains an authoring marker (`PLACEHOLDER`, `to write]`, `TODO`, `Sérgio`,
+ * `[VERIFY SOURCE]`, `researcher note`, `FIXME`).
+ *
+ *   - Keys beginning `_` (`_doc`/`_note`/`_state`, this project's own
+ *     authoring-comment convention, already `isDataKey`'s exclusion for C3)
+ *     mark their whole subtree as authoring metadata and are exempt — that
+ *     exemption is the entire distinction the check draws, so it reuses
+ *     `isDataKey` rather than a second definition of the same rule. FILES
+ *     whose own basename starts with `_` (`_schema.json`, `_dummy.json`,
+ *     `_close_network.schema.json`) get the same exemption at the file level
+ *     — they are schema/fixture data, never loaded into a played session.
+ *   - The `to write` marker is checked as `to write]` — the exact shape of
+ *     the known leak (an authoring aside closed with `]`) — because the bare
+ *     phrase collides with ordinary UI copy already in the build (a diary
+ *     hint reads "press ⏎ to write"); matching the closing bracket keeps the
+ *     detector precise instead of chasing that false positive out of scope.
+ *
+ * C7 RATCHETS rather than failing outright, same idiom as C4/C5 and for the
+ * same reason: a first real run turned up a dozen PRE-EXISTING hits this
+ * session's file fence does not permit touching — `[VERIFY SOURCE]` inside
+ * `data/provotypes/{pillow,origin_intake_e1}.json` debrief sources (C1's own
+ * error text calls this an expected interim state: "Uncited claims carry
+ * [VERIFY SOURCE] until Sérgio checks them"), `PLACEHOLDER` inside
+ * `data/strings/{era3_devices,opening}.json`, and a `Sérgio`-signed authoring
+ * note in `data/paths.json` (a beat/build-status ledger no runtime code ever
+ * imports — narrative content, per CLAUDE.md, but not player-facing). Failing
+ * outright here would break `npm test` over content this session cannot fix
+ * (S59/S60/S61 territory) and would get the check reverted, not the content
+ * fixed — exactly the outcome C4's own comment warns against. The baseline
+ * below is frozen at this session's count (S58) after the ONE fix this
+ * session DOES own (the slice.json leak) and the two false-positive
+ * exemptions above; it fails on growth and nags downward, same as C4/C5.
  *
  * Failure text names the law, not just the field — Sérgio reads these.
  */
@@ -338,6 +379,78 @@ if (staleExclusions.length) {
     `which os.ts's debugJump no longer accepts — remove the stale exclusion.`);
 }
 
+// ── C7: authoring-marker leak detector (RATCHET — see the file header) ───────
+/**
+ * Ratchet baseline: authoring-marker hits in player-visible data/**.json
+ * strings. Frozen at adoption (S58) at the count that remained once this
+ * session's own fix (slice.json's dossier note) and the two false-positive
+ * exemptions (underscore-named schema/fixture files; `to write` scoped to
+ * `to write]`) were applied. Lower this number when a hit gets fixed; never
+ * raise it without a note saying which session introduced the regression.
+ */
+const AUTHORING_MARKER_BASELINE = 12;
+const AUTHORING_MARKERS = [
+  'PLACEHOLDER', 'to write]', 'TODO', 'Sérgio', '[VERIFY SOURCE]', 'researcher note', 'FIXME'
+];
+let stringsChecked = 0;
+let leaksFound = 0;
+const leakDetails = [];
+
+/** recurses a parsed data/**.json value; `_`-prefixed keys (this project's
+ *  authoring-comment convention, per `isDataKey`) exempt their whole subtree —
+ *  that exemption is the entire distinction C7 draws. */
+function checkAuthoringLeaks(where, node, path) {
+  if (typeof node === 'string') {
+    stringsChecked++;
+    for (const marker of AUTHORING_MARKERS) {
+      if (node.includes(marker)) {
+        leaksFound++;
+        const snippet = node.length > 80 ? node.slice(0, 80) + '…' : node;
+        leakDetails.push(`${where}${path}: carries authoring marker "${marker}" — "${snippet}"`);
+      }
+    }
+    return;
+  }
+  if (Array.isArray(node)) {
+    node.forEach((v, i) => checkAuthoringLeaks(where, v, `${path}[${i}]`));
+    return;
+  }
+  if (node && typeof node === 'object') {
+    for (const [k, v] of Object.entries(node)) {
+      if (!isDataKey(k)) continue; // "_"-prefixed: authoring metadata, exempt
+      checkAuthoringLeaks(where, v, `${path}.${k}`);
+    }
+  }
+}
+
+(function walkDataForLeaks(dir) {
+  if (!existsSync(dir)) return;
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) {
+      if (name === '_archive') continue; // superseded data must not fail a live build
+      walkDataForLeaks(p);
+    } else if (name.endsWith('.json') && !name.startsWith('_')) {
+      // "_"-prefixed FILES (e.g. _schema.json, _dummy.json,
+      // _close_network.schema.json) are this project's own convention for
+      // authoring/fixture data never loaded into a played session — the same
+      // exemption "_"-prefixed KEYS get, just at the file level.
+      const data = readJson(p);
+      if (data) checkAuthoringLeaks(rel(p), data, '');
+    }
+  }
+})(join(ROOT, 'data'));
+
+if (leaksFound > AUTHORING_MARKER_BASELINE) {
+  errors.push(`authoring-marker leak: ${leaksFound} player-visible data/**.json strings carry an authoring ` +
+    `marker, baseline is ${AUTHORING_MARKER_BASELINE}. An authoring note-to-self reads as in-fiction text (C7; ` +
+    `the same fault as the slice.json dossier note, docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md ROOT CAUSE #2). ` +
+    `New hits:\n    ` + leakDetails.join('\n    '));
+} else if (leaksFound < AUTHORING_MARKER_BASELINE) {
+  notes.push(`authoring-marker leaks improved: ${leaksFound} < baseline ${AUTHORING_MARKER_BASELINE} — ` +
+    `tighten AUTHORING_MARKER_BASELINE to ${leaksFound} in tools/check-spec.mjs`);
+}
+
 // ── report ───────────────────────────────────────────────────────────────────
 if (errors.length) {
   console.error('spec-law check FAILED:');
@@ -350,5 +463,6 @@ console.log(
   `${heroScenes} scenes within the ${MAX_HERO_PER_SCENE}-hero budget; palette ${hexCount}/${HEX_BASELINE}; ` +
   `docs headerless ${headerlessCount}/${HEADERLESS_BASELINE}, ${supersededTargets.length} supersession links, ` +
   `${killsClaims.length} KILLS assertion(s) all clear; ` +
-  `debug panel covers all ${osIds.size} debugJump ids (${exclusionIds.size} excluded)`
+  `debug panel covers all ${osIds.size} debugJump ids (${exclusionIds.size} excluded); ` +
+  `authoring-marker leaks ${leaksFound}/${AUTHORING_MARKER_BASELINE} across ${stringsChecked} data/**.json strings`
 );

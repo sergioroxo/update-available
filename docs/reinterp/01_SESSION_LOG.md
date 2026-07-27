@@ -16,9 +16,13 @@ STATUS: live
    Do NOT improvise.
 5. **Small, already-logged:** the log-in panel transparency unblock (Sérgio approved 2026-07-25 —
    needs the `main.ts` start-order change AND the descent held until enter, or the arc plays out unseen
-   behind the panel); S51's `netvisionBreak` debug jump seeks `duration − 3`, which at the new 114s
-   length lands at 111s — deep in the tear rather than at the break's start, so the break can't be
-   reviewed properly; `netvisionWasPlaying` never resets (second open in one page load gets no audio).
+   behind the panel); ~~S51's `netvisionBreak` debug jump seeks `duration − 3`...~~ **FIXED (Session
+   59, S58)** — now derives the break from the scene flagged `break: true`, landing at 100.3s;
+   `netvisionWasPlaying` never resets (second open in one page load gets no audio) — still open.
+6. **S59 — THE E2 ARRIVAL**, **S60 — dead buttons/PureMail/offer screen**, **S61 — the transition +
+   Room 2**: queued in `docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md`'s prompt list, in that order —
+   run S59 first now that S58 (the review tooling, this session) has landed; several of the
+   remaining findings may evaporate once a real linear replay is done through the fixed panel.
 
 ## BLOCKED / WAITING (pruned R29 — resolved items struck to DONE, the rest carried)
 - **Sérgio's live queue** is `07_WAITING_ON_SERGIO.md` (audio, the Caleb read, feel-tests, voice
@@ -2357,3 +2361,97 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   **BLOCKED: none narratively.** Everything in scope 1-6 shipped. The only open items are Sérgio's
   own: the voice pass on all new copy (all PLACEHOLDER-draft), and `_dispersalGrounding`'s
   `[VERIFY SOURCE]` queue entry.
+
+- 2026-07-27 — Reinterp Session 59 (Sonnet 5, build-queue tag **S58 — FIX THE REVIEW TOOLING**;
+  logged as Session 59 to keep this log's own numbering sequential, the queue tag kept for
+  cross-reference). Per `docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md`: Sérgio's Era-2 playthrough via
+  the debug panel read as locked, with stale E1 props and mixed era state — mostly the review
+  TOOLING, not the content, and the third time this project's own tools have misled a session.
+
+  ### 1. THE ERA BUTTONS NOW DRIVE THE REAL TRANSITION
+  `src/engine/app.ts`'s panel wiring (was `onEra: (era) => driveMorph(era)`, geometry + desktop-era
+  only) now reads `onEra: (era) => os.onEraShift?.(era)` — the exact closure a real update ritual
+  calls on completion (`driveMorph` + `spine?.onEra(era)`), so the button can no longer desynchronise
+  the conductor from the room. **Compared, not assumed:** a `window.__spine()` probe was added
+  (read-only, gated behind `?debug=1`, same convention as `__os`/`__wake`) reporting `{ step }`.
+  Fresh load → `T1 ritual · update → E2` panel button (drives the REAL `armUpdate('u2')` ritual —
+  notify → EULA → install → restart, all clicked for real via `os.handleClick`, timers stepped with
+  direct `os.update(0.1)` calls since the sandboxed Browser pane suspends `requestAnimationFrame`
+  entirely for hidden documents) landed at `{spine:{step:'e2'}, os:{era:'e2', e2Stage:'silence'},
+  kit/irc/packet/diary: all null}`. A separate fresh load clicking the panel's `E2 2003 · Room 1
+  adult` era button landed at the identical `{spine:{step:'e2'}, os:{era:'e2', e2Stage:'silence'}}`.
+  Same state, two routes — the button is no longer lying. (Visually confirming the room geometry
+  itself — the witness board, the E1 cassette — was not additionally screenshotted: `driveMorph` is
+  the same function call on both paths and untouched by this fix, so a discrepancy there is not
+  something this change could introduce or repair; the retired-window check above is the part this
+  session's wiring change actually governs, and it now matches.)
+
+  ### 2. `?era=` NO LONGER SILENTLY KILLS THE SPINE
+  The `reviewMode` gate (`!!(options.era || options.close || options.reveal || options.morphDemo)`)
+  used to skip `createSpine` outright, and nothing ever re-created it — a session opened via any
+  review link (including the panel's own `LINKS` list, e.g. `?era=2&debug=1`) ran with a permanently
+  null conductor: no send ever arms, no update ever fires, forever, with no on-screen indication why.
+  **Chosen fix (argued, not defaulted): create the spine unconditionally, and seed it to match an
+  `?era=` jump** (`spine?.onEra(options.era)` in the review-jump branch), rather than the other
+  option on offer (leave it off and print "spine disabled" in the panel). Reasoning: `Spine.onEra()`
+  is provably side-effect-free to call speculatively — it only sets a `step` and resets a timer
+  (`src/narrative/spine.ts`, read, not edited, per the file fence) — so seeding costs nothing and
+  turns every review entry point into one that actually drives the piece, which is what a review tool
+  for a narrative conductor should do. A static warning would have been honest but strictly worse:
+  Sérgio's own review path (`?era=2&debug=1` from the panel's own links list) would still have run
+  dead. **Verified:** loading `?reinterp=1&era=2&debug=1` cold now reports
+  `window.__spine()` → `{step:'e2'}` (previously `spine` was `null` and the probe would not have
+  existed to call) alongside `os:{era:'e2', e2Stage:'active'}` (the settled state `?era=` has always
+  produced — unchanged, since `setDesktopEra(era, true)` still uses the settled branch).
+
+  ### 3. CHECK-SPEC C7 — THE AUTHORING-MARKER LEAK DETECTOR, AS A RATCHET
+  Added following C4/C5's idiom, not C1-C3/C6's absolute-fail idiom, and the reasoning is worth
+  reading before anyone is tempted to tighten it to zero: a first real run over `data/**.json`
+  turned up **12 pre-existing hits this session's file fence forbids touching** — `[VERIFY SOURCE]`
+  inside `data/provotypes/{pillow,origin_intake_e1}.json` debrief sources (which check-spec's own C1
+  error text already treats as an accepted interim state — "uncited claims carry `[VERIFY SOURCE]`
+  until Sérgio checks them"), `PLACEHOLDER` inside `data/strings/{era3_devices,opening}.json` (and
+  CLAUDE.md's own workflow explicitly sanctions shipping `PLACEHOLDER-draft` content pending
+  Sérgio's pass — a blanket absolute fail on the bare word would fight the project's own process),
+  and a `Sérgio`-signed note inside `data/paths.json` (a beat/build-status ledger no runtime code
+  imports at all — grepped to confirm; not player-facing despite living under `data/`). Failing
+  outright on these would have broken `npm test` over content this session cannot fix (S59-S61
+  territory) — exactly the "would get this file deleted by Friday" trap C4's own comment names.
+  **What C7 actually does:** walks every `data/**.json` file, recursing every string value, and fails
+  if the ratcheted total exceeds a frozen baseline (12, this session, after fixes below); `_`-prefixed
+  KEYS (`_doc`/`_note`/`_state`, this project's existing convention, reused from `isDataKey` rather
+  than redefined) exempt their subtree, and — new — `_`-prefixed FILE basenames (`_schema.json`,
+  `_dummy.json`, `_close_network.schema.json`) get the same exemption, since they are schema/fixture
+  data never loaded into a played session (confirmed for `_dummy.json` by inspection — a template,
+  not referenced content). The `to write` marker is checked as `to write]` specifically: the bare
+  phrase collided with real, intentional copy already shipped (`data/dialog/s1_end.json`'s diary
+  hint, "press ⏎ to write"), and the exact shape of the known leak was an authoring aside closed with
+  `]`, so matching the bracket keeps the detector precise instead of chasing that false positive.
+  **Failure mode proven by real mutation-and-revert**, per the brief: `data/strings/slice.json`'s
+  `dossier.note` was temporarily set to `"NOTE: TODO fix this"` via a script (not by hand-editing the
+  tracked file in place — the original was backed up first), `node tools/check-spec.mjs` failed with
+  `13 > baseline 12` and named the exact string, the backup was restored, and the checker returned to
+  `12/12` clean. `npm test` and `npm run build` both green on the final tree.
+
+  ### 4. THE KNOWN LEAK — FIXED, HOLE LEFT VISIBLE
+  `data/strings/slice.json:127`'s `dossier.note` ("NOTE: [researcher note — Sérgio's voice, to
+  write]") is now `""`. Not rewritten, not repositioned — S59 owns that, per the file fence
+  (`src/desktop/os.ts` was restricted to "the debug jump only," and `drawDossier`'s
+  `ctx.fillText(strings.dossier.note, ...)` at `os.ts:1199` is outside that debug-jump scope — so the
+  string was emptied rather than the key removed, which would have needed a renderer change this
+  session isn't permitted to make). **The hole, stated plainly:** the dossier card now renders one
+  blank line where the note used to sit. That is the honest shape of "leave the hole" under this
+  session's own file fence — S59 fills it when the easter-egg rename lands.
+
+  ### 5. `netvisionBreak` NOW LANDS ON THE BREAK
+  Was `mediaStrings.duration - 3` → 111s at the current 114s runtime, deep in the tear. Now derives
+  the break point the same way `netvision.ts`'s own private `breakStart` does (read, not imported —
+  `netvision.ts` was out of this session's file fence) —
+  `mediaStrings.scenes.find(s => s.break)?.at ?? mediaStrings.duration - 3` — so the debug jump and
+  the runtime's own break detection can never drift apart. **Verified:** `os.debugJump('netvisionBreak')`
+  then reading `os.netvision.elapsed` returned `100.3` (duration `114`) — exactly the scene flagged
+  `break: true` in `data/dialog/s2_media.json`, the song's first "Call now."
+
+  **BLOCKED: none.** `npx tsc --noEmit`, `npm test`, and `npm run build` all green on the final tree.
+  Files touched match the fence exactly: `src/engine/app.ts`, `src/desktop/os.ts` (the debug-jump
+  case only), `tools/check-spec.mjs`, `data/strings/slice.json`, `README.md`, this log.

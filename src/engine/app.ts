@@ -322,9 +322,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // failures, send summonses, the bare final restart → the Close. The OS
   // performs; the engine moves the space; the spine decides when. ──
   let spine: Spine | null = null;
-  const reviewMode = !!(options.era || options.close || options.reveal || options.morphDemo);
   if (options.reinterp === true) {
-    if (!reviewMode) spine = createSpine(os, { onClose: () => enterClose() });
+    // S58: review params (?era=/?close=/?reveal=/?morphDemo=) used to skip
+    // spine creation entirely via a `reviewMode` gate — the conductor stayed
+    // null for the WHOLE session (nothing later re-creates it), so no send
+    // ever armed and no update ever fired, and nothing on screen said why
+    // (docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md ROOT CAUSE #1). The spine
+    // is cheap and side-effect-free to seed — onEra() only sets a step and
+    // resets a timer — so it is created unconditionally here, and the `?era=`
+    // branch below seeds it to match the requested era. A review session now
+    // drives the same conductor a linear playthrough does, instead of
+    // silently lacking one.
+    spine = createSpine(os, { onClose: () => enterClose() });
     os.onEraShift = (era) => {
       if (era === 'close') return; // the spine's onClose owns the constellation
       driveMorph(era as EraKey);
@@ -339,6 +348,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (yaw !== null && yaw !== undefined) dollyTo(yaw, 2.4, false);
       }
     };
+    if (new URLSearchParams(window.location.search).get('debug') === '1') {
+      // S58 spine probe (read-only, like __os/__wake): the conductor's own
+      // step, so a review can confirm the era buttons and `?era=` jumps
+      // actually advance the narrative and not just the room/desktop era.
+      (window as { __spine?: () => unknown }).__spine = () =>
+        spine ? { step: spine.step } : null;
+    }
   }
   const witness = new WitnessCanvas();
   if (options.reinterp === true) {
@@ -1652,6 +1668,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camPitch = sp.pitch;
       camYaw = sp.yaw;
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      spine?.onEra(options.era); // S58: seed the conductor to match the jump
     } else if ((options.reveal || options.morphDemo) && cluster) {
       applyLightsOn();          // E1 lit state…
       cluster.reveal();         // …already past the first filing (O7)
@@ -1694,7 +1711,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // dev travel panel (?debug=1 — the shipped build's system, ported; Round 18)
   if (options.reinterp) {
     mountDebugPanel(os, {
-      onEra: (era) => driveMorph(era),
+      // S58: route through the REAL transition path (os.onEraShift), not
+      // driveMorph alone — driveMorph only advances the room/desktop-era
+      // machinery; os.onEraShift additionally calls spine?.onEra(era), which
+      // is what actually advances the narrative conductor (sends arm, updates
+      // fire, E1 state retires on schedule). Without it the panel's era jump
+      // desynchronised the spine from the room, which read as a locked build
+      // (docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md ROOT CAUSE #1).
+      onEra: (era) => os.onEraShift?.(era),
       // dev camera jump (?debug=1 only): window.__camProbe(yaw, pitch) teleports
       // to that facing's SEAT pose — how review screenshots are taken
       onCamProbe: (yaw, pitch) => {

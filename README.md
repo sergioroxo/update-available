@@ -25,7 +25,7 @@ npm test             # no-network / no-storage invariants + room fold + spec law
 |---|---|
 | `check-invariants.mjs` | no runtime network, no storage of user input |
 | `check-rooms.mjs` | the room deltas fold cleanly over the base room |
-| `check-spec.mjs` | dossier `status`, felt-scene purity, `tier`/`register` vocabulary, the ≤3-hero Quest budget, a palette ratchet, doc lifecycle tracking (`STATUS:` headers, supersession links, opt-in `KILLS:` assertions — see `docs/reinterp/08_STATUS_REGISTER.md` §5), and `?debug=1` panel completeness (every `debugJump` id `os.ts` accepts has a panel button or a documented exclusion — C6) |
+| `check-spec.mjs` | dossier `status`, felt-scene purity, `tier`/`register` vocabulary, the ≤3-hero Quest budget, a palette ratchet, doc lifecycle tracking (`STATUS:` headers, supersession links, opt-in `KILLS:` assertions — see `docs/reinterp/08_STATUS_REGISTER.md` §5), `?debug=1` panel completeness (every `debugJump` id `os.ts` accepts has a panel button or a documented exclusion — C6), and an authoring-marker leak ratchet (no `PLACEHOLDER`/`Sérgio`/`[VERIFY SOURCE]`/etc. in player-visible `data/**.json` strings, growth-only like the palette ratchet — C7) |
 
 ### Build-time voice lines (offline, never runtime)
 Some apparatus/system lines (never survivor-side lines) are voiced with a local

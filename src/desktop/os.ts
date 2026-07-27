@@ -1591,7 +1591,15 @@ export class DesktopOS {
         this.e2Stage = 'active';
         this.netvisionOfferOpen = false;
         this.openNetVision();
-        this.netvision?.debugSeek(mediaStrings.duration - 3);
+        // S58 fix: this used to seek to `duration - 3` (111s at the current
+        // 114s runtime) — past the break's start (100.3s) and deep into the
+        // tear, so the debug jump never showed what it was named for. Land ON
+        // the break instead, deriving it the same way netvision.ts's own
+        // `breakStart` does (the scene flagged `break: true` — the song's
+        // first "Call now"), so the two can never drift apart.
+        this.netvision?.debugSeek(
+          mediaStrings.scenes.find((s) => s.break)?.at ?? mediaStrings.duration - 3
+        );
         break;
       case 'netvisionStatic':
         this.setPhase('desktop');
