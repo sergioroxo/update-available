@@ -663,6 +663,27 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 
 ## C. OPEN QUESTIONS (answer inline, in chat, or by voice — whatever's cheapest)
 
+- **⚑ Q-D49 (2026-07-26, from S59) — the dossier's visible STATUS line.**
+  `ETHICS_CONSTRAINTS.md` #13 wants a visible `status` on dossier cards. But a rendered
+  `STATUS: DOCUMENTARY` line is *precisely* the authoring voice you just asked to kill
+  ("please no"). S59 moved provenance to `slice.json`'s `dossier._provenance` — present,
+  unchanged, but INVISIBLE — and correctly refused to decide this for you.
+  **Keep it invisible, or restore a rendered line?** *(My read, offered not assumed: keep it
+  invisible HERE, because `referral_notes.txt` is now a found in-world document and a status
+  stamp would break its fiction — but the rule should still bind the Close's constellation and
+  any true dossier surface, where provenance IS the content. That would mean amending #13 to say
+  "visible on provenance surfaces", not "visible everywhere".)*
+
+- **⚑ Q-D50 (2026-07-26, from S61) — where does the OS surface live after you leave Room 1?**
+  The slow fly-over exposed it: Daniel's CRT was showing a full "GracePlatform · testimony tools
+  ready" desktop while you flew over it. S61 made it dead at E3 — but did NOT blanket-retire it,
+  because the spine still arms u4 on that surface. So the question is real and structural: once
+  the player's home base has migrated to Room 2, **what is Daniel's machine, and where does the
+  OS live?** S61 explicitly declined to invent an answer. Options worth weighing: the OS follows
+  the player to each room's machine; Daniel's CRT goes dark and permanently stays a prop; or it
+  keeps running as an abandoned surface you can still see (which the infrastructure spine might
+  actually want — the apparatus doesn't stop when you leave).
+
 *(none open — all answered; see below)*
 
 ### Answered
