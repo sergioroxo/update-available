@@ -180,6 +180,231 @@ during a `felt` scene, filed silently. **Sérgio owns the new name and its copy*
    → **S59**
 3. **The dead buttons** → greyed out, or a plain synonym for continue. **No invented paths.** → **S60**
 
-## Still open
-- **#13** — Lamby's second pop-up uses a different symbol. Intended, or a slip? (Cheap to fix either
-  way; flagging so it is not "corrected" into something Sérgio wanted.)
+## ✅ #13 answered too (2026-07-26)
+Sérgio: *"maybe a slip and we should try for cohesion."* → **ONE Lamby mark everywhere.** Any
+second symbol is a slip; unify on the `lambyChar.ts` character (already the single source since S48,
+shared with the rig lab and Just Change). → **S60**
+
+---
+
+# THE PROMPTS — paste-ready, in order
+*Run **S58 first and re-play before the rest**: until the era buttons drive the real transition, we
+cannot tell tooling artifacts from content bugs, and several findings above may simply evaporate.
+Run **one session at a time** (shared worktree = shared git index — see the S43/S44 postmortem).*
+
+## S58 — FIX THE REVIEW TOOLING · Sonnet 5, high effort · **RUN FIRST**
+
+```
+Tooling session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch
+reinterp, ?reinterp=1&debug=1). Read CLAUDE.md, docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md (ROOT
+CAUSE #1 and #2 are the spec), src/engine/app.ts (lines ~320-335 and ~1690-1700),
+src/narrative/spine.ts, src/debug/panel.ts, tools/check-spec.mjs (match its idiom — C5/C6 are the
+model), and the tail of docs/reinterp/01_SESSION_LOG.md.
+
+THE PROBLEM: Sérgio played Era 2 through the debug panel and reported the experience as locked, with
+stale props and mixed era state. It was mostly the TOOLING. app.ts:~1697 wires the panel's era
+buttons as `onEra: (era) => driveMorph(era)` — geometry only — while the real path (os.onEraShift,
+~line 328) calls driveMorph AND spine?.onEra(era). And `reviewMode` (~line 325) is true whenever
+?era= is present, which skips createSpine ENTIRELY: no sends, no updates, no transitions. A review
+tool that misrepresents the build is worse than none — this is the third time it has cost a session.
+
+SCOPE:
+1. THE ERA BUTTONS MUST DRIVE THE REAL TRANSITION. Route them through the same path a real
+   playthrough takes (os.onEraShift), so the spine advances, the OS shifts era, and E1 room state
+   retires. Verify by clicking to E2 and confirming: no witness board behind you, no E1 cassette on
+   the shelf, and the spine actually in an E2 step.
+2. ?era= MUST NOT SILENTLY KILL THE SPINE. Either create the spine in review mode too (seeded to the
+   requested era), or — if review genuinely needs it off — SAY SO ON SCREEN in the panel ("spine
+   disabled — transitions will not fire"). Silence is what cost a whole playthrough. Choose, and
+   argue the choice in the log.
+3. check-spec C7 — THE AUTHORING-MARKER LEAK DETECTOR. Fail when any PLAYER-VISIBLE string in data/
+   contains an authoring marker: "PLACEHOLDER", "to write", "TODO", "Sérgio", "[VERIFY SOURCE]",
+   "researcher note", "FIXME". Keys beginning "_" (_doc/_note/_state) are authoring metadata and are
+   EXEMPT — that is the whole distinction. Follow C1-C6's idiom and PROVE the failure mode by real
+   mutation-and-revert.
+4. FIX THE KNOWN LEAK: data/strings/slice.json:127 renders
+   "NOTE: [researcher note — Sérgio's voice, to write]" to the player. Remove that string. Do NOT
+   rewrite the dossier around it — S59 owns repositioning it as a renamed easter egg. If removing it
+   leaves a hole, leave the hole and say so.
+5. While you are in there: os.ts's `netvisionBreak` debug jump seeks `duration - 3`, which at the
+   video's current 114s lands at 111s — deep in the tear, not at the break's start. Fix it to land
+   ON the break (~100.3s). It is how the break gets reviewed.
+
+FILES YOU MAY TOUCH: src/engine/app.ts, src/debug/panel.ts, src/desktop/os.ts (the debug jump only),
+tools/check-spec.mjs, data/strings/slice.json, README (checker table row),
+docs/reinterp/01_SESSION_LOG.md. NOT: any other data file, src/desktop/apps/**, src/narrative/**
+(read spine.ts, do not edit it).
+
+ACCEPTANCE: clicking the panel's E2 button produces the SAME state a linear playthrough reaches —
+prove it by comparing, and state in the log what you compared; C7 green with its failure mode proven
+by mutation-and-revert; the leak is gone; netvisionBreak lands on the break. npm test + npm run build
+green; baselines unaffected.
+GIT DISCIPLINE (mandatory): explicit pathspecs only — `git commit -- <your files>`; never bare
+`git commit` or `git add -A`; check `git status --short` first.
+Blocked ≠ improvise: STOP and log BLOCKED.
+```
+
+## S59 — THE E2 ARRIVAL (the era's missing front door) · Opus, high effort
+
+```
+Build session, reinterp worktree (…/update-available-reinterp, branch reinterp, ?reinterp=1). Read
+CLAUDE.md (register laws + the Assistant laws — Lamby's debut is governed by them),
+docs/ETHICS_CONSTRAINTS.md, docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md §A and §B (the spec),
+docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md S2R.0-S2R.2, src/desktop/os.ts's E2Stage machine,
+data/dialog/s2_lamby.json, and the tail of docs/reinterp/01_SESSION_LOG.md.
+
+THE PROBLEM (Sérgio's words): "there is no boot up sequence for the new version of LambyOS… we need
+to be presented to Lamby, if not it doesn't make much connection with the overall experience. Also it
+may create a bit of conflict with the overall Restorify system, so Lamby needs to present it to us."
+Era 2 currently starts and Lamby is simply THERE. His debut is the whole point of the era's guidance
+lineage, and it is unmarked.
+
+SCOPE:
+1. THE LAMBYOS BOOT SEQUENCE. E1 boots with a crawl; E2's version change passes unmarked. Give E2 its
+   own boot — the machine has been UPDATED, and the boot should say so. Include its boot sound/jingle
+   (audio may be a committed placeholder; if none exists, leave a clean hook and log it rather than
+   inventing an asset).
+2. ⚑ LAMBY IS PRESENTED. He introduces himself — briefly, in character, within the Assistant laws
+   (≤2 lines per conduction beat, never during a felt scene, dismissal always works and is logged).
+   This is the debut the whole lineage hangs on.
+3. LAMBY PRESENTS RESTORIFY. Sérgio: the two currently read as competing systems. Lamby introducing
+   the program resolves that and gives him a job on arrival — he is the face; Restorify is the
+   apparatus he speaks for.
+4. "WELCOME BACK DANIEL" LEGIBILITY — the typeface is not readable enough. Fix without restyling the
+   era's chrome.
+5. GUIDANCE AT THE MESSENGER SEAM: (a) the "how was your walk" card currently resolves into NOTHING
+   — it vanishes and jumps to the Messenger; it needs a response. (b) Lamby should NOTIFY the player
+   that a message arrived, so opening the Messenger is motivated rather than guessed at.
+6. THE DOSSIER, REBUILT AS AN EASTER EGG (Sérgio, 2026-07-26): "it can stay as like an easter egg
+   with a different name and like an explainer of the program." Keep the tactic content, kill the
+   authoring voice and the front-and-centre placement. It becomes a diegetic explainer FOUND on the
+   desktop — same family as S55's lamby_rig.exe, and inheriting its rules: never advertised, never
+   rewarded, never reachable during a felt scene, filed silently. ⚑ THE NEW NAME AND ITS COPY ARE
+   SÉRGIO'S (in-world text) — ship a PLACEHOLDER-draft name and flag it for his pass.
+
+LAWS: all new copy ships PLACEHOLDER-draft. Lamby never appears in a felt scene. Nothing is scored.
+Leave/pause live throughout.
+
+FILES YOU MAY TOUCH: src/desktop/os.ts, data/dialog/s2_lamby.json, data/strings/slice.json,
+src/desktop/apps/restorify.ts, src/audio/tapeAudio.ts (boot sound registration only),
+public/assets/audio/** (only if a real asset exists to commit), src/debug/panel.ts (new beats — C6
+fails otherwise), docs/reinterp/01_SESSION_LOG.md. READ/IMPORT ONLY: src/desktop/apps/lambyChar.ts.
+NOT: src/desktop/apps/caleb.ts or accountability.ts (S60 owns them), src/engine/app.ts,
+data/provotypes/**.
+
+ACCEPTANCE: a linear E1→E2 run (NOT a debug jump — S58 must have landed first) plays: update →
+LambyOS boot with its jingle → Lamby introduces himself → Lamby presents Restorify → check-in → the
+walk card ANSWERS → Lamby notifies you of the message → Messenger. "Welcome back Daniel" is legible
+at the seat. The dossier is findable, renamed, and never advertised. npm test (C7 will catch
+authoring markers) + npm run build green.
+GIT DISCIPLINE (mandatory): explicit pathspecs only. Blocked ≠ improvise: STOP and log BLOCKED.
+```
+
+## S60 — THE DEAD BUTTONS, PUREMAIL, AND THE OFFER SCREEN · Opus, high effort
+
+```
+Build session, reinterp worktree (…/update-available-reinterp, branch reinterp, ?reinterp=1). Read
+CLAUDE.md (register laws), docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md §C-§F (the spec),
+docs/REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md, src/desktop/apps/caleb.ts,
+src/desktop/apps/accountability.ts, src/desktop/apps/netvision.ts, src/audio/tapeAudio.ts, and the
+tail of docs/reinterp/01_SESSION_LOG.md.
+
+⚑ THE REGISTER BOUNDARY IS LOAD-BEARING (S45): caleb.ts holds the FELT surfaces and imports no Lamby
+renderer, no Lamby strings, and draws no mark; accountability.ts holds the OPERABLE intrusions and is
+the only module that imports the Lamby character. You may EDIT both — you may NOT blur that line.
+
+SCOPE:
+1. THE DEAD BUTTONS (Sérgio's ruling): "the 'not now' either should be greyed out or just do the
+   same as continue." NO branching, NO invented consequence, NO divergent ledger paths. Prefer
+   GREYED OUT where the beat is coercive (the "we'll get the days back together" reassurance; the
+   "don't be discouraged" pop-up) — a visibly inert option is HONEST and carries the thesis: the
+   apparatus displays a choice that is not one. Use a plain synonym for continue only where greying
+   would read as a bug.
+2. ONE LAMBY MARK EVERYWHERE (Sérgio: the second symbol is "a slip and we should try for cohesion").
+   Unify on lambyChar.ts's character — it has been the single source since S48. Import it; do not
+   fork or re-draw.
+3. ⚑ WIRE THE PUREMAIL READ-ALOUD. This is BUILT AND UNWIRED: S46 rendered and committed
+   public/assets/audio/lamby_puremail_apology.wav and registered it in tapeAudio.ts with a playOnce()
+   helper. Lamby reads the apology in his own voice — the apparatus narrating its own death notice.
+   Highest value-per-effort item in the review. Missing-file-safe (a missing WAV must degrade
+   silently, per Session 30's pattern).
+4. THE PUREMAIL MOMENT IS CONFUSED. (a) The Accountability window pops back when PureMail opens —
+   two things compete with no way to choose; decide which owns the screen and say why in the log.
+   (b) It says "now playing" — playing WHAT? Either make it true or remove it. (c) "1 new message —
+   C___" in the taskbar is barely visible AND not clickable; Sérgio tried to open it. Make it a real
+   affordance or remove it — do not leave a lie.
+5. THE RESIDUE. (a) Add a drop shadow so the line reads as clickable (Sérgio loves the beat, could
+   not tell it was a button). (b) DIAGNOSE: on click it "appeared repeated on the screen and jumped
+   back to the Restorify desktop." That is a bug — reproduce it with the spine RUNNING (S58 first),
+   fix it, and say what it was. (c) After Continue, Caleb's messages were cleared and Sérgio could
+   not tell whether he had said anything — the un-redaction beat is not reading. Make it read.
+6. THE CALEB CHAT. (a) Attribute the player's replies to "Daniel" — the piece knows his name.
+   (b) "Click to Reply" shows while Caleb is still typing; show it only when it is true.
+7. NETVISION — the offer screen and the shots. (a) THE SEALS, per Sérgio's reference: the DRTV
+   end-frame apparatus of trust — a "money-back guarantee" rosette, payment-card badges, the delivery
+   fine print, ORDER NOW!, a phone number. It puts "three easy payments of yourself" in its native
+   grammar, and a money-back guarantee on SELFHOOD is the most damning object the era can show.
+   ⚑ EVERY BADGE MUST BE INVENTED — his reference shows real card brands (Visa/Mastercard/AmEx/
+   Discover) and those may never appear in the fiction. (b) Each shot needs more ANIMATION; they are
+   static. Keep the existing scanline/noise/tear vocabulary — he loves it; do not restyle.
+   (c) Caleb's toast arrives too early and COVERS the end-of-video disclaimer scroll ("a great text")
+   then vanishes unusably. Move it AFTER the scroll and make it persistent/actionable.
+
+FILES YOU MAY TOUCH: src/desktop/apps/caleb.ts, src/desktop/apps/accountability.ts,
+src/desktop/apps/netvision.ts, src/desktop/os.ts, src/audio/tapeAudio.ts,
+data/dialog/s2_caleb.json, data/dialog/s2_media.json, docs/reinterp/01_SESSION_LOG.md.
+READ/IMPORT ONLY: src/desktop/apps/lambyChar.ts. NOT: src/engine/app.ts, src/narrative/**,
+data/provotypes/**.
+
+ACCEPTANCE: played at REAL SPEED with sound, linearly, with the spine running. Every "not now" is
+either visibly inert or a plain continue. One Lamby mark. Lamby AUDIBLY reads PureMail. The taskbar
+message either opens or is gone. The residue reads as clickable and its click bug is fixed and
+explained. The offer screen carries invented seals. npm test + npm run build green.
+GIT DISCIPLINE (mandatory): explicit pathspecs only. Blocked ≠ improvise: STOP and log BLOCKED.
+```
+
+## S61 — THE TRANSITION AND ROOM 2 · Opus, high effort
+
+```
+Build session, reinterp worktree (…/update-available-reinterp, branch reinterp, ?reinterp=1). Read
+CLAUDE.md (comfort law + aesthetic laws), docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md §G and §H (the
+spec), docs/REINTERP_INFRASTRUCTURE_SPINE_2026-07-25.md (why the rooms open — the transition should
+EXPRESS this), src/engine/app.ts, src/room/era3Devices.ts, src/desktop/apps/update.ts, and the tail
+of docs/reinterp/01_SESSION_LOG.md.
+
+THE PROBLEM: the E2→E3 handoff exists but does not READ. Sérgio: "needs a better explanation of the
+transition… the GraceProgram should load on Vera's computer. Also the fly over needs to be slower and
+let you see the room being built so you understand the new space and the passage of time."
+
+SCOPE:
+1. ⚑ SLOW THE FLY-OVER, AND LET THE ROOM BUILD. This is the session's centre. The relocation to Room
+   2 is currently too fast to read as a change of life. Slow it, and stage it so the player SEES the
+   new space assemble — six years and a different person. The comfort law binds (this is artificial
+   locomotion): slow, eased, no roll, no simultaneous fast translation+rotation; state your measured
+   peak linear and angular rates in the log, as S53 did.
+2. GRACEPROGRAM LOADS ON VERA'S COMPUTER, not Daniel's. Right now the E3 platform installs into the
+   Era-2 session, which is why it read as "installing on the Era-2 session… a design that makes no
+   sense." The install belongs to the machine you arrive at.
+3. ERA 3 NEEDS ITS BOOT. Sérgio: "we shouldn't start without the boot up on the computer." Same note
+   as E2's missing boot — the new era's machine should start in front of you.
+4. "REMIND ME LATER" — the law says it works ONCE; in play it is unclear what it does. Make its
+   behaviour legible (and confirm the once-only rule actually holds).
+5. RETIRE THE WITNESS PANEL IN ROOM 2 — it is still visible there.
+6. ROOM 2 DRESSING PASS. From Sérgio's annotated screenshot, these read as wrong or unexplained:
+   a black rectangle in the CEILING ("a black square in the sky" — unexplained), a pale blue
+   rectangle and a pink strip on the wall, the left-hand monitor, a box on the floor, and the chair
+   base. Diagnose each (misplaced? mis-scaled? sunk through a surface? a leftover from another era?)
+   and fix. NOTE the pattern from S52/S54/S56: prop bugs in this project are usually a stale measured
+   height or an override silently dropping a field — measure against the real mesh, do not guess.
+
+FILES YOU MAY TOUCH: src/engine/app.ts, src/room/*.ts, src/desktop/apps/update.ts,
+src/desktop/os.ts, data/room/*.json, data/strings/updates.json, docs/reinterp/01_SESSION_LOG.md.
+NOT: src/desktop/apps/caleb.ts, accountability.ts, netvision.ts (S60 owns them), data/provotypes/**.
+
+ACCEPTANCE: a linear run through u3 into Room 2, watched AT REAL SPEED, in which the fly-over reads
+as a passage of time and the room visibly assembles; GraceProgram installs on Vera's machine; Era 3
+boots in front of you; no witness panel in Room 2; every circled prop resolved with a stated cause.
+Measured comfort rates logged. npm test + npm run build green; baselines unaffected. VR remains
+unverified here (no XR entry point) — say so plainly.
+GIT DISCIPLINE (mandatory): explicit pathspecs only. Blocked ≠ improvise: STOP and log BLOCKED.
+```
