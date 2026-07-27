@@ -51,8 +51,15 @@ He is right: it breaks the fiction and puts the author's name inside the piece.
 **Two fixes needed:** (a) remove/replace that string; (b) a **check-spec C7** that fails when any
 player-visible string contains authoring markers (`PLACEHOLDER`, `to write`, `Sérgio`, `TODO`,
 `[VERIFY SOURCE]`, `researcher note`). This is the same lesson as C5/C6 — if it can leak silently,
-it will. *(Separately: he says the dossier's tactic content is interesting but MISPLACED on the E2
-desktop. Where it belongs is a dramaturgy call.)*
+it will.
+
+**✅ THE DOSSIER ITSELF — ANSWERED.** Sérgio: *"I think it can stay as like an easter egg with a
+different name and like an explainer of the program."* So it is **kept, renamed, and repositioned**
+— not cut. It becomes a **diegetic explainer of the program**, found rather than served, in the same
+family as `lamby_rig.exe` (S55): an unremarked file on the desktop that rewards looking. The tactic
+content he called interesting survives; what dies is the authoring voice and the front-and-centre
+placement. **Rules inherited from the S55 easter egg:** never advertised, never rewarded, never
+during a `felt` scene, filed silently. **Sérgio owns the new name and its copy** (it is in-world text).
 
 ---
 
@@ -81,20 +88,29 @@ desktop. Where it belongs is a dramaturgy call.)*
 10. **"Click to Reply" appears while Caleb is still typing** — you must wait for the boxes anyway,
     so the affordance lies. Show it when it's true.
 11. ✅ **Sad Lamby — loved.**
-12. **⚑ THE DEAD-BUTTON CLUSTER.** *"we'll get the days back together"* offers **"not now"** and
-    **"okay"** — *"what different paths do they go? none?"* Same question for the *"don't be
-    discouraged"* pop-up's **"not now"**. **This is a register-law problem, not just polish:** chips
-    are supposed to REGISTER (file differently on the witness side) even when they don't branch. If
-    they do neither, they're decoration — and the piece's whole thesis is that every response is
-    data. **Either they file differently, or they shouldn't be two buttons.**
+12. **✅ ANSWERED — the dead buttons.** Sérgio: *"the 'not now' either should be greyed out or just
+    do the same as continue."* So: **no branching, no invented consequence.** And his simpler answer
+    is the better one — **a greyed-out "not now" is honest and carries the thesis:** the apparatus
+    displays an option that is not one. *You may not decline this.* That says more as UI than a
+    hidden ledger difference would. **Pick greyed-out where the beat is coercive** (the "we'll get
+    the days back" reassurance, the "don't be discouraged" pop-up); make it a plain synonym for
+    continue only where greying would read as a bug. Do NOT invent divergent paths.
 13. **Lamby's second pop-up uses a DIFFERENT SYMBOL** — is that intended? Reads as inconsistent.
 
 ### D · NetVision — mostly working
 14. ✅ **"Great."** ✅ **Three steps — amazing.** ✅ **Karaoke bubble — so great.**
 15. **Each image needs more animation** — the shots are static.
-16. **Wants "seals of sealing the box of the system"** — certification/approval stamps. *(Needs one
-    clarifying question: seals on the VIDEO as broadcast trust-marks, or on the SYSTEM as
-    approval badges? I read it as period trust-seals on the infomercial.)*
+16. **✅ ANSWERED — the seals are DRTV OFFER-SCREEN FURNITURE.** Sérgio sent a reference: a classic
+    late-night infomercial end-frame with **$29.99**, payment-card logos, *"Please allow 6-8 weeks
+    for delivery / Express delivery for U.S. only / Terms and conditions may apply"*, **ORDER NOW!**,
+    a website, a 1-800 number, and a gold **"30 DAY MONEY BACK GUARANTEE"** rosette.
+    So the offer screen needs that whole apparatus of trust: the guarantee rosette, the card badges,
+    the delivery fine print, the phone number. **Why this is more than dressing:** it puts *"three
+    easy payments of yourself"* into its native visual grammar — and a **money-back guarantee on
+    selfhood** is the single most damning object the era could put on screen. The satire is entirely
+    in the apparatus's self-presentation, exactly as the tone law requires.
+    ⚑ **ETHICS: the card logos in the reference are REAL BRANDS (Visa, Mastercard, AmEx, Discover).
+    Every badge must be INVENTED** — same rule as everything else in the fiction.
 17. **⚑ Caleb's toast arrives too early** — it covers the end-of-video disclaimer scroll (*"a great
     text"*), then disappears with no way to interact. **Move it after the scroll**, and make it
     persistent/actionable rather than a flash.
@@ -143,19 +159,27 @@ desktop. Where it belongs is a dramaturgy call.)*
    real transition; `?era=` doesn't silently kill the spine; add **C7** for authoring-marker leaks;
    remove the `slice.json:127` note. **Then re-play before building anything else** — several
    findings above may evaporate, and we should know which.
-2. **S59 — The E2 arrival**: LambyOS boot + jingle, Lamby's presentation of himself and of
-   Restorify, the "Welcome back Daniel" legibility fix, the message notification, the walk-card
-   response. This is the era's missing front door.
-3. **S60 — The dead buttons + PureMail moment**: make every chip register (or remove the second
-   button), wire the **already-built** Lamby TTS to PureMail, fix the taskbar affordance, move
-   Caleb's toast after the disclaimer scroll, add the residue drop shadow, diagnose the residue
-   click.
+2. **S59 — The E2 arrival + the desktop's introduction layer**: LambyOS boot + jingle, Lamby's
+   presentation of himself and of Restorify, the "Welcome back Daniel" legibility fix, the message
+   notification, the walk-card response — and the **dossier rebuilt as a renamed diegetic easter-egg
+   explainer** (root cause #2), since that is also "what the E2 desktop presents". The era's missing
+   front door.
+3. **S60 — The dead buttons, the PureMail moment, and the NetVision offer screen**: grey out "not
+   now" (never invent divergent paths), wire the **already-built** Lamby TTS to PureMail, fix the
+   taskbar affordance, move Caleb's toast after the disclaimer scroll, add the residue drop shadow,
+   diagnose the residue click — **plus the DRTV offer-screen seals (#16) and per-shot animation
+   (#15)**, which belong here because they share `netvision.ts` with the toast fix and would
+   otherwise collide.
 4. **S61 — The transition**: slow the fly-over so the room builds visibly, GraceProgram on Vera's
    machine, E3 boot sequence, retire the witness panel in Room 2, Room 2 dressing pass.
 
-## Questions for Sérgio
-1. **The "seals"** (#16) — trust-seals on the infomercial, or approval badges on the system?
-2. **The dossier's tactic content** (root cause #2) — it's interesting but misplaced. Where should
-   it live: the Close, a dedicated dossier surface, or cut?
-3. **The dead buttons** (#12) — should "not now" file differently, or should those beats be a single
-   acknowledgement?
+## ✅ All three questions answered by Sérgio, 2026-07-26
+1. **The seals** → DRTV offer-screen furniture (guarantee rosette, card badges, fine print, 1-800
+   number), with every badge INVENTED. → **S60**
+2. **The dossier** → kept, renamed, repositioned as a diegetic easter-egg explainer of the program.
+   → **S59**
+3. **The dead buttons** → greyed out, or a plain synonym for continue. **No invented paths.** → **S60**
+
+## Still open
+- **#13** — Lamby's second pop-up uses a different symbol. Intended, or a slip? (Cheap to fix either
+  way; flagging so it is not "corrected" into something Sérgio wanted.)
