@@ -8,6 +8,21 @@
  * (Ethics #10). The wall cork/record surface now carries the witness lineage,
  * so the cluster no longer wakes this overhead iris during reveal or updates.
  *
+ * ⚑ SESSION 61 — THE IRIS NO LONGER RENDERS. R26 retired the WAKE and left the
+ * geometry in the ceiling: a 1.06 m near-black square with a darker pupil,
+ * permanently dormant, over Room 1. Nothing ever lit it, nothing ever
+ * referred to it, and once the walls come down at E3 you sit in Room 2 and
+ * look up at it across the open space. Sérgio's Room-2 review circled exactly
+ * that — *"a black square in the sky"*, unexplained — and it was unexplained
+ * because it is the leftover of a mechanic this build no longer has. Picked
+ * live from his own sightline before removal: the ray from Room 2's seat at
+ * (-4.4, 1.16, 0.7) hits `witness-oculus`, AABB centre (0, 2.701, 1.5).
+ * The module stays (the wash light, the wake/wakeInstant hooks and the
+ * data block are all still here, unchanged and still wired) so the presence
+ * can be restored in one line if the overhead lineage is ever revived; what
+ * is gone is the four ring bars, the oculus recess and the pupil — the only
+ * parts that were ever VISIBLE while dormant.
+ *
  * Geometry + wash parameters live in data/room/cluster.json (ceilingWitness);
  * all hues are existing era1.json values. Behind ?reinterp=1 only.
  */
@@ -41,35 +56,21 @@ export interface CeilingWitness {
 
 export function buildCeilingWitness(app: pc.Application): CeilingWitness {
   const root = new pc.Entity('ceiling-witness');
-  const [cx, cy, cz] = CW.center as number[];
+  const [cx, , cz] = CW.center as number[]; // the iris's own `cy` went with it (S61)
 
-  // the recess: a dark square set into the ceiling — legible as architecture
-  // even while dormant (O6: "felt as hum and shadow, not shown")
-  const darkMat = new pc.StandardMaterial();
-  darkMat.diffuse = hex('#11111C'); // wallSouth's near-black (era1.json)
-  darkMat.update();
-  root.addChild(box('witness-oculus', [cx, cy + 0.006, cz], [CW.oculusSize, 0.012, CW.oculusSize], darkMat));
-
-  // the iris: a square emissive ring (4 thin boxes) + a darker pupil.
-  // Emissive is driven by the wake level — near-black dormant, pale awake.
+  // ⚑ THE IRIS GEOMETRY IS RETIRED (Session 61 — see the header). The recess
+  // (`witness-oculus`), the four ring bars and the pupil used to be built
+  // here; they never lit, never woke, and read from Room 2 as an unexplained
+  // black square in the ceiling. `box()` and the ring colour/side/thickness
+  // data are deliberately left intact below and in data/room/cluster.json so
+  // restoring the presence is a matter of putting these four lines back.
   const ringColor = hex(CW.ringColor);
   const ringMat = new pc.StandardMaterial();
   ringMat.useLighting = false;
   ringMat.diffuse = new pc.Color(0, 0, 0);
   ringMat.emissive = new pc.Color(0, 0, 0);
   ringMat.update();
-  const s = CW.ringSide;
-  const t = CW.ringThickness;
-  const ry = cy - 0.004;
-  root.addChild(box('witness-ringN', [cx, ry, cz - s / 2], [s + t, 0.012, t], ringMat));
-  root.addChild(box('witness-ringS', [cx, ry, cz + s / 2], [s + t, 0.012, t], ringMat));
-  root.addChild(box('witness-ringW', [cx - s / 2, ry, cz], [t, 0.012, s - t], ringMat));
-  root.addChild(box('witness-ringE', [cx + s / 2, ry, cz], [t, 0.012, s - t], ringMat));
-
-  const pupilMat = new pc.StandardMaterial();
-  pupilMat.diffuse = hex('#15151F'); // floorWitnessDark (era1.json)
-  pupilMat.update();
-  root.addChild(box('witness-pupil', [cx, cy - 0.008, cz], [CW.pupilSize, 0.012, CW.pupilSize], pupilMat));
+  void box; // the builder stays for that restore path
 
   // the wash: pale, from above, no visible source, no shadows (all lights in
   // this piece cast none — here it is also the fiction)

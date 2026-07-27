@@ -142,6 +142,15 @@ export class ClusterMorph {
   private t = 0;
   private plans: Plan[] = [];
   private state = 0; // index into SPACE_STATES
+  /** S61: a per-cascade time multiplier. 1 = the shipped pace (CASCADE 5.2s +
+   *  PROP_DUR 1.3s ≈ 6.5s end to end). The E2→E3 RELOCATION passes >1 so the
+   *  space takes long enough to open that a player watching from above can
+   *  actually see it happen — Sérgio: *"let you see the room being built, so
+   *  you understand the new space and the passage of time."* It scales both
+   *  the sweep and each prop's own resolve, so the diagonal roll keeps its
+   *  exact shape and only its clock changes; nothing about the glitch,
+   *  ordering or targets is touched. */
+  private pace = 1;
   /** R28-2c (the belongings beat): props the player marked KEPT are exempt
    *  from every fold beyond r1 — they keep their EXACT E1 color/pos/presence
    *  through every later era, frozen at the moment of departure (spec §4:
@@ -257,8 +266,9 @@ export class ClusterMorph {
    * Bring the space to state `idx`. `animate` = the narrative cascade (from
    * state idx−1); otherwise SNAP. Deterministic and reversible either way.
    */
-  goToState(idx: number, animate: boolean): void {
+  goToState(idx: number, animate: boolean, pace = 1): void {
     this.active = false; this.plans = [];
+    this.pace = Math.max(0.1, pace);
     if (!animate || idx <= 0) { this.snapTo(Math.max(0, idx)); return; }
 
     this.snapTo(idx - 1);
@@ -309,7 +319,9 @@ export class ClusterMorph {
       const pa = a.h.entity.getLocalPosition(); const pb = b.h.entity.getLocalPosition();
       return (pa.x + pa.z) - (pb.x + pb.z);
     });
-    sorted.forEach((pl, i) => { pl.startT = (i / Math.max(1, sorted.length - 1)) * (CASCADE - PROP_DUR); });
+    const cascade = CASCADE * this.pace;
+    const propDur = PROP_DUR * this.pace;
+    sorted.forEach((pl, i) => { pl.startT = (i / Math.max(1, sorted.length - 1)) * (cascade - propDur); });
 
     this.active = true; this.t = 0;
   }
@@ -317,9 +329,10 @@ export class ClusterMorph {
   update(dt: number): void {
     if (!this.active) return;
     this.t += dt;
+    const propDur = PROP_DUR * this.pace;
 
     for (const pl of this.plans) {
-      const local = (this.t - pl.startT) / PROP_DUR;
+      const local = (this.t - pl.startT) / propDur;
       if (local <= 0) continue;
       const k = Math.min(1, local);
       const e = ease(k);
@@ -336,6 +349,7 @@ export class ClusterMorph {
       );
 
       // the glitch: a brief flicker + scale jitter as the element changes over
+      // (GLITCH_FRAC is a FRACTION of `k`, so it follows the pace for free)
       if (k < GLITCH_FRAC && Math.random() < 0.55) {
         const f = (1 - k / GLITCH_FRAC) * 0.7;
         pl.h.material.emissive.set(col.r + f, col.g + f, col.b + f);
@@ -346,6 +360,6 @@ export class ClusterMorph {
       pl.h.material.update();
     }
 
-    if (this.t > CASCADE + PROP_DUR) this.active = false;
+    if (this.t > (CASCADE + PROP_DUR) * this.pace) this.active = false;
   }
 }

@@ -55,6 +55,38 @@ const BELONGINGS_IDS = new Set(
 );
 
 const RIG_FADE_SECONDS = 2.5;
+/**
+ * ⚑ THE RELOCATION (Session 61) — the E2→E3 handoff's shared clock.
+ *
+ * Sérgio's note: *"the fly over needs to be slower and let you see the room
+ * being built so you understand the new space and the passage of time."* The
+ * old handoff was a 2.4 s dolly fired at the same instant as a 6.5 s cascade,
+ * so the camera had already landed at Vera's desk, facing a wall, before the
+ * space finished opening behind it — six years and a different person, over
+ * in the time it takes to blink.
+ *
+ * It is now three legs, and the room opens IN THE MIDDLE ONE, in front of
+ * you: RISE out of Daniel's chair while his room is still closed → HOLD over
+ * the space while the walls leave and Room 2 assembles → DESCEND into Vera's
+ * seat. `src/engine/app.ts` flies the camera and this module opens the space;
+ * both read these three numbers, so the two halves cannot drift apart.
+ *
+ * The cascade is stretched to fill the middle leg exactly (CASCADE 5.2 +
+ * PROP_DUR 1.3 = 6.5 s at pace 1, so pace = BUILD_SECONDS / 6.5), which is
+ * what `ClusterMorph.goToState`'s pace argument exists for.
+ */
+export const RELOCATION = {
+  /** up out of the chair, inside the still-closed Room 1 */
+  riseSeconds: 7.0,
+  /** the walls leave and the three rooms resolve — the camera barely moves */
+  buildSeconds: 11.0,
+  /** down into Room 2's seat, the facing resolving with the position.
+   *  11.5, not 10: the descent is the longest leg (2.64 m of arc) and at 10 s
+   *  it measured a 0.477 m/s peak — over S53's 0.43 envelope. Measured again
+   *  at 11.5: 0.415 m/s. The number is the comfort law, not a taste call. */
+  descendSeconds: 11.5
+} as const;
+const CASCADE_BASE_SECONDS = 6.5; // CASCADE + PROP_DUR in clusterMorph.ts
 /** space-state index per era (reinterp_deltas.json fold: r1 → r2 → r3 → r4).
  *  Each era now has its OWN state, so the three rooms age era-to-era. */
 const STATE_FOR_ERA: Record<EraKey, number> = { e1: 0, e2: 1, e3: 2, e4: 3 };
@@ -90,6 +122,11 @@ export interface ClusterShell {
   morphToEra(era: EraKey, animate: boolean): void;
   /** apply a named rig directly (the Close uses 'close') */
   applyRig(name: string, animate: boolean): void;
+  /** S61: land the current transition NOW, wherever it had got to — the
+   *  relocation's skip (any input, per the comfort law) needs the space
+   *  finished as well as the camera seated, or the player is left in a
+   *  half-built room with a cascade still rolling behind them. */
+  settleNow(): void;
   /** the era's niche facet table (fluid_niche.json), for the gaze resolver */
   eraTable(): NicheEraTable | undefined;
   /** R28-2c (the belongings beat): freeze these prop ids at their exact r1/
@@ -246,6 +283,37 @@ export function buildClusterShell(
       e.setLocalPosition(p.x, p.y, z);
     }
   }
+  /**
+   * ⚑ SESSION 61 — THE RECORD LEAVES THE WALL AT E3 (Sérgio: *"the witness
+   * panel is still visible in Room 2"*). The record plane hangs on the SPINE
+   * at (0, 1.5, ~3.6); once E3 takes the walls down, Room 2's seat looks
+   * straight across the open floor at it — picked live from that seat, the ray
+   * lands on `witness-screen`, AABB centre (-0.86, 1.43, 3.62).
+   *
+   * It is hidden for E3 only, and the reason is the era's own thesis rather
+   * than tidiness: REINTERP_INFRASTRUCTURE_SPINE_2026-07-25 is explicit that
+   * 2016 is where the apparatus "stopped being a place you go to" and moved
+   * into the infrastructure already in use — which is exactly why the walls
+   * open there. A cold record mounted on a wall is the E1/E2 grammar (a place
+   * you can turn around and face). At E3 the record is not on a wall at all:
+   * it is inside the platform, and Lambient's badge is already sitting in the
+   * corner of all three of Vera's screens. Nothing stops being FILED — the
+   * ledger and the intake are untouched — and the plane comes back at E4,
+   * migrated beside Maya's desk, which is the migration the piece already
+   * scripts (TERMINAL_E4 below).
+   */
+  function setTerminalVisible(visible: boolean): void {
+    const e = app.root.findByName('witness-screen');
+    if (e instanceof pc.Entity) e.enabled = visible;
+    // …and its MOUNT. `terminalFrame` (reinterp_deltas.json r1) is the dark
+    // surround the plane hangs in; hiding the plane alone left a black slab on
+    // the spine, which is what the first pass of this fix produced and what a
+    // live pick caught (AABB centre (-0.9, 1.5, 3.705)). r4 removes the frame
+    // outright — this is the same retirement, one era earlier and reversible.
+    const f = room.props.get('terminalFrame')?.entity;
+    if (f) f.enabled = visible;
+  }
+
   function migrateTerminal(toRoom3: boolean): void {
     const e = app.root.findByName('witness-screen');
     if (!(e instanceof pc.Entity)) return;
@@ -344,6 +412,10 @@ export function buildClusterShell(
       seamsOff();
       carryLampLight(toEra === 'e4');
       migrateTerminal(toEra === 'e4');
+      // S61 — see setTerminalVisible's note. On the ANIMATED E2→E3 relocation
+      // this is deferred into the timeline below so the panel leaves WITH the
+      // walls rather than blinking out three seconds before them.
+      if (!(animate && fromEra === 'e2' && toEra === 'e3')) setTerminalVisible(toEra !== 'e3');
 
       // T2, choreographed (choreography doc §T1 — the SAME staged timeline,
       // moved here from the E1→E2 transition Session 27/R28-0c per Sérgio's
@@ -361,21 +433,30 @@ export function buildClusterShell(
           if (e instanceof pc.Entity && e.light) e.light.intensity = i;
         };
         state = 'open';
-        planeLerp = { from: PLANE_Z[0], to: PLANE_Z[1], t: -3.0, dur: 5.2 }; // rides the cascade
+        // Session 61: every beat below used to sit in the first 5.4 s, under a
+        // 2.4 s camera dolly. They now hang off RELOCATION.riseSeconds — the
+        // space starts opening the moment the camera stops climbing, and takes
+        // the whole middle leg to do it (see RELOCATION's own note above).
+        const R = RELOCATION.riseSeconds;
+        const pace = RELOCATION.buildSeconds / CASCADE_BASE_SECONDS;
+        planeLerp = { from: PLANE_Z[0], to: PLANE_Z[1], t: -R, dur: RELOCATION.buildSeconds };
         schedule([
-          { t: 3.0, fn: () => {                                // the walls begin to leave
+          { t: R, fn: () => {                                  // the walls begin to leave
             beginMorphedStateBatch();
-            morph.goToState(2, true);
+            morph.goToState(2, true, pace);
+            // S61: the record leaves the spine WITH the walls (see
+            // setTerminalVisible) — one change, one moment, not two.
+            setTerminalVisible(false);
           } },
-          { t: 3.0, fn: () => setLight('roomFill', 0.55) },   // ballast: clunk
-          { t: 3.18, fn: () => setLight('roomFill', 0.05) },
-          { t: 3.6, fn: () => setLight('roomFill', 0.95) },   // flicker
-          { t: 3.78, fn: () => setLight('roomFill', 0.1) },
-          { t: 4.2, fn: () => {                                // the other rooms were ready first
+          { t: R, fn: () => setLight('roomFill', 0.55) },      // ballast: clunk
+          { t: R + 0.18, fn: () => setLight('roomFill', 0.05) },
+          { t: R + 0.6, fn: () => setLight('roomFill', 0.95) }, // flicker
+          { t: R + 0.78, fn: () => setLight('roomFill', 0.1) },
+          { t: R + 2.0, fn: () => {                            // the other rooms were ready first
             for (const zl of zoneLights) if (zl.light) zl.light.intensity = 0.9;
           } },
-          { t: 5.3, fn: () => applyRig('e3', true) },
-          { t: 5.4, fn: () => applyLayout() } // X: keep the back arm open post-cascade
+          { t: R + RELOCATION.buildSeconds - 3.0, fn: () => applyRig('e3', true) },
+          { t: R + RELOCATION.buildSeconds - 2.9, fn: () => applyLayout() } // X: keep the back arm open
         ]);
         const t1 = eraTable();
         niche.setFacet((t1?.default ?? 'none') as FacetState);
@@ -406,6 +487,21 @@ export function buildClusterShell(
     applyRig,
     eraTable,
     setKeptIds(ids: ReadonlySet<string>): void { morph.setKeptIds(ids); },
+
+    settleNow(): void {
+      timeline = [];
+      timelineT = 0;
+      planeLerp = null;
+      clearSettled();
+      morph.goToState(STATE_FOR_ERA[era], false); // snap, deterministic
+      applyRig(era, false);
+      state = STATE_FOR_ERA[era] >= 1 ? 'open' : 'sealed';
+      setPlaneZ(PLANE_Z[STATE_FOR_ERA[era] >= 1 ? 1 : 0]);
+      setTerminalVisible(era !== 'e3');
+      niche.setFacet((eraTable()?.default ?? 'none') as FacetState);
+      applyLayout();
+      rebuildSettled();
+    },
 
     update(dt: number): void {
       if (timeline.length) {

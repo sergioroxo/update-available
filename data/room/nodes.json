@@ -2,10 +2,88 @@
   "_doc": "PLACEHOLDER — R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2 'conducted movement'), era table superseded Session 27 (R28-0c, D14) per Sérgio's direct instruction: markers exist ONLY from Era 3 on — this is the TASK-CONDUCTED model, not free exploration. E1/E2 offer ZERO markers: E1 is the sealed room (nothing to jump to yet) and E2 is Daniel's CLOSED room (D15 'homecoming' — the walls stay shut, so there is nowhere else to send him). Cross-room movement starts exactly when the system begins SENDING the player at E3 ('the system sends you there to do tasks and learn about each experience', D13) — the doorways open at the SAME E2→E3 transition (see reinterp_deltas.json r3), so markers becoming available lines up with the rooms actually existing. E3 offers r1-desk + r2-desk (Room 1 stays reachable, Room 2 — Vera — leads); E4 adds r3-desk is already reachable... concretely: r1-desk/r2-desk from e3, r3-desk only from e4 (Maya's room is where E4's TURN lands you, so it is never a 'destination' from elsewhere — you arrive there via the TURN dolly, not a marker; it only offers a marker BACK once you've turned E4-ward again, i.e. from r1/r2 at e4). Each node wraps an EXISTING camera seat from src/engine/app.ts's seatPose() — no new seats invented, per the session brief. `marker` is that seat's own floor-projected (x,z) at a small floor y (0.03m) — the disc a player clicks to jump there; it is NOT an invented threshold/doorway spot, a deliberate prototype simplification (flagged in 01_SESSION_LOG.md as a V2 candidate: move the visual disc to the room's doorway/threshold instead of literally the chair). `eras` lists which era keys make the node OFFERED; a node is never shown for the era matching the player's CURRENT seat (runtime filter, not data). IMPORTANT DISCOVERY from Session 26: seatPose(180) — the 'spine' pseudo-seat (door + record wall) — returns the EXACT SAME (x,y,z) as seatPose(0), only a different yaw (it is a turn-in-place, not a distinct floor position), so it is NOT represented here as a node; turning to face the spine stays free look (drag/arrow-key), never a marker-move. This era table is a documented judgment call (Sérgio's D14 direction, not dictated by the data model); Sérgio/Fable can widen or narrow it freely by editing the `eras` arrays here, no code change needed.",
   "_doc2": "Session 37 (E3-i, THE THREE-SCREEN ROOM foundation, docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's R29-b): added r2-tablet + r2-phone, the first INTRA-room nodes (a jump that stays inside Room 2, never crossing to another room). r2-desk itself is unchanged and now doubles as 'the laptop' seat (Sérgio's brief: 'the existing r2-desk seat becomes/aligns-with the laptop seat') — no rename, so every existing cross-room reference to r2-desk still resolves correctly. The seat-count-as-thesis is deliberate: E1/E2 offer one seat per room; E3 offers r1-desk/r2-desk (cross-room) PLUS r2-tablet/r2-phone (intra-room) — three device-seats inside Room 2 alone, the machine-is-everywhere-you-sit beat (master plan §5). `seatYaw` on the two new nodes is a PSEUDO id (91/92), never a real room-facing yaw — it exists only so available()'s 'never offer the seat you're already at' filter can tell the three Room-2 device-seats apart (they'd otherwise all collide on the real room yaw, 90). It is NEVER passed to src/engine/app.ts's seatPose() switch/case for these two nodes: `pose` below is the camera's REAL, authored position/facing, and performSeatCut() uses it directly (falling back to seatPose(seatYaw) only for nodes without a `pose`, i.e. the three original room seats). `pose`/`marker` values here are FABLE/SÉRGIO CHECK — spatial-feel judgments computed from the room template (tools/gen_rooms.mjs) and screenshot-tuned in-browser this session, not measured facts; see src/room/era3Devices.ts's DEVICE_SEAT_POSES (the authored source these mirror) and the Session 37 log entry.",
   "nodes": [
-    { "id": "r1-desk", "seatYaw": 0, "label": "Room 1", "marker": [0, 0.03, 0.7], "eras": ["e3", "e4"] },
-    { "id": "r2-desk", "seatYaw": 90, "label": "Room 2 — the laptop", "marker": [-4.4, 0.03, 0.7], "eras": ["e3", "e4"] },
-    { "id": "r3-desk", "seatYaw": 270, "label": "Room 3", "marker": [4.4, 0.03, 0.7], "eras": ["e4"] },
-    { "id": "r2-tablet", "seatYaw": 91, "label": "the tablet", "marker": [-3.58, 0.03, 0.35], "pose": { "x": -3.58, "y": 1.05, "z": 0.35, "pitch": -37, "yaw": 0 }, "eras": ["e3", "e4"] },
-    { "id": "r2-phone", "seatYaw": 92, "label": "the phone", "marker": [-3.03, 0.03, 0.3], "pose": { "x": -3.03, "y": 1.0, "z": 0.3, "pitch": -23, "yaw": 0 }, "eras": ["e3", "e4"] }
+    {
+      "id": "r1-desk",
+      "seatYaw": 0,
+      "label": "Room 1",
+      "marker": [
+        0,
+        0.03,
+        0.7
+      ],
+      "eras": [
+        "e3",
+        "e4"
+      ]
+    },
+    {
+      "id": "r2-desk",
+      "seatYaw": 90,
+      "label": "Room 2 — the laptop",
+      "marker": [
+        -4.4,
+        0.03,
+        0.7
+      ],
+      "eras": [
+        "e3",
+        "e4"
+      ]
+    },
+    {
+      "id": "r3-desk",
+      "seatYaw": 270,
+      "label": "Room 3",
+      "marker": [
+        4.4,
+        0.03,
+        0.7
+      ],
+      "eras": [
+        "e4"
+      ]
+    },
+    {
+      "id": "r2-tablet",
+      "seatYaw": 91,
+      "label": "the tablet",
+      "marker": [
+        -3.58,
+        0.03,
+        0.35
+      ],
+      "pose": {
+        "x": -3.58,
+        "y": 1.05,
+        "z": 0.35,
+        "pitch": -37,
+        "yaw": 0
+      },
+      "eras": [
+        "e3",
+        "e4"
+      ]
+    },
+    {
+      "id": "r2-phone",
+      "seatYaw": 92,
+      "label": "the phone",
+      "marker": [
+        -3.03,
+        0.03,
+        0.3
+      ],
+      "pose": {
+        "x": -3.03,
+        "y": 1.0,
+        "z": 0.3,
+        "pitch": -38,
+        "yaw": 0
+      },
+      "eras": [
+        "e3",
+        "e4"
+      ]
+    }
   ]
 }

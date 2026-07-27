@@ -93,14 +93,15 @@
     ],
     "readOn": "Read on",
     "agree": "I Agree",
-    "installTitle": "Installing GracePlatform 2016",
+    "_installSplitDoc": "PLACEHOLDER — Sérgio voice pass pending. Session 61, from his playthrough note: 'the transition needs explaining… GraceProgram should load on VERA's computer, not Daniel's.' He is right, and the old build had the whole ritual happening on one machine: Daniel's 2003 CRT ran a screen that said 'Installing GracePlatform 2016' and then the room simply moved. So u3 is now SPLIT ACROSS THE TWO MACHINES. On Daniel's machine the install stage is the REMOVAL — Restorify's own sunset report, and under it the dispersal (the `uninstall` block below, unchanged): his era ENDS on his screen. The arrival half — the boot, the GracePlatform install and its changelog-as-thesis — lives in `e3_arrival` at the bottom of this file and plays on VERA's laptop, after the relocation, on the machine you are actually sitting at. Same ritual, same four stages (notice → terms → install → restart); it simply stops pretending that one desk in 2003 can install 2016. NOTE the one deliberate asymmetry: the TERMS are still agreed on Daniel's machine, before the move. That is the point of them — the agreement travels with the file, and the file is what moves.",
+    "installTitle": "Removing Restorify 2003",
     "changelog": [
-      "GRACEPLATFORM — WHAT'S NEW",
-      "+ softer colours, kinder words",
-      "+ testimony polish queue",
-      "= the chart: complete",
-      "= your file: cross-referenced",
-      "- the questions are the same"
+      "RESTORIFY 2003 — SERVICE ENDING",
+      "- accountability web: shut down",
+      "- daily realignment: shut down",
+      "= your chart: exported, complete",
+      "= your file: transferred in full",
+      "+ nothing has been deleted"
     ],
     "_uninstallDoc": "PLACEHOLDER — Sérgio voice pass pending. THE DISPERSAL (E2 script S2R.7; D31 STRUCK by Sérgio 2026-07-25 after the GPAHE check, with refinements — docs/REINTERP_D31_DISPERSAL_EVIDENCE_2026-07-25.md). The program's collapse doesn't kill the watcher; it renames it. The uninstall report renders AFTER the changelog finishes typing; lines prefixed '~' draw small and dim (the quiet line carries the thesis). Under the report LAMBY HIMSELF comes apart into seven small marks — the same seven src/desktop/theme/era3.ts's drawLambMark renders SETTLED as Lambient's badge on Room 2's three screens at E3, so what leaves here is literally what arrives there. Built by Fable, Session 33; re-staged and re-worded Session 58. WHY 'RENAMED' AND NOT 'MIGRATING' (Sérgio's adopted refinement): renaming is the documented mechanism — NARTH became ATCSI in 2014, and GPAHE 2023 finds providers relabelling in medical-sounding language to evade moderation. An uninstaller that reports success while the process continues under a new label is better sourced than vague migration AND it rhymes with the piece's own update-as-survival grammar. FRAMING DISCIPLINE (binding): this is survival by scattering, never omnipotence — GPAHE 2023 finds deplatforming partly WORKED, so the staging keeps the marks few, small, and settled, and the fiction keeps its invented marks (Restorify → GracePlatform); the real companies GPAHE names belong to dossier/provenance surfaces only, never to a room.",
     "uninstall": [
@@ -174,6 +175,29 @@
       "text": "Documentary grounding for the 2016→now update trigger: Malta's Act LV of 2016 (first European nationwide conversion-practice ban), passed December 2016, published 9 December 2016, now consolidated as Chapter 567. Cite Parliament of Malta + legislation.mt Chapter 567 — NOT the ILO NATLEX record, which Deep Research flags as ambiguously indexed. Separately, app-store removals of conversion-therapy apps (2018-2019) are documented as ONE app — Living Hope Ministries — pulled by Apple (21 Dec 2018), Microsoft (~Dec 2018), Amazon (by 21 Mar 2019) and Google (28 Mar 2019). Do not write \"several conversion-therapy apps.\" [VERIFY SOURCE]",
       "urls": ["https://www.parlament.mt/12th-leg/bills-12th/bill-no-167/", "https://legislation.mt/eli/cap/567/eng", "https://www.dallasnews.com/news/2018/12/21/there-s-not-an-app-for-that-apple-removes-arlington-ministry-s-app-after-anti-conversion-therapy-group-complaint/", "https://www.theverge.com/2019/3/29/18286906/google-conversion-therapy-app-play-store-remove"]
     }
+  },
+  "_remindDoc": "PLACEHOLDER — Sérgio voice pass pending. Session 61, his note on u3: 'Remind me later — what does it do?' The law (SCRIPT_UPDATE v0.5 §1 / CLAUDE.md) is that it works exactly ONCE, and the code has always honoured that — but nothing on screen said so. Pressing it withdrew the notice with no acknowledgement, and when the notice came back the button had silently vanished, which reads as a different dialog rather than as a spent option. Two strings fix it: `remindedStatus` stays on screen for the whole deferral (the system tells you it is coming back), and `remindSpent` labels the button when it returns GREYED — the S60 ruling applied to the one place in the piece where a dead button is literally the thesis. You may defer this once. You may not decline it.",
+  "remindedStatus": "Update deferred. It will ask again shortly.",
+  "remindSpent": "Reminder used",
+  "_e3ArrivalDoc": "PLACEHOLDER — Sérgio voice pass pending on EVERY string below. Session 61 — THE OTHER HALF OF u3, played on VERA's laptop (src/room/graceQueueLite.ts), not on Daniel's CRT. Sequence: you land in Room 2 at a DARK screen → the machine boots in front of you (his note: 'we shouldn't start without the boot up on the computer' — the same gap S59 closed for E2) → GracePlatform installs, and the changelog-as-thesis types on THERE, on the machine it is actually being installed onto → SisterSignal's sign-in, which is where the era's existing GraceQueue material begins. The changelog is the one that used to run on Daniel's screen, moved wholesale: the era law (era transitions = software updates) keeps its install stage and its thesis, it just happens on the right computer. `signInAfter` is a hold, not a gate — nothing here is pressable and nothing is timed for the player.",
+  "e3_arrival": {
+    "bootTitle": "SisterSignal",
+    "bootLines": [
+      "starting services",
+      "restoring your session",
+      "checking for updates"
+    ],
+    "bootFound": "1 update found — installing",
+    "installTitle": "Installing GracePlatform 2016",
+    "changelog": [
+      "GRACEPLATFORM — WHAT'S NEW",
+      "+ softer colours, kinder words",
+      "+ testimony polish queue",
+      "= the chart: complete",
+      "= your file: cross-referenced",
+      "- the questions are the same"
+    ],
+    "installedLine": "Installed. Your file arrived first."
   },
   "close": {
     "toEra": "close",

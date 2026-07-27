@@ -1294,6 +1294,25 @@ export class DesktopOS {
     const { ctx } = this;
     const skin = this.eraSkin();
     const colors = this.desktopColors();
+    // ⚑ S61 — DANIEL'S MONITOR IS DEAD AT E3, and stays dead. The u3 ritual
+    // used to hand the Room-1 CRT a full GracePlatform 2016 desktop the
+    // instant the era flipped: "community profile migrated · testimony tools
+    // ready", glowing on a 2003 machine in a room whose occupant has just
+    // been transferred, and glowing THROUGH the whole relocation as the
+    // camera flies over it. That is the other half of Sérgio's *"it installs
+    // on the Era-2 session — a design that makes no sense"*: the arrival now
+    // happens on Vera's laptop (src/room/graceQueueLite.ts), so this machine
+    // has nothing left to show. It ran its removal, it restarted, and it is
+    // an empty computer in a closed room.
+    // ⚑ NOT a blanket retirement, and deliberately so: the SPINE still arms
+    // u4 on this surface (src/narrative/spine.ts, step 'e3_s4'), so the screen
+    // comes back the moment the ritual needs it. Where the OS surface should
+    // LIVE once the player has left Room 1 for good is a real open question
+    // this session did not invent an answer to — flagged in the session log.
+    if (this.desktopEra === 'e3' && !this.updateApp) {
+      ui.px(ctx, 0, 0, W, H, ERA1.black);
+      return;
+    }
     ui.px(ctx, 0, 0, W, H, colors.bg);
 
     if (this.desktopEra === 'e1') {
@@ -1357,8 +1376,12 @@ export class DesktopOS {
     if (this.netvision?.open) this.netvision.draw(ctx);
     // …and his toasts arrive OVER the video: the crack in the showpiece
     if (this.caleb?.open) this.caleb.drawToasts(ctx);
-    // the update ritual is SYSTEM-modal — it draws over everything
-    if (this.updateApp?.open && this.updateApp.visible) this.updateApp.draw(ctx);
+    // the update ritual is SYSTEM-modal — it draws over everything.
+    // S61: `.visible` is false only during a DEFERRAL, and the app now draws
+    // one dim standing line there (Sérgio: "Remind me later — what does it
+    // do?"), so the gate is `open` and the app decides what a withdrawn
+    // notice looks like. It still draws nothing at all in any other case.
+    if (this.updateApp?.open) this.updateApp.draw(ctx);
     // taskbar
     ui.bevel(ctx, 0, H - 22, W, 22, true);
     ui.button(ctx, 3, H - 19, 50, 16, 'MENU', {});

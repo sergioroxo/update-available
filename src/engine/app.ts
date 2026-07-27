@@ -18,7 +18,7 @@ import { buildEra1Room } from '../room/era1room';
 import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
-import { buildClusterShell, type ClusterShell, type EraKey } from '../room/cluster';
+import { buildClusterShell, RELOCATION, type ClusterShell, type EraKey } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
@@ -111,6 +111,51 @@ const DESCENT_FROM = { x: 1.52, y: 2.18, z: 2.62, pitch: -30, yaw: 44 };
 const DESCENT_VIA = { x: 1.03, y: 2.45, z: 1.03 };
 /** one continuous move, slow enough to read as drifting in and sitting down */
 const DESCENT_SECONDS = 10;
+// ── ⚑ THE RELOCATION (S61) — E2 → E3, the one time the piece moves you house ──
+// Sérgio, after playing it: *"the transition needs explaining… the fly over
+// needs to be slower and let you see the room being built so you understand
+// the new space and the passage of time."* What he saw was a 2.4 s dolly
+// (`dollyTo(homeYaw, 2.4)`) fired at the same instant as a 6.5 s cascade: the
+// camera arrived at Vera's desk, facing a wall, four seconds before the space
+// behind it finished opening. Six years, and it was over before it read.
+//
+// It is now THREE LEGS, timed by `RELOCATION` in src/room/cluster.ts (which is
+// also what re-times the cascade, so the two halves cannot drift):
+//   1 RISE     — you come up out of Daniel's chair while his room is STILL
+//                CLOSED. Nothing has changed yet; you are just no longer sitting.
+//   2 THE BUILD — the walls leave, the ballast stutters, the two other rooms
+//                resolve out of the dark, and the camera crosses slowly over
+//                the space while it happens. This is the leg the note asked
+//                for: the room is built in front of you, not behind you.
+//   3 DESCEND  — down into Vera's seat, the facing resolving with the position
+//                (S53's lesson: one curve, aim and place together).
+//
+// ⚑ COMFORT LAW (CLAUDE.md; §0-REV-4). This is artificial locomotion — the
+// longest in the piece — so it is held to the envelope S53 measured for the
+// opening descent: peak 0.43 m/s linear, 9.1°/s angular, smootherstep/
+// smoothstep easing (zero velocity at both ends of every leg), no roll, no
+// FOV games, yaw always the shortest signed path. The path is ~6.6 m long and
+// that envelope is exactly why the whole move takes ~30 s: 6.6 m at a mean of
+// ~0.24 m/s is half a minute, and the alternative is a comfort violation.
+// Measured peaks from a real run are in the session log. Any input lands you
+// in the seat at once (endRelocation) and settles the room — the same escape
+// the descent has, for the same reason.
+/** end of leg 1: standing over Daniel's desk, still inside his closed room.
+ *  Kept UNDER the ceiling (2.68) and the lintels (2.43) throughout, so no
+ *  slab ever has to be hidden and restored (the churn S48 logged). */
+const RELOC_OVERLOOK_A = { x: 0.25, y: 2.16, z: 1.75, pitch: -17, yaw: 0 };
+/** leg 1's bezier control — offset PERPENDICULAR to the chord (S53's finding:
+ *  a control point placed "between" the ends bows nothing, it only re-times).
+ *  ~0.23 m of real sagitta: you rise first and lean back after, rather than
+ *  sliding up the diagonal. */
+const RELOC_RISE_VIA = { x: 0.15, y: 2.00, z: 0.95 };
+/** end of leg 2: out over the middle of the opened space, already turning
+ *  toward Room 2. A straight eased tween, not an arc — during the build the
+ *  camera should be the steadiest thing on screen. */
+const RELOC_OVERLOOK_B = { x: -2.30, y: 2.28, z: 1.60, pitch: -13, yaw: 52 };
+/** leg 3's control point: out over Room 2's floor, so the descent curls in
+ *  over the bed and settles at the desk instead of dropping on a diagonal */
+const RELOC_DESCEND_VIA = { x: -3.70, y: 2.10, z: 1.45 };
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
 // the blink is a CUT, never a tween: fade to black, THEN move the camera,
 // THEN fade back — no smooth travel (Sérgio's explicit law: gaze must stay
@@ -309,6 +354,22 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // projection dance — mirrors __os's own established convention exactly.
     (window as { __graceQueue?: () => unknown }).__graceQueue = () =>
       era3Devices ? era3Devices.debugQueue() : null;
+    // S61 FREE-CAMERA probe (?debug=1 only, write-only review aid — the
+    // companion to __camProbe, which can only land on the three SEAT poses).
+    // Room 2's seat sits 0.57 m from the laptop, so every prop-dressing review
+    // in that room was being done through a screen that fills the frame, or by
+    // dragging the view a few degrees at a time. This puts the camera anywhere
+    // (and reads it back), which is how S61 surveyed Room 2's dressing and how
+    // the relocation arc's own poses were checked frame by frame. It never
+    // runs in play: `debugOn` is `?debug=1`.
+    (window as { __camFree?: (x: number, y: number, z: number, pitch: number, yaw: number) => unknown }).__camFree =
+      (x, y, z, pitch, yaw) => {
+        camPos.set(x, y, z);
+        camPitch = pitch;
+        camYaw = yaw;
+        camMove = null;
+        return { pos: [camPos.x, camPos.y, camPos.z], pitch: camPitch, yaw: camYaw };
+      };
     // THE WAKE probe (read-only, like __guide; replaces S40's __preBoot):
     // the wake has no desktop-canvas surface to eyeball (the monitor is dark
     // until it ends), so this closes the same review gap __ledger did —
@@ -601,6 +662,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // track — the move IS a single camMove arc, so this is just "is the front
   // door still playing", read by the skip handlers and by the landing check.
   let descentActive = false;
+  // S61 THE RELOCATION: which leg owns the camera, or null when it is not
+  // running. See the RELOC_* constants above for the shape and the comfort
+  // arithmetic; beginRelocation/advanceRelocation/endRelocation drive it.
+  let relocLeg: 'rise' | 'build' | 'descend' | null = null;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
   // the tilt ran conducted (autoCam) — a free tilt cedes to the player's drag
   let revealReturn = -1;
@@ -905,6 +970,49 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     os.beginReinterpOpening();  // boot on the monitor → O3 profile
   }
 
+  // ── THE RELOCATION's three legs (see the RELOC_* constants) ──
+  /** start the whole move. Called from driveMorph on the E2→E3 shift only —
+   *  never on a snap/settled jump, and never for any other era. */
+  function beginRelocation(): void {
+    relocLeg = 'rise';
+    startCamMove(RELOC_OVERLOOK_A, RELOCATION.riseSeconds, true, RELOC_RISE_VIA);
+  }
+  /** each leg hands over the frame its arc resolves — no gap, no still beat */
+  function advanceRelocation(): void {
+    if (relocLeg === 'rise') {
+      relocLeg = 'build';
+      // a straight eased tween: while the room assembles, the camera is the
+      // one thing on screen that is not changing shape
+      startCamMove(RELOC_OVERLOOK_B, RELOCATION.buildSeconds, true);
+    } else if (relocLeg === 'build') {
+      relocLeg = 'descend';
+      startCamMove(seatPose(90), RELOCATION.descendSeconds, true, RELOC_DESCEND_VIA);
+    } else if (relocLeg === 'descend') {
+      endRelocation();
+    }
+  }
+  /** land it: in the seat, room settled, Vera's machine free to start. Called
+   *  both when leg 3 resolves on its own and as the SKIP — any input at all
+   *  calls this, exactly as endDescent works, so a 30-second scripted move can
+   *  never trap anyone or make them sit through motion they don't want. */
+  function endRelocation(): void {
+    if (!relocLeg) return;
+    relocLeg = null;
+    camMove = null;
+    cluster?.settleNow(); // the space finishes wherever the cascade had got to
+    seatYaw = 90;
+    const sp = seatPose(90);
+    camPos.set(sp.x, sp.y, sp.z);
+    camPitch = sp.pitch;
+    camYaw = sp.yaw;
+    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    camera.setLocalEulerAngles(camPitch, camYaw, 0);
+    // ⚑ and only NOW does Vera's laptop start: the era's machine boots in
+    // front of you, in the seat, the way E1's did (Sérgio: "we shouldn't
+    // start without the boot up on the computer").
+    era3Devices?.beginArrival();
+  }
+
   /** grabbing/keying the view cancels a non-conducted move (the player left it) */
   function nudgeCamera(): void {
     if (camMove && !camMove.conducted) { camMove = null; }
@@ -1135,6 +1243,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // lands you in the seat and does nothing else — it is a way out of the
     // move, not a click on the room underneath it.
     if (descentActive) { endDescent(); return; }
+    // S61: and so is the relocation, for the same reason and by the same
+    // gesture — it is the longest scripted move in the piece.
+    if (relocLeg) { endRelocation(); return; }
     if (!facingBack) {
       if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
@@ -1265,6 +1376,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S48: any key skips the descent too (Escape excepted — the game menu
     // intercepts that in the capture phase and never reaches here)
     if (descentActive) { endDescent(); return; }
+    if (relocLeg) { endRelocation(); return; } // S61: same for the relocation
     // F2, not a letter: printable keys must always reach the typing hand
     if (e.key === 'F2' && os.inDesktop && !os.paused && !gameMenuBus.isOpen) {
       doFlip();
@@ -1370,6 +1482,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // over to S44's wake, same frame, so there is no still beat between
       // arriving and the light starting to come up.
       if (descentActive && !camMove) endDescent();
+      // …and the relocation's legs hand over to each other the same way
+      if (relocLeg && !camMove) advanceRelocation();
       camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
     camera.setLocalEulerAngles(camPitch, camYaw, 0);
@@ -1601,6 +1715,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // r1/E1 fold through this and every later era shift; un-kept eligible
     // props age/retire exactly as reinterp_deltas.json already dictates.
     if (os.belongings) cluster.setKeptIds(os.belongings.kept);
+    const fromEra = cluster.era; // read BEFORE morphToEra reassigns it
     os.setDesktopEra(era);
     era3Devices?.setEra(era); // Session 37: the three device screens, e3+ only
     // S2R.0a: cluster.morphToEra() below calls applyRig(era, animate), which
@@ -1612,6 +1727,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // thirty years of rooms and settle into Room 3, Maya's room (the trans
       // room evolved; ◆N3 retargeted from the old spine desk, Round 24)
       dollyTo(270, 4.5, autoCam);
+    } else if (era === 'e3' && fromEra === 'e2') {
+      // ⚑ S61 — THE RELOCATION replaces the 2.4 s dolly here. It is the only
+      // era shift that moves you into a different room and a different life,
+      // and cluster.morphToEra's own E2→E3 timeline (just called above) is now
+      // scheduled around its three legs. See the RELOC_* constants.
+      beginRelocation();
     } else if (seatYaws().length > 1 && seatYaw !== cluster.homeYaw) {
       dollyTo(cluster.homeYaw, 2.4, false); // era jumps re-seat at the lead room
     }
@@ -1659,7 +1780,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // lighting: cluster.morphToEra(options.era, false) below applies that
       // era's rig (data/room/cluster.json), which owns lighting from E2 on.
       cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
-      era3Devices?.setEra(options.era); // Session 37: review jumps era-gate the device screens too
+      // Session 37: review jumps era-gate the device screens too. S61: and
+      // `settled` skips the arrival (dark → boot → install), matching
+      // os.setDesktopEra(options.era, true) two lines above.
+      era3Devices?.setEra(options.era, true);
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
       // boot SEATED at the era's home room (E4 boots already turned — the TURN)
       seatYaw = cluster.homeYaw;

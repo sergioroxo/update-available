@@ -37,6 +37,7 @@ import * as aero from '../desktop/theme/era3';
 import { ERA3, drawLambMark } from '../desktop/theme/era3';
 import { ledger } from '../state/ledger';
 import q from '../../data/dialog/s3_queue.json';
+import updates from '../../data/strings/updates.json';
 
 interface CardDef {
   id: number;
@@ -57,7 +58,51 @@ const BASE_ORDER = q.order as number[];
 const MIRA_ID = q.miraId as number;
 const MIRA_GATE = q.miraGateFlags as number;
 
-type Mode = 'signin' | 'queue' | 'done';
+/**
+ * ⚑ SESSION 61 — THE ARRIVAL (`dark` → `boot` → `install`), in front of the
+ * three modes that already existed.
+ *
+ * Two of Sérgio's u3 notes land here, and they are the same note twice:
+ * *"GraceProgram should load on VERA's computer"* and *"we shouldn't start
+ * without the boot up on the computer."* The era's ritual used to run its
+ * entire install on Daniel's 2003 CRT — a screen reading "Installing
+ * GracePlatform 2016" in a room that was about to stop existing — and then
+ * you simply appeared at a laptop already sitting at a sign-in prompt. So the
+ * install crossed the relocation with you: Daniel's machine now runs the
+ * REMOVAL (data/strings/updates.json u3), and everything below runs HERE,
+ * after the camera lands, on the machine being installed onto.
+ *
+ * The sequence, all copy from `updates.json`'s `e3_arrival`:
+ *   'dark'    the laptop is off. You arrive to a dead screen, and it holds
+ *             long enough to be read as dead.
+ *   'boot'    the 2016 machine starts in front of you — wordmark, service
+ *             lines, and then "1 update found".
+ *   'install' GracePlatform installs, the changelog-as-thesis types on, the
+ *             bar fills, and it says the quiet part: your file arrived first.
+ *   'signin'  …which is exactly where this module already began.
+ *
+ * DIRTY DISCIPLINE (era3Devices.ts's law, kept): these screens have a clock,
+ * but they still redraw only when their CONTENT changes. `update()` quantises
+ * its own time to TICK (0.25 s) and bumps `version` only when that quantised
+ * value moves, so the arrival costs 4 canvas uploads a second for ~16 s and
+ * then goes back to redrawing on real state changes alone. Nothing here is
+ * pressable and nothing waits on the player.
+ */
+type Mode = 'dark' | 'boot' | 'install' | 'signin' | 'queue' | 'done';
+
+const ARRIVAL = (updates as unknown as {
+  e3_arrival: {
+    bootTitle: string; bootLines: string[]; bootFound: string;
+    installTitle: string; changelog: string[]; installedLine: string;
+  };
+}).e3_arrival;
+
+const DARK_SECONDS = 1.6;      // a dead screen, long enough to read as dead
+const BOOT_LINE_SECONDS = 1.1; // each service line
+const BOOT_TAIL_SECONDS = 1.8; // "1 update found — installing"
+const INSTALL_LINE_SECONDS = 1.0;
+const INSTALL_TAIL_SECONDS = 2.6; // the bar finishing + the installed line
+const TICK = 0.25;             // the quantum the redraw clock moves in
 type Rect = { x: number; y: number; w: number; h: number; id: string };
 function hit(r: Rect, x: number, y: number): boolean {
   return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
@@ -76,7 +121,13 @@ export class GraceQueueLite {
    *  discipline: never re-dirtied by a ticking clock, only real state). */
   version = 0;
 
-  private mode: Mode = 'signin';
+  /** S61: the laptop starts DARK and is walked forward by `update()` once
+   *  `beginArrival()` fires (the relocation landing). A settled review jump
+   *  (?era=3) calls `settleArrival()` instead and lands straight on sign-in —
+   *  the same distinction os.ts draws with `setDesktopEra(era, settled)`. */
+  private mode: Mode = 'dark';
+  private arrivalT = -1;   // < 0 = not running
+  private lastTick = -1;
   private remaining: number[] = [...BASE_ORDER];
   private currentId: number | null = null;
   private flagsFiled = 0;          // off-script cards (5/6/7) sent to review
@@ -86,6 +137,50 @@ export class GraceQueueLite {
 
   constructor() {
     this.lambLine = q.lambient.greet;
+  }
+
+  // ── the arrival (S61) ────────────────────────────────────────────────────
+  private get bootSeconds(): number {
+    return DARK_SECONDS + ARRIVAL.bootLines.length * BOOT_LINE_SECONDS + BOOT_TAIL_SECONDS;
+  }
+  private get installSeconds(): number {
+    return ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + INSTALL_TAIL_SECONDS;
+  }
+
+  /** the relocation has landed: start the machine (app.ts → era3Devices) */
+  beginArrival(): void {
+    if (this.mode !== 'dark' || this.arrivalT >= 0) return;
+    this.arrivalT = 0;
+    this.lastTick = 0;
+    this.bump();
+  }
+
+  /** review jumps skip the arrival narrative, exactly as `?era=` skips E2's */
+  settleArrival(): void {
+    if (this.mode === 'dark' || this.mode === 'boot' || this.mode === 'install') {
+      this.mode = 'signin';
+      this.arrivalT = -1;
+      this.bump();
+    }
+  }
+
+  /** called every frame by era3Devices.tick — see the class header on why this
+   *  does not break the dirty-upload law */
+  update(dt: number): void {
+    if (this.arrivalT < 0) return;
+    this.arrivalT += dt;
+    const want: Mode = this.arrivalT < this.bootSeconds ? (this.arrivalT < DARK_SECONDS ? 'dark' : 'boot')
+      : this.arrivalT < this.bootSeconds + this.installSeconds ? 'install'
+      : 'signin';
+    const tick = Math.floor(this.arrivalT / TICK);
+    if (want !== this.mode) {
+      this.mode = want;
+      if (want === 'signin') this.arrivalT = -1; // the clock's work is done
+      this.lastTick = tick;
+      this.bump();
+      return;
+    }
+    if (tick !== this.lastTick) { this.lastTick = tick; this.bump(); }
   }
 
   // ── queue progression ────────────────────────────────────────────────────
@@ -167,6 +262,13 @@ export class GraceQueueLite {
   // ── draw ─────────────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.rects = [];
+    // S61 — the arrival owns the WHOLE panel: no wallpaper, no taskbar, no
+    // window chrome. A machine that is off or booting has no desktop yet, and
+    // drawing one behind the boot text is the exact "already running" lie this
+    // beat exists to remove.
+    if (this.mode === 'dark') { px(ctx, 0, 0, W, H, ERA3.taskBot); return; }
+    if (this.mode === 'boot') { this.drawBoot(ctx, W, H); return; }
+    if (this.mode === 'install') { this.drawInstall(ctx, W, H); return; }
     aero.wallpaper(ctx, W, H);
     aero.taskbar(ctx, W, H, '9:41'); // period placeholder clock, matches the phone's lock-screen clock
     const MARGIN = 14; const TASKBAR_H = 28;
@@ -180,6 +282,72 @@ export class GraceQueueLite {
     if (this.mode === 'signin') { this.drawSignIn(ctx, c); return; }
     if (this.mode === 'done') { this.drawDone(ctx, c); return; }
     this.drawCard(ctx, c);
+  }
+
+  /** the 2016 machine starting: a wordmark, its services, then the update it
+   *  is about to take. Dark panel, cool ink — the era's own palette, before
+   *  any of the era's own chrome exists yet. */
+  private drawBoot(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    px(ctx, 0, 0, W, H, ERA3.taskBot);
+    const age = this.arrivalT - DARK_SECONDS;
+    const cx = Math.round(W * 0.5);
+    setFont(ctx, 26);
+    ctx.fillStyle = ERA3.accentHi;
+    const tw = ctx.measureText(ARRIVAL.bootTitle).width;
+    ctx.fillText(ARRIVAL.bootTitle, cx - Math.round(tw / 2), Math.round(H * 0.30));
+    drawLambMark(ctx, cx + Math.round(tw / 2) + 14, Math.round(H * 0.30) + 4, 1.4);
+
+    const shown = Math.min(ARRIVAL.bootLines.length, Math.floor(age / BOOT_LINE_SECONDS) + 1);
+    setFont(ctx, 13);
+    ctx.fillStyle = ERA3.grey;
+    for (let i = 0; i < shown; i++) {
+      ctx.fillText(ARRIVAL.bootLines[i], Math.round(W * 0.30), Math.round(H * 0.46) + i * 22);
+    }
+    if (age >= ARRIVAL.bootLines.length * BOOT_LINE_SECONDS) {
+      setFont(ctx, 13);
+      ctx.fillStyle = ERA3.accentHi;
+      ctx.fillText(ARRIVAL.bootFound, Math.round(W * 0.30),
+        Math.round(H * 0.46) + ARRIVAL.bootLines.length * 22 + 8);
+    }
+    this.progressBar(ctx, W, H, Math.min(1, Math.max(0, age / (this.bootSeconds - DARK_SECONDS))));
+  }
+
+  /** ⚑ GracePlatform installing ON VERA'S MACHINE — the changelog-as-thesis
+   *  that used to type itself out on Daniel's CRT four seconds before his room
+   *  stopped existing. Same six lines, same '+ / = / -' grammar the era ritual
+   *  uses everywhere (src/desktop/apps/update.ts), in 2016's palette. */
+  private drawInstall(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    px(ctx, 0, 0, W, H, ERA3.taskBot);
+    const age = this.arrivalT - this.bootSeconds;
+    setFont(ctx, 16);
+    ctx.fillStyle = ERA3.white;
+    ctx.fillText(ARRIVAL.installTitle, Math.round(W * 0.14), Math.round(H * 0.16));
+    const shown = Math.min(ARRIVAL.changelog.length, Math.floor(age / INSTALL_LINE_SECONDS));
+    setFont(ctx, 13);
+    for (let i = 0; i < shown; i++) {
+      const line = ARRIVAL.changelog[i];
+      ctx.fillStyle = line.startsWith('-') ? ERA3.amber : line.startsWith('=') ? ERA3.grey : ERA3.accentHi;
+      ctx.fillText(line, Math.round(W * 0.14), Math.round(H * 0.30) + i * 22);
+    }
+    if (age >= ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + 1.0) {
+      setFont(ctx, 13);
+      ctx.fillStyle = ERA3.grey;
+      ctx.fillText(ARRIVAL.installedLine, Math.round(W * 0.14),
+        Math.round(H * 0.30) + ARRIVAL.changelog.length * 22 + 10);
+    }
+    this.progressBar(ctx, W, H, Math.min(1, Math.max(0, age / this.installSeconds)));
+  }
+
+  /** one bar, both screens. No stutter and no glitch: the E2 install's bar
+   *  stumbles because the program it is installing is failing; this one does
+   *  not fail. It is the smooth one, and that is the point. */
+  private progressBar(ctx: CanvasRenderingContext2D, W: number, H: number, k: number): void {
+    const bw = Math.round(W * 0.5);
+    const bx = Math.round((W - bw) / 2);
+    const by = Math.round(H * 0.80);
+    px(ctx, bx - 1, by - 1, bw + 2, 12, ERA3.greyDk);
+    px(ctx, bx, by, bw, 10, ERA3.tray);
+    px(ctx, bx, by + 1, Math.round(bw * k), 8, ERA3.accent);
   }
 
   private drawSignIn(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {

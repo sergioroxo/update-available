@@ -26,11 +26,8 @@
     {
       "key": "chair",
       "file": "chairDesk.glb",
-      "scale": [
-        1.7,
-        1.25,
-        1.7
-      ],
+      "_scaleDoc": "Session 61: was [1.7, 1.25, 1.7] — 36% wider/deeper than tall, which splayed the star base and squatted the whole chair (Sérgio circled 'the chair base' in Room 2). Measured live at the old scale: 0.534 x 0.759 x 0.569 m, i.e. a desk chair whose back topped out BELOW the desk surface it faces. Native mesh (measured / old scale) = 0.314 x 0.607 x 0.335, so a UNIFORM 1.6 gives 0.50 x 0.97 x 0.54 — the authored 0.5 x 0.75 x 0.5 footprint from data/room/reinterp_deltas.json, at a real chair's height, with no axis distorted. Uniform is the point: nothing about a chair justified a non-uniform scale.",
+      "scale": 1.6,
       "yaw": 180,
       "cx": 0.17,
       "cz": -0.16,
@@ -57,7 +54,12 @@
     {
       "key": "nightstand",
       "file": "sideTable.glb",
-      "scale": 1.9,
+      "_scaleDoc": "Session 61: was a blanket 1.9 copied from bed/bookcase/rug, and nobody ever measured sideTable.glb against it. Native mesh = 0.535 x 0.384 x 0.22 m, so 1.9 rendered a 1.02 x 0.73 x 0.42 m slab where reinterp_deltas.json authors a 0.4 x 0.5 x 0.4 nightstand — two and a half times its own footprint. It read as a crate on the floor (Sérgio: 'a box on the floor'), and it had swallowed the potted plant standing next to it. [0.85, 1.30, 1.55] brings the mesh to 0.45 x 0.50 x 0.34, i.e. the authored box within a few cm, with the long axis no longer poking a metre into the room. Anything sitting ON it moves with it: w_phoneDevice, era3Devices' phone plane, and nodes.json's r2-phone seat.",
+      "scale": [
+        0.85,
+        1.3,
+        1.55
+      ],
       "yaw": 0,
       "cx": 0.26,
       "cz": -0.1,

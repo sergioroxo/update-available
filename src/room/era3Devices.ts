@@ -108,7 +108,12 @@ const PLACEMENT = {
   phone: {
     // y verified in-browser (Session 37): the nightstand's REAL model AABB
     // tops out ~0.73m (not the box-fallback ~0.5m) — this sits just above it.
-    pos: { x: -3.03, y: 0.75, z: -0.3 },
+    // Session 61: and that 0.73 was itself the bug. sideTable.glb was carrying a
+    // blanket 1.9 scale nobody had measured, rendering a 1.02 x 0.73 x 0.42 m
+    // slab where the room authors a 0.4 x 0.5 x 0.4 nightstand — Sérgio's "box
+    // on the floor". data/room/models.json now scales it to its authored box
+    // (measured top 0.500), so the phone comes down with the surface it lies on.
+    pos: { x: -3.03, y: 0.525, z: -0.3 },
     size: { w: 0.07, h: 0.14 },
     euler: { x: 0, y: 0, z: 0 } // flat, screen-up
   }
@@ -127,7 +132,11 @@ export const DEVICE_SEAT_POSES = {
   // the bed/nightstand's REAL measured AABB, not the box-fallback size — see
   // the session log's geometry note), pitch recomputed for the new distance.
   'r2-tablet': { x: -3.58, y: 1.05, z: 0.35, pitch: -37, yaw: 0 },
-  'r2-phone': { x: -3.03, y: 1.0, z: 0.3, pitch: -23, yaw: 0 }
+  // Session 61: pitch -23 → -38. The seat is unmoved; the PHONE came down
+  // 0.23 m with its re-scaled nightstand (see PLACEMENT.phone above), so the
+  // old aim looked over the top of it. Kept in step with data/room/nodes.json,
+  // which stays the authoritative copy.
+  'r2-phone': { x: -3.03, y: 1.0, z: 0.3, pitch: -38, yaw: 0 }
 } as const;
 
 function makeCanvas(logicalW: number, logicalH: number, scale: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
@@ -257,8 +266,16 @@ export interface Era3Devices {
   tick(dt: number): void;
   /** era-gate the three screens (and fire the once-only arrival witness
    *  line the first time era reaches e3+). Call from driveMorph() and the
-   *  ?era= review-jump path alongside the room's own era toggles. */
-  setEra(era: EraKey): void;
+   *  ?era= review-jump path alongside the room's own era toggles.
+   *  S61 `settled`: a review jump wants the laptop already signed-in-ready,
+   *  not the arrival narrative (dark → boot → install) — the same distinction
+   *  os.ts's `setDesktopEra(era, settled)` draws for the E2 arrival. */
+  setEra(era: EraKey, settled?: boolean): void;
+  /** S61: the relocation has landed and the player is in Vera's seat — start
+   *  her machine. Called by app.ts's endRelocation(), never by setEra: the
+   *  boot belongs to the moment you ARRIVE, not to the moment the era flips
+   *  (which is ~30 s earlier, in another room). No-op if already started. */
+  beginArrival(): void;
   /** screen px → world ray (from app.ts's own screenRay()) → the laptop
    *  plane's logical canvas coords, generalized for ANY plane orientation
    *  (the laptop's vertical euler differs from the tablet/phone's flat
@@ -362,7 +379,12 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   let arrived = false;
 
   return {
-    tick(): void {
+    tick(dt: number): void {
+      // S61: the arrival (dark → boot → install → sign-in) is the only thing
+      // in this module with a clock. It bumps `version` on its own quantised
+      // schedule, so the redraw path below is unchanged and still fires only
+      // on a real content change — never per frame. See GraceQueueLite's header.
+      graceQueueLite.update(dt);
       for (const s of screens) {
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
           s.lastVersion = s.versionOf();
@@ -374,15 +396,22 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         if (s.dirty) { s.tex.upload(); s.dirty = false; }
       }
     },
-    setEra(era: EraKey): void {
+    setEra(era: EraKey, settled = false): void {
       const visible = era === 'e3' || era === 'e4';
       for (const s of screens) s.entity.enabled = visible;
+      // S61: a settled review jump lands on sign-in; a real transition leaves
+      // the laptop dark until endRelocation() calls beginArrival(). E4 also
+      // settles — by then the machine has long since been on.
+      if (visible && (settled || era === 'e4')) graceQueueLite.settleArrival();
       if (visible && !arrived) {
         arrived = true;
         if (ledger.era3Arrival.length === 0) {
           ledger.era3Arrival.push({ witness: d.witnessArrival });
         }
       }
+    },
+    beginArrival(): void {
+      graceQueueLite.beginArrival();
     },
     handleLaptopPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
       const laptop = screens.find(s => s.name === 'laptop');

@@ -2690,3 +2690,171 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   **BLOCKED: none.** `npx tsc --noEmit`, `npm test` and `npm run build` green on the final tree.
   **All new copy is PLACEHOLDER-draft** and waits on Sérgio: the seals block (badges, guarantee,
   fine print, website), the now-playing line, the toast's "click to open", and `window.you`.
+
+- 2026-07-27 — Reinterp Session 62 (Opus 5, build-queue tag **S61 — THE TRANSITION AND ROOM 2**;
+  logged as Session 62 to keep this log sequential). The E2→E3 handoff, rebuilt around Sérgio's
+  note that *"the transition needs explaining… the GraceProgram should load on Vera's computer.
+  Also the fly over needs to be slower and let you see the room being built so you understand the
+  new space and the passage of time."*
+
+  ### 1. ⚑ THE RELOCATION — 2.4 s → 29.4 s, AND THE ROOM IS BUILT IN FRONT OF YOU (finding G30)
+  The old handoff fired a `dollyTo(homeYaw, 2.4)` at the *same instant* as a 6.5 s cascade, so the
+  camera had already landed at Vera's desk, facing a wall, four seconds before the space behind it
+  finished opening. Six years of a life, over before it read. It is now **three legs**, and the
+  walls leave during the middle one:
+  **RISE (7.0 s)** — up out of Daniel's chair while his room is still CLOSED; nothing has changed,
+  you are just no longer sitting. **THE BUILD (11.0 s)** — the walls go, the ballast stutters, the
+  two other rooms resolve out of the dark, and the camera crosses slowly above the space while it
+  happens. **DESCEND (11.5 s)** — down into Vera's seat, aim resolving with position (S53's one
+  curve, not a crane). The cascade is stretched to fill the middle leg exactly — `ClusterMorph`
+  gained a `pace` argument (11.0 / 6.5 = 1.69×) that scales the sweep and each prop's own resolve
+  together, so the diagonal roll keeps its shape and only its clock changes. `RELOCATION` in
+  `src/room/cluster.ts` is the single source of the three durations: `app.ts` flies the camera off
+  it and `cluster.ts` schedules the cascade off it, so the two halves cannot drift apart.
+  **⚑ MEASURED COMFORT RATES, from a real run** (per-frame camera sampling at a fixed 1/60 dt,
+  the same method S53 used): path **6.75 m**, duration **29.35 s**, mean **0.230 m/s**, **peak
+  linear 0.415 m/s**, **peak angular 6.87 °/s**. Both inside S53's envelope (0.43 m/s, 9.1 °/s).
+  Smootherstep on the two arcs, smoothstep on the straight middle leg — zero velocity AND zero
+  acceleration at every leg boundary, no roll, no FOV games, yaw always the shortest signed path.
+  Per leg: rise 0.395 / 4.55, build 0.349 / 6.87, descend 0.415 / 5.9.
+  **Why it is half a minute, stated plainly:** the path is inherently ~6.7 m (4.4 m of room, 1.1 m
+  up and 1.1 m back down) and 6.7 m at a mean of 0.23 m/s IS ~29 s. The first cut used a 10 s
+  descent and measured 0.477 m/s — over the envelope — so the descent went to 11.5 s. The number
+  is the comfort law, not a taste call. **It is skippable**: any input at all lands you in the seat
+  and settles the space (new `cluster.settleNow()`), exactly as `endDescent` works and for the same
+  reason. Verified: a keypress 9 s in put the camera at (-4.4, 1.16, 0.7) with the room fully
+  folded on the next frame.
+
+  ### 2. ⚑ GRACEPLATFORM INSTALLS ON VERA'S MACHINE (findings G27/G29)
+  u3 is now **split across the two computers**, which is what "explaining the transition" turned
+  out to mean. On **Daniel's** CRT the install stage is the REMOVAL — `installTitle` is *"Removing
+  Restorify 2003"* and the changelog is the sunset report (`- accountability web: shut down` …
+  `+ nothing has been deleted`, the only `+` line being the thing that survives), with the S33
+  dispersal playing underneath it unchanged. His era ends on his screen. On **Vera's** laptop, after
+  the relocation lands, `GraceQueueLite` gained three modes in front of the three it had:
+  `dark` → `boot` → `install` → `signin`. The GracePlatform changelog-as-thesis moved there
+  wholesale, so the era law (transitions ARE software updates) keeps its install stage and its
+  thesis — it just stops pretending a desk in 2003 can install 2016. The notice and the TERMS stay
+  on Daniel's machine deliberately: the agreement travels with the file, and the file is what moves.
+  **Screenshotted from the running build:** "Removing Restorify 2003" on the CRT; then, after the
+  fly-over, SisterSignal booting on the laptop; then "Installing GracePlatform 2016" typing on
+  there; then the sign-in. A real click on "Sign in" afterwards opened Hannah R.'s card — the
+  existing queue is unregressed.
+
+  ### 3. ERA 3 BOOTS IN FRONT OF YOU (finding G31)
+  Same gap S59 closed for E2. You now arrive at a **dead screen** that holds 1.6 s before anything
+  happens, then the machine starts: wordmark + Lambient's mark, three service lines, "1 update
+  found — installing", a bar. `beginArrival()` is called by `endRelocation()`, NOT by `setEra` —
+  the boot belongs to the moment you ARRIVE, which is ~30 s after the era actually flips, in
+  another room. `?era=3` review jumps call `settleArrival()` and land on sign-in instead, the same
+  distinction `os.setDesktopEra(era, settled)` already draws.
+  **Dirty discipline kept:** the arrival is the only clocked thing in that module; `update()`
+  quantises to 0.25 s and bumps `version` only when that moves, so it costs 4 uploads/sec for ~16 s
+  and then goes back to redrawing on real state changes alone. No per-frame redraw was introduced.
+
+  ### 4. ⚑ ONE THING THE FLY-OVER MADE VISIBLE THAT NOBODY HAD FILED
+  With the camera now passing slowly over Daniel's desk, his CRT was clearly showing a full
+  **GracePlatform 2016 desktop** — *"community profile migrated · testimony tools ready"* — glowing
+  on a 2003 machine in a room whose occupant had just been transferred. That is the other half of
+  his *"it installs on the Era-2 session — a design that makes no sense"*. Daniel's monitor is now
+  **dead at E3**: it ran its removal, it restarted, and it is an empty computer in a closed room.
+  ⚑ **Not a blanket retirement, deliberately:** `src/narrative/spine.ts` still arms **u4 on that
+  surface**, so the screen comes back the moment the ritual needs it (verified: idle E3 = black,
+  `armUpdate('u4')` = the desktop returns). **FOR SÉRGIO / a later session:** *where the OS surface
+  should live once the player has left Room 1 for good* is a real open question this session did
+  not invent an answer to. Today u4 would be delivered on a monitor you are no longer sitting at.
+
+  ### 5. "REMIND ME LATER" — THE LAW HELD, IT JUST NEVER SAID SO (finding G26)
+  The once-only rule was correct in code the whole time and invisible in play. Two changes, both
+  legibility: pressing it now leaves a standing line in the era's own bevelled chrome just above the
+  taskbar (**"Update deferred. It will ask again shortly."**) for the whole 40 s deferral — the
+  first draft put it at `H-14`, which os.ts's taskbar paints straight over, caught on screen and
+  moved. And when the notice returns the button is **drawn GREYED as "Reminder used"** instead of
+  silently vanishing — S60's ruling applied to the one beat it was written for. *You may defer this
+  once. You may not decline it.* **Verified by pressing it:** `remindLaterCount` stayed 1, the
+  notice stayed up, nothing happened at all.
+
+  ### 6. THE WITNESS PANEL LEAVES ROOM 2 (finding G32) — with a reason, not just tidiness
+  Picked live from Vera's seat before touching anything: the ray lands on `witness-screen`, AABB
+  centre (-0.86, 1.43, 3.62). It is hidden for **E3 only**, and the reason is the era's own thesis:
+  `REINTERP_INFRASTRUCTURE_SPINE_2026-07-25` is explicit that 2016 is where the apparatus stopped
+  being a place you go to and moved into the infrastructure already in use — which is *why the walls
+  open there*. A cold record mounted on a wall is E1/E2 grammar. At E3 the record is not on a wall
+  at all: it is inside the platform, and Lambient's badge is already in the corner of all three of
+  Vera's screens. Nothing stops being FILED; the plane returns at E4, migrated beside Maya's desk,
+  which is the migration the piece already scripts. It leaves WITH the walls (scheduled into the
+  cascade, not blinked out three seconds early). ⚑ The first pass hid the plane and left its MOUNT
+  — `terminalFrame`, a black slab on the spine — which a second live pick caught; both go now.
+
+  ### 7. ROOM 2's DRESSING — SIX CIRCLED PROPS, SIX MEASURED CAUSES (finding H33/H34)
+  Nothing here was guessed. Every one was picked or measured against the real mesh in the running
+  build first (a new `?debug=1` `__camFree(x,y,z,pitch,yaw)` review aid made that possible: Room 2's
+  seat sits 0.57 m from the laptop, so the dressing had been reviewable only through a screen that
+  fills the frame).
+  **(a) "A black square in the sky" — the CEILING WITNESS, retired.** Picked from his own sightline:
+  `witness-oculus`, a 1.06 m near-black square at (0, 2.701, 1.5) over Room 1. **Cause:** R26
+  retired the overhead iris's WAKE and left its geometry in the ceiling. It never lit, never woke,
+  and once E3 takes the walls down you sit in Room 2 and look up at it across the open space. It
+  was unexplained because it is the leftover of a mechanic this build no longer has. The module,
+  its wash light, its hooks and its data block all stay — only the four visible pieces are gone.
+  **(b) "The left-hand monitor" — it is the WINDOW.** From the seat, facing the desk, the window is
+  literally on your left, at eye height, and it was a flat EMISSIVE rectangle in a dark frame
+  painted **`#D4D0C8` — the CRT beige this project uses for computer housings**. It read as a second
+  screen because it was dressed as one. **Fix:** a mullion cross (two thin bars in the frame's own
+  colour) so it reads as glazing, and the pane recoloured to `#AABBCC`, the palette's own overcast
+  blue. It reads as a window now.
+  **(c) "A pink strip on the wall" — the CURTAINS.** 0.12 m wide, 0.9 m tall, hanging off nothing,
+  half-overlapping the frame verticals: two lilac sticks. **Fix:** 0.26 m wide, moved clear of the
+  frame, and a **rod** across the top — one prop, and two strips become curtains.
+  **(d) "A pale blue rectangle" — the POSTER, and the SIGN beside it.** Two bare slabs at different
+  heights, and `w_sign` was **`emissive: true`** — a blank plate glowing on the wall near the
+  ceiling. **Fix:** emissive dropped (nothing in that room is a light source), both lowered to a
+  shared centre height, both given a thin dark frame. They read as hung pictures.
+  **(e) "A box on the floor" — the NIGHTSTAND.** `models.json` gave `nightstand` a blanket **1.9**
+  scale copied from bed/bookcase/rug, and nobody had ever measured `sideTable.glb` against it:
+  native 0.535 × 0.384 × 0.22 m, so 1.9 rendered a **1.02 × 0.73 × 0.42 m slab** where
+  `reinterp_deltas.json` authors a 0.4 × 0.5 × 0.4 nightstand — 2.5× its own footprint, poking a
+  metre into the room, **with the potted plant standing inside it**. Scale is now `[0.85, 1.30,
+  1.55]` → 0.45 × 0.50 × 0.34, and everything that sits on it moved with it: `w_phoneDevice`
+  0.74 → 0.512, era3Devices' phone plane 0.75 → 0.525, and nodes.json's `r2-phone` seat re-aimed
+  −23° → −38°. The plant moved clear.
+  **(f) "The chair base."** `chair` carried a **non-uniform** `[1.7, 1.25, 1.7]` — 36% wider and
+  deeper than tall — which splayed the star base and squatted the whole chair: measured 0.534 ×
+  0.759 × 0.569, i.e. a desk chair whose back topped out BELOW the desk it faces. Native (measured
+  ÷ old scale) is 0.314 × 0.607 × 0.335, so a **uniform 1.6** gives 0.50 × 0.97 × 0.54 — the
+  authored footprint at a real chair's height, no axis distorted. Room 1's chair shares the key and
+  improves with it (checked for clipping against the E1 desk: none).
+  **Two more found while measuring, both the same class of fault.** The stored bed's `bedDustSheet`
+  sat at y 0.44 inside a mesh whose top is 0.712 — **buried**, so the one prop that explains why
+  Room 1's bed is out in the doorway was invisible and the bed read as a bare brown box; it is at
+  0.74 now and sized to actually cover it. And `w_flatPanelScreen` (0.56 × 0.32) was BIGGER than
+  the canvas plane over it (0.52 × 0.30), ringing the laptop's screen with a 2 cm emissive mint
+  border; it is 0.50 × 0.28 and no longer emissive at all (the canvas is always there at E3+, so
+  the plate's only job now is to be the panel's dark inner bezel).
+  **Room 3 got the same template fixes** (mullions, curtain rod and width, sign/poster frames, and
+  the two model-manifest scales, which are shared) — the defects are the template's, not Room 2's,
+  and leaving one room fixed and its mirror broken would have read as a new bug.
+
+  ### 8. HOW THIS WAS VERIFIED
+  Entered at E2 (`?era=2&debug=1`), then the **u3 ritual driven with real pointer clicks** — Remind
+  me later → the 40 s deferral → the notice's return → Update now → Read on → I Agree — and from
+  the install onward **nothing was touched**: the removal report and dispersal played, the machine
+  restarted, the relocation ran its three legs, the room built, the camera landed in Vera's seat,
+  her laptop woke, booted, installed GracePlatform and arrived at sign-in. One real click there
+  opened the queue's first card. **Pacing note, stated plainly:** the sandboxed browser pane
+  suspends `requestAnimationFrame` for a hidden document, so frames came from firing PlayCanvas's
+  own `update` event at a fixed 1/60 s dt — real-speed *proportion* by construction (every frame
+  advances exactly 16.7 ms of app time), not wall-clock real time. E4 was re-checked afterwards and
+  is unaffected: `onEraShift('e4')` still runs its own 4.5 s TURN dolly to Room 3's seat and the
+  record plane comes back, migrated. **The full E1→E2 opening was NOT re-played this session** —
+  S59/S60 verified that half; this session enters at E2, which is where its scope starts.
+  **⚑ VR REMAINS UNVERIFIED.** There is no XR entry point in this worktree, so the relocation's
+  comfort has been judged only by its measured rates on a desktop camera. It is the longest piece
+  of artificial locomotion in a work whose entire bodily law is "you never walk", and it MUST be
+  judged in the A11 in-headset pass before it can be called safe.
+
+  **BLOCKED: none.** `npx tsc --noEmit`, `npm test` (palette improved to 40/42; C6 39/39; C7 12/12)
+  and `npm run build` all green on the final tree. **All new copy is PLACEHOLDER-draft and waits on
+  Sérgio's voice pass:** the Restorify sunset changelog, the deferral line and "Reminder used", and
+  the whole `e3_arrival` block (SisterSignal's boot lines, "1 update found — installing", and
+  "Installed. Your file arrived first.").

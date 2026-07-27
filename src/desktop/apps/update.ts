@@ -45,6 +45,12 @@ interface UpdateStrings {
   restarting: string;
 }
 
+/** S61 — the two strings that make "works ONCE" legible (see updates.json's
+ *  `_remindDoc`). Shared by every update, so they live beside the ritual
+ *  rather than inside any one key's block. */
+const REMIND_STATUS: string = (updates as unknown as { remindedStatus: string }).remindedStatus;
+const REMIND_SPENT: string = (updates as unknown as { remindSpent: string }).remindSpent;
+
 const REMIND_SECONDS = 40;   // PLACEHOLDER pacing — the one deferral the system allows
 const INSTALL_SECONDS = 7.5; // changelog types on + the glitch window
 const RESTART_SECONDS = 2.2; // dark beat before the world changes
@@ -151,7 +157,24 @@ export class UpdateApp {
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
 
-    if (this.phase === 'reminded') return;
+    // ⚑ S61 — THE DEFERRAL IS NOT SILENT ANY MORE (Sérgio: *"Remind me later —
+    // what does it do?"*). The notice withdraws, exactly as the law says, but
+    // the system leaves one dim line standing at the foot of the screen for
+    // the whole 40s: it took your deferral, and it is coming back. Nothing to
+    // press, nothing that reads as a window — the apparatus talking to itself
+    // where the taskbar would be, over whatever the desktop is doing (at u2/u3
+    // that is the belongings gathering window, which is the point of the
+    // deferral in this build).
+    if (this.phase === 'reminded') {
+      ui.setFont(ctx, 9);
+      const tw = Math.ceil(ctx.measureText(REMIND_STATUS).width);
+      // sits just ABOVE the taskbar (which os.ts draws at H-22 and would
+      // otherwise paint straight over this), in the era's own bevelled chrome
+      ui.bevel(ctx, 6, H - 40, tw + 16, 15, true);
+      ctx.fillStyle = ERA1.black;
+      ctx.fillText(REMIND_STATUS, 14, H - 37);
+      return;
+    }
 
     if (this.phase === 'notify') {
       const bare = this.key === 'close';
@@ -173,8 +196,16 @@ export class UpdateApp {
         ctx.fillText(line, c.x + 10, c.y + 6 + i * 12);
       });
       ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.updateNow, {});
-      if (this.s.remindLater && !this.remindUsed) {
-        ui.button(ctx, c.x + 8, c.y + c.h - 26, 120, 18, this.s.remindLater, {});
+      // ⚑ S61 — a SPENT deferral is drawn, not deleted. It used to vanish, so
+      // the notice's second appearance looked like a different dialog and the
+      // once-only rule was invisible. Greyed is the honest render (S60's
+      // ruling, and this is the beat it was written for): the option is still
+      // displayed and is no longer one. handleClick has always guarded on
+      // `!this.remindUsed`, so the disabled button pushes no live hit — the
+      // press does nothing, visibly.
+      if (this.s.remindLater) {
+        ui.button(ctx, c.x + 8, c.y + c.h - 26, 120, 18,
+          this.remindUsed ? REMIND_SPENT : this.s.remindLater, { disabled: this.remindUsed });
       }
       return;
     }
