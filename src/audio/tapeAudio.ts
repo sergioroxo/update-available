@@ -51,6 +51,15 @@ const REGISTRY: Record<string, string> = {
   // the tape entries above it never goes through degrade_audio.sh (that pass is
   // for HUMAN/TAPE audio only, per that script's own doctrine comment).
   'lamby_puremail_apology.wav': `${AUDIO_BASE}lamby_puremail_apology.wav`
+  // S60 — THE E2 BOOT JINGLE, HOOKED AND NOT YET REGISTERED. The LambyOS 2003
+  // boot (src/desktop/os.ts's `startE2Boot`) already asks for the name in
+  // data/dialog/s2_lamby.json's `osBootTrack` — 'lambyos_2003_boot.mp3'.
+  // No asset was invented for it, so there is deliberately NO entry above:
+  // the registry law means the request is simply never issued, silently and
+  // with no console error, until a real file exists. When one does, drop it in
+  // public/assets/audio/ and add ONE line here — the boot then sings, and
+  // nothing else changes. APPARATUS audio: clean, never through
+  // tools/degrade_audio.sh (that pass is for HUMAN/TAPE audio only).
 };
 
 const HISS_FILE = 'tape-hiss.mp3';

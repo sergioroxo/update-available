@@ -56,6 +56,10 @@ const OS_BEATS: BeatRow[] = [
   { label: 'Provotype — pillow', id: 'pillow' },
   { label: 'Provotype — intake', id: 'intake' },
   { label: 'lamby_rig.exe — the E1 easter egg (found, not advertised)', id: 'lambyRig' },
+  // Session 60: the Dossier card, rebuilt as the second found file — same
+  // rules as lamby_rig.exe. In play it appears on an IDLE desktop after the
+  // first flip and is never announced; this button opens it directly.
+  { label: 'the found file — the renamed dossier (easter egg)', id: 'foundFile' },
   { label: 'T1 ritual · update → E2', id: 'update2' },
 
   { heading: 'E2 · 2003 — Lamby arrives (Room 1, adult)' },
@@ -70,8 +74,16 @@ const OS_BEATS: BeatRow[] = [
   // real clicks in Session 49; the label says so, so a reviewer never has to
   // infer it from the button order.
   { label: 'S2R.0 · silence — ⏵ LINEAR ENTRY (play from here)', id: 'e2Silence' },
-  { label: 'S2R.1 · Lamby debut', id: 'e2Lamby' },
+  // Session 60: the arrival is four beats now, not two — the machine boots at
+  // its new version (with its jingle), Lamby introduces HIMSELF, then presents
+  // the program he is the face of, then the check-in. Each has its own button
+  // so a reviewer can land on the one they mean; `e2Silence` above still plays
+  // the whole chain forward by ordinary clicking.
+  { label: 'S2R.0b · LambyOS 2003 boot (+ jingle hook)', id: 'e2Boot' },
+  { label: 'S2R.1 · ⚑ Lamby introduces himself', id: 'e2Lamby' },
+  { label: 'S2R.1b · Lamby presents Restorify', id: 'e2Program' },
   { label: 'S2R.2 · Restorify check-in', id: 'e2Restorify' },
+  { label: 'S2R.2b · "a message came in" (Lamby notifies)', id: 'e2Message' },
   { label: 'S2R.3 · Caleb — chat opens', id: 'calebChat' },
   { label: 'S2R.3 · Caleb — commits', id: 'calebCommit' },
   { label: 'S2R.3B · Caleb — apparatus alert', id: 'calebAlert' },

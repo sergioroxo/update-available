@@ -2455,3 +2455,106 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   **BLOCKED: none.** `npx tsc --noEmit`, `npm test`, and `npm run build` all green on the final tree.
   Files touched match the fence exactly: `src/engine/app.ts`, `src/desktop/os.ts` (the debug-jump
   case only), `tools/check-spec.mjs`, `data/strings/slice.json`, `README.md`, this log.
+
+- 2026-07-27 — Reinterp Session 60 (Opus 5, build-queue tag **S59 — THE E2 ARRIVAL + THE DESKTOP'S
+  INTRODUCTION LAYER**; logged as Session 60 to keep this log's numbering sequential). Sérgio's own
+  framing of the gap: *"there is no boot up sequence for the new version of LambyOS… we need to be
+  presented to Lamby, if not it doesn't make much connection with the overall experience. Also it may
+  create a bit of conflict with the overall Restorify system, so Lamby needs to present it to us."*
+  Era 2 opened with a lamb simply, unaccountably, already there.
+
+  ### 1. THE LAMBYOS BOOT (finding A2) — AND ITS JINGLE HOOK
+  The E2 arrival was `silence → 1.6s installer line → a window`. It is now
+  `silence → osBoot → lambyBoot → lambyIntro → lambyProgram → active` (`E2Stage`, `src/desktop/os.ts`).
+  `osBoot` is a real LambyOS 2003 crawl in the same typewriter grammar as the BIOS and O2 crawls —
+  222 chars at the existing `BOOT_CPS`, ~6.7s, click-to-complete like O2, then a 2.2s hold on the
+  footer — and it is where the machine says it has been UPDATED: *"build 5.1.2 — replaces 4.0.7
+  (1997)"*, the profile RESTORED, the journey file MIGRATED, `COMPANION PROCESS ....... STARTING`.
+  **The jingle: hooked, not invented.** No boot asset exists, so none was fabricated. `startE2Boot()`
+  calls `playOnce(lambyStrings.osBootTrack)` against `src/audio/tapeAudio.ts`'s registry law — an
+  unregistered name is never requested, so it is silent with zero console noise until a file lands.
+  **Proven both ways in the running build,** by wrapping `window.Audio`: with the shipped
+  placeholder name, `__audioCalls` is `[]` (no request issued at all); with `osBootTrack` temporarily
+  pointed at a registered file, the same press produced exactly
+  `["assets/audio/tape-hiss.mp3"]` — the hook fires on the boot's first frame. Data reverted from the
+  scratchpad backup afterwards. Drop-in is one line in the registry (comment left there naming the
+  expected filename).
+
+  ### 2. ⚑ LAMBY IS PRESENTED — AND HE PRESENTS RESTORIFY (findings A3, A4)
+  Two conduction beats, exactly two lines each: he introduces himself by name (*"Hello, Daniel. I'm
+  Lamby. / I came with the update. I'll be with you from now on."*), then presents the program he is
+  the face of (*"This is Restorify — your program. I look after it for you. / Shall we begin your
+  Daily Realignment?"*). Four assistant lines across the whole arrival — inside the ≤2-per-beat law
+  and the ≤5-per-stage cap. **Dismissal works at BOTH and files at both**; dismissing the
+  introduction skips the program beat entirely (a dismissed conductor does not keep talking) and
+  lands on the ordinary desktop with Restorify still reachable by its own icon.
+  **He is drawn from the ONE definition** — `drawLambyChar` (`src/desktop/apps/lambyChar.ts`,
+  imported, not copied), full size for the debut with the rig's own appear-pop, and small in the
+  window column everywhere else. The little blocky `drawLambyMark` this file used to carry is
+  deleted. That also lands finding #13's "ONE Lamby mark everywhere" for every window `os.ts` owns
+  (the video offer included, since it shares `drawLambyDialog`) — **S60/queue-S60 should know the
+  shared renderer already changed** before touching `netvision.ts`/`accountability.ts`.
+
+  ### 3. "WELCOME BACK DANIEL" (finding A1)
+  Was 10px in `greyDark` on black — the palette's darkest non-black, read at seat distance through a
+  CRT that is itself a texture. Now 15px `silver`, with the instruction under it kept at 11px `grey`
+  so the hierarchy still reads as a machine waiting rather than a dialog shouting. The bareness was
+  the law (S2R.0c); the dimness was not.
+
+  ### 4. THE MESSENGER SEAM (findings B7, B8)
+  **The walk card ANSWERS.** It used to vanish mid-press: `onCheckinFiled` opened the Messenger over
+  it in the same tick, so the question left without a word. `RestorifyApp` now has a second state —
+  the program's reply to your answer (`checkinResponses`, one per chip) — and a `Continue` the player
+  presses themselves. **Register, never branch:** the four replies differ in wording only, which is
+  exactly the difference the four witness tags were already filing.
+  **Lamby notifies you.** The message now LANDS on the chip press (`maybeLandMessage`) and is
+  ANNOUNCED on the card's Continue (`maybeAnnounceMessage`) — one conduction beat, two lines, `Open`
+  / `Not now`. "Not now" files (`message: deferred — notice dismissed`), increments dismissals, and
+  leaves the **Messenger on the desktop with an unread pip** — the era does not chase, it waits, and
+  the door does not depend on having said yes to him. Both routes call the same `openMessenger()`.
+  (The icon label was "Messenger (1)" and `fitIconLabel`'s 62px clip ate the count into an ellipsis —
+  hence a `warn` pip drawn on the icon instead of a number in the string.)
+
+  ### 5. THE DOSSIER, REBUILT AS THE FOUND FILE (root cause #2's other half)
+  Per Sérgio: *"it can stay as like an easter egg with a different name and like an explainer of the
+  program."* Kept, renamed, repositioned — `referral_notes.txt` (⚑ PLACEHOLDER-draft name AND copy,
+  his to write), a plain document window with the tactic content re-voiced as what it would actually
+  be inside the fiction: **the program's own orientation note about its referral route**, ending
+  *"What is written to us in confidence becomes part of the file. Nothing is deleted."* Dead: the
+  TACTIC/LAYER/STATUS/ARCHIVE furniture, the emptied researcher note (S58 left the hole; it is filled
+  now), the `"Dossier updated"` toast, and the icon's front-and-centre slot in every era skin.
+  Inherits S55's rules: drawn ONLY on an idle desktop (new `desktopIdle()`), which makes *never
+  reachable during a felt scene* a property of the code — a felt surface is a window, and a window
+  means not idle. **Verified live:** the icon appears on the quiet desktop and is gone the moment the
+  Messenger opens.
+  ⚑ **FOR SÉRGIO — one ethics call this session could not make for him.** `ETHICS_CONSTRAINTS.md` #13
+  says dossier cards carry a visible `status`. A rendered `STATUS: DOCUMENTARY` line is exactly the
+  authoring voice he asked to have removed, so provenance moved to `data/strings/slice.json`'s
+  `dossier._provenance` (invisible, tracked, unchanged: documentary — ex-gay-era referral routes).
+  Keep it invisible, or restore a rendered line? His call.
+
+  ### 6. HOW THIS WAS VERIFIED — A REAL LINEAR RUN, NOT A DEBUG JUMP
+  Played from the O1 start screen with real clicks: profile → desktop → `A:\` → the kit through to
+  the channel → the IRC hook (clicked its own `replyRects` until `hooked`) → packet → diary →
+  `diary-glitch`. **The conductor then armed the update itself** — no `armUpdate` call and no era
+  button: `window.__spine()` went `{step:'e1'}` → `{step:'e2'}` and `os.updateArmed` became true on
+  its own once the spine's clock ran. The ritual was clicked through (Update now → EULA pages → I
+  Agree → install → restart) and delivered E2 at `e2Stage:'silence'`. From there, every beat by
+  press: the return press → the LambyOS crawl → the installer line → **his introduction** → Hello →
+  **his presentation of Restorify** → Begin → the check-in → "Struggling" → **the reply** → Continue
+  → **"A message came in while we were talking"** → Not now (filed, icon stays) → the Messenger icon
+  → the felt window opens and the found file's icon disappears with it. Ledger at the end:
+  `return-press:returned, introduction:begun, first-greeting:begun, message-notice:dismissed`.
+  **Two sandbox notes, stated plainly.** (a) rAF is suspended for hidden documents in this browser,
+  so frames were driven by firing PlayCanvas's own `update` event (`app.fire('update', dt)`) — the
+  real per-frame path, spine included, not a hand-stepped `os.update`. (b) The witness FLIP is
+  camera-side geometry in `app.ts`'s frame loop and cannot be turned without a visible viewport, so
+  `os.unlockDossier()` was called directly — that is the exact call `app.ts:1070` makes on the
+  return leg, and the point being verified (silent filing, no toast) was confirmed: the only toast
+  on screen afterwards was the pre-existing mIRC log line.
+
+  **BLOCKED: none.** `npx tsc --noEmit`, `npm test` (C6 covers all 39 debugJump ids; C7 steady at
+  12/12) and `npm run build` all green on the final tree. New debug buttons: `e2Boot`, `e2Program`,
+  `e2Message`, `foundFile`. **Everything new is PLACEHOLDER-draft and waits on Sérgio's voice pass**
+  — the boot lines, both conduction beats, the four check-in replies, the notice, and above all the
+  found file's name and copy.

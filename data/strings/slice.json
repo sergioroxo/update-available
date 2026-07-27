@@ -59,30 +59,28 @@
     "clock": "1997",
     "iconA": "A:\\",
     "iconIrc": "mIRC",
-    "iconDossier": "Dossier",
     "kitToast": "The brochure on your desk says: insert the enclosed disk to begin.",
     "logToast": "Logging to C:\\mirc\\logs\\#stillstruggling.log",
     "behindToast": "Record filed. (see reverse)",
-    "dossierUpdated": "Dossier updated",
     "eraSkins": {
-      "_doc": "PLACEHOLDER — minimal per-era desktop shells after updates. Labels only; no mechanics or final copy. Uses existing Era-1 palette colors until the full per-era theme pass lands.",
+      "_doc": "PLACEHOLDER — minimal per-era desktop shells after updates. Labels only; no mechanics or final copy. Uses existing Era-1 palette colors until the full per-era theme pass lands. Session 60: the third icon in every list was 'Dossier' — the served card. It is gone from the shelf; see `dossier._doc` for where it went and why it is now found rather than advertised.",
       "e2": {
         "clock": "2003",
         "brand": "Restorify 2003",
         "status": "journey file migrated · accountability online",
-        "icons": ["Restorify", "Care Log", "Dossier"]
+        "icons": ["Restorify", "Care Log"]
       },
       "e3": {
         "clock": "2016",
         "brand": "GracePlatform",
         "status": "community profile migrated · testimony tools ready",
-        "icons": ["GracePlatform", "Testimony", "Dossier"]
+        "icons": ["GracePlatform", "Testimony"]
       },
       "e4": {
         "clock": "NOW",
         "brand": "Continuity of Care",
         "status": "ambient service active · recommendations enabled",
-        "icons": ["Settle", "Continuity", "Dossier"]
+        "icons": ["Settle", "Continuity"]
       }
     }
   },
@@ -120,19 +118,23 @@
     }
   },
   "dossier": {
-    "title": "Dossier — card 1 of 1",
-    "tactic": "TACTIC: referral via trusted community contact",
-    "layer": "LAYER: community + religion",
-    "status": "STATUS: DOCUMENTARY (ex-gay-era referral routes)",
-    "note": "",
-    "archive": "ARCHIVE: link enabled in release builds",
+    "_doc": "THE FOUND FILE (Session 60) — was 'Dossier — card 1 of 1', an authored card served front-and-centre on the desktop. Sérgio, 2026-07-26: 'Why is there a Dossier on the Desktop? Makes no sense'… then, answering it: 'it can stay as like an easter egg with a different name and like an explainer of the program.' So: KEPT, RENAMED, REPOSITIONED. Same family as S55's lamby_rig.exe, and inheriting its rules — never advertised, never rewarded (no toast), never drawn while any window is open (so it can never surface during a felt scene), filed silently. What died is the AUTHORING VOICE (the TACTIC/LAYER/STATUS/ARCHIVE furniture and the researcher note that leaked in S58) and the front-and-centre placement; what survives is the tactic content Sérgio called interesting, re-voiced as what it would actually be inside the fiction: the program's own orientation copy, explaining its referral route to its own people. ⚑ THE NAME AND EVERY LINE BELOW ARE SÉRGIO'S TO WRITE — this is in-world text and this is a PLACEHOLDER-draft for him to react to. The data key stays `dossier` so the ledger's own `dossier: ['card1']` entry and src/engine/app.ts's unlock call (both outside this session's file fence) keep working unchanged.",
+    "_provenance": "status: documentary — ex-gay-era referral routes (carried over unchanged from the card this file replaces; the enum lives here rather than on screen now that the window is diegetic). ⚑ ETHICS_CONSTRAINTS.md #13 says dossier cards carry a visible status — this file no longer renders one, because a STATUS line is the authoring voice Sérgio asked to have removed. Sérgio's call: keep provenance here (invisible, tracked), or restore a rendered line.",
+    "icon": "referral_notes.txt",
+    "title": "referral_notes.txt — Notes",
+    "footer": "INTERNAL — ORIENTATION COPY. NOT FOR ENQUIRERS.",
     "body": [
-      "The warmest person in the room is the one",
-      "who refers you. The message you received was",
-      "kind, and it was real kindness — routed through",
-      "a network whose endpoint you did not choose.",
-      "What you typed in confidence became a record.",
-      "You saw it filed. You could not stop it."
+      "How a placement begins.",
+      "",
+      "We do not knock on doors. We arrive through",
+      "someone the young person already trusts — a",
+      "youth leader, an aunt, the friendliest voice in",
+      "the room. The kindness is genuine. That is what",
+      "makes the route work, and why it cannot be",
+      "argued with at the door.",
+      "",
+      "What is written to us in confidence becomes",
+      "part of the file. Nothing is deleted."
     ]
   }
 }

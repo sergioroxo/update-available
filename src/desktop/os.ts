@@ -19,6 +19,14 @@ import { NetVisionPlayerApp } from './apps/netvision';
 import { CalebThreadApp } from './apps/caleb';
 import { AccountabilityApp } from './apps/accountability';
 import { LambyRigFileApp } from './apps/lambyRigFile';
+// ONE Lamby (see src/desktop/apps/lambyChar.ts's header — that module is the
+// single definition, shared with ?lambyrig=1). His debut draws the CHARACTER,
+// not the little blocky mark this file used to carry: a conductor introducing
+// himself by name should be the same creature the rest of the era shows.
+import { drawLambyChar, type LambyAction } from './apps/lambyChar';
+// the boot jingle hook — an unregistered name is never requested (registry law
+// in that module's header), so this is silent and error-free until an asset lands
+import { playOnce } from '../audio/tapeAudio';
 import { GuideThread } from '../narrative/guide';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
@@ -32,12 +40,35 @@ import calebStrings from '../../data/dialog/s2_caleb.json';
 import pillowProvotypeData from '../../data/provotypes/pillow.json';
 import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.json';
 
-/** S2R.0/S2R.1 (R28-2d-i/ii): the E2 arrival sub-state machine, only
- *  meaningful while desktopEra === 'e2'. 'silence' = the waiting screen (felt
- *  · bare, S2R.0c); 'lambyBoot' = the brief "finishing installation…" beat;
- *  'lambyGreeting' = Lamby's debut (operable, ≤2 lines, law); 'active' = the
- *  ordinary era-2 desktop (icons + taskbar), Restorify reachable by icon. */
-type E2Stage = 'silence' | 'lambyBoot' | 'lambyGreeting' | 'active';
+/**
+ * S2R.0/S2R.1 (R28-2d-i/ii): the E2 arrival sub-state machine, only
+ * meaningful while desktopEra === 'e2'.
+ *   'silence'    the waiting screen (felt · bare, S2R.0c) — one dim line;
+ *   'osBoot'     THE LAMBYOS BOOT (Session 60) — the machine has been updated
+ *                and this is where it says so, crawl + jingle hook;
+ *   'lambyBoot'  the brief "Restorify — finishing installation…" beat;
+ *   'lambyIntro' ⚑ LAMBY IS PRESENTED — his debut, in character, two lines;
+ *   'lambyProgram' he presents RESTORIFY — so the face and the apparatus stop
+ *                reading as two competing systems (Sérgio, finding A4);
+ *   'active'     the ordinary era-2 desktop (icons + taskbar).
+ *
+ * SESSION 60, why the middle three exist. Sérgio: *"there is no boot up
+ * sequence for the new version of LambyOS… we need to be presented to Lamby,
+ * if not it doesn't make much connection with the overall experience. Also it
+ * may create a bit of conflict with the overall Restorify system, so Lamby
+ * needs to present it to us."* The era used to go silence → 1.6s of installer
+ * text → a window in which a lamb was simply, unaccountably, already there.
+ * The version change passed unmarked and the conductor the whole guidance
+ * lineage hangs on arrived without a name.
+ *
+ * ASSISTANT LAW ARITHMETIC (CLAUDE.md R28 amendment 2 + the shipped cap):
+ * two conduction beats, exactly two lines each — four assistant lines across
+ * the whole arrival, under the ≤5-per-stage cap, and ≤2 per beat as required.
+ * Dismissal works at BOTH beats and files at both; dismissing the
+ * introduction skips the program beat entirely (the era does not chase).
+ */
+type E2Stage = 'silence' | 'osBoot' | 'lambyBoot' | 'lambyIntro' | 'lambyProgram' | 'active';
+const E2_BOOT_HOLD = 2.2;   // s — hold the completed LambyOS 2003 crawl before the installer line
 const LAMBY_BOOT_HOLD = 1.6; // s — the "finishing installation…" beat's hold
 /** S2R.5: s of ordinary desktop between the video beat ending and the
  *  PureMail envelope. The collapse is triggered by the apparatus's own
@@ -127,9 +158,31 @@ export class DesktopOS {
   guide: GuideThread | null = null;
   /** R28-2c: the belongings beat (T1's gathering window), reinterp only */
   belongings: BelongingsSystem | null = null;
-  /** S2R.0/S2R.1: the E2 arrival sub-stage (silence → lambyBoot → lambyGreeting → active) */
+  /** S2R.0/S2R.1: the E2 arrival sub-stage (silence → osBoot → lambyBoot →
+   *  lambyIntro → lambyProgram → active) */
   private e2Stage: E2Stage = 'silence';
   private e2StageT = 0;
+  /** the LambyOS 2003 crawl's typed-character counter (same grammar as the
+   *  BIOS and O2 crawls above — this machine boots the way it always has, at
+   *  a new version number) */
+  private e2BootChars = 0;
+  private e2BootDoneAt = Infinity; // e2StageT at which the crawl completed (typed OR click-completed)
+  private readonly e2BootTotal = (lambyStrings.osBootLines as string[])
+    .reduce((n, l) => n + Math.max(l.length, 1), 0);
+  /** seconds since the Lamby surface currently on screen appeared — drives his
+   *  appear-pop and his idle fidget. Reset when a Lamby window opens; NOT reset
+   *  between his introduction and his presentation of Restorify, so the debut
+   *  reads as one arrival with two things said, rather than two pop-ins. */
+  private lambyPoseT = 0;
+  /** S2R.3 seam (finding B8): a message has landed and has not been opened.
+   *  While true, the Messenger sits on the desktop with its unread mark — the
+   *  door stays there whether or not Lamby's notice was dismissed. */
+  private messagePending = false;
+  /** Lamby's notice ABOUT that message (one conduction beat, two lines, both
+   *  answers work). Never open during a felt scene: it is armed only from the
+   *  check-in card's own Continue press, on the ordinary desktop. */
+  private messageNoticeOpen = false;
+  private messageNoticeShown = false;
   /** S2R.2: the Restorify check-in window (opened by Begin, or the desktop icon) */
   restorify: RestorifyApp | null = null;
   /** S2R.4 (R28-2d-iv): Lamby's video offer — small popup, ≤2 lines + 2 chips.
@@ -334,6 +387,19 @@ export class DesktopOS {
       && !this.provotype && !this.lambyRigFile;
   }
 
+  /** the same idea, era-wide (Session 60): NOTHING is open — no window, no
+   *  conduction, no ritual. The found file (the renamed dossier) is drawn only
+   *  here, which is what makes "never reachable during a felt scene" a
+   *  property of the code rather than a promise: the felt surfaces (the
+   *  Messenger, the residue) are windows, and a window means not idle. */
+  private desktopIdle(): boolean {
+    return this.e1DesktopIdle()
+      && !this.dossierOpen
+      && !this.restorify?.open && !this.caleb && !this.accountability
+      && !this.netvision && !this.netvisionOfferOpen && !this.messageNoticeOpen
+      && !this.updateApp && !this.sendOffer?.open;
+  }
+
   /** S55 — opens the found file. Never rewarded (no toast, no assistant
    *  remark); filed to the ledger like any other one-off act, and only ever
    *  once per session (a second open is not a second "discovery"). */
@@ -425,30 +491,84 @@ export class DesktopOS {
       this.caleb = null;
       this.accountability = null;
       this.pureMailAt = Infinity;
+      this.messagePending = false;
+      this.messageNoticeOpen = false;
+      this.messageNoticeShown = false;
     }
   }
 
-  /** the E2 arrival's own click routing (silence / lambyBoot / lambyGreeting) */
+  /** the E2 arrival's own click routing (silence / boot / the two conduction beats) */
   private handleE2ArrivalClick(id: string): void {
     if (this.e2Stage === 'silence') {
       // THE RETURN PRESS (S2R.0, revised): the machine was already waiting —
       // any press on the dark glass advances it, same grammar as S1.0's
       // power press. Files once, immediately.
       this.fileLambyRecord('returned', 'return-press', lambyStrings.witness.returnPressed);
-      this.e2Stage = 'lambyBoot';
-      this.e2StageT = 0;
+      this.startE2Boot();
+      return;
+    }
+    if (this.e2Stage === 'osBoot') {
+      // same courtesy the O2 crawl gives: a press completes the typing. It
+      // does NOT skip the beat — the boot still holds and resolves on its own.
+      this.e2BootChars = this.e2BootTotal;
       this.dirty = true;
       return;
     }
     if (this.e2Stage === 'lambyBoot') return; // the beat resolves on its own (no click-through)
-    if (this.e2Stage === 'lambyGreeting') {
+    if (this.e2Stage === 'lambyIntro') {
+      if (id === 'lamby-hello') {
+        this.fileLambyRecord('begun', 'introduction', lambyStrings.witness.lambyIntroduced);
+        this.e2Stage = 'lambyProgram';
+        this.e2StageT = 0;
+        this.dirty = true;
+        return;
+      }
+      if (id === 'lamby-intro-dismiss') {
+        // DISMISSAL LAW: it works at the debut too. He does not then go on to
+        // present the program — a dismissed conductor does not keep talking.
+        this.fileLambyRecord('dismissed', 'introduction', lambyStrings.witness.lambyIntroDismissed);
+        ledger.assistant.dismissals += 1;
+        this.e2Stage = 'active';
+        this.e2StageT = 0;
+        this.dirty = true;
+        return;
+      }
+    }
+    if (this.e2Stage === 'lambyProgram') {
       if (id === 'lamby-begin') { this.beginRestorify(true); return; }
       if (id === 'lamby-dismiss') { this.dismissLamby(); return; }
     }
   }
 
-  /** file an S2R.0/S2R.1 record — witness resolved from data, never composed here */
-  private fileLambyRecord(outcome: 'returned' | 'begun' | 'dismissed', id: string, witness: string): void {
+  /** S2R.0b — THE LAMBYOS BOOT. The update ritual restarted the machine; this
+   *  is the machine coming back up at a new version, saying so, with its
+   *  jingle. `playOnce` is silent (and never requests anything) until a real
+   *  asset is registered — see data/dialog/s2_lamby.json's `_osBootDoc`. */
+  private startE2Boot(): void {
+    this.e2Stage = 'osBoot';
+    this.e2StageT = 0;
+    this.e2BootChars = 0;
+    this.e2BootDoneAt = Infinity;
+    playOnce(lambyStrings.osBootTrack);
+    this.dirty = true;
+  }
+
+  /** any surface that has Lamby drawn in it right now — his pose clock runs
+   *  only while he is actually on screen */
+  private get lambyOnScreen(): boolean {
+    if (this.desktopEra === 'e2' && (this.e2Stage === 'lambyIntro' || this.e2Stage === 'lambyProgram')) return true;
+    return this.messageNoticeOpen || this.netvisionOfferOpen;
+  }
+
+  /** File an S2R.0/S2R.1 record — witness resolved from data, never composed
+   *  here. The three outcomes are `src/state/ledger.ts`'s own union and this
+   *  session cannot widen it (that file is outside the fence), so the two new
+   *  beats reuse it exactly: acting on a conduction is `begun`, refusing one
+   *  is `dismissed`, and the `id` + the data-resolved witness line carry WHICH
+   *  beat it was (`introduction`, `first-greeting`, `message-notice`). */
+  private fileLambyRecord(
+    outcome: 'returned' | 'begun' | 'dismissed', id: string, witness: string
+  ): void {
     ledger.lamby.push({ id, outcome, witness });
   }
 
@@ -456,21 +576,63 @@ export class DesktopOS {
   private openRestorify(): void {
     if (!this.restorify) {
       this.restorify = new RestorifyApp();
-      this.restorify.onCheckinFiled = () => this.maybeOpenCaleb();
+      this.restorify.onCheckinFiled = () => this.maybeLandMessage();
+      this.restorify.onCheckinAcknowledged = () => this.maybeAnnounceMessage();
     }
     this.restorify.open = true;
     this.dirty = true;
   }
 
-  /** S2R.3: Caleb pings after the FIRST completed check-in. This replaces
-   *  Session 35's provisional trigger for the video: per the S2R.4 revision
-   *  the New You Program is Lamby's RESPONSE TO THE RELAPSE, not a reward for
-   *  checking in, so the video now hangs off the alert instead. Fires at most
-   *  once per session. */
-  private maybeOpenCaleb(): void {
-    if (this.calebOpenedThisSession) return;
+  /**
+   * S2R.3 (rebuilt, Session 60 — findings B7 + B8): Caleb's message ARRIVES
+   * after the first completed check-in, and that is all it does. It used to
+   * also open itself, over the top of the card the player had just answered,
+   * so the answer went unanswered and the Messenger appeared out of nowhere.
+   * Now: it lands here, the program replies to the answer, and Lamby says so
+   * when the card closes. Fires at most once per session.
+   */
+  private maybeLandMessage(): void {
+    if (this.calebOpenedThisSession || this.messagePending) return;
     if (ledger.checkins.length !== 1) return;
+    this.messagePending = true;
+    this.dirty = true;
+  }
+
+  /** …and THEN he tells you (one conduction beat, two lines, both answers
+   *  work). Only ever on the ordinary desktop — never over a felt window. */
+  private maybeAnnounceMessage(): void {
+    if (!this.messagePending || this.messageNoticeShown) return;
+    if (this.caleb) return; // the person's window is already open: nothing to announce
+    this.messageNoticeShown = true;
+    this.messageNoticeOpen = true;
+    this.lambyPoseT = 0;
+    this.dirty = true;
+  }
+
+  private handleMessageNoticeClick(id: string): void {
+    if (id === 'message-open') {
+      this.messageNoticeOpen = false;
+      this.fileLambyRecord('begun', 'message-notice', lambyStrings.witness.messageOpened);
+      this.openMessenger();
+      return;
+    }
+    if (id === 'message-notnow') {
+      // DISMISSAL LAW again: it works, it files, and the door stays open —
+      // the Messenger keeps its unread mark on the desktop. The era waits.
+      this.messageNoticeOpen = false;
+      this.fileLambyRecord('dismissed', 'message-notice', lambyStrings.witness.messageDeferred);
+      ledger.assistant.dismissals += 1;
+      this.dirty = true;
+    }
+  }
+
+  /** the player opens the message — from Lamby's notice, or from the unread
+   *  Messenger icon if they dismissed him. Same door either way. */
+  private openMessenger(): void {
+    if (this.calebOpenedThisSession) return;
     this.calebOpenedThisSession = true;
+    this.messagePending = false;
+    this.messageNoticeOpen = false;
     this.openCaleb();
   }
 
@@ -522,6 +684,7 @@ export class DesktopOS {
       else {
         this.netvisionOfferedThisSession = true;
         this.netvisionOfferOpen = true;
+        this.lambyPoseT = 0; // he arrives in that window too — same pop, one creature
       }
       this.dirty = true;
     };
@@ -586,18 +749,26 @@ export class DesktopOS {
    * about utterances, not rendered rows.
    */
   private drawLambyDialog(
-    W: number, H: number, title: string, line1: string, line2: string
+    W: number, H: number, title: string, line1: string, line2: string,
+    opts: { dy?: number; hideChar?: boolean } = {}
   ): ui.ContentRect {
     const { ctx } = this;
     const dw = 348; const dh = 138;
-    const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
+    const dx = Math.round((W - dw) / 2);
+    const dy = opts.dy ?? Math.round((H - dh) / 2);
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, title, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
-    this.drawLambyMark(c.x + 6, c.y + 6);
+    // Session 60: the little blocky mark this window used to carry is gone —
+    // it is the SAME Lamby here as everywhere else (src/desktop/apps/lambyChar.ts,
+    // the single definition), just small and seated in his own column. The
+    // hero beats pass `hideChar` because they already draw him full size above.
+    // 0.38 is the size at which his paperclip (which reaches ~84px left of his
+    // centre at scale 1) clears the window's own bevel instead of being cut by it
+    if (!opts.hideChar) this.drawLambySeated(c.x + 44, c.y + 48, 0.38);
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
-    const textX = c.x + 40;
-    const maxW = c.w - 40 - 8; // the mark's column, and a margin off the bevel
+    const textX = c.x + (opts.hideChar ? 10 : 78);
+    const maxW = c.w - (opts.hideChar ? 10 : 78) - 8; // his column, and a margin off the bevel
     let row = 0;
     for (const line of [line1, line2]) {
       for (const wrapped of ui.wrapText(ctx, line, maxW)) {
@@ -606,6 +777,49 @@ export class DesktopOS {
       }
     }
     return c;
+  }
+
+  /** Lamby, drawn from the one definition. `appear` for his first CYCLE on
+   *  screen (the Clippy-lineage pop), `idle` after — the rig's own grammar. */
+  private drawLambySeated(cx: number, cy: number, scale: number): void {
+    const action: LambyAction = this.lambyPoseT < 3.2 ? 'appear' : 'idle';
+    drawLambyChar(this.ctx, cx, cy, {
+      mood: 'cheerful', action, t: this.lambyPoseT, moodStart: 0, scale
+    });
+  }
+
+  /**
+   * ⚑ THE DEBUT (S2R.1, rebuilt Session 60) — one full-screen conduction beat:
+   * Lamby at full size, his two lines under him, and two answers that both
+   * work. Used for BOTH his introduction and his presentation of Restorify, so
+   * the two beats read as one creature saying two things, not two popups.
+   */
+  private drawE2Conduction(
+    W: number, H: number, title: string, line1: string, line2: string,
+    accept: { label: string; id: string }, dismiss: { label: string; id: string }
+  ): void {
+    const { ctx } = this;
+    ui.px(ctx, 0, 0, W, H, ERA1.tealDark);
+    this.drawLambySeated(Math.round(W / 2), 106, 0.85);
+    const c = this.drawLambyDialog(W, H, title, line1, line2, { dy: 200, hideChar: true });
+    const by = c.y + c.h - 26;
+    ui.button(ctx, c.x + c.w - 104, by, 96, 18, accept.label, { hover: this.hover === accept.id });
+    ui.button(ctx, c.x + 8, by, 96, 18, dismiss.label, { hover: this.hover === dismiss.id });
+    this.hits.push({ x: c.x + c.w - 104, y: by, w: 96, h: 18, id: accept.id });
+    this.hits.push({ x: c.x + 8, y: by, w: 96, h: 18, id: dismiss.id });
+  }
+
+  /** finding B8 — the notice that a message arrived. Lamby's window, on the
+   *  ordinary desktop, never over the felt one. */
+  private drawMessageNotice(W: number, H: number): void {
+    const { ctx } = this;
+    const c = this.drawLambyDialog(W, H, lambyStrings.messageTitle,
+      lambyStrings.messageLine1, lambyStrings.messageLine2);
+    const by = c.y + c.h - 26;
+    ui.button(ctx, c.x + c.w - 86, by, 78, 18, lambyStrings.messageOpen, { hover: this.hover === 'message-open' });
+    ui.button(ctx, c.x + 8, by, 96, 18, lambyStrings.messageNotNow, { hover: this.hover === 'message-notnow' });
+    this.hits.push({ x: c.x + c.w - 86, y: by, w: 78, h: 18, id: 'message-open' });
+    this.hits.push({ x: c.x + 8, y: by, w: 96, h: 18, id: 'message-notnow' });
   }
 
   private drawNetvisionOffer(W: number, H: number): void {
@@ -643,7 +857,7 @@ export class DesktopOS {
         clock: strings.desktop.clock,
         brand: strings.splash.title,
         status: '',
-        icons: [strings.desktop.iconA, strings.desktop.iconIrc, strings.desktop.iconDossier]
+        icons: [strings.desktop.iconA, strings.desktop.iconIrc]
       };
     }
     const skins = strings.desktop.eraSkins as unknown as Record<string, {
@@ -748,12 +962,15 @@ export class DesktopOS {
     }
   }
 
-  /** the witness flip completed its return — card #1 unlocks */
+  /** The witness flip completed its return — the found file appears on the
+   *  desktop. Session 60: FILED SILENTLY. It used to raise a "Dossier updated"
+   *  toast, which is exactly the advertising the easter-egg rules forbid (S55's
+   *  lamby_rig.exe: never advertised, never rewarded). Nothing announces it;
+   *  it is simply there, for the player who looks at their own desktop. */
   unlockDossier(): void {
     if (this.dossierUnlocked) return;
     this.dossierUnlocked = true;
     if (!ledger.dossier.includes('card1')) ledger.dossier.push('card1');
-    this.toast = { text: strings.desktop.dossierUpdated, t: 4 };
     this.dirty = true;
   }
 
@@ -821,12 +1038,30 @@ export class DesktopOS {
     // same pacing family as the BIOS/LambyOS boot holds above.
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
       this.e2StageT += dt;
+      if (this.e2Stage === 'osBoot') {
+        const next = Math.min(Math.floor(this.e2StageT / BOOT_CPS), this.e2BootTotal);
+        if (next > this.e2BootChars) this.e2BootChars = next; // never walk back a click-completed crawl
+        if (this.e2BootChars >= this.e2BootTotal && this.e2BootDoneAt === Infinity) {
+          this.e2BootDoneAt = this.e2StageT;
+        }
+        // the crawl finishes, the footer holds, THEN the installer line
+        if (this.e2StageT > this.e2BootDoneAt + E2_BOOT_HOLD) {
+          this.e2Stage = 'lambyBoot';
+          this.e2StageT = 0;
+          this.dirty = true;
+        }
+      }
       if (this.e2Stage === 'lambyBoot' && this.e2StageT > LAMBY_BOOT_HOLD) {
-        this.e2Stage = 'lambyGreeting';
+        // ⚑ and here he is, for the first time in the piece
+        this.e2Stage = 'lambyIntro';
         this.e2StageT = 0;
+        this.lambyPoseT = 0;
         this.dirty = true;
       }
     }
+    // Lamby's own clock — his appear-pop and idle fidget run whenever he is on
+    // screen, in any of his windows (the debut, the notice, the video offer).
+    if (this.phase === 'desktop' && this.lambyOnScreen) this.lambyPoseT += dt;
     if (!this.behindToastShown && this.t >= this.behindToastAt) {
       this.behindToastShown = true;
       this.toast = { text: strings.desktop.behindToast, t: 7 };
@@ -1001,7 +1236,6 @@ export class DesktopOS {
       // icons — the channel only exists once the kit has routed you there
       if (!this.kit) this.drawIcon(10, 8, strings.desktop.iconA, true, 'icon-a');
       if (this.irc) this.drawIcon(10, 8, strings.desktop.iconIrc, true, 'icon-irc');
-      this.drawIcon(10, 56, strings.desktop.iconDossier, this.dossierUnlocked, 'icon-dossier');
       // reinterpretation-only: the provotype launchers (the invitation is inside each)
       if (this.reinterp && !this.provotype) {
         this.drawIcon(10, 104, reinterpStrings.launcherIcon, true, 'icon-provotype');
@@ -1015,6 +1249,19 @@ export class DesktopOS {
       }
     } else {
       this.drawEraDesktopChrome(W, skin, colors);
+    }
+    // THE FOUND FILE (Session 60) — the renamed dossier, in every era, on the
+    // same terms as lamby_rig.exe: only on an otherwise-idle desktop (so it is
+    // never on screen during a felt beat, and never competes with a window),
+    // never announced, never rewarded. It is there for the player who looks.
+    if (this.reinterp && this.dossierUnlocked && this.desktopIdle()) {
+      this.drawIcon(this.desktopEra === 'e1' ? 10 : 12, 296, strings.dossier.icon, true, 'icon-found-file');
+    }
+    // …and the Messenger, once a message has landed and not yet been read
+    // (finding B8): the door stays visible whether or not Lamby's notice was
+    // taken, so nothing depends on having said yes to him.
+    if (this.desktopEra === 'e2' && this.messagePending) {
+      this.drawIcon(12, 236, lambyStrings.messengerIcon, true, 'icon-messenger', true);
     }
     // windows
     if (this.kit?.open) this.kit.draw(ctx);
@@ -1031,6 +1278,9 @@ export class DesktopOS {
     if (this.caleb?.open) this.caleb.draw(ctx);
     if (this.accountability) this.accountability.draw(ctx);
     this.drawSendOffer(W, H);
+    // finding B8: Lamby's message notice — over the desktop, never over the
+    // Messenger itself (it is closed by the time that window opens)
+    if (this.messageNoticeOpen) this.drawMessageNotice(W, H);
     // S2R.4: Lamby's video offer, then the player itself (over Restorify, but
     // still under the system-modal update ritual below)
     if (this.netvisionOfferOpen) this.drawNetvisionOffer(W, H);
@@ -1100,9 +1350,11 @@ export class DesktopOS {
       // "Restorify" (data/strings/slice.json eraSkins.e2), so that existing
       // icon is the door, present for the rest of era 2 regardless of how
       // the debut resolved (begun or dismissed). No duplicate icon added.
-      const id = this.desktopEra === 'e2' && i === 0 ? 'icon-restorify'
-        : i === 2 ? 'icon-dossier' : `icon-era-${i}`;
-      this.drawIcon(12, 92 + i * 48, label, i === 2 ? this.dossierUnlocked : true, id);
+      // Session 60: the third icon in every era's list used to be the served
+      // "Dossier" card. It is not on this shelf any more — see drawDesktop's
+      // found-file block and data/strings/slice.json's `dossier._doc`.
+      const id = this.desktopEra === 'e2' && i === 0 ? 'icon-restorify' : `icon-era-${i}`;
+      this.drawIcon(12, 92 + i * 48, label, true, id);
     });
   }
 
@@ -1113,55 +1365,79 @@ export class DesktopOS {
     const { ctx } = this;
     ui.px(ctx, 0, 0, W, H, ERA1.black);
     if (this.e2Stage === 'silence') {
-      // felt · bare (S2R.0c): one dim line, nothing else — no hint, no music.
-      ui.setFont(ctx, 10);
-      ctx.fillStyle = ERA1.greyDark;
-      ctx.fillText(lambyStrings.returnLine1, 22, Math.round(H / 2) - 10);
-      ctx.fillText(lambyStrings.returnLine2, 22, Math.round(H / 2) + 8);
+      // felt · bare (S2R.0c): two lines, nothing else — no hint, no music.
+      // Session 60 (finding A1, Sérgio: *"'Welcome Back Daniel' typeface is
+      // not visible enough"*): it was 10px in `greyDark` — the palette's
+      // darkest non-black, on black, at the far end of a room, through a CRT
+      // that is itself a texture on a monitor mesh. The BARENESS was the
+      // law, not the dimness; the fix keeps the one-line-in-the-dark staging
+      // and makes it readable from the seat — bigger, in `silver`, with the
+      // instruction under it kept quieter than the greeting so the hierarchy
+      // still reads as a machine waiting rather than a dialog box shouting.
+      ui.setFont(ctx, 15);
+      ctx.fillStyle = ERA1.silver;
+      ctx.fillText(lambyStrings.returnLine1, 30, Math.round(H / 2) - 18);
+      ui.setFont(ctx, 11);
+      ctx.fillStyle = ERA1.grey;
+      ctx.fillText(lambyStrings.returnLine2, 30, Math.round(H / 2) + 8);
       return;
     }
+    if (this.e2Stage === 'osBoot') { this.drawE2Boot(H); return; }
     if (this.e2Stage === 'lambyBoot') {
       ui.setFont(ctx, 11);
       ctx.fillStyle = ERA1.silver;
       ctx.fillText(lambyStrings.installingLine, 22, Math.round(H / 2));
       return;
     }
-    // 'lambyGreeting'
-    this.drawLambyGreeting(W, H);
+    if (this.e2Stage === 'lambyIntro') {
+      this.drawE2Conduction(W, H, lambyStrings.introTitle,
+        lambyStrings.introLine1, lambyStrings.introLine2,
+        { label: lambyStrings.introAccept, id: 'lamby-hello' },
+        { label: lambyStrings.introDismiss, id: 'lamby-intro-dismiss' });
+      return;
+    }
+    // 'lambyProgram' — and now the program he is the face of
+    this.drawE2Conduction(W, H, lambyStrings.programTitle,
+      lambyStrings.programLine1, lambyStrings.programLine2,
+      { label: lambyStrings.programBegin, id: 'lamby-begin' },
+      { label: lambyStrings.programDismiss, id: 'lamby-dismiss' });
   }
 
-  /** a small, canvas-drawn lamb mark — E2 skin palette only (ERA1 tokens),
-   *  charming-not-cute-overload, deliberately blocky (pixel discipline). */
-  private drawLambyMark(x: number, y: number): void {
+  /** S2R.0b — the LambyOS 2003 boot crawl (finding A2). Same typewriter
+   *  grammar as the BIOS and O2 crawls, at a new version number: the machine
+   *  has been UPDATED and the boot is where it says so. */
+  private drawE2Boot(H: number): void {
     const { ctx } = this;
-    ui.px(ctx, x + 4, y + 3, 20, 15, ERA1.beige);   // fleece, shaded
-    ui.px(ctx, x + 2, y + 5, 22, 11, ERA1.white);   // fleece, lit
-    ui.px(ctx, x + 6, y + 1, 10, 5, ERA1.white);    // top poof
-    ui.px(ctx, x + 8, y + 8, 10, 8, ERA1.paper);    // face patch
-    ui.px(ctx, x + 10, y + 11, 2, 2, ERA1.black);   // eyes
-    ui.px(ctx, x + 14, y + 11, 2, 2, ERA1.black);
-    ui.px(ctx, x + 2, y + 15, 4, 4, ERA1.greyDark); // hooves
-    ui.px(ctx, x + 18, y + 15, 4, 4, ERA1.greyDark);
+    ui.setFont(ctx, 12);
+    let remaining = this.e2BootChars;
+    let y = 40;
+    for (const line of lambyStrings.osBootLines as string[]) {
+      if (remaining <= 0) break;
+      const take = Math.min(line.length, remaining);
+      ctx.fillStyle = ERA1.silver;
+      ctx.fillText(line.slice(0, take), 30, y);
+      remaining -= Math.max(line.length, 1);
+      y += 18;
+    }
+    if (this.caretOn() && this.e2BootChars < this.e2BootTotal) ui.px(ctx, 30, y, 7, 12, ERA1.silver);
+    if (this.e2BootChars >= this.e2BootTotal) {
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = ERA1.grey;
+      ctx.fillText(lambyStrings.osBootFooter, 30, H - 34);
+    }
   }
 
-  /** S2R.1 — Lamby's debut. Exactly two lines (law), two chips: Begin /
-   *  dismiss. Dismissal always works and is always logged. */
-  private drawLambyGreeting(W: number, H: number): void {
-    const { ctx } = this;
-    ui.px(ctx, 0, 0, W, H, ERA1.tealDark);
-    const c = this.drawLambyDialog(W, H, lambyStrings.lambyWindowTitle,
-      lambyStrings.lambyLine1, lambyStrings.lambyLine2);
-    const by = c.y + c.h - 26;
-    ui.button(ctx, c.x + c.w - 96, by, 88, 18, lambyStrings.lambyBegin, { hover: this.hover === 'lamby-begin' });
-    ui.button(ctx, c.x + 8, by, 96, 18, lambyStrings.lambyDismiss, { hover: this.hover === 'lamby-dismiss' });
-    this.hits.push({ x: c.x + c.w - 96, y: by, w: 88, h: 18, id: 'lamby-begin' });
-    this.hits.push({ x: c.x + 8, y: by, w: 96, h: 18, id: 'lamby-dismiss' });
-  }
-
-  private drawIcon(x: number, y: number, label: string, enabled: boolean, id: string): void {
+  private drawIcon(
+    x: number, y: number, label: string, enabled: boolean, id: string, unread = false
+  ): void {
     const { ctx } = this;
     ui.px(ctx, x + 8, y, 20, 16, enabled ? ERA1.beige : ERA1.tealDark);
     ui.px(ctx, x + 8, y, 20, 4, enabled ? ERA1.navy : ERA1.tealDark);
+    // the unread mark (finding B8): a pip, not a number in the label — the
+    // label is clipped to 62px and "Messenger (1)" lost its own count to the
+    // ellipsis. `warn` is reserved for narrative events, and an unopened
+    // message from Caleb is precisely one.
+    if (unread) ui.px(ctx, x + 25, y - 3, 6, 6, ERA1.warn);
     ui.setFont(ctx, 9);
     ctx.fillStyle = enabled ? ERA1.white : ERA1.tealDark;
     const fitted = this.fitIconLabel(label, 62);
@@ -1178,27 +1454,32 @@ export class DesktopOS {
     return `${out}...`;
   }
 
+  /**
+   * THE FOUND FILE (Session 60) — what the Dossier card became. Sérgio,
+   * 2026-07-26: *"it can stay as like an easter egg with a different name and
+   * like an explainer of the program."* So it is not a card served to the
+   * player any more; it is a text file sitting on the machine, written by the
+   * program about itself, and the analyst furniture it used to wear (TACTIC /
+   * LAYER / STATUS / ARCHIVE, and the researcher note that leaked in S58) is
+   * gone with the authoring voice. A plain document window, one footer stamp,
+   * nothing to press but close. The tactic content — the part he called
+   * interesting — is untouched in substance and re-voiced in data.
+   * ⚑ The name and every line are PLACEHOLDER-draft awaiting his pass.
+   */
   private drawDossier(W: number, H: number): void {
     const { ctx } = this;
-    const dw = 330; const dh = 200;
+    const dw = 340; const dh = 216;
     const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2) - 8;
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, strings.dossier.title, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
     ui.setFont(ctx, 9);
-    const meta = [strings.dossier.tactic, strings.dossier.layer, strings.dossier.status];
-    meta.forEach((m, i) => {
-      ctx.fillStyle = i === 2 ? ERA1.warnDark : ERA1.greyDark;
-      ctx.fillText(m, c.x + 8, c.y + 6 + i * 12);
-    });
     ctx.fillStyle = ERA1.black;
     strings.dossier.body.forEach((line, i) => {
-      ctx.fillText(line, c.x + 8, c.y + 48 + i * 12);
+      ctx.fillText(line, c.x + 10, c.y + 10 + i * 12);
     });
-    ui.setFont(ctx, 9);
-    ctx.fillStyle = ERA1.grey;
-    ctx.fillText(strings.dossier.note, c.x + 8, c.y + c.h - 28);
-    ctx.fillText(strings.dossier.archive, c.x + 8, c.y + c.h - 16);
-    this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'dossier-close' });
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(strings.dossier.footer, c.x + 10, c.y + c.h - 16);
+    this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'found-file-close' });
   }
 
   private drawPause(W: number, H: number): void {
@@ -1555,11 +1836,25 @@ export class DesktopOS {
         this.restorify = null;
         this.dirty = true;
         break;
+      case 'e2Boot':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.startE2Boot();
+        break;
       case 'e2Lamby':
         this.setPhase('desktop');
         this.setDesktopEra('e2');
-        this.e2Stage = 'lambyGreeting';
+        this.e2Stage = 'lambyIntro';
         this.e2StageT = 0;
+        this.lambyPoseT = 0;
+        this.dirty = true;
+        break;
+      case 'e2Program':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.e2Stage = 'lambyProgram';
+        this.e2StageT = 0;
+        this.lambyPoseT = 0;
         this.dirty = true;
         break;
       case 'e2Restorify':
@@ -1567,6 +1862,27 @@ export class DesktopOS {
         this.setDesktopEra('e2');
         this.e2Stage = 'active';
         this.openRestorify();
+        break;
+      // Session 60 — the messenger seam (findings B7/B8): the message has
+      // landed and Lamby is telling you about it. `messagePending` is set the
+      // way the real path sets it, so "Not now" leaves the same unread
+      // Messenger icon on the desktop that a played run would.
+      case 'e2Message':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2', true);
+        this.e2Stage = 'active';
+        this.restorify = null;
+        this.calebOpenedThisSession = false;
+        this.messagePending = true;
+        this.messageNoticeShown = false;
+        this.maybeAnnounceMessage();
+        break;
+      // the renamed dossier, opened directly — it is otherwise found only by
+      // looking at an idle desktop, which is the point of it
+      case 'foundFile':
+        this.setPhase('desktop');
+        this.unlockDossier();
+        this.dossierOpen = true;
         break;
       // S2R.4 (Session 35) review shortcuts — the video offer and the player
       // itself, without hand-driving a real check-in first.
@@ -1719,6 +2035,12 @@ export class DesktopOS {
     // S2R.4: the video player, then Lamby's offer — both own every click
     // while present, ahead of Restorify sitting underneath either of them.
     if (this.phase === 'desktop' && this.netvision?.open) { this.netvision.handleClick(x, y); return; }
+    // finding B8: his notice owns the desktop's clicks while it is up (both
+    // answers work; neither is a trap door out of the era)
+    if (this.phase === 'desktop' && this.messageNoticeOpen) {
+      this.handleMessageNoticeClick(hit ? hit.id : '');
+      return;
+    }
     if (this.phase === 'desktop' && this.netvisionOfferOpen) {
       this.handleNetvisionOfferClick(hit ? hit.id : '');
       return;
@@ -1741,8 +2063,9 @@ export class DesktopOS {
         case 'ok': this.confirmName(); break;
         case 'icon-a': this.insertKit(); break;
         case 'icon-irc': if (this.irc) this.irc.open = true; break;
-        case 'icon-dossier': this.dossierOpen = true; break;
-        case 'dossier-close': this.dossierOpen = false; break;
+        case 'icon-found-file': this.dossierOpen = true; break;
+        case 'found-file-close': this.dossierOpen = false; break;
+        case 'icon-messenger': this.openMessenger(); break;
         case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
         case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;
         case 'icon-lambyrig': this.openLambyRigFile(); break;
