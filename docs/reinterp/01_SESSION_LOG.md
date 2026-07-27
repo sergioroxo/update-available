@@ -2558,3 +2558,135 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   `e2Message`, `foundFile`. **Everything new is PLACEHOLDER-draft and waits on Sérgio's voice pass**
   — the boot lines, both conduction beats, the four check-in replies, the notice, and above all the
   found file's name and copy.
+
+- 2026-07-27 — Reinterp Session 61 (Opus 5, build-queue tag **S60 — THE DEAD BUTTONS, THE PUREMAIL
+  MOMENT, AND THE NETVISION OFFER SCREEN**; logged as Session 61 to keep this log sequential).
+  Everything below was played, not inferred: a linear E1→E2 run with real clicks and the spine
+  running, at REAL SPEED with sound (the sandbox suspends rAF for a hidden document and clamps
+  timers, so frames came from a **MessageChannel pump firing PlayCanvas's own `update` event with
+  wall-clock dt** — measured ratio 1.00× over a 6s window, `requestAnimationFrame` ticks 0). The
+  conductor armed both updates itself; no era button was touched.
+
+  ### 1. THE DEAD BUTTONS — GREYED, NOT REWIRED (finding C12)
+  Sérgio's ruling was *"the 'not now' either should be greyed out or just do the same as continue"*,
+  greyed where the beat is coercive. Both coercive beats now render a **visibly inert** option and
+  push no hit rect: the accountability alert's reassurance ("we'll get the days back together") and
+  Lamby's "don't be discouraged" video offer. Pressed in play, they do nothing at all — verified:
+  step unchanged, `assistant.dismissals` still 0, no ledger entry. Nothing branched, nothing was
+  invented; the option was always an ornament and now it looks like one — *you may not decline this.*
+  **The dismissal law came out STRONGER, not weaker.** The alert's close box is now hit-testable from
+  the alert's FIRST frame; `accountability.ts`'s header has claimed "closable at ANY point" since S45
+  while the code only pushed that rect at the final step. The greyed button is safe precisely because
+  the real exit was never that button. (The video offer's decline path — `media: offer declined` —
+  is now unreachable by design; the string stays in data, the dead branch is gone from os.ts. The
+  player is still not trapped: the video's own skip arms at 15s and Leave/pause are live.)
+
+  ### 2. ONE LAMBY — VERIFIED, NOTHING TO CHANGE
+  `grep drawLambyChar(` returns four call sites (os.ts, accountability.ts ×2, update.ts) and one
+  definition. S59 removed os.ts's blocky `drawLambyMark`; the second symbol Sérgio saw is already
+  gone, and the letter's new footer Lamby (below) is the same call. There is one Lamby.
+
+  ### 3. ⚑ THE PUREMAIL VOICE IS WIRED — AND AUDIBLE (finding E21)
+  S46 rendered, committed and registered `lamby_puremail_apology.wav` and nothing ever played it.
+  Now: `os.ts` owns the element, `isAudioAvailable()` decides whether the row exists at all (missing
+  WAV → no button, never a button that lies), the press TOGGLES (`▶ read aloud` / `■ stop`), Esc
+  pauses it and resumes it, Leave and the letter's own Continue stop it. **Proof from the running
+  build:** after pressing it, `{src:'lamby_puremail_apology.wav', paused:false, currentTime:2.89,
+  duration:30.8}` — the apparatus reading its own death notice, out loud, for the first time.
+
+  ### 4. THE PUREMAIL MOMENT — THE LETTER OWNS THE SCREEN (findings E18/E19/E20)
+  **(a) The band no longer pops back.** It was drawn while `step !== 'closed' || mailOpen`, so it
+  vanished when the alert ended and REAPPEARED when the envelope arrived — two live windows, no way
+  to choose, and the one carrying the era's most important text was the one that had just been
+  shoved. **Ruling: the letter owns the screen.** The band is retired at the alert's close and never
+  returns; S2R.5's two other signals move INSIDE the letter's own footer, where they always belonged
+  — the streak field coming apart (`412 days · for nothing`) and Lamby sterile, wordless, beside it.
+  One window, one focus, one event. The letter grew 236→306px to hold them.
+  **(b) "now playing" is TRUE or absent.** It was a permanently-displayed glyph-corrupted status line
+  for a broken jingle that does not exist as an asset. It now renders only while the WAV is actually
+  sounding, and names what is playing. The broken-jingle beat is not cancelled — it is just not
+  claimed until there is a file to claim.
+  **(c) The taskbar mark is a real affordance.** "1 new message — C___" was pale text sunk in a
+  status well, and Sérgio tried to open it and couldn't. It is now a raised taskbar button with the
+  same `warn` unread pip the Messenger icon carries, hit-tested BEFORE the window routing (it is
+  chrome; the window handlers return unconditionally and were swallowing it), and **pressing it is
+  answered**: the apparatus re-asserts its own stamp for a beat. The affordance works; the refusal is
+  the content — the block only ever lifts on the apparatus's own failure, never on a player's press.
+  The mark clears the moment the block lifts, because then it is no longer true.
+
+  ### 5. THE RESIDUE — DIAGNOSED, NOT GUESSED (findings F22/F24/F25)
+  **(a) Drop shadow.** Sérgio loved the beat and could not tell the line was a button; a hard offset
+  shadow under the bevel says "raised, pressable" in this era's own grammar. Confirmed on screen.
+  **(b) ⚑ "It appeared repeated on the screen" — FOUND.** The offered line (11px, in a button at
+  H/2-12) and the standing line (13px, at H/2-6) cross-faded over the same 1.1s at DIFFERENT sizes
+  and DIFFERENT baselines, so for about a second there were visibly two copies of the era's most
+  important sentence sliding out from under each other. Now: same words, same place, same size —
+  what changes is the frame around them (the button falls away first, then the line settles). One
+  sentence, always. Verified frame-by-frame after a real press.
+  **(c) "…and jumped back to the Restorify desktop" — TWO FAULTS, BOTH REAL.** The first was
+  presentational: the hold ended and the bare field was replaced by the full lit desktop on a single
+  frame. The field now fades to black over its last 1.8s and os.ts brings the desktop back UP out of
+  that black (`DESKTOP_RETURN_FADE`) — screenshotted mid-fade in both directions. The second was the
+  dead spine: with the conductor running, the residue does not "jump back to the desktop" at all —
+  `window.__spine()` went to `e3` and armed u3 on its own. That half of the finding was root cause #1
+  wearing a costume.
+  **(d) ⚑ "Caleb's messages were cleared — did he say anything or not?" — REPRODUCED AND FIXED.** The
+  un-redaction was working perfectly and *the transcript ate it*: the body is a tail window
+  (`rows.slice(-maxRows)`) and the reply tray's 32px were reserved permanently, so it held 15 rows —
+  the exact length of the conversation. The instant his four return lines began typing, the words the
+  block had just handed back scrolled off the top in front of him. The tray only exists during
+  `chat`, so from the seal onward the transcript takes that space (15→18 rows). **Now** the whole
+  conversation comes back and STAYS while he answers — screenshotted, every line from "daniel? it's
+  caleb." to "i want to be with you too" restored and visible. The last two lines still scroll once
+  all four of his return lines have landed, several seconds after the payoff has been seen; going
+  further would mean resizing the window mid-beat, which is the one edit this beat cannot survive.
+
+  ### 6. THE CALEB CHAT (findings C9/C10)
+  **(a) ⚑ "daniel:" — the root cause was not what it looked like.** `src/state/ledger.ts` initialises
+  `name` to the placeholder **"—"**, not to an empty string, so a truthiness fallback would never
+  have fired: on every review link and every debug jump — the path Sérgio played — his side of the
+  conversation was attributed to an em dash. The transcript now treats any name with no LETTER in it
+  as absent and falls back to the data's own `window.you`. Verified on a debug jump with
+  `ledger.name === '—'`: the replies read `daniel:`.
+  **(b) "Click to Reply" tells the truth.** While Caleb types, the tray is EMPTY — nothing is
+  offered, so nothing is claimed. The hint now sits directly above the chips at the moment they
+  exist, and is not drawn at the commit-press (that beat is not asking him to learn an interface).
+
+  ### 7. NETVISION (findings D15/D16/D17)
+  **(a) ⚑ THE SEALS.** The offer screen carries the whole DRTV apparatus of trust from Sérgio's
+  reference: **ORDER NOW!**, the number, a website, "3 easy payments of yourself", a gold **30 DAY /
+  MONEY BACK / GUARANTEE** rosette drawn as a pixel starburst, four payment badges and the delivery
+  fine print ("Please allow 6-8 weeks…", "Express restoration in select regions only."). It puts the
+  sting into its native grammar: a **money-back guarantee on selfhood**, sold with the rosette a
+  knife set would carry. ⚑ **EVERY BADGE IS INVENTED** — VALORCARD / MERIDIAN / COVENANT / SWIFTPAY;
+  his reference's real card brands appear nowhere in the fiction.
+  **(b) The shots move.** No new vocabulary, per his note that he loves the existing one: the whole
+  TAPE now rides a slow vertical wobble (scanlines/noise/chrome stay pinned — they are the screen,
+  not the tape, and the sliver it opens is the window's own black), the studio bands swell, the
+  silhouettes breathe out of phase and drift with the camera, the brand card's bars sweep, the
+  rosette pulses a pixel and ORDER NOW! alternates between two warm tones at ~0.8 Hz (a colour
+  alternation, never an on/off flash — warm-corrupt, never strobe). Sampled live: bob 1→0, rosette
+  42→43, shout warn↔tooltip, breath 0.00→0.47.
+  **(c) Caleb's toast waits for the fine print.** It fired at `inBreakNow` — 14s before the end —
+  and covered the disclaimer crawl ("…not therapy, not a cure… your old self may not be
+  recoverable…"), the line Sérgio called a great text and never got to read, then expired. It now
+  fires on a new seam, `disclaimerDone` (the tape actually running out), it **persists** instead of
+  counting down (a crack in the block does not heal on a timer — `clearToasts` at the block's lift
+  is what closes it), it is taller so its own "click to open" has a line, it carries a drop shadow,
+  and it is **pressable over every window** (`pressToastAt`, asked before the window routing) with
+  the same answer as the taskbar mark. `PUREMAIL_DELAY` 2.4→5.0s so it has a moment of ordinary
+  desktop to be seen in. Screenshotted: the crawl clean and toast-free at 110.8s; the toast arriving
+  at 114.0s.
+
+  ### 8. ONE THING THE PLAYTHROUGH CAUGHT THAT NOBODY HAD FILED
+  The s1 "Route sheet" summons icon was drawing **on top of the Caleb window**, inside the felt
+  transcript, next to the reply chips — `drawSendOffer` ran after the windows. os.ts's own
+  `sendOfferPending` law says a summons must never surface on top of S2R.3's window; the paint order
+  now says it too. (Clicks were never affected — the chat takes them first.)
+
+  **REGISTER BOUNDARY: INTACT.** `caleb.ts` still imports no Lamby renderer, no Lamby strings and
+  draws no mark; the new `onNotificationPressed` reports a press and learns nothing — os.ts routes it
+  to the apparatus. `accountability.ts` remains the only module that draws Lamby in this beat.
+  **BLOCKED: none.** `npx tsc --noEmit`, `npm test` and `npm run build` green on the final tree.
+  **All new copy is PLACEHOLDER-draft** and waits on Sérgio: the seals block (badges, guarantee,
+  fine print, website), the now-playing line, the toast's "click to open", and `window.you`.

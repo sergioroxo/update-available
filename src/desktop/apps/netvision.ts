@@ -59,6 +59,16 @@ interface Scene {
   tear?: boolean;
 }
 
+interface OfferSeals {
+  guaranteeDays: string;
+  guaranteeLine1: string;
+  guaranteeLine2: string;
+  orderNow: string;
+  website: string;
+  cards: string[];
+  finePrint: string[];
+}
+
 interface MediaData {
   windowTitle: string;
   brand: string;
@@ -71,6 +81,7 @@ interface MediaData {
   skip: string;
   skipDelaySeconds: number;
   chyrons: Record<string, string>;
+  offer: OfferSeals;
   breakStutter: string;
   breakNoticeText: string;
   mediaClosedTag: string;
@@ -171,10 +182,25 @@ export class NetVisionPlayerApp {
     return this.elapsed >= this.breakStart;
   }
 
-  /** THE BREAK, readable from outside: os.ts uses it to let Caleb back in
-   *  through the corner toasts while the showpiece is failing (S2R.4). */
+  /** THE BREAK, readable from outside (S2R.4). */
   get inBreakNow(): boolean {
     return this.open && this.stage === 'playing' && this.inBreak();
+  }
+
+  /**
+   * S60 (finding D17) — the seam Caleb is allowed back in on.
+   *
+   * He used to arrive at `inBreakNow`, i.e. the instant the tape started
+   * failing, 14 seconds before the end — which put his toast squarely on top
+   * of the disclaimer crawl ("…not therapy, not a cure… your old self may not
+   * be recoverable…"), the single best line the apparatus ever writes about
+   * itself, and Sérgio never got to read it. The crawl is authored to finish
+   * exactly as the tape runs out, so the honest seam is the tape running out:
+   * the fine print gets its whole scroll, and the person arrives in the static
+   * afterwards. os.ts reads THIS now, not `inBreakNow`.
+   */
+  get disclaimerDone(): boolean {
+    return this.open && this.stage === 'staticHold';
   }
 
   /** 0 at the break's start → 1 at the video's own end (duration) */
@@ -261,6 +287,16 @@ export class NetVisionPlayerApp {
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     const a: Rect = c;
 
+    // S60 (finding D15, "each image needs more animation"): the TAPE moves.
+    // Everything inside the frame rides a slow vertical wobble — the picture
+    // never sits perfectly still on a 2003 VHS — while the scanlines, noise and
+    // chrome below stay pinned, because those are the SCREEN, not the tape. The
+    // sliver this opens at the top or bottom edge is the window's own black.
+    // No new vocabulary: this is the tracking instability the break already
+    // exaggerates, present at a whisper from the first frame.
+    ctx.save();
+    ctx.translate(0, this.frameBob());
+
     const tearing = this.elapsed >= this.tearAt;
     if (this.stage === 'staticHold' || tearing) {
       this.drawStatic(ctx, a);
@@ -277,6 +313,7 @@ export class NetVisionPlayerApp {
         this.drawSceneContent(ctx, a, scene, stutter);
       }
     }
+    ctx.restore();
 
     this.drawScanlines(ctx, a);
     this.drawTapeNoise(ctx, a, this.noiseAmount());
@@ -291,6 +328,20 @@ export class NetVisionPlayerApp {
       ui.button(ctx, sx, sy, sw, sh, M.skip, { hover: this.hover === 'skip' });
       this.hits.push({ x: sx, y: sy, w: sw, h: sh, id: 'skip' });
     }
+  }
+
+  /** the tape's own vertical instability, in whole pixels (integer positions,
+   *  pixel discipline). Two slow sines beat against each other so it never
+   *  reads as a loop; the break widens it as the transport fails. */
+  private frameBob(): number {
+    const amp = 1 + this.breakProgress() * 1.6;
+    return Math.round((Math.sin(this.elapsed * 0.9) * 0.6 + Math.sin(this.elapsed * 2.3) * 0.5) * amp);
+  }
+
+  /** a slow breath, 0..1, for the studio shots — a hand-held camera and a
+   *  person who is alive rather than a pasted silhouette */
+  private breath(phase = 0): number {
+    return (Math.sin(this.elapsed * 1.15 + phase) + 1) / 2;
   }
 
   private noiseAmount(): number {
@@ -346,18 +397,24 @@ export class NetVisionPlayerApp {
         this.drawLowerThird(ctx, a, scene, override, false);
         return;
       default: {
-        // host / testimony / crowd — a warm studio set + composite silhouette(s)
+        // host / testimony / crowd — a warm studio set + composite silhouette(s).
+        // S60 (finding D15): the set BREATHES. The studio bands swell a pixel,
+        // the silhouettes rise and fall out of phase with each other, and the
+        // held shot drifts a pixel sideways — a camera operator, not a slide.
         const warm = scene.grade === 'before' ? ERA1.grey : ERA1.paper;
         ui.px(ctx, a.x, a.y, a.w, a.h, warm);
-        ui.px(ctx, a.x, a.y, a.w, 6, ERA1.beige);
-        ui.px(ctx, a.x, a.y + a.h - 6, a.w, 6, ERA1.beige);
+        const bandH = 6 + Math.round(this.breath() * 2);
+        ui.px(ctx, a.x, a.y, a.w, bandH, ERA1.beige);
+        ui.px(ctx, a.x, a.y + a.h - bandH, a.w, bandH, ERA1.beige);
         const baseY = a.y + Math.round(a.h * 0.58);
+        const drift = Math.round(Math.sin(this.elapsed * 0.42) * 2);
         if (scene.shot === 'crowd') {
-          this.drawBust(ctx, a.x + a.w * 0.5 - 46, baseY, 0.8);
-          this.drawBust(ctx, a.x + a.w * 0.5, baseY, 1);
-          this.drawBust(ctx, a.x + a.w * 0.5 + 46, baseY, 0.8);
+          // three people, three phases — the row must never move as one object
+          this.drawBust(ctx, a.x + a.w * 0.5 - 46 + drift, baseY - Math.round(this.breath(1.9) * 2), 0.8);
+          this.drawBust(ctx, a.x + a.w * 0.5 + drift, baseY - Math.round(this.breath(0) * 2), 1);
+          this.drawBust(ctx, a.x + a.w * 0.5 + 46 + drift, baseY - Math.round(this.breath(3.4) * 2), 0.8);
         } else {
-          this.drawBust(ctx, a.x + a.w * 0.5, baseY, 1.15);
+          this.drawBust(ctx, a.x + a.w * 0.5 + drift, baseY, 1.15 + this.breath() * 0.04);
         }
         if (scene.grade) {
           ui.setFont(ctx, 10);
@@ -445,12 +502,19 @@ export class NetVisionPlayerApp {
 
   private drawBrandCard(ctx: CanvasRenderingContext2D, a: Rect): void {
     ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.tealDark);
+    // S60: a title card is where a cheap production shows off. Two bars sweep
+    // out from behind the wordmark (integer widths, palette tokens) and the
+    // ministry line drifts a pixel — the existing chrome grammar, in motion.
+    const sweep = Math.round((Math.sin(this.elapsed * 0.7) + 1) / 2 * (a.w * 0.42));
+    ui.px(ctx, a.x + a.w / 2 - sweep, a.y + a.h / 2 - 34, sweep * 2, 2, ERA1.titleBlue);
+    ui.px(ctx, a.x + a.w / 2 - sweep, a.y + a.h / 2 + 26, sweep * 2, 2, ERA1.titleBlue);
     ui.setFont(ctx, 18);
     const bw = ctx.measureText(M.brand).width;
     this.fringeText(ctx, M.brand, a.x + (a.w - bw) / 2, a.y + a.h / 2 - 24, ERA1.tooltip);
     ui.setFont(ctx, 10);
     const mw = ctx.measureText(M.ministry).width;
-    this.fringeText(ctx, M.ministry, a.x + (a.w - mw) / 2, a.y + a.h / 2 + 6, ERA1.white);
+    const drift = Math.round(Math.sin(this.elapsed * 0.55) * 2);
+    this.fringeText(ctx, M.ministry, a.x + (a.w - mw) / 2 + drift, a.y + a.h / 2 + 6, ERA1.white);
   }
 
   /**
@@ -478,17 +542,109 @@ export class NetVisionPlayerApp {
     }
   }
 
+  /**
+   * THE OFFER SCREEN (S60, finding D16 — Sérgio's DRTV reference).
+   *
+   * The end-frame apparatus of trust, entire: ORDER NOW!, the number, the
+   * website, a gold guarantee rosette, a row of payment badges and the
+   * delivery fine print. It is not dressing. It puts "three easy payments of
+   * yourself" into the visual grammar that phrase was written for, and it
+   * makes the era's most damning object literal — a **money-back guarantee on
+   * selfhood**, sold with the same rosette a knife set would carry.
+   *
+   * ⚑ EVERY BADGE IS INVENTED (data/dialog/s2_media.json's `offer.cards`).
+   * Sérgio's reference shows real card brands; none of them may exist in this
+   * fiction, so the rails are the ministry's own made-up ones.
+   *
+   * The satire is entirely inside the seller's self-presentation and it
+   * collapses under its own promise — the tone law, exactly.
+   */
   private drawOfferCard(ctx: CanvasRenderingContext2D, a: Rect, override?: string): void {
+    const O = M.offer;
     ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.navy);
+    const cx = a.x + a.w / 2;
+
+    // ORDER NOW! — a DRTV end-frame always shouts first. It alternates between
+    // two warm tones rather than blinking on/off: motion without a luminance
+    // step (glitch doctrine — warm-corrupt, never strobe), ~0.8 Hz.
+    ui.setFont(ctx, 14);
+    const shout = Math.sin(this.elapsed * 5) > 0 ? ERA1.warn : ERA1.tooltip;
+    const ow = ctx.measureText(O.orderNow).width;
+    this.fringeText(ctx, O.orderNow, cx - ow / 2, a.y + 14, shout);
+
+    // the number (or, once the tape is failing, the stutter that replaced it)
     ui.setFont(ctx, 16);
     const big = override ?? M.phone;
     const bw = ctx.measureText(big).width;
-    this.fringeText(ctx, big, a.x + (a.w - bw) / 2, a.y + a.h / 2 - 24, ERA1.tooltip);
+    this.fringeText(ctx, big, cx - bw / 2, a.y + 40, ERA1.tooltip);
+
+    ui.setFont(ctx, 9);
+    const ww = ctx.measureText(O.website).width;
+    this.fringeText(ctx, O.website, cx - ww / 2, a.y + 62, ERA1.white);
+
     if (!override) {
       ui.setFont(ctx, 10);
       const cw = ctx.measureText(M.cta).width;
-      this.fringeText(ctx, M.cta, a.x + (a.w - cw) / 2, a.y + a.h / 2 + 4, ERA1.white);
+      this.fringeText(ctx, M.cta, cx - cw / 2, a.y + 80, ERA1.white);
     }
+
+    this.drawGuaranteeRosette(ctx, a.x + a.w - 74, a.y + 150);
+    this.drawCardBadges(ctx, a.x + 24, a.y + 196);
+
+    ui.setFont(ctx, 8);
+    ctx.fillStyle = ERA1.silver;
+    O.finePrint.forEach((line, i) => {
+      ctx.fillText(line, a.x + 24, a.y + a.h - 78 + i * 10);
+    });
+  }
+
+  /** the gold seal. Drawn as a pixel starburst — chunky petals + concentric
+   *  discs, palette tokens only — and it BREATHES by one pixel, which is all
+   *  the animation a seal needs to look like it is being held up to camera. */
+  private drawGuaranteeRosette(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+    const pulse = Math.sin(this.elapsed * 1.9) > 0 ? 1 : 0;
+    const r = 42 + pulse;
+    for (let i = 0; i < 12; i++) {
+      const ang = (i / 12) * Math.PI * 2;
+      const px = Math.round(cx + Math.cos(ang) * r);
+      const py = Math.round(cy + Math.sin(ang) * r);
+      ui.px(ctx, px - 5, py - 5, 10, 10, ERA1.olive);
+    }
+    ctx.fillStyle = ERA1.olive;
+    ctx.beginPath();
+    ctx.arc(Math.round(cx), Math.round(cy), r - 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = ERA1.tooltip;
+    ctx.beginPath();
+    ctx.arc(Math.round(cx), Math.round(cy), r - 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    const O = M.offer;
+    ui.setFont(ctx, 12);
+    ctx.fillStyle = ERA1.warnDark;
+    let tw = ctx.measureText(O.guaranteeDays).width;
+    ctx.fillText(O.guaranteeDays, Math.round(cx - tw / 2), cy - 20);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA1.black;
+    tw = ctx.measureText(O.guaranteeLine1).width;
+    ctx.fillText(O.guaranteeLine1, Math.round(cx - tw / 2), cy - 4);
+    tw = ctx.measureText(O.guaranteeLine2).width;
+    ctx.fillText(O.guaranteeLine2, Math.round(cx - tw / 2), cy + 8);
+  }
+
+  /** the payment rails — ALL INVENTED (see the card's own doc comment). Four
+   *  bevelled plates in a row, the way an end-frame always lays them out. */
+  private drawCardBadges(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    const bw = 62; const bh = 22; const gap = 6;
+    M.offer.cards.forEach((name, i) => {
+      const bx = x + i * (bw + gap);
+      ui.bevel(ctx, bx, y, bw, bh, true);
+      ui.px(ctx, bx + 2, y + 2, bw - 4, 4, ERA1.navy);
+      ui.setFont(ctx, 7);
+      ctx.fillStyle = ERA1.black;
+      const tw = ctx.measureText(name).width;
+      ctx.fillText(name, Math.round(bx + (bw - tw) / 2), y + 10);
+    });
   }
 
   private drawStatic(ctx: CanvasRenderingContext2D, a: Rect): void {

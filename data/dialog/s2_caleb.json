@@ -45,7 +45,9 @@
       "_doc": "S2R.6 — the quietest moment in the piece. `dissolveSeconds` is the slow glitch dissolve that carries the desktop away and leaves the bare field (a settling, not an effect — same grammar as the mail's entrance, run slower and quieter). `arriveSeconds` is the bare dark AFTER the dissolve and BEFORE the line surfaces: nothing at all on screen, on purpose. `holdSeconds` is how long the committed line is allowed to just stand there once the player has pressed it.",
       "dissolveSeconds": 4.2,
       "arriveSeconds": 3.0,
-      "holdSeconds": 6.5
+      "holdSeconds": 6.5,
+      "exitFadeSeconds": 1.8,
+      "_doc_exit": "S60 (finding F25's other half — Sérgio: after the press it 'jumped back to the Restorify desktop'). It did: the hold ended and the bare field was replaced by the full lit desktop on a single frame, which is the one edit this beat cannot survive. The last `exitFadeSeconds` of the hold now fade the field to black, and os.ts brings the desktop up out of that black — the era's quietest moment ends the way it began, as a dissolve."
     },
 
     "toastLifeSeconds": 14,
@@ -53,8 +55,10 @@
   },
 
   "window": {
+    "_doc": "FELT. `you` is the nick the player's own lines carry (finding C9, Sérgio: 'replies should be attributed to Daniel — the piece knows his name'). The transcript prefers `ledger.name` and falls back to this: on any review entry point that skips the opening, `ledger.name` is still empty and every reply he made rendered as a bare ': ' — which is exactly the path Sérgio played. Lowercase to match `contact`; this is a 2003 messenger, not a letterhead. `hint` is now drawn ONLY when the chips are actually on screen (finding C10: it used to sit there while Caleb was still typing, promising a click that did not exist yet).",
     "title": "HopeRestored Messenger",
     "contact": "caleb",
+    "you": "daniel",
     "status": "online",
     "hint": "click to reply"
   },
@@ -129,7 +133,8 @@
     "streakUnit": "days",
     "_doc_streak": "Must stay in step with data/dialog/s2_lamby.json's `streakValue` (\"412 days\") — that file was outside this session's fence, so the number is repeated here rather than parsed out of a display string.",
     "okLabel": "Okay",
-    "dismissLabel": "Not now"
+    "dismissLabel": "Not now",
+    "_doc_dismissLabel": "THE DEAD BUTTON, ON PURPOSE (finding C12 — Sérgio: 'the not now either should be greyed out or just do the same as continue'). At THIS beat — the reassurance, 'we'll get the days back together' — it renders GREYED and takes no press: the apparatus displays an option that is not one. That is the thesis as UI, and it costs the player nothing, because the window's own close box stays live at every step of the alert and files the dismissal exactly as before (DISMISSAL LAW, CLAUDE.md). No branch was invented and no ledger path diverges."
   },
 
   "video": {
@@ -138,8 +143,10 @@
   },
 
   "toasts": {
-    "_doc": "FELT content in the system's own nag-grammar: MSN-style corner message popups, the same shape the apparatus used to nag him, now carrying the person back in. They arrive DURING the video's break — through the broken signal, while the apparatus's showpiece fails. Sérgio: \"not too much\" — so the crack stays a crack. One toast; the array is the seam if a second is ever wanted.",
+    "_doc": "FELT content in the system's own nag-grammar: MSN-style corner message popups, the same shape the apparatus used to nag him, now carrying the person back in. Sérgio: \"not too much\" — so the crack stays a crack. One toast; the array is the seam if a second is ever wanted. S60 RETIMED (finding D17): it used to fire at the START of the break and cover the end-of-video disclaimer scroll — the one piece of fine print Sérgio called 'a great text' — then expire unusably. It now arrives only once the crawl has finished (the video's own end), and it PERSISTS instead of counting down: the crack does not close on a timer, it closes when the block lifts. Clicking it is a real act — see `hint`.",
     "windowTitle": "caleb",
+    "hint": "click to open",
+    "_doc_hint": "Finding E20's other half: the notification has to be an affordance or not be there. It is one — and pressing it is answered by the apparatus, not by this module (the felt side never learns what happens; os.ts routes the press to the block's own stamp, which re-asserts itself). The affordance works. The answer is no. That is the truth of this beat and it is not a dead button.",
     "lines": [
       { "id": "break-1", "text": "daniel are you still get" }
     ],
@@ -159,8 +166,9 @@
     "openLabel": "Open",
     "continueLabel": "Continue",
     "readAloudLabel": "▶ read aloud",
+    "readAloudStopLabel": "■ stop",
     "readAloudTrack": "lamby_puremail_apology.wav",
-    "_doc_readAloud": "HOOK ONLY (S46, not landed): build-time TTS in LAMBY'S VOICE — the apparatus reading its own death notice in the cheerful assistant timbre, doubling as the read-aloud accessibility layer. Apparatus register only; never a felt/survivor-side line. No such file exists and none is registered in src/audio/tapeAudio.ts, so nothing is ever requested.",
+    "_doc_readAloud": "WIRED (S60). Was a hook: S46 rendered and committed public/assets/audio/lamby_puremail_apology.wav and registered it in src/audio/tapeAudio.ts, and nothing ever called it. Now os.ts plays it through `playOnce`, the row renders only when `isAudioAvailable` says the file is really registered (a missing WAV degrades to no button at all — Session 30's pattern), and pressing it again stops it. Build-time TTS in LAMBY'S VOICE: the apparatus reading its own death notice in the cheerful assistant timbre, doubling as the read-aloud accessibility layer. Apparatus register only; never a felt/survivor-side line.",
     "heading": "A message from the Restorify team.",
     "lines": [
       "We have to stop.",
@@ -176,9 +184,9 @@
     ],
     "closing": "Restorify is closing.",
     "streakGlitch": ["0 days", "— days", "412 days · for nothing"],
-    "brokenNowPlaying": "n̷o̷w̷ ̷p̷l̷a̷y̷i̷n̷g̷ ̷—̷ ̷·̷·̷·̷",
-    "_doc_broken": "The jingle returns BROKEN (slow, detuned, a dying music box). No degraded render exists yet and nothing is registered in src/audio/tapeAudio.ts — this line is the VISIBLE half of that beat; the audio half rides Sérgio's degraded-jingle render (audio guide §7c).",
-    "lambyEmpty": "Lamby"
+    "nowPlaying": "now playing — the message, in Lamby's voice",
+    "_doc_nowPlaying": "IT IS TRUE NOW, OR IT IS NOT THERE (finding E19 — Sérgio: 'it says now playing — playing WHAT?'). This used to be `brokenNowPlaying`, a permanently-displayed glyph-corrupted 'now playing' for a broken jingle that does not exist as an asset: a status line about nothing. It now renders ONLY while the read-aloud WAV is actually audible, and names what is playing. The broken-jingle beat (audio guide §7c, Sérgio's degraded render) is not cancelled — it is simply not claimed until there is a file to claim.",
+    "streakFieldLabel": "Purity Streak"
   },
 
   "return": {

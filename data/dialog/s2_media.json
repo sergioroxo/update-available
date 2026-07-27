@@ -24,6 +24,20 @@
     "CROWD": ""
   },
   "_doc_break": "R28-2d-iv (Session 35): THE BREAK — near the video's end the tape degrades (noise density climbs, tracking bands roll, the CTA visually loops/stutters, the last portrait freezes), then tears to static; through the static, one line renders — a first crack of Caleb's message (S2R.3/S2R.5, still gated/unbuilt as its own thread — this is only the fragment surfacing, never the full message). `breakStutter` replaces the spoken line during the loop choreography; `breakNoticeText` is what renders through the static; `mediaClosedTag` is the file label named in the build brief. All PLACEHOLDER, felt-adjacent per the brief's instruction to keep it bare.",
+  "_doc_seals": "S60 — THE OFFER SCREEN'S APPARATUS OF TRUST, per Sérgio's reference (a late-night DRTV end-frame: guarantee rosette, card badges, delivery fine print, ORDER NOW!, a phone number and a website). Why it is more than dressing: it puts 'three easy payments of yourself' into its native visual grammar, and a MONEY-BACK GUARANTEE ON SELFHOOD is the single most damning object the era can put on screen. The satire lives entirely inside the seller's self-presentation, exactly as the tone law requires, and it collapses under its own promise. ⚑ ETHICS: his reference shows REAL card brands (Visa/Mastercard/AmEx/Discover). Every badge below is INVENTED — no real mark, logo or likeness appears in the fiction (CLAUDE.md). All PLACEHOLDER-draft copy pending Sérgio's pass.",
+  "offer": {
+    "guaranteeDays": "30 DAY",
+    "guaranteeLine1": "MONEY BACK",
+    "guaranteeLine2": "GUARANTEE",
+    "orderNow": "ORDER NOW!",
+    "website": "www.thenewyou-program.net",
+    "cards": ["VALORCARD", "MERIDIAN", "COVENANT", "SWIFTPAY"],
+    "finePrint": [
+      "Please allow 6-8 weeks for delivery.",
+      "Express restoration in select regions only.",
+      "Terms and conditions may apply."
+    ]
+  },
   "breakStutter": "Call now! Call now! Call n—",
   "breakNoticeText": "1 new message — C___",
   "mediaClosedTag": "media: interrupted — signal lost",

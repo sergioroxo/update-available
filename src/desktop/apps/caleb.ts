@@ -216,6 +216,11 @@ export class CalebThreadApp {
   onReturnSettled?: () => void;
   /** fires when the residue has been committed and held — the thread is over */
   onThreadDone?: () => void;
+  /** S60 — the player pressed Caleb's notification while the block is on.
+   *  This module does not know and must not know what answers it: os.ts hands
+   *  the press to the apparatus, which re-asserts its own stamp. The felt side
+   *  only reports that he tried. */
+  onNotificationPressed?: () => void;
 
   private readonly msgs: Msg[] = [];
   private readonly stream = new TypeStream();
@@ -294,13 +299,37 @@ export class CalebThreadApp {
     this.dirty = true;
   }
 
-  /** S2R.4 — he comes back through the system's own notification shape */
+  /**
+   * S2R.4 — he comes back through the system's own notification shape.
+   *
+   * S60 (finding D17): it PERSISTS. It used to carry `pacing.toastLifeSeconds`
+   * and vanish — Sérgio watched it cover the disclaimer crawl and then expire
+   * before he could do anything with it, which is the worst of both. A crack
+   * in the block does not heal on a countdown: this one stays until the block
+   * itself lifts (`clearToasts`, called at S2R.5's mail-close). os.ts also
+   * pushes it later now — after the crawl, not at the break's start.
+   */
   pushBreakToast(): void {
     if (this.toasts.length > 0) return;
     const line = (caleb.toasts.lines as { id: string; text: string }[])[0];
     if (!line) return;
-    this.toasts.push({ text: line.text, life: P.toastLifeSeconds });
+    this.toasts.push({ text: line.text, life: Infinity });
     this.dirty = true;
+  }
+
+  /**
+   * The toast is drawn OVER everything (it is the felt module's over-everything
+   * pass), so it must be PRESSABLE over everything too — otherwise it is a
+   * button that only works when nothing is on top of it, which is the same
+   * lie in a new place. os.ts asks this before its window routing, exactly as
+   * it does for the taskbar mark. Returns true if the press was the toast's.
+   */
+  pressToastAt(x: number, y: number): boolean {
+    const hit = this.hits.find(h => h.id === 'toast');
+    if (!hit) return false;
+    if (x < hit.x || x > hit.x + hit.w || y < hit.y || y > hit.y + hit.h) return false;
+    this.onNotificationPressed?.();
+    return true;
   }
 
   clearToasts(): void {
@@ -314,6 +343,8 @@ export class CalebThreadApp {
     this.t += dt;
 
     if (this.toasts.length > 0) {
+      // a finite life still expires (the array is the seam for any future
+      // toast that should); the break toast's is Infinity and simply stays
       for (const toast of this.toasts) toast.life -= dt;
       const before = this.toasts.length;
       this.toasts = this.toasts.filter(toast => toast.life > 0);
@@ -382,7 +413,8 @@ export class CalebThreadApp {
     // the dissolve, the line's fade-in and the commit cross-fade all need
     // every frame; nothing else in this beat does
     if (this.phase === 'residue' && this.t < this.residueAt + LINE_FADE) this.dirty = true;
-    if (this.residueCommitted && this.t < this.residueCommittedAt + LINE_FADE) this.dirty = true;
+    // the commit's cross-fade AND the exit fade both need every frame
+    if (this.residueCommitted) this.dirty = true;
     if (this.t >= this.residueDoneAt) {
       this.residueDoneAt = Infinity;
       this.phase = 'done';
@@ -462,7 +494,17 @@ export class CalebThreadApp {
     const bodyX = c.x + 6;
     const bodyY = c.y + 18;
     const bodyW = c.w - 12;
-    const bodyH = c.h - 18 - TRAY_H;
+    // S60 (finding F22, Sérgio: *"after Continue, Caleb's messages were
+    // cleared — did he say anything or not?"*). DIAGNOSED IN PLAY: the
+    // un-redaction worked perfectly and then the transcript ate it. The body
+    // is a tail window (`rows.slice(-maxRows)`), and with the reply tray's 32px
+    // permanently reserved it held only 15 rows — so the moment his four
+    // return lines started typing, the conversation the block had just handed
+    // back scrolled off the top, in front of him. The words came back and left
+    // again. The tray is only ever drawn during `chat`, so from the seal
+    // onwards the transcript takes that space and the restored conversation
+    // stays on screen while he answers.
+    const bodyH = c.h - 18 - (this.phase === 'chat' ? TRAY_H : 0);
     this.drawTranscript(ctx, bodyX, bodyY, bodyW, bodyH);
 
     if (this.phase === 'chat') this.drawTray(ctx, c.x + 6, c.y + c.h - TRAY_H + 4, c.w - 12);
@@ -477,7 +519,15 @@ export class CalebThreadApp {
     const partial = this.stream.partial;
     if (partial !== null) all.push({ from: 'them', text: partial });
     for (const m of all) {
-      const nick = m.from === 'them' ? caleb.window.contact : ledger.name.toLowerCase();
+      // finding C9 — his replies are HIS. `ledger.name` is authoritative when
+      // it holds a real name; `src/state/ledger.ts` initialises it to the
+      // placeholder "—", so any entry point that skips the opening (every
+      // review link, every debug jump — the path Sérgio played) attributed his
+      // side of the conversation to an em dash. Anything with no LETTER in it
+      // is not a name: fall back to the data's own `you`.
+      const typed = ledger.name.trim();
+      const you = /[a-zA-ZÀ-ɏ]/.test(typed) ? typed.toLowerCase() : caleb.window.you;
+      const nick = m.from === 'them' ? caleb.window.contact : you;
       const prefix = `${nick}: `;
       const pw = ctx.measureText(prefix).width;
       const wrapped = ui.wrapText(ctx, m.text, w - pw);
@@ -515,30 +565,34 @@ export class CalebThreadApp {
 
   /** the reply chips — they register how he engaged, they never fork anything */
   private drawTray(ctx: CanvasRenderingContext2D, x: number, y: number, w: number): void {
-    if (!this.awaiting) {
-      ui.setFont(ctx, 9);
-      ctx.fillStyle = ERA1.grey;
-      ctx.fillText(caleb.window.hint, x, y + 8);
-      return;
-    }
+    // finding C10 (Sérgio: *"'Click to Reply' appears while Caleb is still
+    // typing — you must wait for the boxes anyway, so the affordance lies"*).
+    // While he types, the tray is EMPTY: nothing is offered, so nothing is
+    // claimed. The hint now labels the chips at the moment they actually
+    // exist — it is true when it is on screen, and it is true about the thing
+    // directly under it.
+    if (!this.awaiting) return;
     ui.px(ctx, x, y - 4, w, 1, ERA1.beige);
     if (this.awaitingCommit) {
-      // THE COMMIT-PRESS: one chip, no alternative. There is nothing else on
-      // the tray because there is nothing else he can say.
+      // THE COMMIT-PRESS: one chip, no alternative, and no hint over it — the
+      // beat is not asking him to learn an interface.
       const chip = this.awaiting[0];
       const bw = Math.min(300, w);
       const bx = x + Math.round((w - bw) / 2);
-      ui.button(ctx, bx, y + 4, bw, 20, chip.label, { hover: this.hover === `chip:${chip.id}` });
-      this.hits.push({ x: bx, y: y + 4, w: bw, h: 20, id: `chip:${chip.id}` });
+      ui.button(ctx, bx, y + 6, bw, 20, chip.label, { hover: this.hover === `chip:${chip.id}` });
+      this.hits.push({ x: bx, y: y + 6, w: bw, h: 20, id: `chip:${chip.id}` });
       return;
     }
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA1.grey;
+    ctx.fillText(caleb.window.hint, x, y - 1);
     const n = this.awaiting.length;
     const gap = 8;
     const cw = Math.floor((w - gap * (n - 1)) / n);
     this.awaiting.forEach((chip, i) => {
       const bx = x + i * (cw + gap);
-      ui.button(ctx, bx, y + 4, cw, 20, chip.label, { hover: this.hover === `chip:${chip.id}` });
-      this.hits.push({ x: bx, y: y + 4, w: cw, h: 20, id: `chip:${chip.id}` });
+      ui.button(ctx, bx, y + 10, cw, 18, chip.label, { hover: this.hover === `chip:${chip.id}` });
+      this.hits.push({ x: bx, y: y + 10, w: cw, h: 18, id: `chip:${chip.id}` });
     });
   }
 
@@ -557,16 +611,22 @@ export class CalebThreadApp {
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
     const tw = 168;
-    const th = 46;
+    const th = 58; // room for his line AND the affordance line under it
     this.toasts.forEach((toast, i) => {
       const tx = W - tw - 8;
       const ty = H - 22 - th - 6 - i * (th + 4);
+      // it casts a shadow, like every other pressable thing in this era's
+      // chrome — the toast is an affordance now (finding E20's other half)
+      ui.px(ctx, tx + 2, ty + 2, tw, th, ERA1.black);
       const c = ui.windowFrame(ctx, tx, ty, tw, th, caleb.toasts.windowTitle, true);
       ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
       ui.setFont(ctx, 9);
       ctx.fillStyle = ERA1.black;
       ui.wrapText(ctx, toast.text, c.w - 8).slice(0, 2)
         .forEach((line, r) => ctx.fillText(line, c.x + 4, c.y + 3 + r * ROW_H));
+      ctx.fillStyle = this.hover === 'toast' ? ERA1.navy : ERA1.grey;
+      ctx.fillText(caleb.toasts.hint, c.x + 4, c.y + c.h - 10);
+      if (i === 0) this.hits.push({ x: tx, y: ty, w: tw, h: th, id: 'toast' });
     });
   }
 
@@ -590,36 +650,71 @@ export class CalebThreadApp {
 
     const line = caleb.residue.line;
     const up = Math.min(1, (this.t - this.residueAt) / LINE_FADE);
-    // the press replaces the offered line with the standing one — a cross-fade,
-    // because a hard swap here would read as a UI state change, not a truth
+    // THE PRESS, RE-STAGED (S60, finding F25). Sérgio: on click the line
+    // *"appeared repeated on the screen"*. It was: the offered line (11px, in
+    // a button at H/2-12) and the standing line (13px, at H/2-6) cross-faded
+    // over the same 1.1s at different sizes and different baselines, so for a
+    // beat there were visibly TWO copies of the era's most important sentence,
+    // one sliding out from under the other. They are now the same words in the
+    // same place at the same size — what changes is the FRAME AROUND THEM: the
+    // button falls away and the line is left standing on its own. And the two
+    // halves are sequenced, not overlapped: the button goes first, then the
+    // line settles. One sentence, always.
     const pressed = this.residueCommitted
       ? Math.min(1, (this.t - this.residueCommittedAt) / LINE_FADE) : 0;
+    const chromeOut = Math.min(1, pressed / 0.45);   // the button leaves first
+    const settle = Math.max(0, (pressed - 0.45) / 0.55); // then the line settles
 
-    if (pressed < 1) {
+    ui.setFont(ctx, 12);
+    const tw = ctx.measureText(line).width;
+    const bw = Math.round(tw) + 40;
+    const bx = Math.round((W - bw) / 2);
+    const by = Math.round(H / 2) - 13;
+    const textX = bx + 20;
+    const textY = by + 8;
+
+    if (chromeOut < 1) {
       ctx.save();
-      ctx.globalAlpha = up * (1 - pressed);
-      ui.setFont(ctx, 11);
-      const tw = ctx.measureText(line).width;
-      const bw = Math.round(tw) + 40;
-      const bx = Math.round((W - bw) / 2);
-      const by = Math.round(H / 2) - 12;
+      ctx.globalAlpha = up * (1 - chromeOut);
+      // A DROP SHADOW (finding F24). Sérgio loved the beat and could not tell
+      // the line was a button. The bevel alone was too quiet on this field; a
+      // hard offset shadow is the era's own way of saying "this is raised, and
+      // you may press it" — the same object, finally legible as one.
+      ui.px(ctx, bx + 3, by + 3, bw, 26, ERA1.black);
       ui.button(ctx, bx, by, bw, 26, '', { hover: this.hover === 'residue' });
-      ui.setFont(ctx, 11);
-      ctx.fillStyle = this.hover === 'residue' ? ERA1.navy : ERA1.black;
-      ctx.fillText(line, bx + 20, by + 7);
       ctx.restore();
       // it only takes a click once it is actually legible
       if (!this.residueCommitted && up > 0.5) {
         this.hits.push({ x: bx, y: by, w: bw, h: 26, id: 'residue' });
       }
     }
-    if (pressed > 0) {
+    // the SAME words, in the SAME place, twice over: dark while they sit on
+    // the button, pale once they are standing on the field. Two draws of one
+    // sentence at one baseline — never two sentences.
+    ui.setFont(ctx, 12);
+    if (chromeOut < 1) {
       ctx.save();
-      ctx.globalAlpha = pressed;
-      ui.setFont(ctx, 13);
+      ctx.globalAlpha = up * (1 - chromeOut);
+      ctx.fillStyle = this.hover === 'residue' && !this.residueCommitted ? ERA1.navy : ERA1.black;
+      ctx.fillText(line, textX, textY);
+      ctx.restore();
+    }
+    if (settle > 0) {
+      ctx.save();
+      ctx.globalAlpha = settle;
       ctx.fillStyle = ERA1.paper;
-      const tw = ctx.measureText(line).width;
-      ctx.fillText(line, Math.round((W - tw) / 2), Math.round(H / 2) - 6);
+      ctx.fillText(line, textX, textY);
+      ctx.restore();
+    }
+
+    // …and then it goes out. The hold's last seconds fade the whole field to
+    // black so the desktop can come back UP out of it (os.ts owns that half)
+    // rather than replacing this on one frame — see `pacing.residue._doc_exit`.
+    const toGo = this.residueDoneAt - this.t;
+    if (toGo < RES.exitFadeSeconds) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, Math.max(0, 1 - toGo / RES.exitFadeSeconds));
+      ui.px(ctx, 0, 0, W, H, ERA1.black);
       ctx.restore();
     }
   }
@@ -635,6 +730,7 @@ export class CalebThreadApp {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit) return;
     if (hit.id === 'residue') { this.commitResidue(); return; }
+    if (hit.id === 'toast') { this.onNotificationPressed?.(); return; }
     if (hit.id.startsWith('chip:') && this.awaiting) {
       const chip = this.awaiting.find(c => c.id === hit.id.slice(5));
       if (chip) this.chooseChip(chip);

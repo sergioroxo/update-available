@@ -26,7 +26,7 @@ import { LambyRigFileApp } from './apps/lambyRigFile';
 import { drawLambyChar, type LambyAction } from './apps/lambyChar';
 // the boot jingle hook — an unregistered name is never requested (registry law
 // in that module's header), so this is silent and error-free until an asset lands
-import { playOnce } from '../audio/tapeAudio';
+import { playOnce, isAudioAvailable } from '../audio/tapeAudio';
 import { GuideThread } from '../narrative/guide';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
@@ -72,8 +72,14 @@ const E2_BOOT_HOLD = 2.2;   // s — hold the completed LambyOS 2003 crawl befor
 const LAMBY_BOOT_HOLD = 1.6; // s — the "finishing installation…" beat's hold
 /** S2R.5: s of ordinary desktop between the video beat ending and the
  *  PureMail envelope. The collapse is triggered by the apparatus's own
- *  documented failure, never by the player — the delay is only pacing. */
-const PUREMAIL_DELAY = 2.4;
+ *  documented failure, never by the player — the delay is only pacing.
+ *  S60: 2.4 → 5.0. Caleb's toast now arrives at the END of the video rather
+ *  than at the break's start (finding D17), and it needs a moment of ordinary
+ *  desktop to be seen and pressed before the collapse takes the screen. */
+const PUREMAIL_DELAY = 5.0;
+/** s for the desktop to come back up out of the residue's fade-to-black
+ *  (S60, finding F25 — the beat used to end on a hard cut to the desktop) */
+const DESKTOP_RETURN_FADE = 1.8;
 
 // The shipped opening (warning→off→boot→splash→name→desktop) is UNTOUCHED.
 // Behind ?reinterp=1 the four r_* phases REPLACE it (OPENING_AND_FLOW_SPEC
@@ -209,6 +215,11 @@ export class DesktopOS {
    *  "the notification mark persisting quietly" (brief). The Caleb thread
    *  proper stays gated/untouched; this is only the visual residue. */
   private calebNotificationVisible = false;
+  /** S46's WAV while it is sounding (S60). os.ts owns it so Esc/pause and
+   *  Leave can reach it; null whenever nothing is playing. */
+  private pureMailVoice: HTMLAudioElement | null = null;
+  /** `t` at which the desktop began coming back up out of the residue's black */
+  private desktopReturnAt = -1;
   /** a live send OFFER (master script §4) — icon + summons window on the desktop */
   private sendOffer: { id: string; open: boolean } | null = null;
   /** engine listens: the update restart landed — morph the space to `era` */
@@ -643,9 +654,19 @@ export class DesktopOS {
     const thread = new CalebThreadApp();
     this.caleb = thread;
     thread.onCommit = () => this.openAccountabilityAlert();
+    // S60 (finding E20): he pressed the notification. The felt module reports
+    // the press and learns nothing; the apparatus answers it, by re-asserting
+    // the block it is holding. The affordance is real — the refusal is the
+    // content. (This is also the ONLY thing that could honestly happen: the
+    // block lifts on the apparatus's own failure, never on a player's press.)
+    thread.onNotificationPressed = () => this.accountability?.pingStamp();
     thread.onThreadDone = () => {
       this.caleb = null;
       this.accountability = null;
+      // finding F25 — the desktop comes back UP out of the residue's own
+      // fade-to-black instead of replacing it on one frame ("it jumped back
+      // to the Restorify desktop"). caleb.ts fades out; this fades in.
+      this.desktopReturnAt = this.t;
       // S2R.7 — THE RESIDUE LEADS SOMEWHERE. The thread's end is the era's
       // end: from here the spine (src/narrative/spine.ts) reads the residue
       // filing off the ledger and takes the era to its u3 close, exactly the
@@ -693,22 +714,51 @@ export class DesktopOS {
       this.accountability?.liftStamp();
       this.caleb?.clearToasts();
       this.caleb?.beginRestore();
+      // …and the taskbar's "1 new message" goes with it: the fragment has
+      // resolved into the real conversation coming back (finding E20).
+      this.calebNotificationVisible = false;
+      this.stopReadAloud();
       this.dirty = true;
+    };
+    // ⚑ S46's VOICE, WIRED (S60, finding E21 — "built and not wired", the
+    // highest value-per-effort item in the review). os.ts owns the element so
+    // that Esc/pause and Leave can reach it; `isAudioAvailable` decides whether
+    // the row exists at all, so a missing WAV is silence and no button rather
+    // than a button that does nothing.
+    alert.readAloudAvailable = isAudioAvailable(calebStrings.pureMail.readAloudTrack);
+    alert.isReadingAloud = () => this.readAloudPlaying;
+    alert.onReadAloud = (track) => {
+      if (this.readAloudPlaying) { this.stopReadAloud(); return false; }
+      this.pureMailVoice = playOnce(track);
+      return this.readAloudPlaying;
     };
     this.dirty = true;
   }
 
+  /** true while Lamby is audibly reading the letter — the now-playing row's
+   *  only source of truth (it never claims anything the element isn't doing) */
+  private get readAloudPlaying(): boolean {
+    const a = this.pureMailVoice;
+    return !!a && !a.paused && !a.ended;
+  }
+
+  private stopReadAloud(): void {
+    if (!this.pureMailVoice) return;
+    this.pureMailVoice.pause();
+    this.pureMailVoice = null;
+    this.dirty = true;
+  }
+
   private handleNetvisionOfferClick(id: string): void {
+    // ⚑ ONLY ONE OF THESE IS A BUTTON (S60, finding C12). "Not now" on the
+    // "don't be discouraged" pop-up is drawn GREYED and pushes no hit rect —
+    // Sérgio named this beat as coercive, and a visibly inert option is the
+    // honest rendering of it: the apparatus offers a choice that is not one.
+    // Nothing branches; the player is not trapped either, because the video's
+    // own skip arms at 15s and Leave/pause are live throughout.
     if (id === 'netvision-watch') {
       this.netvisionOfferOpen = false;
       this.openNetVision();
-      return;
-    }
-    if (id === 'netvision-notnow') {
-      this.netvisionOfferOpen = false;
-      ledger.media.push({ id: 'offer', outcome: 'declined', witness: lambyStrings.videoOfferDeclined });
-      if (this.caleb) this.pureMailAt = this.t + PUREMAIL_DELAY;
-      this.dirty = true;
     }
   }
 
@@ -828,9 +878,9 @@ export class DesktopOS {
       lambyStrings.videoOfferLine1, lambyStrings.videoOfferLine2);
     const by = c.y + c.h - 26;
     ui.button(ctx, c.x + c.w - 86, by, 78, 18, lambyStrings.videoOfferWatch, { hover: this.hover === 'netvision-watch' });
-    ui.button(ctx, c.x + 8, by, 96, 18, lambyStrings.videoOfferNotNow, { hover: this.hover === 'netvision-notnow' });
+    // greyed, and no hit rect — see handleNetvisionOfferClick's own note
+    ui.button(ctx, c.x + 8, by, 96, 18, lambyStrings.videoOfferNotNow, { disabled: true });
     this.hits.push({ x: c.x + c.w - 86, y: by, w: 78, h: 18, id: 'netvision-watch' });
-    this.hits.push({ x: c.x + 8, y: by, w: 96, h: 18, id: 'netvision-notnow' });
   }
 
   /** Lamby's "Begin" chip: files the greeting as begun, then opens Restorify */
@@ -978,7 +1028,17 @@ export class DesktopOS {
   update(dt: number): void {
     this.t += dt;
     this.phaseT += dt;
-    if (this.paused) { this.draw(); return; }
+    if (this.paused) {
+      // Esc/pause silences Lamby's reading too — "the game's pause literally
+      // pauses audio, it does not keep playing silently" (tapeAudio's own
+      // doctrine, applied to the one element os.ts owns).
+      if (this.readAloudPlaying) this.pureMailVoice?.pause();
+      this.draw();
+      return;
+    }
+    if (this.pureMailVoice?.paused && !this.pureMailVoice.ended) {
+      void this.pureMailVoice.play().catch(() => { /* autoplay policy — never thrown */ });
+    }
 
     if (this.phase === 'boot') {
       const next = Math.min(Math.floor(this.phaseT / BOOT_CPS), this.bootTotal);
@@ -1021,7 +1081,11 @@ export class DesktopOS {
     // THE BREAK (S2R.4): while the apparatus's own showpiece tears itself
     // apart, Caleb arrives through the corner-toast shape the system uses to
     // nag him. Pushed once — the toast object guards re-entry.
-    if (this.phase === 'desktop' && this.netvision?.inBreakNow) this.caleb?.pushBreakToast();
+    // S60 (finding D17): AFTER the disclaimer crawl, not at the break's start.
+    // He used to land on top of the fine print — "…not therapy, not a cure…
+    // your old self may not be recoverable…", the line Sérgio called a great
+    // text and never got to read. The tape gets to finish lying first.
+    if (this.phase === 'desktop' && this.netvision?.disclaimerDone) this.caleb?.pushBreakToast();
     if (this.t >= this.pureMailAt) {
       this.pureMailAt = Infinity;
       this.accountability?.openMail();
@@ -1272,12 +1336,18 @@ export class DesktopOS {
     if (this.provotype?.open) this.provotype.draw(ctx);
     if (this.lambyRigFile?.open) this.lambyRigFile.draw(ctx);
     if (this.restorify?.open) this.restorify.draw(ctx);
+    // the summons is a DESKTOP object, so it belongs under the windows. It was
+    // drawn after them, and a real playthrough caught it: the s1 "Route sheet"
+    // icon sat on top of the Caleb transcript, inside the felt window, next to
+    // the reply chips. os.ts's own `sendOfferPending` law says a summons must
+    // never surface on top of S2R.3's window; this is that law in the paint
+    // order. (Clicks were never affected — the chat takes them first.)
+    this.drawSendOffer(W, H);
     // S2R.3: the person's window FIRST (felt), then every intrusion on it
     // (operable) drawn over it. Lamby lives only in the second of these two
     // calls — he is never drawn inside the chat's frame, in any beat.
     if (this.caleb?.open) this.caleb.draw(ctx);
     if (this.accountability) this.accountability.draw(ctx);
-    this.drawSendOffer(W, H);
     // finding B8: Lamby's message notice — over the desktop, never over the
     // Messenger itself (it is closed by the time that window opens)
     if (this.messageNoticeOpen) this.drawMessageNotice(W, H);
@@ -1308,14 +1378,36 @@ export class DesktopOS {
         ctx.fillText(guideLine, 64, H - 16);
       }
     }
-    // THE BREAK's residue (S2R.4): a quiet, non-interactive mark — "the
-    // notification mark persisting quietly" — same status-well spot as the
-    // guide line (mutually exclusive era, no layout clash).
+    // THE BREAK's residue (S2R.4), now a REAL AFFORDANCE (S60, finding E20 —
+    // Sérgio: *"'1 new message — C___' in the system bar is barely visible AND
+    // not clickable. He tried to open it and couldn't."*). Two fixes, one
+    // rule — it is an affordance or it is not there:
+    //   · legible: a raised taskbar button with the same unread pip the
+    //     Messenger icon carries, not pale text sunk in a well;
+    //   · clickable: pressing it does exactly what the corner toast does, and
+    //     the apparatus answers by re-asserting its block. The mark is cleared
+    //     the moment the block lifts, because then it is no longer true.
     if (this.reinterp && this.desktopEra === 'e2' && this.calebNotificationVisible) {
-      ui.bevel(ctx, 58, H - 19, W - 108, 16, false);
+      const bw = W - 108;
+      ui.button(ctx, 58, H - 19, bw, 16, '', { hover: this.hover === 'taskbar-message' });
+      ui.px(ctx, 63, H - 15, 6, 6, ERA1.warn);
       ui.setFont(ctx, 9);
-      ctx.fillStyle = ERA1.tooltip;
-      ctx.fillText(mediaStrings.breakNoticeText, 64, H - 16);
+      ctx.fillStyle = this.hover === 'taskbar-message' ? ERA1.navy : ERA1.black;
+      ctx.fillText(mediaStrings.breakNoticeText, 74, H - 16);
+      this.hits.push({ x: 58, y: H - 19, w: bw, h: 16, id: 'taskbar-message' });
+    }
+    // …and the desktop comes UP OUT OF BLACK after the residue (finding F25):
+    // caleb.ts fades its field out, this fades the room back in. The era's
+    // quietest beat is not allowed to end on a cut.
+    if (this.desktopReturnAt >= 0) {
+      const k = (this.t - this.desktopReturnAt) / DESKTOP_RETURN_FADE;
+      if (k >= 1) this.desktopReturnAt = -1;
+      else {
+        ctx.save();
+        ctx.globalAlpha = 1 - Math.max(0, k);
+        ui.px(ctx, 0, 0, W, H, ERA1.black);
+        ctx.restore();
+      }
     }
     // toast
     if (this.toast) {
@@ -2030,6 +2122,20 @@ export class DesktopOS {
       this.handleE2ArrivalClick(hit ? hit.id : '');
       return;
     }
+    // the taskbar is CHROME: it sits outside every window, so its own hit is
+    // asked before the window routing below (which returns unconditionally and
+    // would otherwise swallow a press meant for the bar). Finding E20.
+    if (this.phase === 'desktop' && hit?.id === 'taskbar-message') {
+      this.accountability?.pingStamp();
+      this.dirty = true;
+      return;
+    }
+    // …and Caleb's corner toast, for the same reason: it is drawn over every
+    // window, so it is asked before them (finding E20/D17).
+    if (this.phase === 'desktop' && this.caleb?.pressToastAt(x, y)) {
+      this.dirty = true;
+      return;
+    }
     // S2R.6: the residue owns the whole monitor while it is up
     if (this.phase === 'desktop' && this.caleb?.ownsScreen) { this.caleb.handleClick(x, y); return; }
     // S2R.4: the video player, then Lamby's offer — both own every click
@@ -2146,6 +2252,7 @@ export class DesktopOS {
 
   private leave(): void {
     wipeLedger();
+    this.stopReadAloud(); // the voice does not outlive the session (S60)
     this.paused = false;
     this.setPhase('left');
     this.onLeave?.();
