@@ -47,6 +47,92 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-28 · Session 62 — **THE INFOMERCIAL GETS A CAST**, per
+`docs/REINTERP_NEW_YOU_EDIT_NOTES_2026-07-28.md` (Sérgio's shot-by-shot notes from watching the
+render). **The root fault was one fault, and it explained most of the notes: the film had no
+CAST.** The song sings in at least four voices; `data/dialog/s2_media.json` credited PASTOR DALE
+for lines a woman sings, and `netvision.ts` drew nearly everyone as the same bust on the same beige
+set. Fixing the cast dissolved several "too barebones / too similar" notes on its own. Touched:
+`src/desktop/apps/netvision.ts`, `data/dialog/s2_media.json`, this log. Nothing else.
+
+**1 · THE CAST, IN THE DATA.** 5.92 is **THE STRUGGLER** (not an ANNOUNCER — he is the one being
+addressed); 17.16, 41.65, the three steps and both homecoming lines are **THE COUNSELLOR** (chyron
+`SISTER DEENA · Restoration Counsellor`, invented, PLACEHOLDER-draft); `CROWD` → `THE
+CONGREGATION`; Marcus's chyron is now `MARCUS · 14 MONTHS IN THE PROGRAM`.
+**⚑ The dramaturgy this exists to protect:** hers is the warmest shot in the film — a lamp, a
+chair, hands folded in her lap, the camera closer than it ever gets to Dale — and hers is the voice
+that says *"Confess it · Submit it · Let us hold it for you"* and *"the self he meant you to be"*.
+**The softest voice makes the actual demands.** The steps card (which Sérgio called "marvelous")
+is UNCHANGED in every pixel; the only difference is that her chyron is now the one standing under
+it. Nothing in the fiction ever remarks on it.
+
+**2 · THE BODIES ACT.** New `drawFigure` — articulated hip/shoulder/elbow/hand, drawn with a
+`limb()` helper that steps square blocks along a line (integer positions, no `ctx.rotate`, 1997
+rules). A persona is a POSE, not a sprite: the Struggler hunches small and off-centre in a
+too-wide cold frame (with a second pool of light nobody is standing in); Dale is centred, backlit,
+arms open behind a pulpit; the Counsellor is seated with her hands folded. **The head is a plain
+oval in every pose and never gains a feature — the no-faces law is absolute.** Plus the DRTV
+chyron layer (`DRAMATIZATION` · `ACTUAL PARTICIPANT` · `RESULTS NOT TYPICAL` · `PAID PROGRAMMING`),
+which is real furniture, not invented: Marcus is an ACTUAL PARTICIPANT in the before and RESULTS
+NOT TYPICAL in the after, and the apparatus retracts its own witness in 6pt type.
+
+**3 · THE OPENING** (0 → 5.92 was blank): `LAMBY PRODUCTIONS PRESENTS` over an **evangelist Lamby**
+— a haloed, faceless ministry logo in a gold-edged oval with rays behind it, drawn here and
+importing nothing from `lambyChar.ts`, because it must not be the Clippy lamb. Then the title and
+a mundane copyright line, played completely straight. It never winks; every glitch belongs to the
+break.
+
+**4 · BEFORE/AFTER, DIFFERENTIATED.** BEFORE: desaturated, one hard overhead light, the frame
+cramped by black bars, the body slumped — **and a window behind him**. AFTER: warm key, wide frame,
+upright, a family-shaped shadow — **and no window**. The inversion is in and is never remarked on.
+**5 · PRODUCT PLACEMENT** at 33.43: the boxed program held up to camera by two faceless hands —
+twelve cassette spines, a workbook, shrink-wrap glints, an `AS SEEN ON TV` starburst.
+**6 · THE HOMECOMING** (49.19–52.05) is its own shot now (`homecoming`, so the chorus is untouched):
+the three figures turn to face you, open their arms, a doorway of light widens behind them, and
+they step closer **on the beat** — quantised deliberately, so they are simply nearer each time you
+look. "To the self he meant you to be" arrives letter by letter.
+**7 · THE PHONE** at 91.70: a period desk phone in outline, its hold light blinking on the beat,
+`OPERATORS AVAILABLE: 3` ticking down and never reaching zero (the sequence is authored in the data
+so it cannot land on 0).
+**8 · THE 97.6 CUT IS GONE.** That bare `crowd` shot wedged between two blue offer screens is
+retired; the run stays on the offer field and the phone number SWELLS into the countdown.
+**9 · THE LAST "Call now" NO LONGER CUTS TO DARK.** `tear` moved onto its own beat at 107.60 and
+105.32 now carries `overdrive`: for 2.3s the rosette spins, the badges multiply and stack, the
+number stutters and duplicates, and `ORDER NOW!` grows until it no longer fits (the card clips, so
+"no longer fits" means something). **Then** the tear. The satire now collapses twice — once by
+over-selling itself and once by failing — which is the tone law working as written.
+**10 · THE DISCLAIMER** is 9pt → 13pt, outlined, and drawn ON TOP of the noise instead of under it.
+**Its timing is untouched** — the rate still derives from the scene's `at` and the video's
+`duration`, so it still finishes exactly as the tape runs out.
+**11 · "(Don't) Skip"** — his joke, shipped. The BEHAVIOUR is unchanged, which is what keeps it
+honest.
+
+**A REAL BUG THE FIRST RENDER EXPOSED:** the new sets throw light rays past the frame, and nothing
+clips the player's picture — so they painted onto the desktop *around* the window and stayed there,
+because nothing else clears that region. `draw()` now clips to the content rect before the tape
+bob (the bob's black sliver still works). That was a genuine defect in the shipped surface, not
+just in the MP4.
+
+**HOW THIS WAS VERIFIED.** Three full re-renders with `node tools/render-video.mjs --fps 24`, and
+**I watched the result each time** — pulling stills across the whole 114s (1.5 / 4.5 / 7 / 10 / 19 /
+28 / 30 / 35 / 39 / 45.8 / 50.5 / 56.5 / 60 / 65 / 93 / 99.5 / 106 / 107.4 / 110.5s) rather than
+trusting the code. That loop caught, and fixed, everything above plus: the light cones were far too
+bright, the Counsellor's key pooled into a white balloon that ate the frame, the BEFORE/AFTER
+badges were printed on top of the timestamp, the product's "hands" read as two stilts, the
+`AS SEEN ON TV` starburst sat under the skip button, and "(Don't) Skip" overflowed its plate.
+**And the in-build player was driven for real** — `?reinterp=1&debug=1`, log-in clicked, frames
+pumped through a MessageChannel (the pane suspends rAF), `__os.debugJump('netvision')`, seeks to
+10s and 106.5s, the OS surface blitted for a legible shot, and the **skip pressed at its real hit
+rect**: the player closed and filed `video → skipped → "ad skipped → avoidant — re-serve later"`,
+exactly as before. The MP4 is the review artifact; the browser is the product, and both were
+checked. `npx tsc --noEmit`, `npm test` (invariants / rooms / spec all green) and `npm run build`
+pass on the final tree.
+**BLOCKED: none.** **All new copy is PLACEHOLDER-draft and waits on Sérgio:** SISTER DEENA's name
+and title, the title card's three lines and copyright, the product-box copy, and the operators
+label. And **one judgment call for him**: the four DRTV captions are period-real, but WHICH scene
+carries which is mine — putting `ACTUAL PARTICIPANT` on Marcus's before and `RESULTS NOT TYPICAL`
+on his after was chosen so the apparatus contradicts itself across one man's testimony.)*
+
 *(2026-07-25 · Session 49 — **THE E1/E2 INTERACTION DIAGNOSTIC**, per the S49 prompt
 (findings 2, 3, 6 of `docs/REINTERP_PLAYTHROUGH_NOTES_2026-07-25.md`). Diagnose first, fix
 second. The headline: **Sérgio was right about all three, and the code was right too — every

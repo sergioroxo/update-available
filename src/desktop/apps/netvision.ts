@@ -36,6 +36,30 @@
  *     wreck, including the stutter's re-fire cadence.
  *   · The karaoke ball tracks SUNG WORDS, from each chorus scene's `words`.
  * No new glitch vocabulary was invented for any of it.
+ *
+ * S62 — THE INFOMERCIAL GETS A CAST. Sérgio watched the render and most of his
+ * "too barebones / too similar" notes turned out to be one fault seen from
+ * different angles: THE FILM HAD NO CAST. The song sings in at least four
+ * voices; the data credited PASTOR DALE for lines a woman sings, and this
+ * module drew nearly everyone as the same bust on the same beige set. So:
+ *   · the data names the cast correctly (THE STRUGGLER · PASTOR DALE · THE
+ *     COUNSELLOR · MARCUS · THE CONGREGATION) and each persona gets its own
+ *     staging, key and POSE — see `drawFigure`, which replaces the static
+ *     busts with articulated, faceless figures that slump, open and lean in;
+ *   · ⚑ the dramaturgy that makes: the COUNSELLOR's is the warmest shot in the
+ *     film, and hers is the voice that says "Confess it · Submit it · Let us
+ *     hold it for you" and "the self he meant you to be". The softest voice
+ *     makes the actual demands. Nothing ever remarks on it;
+ *   · a DRTV chyron layer (DRAMATIZATION · ACTUAL PARTICIPANT · RESULTS NOT
+ *     TYPICAL · PAID PROGRAMMING) — real furniture, not invented, and the most
+ *     damning caption the era supplies;
+ *   · an opening title card over an evangelist Lamby, played straight;
+ *   · THE BREAK NOW COLLAPSES TWICE. The offer screen goes into overdrive on
+ *     the last "Call now" — rosette spinning, badges stacking, the number
+ *     duplicating, ORDER NOW! growing past the frame — and only THEN tears.
+ * ⚑ Untouched on purpose, because Sérgio named them as working: the brand
+ * card, the three-steps card, the chorus with its karaoke ball, the offer
+ * screen's existing furniture, and the disclaimer's timing.
  */
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
@@ -45,11 +69,24 @@ import media from '../../../data/dialog/s2_media.json';
 
 interface Scene {
   at: number;
-  shot: 'static' | 'host' | 'brand' | 'testimony' | 'crowd' | 'offer' | 'steps';
+  shot: 'static' | 'host' | 'brand' | 'testimony' | 'crowd' | 'offer' | 'steps'
+      | 'presents' | 'title' | 'product' | 'homecoming';
   speaker: string;
   line: string;
   grade?: 'before' | 'after';
   karaoke?: boolean;
+  /** S62: a period-real DRTV caption, by key into `tags` (DRAMATIZATION,
+   *  ACTUAL PARTICIPANT, RESULTS NOT TYPICAL, PAID PROGRAMMING) */
+  tag?: string;
+  /** S62: the line spells itself out letter by letter instead of cutting in */
+  reveal?: boolean;
+  /** S62: the phone number starts swelling here, and keeps swelling into the
+   *  countdown — what replaced the retired 97.6 cut */
+  swell?: boolean;
+  /** S62: the phone unit + operator counter appear from this scene onward */
+  operators?: boolean;
+  /** S62: the offer screen over-sells itself into collapse from here to `tear` */
+  overdrive?: boolean;
   /** S51: [seconds, word] from the song's WORD-timed lyric file — chorus
    *  scenes only. Absent = the karaoke ball falls back to a linear sweep. */
   words?: [number, string][];
@@ -69,6 +106,23 @@ interface OfferSeals {
   finePrint: string[];
 }
 
+/** S62 — the opening title card, and the boxed product it is selling. */
+interface TitleCard {
+  presents: string;
+  titleLine1: string;
+  titleLine2: string;
+  copyright: string;
+}
+
+interface ProductCopy {
+  name: string;
+  sub: string;
+  contents1: string;
+  contents2: string;
+  starburst1: string;
+  starburst2: string;
+}
+
 interface MediaData {
   windowTitle: string;
   brand: string;
@@ -81,6 +135,10 @@ interface MediaData {
   skip: string;
   skipDelaySeconds: number;
   chyrons: Record<string, string>;
+  tags: Record<string, string>;
+  titleCard: TitleCard;
+  product: ProductCopy;
+  operators: { label: string; counts: number[] };
   offer: OfferSeals;
   breakStutter: string;
   breakNoticeText: string;
@@ -91,6 +149,29 @@ interface MediaData {
   scenes: Scene[];
 }
 
+/**
+ * S62 — a pose for `drawFigure`. Every persona in the cast is a set of these
+ * numbers and nothing else, which is what keeps them distinguishable from each
+ * other without any of them ever growing a face.
+ */
+interface FigurePose {
+  scale?: number;
+  /** the torso leans forward off the hip, px at scale 1 */
+  lean?: number;
+  /** the head sinks toward the chest — the Struggler's entire identity */
+  headDrop?: number;
+  /** 0 = arms hang at the sides · 1 = arms wide open */
+  armSpread?: number;
+  /** 0 = hands at hip height · 1 = hands raised above the shoulder */
+  armLift?: number;
+  /** hands meet in the lap */
+  handsFolded?: boolean;
+  seated?: boolean;
+  /** 0 = turned away, a narrow silhouette · 1 = square to camera */
+  turn?: number;
+  color?: string;
+}
+
 interface Rect { x: number; y: number; w: number; h: number }
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
@@ -98,6 +179,17 @@ const M = media as unknown as MediaData;
 const DW = 460; const DH = 340; // near-fullscreen on the 512×384 E2 desktop
 const STATIC_HOLD_SECONDS = 2.6; // the static + notification-fragment hold before auto-close
 const NOISE_FLOOR = 0.03; // sparse per-frame tape noise, present even outside the break
+
+/**
+ * S62 — THE SONG'S PULSE, measured from the data rather than guessed. The
+ * chorus lines start at 58.51 / 62.39 / 66.55 / 70.79 / 74.85 / 78.91, i.e. a
+ * bar every ~4.08 s, which is 8 beats at ~118 bpm → 0.51 s a beat. Anything
+ * that has to happen ON THE BEAT (the phone's hold light, the homecoming's
+ * approach) phase-locks to the first chorus line, so it is the recording that
+ * sets the cadence and not a hand-picked interval.
+ */
+const SONG_BEAT = 0.51;
+const SONG_ANCHOR = 58.51;
 
 export interface NetVisionOptions {
   /** S2R.4 (revised, Session 45): the skip does not arm instantly — Lamby is
@@ -142,6 +234,29 @@ export class NetVisionPlayerApp {
    *  song's LAST "Call now"), else Session 35's 60%-through-the-break point. */
   private readonly tearAt: number = this.scenes.find(s => s.tear)?.at
     ?? this.breakStart + (this.duration - this.breakStart) * 0.6;
+
+  /** S62 — THE OVERDRIVE. The last "Call now" used to carry `tear` and the
+   *  picture cut straight to dark; Sérgio: "the dark screen with noise is a
+   *  bit too early… it also feels like a missed opportunity for some
+   *  ridiculousness." `tear` moved to its own beat and this flag took its
+   *  place, so for the seconds between them the offer screen over-sells itself
+   *  into collapse. The break is no longer a cut; it is what the pitch does to
+   *  itself, which is the tone law's "satire must collapse", literally. */
+  private readonly overdriveAt: number = this.scenes.find(s => s.overdrive)?.at ?? this.tearAt;
+
+  /** where the phone number starts growing (the retired 97.6 cut's replacement) */
+  private readonly swellAt: number = this.scenes.find(s => s.swell)?.at ?? 0;
+
+  /** where the phone unit + operator counter join the offer screen */
+  private readonly operatorsAt: number = this.scenes.find(s => s.operators)?.at ?? 0;
+
+  /** the homecoming's span — the two "Won't you come home" lines, across which
+   *  the figures turn, open and approach. Derived from the data, never typed. */
+  private readonly homecomingFrom: number = this.scenes.find(s => s.shot === 'homecoming')?.at ?? 0;
+  private readonly homecomingTo: number = (() => {
+    const last = [...this.scenes].reverse().find(s => s.shot === 'homecoming');
+    return last ? this.nextSceneAt(last) : 0;
+  })();
 
   /** the beats the frozen CTA's stutter re-fires on: every voiced scene from
    *  the break onward that belongs to the held card (so the on-screen loop
@@ -294,17 +409,25 @@ export class NetVisionPlayerApp {
     // sliver this opens at the top or bottom edge is the window's own black.
     // No new vocabulary: this is the tracking instability the break already
     // exaggerates, present at a whisper from the first frame.
+    // S62 — AND THE PICTURE IS CLIPPED TO THE SCREEN. The cast's sets throw
+    // light rays well past the frame, and without this they painted onto the
+    // desktop AROUND the window and stayed there (nothing else clears that
+    // region). Clipping before the bob also keeps the bob's own behaviour: the
+    // sliver it opens at the top or bottom edge is still the window's black.
     ctx.save();
+    ctx.beginPath();
+    ctx.rect(a.x, a.y, a.w, a.h);
+    ctx.clip();
     ctx.translate(0, this.frameBob());
 
     const tearing = this.elapsed >= this.tearAt;
     if (this.stage === 'staticHold' || tearing) {
       this.drawStatic(ctx, a);
-      // the fine print the SONG doesn't carry: it crawls through the wreck
-      // (audio guide §7d keeps the disclaimer out of the music deliberately).
-      // Before S51 this scene existed in the data but was never drawn — the
-      // tear branch returned static and nothing else.
-      if (this.stage === 'playing') this.drawDisclaimerCrawl(ctx, a);
+      // S62: the disclaimer used to be drawn HERE, underneath the scanlines
+      // and the noise, and Sérgio could barely read it. It is now drawn after
+      // both, below — bigger, and on top of the wreck instead of inside it.
+      // Its TIMING is untouched: he loves how it lands against the ending
+      // "Call now", and that is the one thing this session must not move.
     } else {
       const scene = this.renderScene();
       if (scene) {
@@ -318,12 +441,15 @@ export class NetVisionPlayerApp {
     this.drawScanlines(ctx, a);
     this.drawTapeNoise(ctx, a, this.noiseAmount());
     if (this.inBreak()) this.drawTrackingBand(ctx, a);
+    // the fine print the SONG doesn't carry (audio guide §7d keeps the
+    // disclaimer out of the music deliberately) — through the wreck, over it.
+    if (this.stage === 'playing' && tearing) this.drawDisclaimerCrawl(ctx, a);
     this.drawChrome(ctx, a);
 
     if (this.stage === 'staticHold') this.drawNotificationFragment(ctx, a);
 
     if (this.stage === 'playing' && this.elapsed >= this.skipAt) {
-      const sw = 56; const sh = 14;
+      const sw = 88; const sh = 14; // S62: "(Don't) Skip" needs the width
       const sx = a.x + a.w - sw - 4; const sy = a.y + 4;
       ui.button(ctx, sx, sy, sw, sh, M.skip, { hover: this.hover === 'skip' });
       this.hits.push({ x: sx, y: sy, w: sw, h: sh, id: 'skip' });
@@ -344,6 +470,21 @@ export class NetVisionPlayerApp {
     return (Math.sin(this.elapsed * 1.15 + phase) + 1) / 2;
   }
 
+  /** 0..1 through the current beat of the song (S62 — see SONG_BEAT). Negative
+   *  elapsed-minus-anchor is handled, because most of the video is BEFORE the
+   *  chorus the tempo was measured from. */
+  private beatFrac(): number {
+    const t = (this.elapsed - SONG_ANCHOR) / SONG_BEAT;
+    return t - Math.floor(t);
+  }
+
+  /** how many whole beats have passed since `from` — the homecoming's approach
+   *  moves on THIS, not on dt, so the figures are simply closer each time you
+   *  look rather than gliding toward you. */
+  private beatsSince(from: number): number {
+    return Math.max(0, Math.floor((this.elapsed - from) / SONG_BEAT));
+  }
+
   private noiseAmount(): number {
     if (!this.inBreak()) return NOISE_FLOOR;
     return NOISE_FLOOR + this.breakProgress() * 0.85;
@@ -360,6 +501,111 @@ export class NetVisionPlayerApp {
     ctx.globalAlpha = 1;
     ctx.fillStyle = color;
     ctx.fillText(text, x, y);
+  }
+
+  /**
+   * S62 — A LIMB. Drawn as a run of square blocks stepped along the line, the
+   * way a 1997 sprite would do it: integer positions, no `ctx.rotate`, no
+   * anti-aliased diagonals. This is the whole reason the cast can GESTURE
+   * without leaving the aesthetic laws — an arm is a path between three
+   * points, and a pose is where those points are.
+   */
+  private limb(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number,
+               thick: number, color: string): void {
+    const steps = Math.max(Math.round(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))), 1);
+    const h = Math.floor(thick / 2);
+    ctx.fillStyle = color;
+    for (let i = 0; i <= steps; i++) {
+      const x = Math.round(x0 + (x1 - x0) * (i / steps)) - h;
+      const y = Math.round(y0 + (y1 - y0) * (i / steps)) - h;
+      ctx.fillRect(x, y, thick, thick);
+    }
+  }
+
+  /**
+   * S62 — THE CAST HAS BODIES NOW (Sérgio: the busts are "too barebones", and
+   * they hold the screen a long time; "they need to be more like stickman
+   * animation (to not show faces)"). A figure is articulated — hip, shoulder,
+   * elbow, hand — so each persona is a POSE rather than a different sprite:
+   * the Struggler hunches, Dale opens, the Counsellor sits with her hands
+   * folded, and the homecoming's three turn and open across two lines.
+   *
+   * ⚑ THE HEAD IS A PLAIN OVAL AND STAYS ONE. No eyes, no mouth, no feature,
+   * in any pose, ever — the no-faces law is absolute (CLAUDE.md), and the
+   * gesture is doing all the work precisely because the face cannot.
+   *
+   * The chorus busts are NOT drawn through here: Sérgio called that shot
+   * "fantastic, just amazing", so `drawBust` below is untouched.
+   */
+  private drawFigure(ctx: CanvasRenderingContext2D, cx: number, baseY: number,
+                     p: FigurePose = {}): void {
+    const s = p.scale ?? 1;
+    const col = p.color ?? ERA1.black;
+    const lean = (p.lean ?? 0) * s;
+    const drop = (p.headDrop ?? 0) * s;
+    const spread = p.armSpread ?? 0;
+    const lift = p.armLift ?? 0;
+    const turn = p.turn ?? 1;
+    const t = (n: number) => Math.max(2, Math.round(n * s));
+
+    const hipY = Math.round(baseY - (p.seated ? 22 : 30) * s);
+    const shoulderY = Math.round(hipY - 24 * s + drop);
+    const shoulderX = Math.round(cx + lean);
+    const halfShoulder = 10 * s * (0.34 + 0.66 * turn);
+
+    // legs — a seated figure's knees come toward camera, which is most of what
+    // makes "seated" read at this size
+    if (p.seated) {
+      const kneeY = hipY + 3 * s;
+      for (const side of [-1, 1]) {
+        const kx = cx + 17 * s + side * 4 * s;
+        this.limb(ctx, cx + side * 4 * s, hipY, kx, kneeY, t(7), col);
+        this.limb(ctx, kx, kneeY, kx - 3 * s, baseY, t(6), col);
+      }
+    } else {
+      for (const side of [-1, 1]) {
+        this.limb(ctx, cx + side * 3 * s, hipY, cx + side * (4 + 2 * turn) * s, baseY, t(7), col);
+      }
+    }
+
+    this.limb(ctx, cx, hipY, shoulderX, shoulderY, t(11), col);
+    this.limb(ctx, shoulderX - halfShoulder, shoulderY, shoulderX + halfShoulder, shoulderY, t(7), col);
+
+    for (const side of [-1, 1]) {
+      const sx = shoulderX + side * halfShoulder;
+      let ex: number; let ey: number; let hx: number; let hy: number;
+      if (p.handsFolded) {
+        // hands meet in the lap — the Counsellor's tell, and the reason her
+        // shot reads as care while she is the one making the demands
+        ex = sx + side * 2 * s; ey = shoulderY + 12 * s;
+        hx = cx + side * 3 * s; hy = hipY - 2 * s;
+      } else {
+        ex = sx + side * (2 + spread * 12) * s; ey = shoulderY + (12 - lift * 9) * s;
+        hx = ex + side * (2 + spread * 14) * s; hy = ey + (11 - lift * 20) * s;
+      }
+      this.limb(ctx, sx, shoulderY + s, ex, ey, t(6), col);
+      this.limb(ctx, ex, ey, hx, hy, t(5), col);
+    }
+
+    const headR = 7 * s;
+    const hx0 = Math.round(shoulderX + lean * 0.35);
+    const hy0 = Math.round(shoulderY - 9 * s);
+    this.limb(ctx, hx0, hy0 + headR, shoulderX, shoulderY, t(4), col);
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.ellipse(hx0, hy0, Math.max(2, Math.round(headR * (0.78 + 0.22 * turn))),
+                Math.max(2, Math.round(headR * 1.08)), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /** a 1px outline box — the period phone and a few frames are drawn from
+   *  these, so the outline vocabulary lives in one place */
+  private outline(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
+                  color: string): void {
+    ui.px(ctx, x, y, w, 1, color);
+    ui.px(ctx, x, y + h - 1, w, 1, color);
+    ui.px(ctx, x, y, 1, h, color);
+    ui.px(ctx, x + w - 1, y, 1, h, color);
   }
 
   private drawBust(ctx: CanvasRenderingContext2D, cx: number, baseY: number, scale = 1): void {
@@ -393,35 +639,69 @@ export class NetVisionPlayerApp {
         // apart in the song, so they get a beat each and accumulate on one
         // card like a countdown. The card carries the words at size, so its
         // lower third shows the chyron only.
+        //
+        // S62 leaves this card exactly as it is — Sérgio: "so good and so in
+        // sync with the song, marvelous". The ONE thing that changed is the
+        // data: the three demands are the COUNSELLOR's, so her chyron is what
+        // now stands under them. That is the whole dramaturgy, made legible
+        // without a word of explanation.
         this.drawStepsCard(ctx, a, scene);
         this.drawLowerThird(ctx, a, scene, override, false);
         return;
+      case 'presents':
+        this.drawPresentsCard(ctx, a);
+        this.drawTag(ctx, a, scene);
+        return;
+      case 'title':
+        this.drawTitleCard(ctx, a);
+        this.drawTag(ctx, a, scene);
+        return;
+      case 'product':
+        this.drawProductCard(ctx, a);
+        this.drawTag(ctx, a, scene);
+        this.drawLowerThird(ctx, a, scene, override);
+        return;
+      case 'homecoming':
+        this.drawHomecoming(ctx, a);
+        this.drawTag(ctx, a, scene);
+        this.drawLowerThird(ctx, a, scene, override);
+        return;
+      case 'host':
+        // S62 — THE CAST. Which body you are looking at is decided by WHO IS
+        // SINGING, not by the shot type: the Struggler, Pastor Dale and the
+        // Counsellor each get their own staging, key and pose. Before this
+        // session all three were the same bust on the same beige set, which is
+        // most of what Sérgio meant by "too similar".
+        if (scene.speaker === 'THE STRUGGLER') this.drawStrugglerSet(ctx, a);
+        else if (scene.speaker === 'THE COUNSELLOR') this.drawCounsellorSet(ctx, a);
+        else this.drawPastorSet(ctx, a);
+        this.drawTag(ctx, a, scene);
+        this.drawLowerThird(ctx, a, scene, override);
+        return;
+      case 'testimony':
+        this.drawTestimonySet(ctx, a, scene);
+        this.drawTag(ctx, a, scene);
+        this.drawLowerThird(ctx, a, scene, override);
+        return;
       default: {
-        // host / testimony / crowd — a warm studio set + composite silhouette(s).
+        // THE CONGREGATION — the chorus. ⚑ UNTOUCHED BY S62 on purpose: this
+        // shot and its red karaoke ball are the one Sérgio called "fantastic,
+        // just amazing", so the busts stay busts here and the cast's new
+        // articulated bodies are kept out of it.
+        //
         // S60 (finding D15): the set BREATHES. The studio bands swell a pixel,
         // the silhouettes rise and fall out of phase with each other, and the
         // held shot drifts a pixel sideways — a camera operator, not a slide.
-        const warm = scene.grade === 'before' ? ERA1.grey : ERA1.paper;
-        ui.px(ctx, a.x, a.y, a.w, a.h, warm);
+        ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.paper);
         const bandH = 6 + Math.round(this.breath() * 2);
         ui.px(ctx, a.x, a.y, a.w, bandH, ERA1.beige);
         ui.px(ctx, a.x, a.y + a.h - bandH, a.w, bandH, ERA1.beige);
         const baseY = a.y + Math.round(a.h * 0.58);
         const drift = Math.round(Math.sin(this.elapsed * 0.42) * 2);
-        if (scene.shot === 'crowd') {
-          // three people, three phases — the row must never move as one object
-          this.drawBust(ctx, a.x + a.w * 0.5 - 46 + drift, baseY - Math.round(this.breath(1.9) * 2), 0.8);
-          this.drawBust(ctx, a.x + a.w * 0.5 + drift, baseY - Math.round(this.breath(0) * 2), 1);
-          this.drawBust(ctx, a.x + a.w * 0.5 + 46 + drift, baseY - Math.round(this.breath(3.4) * 2), 0.8);
-        } else {
-          this.drawBust(ctx, a.x + a.w * 0.5 + drift, baseY, 1.15 + this.breath() * 0.04);
-        }
-        if (scene.grade) {
-          ui.setFont(ctx, 10);
-          ctx.fillStyle = scene.grade === 'before' ? ERA1.warnDark : ERA1.ok;
-          this.fringeText(ctx, scene.grade === 'before' ? M.before : M.after, a.x + 10, a.y + 10,
-            scene.grade === 'before' ? ERA1.warnDark : ERA1.ok);
-        }
+        // three people, three phases — the row must never move as one object
+        this.drawBust(ctx, a.x + a.w * 0.5 - 46 + drift, baseY - Math.round(this.breath(1.9) * 2), 0.8);
+        this.drawBust(ctx, a.x + a.w * 0.5 + drift, baseY - Math.round(this.breath(0) * 2), 1);
+        this.drawBust(ctx, a.x + a.w * 0.5 + 46 + drift, baseY - Math.round(this.breath(3.4) * 2), 0.8);
         // a karaoke scene's line is already the karaoke bar's text — one
         // subtitle, not two stacked copies of the same lyric
         const sung = !!scene.karaoke && !this.inBreak();
@@ -429,6 +709,482 @@ export class NetVisionPlayerApp {
         if (sung) this.drawKaraoke(ctx, a, scene);
       }
     }
+  }
+
+  /**
+   * THE STRUGGLER (5.92, "Tired of feeling like yourself?") — the voice the
+   * old data credited to an ANNOUNCER and the old video drew as the same bust
+   * as everyone else. He is not the authority; he is the one being ADDRESSED,
+   * and the shot has to say so before a word lands.
+   *
+   * Cold key, hard overhead light, and he is SMALL and off-centre in a frame
+   * with far too much room in it — including a second pool of light with
+   * nobody standing in it. The composition does the victim-blaming the lyric
+   * does. Nothing here is warm; the warmth arrives with Dale, four seconds
+   * later, which is the sell.
+   */
+  private drawStrugglerSet(ctx: CanvasRenderingContext2D, a: Rect): void {
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.grey);
+    ui.px(ctx, a.x, a.y, a.w, Math.round(a.h * 0.26), ERA1.greyDark);
+    const floorY = a.y + Math.round(a.h * 0.80);
+    ui.px(ctx, a.x, floorY, a.w, a.h - Math.round(a.h * 0.80), ERA1.greyDark);
+
+    const lx = a.x + Math.round(a.w * 0.33);
+    const ex = a.x + Math.round(a.w * 0.74);
+    const top = a.y + Math.round(a.h * 0.22);
+    const rows = 20;
+    ctx.globalAlpha = 0.15;
+    for (const cx of [lx, ex]) {
+      for (let i = 0; i < rows; i++) {
+        const w = 10 + i * 2;
+        const y = top + Math.round(i * (floorY - top) / rows);
+        ui.px(ctx, cx - w / 2, y, w, Math.ceil((floorY - top) / rows) + 1, ERA1.silver);
+      }
+    }
+    ctx.globalAlpha = 0.28;
+    for (const cx of [lx, ex]) {
+      ctx.fillStyle = ERA1.silver;
+      ctx.beginPath();
+      ctx.ellipse(cx, floorY + 8, 34, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    this.drawFigure(ctx, lx, floorY + 8, {
+      scale: 0.8,
+      lean: 7,
+      headDrop: 7 + this.breath(0.6) * 1.5,
+      armSpread: 0,
+      turn: 0.65
+    });
+  }
+
+  /**
+   * PASTOR DALE (8.78, 12.70) — centred, backlit, arms open. The authority,
+   * and the only figure in the piece the light comes from BEHIND: he is a
+   * silhouette against his own glory, which is both how this television was
+   * actually lit and a fair description of what it is doing.
+   */
+  private drawPastorSet(ctx: CanvasRenderingContext2D, a: Rect): void {
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.tealDark);
+    const cx = a.x + Math.round(a.w / 2);
+    const floorY = a.y + Math.round(a.h * 0.86);
+    const glowY = floorY - 86; // centred on his head, not on the frame
+
+    ctx.globalAlpha = 0.28;
+    for (let i = 0; i < 16; i++) {
+      const ang = (i / 16) * Math.PI * 2 + this.elapsed * 0.05;
+      this.limb(ctx,
+        cx + Math.cos(ang) * 68, glowY + Math.sin(ang) * 68,
+        cx + Math.cos(ang) * 190, glowY + Math.sin(ang) * 190, 6, ERA1.olive);
+    }
+    ctx.globalAlpha = 1;
+
+    const pulse = Math.sin(this.elapsed * 1.6) > 0 ? 1 : 0;
+    ctx.fillStyle = ERA1.olive;
+    ctx.beginPath(); ctx.arc(cx, glowY, 76 + pulse, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = ERA1.tooltip;
+    ctx.beginPath(); ctx.arc(cx, glowY, 57, 0, Math.PI * 2); ctx.fill();
+
+    this.drawFigure(ctx, cx, floorY, {
+      scale: 1.35,
+      armSpread: 0.58 + this.breath() * 0.26,
+      armLift: 0.4 + this.breath(1.2) * 0.1
+    });
+
+    // the lectern he is standing behind — one block, and the shot reads pulpit
+    ui.px(ctx, cx - 52, floorY - 30, 104, 34, ERA1.black);
+    ui.px(ctx, cx - 52, floorY - 30, 104, 2, ERA1.olive);
+  }
+
+  /**
+   * THE COUNSELLOR (17.16, 41.65, the three steps, both homecoming lines) —
+   * the woman's voice the data used to credit to Pastor Dale.
+   *
+   * ⚑ THE POINT OF THE WHOLE SESSION IS IN THIS ROOM. Hers is the warmest
+   * shot in the infomercial: a soft key, a lamp, a chair, hands folded in her
+   * lap, the camera closer than it ever gets to Dale. And hers is the voice
+   * that says "Confess it · Submit it · Let us hold it for you", and "the self
+   * he meant you to be". The softest voice makes the actual demands. The video
+   * hid that when it drew her as the same bust as the pastor; it is legible
+   * now, and it is never explained — the staging just stops lying about who is
+   * asking.
+   */
+  private drawCounsellorSet(ctx: CanvasRenderingContext2D, a: Rect): void {
+    // a room, not a backdrop: warm wall, a wainscot rail, a carpet
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.paper);
+    ui.px(ctx, a.x, a.y, a.w, Math.round(a.h * 0.12), ERA1.beige);
+    const cx = a.x + Math.round(a.w * 0.40);
+    const floorY = a.y + Math.round(a.h * 0.80);
+    ui.px(ctx, a.x, floorY - 46, a.w, 46, ERA1.beige);
+    ui.px(ctx, a.x, floorY - 48, a.w, 3, ERA1.olive);
+    ui.px(ctx, a.x, floorY + 8, a.w, a.h - (floorY - a.y) - 8, ERA1.olive);
+
+    // the warm key, pooled behind her head and nowhere else — soft enough on
+    // the paper wall that it reads as lighting rather than as an object
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = ERA1.white;
+    ctx.beginPath();
+    ctx.ellipse(cx + 8, floorY - 96, 104, 74, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // a standard lamp — the cheapest possible signal for "this is a room in a
+    // house and you are safe in it"
+    const lampX = a.x + Math.round(a.w * 0.84);
+    const shadeY = floorY - 150;
+    ui.px(ctx, lampX - 2, shadeY, 4, 158, ERA1.greyDark);
+    ui.px(ctx, lampX - 16, floorY + 4, 32, 5, ERA1.greyDark);
+    for (let i = 0; i < 7; i++) {
+      ui.px(ctx, lampX - 12 - i * 2, shadeY - 4 - i * 4, 24 + i * 4, 5, ERA1.olive);
+    }
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = ERA1.tooltip;
+    ctx.beginPath(); ctx.arc(lampX, shadeY - 4, 34, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // her chair, then her — seated, hands folded, turned three-quarters to you,
+    // and the camera closer to her than it ever gets to Dale
+    const hipY = floorY - 29;
+    ui.px(ctx, cx - 32, hipY - 54, 64, 56, ERA1.greyDark);
+    ui.px(ctx, cx - 36, hipY - 2, 72, 12, ERA1.greyDark);
+    this.drawFigure(ctx, cx, floorY, {
+      scale: 1.32,
+      seated: true,
+      handsFolded: true,
+      turn: 0.9,
+      headDrop: this.breath(2.1) * 1.6
+    });
+  }
+
+  /**
+   * MARCUS — the testimony, before and after (25.73 / 37.07). Sérgio called
+   * the concept "awesome" and the execution too alike: both grades were the
+   * same bust on the same set with one word changed.
+   *
+   * BEFORE: desaturated, harsh top light, a frame CRAMPED by black bars, the
+   * body slumped — and a window behind him.
+   * AFTER: warm key, wide frame, upright, a family-shaped shadow on the wall.
+   *
+   * ⚑ The quiet inversion (spec §3): the BEFORE has the window and the AFTER
+   * does not. Recovery as enclosure. It is never remarked on, by anyone, ever.
+   */
+  private drawTestimonySet(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene): void {
+    const before = scene.grade === 'before';
+    const cx = a.x + Math.round(a.w / 2);
+    const floorY = a.y + Math.round(a.h * 0.82);
+
+    if (before) {
+      ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.grey);
+      ui.px(ctx, a.x, a.y, a.w, Math.round(a.h * 0.20), ERA1.greyDark);
+      ui.px(ctx, a.x, floorY, a.w, a.h - Math.round(a.h * 0.82), ERA1.greyDark);
+
+      // THE WINDOW (see the doc comment — do not "fix" this by giving the
+      // AFTER one too)
+      const wx = cx + 34; const wy = a.y + Math.round(a.h * 0.24); const ww = 92; const wh = 78;
+      ui.px(ctx, wx - 4, wy - 4, ww + 8, wh + 8, ERA1.greyDark);
+      ui.px(ctx, wx, wy, ww, wh, ERA1.silver);
+      ui.px(ctx, wx + Math.round(ww / 2) - 1, wy, 3, wh, ERA1.greyDark);
+      ui.px(ctx, wx, wy + Math.round(wh / 2) - 1, ww, 3, ERA1.greyDark);
+
+      // a single hard light straight down on him, and nothing else lit
+      ctx.globalAlpha = 0.16;
+      for (let i = 0; i < 20; i++) {
+        const w = 10 + i * 2;
+        const y = a.y + i * Math.round((floorY - a.y) / 20);
+        ui.px(ctx, cx - 62 - w / 2, y, w, Math.ceil((floorY - a.y) / 20) + 1, ERA1.silver);
+      }
+      ctx.globalAlpha = 1;
+
+      this.drawFigure(ctx, cx - 62, floorY + 6, {
+        scale: 0.95, lean: 7, headDrop: 7 + this.breath(0.4) * 1.4, armSpread: 0, turn: 0.7
+      });
+
+      // the frame closes in on him — drawn last so it genuinely crops
+      const bar = Math.round(a.w * 0.16);
+      ui.px(ctx, a.x, a.y, bar, a.h, ERA1.black);
+      ui.px(ctx, a.x + a.w - bar, a.y, bar, a.h, ERA1.black);
+    } else {
+      ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.paper);
+      ui.px(ctx, a.x, a.y, a.w, Math.round(a.h * 0.16), ERA1.beige);
+      ui.px(ctx, a.x, floorY, a.w, a.h - Math.round(a.h * 0.82), ERA1.olive);
+
+      // the family-shaped shadow: two more of him on the wall, smaller, and
+      // never named or spoken to
+      this.drawFigure(ctx, cx - 78, floorY + 2, { scale: 0.62, color: ERA1.silver, turn: 0.8, armSpread: 0.12 });
+      this.drawFigure(ctx, cx + 70, floorY + 2, { scale: 0.46, color: ERA1.silver, turn: 0.8, armSpread: 0.1 });
+
+      this.drawFigure(ctx, cx, floorY + 6, {
+        scale: 1.12,
+        armSpread: 0.3 + this.breath() * 0.08,
+        armLift: 0.14,
+        headDrop: -1
+      });
+    }
+
+    // the grade badge sits BELOW the tape's timestamp chrome — at a.y+10 the
+    // two were printed on top of each other
+    ui.setFont(ctx, 12);
+    const badge = before ? M.before : M.after;
+    this.fringeText(ctx, badge, a.x + (before ? Math.round(a.w * 0.16) + 10 : 12), a.y + 26,
+      before ? ERA1.warnDark : ERA1.ok);
+  }
+
+  /**
+   * PRODUCT PLACEMENT (33.43, "Then Pastor Dale showed me the program") —
+   * Sérgio: "almost needs a fake poster of the program like a product
+   * placement." So the box gets held up to camera the way DRTV has always
+   * held it up: twelve cassettes, a workbook, shrink-wrap, and a starburst.
+   * The apparatus as a thing you can own, which is the same claim the song is
+   * making about a self.
+   */
+  private drawProductCard(ctx: CanvasRenderingContext2D, a: Rect): void {
+    const P = M.product;
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.tealDark);
+    const cx = a.x + Math.round(a.w / 2);
+    const cy = a.y + Math.round(a.h * 0.44);
+
+    ctx.globalAlpha = 0.25;
+    for (let i = 0; i < 20; i++) {
+      const ang = (i / 20) * Math.PI * 2 + this.elapsed * 0.08;
+      this.limb(ctx, cx + Math.cos(ang) * 60, cy + Math.sin(ang) * 60,
+        cx + Math.cos(ang) * 210, cy + Math.sin(ang) * 210, 6, ERA1.olive);
+    }
+    ctx.globalAlpha = 1;
+
+    // the box, breathing a pixel because someone is holding it
+    const lift = Math.round(this.breath() * 2);
+    const bw = 152; const bh = 116;
+    const bx = cx - Math.round(bw / 2); const by = cy - Math.round(bh / 2) - lift;
+    ui.px(ctx, bx + 8, by - 8, bw, 8, ERA1.titleBlue);   // the top face
+    ui.px(ctx, bx + bw, by - 8, 8, bh + 8, ERA1.greyDark); // the side face
+    ui.px(ctx, bx, by, bw, bh, ERA1.navy);
+    ui.px(ctx, bx, by, bw, 3, ERA1.olive);
+    ui.px(ctx, bx, by + bh - 3, bw, 3, ERA1.olive);
+
+    ui.setFont(ctx, 15);
+    let tw = ctx.measureText(P.name).width;
+    this.fringeText(ctx, P.name, cx - tw / 2, by + 12, ERA1.tooltip);
+    ui.setFont(ctx, 11);
+    tw = ctx.measureText(P.sub).width;
+    this.fringeText(ctx, P.sub, cx - tw / 2, by + 30, ERA1.white);
+
+    // twelve cassette spines and the workbook leaning beside them
+    for (let i = 0; i < 12; i++) {
+      const sx = bx + 12 + i * 10;
+      ui.px(ctx, sx, by + 50, 8, 30, ERA1.beige);
+      ui.px(ctx, sx + 1, by + 55, 6, 2, ERA1.greyDark);
+      ui.px(ctx, sx + 1, by + 72, 6, 4, ERA1.greyDark);
+    }
+    ui.px(ctx, bx + 132, by + 44, 14, 36, ERA1.paper);
+    for (let i = 0; i < 5; i++) ui.px(ctx, bx + 134, by + 50 + i * 6, 10, 1, ERA1.grey);
+
+    ui.setFont(ctx, 8);
+    ctx.fillStyle = ERA1.silver;
+    ctx.fillText(P.contents1, bx + 12, by + 86);
+    ctx.fillText(P.contents2, bx + 12, by + 96);
+
+    // shrink-wrap: two glints stepped across the face, never a smooth gradient
+    ctx.globalAlpha = 0.3;
+    this.limb(ctx, bx + 18, by + bh, bx + 74, by, 5, ERA1.white);
+    this.limb(ctx, bx + 74, by + bh, bx + 130, by, 3, ERA1.white);
+    ctx.globalAlpha = 1;
+
+    // the hands holding it up — faceless, like every body in this film. Short
+    // and thick, entering from the bottom of frame: forearms, not stilts.
+    for (const side of [-1, 1]) {
+      const hx = cx + side * 58;
+      this.limb(ctx, hx + side * 96, a.y + a.h, hx, by + bh - 4, 22, ERA1.black);
+      ui.px(ctx, hx - 13, by + bh - 14, 26, 18, ERA1.black);
+    }
+
+    // clear of the skip button, which lives in the top-right corner
+    this.drawStarburst(ctx, a.x + a.w - 58, a.y + 96, 38, P.starburst1, P.starburst2);
+  }
+
+  /** the AS SEEN ON TV rosette — the same chunky-petal grammar as the offer
+   *  screen's guarantee seal, one size down */
+  private drawStarburst(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
+                        line1: string, line2: string): void {
+    const spin = this.elapsed * 0.5;
+    for (let i = 0; i < 10; i++) {
+      const ang = (i / 10) * Math.PI * 2 + spin;
+      ui.px(ctx, Math.round(cx + Math.cos(ang) * r) - 5, Math.round(cy + Math.sin(ang) * r) - 5,
+        10, 10, ERA1.warn);
+    }
+    ctx.fillStyle = ERA1.warn;
+    ctx.beginPath(); ctx.arc(cx, cy, r - 2, 0, Math.PI * 2); ctx.fill();
+    ui.setFont(ctx, 8);
+    ctx.fillStyle = ERA1.white;
+    let tw = ctx.measureText(line1).width;
+    ctx.fillText(line1, Math.round(cx - tw / 2), cy - 9);
+    tw = ctx.measureText(line2).width;
+    ctx.fillText(line2, Math.round(cx - tw / 2), cy + 1);
+  }
+
+  /**
+   * "WON'T YOU COME HOME / TO THE SELF HE MEANT YOU TO BE" (49.19 → 58.51).
+   * Sérgio: "they need more flourishing because it doesn't give much of a Come
+   * to us creepy vibe. Because 'meant you to be' is such a strong thing here!"
+   *
+   * Four things, all restrained, none of them a jump-scare:
+   *   · the three figures TURN to face you and open their arms in unison;
+   *   · a doorway of light widens behind them across the two lines;
+   *   · they step a few pixels CLOSER on the beat — quantised deliberately, so
+   *     nothing ever glides at you. They are simply nearer each time you look;
+   *   · "To the self he meant you to be" arrives letter by letter (`reveal`).
+   * The approach is capped: an invitation that keeps coming, never a lunge.
+   */
+  private drawHomecoming(ctx: CanvasRenderingContext2D, a: Rect): void {
+    const span = Math.max(this.homecomingTo - this.homecomingFrom, 0.01);
+    const p = Math.min(Math.max((this.elapsed - this.homecomingFrom) / span, 0), 1);
+    const beats = Math.min(this.beatsSince(this.homecomingFrom), 14);
+    const cx = a.x + Math.round(a.w / 2);
+    const floorY = a.y + Math.round(a.h * 0.76) + beats;
+
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.greyDark);
+    ui.px(ctx, a.x, floorY, a.w, a.h - (floorY - a.y), ERA1.black);
+
+    const dw = 16 + Math.round(p * 148);
+    const dh = Math.round(a.h * 0.62);
+    ui.px(ctx, cx - dw / 2, floorY - dh, dw, dh, ERA1.tooltip);
+    ui.px(ctx, cx - dw / 2 - 3, floorY - dh - 3, dw + 6, 3, ERA1.olive);
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = ERA1.tooltip;
+    for (let i = 0; i < 8; i++) {
+      const w = dw + i * 10;
+      ui.px(ctx, cx - w / 2, floorY + i * 4, w, 4, ERA1.tooltip);
+    }
+    ctx.globalAlpha = 1;
+
+    const turn = Math.min(p / 0.45, 1);
+    const scale = 0.82 + beats * 0.022;
+    for (const off of [-1, 0, 1]) {
+      this.drawFigure(ctx, cx + off * Math.round(58 + beats * 1.4), floorY + 4, {
+        scale: off === 0 ? scale : scale * 0.92,
+        turn,
+        armSpread: turn * (0.55 + p * 0.4),
+        armLift: turn * 0.28,
+        headDrop: this.breath(off * 1.7) * 1.4
+      });
+    }
+  }
+
+  /**
+   * THE OPENING, 1/2 — "LAMBY PRODUCTIONS PRESENTS" over an EVANGELIST Lamby.
+   *
+   * Explicitly NOT the Clippy lamb of `lambyChar.ts` (nothing is imported from
+   * it): this is a ministry LOGO — haloed, backlit, in a gold-edged oval like
+   * a stained-glass window. He has no face here, which is what a logo is.
+   *
+   * ⚑ It never winks. Sérgio's own phrasing was "recover/succumb", and the
+   * joke is that the two are interchangeable — but the card plays it straight,
+   * because the word that curdles has to be the one the audience supplies.
+   * Every glitch in this film belongs to the break; the opening's whole job is
+   * to be sincerely, hideously wholesome.
+   */
+  private drawPresentsCard(ctx: CanvasRenderingContext2D, a: Rect): void {
+    const T = M.titleCard;
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.navy);
+    const cx = a.x + Math.round(a.w / 2);
+    const cy = a.y + Math.round(a.h * 0.40);
+
+    ctx.globalAlpha = 0.3;
+    for (let i = 0; i < 18; i++) {
+      const ang = (i / 18) * Math.PI * 2 + this.elapsed * 0.06;
+      this.limb(ctx, cx + Math.cos(ang) * 70, cy + Math.sin(ang) * 70,
+        cx + Math.cos(ang) * 230, cy + Math.sin(ang) * 230, 6, ERA1.titleBlue);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = ERA1.olive;
+    ctx.beginPath(); ctx.ellipse(cx, cy, 92, 76, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = ERA1.tealDark;
+    ctx.beginPath(); ctx.ellipse(cx, cy, 84, 68, 0, 0, Math.PI * 2); ctx.fill();
+
+    this.drawEvangelistLamby(ctx, cx, cy + 14);
+
+    ui.setFont(ctx, 12);
+    const tw = ctx.measureText(T.presents).width;
+    this.fringeText(ctx, T.presents, cx - tw / 2, a.y + Math.round(a.h * 0.78), ERA1.tooltip);
+  }
+
+  /** the ministry lamb: fleece, drooping ears, a halo, and no face at all */
+  private drawEvangelistLamby(ctx: CanvasRenderingContext2D, cx: number, baseY: number): void {
+    const fleece = [
+      [-26, -14, 13], [-11, -24, 14], [7, -25, 14], [22, -16, 13],
+      [26, 0, 12], [12, 10, 13], [-8, 11, 13], [-25, 2, 12], [0, -4, 22]
+    ] as const;
+    ctx.fillStyle = ERA1.silver;
+    for (const [dx, dy, r] of fleece) {
+      ctx.beginPath(); ctx.arc(cx + dx + 2, baseY + dy + 2, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = ERA1.white;
+    for (const [dx, dy, r] of fleece) {
+      ctx.beginPath(); ctx.arc(cx + dx, baseY + dy, r, 0, Math.PI * 2); ctx.fill();
+    }
+    // legs
+    ui.px(ctx, cx - 16, baseY + 16, 6, 16, ERA1.beige);
+    ui.px(ctx, cx + 8, baseY + 16, 6, 16, ERA1.beige);
+    // the head, bowed — a plain beige shape, no eyes, no mouth
+    const hx = cx + 26; const hy = baseY - 20;
+    ctx.fillStyle = ERA1.beige;
+    ctx.beginPath(); ctx.ellipse(hx, hy, 13, 11, 0, 0, Math.PI * 2); ctx.fill();
+    ui.px(ctx, hx + 6, hy - 2, 12, 8, ERA1.beige);
+    // ears, stepped down and out (no ctx.rotate — 1997 rules)
+    for (const [dx, dy, w, h] of [[-12, 0, 8, 5], [-16, 5, 7, 5], [-19, 10, 6, 4]] as const) {
+      ui.px(ctx, hx + dx, hy + dy, w, h, ERA1.grey);
+    }
+    // THE HALO — a flat ring above the head, drawn as a squashed ellipse pair
+    ctx.fillStyle = ERA1.tooltip;
+    ctx.beginPath(); ctx.ellipse(hx, hy - 24, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = ERA1.tealDark;
+    ctx.beginPath(); ctx.ellipse(hx, hy - 24, 16, 3, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /**
+   * THE OPENING, 2/2 — the title, played completely straight, and the most
+   * mundane copyright line the era could produce. No glitch, no irony, no
+   * flicker. The card means every word of it.
+   */
+  private drawTitleCard(ctx: CanvasRenderingContext2D, a: Rect): void {
+    const T = M.titleCard;
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.tealDark);
+    const cx = a.x + Math.round(a.w / 2);
+    const mid = a.y + Math.round(a.h * 0.42);
+
+    ui.px(ctx, a.x + 40, mid - 34, a.w - 80, 2, ERA1.olive);
+    ui.px(ctx, a.x + 40, mid + 48, a.w - 80, 2, ERA1.olive);
+
+    ui.setFont(ctx, 17);
+    let tw = ctx.measureText(T.titleLine1).width;
+    this.fringeText(ctx, T.titleLine1, cx - tw / 2, mid - 18, ERA1.tooltip);
+    tw = ctx.measureText(T.titleLine2).width;
+    this.fringeText(ctx, T.titleLine2, cx - tw / 2, mid + 12, ERA1.tooltip);
+
+    ui.setFont(ctx, 8);
+    ctx.fillStyle = ERA1.silver;
+    tw = ctx.measureText(T.copyright).width;
+    ctx.fillText(T.copyright, Math.round(cx - tw / 2), a.y + a.h - 26);
+  }
+
+  /**
+   * THE DRTV CHYRON LAYER (S62) — Sérgio asked for "messages on the screen to
+   * add layers of interpretation". These four captions are not invented: they
+   * are the furniture real direct-response television is obliged to carry, and
+   * DRAMATIZATION standing under a testimony is the most damning caption the
+   * era supplies — the apparatus retracting its own witness, in 6pt, while the
+   * song keeps selling. Small, grey, bottom-left, exactly where it lived.
+   */
+  private drawTag(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene): void {
+    const text = scene.tag ? (M.tags[scene.tag] ?? '') : '';
+    if (!text) return;
+    ui.setFont(ctx, 8);
+    const tw = ctx.measureText(text).width;
+    const x = a.x + 10; const y = a.y + a.h - 46;
+    ui.px(ctx, x - 3, y - 2, tw + 6, 12, ERA1.black);
+    ctx.fillStyle = ERA1.silver;
+    ctx.fillText(text, x, y);
   }
 
   /** `showLine: false` = something else on screen already carries this scene's
@@ -439,7 +1195,16 @@ export class NetVisionPlayerApp {
   private drawLowerThird(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene, override?: string,
                          showLine = true): void {
     const chyron = scene.speaker ? (M.chyrons[scene.speaker] ?? '') : '';
-    const line = override ?? (showLine ? scene.line : '');
+    let line = override ?? (showLine ? scene.line : '');
+    // S62: a `reveal` line spells itself out letter by letter — used once, on
+    // "To the self he meant you to be", because that is the sentence the whole
+    // apparatus is built to arrive at and it should be watched being typed.
+    // The rate comes from the scene's own span, so nothing is hand-timed.
+    if (line && scene.reveal && override === undefined) {
+      const span = Math.max(this.nextSceneAt(scene) - scene.at, 0.5) * 0.45;
+      const frac = Math.min(Math.max((this.elapsed - scene.at) / span, 0), 1);
+      line = line.slice(0, Math.ceil(frac * line.length));
+    }
     if (!chyron && !line) return;
     const barY = a.y + a.h - 34;
     ui.px(ctx, a.x, barY, a.w, 34, ERA1.navy);
@@ -561,51 +1326,126 @@ export class NetVisionPlayerApp {
    */
   private drawOfferCard(ctx: CanvasRenderingContext2D, a: Rect, override?: string): void {
     const O = M.offer;
+    const od = this.overdriveAmount();
+    const swell = this.swellAmount();
     ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.navy);
     const cx = a.x + a.w / 2;
 
+    // S62 — the overdrive is allowed to overflow, so the picture has to CLIP.
+    // "Grows until it no longer fits" only means anything if the frame refuses
+    // to make room.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(a.x, a.y, a.w, a.h);
+    ctx.clip();
+
     // ORDER NOW! — a DRTV end-frame always shouts first. It alternates between
     // two warm tones rather than blinking on/off: motion without a luminance
-    // step (glitch doctrine — warm-corrupt, never strobe), ~0.8 Hz.
-    ui.setFont(ctx, 14);
+    // step (glitch doctrine — warm-corrupt, never strobe), ~0.8 Hz. In the
+    // overdrive it simply keeps GROWING, past the edges of its own screen.
+    ui.setFont(ctx, Math.round(14 + od * od * 62));
     const shout = Math.sin(this.elapsed * 5) > 0 ? ERA1.warn : ERA1.tooltip;
     const ow = ctx.measureText(O.orderNow).width;
-    this.fringeText(ctx, O.orderNow, cx - ow / 2, a.y + 14, shout);
+    this.fringeText(ctx, O.orderNow, cx - ow / 2, a.y + 14 - od * 10, shout);
 
-    // the number (or, once the tape is failing, the stutter that replaced it)
-    ui.setFont(ctx, 16);
+    // the number (or, once the tape is failing, the stutter that replaced it).
+    // S62: it SWELLS from 97.6 into the countdown — which is what replaced the
+    // retired crowd cut — and in the overdrive it duplicates across the frame.
+    const beatPop = this.beatFrac() < 0.3 ? 1 : 0;
+    ui.setFont(ctx, Math.round(16 + swell * 8 + od * 10 + beatPop));
     const big = override ?? M.phone;
     const bw = ctx.measureText(big).width;
-    this.fringeText(ctx, big, cx - bw / 2, a.y + 40, ERA1.tooltip);
+    const copies = 1 + Math.floor(od * 5);
+    for (let i = copies - 1; i >= 0; i--) {
+      const jx = i === 0 ? 0 : Math.round(Math.sin(this.elapsed * (6 + i * 3) + i) * od * 30);
+      const jy = i === 0 ? 0 : Math.round(Math.cos(this.elapsed * (4 + i * 2) + i) * od * 18);
+      this.fringeText(ctx, big, cx - bw / 2 + jx, a.y + 40 + jy,
+        i === 0 ? ERA1.tooltip : ERA1.olive);
+    }
 
     ui.setFont(ctx, 9);
     const ww = ctx.measureText(O.website).width;
-    this.fringeText(ctx, O.website, cx - ww / 2, a.y + 62, ERA1.white);
+    this.fringeText(ctx, O.website, cx - ww / 2, a.y + 68 + Math.round(swell * 8), ERA1.white);
 
     if (!override) {
       ui.setFont(ctx, 10);
       const cw = ctx.measureText(M.cta).width;
-      this.fringeText(ctx, M.cta, cx - cw / 2, a.y + 80, ERA1.white);
+      this.fringeText(ctx, M.cta, cx - cw / 2, a.y + 86 + Math.round(swell * 8), ERA1.white);
     }
 
-    this.drawGuaranteeRosette(ctx, a.x + a.w - 74, a.y + 150);
-    this.drawCardBadges(ctx, a.x + 24, a.y + 196);
+    if (this.operatorsAt && this.elapsed >= this.operatorsAt) {
+      this.drawPhoneUnit(ctx, a.x + 24, a.y + 116);
+    }
+
+    this.drawGuaranteeRosette(ctx, a.x + a.w - 74, a.y + 150, od);
+    this.drawCardBadges(ctx, a.x + 24, a.y + 196, od);
 
     ui.setFont(ctx, 8);
     ctx.fillStyle = ERA1.silver;
     O.finePrint.forEach((line, i) => {
       ctx.fillText(line, a.x + 24, a.y + a.h - 78 + i * 10);
     });
+    ctx.restore();
+  }
+
+  /** 0 → 1 across the overdrive, i.e. from the last "Call now" to the tear */
+  private overdriveAmount(): number {
+    if (this.elapsed < this.overdriveAt) return 0;
+    const span = Math.max(this.tearAt - this.overdriveAt, 0.001);
+    return Math.min((this.elapsed - this.overdriveAt) / span, 1);
+  }
+
+  /** 0 → 1 from the `swell` beat to the break, then held. The phone number
+   *  grows into the countdown instead of the video cutting away to a bare
+   *  crowd shot and back — Sérgio's own suggestion, and it keeps the last
+   *  fifteen seconds one continuous run. */
+  private swellAmount(): number {
+    if (!this.swellAt || this.elapsed < this.swellAt) return 0;
+    const span = Math.max(this.breakStart - this.swellAt, 0.001);
+    return Math.min((this.elapsed - this.swellAt) / span, 1);
+  }
+
+  /**
+   * "OPERATORS OF GRACE ARE STANDING BY" (91.70) — Sérgio: "maybe add an
+   * outline of phone with a blinking light?" A period desk phone in outline,
+   * its hold light blinking ON THE BEAT of the song, and a count of available
+   * operators that ticks down and never reaches zero. Scarcity that never
+   * resolves is the entire grammar of a call-now clock, and the sequence is
+   * authored in the data so it can never land on 0 by accident.
+   */
+  private drawPhoneUnit(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    const line = ERA1.tooltip;
+    this.outline(ctx, x, y, 66, 12, line);          // the handset
+    this.outline(ctx, x + 2, y + 12, 10, 8, line);  // its cradle horns
+    this.outline(ctx, x + 54, y + 12, 10, 8, line);
+    this.outline(ctx, x + 4, y + 20, 58, 30, line); // the base
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) ui.px(ctx, x + 12 + c * 9, y + 26 + r * 7, 4, 4, line);
+    }
+    const on = this.beatFrac() < 0.42;
+    ui.px(ctx, x + 46, y + 28, 6, 6, on ? ERA1.warn : ERA1.warnDark);
+
+    const counts = M.operators.counts;
+    const idx = Math.floor((this.elapsed - this.operatorsAt) / (SONG_BEAT * 2));
+    const n = counts[((idx % counts.length) + counts.length) % counts.length];
+    ui.setFont(ctx, 8);
+    ctx.fillStyle = ERA1.silver;
+    ctx.fillText(`${M.operators.label} ${n}`, x, y + 54);
   }
 
   /** the gold seal. Drawn as a pixel starburst — chunky petals + concentric
    *  discs, palette tokens only — and it BREATHES by one pixel, which is all
    *  the animation a seal needs to look like it is being held up to camera. */
-  private drawGuaranteeRosette(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+  private drawGuaranteeRosette(ctx: CanvasRenderingContext2D, cx: number, cy: number,
+                               od = 0): void {
     const pulse = Math.sin(this.elapsed * 1.9) > 0 ? 1 : 0;
-    const r = 42 + pulse;
+    const r = 42 + pulse + Math.round(od * 14);
+    // S62: in the overdrive the seal SPINS — the petals rotate rather than the
+    // canvas (90°-step rotation law), and a guarantee on selfhood turning into
+    // a fairground wheel is the promise collapsing under its own weight.
+    const spin = this.elapsed * 3.2 * od;
     for (let i = 0; i < 12; i++) {
-      const ang = (i / 12) * Math.PI * 2;
+      const ang = (i / 12) * Math.PI * 2 + spin;
       const px = Math.round(cx + Math.cos(ang) * r);
       const py = Math.round(cy + Math.sin(ang) * r);
       ui.px(ctx, px - 5, py - 5, 10, 10, ERA1.olive);
@@ -634,17 +1474,24 @@ export class NetVisionPlayerApp {
 
   /** the payment rails — ALL INVENTED (see the card's own doc comment). Four
    *  bevelled plates in a row, the way an end-frame always lays them out. */
-  private drawCardBadges(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  private drawCardBadges(ctx: CanvasRenderingContext2D, x: number, y: number, od = 0): void {
     const bw = 62; const bh = 22; const gap = 6;
-    M.offer.cards.forEach((name, i) => {
-      const bx = x + i * (bw + gap);
-      ui.bevel(ctx, bx, y, bw, bh, true);
-      ui.px(ctx, bx + 2, y + 2, bw - 4, 4, ERA1.navy);
+    // S62: in the overdrive the rails MULTIPLY and stack upward — the same four
+    // invented marks, printed again and again, because a pitch in collapse has
+    // no new reassurance to offer and can only repeat the ones it has.
+    const cards = M.offer.cards;
+    const total = cards.length + Math.floor(od * 16);
+    for (let i = 0; i < total; i++) {
+      const name = cards[i % cards.length];
+      const bx = x + (i % 4) * (bw + gap);
+      const by = y - Math.floor(i / 4) * (bh + 4);
+      ui.bevel(ctx, bx, by, bw, bh, true);
+      ui.px(ctx, bx + 2, by + 2, bw - 4, 4, ERA1.navy);
       ui.setFont(ctx, 7);
       ctx.fillStyle = ERA1.black;
       const tw = ctx.measureText(name).width;
-      ctx.fillText(name, Math.round(bx + (bw - tw) / 2), y + 10);
-    });
+      ctx.fillText(name, Math.round(bx + (bw - tw) / 2), by + 10);
+    }
   }
 
   private drawStatic(ctx: CanvasRenderingContext2D, a: Rect): void {
@@ -668,18 +1515,31 @@ export class NetVisionPlayerApp {
   private drawDisclaimerCrawl(ctx: CanvasRenderingContext2D, a: Rect): void {
     const scene = this.activeScene();
     if (!scene || scene.shot !== 'static' || !scene.line) return;
-    ui.setFont(ctx, 9);
+    // S62 — BIGGER, and legible THROUGH the noise rather than under it
+    // (Sérgio: "needs to be bigger so we can see it with the scanlines and
+    // noise, but it is great to read it while the call now is ending!!"). The
+    // type goes 9 → 13 and gains a black outline so the static cannot eat it;
+    // it is also drawn after the noise layer now. THE TIMING IS UNCHANGED —
+    // the rate still comes from the scene's own `at` and the video's
+    // `duration`, so it still finishes exactly as the tape runs out, which is
+    // the part he explicitly loves.
+    ui.setFont(ctx, 13);
     const tw = ctx.measureText(scene.line).width;
     const travel = a.w + tw;
     const span = Math.max(this.duration - scene.at, 0.5);
     const frac = Math.min(Math.max((this.elapsed - scene.at) / span, 0), 1);
-    const x = a.x + a.w - frac * travel;
+    const x = Math.round(a.x + a.w - frac * travel);
+    const y = a.y + a.h - 56;
     ctx.save();
     ctx.beginPath();
     ctx.rect(a.x, a.y, a.w, a.h);
     ctx.clip();
-    ctx.fillStyle = ERA1.silver;
-    ctx.fillText(scene.line, Math.round(x), a.y + a.h - 52);
+    ctx.fillStyle = ERA1.black;
+    for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [2, 2]] as const) {
+      ctx.fillText(scene.line, x + ox, y + oy);
+    }
+    ctx.fillStyle = ERA1.tooltip;
+    ctx.fillText(scene.line, x, y);
     ctx.restore();
   }
 
