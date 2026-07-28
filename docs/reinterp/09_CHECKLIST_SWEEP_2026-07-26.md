@@ -109,3 +109,48 @@ still on; the door is still there), never a quest marker.
 5. **D33 — the lost easter eggs.** `lamby_rig.exe` and `referral_notes.txt` exist but nothing leads
    to them. Given Q-D50's provotype-space idea, should the abandoned-machine space be **where they
    surface too** — one place the piece quietly says "there is more here" — or do they stay scattered?
+
+---
+
+# ✅ HIS ANSWERS TO THE FIVE QUESTIONS (2026-07-26)
+
+1. **D13 — the three-screen room STAYS.** *"you are right… keep the angles there. I forgot about
+   that. yeah the three-screen room is one place."* So: one seat per room is the **minimum**, Room 2's
+   tablet/phone nodes are a deliberate exception, and the **Finale room gets its own seat**. No
+   retirement. *(Still to think through: the new narrative for it — his words.)*
+
+2. **D37 — "It extends to everything."** Content gets drafted without waiting: felt text, dossier
+   wording, all of it. **⚑ One boundary I am NOT assuming away, and want on the record:** the hard
+   ethics lines are about *third parties*, not about his approval queue — no real people in the
+   fiction, no reproduced survivor testimony, G1–G12 still gated. Those aren't a bottleneck he can
+   waive on my behalf, because they protect people who aren't in the room. **Everything else: I draft,
+   he reviews.**
+
+3. **D42 / the video — DELIVERED.** He asked for an MP4 to review. Built
+   `tools/render-video.mjs`, an **offline deterministic renderer**: `NetVisionPlayerApp` already
+   exposes `update(dt)` + `draw(ctx)`, so it drives that against node-canvas at a fixed timestep,
+   set up exactly as `os.ts` does (512×384 logical, ×3 backing, `scale(3,3)`), and muxes the real
+   committed tape03 track with ffmpeg. **Nothing is screen-captured** — which matters, because the
+   sandboxed browser suspends rAF and no capture could guarantee frame pacing. 2736 frames, 113.88s,
+   subtitles landing on the frame the data says. Reusable for any canvas surface from here.
+
+4. **D27 / aging E2 — needs a real look, not a fix yet.** *"From the Debug panel we couldn't see
+   much change, but it could be a morph error. Need to try, but the overall expectation is for us to
+   understand the time has passed."* ⚑ **Note the timing: that observation predates S58**, which
+   fixed the era buttons — so it may have been the tooling again. **Re-check before building
+   anything.** The expectation is now explicit and it is the useful part: *the player should
+   understand that time has passed.*
+
+5. **D33 / the easter eggs — "there is more here", and LAMBY OFFERS IT.** *"At least it's clear for
+   the user that if they want they can experiment more and without being forced. I think we can be
+   more direct and propose activities if they want. Let's use the Lamby logics of how we develop
+   this to our benefit."*
+   **This resolves the level-select risk completely.** It is not a menu — it is **the conductor
+   offering a destination**, which is already the piece's law (R28 §2: the conductor offers, refusing
+   always works and is filed). So:
+   - Lamby **proposes** the provotypes; the player may always decline; declining is filed.
+   - The offer itself carries the thesis — **the apparatus offering you more of itself** — so the
+     feature is content, not UI.
+   - "Without being forced" is the register: `operable`, may charm, never a quest marker.
+   **This is now the design for both the provotype space (Q-D50) and the easter eggs (D33): one
+   grammar, Lamby's, doing double duty.**
