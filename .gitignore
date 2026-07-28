@@ -2,3 +2,7 @@ node_modules/
 dist/
 .DS_Store
 update-available/
+
+# review artifacts — rendered video (tools/render-video.mjs), regenerable, 12MB+
+out/
+.render-tmp/
