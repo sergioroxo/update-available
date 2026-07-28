@@ -47,6 +47,54 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-07-28 · Session 63 — **THE CHORUS**, immediately after S62 and on Sérgio's revision of his
+own earlier positive. He had called the chorus "fantastic, just amazing" and S62 protected it; once
+every other shot had bodies he looked again: *"it is a bit bare-bones compared to the other images
+now… Do you think it would be possible to keep the Karaoke aspect and just change what is being
+shown? Because it's almost 20 seconds of just the same background."* **His observation, and it was
+right** — the six chorus lines (58.51 → 78.91) were three busts on one flat field for twenty
+seconds. The bar, the red ball and every timing are untouched; only what plays behind them changed.
+Touched: `netvision.ts` (`drawChorusSet`, and 12 lines of `drawKaraoke`), `s2_media.json`
+(`singAlong`, one string), this log.
+
+**THE IDEA, which is the piece's own argument and is never stated: the congregation grows, and as
+it grows it becomes identical.** Four people open the chorus as four *different* people — one
+hunched, one turned away, one with her hands folded, one already sold — and across the six lines
+every difference is interpolated out of them: same posture, same open arms, same angle to camera.
+**They also stop breathing separately.** Early, each body rides its own phase (S60's rule: the row
+must never move as one object); by the last lines they all move ON THE BEAT, together. Losing the
+phase difference IS the unification — the shot argues by synchronising, and once they are one body
+their arms lift together on the beat. Behind them a rank of busts is added on every line, receding
+and paling into the light, so a quartet becomes a choir of about fifty. The light itself rises out
+of the horizon in stepped bands, so *"It's a brighter, lighter way"* arrives as literal
+illumination on the line that says it.
+
+**⚑ AND THE FRONT RANK HAS A GAP IN IT.** Dead centre, with an aisle running back through every
+rank, a place is kept empty. It lights on *"Discover the new you today"* and it is the only thing
+the frame is still missing when the choir is complete. **It is a reprise of the second, empty pool
+of light in the Struggler's shot at 5.92** — the same composition, thirty seconds and one
+conversion later. Nothing ever mentions either one.
+
+Every number above is derived from the six scenes' own `at` values (the growth, the convergence
+point, the dawn, the moment the empty place lights) — nothing is a typed second. The one new
+authored string is `singAlong` ("SING ALONG", PLACEHOLDER-draft), a prompt that shows for the first
+two lines and drops away once everyone is singing; it is the apparatus asking you to join in, which
+is what a karaoke bar in an infomercial has always been for. `drawBust` gained an optional colour
+(default unchanged) so the ranks can haze out with distance — the bust survives as exactly the
+right vocabulary for a crowd too far back to have legs, which is the part of the old shot that
+worked. The karaoke bar grew 22 → 34px to carry the line COMING UP, dim, under the one being sung —
+what a real sing-along tape does, and it gives the twenty seconds somewhere to be going.
+
+**WATCHED, three re-renders.** The first pass put the ranks at the same height as the front row, so
+the busts read as clutter beside the figures instead of depth — fixed by standing them above the
+front rank's heads (the only depth cue a flat 2D field has), raising the horizon, and roughly
+doubling their density. The second pass left the first line with nothing behind it (the exact
+complaint again), so the choir now starts with one rank already present; the SING ALONG plate was
+also colliding with the bouncing ball's arc and moved up. **Driven in the real build too**
+(`?reinterp=1&debug=1` → log-in → pumped frames → `debugJump('netvision')` → seek to 77s → the OS
+surface blitted): the choir renders on the actual monitor texture, not just in the MP4.
+`npx tsc --noEmit`, `npm test` and `npm run build` green. **BLOCKED: none.**)*
+
 *(2026-07-28 · Session 62 — **THE INFOMERCIAL GETS A CAST**, per
 `docs/REINTERP_NEW_YOU_EDIT_NOTES_2026-07-28.md` (Sérgio's shot-by-shot notes from watching the
 render). **The root fault was one fault, and it explained most of the notes: the film had no

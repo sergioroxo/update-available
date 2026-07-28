@@ -136,6 +136,8 @@ interface MediaData {
   skipDelaySeconds: number;
   chyrons: Record<string, string>;
   tags: Record<string, string>;
+  /** S63 — the chorus's sing-along prompt. Optional: absent data draws none. */
+  singAlong?: string;
   titleCard: TitleCard;
   product: ProductCopy;
   operators: { label: string; counts: number[] };
@@ -255,6 +257,14 @@ export class NetVisionPlayerApp {
   private readonly homecomingFrom: number = this.scenes.find(s => s.shot === 'homecoming')?.at ?? 0;
   private readonly homecomingTo: number = (() => {
     const last = [...this.scenes].reverse().find(s => s.shot === 'homecoming');
+    return last ? this.nextSceneAt(last) : 0;
+  })();
+
+  /** the chorus's own span (58.51 → the brand card at 81.60) — S63's dawn and
+   *  the choir's growth are both derived from it, never from typed seconds. */
+  private readonly chorusFrom: number = this.scenes.find(s => s.shot === 'crowd')?.at ?? 0;
+  private readonly chorusTo: number = (() => {
+    const last = [...this.scenes].reverse().find(s => s.shot === 'crowd');
     return last ? this.nextSceneAt(last) : 0;
   })();
 
@@ -608,12 +618,16 @@ export class NetVisionPlayerApp {
     ui.px(ctx, x + w - 1, y, 1, h, color);
   }
 
-  private drawBust(ctx: CanvasRenderingContext2D, cx: number, baseY: number, scale = 1): void {
+  /** the head-and-shoulders bust. S63 gives it a colour (default unchanged):
+   *  the chorus's ranks recede into haze, and a bust is exactly the right
+   *  vocabulary for a crowd too far back to have legs. */
+  private drawBust(ctx: CanvasRenderingContext2D, cx: number, baseY: number, scale = 1,
+                   color: string = ERA1.black): void {
     const w = 34 * scale; const h = 30 * scale;
-    ui.px(ctx, cx - w / 2, baseY - h * 0.55, w * 0.24, h * 0.3, ERA1.black); // neck
-    ui.px(ctx, cx - w / 2, baseY - h * 0.35, w, h * 0.5, ERA1.black); // shoulders
+    ui.px(ctx, cx - w / 2, baseY - h * 0.55, w * 0.24, h * 0.3, color); // neck
+    ui.px(ctx, cx - w / 2, baseY - h * 0.35, w, h * 0.5, color); // shoulders
     const headS = h * 0.5;
-    ui.px(ctx, cx - headS / 2, baseY - h * 0.55 - headS * 0.85, headS, headS, ERA1.black); // head
+    ui.px(ctx, cx - headS / 2, baseY - h * 0.55 - headS * 0.85, headS, headS, color); // head
   }
 
   private drawSceneContent(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene, override?: string): void {
@@ -684,24 +698,8 @@ export class NetVisionPlayerApp {
         this.drawLowerThird(ctx, a, scene, override);
         return;
       default: {
-        // THE CONGREGATION — the chorus. ⚑ UNTOUCHED BY S62 on purpose: this
-        // shot and its red karaoke ball are the one Sérgio called "fantastic,
-        // just amazing", so the busts stay busts here and the cast's new
-        // articulated bodies are kept out of it.
-        //
-        // S60 (finding D15): the set BREATHES. The studio bands swell a pixel,
-        // the silhouettes rise and fall out of phase with each other, and the
-        // held shot drifts a pixel sideways — a camera operator, not a slide.
-        ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.paper);
-        const bandH = 6 + Math.round(this.breath() * 2);
-        ui.px(ctx, a.x, a.y, a.w, bandH, ERA1.beige);
-        ui.px(ctx, a.x, a.y + a.h - bandH, a.w, bandH, ERA1.beige);
-        const baseY = a.y + Math.round(a.h * 0.58);
-        const drift = Math.round(Math.sin(this.elapsed * 0.42) * 2);
-        // three people, three phases — the row must never move as one object
-        this.drawBust(ctx, a.x + a.w * 0.5 - 46 + drift, baseY - Math.round(this.breath(1.9) * 2), 0.8);
-        this.drawBust(ctx, a.x + a.w * 0.5 + drift, baseY - Math.round(this.breath(0) * 2), 1);
-        this.drawBust(ctx, a.x + a.w * 0.5 + 46 + drift, baseY - Math.round(this.breath(3.4) * 2), 0.8);
+        // THE CONGREGATION — the chorus (58.51 → 78.91).
+        this.drawChorusSet(ctx, a, scene);
         // a karaoke scene's line is already the karaoke bar's text — one
         // subtitle, not two stacked copies of the same lyric
         const sung = !!scene.karaoke && !this.inBreak();
@@ -1071,6 +1069,128 @@ export class NetVisionPlayerApp {
   }
 
   /**
+   * THE CHORUS (58.51 → 78.91) — twenty seconds, and until S63 they were
+   * twenty seconds of three busts on one flat field. Sérgio, who had called
+   * this shot "fantastic", revised himself once the rest of the film had
+   * bodies: "it is a bit bare-bones compared to the other images now… Do you
+   * think it would be possible to keep the Karaoke aspect and just change what
+   * is being shown?" The bar, the ball and their timing are untouched; what
+   * they play over is rebuilt.
+   *
+   * THE IDEA, which is the piece's own argument and is never stated:
+   * **the congregation grows, and as it grows it becomes identical.**
+   *   · Four people open the chorus as four different people — one hunched,
+   *     one turned away, one with her hands folded, one already sold — and
+   *     across the six lines every difference is interpolated out of them:
+   *     same posture, same open arms, same angle to camera.
+   *   · They also stop breathing separately. Early, each body rides its own
+   *     phase (S60's rule: the row must never move as one object). By the last
+   *     lines they all move ON THE BEAT, together. **Losing the phase
+   *     difference IS the unification** — the shot argues by synchronising.
+   *   · A rank of busts is added BEHIND them on every line, receding and
+   *     paling into the light, so a quartet becomes a choir of fifty.
+   *   · The light rises out of the horizon in stepped bands — "It's a
+   *     brighter, lighter way" arriving as literal illumination, on the line
+   *     that says it.
+   *   · ⚑ AND THE FRONT RANK HAS A GAP IN IT. Dead centre, with an aisle
+   *     running back through the choir, a place is kept empty; it lights on
+   *     "Discover the new you today" and is the only thing the frame is still
+   *     missing when the choir is complete. It is a reprise of the second,
+   *     empty pool of light in the Struggler's shot at 5.92. Nothing ever
+   *     mentions either one.
+   */
+  private drawChorusSet(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene): void {
+    const chorus = this.scenes.filter(s => s.shot === 'crowd');
+    const idx = Math.max(chorus.indexOf(scene), 0);
+    const span = Math.max(this.chorusTo - this.chorusFrom, 0.01);
+    const clamp = (v: number) => Math.min(Math.max(v, 0), 1);
+    const dawn = clamp((this.elapsed - this.chorusFrom) / span);
+    // they finish converging on the fourth line — the one that promises the
+    // brighter, lighter way. Derived from the data, never a typed second.
+    const unifyBy = chorus[Math.min(3, chorus.length - 1)]?.at ?? this.chorusTo;
+    const unify = clamp((this.elapsed - this.chorusFrom) / Math.max(unifyBy - this.chorusFrom, 0.01));
+    const mix = (from: number, to: number) => from + (to - from) * unify;
+
+    const cx = a.x + Math.round(a.w / 2);
+    const floorY = a.y + Math.round(a.h * 0.70);
+
+    // the light comes up out of the horizon, one stepped band per shade
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.grey);
+    const glow = Math.round(dawn * a.h * 0.74);
+    ui.px(ctx, a.x, floorY - glow, a.w, glow, ERA1.beige);
+    ui.px(ctx, a.x, floorY - Math.round(glow * 0.62), a.w, Math.round(glow * 0.62), ERA1.paper);
+    ui.px(ctx, a.x, floorY - Math.round(glow * 0.26), a.w, Math.round(glow * 0.26), ERA1.white);
+    ui.px(ctx, a.x, floorY, a.w, a.h - (floorY - a.y), ERA1.beige);
+    ui.px(ctx, a.x, floorY, a.w, 2, ERA1.olive);
+
+    // the beat they will all end up moving on
+    const beatBob = this.beatFrac() < 0.5 ? 0 : 1;
+    const AISLE = 26; // the kept place runs all the way back through the ranks
+
+    // the ranks behind, back to front — each line of the song adds one. They
+    // stand ABOVE the front rank's heads, which is the only depth cue a flat
+    // 2D field has, and they pale into the light as they recede.
+    for (let r = idx + 1; r >= 1; r--) {
+      const s = Math.max(0.34, 0.62 - (r - 1) * 0.06);
+      const count = 7 + r * 3;
+      const y = floorY - 62 - (r - 1) * 15 - beatBob;
+      const shade = r >= 5 ? ERA1.silver : r >= 3 ? ERA1.grey : ERA1.greyDark;
+      for (let i = 0; i < count; i++) {
+        const x = a.x + Math.round((i + 0.5) * a.w / count) + (r % 2 ? 9 : 0);
+        if (Math.abs(x - cx) < AISLE) continue;
+        this.drawBust(ctx, x, y, s, shade);
+      }
+    }
+
+    // ⚑ the place kept for you — it lights on "Discover the new you today"
+    const litFrom = chorus[Math.min(2, chorus.length - 1)]?.at ?? this.chorusFrom;
+    const lit = clamp((this.elapsed - litFrom) / 2.4);
+    if (lit > 0) {
+      ctx.globalAlpha = 0.3 + lit * 0.45;
+      ctx.fillStyle = ERA1.white;
+      ctx.beginPath();
+      ctx.ellipse(cx, floorY + 12, Math.round(18 + lit * 26), Math.round(4 + lit * 4), 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // the front rank: four people who begin as four people
+    const rank = [
+      { x: -148, lean: 6, drop: 6, spread: 0,    turn: 0.6,  folded: false, phase: 1.9 },
+      { x: -56,  lean: 0, drop: 0, spread: 0,    turn: 0.25, folded: false, phase: 0.0 },
+      { x: 56,   lean: 0, drop: 2, spread: 0,    turn: 0.85, folded: true,  phase: 3.4 },
+      { x: 148,  lean: 0, drop: 0, spread: 0.55, turn: 1,    folded: false, phase: 2.6 }
+    ];
+    for (const f of rank) {
+      const bob = Math.round(mix(this.breath(f.phase) * 2, beatBob * 2));
+      this.drawFigure(ctx, cx + f.x, floorY + 4 - bob, {
+        scale: 0.86,
+        lean: mix(f.lean, 0),
+        headDrop: mix(f.drop, 0),
+        armSpread: mix(f.spread, 0.62),
+        // once they are one body, the arms lift together on the beat
+        armLift: mix(0, 0.3) + beatBob * 0.16 * unify,
+        turn: mix(f.turn, 1),
+        handsFolded: f.folded && unify < 0.5
+      });
+    }
+
+    // SING ALONG — the apparatus asking you to join in, which is what a
+    // karaoke bar in an infomercial has always been for. It drops away once
+    // everyone is singing.
+    if (idx <= 1 && M.singAlong) {
+      ui.setFont(ctx, 9);
+      const tw = ctx.measureText(M.singAlong).width;
+      const px0 = cx - Math.round(tw / 2);
+      const py = a.y + a.h - 96; // clear of the bouncing ball's arc
+      ui.px(ctx, px0 - 12, py - 3, tw + 24, 14, ERA1.black);
+      ui.px(ctx, px0 - 8, py + 2, 5, 5, this.beatFrac() < 0.5 ? ERA1.warn : ERA1.warnDark);
+      ctx.fillStyle = ERA1.tooltip;
+      ctx.fillText(M.singAlong, px0, py);
+    }
+  }
+
+  /**
    * THE OPENING, 1/2 — "LAMBY PRODUCTIONS PRESENTS" over an EVANGELIST Lamby.
    *
    * Explicitly NOT the Clippy lamb of `lambyChar.ts` (nothing is imported from
@@ -1224,8 +1344,12 @@ export class NetVisionPlayerApp {
    * `words` still works: it falls back to that linear sweep.
    */
   private drawKaraoke(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene): void {
-    const barY = a.y + a.h - 60;
-    ui.px(ctx, a.x, barY, a.w, 22, ERA1.black);
+    // S63: the bar grew from 22 to 34 so it can carry the line COMING UP,
+    // dim, underneath the one being sung — which is what a karaoke tape
+    // actually does, and it gives the twenty seconds somewhere to be going.
+    // The ball, the fill-behind-it and every timing are exactly as they were.
+    const barY = a.y + a.h - 64;
+    ui.px(ctx, a.x, barY, a.w, 34, ERA1.black);
     ui.setFont(ctx, 11);
     const text = scene.line;
     if (!text) return;
@@ -1261,6 +1385,14 @@ export class NetVisionPlayerApp {
       const frac = Math.min(Math.max((this.elapsed - scene.at) / span, 0), 1);
       ballX = tx + frac * tw;
     }
+    const nextScene = this.scenes[this.scenes.indexOf(scene) + 1];
+    if (nextScene?.karaoke && nextScene.line) {
+      ui.setFont(ctx, 9);
+      const nw = ctx.measureText(nextScene.line).width;
+      ctx.fillStyle = ERA1.grey;
+      ctx.fillText(nextScene.line, Math.round(a.x + (a.w - nw) / 2), barY + 20);
+    }
+
     const bounce = Math.abs(Math.sin(this.elapsed * 8)) * 6;
     ui.px(ctx, ballX - 2, barY - 8 - bounce, 4, 4, ERA1.warn);
   }
