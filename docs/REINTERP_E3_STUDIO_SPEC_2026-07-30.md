@@ -211,3 +211,100 @@ transmutation to **Echo / "L"** — because a companion revealed as a fail-loop 
 **Sequencing note:** the games are stages of one program in the source doc. On the phone they become
 apps you can open in any order — which is better for the piece's laws (no forced sequence, dismissal
 always works) and keeps them provotypes rather than a level.
+
+---
+
+# ADDENDUM 2 — reviewing the games as suggestions, and the Pokémon Go question (2026-07-30)
+*Sérgio asked for a real review rather than acceptance: "they need to be rethought as well and not
+forced… only if it adds to the narrative, if not to be separate." And he floated a
+"Lamby and Friends" mobile game, unsure whether it is too much. Verdicts below, with reasons.*
+
+## The three Gemini games — reviewed, not accepted
+
+**1 · "The Swivel" (Tinder swipe) — KEEP.**
+The swipe *is* the 2016 gesture, so the form is period-exact. It dramatises **enforced isolation**,
+which the research documents (accountability partners; monitoring of relationships). The Guide's hand
+overlaying yours to force the left-swipe is the strongest single image in the doc: coercion rendered
+as UI assistance. It also rhymes with this project's own dead-button law — *an option displayed that
+is not one.*
+
+**2 · "The Purge" (Fruit Ninja slice) — ⚑ CUT, and I want to be plain about why.**
+I flagged this before as needing an ethics call. Having sat with it, my recommendation is to cut it,
+and the reason is sharper than "the player performs violence":
+
+> **The mechanic requires the piece itself to render "Trans identity", "Self-Love" and "Queer
+> community" as objects that exist to be destroyed.** Even in a critical frame, the piece has to draw
+> them as targets and reward the strike. That is a different order of act from *depicting* coercion —
+> it makes the artwork perform the erasure with the player's hands on the blade.
+
+Everything it wants to say — thought-stopping, the discipline of destroying "unwanted" thoughts — can
+be said without a queer identity ever being the target. *(Also: Fruit Ninja peaks 2010–12, so it is
+the least period-true of the three anyway.)* **If you want it, it needs your explicit G-gate call —
+but I would not build it.**
+
+**3 · "The Score" (rigged endless-runner) — KEEP, and it is the best evidenced of the three.**
+Flappy Bird is 2014, close enough to read. And the mechanic is the **single best-documented thing in
+the whole project**: Alan Chambers's own estimate that ~99.9% experienced no change. A game engineered
+to be unwinnable, which then blames you — *"You didn't try hard enough. Pray harder."* — is not a
+metaphor for the apparatus. It is a working model of it.
+
+**Order:** if both ship, **The Score comes first.** The player should already know the system is
+rigged before anything else asks them to comply.
+
+---
+
+## ⚑ "Lamby and Friends" — my honest answer: yes, but it is NOT respite
+
+**Why yes.** **Pokémon Go launched July 2016.** That is not a loose cultural reference — it is *the*
+artifact of Era 3's exact summer. And a ministry with a mascot absolutely would have shipped a
+collect-em-up; churches were making apps (the Living Hope app is documented, pulled by Apple in Dec
+2018). It gives E3 the **"ridiculousness" register** that the infomercial gives E2 — which is the
+thing E3 has been missing, and the reason it read as a category rather than a form.
+
+**And the mechanic is better than a gag.** Pokémon Go's actual verb is *go somewhere and check in*.
+A ministry version surfaces **"gatherings near you"** — which is the referral network as an AR game.
+Location-based recruitment wearing a mascot. It also rhymes for free with Restorify's own
+**check-in**, which the piece already built in E2: same word, thirteen years apart, now with a map.
+
+**⚑ But it cannot be respite, and this matters.** The respite law says respite is *genuine queer joy,
+never a trap, never revealed as fake — the system targets around it, never through it.* A
+Lamby-branded game **is the apparatus by definition.** Calling it respite would break the law that
+protects the piece's only safe ground.
+
+So: **it is `operable` satire, and it must collapse** — like every other charming surface here.
+
+**Which leaves a real gap worth naming:** if E3 needs relief, that relief has to be **something of
+Vera's own, unbranded** — not a ministry product. E1 has the resistance objects and the mixtape. E3
+has no equivalent yet, and it should. *That* is the respite; the game is the joke.
+
+## How they fit together (three distinct things — do not merge them)
+| Thing | Register | Job |
+|---|---|---|
+| **The provotypes** (Swivel, Score) | `operable`, grave | serious vignettes; documented mechanisms; offered by Lamby, declinable, filed |
+| **"Lamby and Friends"** | `operable`, absurd | the era's ridiculousness beat; period-exact; must collapse |
+| **Vera's own thing** (TBD) | `respite` | genuine, unbranded, never a trap — the era currently lacks this |
+
+**Scope discipline:** the game should be **small** — a few screens on the phone, not a playable
+Pokémon Go. Sérgio's "maybe too much" instinct is right about a full pastiche and wrong about the
+idea. Keep it to the map, the check-in, the collection, and one collapse.
+
+---
+
+## On the studio's filters — "the filters can have added layers"
+Taken, and it is the right push: the presets are the cheapest place in the piece to **expand the
+media-apparatus exploration** he wants. Beyond grade/light/framing/music, each segment can expose
+period-true production furniture: a **lower-third** naming her ("Vera · Overcomer"), **stock B-roll**
+suggestions, a **thumbnail generator** offering the before/after split image, **caption styling** in
+the pastel self-help idiom (Node 4), and a **title assistant** proposing SEO-shaped phrasings.
+Each one is another documented layer of how this content is actually made — and every one of them is
+a small figurative statement, which is exactly what he asked the filters to carry.
+
+## On D37's boundary (his clarification, recorded)
+> *"we shouldn't copy people's life experiences, but yes, be inspired by the historical elements that
+> made this a reality… if you really are struggling, you can ask me."*
+
+**Understood and binding.** For Vera's testimony specifically: it is drafted from the *documented
+grammar* — the three-phase structure, the co-opted vocabulary, the pathologising "before" — never
+from any real person's account. No survivor's words, no reconstructed testimony, no composite that
+tracks an identifiable life. Where a beat would need a real experience to work, I ask instead of
+inventing around it.
