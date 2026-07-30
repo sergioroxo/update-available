@@ -1,6 +1,12 @@
-STATUS: live
+STATUS: superseded-by docs/REINTERP_E3_RECONSIDERED_2026-07-30.md
 
 # VERA'S TESTIMONY — draft, and what the studio does to it
+
+> **⚑ SUPERSEDED 2026-07-30.** Vera does not edit her own testimony — she edits OTHER PEOPLE'S,
+> which is what "promoted, loved because she's useful" actually means. Her own testimony survives
+> as CONTEXT (the pinned exemplar that shows what "good" looks like), never as the task. The raw
+> take below is kept because its central finding still holds: an account with no epiphany cannot
+> fill a three-slot template — that is now Mira's problem, and the era's mechanic.
 *Drafted under the co-creation norm: Claude drafts, Sérgio reviews and rewrites, his edit wins.
 **PLACEHOLDER-draft throughout.** Built from the documented testimony grammar only — never from any
 real person's account, no survivor's words, no composite tracking an identifiable life.*

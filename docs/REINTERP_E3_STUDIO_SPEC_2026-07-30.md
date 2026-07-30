@@ -1,6 +1,12 @@
-STATUS: live
+STATUS: superseded-by docs/REINTERP_E3_RECONSIDERED_2026-07-30.md
 
 # ERA 3 — THE TESTIMONY STUDIO · build spec
+
+> **⚑ SUPERSEDED 2026-07-30** by `REINTERP_E3_RECONSIDERED_2026-07-30.md`.
+> Sérgio's critique: Vera editing her OWN testimony had no diegetic logic, the echo chamber was
+> asserted rather than mechanised, the view-count coercion was contrived, and the three devices were
+> never actually connected. Kept as the reasoning trail — the presets-as-ideology idea and the E4
+> bridge survive into the reconsidered version.
 *The E3 revamp made concrete. Grounded in `REINTERP_E3_REVAMP_BRIEF_2026-07-30.md` rev 3 and the
 research it cites. Two devices: the **laptop** produces and circulates, the **phone** returns and
 breaks the era.*
