@@ -6,12 +6,15 @@
  * and a links list of every review URL + the controls. Toggle with backtick (`)
  * or the hide/⚙ buttons.
  */
+import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
 const BUILD_TAG = 'R28-2d-iv · NetVision Player (New You infomercial)';
 
 interface DebugOpts {
+  /** The live renderer: required for a non-black WebGL canvas readback. */
+  app?: pc.Application;
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
   onReveal?: () => void;
   onClose?: () => void;
@@ -172,11 +175,11 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     background: 'rgba(16,18,26,0.94)', color: '#cdd3df',
     font: '11px/1.4 monospace', padding: '8px', borderRadius: '6px',
     border: '1px solid #3a4154', maxHeight: '94vh', overflowY: 'auto',
-    width: '208px', userSelect: 'none'
+    width: '188px', userSelect: 'none', boxShadow: '0 2px 12px #0008'
   } as CSSStyleDeclaration);
 
   const pill = document.createElement('button');
-  pill.textContent = '⚙ debug';
+  pill.textContent = '⚙ map';
   Object.assign(pill.style, {
     position: 'fixed', top: '8px', left: '8px', zIndex: '9999', display: 'none',
     background: 'rgba(16,18,26,0.92)', color: '#8fb6ff', border: '1px solid #3a4154',
@@ -194,9 +197,9 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
   } as CSSStyleDeclaration);
   const titleText = document.createElement('span');
-  titleText.textContent = 'DEBUG';
+  titleText.textContent = 'PIECE MAP';
   const hideBtn = document.createElement('button');
-  hideBtn.textContent = 'hide ✕';
+  hideBtn.textContent = 'close ✕';
   Object.assign(hideBtn.style, {
     background: '#222838', color: '#cdd3df', border: '1px solid #39405270',
     font: '10px monospace', padding: '2px 6px', cursor: 'pointer', borderRadius: '3px'
@@ -214,8 +217,8 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
 
   // live "you are here": era + room, polled from the app (?debug=1)
   const now = document.createElement('div');
-  now.style.cssText = 'color:#8fffc0;font-size:10px;margin-bottom:6px;min-height:13px';
-  now.textContent = 'here: —';
+  now.style.cssText = 'color:#8fffc0;font-size:10px;margin:4px 0;min-height:13px;font-weight:bold';
+  now.textContent = 'CURRENT: —';
   panel.appendChild(now);
   // draw calls vs the Quest budget (~50–100, WEBXR_PERFORMANCE_NOTES) + how
   // many props the static batcher folded away (?nobatch=1 to compare raw)
@@ -225,7 +228,9 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   panel.appendChild(perf);
   window.setInterval(() => {
     const s = (window as { __reinterpNow?: string }).__reinterpNow;
-    now.textContent = 'here: ' + (s ?? '— (open a room)');
+    const place = s ?? '— (open a room)';
+    now.textContent = 'CURRENT: ' + place;
+    pill.textContent = '⚙ ' + (s?.split(' · ')[0] ?? 'map');
     const w = window as {
       __drawCalls?: number;
       __batchedProps?: number;
@@ -241,7 +246,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     }
   }, 250);
 
-  const mkBtn = (label: string, fn: () => void): HTMLButtonElement => {
+  const mkBtn = (parent: HTMLElement, label: string, fn: () => void): HTMLButtonElement => {
     const b = document.createElement('button');
     b.textContent = label;
     Object.assign(b.style, {
@@ -252,23 +257,59 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     b.addEventListener('mouseenter', () => { b.style.background = '#313a52'; });
     b.addEventListener('mouseleave', () => { b.style.background = '#222838'; });
     b.addEventListener('click', () => fn());
-    panel.appendChild(b);
+    parent.appendChild(b);
     return b;
   };
-  const heading = (text: string): void => {
+  const heading = (parent: HTMLElement, text: string): void => {
     const h = document.createElement('div');
     h.textContent = text;
     h.style.cssText = 'color:#7f8aa3;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;margin:8px 0 2px';
-    panel.appendChild(h);
+    parent.appendChild(h);
   };
-  const sep = (): void => {
-    const d = document.createElement('div');
-    d.style.cssText = 'border-top:1px solid #39405270;margin:6px 0';
-    panel.appendChild(d);
+  /** Keeps each map branch's open/closed state for the life of this panel. */
+  const sectionState: Record<string, boolean> = {};
+  const section = (label: string, summary: string, initiallyOpen = false): HTMLElement => {
+    const wrap = document.createElement('section');
+    wrap.style.cssText = 'border-top:1px solid #39405270;padding-top:4px;margin-top:5px';
+    const toggle = document.createElement('button');
+    Object.assign(toggle.style, {
+      display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center',
+      background: 'transparent', color: '#8fb6ff', border: '0', font: 'bold 10px monospace',
+      padding: '2px 0', cursor: 'pointer', textAlign: 'left'
+    } as CSSStyleDeclaration);
+    const text = document.createElement('span');
+    text.textContent = label;
+    const marker = document.createElement('span');
+    toggle.append(text, marker);
+    const detail = document.createElement('div');
+    detail.style.cssText = 'color:#7f8aa3;font-size:9px;margin:0 0 3px';
+    detail.textContent = summary;
+    const body = document.createElement('div');
+    const setOpen = (open: boolean): void => {
+      sectionState[label] = open;
+      body.hidden = !open;
+      detail.hidden = open;
+      marker.textContent = open ? '−' : '+';
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+    setOpen(initiallyOpen);
+    toggle.addEventListener('click', () => setOpen(!sectionState[label]));
+    wrap.append(toggle, detail, body);
+    panel.appendChild(wrap);
+    return body;
   };
 
-  const shotBtn = mkBtn('📷 screenshot', () => {
-    const cv = document.querySelector('canvas');
+  const actions = document.createElement('div');
+  actions.style.cssText = 'display:flex;gap:4px;margin:4px 0 2px';
+  panel.appendChild(actions);
+  const shotBtn = mkBtn(actions, '📷 shot', () => {
+    const app = opts.app;
+    if (!app) return;
+    // WebGL clears its back buffer after presentation. Render and read the
+    // PlayCanvas canvas in this same synchronous click path; preserveDrawingBuffer
+    // would retain it at a performance cost on every 72 Hz frame.
+    app.render();
+    const cv = app.graphicsDevice.canvas;
     if (!cv) return;
     cv.toBlob((blob) => {
       if (!blob) return;
@@ -280,49 +321,46 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
       URL.revokeObjectURL(url);
     });
   });
-  shotBtn.style.color = '#8fffc0';
+  shotBtn.style.cssText += ';color:#8fffc0;flex:1';
 
   const isFlat = new URLSearchParams(window.location.search).get('flat') === '1';
-  const modeBtn = mkBtn(isFlat ? '🖥 → 3D room' : '▭ → Flat 2D', () => {
+  const modeBtn = mkBtn(actions, isFlat ? '🖥 3D' : '▭ flat', () => {
     const p = new URLSearchParams(window.location.search);
     if (isFlat) p.delete('flat'); else p.set('flat', '1');
     p.set('debug', '1');
     window.location.search = p.toString();
   });
-  modeBtn.style.color = '#ffd48f';
+  modeBtn.style.cssText += ';color:#ffd48f;flex:1';
 
-  // ── ERA (time): change which era the three rooms are aged to ──
+  // ── NAVIGATE: time, room and witness — the spatial spine, close at hand. ──
+  const navigate = section('NAVIGATE', 'time · room · witness', true);
   if (opts.onEra || opts.onReveal || opts.onClose) {
-    heading('era — the rooms age');
-    if (opts.onReveal) mkBtn('O7 · first-filing reveal', opts.onReveal);
-    if (opts.onEra) for (const [era, label] of ERAS) mkBtn(label, () => opts.onEra?.(era));
-    if (opts.onClose) mkBtn('Close · point cloud', opts.onClose);
+    heading(navigate, 'TIME — the rooms age');
+    if (opts.onReveal) mkBtn(navigate, 'O7 · first-filing reveal', opts.onReveal);
+    if (opts.onEra) for (const [era, label] of ERAS) mkBtn(navigate, label, () => opts.onEra?.(era));
+    if (opts.onClose) mkBtn(navigate, 'Close · point cloud', opts.onClose);
   }
-
-  // ── ROOM (place): jump the camera to a room's desk seat ──
   if (opts.onCamProbe) {
-    heading('room — jump the camera');
-    for (const [label, yaw] of ROOMS) mkBtn(label, () => opts.onCamProbe?.(yaw, 0));
+    heading(navigate, 'PLACE — desk seats');
+    for (const [label, yaw] of ROOMS) mkBtn(navigate, label, () => opts.onCamProbe?.(yaw, 0));
   }
-
-  // ── the trans room's facets (Room 3) ──
   if (opts.onFacet) {
-    heading('room 3 facet (trans)');
-    mkBtn('Facet — trans-fem', () => opts.onFacet?.('transfem'));
-    mkBtn('Facet — trans-masc', () => opts.onFacet?.('transmasc'));
-    mkBtn('Facet — non-binary', () => opts.onFacet?.('nonbinary'));
-    mkBtn('Facet — all (E3)', () => opts.onFacet?.('all'));
-    mkBtn('Facet — none (E1)', () => opts.onFacet?.('none'));
+    heading(navigate, 'ROOM 3 — facet');
+    mkBtn(navigate, 'Facet — trans-fem', () => opts.onFacet?.('transfem'));
+    mkBtn(navigate, 'Facet — trans-masc', () => opts.onFacet?.('transmasc'));
+    mkBtn(navigate, 'Facet — non-binary', () => opts.onFacet?.('nonbinary'));
+    mkBtn(navigate, 'Facet — all (E3)', () => opts.onFacet?.('all'));
+    mkBtn(navigate, 'Facet — none (E1)', () => opts.onFacet?.('none'));
   }
   if (opts.onFlip) {
-    heading('witness');
-    mkBtn('Flip ⟲ (turn to record)', opts.onFlip);
+    heading(navigate, 'WITNESS');
+    mkBtn(navigate, 'Flip ⟲ (turn to record)', opts.onFlip);
   }
 
   // ── SENDS (master script §4) — fire the seam the beats will call; every
   // outcome files to the record (flip to see the cross-reference lines) ──
   if (opts.onSend && opts.sends?.length) {
-    heading('sends — the summons seam');
+    const sends = section('SENDS', 'summons seam · offer / visit / decline');
     for (const { id, label } of opts.sends) {
       const row = document.createElement('div');
       row.style.cssText = 'margin:2px 0';
@@ -345,22 +383,25 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
         btns.appendChild(b);
       }
       row.appendChild(btns);
-      panel.appendChild(row);
+      sends.appendChild(row);
     }
   }
 
   // ── OS beats (the 2D desktop states) ── grouped/ordered as the piece's spine;
   // see the comment above OS_BEATS for how this stays complete (C6).
-  heading('os beats (the monitor)');
   const excluded = new Set(OS_BEAT_EXCLUSIONS);
+  let beats: HTMLElement | null = null;
   for (const row of OS_BEATS) {
-    if ('heading' in row) { heading(row.heading); continue; }
+    if ('heading' in row) {
+      beats = section(`DESKTOP · ${row.heading}`, 'monitor state jumps');
+      continue;
+    }
     if (excluded.has(row.id)) continue; // documented exclusion wins if ever double-listed
-    mkBtn(row.label, () => os.debugJump(row.id));
+    if (beats) mkBtn(beats, row.label, () => os.debugJump(row.id));
   }
 
   // ── LINKS: every review URL as a clickable link (Sérgio's ask) ──
-  heading('open a state (links)');
+  const links = section('REVIEW LINKS', 'open a known state in a fresh URL');
   for (const [label, href] of LINKS) {
     const a = document.createElement('a');
     a.textContent = label;
@@ -371,21 +412,22 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     } as CSSStyleDeclaration);
     a.addEventListener('mouseenter', () => { a.style.textDecoration = 'underline'; });
     a.addEventListener('mouseleave', () => { a.style.textDecoration = 'none'; });
-    panel.appendChild(a);
+    links.appendChild(a);
   }
 
   // ── CONTROLS reference ──
-  heading('controls');
+  const controls = section('CONTROLS', 'look · turn · movement · map');
   const ctrls = document.createElement('div');
   ctrls.style.cssText = 'color:#9aa3b8;font-size:10px;line-height:1.5';
   ctrls.innerHTML =
     'drag / ← → = look around (never moves rooms)<br>R = home room · F = flip to record<br>' +
     'click a floor marker = blink-jump there (R28-1, markers E3+)<br>` = show/hide this panel';
-  panel.appendChild(ctrls);
+  controls.appendChild(ctrls);
 
-  sep();
   document.body.appendChild(panel);
   document.body.appendChild(pill);
+  // Keep review captures clear until the reviewer deliberately opens the map.
+  show(false);
 
   window.addEventListener('keydown', (e) => {
     if (e.key === '`' || e.code === 'Backquote') {

@@ -1835,6 +1835,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // dev travel panel (?debug=1 — the shipped build's system, ported; Round 18)
   if (options.reinterp) {
     mountDebugPanel(os, {
+      app,
       // S58: route through the REAL transition path (os.onEraShift), not
       // driveMorph alone — driveMorph only advances the room/desktop-era
       // machinery; os.onEraShift additionally calls spine?.onEra(era), which
