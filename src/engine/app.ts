@@ -248,13 +248,131 @@ interface AppOptions {
   nobatch?: boolean;
 }
 
-export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}): Promise<pc.Application> {
+/**
+ * The application shell is prepared while the orienting card is still up on
+ * XR-capable devices. WebXR requires requestSession() to happen in the same
+ * user-gesture stack as ENTER VR, while the room's model preload is async.
+ * Preparing only the PlayCanvas device + camera here lets startApp() make that
+ * request synchronously, before its first await, without starting or revealing
+ * any of the fiction behind the content note.
+ *
+ * The authored camera pose lives on a parent rig. In desktop mode the child is
+ * identity, so this is exactly the old camera transform. In XR, PlayCanvas owns
+ * the child's tracked head pose while the existing entrance/relocation/TURN
+ * choreography continues to move the rig.
+ */
+interface AppShell {
+  canvasEl: HTMLCanvasElement;
+  app: pc.Application;
+  cameraRig: pc.Entity;
+  camera: pc.Entity;
+}
+
+let preparedXrShell: AppShell | null = null;
+let preparedXrReady: Promise<boolean> | null = null;
+let immersiveVrRequested = false;
+
+function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
   const app = new pc.Application(canvasEl, {
     graphicsDeviceOptions: { antialias: false, alpha: false }
   });
   app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
   app.setCanvasResolution(pc.RESOLUTION_AUTO);
   window.addEventListener('resize', () => app.resizeCanvas());
+
+  const cameraRig = new pc.Entity('camera-rig');
+  cameraRig.setLocalPosition(EYE.x, EYE.y, EYE.z);
+  app.root.addChild(cameraRig);
+
+  const camera = new pc.Entity('camera');
+  camera.addComponent('camera', {
+    clearColor: new pc.Color(0.05, 0.04, 0.03),
+    fov: 42,
+    nearClip: 0.05
+  });
+  cameraRig.addChild(camera);
+
+  return { canvasEl, app, cameraRig, camera };
+}
+
+/**
+ * Called only after navigator.xr has directly confirmed immersive-vr support.
+ * Wait for PlayCanvas's own async availability probe too; its start() rejects
+ * an otherwise valid user gesture until this internal flag has become true.
+ */
+export function prepareImmersiveVrEntry(canvasEl: HTMLCanvasElement): Promise<boolean> {
+  if (preparedXrShell?.canvasEl === canvasEl && preparedXrReady) return preparedXrReady;
+  if (preparedXrShell) return Promise.resolve(false);
+
+  const shell = createAppShell(canvasEl);
+  preparedXrShell = shell;
+  const xr = shell.app.xr;
+  if (!xr) {
+    preparedXrReady = Promise.resolve(false);
+    return preparedXrReady;
+  }
+  if (xr.isAvailable(pc.XRTYPE_VR)) {
+    preparedXrReady = Promise.resolve(true);
+    return preparedXrReady;
+  }
+
+  preparedXrReady = new Promise<boolean>((resolve) => {
+    const event = `available:${pc.XRTYPE_VR}`;
+    const finish = (available: boolean): void => {
+      if (!available) return;
+      xr.off(event, finish);
+      xr.off('error', fail);
+      resolve(true);
+    };
+    const fail = (): void => {
+      xr.off(event, finish);
+      xr.off('error', fail);
+      resolve(false);
+    };
+    xr.on(event, finish);
+    xr.on('error', fail);
+  });
+  return preparedXrReady;
+}
+
+/** Mark the next synchronous startApp() call as the ENTER VR path. */
+export function requestImmersiveVrEntry(): void {
+  immersiveVrRequested = true;
+}
+
+export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions = {}): Promise<pc.Application> {
+  const shell = preparedXrShell?.canvasEl === canvasEl
+    ? preparedXrShell
+    : createAppShell(canvasEl);
+  preparedXrShell = null;
+  preparedXrReady = null;
+  const startInVr = immersiveVrRequested;
+  immersiveVrRequested = false;
+  const { app, cameraRig, camera } = shell;
+  const xr = app.xr;
+
+  /** PlayCanvas leaves its last tracked local pose on the camera when a
+   * session ends. Restore the identity child so the authored rig is once again
+   * the complete desktop pose, then restore the ordinary canvas resolution. */
+  const restoreDesktopCamera = (): void => {
+    camera.setLocalPosition(0, 0, 0);
+    camera.setLocalEulerAngles(0, 0, 0);
+    app.resizeCanvas();
+  };
+  xr?.on('end', restoreDesktopCamera);
+
+  // This must remain before the first await in this async function: WebXR
+  // accepts requestSession only inside ENTER VR's original click stack.
+  if (startInVr && xr && camera.camera) {
+    xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
+      callback: (error) => {
+        if (!error) return;
+        restoreDesktopCamera();
+        console.warn('Unable to enter immersive VR; continuing on desktop.', error);
+      }
+    });
+  }
+
   app.scene.ambientLight = new pc.Color(0.16, 0.15, 0.15);
   // reinterp E1 style pass (§2-E1): warm the ambient a touch so the floor/shell
   // read cozy under the lamp's dominance — baseline ambient is untouched.
@@ -463,15 +581,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // half of the arc — it wakes by hardening, on the first filing.
     restoreWitnessSurface();
   }
-
-  const camera = new pc.Entity('camera');
-  camera.addComponent('camera', {
-    clearColor: new pc.Color(0.05, 0.04, 0.03),
-    fov: 42,
-    nearClip: 0.05
-  });
-  camera.setLocalPosition(EYE.x, EYE.y, EYE.z);
-  app.root.addChild(camera);
 
   // vignette: definition falls off toward the edges (taste call: no particles)
   const vignette = document.createElement('div');
@@ -955,8 +1064,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camPos.set(EYE.x, EYE.y, EYE.z);
     camPitch = 0;
     camYaw = 0;
-    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
-    camera.setLocalEulerAngles(camPitch, camYaw, 0);
+    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
     wakeActive = true;   // …and only now does the room wake (decision doc §3)
     wakeT = 0;
   }
@@ -1005,8 +1114,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camPos.set(sp.x, sp.y, sp.z);
     camPitch = sp.pitch;
     camYaw = sp.yaw;
-    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
-    camera.setLocalEulerAngles(camPitch, camYaw, 0);
+    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
     // ⚑ and only NOW does Vera's laptop start: the era's machine boots in
     // front of you, in the seat, the way E1's did (Sérgio: "we shouldn't
     // start without the boot up on the computer").
@@ -1089,8 +1198,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camPos.set(sp.x, sp.y, sp.z);
     camPitch = sp.pitch;
     camYaw = sp.yaw;
-    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
-    camera.setLocalEulerAngles(camPitch, camYaw, 0);
+    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
     camMove = null;
     tween = null;
   }
@@ -1125,6 +1234,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   }
 
   const isBackYaw = (): boolean => {
+    // In XR the authored rig yaw is only half the view: the child's tracked
+    // head turn must be what crosses the witness hemisphere.
+    if (xr?.active) return camera.forward.z > 0;
     const n = ((camYaw % 360) + 360) % 360;
     return n > 90 && n < 270;
   };
@@ -1148,7 +1260,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     flipBtn.style.borderColor = '#ffd';
   };
   os.onFlipReady = pulse;
-  os.onLeave = () => { flipBtn.style.display = 'none'; };
+  os.onLeave = () => {
+    flipBtn.style.display = 'none';
+    if (xr?.active) xr.end();
+  };
 
   /** the ⟲ assist: tween to the other facing (drag can do it manually too) */
   function doFlip(): void {
@@ -1484,9 +1599,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (descentActive && !camMove) endDescent();
       // …and the relocation's legs hand over to each other the same way
       if (relocLeg && !camMove) advanceRelocation();
-      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
-    camera.setLocalEulerAngles(camPitch, camYaw, 0);
+    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
     publishNow(); // ?debug=1 live "you are here" readout
 
     // ── cluster / ceiling / Close + the O7 choreography (reinterp only) ──
@@ -1764,7 +1879,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camPos.set(EYE.x, EYE.y, EYE.z);
     camPitch = 6;
     camYaw = 0;
-    camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
   }
 
   if (options.reinterp) {
@@ -1791,7 +1906,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camPos.set(sp.x, sp.y, sp.z);
       camPitch = sp.pitch;
       camYaw = sp.yaw;
-      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
       spine?.onEra(options.era); // S58: seed the conductor to match the jump
     } else if ((options.reveal || options.morphDemo) && cluster) {
       applyLightsOn();          // E1 lit state…
@@ -1800,7 +1915,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
       camPitch = ESTABLISH.pitch;
       camYaw = 0;
-      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else {
       // fresh load (past the interim log-in panel): the room is already there,
       // dark, and you come DOWN into it (S48) — then it WAKES on its own
@@ -1827,8 +1942,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       // the facing is committed HERE, not left to the first per-frame pass —
       // otherwise the opening frame renders level and the pitch snaps on frame 2
-      camera.setLocalPosition(camPos.x, camPos.y, camPos.z);
-      camera.setLocalEulerAngles(camPitch, camYaw, 0);
+      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
     }
   }
 

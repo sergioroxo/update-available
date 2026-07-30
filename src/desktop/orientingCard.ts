@@ -12,8 +12,9 @@
  * orientation one: everything the piece will ever ask of the body is listed
  * here, in plain type, before a single thing happens.
  *
- * It ends in ONE action: LOG IN. Pressing it wakes the room — the main light
- * comes up and the machine boots by itself (src/engine/app.ts's wake
+ * It ends in LOG IN, plus ENTER VR only when this browser has confirmed an
+ * immersive-vr session is available. Either wakes the same room — the main
+ * light comes up and the machine boots by itself (src/engine/app.ts's wake
  * sequence; decision §3). Nothing else is required of the player, ever: the
  * old optional power-press is gone.
  *
@@ -28,6 +29,7 @@
  * starts, so Esc/the pause glyph already work while this panel is showing.
  */
 import copy from '../../data/strings/orientingCard.json';
+import { prepareImmersiveVrEntry, requestImmersiveVrEntry } from '../engine/app';
 import { wipeLedger } from '../state/ledger';
 
 const ARM_DELAY_MS = 4000; // the ethics arm-delay: "enter" can never be instant
@@ -199,7 +201,7 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
   }));
   card.appendChild(rule());
 
-  // ── the one action (+ Leave, which always works) ──
+  // ── entry actions (+ Leave, which always works) ──
   const actions = document.createElement('div');
   Object.assign(actions.style, {
     display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px'
@@ -213,6 +215,7 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
     border: `1px solid ${FRAME.edge}`, borderRadius: '2px', cursor: 'not-allowed',
     background: FRAME.rule, color: FRAME.ghost, letterSpacing: '1px'
   } as CSSStyleDeclaration);
+  let enterVr: HTMLButtonElement | null = null;
 
   const leave = document.createElement('button');
   leave.textContent = copy.leaveLabel;
@@ -236,10 +239,14 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
   const arm = (): void => {
     if (destroyed) return;
     armed = true;
-    enter.disabled = false;
-    enter.style.cursor = 'pointer';
-    enter.style.background = FRAME.action;
-    enter.style.color = FRAME.actionInk;
+    const enable = (button: HTMLButtonElement): void => {
+      button.disabled = false;
+      button.style.cursor = 'pointer';
+      button.style.background = FRAME.action;
+      button.style.color = FRAME.actionInk;
+    };
+    enable(enter);
+    if (enterVr) enable(enterVr);
     wait.style.display = 'none';
     enterNote.style.display = 'block';
   };
@@ -268,6 +275,42 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
   leave.addEventListener('click', doLeave);
 
   document.body.appendChild(root);
+
+  // `?flat=1` is the universal canvas-only fallback: do not even probe or
+  // prepare WebXR there. On every other path, unsupported browsers receive no
+  // extra element and retain the exact existing LOG IN flow.
+  if (new URLSearchParams(window.location.search).get('flat') !== '1' && navigator.xr) {
+    void navigator.xr.isSessionSupported('immersive-vr').then(async (supported) => {
+      if (!supported || destroyed) return;
+      const canvas = document.getElementById('app');
+      if (!(canvas instanceof HTMLCanvasElement)) return;
+      const ready = await prepareImmersiveVrEntry(canvas);
+      if (!ready || destroyed || !actions.isConnected) return;
+
+      enterVr = document.createElement('button');
+      enterVr.textContent = copy.enterVrLabel;
+      enterVr.disabled = !armed;
+      Object.assign(enterVr.style, {
+        font: 'inherit', fontWeight: '700', fontSize: '13px', padding: '10px 26px',
+        border: `1px solid ${FRAME.edge}`, borderRadius: '2px',
+        cursor: armed ? 'pointer' : 'not-allowed',
+        background: armed ? FRAME.action : FRAME.rule,
+        color: armed ? FRAME.actionInk : FRAME.ghost,
+        letterSpacing: '1px'
+      } as CSSStyleDeclaration);
+      enterVr.addEventListener('click', () => {
+        if (!armed || destroyed) return;
+        // startApp consumes this flag synchronously inside onContinue's click
+        // stack, before model preloading can yield and lose user activation.
+        requestImmersiveVrEntry();
+        onContinue();
+      });
+      actions.insertBefore(enterVr, leave);
+    }).catch(() => {
+      // Availability failure is the unsupported path: leave the card exactly
+      // as it was, with LOG IN as its sole entry action.
+    });
+  }
 
   return {
     destroy(): void {

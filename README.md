@@ -39,8 +39,8 @@ npm run tts -- --id lamby_puremail_apology
 
 ### Quest 3 loop
 ```bash
-npm run dev -- --host
-tailscale serve --https=443 localhost:5173   # gives an HTTPS URL
+npm run dev -- --host --port 3000
+tailscale serve --https=443 localhost:3000   # gives an HTTPS URL
 # open that URL in the Quest browser
 ```
 
