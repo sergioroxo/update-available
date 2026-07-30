@@ -232,3 +232,105 @@ Return numbered to match 1–8 so results can be pasted back against our notes.
 
 **Where the results go:** items 1–5 and 8 feed this brief and the E3 build; 6–7 are dossier/provenance
 material for the Close constellation (real names stay out of the fiction, as ever).
+
+---
+
+# ✅ REVISION 3 — the research lands, and it corrects me twice (2026-07-30)
+*Sources: Sérgio's Gemini deep-research passes — `SOGICE Digital Transformation Research.md` and
+`SOGIECE Testimony Content Analysis Framework (1).md`. **Two of my proposals are not supported by the
+evidence; one of his instincts is fully documented.** That is the research doing its job.*
+
+## ⚑ CORRECTION 1 — cut the quiz. It is unsubstantiated.
+My beat #3 proposed the Sides A/B/X/Y framework as a shareable personality quiz. The research is
+explicit: *"The claim that the 'Sides' framework circulated as shareable, interactive online quizzes
+is unsubstantiated… it circulated through long-form blog posts, podcast debates, academic essays and
+church conference panels."* The general category — online quizzes / self-assessments — is rated
+**Thinly Evidenced / Not Found / Speculative**.
+**→ CUT.** The taxonomy itself is documentary and still usable; the quiz format is invented and
+would have been our own fiction dressed as history.
+
+## ⚑ CORRECTION 2 — Vera PRODUCES; she does not moderate. Sérgio was right, I was not.
+I built the era on Vera-as-moderator. The evidence ranks that **thinly evidenced / contested**:
+*"specific digital forum moderation records are largely private or unarchived… must be stated as
+contested."*
+
+But **testimony production is FULLY DOCUMENTED** — *"Former participants volunteer their personal
+narratives, which are edited, filmed and published by media networks. Fully Documented: central to
+the operational models of both CHANGED and Restored Hope Network."* Group leaders and lay mentors:
+also fully documented.
+
+**→ So his "conversion influencer" instinct is the evidence-backed design, and my moderator framing
+was the speculative one.** The queue survives only as a light activity tracker; the era's spine is
+production.
+
+## ⚑ THE FIND THAT BUILDS THE ERA: the testimony has a documented production grammar
+The content-analysis framework gives a complete, sourced codebook for how these videos are made —
+three phases, each with prescribed visual, auditory and spatial codes:
+
+| Phase | Visual | Audio | Spatial |
+|---|---|---|---|
+| **1 · Pre-conversion "sickness"** | cool/blue desaturation, low-key harsh light, tight claustrophobic framing, shadows | minor-key drones, hesitant speech, long pauses | enclosed dark room, monochrome dark clothing |
+| **2 · The epiphanic pivot** | lens flare, warm key light, camera pulls back, halo backlight | minor→major modulation, piano/acoustic enters, swelling strings | open/natural/sacral space; posture opens |
+| **3 · Transformed self** | golden-hour high-key, saturated, framed with an opposite-sex spouse and children | major-key resolution, crisp audio, laughter and child voices | suburban home, sunlit garden, gender-normative styling |
+
+**This is the studio.** Vera's editing timeline has exactly three segments, and its controls are that
+codebook: a colour-grade slider from *cool* to *golden*, a music bed from *minor drone* to *major
+swell*, a framing control from *tight* to *family-wide*, a posture toggle from *hunched* to *open*.
+
+**She does not write propaganda. She applies presets. The presets are the ideology.**
+
+That is the most damning thing this era can do, it needs no explanation, and **every control on it is
+sourced.** It also rhymes across the piece: in 2003 the infomercial performed a before/after *on*
+Marcus; in 2016 Vera performs the same operation **on herself**, with a UI.
+
+Publishing applies **Node 5** — the documented call-to-action furniture: an end card, a link-in-bio
+prompt, hashtag overlays (`#Changed`, `#OnceGay`, `#FreedomMarch` are the real ones — **ours must be
+invented equivalents**), a QR code, *"If I can change, you can too."*
+And **Node 4** is the tell: co-opted therapy language — *authentic self, freedom, healing, unpacking
+my past* — in minimalist pastel self-help styling. The apparatus wearing recovery's clothes.
+
+## ⚑ TWO DEVICES, not three (his simplification — adopted)
+> *"we can make into two to simplify complexity and to be more realistic, maybe the Laptop has dual
+> function of producing and circulating and the Phone as the return element that transitions to the
+> breakage of the time / to next era."*
+
+Better, and more period-true — in 2016 you *did* edit and post from one machine.
+
+| Device | Role |
+|---|---|
+| **Laptop** | **PRODUCE + CIRCULATE.** The studio and the feed in one place: cut the testimony, publish it, watch it enter the stream beside others'. |
+| **Phone** | **THE RETURN — and the era's break.** The notification, the DM, the comment about her. It reaches her personally, and **the phone is where the era ends**: the return becomes the rupture that carries into E4. |
+
+That makes the phone structurally load-bearing rather than a third screen: **the thing that closes
+the echo chamber is the same thing that breaks the era.** *(The tablet stays as room dressing — S37's
+three-screen room still reads as one place; it just stops being three destinations.)*
+
+## Three findings that reshape neighbouring eras
+1. **The fork predates the collapse.** Restored Hope Network was formed **May 2012 and incorporated
+   July 2012 — before Exodus closed in June 2013** — by leaders who confronted Chambers in 2011–12
+   and split in April 2012 over his softening. **The apparatus did not react to its death; it had
+   already forked.** That is a sharper account than S57's dispersal currently gives, and it belongs
+   in the u3 grounding.
+2. **Four different survival strategies, cleanly documented:** Exodus *refused* to rebrand and closed
+   (Chambers: the brand was "inextricably linked to trauma"); NARTH *did* rebrand (→ ATCSI, Aug 2014)
+   and switched from clinical pathologisation to **civil-liberties language**; RHN forked early;
+   CHANGED (2018) emerged from **lobbying against California AB 2943** — legislative testimony turned
+   into a permanent content platform.
+3. **Platform lag was economic, not ethical.** The Living Hope Ministries app stayed on Google Play
+   until March 2019 and was pulled only after HRC withheld Google's Corporate Equality Index score.
+   **Removal came from a scorecard, not a policy** — a fact that belongs near the infrastructure
+   spine, and one E4 can use.
+   *(Also: the pivot to trans identities and detransition narratives is documented as the era's
+   later turn — that is the E3→E4 bridge and Room 3's grounding.)*
+
+## Best-documented media forms (use these; avoid the thin ones)
+**Strong:** mobile apps (Living Hope) · podcasts (RHN conference audio) · testimony vlogs (CHANGED
+YouTube) · webinars and paid online courses · livestreams with donation widgets · influencer
+partnerships (worship artists × CHANGED).
+**Thin — do not build as fact:** paid social advertising · YouTube monetisation revenue ·
+purpose-built accountability apps · online quizzes.
+
+## Ethics, unchanged
+Every real name above is **dossier/provenance only**. The fiction keeps GraceQueue / SisterSignal /
+Lambient and **invented hashtags**. Where the research says *contested* — peer moderation, quiz
+circulation — the piece either does not assert it or marks it `contested`.
