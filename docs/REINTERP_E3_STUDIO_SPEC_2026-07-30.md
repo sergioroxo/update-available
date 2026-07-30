@@ -308,3 +308,53 @@ grammar* — the three-phase structure, the co-opted vocabulary, the pathologisi
 from any real person's account. No survivor's words, no reconstructed testimony, no composite that
 tracks an identifiable life. Where a beat would need a real experience to work, I ask instead of
 inventing around it.
+
+---
+
+# ✅ ADDENDUM 3 — decisions, and the suite consolidates (2026-07-30)
+
+## Decided
+- **"The Purge" is CUT.** Confirmed by Sérgio. The Swivel and The Score survive.
+- **"Lamby and Friends" is not a separate category.** It is the umbrella, and the games live inside
+  it as operable satire. **His merge is better than my three-bucket split**, for a reason worth
+  stating: separating "the serious provotype" from "the silly mascot game" would be the piece making
+  a distinction the apparatus does not make. **The rigged conformity game and the cute collect-em-up
+  ship from the same publisher.** That they are one suite IS the argument.
+
+## The suite (working names — Sérgio owns final naming)
+A mascot-brand app family on the 2016 phone. Period-exact: mascot brands shipped app *suites*, and
+2016 was thick with knockoffs whose names were exactly this shape.
+
+| App | Was | What it is | Register |
+|---|---|---|---|
+| **FlapySheep** *(his name — keep it)* | "The Score" | the playable one: keep the sheep inside a shrinking "safe zone"; the controls sabotage themselves; on the inevitable crash — *you didn't try hard enough.* **The best-evidenced mechanic in the project** (Chambers's own ~99.9%). | `operable`, collapses |
+| **The Fold** *(draft)* | "The Swivel" | swipe to keep or release from the flock; then right-swipe locks and the hand is guided left. *A sheepfold is an enclosure, and "return to the fold" is the idiom — the pun is doing real work.* | `operable`, collapses |
+| **Lamby GO** *(draft)* | the Pokémon-Go beat | **gatherings near you** — the referral network as a map game. Its verb is *go somewhere and check in*, which rhymes with Restorify's check-in thirteen years earlier. | `operable`, collapses |
+
+**Sheep logic is free and worth using:** flock, stray, fold, shepherd, lost-and-found. The mascot's
+own vocabulary is already the vocabulary of retrieval. Nothing has to be explained.
+
+**Scope:** small. A few screens each; only **FlapySheep is genuinely playable**. The others can be
+a screen, a gesture, and a collapse.
+
+## Tinder gamification in the studio (his offer, qualified)
+> *"If it makes sense we can include aspects of the gamification of Tinder on the studio."*
+
+**Yes — but keep the teeth where they are.** The Fold's power is the *forced* left-swipe on people
+you love; diluting that into "swipe to pick B-roll" would spend the mechanic for texture.
+
+So: **use the swipe gesture in the studio for something smaller and period-true** — swiping through
+takes, thumbnails, or B-roll, because in 2016 everything was a swipe. **And one place where it keeps
+its edge:** swiping to moderate comments on her own video — left hides, right approves — where a
+supportive comment is the one the interface will not let her keep.
+
+## What this leaves open (unchanged, and still his)
+**E3 has no respite.** The suite is all apparatus; the studio is all apparatus. E1 has the resistance
+objects and the mixtape. **Vera needs something unbranded that is genuinely hers** — and that is the
+one piece of the era I should not invent alone, because it is the only ground in E3 that is not the
+system talking.
+
+## The register that governs all of it
+Sérgio: *"a ridiculousness exaggeration of reality but at the same time talking about the reality."*
+That is the infomercial's register, now carried into E3 — which is exactly what the era was missing.
+Every item above may charm, and every item above must collapse.
