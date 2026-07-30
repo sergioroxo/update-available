@@ -327,14 +327,14 @@ A mascot-brand app family on the 2016 phone. Period-exact: mascot brands shipped
 
 | App | Was | What it is | Register |
 |---|---|---|---|
-| **FlapySheep** *(his name — keep it)* | "The Score" | the playable one: keep the sheep inside a shrinking "safe zone"; the controls sabotage themselves; on the inevitable crash — *you didn't try hard enough.* **The best-evidenced mechanic in the project** (Chambers's own ~99.9%). | `operable`, collapses |
+| **FloppySheep** *(his name — keep it)* | "The Score" | the playable one: keep the sheep inside a shrinking "safe zone"; the controls sabotage themselves; on the inevitable crash — *you didn't try hard enough.* **The best-evidenced mechanic in the project** (Chambers's own ~99.9%). | `operable`, collapses |
 | **The Fold** *(draft)* | "The Swivel" | swipe to keep or release from the flock; then right-swipe locks and the hand is guided left. *A sheepfold is an enclosure, and "return to the fold" is the idiom — the pun is doing real work.* | `operable`, collapses |
 | **Lamby GO** *(draft)* | the Pokémon-Go beat | **gatherings near you** — the referral network as a map game. Its verb is *go somewhere and check in*, which rhymes with Restorify's check-in thirteen years earlier. | `operable`, collapses |
 
 **Sheep logic is free and worth using:** flock, stray, fold, shepherd, lost-and-found. The mascot's
 own vocabulary is already the vocabulary of retrieval. Nothing has to be explained.
 
-**Scope:** small. A few screens each; only **FlapySheep is genuinely playable**. The others can be
+**Scope:** small. A few screens each; only **FloppySheep is genuinely playable**. The others can be
 a screen, a gesture, and a collapse.
 
 ## Tinder gamification in the studio (his offer, qualified)
@@ -358,3 +358,36 @@ system talking.
 Sérgio: *"a ridiculousness exaggeration of reality but at the same time talking about the reality."*
 That is the infomercial's register, now carried into E3 — which is exactly what the era was missing.
 Every item above may charm, and every item above must collapse.
+
+---
+
+# ✅ ADDENDUM 4 — the respite decision, and the name (2026-07-30)
+
+## ⚑ E3 HAS NO RESPITE — and that is deliberate, not a gap
+> *Sérgio: "It makes sense because this way it also protects Vera from being a victim of the system,
+> and the ending is a true moment of breakage for her as well, so the emotional resonance to them is
+> higher."*
+
+**This supersedes my concern, and his reasoning is better than mine.** I had treated the absence as
+something to fill. It is load-bearing:
+
+- **Giving her a refuge would position her as someone needing refuge** — a victim sheltering from the
+  system. But E3's whole thesis is that she is **enlisted**, inside it, producing it. A respite corner
+  would quietly contradict the era's argument.
+- **And it makes the ending a real rupture.** If there were somewhere safe to return to, the phone's
+  break would be a retreat. With nothing, it is a breakage — which is what the era needs it to be.
+
+**Legally clean, too:** CLAUDE.md's respite law governs respite *when it appears* — "never a trap,
+never revealed as fake, the system targets around it" — it does not require one per era. E3 having
+none breaks nothing.
+
+**One rhythm note, for later and not a blocker:** the piece's relief map now reads E1 respite
+(resistance objects, the mixtape) → E2 felt warmth (Caleb, then destroyed) → **E3 nothing** → E4
+ambient → the Close as solidarity. That is a long unrelieved stretch, and it means **the Close
+carries more weight than it used to.** Worth being deliberate about when C2 is specced; not a reason
+to change E3.
+
+## The name: **FloppySheep**
+Sérgio's correction, and it is the better name — *floppy* is the sheep's ears **and** the floppy disk
+that Era 1 runs on. A knockoff mascot game whose name quietly contains the piece's first medium.
+Renamed throughout.
