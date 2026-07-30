@@ -13,9 +13,11 @@
  * discipline), links are ONE line mesh, all labels ONE textured quad mesh →
  * 5 draw calls total. Round-18 clipping fixes: links are TRIMMED back to the
  * node surfaces (no lines stabbing through cubes) and any link whose segment
- * would cross the player's clear bubble is rejected. Geometry is generated
- * once at build (seeded, deterministic); nothing allocates after
- * construction. Parameters in data/room/cluster.json. ?reinterp=1 only.
+ * would cross the player's clear bubble is rejected. Geometry topology and
+ * label atlas are generated once at build (seeded, deterministic); label
+ * positions are rewritten in their one dynamic vertex buffer so every quad
+ * billboards toward the camera. All scratch storage is preallocated: nothing
+ * allocates per frame. Parameters in data/room/cluster.json. ?reinterp=1 only.
  */
 import * as pc from 'playcanvas';
 import clusterData from '../../data/room/cluster.json';
@@ -198,6 +200,12 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     .map((n, i) => ({ i, s: n[3] ?? 1, core: i < P.coreCount }))
     .sort((a, b) => (Number(b.core) - Number(a.core)) || (b.s - a.s))
     .slice(0, labels.length);
+  const labelCenters = new Float32Array(labels.length * 3);
+  const labelWidths = new Float32Array(labels.length);
+  let labelMesh: pc.Mesh | null = null;
+  let labelVertexData: Float32Array | null = null;
+  let labelPositionOffset = 0;
+  let labelVertexStride = 0;
   const ATLAS = 1152; // 32 rows * ROW — the 32-label cap this atlas must fit
   const ROW = 36;
   const atlas = document.createElement('canvas');
@@ -249,6 +257,10 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       const wid = (widths[li] / ROW) * hgt;
       const lift = surface(n) + hgt * 0.85; // sits just above its node
       const cxp = n[0] + upv.x * lift, cyp = n[1] + upv.y * lift, czp = n[2] + upv.z * lift;
+      labelCenters[li * 3] = cxp;
+      labelCenters[li * 3 + 1] = cyp;
+      labelCenters[li * 3 + 2] = czp;
+      labelWidths[li] = wid;
       const base = li * 4;
       const corners = [
         [-wid / 2, hgt / 2], [wid / 2, hgt / 2], [wid / 2, -hgt / 2], [-wid / 2, -hgt / 2]
@@ -266,10 +278,26 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       lidx.push(base, base + 1, base + 2, base, base + 2, base + 3);
     });
     const lmesh = new pc.Mesh(app.graphicsDevice);
+    // Only the positions change. Pre-size a dynamic vertex buffer once, then
+    // mutate its interleaved position fields in place in updateBillboards().
+    lmesh.clear(true, false, labels.length * 4, labels.length * 6);
     lmesh.setPositions(lp);
     lmesh.setUvs(0, luv);
     lmesh.setIndices(lidx);
     lmesh.update(pc.PRIMITIVE_TRIANGLES);
+    let labelExtent = P.outerRadius;
+    for (const width of labelWidths) labelExtent = Math.max(labelExtent, P.outerRadius + width / 2);
+    lmesh.aabb = new pc.BoundingBox(
+      new pc.Vec3(),
+      new pc.Vec3(labelExtent, labelExtent, labelExtent)
+    );
+    const positionElement = lmesh.vertexBuffer.format.elements
+      .find((element) => element.name === pc.SEMANTIC_POSITION);
+    if (!positionElement) throw new Error('point-cloud label mesh has no position stream');
+    labelMesh = lmesh;
+    labelVertexData = new Float32Array(lmesh.vertexBuffer.lock());
+    labelPositionOffset = positionElement.offset / Float32Array.BYTES_PER_ELEMENT;
+    labelVertexStride = positionElement.stride / Float32Array.BYTES_PER_ELEMENT;
     const lent = new pc.Entity('cloud-labels');
     lent.addComponent('render', { meshInstances: [new pc.MeshInstance(lmesh, labelMat)] });
     root.addChild(lent);
@@ -284,6 +312,82 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   let level = 0;
   let visible = false;
   let yaw = 0;
+
+  /**
+   * Rewrites the existing merged label mesh so every quad faces the live
+   * camera. The mesh, typed-array view and all scalar scratch are retained;
+   * this adds one small dynamic-buffer upload, not entities, draws or garbage.
+   */
+  function updateBillboards(): void {
+    const vertexData = labelVertexData;
+    const vertexBuffer = labelMesh?.vertexBuffer;
+    const camera = app.systems.camera?.cameras[0]?.entity;
+    if (!vertexData || !vertexBuffer || !camera) return;
+
+    // root has only this translation + yaw. Transform the camera into the
+    // constellation's local space without allocating a matrix or Vec3.
+    const cameraWorld = camera.getPosition();
+    const dx = cameraWorld.x - ox;
+    const dy = cameraWorld.y - oy;
+    const dz = cameraWorld.z - oz;
+    const radians = yaw * Math.PI / 180;
+    const cosine = Math.cos(radians);
+    const sine = Math.sin(radians);
+    const cameraX = cosine * dx - sine * dz;
+    const cameraY = dy;
+    const cameraZ = sine * dx + cosine * dz;
+    const halfHeight = P.labelHeight / 2;
+
+    for (let li = 0; li < labels.length; li++) {
+      const centerAt = li * 3;
+      const centerX = labelCenters[centerAt];
+      const centerY = labelCenters[centerAt + 1];
+      const centerZ = labelCenters[centerAt + 2];
+
+      // normal points from the label to the camera. right = worldUp × normal;
+      // up = normal × right. That ordering keeps atlas U screen-left→right.
+      let normalX = cameraX - centerX;
+      let normalY = cameraY - centerY;
+      let normalZ = cameraZ - centerZ;
+      const normalLength = Math.sqrt(
+        normalX * normalX + normalY * normalY + normalZ * normalZ
+      );
+      if (normalLength > 1e-6) {
+        normalX /= normalLength;
+        normalY /= normalLength;
+        normalZ /= normalLength;
+      } else {
+        normalX = 0;
+        normalY = 0;
+        normalZ = 1;
+      }
+
+      let rightX = normalZ;
+      let rightZ = -normalX;
+      const rightLength = Math.sqrt(rightX * rightX + rightZ * rightZ);
+      if (rightLength > 1e-6) {
+        rightX /= rightLength;
+        rightZ /= rightLength;
+      } else {
+        rightX = 1;
+        rightZ = 0;
+      }
+      const upX = normalY * rightZ;
+      const upY = normalZ * rightX - normalX * rightZ;
+      const upZ = -normalY * rightX;
+      const halfWidth = labelWidths[li] / 2;
+
+      for (let corner = 0; corner < 4; corner++) {
+        const horizontal = corner === 0 || corner === 3 ? -halfWidth : halfWidth;
+        const vertical = corner < 2 ? halfHeight : -halfHeight;
+        const vertexAt = (li * 4 + corner) * labelVertexStride + labelPositionOffset;
+        vertexData[vertexAt] = centerX + rightX * horizontal + upX * vertical;
+        vertexData[vertexAt + 1] = centerY + upY * vertical;
+        vertexData[vertexAt + 2] = centerZ + rightZ * horizontal + upZ * vertical;
+      }
+    }
+    vertexBuffer.unlock();
+  }
 
   function applyFade(): void {
     warmMats.forEach((m, t) => {
@@ -308,6 +412,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     show(): void {
       visible = true;
       root.enabled = true;
+      updateBillboards();
     },
     get visible(): boolean { return visible; },
     update(dt: number): void {
@@ -318,6 +423,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       }
       yaw += P.driftDegPerSec * dt; // the slow drift — alive, not surveilled
       root.setLocalEulerAngles(0, yaw, 0);
+      updateBillboards();
     }
   };
 }
