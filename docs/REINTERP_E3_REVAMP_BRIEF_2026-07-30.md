@@ -105,3 +105,130 @@ keeps GraceQueue / SisterSignal / Lambient. Nothing above puts a real name in a 
 period-exact, that makes the argument without anyone explaining it. And it turns Vera from a
 character who *is watched* into one who is **made complicit**, which is a harder and truer thing for
 this era to say.
+
+---
+
+# ✅ REVISION 2 — Sérgio's pass (2026-07-30)
+*His notes reframe this. Three changes matter: Vera becomes an **influencer**, not just a moderator;
+the era's shape becomes an **echo chamber**; and the three devices become a **sequence**, not a set.*
+
+## ⚑ 1. Vera PRODUCES — and that fixes the execution worry
+> *"if Testimony became the logic, shouldn't we explore this more directly, she can also be a
+> conversion 'influencer'?"* — and on the testimony player: *"quite unsure of how this lands… the
+> logic sounds super interesting, but the execution can be limited."*
+
+**He is right on both counts, and they are the same problem.** A testimony *player* is something you
+watch — passive, and thin after ninety seconds. A testimony **studio** is something you *make*.
+
+So: **Vera is a conversion influencer.** She records, edits, titles, thumbnails, publishes. The
+player becomes a studio, and the era's central verb changes from *review* to **produce**.
+
+That is also the sharper historical claim. The Changed Movement's whole architecture is
+testimony-as-content made by former participants — **the apparatus's most effective recruiter is
+someone it already worked on**, and she is not paid, and she believes it.
+
+## ⚑ 2. The echo chamber — his best note, and it becomes the era's structure
+> *"her producing, her reviewing others, but also being a victim — in a way starts the conversation
+> of the Echo Chambers"*
+
+Three layers at once, and they close into a loop:
+
+**SHE MAKES IT → IT CIRCULATES → IT COMES BACK TO HER.**
+
+The testimony she published is recommended *to her*. The comments she moderates are about *her* video.
+The "you might also like" row on her own feed is full of people who sound exactly like her — because
+she taught them how to sound. **She is the audience for her own recruitment.**
+
+That is not a metaphor for an echo chamber; it is the mechanism, literally rendered. And it lands the
+era's thesis without a word of explanation: *the apparatus no longer needs to reach you, because you
+are producing it.*
+
+## ⚑ 3. The three devices become a SEQUENCE — background → mechanism
+> *"sequential jumping from one device to device while exploring this evolution from background to
+> mechanism… we need more here, and to be versatile for the user logic"*
+
+The three-screen room already exists (S37). Give each screen a **stage of the loop**, so moving
+between them *is* the argument:
+
+| Device | Stage | What you do | Where the apparatus sits |
+|---|---|---|---|
+| **Laptop** | **PRODUCE** | record / edit / title / publish a testimony | a tool she uses — background |
+| **Tablet** | **CIRCULATE** | the feed: her video among others; moderate the queue | a place she lives — ambient |
+| **Phone** | **RETURN** | the notification, the DM, the comment about her | it reaches her — mechanism |
+
+**The player chooses the order**, which is the versatility he asked for — but every path closes the
+loop, because the phone always brings it back. *You cannot stand outside a thing you are making.*
+
+## Revised beat list
+
+| # | Beat | Status after his pass |
+|---|---|---|
+| 1 | **The queue → an ACTIVITY TRACKER** | ✅ his amendment: it tracks what Vera owes, not just what's pending. Streak-adjacent, era-correct, and it never empties. |
+| 2 | **Testimony STUDIO** (was: player) | ✅ reframed — she produces. The dashboard responds to *her* work. Execution risk answered. |
+| 3 | **"What's your Side?" quiz + more usurped forms** | ✅ he wants MORE examples — see the research prompt below. |
+| 4 | ~~Community guidelines diff view~~ | ❌ **CUT.** His call: *"too much text based no?"* — correct. Salvage one gesture instead: the guidelines scroll past too fast to read and **exactly one word changes in place** ("change" → "calling"). You catch it or you don't. No wall of text. |
+| 5 | **The recommendation → THE ECHO CHAMBER** | ✅ promoted from a UI detail to the era's spine. |
+| 6 | **Lambient's badges as trust signals** | ✅ kept. |
+
+## Still open (mine to draft under D37, his to react to)
+- Vera's testimony copy — `felt` where she means it, `operable` where the platform shapes it. The
+  hardest writing in the era, because **she is sincere**.
+- Whether the studio's "publish" is a commit-press like S2R.3's. *My read: yes, and it should rhyme.*
+
+---
+
+# CHATGPT DEEP RESEARCH PROMPT — Era 3's media forms and sources
+*He offered to run these. Example he gave of the register wanted:
+`splcenter.org/resources/reports/narth-becomes-main-source-anti-gay-junk-science/`*
+
+```
+You are researching for an academic art project at the University of Bergen (Center for Digital
+Narrative) about how organised sexual-orientation and gender-identity change efforts (SOGICE) moved
+online. It is educational and survivor-centred. Accuracy matters more than completeness: if
+something cannot be substantiated, say so plainly rather than filling the gap. For each finding give
+the best primary or authoritative source with a working URL, a one-line verdict (confirmed /
+partially confirmed / not found), and a suggested label — documentary, contested, or speculative.
+
+FOCUS: the period roughly 2013–2018 — after Exodus International's closure, before the current
+wave — and specifically HOW THE APPARATUS USED MEDIA FORMS.
+
+1. SUCCESSOR ORGANISATIONS. Restored Hope Network's formation from former Exodus affiliates; its
+   conferences (a 2016 "HOPE" conference is already cited in our knowledge base — confirm). What
+   did it change, and what did it keep?
+
+2. TESTIMONY AS CONTENT. The "Changed" movement / "Changed Is Possible" (Elizabeth Woning, Ken
+   Williams): when did it start, what is its structure, and is "testimony network" a fair
+   description? How central are personal-story video, books and hashtags to how it reaches people?
+
+3. ⚑ MEDIA FORMS USURPED BY THE APPARATUS — the core question. Beyond ordinary websites, which
+   ordinary media/platform FORMS have documented use by conversion-practice organisations? For each,
+   give a concrete documented example: personal testimony vlogs · livestreams with donations ·
+   podcasts · mobile apps · Facebook/other support groups · online quizzes or self-assessments ·
+   webinars and online courses · influencer partnerships · paid social advertising · YouTube
+   monetisation · discipleship or accountability apps. Which are best documented, and which are
+   thinly evidenced?
+
+4. THE "SIDES" FRAMEWORK (Side A / B / X / Y) categorising Christian positions on faith and
+   sexuality: origin, roughly when it spread, and whether it circulated as shareable quiz-style
+   content.
+
+5. PEER LABOUR AND MODERATION. Any documented cases of former participants working — paid or
+   unpaid — as moderators, group leaders, testimony producers or "accountability partners" for
+   these organisations. This is the project's central Era-3 claim; we need to know how well
+   evidenced it is, and to state it as contested if it is thin.
+
+6. ALAN CHAMBERS on why Exodus CLOSED rather than rebranded (his 2013 apology and later statements).
+   Exact wording and dates, please.
+
+7. NARTH → ATCSI (2014) and the "junk science" pipeline — e.g.
+   splcenter.org/resources/reports/narth-becomes-main-source-anti-gay-junk-science/ — confirm the
+   rebrand, the date, and what the renaming changed in practice.
+
+8. ANYTHING WE ARE MISSING about this period that would matter to someone dramatising how the
+   apparatus survived by changing form. Surprises welcome.
+
+Return numbered to match 1–8 so results can be pasted back against our notes.
+```
+
+**Where the results go:** items 1–5 and 8 feed this brief and the E3 build; 6–7 are dossier/provenance
+material for the Close constellation (real names stay out of the fiction, as ever).

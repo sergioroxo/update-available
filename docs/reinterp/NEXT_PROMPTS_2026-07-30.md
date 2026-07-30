@@ -169,3 +169,38 @@ GIT: explicit pathspecs only. Blocked ≠ improvise: STOP and log BLOCKED.
   filed; nothing rewarded.
 
 Both need register-law judgement and felt/operable calls, so they are poor fits for a mechanical lane.
+
+---
+
+# ⚑ TESTING RECIPE — with Tailscale installed (2026-07-30)
+*He has Tailscale on both devices, plus Mozilla XR Viewer on the iPad.*
+
+**The Mac serves, the iPad/Quest opens it.** On the Mac:
+```bash
+npm run dev -- --host --port 3000
+tailscale serve --https=443 localhost:3000
+```
+Then open **`https://h7cw2l44vg.tail379051.ts.net/?reinterp=1`** on the iPad. Tailscale is installed
+there, so the tailnet URL resolves and WebXR's HTTPS requirement is satisfied.
+
+**For the Quest**, which has no Tailscale: `tailscale serve` is tailnet-only, so use
+**`tailscale funnel`** instead — it publishes a public HTTPS URL needing nothing installed on the
+headset. (Or deploy to GitHub Pages, which is the stable route.)
+
+### What to expect, and the empirical test that beats speculation
+S65 gates the button on `navigator.xr?.isSessionSupported('immersive-vr')`. **So: open it and look.**
+If "Enter VR" appears, XR is live. If not, it isn't — no debugging required.
+
+- **iPad Safari:** almost certainly no button (Apple ships WebXR on visionOS, not iPadOS).
+- **Mozilla XR Viewer:** it exposes WebXR on iOS, but it was built around ARKit and `immersive-ar`,
+  and the project was archived. It may report no `immersive-vr` support. **Worth two minutes to try;
+  don't sink an afternoon into it.**
+- **Quest 3 browser:** this is the real target and should work.
+
+### ⚑ The better iPad route — and it tests the thing that matters
+A **gyroscope "magic window"** (`DeviceOrientation`) is not WebXR: no stereo, no headset. But you
+physically turn the iPad and the room turns — which is **exactly the piece's only bodily ask**. It
+would let the turn, the entrance descent and the 29-second relocation be felt on a device that
+already has Tailscale, without waiting on the Quest. Small, self-contained, and a good Codex job.
+
+**Suggested: S68 — gyroscope look-around fallback · Codex GPT 5.6, medium effort.**
