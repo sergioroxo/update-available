@@ -1,6 +1,13 @@
-STATUS: live
+STATUS: superseded-by docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md
 
 # ERA 3 — RECONSIDERED FROM THE GROUND
+
+> **⚑ SUPERSEDED 2026-07-30** by `REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md`.
+> Sérgio: keep the list-of-changes mechanic, but DROP "bury" — it was still retrofitting old canon
+> instead of showing how SOGICE used digital platforms to target. The break becomes MALTA (the era's
+> real 2016 event) arriving from a colleague, and the glitch BRIGHTENS instead of degrading.
+> What survives: the escalation table (object → participant → operator → obsolete), the correction
+> list, Lambient as the software's voice, and the E4 handoff.
 *Sérgio: "I want you to fully reconsider the whole Era-3 experience instead of trying to make it
 happen… there was zero connection between the devices." He is right on every count. This supersedes
 the STUDIO_SPEC and the VERA_TESTIMONY draft. **SUPERSEDES:
