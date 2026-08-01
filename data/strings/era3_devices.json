@@ -1,15 +1,24 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Session 37 (E3-i, THE THREE-SCREEN ROOM foundation) built the static shells; Session 38 (E3-ii, the GraceQueue pattern strip + card set) wires the laptop to src/room/graceQueueLite.ts (its own sign-in/queue/done copy now lives in data/dialog/s3_queue.json, not here — the `laptop` object below was retired this session, superseded) and makes the tablet feed DATA-DRIVEN from the same s3_queue.json (the static 4-card `posts` placeholder was retired — the feed is now computed from ledger.graceQueue's resolved outcomes; `tablet.quiet`/`heartGlyph`/`verifiedBadge`/`miraCommentsTeaser` live in s3_queue.json, only `tablet.appName`/`feedHeading` stay here as the app's own chrome). The phone remains the static lock/notification shell (unchanged this session — Noa's ask per S3R.4 arrives with E3-v).",
+  "_doc": "PLACEHOLDER-draft — Sérgio voice pass pending. Session 37 (E3-i) built the static shells; Session 38 wired the laptop to src/room/graceQueueLite.ts and made the tablet feed data-driven; Session 64 (E3-iii, THE CORRECTION LIST) rebuilt the laptop as the correction list and gave THE PHONE its beat. The `laptop` object and the tablet's static `posts` were retired in S38 (the laptop's own copy lives in data/dialog/s3_queue.json); the tablet still takes only `appName`/`feedHeading` from here.",
+  "_docMalta": "⚑ PLACEHOLDER-draft, and the hardest lines in the era — the spec says so explicitly and hands them to Sérgio to rewrite. THE BREAK (spec §4): December 2016, Act LV, the first national ban in Europe — the one E3 fact the project's KB records as CONFIRMED. It arrives ON THE PHONE, from an UNNAMED PEER MODERATOR IN ANOTHER COUNTRY doing the identical work — deliberately NOT Noa (rev 4 §1: Noa is on the correction list, and if she also brought Malta the era would resolve her, which the canon forbids). She is named only by a first name in a contact row; `Bea` is invented and is her whole existence in the piece. Register: `felt`. Bare — no Lambient badge on this screen (the phone is the one thing in the room she chose; the apparatus does not get a mark on it), no mechanics, no satire, and nothing here is filed to the ledger. The reply field is real, active and blinking; pressing it holds the cursor in an empty field and nothing else happens. There is no keyboard in this piece and there is no reply.",
   "tablet": {
     "appName": "True Daughters",
     "feedHeading": "Your feed"
   },
   "phone": {
     "lockClock": "9:41",
-    "lockDate": "PLACEHOLDER — date",
-    "notificationApp": "Messenger",
-    "notificationPreview": "PLACEHOLDER — a notification preview line.",
-    "notificationTime": "now"
+    "lockDate": "Tuesday 13 December",
+    "notificationApp": "Messages",
+    "notificationTime": "now",
+    "malta": {
+      "contact": "Bea",
+      "time": "23:14",
+      "preview": "did you see. malta. they made it illegal.",
+      "lines": [
+        "did you see. malta. they made it illegal.",
+        "not here. but somewhere."
+      ]
+    }
   },
   "witnessArrival": "companion process v3: lambient — distributed",
   "nodeLabels": {

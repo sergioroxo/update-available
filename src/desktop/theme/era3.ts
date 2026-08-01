@@ -70,7 +70,18 @@ export const ERA3 = {
   lambBand: '#e6f0fb',     // soft blue lane = Lambient's voice
   lambTag: '#2f86d8',      // "LAMBIENT" tag ink
   alarmBand: '#f6dde2',    // the Watcher's pressure band
-  alarm: '#b03a55'         // ROOM INTEGRITY alarm ink
+  alarm: '#b03a55',        // ROOM INTEGRITY alarm ink
+  // The PHONE (Session 37's nightstand screen, brought into the palette in
+  // Session 64 — these five values were invented at the call site in
+  // src/room/era3Devices.ts, which is exactly what the palette law forbids;
+  // they are unchanged in value, only rehomed). A phone in 2016 is the one
+  // dark screen in a bright era: the laptop is glass and daylight, and this
+  // is a lit rectangle in a dark room, held close.
+  phoneBg: '#0a0f18',      // the lock screen at night
+  phonePanel: '#1f2a3a',   // a notification / a message field
+  phoneDim: '#8aa0b8',     // the date under the clock
+  phoneMeta: '#9fb4cc',    // timestamps
+  phoneText: '#cfe0f2'     // what a person actually said
 } as const;
 
 /** The Aero desktop: a cool deep-blue gradient with a soft off-centre glow. */
@@ -212,6 +223,36 @@ export function drawLambMark(ctx: CanvasRenderingContext2D, x: number, y: number
       ERA3.greyDk
     );
   }
+}
+
+/**
+ * ⚑ THE LIFT, screen side (Session 64) — the laptop's grade warms while the
+ * software on it does not change at all. `k` runs 0 (as you found it) → 1.
+ *
+ * Lives here, in the theme, for the reason the theme exists: the wash must be
+ * made of THIS era's own colours, not of a warm hue invented at the call site.
+ * `rose` puts the era's own warm thread over the cold glass; `amber` — the
+ * colour this interface has only ever used to flag a person — is what actually
+ * lights it. Two passes, both non-destructive blends, so every pixel of the
+ * correction list is still exactly where and what it was: the panel is graded,
+ * never redrawn.
+ */
+export function warmGrade(ctx: CanvasRenderingContext2D, W: number, H: number, k: number): void {
+  if (k <= 0) return;
+  const kk = Math.min(1, k);
+  ctx.save();
+  ctx.globalCompositeOperation = 'soft-light';
+  // 0.62, not 1: enough that the cold glass goes warm, little enough that the
+  // Aero blue is still visibly blue. It has to read as light falling on the
+  // screen, not as a filter laid over it.
+  ctx.globalAlpha = 0.62 * kk;
+  ctx.fillStyle = ERA3.amber;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = 0.14 * kk;
+  ctx.fillStyle = ERA3.rose;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
 }
 
 /** Sunken white field with an optional single line of text. */

@@ -36,12 +36,12 @@
  */
 import * as pc from 'playcanvas';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
-import { setFont } from '../desktop/theme/chrome';
+import { setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
 import { ERA3, drawLambMark } from '../desktop/theme/era3';
 import { ledger } from '../state/ledger';
-import type { EraKey } from './cluster';
-import { GraceQueueLite } from './graceQueueLite';
+import { setEra3Lift, type EraKey } from './cluster';
+import { GraceQueueLite, type TabletFeedItem } from './graceQueueLite';
 import d from '../../data/strings/era3_devices.json';
 import q from '../../data/dialog/s3_queue.json';
 
@@ -156,15 +156,14 @@ function makeCanvas(logicalW: number, logicalH: number, scale: number): { canvas
 // graceQueueLite.ts needs the same corner mark for its sign-in screen — a
 // shared theme-level home avoids the cycle).
 
-/** the tablet — the SAME room as readers see it (S3R.1 spec). Session 38:
- *  fully DATA-DRIVEN from graceQueueLite's resolved outcomes: approved cards
- *  render with hearts + a lamb-badge (the system's own endorsement); cards
- *  sent to review are simply ABSENT (complicity made visible without a line
- *  of text); Mira's card, if let stand, pins to the top with a one-line
- *  comments teaser and NO badge (the system never blessed her — it just
- *  failed to remove her). Before any queue action, the feed is honestly
- *  quiet (nothing has been resolved yet). */
-function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number, feed: import('./graceQueueLite').TabletFeedItem[]): void {
+/** the tablet — the SAME room as readers see it (S3R.1 spec), and Session 64's
+ *  consequence surface for the correction list: a submission appears here once
+ *  its corrections have been worked, carrying exactly the channels that were
+ *  actually applied to it. The reader never sees a correction; they see the
+ *  corrected thing, published, with a heart on it. Before any work is done the
+ *  feed is honestly quiet. (Session 38's approve/review/Mira dramaturgy is
+ *  retired with the verbs it belonged to — see graceQueueLite's header.) */
+function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number, feed: TabletFeedItem[]): void {
   aero.px(ctx, 0, 0, W, H, ERA3.glass);
   aero.px(ctx, 0, 0, W, 26, ERA3.accent);
   setFont(ctx, 12);
@@ -181,81 +180,48 @@ function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number, fe
   }
 
   let y = 48;
-  const cardH = 62;
   feed.forEach((post) => {
-    const spine = post.miraTop ? ERA3.accent : ERA3.memberSpine;
-    aero.px(ctx, 6, y, W - 12, cardH - 6, ERA3.memberBand);
-    aero.px(ctx, 6, y, 3, cardH - 6, spine);
+    // measured before anything is drawn, so a long chip run can never spill
+    // past the card it belongs to (the tablet is 216 logical px wide)
+    setFont(ctx, 9);
+    const lines = wrapText(ctx, post.text, W - 26).slice(0, 4);
+    setFont(ctx, 8);
+    const chipLines = post.chips.length ? wrapText(ctx, post.chips.join(' · '), W - 26) : [];
+    const cardH = 22 + lines.length * 11 + 11 + chipLines.length * 10 + (post.partner ? 10 : 0) + 8;
+    aero.px(ctx, 6, y, W - 12, cardH, ERA3.memberBand);
+    aero.px(ctx, 6, y, 3, cardH, ERA3.memberSpine);
     setFont(ctx, 9);
     ctx.fillStyle = ERA3.ink;
     ctx.fillText(post.author, 14, y + 6);
-    setFont(ctx, 9);
     ctx.fillStyle = ERA3.greyDk;
-    const words = post.text.split(' ');
-    let line = ''; let ly = y + 20;
-    for (const w of words) {
-      const test = line ? `${line} ${w}` : w;
-      if (ctx.measureText(test).width > W - 24 && line) { ctx.fillText(line, 14, ly); line = w; ly += 11; }
-      else line = test;
+    lines.forEach((ln, i) => ctx.fillText(ln, 14, y + 20 + i * 11));
+    let fy = y + 22 + lines.length * 11;
+    // the network's own endorsement of the thing it just edited
+    setFont(ctx, 8); ctx.fillStyle = ERA3.rose;
+    ctx.fillText(q.tablet.heartGlyph, 14, fy);
+    const hw = ctx.measureText(q.tablet.heartGlyph).width;
+    ctx.fillStyle = ERA3.lambTag;
+    ctx.fillText(q.tablet.verifiedBadge, 14 + hw + 4, fy);
+    drawLambMark(ctx, 14 + hw + 4 + ctx.measureText(q.tablet.verifiedBadge).width + 6, fy - 4, 0.7);
+    // …and the channels she is now on, in the reader's view, unremarked
+    ctx.fillStyle = ERA3.grey;
+    chipLines.forEach((ln, i) => ctx.fillText(ln, 14, fy + 11 + i * 10));
+    fy += 11 + chipLines.length * 10;
+    if (post.partner) {
+      ctx.fillStyle = ERA3.accent;
+      ctx.fillText(post.partner, 14, fy);
     }
-    if (line) ctx.fillText(line, 14, ly);
-    // the system's own endorsement: hearts + lamb-badge (on-script/approved
-    // only — an off-script card that was let stand gets neither)
-    if (post.badged) {
-      setFont(ctx, 8); ctx.fillStyle = ERA3.rose;
-      ctx.fillText(q.tablet.heartGlyph, 14, y + cardH - 16);
-      const hw = ctx.measureText(q.tablet.heartGlyph).width;
-      ctx.fillStyle = ERA3.lambTag;
-      ctx.fillText(q.tablet.verifiedBadge, 14 + hw + 4, y + cardH - 16);
-      drawLambMark(ctx, 14 + hw + 4 + ctx.measureText(q.tablet.verifiedBadge).width + 6, y + cardH - 20, 0.7);
-    }
-    // Mira's comments teaser — one line, no thread this session
-    if (post.miraTop) {
-      setFont(ctx, 8); ctx.fillStyle = ERA3.accent;
-      ctx.fillText(q.tablet.miraCommentsTeaser, 14, y + cardH - 16);
-    }
-    y += cardH;
+    y += cardH + 5;
   });
 }
 
-function drawPhoneShell(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-  aero.px(ctx, 0, 0, W, H, '#0a0f18');
-  setFont(ctx, 20);
-  ctx.fillStyle = ERA3.white;
-  const clockW = ctx.measureText(d.phone.lockClock).width;
-  ctx.fillText(d.phone.lockClock, Math.round((W - clockW) / 2), 30);
-  setFont(ctx, 9);
-  ctx.fillStyle = '#8aa0b8';
-  const dateW = ctx.measureText(d.phone.lockDate).width;
-  ctx.fillText(d.phone.lockDate, Math.round((W - dateW) / 2), 56);
-  // one notification row, low on the lock screen
-  const ny = H - 74; const nw = W - 16;
-  aero.px(ctx, 8, ny, nw, 58, '#1f2a3a');
-  // app glyph (a small square) with Lambient's mark standing in as its icon badge
-  aero.px(ctx, 16, ny + 8, 22, 22, ERA3.accent);
-  drawLambMark(ctx, 30, ny + 14, 0.55);
-  setFont(ctx, 9);
-  ctx.fillStyle = ERA3.white;
-  ctx.fillText(d.phone.notificationApp, 46, ny + 8);
-  ctx.fillStyle = '#9fb4cc';
-  ctx.fillText(d.phone.notificationTime, W - 8 - 24, ny + 8);
-  setFont(ctx, 9);
-  ctx.fillStyle = '#cfe0f2';
-  wrapPlain(ctx, d.phone.notificationPreview, nw - 40).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, 46, ny + 22 + i * 11));
-}
-
-function wrapPlain(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let line = '';
-  for (const w of words) {
-    const test = line ? `${line} ${w}` : w;
-    if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
-    else line = test;
-  }
-  if (line) lines.push(line);
-  return lines;
-}
+// Session 64: `drawPhoneShell` is GONE, and so is its private `wrapPlain`. The
+// phone stopped being a static shell the moment it started carrying the era's
+// break — it now owns state, a clock and hit rects exactly as the laptop does,
+// so its drawing moved to `graceQueueLite.drawPhone()` beside them. Its five
+// invented colours moved too, into `src/desktop/theme/era3.ts` (`phoneBg`,
+// `phonePanel`, `phoneDim`, `phoneMeta`, `phoneText`) — unchanged in value, and
+// no longer in breach of the palette law that says colour lives in the theme.
 
 export interface Era3Devices {
   /** call once a frame — uploads any screen whose content just changed. The
@@ -357,7 +323,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     lastVersion?: number;
   };
   const screens: Screen[] = [];
-  const graceQueueLite = new GraceQueueLite();
+  // ⚑ THE LIFT's one wire: the laptop's break reaches the ROOM's light through
+  // cluster.ts's module-level hook, because app.ts (which owns both halves) is
+  // outside this session's file fence. See cluster.ts's E3_LIFT.
+  const graceQueueLite = new GraceQueueLite({ onLight: setEra3Lift });
 
   function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);
@@ -374,7 +343,12 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
 
   add('laptop', LOGICAL.laptop, (ctx, w, h) => graceQueueLite.draw(ctx, w, h), { versionOf: () => graceQueueLite.version });
   add('tablet', LOGICAL.tablet, (ctx, w, h) => drawTabletShell(ctx, w, h, graceQueueLite.tabletFeed()), { versionOf: () => graceQueueLite.version });
-  add('phone', LOGICAL.phone, drawPhoneShell);
+  // Session 64: the phone no longer draws once and never again (S37's law) —
+  // it carries the era's break, so it takes its OWN version counter. The
+  // dirty-upload law is unchanged, only widened: `phoneVersion` moves on a real
+  // change (the message arriving, the message opening, the caret) and the
+  // caret's blink therefore never re-uploads the laptop or the tablet.
+  add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
 
   let arrived = false;
 
@@ -391,6 +365,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
           if (s.name === 'laptop') graceQueueLite.draw(s.ctx, s.logical.w, s.logical.h);
           else if (s.name === 'tablet') drawTabletShell(s.ctx, s.logical.w, s.logical.h, graceQueueLite.tabletFeed());
+          else graceQueueLite.drawPhone(s.ctx, s.logical.w, s.logical.h);
           s.dirty = true;
         }
         if (s.dirty) { s.tex.upload(); s.dirty = false; }
@@ -414,13 +389,24 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       graceQueueLite.beginArrival();
     },
     handleLaptopPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
-      const laptop = screens.find(s => s.name === 'laptop');
-      if (!laptop || !laptop.entity.enabled) return false;
-      const place = PLACEMENT.laptop;
-      const hitPt = hitPlane(laptop.entity, place.size.w, place.size.h, laptop.logical.w, laptop.logical.h, ray);
-      if (!hitPt) return false;
-      graceQueueLite.handleClick(hitPt.x, hitPt.y);
-      return true;
+      const test = (name: 'laptop' | 'phone'): { x: number; y: number } | null => {
+        const s = screens.find(sc => sc.name === name);
+        if (!s || !s.entity.enabled) return null;
+        const place = PLACEMENT[name];
+        return hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
+      };
+      const onLaptop = test('laptop');
+      if (onLaptop) { graceQueueLite.handleClick(onLaptop.x, onLaptop.y); return true; }
+      // Session 64: the PHONE is pressable now (the Malta notification, then
+      // the reply field). The method keeps its Session-38 name because its only
+      // call site is `src/engine/app.ts`'s pointerdown, which is outside this
+      // session's file fence — it routes any Era-3 device screen that has
+      // verbs. A press that lands on the phone's glass but on no target
+      // returns false and falls through to the floor markers, exactly as a
+      // miss on the laptop always has.
+      const onPhone = test('phone');
+      if (onPhone) return graceQueueLite.handlePhoneClick(onPhone.x, onPhone.y);
+      return false;
     },
     debugCanvases(): Record<'laptop' | 'tablet' | 'phone', HTMLCanvasElement> {
       const out = {} as Record<'laptop' | 'tablet' | 'phone', HTMLCanvasElement>;

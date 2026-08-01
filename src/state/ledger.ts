@@ -132,23 +132,28 @@ export interface Ledger {
    */
   era3Arrival: { witness: string }[];
   /**
-   * S3R.1/S3R.5 (Session 38, E3-ii — the GraceQueue pattern strip + card set,
-   * docs/REINTERP_E3_GRACEQUEUE_CARDS_DRAFT_2026-07-13.md): every card action
-   * in the laptop's moderation loop files here, witness-symmetrically (both
-   * off-script outcomes — reviewed AND stood — are data, never silence). No
-   * scores/streaks/progress count are ever derived from this array (CLAUDE.md
-   * law) — it exists purely as the record. `witness` resolved from
-   * data/dialog/s3_queue.json at file time, never composed in TS.
+   * THE CORRECTION LIST (Session 64, E3-iii — docs/REINTERP_E3_THE_CORRECTION_
+   * LIST_2026-07-30.md): one line per correction DECIDED on the laptop, filed
+   * witness-symmetrically — applying files, and so does skipping, because a
+   * skip is an act and the record never leaves an act silent. `cardId` is the
+   * correction's own id in data/dialog/s3_queue.json, where `witness` also
+   * lives; nothing here is composed in TS. No scores, streaks or progress
+   * counts are ever derived from this array (CLAUDE.md law) — the only number
+   * the player ever sees is the in-fiction `n of m applied` on the laptop, and
+   * it is computed from the list, not from here.
+   *
+   * ⚑ NOT filed here, deliberately: anything in the Malta beat. See
+   * `src/room/graceQueueLite.ts`'s header — the apparatus did not ask for it,
+   * so the apparatus does not get to record it (the Tape C doctrine, above).
+   *
+   * ⚑ `'stood'` is RETIRED — the Session-38 moderation verbs it belonged to
+   * (`Approve` / `Move to review` / `Let it stand`) are deleted, and nothing
+   * emits it any more. It stays in this union for one honest reason:
+   * `src/witness/intake.ts` colours a filing by testing for it, and that file
+   * is outside this session's fence. Whoever next opens intake.ts should drop
+   * the test and this variant together.
    */
-  graceQueue: { cardId: number; outcome: 'approved' | 'reviewed' | 'stood'; witness: string }[];
-  /**
-   * S3R.5 (the Mira choice): true once Mira's card has been let stand — a
-   * state flag for the LATER turn/counter-current beats (S3R.6, not this
-   * session's scope; this session only sets the flag + files the glitch
-   * line above in `graceQueue`). Never true on 'reviewed' (bury). Persists
-   * for the rest of the session once set (S3R.6 will read it, not clear it).
-   */
-  graceQueueMiraStood: boolean;
+  graceQueue: { cardId: number; outcome: 'applied' | 'skipped' | 'stood'; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -171,8 +176,7 @@ const fresh = (): Ledger => ({
   media: [],
   caleb: [],
   era3Arrival: [],
-  graceQueue: [],
-  graceQueueMiraStood: false
+  graceQueue: []
 });
 
 export let ledger: Ledger = fresh();

@@ -47,6 +47,114 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-01 · Session 64 — **ERA 3: THE CORRECTION LIST**, built to
+`REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` revision 4. Touched: `graceQueueLite.ts` (rewritten),
+`era3Devices.ts`, `cluster.ts`, `desktop/theme/era3.ts`, `state/ledger.ts`, `debug/panel.ts`,
+`s3_queue.json` (rewritten), `era3_devices.json`, the spec doc's status header, `08_STATUS_REGISTER.md`,
+this log, BUILD_LOG.)*
+
+**REGISTER CALLS, stated as the brief requires.** `operable`: the correction column, the platform
+chips and partner card, the manual/verse lines, the `n of m applied` counter, the tablet feed. The
+tool may be tidy and charming and the satire lives there and only there. `felt`: the three
+submissions and the Malta message. Bare — **no Lambient lane on any screen showing a person's own
+words** (Lambient keeps a badge in the window chrome, which is what it now is: a mark, not a mouth),
+no system band over a submission, no verdict, no satire. The submitters are sincere and are never
+the joke. **E3 has NO respite** — deliberate, confirmed by Sérgio, and none was added.
+
+**⚑ RETIREMENT NOTE — the old queue verbs are deleted, not deprecated in place.** Session 38's
+`Approve` / `Move to review` / `Let it stand`, the eight testimony cards, `order`, `miraId`,
+`miraGateFlags`, the Mira gate, `ledger.graceQueueMiraStood` and `era3Devices.drawPhoneShell` are
+gone from code and data, with the reason written into `graceQueueLite.ts`'s header and
+`s3_queue.json`'s `_doc`: the evidence. The research rates peer forum **moderation** CONTESTED
+("records are largely private or unarchived"), so Vera judging whether a story is ALLOWED was a
+claim the piece would have had to mark `contested`; testimony **production** is FULLY DOCUMENTED.
+The submissions are therefore already accepted, and the verb is APPLY / SKIP against a style guide.
+One deliberate exception: `ledger.graceQueue.outcome`'s `'stood'` variant survives in the union
+because `src/witness/intake.ts` colours a filing by testing for it and that file was outside this
+session's fence — flagged in the ledger's own comment and in the status register.
+
+**What shipped.** (1) **The correction list** on the laptop: one submission at a time in a cream
+card with a rose spine and nothing else on it, and the seven corrections beside it — the open one
+expanded (rule, one-line rationale, the two reference lines, Apply / Skip), the decided ones
+collapsed with `applied` / `skipped`, the rest waiting. The header reads `3 of 7 applied` and
+**nothing else happens**: skipping files to the ledger, the counter does not move, no metric
+responds, nobody comments, and the work simply stays there. (2) **Every correction is a platform**
+— applying 3–6 attaches a visible chip to the submission (`queued · audio` for the conference
+podcast, `invitation attached` for the course funnel, `in the companion` for the mobile app) and a
+partner card (`Bright County · worship · partnered`) for the influencer partnership; the same marks
+then appear on the tablet, in the reader's own feed, unremarked. (3) **Item 7, "Route for
+mentorship", gets the quietest presentation on the screen** — and one asymmetry does the work:
+items 3–6 announce the channel they attach, and item 7 does not announce that it sends a person.
+That is data (`quiet: true`), not a hardcoded id. (4) **Script and scripture**: `The Ordering`
+(the manual) cites `Household` (the verses), both invented, drawn in the same grey at the same
+size in the same citation shape — verified on screen, they are typographically indistinguishable.
+Every verse is gentle and about care, belonging or keeping; the cruelty is entirely in what it is
+footnoting. **`Household 6:2` is cited twice** — under "route for mentorship" and under Noa's
+"gender clarity review" — because to the apparatus a routing is a routing. (5) **Noa's two
+corrections, both rendered, neither endorsed**, on one submission; nothing in the piece comments on
+either and no beat resolves her. (6) **THE BREAK**: Malta arrives on the phone from **Bea**, an
+unnamed peer moderator in another country (NOT Noa — she is on the list, and the era must not
+resolve her). The phone's lock screen is empty until it isn't; the message is two lines and a
+header; the reply field below is live and blinking, and pressing it stops the blink and holds the
+cursor in an empty field. There is no keyboard in this piece and there is no reply. **The Malta
+beat files NOTHING** — the Tape C doctrine: the record answers for what the apparatus asked you to
+do, and the apparatus did not ask for this. (7) **AND THEN THE LIGHT.** 1.4 s after she opens the
+message the room lifts over 5 s: ambient `#332d2e → #574d45` (warmer as well as brighter), the lamp
+0.7 → 1.68 with its range 2.2 → 3.3, roomFill 0.78 → 1.05, the west zone 0.64 → 0.90, and the cold
+`screenGlow` giving a little back, 0.42 → 0.34 — the two lights that fight for one room, and the
+warm one winning for the first time. The laptop is **graded, never redrawn**: a soft-light amber
+wash at 0.62 plus a rose screen at 0.14, both from the era's own palette, tuned down from a first
+pass that read as a sepia filter until the Aero blue survived it. **Not one character of the
+correction list changes**, and the next submission is already loaded underneath.
+
+**Implementation notes worth carrying.** The lift is **derived from the `e3` rig by gains**, not
+authored as a new rig in `cluster.json` — a named rig would be a different lighting STATE, and the
+whole beat is that there is no new state, only a different exposure; it also means the lit room can
+never drift from the unlit one. `applyRig()` was split into `applyRig` + `fadeToRig` so the derived
+rig reuses the existing crossfade, and the crossfade duration became a variable (5 s for the lift;
+2.5 s reads as a cut). The laptop reaches the ROOM's light through a module-level hook
+(`cluster.setEra3Lift`) because `app.ts` owns both halves and was outside the fence. The phone
+stopped being a static shell — it has its own `phoneVersion` counter, so the caret's blink never
+re-uploads the laptop or the tablet, and the dirty-upload law is widened rather than broken.
+`handleLaptopPointer` keeps its Session-38 name (its only call site is in `app.ts`) and now routes
+the phone too. Five phone colours moved from call sites into `theme/era3.ts`, which is what the
+palette law actually asks for.
+
+**Every new beat has a debug-panel button** (`E3 · THE CORRECTION LIST`, eleven of them: the list,
+each verb, item 7, Noa, the phone's arrival, opening it, the reply press, and the light on its own
+with an A/B back to the E3 rig). They reach the live instance through the existing
+`window.__graceQueue()` probe and are typed as `[label, beat]` tuples so check-spec C6's textual
+parse of `panel.ts` cannot mistake a device beat for an OS one. C6 cannot see these beats at all —
+they are not `debugJump` ids — which is exactly why they were written by hand: three sessions have
+now shipped content Sérgio could not reach.
+
+**VERIFIED in the browser** (synchronous rAF stepper; real pointer clicks projected through each
+device plane's own world transform). Real clicks on the 3D laptop filed `list: applied — renata
+(soften the term)` and `list: skipped — renata (remove the unresolved)` with the counter reading
+`1 of 2` and then `2 of 7` — **the skip files and does not count**, confirmed in `__ledger()`.
+Chips and the partner card attach as their corrections are applied; item 7 applied files
+`list: applied — renata (route for mentorship)`. Noa's submission renders both corrections, header
+`0 of 2 applied`. A real click on the phone's notification opened the message; a real click on the
+reply field set `replyHeld` and produced **zero version bumps over the next 2 s** (the caret is
+held, not blinking) and **zero ledger entries**. The lift measured at four points across the ramp
+(1 s: unchanged — the hold works; 3 s: mid; 9 s: settled at the numbers above). A/B screenshots of
+the identical Deb M. screen lit and unlit are the acceptance test and it reads. The tablet feed
+shows both worked submissions with their channels, wrapped inside their cards. Draw calls 31–34 at
+the three seats, 125 props batched — inside the ≤60 budget. E1/E2 show zero device screens and
+their own authored ambients; E4's ambient is `#0d0d12` (the lift does not leak). Baseline `/`:
+no reinterp attribute, one canvas, every probe `undefined`, zero console errors; `?flat=1&reinterp=1`
+renders the 2D fallback with zero console errors. `npx tsc --noEmit`, `npm test` and `npm run build`
+all green.
+
+**Observed, not introduced:** hammering three era buttons within a few frames from the debug panel
+raises four PlayCanvas `Invalid batch 1 insertion/removal with node: "terminalFrame"` asserts. It
+does not occur on the ordinary path or on a single era jump, and this session touched no batching
+code. Worth a look by whoever next opens `batching.ts` / `clusterMorph.ts`.
+
+**Left for Sérgio, and it is the whole content:** every string is PLACEHOLDER-draft. The two Malta
+lines are the hardest in the era and are his to rewrite; so are the correction names, the
+rationales, the verse form, and all three submissions. **BLOCKED: none.**
+
 *(2026-07-28 · Session 63 — **THE CHORUS**, immediately after S62 and on Sérgio's revision of his
 own earlier positive. He had called the chorus "fantastic, just amazing" and S62 protected it; once
 every other shot had bodies he looked again: *"it is a bit bare-bones compared to the other images

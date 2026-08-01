@@ -121,6 +121,35 @@ const OS_BEATS: BeatRow[] = [
 ];
 
 /**
+ * ⚑ THE E3 DEVICE BEATS (Session 64) — the correction list, the break, the light.
+ *
+ * These are NOT `debugJump` ids: they live on Room 2's own screens
+ * (`src/room/graceQueueLite.ts`), which `src/desktop/os.ts` knows nothing
+ * about, so check-spec's C6 cannot see them. They get buttons anyway, and for
+ * exactly C6's reason — three previous sessions shipped beats Sérgio could not
+ * reach, and concluded content was missing when it wasn't. Deliberately typed
+ * as `[label, beat]` tuples rather than `{ id: '…' }` objects so C6's textual
+ * parse of this file stays clean and cannot mistake a device beat for an OS one.
+ *
+ * They reach the live instance through `window.__graceQueue()` — the same
+ * `?debug=1` probe app.ts already publishes for review drives — so the panel
+ * needs no new wiring through `src/engine/app.ts`.
+ */
+const E3_DEVICE_BEATS: Array<[string, string]> = [
+  ['sign in → the correction list', 'list'],
+  ['⚑ submission 1 · the seven corrections', 'list'],
+  ['apply the open correction', 'apply'],
+  ['skip it (files; nothing happens)', 'skip'],
+  ['⚑ item 7 · route for mentorship (the hinge)', 'item7'],
+  ['⚑ submission 2 · Noa (both corrections)', 'noa'],
+  ['the phone · Malta arrives (notification)', 'maltaArrive'],
+  ['the phone · open the message', 'maltaOpen'],
+  ['the phone · press the reply field', 'reply'],
+  ['⚑⚑ THE LIGHT — the brighten, alone', 'light'],
+  ['…and back to the E3 rig (A/B)', 'lightOff']
+];
+
+/**
  * debugJump ids that intentionally have NO panel button — each entry needs a
  * one-line reason. C6 requires every id os.ts's debugJump accepts to be
  * either above (OS_BEATS) or here; currently empty because every id os.ts
@@ -398,6 +427,19 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     }
     if (excluded.has(row.id)) continue; // documented exclusion wins if ever double-listed
     if (beats) mkBtn(beats, row.label, () => os.debugJump(row.id));
+  }
+
+  // ── E3 DEVICE BEATS: Room 2's own screens (see E3_DEVICE_BEATS above) ──
+  const devices = section('E3 · THE CORRECTION LIST', 'laptop · phone · the light');
+  const dnote = document.createElement('div');
+  dnote.style.cssText = 'color:#7f8aa3;font-size:9px;line-height:1.4;margin:0 0 3px';
+  dnote.textContent = 'needs E3 + Room 2 (era button above, then the laptop/phone seats).';
+  devices.appendChild(dnote);
+  for (const [label, beat] of E3_DEVICE_BEATS) {
+    mkBtn(devices, label, () => {
+      const probe = (window as { __graceQueue?: () => { debugBeat(b: string): void } | null }).__graceQueue;
+      probe?.()?.debugBeat(beat);
+    });
   }
 
   // ── LINKS: every review URL as a clickable link (Sérgio's ask) ──

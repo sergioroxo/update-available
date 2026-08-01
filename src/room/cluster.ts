@@ -56,6 +56,57 @@ const BELONGINGS_IDS = new Set(
 
 const RIG_FADE_SECONDS = 2.5;
 /**
+ * ⚑ THE LIFT (Session 64) — Era 3's ONE INVERSION, and the era's ending.
+ * `docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` §4.
+ *
+ * Every glitch in this piece so far is DEGRADATION: the tape hiss, the tearing
+ * signal, the dying music box, Lamby coming apart in the u3 install. This one
+ * BRIGHTENS. Malta arrives on the phone (December 2016, Act LV) and the room's
+ * light lifts — and NOTHING ELSE CHANGES. Not one character of the correction
+ * list, not one state in the software. The list is simply lit well enough to be
+ * read as what it is.
+ *
+ * It is authored as GAINS ON THE e3 RIG rather than as a new rig in
+ * `data/room/cluster.json`, and that is the honest encoding, not a convenience:
+ * a named rig would be a different lighting STATE, and the whole beat is that
+ * there is no new state — it is the same room at a different exposure. The
+ * warm side takes the largest gain (the lamp, roomFill's rose) and the cold
+ * side gives a little back (screenGlow, witnessCold), which is the piece's own
+ * light doctrine — two lights fight for one room — winning warm for the first
+ * time. Briefly.
+ *
+ * Slower than an ordinary rig crossfade on purpose: it must be FELT before it
+ * is understood, and 2.5 s reads as a cut.
+ */
+const E3_LIFT_SECONDS = 5.0;
+const E3_LIFT = {
+  /** per-channel ambient gain — r/g above b, so the lift warms as it rises */
+  ambient: [1.7, 1.72, 1.5],
+  zoneFill: 1.4,
+  /** per-light intensity gain; a light absent from the e3 rig is left alone */
+  lights: {
+    roomFill: 1.35,
+    lamp: 2.4,
+    screenGlow: 0.8,
+    witnessCold: 0.8
+  } as Record<string, number | undefined>,
+  /** the lamp reaches further too — the only range change in the beat */
+  lampRange: 1.5
+};
+
+/**
+ * The lift's one call-in, module-level ON PURPOSE. The beat that fires it lives
+ * on the laptop (`src/room/graceQueueLite.ts` → `src/room/era3Devices.ts`), and
+ * neither of those holds a `ClusterShell` — `src/engine/app.ts` owns both halves
+ * and is outside this session's file fence. A no-op when no shell exists (flat
+ * mode, tests), which is the correct behaviour rather than a guard: with no room
+ * there is no light to lift.
+ */
+let e3LiftHook: ((on: boolean) => void) | null = null;
+export function setEra3Lift(on: boolean): void {
+  e3LiftHook?.(on);
+}
+/**
  * ⚑ THE RELOCATION (Session 61) — the E2→E3 handoff's shared clock.
  *
  * Sérgio's note: *"the fly over needs to be slower and let you see the room
@@ -345,11 +396,25 @@ export function buildClusterShell(
   let ambFrom = new pc.Color(0, 0, 0);
   let ambTo = new pc.Color(0, 0, 0);
   let rigT = 1;
+  /** the current crossfade's duration — RIG_FADE_SECONDS for every ordinary rig
+   *  change, E3_LIFT_SECONDS for the lift (which must read as a room changing,
+   *  not as a cut). */
+  let rigFadeSeconds = RIG_FADE_SECONDS;
+  /** true only between Malta and the next authored rig change — see liftE3() */
+  let e3Lifted = false;
 
   function applyRig(name: string, animate: boolean): void {
     if (name === '_note') return;
     const rig = (clusterData.rigs as unknown as Record<string, Rig | undefined>)[name];
     if (!rig) return;
+    rigFadeSeconds = RIG_FADE_SECONDS;
+    e3Lifted = false; // any authored rig change ends the beat — see liftE3()
+    fadeToRig(rig, animate);
+  }
+
+  /** the crossfade itself, shared by `applyRig` (an authored rig from
+   *  data/room/cluster.json) and `liftE3` (a rig DERIVED from the e3 one). */
+  function fadeToRig(rig: Rig, animate: boolean): void {
     rigFades = [];
     const fadeLight = (l: pc.LightComponent, target: RigLight): void => {
       const tc = target.color ? hex(target.color) : l.color.clone();
@@ -382,6 +447,34 @@ export function buildClusterShell(
       rigT = 1;
     }
   }
+
+  /**
+   * ⚑ THE LIFT — see E3_LIFT above for what this beat IS. Here is only how it
+   * is built: the e3 rig, multiplied. Nothing is authored twice, so the lit
+   * room cannot drift away from the unlit one; it is the same room, exposed.
+   */
+  function liftE3(on: boolean): void {
+    const base = (clusterData.rigs as unknown as Record<string, Rig | undefined>).e3;
+    if (!base || e3Lifted === on) return;
+    e3Lifted = on;
+    if (!on) { applyRig('e3', true); return; }
+    const lights: Record<string, RigLight> = {};
+    for (const [id, target] of Object.entries(base.lights)) {
+      const gain = E3_LIFT.lights[id] ?? 1;
+      lights[id] = {
+        intensity: target.intensity * gain,
+        range: id === 'lamp' && target.range !== undefined ? target.range * E3_LIFT.lampRange : target.range,
+        color: target.color
+      };
+    }
+    rigFadeSeconds = E3_LIFT_SECONDS;
+    fadeToRig({
+      ambient: base.ambient.map((c, i) => c * E3_LIFT.ambient[i]),
+      zoneFill: base.zoneFill * E3_LIFT.zoneFill,
+      lights
+    }, true);
+  }
+  e3LiftHook = liftE3;
 
   function eraTable(): NicheEraTable | undefined {
     return (nicheData.eras as unknown as Record<string, NicheEraTable | undefined>)[era];
@@ -525,7 +618,7 @@ export function buildClusterShell(
         if (k >= 1) planeLerp = null;
       }
       if (rigT < 1) {
-        rigT = Math.min(1, rigT + dt / RIG_FADE_SECONDS);
+        rigT = Math.min(1, rigT + dt / rigFadeSeconds);
         const k = rigT * rigT * (3 - 2 * rigT);
         for (const f of rigFades) {
           f.light.intensity = f.fi + (f.ti - f.fi) * k;

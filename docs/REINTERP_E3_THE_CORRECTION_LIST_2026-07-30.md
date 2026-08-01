@@ -1,5 +1,31 @@
 STATUS: live
 
+# ✅ BUILT — Session 64 (2026-08-01). What shipped, and the four decisions the build made
+*Everything below §1–§6 is the spec and is unchanged. This header records only what is now
+CODE, so nobody has to read the build to find out what is still a proposal.*
+
+- **BUILT:** §1 the correction list (laptop, APPLY/SKIP, `n of 7 applied`, skipping filed and
+  nothing else happening) · the platform chips and the partner card, one per documented channel ·
+  item 7 with the quietest presentation on the screen · §2 the doubling, `The Ordering` citing
+  `Household`, same grey/size/shape · Noa's two contradictory corrections on one submission, both
+  rendered, neither answered · §4 Malta on the phone, from **Bea**, with the live blinking reply
+  field that does nothing · §4 THE LIGHT, the room's own rig lifted and the laptop's grade warmed ·
+  §5 the next submission already loaded when the break lands.
+- **Decision 1 — three submissions, seen in order** (the doc's last open question, "names-only or
+  two-or-three people?"): three — Renata (the seven), Noa (her two), and a third that arrives WITH
+  the break, so §5's "the next item is still there" is literal rather than described.
+- **Decision 2 — the colleague is `Bea`,** a first name in a contact row and nothing else, per
+  rev 4 §1. Invented. She is a moderator in another country and has no second line.
+- **Decision 3 — the Malta beat files NOTHING to the ledger** (not the message, not the held
+  cursor, not the light). Same doctrine as Tape C in E1: the record answers for what the apparatus
+  asked you to do, and the apparatus did not ask for this.
+- **Decision 4 — the lift is derived from the `e3` rig, not authored as a new one** in
+  `data/room/cluster.json`. A named rig would be a different lighting STATE; the whole beat is that
+  there is no new state. Same room, different exposure.
+- **Still PLACEHOLDER-draft and still yours:** every string — the two Malta lines above all, the
+  correction names, the rationales, the verse form, and the three submissions.
+- Build record: `docs/reinterp/01_SESSION_LOG.md`, Session 64.
+
 # ERA 3 — THE CORRECTION LIST
 *Third pass, on Sérgio's direction: keep the list-of-changes mechanic, **drop "bury"** and stop
 retrofitting old canon, focus on **how SOGICE used digital platforms to target**, put the

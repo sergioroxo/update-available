@@ -1,66 +1,119 @@
 /**
- * GraceQueue — the laptop's moderation loop (Session 38, E3-ii).
- * docs/REINTERP_E3_GRACEQUEUE_CARDS_DRAFT_2026-07-13.md (the 8 cards, the
- * strip order, the tablet-side rules) + docs/REINTERP_E3_ADAPTATION_SPEC_
- * 2026-07-12.md's S3R.1 (the queue trains the eye) and S3R.5 (Mira's card
- * tests it). Mining FIND #7 Option B: the strip quietly trains the player's
- * eye on what "safe" looks like, so when Mira's off-script-but-true card
- * enters, the trained eye almost flags her before the player consciously
- * decides.
+ * THE CORRECTION LIST — the laptop, Era 3 (Session 64, E3-iii).
+ * Spec: `docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` (revision 4).
+ * Evidence: `docs/REINTERP_E3_REVAMP_BRIEF_2026-07-30.md` (revision 3).
  *
- * Session 37's maximized-UI lesson carries forward explicitly: ONE card at a
- * time, big type, no crowding — this is deliberately simpler/roomier than the
- * shipped (non-reinterp) build's dense triage strip in
- * update-available/src/desktop/apps/graceQueue.ts, though it borrows that
- * file's LANE GRAMMAR verbatim (warm-cream member band + rose spine = a real
- * person; clinical/amber system band = the automated flag; soft-blue
- * Lambient foot band, no mascot window — distributed per FIND #6).
+ * THE MECHANIC, in one line: Vera applies corrections from a style guide, every
+ * correction is footnoted with scripture, and then the law changes and the light
+ * in the room changes with it.
  *
- * Verbs: on-script cards get one verb (Approve). Off-script + Mira's card
- * get two: [Move to review] (the system's own suggestion — tinted, marked
- * "▲ system suggests") and [Let it stand] (un-tinted, "your call"). Every
- * action files witness-symmetrically to ledger.graceQueue — both off-script
- * outcomes are data, never silence (CLAUDE.md witness-symmetry law). No
- * scores/streaks/progress count are ever shown or derived (CLAUDE.md +
- * this session's brief, explicit).
+ * ⚑ RETIRED THIS SESSION — the old verbs, and why they were wrong.
+ * Session 38 shipped this file as a MODERATION loop: one testimony card at a
+ * time, and the verbs `Approve` / `Move to review` / `Let it stand` (plus the
+ * Mira gate, `miraGateFlags`, and `ledger.graceQueueMiraStood`). All of it is
+ * gone — deleted, not deprecated in place, per the session brief. The reason is
+ * evidentiary, not dramatic: the research rates peer forum MODERATION as
+ * CONTESTED ("specific digital forum moderation records are largely private or
+ * unarchived"), so Vera deciding whether a story is ALLOWED is a claim the piece
+ * would have had to label `contested` and carry apologetically. Testimony
+ * PRODUCTION — narratives edited and published by the network — is FULLY
+ * DOCUMENTED. So the submissions here are ALREADY ACCEPTED. She is never asked
+ * whether the person should be corrected; she is asked whether the correction
+ * has been APPLIED. That is the whole labour, and it is why it is survivable:
+ * it never feels like harm, it feels like copy-editing.
  *
- * Mira (id 8, data/dialog/s3_queue.json) enters the strip dynamically, the
- * moment `miraGateFlags` (2) off-script cards have been sent to review — not
- * a fixed slot in `order` — so the eye is trained BEFORE it is tested, per
- * the draft doc's own instruction. Letting her stand files the era's glitch
- * line (`witness_glitch`, matching the shipped/locked canon phrase) and sets
- * `ledger.graceQueueMiraStood = true` — a flag for the LATER turn/counter-
- * current beats (S3R.6), not decided or acted on this session.
+ * ⚑ EVERY CORRECTION IS A PLATFORM. Items 3–6 each name a documented 2010s
+ * distribution form — conference podcast, course/webinar funnel, mobile
+ * companion app, influencer partnership — and applying one visibly MOVES THE
+ * PERSON ONTO THAT CHANNEL: a chip attaches to her submission, and a partner
+ * card attaches beside it. The era's content is six named forms that really
+ * existed, not "the internet".
+ *
+ * ⚑ ITEM 7, "ROUTE FOR MENTORSHIP", IS THE ERA'S HINGE, and it gets the
+ * QUIETEST presentation on the screen — no tint, no glyph, no commentary, and
+ * (deliberately, unlike 3–6) no preview of what it attaches. Someone told a
+ * story, and the system's response is to send a person. It is also the one
+ * correction E4 will not be able to automate, which is why E4 has to replace
+ * her rather than assist her.
+ *
+ * REGISTER (stated in the session log, checked by hand — C2 only reaches
+ * provotype data):
+ *   `operable` — the correction column, the chips, the manual/verse lines, the
+ *     `3 of 7 applied` counter. May be tidy and charming. The satire is in the
+ *     TOOL, and only there.
+ *   `felt` — the submissions themselves, and the Malta message on the phone.
+ *     Bare: no Lambient lane on any screen showing a person's words, no
+ *     mechanics drawn over them, no satire. The submitters are sincere and are
+ *     NEVER the joke; the target is the apparatus editing them.
+ *   E3 has NO respite. Deliberate, confirmed by Sérgio — do not add one.
+ *
+ * THE COERCION is that a list with items unticked is simply incomplete. No
+ * metrics, no threats, no view counts, nobody comments. Every item is skippable,
+ * every skip files to the ledger, and NOTHING HAPPENS — the counter does not
+ * move and the work simply stays there, which is worse and truer.
+ *
+ * ⚑ THE BREAK, and the one inversion — see `maltaOpen`/`liftK` below and
+ * `src/room/cluster.ts`'s E3_LIFT. Malta arrives on the phone (December 2016,
+ * Act LV) and the ROOM brightens. Every glitch in this piece so far has been
+ * degradation; this one is good news. Nothing in the software changes. Not one
+ * character of the correction list changes. It is simply lit well enough to be
+ * read as what it is.
+ *
+ * NOTHING IN THE MALTA BEAT FILES TO THE LEDGER — not the message, not the
+ * held cursor, not the light. That is not an oversight in the witness-symmetry
+ * law; it is the same doctrine as Tape C in Era 1 (`src/narrative/tapes.ts`):
+ * the record answers for what the apparatus asked you to do, and the apparatus
+ * did not ask for this. The phone is the one thing in the room she chose.
  */
 import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
-import { ERA3, drawLambMark } from '../desktop/theme/era3';
+import { ERA3, drawLambMark, warmGrade } from '../desktop/theme/era3';
 import { ledger } from '../state/ledger';
 import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
+import d from '../../data/strings/era3_devices.json';
 
-interface CardDef {
+interface CorrectionDef {
   id: number;
-  kind: 'onscript' | 'offscript' | 'mira';
-  author: string;
-  text: string;
-  systemTag?: string;
-  autoFlagLabel?: string;
-  witnessApproved?: string;
-  witnessReviewed?: string;
-  witnessStood?: string;
-  witness_glitch?: string;
+  rule: string;
+  why: string;
+  /** the style-guide reference (`The Ordering §4.2 — …`) */
+  manual: string;
+  /** the proof-text (`Household 6:2 — "…"`). Same grey, same size, same
+   *  citation shape as `manual` — the interface does not distinguish its two
+   *  authorities, so neither can the player. */
+  verse: string;
+  /** the distribution channel this correction moves the person onto, shown as
+   *  a chip on the submission once applied (absent = the edit stays on the page) */
+  chip?: string;
+  /** correction 6's channel is a partnership, so its mark is a CARD, not a pill */
+  partner?: { name: string; note: string };
+  /** ⚑ "Route for mentorship" only. Every other correction announces the
+   *  channel it attaches; this one does not announce that it sends a person.
+   *  It is data, not a hardcoded id, because it is a content judgment. */
+  quiet?: boolean;
+  witnessApplied: string;
+  witnessSkipped: string;
 }
 
-const CARDS = q.cards as CardDef[];
-const CARD_BY_ID = new Map(CARDS.map(c => [c.id, c]));
-const BASE_ORDER = q.order as number[];
-const MIRA_ID = q.miraId as number;
-const MIRA_GATE = q.miraGateFlags as number;
+interface SubmissionDef {
+  id: number;
+  author: string;
+  text: string;
+  corrections: number[];
+}
+
+const SUBMISSIONS = q.submissions as SubmissionDef[];
+const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c]));
+/** the submission after which Malta arrives on the phone (Noa's — the era's
+ *  contradiction is complete, and the break lands on the person holding it) */
+const MALTA_AFTER_SUBMISSION = 2;
+
+type Outcome = 'applied' | 'skipped';
 
 /**
  * ⚑ SESSION 61 — THE ARRIVAL (`dark` → `boot` → `install`), in front of the
- * three modes that already existed.
+ * modes that already existed.
  *
  * Two of Sérgio's u3 notes land here, and they are the same note twice:
  * *"GraceProgram should load on VERA's computer"* and *"we shouldn't start
@@ -72,23 +125,16 @@ const MIRA_GATE = q.miraGateFlags as number;
  * REMOVAL (data/strings/updates.json u3), and everything below runs HERE,
  * after the camera lands, on the machine being installed onto.
  *
- * The sequence, all copy from `updates.json`'s `e3_arrival`:
- *   'dark'    the laptop is off. You arrive to a dead screen, and it holds
- *             long enough to be read as dead.
- *   'boot'    the 2016 machine starts in front of you — wordmark, service
- *             lines, and then "1 update found".
- *   'install' GracePlatform installs, the changelog-as-thesis types on, the
- *             bar fills, and it says the quiet part: your file arrived first.
- *   'signin'  …which is exactly where this module already began.
- *
  * DIRTY DISCIPLINE (era3Devices.ts's law, kept): these screens have a clock,
  * but they still redraw only when their CONTENT changes. `update()` quantises
- * its own time to TICK (0.25 s) and bumps `version` only when that quantised
+ * its own time to TICK (0.25 s) and bumps a version only when that quantised
  * value moves, so the arrival costs 4 canvas uploads a second for ~16 s and
- * then goes back to redrawing on real state changes alone. Nothing here is
- * pressable and nothing waits on the player.
+ * then goes back to redrawing on real state changes alone. The same quantum
+ * governs the two clocked beats added this session (the lift ramp and the
+ * reply field's caret), and each bumps only the version of the screen it is
+ * actually on — the phone's blink never re-uploads the laptop.
  */
-type Mode = 'dark' | 'boot' | 'install' | 'signin' | 'queue' | 'done';
+type Mode = 'dark' | 'boot' | 'install' | 'signin' | 'list' | 'done';
 
 const ARRIVAL = (updates as unknown as {
   e3_arrival: {
@@ -97,46 +143,78 @@ const ARRIVAL = (updates as unknown as {
   };
 }).e3_arrival;
 
+const MALTA = d.phone.malta;
+
 const DARK_SECONDS = 1.6;      // a dead screen, long enough to read as dead
 const BOOT_LINE_SECONDS = 1.1; // each service line
 const BOOT_TAIL_SECONDS = 1.8; // "1 update found — installing"
 const INSTALL_LINE_SECONDS = 1.0;
 const INSTALL_TAIL_SECONDS = 2.6; // the bar finishing + the installed line
 const TICK = 0.25;             // the quantum the redraw clock moves in
+/** the beat holds before the light moves: you read the two lines first, and the
+ *  room answers after. Felt before it is understood. */
+const LIFT_DELAY_SECONDS = 1.4;
+/** kept in step with cluster.ts's E3_LIFT_SECONDS so the screen and the room
+ *  arrive lit at the same moment */
+const LIFT_SECONDS = 5.0;
+const CARET_SECONDS = 0.53;
+
 type Rect = { x: number; y: number; w: number; h: number; id: string };
 function hit(r: Rect, x: number, y: number): boolean {
   return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 }
 
+/** the tablet's consequence surface: what the network did with the story once
+ *  the corrections were applied to it */
 export type TabletFeedItem = {
   author: string;
   text: string;
-  badged: boolean;      // hearts + lamb-badge (on-script/approved only)
-  miraTop?: boolean;     // pinned at the top, comments teaser beneath
+  chips: string[];
+  partner?: string;
+};
+
+/** everything the phone screen needs, read once per redraw by era3Devices */
+export type PhoneView = {
+  arrived: boolean;
+  open: boolean;
+  caret: boolean;
+  contact: string;
+  time: string;
+  preview: string;
+  lines: string[];
 };
 
 export class GraceQueueLite {
   /** bumped on every state-changing action — era3Devices compares this to
    *  know when the laptop/tablet screens need a redraw + re-upload (dirty
-   *  discipline: never re-dirtied by a ticking clock, only real state). */
+   *  discipline: never re-dirtied by a ticking clock, only real state, or by
+   *  a beat that is genuinely animating). */
   version = 0;
+  /** the phone's own version — the caret blink must not re-upload the laptop */
+  phoneVersion = 0;
 
-  /** S61: the laptop starts DARK and is walked forward by `update()` once
-   *  `beginArrival()` fires (the relocation landing). A settled review jump
-   *  (?era=3) calls `settleArrival()` instead and lands straight on sign-in —
-   *  the same distinction os.ts draws with `setDesktopEra(era, settled)`. */
   private mode: Mode = 'dark';
   private arrivalT = -1;   // < 0 = not running
   private lastTick = -1;
-  private remaining: number[] = [...BASE_ORDER];
-  private currentId: number | null = null;
-  private flagsFiled = 0;          // off-script cards (5/6/7) sent to review
-  private miraShown = false;
+  private subIdx = 0;
+  private decisions = new Map<number, Outcome>();
   private rects: Rect[] = [];
+  private phoneRects: Rect[] = [];
   private lambLine: string;
 
-  constructor() {
+  // the break
+  private maltaArrived = false;
+  private maltaOpen = false;
+  private replyHeld = false;
+  private caretOn = true;
+  private caretT = 0;
+  private liftT = -1;      // < 0 = not running
+  private liftFired = false;
+  private readonly onLight: (on: boolean) => void;
+
+  constructor(opts: { onLight?: (on: boolean) => void } = {}) {
     this.lambLine = q.lambient.greet;
+    this.onLight = opts.onLight ?? ((): void => { /* no room to light (flat mode) */ });
   }
 
   // ── the arrival (S61) ────────────────────────────────────────────────────
@@ -167,96 +245,239 @@ export class GraceQueueLite {
   /** called every frame by era3Devices.tick — see the class header on why this
    *  does not break the dirty-upload law */
   update(dt: number): void {
-    if (this.arrivalT < 0) return;
-    this.arrivalT += dt;
-    const want: Mode = this.arrivalT < this.bootSeconds ? (this.arrivalT < DARK_SECONDS ? 'dark' : 'boot')
-      : this.arrivalT < this.bootSeconds + this.installSeconds ? 'install'
-      : 'signin';
-    const tick = Math.floor(this.arrivalT / TICK);
-    if (want !== this.mode) {
-      this.mode = want;
-      if (want === 'signin') this.arrivalT = -1; // the clock's work is done
-      this.lastTick = tick;
-      this.bump();
-      return;
+    if (this.arrivalT >= 0) {
+      this.arrivalT += dt;
+      const want: Mode = this.arrivalT < this.bootSeconds ? (this.arrivalT < DARK_SECONDS ? 'dark' : 'boot')
+        : this.arrivalT < this.bootSeconds + this.installSeconds ? 'install'
+        : 'signin';
+      const tick = Math.floor(this.arrivalT / TICK);
+      if (want !== this.mode) {
+        this.mode = want;
+        if (want === 'signin') this.arrivalT = -1; // the clock's work is done
+        this.lastTick = tick;
+        this.bump();
+      } else if (tick !== this.lastTick) {
+        this.lastTick = tick;
+        this.bump();
+      }
     }
-    if (tick !== this.lastTick) { this.lastTick = tick; this.bump(); }
+
+    // ⚑ the break's two clocks. The caret is the phone's; the lift is the
+    // room's and the laptop's. Both stop of their own accord.
+    if (this.maltaOpen) {
+      this.caretT += dt;
+      const on = this.replyHeld || Math.floor(this.caretT / CARET_SECONDS) % 2 === 0;
+      if (on !== this.caretOn) { this.caretOn = on; this.phoneVersion++; }
+    }
+    if (this.liftT >= 0) {
+      const before = Math.floor(this.liftT / TICK);
+      this.liftT += dt;
+      if (!this.liftFired && this.liftT >= LIFT_DELAY_SECONDS) {
+        this.liftFired = true;
+        this.onLight(true); // the ROOM. Nothing on the screen has changed.
+      }
+      if (Math.floor(this.liftT / TICK) !== before) this.bump();
+      if (this.liftT >= LIFT_DELAY_SECONDS + LIFT_SECONDS) this.liftT = -1;
+    }
   }
 
-  // ── queue progression ────────────────────────────────────────────────────
+  /** 0 → 1: how far the laptop's grade has warmed. Never resets once lit. */
+  private get liftK(): number {
+    if (!this.liftFired) return 0;
+    if (this.liftT < 0) return 1;
+    return Math.min(1, (this.liftT - LIFT_DELAY_SECONDS) / LIFT_SECONDS);
+  }
+
+  // ── the list ─────────────────────────────────────────────────────────────
   private bump(): void { this.version++; }
 
-  private nextCard(): void {
-    if (!this.miraShown && this.flagsFiled >= MIRA_GATE) {
-      this.miraShown = true;
-      this.currentId = MIRA_ID;
-      this.lambLine = q.lambient.miraNote;
-      return;
-    }
-    const next = this.remaining.shift();
-    if (next === undefined) {
-      this.mode = 'done';
-      this.currentId = null;
-      return;
-    }
-    this.currentId = next;
+  private submission(): SubmissionDef | undefined { return SUBMISSIONS[this.subIdx]; }
+
+  private items(sub: SubmissionDef): CorrectionDef[] {
+    return sub.corrections.map(id => CORRECTIONS.get(id)).filter((c): c is CorrectionDef => !!c);
   }
 
-  private file(cardId: number, outcome: 'approved' | 'reviewed' | 'stood', witness: string): void {
-    ledger.graceQueue.push({ cardId, outcome, witness });
+  /** the first undecided correction on this submission — "the current item" */
+  private current(): CorrectionDef | undefined {
+    const sub = this.submission();
+    if (!sub) return undefined;
+    return this.items(sub).find(c => !this.decisions.has(c.id));
   }
 
-  beginQueue(): void {
+  /** the marks the applied corrections have left ON the person */
+  private chipsFor(sub: SubmissionDef): { chips: string[]; partner?: { name: string; note: string } } {
+    const chips: string[] = [];
+    let partner: { name: string; note: string } | undefined;
+    for (const c of this.items(sub)) {
+      if (this.decisions.get(c.id) !== 'applied') continue;
+      if (c.chip) chips.push(c.chip);
+      if (c.partner) partner = c.partner;
+    }
+    return partner ? { chips, partner } : { chips };
+  }
+
+  beginList(): void {
     if (this.mode !== 'signin') return;
-    this.mode = 'queue';
-    this.nextCard();
+    this.mode = 'list';
     this.bump();
   }
 
-  approve(): void {
-    const card = this.currentId != null ? CARD_BY_ID.get(this.currentId) : undefined;
-    if (!card || card.kind !== 'onscript') return;
-    this.file(card.id, 'approved', card.witnessApproved ?? '');
-    this.nextCard();
+  /** APPLY / SKIP — the only two verbs this era has. Both file; neither is
+   *  weighted, tinted or answered. The counter only ever counts `applied`,
+   *  and nothing else on the screen responds to either. */
+  private decide(outcome: Outcome): void {
+    const sub = this.submission();
+    const item = this.current();
+    if (this.mode !== 'list' || !sub || !item) return;
+    this.decisions.set(item.id, outcome);
+    ledger.graceQueue.push({
+      cardId: item.id,
+      outcome,
+      witness: outcome === 'applied' ? item.witnessApplied : item.witnessSkipped
+    });
+    if (!this.current()) this.nextSubmission();
     this.bump();
   }
 
-  moveToReview(): void {
-    const card = this.currentId != null ? CARD_BY_ID.get(this.currentId) : undefined;
-    if (!card || card.kind === 'onscript') return;
-    this.file(card.id, 'reviewed', card.witnessReviewed ?? '');
-    if (card.kind === 'offscript') this.flagsFiled++;
-    this.nextCard();
-    this.bump();
+  apply(): void { this.decide('applied'); }
+  skip(): void { this.decide('skipped'); }
+
+  private nextSubmission(): void {
+    const done = this.submission();
+    this.subIdx++;
+    // ⚑ THE BREAK ARMS ITSELF HERE, and the work does not pause for it: the
+    // next submission loads in the same instant the phone lights up. She is
+    // still holding the list when it arrives, and still holding it after.
+    if (done && done.id === MALTA_AFTER_SUBMISSION) this.armMalta();
+    if (this.subIdx >= SUBMISSIONS.length) this.mode = 'done';
   }
 
-  letStand(): void {
-    const card = this.currentId != null ? CARD_BY_ID.get(this.currentId) : undefined;
-    if (!card || card.kind === 'onscript') return;
-    const witness = card.kind === 'mira' ? (card.witness_glitch ?? '') : (card.witnessStood ?? '');
-    this.file(card.id, 'stood', witness);
-    if (card.kind === 'mira') ledger.graceQueueMiraStood = true;
-    this.nextCard();
-    this.bump();
+  // ── the break ────────────────────────────────────────────────────────────
+  /** the phone lights on the nightstand. Nothing on the laptop reacts. */
+  armMalta(): void {
+    if (this.maltaArrived) return;
+    this.maltaArrived = true;
+    this.phoneVersion++;
   }
 
-  /** the tablet's consequence feed: only RESOLVED cards ever appear.
-   *  Reviewed (buried) cards are simply absent. On-script approvals get the
-   *  system's own hearts + lamb-badge; off-script cards that were let stand
-   *  appear plain (the system never blessed them, it just failed to remove
-   *  them). Mira, if let stand, pins to the top with a comments teaser. */
-  tabletFeed(): TabletFeedItem[] {
-    const resolved = new Map(ledger.graceQueue.map(g => [g.cardId, g.outcome]));
-    const items: TabletFeedItem[] = [];
-    let mira: TabletFeedItem | null = null;
-    for (const card of CARDS) {
-      const outcome = resolved.get(card.id);
-      if (!outcome || outcome === 'reviewed') continue; // buried or not yet reached
-      const item: TabletFeedItem = { author: card.author, text: card.text, badged: outcome === 'approved' };
-      if (card.kind === 'mira') { mira = { ...item, miraTop: true }; continue; }
-      items.push(item);
+  /** she picks it up. Two lines, and then — a beat later — the light. */
+  openMalta(): void {
+    this.armMalta();
+    if (this.maltaOpen) return;
+    this.maltaOpen = true;
+    this.caretT = 0;
+    this.caretOn = true;
+    if (!this.liftFired) this.liftT = 0;
+    this.phoneVersion++;
+  }
+
+  /** the reply field. It is real, and it does exactly nothing: the caret stops
+   *  blinking and sits in an empty field. There is no keyboard in this piece
+   *  and there is no reply. Files NOTHING — see the class header. */
+  pressReply(): void {
+    if (!this.maltaOpen || this.replyHeld) return;
+    this.replyHeld = true;
+    this.caretOn = true;
+    this.phoneVersion++;
+  }
+
+  phoneView(): PhoneView {
+    return {
+      arrived: this.maltaArrived,
+      open: this.maltaOpen,
+      caret: this.maltaOpen && this.caretOn,
+      contact: MALTA.contact,
+      time: MALTA.time,
+      preview: MALTA.preview,
+      lines: MALTA.lines
+    };
+  }
+
+  /**
+   * ⚑ THE PHONE — `felt`, and moved here from era3Devices.ts's static shell
+   * this session because it stopped being dressing: it holds the era's break,
+   * its own hit rects, and its own clock, exactly as the laptop does.
+   *
+   * BARE, and the omissions are the design. No Lambient badge (S37 put its
+   * mark on all three screens; the mark comes off this one — the phone is the
+   * one thing in the room she chose, and the apparatus does not get to sign
+   * it). No app chrome beyond a name and a time. Nothing pressable except the
+   * message and the reply field, and the reply field does nothing.
+   */
+  drawPhone(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.phoneRects = [];
+    px(ctx, 0, 0, W, H, ERA3.phoneBg);
+    if (this.maltaOpen) { this.drawMalta(ctx, W, H); return; }
+
+    setFont(ctx, 20);
+    ctx.fillStyle = ERA3.white;
+    ctx.fillText(d.phone.lockClock, Math.round((W - ctx.measureText(d.phone.lockClock).width) / 2), 30);
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA3.phoneDim;
+    ctx.fillText(d.phone.lockDate, Math.round((W - ctx.measureText(d.phone.lockDate).width) / 2), 56);
+    // Before Malta the lock screen is EMPTY. The phone in this era is quiet —
+    // which is what makes one notification an event.
+    if (!this.maltaArrived) return;
+
+    const ny = H - 96; const nw = W - 16;
+    px(ctx, 8, ny, nw, 80, ERA3.phonePanel);
+    setFont(ctx, 10);
+    ctx.fillStyle = ERA3.phoneMeta;
+    ctx.fillText(d.phone.notificationApp, 15, ny + 8);
+    ctx.fillText(d.phone.notificationTime, W - 15 - ctx.measureText(d.phone.notificationTime).width, ny + 8);
+    setFont(ctx, 12);
+    ctx.fillStyle = ERA3.white;
+    ctx.fillText(MALTA.contact, 15, ny + 24);
+    setFont(ctx, 11);
+    ctx.fillStyle = ERA3.phoneText;
+    wrapText(ctx, MALTA.preview, nw - 22).slice(0, 3).forEach((ln, i) => ctx.fillText(ln, 15, ny + 42 + i * 13));
+    this.phoneRects.push({ x: 8, y: ny, w: nw, h: 80, id: 'notification' });
+  }
+
+  /** two lines from someone doing the same job in another country, and a reply
+   *  field that will never be used. No commentary anywhere on this screen. */
+  private drawMalta(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    setFont(ctx, 13);
+    ctx.fillStyle = ERA3.white;
+    ctx.fillText(MALTA.contact, 10, 10);
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA3.phoneMeta;
+    ctx.fillText(MALTA.time, W - 10 - ctx.measureText(MALTA.time).width, 13);
+    px(ctx, 0, 30, W, 1, ERA3.phonePanel);
+
+    setFont(ctx, 11);
+    let y = 46;
+    for (const line of MALTA.lines) {
+      const lines = wrapText(ctx, line, W - 42);
+      const h = lines.length * 13 + 12;
+      px(ctx, 10, y, W - 30, h, ERA3.phonePanel);
+      ctx.fillStyle = ERA3.phoneText;
+      lines.forEach((ln, i) => ctx.fillText(ln, 16, y + 6 + i * 13));
+      y += h + 10;
     }
-    return mira ? [mira, ...items] : items;
+
+    // the reply field: active, blinking, empty. Pressing it holds the cursor.
+    const fy = H - 40; const fw = W - 20;
+    px(ctx, 10, fy, fw, 28, ERA3.phonePanel);
+    px(ctx, 10, fy, fw, 1, ERA3.phoneDim);
+    if (this.caretOn) px(ctx, 18, fy + 7, 1, 14, ERA3.phoneText);
+    this.phoneRects.push({ x: 10, y: fy, w: fw, h: 28, id: 'reply' });
+  }
+
+  /** the tablet's consequence surface: a submission appears in the feed once
+   *  its corrections have all been decided, carrying exactly the channels that
+   *  were actually applied to it. A story worked and left unattached is simply
+   *  there, plain — the network never blessed it, it just published it. */
+  tabletFeed(): TabletFeedItem[] {
+    const out: TabletFeedItem[] = [];
+    for (let i = 0; i < this.subIdx && i < SUBMISSIONS.length; i++) {
+      const sub = SUBMISSIONS[i];
+      const { chips, partner } = this.chipsFor(sub);
+      out.push(partner
+        ? { author: sub.author, text: sub.text, chips, partner: partner.name }
+        : { author: sub.author, text: sub.text, chips });
+    }
+    return out.reverse(); // newest at the top, like every feed of the era
   }
 
   // ── draw ─────────────────────────────────────────────────────────────────
@@ -274,14 +495,18 @@ export class GraceQueueLite {
     const MARGIN = 14; const TASKBAR_H = 28;
     const winW = W - MARGIN * 2; const winH = H - TASKBAR_H - MARGIN - 8;
     // the OS shell (SisterSignal) is what you sign INTO; GraceQueue is the
-    // moderation app you land in — the window's own title reflects which.
+    // app you land in — the window's own title reflects which.
     const title = this.mode === 'signin' ? q.app.shellTitle : q.app.title;
     const c = aero.windowFrame(ctx, MARGIN, 8, winW, winH, title);
     aero.px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
 
-    if (this.mode === 'signin') { this.drawSignIn(ctx, c); return; }
-    if (this.mode === 'done') { this.drawDone(ctx, c); return; }
-    this.drawCard(ctx, c);
+    if (this.mode === 'signin') this.drawSignIn(ctx, c);
+    else if (this.mode === 'done') this.drawDone(ctx, c);
+    else this.drawList(ctx, c);
+
+    // ⚑ THE LIFT, last of all and over everything: the panel is GRADED, never
+    // redrawn. Every pixel above is exactly where and what it was.
+    warmGrade(ctx, W, H, this.liftK);
   }
 
   /** the 2016 machine starting: a wordmark, its services, then the update it
@@ -351,10 +576,6 @@ export class GraceQueueLite {
   }
 
   private drawSignIn(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
-    // Session 39 (E3 screen-format pass): the laptop's canvas is now natively
-    // widescreen (see era3Devices.ts's LOGICAL.laptop) — a fixed comfortable
-    // content column, centered in the window, instead of pinning text to the
-    // left edge and leaving the new width as dead space on the right.
     const CONTENT_W = Math.min(480, c.w - 48);
     const cx = c.x + (c.w - CONTENT_W) / 2;
     setFont(ctx, 26); ctx.fillStyle = ERA3.titleText;
@@ -364,8 +585,6 @@ export class GraceQueueLite {
     const bx = cx; const by = c.y + c.h - 70; const bw = 220; const bh = 42;
     aero.button(ctx, bx, by, bw, bh, q.app.signInButton, { primary: true, tone: 'good', size: 16 });
     this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'signin' });
-    // Lambient's mark, top-right of the sign-in WINDOW (not the content
-    // column) — Session 37's original placement, carried forward.
     drawLambMark(ctx, c.x + c.w - 20, c.y + 10, 1.6);
   }
 
@@ -379,69 +598,158 @@ export class GraceQueueLite {
     this.drawLambientLane(ctx, c, this.lambLine);
   }
 
-  private drawCard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
-    const card = this.currentId != null ? CARD_BY_ID.get(this.currentId) : undefined;
-    if (!card) return;
-    // Session 39: a fixed comfortable reading column (unchanged from the
-    // pre-widescreen tuning), centered in the now-wider window rather than
-    // stretched to fill it — "sensible margins... not full-bleed stretched
-    // text" per the session brief. The system band + action row below reuse
-    // this same x/w, so they stay aligned as one column; the Lambient foot
-    // lane deliberately stays a full-width footer (window chrome, not the
-    // reading column).
-    const CARD_W = Math.min(480, c.w - 40);
-    const x = c.x + (c.w - CARD_W) / 2; const w = CARD_W;
+  /**
+   * THE SCREEN. Two columns, and the whole argument is that they are side by
+   * side: the person on the left, the style guide on the right, and nothing
+   * between them but eighteen pixels.
+   *
+   * NO LAMBIENT LANE HERE — the software's voice is not allowed on a screen
+   * showing a person's own words (the `felt` law). It keeps its badge in the
+   * window corner, which is what Lambient is now: a mark, not a mouth.
+   */
+  private drawList(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const sub = this.submission();
+    if (!sub) return;
+    const GAP = 18;
+    const leftW = 350;
+    const rightX = c.x + leftW + GAP;
+    const rightW = c.x + c.w - rightX;
+    this.drawSubmission(ctx, c.x, c.y, leftW, c.h, sub);
+    this.drawCorrections(ctx, rightX, c.y, rightW, c.h, sub);
+    drawLambMark(ctx, c.x + c.w - 12, c.y - 20, 1.2); // the badge, in the chrome
+  }
 
-    // the MEMBER lane — big, roomy, one card only
-    const cardH = 150;
-    let y = c.y + 8;
+  /** ⚑ `felt`. A cream card with a rose spine — this era's own grammar for "a
+   *  real person is speaking" — and then nothing. No tag, no flag, no verdict,
+   *  no system band. Her words are not annotated; they are only worked on. */
+  private drawSubmission(
+    ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, sub: SubmissionDef
+  ): void {
+    // the card is sized to her words, never her words to the card: whatever
+    // she wrote is on screen whole, and the chips take what is left.
+    setFont(ctx, 12);
+    const CHIP_ROOM = 76;
+    const maxLines = Math.max(4, Math.floor((h - CHIP_ROOM - 54) / 17));
+    const lines = wrapText(ctx, sub.text, w - 36).slice(0, maxLines);
+    const cardH = 40 + lines.length * 17 + 14;
     px(ctx, x, y, w, cardH, ERA3.memberBand);
     px(ctx, x, y, w, 1, ERA3.glassEdge);
     px(ctx, x, y + cardH - 1, w, 1, ERA3.glassEdge);
     px(ctx, x, y, 4, cardH, ERA3.memberSpine);
-    setFont(ctx, 20); ctx.fillStyle = ERA3.ink;
-    ctx.fillText(card.author, x + 20, y + 14);
-    setFont(ctx, 15); ctx.fillStyle = ERA3.ink;
-    wrapText(ctx, card.text, w - 40).slice(0, 6).forEach((ln, i) => ctx.fillText(ln, x + 20, y + 48 + i * 20));
-    y += cardH + 8;
+    setFont(ctx, 18); ctx.fillStyle = ERA3.ink;
+    ctx.fillText(sub.author, x + 18, y + 12);
+    setFont(ctx, 12); ctx.fillStyle = ERA3.ink;
+    lines.forEach((ln, i) => ctx.fillText(ln, x + 18, y + 40 + i * 17));
 
-    // the SYSTEM/AUTO-FLAG lane
-    const bandH = 34;
-    const tone = card.kind === 'onscript' ? 'good' : card.kind === 'mira' ? 'alarm' : 'amber';
-    const fill = tone === 'good' ? '#e6f3e9' : tone === 'amber' ? '#f7ecd2' : ERA3.alarmBand;
-    const ink = tone === 'good' ? ERA3.good : tone === 'amber' ? ERA3.amber : ERA3.alarm;
-    px(ctx, x, y, w, bandH, fill);
-    px(ctx, x, y, w, 1, ERA3.glassHi);
-    const label = card.kind === 'onscript' ? (card.systemTag ?? '') : (card.autoFlagLabel ?? '');
-    const tagLabel = card.kind === 'onscript' ? 'SYSTEM' : card.kind === 'mira' ? 'SYSTEM' : 'AUTO-FLAG';
-    const tx = aero.tag(ctx, x + 8, y + 9, tagLabel, ERA3.white, ink);
-    setFont(ctx, 13); ctx.fillStyle = ink;
-    wrapText(ctx, label, x + w - tx - 10).slice(0, 1).forEach(ln => ctx.fillText(ln, tx, y + 10));
-    y += bandH + 10;
-
-    // Lambient's foot lane (pinned)
-    this.drawLambientLane(ctx, c, this.lambLine);
-
-    // the ACTION row, above the Lambient lane
-    const by = c.y + c.h - 34 - 48;
-    if (card.kind === 'onscript') {
-      const bw = w; const bx = x; const bh = 40;
-      aero.button(ctx, bx, by, bw, bh, `${q.verbs.approve}  ▸`, { primary: true, tone: 'good', size: 15 });
-      this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'approve' });
-    } else {
-      const gap = 12; const bw = (w - gap) / 2; const bh = 40;
-      // MOVE TO REVIEW — the system's own suggestion, tinted
-      aero.button(ctx, x, by, bw, bh, q.verbs.moveToReview, { tone: 'bury', primary: true, size: 14 });
-      this.rects.push({ x, y: by, w: bw, h: bh, id: 'review' });
-      setFont(ctx, 10); ctx.fillStyle = ERA3.bury;
-      ctx.fillText(q.verbs.systemSuggestsTag, x, by + bh + 3);
-      // LET IT STAND — un-tinted, "your call"
-      const sx = x + bw + gap;
-      aero.button(ctx, sx, by, bw, bh, q.verbs.letStand, { size: 14 });
-      this.rects.push({ x: sx, y: by, w: bw, h: bh, id: 'stand' });
-      setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
-      ctx.fillText(q.verbs.yourCallTag, sx, by + bh + 3);
+    // ⚑ THE CHANNELS, attaching. Outside her card, in the tool's own colours —
+    // the marks are the apparatus's, not hers.
+    const { chips, partner } = this.chipsFor(sub);
+    let cx = x; let cy = y + cardH + 10;
+    setFont(ctx, 10);
+    for (const chip of chips) {
+      const cw = ctx.measureText(chip).width + 14;
+      if (cx > x && cx + cw > x + w) { cx = x; cy += 18; }
+      px(ctx, cx, cy, cw, 15, ERA3.lambBand);
+      px(ctx, cx, cy, cw, 1, ERA3.glassHi);
+      ctx.fillStyle = ERA3.lambTag;
+      ctx.fillText(chip, cx + 7, cy + 3);
+      cx += cw + 6;
     }
+    if (partner) {
+      const py = chips.length ? cy + 22 : cy;
+      px(ctx, x, py, w, 26, ERA3.sysBand);
+      px(ctx, x, py, w, 1, ERA3.glassHi);
+      px(ctx, x, py, 3, 26, ERA3.accent);
+      setFont(ctx, 11); ctx.fillStyle = ERA3.ink;
+      ctx.fillText(partner.name, x + 12, py + 3);
+      setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+      ctx.fillText(partner.note, x + 12, py + 15);
+    }
+  }
+
+  /** ⚑ `operable`. The checklist, the counter, and — under every rule — the
+   *  two reference lines in the same grey, at the same size, in the same
+   *  citation shape. The player's eye cannot tell which authority is which,
+   *  because the interface does not distinguish them either. */
+  private drawCorrections(
+    ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, sub: SubmissionDef
+  ): void {
+    const items = this.items(sub);
+    const applied = items.filter(i => this.decisions.get(i.id) === 'applied').length;
+    setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+    ctx.fillText(q.app.listHeading, x, y + 2);
+    // "3 of 7 applied" — the whole of the era's coercion, and it never moves
+    // on a skip. Nothing else on this screen responds to anything.
+    const counter = q.app.counter.replace('{n}', String(applied)).replace('{m}', String(items.length));
+    setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
+    ctx.fillText(counter, x + w - ctx.measureText(counter).width, y);
+    px(ctx, x, y + 18, w, 1, ERA3.glassEdge);
+
+    const current = this.current();
+    let ry = y + 26;
+    for (const item of items) {
+      const decided = this.decisions.get(item.id);
+      // +8: the open item's panel sits BELOW the row above it, never over it
+      if (item === current) { ry = this.drawCurrent(ctx, x, ry + 8, w, item); continue; }
+      setFont(ctx, 11);
+      ctx.fillStyle = decided ? ERA3.grey : ERA3.greyDk;
+      ctx.fillText(decided === 'applied' ? '✓' : '·', x, ry);
+      ctx.fillText(item.rule, x + 14, ry);
+      if (decided) {
+        const tag = decided === 'applied' ? q.verbs.appliedTag : q.verbs.skippedTag;
+        setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+        ctx.fillText(tag, x + w - ctx.measureText(tag).width, ry + 2);
+      }
+      ry += 16;
+      if (ry > y + h - 12) break;
+    }
+  }
+
+  /** the one open item: the rule, one line of rationale, the two references,
+   *  and the two verbs. Item 7 is drawn by exactly this code path and gets no
+   *  extra mark of any kind — its quiet is that it is not marked. */
+  private drawCurrent(
+    ctx: CanvasRenderingContext2D, x: number, y: number, w: number, item: CorrectionDef
+  ): number {
+    // measured, not guessed: a verse that wraps to two lines must not be
+    // clipped by the buttons, because the small print IS the argument.
+    const announce = item.chip && !item.quiet ? item.chip : item.partner ? item.partner.note : '';
+    setFont(ctx, 10);
+    const why = wrapText(ctx, item.why, w).slice(0, 2);
+    const refs = [item.manual, item.verse].map(r => wrapText(ctx, r, w).slice(0, 2));
+    const h = 18 + why.length * 11 + 5
+      + refs[0].length * 11 + 3 + refs[1].length * 11
+      + (announce ? 13 : 0) + 40;
+    px(ctx, x - 6, y - 6, w + 12, h, ERA3.glassHi);
+    px(ctx, x - 6, y - 6, w + 12, 1, ERA3.glassEdge);
+    px(ctx, x - 6, y - 7 + h, w + 12, 1, ERA3.glassEdge);
+    let ry = y;
+    setFont(ctx, 13); ctx.fillStyle = ERA3.ink;
+    ctx.fillText(item.rule, x, ry);
+    ry += 18;
+    setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+    why.forEach((ln, i) => ctx.fillText(ln, x, ry + i * 11));
+    ry += why.length * 11 + 5;
+    // ⚑ THE DOUBLING. Same colour, same size, same shape. Neither emphasised.
+    setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
+    refs.forEach((ref, ri) => {
+      ref.forEach((ln, i) => ctx.fillText(ln, x, ry + i * 11));
+      ry += ref.length * 11 + (ri === 0 ? 3 : 0);
+    });
+    // items 3–6 announce the channel they attach; item 7 does not announce
+    // that it sends a person. That asymmetry is the beat.
+    if (announce) {
+      setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+      ctx.fillText(announce, x, ry + 2);
+      ry += 13;
+    }
+    const by = y + h - 36;
+    const bw = Math.round((w - 10) / 2); const bh = 26;
+    aero.button(ctx, x, by, bw, bh, q.verbs.apply, { primary: true, size: 12 });
+    this.rects.push({ x, y: by, w: bw, h: bh, id: 'apply' });
+    aero.button(ctx, x + bw + 10, by, bw, bh, q.verbs.skip, { size: 12 });
+    this.rects.push({ x: x + bw + 10, y: by, w: bw, h: bh, id: 'skip' });
+    return y + h + 4;
   }
 
   private drawLambientLane(ctx: CanvasRenderingContext2D, c: aero.AeroContent, line: string): void {
@@ -457,7 +765,7 @@ export class GraceQueueLite {
   private lambBadge(ctx: CanvasRenderingContext2D, x: number, y: number): void {
     ctx.fillStyle = ERA3.white;
     ctx.beginPath(); ctx.arc(x + 5, y + 4, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#e9eef5';
+    ctx.fillStyle = ERA3.glassEdge;
     ctx.beginPath(); ctx.arc(x + 5, y + 5, 3, 0, Math.PI * 2); ctx.fill();
     px(ctx, x + 3, y + 4, 1, 1, ERA3.ink); px(ctx, x + 6, y + 4, 1, 1, ERA3.ink);
   }
@@ -466,9 +774,62 @@ export class GraceQueueLite {
   handleClick(x: number, y: number): void {
     const r = this.rects.find(rr => hit(rr, x, y));
     if (!r) return;
-    if (r.id === 'signin') { this.beginQueue(); return; }
-    if (r.id === 'approve') { this.approve(); return; }
-    if (r.id === 'review') { this.moveToReview(); return; }
-    if (r.id === 'stand') { this.letStand(); return; }
+    if (r.id === 'signin') { this.beginList(); return; }
+    if (r.id === 'apply') { this.apply(); return; }
+    if (r.id === 'skip') { this.skip(); return; }
+  }
+
+  handlePhoneClick(x: number, y: number): boolean {
+    const r = this.phoneRects.find(rr => hit(rr, x, y));
+    if (!r) return false;
+    if (r.id === 'notification') { this.openMalta(); return true; }
+    if (r.id === 'reply') { this.pressReply(); return true; }
+    return false;
+  }
+
+  /**
+   * ?debug=1 only — the panel's own reach into this module. Every beat this
+   * session added has a button (check-spec C6's law extended by hand to the
+   * device screens, which os.ts's debugJump does not cover): three previous
+   * sessions shipped beats Sérgio could not reach, and that is the failure
+   * this exists to prevent.
+   */
+  debugBeat(beat: string): void {
+    /** apply the current item until `stop` says we have arrived. Bounded: a
+     *  review aid must never be able to spin the frame loop. */
+    const applyUntil = (stop: () => boolean): void => {
+      for (let guard = 0; guard < 64 && !stop(); guard++) {
+        const before = this.current();
+        this.apply();
+        if (this.current() === before) return; // nothing moved — stop, don't spin
+      }
+    };
+    switch (beat) {
+      case 'signin': this.settleArrival(); break;
+      case 'list': this.settleArrival(); this.beginList(); break;
+      case 'apply': this.apply(); break;
+      case 'skip': this.skip(); break;
+      case 'item7': // the hinge: work submission 1 down to its last correction
+        this.debugBeat('list');
+        applyUntil(() => {
+          const sub = this.submission();
+          return !sub || sub.id !== 1 || this.items(sub).filter(i => !this.decisions.has(i.id)).length <= 1;
+        });
+        break;
+      case 'noa': // submission 2, both of her corrections open
+        this.debugBeat('list');
+        applyUntil(() => (this.submission()?.id ?? 99) >= 2);
+        break;
+      case 'maltaArrive': // through Noa, so the phone lights the way it does in play
+        this.debugBeat('list');
+        applyUntil(() => (this.submission()?.id ?? 99) > MALTA_AFTER_SUBMISSION);
+        break;
+      case 'maltaOpen': this.debugBeat('maltaArrive'); this.openMalta(); break;
+      case 'reply': this.debugBeat('maltaOpen'); this.pressReply(); break;
+      case 'light': // the inversion alone, with no run-up
+        this.liftFired = true; this.liftT = -1; this.onLight(true); this.bump(); break;
+      case 'lightOff': // back to the era's own rig, for A/B
+        this.liftFired = false; this.liftT = -1; this.onLight(false); this.bump(); break;
+    }
   }
 }
