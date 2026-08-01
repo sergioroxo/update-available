@@ -21,17 +21,51 @@ the style guide requires.** Each arrives as a checklist item with a one-line rat
 been applied.** That is the whole labour, and it is why it is survivable — it never feels like harm,
 it feels like copy-editing.
 
-### What the corrections actually do — the era's content
-These are the digital targeting methods, rendered as UI. Each is one line in a list:
+### ⚑ What the corrections actually do — EVERY CORRECTION IS A PLATFORM
+*Revision 4, on Sérgio's emphasis: "I would explore digital methods and platforms." This is the
+section that carries it. Each list item does not merely edit words — **it moves the person onto a
+distribution channel**, and every channel below is one the research rates **strongly documented**
+(brief rev 3, "best-documented media forms"). The era's content is not "the internet." It is six
+named forms, one per line, each of which really existed.*
 
-| Correction | What it does | The digital method it shows |
-|---|---|---|
-| **Soften the term** | *"lesbian" → "same-sex attracted"* | identity replaced with a symptom; the language that evades moderation |
-| **Remove the unresolved** | any sentence that doesn't conclude | doubt is a retention problem |
-| **Add the invitation** | append the call-to-action and link | every story becomes a funnel |
-| **Route for mentorship** | flag the submitter for follow-up contact | **the story is a lead** |
-| **Adjust presentation** | *"soften the flannel; brighten the voice"* — canon | the profile itself is corrected |
-| **Gender clarity review** | *"possible gender confusion — route to exploratory mentorship"* — canon | the same person, a second and contradictory correction |
+| # | Correction (in-world) | What it does to the submission | The documented form it puts her on |
+|---|---|---|---|
+| 1 | **Soften the term** | *"lesbian" → "same-sex attracted"* | the softened lexicon NARTH→ATCSI adopted; language that survives moderation |
+| 2 | **Remove the unresolved** | delete any sentence that doesn't conclude | testimony grammar — doubt is a retention problem |
+| 3 | **Clip for the broadcast** | mark 40 seconds for the conference audio | **podcast** (RHN conference recordings) |
+| 4 | **Attach the invitation** | append the call-to-action, the link, the QR | **course / webinar funnel**, and the giving widget |
+| 5 | **Add to the companion** | push the story into the phone app's daily reading | **mobile app** (documented on a store until a scorecard pulled it) |
+| 6 | **Pair with a partner** | attach a sponsor card to her story | **influencer partnership** — her account beside a brand's |
+| 7 | **⚑ Route for mentorship** | flag the submitter for personal follow-up | **lay mentorship** — the story becomes a lead, and a person is sent |
+
+**Plus the two that are canon and belong to Noa, and must both appear:**
+
+| | | | |
+|---|---|---|---|
+| a | **Adjust presentation** | *"soften the flannel; brighten the voice"* | the profile itself is corrected |
+| b | **Gender clarity review** | *"possible gender confusion — route to exploratory mentorship"* | the same person, corrected a second and contradictory way |
+
+⚑ **Noa's two corrections stay** — they are the sharpest thing the era has: *the same testimony
+flagged both as a woman who needs softening and as a possible man who needs routing.* **Both rendered,
+neither endorsed, and the piece never answers for her.** The apparatus disagreeing with itself about
+one person is the era's argument in two list items.
+
+**⚑ "Route for mentorship" is the beat that matters most.** It is the moment the player sees that this
+was never moderation — **it is recruitment**. Someone told a story, and the system's response is to
+send a person to their door. **It is also the answer to "human influence, not machine":** items 3–6
+are infrastructure; item 7 is a person getting in a car. E4 automates the first six. It cannot
+automate the seventh, which is why E4 has to *replace* her rather than assist her.
+
+### ⚑ And this is the version the evidence actually supports
+Worth stating plainly, because it corrects the built code: the research rates **peer forum moderation
+as CONTESTED** ("records are largely private or unarchived"), while **testimony production — former
+participants' narratives *edited, filmed and published* by the network — is FULLY DOCUMENTED.**
+
+`src/room/graceQueueLite.ts` currently ships the contested version: its verbs are **Approve /
+Move to review / Let it stand**, i.e. Vera judging whether a story is allowed. **The correction list
+is the documented version of the same labour** — she does not decide what is permitted, she prepares
+what has already been accepted. The redesign is not only better drama; it moves the era off a claim
+the piece would have had to mark `contested` and onto one it can state flatly.
 
 ⚑ **Noa's two corrections stay** — they are the sharpest thing the era has: *the same testimony
 flagged both as a woman who needs softening and as a possible man who needs routing.* **Both rendered,
@@ -53,6 +87,38 @@ why**, in the same typeface, at the same size. Nothing is argued. Both are simpl
 
 *(Invented verses and an invented book — no real scripture quoted as the apparatus's justification.
 The FORM is the point, not the text.)*
+
+### ⚑ Made concrete — the doubling has to be *visible*, not described
+The doubling only works if the two references are **typographically indistinguishable**. So the
+style-guide line and the proof-text line get the same grey, the same size, the same citation format:
+
+```
+7 · Route for mentorship
+   Style ref. §4.2 — follow-up contact within 48h
+   Household 6:2 — "and the lost one was not sent a letter, but a neighbour"
+```
+
+**Three rules, and they are the whole design:**
+1. **Same weight, same colour, same size.** Neither line is emphasised. The player's eye cannot tell
+   which authority is which, because *the interface does not distinguish them either.*
+2. **Never quoted aloud, never argued.** No character cites scripture. It is furniture — the small
+   print under a rule, the thing nobody reads. That is how it actually works.
+3. **The verse never justifies cruelty in words.** It is always gentle, and always about care,
+   belonging, or keeping. **The cruelty is entirely in what it is footnoting.**
+
+### The naming — a draft to react to (PLACEHOLDER, Sérgio's call)
+The invented book must sound period-true and denominationally plausible without pastiching any real
+text. Two candidates, and I'd take the first:
+
+- **⚑ `Household`** — *"Household 6:2."* Reads instantly as scripture-shaped; "household of faith"
+  is genuine period vocabulary of this movement; and it carries the domestic coercion the whole piece
+  is about — the family as the unit that does the correcting. **My recommendation.**
+- **`The Ordering`** — *"Ordering 3:14."* Colder, more clerical, more obviously the rulebook the
+  style guide already is. Sharper, but it tips the hand: it *sounds* like a manual, which loses the
+  disguise. Better as the style guide's own title than as the scripture.
+
+**So my read: the manual is called `The Ordering`, and it cites `Household`.** The rulebook and the
+holy book are two documents with one voice, and the player never sees them disagree.
 
 ## 3 · THE COERCION — it is a list, and lists get completed
 No metrics, no threats, no view counts. **A checklist with items unticked is simply incomplete**, and
@@ -118,11 +184,61 @@ and E4's premise in one beat.
   person. The machine doing it alone is E4's move, and E3 must not spend it early.
 - ✅ **No room-jumping.** The phone is the movement within the room; the other rooms stay shut.
 
-## Open for Sérgio
-1. **Who is the colleague?** *(My read: Noa — it gives her agency instead of only being an object of
-   correction, and the person the system cannot file is a good person to see it first. But it may be
-   cleaner as an unnamed peer.)*
-2. **Does Vera reply to the message?** *My read: no. She reads it, and the light changes. A reply
-   would resolve something the era should leave open.*
-3. **The invented scripture** — form only, no real verses. Worth your eye on the naming so it reads
-   period-true without quoting anything actual.
+---
+
+# ✅ REVISION 4 — the three open questions, answered (2026-07-30)
+*Drafted, not asked. All three are PLACEHOLDER until your pass; your edit wins.*
+
+### 1 · Who is the colleague? — **not Noa. An unnamed peer.**
+I proposed Noa last pass and I now think that was wrong, for a reason the correction list itself
+supplies: **Noa is on the list.** She is the person items (a) and (b) are being applied *to*. If she
+is also the one who brings Malta, she becomes both the object of the apparatus and its
+counter-current, and the era resolves her — which the canon explicitly forbids. *"The piece never
+answers for her."*
+
+So the colleague is **another moderator in another country, named only by a first name in a contact
+row** — someone doing the identical work, whose entire existence in the piece is one message. That
+also makes the point better: **it is not a rescue from outside. It is the same job, somewhere the law
+just changed.** The person who tells her is not free either. Yet.
+
+### 2 · Does Vera reply? — **no, and the interface should offer to.**
+Confirmed, with one addition. The message sits there and **the reply field is right below it, active,
+blinking.** The player can press it. Nothing is typed — there is no keyboard in this piece — and the
+cursor just sits in an empty field until the beat passes.
+
+That is stronger than a closed message, because it makes the silence a *held* one rather than an
+absent one, and it costs nothing to build.
+
+### 3 · The scripture — drafted above (§2). `The Ordering` cites `Household`.
+
+---
+
+## ⚑ HOW THE TWO DEVICES CONNECT — since we are not leaving the room
+*Sérgio: "we already will have the phone to jump inside the room… I would refrain unless it would
+make the most narrative sense." Agreed — no room-jumping. So the connection has to be inside one
+room, and it is this:*
+
+**The laptop holds the list. The phone holds the law. They are the same distance apart as the two
+lights.**
+
+- The laptop is the **work surface** — lit by the screen, cold, high-definition. Everything on it is
+  authored by someone else. It is the sharp side.
+- The phone is the **personal surface** — the only thing in the room she chose. Malta arrives there
+  because that is where a friend can reach her, and nowhere else in the era can.
+- **The jump between them is the era's only movement**, and it is the movement of putting the work
+  down to look at something. That is a small enough gesture to survive being repeated, and it is
+  exactly the gesture the break needs.
+
+**And the light travels the wrong way, which is the whole trick.** The news arrives on the phone —
+but the thing that brightens is **the room, and the laptop.** The correction list does not change one
+character. It is simply lit well enough to be read as what it is.
+
+## Still open for Sérgio
+- **Every string above is PLACEHOLDER-draft**, including the Malta message, the correction names, and
+  the verse form. The two-line message (*"did you see. malta. they made it illegal. / not here. but
+  somewhere."*) is the hardest line in the era and is yours to rewrite.
+- **The submitters.** The corrections need people to be applied to. Canon gives Noa; Mira can stay as
+  a name in the queue without being load-bearing. **Do you want the rest invented as names-only
+  (a queue of first names and one paragraph each), or should the era run on two or three people the
+  player sees repeatedly?** *My read: three, seen repeatedly — a list of strangers is data, and the
+  point is that they are not.*

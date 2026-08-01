@@ -204,3 +204,104 @@ would let the turn, the entrance descent and the 29-second relocation be felt on
 already has Tailscale, without waiting on the Quest. Small, self-contained, and a good Codex job.
 
 **Suggested: S68 — gyroscope look-around fallback · Codex GPT 5.6, medium effort.**
+
+---
+
+# S66 — ERA 3: THE CORRECTION LIST · Opus, high effort · **here, not Codex**
+*Rewritten 2026-07-30 against `REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` rev 4. The earlier
+S66 in `REINTERP_E3_STUDIO_SPEC_2026-07-30.md` targeted the superseded studio design — **ignore it.**
+This is narrative + register work; it must not go to Codex.*
+
+```
+Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
+?reinterp=1). Read, in this order: CLAUDE.md (the register laws are the mechanic here, not a
+constraint), docs/ETHICS_CONSTRAINTS.md, docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md (THE
+SPEC — read revision 4 especially), docs/REINTERP_E3_REVAMP_BRIEF_2026-07-30.md revision 3 (the
+evidence; every correction below is sourced there), docs/reinterp/08_STATUS_REGISTER.md, then
+src/room/graceQueueLite.ts, src/room/era3Devices.ts, src/room/cluster.ts (the ambientLight /
+setLight machinery — the break needs it), src/desktop/theme/era3.ts, src/debug/panel.ts,
+tools/check-spec.mjs.
+
+THE MECHANIC, in one line: Vera applies corrections from a style guide. Every correction is
+footnoted with scripture. Then the law changes, and the light in the room changes with it.
+
+⚑ THE SINGLE BIGGEST CHANGE — the queue's verbs are wrong and must be replaced.
+graceQueueLite.ts currently offers Approve / Move to review / Let it stand. That is Vera JUDGING
+whether a story is allowed, which the research rates CONTESTED (forum-moderation records are largely
+private or unarchived). Testimony PRODUCTION — narratives edited and published by the network — is
+FULLY DOCUMENTED. So the submissions are already accepted, and the verb becomes APPLY / SKIP on a
+per-correction checklist. Do not keep the old verbs alongside the new ones; replace them, and note
+the retirement in the file header the way this codebase already does.
+
+SCOPE:
+1. THE CORRECTION LIST (laptop). One submission at a time, big type, no crowding — keep S37's
+   maximized-UI lesson. Beside it, the seven corrections from the spec's rev-4 table, each an item
+   with: the rule, a one-line rationale, a proof-text line, and APPLY / SKIP. Every item is skippable
+   and skipping is filed to the ledger. The header reads `3 of 7 applied` and NOTHING ELSE happens —
+   no metric moves, no one comments, the work simply stays there.
+2. ⚑ EVERY CORRECTION IS A PLATFORM. Items 3-6 (clip for the broadcast / attach the invitation / add
+   to the companion / pair with a partner) each name a documented 2010s distribution form — podcast,
+   course funnel, mobile app, influencer partnership. Applying one must VISIBLY move the person onto
+   that channel (a chip appears on the submission: `queued · audio`, `in the companion`, a partner
+   card attaches). The era's content is six named real forms, not "the internet."
+3. ⚑ ITEM 7, "ROUTE FOR MENTORSHIP", IS THE ERA'S HINGE. It flags a submitter for personal
+   follow-up. It must read, without a word of commentary, as the moment this stops being editing and
+   becomes recruitment: someone told a story, and the system's response is to send a person. Give it
+   the quietest presentation on the screen. It is the one correction E4 will NOT be able to automate.
+4. SCRIPT AND SCRIPTURE. Under each rule, a proof-text in THE SAME grey, size and citation format as
+   the style reference. The player must not be able to tell which authority is which, because the
+   interface does not distinguish them. Invented book only — the spec's draft is `The Ordering`
+   (the manual) citing `Household` (the verses). NO REAL SCRIPTURE, ever, as the apparatus's
+   justification. The verse text is always gentle and always about care or belonging; the cruelty is
+   entirely in what it is footnoting.
+5. NOA'S TWO CORRECTIONS, both rendered, neither endorsed: "soften the flannel; brighten the voice"
+   AND "possible gender confusion — route to exploratory mentorship", on the SAME submission. The
+   piece never answers for her. If any beat resolves Noa, STOP and flag it.
+6. ⚑ THE BREAK — MALTA, on the phone. December 2016, Act LV. It arrives from an unnamed peer
+   moderator in another country (NOT Noa — she is on the list; see rev 4 §1). Two lines, both
+   PLACEHOLDER-draft. The reply field below it is active and blinking; pressing it does nothing but
+   hold the cursor in an empty field. There is no keyboard in this piece and there is no reply.
+7. ⚑ AND THEN THE LIGHT — the one inversion. Every glitch in this piece so far is DEGRADATION. This
+   one BRIGHTENS: the room's ambient lifts and the laptop's grade warms, using cluster.ts's existing
+   ambientLight machinery. Nothing in the software changes. Not one character of the correction list
+   changes. It is simply lit well enough to be read as what it is. Get this beat right or the era
+   has no ending — it is the whole point of the pass.
+8. WHAT THE BREAK CHANGES: nothing, and everything. She does not quit, the list does not vanish, the
+   next item is still there. The era ends on a person who can no longer un-know what the work is.
+
+REGISTER CALLS (state them in the session log, and check-spec C2 will enforce them):
+- the correction list, the chips, the proof-texts, the `3 of 7` counter: `operable`. May be tidy and
+  charming. The satire is in the TOOL.
+- the submissions themselves, and the Malta message: `felt`. Bare. No Lambient, no mechanics, no
+  satire. The submitters are sincere and are NEVER the joke — the target is the apparatus.
+- E3 has NO respite. That is deliberate and confirmed by Sérgio; do not add one.
+
+LAWS THAT WILL FAIL CI IF BROKEN:
+- No runtime network calls; no localStorage/sessionStorage/indexedDB/cookies. Ledger only.
+- Palette from src/desktop/theme/ — check-spec C4's hex ratchet must not rise.
+- check-spec C6: EVERY new beat needs a debug-panel button. src/debug/panel.ts IS IN SCOPE. (Three
+  previous sessions shipped beats with no buttons and Sérgio could not reach the content.)
+- No real people, orgs, logos or hashtags in the fiction. Real names are dossier/provenance only.
+- All display text in data/ as PLACEHOLDER-draft, never composed in TS.
+
+FILE FENCE (edit only these):
+  src/room/graceQueueLite.ts, src/room/era3Devices.ts, src/room/cluster.ts,
+  src/desktop/theme/era3.ts, src/state/ledger.ts, src/debug/panel.ts,
+  data/dialog/s3_queue.json, data/strings/era3_devices.json,
+  docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md (status/decisions only),
+  docs/reinterp/01_SESSION_LOG.md, docs/reinterp/08_STATUS_REGISTER.md, BUILD_LOG.md
+Git discipline: stage with EXPLICIT PATHSPECS only, never `git add -A` or `git commit -a` — another
+session may share this worktree's index.
+
+DONE WHEN: npm run dev works; npm test passes; check-spec clean; every new beat reachable from the
+debug panel; BUILD_LOG gets ONE line (one line — not a paragraph); the session log gets the register
+calls and the retirement note for the old queue verbs.
+
+ACCEPTANCE, BY FEEL (Sérgio's criteria, checkable by playing it):
+- Applying a correction feels like copy-editing, not like harm. If it feels like harm, it is too
+  loud and the era stops working.
+- The proof-text is unremarkable. The player may not consciously notice it for several items.
+- "Route for mentorship" lands as a small cold drop, with no music sting and no commentary.
+- The brighten is the first time in the piece that a glitch is good news, and it should be felt
+  before it is understood.
+```
