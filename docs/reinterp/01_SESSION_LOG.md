@@ -3,6 +3,22 @@ STATUS: live
 
 ## NEXT UP (rebuilt 2026-07-25 — items 1-3 of the R29 list all shipped, S40/S41/S42; the list had
 ## gone stale again the same way, so it is pruned here. Top item = your session unless Sérgio says so.)
+0. **⚑ S66 — ROOM 2 IS UNUSABLE AS A PLACE (Sérgio's 2026-08-01 pass). The top item.** Six of his
+   eleven notes are this one job, and the software work is now ahead of the room it sits in.
+   (a) **The devices must come TO the player at a device seat** — his own fix, and the right one:
+   a held/framed close read instead of a camera craning down at a 7 cm phone from 0.77 m. The floor
+   discs at the seat's own (x,z) have been a flagged prototype simplification since R28-1
+   (`nodes.json` `_doc` says so); this is where that debt comes due. Touches `nodes.json`,
+   `app.ts`'s seat cut, `era3Devices.ts`'s placements.
+   (b) **Clipping and misplacement** — props through props, and the SHELF is in the wall again
+   (it has been fixed before; find out what re-broke it before re-nudging numbers).
+   (c) **The desk/PC assembly reads as unlit black blocks** — his "block symbol" on the bed → chair
+   jump is a prop, not a glyph. Materials/lighting, not geometry.
+   (d) **Marker logistics beyond the caption** — S65 stopped the hint nagging, but the deeper
+   question he raised is untouched: what a marker MEANS when the thing it takes you to is a screen
+   you then cannot read.
+   Do NOT improvise the art direction here — `REINTERP_3D_STYLE_DIRECTION` + the Soft Lo-Fi law,
+   and screenshots at every seat before and after.
 1. ~~**S57 — S2R.7: ERA 2 ENDS.**~~ **SHIPPED 2026-07-26 (Session 58, below)** — the residue now
    retires the send lane and arms the era's own close, the u3 ritual runs the established grammar,
    the belongings beat fires a second time as a MIGRATION, the restart lands the player in Room 2,
@@ -47,6 +63,62 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-01 · Session 65 — **SÉRGIO'S FIRST PASS ON THE CORRECTION LIST.** He played it and sent
+eleven notes. Five were software and are FIXED below; six are the ROOM, and they are a build this
+session deliberately did not start — see "NOT FIXED" and the top of NEXT UP. Touched:
+`graceQueueLite.ts`, `cluster.ts`, `engine/app.ts`, `s3_queue.json`, this log, BUILD_LOG.)*
+
+**⚑ THE ONE THAT MATTERED: "when I press the corrections it doesn't change the text on the side?"**
+He is right, and it was the whole mechanic. S64 shipped a list whose verbs greyed out a row and did
+nothing to the person. **Applying a correction now rewrites her words in front of you.** Each
+correction carries an `edit` in data: `replace` swaps the word (*lesbian* → *same-sex attracted*),
+`cut` removes the sentence, `mark` selects the forty seconds for the conference audio, `append` puts
+a call-to-action in her mouth in a voice that is not hers. **The corrections with no `edit` — add to
+the companion, pair with a partner, gender clarity review, and route for mentorship — do not touch
+her words at all.** That asymmetry is now doing real work: routing a person changes nothing on the
+page, which is precisely why it is the one that matters.
+
+**AND THE TWO SCREENS NOW DISAGREE ON PURPOSE.** The LAPTOP draws tracked changes: the cut sentence
+is still there, struck through and grey; the replaced word sits struck beside its replacement; the
+appended line is marked as added; the clipped forty seconds carry an editor's selection band. The
+TABLET publishes the result — cuts gone, the replacement reading as if it were always her word, no
+way for a reader to know. *No single edit is a lie, and together they remove the person* is now a
+thing the build SHOWS on two surfaces instead of a sentence in a doc. It also answers his "what is
+the queued audio here?": the chip finally has an antecedent, because the clip is visibly selected in
+her sentence. And it answers "what does the skip button do, can she skip?" — she can, always, and
+now the difference is legible: **Apply changes her text, Skip does not, the counter moves for one
+and not the other, and nothing else happens either way.**
+
+**Also fixed.** (a) **The symbol on top of the X button** — S64 put Lambient's badge in the title bar
+and it landed on the close box; a mark scribbled over the window's own controls is not a trust
+signal, it is a rendering bug. Moved to the bottom-left of the window body; the caption buttons own
+the top-right and nothing goes there. (b) **The name** — he asked "didn't we change the name?" and
+he was right that GraceQueue is the dead moderation app's name. The window now reads
+**`GracePlatform · Polish`**, which is not invented for the occasion: the u3 install changelog
+already promises a *"testimony polish queue"*, so the era now names itself from the update that
+installed it. (c) **"Click a marker to move" always on** — it was dismissed only by actually using a
+marker, so looking around, or moving via the review panel, left a permanent instruction pinned over
+the room. A caption that never leaves is furniture, and the frame does not nag: it now teaches once
+and fades after 7 s, and using a marker still dismisses it early. (d) **Room 2 had no light** —
+literally true, and the diagnosis is worth keeping: Room 1 has a LAMP, a prop you can see throwing
+light you can read as coming from it; Room 2 had one invisible ceiling omni at 2.15 m and nothing
+else, so it renders as flat brown fill with no source in it. Added `light-r2Screen`, the laptop's
+own cool spill at the panel — at night in 2016 the screen IS the lamp — rig-driven with the zone
+lights, so the lift carries it too. It puts the light doctrine the right way round: the warm lamp is
+Daniel's, and Vera's light comes out of the work.
+
+**⚑ NOT FIXED, and deliberately not started — THE ROOM IS ITS OWN BUILD.** Six of his notes are one
+job and it is not a patch: props clipping through each other and through walls, **the shelf back in
+the wall again**, the PC/desk assembly reading as unlit black blocks (his "block symbol" when
+jumping bed → chair is a prop, not a glyph), and — the big one — **the devices are unusable at their
+seats.** The movement markers are floor discs at the seat's own floor-projected (x,z), which
+`nodes.json` has flagged as a prototype simplification since R28-1, and the device seats aim a
+camera down at a 7 cm phone from 0.77 m in a dark room. **His fix is the right one and should be the
+spec: when you take a device seat, the device comes to you** — a held/close read, framed, instead of
+craning at a plane on furniture. That is a `nodes.json` + `app.ts` + `era3Devices.ts` job with real
+staging iteration in it, and half-doing it at the end of a session would have been worse than
+scoping it. Written up as the top item of NEXT UP.
+
 *(2026-08-01 · Session 64 — **ERA 3: THE CORRECTION LIST**, built to
 `REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` revision 4. Touched: `graceQueueLite.ts` (rewritten),
 `era3Devices.ts`, `cluster.ts`, `desktop/theme/era3.ts`, `state/ledger.ts`, `debug/panel.ts`,

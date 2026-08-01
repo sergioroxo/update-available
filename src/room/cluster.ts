@@ -284,6 +284,26 @@ export function buildClusterShell(
   };
   zoneLights.push(mkLight('light-zoneE', [3.88, 2.15, 0.7], '#E8B7C8', 5.4)); // Room 3 (east): the trans room / Maya
   zoneLights.push(mkLight('light-zoneW', [-3.88, 2.15, 0.7], '#D9A8A0', 5.4)); // Room 2 (west): the lesbian room / Vera
+  /**
+   * ⚑ ROOM 2'S OWN LIGHT (Session 65, Sérgio: *"there's a lot of clipping
+   * objects in this room and has no lights"* — the second half was exactly
+   * true). Room 1 has a LAMP: a prop you can see, throwing light you can read
+   * as coming from it. Room 2 had a single invisible ceiling omni at 2.15 m
+   * and nothing else, so the whole room was flat fill with no source in it —
+   * which is why it photographs as brown mud.
+   *
+   * The source it should have had is the one already on the desk. This is the
+   * laptop's own spill, cool and short-range, sitting at the panel: at night,
+   * in 2016, the screen IS the lamp. It also puts the piece's light doctrine
+   * on the right side of the room — the warm lamp is Daniel's, and Vera's
+   * light comes out of the work. The lift then does the rest of the argument
+   * by finally putting something warm in here.
+   *
+   * Registered in `zoneLights` so the per-era rig drives it with the others;
+   * `mayaGlow`'s existing '#8899BB' is reused rather than a new value.
+   */
+  const r2Screen = mkLight('light-r2Screen', [-4.9, 1.15, 0.7], '#8899BB', 2.4);
+  zoneLights.push(r2Screen);
   const mayaGlow = mkLight('light-mayaGlow', [4.4, 1.35, 0.7], '#8899BB', 3.0); // Room 3 interface light (E4)
   void mayaGlow; // rig-driven by id
 

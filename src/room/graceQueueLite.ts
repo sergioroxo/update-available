@@ -92,6 +92,8 @@ interface CorrectionDef {
    *  channel it attaches; this one does not announce that it sends a person.
    *  It is data, not a hardcoded id, because it is a content judgment. */
   quiet?: boolean;
+  /** what applying this correction DOES to her words — see `applyEdits` */
+  edit?: { kind: 'replace' | 'cut' | 'mark' | 'append'; find?: string; with?: string; text?: string };
   witnessApplied: string;
   witnessSkipped: string;
 }
@@ -168,10 +170,15 @@ function hit(r: Rect, x: number, y: number): boolean {
  *  the corrections were applied to it */
 export type TabletFeedItem = {
   author: string;
+  /** the PUBLISHED text — every applied edit made real and nothing struck out.
+   *  The reader is never shown a correction, only its result. */
   text: string;
   chips: string[];
   partner?: string;
 };
+
+/** one span of a submission, and what a correction did to it */
+type TextRun = { text: string; state: 'kept' | 'cut' | 'added' | 'marked' };
 
 /** everything the phone screen needs, read once per redraw by era3Devices */
 export type PhoneView = {
@@ -302,6 +309,78 @@ export class GraceQueueLite {
     const sub = this.submission();
     if (!sub) return undefined;
     return this.items(sub).find(c => !this.decisions.has(c.id));
+  }
+
+  /**
+   * ⚑ WHAT A CORRECTION ACTUALLY DOES — the thing the first build of this
+   * screen was missing, and the reason the mechanic did not read: applying a
+   * correction has to CHANGE HER WORDS, in front of you, or "apply" is just a
+   * button that greys out a row.
+   *
+   * Her text becomes a list of runs. `kept` is what she wrote and still says;
+   * `cut` is what a correction removed; `added` is what a correction put in
+   * her mouth; `marked` is the forty seconds selected for the conference
+   * audio. **Corrections with no `edit` do not touch her words at all** —
+   * routing her for mentorship changes nothing on the page, which is exactly
+   * why it is the one that matters.
+   *
+   * `tracked` decides which of the two truths is drawn:
+   *   true  (the LAPTOP) — tracked changes: the cut sentence is still there,
+   *         struck through and grey, so the player can always see what was
+   *         taken and by which rule.
+   *   false (the TABLET) — the published result: the cuts are simply gone, the
+   *         replacement reads as if it were always the word she used, and the
+   *         reader has no way of knowing. No single edit was a lie.
+   */
+  private runs(sub: SubmissionDef, tracked: boolean): TextRun[] {
+    let runs: TextRun[] = [{ text: sub.text, state: 'kept' }];
+    for (const c of this.items(sub)) {
+      if (this.decisions.get(c.id) !== 'applied' || !c.edit) continue;
+      const e = c.edit;
+      if (e.kind === 'append' && e.text) { runs.push({ text: ' ' + e.text, state: 'added' }); continue; }
+      if (!e.find) continue;
+      const next: TextRun[] = [];
+      for (const run of runs) {
+        const at = run.state === 'kept' ? run.text.indexOf(e.find) : -1;
+        if (at < 0) { next.push(run); continue; }
+        const before = run.text.slice(0, at);
+        const after = run.text.slice(at + e.find.length);
+        if (before) next.push({ text: before, state: 'kept' });
+        if (e.kind === 'mark') next.push({ text: e.find, state: 'marked' });
+        else if (tracked) {
+          next.push({ text: e.find, state: 'cut' });
+          if (e.kind === 'replace' && e.with) next.push({ text: ' ' + e.with, state: 'added' });
+        } else if (e.kind === 'replace' && e.with) {
+          next.push({ text: e.with, state: 'kept' });
+        }
+        if (after) next.push({ text: after, state: 'kept' });
+      }
+      runs = next;
+    }
+    return runs;
+  }
+
+  /** word-wrap ACROSS runs, so a struck-through sentence can break over lines
+   *  without losing which run each word belongs to */
+  private wrapRuns(ctx: CanvasRenderingContext2D, runs: TextRun[], maxW: number): TextRun[][] {
+    const lines: TextRun[][] = [];
+    let line: TextRun[] = [];
+    let w = 0;
+    for (const run of runs) {
+      for (const word of run.text.split(' ')) {
+        if (!word) continue;
+        const piece = line.length ? ' ' + word : word;
+        const pw = ctx.measureText(piece).width;
+        if (line.length && w + pw > maxW) { lines.push(line); line = []; w = 0; }
+        const t = line.length ? ' ' + word : word;
+        const last = line[line.length - 1];
+        if (last && last.state === run.state) last.text += t;
+        else line.push({ text: t, state: run.state });
+        w += ctx.measureText(t).width;
+      }
+    }
+    if (line.length) lines.push(line);
+    return lines;
   }
 
   /** the marks the applied corrections have left ON the person */
@@ -473,9 +552,12 @@ export class GraceQueueLite {
     for (let i = 0; i < this.subIdx && i < SUBMISSIONS.length; i++) {
       const sub = SUBMISSIONS[i];
       const { chips, partner } = this.chipsFor(sub);
+      // the PUBLISHED text: `tracked: false` — the cuts are gone, the
+      // replacement reads as her own word, and the reader cannot tell.
+      const text = this.runs(sub, false).map(r => r.text).join('').replace(/\s+([.,])/g, '$1').trim();
       out.push(partner
-        ? { author: sub.author, text: sub.text, chips, partner: partner.name }
-        : { author: sub.author, text: sub.text, chips });
+        ? { author: sub.author, text, chips, partner: partner.name }
+        : { author: sub.author, text, chips });
     }
     return out.reverse(); // newest at the top, like every feed of the era
   }
@@ -494,8 +576,13 @@ export class GraceQueueLite {
     aero.taskbar(ctx, W, H, '9:41'); // period placeholder clock, matches the phone's lock-screen clock
     const MARGIN = 14; const TASKBAR_H = 28;
     const winW = W - MARGIN * 2; const winH = H - TASKBAR_H - MARGIN - 8;
-    // the OS shell (SisterSignal) is what you sign INTO; GraceQueue is the
-    // app you land in — the window's own title reflects which.
+    // the OS shell (SisterSignal) is what you sign INTO; the polish tool is
+    // the app you land in — the window's own title reflects which. The title
+    // is no longer "GraceQueue": that was the moderation app's name, and there
+    // is no moderation any more. It is now the thing the install's own
+    // changelog already promised — GracePlatform's "testimony polish queue"
+    // (data/strings/updates.json, u3) — so the era names itself consistently
+    // from the update that installed it. PLACEHOLDER, Sérgio's call.
     const title = this.mode === 'signin' ? q.app.shellTitle : q.app.title;
     const c = aero.windowFrame(ctx, MARGIN, 8, winW, winH, title);
     aero.px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
@@ -616,7 +703,12 @@ export class GraceQueueLite {
     const rightW = c.x + c.w - rightX;
     this.drawSubmission(ctx, c.x, c.y, leftW, c.h, sub);
     this.drawCorrections(ctx, rightX, c.y, rightW, c.h, sub);
-    drawLambMark(ctx, c.x + c.w - 12, c.y - 20, 1.2); // the badge, in the chrome
+    // Lambient's badge sits at the BOTTOM-LEFT of the window body. It was in
+    // the title bar for one build and landed on top of the close box — a mark
+    // scribbled over the window's own controls, which is not a trust signal,
+    // it is a rendering bug (Sérgio caught it: "there's a symbol on top of the
+    // x button"). The caption buttons own the top-right; nothing goes there.
+    drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
   }
 
   /** ⚑ `felt`. A cream card with a rose spine — this era's own grammar for "a
@@ -625,25 +717,54 @@ export class GraceQueueLite {
   private drawSubmission(
     ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, sub: SubmissionDef
   ): void {
-    // the card is sized to her words, never her words to the card: whatever
-    // she wrote is on screen whole, and the chips take what is left.
-    setFont(ctx, 12);
-    const CHIP_ROOM = 76;
-    const maxLines = Math.max(4, Math.floor((h - CHIP_ROOM - 54) / 17));
-    const lines = wrapText(ctx, sub.text, w - 36).slice(0, maxLines);
-    const cardH = 40 + lines.length * 17 + 14;
+    // The card is sized to her words, never her words to the card. Corrections
+    // ADD text as well as strike it (the appended invitation is longer than
+    // anything she wrote), so the type steps down until the whole thing fits
+    // rather than truncating: whatever was done to her is on screen entire, or
+    // the tracked changes are pointless.
+    const { chips, partner } = this.chipsFor(sub);
+    const chipRoom = (chips.length ? 24 : 0) + (chips.length > 3 ? 18 : 0) + (partner ? 32 : 0) + 10;
+    const runs = this.runs(sub, true);
+    let size = 12; let lead = 17; let lines: TextRun[][] = [];
+    for (const trySize of [12, 11, 10, 9]) {
+      size = trySize; lead = trySize + 5;
+      setFont(ctx, size);
+      lines = this.wrapRuns(ctx, runs, w - 36);
+      if (40 + lines.length * lead + 14 <= h - chipRoom) break;
+    }
+    const maxLines = Math.max(4, Math.floor((h - chipRoom - 54) / lead));
+    lines = lines.slice(0, maxLines);
+    const cardH = 40 + lines.length * lead + 14;
     px(ctx, x, y, w, cardH, ERA3.memberBand);
     px(ctx, x, y, w, 1, ERA3.glassEdge);
     px(ctx, x, y + cardH - 1, w, 1, ERA3.glassEdge);
     px(ctx, x, y, 4, cardH, ERA3.memberSpine);
     setFont(ctx, 18); ctx.fillStyle = ERA3.ink;
     ctx.fillText(sub.author, x + 18, y + 12);
-    setFont(ctx, 12); ctx.fillStyle = ERA3.ink;
-    lines.forEach((ln, i) => ctx.fillText(ln, x + 18, y + 40 + i * 17));
+    // ⚑ HER WORDS, AS THE CORRECTIONS HAVE LEFT THEM — tracked, so what was
+    // taken is still visible. Nothing here comments; the page just changes.
+    setFont(ctx, size);
+    lines.forEach((run, i) => {
+      const ly = y + 40 + i * lead;
+      let lx = x + 18;
+      for (const seg of run) {
+        const segW = ctx.measureText(seg.text).width;
+        // the forty seconds selected for the conference audio: an editor's
+        // in/out selection over a person's sentence, drawn as a band with a
+        // rule under it — the same gesture any 2016 audio tool would make.
+        if (seg.state === 'marked') {
+          px(ctx, lx, ly - 3, segW, lead, ERA3.lambBand);
+          px(ctx, lx, ly - 3 + lead - 1, segW, 1, ERA3.lambTag);
+        }
+        ctx.fillStyle = seg.state === 'cut' ? ERA3.grey : seg.state === 'added' ? ERA3.greyDk : ERA3.ink;
+        ctx.fillText(seg.text, lx, ly);
+        if (seg.state === 'cut') px(ctx, lx, ly + Math.round(size / 2), segW, 1, ERA3.grey);
+        lx += segW;
+      }
+    });
 
     // ⚑ THE CHANNELS, attaching. Outside her card, in the tool's own colours —
     // the marks are the apparatus's, not hers.
-    const { chips, partner } = this.chipsFor(sub);
     let cx = x; let cy = y + cardH + 10;
     setFont(ctx, 10);
     for (const chip of chips) {

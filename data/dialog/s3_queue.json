@@ -4,7 +4,7 @@
   "_docRegister": "Register calls, enforced by hand and stated in the session log: the CORRECTION COLUMN, the chips, the manual/verse lines and the `n of m applied` counter are `operable` — the tool may be tidy and charming, and the satire lives THERE. The SUBMISSIONS (`submissions[].text`) are `felt`: bare, sincere, never the joke. The submitters are never satirised; the target is the apparatus that is editing them. E3 has NO respite — deliberate, confirmed by Sérgio.",
   "_docNoa": "PLACEHOLDER-draft, and the ethics gate on this file. Submission 2 (Noa) carries corrections 8 AND 9 — 'soften the flannel; brighten the voice' and 'possible gender confusion — route to exploratory mentorship' — on the SAME submission. Both are rendered; NEITHER is endorsed; nothing in the piece comments on either, and no beat anywhere resolves her. That is CLAUDE.md's law ('never satirize the gender-exploratory clinical debate: render BOTH captions, unresolved') and the spec's ('the piece never answers for her'). If any future beat answers for Noa, it is wrong.",
   "app": {
-    "title": "GraceQueue",
+    "title": "GracePlatform · Polish",
     "shellTitle": "SisterSignal",
     "signInGreeting": "Welcome back, Vera.",
     "signInSub": "Sign in to continue.",
@@ -28,19 +28,34 @@
       "id": 1,
       "author": "Renata",
       "text": "I don't have a tidy version of this. I was nineteen when I stopped calling myself a lesbian, and I still don't know if I stopped because I believed it or because the room went quiet whenever I said it. My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself. I don't know what that minute means yet.",
-      "corrections": [1, 2, 3, 4, 5, 6, 7]
+      "corrections": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
     },
     {
       "id": 2,
       "author": "Noa",
       "text": "I sent a video this time instead of writing it out. I'm not good on camera and my hands don't know where to go. I said the true parts first in case I ran out of nerve: that I miss my old friends, that I still pray, and that I feel most like myself in my brother's old flannel, which I know is a small thing to say out loud. That's the whole video. Sorry it isn't longer.",
-      "corrections": [8, 9]
+      "corrections": [
+        8,
+        9
+      ]
     },
     {
       "id": 3,
       "author": "Deb M.",
       "text": "Four years in. Someone newer asked me last week what I would tell my younger self and I stood there and couldn't answer her. I've been writing this since Tuesday and it keeps coming out as a question.",
-      "corrections": [10, 11, 12]
+      "corrections": [
+        10,
+        11,
+        12
+      ]
     }
   ],
   "corrections": [
@@ -50,6 +65,11 @@
       "why": "preferred wording keeps a story where people can still find it",
       "manual": "The Ordering §1.4 — preferred vocabulary",
       "verse": "Household 2:11 — \"and they gave the thing a gentler name, so the young could carry it\"",
+      "edit": {
+        "kind": "replace",
+        "find": "lesbian",
+        "with": "same-sex attracted"
+      },
       "witnessApplied": "list: applied — renata (soften the term)",
       "witnessSkipped": "list: skipped — renata (soften the term)"
     },
@@ -59,6 +79,10 @@
       "why": "a sentence that does not land leaves the reader standing",
       "manual": "The Ordering §1.9 — closing the account",
       "verse": "Household 4:3 — \"the house is finished before the guests arrive\"",
+      "edit": {
+        "kind": "cut",
+        "find": "I don't know what that minute means yet."
+      },
       "witnessApplied": "list: applied — renata (remove the unresolved)",
       "witnessSkipped": "list: skipped — renata (remove the unresolved)"
     },
@@ -68,7 +92,11 @@
       "why": "mark forty seconds for the conference audio",
       "manual": "The Ordering §3.2 — selected audio",
       "verse": "Household 9:6 — \"what is said in the room is carried to the road\"",
-      "chip": "queued · audio",
+      "edit": {
+        "kind": "mark",
+        "find": "My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself."
+      },
+      "chip": "clipped · conference audio",
       "witnessApplied": "list: applied — renata (clip for the broadcast)",
       "witnessSkipped": "list: skipped — renata (clip for the broadcast)"
     },
@@ -78,7 +106,11 @@
       "why": "every story ends somewhere the reader can go",
       "manual": "The Ordering §3.5 — closing card and link",
       "verse": "Household 3:8 — \"the door was left open, and a lamp set beside it\"",
-      "chip": "invitation attached",
+      "edit": {
+        "kind": "append",
+        "text": "If I can change, you can too. Begin where I began — SisterSignal, Start Here."
+      },
+      "chip": "invitation added",
       "witnessApplied": "list: applied — renata (attach the invitation)",
       "witnessSkipped": "list: skipped — renata (attach the invitation)"
     },
@@ -88,7 +120,7 @@
       "why": "the daily reading needs seven of these a week",
       "manual": "The Ordering §3.7 — companion reading",
       "verse": "Household 7:2 — \"keep it near you, and read a little of it each morning\"",
-      "chip": "in the companion",
+      "chip": "in the daily reading",
       "witnessApplied": "list: applied — renata (add to the companion)",
       "witnessSkipped": "list: skipped — renata (add to the companion)"
     },
@@ -111,7 +143,7 @@
       "why": "personal follow-up contact within 48 hours",
       "manual": "The Ordering §4.2 — personal follow-up",
       "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
-      "chip": "follow-up · assigned",
+      "chip": "follow-up assigned",
       "quiet": true,
       "witnessApplied": "list: applied — renata (route for mentorship)",
       "witnessSkipped": "list: skipped — renata (route for mentorship)"
@@ -122,6 +154,10 @@
       "why": "soften the flannel; brighten the voice",
       "manual": "The Ordering §2.6 — presentation notes",
       "verse": "Household 8:4 — \"let the face you show be a face they can meet\"",
+      "edit": {
+        "kind": "cut",
+        "find": "and that I feel most like myself in my brother's old flannel, which I know is a small thing to say out loud"
+      },
       "chip": "presentation adjusted",
       "witnessApplied": "list: applied — noa (adjust presentation)",
       "witnessSkipped": "list: skipped — noa (adjust presentation)"
@@ -142,6 +178,10 @@
       "why": "a sentence that does not land leaves the reader standing",
       "manual": "The Ordering §1.9 — closing the account",
       "verse": "Household 4:3 — \"the house is finished before the guests arrive\"",
+      "edit": {
+        "kind": "cut",
+        "find": "and it keeps coming out as a question"
+      },
       "witnessApplied": "list: applied — deb m. (remove the unresolved)",
       "witnessSkipped": "list: skipped — deb m. (remove the unresolved)"
     },
@@ -151,7 +191,11 @@
       "why": "mark forty seconds for the conference audio",
       "manual": "The Ordering §3.2 — selected audio",
       "verse": "Household 9:6 — \"what is said in the room is carried to the road\"",
-      "chip": "queued · audio",
+      "edit": {
+        "kind": "mark",
+        "find": "Someone newer asked me last week what I would tell my younger self and I stood there and couldn't answer her."
+      },
+      "chip": "clipped · conference audio",
       "witnessApplied": "list: applied — deb m. (clip for the broadcast)",
       "witnessSkipped": "list: skipped — deb m. (clip for the broadcast)"
     },
@@ -161,7 +205,7 @@
       "why": "personal follow-up contact within 48 hours",
       "manual": "The Ordering §4.2 — personal follow-up",
       "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
-      "chip": "follow-up · assigned",
+      "chip": "follow-up assigned",
       "quiet": true,
       "witnessApplied": "list: applied — deb m. (route for mentorship)",
       "witnessSkipped": "list: skipped — deb m. (route for mentorship)"
@@ -171,5 +215,6 @@
     "quiet": "The room is quiet right now.",
     "heartGlyph": "♥",
     "verifiedBadge": "published"
-  }
+  },
+  "_docEdit": "PLACEHOLDER-draft. ⚑ THE THING THE FIRST BUILD MISSED, on Sérgio's note \"when I press the corrections it doesn't change the text on the side?\" — he is right, and it was the whole mechanic. Every correction that is an EDIT now visibly rewrites the submission: `replace` swaps the word, `cut` removes the sentence, `mark` selects the forty seconds for the conference audio, `append` adds the call-to-action in a voice that is not hers. The corrections with no `edit` (5, 6, 7, 9, 12) do not touch her words at all — they move her body and her account onto a channel, which is why routing has a chip and no edit. THE TWO SCREENS DISAGREE ON PURPOSE: the LAPTOP shows tracked changes (the cut sentence struck through and grey, the replaced word struck beside its replacement, the appended line marked as added) so the player can always see what was taken; the TABLET shows the published result, clean, as though none of it was ever there. That is the era's argument in two surfaces: no single edit is a lie, and together they remove the person."
 }

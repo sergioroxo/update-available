@@ -790,6 +790,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let blinkTargetNode: string | null = null;
   let moveHintShown = false;
   let moveHintDismissed = false;
+  /** Session 65 (Sérgio: *"there's a 'click a marker to move' always on, we
+   *  need to think about this logistics"*). It was: shown the first time any
+   *  marker is offered, and hidden ONLY by actually using one — so a player
+   *  who looked around, or who moved with the review panel, kept a permanent
+   *  instruction pinned over the room. A caption that never leaves stops being
+   *  a caption and becomes furniture, and the frame does not get to nag. It
+   *  now teaches once and goes: it holds for HINT_SECONDS and then fades,
+   *  whether or not it was obeyed. Using a marker still dismisses it early. */
+  let moveHintT = -1;
+  const HINT_SECONDS = 7;
 
   // R28-2a: prop emphasis follows the ACTIVE side-message (data key
   // `emphasis`, resolved to prop ids here — geometry stays in .ts). This
@@ -1658,9 +1668,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (!moveHintShown && !moveHintDismissed && !busy && moveHint) {
           if (movementNodes.available(cluster.era, seatYaw).length > 0) {
             moveHintShown = true;
+            moveHintT = 0;
             moveHint.style.opacity = '1';
             moveHint.style.pointerEvents = 'auto';
           }
+        }
+        // it teaches once and leaves — see moveHintT's note
+        if (moveHintT >= 0) {
+          moveHintT += dt;
+          if (moveHintT >= HINT_SECONDS) { moveHintT = -1; dismissMoveHint(); }
         }
       }
 
