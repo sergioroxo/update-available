@@ -1212,6 +1212,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
     camMove = null;
     tween = null;
+
+    // ⚑ THE HELD READ (Session 66) — see era3Devices.ts's note. Taking the
+    // tablet or phone seat lifts that screen off the furniture into the hand;
+    // any other seat puts everything back. The resting BOX prop hides while
+    // its screen is held, so the object is never in two places at once.
+    const held: 'tablet' | 'phone' | null =
+      nodeId === 'r2-tablet' ? 'tablet' : nodeId === 'r2-phone' ? 'phone' : null;
+    era3Devices?.holdDevice(held, sp);
+    for (const [prop, name] of [['w_tabletDevice', 'tablet'], ['w_phoneDevice', 'phone']] as const) {
+      const h = room?.props.get(prop);
+      if (h) h.entity.enabled = held !== name;
+    }
   }
 
   /**

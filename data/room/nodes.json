@@ -48,16 +48,16 @@
       "seatYaw": 91,
       "label": "the tablet",
       "marker": [
-        -3.58,
+        -3.7,
         0.03,
-        0.35
+        0.62
       ],
       "pose": {
-        "x": -3.58,
-        "y": 1.05,
-        "z": 0.35,
-        "pitch": -37,
-        "yaw": 0
+        "x": -3.7,
+        "y": 1.16,
+        "z": 0.62,
+        "pitch": -14,
+        "yaw": 180
       },
       "eras": [
         "e3",
@@ -69,21 +69,22 @@
       "seatYaw": 92,
       "label": "the phone",
       "marker": [
-        -3.03,
+        -2.42,
         0.03,
-        0.3
+        0.12
       ],
       "pose": {
-        "x": -3.03,
-        "y": 1.0,
-        "z": 0.3,
-        "pitch": -38,
-        "yaw": 0
+        "x": -2.42,
+        "y": 1.14,
+        "z": 0.12,
+        "pitch": -16,
+        "yaw": 90
       },
       "eras": [
         "e3",
         "e4"
       ]
     }
-  ]
+  ],
+  "_docHeld": "Session 66 — the device seats no longer CRANE. They used to sit 0.6-0.8 m from a screen lying flat on furniture, pitched -37/-38 deg, which is how a 7 cm phone ended up carrying the era's break unreadably. The device now comes to the hand instead (src/room/era3Devices.ts, holdDevice), so these poses are ordinary seated ones: a gentle downward gaze at a thing held in front of you. `pose` still overrides seatPose() exactly as before; only the numbers changed, and the held pose is DERIVED from them, so retuning a seat moves its device with it. PLACEHOLDER-draft framing, Sérgio's to retune by feel."
 }

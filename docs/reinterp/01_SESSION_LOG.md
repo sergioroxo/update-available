@@ -143,6 +143,117 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-02 · Session 66 — **ROOM 2 BECOMES A PLACE.** The four lettered items, plus what
+building it turned up. Touched: `era1room.ts`, `assets.ts`, `clusterMorph.ts`, `cluster.ts`,
+`era3Devices.ts`, `engine/app.ts`, `debug/panel.ts`, `reinterp_deltas.json`, `models`-adjacent
+data (`cluster.json`, `nodes.json`), this log, BUILD_LOG.)*
+
+**⚑ THREE ROOT CAUSES, and none of them was the thing the note described.** All three were found by
+measuring in-engine rather than by reading the data, which is the method this brief asked for and
+the reason it was worth asking for.
+
+**1 · The material law has only ever applied to Room 1.** `classifyProp` in `era1room.ts` matched
+BARE id prefixes (`bed`, `book`, `rug`), and the side rooms prefix everything with their own letter
+(`w_bed`, `e_rug`, `w1doorFront`). **All 83 props in Rooms 2 and 3 fell through to `set`** and were
+rendered colour-true and crisp. So the entire §2-E1 soft/crisp split — the thing that makes Room 1
+read as lived-in — had never touched the room Sérgio was complaining about. That is most of why Room
+2 read as furniture (nothing was soft, so nothing was personal) and **all** of why the monitor read
+as an unlit block: `set` left an authored near-black diffuse exactly as dark as it was written.
+Stripping the prefix fixed both at once. `system` also stopped being a no-op — it now carries a small
+ABSOLUTE emissive floor, because "leave it colour-true" is right for a mid-tone instrument and
+catastrophic for a dark one: a near-black prop under a dim rig is not a crisp object, it is a hole.
+**That hole is Sérgio's "block symbol" on the bed→chair jump.** It was a prop, as suspected — but not
+a misplaced one; it was a correctly-placed prop with no light on it and no floor under its colour.
+
+**2 · The shelf did not "re-break". It was never fixed.** `models.json` already carries S61's own
+note that `sideTable.glb` had "a blanket 1.9 copied from bed/bookcase/rug, and nobody ever measured
+it". **S61 measured one of the four props carrying that blanket scale and left the other three.**
+Measured live this session against the boxes their placement was authored against:
+
+| prop | authored box | actually rendered | verdict |
+|---|---|---|---|
+| `w_desk` | 1.40 × 0.75 × 0.60 | 1.76 × 0.73 × **0.90** | 50% too deep |
+| `w_bookcase` | 0.75 × 1.70 × 0.50 | 0.75 × 1.67 × **0.76** | 52% too deep → **through the wall** |
+| `w_rug` | 1.60 × 0.02 × 1.50 | 1.75 × 0.02 × **2.98** | 99% too long |
+| `w_bed` | 1.05 × 0.50 × 2.05 | 1.09 × 0.71 × 2.14 | the BOX was the wrong one |
+
+So the bookcase has always been 0.26 m deeper than the box its position was computed against, and an
+earlier pass "fixing" it nudged a position against a phantom. The overlap report also found a fault
+**bigger than the shelf and nobody had mentioned it: the bed was inside the desk, 0.47 × 0.71 × 0.27
+m.** Fixed by measurement, not by eye — an in-engine solver perturbs each model axis, learns which
+world extent it drives, and iterates the scale until rendered == authored. The bed KEEPS its uniform
+1.9 (the mesh is a plausible bed; squashing Y by 0.7 to hit a guessed 0.5 would distort the
+headboard) and its authored box was corrected to the measurement instead.
+⚑ **Room 1 carries the identical debt** — its desk/bookcase/rug boxes are the same intent and the
+same meshes. It is NOT fixed here: Room 1 is the benchmark that currently reads correctly, and
+silently resizing the good room to fix the broken one is a bad trade. The correction is applied
+per-prop (new `modelScale`), so Room 1 is untouched and can adopt it deliberately.
+⚑ **And a third bug behind the second:** `modelScale` existed in the data and was honoured by the
+spawner, and the FOLD between them (`clusterMorph.foldTargets`) silently dropped it — so the data
+looked right and the bookcase stayed in the wall. Threaded through. This is the third time this
+codebase has been bitten by a field that exists at both ends and is lost in the middle.
+
+**3 · Room 2's light had no source in it.** S65 gave it the laptop's cold spill, which was half a
+fix: a room lit only by the thing doing this to her is a thesis, not a home. The style direction's
+governing idea is that the warm light is life and it needs a source you can SEE — Room 1's lamp is
+canon's one constant object for exactly that reason. Room 2 now has **her own desk lamp**
+(`w_lamp2*` + `light-r2Lamp`, rig-driven, appearing at E3 and pulled down at E4 as the cold light
+wins). The room stopped photographing as brown mud the moment it had something throwing light in it.
+
+**⚑ (a) THE HELD READ — the biggest item, and it works.** Taking the tablet or phone seat now lifts
+that screen off the furniture into a held pose in front of the camera, and puts it back on leaving.
+The debt was flagged in its own data: `nodes.json`'s `_doc` has called the floor-disc-at-the-seat's-
+own-(x,z) "a deliberate prototype simplification" since R28-1. For a room seat that is fine; for a
+7 cm phone it meant craning at 38° from 0.77 m **at the object carrying the era's break**. Three
+properties worth keeping: the held pose is DERIVED from the seat's camera pose (a retuned seat drags
+its device with it), click routing needed NO changes at all (`hitPlane` reads the live world
+transform, so the Malta reply field stays pressable while held), and the resting box prop hides while
+its screen is in hand. The seats themselves stopped craning too — both are ordinary seated poses now
+(−14°/−16°), because the thing you are reading comes up to meet you.
+**And (d) answers itself:** a marker now means *go and read this*, and the reading is possible. The
+remaining marker question is not about markers.
+
+**FRAMING, decided in-engine by looking.** The device seats were re-aimed at what is BEHIND the
+screen: from the bed the tablet sits against her bookcase; from the nightstand the phone sits against
+**the desk she just put down**, which is the era's own image — she reads that it is illegal somewhere
+with the correction list still in the frame. Held distances tuned twice (0.46 → 0.60 tablet,
+0.30 → 0.36 phone) because at the first setting the device filled the frame and the room she is in
+disappeared, which defeats the point of having furnished it.
+
+**⚑ VERA'S THINGS — the contract, delivered.** ~38 new props, every colour taken from Room 1's own
+palette or this room's; nothing invented. Her desk lamp, a mug, a notepad and pen, a cardigan over
+the chair back, a pillow and a folded throw, slippers by the bed, a glass on the nightstand, three
+shelves of books, a small radio, one framed picture, a wall calendar reading December 2016 (which is
+only what the phone already says), and a laundry basket by the door. **The books are eighteen
+separate spines, not three blocks** — that single change is the difference between a decorated shelf
+and somebody's reading, and it was only obvious once it was on screen. Nothing here asserts a story:
+these are staging calls, which the brief put on my side of the line. **What returns and who the era
+is about stays Sérgio's, and nothing was built toward it.**
+
+**Register:** every belonging classifies `personal` (soft, desaturated, warm-nudged — they recede);
+the flat panel and the devices classify `system` (crisp, color-true, now with a floor). Vera is never
+the joke and her things are not evidence. E3 still has no respite.
+
+**Verified in-engine:** clipping report down from 13 overlaps to 3 to 0 real ones (the remainder are
+things resting on the things they rest on, which the report now models); measured extents match the
+authored boxes exactly (desk 0.60×0.75×1.40, bookcase 0.50×1.70×0.75, rug 1.50×0.02×1.60); draw
+calls **40** at the desk seat with 160 props batched, inside the ≤60 Quest budget; `?flat=1&reinterp=1`
+renders the 2D fallback with one canvas and zero console errors; `npx tsc --noEmit`, `npm test`
+(palette 33/34, C6 39/39) and `npm run build` all green. Screenshots taken at the desk seat (default
+and turned), the bookcase facing, and both device seats before and after the held read.
+
+**⚑ PROPOSALS, each deletable in one line.** (1) *Her desk lamp* — ROLLBACK: delete `light-r2Lamp`,
+the three `w_lamp2*` props and the `r2Lamp` rig entries. (2) *The held read* — ROLLBACK: delete the
+`holdDevice` call in `app.ts`'s `performSeatCut`; everything returns to rest poses. (3) *Per-prop
+`modelScale`* — ROLLBACK: delete the four `modelScale` fields in `reinterp_deltas.json`.
+
+**NOT FIXED, and named rather than quietly skipped.** (i) The `?debug=1` "CURRENT:" readout reports
+Room 1 at both device seats — the "you are here" line Sérgio navigates by is wrong for the two seats
+this session just rebuilt. Small, real, and outside what the four items covered. (ii) Room 1's
+inherited scale debt (above). (iii) The desk seat still frames the monitor tightly enough that the
+desk surface — mug, keyboard, lamp — sits below the default gaze; you find it by turning, which is
+the mechanic, but it is a framing call worth Sérgio's eye rather than mine.
+
 *(2026-08-01 · Session 65 — **SÉRGIO'S FIRST PASS ON THE CORRECTION LIST.** He played it and sent
 eleven notes. Five were software and are FIXED below; six are the ROOM, and they are a build this
 session deliberately did not start — see "NOT FIXED" and the top of NEXT UP. Touched:

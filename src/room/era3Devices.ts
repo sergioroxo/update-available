@@ -96,12 +96,17 @@ const PLACEMENT = {
     // closer to the chair. This plane sits proud of `w_flatPanelScreen`'s
     // real-world face (measured the same way the CRT's was: box center
     // world x ≈ -5.005, thin axis half-extent 0.01 → box max x ≈ -4.995).
-    pos: { x: -4.97, y: 1.1, z: 0.7 },
+    // Session 66: the desk was measured and re-placed (it rendered 0.9 m deep
+    // against an authored 0.6), taking the flat panel with it — this plane
+    // rides the panel's new face at x ≈ -5.24.
+    pos: { x: -5.22, y: 1.1, z: 0.7 },
     size: { w: 0.52, h: 0.3 },
     euler: { x: 90, y: 90, z: 0 } // verified in-browser (Session 37): normal (+1,0,0), faces the chair
   },
   tablet: {
-    pos: { x: -3.58, y: 0.565, z: -0.3 },
+    // Session 66: on the bed's new position, and its REST pose only — taking
+    // the tablet seat lifts it to the hand (see THE HELD READ).
+    pos: { x: -3.70, y: 0.72, z: -0.10 },
     size: { w: 0.16, h: 0.22 },
     euler: { x: 0, y: 0, z: 0 } // flat, screen-up
   },
@@ -113,7 +118,8 @@ const PLACEMENT = {
     // slab where the room authors a 0.4 x 0.5 x 0.4 nightstand — Sérgio's "box
     // on the floor". data/room/models.json now scales it to its authored box
     // (measured top 0.500), so the phone comes down with the surface it lies on.
-    pos: { x: -3.03, y: 0.525, z: -0.3 },
+    // Session 66: on the nightstand's new position; REST pose only.
+    pos: { x: -2.42, y: 0.51, z: -0.72 },
     size: { w: 0.07, h: 0.14 },
     euler: { x: 0, y: 0, z: 0 } // flat, screen-up
   }
@@ -127,16 +133,14 @@ const PLACEMENT = {
  *  kind of "layout" nodes.json already owns for the base three room seats,
  *  so the device seats follow the same home). FABLE/SÉRGIO CHECK throughout. */
 export const DEVICE_SEAT_POSES = {
-  // Sérgio's live readability note (Session 37): "bias closer" — both pulled
-  // in from the original 1.3m viewing distance to ~0.6-0.65m (still clear of
-  // the bed/nightstand's REAL measured AABB, not the box-fallback size — see
-  // the session log's geometry note), pitch recomputed for the new distance.
-  'r2-tablet': { x: -3.58, y: 1.05, z: 0.35, pitch: -37, yaw: 0 },
-  // Session 61: pitch -23 → -38. The seat is unmoved; the PHONE came down
-  // 0.23 m with its re-scaled nightstand (see PLACEMENT.phone above), so the
-  // old aim looked over the top of it. Kept in step with data/room/nodes.json,
-  // which stays the authoritative copy.
-  'r2-phone': { x: -3.03, y: 1.0, z: 0.3, pitch: -38, yaw: 0 }
+  // ⚑ Session 66: both seats STOPPED CRANING. S37 biased them closer and S61
+  // re-aimed the phone downward, and each was the right local fix for a wrong
+  // premise — that the way to read a 7 cm object lying on furniture is to put
+  // your face near it. The device is lifted to the hand now (`holdDevice`),
+  // so these are ordinary seated poses with a gentle downward gaze, and the
+  // held pose is DERIVED from them (a retuned seat brings its device along).
+  'r2-tablet': { x: -3.70, y: 1.16, z: 0.62, pitch: -14, yaw: 180 },
+  'r2-phone': { x: -2.42, y: 1.14, z: 0.12, pitch: -16, yaw: 90 }
 } as const;
 
 function makeCanvas(logicalW: number, logicalH: number, scale: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
@@ -223,6 +227,45 @@ function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number, fe
 // `phonePanel`, `phoneDim`, `phoneMeta`, `phoneText`) — unchanged in value, and
 // no longer in breach of the palette law that says colour lives in the theme.
 
+/**
+ * ⚑ THE HELD READ (Session 66) — the era's biggest usability debt, closed.
+ *
+ * Sérgio, after playing it: *"when you move to markers the objects are just
+ * impossible to use and to view"*, and his own fix, which is the right one:
+ * *"the other objects when we jump to the marker they should come closer to us
+ * so we can 'use' them."*
+ *
+ * The debt is old and was flagged in its own data: `data/room/nodes.json`'s
+ * `_doc` has said since R28-1 that a marker is placed at the seat's own
+ * floor-projected (x,z) as *"a deliberate prototype simplification"*. For a
+ * ROOM seat that is fine. For a 7 cm phone lying on a nightstand it meant the
+ * camera craned down at 38° from 0.77 m at an object the size of a thumbnail,
+ * and the era's break — two lines from Malta and a reply field — was staged on
+ * it. The content was unreadable at the seat it is read from.
+ *
+ * So the device comes to the hand instead. Taking a device seat lifts that
+ * screen off the furniture to a HELD pose in front of the camera; leaving puts
+ * it back. It is the one thing a piece whose law is *you never walk* can still
+ * do honestly: you cannot cross the room, but you can pick up your own phone.
+ *
+ * Three properties worth keeping:
+ *  - the held pose is DERIVED from the seat's own camera pose, so it cannot
+ *    drift out of frame if a seat is ever retuned;
+ *  - click routing needs no changes at all — `hitPlane` reads the entity's live
+ *    world transform, so the reply field stays pressable while held;
+ *  - the resting box prop hides while its screen is in hand (app.ts), so there
+ *    is never a phone on the nightstand AND a phone in front of you.
+ *
+ * ROLLBACK: `holdDevice(null)` is a no-op path — delete the `holdDevice` call
+ * in app.ts's `performSeatCut` and everything returns to the rest poses.
+ */
+export type HeldDevice = 'tablet' | 'phone' | null;
+/** how far in front of the eye each device sits when held, in metres. A phone
+ *  is held closer than a tablet because it is smaller, not because it matters
+ *  more — both end up subtending roughly the same angle. */
+const HELD_DISTANCE = { tablet: 0.60, phone: 0.36 } as const;
+const HOLD_SECONDS = 0.45;
+
 export interface Era3Devices {
   /** call once a frame — uploads any screen whose content just changed. The
    *  phone still draws/uploads exactly ONCE (Session 37's original law,
@@ -242,6 +285,10 @@ export interface Era3Devices {
    *  boot belongs to the moment you ARRIVE, not to the moment the era flips
    *  (which is ~30 s earlier, in another room). No-op if already started. */
   beginArrival(): void;
+  /** ⚑ raise a device to the hand (or `null` to put everything back) — see the
+   *  HELD READ note above. `seat` is the camera pose being cut to; the held
+   *  pose is computed from it, so the two can never disagree. */
+  holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
   /** screen px → world ray (from app.ts's own screenRay()) → the laptop
    *  plane's logical canvas coords, generalized for ANY plane orientation
    *  (the laptop's vertical euler differs from the tablet/phone's flat
@@ -321,6 +368,14 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
      *  once at construction and never again, per Session 37's original law. */
     versionOf?: () => number;
     lastVersion?: number;
+    /** where this screen LIVES when nobody is holding it (see HELD READ) */
+    restPos: pc.Vec3;
+    restEuler: pc.Vec3;
+    /** the pose it is travelling toward, and how far along it is (0 = rest) */
+    heldPos?: pc.Vec3;
+    heldEuler?: pc.Vec3;
+    holdK: number;      // 0 = on the furniture, 1 = in the hand
+    holdTo: number;     // the target for holdK
   };
   const screens: Screen[] = [];
   // ⚑ THE LIFT's one wire: the laptop's break reaches the ROOM's light through
@@ -338,7 +393,34 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     entity.setLocalEulerAngles(place.euler.x, place.euler.y, place.euler.z);
     entity.enabled = false; // setEra() decides visibility
     app.root.addChild(entity);
-    screens.push({ name, canvas, ctx, tex, entity, dirty: true, logical: { w: logical.w, h: logical.h }, versionOf: opts.versionOf, lastVersion: opts.versionOf ? opts.versionOf() : undefined });
+    screens.push({
+      name, canvas, ctx, tex, entity, dirty: true, logical: { w: logical.w, h: logical.h },
+      versionOf: opts.versionOf, lastVersion: opts.versionOf ? opts.versionOf() : undefined,
+      restPos: new pc.Vec3(place.pos.x, place.pos.y, place.pos.z),
+      restEuler: new pc.Vec3(place.euler.x, place.euler.y, place.euler.z),
+      holdK: 0, holdTo: 0
+    });
+  }
+
+  /**
+   * The held pose, derived from the seat's camera pose. `pitch`/`yaw` are the
+   * camera's own, so "in front of the eye" is computed rather than authored —
+   * a retuned seat drags its held device with it and cannot leave it behind.
+   *
+   * The plane primitive faces +Y, which is why the euler is (90 + pitch, yaw,
+   * 0) rather than the camera's own angles: PLACEMENT.laptop already uses the
+   * same +90 convention to stand a screen upright, and the pitch term tilts the
+   * device to meet a downward gaze the way a held object actually does.
+   */
+  function heldPoseFor(name: keyof typeof PLACEMENT, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): { pos: pc.Vec3; euler: pc.Vec3 } {
+    const dist = name === 'phone' ? HELD_DISTANCE.phone : HELD_DISTANCE.tablet;
+    const p = seat.pitch * Math.PI / 180;
+    const y = seat.yaw * Math.PI / 180;
+    const fwd = new pc.Vec3(-Math.sin(y) * Math.cos(p), Math.sin(p), -Math.cos(y) * Math.cos(p));
+    return {
+      pos: new pc.Vec3(seat.x + fwd.x * dist, seat.y + fwd.y * dist, seat.z + fwd.z * dist),
+      euler: new pc.Vec3(90 + seat.pitch, seat.yaw, 0)
+    };
   }
 
   add('laptop', LOGICAL.laptop, (ctx, w, h) => graceQueueLite.draw(ctx, w, h), { versionOf: () => graceQueueLite.version });
@@ -359,6 +441,27 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // schedule, so the redraw path below is unchanged and still fires only
       // on a real content change — never per frame. See GraceQueueLite's header.
       graceQueueLite.update(dt);
+      // the held read's own easing — position/rotation only, never a redraw:
+      // moving a screen through the room does not change a pixel on it, so
+      // this cannot dirty a canvas and the upload law below is untouched.
+      for (const s of screens) {
+        if (s.holdK === s.holdTo) continue;
+        const step = dt / HOLD_SECONDS;
+        s.holdK = s.holdTo > s.holdK ? Math.min(s.holdTo, s.holdK + step) : Math.max(s.holdTo, s.holdK - step);
+        const k = s.holdK * s.holdK * (3 - 2 * s.holdK);
+        const hp = s.heldPos ?? s.restPos;
+        const he = s.heldEuler ?? s.restEuler;
+        s.entity.setLocalPosition(
+          s.restPos.x + (hp.x - s.restPos.x) * k,
+          s.restPos.y + (hp.y - s.restPos.y) * k,
+          s.restPos.z + (hp.z - s.restPos.z) * k
+        );
+        s.entity.setLocalEulerAngles(
+          s.restEuler.x + (he.x - s.restEuler.x) * k,
+          s.restEuler.y + (he.y - s.restEuler.y) * k,
+          s.restEuler.z + (he.z - s.restEuler.z) * k
+        );
+      }
       for (const s of screens) {
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
           s.lastVersion = s.versionOf();
@@ -387,6 +490,19 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     },
     beginArrival(): void {
       graceQueueLite.beginArrival();
+    },
+    holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void {
+      for (const s of screens) {
+        if (s.name === 'laptop') continue; // the laptop is already at reading distance
+        if (s.name === which) {
+          const hp = heldPoseFor(s.name, seat);
+          s.heldPos = hp.pos;
+          s.heldEuler = hp.euler;
+          s.holdTo = 1;
+        } else {
+          s.holdTo = 0;
+        }
+      }
     },
     handleLaptopPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
       const test = (name: 'laptop' | 'phone'): { x: number; y: number } | null => {

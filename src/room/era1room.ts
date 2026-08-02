@@ -26,6 +26,11 @@ export interface PropDef {
    *  If the model is loaded, this prop spawns the MESH (recolored to `color`);
    *  otherwise it falls back to the box defined by `size`. */
   model?: string;
+  /** OPTIONAL per-prop mesh scale, overriding data/room/models.json's per-KEY
+   *  scale. Present because one model key furnishes three rooms at different
+   *  measured sizes — see spawnModel's note. Set it only from a MEASUREMENT
+   *  (the in-engine solver in the Session 66 log), never by eye. */
+  modelScale?: number | [number, number, number] | number[];
 }
 
 interface LightDef {
@@ -100,13 +105,40 @@ const clamp01 = (x: number): number => (x < 0 ? 0 : x > 1 ? 1 : x);
  */
 type StyleTier = 'hero' | 'system' | 'personal' | 'fog' | 'set';
 
-function classifyProp(id: string): StyleTier {
-  const is = (...pre: string[]): boolean => pre.some(p => id.startsWith(p));
+/**
+ * ⚑ SESSION 66 — THE ROOM PREFIX, and why Rooms 2 and 3 never looked lived in.
+ *
+ * This function matched BARE id prefixes (`bed`, `book`, `rug`…), and the side
+ * rooms prefix every prop with their own letter: `w_bed`, `w_bookcase`,
+ * `e_rug`, `w1doorFront`. So all 83 props in Rooms 2 and 3 fell through to
+ * `set` and were rendered colour-true and crisp — **the entire §2-E1 material
+ * law has only ever applied to Room 1.** That is most of why Room 2 reads as
+ * furniture rather than a life (nothing is soft, so nothing is personal), and
+ * all of why its near-black monitor shell renders as an unlit block: `set`
+ * leaves the authored near-black diffuse exactly as dark as it was written, in a room whose
+ * only light until last session was an invisible ceiling omni.
+ *
+ * Stripping the prefix is the whole fix; the tier lists below then do the work
+ * they were always meant to do in every room at once.
+ */
+/** `w_bed` → `bed`, `w1doorFront` → `doorFront`, `bed` → `bed` */
+const bare = (id: string): string => id.replace(/^[we](_|1)/, '');
+
+function classifyProp(rawId: string): StyleTier {
+  const id = bare(rawId);
+  const is = (...pre: string[]): boolean =>
+    pre.some(p => id.toLowerCase().startsWith(p.toLowerCase()));
   if (is('crt', 'kit')) return 'hero';                 // monitor + starter kit (≤3 hero)
-  if (is('tower', 'keyboard', 'mouse', 'modem')) return 'system'; // the apparatus's gear
-  if (is('sodaCan', 'homeworkPile')) return 'fog';     // incidental floor clutter
+  // the apparatus's gear — Room 2's flat panel is the same tier as Room 1's
+  // tower: the system's instruments are the most defined objects in the room.
+  if (is('tower', 'keyboard', 'mouse', 'modem', 'flatPanel',
+         'tabletDevice', 'phoneDevice')) return 'system';
+  if (is('sodaCan', 'homeworkPile', 'plant_', 'sign')) return 'fog';
   if (is('bed', 'mattress', 'blanket', 'pillow', 'poster', 'boombox',
-         'mixtape', 'book', 'cdStack', 'curtain', 'rug')) return 'personal';
+         'mixtape', 'book', 'cdStack', 'curtain', 'rug',
+         // Session 66 — Vera's own things (see data/room/reinterp_deltas.json)
+         'mug', 'cardigan', 'slippers', 'papers', 'calendar', 'frame',
+         'radio', 'laundry', 'throw', 'notepad', 'lamp2', 'glass')) return 'personal';
   return 'set';                                        // desk/shelf/door/chair/lamp/shell — left true
 }
 
@@ -130,7 +162,23 @@ function styleMaterial(material: pc.StandardMaterial, id: string): void {
     case 'hero':     // stays crisp/true; a faint self-emissive keeps it the most-defined thing
       material.emissive = new pc.Color(material.diffuse.r * 0.10, material.diffuse.g * 0.10, material.diffuse.b * 0.10);
       break;
-    // 'system' + 'set': left color-true (crisp)
+    case 'system':
+      // ⚑ Session 66. `system` used to be a no-op ("left color-true"), which is
+      // right for a mid-tone instrument and catastrophic for a dark one: Room
+      // 2's flat panel is authored near-black, and such a diffuse under a
+      // dim rig is not a crisp object, it is a HOLE — Sérgio's "block symbol"
+      // on the bed→chair jump, which he reasonably read as a missing glyph.
+      // A small ABSOLUTE emissive floor (not a fraction of the diffuse, which
+      // would give a black prop nothing) keeps the apparatus's gear readable as
+      // an object in any light, and reads as what it physically is: a device
+      // that is switched on. Definition still follows the cold light.
+      material.emissive = new pc.Color(
+        Math.max(material.diffuse.r, 0.16) * 0.34,
+        Math.max(material.diffuse.g, 0.16) * 0.34,
+        Math.max(material.diffuse.b, 0.20) * 0.34
+      );
+      break;
+    // 'set': left color-true (crisp)
   }
 }
 
@@ -153,7 +201,9 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
   let e: pc.Entity | null = null;
   let isModel = false;
   if (room.reinterp && p.model && hasModel(p.model)) {
-    e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0, p.color);
+    const ms = p.modelScale;
+    e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0, p.color,
+      Array.isArray(ms) ? [ms[0], ms[1], ms[2]] : ms);
     if (e) { e.name = p.id; isModel = true; }
   }
   if (!e) {

@@ -35,7 +35,7 @@ interface Delta {
   // `yaw` (Session 56): same story — a `props` override silently dropped it
   // exactly like `model` used to, so mixtape's small "face the seat" turn
   // (data/room/reinterp_deltas.json) did nothing until this was added too.
-  props?: Record<string, { color?: string; pos?: number[]; size?: number[]; model?: string; yaw?: number }>;
+  props?: Record<string, { color?: string; pos?: number[]; size?: number[]; model?: string; yaw?: number; modelScale?: number | number[] }>;
   remove?: string[];
   add?: PropDef[];
 }
@@ -50,14 +50,14 @@ const DELTA_LIST: Delta[] = SPACE_STATES.map(
   s => (deltas as unknown as Record<string, Delta>)[s]
 );
 
-interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string }
+interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string; modelScale?: number | number[] }
 
 /** fold base + deltas 0..idx → each prop's full target state (module-level so
  *  the static-set computation shares the exact same fold the morph runs) */
 function foldTargets(idx: number): Map<string, PropTarget> {
   const m = new Map<string, PropTarget>();
   for (const d of (era1 as unknown as { props: PropDef[] }).props) {
-    m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model });
+    m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model, modelScale: d.modelScale });
   }
   for (let i = 0; i <= idx; i++) {
     const delta = DELTA_LIST[i];
@@ -68,11 +68,12 @@ function foldTargets(idx: number): Map<string, PropTarget> {
       if (o.pos) t.pos = [...o.pos];
       if (o.size) t.size = [...o.size];
       if (o.model) t.model = o.model;
+      if (o.modelScale) t.modelScale = o.modelScale;
       if (o.yaw !== undefined) t.yaw = o.yaw;
     }
     for (const id of delta.remove ?? []) { const t = m.get(id); if (t) t.present = false; }
     for (const def of delta.add ?? []) {
-      m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model });
+      m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model, modelScale: def.modelScale });
     }
   }
   return m;
@@ -185,7 +186,13 @@ export class ClusterMorph {
   private spawnTarget(id: string, t: PropTarget): PropHandle {
     return spawnProp(this.room, {
       id, pos: t.pos as [number, number, number], size: t.size as [number, number, number],
-      color: t.color, emissive: t.emissive, yaw: t.yaw, model: t.model
+      // Session 66: `modelScale` MUST travel with the target. It is set on
+      // three Room-2 props from an in-engine measurement, and dropping it here
+      // (as the fold silently did at first) puts the bookcase back through the
+      // wall with the data looking correct — the exact shape of bug this
+      // codebase keeps hitting: a field that exists in data, is honoured by
+      // the spawner, and is lost in the layer between them.
+      color: t.color, emissive: t.emissive, yaw: t.yaw, model: t.model, modelScale: t.modelScale
     });
   }
 

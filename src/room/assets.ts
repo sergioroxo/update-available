@@ -138,7 +138,7 @@ function tintModel(root: pc.Entity, colorHex: string): void {
  * room/morph transforms — its scale is 1, so the morph can't distort the mesh.
  * Returns null if the model isn't loaded (caller falls back to a box).
  */
-export function spawnModel(key: string, pos: number[], propYaw: number, colorHex?: string): pc.Entity | null {
+export function spawnModel(key: string, pos: number[], propYaw: number, colorHex?: string, scaleOverride?: Scale): pc.Entity | null {
   const asset = containers.get(key);
   const res = asset?.resource as { instantiateRenderEntity?: () => pc.Entity } | undefined;
   if (!res?.instantiateRenderEntity) return null;
@@ -147,7 +147,19 @@ export function spawnModel(key: string, pos: number[], propYaw: number, colorHex
 
   // scale may be uniform (number) or per-axis [sx,sy,sz] — the latter lets a
   // piece (e.g. the desk) get wider/deeper without getting taller.
-  const s = m.scale;
+  //
+  // ⚑ `scaleOverride` (Session 66) is a PER-PROP scale, and it exists because
+  // the manifest scale is per-MODEL-KEY while the same key furnishes three
+  // different rooms. Room 2's desk/bookcase/rug were measured this session at
+  // 50–99% larger than the box their placement was authored against — which is
+  // what put the bookcase through the wall and the bed inside the desk. Room 1
+  // carries the identical debt, but Room 1 is the benchmark that currently
+  // reads correctly, and silently resizing its furniture to fix Room 2 would
+  // trade a known-good room for an unmeasured one. So the correction is
+  // applied where it was measured. See the session log for Room 1's inherited
+  // debt; ROLLBACK is deleting the four `modelScale` fields in
+  // data/room/reinterp_deltas.json.
+  const s = scaleOverride ?? m.scale;
   const [sx, sy, sz] = Array.isArray(s) ? s : [s, s, s];
   model.setLocalScale(sx, sy, sz);
   model.setLocalPosition(-m.cx * sx, -m.baseY * sy, -m.cz * sz);

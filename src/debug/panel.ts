@@ -372,6 +372,22 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   if (opts.onCamProbe) {
     heading(navigate, 'PLACE — desk seats');
     for (const [label, yaw] of ROOMS) mkBtn(navigate, label, () => opts.onCamProbe?.(yaw, 0));
+    // ⚑ Session 66 — the two DEVICE seats. They are real marker moves, not
+    // camera probes, because the whole point of them now is the side effect:
+    // taking one lifts that screen off the furniture into the hand (THE HELD
+    // READ, era3Devices.ts). A camProbe would put the camera in the right
+    // place with the device still lying on the bed, which is precisely the
+    // state this session existed to remove.
+    heading(navigate, 'PLACE — Room 2 device seats (held read)');
+    for (const [label, node] of [
+      ['→ the tablet · comes to hand', 'r2-tablet'],
+      ['→ the phone · comes to hand', 'r2-phone'],
+      ['→ back to the laptop', 'r2-desk']
+    ] as const) {
+      mkBtn(navigate, label, () => {
+        (window as { __requestMove?: (id: string) => void }).__requestMove?.(node);
+      });
+    }
   }
   if (opts.onFacet) {
     heading(navigate, 'ROOM 3 — facet');

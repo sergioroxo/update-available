@@ -302,8 +302,30 @@ export function buildClusterShell(
    * Registered in `zoneLights` so the per-era rig drives it with the others;
    * `mayaGlow`'s existing '#8899BB' is reused rather than a new value.
    */
-  const r2Screen = mkLight('light-r2Screen', [-4.9, 1.15, 0.7], '#8899BB', 2.4);
+  /** a room light's COLOUR is room data, not code — read it from the rig that
+   *  drives it (data/room/cluster.json) instead of pinning a second copy here.
+   *  The fallback is only for a light with no authored entry yet. */
+  const rigColor = (id: string): string =>
+    (clusterData.rigs as unknown as Record<string, Rig | undefined>).e3?.lights?.[id]?.color
+      ?? zoneLights[0].light?.color.toString(false) ?? '';
+
+  const r2Screen = mkLight('light-r2Screen', [-5.1, 1.15, 0.7], rigColor('r2Screen'), 2.4);
   zoneLights.push(r2Screen);
+  /**
+   * ⚑ VERA'S LAMP (Session 66) — the other half of the same fix, and the more
+   * important half. S65 gave Room 2 the laptop's cold spill; a room lit only by
+   * the thing that is doing this to her is a thesis, not a home. The style
+   * direction's governing idea is that **the warm light is life** and it needs
+   * a visible source: Room 1's lamp is canon's one constant object precisely
+   * because you can see it throwing what it throws.
+   *
+   * So Room 2 gets its own, on her desk (`w_lamp2*`), nineteen years newer and
+   * smaller than Daniel's. Not rig-driven through `zoneLights` — it is named,
+   * so `data/room/cluster.json`'s per-era rigs drive it like `lamp`, and the
+   * era arc can take it down as the cold light wins. ROLLBACK: delete this
+   * light, the three `w_lamp2*` props, and the `r2Lamp` rig entries.
+   */
+  mkLight('light-r2Lamp', [-5.30, 1.02, 1.24], rigColor('r2Lamp'), 2.6);
   const mayaGlow = mkLight('light-mayaGlow', [4.4, 1.35, 0.7], '#8899BB', 3.0); // Room 3 interface light (E4)
   void mayaGlow; // rig-driven by id
 
