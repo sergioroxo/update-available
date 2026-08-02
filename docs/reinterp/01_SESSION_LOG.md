@@ -62,6 +62,14 @@ STATUS: live
    room wants something not listed, build it, screenshot it, and say why — with a named rollback so
    Sérgio can cut it in one line. **A proposal he can delete cheaply is worth more than a question
    he has to answer before anything moves.**
+0b. **⚑ S67 — THE CHOREOGRAPHY.** Prompt written and ready at the tail of
+   `docs/REINTERP_THE_BUILDING_2026-08-02.md`. Every era change lifts the player out of the room, and
+   what they see when they come up changes each time (one room walls-on → the walls come off and
+   there are three → routine → the Close). **Runs AFTER item 0** — the choreography reveals rooms,
+   and revealing rooms that are not yet places spends the reveal on furniture. Checked state:
+   E1→E2 fires no camera move at all, E2→E3 is the built and comfort-measured reference, E3→E4 is a
+   4.5 s yaw dolly whose comment claims a rise it never performs. The Close inherits this grammar
+   in a LATER session (Sérgio, 2026-08-02: *"build the choreo first and let the Close inherit it"*).
 1. ~~**S57 — S2R.7: ERA 2 ENDS.**~~ **SHIPPED 2026-07-26 (Session 58, below)** — the residue now
    retires the send lane and arms the era's own close, the u3 ritual runs the established grammar,
    the belongings beat fires a second time as a MIGRATION, the restart lands the player in Room 2,

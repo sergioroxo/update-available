@@ -236,20 +236,17 @@ are unbuilt in this respect.
 
 ## Open — the ones that actually change the build
 
-1. **Do the other rooms become visible EARLIER than the ending?** *My read, unchanged: no.* The
-   choreography shows them at E2→E3 and E3→E4 and never from inside a room. Making them visible
-   throughout would turn the isolation into a level select and spend the ending early.
+1. ~~Do the other rooms become visible earlier?~~ **ANSWERED — no.** *"We only see the movement
+   between them."* They are visible during the choreography and never from inside a room.
 2. ~~Is the building literal?~~ **ANSWERED — implied.**
 3. ~~Enter, or only look?~~ **ANSWERED — only look.**
 4. **The line itself is yours**, and unhurried. Everything above is structure. What you wrote in
    chat is already better than anything I would draft; it needs a form, not a rewrite.
-5. **⚑ NEW, and it is now the load-bearing one: does the Close-as-fourth-room happen in this pass,
-   or after?** The choreography is cheap, reuses measured motion, and pays off immediately. The
-   fourth room is a real rebuild of a specced-but-unbuilt scene whose constellation topology is
-   *already* flagged as decorative-not-real in the status register, and whose source verification is
-   incomplete. **My read: build the choreography first, and let the Close inherit it.** The rise at
-   the Close is then the fourth instance of a grammar the player already knows — which is exactly
-   what makes "you do not come down" register as an ending rather than a camera move.
+5. ~~Close-as-fourth-room now or after?~~ **ANSWERED — after.** *"Build the choreo first and let the
+   Close inherit it."* So the final rise is the fourth instance of a grammar the player already
+   knows, which is what makes "you do not come down" register as an ending rather than a camera move.
+
+**All open questions are now closed. The pipeline is: S66 rooms → S67 choreography → the Close.**
 
 ---
 
@@ -270,3 +267,95 @@ lane that cannot look at the screen.
 **What replaces it: a BUILD prompt for the choreography**, written when S66 (the rooms as livable
 places) is done — in that order, because the choreography reveals rooms, and revealing rooms that
 are not yet places would spend the reveal on furniture.
+
+---
+
+# S67 — THE CHOREOGRAPHY · Opus, high effort · **not Codex**
+*Written 2026-08-02 with every open question closed. Runs AFTER S66 (the rooms as livable places) —
+the choreography reveals rooms, and revealing rooms that are not yet places spends the reveal on
+furniture. The Close inherits this grammar in a later session and is NOT in scope here.*
+
+## ⚑ What the code actually does today (checked, not assumed)
+`driveMorph()` in `src/engine/app.ts:1832` is where every era shift lands, and the four transitions
+are in three different states:
+
+| Transition | Today | Needed |
+|---|---|---|
+| **E1 → E2** | **nothing.** E1/E2 are single-room, so `seatYaws().length > 1` is false and no camera move fires at all. | the first rise — **walls stay ON** |
+| **E2 → E3** | `beginRelocation()` — the full rise 7.0 / build 11.0 / descend 11.5, comfort-measured. **The reference implementation.** | generalise it; add the doorplates |
+| **E3 → E4** | `dollyTo(270, 4.5, autoCam)` — a yaw turn. Its own comment claims it *"rise[s] up over thirty years of rooms and settle[s] into Room 3"*, **which is not what a yaw dolly does.** | the third instance — make the comment true |
+| **→ Close** | `enterClose()` disables the room entities outright | **out of scope.** Leave a clean seam for it. |
+
+```
+Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
+?reinterp=1). Read, in order: CLAUDE.md, docs/REINTERP_THE_BUILDING_2026-08-02.md (THIS DOC — the
+design, revision 1's four-beat table is the spec), docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §5
+(⚑ the locomotion law's 2026-08-02 CLARIFICATION — driven movement is PERMITTED; only the player
+steering themselves is forbidden), docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md §3 (the era relocation
+flow and the cyclorama), docs/reinterp/08_STATUS_REGISTER.md, then src/engine/app.ts (driveMorph at
+~1832, beginRelocation/advanceRelocation ~1093, the DESCENT_* entrance constants ~97),
+src/room/cluster.ts (RELOCATION, applyRig, morphToEra), src/room/clusterMorph.ts, src/debug/panel.ts.
+
+THE IDEA: the piece's only bodily law is that you turn but never walk. Its meaning is that a screen
+fixes your facing, and what is behind you is other people. So at every era change the piece lifts you
+out of the room — and WHAT YOU SEE WHEN YOU COME UP IS THE STORY, and it changes each time.
+
+THE FOUR BEATS (the spec; the fourth is NOT built this session):
+  E1→E2  one room below. WALLS STAY ON. It ages beneath you; you are set back down in the same place.
+         ⚑ Canon requires this: "E1→E2 ages the SAME room, walls stay CLOSED — the homecoming is
+         private." The rise happens and the opening does not. You see one lit box in the dark.
+  E2→E3  the walls come OFF and there are THREE. You are set down in a different one. THE PAYOFF.
+  E3→E4  three rooms, you move again — familiar now, almost routine. That familiarity is the point.
+  Close  you rise and you do not come down. OUT OF SCOPE — leave the seam clean for it.
+
+SCOPE:
+1. GENERALISE THE RELOCATION. beginRelocation/advanceRelocation are hardcoded to E2→E3 (app.ts:1093
+   says so). Make them a parameterised choreography that takes: which rooms are revealed, whether the
+   walls open, the destination seat, and the leg durations. E2→E3's existing behaviour must be
+   BIT-IDENTICAL after the refactor — it is the only leg that has been comfort-measured.
+2. E1→E2: the first rise, walls ON. This is the one that teaches the grammar, and it must feel
+   incomplete — you come up, there is one room, there is nothing else to see, you go back down.
+   ⚑ Do not let the emptiness read as a missing asset. It is the content.
+3. E3→E4: replace the 4.5 s yaw dolly with the third instance, and fix the comment that describes a
+   rise the code never performed.
+4. THE DOORPLATES. One per room, visible only from above: era, name, one line. Building signage —
+   the flat plate beside a door, the buzzer slot — NOT exhibition labels. Strings live in data/,
+   PLACEHOLDER-draft, Sérgio's voice pass pending. The three plates read in sequence are the piece's
+   thesis; no single one states it.
+5. ONLY LOOK, NEVER ENTER (confirmed). From above there is no marker, no disc, no affordance to go
+   into another room. You can see them and you cannot reach them — that is the truer version of the
+   sentence, and it is a deliberate absence rather than an omission.
+6. THE BUILDING IS IMPLIED, NOT MODELLED (confirmed). Floor, doorplates, the suggestion of a shared
+   wall. No apartment block. Soft Lo-Fi wants underdefined edges and the Quest budget is not
+   negotiable (≤75k tris, ≤60 draw calls, 72 Hz).
+
+⚑ COMFORT IS THE RISK AND THE NUMBERS ARE THE LAW:
+   - The envelope is S53's 0.43 m/s peak. RELOCATION.descendSeconds is 11.5 rather than 10 BECAUSE
+     10 measured 0.477. Do not author a leg without measuring its peak, and report every number.
+   - Every existing figure is DESKTOP-measured. A11 (the in-headset pass) has still never run. Say
+     so plainly in the session log rather than implying these are verified in VR.
+   - Honour ?descent=0 — whatever opts out of the entrance must opt out of this too.
+   - The player must be HELD and TURN at the top, not carried around the building. Driven up is
+     permitted; driven in circles is the nausea case and is not the design.
+
+LAWS THAT WILL FAIL CI: no runtime network calls; no storage; palette from src/desktop/theme/
+(ratchet is 34 and must not rise); check-spec C6 — EVERY new beat needs a debug-panel button, and
+src/debug/panel.ts IS IN THE FENCE; all display text in data/ as PLACEHOLDER-draft, never in TS;
+the frame never plays — ⚑ NO NARRATION over any of this, in the piece's own voice, ever.
+
+FILE FENCE: src/engine/app.ts, src/room/cluster.ts, src/room/clusterMorph.ts, src/room/assets.ts,
+src/debug/panel.ts, data/room/cluster.json, data/strings/ (new doorplates file),
+docs/REINTERP_THE_BUILDING_2026-08-02.md (status only), docs/reinterp/01_SESSION_LOG.md,
+docs/reinterp/08_STATUS_REGISTER.md, BUILD_LOG.md.
+Git: EXPLICIT PATHSPECS only — never `git add -A`; another session may share this worktree's index.
+
+DONE WHEN: npm run dev works; tsc + npm test + npm run build green; ?flat=1 clean; all four
+transitions reachable from the debug panel; measured peak speeds reported for every leg; BUILD_LOG
+gets ONE line.
+
+ACCEPTANCE, BY FEEL:
+- The E1→E2 rise feels like it should have shown you more, and didn't.
+- The E2→E3 wall-drop lands as a reveal because you have done this before — if it plays as a nice
+  effect rather than a discovery, the first beat is wrong, not the second.
+- By E3→E4 the move is routine, and that is uncomfortable rather than boring.
+- Nobody explains anything at any point.
