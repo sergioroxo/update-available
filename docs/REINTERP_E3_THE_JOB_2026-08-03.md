@@ -143,6 +143,22 @@ suite.
 
 ---
 
+# ✅ CONFIRMED BY SÉRGIO, 2026-08-03
+- **The Vera reframe is approved.** Conditions attached, all carried into S70: the logic must be
+  **dynamic, not basic**; the register is **eerie + satirical + serious, mixed**; **Vera is never the
+  joke and neither are the commenters**; and **FloppySheep must be there**.
+- **⚑ FloppySheep is required, and it is not respite.** Built as a real, playable, genuinely fun
+  mascot game on the phone, one tap away *while a comment sits unanswered* — which is what everyone
+  does at work. The piece says nothing about it: no scolding, no timer, no ledger entry. It is
+  `operable`, the apparatus's own cheerful product, and it must never become a reward.
+- **E4 / detrans:** *"detrans are not the target, never, just the apparatus and the AI usage."*
+  Recorded as a standing constraint, not a preference.
+- **The doorplates are cut.** *"The doorplates aren't good."*
+- **A spatial audit is wanted:** *"I wish we'd make a prompt that would walk around the space to see
+  corrections to be made."* → **S71**, in `docs/reinterp/BUILD_QUEUE_LIVE.md`.
+
+---
+
 # ⚑ ERA 4 — THE DETRANSITION SERVICE (Sérgio, 2026-08-03)
 > *"I would like to also play on the recent existence of Detrans.ai and make this part of the
 > experience."*
@@ -158,7 +174,9 @@ gay→straight. A site that automates the operation is *exactly* what "it needs 
 
 ## Three constraints, and none of them is optional
 
-1. **⚑ The target is the apparatus, never detransitioners.** CLAUDE.md is explicit: *never satirise
+1. **⚑ The target is the apparatus, never detransitioners — CONFIRMED BY SÉRGIO 2026-08-03**, in his
+   own words: *"detrans are not the target, never, just the apparatus and the AI usage."* This is now
+   a standing constraint on every E4 beat, not a note. CLAUDE.md is explicit: *never satirise
    the gender-exploratory clinical debate; render BOTH captions, unresolved.* People who detransition
    are people, their accounts are their own, and the piece has no opinion to offer about them. What
    the piece may examine is **a system that industrialises and automates their stories.** If any beat
