@@ -64,10 +64,35 @@
  * law; it is the same doctrine as Tape C in Era 1 (`src/narrative/tapes.ts`):
  * the record answers for what the apparatus asked you to do, and the apparatus
  * did not ask for this. The phone is the one thing in the room she chose.
+ *
+ * ⚑ SESSION 69 — NOA'S VIDEO, AND CORRECTION 13. Her submission opens "I sent
+ * a video this time instead of writing it out" and until now there was no
+ * video: the player corrected a recording they had never watched. There is one
+ * now (`drawVideo` below; the frames are `drawNoaFrame` in the era's theme,
+ * where the colours live). Correction 13 grades it with a preset called
+ * `Honest Light`, and applying it changes the picture in front of you exactly
+ * as the text edits change her words. Three properties, and all three are the
+ * design rather than an omission:
+ *   · PLAYING IS OPTIONAL and files NOTHING (`togglePlay`) — same doctrine as
+ *     Malta: the record answers for what the apparatus asked you to do. It did
+ *     not ask you to watch. Nothing anywhere remarks on this, and nothing
+ *     should be added that does.
+ *   · THE GRADE HAS NO OPINION ABOUT HER. It does not answer what corrections
+ *     8 and 9 disagree about, and it must never be given a way to. It makes
+ *     her look like a BEFORE, because the documented codebook's phase 1 is
+ *     "pre-conversion sickness", and that is the whole of what it knows.
+ *   · TRACKED CHANGES, FOR AN IMAGE. Applying the preset leaves the ungraded
+ *     frame beside it, small and labelled, the way a cut sentence stays struck
+ *     through on the page — and the TABLET publishes the graded still alone,
+ *     with no before beside it and no way for a reader to know. The laptop
+ *     remembers; the tablet publishes clean. It is the same disagreement
+ *     between the two screens that `runs(sub, tracked)` already draws for text.
  */
 import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
-import { ERA3, drawLambMark, warmGrade } from '../desktop/theme/era3';
+import {
+  ERA3, drawLambMark, warmGrade, drawNoaFrame, honestLight, NOA_FRAME, NOA_SECONDS
+} from '../desktop/theme/era3';
 import { ledger } from '../state/ledger';
 import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
@@ -94,6 +119,11 @@ interface CorrectionDef {
   quiet?: boolean;
   /** what applying this correction DOES to her words — see `applyEdits` */
   edit?: { kind: 'replace' | 'cut' | 'mark' | 'append'; find?: string; with?: string; text?: string };
+  /** ⚑ correction 13 only: the correction that edits the PICTURE and not the
+   *  words. `preset` is the house look's own name (it must sound like care,
+   *  not craft); `note` is what the panel says it does, and is the one place
+   *  this item is allowed to charm. See `s3_queue.json`'s `_docVideo`. */
+  grade?: { preset: string; note: string };
   witnessApplied: string;
   witnessSkipped: string;
 }
@@ -102,6 +132,9 @@ interface SubmissionDef {
   id: number;
   author: string;
   text: string;
+  /** a submission that came in as a recording rather than as writing. Noa's
+   *  is the only one, and her own first line has always said so. */
+  video?: { label: string; duration: string; beforeLabel: string };
   corrections: number[];
 }
 
@@ -161,6 +194,28 @@ const LIFT_DELAY_SECONDS = 1.4;
 const LIFT_SECONDS = 5.0;
 const CARET_SECONDS = 0.53;
 
+/** ⚑ THE PLAYER (S69). `PLAYER_S` device pixels per frame unit → a 176×100
+ *  picture on the laptop's 676×390 panel; the small "as sent" frame beside it
+ *  is the same picture at half that. `TRANSPORT_H` is reserved whether or not
+ *  the preset has been applied, so applying it never shoves her card down the
+ *  screen — only the lane fills. */
+const PLAYER_S = 1;
+const PLAYER_W = NOA_FRAME.w * PLAYER_S;
+const PLAYER_H = NOA_FRAME.h * PLAYER_S;
+/** the ungraded frame that stays beside it — the same picture, half the size */
+const THUMB_S = 0.5;
+const THUMB_W = NOA_FRAME.w * THUMB_S;
+const THUMB_H = NOA_FRAME.h * THUMB_S;
+const TRANSPORT_H = 28;
+const VIDEO_BLOCK_H = PLAYER_H + 4 + TRANSPORT_H;
+/** her voice, as any 2016 editor would draw it: bursts with gaps in them. She
+ *  said the true parts first in case she ran out of nerve, and then stopped.
+ *  Authored, not random — the pauses are the composition. */
+const VOICE = [
+  0, 0, 2, 3, 4, 3, 2, 0, 0, 0, 3, 4, 5, 4, 2, 1, 0, 0, 0, 0, 2, 3,
+  3, 4, 3, 0, 0, 0, 1, 3, 4, 4, 3, 2, 0, 0, 0, 2, 3, 2, 1, 0, 0, 0
+];
+
 type Rect = { x: number; y: number; w: number; h: number; id: string };
 function hit(r: Rect, x: number, y: number): boolean {
   return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
@@ -175,6 +230,10 @@ export type TabletFeedItem = {
   text: string;
   chips: string[];
   partner?: string;
+  /** ⚑ the still, PUBLISHED — graded or not, whichever was actually done to
+   *  it, and with no ungraded frame beside it. The laptop remembers what was
+   *  taken; the tablet shows the result, and a reader has no way to know. */
+  video?: { graded: boolean };
 };
 
 /** one span of a submission, and what a correction did to it */
@@ -208,6 +267,11 @@ export class GraceQueueLite {
   private rects: Rect[] = [];
   private phoneRects: Rect[] = [];
   private lambLine: string;
+
+  // the video (S69) — `playT` is seconds into it, `playing` whether it moves.
+  // Nobody is asked to press this and nothing files when they do.
+  private playT = 0;
+  private playing = false;
 
   // the break
   private maltaArrived = false;
@@ -267,6 +331,17 @@ export class GraceQueueLite {
         this.lastTick = tick;
         this.bump();
       }
+    }
+
+    // the video's clock — the third and last of this screen's clocks, and the
+    // only one a player starts. Same TICK quantum as the others: her hands move
+    // four times a second, which is what a 2016 webcam in a dim room looked
+    // like anyway. It stops itself at the end and never loops.
+    if (this.playing) {
+      const before = Math.floor(this.playT / TICK);
+      this.playT += dt;
+      if (this.playT >= NOA_SECONDS) { this.playT = NOA_SECONDS; this.playing = false; this.bump(); }
+      else if (Math.floor(this.playT / TICK) !== before) this.bump();
     }
 
     // ⚑ the break's two clocks. The caret is the phone's; the lift is the
@@ -393,6 +468,21 @@ export class GraceQueueLite {
       if (c.partner) partner = c.partner;
     }
     return partner ? { chips, partner } : { chips };
+  }
+
+  /** has the house look been applied to this submission's picture? */
+  private graded(sub: SubmissionDef): boolean {
+    return this.items(sub).some(c => c.grade && this.decisions.get(c.id) === 'applied');
+  }
+
+  /** press the picture. It plays, or it stops. That is the entire contract:
+   *  nothing asks for it, nothing waits for it, nothing is unlocked by it, and
+   *  ⚑ NOTHING IS FILED — the apparatus did not ask you to watch her. */
+  togglePlay(): void {
+    if (!this.submission()?.video) return;
+    if (this.playT >= NOA_SECONDS) this.playT = 0; // finished: pressing plays it again
+    this.playing = !this.playing;
+    this.bump();
   }
 
   beginList(): void {
@@ -555,9 +645,10 @@ export class GraceQueueLite {
       // the PUBLISHED text: `tracked: false` — the cuts are gone, the
       // replacement reads as her own word, and the reader cannot tell.
       const text = this.runs(sub, false).map(r => r.text).join('').replace(/\s+([.,])/g, '$1').trim();
-      out.push(partner
-        ? { author: sub.author, text, chips, partner: partner.name }
-        : { author: sub.author, text, chips });
+      const item: TabletFeedItem = { author: sub.author, text, chips };
+      if (partner) item.partner = partner.name;
+      if (sub.video) item.video = { graded: this.graded(sub) };
+      out.push(item);
     }
     return out.reverse(); // newest at the top, like every feed of the era
   }
@@ -701,7 +792,11 @@ export class GraceQueueLite {
     const leftW = 350;
     const rightX = c.x + leftW + GAP;
     const rightW = c.x + c.w - rightX;
-    this.drawSubmission(ctx, c.x, c.y, leftW, c.h, sub);
+    // ⚑ the picture sits ABOVE her words, because that is the order she sent
+    // them in: she recorded it, and then apologised for it in writing.
+    const videoH = sub.video ? VIDEO_BLOCK_H + 10 : 0;
+    if (sub.video) this.drawVideo(ctx, c.x, c.y, leftW, sub, sub.video);
+    this.drawSubmission(ctx, c.x, c.y + videoH, leftW, c.h - videoH, sub);
     this.drawCorrections(ctx, rightX, c.y, rightW, c.h, sub);
     // Lambient's badge sits at the BOTTOM-LEFT of the window body. It was in
     // the title bar for one build and landed on top of the close box — a mark
@@ -709,6 +804,69 @@ export class GraceQueueLite {
     // it is a rendering bug (Sérgio caught it: "there's a symbol on top of the
     // x button"). The caption buttons own the top-right; nothing goes there.
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+  }
+
+  /**
+   * ⚑ THE VIDEO — `felt`, and the whole of this method's discipline is what it
+   * does NOT draw. Nothing goes over the picture: no badge, no Lambient mark,
+   * no tag, no caption, no verdict, no play glyph laid across her hands. The
+   * only chrome is BELOW the frame, and it belongs to the tool.
+   *
+   * What is beside it, once the preset has been applied, is the ungraded
+   * frame — small, labelled `as sent`, exactly the way the cut sentence stays
+   * struck through in her text. That is the tracked change, for an image.
+   *
+   * The two audio lanes say the rest without a word. Her voice is drawn with
+   * the gaps in it, because she said the true parts first in case she ran out
+   * of nerve. The pad the preset lays underneath does not have gaps.
+   */
+  private drawVideo(
+    ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
+    sub: SubmissionDef, video: { label: string; duration: string; beforeLabel: string }
+  ): void {
+    const graded = this.graded(sub);
+    px(ctx, x - 1, y - 1, PLAYER_W + 2, PLAYER_H + 2, ERA3.greyDk);
+    drawNoaFrame(ctx, x, y, PLAYER_S, { t: this.playT, graded });
+    if (graded) honestLight(ctx, x, y, PLAYER_W, PLAYER_H);
+    this.rects.push({ x, y, w: PLAYER_W, h: PLAYER_H, id: 'video' });
+
+    // the column beside the player: what the file is, and — once it has been
+    // graded — what it was.
+    const x2 = x + PLAYER_W + 12;
+    setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+    wrapText(ctx, video.label, x + w - x2).slice(0, 1).forEach(ln => ctx.fillText(ln, x2, y));
+    if (graded) {
+      px(ctx, x2 - 1, y + 15, THUMB_W + 2, THUMB_H + 2, ERA3.glassEdge);
+      drawNoaFrame(ctx, x2, y + 16, THUMB_S);
+      setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
+      ctx.fillText(video.beforeLabel, x2, y + 16 + THUMB_H + 4);
+    }
+
+    // the transport. A bar, a duration, and two lanes.
+    const ty = y + PLAYER_H + 4;
+    const k = this.playT / NOA_SECONDS;
+    setFont(ctx, 8);
+    const dw = ctx.measureText(video.duration).width;
+    ctx.fillStyle = ERA3.grey;
+    ctx.fillText(video.duration, x + PLAYER_W - dw, ty);
+    if (this.playing) {                              // pause: two bars
+      px(ctx, x, ty, 2, 8, ERA3.greyDk);
+      px(ctx, x + 4, ty, 2, 8, ERA3.greyDk);
+    } else {                                         // play: a stepped triangle
+      for (let i = 0; i < 4; i++) px(ctx, x + i, ty + i, 1, 8 - i * 2, ERA3.greyDk);
+    }
+    const trackX = x + 11; const trackW = PLAYER_W - 11 - dw - 6;
+    px(ctx, trackX, ty + 3, trackW, 3, ERA3.glassEdge);
+    px(ctx, trackX, ty + 3, Math.round(trackW * k), 3, ERA3.accent);
+
+    // her voice, with its silences
+    const step = PLAYER_W / VOICE.length;
+    VOICE.forEach((a, i) => {
+      if (a <= 0) return;
+      px(ctx, x + i * step, ty + 17 - a, Math.max(1, step - 1), a * 2, ERA3.greyDk);
+    });
+    // and, underneath it, the bed — unbroken, from end to end
+    if (graded) px(ctx, x, ty + 21, PLAYER_W, 3, ERA3.accent);
   }
 
   /** ⚑ `felt`. A cream card with a rose spine — this era's own grammar for "a
@@ -834,7 +992,9 @@ export class GraceQueueLite {
   ): number {
     // measured, not guessed: a verse that wraps to two lines must not be
     // clipped by the buttons, because the small print IS the argument.
-    const announce = item.chip && !item.quiet ? item.chip : item.partner ? item.partner.note : '';
+    const announce = item.chip && !item.quiet ? item.chip
+      : item.partner ? item.partner.note
+        : item.grade ? item.grade.note : '';
     setFont(ctx, 10);
     const why = wrapText(ctx, item.why, w).slice(0, 2);
     const refs = [item.manual, item.verse].map(r => wrapText(ctx, r, w).slice(0, 2));
@@ -847,6 +1007,10 @@ export class GraceQueueLite {
     let ry = y;
     setFont(ctx, 13); ctx.fillStyle = ERA3.ink;
     ctx.fillText(item.rule, x, ry);
+    // ⚑ the preset wears its own name, and the name is the tell: a colour
+    // grade that makes a person look ill is called `Honest Light`. It is the
+    // only badge on this item, and it is on the TOOL, never on her.
+    if (item.grade) aero.tag(ctx, x + ctx.measureText(item.rule).width + 8, ry + 2, item.grade.preset, ERA3.white, ERA3.lambTag);
     ry += 18;
     setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
     why.forEach((ln, i) => ctx.fillText(ln, x, ry + i * 11));
@@ -898,6 +1062,7 @@ export class GraceQueueLite {
     if (r.id === 'signin') { this.beginList(); return; }
     if (r.id === 'apply') { this.apply(); return; }
     if (r.id === 'skip') { this.skip(); return; }
+    if (r.id === 'video') { this.togglePlay(); return; }
   }
 
   handlePhoneClick(x: number, y: number): boolean {
@@ -941,6 +1106,16 @@ export class GraceQueueLite {
         this.debugBeat('list');
         applyUntil(() => (this.submission()?.id ?? 99) >= 2);
         break;
+      // ⚑ S69 — the video, and the preset. `play` is here because a reviewer
+      // needs to be able to see the hands move on demand; in play NOTHING asks
+      // for it, and the ordinary path to this screen is `noa` above.
+      case 'play': this.debugBeat('noa'); this.playT = 0; this.playing = true; break;
+      case 'playEnd': this.debugBeat('noa'); this.playT = NOA_SECONDS; this.playing = false; this.bump(); break;
+      // the house look is the FIRST item on her submission, so `noa` already
+      // opens it — and applying it leaves you on the same screen, looking at
+      // what it did, with two corrections still to work.
+      case 'gradeApply': this.debugBeat('noa'); this.apply(); break;
+      case 'gradeSkip': this.debugBeat('noa'); this.skip(); break;
       case 'maltaArrive': // through Noa, so the phone lights the way it does in play
         this.debugBeat('list');
         applyUntil(() => (this.submission()?.id ?? 99) > MALTA_AFTER_SUBMISSION);

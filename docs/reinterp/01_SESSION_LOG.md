@@ -143,6 +143,98 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-03 · Session 69 — **THE PRESETS, ON NOA'S VIDEO.** Spec: `REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md`
+revision 5; controls sourced from `REINTERP_E3_REVAMP_BRIEF_2026-07-30.md` rev 3. Touched:
+`desktop/theme/era3.ts`, `room/graceQueueLite.ts`, `room/era3Devices.ts`, `debug/panel.ts`,
+`s3_queue.json`, the spec's status header, this log, 08_STATUS_REGISTER, BUILD_LOG.)*
+
+**THE PREMISE, made deliberate.** Noa's submission has opened with *"I sent a video this time instead
+of writing it out"* since S64 and there was no video — the player was correcting a recording they had
+never watched. There is one now, and **you are still allowed to grade it without pressing play.**
+Nothing anywhere remarks on that; it is built and left, exactly as the spec asked.
+
+**⚑ THE VIDEO.** Pre-authored pixel frames, no camera and no file input ever (the Restoration
+Filter's law). **Faceless by an in-world reason rather than a crop that hides a head:** she propped
+the laptop badly, so the shot is her lap — the brother's flannel over her knees, both sleeves coming
+up from the bottom corners, her hands meeting in the middle, and past them a dim room with one lamp
+in it. Someone who says *"I'm not good on camera"* frames it exactly this wrong. **The hands are the
+sentence:** *"my hands don't know where to go"* is not captioned, it is the animation — eight poses
+over twenty-four seconds, apart, together, interlaced, a thumb rubbing a thumb, the sleeve pulled
+down over one hand (it is her brother's shirt, so the sleeves are too long), held there, apart again,
+still. The video is short because her own words say it is: *"Sorry it isn't longer."*
+
+**⚑ CORRECTION 13 — `Apply the house look`, preset `Honest Light`.** Same list, same shape, same
+grey manual/verse doubling as every other item (`The Ordering §3.1` / `Household 1:5 — "one lamp for
+the whole room, so that no face is lit differently from another"`). Applying it **cools and
+desaturates her, tightens the crop, and lays a pad underneath** — the documented codebook's phase 1,
+which is titled *pre-conversion "sickness"*. The apparatus grades her as ill before she has said
+anything. **It has no opinion about her gender and must never acquire one**; it does not answer what
+corrections 8 and 9 disagree about, and like both of those it is never commented on. **The piece
+still does not answer for Noa.**
+
+**⚑ THE PAD, RENDERED RATHER THAN SOUNDED.** Under the picture the transport carries her voice drawn
+the way any 2016 editor would draw it — bursts with silences in them, because she said the true parts
+first in case she ran out of nerve. Applying the preset adds a second lane: one unbroken band, end to
+end. *Her voice has gaps in it; the bed the tool laid under her does not.* No line says this.
+**Honest limit: it is drawn, not audible** — sounding it needs `data/audio/` + `src/audio/`, both
+outside this session's fence. Named here rather than quietly skipped.
+
+**TRACKED CHANGES, FOR AN IMAGE — and the two screens still disagree on purpose.** The LAPTOP keeps
+the ungraded frame beside the graded one, small, labelled `as sent`, exactly the way a cut sentence
+stays struck through in her text. The TABLET publishes the graded still alone, with a ♥ published
+badge, no before-frame and no mark that a preset was ever applied. *The laptop remembers; the tablet
+publishes clean.*
+
+![Noa's video, ungraded and graded](S69_noa_video_ungraded_vs_graded.png)
+*Left: as sent. Right: `Honest Light` applied — cooler, desaturated, cropped tighter, the corners
+pulled down, the ungraded frame beside it, and the unbroken pad band under her voice track.
+Reproduce exactly: debug panel → `⚑ submission 2 · Noa` then `⚑ correction 13 · APPLY the house look`
+(and `SKIP it` for the A/B).*
+
+**⚑ TWO DECISIONS THE BUILD MADE.** (1) **Correction 13 goes FIRST on her submission, not last** —
+deciding the last correction advances to the next submission, so a grade placed last would change a
+picture the player never sees again. First is also sharper: the house look is the first thing offered
+on Noa, before anything else and before any reason to have watched. (2) **Playing files NOTHING** to
+the ledger — the same doctrine as Malta and Tape C: the record answers for what the apparatus asked
+you to do, and it did not ask you to watch her.
+
+**COLOUR, and no new hex.** Every value in the new `NOA` palette block is lifted verbatim from
+`data/room/era1.json`, the piece's own approved domestic palette, per `cluster.json`'s COLOR LAW —
+including the two skin values, which are the room's own floor and bed-frame browns and are
+deliberately not chosen AS a skin tone. It lives in `theme/era3.ts` because that is where colour is
+allowed to live; the palette ratchet is unmoved at **33/34**.
+
+**⚑ THE ART IS THE WEAK PART, and it took three rewrites to get this far.** Worth recording because
+the failure mode was consistent: **at 176×100 every axis-aligned rectangle reads as architecture.**
+Pass 1 built the flannel as a bold check and it read as a picket fence; the forearms were horizontal
+bands and read as shelves. Pass 2 kept the bars and only changed the scale — same result. Pass 3
+threw out texture for **shape and value**: knees as a curve stepped column by column, forearms as
+tapering diagonals from the bottom corners, hands as rounded masses, weave as a few threads. Three
+further bugs found by looking rather than by reading the code: a `v % n` jitter on a stepping counter
+is a **sawtooth**, not noise (it put a row of perfectly regular teeth along her knees); dithering the
+light **per column** gives every column one tone and produces **corduroy**, so the falloff had to
+dither in both axes; and the floor was `era1.json`'s rug hex, which is the **same value as the lit
+flannel**, so her knees vanished into the carpet. **It is legible and it is not cruel, but it is
+draft art and Sérgio's eye should decide whether the register is right.**
+
+**Register held.** The video is `felt`: nothing is drawn over the picture — no badge, no Lambient, no
+tag, no caption, no play glyph across her hands; the only chrome is below the frame and belongs to
+the tool. The preset panel is `operable` and is the one thing allowed to be pleased with itself — a
+colour grade that makes a person look ill, wearing its own name on a pill. **The satire is entirely
+in the tool.** E3 still has no respite. **The E4 bridge is set up and not spent:** this is one
+person's video, graded by hand, one preset at a time, and nothing here gestures at the image changer.
+
+**Verified with real clicks, not just debug jumps:** `handleClick` on the player toggles play, the
+clock advances 5.00 s over twenty 0.25 s ticks, a second click pauses, and a press off the player
+does nothing. The tablet feed reports `Noa · video {graded:true}` with no chips when 8 and 9 are
+skipped. `npx tsc --noEmit`, `npm test` (palette 33/34, C6 39/39, authoring-marker leaks 10/10) and
+`npm run build` all green; `npm run dev` serves.
+
+**NOT DONE, named rather than skipped.** (i) **`docs/reinterp/BUILD_QUEUE_LIVE.md` still marks S69
+`QUEUED`** — that file is outside this session's fence, and per 08's §6 a stale prompt marker is the
+exact failure that doc exists to prevent. **Whoever next owns that file should flip it to SHIPPED.**
+(ii) The pad is drawn, not sounded (above). (iii) The frames are draft art (above).
+
 *(2026-08-02 · Session 66 — **ROOM 2 BECOMES A PLACE.** The four lettered items, plus what
 building it turned up. Touched: `era1room.ts`, `assets.ts`, `clusterMorph.ts`, `cluster.ts`,
 `era3Devices.ts`, `engine/app.ts`, `debug/panel.ts`, `reinterp_deltas.json`, `models`-adjacent

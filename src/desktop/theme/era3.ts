@@ -255,6 +255,335 @@ export function warmGrade(ctx: CanvasRenderingContext2D, W: number, H: number, k
   ctx.restore();
 }
 
+/**
+ * ⚑ NOA'S VIDEO (Session 69) — the picture the correction list has always
+ * claimed to be editing, and never had.
+ *
+ * Her submission has opened with *"I sent a video this time instead of writing
+ * it out"* since Session 64, and there was no video: the player corrected a
+ * recording they had never watched. That was a template shortcut. It is now
+ * deliberate, and the frames below are it.
+ *
+ * ⚑ FACELESS, and by an in-world reason rather than a crop that hides a head:
+ * she propped the laptop badly. What is in shot is her lap — the brother's
+ * flannel over her knees, both sleeves coming in from the sides, her hands
+ * meeting in the middle, and past them a dim room with one lamp in it. Someone
+ * who says *"I'm not good on camera"* frames it exactly this wrong, and it
+ * means the piece never has to draw a face to draw a person. Everything in the
+ * frame is something she actually names.
+ *
+ * ⚑ AND THE HANDS ARE THE SENTENCE. *"my hands don't know where to go"* is not
+ * illustrated by a caption; it is the animation. Eight poses over twenty-four
+ * seconds — apart, coming together, interlaced, a thumb rubbing a thumb, the
+ * sleeve pulled down over one hand, held there, apart again, still. The video
+ * is short because her own words say it is: *"That's the whole video. Sorry it
+ * isn't longer."*
+ *
+ * ⚑ NO CAMERA, NO FILE INPUT, EVER — the Restoration Filter's law, unchanged.
+ * These are pre-authored pixel frames drawn from code. Nothing is captured,
+ * nothing is uploaded, no permission is ever requested.
+ *
+ * REGISTER: `felt`. She is never the joke, nothing is drawn OVER her, and the
+ * satire is entirely in the panel beside her (`honestLight` below and its
+ * checklist item). The frame is SOFT — underdefined, warm, low-contrast — per
+ * the doctrine that the witness side is the sharp side and life is not.
+ *
+ * COLOUR: every value in `NOA` is lifted verbatim from `data/room/era1.json`,
+ * the piece's own approved domestic palette (`data/room/cluster.json`'s COLOR
+ * LAW: *"every hex here already exists in data/room/era1.json"*). Nothing here
+ * is invented — including the two skin values, which are the room's own floor
+ * and bed-frame browns and are deliberately not chosen AS a skin tone.
+ */
+export const NOA = {
+  wall: '#2C2C34',        // era1 boomboxSpeaker — the dim room behind her
+  wallLit: '#74492F',     // era1 deskLeg — where the lamp reaches the wall
+  glow: '#8A5A3B',        // era1 deskTop — the lamp's spill
+  glowHot: '#E8C9A0',     // era1 roomFill light — its small hot centre
+  floor: '#B98563',       // era1 rug
+  bed: '#A07B52',         // era1 bedFrame — the edge of a bed past her knees
+  blanket: '#D4A0A0',     // era1 blanket — a corner of it, out of focus
+  dark: '#1A1A24',        // era1 witnessPanelFrame — the corners of the room
+  // the flannel is OLD and the room is DIM, so its check is low-contrast and
+  // warm — a bold check at this scale reads as a fence, not as a shirt.
+  flannel: '#A07B52',     // era1 bedFrame — the worn ground
+  flannelLit: '#B98563',  // era1 rug — where the lamp catches the cloth
+  flannelDk: '#8A5A3B',   // era1 deskTop — the check
+  flannelDp: '#74492F',   // era1 deskLeg — where two checks cross
+  flannelPale: '#C9A8A0', // era1 book — the pale thread in the weave
+  // ⚑ her hands are the brightest thing in the frame, and the reason is in the
+  // room: the laptop she is recording into is the only light on them. It is the
+  // same fact Room 2 is built on — in 2016 the screen is the lamp.
+  skinHi: '#E6D2BC',      // era1 wall — where the screen catches them
+  skin: '#C9A07A',        // era1 floor
+  skinLo: '#8A5A3B'       // era1 deskTop
+} as const;
+
+/** the frame's own virtual grid — every composition figure below is in these
+ *  units, and the caller picks how many device pixels one unit is worth. */
+export const NOA_FRAME = { w: 176, h: 100 } as const;
+/** how long the whole thing runs, and how long one pose holds. 8 × 3 = 24 s. */
+export const NOA_SECONDS = 24;
+const POSE_HOLD = 3;
+
+/** the eight poses of one sentence. `l`/`r` are each hand's CENTRE in frame
+ *  units; `cuff` is how far the sleeve has come down over that hand — it is her
+ *  brother's shirt, so the sleeves are too long for her, which is the whole
+ *  reason poses 6 and 7 are possible at all. */
+const HAND_W = 27;
+const HAND_H = 22;
+const POSES: Array<{ l: [number, number]; r: [number, number]; cuffL: number; cuffR: number }> = [
+  { l: [50, 64], r: [126, 64], cuffL: 0, cuffR: 0 },  // apart, one on each knee
+  { l: [64, 62], r: [112, 62], cuffL: 0, cuffR: 0 },  // coming together
+  { l: [76, 62], r: [100, 62], cuffL: 0, cuffR: 0 },  // fingers meeting
+  { l: [78, 61], r: [98, 65], cuffL: 0, cuffR: 0 },   // one folded over the other
+  { l: [78, 63], r: [98, 61], cuffL: 0, cuffR: 0 },   // a thumb rubbing a thumb
+  { l: [72, 62], r: [104, 62], cuffL: 11, cuffR: 0 }, // the sleeve comes down
+  { l: [70, 63], r: [106, 62], cuffL: 21, cuffR: 0 }, // and covers the hand
+  { l: [56, 65], r: [120, 65], cuffL: 7, cuffR: 0 }   // apart again. still.
+];
+
+/**
+ * One frame of her video, drawn into `x,y` at `s` device pixels per frame unit.
+ * `t` is playback seconds (0 = the poster frame, nothing moving). `graded`
+ * tightens the crop the way the preset does — the colour half of the grade is
+ * `honestLight` below, applied by the caller OVER this.
+ *
+ * ⚑ The tighter crop closes on her HANDS, never off the flannel. A crop that
+ * removed the flannel would be the piece taking a view on what correction 8
+ * wants removed, and the piece does not have one.
+ *
+ * ⚑ DRAWN AS SILHOUETTES, NOT AS BARS. Two earlier passes built this scene out
+ * of axis-aligned rectangles and stripes, and at this resolution every one of
+ * them read as ARCHITECTURE — the flannel became a picket fence, the forearms
+ * became shelves, and the hands became boxes on a plank. What makes a low-res
+ * image read as a body is shape and value, not texture. So her knees are a
+ * curve stepped column by column, her forearms are tapering diagonals coming up
+ * from the bottom corners, her hands are rounded masses, and the weave is four
+ * dashes and a lot of restraint. Everything is warm and low-contrast, with the
+ * light falling off toward the edges — the Soft Lo-Fi doctrine, and the reason
+ * the graded version lands: the tool's version is the SHARP one.
+ *
+ * ⚑ AND SHE HAS NO VIGNETTE. Her own frame is evenly, badly lit. The dark
+ * closing corners in `honestLight` are the preset's, not hers.
+ */
+export function drawNoaFrame(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, s: number,
+  opts: { t?: number; graded?: boolean } = {}
+): void {
+  const t = Math.max(0, opts.t ?? 0);
+  const zoom = opts.graded ? s * 1.5 : s;
+  const VW = NOA_FRAME.w; const VH = NOA_FRAME.h;
+  const W = VW * s; const H = VH * s;
+  const fine = zoom >= 1;   // the weave, the fingers and the grain drop out of
+                            // the thumbnail, which only has to read as the same
+                            // shot at half the size
+  // the crop closes on the hands (88, 66); ungraded, that is simply the frame
+  const ox = x + W / 2 - (opts.graded ? 88 : VW / 2) * zoom;
+  const oy = y + H / 2 - (opts.graded ? 66 : VH / 2) * zoom;
+  const R = (vx: number, vy: number, vw: number, vh: number, c: string): void => {
+    px(ctx, ox + vx * zoom, oy + vy * zoom, vw * zoom, vh * zoom, c);
+  };
+  /** a soft mass: rows that narrow toward the top and bottom. Nothing in a body
+   *  is a rectangle, and at 176×100 a rectangle is the only thing you notice. */
+  const blob = (cx: number, cy: number, w: number, h: number, c: string): void => {
+    for (let i = 0; i < h; i++) {
+      const k = (i + 0.5) / h * 2 - 1;
+      const hw = Math.max(1, Math.round(w / 2 * Math.sqrt(Math.max(0, 1 - k * k * 0.62))));
+      R(cx - hw, cy - h / 2 + i, hw * 2, 1, c);
+    }
+  };
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(Math.round(x), Math.round(y), Math.round(W), Math.round(H));
+  ctx.clip();
+  /** every edge in this frame is RAGGED by a few units, because a straight line
+   *  at this size is a plank and a person's room does not have any. Hashed, not
+   *  `v % n` — a modulus of a stepping counter is a sawtooth, and the first pass
+   *  of this put a row of perfectly regular teeth along her knees. */
+  // `freq` keeps the wobble LOW-frequency: hashing every unit gives a torn,
+  // eroded edge that reads as damage, which is not what soft means.
+  const jit = (v: number, amp: number, freq = 8): number => {
+    let h = (Math.floor(v / freq) * 2654435761) >>> 0;
+    h ^= h >>> 15; h = (h * 2246822519) >>> 0; h ^= h >>> 13;
+    return (h % (amp * 2 + 1)) - amp;
+  };
+
+  // ── the room past her knees. One lamp on, and nothing in focus. ─────────
+  R(0, 0, VW, VH, NOA.wall);                // nothing in this frame is unpainted
+  R(0, 0, VW, 7, NOA.dark);                 // the ceiling corner, unreached
+  blob(30, 18, 76, 30, NOA.glow);           // the lamp's spill on the wall
+  blob(30, 17, 34, 15, NOA.glowHot);        // and the small hot centre of it
+  R(120, 0, 56, 34, NOA.dark);              // the far corner it never reaches
+  R(104, 24, 72, 12, NOA.bed);              // the end of a bed
+  R(126, 19, 42, 6, NOA.blanket);           // a corner of the blanket on it
+  for (let vx = 0; vx < VW; vx += 2) {      // the floor, well out of focus
+    R(vx, 34 + jit(vx, 2), 2, 40, NOA.wallLit); // ⚑ NOT `floor`: that is the
+  }                                             // same hex as the lit flannel,
+  // and her knees vanished into the carpet. The floor behind her is the DARKEST
+  // warm the palette has, so that she is the thing in front of it.
+
+  // ── her lap: two knees, stepped column by column ────────────────────────
+  const breath = Math.sin(t * 1.3) > 0 ? 0 : 1;   // she is breathing. That is all.
+  /** how much of the screen's light reaches this column — the laptop is right
+   *  in front of her, so the middle of the frame is the lit part, and the fall-
+   *  off is FOUR ragged steps rather than three clean ones (three read as three
+   *  painted panels, which is the opposite of what light does). */
+  const GROUND = [NOA.flannelDk, NOA.flannel, NOA.flannelLit];
+  // Continuous, then DITHERED IN BOTH AXES. Four hard tiers put three straight
+  // vertical seams down her lap; dithering per COLUMN replaced them with
+  // corduroy, because a whole column then takes one tone. So the lap is drawn
+  // as small blocks and each block decides for itself — which is the only one of
+  // the three that looks like light falling on cloth.
+  const hash2 = (a: number, b: number): number => {
+    let h = ((a * 73856093) ^ (b * 19349663)) >>> 0;
+    h ^= h >>> 13; h = (h * 1274126177) >>> 0;
+    return (h >>> 8) / 16777216;
+  };
+  const litAt = (vx: number, vy: number): number => {
+    const L = 2 - Math.abs(vx - 88) / 46 - Math.max(0, (vy - 86) / 20);
+    const base = Math.floor(L);
+    return Math.max(0, Math.min(2, base + (L - base > hash2(vx, vy) ? 1 : 0)));
+  };
+  const kneeTop = (vx: number): number => {
+    const hump = (c: number): number => {
+      const d = (vx - c) / 48;
+      return d * d >= 1 ? 0 : 17 * (1 - d * d);
+    };
+    return Math.round(64 - Math.max(hump(48), hump(128))) + breath + jit(vx, 1, 10);
+  };
+  for (let vx = 0; vx < VW; vx += 2) {
+    const top = kneeTop(vx);
+    R(vx, top - 3, 2, 3, NOA.flannelDp);        // where the lap meets the room
+    for (let vy = top; vy < VH; vy += 6) R(vx, vy, 2, 6, GROUND[litAt(vx, vy)]);
+    if (litAt(vx, top) >= 1) R(vx, top, 2, 2, GROUND[2]);  // light along the knee
+  }
+  // the cloth falling between her knees — a wedge, widening toward the camera
+  for (let vy = 54; vy < VH; vy += 2) {
+    const w = 4 + Math.round((vy - 54) * 0.2);
+    R(88 - w / 2 + jit(vy, 1, 8), vy, w, 2, NOA.flannelDp);
+  }
+  if (fine) {   // the weave: single threads catching the light, never a check
+    let ws = 991;
+    const wr = (): number => (ws = (ws * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    for (let i = 0; i < 70; i++) {
+      const vx = Math.floor(wr() * VW); const vy = 48 + Math.floor(wr() * (VH - 48));
+      if (vy < kneeTop(vx) || litAt(vx, vy) < 2) continue;
+      const pale = wr() > 0.72;   // mostly the weave's own shadow; rarely a thread
+      R(vx, vy, wr() > 0.5 ? 2 : 1, wr() > 0.5 ? 1 : 2, pale ? NOA.flannelPale : NOA.flannelDk);
+    }
+  }
+
+  // ── her forearms, coming up from the bottom corners, and her hands ──────
+  const pose = POSES[Math.min(POSES.length - 1, Math.floor(t / POSE_HOLD))];
+  const arm = (hx: number, hy: number, cuff: number, fromLeft: boolean): void => {
+    // the elbow is out of frame below her; the wrist is at the hand. Tapering
+    // diagonals, because a horizontal band at this size is a shelf.
+    const ex = fromLeft ? -14 : VW + 14; const ey = VH + 12;
+    const wx = hx + (fromLeft ? -1 : 1) * (HAND_W / 2 - 3) * -1; // just inside the hand
+    const reach = cuff;                       // the sleeve comes further over it
+    const x0 = fromLeft ? 0 : Math.round(wx - reach);
+    const x1 = fromLeft ? Math.round(wx + reach) : VW;
+    for (let vx = x0; vx < x1; vx += 2) {
+      const k = Math.min(1, Math.max(0, (vx - ex) / (wx - ex)));
+      const cy = ey + (hy + 2 - ey) * k;
+      const half = 17 - 4 * k;
+      // the arms are DARKER than the lap they lie on, with the screen's light
+      // along the top of each — that rim is the only thing that separates a
+      // forearm from a knee at this size, and without it they merge into mud.
+      R(vx, cy - half, 2, half * 2, NOA.flannelDk);
+      R(vx, cy - half, 2, 3, NOA.flannel);
+      R(vx, cy - half, 2, 1, NOA.flannelLit);
+      R(vx, cy + half - 3, 2, 3, NOA.flannelDp);       // shadow underneath
+    }
+  };
+  const hand = (hx: number, hy: number, fromLeft: boolean): void => {
+    const dir = fromLeft ? 1 : -1;
+    if (fine) {   // four fingers, folded under toward the other hand — mostly
+      for (let f = 0; f < 4; f++) {          // hidden by the palm drawn over them
+        const fx = hx + dir * (10 - f * 6);
+        blob(fx, hy + 6 + Math.abs(f - 1), 7, 13 - Math.abs(f - 1) * 2, NOA.skin);
+        R(fx + dir * 3, hy + 3, 1, 10, NOA.skinLo);
+      }
+    }
+    blob(hx, hy + 3, HAND_W + 1, HAND_H, NOA.skinLo);  // the hand's own shadow
+    blob(hx, hy, HAND_W, HAND_H, NOA.skin);
+    blob(hx, hy - 5, HAND_W - 8, 9, NOA.skinHi);       // where the screen lights it
+    if (fine) {
+      blob(hx - dir * (HAND_W / 2 - 3), hy + 1, 9, 12, NOA.skin);   // the thumb
+      R(hx - dir * (HAND_W / 2 - 7), hy - 4, 1, 11, NOA.skinLo);
+    }
+  };
+  const [lx, ly] = pose.l; const [rx, ry] = pose.r;
+  arm(lx, ly + breath, pose.cuffL, true);
+  arm(rx, ry + breath, pose.cuffR, false);
+  hand(lx, ly + breath, true);
+  hand(rx, ry + breath, false);
+  // the sleeve, drawn LAST on the hand it has come down over
+  if (pose.cuffL > 0) blob(lx - HAND_W / 2 + pose.cuffL / 2 - 2, ly + breath + 1, pose.cuffL + 4, HAND_H + 6, NOA.flannel);
+  if (pose.cuffL > 0) blob(lx - HAND_W / 2 + pose.cuffL / 2 - 2, ly + breath - 5, pose.cuffL, 8, NOA.flannelLit);
+
+  // ── and the grain of a cheap camera in a room with one lamp in it ───────
+  if (fine) {
+    let seed = 7 + Math.floor(t / POSE_HOLD) * 7919;
+    const rnd = (): number => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    for (let i = 0; i < 70; i++) {
+      const gy = Math.floor(rnd() * VH);
+      R(Math.floor(rnd() * VW), gy, 1, 1,
+        gy < 40 ? NOA.dark : rnd() > 0.5 ? NOA.flannelDp : NOA.wallLit);
+    }
+  }
+  ctx.restore();
+}
+
+/**
+ * ⚑ THE PRESET, applied — the colour half of correction 13.
+ *
+ * Three moves, and each one is a line of the documented codebook's PHASE 1
+ * (`REINTERP_E3_REVAMP_BRIEF_2026-07-30.md` rev 3): *"cool/blue desaturation,
+ * low-key harsh light, tight claustrophobic framing, shadows."* The framing is
+ * `drawNoaFrame`'s crop; the other three are here.
+ *
+ * Phase 1 of that codebook is titled **pre-conversion "sickness"**. So the
+ * preset does not comment on her, argue with her, or take any view of her at
+ * all — it makes her look like a BEFORE, which is the only thing it knows how
+ * to do. It has no opinion on anything corrections 8 and 9 disagree about, and
+ * it must never acquire one.
+ *
+ * Non-destructive, like `warmGrade`: the frame is GRADED, never redrawn.
+ */
+export function honestLight(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  ctx.clip();
+  // 1 · the colour comes out of her
+  ctx.globalCompositeOperation = 'saturation';
+  ctx.globalAlpha = 0.62;
+  ctx.fillStyle = ERA3.grey;
+  ctx.fillRect(x, y, w, h);
+  // 2 · and the room goes cold — the era's own desktop blue, nothing invented
+  ctx.globalCompositeOperation = 'soft-light';
+  ctx.globalAlpha = 0.58;
+  ctx.fillStyle = ERA3.deskMid;
+  ctx.fillRect(x, y, w, h);
+  // 3 · low-key: the light is pulled off the edges in six stepped rings, so the
+  //     only thing left lit is the middle of her. Stepped, not a gradient —
+  //     pixel discipline holds inside the picture too.
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = ERA3.taskBot;
+  for (let i = 0; i < 6; i++) {
+    ctx.globalAlpha = 0.09;
+    const in0 = i * 3;
+    ctx.fillRect(x + in0, y + in0, w - in0 * 2, 3);
+    ctx.fillRect(x + in0, y + h - in0 - 3, w - in0 * 2, 3);
+    ctx.fillRect(x + in0, y + in0, 3, h - in0 * 2);
+    ctx.fillRect(x + w - in0 - 3, y + in0, 3, h - in0 * 2);
+  }
+  ctx.restore();
+}
+
 /** Sunken white field with an optional single line of text. */
 export function field(
   ctx: CanvasRenderingContext2D,

@@ -38,7 +38,7 @@ import * as pc from 'playcanvas';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import { setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
-import { ERA3, drawLambMark } from '../desktop/theme/era3';
+import { ERA3, drawLambMark, drawNoaFrame, honestLight, NOA_FRAME } from '../desktop/theme/era3';
 import { ledger } from '../state/ledger';
 import { setEra3Lift, type EraKey } from './cluster';
 import { GraceQueueLite, type TabletFeedItem } from './graceQueueLite';
@@ -191,15 +191,25 @@ function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number, fe
     const lines = wrapText(ctx, post.text, W - 26).slice(0, 4);
     setFont(ctx, 8);
     const chipLines = post.chips.length ? wrapText(ctx, post.chips.join(' · '), W - 26) : [];
-    const cardH = 22 + lines.length * 11 + 11 + chipLines.length * 10 + (post.partner ? 10 : 0) + 8;
+    // ⚑ S69: a submission that came in as a recording is PUBLISHED as one —
+    // the still, exactly as the corrections left it. No ungraded frame beside
+    // it and no mark saying a preset was ever applied: the laptop remembers
+    // what was taken, and this surface simply shows the result.
+    const stillS = 0.5;
+    const stillH = post.video ? NOA_FRAME.h * stillS + 6 : 0;
+    const cardH = 22 + stillH + lines.length * 11 + 11 + chipLines.length * 10 + (post.partner ? 10 : 0) + 8;
     aero.px(ctx, 6, y, W - 12, cardH, ERA3.memberBand);
     aero.px(ctx, 6, y, 3, cardH, ERA3.memberSpine);
     setFont(ctx, 9);
     ctx.fillStyle = ERA3.ink;
     ctx.fillText(post.author, 14, y + 6);
+    if (post.video) {
+      drawNoaFrame(ctx, 14, y + 18, stillS, { graded: post.video.graded });
+      if (post.video.graded) honestLight(ctx, 14, y + 18, NOA_FRAME.w * stillS, NOA_FRAME.h * stillS);
+    }
     ctx.fillStyle = ERA3.greyDk;
-    lines.forEach((ln, i) => ctx.fillText(ln, 14, y + 20 + i * 11));
-    let fy = y + 22 + lines.length * 11;
+    lines.forEach((ln, i) => ctx.fillText(ln, 14, y + 20 + stillH + i * 11));
+    let fy = y + 22 + stillH + lines.length * 11;
     // the network's own endorsement of the thing it just edited
     setFont(ctx, 8); ctx.fillStyle = ERA3.rose;
     ctx.fillText(q.tablet.heartGlyph, 14, fy);

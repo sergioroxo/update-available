@@ -26,6 +26,28 @@ CODE, so nobody has to read the build to find out what is still a proposal.*
   correction names, the rationales, the verse form, and the three submissions.
 - Build record: `docs/reinterp/01_SESSION_LOG.md`, Session 64.
 
+## ✅ BUILT — Session 69 (2026-08-03): REVISION 5 is code
+*Same rule as the header above: this records only what is now CODE.*
+- **BUILT:** §rev5 all four items — **the video** (pre-authored pixel frames, faceless, her lap and
+  the brother's flannel and her hands, eight poses over 24 s, drawn in `src/desktop/theme/era3.ts`
+  where the colours live) · **correction 13 `Apply the house look`**, same shape and same
+  manual/verse doubling as every other item, its preset named `Honest Light` on a tag pill ·
+  **the grade as a visible transform** (cools, desaturates, tightens the crop, and lays an unbroken
+  pad under a voice track that has gaps in it) · **tracked changes for an image** — the ungraded
+  frame stays beside it labelled `as sent`, and the tablet publishes the graded still alone.
+- **Decision 5 — correction 13 goes FIRST on Noa's submission, not last.** Applying the last
+  correction on a submission advances to the next one, so a grade placed last would change a picture
+  the player never sees again. First also sharpens rev 5's own point: the house look is the first
+  thing offered on her submission, before anything else and before any reason to press play.
+- **Decision 6 — playing files NOTHING to the ledger**, same doctrine as the Malta beat: the record
+  answers for what the apparatus asked you to do, and it did not ask you to watch her.
+- **Unchanged and honoured:** the grade takes no view of her gender, corrections 8 and 9 still
+  disagree, and nothing anywhere comments on the video, on the preset, or on the order of the two.
+- **Still PLACEHOLDER-draft and still yours:** the rule and rationale text, the verse
+  (`Household 1:5`), the preset name, the labels, and the frames themselves — the art is a draft to
+  react to, not a finished look.
+- Build record: `docs/reinterp/01_SESSION_LOG.md`, Session 69.
+
 # ERA 3 — THE CORRECTION LIST
 *Third pass, on Sérgio's direction: keep the list-of-changes mechanic, **drop "bury"** and stop
 retrofitting old canon, focus on **how SOGICE used digital platforms to target**, put the

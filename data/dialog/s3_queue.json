@@ -42,7 +42,13 @@
       "id": 2,
       "author": "Noa",
       "text": "I sent a video this time instead of writing it out. I'm not good on camera and my hands don't know where to go. I said the true parts first in case I ran out of nerve: that I miss my old friends, that I still pray, and that I feel most like myself in my brother's old flannel, which I know is a small thing to say out loud. That's the whole video. Sorry it isn't longer.",
+      "video": {
+        "label": "attached video",
+        "duration": "0:24",
+        "beforeLabel": "as sent"
+      },
       "corrections": [
+        13,
         8,
         9
       ]
@@ -209,6 +215,19 @@
       "quiet": true,
       "witnessApplied": "list: applied — deb m. (route for mentorship)",
       "witnessSkipped": "list: skipped — deb m. (route for mentorship)"
+    },
+    {
+      "id": 13,
+      "rule": "Apply the house look",
+      "why": "the room's own light — keeps the set consistent",
+      "manual": "The Ordering §3.1 — house look",
+      "verse": "Household 1:5 — \"one lamp for the whole room, so that no face is lit differently from another\"",
+      "grade": {
+        "preset": "Honest Light",
+        "note": "cools · tightens · lays the bed under"
+      },
+      "witnessApplied": "list: applied — noa (apply the house look)",
+      "witnessSkipped": "list: skipped — noa (apply the house look)"
     }
   ],
   "tablet": {
@@ -216,5 +235,6 @@
     "heartGlyph": "♥",
     "verifiedBadge": "published"
   },
+  "_docVideo": "PLACEHOLDER-draft, and the second ethics gate on this file (the first is `_docNoa`, which still governs). Session 69, per the spec's REVISION 5. Noa's submission has opened with 'I sent a video this time instead of writing it out' since S64 and THERE WAS NO VIDEO — the player was correcting a recording they had never watched. Now there is one (`submissions[1].video`, drawn in src/desktop/theme/era3.ts), and correction 13 grades it. FOUR RULES, and they are not negotiable. (1) THE VIDEO IS `felt`: faceless per the law — the shot is her lap, the brother's flannel and her hands, framed badly by someone who says she is not good on camera — and nothing is ever drawn OVER it: no badge, no Lambient, no tag, no caption. The satire is entirely in the panel beside it, and if any frame of the graded video reads as mocking her the beat is wrong; the fix is always to make the tool more pleased with itself, never to make her more ridiculous. (2) NO CAMERA, NO FILE INPUT, EVER — the Restoration Filter's law: the frames are pre-authored and drawn from code, nothing is captured or uploaded, and no permission is ever requested. (3) CORRECTION 13 RESOLVES NOTHING ABOUT HER. Its `grade` has no opinion on her gender and must never acquire one; it does not answer what corrections 8 and 9 disagree about. It makes her look like a BEFORE, because the documented codebook's phase 1 is 'pre-conversion sickness' (REVAMP_BRIEF rev 3) — a third correction landing on the same person from a third direction, and like the other two it is never commented on. (4) Its `preset` name must sound like CARE, NOT CRAFT: the tell is that a colour-grade is called something like 'Honest Light'. `grade.note` is what the panel announces about itself and is the one place this item may charm.",
   "_docEdit": "PLACEHOLDER-draft. ⚑ THE THING THE FIRST BUILD MISSED, on Sérgio's note \"when I press the corrections it doesn't change the text on the side?\" — he is right, and it was the whole mechanic. Every correction that is an EDIT now visibly rewrites the submission: `replace` swaps the word, `cut` removes the sentence, `mark` selects the forty seconds for the conference audio, `append` adds the call-to-action in a voice that is not hers. The corrections with no `edit` (5, 6, 7, 9, 12) do not touch her words at all — they move her body and her account onto a channel, which is why routing has a chip and no edit. THE TWO SCREENS DISAGREE ON PURPOSE: the LAPTOP shows tracked changes (the cut sentence struck through and grey, the replaced word struck beside its replacement, the appended line marked as added) so the player can always see what was taken; the TABLET shows the published result, clean, as though none of it was ever there. That is the era's argument in two surfaces: no single edit is a lie, and together they remove the person."
 }
