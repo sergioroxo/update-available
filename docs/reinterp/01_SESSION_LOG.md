@@ -32,6 +32,15 @@ STATUS: live
    > screens. Vera owns nothing on screen, which is why every seat reads as a dead end: when you
    > turn, there is nothing to have turned toward.
 
+   **⚑ SCOPED UP 2026-08-02 — this is all four moments, not only Room 2.** Sérgio: *"each room not
+   having an identity as a 'livable existence' … should be something to do for all 4 moments."*
+   Room 2 stays this session's build (it is the one that is broken now, and Room 1 is the benchmark
+   to match), but the contract is written for every room and Room 3 / the E4 state inherit it.
+   **This got more load-bearing on 2026-08-02, not less:** `REINTERP_THE_BUILDING_2026-08-02.md`
+   will lift the player above these rooms and ask them to be recognised as *lives*. A room that is
+   furniture from the inside is furniture from above, and the reveal is only as strong as what it
+   reveals. **Do the rooms before the choreography.**
+
    Choose the belongings, place them, light them, sit in every seat, screenshot, change your mind,
    and do it again. **Iterate in-engine and report what you learned** — that is explicitly wanted
    here, and it is warranted by evidence rather than optimism: the two biggest findings of the last

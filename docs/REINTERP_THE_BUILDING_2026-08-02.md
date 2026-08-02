@@ -69,19 +69,32 @@ rise out of the last room the same way you came into the first.
 That is a rhyme the piece can afford, it needs no new motion grammar, and it gives the ending a shape
 the current Close does not have: *you are leaving the same way you arrived, and now you can see.*
 
-### 3 · ⚑ It must be blink-cuts between overlooks, NOT a flythrough
-R28 is unambiguous: **no smooth locomotion, ever** — movement is blink/fade jumps, and the descent is
-already flagged in the source as *"the one piece of artificial locomotion in a work whose entire
-bodily law is you never walk."* A smooth orbiting tour of a building would be the piece's single
-worst VR comfort case and would break its own law at the exact moment it makes its point.
+### 3 · ⚑ CORRECTED (Sérgio, 2026-08-02) — driven movement is allowed. I read the law too strictly.
+I argued this must be blink-cuts because "R28 forbids smooth locomotion." **That conflated two
+different things, and Sérgio drew the line correctly:**
 
-**So: you rise once, and then you TURN.** You are held above the building, and the rooms are around
-you. Reaching each one is a look, or at most a blink-cut to a fixed overlook per room.
+> *"we are not talking about artificial locomotion — that one can and already happens, and was
+> happening before. What I am talking about is the user walking around in the space with the joystick
+> as if this was a 3D game inside a house. I don't want that locomotion. But artificial one, of being
+> driven to a new space and stuff, yes of course."*
 
-**This is better than a tour, not a compromise.** A flythrough shows you the building. Turning in
-place above it makes you *do the piece's gesture at full scale* — the same turn you have made in every
-room, now with three lives behind you instead of a wall. The mechanic and the meaning become the same
-action in the last minute of the work.
+**The law is about AGENCY, not about smoothness.** What is forbidden is the player *walking* —
+free joystick travel through a modelled house. What is permitted, and already shipped, is the piece
+**driving** you: the entrance descent, the relocation's three legs, the sends. The distinction is who
+is steering, and it always was.
+
+So the choreography **can be a driven move.** It does not have to be a cut.
+
+**What remains true is a comfort constraint, not a law**, and it is a measured number rather than a
+taste call: the relocation's descent leg was lengthened from 10 s to 11.5 s because it measured
+0.477 m/s against S53's 0.43 m/s envelope. **Driven movement is allowed; fast driven movement is
+what makes people sick.** And every one of those numbers is desktop-measured, because A11 — the
+in-headset pass — has still never run.
+
+**The turn survives anyway, and should.** Once you are up there, being *held* and turning to find the
+rooms is stronger than being carried past them: it is the piece's own gesture at full scale, the same
+turn you have made in every room, now with three lives behind you instead of a wall. So the shape is
+**driven up, then turn** — not driven around.
 
 ### 4 · The panels — yes, and they are the voice
 One per room: **era, name, and one line.** Read in sequence, three plaques do the work of the
@@ -153,76 +166,107 @@ proposal does not add that work — it gives it a shape it was missing.**
 
 ---
 
-## ⚑ Open for Sérgio — the ones that actually change the build
+---
 
-1. **Do the other rooms become visible EARLIER than the ending?** The mid-piece pass shows them once
-   at E2→E3. *My read: no — one unexplained glimpse, then nothing until the Close. Making them
-   visible throughout would turn the isolation into a level select and spend the ending early.*
-2. **Is the building literal?** Apartments on a corridor, or three rooms floating in dark with no
-   structure between them? *My read: implied, not modelled — floor, doorplates, and the suggestion
-   of a shared wall. A rendered apartment block is a lot of geometry for one minute, and the piece's
-   Soft Lo-Fi law wants underdefined edges anyway.*
-3. **Can the player still enter the other rooms from up there, or only look?** *My read: only look,
-   and this is the harder call — being able to go back in would be generous, but "you can see them
-   and you cannot reach them" is the truer version of the sentence.*
-4. **The line itself is yours.** Everything above is structure. The sentence he wrote in chat is
-   already better than anything I would draft, and it needs a form, not a rewrite.
+# ⚑ REVISION 1 — THE CHOREOGRAPHY (Sérgio, 2026-08-02)
+*His question 1 turned a one-off ending into the piece's movement grammar, and it is the best
+structural consequence of the whole idea:*
+
+> *"Would it make sense to do the same narrative of coming up to see externally the exchange for
+> Room 1 between the 2 eras? That would create a visual language for the flow, making them make more
+> sense while you travel around."*
+
+**Yes — and it does something neither of us was aiming at: it gives the rise an ARC.** If the camera
+comes up at every era change, then *what you see when you come up* is itself the story, and it
+changes four times.
+
+| Transition | You rise, and… | What it says |
+|---|---|---|
+| **E1 → E2** | there is **one room** below you. The walls stay **on**. It ages beneath you and sets you back down in the same place. | *time moved; you did not.* And you assume this is all there is. |
+| **E2 → E3** | the walls come **off**, and there are **three**. You are set down in a different one. | **they were always there.** You were never shown. |
+| **E3 → E4** | three rooms again, and you move again. Familiar now, almost routine. | the apparatus does this constantly. The horror is that it is no longer strange. |
+| **→ THE CLOSE** | you rise, and **you do not come down** — until you come down somewhere new. | the fourth room. |
+
+**⚑ And this resolves a canon conflict rather than creating one.** The master plan is explicit that
+**E1→E2 ages the same room with the walls CLOSED — "the homecoming is private."** My first instinct
+was that his proposal overrides that. It does not, and the reconciliation is better than either
+version:
+
+**At E1→E2 the rise happens and the opening does not.** You come up; the walls stay on; you see one
+lit box in the dark and nothing around it. The privacy of the homecoming is perfectly preserved —
+nobody sees in, and you do not see out — while the *movement* is established as the piece's grammar.
+
+**Which makes the E2→E3 wall-drop a payoff instead of an effect.** You have done this before. Last
+time there was one room. This time the walls come off. **The mechanic teaches you to expect one
+thing and then shows you the building** — which is the sentence, performed, without a word.
+
+### ⚑ A convergence worth recording, because it was arrived at independently
+`REINTERP_MASTER_PLAN_v2_2026-07-12.md` §3 already carries, from mining FIND #10:
+*"The E4 finale carries the cyclorama concept: slits-of-countless-rooms resolving into the four
+walkable era panels."*
+
+**Countless rooms, resolving into four.** That is this proposal, written months earlier from the
+other direction — the finale reaching for other people's rooms before there was a reason for them.
+The building gives that beat its argument, and the cyclorama gives the building its scale: **three
+rooms are the ones you know; the slits are everyone else.**
+
+*(One conflict to settle there: "four walkable era panels" vs. Sérgio's confirmed "only look." The
+cyclorama's walkability is the older idea and should probably yield.)*
+
+## Sérgio's answers to the open questions (2026-08-02)
+1. **Rise at every era change — CONFIRMED**, and it becomes the visual language. See the table above.
+2. **The building is IMPLIED, not modelled — CONFIRMED.** Floor, doorplates, the suggestion of a
+   shared wall. No apartment block geometry.
+3. **From above you can only LOOK, never enter — CONFIRMED.** *"Exactly, only look."*
+4. **The line** — open, and unhurried. *"We can think about that."*
+
+## ⚑ And the identity work is not just Room 2
+> *"each room not having an identity as a 'livable existence' … should be something to do for all
+> 4 moments."*
+
+**Confirmed and scoped up.** S66's contract of intent applies to every room, not only Vera's: each
+space must show that somebody lives there. This matters more now than it did an hour ago — **if the
+player is going to be lifted above these rooms and asked to recognise them as lives, they have to be
+lives when you are inside them.** The choreography's payoff is only as strong as the rooms it reveals.
+
+Room 1 has tapes, a kit, a diary and is the benchmark. Room 2 has furniture. Room 3 and the E4 state
+are unbuilt in this respect.
 
 ---
 
-# ⚑ THE PROMPT — think this through before anything is built
-*Sérgio: "Let's probably write a prompt to think this over." This is a THINKING round, not a build.
-It produces a spec and a decision, not code.*
+## Open — the ones that actually change the build
 
-```
-Design round, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp).
-Read, in order: CLAUDE.md, docs/ETHICS_CONSTRAINTS.md,
-docs/REINTERP_THE_BUILDING_2026-08-02.md (THIS DOC — the proposal and its open questions),
-docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md (the movement law — blink-cuts, never smooth travel),
-docs/REINTERP_CLOSE_CONSTELLATION_BRIEF_2026-07-24.md (what the Close currently is),
-docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md §R24 (three rooms that age — this must NOT be reopened),
-src/room/cluster.ts (RELOCATION + ClusterMorph — the building is already built, at E2→E3),
-src/engine/app.ts lines 90-140 (the entrance descent, its comfort envelope, and ?descent=0),
-src/room/pointCloud.ts, data/strings/close_network.json, docs/reinterp/08_STATUS_REGISTER.md.
+1. **Do the other rooms become visible EARLIER than the ending?** *My read, unchanged: no.* The
+   choreography shows them at E2→E3 and E3→E4 and never from inside a room. Making them visible
+   throughout would turn the isolation into a level select and spend the ending early.
+2. ~~Is the building literal?~~ **ANSWERED — implied.**
+3. ~~Enter, or only look?~~ **ANSWERED — only look.**
+4. **The line itself is yours**, and unhurried. Everything above is structure. What you wrote in
+   chat is already better than anything I would draft; it needs a form, not a rewrite.
+5. **⚑ NEW, and it is now the load-bearing one: does the Close-as-fourth-room happen in this pass,
+   or after?** The choreography is cheap, reuses measured motion, and pays off immediately. The
+   fourth room is a real rebuild of a specced-but-unbuilt scene whose constellation topology is
+   *already* flagged as decorative-not-real in the status register, and whose source verification is
+   incomplete. **My read: build the choreography first, and let the Close inherit it.** The rise at
+   the Close is then the fourth instance of a grammar the player already knows — which is exactly
+   what makes "you do not come down" register as an ending rather than a camera move.
 
-THE IDEA, in the project lead's words: "when we look at a computer we are looking only one way — the
-internet allows us to expand our horizons, but we never see what is behind us, we never see what's
-happening to others." The piece's only bodily ask has always been the turn. This proposes that the
-turn's meaning is other people, revealed at the Close by rising out of the last room and seeing that
-the three rooms were always in one building.
+---
 
-DO NOT BUILD ANYTHING. Produce a spec and a recommendation.
+# ⚑ THE THINKING ROUND IS CANCELLED (2026-08-02)
+*Sérgio: "Maybe we don't need the prompt for the thinking? … unless you feel like we should or
+consult with Codex."*
 
-WHAT TO WORK OUT:
-1. THE STAGING. Where exactly does the player rise to, and what is the geometry of "the building"?
-   Reuse RELOCATION's measured legs and the entrance curve rather than authoring new motion. The
-   result must be TURN-IN-PLACE at fixed overlooks with blink-cuts between them — smooth orbiting is
-   forbidden by R28 and would be the piece's worst VR comfort case. Give real poses and real seconds.
-2. THE SEQUENCE. What the player does, beat by beat, from the last moment of Era 4 to the last
-   moment of the Close. Where the doorplates are read. Where the fourth room is entered. Whether the
-   other rooms can be re-entered or only seen (see open question 3 — argue it, don't dodge it).
-3. THE FOURTH ROOM. Turn the Close from a constellation over a fading room into a room in the same
-   building — the player's — containing pieces of all three and whose lights are the sources. Say
-   precisely what changes in pointCloud.ts and close_network.json, and what does NOT change. Note
-   that the constellation's topology is ALREADY flagged as decorative-not-real in the status
-   register; this spec should say whether that debt must be paid first.
-4. ⚑ THE VOICE. The frame never plays. Work out how the sentence lands WITHOUT a narrator — the doc
-   proposes three doorplates carrying it in pieces plus one written line at the end. Test that
-   proposal hard and propose better if there is better. A voice-over stating the thesis is the one
-   move that would make the whole piece read as an essay, and it must not happen.
-5. WHAT IT COSTS AND WHAT IT BREAKS. Which existing scenes, docs and STATUS entries this touches;
-   what it supersedes; what it makes dead. Be specific and check for deprecation before proposing
-   work on any surface.
-6. ⚑ WHAT ARGUES AGAINST IT. Required section. The strongest honest case for NOT doing this, or for
-   doing a smaller version. If the smaller version is better, say so — the mid-piece pass gaining
-   meaning may be 80% of the value at 10% of the cost.
+**Agreed — dropped, and the prompt that was here is deleted rather than left to rot.** Between this
+doc and his four answers the thinking is done: the movement law is clarified, the choreography has a
+four-beat arc, the building is implied, looking-not-entering is settled, and the Close's role is
+decided. A round asking "think this over" would now be asking for a document that already exists.
 
-CONSTRAINTS THAT ARE NOT NEGOTIABLE: no smooth locomotion; the frame never plays; R24's three aging
-rooms stay; real names remain dossier/provenance only (the fourth room is where they already live);
-Quest budget (≤75k tris, ≤60 draw calls, 72Hz); comfort numbers are MEASURED, not estimated, and
-A11 (the in-headset pass) has still never run — say plainly which of your numbers are unverified.
+**And it should not go to Codex.** The project's own split says Codex takes well-specified mechanical
+work whose acceptance is `tsc` + tests, and explicitly *"its prompts must not claim visual
+verification."* This is camera dramaturgy judged by feel in a headset — the single worst fit for a
+lane that cannot look at the screen.
 
-DELIVERABLE: docs/REINTERP_THE_BUILDING_SPEC_<date>.md with STATUS header, a beat sheet, real poses
-and durations, the Close delta, the voice solution, a supersession list, and the argument against.
-Then ONE line in BUILD_LOG.md. No source files edited.
-```
+**What replaces it: a BUILD prompt for the choreography**, written when S66 (the rooms as livable
+places) is done — in that order, because the choreography reveals rooms, and revealing rooms that
+are not yet places would spend the reveal on furniture.
