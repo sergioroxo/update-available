@@ -108,7 +108,7 @@ const MAX_HERO_PER_SCENE = 3; // CLAUDE.md: "<=3 hero objects per scene on Quest
  * never speaks in the piece's voice). Lower this number when it drops; never
  * raise it without a note saying which law changed.
  */
-const HEX_BASELINE = 40;
+const HEX_BASELINE = 34;
 
 const errors = [];
 const notes = [];
@@ -388,7 +388,7 @@ if (staleExclusions.length) {
  * `to write]`) were applied. Lower this number when a hit gets fixed; never
  * raise it without a note saying which session introduced the regression.
  */
-const AUTHORING_MARKER_BASELINE = 12;
+const AUTHORING_MARKER_BASELINE = 10;
 const AUTHORING_MARKERS = [
   'PLACEHOLDER', 'to write]', 'TODO', 'Sérgio', '[VERIFY SOURCE]', 'researcher note', 'FIXME'
 ];

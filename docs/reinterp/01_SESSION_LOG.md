@@ -19,6 +19,40 @@ STATUS: live
    you then cannot read.
    Do NOT improvise the art direction here — `REINTERP_3D_STYLE_DIRECTION` + the Soft Lo-Fi law,
    and screenshots at every seat before and after.
+
+   ### ⚑ HOW S66 WORKS — the creative-leeway amendment (Sérgio, 2026-08-02)
+   *"I do feel like we can try to give the model some creative leeway to try out the logistics and
+   the narrative placement and suggest and build upon that."* **Granted, with one line drawn.**
+
+   **LEEWAY — GRANTED, and it is the point of this session.** Do not wait for a prop list. You are
+   given a CONTRACT OF INTENT, not an inventory:
+
+   > **Room 2 must show that somebody lives here, and that person is not the story — she is who the
+   > story is happening to.** Room 1 has tapes, a kit, a diary. Room 2 has furniture and three
+   > screens. Vera owns nothing on screen, which is why every seat reads as a dead end: when you
+   > turn, there is nothing to have turned toward.
+
+   Choose the belongings, place them, light them, sit in every seat, screenshot, change your mind,
+   and do it again. **Iterate in-engine and report what you learned** — that is explicitly wanted
+   here, and it is warranted by evidence rather than optimism: the two biggest findings of the last
+   two sessions (the corrections never touched her words; Room 2 had literally no readable light)
+   were both found by *building and looking*, and neither was catchable in a doc. Real-click
+   verification through the device planes now works, so "try it and look" is a real method.
+
+   **THE LINE — what leeway does NOT extend to.** Staging, logistics, props, lighting, placement,
+   framing, the order of a read: yours. **What RETURNS, and who the era is about: not yours.** The
+   last session correctly identified that nothing recurs in Era 3 and proposed that Vera's own
+   testimony should eventually enter her own queue. That is a real story decision, it is Sérgio's,
+   and it is NOT in this session's scope — building toward it would be the four-pass E3 mistake
+   repeating one layer down.
+
+   **The working rule:** if it can be judged by sitting in the seat, decide it yourself. If it
+   changes what the era MEANS, propose it in the session log and stop.
+
+   **And propose beyond the brief.** The four lettered items are the floor, not the ceiling. If the
+   room wants something not listed, build it, screenshot it, and say why — with a named rollback so
+   Sérgio can cut it in one line. **A proposal he can delete cheaply is worth more than a question
+   he has to answer before anything moves.**
 1. ~~**S57 — S2R.7: ERA 2 ENDS.**~~ **SHIPPED 2026-07-26 (Session 58, below)** — the residue now
    retires the send lane and arms the era's own close, the u3 ritual runs the established grammar,
    the belongings beat fires a second time as a MIGRATION, the restart lands the player in Room 2,
