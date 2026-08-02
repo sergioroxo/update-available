@@ -10,7 +10,8 @@ not live.***
 |---|---|---|---|
 | — | ~~S66 — the rooms as livable places~~ | ↓ below, in this file | **SHIPPED 2026-08-02** — number retired |
 | — | ~~S67 — the choreography~~ | `docs/REINTERP_THE_BUILDING_2026-08-02.md`, tail | **SHIPPED 2026-08-02** — number retired |
-| 1 | **S69 — the presets on Noa's video** | ↓ below, in this file | **QUEUED — dispatch this one** (S66 and S67 have both shipped) |
+| — | ~~S69 — the presets on Noa's video~~ | ↓ below, in this file | **SHIPPED 2026-08-02** (`11ef26e`) — number retired |
+| 1 | **S70 — the comments, and the recruitment floor** | *not yet written — see `docs/REINTERP_E3_THE_JOB_2026-08-03.md`* | **NEXT, pending Sérgio's go** |
 | — | S68 | *(soft-claimed by the gyroscope look-around suggestion, `NEXT_PROMPTS_2026-07-30.md` tail — not written)* | — |
 
 **Numbers are not reused.** S66 previously named two other jobs (the retired testimony studio; the
@@ -96,7 +97,7 @@ lived in rather than decorated — if it looks like a set, it is wrong.
 ---
 
 # S69 — THE PRESETS, ON NOA'S VIDEO · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: QUEUED — after S66. Independent of S67.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-02 — built as the presets on Noa's video (`11ef26e`). Do not dispatch; the number is retired.**
 *Sérgio approved 2026-08-02. Spec: `REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` **revision 5**.
 This is the salvage the retired studio spec's supersession header always reserved — presets-as-
 ideology and the sourced three-phase grammar — returning as ONE correction item inside the shipped
