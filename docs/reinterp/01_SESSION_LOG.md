@@ -3375,3 +3375,155 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   **⚑ Comfort risk now exposed, not resolved:** three existing conducted moves translate and rotate the rig while the head remains tracked: (1) S53's 10-second opening descent, (2) S61's three-leg E2→E3 relocation at approximately 29.35 seconds, and (3) E4's 4.5-second TURN dolly. Those are artificial camera motion in a turn-only piece and remain A11 headset judgments. `?descent=0` still supplies the opening A/B; this session did not change the motions.
 
   **No headset or visual verification is claimed. A human must verify on Quest 3, over HTTPS:** (1) the card offers Enter VR and selecting it opens a true immersive session rather than a flat browser window; (2) initial seated eye height, room scale, stereo rendering, and head tracking are correct, with physical turning crossing to and from the witness side; (3) the opening descent, E2→E3 relocation, and E4 TURN all visibly move the world around the tracked head, reach the authored seats/facings, and are tolerable—testing the opening both normally and with `?descent=0`; (4) Quest's system Exit VR returns to the live desktop canvas without a pose jump, frozen frame, wrong resolution, or second app; (5) the piece's Leave action ends the immersive session; (6) a sustained run holds the binding 72 Hz floor, especially during all three conducted moves; and (7) an unsupported desktop browser still shows only Log in/Leave, while `?flat=1&reinterp=1` remains the canvas-only fallback. Controller pointing/menu behavior is explicitly outside this scaffolding session and was not claimed. `npx tsc --noEmit`, `npm test` (C6 39/39), and `npm run build` are green. **BLOCKED: none.**
+
+- 2026-08-02 — **S67 THE CHOREOGRAPHY: the rise becomes the piece's movement grammar** (Opus, from
+  `docs/REINTERP_THE_BUILDING_2026-08-02.md` revision 1's four-beat table). The piece now lifts you
+  out of the room at EVERY era change, and what you see when you come up is the story.
+
+  ### 1. WHAT THE RELOCATION BECAME
+  S61's E2→E3 handoff was hardcoded in two places at once — `beginRelocation()` in `app.ts` and a
+  `fromEra === 'e2' && toEra === 'e3'` branch inside `cluster.morphToEra()`. Both are now driven by
+  one plan table: `RELOCATIONS` in `src/room/cluster.ts` (leg durations, cascade length, whether the
+  walls open, when the era's rig crossfades, the destination seat, which doorplates light) and
+  `RELOC_POSES` in `src/engine/app.ts` (the camera poses and bezier controls), keyed identically as
+  `${from}-${to}`. `morphToEra(era, animate, plan)` takes an explicit `null` to opt out.
+
+  | | rise | build | descend | total | walls | seat |
+  |---|---|---|---|---|---|---|
+  | **E1→E2** | 7.0 | 7.0 | 7.0 | **21.0 s** | stay ON | Room 1 (unchanged) |
+  | **E2→E3** | 7.0 | 11.0 | 11.5 | **29.5 s** | come OFF | Room 2 |
+  | **E3→E4** | 7.0 | 24.0 | 11.5 | **42.5 s** | already off | Room 3 |
+
+  **E1→E2 is a palindrome, and that is the content.** You rise 1.47 m out of Daniel's chair, hold
+  over his still-closed room while it ages beneath you (the moon goes out, the tapes go, 2003's
+  daylight comes up), and come back down into the same chair. The middle leg drifts 0.57 m and
+  arrives nowhere — the slowest leg in the piece at 0.121 m/s, three times slower than anything
+  else, so it reads as waiting rather than travel. ⚑ **What stops the emptiness reading as a missing
+  asset is the doorplate:** exactly one lights, and it is on screen for 14.2 of the 21 seconds.
+
+  **E3→E4 is 42.5 s and that is arithmetic, not taste.** Room 2's seat to Room 3's is 8.8 m apart
+  and the crossing swings the view 142°; at S53's 9.1 °/s ceiling the turn alone needs 23.4 s, and
+  the piece's own stated envelope (~0.24 m/s mean) predicts ~43 s for a 10.5 m path. **The single
+  number worth re-feeling in a headset is this one** — the alternative (blink-cutting the crossing)
+  was rejected because the whole beat is that you SEE the building again and it is no longer strange.
+
+  ### 2. MEASURED PEAK SPEEDS — every leg, live, and how they were obtained
+  Sampled off the live `camera-rig` at a fixed 16.67 ms step, yaw read from the rig's FORWARD VECTOR
+  (`getLocalEulerAngles()` quantises near 90° and reported a phantom 0.26° step with zero motion for
+  20 frames after it — a readback artifact, not a camera move). Cross-checked against an offline
+  integration of the same bezier + easing, which **reproduces S61's two live figures exactly**
+  (E2→E3 descend: 0.477 m/s at 10 s, 0.415 m/s at 11.5 s), so the model and the build agree.
+
+  | leg | kind | chord | peak m/s | peak yaw °/s | peak pitch °/s |
+  |---|---|---|---|---|---|
+  | E1→E2 rise | arc | 1.471 m | **0.395** | 0.00 | 4.55 |
+  | E1→E2 hold | tween | 0.567 m | **0.121** | 0.00 | 0.43 |
+  | E1→E2 descend | arc | 1.421 m | **0.381** | 0.00 | 5.09 |
+  | E2→E3 rise | arc | 1.471 m | **0.395** | 0.00 | 4.55 |
+  | E2→E3 build | tween | 2.557 m | **0.349** | 7.09 | 0.55 |
+  | E2→E3 descend | arc | 2.544 m | **0.415** | 6.20 | 2.12 |
+  | E3→E4 rise | arc | 1.471 m | **0.395** | 0.00 | 4.55 |
+  | E3→E4 crossing | tween | 6.453 m | **0.403** | 8.87 | 0.25 |
+  | E3→E4 descend | arc | 2.544 m | **0.415** | 6.20 | 2.12 |
+
+  Envelope: 0.43 m/s, 9.1 °/s. **Every leg is inside it.** E2→E3's three legs are byte-identical to
+  S61's and re-measured to the same figures — the refactor changed nothing about the one leg set
+  that had ever been comfort-measured. E3→E4's descend is a pure x-mirror of it, so it carries the
+  same numbers by construction.
+
+  **⚑ WHAT E3→E4 USED TO BE, measured for the record:** `dollyTo(270, 4.5, autoCam)` — 8.8 m and
+  180° of yaw in 4.5 s = **3.667 m/s and 75 °/s**, i.e. 8.5× the linear envelope and 8.2× the
+  angular one, under a comment claiming it "rise[s] up over thirty years of rooms", which a yaw
+  dolly does not do. E1→E2 fired no camera move at all. Both are fixed; the comment is now true.
+
+  **⚑ ALL OF THIS IS DESKTOP-MEASURED. A11, the in-headset pass, has still never run.** Nothing in
+  this session has been judged in VR, and the E3→E4 crossing is now the longest piece of artificial
+  locomotion in a work whose entire bodily law is "you never walk."
+
+  ### 3. THE DOORPLATES
+  One per room, era + name + one line, drawn once into a small canvas each (monospace,
+  `FILTER_NEAREST`, geometry and colours in `data/room/cluster.json`, strings in the new
+  `data/strings/doorplates.json` as PLACEHOLDER-draft). Enabled only while a relocation has you out
+  of the seat, faded in and out over 1.4 s.
+
+  **They are on the wall each seat faces, not on the floor, and that was measured rather than
+  chosen:** at every overlook pose the camera sits at y 2.16–2.28 with a −13..−19 pitch and a 42
+  fov, which frames each room's far wall in its upper half and shows almost no floor — a floor
+  plaque would have been out of frame in every leg. On the wall at y 2.10 it needs a +30..+34
+  look-up from the seat (half-fov is 21°), so "only from above" holds geometrically and not only by
+  the enable gate. Two live corrections: r2/r3 moved from their rooms' z-centre to z −0.3 (at 0.7
+  they sat 23° off axis against a 29.7° horizontal half-fov, i.e. clipped by the screen edge), and
+  r3 was raised to y 2.36 because Room 3's curtain rod runs through that z and the plate's material
+  is depth-write-off, so the opaque rod drew straight over it.
+
+  **Measured on-screen time, per beat — the exposure arc is 1 → 2 → 3 plates:**
+
+  | | Room 1 | Room 2 | Room 3 |
+  |---|---|---|---|
+  | E1→E2 | **14.2 s** (3.2→17.3) | — | — |
+  | E2→E3 | 4.0 s (7→11) | **11.0 s** (14.1→25.1) | — (behind you throughout) |
+  | E3→E4 | 3.1 s (19.7→22.8) | 5.2 s (11.9→17.1) | **11.2 s** (26.2→37.3) |
+
+  Room 3's plate is never readable at E2→E3 because that leg's poses are S61's and had to stay
+  byte-identical; the effect is that each rise gives you one more plate than the last, and only the
+  third beat completes the sequence. **The lines are Claude's draft and Sérgio's edit wins.** They
+  are doormat notes, not labels: *ring twice, the bell is broken* / *please leave parcels with me* /
+  *no unsolicited callers* — thirty years of one door getting harder to reach, with no single plate
+  stating the thesis. Two things flagged for him in the file's own `_doc`: r3's era as a bare 2026,
+  and the plates being static (Room 1 still reads 1997/DANIEL after the room is vacated — a struck
+  or blank plate is the obvious next beat and was deliberately not built, because it would be the
+  piece commenting). Type auto-fits its plate, so a rewrite cannot silently clip (the first pass
+  rendered "ring twice, the bell" and stopped).
+
+  ### 4. ONLY LOOK, NEVER ENTER — verified, not assumed
+  Driven the whole 42.5 s E3→E4 flight from E3 (where markers exist) sampling the `movement-nodes`
+  entity every frame: **zero frames with a visible marker for the entire relocation; the first one
+  reappears at 42.49 s**, the frame it lands. `scriptedBusy()` already covered this; now it is
+  measured. There is no disc, no affordance and no way into another room from above.
+
+  ### 5. FOUR THINGS FOUND WHILE BUILDING, ALL REPORTED RATHER THAN QUIETLY PATCHED
+  1. **The E4 witness record was landing outside Room 3.** `morphToEra` called `migrateTerminal(true)`
+     (which puts the plane on Maya's wall at z 1.75) and then `setPlaneZ()` unconditionally, dragging
+     it back to the spine's z 3.62 — behind Room 3's east wall. Pre-existing since the E4 migration
+     landed; `settleNow()` did the same. FIXED (both now skip the spine z at E4) and verified live:
+     the plane sits at (5.66, 1.50, 1.75).
+  2. **A relocation could be hijacked by the entrance descent.** The update loop's
+     `descentActive && !camMove → endDescent()` fires the instant leg 1's arc resolves, teleporting
+     the camera into the seat mid-flight. Measured before the guard: an **88 m/s, 1020 °/s**
+     single-frame spike between legs 1 and 2. It cannot happen in play (the descent lands ~10 s after
+     load) but the debug panel reaches it, so `beginRelocation` now cancels the front door outright.
+  3. **⚑ E3→E4's cascade peaks at 63 draw calls, over the ≤60 Quest budget — and 62 of that is
+     pre-existing.** Measured: E2→E3 peaks at 57 without plates / 58 with; E3→E4 at 62 / 63. The
+     plates cost exactly ONE call at peak (frustum culling keeps the other two out of frame) and
+     zero at every settled state (settled E3 = 21, E4 = 24). The cause is `beginMorphedStateBatch()`
+     clearing the settled batch for the duration of a cascade, which is batching.ts's documented
+     design and outside this fence. **My change makes it worse in one way that must be said: the r4
+     cascade now runs 11.0 s instead of 6.5 s, so the over-budget window is ~4.5 s longer.** Flagged
+     for whoever next owns `src/room/batching.ts`.
+  4. **A pre-existing PlayCanvas assert**, unrelated to this work: eight
+     `ASSERT FAILED: Invalid batch 1 insertion/removal with node: "terminalFrame"` per playthrough,
+     from `setTerminalVisible()` toggling `.enabled` on a batched node. Confirmed identical on the
+     `?descent=0` path, which is the pre-S67 code verbatim. Not introduced here, not fixed here.
+
+  ### 6. A DECISION THAT CHANGED AFTER LOOKING AT IT
+  The first pass gave every non-wall-opening relocation the same early rig crossfade. Live, that put
+  E4's near-dark rig (ambient 0.05, roomFill 0.1 — "the cold has won") 2.5 s into a 24 s crossing, so
+  the one beat that has to show you three rooms one last time played in near-black. `rigDelaySeconds`
+  is now per-transition: E1→E2 fires it EARLY (2003's daylight replacing 1997's lamp-lit night is the
+  aging, and you watch it from above), E3→E4 fires it at 22.0 s so the building is still lit while
+  you cross it and the lights go out as you come down into Maya's room.
+
+  ### 7. HOW THIS WAS VERIFIED
+  `?reinterp=1&debug=1`, real DOM clicks on the panel, frames driven by a synchronous stepper at a
+  fixed 16.67 ms (the sandboxed pane suspends `requestAnimationFrame` for a hidden document) — so
+  proportions are exact by construction, not wall-clock real time. All three relocations were flown
+  BOTH from the new debug buttons and through the real path (`os.onEraShift` → `driveMorph`), chained
+  E1→E2→E3→E4 in one session, landing at (0, 1.16, 0.7), (−4.4, …) and (4.4, …) with the era readout
+  correct each time. Skip verified from mid-flight on all three (a real `pointerdown` on the canvas at
+  8.3 s / 15.0 s / 20.0 s lands the correct seat and fades the plates). `?descent=0` verified: **zero
+  per-frame camera motion at every era shift**, correct seats, plates never enabled. `?flat=1` boots
+  the desktop canvas alone with no console errors. `npx tsc --noEmit`, `npm test` (palette 33/34, C6
+  39/39, C7 10/10, C8 26 blocks) and `npm run build` green.
+
+  **BLOCKED: none.** Waiting on Sérgio: the three doorplate lines (voice pass), and one judgement
+  call — whether E3→E4's 42.5 s reads as routine or as boring. **A11 remains unrun.**

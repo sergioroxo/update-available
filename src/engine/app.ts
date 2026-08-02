@@ -18,7 +18,8 @@ import { buildEra1Room } from '../room/era1room';
 import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
-import { buildClusterShell, RELOCATION, type ClusterShell, type EraKey } from '../room/cluster';
+import { buildClusterShell, relocationFor, type ClusterShell, type EraKey,
+  type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
@@ -111,7 +112,7 @@ const DESCENT_FROM = { x: 1.52, y: 2.18, z: 2.62, pitch: -30, yaw: 44 };
 const DESCENT_VIA = { x: 1.03, y: 2.45, z: 1.03 };
 /** one continuous move, slow enough to read as drifting in and sitting down */
 const DESCENT_SECONDS = 10;
-// ── ⚑ THE RELOCATION (S61) — E2 → E3, the one time the piece moves you house ──
+// ── ⚑ THE RELOCATION (S61; every era change from S67) — the piece lifts you ──
 // Sérgio, after playing it: *"the transition needs explaining… the fly over
 // needs to be slower and let you see the room being built so you understand
 // the new space and the passage of time."* What he saw was a 2.4 s dolly
@@ -119,27 +120,40 @@ const DESCENT_SECONDS = 10;
 // camera arrived at Vera's desk, facing a wall, four seconds before the space
 // behind it finished opening. Six years, and it was over before it read.
 //
-// It is now THREE LEGS, timed by `RELOCATION` in src/room/cluster.ts (which is
+// It is THREE LEGS, timed by `RELOCATIONS` in src/room/cluster.ts (which is
 // also what re-times the cascade, so the two halves cannot drift):
-//   1 RISE     — you come up out of Daniel's chair while his room is STILL
-//                CLOSED. Nothing has changed yet; you are just no longer sitting.
-//   2 THE BUILD — the walls leave, the ballast stutters, the two other rooms
-//                resolve out of the dark, and the camera crosses slowly over
-//                the space while it happens. This is the leg the note asked
-//                for: the room is built in front of you, not behind you.
-//   3 DESCEND  — down into Vera's seat, the facing resolving with the position
+//   1 RISE     — you come up out of the chair while the room is unchanged.
+//                Nothing has happened yet; you are just no longer sitting.
+//   2 THE BUILD — the space changes while you are up there, in front of you,
+//                and the camera crosses slowly over it. This is the leg the
+//                note asked for: the room is built in front of you, not behind.
+//   3 DESCEND  — down into a seat, the facing resolving with the position
 //                (S53's lesson: one curve, aim and place together).
 //
+// ⚑ S67 MADE THIS THE PIECE'S MOVEMENT GRAMMAR RATHER THAN ONE HANDOFF, and
+// the argument is in docs/REINTERP_THE_BUILDING_2026-08-02.md: the one bodily
+// law is that you turn but never walk, and its meaning is that a screen fixes
+// your facing while what is behind you is other people. So the lift happens at
+// EVERY era change and *what you see when you come up* is the story — one
+// closed room at E1→E2, three at E2→E3, three again and routinely at E3→E4.
+// The legs are deliberately the same; only the view differs. `RELOC_POSES`
+// below is the camera half, keyed identically to cluster.ts's table.
+//
 // ⚑ COMFORT LAW (CLAUDE.md; §0-REV-4). This is artificial locomotion — the
-// longest in the piece — so it is held to the envelope S53 measured for the
-// opening descent: peak 0.43 m/s linear, 9.1°/s angular, smootherstep/
-// smoothstep easing (zero velocity at both ends of every leg), no roll, no
-// FOV games, yaw always the shortest signed path. The path is ~6.6 m long and
-// that envelope is exactly why the whole move takes ~30 s: 6.6 m at a mean of
-// ~0.24 m/s is half a minute, and the alternative is a comfort violation.
-// Measured peaks from a real run are in the session log. Any input lands you
-// in the seat at once (endRelocation) and settles the room — the same escape
-// the descent has, for the same reason.
+// longest in the piece — so every leg is held to the envelope S53 measured for
+// the opening descent: peak 0.43 m/s linear, 9.1°/s angular, smootherstep
+// (arcs) / smoothstep (straight tweens) easing so velocity is zero at both
+// ends of every leg, no roll, no FOV games, yaw always the shortest signed
+// path. Those two easings put the peak at exactly 1.875 × chord / duration for
+// an arc and 1.5 × chord / duration for a tween, which is why every duration
+// here is a quotient rather than a preference: E2→E3's descent is 11.5 s and
+// not 10 because 1.875 × 2.5445 / 10 = 0.477, over the envelope. E3→E4's
+// crossing is 24 s because the building is 8.8 m wide and the turn is 142°.
+// Measured peaks from real runs are in the session log; ALL are desktop
+// figures, because A11 (the in-headset pass) has still never run. Any input
+// lands you in the seat at once (endRelocation) and settles the room — the
+// same escape the descent has, for the same reason — and `?descent=0` opts
+// out of the whole grammar, exactly as it opts out of the entrance.
 /** end of leg 1: standing over Daniel's desk, still inside his closed room.
  *  Kept UNDER the ceiling (2.68) and the lintels (2.43) throughout, so no
  *  slab ever has to be hidden and restored (the churn S48 logged). */
@@ -156,6 +170,56 @@ const RELOC_OVERLOOK_B = { x: -2.30, y: 2.28, z: 1.60, pitch: -13, yaw: 52 };
 /** leg 3's control point: out over Room 2's floor, so the descent curls in
  *  over the bed and settles at the desk instead of dropping on a diagonal */
 const RELOC_DESCEND_VIA = { x: -3.70, y: 2.10, z: 1.45 };
+/**
+ * ⚑ E1→E2's leg 2 (S67): THE HOLD THAT GOES NOWHERE.
+ *
+ * The walls stay on, so there is no second room for the camera to cross
+ * toward, and the honest thing is to not pretend there is. It drifts 0.57 m —
+ * a little further west, a little further down, toward the wall the building
+ * happens to be behind — and stops. Slowest leg in the piece by a factor of
+ * three (0.12 m/s peak), which reads as WAITING rather than as travel.
+ *
+ * ⚑ It must not read as a missing asset. What stops it doing so is Room 1's
+ * doorplate: you come up, exactly one plate lights, and there is nothing else
+ * in the dark. One is a fact about the building; zero would have been a bug.
+ */
+const RELOC_E1_HOLD = { x: -0.30, y: 2.20, z: 1.62, pitch: -19, yaw: 0 };
+/** E1→E2's leg 3 control: 0.23 m of sagitta (the rise's own figure), out over
+ *  the room so you settle back into the chair rather than drop into it */
+const RELOC_E1_DESCEND_VIA = { x: -0.38, y: 1.90, z: 0.83 };
+/** E3→E4's leg 1 — Room 2's overlook. Deliberately the exact translation of
+ *  Room 1's (+0.25 x, +1.00 y, +1.05 z off the seat, 1.4715 m of chord): by
+ *  the third time, the move must be recognisable in the body, not just in the
+ *  edit. Same via offset, same 7.0 s, same 0.394 m/s peak. */
+const RELOC_OVERLOOK_R2 = { x: -4.15, y: 2.16, z: 1.75, pitch: -17, yaw: 90 };
+const RELOC_R2_RISE_VIA = { x: -4.25, y: 2.00, z: 0.95 };
+/** E3→E4's leg 2 — the mirror of RELOC_OVERLOOK_B, over the Room 1 / Room 3
+ *  threshold, and the crossing that gets there is the longest move in the
+ *  piece: 6.45 m and 142° of turn. See the durations in cluster.ts. */
+const RELOC_OVERLOOK_C = { x: 2.30, y: 2.28, z: 1.60, pitch: -13, yaw: 308 };
+/** E3→E4's leg 3 control — RELOC_DESCEND_VIA mirrored in x, so the descent
+ *  into Maya's seat is geometrically identical to the one into Vera's */
+const RELOC_R3_DESCEND_VIA = { x: 3.70, y: 2.10, z: 1.45 };
+
+/** the camera half of a relocation, keyed exactly as cluster.ts's RELOCATIONS
+ *  (`${from}-${to}`); the space half — durations, walls, seat, plates — lives
+ *  there so the two cannot drift. Leg 1 and leg 3 are ARCS (a `via` control
+ *  point); leg 2 is a straight eased tween, because while the space is
+ *  changing the camera should be the steadiest thing on screen. */
+interface RelocPoses {
+  rise: { x: number; y: number; z: number; pitch: number; yaw: number };
+  riseVia: { x: number; y: number; z: number };
+  hold: { x: number; y: number; z: number; pitch: number; yaw: number };
+  descendVia: { x: number; y: number; z: number };
+}
+const RELOC_POSES: Record<string, RelocPoses | undefined> = {
+  'e1-e2': { rise: RELOC_OVERLOOK_A, riseVia: RELOC_RISE_VIA,
+    hold: RELOC_E1_HOLD, descendVia: RELOC_E1_DESCEND_VIA },
+  'e2-e3': { rise: RELOC_OVERLOOK_A, riseVia: RELOC_RISE_VIA,
+    hold: RELOC_OVERLOOK_B, descendVia: RELOC_DESCEND_VIA },
+  'e3-e4': { rise: RELOC_OVERLOOK_R2, riseVia: RELOC_R2_RISE_VIA,
+    hold: RELOC_OVERLOOK_C, descendVia: RELOC_R3_DESCEND_VIA }
+};
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
 // the blink is a CUT, never a tween: fade to black, THEN move the camera,
 // THEN fade back — no smooth travel (Sérgio's explicit law: gaze must stay
@@ -759,7 +823,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     vx: number; vy: number; vz: number; arc: boolean;
     t: number; dur: number; conducted: boolean; }
   let camMove: CamMove | null = null;
-  let autoCam = false;
+  /** ⚑ THE ONE OPT-OUT (`?descent=0`). It has always turned off the entrance
+   *  descent; S67 makes it turn off the RELOCATIONS too, because they are the
+   *  same thing at a larger scale and the brief is explicit that whatever opts
+   *  out of one must opt out of the other. With it off, an era shift ages the
+   *  room and cuts you to the destination seat — no driven motion anywhere in
+   *  the piece. Read once: the URL cannot change mid-session. */
+  const drivenMoves = new URLSearchParams(window.location.search).get('descent') !== '0';
   // THE WAKE (decision doc §3): true from the moment the player logs in at
   // the interim panel until the light has finished coming up and the machine
   // has booted itself. It replaces S40's LOOK/INTERACT pre-boot window and
@@ -774,9 +844,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // S61 THE RELOCATION: which leg owns the camera, or null when it is not
   // running. See the RELOC_* constants above for the shape and the comfort
   // arithmetic; beginRelocation/advanceRelocation/endRelocation drive it.
+  // S67: plus WHICH relocation — the key into RELOC_POSES / cluster.ts's
+  // RELOCATIONS, and the plan itself, so a leg never has to ask what era it is.
   let relocLeg: 'rise' | 'build' | 'descend' | null = null;
+  let relocKey: string | null = null;
+  let relocPlan: RelocationPlan | null = null;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
-  // the tilt ran conducted (autoCam) — a free tilt cedes to the player's drag
+  // the tilt ran conducted — a free tilt cedes to the player's drag
   let revealReturn = -1;
   let revealConducted = false;
   let morphDemoIn = -1; // ?morph= review: seconds until the live morph plays
@@ -1089,47 +1163,79 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     os.beginReinterpOpening();  // boot on the monitor → O3 profile
   }
 
-  // ── THE RELOCATION's three legs (see the RELOC_* constants) ──
-  /** start the whole move. Called from driveMorph on the E2→E3 shift only —
-   *  never on a snap/settled jump, and never for any other era. */
-  function beginRelocation(): void {
+  // ── THE RELOCATION's three legs (see RELOC_POSES + cluster.ts RELOCATIONS) ──
+  /** start the whole move. Called from driveMorph on an era shift that has a
+   *  plan — never on a snap/settled jump, and never under ?descent=0. */
+  function beginRelocation(key: string, plan: RelocationPlan): void {
+    const poses = RELOC_POSES[key];
+    if (!poses) return;
+    // ⚑ A relocation owns the camera outright, so the front door cannot still
+    // be running under it. In play they never overlap (the descent lands ~10 s
+    // after load, eras shift minutes later) — but the debug panel can start a
+    // relocation mid-descent, and the update loop's `descentActive && !camMove
+    // → endDescent()` would then fire the instant leg 1's arc resolved and
+    // teleport the camera into the seat mid-flight. Measured live before this
+    // guard: an 88 m/s, 1020 °/s single-frame spike between legs 1 and 2.
+    descentActive = false;
+    wakeActive = false;
+    relocKey = key;
+    relocPlan = plan;
     relocLeg = 'rise';
-    startCamMove(RELOC_OVERLOOK_A, RELOCATION.riseSeconds, true, RELOC_RISE_VIA);
+    startCamMove(poses.rise, plan.riseSeconds, true, poses.riseVia);
   }
   /** each leg hands over the frame its arc resolves — no gap, no still beat */
   function advanceRelocation(): void {
+    const poses = relocKey ? RELOC_POSES[relocKey] : undefined;
+    if (!poses || !relocPlan) { endRelocation(); return; }
     if (relocLeg === 'rise') {
       relocLeg = 'build';
-      // a straight eased tween: while the room assembles, the camera is the
+      // ⚑ THE PLATES come up with the second leg, and only ever here: this is
+      // the beat where you are out of the seat and above the rooms, and
+      // "visible only from above" is enforced by nothing being on screen at
+      // any other time. At E1→E2 exactly one lights (see RELOC_E1_HOLD).
+      cluster?.showPlates(relocPlan.plates);
+      // a straight eased tween: while the space changes, the camera is the
       // one thing on screen that is not changing shape
-      startCamMove(RELOC_OVERLOOK_B, RELOCATION.buildSeconds, true);
+      startCamMove(poses.hold, relocPlan.buildSeconds, true);
     } else if (relocLeg === 'build') {
       relocLeg = 'descend';
-      startCamMove(seatPose(90), RELOCATION.descendSeconds, true, RELOC_DESCEND_VIA);
+      startCamMove(seatPose(relocPlan.seat), relocPlan.descendSeconds, true, poses.descendVia);
     } else if (relocLeg === 'descend') {
       endRelocation();
     }
   }
-  /** land it: in the seat, room settled, Vera's machine free to start. Called
-   *  both when leg 3 resolves on its own and as the SKIP — any input at all
-   *  calls this, exactly as endDescent works, so a 30-second scripted move can
-   *  never trap anyone or make them sit through motion they don't want. */
+  /** land it: in the seat, room settled, the era's machine free to start.
+   *  Called both when leg 3 resolves on its own and as the SKIP — any input at
+   *  all calls this, exactly as endDescent works, so a scripted move of this
+   *  length can never trap anyone or make them sit through motion they don't
+   *  want. It is also the whole ?descent=0 path (seatCut below). */
   function endRelocation(): void {
     if (!relocLeg) return;
+    const key = relocKey;
+    const seat = relocPlan?.seat ?? 0;
     relocLeg = null;
+    relocKey = null;
+    relocPlan = null;
     camMove = null;
+    cluster?.hidePlates(); // the plates belong to the overlook and nowhere else
     cluster?.settleNow(); // the space finishes wherever the cascade had got to
-    seatYaw = 90;
-    const sp = seatPose(90);
+    seatCut(seat);
+    // ⚑ and only NOW does Vera's laptop start: the era's machine boots in
+    // front of you, in the seat, the way E1's did (Sérgio: "we shouldn't
+    // start without the boot up on the computer"). E3's arrival only — E1→E2
+    // and E3→E4 have no device boot of their own to hold back.
+    if (key === 'e2-e3') era3Devices?.beginArrival();
+  }
+  /** put the camera in a room's seat, now. The landing half of a relocation,
+   *  and the whole of it under ?descent=0. */
+  function seatCut(yaw: number): void {
+    seatYaw = yaw;
+    const sp = seatPose(yaw);
     camPos.set(sp.x, sp.y, sp.z);
     camPitch = sp.pitch;
     camYaw = sp.yaw;
     cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
-    // ⚑ and only NOW does Vera's laptop start: the era's machine boots in
-    // front of you, in the seat, the way E1's did (Sérgio: "we shouldn't
-    // start without the boot up on the computer").
-    era3Devices?.beginArrival();
   }
 
   /** grabbing/keying the view cancels a non-conducted move (the player left it) */
@@ -1838,9 +1944,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // parallel function here — an app.ts-side override would only be clobbered
   // moments later by applyRig(toEra, animate) inside cluster.morphToEra().
 
-  /** animated era morph + the TURN: E4's restart re-anchors the home facing
-   *  180° (◆N3 LOCKED — "let's be bold, we need emotion"): a slow conducted
-   *  pan under auto-cam, a takeable default otherwise */
+  /**
+   * ⚑ EVERY ERA SHIFT LANDS HERE, and since S67 every one of them is a
+   * RELOCATION: the piece lifts you out of the room, the room changes under
+   * you, and it sets you down. See the block above RELOC_POSES for why that is
+   * the piece's argument and not a camera flourish.
+   *
+   * What this replaced, for the record: E1→E2 did NOTHING at all (E1/E2 are
+   * single-room eras, so `seatYaws().length > 1` was false and no camera move
+   * fired), and E3→E4 was `dollyTo(270, 4.5, autoCam)` — a 4.5 s arc across
+   * 8.8 m and 180° of yaw, i.e. a 3.67 m/s / 75 °/s peak against an 0.43 m/s /
+   * 9.1 °/s envelope, under a comment that claimed it "rise[s] up over thirty
+   * years of rooms", which a yaw dolly does not do. Both are now the same
+   * three legs E2→E3 has flown since S61, whose numbers are untouched.
+   */
   function driveMorph(era: EraKey): void {
     if (!cluster) return;
     // R28-2b: every era shift resets the tape system BEFORE the morph removes
@@ -1864,18 +1981,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S2R.0a: cluster.morphToEra() below calls applyRig(era, animate), which
     // owns the E2 daylight cue (data/room/cluster.json's `e2` rig) in the
     // SAME morph beat as the room aging — see the note above applyLightsOn().
-    cluster.morphToEra(era, true);
-    if (era === 'e4') {
-      // THE TURN as a dolly — the piece's slowest, heaviest move: rise up over
-      // thirty years of rooms and settle into Room 3, Maya's room (the trans
-      // room evolved; ◆N3 retargeted from the old spine desk, Round 24)
-      dollyTo(270, 4.5, autoCam);
-    } else if (era === 'e3' && fromEra === 'e2') {
-      // ⚑ S61 — THE RELOCATION replaces the 2.4 s dolly here. It is the only
-      // era shift that moves you into a different room and a different life,
-      // and cluster.morphToEra's own E2→E3 timeline (just called above) is now
-      // scheduled around its three legs. See the RELOC_* constants.
-      beginRelocation();
+    const key = `${fromEra}-${era}`;
+    const plan = drivenMoves ? relocationFor(fromEra, era) : undefined;
+    // the space's half is scheduled around the camera's legs; passing the plan
+    // (or an explicit null) keeps the two halves reading the SAME numbers.
+    cluster.morphToEra(era, true, plan ?? null);
+    if (plan) {
+      beginRelocation(key, plan);
+    } else if (relocationFor(fromEra, era)) {
+      // ?descent=0: whatever opts out of the entrance opts out of this too.
+      // The room still ages; you are simply already in the destination seat
+      // when it does, which is the pre-S61 grammar.
+      seatCut(relocationFor(fromEra, era)?.seat ?? cluster.homeYaw);
+      if (fromEra === 'e2' && era === 'e3') era3Devices?.beginArrival();
     } else if (seatYaws().length > 1 && seatYaw !== cluster.homeYaw) {
       dollyTo(cluster.homeYaw, 2.4, false); // era jumps re-seat at the lead room
     }
@@ -1950,9 +2068,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // (decision doc §3). No board-look gate, no power button, no teaching
       // window; nothing to press at any point.
       applyRoomLight(0);
-      const wantDescent = new URLSearchParams(window.location.search).get('descent') !== '0';
       camYaw = 0;
-      if (wantDescent) {
+      if (drivenMoves) {
         // S53: one arc, off-centre → the seat, aim resolving with position.
         // The pose is committed BEFORE startCamMove because that function reads
         // the live camera as the curve's start (and takes the shortest yaw).
@@ -1998,6 +2115,29 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         camMove = null;
       },
       onReveal: () => cluster?.reveal(),
+      // ⚑ S67 (check-spec C6's rule, applied by hand because C6 can only see
+      // os.ts's debugJump ids): every new beat gets a button. This one replays
+      // a relocation from its own starting seat and era WITHOUT needing the
+      // update ritual that normally fires it — the only way to judge three
+      // ~20-45 s camera moves by feel without playing thirty years first.
+      onRelocate: (from, to) => {
+        if (!cluster) return;
+        const plan = relocationFor(from, to);
+        if (!plan) return;
+        const start = from === 'e3' ? 90 : 0; // where that era is actually seated
+        os.setDesktopEra(from, true);
+        era3Devices?.setEra(from, true);
+        cluster.morphToEra(from, false, null); // put the space in the FROM state
+        seatCut(start);
+        os.setDesktopEra(to, true);
+        era3Devices?.setEra(to, true);
+        cluster.morphToEra(to, true, plan);
+        beginRelocation(`${from}-${to}`, plan);
+      },
+      onPlates: (on) => {
+        if (on) cluster?.showPlates(['r1', 'r2', 'r3']);
+        else cluster?.hidePlates();
+      },
       onClose: enterClose,
       onFacet: (f) => niche?.setFacet(f),
       onFlip: doFlip,

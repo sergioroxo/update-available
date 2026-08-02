@@ -71,11 +71,21 @@ because a hand-maintained register is just one more thing that drifts.*
 | ~~`opening.ts` `mountStartupOverlay`~~ · ~~`openingBoardDressing.ts`~~ · cork profile-pinning in `intake.ts` | **dead — DELETED S44** | Sérgio retired the cork board outright (decision doc §1). Both files are gone from the tree (git history keeps them); `intake.ts`'s `drawCorkBoard`/`drawPinnedNote`/`optionLabel` are removed, and the wall now goes dormant → hardening → cold record. Nine `KILLS:` lines in the decision doc hold the ground (C5). `data/strings/opening.json` stays (intake.ts still reads `o3_board_hardening`); its five pinned-note caption keys went with the board |
 | `graceQueueLite.ts` + `era3Devices.ts` (E3's laptop/tablet/phone) | **live — rebuilt S64** | THE CORRECTION LIST (`REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md`). S38's moderation loop is **dead and deleted**: the verbs `Approve` / `Move to review` / `Let it stand`, the Mira gate (`miraId`/`miraGateFlags`), `ledger.graceQueueMiraStood`, and `era3Devices.drawPhoneShell` are all gone, with the reason in graceQueueLite's header (the research rates peer moderation CONTESTED; testimony production is DOCUMENTED). The phone is no longer a static shell — it holds the era's break and has its own version counter |
 | `ledger.graceQueue.outcome === 'stood'` | **live-but-deprecated (one known caller)** | nothing emits it after S64; the variant survives only because `src/witness/intake.ts` colours a filing by testing for it and that file was outside S64's fence. Drop the test and the variant together |
+| `cluster.ts` `RELOCATIONS` / `relocationFor` + `app.ts` `RELOC_POSES` | **live — generalised S67** | ⚑ THE RELOCATION is now the piece's movement grammar at EVERY era change, not one handoff (`REINTERP_THE_BUILDING_2026-08-02.md` rev 1). One plan table drives both halves; `morphToEra(era, animate, plan)` takes an explicit `null` to opt out and `?descent=0` does exactly that. **S61's E2→E3 numbers are unchanged and re-measured identical** (0.415 m/s, 7.09 °/s). E1→E2 previously fired NO camera move; E3→E4's `dollyTo(270, 4.5)` measured 3.667 m/s / 75 °/s against an 0.43 / 9.1 envelope and is **dead and deleted**. ⚑ Every figure is DESKTOP-measured — A11 has never run |
+| `cluster.ts` doorplates (`showPlates`/`hidePlates`, `drawPlate`) | **live — S67** | three plates, enabled only during a relocation. Geometry/colour in `data/room/cluster.json`, strings in `data/strings/doorplates.json` (PLACEHOLDER-draft, Sérgio's voice pass pending). Costs 1 draw call at peak, 0 settled |
 | `cluster.ts` `setEra3Lift` / `liftE3` | **live** | ⚑ E3's one inversion — the room's light LIFTS at Malta. Derived from the `e3` rig by gains, deliberately not a new rig in `cluster.json` (the beat is that there is no new lighting state). Reached from the laptop through a module-level hook because `app.ts` owns both halves and was outside S64's fence |
 | `ceilingWitness.ts` | **live-but-deprecated (dormant by design)** | retired role R26-B4; shell still built, never woken; its header SAYS so — the model citizen |
 | `lambyRig.ts` (`?lambyrig=1`) | **UNREVIEWED** | standalone QA route, still mounted; S34 built Lamby's debut WITHOUT extracting it. Keep as rig lab or retire — flag for the S41 header pass |
 | `pointCloud.ts` | **live, two flagged defects** | (1) `labels.slice(0, 28)` vs 32 merged nodes — 4 silently drop (S41 chore); (2) topology is decoration claiming provenance (decision Q4) |
 | `tools/`: check-invariants, check-rooms, check-spec, close-graph-report, gen_rooms, gen_attributions, export-atlases, degrade_audio, backup | **live** | first three run in `npm test`; close-graph-report read-only by design |
+
+**Two open defects logged by S67, neither introduced by it, both outside its fence:**
+(1) `src/room/batching.ts` — `beginMorphedStateBatch()` clears the settled batch for a whole cascade,
+so **E3→E4's cascade peaks at 62 draw calls against the ≤60 Quest budget** (E2→E3 peaks at 57).
+S67 made the window ~4.5 s longer by stretching that cascade to 11.0 s, and its three doorplates add
+exactly 1 call at peak. (2) `setTerminalVisible()` toggles `.enabled` on a batched node, which emits
+eight `ASSERT FAILED: Invalid batch 1 insertion/removal with node: "terminalFrame"` per playthrough —
+confirmed identical on the pre-S67 code path.
 
 **Two ratchets went SLACK in S64 and should be tightened by whoever next owns `tools/check-spec.mjs`**
 (it was outside that session's fence, so both now emit a nag instead of holding the line):
@@ -98,6 +108,7 @@ Felt purity / tier-register vocabulary / hero budget — now enforced (C2/C3). P
 |---|---|
 | `data/paths.json` · `room/era1.json` · `room/models.json` · `room/reinterp_deltas.json` · `strings/attributions.json` | **live** (structural; no voice dependency) |
 | `dialog/s1_end·s1_guide·s1_irc·s1_kit·s1_tapes·s2_lamby·s2_media·s3_queue` · `strings/opening·orientingCard·gameMenu·lamby_rig·reinterp·slice·updates·era3_devices` · `room/belongings·cluster·fluid_niche·nodes` · `sends.json` · `provotypes/origin_intake_e1·pillow` | **live + PLACEHOLDER awaiting Sérgio** (all display text; `_doc`-flagged) |
+| `strings/doorplates.json` | **live + PLACEHOLDER-draft (S67)** — Claude's draft of the three plates; Sérgio's voice pass pending, his edit wins. Two open calls named in the file's own `_doc`: r3's era as a bare year, and whether Room 1's plate should change once the room is vacated |
 | `strings/close_network.json` | **live + PLACEHOLDER** — and carries the fake-topology caveat (Q4); no node may render bright-documentary until sources verify |
 | `strings/_close_network.schema.json` | **proposed** — not yet consumed by engine or CI; activates only if/when the derived graph is adopted |
 | `provotypes/_schema.json` | **live** (consumed by check-spec C1; `close`/`goto` now documented — the old session-log BLOCKED note is stale and pruned this round) |

@@ -8,9 +8,9 @@ not live.***
 
 | # | Session | Prompt lives at | Status |
 |---|---|---|---|
-| 1 | **S66 — the rooms as livable places** | **↓ below, in this file** | **QUEUED — dispatch this one** |
-| 2 | **S67 — the choreography** | `docs/REINTERP_THE_BUILDING_2026-08-02.md`, tail | QUEUED — after S66 |
-| 3 | **S69 — the presets on Noa's video** | ↓ below, in this file | QUEUED — after S66; independent of S67 |
+| — | ~~S66 — the rooms as livable places~~ | ↓ below, in this file | **SHIPPED 2026-08-02** — number retired |
+| — | ~~S67 — the choreography~~ | `docs/REINTERP_THE_BUILDING_2026-08-02.md`, tail | **SHIPPED 2026-08-02** — number retired |
+| 1 | **S69 — the presets on Noa's video** | ↓ below, in this file | **QUEUED — dispatch this one** (S66 and S67 have both shipped) |
 | — | S68 | *(soft-claimed by the gyroscope look-around suggestion, `NEXT_PROMPTS_2026-07-30.md` tail — not written)* | — |
 
 **Numbers are not reused.** S66 previously named two other jobs (the retired testimony studio; the
@@ -20,7 +20,7 @@ dispatchable. See `08_STATUS_REGISTER.md` §6.
 ---
 
 # S66 — ROOM 2 IS NOT A PLACE · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: QUEUED — this is the live S66. Dispatch this block.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-02 — this was the live S66 and it is done. Do not dispatch; the number is retired (see BUILD_LOG.md and 01_SESSION_LOG.md).**
 *From Sérgio's 2026-08-01 play pass: six of his eleven notes are this one job, and the software is
 now ahead of the room it sits in. Full context at `docs/reinterp/01_SESSION_LOG.md` NEXT UP item 0,
 including the creative-leeway amendment, which is part of the brief and not preamble.*

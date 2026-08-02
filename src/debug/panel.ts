@@ -16,6 +16,10 @@ interface DebugOpts {
   /** The live renderer: required for a non-black WebGL canvas readback. */
   app?: pc.Application;
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
+  /** S67 THE BUILDING: replay one era relocation from its own starting seat */
+  onRelocate?: (from: 'e1' | 'e2' | 'e3' | 'e4', to: 'e1' | 'e2' | 'e3' | 'e4') => void;
+  /** S67: the doorplates on their own, for reading them without a 20 s flight */
+  onPlates?: (on: boolean) => void;
   onReveal?: () => void;
   onClose?: () => void;
   onFacet?: (facet: 'transfem' | 'transmasc' | 'nonbinary' | 'all' | 'none') => void;
@@ -389,6 +393,31 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
       });
     }
   }
+  // ⚑ THE BUILDING (S67) — the four beats of the relocation grammar, each
+  // reachable without playing the update ritual that fires it. The fourth is
+  // the Close, which does not come back down; it is out of this session's
+  // scope and its button is the existing 'Close · point cloud' above.
+  if (opts.onRelocate || opts.onPlates) {
+    const building = section('THE BUILDING', 'the rise at every era change');
+    const bnote = document.createElement('div');
+    bnote.style.cssText = 'color:#7f8aa3;font-size:9px;line-height:1.4;margin:0 0 3px';
+    bnote.textContent = 'each seats you in the FROM era first, then flies it. Any click lands you.';
+    building.appendChild(bnote);
+    if (opts.onRelocate) {
+      for (const [label, from, to] of [
+        ['1 · E1→E2 — walls ON (21s)', 'e1', 'e2'],
+        ['2 · E2→E3 — the walls come off (29.5s)', 'e2', 'e3'],
+        ['3 · E3→E4 — routine now (42.5s)', 'e3', 'e4']
+      ] as const) {
+        mkBtn(building, label, () => opts.onRelocate?.(from, to));
+      }
+    }
+    if (opts.onPlates) {
+      mkBtn(building, 'doorplates — show all three', () => opts.onPlates?.(true));
+      mkBtn(building, 'doorplates — hide', () => opts.onPlates?.(false));
+    }
+  }
+
   if (opts.onFacet) {
     heading(navigate, 'ROOM 3 — facet');
     mkBtn(navigate, 'Facet — trans-fem', () => opts.onFacet?.('transfem'));

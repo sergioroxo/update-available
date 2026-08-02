@@ -271,7 +271,13 @@ are not yet places would spend the reveal on furniture.
 ---
 
 # S67 — THE CHOREOGRAPHY · Opus, high effort · **not Codex**
-**⚑ PROMPT STATUS: QUEUED — dispatch only after S66 (the livable rooms) has shipped.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-02 (S67). Do not dispatch again — the number is retired.**
+*Built: the relocation generalised to a plan table (`RELOCATIONS` in `src/room/cluster.ts` +
+`RELOC_POSES` in `src/engine/app.ts`), all three era steps flying it, the doorplates, and the
+debug-panel buttons. E2→E3 verified unchanged at its measured 0.415 m/s / 7.09 °/s. Every measured
+number and every open item is in `docs/reinterp/01_SESSION_LOG.md` under S67. **The Close (beat 4)
+remains out of scope and its seam is clean** — `enterClose()` is untouched and inherits this
+grammar whenever it is built.*
 *Written 2026-08-02 with every open question closed. Runs AFTER S66 (the rooms as livable places) —
 the choreography reveals rooms, and revealing rooms that are not yet places spends the reveal on
 furniture. The Close inherits this grammar in a later session and is NOT in scope here.*

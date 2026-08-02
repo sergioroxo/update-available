@@ -25,6 +25,8 @@ import { batchStaticProps, batchSettledProps, clearSettledBatch, type SettledBat
 import clusterData from '../../data/room/cluster.json';
 import nicheData from '../../data/room/fluid_niche.json';
 import belongingsData from '../../data/room/belongings.json';
+import doorplateStrings from '../../data/strings/doorplates.json';
+import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import type { FluidNiche, FacetState } from './fluidNiche';
 import type { CeilingWitness } from './ceilingWitness';
 
@@ -107,7 +109,7 @@ export function setEra3Lift(on: boolean): void {
   e3LiftHook?.(on);
 }
 /**
- * ⚑ THE RELOCATION (Session 61) — the E2→E3 handoff's shared clock.
+ * ⚑ THE RELOCATION (Session 61; GENERALISED to every era change in Session 67)
  *
  * Sérgio's note: *"the fly over needs to be slower and let you see the room
  * being built so you understand the new space and the passage of time."* The
@@ -116,27 +118,114 @@ export function setEra3Lift(on: boolean): void {
  * space finished opening behind it — six years and a different person, over
  * in the time it takes to blink.
  *
- * It is now three legs, and the room opens IN THE MIDDLE ONE, in front of
- * you: RISE out of Daniel's chair while his room is still closed → HOLD over
- * the space while the walls leave and Room 2 assembles → DESCEND into Vera's
- * seat. `src/engine/app.ts` flies the camera and this module opens the space;
- * both read these three numbers, so the two halves cannot drift apart.
+ * It is three legs, and the room changes IN THE MIDDLE ONE, in front of you:
+ * RISE out of the seat → HOLD over the space while it ages → DESCEND into a
+ * seat. `src/engine/app.ts` flies the camera and this module changes the
+ * space; both read the SAME plan, so the two halves cannot drift apart.
  *
- * The cascade is stretched to fill the middle leg exactly (CASCADE 5.2 +
- * PROP_DUR 1.3 = 6.5 s at pace 1, so pace = BUILD_SECONDS / 6.5), which is
- * what `ClusterMorph.goToState`'s pace argument exists for.
+ * The cascade is stretched to fill its leg exactly (CASCADE 5.2 + PROP_DUR
+ * 1.3 = 6.5 s at pace 1, so pace = cascadeSeconds / 6.5), which is what
+ * `ClusterMorph.goToState`'s pace argument exists for.
+ *
+ * ⚑ WHAT SESSION 67 ADDED, AND WHY IT IS ONE MECHANISM RATHER THAN THREE
+ * (docs/REINTERP_THE_BUILDING_2026-08-02.md, revision 1's four-beat table):
+ * the piece's one bodily law is that you turn but never walk, and its meaning
+ * is that a screen fixes your facing while what is behind you is other people.
+ * So the lift happens at EVERY era change, and *what you see when you come up*
+ * is the story — which means the legs must be identical and only the view may
+ * differ. Hence a table: same three legs, same easing, same comfort envelope;
+ * `opensWalls` and the destination seat carry the whole difference.
+ *
+ *   e1-e2  the walls stay CLOSED. Canon requires it — MASTER_PLAN_v2 §3, "E1→E2
+ *          ages the SAME room (walls stay CLOSED — the homecoming is private)".
+ *          The rise happens and the opening does not: up, a hold that goes
+ *          nowhere, back down into the same chair. A palindrome, 7/7/7. It is
+ *          meant to feel like it should have shown you more and didn't.
+ *   e2-e3  the payoff, and the ONE comfort-MEASURED leg set (S61). Untouched.
+ *   e3-e4  the third instance, and the longest: Room 2's seat to Room 3's is
+ *          8.8 m apart, so at the 0.43 m/s envelope the crossing simply takes
+ *          24 s. That is arithmetic, not taste — see app.ts's RELOC_POSES.
+ *
+ * ⚑ EVERY NUMBER HERE IS DESKTOP-MEASURED. A11 (the in-headset pass) has still
+ * never run, so nothing below is verified in VR.
  */
-export const RELOCATION = {
-  /** up out of the chair, inside the still-closed Room 1 */
-  riseSeconds: 7.0,
-  /** the walls leave and the three rooms resolve — the camera barely moves */
-  buildSeconds: 11.0,
-  /** down into Room 2's seat, the facing resolving with the position.
-   *  11.5, not 10: the descent is the longest leg (2.64 m of arc) and at 10 s
-   *  it measured a 0.477 m/s peak — over S53's 0.43 envelope. Measured again
-   *  at 11.5: 0.415 m/s. The number is the comfort law, not a taste call. */
-  descendSeconds: 11.5
-} as const;
+export interface RelocationPlan {
+  /** up out of the chair, inside the room you are leaving */
+  riseSeconds: number;
+  /** the camera's middle leg — the room changes in front of you */
+  buildSeconds: number;
+  /** down into the destination seat, the facing resolving with the position */
+  descendSeconds: number;
+  /** how long the SPACE cascade takes. Defaults to buildSeconds (E2→E3's
+   *  behaviour, where the wall-drop fills the leg exactly); E3→E4 finishes its
+   *  aging early and leaves the rest of the leg as pure travel over a building
+   *  that is already done — which is what "almost routine" has to feel like. */
+  cascadeSeconds?: number;
+  /** true = the walls LEAVE during the build leg: the 'hold' rig, the ballast
+   *  stutter, the other rooms' zone lights coming up, and the record leaving
+   *  the spine. False = the room merely ages under you. */
+  opensWalls: boolean;
+  /**
+   * ⚑ WHEN the era's own rig crossfades, in seconds after the rise ends. It is
+   * per-transition because the light means something different each time, and
+   * the default got E3→E4 wrong on the first pass — measured live, the E4 rig
+   * (ambient 0.05, roomFill 0.1: "the cold has won") landed 2.5 s into a 24 s
+   * crossing, so the one beat that has to show you three rooms one last time
+   * played in near-black.
+   *   e1-e2  EARLY. 2003's daylight replacing 1997's lamp-lit night is the
+   *          single strongest time cue the piece owns, and at this beat the
+   *          aging IS the content — you watch the light change from above.
+   *   e2-e3  cascade − 3.0, i.e. the S61 timing, untouched.
+   *   e3-e4  LATE. You cross a building that is still lit, and it goes out as
+   *          you come down into Maya's room. Arrival, not transit.
+   * Omitted → opensWalls ? cascade − 3.0 : min(2.5, cascade × 0.35).
+   */
+  rigDelaySeconds?: number;
+  /** the seat yaw the descent lands in (0 = Room 1, 90 = Room 2, 270 = Room 3) */
+  seat: number;
+  /** which rooms' doorplates are lit while you are up there. At e1-e2 there is
+   *  exactly ONE, and that is the content of the beat, not a missing asset. */
+  plates: readonly string[];
+}
+
+/** keyed `${from}-${to}`; a transition absent here takes the plain morph path */
+export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
+  'e1-e2': {
+    riseSeconds: 7.0, buildSeconds: 7.0, descendSeconds: 7.0,
+    opensWalls: false, seat: 0, plates: ['r1']
+  },
+  'e2-e3': {
+    riseSeconds: 7.0,
+    buildSeconds: 11.0,
+    /** 11.5, not 10: the descent is the longest leg of this move (2.54 m of
+     *  chord) and at 10 s it measured a 0.477 m/s peak — over S53's 0.43
+     *  envelope. Measured again at 11.5: 0.415 m/s. The number is the comfort
+     *  law, not a taste call. */
+    descendSeconds: 11.5,
+    opensWalls: true, seat: 90, plates: ['r1', 'r2', 'r3']
+  },
+  'e3-e4': {
+    riseSeconds: 7.0,
+    /** 24.0 is set by the TURN, not by the distance: the crossing swings the
+     *  view 142° and 1.5 × 142 / 24 = 8.88 °/s sits under S53's 9.1 °/s
+     *  ceiling. The translation peak that falls out of it (0.403 m/s) is
+     *  comfortably inside 0.43. */
+    buildSeconds: 24.0,
+    /** the r4 fold reads at the same pace the wall-drop did; the remaining
+     *  ~13 s of the leg is travel over a finished building */
+    cascadeSeconds: 11.0,
+    descendSeconds: 11.5,
+    /** 2.0 s before the crossing ends, so the 2.5 s crossfade finishes just
+     *  after the descent starts: the lights go out as you come down */
+    rigDelaySeconds: 22.0,
+    opensWalls: false, seat: 270, plates: ['r1', 'r2', 'r3']
+  }
+};
+
+/** the plan for an era step, or undefined when the piece should just morph */
+export function relocationFor(from: EraKey, to: EraKey): RelocationPlan | undefined {
+  return RELOCATIONS[`${from}-${to}`];
+}
 const CASCADE_BASE_SECONDS = 6.5; // CASCADE + PROP_DUR in clusterMorph.ts
 /** space-state index per era (reinterp_deltas.json fold: r1 → r2 → r3 → r4).
  *  Each era now has its OWN state, so the three rooms age era-to-era. */
@@ -156,6 +245,83 @@ const PLANE_Z: [number, number] = [3.60, 3.62];
 const TERMINAL_E4 = { pos: [5.66, 1.5, 1.75] as [number, number, number], yaw: 270 };
 const TERMINAL_SPINE_YAW = 180;
 
+/**
+ * ⚑ THE DOORPLATES (Session 67) — the piece's only piece of building fabric.
+ *
+ * Sérgio confirmed two things that decide everything about them: the building
+ * is IMPLIED, not modelled, and from above you may ONLY LOOK, never enter. So
+ * there is no block, no corridor and no marker — three plates and a floor are
+ * the whole building, and the fact that you can read a name and cannot reach
+ * it is the truer version of the sentence.
+ *
+ * Register: BUILDING SIGNAGE. The flat plate beside a door, the card in a
+ * buzzer slot — never an exhibition label, because a label would be the frame
+ * explaining the room to you and the frame never plays. Three fields, no more:
+ * era, name, one line. Read in sequence they are the thesis; no single one
+ * states it (see data/strings/doorplates.json's note for the draft's own law).
+ *
+ * They are drawn ONCE, at build, into a small canvas each (pixel discipline:
+ * monospace, integer rects, FILTER_NEAREST via makeScreenTexture) and then
+ * only enabled/faded — no per-frame drawing, no texture re-upload, three extra
+ * draw calls and six triangles against the Quest budget.
+ */
+const PLATE_DATA = clusterData.doorplates;
+const PLATE_TEXT = (doorplateStrings as unknown as {
+  rooms: Record<string, { era: string; name: string; line: string } | undefined>;
+}).rooms;
+/** the plate canvas, at 400 px per metre — the same order of pixel density as
+ *  the monitor's own surface, so the type reads crisp under FILTER_NEAREST */
+const PLATE_PX = 400;
+
+/** set the largest font in [min, max] whose text fits `maxWidth`, and return
+ *  it. ⚑ The plates are PLACEHOLDER-draft and Sérgio's voice pass rewrites all
+ *  three lines; a fixed size would clip his words at the plate edge silently
+ *  and in 3D, where nobody would see it until a headset session. The first
+ *  pass of this did exactly that — "ring twice, the bell is broken" rendered
+ *  as "ring twice, the bell". Fitting is the durable answer, not a wider
+ *  plate: a doorplate that grows to hold its sentence stops being a doorplate. */
+function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number,
+                 max: number, min: number, weight = ''): number {
+  for (let size = max; size > min; size--) {
+    ctx.font = `${weight}${size}px monospace`;
+    if (ctx.measureText(text).width <= maxWidth) return size;
+  }
+  ctx.font = `${weight}${min}px monospace`;
+  return min;
+}
+
+function drawPlate(id: string): HTMLCanvasElement | null {
+  const t = PLATE_TEXT[id];
+  if (!t) return null;
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(PLATE_DATA.w * PLATE_PX);
+  cv.height = Math.round(PLATE_DATA.h * PLATE_PX);
+  const ctx = cv.getContext('2d');
+  if (!ctx) return null;
+  ctx.fillStyle = PLATE_DATA.plate;
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  // the engraved edge: an inset rule, the way a screwed-on plate has a border
+  // because the plate is a plate and not a sticker
+  ctx.strokeStyle = PLATE_DATA.ink;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(5, 5, cv.width - 10, cv.height - 10);
+  ctx.fillStyle = PLATE_DATA.ink;
+  ctx.textBaseline = 'top';
+  const pad = 14;
+  const inner = cv.width - pad * 2;
+  // row 1: the year, then the name. The year is fixed and small (it is the
+  // landlord's hand); the name takes whatever is left of the row.
+  fitFont(ctx, t.era, inner * 0.3, 18, 10);
+  ctx.fillText(t.era, pad, 12);
+  const eraW = ctx.measureText(t.era).width;
+  fitFont(ctx, t.name, inner - eraW - 14, 26, 12, 'bold ');
+  ctx.fillText(t.name, pad + eraW + 14, 8);
+  // row 2: the resident's own note, the one that has to survive a rewrite
+  fitFont(ctx, t.line, inner, 15, 8);
+  ctx.fillText(t.line, pad, 44);
+  return cv;
+}
+
 function hex(c: string): pc.Color {
   const n = parseInt(c.slice(1), 16);
   return new pc.Color(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
@@ -169,8 +335,16 @@ export interface ClusterShell {
   readonly homeYaw: number;
   /** O7: sealed → dim — the first-filing reveal */
   reveal(): void;
-  /** the O8 seam: cascade the space + crossfade the rig + re-arm the niche */
-  morphToEra(era: EraKey, animate: boolean): void;
+  /** the O8 seam: cascade the space + crossfade the rig + re-arm the niche.
+   *  `plan` (S67) is the relocation choreography this shift is part of — the
+   *  space's half of it, scheduled around the camera's three legs. Pass null
+   *  for the undriven path (?descent=0, review jumps): everything happens at
+   *  once, exactly as it did before the relocation existed. */
+  morphToEra(era: EraKey, animate: boolean, plan?: RelocationPlan | null): void;
+  /** S67: raise the named rooms' doorplates (the relocation's overlook) and
+   *  drop them again. Fades, so neither end is a pop. */
+  showPlates(ids: readonly string[]): void;
+  hidePlates(): void;
   /** apply a named rig directly (the Close uses 'close') */
   applyRig(name: string, animate: boolean): void;
   /** S61: land the current transition NOW, wherever it had got to — the
@@ -346,6 +520,32 @@ export function buildClusterShell(
     root.addChild(e);
     return e;
   });
+
+  // ── the doorplates (see drawPlate above): built once, hidden, and only ever
+  //    enabled while a relocation has the player out of the seat ──
+  interface Plate { mat: pc.StandardMaterial; entity: pc.Entity }
+  const plates = new Map<string, Plate>();
+  let plateFade = 0;      // current opacity
+  let plateTarget = 0;    // where it is heading
+  for (const [id, geom] of Object.entries(PLATE_DATA.rooms as Record<string, { pos: number[]; yaw: number }>)) {
+    const cv = drawPlate(id);
+    if (!cv) continue;
+    const e = makeScreenEntity(`doorplate-${id}`, makeScreenTexture(app, cv), PLATE_DATA.w, PLATE_DATA.h, true);
+    // the witnessTerminal convention (migrateTerminal): X 90 stands the plane
+    // up, Y picks which way it faces. 0 = +Z, 90 = +X, 180 = -Z, 270 = -X.
+    e.setLocalEulerAngles(90, geom.yaw, 0);
+    e.setLocalPosition(geom.pos[0], geom.pos[1], geom.pos[2]);
+    e.enabled = false;
+    const mat = e.render?.material as pc.StandardMaterial | undefined;
+    if (mat) { mat.opacity = 0; mat.update(); }
+    root.addChild(e);
+    if (mat) plates.set(id, { mat, entity: e });
+  }
+  function showPlates(ids: readonly string[]): void {
+    for (const [id, p] of plates) p.entity.enabled = ids.includes(id);
+    plateTarget = 1;
+  }
+  function hidePlates(): void { plateTarget = 0; }
 
   app.root.addChild(root);
 
@@ -539,62 +739,82 @@ export function buildClusterShell(
       // state change for gaze/send gating.
     },
 
-    morphToEra(toEra: EraKey, animate: boolean): void {
+    morphToEra(toEra: EraKey, animate: boolean, plan?: RelocationPlan | null): void {
       const fromEra = era;
       era = toEra;
       const fromIdx = STATE_FOR_ERA[fromEra];
       const toIdx = STATE_FOR_ERA[toEra];
+      // S67: `plan === undefined` means "use the choreography if there is one";
+      // an explicit null is the opt-out (?descent=0, review jumps), which is
+      // the pre-S61 behaviour — everything at once, no timeline.
+      const reloc = animate && plan !== null
+        ? (plan ?? relocationFor(fromEra, toEra))
+        : undefined;
       seamsOff();
       carryLampLight(toEra === 'e4');
       migrateTerminal(toEra === 'e4');
-      // S61 — see setTerminalVisible's note. On the ANIMATED E2→E3 relocation
-      // this is deferred into the timeline below so the panel leaves WITH the
-      // walls rather than blinking out three seconds before them.
-      if (!(animate && fromEra === 'e2' && toEra === 'e3')) setTerminalVisible(toEra !== 'e3');
+      // S61 — see setTerminalVisible's note. On a WALL-OPENING relocation this
+      // is deferred into the timeline below so the panel leaves WITH the walls
+      // rather than blinking out three seconds before them.
+      if (!reloc?.opensWalls) setTerminalVisible(toEra !== 'e3');
 
-      // T2, choreographed (choreography doc §T1 — the SAME staged timeline,
+      // ⚑ THE RELOCATION's space half (choreography doc §T1's staged timeline,
       // moved here from the E1→E2 transition Session 27/R28-0c per Sérgio's
-      // D14/D15 direction: E2 is Daniel's closed homecoming room; the walls
-      // stay shut until the E2→E3 update, so this is where "the room OPENS,
-      // it does not explode" actually happens now): hold on the lamp → the
-      // cascade rolls the space open under the ballast stages → settle.
-      if (animate && fromEra === 'e2' && toEra === 'e3') {
-        applyRig('hold', true); // Session 27 (item 11): animated, not an instant
-        // snap — an un-eased jump straight to the 'hold' rig hit the CRT's own
-        // screenGlow light (E2's 0.38 → hold's 0.1) in a single frame, right as
-        // the update notice appeared, reading as a lighting glitch on the monitor.
+      // D14/D15 direction, and generalised to all three era steps in S67).
+      // Everything hangs off `riseSeconds`: the space starts changing the
+      // moment the camera stops climbing, and takes its own leg to do it.
+      if (reloc) {
         const setLight = (id: string, i: number): void => {
           const e = app.root.findByName(`light-${id}`);
           if (e instanceof pc.Entity && e.light) e.light.intensity = i;
         };
-        state = 'open';
-        // Session 61: every beat below used to sit in the first 5.4 s, under a
-        // 2.4 s camera dolly. They now hang off RELOCATION.riseSeconds — the
-        // space starts opening the moment the camera stops climbing, and takes
-        // the whole middle leg to do it (see RELOCATION's own note above).
-        const R = RELOCATION.riseSeconds;
-        const pace = RELOCATION.buildSeconds / CASCADE_BASE_SECONDS;
-        planeLerp = { from: PLANE_Z[0], to: PLANE_Z[1], t: -R, dur: RELOCATION.buildSeconds };
-        schedule([
-          { t: R, fn: () => {                                  // the walls begin to leave
+        const R = reloc.riseSeconds;
+        const cascade = reloc.cascadeSeconds ?? reloc.buildSeconds;
+        const pace = cascade / CASCADE_BASE_SECONDS;
+        const rigAt = reloc.rigDelaySeconds
+          ?? (reloc.opensWalls ? cascade - 3.0 : Math.min(2.5, cascade * 0.35));
+        state = toIdx >= 1 ? 'open' : 'sealed';
+        const events: { t: number; fn: () => void }[] = [
+          { t: R, fn: () => {                                  // the space begins to change
             beginMorphedStateBatch();
-            morph.goToState(2, true, pace);
+            morph.goToState(toIdx, true, pace);
             // S61: the record leaves the spine WITH the walls (see
             // setTerminalVisible) — one change, one moment, not two.
-            setTerminalVisible(false);
-          } },
-          { t: R, fn: () => setLight('roomFill', 0.55) },      // ballast: clunk
-          { t: R + 0.18, fn: () => setLight('roomFill', 0.05) },
-          { t: R + 0.6, fn: () => setLight('roomFill', 0.95) }, // flicker
-          { t: R + 0.78, fn: () => setLight('roomFill', 0.1) },
-          { t: R + 2.0, fn: () => {                            // the other rooms were ready first
-            for (const zl of zoneLights) if (zl.light) zl.light.intensity = 0.9;
-          } },
-          { t: R + RELOCATION.buildSeconds - 3.0, fn: () => applyRig('e3', true) },
-          { t: R + RELOCATION.buildSeconds - 2.9, fn: () => applyLayout() } // X: keep the back arm open
-        ]);
-        const t1 = eraTable();
-        niche.setFacet((t1?.default ?? 'none') as FacetState);
+            if (reloc.opensWalls) setTerminalVisible(toEra !== 'e3');
+          } }
+        ];
+        if (reloc.opensWalls) {
+          applyRig('hold', true); // Session 27 (item 11): animated, not an instant
+          // snap — an un-eased jump straight to the 'hold' rig hit the CRT's own
+          // screenGlow light (E2's 0.38 → hold's 0.1) in a single frame, right as
+          // the update notice appeared, reading as a lighting glitch on the monitor.
+          planeLerp = { from: PLANE_Z[0], to: PLANE_Z[1], t: -R, dur: cascade };
+          events.push(
+            { t: R, fn: () => setLight('roomFill', 0.55) },      // ballast: clunk
+            { t: R + 0.18, fn: () => setLight('roomFill', 0.05) },
+            { t: R + 0.6, fn: () => setLight('roomFill', 0.95) }, // flicker
+            { t: R + 0.78, fn: () => setLight('roomFill', 0.1) },
+            { t: R + 2.0, fn: () => {                            // the other rooms were ready first
+              for (const zl of zoneLights) if (zl.light) zl.light.intensity = 0.9;
+            } },
+            { t: R + rigAt, fn: () => applyRig(toEra, true) },
+            { t: R + rigAt + 0.1, fn: () => applyLayout() }       // X: keep the back arm open
+          );
+        } else {
+          // ⚑ NO ballast, NO stutter, NO zone lights: nothing is opening, the
+          // room is only getting older. Its rig is the aging (E1→E2's 2003
+          // daylight is the single strongest time cue the piece has), so it
+          // crossfades inside the leg rather than at the seam — you watch the
+          // light change from above instead of arriving to find it changed.
+          if (toEra !== 'e4') setPlaneZ(PLANE_Z[toIdx >= 1 ? 1 : 0]);
+          planeLerp = null;
+          events.push(
+            { t: R + rigAt, fn: () => applyRig(toEra, true) },
+            { t: R + cascade, fn: () => applyLayout() }
+          );
+        }
+        schedule(events);
+        niche.setFacet((eraTable()?.default ?? 'none') as FacetState);
         applyLayout();
         return;
       }
@@ -611,13 +831,20 @@ export function buildClusterShell(
       }
       applyRig(toEra, animate);
       state = toIdx >= 1 ? 'open' : 'sealed';
-      setPlaneZ(PLANE_Z[toIdx >= 1 ? 1 : 0]);
+      // S67: NOT at E4 — migrateTerminal() has just put the record on Room 3's
+      // wall at z 1.75, and setPlaneZ would drag it straight back to the spine's
+      // z 3.62, i.e. outside Room 3 entirely, behind its east wall. Pre-existing
+      // since the E4 migration landed; caught while generalising this path.
+      if (toEra !== 'e4') setPlaneZ(PLANE_Z[toIdx >= 1 ? 1 : 0]);
       planeLerp = null;
       const table = eraTable();
       niche.setFacet((table?.default ?? 'none') as FacetState);
       applyLayout(); // X: re-assert the open back arm after the fold
       if (rebuildAfterLayout) rebuildSettled();
     },
+
+    showPlates,
+    hidePlates,
 
     applyRig,
     eraTable,
@@ -627,11 +854,15 @@ export function buildClusterShell(
       timeline = [];
       timelineT = 0;
       planeLerp = null;
+      hidePlates(); // S67: the plates belong to the overlook and nowhere else
       clearSettled();
       morph.goToState(STATE_FOR_ERA[era], false); // snap, deterministic
       applyRig(era, false);
       state = STATE_FOR_ERA[era] >= 1 ? 'open' : 'sealed';
-      setPlaneZ(PLANE_Z[STATE_FOR_ERA[era] >= 1 ? 1 : 0]);
+      // S67: see morphToEra's note — at E4 the record lives on Room 3's wall
+      // and the spine z would put it outside the room.
+      if (era !== 'e4') setPlaneZ(PLANE_Z[STATE_FOR_ERA[era] >= 1 ? 1 : 0]);
+      else migrateTerminal(true);
       setTerminalVisible(era !== 'e3');
       niche.setFacet((eraTable()?.default ?? 'none') as FacetState);
       applyLayout();
@@ -647,6 +878,16 @@ export function buildClusterShell(
         }
       }
       morph.update(dt);
+      // the doorplates' fade — linear, short, and it never runs when nothing
+      // is showing (the common case is a no-op comparison)
+      if (plateFade !== plateTarget) {
+        const step = dt / PLATE_DATA.fadeSeconds;
+        plateFade = plateTarget > plateFade
+          ? Math.min(plateTarget, plateFade + step)
+          : Math.max(plateTarget, plateFade - step);
+        for (const p of plates.values()) { p.mat.opacity = plateFade; p.mat.update(); }
+        if (plateFade === 0) for (const p of plates.values()) p.entity.enabled = false;
+      }
       if (pendingSettledRebatch && !morph.running) {
         pendingSettledRebatch = false;
         applyLayout();
