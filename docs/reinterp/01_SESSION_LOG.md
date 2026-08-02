@@ -3,7 +3,10 @@ STATUS: live
 
 ## NEXT UP (rebuilt 2026-07-25 — items 1-3 of the R29 list all shipped, S40/S41/S42; the list had
 ## gone stale again the same way, so it is pruned here. Top item = your session unless Sérgio says so.)
-0. **⚑ S66 — ROOM 2 IS UNUSABLE AS A PLACE (Sérgio's 2026-08-01 pass). The top item.** Six of his
+0. **⚑ S66 — ROOM 2 IS UNUSABLE AS A PLACE (Sérgio's 2026-08-01 pass). The top item.**
+   **⚑ DISPATCHABLE PROMPT: `docs/reinterp/BUILD_QUEUE_LIVE.md`** (created 2026-08-02 — the only
+   file to dispatch from). What follows here is the BRIEF the prompt points back at, and the
+   creative-leeway amendment below is part of it. Six of his
    eleven notes are this one job, and the software work is now ahead of the room it sits in.
    (a) **The devices must come TO the player at a device seat** — his own fix, and the right one:
    a held/framed close read instead of a camera craning down at a 7 cm phone from 0.77 m. The floor
@@ -62,7 +65,7 @@ STATUS: live
    room wants something not listed, build it, screenshot it, and say why — with a named rollback so
    Sérgio can cut it in one line. **A proposal he can delete cheaply is worth more than a question
    he has to answer before anything moves.**
-0b. **⚑ S67 — THE CHOREOGRAPHY.** Prompt written and ready at the tail of
+0b. **⚑ S67 — THE CHOREOGRAPHY.** Listed in `docs/reinterp/BUILD_QUEUE_LIVE.md`; prompt body at the tail of
    `docs/REINTERP_THE_BUILDING_2026-08-02.md`. Every era change lifts the player out of the room, and
    what they see when they come up changes each time (one room walls-on → the walls come off and
    there are three → routine → the Close). **Runs AFTER item 0** — the choreography reveals rooms,

@@ -1,5 +1,9 @@
 STATUS: live
 
+> **⚑ NOTHING IN THIS FILE IS DISPATCHABLE (2026-08-02).** Every prompt below has SHIPPED.
+> The live queue is `docs/reinterp/BUILD_QUEUE_LIVE.md`. Kept for the VR-testing findings
+> and the Codex-lane reasoning, which are still current.
+
 # NEXT PROMPTS — with a Codex lane, and the real answer on VR testing (2026-07-30)
 
 ## ⚑ FIRST, A CORRECTION I OWE YOU ABOUT VR

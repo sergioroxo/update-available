@@ -220,3 +220,4 @@
 - 2026-08-02 — The Building rev 1: the rise becomes the piece's movement grammar across all four transitions; locomotion law clarified (agency, not smoothness); thinking round cancelled; S66's livable-room contract scoped to all four moments.
 - 2026-08-02 — S67 (the choreography) specced and queued behind S66; all Building open questions closed.
 - 2026-08-02 — check-spec C8: prompt blocks carry a lifecycle marker and superseded docs carry none; 24 blocks marked, the stale studio S66 deleted.
+- 2026-08-02 — Presets return as correction 13 on Noa's video (spec rev 5, queued S69); BUILD_QUEUE_LIVE.md created as the only dispatchable queue, with S66 written out in full.

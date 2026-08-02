@@ -93,15 +93,6 @@ is the documented version of the same labour** — she does not decide what is p
 what has already been accepted. The redesign is not only better drama; it moves the era off a claim
 the piece would have had to mark `contested` and onto one it can state flatly.
 
-⚑ **Noa's two corrections stay** — they are the sharpest thing the era has: *the same testimony
-flagged both as a woman who needs softening and as a possible man who needs routing.* **Both rendered,
-neither endorsed, and the piece never answers for her.** The apparatus disagreeing with itself about
-one person is the era's argument in two list items.
-
-**⚑ "Route for mentorship" is the beat that matters most.** It is the moment the player sees that this
-was never moderation — **it is recruitment**. Someone told a story, and the system's response is to
-send a person to their door.
-
 ## 2 · SCRIPT AND SCRIPTURE — the doubling
 *Sérgio: "the following of the script (scripture at play here)."*
 
@@ -268,3 +259,64 @@ character. It is simply lit well enough to be read as what it is.
   (a queue of first names and one paragraph each), or should the era run on two or three people the
   player sees repeatedly?** *My read: three, seen repeatedly — a list of strangers is data, and the
   point is that they are not.*
+
+---
+
+# ✅ REVISION 5 — THE PRESETS COME BACK, ON NOA'S VIDEO (2026-08-02)
+*Sérgio: "add the presets as a correction on Noa's video (which was only a template so you'll need to
+build it)." Approved and specced. This is the salvage the STUDIO_SPEC's supersession header always
+reserved — presets-as-ideology and the sourced three-phase grammar — returning as **one correction
+item inside the shipped design**, not as a rebuild of the retired studio.*
+
+## ⚑ The thing the current build accidentally created, and which we should now use on purpose
+
+Noa's submission text opens: *"I sent a video this time instead of writing it out."*
+
+**There is no video.** The player corrects a recording they have never watched. That was a template
+shortcut, and it is also the sharpest thing in the era, so the build should make it deliberate:
+
+**The preset is offered before you have played it. You can grade her without watching. Playing it is
+optional, nobody asks you to, and skipping it costs nothing.** The apparatus does not need to have
+seen her either.
+
+## Correction 13 — the grade, and it is the sourced codebook
+
+The controls are `REINTERP_E3_REVAMP_BRIEF_2026-07-30.md` rev 3's production grammar, which is the
+best-evidenced material the era has: **grade · framing · music bed · posture**, in three phases.
+Noa's video has one phase — she is just talking — so the preset supplies the missing one.
+
+| | |
+|---|---|
+| **rule** | *Apply the house look* — the preset name must sound like **care, not craft**. The tell is that a colour-grade is called something like *Honest Light*. |
+| **why** | *"the room's own light — keeps the set consistent"* |
+| **manual / verse** | same doubling as every other item; the verse stays gentle |
+| **what it does** | cools and desaturates her, tightens the crop, drops a minor pad underneath |
+| **what that MEANS** | the documented codebook's **phase 1 is "pre-conversion sickness."** So the preset makes her look like a *before*. **The apparatus grades her as ill before she has said anything.** |
+
+**⚑ And it resolves nothing about her, which is why it is safe and why it is worse.** The grade has
+no opinion on her gender. It does not answer the question corrections 8 and 9 disagree about. It just
+makes her look unwell — a third correction that lands on the same person from a third direction and,
+like the other two, is never commented on. *The piece still never answers for Noa.*
+
+## What the build has to make
+1. **The video, rendered.** Pre-authored pixel frames on the laptop — ⚑ **faceless per the law**, and
+   drawn from what she actually says: her hands (*"my hands don't know where to go"*), the brother's
+   flannel. It must be **tender**. `felt`. She is never the joke; the satire is entirely in the panel
+   beside her.
+   ⚑ **No camera, no file input, ever** — same law as the Restoration Filter. It is a sprite.
+2. **The grade as a visible transform**, exactly as the text edits already work: applying it changes
+   the picture in front of you, and skipping it visibly does not.
+3. **Tracked changes, for an image.** The text corrections show what was taken (struck through, grey).
+   The image needs its equivalent — *my read: the ungraded frame stays available beside it, small, the
+   way the cut sentence stays on the page.* **The laptop remembers; the tablet publishes clean.**
+4. **The E4 bridge, set up and not spent.** This is one person's video, graded by hand, one preset at
+   a time. E4's image changer is the same operation applied to anyone, instantly, with no one there.
+   **Do not gesture at that here.** Build the hand-operated version well and E4 inherits the rhyme.
+
+## Register, unchanged and non-negotiable
+The video is `felt` — bare, no chrome over her, no Lambient. The preset panel is `operable` and may
+charm. **If any frame of the graded video reads as mocking Noa, the beat is wrong**, and the fix is
+always to make the tool more pleased with itself, never to make her more ridiculous.
+
+**Queued as S69** (S68 is already claimed by the gyroscope look-around suggestion — retired and
+soft-claimed numbers stay claimed, per `08_STATUS_REGISTER.md` §6).
