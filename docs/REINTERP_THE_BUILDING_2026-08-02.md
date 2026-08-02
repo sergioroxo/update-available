@@ -271,6 +271,7 @@ are not yet places would spend the reveal on furniture.
 ---
 
 # S67 — THE CHOREOGRAPHY · Opus, high effort · **not Codex**
+**⚑ PROMPT STATUS: QUEUED — dispatch only after S66 (the livable rooms) has shipped.**
 *Written 2026-08-02 with every open question closed. Runs AFTER S66 (the rooms as livable places) —
 the choreography reveals rooms, and revealing rooms that are not yet places spends the reveal on
 furniture. The Close inherits this grammar in a later session and is NOT in scope here.*

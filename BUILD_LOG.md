@@ -219,3 +219,4 @@
 - 2026-08-02 — The Building: the turn's thesis written up (rooms as one building, Close as the fourth room), S66 given a creative-leeway contract, check-spec ratchets tightened to 34/10.
 - 2026-08-02 — The Building rev 1: the rise becomes the piece's movement grammar across all four transitions; locomotion law clarified (agency, not smoothness); thinking round cancelled; S66's livable-room contract scoped to all four moments.
 - 2026-08-02 — S67 (the choreography) specced and queued behind S66; all Building open questions closed.
+- 2026-08-02 — check-spec C8: prompt blocks carry a lifecycle marker and superseded docs carry none; 24 blocks marked, the stale studio S66 deleted.

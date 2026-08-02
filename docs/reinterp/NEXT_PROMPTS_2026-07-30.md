@@ -53,6 +53,7 @@ Sérgio or I confirm the look afterwards.
 ---
 
 # S63 — REBUILD THE DEBUG PANEL (+ fix the screenshot button) · Codex GPT 5.6
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Codebase: /Users/sergiogalvaoroxo/update-available-reinterp (branch reinterp). Read CLAUDE.md,
@@ -92,6 +93,7 @@ or `git add -A`. Blocked ≠ improvise: STOP and log BLOCKED.
 ```
 
 # S64 — THE CONSTELLATION'S LABELS READ BACKWARDS · Codex GPT 5.6
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Codebase: /Users/sergiogalvaoroxo/update-available-reinterp (branch reinterp). Read
@@ -123,6 +125,7 @@ GIT: explicit pathspecs only. Blocked ≠ improvise: STOP and log BLOCKED.
 ```
 
 # S65 — THE WEBXR ENTRY POINT (this is what actually unblocks A11) · Codex GPT 5.6
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Codebase: /Users/sergiogalvaoroxo/update-available-reinterp (branch reinterp). Read CLAUDE.md (the
@@ -208,6 +211,9 @@ already has Tailscale, without waiting on the Quest. Small, self-contained, and 
 ---
 
 # S66 — ERA 3: THE CORRECTION LIST · Opus, high effort · **here, not Codex**
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Built in Session 64, revised in Session 65 on
+Sérgio's play notes. ⚑ The number is also RETIRED: "S66" now means the livable-rooms job at the
+top of `docs/reinterp/01_SESSION_LOG.md` NEXT UP. Kept as the reasoning trail only.
 *Rewritten 2026-07-30 against `REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` rev 4. The earlier
 S66 in `REINTERP_E3_STUDIO_SPEC_2026-07-30.md` targeted the superseded studio design — **ignore it.**
 This is narrative + register work; it must not go to Codex.*

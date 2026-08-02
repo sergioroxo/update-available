@@ -64,6 +64,7 @@ break beat is already written into the song, and the build never lands on it.**
 ---
 
 # S51 — THE NEW YOU VIDEO, REBUILT TO THE SONG · Opus, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 You are building ONE session of the reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp,
@@ -122,6 +123,7 @@ Blocked ≠ improvise: STOP and log BLOCKED.
 ---
 
 # S52 — E1 PROPS: THE BOOMBOX AND THE TAPES · Sonnet 5, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Build session, reinterp worktree (…/update-available-reinterp, branch reinterp, ?reinterp=1).
@@ -161,6 +163,7 @@ GIT DISCIPLINE (mandatory): explicit pathspecs only. Blocked ≠ improvise: STOP
 ---
 
 # S53 — THE ENTRANCE, REFINED · Opus, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Build session, reinterp worktree (…/update-available-reinterp, branch reinterp, ?reinterp=1).

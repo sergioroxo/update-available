@@ -140,6 +140,7 @@ above can be reviewed as a file rather than by driving the browser.
 ---
 
 # S62 — THE INFOMERCIAL GETS A CAST · Opus, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch

@@ -84,6 +84,7 @@ doesn't visibly fire, or the props are too small/dark to read as a boombox from 
 ---
 
 # S50 — THE REVIEW PANEL, REBUILT · Sonnet 5, high effort · **RUN THIS FIRST**
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Tooling session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch
@@ -130,6 +131,7 @@ Blocked ≠ improvise: STOP and log BLOCKED.
 ---
 
 # S48 — THE PACING & POLISH PASS · Opus 4.8, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 You are building ONE session of the reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp,
@@ -191,6 +193,7 @@ Blocked ≠ improvise: STOP and log BLOCKED.
 ---
 
 # S49 — THE E1/E2 INTERACTION DIAGNOSTIC · Sonnet 5, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Diagnostic-then-fix session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp,

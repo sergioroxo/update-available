@@ -193,6 +193,7 @@ cannot tell tooling artifacts from content bugs, and several findings above may 
 Run **one session at a time** (shared worktree = shared git index — see the S43/S44 postmortem).*
 
 ## S58 — FIX THE REVIEW TOOLING · Sonnet 5, high effort · **RUN FIRST**
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Tooling session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch
@@ -245,6 +246,7 @@ Blocked ≠ improvise: STOP and log BLOCKED.
 ```
 
 ## S59 — THE E2 ARRIVAL (the era's missing front door) · Opus, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Build session, reinterp worktree (…/update-available-reinterp, branch reinterp, ?reinterp=1). Read
@@ -301,6 +303,7 @@ GIT DISCIPLINE (mandatory): explicit pathspecs only. Blocked ≠ improvise: STOP
 ```
 
 ## S60 — THE DEAD BUTTONS, PUREMAIL, AND THE OFFER SCREEN · Opus, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Build session, reinterp worktree (…/update-available-reinterp, branch reinterp, ?reinterp=1). Read
@@ -364,6 +367,7 @@ GIT DISCIPLINE (mandatory): explicit pathspecs only. Blocked ≠ improvise: STOP
 ```
 
 ## S61 — THE TRANSITION AND ROOM 2 · Opus, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Build session, reinterp worktree (…/update-available-reinterp, branch reinterp, ?reinterp=1). Read

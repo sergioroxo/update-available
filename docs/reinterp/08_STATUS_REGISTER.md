@@ -152,3 +152,34 @@ mechanically checked will fail the same way.
 
 Build lane: S41. This register is hand-written ONCE (this round); after S41 the headers are the
 truth and this page holds only what headers can't say.
+
+
+---
+
+## §6 — PROMPT BLOCKS ARE A LIFECYCLE SURFACE (added 2026-08-02, after a dispatched stale prompt)
+
+§5 named the class: *"the pointers agents are told to trust were the stalest layer in the repo."*
+**Prompt blocks were the un-audited instance of exactly that**, and on 2026-08-02 one was dispatched:
+the `S66 — BUILD THE TESTIMONY STUDIO` block out of `REINTERP_E3_STUDIO_SPEC_2026-07-30.md`, a file
+whose first line had read `STATUS: superseded-by …` since the day it was written. The session logged
+BLOCKED and built nothing (`423bd62`) — **but only because that agent chose to check the header of
+the file its prompt came from, which is a habit, not a control.**
+
+**Two failures, both now machine-checked by `check-spec.mjs` C8:**
+1. **A doc's STATUS does not propagate into the prompt a human copies out of it.** A prompt block is
+   pasted into a fresh agent with none of its surrounding document. It must carry its own status.
+2. **Session numbers are not unique.** "S66" named three different jobs at once: the retired studio
+   build, the shipped correction list, and the live livable-rooms work. Grepping for a number found
+   the wrong one.
+
+**The rules C8 enforces:**
+- A `STATUS: superseded-by` doc must contain **no dispatchable prompt block at all.** Delete the
+  prompt and keep the reasoning — an annotated prompt is still a prompt.
+- Every prompt heading (`# S<n> — …`) must carry
+  `**⚑ PROMPT STATUS: SHIPPED | QUEUED | BLOCKED | DRAFT …**` within three lines.
+- Scene ids are exempt by construction: they carry a dot (`S1.7`, `S2R.3`) and the pattern requires
+  a dash. The first pass flagged three Era-1 scene headings before this was tightened.
+
+**Retired numbers stay retired.** When a prompt ships, its marker says so and the number is not
+reused; if a number must be re-pointed, the old block says where it now points. 24 prompt blocks are
+marked as of adoption.

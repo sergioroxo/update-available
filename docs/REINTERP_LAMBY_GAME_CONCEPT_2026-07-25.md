@@ -141,6 +141,7 @@ reuses one surface four times.
 ---
 
 # S55 — THE E1 EASTER EGG: lamby_rig.exe · Sonnet 5, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,

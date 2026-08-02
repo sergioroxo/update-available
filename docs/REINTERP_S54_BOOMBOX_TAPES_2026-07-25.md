@@ -1,6 +1,7 @@
 STATUS: live
 
 # S54 — THE BOOMBOX SITS DOWN, THE TAPES BECOME USABLE
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 *Sérgio's second pass on S52, from his screenshot: "the boombox is now facing us but it turn upwards
 which makes no sense, so it should be horizontal (drop 45 degrees to the right), and the tapes are
 just floating and should just be on the shelf, also they need to be understandable that you'll need

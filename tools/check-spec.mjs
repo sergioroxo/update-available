@@ -256,6 +256,17 @@ const KILLS_LINE = /^KILLS:\s*(src\/\S+?)#(\S+)\s*$/;
 let headerlessCount = 0;
 const supersededTargets = []; // { where, target }
 const killsClaims = [];       // { where, path, symbol }
+// ── C8 state: dispatchable session prompts (see the check below) ────────────
+const promptBlocks = [];      // { where, line, tag, marked, superseded }
+/** a session-prompt heading: `# S66 — …`. This project writes every build
+ *  prompt under one, and agents are dispatched by copying the block beneath.
+ *  ⚑ The dash is required, and it is what separates a SESSION from a SCENE:
+ *  scene ids carry a dot (`## S1.7 — Escalation`, `S2R.3`) and must not trip
+ *  this check — the first pass flagged three of them in the Era-1 ending
+ *  scripts. So: digits, then whitespace, then a dash — never a dot. */
+const PROMPT_HEADER = /^#{1,2}\s+(S\d{1,3})\s+[—–-]/;
+/** the lifecycle marker a prompt heading must carry within 3 lines. */
+const PROMPT_STATUS = /PROMPT STATUS:\s*(SHIPPED|QUEUED|BLOCKED|DRAFT)/;
 
 (function walkMd(dir) {
   for (const name of readdirSync(dir)) {
@@ -278,9 +289,21 @@ const killsClaims = [];       // { where, path, symbol }
     } else if (m[1].startsWith('superseded-by')) {
       supersededTargets.push({ where, target: m[2] });
     }
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
       const km = line.trim().match(KILLS_LINE);
       if (km) killsClaims.push({ where, path: km[1], symbol: km[2] });
+      // C8: a dispatchable session-prompt block. The header is what a human
+      // greps for and copies; the fenced body under it is what gets pasted
+      // into an agent. Both matter, so the header is the anchor.
+      const pm = line.match(PROMPT_HEADER);
+      if (pm) {
+        const marked = lines.slice(i + 1, i + 4).some((l) => PROMPT_STATUS.test(l));
+        promptBlocks.push({
+          where, line: i + 1, tag: pm[1], marked,
+          superseded: m[1].startsWith('superseded-by')
+        });
+      }
     }
   }
 })(join(ROOT, 'docs'));
@@ -451,6 +474,28 @@ if (leaksFound > AUTHORING_MARKER_BASELINE) {
     `tighten AUTHORING_MARKER_BASELINE to ${leaksFound} in tools/check-spec.mjs`);
 }
 
+// ── C8: no dispatchable prompt inside a superseded doc; every prompt states ──
+// ── its lifecycle. ROOT CAUSE, 2026-08-02: a session was dispatched with the
+// ── "S66 — BUILD THE TESTIMONY STUDIO" block out of a doc whose own first line
+// ── had read `STATUS: superseded-by …` since the day it was written. It logged
+// ── BLOCKED and built nothing (423bd62), but only because that agent thought to
+// ── check the header of the file its prompt came from — which is not a control.
+// ── 08_STATUS_REGISTER.md §5 already named the class ("the pointers agents are
+// ── told to trust were the stalest layer in the repo"); prompt blocks ARE that
+// ── layer, and a doc's STATUS header does not propagate into the prompt a human
+// ── copies out of it. So the prompt has to carry its own.
+for (const b of promptBlocks) {
+  if (b.superseded) {
+    errors.push(`${b.where}:${b.line}: SUPERSEDED doc still contains a dispatchable prompt block ` +
+      `(${b.tag}). Delete the prompt — an annotated prompt is still a prompt. Keep the reasoning, ` +
+      `not the instructions (C8).`);
+  } else if (!b.marked) {
+    errors.push(`${b.where}:${b.line}: prompt block ${b.tag} carries no lifecycle marker. Add ` +
+      `\`**⚑ PROMPT STATUS: SHIPPED|QUEUED|BLOCKED|DRAFT …**\` on one of the 3 lines under the ` +
+      `heading, so a stale prompt cannot be dispatched by grepping for its number (C8).`);
+  }
+}
+
 // ── report ───────────────────────────────────────────────────────────────────
 if (errors.length) {
   console.error('spec-law check FAILED:');
@@ -464,5 +509,6 @@ console.log(
   `docs headerless ${headerlessCount}/${HEADERLESS_BASELINE}, ${supersededTargets.length} supersession links, ` +
   `${killsClaims.length} KILLS assertion(s) all clear; ` +
   `debug panel covers all ${osIds.size} debugJump ids (${exclusionIds.size} excluded); ` +
-  `authoring-marker leaks ${leaksFound}/${AUTHORING_MARKER_BASELINE} across ${stringsChecked} data/**.json strings`
+  `authoring-marker leaks ${leaksFound}/${AUTHORING_MARKER_BASELINE} across ${stringsChecked} data/**.json strings; ` +
+  `${promptBlocks.length} prompt block(s) all lifecycle-marked`
 );

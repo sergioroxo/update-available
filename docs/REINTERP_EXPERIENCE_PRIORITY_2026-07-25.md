@@ -92,6 +92,7 @@ you go to**. His words: it "does help with the D31 of changing the way the rooms
 ---
 
 # S57 — S2R.7: ERA 2 ENDS · Opus, high effort
+**⚑ PROMPT STATUS: SHIPPED — do not dispatch.** Kept as the reasoning trail only.
 
 ```
 Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch

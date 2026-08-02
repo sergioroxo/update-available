@@ -101,59 +101,35 @@ empties; nobody remarks on it.
 
 ---
 
-# S66 — BUILD THE TESTIMONY STUDIO · Opus, high effort
+# ⚑ THE BUILD PROMPT THAT WAS HERE IS DELETED (2026-08-02)
 
-```
-Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
-?reinterp=1). Read CLAUDE.md (the register laws are the MECHANIC here, not just a constraint),
-docs/ETHICS_CONSTRAINTS.md, docs/REINTERP_E3_STUDIO_SPEC_2026-07-30.md (THIS SPEC),
-docs/REINTERP_E3_REVAMP_BRIEF_2026-07-30.md revisions 2 and 3 (the reasoning and the evidence),
-src/room/era3Devices.ts, src/room/graceQueueLite.ts, src/desktop/theme/era3.ts, and the tail of
-docs/reinterp/01_SESSION_LOG.md.
+**A session was dispatched with it on 2026-08-02 and correctly logged BLOCKED without building
+anything** (`423bd62`). It was lines 104-155 of this file: a fully dispatchable "S66 — BUILD THE
+TESTIMONY STUDIO" block sitting inside a doc whose own first line has read
+`STATUS: superseded-by …RECONSIDERED` since the day it was written — and RECONSIDERED is itself
+superseded by `REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md`, which was BUILT in Session 64 and
+revised in Session 65 on Sérgio's play notes.
 
-THE MECHANIC: the studio converts `felt` into `operable`. Vera's raw account is bare and true; the
-presets turn it into something that circulates. Nothing forces the player — publishing it raw is
-allowed, and the platform simply does not carry it. The coercion is ARITHMETIC (the view count does
-not move), never UI. The player performs the ideology without being told to.
+**The four things that prompt asked for are the four reasons this spec was retired** (see the
+supersession header at the top of this file), and it inverted two live decisions: E3's coercion is
+explicitly *"no metrics, no threats, no view counts… it says `3 of 7 applied`"*, and the era's break
+is Malta and the light. Building it would have undone a working era.
 
-SCOPE:
-1. THE STUDIO on the laptop: a three-segment timeline matching the documented testimony grammar
-   ("Where I was" / "What happened" / "Where I am now"), each with a preset whose controls ARE the
-   codebook in the spec — grade, light, framing, music bed, posture. Preset names sound like care,
-   not craft. Lambient marks one "Recommended for this segment."
-2. ⚑ THE TONE LAW IS ABSOLUTE: the satire is in the TOOL. Vera is sincere and is never the joke. Her
-   raw segments are `felt` — bare, no grade, no music. The studio chrome is `operable`. If any beat
-   reads as mocking her, STOP and flag it.
-3. PUBLISH as a commit-press (rhyme it with S2R.3's single chip), appending the documented Node 5
-   furniture: end card, link-in-bio, QR, invented hashtags, "If I can change, you can too."
-   REAL hashtags are dossier-only — invent the in-world ones.
-4. CIRCULATE on the same device: her testimony in a stream of near-identical others; Node 4's
-   co-opted therapy language in pastel self-help styling; Lambient's badges as verified/sponsored/
-   flagged trust marks (reuse S57's dispersal marks — do not draw new ones).
-5. THE ECHO CHAMBER: her own video recommended to her; comments about her; "you might also like"
-   full of people who sound like her. Do not explain it anywhere.
-6. THE PHONE as the RETURN and the era's break — notification, DM, a comment using her own words
-   back at her, then the glitch begins. Leave a clean seam for E4: the name erodes
-   (Lamby → Lambient → Echo / "L"). Do NOT build E4 here; just make the seam real.
-7. The GraceQueue survives only as a light activity tracker. It must not carry the era — peer
-   moderation is rated CONTESTED in the research and the piece should not assert it.
+**The prompt is deleted rather than annotated**, because an annotated prompt is still a prompt and
+this is the second time a stale pointer has cost a session. `tools/check-spec.mjs` C8 now fails the
+build if any `superseded-by` doc contains a dispatchable prompt block, so this class of accident
+cannot recur silently.
 
-LAWS: all new copy PLACEHOLDER-draft (Vera's testimony is survivor-adjacent felt text — draft it per
-the co-creation norm, Sérgio rewrites). Faces are never shown. Every preset declinable, declining
-filed. Leave/pause live throughout. Nothing scored. No real organisation, person or hashtag in the
-fiction.
+**The live E3 spec is `REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md`. It is BUILT.**
 
-FILES YOU MAY TOUCH: src/room/era3Devices.ts, src/room/graceQueueLite.ts, new
-src/desktop/apps/studio.ts (or similar), data/dialog/ (new E3 files), data/strings/era3_devices.json,
-src/desktop/theme/era3.ts, src/state/ledger.ts, src/witness/intake.ts (filings),
-src/debug/panel.ts (new beats — C6 fails otherwise), docs/reinterp/01_SESSION_LOG.md.
-NOT: src/desktop/apps/caleb.ts, accountability.ts, netvision.ts, src/narrative/spine.ts.
+## ⚑ What is still worth salvaging from this doc (the blocked session's own note, and it is right)
+The presets-as-ideology idea is NOT dead — the supersession header always kept it, and the
+three-phase production grammar in `REINTERP_E3_REVAMP_BRIEF_2026-07-30.md` rev 3 is properly
+sourced. It should return **as a beat inside the correction list, not as a rebuild**: Noa's
+submission is already a video, so applying a correction to it could expose exactly those preset
+controls — grade, framing, music bed, posture. That is additive, it costs one correction item, and
+it lands the sourced codebook inside the design that shipped. **Not scheduled; noted.**
 
-ACCEPTANCE: played linearly with real clicks — raw publish shows the number NOT moving; applying
-presets makes it move; the loop returns to her; the phone break fires. State in the log that you
-verified the arithmetic coercion works without any instruction text. npm test + npm run build green.
-GIT DISCIPLINE: explicit pathspecs only. Blocked ≠ improvise: STOP and log BLOCKED.
-```
 
 ## Open for Sérgio
 1. **Vera's raw testimony copy** — I draft under D37; it is the hardest writing in the era because
