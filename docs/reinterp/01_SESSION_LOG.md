@@ -92,6 +92,32 @@ STATUS: live
    remaining findings may evaporate once a real linear replay is done through the fixed panel.
 
 ## BLOCKED / WAITING (pruned R29 — resolved items struck to DONE, the rest carried)
+- **⚑ BLOCKED 2026-08-02 — "BUILD THE TESTIMONY STUDIO" was dispatched from a superseded spec.
+  Nothing was built; no files were touched.** The prompt is verbatim
+  `REINTERP_E3_STUDIO_SPEC_2026-07-30.md` **lines 104–155**, and that doc's own first line reads
+  `STATUS: superseded-by REINTERP_E3_RECONSIDERED_2026-07-30.md`, which is itself
+  `superseded-by REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` — the live spec, marked ✅ BUILT
+  (Session 64) and revised on Sérgio's own play notes (Session 65). `NEXT_PROMPTS_2026-07-30.md:212`
+  already says so in as many words: *"The earlier S66 in `REINTERP_E3_STUDIO_SPEC` targeted the
+  superseded studio design — **ignore it**."* Two S66 prompts live in that file and the stale one is
+  the one that got sent.
+  **The four things the prompt asks for are the four reasons the spec was retired**, per its own
+  supersession header: Vera editing her OWN testimony has no diegetic logic (scope 1–2); the echo
+  chamber was asserted rather than mechanised (scope 5); **the view-count coercion was contrived**
+  (the prompt's whole MECHANIC and its acceptance test); and the devices were never connected
+  (scope 4, 6). It also contradicts the live spec twice over: E3's coercion is explicitly *"No
+  metrics, no threats, no view counts… it says 3 of 7 applied"*, and the era's break is **Malta and
+  the light**, not a comment using her own words back at her. And scope 7 — *"the GraceQueue
+  survives only as a light activity tracker"* — would gut the correction list that S64 shipped and
+  S65 fixed on his notes.
+  **What genuinely survives and is worth reviving on his call:** presets-as-ideology, the E4 bridge,
+  and the sourced three-phase production grammar (REVAMP_BRIEF rev 3) — as a beat *inside* the
+  correction list, not as a replacement for it. Awaiting his decision; see the reply of 2026-08-02.
+  ⚑ Process note, and the real fix: this is the second time a stale pointer has cost a session
+  (cf. §5 of `08_STATUS_REGISTER.md`, "the pointers agents are told to trust were the stalest layer
+  in the repo"). **The prompt blocks inside superseded docs are now the stalest layer.** Cheapest
+  durable fix: a check-spec rule that fails when a `superseded-by` doc still contains a dispatchable
+  prompt block, or simply strike those blocks when the doc is superseded.
 - **Sérgio's live queue** is `07_WAITING_ON_SERGIO.md` (audio, the Caleb read, feel-tests, voice
   passes) and the decision queue in `03_COORDINATION.md`. Not duplicated here.
 - **A11 in-headset playtest date** — still gates all remaining spatial tiers + batching-3. The
