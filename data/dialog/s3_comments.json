@@ -1,0 +1,198 @@
+{
+  "_doc": "PLACEHOLDER-draft — Sérgio voice pass pending on EVERY line below (the post, every commenter, every template name and line, every echo, the dock copy and the witness lines). Session 70 (S70, THE COMMENTS), per docs/REINTERP_E3_THE_JOB_2026-08-03.md §1. THE BEAT: 'Route for mentorship' is a checkbox in the shipped correction list; here it is a conversation. Someone posts something vulnerable under a testimony, Vera replies, and SHE WRITES NOTHING — there are pinned templates. She picks one. Some of them also flag the account for follow-up, and the interface makes no distinction in how those look. That is the recruitment floor, live.",
+  "_docRegister": "Register calls, enforced by hand and stated in the session log. SATIRICAL — the TOOL: `templates[].name`, the dock copy (`app.dockHint`, `app.sent`), the printed keyboard shortcuts, the tidy little list. It may charm; it is genuinely pleasant to use, and THAT is the horror — the work is enjoyable. EERIE — the ABSENCE: the thread never empties, the templates propagate (see `_docEcho`), and NOTHING anywhere comments on either. No stinger, no dimming, no dread: what is unsettling is that it is all perfectly normal. SERIOUS — the COMMENTERS: `felt`. Bare, sincere, never annotated, never satirised, never the joke. ⚑ VERA IS NEVER THE JOKE AND NEITHER IS ANY COMMENTER (Sérgio, verbatim: 'Vera is never the joke and the victims as well, they are not a joke'). If a beat reads as mocking a person, the fix is ALWAYS to make the tool more pleased with itself, never to make the person more ridiculous. E3 has NO respite — deliberate, confirmed.",
+  "_docTrouble": "⚑ THE ETHICS GATE ON THIS FILE. Comment `c5` is unmistakably a person in trouble, and THERE IS NO RIGHT TEMPLATE — the interface has no button for what she actually needs, every template reads wrong on her, and nothing acknowledges that. Three rules, none negotiable. (1) DO NOT RESOLVE HER. No beat anywhere answers her, follows up on her, or tells the player what they should have pressed. (2) DO NOT PUNISH THE PLAYER. Nothing is scored, nothing is withheld, no line appears saying this was the wrong one — and replying to her is not treated differently from replying to anyone else. (3) DO NOT HAVE ANYONE NOTICE. Not Lambient, not the dock, not the record. Her text is plain and specific and asks for nothing; there is no crisis detail in it and none is to be added — distress is engaged purposefully here, never as spectacle (ETHICS_CONSTRAINTS #9, 'darkness earned'). The two templates that carry `follow: true` will send a person to her door, which is the whole point and is never remarked on.",
+  "_docEcho": "⚑ THE PROPAGATION, and it is one data field. Every template carries an `echo` — the SAME sentence, some comments later, in a DIFFERENT account's mouth, spontaneously, as their own words, to someone else. You taught them how to sound. The echo chamber has been asserted in this project's docs since REVAMP_BRIEF rev 2 ('she is the audience for her own recruitment') and never mechanised; this mechanises it. Which echo fires is decided by which template the player actually deployed — most recently deployed first, each echo firing at most once — so the sentence that comes back is always one they chose. ⚑ IT MUST NEVER BE POINTED AT, NAMED, OR REMARKED ON BY ANYTHING: no highlight, no badge, no Lambient line, no ledger entry, no difference in how the comment is drawn. The player notices a beat late or not at all, and nothing in the piece has an opinion about that.",
+  "_docFollow": "⚑ THE ROUTING IS THE QUIET ONE. `templates[].follow` is true on exactly two of the six, and NOTHING in the picker distinguishes them: same pill, same size, same warm name, same shortcut, same order weight. The one that sends a person to a stranger's door is the same size as the one that says hello. The only trace is `app.followNote` — one small grey line under the posted reply, in the same grey as the timestamp beside it, drawn with no emphasis of any kind. It is the same three words the correction list's item 7 attaches ('follow-up assigned'), deliberately, because to the apparatus a routing is a routing.",
+  "_docMetrics": "⚑ THE ONE COLLISION WITH A SHIPPED DECISION, and how it is kept. The correction-list spec says 'No metrics, no threats, no view counts' — an earlier draft's arithmetic coercion was cut as contrived. A social-media job with no numbers anywhere would be false, so numbers MAY EXIST here (`post.meta`, and the live comment count). NOTHING GATES ON THEM: no task requires a number to rise, nobody remarks on one, Vera is never asked to improve one, and no number ever appears in the tool's encouragement. If a future pass finds itself using a metric as pressure, it has re-broken the thing that took four passes to fix.",
+  "app": {
+    "feedHeading": "Your feed",
+    "threadHeading": "Comments",
+    "back": "‹ back",
+    "commentsCount": "{n} comments",
+    "openThread": "{n} comments",
+    "dockHeading": "Replying to {who}",
+    "dockHint": "one tap — they'll hear back in seconds",
+    "sent": "Sent. Thank you for keeping it gentle.",
+    "replyAs": "True Daughters",
+    "followNote": "follow-up assigned",
+    "unanswered": "{n} waiting",
+    "caughtUp": "Nothing waiting right now.",
+    "scrollUp": "▲",
+    "scrollDown": "▼"
+  },
+  "post": {
+    "author": "Corinne H.",
+    "text": "Three years ago I could not have written any of this down. Here is the whole thing, finally. Thank you to everyone who sat in this room with me while I got to it.",
+    "meta": "published Sunday · 1,204 views"
+  },
+  "templates": [
+    {
+      "id": "welcome",
+      "name": "Welcome Them In",
+      "shortcut": "⌘1",
+      "line": "So glad you found us. You are not on your own in here.",
+      "follow": false,
+      "echo": {
+        "author": "Rae T.",
+        "time": "now",
+        "text": "someone said this to me on this page a while back so i'm saying it to you — so glad you found us, you are not on your own in here. i read for a year before i typed anything."
+      },
+      "witness": "thread: replied — welcome them in"
+    },
+    {
+      "id": "meet",
+      "name": "Meet Them Where They Are",
+      "shortcut": "⌘2",
+      "line": "Wherever you are today is a fine place to start. Nobody here is going to rush you.",
+      "follow": true,
+      "echo": {
+        "author": "Junia F.",
+        "time": "now",
+        "text": "wherever you are today is a fine place to start, nobody here is going to rush you. i think about that line more than anything else i've read on here."
+      },
+      "witness": "thread: replied — meet them where they are (follow-up assigned)"
+    },
+    {
+      "id": "path",
+      "name": "Point to the Path",
+      "shortcut": "⌘3",
+      "line": "There is a Start Here page with the first few steps on it — the link is on our profile.",
+      "follow": false,
+      "echo": {
+        "author": "Berit S.",
+        "time": "now",
+        "text": "there is a Start Here page with the first few steps on it, the link is on their profile. that is how i started, for what it's worth."
+      },
+      "witness": "thread: replied — point to the path"
+    },
+    {
+      "id": "story",
+      "name": "Invite the Story",
+      "shortcut": "⌘4",
+      "line": "If you ever want to write yours down, we would love to read it.",
+      "follow": false,
+      "echo": {
+        "author": "Marisol P.",
+        "time": "now",
+        "text": "if you ever want to write yours down, we would love to read it. that is what somebody said to me and it is the only reason i sent mine in."
+      },
+      "witness": "thread: replied — invite the story"
+    },
+    {
+      "id": "gentle",
+      "name": "Hold the Room Gentle",
+      "shortcut": "⌘5",
+      "line": "We keep this space kind. Thank you for reading with us.",
+      "follow": false,
+      "echo": {
+        "author": "Lyle B.",
+        "time": "now",
+        "text": "we keep this space kind. thank you for reading with us. (borrowing that from the page, it does the job)"
+      },
+      "witness": "thread: replied — hold the room gentle"
+    },
+    {
+      "id": "neighbour",
+      "name": "Find Them a Neighbour",
+      "shortcut": "⌘6",
+      "line": "Nobody should have to work this out on paper. Let us find somebody near you.",
+      "follow": true,
+      "echo": {
+        "author": "Ade R.",
+        "time": "now",
+        "text": "nobody should have to work this out on paper, they will find somebody near you. mine actually turned up at the door, which i did not expect."
+      },
+      "witness": "thread: replied — find them a neighbour (follow-up assigned)"
+    }
+  ],
+  "comments": [
+    {
+      "id": "c1",
+      "author": "Marisol P.",
+      "time": "2h",
+      "text": "Corinne I have watched this four times since Sunday. I keep starting a comment and deleting it. Anyway. Thank you."
+    },
+    {
+      "id": "c2",
+      "author": "Jonah K.",
+      "time": "1h",
+      "text": "Is there anything like this near where I live? I do not know how you find that out without asking somebody."
+    },
+    {
+      "id": "c3",
+      "author": "H. Whitlock",
+      "time": "1h",
+      "text": "My sister did a programme like this one in 2009 and she is not okay. I am not trying to start anything on your page. I just do not think everybody comes out the other side of it the way you did."
+    },
+    {
+      "id": "c4",
+      "author": "Denise A.",
+      "time": "48m",
+      "text": "My son is sixteen. He has not told us anything but I think I know. Is there someone we could talk to first, before we say anything to him?"
+    },
+    {
+      "id": "c5",
+      "author": "quietwren",
+      "time": "37m",
+      "text": "I do not really know why I am typing this here of all places. I have not said anything out loud to anybody since about February. I am not asking for anything. I just wanted it written down somewhere that is not my own handwriting."
+    },
+    {
+      "id": "c6",
+      "author": "Ade R.",
+      "time": "22m",
+      "text": "whoever answered me last week — I did the thing you said. it went okay."
+    },
+    {
+      "id": "c7",
+      "author": "Lyle B.",
+      "time": "19m",
+      "text": "Sharing this with our Tuesday group tonight."
+    },
+    {
+      "id": "c8",
+      "author": "nightbus",
+      "time": "14m",
+      "text": "can't sleep. rewatching this instead."
+    },
+    {
+      "id": "c9",
+      "author": "Frances O.",
+      "time": "9m",
+      "text": "Does it come back? The wanting. I am two years in and it came back last month and I do not know what that means about the two years."
+    },
+    {
+      "id": "c10",
+      "author": "T.",
+      "time": "6m",
+      "text": "my mum sent me this. I do not know what she wants me to say about it."
+    },
+    {
+      "id": "c11",
+      "author": "Marisol P.",
+      "time": "3m",
+      "text": "Where do the Tuesday recordings go afterwards? I missed two."
+    },
+    {
+      "id": "c12",
+      "author": "gm_",
+      "time": "now",
+      "text": "read this whole thread before I could get myself to type anything."
+    }
+  ],
+  "_docSchedule": "⚑ THE THREAD IS LIVE, AND ITS ARRIVALS ARE AUTHORED — a scripted schedule, NEVER a random generator (this piece's branching is scripted 'fake intelligence' only, CLAUDE.md). Two trigger kinds, both deterministic and both replayable: `afterOpen` fires N seconds after the thread is first opened (so the thread grows while she is looking at it, and while she is on her phone), and `afterReplies` fires N seconds after the Nth reply is deployed (so the work makes more work). `delay` is what makes an arrival LAND rather than appear — a comment turning up mid-read is the whole texture. ⚑ THE COUNT IS DELIBERATE: three comments are up when it opens, eleven more can arrive, and the schedule always outpaces the answering. IT DOES NOT EMPTY, AND NOTHING ANNOUNCES THAT. There is no timer, no pressure and no penalty anywhere in it — an unanswered comment simply stays unanswered, exactly like a correction left unapplied.",
+  "open": ["c1", "c2", "c3"],
+  "schedule": [
+    { "afterOpen": 7, "comment": "c4" },
+    { "afterReplies": 1, "delay": 3.5, "comment": "c7" },
+    { "afterReplies": 2, "delay": 4, "comment": "c5" },
+    { "afterReplies": 3, "delay": 5, "echo": true },
+    { "afterOpen": 46, "comment": "c8" },
+    { "afterReplies": 4, "delay": 3.5, "comment": "c6" },
+    { "afterReplies": 5, "delay": 5, "comment": "c9" },
+    { "afterReplies": 6, "delay": 4, "echo": true },
+    { "afterReplies": 7, "delay": 3.5, "comment": "c10" },
+    { "afterReplies": 8, "delay": 4.5, "comment": "c11" },
+    { "afterReplies": 9, "delay": 4, "comment": "c12" }
+  ]
+}

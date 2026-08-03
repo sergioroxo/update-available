@@ -154,7 +154,22 @@ const E3_DEVICE_BEATS: Array<[string, string]> = [
   ['the phone · open the message', 'maltaOpen'],
   ['the phone · press the reply field', 'reply'],
   ['⚑⚑ THE LIGHT — the brighten, alone', 'light'],
-  ['…and back to the E3 rig (A/B)', 'lightOff']
+  ['…and back to the E3 rig (A/B)', 'lightOff'],
+  // ⚑ S70 — THE TABLET: the comment thread, the template picker, the routing
+  // and the propagation. In play the way in is the `N comments` row on the top
+  // post of the feed; these land on states that otherwise take minutes of work.
+  ['⚑ the tablet · open the comment thread', 'thread'],
+  ['↳ pick the first comment (picker opens)', 'threadPick'],
+  ['↳ deploy a template (reply + auto-advance)', 'threadReply'],
+  ['↳ ⚑ the quiet one — the reply that ROUTES', 'threadRoute'],
+  ['↳ pull the next authored arrival forward', 'threadArrive'],
+  ['↳ ⚑⚑ THE PROPAGATION — your sentence, returned', 'threadEcho'],
+  ['↳ ⚑ the commenter there is no template for', 'threadTrouble'],
+  // ⚑ S70 — THE PHONE: FloppySheep. In play the only way in is the icon on her
+  // home screen, which nothing points at and nothing ever mentions.
+  ['⚑ the phone · FloppySheep (home screen icon)', 'floppy'],
+  ['↳ FloppySheep · running', 'floppyPlay'],
+  ['↳ FloppySheep · the oh-no card', 'floppyOver']
 ];
 
 /**

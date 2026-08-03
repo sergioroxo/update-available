@@ -36,14 +36,10 @@
  */
 import * as pc from 'playcanvas';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
-import { setFont, wrapText } from '../desktop/theme/chrome';
-import * as aero from '../desktop/theme/era3';
-import { ERA3, drawLambMark, drawNoaFrame, honestLight, NOA_FRAME } from '../desktop/theme/era3';
 import { ledger } from '../state/ledger';
 import { setEra3Lift, type EraKey } from './cluster';
-import { GraceQueueLite, type TabletFeedItem } from './graceQueueLite';
+import { GraceQueueLite } from './graceQueueLite';
 import d from '../../data/strings/era3_devices.json';
-import q from '../../data/dialog/s3_queue.json';
 
 /** Session 39 (E3 screen-format pass): each canvas's logical resolution is
  *  now chosen to MATCH its panel plane's world aspect exactly (a fixed
@@ -160,74 +156,15 @@ function makeCanvas(logicalW: number, logicalH: number, scale: number): { canvas
 // graceQueueLite.ts needs the same corner mark for its sign-in screen — a
 // shared theme-level home avoids the cycle).
 
-/** the tablet — the SAME room as readers see it (S3R.1 spec), and Session 64's
- *  consequence surface for the correction list: a submission appears here once
- *  its corrections have been worked, carrying exactly the channels that were
- *  actually applied to it. The reader never sees a correction; they see the
- *  corrected thing, published, with a heart on it. Before any work is done the
- *  feed is honestly quiet. (Session 38's approve/review/Mira dramaturgy is
- *  retired with the verbs it belonged to — see graceQueueLite's header.) */
-function drawTabletShell(ctx: CanvasRenderingContext2D, W: number, H: number, feed: TabletFeedItem[]): void {
-  aero.px(ctx, 0, 0, W, H, ERA3.glass);
-  aero.px(ctx, 0, 0, W, 26, ERA3.accent);
-  setFont(ctx, 12);
-  ctx.fillStyle = ERA3.white;
-  ctx.fillText(d.tablet.appName, 8, 7);
-  setFont(ctx, 10);
-  ctx.fillStyle = ERA3.greyDk;
-  ctx.fillText(d.tablet.feedHeading, 8, 32);
-
-  if (feed.length === 0) {
-    setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(q.tablet.quiet, 8, 60);
-    return;
-  }
-
-  let y = 48;
-  feed.forEach((post) => {
-    // measured before anything is drawn, so a long chip run can never spill
-    // past the card it belongs to (the tablet is 216 logical px wide)
-    setFont(ctx, 9);
-    const lines = wrapText(ctx, post.text, W - 26).slice(0, 4);
-    setFont(ctx, 8);
-    const chipLines = post.chips.length ? wrapText(ctx, post.chips.join(' · '), W - 26) : [];
-    // ⚑ S69: a submission that came in as a recording is PUBLISHED as one —
-    // the still, exactly as the corrections left it. No ungraded frame beside
-    // it and no mark saying a preset was ever applied: the laptop remembers
-    // what was taken, and this surface simply shows the result.
-    const stillS = 0.5;
-    const stillH = post.video ? NOA_FRAME.h * stillS + 6 : 0;
-    const cardH = 22 + stillH + lines.length * 11 + 11 + chipLines.length * 10 + (post.partner ? 10 : 0) + 8;
-    aero.px(ctx, 6, y, W - 12, cardH, ERA3.memberBand);
-    aero.px(ctx, 6, y, 3, cardH, ERA3.memberSpine);
-    setFont(ctx, 9);
-    ctx.fillStyle = ERA3.ink;
-    ctx.fillText(post.author, 14, y + 6);
-    if (post.video) {
-      drawNoaFrame(ctx, 14, y + 18, stillS, { graded: post.video.graded });
-      if (post.video.graded) honestLight(ctx, 14, y + 18, NOA_FRAME.w * stillS, NOA_FRAME.h * stillS);
-    }
-    ctx.fillStyle = ERA3.greyDk;
-    lines.forEach((ln, i) => ctx.fillText(ln, 14, y + 20 + stillH + i * 11));
-    let fy = y + 22 + stillH + lines.length * 11;
-    // the network's own endorsement of the thing it just edited
-    setFont(ctx, 8); ctx.fillStyle = ERA3.rose;
-    ctx.fillText(q.tablet.heartGlyph, 14, fy);
-    const hw = ctx.measureText(q.tablet.heartGlyph).width;
-    ctx.fillStyle = ERA3.lambTag;
-    ctx.fillText(q.tablet.verifiedBadge, 14 + hw + 4, fy);
-    drawLambMark(ctx, 14 + hw + 4 + ctx.measureText(q.tablet.verifiedBadge).width + 6, fy - 4, 0.7);
-    // …and the channels she is now on, in the reader's view, unremarked
-    ctx.fillStyle = ERA3.grey;
-    chipLines.forEach((ln, i) => ctx.fillText(ln, 14, fy + 11 + i * 10));
-    fy += 11 + chipLines.length * 10;
-    if (post.partner) {
-      ctx.fillStyle = ERA3.accent;
-      ctx.fillText(post.partner, 14, fy);
-    }
-    y += cardH + 5;
-  });
-}
+// Session 70: `drawTabletShell` is GONE from this file, and so are the theme,
+// wrapText and s3_queue imports it needed. The tablet stopped being a static
+// consequence surface the moment it grew a job — it now carries the comment
+// thread, the template picker and its own hit rects, exactly as the laptop and
+// (since S64) the phone do. Its drawing moved to `src/desktop/apps/comments.ts`
+// and is reached through `graceQueueLite.drawTablet()`, the same shape S64 used
+// when the phone's shell moved out. The feed itself is UNCHANGED in every
+// respect but its home: same cards, same hearts, same lamb badges, same
+// published still.
 
 // Session 64: `drawPhoneShell` is GONE, and so is its private `wrapPlain`. The
 // phone stopped being a static shell the moment it started carrying the era's
@@ -434,7 +371,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   }
 
   add('laptop', LOGICAL.laptop, (ctx, w, h) => graceQueueLite.draw(ctx, w, h), { versionOf: () => graceQueueLite.version });
-  add('tablet', LOGICAL.tablet, (ctx, w, h) => drawTabletShell(ctx, w, h, graceQueueLite.tabletFeed()), { versionOf: () => graceQueueLite.version });
+  // Session 70: the tablet takes its OWN version, exactly as the phone did in
+  // S64 — it now has state the laptop knows nothing about (an open thread, a
+  // selected comment, arrivals landing on their own schedule), and a comment
+  // arriving must not re-upload the 676x390 laptop panel beside it.
+  add('tablet', LOGICAL.tablet, (ctx, w, h) => graceQueueLite.drawTablet(ctx, w, h), { versionOf: () => graceQueueLite.tabletVersion });
   // Session 64: the phone no longer draws once and never again (S37's law) —
   // it carries the era's break, so it takes its OWN version counter. The
   // dirty-upload law is unchanged, only widened: `phoneVersion` moves on a real
@@ -477,7 +418,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           s.lastVersion = s.versionOf();
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
           if (s.name === 'laptop') graceQueueLite.draw(s.ctx, s.logical.w, s.logical.h);
-          else if (s.name === 'tablet') drawTabletShell(s.ctx, s.logical.w, s.logical.h, graceQueueLite.tabletFeed());
+          else if (s.name === 'tablet') graceQueueLite.drawTablet(s.ctx, s.logical.w, s.logical.h);
           else graceQueueLite.drawPhone(s.ctx, s.logical.w, s.logical.h);
           s.dirty = true;
         }
@@ -515,7 +456,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       }
     },
     handleLaptopPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
-      const test = (name: 'laptop' | 'phone'): { x: number; y: number } | null => {
+      const test = (name: 'laptop' | 'tablet' | 'phone'): { x: number; y: number } | null => {
         const s = screens.find(sc => sc.name === name);
         if (!s || !s.entity.enabled) return null;
         const place = PLACEMENT[name];
@@ -532,6 +473,13 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // miss on the laptop always has.
       const onPhone = test('phone');
       if (onPhone) return graceQueueLite.handlePhoneClick(onPhone.x, onPhone.y);
+      // Session 70: and the TABLET has verbs now — the comment thread and its
+      // template picker. Tested last only because it is the largest plane lying
+      // flat in the room and a ray on its way to something else should not be
+      // eaten by it; a press on its glass that hits no target returns false and
+      // falls through to the floor markers, exactly as the other two do.
+      const onTablet = test('tablet');
+      if (onTablet) return graceQueueLite.handleTabletClick(onTablet.x, onTablet.y);
       return false;
     },
     debugCanvases(): Record<'laptop' | 'tablet' | 'phone', HTMLCanvasElement> {

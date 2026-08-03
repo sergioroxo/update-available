@@ -11,8 +11,8 @@ not live.***
 | — | ~~S66 — the rooms as livable places~~ | ↓ below, in this file | **SHIPPED 2026-08-02** — number retired |
 | — | ~~S67 — the choreography~~ | `docs/REINTERP_THE_BUILDING_2026-08-02.md`, tail | **SHIPPED 2026-08-02** — number retired |
 | — | ~~S69 — the presets on Noa's video~~ | ↓ below, in this file | **SHIPPED 2026-08-02** (`11ef26e`) — number retired |
-| 1 | **S70 — the comments, and the recruitment floor** | ↓ below, in this file | **QUEUED — dispatch this one** |
-| 2 | **S71 — walk the space and report what is wrong** | ↓ below, in this file | QUEUED — independent, either order |
+| — | ~~S70 — the comments, and the recruitment floor~~ | ↓ below, in this file | **SHIPPED 2026-08-03** — number retired |
+| 1 | **S71 — walk the space and report what is wrong** | ↓ below, in this file | **QUEUED — dispatch this one** |
 | — | S68 | *(soft-claimed by the gyroscope look-around suggestion, `NEXT_PROMPTS_2026-07-30.md` tail — not written)* | — |
 
 **Numbers are not reused.** S66 previously named two other jobs (the retired testimony studio; the
@@ -169,7 +169,7 @@ to grade her without ever pressing play.
 ---
 
 # S70 — THE COMMENTS, AND THE RECRUITMENT FLOOR · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: QUEUED — dispatch this one.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-03 — built as the comment thread on the tablet and FloppySheep on the phone. Do not dispatch; the number is retired (see BUILD_LOG.md and 01_SESSION_LOG.md, Session 70).**
 *Sérgio approved 2026-08-03 with four conditions, all of which are IN the prompt and none of which
 are preamble: the logic must be **dynamic, not basic**; the register is **eerie + satirical +
 serious, mixed**; **Vera is never the joke and neither are the commenters**; and **FloppySheep must

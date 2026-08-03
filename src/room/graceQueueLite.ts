@@ -87,6 +87,23 @@
  *     with no before beside it and no way for a reader to know. The laptop
  *     remembers; the tablet publishes clean. It is the same disagreement
  *     between the two screens that `runs(sub, tracked)` already draws for text.
+ *
+ * ⚑ SESSION 70 — THE OTHER TWO SCREENS GET A JOB, and this class becomes the
+ * desk rather than the laptop. E3's reframe (`REINTERP_E3_THE_JOB_2026-08-03`)
+ * is that Vera is a social-media manager and the correction list is her MORNING
+ * QUEUE, not her whole day. So:
+ *   · THE TABLET now runs `src/desktop/apps/comments.ts` — the network's feed
+ *     (unchanged, still this file's `tabletFeed()`) and, under one published
+ *     testimony, the comment thread where *"route for mentorship"* stops being
+ *     a checkbox and becomes a conversation. All of its own laws live in that
+ *     file's header and in `data/dialog/s3_comments.json`'s `_doc` blocks.
+ *   · THE PHONE now has one app on it: `src/desktop/apps/floppysheep.ts`, the
+ *     publisher's mascot game, one tap away while a comment sits unanswered.
+ *     ⚑ It is `operable`, not respite, it files NOTHING, and nothing anywhere
+ *     scolds, times, counts or interrupts it.
+ * Both are wired here because this class already owns all three screens' state,
+ * their hit rects, their version counters and the debug reach — and because
+ * `era3Devices.ts` is 3D plumbing that should not learn what a comment is.
  */
 import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
@@ -94,9 +111,16 @@ import {
   ERA3, drawLambMark, warmGrade, drawNoaFrame, honestLight, NOA_FRAME, NOA_SECONDS
 } from '../desktop/theme/era3';
 import { ledger } from '../state/ledger';
+import { CommentsApp, type TabletFeedItem, type CommentTemplate } from '../desktop/apps/comments';
+import { FloppySheep, drawFloppyIcon, FLOPPY_LABEL } from '../desktop/apps/floppysheep';
 import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
 import d from '../../data/strings/era3_devices.json';
+
+/** re-exported from its Session-64 home so `era3Devices.ts` keeps its import;
+ *  the type moved to `desktop/apps/comments.ts` when that module took over the
+ *  whole tablet, which is also what keeps the two files acyclic. */
+export type { TabletFeedItem };
 
 interface CorrectionDef {
   id: number;
@@ -221,21 +245,6 @@ function hit(r: Rect, x: number, y: number): boolean {
   return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 }
 
-/** the tablet's consequence surface: what the network did with the story once
- *  the corrections were applied to it */
-export type TabletFeedItem = {
-  author: string;
-  /** the PUBLISHED text — every applied edit made real and nothing struck out.
-   *  The reader is never shown a correction, only its result. */
-  text: string;
-  chips: string[];
-  partner?: string;
-  /** ⚑ the still, PUBLISHED — graded or not, whichever was actually done to
-   *  it, and with no ungraded frame beside it. The laptop remembers what was
-   *  taken; the tablet shows the result, and a reader has no way to know. */
-  video?: { graded: boolean };
-};
-
 /** one span of a submission, and what a correction did to it */
 type TextRun = { text: string; state: 'kept' | 'cut' | 'added' | 'marked' };
 
@@ -256,8 +265,20 @@ export class GraceQueueLite {
    *  discipline: never re-dirtied by a ticking clock, only real state, or by
    *  a beat that is genuinely animating). */
   version = 0;
-  /** the phone's own version — the caret blink must not re-upload the laptop */
-  phoneVersion = 0;
+  /** the phone's own counter — the caret blink must not re-upload the laptop */
+  private phoneV = 0;
+
+  /** ⚑ S70 — the tablet and the phone are no longer this screen's dependants.
+   *  Each takes the version of everything that can change it and NOTHING else,
+   *  so a comment arriving never re-uploads the laptop and a sheep in mid-air
+   *  never re-uploads either of the other two. Summing two monotonic counters
+   *  stays monotonic, which is all era3Devices' `versionOf` contract asks for. */
+  get tabletVersion(): number { return this.version + this.comments.version; }
+  get phoneVersion(): number { return this.phoneV + this.floppy.version; }
+
+  /** the comment thread (the tablet) and the mascot game (the phone) */
+  readonly comments = new CommentsApp();
+  readonly floppy = new FloppySheep();
 
   private mode: Mode = 'dark';
   private arrivalT = -1;   // < 0 = not running
@@ -349,7 +370,7 @@ export class GraceQueueLite {
     if (this.maltaOpen) {
       this.caretT += dt;
       const on = this.replyHeld || Math.floor(this.caretT / CARET_SECONDS) % 2 === 0;
-      if (on !== this.caretOn) { this.caretOn = on; this.phoneVersion++; }
+      if (on !== this.caretOn) { this.caretOn = on; this.phoneV++; }
     }
     if (this.liftT >= 0) {
       const before = Math.floor(this.liftT / TICK);
@@ -361,6 +382,13 @@ export class GraceQueueLite {
       if (Math.floor(this.liftT / TICK) !== before) this.bump();
       if (this.liftT >= LIFT_DELAY_SECONDS + LIFT_SECONDS) this.liftT = -1;
     }
+
+    // ⚑ S70 — the other two screens' clocks, each bumping only its own version.
+    // The thread's is discrete (an arrival lands, and that is an event); the
+    // game's is the one genuine animation in the room, and it stops itself the
+    // moment the sheep does. Neither can ever re-upload the laptop.
+    this.comments.update(dt);
+    this.floppy.update(dt);
   }
 
   /** 0 → 1: how far the laptop's grade has warmed. Never resets once lit. */
@@ -526,7 +554,7 @@ export class GraceQueueLite {
   armMalta(): void {
     if (this.maltaArrived) return;
     this.maltaArrived = true;
-    this.phoneVersion++;
+    this.phoneV++;
   }
 
   /** she picks it up. Two lines, and then — a beat later — the light. */
@@ -537,7 +565,7 @@ export class GraceQueueLite {
     this.caretT = 0;
     this.caretOn = true;
     if (!this.liftFired) this.liftT = 0;
-    this.phoneVersion++;
+    this.phoneV++;
   }
 
   /** the reply field. It is real, and it does exactly nothing: the caret stops
@@ -547,7 +575,7 @@ export class GraceQueueLite {
     if (!this.maltaOpen || this.replyHeld) return;
     this.replyHeld = true;
     this.caretOn = true;
-    this.phoneVersion++;
+    this.phoneV++;
   }
 
   phoneView(): PhoneView {
@@ -575,6 +603,10 @@ export class GraceQueueLite {
    */
   drawPhone(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.phoneRects = [];
+    // ⚑ S70 — the game is the whole screen while it is open, and it owns its
+    // own way out. Nothing of the work is visible behind it and nothing of the
+    // work interrupts it.
+    if (this.floppy.open) { this.floppy.draw(ctx, W, H); return; }
     px(ctx, 0, 0, W, H, ERA3.phoneBg);
     if (this.maltaOpen) { this.drawMalta(ctx, W, H); return; }
 
@@ -584,8 +616,22 @@ export class GraceQueueLite {
     setFont(ctx, 9);
     ctx.fillStyle = ERA3.phoneDim;
     ctx.fillText(d.phone.lockDate, Math.round((W - ctx.measureText(d.phone.lockDate).width) / 2), 56);
-    // Before Malta the lock screen is EMPTY. The phone in this era is quiet —
-    // which is what makes one notification an event.
+
+    // ⚑ THE ONE APP ON HER PHONE, and it is the publisher's mascot game.
+    // S64's law here was "before Malta the lock screen is EMPTY — the phone in
+    // this era is quiet, which is what makes one notification an event", and
+    // that law is UNCHANGED: there are still no notifications until Malta. What
+    // has been added is not a notification. It is the thing she has on her
+    // phone, and the joke of it is entirely on the brand: the same lamb still
+    // ships delight while the serious arm of it has become a workflow. It files
+    // nothing, it is never suggested, and nothing anywhere remarks on it.
+    const s = 44; const ix = Math.round((W - s) / 2); const iy = 104;
+    drawFloppyIcon(ctx, ix, iy, s);
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA3.phoneText;
+    ctx.fillText(FLOPPY_LABEL, Math.round((W - ctx.measureText(FLOPPY_LABEL).width) / 2), iy + s + 6);
+    this.phoneRects.push({ x: ix - 8, y: iy - 6, w: s + 16, h: s + 26, id: 'floppy' });
+
     if (!this.maltaArrived) return;
 
     const ny = H - 96; const nw = W - 16;
@@ -651,6 +697,39 @@ export class GraceQueueLite {
       out.push(item);
     }
     return out.reverse(); // newest at the top, like every feed of the era
+  }
+
+  /**
+   * ⚑ THE TABLET (S70) — the feed, and the comment thread under one published
+   * testimony. Everything about it lives in `src/desktop/apps/comments.ts`;
+   * this is only the seam, and the seam is where the two halves of her job meet:
+   * the same surface that publishes what the laptop corrected is the one where
+   * the people underneath it are answered.
+   */
+  drawTablet(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.comments.draw(ctx, W, H, this.tabletFeed());
+  }
+
+  /**
+   * ⚑ THE ONE THING THIS FILE FILES FOR THE THREAD, and it is the act itself.
+   * Deploying a template is something the apparatus asked her to do, so it goes
+   * on the record with the template's own witness line — including, for the two
+   * that carry it, the follow-up. NOTHING ELSE from that surface files: not an
+   * arrival, not the propagation, not a comment she read and left, and not one
+   * second of FloppySheep. Same doctrine as Malta and Tape C — the record
+   * answers for what the apparatus asked for, and it asked for none of those.
+   */
+  private fileReply(t: CommentTemplate, commentId: string): void {
+    ledger.comments.push({
+      commentId,
+      templateId: t.id,
+      follow: t.follow,
+      witness: t.witness
+    });
+  }
+
+  handleTabletClick(x: number, y: number): boolean {
+    return this.comments.handleClick(x, y, (t, id) => this.fileReply(t, id));
   }
 
   // ── draw ─────────────────────────────────────────────────────────────────
@@ -1066,10 +1145,13 @@ export class GraceQueueLite {
   }
 
   handlePhoneClick(x: number, y: number): boolean {
+    // the game takes the whole screen and the whole thumb while it is open
+    if (this.floppy.open) return this.floppy.tap(x, y);
     const r = this.phoneRects.find(rr => hit(rr, x, y));
     if (!r) return false;
     if (r.id === 'notification') { this.openMalta(); return true; }
     if (r.id === 'reply') { this.pressReply(); return true; }
+    if (r.id === 'floppy') { this.floppy.openGame(); return true; }
     return false;
   }
 
@@ -1126,6 +1208,16 @@ export class GraceQueueLite {
         this.liftFired = true; this.liftT = -1; this.onLight(true); this.bump(); break;
       case 'lightOff': // back to the era's own rig, for A/B
         this.liftFired = false; this.liftT = -1; this.onLight(false); this.bump(); break;
+      // ⚑ S70 — THE TABLET. Each of these lands on a state that otherwise takes
+      // several minutes of ordinary work to reach; the ordinary way in is the
+      // `N comments` row on the feed's top post.
+      case 'thread': case 'threadPick': case 'threadReply': case 'threadRoute':
+      case 'threadArrive': case 'threadTrouble': case 'threadEcho':
+        this.comments.debugBeat(beat, (t, id) => this.fileReply(t, id)); break;
+      // ⚑ S70 — THE PHONE. In play the only way in is the icon on her home
+      // screen, which nothing points at.
+      case 'floppy': case 'floppyPlay': case 'floppyOver':
+        this.floppy.debugBeat(beat); break;
     }
   }
 }

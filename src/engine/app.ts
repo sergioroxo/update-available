@@ -783,6 +783,36 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let camPitch = 0;
   let tween: number | null = null; // yaw target while the ⟲ swing runs
   let facingBack = false;
+  /**
+   * ⚑ S70 — WHICH DEVICE IS IN HER HANDS (null = none). Set by the seat cut
+   * below, and read by `isBackYaw()`.
+   *
+   * THE BUG THIS CLOSES, found by building a clickable surface on the tablet
+   * and discovering it could not be clicked: the witness hemisphere is defined
+   * by a GLOBAL camera yaw (`n > 90 && n < 270`), which assumes the player is
+   * in Room 1's seat looking at Room 1's monitor. Room 2's TABLET seat authors
+   * a camera yaw of 180 (`data/room/nodes.json`, `r2-tablet`) because the
+   * tablet lies on the far side of the bed and she has to look that way to read
+   * it — so simply SITTING DOWN WITH THE TABLET counted as turning to the
+   * record: `os.markWitnessSeen()` fired, the cold-creep stopped, and — the
+   * part that actually bites — `pointerdown`'s whole prop/screen block is
+   * guarded by `if (!facingBack)`, so every press on that screen was discarded
+   * before it reached `era3Devices.handleLaptopPointer`. Harmless while the
+   * tablet was a read-only feed; fatal the moment it grew verbs.
+   *
+   * THE FIX, and why it is this one: a device in your hands is not a direction.
+   * While one is held the player is looking at an object 40 cm from their face,
+   * not across the room at the record, so the hemisphere simply does not apply
+   * — the turn is still the signature bodily ask, it is just made from a seat
+   * that has a room in front of it. Leaving the phone seat or the tablet seat
+   * restores the hemisphere exactly as it was.
+   *
+   * ⚑ NOT the whole defect. The general fault — a yaw-based hemisphere in a
+   * piece that now has three rooms and five seats — is S71's to measure and is
+   * the same root cause as its listed "`CURRENT:` readout is wrong at both
+   * device seats". This closes the case that blocks S70 and no more.
+   */
+  let heldDevice: 'tablet' | 'phone' | null = null;
   let flipCount = 0;
   let drag: { x: number; y: number } | null = null;
 
@@ -1325,6 +1355,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // its screen is held, so the object is never in two places at once.
     const held: 'tablet' | 'phone' | null =
       nodeId === 'r2-tablet' ? 'tablet' : nodeId === 'r2-phone' ? 'phone' : null;
+    heldDevice = held;
     era3Devices?.holdDevice(held, sp);
     for (const [prop, name] of [['w_tabletDevice', 'tablet'], ['w_phoneDevice', 'phone']] as const) {
       const h = room?.props.get(prop);
@@ -1364,6 +1395,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const isBackYaw = (): boolean => {
     // In XR the authored rig yaw is only half the view: the child's tracked
     // head turn must be what crosses the witness hemisphere.
+    // S70: a device in the hands is not a direction — see `heldDevice`.
+    if (heldDevice) return false;
     if (xr?.active) return camera.forward.z > 0;
     const n = ((camYaw % 360) + 360) % 360;
     return n > 90 && n < 270;

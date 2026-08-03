@@ -584,6 +584,40 @@ export function honestLight(ctx: CanvasRenderingContext2D, x: number, y: number,
   ctx.restore();
 }
 
+/**
+ * ⚑ FLOPPYSHEEP (Session 70) — the mascot game on Vera's phone, and the only
+ * app on it.
+ *
+ * Sérgio asked for it by name. It is `operable` and it is NOT respite: E3 has
+ * no respite, and this does not quietly reintroduce one. It is the apparatus's
+ * own cheerful product — the same publisher's lamb, still shipping delight
+ * while the serious arm of the brand has become a workflow. The joke is on the
+ * apparatus, never on the person holding the phone.
+ *
+ * So the palette is the one thing in this era allowed to be simply NICE: a
+ * bright morning, a green field, a white sheep. Every value is lifted verbatim
+ * from `data/room/era1.json` (the piece's own approved domestic palette, per
+ * `data/room/cluster.json`'s COLOR LAW) or from `ERA3` above — nothing here is
+ * invented, including the sky, which is the era's own desktop accent.
+ */
+export const FLOPPY = {
+  sky: ERA3.accentHi,      // the era's own aero highlight, used as a morning
+  skyLow: '#cfe0f2',       // the paler band at the horizon (also this file's capBtn face)
+  cloud: ERA3.white,
+  sun: '#FFD24C',          // era1 lamp warm
+  hillFar: '#9FD8CB',      // era1 — the hills behind the field
+  hill: '#A8B49A',         // era1 — the field itself
+  hillDk: '#9A9486',       // era1 — its shadowed rows
+  earth: '#8A5A3B',        // era1 deskTop — the ground under the grass
+  fence: '#B89B7E',        // era1 — old wood in sunlight
+  fenceDk: '#74492F',      // era1 deskLeg — its shadow side
+  wool: ERA3.white,
+  woolShade: '#E2CFBA',    // era1 — the underside of the fleece
+  face: '#3A3A44',         // era1 — the sheep's face and ears
+  leg: '#44464F',          // era1 — four legs, mid-cycle
+  ink: ERA3.ink
+} as const;
+
 /** Sunken white field with an optional single line of text. */
 export function field(
   ctx: CanvasRenderingContext2D,

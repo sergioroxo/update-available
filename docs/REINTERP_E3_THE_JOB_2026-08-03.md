@@ -1,5 +1,44 @@
 STATUS: live
 
+# ✅ BUILT — §1 THE COMMENTS, Session 70 (2026-08-03). What is now CODE
+*Same rule as the correction list's own headers: this records only what shipped, so nobody has to
+read the build to find out what is still a proposal. §§2–6 below are UNBUILT and remain the design.*
+
+- **BUILT — §1 THE COMMENTS, on the TABLET** (`src/desktop/apps/comments.ts`,
+  `data/dialog/s3_comments.json`): the network's feed, and under one published testimony a live
+  comment thread with a pinned-template picker. All four mechanisms are code — **(1)** the thread is
+  live off an authored schedule (`afterOpen` seconds / `afterReplies` + `delay`, never a generator)
+  and **does not empty**: three comments on open, eleven more that can arrive, and the schedule
+  outpaces the answering; **(2)** no compose field anywhere — six warm templates, their ⌘-shortcuts
+  **printed and deliberately not bound**; **(3)** ⚑ **the propagation**, one authored `echo` per
+  template, fired by whichever template the player actually deployed, never marked or remarked on;
+  **(4)** `follow: true` on two of six, drawn identically to the other four, leaving one small grey
+  `follow-up assigned` under the posted reply and nothing else.
+- **BUILT — FLOPPYSHEEP, on the PHONE** (`src/desktop/apps/floppysheep.ts`,
+  `data/dialog/s3_floppysheep.json`): a real one-thumb runner — tap to hop, one extra flap in the
+  air, an authored twenty-fence course that quickens gently. It is the only app on her home screen.
+  `operable`, **not respite**; it files NOTHING and nothing in the piece ever mentions it.
+- **Decision 1 — the comments live on the TABLET, not the laptop.** The design's own rule is that a
+  surface with no owed task is decoration; the tablet was the only screen with no verb. It is also
+  already the publication surface, so the thread hangs literally under a published testimony, and
+  the held read (S66) puts it in her hands.
+- **Decision 2 — sending AUTO-ADVANCES to the next comment that is owed a reply** and leaves the
+  picker open. Two taps for the first reply, one for every reply after it. That is what makes the
+  loop quick and satisfying, which is the point and the horror.
+- **Decision 3 — the ledger gets `comments`, and only the ACT files.** Not an arrival, not the
+  propagation, not one second of FloppySheep. Same doctrine as Malta and Tape C.
+- **Decision 4 — one fix outside the fence, named:** the tablet seat authors a camera yaw of 180,
+  which the witness hemisphere read as *turning to the record* — so `pointerdown`'s whole
+  prop/screen block was skipped and **the tablet could not be clicked at its own seat.** Closed in
+  `src/engine/app.ts` by a `heldDevice` guard. The general fault (a yaw-based hemisphere in a
+  building with three rooms) is S71's.
+- **Still PLACEHOLDER-draft and still yours:** every string — the post, all twelve commenters, the
+  six template names and their lines, all six echoes, the dock copy, the witness lines, and
+  FloppySheep's own cheerful text.
+- Build record: `docs/reinterp/01_SESSION_LOG.md`, Session 70.
+
+---
+
 # ERA 3 — VERA HAS A JOB, NOT A LIST
 *Sérgio, 2026-08-03: "since we are making a VR piece focused on the digital experience of SOGICE,
 wouldn't it make sense that in this era Vera was like a social media manager for one of the

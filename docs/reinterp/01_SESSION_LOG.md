@@ -143,6 +143,129 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-03 · Session 70 — **THE COMMENTS, AND THE RECRUITMENT FLOOR.** Design:
+`REINTERP_E3_THE_JOB_2026-08-03.md` §1. Touched: `desktop/apps/comments.ts` (new),
+`desktop/apps/floppysheep.ts` (new), `data/dialog/s3_comments.json` (new),
+`data/dialog/s3_floppysheep.json` (new), `desktop/theme/era3.ts`, `room/graceQueueLite.ts`,
+`room/era3Devices.ts`, `state/ledger.ts`, `debug/panel.ts`, ⚑ `engine/app.ts` (one fix, §THE BUG),
+the design doc's status header, BUILD_QUEUE_LIVE, this log, 08_STATUS_REGISTER, BUILD_LOG.)*
+
+**THE BEAT, and it lands.** *"Route for mentorship"* was a checkbox in the shipped list. It is now a
+conversation: somebody posts something vulnerable under a published testimony, and Vera answers
+without writing a word, because there are pinned templates. Two of the six also flag the account for
+follow-up, and **the picker distinguishes them in no way at all.** The one that sends a person to a
+stranger's door is the same size as the one that says hello.
+
+**⚑ WHERE IT LIVES — the TABLET, and that was a real decision.** The design's own guard is that a
+surface with no owed task is decoration and should be cut; the tablet was the only screen with no
+verb. It is also already the *publication* surface, so the thread now hangs literally under a story
+the network published — and S66's held read puts it in her hands rather than on the bed. The laptop
+keeps the morning queue, the phone keeps Malta, and each of the three screens now has a job.
+
+**⚑ IT IS DYNAMIC, and here is what that actually cost.** Four mechanisms, all authored, no
+generators anywhere:
+1. **The thread is live.** Arrivals fire off a scripted schedule in the data with two deterministic
+   triggers — `afterOpen` seconds, and `afterReplies` + `delay`. Three comments are up when you open
+   it; eleven more can arrive; **the schedule outpaces the answering and it does not empty.** There
+   is no timer, no countdown and no penalty: an unanswered comment simply stays unanswered, exactly
+   like an unapplied correction. Nothing announces any of it.
+2. **You choose the template, not the words.** No compose field exists on the surface. Six warm
+   names, and the tell is that the redirect is called `Meet Them Where They Are`. ⚑ **Their ⌘
+   shortcuts are printed and NOT bound** — the tool advertising an efficiency the input law will not
+   let it have, which is the same gesture as Malta's live reply field that does nothing.
+3. **⚑ THE PROPAGATION.** One authored `echo` per template: the same sentence, some comments later,
+   in a *different* account's mouth, as their own words, to somebody else. Which one comes back is
+   decided by which template the player actually deployed (most recent first, each echo fires once),
+   so it is always their own sentence. **Nothing points at it** — no highlight, no badge, no line, no
+   ledger entry, and no difference whatsoever in how that comment is drawn. The echo chamber has been
+   asserted in these docs since the revamp brief; it is now one data field.
+4. **The routing is the quiet one.** `follow: true` leaves exactly one trace: `follow-up assigned`,
+   in the same grey and the same size as the timestamp two lines above it, with no emphasis, no
+   glyph and no explanation. It is the same three words item 7 attaches on the laptop, deliberately —
+   *to the apparatus a routing is a routing.*
+
+**⚑ THE LOOP IS THE HORROR, and it had to be built to be felt.** Sending **auto-advances** to the
+next comment that is owed a reply and leaves the picker open: two taps for the first, one for every
+one after it. It is genuinely quick and genuinely satisfying, and the tool thanks you each time
+(*"Sent. Thank you for keeping it gentle."*) — qualitative, never numeric, because a number in the
+encouragement is the coercion this era spent four passes removing.
+
+**⚑ THE COMMENTER THERE IS NO TEMPLATE FOR.** `quietwren` arrives after your second reply: *"I have
+not said anything out loud to anybody since about February. I am not asking for anything. I just
+wanted it written down somewhere that is not my own handwriting."* All six templates stay available,
+all six read wrong, and **nothing anywhere acknowledges that.** She is not resolved, the player is
+not punished, no line appears telling you it was the wrong one — and the two templates that would
+"help" in the tool's terms are the two that send somebody to her door. Drawn exactly like every other
+comment, because the interface does not distinguish them either.
+
+**⚑ FLOPPYSHEEP is real and it is fun, and that took tuning.** One-thumb runner on the phone: tap to
+hop, one extra flap mid-air, an authored twenty-fence course that quickens 1.2 px/s per fence to a
+112 cap. **The first physics were unwinnable while looking fine** — at gravity 620 the hop covered
+62 px of course and clearing a fence needs the gap plus the post plus the sheep's own body, ~68, so a
+perfectly timed jump came down *on* the fence every time. 520 gives 55 px of apex over 0.92 s and a
+~0.45 s timing window; a perfect-play bot now reaches 17 fences in 21.5 s before the speed beats it.
+It is the only app on her home screen — *a Lamby game*, says its own footer — it files **nothing**,
+and the piece never mentions it. It is `operable`, not respite: nothing is unlocked, no best is kept.
+
+**⚑ THE BUG THIS SESSION FOUND BY BUILDING — the tablet could not be clicked at its own seat.** The
+witness hemisphere is a GLOBAL camera yaw (`n > 90 && n < 270`) that assumes you are in Room 1's
+chair. Room 2's tablet seat authors yaw **180**, because the tablet lies on the far side of the bed —
+so simply sitting down with it counted as *turning to the record*: `markWitnessSeen()` fired, and
+`pointerdown`'s entire prop/screen block, which is guarded by `if (!facingBack)`, discarded every
+press before it reached the device planes. Harmless while the tablet was a read-only feed; fatal the
+moment it grew verbs. Closed narrowly in `app.ts`: **a device in your hands is not a direction**, so
+`isBackYaw()` returns false while one is held, and leaving the seat restores the hemisphere exactly.
+⚑ **This is not the whole defect.** A yaw-based hemisphere in a building with three rooms and five
+seats is the same root cause as S71's listed *"`CURRENT:` readout is wrong at both device seats"* —
+which is still wrong, and is still S71's. `app.ts` was outside this session's fence; the change is
+one guard, is commented at length, and is named here rather than slipped in.
+
+**VERIFIED WITH REAL POINTER CLICKS**, not debug jumps — a synthetic `pointerdown` projected from
+the tablet's live world transform back through `camera.worldToScreen`, so every press went the whole
+route (`app.ts` pointerdown → `screenRay` → `handleLaptopPointer` → `hitPlane` → `handleTabletClick`).
+Confirmed end to end: opening the thread from the feed's `3 comments` row, selecting a comment,
+deploying a template, the auto-advance, the `follow-up assigned` line under a routed reply, the
+ledger filing both replies with the right `follow` flag, the echo arriving, and FloppySheep opening
+from its icon and taking taps. `?flat=1` renders clean with no console errors.
+
+**⚑ HONEST GAP — THE SCREENSHOTS ARE NOT IN THE REPO, and that is a real miss against the brief.**
+I saw all four beats and they read correctly (they are described above from what was on screen), but
+I could not get the image *files* onto disk: the sandboxed browser pane does not deliver downloads to
+the filesystem, and relaying the PNG as base64 through the tool boundary corrupted on the first
+chunk. Rather than commit a truncated image I committed none. **One-click reproduction, from a normal
+browser** at `?reinterp=1&era=3&debug=1`: the debug panel's 📷 shot button captures the 3D view, and
+for crisp panels paste this in the console —
+```js
+for (const n of ['laptop','tablet','phone']) {
+  const a = document.createElement('a');
+  a.href = window.__era3Devices()[n].toDataURL('image/png');
+  a.download = `S70_${n}.png`; a.click();
+}
+```
+The four states are `⚑ the tablet · open the comment thread` → `↳ pick the first comment`,
+`↳ ⚑ the quiet one — the reply that ROUTES`, `↳ ⚑⚑ THE PROPAGATION`, and `⚑ the phone · FloppySheep`.
+
+**ELEVEN NEW DEBUG BUTTONS** (C6's law extended by hand to the device screens, which `os.ts` knows
+nothing about): the thread, the picker, a reply, the routing reply, a forced arrival, the
+propagation, the commenter-with-no-template, and FloppySheep idle/running/oh-no.
+
+**COLOUR, and no new hex.** The `FLOPPY` palette is lifted from `data/room/era1.json` and `ERA3` —
+the sky is the era's own aero highlight, the field and the hills are Room 1's sage and mint, the
+fence is its old wood. The ratchet is **unmoved at 33/33**, and every string is in `data/` as
+PLACEHOLDER-draft.
+
+**REGISTER, checked by hand.** SATIRICAL: the dock, its warm names, its printed shortcuts, its
+thank-you. EERIE: the propagation, the thread never emptying, and that nothing comments on either —
+absence, not atmosphere; no stinger, no dimming, nothing added. SERIOUS: the commenters, `felt`,
+with nothing ever drawn over their words — no tag, no badge, no verdict, no Lambient mark. **Vera is
+never the joke and neither is any commenter**; every laugh in the surface is the tool being pleased
+with itself.
+
+**⚑ STILL YOURS, and the ethics gates are in the data.** Every string is PLACEHOLDER-draft — the
+post, all twelve commenters, the six template names and lines, all six echoes, the dock copy and the
+witness lines. `s3_comments.json`'s `_docTrouble` is the gate on `c5` and governs any future beat:
+do not resolve her, do not punish the player, do not have anyone notice.
+
 *(2026-08-03 · Session 69 — **THE PRESETS, ON NOA'S VIDEO.** Spec: `REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md`
 revision 5; controls sourced from `REINTERP_E3_REVAMP_BRIEF_2026-07-30.md` rev 3. Touched:
 `desktop/theme/era3.ts`, `room/graceQueueLite.ts`, `room/era3Devices.ts`, `debug/panel.ts`,

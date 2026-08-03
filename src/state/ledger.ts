@@ -154,6 +154,28 @@ export interface Ledger {
    * the test and this variant together.
    */
   graceQueue: { cardId: number; outcome: 'applied' | 'skipped' | 'stood'; witness: string }[];
+  /**
+   * THE COMMENTS (Session 70, E3 — docs/REINTERP_E3_THE_JOB_2026-08-03.md §1):
+   * one line per template DEPLOYED under a comment on the tablet. `witness` is
+   * the template's own line in data/dialog/s3_comments.json, never composed in
+   * TS, and `follow` records the two templates that also flag the account for
+   * personal follow-up — the recruitment floor, on the record, in the same flat
+   * grammar as everything else she did.
+   *
+   * ⚑ WHAT IS DELIBERATELY NOT HERE, and each omission is the same doctrine as
+   * the Malta beat above (the record answers for what the apparatus ASKED you
+   * to do):
+   *   · a comment READ AND LEFT UNANSWERED files nothing. The apparatus never
+   *     asked for a reply, it only left the thread open — and an unanswered
+   *     comment is already its own kind of record.
+   *   · THE PROPAGATION files nothing. A stranger repeating a sentence Vera
+   *     deployed is not an act of hers, and giving the record a line for it
+   *     would be the piece pointing at the thing it must never point at.
+   *   · FLOPPYSHEEP files nothing, ever. No time, no count, no entry. Nobody
+   *     asked her to play it and nobody gets to write it down.
+   * No score, streak or progress count is ever derived from this array.
+   */
+  comments: { commentId: string; templateId: string; follow: boolean; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -176,7 +198,8 @@ const fresh = (): Ledger => ({
   media: [],
   caleb: [],
   era3Arrival: [],
-  graceQueue: []
+  graceQueue: [],
+  comments: []
 });
 
 export let ledger: Ledger = fresh();
