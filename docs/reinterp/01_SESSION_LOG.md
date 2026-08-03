@@ -228,22 +228,26 @@ deploying a template, the auto-advance, the `follow-up assigned` line under a ro
 ledger filing both replies with the right `follow` flag, the echo arriving, and FloppySheep opening
 from its icon and taking taps. `?flat=1` renders clean with no console errors.
 
-**⚑ HONEST GAP — THE SCREENSHOTS ARE NOT IN THE REPO, and that is a real miss against the brief.**
-I saw all four beats and they read correctly (they are described above from what was on screen), but
-I could not get the image *files* onto disk: the sandboxed browser pane does not deliver downloads to
-the filesystem, and relaying the PNG as base64 through the tool boundary corrupted on the first
-chunk. Rather than commit a truncated image I committed none. **One-click reproduction, from a normal
-browser** at `?reinterp=1&era=3&debug=1`: the debug panel's 📷 shot button captures the 3D view, and
-for crisp panels paste this in the console —
-```js
-for (const n of ['laptop','tablet','phone']) {
-  const a = document.createElement('a');
-  a.href = window.__era3Devices()[n].toDataURL('image/png');
-  a.download = `S70_${n}.png`; a.click();
-}
-```
-The four states are `⚑ the tablet · open the comment thread` → `↳ pick the first comment`,
-`↳ ⚑ the quiet one — the reply that ROUTES`, `↳ ⚑⚑ THE PROPAGATION`, and `⚑ the phone · FloppySheep`.
+**THE FOUR STATES, OFF THE DEVICES' OWN CANVASES** — 1:1 pixels, not the 3D view.
+
+![The tablet's comment thread: the picker, the routing, the propagation — and FloppySheep on the phone](S70_comment_thread_routing_propagation_floppysheep.png)
+*A: the thread, the picker open on Marisol P. — six warm names, `⌘1`–`⌘6` printed and not bound, and
+no compose field anywhere on the surface. B: the reply that routes, and the whole of the trace it
+leaves — `follow-up assigned`, in the same grey and at the same size as the `1h` timestamps around it.
+C: the propagation — your sentence (`So glad you found us. You are not on your own in here.`) coming
+back in Rae T.'s mouth, as her own words, to somebody else, drawn exactly like every other comment.
+D: FloppySheep mid-hop, one fence cleared, filing nothing. Reproduce exactly: `?reinterp=1&era=3&debug=1`,
+debug panel (`` ` ``) → `→ the tablet · comes to hand`, then `⚑ the tablet · open the comment thread`
++ `↳ pick the first comment`, then `↳ ⚑ the quiet one — the reply that ROUTES`, then
+`↳ ⚑⚑ THE PROPAGATION`; then `→ the phone · comes to hand` → `⚑ the phone · FloppySheep` →
+`↳ FloppySheep · running`.*
+
+**How they were captured** (the sandboxed browser pane still cannot deliver a download to the
+filesystem, which is what left this gap open for a session): the same build was driven in a real
+headless Chrome, and the panels read straight off the offscreen canvases with
+`window.__era3Devices()[n].toDataURL('image/png')` — so the frame loop, the seats and the debug beats
+are the shipped ones and only the readback is scripted. D was **played, not posed**: the driver taps
+when the next fence is one hop away and keeps the frame where the sheep is genuinely above it.
 
 **ELEVEN NEW DEBUG BUTTONS** (C6's law extended by hand to the device screens, which `os.ts` knows
 nothing about): the thread, the picker, a reply, the routing reply, a forced arrival, the
