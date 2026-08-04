@@ -179,9 +179,11 @@ const RELOC_DESCEND_VIA = { x: -3.70, y: 2.10, z: 1.45 };
  * happens to be behind — and stops. Slowest leg in the piece by a factor of
  * three (0.12 m/s peak), which reads as WAITING rather than as travel.
  *
- * ⚑ It must not read as a missing asset. What stops it doing so is Room 1's
- * doorplate: you come up, exactly one plate lights, and there is nothing else
- * in the dark. One is a fact about the building; zero would have been a bug.
+ * ⚑ S71: it must not read as a missing asset, and what S67 relied on to stop
+ * that — Room 1's doorplate lighting alone in the dark — IS GONE (Sérgio cut
+ * the plates). The hold is now 7 seconds over a closed room with nothing added
+ * to it. That is deliberate and it is untested in the seat: flagged in the
+ * Session 71 log as the one thing the cut leaves open.
  */
 const RELOC_E1_HOLD = { x: -0.30, y: 2.20, z: 1.62, pitch: -19, yaw: 0 };
 /** E1→E2's leg 3 control: 0.23 m of sagitta (the rise's own figure), out over
@@ -202,7 +204,7 @@ const RELOC_OVERLOOK_C = { x: 2.30, y: 2.28, z: 1.60, pitch: -13, yaw: 308 };
 const RELOC_R3_DESCEND_VIA = { x: 3.70, y: 2.10, z: 1.45 };
 
 /** the camera half of a relocation, keyed exactly as cluster.ts's RELOCATIONS
- *  (`${from}-${to}`); the space half — durations, walls, seat, plates — lives
+ *  (`${from}-${to}`); the space half — durations, walls, the seat — lives
  *  there so the two cannot drift. Leg 1 and leg 3 are ARCS (a `via` control
  *  point); leg 2 is a straight eased tween, because while the space is
  *  changing the camera should be the steadiest thing on screen. */
@@ -821,19 +823,40 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const debugOn = new URLSearchParams(window.location.search).get('debug') === '1';
   const ROOM_LABEL: Record<number, string> = {
     0: 'Room 1 · front (gay)', 90: 'Room 2 · west (lesbian)',
-    180: 'spine · door + record', 270: 'Room 3 · east (trans)'
+    270: 'Room 3 · east (trans)'
   };
+  /** the two side rooms begin where the base room's own walls stood (era1.json
+   *  wallWest/wallEast at x ∓2.13, and the side floors start at ∓2.03) */
+  const ROOM_EDGE_X = 2.03;
   let lastNow = '';
   function publishNow(): void {
     if (!debugOn) return;
     const eraU = (cluster ? cluster.era : 'e1').toUpperCase();
-    let room = 'Room 1 · front (gay)';
+    let room = ROOM_LABEL[0];
+    let facing = '';
     if (cluster && cluster.state !== 'sealed') {
-      let best = 0;
-      for (const y of [0, 90, 180, 270]) if (angDist(camYaw, y) < angDist(camYaw, best)) best = y;
-      room = ROOM_LABEL[best];
+      /**
+       * ⚑ S71 — WHERE YOU ARE IS A POSITION, NOT A FACING.
+       *
+       * This used to pick whichever of the four seat yaws was nearest `camYaw`,
+       * which is right in a room seat and wrong at every device seat: Room 2's
+       * tablet seat authors yaw 180 (the tablet lies on the far side of the
+       * bed), so sitting down with it reported `spine · door + record` while
+       * the player was in Room 2 — measured this session at both device seats,
+       * in both E3 and E4. It is the same root cause S70 patched in the witness
+       * hemisphere: a global camera yaw standing in for a place. The three
+       * rooms are separated in x and nothing else is, so x is the answer, and
+       * the facing is reported as what it is — a facing.
+       */
+      room = camPos.x < -ROOM_EDGE_X ? ROOM_LABEL[90]
+        : camPos.x > ROOM_EDGE_X ? ROOM_LABEL[270]
+          : ROOM_LABEL[0];
+      // …and a device in the hands is not a direction either (S70's rule, same
+      // seat, same reason): the tablet seat authors yaw 180 because the tablet
+      // lies across the bed, not because the player turned around.
+      if (!heldDevice && angDist(camYaw, 180) < 45) facing = ' · turned to the record';
     }
-    const s = `${eraU} · ${room}`;
+    const s = `${eraU} · ${room}${facing}`;
     if (s !== lastNow) { lastNow = s; (window as { __reinterpNow?: string }).__reinterpNow = s; }
     // the Quest budget, live (WEBXR_PERFORMANCE_NOTES: ~50–100): last frame's
     // draw-call total, for the panel readout + batching A/B (?nobatch=1)
@@ -1219,11 +1242,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!poses || !relocPlan) { endRelocation(); return; }
     if (relocLeg === 'rise') {
       relocLeg = 'build';
-      // ⚑ THE PLATES come up with the second leg, and only ever here: this is
-      // the beat where you are out of the seat and above the rooms, and
-      // "visible only from above" is enforced by nothing being on screen at
-      // any other time. At E1→E2 exactly one lights (see RELOC_E1_HOLD).
-      cluster?.showPlates(relocPlan.plates);
       // a straight eased tween: while the space changes, the camera is the
       // one thing on screen that is not changing shape
       startCamMove(poses.hold, relocPlan.buildSeconds, true);
@@ -1247,7 +1265,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     relocKey = null;
     relocPlan = null;
     camMove = null;
-    cluster?.hidePlates(); // the plates belong to the overlook and nowhere else
     cluster?.settleNow(); // the space finishes wherever the cascade had got to
     seatCut(seat);
     // ⚑ and only NOW does Vera's laptop start: the era's machine boots in
@@ -2166,10 +2183,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         era3Devices?.setEra(to, true);
         cluster.morphToEra(to, true, plan);
         beginRelocation(`${from}-${to}`, plan);
-      },
-      onPlates: (on) => {
-        if (on) cluster?.showPlates(['r1', 'r2', 'r3']);
-        else cluster?.hidePlates();
       },
       onClose: enterClose,
       onFacet: (f) => niche?.setFacet(f),

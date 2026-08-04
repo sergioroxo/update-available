@@ -12,7 +12,7 @@ not live.***
 | — | ~~S67 — the choreography~~ | `docs/REINTERP_THE_BUILDING_2026-08-02.md`, tail | **SHIPPED 2026-08-02** — number retired |
 | — | ~~S69 — the presets on Noa's video~~ | ↓ below, in this file | **SHIPPED 2026-08-02** (`11ef26e`) — number retired |
 | — | ~~S70 — the comments, and the recruitment floor~~ | ↓ below, in this file | **SHIPPED 2026-08-03** — number retired |
-| 1 | **S71 — walk the space and report what is wrong** | ↓ below, in this file | **QUEUED — dispatch this one** |
+| — | ~~S71 — walk the space and report what is wrong~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired |
 | — | S68 | *(soft-claimed by the gyroscope look-around suggestion, `NEXT_PROMPTS_2026-07-30.md` tail — not written)* | — |
 
 **Numbers are not reused.** S66 previously named two other jobs (the retired testimony studio; the
@@ -269,7 +269,7 @@ ACCEPTANCE, BY FEEL:
 ---
 
 # S71 — WALK THE SPACE AND REPORT WHAT IS WRONG · Opus, medium-high effort
-**⚑ PROMPT STATUS: QUEUED — independent of S70; can run in either order.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-04 — done. Do not dispatch; the number is retired (see BUILD_LOG.md and 01_SESSION_LOG.md). The reusable half is `tools/room-audit.mjs`: run it after any room change instead of re-dispatching this.**
 *Sérgio, 2026-08-03: "I wish we'd make a prompt that would walk around the space to see corrections
 to be made." Positional debt has been accumulating faster than it is being paid: S66 found a bed
 inside a desk and a bookcase 0.26 m deeper than its own bounding box, S67 found the E4 witness record

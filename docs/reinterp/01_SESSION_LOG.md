@@ -143,6 +143,168 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-04 · Session 71 — **WALK THE SPACE AND REPORT WHAT IS WRONG.** An AUDIT: it fixes what is
+provable by measurement and proposes everything that is taste. Touched: `tools/room-audit.mjs`
+(new), `room/cluster.ts`, `engine/app.ts`, `debug/panel.ts`, `data/room/reinterp_deltas.json`,
+`data/room/cluster.json`, `data/strings/doorplates.json` (**deleted**), BUILD_QUEUE_LIVE, this log,
+08_STATUS_REGISTER, BUILD_LOG.)*
+
+**⚑ THE TOOL FIRST, because the point of this session is that it can be run again.**
+`node tools/room-audit.mjs` reports SURFACE (a prop in a wall) · OVERLAP (prop in prop, with the
+depth on its shallowest axis) · FLOATING (a standing prop with nothing under it) · BOUNDS (outside
+its room's floor) · SCALE (rendered extent vs authored `size`), for all four space states, worst
+first. **No browser and no dependencies** — a check that needs a headless Chrome gets run once and
+never again. It reads the same three files the engine reads and takes the meshes' extents from the
+GLBs' own POSITION accessor min/max; the fold is a port of `clusterMorph.foldTargets` and the
+placement maths a port of `assets.spawnModel`.
+
+**⚑ IT WAS CROSS-CHECKED AGAINST THE ENGINE BEFORE ANY NUMBER BELOW WAS BELIEVED**, and the check
+earned its keep. Live PlayCanvas world AABBs vs the tool, prop by prop: **r2 67/67, r3 184/184,
+r4 185/185, worst corner error 0.00000 m.** The one disagreement in the first run was the tool's
+fault and is a real property of the pipeline: `instantiateRenderEntity()` returns the glTF's single
+root and `spawnModel` then **overwrites that root's own transform** — `pottedPlant.glb` carries
+`scale: [2,2,2]` there, so honouring it reported the plant at twice its size. (r1 is unverified
+live: `?era=1` is not a review URL and the pre-fiction gate holds the app before the room exists.
+r2 folds r1 forward and matched exactly.)
+
+⚑ **THE RULE THIS SESSION USED, stated so the next one can disagree with it:** a scale mismatch that
+causes a collision or an out-of-bounds is a FIX; a scale mismatch that causes neither is a PROPOSAL,
+because the authored box is then only stale bookkeeping and resizing furniture is redecorating.
+
+![Room 3 before and after, and the E4 seat](S71_room_audit_before_after.png)
+*A/B: the E3→E4 overlook over Room 3. Reproduce: `?reinterp=1&era=4&debug=1&descent=0`, then in the
+console `__camFree(2.30, 2.28, 1.60, -13, 308)`. C is the same build's E4 home seat, untouched.*
+
+---
+
+### FIXED — worst first, each with its measurement
+
+**1 · ⚑ ROOM 3 CARRIES THE WHOLE OF S66'S DEBT, AND NOBODY HAD LOOKED.** S66 fixed Room 2's
+desk/bookcase/rug per-prop and wrote up "Room 1 carries the identical debt". **Room 3 was never
+mentioned and is worse than either**, because in Room 3 the debt collides: `e_desk` renders
+**1.763 × 0.730 × 0.902** against an authored **1.40 × 0.75 × 0.60** (+26% / −3% / **+50% deep**),
+which put it **0.266 m inside `e_bed`** and **0.060 m into `e_wallDesk`**. FIXED with Room 2's own
+measured numbers, `modelScale [1.906, 1.951, 1.529]` — the same figures, because the authored box is
+the same. Residual overlap with the bed: **0.086 m**, which is NOT fixed — see PROPOSALS 1.
+
+**2 · BOTH SIDE-ROOM BOOKCASES STAND THROUGH THEIR OWN BACK WALLS.** `w_bookcase` passed **clean
+through `w_wallL`, 0.055 m out the far side**, and sat **0.085 m past Room 2's floor**; `e_bookcase`
+through `e_wallL`, **0.080 m out**, **0.110 m past Room 3's floor**. ⚑ S66 *did* fix this
+bookcase — but it fixed the SCALE, and the fault is the POSITION: the placement was authored against
+the wall's centre line, not its inner face, so re-scaling the mesh moved the penetration by 5 mm and
+left it. FIXED by measurement: back flush to each wall's inner face (`w_bookcase` z 2.16 → **2.045**,
+`e_bookcase` z −0.78 → **−0.64**).
+
+**3 · ⚑ TWO PROPS HAVE BEEN HANGING IN MID-AIR SINCE E3 SHIPPED.** r3 moves Room 1's bookcase from
+z 0.75 to 3.3 and gives `book1`, `book3` and `cdStack` matching overrides. `teddyBox` and
+`rainbowDuck` never got one: measured **0.683 m and 1.540 m of clear air beneath them**, in the
+middle of the vacated room, at E3 and E4. FIXED — both now carry the shelf's own +2.55 z, which
+preserves each prop's exact relationship to its compartment instead of re-placing it by eye.
+
+**4 · A FIX FROM THREE SESSIONS RUNNING WAS SILENTLY REVERTED BY A LATER OVERRIDE.** `cdStack`'s r3
+override reads `[1.98, 0.71, 3.45]` — era1.json's ORIGINAL x and y, plus 2.55 z. But r1 corrects
+that prop to `(2.02, 0.773)` for two measured reasons of its own (S54/S55/S56: the y put its base
+**0.063 m inside the shelf board**, the x/z moved it off the tape run) — **and a later `props`
+override replaces `pos` wholesale rather than merging it.** So r3 undid both. FIXED to
+`[2.02, 0.773, 3.17]`. ⚑ This is the fold's own hazard and it is worth a line in anyone's head: an
+override further down the chain is a REPLACEMENT, not a delta.
+
+**5 · THE `?debug=1` "CURRENT:" READOUT — confirmed, measured, and it was worse than recorded.**
+S66 logged it as "reports Room 1 at both device seats". Measured at all four combinations: at the
+TABLET seat it reported **`spine · door + record`** (E3 and E4), and at the PHONE seat it was right
+**by accident**. Root cause: `publishNow()` picked whichever of the four seat yaws was nearest
+`camYaw`, and the tablet seat authors yaw 180 because the tablet lies across the bed — **the same
+root cause S70 patched in the witness hemisphere: a global camera yaw standing in for a place.**
+FIXED: the room is now read from camera **x** (the only axis that separates the three rooms), and
+the facing is reported as a facing (`· turned to the record`), suppressed while a device is held —
+S70's rule, same seat, same reason. Now reads `E3 · Room 2 · west (lesbian)` at both device seats.
+
+**6 · THE EIGHT `terminalFrame` BATCH ASSERTS — closed, and S67 named the wrong file.** Reproduced:
+`ASSERT FAILED: Invalid batch 2 insertion/removal with node: "terminalFrame"`, 2 per four era jumps.
+S67 flagged `src/room/batching.ts` as the cause; the cause is the **toggle**, and the toggle is in
+`cluster.ts` — `setTerminalVisible()` flips `.enabled` on a batched node, which batching.ts's own
+documented law forbids. FIXED by excluding it from the settled group, exactly as `BELONGINGS_IDS`
+already is for the same reason. Measured after: **0 asserts, and 0 extra draw calls at either peak.**
+
+**7 · FOUR SMALLER SOLIDS INSIDE OTHER SOLIDS**, all fixed by the smallest measured nudge, all
+one-line rollbacks: Room 3's CRT head floated **0.040 m above its own pedestal** (Room 1's CRT has a
+neck prop between them; Room 3's has nothing) → the head drops to y 1.04; `e_crtBody` was **0.035 m
+inside `e_curtL`** → the whole CRT assembly moves −0.06 x, which also keeps it on the desk now the
+desk is its authored size; `movingBox2` was **0.150 m inside `movingBox1`** → +0.15 x, +0.15 z, so
+the corners touch; `e_nightstand` was **0.034 m inside `e_bed`** → x 3.03 → 2.985; `w_radio` was
+**0.070 m inside the bookcase carcass** and 0.030 into its own book row → moved to the front of the
+same shelf (−4.44, 1.93). Room 1's stored bed (`bedMoved` + `bedDustSheet`) clipped **0.0625 m** of
+Room 2's side wall → +0.065 x.
+
+**8 · THE DOORPLATES ARE CUT** (Sérgio, 2026-08-03: *"the doorplates aren't good."*). Gone: the
+plate entities and their fade, `drawPlate`/`fitFont`, `showPlates`/`hidePlates`,
+`RelocationPlan.plates`, the debug panel's two buttons, `doorplates` in `data/room/cluster.json`, and
+`data/strings/doorplates.json` deleted outright. **The choreography is untouched** and every measured
+figure in S67's table still holds. Measured side effect: the plates cost exactly the 1 draw call S67
+attributed to them — **E2→E3 peaks at 57 (was 58), E3→E4 at 62 (was 63).**
+
+---
+
+### NOT FIXED — proposals, and one thing left broken on purpose
+
+**P1 · The desk/bed corner in Room 3, 0.086 m.** After fix 1 the two still interpenetrate at the
+corner, and **the authored boxes overlap by 0.075 m on their own** — this predates the scale bug and
+is a composition call, not a measurement one. Three exact options: `e_desk` pos z 0.7 → **0.61**
+(clears it; moves the desk 0.09 m off the seat's own z axis), or `e_bed` pos z 1.85 → **1.945**
+(clears it; puts the bed 0.038 m into `e_wallL`), or leave it. ROLLBACK of any: restore the one
+number. **Reported plainly: this clip is still in the build.**
+
+**P2 · ⚑ THE E4 HOME SEAT FRAMES A BLANK EMISSIVE RECTANGLE** (panel C). `e_crtScreen` is a flat
+colour box (`#2C3A5C` at E4), not a render-texture surface, and at the seat the piece's own home
+facing it fills most of the frame with nothing on it. This is a CONTENT gap, not a fault, and it is
+the single strongest thing this sweep found by looking rather than by measuring. Nothing proposed
+for it: what Maya's screen says is Sérgio's.
+
+**P3 · The desk seats frame the monitor and nothing else — now with the number.** Confirmed at
+every seat. At eye 1.16 with pitch 0 and a 42° vertical FOV (21° half), the desk surface at y 0.75
+sits **45.7° below the horizon in Room 2 and 50.9° in Room 1** — i.e. **25–30° below the bottom of
+frame.** Turning is the mechanic and this may be exactly right; it is a framing call. If it should
+change, the one-line versions are seat `pitch` −8 (costs the top of the monitor) or eye y 1.16 →
+1.24. Nothing applied.
+
+**P4 · Room 1's inherited scale debt — measured, not touched.** `rugModel` renders
+**2.983 × 0.019 × 1.748** against an authored 1.50 × 0.02 × 1.10 (**+99% / +59%**), `deskModel`
+**1.763 × 0.730 × 0.902** vs 1.50 × 0.75 × 0.70 (+18% / +29%), `bedModel` **1.085 × 0.712 × 2.137**
+vs 0.78 × 0.50 × 1.95, `plantModel` **0.201 × 0.621 × 0.229** vs 0.22 × 0.30 × 0.22 (a **2×** tall
+potted plant), `chairModel` +30% on y. **None of them collides with anything**, so by this session's
+own rule they are proposals. The exact `modelScale` for each is `authored ÷ native`; Room 2's three
+are already in the data as worked examples. ⚑ Room 1 is the benchmark and was not touched.
+
+**P5 · E3→E4 still peaks at 62 draw calls against the ≤60 budget** — measured live,
+**5 samples of 367 over budget** (~0.6 s of a 42.5 s move). E2→E3 peaks at 57 and is clear. The
+cause is unchanged and is `beginMorphedStateBatch()` clearing the settled batch for the whole
+cascade. The fix that would work is real but is **not a measurement fix**: batch the props whose
+fold is identical between the two states instead of clearing everything. r4 changes 7 props, so
+almost the whole room would stop glitching during the E3→E4 cascade — a visible change to the
+piece's signature effect, and therefore Sérgio's call, not mine.
+
+**P6 · Three things the sweep saw that are intent, listed so nobody re-finds them.** A cardigan
+draped over a chair back (0.064 m, and "floating" because a chair's AABB is not its seat); a chair
+tucked under a desk (0.048–0.050 m in plan, correct in 3D); the record's frame 0.020 m into the
+spine wall, which is what mounted means. The tool reports these; they are not faults. Also real but
+tiny: **Room 1's curtains hang from nothing** — Rooms 2 and 3 have a `curtRod` prop and Room 1 does
+not. And `rainbowDuck` overhangs its shelf edge by **0.040 m** in every state; it now travels with
+the shelf but keeps that authored overhang, deliberately, rather than being re-placed in Room 1.
+
+**THE SWEEP ITSELF:** every seat (r1 / r1-turned / r2 / r3 / tablet / phone) × E2, E3, E4, plus all
+five S67 overlook poses — 29 frames, driven with `__camFree` and real `__requestMove` jumps for the
+two device seats. Room 2's lamp and the E3 lift both read, and no prop was found sitting in the dark.
+**Three surfaces read as flat blocks, and only one of them is certainly wrong:** Maya's screen (P2);
+the witness record, which is a black rectangle at `?era=2` because nothing has been filed yet — the
+dormant state, correct in play and misleading in a review jump; and the HELD tablet/phone, which are
+bare textured planes with no device body around them, so a held screen floats as a rectangle in the
+air. That last is a one-prop fix and is nobody's brief yet. `?flat=1&reinterp=1` boots the desktop
+canvas alone with one console error, a 404 for `/favicon.ico`, which the 3D path has too.
+
+**VERIFIED:** `npx tsc --noEmit`, `npm test` (palette 33/33, C6 39/39, C7 10/10, C8 all marked) and
+`npm run build` green; both relocations flown end to end after the plate removal and both land their
+seats. **A11 (in-headset) still has never run**, and nothing here was judged in VR.
+
 *(2026-08-03 · Session 70 — **THE COMMENTS, AND THE RECRUITMENT FLOOR.** Design:
 `REINTERP_E3_THE_JOB_2026-08-03.md` §1. Touched: `desktop/apps/comments.ts` (new),
 `desktop/apps/floppysheep.ts` (new), `data/dialog/s3_comments.json` (new),

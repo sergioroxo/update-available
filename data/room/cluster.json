@@ -285,41 +285,6 @@
    }
   }
  },
- "doorplates": {
-  "_note": "⚑ THE DOORPLATES (Session 67, docs/REINTERP_THE_BUILDING_2026-08-02.md scope item 4). One per room, ENABLED ONLY while an era relocation has the player up out of the seat — building signage seen from above, never from the chair. GEOMETRY, and why it is this and not the floor: at every overlook pose the camera sits at y 2.16-2.28 with a -13..-19 pitch and a 42 fov, which frames each room's FAR WALL in its upper half and shows almost no floor at all — a floor plaque would be out of frame in every leg. So the plate hangs high on the wall the seat faces, above the window/desk line: from the seat (eye 1.16, pitch 0) it needs a +30..+34 look-up and is never in frame; from the overlook it sits near the top of frame, horizontally centred. The wall you have stared at for a whole era, with a name on it you were never shown. COLOR LAW (this file's own): both hexes already exist in data/room/era1.json — #C9BFA6 is the plate (old enamel), #2C2C34 the engraved ink. Text lives in data/strings/doorplates.json, PLACEHOLDER-draft. `yaw` follows the witnessTerminal convention used by cluster.ts's migrateTerminal: 0 = faces +Z, 90 = +X, 180 = -Z, 270 = -X. ⚑ THE Z OFFSETS ARE MEASURED, NOT CHOSEN: r2 and r3 sit at z -0.3 rather than at their rooms' z-centre 0.7 because both overlook paths end looking toward -Z (yaw 52 into Room 2, yaw 308 into Room 3), and at z 0.7 the plate falls 23° off the frame's axis against a 29.7° horizontal half-FOV at 1280x860 — i.e. clipped by the screen edge, which is what the first pass rendered. At z -0.3 it reads 8.4° off axis, near frame centre, and stays in frame through the descent as well. Both are still 38° off axis and 30° above the sightline from their own SEATS, so the 'only from above' claim holds geometrically and not only by the enable gate.",
-  "w": 0.66,
-  "h": 0.18,
-  "plate": "#C9BFA6",
-  "ink": "#2C2C34",
-  "fadeSeconds": 1.4,
-  "rooms": {
-   "r1": {
-    "pos": [
-     0,
-     2.1,
-     -0.67
-    ],
-    "yaw": 0
-   },
-   "r2": {
-    "pos": [
-     -5.66,
-     2.1,
-     -0.3
-    ],
-    "yaw": 90
-   },
-   "r3": {
-    "_note": "y 2.36, not the 2.1 the other two use, and the asymmetry is the room's not a mistake: Room 3's curtain rod (e_curtRod, y 2.14, z -0.83..0.53) runs straight through this plate's z, and the plate's material is depth-write-off (it is transparent), so the opaque rod draws OVER it — measured live, the rod cut the plate in half. Room 2's rod sits at z 0.87..2.23 and is already clear at the same height. Raising this one above the rod keeps the z that puts it near frame centre on the E3→E4 approach; moving it along the wall instead would push it to 27° off axis against a 29.7° half-FOV.",
-    "pos": [
-     5.66,
-     2.36,
-     -0.3
-    ],
-    "yaw": 270
-   }
-  }
- },
  "pointCloud": {
   "_note": "The Close's constellation (R1 confirmed; Gephi-style reference, Round 2): warm orange/yellow NODES on a cool blue LINK-WEB against a NIGHT-BLUE backdrop (Round 18: not black — 'we can't see'), dense center + scattered satellites, and LABELS on the hub nodes carrying the project's knowledge network (data/strings/close_network.json, PLACEHOLDER until Sérgio's pass). The inversion: warm nodes / cool web = the lamp's temperature at network scale. Hues = the lamp pool (#F7C775/#EFA13F), the moon face (#F3EAD8), the moonlight blue (#6C7BA8); backdrop = windowPane night #2C3A5C scaled down in code (a light level, not a new hue). Links are trimmed to node surfaces and never cross the player's clear bubble (the Round-18 clipping fix).",
   "center": [

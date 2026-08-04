@@ -398,10 +398,11 @@
         ]
       },
       "cdStack": {
+        "_doc": "Session 71: this override said [1.98, 0.71, 3.45] — era1.json's ORIGINAL x and y plus 2.55 z. But r1 already corrects this prop to (2.02, 0.773) for two measured reasons (see r1's own _doc: the y put its base 0.063 m INSIDE the shelf board, and the x/z moved it off the tape run), and a later override replaces `pos` wholesale, so r3 silently reverted both. The fold's own hazard: an override further down the chain is not a delta, it is a replacement. Now r1's corrected position plus the shelf's +2.55 z.",
         "pos": [
-          1.98,
-          0.71,
-          3.45
+          2.02,
+          0.773,
+          3.17
         ]
       },
       "mixtape": {
@@ -409,6 +410,21 @@
           1.98,
           1.16,
           3.38
+        ]
+      },
+      "teddyBox": {
+        "_doc": "Session 71: LEFT BEHIND. r3 moves the bookcase from z 0.75 to 3.3 and gives book1/book3/cdStack matching overrides — teddyBox and rainbowDuck never got one, so from E3 on they hung in mid-air in the middle of the vacated room (measured: 0.683 m and 1.540 m of clear air beneath them, tools/room-audit.mjs FLOATING). Both now carry the shelf's own +2.55 z, which preserves each prop's exact relationship to its compartment rather than re-placing it by eye.",
+        "pos": [
+          1.98,
+          0.763,
+          3.05
+        ]
+      },
+      "rainbowDuck": {
+        "pos": [
+          1.98,
+          1.6,
+          2.93
         ]
       }
     },
@@ -906,7 +922,7 @@
         "pos": [
           -4.28,
           0,
-          2.16
+          2.045
         ],
         "size": [
           0.75,
@@ -1378,7 +1394,12 @@
         ],
         "color": "#8A5A3B",
         "yaw": 270,
-        "model": "desk"
+        "model": "desk",
+        "modelScale": [
+          1.906,
+          1.951,
+          1.529
+        ]
       },
       {
         "id": "e_chair",
@@ -1415,7 +1436,7 @@
       {
         "id": "e_nightstand",
         "pos": [
-          3.03,
+          2.985,
           0,
           1.9
         ],
@@ -1433,7 +1454,7 @@
         "pos": [
           4.28,
           0,
-          -0.78
+          -0.64
         ],
         "size": [
           0.75,
@@ -1463,8 +1484,8 @@
       {
         "id": "e_crtBody",
         "pos": [
-          5.43,
-          1.08,
+          5.37,
+          1.04,
           0.7
         ],
         "size": [
@@ -1478,8 +1499,8 @@
       {
         "id": "e_crtBezel",
         "pos": [
-          5.21,
-          1.08,
+          5.15,
+          1.04,
           0.7
         ],
         "size": [
@@ -1493,8 +1514,8 @@
       {
         "id": "e_crtScreen",
         "pos": [
-          5.195,
-          1.08,
+          5.135,
+          1.04,
           0.7
         ],
         "size": [
@@ -1509,7 +1530,7 @@
       {
         "id": "e_crtFoot",
         "pos": [
-          5.38,
+          5.32,
           0.8,
           0.7
         ],
@@ -1584,7 +1605,7 @@
       {
         "id": "bedMoved",
         "pos": [
-          -1.55,
+          -1.485,
           0,
           2.63
         ],
@@ -1629,9 +1650,9 @@
       {
         "id": "movingBox2",
         "pos": [
-          1.02,
+          1.17,
           0.15,
-          1.45
+          1.6
         ],
         "size": [
           0.4,
@@ -1733,7 +1754,7 @@
       {
         "id": "bedDustSheet",
         "pos": [
-          -1.55,
+          -1.485,
           0.74,
           2.63
         ],
@@ -1912,9 +1933,9 @@
       {
         "id": "w_radio",
         "pos": [
-          -4.52,
+          -4.44,
           1.02,
-          2.14
+          1.93
         ],
         "size": [
           0.18,

@@ -25,8 +25,6 @@ import { batchStaticProps, batchSettledProps, clearSettledBatch, type SettledBat
 import clusterData from '../../data/room/cluster.json';
 import nicheData from '../../data/room/fluid_niche.json';
 import belongingsData from '../../data/room/belongings.json';
-import doorplateStrings from '../../data/strings/doorplates.json';
-import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import type { FluidNiche, FacetState } from './fluidNiche';
 import type { CeilingWitness } from './ceilingWitness';
 
@@ -55,6 +53,25 @@ interface Rig { ambient: number[]; zoneFill: number; lights: Record<string, RigL
 const BELONGINGS_IDS = new Set(
   (belongingsData as unknown as { eligible: { id: string }[] }).eligible.map((e) => e.id)
 );
+
+/**
+ * ⚑ S71 — THE EIGHT `terminalFrame` ASSERTS, CLOSED AT THE CALL SITE.
+ *
+ * `setTerminalVisible()` below toggles `.enabled` on this prop at every era
+ * change (the record leaves the wall for E3 and comes back at E4), and
+ * batching.ts's own documented law is that a batched node's world transform is
+ * baked once per state and only re-derived on enable/disable — so PlayCanvas
+ * rejects the insertion and the removal and logs
+ * `ASSERT FAILED: Invalid batch N insertion/removal with node: "terminalFrame"`.
+ * Measured this session: 2 per four era jumps, 8 per playthrough as S67 counted.
+ *
+ * S67 named `src/room/batching.ts` as the cause and left it there. The cause is
+ * the toggle, and the toggle is in this file: a prop that is switched on and
+ * off must not join a batch, which is exactly why BELONGINGS_IDS is already
+ * excluded from both groups. Same remedy, same reason, and it costs at most one
+ * draw call. ROLLBACK: delete this set and its two uses below.
+ */
+const UNBATCHED_IDS = new Set(['terminalFrame']);
 
 const RIG_FADE_SECONDS = 2.5;
 /**
@@ -183,16 +200,13 @@ export interface RelocationPlan {
   rigDelaySeconds?: number;
   /** the seat yaw the descent lands in (0 = Room 1, 90 = Room 2, 270 = Room 3) */
   seat: number;
-  /** which rooms' doorplates are lit while you are up there. At e1-e2 there is
-   *  exactly ONE, and that is the content of the beat, not a missing asset. */
-  plates: readonly string[];
 }
 
 /** keyed `${from}-${to}`; a transition absent here takes the plain morph path */
 export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
   'e1-e2': {
     riseSeconds: 7.0, buildSeconds: 7.0, descendSeconds: 7.0,
-    opensWalls: false, seat: 0, plates: ['r1']
+    opensWalls: false, seat: 0
   },
   'e2-e3': {
     riseSeconds: 7.0,
@@ -202,7 +216,7 @@ export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
      *  envelope. Measured again at 11.5: 0.415 m/s. The number is the comfort
      *  law, not a taste call. */
     descendSeconds: 11.5,
-    opensWalls: true, seat: 90, plates: ['r1', 'r2', 'r3']
+    opensWalls: true, seat: 90
   },
   'e3-e4': {
     riseSeconds: 7.0,
@@ -218,7 +232,7 @@ export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
     /** 2.0 s before the crossing ends, so the 2.5 s crossfade finishes just
      *  after the descent starts: the lights go out as you come down */
     rigDelaySeconds: 22.0,
-    opensWalls: false, seat: 270, plates: ['r1', 'r2', 'r3']
+    opensWalls: false, seat: 270
   }
 };
 
@@ -246,81 +260,25 @@ const TERMINAL_E4 = { pos: [5.66, 1.5, 1.75] as [number, number, number], yaw: 2
 const TERMINAL_SPINE_YAW = 180;
 
 /**
- * ⚑ THE DOORPLATES (Session 67) — the piece's only piece of building fabric.
+ * ⚑ THE DOORPLATES ARE CUT (Session 71, Sérgio: *"the doorplates aren't
+ * good."*). Three wall plates named each room from the overlook, and their job
+ * was to caption rooms that had no identity of their own. S66 removed that job
+ * — Room 2 is somebody's room now, with her lamp, her books and her cardigan
+ * on the chair — so a plate telling you whose room it is became the frame
+ * explaining the room to you, which this piece never does.
  *
- * Sérgio confirmed two things that decide everything about them: the building
- * is IMPLIED, not modelled, and from above you may ONLY LOOK, never enter. So
- * there is no block, no corridor and no marker — three plates and a floor are
- * the whole building, and the fact that you can read a name and cannot reach
- * it is the truer version of the sentence.
+ * ⚑ THE CHOREOGRAPHY STAYS. The rise, the hold and the descent are unchanged
+ * and every measured figure in the Session 67 log still holds; only the
+ * signage is gone. One consequence is named rather than hidden: S67's own
+ * argument for E1→E2 was that the single lit plate is what stops the empty
+ * hold reading as a missing asset. That hold is now 7 seconds over a closed
+ * room with nothing in it, and whether it reads as waiting or as a bug is a
+ * judgement for Sérgio in the seat.
  *
- * Register: BUILDING SIGNAGE. The flat plate beside a door, the card in a
- * buzzer slot — never an exhibition label, because a label would be the frame
- * explaining the room to you and the frame never plays. Three fields, no more:
- * era, name, one line. Read in sequence they are the thesis; no single one
- * states it (see data/strings/doorplates.json's note for the draft's own law).
- *
- * They are drawn ONCE, at build, into a small canvas each (pixel discipline:
- * monospace, integer rects, FILTER_NEAREST via makeScreenTexture) and then
- * only enabled/faded — no per-frame drawing, no texture re-upload, three extra
- * draw calls and six triangles against the Quest budget.
+ * Removed with them: `drawPlate`/`fitFont`, the plate entities and their fade,
+ * `showPlates`/`hidePlates`, `RelocationPlan.plates`, `doorplates` in
+ * data/room/cluster.json, and data/strings/doorplates.json entirely.
  */
-const PLATE_DATA = clusterData.doorplates;
-const PLATE_TEXT = (doorplateStrings as unknown as {
-  rooms: Record<string, { era: string; name: string; line: string } | undefined>;
-}).rooms;
-/** the plate canvas, at 400 px per metre — the same order of pixel density as
- *  the monitor's own surface, so the type reads crisp under FILTER_NEAREST */
-const PLATE_PX = 400;
-
-/** set the largest font in [min, max] whose text fits `maxWidth`, and return
- *  it. ⚑ The plates are PLACEHOLDER-draft and Sérgio's voice pass rewrites all
- *  three lines; a fixed size would clip his words at the plate edge silently
- *  and in 3D, where nobody would see it until a headset session. The first
- *  pass of this did exactly that — "ring twice, the bell is broken" rendered
- *  as "ring twice, the bell". Fitting is the durable answer, not a wider
- *  plate: a doorplate that grows to hold its sentence stops being a doorplate. */
-function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number,
-                 max: number, min: number, weight = ''): number {
-  for (let size = max; size > min; size--) {
-    ctx.font = `${weight}${size}px monospace`;
-    if (ctx.measureText(text).width <= maxWidth) return size;
-  }
-  ctx.font = `${weight}${min}px monospace`;
-  return min;
-}
-
-function drawPlate(id: string): HTMLCanvasElement | null {
-  const t = PLATE_TEXT[id];
-  if (!t) return null;
-  const cv = document.createElement('canvas');
-  cv.width = Math.round(PLATE_DATA.w * PLATE_PX);
-  cv.height = Math.round(PLATE_DATA.h * PLATE_PX);
-  const ctx = cv.getContext('2d');
-  if (!ctx) return null;
-  ctx.fillStyle = PLATE_DATA.plate;
-  ctx.fillRect(0, 0, cv.width, cv.height);
-  // the engraved edge: an inset rule, the way a screwed-on plate has a border
-  // because the plate is a plate and not a sticker
-  ctx.strokeStyle = PLATE_DATA.ink;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(5, 5, cv.width - 10, cv.height - 10);
-  ctx.fillStyle = PLATE_DATA.ink;
-  ctx.textBaseline = 'top';
-  const pad = 14;
-  const inner = cv.width - pad * 2;
-  // row 1: the year, then the name. The year is fixed and small (it is the
-  // landlord's hand); the name takes whatever is left of the row.
-  fitFont(ctx, t.era, inner * 0.3, 18, 10);
-  ctx.fillText(t.era, pad, 12);
-  const eraW = ctx.measureText(t.era).width;
-  fitFont(ctx, t.name, inner - eraW - 14, 26, 12, 'bold ');
-  ctx.fillText(t.name, pad + eraW + 14, 8);
-  // row 2: the resident's own note, the one that has to survive a rewrite
-  fitFont(ctx, t.line, inner, 15, 8);
-  ctx.fillText(t.line, pad, 44);
-  return cv;
-}
 
 function hex(c: string): pc.Color {
   const n = parseInt(c.slice(1), 16);
@@ -341,10 +299,6 @@ export interface ClusterShell {
    *  for the undriven path (?descent=0, review jumps): everything happens at
    *  once, exactly as it did before the relocation existed. */
   morphToEra(era: EraKey, animate: boolean, plan?: RelocationPlan | null): void;
-  /** S67: raise the named rooms' doorplates (the relocation's overlook) and
-   *  drop them again. Fades, so neither end is a pop. */
-  showPlates(ids: readonly string[]): void;
-  hidePlates(): void;
   /** apply a named rig directly (the Close uses 'close') */
   applyRig(name: string, animate: boolean): void;
   /** S61: land the current transition NOW, wherever it had got to — the
@@ -431,7 +385,7 @@ export function buildClusterShell(
     // R28-2c: belongings-eligible props are ALSO excluded here (reusing the
     // "staticIds" skip check inside batchSettledProps), never joining the
     // settled group regardless of kept state — see BELONGINGS_IDS above.
-    settledBatch = batchSettledProps(app, room, new Set([...staticIds, ...BELONGINGS_IDS]));
+    settledBatch = batchSettledProps(app, room, new Set([...staticIds, ...BELONGINGS_IDS, ...UNBATCHED_IDS]));
     settledJoined = settledBatch?.joined ?? 0;
     publishBatchStats();
   }
@@ -443,7 +397,7 @@ export function buildClusterShell(
   if (batch) {
     // R28-2c: belongings-eligible props never join the permanent static
     // group either, even if their fold happens to be identical everywhere.
-    staticJoined = batchStaticProps(app, room, new Set([...staticIds].filter((id) => !BELONGINGS_IDS.has(id))));
+    staticJoined = batchStaticProps(app, room, new Set([...staticIds].filter((id) => !BELONGINGS_IDS.has(id) && !UNBATCHED_IDS.has(id))));
     rebuildSettled();
   }
 
@@ -520,32 +474,6 @@ export function buildClusterShell(
     root.addChild(e);
     return e;
   });
-
-  // ── the doorplates (see drawPlate above): built once, hidden, and only ever
-  //    enabled while a relocation has the player out of the seat ──
-  interface Plate { mat: pc.StandardMaterial; entity: pc.Entity }
-  const plates = new Map<string, Plate>();
-  let plateFade = 0;      // current opacity
-  let plateTarget = 0;    // where it is heading
-  for (const [id, geom] of Object.entries(PLATE_DATA.rooms as Record<string, { pos: number[]; yaw: number }>)) {
-    const cv = drawPlate(id);
-    if (!cv) continue;
-    const e = makeScreenEntity(`doorplate-${id}`, makeScreenTexture(app, cv), PLATE_DATA.w, PLATE_DATA.h, true);
-    // the witnessTerminal convention (migrateTerminal): X 90 stands the plane
-    // up, Y picks which way it faces. 0 = +Z, 90 = +X, 180 = -Z, 270 = -X.
-    e.setLocalEulerAngles(90, geom.yaw, 0);
-    e.setLocalPosition(geom.pos[0], geom.pos[1], geom.pos[2]);
-    e.enabled = false;
-    const mat = e.render?.material as pc.StandardMaterial | undefined;
-    if (mat) { mat.opacity = 0; mat.update(); }
-    root.addChild(e);
-    if (mat) plates.set(id, { mat, entity: e });
-  }
-  function showPlates(ids: readonly string[]): void {
-    for (const [id, p] of plates) p.entity.enabled = ids.includes(id);
-    plateTarget = 1;
-  }
-  function hidePlates(): void { plateTarget = 0; }
 
   app.root.addChild(root);
 
@@ -843,9 +771,6 @@ export function buildClusterShell(
       if (rebuildAfterLayout) rebuildSettled();
     },
 
-    showPlates,
-    hidePlates,
-
     applyRig,
     eraTable,
     setKeptIds(ids: ReadonlySet<string>): void { morph.setKeptIds(ids); },
@@ -854,7 +779,6 @@ export function buildClusterShell(
       timeline = [];
       timelineT = 0;
       planeLerp = null;
-      hidePlates(); // S67: the plates belong to the overlook and nowhere else
       clearSettled();
       morph.goToState(STATE_FOR_ERA[era], false); // snap, deterministic
       applyRig(era, false);
@@ -878,16 +802,6 @@ export function buildClusterShell(
         }
       }
       morph.update(dt);
-      // the doorplates' fade — linear, short, and it never runs when nothing
-      // is showing (the common case is a no-op comparison)
-      if (plateFade !== plateTarget) {
-        const step = dt / PLATE_DATA.fadeSeconds;
-        plateFade = plateTarget > plateFade
-          ? Math.min(plateTarget, plateFade + step)
-          : Math.max(plateTarget, plateFade - step);
-        for (const p of plates.values()) { p.mat.opacity = plateFade; p.mat.update(); }
-        if (plateFade === 0) for (const p of plates.values()) p.entity.enabled = false;
-      }
       if (pendingSettledRebatch && !morph.running) {
         pendingSettledRebatch = false;
         applyLayout();
