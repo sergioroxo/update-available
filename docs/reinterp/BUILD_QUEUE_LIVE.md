@@ -13,6 +13,7 @@ not live.***
 | — | ~~S69 — the presets on Noa's video~~ | ↓ below, in this file | **SHIPPED 2026-08-02** (`11ef26e`) — number retired |
 | — | ~~S70 — the comments, and the recruitment floor~~ | ↓ below, in this file | **SHIPPED 2026-08-03** — number retired |
 | — | ~~S71 — walk the space and report what is wrong~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired |
+| 1 | **S72 — the audit system (L3 capture + L4 assertions)** | ↓ below, in this file | **QUEUED — dispatch this one** |
 | — | S68 | *(soft-claimed by the gyroscope look-around suggestion, `NEXT_PROMPTS_2026-07-30.md` tail — not written)* | — |
 
 **Numbers are not reused.** S66 previously named two other jobs (the retired testimony studio; the
@@ -330,4 +331,88 @@ DELIVERABLE: a prioritised findings list in the session log — WORST FIRST, eac
 whether it was fixed or proposed, and a screenshot reference. Plus the reusable tool. Plus ONE line
 in BUILD_LOG.md. ⚑ Report faithfully: if something is still wrong at the end, say so plainly rather
 than describing it as addressed.
+```
+
+---
+
+# S72 — THE AUDIT SYSTEM: L3 + L4 · Opus, high effort
+**⚑ PROMPT STATUS: QUEUED — dispatch this one.**
+*Sérgio, 2026-08-04: "We for sure will have in the future to make a system of analysis and audit for
+the experience so we can catch errors in time." Design: `docs/REINTERP_THE_AUDIT_SYSTEM_2026-08-04.md`.
+⚑ The salvaged rig is already in `tools/harness/` — READ ITS README FIRST; it was written three times
+and thrown away three times, and this session exists so that stops happening.*
+
+```
+Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
+?reinterp=1). Read, in order: docs/REINTERP_THE_AUDIT_SYSTEM_2026-08-04.md (THE DESIGN — the five
+tiers; L3 and L4 are this session), tools/harness/README.md (⚑ the salvage, and what is hardcoded in
+it), tools/room-audit.mjs (L2 — the model for how a tool in this repo should be written: no browser,
+no dependencies, cross-checked against the live engine), tools/check-spec.mjs (L1 — and the RATCHET
+pattern every numeric check here must copy), docs/reinterp/01_SESSION_LOG.md Sessions 66-71 (where
+the nine uncaught faults came from), then src/engine/app.ts, src/room/cluster.ts, src/debug/panel.ts,
+package.json.
+
+THE JOB: turn the thrown-away capture rig into a permanent one (L3), and add the six assertions that
+make frames fail a build (L4). ⚑ NINE FAULTS REACHED SÉRGIO WITH ZERO COVERAGE — the design doc lists
+them, and each assertion below exists because of a specific one.
+
+SCOPE — L3, the capture tool:
+1. Consolidate tools/harness/ into ONE tool with a CLI (tools/shots.mjs or similar): the visual sweep
+   (every seat × era state × room + the S67 overlooks), the device-canvas grabs, and the contact-sheet
+   composite. Keep asserts.mjs's console counting and relocmeasure.mjs's camera sampling as modes.
+2. ⚑ PARAMETERISE WHAT IS HARDCODED, and the third one matters most: the Chrome path (macOS-only
+   today); the dev-server port (5173 assumed, has served on 3000); and THE SEAT AND OVERLOOK POSE
+   TABLES, which are currently COPIES of app.ts's and will silently rot. Read them from the app —
+   expose them on the existing debug surface rather than duplicating them.
+3. puppeteer-core stays a devDependency and must be OPTIONAL: `npm test` must never require a browser
+   or a running dev server. If Chrome is absent, L3/L4 skip with a clear message and exit 0.
+
+SCOPE — L4, the six assertions (all six; each cites the fault that motivates it):
+1. ⚑ THE COMFORT ENVELOPE — sample the live camera rig through EVERY driven leg (entrance descent,
+   all three choreography transitions, every scripted send); FAIL above 0.43 m/s or 9.1 °/s.
+   relocmeasure.mjs already samples; it needs a threshold and an exit code. THIS IS THE HIGHEST-STAKES
+   CHECK IN THE PIECE — E3→E4 shipped at 3.667 m/s, 8.5× the envelope, and nothing noticed.
+2. DRAW-CALL CEILING — peak across every transition, as a RATCHET starting at today's real value
+   (62 against a ≤60 budget). Nag downward; do not block on day one.
+3. ⚑ BLANK-FRAME CHECK — a captured frame whose luminance variance is near zero is an unlit block or
+   a dead screen. Ratchet the count. This one statistic covers three of Sérgio's own reports ("unlit
+   black blocks", "photographs as brown mud", "Maya's screen is blank at the E4 home seat"). Tune the
+   threshold against REAL frames, and report what it flags rather than trusting a guessed constant.
+4. SUBJECT-IN-FRAME — each seat declares what it is for; assert that thing's projected position is
+   inside the FOV. Catches the desk seat framing its subject 45-51° below a 21° half-FOV. The seat→
+   subject mapping is DATA, authored, not inferred.
+5. CONSOLE ASSERTS = 0 — S71 got the eight `terminalFrame` asserts to zero and nothing keeps them
+   there. asserts.mjs already counts them.
+6. REACHABILITY ON THE ORDINARY PATH — C6 proves every beat has a debug button; nothing proves a beat
+   is reachable WITHOUT one. That is the S64 class of bug (`?era=` killed the spine and misled three
+   playthroughs). If a full ordinary-path traversal is too large for this session, SAY SO and ship the
+   other five rather than a fake version of this one.
+
+⚑ THE DESIGN RULES, and they are not style notes — each one is why an existing check survived:
+- RATCHETS, NOT PERFECTION. Every numeric check starts at today's real value and fails on GROWTH.
+  The palette ratchet went 157 -> 33 because it nagged instead of blocking. A check that fails on day
+  one gets disabled on day one.
+- ONE COMMAND: `npm run audit`. If it takes three commands and a dev server by hand, it runs once.
+- REPORT, DON'T REDECORATE: fix only what is provably wrong by measurement; PROPOSE anything that is
+  taste. Nothing in this system may retune a composition on its own.
+- CROSS-CHECK BEFORE TRUSTING. room-audit.mjs was verified against the live engine to 0.00000 m
+  before a single number was believed, and that is why its findings held. Do the same here: if an
+  assertion disagrees with the engine, the assertion is wrong until proven otherwise.
+
+LAWS: no runtime network calls in src/ (the harness is a dev tool and lives in tools/) · no storage ·
+palette ratchet 33 must not rise · C6 and C8 both apply (mark this block SHIPPED when done) ·
+EXPLICIT PATHSPECS only, never `git add -A`.
+
+FILE FENCE: tools/shots.mjs (new), tools/harness/*, tools/check-spec.mjs, package.json (scripts +
+optional devDependency ONLY), src/debug/panel.ts (to expose the pose tables), src/engine/app.ts (to
+export them), docs/REINTERP_THE_AUDIT_SYSTEM_2026-08-04.md (status only),
+docs/reinterp/BUILD_QUEUE_LIVE.md (flip this block to SHIPPED), docs/reinterp/01_SESSION_LOG.md,
+docs/reinterp/08_STATUS_REGISTER.md, BUILD_LOG.md.
+
+DONE WHEN: `npm run audit` runs end to end and prints a readable report; `npm test` still passes
+WITHOUT a browser or dev server; tsc + build green; every ratchet baseline set to a MEASURED value
+with a comment saying which session measured it; BUILD_LOG gets ONE line.
+
+⚑ REPORT FAITHFULLY: state which assertions are live, which are ratcheted and at what, and which you
+could not build. A skipped check named plainly is worth more than a check that always passes.
 ```
