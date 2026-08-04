@@ -24,6 +24,22 @@ interface DebugOpts {
   onFlip?: () => void;
   /** dev-only camera jump: seat pose at an exact yaw (review screenshots) */
   onCamProbe?: (yaw: number, pitch: number) => void;
+  /**
+   * ⚑ S72 — THE POSE TABLES, for the audit tool (`tools/shots.mjs`).
+   *
+   * `tools/harness/sweep.mjs` kept its own transcription of app.ts's seats and
+   * the five S67 overlooks. A copy of a number cannot notice the original
+   * moving: the sweep would have gone on photographing retired poses and
+   * reporting them clean. So the tool holds no camera numbers at all — it reads
+   * `window.__poses` and photographs whatever the build actually flies.
+   *
+   * Published here rather than in app.ts because this is where the `?debug=1`
+   * surface already is (`__camProbe`, three lines below, is the same idiom) —
+   * and because it keeps the DEVICE seats, which live in the movement-node
+   * graph, and the room seats, which live in app.ts, arriving at the tool
+   * through one door.
+   */
+  poses?: () => unknown;
   /** the send seam (master script §4) — review buttons until beats fire it */
   sends?: { id: string; label: string }[];
   onSend?: (id: string, outcome: 'offered' | 'visited' | 'declined') => void;
@@ -217,6 +233,11 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   if (opts.onCamProbe) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).__camProbe = opts.onCamProbe;
+  }
+  if (opts.poses) {
+    // S72: see DebugOpts.poses — the audit tool's single source for every
+    // camera pose the piece flies, so no tool ever transcribes one again.
+    (window as { __poses?: () => unknown }).__poses = opts.poses;
   }
 
   const panel = document.createElement('div');

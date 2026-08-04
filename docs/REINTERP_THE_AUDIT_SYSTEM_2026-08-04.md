@@ -1,5 +1,16 @@
 STATUS: live
 
+> **⚑ BUILT — Session 72, 2026-08-04.** L3 and L4 are in `tools/shots.mjs`; `npm run audit` runs
+> L1 + L2 + L3 + L4 as one command. **Five of the six assertions are live**, each ratcheted at a
+> measured value; **assertion 6 (reachability on the ordinary path) was NOT built** and says so in
+> every report. `tools/harness/` is retired to a tombstone.
+>
+> The first real run found **four comfort violations nothing had ever measured** — the entrance
+> descent at 0.497 m/s (1.2× the envelope the same file claims it meets) and the scripted-send dolly
+> at 4.4–6.9 m/s (10–16×, latent: no beat fires the seam yet). Both are REPORTED with exact proposed
+> durations and **nothing was applied.** Findings and numbers: `docs/reinterp/01_SESSION_LOG.md`
+> Session 72.
+
 # THE AUDIT SYSTEM — catching it before Sérgio has to
 *Sérgio, 2026-08-04: "We for sure will have in the future to make a system of analysis and audit for
 the experience so we can catch errors in time."*
@@ -44,8 +55,8 @@ between sessions.*
 |---|---|---|
 | **L1 · static** | invariants, register laws, dossier status, doc lifecycle, panel completeness, prompt lifecycle | ✅ **built** — `check-invariants` + `check-rooms` + `check-spec` C1–C8 |
 | **L2 · measured geometry** | prop-in-prop, prop-through-wall, floating props, rendered-vs-authored scale | ✅ **built** — `tools/room-audit.mjs` (S71), agrees with the live engine to 0.00000 m |
-| **L3 · capture** | render every seat × era × room + the overlooks, and every device canvas, to real files | ⚠️ **exists as salvage**, `tools/harness/` — needs consolidating |
-| **L4 · assertions over L3** | ⚑ **the missing tier.** Comfort, budget, blank frames, subject-in-frame, console asserts | ❌ **not built** |
+| **L3 · capture** | render every seat × era × room + the overlooks, and every device canvas, to real files | ✅ **built** (S72) — `tools/shots.mjs sweep` / `devices` / `sheet`; holds no camera numbers of its own |
+| **L4 · assertions over L3** | ⚑ **the missing tier.** Comfort, budget, blank frames, subject-in-frame, console asserts | ✅ **5 of 6 built** (S72) — `tools/shots.mjs audit`; assertion 6 (reachability) NOT built |
 | **L5 · the human pass** | does it *mean* anything; is the register right; does it work in a headset | 🔒 **irreplaceable — Sérgio, and A11** |
 
 **L4 is the whole proposal.** L3 makes frames; L4 is what turns frames into a build failure.

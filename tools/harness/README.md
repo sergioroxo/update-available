@@ -1,45 +1,49 @@
-STATUS: live
+STATUS: superseded-by tools/shots.mjs
 
-# tools/harness — the verification rig, salvaged rather than rebuilt again
+# tools/harness — CONSOLIDATED into `tools/shots.mjs` (Session 72)
 
-**These twelve scripts were written three separate times** — S69, S70 part 2, and S71 — and thrown
-away each time, because each session built them in its own scratchpad. They were recovered from
-S71's scratchpad on 2026-08-04, minutes before it would have been cleaned.
+The twelve scripts that lived here were written three separate times — S69, S70
+part 2, S71 — and thrown away each time, because each session built them in its
+own scratchpad. They were recovered from S71's scratchpad on 2026-08-04, minutes
+before it would have been cleaned, and **S72 folded every one of them into
+`tools/shots.mjs`, which has a CLI, no hardcoded paths, and assertions on top.**
 
-⚑ **They are RAW SALVAGE, not a finished tool.** Paths are hardcoded, several are one-off probes for
-a question that is already answered, and there is no CLI. **They are here so the next session starts
-from something rather than from nothing** — consolidating them into a real `tools/shots.mjs` is
-S72's job (`docs/reinterp/BUILD_QUEUE_LIVE.md`).
+This file is the tombstone. Nothing here runs any more.
 
-## Why a headless-Chrome rig exists at all
-The sandboxed browser pane **cannot write downloads to disk**, and relaying a PNG back as base64
-through a tool boundary corrupted on the first chunk (S70 part 1 tried and correctly shipped nothing
-rather than a truncated file). So verification images have to be produced by driving the real build
-in real Chrome and writing with `fs`.
-
-The route that works, and it needs nothing added to `package.json`:
 ```bash
-npm run dev
-node tools/harness/sweep.mjs before
+npm run audit                       # L1 + L2 + L3 capture + L4 assertions
+node tools/shots.mjs sweep --tag x  # the visual sweep alone
+node tools/shots.mjs verify         # the cross-checks, against the live engine
 ```
-`puppeteer-core` → the system Chrome at `/Applications/Google Chrome.app/…`, with
-`--enable-unsafe-swiftshader --use-gl=angle` so WebGL renders headless. **Same URL, same seats, same
-debug beats as a human gets — only the readback is scripted.**
 
-## What each one is
-| file | what it does | worth keeping? |
-|---|---|---|
-| `sweep.mjs` | ⚑ **the visual sweep** — every seat × era state × room, plus the S67 overlooks, into `shots-<tag>/` | **yes — this is the core** |
-| `capture.mjs` / `capture2.mjs` | grabs the offscreen device canvases (`__era3Devices()[n].toDataURL`) after driving debug beats | **yes** |
-| `compose.mjs` / `compose71.mjs` | composites labelled A/B/C/D contact sheets at 1:1 pixels | yes |
-| `asserts.mjs` | counts console asserts across era jumps — how the eight `terminalFrame` asserts were found | **yes** |
-| `relocmeasure.mjs` | samples the live camera rig to measure a leg's peak m/s against the 0.43 envelope | **yes — the comfort law has no other check** |
-| `verify-aabb.mjs` | cross-checks `room-audit.mjs`'s maths against the live engine (agreed to 0.00000 m) | yes |
-| `glb.mjs` | dependency-free GLB reader; the same logic now lives in `tools/room-audit.mjs` | superseded |
-| `probe.mjs`, `flat.mjs`, `f404.mjs` | one-off probes (console dump, `?flat=1` check, 404 check) | fold into the CLI |
+## Where each one went
+| was | is now |
+|---|---|
+| `sweep.mjs` | `shots.mjs sweep` — and it no longer carries a COPY of the seat/overlook tables (see below) |
+| `capture.mjs`, `capture2.mjs` | `shots.mjs devices` |
+| `compose.mjs`, `compose71.mjs` | `shots.mjs sheet` (auto-grid, any frame count) |
+| `asserts.mjs` | assertion 5 inside `shots.mjs audit` |
+| `relocmeasure.mjs` | assertions 1 + 2 — with a threshold and an exit code, which is what it always lacked |
+| `verify-aabb.mjs` | `shots.mjs verify` (still reports r4: 185 props, worst corner error 0.00000 m) |
+| `glb.mjs` | superseded by `tools/room-audit.mjs` |
+| `probe.mjs`, `flat.mjs`, `f404.mjs` | one-off probes for questions already answered — not carried |
 
-## The hardcoded things a consolidation must parameterise
-- the Chrome path (macOS-only today)
-- `http://localhost:5173` — the dev server has served on 3000 before
-- the seat and overlook pose tables in `sweep.mjs`, which are **copies of `app.ts`'s** and will
-  silently rot. ⚑ They should be read from the app, not duplicated.
+## The three hardcoded things, and what happened to them
+- **the Chrome path** — now `--chrome`, then `$CHROME`/`$CHROME_PATH`/
+  `$PUPPETEER_EXECUTABLE_PATH`, then a per-platform candidate list (macOS,
+  Windows, Linux). Absent ⇒ the tool skips and exits 0; it never downloads one.
+- **`http://localhost:5173`** — now `--port` / `$SHOTS_PORT`, and if nothing is
+  answering the tool starts vite itself and stops it again.
+- **⚑ the seat and overlook pose tables**, which were copies of `app.ts`'s and
+  would have rotted silently — the tool now holds **no camera numbers at all**.
+  `src/engine/app.ts` exports `CAMERA_POSES`, the debug panel publishes it as
+  `window.__poses` under `?debug=1`, and the sweep photographs whatever the
+  build actually flies.
+
+## Why a headless-Chrome rig exists at all (still true, still the reason)
+The sandboxed browser pane **cannot write downloads to disk**, and relaying a PNG
+back as base64 through a tool boundary corrupted on the first chunk (S70 part 1
+tried and correctly shipped nothing rather than a truncated file). So
+verification images have to be produced by driving the real build in real Chrome
+and writing with `fs`. `puppeteer-core` is a devDependency and is **optional**:
+`npm test` never touches a browser or a dev server.

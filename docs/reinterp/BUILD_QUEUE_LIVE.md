@@ -13,8 +13,13 @@ not live.***
 | — | ~~S69 — the presets on Noa's video~~ | ↓ below, in this file | **SHIPPED 2026-08-02** (`11ef26e`) — number retired |
 | — | ~~S70 — the comments, and the recruitment floor~~ | ↓ below, in this file | **SHIPPED 2026-08-03** — number retired |
 | — | ~~S71 — walk the space and report what is wrong~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired |
-| 1 | **S72 — the audit system (L3 capture + L4 assertions)** | ↓ below, in this file | **QUEUED — dispatch this one** |
+| — | ~~S72 — the audit system (L3 capture + L4 assertions)~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired. 5 of 6 assertions live; assertion 6 (reachability) NOT built, named as such |
 | — | S68 | *(soft-claimed by the gyroscope look-around suggestion, `NEXT_PROMPTS_2026-07-30.md` tail — not written)* | — |
+
+**⚑ NOTHING IS QUEUED.** The next session's job is Sérgio's to name. Two candidates the S72 audit
+produced, both in the session log with their measurements: **the comfort violations** (the entrance
+descent at 1.2× and the send seam at 10–16×, exact durations proposed, nothing applied — his call
+because both are pacing), and **assertion 6**, the ordinary-path traversal S72 did not build.
 
 **Numbers are not reused.** S66 previously named two other jobs (the retired testimony studio; the
 correction list, shipped as Session 64). Both are marked SHIPPED where they sit and neither is
@@ -336,7 +341,9 @@ than describing it as addressed.
 ---
 
 # S72 — THE AUDIT SYSTEM: L3 + L4 · Opus, high effort
-**⚑ PROMPT STATUS: QUEUED — dispatch this one.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-04 — do not dispatch; the number is retired. `tools/shots.mjs`
++ `npm run audit`; 5 of the 6 assertions are live, assertion 6 (reachability on the ordinary path)
+was NOT built and is named as not built. See BUILD_LOG.md and 01_SESSION_LOG.md.**
 *Sérgio, 2026-08-04: "We for sure will have in the future to make a system of analysis and audit for
 the experience so we can catch errors in time." Design: `docs/REINTERP_THE_AUDIT_SYSTEM_2026-08-04.md`.
 ⚑ The salvaged rig is already in `tools/harness/` — READ ITS README FIRST; it was written three times

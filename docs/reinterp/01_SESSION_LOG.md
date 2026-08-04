@@ -143,6 +143,120 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-04 · Session 72 — **THE AUDIT SYSTEM: L3 CAPTURE + L4 ASSERTIONS.** Design:
+`docs/REINTERP_THE_AUDIT_SYSTEM_2026-08-04.md`. Touched: `tools/shots.mjs` (new), `tools/harness/*`
+(twelve scripts **deleted**, README → tombstone), `engine/app.ts`, `debug/panel.ts`, `package.json`,
+the design doc's status, BUILD_QUEUE_LIVE, this log, 08_STATUS_REGISTER, BUILD_LOG.)*
+
+**⚑ THE TOOL FIRST, because the point of this session is that it can be run again — and this time
+by one command.**
+
+```bash
+npm run audit          # L1 (npm test) + L2 (room-audit) + L3 capture + L4 assertions
+```
+
+It starts its own dev server if none is answering and stops it again. `puppeteer-core` is an
+optional devDependency: with no Chrome on the machine, L3/L4 print what they are skipping and **exit
+0**, and `npm test` never touches a browser. Other modes: `sweep` · `devices` · `sheet` · `blank`
+(offline — re-scores last week's frames with no browser at all) · `comfort` · `verify`.
+
+**⚑ THE COPIED POSE TABLES ARE GONE, which was the third hardcoded thing and the one that mattered.**
+`tools/harness/sweep.mjs` carried a transcription of `app.ts`'s seats and the five S67 overlooks —
+correct the day it was written, and with no way of staying correct. `app.ts` now exports
+`CAMERA_POSES`, the debug panel publishes it as `window.__poses` under `?debug=1`, and **the tool
+holds no camera numbers at all.** The other two: `--chrome` / `$CHROME` with a per-platform candidate
+list (it was macOS-only), and `--port` / `$SHOTS_PORT` (5173 was assumed).
+
+**⚑ IT WAS CROSS-CHECKED AGAINST THE ENGINE BEFORE ANY NUMBER BELOW WAS BELIEVED** — S71's rule,
+applied twice. `node tools/shots.mjs verify` poses the real rig at every seat and compares this
+tool's world→view maths against PlayCanvas's own composed camera transform: **83 probe points, worst
+disagreement 9.5 × 10⁻⁸ m.** It also absorbs S71's `verify-aabb.mjs`, so L2 keeps its own guarantee
+as a command rather than a lost script: **r4, 185 props, worst corner error 0.00000 m.**
+
+And a third check that was not planned and is the strongest one: with the velocities differentiated
+correctly, **the tool independently reproduces four figures three different files measured by hand** —
+`cluster.ts`'s 0.415 m/s for E2→E3's descent, its 0.403 m/s / 8.88 °/s for E3→E4's crossing (measured
+8.87), `app.ts`'s 0.394 m/s for the E3→E4 rise (measured 0.395) and its 0.12 m/s for the E1 hold
+(measured 0.121). Nothing was fitted to them.
+
+---
+
+### ⚑ WHAT THE FIRST RUN FOUND — four comfort violations, none of them previously measured
+
+**1 · ⚑ THE SCRIPTED SEND DOLLY RUNS AT UP TO 6.87 m/s AND 141 °/s — 16× the envelope.** A resolved
+summons calls `dollyTo(yaw, 2.4, false)`, and a facet send targets Room 3 (`sends.ts`: *"every facet
+lives in Room 3"*). From Room 2 that is **8.87 m of path and 180° of turn in 2.4 seconds.** The two
+bay sends measure **4.42 m/s / 70 °/s** over 4.65 m. This is worse than the E3→E4 fault (3.667 m/s)
+that motivated the whole check.
+
+⚑ **It is LATENT, and that changes the urgency without excusing it:** no beat fires the send seam in
+this worktree yet (`app.ts`: *"the trigger beats ride the content-merge lane"*), so it is armed and
+unreachable in play — and it ships the moment a content session wires a beat to `onSendResolve`.
+**PROPOSED, NOT APPLIED:** 38.2 s for the Room 2 → Room 3 leg, 24.5 s for the two 4.65 m ones. Those
+are enormous next to 2.4, which is the real finding: the send dolly was never designed against the
+comfort law at all. Whether a summons should take 38 seconds, or should be a blink cut like every
+other cross-room move in R28's grammar, is a design call and therefore Sérgio's.
+
+**2 · ⚑ THE ENTRANCE DESCENT IS 1.2× OVER THE LAW IT IS THE SOURCE OF.** Measured **0.497 m/s**
+against the 0.43 envelope (angular 8.25 °/s, inside). `app.ts`'s own comment says *"measured peaks
+are 0.43 m/s and 9.1°/s"* — but the same file's arithmetic gives it away: 1.875 × 2.653 m of chord /
+10 s = **0.497**, which is exactly what the rig does. The envelope was named from this leg and the
+leg has never met it. **This one every player flies, every run, as the first thing that happens.**
+**PROPOSED, NOT APPLIED:** `DESCENT_SECONDS` 10 → **11.6** (11.5 also clears it, and is already
+E2→E3's descent duration). One number. Not applied because the opening's pacing is a composition and
+the fence for `app.ts` this session was the pose tables.
+
+**3 · THE ENTRANCE IS THE PIECE'S DRAW-CALL PEAK, and S71 never measured it.** S71 had E2→E3 at 57
+and E3→E4 at 62; this run reproduces both **exactly** and adds **67 at the entrance**, while the
+batcher is still settling — i.e. the highest draw-call moment in the piece is its first ten seconds,
+for every player. Ratchet set at 67 against the ≤60 budget; it nags rather than blocks, because the
+fix for the E3→E4 half is a change to the cascade's signature effect (S71 P5) and is Sérgio's call.
+
+**4 · THE SWEEP'S OWN FIRST FALSE POSITIVE, caught and fixed.** The blank-frame check flagged three
+E2 overlooks at 97% flat. They were real black frames and not a fault: the salvaged sweep
+photographed all five overlooks at all three eras, and at a settled `?era=2` the walls are still up,
+so `look-B-open` (x −2.30) and `look-C-cross` (x +2.30) put the camera **outside the closed room**.
+An overlook occurs in exactly one room state and the choreography says which — a rise happens in the
+era you are leaving, a build ends in the era you are arriving in — so the sweep now derives that map
+from the published relocation table. Three false flags gone, and no name list to rot.
+
+---
+
+### The five assertions that are live, and what each is ratcheted at
+
+| # | assertion | today | basis |
+|---|---|---|---|
+| 1 | **comfort envelope** | ⚑ **FAILS** — 4 legs over | a LAW, not a ratchet: 0.43 m/s / 9.1 °/s. Ratcheting it would mean accepting today's number, and today's number is the one thing here that can make a person ill |
+| 2 | draw-call peak | ratchet **67** (budget 60) | measured S72; entrance 67 · E3→E4 62 · sends 60 · E2→E3 57 · E1→E2 38 |
+| 3 | blank frames | ratchet **1** | `e4_seat-r1-turned` at 0.66 flat — the dormant record in E4's dark rig, S71's own review-jump artefact. Named every run, not excluded |
+| 4 | subject-in-frame | ratchet **6** | the three desks × the eras they are seated in: 44.5° / 48.0° / 41.5° below a 21° half-FOV. Corroborates S71's P3 (45.7–50.9°, measured to the surface rather than the box centre) from a different method. Every declared SCREEN is in frame |
+| 5 | console asserts | **0**, absolute | S71's eight `terminalFrame` asserts stay closed; the run emits none |
+| 6 | reachability on the ordinary path | ⚑ **NOT BUILT** | see below |
+
+Assertion 4's seat→subject map is the one authored table in the tool (`SEAT_SUBJECTS`), because no
+amount of geometry can say what a seat is *for*. The device seats declare nothing on purpose: the
+held screen is placed relative to the camera by construction, so it cannot fall out of frame.
+
+**⚑ ASSERTION 6 IS NOT BUILT, and it is named as not built in every report rather than faked.** A
+real ordinary-path traversal is click-only, no review params, E1 → the Close, and it is its own
+session. What S72 does have is the first rung of it: the comfort run enters through the pre-fiction
+panel the way a player does — it waits out `orientingCard.ts`'s 4 s ethics arm-delay and clicks **Log
+in**, because that click IS the entry gesture and the descent cannot be reached any other way.
+
+**REPORTED, NOT REDECORATED:** nothing in the piece was retuned. The only src changes are the pose
+tables exported from `app.ts`, published by `panel.ts`, plus a `__camPose()` probe (`?debug=1`,
+read-only) and a `camMoveSeq` counter — the latter is what makes the comfort check honest, because a
+CUT is not locomotion and differencing across a blink jump or `endRelocation`'s seat snap reports
+thousands of m/s. Velocities are differentiated against **the move's own clock**, not wall time: a
+first pass on wall time reported 2.8 m/s on a leg the curve runs at 0.44, which was headless
+swiftshader's frame pacing and not the piece.
+
+**VERIFIED:** `npm test` (palette 33/33, C6 39/39, C7 10/10, C8 all marked), `npx tsc --noEmit` and
+`npm run build` green; `npm run audit` end to end, exit 1 on the comfort failures, identical numbers
+across three consecutive runs; the skip path exits 0 with no browser; `blank` re-scores a saved sweep
+offline. Sweeps write to `out/shots-<tag>/`, which `.gitignore` already covers. **A11 (in-headset)
+has still never run, and every comfort figure above is desktop-measured.**
+
 *(2026-08-04 · Session 71 — **WALK THE SPACE AND REPORT WHAT IS WRONG.** An AUDIT: it fixes what is
 provable by measurement and proposes everything that is taste. Touched: `tools/room-audit.mjs`
 (new), `room/cluster.ts`, `engine/app.ts`, `debug/panel.ts`, `data/room/reinterp_deltas.json`,

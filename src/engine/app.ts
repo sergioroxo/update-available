@@ -18,7 +18,7 @@ import { buildEra1Room } from '../room/era1room';
 import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
-import { buildClusterShell, relocationFor, type ClusterShell, type EraKey,
+import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
@@ -221,6 +221,100 @@ const RELOC_POSES: Record<string, RelocPoses | undefined> = {
     hold: RELOC_OVERLOOK_B, descendVia: RELOC_DESCEND_VIA },
   'e3-e4': { rise: RELOC_OVERLOOK_R2, riseVia: RELOC_R2_RISE_VIA,
     hold: RELOC_OVERLOOK_C, descendVia: RELOC_R3_DESCEND_VIA }
+};
+
+/** the DOLLY's pull-back CONTROL point (Sérgio, Round 23): raised and slightly
+ *  back from the hub, so travel between rooms bows up-and-back (you rise over
+ *  the space and see the three rooms) before pushing into the next desk. Used
+ *  directly as the bezier control, not as a pass-through — clean arcs now that
+ *  the rooms sit on the x-axis. Module scope since S72 (see CAMERA_POSES). */
+const DOLLY_CTRL = { x: 0, y: 1.98, z: 1.15 };
+
+export interface CameraPose { x: number; y: number; z: number; pitch: number; yaw: number }
+
+/** each room's SEAT — the desk framed at E1 intimacy (eye ~0.8 m from the
+ *  screen, level), identical to the E1 view the player already trusts. Room 1
+ *  faces the north desk (yaw 0); Room 2 sits at its west desk (yaw 90); Room 3
+ *  at its east desk (yaw 270). All three desks read the same closeness.
+ *  ⚑ Module scope since S72 so the audit tool can be handed THIS function's own
+ *  output rather than a transcription of it (see CAMERA_POSES below). */
+export function seatPose(yaw: number): CameraPose {
+  switch (((yaw % 360) + 360) % 360) {
+    case 90:  return { x: -4.4, y: EYE.y, z: 0.7, pitch: 0, yaw: 90 };  // Room 2 (west)
+    case 270: return { x: 4.4, y: EYE.y, z: 0.7, pitch: 0, yaw: 270 };  // Room 3 (east)
+    case 180: return { x: EYE.x, y: EYE.y, z: 0.7, pitch: 0, yaw: 180 }; // spine (door + record) — review only
+    default:  return { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }; // Room 1 (front)
+  }
+}
+
+/**
+ * ⚑ THE POSE TABLES, PUBLISHED (S72 — the audit system, L3).
+ *
+ * `tools/harness/sweep.mjs` carried its own COPY of the seats and the five S67
+ * overlooks. It was correct on the day it was written and had no way of staying
+ * correct: move an overlook here and the sweep goes on photographing the old
+ * one, silently, which is the precise failure mode the tool exists to catch.
+ * So the tool no longer holds camera numbers at all — `tools/shots.mjs` reads
+ * this object off `window.__poses` (published by the debug panel under
+ * `?debug=1`, alongside `__camProbe`) and photographs whatever the build
+ * actually flies. Nothing here is new geometry: every field REFERENCES the
+ * constant above it. Adding a seat or an overlook means adding it here too, and
+ * that is the only maintenance this arrangement asks for.
+ *
+ * The leg durations come from `cluster.ts`'s RELOCATIONS — the same table the
+ * space half reads — so the comfort assertion divides the chord this file
+ * authored by the seconds that file authored, exactly as the engine does.
+ */
+export const CAMERA_POSES = {
+  /** the seated eye, and the camera's vertical FOV in degrees (createAppShell) */
+  eye: EYE,
+  fov: 42,
+  /** every seat the piece can put you in, keyed by the yaw that names it */
+  seats: {
+    r1: seatPose(0),
+    'r1-turned': seatPose(180),
+    r2: seatPose(90),
+    r3: seatPose(270)
+  } as Record<string, CameraPose>,
+  /** the S67 overlooks — leg 1's and leg 2's ends, which is what a review
+   *  actually wants to look at (the room as the lift shows it to you) */
+  overlooks: {
+    'look-A-room1': RELOC_OVERLOOK_A,
+    'look-e1hold': RELOC_E1_HOLD,
+    'look-B-open': RELOC_OVERLOOK_B,
+    'look-R2': RELOC_OVERLOOK_R2,
+    'look-C-cross': RELOC_OVERLOOK_C
+  } as Record<string, CameraPose>,
+  /** THE OPENING DESCENT as a driven leg: one arc, from → via → the seat */
+  descent: {
+    from: DESCENT_FROM,
+    via: DESCENT_VIA,
+    to: { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 } as CameraPose,
+    seconds: DESCENT_SECONDS,
+    arc: true
+  },
+  /** the three relocations, each as its three driven legs with the durations
+   *  cluster.ts times them at. `arc` = a bezier through `via` (smootherstep,
+   *  peak 1.875 × chord / dur); `arc: false` = a straight eased tween
+   *  (smoothstep, peak 1.5 × chord / dur). See the comfort block above. */
+  relocations: Object.fromEntries(Object.entries(RELOC_POSES).map(([key, p]) => {
+    const plan = RELOCATIONS[key];
+    const from = key.slice(0, 2);
+    return [key, {
+      /** where that era is actually seated — the panel's own onRelocate start */
+      start: seatPose(from === 'e3' ? 90 : 0),
+      legs: [
+        { leg: 'rise', to: p!.rise, via: p!.riseVia, seconds: plan?.riseSeconds ?? 0, arc: true },
+        { leg: 'build', to: p!.hold, via: null, seconds: plan?.buildSeconds ?? 0, arc: false },
+        { leg: 'descend', to: seatPose(plan?.seat ?? 0), via: p!.descendVia,
+          seconds: plan?.descendSeconds ?? 0, arc: true }
+      ]
+    }];
+  })),
+  /** the DOLLY's bezier control point — the send's own arc (dollyTo) */
+  dollyCtrl: DOLLY_CTRL,
+  /** how long a scripted send's dolly takes (app.ts's onSendResolve) */
+  dollySeconds: 2.4
 };
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
 // the blink is a CUT, never a tween: fade to black, THEN move the camera,
@@ -554,6 +648,35 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         camMove = null;
         return { pos: [camPos.x, camPos.y, camPos.z], pitch: camPitch, yaw: camYaw };
       };
+    /**
+     * ⚑ S72 THE COMFORT PROBE (`?debug=1`, read-only — the companion to
+     * `__camFree`, which writes). The comfort law (0.43 m/s, 9.1 °/s) is the
+     * only law in this piece that can hurt a person, and until now it was a
+     * number a session happened to measure by hand: E3→E4 shipped at 3.667 m/s,
+     * 8.5× the envelope, under a comment describing a rise the code never
+     * performed, and nothing noticed for weeks.
+     *
+     * `tools/shots.mjs --comfort` samples this every frame through every driven
+     * leg and differentiates it. `seq` is what makes that honest: it changes at
+     * every leg boundary and at every CUT, so a pair of samples that do not
+     * share a seq is discarded rather than reported as an infinite velocity.
+     * `driven` distinguishes a curve in flight from the player simply sitting.
+     */
+    (window as { __camPose?: () => unknown }).__camPose = () => ({
+      x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw,
+      driven: !!camMove, seq: camMoveSeq,
+      conducted: camMove?.conducted ?? false,
+      arc: camMove?.arc ?? false,
+      dur: camMove?.dur ?? 0,
+      // ⚑ the MOVE's own clock, and it is the one the comfort check must
+      // differentiate against. Wall-clock frame deltas measure the renderer:
+      // headless swiftshader stutters, and dividing a normal step by a 100 ms
+      // frame reported 2.8 m/s on a leg the curve runs at 0.44. `t` advances by
+      // the app's own dt, so d(position)/d(t) is the velocity the curve
+      // PRESCRIBES — what a player at a steady frame rate actually receives.
+      t: camMove?.t ?? 0,
+      leg: relocLeg, reloc: relocKey, descent: descentActive
+    });
     // THE WAKE probe (read-only, like __guide; replaces S40's __preBoot):
     // the wake has no desktop-canvas surface to eyeball (the monitor is dark
     // until it ends), so this closes the same review gap __ledger did —
@@ -876,6 +999,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     vx: number; vy: number; vz: number; arc: boolean;
     t: number; dur: number; conducted: boolean; }
   let camMove: CamMove | null = null;
+  /** S72: monotonic id of the driven leg currently owning the camera — see
+   *  startCamMove and the `__camPose` probe. Never resets; only ever compared. */
+  let camMoveSeq = 0;
   /** ⚑ THE ONE OPT-OUT (`?descent=0`). It has always turned off the entrance
    *  descent; S67 makes it turn off the RELOCATIONS too, because they are the
    *  same thing at a larger scale and the brief is explicit that whatever opts
@@ -1178,6 +1304,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camMove = { fx, fy, fz, fp: camPitch, fyaw: camYaw,
       tx: to.x, ty: to.y, tz: to.z, tp: to.pitch, tyaw: camYaw + dyaw,
       vx, vy, vz, arc: !!via, t: 0, dur, conducted };
+    // ⚑ S72: every start bumps the leg counter. The comfort assertion samples
+    // the live rig and differentiates it, and a CUT is not locomotion — a blink
+    // jump and endRelocation's own seat snap both move the camera metres in one
+    // frame, legitimately. Differencing across those would report thousands of
+    // m/s and the check would be switched off on its first run. So the sampler
+    // only measures a pair of frames that share a leg id, which is exactly the
+    // set of frames a driven curve owns.
+    camMoveSeq++;
     tween = null;
   }
 
@@ -1298,28 +1432,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // Head-drag past a room boundary re-seats on release; arrow keys step rooms;
   // R homes. Sealed E1 keeps the shipped single-seat behavior. Browser only —
   // in VR the head is the camera and the rooms simply surround you. ──
-  // The dolly's pull-back CONTROL point: raised and slightly back from the hub,
-  // so travel between rooms bows up-and-back (you rise over the space and see the
-  // three rooms) before pushing into the next desk. Used directly as the bezier
-  // control (not a pass-through) — clean arcs now that rooms sit on the x-axis.
-  const DOLLY_CTRL = { x: 0, y: 1.98, z: 1.15 };
-  let seatYaw = 0;                          // current seat (0 = R1 | 90 = R2 west | 270 = R3 east)
+  let seatYaw = 0;                        // current seat (0 = R1 | 90 = R2 west | 270 = R3 east)
 
   const angDist = (a: number, b: number): number =>
     Math.abs((((a - b) % 360) + 540) % 360 - 180);
 
-  /** each room's SEAT — the desk framed at E1 intimacy (eye ~0.8 m from the
-   *  screen, level), identical to the E1 view the player already trusts. Room 1
-   *  faces the north desk (yaw 0); Room 2 sits at its west desk (yaw 90); Room 3
-   *  at its east desk (yaw 270). All three desks read the same closeness. */
-  function seatPose(yaw: number): { x: number; y: number; z: number; pitch: number; yaw: number } {
-    switch (((yaw % 360) + 360) % 360) {
-      case 90:  return { x: -4.4, y: EYE.y, z: 0.7, pitch: 0, yaw: 90 };  // Room 2 (west)
-      case 270: return { x: 4.4, y: EYE.y, z: 0.7, pitch: 0, yaw: 270 };  // Room 3 (east)
-      case 180: return { x: EYE.x, y: EYE.y, z: 0.7, pitch: 0, yaw: 180 }; // spine (door + record) — review only
-      default:  return { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }; // Room 1 (front)
-    }
-  }
   /** the three rooms the dolly seats in — Room 1 (0), Room 2 west (90), Room 3
    *  east (270). The spine (180: door + record terminal) is a channel you can
    *  turn to look at, never a room. E4 uses the same three; its home is Room 3
@@ -2164,6 +2281,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         camPitch = pitch !== 0 ? pitch : sp.pitch;
         camMove = null;
       },
+      // ⚑ S72 (see panel.ts's DebugOpts.poses): the code-resident tables plus
+      // the DEVICE seats, which are authored in data/room/nodes.json and reach
+      // the tool through the live node graph rather than a second read of it.
+      // A node without its own `pose` is a base room seat, so it resolves
+      // through the same seatPose() the cut itself calls (performSeatCut).
+      poses: () => ({
+        ...CAMERA_POSES,
+        deviceSeats: (movementNodes?.nodes ?? []).map((n) => ({
+          id: n.id, label: n.label, eras: n.eras,
+          pose: n.pose ?? seatPose(n.seatYaw)
+        }))
+      }),
       onReveal: () => cluster?.reveal(),
       // ⚑ S67 (check-spec C6's rule, applied by hand because C6 can only see
       // os.ts's debugJump ids): every new beat gets a button. This one replays
