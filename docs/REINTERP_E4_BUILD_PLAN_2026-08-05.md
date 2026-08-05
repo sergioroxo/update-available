@@ -19,7 +19,11 @@ Counted from `data/room/reinterp_deltas.json`, not from any doc:
 window pieces, curtains, poster, sign, door — plus desk, chair, bed, nightstand, bookcase, rug, a CRT
 in five pieces, keyboard, mouse, two folders. **No lamp, no mug, no cardigan, no books, no calendar.**
 
-> **Room 3 is Room 2 before S66 — the exact state Sérgio complained about.** And Era 4 happens there.
+> **Room 3 today is in the state Room 2 was in BEFORE S66** — the exact state Sérgio complained
+> about. And Era 4 happens there.
+> *(Clarifying my own bad sentence, which read as if I had confused the mapping. I had not, and it is:
+> **Room 1 = Daniel, Eras 1 AND 2** · **Room 2 = Vera, Era 3** · **Room 3 = Maya, Era 4.** The
+> comparison above is of BUILD STATE, not of which room belongs to which era.)*
 
 ### And the phone really does not exist
 ```json
@@ -51,17 +55,19 @@ So: **a cheap design stage first, then the room, then the software.**
 **The only job: decide what the room must physically contain**, so Stage 1 cannot guess wrong.
 Roughly a half-session, and it unblocks everything:
 
-1. **⚑ What is the device?** The design says L *"speaks FROM THE DEVICE into the room, spatialized at
-   the all-in-one."* **There is no all-in-one in the data** — Room 3 has a CRT in five pieces,
-   inherited and re-tinted. Either the CRT becomes the all-in-one across the eras, or E4 adds a real
-   one. This is a prop decision with an argument attached (the machine is the same machine).
-2. **Where do captions live?** On the device screen, floating in the room, or on the witness surface?
-   ⚑ Different answers need different geometry, and this is an accessibility requirement, not a
-   flourish — decide it before the walls are dressed.
-3. **Where is the ball watched from?** A seat, the device, or the room itself? The turn is the
-   player's only action there, so the *staging* is the mechanic.
-4. **Where do the photo memories appear?** The device, or something of hers?
-5. **⚑ THE TOUCHLESS BUDGET** (below).
+**✅ ITEMS 1–4 ARE ANSWERED** by `REINTERP_E4_THE_DEVICE_2026-08-05.md` (Sérgio's headset question,
+2026-08-05). The device is **the headset**; captions live on the visor, which is **the same 2D canvas
+remounted**, so the one-surface law survives intact; the memories are served to the visor; and the
+ball is deliberately **NOT** watched through it. What remains for Stage 0 is item 5 and the prop list
+that falls out of the above.
+
+1. ~~What is the device?~~ **the headset** — the all-in-one the audio design asked for and the data
+   never had.
+2. ~~Where do captions live?~~ **the visor surface** — accessibility and the one-surface law agree.
+3. ~~Where is the ball watched from?~~ **not through the device.** The one thing not served.
+4. ~~Where do the memories appear?~~ **the visor.** They arrive at her face; that is the point.
+5. **⚑ THE TOUCHLESS BUDGET** (below) — still open, and now load-bearing: the device is *how* the
+   apparatus gets past the turn.
 
 ## ⚑ Stage 0.5 · "Almost touchless" — Sérgio's own note, made into a rule
 > *"I kinda like that this era is almost touchless, as the system navigates through you."*
@@ -81,7 +87,20 @@ gesture. **The input budget bottoms out and then returns, once, in the only room
 
 That is a better argument for the ball than anything in the deep pass, and it came out of his note.
 
-## Stage 1 · THE ROOM — Room 3 as a livable place
+## ⚑ Stage 1 · THE ROOMS — and it is all three, not just Room 3
+**CORRECTED by Sérgio, 2026-08-05:** *"Vera's room has a lot of mistakes, all the rooms built have
+still a lot of logistics and object errors. So no, it's not done."*
+
+**I framed Room 2 as finished and Room 3 as behind it. That was wrong, and it would have set the
+wrong target** — building Room 3 up to a standard that is itself not met. Room 2's 73 props are a
+*count*, not a verdict, and S71 deliberately fixed only what was provable by measurement and left
+every judgement call as a proposal. **That backlog is still open, in every room.**
+
+So Stage 1 is a pass over **all three rooms**: Room 3 needs a life it has never had, and Rooms 1 and 2
+need the logistics and object errors cleared. `npm run audit` and `room-audit.mjs` catch the
+measurable half; the rest is Sérgio's eye and a session sitting in every seat.
+
+### Room 3 as a livable place
 **S66's contract of intent, applied to Maya**, exactly as he asked on 2026-08-03 (*"should be
 something to do for all 4 moments"*): the room must show somebody lives here, and she is not the
 story — she is who the story is happening to. Room 1 is the benchmark; Room 2 is the recent worked
