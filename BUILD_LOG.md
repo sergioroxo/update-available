@@ -233,3 +233,4 @@
 - 2026-08-04 — Narrative audit: E4 has zero beats and no dialog data, the Close is one button; figures-for-the-article index added.
 - 2026-08-05 — E4: Echo renamed L, the Byline export source folded in as the Malta payoff, speculation ledger + four design decisions written, S73 queued, S68 retired unbuilt.
 - 2026-08-05 — E4 deep pass: ballroom as the category inversion, house/Household rhyme, MC vs L, the photo editor as a memories feature; S73 held pending two decisions.
+- 2026-08-05 — E4 build plan: four staged sessions with the ROOM as stage one (Room 3 has 37 props vs Room 2's 73; both phone props are untextured boxes); touchless input budget adopted.

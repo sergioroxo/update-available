@@ -166,10 +166,11 @@ checked. **One line does the whole transnational argument.**
 
 # 4 · ⚑ IDEAS FOR THE OTHER ERAS (he asked)
 
-**4.1 · Handwriting disappears.** E1's mixtape is the only handwritten label in the piece — everything
-else, in every era, is typeset. **By E4 nothing is handwritten, because L has no hand.** It costs one
-art note per era and it is a thirty-year argument nobody has to state. *(E1's mixtape already exists;
-this is a discipline, not a build.)*
+**4.1 · Handwriting disappears.** ⚑ **CORRECTED by Sérgio, 2026-08-05: E1 has no handwritten label
+today.** I assumed the mixtape carried one; it does not. So this is **an ADDITION to a shipped era,
+not a discipline to maintain** — an art pass on E1 to buy a through-line that pays off in E4, where
+nothing is handwritten because L has no hand. Still a good argument; it is simply not free, and it
+should be judged as new work. **Parked as a proposal.**
 
 **4.2 · ⚑ THE NAME — the high-value, high-risk one, and it is yours to decide.**
 The name/file thread already reads: E1 *"they already know your name"* → E2 `subject migrated — file
@@ -230,3 +231,10 @@ cheaper to decide now than after fifty lines exist.
   a community reader.
 - Two decisions are still yours: **the ball reader** (§5.3), and **whose name the record retains**
   (§4.2).
+- ⚑ **And the era is now "almost touchless"** (Sérgio, 2026-08-05): the beats advance themselves and
+  L moves you. That is an input budget that shrinks era over era — receive, respond, operate, watch —
+  and **the ball is where the one input comes back.** See `REINTERP_E4_BUILD_PLAN_2026-08-05.md`
+  §0.5; it is a better argument for the ball than anything above.
+- ⚑ **Staging:** the build is FOUR sessions, not one, and **the room is stage one** —
+  `REINTERP_E4_BUILD_PLAN_2026-08-05.md`. Room 3 has 37 props to Room 2's 73 and Room 1's 107, and
+  both phone props are untextured boxes with no `model` field.
