@@ -14,7 +14,7 @@ not live.***
 | — | ~~S70 — the comments, and the recruitment floor~~ | ↓ below, in this file | **SHIPPED 2026-08-03** — number retired |
 | — | ~~S71 — walk the space and report what is wrong~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired |
 | — | ~~S72 — the audit system (L3 capture + L4 assertions)~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired. 5 of 6 assertions live; assertion 6 (reachability) NOT built, named as such |
-| 1 | **S73 — Era 4 exists** | ↓ below, in this file | **QUEUED — the largest gap in the piece** |
+| — | **S73 — Era 4 exists** | ↓ below, in this file | ⚑ **HELD 2026-08-05** — scope changed by the deep pass; 2 decisions open |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED unbuilt 2026-08-05** — see below |
 
 **⚑ NOTHING IS QUEUED.** The next session's job is Sérgio's to name. Two candidates the S72 audit
@@ -439,7 +439,12 @@ could not build. A skipped check named plainly is worth more than a check that a
 ---
 
 # S73 — ERA 4 EXISTS · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: QUEUED — dispatch this one. It is the largest remaining gap in the piece.**
+**⚑ PROMPT STATUS: BLOCKED — do NOT dispatch yet.** Sérgio, 2026-08-05: *"I will wait for these
+before the S73."* ⚑ The prompt below predates `REINTERP_E4_DEEP_PASS_2026-08-05.md` and its §6
+**changes scope**: TRANSCENDANCE becomes the MC against L (not laughter), the player's action at
+the ball is the TURN and nothing else, and the AI photo editor is IN SCOPE as a memories feature.
+Two decisions are open first — the ball reader, and whose name the record retains. Rewrite this
+block against the deep pass before dispatching.
 *The narrative audit (`REINTERP_WHAT_IS_MISSING_2026-08-04.md`) counted it from the build: E1 has 14
 desktop beats, E2 has 18, E4 has **ZERO** and there is no `s4_*.json`. You can walk into Era 4 and
 there is nothing to do. ⚑ Read `REINTERP_E4_THE_ARGUMENT_2026-08-05.md` before the design docs — it
