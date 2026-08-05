@@ -1,6 +1,20 @@
 # REINTERP E4 — AUDIO-FIRST: how to actually make it (design, 2026-07-12)
 STATUS: live
 
+> **⚑ TWO AMENDMENTS, 2026-08-05 (Sérgio) — read `REINTERP_E4_THE_ARGUMENT_2026-08-05.md` first.**
+> 1. **ECHO IS RENAMED "L".** Lamby → Lambient → **L**: the dispersal finishing as a file
+>    designation. The era whose wound is a name the system will not release is presided over by a
+>    system that has given up its own. Every "Echo" below should read "L".
+> 2. **A NEW SOURCE CHANGES THE ERA'S ARGUMENT.** Byline Times, 14 Aug 2024 — US groups running
+>    European conferences (Warsaw), retreats in Poland and England, ~$300 online courses, webinar
+>    series, directories pointing home to American experts. **So E3's Malta break pays off here:
+>    the law arrived, and the apparatus moved to where the law was not.** E4 is no longer only "it
+>    automates itself" — it is **no labour AND no jurisdiction.** Real orgs stay dossier-only.
+> Also confirmed: **subtitles on every spoken line** (accessibility *and* the only warning an audio
+> beat can give), and **TRANSCENDANCE is the piece's positive thesis**, delivered as the
+> instrument's failure (`NO CATEGORY FOUND`), never as a message.
+
+
 *Fable, per Sérgio: "this should all be audio based on the conversations with the AI, focus
 on deadnaming, focus on the LGB community being transphobes; keep TRANSCENDANCE." This is
 the make-plan: sound design thesis, mechanics, the two vectors, the production pipeline,

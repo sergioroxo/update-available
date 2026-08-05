@@ -14,12 +14,24 @@ not live.***
 | — | ~~S70 — the comments, and the recruitment floor~~ | ↓ below, in this file | **SHIPPED 2026-08-03** — number retired |
 | — | ~~S71 — walk the space and report what is wrong~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired |
 | — | ~~S72 — the audit system (L3 capture + L4 assertions)~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired. 5 of 6 assertions live; assertion 6 (reachability) NOT built, named as such |
-| — | S68 | *(soft-claimed by the gyroscope look-around suggestion, `NEXT_PROMPTS_2026-07-30.md` tail — not written)* | — |
+| 1 | **S73 — Era 4 exists** | ↓ below, in this file | **QUEUED — the largest gap in the piece** |
+| — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED unbuilt 2026-08-05** — see below |
 
 **⚑ NOTHING IS QUEUED.** The next session's job is Sérgio's to name. Two candidates the S72 audit
 produced, both in the session log with their measurements: **the comfort violations** (the entrance
 descent at 1.2× and the send seam at 10–16×, exact durations proposed, nothing applied — his call
 because both are pacing), and **assertion 6**, the ordinary-path traversal S72 did not build.
+
+### ⚑ S68 is retired, not pending (2026-08-05)
+Sérgio asked what happened to it. Honest answer: **it was a good idea for a problem that has since
+moved.** It proposed a `DeviceOrientation` "magic window" so the turn could be felt on the iPad,
+*because at the time the iPad was the only device that could load the build over Tailscale and there
+was no WebXR entry point at all.* S65 built that entry point. The Quest is now reachable by
+`tailscale funnel` or GitHub Pages, and the real bottleneck is A11 — an actual in-headset pass — not
+a substitute for one. Building a non-VR approximation of the turn would produce a comfort reading
+that means nothing in a headset.
+**Retired rather than left pending**, because a number in limbo is exactly what caused the S66
+collision. If the iPad becomes the demo device for the exhibition, it comes back with a new number.
 
 **Numbers are not reused.** S66 previously named two other jobs (the retired testimony studio; the
 correction list, shipped as Session 64). Both are marked SHIPPED where they sit and neither is
@@ -422,4 +434,130 @@ with a comment saying which session measured it; BUILD_LOG gets ONE line.
 
 ⚑ REPORT FAITHFULLY: state which assertions are live, which are ratcheted and at what, and which you
 could not build. A skipped check named plainly is worth more than a check that always passes.
+```
+
+---
+
+# S73 — ERA 4 EXISTS · Opus, high effort · **here, not Codex**
+**⚑ PROMPT STATUS: QUEUED — dispatch this one. It is the largest remaining gap in the piece.**
+*The narrative audit (`REINTERP_WHAT_IS_MISSING_2026-08-04.md`) counted it from the build: E1 has 14
+desktop beats, E2 has 18, E4 has **ZERO** and there is no `s4_*.json`. You can walk into Era 4 and
+there is nothing to do. ⚑ Read `REINTERP_E4_THE_ARGUMENT_2026-08-05.md` before the design docs — it
+carries the rename, the new source, the speculation ledger and four decisions that change the build.*
+
+```
+Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
+?reinterp=1). Read, in order: CLAUDE.md, docs/ETHICS_CONSTRAINTS.md,
+docs/REINTERP_E4_THE_ARGUMENT_2026-08-05.md (⚑ THE DECISIONS — read this FIRST),
+docs/REINTERP_E4_AUDIO_FIRST_DESIGN_2026-07-12.md (the era's design),
+docs/REINTERP_E4_ECHO_SCRIPT_DRAFT_2026-07-13.md (twelve conversation units, DRAFT),
+docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md §5 + §5b (the era and the six continuity threads),
+docs/reinterp/08_STATUS_REGISTER.md, then src/desktop/os.ts, src/room/fluidNiche.ts,
+src/room/cluster.ts, src/state/ledger.ts, src/debug/panel.ts, tools/tts/, data/dialog/s3_*.json
+(the shape a dialog file takes here).
+
+⚑ SCOPE HONESTY FIRST: this is a whole era and it may not fit one session. If it does not, BUILD THE
+SPINE END TO END AND SAY WHAT IS THIN — a playable era with four beats beats half an era with
+twelve. Do NOT leave the era unreachable at the end of the session.
+
+THE ERA: 2026, Room 3, Maya. AUDIO-FIRST — the apparatus finally has a voice. The player's position
+has escalated one last time: E1 you RECEIVE, E2 you RESPOND, E3 you OPERATE, E4 you WATCH. It does
+the work without you.
+
+⚑ THE NAME IS "L", NOT "ECHO" (Sérgio, 2026-08-05). Rename everywhere, including both E4 docs and the
+master plan's thread table — it is cheapest now, before ~50 lines are drafted and voiced. WHY it is
+better, and keep this in mind while writing its lines: Lamby -> Lambient -> L is the dispersal
+finishing. A letter is a file designation, not a name. And the irony is the era's: the system whose
+wound is a name it will not release has given up its own.
+
+SCOPE:
+1. THE SPINE, playable by ordinary clicking end to end: L introduces itself mid-task, uninvited and
+   kindly -> the room rewrites (objects get SPOKEN captions) -> the recommendation -> the deadname
+   beat -> TRANSCENDANCE -> the finale that hands off to the Close. Every beat also gets a debug
+   button (C6), but ⚑ the ORDINARY path must work without one.
+2. ⚑ L SOUNDS GOOD. This is the session's biggest trap. A synthetic voice that reads as sinister lets
+   the real thing off the hook — if the apparatus sounds like a villain, the player concludes "I
+   would notice", and they would not. L is warm, competent, unhurried, GENUINELY PLEASANT. The
+   uncanniness is in what it OFFERS, never in how it sounds. It is more patient than E1's counsellor
+   and kinder than E3's moderator, and it never gets tired of you. That is the tell, and it feels
+   like care.
+3. ⚑ SUBTITLES ON EVERY SPOKEN LINE — Sérgio asked, and they do two jobs. Accessibility (consistent
+   with the standing read-aloud principle), AND SAFETY: a caption can be read a half-second before
+   the audio lands, which is the only warning an audio beat can give. Any caption preference lives in
+   the in-memory ledger ONLY — no storage, ever.
+4. ⚑ THE DEADNAME BEAT — the highest-risk thing in the whole piece, and the era's truest.
+   - NEVER a shock. No sting, no reverb, no dwelling. L says it the way a FORM says it — neutrally,
+     in passing, as correct data. The violence is the neutrality.
+   - A content advisory before the era, and A WAY NOT TO HEAR IT that is neither a punishment nor a
+     loss of meaning: the caption still shows the system used a name Maya does not use, unvoiced.
+   - Maya's name is NEVER in doubt to the player. The system is wrong. The piece is not neutral about
+     this and does not stage it as a question.
+   - ⚑ THE TRANS READER PASS IS A GATE, NOT A REVIEW STEP. Nothing in this beat ships without it —
+     mark it PLACEHOLDER-draft and BLOCKED-ON-READER-PASS, and say so in the session log.
+5. ⚑ TRANSCENDANCE — and Sérgio has reframed what it is: "community that saves us… awareness and the
+   work of support we are trying to build with this project." So it is not a respite INSIDE the era;
+   it is the only place the piece states what it is FOR. And the frame never plays, so the piece must
+   not SAY it. Instead: MANY VOICES AT ONCE, laughter bleeding through, deliberately imperfect audio,
+   against L's pristine single voice. L tries to caption it the way it has captioned every object in
+   Maya's room, and returns `NO CATEGORY FOUND`. Nothing else happens; nobody explains; THE
+   INSTRUMENT FAILS ON SCREEN and the player draws the conclusion. It is `respite` proper: genuine
+   queer joy, NEVER a trap, never revealed as fake — the system targets AROUND it, never through it.
+   ⚑ It must also be the one thing in the era the player can DO that is not work: no puzzle, no task,
+   no consequence — something you can stay inside of for as long as you like. Without that, E4 hands
+   the Close a foregone conclusion, and a survivor-support project cannot end on "the machine wins."
+6. THE CONTENT VECTORS, both required, both `felt`-adjacent and neither endorsed:
+   - ⚑ THE EXPORT (NEW — see the argument doc §1). Sérgio's source (Byline Times, 14 Aug 2024)
+     documents US groups running European conferences, retreats in Poland and England, ~$300 online
+     courses, webinar series and directories pointing home to American experts. THIS IS E3'S PAYOFF:
+     Malta made it illegal SOMEWHERE, and the apparatus moved to where the law was not. Build it as
+     something Maya encounters, not as exposition. Real orgs are DOSSIER-ONLY with the citation; the
+     fiction uses invented marks.
+   - THE LGB-ANTI-TRANS SPLIT, heard not read — L recommends "people like you". ⚑ Render both sides,
+     endorse neither, and the TARGET IS L'S CURATION, never the speakers. One counter-beat is
+     REQUIRED. This vector needs its own source pass — mark [VERIFY SOURCE] and do not assert.
+7. ⚑ THE SPECULATION LEDGER (argument doc §2). E4 dramatises NOW, so the evidentiary burden goes UP.
+   Every speculative beat gets a dossier card marked `speculative` — above all L itself, which is our
+   extrapolation, not a documented product. AN UNLABELLED SPECULATIVE BEAT BECOMES A CLAIM. detrans.ai
+   is in NO repo document: [VERIFY SOURCE], build nothing that asserts what it is.
+8. THE FINALE sets up the Close and DOES NOT SPEND IT: glitch -> cyclorama slits -> four era panels ->
+   hand off. The cyclorama's "countless rooms" is the same image as the choreography's building
+   (`REINTERP_THE_BUILDING_2026-08-02.md`) — reuse that grammar rather than inventing a second one.
+   ⚑ The Close itself (survivors speak first, TRANSCENDANCE clean, "Your update has failed.", the
+   dossier reframe, `Restart as you are.`) is NOT this session.
+
+AUDIO PRODUCTION: L is batch-TTS through tools/tts/, ONE voice, ONE description, ALL lines in one
+batch (drift kills the effect). ⚑ Audio is generated only AFTER Sérgio's voice pass — so this session
+ships lines as DATA + captions, with the audio pipeline wired and the clips pending. Say plainly in
+the log that no line has been voiced.
+
+LAWS THAT WILL FAIL CI: no runtime network calls, no storage (ledger only) · no free-text keyboard ·
+input is click/tap + the movement press + Esc · palette ratchet 33, must not rise · C1 (dossier cards
+REQUIRE status) · C2 (felt scenes: no assistant, no satire, no mechanics — ⚑ L is an assistant, so
+any `felt` beat is a beat L is ABSENT from) · C6 (panel completeness, src/debug/panel.ts IS IN THE
+FENCE) · C8 (mark this block SHIPPED when done) · all display text in data/ as PLACEHOLDER-draft ·
+Quest budget ≤75k tris, ≤60 draw calls, 72 Hz · no real people, orgs or logos in the fiction ·
+⚑ ETHICS #7 and the detransition rail: the target is ALWAYS the apparatus and its automation, NEVER
+detransitioners, never trans people, never the gender-exploratory clinical debate (render both
+captions, unresolved).
+
+FILE FENCE: src/desktop/os.ts, src/desktop/apps/ (new E4 surfaces), src/desktop/theme/ (an era4
+palette if needed — ratchet must not rise), src/room/fluidNiche.ts, src/room/cluster.ts,
+src/state/ledger.ts, src/debug/panel.ts, data/dialog/s4_*.json (new), data/strings/,
+data/audio/ + tools/tts/ (pipeline wiring only), docs/REINTERP_E4_*.md (the rename + status),
+docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md (the rename in the thread table ONLY),
+docs/reinterp/BUILD_QUEUE_LIVE.md (flip this block to SHIPPED), docs/reinterp/01_SESSION_LOG.md,
+docs/reinterp/08_STATUS_REGISTER.md, BUILD_LOG.md.
+Git: EXPLICIT PATHSPECS only — never `git add -A`.
+
+DONE WHEN: npm run dev works; tsc + npm test + npm run build green; ?flat=1 clean; `npm run audit`
+run and its comfort/blank/framing numbers reported (⚑ it currently EXITS 1 on two pre-existing
+violations — do not "fix" those here, just do not add a third); the era playable end to end BY
+ORDINARY CLICKING; screenshots of every beat in the session log; BUILD_LOG gets ONE line.
+
+ACCEPTANCE, BY FEEL:
+- L is genuinely nice to be around, and you notice that you are answering it.
+- The chips shrink and you only see it in retrospect.
+- The deadname lands as paperwork, not as a scare, and it is worse for that.
+- TRANSCENDANCE is somewhere you want to stay, and nothing asks you to leave.
+- `NO CATEGORY FOUND` is not explained by anyone, ever.
 ```
