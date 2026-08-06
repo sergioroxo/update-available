@@ -27,9 +27,41 @@ walks. It is the most category-saturated room imaginable.
 | what happens to it after | it is retained | **it is yours** |
 
 So when L attempts its caption and returns **`NO CATEGORY FOUND`**, the joke is not that there is no
-category. **The room is made of nothing but categories. They are simply not the machine's to
-assign.** That is the sharpest single image available to this piece, and Sérgio's note is what
-produced it.
+category. **The room is made of nothing but categories.**
+
+### ⚑ CORRECTED 2026-08-06 — and the correction makes the beat better
+I originally wrote *"they are simply not the machine's to assign."* The provenance pass
+(`docs/research/BALLROOM_PROVENANCE_2026-08-06.md`) says that reading is **a simplification, and it
+flattens what scholars treat as the culture's central insight.**
+
+**Community authorship and community judging are real and well supported** — houses and commentators
+set the criteria, community panels score them, no outside institution issues the rubric. **But many
+of the signature categories are not invented from nothing.** "Realness" categories are skilled
+re-performances of categories the outside world *already imposes* on the same people daily — passing,
+as a literal safety requirement. Bailey's scholarship and Muñoz's *disidentification* both describe
+working **on and against** dominant categorisation from within it, not escaping categorisation.
+
+> **So the accurate line is not "these categories are alien to the machine."**
+> **It is: the machine's own vocabulary is being performed by the people it was imposed on — and the
+> judging has been taken away from it.**
+
+⚑ **That is a better beat than the one I wrote, and it changes what the categories should be.** My
+instruction to invent categories in the piece's own register was half right: they should invent, but
+they should **echo the apparatus's own words** — because that is what realness does. Which means the
+piece already has them: **the profile, the check-in chips, the correction list, L's captions.** Four
+eras of categories imposed on people, walked and judged by the people they were imposed on.
+
+**And `NO CATEGORY FOUND` gets sharper.** The machine is not baffled by alien material. **It
+recognises every word and cannot occupy the role.** It is looking at its own vocabulary with the
+scoring taken out of its hands.
+
+**Three traps the pass names, all avoidable:** claiming total independence from imposed norms (it
+undersells the real point) · treating *Paris Is Burning* as the default reference without bell hooks's
+1992 critique, which is the standard citation on exactly this failure mode · crediting "ballroom
+culture" in the abstract instead of naming lineage and originators, **which repeats the extraction
+pattern rather than correcting it.** And one more: **do not imply a documented link between ballroom
+and SOGICE survivors specifically** — it is not in the sources. The supported claim is the broader
+one: family and religious rejection → housing precarity → houses as one chosen-family response.
 
 ## ⚑ 1.1 · And the rhyme that was already in the repo, unplanned
 

@@ -20,7 +20,35 @@ Europe* — documents something the piece's E4 did not have and needed:
 | **Brothers Road** retreats held **in England and Poland** | the body still travels, even when the content does not |
 | Training offered to **schools and counsellors** | the target moved upstream, to institutions |
 
-## ⚑ And here is the through-line the piece was missing
+## ⚑ CORRECTED 2026-08-06 BY THE SOURCE PASS — the thesis below was half wrong, and the truth is worse
+
+`docs/research/E4_SOURCES_export_2026-08-06.md` corroborated most of the Byline claims and broke two.
+**One of the breaks lands on the era's thesis**, so it is corrected here rather than footnoted:
+
+- **⚑ "The apparatus moved to where the law was not" is NOT documented, and probably is not true.**
+  IFTCC is registered in **London** and conferences in **Poland** — and **neither the UK nor Poland
+  has a national ban in force.** They did not flee anywhere. Brothers Road's England/Poland retreats
+  were **2007 and 2014**, and its current schedule lists **no European dates at all** — a shift toward
+  Egypt, Israel, Mexico and the US that **no ban explains**, because no ban applied.
+- **So the accurate claim is sharper, not softer:** *the apparatus did not have to relocate, because
+  almost nowhere made it illegal.* **Malta went first in 2016 and is still close to alone.** The
+  Council of Europe (PACE, Jan 2026), the European Parliament (Apr 2026) and a UK draft bill
+  (Jun 2026) have all moved — **and none of it binds anyone.**
+- **What that does to Era 3's break:** Malta still lands, and it lands *harder*. Vera hears that it is
+  illegal **somewhere** — and the honest answer ten years later is that *somewhere* is still very
+  nearly the whole story. **The apparatus did not outrun the law. The law never arrived.**
+- **Two smaller breaks, recorded so nothing rests on them:** the *"more than 30 countries"* figure is
+  **28** in IFTCC's own release for that event (a different 2023 conference drew 34), and the
+  apparent second and third sources for the whole story — The Progressive, 76crimes — are **by the
+  same reporter**, so they are not independent corroboration. **GPAHE is the genuine independent
+  anchor**, documenting all four organisations without citing Byline at all.
+
+*(The legal picture is being completed by a second pass, `E4_SOURCES_law_2026-08-06.md`. Treat the
+ban list above as provisional until it lands.)*
+
+---
+
+## The through-line, as originally written (superseded in part by the correction above)
 
 **Era 3 ends on Malta — the first European ban, December 2016.** Until now, Era 4's answer to that
 was *"the apparatus automates itself."* True, and thin.
@@ -61,12 +89,12 @@ goes UP, not down** — and it is the era most likely to be read as prophecy rat
 
 | Beat | Status | Note |
 |---|---|---|
-| The apparatus operating transnationally online | **documentary** | Byline 2024 + the existing GPAHE material |
+| The apparatus operating transnationally online | **documentary** — ⚑ but see the correction at §1: it operates where there is **no ban**, which is not the same claim as evading one | GPAHE is the independent anchor; Byline's follow-ups are the same reporter |
 | Softened language, civil-liberties framing | **documentary** | NARTH→ATCSI, already in the KB |
 | Detransition narratives as the current vector | **documentary** | already in the research (brief rev 3) |
 | The LGB-anti-trans split, *"transing away the gay"* | **documented as rhetoric** — ⚑ needs its own source pass before it is voiced | the piece must render it, never endorse it |
-| **L as a conversational AI doing this work** | ⚑ **SPECULATIVE, and must be labelled so** | the *capability* is ordinary; this *deployment* is our extrapolation |
-| A detransition AI service (detrans.ai) | ⚑ **[VERIFY SOURCE] — in no repo document** | nothing may be asserted until sourced |
+| **L as a conversational AI doing this work** | ⚑ **UPGRADED 2026-08-06 → `documentary` for the FORM** | detrans.ai exists and was investigated. Our L's voice, lines and behaviour stay invented and labelled |
+| A detransition AI service (detrans.ai) | ⚑ **SOURCED 2026-08-06 → `documentary`** | Sept 2025, open-weight model, ~2,700 scraped r/detrans posters, Rewire investigation 15 Jul 2026. `REINTERP_E4_SOURCE_PASS_2026-08-06.md` §1 |
 | The system speaking a deadname aloud | **design extrapolation** from documented record-keeping | not a documented product |
 
 **The honest position, and it should be stated inside the piece rather than only in a doc:** E4's
