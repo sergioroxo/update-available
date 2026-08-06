@@ -238,3 +238,4 @@
 - 2026-08-05 — Stage 0 closed (touchless budget, the ball has no screen, the fixture list); S74 queued as E4 Stage 1; model-elicitation research protocol added.
 - 2026-08-06 — Strand B run kit: the layout prompt, a six-model arm list current as of today, and the audit-based scoring sheet.
 - 2026-08-06 — Entrance descent 10 → 11.6s on Sérgio's decision (0.497 → 0.429 m/s, verified by shots.mjs comfort); S73 rewritten as E4 Stage 2 with the ball explicitly excluded.
+- 2026-08-06 — E4 source pass: detrans.ai sourced (L's form moves to documentary), the LGB-split lobbying/clinical distinction set as a law, both S73 gates closed.

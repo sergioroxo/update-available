@@ -440,17 +440,38 @@ could not build. A skipped check named plainly is worth more than a check that a
 ---
 
 # S73 — ERA 4 EXISTS (Stage 2) · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: BLOCKED — runs AFTER S74 ships, and two decisions are Sérgio's (below).**
+**⚑ PROMPT STATUS: BLOCKED — on S74 ONLY. Both narrative gates closed 2026-08-06; dispatch as soon as S74 ships.**
 *Rewritten 2026-08-06 against the deep pass; the earlier version predated it and would have built the
 wrong ball. Stage 2 of `REINTERP_E4_BUILD_PLAN_2026-08-05.md`. ⚑ THE BALL IS NOT THIS SESSION — it is
 Stage 3, after the reader.*
 
-## The two gates, both Sérgio's, both stated in the prompt
-1. **The ball reader** — a reader from ballroom/Black queer community specifically, per
-   `REINTERP_E4_DEEP_PASS_2026-08-05.md` §5.3. Gates Stage 3, not this session.
-2. **⚑ Whose name the record retains** — Daniel's 1997 file (safe, most of the force) or the name the
-   PLAYER typed in 1997 (strongest, and the most dangerous thing in the work). §4.2. **This session
-   must build the beat so that either answer drops in**, and must not choose.
+## ✅ BOTH GATES CLOSED — Sérgio, 2026-08-06
+1. ~~The ball reader~~ **LIFTED.** *"The ball reader is symbolic, you don't have to copy Black/Latinx
+   people, this is interpretive. Read from the culture and infer."* The technique that makes that
+   hold is in `REINTERP_E4_SOURCE_PASS_2026-08-06.md` §4: **the MC performs the FUNCTION — announce,
+   categorise, celebrate — with NO ballroom vernacular, and invented categories in the piece's own
+   register, exactly as `Household` is invented scripture.** The ball does not quote ballroom; it
+   does what ballroom does. Ballroom is still credited as the influence on a Dossier card — a
+   citation, not a gate. (Stage 3, still not this session.)
+2. ~~Whose name the record retains~~ **ANSWERED BY FACT: Daniel.** ⚑ My §4.2 proposal rested on a
+   false premise — **the reinterp build has no typed name.** `os.ts beginReinterpOpening()` sets
+   `ledger.name = opening.o3_prefilled_name` = **"Daniel"**, under *"Welcome back,"* and *"we filled
+   this in for you."* The typed path (`confirmName`) belongs to the shipped, non-reinterp build.
+   **And the prefilled version is stronger:** the name was never the player's to give. So L saying
+   *Daniel* to Maya in 2026 is not the record keeping something you offered — **it is the record
+   still holding the name it assigned you thirty years ago.** One place in the ledger, no decision to
+   defer. *(Note: CLAUDE.md's "the typed name … lives in the ledger" is stale for this branch.)*
+
+## ⚑ AND THE SOURCE PASS CHANGED TWO THINGS — read `REINTERP_E4_SOURCE_PASS_2026-08-06.md`
+- **L's FORM is now `documentary`, not `speculative`.** detrans.ai (Sept 2025; built on an
+  open-weight model; scraped from ~2,700 r/detrans posters; investigated by Rewire News Group, 15 Jul
+  2026) is a conversational AI doing this work. **It is also E3's correction list automated** — the
+  same operation at 2,700 people with nobody's hands on it. Our L stays invented and labelled.
+- **The LGB-split beat has a law attached** (source pass §2): a lobbying campaign with a named
+  author, a documented purpose and an unsupported premise is **NOT** the gender-exploratory clinical
+  debate. Attribute and source the first; both-captions-unresolved is reserved for the second.
+  ⚑ Collapsing them would give a lobbying position the epistemic protection the piece reserves for
+  genuine uncertainty — the worst error Era 4 could make.
 
 ```
 Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
