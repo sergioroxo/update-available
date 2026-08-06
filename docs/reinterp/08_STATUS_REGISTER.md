@@ -222,3 +222,48 @@ the file its prompt came from, which is a habit, not a control.**
 **Retired numbers stay retired.** When a prompt ships, its marker says so and the number is not
 reused; if a number must be re-pointed, the old block says where it now points. 24 prompt blocks are
 marked as of adoption.
+---
+
+## §7 — THE S74 DRAW-CALL REGRESSION, DIAGNOSED (2026-08-06)
+
+S74 reported honestly that it could not explain why `npm run audit` now exceeds its draw-call ratchet
+while a manual seat measurement showed only 29. **The pattern across the legs is the diagnosis, and
+it was not visible from any single measurement:**
+
+| leg | before S74 | after | Δ |
+|---|---|---|---|
+| entrance | 67 | 68 | +1 |
+| E1→E2 | 38 | 39 | +1 |
+| E2→E3 | 57 | 57 | **0** |
+| E3→E4 | 62 | 62 | **0** |
+| **⚑ sends** | 60 | **78** | **+18** |
+
+**⚑ Two era transitions are UNCHANGED despite Room 3 gaining 68 props.** So this is not "more props
+cost more draws" globally, and it is not a tool artifact — it is one leg.
+
+**The cause: Maya's belongings were added at `r3`, not `r4`.** That was a defensible call (S66 did
+the same for Vera; the rooms age as one building and Maya lives there the whole time) — but it means
+**32 belongings are present during ERA 3**, and the scripted send dolly is the one leg that flies
+across Room 3 *during E3* with all of them in frame at once. The era transitions do not spike because
+their peaks fall inside the morph cascade, when the props are mid-fold rather than all resident.
+
+**Why a seat measured 29:** a settled seat is the batched steady state. The tool measures the PEAK
+during motion, while the batcher is still merging. **Both numbers are right; they measure different
+moments.** S72's own note already said the entrance is the piece's highest draw-call moment *because
+the batcher is still settling* — S74 hit the same wall without that context to hand.
+
+### ⚑ The recommendation: DO NOT raise the ratchet
+- **The sends are latent.** No beat fires that seam (`app.ts`: the trigger beats ride the
+  content-merge lane), so 78 is unreachable in play today — exactly like the **6.87 m/s** on the same
+  legs.
+- **So the sends leg is now over budget AND over speed, and both are latent.** ⚑ Whoever wires the
+  first send beat must fix both, in the same session. That is the note this entry exists to leave.
+- Raising the ratchet to 78 would legitimise a regression on an unreachable path. **A failing ratchet
+  on a path nobody can reach is exactly the right kind of nag** — it costs nothing today and it
+  cannot be forgotten tomorrow.
+- The two `+1`s (entrance, E1→E2) are Room 1's new `curtainRod` and are not worth acting on.
+
+**If the sends leg later needs to come down:** the lever is whether Maya's belongings need to be
+resident at `r3` at all, or whether they can arrive at `r4` with the era they belong to. That is a
+narrative call — the rooms-age-together argument is good — and it should be made deliberately rather
+than as a performance fix.
