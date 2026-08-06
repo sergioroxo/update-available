@@ -28,15 +28,31 @@ the material is already in the right shape and nothing has to be re-derived.
 
 ---
 
-## ⚑ THE TWO RULES EVERY INTAKE OBEYS
-These come from the schema's own `_doc` and they are not negotiable:
+## ⚑ THE RULES EVERY INTAKE OBEYS — corrected 2026-08-06
 
-1. **`label` is ALWAYS authored by Sérgio. Never auto-filled from a source's text.** Research passes
-   emit `label: ""` and put their wording in `_labelSuggestion`. The reason is ethical, not stylistic:
-   source texts name real people and legal cases, and this surface's standing rule is *no survivor
-   names, no real individuals — sources and structures only.*
-2. **Nodes are sources and structures. Never people.** An organisation, an event, an instrument, a
-   document, a mechanism, a scholarly work — yes. A person — no, however public.
+**First, a correction to this file, because it caused four prompts to be written wrong.**
+The schema's `_doc` is dated **2026-07-22**. The co-creation norm (CLAUDE.md line 100) is dated
+**2026-07-24**. ⚑ **The schema is two days older than the norm and encodes the rule the norm
+retired** — and I read the schema, believed it, and told four research agents to emit blank labels.
+Exactly the stale-pointer class this repo has been bitten by twice before. The schema's `_doc` is now
+corrected in place so nobody re-derives it.
+
+Sérgio, 2026-08-06: *"I will do the review of the project, so no need to not do the work because I
+need to author — this is an old conversation we had."*
+
+**The rule that was bundled has to be split, because only half of it was retired:**
+
+1. **⚑ ETHICS — STANDS.** A label is **never copied from a source's `text`**, because those texts name
+   real people and legal cases. And a node names an **organisation, instrument, event, document,
+   scholarly work or mechanism — never a person**, however public. *No survivor names, no real
+   individuals: sources and structures only.*
+2. **⚑ AUTHORSHIP — RETIRED.** Labels are **drafted**, marked `PLACEHOLDER-draft`, and Sérgio reviews
+   and rewrites; his edit wins. Emitting `label: ""` and waiting is the old behaviour and it produces
+   exactly what the norm was written to prevent: a blank that cannot be flow-tested.
+
+**Practical effect on the four passes now in flight:** they were told to emit `label: ""` with wording
+in `_labelSuggestion`. **No rework is needed** — the drafting already happened, it is just parked in a
+side field. At intake, `_labelSuggestion` is promoted to `label` and marked as a draft.
 
 **Status vocabulary** is the dossier law's: `documentary | contested | speculative | unrated`.
 `verified: false` wherever a claim rests on a single source.
@@ -45,8 +61,8 @@ These come from the schema's own `_doc` and they are not negotiable:
 
 ## The pipeline
 ```
-web research  →  docs/research/*.md  →  candidate nodes (JSON, label:"")
-                                     →  Sérgio's wording + ethics pass
+web research  →  docs/research/*.md  →  candidate nodes, labels DRAFTED
+                                     →  Sérgio's review (he rewrites; his edit wins)
                                      →  data/strings/close_network.json  →  the Close
 ```
 
@@ -82,7 +98,10 @@ by era, do not invent relationships).
 ---
 
 ## ⚑ What would make this stick
-A **C9 check**: fail the build when a `docs/research/*.md` file has no corresponding entry here, or
-when a candidate node carries a non-empty `label` (the ethics rule, machine-enforced). Cheap, and it
-is the same ratchet pattern that took the palette from 157 to 33 and stopped stale prompts being
-dispatched. **Not built — proposed here so it is not forgotten.**
+A **C9 check**: fail the build when a `docs/research/*.md` file has no corresponding entry in the
+register above, and when a node's `label` is byte-identical to any source `text` in the repo — which
+is the ethics rule, machine-enforced, and the only half of the old rule worth checking.
+⚑ **Note what C9 must NOT do:** an earlier draft of this file proposed failing on a *non-empty* label.
+That would have enforced the retired authorship rule in CI, permanently. Cheap otherwise, and the same
+ratchet pattern that took the palette from 157 to 33. **Not built — proposed here so it is not
+forgotten.**
