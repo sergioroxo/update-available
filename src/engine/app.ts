@@ -123,10 +123,11 @@ const DESCENT_VIA = { x: 1.03, y: 2.45, z: 1.03 };
  *  claim "measured peaks are 0.43 m/s and 9.1°/s", but the envelope was NAMED
  *  from this leg and the leg had never met it — for every player, every run, as
  *  the first thing that happens. Applied 2026-08-06 on Sérgio's decision, since
- *  the 1.6 s is pacing and pacing is his. (11.5 also clears it and is E2→E3's
- *  descent duration; 11.6 is taken for the margin.) Re-measure with
- *  `node tools/shots.mjs comfort` after touching DESCENT_FROM/VIA or the seat. */
-const DESCENT_SECONDS = 11.6;
+ *  the 2 s is pacing and pacing is his. ⚑ 11.6 was applied first and measured
+ *  0.429 — inside, but by 0.001 m/s, which is a hairline any later tweak to
+ *  DESCENT_FROM/VIA or the seat would erase. Sérgio took 12.0 for real margin.
+ *  Re-measure with `node tools/shots.mjs comfort` after touching any of those. */
+const DESCENT_SECONDS = 12.0;
 // ── ⚑ THE RELOCATION (S61; every era change from S67) — the piece lifts you ──
 // Sérgio, after playing it: *"the transition needs explaining… the fly over
 // needs to be slower and let you see the room being built so you understand
