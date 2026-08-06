@@ -235,3 +235,4 @@
 - 2026-08-05 — E4 deep pass: ballroom as the category inversion, house/Household rhyme, MC vs L, the photo editor as a memories feature; S73 held pending two decisions.
 - 2026-08-05 — E4 build plan: four staged sessions with the ROOM as stage one (Room 3 has 37 props vs Room 2's 73; both phone props are untextured boxes); touchless input budget adopted.
 - 2026-08-05 — E4 device decided: the headset, with the 2D canvas remounted to the visor (one-surface law intact); Stage 0 items 1-4 answered; rooms-not-done correction folded into Stage 1.
+- 2026-08-05 — Stage 0 closed (touchless budget, the ball has no screen, the fixture list); S74 queued as E4 Stage 1; model-elicitation research protocol added.

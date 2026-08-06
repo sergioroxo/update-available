@@ -113,3 +113,47 @@ you are outside this. But it belongs on the same page as the reader pass, and it
 | **Where do the photo memories appear?** | the visor: they are *served* to her, which is the point |
 | **Where is the ball watched from?** | ⚑ **not through the device** — the one thing that is not served |
 | **What does the room need?** | the headset as a real prop, its resting place, and whatever she has to move to put it on |
+
+---
+
+# ⚑ STAGE 0 — CLOSED (2026-08-05)
+*The remaining items, decided. Stage 1 is now dispatchable as S74.*
+
+## 5 · The touchless budget, made concrete
+"Almost touchless" is a number, not a mood. **E4's entire era ships with roughly a third of E3's
+interactions**, and the shape matters more than the count:
+
+| | who advances the beat |
+|---|---|
+| **E1–E3** | the player, almost always. Insert, press, apply, reply, publish. |
+| **⚑ E4** | **the system, almost always.** L begins the next thing while you are still in the last one. |
+
+**The rule for the build:** *if a beat can advance itself, it does.* The player's presses are reserved
+for three things only — **answering L by chip** (which is not navigation, it is being talked to),
+**the memories undo** (the dismissal law, which must always work), and **the turn**.
+
+**Nothing else. No menus, no confirmations, no "continue."** The era is the only one where the piece
+moves without you, and that is what obsolete feels like from the inside.
+
+## ⚑ And TRANSCENDANCE has no screen at all
+The ball is not watched through the device — decided above. **So it is not watched through anything.**
+
+Four eras have been surfaces: a CRT, a program, three device screens, a visor. **The last thing in the
+era has no screen in it.** The ball arrives as sound and light *in the room*, and the only thing you
+do is turn.
+
+That costs no new geometry, it is the strongest possible statement of the contrast, and it is why the
+one input comes back there: **there is no interface left to come between you and it.**
+
+## The prop list Stage 1 must build (fixtures — not negotiable, unlike the belongings)
+| prop | why |
+|---|---|
+| **the headset** — a hero object, on a stand or charging | the era's device; the visor is the screen surface |
+| **its resting place**, reachable from the seat | she has to pick it up; that gesture is the era beginning |
+| **whatever she moves to put it on** — glasses, a cup, an earring | one small honest detail; the body is in the room |
+| **the CRT goes dark and STAYS** | ⚑ the same machine across thirty years, finally off. Do not delete it — an unplugged machine still in the room is the piece's own argument about what does not get thrown away |
+| **the phone, with a real model** | S66's debt, paid in Rooms 2 and 3 both |
+| **surfaces for the ball's light** | sound and light fill the room; nothing renders a stage |
+
+**Everything else in Room 3 is belongings, and belongings are the build session's judgement** — the
+S66 contract, not a shopping list. **Maya's things are hers. They are not Vera's re-coloured.**

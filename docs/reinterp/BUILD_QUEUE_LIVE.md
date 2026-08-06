@@ -14,7 +14,8 @@ not live.***
 | — | ~~S70 — the comments, and the recruitment floor~~ | ↓ below, in this file | **SHIPPED 2026-08-03** — number retired |
 | — | ~~S71 — walk the space and report what is wrong~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired |
 | — | ~~S72 — the audit system (L3 capture + L4 assertions)~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired. 5 of 6 assertions live; assertion 6 (reachability) NOT built, named as such |
-| — | **S73 — Era 4 exists** | ↓ below, in this file | ⚑ **HELD 2026-08-05** — scope changed by the deep pass; 2 decisions open |
+| 1 | **S74 — the rooms (E4 Stage 1)** | ↓ below, in this file | **QUEUED — dispatch this one** |
+| 2 | **S73 — Era 4 exists** (E4 Stage 2) | ↓ below, in this file | ⚑ **BLOCKED** — runs after S74; rewrite against the deep pass first; 2 decisions open |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED unbuilt 2026-08-05** — see below |
 
 **⚑ NOTHING IS QUEUED.** The next session's job is Sérgio's to name. Two candidates the S72 audit
@@ -565,4 +566,89 @@ ACCEPTANCE, BY FEEL:
 - The deadname lands as paperwork, not as a scare, and it is worse for that.
 - TRANSCENDANCE is somewhere you want to stay, and nothing asks you to leave.
 - `NO CATEGORY FOUND` is not explained by anyone, ever.
+```
+
+---
+
+# S74 — THE ROOMS (Stage 1 of Era 4) · Opus or a cheaper model · **delegable**
+**⚑ PROMPT STATUS: QUEUED — dispatch this one. Stage 0 is closed; this is now unblocked.**
+*Plan: `REINTERP_E4_BUILD_PLAN_2026-08-05.md`. Fixtures decided in `REINTERP_E4_THE_DEVICE_2026-08-05.md`
+§"STAGE 0 — CLOSED". ⚑ This is the stage that stops Era 4 repeating Era 3's fault, so it runs BEFORE
+any E4 software. It is delegable because it has a real oracle: `room-audit.mjs` agrees with the live
+engine to 0.00000 m, and `npm run audit` scores the frames.*
+
+```
+Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
+?reinterp=1). Read, in order: CLAUDE.md, docs/REINTERP_E4_BUILD_PLAN_2026-08-05.md (⚑ THE PLAN —
+this is Stage 1), docs/REINTERP_E4_THE_DEVICE_2026-08-05.md §"STAGE 0 — CLOSED" (⚑ THE FIXTURE LIST,
+decided — not negotiable), docs/reinterp/01_SESSION_LOG.md NEXT UP item 0 (S66's CONTRACT OF INTENT
+and its creative-leeway amendment — that contract is this session's brief, applied to Maya),
+docs/REINTERP_3D_STYLE_DIRECTION* (Soft Lo-Fi — do NOT improvise art direction),
+docs/reinterp/01_SESSION_LOG.md Sessions 66 and 71 (the worked example, and the audit's open
+proposals), then tools/room-audit.mjs, tools/shots.mjs, data/room/reinterp_deltas.json,
+data/room/era1.json, data/room/models.json, src/room/assets.ts, src/room/cluster.ts,
+src/debug/panel.ts.
+
+⚑ THE NUMBERS THAT MOTIVATE THIS SESSION, measured from the data, not claimed:
+  Room 1 (Daniel, E1+E2) 107 props · Room 2 (Vera, E3) 73 · ROOM 3 (Maya, E4) 37 — and Room 3's are
+  almost entirely architecture. No lamp, no mug, no books, no calendar. ZERO belongings. Era 4 happens
+  there. Its whole r4 delta is seven colour overrides and one added box.
+  And BOTH phone props (`w_phoneDevice`, `e_phone`) carry NO `model` field — they are untextured
+  boxes. Everything Era 3 ships is read on one.
+
+THE CONTRACT OF INTENT — you are given this, not a shopping list:
+  Room 3 must show that somebody lives here, and that person is not the story — she is who the story
+  is happening to. ⚑ MAYA'S THINGS ARE HERS. They are not Vera's re-coloured, and they are not a
+  trans character's belongings as an outsider would inventory them. She is a person with a life that
+  is mostly not about this.
+
+SCOPE:
+1. ⚑ THE FIXTURES (decided in Stage 0 — build exactly these, they carry meaning):
+   - THE HEADSET, a hero object, on a stand or charging, reachable from the seat. It is the era's
+     device and its visor is where the 2D canvas will mount in Stage 2. Leave a clean, named seam for
+     that mount; do NOT build the screen behaviour here.
+   - ITS RESTING PLACE, and one small honest detail she moves to put it on (glasses, a cup, an
+     earring). The body is in the room.
+   - ⚑ THE CRT GOES DARK AND STAYS. Do not delete it. The same machine across thirty years, finally
+     off, still in the room — that is the piece's own argument about what does not get thrown away.
+   - THE PHONE GETS A REAL MODEL, in Room 2 AND Room 3. S66's debt, paid in both this time.
+   - Surfaces that can take the ball's light later. Nothing renders a stage; no new geometry for it.
+2. ROOM 3'S BELONGINGS — the session's judgement, ~35 as a scale not a quota. Iterate in-engine: place
+   them, light them, sit in every seat, screenshot, change your mind, do it again. Room 1 is the
+   reference for DENSITY and Room 2 for METHOD; neither is a template to copy.
+3. ⚑ ROOMS 1 AND 2 ARE ALSO IN SCOPE — Sérgio, 2026-08-05: "Vera's room has a lot of mistakes, all
+   the rooms built have still a lot of logistics and object errors. So no, it's not done." S71 fixed
+   only what was provable by measurement and left every judgement call as a proposal; work that
+   backlog (its list is in the Session 71 log) and clear the logistics and object errors you find.
+4. RUN THE AUDIT AND USE IT: `node tools/room-audit.mjs` and `npm run audit`. Report every number.
+   ⚑ `npm run audit` currently EXITS 1 on two pre-existing comfort violations (the entrance descent at
+   0.497 m/s and the latent send dolly). DO NOT fix those here — they are pacing and they are
+   Sérgio's. Just do not add a third, and do not let the blank-frame or subject-in-frame ratchets rise.
+
+⚑ WHERE THE LEEWAY STOPS: staging, props, lighting, placement, framing — yours, decide them and
+report what you learned. WHAT THE ERA MEANS — not yours. Do not build any E4 software, any L
+behaviour, any caption, any ball. If a room decision seems to require a narrative decision, write it
+in the session log and stop.
+
+LAWS: Soft Lo-Fi (cozy low-poly, underdefined edges, NOT horror-dark) · selective fidelity, ≤3 hero
+objects per scene · palette from src/desktop/theme/ (ratchet 33, must not rise) · Quest budget ≤75k
+tris, ≤60 draw calls, 72 Hz, no realtime shadows · no runtime network, no storage · C6 (any new beat
+needs a debug-panel button; src/debug/panel.ts IS IN THE FENCE) · C8 (flip this block to SHIPPED) ·
+all display text in data/ as PLACEHOLDER-draft.
+⚑ Maya is never the joke, and her belongings are not evidence — they are a life.
+
+FILE FENCE: data/room/*.json, src/room/*.ts, src/debug/panel.ts, src/engine/app.ts (seat poses only),
+tools/room-audit.mjs (if a check needs extending), docs/REINTERP_E4_BUILD_PLAN_2026-08-05.md (status
+only), docs/reinterp/BUILD_QUEUE_LIVE.md, docs/reinterp/01_SESSION_LOG.md,
+docs/reinterp/08_STATUS_REGISTER.md, BUILD_LOG.md.
+Git: EXPLICIT PATHSPECS only — never `git add -A`; another session may share this worktree's index.
+
+DONE WHEN: npm run dev works; tsc + npm test + npm run build green; ?flat=1 clean; room-audit clean or
+its remainder explained with measurements; SCREENSHOTS FROM EVERY SEAT IN EVERY ROOM, before and
+after, in the session log; BUILD_LOG gets ONE line.
+
+ACCEPTANCE, BY FEEL: turn in any seat in Room 3 and something of hers is there to find. The headset
+reads as a thing she uses, not a prop placed for the player. The dark CRT is noticeable without being
+pointed at. Nothing reads as an unlit block anywhere in any room. And all three rooms should feel
+lived in rather than decorated — if one looks like a set, it is wrong.
 ```
