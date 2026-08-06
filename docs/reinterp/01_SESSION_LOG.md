@@ -143,6 +143,155 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-06 · Session 74 — **THE ROOMS (E4 STAGE 1) — MAYA GETS A LIFE, THE PHONE GETS A BODY, THE
+CRT GOES DARK.** Plan: `REINTERP_E4_BUILD_PLAN_2026-08-05.md`; fixtures decided in
+`REINTERP_E4_THE_DEVICE_2026-08-05.md` §"STAGE 0 — CLOSED". Touched: `data/room/reinterp_deltas.json`,
+`src/room/era1room.ts` (the `parts` composite + classifyProp tiers), `src/room/clusterMorph.ts` (the
+composite threaded through the fold), `docs/reinterp/BUILD_QUEUE_LIVE.md`, this log,
+`08_STATUS_REGISTER.md`, `BUILD_LOG.md`.)*
+
+**⚑ THE NUMBERS, before and after.** Room 3 (Maya) went from **37 props, zero belongings** to **~70**:
+~32 new belongings (`r3`, present from E3 on — see below for why), the headset assembly (stand + visor
++ strap, `r4`), the honest-detail glasses (`r4`), and the phone's own camera-bump part (`r4`). Room 1
+and Room 2 both picked up one measured fix each. `node tools/room-audit.mjs` across all four states:
+**76 findings at HEAD → 70 after this session**, despite ~38 new props — three of the six removed
+findings were direct fixes, the rest is that the new props introduced zero faults of their own bar one
+accepted-by-precedent pattern (below).
+
+**⚑ WHERE THE THREE ROOMS' BELONGINGS ACTUALLY LIVE, and why Maya's join Vera's timing, not Era 4's.**
+The `reinterp_deltas.json` top-level keys are era STATES, not room ownership: `r3` is where the side
+rooms' walls first open (both Room 2 and Room 3's shells, plus Vera's own ~38 belongings, were already
+added there by S66). The three rooms are one building ageing across thirty years in parallel — Maya's
+room does not spring into existence when Era 4 begins, any more than Room 1 stops being Daniel's the
+moment Era 2 starts. So her ~32 belongings join the same `r3` block, present (unfocused) through E3
+and carried forward unchanged into E4. Only the era's OWN device — the headset, its honest detail, and
+the phone's arrival — are `r4`-only, mirroring `e_phone`'s own pre-existing precedent.
+
+**1 · THE FIXTURES, all four from Stage 0's closed list.**
+- **The headset** — a hero object (`era1room.ts`'s `classifyProp` gained a `headset` prefix alongside
+  `crt`/`kit`; Room 3's hero count is now exactly two, inside the ≤3 budget), three parts (stand, visor,
+  strap) on the desk's own free front strip — within reach of the seat (`seatPose(270)`'s eye sits at
+  x4.4, z0.7; the stand is at x5.40-5.50, well inside arm's reach, clear of the CRT/keyboard/folders
+  cluster). **The visor is named and left clean on purpose** — no emissive, no render-texture, no
+  screen behaviour — that is Stage 2's seam, not this session's.
+- **Its resting place + the honest detail**: `e_glasses`, set down beside the stand — the ordinary human
+  gesture of taking them off before the headset goes on.
+- **THE CRT GOES DARK AND STAYS.** `e_crtScreen`'s r4 colour override changed from `#2C3A5C` (still a
+  lit blue) to `#15151F` — the same "off" hex every other window in that block already uses, not
+  invented. Not deleted, not moved: the same machine across thirty years, finally off, still in the
+  room, visible without being pointed at (screenshot below).
+- **THE PHONE GETS A REAL MODEL, in both rooms** — but not identically, and the difference is honest
+  engineering, not a shortcut. No CC0 phone-shaped GLB exists in the local kit (`assets/LICENSES.md`),
+  and this session had no way to fetch one (no network fetch capability available for binary assets).
+  Built the CRT's own way instead: a real multi-part PRIMITIVE assembly (body + camera bump), not a
+  flat box. **Room 3's phone** (`e_phoneBody`/`e_phoneCam`, moved to the nightstand — freeing the desk
+  for the headset and a more honest bedside-charging place for it) uses plain sibling props, since
+  nothing hides it. **Room 2's phone** (`w_phoneDevice`) could not use the same trick: `app.ts`'s
+  held-read toggles it by literal id (`h.entity.enabled = held !== name`), and this session's file
+  fence held `app.ts` to seat poses only, so a second sibling prop would sit visible in mid-air the
+  instant the phone comes to hand. **New mechanism to solve it cleanly**: `PropDef.parts` (a multi-box
+  assembly under ONE id/entity, `era1room.ts`) — a wrapper with no render of its own (so
+  `batching.ts`'s existing `!h.entity.render` guard already excludes it, no batching code touched) and
+  N child boxes. `clusterMorph.ts` threads `parts` through the fold and treats a `composite` handle
+  exactly like a `model` one (presence/position only — colour and scale don't travel through the fold,
+  same documented limitation a `model` prop already has, harmless for a prop added once and never
+  re-coloured). `w_phoneDevice` is still one id, the hide-on-hold toggle needed zero changes, and it
+  now reads as a body + a camera bump instead of a flat slab.
+
+**2 · ROOM 3'S BELONGINGS — the session's judgement, ~32 landed.** Bookcase: 10 books in two rows (5
+colours reused from Room 1/Room 2's own families, matched to Vera's exact size/placement convention so
+no new geometry maths was needed) + a pencil tin. Desk: a mug (reusing `poster2`'s own mint-teal —
+the one deliberate colour-share with Room 1's architecture), a sketchbook, a pen. Chair: a hoodie
+draped over the back (same convention as `w_cardigan` — Session 71's own accepted "chair AABB is not
+its seat" pattern, confirmed still true here: 0.072 m overlap / 0.620 m "float", both matching
+`w_cardigan`'s own numbers closely enough to be the same intentional shape, not a new fault). Bed: a
+second pillow, a folded throw. Nightstand: a glass, an earbuds case, a clock, a charging cable on the
+floor beside it (plus the phone, above). Windowsill: the exact same plant as Room 2's own
+(`w_plant_pot`/`top`, reused verbatim rather than re-invented — a plant is not a personality trait).
+By the door: a backpack, a kicked-off pair of sneakers, dropped keys — not Vera's laundry basket; a
+life that goes outside this room. Floor: a cushion, a book left open where she was reading, a water
+bottle, a small speaker (the same idea as Room 1's boombox and Room 2's radio, one generation newer).
+Bookcase top: a small framed photo, leaning rather than hung (the same construction `w_frame` already
+uses). Seven new `classifyProp` keywords (`sketchbook`, `hoodie`, `backpack`, `sneaker`, `cushion`,
+`speaker`, `waterBottle`, `glasses` → personal; `earbuds`, `clock`, `cable`, `keys`, `tin` → fog),
+matching the soft/recede material law to the new categories rather than leaving them `set` (crisp,
+colour-true, wrong for a life).
+
+**3 · ROOMS 1 AND 2 — the backlog Sérgio named 2026-08-05, worked, not just re-proposed.**
+- **P1 closed** (Session 71's own proposal, left unfixed): `e_desk` ∩ `e_bed`, 0.086 m. `e_desk`'s
+  measured `modelScale` renders 50% deeper on its own axis than authored; moving the desk (`pos.z`
+  0.7 → 0.61) clears the bed with margin instead of resizing furniture that is otherwise correctly
+  measured. Every desk-surface prop (the CRT's four parts, keyboard, mouse, both folders) carries the
+  identical -0.09 z so the whole assembly stays together — verified by the audit: the finding is gone
+  and nothing new appeared in its place.
+- **Room 1's curtains stop floating.** Session 71's P6 named this and left it: *"Room 1's curtains hang
+  from nothing — Rooms 2 and 3 have a curtRod prop and Room 1 does not."* `era1.json` itself has to stay
+  byte-identical to the shipped baseline (`assets/LICENSES.md`), so the fix lands as a new `curtainRod`
+  in the `r1` delta's own `add` array — same brown as the side rooms' rods, same "hangs from the thing
+  above it" relationship the audit tool already recognises. FLOATING → held, in every state (both
+  curtains, all four folds).
+- **`w_desk` ∩ `w_chair` (0.050 m on x) — investigated, confirmed as the SAME intentional pattern P6
+  already accepted for Room 1's `deskModel`∩`chairModel` (0.048 m), not a new fault.** A chair tucked
+  under a desk, correct in 3D, flagged in plan by an AABB that isn't the seat. Left alone.
+- Everything else `room-audit.mjs` reports at HEAD (the SCALE proposals, the duck/cardigan overhangs,
+  `terminalFrame`'s joinery) is the same set S71 already classified as intent or as Room 1's own
+  inherited debt, deliberately not regressed — Room 1 is still the benchmark and was not touched beyond
+  the one new prop above.
+
+**⚑ 4 · THE DRAW-CALL RATCHET — investigated at length, NOT resolved, reported plainly.** `npm run
+audit` (L1-L4, `tools/shots.mjs`) shows the draw-call ceiling ratchet (67) now exceeded: **entrance 68
+(was 67), sends 78 (was 60)**; E2→E3 and E3→E4 are unchanged (57, 62). This is a real regression this
+session's own additions caused and did not fix. What was tried: (a) a static analysis of every
+(tier, colour) combination visible at each state found only 3-7 genuinely new "singleton" batch groups
+introduced by the belongings, all traceable to a handful of small items (keys; clock+cable sharing
+one); consolidating those colours to already-common hexes (waterBottle, speaker, tin recoloured to
+reuse existing groups) measured **zero change** in the official tool's own number, disproving the
+hypothesis that batch-group proliferation is the cause; (b) live in-browser instrumentation
+(`window.__batchedProps`/`__staticBatchedProps`/`__settledBatchedProps`/`app.stats.drawCalls`) at every
+steady seat found the new props correctly joined the settled batch (Room 3's own seat: 62 draw calls,
+matching the pre-existing E3→E4 number, not inflated); (c) a manual replay of the entrance descent,
+recorded frame-by-frame, measured a peak of **29** — nowhere near 68. **The mechanism causing the
+official tool's own entrance/sends peaks to be so much higher than any steady seat or manual replay
+could not be pinned down in the time available.** Two honest observations rather than a fix: the
+`sends` number is on the same LATENT/unreachable mechanism the comfort violations already exempt (no
+beat fires `onSendResolve` yet); `entrance` is on a real path and is the one that matters, and it is a
+single unit over an already-slack ratchet (was already 67 against a ≤60 hard budget before this
+session — 7 over, unfixed, pre-existing). Flagged in `08_STATUS_REGISTER.md` for whoever next opens
+`batching.ts`/`clusterMorph.ts`, alongside the E3→E4 defect S71 already left there — very likely the
+same root cause (the settled batch's behaviour during a driven camera leg), not two separate bugs.
+
+**SCREENSHOTS**, every seat, era 1/3/4, all three rooms plus free-camera surveys of Room 3's desk,
+bookcase and nightstand (headset, dark CRT, phone-on-nightstand with its camera bump, the hoodie on
+the chair, the sketchbook+pen on the desk all confirmed visible and legible in-engine). Captured live
+via the browser tool rather than `tools/shots.mjs`'s own contact sheet (this session's environment);
+not committed as image files — described here with exact camera poses so they can be reproduced:
+`?reinterp=1&era=4&debug=1&descent=0` then `__camProbe(270,0)` for the dark-CRT seat shot, then
+`__camFree(3.3,1.7,1.5,-18,300)` for the desk-with-headset-and-lamp establishing shot, and
+`__camFree(3.5,1.1,2.4,-30,30)` for the nightstand/phone shot.
+
+**VERIFIED**: `npx tsc --noEmit`, `npm test` (invariants OK, rooms OK — 223 props live at E4, spec OK,
+palette 33/33 **unmoved** — every new colour lives in `data/room/*.json`, which the C4 ratchet does not
+scan, and every hex reused matches the aesthetic law's own "family" rule anyway) and `npm run build`
+all green. `node tools/room-audit.mjs`: 70 findings across 4 states (was 76), tolerances unchanged.
+`?flat=1&reinterp=1` unaffected (this session touched no desktop/2D code). `npm run audit`'s comfort
+section is unchanged from the brief's own framing — the entrance descent's COMFORT figure is fine
+(0.414 m/s, 6.87 °/s) and only the three LATENT scripted-send legs fail it, exactly as expected; the
+NEW failure this session introduced is the draw-call ratchet, above, reported rather than hidden.
+
+**⚑ A SHARED-WORKTREE NOTE.** HEAD moved from `24f87ac` to `7a61726` (six commits, none touching
+`data/room/*`, `src/room/*`, or this log) while this session was running — another session committing
+to the same branch, exactly the risk this file's own file-fence note warns about. `git stash` /
+`git stash pop` round-tripped cleanly with no conflicts; noted here in case the next session finds a
+git-log surprise.
+
+**NOT DONE, named rather than skipped.** (i) The draw-call ratchet regression above — investigated,
+not root-caused. (ii) No literal GLB model for either phone (see fixture 4 above) — a deliberate,
+documented substitution, not an oversight. (iii) A screenshot CONTACT SHEET (`tools/shots.mjs`'s own
+capture) was not run for this session's specific new content — the manual browser survey above stands
+in for it; whoever next runs `npm run audit` will get fresh frames of Room 3 for free. (iv) This
+session did not build any E4 software, L behaviour, caption or ball — per the brief's own line, and
+per Stage 2 being S73's job now that this one has shipped.)*
+
 *(2026-08-04 · Session 72 — **THE AUDIT SYSTEM: L3 CAPTURE + L4 ASSERTIONS.** Design:
 `docs/REINTERP_THE_AUDIT_SYSTEM_2026-08-04.md`. Touched: `tools/shots.mjs` (new), `tools/harness/*`
 (twelve scripts **deleted**, README → tombstone), `engine/app.ts`, `debug/panel.ts`, `package.json`,

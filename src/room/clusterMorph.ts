@@ -40,6 +40,12 @@ interface Delta {
   add?: PropDef[];
 }
 
+/** Session 74: `parts` (era1room.ts's composite-box assembly, e.g. the phone)
+ *  must survive the fold the same way `model` already does, or the FIRST
+ *  spawn of a composite prop (the only spawn that ever reads `parts` — see
+ *  spawnTarget below) falls back to a plain box and the assembly never
+ *  renders at all. */
+
 /** the ordered fold: base era1.json → r1 (E1) → r2 (E2) → r3 (E3) → r4 (E4).
  *  Each state ages the three rooms one era on (Round 24, Phase B): r3 closes
  *  Room 1 (Daniel transferred) + brings Room 2 forward (Vera, 2016), r4 lands
@@ -50,14 +56,14 @@ const DELTA_LIST: Delta[] = SPACE_STATES.map(
   s => (deltas as unknown as Record<string, Delta>)[s]
 );
 
-interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string; modelScale?: number | number[] }
+interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string; modelScale?: number | number[]; parts?: PropDef['parts'] }
 
 /** fold base + deltas 0..idx → each prop's full target state (module-level so
  *  the static-set computation shares the exact same fold the morph runs) */
 function foldTargets(idx: number): Map<string, PropTarget> {
   const m = new Map<string, PropTarget>();
   for (const d of (era1 as unknown as { props: PropDef[] }).props) {
-    m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model, modelScale: d.modelScale });
+    m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model, modelScale: d.modelScale, parts: d.parts });
   }
   for (let i = 0; i <= idx; i++) {
     const delta = DELTA_LIST[i];
@@ -73,7 +79,7 @@ function foldTargets(idx: number): Map<string, PropTarget> {
     }
     for (const id of delta.remove ?? []) { const t = m.get(id); if (t) t.present = false; }
     for (const def of delta.add ?? []) {
-      m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model, modelScale: def.modelScale });
+      m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model, modelScale: def.modelScale, parts: def.parts });
     }
   }
   return m;
@@ -115,7 +121,7 @@ export function constantPropIds(): Set<string> {
   const out = new Set<string>();
   const first = folds[0];
   for (const [id, t0] of first) {
-    if (!t0.present || t0.model) continue;
+    if (!t0.present || t0.model || t0.parts) continue;
     const s0 = sig(t0);
     if (!folds.every(f => sig(f.get(id)) === s0)) continue;
     const b = baseline.get(id);
@@ -192,7 +198,7 @@ export class ClusterMorph {
       // wall with the data looking correct — the exact shape of bug this
       // codebase keeps hitting: a field that exists in data, is honoured by
       // the spawner, and is lost in the layer between them.
-      color: t.color, emissive: t.emissive, yaw: t.yaw, model: t.model, modelScale: t.modelScale
+      color: t.color, emissive: t.emissive, yaw: t.yaw, model: t.model, modelScale: t.modelScale, parts: t.parts
     });
   }
 
@@ -214,7 +220,7 @@ export class ClusterMorph {
    *  static/settled groups (both explicitly skip `h.model`), so there is no
    *  batch to desync. */
   private applyTarget(h: PropHandle, t: PropTarget): void {
-    if (h.model) {
+    if (h.model || h.composite) {
       h.entity.enabled = t.present;
       if (t.present) h.entity.setLocalPosition(t.pos[0], t.pos[1], t.pos[2]);
       return;
@@ -264,7 +270,7 @@ export class ClusterMorph {
       if (STATIC_IDS.has(id)) continue; // constants are always present
       const t = targets.get(id);
       const absent = !t || !t.present;
-      if (h.model) h.entity.enabled = !absent; // models toggle presence, never scale-to-0
+      if (h.model || h.composite) h.entity.enabled = !absent; // toggle presence, never scale-to-0
       else if (absent) h.entity.setLocalScale(0, 0, 0);
     }
   }
@@ -296,13 +302,13 @@ export class ClusterMorph {
         const seed = tp?.present ? tp : tn;
         if (!seed) continue;
         h = this.spawnTarget(id, seed);
-        if (!h.model && !tp?.present) h.entity.setLocalScale(0, 0, 0); // grows in from nothing
+        if (!h.model && !h.composite && !tp?.present) h.entity.setLocalScale(0, 0, 0); // grows in from nothing
       }
-      // MODEL props don't animate (a wrapper the morph must not distort): snap
-      // their presence AND position (see applyTarget's own note — a model
-      // prop can still relocate across eras) to the target, skipping the
-      // pos/scale cascade.
-      if (h.model) {
+      // MODEL (and composite) props don't animate (a wrapper the morph must
+      // not distort): snap their presence AND position (see applyTarget's own
+      // note — a model prop can still relocate across eras) to the target,
+      // skipping the pos/scale cascade.
+      if (h.model || h.composite) {
         h.entity.enabled = !!tn?.present;
         if (tn?.present) h.entity.setLocalPosition(tn.pos[0], tn.pos[1], tn.pos[2]);
         continue;

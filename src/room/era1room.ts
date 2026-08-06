@@ -31,6 +31,27 @@ export interface PropDef {
    *  measured sizes — see spawnModel's note. Set it only from a MEASUREMENT
    *  (the in-engine solver in the Session 66 log), never by eye. */
   modelScale?: number | [number, number, number] | number[];
+  /**
+   * OPTIONAL: a multi-box assembly under ONE id/entity — a "real model" built
+   * from primitives (the CRT/lamp/shelf precedent) rather than a GLB, but as
+   * ONE toggleable unit instead of N separate room props. Session 74 (the E4
+   * room pass): needed for the phone, whose resting-box id is toggled by
+   * `app.ts`'s held-read (`h.entity.enabled = held !== name`, keyed to the
+   * literal id `w_phoneDevice`) — extra top-level sibling props would NOT
+   * hide when the phone is picked up, so the extra detail has to live INSIDE
+   * this prop's own entity instead. Each part's `pos`/`size` is a LOCAL
+   * offset from this prop's own `pos`, in the prop's own pre-yaw frame (the
+   * wrapper carries `yaw` and rotates every part together, exactly like a
+   * `model` wrapper does). This prop's own `size`/`color`/`emissive` above
+   * still describe its OVERALL bounding box — room-audit.mjs's box fallback
+   * and the OVERLAP/BOUNDS/SURFACE checks read only `pos`/`size`, so they see
+   * a composite exactly as they would a plain box, no tool changes needed.
+   * Colour does NOT travel through clusterMorph's fold once spawned (same
+   * limitation a `model` prop already has, for the same reason: the wrapper's
+   * children carry their own fixed materials) — harmless for a prop that is
+   * only ever added once and never re-coloured by a later era override.
+   */
+  parts?: { pos: [number, number, number]; size: [number, number, number]; color: string; emissive?: boolean }[];
 }
 
 interface LightDef {
@@ -65,6 +86,9 @@ export interface PropHandle {
   /** set when this prop is a real model (wrapper entity) — the morph must NOT
    *  drive its pos/scale/color (the model self-places); only its presence. */
   model?: string;
+  /** set when this prop is a `parts` composite (wrapper entity, no render of
+   *  its own) — same morph restriction as `model`: only presence/position. */
+  composite?: boolean;
 }
 
 /** the model's real, already-cloned materials (assets.ts tints a clone per
@@ -128,17 +152,27 @@ function classifyProp(rawId: string): StyleTier {
   const id = bare(rawId);
   const is = (...pre: string[]): boolean =>
     pre.some(p => id.toLowerCase().startsWith(p.toLowerCase()));
-  if (is('crt', 'kit')) return 'hero';                 // monitor + starter kit (≤3 hero)
+  // Session 74 — the headset is Room 3's own device, same budget line as the
+  // CRT and the E1 kit (≤3 hero per scene: Room 3 has exactly two, the CRT +
+  // the headset — see the session log for the count).
+  if (is('crt', 'kit', 'headset')) return 'hero';       // monitor + starter kit + headset (≤3 hero)
   // the apparatus's gear — Room 2's flat panel is the same tier as Room 1's
   // tower: the system's instruments are the most defined objects in the room.
   if (is('tower', 'keyboard', 'mouse', 'modem', 'flatPanel',
          'tabletDevice', 'phoneDevice')) return 'system';
-  if (is('sodaCan', 'homeworkPile', 'plant_', 'sign')) return 'fog';
+  if (is('sodaCan', 'homeworkPile', 'plant_', 'sign',
+         // Session 74 — Maya's own small clutter (see data/room/reinterp_deltas.json):
+         // minor incidental objects recede exactly like homeworkPile/sodaCan do.
+         'earbuds', 'clock', 'cable', 'keys', 'tin')) return 'fog';
   if (is('bed', 'mattress', 'blanket', 'pillow', 'poster', 'boombox',
          'mixtape', 'book', 'cdStack', 'curtain', 'rug',
          // Session 66 — Vera's own things (see data/room/reinterp_deltas.json)
          'mug', 'cardigan', 'slippers', 'papers', 'calendar', 'frame',
-         'radio', 'laundry', 'throw', 'notepad', 'lamp2', 'glass')) return 'personal';
+         'radio', 'laundry', 'throw', 'notepad', 'lamp2', 'glass',
+         // Session 74 — Maya's own things: hers, not Vera's re-coloured (see
+         // the E4 room-pass session log for the contract this answers).
+         'sketchbook', 'hoodie', 'backpack', 'sneaker', 'cushion',
+         'speaker', 'waterBottle', 'glasses')) return 'personal';
   return 'set';                                        // desk/shelf/door/chair/lamp/shell — left true
 }
 
@@ -200,11 +234,37 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
   // (scaled + centered on pos); otherwise fall back to the box from `size`.
   let e: pc.Entity | null = null;
   let isModel = false;
+  let isComposite = false;
   if (room.reinterp && p.model && hasModel(p.model)) {
     const ms = p.modelScale;
     e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0, p.color,
       Array.isArray(ms) ? [ms[0], ms[1], ms[2]] : ms);
     if (e) { e.name = p.id; isModel = true; }
+  }
+  // the `parts` composite path (see PropDef.parts) — a wrapper with NO render
+  // of its own (so batching.ts's existing `!h.entity.render` guard already
+  // excludes it, no batching change needed) and one child box per part.
+  if (!e && p.parts?.length) {
+    e = new pc.Entity(p.id);
+    p.parts.forEach((part, i) => {
+      const pe = new pc.Entity(`${p.id}-part${i}`);
+      pe.addComponent('render', { type: 'box' });
+      const pm = new pc.StandardMaterial();
+      if (part.emissive) {
+        pm.useLighting = false;
+        pm.diffuse = new pc.Color(0, 0, 0);
+        pm.emissive = hex(part.color);
+      } else {
+        pm.diffuse = hex(part.color);
+        if (room.reinterp) styleMaterial(pm, p.id);
+      }
+      pm.update();
+      if (pe.render) pe.render.material = pm;
+      pe.setLocalPosition(part.pos[0], part.pos[1], part.pos[2]);
+      pe.setLocalScale(part.size[0], part.size[1], part.size[2]);
+      e!.addChild(pe);
+    });
+    isComposite = true;
   }
   if (!e) {
     e = new pc.Entity(p.id);
@@ -213,7 +273,7 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
   }
   if (!isModel) {
     e.setLocalPosition(p.pos[0], p.pos[1], p.pos[2]);
-    e.setLocalScale(p.size[0], p.size[1], p.size[2]);
+    if (!isComposite) e.setLocalScale(p.size[0], p.size[1], p.size[2]);
     if (p.yaw) e.setLocalEulerAngles(0, p.yaw, 0);
   }
   room.root.addChild(e);
@@ -221,11 +281,13 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
     entity: e,
     material,
     emissive: !!p.emissive,
-    // a box renders with `material`; a model renders with its own tinted
-    // clones and leaves `material` an orphan (see PropHandle.materials)
-    materials: isModel ? modelMaterials(e) : [material]
+    // a box renders with `material`; a model or composite renders with its
+    // own (tinted/per-part) materials and leaves `material` an orphan (see
+    // PropHandle.materials)
+    materials: isModel || isComposite ? modelMaterials(e) : [material]
   };
   if (isModel) h.model = p.model;
+  if (isComposite) h.composite = true;
   room.props.set(p.id, h);
   return h;
 }

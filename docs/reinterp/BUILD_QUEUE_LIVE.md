@@ -14,14 +14,17 @@ not live.***
 | — | ~~S70 — the comments, and the recruitment floor~~ | ↓ below, in this file | **SHIPPED 2026-08-03** — number retired |
 | — | ~~S71 — walk the space and report what is wrong~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired |
 | — | ~~S72 — the audit system (L3 capture + L4 assertions)~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired. 5 of 6 assertions live; assertion 6 (reachability) NOT built, named as such |
-| 1 | **S74 — the rooms (E4 Stage 1)** | ↓ below, in this file | **QUEUED — dispatch this one** |
-| 2 | **S73 — Era 4 exists** (E4 Stage 2) | ↓ below, in this file | ⚑ **BLOCKED** — runs after S74; rewrite against the deep pass first; 2 decisions open |
+| — | ~~S74 — the rooms (E4 Stage 1)~~ | ↓ below, in this file | **SHIPPED 2026-08-06** — number retired |
+| 1 | **S73 — Era 4 exists** (E4 Stage 2) | ↓ below, in this file | **QUEUED — S74 has shipped; both narrative gates were already closed 2026-08-06** |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED unbuilt 2026-08-05** — see below |
 
-**⚑ NOTHING IS QUEUED.** The next session's job is Sérgio's to name. Two candidates the S72 audit
-produced, both in the session log with their measurements: **the comfort violations** (the entrance
-descent at 1.2× and the send seam at 10–16×, exact durations proposed, nothing applied — his call
-because both are pacing), and **assertion 6**, the ordinary-path traversal S72 did not build.
+**⚑ S73 IS QUEUED** (above) now that S74 has shipped Room 3. Two other candidates the S72 audit
+produced remain open and un-dispatched, both in the session log with their measurements: **the
+comfort violations on the send seam** (10–16× the envelope, still latent — no beat fires it; the
+entrance descent's own COMFORT figure is fine, see Session 74's numbers), and **assertion 6**, the
+ordinary-path traversal S72 did not build. ⚑ NEW, measured by Session 74: the draw-call ratchet (67)
+is now exceeded — entrance 68, sends 78 — a side effect of Room 3's belongings; not root-caused this
+session (see 01_SESSION_LOG.md's own account of the investigation).
 
 ### ⚑ S68 is retired, not pending (2026-08-05)
 Sérgio asked what happened to it. Honest answer: **it was a good idea for a problem that has since
@@ -440,7 +443,8 @@ could not build. A skipped check named plainly is worth more than a check that a
 ---
 
 # S73 — ERA 4 EXISTS (Stage 2) · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: BLOCKED — on S74 ONLY. Both narrative gates closed 2026-08-06; dispatch as soon as S74 ships.**
+**⚑ PROMPT STATUS: QUEUED — S74 shipped 2026-08-06 (Room 3 has its belongings, headset and dark CRT;
+both phones have real models). Both narrative gates were already closed 2026-08-06. Dispatch this one.**
 *Rewritten 2026-08-06 against the deep pass; the earlier version predated it and would have built the
 wrong ball. Stage 2 of `REINTERP_E4_BUILD_PLAN_2026-08-05.md`. ⚑ THE BALL IS NOT THIS SESSION — it is
 Stage 3, after the reader.*
@@ -596,7 +600,10 @@ ACCEPTANCE, BY FEEL:
 ---
 
 # S74 — THE ROOMS (Stage 1 of Era 4) · Opus or a cheaper model · **delegable**
-**⚑ PROMPT STATUS: QUEUED — dispatch this one. Stage 0 is closed; this is now unblocked.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-06 — Room 3 has ~32 belongings, the headset (hero, on its stand,
+with the honest-detail glasses), the dark-and-staying CRT, and a real multi-part model for the phone
+in BOTH Room 2 and Room 3. Do not dispatch; the number is retired. See BUILD_LOG.md and
+01_SESSION_LOG.md, Session 74.**
 *Plan: `REINTERP_E4_BUILD_PLAN_2026-08-05.md`. Fixtures decided in `REINTERP_E4_THE_DEVICE_2026-08-05.md`
 §"STAGE 0 — CLOSED". ⚑ This is the stage that stops Era 4 repeating Era 3's fault, so it runs BEFORE
 any E4 software. It is delegable because it has a real oracle: `room-audit.mjs` agrees with the live

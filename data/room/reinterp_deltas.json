@@ -351,6 +351,21 @@
         ],
         "color": "#44464F",
         "model": "cassettePlayer"
+      },
+      {
+        "id": "curtainRod",
+        "_doc": "Session 74 (the E4 room pass, item 3 in scope: 'all the rooms built have still a lot of logistics and object errors' — S71's own P6 named this and left it: 'Room 1's curtains hang from nothing — Rooms 2 and 3 have a curtRod prop and Room 1 does not.' era1.json itself stays byte-identical to the shipped baseline (assets/LICENSES.md), so the fix lands here in r1 rather than on the baseline curtainLeft/curtainRight props themselves. Spans both curtains (x -1.50 to -0.40, matching e_curtRod/w_curtRod's own span logic) just above their authored top (curtainLeft/Right pos.y 1.5 + half-height 0.55 = 2.05), same brown as the side rooms' rods and the shelf/desk timber already in this room. FLOATING → held (room-audit.mjs's 'hangs' rule: a prop whose base sits within 0.03 m of another prop's underside).",
+        "pos": [
+          -0.95,
+          2.07,
+          -0.64
+        ],
+        "size": [
+          1.16,
+          0.04,
+          0.04
+        ],
+        "color": "#8A5A3B"
       }
     ]
   },
@@ -1382,10 +1397,11 @@
       },
       {
         "id": "e_desk",
+        "_doc": "Session 74: z 0.7 → 0.61 (P1 in Session 71's log — the exact fix it proposed but did not apply). e_desk's own measured `modelScale` renders +50% deep on its local z, which put it 0.086 m inside e_bed; moving the desk clears it with a small margin instead of resizing the (correctly-measured) furniture. Every prop resting ON the desk (CRT, keyboard, mouse, folders) carries the same -0.09 z so the whole assembly stays together.",
         "pos": [
           5.28,
           0,
-          0.7
+          0.61
         ],
         "size": [
           1.4,
@@ -1486,7 +1502,7 @@
         "pos": [
           5.37,
           1.04,
-          0.7
+          0.61
         ],
         "size": [
           0.5,
@@ -1501,7 +1517,7 @@
         "pos": [
           5.15,
           1.04,
-          0.7
+          0.61
         ],
         "size": [
           0.46,
@@ -1516,7 +1532,7 @@
         "pos": [
           5.135,
           1.04,
-          0.7
+          0.61
         ],
         "size": [
           0.34,
@@ -1532,7 +1548,7 @@
         "pos": [
           5.32,
           0.8,
-          0.7
+          0.61
         ],
         "size": [
           0.3,
@@ -1547,7 +1563,7 @@
         "pos": [
           5.1,
           0.755,
-          0.7
+          0.61
         ],
         "size": [
           0.42,
@@ -1562,7 +1578,7 @@
         "pos": [
           5.1,
           0.755,
-          1.04
+          0.95
         ],
         "size": [
           0.06,
@@ -1708,6 +1724,7 @@
       },
       {
         "id": "w_phoneDevice",
+        "_doc": "Session 74: THE PHONE GETS A REAL MODEL (build plan fixture list, item 4) — was a single untextured box, the exact fault the plan measured ('No `model` field on either. They are untextured boxes.'). No CC0 phone-shaped GLB exists in the local kit (assets/LICENSES.md) and this session had no way to fetch one, so it is built the CRT's own way — a real multi-part assembly, primitives not a mesh — using the new `parts` composite (era1room.ts/clusterMorph.ts): a dark glass body + a camera bump, under ONE id/entity so `app.ts`'s held-read toggle (`w_phoneDevice`, seat poses only in this session's file fence) keeps working unmodified — the whole assembly hides together when the phone comes to hand. `parts` positions are LOCAL offsets in this prop's own pre-yaw frame, same frame as `size`.",
         "pos": [
           -2.42,
           0.51,
@@ -1718,7 +1735,11 @@
           0.012,
           0.14
         ],
-        "color": "#2C2C34",
+        "color": "#15151F",
+        "parts": [
+          { "pos": [0, 0, 0], "size": [0.07, 0.012, 0.14], "color": "#15151F" },
+          { "pos": [0, 0.006, 0.058], "size": [0.014, 0.004, 0.014], "color": "#9AA0A6" }
+        ],
         "yaw": 90
       },
       {
@@ -1726,7 +1747,7 @@
         "pos": [
           5.16,
           0.79,
-          1.06
+          0.97
         ],
         "size": [
           0.3,
@@ -1741,7 +1762,7 @@
         "pos": [
           5.14,
           0.85,
-          1.1
+          1.01
         ],
         "size": [
           0.28,
@@ -2289,6 +2310,240 @@
         ],
         "color": "#C8B8D0",
         "yaw": 90
+      },
+      {
+        "id": "e_bookRow0_0",
+        "_doc": "Session 74 — MAYA'S THINGS (the E4 room pass, build plan Stage 1 / S66's contract applied to her, per docs/reinterp/BUILD_QUEUE_LIVE.md and the session log). Present from r3 (E3) on, same convention as Vera's own belongings above: the three rooms are ONE building that ages 30 years in parallel, so Maya already lives here while the piece's attention is on Vera — the room does not become hers only when the story reaches E4. ~32 items, a scale not a quota (S66's own phrase); every colour reused from era1.json's family or already approved in this file, nothing invented. She is not Vera re-coloured: a different mix (a sketchbook and pens rather than a notepad; sneakers and a backpack by the door rather than slippers and a laundry basket; a floor cushion, not a throw pillow chair) and a different palette lean (mint/rose/tan rather than lavender/sage). Placement iterated in-engine against `node tools/room-audit.mjs` (see this session's log for before/after numbers).",
+        "pos": [4.15, 0.52, -0.55],
+        "size": [0.16, 0.20, 0.036],
+        "color": "#C9A8A0",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookRow0_1",
+        "pos": [4.20, 0.52, -0.55],
+        "size": [0.16, 0.21, 0.04],
+        "color": "#9FB4C0",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookRow0_2",
+        "pos": [4.245, 0.525, -0.55],
+        "size": [0.16, 0.22, 0.038],
+        "color": "#A8B49A",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookRow0_3",
+        "pos": [4.29, 0.522, -0.55],
+        "size": [0.16, 0.205, 0.042],
+        "color": "#C8B8D0",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookRow0_4",
+        "pos": [4.335, 0.518, -0.55],
+        "size": [0.16, 0.198, 0.05],
+        "color": "#B98563",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookRow1_0",
+        "pos": [4.15, 0.98, -0.55],
+        "size": [0.16, 0.165, 0.045],
+        "color": "#C98F8F",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookRow1_1",
+        "pos": [4.195, 0.98, -0.55],
+        "size": [0.16, 0.175, 0.04],
+        "color": "#C9A8A0",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookRow1_2",
+        "pos": [4.24, 0.985, -0.55],
+        "size": [0.16, 0.18, 0.042],
+        "color": "#9FB4C0",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookRow1_3",
+        "pos": [4.285, 0.99, -0.55],
+        "size": [0.16, 0.19, 0.048],
+        "color": "#A8B49A",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookRow1_4",
+        "pos": [4.335, 0.985, -0.55],
+        "size": [0.16, 0.185, 0.038],
+        "color": "#D4D0C8",
+        "yaw": 270
+      },
+      {
+        "id": "e_tin",
+        "_doc": "Session 74: an empty third shelf keeps a pencil tin rather than a third row of books — the point of a bookcase not entirely full of books (this is fog-tier per era1room.ts's classifyProp, the same recede-into-background treatment as homeworkPile).",
+        "pos": [4.25, 1.40, -0.55],
+        "size": [0.06, 0.08, 0.06],
+        "color": "#F5F4ED",
+        "yaw": 270
+      },
+      {
+        "id": "e_mug",
+        "_doc": "Session 74 — the desk, in front of the keyboard (the free strip the headset's own fixtures will share at r4 — see that block's doc).",
+        "pos": [5.03, 0.795, -0.03],
+        "size": [0.08, 0.09, 0.08],
+        "color": "#9FD8CB",
+        "yaw": 270
+      },
+      {
+        "id": "e_sketchbook",
+        "pos": [5.05, 0.762, 0.15],
+        "size": [0.21, 0.012, 0.15],
+        "color": "#E8B7C8",
+        "yaw": 270
+      },
+      {
+        "id": "e_pen",
+        "pos": [5.02, 0.775, 0.15],
+        "size": [0.11, 0.012, 0.012],
+        "color": "#2C2C34",
+        "yaw": 270
+      },
+      {
+        "id": "e_hoodie",
+        "_doc": "Session 74: the chair — same drape-over-the-back logic as w_cardigan (Session 66), a different garment and a different colour so the two rooms don't read as the same person twice.",
+        "pos": [4.48, 0.8, 0.95],
+        "size": [0.1, 0.32, 0.36],
+        "color": "#9FB4C0",
+        "yaw": 270
+      },
+      {
+        "id": "e_pillow2",
+        "_doc": "Session 74: the bed — a second pillow toward the nightstand end, a folded throw at the foot.",
+        "pos": [3.35, 0.62, 1.85],
+        "size": [0.45, 0.09, 0.28],
+        "color": "#F5EDDC",
+        "yaw": 270
+      },
+      {
+        "id": "e_throw",
+        "pos": [4.1, 0.745, 2.2],
+        "size": [0.35, 0.06, 0.9],
+        "color": "#A8B49A",
+        "yaw": 270
+      },
+      {
+        "id": "e_glass",
+        "_doc": "Session 74: the nightstand top — a glass of water, an earbuds case, a small clock. The phone itself arrives at r4 (the era's device timeline, e_phoneBody/e_phoneCam below) on the same surface.",
+        "pos": [2.86, 0.555, 1.75],
+        "size": [0.06, 0.11, 0.06],
+        "color": "#D4D0C8",
+        "yaw": 270
+      },
+      {
+        "id": "e_earbuds",
+        "pos": [3.05, 0.51, 1.75],
+        "size": [0.03, 0.02, 0.05],
+        "color": "#F5F4ED",
+        "yaw": 270
+      },
+      {
+        "id": "e_clock",
+        "pos": [2.87, 0.535, 2.02],
+        "size": [0.09, 0.06, 0.09],
+        "color": "#2C2C34",
+        "yaw": 270
+      },
+      {
+        "id": "e_cable",
+        "pos": [2.75, 0.02, 1.95],
+        "size": [0.15, 0.015, 0.03],
+        "color": "#2C2C34",
+        "yaw": 270
+      },
+      {
+        "id": "e_plant_pot",
+        "_doc": "Session 74: floor-standing, near the window — same plant as Room 2's own (w_plant_pot/top), the one item deliberately shared rather than re-invented (a plant is not a personality trait).",
+        "pos": [5.5, 0.28, -0.7],
+        "size": [0.22, 0.26, 0.22],
+        "color": "#74492F",
+        "yaw": 270
+      },
+      {
+        "id": "e_plant_top",
+        "pos": [5.5, 0.55, -0.7],
+        "size": [0.32, 0.30, 0.32],
+        "color": "#A8B49A",
+        "yaw": 270
+      },
+      {
+        "id": "e_backpack",
+        "_doc": "Session 74: by the door — a life that goes outside this room. Not Vera's laundry basket: a backpack, a kicked-off pair of sneakers, keys dropped on the way in.",
+        "pos": [2.25, 0.18, 0.3],
+        "size": [0.28, 0.36, 0.20],
+        "color": "#B98563",
+        "yaw": 270
+      },
+      {
+        "id": "e_sneakerL",
+        "pos": [2.3, 0.05, 0.65],
+        "size": [0.10, 0.10, 0.24],
+        "color": "#E8D48A",
+        "yaw": 270
+      },
+      {
+        "id": "e_sneakerR",
+        "pos": [2.45, 0.05, 0.65],
+        "size": [0.10, 0.10, 0.24],
+        "color": "#E8D48A",
+        "yaw": 270
+      },
+      {
+        "id": "e_keys",
+        "pos": [2.35, 0.03, 0.85],
+        "size": [0.06, 0.02, 0.06],
+        "color": "#9AA0A6",
+        "yaw": 270
+      },
+      {
+        "id": "e_cushion",
+        "_doc": "Session 74: the rug and the floor between the bed and the desk — a cushion to sit on the floor with, a book left open where she was reading, a water bottle, a small speaker (the same idea as Room 1's boombox and Room 2's radio, one generation newer).",
+        "pos": [3.3, 0.09, 0.4],
+        "size": [0.5, 0.18, 0.5],
+        "color": "#C98F8F",
+        "yaw": 270
+      },
+      {
+        "id": "e_bookLoose",
+        "pos": [3.4, 0.02, 2.3],
+        "size": [0.18, 0.03, 0.13],
+        "color": "#C9A8A0",
+        "yaw": 270
+      },
+      {
+        "id": "e_waterBottle",
+        "pos": [3.35, 0.09, 1.6],
+        "size": [0.06, 0.18, 0.06],
+        "color": "#9FB4C0",
+        "yaw": 270
+      },
+      {
+        "id": "e_speaker",
+        "pos": [4.9, 0.06, 0.05],
+        "size": [0.10, 0.12, 0.10],
+        "color": "#8A5A3B",
+        "yaw": 270
+      },
+      {
+        "id": "e_frame",
+        "_doc": "Session 74: the bookcase's own top edge — a small framed photo (the same idea as w_frame, leaning against the case rather than hung, per the live measurement that showed w_frame does the same).",
+        "pos": [4.45, 1.45, -0.35],
+        "size": [0.11, 0.14, 0.02],
+        "color": "#8A5A3B",
+        "yaw": 270
       }
     ]
   },
@@ -2304,7 +2559,8 @@
         "color": "#15151F"
       },
       "e_crtScreen": {
-        "color": "#2C3A5C"
+        "_doc": "Session 74: THE CRT GOES DARK AND STAYS (build plan fixture list, item 3 — was blue, i.e. still reading as ON). #15151F is the same 'off' hex every other window/screen in this r4 block already goes to (windowPane/w_winPane/e_winPane above) — reused, not invented. This prop is spawned `emissive:true` (r3's own add), so an override here replaces its emissive colour directly (clusterMorph.applyTarget copies `color` straight onto the emissive channel for an emissive prop) — there is no separate 'off' switch in this data schema, so 'as dark as the rest of the dead glass in this room' is how off is expressed. Not deleted, not moved: the same machine across thirty years, finally off, still in the room.",
+        "color": "#15151F"
       },
       "lampFoot": {
         "pos": [
@@ -2333,18 +2589,49 @@
     ],
     "add": [
       {
-        "id": "e_phone",
-        "pos": [
-          4.9,
-          0.77,
-          1.12
-        ],
-        "size": [
-          0.09,
-          0.012,
-          0.17
-        ],
-        "color": "#1A1A24",
+        "id": "e_phoneBody",
+        "_doc": "Session 74: THE PHONE GETS A REAL MODEL (fixture list item 4 — was a single untextured box; see w_phoneDevice's own _doc in r3 for why this is a primitive assembly rather than a GLB). Moved from the desk to the nightstand — bedside charging is the more honest place for it, and it frees the desk's front strip for the headset below, which the fixture list marks as the thing that actually needs to be within reach of the seat. Nothing in code keys off the literal id `e_phone` (checked: `app.ts`'s held-read list only covers Room 2's tablet/phone), so this rename is safe.",
+        "pos": [2.98, 0.507, 1.85],
+        "size": [0.09, 0.012, 0.17],
+        "color": "#15151F",
+        "yaw": 270
+      },
+      {
+        "id": "e_phoneCam",
+        "pos": [2.98, 0.513, 1.795],
+        "size": [0.014, 0.004, 0.014],
+        "color": "#9AA0A6",
+        "yaw": 270
+      },
+      {
+        "id": "e_headsetStand",
+        "_doc": "Session 74: THE HEADSET (fixture list item 1) — a hero object (era1room.ts's classifyProp, alongside the CRT: Room 3's two heroes, inside the ≤3 budget), on the desk's own free front strip, within reach of the seat (seatPose(270): eye at x4.4,z0.7, facing the desk — the stand sits at x5.40-5.50, well inside arm's reach, clear of the CRT/keyboard/folders cluster which all sit at z>=0.36 after this session's desk-shift fix). A small charging dock, not furniture: this is where she puts it down.",
+        "pos": [5.45, 0.78, 0.05],
+        "size": [0.10, 0.06, 0.10],
+        "color": "#2C2C34",
+        "yaw": 270
+      },
+      {
+        "id": "e_headsetVisor",
+        "_doc": "Session 74: the visor. ⚑ THE SEAM for Stage 2 — this is where the 2D canvas mounts as the era's screen surface (per REINTERP_E4_THE_DEVICE_2026-08-05.md: 'the visor is the screen surface'). Left CLEAN on purpose: no emissive, no render-texture, no screen behaviour — that is explicitly not this session's build.",
+        "pos": [5.45, 0.87, 0.05],
+        "size": [0.09, 0.09, 0.16],
+        "color": "#3A3A44",
+        "yaw": 270
+      },
+      {
+        "id": "e_headsetStrap",
+        "pos": [5.53, 0.87, 0.05],
+        "size": [0.11, 0.02, 0.03],
+        "color": "#2C2C34",
+        "yaw": 270
+      },
+      {
+        "id": "e_glasses",
+        "_doc": "Session 74: THE HONEST DETAIL (fixture list — 'whatever she moves to put it on... one small honest detail; the body is in the room'). Her glasses, set down beside the stand — the ordinary human gesture of taking them off before the headset goes on.",
+        "pos": [5.45, 0.755, -0.03],
+        "size": [0.045, 0.02, 0.13],
+        "color": "#2C2C34",
         "yaw": 270
       }
     ]
