@@ -77,7 +77,7 @@ by era, do not invent relationships).
 | pass | file | anchors | status |
 |---|---|---|---|
 | **The European export** | `E4_SOURCES_export_2026-08-06.md` | ✅ **LANDED.** 14 nodes. Claim substantially holds; ⚑ **broke the era's thesis** — they operate where there is no ban rather than fleeing one. Also: "30+ countries" is 28, and the apparent second sources are the same reporter | ✅ 2026-08-06 |
-| **AI & automation** | `E4_SOURCES_ai_2026-08-06.md` | ⚑ **L's own standing.** detrans.ai moves the *form* from speculative to documentary; also tests whether the AI photo-editor claim (currently `speculative [DO NOT CITE YET]`) has any documented instance yet | ⏳ dispatched 2026-08-06 |
+| **AI & automation** | `E4_SOURCES_ai_2026-08-06.md` | ✅ **LANDED.** 12 nodes. L's form → `documentary`; ⚑ but the apparatus is an **adopter, not a developer** — no conversion org found building AI. ⚑ **The photo editor STAYS `speculative`** — no such tool exists anywhere in the record. Best single item: GLAAD 2026 on Llama 4 | ✅ 2026-08-06 |
 | **The legal counter-current** | `E4_SOURCES_law_2026-08-06.md` | Malta as E3's break, and the Close's *"the bans that DID pass, beside the survivors."* ⚑ Must include the failures — a list of only victories would be a false picture | ⏳ dispatched 2026-08-06 |
 | **Ballroom provenance** | `BALLROOM_PROVENANCE_2026-08-06.md` | ✅ **LANDED.** 13 nodes + a draft attribution. ⚑ **Our reading was a simplification** — realness re-performs imposed categories rather than escaping them; what was seized back is the judging. Names three traps, incl. *Paris Is Burning* without bell hooks, and crediting the culture in the abstract instead of its lineage | ✅ 2026-08-06 |
 

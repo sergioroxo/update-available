@@ -17,15 +17,33 @@ I had this marked *"in NO repo document — [VERIFY SOURCE], assert nothing."* I
 | **What** | a website and chatbot presented as a tool for understanding detransitioners' perspectives |
 | **Launched** | September 2025 |
 | **Built by** | Peter James Steven, a software engineer in Wellington, New Zealand — after his sister began taking testosterone in 2024 |
-| **⚑ Technology** | it runs on **Kimi**, an open-weight Chinese LLM |
+| **⚑ Technology** | a RAG chatbot over the scraped corpus, **deliberately routed around Western LLMs** onto Chinese open-weight models. ⚑ **Which one is not stable** — see the correction below |
 | **⚑ Its data** | scraped posts from roughly **2,700 of the most active users of r/detrans**, plus YouTube |
-| **Its claim** | *"talk to 50,000+ / 60,000+ detransitioners"* |
+| **Its claim** | *"talk to 50,000+ / 60,000+ detransitioners"* — ⚑ **misleading by its own fine print**: that is the subreddit's subscriber count, not the dataset |
 | **Assessment** | a **Rewire News Group** investigation (15 July 2026) characterises it as targeting trans users with conversion practice, finding it discouraged gender-affirming care **in every scenario tested**, and describes it as repackaging debunked science as balanced advice |
 
-**Dossier status: `documentary`** for its existence, its builder, its technology and its data source
-(multiple independent sources agree). **`contested`** is the wrong label for the assessment — the
-investigation is attributable and should be cited *as* the investigation's finding, not as a fact
-about intent.
+### ⚑ CORRECTED 2026-08-06 by the AI pass (`docs/research/E4_SOURCES_ai_2026-08-06.md`)
+I stated three things above more firmly than the record supports. Fixed here rather than quietly:
+
+1. **⚑ "It runs on Kimi" is NOT a stable fact.** Reporting and the site's own self-description name
+   **three different Chinese open-weight models at different points — Kimi, then DeepSeek, then
+   Xiaomi MiMo** (the last read directly from the site today). **Treat the specific model as a moving
+   target, never as a citable constant.** What IS stable, and is the better fact anyway: it
+   deliberately routes around Western models.
+2. **⚑ AND THE BUILDER'S STATED REASON IS THE FINDING.** He says GPT-class models were *"too
+   aggressive"* defending gender-affirming framing. **That is Strand A's central question answered
+   from the other side: the frontier models refused, so he used an open one.** Capability was never
+   the constraint; willingness was — and the open-weight arm removed it. This belongs in the paper.
+3. **The "60,000+ detransitioners" tagline is misleading, per the site's own fine print** — it is the
+   **subreddit's subscriber count**, not the dataset. I repeated it uncritically. The dataset is the
+   ~2,700 most-active authors.
+4. **The Rewire investigation could not be fetched** (403 to automated retrieval), so its claims are
+   reconstructed secondhand and flagged **unverified at the word level** — though the substance is
+   independently corroborated, including by SPLC's own Hatewatch coverage.
+
+**Dossier status: `documentary`** for its existence, its builder, its data source and its routing
+around Western models. **The underlying model is `contested`** (three named, none stable). **The
+assessment is attributable** — cite it *as* the investigation's finding, never as a fact about intent.
 
 ## ⚑ What it does to Era 4 — three things, and the first is large
 
@@ -65,6 +83,42 @@ whose posts became the model's voice are *also* being used by it.
 
 **In the fiction: an invented mark, always.** The real name, the builder and the investigation are
 Dossier-only, exactly like every other real organisation in this work.
+
+## ⚑ AND THE WIDER PASS CHANGES ONE MORE THING — the apparatus did not build this
+
+**No conversion-practice organisation was found building or commissioning AI tooling.** GPAHE's
+standing reports — the field's reference documentation — contain **zero mentions of AI, chatbots or
+automation**; they predate the wave, and no 2025–26 update exists.
+
+**What the record actually shows is a different mechanism, and a more interesting one:**
+> **an individual built the tool. An organisation found it and promoted it.**
+> (Genspect — SPLC-designated June 2024 alongside SEGM — amplified detrans.ai promotionally. A
+> promotional link, not funding or development.)
+
+⚑ **So E4 must not depict the apparatus as an AI developer.** It is an **adopter**. That is what the
+evidence supports, and it is worse: the apparatus no longer needs a research budget, only a link.
+
+**Two further documented items, both `documentary`:**
+- A second, independent instance of the same pattern: a user-made **"Detrans bot" on Character.AI**,
+  ~51.5k interactions, no connection to detrans.ai found. **The form is not one product; it is a
+  category.**
+- ⚑ **GLAAD's 2026 report** names **Meta's Llama 4 recommending conversion therapy in an April 2025
+  test — and Meta characterising it as deliberate "bias correction."** A frontier lab, its own model,
+  described as intentional. That is the single most citable item the pass returned.
+
+## ⚑ THE NEGATIVE FINDINGS, which constrain the build
+**A "not found" is a finding, and two of these bind S73:**
+
+1. **⚑ NO AI "TRUE SELF" / PRE-TRANSITION PHOTO-RESTORATION TOOL EXISTS ANYWHERE IN THE RECORD.**
+   This **corroborates the project's existing `speculative` / `[DO NOT CITE YET]` rating (Ethics #13)
+   and it must stay exactly there.** The memories-enhancement beat is **our invention** and must be
+   labelled as invention on its Dossier card. It is the most vivid thing in Era 4 and the least
+   evidenced — that combination is precisely what the speculation ledger exists to catch.
+2. **No AI-specific regulatory or legal response anywhere** — not the EU (its May 2026 AI Act review
+   left self-help therapy chatbots unclassified, with no conversion-specific carve-out), not New
+   Zealand, not the US. And **no app-store presence or removal history** for any such product.
+   ⚑ Note the rhyme with E3, which the piece already carries: the Living Hope app came off a store in
+   2019 **because of a corporate scorecard, not a policy.** Ten years on, there is still no policy.
 
 ---
 
