@@ -237,3 +237,4 @@
 - 2026-08-05 — E4 device decided: the headset, with the 2D canvas remounted to the visor (one-surface law intact); Stage 0 items 1-4 answered; rooms-not-done correction folded into Stage 1.
 - 2026-08-05 — Stage 0 closed (touchless budget, the ball has no screen, the fixture list); S74 queued as E4 Stage 1; model-elicitation research protocol added.
 - 2026-08-06 — Strand B run kit: the layout prompt, a six-model arm list current as of today, and the audit-based scoring sheet.
+- 2026-08-06 — Entrance descent 10 → 11.6s on Sérgio's decision (0.497 → 0.429 m/s, verified by shots.mjs comfort); S73 rewritten as E4 Stage 2 with the ball explicitly excluded.

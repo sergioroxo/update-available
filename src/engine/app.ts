@@ -84,9 +84,15 @@ const WAKE_RAMP_SECONDS = 1.8;
 // COMFORT LAW (CLAUDE.md's turn-only body; §0-REV-4's accessibility rule).
 // ⚑ Translation and rotation NOW OVERLAP, which is exactly the combination that
 // provokes VR sickness, so the whole budget went into keeping the rates low
-// instead of into separating the phases: measured peaks are 0.43 m/s and
-// 9.1°/s (S48's separated version peaked at 1.1 m/s and 41°/s — this moves the
-// body slower AND turns the head four times slower, while never stopping).
+// instead of into separating the phases: the envelope is 0.43 m/s and 9.1°/s
+// (S48's separated version peaked at 1.1 m/s and 41°/s — this moves the body
+// slower AND turns the head four times slower, while never stopping).
+// ⚑ CORRECTED 2026-08-06: this comment used to assert the leg MET those peaks.
+// It did not. S72's L4 assertion measured 0.497 m/s here — the envelope was
+// named from this leg and the leg overran it by 1.2× from the day it shipped.
+// Fixed by DESCENT_SECONDS 10 → 11.6 (see below). `npm run audit` now fails if
+// any driven leg exceeds the envelope, so this class of drift cannot recur
+// silently — but every figure here is DESKTOP-measured and A11 has never run.
 // Smootherstep throughout: zero velocity AND zero acceleration at both ends, no
 // start jolt, no mid-move speed change, no arrival bump. Yaw takes the shortest
 // signed path, so it cannot wind the long way round. No roll, ever, and no
@@ -110,8 +116,17 @@ const DESCENT_FROM = { x: 1.52, y: 2.18, z: 2.62, pitch: -30, yaw: 44 };
  *  2.65 m chord, i.e. a straight line.) This one is offset 0.52 m perpendicular
  *  — up, and out toward the door side — measured as 0.50 m of real sagitta. */
 const DESCENT_VIA = { x: 1.03, y: 2.45, z: 1.03 };
-/** one continuous move, slow enough to read as drifting in and sitting down */
-const DESCENT_SECONDS = 10;
+/** one continuous move, slow enough to read as drifting in and sitting down.
+ *  ⚑ 11.6, not 10 — and this is the comfort law, not a taste call. S72's L4
+ *  assertion measured this leg at **0.497 m/s against the 0.43 m/s envelope**:
+ *  1.875 × 2.653 m of chord / 10 s. The comment above these constants used to
+ *  claim "measured peaks are 0.43 m/s and 9.1°/s", but the envelope was NAMED
+ *  from this leg and the leg had never met it — for every player, every run, as
+ *  the first thing that happens. Applied 2026-08-06 on Sérgio's decision, since
+ *  the 1.6 s is pacing and pacing is his. (11.5 also clears it and is E2→E3's
+ *  descent duration; 11.6 is taken for the margin.) Re-measure with
+ *  `node tools/shots.mjs comfort` after touching DESCENT_FROM/VIA or the seat. */
+const DESCENT_SECONDS = 11.6;
 // ── ⚑ THE RELOCATION (S61; every era change from S67) — the piece lifts you ──
 // Sérgio, after playing it: *"the transition needs explaining… the fly over
 // needs to be slower and let you see the room being built so you understand
