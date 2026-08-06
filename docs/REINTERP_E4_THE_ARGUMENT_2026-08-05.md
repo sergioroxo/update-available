@@ -30,13 +30,31 @@ Europe* — documents something the piece's E4 did not have and needed:
   has a national ban in force.** They did not flee anywhere. Brothers Road's England/Poland retreats
   were **2007 and 2014**, and its current schedule lists **no European dates at all** — a shift toward
   Egypt, Israel, Mexico and the US that **no ban explains**, because no ban applied.
-- **So the accurate claim is sharper, not softer:** *the apparatus did not have to relocate, because
-  almost nowhere made it illegal.* **Malta went first in 2016 and is still close to alone.** The
-  Council of Europe (PACE, Jan 2026), the European Parliament (Apr 2026) and a UK draft bill
-  (Jun 2026) have all moved — **and none of it binds anyone.**
-- **What that does to Era 3's break:** Malta still lands, and it lands *harder*. Vera hears that it is
-  illegal **somewhere** — and the honest answer ten years later is that *somewhere* is still very
-  nearly the whole story. **The apparatus did not outrun the law. The law never arrived.**
+- **⚑ MY OWN CORRECTION WAS THEN OVER-CORRECTED, and the law pass caught it.** I wrote *"almost
+  nowhere made it illegal — Malta is still close to alone."* **That is wrong.**
+  `docs/research/E4_SOURCES_law_2026-08-06.md` establishes **about ten firmly-sourced national bans**
+  (Malta, France, Canada, Norway, Mexico, Spain, plus reasonably-sourced Germany, New Zealand,
+  Cyprus, Belgium, Portugal). The law arrived in a lot of places.
+- **⚑ THE ACCURATE THESIS, and it is better than either of my two drafts:**
+  > **The law arrived in patches — and a patchwork is porous.**
+  > IFTCC is registered in the **UK** and meets in **Poland**: two gaps, not two refuges. Nobody had
+  > to flee. And the strongest documented evidence of crossing is a **CBC Marketplace undercover
+  > investigation**, in which a US life coach offered **online** conversion coaching to a Canadian
+  > producer **despite Canada's ban.** Nobody moved. **A ban is national; a URL is not.**
+- **What that does to Era 3's break:** Malta still lands, and it lands *precisely*. Vera hears it is
+  illegal **somewhere** — and *somewhere* turns out to be the exact shape of the problem. **The
+  apparatus did not outrun the law. It did not have to. It only had to be somewhere else, or online,
+  and both were free.**
+- **⚑ AND THE COUNTER-CURRENT RUNS BACKWARDS TOO, which the piece does not yet carry.** The Close's
+  canon is *"the bans that DID pass, beside the survivors."* It now needs its companion: **the bans
+  that passed and were then narrowed.** The **US Supreme Court's *Chiles v. Salazar*** (31 Mar 2026,
+  8–1) forced Colorado to narrow its own minors' ban. **Portugal's 2024 ban is under an organised
+  repeal petition.** And on **13 May 2026 the European Commission declined a binding directive** —
+  despite a 1.2-million-signature citizens' initiative and a 405-vote Parliament resolution — offering
+  a non-binding recommendation not due until 2027.
+- **The UK is the era's clearest failure:** promised **2018**, scrapped **April 2022**, trans coverage
+  added and then contested, and as of today **still only a draft bill in pre-legislative scrutiny.**
+  Eight years. ⚑ *And it is where IFTCC is registered.*
 - **Two smaller breaks, recorded so nothing rests on them:** the *"more than 30 countries"* figure is
   **28** in IFTCC's own release for that event (a different 2023 conference drew 34), and the
   apparent second and third sources for the whole story — The Progressive, 76crimes — are **by the

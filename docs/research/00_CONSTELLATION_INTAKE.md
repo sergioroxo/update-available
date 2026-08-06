@@ -78,7 +78,7 @@ by era, do not invent relationships).
 |---|---|---|---|
 | **The European export** | `E4_SOURCES_export_2026-08-06.md` | ✅ **LANDED.** 14 nodes. Claim substantially holds; ⚑ **broke the era's thesis** — they operate where there is no ban rather than fleeing one. Also: "30+ countries" is 28, and the apparent second sources are the same reporter | ✅ 2026-08-06 |
 | **AI & automation** | `E4_SOURCES_ai_2026-08-06.md` | ✅ **LANDED.** 12 nodes. L's form → `documentary`; ⚑ but the apparatus is an **adopter, not a developer** — no conversion org found building AI. ⚑ **The photo editor STAYS `speculative`** — no such tool exists anywhere in the record. Best single item: GLAAD 2026 on Llama 4 | ✅ 2026-08-06 |
-| **The legal counter-current** | `E4_SOURCES_law_2026-08-06.md` | Malta as E3's break, and the Close's *"the bans that DID pass, beside the survivors."* ⚑ Must include the failures — a list of only victories would be a false picture | ⏳ dispatched 2026-08-06 |
+| **The legal counter-current** | `E4_SOURCES_law_2026-08-06.md` | ✅ **LANDED.** ~10 firmly-sourced national bans — ⚑ **which corrected my own over-correction** (I had written "Malta is close to alone"). Scope matters more than count: Spain regulatory not criminal, Germany minors-only, consent-as-defence varies. ⚑ Greece and Iceland **unresolved source conflicts, flagged not guessed**; Netherlands passed both chambers but is **not yet law** | ✅ 2026-08-06 |
 | **Ballroom provenance** | `BALLROOM_PROVENANCE_2026-08-06.md` | ✅ **LANDED.** 13 nodes + a draft attribution. ⚑ **Our reading was a simplification** — realness re-performs imposed categories rather than escaping them; what was seized back is the judging. Names three traps, incl. *Paris Is Burning* without bell hooks, and crediting the culture in the abstract instead of its lineage | ✅ 2026-08-06 |
 
 ### Already sourced this week, awaiting intake
@@ -86,6 +86,19 @@ by era, do not invent relationships).
   investigation 15 Jul 2026. `REINTERP_E4_SOURCE_PASS_2026-08-06.md` §1.
 - **The LGB-split lobbying campaign** — the phrase's documented origin and purpose, GPAHE's
   classification. Same file, §2. ⚑ Carries the lobbying-vs-clinical-debate distinction as a law.
+
+### ⚑ FOUR THINGS THE LAW PASS SAYS THE PIECE MUST NOT DO
+1. **Do not use the Switzerland-as-haven claim.** Its original source was unreachable (403) and it
+   could not be verified at all. It is asserted in secondary sources only.
+2. **Do not lean the ending on more than the CBC Marketplace case can carry.** That undercover
+   investigation — a US life coach offering online coaching to a Canadian despite Canada's ban — is
+   **the sturdiest single piece of cross-border evidence in the file.** The broader "bans just push it
+   elsewhere" claim is assertion.
+3. **Do not state Greece's or Iceland's scope.** Sources conflict — Greece on whether gender identity
+   is covered at all, Iceland on whether it took force 1 Jan 2024 or 1 Jul 2025. Flagged, not guessed.
+4. **Do not call the Netherlands a ban.** Passed both chambers; still awaiting royal assent.
+   ⚑ *And do not say "adopted" when the fact is "in force," or vice versa — this project has been
+   bitten by that distinction before.*
 
 ### Still owed, not yet dispatched
 - **The E1/E2 sources** have never been through a pass of this kind; the constellation's 24 labels
