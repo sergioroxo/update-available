@@ -18,6 +18,16 @@ one**, both verified in our code today.*
 | **Implement raycasting bound to touch events** | ⚑ **Already built** — `hitPlane()`, prop picking, screen-plane routing, `BELONGINGS_HIT`; S70 verified it with real projected pointer presses. **But see §2, because it is conditionally broken** |
 | **Touch-drag fallback (OrbitControls, panning off)** | ⚑ **Already built** as drag-to-look — but see §2.1, which is the part the brief glosses |
 
+## ⚑ AND THE FULLER RESEARCH SÉRGIO SUPPLIED CONFIRMS THREE THINGS I HAD FLAGGED
+`Cross-Platform PlayCanvas 360 Interactive Experience` (his deep-research pass) is written **for
+PlayCanvas**, which makes it directly usable where the shorter brief was not:
+- ⚑ **It resolves taps on `onTouchEnd`, "only if single tap"** — independently arriving at §2.1's fix.
+- **It gives the full gyro quaternion chain** (`q₀ × q₁ × q₂`, plus an additive `q_touch` for drag),
+  so drag and gyro compose rather than fight.
+- ⚑ **It kills the Mozilla WebXR Viewer route definitively** — deprecated, unmaintained, and it
+  requires a download, which breaks the zero-install premise. *(I had suggested trying it back on
+  2026-07-30. It should not be tried.)*
+
 **So the brief's value is confirmation, not architecture.** It independently arrives at the same
 conclusion the device research did, which is worth something. It just describes building from scratch
 what mostly exists.
@@ -60,7 +70,41 @@ information the picking code already has.
 
 # 3 · WHAT THE BRIEF ALSO MISSES — three design problems gyro does not solve
 
-## 3.1 · ⚑ THE SCREEN-IN-A-SCREEN PROBLEM — the real risk, and it is not technical
+## 3.1 · ⚑ CORRECTED — pinch-to-zoom FOV, NOT "fill the viewport"
+
+**Sérgio, 2026-08-06:** *"I wouldn't make touching the screen turn it into flat inside the mobile. We
+can have zooms, that is different, but I don't want the 'fill up' — that would be webxr to flat by
+tapping, and no."*
+
+**He is right and my recommendation was wrong.** A canvas that takes the viewport **is** flat-by-
+tapping: the 3D room disappears and the spatial frame — the whole point of the piece — goes with it.
+I described S66's held read as "fills the viewport," which is both a bad description of it and a bad
+idea in mode 3.
+
+⚑ **And his own deep-research spec supplies the right answer, which I should have found:
+PINCH-TO-ZOOM ON THE CAMERA'S FIELD OF VIEW, clamped between 30° and 80°.**
+
+```
+Δd  = current pinch distance − previous
+FOV = clamp(FOV − Δd · sensitivity, 30°, 80°)
+```
+
+**Why this is the correct solution and not a compromise:**
+- **The room never leaves.** You narrow the frame and see *less* of the room, *larger*. Nothing is
+  replaced, nothing is swapped, no mode is entered. **You are still in the space the entire time.**
+- **It is the native 360-video gesture**, which is exactly the vocabulary he asked for — people
+  already know it from every panorama and map they have ever used.
+- **It is the camera, not the fiction.** No diegetic cost, no new surface, no law bent. It does not
+  touch the one-UI-surface rule because it does not add a surface.
+- **It is what a person actually does** when something across a room is too small to read: they look
+  harder, or they get closer. **Zoom is getting closer. "Fill" is teleporting to a different medium.**
+
+**So the screen-in-a-screen problem is solved by optics, not by architecture** — and the design
+question I raised as *(a) leave it / (b) fill / (c) reflow* had a fourth answer I missed.
+⚑ **Open, and it is a real question:** at 30° FOV, is the 512×384 canvas actually legible on a 6"
+phone? **That is measurable and must be measured**, not assumed, before mode 3 is called done.
+
+## 3.1b · The old framing, kept as the record of the error
 This piece's UI is a **512×384 logical canvas**, pixel-art, `FILTER_NEAREST`, textured onto a monitor
 mesh **inside** the 3D room. On a phone, that is a small screen showing a room containing a smaller
 screen carrying the text.
@@ -88,12 +132,32 @@ ask is the turn, and *where "forward" is* is therefore load-bearing. A recentre 
 the player where the room's front is — which makes it a **game-menu** object (frame-voice, functional),
 alongside the restart and the caption setting.
 
-## 3.3 · Portrait, on a 4:3 canvas, in a landscape room
-A phone held upright shows a tall slice of a room whose content was composed for a wide frame. Either
-the piece asks for landscape (a real, common, acceptable ask) or the composition has to survive
-portrait. ⚑ **Decide it before building, because the seat framings and the whole subject-in-frame
-audit depend on the aspect ratio** — S76's own measurement moved from 29.7° to 34.3° just between
-1280×860 and 16:9.
+## 3.3 · Portrait vs landscape — ⚑ SOLVED BY THE SPEC, not by decree
+I said this had to be *decided* before building. **It does not: the research handles it
+mathematically.** The screen-orientation angle `so ∈ {0°, 90°, −90°, 180°}` becomes a quaternion `q₂`
+applied about the local Z axis, recomputed on `orientationchange`:
+
+> `q_gyro = q₀ × q₁ × q₂` — **the horizon stays level relative to gravity, with no axis flipping**,
+> whichever way the phone is held.
+
+So the piece **does not have to demand landscape.** ⚑ What remains true, and is now the only open part:
+**composition** still changes with aspect ratio — S76's own half-FOV moved 29.7° → 34.3° between
+1280×860 and 16:9 — so **the subject-in-frame audit (S81) must run at a portrait viewport as well as
+a desktop one**, or it is only checking one of the shapes people will actually hold.
+
+## 3.4 · ⚑ AND THE SPEC RAISES A QUESTION ABOUT OUR OWN BUDGET
+Its Quest draw-call targets are **< 80 per frame on Quest 2** and **< 120 on Quest 3**, with triangle
+budgets of 250k and 500k.
+
+**CLAUDE.md's law is ≤60 draw calls and ≤75k tris** — *substantially stricter than this spec on every
+axis.* Which means the numbers we have been treating as failures may be miscalibrated: **the latent
+send leg at 78 sits inside this spec's Quest-2 budget and well inside Quest 3's.**
+
+⚑ **I am not changing the law.** Our number may be a deliberate margin for stereo rendering, for the
+render-texture uploads, or simply for headroom — and **A11 has never run**, so nobody has measured
+frame time on the actual device. **But it is worth Sérgio knowing that our ceiling is roughly half
+what an outside spec recommends**, and that the honest way to settle it is one in-headset frame-time
+capture, not another argument.
 
 ---
 

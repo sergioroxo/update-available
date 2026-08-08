@@ -973,17 +973,29 @@ SCOPE:
    zero and expect drift. Recentre is frame-voice and functional — it belongs beside restart and the
    caption setting in `src/desktop/gameMenu.ts`, not in the fiction. And it is load-bearing rather
    than plumbing: this piece's one bodily ask is the turn, so WHERE FORWARD IS matters.
-5. ⚑ TWO DESIGN CALLS TO MAKE AND REPORT (assessment §3.1 and §3.3), both mine to propose and
-   Sérgio's to overturn:
-   - THE SCREEN-IN-A-SCREEN. A 512×384 pixel-art canvas on a monitor mesh, seen on a phone, is a small
-     screen inside a small screen. ⚑ RECOMMENDED: reuse S66's HELD READ — tap a screen and it comes up
-     to fill the viewport; tap out and it returns to the room. Same built, already-approved gesture,
-     one canvas, one layout, and it stays diegetic: you pick a thing up to read it.
-   - PORTRAIT vs LANDSCAPE. Decide BEFORE building, because every seat framing and the whole
-     subject-in-frame audit depend on aspect ratio (S76's own half-FOV moved 29.7° → 34.3° between
-     1280×860 and 16:9). Asking for landscape is a legitimate, common ask. SAY WHICH YOU CHOSE.
-6. DO NOT touch the invisible-prop placements — that is S81, and it needs this session's picking fix
+5. ⚑ PINCH-TO-ZOOM ON THE CAMERA FOV — and read this carefully, because the first version of this
+   prompt got it wrong. Sérgio, 2026-08-06: "I wouldn't make touching the screen turn it into flat
+   inside the mobile. We can have zooms, that is different, but I don't want the 'fill up'."
+   ⚑ DO NOT build any mode where the canvas takes over the viewport. That is flat-by-tapping: the 3D
+   room disappears and the spatial frame goes with it, and the spatial frame is the piece.
+   BUILD INSTEAD, per his own research spec: two-finger pinch → camera FOV,
+   `FOV = clamp(FOV − Δd · sensitivity, 30°, 80°)`. The room never leaves; you narrow the frame and
+   see LESS of the room, LARGER. It is the native 360-video gesture, it is the camera rather than the
+   fiction, and it adds no surface — so it does not touch the one-UI-surface law.
+   ⚑ THEN MEASURE THE THING NOBODY KNOWS: at 30° FOV, is the 512×384 canvas actually LEGIBLE on a
+   phone-sized viewport? Report the answer with a screenshot. If it is not, say so plainly — that is a
+   finding, and it is the one the whole mode turns on. Do NOT solve it by filling the viewport.
+6. PORTRAIT AND LANDSCAPE — ⚑ do NOT force an orientation. His research spec handles it: the screen
+   orientation angle becomes quaternion `q₂` about local Z, recomputed on `orientationchange`, so
+   `q_gyro = q₀ × q₁ × q₂` keeps the horizon level relative to gravity with no axis flipping. Use that
+   chain, and an additive `q_touch` so drag and gyro compose rather than fight. ⚑ Composition still
+   changes with aspect ratio, so note for S81 that the subject-in-frame audit must run at a PORTRAIT
+   viewport too, not only a desktop one.
+7. DO NOT touch the invisible-prop placements — that is S81, and it needs this session's picking fix
    before its numbers mean anything.
+8. ⚑ DO NOT pursue the Mozilla WebXR Viewer on iOS. His research spec establishes it is deprecated,
+   unmaintained, spec-divergent, and requires a download — which breaks the zero-install premise.
+   (I suggested trying it on 2026-07-30; that suggestion is withdrawn.)
 
 LAWS: no runtime network calls · no storage (the recentre zero and any motion preference live in the
 in-memory ledger ONLY) · input stays click/tap + the movement press + Esc — ⚑ the gyro is a LOOK, not
@@ -1003,6 +1015,12 @@ DONE WHEN: npm run dev works; tsc + npm test + npm run build green; every era re
 pointer presses after the tap/drag change; the gyro path exercised at a mobile viewport (375×812) with
 the permission flow present; recentre reachable from the menu; screenshots in the session log;
 BUILD_LOG gets ONE line.
+⚑ AND NOTE, WITHOUT ACTING ON IT: his research spec's Quest budgets are <80 draw calls on Quest 2 and
+<120 on Quest 3, against CLAUDE.md's ≤60. Our ceiling is roughly half what an outside spec
+recommends, which means the latent 78-call send leg may be inside budget rather than over it. DO NOT
+change the law on that basis — it is Sérgio's, and the honest way to settle it is one in-headset
+frame-time capture, which has never happened. Just do not treat 60 as physics.
+
 ⚑ REPORT FAITHFULLY: you cannot fully test iOS motion in a headless browser. Say plainly what was
 verified by simulation versus what needs a real device, and do NOT describe the latter as verified.
 
