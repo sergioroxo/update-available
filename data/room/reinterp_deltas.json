@@ -2606,7 +2606,7 @@
       {
         "id": "e_headsetStand",
         "_doc": "Session 74: THE HEADSET (fixture list item 1) — a hero object (era1room.ts's classifyProp, alongside the CRT: Room 3's two heroes, inside the ≤3 budget), on the desk's own free front strip, within reach of the seat (seatPose(270): eye at x4.4,z0.7, facing the desk — the stand sits at x5.40-5.50, well inside arm's reach, clear of the CRT/keyboard/folders cluster which all sit at z>=0.36 after this session's desk-shift fix). A small charging dock, not furniture: this is where she puts it down.",
-        "pos": [5.45, 0.78, 0.05],
+        "pos": [5.45, 0.78, 0.3],
         "size": [0.10, 0.06, 0.10],
         "color": "#2C2C34",
         "yaw": 270
@@ -2614,14 +2614,14 @@
       {
         "id": "e_headsetVisor",
         "_doc": "Session 74: the visor. ⚑ THE SEAM for Stage 2 — this is where the 2D canvas mounts as the era's screen surface (per REINTERP_E4_THE_DEVICE_2026-08-05.md: 'the visor is the screen surface'). Left CLEAN on purpose: no emissive, no render-texture, no screen behaviour — that is explicitly not this session's build.",
-        "pos": [5.45, 0.87, 0.05],
+        "pos": [5.45, 0.87, 0.3],
         "size": [0.09, 0.09, 0.16],
         "color": "#3A3A44",
         "yaw": 270
       },
       {
         "id": "e_headsetStrap",
-        "pos": [5.53, 0.87, 0.05],
+        "pos": [5.53, 0.87, 0.3],
         "size": [0.11, 0.02, 0.03],
         "color": "#2C2C34",
         "yaw": 270
@@ -2629,7 +2629,7 @@
       {
         "id": "e_glasses",
         "_doc": "Session 74: THE HONEST DETAIL (fixture list — 'whatever she moves to put it on... one small honest detail; the body is in the room'). Her glasses, set down beside the stand — the ordinary human gesture of taking them off before the headset goes on.",
-        "pos": [5.45, 0.755, -0.03],
+        "pos": [5.45, 0.755, 0.22],
         "size": [0.045, 0.02, 0.13],
         "color": "#2C2C34",
         "yaw": 270

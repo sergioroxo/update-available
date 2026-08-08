@@ -131,7 +131,16 @@ const PLACEMENT = {
    * laptop's 90). Measured off the authored box, not eyeballed.
    */
   visor: {
-    pos: { x: 5.365, y: 0.872, z: 0.05 },
+    /** ⚑ z 0.30, not 0.05 (2026-08-06). S76 measured the headset at 33.9° off
+     *  the seat bearing against a 29.7° horizontal half-FOV — i.e. the era's
+     *  opening gesture was OUTSIDE THE FRAME and the player had to drag to
+     *  find it. S76 named the fix and could not apply it (the prop data was
+     *  outside its fence). +0.25 m brings the bearing to ~20.8°, comfortably
+     *  inside, and still clears the CRT/keyboard/folders cluster at z>=0.36.
+     *  ⚑ Keep this in step with `e_headsetStand/Visor/Strap` and `e_glasses`
+     *  in data/room/reinterp_deltas.json — they move together or the visor
+     *  detaches from its own prop. */
+    pos: { x: 5.365, y: 0.872, z: 0.30 },
     size: { w: 0.088, h: 0.066 },
     euler: { x: 90, y: 270, z: 0 }
   },

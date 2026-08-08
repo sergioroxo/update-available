@@ -323,3 +323,40 @@ none leaves the era unreachable. ⚑ **S77 carries the trans reader pass as a GA
 5. **The found file has no home in E4** (drawn only on an idle desktop; there is none). Decide.
 6. **`?flat=1` still has no E3 or E4 to play** — E3's content is all on room devices (since S37), so
    nothing can arm u4 there. Older than S76; the shell itself draws correctly in flat.
+
+
+---
+
+## §9 — WHAT S76 LEFT OPEN, AND ONE THING IT FIXED THAT NOBODY HAD NOTICED (2026-08-06)
+
+### ✅ FIXED IMMEDIATELY AFTER S76 (it named the fix and could not reach it)
+**The headset was outside the frame at Maya's seat** — 33.9° off the seat bearing against a 29.7°
+horizontal half-FOV, so the era's *opening gesture* required the player to go looking for it. The prop
+data was outside S76's fence, so it reported the fix rather than applying it. **Applied 2026-08-06:**
+`e_headsetStand/Visor/Strap` and `e_glasses` moved +0.25 m in z, and `PLACEMENT.visor.pos.z` with
+them. Bearing now ~20.8°, comfortably inside, still clear of the CRT/keyboard/folders cluster at
+z ≥ 0.36. `room-audit` unchanged at 70 findings — no new collisions.
+
+### ⚑ THE FIND NOBODY HAD MADE: Era 4 was UNREACHABLE
+`spine.ts`'s e3 path was gated on the **scripted sends**, which are latent — no beat fires that seam.
+**So the spine waited at `e3_s3` forever and the u4 update never armed.** The narrative audit
+(2026-08-04) counted Era 4 as having zero beats; it was worse than that — *there was no way to get
+there.* S76 armed it off the correction list running out (13 corrections filed → six seconds of quiet
+→ the platform announces its own end). ⚑ **When the sends are finally built, the spine should take
+that gate back.**
+
+### ⚑ BLOCKS S77 — fix this FIRST
+**`app.ts`'s back-hemisphere press fault is still open.** S70 patched only the held-device case; the
+general fault (a yaw-based witness hemisphere in a building with three rooms) remains. **It is
+harmless in S76 because the headset touch precedes any turn — and it will silently discard S77's
+chips the moment a player answers L while turned.** S77's whole interaction is answering L by chip.
+**Fix it in S77's opening move, not after the chips are built.**
+
+### Open, lower priority
+- **⚑ `?flat=1` has no E3 or E4 to play.** E3's content has been room-device-only since S37, so
+  nothing can arm u4 there. The shell itself draws correctly in flat. This is older than S76 and it is
+  a real architectural debt: CLAUDE.md calls `?flat=1` the *universal fallback*, and it currently
+  covers half the piece. **It also weakens the argument made for the E4 space design**, which leaned
+  on flat surviving intact. Needs its own session.
+- **The found file (the renamed dossier easter egg) has no home in E4** — it draws only on an idle
+  desktop, and E4 has none by design. S77/S78 should decide whether it retires at E4 or migrates.
