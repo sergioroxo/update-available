@@ -19,6 +19,9 @@ import { NetVisionPlayerApp } from './apps/netvision';
 import { CalebThreadApp } from './apps/caleb';
 import { AccountabilityApp } from './apps/accountability';
 import { LambyRigFileApp } from './apps/lambyRigFile';
+// ERA 4's SHELL (S76) — the place the visor opens. See that module's header:
+// this file draws it INSTEAD of a desktop from `e4` on, because E4 has none.
+import { E4Shell, setE4Bridge, roomIsMounted } from './apps/space';
 // ONE Lamby (see src/desktop/apps/lambyChar.ts's header — that module is the
 // single definition, shared with ?lambyrig=1). His debut draws the CHARACTER,
 // not the little blocky mark this file used to carry: a conductor introducing
@@ -35,6 +38,7 @@ import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
 import opening from '../../data/strings/opening.json';
 import lambyStrings from '../../data/dialog/s2_lamby.json';
+import s4update from '../../data/dialog/s4_update.json';
 import mediaStrings from '../../data/dialog/s2_media.json';
 import calebStrings from '../../data/dialog/s2_caleb.json';
 import pillowProvotypeData from '../../data/provotypes/pillow.json';
@@ -160,6 +164,13 @@ export class DesktopOS {
   private lambyRigFile: LambyRigFileApp | null = null;
   /** the era-update ritual (spine-armed; never player-triggered) */
   updateApp: UpdateApp | null = null;
+  /** ⚑ ERA 4's SHELL (S76) — null until the era is `e4`, and from then on it is
+   *  the whole of this canvas: the headset's standby field, then THE PLACE.
+   *  There is no desktop underneath it (`drawDesktop` returns before any
+   *  chrome), which is the era's own statement: the application layer is gone
+   *  and the OS is the assistant. Published on the bridge so the room can mount
+   *  this same canvas on the visor — see src/desktop/apps/space.ts. */
+  e4: E4Shell | null = null;
   /** R28-2a: the Era-1 side-message guide thread (reinterp only, pre-Lamby) */
   guide: GuideThread | null = null;
   /** R28-2c: the belongings beat (T1's gathering window), reinterp only */
@@ -263,6 +274,14 @@ export class DesktopOS {
       this.phase = 'r_dark';
       this.guide = new GuideThread(this);
       this.belongings = new BelongingsSystem();
+      // S76 — the room reads the era's shell and the last ritual through here.
+      // Lazy by construction: app.ts builds era3Devices BEFORE the OS.
+      setE4Bridge({
+        canvas: () => this.canvas,
+        update: () => this.updateApp,
+        shell: () => this.e4,
+        armFinal: () => this.armUpdate('u4')
+      });
     }
   }
 
@@ -438,6 +457,20 @@ export class DesktopOS {
       if (key === 'u3' && !ledger.records.includes('subject-migrated')) {
         ledger.records.push('subject-migrated');
       }
+      // S76 — the same filing at the same moment for the LAST update: the
+      // service became continuous and the companion was registered. Filed at
+      // the restart, not at the notice, and filed as the system's own act with
+      // no player choice near it (witness symmetry, the plainest kind).
+      // ⚑ TWO LINES, because two things happened and the record separates them:
+      // the service stopped being an application, and a companion was
+      // registered to the file. L is INSTALLED, agreed to in a dialog nobody
+      // read — never a character who appears.
+      if (key === 'u4' && ledger.e4Space.length === 0) {
+        ledger.e4Space.push(
+          { id: 'update', outcome: 'installed', witness: s4update.witness.installed },
+          { id: 'companion', outcome: 'installed', witness: s4update.witness.arrived }
+        );
+      }
       this.setDesktopEra(toEra);
       this.dirty = true;
       this.onEraShift?.(toEra);
@@ -469,6 +502,21 @@ export class DesktopOS {
     const entering = this.desktopEra !== era;
     this.desktopEra = era;
     this.retireEra1Windows();
+    // ⚑ E4 HAS NO DESKTOP (docs/REINTERP_E4_THE_SPACE_2026-08-06.md §6). E1, E2
+    // and E3 all had one — icons, a taskbar, a thing you opened. This era
+    // arrives as a device that is already on and already waiting, so the shell
+    // takes the whole surface and no chrome is drawn around it ever again.
+    if (era === 'e4') {
+      if (!this.e4) this.e4 = new E4Shell();
+      // A `?era=4` REVIEW JUMP never plays the opening, so this canvas can
+      // still be sitting in `r_dark` — which was harmless while E3/E4 drew a
+      // dead monitor and is not harmless now that the visor is textured with
+      // it. In play the phase is already `desktop` and this changes nothing.
+      if (this.phase !== 'desktop') this.setPhase('desktop');
+      this.toast = null; // no era-status toast: there is no taskbar to sit in
+      this.dirty = true;
+      return;
+    }
     if (era === 'e2' && entering) {
       // S2R.0c: THE SILENCE — nothing speaks, not even the era-status toast.
       // The monitor holds only the S2R.0 waiting-screen line until pressed.
@@ -946,7 +994,27 @@ export class DesktopOS {
    *  never surface on top of S2R.3's felt window, and u3 must not arm while
    *  the Caleb thread is still running. */
   get sendOfferPending(): boolean {
-    return this.sendOffer !== null || this.caleb !== null;
+    return this.sendOffer !== null || this.caleb !== null || this.e4HoldsTheSpine;
+  }
+
+  /**
+   * ⚑ S76 — ERA 4 OWNS ITS OWN CLOCK, and the spine must not run one against it.
+   *
+   * `src/narrative/spine.ts` (outside this session's fence) still carries a
+   * placeholder `E4_HOLD = 22` — twenty-two seconds after arriving in E4 it
+   * arms the bare final restart and closes the piece. That was a stand-in for
+   * an era that did not exist yet. It exists now, it is four sessions long, and
+   * a 22-second timer would end it while the player is still looking out of the
+   * window.
+   *
+   * So the era holds the spine's breath the same way a live summons or a modal
+   * narrative beat already does — one honest sentence: while E4 is running and
+   * has not handed off, the spine has no business here. ⚑ The hand-off is
+   * S79's: when the ball is over, `E4Shell.handOff()` releases this and the
+   * bare restart arms exactly as the spine always meant it to.
+   */
+  private get e4HoldsTheSpine(): boolean {
+    return this.desktopEra === 'e4' && this.e4 !== null && !this.e4.handedOffToClose;
   }
 
   private resolveSend(outcome: 'visited' | 'declined'): void {
@@ -1073,7 +1141,17 @@ export class DesktopOS {
     if (this.t >= this.escalationFallbackAt) this.escalate();
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
     if (this.phase === 'desktop' && this.lambyRigFile?.open) this.lambyRigFile.update(dt);
-    if (this.phase === 'desktop' && this.updateApp) this.updateApp.update(dt);
+    // ⚑ S76: the ritual and the era's shell tick regardless of the phase, and
+    // the two other phase gates around them are gone. Every other window here
+    // is a window ON this canvas, so gating them on `desktop` is right; these
+    // two are not — u4 draws on Vera's laptop and the shell draws on the visor,
+    // both in the room, and a canvas that happens to be dark must not stop a
+    // ritual the player is watching somewhere else. (It also makes the review
+    // jumps honest: `?era=3` + the update4 button now actually runs.)
+    if (this.updateApp) this.updateApp.update(dt);
+    // the era's shell keeps its own slow clock (the standby light, quantised —
+    // see space.ts). It runs whether or not the device has been touched.
+    if (this.e4) this.e4.update(dt);
     if (this.phase === 'desktop' && this.netvision) this.netvision.update(dt);
     // S2R.3–S2R.6: the person's window and the apparatus's answer to it
     if (this.phase === 'desktop' && this.caleb) this.caleb.update(dt);
@@ -1291,6 +1369,21 @@ export class DesktopOS {
       this.caleb.draw(this.ctx);
       return;
     }
+    // ⚑ ERA 4 — AND THERE IS NO DESKTOP HERE (THE_SPACE §6). Every branch below
+    // this one draws a desktop of some kind; this era draws a device that is
+    // already on. The shell owns the whole surface — standby, then THE PLACE —
+    // and nothing frames it: no taskbar, no icons, no clock, no era toast. In
+    // the room this same canvas is textured onto the VISOR rather than a
+    // monitor (src/room/era3Devices.ts), and under `?flat=1` it is the screen.
+    // The update ritual is deliberately NOT excluded: u4 runs on Vera's laptop
+    // and is over before this era begins, and any later ritual (the bare final
+    // restart) is the frame's business, not the era's.
+    if (this.desktopEra === 'e4' && this.e4) {
+      this.e4.draw(this.ctx, W, H);
+      if (!this.e4.worn) this.hits.push({ x: 0, y: 0, w: W, h: H, id: 'e4-touch' });
+      if (this.updateApp?.open) this.updateApp.draw(this.ctx);
+      return;
+    }
     const { ctx } = this;
     const skin = this.eraSkin();
     const colors = this.desktopColors();
@@ -1304,12 +1397,15 @@ export class DesktopOS {
     // happens on Vera's laptop (src/room/graceQueueLite.ts), so this machine
     // has nothing left to show. It ran its removal, it restarted, and it is
     // an empty computer in a closed room.
-    // ⚑ NOT a blanket retirement, and deliberately so: the SPINE still arms
-    // u4 on this surface (src/narrative/spine.ts, step 'e3_s4'), so the screen
-    // comes back the moment the ritual needs it. Where the OS surface should
-    // LIVE once the player has left Room 1 for good is a real open question
-    // this session did not invent an answer to — flagged in the session log.
-    if (this.desktopEra === 'e3' && !this.updateApp) {
+    // ⚑ S76 CLOSES S61's OPEN QUESTION — *"where the OS surface should LIVE once
+    // the player has left Room 1 for good"*. It lives on the screen the player
+    // is actually looking at. The last update no longer comes back to this dead
+    // CRT: u4 lands on VERA'S LAPTOP (src/room/era3Devices.ts composites it
+    // there), so Daniel's machine stays off from E3 to the end, with no
+    // exception at all. The one carve-out is `?flat=1`, which has no room and
+    // no laptop — there the ritual has nowhere else to go, and blacking it out
+    // would make Era 4 unreachable in the universal fallback.
+    if (this.desktopEra === 'e3' && (roomIsMounted() || !this.updateApp)) {
       ui.px(ctx, 0, 0, W, H, ERA1.black);
       return;
     }
@@ -2091,7 +2187,25 @@ export class DesktopOS {
         this.debugJump('update3');
         this.updateApp?.debugSkipToInstall();
         break;
+      // ⚑ S76 — THE LAST UPDATE. In play it arms itself when the correction
+      // list is exhausted and it draws on VERA'S LAPTOP, so this button is only
+      // useful with the room at E3 (the panel's own era jump) — it arms the
+      // ritual, it does not decide where the ritual appears.
       case 'update4': this.setPhase('desktop'); this.armUpdate('u4'); break;
+      // E4's two shell states. The ROOM does not follow these (no OS beat has
+      // ever moved the room — that is the panel's era jump, which calls
+      // app.ts's morph and lands you in Maya's seat); they set what the era's
+      // one surface is showing.
+      case 'e4Standby':
+        this.setPhase('desktop');
+        this.setDesktopEra('e4');
+        this.e4 = new E4Shell(); // back to the device untouched, for re-review
+        break;
+      case 'e4Place':
+        this.setPhase('desktop');
+        this.setDesktopEra('e4');
+        this.e4?.wear();
+        break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
       case 'send-s1': this.setPhase('desktop'); this.offerSend('s1'); break;
       case 'send-s2': this.setPhase('desktop'); this.offerSend('s2'); break;
@@ -2134,6 +2248,16 @@ export class DesktopOS {
     // the update ritual is SYSTEM-modal while visible — it owns every click
     if (this.phase === 'desktop' && this.updateApp?.open && this.updateApp.visible) {
       this.updateApp.handleClick(x, y);
+      this.dirty = true;
+      return;
+    }
+    // ⚑ S76 — E4's shell owns every press on this surface, because it IS the
+    // surface. Closed: any press on the dark glass is THE ONE TOUCH (S1.0's
+    // power-press grammar). Worn: nothing is pressable yet, and a press falls
+    // through to nothing rather than to a desktop that does not exist. S77's
+    // chips land inside `E4Shell.handleClick`.
+    if (this.phase === 'desktop' && this.desktopEra === 'e4' && this.e4) {
+      this.e4.handleClick(x, y);
       this.dirty = true;
       return;
     }

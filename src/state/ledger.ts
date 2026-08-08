@@ -176,6 +176,23 @@ export interface Ledger {
    * No score, streak or progress count is ever derived from this array.
    */
   comments: { commentId: string; templateId: string; follow: boolean; witness: string }[];
+  /**
+   * ERA 4's SHELL (Session 76 — docs/REINTERP_E4_THE_SPACE_2026-08-06.md).
+   * Three entries at most, and they are the era's whole physical record:
+   *   `installed` — the last update completed and the companion was registered
+   *                 (filed at the RESTART, like u3's `subject-migrated`: the
+   *                 record files the migration when the migration happens);
+   *   `worn`      — the one touch on the headset;
+   *   `turned`    — ⚑ filed ONCE, the first time the player turns while wearing
+   *                 it. The line is `orientation: changed — view unchanged`.
+   *                 The record is the only thing in the piece that remarks on
+   *                 the turn that does not work, and it remarks on it the way
+   *                 it remarks on everything: administratively, without comment.
+   *
+   * `witness` resolved from data/dialog/s4_space.json and s4_update.json at
+   * file time, never composed in TS. In-memory only, like everything here.
+   */
+  e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned'; witness: string }[];
 }
 
 const fresh = (): Ledger => ({
@@ -199,7 +216,8 @@ const fresh = (): Ledger => ({
   caleb: [],
   era3Arrival: [],
   graceQueue: [],
-  comments: []
+  comments: [],
+  e4Space: []
 });
 
 export let ledger: Ledger = fresh();

@@ -40,6 +40,12 @@ interface UpdateStrings {
    *  HIMSELF thinning out of the report while the pieces that become
    *  Lambient's badges at E3 travel out along the FRAG offsets below. */
   uninstall?: string[];
+  /** ⚑ THE INSTALL REPORT (u4, S76) — `uninstall`'s mirror, rendered by the
+   *  same code path and with the same '~' quiet-line grammar. u3 reports what
+   *  could not be removed and comes apart doing it; u4 reports what ARRIVED,
+   *  which is L. The dispersal animation stays u3's alone (see `drawDispersal`'s
+   *  call site): the fragments left once, and they are not leaving again. */
+  report?: string[];
   /** per-update install length override (u3 needs room for the dispersal) */
   installSeconds?: number;
   restarting: string;
@@ -117,6 +123,14 @@ export class UpdateApp {
   /** the notification is withdrawn while reminded; it returns once */
   get visible(): boolean {
     return this.phase !== 'reminded';
+  }
+
+  /** S76: the last two stages paint the whole surface rather than a dialog.
+   *  The room needs to know, because u4 is composited onto a laptop screen that
+   *  is wider than this canvas — a full-bleed install must black the whole
+   *  panel out, not sit in the middle of somebody's still-open work. */
+  get fullScreen(): boolean {
+    return this.phase === 'install' || this.phase === 'restart';
   }
 
   update(dt: number): void {
@@ -250,13 +264,14 @@ export class UpdateApp {
       // LAMBY HIMSELF comes apart into the marks that become Lambient's
       // badges at E3. Nothing in the copy explains it; the staging is the
       // argument (session brief item 6c).
-      if (this.s.uninstall) {
+      const trailer = this.s.uninstall ?? this.s.report;
+      if (trailer) {
         const clDone = this.s.changelog.length * 0.8 + 0.9;
         const baseY = 62 + this.s.changelog.length * 16 + 14;
-        const shownU = Math.min(this.s.uninstall.length, Math.floor(Math.max(0, this.t - clDone) / 1.1));
+        const shownU = Math.min(trailer.length, Math.floor(Math.max(0, this.t - clDone) / 1.1));
         let quietAt = -1;
         for (let i = 0; i < shownU; i++) {
-          const raw = this.s.uninstall[i];
+          const raw = trailer[i];
           const quiet = raw.startsWith('~');
           ui.setFont(ctx, quiet ? 8 : 10);
           ctx.fillStyle = quiet ? ERA1.greyDark : ERA1.silver;
@@ -264,7 +279,11 @@ export class UpdateApp {
           if (quiet && quietAt < 0) quietAt = clDone + (i + 1) * 1.1;
         }
         ui.setFont(ctx, 10);
-        if (quietAt >= 0) this.drawDispersal(ctx, this.t - quietAt);
+        // ⚑ u3 ONLY. The dispersal is the beat of one update — Lamby coming
+        // apart under the line that says he could not be removed — and u4's
+        // report uses the same block for the opposite event. Keyed rather than
+        // flagged in data because it is a scene, not a setting.
+        if (quietAt >= 0 && this.key === 'u3') this.drawDispersal(ctx, this.t - quietAt);
       }
       // progress + the glitch: the bar stutters near the end (soft, no strobe)
       const bw = 220; const bx = Math.round((W - bw) / 2); const by = H - 70;

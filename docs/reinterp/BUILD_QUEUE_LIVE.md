@@ -15,8 +15,8 @@ not live.***
 | — | ~~S71 — walk the space and report what is wrong~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired |
 | — | ~~S72 — the audit system (L3 capture + L4 assertions)~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired. 5 of 6 assertions live; assertion 6 (reachability) NOT built, named as such |
 | — | ~~S74 — the rooms (E4 Stage 1)~~ | ↓ below, in this file | **SHIPPED 2026-08-06** — number retired |
-| **1** | **S76 — the update, the space, and no desktop** (E4 Stage 2a) | ↓ below, in this file | **QUEUED — dispatch this one** |
-| 2 | **S77 — L, and the room rewrites** (2b) | ↓ below | BLOCKED on S76 · ⚑ contains the deadname beat |
+| — | ~~S76 — the update, the space, and no desktop~~ (E4 Stage 2a) | ↓ below, in this file | **SHIPPED 2026-08-08** |
+| **1** | **S77 — L, and the room rewrites** (2b) | ↓ below | **dispatch this one** · ⚑ contains the deadname beat |
 | 3 | **S78 — the offers, and the hand-off** (2c) | ↓ below | BLOCKED on S77 |
 | 4 | **S79 — TRANSCENDANCE** (Stage 3) | ↓ below | BLOCKED on S78 |
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
@@ -448,7 +448,14 @@ could not build. A skipped check named plainly is worth more than a check that a
 ---
 
 # S76 — THE UPDATE, THE SPACE, AND NO DESKTOP · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: QUEUED — dispatch this one. It is E4 Stage 2a and the era's shell.**
+**⚑ PROMPT STATUS: SHIPPED — 2026-08-08 (Session 76). E4 Stage 2a: the era's shell.**
+*Built: the last update on Vera's laptop, arming itself when E3's correction list runs out (so Era 4
+is reachable by ordinary clicking — the spine's own path is gated on the latent sends); the EULA
+carrying the source pass in supplier boilerplate; L INSTALLED in the install report; the one touch on
+the headset; THE PLACE drawn on the canvas; ⚑ the turn that does not work; and no desktop from `e4`
+on. Not done, and named: the headset sits a few degrees outside the frame at Maya's seat (the fix is
+a data file outside this fence). Record: `01_SESSION_LOG.md` (2026-08-08) + `08_STATUS_REGISTER.md`
+§2 and §8's hand-off list.*
 *⚑ S73 and S75 are RETIRED numbers — S73's design was superseded by the space reframe, and S75 was
 the run Sérgio stopped (its only artefact, `src/desktop/theme/era4.ts`, is salvaged and in the fence).
 Numbers are not reused. Stage 2 is now FOUR sessions: **S76 shell → S77 voice → S78 offers →
@@ -541,7 +548,10 @@ place is somewhere you would rather be. And you turn, and it comes with you, and
 ---
 
 # S77 — L, AND THE ROOM REWRITES · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: BLOCKED — on S76. Stage 2b: the voice. ⚑ Contains the piece's highest-risk beat.**
+**⚑ PROMPT STATUS: QUEUED — S76 shipped 2026-08-08, so this is unblocked. Stage 2b: the voice.
+⚑ Contains the piece's highest-risk beat. ⚑ Read `08_STATUS_REGISTER.md` §8's "what S76 hands the
+next three" before you start — the chips land in `E4Shell.handleClick`, and `app.ts`'s back-hemisphere
+press fault will bite them.**
 
 ⚑ SHARED PREAMBLE — every E4 session reads these, in this order:
   CLAUDE.md · docs/ETHICS_CONSTRAINTS.md ·

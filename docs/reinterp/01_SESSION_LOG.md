@@ -147,6 +147,99 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-08 · Session 76 — **THE UPDATE, THE PLACE, AND NO DESKTOP (E4 STAGE 2a — THE ERA'S SHELL).**
+Design of record: `REINTERP_E4_THE_SPACE_2026-08-06.md`; source finding: `…SOURCE_PASS_2026-08-06.md`
+§"the apparatus did not build this"; touchless budget: `…THE_DEVICE_2026-08-05.md` §"STAGE 0 —
+CLOSED". Touched: `src/desktop/apps/space.ts` (new), `src/desktop/theme/era4.ts`,
+`src/desktop/apps/update.ts`, `src/desktop/os.ts`, `src/room/era3Devices.ts`, `src/state/ledger.ts`,
+`src/debug/panel.ts`, `data/strings/updates.json` (u4 rewritten), `data/dialog/s4_update.json` +
+`s4_space.json` (new), `BUILD_QUEUE_LIVE.md`, this log, `08_STATUS_REGISTER.md`, `BUILD_LOG.md`.)*
+
+![S76 — the update, the place, the turn](S76_update_place_turn.png)
+
+**⚑ WHERE THE LAST UPDATE HAPPENS — S61's open question, answered.** S61 turned Daniel's monitor off
+at E3 and stays off ("an empty computer in a closed room"), but left the spine arming **u4 on that
+dead surface**, with a comment saying in as many words that where the OS should live once the player
+has left Room 1 was *"a real open question this session did not invent an answer to."* It lives on
+**the screen the player is actually looking at**: the notice, the terms, the changelog and the restart
+all land on **Vera's laptop** — the machine that gave her the work announces the end of it. The ritual
+object is unchanged and still `DesktopOS`'s (`src/desktop/apps/update.ts`, same 1997 chrome as every
+other update in the piece, which is the point); `era3Devices` only decides where it appears.
+Daniel's CRT now stays dark from E3 to the end **with no exception at all**.
+
+**⚑ AND IT ARMS ITSELF, so Era 4 is reachable by ordinary clicking for the first time.** The spine's
+own e3 path is gated on the scripted sends, and the sends are latent (08 §7) — the offer icon has no
+surface to draw on, so `spine.ts` waits at `e3_s3` forever and E4 was unreachable without a debug
+button. The trigger is now **the correction list running out**: 13 corrections filed, six seconds of
+quiet, then the platform announces its own end. Counted off `ledger.graceQueue` against
+`s3_queue.json`'s own totals, so the two cannot drift. It is the system's failure, not the player's —
+the notice's first line is *"A submission could not be processed as written"*, and what the changelog
+retires is **the person doing the work** (`- contributor tools: retired · - the moderation queue:
+retired · - the waiting: retired`). When the sends land, the spine should take this trigger back.
+
+**⚑ THE EULA IS WHERE THE SOURCE PASS LANDS.** Page 3, clause 3, in supplier boilerplate: *"Continuity
+does not develop, train or host the models it makes available. It accepts their terms on your behalf,
+as you accept these on your own."* That is the pass's finding — no conversion-practice organisation
+was found building AI tooling; an individual built the tool and an organisation promoted it, so the
+apparatus is an **adopter**. A player who reads the terms finds it. A player who clicks through does
+not. **Nothing anywhere points at it**, and nothing should be added that does.
+
+**⚑ L IS INSTALLED, not introduced.** u4 carries a `report` block (new, `uninstall`'s mirror, drawn by
+the same code path — the dispersal animation is now keyed to u3 alone): *"Registering companion
+service… / L — ready / ~ no further action is required from you."* The quiet line is the touchless
+budget spoken by the apparatus itself. The record files two lines at the restart, not one: the service
+became continuous, and a companion was registered to the file.
+
+**⚑ THE PLACE.** The visor opens a home environment — a window, a horizon, a shelf, a low table, a cup
+nobody drank from — drawn on the canvas, parallaxed in hard steps, adding **no geometry**. It is
+warmer and brighter than the room she is sitting in and it is not soured anywhere: the relief lands
+honestly, which is the trap and the tell. Every hex is lifted verbatim from `data/room/era1.json`
+(the `PLACE` block in `theme/era4.ts`); palette ratchet unmoved at **33/33**. The only addressing this
+session carries is two words bottom-left: **Sunroom · arranged for you**. No name appears anywhere —
+the record holds "Daniel" (08 §8 #11) and the deadname beat is S77's, gated on the reader pass.
+
+**⚑ THE TURN THAT DOES NOT WORK — built, and it is one line.** `era3Devices.driveVisor` places the
+plane in front of the camera's live world transform every frame, so the picture is mounted to the
+head. You turn — the gesture the piece has taught for thirty years — and the place comes with you. The
+picture leans a few pixels and gets nowhere. **The room is still visible around the edges** (0.28 ×
+0.21 m at 0.30 m covers ~91% of the 42° frame vertically, ~82% horizontally), which is what makes it
+legible rather than merely absolute: Maya's room slides past the borders of a rectangle that does not
+move. **Nobody explains it.** The only thing in the piece that ever mentions it is the record, once:
+`orientation: changed — view unchanged`.
+
+**⚑ NO DESKTOP.** From `e4` on, `drawDesktop` returns before any chrome — no taskbar, no icons, no
+clock, no era toast. The phase machine keeps the name `desktop` because that is its word for "the
+piece is running"; there is nothing desktop-shaped left on the surface. One consequence to notice:
+**the found file (the renamed dossier) has no home in E4** — it is drawn only on an idle desktop, and
+there is no longer one. S77/S78 should decide where it lives.
+
+**⚑ AND THE ERA HOLDS THE SPINE'S BREATH.** `spine.ts` (outside this fence) still carries
+`E4_HOLD = 22` — twenty-two seconds after arriving at E4 it arms the bare final restart and closes the
+piece. That was a stand-in for an era that did not exist. `os.sendOfferPending` now also returns true
+while E4 is running and has not handed off, the same way a live summons already holds it. **S79's ball
+releases it** via `E4Shell.handOff()`, which is wired and unused.
+
+**MEASURED.** `npm run audit` legs are **byte-identical to the pre-session baseline** — entrance 68,
+E1→E2 39, E2→E3 57, E3→E4 62, sends 78; comfort unchanged (the same three latent send legs, 6.87 /
+4.42 m/s); console asserts 0. A clean A/B at Maya's seat, same pose, shell closed vs worn: **63 → 64
+and 53 → 54 — the visor costs exactly one draw call, and only while worn.** `npm test` green, palette
+33/33, C6 covers 41 debugJump ids. The whole path was walked with **real mouse presses** in headless
+Chrome: 13 corrections → the notice arms itself → Update now → four EULA pages → I Agree → install →
+restart → the relocation lands at Maya's seat, `ledger.e4Space` filed, `eulaScrollPct 100`.
+
+**⚑ WHAT I COULD NOT DO, and it wants Sérgio's call.** **The headset is just outside the frame at
+Maya's seat.** Measured: the visor sits 33.9° off the seat's own bearing, against a 29.7° horizontal
+half-FOV at 1280×860 (34.3° at 16:9 — so it is at the very edge on a widescreen browser and just
+outside on a 3:2 one). The player has to drag a few degrees to find it. The standby light is now
+deliberately big and mint so that it is unmissable **once it is in frame**, but the fix is one line in
+`data/room/reinterp_deltas.json`, which was outside this session's fence: move `e_headsetStand` /
+`e_headsetVisor` / `e_headsetStrap` / `e_glasses` from `z 0.05` to about `z 0.30` (still the desk's
+free front strip, still clear of the CRT/keyboard cluster at `z ≥ 0.36`), and move
+`PLACEMENT.visor.pos.z` in `src/room/era3Devices.ts` with them. **Also open:** `?flat=1` renders
+cleanly and the shell draws there, but nothing can ARM u4 in flat — E3's content is all on room
+devices and has been since S37, so the flat fallback still has no E3/E4 to play. That is older than
+this session and is stated here rather than hidden.
+
 *(2026-08-06 · Session 74 — **THE ROOMS (E4 STAGE 1) — MAYA GETS A LIFE, THE PHONE GETS A BODY, THE
 CRT GOES DARK.** Plan: `REINTERP_E4_BUILD_PLAN_2026-08-05.md`; fixtures decided in
 `REINTERP_E4_THE_DEVICE_2026-08-05.md` §"STAGE 0 — CLOSED". Touched: `data/room/reinterp_deltas.json`,

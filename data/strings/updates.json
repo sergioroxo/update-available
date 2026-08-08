@@ -51,7 +51,10 @@
     "_sourceGrounding": {
       "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
       "text": "Documentary grounding candidate for the 1997→2003 update trigger: John Paulk, public face of the 1998 ex-gay advertising campaign, was photographed at a Washington, D.C. gay bar 19 September 2000; Exodus International removed him as board chair 3 October 2000 and placed him under disciplinary supervision. This is a documented public scandal and organizational discipline — NOT a claim that Exodus itself collapsed in 2000; no display string here makes that claim. [VERIFY SOURCE]",
-      "urls": ["https://www.christianitytoday.com/2000/10/ex-gay-leader-disciplined-for-gay-bar-visit/", "https://lgbpsychology.org/html/Paulk-Southern%20Voice.html"]
+      "urls": [
+        "https://www.christianitytoday.com/2000/10/ex-gay-leader-disciplined-for-gay-bar-visit/",
+        "https://lgbpsychology.org/html/Paulk-Southern%20Voice.html"
+      ]
     }
   },
   "u3": {
@@ -111,7 +114,11 @@
     "_dispersalGrounding": {
       "_proposed": "S58 2026-07-26 — grounding for the dispersal beat per D31's strike; awaiting Sérgio. Status suggestion: documentary / confidence high.",
       "text": "Documentary grounding for the dispersal: after Exodus International's closure (announced 19 June 2013) the movement survived by rebranding (softer messaging, new names), decentralizing from centralized structures into networks of independent affiliates, and migrating into platform-native forms. The specific RENAMING mechanism is documented: NARTH became ATCSI in 2014, and providers adopt medical-sounding terminology to evade content moderation. Contested-ground caveat that must travel with the claim: GPAHE's 2023 report finds deplatforming partly worked (Facebook/Instagram recommendation pathways eliminated, Bing markedly improved, TikTok best-performing with warnings; YouTube still poor, non-English content least moderated). [VERIFY SOURCE]",
-      "urls": ["https://globalextremism.org/reports/conversion-therapy-online-the-players/", "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem/", "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/"]
+      "urls": [
+        "https://globalextremism.org/reports/conversion-therapy-online-the-players/",
+        "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem/",
+        "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/"
+      ]
     },
     "_migrationFilingDoc": "PLACEHOLDER — Sérgio voice pass pending. S2R.7 item 5: THE LAST FILING UNDER DANIEL'S NAME. Filed once, at the u3 restart (src/desktop/os.ts) and rendered in the record's own cold ink by src/witness/intake.ts. Not a choice, not a judgement, no player act anywhere near it — the record simply notes that the subject moved and the file did not.",
     "migrationFiling": "subject migrated — file retained",
@@ -120,60 +127,116 @@
     "_sourceGrounding": {
       "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
       "text": "Documentary grounding for the 2003→2016 update trigger: Alan Chambers's public apology (\"I Am Sorry\") and Exodus International's board decision to close the organization were both announced 19 June 2013 — use the date, not \"in 2013.\" [VERIFY SOURCE]",
-      "urls": ["https://web.archive.org/web/20130622031108/http://exodusinternational.org/2013/06/i-am-sorry", "https://www.christianitytoday.com/2013/06/alan-chambers-apologizes-to-gay-community-exodus/", "https://www.latimes.com/local/lanow/la-me-ln-exodus-ministry-to-shut-down-20130619-story.html"]
+      "urls": [
+        "https://web.archive.org/web/20130622031108/http://exodusinternational.org/2013/06/i-am-sorry",
+        "https://www.christianitytoday.com/2013/06/alan-chambers-apologizes-to-gay-community-exodus/",
+        "https://www.latimes.com/local/lanow/la-me-ln-exodus-ministry-to-shut-down-20130619-story.html"
+      ]
     }
   },
   "u4": {
+    "_doc": "PLACEHOLDER-draft — Claude drafted every display string in this block under the co-creation norm (CLAUDE.md line 100, revised 2026-07-24); Sérgio reviews and rewrites, his edit wins. S76 REWROTE u4: the last update the piece installs, and the one the title is about. Three things had to land in it. (1) ⚑ L ARRIVES INSIDE IT — the `report` block below installs the companion, so L is something AGREED TO in a dialog nobody read, not a character who appears. (2) ⚑ THE EULA IS WHERE THE SOURCE PASS LANDS (docs/REINTERP_E4_SOURCE_PASS_2026-08-06.md): no conversion-practice organisation was found building or commissioning AI tooling — an individual built the tool and an organisation promoted it. The apparatus is an ADOPTER, not a developer. That finding is page 3, clause 3, in supplier boilerplate: 'does not develop, train or host the models it makes available. It accepts their terms on your behalf, as you accept these on your own.' A player who reads the terms finds it; a player who clicks through does not; ⚑ NOTHING ANYWHERE POINTS AT IT. Do not add emphasis, a colour, or a line that draws the eye — the whole beat is that it is legally disclosed and practically invisible. (3) The changelog is the thesis and the thesis is the LABOUR: what this update removes is the person doing the work (E3 = Vera correcting testimony by hand, one correction at a time; E4 = the same operation with nobody's hands on it). ⚑ Every mark is invented — GracePlatform is the piece's own E3 platform, Continuity and Sunroom are ours. No real company, product, model or organisation is named in the fiction, ever; the documented ones live on Dossier cards with a status.",
+    "_docWhere": "⚑ THIS RITUAL DOES NOT RUN ON DANIEL'S MONITOR. S61 turned that machine off at E3 and left this key arming on a dead screen in a closed room. It now lands on Vera's laptop — see data/dialog/s4_update.json's `_docWhere`, and src/room/era3Devices.ts, which composites it there. Unlike u3 there is no split arrival block: the whole ritual plays on the one machine she is sitting at, and the ARRIVAL half is the headset waiting in the next room with L already installed on it.",
     "toEra": "e4",
     "notifyTitle": "GracePlatform — Important Changes",
     "notify": [
       "A submission could not be processed",
       "as written.",
       "",
-      "GracePlatform is joining a family of",
-      "wellness services. Your journey",
-      "continues where you already are:",
-      "everywhere."
+      "Contributor tools are being retired.",
+      "GracePlatform is joining Continuity,",
+      "a family of wellness services.",
+      "",
+      "Your file comes with you."
     ],
     "updateNow": "Update now",
     "remindLater": "Remind me later",
-    "eulaTitle": "Continuity of Care — Data Agreement",
+    "eulaTitle": "Continuity of Care — Terms of Service",
     "eula": [
       [
-        "There is no longer an app to open.",
-        "The service is ambient.",
+        "1. THE SERVICE",
+        "",
+        "There is no longer an application",
+        "to open. The service is ambient.",
         "",
         "Recommendations will find you.",
-        "A coach will find you.",
+        "A companion will find you.",
         "A community will find you.",
         "",
         "You do not need to search."
       ],
       [
+        "2. YOUR FILE",
+        "",
+        "Your record (1997, 2003, 2016) is",
+        "carried forward without alteration",
+        "and informs your experience today.",
+        "",
         "You agree that interest is consent.",
         "You agree that hesitation is",
         "interest.",
+        "You agree that a question answered",
+        "once may be asked again."
+      ],
+      [
+        "3. COMPONENTS AND SUPPLIERS",
         "",
-        "Your file — 1997, 2003, 2016 —",
-        "informs your experience today."
+        "Portions of this service are made",
+        "available under licence by third",
+        "parties. Continuity does not",
+        "develop, train or host the models",
+        "it makes available. It accepts",
+        "their terms on your behalf, as you",
+        "accept these on your own.",
+        "",
+        "The list of suppliers is available",
+        "on request and may change without",
+        "notice to you."
+      ],
+      [
+        "4. YOUR COMPANION",
+        "",
+        "A companion process is included",
+        "with this service and cannot be",
+        "removed separately from it.",
+        "",
+        "It is not a person and does not",
+        "claim to be.",
+        "",
+        "It will learn what you like."
       ]
     ],
     "readOn": "Read on",
     "agree": "I Agree",
     "installTitle": "Updating…",
     "changelog": [
-      "NOW — WHAT'S NEW",
-      "+ no install required",
+      "CONTINUITY — WHAT IS NEW",
+      "+ no application to open",
       "+ no button to close",
-      "= the record: thirty years",
-      "= the goal: still on file",
-      "- the light is the interface"
+      "+ your companion, included",
+      "= the record: thirty years, intact",
+      "= the goal: unchanged, on file",
+      "- contributor tools: retired",
+      "- the moderation queue: retired",
+      "- the waiting: retired"
     ],
+    "_reportDoc": "⚑ L IS INSTALLED HERE, and this is the only place in the piece where that happens. `report` renders exactly like u3's `uninstall` block (types on after the changelog; a line prefixed '~' renders small and dim) and is deliberately its MIRROR: u3's report is what could not be removed and left in pieces, u4's is what arrived and will not be leaving. ⚑ The dispersal animation belongs to u3 alone and does not play here — see the key guard in src/desktop/apps/update.ts. The quiet line is the thesis, and it is also the touchless budget spoken by the apparatus itself: from here on the piece moves without you.",
+    "report": [
+      "Registering companion service…",
+      "L — ready",
+      "~ no further action is required from you."
+    ],
+    "installSeconds": 13.5,
     "restarting": "Restarting…",
     "_sourceGrounding": {
       "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
       "text": "Documentary grounding for the 2016→now update trigger: Malta's Act LV of 2016 (first European nationwide conversion-practice ban), passed December 2016, published 9 December 2016, now consolidated as Chapter 567. Cite Parliament of Malta + legislation.mt Chapter 567 — NOT the ILO NATLEX record, which Deep Research flags as ambiguously indexed. Separately, app-store removals of conversion-therapy apps (2018-2019) are documented as ONE app — Living Hope Ministries — pulled by Apple (21 Dec 2018), Microsoft (~Dec 2018), Amazon (by 21 Mar 2019) and Google (28 Mar 2019). Do not write \"several conversion-therapy apps.\" [VERIFY SOURCE]",
-      "urls": ["https://www.parlament.mt/12th-leg/bills-12th/bill-no-167/", "https://legislation.mt/eli/cap/567/eng", "https://www.dallasnews.com/news/2018/12/21/there-s-not-an-app-for-that-apple-removes-arlington-ministry-s-app-after-anti-conversion-therapy-group-complaint/", "https://www.theverge.com/2019/3/29/18286906/google-conversion-therapy-app-play-store-remove"]
+      "urls": [
+        "https://www.parlament.mt/12th-leg/bills-12th/bill-no-167/",
+        "https://legislation.mt/eli/cap/567/eng",
+        "https://www.dallasnews.com/news/2018/12/21/there-s-not-an-app-for-that-apple-removes-arlington-ministry-s-app-after-anti-conversion-therapy-group-complaint/",
+        "https://www.theverge.com/2019/3/29/18286906/google-conversion-therapy-app-play-store-remove"
+      ]
     }
   },
   "_remindDoc": "PLACEHOLDER — Sérgio voice pass pending. Session 61, his note on u3: 'Remind me later — what does it do?' The law (SCRIPT_UPDATE v0.5 §1 / CLAUDE.md) is that it works exactly ONCE, and the code has always honoured that — but nothing on screen said so. Pressing it withdrew the notice with no acknowledgement, and when the notice came back the button had silently vanished, which reads as a different dialog rather than as a spent option. Two strings fix it: `remindedStatus` stays on screen for the whole deferral (the system tells you it is coming back), and `remindSpent` labels the button when it returns GREYED — the S60 ruling applied to the one place in the piece where a dead button is literally the thesis. You may defer this once. You may not decline it.",

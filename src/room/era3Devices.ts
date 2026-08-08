@@ -39,7 +39,11 @@ import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import { ledger } from '../state/ledger';
 import { setEra3Lift, type EraKey } from './cluster';
 import { GraceQueueLite } from './graceQueueLite';
+import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
+import { ERA1, ERA1_CANVAS } from '../desktop/theme/era1';
+import { px } from '../desktop/theme/chrome';
 import d from '../../data/strings/era3_devices.json';
+import queue from '../../data/dialog/s3_queue.json';
 
 /** Session 39 (E3 screen-format pass): each canvas's logical resolution is
  *  now chosen to MATCH its panel plane's world aspect exactly (a fixed
@@ -66,7 +70,12 @@ import d from '../../data/strings/era3_devices.json';
 const LOGICAL = {
   laptop: { w: 676, h: 390, scale: 3 },
   tablet: { w: 216, h: 297, scale: 2 },
-  phone: { w: 140, h: 280, scale: 2 }
+  phone: { w: 140, h: 280, scale: 2 },
+  /** ⚑ THE VISOR (S76) draws no canvas of its own — it is textured with
+   *  `DesktopOS.canvas`, the piece's one UI surface, at that canvas's own
+   *  logical size. Same canvas, same FILTER_NEAREST, same `?flat=1`: only the
+   *  mount point changed, from a monitor to a thing on your face. */
+  visor: { w: ERA1_CANVAS.width, h: ERA1_CANVAS.height, scale: 1 }
 } as const;
 
 /** Room 2 (Vera, west) world placements — Session 37 FABLE/SÉRGIO CHECK:
@@ -105,6 +114,26 @@ const PLACEMENT = {
     pos: { x: -3.70, y: 0.72, z: -0.10 },
     size: { w: 0.16, h: 0.22 },
     euler: { x: 0, y: 0, z: 0 } // flat, screen-up
+  },
+  /**
+   * ⚑ ROOM 3's VISOR (S76) — the seam S74 left, taken up.
+   *
+   * `data/room/reinterp_deltas.json`'s `e_headsetVisor` is a 0.09 × 0.09 × 0.16
+   * box on the desk's front strip at (5.45, 0.87, 0.05) with yaw 270, and its
+   * `_doc` says in as many words: *"⚑ THE SEAM for Stage 2 — this is where the
+   * 2D canvas mounts as the era's screen surface. Left CLEAN on purpose."*
+   *
+   * The plane sits just proud of the face turned toward the seat. Maya's seat
+   * (`seatPose(270)`) puts the eye at x 4.4 looking along +X, and yaw 270 turns
+   * the box's 0.16 m extent into its DEPTH, so the face the player sees is
+   * 0.09 wide × 0.09 tall at x ≈ 5.37. The plane is 4:3 to match the canvas —
+   * 88 × 66 mm, inside that face — and faces −X (euler y 270, the mirror of the
+   * laptop's 90). Measured off the authored box, not eyeballed.
+   */
+  visor: {
+    pos: { x: 5.365, y: 0.872, z: 0.05 },
+    size: { w: 0.088, h: 0.066 },
+    euler: { x: 90, y: 270, z: 0 }
   },
   phone: {
     // y verified in-browser (Session 37): the nightstand's REAL model AABB
@@ -207,6 +236,57 @@ function makeCanvas(logicalW: number, logicalH: number, scale: number): { canvas
  * in app.ts's `performSeatCut` and everything returns to the rest poses.
  */
 export type HeldDevice = 'tablet' | 'phone' | null;
+
+/**
+ * ⚑ THE LAST UPDATE LANDS HERE (S76). `data/dialog/s4_update.json` `_docWhere`
+ * carries the argument; this is the wiring. The ritual object itself is
+ * unchanged and still owned by `DesktopOS` — the OS runs its clock, files its
+ * ledger entry and decides when it is over. This module only decides WHERE it
+ * appears, and the answer is the screen the player is actually looking at when
+ * Era 3 ends: Vera's laptop, the machine that gave her the work.
+ *
+ * The canvas offsets centre the ritual's own 512 × 384 logical surface on the
+ * laptop's 676 × 390 panel. ⚑ The dialogs keep their 1997 chrome, deliberately:
+ * every update in this piece has looked like this, and the acceptance criterion
+ * for the era's opening is that the last one feels like all the others.
+ */
+const RITUAL_OFFSET = {
+  x: Math.round((LOGICAL.laptop.w - ERA1_CANVAS.width) / 2),
+  y: Math.round((LOGICAL.laptop.h - ERA1_CANVAS.height) / 2)
+} as const;
+
+/**
+ * ⚑ THE TRIGGER FOR IT, and it is the system's own failure, never the player
+ * (CLAUDE.md; Ethics #11). E3's argument is that a person corrects testimony by
+ * hand, one item at a time; the update retires the person. So it arms when the
+ * correction list is EXHAUSTED — counted from the same data the laptop reads,
+ * against the record's own filings, so the two cannot drift apart.
+ *
+ * ⚑ WHY NOT THE SPINE, which is where every other update is armed: `spine.ts`'s
+ * e3 path runs through `offer('s3')` / `offer('s4')`, and the scripted sends are
+ * LATENT — no beat fires that seam, the offer icon has nowhere to draw on a
+ * monitor that is off, and the spine therefore waits at `e3_s3` forever. That
+ * is 08_STATUS_REGISTER §7's standing note, and it is why Era 4 was unreachable
+ * by ordinary clicking before this session. When the sends land, the spine
+ * should take this trigger back; it is one call and it belongs there.
+ */
+const CORRECTION_IDS = new Set((queue.corrections as { id: number }[]).map(c => c.id));
+const TOTAL_CORRECTIONS = (queue.submissions as { corrections: number[] }[])
+  .reduce((n, s) => n + s.corrections.filter(id => CORRECTION_IDS.has(id)).length, 0);
+/** s of ordinary quiet after the last correction before the notice — long
+ *  enough that it plainly is not a response to the player's press. */
+const FINAL_GAP = 6;
+
+/** ⚑ THE ONE TOUCH: how far in front of the eye the picture hangs once the
+ *  device is on, and how big it is there. At the camera's 42° vertical FOV a
+ *  0.21 m plane at 0.30 m covers ~91% of the frame's height and ~82% of its
+ *  width — so the room is still there at the edges, sliding past, while the
+ *  place stays exactly where it is. That margin is not a compromise; it is
+ *  where the turn that does not work becomes visible. */
+const WORN = { distance: 0.30, w: 0.28, h: 0.21 } as const;
+/** the touch is not a movement (Sérgio, 2026-08-06) — no donning animation.
+ *  This is only the picture arriving, and it is short enough not to be one. */
+const WEAR_SECONDS = 0.55;
 /** how far in front of the eye each device sits when held, in metres. A phone
  *  is held closer than a tablet because it is smaller, not because it matters
  *  more — both end up subtending roughly the same angle. */
@@ -248,7 +328,7 @@ export interface Era3Devices {
   /** ?debug=1 review aid only (like __os/__tapes) — the raw offscreen
    *  canvases, for pixel-probing the shell content/lamb-marks without
    *  screenshot-chasing the 3D projection. */
-  debugCanvases(): Record<'laptop' | 'tablet' | 'phone', HTMLCanvasElement>;
+  debugCanvases(): Record<string, HTMLCanvasElement>;
   /** ?debug=1 review aid only (like __os) — the live GraceQueueLite
    *  instance, so a review can drive/inspect the queue in logical laptop-
    *  canvas coordinates without the world→screen projection dance. */
@@ -300,7 +380,30 @@ function hitPlane(entity: pc.Entity, wWorld: number, hWorld: number, logicalW: n
   return { x: u * logicalW, y: v * logicalH };
 }
 
+/** ray↔sphere, for pressing an OBJECT rather than a screen: the shortest
+ *  distance from the segment to a point. `src/engine/app.ts` has its own
+ *  `rayHitsPoint` for exactly this, and it is outside this session's fence —
+ *  same maths, ten lines, rather than a change to a file this session may not
+ *  touch. (If the two ever disagree, app.ts's is the original.) */
+function rayNear(
+  ray: { p0: pc.Vec3; p1: pc.Vec3 }, at: { x: number; y: number; z: number }, radius: number
+): boolean {
+  const dx = ray.p1.x - ray.p0.x, dy = ray.p1.y - ray.p0.y, dz = ray.p1.z - ray.p0.z;
+  const len2 = dx * dx + dy * dy + dz * dz;
+  if (len2 < 1e-9) return false;
+  const t = Math.max(0, Math.min(1,
+    ((at.x - ray.p0.x) * dx + (at.y - ray.p0.y) * dy + (at.z - ray.p0.z) * dz) / len2));
+  const cx = ray.p0.x + dx * t - at.x;
+  const cy = ray.p0.y + dy * t - at.y;
+  const cz = ray.p0.z + dz * t - at.z;
+  return cx * cx + cy * cy + cz * cz <= radius * radius;
+}
+
 export function buildEra3Devices(app: pc.Application): Era3Devices {
+  // S76: there IS a room, so the last update draws on the laptop and Daniel's
+  // Era-3 monitor stays off. `?flat=1` never reaches this line — see
+  // src/desktop/apps/space.ts's `roomIsMounted`.
+  claimRoomMount();
   type Screen = {
     name: keyof typeof PLACEMENT;
     canvas: HTMLCanvasElement;
@@ -309,6 +412,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     entity: pc.Entity;
     dirty: boolean;
     logical: { w: number; h: number };
+    /** ⚑ the visor: its pixels are drawn by `DesktopOS`, not here. The redraw
+     *  loop below only uploads it — this module never touches that canvas's
+     *  context, because the piece has ONE UI surface and this is a second
+     *  mount of it, not a second copy. */
+    external?: boolean;
     /** if present, checked each tick; the screen redraws+re-uploads ONLY
      *  when this value has changed since the last tick (dirty discipline —
      *  never a bare per-frame redraw). Screens without one (the phone) draw
@@ -370,7 +478,26 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     };
   }
 
-  add('laptop', LOGICAL.laptop, (ctx, w, h) => graceQueueLite.draw(ctx, w, h), { versionOf: () => graceQueueLite.version });
+  /**
+   * The laptop's own draw, plus the ritual composited over it. `ritualTick`
+   * moves once per frame while a ritual is up — the dirty-upload law's own
+   * exception for "a beat that is genuinely animating" (the changelog types on,
+   * the progress bar stutters), and it stops the instant the ritual is over.
+   */
+  let ritualTick = 0;
+  function drawLaptop(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+    graceQueueLite.draw(ctx, w, h);
+    const ritual = e4Bridge()?.update();
+    if (!ritual?.open) return;
+    if (ritual.fullScreen) px(ctx, 0, 0, w, h, ERA1.black);
+    ctx.save();
+    ctx.translate(RITUAL_OFFSET.x, RITUAL_OFFSET.y);
+    ritual.draw(ctx);
+    ctx.restore();
+  }
+
+  add('laptop', LOGICAL.laptop, drawLaptop,
+    { versionOf: () => graceQueueLite.version + ritualTick });
   // Session 70: the tablet takes its OWN version, exactly as the phone did in
   // S64 — it now has state the laptop knows nothing about (an open thread, a
   // selected comment, arrivals landing on their own schedule), and a comment
@@ -384,9 +511,143 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
 
   let arrived = false;
+  let eraNow: EraKey = 'e1';
+  /** s of quiet accumulated since the correction list was exhausted */
+  let finalT = -1;
+  let finalArmed = false;
+
+  // ── ⚑ THE VISOR (S76) ─────────────────────────────────────────────────────
+  /** created the first time the era reaches e4, because `src/engine/app.ts`
+   *  builds this module BEFORE the OS exists and the visor is textured with the
+   *  OS's own canvas. Nothing about it exists in E1–E3. */
+  let visor: Screen | null = null;
+  let visorK = 0;            // 0 = on the stand, 1 = on your face
+  let camEntity: pc.Entity | null = null;
+  /** the camera's yaw at the moment the device went on — every later yaw is
+   *  measured against it, and that difference is the whole of the turn. */
+  let wornYaw = 0;
+  let wasWorn = false;
+
+  function camera(): pc.Entity | null {
+    if (!camEntity) {
+      const found = app.root.findByName('camera');
+      if (found instanceof pc.Entity) camEntity = found;
+    }
+    return camEntity;
+  }
+
+  function ensureVisor(): void {
+    if (visor) return;
+    const source = e4Bridge()?.canvas();
+    if (!source) return;
+    const place = PLACEMENT.visor;
+    const tex = makeScreenTexture(app, source);
+    const entity = makeScreenEntity('era4-visor', tex, place.size.w, place.size.h);
+    entity.setLocalPosition(place.pos.x, place.pos.y, place.pos.z);
+    entity.setLocalEulerAngles(place.euler.x, place.euler.y, place.euler.z);
+    entity.enabled = false;
+    app.root.addChild(entity);
+    visor = {
+      name: 'visor', canvas: source, ctx: null as unknown as CanvasRenderingContext2D,
+      tex, entity, dirty: true, external: true,
+      logical: { w: LOGICAL.visor.w, h: LOGICAL.visor.h },
+      versionOf: () => e4Bridge()?.shell()?.version ?? 0,
+      lastVersion: -1,
+      restPos: new pc.Vec3(place.pos.x, place.pos.y, place.pos.z),
+      restEuler: new pc.Vec3(place.euler.x, place.euler.y, place.euler.z),
+      holdK: 0, holdTo: 0
+    };
+    screens.push(visor);
+  }
+
+  /** the plane primitive faces +Y; tipping it 90° about its own X turns that
+   *  normal into the camera's +Z, i.e. straight back at the eye. Composed with
+   *  the camera's own world rotation, that is "hung in front of your face" —
+   *  and it is read from the camera's live transform rather than rebuilt out of
+   *  euler angles, which do not survive the round trip (a rig yaw of 270 reads
+   *  back off the child camera as 68.78° — measured in-browser, S76). */
+  const TIP = new pc.Quat().setFromEulerAngles(90, 0, 0);
+  const restQuat = new pc.Quat();
+  const wornQuat = new pc.Quat();
+  const nowQuat = new pc.Quat();
+  const wornPos = new pc.Vec3();
+  const nowPos = new pc.Vec3();
+
+  /**
+   * ⚑ THE PICTURE IS MOUNTED TO THE HEAD, and this is the line that does it.
+   *
+   * Every frame, while it is worn, the plane is placed in front of the camera's
+   * own world transform. So the player turns — the one gesture this piece has
+   * taught for thirty years of story, the gesture that has always worked — and
+   * the place turns with them. **There is no away.**
+   *
+   * ⚑ NOBODY EXPLAINS THIS. There is no line, no cue, no glitch and no
+   * assistant remark anywhere near it, in this file or any other. It is simply
+   * true, and the player discovers it by doing the thing they have always done.
+   * The only thing in the whole piece that ever mentions it is the record, once,
+   * in its own administrative voice: `orientation: changed — view unchanged`.
+   *
+   * The room stays visible around the edges (see WORN's note), which is what
+   * makes the beat legible rather than merely absolute: Maya's room slides past
+   * the borders of a rectangle that does not move.
+   */
+  function driveVisor(dt: number): void {
+    const shell = e4Bridge()?.shell();
+    if (!visor || !shell) return;
+    const cam = camera();
+    const worn = shell.worn;
+    /** the direction the camera is looking, as a compass bearing in degrees.
+     *  Taken from the forward vector, which is unambiguous; see TIP's note. */
+    const bearing = (): number => {
+      const f = cam ? cam.forward : null;
+      return f ? Math.atan2(-f.x, -f.z) * 180 / Math.PI : 0;
+    };
+    if (worn && !wasWorn && cam) { wornYaw = bearing(); }
+    wasWorn = worn;
+    const target = worn ? 1 : 0;
+    if (visorK !== target) {
+      const step = dt / WEAR_SECONDS;
+      visorK = target > visorK ? Math.min(1, visorK + step) : Math.max(0, visorK - step);
+    }
+    if (visorK === 0 || !cam) {
+      visor.entity.setPosition(visor.restPos.x, visor.restPos.y, visor.restPos.z);
+      visor.entity.setEulerAngles(visor.restEuler.x, visor.restEuler.y, visor.restEuler.z);
+      visor.entity.setLocalScale(PLACEMENT.visor.size.w, 1, PLACEMENT.visor.size.h);
+      return;
+    }
+    const p = cam.getPosition();
+    const f = cam.forward;
+    const k = visorK * visorK * (3 - 2 * visorK); // smoothstep, as the held read
+    wornPos.set(
+      p.x + f.x * WORN.distance, p.y + f.y * WORN.distance, p.z + f.z * WORN.distance
+    );
+    restQuat.setFromEulerAngles(visor.restEuler.x, visor.restEuler.y, visor.restEuler.z);
+    wornQuat.copy(cam.getRotation()).mul(TIP);
+    nowPos.lerp(visor.restPos, wornPos, k);
+    nowQuat.slerp(restQuat, wornQuat, k);
+    visor.entity.setPosition(nowPos);
+    visor.entity.setRotation(nowQuat);
+    visor.entity.setLocalScale(
+      PLACEMENT.visor.size.w + (WORN.w - PLACEMENT.visor.size.w) * k,
+      1,
+      PLACEMENT.visor.size.h + (WORN.h - PLACEMENT.visor.size.h) * k
+    );
+    // …and the picture answers the turn, in steps, and gets nowhere.
+    if (worn) shell.setLook(((bearing() - wornYaw + 540) % 360) - 180);
+  }
 
   return {
     tick(dt: number): void {
+      // S76: the last update's own frames — see `drawLaptop`
+      if (e4Bridge()?.update()?.open) ritualTick++;
+      // ⚑ E3 ENDS WHEN THE WORK DOES. Counted off the record, not off any
+      // screen's private state: every correction decided, then a beat of quiet,
+      // then the platform announces its own end. See TOTAL_CORRECTIONS above.
+      if (eraNow === 'e3' && !finalArmed && ledger.graceQueue.length >= TOTAL_CORRECTIONS) {
+        finalT = finalT < 0 ? 0 : finalT + dt;
+        if (finalT >= FINAL_GAP) { finalArmed = true; e4Bridge()?.armFinal(); }
+      }
+      driveVisor(dt);
       // S61: the arrival (dark → boot → install → sign-in) is the only thing
       // in this module with a clock. It bumps `version` on its own quantised
       // schedule, so the redraw path below is unchanged and still fires only
@@ -414,10 +675,20 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         );
       }
       for (const s of screens) {
+        if (s.external) {
+          // the visor: another module owns those pixels. Upload when the shell
+          // says they changed, and never draw a stroke on them here.
+          if (s.versionOf && s.lastVersion !== s.versionOf()) {
+            s.lastVersion = s.versionOf();
+            s.dirty = true;
+          }
+          if (s.dirty && s.entity.enabled) { s.tex.upload(); s.dirty = false; }
+          continue;
+        }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
           s.lastVersion = s.versionOf();
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
-          if (s.name === 'laptop') graceQueueLite.draw(s.ctx, s.logical.w, s.logical.h);
+          if (s.name === 'laptop') drawLaptop(s.ctx, s.logical.w, s.logical.h);
           else if (s.name === 'tablet') graceQueueLite.drawTablet(s.ctx, s.logical.w, s.logical.h);
           else graceQueueLite.drawPhone(s.ctx, s.logical.w, s.logical.h);
           s.dirty = true;
@@ -426,8 +697,17 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       }
     },
     setEra(era: EraKey, settled = false): void {
+      eraNow = era;
       const visible = era === 'e3' || era === 'e4';
-      for (const s of screens) s.entity.enabled = visible;
+      // ⚑ S76: the visor is created here and not before — this module is built
+      // before the OS exists, and the visor is textured with the OS's canvas.
+      // It is Era 4's alone: Vera's three screens are enabled at e3 and e4 as
+      // they always were, and this one is enabled at e4 and nowhere else, so no
+      // era transition before the last one gains a single draw call from it.
+      if (era === 'e4') ensureVisor();
+      for (const s of screens) {
+        s.entity.enabled = s.name === 'visor' ? era === 'e4' : visible;
+      }
       // S61: a settled review jump lands on sign-in; a real transition leaves
       // the laptop dark until endRelocation() calls beginArrival(). E4 also
       // settles — by then the machine has long since been on.
@@ -462,7 +742,40 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         const place = PLACEMENT[name];
         return hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
       };
+      // ⚑ S76 — THE ONE TOUCH, and it is checked first because in Era 4 there
+      // is nothing else on this route. Two ways to land it, both a press on the
+      // same object: the visor's own screen plane (which is 9 cm across at a
+      // metre, so it is small), or a generous sphere around the headset itself,
+      // because the thing you are pressing is a headset on a stand and not a
+      // button. There is no second confirmation and no donning animation: it is
+      // touched and it is on.
+      const shell = e4Bridge()?.shell();
+      if (visor?.entity.enabled && shell && !shell.worn) {
+        const onVisor = hitPlane(
+          visor.entity, PLACEMENT.visor.size.w, PLACEMENT.visor.size.h,
+          visor.logical.w, visor.logical.h, ray
+        );
+        if (onVisor || rayNear(ray, PLACEMENT.visor.pos, 0.16)) { shell.wear(); return true; }
+      }
+      // …and once it is on, the picture is in front of your face: every press
+      // goes to it, because there is nothing else to press. It consumes them
+      // even where it has nothing to do, so a press cannot fall through the
+      // place onto the room behind it. S77's chips answer inside `handleClick`.
+      if (visor?.entity.enabled && shell?.worn) {
+        const onVisor = hitPlane(
+          visor.entity, WORN.w, WORN.h, visor.logical.w, visor.logical.h, ray
+        );
+        if (onVisor) { shell.handleClick(onVisor.x, onVisor.y); return true; }
+      }
+      // ⚑ THE LAST UPDATE, on Vera's laptop. System-modal over that screen only
+      // (a press on the phone or the tablet still reaches them — the ritual owns
+      // the surface it is drawn on, not the room).
+      const ritual = e4Bridge()?.update();
       const onLaptop = test('laptop');
+      if (ritual?.open && ritual.visible && onLaptop) {
+        ritual.handleClick(onLaptop.x - RITUAL_OFFSET.x, onLaptop.y - RITUAL_OFFSET.y);
+        return true;
+      }
       if (onLaptop) { graceQueueLite.handleClick(onLaptop.x, onLaptop.y); return true; }
       // Session 64: the PHONE is pressable now (the Malta notification, then
       // the reply field). The method keeps its Session-38 name because its only
@@ -482,8 +795,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       if (onTablet) return graceQueueLite.handleTabletClick(onTablet.x, onTablet.y);
       return false;
     },
-    debugCanvases(): Record<'laptop' | 'tablet' | 'phone', HTMLCanvasElement> {
-      const out = {} as Record<'laptop' | 'tablet' | 'phone', HTMLCanvasElement>;
+    debugCanvases(): Record<string, HTMLCanvasElement> {
+      // S76: `visor` joins the three, and it is deliberately the SAME object
+      // `window.__os.canvas` already exposes — a review that probes both is
+      // meant to see one canvas twice.
+      const out: Record<string, HTMLCanvasElement> = {};
       for (const s of screens) out[s.name] = s.canvas;
       return out;
     },

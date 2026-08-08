@@ -126,7 +126,14 @@ const OS_BEATS: BeatRow[] = [
   { label: 'S2R.7 · THE DISPERSAL (u3 install: removed / RENAMED)', id: 'u3Dispersal' },
 
   { heading: 'E3 → E4 (Room 2 lesbian → Room 3 trans)' },
-  { label: 'T3 ritual · update → E4', id: 'update4' },
+  // ⚑ S76. In PLAY the ritual arms itself when the correction list is
+  // exhausted, and it draws on VERA'S LAPTOP — so this button wants the room at
+  // E3 (the era jumps above) or there is nothing on screen to run it on.
+  { label: 'T3 ritual · update → E4 (⚑ runs on Vera\'s laptop)', id: 'update4' },
+  // …and the era's own two states. Neither moves the room: use the E4 era jump
+  // first to land in Maya's seat, then these to set what the visor is showing.
+  { label: 'E4 · the headset, waiting (standby — one touch to wear)', id: 'e4Standby' },
+  { label: 'E4 · ⚑ THE PLACE (worn — then turn, and see what happens)', id: 'e4Place' },
 
   { heading: 'Close' },
   { label: 'Final · Restart as you are', id: 'closeUpdate' },

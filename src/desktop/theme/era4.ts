@@ -85,6 +85,194 @@ export const ERA4 = {
   redact: '#44464F'
 } as const;
 
+/**
+ * ⚑ THE PLACE (S76) — the home environment's palette, and it is the WARMEST
+ * block in the piece since Era 1's paper.
+ *
+ * `docs/REINTERP_E4_THE_SPACE_2026-08-06.md` §4.1: *"The headset goes on and it
+ * is better in here. Warmer, brighter and quieter than the room she is sitting
+ * in. ⚑ The piece must let this land honestly. No irony, no warning."* So none
+ * of these are dimmed, greyed or soured. It is a nice room. That is the whole
+ * point, and souring it would be the era arguing with itself.
+ *
+ * COLOR LAW, same discipline as the ERA4 block above and `era3.ts`'s NOA:
+ * ⚑ every hex is lifted VERBATIM from `data/room/era1.json`. Nothing invented.
+ * The wall creams and the wood browns are literally the colours Daniel's 1997
+ * room is painted in — which is not a saving, it is the argument: the pleasant
+ * default room the apparatus hands her is assembled out of the same handful of
+ * colours every room in this piece has always had.
+ */
+export const PLACE = {
+  wallHi: '#F0E5D4',     // the lit wall, up near the window
+  wall: '#E6D2BC',
+  wallLo: '#CFC4AA',     // shadowed wall, and the window's own frame
+  sill: '#B5A98C',
+  floor: '#A07B52',
+  floorLo: '#8A5A3B',    // the plank seams
+  floorHi: '#B98563',    // where the light lands
+  sky: '#AABBCC',
+  skyLo: '#8899BB',      // higher up, further away
+  skyHaze: '#EBD9C4',    // the warm band that sits on the horizon
+  land: '#A8B49A',       // something green, far off, unresolvable
+  landLo: '#9A9486',
+  sun: '#F7C775',
+  sunHi: '#FFD24C',
+  rug: '#D8CDB4',
+  rugHi: '#E8C9A0',
+  textile: '#C9A8A0',    // the cushion nobody chose
+  textileHi: '#D9A8A0',
+  plant: '#A8B49A',
+  plantLo: '#9A9486',
+  mug: '#F5EDDC',
+  shelf: '#B5A98C',
+  book: '#C42020',
+  bookAlt: '#2C3A5C',
+  ink: '#74492F'         // the environment's own small print
+} as const;
+
+/** ⚑ THE PARALLAX BOUND. The picture answers when you look, and it answers a
+ *  little, in hard steps, and it never gets anywhere: three layers, twelve
+ *  pixels at the very front, and turning further buys nothing. `look` is
+ *  −1…+1 and is already quantised by the caller (see apps/space.ts's LOOK_STEP)
+ *  so this can only ever be redrawn a handful of times across a whole turn. */
+const PARALLAX = { far: 3, mid: 7, near: 12 } as const;
+const shift = (look: number, depth: keyof typeof PARALLAX): number =>
+  Math.round(-look * PARALLAX[depth]);
+
+/**
+ * ⚑ THE HOME ENVIRONMENT — a picture of a place, drawn on the canvas.
+ *
+ * Every VR headset ships one: a pleasant default room, a view out of a window,
+ * a horizon. ⚑ *"A room that is not yours, that millions of people have an
+ * identical copy of, designed to feel like somewhere"* (THE_SPACE §2). It adds
+ * NO geometry — it is flat, and the flatness is the era's argument: the
+ * apparatus can only ever show you a picture of a room.
+ *
+ * Drawn in hard steps, integer positions, no rotations (pixel discipline). The
+ * only soft thing is the light, which is three alpha washes — the same device
+ * `photograph()` uses for the light the system adds to her picture.
+ *
+ * ⚑ PLACEHOLDER-draft art — Sérgio's eye pending, like the NOA frames.
+ */
+export function homeEnvironment(
+  ctx: CanvasRenderingContext2D, W: number, H: number, look: number
+): void {
+  const HORIZON = 236;
+  const far = shift(look, 'far');
+  const mid = shift(look, 'mid');
+  const near = shift(look, 'near');
+
+  // ── the wall, and the floor it stands on ──────────────────────────────────
+  px(ctx, 0, 0, W, HORIZON, PLACE.wall);
+  px(ctx, 0, 0, W, 96, PLACE.wallHi);          // higher up is lighter
+  px(ctx, 0, HORIZON - 26, W, 26, PLACE.wallLo);
+  px(ctx, 0, HORIZON, W, H - HORIZON, PLACE.floor);
+  for (let y = HORIZON + 11; y < H; y += 13) px(ctx, 0, y, W, 1, PLACE.floorLo);
+
+  // ── the window: the whole reason a default room feels like somewhere ──────
+  const wx = 168 + mid; const wy = 44; const ww = 264; const wh = 168;
+  px(ctx, wx - 6, wy - 6, ww + 12, wh + 12, PLACE.wallLo);   // the frame
+  px(ctx, wx, wy, ww, wh, PLACE.skyLo);
+  px(ctx, wx + far, wy + 52, ww, 46, PLACE.sky);
+  px(ctx, wx + far, wy + 98, ww, 22, PLACE.skyHaze);         // the warm band
+  px(ctx, wx + far, wy + 120, ww, 34, PLACE.land);
+  px(ctx, wx + far, wy + 146, ww, 22, PLACE.landLo);
+  // the sun: two squares, low and left, never a disc — pixel discipline
+  px(ctx, wx + 42 + far, wy + 74, 18, 18, PLACE.sunHi);
+  px(ctx, wx + 36 + far, wy + 68, 30, 30, PLACE.sun);
+  px(ctx, wx + 42 + far, wy + 74, 18, 18, PLACE.sunHi);
+  // mullions — the frame does not parallax against its own glass
+  px(ctx, wx + Math.round(ww / 2) - 2, wy, 4, wh, PLACE.wallLo);
+  px(ctx, wx, wy + Math.round(wh / 2) - 2, ww, 4, PLACE.wallLo);
+  px(ctx, wx - 8, wy + wh, ww + 16, 9, PLACE.sill);
+
+  // ── the light it throws, which is the honest part ─────────────────────────
+  ctx.save();
+  ctx.globalAlpha = 0.20;
+  px(ctx, wx - 26, HORIZON, ww + 52, 40, PLACE.sun);
+  ctx.globalAlpha = 0.14;
+  px(ctx, wx - 54, HORIZON + 40, ww + 108, 44, PLACE.sun);
+  ctx.globalAlpha = 0.08;
+  px(ctx, wx - 86, HORIZON + 84, ww + 172, 52, PLACE.sun);
+  ctx.restore();
+  px(ctx, wx + 10, HORIZON + 6, ww - 20, 3, PLACE.floorHi);
+
+  // ── the things somebody put here for you ──────────────────────────────────
+  // a shelf, three books, a plant. None of it is anybody's.
+  const sx = 22 + mid;
+  px(ctx, sx, 108, 108, 6, PLACE.shelf);
+  px(ctx, sx + 10, 86, 8, 22, PLACE.book);
+  px(ctx, sx + 20, 82, 7, 26, PLACE.bookAlt);
+  px(ctx, sx + 29, 88, 9, 20, PLACE.ink);
+  px(ctx, sx + 74, 92, 20, 16, PLACE.plantLo);
+  px(ctx, sx + 78, 74, 12, 20, PLACE.plant);
+  px(ctx, sx + 70, 80, 10, 8, PLACE.plant);
+  px(ctx, sx + 88, 78, 10, 8, PLACE.plant);
+
+  // the rug, the table, the cushion, the cup somebody left in the render
+  const nx = near;
+  px(ctx, 74 + nx, 262, 344, 78, PLACE.rug);
+  px(ctx, 74 + nx, 262, 344, 4, PLACE.rugHi);
+  px(ctx, 74 + nx, 336, 344, 4, PLACE.rugHi);
+  px(ctx, 150 + nx, 272, 190, 30, PLACE.floorLo);
+  px(ctx, 150 + nx, 272, 190, 5, PLACE.floorHi);
+  px(ctx, 166 + nx, 302, 10, 26, PLACE.floorLo);
+  px(ctx, 314 + nx, 302, 10, 26, PLACE.floorLo);
+  px(ctx, 292 + nx, 258, 16, 14, PLACE.mug);
+  px(ctx, 292 + nx, 258, 16, 3, PLACE.wallHi);
+  px(ctx, 40 + nx, 288, 74, 44, PLACE.textile);
+  px(ctx, 40 + nx, 288, 74, 5, PLACE.textileHi);
+}
+
+/**
+ * ⚑ THE VISOR'S OWN EDGE. Four hard bands of the field colour, darkest at the
+ * very border — the limit of what the thing on your face can show you. It is
+ * also the honest seam: in the room, the picture is a rectangle mounted to your
+ * head, and the rectangle has edges even when the place inside it does not.
+ */
+export function visorEdge(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+  const bands: [number, number][] = [[14, 0.10], [8, 0.20], [4, 0.34], [2, 0.55]];
+  ctx.save();
+  for (const [inset, alpha] of bands) {
+    ctx.globalAlpha = alpha;
+    px(ctx, 0, 0, W, inset, ERA4.field);
+    px(ctx, 0, H - inset, W, inset, ERA4.field);
+    px(ctx, 0, 0, inset, H, ERA4.field);
+    px(ctx, W - inset, 0, inset, H, ERA4.field);
+  }
+  ctx.restore();
+}
+
+/**
+ * The device before it is worn: a dark field, one standby light, one dim line.
+ * ⚑ Drawn LARGE and simple on purpose — this same canvas is textured onto a
+ * 9 cm visor across the room, so anything smaller than this reads as noise. The
+ * grammar is S2R.0's waiting screen (one dim line on dark glass, pressed to
+ * advance), which is the piece's own way of saying "it is on, and it is waiting".
+ */
+export function standby(
+  ctx: CanvasRenderingContext2D, W: number, H: number, pulse: number, label: string
+): void {
+  px(ctx, 0, 0, W, H, ERA4.field);
+  px(ctx, 0, 0, W, 40, ERA4.fieldLo);
+  px(ctx, 0, H - 40, W, 40, ERA4.fieldLo);
+  const cx = Math.round(W / 2); const cy = Math.round(H / 2) - 14;
+  // ⚑ THE STANDBY LIGHT, and it is deliberately BIG. Measured in-browser (S76):
+  // the visor's face is about 80 screen px across at the seat, so a tasteful
+  // 4 px rail resolves to less than one pixel and the device reads as dead
+  // furniture. This is the affordance — the piece may not explain the headset
+  // in words (the touchless budget, and nothing in Era 4 is announced), so the
+  // object has to say "on, and waiting" by being visibly lit.
+  const wide = 240 + Math.round(pulse * 24);
+  px(ctx, cx - Math.round(wide / 2), cy - 2, wide, 14, ERA4.lBand);
+  px(ctx, cx - Math.round(wide / 2), cy, wide, 10, ERA4.lDim);
+  px(ctx, cx - 40, cy - 8, 80, 26, ERA4.l);
+  setFont(ctx, 10);
+  ctx.fillStyle = ERA4.dim;
+  const tw = Math.ceil(ctx.measureText(label).width);
+  ctx.fillText(label, cx - Math.round(tw / 2), cy + 28);
+}
+
 /** The visor's resting field: not black — a dark grey-blue with a soft, very
  *  low-contrast vignette. Underdefined edges, per the Soft Lo-Fi doctrine. */
 export function visorField(ctx: CanvasRenderingContext2D, W: number, H: number): void {
