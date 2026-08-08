@@ -21,7 +21,8 @@ not live.***
 | 4 | **S79 — TRANSCENDANCE** (Stage 3) | ↓ below | BLOCKED on S78 |
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
-| — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED unbuilt 2026-08-05** — see below |
+| **⚑ 1** | **S80 — the gyro look-mode, and the visibility audit** | *not yet written — `REINTERP_THE_LOOK_MODES_2026-08-06.md` §4* | ⚑ **NEXT, ahead of S77** — see the note below |
+| — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
 
 **⚑ S73 IS QUEUED** (above) now that S74 has shipped Room 3. Two other candidates the S72 audit
 produced remain open and un-dispatched, both in the session log with their measurements: **the
@@ -31,7 +32,18 @@ ordinary-path traversal S72 did not build. ⚑ NEW, measured by Session 74: the 
 is now exceeded — entrance 68, sends 78 — a side effect of Room 3's belongings; not root-caused this
 session (see 01_SESSION_LOG.md's own account of the investigation).
 
-### ⚑ S68 is retired, not pending (2026-08-05)
+### ⚑⚑ CORRECTION 2026-08-06 — S68's retirement was wrong, and it mattered
+Sérgio corrected the architecture: **`?flat=1` is not a fallback, it is a review tool**; the browser
+3D build is co-designed with the VR build; and **phone/tablet must look around by gyroscope, like a
+360 video.** Verified the same day: **Safari has no WebXR on iOS, iPadOS or macOS** — only visionOS.
+**So S65's XR entry point can never fire on an iPad, and my argument below ("S65 built that entry
+point, so the iPad is no longer the bottleneck") was false.** Gyro is not an approximation of the turn
+for testing; **it is how every phone and tablet audience will ever experience this piece.**
+Reinstated as **S80**, which also carries the visibility audit — because the same misreading is why
+eight of the nine belongings props sit past 69° from the seat and nobody noticed.
+
+### The 2026-08-05 reasoning, kept as the record of the error
+
 Sérgio asked what happened to it. Honest answer: **it was a good idea for a problem that has since
 moved.** It proposed a `DeviceOrientation` "magic window" so the turn could be felt on the iPad,
 *because at the time the iPad was the only device that could load the build over Tailscale and there

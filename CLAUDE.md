@@ -32,9 +32,28 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
 ## Stack & architecture (decided — do not re-litigate)
 - PlayCanvas **as npm package** + Vite + TypeScript. No cloud editor. Static
   build, deployable to GitHub Pages (`base: './'`).
-- **One scene, two cameras:** browser = framed camera in the same 3D room
-  (drag-to-look); Quest 3 = the head. The flip = camera/body turns ~180°.
-  `?flat=1` must always render the desktop canvas alone (universal fallback).
+- **⚑ One scene, THREE look-modes — corrected 2026-08-06 by Sérgio.** This piece
+  is a **WebXR experience**, and the browser build is **co-designed with the VR
+  build, not degraded from it**:
+  1. **Immersive WebXR** (Quest 3; Vision Pro) — the head is the camera.
+  2. **Browser, drag-to-look** (desktop/laptop) — framed camera, same 3D room.
+  3. **⚑ Browser, GYRO-to-look** (phone, tablet) — same room; you turn the
+     device, as in a 360 video. **NOT BUILT. It is a requirement, not a nicety**
+     — see below.
+  The flip = camera/body turns ~180°, in all three.
+- **⚑ `?flat=1` IS NOT A FALLBACK.** It was a testing-phase device and the old
+  wording here ("universal fallback") was a misreading that limited development
+  for months. It is a **REVIEW TOOL** — the desktop canvas alone, for inspecting
+  2D work without the room. **It is not an audience target and no design
+  decision should be justified by it.** The fallback for "VR is not possible"
+  is **the browser 3D room**, which is a first-class build.
+- **⚑ DEVICE REALITY (verified 2026-08-06, and it drives the above):** Safari
+  implements WebXR **only on visionOS** — there is **no WebXR on iOS, iPadOS or
+  macOS Safari**, and `navigator.xr` will never fire there. So for every Apple
+  device except Vision Pro, **look-mode 3 IS the experience.** It needs
+  `DeviceOrientationEvent.requestPermission()`, which requires **HTTPS** and a
+  **real user gesture** (it cannot be requested on page load) — so it needs a
+  deliberate button. Android grants orientation without a prompt.
 - **One UI surface:** all interaction lives on the offscreen 2D desktop
   canvas (`src/desktop/`), textured onto the monitor mesh with
   `FILTER_NEAREST`. The 3D room is staging, not UI.
