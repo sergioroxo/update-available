@@ -21,7 +21,8 @@ not live.***
 | 4 | **S79 — TRANSCENDANCE** (Stage 3) | ↓ below | BLOCKED on S78 |
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
-| **⚑ 1** | **S80 — the gyro look-mode, and the visibility audit** | *not yet written — `REINTERP_THE_LOOK_MODES_2026-08-06.md` §4* | ⚑ **NEXT, ahead of S77** — see the note below |
+| **⚑ 1** | **S80 — fix picking, then the gyro look-mode** | ↓ at the tail of this file | ⚑ **NEXT, ahead of S77.** Its 2.2 fix is S77's own prerequisite |
+| 2 | **S81 — the visibility audit, read as broken interactions** | *not yet written — `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §4* | after S80 |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
 
 **⚑ S73 IS QUEUED** (above) now that S74 has shipped Room 3. Two other candidates the S72 audit
@@ -921,4 +922,91 @@ ACCEPTANCE, BY FEEL: turn in any seat in Room 3 and something of hers is there t
 reads as a thing she uses, not a prop placed for the player. The dark CRT is noticeable without being
 pointed at. Nothing reads as an unlit block anywhere in any room. And all three rooms should feel
 lived in rather than decorated — if one looks like a set, it is wrong.
+```
+
+
+---
+
+# S80 — FIX PICKING, THEN THE GYRO LOOK-MODE · Opus, high effort · **here, not Codex**
+**⚑ PROMPT STATUS: QUEUED — dispatch this one, ahead of S77. Its item 1 is S77's prerequisite.**
+*Sérgio, 2026-08-06, correcting the architecture: `?flat=1` is a REVIEW TOOL, not a fallback; the
+browser 3D build is co-designed with the VR build; and **phone/tablet must look around by gyroscope,
+like a 360 video.** Verified: **Safari has WebXR only on visionOS** — none on iOS, iPadOS or macOS —
+so for every Apple device but Vision Pro **this mode IS the experience.** Design and assessment:
+`REINTERP_THE_LOOK_MODES_2026-08-06.md` and `REINTERP_MODE3_ASSESSMENT_2026-08-06.md`.
+⚑ This supersedes S68, whose retirement was wrong; the number stays retired.*
+
+```
+Build session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
+?reinterp=1). Read CLAUDE.md (⚑ its "Stack & architecture" section was CORRECTED 2026-08-06 — three
+look-modes, and flat is a review tool), docs/REINTERP_THE_LOOK_MODES_2026-08-06.md,
+⚑ docs/REINTERP_MODE3_ASSESSMENT_2026-08-06.md (THE SPEC — §2 is the blocker list, §3 the design
+questions), docs/reinterp/08_STATUS_REGISTER.md §8 and §9, then src/engine/app.ts (the pointer
+handling, ~1667; `facingBack`; the hit helpers), src/room/era3Devices.ts (the held read — you are
+reusing its gesture), src/desktop/gameMenu.ts, src/debug/panel.ts, tools/shots.mjs.
+
+⚑ ORDER MATTERS AND IS NOT NEGOTIABLE: fix picking FIRST, ship it verified, THEN build the gyro. A
+gyro on top of broken picking produces a mode where a whole hemisphere does not respond to touch and
+every look-drag fires props on the way.
+
+SCOPE:
+1. ⚑ TAP vs DRAG. Interactions currently resolve on `pointerdown` — prop hits, the power button, the
+   kit, the belongings geometry, all on PRESS — while `pointermove` drags the camera. There is NO
+   discrimination. On a mouse it survives; on touch, EVERY look-drag that begins on a prop also
+   activates that prop. Resolve interactions on `pointerup` behind a movement threshold and a time
+   limit: a press that travels is a look, a press that stays is a tap.
+   ⚑ THIS TOUCHES EVERY INTERACTIVE SURFACE IN THE PIECE. It is the riskiest change in the session.
+   Re-run `npm run audit` and re-verify with real projected pointer presses afterwards — every era,
+   every device screen, the belongings window, the update ritual's "I Agree".
+2. ⚑ REPLACE THE YAW HEMISPHERE. The whole hit-test block sits behind `if (!facingBack)` — a yaw-based
+   witness hemisphere. S70 patched only the held-device case; S76 warned it will silently discard
+   S77's chips. On a device you physically rotate it is systemic: a whole hemisphere of the room stops
+   responding. ⚑ Replace it with WHAT THE RAY ACTUALLY HITS — information the picking code already
+   has. A reasonable shortcut in a one-room build; wrong in a three-room building.
+3. THE GYRO LOOK-MODE. `DeviceOrientationEvent` → camera yaw/pitch, same camera and same seat as
+   drag-to-look (⚑ NOT a new camera, NOT a new scene). Requires HTTPS and
+   `DeviceOrientationEvent.requestPermission()` behind a REAL USER GESTURE — it cannot be requested on
+   page load, so the button is a designed object. ⚑ Android grants orientation with no prompt: the two
+   platforms need different entry flows, and neither may block the other.
+   Drag-to-look must keep working when motion is denied or unavailable, and the two must not fight.
+4. ⚑ RECENTRE, in the game menu. iOS gives no reliable absolute heading, so track RELATIVE yaw from a
+   zero and expect drift. Recentre is frame-voice and functional — it belongs beside restart and the
+   caption setting in `src/desktop/gameMenu.ts`, not in the fiction. And it is load-bearing rather
+   than plumbing: this piece's one bodily ask is the turn, so WHERE FORWARD IS matters.
+5. ⚑ TWO DESIGN CALLS TO MAKE AND REPORT (assessment §3.1 and §3.3), both mine to propose and
+   Sérgio's to overturn:
+   - THE SCREEN-IN-A-SCREEN. A 512×384 pixel-art canvas on a monitor mesh, seen on a phone, is a small
+     screen inside a small screen. ⚑ RECOMMENDED: reuse S66's HELD READ — tap a screen and it comes up
+     to fill the viewport; tap out and it returns to the room. Same built, already-approved gesture,
+     one canvas, one layout, and it stays diegetic: you pick a thing up to read it.
+   - PORTRAIT vs LANDSCAPE. Decide BEFORE building, because every seat framing and the whole
+     subject-in-frame audit depend on aspect ratio (S76's own half-FOV moved 29.7° → 34.3° between
+     1280×860 and 16:9). Asking for landscape is a legitimate, common ask. SAY WHICH YOU CHOSE.
+6. DO NOT touch the invisible-prop placements — that is S81, and it needs this session's picking fix
+   before its numbers mean anything.
+
+LAWS: no runtime network calls · no storage (the recentre zero and any motion preference live in the
+in-memory ledger ONLY) · input stays click/tap + the movement press + Esc — ⚑ the gyro is a LOOK, not
+an input, and must never select anything · no gaze-triggered anything, ever (R28) · palette ratchet 33
+· C6 panel completeness, src/debug/panel.ts IS IN THE FENCE · C8 flip this block to SHIPPED · Quest
+budget unchanged · ⚑ comfort: the gyro is 1:1 head/device motion, so it does not enter the 0.43 m/s
+envelope — but do not add smoothing that lags, because lag is its own nausea.
+⚑ `npm run audit` already exits 1 on the latent send legs. Do not fix, do not raise the ratchet.
+
+FILE FENCE: src/engine/app.ts, src/desktop/gameMenu.ts, src/desktop/os.ts, src/room/era3Devices.ts,
+src/state/ledger.ts, src/debug/panel.ts, src/main.ts, src/flat/flat.ts, data/strings/gameMenu.json,
+tools/shots.mjs (if a check needs extending), CLAUDE.md (⚑ ONLY to record what shipped),
+docs/reinterp/{BUILD_QUEUE_LIVE.md,01_SESSION_LOG.md,08_STATUS_REGISTER.md}, BUILD_LOG.md.
+Git: EXPLICIT PATHSPECS only.
+
+DONE WHEN: npm run dev works; tsc + npm test + npm run build green; every era re-verified with real
+pointer presses after the tap/drag change; the gyro path exercised at a mobile viewport (375×812) with
+the permission flow present; recentre reachable from the menu; screenshots in the session log;
+BUILD_LOG gets ONE line.
+⚑ REPORT FAITHFULLY: you cannot fully test iOS motion in a headless browser. Say plainly what was
+verified by simulation versus what needs a real device, and do NOT describe the latter as verified.
+
+ACCEPTANCE, BY FEEL: on a phone you turn your body and the room turns, and reaching the thing behind
+you feels like looking rather than like work. A drag never fires a prop. And nothing in the room stops
+responding because of which way you are facing.
 ```
