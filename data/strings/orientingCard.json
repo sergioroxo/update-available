@@ -20,6 +20,14 @@
     "Point at a marker on the floor and pull the trigger to move to it.",
     "The menu button opens the same menu: pause, controls, credits, leave."
   ],
+  "controlsPhoneHeading": "On a phone or tablet",
+  "controlsPhoneLines": [
+    "Turn the device to look around the room, as you would in a 360 video.",
+    "Or drag with one finger, if you would rather not move.",
+    "Tap to choose. A tap that slides is a look, not a choice.",
+    "Pinch to zoom in when something is too small to read.",
+    "Landscape shows the whole screen at once; upright works too."
+  ],
   "controlsNote": "You never walk, and nothing here is timed. Turning to look is the only thing your body has to do.",
   "enterLabel": "Log in",
   "enterVrLabel": "Enter VR",

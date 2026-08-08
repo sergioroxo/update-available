@@ -195,6 +195,12 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
   };
   controlBlock(copy.controlsDesktopHeading, copy.controlsDesktopLines);
   controlBlock(copy.controlsHeadsetHeading, copy.controlsHeadsetLines);
+  // ⚑ 2026-08-06: the THIRD look-mode. S80 built gyro-to-look and correctly
+  // reported that this card still described only two ways to play — and for
+  // every Apple device but Vision Pro, this third one IS the experience
+  // (Safari has WebXR only on visionOS). The card is the piece's front door and
+  // an accessibility surface, so a mode nobody is told about does not exist.
+  controlBlock(copy.controlsPhoneHeading, copy.controlsPhoneLines);
 
   card.appendChild(line(copy.controlsNote, {
     fontSize: '12px', lineHeight: '1.6', color: FRAME.faint, marginBottom: '22px'

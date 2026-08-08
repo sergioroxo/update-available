@@ -432,3 +432,35 @@ is right is one in-headset frame-time capture.
 5. **The orienting card describes two ways to play, not three** (`src/desktop/orientingCard.ts`,
    outside S80's fence): "On this computer" and "In a headset". There is now a third, and a phone
    audience arrives with no idea the device turn exists beyond one button at the bottom of the frame.
+
+
+---
+
+## §12 — ⚑ A RECURRING BUG CLASS, NAMED AFTER ITS THIRD INSTANCE (2026-08-06)
+
+**Three sessions have now independently hit the same fault: a GLOBAL YAW STANDING IN FOR A PLACE.**
+
+| | where | what it broke |
+|---|---|---|
+| **S70** | `pointerdown`'s witness hemisphere | the tablet could not be clicked at its own seat (yaw 180 read as *turned to the record*) |
+| **S71** | the `?debug=1` `CURRENT:` readout | reported Room 1 at both device seats |
+| **S80** | Recentre, via `seatPose(seatYaw)` | at a device seat it swung the view to **Room 1's** facing |
+
+**The shape is always the same:** a single yaw value is used to answer a question that is actually
+*"where am I?"* — and it was correct exactly once, in a one-room build with one seat. **Every room and
+every device seat added since has been a new way for it to be wrong.**
+
+**S80 fixed picking properly** — the hemisphere is gone from the hit path, replaced by what the ray
+hits — and fixed Recentre with `seatNodeId`. ⚑ **But the class is not closed**, and the way to close
+it is not another patch:
+
+> **Anywhere the code asks "which yaw?" to mean "which place?", it should ask for the place.**
+> Seats have ids. Rooms have ids. The yaw is a consequence, not an identity.
+
+**One known instance is still open, deliberately:** the KEYBOARD is still gated on `facingBack`. S80
+left it and said why — a keypress is not a look gesture, so the argument for the guard is different
+there. ⚑ **Reasonable, and worth re-checking the first time someone reports a dead key.**
+
+**For future sessions:** if you find yourself comparing a yaw to a threshold to decide *what the
+player is looking at* or *where they are*, stop. That is this bug, and it has been written three
+times.
