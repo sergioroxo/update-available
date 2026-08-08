@@ -100,6 +100,14 @@ by era, do not invent relationships).
    ⚑ *And do not say "adopted" when the fact is "in force," or vice versa — this project has been
    bitten by that distinction before.*
 
+### Sérgio-run passes (not constellation material — design provocation)
+- **`RESEARCH_ARENA_E4_BRIEF_2026-08-06.md`** — the Era-4 brief for ArenaAI. ⚑ Deliberately withholds
+  every decision we have made (L, the headset, the home environment, the memories beat, the failed
+  turn, `NO CATEGORY FOUND`) so the models are not handing our own answers back. Gives the situation,
+  the ethical rails, and Sérgio's two fixed points: TRANSCENDANCE and the checkpoints.
+  ⚑ **Outputs are provocation, never material** — same rule as Strand B's layouts. Nothing enters
+  `data/` without Sérgio choosing it deliberately.
+
 ### Still owed, not yet dispatched
 - **The E1/E2 sources** have never been through a pass of this kind; the constellation's 24 labels
   are the only record and they are unrated.
