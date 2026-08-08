@@ -1,6 +1,10 @@
 # REINTERP SESSION LOG — append-only; newest at the top of DONE
 STATUS: live
 
+## ⚑ E4 IS NOW FOUR SESSIONS (2026-08-06): S74 ✅ rooms → **S76 shell** → S77 voice → S78 offers →
+## S79 the ball. Prompts: `docs/reinterp/BUILD_QUEUE_LIVE.md`. Decisions: `08_STATUS_REGISTER.md` §8.
+## S73 and S75 are RETIRED numbers.
+
 ## NEXT UP (rebuilt 2026-07-25 — items 1-3 of the R29 list all shipped, S40/S41/S42; the list had
 ## gone stale again the same way, so it is pruned here. Top item = your session unless Sérgio says so.)
 0. **⚑ S66 — ROOM 2 IS UNUSABLE AS A PLACE (Sérgio's 2026-08-01 pass). The top item.**

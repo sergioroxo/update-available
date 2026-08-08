@@ -267,3 +267,39 @@ the batcher is still settling* — S74 hit the same wall without that context to
 resident at `r3` at all, or whether they can arrive at `r4` with the era they belong to. That is a
 narrative call — the rooms-age-together argument is good — and it should be made deliberately rather
 than as a performance fix.
+
+
+---
+
+## §8 — ERA 4's DECISIONS, REGISTERED (2026-08-06)
+*Every call made this week, in one place, so no session has to re-derive one. Sérgio's are marked
+**[S]**; the rest are mine under the co-creation norm and are his to overturn.*
+
+| # | decision | where it is argued |
+|---|---|---|
+| 1 | **[S]** The assistant is **L**, not Echo — the dispersal finishing as a file designation | ARGUMENT §3 |
+| 2 | **[S]** The device is a **headset**, and ⚑ **the visor opens a PLACE, not a rectangle** | THE_SPACE §1–2 |
+| 3 | The place is a **home environment** — a default room that is not hers, ad-saturated, addressed to her by name. **Drawn on the canvas**: a picture of a place, no new geometry | THE_SPACE §2 |
+| 4 | ⚑ **The turn does not work in it.** The place comes with you. Nobody explains it | THE_SPACE §4 |
+| 5 | ⚑ **E4 has NO DESKTOP.** The application layer is gone; the OS is the assistant | THE_SPACE §6 |
+| 6 | **[S]** The era opens with **the update ritual**, and **L arrives inside it** — installed, agreed to. The EULA is where *"it accepted the terms"* lands | THE_SPACE §6 |
+| 7 | **[S]** Putting the headset on is **ONE TOUCH**, not a movement. No donning animation | S73_OPEN_ISSUES Q2 |
+| 8 | **[S]** The **touchless budget** is a rule: if a beat can advance itself, it does. Three presses in the whole era — chip, undo, turn | THE_DEVICE, Stage 0 |
+| 9 | The **deadname advisory** goes on the **pre-fiction panel**, never in-fiction *(Sérgio had no preference; my call, his to overturn)* | S73_OPEN_ISSUES Q3 |
+| 10 | **[S]** The **unvoiced opt-out** goes in the **game menu**. Accessibility belongs to the frame, never to the apparatus | S73_OPEN_ISSUES Q4 |
+| 11 | The record holds **"Daniel"** — ⚑ *answered by fact*: this branch prefills the name, so there is no typed name to retain. The name was never the player's to give | S73 gates, closed |
+| 12 | **[S]** The ball is an **interpretive homage**; the reader gate is **lifted**. Function without vernacular; invented categories; ballroom credited by lineage | DEEP_PASS §1.2, SOURCE_PASS §4 |
+| 13 | ⚑ The ball's **categories echo the apparatus's own words** — corrected by the provenance pass. What was seized back is the **judging**, not the vocabulary | DEEP_PASS §1 (corrected) |
+| 14 | **TRANSCENDANCE has no screen at all** — and that is the same point as #2, not a contradiction | THE_SPACE §3 |
+| 15 | The apparatus is an **ADOPTER, not a developer** of AI | SOURCE_PASS |
+| 16 | The **memories/photo beat stays `speculative`** — no such tool exists in the record | SOURCE_PASS, negative findings |
+| 17 | The export thesis is **"the law arrived in patches; a ban is national, a URL is not"** — twice corrected | ARGUMENT §1 |
+| 18 | **The store and the "for you" wall are droppable on purpose** — cut first if S78 runs long | S78 scope 4 |
+
+### Numbers retired this week
+**S68** (gyroscope, never written) · **S73** (one giant Stage 2, superseded by the space reframe) ·
+**S75** (the number the stopped run used for itself). ⚑ Numbers are never reused — `08 §6`.
+
+### The E4 build, as it now stands
+**S74 ✅ rooms → S76 shell → S77 voice → S78 offers → S79 the ball.** Each is playable alone and none
+leaves the era unreachable. ⚑ **S77 carries the trans reader pass as a GATE, not a review step.**

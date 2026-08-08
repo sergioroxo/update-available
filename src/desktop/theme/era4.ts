@@ -1,5 +1,7 @@
 /**
- * ERA 4 palette + visor chrome (2026, Room 3, Maya) — Session 75.
+ * ERA 4 palette + visor chrome (2026, Room 3, Maya).
+ * ⚑ Written by the STOPPED run, which numbered itself Session 75. That number is
+ * RETIRED and never reused; the era's build is S76-S79. See BUILD_QUEUE_LIVE.md.
  *
  * ⚑ SALVAGED 2026-08-06. Session 75 (the first S73 attempt) was STOPPED by
  * Sérgio mid-run; this palette is the only artefact it produced and it is kept
