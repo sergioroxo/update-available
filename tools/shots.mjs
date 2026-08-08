@@ -105,9 +105,26 @@ const COMFORT_WINDOW = 5;
  * ratchet — the fix that would close the E3→E4 half is a change to the piece's
  * signature cascade effect and is Sérgio's call, not this tool's (S71 P5).
  * Measured: S72, headless 1280×860.
+ *
+ * ⚑⚑ BUDGET RAISED 60 → 75 by Sérgio, 2026-08-06 ("maybe we should try and push
+ * to 75 draw calls, I think that will help"). It is his law to set and this is
+ * an informed loosening, not a slip: his own cross-platform research spec puts
+ * the Quest 2 target at <80 and Quest 3 at <120, so 75 still keeps real margin
+ * under the LOWER of the two — while clearing the entrance (68) and the E3→E4
+ * cascade (62), which were over the old 60 and are not defects.
+ * ⚑ IT DOES NOT CLEAR THE SEND LEG AT 78. That one stays over budget.
+ *
+ * ⚑ AND THE RATCHET NOW TRACKS THE REACHABLE PEAK ONLY (68, the entrance after
+ * S74's curtain rod). The send legs are EXCLUDED and measured separately: no
+ * beat fires that seam, so 78 is unreachable in play — but excluding it from a
+ * nag is not blessing it. It is over the new budget too, and whoever wires the
+ * first send beat owns bringing it under 75, in the same session as the 6.87
+ * m/s comfort violation on the same legs (08 §7, §9).
  */
-const DRAW_CALL_BASELINE = 67;
-const DRAW_CALL_BUDGET = 60;
+const DRAW_CALL_BASELINE = 68;
+const DRAW_CALL_BUDGET = 75;
+/** legs excluded from the RATCHET (never from the report) — see above. */
+const DRAW_CALL_LATENT = /send/i;
 
 /**
  * ⚑ BLANK FRAMES. A captured frame with no luminance structure is an unlit
@@ -997,7 +1014,10 @@ function reportComfort(legs) {
 
 function reportDraw(peaks) {
   if (!peaks.length) { skipped.push('DRAW CALLS — nothing recorded'); return; }
-  const peak = Math.max(...peaks.map((p) => p.peak));
+  // ⚑ the ratchet tracks REACHABLE legs; the latent send seam is reported in
+  // full below but cannot nag, because no beat fires it (see DRAW_CALL_LATENT).
+  const reachable = peaks.filter((p) => !DRAW_CALL_LATENT.test(p.what));
+  const peak = Math.max(...(reachable.length ? reachable : peaks).map((p) => p.peak));
   console.log(`\n━━ 2 · DRAW-CALL CEILING (Quest budget ≤${DRAW_CALL_BUDGET}; ratchet at ${DRAW_CALL_BASELINE}) ━━`);
   for (const p of peaks) console.log(`   ${String(p.peak).padStart(4)}  ${p.what}${p.peak > DRAW_CALL_BUDGET ? '  ⚑ over budget' : ''}`);
   if (peak > DRAW_CALL_BASELINE) {

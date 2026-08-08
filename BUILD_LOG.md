@@ -246,3 +246,4 @@
 - 2026-08-06 — Architecture corrected: flat is a review tool, not a fallback; three look-modes; gyro reinstated as S80 with a visibility audit (8 of 9 belongings props sit past 69° from the seat).
 - 2026-08-06 — Mode 3 assessed against Gemini's brief: two verified blockers (pointerdown-not-pointerup; the yaw hemisphere) come before the gyro; S80 written, S81 queued for the visibility audit.
 - 2026-08-06 — Arena brief for Era 4 written (situation not solution: every decided element withheld); mode-3 assessment corrected to pinch-zoom.
+- 2026-08-06 — Quest draw-call budget 60 → 75 (Sérgio); ratchet re-scoped to the reachable peak (68), latent send legs excluded from the nag but still reported at 78.

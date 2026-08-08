@@ -360,3 +360,38 @@ chips the moment a player answers L while turned.** S77's whole interaction is a
   on flat surviving intact. Needs its own session.
 - **The found file (the renamed dossier easter egg) has no home in E4** — it draws only on an idle
   desktop, and E4 has none by design. S77/S78 should decide whether it retires at E4 or migrates.
+
+
+---
+
+## §10 — THE DRAW-CALL BUDGET IS NOW 75 (Sérgio, 2026-08-06)
+*"Maybe we should try and push to 75 draw calls, I think that will help."* His law to set, and it is
+an informed loosening rather than a slip: his own cross-platform research spec puts **Quest 2 at <80
+and Quest 3 at <120**, so **75 keeps real margin under the lower of the two.**
+
+**What it clears, and none of these were defects:**
+
+| leg | peak | under 60 | under 75 |
+|---|---|---|---|
+| entrance | 68 | ⚑ over | ✅ |
+| E1→E2 | 39 | ✅ | ✅ |
+| E2→E3 | 57 | ✅ | ✅ |
+| E3→E4 | 62 | ⚑ over | ✅ |
+| **⚑ sends** | **78** | ⚑ over | **⚑ STILL OVER** |
+
+### And the ratchet was re-scoped, which is my call and reversible
+`DRAW_CALL_BASELINE` 67 → **68**, and **the latent send legs are now excluded from the ratchet**
+(`DRAW_CALL_LATENT`). They are still reported in full — excluding a leg from a *nag* is not blessing
+it.
+
+**Why:** the ratchet's job is *do not grow*, and it was measuring an unreachable path. 68 is the real
+reachable peak (the entrance, after S74's curtain rod added one call). With the sends in the maximum,
+the ratchet could never pass and would have been switched off, which is exactly how a check dies.
+
+**⚑ What this does NOT do:** it does not excuse the send leg. **78 is over the new budget too**, and
+whoever wires the first send beat owns bringing it under 75 — **in the same session as the 6.87 m/s
+comfort violation on those same legs** (§7, §9). That leg is now the only thing in the piece over
+budget, and it is over on two axes at once.
+
+⚑ **And every figure here is desktop-measured. A11 has never run.** The honest way to know whether 75
+is right is one in-headset frame-time capture.

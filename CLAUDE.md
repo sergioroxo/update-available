@@ -101,7 +101,11 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
   life is soft).
 - **Selective fidelity:** tiers `hero | set | fog`; ≤3 hero objects per scene
   on Quest. The system's instruments are the most defined objects.
-- Quest 3 budget: ≤75k tris, ≤60 draw calls, 72 Hz floor, no realtime
+- Quest 3 budget: ≤75k tris, **≤75 draw calls** (⚑ raised from 60 by Sérgio
+  2026-08-06; his cross-platform research puts Quest 2 at <80 and Quest 3 at
+  <120, so 75 keeps margin under the LOWER of the two while clearing the
+  entrance at 68 and the E3→E4 cascade at 62, which were never defects. The
+  latent send leg at 78 is still over), 72 Hz floor, no realtime
   shadows, render-texture uploads on dirty only. No locomotion ever — the
   only bodily ask is the turn.
 
