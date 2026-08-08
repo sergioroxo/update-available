@@ -41,7 +41,24 @@ raise the ratchet, and do not let it stop you shipping.
 
 # PART B — FIVE QUESTIONS, EACH WITH MY READ
 
-## ⚑ Q1 · When the visor goes on, what does the player actually see? *(the big one)*
+## ✅ ANSWERED BY SÉRGIO, 2026-08-06
+- **Q1 — reframed, not answered yes/no.** He rejected the binary: *"this opens a new space where
+  TRANSCENDANCE plays out… a new layer of the digital space… play on the VR systems but also on the
+  promotional of ADS everywhere and AI promotional, in a serious but fun way."* ⚑ **He is right and my
+  read was too small.** Full answer: `REINTERP_E4_THE_SPACE_2026-08-06.md`.
+- **Q2 — ✅ it is a TOUCH, not a movement.** *"The putting on is a 'touching' it, no need to make the
+  movement to put it on."* One press, consistent with the input law. No animation of donning it.
+- **Q3 — open.** *"Don't fully know."* My read stands (the pre-fiction panel) and under the
+  co-creation norm I will build it there and he reviews, rather than leaving a blank.
+- **Q4 — ✅ the game menu.** *"If it is in the menu setting, then it's okay."* `src/desktop/gameMenu.ts`
+  exists and is mounted; the unvoiced-deadname option goes there.
+- **Q5 — ✅ yes, and it is the title.** *"Of course it does… that's the idea here, 'Your Update Has
+  Failed'."* ⚑ E4's OS answer: **there is no desktop.** See `REINTERP_E4_THE_SPACE_2026-08-06.md` §6.
+
+---
+
+## ~~Q1~~ · superseded — kept for the reasoning trail
+### When the visor goes on, what does the player actually see? *(the big one)*
 The device doc settles that the visor is the screen. It does **not** settle what happens to the frame.
 
 - **(a)** You stay seated in Room 3 and watch the visor plane from outside it.
