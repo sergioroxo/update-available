@@ -29,6 +29,20 @@ class GameMenuBus {
    */
   leaveEngine: (() => void) | null = null;
 
+  /**
+   * ⚑ S80 — the same idiom as `leaveEngine` directly above, for look-mode 3's
+   * RECENTRE: set by the 3D engine once the camera exists, null everywhere
+   * else (flat mode, the pre-fiction orienting card), and the menu simply does
+   * not draw the row when it is null. It puts "forward" back where the room's
+   * front is — necessary because iOS gives no reliable absolute heading, so
+   * the gyro's yaw is relative to a zero and it drifts.
+   *
+   * Still frame voice, and still invisible to the record: recentring changes
+   * where the player is looking and nothing else. (The engine keeps its own
+   * view state on the ledger's `view` field, which `src/witness/` never reads.)
+   */
+  recentreView: (() => void) | null = null;
+
   get isOpen(): boolean {
     return this._open;
   }

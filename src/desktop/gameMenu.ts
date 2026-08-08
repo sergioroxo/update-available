@@ -132,6 +132,17 @@ export function mountGameMenu(): GameMenu {
     if (view === 'main') {
       heading(copy.title);
       row(copy.resume, () => gameMenuBus.close(), true);
+      // ⚑ S80 — RECENTRE, and it belongs here rather than in the fiction for
+      // the same reason the caption chrome does: it is the frame telling the
+      // player where the room's front is. Only drawn when an engine with a
+      // camera has offered one (flat mode and the pre-fiction card have none).
+      // It is load-bearing, not plumbing: iOS gives no reliable absolute
+      // heading, so device-look yaw is relative to a zero and drifts — and
+      // this piece's one bodily ask is the turn, which makes *where forward is*
+      // part of the work.
+      if (gameMenuBus.recentreView) {
+        row(copy.recentre, () => { gameMenuBus.recentreView?.(); gameMenuBus.close(); });
+      }
       row(copy.restart, () => { view = 'restartConfirm'; render(); });
       row(copy.controls, () => { view = 'controls'; render(); });
       row(copy.credits, () => { view = 'credits'; render(); });

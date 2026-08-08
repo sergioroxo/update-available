@@ -32,6 +32,10 @@ import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
+/** ⚑ S80: the frame's own words for look-mode 3's button. It lives in the game
+ *  menu's string file because the recentre row beside it does too — one file
+ *  for the frame voice, none of it on the monitor texture. */
+import menuStrings from '../../data/strings/gameMenu.json';
 
 const FLIP_SECONDS = 0.9;
 /** the CRT's visible screen (meters, 4:3) — bezels in era1.json sit flush */
@@ -837,6 +841,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let moveHint: HTMLDivElement | null = null;
   let tapeCaption: HTMLDivElement | null = null;
   let tapeMuteBtn: HTMLButtonElement | null = null;
+  /** ⚑ S80 — look-mode 3's entry: see THE GYRO block further down. Created
+   *  here with the rest of the frame chrome so the styling stays in one place
+   *  (and so the non-reinterp baseline never even builds the element). */
+  let motionBtn: HTMLButtonElement | null = null;
   function dismissMoveHint(): void {
     if (moveHintDismissed || !moveHint) return;
     moveHintDismissed = true;
@@ -906,6 +914,22 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       tapeAudio.setMuted(!tapeAudio.isMuted);
       tapeMuteBtn.textContent = tapeAudio.isMuted ? 'unmute' : 'mute';
     });
+
+    // ⚑ S80 — THE MOTION BUTTON. Frame chrome, exactly like the three above:
+    // plain, undecorated, never on the monitor texture, never in the fiction's
+    // voice. It has to be a DELIBERATE OBJECT rather than a technicality
+    // because `DeviceOrientationEvent.requestPermission()` cannot be called on
+    // page load at all — iOS requires a real user gesture, so the gesture has
+    // to be something a person chooses to make. Reuses HINT_CHROME so no new
+    // colour enters the build (check-spec C4's palette ratchet).
+    motionBtn = document.createElement('button');
+    Object.assign(motionBtn.style, {
+      ...HINT_CHROME, left: '50%', bottom: '3%', border: '1px solid #444',
+      cursor: 'pointer', display: 'none'
+    } as CSSStyleDeclaration);
+    motionBtn.style.opacity = '1';
+    motionBtn.style.pointerEvents = 'auto';
+    document.body.appendChild(motionBtn);
   }
 
   // S1.0 hint: shown while the machine waits dark
@@ -1427,6 +1451,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  and the whole of it under ?descent=0. */
   function seatCut(yaw: number): void {
     seatYaw = yaw;
+    seatNodeId = null; // a base room seat: seatPose(yaw) IS its authored pose
     const sp = seatPose(yaw);
     camPos.set(sp.x, sp.y, sp.z);
     camPitch = sp.pitch;
@@ -1449,6 +1474,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // R homes. Sealed E1 keeps the shipped single-seat behavior. Browser only —
   // in VR the head is the camera and the rooms simply surround you. ──
   let seatYaw = 0;                        // current seat (0 = R1 | 90 = R2 west | 270 = R3 east)
+  /** ⚑ S80: the movement node the player is actually sitting in, or null for a
+   *  base room seat. Device seats author their own pose (nodes.json), which
+   *  `seatPose(seatYaw)` cannot reproduce — Recentre needs the real one. */
+  let seatNodeId: string | null = null;
 
   const angDist = (a: number, b: number): number =>
     Math.abs((((a - b) % 360) + 540) % 360 - 180);
@@ -1487,6 +1516,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const node = movementNodes?.find(nodeId);
     if (!node) return;
     seatYaw = node.seatYaw;
+    // ⚑ S80: remember WHICH seat, not just its yaw. A device seat carries its
+    // own authored pose, so `seatPose(seatYaw)` is the wrong answer there —
+    // measured this session when Recentre at the tablet seat swung the view to
+    // Room 1's facing. Same root cause S70/S71 kept finding: a global yaw
+    // standing in for a place.
+    seatNodeId = nodeId;
     // Session 37 (E3-i): an intra-room device seat (the tablet/phone) carries
     // its own exact camera pose — seatPose(seatYaw) is only a fallback for
     // the three base room seats, which have no `pose` of their own.
@@ -1542,12 +1577,300 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       () => (cluster && movementNodes ? movementNodes.available(cluster.era, seatYaw).map(n => n.id) : []);
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // ⚑ S80 — LOOK-MODE 3: THE GYRO. The third of the three look-modes
+  // (CLAUDE.md, corrected by Sérgio 2026-08-06), and for every Apple device
+  // except Vision Pro it IS the experience: Safari implements WebXR only on
+  // visionOS, so `navigator.xr` will never fire on iPhone or iPad and the
+  // browser 3D room is what those audiences get. You turn the device and the
+  // room turns, as in a 360 video.
+  //
+  // ⚑ SAME CAMERA, SAME SEAT, SAME SCENE. This adds no camera and no mode of
+  // its own. The RIG keeps the authored pose — the seat, the scripted moves,
+  // the drag — and the gyro rotates the CHILD camera entity, which is exactly
+  // where PlayCanvas puts a tracked head in XR. So the composition falls out
+  // for free: drag and gyro COMPOSE rather than fight (the research spec's
+  // `q_final = q_touch × q_gyro`, with the rig standing in for `q_touch`), and
+  // every scripted relocation still owns the camera while it flies.
+  //
+  // ⚑ IT IS A LOOK, NEVER AN INPUT. Nothing here selects, arms, hovers or
+  // triggers anything, and there is no dwell, no gaze target and no timer
+  // (R28: no gaze-triggered anything, ever). Turning the device changes what
+  // you can see and nothing else; a tap is still the only way to act.
+  //
+  // ⚑ AND IT MUST NEVER BLOCK DRAG-TO-LOOK. Permission denied, sensor absent,
+  // insecure origin, desktop browser — in every one of those cases the button
+  // says so plainly and the drag path continues untouched.
+  //
+  // The maths is the research spec's, verbatim except where PlayCanvas differs
+  // (noted at the line): q_gyro = q₀ × q₁ × q₂, with q₂ from the SCREEN
+  // ORIENTATION, recomputed on `orientationchange` — which is why the piece
+  // does not have to demand landscape. The horizon stays level relative to
+  // gravity with no axis flipping, in portrait or landscape.
+  // ═══════════════════════════════════════════════════════════════════════
+  type MotionState = 'unsupported' | 'idle' | 'asking' | 'live' | 'denied' | 'silent';
+  let motionState: MotionState = 'unsupported';
+  const motionAngles = { alpha: 0, beta: 0, gamma: 0 };
+  let motionSeen = false;
+  let motionSilentTimer = 0;
+  /** the device heading (deg) that currently means "the way the seat faces" */
+  let motionYawZero = 0;
+  /** true for one frame after a recentre is asked for, before a reading lands */
+  let motionWantZero = true;
+
+  // pre-allocated, per the spec's own note: nothing here allocates per frame
+  const qDevice = new pc.Quat();
+  /** q₁ — the fixed −90° about X that aims the camera out through the back of
+   *  the device instead of over its top edge */
+  const qAxis = new pc.Quat(-Math.SQRT1_2, 0, 0, Math.SQRT1_2);
+  const qScreen = new pc.Quat();
+  const qAbsolute = new pc.Quat();
+  const qZeroFix = new pc.Quat();
+  const qHead = new pc.Quat();
+  const vHeading = new pc.Vec3();
+  const vRoll = new pc.Vec3();
+  const V_FWD = new pc.Vec3(0, 0, -1);
+  const V_UP = new pc.Vec3(0, 1, 0);
+
+  /** the screen-orientation angle in degrees, both spellings, both supported */
+  function screenAngle(): number {
+    const so = window.screen?.orientation?.angle;
+    if (typeof so === 'number') return so;
+    const legacy = (window as { orientation?: number }).orientation;
+    return typeof legacy === 'number' ? legacy : 0;
+  }
+
+  /** the heading of a rotation about world-up, in degrees (0 = along −Z) */
+  function yawOf(q: pc.Quat): number {
+    q.transformVector(V_FWD, vHeading);
+    if (Math.abs(vHeading.y) > 0.99) {
+      // pointed at the ceiling or the floor: forward carries no heading, so
+      // take it from the device's own up vector instead (the standard
+      // magic-window degeneracy, and it is reachable — people look up)
+      q.transformVector(V_UP, vRoll);
+      const s = vHeading.y > 0 ? -1 : 1;
+      vHeading.set(s * vRoll.x, 0, s * vRoll.z);
+    }
+    return Math.atan2(-vHeading.x, -vHeading.z) * pc.math.RAD_TO_DEG;
+  }
+
+  /** q_gyro = q₀ × q₁ × q₂, into `qAbsolute` */
+  function composeMotion(): void {
+    const x = motionAngles.beta * pc.math.DEG_TO_RAD;
+    const y = motionAngles.alpha * pc.math.DEG_TO_RAD;
+    const z = -motionAngles.gamma * pc.math.DEG_TO_RAD;
+    const c1 = Math.cos(x / 2), c2 = Math.cos(y / 2), c3 = Math.cos(z / 2);
+    const s1 = Math.sin(x / 2), s2 = Math.sin(y / 2), s3 = Math.sin(z / 2);
+    qDevice.set(
+      s1 * c2 * c3 + c1 * s2 * s3,
+      c1 * s2 * c3 - s1 * c2 * s3,
+      c1 * c2 * s3 - s1 * s2 * c3,
+      c1 * c2 * c3 + s1 * s2 * s3
+    );
+    // ⚑ DEGREES, not the radians the research spec passes here: PlayCanvas's
+    // Quat.setFromAxisAngle takes an angle in degrees, and pc.Vec3.FORWARD is
+    // (0,0,−1), which absorbs the sign flip the three.js formulation carries.
+    qScreen.setFromAxisAngle(pc.Vec3.FORWARD, screenAngle());
+    qAbsolute.copy(qDevice).mul(qAxis).mul(qScreen);
+  }
+
+  /** ⚑ THE PER-FRAME APPLICATION. Called after the rig is posed, so the rig is
+   *  the seat and this is the head. 1:1 with the device — deliberately NO
+   *  smoothing: a lag between turning your head and the picture turning is its
+   *  own nausea, and worse than the jitter it would hide. */
+  function applyMotionLook(): void {
+    if (motionState !== 'live' || xr?.active) return;
+    composeMotion();
+    if (motionWantZero) {
+      motionWantZero = false;
+      motionYawZero = yawOf(qAbsolute);
+      ledger.view.yawZero = motionYawZero;
+    }
+    // re-zero the HEADING only. Pitch and roll are gravity-referenced and
+    // absolute on every platform, so they are left exactly as measured —
+    // cancelling them would tilt the horizon by however the phone happened to
+    // be held at the moment the player pressed recentre.
+    qZeroFix.setFromEulerAngles(0, -motionYawZero, 0);
+    qHead.copy(qZeroFix).mul(qAbsolute);
+    camera.setLocalRotation(qHead);
+  }
+
+  function onDeviceOrientation(e: DeviceOrientationEvent): void {
+    if (e.alpha === null && e.beta === null && e.gamma === null) return;
+    if (e.alpha !== null) motionAngles.alpha = e.alpha;
+    if (e.beta !== null) motionAngles.beta = e.beta;
+    if (e.gamma !== null) motionAngles.gamma = e.gamma;
+    if (!motionSeen) {
+      motionSeen = true;
+      motionState = 'live';
+      motionWantZero = true; // arriving never swings the room: here is forward
+      paintMotionBtn();
+    }
+  }
+
+  function stopMotion(remember: 'off' | 'denied' | 'unavailable'): void {
+    window.removeEventListener('deviceorientation', onDeviceOrientation, true);
+    window.clearTimeout(motionSilentTimer);
+    motionSeen = false;
+    motionState = remember === 'off' ? 'idle' : remember === 'denied' ? 'denied' : 'silent';
+    ledger.view.motion = remember;
+    if (!xr?.active) camera.setLocalEulerAngles(0, 0, 0); // hand the view back to the rig
+    paintMotionBtn();
+  }
+
+  function attachMotion(): void {
+    window.addEventListener('deviceorientation', onDeviceOrientation, true);
+    // ⚑ the silent failure the spec warns about: on an insecure origin, and on
+    // hardware with no IMU, the listener attaches and simply never fires — no
+    // error, no console warning. So it is given a moment to prove itself and
+    // then told the truth about itself.
+    motionSilentTimer = window.setTimeout(() => {
+      if (!motionSeen) stopMotion('unavailable');
+    }, 1500);
+  }
+
+  /** ⚑ THE ENTRY FLOWS ARE DIFFERENT ON THE TWO PLATFORMS, and neither may
+   *  block the other: iOS 13+ must ask (a native modal, inside this very
+   *  gesture stack, over HTTPS); Android grants orientation with no prompt at
+   *  all. One button, one press, two paths behind it. */
+  function requestMotion(): void {
+    type Requestable = { requestPermission?: () => Promise<PermissionState | string> };
+    const req = (window.DeviceOrientationEvent as unknown as Requestable | undefined)?.requestPermission;
+    if (typeof req !== 'function') { // Android, and every non-iOS browser
+      motionState = 'asking';
+      paintMotionBtn();
+      attachMotion();
+      return;
+    }
+    motionState = 'asking';
+    paintMotionBtn();
+    req.call(window.DeviceOrientationEvent)
+      .then((res: string) => {
+        if (res === 'granted') {
+          ledger.view.motion = 'granted';
+          attachMotion();
+        } else {
+          stopMotion('denied');
+        }
+      })
+      .catch(() => stopMotion('denied'));
+  }
+
+  function paintMotionBtn(): void {
+    if (!motionBtn) return;
+    const copy = menuStrings;
+    const label: Record<MotionState, string> = {
+      unsupported: '',
+      idle: copy.motionEnable,
+      asking: copy.motionAsking,
+      live: copy.motionDisable,
+      denied: copy.motionDenied,
+      silent: copy.motionUnavailable
+    };
+    motionBtn.textContent = label[motionState];
+    motionBtn.title = motionState === 'idle' ? copy.motionEnableHint : label[motionState];
+    motionBtn.style.display = motionState === 'unsupported' ? 'none' : 'block';
+    motionBtn.style.transform = 'translateX(-50%)';
+  }
+
+  /**
+   * ⚑ RECENTRE — reachable from the game menu, and load-bearing rather than
+   * plumbing. iOS gives no reliable absolute heading, so the yaw above is
+   * RELATIVE to a zero and it drifts; and this piece's one bodily ask is the
+   * turn, which makes *where forward is* part of the work rather than a
+   * setting. It is frame voice: it sits beside Restart, not in the fiction.
+   *
+   * It also puts the frame back to its authored width, because the pinch zoom
+   * is the other way the view can end up somewhere the player did not mean.
+   */
+  function recentreView(): void {
+    ledger.view.recentres++;
+    if (camera.camera) camera.camera.fov = FOV_HOME;
+    if (motionState === 'live') {
+      motionWantZero = true; // the next reading decides where forward is
+      return;
+    }
+    // drag-to-look has no sensor to re-zero: put the facing back on the seat
+    // the player is actually in — a device seat's own authored pose if that is
+    // where they are, not the room seat's (see `seatNodeId`).
+    const node = seatNodeId ? movementNodes?.find(seatNodeId) : null;
+    const sp = node?.pose ?? seatPose(seatYaw);
+    camYaw = sp.yaw;
+    camPitch = sp.pitch;
+    tween = null;
+  }
+
+  if (options.reinterp === true && motionBtn) {
+    // ⚑ WHO SEES THE BUTTON. `DeviceOrientationEvent` exists on desktop Chrome
+    // too and never fires there, so its mere presence proves nothing: the
+    // affordance is offered where a sensor is PLAUSIBLE — iOS (which announces
+    // itself by needing permission) or a coarse/touch pointer — plus `?motion=1`,
+    // a review switch so this path can be exercised on a desktop browser.
+    const forced = new URLSearchParams(window.location.search).get('motion') === '1';
+    const hasEvent = typeof window.DeviceOrientationEvent !== 'undefined';
+    const needsPermission = typeof (window.DeviceOrientationEvent as unknown as
+      { requestPermission?: unknown } | undefined)?.requestPermission === 'function';
+    const touchy = navigator.maxTouchPoints > 0 ||
+      window.matchMedia?.('(pointer: coarse)')?.matches === true;
+    if (hasEvent && (forced || needsPermission || touchy)) motionState = 'idle';
+    paintMotionBtn();
+    motionBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (motionState === 'live') stopMotion('off');
+      else if (motionState !== 'asking') requestMotion();
+    });
+    // portrait ⇄ landscape: q₂ is recomputed from this every frame, so the
+    // only thing the change needs is a re-zero, or the room appears to have
+    // swung 90° while the player merely turned the phone in their hand.
+    window.addEventListener('orientationchange', () => { motionWantZero = true; });
+    window.screen?.orientation?.addEventListener?.('change', () => { motionWantZero = true; });
+    // the menu's Recentre row (see src/desktop/gameMenu.ts)
+    gameMenuBus.recentreView = recentreView;
+    (window as { __motion?: () => unknown }).__motion = () => ({
+      state: motionState, yawZero: motionYawZero, angles: { ...motionAngles },
+      screenAngle: screenAngle(), fov: camera.camera?.fov
+    });
+    (window as { __recentre?: () => void }).__recentre = recentreView;
+    (window as { __motionSim?: (on: boolean) => boolean }).__motionSim = motionSimulate;
+  }
+
+  /**
+   * ⚑ S80 — THE REVIEW ROUTE FOR A MODE NOBODY CAN PRESS AT A DESK (?debug=1
+   * and the panel's own button). A desktop browser cannot make the gesture iOS
+   * demands and has no IMU to answer it, so look-mode 3 would otherwise be
+   * unreviewable anywhere but a phone — which is exactly how a mode ships
+   * broken. This attaches the REAL listener and feeds it REAL
+   * `deviceorientation` events with synthetic angles, so everything downstream
+   * (the quaternion chain, the screen-orientation term, the zeroing, the
+   * picking through a rotated camera) is the shipping path and only the sensor
+   * is fake. ⚑ It is NOT a substitute for a device: it cannot show sensor
+   * noise, permission behaviour, or how the turn feels in the hand.
+   */
+  let motionSimTimer = 0;
+  function motionSimulate(on: boolean): boolean {
+    window.clearInterval(motionSimTimer);
+    motionSimTimer = 0;
+    if (!on) { stopMotion('off'); return false; }
+    if (typeof window.DeviceOrientationEvent !== 'function') return false;
+    attachMotion();
+    let a = 0;
+    motionSimTimer = window.setInterval(() => {
+      a = (a + 2) % 360; // a slow, steady turn on the spot — ~14°/s at 50 ms
+      window.dispatchEvent(new DeviceOrientationEvent('deviceorientation',
+        { alpha: a, beta: 90, gamma: 0 })); // beta 90 = held upright, level
+    }, 50);
+    return true;
+  }
+
   const isBackYaw = (): boolean => {
     // In XR the authored rig yaw is only half the view: the child's tracked
     // head turn must be what crosses the witness hemisphere.
     // S70: a device in the hands is not a direction — see `heldDevice`.
+    // ⚑ S80: and gyro-look is the same situation as XR — the rig's yaw is the
+    // seat, not the facing — so it is answered the same way, by the camera's
+    // own world forward.
     if (heldDevice) return false;
-    if (xr?.active) return camera.forward.z > 0;
+    if (xr?.active || motionState === 'live') return camera.forward.z > 0;
     const n = ((camYaw % 360) + 360) % 360;
     return n > 90 && n < 270;
   };
@@ -1590,7 +1913,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   /** crossing to the witness hemisphere files you — however you turned */
   function onCrossed(back2: boolean): void {
-    canvasEl.style.cursor = back2 ? 'not-allowed' : 'default';
+    // ⚑ S80: the cursor no longer says `not-allowed` when you turn. It said so
+    // because the press really WAS discarded on this side (the yaw hemisphere);
+    // now that picking is what the ray hits, the room behind you answers
+    // normally and a "no" cursor would be a lie about the build.
+    canvasEl.style.cursor = 'default';
     if (back2) {
       if (!os.inDesktop) return; // nothing on record before the desktop
       flipCount++;
@@ -1664,15 +1991,89 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (cluster && cluster.state === 'sealed') cluster.reveal();
   };
 
-  canvasEl.addEventListener('pointerdown', (e) => {
-    // S48: the descent is SKIPPABLE, always and by anything. The first press
-    // lands you in the seat and does nothing else — it is a way out of the
-    // move, not a click on the room underneath it.
-    if (descentActive) { endDescent(); return; }
-    // S61: and so is the relocation, for the same reason and by the same
-    // gesture — it is the longest scripted move in the piece.
-    if (relocLeg) { endRelocation(); return; }
-    if (!facingBack) {
+  /**
+   * ⚑ S80 — TAP vs DRAG, and it is the whole reason this session exists.
+   *
+   * WHAT IT WAS: every interaction in the piece resolved on `pointerdown` —
+   * the power button, the kit, the belongings, the tapes, the monitor plane,
+   * Room 2's device screens, the floor markers — while `pointermove` dragged
+   * the camera. There was no discrimination of any kind. On a mouse that
+   * survives (you click precisely, and you start drags on empty space by
+   * habit). ⚑ On a touch screen it is a defect on first contact: EVERY attempt
+   * to look around that begins on a prop also activates that prop, and
+   * look-mode 3's whole navigation is touch, on a screen where a thumb covers
+   * several props at once.
+   *
+   * WHAT IT IS NOW, and it is the ordinary fix (Sérgio's own research spec
+   * arrives at the same one — `onTouchEnd`, "only if single tap"): the press
+   * ALWAYS begins a look, and the release resolves an interaction only if the
+   * press neither travelled nor lingered. A press that travels is a look. A
+   * press that stays is a tap.
+   *
+   * The two thresholds, and why these numbers:
+   *  · TAP_SLOP_PX 10 — measured as PATH LENGTH, not displacement, so a wiggle
+   *    that returns to where it started still reads as a look. 10 CSS px is
+   *    ~1.6° of yaw at the drag rate below: far under the smallest thing in the
+   *    room, far over the jitter of a finger lifting off glass.
+   *  · TAP_MS 1200 — generous on purpose. A long press is not a gesture
+   *    anywhere in this piece, so nothing competes for it; the limit exists
+   *    only so a thumb RESTING on the glass does not fire something when it
+   *    eventually lifts. Erring long costs nothing; erring short would swallow
+   *    a deliberate slow press, which is worse than the fault being fixed.
+   *
+   * ⚑ AND THE SECOND FIX IS THAT THIS BLOCK NO LONGER ASKS WHICH WAY YOU FACE.
+   * It used to sit entirely inside `if (!facingBack)` — a yaw-based witness
+   * hemisphere (`camYaw` in 90…270), so turning past a threshold discarded
+   * every press in the room. That was a reasonable shortcut in a one-room
+   * build; in a three-room building it is wrong, and on a device you PHYSICALLY
+   * ROTATE it is systemic — a whole hemisphere would simply stop responding.
+   * S70 patched only the held-device case; S76 warned it would silently eat
+   * S77's chips. The replacement is what the ray actually hits, which every
+   * test below already computes: `toDesktop()` clamps to t ∈ [0,1] along
+   * near→far and to u,v ∈ [0,1] on the plane, and `rayHitsPoint()` is a
+   * distance test against a forward segment — so a surface behind you cannot
+   * be hit, by geometry, without anything having to know your yaw.
+   * `facingBack` itself is untouched and still means what it always meant:
+   * the crossing that files you (onCrossed / markWitnessSeen / the cold creep).
+   */
+  const TAP_SLOP_PX = 10;
+  const TAP_MS = 1200;
+  /** the live press, or null. `moved` is accumulated path length in CSS px. */
+  let press: { id: number; t: number; moved: number } | null = null;
+  /** every pointer currently down, for the two-finger pinch below */
+  const pointers = new Map<number, { x: number; y: number }>();
+
+  /**
+   * ⚑ S80 — PINCH-TO-ZOOM ON THE CAMERA FOV (mode-3 scope item, and the
+   * CORRECTED answer to "the canvas is small on a phone").
+   *
+   * Sérgio, 2026-08-06: *"I wouldn't make touching the screen turn it into flat
+   * inside the mobile. We can have zooms, that is different, but I don't want
+   * the 'fill up'."* A canvas that takes the viewport IS flat-by-tapping: the
+   * room disappears and the spatial frame goes with it, and the spatial frame
+   * is the piece. So this narrows the FRAME instead — you see LESS of the room,
+   * LARGER, and you never leave it. It is the native 360-video gesture, it is
+   * the camera rather than the fiction, and it adds no UI surface.
+   *
+   * `FOV = clamp(FOV − Δd · sensitivity, 30°, 80°)`, straight from the research
+   * spec. The zoom PERSISTS after the fingers lift (a panorama does not spring
+   * back); the game menu's Recentre puts it back to the authored 42°.
+   */
+  const FOV_MIN = 30;
+  const FOV_MAX = 80;
+  const FOV_HOME = 42; // createAppShell's authored value, and CAMERA_POSES.fov
+  const PINCH_SENSITIVITY = 0.10; // °/px, by feel — never tested on hardware
+  let pinch: number | null = null; // last two-finger distance, or null
+
+  function pointerSpread(): number {
+    const [a, b] = [...pointers.values()];
+    if (!a || !b) return 0;
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  /** the interaction resolution — everything that used to run on pointerdown */
+  function resolveTap(e: PointerEvent): void {
+    {
       if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
         return;
@@ -1771,23 +2172,72 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         }
       }
     }
+  }
+
+  // ⚑ the browser must not claim the gestures the room needs: without this a
+  // touch-drag scrolls/rubber-bands the page and a pinch zooms the DOCUMENT,
+  // and neither pointer stream ever reaches the code above.
+  canvasEl.style.touchAction = 'none';
+
+  canvasEl.addEventListener('pointerdown', (e) => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    // a second finger is a PINCH: not a look, not a tap. Both are cancelled
+    // outright rather than resumed, so lifting one finger of a zoom can never
+    // fire whatever happened to be under it.
+    if (pointers.size >= 2) {
+      press = null;
+      drag = null;
+      pinch = pointerSpread();
+      return;
+    }
+    // S48: the descent is SKIPPABLE, always and by anything. The first press
+    // lands you in the seat and does nothing else — it is a way out of the
+    // move, not a click on the room underneath it. (It stays on PRESS, not
+    // release: a scripted move must yield to the first touch, not to the lift.)
+    if (descentActive) { endDescent(); return; }
+    // S61: and so is the relocation, for the same reason and by the same
+    // gesture — it is the longest scripted move in the piece.
+    if (relocLeg) { endRelocation(); return; }
+    press = { id: e.pointerId, t: performance.now(), moved: 0 };
     drag = { x: e.clientX, y: e.clientY };
     tween = null; // grabbing the view cancels the assist
     nudgeCamera(); // …and a non-conducted O2/reset move
     try { canvasEl.setPointerCapture(e.pointerId); } catch { /* synthetic pointers */ }
   });
   canvasEl.addEventListener('pointermove', (e) => {
+    if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch !== null) {
+      if (pointers.size < 2 || !camera.camera) return;
+      const d = pointerSpread();
+      camera.camera.fov = Math.max(FOV_MIN, Math.min(FOV_MAX,
+        camera.camera.fov - (d - pinch) * PINCH_SENSITIVITY));
+      pinch = d;
+      return;
+    }
     if (drag && (e.buttons & 1)) {
-      camYaw -= (e.clientX - drag.x) * 0.16;
-      camPitch = Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, camPitch - (e.clientY - drag.y) * 0.12));
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      if (press) press.moved += Math.hypot(dx, dy); // path length, not displacement
+      camYaw -= dx * 0.16;
+      camPitch = Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, camPitch - dy * 0.12));
       drag = { x: e.clientX, y: e.clientY };
       return;
     }
-    if (facingBack) return; // the witness side does not respond to you
+    // hover feedback follows the ray like everything else now — off the
+    // monitor plane `toDesktop()` simply returns null (S80: no yaw gate).
     const p = toDesktop(e);
     if (p) os.handleMove(p.x, p.y);
   });
-  canvasEl.addEventListener('pointerup', () => {
+  canvasEl.addEventListener('pointerup', (e) => {
+    pointers.delete(e.pointerId);
+    if (pinch !== null) {
+      if (pointers.size < 2) pinch = null;
+      drag = null;
+      press = null;
+      return;
+    }
+    const p = press;
+    press = null;
     drag = null;
     // R28-0c (item 13, Sérgio: "the camera still jumps rooms from look/drag
     // input"): the old dolly-follow ("releasing a head-turn nearer another
@@ -1796,6 +2246,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // (markers) or a scripted beat (sends/updates/the TURN); drag is
     // look-in-place only, full stop. The shipped (non-reinterp) baseline
     // never had this behavior to begin with, so nothing changes there.
+    if (!p || p.id !== e.pointerId) return;
+    if (p.moved > TAP_SLOP_PX) return;                 // it travelled: a look
+    if (performance.now() - p.t > TAP_MS) return;      // it lingered: not a tap
+    resolveTap(e);
+  });
+  canvasEl.addEventListener('pointercancel', (e) => {
+    pointers.delete(e.pointerId);
+    press = null;
+    drag = null;
+    if (pointers.size < 2) pinch = null;
   });
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -1913,6 +2373,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
     cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+    // ⚑ S80: …and then the head, if the player is turning a device. The rig is
+    // the seat; this is the look. Nothing above it changes, in any era.
+    applyMotionLook();
     publishNow(); // ?debug=1 live "you are here" readout
 
     // ── cluster / ceiling / Close + the O7 choreography (reinterp only) ──
@@ -2332,6 +2795,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onClose: enterClose,
       onFacet: (f) => niche?.setFacet(f),
       onFlip: doFlip,
+      // ⚑ S80 (check-spec C6's rule, applied by hand for the same reason S67
+      // did): look-mode 3 gets buttons, or it is a mode only a phone can see.
+      onMotionSim: motionSimulate,
+      onRecentre: recentreView,
+      onFov: (deg) => { if (camera.camera) camera.camera.fov = deg; },
       sends: sendRt?.ids,
       onSend: (id, outcome) => sendRt?.fire(id, outcome)
     });

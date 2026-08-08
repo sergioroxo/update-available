@@ -24,7 +24,10 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
    works and is logged.
 3. **Input (revises "click/tap only"):** click/tap + the movement press
    (above) + Esc/pause opening the game menu. Still no free-text keyboard, no
-   timers, no chords.
+   timers, no chords. ⚑ **S80: a tap is now resolved on RELEASE, behind a
+   10 px / 1.2 s threshold — a press that travels is a look, a press that stays
+   is a tap.** The two-finger pinch is a camera control, not an input, and the
+   gyro is a LOOK: neither can ever select anything.
 4. **The frame (unchanged, clarified):** the non-diegetic game menu
    (Esc/pause: resume, restart, controls help, credits/attributions, leave)
    is frame-voice — functional and undecorated. The frame still never plays.
@@ -38,8 +41,14 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
   1. **Immersive WebXR** (Quest 3; Vision Pro) — the head is the camera.
   2. **Browser, drag-to-look** (desktop/laptop) — framed camera, same 3D room.
   3. **⚑ Browser, GYRO-to-look** (phone, tablet) — same room; you turn the
-     device, as in a 360 video. **NOT BUILT. It is a requirement, not a nicety**
-     — see below.
+     device, as in a 360 video. **BUILT S80** (2026-08-09): same camera, same
+     seat, same scene — the rig holds the authored pose and the gyro rotates
+     the child camera, exactly where XR puts a tracked head, so drag and gyro
+     COMPOSE. Entry is a deliberate button (iOS cannot be asked for orientation
+     without a real gesture); **Recentre lives in the game menu** because iOS
+     gives no absolute heading and relative yaw drifts. **Two-finger pinch =
+     camera FOV, 30°–80°** — you narrow the frame, the room never leaves.
+     ⚑ Verified by simulation in headless Chrome only; **never run on a phone.**
   The flip = camera/body turns ~180°, in all three.
 - **⚑ `?flat=1` IS NOT A FALLBACK.** It was a testing-phase device and the old
   wording here ("universal fallback") was a misreading that limited development

@@ -43,6 +43,19 @@ interface DebugOpts {
   /** the send seam (master script §4) — review buttons until beats fire it */
   sends?: { id: string; label: string }[];
   onSend?: (id: string, outcome: 'offered' | 'visited' | 'declined') => void;
+  /**
+   * ⚑ S80 — LOOK-MODE 3 (the gyro), reviewable from a desk. A desktop browser
+   * can neither make the gesture iOS demands nor answer it with a sensor, so
+   * without these three the mode is only inspectable on a phone — which is how
+   * a look-mode ships broken. `onMotionSim` attaches the REAL listener and
+   * feeds it synthetic `deviceorientation` events (see app.ts); `onRecentre`
+   * is the same function the game menu's row calls; `onFov` is the pinch
+   * zoom's endpoint, so the 30°-legibility question can be looked at rather
+   * than argued about.
+   */
+  onMotionSim?: (on: boolean) => boolean;
+  onRecentre?: () => void;
+  onFov?: (deg: number) => void;
 }
 
 /**
@@ -472,6 +485,30 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     mkBtn(navigate, 'Flip ⟲ (turn to record)', opts.onFlip);
   }
 
+  // ── ⚑ S80 · LOOK — the three look-modes' shared controls, and the only way
+  // to exercise mode 3 without a phone in your hand. ──
+  if (opts.onMotionSim || opts.onRecentre || opts.onFov) {
+    const look = section('LOOK (mode 3 · gyro)', 'device turn · recentre · zoom');
+    const lnote = document.createElement('div');
+    lnote.style.cssText = 'color:#7f8aa3;font-size:9px;line-height:1.4;margin:0 0 3px';
+    lnote.textContent = 'the simulation drives the REAL listener with fake angles. It cannot tell you how the turn feels — only a device can.';
+    look.appendChild(lnote);
+    if (opts.onMotionSim) {
+      let simOn = false;
+      const b = mkBtn(look, '▶ simulate a device turn', () => {
+        simOn = opts.onMotionSim?.(!simOn) ?? false;
+        b.textContent = simOn ? '■ stop the device turn' : '▶ simulate a device turn';
+      });
+    }
+    if (opts.onRecentre) mkBtn(look, 'recentre the view (menu row)', opts.onRecentre);
+    if (opts.onFov) {
+      for (const deg of [30, 42, 80]) {
+        mkBtn(look, `zoom · FOV ${deg}°${deg === 42 ? ' (authored)' : deg === 30 ? ' (pinched all the way in)' : ' (all the way out)'}`,
+          () => opts.onFov?.(deg));
+      }
+    }
+  }
+
   // ── SENDS (master script §4) — fire the seam the beats will call; every
   // outcome files to the record (flip to see the cross-reference lines) ──
   if (opts.onSend && opts.sends?.length) {
@@ -549,7 +586,12 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   ctrls.style.cssText = 'color:#9aa3b8;font-size:10px;line-height:1.5';
   ctrls.innerHTML =
     'drag / ← → = look around (never moves rooms)<br>R = home room · F = flip to record<br>' +
-    'click a floor marker = blink-jump there (R28-1, markers E3+)<br>` = show/hide this panel';
+    'click a floor marker = blink-jump there (R28-1, markers E3+)<br>' +
+    // ⚑ S80: a press only acts if it neither travelled (>10 px) nor lingered
+    // (>1.2 s) — a press that travels is a look. And the two-finger pinch is
+    // the camera's FOV, 30°–80°: the room never leaves the frame.
+    'a press that DRAGS is a look, not a click · pinch = zoom (FOV 30–80°)<br>' +
+    'phone/tablet: turn the device to look (button at the bottom)<br>` = show/hide this panel';
   controls.appendChild(ctrls);
 
   document.body.appendChild(panel);

@@ -395,3 +395,40 @@ budget, and it is over on two axes at once.
 
 ⚑ **And every figure here is desktop-measured. A11 has never run.** The honest way to know whether 75
 is right is one in-headset frame-time capture.
+
+
+---
+
+## §11 — S80: WHAT PICKING'S FIX CLOSES, AND WHAT LOOK-MODE 3 STILL OWES A DEVICE (2026-08-09)
+
+### ✅ CLOSED — and §9's "BLOCKS S77" is one of them
+| open item | where it was registered | status |
+|---|---|---|
+| **A press in the back hemisphere is discarded** | §8 hand-off #3, §9 "BLOCKS S77" | ✅ **CLOSED.** Picking is what the ray hits; `facingBack` no longer gates any hit test. **S77 is unblocked** and its opening move no longer has to carry this |
+| **Interactions resolve on `pointerdown`, so every drag is a click** | MODE3_ASSESSMENT §2.1 | ✅ **CLOSED.** Resolved on `pointerup` behind 10 px / 1.2 s |
+| **Look-mode 3 does not exist** | THE_LOOK_MODES §1 | ✅ **BUILT** — but see below, it has never run on a phone |
+| **Recentre at a device seat used the wrong pose** | *found by S80, not previously known* | ✅ **CLOSED** — `seatNodeId`; same root cause as S70/S71's, a global yaw standing in for a place |
+
+### ⚑ OPEN, and honest about which kind of open it is
+1. **⚑ NO DEVICE HAS EVER RUN LOOK-MODE 3.** Everything measured came from synthetic
+   `deviceorientation` events fed to the real listener in headless Chrome. Untested: the iOS
+   permission modal, sensor noise, whether the turn feels right in the hand, and whether the pinch
+   sensitivity (0.10 °/px) is anywhere near correct. **It needs HTTPS and twenty minutes with a
+   phone** — and that pass is now the same shape as **A11**, which has still never run either.
+   ⚑ **Two of the three look-modes remain unverified on their own hardware.**
+2. **⚑ PORTRAIT PUTS "WHOLE SCREEN" AND "READABLE TEXT" AT OPPOSITE ENDS OF THE ZOOM.** Measured
+   (`node tools/shots.mjs zoom`): at the authored 42° the monitor subtends 28.1° horizontally against
+   a 20.1° frame at 375×812, so the canvas is cropped; pinched out to 80° the whole screen fits and
+   the body copy does not read. **Landscape at 30° is the posture where both hold.** Nothing was
+   changed on this — it is Sérgio's call whether the piece says anything about how to hold the phone.
+3. **⚑ S81 MUST RUN AT A PORTRAIT VIEWPORT TOO.** The subject-in-frame assertion is measured at
+   1280×860 only, and composition changes with aspect ratio (S76's own half-FOV moved 29.7° → 34.3°
+   between two desktop shapes; portrait moves it far further, to 20.1°). A visibility audit at one
+   shape is checking one of the shapes people will actually hold.
+4. **The keyboard is still gated on `facingBack`** (`app.ts`, the keydown handler: turned to the
+   record, Esc returns and everything else is swallowed). Left deliberately — a keypress is not a
+   look gesture, so it does not have picking's defect — but it is the same yaw hemisphere, and
+   whoever next needs typing while turned should know it is there.
+5. **The orienting card describes two ways to play, not three** (`src/desktop/orientingCard.ts`,
+   outside S80's fence): "On this computer" and "In a headset". There is now a third, and a phone
+   audience arrives with no idea the device turn exists beyond one button at the bottom of the frame.

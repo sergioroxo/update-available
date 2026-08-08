@@ -44,7 +44,13 @@ const nobatch = query.get('nobatch') === '1';
 const reviewMode = !!(era || morphDemo || close || reveal);
 
 function launch(): void {
-  // ?flat=1 — the universal version: desktop canvas alone, no WebGL, no room
+  // ⚑ ?flat=1 — a REVIEW TOOL: the desktop canvas alone, no WebGL, no room,
+  // for inspecting 2D work without the space around it. Corrected 2026-08-06
+  // by Sérgio — it is NOT a fallback and not an audience target (the old
+  // "universal version" wording here was the misreading; see
+  // docs/REINTERP_THE_LOOK_MODES_2026-08-06.md). The fallback when VR is not
+  // possible is the browser 3D ROOM, which is a first-class build with two
+  // look-modes of its own: drag (desktop) and gyro (phone/tablet, S80).
   if (query.get('flat') === '1') startFlat(canvas as HTMLCanvasElement, { reinterp });
   else void startApp(canvas as HTMLCanvasElement, { reinterp, facet, era, morphDemo, close, reveal, nobatch });
 }

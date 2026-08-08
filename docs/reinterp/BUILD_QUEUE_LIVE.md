@@ -21,8 +21,8 @@ not live.***
 | 4 | **S79 — TRANSCENDANCE** (Stage 3) | ↓ below | BLOCKED on S78 |
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
-| **⚑ 1** | **S80 — fix picking, then the gyro look-mode** | ↓ at the tail of this file | ⚑ **NEXT, ahead of S77.** Its 2.2 fix is S77's own prerequisite |
-| 2 | **S81 — the visibility audit, read as broken interactions** | *not yet written — `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §4* | after S80 |
+| — | ~~S80 — fix picking, then the gyro look-mode~~ | ↓ at the tail of this file | ✅ **SHIPPED 2026-08-09.** Its 2.2 fix (the yaw hemisphere) is closed, so **S77 is now dispatchable** |
+| **2** | **S81 — the visibility audit, read as broken interactions** | *not yet written — `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §4* | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
 
 **⚑ S73 IS QUEUED** (above) now that S74 has shipped Room 3. Two other candidates the S72 audit
@@ -928,7 +928,7 @@ lived in rather than decorated — if one looks like a set, it is wrong.
 ---
 
 # S80 — FIX PICKING, THEN THE GYRO LOOK-MODE · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: QUEUED — dispatch this one, ahead of S77. Its item 1 is S77's prerequisite.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-09 — picking fixed and verified, look-mode 3 built. Do not dispatch; the number is retired (see BUILD_LOG.md and 01_SESSION_LOG.md). ⚑ Its item 1 was S77's prerequisite and is now closed: a press in the back hemisphere is no longer discarded, so S77's chips will land.**
 *Sérgio, 2026-08-06, correcting the architecture: `?flat=1` is a REVIEW TOOL, not a fallback; the
 browser 3D build is co-designed with the VR build; and **phone/tablet must look around by gyroscope,
 like a 360 video.** Verified: **Safari has WebXR only on visionOS** — none on iOS, iPadOS or macOS —

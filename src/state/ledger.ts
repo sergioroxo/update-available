@@ -193,6 +193,35 @@ export interface Ledger {
    * file time, never composed in TS. In-memory only, like everything here.
    */
   e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned'; witness: string }[];
+  /**
+   * ⚑ S80 — LOOK-MODE 3 (the gyro), and it is deliberately NOT A RECORD.
+   *
+   * Every other field on this object is the piece's memory of what was done to
+   * the player or by them. This one is not: it is the frame's own view state —
+   * whether device-motion look is on, where the player's "forward" was last
+   * zeroed, how many times they recentred. **Nothing in `src/witness/` reads
+   * it, nothing files from it, and it must never appear on the record.** A
+   * player turning their phone is not a data point.
+   *
+   * It lives here anyway for one reason, and it is the invariant: this object
+   * is the only store the piece is allowed at all (the browser's persistent
+   * ones are forbidden outright — see the header above), so anything that must
+   * survive an era shift and die with the session belongs here and nowhere
+   * else. `wipeLedger()` takes it with everything else.
+   *
+   * `motion`: 'unasked' before any request · 'granted'/'denied' after an iOS
+   * permission prompt · 'unavailable' when the sensor never reported ·
+   * 'off' when the player turned it back off themselves.
+   * `yawZero`: the device heading, in degrees, that currently means "the way
+   * the seat faces". Null until the first reading. iOS gives no reliable
+   * absolute heading, so this is RELATIVE and it will drift — which is exactly
+   * why Recentre exists in the game menu.
+   */
+  view: {
+    motion: 'unasked' | 'granted' | 'denied' | 'unavailable' | 'off';
+    yawZero: number | null;
+    recentres: number;
+  };
 }
 
 const fresh = (): Ledger => ({
@@ -217,7 +246,8 @@ const fresh = (): Ledger => ({
   era3Arrival: [],
   graceQueue: [],
   comments: [],
-  e4Space: []
+  e4Space: [],
+  view: { motion: 'unasked', yawZero: null, recentres: 0 }
 });
 
 export let ledger: Ledger = fresh();

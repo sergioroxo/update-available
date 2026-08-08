@@ -8,6 +8,7 @@
  *     node tools/shots.mjs comfort          # the envelope, alone
  *     node tools/shots.mjs blank shots-after
  *     node tools/shots.mjs verify           # cross-check the maths vs the engine
+ *     node tools/shots.mjs zoom --width 375 --height 812   # S80, mode 3's legibility
  *
  * ⚑ WHY THIS FILE EXISTS AT ALL. The capture rig was written three times — S69,
  * S70 part 2, S71 — and thrown away three times, because each session built it
@@ -688,6 +689,86 @@ function writeManifest(outDir, frames) {
     JSON.stringify(frames.map((f) => ({ ...f, file: path.relative(ROOT, f.file) })), null, 1));
 }
 
+/**
+ * ⚑ S80 — `zoom`: THE MODE-3 LEGIBILITY CAPTURE, and it exists because the
+ * question it answers is the one look-mode 3 turns on.
+ *
+ * The piece's UI is a 512×384 pixel-art canvas textured onto a monitor mesh
+ * INSIDE the room. On a phone that is a small screen showing a room containing
+ * a smaller screen carrying the text. `REINTERP_MODE3_ASSESSMENT` §3.1 says
+ * plainly that this **must be measured, not assumed** — and that the answer may
+ * not be filling the viewport, because a canvas that takes the viewport is
+ * flat-by-tapping and the spatial frame is the piece.
+ *
+ * So this photographs the same seat at a PHONE viewport across the pinch
+ * zoom's whole range (80° out, 42° authored, 30° all the way in), in portrait
+ * AND landscape, and reports the measured on-screen height of one canvas pixel
+ * at each. Nothing here decides anything: it is a capture, and the reading of
+ * it is Sérgio's.
+ *
+ *     node tools/shots.mjs zoom [--width 375 --height 812] [--era 1|3]
+ */
+async function zoomLegibility(browser, asserts, outDir) {
+  fs.mkdirSync(outDir, { recursive: true });
+  const era = Number(flag('era', 3));
+  const rows = [];
+  for (const [orient, w, h] of [
+    ['portrait', VIEWPORT.width, VIEWPORT.height],
+    ['landscape', VIEWPORT.height, VIEWPORT.width]
+  ]) {
+    const page = await browser.newPage();
+    await page.setViewport({ width: w, height: h });
+    page.on('console', (m) => { const t = m.text(); if (/ASSERT|Invalid batch/i.test(t)) asserts.push(t.slice(0, 160)); });
+    const q = era === 1 ? '?reinterp=1&debug=1&descent=0' : `?reinterp=1&era=${era}&debug=1&descent=0`;
+    await page.goto(`http://localhost:${PORT}/${q}`, { waitUntil: 'networkidle2', timeout: 60000 });
+    if (era === 1) {
+      // ⚑ ORDER MATTERS: a fresh load is gated by the pre-fiction orienting
+      // card, and the engine (and so `__poses`) does not exist until it is
+      // dismissed. The review jumps bypass the card, so they wait first.
+      // ⚑ and it must be ENABLED, not merely present: the card deliberately
+      // holds its buttons disabled for a moment so the content note cannot be
+      // skipped instantly (orientingCard.ts), and `.click()` on a disabled
+      // button silently does nothing.
+      await page.waitForFunction(() => [...document.querySelectorAll('button')]
+        .some((b) => /log in/i.test(b.textContent || '') && !b.disabled), { timeout: 30000 });
+      await page.evaluate(() => [...document.querySelectorAll('button')]
+        .find((b) => /log in/i.test(b.textContent || ''))?.click());
+    }
+    await page.waitForFunction(() => window.__poses !== undefined, { timeout: 30000 });
+    if (era === 1) {
+      await page.waitForFunction(() => !!window.__os, { timeout: 30000 });
+      // `--beat` picks WHAT is on the monitor while it is photographed. The
+      // default is the profile setup, because legibility is a question about
+      // TYPE and that screen is the piece's densest: a heading, body copy, six
+      // chips and four checkbox rows, all at the 512×384 canvas's own sizes.
+      await page.evaluate((b) => window.__os.debugJump(b), String(flag('beat', 'profile')));
+    }
+    await wait(6000);
+    for (const fov of [80, 42, 30]) {
+      await page.evaluate((f) => {
+        const cam = window.__app.root.findByName('camera');
+        cam.camera.fov = f;
+      }, fov);
+      await wait(350);
+      const file = path.join(outDir, `zoom_${orient}_${w}x${h}_fov${fov}.png`);
+      await page.screenshot({ path: file });
+      // how tall is ONE canvas pixel on this screen? Project the monitor
+      // plane's own top and bottom edge and divide by the 384 logical rows.
+      const px = await page.evaluate(() => {
+        const app = window.__app;
+        const cam = app.root.findByName('camera');
+        const V = cam.getPosition().constructor;
+        const top = cam.camera.worldToScreen(new V(0, 1.08 + 0.15, 0));
+        const bot = cam.camera.worldToScreen(new V(0, 1.08 - 0.15, 0));
+        return { screenPx: Math.abs(bot.y - top.y), css: app.graphicsDevice.canvas.clientHeight };
+      });
+      rows.push({ orient, w, h, fov, file, pxPerRow: px.screenPx / 384, monitorPx: px.screenPx });
+    }
+    await page.close();
+  }
+  return rows;
+}
+
 /** the offscreen device canvases (S70's captures), driven through real beats */
 async function devices(browser, asserts, outDir) {
   fs.mkdirSync(outDir, { recursive: true });
@@ -1150,6 +1231,16 @@ try {
     const { legs, drawPeaks } = await comfort(browser, asserts);
     reportComfort(legs);
     reportDraw(drawPeaks);
+  } else if (MODE === 'zoom') {
+    const rows = await zoomLegibility(browser, asserts, OUT);
+    console.log('\n━━ ⚑ MODE 3 · IS THE 512×384 CANVAS LEGIBLE ON A PHONE? ━━');
+    console.log('   one canvas pixel, measured on screen, at each end of the pinch zoom:');
+    for (const r of rows) {
+      console.log(`   ${r.orient.padEnd(9)} ${String(r.w).padStart(4)}×${String(r.h)} · FOV ${String(r.fov).padStart(2)}° · ` +
+        `monitor ${r.monitorPx.toFixed(0)} px tall · ${r.pxPerRow.toFixed(3)} screen px per canvas row`);
+    }
+    console.log(`\n   ${rows.length} frames → ${path.relative(ROOT, OUT)} — ⚑ LOOK AT THEM. This tool measures;`);
+    console.log('   whether the text can be READ is a judgement, and it is Sérgio\'s.');
   } else if (MODE === 'verify') {
     const v = await verify(browser, asserts);
     console.log(`\n━━ CROSS-CHECK vs the live engine ━━`);
@@ -1191,7 +1282,7 @@ try {
     console.log('   (click-only, no review params, E1 → the Close) and that is its own session.');
     skipped.push('REACHABILITY (assertion 6) — not built; see the note above');
   } else {
-    console.log(`unknown mode "${MODE}". Modes: audit · sweep · devices · sheet · blank · framing · comfort · verify`);
+    console.log(`unknown mode "${MODE}". Modes: audit · sweep · devices · sheet · blank · framing · comfort · verify · zoom`);
     exitCode = 2;
   }
 

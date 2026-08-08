@@ -147,6 +147,124 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-09 · Session 80 — **FIX PICKING, THEN THE GYRO (LOOK-MODE 3).** Spec of record:
+`REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §2 (the blockers) and §3.1 (pinch, CORRECTED);
+architecture: `REINTERP_THE_LOOK_MODES_2026-08-06.md`; the maths, the permission lifecycle and the
+single-tap raycaster come from Sérgio's own deep-research spec, `Cross-Platform PlayCanvas 360
+Interactive Experience`. Touched: `src/engine/app.ts`, `src/desktop/gameMenu.ts`,
+`src/state/gameMenuBus.ts` (⚑ one line, outside the stated fence — see below), `src/state/ledger.ts`,
+`src/debug/panel.ts`, `src/main.ts`, `data/strings/gameMenu.json`, `tools/shots.mjs`, `CLAUDE.md`,
+`BUILD_QUEUE_LIVE.md`, this log, `08_STATUS_REGISTER.md`, `BUILD_LOG.md`.)*
+
+**⚑ A PRESS THAT TRAVELS IS A LOOK. A PRESS THAT STAYS IS A TAP.** Every interaction in the piece
+resolved on `pointerdown` — the power button, the kit, the belongings, the tapes, the monitor plane,
+Room 2's three device screens, the floor markers — while `pointermove` dragged the camera, with no
+discrimination of any kind between the two. On a mouse it survived. On touch it is a defect on first
+contact, and look-mode 3's whole navigation is touch. Interactions now resolve on `pointerup` behind
+**10 CSS px of accumulated path length and 1.2 s**; the press still always begins a look, so the
+camera never feels held back. The thresholds erred long on purpose: a long press is not a gesture
+anywhere in this piece, so nothing competes for it, and swallowing a slow deliberate press would be
+worse than the fault being fixed.
+
+**⚑ AND THE YAW HEMISPHERE IS GONE FROM PICKING.** The whole hit-test block sat inside
+`if (!facingBack)` — `camYaw` in 90…270 — so turning past a threshold discarded every press in the
+room. S70 patched only the held-device case; S76 warned it would silently eat S77's chips. It is
+replaced by **what the ray actually hits**, which every test already computed: `toDesktop()` clamps
+to t ∈ [0,1] and u,v ∈ [0,1]; `rayHitsPoint()` is a distance test against a forward segment. A
+surface behind you cannot be hit, by geometry, with nothing having to know your yaw. `facingBack`
+itself is untouched and still means the crossing that files you. The `not-allowed` cursor is gone
+with it — it was telling the truth about a build that discarded the press, and a lie about this one.
+
+**⚑ MEASURED, with real projected pointer presses, era by era:**
+
+| what | drag that begins on it | ordinary tap |
+|---|---|---|
+| profile icon (monitor plane, E1) | ⟲ view turned −18°, **icon not selected** | ✅ selected |
+| tape C on the shelf (prop ray) | — | ✅ inserted |
+| the boombox | ⟲ turned −88° → −99.8°, **playback did not start** | ✅ playing |
+| a belongings prop (rainbowDuck) | **kept nothing** | ✅ kept |
+| the update's "Remind me later" | — | ✅ gathering window opened |
+| the EULA's "I Agree" | **did not agree** · and a 1.4 s press **did not agree** | ✅ install, `eulaScrollPct 100` |
+| the tablet floor marker (E3) | ⟲ turned 270° → 246°, **did not move** | ✅ blink-cut to the tablet seat |
+| ⚑ **the headset (E4), at camYaw 268** | — | ✅ **worn — `device: worn — one touch` filed** |
+
+The last row is the hemisphere fix, exactly: **268° is inside the old witness hemisphere**, the
+crossing had already fired (`flips: 2`, `ministry-index-card` on the record), and the press went
+through anyway. Before this session it was discarded before it reached `era3Devices`.
+
+**⚑ LOOK-MODE 3 — SAME CAMERA, SAME SEAT, SAME SCENE.** The rig keeps the authored pose (the seat,
+the scripted relocations, the drag) and the gyro rotates the **child camera entity** — precisely
+where PlayCanvas puts a tracked head in XR. So the composition is free: drag and gyro **compose**
+rather than fight (the research spec's `q_final = q_touch × q_gyro`, with the rig as `q_touch`), and
+no relocation has to know the gyro exists. `q_gyro = q₀ × q₁ × q₂` verbatim from the spec, with one
+correction it could not know: **PlayCanvas's `setFromAxisAngle` takes degrees**, not the radians the
+spec passes, and `pc.Vec3.FORWARD` is (0,0,−1), which absorbs the three.js sign flip. Only the
+HEADING is re-zeroed — pitch and roll are gravity-referenced on every platform, so cancelling them
+would tilt the horizon by however the phone happened to be held. **No smoothing anywhere**: it is 1:1
+device motion, and lag is its own nausea.
+
+Measured at a 375×812 viewport, driving the REAL `deviceorientation` listener with synthetic angles:
+`alpha 0 → world yaw 90` (= the rig's own seat yaw, so switching it on never swings the room),
+`30 → 120`, `90 → 180`, `180 → 270`, `270 → 0`, `359 → 89`. A drag moved the rig 90° → 70.8° and the
+world followed to 115.8° — the +45° gyro offset preserved. `beta 60 → pitch +30°`, `beta 120 → −30°`.
+**A full 360° sweep in four pitches, pressing nothing, left the ledger byte-identical:** the gyro is
+a look, never an input, and there is no gaze path anywhere near it.
+
+**THE ENTRY IS A DESIGNED OBJECT because iOS gives no other option.** `requestPermission()` cannot be
+called on page load — it needs transient activation — so the button is frame chrome, plain, beside
+the other frame-voice elements, never on the monitor texture. iOS asks; **Android attaches with no
+prompt**; a browser with the API and no sensor is caught by a 1.5 s silence timer and told the truth
+(*"No motion sensor here. Drag to look."*), which was seen firing during this session's own testing.
+Denied, silent, unavailable, switched off — in every case drag-to-look continues untouched, verified.
+
+**⚑ PINCH IS THE CAMERA'S FOV, AND THE ROOM NEVER LEAVES.** `FOV = clamp(FOV − Δd·0.10, 30°, 80°)`.
+Measured: spreading 100→400 px drove 42° → 30° (clamped), pinching back raised it to 60°, and the
+clamps hold at exactly 30 and 80 while the pose does not move. A two-finger gesture cancels both the
+look and the tap outright, so lifting one finger of a zoom can never fire whatever was under it —
+verified with a pinch centred on the tablet's glass, ledger unchanged.
+
+**⚑ RECENTRE, in the game menu, beside Restart.** It re-zeros the heading onto the seat's own facing
+and puts the frame back to the authored 42°. Verified: with the device still at alpha 45 the world
+yaw snapped to the rig's 70.8°. ⚑ **It also found a bug of its own:** at a DEVICE seat it swung the
+view to Room 1's facing, because `seatPose(seatYaw)` cannot reproduce a device seat's authored pose
+(nodes.json). Fixed by tracking `seatNodeId` — the same root cause S70 and S71 each hit from a
+different direction: **a global yaw standing in for a place.**
+
+**⚑ IS THE 512×384 CANVAS LEGIBLE ON A PHONE? MEASURED, AND THE ANSWER IS "IN LANDSCAPE, PINCHED
+IN".** New repeatable capture: `node tools/shots.mjs zoom --width 375 --height 812 --era 1`.
+
+![S80 — mode 3's legibility at both ends of the pinch](S80_mode3_zoom_legibility.png)
+*left: portrait, pinched out to 80° — the whole screen, and you cannot read it. middle: portrait at
+the authored 42° — it reads, and the canvas is cropped left and right. right: landscape at 30° —
+the whole 512×384 canvas in frame and legible. Same seat, same beat, same build.*
+
+| viewport | FOV | monitor on screen | screen px per canvas row | reads? |
+|---|---|---|---|---|
+| portrait 375×812 | 80° (pinched out) | 207 px tall | 0.54 | headings only; body copy no |
+| portrait 375×812 | 42° (authored) | 453 px | 1.18 | **yes — but cropped left and right** |
+| portrait 375×812 | 30° (pinched in) | 649 px | 1.69 | yes, more cropped |
+| landscape 812×375 | 80° | 96 px | 0.25 | no |
+| landscape 812×375 | 42° | 209 px | 0.55 | marginal |
+| **landscape 812×375** | **30°** | **300 px** | **0.78** | ⚑ **whole canvas in frame AND readable** |
+
+**So the pinch does the job the assessment hoped it would, and it does not need the viewport fill.**
+The honest caveat is the one the table shows: **in portrait, "the whole screen is visible" and "the
+text is readable" sit at opposite ends of the zoom** — at the authored 42° the monitor subtends 28.1°
+horizontally against a 20.1° frame. Nothing was changed on the strength of this; it is a finding.
+
+**⚑ WHAT WAS NOT AND COULD NOT BE VERIFIED.** No phone, no tablet, no headset was involved at any
+point. Every gyro figure above comes from synthetic `deviceorientation` events fed to the real
+listener in headless Chrome — the chain, the zeroing, the composition and the picking through a
+rotated camera are all the shipping path, and **only the sensor is fake**. Untested and untestable
+here: the iOS permission modal itself, sensor noise, the real feel of the turn in the hand, whether
+0.10°/px is the right pinch sensitivity, and whether look-mode 3 is comfortable. It needs HTTPS
+(`tailscale funnel` or GitHub Pages) and twenty minutes with a phone.
+
+**⚑ ONE FENCE DEVIATION, declared:** `src/state/gameMenuBus.ts` was not in the stated fence and got
+one line — `recentreView`, a nullable callback, an exact copy of the `leaveEngine` pattern directly
+above it. The alternative was a production-path `window.__` global, which is worse. The bus still
+imports nothing and files nothing.
+
 *(2026-08-08 · Session 76 — **THE UPDATE, THE PLACE, AND NO DESKTOP (E4 STAGE 2a — THE ERA'S SHELL).**
 Design of record: `REINTERP_E4_THE_SPACE_2026-08-06.md`; source finding: `…SOURCE_PASS_2026-08-06.md`
 §"the apparatus did not build this"; touchless budget: `…THE_DEVICE_2026-08-05.md` §"STAGE 0 —

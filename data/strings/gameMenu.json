@@ -1,5 +1,5 @@
 {
-  "_doc": "PLACEHOLDER — R28-4 game menu (CLAUDE.md REINTERP AMENDMENTS §4, docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §4 layer 2). Frame-voice text is functional and near-final by nature (menu labels, the static controls list) — but still Sérgio's to confirm, especially restartConfirmBody's exact wording and whether the pauseGlyphSymbol reads right at a glance (a plain 'II' first pass, cheap to swap for an icon later).",
+  "_doc": "PLACEHOLDER — R28-4 game menu (CLAUDE.md REINTERP AMENDMENTS §4, docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §4 layer 2). Frame-voice text is functional and near-final by nature (menu labels, the static controls list) — but still Sérgio's to confirm, especially restartConfirmBody's exact wording and whether the pauseGlyphSymbol reads right at a glance (a plain 'II' first pass, cheap to swap for an icon later). S80 adds the look-mode-3 strings: the motion* set (the on-screen button that asks for device orientation — iOS cannot be asked without a real press, so the button is a designed object) and 'recentre' (the menu row that puts forward back where the room's front is). All of it frame voice: functional, undecorated, never in the piece's own voice.",
   "pauseGlyphSymbol": "II",
   "pauseGlyphLabel": "Menu (Esc)",
   "title": "Menu",
@@ -9,6 +9,7 @@
   "credits": "Credits & attributions",
   "leave": "Leave",
   "back": "Back",
+  "recentre": "Recentre the view",
   "restartConfirmTitle": "Restart?",
   "restartConfirmBody": "This wipes everything and returns you to the start. Nothing you do is ever kept, either way.",
   "restartConfirmYes": "Yes, restart",
@@ -16,10 +17,19 @@
   "controlsTitle": "Controls",
   "controlsLines": [
     "Drag to look around.",
+    "On a phone or tablet, turn the device to look — the button at the bottom of the screen switches that on.",
+    "Pinch with two fingers to zoom the view in or out.",
     "Click a marker to move.",
     "Click to interact.",
+    "Recentre the view puts forward back where the room's front is.",
     "Esc — or this menu's corner button — pauses."
   ],
+  "motionEnable": "Look with your device",
+  "motionEnableHint": "Turn your phone or tablet to look around the room.",
+  "motionAsking": "Asking…",
+  "motionDisable": "Stop device look",
+  "motionDenied": "Motion access declined. Drag to look.",
+  "motionUnavailable": "No motion sensor here. Drag to look.",
   "creditsTitle": "Credits & attributions",
   "creditsNone": "No third-party assets to credit yet."
 }
