@@ -152,6 +152,21 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
     fontSize: '12.5px', lineHeight: '1.6', color: FRAME.dim, marginBottom: '14px'
   }));
   card.appendChild(line(copy.contentNote, {
+    fontSize: '12.5px', lineHeight: '1.6', color: FRAME.dim, marginBottom: '14px'
+  }));
+  // ⚑ S77 — THE DEADNAME ADVISORY, and this panel is the only place it can
+  // honestly go (08_STATUS_REGISTER §8 decision 9). An IN-FICTION advisory would
+  // make the apparatus the thing offering you protection from itself, which is
+  // the exact move the piece spends four eras describing. So it sits here,
+  // outside the fiction, behind the same 4 s ethics arm-delay as the content
+  // note, and it says where the setting is rather than being the setting.
+  // ⚑ It names what happens without naming any character or spoiling any beat,
+  // and it states the piece's position plainly: the system is wrong. That is
+  // not neutrality and is not meant to be.
+  // ⚑ PLACEHOLDER-draft, and BLOCKED-ON-READER-PASS with the beat it describes:
+  // the trans reader pass is a gate, not a review step, and this wording is
+  // inside that gate.
+  card.appendChild(line(copy.nameNote, {
     fontSize: '12.5px', lineHeight: '1.6', color: FRAME.dim, marginBottom: '22px'
   }));
 

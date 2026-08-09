@@ -147,6 +147,136 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-09 · Session 77 — **L, AND THE ROOM REWRITES** (Era 4, stage 2b: the voice). Design of
+record: `REINTERP_E4_AUDIO_FIRST_DESIGN_2026-07-12.md` §2, `REINTERP_E4_ECHO_SCRIPT_DRAFT_2026-07-13.md`
+(now renamed throughout), `REINTERP_E4_THE_ARGUMENT_2026-08-05.md` §4.1–4.3. Touched:
+`src/desktop/apps/lVoice.ts` (new), `src/desktop/apps/space.ts`, `src/desktop/os.ts`,
+`src/desktop/gameMenu.ts`, `src/desktop/orientingCard.ts`, `src/state/ledger.ts`,
+`src/debug/panel.ts`, `data/dialog/s4_l.json` (new), `data/strings/gameMenu.json`,
+`data/strings/orientingCard.json`, `data/audio/tts_manifest.json`, `tools/tts/render.py`,
+the two E4 docs + the master plan's thread tables, `BUILD_QUEUE_LIVE.md`, this log,
+`08_STATUS_REGISTER.md`, `BUILD_LOG.md`.)*
+
+![S77](S77_L_captions_deadname.png)
+
+**⚑ L SOUNDS GOOD, WHICH WAS THE SESSION'S ONE REAL RISK.** Thirty-two lines drafted
+(PLACEHOLDER-draft) across ten conversation units, and every one of them is warm, competent and
+unhurried. Nothing in the code adds a sting to any of it: no shake, no red, no alarm colour, no
+sound cue, no delay for effect. The uncanniness is entirely in what L *offers* — replacing a mended
+hoodie, keeping an hour free for a sketchbook nobody has opened, calling a month without mirrors
+progress. ⚑ **If any line ever reads as villainous it is wrong**, and the data file says so in its
+own header, because the failure mode here is a player concluding *I would notice.*
+
+**WHAT PLAYS, BY ORDINARY CLICKING.** Verified with real pointer presses in the 3D room, through
+`app.ts`'s pointerdown/pointerup path and `era3Devices`' ray — not debug jumps: the one touch on the
+headset landed at screen (140, 590), L began by itself, the room captions ran themselves out, and
+ten units played end to end on chip presses alone. The record afterwards, in order:
+
+    answered   companion: acknowledged
+    captioned  objects: catalogued — footwear
+    captioned  objects: catalogued — sketchbook, disuse noted
+    captioned  objects: catalogued — frame, orientation noted
+    captioned  objects: no category returned — held for review
+    corrected  name: corrected by subject
+    retained   legacy record consistency — retained
+    answered   friction: absorbed
+    corrected  name: corrected by subject (2)
+    retained   legacy record consistency — retained (2)
+    answered   state: fatigue reported, resolve reported
+    answered   progress: acknowledged
+    answered   offer: accepted for review
+
+⚑ Read the two pairs. `name: corrected by subject` sits directly above `legacy record consistency —
+retained`, twice. That is the beat, in the record's own voice, and no line of dialogue ever says it.
+
+**⚑ THE CAPTIONS RUN OUT — the beat the drafts did not have.** L captions three of Maya's things
+gently, diagnostically, and then awfully (the photo frame faces the bed, not the door, and L is
+*right* about why). Then it meets a hoodie she took in and re-sewed herself, and it captions it
+**`condition: damaged`**, corrects itself to **`condition: repair in progress`**, offers
+**`condition: keepsake?`**, and stops — the label going to `ITEM · no category — held for review`
+over four seconds of authored silence with no caption band at all. ⚑ The true answer is never said
+by anybody: the machine's vocabulary is *original* and *damaged*, and a thing altered on purpose has
+nowhere to go in it. Nothing points at it; the record's one line is the only remark.
+
+**⚑ THE DEADNAME LANDS AS PAPERWORK.** It arrives mid-flow, one item among others, immediately after
+the machine has just failed at a hoodie — and the sentence's concern is the *record's* consistency,
+not hers. The name resolves from `ledger.name` and nowhere else. The correction chip is always
+accepted, always apologised for, and the record never changes; the second instance is warmer and
+worse ("the records team tell me the legacy field is protected"). Three things guard it, and all
+three are built:
+- **the advisory is on the PRE-FICTION PANEL** (`orientingCard.ts`), behind the same 4 s ethics
+  arm-delay as the content note. ⚑ It cannot be in-fiction: an in-fiction advisory makes the
+  apparatus the thing offering you protection from itself.
+- **the unvoiced opt-out is in the GAME MENU**, always visible, from the pre-fiction panel onward —
+  a setting that only appeared once the beat was imminent would itself announce the beat. With it
+  on the caption reads *"…still lists you under a name you do not use"* and the audio is not asked
+  for. The meaning survives; the ambush does not.
+- **Maya's name is never in doubt.** The system is wrong, the card says so in the frame's own voice,
+  and nothing stages it as a question.
+
+**⚑⚑ AND IT IS BLOCKED-ON-READER-PASS. Say this plainly rather than filing it as done: the trans
+reader pass is a GATE, not a review step.** Every string in the deadname beat, the pre-fiction
+advisory and the menu row is PLACEHOLDER-draft and marked BLOCKED-ON-READER-PASS in the data. None
+of it ships without that pass. Nothing here is a judgement about whether the beat is right — it is a
+draft built so the flow can be tested and so there is something real to react to.
+
+**THE SHRINKING CHOICE, and you only see it afterwards.** u7 greys one chip the first time it is
+ever shown (*"I am trans and that is not the problem"* — the player never gets to press it and never
+knew they could have). u8 greys the two they had been using. ⚑ u9 greys the correction chip itself,
+for **one unit**, and because that unit waits for a press it sits there unpressable for as long as
+you look at it; u10 brings it back live. Nothing announces any of it, in any line, ever.
+
+**THE TOUCHLESS BUDGET HELD.** The whole module takes one kind of press — a chip — and there is no
+continue, no confirm, no dismiss, no skip and no timer anywhere in it. A unit with chips waits
+forever. A press that lands on no chip is consumed rather than acted on, so nothing falls through
+the place onto the room behind it.
+
+**AUDIO: NO LINE IS VOICED, and that is the plan, not a shortfall.** The pipeline is wired end to
+end — `tools/tts/render.py` gained a `batch` entry type that walks `s4_l.json`, finds every object
+carrying both `text` and `audio`, and renders **all 32 through one TTS instance with one voice style
+in one process** (verified by dry-running the walk: 32 lines, silences correctly skipped). One
+voice, one sitting, because drift kills the effect. Clips come after Sérgio's voice pass.
+⚑ **AND ONE WIRING STEP REMAINS THAT S77 COULD NOT TAKE:** after the render, the filenames must be
+added to `src/audio/tapeAudio.ts`'s registry, which is outside this session's fence. Until then the
+registry law means every name is simply never requested — no console error, no 404, silent captions.
+
+**⚑ ONE REAL BUG FOUND BY LOOKING AT THE FRAME.** The era's highest-risk line rendered as
+*"…still lists you as —."* `beginReinterpOpening` prefills `ledger.name`, but a review jump
+(`?era=4`, `?flat=1`, any panel landing) never runs the opening, so the ledger sat on its display
+placeholder `—` — in exactly the state Sérgio reviews in. The prefill moved to the reinterp branch of
+`DesktopOS`'s constructor, so it is true of any reinterp session however it was entered.
+
+**⚑ AND ONE COMPOSITION FIX TO S76's PICTURE, stated because it changes a shipped frame.** The
+environment tag (`Sunroom` / `arranged for you`) moved from bottom-left to top-left. It was right
+where nothing else spoke; L's caption band now owns the bottom edge for most of the era and the tag
+was simply underneath it, invisible. Top-left also gives the surface an honest hierarchy — the
+place's name and the system's label field along the top, the voice and your answers along the bottom.
+
+**FOUND WHILE BUILDING, AND FIXED:** the caption band used to clear the instant a unit started
+waiting, so the player was answering a question that was no longer on screen. It persists through
+the chips now. That is not polish — a caption you cannot re-read is not a witness surface.
+
+**WHAT I DID NOT BUILD, deliberately:** the "ally" recording and the ally echo (U4/U9 of the draft)
+are S78's, because the curation beat belongs with the offers and the lobbying-vs-clinical-debate law
+governs it; the careful pause (U11) is an *offer* and is S78's; TRANSCENDANCE (U12) is S79's. ⚑ **No
+texture of the ball exists in this session — not started, not stubbed.** `E4Shell.handOff()` is
+still unwired. `LVoice.onHandOff` is the named seam, fired by u10's second chip.
+
+**NUMBERS.** `tsc` + `npm test` + `npm run build` green. check-spec: palette **33/33** (unchanged),
+debug panel covers **all 52 debugJump ids** (0 excluded; 11 new buttons), authoring-marker leaks
+**10/10** across **3023** data strings. `npm run audit`: draw calls **68 entrance · 39 E1→E2 ·
+57 E2→E3 · 62 E3→E4 · 78 sends** — every figure identical to before this session, because the voice
+adds no geometry; console asserts **0**; the only failures are the three pre-existing latent send
+legs (6.874 / 4.420 / 4.420 m/s), untouched as instructed.
+
+**⚑ NOT DONE, AND NAMED.** (1) The trans reader pass — the gate above. (2) `?flat=1` still cannot
+reach Era 4 at all: flat mode mounts no debug panel and E3's content is room-device-only, so L was
+verified in the 3D room only. Flat boots clean with zero page or console errors and draws the
+pre-fiction advisory correctly; the E4-in-flat debt is 08 §9's, older than this session, and
+unchanged by it. (3) `REINTERP_MASTER_PLAN_v2` still says "Echo" in **prose at lines 146, 153, 156
+and 157** — the fence said *thread table ONLY*, so the two tables were renamed and the prose was
+not. One `sed` for whoever next has that file in fence.
+
 *(2026-08-09 · Session 80 — **FIX PICKING, THEN THE GYRO (LOOK-MODE 3).** Spec of record:
 `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §2 (the blockers) and §3.1 (pinch, CORRECTED);
 architecture: `REINTERP_THE_LOOK_MODES_2026-08-06.md`; the maths, the permission lifecycle and the

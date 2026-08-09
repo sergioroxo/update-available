@@ -95,7 +95,7 @@ system's shared infrastructure is what connects them (cross-cluster sends).
 | E1 '97 | (no character) | impersonal system side-messages, one at a time, terse imperative; the last one seeds Lamby ("assistance will be improved") | ignoring files `declined` |
 | E2 '03 | **Lamby** | the mascot installed inside your life; ≤2 lines/beat; consoles you for wounds it makes | closing the mascot (filed) |
 | E3 '16 | **Lambient** | no window — distributed across the crowd: lamb verified-badges, reaction stamps, suggested mod actions | muting a crowd (filed) |
-| E4 now | **Echo** | the chamber that only asks back; narrows your language (the Shrinking Choice) | refusing a question (filed) |
+| E4 now | **L** | the chamber that only asks back; narrows your language (the Shrinking Choice) | refusing a question (filed) |
 
 Constants: never in `felt` scenes (absence IS the register change), never jokes at the
 victim, never delivers Dossier text, dismissal always works and is always logged.
@@ -167,7 +167,7 @@ Six threads run the length of the piece; every era beat should be traceable to a
 
 | Thread | E1 '97 | E2 '03 | E3 '16 | E4 now | Close |
 |---|---|---|---|---|---|
-| **The watcher** | impersonal side-messages | Lamby installed; uninstall FAILS ("could not be removed. migrating.") | the fragments = Lambient's marks on every device | Echo — the voice | named, witnessed, refused |
+| **The watcher** | impersonal side-messages | Lamby installed; uninstall FAILS ("could not be removed. migrating.") | the fragments = Lambient's marks on every device | L — the voice | named, witnessed, refused |
 | **The board** | cork board files YOU → the record wall | the dashboard | the feed IS the board; Vera made its keeper | Maya's wall (the TURN) | the constellation |
 | **The machine** | one CRT, booted FOR you | same machine; YOU press return | three devices — every seat is a screen | the room itself speaks | the room renamed, not closed |
 | **The name/file** | "they already know your name"; first click files | `subject migrated — file retained` | Vera moderates OTHERS' files; Daniel's archived | the deadname the record won't release; Maya the name it can't file | "Nothing about you was broken" |

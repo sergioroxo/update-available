@@ -83,16 +83,37 @@ def resolve_text(entry: dict) -> str:
     return " ".join(str(p) for p in pieces)
 
 
-def synth_one(entry: dict) -> None:
-    entry_id = entry["id"]
-    register = entry.get("register")
-    if register != ALLOWED_REGISTER:
-        raise SystemExit(
-            f"REFUSED: entry '{entry_id}' has register '{register}', not "
-            f"'{ALLOWED_REGISTER}'. This tool only synthesizes apparatus/"
-            f"system voice — see the ETHICS BOUNDARY in this file's header."
-        )
+def collect_batch(node, requires, out):
+    """Walk a parsed narrative JSON and collect every object that carries ALL of
+    `requires` (e.g. ["text", "audio"]) with non-empty values.
 
+    ⚑ WHY A WALK AND NOT A PATH EXPRESSION (S77). Era 4's L has ~30 short lines
+    spread across conversation units, chip replies and label beats, and the
+    whole point of the voice is that they are ONE VOICE IN ONE SITTING — the
+    design doc's own words: "one voice, one description, ALL lines in one batch
+    (drift kills the effect)". Hand-listing thirty dotted paths in the manifest
+    would be thirty chances for a line to be added later and quietly never
+    voiced, and the failure mode of that is a conversation where one sentence
+    sounds like a different machine. A walk cannot miss a line that exists.
+
+    ⚑ AND A LINE WITH NO `audio` KEY IS DELIBERATELY SKIPPED, not an error:
+    s4_l.json's held silences (u3's fourth beat) carry empty text and no
+    filename on purpose. Nothing renders a silence.
+    """
+    if isinstance(node, dict):
+        if all(str(node.get(k, "")).strip() for k in requires):
+            out.append(node)
+        for key, value in node.items():
+            if key.startswith("_"):
+                continue  # authoring metadata, this repo's own convention
+            collect_batch(value, requires, out)
+    elif isinstance(node, list):
+        for value in node:
+            collect_batch(value, requires, out)
+    return out
+
+
+def load_tts():
     try:
         from supertonic import TTS
     except ImportError:
@@ -102,12 +123,20 @@ def synth_one(entry: dict) -> None:
             "  pip install supertonic\n"
             "(see this file's SETUP header for details)."
         )
+    return TTS(auto_download=True)
 
-    text = resolve_text(entry)
-    if not text.strip():
-        raise SystemExit(f"entry '{entry_id}' resolved to empty text — nothing to render.")
 
-    tts = TTS(auto_download=True)
+def check_register(entry: dict) -> None:
+    register = entry.get("register")
+    if register != ALLOWED_REGISTER:
+        raise SystemExit(
+            f"REFUSED: entry '{entry['id']}' has register '{register}', not "
+            f"'{ALLOWED_REGISTER}'. This tool only synthesizes apparatus/"
+            f"system voice — see the ETHICS BOUNDARY in this file's header."
+        )
+
+
+def render(tts, entry: dict, text: str, out_rel: str, label: str) -> None:
     style = tts.get_voice_style(voice_name=entry.get("voice", "F1"))
     wav, duration = tts.synthesize(
         text=text,
@@ -116,11 +145,48 @@ def synth_one(entry: dict) -> None:
         total_steps=entry.get("steps", 8),
         speed=entry.get("speed", 1.0),
     )
-
-    out_path = ROOT / entry["outFile"]
+    out_path = ROOT / out_rel
     out_path.parent.mkdir(parents=True, exist_ok=True)
     tts.save_audio(wav, str(out_path))
-    print(f"[{entry_id}] wrote {out_path.relative_to(ROOT)} ({float(duration[0]):.2f}s)")
+    print(f"[{label}] wrote {out_path.relative_to(ROOT)} ({float(duration[0]):.2f}s)")
+
+
+def synth_batch(entry: dict) -> None:
+    """⚑ ONE VOICE, ONE SITTING (S77). A `batch` entry renders EVERY line in a
+    narrative data file through a single TTS instance with a single voice style,
+    in one process. That is not a convenience — it is the design constraint:
+    `REINTERP_E4_AUDIO_FIRST_DESIGN_2026-07-12.md` §4 says all lines go in one
+    batch because drift kills the effect, and Era 4's whole premise is a voice
+    that never varies, never tires and never has a bad day.
+
+    ⚑ THE ETHICS BOUNDARY IS UNCHANGED AND IS CHECKED FIRST: `register` must
+    still be "apparatus". A batch is a bigger gun, so it gets the same safety.
+    """
+    check_register(entry)
+    spec = entry["batch"]
+    requires = spec.get("requires", ["text", "audio"])
+    doc = load_json(ROOT / spec["file"])
+    lines = collect_batch(doc, requires, [])
+    if not lines:
+        raise SystemExit(f"batch '{entry['id']}' matched no lines in {spec['file']}.")
+    text_field = spec.get("textField", "text")
+    audio_field = spec.get("audioField", "audio")
+    out_dir = spec.get("outDir", "public/assets/audio/")
+    print(f"[{entry['id']}] {len(lines)} line(s), one voice ({entry.get('voice', 'F1')}), one sitting")
+    tts = load_tts()
+    for line in lines:
+        render(tts, entry, line[text_field], out_dir + line[audio_field], line.get("id", "?"))
+
+
+def synth_one(entry: dict) -> None:
+    if "batch" in entry:
+        synth_batch(entry)
+        return
+    check_register(entry)
+    text = resolve_text(entry)
+    if not text.strip():
+        raise SystemExit(f"entry '{entry['id']}' resolved to empty text — nothing to render.")
+    render(load_tts(), entry, text, entry["outFile"], entry["id"])
 
 
 def main() -> None:

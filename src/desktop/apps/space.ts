@@ -48,6 +48,13 @@
  * era and gives the spine its bare final restart back), and there is no ball
  * texture anywhere in this session — not started, not stubbed.
  *
+ * ⚑ S77 TOOK THE FIRST OF THOSE SEAMS: `LVoice` (`apps/lVoice.ts`) now begins
+ * the moment the device goes on, draws over this picture, and takes the era's
+ * one press. This file still holds no line and speaks nothing — the voice is
+ * its own module and its own data file, so the place and the thing talking in
+ * it stay separable. `handOff()` is STILL unwired and there is STILL no ball
+ * texture: S77 built nothing of S79's.
+ *
  * INPUT BUDGET (`REINTERP_E4_THE_DEVICE_2026-08-05.md`, Stage 0 §5): the whole
  * era spends three presses — a chip, the memories undo, the turn. This session
  * spends the update's one "I Agree" and the ONE TOUCH on the headset. There is
@@ -57,6 +64,7 @@ import { homeEnvironment, standby, visorEdge, ERA4, PLACE } from '../theme/era4'
 import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import space from '../../../data/dialog/s4_space.json';
+import { LVoice } from './lVoice';
 import type { UpdateApp } from './update';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
@@ -89,6 +97,12 @@ export class E4Shell {
   private lookStep = 0;
   private turnFiled = false;
   private handedOff = false;
+  /** ⚑ S77 — L. Made with the shell (so a `?debug=1` jump can reach a unit
+   *  before the device is even worn) but it does not START until the one touch:
+   *  the era's grammar is that you put it on and it is already talking, which
+   *  only reads if it was NOT talking a moment earlier. */
+  readonly voice = new LVoice();
+  private voiceVersion = 0;
   /** bumped on any change to what this surface DRAWS; the room compares it to
    *  decide when to re-upload the visor texture (dirty discipline, the law
    *  era3Devices' three screens already obey). */
@@ -104,6 +118,14 @@ export class E4Shell {
     this.t += dt;
     const step = Math.floor(((this.t % PULSE_SECONDS) / PULSE_SECONDS) * PULSE_STEPS);
     if (step !== this.pulseStep) { this.pulseStep = step; this.version++; }
+    // L keeps its own version so the caption band's changes reach the visor
+    // texture through the SAME dirty-only upload discipline the three E3
+    // screens obey — a talking assistant must not become a per-frame upload.
+    this.voice.update(dt);
+    if (this.voice.version !== this.voiceVersion) {
+      this.voiceVersion = this.voice.version;
+      this.version++;
+    }
   }
 
   /**
@@ -118,6 +140,9 @@ export class E4Shell {
     this.t = 0;
     this.version++;
     ledger.e4Space.push({ id: 'headset', outcome: 'worn', witness: space.witness.worn });
+    // ⚑ and L is already talking. No greeting screen, no onboarding, no
+    // application to open: the OS IS the assistant from here on.
+    this.voice.begin();
   }
 
   /**
@@ -161,26 +186,44 @@ export class E4Shell {
       return;
     }
     homeEnvironment(ctx, W, H, this.look);
-    // the environment's own name, bottom-left, the size a headset prints it.
-    // ⚑ `arranged for you` is the ENTIRE addressing this session carries — the
-    // faintest sense that the place is aimed at somebody. The ads, the store
-    // and the "for you" wall are S78's, and no name appears until S77 has run
-    // the reader pass that governs it.
+    // The environment's own name, the size a headset prints it. ⚑ `arranged for
+    // you` is the ENTIRE addressing this session carries — the faintest sense
+    // that the place is aimed at somebody. The ads, the store and the "for you"
+    // wall are S78's.
+    //
+    // ⚑ MOVED TOP-LEFT BY S77, and it is a composition fix rather than a change
+    // of mind. S76 printed it bottom-left, which was right in a place where
+    // nothing else spoke; L's caption band now lives along the bottom edge for
+    // most of the era and the tag was simply underneath it, invisible. Top-left
+    // also gives the surface an honest hierarchy: the environment's name and
+    // the system's label field along the top, the voice and your answers along
+    // the bottom.
     setFont(ctx, 10);
     ctx.fillStyle = PLACE.ink;
-    ctx.fillText(space.tag, 16, H - 34);
+    ctx.fillText(space.tag, 16, 16);
     setFont(ctx, 8);
     ctx.fillStyle = PLACE.floorLo;
-    ctx.fillText(space.tagSub, 16, H - 20);
-    px(ctx, 16, H - 40, 34, 1, PLACE.ink);
+    ctx.fillText(space.tagSub, 16, 30);
+    px(ctx, 16, 41, 34, 1, PLACE.ink);
+    // ⚑ L draws INSIDE the visor's edge, not outside it: the caption band, the
+    // chips and the label field are things the device is showing her, so the
+    // vignette closes over them exactly as it closes over the room.
+    this.voice.draw(ctx, W, H);
     visorEdge(ctx, W, H);
   }
 
-  /** the ONLY press this surface takes, and only in the closed state: the one
-   *  touch. Any press on the dark glass counts (S1.0's power-press grammar,
-   *  and S2R.0's return press). Returns true if it consumed the press. */
-  handleClick(_x: number, _y: number): boolean {
-    if (this.worn) return false; // S77: L's chips land here
+  /**
+   * The presses this surface takes, and there are only ever two kinds.
+   * CLOSED: any press on the dark glass is THE ONE TOUCH (S1.0's power-press
+   * grammar, and S2R.0's return press).
+   * WORN: ⚑ L's chips, and nothing else. A press that lands on no chip is
+   * still CONSUMED — the picture is in front of her face, so a press cannot
+   * fall through the place onto the room behind it — and consuming a press is
+   * not the same as acting on one: there is no continue, no confirm and no
+   * dismiss anywhere in this era.
+   */
+  handleClick(x: number, y: number): boolean {
+    if (this.worn) { this.voice.handleClick(x, y); return true; }
     this.wear();
     return true;
   }

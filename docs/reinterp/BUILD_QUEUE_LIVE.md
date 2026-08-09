@@ -16,8 +16,8 @@ not live.***
 | — | ~~S72 — the audit system (L3 capture + L4 assertions)~~ | ↓ below, in this file | **SHIPPED 2026-08-04** — number retired. 5 of 6 assertions live; assertion 6 (reachability) NOT built, named as such |
 | — | ~~S74 — the rooms (E4 Stage 1)~~ | ↓ below, in this file | **SHIPPED 2026-08-06** — number retired |
 | — | ~~S76 — the update, the space, and no desktop~~ (E4 Stage 2a) | ↓ below, in this file | **SHIPPED 2026-08-08** |
-| **1** | **S77 — L, and the room rewrites** (2b) | ↓ below | **dispatch this one** · ⚑ contains the deadname beat |
-| 3 | **S78 — the offers, and the hand-off** (2c) | ↓ below | BLOCKED on S77 |
+| — | ~~S77 — L, and the room rewrites~~ (E4 Stage 2b) | ↓ below, in this file | ✅ **SHIPPED 2026-08-09.** ⚑ The deadname beat is built and is **BLOCKED-ON-READER-PASS** — a gate, not a review step |
+| **1** | **S78 — the offers, and the hand-off** (2c) | ↓ below | ⚑ **UNBLOCKED by S77 — dispatch this one** |
 | 4 | **S79 — TRANSCENDANCE** (Stage 3) | ↓ below | BLOCKED on S78 |
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
@@ -561,10 +561,20 @@ place is somewhere you would rather be. And you turn, and it comes with you, and
 ---
 
 # S77 — L, AND THE ROOM REWRITES · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: QUEUED — S76 shipped 2026-08-08, so this is unblocked. Stage 2b: the voice.
-⚑ Contains the piece's highest-risk beat. ⚑ Read `08_STATUS_REGISTER.md` §8's "what S76 hands the
-next three" before you start — the chips land in `E4Shell.handleClick`, and `app.ts`'s back-hemisphere
-press fault will bite them.**
+**⚑ PROMPT STATUS: SHIPPED — 2026-08-09 (Session 77). E4 Stage 2b: L's voice.**
+*Built: ten conversation units / 32 drafted lines in `data/dialog/s4_l.json`; `LVoice`
+(`src/desktop/apps/lVoice.ts`) drawing captions, chips and the label field over S76's place;
+⚑ the room rewrites AND the captions run out (wrong, wrong, an offer, then a held silence and
+`no category — held for review`); ⚑ both deadname instances, landing as paperwork, with the advisory
+on the pre-fiction panel and the unvoiced opt-out in the game menu; the shrinking choice across three
+stages including the correction chip's one-unit disappearance and its return; the batch-TTS pipeline
+wired (32 lines, one voice, one sitting) with ⚑ NOT ONE LINE VOICED, by plan.
+⚑ **BLOCKED-ON-READER-PASS:** the deadname beat, the advisory and the menu row are PLACEHOLDER-draft
+and the trans reader pass is a GATE, not a review step — none of it ships without one.
+Not done, and named: `?flat=1` still cannot reach Era 4 (08 §9's older debt, unchanged); the audio
+registry in `src/audio/tapeAudio.ts` still needs the filenames after the render (outside the fence);
+the master plan says "Echo" in prose at lines 146/153/156/157 (the fence said thread table only).
+Record: `01_SESSION_LOG.md` (2026-08-09, S77) + `08_STATUS_REGISTER.md` §14.*
 
 ⚑ SHARED PREAMBLE — every E4 session reads these, in this order:
   CLAUDE.md · docs/ETHICS_CONSTRAINTS.md ·

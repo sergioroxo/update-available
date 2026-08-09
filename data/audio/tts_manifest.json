@@ -15,6 +15,24 @@
         "file": "data/dialog/s2_caleb.json",
         "fields": ["pureMail.heading", "pureMail.lines[]", "pureMail.closing"]
       }
+    },
+    {
+      "id": "l_era4_voice",
+      "_doc": "⚑ S77 — L, ERA 4's VOICE. A `batch` entry: render.py walks data/dialog/s4_l.json, finds every object carrying both `text` and `audio`, and renders ALL of them through ONE TTS instance with ONE voice style in ONE process. That is the design constraint, not a convenience — REINTERP_E4_AUDIO_FIRST_DESIGN_2026-07-12.md §4: 'one voice, one description, ALL lines in one batch (drift kills the effect)'. Era 4's premise is a voice that never varies, never tires and never has a bad day; a line rendered in a second sitting would sound like a second machine. Held silences (u3's fourth beat) carry no `audio` key and are skipped, because nothing renders a silence.",
+      "_docNotRun": "⚑ NOT RUN, AND DELIBERATELY SO. No line of L's is voiced. Clips are generated only AFTER Sérgio's voice pass on the copy (the same order the Lamby entry above followed), because re-rendering thirty lines after a rewrite costs an afternoon and the whole point of one batch is that it happens once. Until then src/audio/tapeAudio.ts's registry law means every filename below is simply never requested — no console error, no 404, captions with no sound. ⚑ AND AFTER the render, somebody must add those filenames to that registry (src/audio/tapeAudio.ts, outside S77's file fence) or the clips still will not play. That is the one wiring step S77 could not take.",
+      "_docVoice": "Voice description for Sérgio's pass, per the design doc §4 and ⚑ corrected by ARGUMENT §4.1 — L MUST SOUND GOOD: 'calm adult voice, ambiguous gender, warm and unhurried, perfectly articulate, studio-clean, no breath sounds, gentle therapeutic cadence, slightly too even.' ⚑ NOT sinister, NOT flat, NOT robotic, and no degradation pass ever: a synthetic voice that reads as a villain lets the real thing off the hook. If a rendered line sounds like a warning, the voice is wrong. `voice`/`speed`/`steps` below are a first guess and are his to change — but change them ONCE, for the whole batch.",
+      "register": "apparatus",
+      "voice": "F3",
+      "lang": "en",
+      "speed": 0.96,
+      "steps": 12,
+      "batch": {
+        "file": "data/dialog/s4_l.json",
+        "requires": ["text", "audio"],
+        "textField": "text",
+        "audioField": "audio",
+        "outDir": "public/assets/audio/"
+      }
     }
   ]
 }

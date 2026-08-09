@@ -272,6 +272,18 @@ export class DesktopOS {
     // as the engine's DOM overlay) until beginReinterpOpening() lights the boot.
     if (this.reinterp) {
       this.phase = 'r_dark';
+      // ⚑ S77 — THE RECORD HOLDS A NAME FROM THE FIRST FRAME, and this is a
+      // BUG FIX, not tidying. `beginReinterpOpening` prefills it ("they already
+      // know your name" — there is no typed name in this branch), but a review
+      // jump (`?era=4`, `?flat=1`, any debug-panel landing) never runs the
+      // opening, so the ledger sat on its display placeholder `—`. Era 4's
+      // deadname beat reads the name from `ledger.name` and from nowhere else,
+      // by design — so in exactly the state Sérgio reviews in, the era's
+      // highest-risk line rendered as "…still lists you as —." Found by looking
+      // at the frame. Setting it here makes it true of any reinterp session
+      // however it was entered; `beginReinterpOpening` still sets the same value
+      // and is now a no-op restatement rather than the only source.
+      ledger.name = opening.o3_prefilled_name;
       this.guide = new GuideThread(this);
       this.belongings = new BelongingsSystem();
       // S76 — the room reads the era's shell and the last ritual through here.
@@ -2206,6 +2218,26 @@ export class DesktopOS {
         this.setDesktopEra('e4');
         this.e4?.wear();
         break;
+      // ⚑ S77 — L'S CONVERSATION, one button per beat (C6: three sessions have
+      // now shipped beats Sérgio could not reach and concluded content was
+      // missing when it wasn't). In PLAY there is nothing to jump to: the
+      // conversation runs forward from the one touch by ordinary clicking, and
+      // `e4L` below is that same linear entry. The rest land on a unit with the
+      // record filled in as if the ones before had played.
+      case 'e4L': this.debugJump('e4Place'); break;
+      case 'e4Captions': this.e4Voice('u2_room'); break;
+      case 'e4Unplaced': this.e4Voice('u3_unplaced'); break;
+      case 'e4Deadname': this.e4Voice('u4_name_one'); break;
+      case 'e4Friction': this.e4Voice('u5_friction'); break;
+      case 'e4Deadname2': this.e4Voice('u6_name_two'); break;
+      case 'e4Shrink': this.e4Voice('u7_shrink_one'); break;
+      case 'e4Shrink2': this.e4Voice('u8_shrink_two'); break;
+      case 'e4Narrowed': this.e4Voice('u9_narrowed'); break;
+      case 'e4Returns': this.e4Voice('u10_returns'); break;
+      // …and the chips of whichever unit is on screen, without waiting the
+      // lines out. The shrinking choice is a thing you look AT, so a reviewer
+      // needs to be able to sit in front of a chip set.
+      case 'e4Chips': this.e4?.voice.debugToChips(); break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
       case 'send-s1': this.setPhase('desktop'); this.offerSend('s1'); break;
       case 'send-s2': this.setPhase('desktop'); this.offerSend('s2'); break;
@@ -2213,6 +2245,13 @@ export class DesktopOS {
       case 'send-s4': this.setPhase('desktop'); this.offerSend('s4'); break;
     }
     this.dirty = true;
+  }
+
+  /** ⚑ S77 review helper: put the device on (so the era's surface is the place,
+   *  not the standby glass) and land L on one unit. Never reachable in play. */
+  private e4Voice(unitId: string): void {
+    this.debugJump('e4Place');
+    this.e4?.voice.debugJumpTo(unitId);
   }
 
   // ── input ──────────────────────────────────────────────────────────────

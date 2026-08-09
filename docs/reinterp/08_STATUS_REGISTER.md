@@ -26,7 +26,7 @@ because a hand-maintained register is just one more thing that drifts.*
 | `REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md` | partially executed; Caleb sections gated |
 | `REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md` | S2R.0–S2R.4 built; **S2R.5–S2R.7 unbuilt** |
 | `REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md` · `REINTERP_E3_SENDS_SCRIPTS_2026-07-13.md` · `REINTERP_E3_GRACEQUEUE_CARDS_DRAFT_2026-07-13.md` | E3 spine; sends scripted not built; cards await Sérgio |
-| `REINTERP_E4_AUDIO_FIRST_DESIGN_2026-07-12.md` · `REINTERP_E4_ECHO_SCRIPT_DRAFT_2026-07-13.md` | E4 direction; Echo draft awaits D37 verify |
+| `REINTERP_E4_AUDIO_FIRST_DESIGN_2026-07-12.md` · `REINTERP_E4_ECHO_SCRIPT_DRAFT_2026-07-13.md` | E4 direction. ⚑ **Both renamed Echo → L in full, S77 2026-08-09** (the second file's PATH still says ECHO on purpose — a dozen docs cite it). Eight of its twelve units are built in `data/dialog/s4_l.json`; U4/U9/U11 are S78's and U12 is S79's. Still awaits Sérgio's voice pass, and the deadname beat awaits the trans reader pass |
 | `REINTERP_E1_TAPE_VO_SCRIPTS_2026-07-13.md` · `REINTERP_AUDIO_PRODUCTION_GUIDE_2026-07-11.md` | Sérgio's recording queue |
 | `REINTERP_ERA_MINING_R28_2026-07-10.md` | still being drawn from (finds #7, #10 unspent) |
 | `REINTERP_3D_STYLE_DIRECTION_2026-07-04.md` | art direction; V2 prop pass pending |
@@ -304,8 +304,9 @@ than as a performance fix.
 **S75** (the number the stopped run used for itself). ⚑ Numbers are never reused — `08 §6`.
 
 ### The E4 build, as it now stands
-**S74 ✅ rooms → S76 ✅ shell → S77 voice → S78 offers → S79 the ball.** Each is playable alone and
-none leaves the era unreachable. ⚑ **S77 carries the trans reader pass as a GATE, not a review step.**
+**S74 ✅ rooms → S76 ✅ shell → S77 ✅ voice → S78 offers → S79 the ball.** Each is playable alone and
+none leaves the era unreachable. ⚑ **S77 carries the trans reader pass as a GATE, not a review step —
+and it is STILL OPEN. The beat is built, drafted and marked; it has not been read.** See §14.
 
 ### ⚑ WHAT S76 HANDS THE NEXT THREE (2026-08-08)
 1. **The era opens and holds.** E3's list running out arms the last update on Vera's laptop; the
@@ -358,8 +359,13 @@ chips the moment a player answers L while turned.** S77's whole interaction is a
   a real architectural debt: CLAUDE.md calls `?flat=1` the *universal fallback*, and it currently
   covers half the piece. **It also weakens the argument made for the E4 space design**, which leaned
   on flat surviving intact. Needs its own session.
+  ⚑ **S77 ADDS A SECOND HALF TO THIS, found while trying to verify L there: `?flat=1` MOUNTS NO DEBUG
+  PANEL AT ALL** (`src/flat/flat.ts` never calls `mountDebugPanel`). So flat has neither an ordinary
+  route into E3/E4 nor a review route — it is not merely missing content, it is unreachable *and*
+  un-inspectable past E2. Whoever takes that session should fix both together.
 - **The found file (the renamed dossier easter egg) has no home in E4** — it draws only on an idle
-  desktop, and E4 has none by design. S77/S78 should decide whether it retires at E4 or migrates.
+  desktop, and E4 has none by design. ⚑ S77 did NOT decide this (its fence and its subject were the
+  voice); it falls to S78.
 
 
 ---
@@ -500,3 +506,52 @@ measurements. The measurements are done.
 
 **⚑ And one honest note:** items 7–10 have been deferred for weeks and are the piece's oldest debt.
 Mode 3 did not create that; it just added a second device to the same afternoon.
+
+
+---
+
+## §14 — S77: WHAT L CLOSES, AND THE ONE GATE THAT IS STILL SHUT (2026-08-09)
+
+### ✅ CLOSED
+| open item | where it was registered | status |
+|---|---|---|
+| **S77's chips land in `E4Shell.handleClick`** | §8 hand-off #2 | ✅ **DONE.** `LVoice` owns the press; a press on no chip is consumed, never fallen through |
+| **The deadname advisory's home** | §8 decision 9 | ✅ **BUILT** on the pre-fiction panel (`orientingCard.ts`), behind the 4 s ethics arm-delay |
+| **The unvoiced opt-out's home** | §8 decision 10 (Sérgio) | ✅ **BUILT** in the game menu, always visible, from the pre-fiction panel onward |
+| **The name's single source** | §8 decision 11 | ✅ **AND A BUG WITH IT** — see below |
+| **Echo → L across the E4 docs** | §8 decision 1 | ✅ done in the two E4 docs and the master plan's two thread tables |
+
+### ⚑ STILL SHUT, AND IT IS THE IMPORTANT ONE
+**THE TRANS READER PASS HAS NOT HAPPENED.** The deadname beat, the pre-fiction advisory and the menu
+row are built, drafted and marked `PLACEHOLDER-draft` / `BLOCKED-ON-READER-PASS` in
+`data/dialog/s4_l.json`, `data/strings/orientingCard.json` and `src/desktop/orientingCard.ts`.
+⚑ **Building it is not passing it.** Nothing in this beat ships without a reader, and no downstream
+session may treat "S77 shipped" as "the beat is cleared". It is a gate, and it is closed.
+
+### ⚑ A FOURTH INSTANCE OF NOTHING — but a first instance of something else
+**A DISPLAY PLACEHOLDER SURVIVING INTO A LOAD-BEARING LINE.** `ledger.name` is prefilled at the
+opening ("they already know your name"); a review jump never runs the opening; so at `?era=4` the
+era's highest-risk line rendered as *"…still lists you as —."* — in exactly the state the project
+lead reviews in. Fixed by prefilling in the reinterp branch of `DesktopOS`'s constructor.
+
+⚑ **The shape, for the register:** *a value that is only correct on the ordinary path, read by a beat
+that a review path can reach.* It is a cousin of §12's class (a global standing in for a place) and
+of the S64 fault (`?era=` killing the spine). **The check that would have caught all three is
+`shots.mjs`'s assertion 6, REACHABILITY, which is still not built.** That is now three faults with
+one missing check behind them.
+
+### WHAT S77 HANDS S78 AND S79
+1. **`LVoice.onHandOff`** is the named seam and is fired by u10's second chip ("Show me the quieter
+   month"). It leads nowhere today, deliberately.
+2. **`E4Shell.handOff()` is STILL UNWIRED** — S79's, unchanged since S76, and it remains the only
+   thing that lets the spine close the piece.
+3. **⚑ NO TEXTURE OF THE BALL EXISTS.** Not started, not stubbed, not sketched. S79 inherits a blank
+   page, which is the correct inheritance.
+4. **The curation beat is S78's** (the draft script's U4/U9), with the source pass's
+   lobbying-vs-clinical-debate law governing it, and **the careful pause (U11) is S78's too** —
+   it is an *offer*, and offers are that session.
+5. **The audio registry needs the filenames** once the batch renders: `src/audio/tapeAudio.ts`,
+   outside S77's fence. Until then every name is silently never requested, by the registry law.
+6. **`data/dialog/s4_l.json`'s `_doc` keys are the brief** for anyone editing L's copy — the voice
+   law, the register law, the caption law, the deadname rules and the shrink arc are all written
+   into the file that carries the lines, not only into a doc beside it.

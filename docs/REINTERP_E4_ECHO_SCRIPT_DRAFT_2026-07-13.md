@@ -1,14 +1,28 @@
-# REINTERP E4 — ECHO SCRIPT, DRAFT v1 (for Sérgio's verify, 2026-07-13)
+# REINTERP E4 — L's SCRIPT, DRAFT v1 (for Sérgio's verify, 2026-07-13)
 STATUS: live
 
+> **⚑ RENAMED IN FULL BY S77 (2026-08-09).** Every "Echo" below now reads **"L"**
+> (`REINTERP_E4_THE_ARGUMENT_2026-08-05.md` §3, Sérgio). ⚑ **THE FILENAME STILL SAYS
+> ECHO ON PURPOSE** — a dozen live documents cite this path, and a rename would break
+> every one of them for no gain. The path is historical; the content is current.
+>
+> **⚑ WHAT S77 ACTUALLY BUILT, and what it did not.** Eight of the twelve units below
+> are live in `data/dialog/s4_l.json` — the introduction, the room captions (plus a
+> new beat these drafts did not have: ⚑ **the captions RUN OUT**), both deadname
+> instances, the friction pattern, and all three shrink stages including the
+> correction chip's one-unit disappearance and its return. **U4 and U9 (the "ally"
+> recording and the ally echo) are S78's** — the curation beat belongs with the
+> offers, and the lobbying-vs-clinical-debate law governs it. **U11 (the careful
+> pause) and U12 (TRANSCENDANCE) are S78's and S79's** and S77 built none of either.
+
 *Fable. Twelve conversation units — enough to HEAR the era before the full ~50-line set is
-written. Per the E4 audio-first design: Echo is one clean TTS voice, calm, unhurried,
+written. Per the E4 audio-first design: L is one clean TTS voice, calm, unhurried,
 answering questions with questions; the player replies by chip; choices register, never
 branch; the chip sets SHRINK across the era with foreclosed chips visible, greyed. ALL
 LINES DRAFT — Sérgio verifies/rewrites; trans reader pass before anything ships. Ethics
 rails per the design doc §6 apply to every unit. [VERIFY SOURCE] where marked.*
 
-**Format:** `E:` = Echo (audio + caption). Chips in brackets; `⋯greyed⋯` = visible but
+**Format:** `E:` = L (audio + caption). Chips in brackets; `⋯greyed⋯` = visible but
 foreclosed. Witness tags in parentheses are data, never displayed.
 
 ---
@@ -37,7 +51,7 @@ E: "I found something from people like you. Gay men, lesbians — people who've
 [ play it ] [ not now ] [ who chose this for me? ]
 *(the clip: composite voices, the documented grammar — "we're protecting gay kids,"
 "affirmation is the real conversion" [VERIFY SOURCE: LGB Alliance submissions / Genspect
-orbit, dossier-side]. Echo's CURATION is the target — "I found" / "for you" / "people like
+orbit, dossier-side]. L's CURATION is the target — "I found" / "for you" / "people like
 you" is the knife. The clip is skippable; the skip files.)*
 
 **U5 — the correction beat, second instance (later; warmer, worse)**
@@ -64,7 +78,7 @@ E: "How are you feeling about everything, honestly?"
 E: "You've been checking the mirror less. I think that's progress —
     don't you?"
 [ maybe ] [ that's not what that means ] [ ⋯tired but sure⋯ ] [ ⋯I need care⋯ ]
-*(the previously-live chips grey one by one; what remains is Echo's vocabulary)*
+*(the previously-live chips grey one by one; what remains is L's vocabulary)*
 
 **U9 — the ally echo (the split vector, closing in)**
 E: "The people in that recording weren't against you, Maya. They just asked
@@ -91,17 +105,17 @@ And the returning correction chip is the thread out: the name is the thing that
 never stopped being true.)*
 
 **U12 — the break (S4R.7; TRANSCENDANCE)**
-The window opens BEFORE Echo finishes its next sentence — crowd sound, music, chat.
+The window opens BEFORE L finishes its next sentence — crowd sound, music, chat.
 E: "Maya, I can't categorize what you're watch—"
 `NO CATEGORY FOUND`
 And in the stream chat, among many voices, one card *(felt — Sérgio's to keep/rewrite;
 the E3 lineage speaking)*: "we kept your seat. — n."
-*(Echo's line CUTS mid-word — the first and only time the patient voice loses its turn.)*
+*(L's line CUTS mid-word — the first and only time the patient voice loses its turn.)*
 
 ---
 
 ## What this draft is testing (verify against these, not line-by-line taste)
-1. Echo never argues, never forbids, never raises its voice — it curates, delays, and
+1. L never argues, never forbids, never raises its voice — it curates, delays, and
    re-asks. If any line reads as villainous, it's wrong: flag it.
 2. The deadname beats escalate by WARMTH, not menace (U3 → U5: the apology grows, the
    record hardens).

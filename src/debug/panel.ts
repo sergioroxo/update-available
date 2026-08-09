@@ -148,6 +148,24 @@ const OS_BEATS: BeatRow[] = [
   { label: 'E4 · the headset, waiting (standby — one touch to wear)', id: 'e4Standby' },
   { label: 'E4 · ⚑ THE PLACE (worn — then turn, and see what happens)', id: 'e4Place' },
 
+  { heading: 'E4 · L — the voice, and the room rewrites (S77)' },
+  // ⚑ S77. `e4L` is the LINEAR ENTRY: it is the same thing the one touch does,
+  // and from there the whole conversation runs forward by ordinary clicking —
+  // L speaks, the chips appear, you answer, it goes on by itself. Every button
+  // below lands on one unit with the record filled in as if the ones before it
+  // had played; none of them is reachable in play, and none of them is needed.
+  { label: 'S4R.1 · L introduces itself — ⏵ LINEAR ENTRY (play from here)', id: 'e4L' },
+  { label: 'S4R.2 · the room rewrites (L captions her things)', id: 'e4Captions' },
+  { label: '⚑ the captions RUN OUT (wrong, wrong, an offer, then nothing)', id: 'e4Unplaced' },
+  { label: '⚑⚑ THE DEADNAME · first instance (it lands as paperwork)', id: 'e4Deadname' },
+  { label: 'S4R.4 · the friction pattern (the stream always opens)', id: 'e4Friction' },
+  { label: '⚑⚑ THE DEADNAME · second instance (warmer, and worse)', id: 'e4Deadname2' },
+  { label: 'S4R.5 · the chips begin to thin (one greyed)', id: 'e4Shrink' },
+  { label: '↳ shrink 2 · the ones you were using grey', id: 'e4Shrink2' },
+  { label: '⚑⚑ THE NARROWED FIELD — the correction chip is gone', id: 'e4Narrowed' },
+  { label: '↳ …and it comes back, live (the thread out)', id: 'e4Returns' },
+  { label: '↳ skip to the chips of whichever unit is up', id: 'e4Chips' },
+
   { heading: 'Close' },
   { label: 'Final · Restart as you are', id: 'closeUpdate' },
 

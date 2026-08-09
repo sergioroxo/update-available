@@ -16,17 +16,26 @@
  * undecorated — it never charms, never scores, never glitters.
  *
  * THE FRAME NEVER PLAYS, asserted in code, not just claimed: this file never
- * imports state/ledger's `ledger` or witness/intake, and never calls any
- * witness-filing function. Opening/closing the menu, and reading Controls or
+ * calls any witness-filing function, and it never appends to any of the
+ * ledger's RECORD fields. Opening/closing the menu, and reading Controls or
  * Credits, are all invisible to the ledger and the witness record —
  * verified in 01_SESSION_LOG.md Session 36 by probing __ledger() before and
- * after driving every menu interaction. Restart/Leave are the one deliberate
- * exception: they WIPE the ledger via `wipeLedger()` (the opposite of
- * filing — emptying it, never adding to it), which is exactly the
- * in-memory-only invariant's own escape hatch (state/ledger.ts), not the
- * frame playing.
+ * after driving every menu interaction. There are two deliberate exceptions,
+ * and neither is the frame playing:
+ *   · Restart/Leave WIPE the ledger via `wipeLedger()` — the opposite of
+ *     filing, emptying it rather than adding to it, and exactly the
+ *     in-memory-only invariant's own escape hatch (state/ledger.ts);
+ *   · ⚑ S77 reads and writes ONE field, `ledger.view.unvoicedName`. The header
+ *     used to say this file never imports `ledger` at all; that is now false
+ *     and is corrected here rather than quietly. `view` is the ledger's
+ *     documented home for the FRAME's own state — src/witness/ never reads it,
+ *     nothing files from it, and it exists there only because this piece is
+ *     allowed no other store at all — every browser-persistent one is
+ *     forbidden outright by the hard invariants. Setting an accessibility
+ *     preference is not filing, and this row never touches anything the record
+ *     can see.
  */
-import { wipeLedger } from '../state/ledger';
+import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import copy from '../../data/strings/gameMenu.json';
 import attributions from '../../data/strings/attributions.json';
@@ -143,6 +152,23 @@ export function mountGameMenu(): GameMenu {
       if (gameMenuBus.recentreView) {
         row(copy.recentre, () => { gameMenuBus.recentreView?.(); gameMenuBus.close(); });
       }
+      // ⚑ S77 — THE UNVOICED OPT-OUT, and it lives HERE for the reason the
+      // whole beat depends on: an opt-out the apparatus offers you is not an
+      // opt-out. Accessibility belongs to the frame (Sérgio, 2026-08-06: "if it
+      // is in the menu setting, then it's okay"). It is always shown, in every
+      // era and from the pre-fiction panel on — a setting that only appeared
+      // once the beat was imminent would be the piece announcing the beat, and
+      // a warning you can only find after you needed it is not one.
+      // ⚑ IT NEVER REMOVES THE MEANING: with it on, the subtitle still says the
+      // system used a name Maya does not use. Only the audio is withheld. The
+      // advisory that tells the player this exists is on the pre-fiction panel
+      // (src/desktop/orientingCard.ts), which is the last surface before the
+      // fiction starts and the only place an advisory can honestly go.
+      row(
+        ledger.view.unvoicedName ? copy.unvoicedNameOn : copy.unvoicedNameOff,
+        () => { ledger.view.unvoicedName = !ledger.view.unvoicedName; render(); }
+      );
+      paragraph(copy.unvoicedNameNote);
       row(copy.restart, () => { view = 'restartConfirm'; render(); });
       row(copy.controls, () => { view = 'controls'; render(); });
       row(copy.credits, () => { view = 'credits'; render(); });

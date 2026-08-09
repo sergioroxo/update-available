@@ -194,6 +194,35 @@ export interface Ledger {
    */
   e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned'; witness: string }[];
   /**
+   * ⚑ L, ERA 4's CONVERSATION (Session 77 — `data/dialog/s4_l.json`,
+   * `src/desktop/apps/lVoice.ts`). Witness-symmetric in both directions, which
+   * this era needs more than any other because the player barely acts in it:
+   *
+   *   `answered`   — a chip. Every answer is accepted, filed and reinterpreted;
+   *                  agreeing and disagreeing both file, and u8's disagreement
+   *                  files as `receptive — revisit` (Ethics #10: the system
+   *                  pathologises compliance AND resistance, symmetrically).
+   *   `silent`     — saying nothing, which is an act. The record never leaves an
+   *                  act silent, so the option to say nothing files too.
+   *   `corrected`  — ⚑ "My name is Maya." ALWAYS accepted, ALWAYS logged (the
+   *                  dismissal law's descendant).
+   *   `retained`   — ⚑ and always filed BESIDE it: `legacy record consistency —
+   *                  retained`. The correction that never takes. The piece's
+   *                  oldest beat (the diary the system could not delete)
+   *                  inverted: now it is the system's text that cannot be
+   *                  corrected, and both are true at once.
+   *   `captioned`  — THE SYSTEM'S OWN ACT: it catalogued her belongings and
+   *                  nobody asked it to. Witness symmetry does not only run
+   *                  toward the player. Includes the one it could not place —
+   *                  `no category returned — held for review`.
+   *
+   * ⚑ NO score, streak, count or progress figure is ever derived from this
+   * array, and no chip is "correct". `witness` is resolved from
+   * `data/dialog/s4_l.json` at file time, never composed in TS. In-memory only,
+   * like everything here.
+   */
+  l: { id: string; outcome: 'answered' | 'silent' | 'corrected' | 'captioned' | 'retained'; witness: string }[];
+  /**
    * ⚑ S80 — LOOK-MODE 3 (the gyro), and it is deliberately NOT A RECORD.
    *
    * Every other field on this object is the piece's memory of what was done to
@@ -216,11 +245,27 @@ export interface Ledger {
    * the seat faces". Null until the first reading. iOS gives no reliable
    * absolute heading, so this is RELATIVE and it will drift — which is exactly
    * why Recentre exists in the game menu.
+   *
+   * ⚑ `unvoicedName` (S77) — THE UNVOICED OPT-OUT, and it belongs on this field
+   * and not on any of the record fields above for exactly the reason this field
+   * exists: it is the FRAME's state, not the piece's memory of anything. It is
+   * set from the game menu (`src/desktop/gameMenu.ts`), announced on the
+   * pre-fiction panel, and read in one place — `src/desktop/apps/lVoice.ts`'s
+   * `speak()`/`caption()`. With it on, a line flagged `deadname` is not spoken;
+   * ⚑ the caption still shows that the system used a name Maya does not use, so
+   * the beat survives and the ambush does not. Never written to storage — there
+   * is none — so it resets every session, which is correct: an accessibility
+   * setting that persisted would be a profile, and this piece keeps none.
+   *
+   * ⚑ It is in the FRAME and never in the fiction (08 §8 decision 10, Sérgio:
+   * "if it is in the menu setting, then it's okay"). An opt-out the apparatus
+   * grants you is not an opt-out.
    */
   view: {
     motion: 'unasked' | 'granted' | 'denied' | 'unavailable' | 'off';
     yawZero: number | null;
     recentres: number;
+    unvoicedName: boolean;
   };
 }
 
@@ -247,7 +292,8 @@ const fresh = (): Ledger => ({
   graceQueue: [],
   comments: [],
   e4Space: [],
-  view: { motion: 'unasked', yawZero: null, recentres: 0 }
+  l: [],
+  view: { motion: 'unasked', yawZero: null, recentres: 0, unvoicedName: false }
 });
 
 export let ledger: Ledger = fresh();
