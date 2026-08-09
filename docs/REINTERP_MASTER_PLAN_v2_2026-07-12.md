@@ -143,18 +143,18 @@ SisterSignal→Flourish rebrand = the u4 trigger.
 
 **ERA 4 — THE ROOM REWRITES YOU (now, Maya, Room 3) — DIRECTION REVISED (Sérgio,
 2026-07-12): AUDIO-FIRST.** The era is carried by **spoken conversations with the AI** —
-Echo is a VOICE (the digital-voice aesthetic is the point: the apparatus finally sounds
+L is a VOICE (the digital-voice aesthetic is the point: the apparatus finally sounds
 like a person), the player responds by chip (input law). Two foregrounded vectors:
 **deadnaming** (the system speaks the old name aloud — the un-overwritable-name beat
 inverted; Maya is the name it can't file) and **the LGB-anti-trans split** ("transing away
 the gay" — the coalition weaponizing gay rights against trans people; sourced per the
 ERA4 source spine, dossier-side referents, composites playable). The room still rewrites
 (objects re-captioned — spoken now, not just labeled), the Soft Lock and the Shrinking
-Choice survive as CONVERSATIONAL patterns (the narrowing happens in what Echo offers you
+Choice survive as CONVERSATIONAL patterns (the narrowing happens in what L offers you
 to say). **TRANSCENDANCE stays** — the uncaptionable dance-stream respite, `NO CATEGORY
 FOUND`, the community not the AI as what saves. Hard rails unchanged: Ethics #7,
-detransition never vilified, trans reader passes. Production note: Echo's voice = TTS by
-design (the §7 doctrine bends here deliberately — Echo is clean, TOO clean). Finale:
+detransition never vilified, trans reader passes. Production note: L's voice = TTS by
+design (the §7 doctrine bends here deliberately — L is clean, TOO clean). Finale:
 glitch → cyclorama slits → four era panels → the global Close.
 
 **THE CLOSE — unchanged canon:** survivors speak first, TRANSCENDANCE plays clean, "Your

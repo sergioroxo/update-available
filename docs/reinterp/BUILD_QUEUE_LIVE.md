@@ -818,6 +818,15 @@ SCOPE:
    Maya's room, and fails. NOT because the material is alien: it RECOGNISES EVERY WORD AND CANNOT
    OCCUPY THE ROLE. It is looking at its own vocabulary with the scoring taken out of its hands.
    Nobody explains this. Ever. No line, no cue.
+   ⚑ AND MIND THE RHYME S77 CREATED, because it is a gift and a trap at once. S77 built the
+   captions-running-out beat and its last state reads `ITEM · no category — held for review` — on a
+   MENDED HOODIE. That is the same failure at private scale: the machine's vocabulary is *original*
+   and *damaged*, and a repaired thing is neither.
+   ⚑ SO THE BALL IS NOT THE FIRST TIME THE PLAYER SEES THIS. It is the second, and it must be the
+   LARGER one — the same limitation, in public, with people in it, where the hoodie was one object
+   alone in a room. USE the rhyme; do NOT repeat the wording. If the ball's line is a copy of the
+   hoodie's, the ending is a callback instead of a discovery. Word it so a player who noticed the
+   hoodie feels it land twice, and a player who did not still meets it whole.
 5. TRANSJESUS, per canon: "the stream survives; the platform stutters." ⚑ THE STUTTER IS L'S, NEVER
    THE BALL'S — dropped frames, a caption rewriting itself, an unrequested content warning, a
    `sensitive` label. NEVER glitch the performers. NEVER distort the joy. `respite` is absolute here:
