@@ -464,3 +464,39 @@ there. ⚑ **Reasonable, and worth re-checking the first time someone reports a 
 **For future sessions:** if you find yourself comparing a yaw to a threshold to decide *what the
 player is looking at* or *where they are*, stop. That is this bug, and it has been written three
 times.
+
+
+---
+
+## §13 — THE DEVICE SESSION: everything that needs real hardware, in one list (2026-08-06)
+*Sérgio: "Is it possible to continue working and then later we can try the iPad (iOS) system?"*
+**Yes — nothing downstream is blocked.** S77–S79 do not touch mode 3, and S81's visibility audit is
+desktop-measurable. What the hardware settles is **tuning and confirmation, never architecture.**
+
+⚑ **But five separate sessions have now deferred something to "a real device," and the answers are
+scattering.** This is the consolidated list, so one afternoon closes all of it.
+
+### On an iPhone or iPad (Safari, over HTTPS — `tailscale serve` on the Mac)
+| # | question | who deferred it | why it cannot be faked |
+|---|---|---|---|
+| 1 | Does the **iOS permission modal** actually appear, and does the button satisfy transient activation? | S80 | headless Chrome has no modal to show |
+| 2 | **Sensor noise** — is raw `deviceorientation` jittery enough to need filtering? | S80 | synthetic events are perfectly clean |
+| 3 | Is **0.10 °/px pinch sensitivity** right in the hand? | S80 | a mouse wheel is not two thumbs |
+| 4 | ⚑ **Does the turn feel right?** Turning your body while holding a phone is the mode's whole argument | S80 | not measurable at all |
+| 5 | Is the **42° portrait crop** actually annoying, or does a small pan read fine? | S80 + the strip | the screenshot shows it; only a hand can judge it |
+| 6 | Does **`orientationchange`** keep the horizon level in practice? | S80 | emulated rotation is not a real gyro |
+
+### On a Quest 3 (`tailscale funnel` or GitHub Pages)
+| # | question | who deferred it | |
+|---|---|---|---|
+| 7 | ⚑ **A11 — the in-headset pass. It has NEVER run.** | S53, S61, S65, S67, S72, S76 | six sessions |
+| 8 | Is **75 draw calls** right? One frame-time capture settles it | 2026-08-06 | our ceiling is ~half an outside spec's |
+| 9 | Does the **entrance descent at 12.0 s** read as comfortable, or merely slow? | S72 | every figure is desktop-measured |
+| 10 | Does **E3→E4's 42.5 s crossing** read as routine or as boring? | S67 | *"if it's boring, the honest lever is the envelope, not the edit"* |
+
+### ⚑ What to bring
+The build over HTTPS · twenty minutes · and **nothing else** — these are all *judgements*, not
+measurements. The measurements are done.
+
+**⚑ And one honest note:** items 7–10 have been deferred for weeks and are the piece's oldest debt.
+Mode 3 did not create that; it just added a second device to the same afternoon.
