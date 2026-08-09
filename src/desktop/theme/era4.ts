@@ -36,7 +36,8 @@
  * on this surface is the system's own instruments — the caption band, the
  * label field, the counter — exactly as the selective-fidelity law requires.
  */
-import { px, setFont } from './chrome';
+import { px, setFont, wrapText } from './chrome';
+import { RENDER_SCALE } from './era1';
 
 export const ERA4 = {
   // the field — the visor's own darkness, the room's dead-glass hex
@@ -128,6 +129,37 @@ export const PLACE = {
   book: '#C42020',
   bookAlt: '#2C3A5C',
   ink: '#74492F'         // the environment's own small print
+} as const;
+
+/**
+ * ⚑ THE WALL (S78) — the palette the place's OFFERS are drawn in, and it is
+ * deliberately the PAPER family rather than the visor's dark chrome.
+ *
+ * `docs/REINTERP_E4_THE_SPACE_2026-08-06.md` §2: the ads are not ads on a page,
+ * they are ads IN A ROOM — *"everything here is addressed to her… offers that
+ * are, genuinely, quite nice"*. So they are lit like the room they hang in, not
+ * like a system dialog: warm card stock on a warm wall. ⚑ An offer drawn in
+ * alarm colours would be the era arguing with itself, exactly as a sinister L
+ * would be (§4.1). It should be a pleasure to look at. That is the trap.
+ *
+ * COLOR LAW, same discipline as every block above: ⚑ every hex is lifted
+ * VERBATIM from `data/room/era1.json`. Nothing invented, ratchet unmoved.
+ */
+export const WALL = {
+  card: '#F3EAD8',       // the card stock
+  cardHi: '#F5F4ED',     // its lit top edge
+  cardEdge: '#CFC4AA',
+  mark: '#8A5A3B',       // the invented mark, small, above the title
+  title: '#74492F',
+  body: '#9A9486',
+  price: '#2C3A5C',
+  accent: '#EFA13F',     // the one warm accent — the thing they want you to press
+  /** ⚑ the smallest, dimmest type on the surface, and it is where the export
+   *  thesis lives: `Available in your region.` sits here, in the same colour as
+   *  a delivery note, and nothing anywhere points at it. */
+  fine: '#B5A98C',
+  meta: '#A8917B',
+  quiet: '#C9BFA6'       // a withdrawn item, on its way out
 } as const;
 
 /** ⚑ THE PARALLAX BOUND. The picture answers when you look, and it answers a
@@ -381,40 +413,90 @@ export function labelField(
  * FACELESS, like `era3.ts`'s NOA frames and for the same reason: no real
  * people, no likenesses, ever. The figure is a shape at a window.
  * ⚑ PLACEHOLDER-draft art — Sérgio's eye pending.
+ *
+ * ⚑ S78 ADDED `variant`, because the beat needs TWO memories and not one: the
+ * second one is *already enhanced when it arrives*, which is the whole point
+ * (nothing you decline is ever un-offered), and that reads as a system habit
+ * only if it is visibly a different photograph. 0 = the window portrait,
+ * 1 = outdoors in the spring.
  */
 export function photograph(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number,
-  enhanced: boolean
+  enhanced: boolean,
+  variant = 0
 ): void {
   const sky = enhanced ? ERA4.photoSkyHi : ERA4.photoSky;
-  const wall = enhanced ? ERA4.photoWallHi : ERA4.photoWall;
   const skin = enhanced ? ERA4.photoSkinHi : ERA4.photoSkin;
   const cloth = enhanced ? ERA4.photoClothHi : ERA4.photoCloth;
-
-  px(ctx, x, y, w, h, wall);
-  // the window she is standing in front of — straightened in the enhanced pass
+  const wall = ERA4.photoWall;
+  // ⚑ the enhanced pass STRAIGHTENS and RE-CENTRES. Her own frames are a few
+  // pixels out and a little off to one side, the way a photograph taken quickly
+  // by a person is. The system's are level and composed.
   const tilt = enhanced ? 0 : 3;
-  const wx = x + Math.round(w * 0.10);
-  const ww = Math.round(w * 0.52);
-  px(ctx, wx, y + 6 + tilt, ww, Math.round(h * 0.62), sky);
-  px(ctx, wx + Math.round(ww / 2) - 1, y + 6 + tilt, 2, Math.round(h * 0.62), wall);
-  if (enhanced) {
-    // the light the system added: a warm wash across the top third
-    ctx.save();
-    ctx.globalAlpha = 0.30;
-    px(ctx, x, y, w, Math.round(h * 0.4), ERA4.photoSun);
-    ctx.restore();
+  const skew = enhanced ? 0 : 5;
+  // ⚑ a photograph is a rectangle and everything in it stops at its edge. The
+  // tilt and the skew push bands past that edge on purpose, so the crop is what
+  // keeps them inside — found by looking: the spring memory's ground ran a
+  // hundred pixels down the wall of the room behind it.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+
+  if (variant === 1) {
+    // outdoors: a horizon, something green, and light the system found for it
+    px(ctx, x, y, w, h, sky);
+    if (enhanced) {
+      px(ctx, x, y + Math.round(h * 0.30), w, Math.round(h * 0.16), PLACE.skyHaze);
+      px(ctx, x + Math.round(w * 0.14), y + Math.round(h * 0.12), 14, 14, PLACE.sun);
+      px(ctx, x + Math.round(w * 0.14) + 3, y + Math.round(h * 0.12) + 3, 8, 8, PLACE.sunHi);
+    }
+    px(ctx, x - skew, y + Math.round(h * 0.50) + tilt, w + skew, Math.round(h * 0.18),
+      enhanced ? PLACE.land : PLACE.landLo);
+    px(ctx, x - skew, y + Math.round(h * 0.66) + tilt, w + skew, h,
+      enhanced ? ERA4.photoWallHi : PLACE.landLo);
+  } else {
+    px(ctx, x, y, w, h, wall);
+    // the window she is standing in front of
+    const wx = x + Math.round(w * 0.10) - skew;
+    const ww = Math.round(w * 0.52);
+    const wh = Math.round(h * 0.62);
+    px(ctx, wx, y + 6 + tilt, ww, wh, sky);
+    px(ctx, wx + Math.round(ww / 2) - 1, y + 6 + tilt, 2, wh, wall);
+    if (enhanced) {
+      // ⚑ WHAT THE SYSTEM ACTUALLY DID, and it is not a wash over everything:
+      // it found the light. A warm spill off the window onto the wall beside
+      // it, a lifted sill, and a top band of sun — the picture reads LIT rather
+      // than paled, which is the only version of this beat that works. If the
+      // enhanced photograph is not the better photograph, the beat is inverted
+      // and the cruelty is gone.
+      px(ctx, x, y, w, 5, ERA4.photoWarm);
+      px(ctx, wx, y + 6 + wh, ww, 4, ERA4.photoWarm);
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      px(ctx, wx + ww, y + 10, Math.round(w * 0.22), h - 20, ERA4.photoSun);
+      ctx.globalAlpha = 0.12;
+      px(ctx, x, y, w, Math.round(h * 0.30), ERA4.photoSun);
+      ctx.restore();
+    }
   }
   // the figure — a shape, no face, ever
-  const fx = x + Math.round(w * 0.56);
-  const fy = y + Math.round(h * 0.22);
+  const fx = x + Math.round(w * (variant === 1 ? 0.42 : 0.56)) + skew;
+  const fy = y + Math.round(h * (variant === 1 ? 0.30 : 0.22)) + tilt;
   px(ctx, fx, fy, 14, 14, skin);                 // head
   px(ctx, fx - 2, fy - 3, 18, 6, ERA4.photoHair);
   px(ctx, fx - 4, fy + 15, 22, h - (fy - y) - 15, cloth); // shoulders down
-  if (!enhanced) {
-    // her version has grain. The enhanced one does not, and that is the tell.
+  if (enhanced) {
+    // the rim of light down one side of her — the flattering half of the pass
+    px(ctx, fx - 5, fy + 15, 1, h - (fy - y) - 15, ERA4.photoWarm);
+    px(ctx, fx - 1, fy, 2, 14, ERA4.photoWarm);
+  } else {
+    // ⚑ her version is UNDEREXPOSED and it has grain. The enhanced one is
+    // neither, and that is the tell — the only one there is.
     ctx.save();
+    ctx.globalAlpha = 0.18;
+    px(ctx, x, y, w, h, ERA4.field);
     ctx.globalAlpha = 0.10;
     for (let i = 0; i < 90; i++) {
       const gx = x + ((i * 37) % w);
@@ -423,11 +505,266 @@ export function photograph(
     }
     ctx.restore();
   }
+  ctx.restore();   // the crop
   // frame
   px(ctx, x - 1, y - 1, w + 2, 1, ERA4.photoFrame);
   px(ctx, x - 1, y + h, w + 2, 1, ERA4.photoFrame);
   px(ctx, x - 1, y - 1, 1, h + 2, ERA4.photoFrame);
   px(ctx, x + w, y - 1, 1, h + 2, ERA4.photoFrame);
+}
+
+export interface Rect { x: number; y: number; w: number; h: number }
+
+/**
+ * ⚑ THE MEMORY (S78) — and the surface exists to be UNREMARKABLE.
+ *
+ * `docs/REINTERP_E4_DEEP_PASS_2026-08-05.md` §2: it is not an app. There is no
+ * window frame, no title bar, no toolbar and nothing to open — a card the way a
+ * phone puts a card in front of you, with the date at the top and the picture
+ * under it. **Nothing announces that the picture has been changed.**
+ *
+ * The one control is the small grey `See original` line every photo product in
+ * the world puts under an automatic enhancement, drawn in the DIMMEST type on
+ * the card, below the picture, where such a line always is. ⚑ It is the era's
+ * second press and the whole reason the beat can be discovered at all — and it
+ * is deliberately not styled as a warning, a button or an alert. Returns its
+ * rect so the caller can hit-test the same geometry that was drawn.
+ */
+export function memoryCard(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number,
+  title: string, control: string,
+  enhanced: boolean, variant: number
+): Rect {
+  const pad = 12;
+  const pw = w - pad * 2;
+  const ph = Math.round(pw * 0.62);
+  const h = pad + 14 + ph + 10 + 12 + pad - 6;
+  px(ctx, x, y, w, h, WALL.card);
+  px(ctx, x, y, w, 1, WALL.cardHi);
+  px(ctx, x, y + h - 1, w, 1, WALL.cardEdge);
+  px(ctx, x, y, 1, h, WALL.cardEdge);
+  px(ctx, x + w - 1, y, 1, h, WALL.cardEdge);
+
+  setFont(ctx, 9);
+  ctx.fillStyle = WALL.meta;
+  ctx.fillText(title, x + pad, y + pad - 3);
+
+  photograph(ctx, x + pad, y + pad + 12, pw, ph, enhanced, variant);
+
+  // the small grey line under the picture. Never emphasised, never coloured.
+  const cy = y + pad + 12 + ph + 8;
+  setFont(ctx, 9);
+  ctx.fillStyle = enhanced ? WALL.fine : WALL.quiet;
+  ctx.fillText(control, x + pad, cy);
+  const cw = Math.ceil(ctx.measureText(control).width);
+  return { x: x + pad - 4, y: cy - 4, w: cw + 8, h: 16 };
+}
+
+export interface OfferCopy {
+  mark: string; title: string; body: string; price: string; fine: string;
+}
+
+/**
+ * ⚑ AN OFFER, on the wall of the place (S78). Warm card stock, one accent, and
+ * the fine print in the dimmest type there is — which is where the export
+ * thesis lives (`Available in your region.`) and why nothing here draws the eye
+ * to it. It is not pressable: this era's presses are spent elsewhere, and a
+ * store you could buy from would be a beat nobody asked for.
+ *
+ * ⚑ PLACEHOLDER-draft art. `body` is wrapped by the caller so this helper stays
+ * a painter and the copy stays in `data/dialog/s4_offers.json`.
+ */
+export function offerCard(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  copy: OfferCopy, bodyRows: string[]
+): void {
+  px(ctx, x, y, w, h, WALL.card);
+  px(ctx, x, y, w, 1, WALL.cardHi);
+  px(ctx, x, y + h - 1, w, 1, WALL.cardEdge);
+  px(ctx, x, y, 1, h, WALL.cardEdge);
+  px(ctx, x + w - 1, y, 1, h, WALL.cardEdge);
+  px(ctx, x, y, 3, h, WALL.accent);      // the one warm accent
+
+  setFont(ctx, 8);
+  ctx.fillStyle = WALL.mark;
+  ctx.fillText(copy.mark, x + 10, y + 7);
+  // the title wraps rather than running off the card — the copy lives in data
+  // and is the project lead's to rewrite, so the painter must survive a longer
+  // line instead of the line being cut to fit the painter.
+  setFont(ctx, 10);
+  const titleRows = wrapText(ctx, copy.title, w - 20).slice(0, 2);
+  ctx.fillStyle = WALL.title;
+  titleRows.forEach((row, i) => ctx.fillText(row, x + 10, y + 18 + i * 12));
+  setFont(ctx, 9);
+  ctx.fillStyle = WALL.body;
+  const bodyTop = y + 20 + titleRows.length * 12;
+  bodyRows.forEach((row, i) => ctx.fillText(row, x + 10, bodyTop + i * 11));
+  setFont(ctx, 10);
+  ctx.fillStyle = WALL.price;
+  ctx.fillText(copy.price, x + 10, y + h - 32);
+  // ⚑ THE SMALLEST TYPE ON THE SURFACE, and it is where the export thesis
+  // lives. It WRAPS rather than being cut to the card, because `Available in
+  // your region.` is the line the whole beat is built on and a clipped line
+  // carries nothing. Nothing else about it is emphasised: same colour as a
+  // delivery note, no rule above it, never mentioned by anybody.
+  setFont(ctx, 8);
+  ctx.fillStyle = WALL.fine;
+  wrapText(ctx, copy.fine, w - 18).slice(0, 2)
+    .forEach((row, i) => ctx.fillText(row, x + 10, y + h - 21 + i * 10));
+}
+
+/**
+ * ⚑ THE RECOMMENDATION (S78) — the curated clip, on the same card stock as the
+ * offers because it IS one: a placement, paid for, selected for her.
+ *
+ * The card states who is speaking and that the placement was paid for, because
+ * `docs/REINTERP_E4_SOURCE_PASS_2026-08-06.md` §2's law is that a lobbying
+ * campaign is ATTRIBUTED, not held open as a question. The excerpts are drawn
+ * as speech and nothing on the surface answers them — the answer is the second
+ * card, which the system takes away.
+ */
+export function mediaCard(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  mark: string, meta: string, runtime: string, rows: string[]
+): void {
+  px(ctx, x, y, w, h, WALL.card);
+  px(ctx, x, y, w, 1, WALL.cardHi);
+  px(ctx, x, y + h - 1, w, 1, WALL.cardEdge);
+  px(ctx, x, y, 1, h, WALL.cardEdge);
+  px(ctx, x + w - 1, y, 1, h, WALL.cardEdge);
+  px(ctx, x, y, w, 22, WALL.cardHi);
+  px(ctx, x, y + 22, w, 1, WALL.cardEdge);
+
+  setFont(ctx, 10);
+  ctx.fillStyle = WALL.title;
+  ctx.fillText(mark, x + 10, y + 7);
+  setFont(ctx, 8);
+  ctx.fillStyle = WALL.meta;
+  const rw = Math.ceil(ctx.measureText(runtime).width);
+  ctx.fillText(runtime, x + w - 10 - rw, y + 9);
+  ctx.fillStyle = WALL.fine;
+  ctx.fillText(meta, x + 10, y + 27);
+
+  setFont(ctx, 10);
+  ctx.fillStyle = WALL.body;
+  rows.forEach((row, i) => ctx.fillText(row, x + 10, y + 42 + i * 13));
+}
+
+/**
+ * ⚑ THE ONE THE SELECTION LEFT OUT (S78), and the system is taking it away.
+ * Same stock, no accent rail, dimmer. `fade` runs 1 → 0 as it is withdrawn; at
+ * 0 the card is gone and its row prints what the system did, in the system's
+ * own flat vocabulary. Nothing else remarks on it, ever.
+ */
+export function counterCard(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  meta: string, rows: string[], removedLabel: string, fade: number
+): void {
+  if (fade <= 0) {
+    // the row the card left behind. Quiet, but it has to be READABLE — the
+    // withdrawal is the beat's whole indictment and an invisible line indicts
+    // nothing. One thin strip of stock so it is not competing with a wall.
+    px(ctx, x, y, w, 14, WALL.cardHi);
+    px(ctx, x, y, w, 1, WALL.cardEdge);
+    px(ctx, x, y + 13, w, 1, WALL.cardEdge);
+    setFont(ctx, 8);
+    ctx.fillStyle = WALL.meta;
+    ctx.fillText(removedLabel, x + 10, y + 4);
+    return;
+  }
+  ctx.save();
+  ctx.globalAlpha = fade;
+  px(ctx, x, y, w, h, WALL.card);
+  px(ctx, x, y, w, 1, WALL.cardEdge);
+  px(ctx, x, y + h - 1, w, 1, WALL.cardEdge);
+  px(ctx, x, y, 1, h, WALL.cardEdge);
+  px(ctx, x + w - 1, y, 1, h, WALL.cardEdge);
+  setFont(ctx, 8);
+  ctx.fillStyle = WALL.fine;
+  ctx.fillText(meta, x + 10, y + 7);
+  setFont(ctx, 10);
+  ctx.fillStyle = WALL.body;
+  rows.forEach((row, i) => ctx.fillText(row, x + 10, y + 21 + i * 13));
+  ctx.restore();
+}
+
+/**
+ * ⚑ THE GLITCH (S78, the finale's first move). The piece's own grammar — the
+ * update ritual has stuttered at every era change since 1997 — in hard integer
+ * bands, never a strobe, never a colour that is not already on the surface. It
+ * displaces what is ALREADY DRAWN rather than drawing anything new, which is
+ * why it takes the canvas as its own source. `k` runs 0→1.
+ *
+ * ⚑ THE SOURCE RECT IS IN BACKING-STORE PIXELS AND THE DESTINATION IS NOT.
+ * `os.ts` renders this canvas at ×`RENDER_SCALE` so glyphs resolve in VR, and
+ * the 2D context carries that scale in its transform — which `drawImage`
+ * applies to the destination and NOT to the source. Reading `0,y,W,bh` took a
+ * sixth of the top-left corner and blew it up over the whole band; the first
+ * capture of this beat was a cream-coloured smear with one letter in it. Found
+ * by looking at the frame, which is the only way this class of fault is ever
+ * found.
+ */
+export function glitchBands(ctx: CanvasRenderingContext2D, W: number, H: number, k: number): void {
+  const bands = 7;
+  const bh = Math.ceil(H / bands);
+  const S = RENDER_SCALE;
+  for (let i = 0; i < bands; i++) {
+    // deterministic, seeded off the band index — no rng, same every run
+    const dir = i % 2 === 0 ? 1 : -1;
+    const amp = Math.round(k * (6 + ((i * 13) % 17)));
+    if (amp === 0) continue;
+    const y = i * bh;
+    ctx.drawImage(ctx.canvas, 0, y * S, W * S, bh * S, dir * amp, y, W, bh);
+    px(ctx, 0, y, W, 1, ERA4.rule);
+  }
+}
+
+/**
+ * ⚑ THE FOUR PANELS (S78, the finale) — and they are the cyclorama's own slits,
+ * widened. FOUR of the countless rooms open far enough to be rooms: a window, a
+ * floor, and one thing in each. The years are the ONLY text in the beat.
+ *
+ * ⚑ Same grammar as `cyclorama` above and as the relocation choreography's
+ * building (`REINTERP_THE_BUILDING_2026-08-02.md`) — the piece has ONE image for
+ * *countless rooms* and this is it. `k` runs 0→1.
+ * ⚑ IT SETS THE CLOSE UP AND SPENDS NONE OF IT: no survivors, no title card, no
+ * `Restart as you are.` Those are the Close's and they are not this session's.
+ */
+export function eraPanels(
+  ctx: CanvasRenderingContext2D, W: number, H: number, k: number, years: string[]
+): void {
+  const n = Math.max(1, years.length);
+  const pw = 96;
+  const ph = 132;
+  const gap = Math.round((W - n * pw) / (n + 1));
+  const top = Math.round((H - ph) / 2) - 8;
+  years.forEach((year, i) => {
+    const phase = Math.max(0, Math.min(1, k * 2.4 - i * 0.34));
+    if (phase <= 0) return;
+    const x = gap + i * (pw + gap);
+    const openW = Math.max(2, Math.round(pw * phase));
+    const ox = x + Math.round((pw - openW) / 2);
+    // the room, seen edge-on: wall, floor, a window, and one thing in it
+    px(ctx, ox, top, openW, ph, PLACE.wallLo);
+    px(ctx, ox, top + ph - 34, openW, 34, PLACE.floorLo);
+    if (phase > 0.55) {
+      px(ctx, ox + 14, top + 22, Math.max(2, openW - 28), 46, PLACE.skyLo);
+      px(ctx, ox + 14, top + 44, Math.max(2, openW - 28), 24, PLACE.skyHaze);
+      px(ctx, ox + 20, top + ph - 52, 18, 18, PLACE.shelf);
+    }
+    px(ctx, ox, top, openW, 1, ERA4.glow);
+    px(ctx, ox, top + ph - 1, openW, 1, ERA4.rule);
+    if (phase >= 1) {
+      setFont(ctx, 10);
+      ctx.fillStyle = ERA4.dim;
+      const tw = Math.ceil(ctx.measureText(year).width);
+      ctx.fillText(year, x + Math.round((pw - tw) / 2), top + ph + 12);
+    }
+  });
 }
 
 /**

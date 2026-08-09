@@ -223,6 +223,45 @@ export interface Ledger {
    */
   l: { id: string; outcome: 'answered' | 'silent' | 'corrected' | 'captioned' | 'retained'; witness: string }[];
   /**
+   * ⚑ THE OFFERS (Session 78 — `data/dialog/s4_offers.json`,
+   * `src/desktop/apps/offers.ts`). What the place put in front of her, and what
+   * she did about it. Witness-symmetric in BOTH directions, and in this beat
+   * the system's own direction carries most of the weight — she is barely asked
+   * for anything, so most of what happens here is something done TO her:
+   *
+   *   `surfaced`  — ⚑ THE SYSTEM'S OWN ACT. A photograph resurfaced and
+   *                 enhanced without being asked; four offers put up on the
+   *                 wall; a paid placement selected for her out of 214. Nobody
+   *                 requested any of it, and the record says so in the system's
+   *                 own flat vocabulary — which is the only thing in the piece
+   *                 that ever remarks on the curation.
+   *   `undone`    — ⚑ the memories UNDO, and it ALWAYS WORKS and is ALWAYS
+   *                 logged (the dismissal law, unbroken since E1). The picture
+   *                 goes back to hers. The next memory is already enhanced.
+   *   `withdrawn` — the recommendation the selection left out, taken away again
+   *                 by the system, unrequested. Filed for exactly the reason
+   *                 the enhancement is: an act nobody asked for is still an act.
+   *   `answered` / `corrected` — the careful pause's two live chips. Neither is
+   *                 correct, neither branches, and pressing the pause is NOT
+   *                 filed as a defeat anywhere in this array or in its copy.
+   *   `retained`  — ⚑ filed BESIDE `corrected`, as it has been since S77: the
+   *                 legacy field is protected and the correction never takes.
+   *                 And beside `answered` on the pause, where the record's line
+   *                 (`care pathway: interrupted — flagged for review`) is not a
+   *                 translation of what she chose. Both are true at once and
+   *                 nothing in the piece ever reconciles them.
+   *   `handed`    — the era handed over. One line, at the very end.
+   *
+   * ⚑ NO score, streak, count or progress figure is ever derived from this
+   * array. `witness` is resolved from `data/dialog/s4_offers.json` at file time,
+   * never composed in TS. In-memory only, like everything here.
+   */
+  e4Offers: {
+    id: string;
+    outcome: 'surfaced' | 'undone' | 'answered' | 'corrected' | 'retained' | 'withdrawn' | 'handed';
+    witness: string;
+  }[];
+  /**
    * ⚑ S80 — LOOK-MODE 3 (the gyro), and it is deliberately NOT A RECORD.
    *
    * Every other field on this object is the piece's memory of what was done to
@@ -293,6 +332,7 @@ const fresh = (): Ledger => ({
   comments: [],
   e4Space: [],
   l: [],
+  e4Offers: [],
   view: { motion: 'unasked', yawZero: null, recentres: 0, unvoicedName: false }
 });
 

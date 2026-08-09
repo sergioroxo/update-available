@@ -2238,6 +2238,21 @@ export class DesktopOS {
       // lines out. The shrinking choice is a thing you look AT, so a reviewer
       // needs to be able to sit in front of a chip set.
       case 'e4Chips': this.e4?.voice.debugToChips(); break;
+      // ⚑ S78 — THE OFFERS. In PLAY there is nothing to jump to: L's last chip
+      // hands over and the whole sequence runs forward by ordinary clicking
+      // (`e4Offers` below is that same linear entry — it is L's unit u10, whose
+      // second chip starts it). The rest land on one beat directly.
+      case 'e4Offers': this.e4Voice('u10_returns'); break;
+      case 'e4Memory': this.e4Offer('m1'); break;
+      case 'e4MemoryAB': this.e4Offer('m1'); this.e4?.offers.debugToggleEnhanced(); break;
+      case 'e4Memory2': this.e4Offer('m2'); break;
+      case 'e4Wall': this.e4Offer('wall'); break;
+      case 'e4Curation': this.e4Offer('curation'); break;
+      case 'e4Pause': this.e4Offer('pause'); break;
+      case 'e4PauseChips': this.e4Offer('pause'); this.e4?.offers.debugToChips(); break;
+      case 'e4Glitch': this.e4Offer('glitch'); break;
+      case 'e4Cyclorama': this.e4Offer('cyclorama'); break;
+      case 'e4Panels': this.e4Offer('panels'); break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
       case 'send-s1': this.setPhase('desktop'); this.offerSend('s1'); break;
       case 'send-s2': this.setPhase('desktop'); this.offerSend('s2'); break;
@@ -2252,6 +2267,14 @@ export class DesktopOS {
   private e4Voice(unitId: string): void {
     this.debugJump('e4Place');
     this.e4?.voice.debugJumpTo(unitId);
+  }
+
+  /** ⚑ S78 review helper: the device on, L silent (the offers only run once the
+   *  conversation is over), and the offers landed on one beat. Never in play. */
+  private e4Offer(stage: string): void {
+    this.debugJump('e4Place');
+    this.e4?.voice.debugFinish();
+    this.e4?.offers.debugJumpTo(stage);
   }
 
   // ── input ──────────────────────────────────────────────────────────────

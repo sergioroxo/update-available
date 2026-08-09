@@ -665,7 +665,12 @@ worse for that.
 ---
 
 # S78 — THE OFFERS, AND THE HAND-OFF · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: BLOCKED — on S77. Stage 2c: what the place sells her, and how the era ends.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-06 — but its ACCEPTANCE did not run.** The session was terminated
+mid-run by an account spend limit, just as it began its end-to-end click-through. The code is
+committed and the automated checks pass; **nobody has played the beats in order, there are no
+screenshots, and there is no session-log entry.** See `08_STATUS_REGISTER.md` §15 for the exact list.
+**Do not re-dispatch this block** — the work is in the tree. The follow-up is a short verification
+pass, not a rebuild.
 
 ⚑ SHARED PREAMBLE — every E4 session reads these, in this order:
   CLAUDE.md · docs/ETHICS_CONSTRAINTS.md ·

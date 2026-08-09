@@ -555,3 +555,32 @@ one missing check behind them.
 6. **`data/dialog/s4_l.json`'s `_doc` keys are the brief** for anyone editing L's copy — the voice
    law, the register law, the caption law, the deadname rules and the shrink arc are all written
    into the file that carries the lines, not only into a doc beside it.
+
+
+---
+
+## §15 — S78 LANDED ITS BUILD BUT NOT ITS ACCEPTANCE (2026-08-06)
+**The session was terminated mid-run by an account spend limit**, at the point it had just written:
+*"Now an end-to-end run through the whole era by clicking."* So the code exists and the automated
+checks pass; **its own interactive verification never happened.**
+
+**Committed by me rather than re-dispatched**, because re-running would rebuild work that is already
+in the tree — and because I could check the parts that are checkable.
+
+### What I verified before committing
+`tsc` clean · `npm test` green · `npm run build` green · **C6 covers all 63 debugJump ids** (up from
+52, so its 11 new beats all have buttons) · **4 provotypes** carry status + confidence (up from 3) ·
+palette 33/33 · marker leaks 10/10.
+⚑ And the ethics constraint that bound it: the memories dossier card carries `speculative`,
+`[VERIFY SOURCE]`, and — better than the letter of Ethics #13 — the observation that **a negative
+finding decays: if such a product ships, the card changes status.**
+
+### ⚑ WHAT IS NOT VERIFIED, and must not be described as if it were
+- **No end-to-end click-through of Era 4.** Nobody has played S78's beats in order.
+- **No screenshots** — its brief asked for the enhanced photo beside its original, and there are none.
+- **Whether it kept or cut the droppable half** (the store and the "for you" wall) is unrecorded; the
+  code suggests a "wall" beat exists, but its own report never said.
+- **No session-log entry**, because it never got to write one.
+
+**The follow-up is small and should not be a whole session:** open Era 4, click through it once,
+take the two screenshots, and write the log entry. ⚑ **Until that happens, S78 is built, not done.**

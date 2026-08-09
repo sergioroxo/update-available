@@ -139,6 +139,14 @@ export class LVoice {
 
   get live(): boolean { return this.started; }
   get unitId(): string { return UNITS[this.unit]?.id ?? ''; }
+  /**
+   * ⚑ S78 needs this and S77 did not have it. `onHandOff` fires the INSTANT the
+   * last chip is pressed — before its reply has been spoken — because the seam
+   * is the press, not the silence after it. But the offers draw their own
+   * caption band on the same strip of the visor, so starting them on the press
+   * would put two speakers on screen at once. `E4Shell` waits for this instead.
+   */
+  get finished(): boolean { return this.phase === 'done'; }
 
   // ── the clock ────────────────────────────────────────────────────────────
   update(dt: number): void {
@@ -342,6 +350,23 @@ export class LVoice {
     this.label = null;
     this.phase = 'speaking';
     this.enterLine();
+  }
+
+  /**
+   * ⚑ S78 review helper: put the conversation where it is when the offers run —
+   * finished. L has said its last line and the band is empty, which is the only
+   * honest backdrop for reviewing an offers beat: in play L never speaks over
+   * them, so a review jump must not either.
+   */
+  debugFinish(): void {
+    this.started = true;
+    this.unit = UNITS.length - 1;
+    this.line = 0;
+    this.reply = null;
+    this.holdOpen = false;
+    this.label = null;
+    this.phase = 'done';
+    this.version++;
   }
 
   /** review: skip the current unit's lines and sit on its chips */

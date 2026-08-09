@@ -65,6 +65,7 @@ import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import space from '../../../data/dialog/s4_space.json';
 import { LVoice } from './lVoice';
+import { E4Offers } from './offers';
 import type { UpdateApp } from './update';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
@@ -103,10 +104,29 @@ export class E4Shell {
    *  only reads if it was NOT talking a moment earlier. */
   readonly voice = new LVoice();
   private voiceVersion = 0;
+  /** ⚑ S78 — THE OFFERS. Made with the shell for the same reason `voice` is (a
+   *  `?debug=1` jump must be able to reach a beat before the device is worn),
+   *  and started only when L has finished its last line. */
+  readonly offers = new E4Offers();
+  private offersVersion = 0;
+  /** L's last chip fired its hand-off; the offers begin when L stops talking */
+  private offersPending = false;
   /** bumped on any change to what this surface DRAWS; the room compares it to
    *  decide when to re-upload the visor texture (dirty discipline, the law
    *  era3Devices' three screens already obey). */
   version = 0;
+
+  constructor() {
+    // ⚑ THE TWO SEAMS, JOINED (S78). S76 left `handOff()` unwired and S77 left
+    // `onHandOff` leading nowhere; this is where they meet, and the chain is:
+    // L's last chip → the offers → the finale → `handOff()` → the spine closes
+    // the piece. ⚑ The BALL's seam is inside the offers (`E4Offers.onBreak`) and
+    // nothing is registered on it, so the finale follows the careful pause
+    // directly today. When S79 exists it takes the break and the rest is
+    // unchanged.
+    this.voice.onHandOff = () => { this.offersPending = true; };
+    this.offers.onHandOff = () => this.handOff();
+  }
 
   get stage(): Stage { return this.stageNow; }
   get worn(): boolean { return this.stageNow === 'worn'; }
@@ -124,6 +144,20 @@ export class E4Shell {
     this.voice.update(dt);
     if (this.voice.version !== this.voiceVersion) {
       this.voiceVersion = this.voice.version;
+      this.version++;
+    }
+    // ⚑ S78 — THE HAND-OFF FROM L. `LVoice.onHandOff` fires on the press of
+    // u10's second chip ("Show me the quieter month"); the offers wait until L
+    // has actually finished speaking, so the visor never carries two caption
+    // bands at once. Nothing is announced in between: L says it will only put
+    // up the ones it thinks she would want, and then it does.
+    if (this.offersPending && this.voice.finished && !this.offers.live) {
+      this.offersPending = false;
+      this.offers.begin();
+    }
+    this.offers.update(dt);
+    if (this.offers.version !== this.offersVersion) {
+      this.offersVersion = this.offers.version;
       this.version++;
     }
   }
@@ -168,8 +202,13 @@ export class E4Shell {
     }
   }
 
-  /** S79's seam: the ball is the one thing not served through the device, and
-   *  when it is over the era hands the spine back its bare final restart. */
+  /**
+   * ⚑ WIRED BY S78. It was S76's named seam and S77 left it alone; the FINALE
+   * calls it now (`E4Offers.onHandOff`), which is what actually lets the spine
+   * close the piece — before this, `e4HoldsTheSpine` held forever and the era
+   * had no end. ⚑ S79's ball goes BEFORE the finale, in `E4Offers.onBreak`, so
+   * nothing here has to change when it lands.
+   */
   handOff(): void {
     if (this.handedOff) return;
     this.handedOff = true;
@@ -185,6 +224,10 @@ export class E4Shell {
       standby(ctx, W, H, pulse, space.standbyLabel);
       return;
     }
+    // ⚑ THE FINALE TAKES THE FIELD. Everywhere else the offers draw OVER the
+    // picture of a room, exactly as L's captions do; from the cyclorama on there
+    // is no room left to draw under them, which is the point of that image.
+    if (this.offers.ownsField) { this.offers.draw(ctx, W, H); return; }
     homeEnvironment(ctx, W, H, this.look);
     // The environment's own name, the size a headset prints it. ⚑ `arranged for
     // you` is the ENTIRE addressing this session carries — the faintest sense
@@ -209,6 +252,10 @@ export class E4Shell {
     // chips and the label field are things the device is showing her, so the
     // vignette closes over them exactly as it closes over the room.
     this.voice.draw(ctx, W, H);
+    // ⚑ and S78's offers over the same picture, in the same grammar: the cards
+    // are things the place is showing her, so they sit inside the visor's edge
+    // exactly as the captions do.
+    this.offers.draw(ctx, W, H);
     visorEdge(ctx, W, H);
   }
 
@@ -223,7 +270,14 @@ export class E4Shell {
    * dismiss anywhere in this era.
    */
   handleClick(x: number, y: number): boolean {
-    if (this.worn) { this.voice.handleClick(x, y); return true; }
+    if (this.worn) {
+      // ⚑ the offers get first refusal, because by the time they are on screen L
+      // has finished and its chips are gone. Two of the era's three presses land
+      // here — the memories undo and the careful pause — and everything else on
+      // this surface is still consumed and still does nothing.
+      if (!this.offers.handleClick(x, y)) this.voice.handleClick(x, y);
+      return true;
+    }
     this.wear();
     return true;
   }

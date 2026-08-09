@@ -166,6 +166,24 @@ const OS_BEATS: BeatRow[] = [
   { label: '↳ …and it comes back, live (the thread out)', id: 'e4Returns' },
   { label: '↳ skip to the chips of whichever unit is up', id: 'e4Chips' },
 
+  { heading: 'E4 · the offers, and the hand-off (S78)' },
+  // ⚑ S78. `e4Offers` is the LINEAR ENTRY and it is L's own last unit: press
+  // "Show me the quieter month" and everything below runs forward by ordinary
+  // clicking, with nothing to press but the memories undo and the careful
+  // pause. Every button under it lands on one beat with L already finished,
+  // which is where L is whenever the offers are on screen in play.
+  { label: '⏵ LINEAR ENTRY — L\'s last chip hands over (play from here)', id: 'e4Offers' },
+  { label: '⚑⚑ THE MEMORIES · "two years ago today" (already enhanced)', id: 'e4Memory' },
+  { label: '↳ ⚑ the SAME card, un-enhanced (A/B the two photographs)', id: 'e4MemoryAB' },
+  { label: '↳ the second memory — already enhanced, whatever you did', id: 'e4Memory2' },
+  { label: 'the wall · four offers put up for her (⚑ read the fine print)', id: 'e4Wall' },
+  { label: '⚑ the curation · what was chosen, and what was taken away', id: 'e4Curation' },
+  { label: '⚑ the careful pause (two doors, and it waits forever)', id: 'e4Pause' },
+  { label: '↳ skip its lines and sit on its chips', id: 'e4PauseChips' },
+  { label: 'FINALE 1/3 · the glitch', id: 'e4Glitch' },
+  { label: 'FINALE 2/3 · the cyclorama (the building\'s own image)', id: 'e4Cyclorama' },
+  { label: 'FINALE 3/3 · four panels → hand off (⚑ releases the spine)', id: 'e4Panels' },
+
   { heading: 'Close' },
   { label: 'Final · Restart as you are', id: 'closeUpdate' },
 
