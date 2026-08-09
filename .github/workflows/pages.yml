@@ -1,0 +1,66 @@
+# ⚑ MANUAL ONLY, ON PURPOSE. This never fires on a push.
+# Publishing is an outward-facing act and this piece has ethics gates that are not closed
+# (the Era-4 deadname beat is BLOCKED-ON-READER-PASS, and every string is PLACEHOLDER-draft),
+# so it publishes when Sérgio says so and not when a build session happens to land.
+# See docs/DEPLOY_PAGES.md before the first run.
+name: pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch to build and publish'
+        required: true
+        default: 'reinterp'
+
+# One deploy at a time; a newer run waits rather than racing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # ⚑ THE LAWS RUN BEFORE ANYTHING IS PUBLISHED.
+      # check-invariants (no network, no storage), check-rooms, and check-spec
+      # C1-C8. A build that breaks its own invariants must never reach a device
+      # — least of all one someone is testing on.
+      - name: Verify the invariants
+        run: npm test
+
+      - run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      # vite.config.ts sets `base: './'`, so the bundle is path-relative and
+      # works from a project subpath without knowing the repo name.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
