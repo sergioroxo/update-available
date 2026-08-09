@@ -582,5 +582,11 @@ finding decays: if such a product ships, the card changes status.**
   code suggests a "wall" beat exists, but its own report never said.
 - **No session-log entry**, because it never got to write one.
 
-**The follow-up is small and should not be a whole session:** open Era 4, click through it once,
-take the two screenshots, and write the log entry. ⚑ **Until that happens, S78 is built, not done.**
+### ✅ CLOSED 2026-08-06 — the verification pass ran
+All nine beats fired in order with zero page errors; the A/B screenshots are committed
+(`S78_memory_enhanced.png` / `S78_memory_original.png`) and **the enhanced photograph is genuinely
+the better one**, which is the beat working. The curation beat discloses `placement paid` in its own
+fine print. **The droppable half was KEPT** — `e4Wall` exists and fires. Session-log entry written.
+⚑ **Still not established, and not to be read as if it were:** no phone-viewport play, the beats were
+driven by debug button rather than the ordinary chip path end to end, and **the trans reader pass on
+S77's deadname beat is still open and is a gate.**

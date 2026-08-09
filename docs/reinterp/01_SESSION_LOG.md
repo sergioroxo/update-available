@@ -488,6 +488,43 @@ cleanly and the shell draws there, but nothing can ARM u4 in flat — E3's conte
 devices and has been since S37, so the flat fallback still has no E3/E4 to play. That is older than
 this session and is stated here rather than hidden.
 
+*(2026-08-06 · Session 78 — **ERA 4 STAGE 2c: THE OFFERS, AND THE HAND-OFF.** ⚑ Its build session was
+terminated mid-run by an account spend limit at the exact moment it wrote *"Now an end-to-end run
+through the whole era by clicking"* — so the code landed complete and unverified. **This entry is the
+verification pass it never got to run**, done afterwards rather than re-dispatched, because
+re-running would have rebuilt work already in the tree.*
+
+**All nine beats fired, in order, driven through the debug panel's own buttons at 1280×860:**
+`e4Offers` (L's last chip hands over) → `e4Memory` → `e4MemoryAB` → `e4Memory2` → `e4Wall` →
+`e4Curation` → `e4Glitch` → `e4Cyclorama` → `e4Panels`. **Zero page errors** (one 404, the known
+favicon). The era plays through to its hand-off.
+
+**⚑ THE MEMORIES A/B — the deliverable its brief asked for and it did not get to take.**
+`docs/reinterp/S78_memory_enhanced.png` and `S78_memory_original.png`, the same card, one press apart.
+**The enhanced photograph is genuinely the better one** — warmer, clearer, the figure defined —
+against a cooler, grainier, flatter original. That is the beat working: the cruelty is that it is a
+good photo, and the system is pleased with itself. L's line is *"Two years ago today. You look happy
+in this one — I thought you'd want it back."*
+⚑ **And the undo's own label is `Original restored`** — the apparatus's word, *restored*, applied to
+the correction of its own correction. Whether that was deliberate or not, it is right, and nothing
+points at it.
+
+**⚑ THE CURATION beat holds the ethics law** (`S78_curation_paid_placement.png`). The placement reads
+`STEADY VOICES · a Compass campaign · placement paid` — an **invented** mark, and it **discloses in
+its own fine print that it is paid**. The quoted line is the softened civil-liberties register
+rendered without endorsement; L's is *"I found something from people like you. Twenty minutes, and
+you can have it in the background."* **Attributed and disclosed, not staged as an open question** —
+which is exactly the lobbying-vs-clinical-debate distinction the source pass made a law.
+
+**⚑ THE DROPPABLE HALF WAS KEPT.** `e4Wall` exists and fires — the four offers put up while L talks.
+S78's own report never said which way it went; the build answers it.
+
+**What this pass did NOT establish**, and it should not be read as if it had: nobody has played the
+era at a *phone* viewport, the beats were driven by debug button rather than by the ordinary chip
+path end-to-end, and **the trans reader pass on S77's deadname beat remains open and is a gate.**
+`08_STATUS_REGISTER.md` §15 is updated rather than deleted — the honest record of a session that
+shipped its build and lost its acceptance.)
+
 *(2026-08-06 · Session 74 — **THE ROOMS (E4 STAGE 1) — MAYA GETS A LIFE, THE PHONE GETS A BODY, THE
 CRT GOES DARK.** Plan: `REINTERP_E4_BUILD_PLAN_2026-08-05.md`; fixtures decided in
 `REINTERP_E4_THE_DEVICE_2026-08-05.md` §"STAGE 0 — CLOSED". Touched: `data/room/reinterp_deltas.json`,

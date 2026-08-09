@@ -57,15 +57,19 @@ fails with a permissions error and nothing else is wrong.
 - The piece opens on the pre-fiction panel with the content note and the 4-second ethics delay before
   anything can start.
 
-**⚑ My read, and it is a recommendation rather than a decision:** for a device-testing pass this is
-fine — an unlinked, noindexed, work-in-progress URL is ordinary practice. **What I would not do is
-treat it as a soft launch.** Do not put the URL in a paper, a talk or a post until the reader pass has
-happened and your voice pass has landed. The gap between *testable* and *published* is exactly the
-gap those two gates cover.
+## ✅ DECIDED — Sérgio, 2026-08-06
+> *"I have no issues with it being public, the trial version. As long as there is no access to the
+> repo then it's okay for the link to be public."*
 
-**If you want it genuinely private:** GitHub Pages access control on a private repo needs a paid
-plan. The alternative that costs nothing is `tailscale funnel` from the Mac — public HTTPS URL, but
-only while your machine is serving, and you can stop it at any time.
+**Confirmed and correct on the mechanics:** GitHub's own caution says it plainly —
+*"This repository is private but the published site will be public."* Pro does not include
+access-controlled Pages. **The repo stays private; the built site is reachable by URL.** That is the
+arrangement he has approved.
+
+**⚑ The one line I would still hold, and it is not about access:** *testable* is not *published*.
+Don't put the URL in a paper, a talk or a post until the **trans reader pass** on Era 4's deadname
+beat has happened and your voice pass has landed. That gap is exactly what those two gates cover, and
+it is unaffected by who can reach the link.
 
 ---
 

@@ -254,3 +254,4 @@
 - 2026-08-06 — Echo→L rename finished in the master plan prose; S79 warned about the no-category rhyme S77 created.
 - 2026-08-06 — GitHub Pages deploy (manual-only, runs npm test before publishing) + DEPLOY_PAGES.md; HTTPS is what unblocks the §13 device list.
 - 2026-08-06 — S78's offers/memories/curation/finale committed after its session was cut off by a spend limit; automated checks green, its own click-through and screenshots NOT done (08 §15).
+- 2026-08-06 — S78's verification pass run (nine beats, zero errors, A/B committed, droppable half KEPT); Pages public-link decision recorded.
