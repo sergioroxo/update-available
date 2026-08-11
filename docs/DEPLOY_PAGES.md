@@ -30,9 +30,31 @@ breaks its own laws must never reach a device, least of all one someone is testi
 `vite.config.ts` already sets `base: './'`, so the bundle is path-relative and works from a repo
 subpath without knowing the repo name. Nothing to configure there.
 
-### First run only — one setting in the repo
-**Settings → Pages → Build and deployment → Source: GitHub Actions.** Without that, the deploy step
-fails with a permissions error and nothing else is wrong.
+### ⚑ FIRST RUN — TWO settings, and the second one is what failed on 2026-08-06
+**1. Settings → Pages → Build and deployment → Source: GitHub Actions.**
+
+**2. ⚑ Settings → Environments → `github-pages` → Deployment branches and tags → add `reinterp`**
+(or set it to allow all branches).
+
+**Why:** GitHub creates the `github-pages` environment with a protection rule that permits deploys
+**only from the default branch.** All our work is on `reinterp`, so the first run failed with:
+
+> `Branch "reinterp" is not allowed to deploy to github-pages due to environment protection rules.`
+
+⚑ **The build had already SUCCEEDED** — a 12.2 MB artifact was produced, which means `npm test`
+passed on CI and the bundle is sound. **Only the publish step was refused.** Nothing is wrong with
+the code or the workflow; it is one permission, and it is deliberate on GitHub's part.
+
+### Two smaller things from that run
+- **`pages.yml` must live on `main` as well as `reinterp`.** `workflow_dispatch` workflows only
+  appear in the Actions UI if they exist on the **default branch**. It is there now.
+  ⚑ Note the resulting subtlety: **the branch you pick in the UI chooses which workflow FILE runs;
+  the `ref` input chooses what gets CHECKED OUT and built.** They are not the same thing. Pick
+  `reinterp` in both and it does what you expect.
+- **The Node 20 deprecation warning is benign.** It is about the *actions'* own runtime, not ours —
+  GitHub is forcing `checkout`/`setup-node`/`upload-artifact` onto Node 24 and they still work. Our
+  build still runs on Node 20 deliberately, to match the local toolchain. **Not a failure, and not
+  worth chasing** until an action actually breaks.
 
 ---
 
