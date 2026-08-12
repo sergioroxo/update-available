@@ -92,9 +92,10 @@ register tool: reading what you hear makes the narrowing visible and quotable).
 
 ## §4 The production pipeline (what it costs, how it's made)
 
-- **Data:** `data/dialog/s4_echo.json` — conversation units `{ echoLine, audio, chips[]
-  (each with ledgerTag + witness line + aliveUntil beat), shrinkStage }`; ambient
-  instances in `s4_room.json`. Everything PLACEHOLDER for Sérgio's pass FIRST — **audio
+- **Data:** ~~`data/dialog/s4_echo.json` with `{ echoLine, audio, chips[], shrinkStage }`,
+  plus ambient instances in `s4_room.json`~~. **⚑ CORRECTED 2026-08-12:** those paths and
+  fields were never the shipped shape. The live files are `data/dialog/s4_l.json` and
+  `data/dialog/s4_space.json`; the former uses ordered `lines[]` units. Everything PLACEHOLDER for Sérgio's pass FIRST — **audio
   is generated only after his voice pass** (unlike the tapes, L's lines are pure
   system voice = my draft, his pass, then batch-TTS).
 - **L's voice:** generated on Sérgio's HF/TTS pipeline (Qwen3-TTS / Kokoro class) —

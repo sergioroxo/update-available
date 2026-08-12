@@ -189,7 +189,9 @@ flag) slot in as follows:
    artifacts **once** (shared `data/formats/` + Sift™-style invented marks,
    per v0.4 §5) so the modules quote each other instead of forking.
 4. **Inventory action:** list Zap! (and any other already-built framework
-   levels) in [PROCESS_REGISTER.md](PROCESS_REGISTER.md) §B with build state
+   levels) in ~~`PROCESS_REGISTER.md` §B~~ **⚑ CORRECTED
+   2026-08-12: that proposed register was never created; use
+   [`reinterp/08_STATUS_REGISTER.md`](reinterp/08_STATUS_REGISTER.md) for current build state**
    + URL; assess embed effort (it's already HTML canvas → likely loads in an
    in-OS window nearly as-is, flat fallback included).
 

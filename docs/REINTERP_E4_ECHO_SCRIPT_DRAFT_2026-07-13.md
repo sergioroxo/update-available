@@ -126,5 +126,6 @@ the E3 lineage speaking)*: "we kept your seat. — n."
    you"), and U12's chat card answers it with the piece's own structure.
 
 ## Production next steps (after Sérgio's verify)
-Full set (~50 lines) → `data/dialog/s4_echo.json` PLACEHOLDER → his voice pass → batch
+~~Full set (~50 lines) → `data/dialog/s4_echo.json` PLACEHOLDER~~ → **⚑ CORRECTED 2026-08-12:
+the live path is `data/dialog/s4_l.json`** → his voice pass → batch
 TTS (one voice, one sitting) → the E4 build lanes per the design doc §4.

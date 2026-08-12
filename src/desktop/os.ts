@@ -1416,7 +1416,7 @@ export class DesktopOS {
     // there), so Daniel's machine stays off from E3 to the end, with no
     // exception at all. The one carve-out is `?flat=1`, which has no room and
     // no laptop — there the ritual has nowhere else to go, and blacking it out
-    // would make Era 4 unreachable in the universal fallback.
+    // would make Era 4 unreachable in the canvas-only review tool.
     if (this.desktopEra === 'e3' && (roomIsMounted() || !this.updateApp)) {
       ui.px(ctx, 0, 0, W, H, ERA1.black);
       return;

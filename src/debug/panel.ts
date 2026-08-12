@@ -10,7 +10,28 @@ import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'R28-2d-iv · NetVision Player (New You infomercial)';
+const BUILD_TAG = 'S83 · iPad horizon diagnostic';
+
+interface MotionDiagnostic {
+  state: string;
+  yawZero: number;
+  angles: { alpha: number | null; beta: number | null; gamma: number | null };
+  screenAngle: {
+    angle: number | null;
+    source: 'screen.orientation' | 'legacy' | 'derived' | 'unknown';
+    reported: number | null;
+  };
+  viewport: {
+    media: 'portrait' | 'landscape';
+    aspect: 'portrait' | 'landscape' | 'square';
+    agrees: boolean;
+    width: number;
+    height: number;
+  };
+  resolved: { yaw: number; pitch: number; roll: number };
+  events: { orientationchange: number; screenChange: number };
+  fov?: number;
+}
 
 interface DebugOpts {
   /** The live renderer: required for a non-black WebGL canvas readback. */
@@ -56,6 +77,8 @@ interface DebugOpts {
   onMotionSim?: (on: boolean) => boolean;
   onRecentre?: () => void;
   onFov?: (deg: number) => void;
+  /** S83: live, on-device facts; rendered even while the map is collapsed. */
+  motionDiagnostic?: () => MotionDiagnostic;
 }
 
 /**
@@ -281,7 +304,7 @@ const LINKS: Array<[string, string]> = [
   ['Close · point cloud', '?reinterp=1&close=1&debug=1'],
   ['Layout T · back = wall', '?reinterp=1&era=2&debug=1'],
   ['Layout X · back = ending arm', '?reinterp=1&era=2&debug=1&layout=x'],
-  ['Flat 2D fallback', '?flat=1&reinterp=1']
+  ['Flat canvas review tool', '?flat=1&reinterp=1']
 ];
 
 export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
@@ -353,6 +376,49 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   perf.style.cssText = 'color:#9fb4c0;font-size:10px;margin-bottom:6px;min-height:13px';
   perf.textContent = 'draw calls: —';
   panel.appendChild(perf);
+
+  // ⚑ S83 — always visible even when the large piece map is collapsed. This
+  // is deliberately plain DOM debug chrome, not another diegetic/UI surface:
+  // Sérgio needs one iPad photograph that captures the API source, raw sensor
+  // noise, rotation-event evidence and the resolved horizon at the same time.
+  const motionReadout = document.createElement('pre');
+  motionReadout.id = 'motion-diagnostic';
+  motionReadout.setAttribute('aria-label', 'device look diagnostic');
+  Object.assign(motionReadout.style, {
+    position: 'fixed', top: '8px', right: '8px', zIndex: '10000',
+    boxSizing: 'border-box', width: 'min(258px, calc(100vw - 16px))',
+    margin: '0', padding: '7px 8px', borderRadius: '5px',
+    background: 'rgba(16,18,26,0.94)', color: '#cdd3df',
+    border: '1px solid #3a4154', font: '10px/1.35 monospace',
+    whiteSpace: 'pre-wrap', pointerEvents: 'none', userSelect: 'text',
+    boxShadow: '0 2px 12px #0008'
+  } as CSSStyleDeclaration);
+  motionReadout.textContent = 'GYRO / HORIZON\nwaiting for app…';
+
+  const fmt = (n: number | null): string => n === null ? '—' : `${n.toFixed(1)}°`;
+  const paintMotionReadout = (): void => {
+    const d = opts.motionDiagnostic?.();
+    if (!d) {
+      motionReadout.textContent = 'GYRO / HORIZON\ndiagnostic unavailable';
+      return;
+    }
+    const reported = d.screenAngle.reported !== null &&
+      d.screenAngle.reported !== d.screenAngle.angle
+      ? ` (API said ${fmt(d.screenAngle.reported)})` : '';
+    const match = d.viewport.agrees ? 'agree' : 'DISAGREE';
+    motionReadout.textContent = [
+      `GYRO / HORIZON · ${d.state}`,
+      `q₂ ${fmt(d.screenAngle.angle)} · ${d.screenAngle.source}${reported}`,
+      `raw α ${fmt(d.angles.alpha)}  β ${fmt(d.angles.beta)}  γ ${fmt(d.angles.gamma)}`,
+      `media ${d.viewport.media} · aspect ${d.viewport.aspect}`,
+      `${d.viewport.width}×${d.viewport.height} · ${match}`,
+      `camera yaw ${fmt(d.resolved.yaw)}  pitch ${fmt(d.resolved.pitch)}  roll ${fmt(d.resolved.roll)}`,
+      `events legacy ${d.events.orientationchange} · screen ${d.events.screenChange}`
+    ].join('\n');
+  };
+  window.setInterval(paintMotionReadout, 100);
+  paintMotionReadout();
+
   window.setInterval(() => {
     const s = (window as { __reinterpNow?: string }).__reinterpNow;
     const place = s ?? '— (open a room)';
@@ -632,6 +698,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
 
   document.body.appendChild(panel);
   document.body.appendChild(pill);
+  document.body.appendChild(motionReadout);
   // Keep review captures clear until the reviewer deliberately opens the map.
   show(false);
 

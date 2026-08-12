@@ -1,5 +1,6 @@
 /**
- * ?flat=1 — the universal fallback (AGENTS.md invariant; Codex review Gap C).
+ * ?flat=1 — the canvas-only REVIEW TOOL (CLAUDE.md correction, 2026-08-06).
+ * Historical name retained in older comments/docs: "universal fallback".
  * Renders the desktop canvas alone, no WebGL, no room: classrooms, archival
  * use, low-end machines, debugging. Same OS, same ledger, same flip grammar
  * (F2/⟲ swaps to the witness record; ESC returns) — only the body is gone.
@@ -23,7 +24,7 @@ export function startFlat(canvasEl: HTMLCanvasElement, options: FlatOptions = {}
   // comment; gameMenuBus.leaveEngine stays null (menu falls back to a
   // reload) until this line runs.
   if (options.reinterp === true) gameMenuBus.leaveEngine = () => os.leaveNow();
-  // ?flat=1 is the testing fallback (desktop canvas alone, no room) — so it has
+  // ?flat=1 is the review tool (desktop canvas alone, no room) — so it has
   // no O1 start-screen/room/camera (those are the 3D engine's). Under reinterp
   // we skip straight into the O2/O3 monitor beats so the OS content stays
   // testable here; the 3D browser view is the real opening.

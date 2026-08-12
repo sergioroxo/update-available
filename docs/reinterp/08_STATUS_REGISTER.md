@@ -739,3 +739,31 @@ exists. ⚑ **One minute on real hardware found what three weeks of simulation c
 
 **Recorded consequence:** anything in this repo that claims mode 3 works should read *"works in
 portrait; landscape unverified"* until S83 lands and Sérgio re-checks on the device.
+
+### S83 landed — the symptom selects the missing/wrong q₂ class, not the sign class
+The photograph's ~90° roll is the error produced by an absent or wrong-cardinal q₂ after a 90°
+physical turn. A reversed q₂ sign would add the same quarter-turn in the wrong direction and leave
+the world ~180° out. **The report therefore supports the leading hypothesis and contradicts the
+sign hypothesis, but it does not prove which iPadOS API value caused it.** The new `?debug=1`
+readout exists to supply that missing fact on the same hardware.
+
+`screenAngle()` now returns `{ angle, source, reported }`: absence is `null/unknown`, never a
+plausible zero. It reads `screen.orientation`, then legacy orientation, and reconciles either value
+against the live gravity-referenced sensor quaternion. If neither API answers — or an API supplies
+a stale/wrong cardinal — it tests all four q₂ cardinals and chooses the one whose camera up is level
+against gravity. `matchMedia('(orientation: landscape)')` and viewport aspect are shown separately;
+**they do not choose +90 versus −90.** That missing landscape-left/right fact comes from the sensor
+quaternion, which also handles a tablet whose natural orientation is landscape.
+
+The q₂ sign/axis is unchanged and verified algebraically against the research spec: its +Z axis at
+`−screenAngle` is exactly PlayCanvas's −Z `FORWARD` axis at `+screenAngle`. Both rotation events
+still request a re-zero, now with counters in the diagnostic, but the shipping guarantee no longer
+depends on them: each live frame polls the resolved cardinal + media/aspect orientation and requests
+the same re-zero if that key changes.
+
+**⚑ UNVERIFIED ON HARDWARE.** TypeScript, invariants/spec tests, production build, and an iPad-sized
+1024×768 browser render are green; synthetic orientation events make the readout update and leave
+resolved roll at ~0°. No tool in this session rotated an iPad. Sérgio must photograph the readout at
+rest in portrait and in both landscape directions, including the q₂ source/value, raw α/β/γ,
+camera roll, and both event counters. Correct = q₂ changes to the needed cardinal and camera roll
+settles near 0°; broken = q₂ stays `unknown`/the old cardinal or camera roll stays near ±90°.

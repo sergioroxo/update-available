@@ -18,7 +18,7 @@
  * drawn onto ONE offscreen 2D canvas textured onto a mesh with FILTER_NEAREST:
  * a CRT in 1997/2003, a flat panel and two device screens in 2016, and now the
  * VISOR of a headset. Same canvas (`DesktopOS.canvas`), same logical
- * resolution (`ERA1_CANVAS`), same `?flat=1` fallback — so this file is a
+ * resolution (`ERA1_CANVAS`), same `?flat=1` review tool — so this file is a
  * PALETTE and a set of draw helpers, not a second UI system.
  *
  * COLOR LAW (CLAUDE.md; the same discipline `theme/era3.ts`'s NOA block

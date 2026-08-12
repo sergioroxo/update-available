@@ -603,9 +603,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     ceiling = buildCeilingWitness(app);
     cluster = buildClusterShell(app, room, niche, ceiling, layout, options.nobatch !== true);
     cloud = buildPointCloud(app);
-    // the SEND seam (master script §4) — no beat fires it in this worktree
-    // yet (the trigger beats ride the content-merge lane); the debug panel
-    // carries review buttons so the filing/carry-back path stays testable
+    // the SEND seam (master script §4). HISTORICAL WRONG CLAIM: "no beat fires
+    // it". S82 corrected that by inspection: the spine offers s1/s2 on E2's
+    // ordinary path; s3/s4 remain inaccessible on Daniel's black E3 CRT. The
+    // debug panel also carries review buttons for the filing/carry-back path.
     sendRt = createSendRuntime(room, niche);
     // R28-1: the movement node graph (floor markers at the existing camera
     // seats). Geometry/gating only — the camera cut lives in requestMove().
@@ -1604,13 +1605,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   //
   // The maths is the research spec's, verbatim except where PlayCanvas differs
   // (noted at the line): q_gyro = q₀ × q₁ × q₂, with q₂ from the SCREEN
-  // ORIENTATION, recomputed on `orientationchange` — which is why the piece
-  // does not have to demand landscape. The horizon stays level relative to
-  // gravity with no axis flipping, in portrait or landscape.
+  // ORIENTATION. HISTORICAL INCOMPLETE CLAIM: "recomputed on
+  // `orientationchange`" — it always was recomputed each frame, and S83 now
+  // derives/polls the cardinal too because the event/API may be absent. That
+  // is why the piece does not have to demand landscape. The horizon stays
+  // level relative to gravity with no axis flipping, in either posture.
   // ═══════════════════════════════════════════════════════════════════════
   type MotionState = 'unsupported' | 'idle' | 'asking' | 'live' | 'denied' | 'silent';
+  type ScreenAngleSource = 'screen.orientation' | 'legacy' | 'derived' | 'unknown';
+  type ScreenAngleReading = {
+    angle: number | null;
+    source: ScreenAngleSource;
+    /** the API value before sensor reconciliation; diagnostic only */
+    reported: number | null;
+  };
   let motionState: MotionState = 'unsupported';
-  const motionAngles = { alpha: 0, beta: 0, gamma: 0 };
+  const motionAngles: { alpha: number | null; beta: number | null; gamma: number | null } = {
+    alpha: null, beta: null, gamma: null
+  };
   let motionSeen = false;
   let motionSilentTimer = 0;
   /** the device heading (deg) that currently means "the way the seat faces" */
@@ -1627,17 +1639,111 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const qAbsolute = new pc.Quat();
   const qZeroFix = new pc.Quat();
   const qHead = new pc.Quat();
+  const qAngleProbe = new pc.Quat();
+  const qResolvedProbe = new pc.Quat();
   const vHeading = new pc.Vec3();
   const vRoll = new pc.Vec3();
+  const vProbeForward = new pc.Vec3();
+  const vProbeUp = new pc.Vec3();
+  const vProbeRight = new pc.Vec3();
+  const vProbeLevelUp = new pc.Vec3();
+  const vResolved = new pc.Vec3();
   const V_FWD = new pc.Vec3(0, 0, -1);
   const V_UP = new pc.Vec3(0, 1, 0);
+  const CARDINAL_SCREEN_ANGLES = [0, 90, -90, 180] as const;
+  let motionScreen: ScreenAngleReading = { angle: null, source: 'unknown', reported: null };
+  let motionOrientationKey = '';
+  let legacyOrientationEvents = 0;
+  let screenOrientationEvents = 0;
 
-  /** the screen-orientation angle in degrees, both spellings, both supported */
-  function screenAngle(): number {
+  function normalAngle(deg: number): number {
+    const n = ((Math.round(deg / 90) * 90) % 360 + 360) % 360;
+    return n === 270 ? -90 : n;
+  }
+
+  function viewportOrientation(): {
+    media: 'portrait' | 'landscape';
+    aspect: 'portrait' | 'landscape' | 'square';
+    agrees: boolean;
+    width: number;
+    height: number;
+  } {
+    const media = window.matchMedia('(orientation: landscape)').matches ? 'landscape' : 'portrait';
+    const aspect = window.innerWidth === window.innerHeight ? 'square'
+      : window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+    return {
+      media, aspect, agrees: aspect === 'square' || media === aspect,
+      width: window.innerWidth, height: window.innerHeight
+    };
+  }
+
+  /** Absolute roll after applying one q₂ candidate. The correct cardinal
+   *  screen correction is the one whose gravity-referenced horizon is upright;
+   *  the opposite landscape sign is 180° away, not an equally plausible fit. */
+  function screenCandidateRoll(angle: number): number {
+    qAngleProbe.setFromAxisAngle(pc.Vec3.FORWARD, angle);
+    qResolvedProbe.copy(qDevice).mul(qAxis).mul(qAngleProbe);
+    qResolvedProbe.transformVector(V_FWD, vProbeForward);
+    qResolvedProbe.transformVector(V_UP, vProbeUp);
+    // Measure the camera's up against a gravity-level up at the same yaw and
+    // pitch. Unlike Euler.z, this does not turn yaw 180° into a fake roll 180°.
+    if (Math.abs(vProbeForward.dot(V_UP)) > 0.99) {
+      // Looking exactly along gravity has no defined horizon. Rotation changes
+      // pass through this briefly; retain the current cardinal if possible.
+      return motionScreen.angle === angle ? 0 : 180;
+    }
+    vProbeRight.cross(vProbeForward, V_UP).normalize();
+    vProbeLevelUp.cross(vProbeRight, vProbeForward).normalize();
+    return Math.abs(Math.atan2(
+      vProbeUp.dot(vProbeRight),
+      vProbeUp.dot(vProbeLevelUp)
+    ) * pc.math.RAD_TO_DEG);
+  }
+
+  function derivedScreenAngle(): number | null {
+    // Aspect says portrait/landscape but cannot say landscape-left/right (and
+    // some tablets have a natural landscape orientation). The live gravity-
+    // referenced sensor quaternion supplies that missing sign without forcing
+    // either posture. Until beta + gamma exist, the honest answer is unknown.
+    if (motionAngles.beta === null || motionAngles.gamma === null) return null;
+    let best: number = CARDINAL_SCREEN_ANGLES[0];
+    let bestRoll = Number.POSITIVE_INFINITY;
+    for (const angle of CARDINAL_SCREEN_ANGLES) {
+      const roll = screenCandidateRoll(angle);
+      // Keep the previous derived answer on a genuine tie; this is discrete
+      // orientation bookkeeping, not smoothing or filtering the gyro look.
+      if (roll < bestRoll - 0.01 ||
+          (Math.abs(roll - bestRoll) <= 0.01 && motionScreen.angle === angle)) {
+        best = angle;
+        bestRoll = roll;
+      }
+    }
+    return best;
+  }
+
+  /** The screen-orientation correction and the evidence behind it. A numeric
+   *  zero is returned only when a source actually says zero; absence is null.
+   *  API values are reconciled against gravity so a present-but-stale 0 cannot
+   *  silently masquerade as portrait on a landscape viewport. */
+  function screenAngle(): ScreenAngleReading {
     const so = window.screen?.orientation?.angle;
-    if (typeof so === 'number') return so;
     const legacy = (window as { orientation?: number }).orientation;
-    return typeof legacy === 'number' ? legacy : 0;
+    const reported = Number.isFinite(so) ? normalAngle(so as number)
+      : Number.isFinite(legacy) ? normalAngle(legacy as number) : null;
+    const source: ScreenAngleSource = Number.isFinite(so) ? 'screen.orientation'
+      : Number.isFinite(legacy) ? 'legacy' : 'unknown';
+    const derived = derivedScreenAngle();
+
+    if (reported !== null) {
+      // A wrong cardinal is at least 90° worse. Leave 45° of margin for a
+      // person holding the device at an angle during the physical rotation.
+      if (derived !== null && screenCandidateRoll(derived) + 45 < screenCandidateRoll(reported)) {
+        return { angle: derived, source: 'derived', reported };
+      }
+      return { angle: reported, source, reported };
+    }
+    if (derived !== null) return { angle: derived, source: 'derived', reported: null };
+    return { angle: null, source: 'unknown', reported: null };
   }
 
   /** the heading of a rotation about world-up, in degrees (0 = along −Z) */
@@ -1654,11 +1760,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return Math.atan2(-vHeading.x, -vHeading.z) * pc.math.RAD_TO_DEG;
   }
 
-  /** q_gyro = q₀ × q₁ × q₂, into `qAbsolute` */
-  function composeMotion(): void {
-    const x = motionAngles.beta * pc.math.DEG_TO_RAD;
-    const y = motionAngles.alpha * pc.math.DEG_TO_RAD;
-    const z = -motionAngles.gamma * pc.math.DEG_TO_RAD;
+  /** q_gyro = q₀ × q₁ × q₂, into `qAbsolute`. False means q₂ is honestly
+   *  unknown, so no camera rotation is applied with a fabricated zero. */
+  function composeMotion(): boolean {
+    const x = (motionAngles.beta ?? 0) * pc.math.DEG_TO_RAD;
+    const y = (motionAngles.alpha ?? 0) * pc.math.DEG_TO_RAD;
+    const z = -(motionAngles.gamma ?? 0) * pc.math.DEG_TO_RAD;
     const c1 = Math.cos(x / 2), c2 = Math.cos(y / 2), c3 = Math.cos(z / 2);
     const s1 = Math.sin(x / 2), s2 = Math.sin(y / 2), s3 = Math.sin(z / 2);
     qDevice.set(
@@ -1667,11 +1774,28 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       c1 * c2 * s3 - s1 * s2 * c3,
       c1 * c2 * c3 + s1 * s2 * s3
     );
+    motionScreen = screenAngle();
+    ledger.view.screenAngle = motionScreen.angle;
+    ledger.view.screenAngleSource = motionScreen.source;
+    const viewport = viewportOrientation();
+    const orientationKey = `${viewport.media}/${viewport.aspect}/${motionScreen.angle ?? 'unknown'}`;
+    if (motionOrientationKey && orientationKey !== motionOrientationKey) {
+      // Polling is intentional: deprecated `orientationchange` and
+      // ScreenOrientation.change are not both dependable on the iPadOS
+      // versions this mode must support. This catches the same change even if
+      // neither event arrives. It changes only the zero, never sensor data.
+      motionWantZero = true;
+    }
+    motionOrientationKey = orientationKey;
+    if (motionScreen.angle === null) return false;
     // ⚑ DEGREES, not the radians the research spec passes here: PlayCanvas's
-    // Quat.setFromAxisAngle takes an angle in degrees, and pc.Vec3.FORWARD is
-    // (0,0,−1), which absorbs the sign flip the three.js formulation carries.
-    qScreen.setFromAxisAngle(pc.Vec3.FORWARD, screenAngle());
+    // Quat.setFromAxisAngle takes degrees. The spec/three.js q₂ is axis +Z,
+    // angle −screenAngle. PlayCanvas FORWARD is −Z, so axis −Z with angle
+    // +screenAngle is the SAME quaternion. The old "absorbs the sign flip"
+    // claim is therefore correct; this spells out the equivalence.
+    qScreen.setFromAxisAngle(pc.Vec3.FORWARD, motionScreen.angle);
     qAbsolute.copy(qDevice).mul(qAxis).mul(qScreen);
+    return true;
   }
 
   /** ⚑ THE PER-FRAME APPLICATION. Called after the rig is posed, so the rig is
@@ -1680,7 +1804,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  own nausea, and worse than the jitter it would hide. */
   function applyMotionLook(): void {
     if (motionState !== 'live' || xr?.active) return;
-    composeMotion();
+    if (!composeMotion()) return;
     if (motionWantZero) {
       motionWantZero = false;
       motionYawZero = yawOf(qAbsolute);
@@ -1693,6 +1817,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     qZeroFix.setFromEulerAngles(0, -motionYawZero, 0);
     qHead.copy(qZeroFix).mul(qAbsolute);
     camera.setLocalRotation(qHead);
+    // Diagnostic means the resolved CAMERA, not merely the child/head offset:
+    // include the authored seat/drag rig in yaw and pitch as the player sees it.
+    camera.getRotation().getEulerAngles(vResolved);
   }
 
   function onDeviceOrientation(e: DeviceOrientationEvent): void {
@@ -1712,6 +1839,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     window.removeEventListener('deviceorientation', onDeviceOrientation, true);
     window.clearTimeout(motionSilentTimer);
     motionSeen = false;
+    motionOrientationKey = '';
     motionState = remember === 'off' ? 'idle' : remember === 'denied' ? 'denied' : 'silent';
     ledger.view.motion = remember;
     if (!xr?.active) camera.setLocalEulerAngles(0, 0, 0); // hand the view back to the rig
@@ -1822,13 +1950,22 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // portrait ⇄ landscape: q₂ is recomputed from this every frame, so the
     // only thing the change needs is a re-zero, or the room appears to have
     // swung 90° while the player merely turned the phone in their hand.
-    window.addEventListener('orientationchange', () => { motionWantZero = true; });
-    window.screen?.orientation?.addEventListener?.('change', () => { motionWantZero = true; });
+    window.addEventListener('orientationchange', () => {
+      legacyOrientationEvents++;
+      motionWantZero = true;
+    });
+    window.screen?.orientation?.addEventListener?.('change', () => {
+      screenOrientationEvents++;
+      motionWantZero = true;
+    });
     // the menu's Recentre row (see src/desktop/gameMenu.ts)
     gameMenuBus.recentreView = recentreView;
     (window as { __motion?: () => unknown }).__motion = () => ({
       state: motionState, yawZero: motionYawZero, angles: { ...motionAngles },
-      screenAngle: screenAngle(), fov: camera.camera?.fov
+      screenAngle: motionScreen, viewport: viewportOrientation(),
+      resolved: { yaw: vResolved.y, pitch: vResolved.x, roll: vResolved.z },
+      events: { orientationchange: legacyOrientationEvents, screenChange: screenOrientationEvents },
+      fov: camera.camera?.fov
     });
     (window as { __recentre?: () => void }).__recentre = recentreView;
     (window as { __motionSim?: (on: boolean) => boolean }).__motionSim = motionSimulate;
@@ -2800,6 +2937,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onMotionSim: motionSimulate,
       onRecentre: recentreView,
       onFov: (deg) => { if (camera.camera) camera.camera.fov = deg; },
+      motionDiagnostic: () => ({
+        state: motionState,
+        yawZero: motionYawZero,
+        angles: { ...motionAngles },
+        screenAngle: motionScreen,
+        viewport: viewportOrientation(),
+        resolved: { yaw: vResolved.y, pitch: vResolved.x, roll: vResolved.z },
+        events: {
+          orientationchange: legacyOrientationEvents,
+          screenChange: screenOrientationEvents
+        },
+        fov: camera.camera?.fov
+      }),
       sends: sendRt?.ids,
       onSend: (id, outcome) => sendRt?.fire(id, outcome)
     });

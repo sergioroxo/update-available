@@ -284,6 +284,9 @@ export interface Ledger {
    * the seat faces". Null until the first reading. iOS gives no reliable
    * absolute heading, so this is RELATIVE and it will drift — which is exactly
    * why Recentre exists in the game menu.
+   * `screenAngle` + `screenAngleSource`: the current in-memory q₂ correction
+   * and the evidence that supplied it. Null/unknown is deliberately distinct
+   * from a reported 0°; no orientation fact is persisted between sessions.
    *
    * ⚑ `unvoicedName` (S77) — THE UNVOICED OPT-OUT, and it belongs on this field
    * and not on any of the record fields above for exactly the reason this field
@@ -303,6 +306,8 @@ export interface Ledger {
   view: {
     motion: 'unasked' | 'granted' | 'denied' | 'unavailable' | 'off';
     yawZero: number | null;
+    screenAngle: number | null;
+    screenAngleSource: 'screen.orientation' | 'legacy' | 'derived' | 'unknown';
     recentres: number;
     unvoicedName: boolean;
   };
@@ -333,7 +338,11 @@ const fresh = (): Ledger => ({
   e4Space: [],
   l: [],
   e4Offers: [],
-  view: { motion: 'unasked', yawZero: null, recentres: 0, unvoicedName: false }
+  view: {
+    motion: 'unasked', yawZero: null,
+    screenAngle: null, screenAngleSource: 'unknown',
+    recentres: 0, unvoicedName: false
+  }
 });
 
 export let ledger: Ledger = fresh();

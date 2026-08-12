@@ -1206,7 +1206,7 @@ more than a long one that pads.
 ---
 
 # S83 — THE HORIZON IS LOPSIDED ON A REAL iPAD · **Codex GPT 5.6, high effort**
-**⚑ PROMPT STATUS: QUEUED — dispatch to Codex. This is mode 3's first real-device finding.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-12 — fix + always-visible `?debug=1` hardware diagnostic landed; UNVERIFIED ON HARDWARE until Sérgio photographs the iPad readout in portrait and both landscape directions.**
 *Sérgio, 2026-08-12, on an iPad in landscape, over the deployed Pages build: the world is rolled
 about 90° — the room is tilted and the laptop screen's text runs vertically. **Gyro is otherwise
 working**: the permission was granted, `Stop device look` is on screen, E3 loaded.*

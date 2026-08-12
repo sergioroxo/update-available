@@ -7,6 +7,10 @@ STATUS: live
 
 ## NEXT UP (rebuilt 2026-07-25 — items 1-3 of the R29 list all shipped, S40/S41/S42; the list had
 ## gone stale again the same way, so it is pruned here. Top item = your session unless Sérgio says so.)
+> **⚑ CORRECTION 2026-08-12:** the numbered list below is retained as session history and is no
+> longer a dispatch queue. S66–S78 have shipped and S73/S75 are retired. Dispatch only from
+> `BUILD_QUEUE_LIVE.md`; at this audit, S79 is its next unshipped implementation session.
+
 0. **⚑ S66 — ROOM 2 IS UNUSABLE AS A PLACE (Sérgio's 2026-08-01 pass). The top item.**
    **⚑ DISPATCHABLE PROMPT: `docs/reinterp/BUILD_QUEUE_LIVE.md`** (created 2026-08-02 — the only
    file to dispatch from). What follows here is the BRIEF the prompt points back at, and the
@@ -147,6 +151,54 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-12 · Session 83 — **THE iPAD HORIZON FIX + THE DEVICE DIAGNOSTIC.** Touched:
+`src/engine/app.ts`, `src/debug/panel.ts`, `src/state/ledger.ts`, `BUILD_QUEUE_LIVE.md`, this log,
+`08_STATUS_REGISTER.md`, `BUILD_LOG.md`. No narrative, geometry, comfort, pacing, movement or send
+code changed.)*
+
+**DIAGNOSIS BY ERROR SHAPE.** The real-iPad photograph shows ~90° of roll in landscape. That is the
+error produced when q₂ is absent or resolves to the wrong cardinal after a quarter-turn. If q₂'s
+sign were reversed, it would correct in the same direction as the physical rotation and the
+remaining error would be ~180°, not ~90°. The report therefore supports the missing/wrong q₂
+hypothesis and contradicts the sign hypothesis. It cannot prove whether `screen.orientation`,
+legacy `window.orientation`, or neither was the source on that iPad; the diagnostic now records
+that fact instead of guessing it.
+
+**THE FIX.** `screenAngle()` returns an angle plus its source, and `unknown` is represented as null —
+never as a silent zero. API values are reconciled against the live sensor quaternion, so even a
+present-but-stale zero cannot masquerade as portrait. Aspect and `matchMedia` identify the viewport
+shape but cannot identify landscape-left versus landscape-right (and some tablets have a natural
+landscape orientation), so neither supplies a guessed sign. Instead the code tests q₂ at 0, +90,
+−90 and 180 and selects the cardinal whose camera-up is level against gravity. The test uses vectors,
+not Euler roll: Euler decomposition can falsely relabel a 180° yaw as 180° roll. The research sign
+and axis remain unchanged because +Z at `−screenAngle` is algebraically identical to PlayCanvas
+`FORWARD` (−Z) at `+screenAngle`.
+
+**ROTATION AND READOUT.** The deprecated `orientationchange` and ScreenOrientation `change` hooks
+remain and count their firings, but correctness does not depend on either: the resolved cardinal +
+media/aspect key is polled on every live gyro frame and a change re-zeros heading. Behind
+`?debug=1`, a small always-visible panel now shows q₂ angle + source (and a rejected API value), raw
+α/β/γ, matchMedia and aspect results with viewport dimensions, resolved camera yaw/pitch/roll, and
+both listener counters. At 1024×768 it rendered legibly in the 3D room; synthetic events changed
+raw values and the resolved camera while roll stayed ~0°. No smoothing/filtering was added.
+
+**⚑ UNVERIFIED ON HARDWARE — EXACTLY WHAT REMAINS.** This session did not and cannot rotate an iPad.
+It does not verify the iPad's API source, landscape-left/right corrections, listener behavior,
+sensor noise at rest, or the feel of the turn. Sérgio must photograph the always-visible readout at
+rest in portrait and in both landscape directions; the photograph must include q₂ value/source,
+raw α/β/γ, camera roll, and event counts. Correct means the resolved q₂ changes to the needed
+cardinal and camera roll settles near 0°; broken means q₂ remains unknown/the old cardinal or roll
+remains near ±90°.
+
+**ONE-LINE DEVICE INSTRUCTION:** Open
+`https://sergioroxo.github.io/update-available/?reinterp=1&era=3&debug=1`, tap **Look with your
+device**, rotate portrait → landscape-left → landscape-right, and photograph the top-right panel:
+correct = q₂ changes cardinal/source and roll returns near 0°; broken = q₂ stays unknown/unchanged
+or roll stays near ±90°.
+
+**Acceptance:** `npx tsc --noEmit` green; `npm test` green (palette 33/33, C6 63/63, C8 clean);
+`npm run build` green; mobile-viewport readout rendered and exercised in the local 3D build.
+
 *(2026-08-09 · Session 77 — **L, AND THE ROOM REWRITES** (Era 4, stage 2b: the voice). Design of
 record: `REINTERP_E4_AUDIO_FIRST_DESIGN_2026-07-12.md` §2, `REINTERP_E4_ECHO_SCRIPT_DRAFT_2026-07-13.md`
 (now renamed throughout), `REINTERP_E4_THE_ARGUMENT_2026-08-05.md` §4.1–4.3. Touched:

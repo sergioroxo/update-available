@@ -86,7 +86,7 @@ type Stage = 'closed' | 'worn';
 /**
  * The era's shell. One instance, made by `DesktopOS` when the era becomes `e4`
  * and published on the bridge below so the ROOM (`src/room/era3Devices.ts`) and
- * the flat fallback can both reach the same object — the mount points differ,
+ * the flat review tool can reach the same object — the mount points differ,
  * the surface does not.
  */
 export class E4Shell {
@@ -329,7 +329,7 @@ export function e4Bridge(): E4Bridge | null { return bridge; }
  * Vera's laptop, and Daniel's Era-3 monitor stays dead exactly as S61 left it.
  * In flat there is only the one canvas, so the ritual draws there — otherwise
  * `?flat=1` would black out the notice and Era 4 would be unreachable in the
- * universal fallback, which is the one thing that fallback exists to prevent.
+ * canvas-only review route, which is the one thing that review route exists to prevent.
  */
 let roomMounted = false;
 export function claimRoomMount(): void { roomMounted = true; }

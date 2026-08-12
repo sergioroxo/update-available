@@ -1,6 +1,6 @@
 {
   "title": "The Close constellation — the project's knowledge network",
-  "_doc": "PROPOSED (2026-07-22, awaiting Sérgio) — the target shape for data/strings/close_network.json, which is today a flat list of 24 hand-typed labels. The Close's point cloud is canonically 'symbolically drawn from the data/connections used to make this immersive experience itself' (master plan F6) and its hub nodes carry 'the network of knowledge the piece itself is built from' (src/room/pointCloud.ts). Today the mesh's TOPOLOGY does not honour that: node positions are seeded-random, links join near neighbours by spatial proximity only, and labels are assigned to whichever nodes happened to render largest. This schema makes the network real. NOTHING has been migrated — see the criteria doc and Sérgio's approval before data moves. THE ETHICS RULE THAT SHAPES THIS FILE: a node's visible `label` is ALWAYS authored, never copied from a dossier source's `text`, because those texts name real people and legal cases while this surface's own standing rule is 'No survivor names, no real individuals — sources and structures only.' Derivation supplies structure and status; wording stays Sérgio's.",
+  "_doc": "PROPOSED (2026-07-22, awaiting Sérgio) — the target shape for data/strings/close_network.json, which is today a flat list of 24 hand-typed labels. The Close's point cloud is canonically 'symbolically drawn from the data/connections used to make this immersive experience itself' (master plan F6) and its hub nodes carry 'the network of knowledge the piece itself is built from' (src/room/pointCloud.ts). Today the mesh's TOPOLOGY does not honour that: node positions are seeded-random, links join near neighbours by spatial proximity only, and labels are assigned to whichever nodes happened to render largest. This schema makes the network real. NOTHING has been migrated — see the criteria doc and Sérgio's approval before data moves. HISTORICAL WRONG CLAIM (2026-07-22, retained visibly): a node's visible label is always authored by Sérgio and remains empty while waiting. CORRECTION (2026-08-12): the 2026-07-24 co-creation norm retired that rule; draft labels may be PLACEHOLDER-draft for Sérgio to review and rewrite, while source text still must never be copied into a visible label.",
   "type": "object",
   "required": ["sergioPass", "nodes", "edges"],
   "properties": {
@@ -18,7 +18,7 @@
           "id": { "type": "string", "description": "stable slug — edges reference it, so renaming a label never breaks the graph" },
           "label": {
             "type": "string",
-            "description": "THE VISIBLE TEXT, always authored by Sérgio. Never auto-filled from a source's `text` field (see the ethics rule in _doc). A derived node awaiting a label carries the empty string and is reported, not invented."
+            "description": "THE VISIBLE TEXT. Never auto-filled from a source's `text` field. Under the 2026-07-24 co-creation norm it may be a clearly marked PLACEHOLDER-draft for Sérgio to review and rewrite; his edit wins."
           },
           "origin": {
             "type": "string",

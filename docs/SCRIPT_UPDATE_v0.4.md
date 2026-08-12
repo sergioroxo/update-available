@@ -132,7 +132,9 @@ mini-games. Formalized as a third register value (extends v0.3 Part VI):
   registers, montage logic.
 - **Sérgio's existing mini-games** slot as seam-arcade objects (an in-OS
   "Games" folder, era-skinned). Inventory them in
-  [PROCESS_REGISTER.md](PROCESS_REGISTER.md) (what exists, where, what state)
+  ~~`PROCESS_REGISTER.md`~~ **⚑ CORRECTED 2026-08-12: this proposed
+  register was never created; current build/session state is in
+  [`reinterp/08_STATUS_REGISTER.md`](reinterp/08_STATUS_REGISTER.md)**
   and assign per-era; register `respite` unless a game is itself satirical
   (then `operable`, witness-side or perpetrator-marked).
 
@@ -203,7 +205,8 @@ concrete beat + one infrastructure decision:
 
 ## 6. EQUIRECTANGULAR VISUALIZATION PACK (Q1 — see the rooms before building)
 
-Same contract as [STORYBOARD_PROMPTS_v0.2.md](../STORYBOARD_PROMPTS_v0.2.md):
+Same contract as ~~`STORYBOARD_PROMPTS_v0.2.md`~~
+**⚑ CORRECTED 2026-08-12: that referenced file is not present in this repository**:
 **throwaway, visualization-only, not reference art.** Paste into ChatGPT image
 generation; view in any 360 viewer (or just look at the unwrapped image) to
 feel each era's room as a surrounding space.
