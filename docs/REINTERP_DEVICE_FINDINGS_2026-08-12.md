@@ -129,3 +129,77 @@ opening.
 **Do not accept the s2 send on a Quest** (`08 §17`) — 6.874 m/s against a 0.43 envelope, on E2's
 ordinary path. On the iPad it is merely unpleasant; in stereo it is the thing the comfort law exists
 to prevent.
+
+
+---
+
+# 7 · SECOND iPAD PASS (2026-08-12, afternoon) — four visual defects, three diagnosed
+*⚑ Sérgio's priority, adopted: **tablet first.** "If this is working here I am sure it'll mostly be
+easier to convert to Quest, because tablet will be the most used method (for the exhibition at
+least)." So the Quest list in `08 §13` waits; everything below is tablet-facing.*
+
+## 7.1 · ⚑ THE BLACK BOARD IN E2 — diagnosed, and it has a documented precedent
+The large black rectangle on the wall is **`witnessPanelFrame`** — `[0, 1.5, 3.52]`, 1.8 × 1.4 × 0.1,
+colour `#1a1a24`, sitting on `wallSouth` at z 3.72. **It is the witness record's FRAME**, and what he
+photographed is the frame with nothing drawn on it.
+
+**⚑ This exact failure is already in the repo's history.** Session 27's note: the record plane's z
+was 3.685/3.865, *both deeper than the frame prop's own near face (~3.649)* — so the plane fell
+**behind** the frame the instant an era transition ran, and the surface read as a bare board.
+**The z was corrected once. This is E2, after a transition, and it is black again.**
+
+**So the hypothesis to test first is the same one: the record plane is behind its frame at E2.**
+⚑ Do not re-nudge the z until you know *what re-broke it* — that is the instruction S66 was given
+about the shelf, for the same reason.
+
+## 7.2 · ⚑ THE DUCK — the audit already flags it, in EVERY state
+`node tools/room-audit.mjs`:
+```
+FLOATING  rainbowDuck   1.560 m of air under it (base y 1.560, nearest support below y 0)
+```
+**Not just at E3 — at r1 as well.** S71 fixed the *r3* case and the original placement was never
+right. The geometry is ambiguous and I will not guess it:
+
+| | |
+|---|---|
+| `rainbowDuck` | pos `[1.98, 1.60, 0.38]`, size `0.09 × 0.08 × 0.10` |
+| `shelfBoard3` | pos `[1.98, 1.54, 0.75]`, size `0.28 × 0.04 × 0.85` |
+
+Taking pos as centre, the duck's base is **1.56** and the board's top is **1.56** — they should touch.
+**But the audit finds the FLOOR as the nearest support**, which means something in x/z is not
+overlapping as it looks. ⚑ Note the duck sits at **z 0.38** while the board spans **z 0.325–1.175** —
+it is right on the front lip, 5 cm from falling off.
+
+> **⚑ Measure it; do not nudge it.** And the user-facing symptom is the real test: **Sérgio cannot see
+> the duck on the device.** Fixing the audit number without him then finding it has fixed nothing.
+
+## 7.3 · The floating tape in E2 — ⚑ NOT reproduced, and that is worth saying
+`room-audit` flags only three FLOATING props: `rainbowDuck`, `w_cardigan`, `e_hoodie`. **The last two
+are drapes** — a cardigan over a chair back has nothing directly beneath it by design, and that is an
+accepted pattern, not a bug. **No tape is flagged in any state.**
+
+So either the tape's support is real and it only *reads* as floating from that angle, or it is a
+class the audit does not catch. ⚑ **This one needs Sérgio to say which shelf and which era** — a
+screenshot with the tape in frame and the `?debug=1` era chip visible is enough.
+
+## 7.4 · ⚑ THE CD STACK — his design question, and the evidence favours cutting it
+> *"the cd stack shouldn't be in another era, since there are the tapes here?"*
+
+**Period-wise it is fine.** 1997 is exactly when CDs were everywhere; a teenager owning both is true
+to the year, and cutting it for anachronism would be wrong.
+
+**⚑ But the argument for cutting it is better than the period argument for keeping it, and it is
+evidential rather than taste:**
+- **`cdStack` is the only prop on that shelf with NO `_doc`.** Every neighbour — teddyBox,
+  rainbowDuck, the books — carries a note saying why it exists and which session put it there.
+  **A prop with no stated reason is the definition of decoration**, and this room's law is that
+  belongings are a life, not set dressing.
+- **It competes with the one object the era is built on.** The mixtape is *the* designed candidate,
+  Tape C carries the era's refusal, and the boombox is the room's warm instrument. **E1's medium is
+  the cassette on purpose.** A stack of CDs beside it does not contradict the period; it dilutes the
+  shelf's meaning.
+- ⚑ And it is not the apparatus's medium either — **the kit inserted into the machine is a floppy**
+  (`KIT_FLOPPY`), not a CD-ROM. So the stack belongs to neither side of the argument.
+
+**My read: cut it, or give it a reason.** Sérgio's call, and either answer is defensible — but
+"it has no `_doc`" is the honest reason it feels wrong, and it is his own instinct being right.
