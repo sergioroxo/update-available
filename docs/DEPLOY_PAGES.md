@@ -107,6 +107,28 @@ does rotating the device keep the horizon level.
 project's history** · whether 75 draw calls is right · whether the 12-second entrance reads as
 comfortable or merely slow · whether E3→E4's 42.5-second crossing reads as routine or as boring.
 
+## ⚑⚑ THE BARE URL SHOWS THE OLD PIECE — AND THAT IS CORRECT
+**This caught Sérgio on the first deploy and it will catch every device tester after him.**
+
+**`https://sergioroxo.github.io/update-available/` runs the SHIPPED build, not the reinterp.**
+It is not a stale deploy and nothing is wrong: `src/main.ts:19` reads
+`const reinterp = query.get('reinterp') === '1'`, and CLAUDE.md's own law is that the reinterp
+amendments apply **ONLY behind `?reinterp=1`** while the shipped build's laws stay exactly as
+written. **One deployed bundle contains both pieces; the query string chooses which one you get.**
+
+> ### ⚑ BOOKMARK THIS, NOT THE BARE ADDRESS
+> ```
+> https://sergioroxo.github.io/update-available/?reinterp=1
+> ```
+
+**To confirm the deploy is actually current** (rather than an older publish), open
+`?reinterp=1&debug=1` — the debug panel should list the **E4 sections** (`e4Offers`, `e4Memory`,
+`e4Wall`, the finale trio). If those buttons are there, the build is at or after S78. If the panel
+has no E4 block, the Actions run did not publish and you are seeing a previous deployment.
+
+⚑ **Anyone you hand the link to gets the shipped piece unless the query is on it.** For a device test
+that is a silent wrong-piece failure, so send the full URL, never the root.
+
 ⚑ **Useful review URLs** (append to the Pages address):
 ```
 ?reinterp=1                 the piece, from the front door
