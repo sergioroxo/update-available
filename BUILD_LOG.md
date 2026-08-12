@@ -256,3 +256,4 @@
 - 2026-08-06 — S78's offers/memories/curation/finale committed after its session was cut off by a spend limit; automated checks green, its own click-through and screenshots NOT done (08 §15).
 - 2026-08-06 — S78's verification pass run (nine beats, zero errors, A/B committed, droppable half KEPT); Pages public-link decision recorded.
 - 2026-08-06 — First Pages run: build succeeded (CI ran the invariants on reinterp for the first time), deploy blocked by the github-pages environment's default-branch rule; fix documented.
+- 2026-08-09 — S82 written for Codex: the integrity pass (cross-doc contradictions, build-vs-docs, reachability, the recurring bug classes).

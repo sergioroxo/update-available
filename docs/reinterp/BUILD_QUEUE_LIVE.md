@@ -1052,3 +1052,151 @@ ACCEPTANCE, BY FEEL: on a phone you turn your body and the room turns, and reach
 you feels like looking rather than like work. A drag never fires a prop. And nothing in the room stops
 responding because of which way you are facing.
 ```
+---
+
+# S82 — THE INTEGRITY PASS: narrative, structure, and the bugs that keep coming back · **Codex GPT 5.6, high effort**
+**⚑ PROMPT STATUS: QUEUED — dispatch to Codex. Independent of S79/S81; can run any time the tree is clean.**
+*Sérgio, 2026-08-09: "I want Codex to do a narrative pass and an overall audit of the logic and
+structure of the project and to lock down overbearing bugs."*
+
+## ⚑ Why this is the right job for Codex, and where the line is
+The project's own lane rule (`NEXT_PROMPTS_2026-07-30.md`) is that **Codex takes well-specified work
+whose acceptance is `tsc` + `npm test` + `npm run build`, and its prompts must never claim visual
+verification.** A narrative pass in the sense of *does this beat land* is explicitly NOT its lane —
+that is register judgement and it stays with Sérgio and Claude.
+
+**But there is a narrative job here that is exactly Codex-shaped and has never been done:**
+**97 live design documents, 52 source files and 32 PLACEHOLDER data files, with a week of amendments
+layered on top of each other.** Nobody has ever read the whole thing at once and asked *do these
+agree?* That is consistency work, it is mechanical, it is large, and it is the single most likely
+place a silent contradiction is hiding.
+
+```
+Audit session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch reinterp,
+?reinterp=1). ⚑ YOU ARE AUDITING. Report first, fix only what is PROVABLY wrong (below).
+
+READ, in this order:
+  CLAUDE.md · docs/ETHICS_CONSTRAINTS.md ·
+  ⚑ docs/reinterp/08_STATUS_REGISTER.md IN FULL — all fifteen sections. It is the map, and §5 tells
+    you how it is meant to stay true. §6, §12 and §15 name failure CLASSES, not just instances ·
+  docs/reinterp/01_SESSION_LOG.md (the tail, and NEXT UP) ·
+  docs/reinterp/BUILD_QUEUE_LIVE.md (what is queued, shipped and retired) ·
+  docs/REINTERP_MASTER_PLAN_v2_2026-07-12.md (the spine) ·
+  then every `STATUS: live` doc under docs/ — there are ~97; you do not have to quote them, you have
+    to notice where they disagree ·
+  then src/, data/, tools/check-spec.mjs, tools/room-audit.mjs, tools/shots.mjs.
+
+⚑ THREE RULES THAT GOVERN THE WHOLE SESSION:
+  1. REPORT, DO NOT REDECORATE. Fix ONLY what is provably wrong by inspection: a referenced id that
+     does not exist, a doc asserting something the code contradicts, dead code, a broken link, a
+     stale pointer. EVERYTHING ELSE IS A FINDING, not an edit. Do not rewrite narrative text, do not
+     make register calls (`operable`/`felt`/`respite`), do not touch tone, and do not "improve"
+     copy — all of that is Sérgio's and the co-creation norm covers it.
+  2. ⚑ NEVER CLAIM VISUAL VERIFICATION. You cannot drive the browser. Your acceptance is `tsc`,
+     `npm test`, `npm run build`. If a finding needs eyes, say "needs a visual pass" and stop.
+  3. A "not found" IS a finding. If you check something and it is fine, say so — a clean result on a
+     suspected fault is worth as much as a hit, and this project has been bitten by assuming.
+
+──────────────────────────────────────────────────────────────────────
+PART A · NARRATIVE AND DOCUMENT INTEGRITY  (the part nobody has ever done)
+
+A1. ⚑ CROSS-DOCUMENT CONTRADICTIONS. ~97 live docs, many amended this week with "CORRECTED",
+    "SUPERSEDED", "revision N" headers. Find every place TWO LIVE DOCS DISAGREE about a decision.
+    ⚑ The known shape of this fault: `08 §6` — a schema dated 2026-07-22 encoded a rule the
+    co-creation norm retired on 2026-07-24, and a session read the older file and believed it.
+    THE OLDER FILE IS NOT ALWAYS THE WRONG ONE. Report both sides and which is dated later; do not
+    decide.
+
+A2. ⚑ DOES THE BUILD MATCH ITS OWN DOCS? For each era, take what the design docs say EXISTS and check
+    it against `src/` and `data/`. Two directions, both matter:
+      (a) documented but absent — a beat, a prop, a string, a mechanic a doc claims is built
+      (b) ⚑ BUILT BUT UNDOCUMENTED — code with no design doc behind it. This is the quieter fault and
+          it is how a piece drifts from its own intention.
+    ⚑ The class name for (a) is in the register already: "planned, partially done, assumed complete."
+
+A3. NARRATIVE SPINE CONSISTENCY. `MASTER_PLAN_v2` §5b names six continuity threads (the watcher, the
+    board, the machine, the name/file, the warm objects, the law outside) with a value per era.
+    ⚑ Check each thread actually appears in each era's data/code. A thread with a gap is a real
+    finding, and the table has never been checked against the build.
+
+A4. NAME AND TERM DRIFT. The assistant is Lamby → Lambient → **L**. Rooms map: Room 1 = Daniel
+    (E1+E2), Room 2 = Vera (E3), Room 3 = Maya (E4). Check for stale names, wrong room/era mappings,
+    and any surviving "Echo". ⚑ Also check invented marks are used consistently and that NO REAL
+    organisation, person or brand has leaked into `data/` (they are dossier/provenance only).
+
+A5. THE PLACEHOLDER AND VERIFY LEDGER. **132 `[VERIFY SOURCE]` markers and 32 PLACEHOLDER data files.**
+    Nothing counts them and nothing tracks whether they are being retired or accumulating. Produce
+    the census, grouped by era and by kind. ⚑ This is the "Dossier's evidential health" audit named
+    in `REINTERP_THE_AUDIT_SYSTEM_2026-08-04.md` and never built — **the one the article will be
+    judged on.**
+
+──────────────────────────────────────────────────────────────────────
+PART B · LOGIC AND STRUCTURE
+
+B1. ⚑ REACHABILITY ON THE ORDINARY PATH — assertion 6 of the audit system, NEVER BUILT, and the
+    register is now THREE FAULTS DEEP behind it (`08 §14`). Trace, statically, whether every beat is
+    reachable by ordinary clicking from the front door — no debug jumps. You cannot click, so do it
+    by reading the state machines: `spine.ts`, `os.ts`'s phase graph, `E4Shell`, `LVoice`, the update
+    rituals. ⚑ REPORT ANY BEAT THAT ONLY A DEBUG BUTTON CAN REACH. That is the S64 class of bug that
+    misled three playthroughs.
+
+B2. ORPHANS AND DEAD SEAMS. Find code that nothing calls and seams nothing fires. ⚑ Known: `sends.ts`
+    is a complete runtime whose own header says no beat triggers it. Find the rest. For each, say
+    whether it is DEAD (delete) or LATENT-BY-DESIGN (a seam waiting for content) — those are
+    different and must not be conflated.
+
+B3. STATE AND LEDGER INTEGRITY. `ledger.ts` is in-memory only and wiped on exit — verify nothing
+    writes to storage anywhere, and that every `wipeLedger` path is complete. ⚑ Check the FILING
+    doctrine holds: some beats deliberately file NOTHING (Malta, Tape C, the ball, FloppySheep,
+    playing Noa's video) because the apparatus did not ask for them. Confirm those are still silent.
+
+B4. DATA SCHEMA DRIFT. Fields honoured at one end and dropped in the middle — this codebase has been
+    bitten at least three times (`modelScale`, the ledger name prefill, the r3 `props` override that
+    replaces rather than merges). Look for more of that exact shape.
+
+──────────────────────────────────────────────────────────────────────
+PART C · THE BUGS THAT KEEP COMING BACK
+
+C1. ⚑ THE YAW-FOR-PLACE CLASS (`08 §12`) — a global yaw standing in for a place. Three instances
+    found (S70's unclickable tablet, S71's wrong `CURRENT:` readout, S80's Recentre). S80 removed it
+    from PICKING. ⚑ ONE INSTANCE IS KNOWINGLY OPEN: the keyboard is still gated on `facingBack`.
+    FIND EVERY REMAINING PLACE the code compares a yaw to a threshold to answer "where am I?" or
+    "what am I looking at?". Report each with a verdict: still correct here, or the same bug again.
+
+C2. `?flat=1` (`08 §14`): it cannot reach E3 or E4, and it mounts NO DEBUG PANEL, so it is
+    unreachable AND un-inspectable past E2. ⚑ NOTE THE FRAMING FIRST — CLAUDE.md was corrected on
+    2026-08-06 and **flat is a REVIEW TOOL, not a fallback**. So this is a tooling gap, not a broken
+    audience path. Scope what it would take; do not build it.
+
+C3. THE LATENT SEND LEGS: over budget (78 draw calls against 75) AND over the comfort envelope
+    (6.87 m/s against 0.43) — both on a seam no beat fires. Confirm still latent. ⚑ DO NOT FIX and
+    DO NOT un-exclude them from the ratchet; note that whoever wires the first send beat owns both.
+
+C4. Confirm the eight `terminalFrame` console asserts S71 closed are still at zero, and that no new
+    console errors have appeared.
+
+C5. ⚑ ANY BUG YOU FIND THAT IS NOT ON THIS LIST is the most valuable thing you can return. Say how
+    you found it.
+
+──────────────────────────────────────────────────────────────────────
+FIX ONLY THESE, and only if provable by inspection: broken cross-references and dead links in docs ·
+ids referenced but never defined · stale pointers (a doc naming a file/symbol that no longer exists) ·
+genuinely dead code with no caller · a doc asserting something the code plainly contradicts (correct
+the DOC, note it, and ⚑ never silently — this project corrects in place with the wrong claim left
+visible, because the wrong claim is usually the interesting part).
+⚑ EVERYTHING ELSE IS A REPORT.
+
+LAWS: no runtime network calls · no storage · palette ratchet 33 · C1–C8 must still pass · C8: flip
+this block to SHIPPED · Quest ≤75k tris, ≤75 draw calls · `npm run audit` currently exits 1 ONLY on
+the three latent send legs — do not fix, do not raise, do not un-exclude.
+Git: EXPLICIT PATHSPECS only — never `git add -A`; another session may share this worktree's index.
+
+DELIVERABLE: `docs/reinterp/S82_INTEGRITY_AUDIT_<date>.md`, STATUS header, findings ⚑ WORST FIRST,
+each with: what it is · where (file:line) · how you found it · FIXED or REPORTED · and for reported
+ones, what it would take. Plus a one-line summary per part. Plus ONE line in BUILD_LOG.md, and a
+`08_STATUS_REGISTER.md` section for anything that is a CLASS rather than an instance.
+
+⚑ REPORT FAITHFULLY. If a part turns up nothing, say so plainly — do not manufacture findings to
+fill a section. If you could not complete a part, name it and say why. A short honest audit is worth
+more than a long one that pads.
+```
