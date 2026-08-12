@@ -82,7 +82,7 @@ def main():
     st.sidebar.markdown("*PhD research archive*")
     st.sidebar.divider()
 
-    pages = [
+    advanced_pages = [
         "Dashboard",
         "Review Inbox",
         "Corpus Intelligence",
@@ -105,20 +105,46 @@ def main():
         "Offload Packages",
         "Seed Data",
     ]
-    if st.session_state.get("page") not in pages:
-        st.session_state["page"] = pages[0]
+    main_routes = {
+        "Today": "Dashboard",
+        "🏭 Production Line": "Production Line",
+        "Sources": "Source Queue",
+        "Collections": "Research Collections",
+        "Findings": "Review Inbox",
+        "Publish": "Pending Upload",
+        "System Health": "System Health",
+    }
+    main_pages = [*main_routes, "Advanced"]
+    route_to_main = {route: label for label, route in main_routes.items()}
+    current_route = st.session_state.get("page", "Dashboard")
+    if st.session_state.get("nav_page") not in main_pages:
+        st.session_state["nav_page"] = route_to_main.get(current_route, "Advanced")
+    if current_route in advanced_pages:
+        st.session_state.setdefault("advanced_page", current_route)
+    if st.session_state.get("advanced_page") not in advanced_pages:
+        st.session_state["advanced_page"] = "Dashboard"
     requested_page = st.session_state.pop("_nav_to", None)
-    if requested_page in pages:
-        st.session_state["page"] = requested_page
-        st.session_state["nav_page"] = requested_page
+    if requested_page in main_routes.values():
+        st.session_state["nav_page"] = route_to_main[requested_page]
+    elif requested_page in advanced_pages:
+        st.session_state["nav_page"] = "Advanced"
+        st.session_state["advanced_page"] = requested_page
 
-    page = st.sidebar.radio(
+    main_page = st.sidebar.radio(
         "Navigate",
-        pages,
-        index=pages.index(st.session_state.get("page", pages[0])),
+        main_pages,
         key="nav_page",
         label_visibility="collapsed",
     )
+    if main_page == "Advanced":
+        page = st.sidebar.selectbox(
+            "Advanced tools",
+            advanced_pages,
+            key="advanced_page",
+            help="All original pages remain available here.",
+        )
+    else:
+        page = main_routes[main_page]
     st.session_state["page"] = page
 
     st.sidebar.divider()
@@ -131,6 +157,17 @@ def main():
 
     if page == "Dashboard":
         page_dashboard()
+    elif page == "Production Line":
+        from runner.production_line_ui import render_production_line
+        render_production_line()
+    elif page == "Research Collections":
+        from runner.research_collections_ui import render_research_collections_page
+
+        config = _load_config_safe()
+        if config:
+            render_research_collections_page(config)
+        else:
+            st.error("Could not load local corpus configuration.")
     elif page == "Review Inbox":
         page_review_inbox()
     elif page == "Corpus Intelligence":
@@ -177,11 +214,27 @@ def main():
         page_offload_packages()
     elif page == "Seed Data":
         page_seed_data()
+    elif page == "System Health":
+        page_system_health()
 
 
 # ---------------------------------------------------------------------------
 # Dashboard
 # ---------------------------------------------------------------------------
+
+def page_system_health():
+    st.title("System Health")
+    st.write(
+        "Check services, background work, and recovery information here. Research decisions "
+        "remain in Collections and Findings."
+    )
+    config = _load_config_safe()
+    if not config:
+        st.error("Could not load config. Check runner/.env.")
+        return
+    _render_system_health_panel(config)
+    st.info("Detailed worker, routing, logs, and maintenance controls remain under Advanced.")
+
 
 def page_dashboard():
     st.title("Dashboard")
@@ -4869,14 +4922,17 @@ def _render_enrichment_result(result) -> None:
         st.dataframe([p.model_dump() for p in result.statistical_claims], width="stretch")
 
 
-def _render_second_opinion_gate(config, analysis_text: str) -> None:
+def _render_second_opinion_gate(
+    config, analysis_text: str, *, doc_id: str | None = None,
+) -> None:
     from runner.models.document import AnalysisResult
     from runner.pipeline import second_opinion
 
-    intake_result = st.session_state.ingest.get("intake")
-    if not intake_result:
-        return
-    doc_id = intake_result.doc_id
+    if not doc_id:
+        intake_result = st.session_state.ingest.get("intake")
+        if not intake_result:
+            return
+        doc_id = intake_result.doc_id
     doc_dir = config.corpus_dir / doc_id
     try:
         current = AnalysisResult.model_validate(json.loads(analysis_text))
@@ -5337,9 +5393,9 @@ def page_document_list():
             with batch_cols[1]:
                 run_profile = st.selectbox(
                     "Profile",
-                    ["shame_article", "podcast_analysis", "testimony_analysis", "anti_gender_network", "search_discovery"],
+                    ["documentary_analysis", "shame_article", "podcast_analysis", "testimony_analysis", "anti_gender_network", "search_discovery"],
                     key="doc_set_run_profile",
-                    help="documentary_analysis is manual-only and is not available for batch runs.",
+                    help="Collection runs are bounded to 15 documents and preserve existing reviewed annotations.",
                 )
             with batch_cols[2]:
                 run_llm = st.selectbox("Model", ["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local"], key="doc_set_run_llm")
@@ -7955,6 +8011,17 @@ def _render_doc_card(doc: dict, corpus_dir: Path, *, force_expanded: bool = Fals
 
         _render_review_overrides(doc["doc_id"], corpus_dir / doc["doc_id"])
 
+        analysis_path = corpus_dir / doc["doc_id"] / "analysis.json"
+        if analysis_path.is_file():
+            try:
+                saved_analysis_text = analysis_path.read_text(encoding="utf-8")
+            except OSError as exc:
+                st.warning(f"Could not open the saved analysis for comparison: {exc}")
+            else:
+                _render_second_opinion_gate(
+                    _prov_cfg, saved_analysis_text, doc_id=doc["doc_id"],
+                )
+
         # ── Actions ───────────────────────────────────────────────────────
         st.divider()
         act_cols = st.columns([1, 2, 1])
@@ -8032,28 +8099,42 @@ def _render_doc_card(doc: dict, corpus_dir: Path, *, force_expanded: bool = Fals
                 st.rerun()
 
         with act_cols[1]:
-            llm_opts = ["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local"]
-            ra_llm = st.selectbox("Model", llm_opts, key=f"ra_llm_{doc['doc_id']}", label_visibility="collapsed")
-            if st.button("🔄 Reanalyze", key=f"reanalyze_{doc['doc_id']}"):
-                with st.spinner(f"Re-running analysis with {ra_llm}…"):
-                    r = __import__("subprocess").run(
-                        [sys.executable, "-m", "runner", "reanalyze", doc["doc_id"],
-                         "--llm", ra_llm, "--yes"],
-                        capture_output=True, text=True, cwd=_project_root,
-                    )
-                if r.returncode == 0:
-                    _set_doc_action_feedback(
-                        doc["doc_id"],
-                        "success",
-                        "Analysis updated. Reopen this document to review the new analysis and provenance warnings.",
-                    )
-                else:
-                    _set_doc_action_feedback(
-                        doc["doc_id"],
-                        "error",
-                        "Reanalysis failed:\n\n" + (r.stderr[-1200:] or r.stdout[-1200:] or "(no output)"),
-                    )
-                st.rerun()
+            with st.expander("Advanced recovery: replace the current analysis"):
+                st.warning(
+                    "Ordinary verification should use the safe second-opinion panel above. "
+                    "This recovery action rewrites the current analysis; use it only when the "
+                    "original run is known to be unusable."
+                )
+                llm_opts = ["litelm", "litelm-heavy", "litelm-reasoning", "claude", "local"]
+                ra_llm = st.selectbox("Replacement model", llm_opts, key=f"ra_llm_{doc['doc_id']}")
+                replace_confirmed = st.checkbox(
+                    "I understand this replaces the current analysis",
+                    key=f"reanalyze_confirm_{doc['doc_id']}",
+                )
+                if st.button(
+                    "Replace analysis",
+                    key=f"reanalyze_{doc['doc_id']}",
+                    disabled=not replace_confirmed,
+                ):
+                    with st.spinner(f"Re-running analysis with {ra_llm}…"):
+                        r = __import__("subprocess").run(
+                            [sys.executable, "-m", "runner", "reanalyze", doc["doc_id"],
+                             "--llm", ra_llm, "--yes"],
+                            capture_output=True, text=True, cwd=_project_root,
+                        )
+                    if r.returncode == 0:
+                        _set_doc_action_feedback(
+                            doc["doc_id"],
+                            "success",
+                            "Analysis replaced. Reopen this document and recompile its batch.",
+                        )
+                    else:
+                        _set_doc_action_feedback(
+                            doc["doc_id"],
+                            "error",
+                            "Replacement analysis failed:\n\n" + (r.stderr[-1200:] or r.stdout[-1200:] or "(no output)"),
+                        )
+                    st.rerun()
 
         with act_cols[2]:
             _render_complement_enrichment_action(
@@ -8758,7 +8839,7 @@ def _generate_and_push_embedding(doc_id: str, corpus_dir: Path, config) -> tuple
 # ---------------------------------------------------------------------------
 
 def page_pending_upload():
-    st.title("Pending Upload")
+    st.title("Publish")
 
     config = _load_config_safe()
     if not config:
@@ -8770,11 +8851,31 @@ def page_pending_upload():
         st.info("Corpus directory is empty.")
         return
 
+    from runner.pipeline.document_publication import local_private_draft_ids
+    from runner.publication_ui import render_private_draft_review
+
+    private_drafts = local_private_draft_ids(config)
+    render_private_draft_review(
+        config,
+        doc_ids=private_drafts,
+        key_prefix="publish_private_drafts",
+    )
+
+    st.divider()
+    st.subheader("Send or update private drafts")
+    st.write(
+        "Completed local documents go first to a private Sanity draft and the "
+        "service-only research index. This does not make them public."
+    )
+
     pending = []
     for doc_dir in sorted(corpus_dir.iterdir()):
         if not doc_dir.is_dir():
             continue
-        if (doc_dir / "sanity_record.json").exists():
+        marker = _load_json_if_exists(doc_dir / "sanity_record.json") or {}
+        if marker and marker.get("archive_state") != "private_draft":
+            # Legacy markers predate explicit draft state and point at normal
+            # Sanity ids; do not silently reinterpret them as private drafts.
             continue
         if not (doc_dir / "analysis.json").exists():
             continue
@@ -8782,49 +8883,92 @@ def page_pending_upload():
             data = json.loads((doc_dir / "analysis.json").read_text())
         except Exception:
             continue
-        pending.append({"doc_id": doc_dir.name, "type": data.get("type", "?")})
+        preprocess = _load_json_if_exists(doc_dir / "preprocess.json") or {}
+        intake = _load_json_if_exists(doc_dir / "intake.json") or {}
+        title = str(
+            preprocess.get("title") or data.get("title")
+            or intake.get("original_filename") or doc_dir.name
+        ).strip()
+        source = str(
+            preprocess.get("sitename") or intake.get("source_url")
+            or intake.get("source") or ""
+        ).strip()
+        date = str(
+            preprocess.get("date_published") or data.get("date") or ""
+        ).strip()[:10]
+        state = (
+            "Private draft — check for local updates"
+            if marker.get("archive_state") == "private_draft"
+            else "Ready for private draft"
+        )
+        context = " · ".join(value for value in (source[:72], date, state) if value)
+        label = f"{title[:120]} — {context}  [{doc_dir.name[:12]}]" if context else (
+            f"{title[:120]}  [{doc_dir.name[:12]}]"
+        )
+        pending.append({
+            "doc_id": doc_dir.name,
+            "type": data.get("type", "?"),
+            "label": label,
+        })
 
     if not pending:
-        st.success("No documents waiting to be uploaded.")
+        st.success("No completed local documents are waiting for a private-draft check.")
         return
 
-    st.warning(f"{len(pending)} document(s) saved locally but not yet uploaded to Sanity.")
+    st.info(f"{len(pending)} completed document(s) can be checked for private-draft upload.")
 
-    if st.button("⬆ Upload all to Sanity", type="primary"):
-        progress = st.progress(0)
-        errors = []
-        for i, p in enumerate(pending):
-            with st.spinner(f"Uploading {p['doc_id']}…"):
-                r = __import__("subprocess").run(
-                    [sys.executable, "-m", "runner", "upload-doc", p["doc_id"]],
-                    capture_output=True, text=True, cwd=_project_root,
-                )
-                if r.returncode != 0:
-                    errors.append((p["doc_id"], r.stderr[-300:] or r.stdout[-300:]))
-            progress.progress((i + 1) / len(pending))
-        if errors:
-            for doc_id, msg in errors:
-                st.error(f"{doc_id}: {msg}")
-        else:
-            st.success(f"Uploaded {len(pending)} document(s).")
-        st.rerun()
+    from runner.remote_reconciliation_ui import render_remote_reconciliation_launcher
+    render_remote_reconciliation_launcher(
+        config,
+        candidate_doc_ids=[row["doc_id"] for row in pending],
+        candidate_labels={row["doc_id"]: row["label"] for row in pending},
+        key_prefix="pending_upload_remote",
+    )
 
-    st.divider()
-    for p in pending:
-        col1, col2, col3 = st.columns([3, 1, 1])
-        col1.write(f"**{p['doc_id']}** — {p['type']}")
-        if col2.button("Upload", key=f"pu_{p['doc_id']}"):
-            with st.spinner("Uploading…"):
-                r = __import__("subprocess").run(
-                    [sys.executable, "-m", "runner", "upload-doc", p["doc_id"]],
-                    capture_output=True, text=True, cwd=_project_root,
-                )
-            if r.returncode == 0:
-                st.success(f"{p['doc_id']} uploaded.")
+    with st.expander(
+        "Legacy direct upload — unsafe compatibility option",
+        expanded=False,
+    ):
+        st.warning(
+            "These original controls bypass the conflict and destination-access checks. They can "
+            "overwrite an unreviewed remote record and may expose data when a Sanity dataset is public. "
+            "Use **Upload completed documents** above for normal work."
+        )
+        if st.button("⬆ Legacy: upload all to Sanity"):
+            progress = st.progress(0)
+            errors = []
+            for i, p in enumerate(pending):
+                with st.spinner(f"Uploading {p['doc_id']}…"):
+                    r = __import__("subprocess").run(
+                        [sys.executable, "-m", "runner", "upload-doc", p["doc_id"]],
+                        capture_output=True, text=True, cwd=_project_root,
+                    )
+                    if r.returncode != 0:
+                        errors.append((p["doc_id"], r.stderr[-300:] or r.stdout[-300:]))
+                progress.progress((i + 1) / len(pending))
+            if errors:
+                for doc_id, msg in errors:
+                    st.error(f"{doc_id}: {msg}")
             else:
-                st.error(r.stderr[-400:] or r.stdout[-400:])
+                st.success(f"Uploaded {len(pending)} document(s).")
             st.rerun()
-        col3.code(p["doc_id"], language=None)
+
+        st.divider()
+        for p in pending:
+            col1, col2, col3 = st.columns([3, 1, 1])
+            col1.write(f"**{p['doc_id']}** — {p['type']}")
+            if col2.button("Legacy upload", key=f"pu_{p['doc_id']}"):
+                with st.spinner("Uploading…"):
+                    r = __import__("subprocess").run(
+                        [sys.executable, "-m", "runner", "upload-doc", p["doc_id"]],
+                        capture_output=True, text=True, cwd=_project_root,
+                    )
+                if r.returncode == 0:
+                    st.success(f"{p['doc_id']} uploaded.")
+                else:
+                    st.error(r.stderr[-400:] or r.stdout[-400:])
+                st.rerun()
+            col3.code(p["doc_id"], language=None)
 
 
 # ---------------------------------------------------------------------------
@@ -22182,6 +22326,8 @@ def page_mac_studio_worker():
         unpack_source_archive,
     )
 
+    from runner.production_line_ui import render_factory_console
+
     st.title("🖥️ Mac Studio Worker")
     st.caption(
         "Local console for the Mac Studio side of source offload. It scans the "
@@ -22189,6 +22335,10 @@ def page_mac_studio_worker():
         "source-offload inbox, runs `source-worker` locally, and archives finished "
         "outbox packages back to the transfer folder. No package is auto-deleted."
     )
+
+    render_factory_console()
+    st.divider()
+    st.subheader("Legacy manual source packages")
 
     transfer_root = _source_transfer_root(mac_studio=True)
     offload_root = _mac_studio_offload_root()

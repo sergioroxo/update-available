@@ -7,6 +7,176 @@ _RUNNER_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _RUNNER_DIR.parent
 
 
+@dataclass(frozen=True)
+class FactoryConfig:
+    to_studio: Path | None
+    from_studio: Path | None
+    state_root: Path | None
+    job_root: Path | None
+    host_role: str
+    dry_run_only: bool
+    enabled: bool
+    problems: tuple[str, ...]
+    production_canary_enabled: bool = False
+    maximum_copied_text_bytes: int = 1_048_576
+    macbook_signing_private_key: Path | None = None
+    studio_command_public_keys: tuple[Path, ...] = ()
+    studio_receipt_signing_private_key: Path | None = None
+    macbook_receipt_public_keys: tuple[Path, ...] = ()
+    service_log_root: Path | None = None
+    service_poll_seconds: float = 5.0
+    launch_agent_label: str = "org.survivingsogice.factory"
+    launch_agent_plist_output: Path | None = None
+    production_ready: bool = False
+    production_problems: tuple[str, ...] = ()
+
+
+def _paths_overlap(left: Path, right: Path) -> bool:
+    a, b = left.expanduser().resolve(), right.expanduser().resolve()
+    try:
+        a.relative_to(b)
+        return True
+    except ValueError:
+        try:
+            b.relative_to(a)
+            return True
+        except ValueError:
+            return False
+
+
+def load_factory_config(source: dict[str, str] | None = None) -> FactoryConfig:
+    """Load an opt-in synthetic factory boundary without discovering live data."""
+    if source is None:
+        _refresh_dotenv()
+    env = os.environ if source is None else source
+    names = (
+        "SOGICE_FACTORY_TO_STUDIO", "SOGICE_FACTORY_FROM_STUDIO",
+        "SOGICE_FACTORY_STATE_ROOT", "SOGICE_FACTORY_JOB_ROOT",
+    )
+    values = [env.get(name, "").strip() for name in names]
+    paths = [Path(value).expanduser() if value else None for value in values]
+    role = env.get("SOGICE_FACTORY_HOST_ROLE", "").strip().lower()
+    dry = env.get("SOGICE_FACTORY_DRY_RUN_ONLY", "").strip().lower() in {
+        "1", "true", "yes", "on",
+    }
+    production_enabled = env.get(
+        "SOGICE_FACTORY_PRODUCTION_CANARY_ENABLED", "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    problems: list[str] = []
+    if role not in {"macbook", "mac-studio", "synthetic"}:
+        problems.append("Choose this machine's factory role.")
+    if any(path is None for path in paths):
+        problems.append("Configure all four factory folders.")
+    if not dry and not production_enabled:
+        problems.append("Dry-run-only protection must be enabled.")
+    concrete = [path for path in paths if path is not None]
+    for shared in concrete[:2]:
+        for local in concrete[2:]:
+            if _paths_overlap(shared, local):
+                problems.append("Shared and Studio-local folders must not overlap.")
+    if len(concrete) >= 2 and _paths_overlap(concrete[0], concrete[1]):
+        problems.append("The two directional shared folders must not overlap.")
+    try:
+        maximum_bytes = int(env.get(
+            "SOGICE_FACTORY_MAX_COPIED_TEXT_BYTES", "1048576",
+        ).strip())
+        if not 1 <= maximum_bytes <= 16 * 1024 * 1024:
+            raise ValueError
+    except ValueError:
+        maximum_bytes = 1_048_576
+        problems.append("Copied-text size limit must be between 1 byte and 16 MiB.")
+
+    def absolute_optional(name: str) -> Path | None:
+        value = env.get(name, "").strip()
+        if not value:
+            return None
+        candidate = Path(value).expanduser()
+        if not candidate.is_absolute():
+            problems.append(f"{name} must be an absolute host-local path.")
+        return candidate
+
+    def absolute_list(name: str) -> tuple[Path, ...]:
+        values = tuple(item.strip() for item in env.get(name, "").split(",") if item.strip())
+        result = tuple(Path(item).expanduser() for item in values)
+        if any(not item.is_absolute() for item in result):
+            problems.append(f"{name} must contain only absolute host-local paths.")
+        return result
+
+    macbook_private = absolute_optional("SOGICE_FACTORY_MACBOOK_SIGNING_PRIVATE_KEY")
+    studio_public = absolute_list("SOGICE_FACTORY_STUDIO_COMMAND_PUBLIC_KEYS")
+    studio_private = absolute_optional("SOGICE_FACTORY_STUDIO_RECEIPT_SIGNING_PRIVATE_KEY")
+    macbook_public = absolute_list("SOGICE_FACTORY_MACBOOK_RECEIPT_PUBLIC_KEYS")
+    service_log_root = absolute_optional("SOGICE_FACTORY_SERVICE_LOG_ROOT")
+    launch_output = absolute_optional("SOGICE_FACTORY_LAUNCH_AGENT_PLIST_OUTPUT")
+    try:
+        poll_seconds = float(env.get("SOGICE_FACTORY_SERVICE_POLL_SECONDS", "5").strip())
+        if not 0.1 <= poll_seconds <= 300:
+            raise ValueError
+    except ValueError:
+        poll_seconds = 5.0
+        problems.append("Factory service polling must be between 0.1 and 300 seconds.")
+    launch_label = env.get(
+        "SOGICE_FACTORY_LAUNCH_AGENT_LABEL", "org.survivingsogice.factory",
+    ).strip()
+    if (
+        not launch_label or len(launch_label) > 200
+        or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-" for character in launch_label)
+    ):
+        problems.append("Factory LaunchAgent label is invalid.")
+
+    production_problems: list[str] = []
+    if not production_enabled:
+        production_problems.append("Copied-text canary support is not enabled.")
+    if role in {"macbook", "synthetic"}:
+        if macbook_private is None:
+            production_problems.append("MacBook command signing key is not configured.")
+        if not macbook_public:
+            production_problems.append("MacBook receipt verification keys are not configured.")
+    if role in {"mac-studio", "synthetic"}:
+        if not studio_public:
+            production_problems.append("Mac Studio command verification keys are not configured.")
+        if studio_private is None:
+            production_problems.append("Mac Studio receipt signing key is not configured.")
+        if service_log_root is None:
+            production_problems.append("Mac Studio service log folder is not configured.")
+    shared_roots = tuple(path for path in paths[:2] if path is not None)
+    local_sensitive = tuple(
+        path for path in (
+            macbook_private, studio_private, service_log_root, launch_output,
+            *studio_public, *macbook_public,
+        ) if path is not None
+    )
+    for sensitive in local_sensitive:
+        if any(_paths_overlap(sensitive, shared) for shared in shared_roots):
+            production_problems.append("Keys, logs, and service files must remain outside shared folders.")
+    for private in (macbook_private, studio_private):
+        if private is not None:
+            if not private.exists():
+                production_problems.append("Configured private key file does not exist.")
+            elif private.is_symlink() or not private.is_file() or private.stat().st_mode & 0o077:
+                production_problems.append("Configured private key must be a regular 0600 host-local file.")
+    for public in (*studio_public, *macbook_public):
+        if not public.exists() or public.is_symlink() or not public.is_file():
+            production_problems.append("Configured public verification key file does not exist.")
+    return FactoryConfig(
+        to_studio=paths[0], from_studio=paths[1], state_root=paths[2],
+        job_root=paths[3], host_role=role or "unconfigured",
+        dry_run_only=dry, enabled=not problems, problems=tuple(dict.fromkeys(problems)),
+        production_canary_enabled=production_enabled,
+        maximum_copied_text_bytes=maximum_bytes,
+        macbook_signing_private_key=macbook_private,
+        studio_command_public_keys=studio_public,
+        studio_receipt_signing_private_key=studio_private,
+        macbook_receipt_public_keys=macbook_public,
+        service_log_root=service_log_root,
+        service_poll_seconds=poll_seconds,
+        launch_agent_label=launch_label,
+        launch_agent_plist_output=launch_output,
+        production_ready=bool(production_enabled and not production_problems and not problems),
+        production_problems=tuple(dict.fromkeys(production_problems)),
+    )
+
+
 def _refresh_dotenv() -> None:
     """Reload project env files so Streamlit reruns pick up edits.
 

@@ -1,6 +1,6 @@
 import pytest
 
-from runner.config import load_config
+from runner.config import load_config, load_factory_config
 
 
 SERVICE_ENV = [
@@ -89,3 +89,28 @@ def test_load_config_defaults_to_current_mac_studio_mlx_route_tags(monkeypatch, 
     assert config.litelm_ollama_analysis_model_heavy == "gemma4:31b-mlx"
     assert config.litelm_ollama_analysis_model_reasoning == "qwen3.6:27b-mlx"
     assert config.litelm_ollama_embedding_model == "qwen3-embedding:8b"
+
+
+def test_production_factory_config_is_additive_and_fail_closed(tmp_path):
+    base = {
+        "SOGICE_FACTORY_TO_STUDIO": str(tmp_path / "exchange" / "to"),
+        "SOGICE_FACTORY_FROM_STUDIO": str(tmp_path / "exchange" / "from"),
+        "SOGICE_FACTORY_STATE_ROOT": str(tmp_path / "state"),
+        "SOGICE_FACTORY_JOB_ROOT": str(tmp_path / "jobs"),
+        "SOGICE_FACTORY_HOST_ROLE": "mac-studio",
+        "SOGICE_FACTORY_DRY_RUN_ONLY": "true",
+    }
+    config = load_factory_config(base)
+    assert config.enabled is True
+    assert config.production_ready is False
+    assert "not enabled" in config.production_problems[0]
+    unsafe = load_factory_config({
+        **base,
+        "SOGICE_FACTORY_PRODUCTION_CANARY_ENABLED": "true",
+        "SOGICE_FACTORY_STUDIO_COMMAND_PUBLIC_KEYS": str(tmp_path / "exchange" / "to" / "key.pem"),
+        "SOGICE_FACTORY_STUDIO_RECEIPT_SIGNING_PRIVATE_KEY": "relative.pem",
+        "SOGICE_FACTORY_SERVICE_LOG_ROOT": str(tmp_path / "logs"),
+    })
+    assert unsafe.production_ready is False
+    assert any("outside shared" in item for item in unsafe.production_problems)
+    assert any("absolute host-local" in item for item in unsafe.problems)
