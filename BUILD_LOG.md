@@ -260,3 +260,4 @@
 - 2026-08-09 — DEPLOY_PAGES: the bare Pages URL runs the SHIPPED build by design; ?reinterp=1 is required and is the link to share.
 - 2026-08-12 — S82 integrity audit: 97 live docs + runtime/data traced; s2 send proved reachable and over-comfort, s3/s4 debug-only, seat-relative flip bug and evidential/reachability classes reported; narrow stale pointers fixed; tsc/test/build green, audit fails only its three retained send legs.
 - 2026-08-12 — S82: the s2 send is ordinary-path reachable, not latent (16x the comfort envelope, on E2's critical path); my error propagated through six briefs, registered as 08 §17 with a headset safety note.
+- 2026-08-12 — First iPad test: world rolled ~90° in landscape (q₂ screen term likely absent on iPadOS); S83 written for Codex with an on-device diagnostic as half the deliverable.

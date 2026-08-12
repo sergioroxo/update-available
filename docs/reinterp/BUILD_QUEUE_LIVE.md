@@ -17,17 +17,19 @@ not live.***
 | — | ~~S74 — the rooms (E4 Stage 1)~~ | ↓ below, in this file | **SHIPPED 2026-08-06** — number retired |
 | — | ~~S76 — the update, the space, and no desktop~~ (E4 Stage 2a) | ↓ below, in this file | **SHIPPED 2026-08-08** |
 | — | ~~S77 — L, and the room rewrites~~ (E4 Stage 2b) | ↓ below, in this file | ✅ **SHIPPED 2026-08-09.** ⚑ The deadname beat is built and is **BLOCKED-ON-READER-PASS** — a gate, not a review step |
-| **1** | **S78 — the offers, and the hand-off** (2c) | ↓ below | ⚑ **UNBLOCKED by S77 — dispatch this one** |
-| 4 | **S79 — TRANSCENDANCE** (Stage 3) | ↓ below | BLOCKED on S78 |
+| — | ~~S78 — the offers, and the hand-off~~ (2c) | ↓ below | **SHIPPED + VERIFIED 2026-08-06** — nine-beat pass and A/B captures recorded; no phone-viewport pass |
+| **1** | **S79 — TRANSCENDANCE** (Stage 3) | ↓ below | **UNBLOCKED by S78**; its ball-reader gate is explicitly lifted, ethics laws still apply |
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
-| — | ~~S80 — fix picking, then the gyro look-mode~~ | ↓ at the tail of this file | ✅ **SHIPPED 2026-08-09.** Its 2.2 fix (the yaw hemisphere) is closed, so **S77 is now dispatchable** |
+| — | ~~S80 — fix picking, then the gyro look-mode~~ | ↓ at the tail of this file | ✅ **SHIPPED 2026-08-09.** Its picking fix is closed; S77 and S78 subsequently shipped |
 | **2** | **S81 — the visibility audit, read as broken interactions** | *not yet written — `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §4* | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
 
-**⚑ S73 IS QUEUED** (above) now that S74 has shipped Room 3. Two other candidates the S72 audit
+~~**⚑ S73 IS QUEUED**~~ **⚑ CORRECTED 2026-08-12: S73 is RETIRED; S79 is the next
+unshipped implementation session.** Two other candidates the S72 audit
 produced remain open and un-dispatched, both in the session log with their measurements: **the
-comfort violations on the send seam** (10–16× the envelope, still latent — no beat fires it; the
+comfort violations on the send seam** (10–16× the envelope; **⚑ S82 CORRECTION: the failing s2 leg
+is ordinary-path reachable in E2, while failing s3/s4 remain inaccessible on Daniel's E3 CRT**; the
 entrance descent's own COMFORT figure is fine, see Session 74's numbers), and **assertion 6**, the
 ordinary-path traversal S72 did not build. ⚑ NEW, measured by Session 74: the draw-call ratchet (67)
 is now exceeded — entrance 68, sends 78 — a side effect of Room 3's belongings; not root-caused this
@@ -665,12 +667,10 @@ worse for that.
 ---
 
 # S78 — THE OFFERS, AND THE HAND-OFF · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: SHIPPED 2026-08-06 — but its ACCEPTANCE did not run.** The session was terminated
-mid-run by an account spend limit, just as it began its end-to-end click-through. The code is
-committed and the automated checks pass; **nobody has played the beats in order, there are no
-screenshots, and there is no session-log entry.** See `08_STATUS_REGISTER.md` §15 for the exact list.
-**Do not re-dispatch this block** — the work is in the tree. The follow-up is a short verification
-pass, not a rebuild.
+**⚑ PROMPT STATUS: SHIPPED + VERIFIED 2026-08-06.** ~~Its first session ended before acceptance:
+nobody had played the beats in order, there were no screenshots, and there was no session-log
+entry.~~ **⚑ CORRECTED:** the follow-up ran all nine beats, committed the A/B captures, and recorded
+the kept droppable half. See `08_STATUS_REGISTER.md` §15. **Do not re-dispatch this block.**
 
 ⚑ SHARED PREAMBLE — every E4 session reads these, in this order:
   CLAUDE.md · docs/ETHICS_CONSTRAINTS.md ·
@@ -756,7 +756,8 @@ The region line goes past you the first time. And the era ends handing something
 ---
 
 # S79 — TRANSCENDANCE · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: BLOCKED — on S78. Stage 3: the ball, and the only thing in the era that is not work.**
+**⚑ PROMPT STATUS: QUEUED — UNBLOCKED 2026-08-12 because S78 shipped. Historical wrong claim:
+~~BLOCKED — on S78.~~ Stage 3: the ball, and the only thing in the era that is not work.**
 
 ⚑ SHARED PREAMBLE — every E4 session reads these, in this order:
   CLAUDE.md · docs/ETHICS_CONSTRAINTS.md ·
@@ -780,12 +781,13 @@ The region line goes past you the first time. And the era ends handing something
   C1 dossier cards REQUIRE a status · C2 ⚑ L IS AN ASSISTANT, so a `felt` beat is a beat L is ABSENT
   from · C6 every new beat needs a debug-panel button and src/debug/panel.ts IS IN EVERY FENCE ·
   C8 flip your own block to SHIPPED when done · all display text in data/ as PLACEHOLDER-draft, never
-  composed in TS · Quest ≤75k tris, ≤60 draw calls, 72 Hz · no real people, orgs or logos in the
-  fiction · ⚑ ETHICS #7 and the detransition rail: the target is ALWAYS the apparatus and its
+  composed in TS · Quest ≤75k tris, ~~≤60 draw calls~~ **⚑ CORRECTED 2026-08-12: ≤75 draw calls**,
+  72 Hz · no real people, orgs or logos in the fiction · ⚑ ETHICS #7 and the detransition rail: the target is ALWAYS the apparatus and its
   automation — NEVER detransitioners, never trans people, never the gender-exploratory clinical
   debate (both captions, unresolved).
-  ⚑ `npm run audit` currently EXITS 1 on the latent send legs (78 draw calls, 6.87 m/s — no beat
-  fires that seam). DO NOT fix, DO NOT raise the ratchet, do not let it block you. 08 §7 explains it.
+  ⚑ `npm run audit` currently EXITS 1 on three send legs (78 grouped draw calls; s2 6.87 m/s,
+  s3/s4 4.42 m/s). **S82 CORRECTION: s2 is ordinary-path reachable; s3/s4 are E3-inaccessible.**
+  DO NOT fix, DO NOT raise the ratchet, do not let it block you. 08 §16 explains it.
   Git: EXPLICIT PATHSPECS only — never `git add -A`.
 
 ⚑ AND THE CO-CREATION NORM, which supersedes any doc that says otherwise (CLAUDE.md line 100,
@@ -1055,7 +1057,7 @@ responding because of which way you are facing.
 ---
 
 # S82 — THE INTEGRITY PASS: narrative, structure, and the bugs that keep coming back · **Codex GPT 5.6, high effort**
-**⚑ PROMPT STATUS: QUEUED — dispatch to Codex. Independent of S79/S81; can run any time the tree is clean.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-12. Independent of S79/S81.**
 *Sérgio, 2026-08-09: "I want Codex to do a narrative pass and an overall audit of the logic and
 structure of the project and to lock down overbearing bugs."*
 
@@ -1199,4 +1201,102 @@ ones, what it would take. Plus a one-line summary per part. Plus ONE line in BUI
 ⚑ REPORT FAITHFULLY. If a part turns up nothing, say so plainly — do not manufacture findings to
 fill a section. If you could not complete a part, name it and say why. A short honest audit is worth
 more than a long one that pads.
+```
+
+---
+
+# S83 — THE HORIZON IS LOPSIDED ON A REAL iPAD · **Codex GPT 5.6, high effort**
+**⚑ PROMPT STATUS: QUEUED — dispatch to Codex. This is mode 3's first real-device finding.**
+*Sérgio, 2026-08-12, on an iPad in landscape, over the deployed Pages build: the world is rolled
+about 90° — the room is tilted and the laptop screen's text runs vertically. **Gyro is otherwise
+working**: the permission was granted, `Stop device look` is on screen, E3 loaded.*
+
+## ⚑ THE SHAPE OF THIS JOB, and why it is a Codex job with one condition
+The fix is mechanical and well-specified. **But neither you nor a headless browser can rotate a
+physical iPad**, so you cannot verify it — S80 built this whole path against synthetic events at a
+fixed viewport, which is exactly why the fault survived to a device.
+
+**So the deliverable is TWO things, and the second is what makes the first checkable:**
+1. the fix, and
+2. ⚑ **an on-device diagnostic readout** Sérgio can read on the iPad in ten seconds.
+**A fix he cannot confirm is worth less than a fix plus a number he can photograph.**
+
+```
+Bug-fix session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch
+reinterp). Read CLAUDE.md (⚑ the three look-modes; ?flat=1 is a REVIEW TOOL, not a fallback),
+docs/REINTERP_THE_LOOK_MODES_2026-08-06.md, docs/REINTERP_MODE3_ASSESSMENT_2026-08-06.md,
+⚑ /Users/sergiogalvaoroxo/Pc_Simulation/Sources/Deep Research/Cross-Platform PlayCanvas 360 Interactiv.md
+(the q₀ × q₁ × q₂ chain this implements), docs/reinterp/08_STATUS_REGISTER.md §11 and §18, then
+src/engine/app.ts around lines 1600–1740 (`screenAngle`, `composeMotion`, `applyMotionLook`,
+`onDeviceOrientation`, and the `orientationchange` listeners near 1826).
+
+THE SYMPTOM: on a real iPad in Safari, landscape, the entire world is rolled ~90°. Portrait is
+reportedly fine. Gyro is otherwise live and the permission flow worked.
+
+⚑ THE LEADING HYPOTHESIS, and it is a hypothesis — prove or disprove it before you change anything:
+`screenAngle()` at app.ts:1637 does this —
+    const so = window.screen?.orientation?.angle;
+    if (typeof so === 'number') return so;
+    const legacy = (window as { orientation?: number }).orientation;
+    return typeof legacy === 'number' ? legacy : 0;
+**If NEITHER API reports on iPadOS Safari, it returns 0 and the screen term q₂ vanishes** — so the
+world is rolled by exactly however far the device was physically turned. **A 90° device rotation
+produces a 90° error. That matches the report precisely.**
+⚑ THE SECOND CANDIDATE, which produces a DIFFERENT error and must be distinguished: the sign. The
+line `qScreen.setFromAxisAngle(pc.Vec3.FORWARD, screenAngle())` uses FORWARD = (0,0,−1), and its
+comment claims that absorbs a sign flip from the three.js formulation. **If that reasoning is wrong,
+the term rotates the wrong way and landscape is out by 180°, not 90°.** Work out which error the
+symptom actually describes and say so.
+
+SCOPE:
+1. ⚑ FIX `screenAngle()` SO IT CANNOT SILENTLY RETURN A WRONG ANSWER. Returning 0 when it does not
+   know is the failure — a 0 that means "portrait" and a 0 that means "no idea" are different facts
+   and this code cannot tell them apart. Consider deriving orientation independently of the API —
+   `matchMedia('(orientation: landscape)')` and the viewport aspect are always available — and
+   reconciling that with the reported angle. ⚑ NOTE THE LIMIT: aspect alone cannot distinguish
+   landscape-left from landscape-right (+90 vs −90), so say how you resolve that rather than
+   assuming.
+2. VERIFY THE SIGN AND THE AXIS of q₂ against the research spec's derivation. If the FORWARD-absorbs-
+   the-flip reasoning holds, say so and leave it; if it does not, fix it and correct the comment IN
+   PLACE with the wrong claim left visible, which is this project's house rule.
+3. RE-ZERO ON ROTATION. `orientationchange` and `screen.orientation.change` both set `motionWantZero`
+   (app.ts ~1826). ⚑ Check they FIRE on iPadOS — `orientationchange` is deprecated and the
+   `screen.orientation` listener may not exist at all on the very platform where it is needed. If
+   both are unreliable, poll the derived orientation instead and re-zero on change.
+4. ⚑⚑ BUILD THE ON-DEVICE DIAGNOSTIC — this is half the deliverable, not a nicety. Behind `?debug=1`,
+   a small always-visible readout showing, live:
+     · what `screenAngle()` returns, AND which source it came from (screen.orientation / legacy /
+       derived / unknown) — ⚑ the SOURCE is the finding, not just the number
+     · raw alpha / beta / gamma
+     · the derived orientation from matchMedia and the aspect
+     · the resolved camera yaw/pitch/roll
+   Sérgio reads it on the iPad and photographs it. **One look answers this bug AND several §13
+   questions at once** — sensor noise (do the raw angles jitter at rest?) and whether the listeners
+   fire (does the readout change when he rotates?).
+5. WHILE YOU ARE IN THERE, and only if cheap: note whether anything else in this path assumes a
+   viewport shape. Do NOT force an orientation — the piece must work held either way.
+
+⚑ WHAT YOU MUST NOT DO
+- **Do not claim you verified this.** You cannot rotate a device. Your acceptance is `tsc`,
+  `npm test`, `npm run build`, plus reasoning you can show. Say plainly, in your report and in the
+  session log, that the fix is UNVERIFIED ON HARDWARE and names what Sérgio must check.
+- Do not touch the comfort envelope, the movement law, geometry, pacing or any narrative text.
+- Do not "fix" the s2 send (08 §17) — that is a separate decision and it is Sérgio's.
+- Do not add smoothing or filtering to the gyro to hide jitter. ⚑ Lag is its own nausea and the
+  no-smoothing choice is deliberate. If the diagnostic shows real noise, REPORT it; do not damp it.
+
+LAWS: no runtime network calls · no storage — the recentre zero and any orientation state live in the
+in-memory ledger ONLY · input stays click/tap + the movement press + Esc; ⚑ the gyro is a LOOK and
+must never select anything · palette ratchet 33 · C6 panel completeness, src/debug/panel.ts IS IN THE
+FENCE · C8 flip this block to SHIPPED · `npm run audit` currently exits 1 on the s2/s3/s4 send legs —
+do not fix, do not raise, do not un-exclude.
+
+FILE FENCE: src/engine/app.ts, src/debug/panel.ts, src/state/ledger.ts, src/desktop/gameMenu.ts,
+data/strings/gameMenu.json, docs/reinterp/{BUILD_QUEUE_LIVE.md,01_SESSION_LOG.md,08_STATUS_REGISTER.md},
+BUILD_LOG.md. Git: EXPLICIT PATHSPECS only.
+
+DONE WHEN: tsc + npm test + npm run build green; the diagnostic renders under ?debug=1 at a mobile
+viewport; the session log states exactly what is unverified and what Sérgio should photograph.
+⚑ AND WRITE THE ONE-LINE INSTRUCTION HE NEEDS: which URL to open on the iPad, and what a correct
+readout looks like versus a broken one.
 ```

@@ -705,3 +705,37 @@ Two candidate routes, and they are genuinely different pieces of work:
 
 **Sérgio's call. It is a comfort decision and a pacing decision at once, and it should get its own
 session rather than be tacked onto another.**
+
+
+---
+
+## §18 — ⚑ THE FIRST REAL DEVICE FOUND IT IN ONE MINUTE (2026-08-12)
+**Sérgio opened the deployed build on an iPad, in landscape. The world is rolled ~90°** — the room
+tilts and the laptop's text runs vertically. Everything else in mode 3 worked: the permission was
+granted, `Stop device look` was on screen, E3 loaded.
+
+**Leading suspect, `src/engine/app.ts:1637`:**
+```
+const so = window.screen?.orientation?.angle;
+if (typeof so === 'number') return so;
+const legacy = (window as { orientation?: number }).orientation;
+return typeof legacy === 'number' ? legacy : 0;   // ⚑ a silent 0
+```
+**If neither API reports on iPadOS Safari, the screen term q₂ vanishes and the world is rolled by
+exactly however far the device was turned.** A 90° rotation gives a 90° error — which is what the
+photograph shows. *(The competing candidate, a sign error on q₂, would give 180°. S83 must
+distinguish them rather than assume.)*
+
+### ⚑ THE CLASS: a fallback that returns a plausible value instead of admitting ignorance
+`0` means "portrait" and `0` means "I have no idea", and this code cannot tell them apart. **Every
+silent default is a lie the next reader believes** — which is the same shape as §17's stale comment
+and §6's stale schema, arriving through a different door.
+
+### And the vindication of doing the device pass at all
+**S80 built this entire path against synthetic `deviceorientation` events at a fixed viewport**, and
+said so honestly. Headless Chrome does not rotate, so **screen-orientation handling was never
+exercised until a hand turned an iPad.** That is not a failure of S80's work; it is the reason §13
+exists. ⚑ **One minute on real hardware found what three weeks of simulation could not.**
+
+**Recorded consequence:** anything in this repo that claims mode 3 works should read *"works in
+portrait; landscape unverified"* until S83 lands and Sérgio re-checks on the device.
