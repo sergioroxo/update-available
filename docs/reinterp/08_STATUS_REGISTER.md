@@ -542,9 +542,11 @@ one missing check behind them.
 
 ### WHAT S77 HANDS S78 AND S79
 1. **`LVoice.onHandOff`** is the named seam and is fired by u10's second chip ("Show me the quieter
-   month"). It leads nowhere today, deliberately.
-2. **`E4Shell.handOff()` is STILL UNWIRED** — S79's, unchanged since S76, and it remains the only
-   thing that lets the spine close the piece.
+   month"). ~~It leads nowhere today, deliberately.~~ **⚑ CORRECTED S82:** S78 now sets
+   `offersPending`, beginning the offer sequence when L stops talking (`space.ts:119–128`).
+2. ~~**`E4Shell.handOff()` is STILL UNWIRED** — S79's, unchanged since S76.~~ **⚑ CORRECTED S82,
+   2026-08-12:** S78 joined L's handoff to the offers and the offers' finale to `handOff()`
+   (`src/desktop/apps/space.ts:119–129`). S79's still-latent seam is `E4Offers.onBreak`.
 3. **⚑ NO TEXTURE OF THE BALL EXISTS.** Not started, not stubbed, not sketched. S79 inherits a blank
    page, which is the correct inheritance.
 4. **The curation beat is S78's** (the draft script's U4/U9), with the source pass's
@@ -590,3 +592,116 @@ fine print. **The droppable half was KEPT** — `e4Wall` exists and fires. Sessi
 ⚑ **Still not established, and not to be read as if it were:** no phone-viewport play, the beats were
 driven by debug button rather than the ordinary chip path end to end, and **the trans reader pass on
 S77's deadname beat is still open and is a gate.**
+
+---
+
+## §16 — S82 INTEGRITY AUDIT: THE CLASSES BEHIND THE INSTANCES (2026-08-12)
+
+The full evidence, including clean checks and file:line locations, is in
+`docs/reinterp/S82_INTEGRITY_AUDIT_2026-08-12.md`. These are the reusable failure classes only.
+
+### ⚑ CLASS 1 — A LIVE CLAIM HAS NO EXPIRY MECHANISM
+The repository can mark a whole document live/history/superseded, but it cannot retire a claim inside
+a still-live document. Later correction headers therefore coexist with operative older sentences:
+the 60/75 draw-call budget, flat-as-fallback/review-tool framing, Echo/L naming, and the 2026-07-22
+blank-label rule all survive in live material. “Read the master plan when documents disagree” does
+not solve this: the live master plan itself still carries the 60-call law and an obsolete E3 spine.
+**What would catch it:** stable decision ids, `supersedes` metadata at claim level, and a checker that
+rejects two live values for one id. S82 corrected only the provably stale pointers/claims it touched.
+
+### ⚑ CLASS 2 — A SOURCE OF TRUTH CAN BE DECLARED WITHOUT BEING CONSUMED
+`data/paths.json` and `src/narrative/spine.ts` both say composition is data-driven, but the spine
+imports no path data and hard-codes its phase graph. The file then becomes an authoritative-looking
+build ledger that can drift silently (and has). **What would catch it:** either make the runtime
+consume the path graph and validate every beat id, or explicitly demote/remove the composition claim.
+
+### ⚑ CLASS 3 — “ORDINARY PATH” AND “DEBUG-COVERED” ARE DIFFERENT GRAPHS
+C6 proves that every debug id has a panel button; it proves no player can reach that beat. Static S82
+tracing found the converse too: E2 ordinary play offers s1/s2 (and the failing s2 leg is therefore
+reachable), despite the seam being called wholly latent, while E3 s3/s4 are offered by the spine on
+a CRT that deliberately renders black and are thus debug-only. **What would catch it:** assertion 6
+as an automated, no-review-param traversal whose
+visited beat set is compared with the authored ordinary-path set.
+
+### ⚑ CLASS 4 — GLOBAL FACING IS STILL BEING USED FOR A SEAT-RELATIVE TURN
+S80 removed yaw from picking, but `isBackYaw()` and `doFlip()` still classify/target the global
+0°/180° hemisphere. At the authored 90°/270° side-room seats, the flip assist can prescribe 90°
+instead of the piece's ~180° bodily ask; the same global boolean still gates keyboard input and
+witness crossing. **What would catch it:** express “back” relative to the current seat's authored
+forward (or a witness surface hit/plane), then test every seat × look-mode at the boundary headings.
+
+### ⚑ CLASS 5 — AN ASSERTION CAN CLAIM MORE THAN ITS PROBE OBSERVES
+The audit reports “console asserts” and catches `pageerror`, `ASSERT`, and `Invalid batch`; it does not
+collect ordinary `console.error` messages. Therefore a zero result closes the eight `terminalFrame`
+asserts but cannot establish “no new console errors.” **What would catch it:** collect console events
+whose type is `error` in every page listener and ratchet that population independently.
+
+### ⚑ CLASS 6 — EVIDENTIAL DEBT HAS NO OWNED LEDGER
+The promised 132-marker/32-file baseline is already not reproducible by a defined scope. Against the
+pre-S82 `HEAD`, S82 counted 150 repository `[VERIFY SOURCE]` occurrences, 133 in docs+data, 23 in
+data, and 33 data files containing `PLACEHOLDER`; only 19 verify markers are active runtime/data debt after tool literals,
+fixtures and the proposed schema are excluded. **What would catch it:** one checked-in census command
+with named inclusions/exclusions, grouped by era, kind, lifecycle and change from the previous run.
+
+### ⚑ CLASS 7 — A WIPE LAW CAN NAME A TERMINATION PATH THAT DOES NOT EXIST
+All implemented Leave/Restart/`beforeunload` paths wipe the in-memory ledger and no storage API is
+used. But `ledger.ts` also promises an “idle reset”; no inactivity reset exists to call `wipeLedger`.
+**What would catch it:** one centralized termination contract with tests for every enumerated reason,
+including a specified idle threshold, rather than comments naming unimplemented paths.
+
+### ⚑ CLASS 8 — “PLANNED, PARTIALLY DONE, ASSUMED COMPLETE” ALSO APPLIES TO CONTINUITY
+The master-plan continuity table describes E4 TRANSCENDANCE and a content-bearing Close as if present;
+the ball is unbuilt and the Close currently disables the rooms and shows the procedural constellation.
+The same table still names the retired E1 cork board. **What would catch it:** validate each
+era/thread cell against a concrete beat/prop/string id and distinguish `planned`, `built`, `reachable`,
+and `accepted` instead of one prose value.
+
+
+---
+
+## §17 — ⚑⚑ THE SEND LEGS ARE NOT LATENT, AND I SAID THEY WERE SIX TIMES (2026-08-12)
+
+**S82 found it and it is the most consequential finding of the week.** Verified independently:
+
+- `src/narrative/spine.ts:123` — E2's ordinary path offers **s1** after `SEND_DELAY`.
+- `:127` — offers **s2** once s1 resolves.
+- ⚑ `:131` — `if (sendResolved('s2') && t >= UPDATE_GAP) arm('u3', 'e3')`. **s2 must resolve for the
+  era to advance.** It is not a side path. **It is the critical path.**
+
+**So a player who accepts the s2 send gets a camera move measured at 6.874 m/s and 140.59 °/s,
+against an envelope of 0.43 m/s and 9.1 °/s. Sixteen times over.** And the same run peaks at 78 draw
+calls against a 75 budget.
+
+### ⚑ HOW I GOT IT WRONG, because the mechanism matters more than the instance
+`sends.ts`'s own header said *"No beat in this worktree triggers sends yet."* `shots.mjs` repeated it
+in its comfort report as the reason those legs were "latent". **I read the comment, believed it, and
+wrote "the sends are latent — do not fix, do not let it block you" into six consecutive session
+briefs** (S73, S76, S77, S78, S79, S80, S82).
+
+**That is exactly the class this register documents in §6 and §12: a stale claim, trusted because it
+was written down, propagated because nobody re-derived it.** I have been correcting other people's
+instances of it all week and produced the largest one myself. ⚑ **A code comment is not evidence.**
+The check that would have caught it is the one that was never built: **assertion 6, reachability on
+the ordinary path** — now four faults deep.
+
+### What this changes, immediately
+1. **⚑ DO NOT TAKE THE s2 SEND IN A HEADSET** until it is fixed. On a desktop it is unpleasant; in
+   stereo, at 16× the envelope, it is the exact thing the comfort law exists to prevent. **This is a
+   safety note, not a polish note.** A11 is about to run for the first time.
+2. **The ratchet exclusion I added in §10 is now wrong.** I excluded the send legs from the draw-call
+   nag on the grounds that they were unreachable. They are reachable. ⚑ **It should be reverted when
+   the leg is fixed, not before** — reverting first would only make the audit fail on a fault nobody
+   is working on.
+3. **Every "the sends are latent" line in every queued prompt is false** and must be struck when
+   those prompts are next touched.
+
+### The fix is a decision, not a nudge
+Two candidate routes, and they are genuinely different pieces of work:
+- **Lengthen the dolly** to ~38 s (S72's own proposed figure for the 8.87 m Room 2 → Room 3 leg).
+  Keeps the move, and makes it the longest thing in the piece.
+- **⚑ Make it a blink-cut**, which is what R28's movement law prescribes for cross-room travel in the
+  first place (130 ms / 220 ms, never smooth). ⚑ **Worth asking whether the send dolly was ever
+  compliant with the movement law**, or whether it predates it.
+
+**Sérgio's call. It is a comfort decision and a pacing decision at once, and it should get its own
+session rather than be tacked onto another.**

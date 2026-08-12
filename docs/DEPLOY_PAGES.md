@@ -95,6 +95,20 @@ it is unaffected by who can reach the link.
 
 ---
 
+## ⚑⚑ ONE SAFETY NOTE BEFORE THE HEADSET — added 2026-08-12
+**S82 found that the s2 send is on the ordinary path, not latent** (`08 §17`). Accepting it flies the
+camera at **6.874 m/s against a 0.43 m/s envelope — sixteen times over** — and it sits on E2's
+critical path, because the era cannot advance until s2 resolves.
+
+> ### ⚑ ON THE iPAD: fine. ON THE QUEST: **do not accept the s2 send until it is fixed.**
+> A phone or tablet is a window you hold; the same motion in **stereo, head-locked**, at 16× the
+> comfort envelope is exactly what that envelope exists to prevent. **Decline the send, or use
+> `?era=3` to enter past it.**
+
+Everything else in the device list is safe. This is one beat, it is known, and the fix is a decision
+Sérgio has to make (lengthen the dolly to ~38 s, or make it the blink-cut R28's movement law
+prescribes for cross-room travel).
+
 ## What to do once it is up — the device session
 `08_STATUS_REGISTER.md` §13 is the checklist. **Ten questions, one afternoon, and they are all
 judgements — the measurements are done.**
