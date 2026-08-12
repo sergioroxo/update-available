@@ -118,7 +118,14 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
 
   const card = document.createElement('div');
   Object.assign(card.style, {
-    width: 'min(660px, 96vw)', margin: 'auto', boxSizing: 'border-box',
+    // ⚑ 900, not 660 (2026-08-12, Sérgio on a real iPad: "the panel at the
+    //  beginning should also be wider on an iPad because it gets cut off").
+    //  The card carries THREE control blocks since the gyro look-mode was
+    //  added, and each column is `flex: 1 1 240px; min-width: 220px` — so a
+    //  single row needs 3×220 + 2×22 gap + 68 padding ≈ 772px. At 660 they
+    //  wrapped 2+1 and the card grew taller than an iPad's browser viewport.
+    //  ⚑ Adding the third block is what broke this; the width never moved.
+    width: 'min(900px, 96vw)', margin: 'auto', boxSizing: 'border-box',
     padding: '30px 34px',
     background: `rgba(${FRAME.panelRGB}, ${CARD_ALPHA})`,
     border: `1px solid ${FRAME.edge}`, borderRadius: '2px'
@@ -297,7 +304,7 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
 
   document.body.appendChild(root);
 
-  // `?flat=1` is the universal canvas-only fallback: do not even probe or
+  // `?flat=1` is the canvas-only review tool: do not even probe or
   // prepare WebXR there. On every other path, unsupported browsers receive no
   // extra element and retain the exact existing LOG IN flow.
   if (new URLSearchParams(window.location.search).get('flat') !== '1' && navigator.xr) {
