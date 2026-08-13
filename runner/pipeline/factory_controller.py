@@ -8,15 +8,18 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from runner.models.reprocessing import (
     CampaignStatusSummaryV2,
     CopiedTextCanaryApprovalV1,
+    CopiedTextPilotApprovalV1,
     FactoryCommandV1,
     PRODUCTION_CANARY_STATIONS,
     ProductionCanaryCampaignV1,
     ProductionCanaryJobV1,
+    ProductionPilotCampaignV1,
+    ProductionPilotPackageV1,
     ProductionRecoveryUnitV1,
     RecoveryUnitManifestV1,
     ResearchCampaignV2,
@@ -86,6 +89,8 @@ def build_production_canary_package(
     source_metadata,
     approval: CopiedTextCanaryApprovalV1,
     created_at: datetime,
+    package_id: str = "package-001",
+    barrier_id: str = "copied-text-canary-complete-units-v2",
 ) -> tuple[ProductionRecoveryUnitV1, tuple]:
     """Build deterministic declarations and predicted immutable outputs."""
     jobs: list[ProductionCanaryJobV1] = []
@@ -94,7 +99,7 @@ def build_production_canary_package(
     for sequence, station_id in enumerate(PRODUCTION_CANARY_STATIONS, start=1):
         job = ProductionCanaryJobV1(
             run_id=run_id,
-            package_id="package-001",
+            package_id=package_id,
             document_id=document_id,
             station_id=station_id,
             station_sequence=sequence,
@@ -113,6 +118,7 @@ def build_production_canary_package(
                 "infrastructure_retryable" if station_id == "complete_units_v2"
                 else "deterministic_non_retryable"
             ),
+            barrier_id=barrier_id,
         )
         completed_at = created_at + timedelta(seconds=sequence)
         if station_id == "source_verify":
@@ -136,7 +142,7 @@ def build_production_canary_package(
         predecessor_hash = material.manifest_sha256
     return ProductionRecoveryUnitV1(
         run_id=run_id,
-        package_id="package-001",
+        package_id=package_id,
         document_id=document_id,
         jobs=tuple(jobs),
     ), tuple(materials)
@@ -255,6 +261,151 @@ def publish_production_canary_release(
         "predicted_materials": predicted_materials,
         "source_published_bytes": publication.published_bytes,
         "source_reused_bytes": publication.reused_bytes,
+        "campaign_reused": campaign_result["reused"],
+        "package_reused": package_result["reused"],
+        "approval_reused": approval_result["reused"],
+        "command_reused": command_result["reused"],
+    }
+
+
+def publish_production_pilot_release(
+    *,
+    to_studio: Path,
+    source_paths: Mapping[str, Path],
+    approval: CopiedTextPilotApprovalV1,
+    command_signing_private_key: Path,
+    now: datetime,
+    maximum_source_bytes: int = 1_048_576,
+    include_start: bool = True,
+) -> dict[str, Any]:
+    """Publish only an already explicit, hash-bound 6–12 document pilot.
+
+    Selection is deliberately outside this interface.  Every supplied path
+    must correspond to one approval row and is reverified immediately before
+    its immutable content-addressed copy.
+    """
+    approval.assert_current(now)
+    approved_ids = tuple(row.document_id for row in approval.artifacts)
+    if tuple(sorted(source_paths)) != approved_ids:
+        raise ValueError("pilot source paths must match the complete approved document table")
+    publications = []
+    jobs: list[ProductionCanaryJobV1] = []
+    predicted_materials: dict[str, tuple] = {}
+    published_bytes = 0
+    reused_bytes = 0
+    for artifact in approval.artifacts:
+        source_path = Path(source_paths[artifact.document_id])
+        if not source_path.is_absolute():
+            raise ValueError("pilot controller requires explicit absolute local source paths")
+        if source_path.is_symlink() or not source_path.is_file():
+            raise ValueError("pilot source must be a regular non-symlink file")
+        if source_path.name != artifact.safe_display_filename:
+            raise ValueError("pilot source filename changed after approval")
+        data = source_path.read_bytes()
+        if len(data) > maximum_source_bytes:
+            raise ValueError("pilot source exceeds the configured size limit")
+        try:
+            text = data.decode("utf-8", errors="strict")
+        except UnicodeDecodeError as exc:
+            raise ValueError("pilot source is not strict UTF-8") from exc
+        if "\x00" in text or "[TRUNCATED MIDDLE" in text:
+            raise ValueError("pilot source contains a prohibited marker or NUL")
+        if (
+            len(data) != artifact.source_bytes
+            or len(text) != artifact.source_characters
+            or sha256_bytes(data) != artifact.source_sha256
+        ):
+            raise ValueError("pilot approval does not match supplied bytes")
+        extension = source_path.suffix.lower().lstrip(".")
+        publication = publish_source_object(
+            source_path, to_studio, doc_id=artifact.document_id,
+            safe_extension=extension, media_type=artifact.media_type,
+        )
+        publications.append(publication)
+        published_bytes += publication.published_bytes
+        reused_bytes += publication.reused_bytes
+        compatibility_approval = CopiedTextCanaryApprovalV1(
+            approval_id=f"{approval.approval_id}-{artifact.document_id}",
+            run_id=approval.run_id, document_id=artifact.document_id,
+            source_sha256=artifact.source_sha256, source_bytes=artifact.source_bytes,
+            safe_display_filename=artifact.safe_display_filename,
+            media_type=artifact.media_type, public_source_url=artifact.public_source_url,
+            public_provenance_label=artifact.public_provenance_label,
+            approved_at=approval.approved_at, expires_at=approval.expires_at,
+            researcher_id=approval.researcher_id, source_is_public=True,
+            source_is_non_sensitive=True, not_anonymous_platform_testimony=True,
+            contains_no_private_or_restricted_material=True,
+            copied_local_bytes_only=True,
+            authorized_station_ids=PRODUCTION_CANARY_STATIONS,
+        )
+        package, materials = build_production_canary_package(
+            run_id=approval.run_id, document_id=artifact.document_id,
+            source_reference=publication.reference, source_bytes=data,
+            source_metadata=publication.metadata, approval=compatibility_approval,
+            created_at=now,
+            package_id="pilot-package-001",
+            barrier_id="copied-text-pilot-complete-units-v2",
+        )
+        jobs.extend(package.jobs)
+        predicted_materials[artifact.document_id] = materials
+    package = ProductionPilotPackageV1(
+        run_id=approval.run_id, package_id="pilot-package-001",
+        document_ids=approved_ids, jobs=tuple(jobs),
+    )
+    references = tuple(row.reference for row in publications)
+    campaign = ProductionPilotCampaignV1(
+        run_id=approval.run_id, execution_mode="production_copied_text_pilot",
+        created_at=now, creator_id="macbook-production-controller-v1",
+        approval_id=approval.approval_id,
+        approval_sha256=sha256_bytes(canonical_json_bytes(approval)),
+        document_ids=approved_ids, source_references=references,
+        package_id=package.package_id,
+        package_manifest_sha256=sha256_bytes(canonical_json_bytes(package)),
+        authorized_station_ids=PRODUCTION_CANARY_STATIONS,
+    )
+    production_root = f"campaigns/{campaign.run_id}/production"
+    approval_result = publish_exchange_json(
+        to_studio, f"{production_root}/approval.json", approval,
+    )
+    package_result = publish_exchange_json(
+        to_studio, f"{production_root}/package.json", package,
+    )
+    campaign_message = sign_factory_message(
+        campaign, purpose="campaign_release", run_id=campaign.run_id,
+        message_id=f"campaign-release-{campaign.run_id}",
+        private_key_path=command_signing_private_key, issued_at=now,
+        shared_roots=(Path(to_studio),),
+    )
+    campaign_result = publish_exchange_json(
+        to_studio, f"{production_root}/campaign.auth.json", campaign_message,
+    )
+    command_result: dict[str, Any] = {"reused": False, "sha256": ""}
+    command = None
+    if include_start:
+        command = FactoryCommandV1(
+            run_id=campaign.run_id, command_id="production-command-000001-start",
+            sequence=1, action="start_approved", issued_at=now,
+            expires_at=now + timedelta(hours=24),
+            campaign_sha256=sha256_bytes(canonical_json_bytes(campaign)),
+        )
+        command_message = sign_factory_message(
+            command, purpose="command", run_id=campaign.run_id,
+            message_id=command.command_id,
+            private_key_path=command_signing_private_key,
+            issued_at=now, expires_at=command.expires_at,
+            shared_roots=(Path(to_studio),),
+        )
+        command_result = publish_exchange_json(
+            to_studio,
+            f"commands/{campaign.run_id}/{command.sequence:06d}-{command.command_id}.auth.json",
+            command_message,
+        )
+    return {
+        "run_id": campaign.run_id, "campaign": campaign, "package": package,
+        "approval": approval, "command": command,
+        "predicted_materials": predicted_materials,
+        "source_published_bytes": published_bytes,
+        "source_reused_bytes": reused_bytes,
         "campaign_reused": campaign_result["reused"],
         "package_reused": package_result["reused"],
         "approval_reused": approval_result["reused"],
@@ -845,6 +996,108 @@ def demo_production_canary(workspace: Path, *, run_id: str) -> dict[str, Any]:
     return report
 
 
+def demo_persistent_multirun(workspace: Path) -> dict[str, Any]:
+    """Production-shaped two-run/six-document-per-run host discovery proof."""
+    from runner.models.reprocessing import (
+        PILOT_CONFIRMATION_TEXT, CopiedTextPilotArtifactV1,
+    )
+    from .factory_service import run_service_scan_once
+
+    workspace = Path(workspace).resolve()
+    to_studio = workspace / "exchange" / "to-mac-studio"
+    from_studio = workspace / "exchange" / "from-mac-studio"
+    state_root = workspace / "studio-local"
+    log_root = workspace / "service-logs"
+    key_root = workspace / "host-local-keys"
+    key_root.mkdir(parents=True, exist_ok=True)
+    mb_private, mb_public = key_root / "mb.private.pem", key_root / "mb.public.pem"
+    st_private, st_public = key_root / "st.private.pem", key_root / "st.public.pem"
+    if not mb_private.exists():
+        generate_keypair(mb_private, mb_public, shared_roots=(to_studio, from_studio))
+    if not st_private.exists():
+        generate_keypair(st_private, st_public, shared_roots=(to_studio, from_studio))
+    created_at = datetime(2026, 8, 13, 12, tzinfo=timezone.utc)
+    releases = []
+    for run_id in ("synthetic-multirun-a", "synthetic-multirun-b"):
+        source_root = workspace / "fixtures" / run_id
+        source_root.mkdir(parents=True, exist_ok=True)
+        artifacts = []
+        source_paths = {}
+        for index in range(6):
+            document_id = f"{run_id}-doc-{index + 1:02d}"
+            filename = f"public-{index + 1:02d}.txt"
+            data = f"Run-011 synthetic public fixture {run_id} {index + 1}.\n".encode()
+            source = source_root / filename
+            if source.exists() and source.read_bytes() != data:
+                raise ValueError("synthetic multi-run fixture identity changed")
+            if not source.exists():
+                atomic_write_bytes(source, data)
+            source_paths[document_id] = source
+            artifacts.append(CopiedTextPilotArtifactV1(
+                document_id=document_id, source_sha256=sha256_bytes(data),
+                source_bytes=len(data), source_characters=len(data.decode()),
+                safe_display_filename=filename, media_type="text/plain",
+                public_title=f"Synthetic fixture {index + 1}",
+                public_provenance_label="Run-011 temporary synthetic demonstration",
+                source_is_public=True, source_is_non_sensitive=True,
+                not_anonymous_platform_testimony=True,
+                contains_no_private_or_restricted_material=True,
+                copied_local_bytes_only=True,
+            ))
+        approval = CopiedTextPilotApprovalV1(
+            approval_id=f"approval-{run_id}", run_id=run_id,
+            approved_at=created_at, expires_at=created_at + timedelta(hours=24),
+            researcher_id="researcher-synthetic", artifacts=tuple(artifacts),
+            authorized_station_ids=PRODUCTION_CANARY_STATIONS,
+            macbook_code_identity_sha256="a" * 64,
+            macbook_worktree_identity_sha256="b" * 64,
+            storage_preflight_identity_sha256="c" * 64,
+            researcher_confirmation_text=PILOT_CONFIRMATION_TEXT,
+        )
+        releases.append(publish_production_pilot_release(
+            to_studio=to_studio, source_paths=source_paths, approval=approval,
+            command_signing_private_key=mb_private, now=created_at,
+        ))
+    common = dict(
+        to_studio=to_studio, from_studio=from_studio,
+        state_root=state_root, log_root=log_root,
+        command_public_key_paths=(mb_public,),
+        receipt_signing_private_key=st_private, host_role="synthetic",
+    )
+    first = run_service_scan_once(now=created_at + timedelta(seconds=2), **common)
+    second = run_service_scan_once(now=created_at + timedelta(seconds=3), **common)
+    first_projection = tuple(row.get("projection_sha256", "") for row in first["runs"])
+    second_projection = tuple(row.get("projection_sha256", "") for row in second["runs"])
+    report = {
+        "schema_version": "factory-persistent-multirun-demo-v1.0",
+        "run_ids": tuple(row["run_id"] for row in first["runs"]),
+        "document_count": 12,
+        "first_statuses": tuple(row["status"] for row in first["runs"]),
+        "second_steps": tuple(row["steps"] for row in second["runs"]),
+        "projection_sha256s": first_projection,
+        "projection_parity": first_projection == second_projection,
+        "health_message_bounded": second["health_published"] is False,
+        "database_paths": tuple(
+            f"studio-local/{row['run_id']}/worker.db" for row in first["runs"]
+        ),
+        "source_published_bytes": sum(row["source_published_bytes"] for row in releases),
+        "shared_tree_database_files": (), "content_free": True,
+    }
+    if (
+        report["run_ids"] != ("synthetic-multirun-a", "synthetic-multirun-b")
+        or report["first_statuses"] != ("succeeded", "succeeded")
+        or report["second_steps"] != (0, 0)
+        or not report["projection_parity"] or not report["health_message_bounded"]
+        or list((workspace / "exchange").rglob("*.db"))
+    ):
+        raise AssertionError("persistent multi-run synthetic demonstration failed")
+    atomic_write_bytes(
+        workspace / "persistent_multirun_demo_report.json",
+        (json.dumps(report, sort_keys=True, separators=(",", ":")) + "\n").encode(),
+    )
+    return report
+
+
 def _main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="factory_controller")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -857,6 +1110,8 @@ def _main(argv: list[str] | None = None) -> int:
     production_demo = sub.add_parser("demo-production-canary")
     production_demo.add_argument("--workspace", required=True, type=Path)
     production_demo.add_argument("--run-id", required=True)
+    persistent_demo = sub.add_parser("demo-persistent-multirun")
+    persistent_demo.add_argument("--workspace", required=True, type=Path)
     args = parser.parse_args(argv)
     if args.command == "simulate-three-docs":
         report = simulate_three_documents(args.workspace, run_id=args.run_id)
@@ -868,6 +1123,12 @@ def _main(argv: list[str] | None = None) -> int:
     if args.command == "demo-production-canary":
         print(json.dumps(
             demo_production_canary(args.workspace, run_id=args.run_id),
+            sort_keys=True, separators=(",", ":"),
+        ))
+        return 0
+    if args.command == "demo-persistent-multirun":
+        print(json.dumps(
+            demo_persistent_multirun(args.workspace),
             sort_keys=True, separators=(",", ":"),
         ))
         return 0

@@ -2,13 +2,22 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import plistlib
+import subprocess
 from pathlib import Path
 from typing import Any
 
 from runner.models.reprocessing import require_safe_id
 from .atomic_io import atomic_write_bytes
+
+
+FACTORY_LAUNCH_AGENT_LABEL = "org.survivingsogice.factory-service"
+FACTORY_LAUNCH_AGENT_TARGET = Path(
+    "/Users/cdn-ai/Library/LaunchAgents/org.survivingsogice.factory-service.plist"
+)
 
 
 def _absolute(path: Path, field: str) -> Path:
@@ -42,7 +51,8 @@ def render_launch_agent(
 ) -> bytes:
     if not label or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-" for character in label):
         raise ValueError("LaunchAgent label is invalid")
-    run_id = require_safe_id(run_id, field="run_id")
+    if run_id:
+        run_id = require_safe_id(run_id, field="run_id")
     python_path = _absolute(python_path, "python_path")
     working_directory = _absolute(working_directory, "working_directory")
     to_studio = _absolute(to_studio, "to_studio")
@@ -64,11 +74,12 @@ def render_launch_agent(
         "--from-studio", str(from_studio),
         "--state-root", str(state_root),
         "--log-root", str(log_root),
-        "--run-id", run_id,
         "--receipt-private-key", str(receipt_private_key),
         "--host-role", "mac-studio",
         "--poll-seconds", str(poll_seconds),
     ]
+    if run_id:
+        arguments.extend(("--run-id", run_id))
     for key in public_keys:
         arguments.extend(("--command-public-key", str(key)))
     payload: dict[str, Any] = {
@@ -149,6 +160,146 @@ def status_check(plist_path: Path, label: str) -> dict[str, Any]:
     }
 
 
+def install_validated_launch_agent(
+    *,
+    candidate_path: Path,
+    target_path: Path,
+    backup_directory: Path,
+    label: str = FACTORY_LAUNCH_AGENT_LABEL,
+) -> dict[str, Any]:
+    """Install exact validated bytes while preserving any related predecessor."""
+    candidate = _absolute(candidate_path, "candidate_path")
+    target = _absolute(target_path, "target_path")
+    backup = _absolute(backup_directory, "backup_directory")
+    if candidate.is_symlink() or not candidate.is_file():
+        raise ValueError("LaunchAgent candidate must be a regular non-symlink file")
+    data = candidate.read_bytes()
+    validated = validate_launch_agent(data)
+    if validated["label"] != label:
+        raise ValueError("LaunchAgent candidate label mismatch")
+    installed_sha = hashlib.sha256(data).hexdigest()
+    previous_sha = ""
+    backup_path = None
+    if target.exists():
+        if target.is_symlink() or not target.is_file():
+            raise ValueError("refusing to overwrite an unsafe LaunchAgent target")
+        previous = target.read_bytes()
+        previous_validated = validate_launch_agent(previous)
+        if previous_validated["label"] != label:
+            raise ValueError("refusing to overwrite an unrelated LaunchAgent")
+        previous_sha = hashlib.sha256(previous).hexdigest()
+        if previous == data:
+            return {
+                "schema_version": "factory-launch-agent-install-v1.0",
+                "label": label, "target": str(target), "installed_sha256": installed_sha,
+                "previous_sha256": previous_sha, "backup_path": "",
+                "changed": False, "mode": oct(target.stat().st_mode & 0o777),
+            }
+        backup_path = backup / f"{label}.{previous_sha}.plist"
+        if backup_path.exists() and backup_path.read_bytes() != previous:
+            raise ValueError("LaunchAgent backup identity collision")
+        if not backup_path.exists():
+            atomic_write_bytes(backup_path, previous)
+            os.chmod(backup_path, 0o600)
+    atomic_write_bytes(target, data)
+    os.chmod(target, 0o644)
+    return {
+        "schema_version": "factory-launch-agent-install-v1.0",
+        "label": label, "target": str(target), "installed_sha256": installed_sha,
+        "previous_sha256": previous_sha,
+        "backup_path": str(backup_path) if backup_path else "",
+        "changed": True, "mode": "0o644",
+    }
+
+
+def launchctl_command(
+    action: str,
+    *,
+    label: str = FACTORY_LAUNCH_AGENT_LABEL,
+    target_path: Path = FACTORY_LAUNCH_AGENT_TARGET,
+    uid: int | None = None,
+) -> tuple[str, ...]:
+    """Return an argument-only current-GUI-user launchctl operation."""
+    if label != FACTORY_LAUNCH_AGENT_LABEL:
+        raise ValueError("factory lifecycle requires the exact service label")
+    domain = f"gui/{os.getuid() if uid is None else uid}"
+    service = f"{domain}/{label}"
+    target = str(_absolute(target_path, "target_path"))
+    commands = {
+        "bootstrap": ("launchctl", "bootstrap", domain, target),
+        "status": ("launchctl", "print", service),
+        "stop": ("launchctl", "bootout", service),
+    }
+    if action not in commands:
+        raise ValueError("unsupported launchctl lifecycle action")
+    return commands[action]
+
+
+def execute_launchctl(
+    action: str,
+    *,
+    host_role: str,
+    label: str = FACTORY_LAUNCH_AGENT_LABEL,
+    target_path: Path = FACTORY_LAUNCH_AGENT_TARGET,
+    uid: int | None = None,
+    runner=subprocess.run,
+) -> dict[str, Any]:
+    if host_role not in {"mac-studio", "synthetic"}:
+        raise PermissionError("launchctl lifecycle is restricted to the Mac Studio")
+    command = launchctl_command(
+        action, label=label, target_path=target_path, uid=uid,
+    )
+    completed = runner(
+        command, check=False, capture_output=True, text=True, shell=False,
+    )
+    output = (completed.stdout or "") + (completed.stderr or "")
+    lowered = output.lower()
+    return {
+        "schema_version": "factory-launchctl-result-v1.0",
+        "action": action, "label": label, "returncode": completed.returncode,
+        "identity_present": label.lower() in lowered,
+        "pid_reported": "pid =" in lowered,
+        "content_free": True,
+    }
+
+
+def uninstall_identity_matched_launch_agent(
+    *, target_path: Path, installed_sha256: str, label: str = FACTORY_LAUNCH_AGENT_LABEL,
+) -> dict[str, Any]:
+    target = _absolute(target_path, "target_path")
+    if target.is_symlink() or not target.is_file():
+        return {"label": label, "removed": False, "reason": "not_installed"}
+    data = target.read_bytes()
+    if validate_launch_agent(data)["label"] != label:
+        raise ValueError("refusing to remove an unrelated LaunchAgent")
+    actual = hashlib.sha256(data).hexdigest()
+    if actual != installed_sha256:
+        raise ValueError("installed LaunchAgent identity changed")
+    target.unlink()
+    return {"label": label, "removed": True, "removed_sha256": actual}
+
+
+def restore_launch_agent_backup(
+    *, backup_path: Path, target_path: Path, expected_backup_sha256: str,
+    label: str = FACTORY_LAUNCH_AGENT_LABEL,
+) -> dict[str, Any]:
+    backup = _absolute(backup_path, "backup_path")
+    target = _absolute(target_path, "target_path")
+    if backup.is_symlink() or not backup.is_file():
+        raise ValueError("LaunchAgent backup is unavailable")
+    data = backup.read_bytes()
+    actual = hashlib.sha256(data).hexdigest()
+    if actual != expected_backup_sha256:
+        raise ValueError("LaunchAgent backup identity changed")
+    if validate_launch_agent(data)["label"] != label:
+        raise ValueError("LaunchAgent backup label mismatch")
+    if target.exists():
+        raise ValueError("rollback target must be absent before restoration")
+    atomic_write_bytes(target, data)
+    os.chmod(target, 0o644)
+    return {"label": label, "restored": True, "restored_sha256": actual}
+
+
 def _main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="factory_launch_agent")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -161,7 +312,7 @@ def _main(argv: list[str] | None = None) -> int:
     render.add_argument("--from-studio", required=True, type=Path)
     render.add_argument("--state-root", required=True, type=Path)
     render.add_argument("--log-root", required=True, type=Path)
-    render.add_argument("--run-id", required=True)
+    render.add_argument("--run-id", default="")
     render.add_argument("--command-public-key", required=True, action="append", type=Path)
     render.add_argument("--receipt-private-key", required=True, type=Path)
     render.add_argument("--poll-seconds", type=float, default=5.0)

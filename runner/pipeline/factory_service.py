@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from runner.models.reprocessing import (
     CopiedTextCanaryApprovalV1,
+    CopiedTextPilotApprovalV1,
     FactoryCommandV1,
     FactoryEventV1,
     FactoryReceiptV1,
@@ -24,6 +25,8 @@ from runner.models.reprocessing import (
     PRODUCTION_CANARY_STATIONS,
     ProductionCanaryCampaignV1,
     ProductionCanaryJobV1,
+    ProductionPilotCampaignV1,
+    ProductionPilotPackageV1,
     ProductionRecoveryUnitV1,
     require_safe_id,
 )
@@ -34,6 +37,7 @@ from .factory_auth import (
     sign_factory_message,
     verify_factory_message,
 )
+from .atomic_io import atomic_write_bytes
 from .factory_messages import (
     canonical_json_bytes,
     publish_checksum_bound_bytes,
@@ -148,7 +152,9 @@ class ProductionWorkerStore:
         return str(row[0]) if row else default
 
     def initialize_jobs(
-        self, campaign: ProductionCanaryCampaignV1, package: ProductionRecoveryUnitV1,
+        self,
+        campaign: ProductionCanaryCampaignV1 | ProductionPilotCampaignV1,
+        package: ProductionRecoveryUnitV1 | ProductionPilotPackageV1,
     ) -> None:
         previous_run = self.get_meta("run_id")
         if previous_run and previous_run != campaign.run_id:
@@ -230,15 +236,24 @@ class ProductionWorkerStore:
 
     def jobs(self) -> tuple[sqlite3.Row, ...]:
         return tuple(self.connection.execute(
-            "SELECT * FROM production_jobs ORDER BY station_sequence"
+            "SELECT * FROM production_jobs ORDER BY package_id,document_id,station_sequence"
         ).fetchall())
 
-    def job(self, station_id: str) -> sqlite3.Row:
-        row = self.connection.execute(
-            "SELECT * FROM production_jobs WHERE station_id=?", (station_id,),
-        ).fetchone()
+    def job(self, station_id: str, document_id: str = "") -> sqlite3.Row:
+        if document_id:
+            rows = self.connection.execute(
+                "SELECT * FROM production_jobs WHERE station_id=? AND document_id=?",
+                (station_id, document_id),
+            ).fetchall()
+        else:
+            rows = self.connection.execute(
+                "SELECT * FROM production_jobs WHERE station_id=?", (station_id,),
+            ).fetchall()
+        if len(rows) > 1:
+            raise ValueError("document_id is required for a multi-document job lookup")
+        row = rows[0] if rows else None
         if row is None:
-            raise KeyError(station_id)
+            raise KeyError((document_id, station_id))
         return row
 
     def recover_expired(self, now: datetime) -> int:
@@ -261,7 +276,7 @@ class ProductionWorkerStore:
                 continue
             predecessor = row["predecessor_station_id"]
             if predecessor:
-                previous = self.job(predecessor)
+                previous = self.job(predecessor, row["document_id"])
                 if previous["state"] != "succeeded":
                     continue
                 if previous["output_sha256"] != row["predecessor_output_sha256"]:
@@ -277,11 +292,11 @@ class ProductionWorkerStore:
                 )
             if cursor.rowcount != 1:
                 continue
-            return self.job(row["station_id"])
+            return self.job(row["station_id"], row["document_id"])
         return None
 
     def _lease(self, row: sqlite3.Row, token: str, now: datetime) -> None:
-        current = self.job(row["station_id"])
+        current = self.job(row["station_id"], row["document_id"])
         if current["state"] != "running" or current["lease_token"] != token:
             raise ProductionLeaseRejected("stale production lease")
         if not current["lease_expiry"] or datetime.fromisoformat(current["lease_expiry"]) <= now:
@@ -291,8 +306,8 @@ class ProductionWorkerStore:
         self._lease(row, token, now)
         with self.connection:
             self.connection.execute(
-                "UPDATE production_jobs SET heartbeat_time=?,lease_expiry=? WHERE station_id=?",
-                (now.isoformat(), (now + timedelta(seconds=60)).isoformat(), row["station_id"]),
+                "UPDATE production_jobs SET heartbeat_time=?,lease_expiry=? WHERE station_id=? AND document_id=?",
+                (now.isoformat(), (now + timedelta(seconds=60)).isoformat(), row["station_id"], row["document_id"]),
             )
 
     def succeed(self, row: sqlite3.Row, token: str, now: datetime, output_sha256: str) -> None:
@@ -300,14 +315,15 @@ class ProductionWorkerStore:
         with self.connection:
             self.connection.execute(
                 "UPDATE production_jobs SET state='succeeded',output_sha256=?,terminal_reason='',lease_token=NULL,lease_expiry=NULL "
-                "WHERE station_id=?", (output_sha256, row["station_id"]),
+                "WHERE station_id=? AND document_id=?",
+                (output_sha256, row["station_id"], row["document_id"]),
             )
 
-    def reconcile_success(self, station_id: str, output_sha256: str) -> None:
+    def reconcile_success(self, station_id: str, document_id: str, output_sha256: str) -> None:
         with self.connection:
             self.connection.execute(
                 "UPDATE production_jobs SET state='succeeded',output_sha256=?,terminal_reason='',lease_token=NULL,lease_expiry=NULL "
-                "WHERE station_id=?", (output_sha256, station_id),
+                "WHERE station_id=? AND document_id=?", (output_sha256, station_id, document_id),
             )
 
     def fail(self, row: sqlite3.Row, token: str, now: datetime, reason: str, *, retryable: bool) -> str:
@@ -315,27 +331,39 @@ class ProductionWorkerStore:
         state = "ready" if retryable and row["attempt"] < row["maximum_attempts"] else "held"
         with self.connection:
             self.connection.execute(
-                "UPDATE production_jobs SET state=?,terminal_reason=?,lease_token=NULL,lease_expiry=NULL WHERE station_id=?",
-                (state, reason, row["station_id"]),
+                "UPDATE production_jobs SET state=?,terminal_reason=?,lease_token=NULL,lease_expiry=NULL "
+                "WHERE station_id=? AND document_id=?",
+                (state, reason, row["station_id"], row["document_id"]),
             )
         return state
 
-    def expire_lease_for_test(self, station_id: str, now: datetime) -> tuple[sqlite3.Row, str]:
-        row = self.job(station_id)
+    def expire_lease_for_test(
+        self, station_id: str, now: datetime, document_id: str = "",
+    ) -> tuple[sqlite3.Row, str]:
+        row = self.job(station_id, document_id)
         token = str(row["lease_token"])
         with self.connection:
             self.connection.execute(
-                "UPDATE production_jobs SET lease_expiry=? WHERE station_id=?",
-                ((now - timedelta(seconds=1)).isoformat(), station_id),
+                "UPDATE production_jobs SET lease_expiry=? WHERE station_id=? AND document_id=?",
+                ((now - timedelta(seconds=1)).isoformat(), station_id, row["document_id"]),
             )
         return row, token
 
     def hold_without_lease(self, row: sqlite3.Row, reason: str) -> None:
         with self.connection:
             self.connection.execute(
-                "UPDATE production_jobs SET state='held',terminal_reason=? WHERE station_id=?",
-                (reason, row["station_id"]),
+                "UPDATE production_jobs SET state='held',terminal_reason=? WHERE station_id=? AND document_id=?",
+                (reason, row["station_id"], row["document_id"]),
             )
+
+    def hold_descendants(self, row: sqlite3.Row, reason: str = "predecessor_held") -> int:
+        with self.connection:
+            cursor = self.connection.execute(
+                "UPDATE production_jobs SET state='held',terminal_reason=? "
+                "WHERE document_id=? AND station_sequence>? AND state IN ('pending','ready')",
+                (reason, row["document_id"], row["station_sequence"]),
+            )
+        return cursor.rowcount
 
     def next_sequence(self) -> int:
         return int(self.connection.execute(
@@ -413,9 +441,9 @@ class ProductionCanaryWorker:
             self.run_state / "worker.db",
             shared_roots=(self.to_studio, self.from_studio),
         )
-        self.campaign: ProductionCanaryCampaignV1 | None = None
-        self.package: ProductionRecoveryUnitV1 | None = None
-        self.approval: CopiedTextCanaryApprovalV1 | None = None
+        self.campaign: ProductionCanaryCampaignV1 | ProductionPilotCampaignV1 | None = None
+        self.package: ProductionRecoveryUnitV1 | ProductionPilotPackageV1 | None = None
+        self.approval: CopiedTextCanaryApprovalV1 | CopiedTextPilotApprovalV1 | None = None
         self.campaign_sha256 = ""
 
     def close(self) -> None:
@@ -434,27 +462,56 @@ class ProductionCanaryWorker:
             allowed_public_keys=self.command_public_keys,
             now=self.now,
         )
-        campaign = ProductionCanaryCampaignV1.model_validate_json(
-            canonical_json_bytes(payload)
-        )
+        schema_version = payload.get("schema_version") if isinstance(payload, dict) else ""
+        if schema_version == "production-canary-campaign-v1.0":
+            campaign = ProductionCanaryCampaignV1.model_validate_json(
+                canonical_json_bytes(payload)
+            )
+            approval_model = CopiedTextCanaryApprovalV1
+            package_model = ProductionRecoveryUnitV1
+        elif schema_version == "production-pilot-campaign-v1.0":
+            campaign = ProductionPilotCampaignV1.model_validate_json(
+                canonical_json_bytes(payload)
+            )
+            approval_model = CopiedTextPilotApprovalV1
+            package_model = ProductionPilotPackageV1
+        else:
+            raise ValueError("unsupported authenticated production campaign schema")
         approval_relative, package_relative = f"{root}/approval.json", f"{root}/package.json"
         approval_path, package_path = self.to_studio / approval_relative, self.to_studio / package_relative
         verify_checksum_pair(approval_path, relative_path=approval_relative)
         verify_checksum_pair(package_path, relative_path=package_relative)
-        approval = CopiedTextCanaryApprovalV1.model_validate_json(approval_path.read_bytes())
-        package = ProductionRecoveryUnitV1.model_validate_json(package_path.read_bytes())
+        approval = approval_model.model_validate_json(approval_path.read_bytes())
+        package = package_model.model_validate_json(package_path.read_bytes())
         approval.assert_current(self.now)
         if sha256_bytes(canonical_json_bytes(approval)) != campaign.approval_sha256:
             raise ValueError("campaign approval hash mismatch")
         if sha256_bytes(canonical_json_bytes(package)) != campaign.package_manifest_sha256:
             raise ValueError("campaign package hash mismatch")
-        if (
-            approval.run_id != self.run_id or package.run_id != self.run_id
-            or approval.document_id != campaign.document_id
-            or package.document_id != campaign.document_id
-            or package.package_id != campaign.package_id
-        ):
-            raise ValueError("production campaign component identity mismatch")
+        if approval.run_id != self.run_id or package.run_id != self.run_id:
+            raise ValueError("production campaign component run identity mismatch")
+        if isinstance(campaign, ProductionCanaryCampaignV1):
+            if (
+                approval.document_id != campaign.document_id
+                or package.document_id != campaign.document_id
+                or package.package_id != campaign.package_id
+            ):
+                raise ValueError("production canary component identity mismatch")
+        else:
+            if not isinstance(approval, CopiedTextPilotApprovalV1) or not isinstance(
+                package, ProductionPilotPackageV1
+            ):
+                raise ValueError("production pilot component schema mismatch")
+            approval_ids = tuple(row.document_id for row in approval.artifacts)
+            approval_hashes = tuple(row.source_sha256 for row in approval.artifacts)
+            campaign_hashes = tuple(row.source_sha256 for row in campaign.source_references)
+            if (
+                approval_ids != campaign.document_ids
+                or package.document_ids != campaign.document_ids
+                or package.package_id != campaign.package_id
+                or approval_hashes != campaign_hashes
+            ):
+                raise ValueError("production pilot component identity mismatch")
         self.campaign, self.package, self.approval = campaign, package, approval
         self.campaign_sha256 = sha256_bytes(canonical_json_bytes(campaign))
         self.store.initialize_jobs(campaign, package)
@@ -518,7 +575,36 @@ class ProductionCanaryWorker:
 
     def _job_contract(self, row: sqlite3.Row) -> ProductionCanaryJobV1:
         assert self.package is not None
-        return next(job for job in self.package.jobs if job.station_id == row["station_id"])
+        return next(
+            job for job in self.package.jobs
+            if job.station_id == row["station_id"] and job.document_id == row["document_id"]
+        )
+
+    def _document_approval(self, document_id: str) -> CopiedTextCanaryApprovalV1:
+        assert self.approval is not None
+        if isinstance(self.approval, CopiedTextCanaryApprovalV1):
+            if self.approval.document_id != document_id:
+                raise ValueError("canary approval/document mismatch")
+            return self.approval
+        artifact = next(
+            (row for row in self.approval.artifacts if row.document_id == document_id),
+            None,
+        )
+        if artifact is None:
+            raise ValueError("pilot document is absent from approval")
+        return CopiedTextCanaryApprovalV1(
+            approval_id=f"{self.approval.approval_id}-{document_id}",
+            run_id=self.approval.run_id, document_id=document_id,
+            source_sha256=artifact.source_sha256, source_bytes=artifact.source_bytes,
+            safe_display_filename=artifact.safe_display_filename,
+            media_type=artifact.media_type, public_source_url=artifact.public_source_url,
+            public_provenance_label=artifact.public_provenance_label,
+            approved_at=self.approval.approved_at, expires_at=self.approval.expires_at,
+            researcher_id=self.approval.researcher_id, source_is_public=True,
+            source_is_non_sensitive=True, not_anonymous_platform_testimony=True,
+            contains_no_private_or_restricted_material=True,
+            copied_local_bytes_only=True, authorized_station_ids=PRODUCTION_CANARY_STATIONS,
+        )
 
     def _emit(
         self,
@@ -550,7 +636,8 @@ class ProductionCanaryWorker:
             occurred_at=occurred,
             worker_id="mac-studio-production-service-v1",
             input_fingerprint=(
-                self.store.job(station_id)["input_fingerprint"] if document_id else ""
+                self.store.job(station_id, document_id)["input_fingerprint"]
+                if document_id else ""
             ),
             output_sha256=output_sha256,
             error_class=error_class,
@@ -587,13 +674,18 @@ class ProductionCanaryWorker:
             count += 1
         return count
 
-    def _local_final_dir(self, station_id: str) -> Path:
-        assert self.campaign is not None
-        return self.run_state / "results" / self.campaign.document_id / station_id
+    def _local_final_dir(self, station_id: str, document_id: str) -> Path:
+        return self.run_state / "results" / document_id / station_id
+
+    def _station_entity_id(self, row: sqlite3.Row) -> str:
+        # Station projection is campaign-wide; document/station isolation is
+        # represented by the separately emitted document events.
+        return str(row["station_id"])
 
     def _build_material(self, row: sqlite3.Row) -> StationMaterial:
         assert self.approval is not None and self.campaign is not None
         job = self._job_contract(row)
+        approval = self._document_approval(row["document_id"])
         source_bytes, metadata = load_verified_source(self.to_studio, job=job)
         completed_at = self.campaign.created_at + timedelta(seconds=job.station_sequence)
         if job.station_id == "source_verify":
@@ -601,14 +693,16 @@ class ProductionCanaryWorker:
                 job=job,
                 source_bytes=source_bytes,
                 metadata=metadata,
-                approval=self.approval,
+                approval=approval,
                 completed_at=completed_at,
             )
         if job.station_id == "canonical_text_prepare":
             return build_canonical_text_material(
                 job=job, source_bytes=source_bytes, completed_at=completed_at,
             )
-        canonical = self._local_final_dir("canonical_text_prepare") / "extracted.txt"
+        canonical = self._local_final_dir(
+            "canonical_text_prepare", row["document_id"]
+        ) / "extracted.txt"
         if canonical.is_symlink() or not canonical.is_file():
             raise DeterministicStationHold("canonical_predecessor_missing")
         return build_complete_units_material(
@@ -645,7 +739,7 @@ class ProductionCanaryWorker:
     def _reconcile_local_results(self) -> bool:
         progressed = False
         for row in self.store.jobs():
-            final_dir = self._local_final_dir(row["station_id"])
+            final_dir = self._local_final_dir(row["station_id"], row["document_id"])
             manifest_path = final_dir / "artifact_manifest.json"
             if not manifest_path.is_file():
                 continue
@@ -653,8 +747,10 @@ class ProductionCanaryWorker:
             verify_artifact_manifest(final_dir, manifest, allow_manifest_file=True)
             output_hash = sha256_bytes(canonical_json_bytes(manifest))
             if row["state"] != "succeeded" or row["output_sha256"] != output_hash:
-                self.store.reconcile_success(row["station_id"], output_hash)
-                row = self.store.job(row["station_id"])
+                self.store.reconcile_success(
+                    row["station_id"], row["document_id"], output_hash
+                )
+                row = self.store.job(row["station_id"], row["document_id"])
                 progressed = True
             self._publish_material(row, StationMaterial(
                 artifacts={entry.relative_path: (final_dir / entry.relative_path).read_bytes() for entry in manifest.artifacts},
@@ -666,11 +762,11 @@ class ProductionCanaryWorker:
                 station_id=row["station_id"], to_state="succeeded",
             ):
                 if not self.store.has_transition(
-                    entity_kind="station", entity_id=row["station_id"],
+                    entity_kind="station", entity_id=self._station_entity_id(row),
                     station_id=row["station_id"], to_state="running",
                 ):
                     self._emit(
-                        entity_kind="station", entity_id=row["station_id"],
+                        entity_kind="station", entity_id=self._station_entity_id(row),
                         station_id=row["station_id"], from_state="pending", to_state="running",
                     )
                 self._emit(
@@ -680,7 +776,7 @@ class ProductionCanaryWorker:
                     output_sha256=output_hash,
                 )
                 self._emit(
-                    entity_kind="station", entity_id=row["station_id"], station_id=row["station_id"],
+                    entity_kind="station", entity_id=self._station_entity_id(row), station_id=row["station_id"],
                     from_state="running", to_state="succeeded",
                 )
                 progressed = True
@@ -727,11 +823,11 @@ class ProductionCanaryWorker:
             return self._finish_campaign()
         token = str(row["lease_token"])
         if not self.store.has_transition(
-            entity_kind="station", entity_id=row["station_id"],
+            entity_kind="station", entity_id=self._station_entity_id(row),
             station_id=row["station_id"], to_state="running",
         ):
             self._emit(
-                entity_kind="station", entity_id=row["station_id"], station_id=row["station_id"],
+                entity_kind="station", entity_id=self._station_entity_id(row), station_id=row["station_id"],
                 from_state="pending", to_state="running",
             )
         self._emit(
@@ -744,9 +840,11 @@ class ProductionCanaryWorker:
         try:
             material = self._build_material(row)
             predicted = ""
-            rows = self.store.jobs()
-            if row["station_sequence"] < len(rows):
-                predicted = rows[row["station_sequence"]]["predecessor_output_sha256"]
+            if row["station_sequence"] < len(PRODUCTION_CANARY_STATIONS):
+                next_station = PRODUCTION_CANARY_STATIONS[row["station_sequence"]]
+                predicted = self.store.job(
+                    next_station, row["document_id"]
+                )["predecessor_output_sha256"]
             if predicted and predicted != material.manifest_sha256:
                 raise DeterministicStationHold("predicted_output_mismatch")
             attempt_dir = (
@@ -754,7 +852,7 @@ class ProductionCanaryWorker:
                 / f"attempt-{row['attempt']:03d}-{token}"
             )
             write_attempt_material(attempt_dir, material)
-            final_dir = self._local_final_dir(row["station_id"])
+            final_dir = self._local_final_dir(row["station_id"], row["document_id"])
             finalize_attempt_material(attempt_dir, final_dir)
             if crash_point == f"after_result_write:{row['station_id']}":
                 raise ProductionWorkerCrash("after_result_write")
@@ -769,7 +867,7 @@ class ProductionCanaryWorker:
                 output_sha256=material.manifest_sha256,
             )
             self._emit(
-                entity_kind="station", entity_id=row["station_id"], station_id=row["station_id"],
+                entity_kind="station", entity_id=self._station_entity_id(row), station_id=row["station_id"],
                 from_state="running", to_state="succeeded",
             )
             self.publish_pending()
@@ -781,6 +879,7 @@ class ProductionCanaryWorker:
             state = self.store.fail(
                 row, token, self.now, exc.reason_code, retryable=False,
             )
+            self.store.hold_descendants(row)
             self._emit(
                 entity_kind="document", entity_id=row["document_id"],
                 document_id=row["document_id"], station_id=row["station_id"],
@@ -788,7 +887,7 @@ class ProductionCanaryWorker:
                 error_class=exc.reason_code,
             )
             self._emit(
-                entity_kind="station", entity_id=row["station_id"], station_id=row["station_id"],
+                entity_kind="station", entity_id=self._station_entity_id(row), station_id=row["station_id"],
                 from_state="running", to_state="held", error_class=exc.reason_code,
             )
             self.publish_pending()
@@ -884,6 +983,126 @@ def publish_service_status(
     )
 
 
+def discover_production_runs(to_studio: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Discover only checksum-complete releases at the exact production path."""
+    campaigns = Path(to_studio) / "campaigns"
+    if not campaigns.exists():
+        return (), ()
+    if campaigns.is_symlink() or not campaigns.is_dir():
+        raise ValueError("campaign exchange root is unsafe")
+    accepted: list[str] = []
+    rejected: list[str] = []
+    for candidate in sorted(campaigns.iterdir(), key=lambda path: path.name):
+        if candidate.is_symlink() or not candidate.is_dir():
+            continue
+        try:
+            run_id = require_safe_id(candidate.name, field="run_id")
+        except ValueError:
+            continue
+        relative = f"campaigns/{run_id}/production/campaign.auth.json"
+        campaign_path = Path(to_studio) / relative
+        if campaign_path.is_symlink() or not campaign_path.is_file():
+            continue
+        sidecar = campaign_path.with_name(campaign_path.name + ".sha256")
+        if sidecar.is_symlink() or not sidecar.is_file():
+            rejected.append(run_id)
+            continue
+        try:
+            verify_checksum_pair(campaign_path, relative_path=relative)
+        except Exception:
+            rejected.append(run_id)
+            continue
+        accepted.append(run_id)
+    return tuple(accepted), tuple(rejected)
+
+
+def _publish_host_health_once(
+    *,
+    from_studio: Path,
+    to_studio: Path,
+    state_root: Path,
+    status: str,
+    receipt_signing_private_key: Path,
+    issued_at: datetime,
+) -> bool:
+    """Publish one authenticated content-free message per health transition."""
+    safe_status = require_safe_id(status, field="status")
+    marker = Path(state_root) / "host-health-state.json"
+    if marker.is_symlink():
+        raise ValueError("host health marker must not be a symlink")
+    previous = ""
+    if marker.is_file():
+        try:
+            previous = str(json.loads(marker.read_text(encoding="utf-8"))["status"])
+        except Exception as exc:
+            raise ValueError("host health marker is malformed") from exc
+    if previous == safe_status:
+        return False
+    stamp = issued_at.strftime("%Y%m%dT%H%M%S%fZ")
+    payload = {
+        "schema_version": "factory-host-health-v1.0",
+        "run_id": "factory-host-service",
+        "status": safe_status,
+        "content_free": True,
+        "issued_at": issued_at.isoformat(),
+    }
+    message = sign_factory_message(
+        payload, purpose="service_status", run_id="factory-host-service",
+        message_id=f"host-service-{safe_status}-{stamp}",
+        private_key_path=receipt_signing_private_key, issued_at=issued_at,
+        shared_roots=(Path(to_studio), Path(from_studio)),
+    )
+    publish_exchange_json(
+        from_studio, f"service/host/{stamp}-{safe_status}.auth.json", message,
+    )
+    atomic_write_bytes(
+        marker,
+        canonical_json_bytes({"status": safe_status, "updated_at": issued_at.isoformat()}),
+    )
+    return True
+
+
+def _run_worker_unlocked(
+    *,
+    to_studio: Path,
+    from_studio: Path,
+    state_root: Path,
+    run_id: str,
+    keys: Mapping[str, Ed25519PublicKey],
+    receipt_signing_private_key: Path,
+    current: datetime,
+    emit_run_status: bool,
+) -> dict:
+    worker = ProductionCanaryWorker(
+        to_studio=to_studio, from_studio=from_studio, state_root=state_root,
+        run_id=run_id, command_public_keys=keys,
+        receipt_signing_private_key=receipt_signing_private_key, now=current,
+    )
+    try:
+        if emit_run_status:
+            publish_service_status(
+                from_studio=from_studio, to_studio=to_studio, run_id=run_id,
+                status="startup", receipt_signing_private_key=receipt_signing_private_key,
+                issued_at=current,
+            )
+        steps = worker.run_until_idle()
+        projection = worker.projection()
+        if emit_run_status:
+            publish_service_status(
+                from_studio=from_studio, to_studio=to_studio, run_id=run_id,
+                status="ready", receipt_signing_private_key=receipt_signing_private_key,
+                issued_at=current + timedelta(microseconds=1),
+            )
+        return {
+            "schema_version": "factory-service-once-result-v1.0",
+            "run_id": run_id, "status": projection.campaign.state,
+            "steps": steps, "projection_sha256": projection.projection_sha256,
+            "content_free": True,
+        }
+    finally:
+        worker.close()
+
+
 def run_service_once(
     *,
     to_studio: Path,
@@ -906,38 +1125,67 @@ def run_service_once(
     current = now or datetime.now(timezone.utc)
     keys = public_key_allowlist(command_public_key_paths, shared_roots=roots)
     with FactoryServiceLock(state_root):
-        worker = ProductionCanaryWorker(
-            to_studio=to_studio,
-            from_studio=from_studio,
-            state_root=state_root,
-            run_id=run_id,
-            command_public_keys=keys,
+        return _run_worker_unlocked(
+            to_studio=to_studio, from_studio=from_studio,
+            state_root=state_root, run_id=run_id, keys=keys,
             receipt_signing_private_key=receipt_signing_private_key,
-            now=current,
+            current=current, emit_run_status=True,
         )
-        try:
-            publish_service_status(
-                from_studio=from_studio, to_studio=to_studio, run_id=run_id,
-                status="startup", receipt_signing_private_key=receipt_signing_private_key,
-                issued_at=current,
-            )
-            steps = worker.run_until_idle()
-            projection = worker.projection()
-            publish_service_status(
-                from_studio=from_studio, to_studio=to_studio, run_id=run_id,
-                status="ready", receipt_signing_private_key=receipt_signing_private_key,
-                issued_at=current + timedelta(microseconds=1),
-            )
-            return {
-                "schema_version": "factory-service-once-result-v1.0",
-                "run_id": run_id,
-                "status": projection.campaign.state,
-                "steps": steps,
-                "projection_sha256": projection.projection_sha256,
-                "content_free": True,
-            }
-        finally:
-            worker.close()
+
+
+def run_service_scan_once(
+    *,
+    to_studio: Path,
+    from_studio: Path,
+    state_root: Path,
+    log_root: Path,
+    command_public_key_paths: tuple[Path, ...],
+    receipt_signing_private_key: Path,
+    host_role: str,
+    now: datetime | None = None,
+) -> dict:
+    """Host-level deterministic discovery with per-run fault isolation."""
+    if host_role not in {"mac-studio", "synthetic"}:
+        raise PermissionError("production factory service requires the Mac Studio host role")
+    roots = (Path(to_studio), Path(from_studio))
+    for local in (Path(state_root), Path(log_root), Path(receipt_signing_private_key)):
+        if any(_inside(local, shared) for shared in roots):
+            raise ValueError("factory service local paths must remain outside shared trees")
+    Path(log_root).mkdir(parents=True, exist_ok=True)
+    current = now or datetime.now(timezone.utc)
+    keys = public_key_allowlist(command_public_key_paths, shared_roots=roots)
+    results: list[dict] = []
+    with FactoryServiceLock(state_root):
+        run_ids, incomplete_or_tampered = discover_production_runs(to_studio)
+        for run_id in run_ids:
+            try:
+                results.append(_run_worker_unlocked(
+                    to_studio=to_studio, from_studio=from_studio,
+                    state_root=state_root, run_id=run_id, keys=keys,
+                    receipt_signing_private_key=receipt_signing_private_key,
+                    current=current, emit_run_status=False,
+                ))
+            except Exception as exc:
+                results.append({
+                    "run_id": run_id, "status": "held",
+                    "reason": type(exc).__name__, "content_free": True,
+                })
+        health = "idle" if not run_ids and not incomplete_or_tampered else (
+            "held" if incomplete_or_tampered or any(row["status"] == "held" for row in results)
+            else "ready"
+        )
+        health_published = _publish_host_health_once(
+            from_studio=from_studio, to_studio=to_studio, state_root=state_root,
+            status=health, receipt_signing_private_key=receipt_signing_private_key,
+            issued_at=current,
+        )
+    return {
+        "schema_version": "factory-service-scan-result-v1.0",
+        "status": health, "run_count": len(run_ids),
+        "rejected_count": len(incomplete_or_tampered),
+        "runs": tuple(results), "health_published": health_published,
+        "content_free": True,
+    }
 
 
 def _main(argv: list[str] | None = None) -> int:
@@ -948,7 +1196,7 @@ def _main(argv: list[str] | None = None) -> int:
     run.add_argument("--from-studio", required=True, type=Path)
     run.add_argument("--state-root", required=True, type=Path)
     run.add_argument("--log-root", required=True, type=Path)
-    run.add_argument("--run-id", required=True)
+    run.add_argument("--run-id", default="")
     run.add_argument("--command-public-key", required=True, action="append", type=Path)
     run.add_argument("--receipt-private-key", required=True, type=Path)
     run.add_argument("--host-role", required=True)
@@ -973,21 +1221,21 @@ def _main(argv: list[str] | None = None) -> int:
     signal.signal(signal.SIGINT, request_stop)
     while True:
         try:
-            result = run_service_once(
-                to_studio=args.to_studio,
-                from_studio=args.from_studio,
-                state_root=args.state_root,
-                log_root=args.log_root,
-                run_id=args.run_id,
+            common = dict(
+                to_studio=args.to_studio, from_studio=args.from_studio,
+                state_root=args.state_root, log_root=args.log_root,
                 command_public_key_paths=tuple(args.command_public_key),
                 receipt_signing_private_key=args.receipt_private_key,
-                host_role=args.host_role,
-                now=validation_now,
+                host_role=args.host_role, now=validation_now,
+            )
+            result = (
+                run_service_once(run_id=args.run_id, **common)
+                if args.run_id else run_service_scan_once(**common)
             )
             print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         except Exception as exc:
             print(json.dumps({
-                "run_id": args.run_id,
+                "run_id": args.run_id or "factory-host-service",
                 "status": "fault",
                 "reason": type(exc).__name__,
                 "content_free": True,

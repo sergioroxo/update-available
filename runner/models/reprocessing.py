@@ -6,7 +6,7 @@ fields, coercion, machine-absolute paths, and ambiguous source identities.
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import PurePosixPath
 from typing import Literal
 
@@ -710,7 +710,9 @@ class ProductionCanaryJobV1(StrictContract):
     policy_version: str
     maximum_attempts: int = Field(default=2, ge=1, le=3)
     retry_classification: Literal["deterministic_non_retryable", "infrastructure_retryable"]
-    barrier_id: Literal["copied-text-canary-complete-units-v2"] = (
+    barrier_id: Literal[
+        "copied-text-canary-complete-units-v2", "copied-text-pilot-complete-units-v2"
+    ] = (
         "copied-text-canary-complete-units-v2"
     )
 
@@ -832,6 +834,243 @@ class ProductionCanaryCampaignV1(StrictContract):
             raise ValueError("campaign source/document identity mismatch")
         if self.source_reference.source_ref_kind != "source_object":
             raise ValueError("production canary requires copied source bytes")
+        return self
+
+
+PILOT_CONFIRMATION_TEXT = (
+    "I approve these copied public, non-sensitive text artifacts for the "
+    "three non-model pilot stations only."
+)
+
+
+class CopiedTextPilotArtifactV1(StrictContract):
+    """One explicitly selected member of a bounded copied-text pilot."""
+
+    schema_version: Literal["copied-text-pilot-artifact-v1.0"] = (
+        "copied-text-pilot-artifact-v1.0"
+    )
+    document_id: str
+    source_sha256: str
+    source_bytes: int = Field(ge=1)
+    source_characters: int = Field(ge=1)
+    safe_display_filename: str
+    media_type: Literal["text/plain", "text/markdown"]
+    public_title: str
+    public_provenance_label: str
+    public_source_url: str = ""
+    source_is_public: Literal[True]
+    source_is_non_sensitive: Literal[True]
+    not_anonymous_platform_testimony: Literal[True]
+    contains_no_private_or_restricted_material: Literal[True]
+    copied_local_bytes_only: Literal[True]
+
+    @field_validator("document_id")
+    @classmethod
+    def _artifact_id(cls, value: str) -> str:
+        return require_safe_id(value, field="document_id")
+
+    @field_validator("source_sha256")
+    @classmethod
+    def _artifact_hash(cls, value: str) -> str:
+        return require_sha256(value, field="source_sha256")
+
+    @field_validator("safe_display_filename")
+    @classmethod
+    def _artifact_filename(cls, value: str) -> str:
+        if (
+            not value or value != value.strip() or "/" in value or "\\" in value
+            or "\x00" in value or value in {".", ".."}
+            or value.lower().endswith((".partial", ".sha256"))
+        ):
+            raise ValueError("safe_display_filename is not a portable filename")
+        if PurePosixPath(value).suffix.lower() not in {".txt", ".md"}:
+            raise ValueError("copied pilot supports only .txt or .md")
+        return value
+
+    @field_validator("public_title", "public_provenance_label", "public_source_url")
+    @classmethod
+    def _public_text(cls, value: str, info) -> str:
+        if value != value.strip() or len(value) > 500 or "\n" in value or "\x00" in value:
+            raise ValueError(f"{info.field_name} is malformed")
+        if info.field_name != "public_source_url" and not value:
+            raise ValueError(f"{info.field_name} is required")
+        return value
+
+    @model_validator(mode="after")
+    def _artifact_media(self) -> "CopiedTextPilotArtifactV1":
+        expected = (
+            "text/markdown" if self.safe_display_filename.lower().endswith(".md")
+            else "text/plain"
+        )
+        if self.media_type != expected:
+            raise ValueError("media type does not match copied text extension")
+        return self
+
+
+class CopiedTextPilotApprovalV1(StrictContract):
+    """Expiring authority for exactly 6–12 named copied text artifacts."""
+
+    schema_version: Literal["copied-text-pilot-approval-v1.0"] = (
+        "copied-text-pilot-approval-v1.0"
+    )
+    approval_id: str
+    run_id: str
+    approved_at: datetime
+    expires_at: datetime
+    researcher_id: str
+    artifacts: tuple[CopiedTextPilotArtifactV1, ...]
+    authorized_station_ids: tuple[str, ...]
+    maximum_package_size: Literal[15] = 15
+    macbook_code_identity_sha256: str
+    macbook_worktree_identity_sha256: str
+    storage_preflight_identity_sha256: str
+    network_acquisition: Literal[False] = False
+    research_model_calls: Literal[False] = False
+    embeddings: Literal[False] = False
+    rag: Literal[False] = False
+    analysis: Literal[False] = False
+    enrichment: Literal[False] = False
+    remote_writes: Literal[False] = False
+    corpus_import: Literal[False] = False
+    publication: Literal[False] = False
+    researcher_confirmation_text: Literal[
+        "I approve these copied public, non-sensitive text artifacts for the three non-model pilot stations only."
+    ] = PILOT_CONFIRMATION_TEXT
+
+    @field_validator("approval_id", "run_id", "researcher_id")
+    @classmethod
+    def _pilot_approval_ids(cls, value: str, info) -> str:
+        return require_safe_id(value, field=info.field_name)
+
+    @field_validator("approved_at", "expires_at")
+    @classmethod
+    def _pilot_approval_times(cls, value: datetime, info) -> datetime:
+        return _require_timezone(value, field=info.field_name)
+
+    @field_validator(
+        "macbook_code_identity_sha256", "macbook_worktree_identity_sha256",
+        "storage_preflight_identity_sha256",
+    )
+    @classmethod
+    def _pilot_identity_hashes(cls, value: str, info) -> str:
+        return require_sha256(value, field=info.field_name)
+
+    @model_validator(mode="after")
+    def _pilot_approval_invariants(self) -> "CopiedTextPilotApprovalV1":
+        if self.expires_at - self.approved_at != timedelta(hours=24):
+            raise ValueError("pilot approval requires an exact 24-hour window")
+        if self.authorized_station_ids != PRODUCTION_CANARY_STATIONS:
+            raise ValueError("pilot approval requires exactly the three ordered stations")
+        if not 6 <= len(self.artifacts) <= 12:
+            raise ValueError("real copied-text pilot requires 6–12 artifacts")
+        document_ids = tuple(row.document_id for row in self.artifacts)
+        if document_ids != tuple(sorted(set(document_ids))):
+            raise ValueError("pilot artifacts must use sorted unique document IDs")
+        hashes = tuple(row.source_sha256 for row in self.artifacts)
+        if len(set(hashes)) != len(hashes):
+            raise ValueError("pilot artifacts must not duplicate source hashes")
+        return self
+
+    def assert_current(self, now: datetime) -> None:
+        _require_timezone(now, field="now")
+        if now < self.approved_at or now >= self.expires_at:
+            raise ValueError("copied-text pilot approval is not currently valid")
+
+
+class ProductionPilotPackageV1(StrictContract):
+    schema_version: Literal["production-pilot-package-v1.0"] = (
+        "production-pilot-package-v1.0"
+    )
+    run_id: str
+    package_id: str
+    package_sequence: Literal[1] = 1
+    document_ids: tuple[str, ...]
+    jobs: tuple[ProductionCanaryJobV1, ...]
+    maximum_package_size: Literal[15] = 15
+
+    @field_validator("run_id", "package_id")
+    @classmethod
+    def _pilot_package_ids(cls, value: str, info) -> str:
+        return require_safe_id(value, field=info.field_name)
+
+    @model_validator(mode="after")
+    def _pilot_package_jobs(self) -> "ProductionPilotPackageV1":
+        if not 6 <= len(self.document_ids) <= 12:
+            raise ValueError("production pilot package requires 6–12 documents")
+        if self.document_ids != tuple(sorted(set(self.document_ids))):
+            raise ValueError("pilot package documents must be sorted and unique")
+        expected = tuple(
+            (document_id, station_id)
+            for document_id in self.document_ids
+            for station_id in PRODUCTION_CANARY_STATIONS
+        )
+        actual = tuple((job.document_id, job.station_id) for job in self.jobs)
+        if actual != expected:
+            raise ValueError("pilot jobs must follow deterministic document/station order")
+        if any(job.run_id != self.run_id or job.package_id != self.package_id for job in self.jobs):
+            raise ValueError("pilot package/job identity mismatch")
+        return self
+
+
+class ProductionPilotCampaignV1(StrictContract):
+    schema_version: Literal["production-pilot-campaign-v1.0"] = (
+        "production-pilot-campaign-v1.0"
+    )
+    run_id: str
+    execution_mode: Literal["production_copied_text_pilot"]
+    created_at: datetime
+    creator_id: str
+    approval_id: str
+    approval_sha256: str
+    document_ids: tuple[str, ...]
+    source_references: tuple[CampaignSourceReferenceV1, ...]
+    package_id: str
+    package_manifest_sha256: str
+    authorized_station_ids: tuple[str, ...]
+    barrier_id: Literal["copied-text-pilot-complete-units-v2"] = (
+        "copied-text-pilot-complete-units-v2"
+    )
+    command_expiry_hours: Literal[24] = 24
+    network_acquisition: Literal[False] = False
+    research_model_calls: Literal[False] = False
+    embeddings: Literal[False] = False
+    rag: Literal[False] = False
+    analysis: Literal[False] = False
+    enrichment: Literal[False] = False
+    remote_writes: Literal[False] = False
+    corpus_import: Literal[False] = False
+    publication: Literal[False] = False
+    policy_version: Literal["production-pilot-policy-v1.0"] = (
+        "production-pilot-policy-v1.0"
+    )
+
+    @field_validator("run_id", "creator_id", "approval_id", "package_id")
+    @classmethod
+    def _pilot_campaign_ids(cls, value: str, info) -> str:
+        return require_safe_id(value, field=info.field_name)
+
+    @field_validator("approval_sha256", "package_manifest_sha256")
+    @classmethod
+    def _pilot_campaign_hashes(cls, value: str, info) -> str:
+        return require_sha256(value, field=info.field_name)
+
+    @field_validator("created_at")
+    @classmethod
+    def _pilot_created_at(cls, value: datetime) -> datetime:
+        return _require_timezone(value, field="created_at")
+
+    @model_validator(mode="after")
+    def _pilot_campaign_invariants(self) -> "ProductionPilotCampaignV1":
+        if self.authorized_station_ids != PRODUCTION_CANARY_STATIONS:
+            raise ValueError("production pilot requires exactly the three ordered stations")
+        if not 6 <= len(self.document_ids) <= 12:
+            raise ValueError("production pilot requires 6–12 documents")
+        if self.document_ids != tuple(sorted(set(self.document_ids))):
+            raise ValueError("campaign documents must be sorted and unique")
+        if tuple(row.doc_id for row in self.source_references) != self.document_ids:
+            raise ValueError("campaign source references must bind every ordered document")
+        if any(row.source_ref_kind != "source_object" for row in self.source_references):
+            raise ValueError("production pilot requires copied source bytes")
         return self
 
 
