@@ -465,16 +465,50 @@ class ProductionCanaryWorker:
             command_message = AuthenticatedFactoryMessageV1.model_validate_json(
                 canonical_json_bytes(raw)
             )
+            envelope = command_message.envelope
+            expired = envelope.expires_at is not None and self.now >= envelope.expires_at
+            verification_time = self.now
+            if expired:
+                # Expiry prevents application, but it must not prevent us from
+                # authenticating an immutable historical command.  Verify it at
+                # the last representable instant in its signed validity window;
+                # every non-temporal production check remains fail-closed.
+                verification_time = envelope.expires_at - timedelta(microseconds=1)
             command_payload = verify_factory_message(
                 command_message,
                 expected_purpose="command",
                 expected_run_id=self.run_id,
                 allowed_public_keys=self.command_public_keys,
-                now=self.now,
+                now=verification_time,
             )
             command = FactoryCommandV1.model_validate_json(
                 canonical_json_bytes(command_payload)
             )
+            expected_relative = (
+                f"commands/{self.run_id}/{command.sequence:06d}-"
+                f"{command.command_id}.auth.json"
+            )
+            if relative != expected_relative:
+                raise FactoryAuthenticationError(
+                    "authenticated command filename identity mismatch"
+                )
+            if command.command_id != envelope.message_id:
+                raise FactoryAuthenticationError(
+                    "authenticated command message identity mismatch"
+                )
+            if (
+                command.issued_at != envelope.issued_at
+                or command.expires_at != envelope.expires_at
+            ):
+                raise FactoryAuthenticationError(
+                    "authenticated command time binding mismatch"
+                )
+            if command.campaign_sha256 != self.campaign_sha256:
+                raise FactoryAuthenticationError(
+                    "authenticated command campaign mismatch"
+                )
+            if expired:
+                continue
             self.store.apply_command(
                 command,
                 message_id=command_message.envelope.message_id,

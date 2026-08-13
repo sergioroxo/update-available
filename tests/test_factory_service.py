@@ -11,11 +11,17 @@ from runner.models.reprocessing import (
     PRODUCTION_CANARY_STATIONS,
     CopiedTextCanaryApprovalV1,
 )
-from runner.pipeline.factory_auth import generate_keypair, public_key_allowlist
+from runner.pipeline.factory_auth import (
+    AuthenticatedFactoryMessageV1,
+    FactoryAuthenticationError,
+    generate_keypair,
+    public_key_allowlist,
+    sign_factory_message,
+)
 from runner.pipeline.factory_controller import (
     demo_production_canary, publish_production_canary_release,
 )
-from runner.pipeline.factory_messages import sha256_bytes
+from runner.pipeline.factory_messages import canonical_json_bytes, sha256_bytes
 from runner.pipeline.factory_messages import publish_checksum_bound_json
 from runner.pipeline.factory_service import (
     FactoryServiceLock, ProductionCanaryWorker, ProductionLeaseRejected,
@@ -23,14 +29,14 @@ from runner.pipeline.factory_service import (
 )
 from runner.pipeline.syncthing_exchange import (
     assert_clean_transfer_tree, observe_authenticated_receipts,
-    verify_authenticated_result_bundle,
+    publish_exchange_json, verify_authenticated_result_bundle,
 )
 
 
 NOW = datetime(2026, 8, 12, 12, tzinfo=timezone.utc)
 
 
-def _setup(tmp_path: Path, run_id="production-service-009"):
+def _setup(tmp_path: Path, run_id="production-service-009", approval_hours=1):
     keys = tmp_path / "keys"
     keys.mkdir()
     mb_private, mb_public = keys / "mb.private.pem", keys / "mb.public.pem"
@@ -45,7 +51,8 @@ def _setup(tmp_path: Path, run_id="production-service-009"):
         source_sha256=sha256_bytes(data), source_bytes=len(data),
         safe_display_filename="fixture.md", media_type="text/markdown",
         public_provenance_label="synthetic fixture", approved_at=NOW-timedelta(seconds=1),
-        expires_at=NOW+timedelta(hours=1), researcher_id="researcher-synthetic",
+        expires_at=NOW+timedelta(hours=approval_hours),
+        researcher_id="researcher-synthetic",
         source_is_public=True, source_is_non_sensitive=True,
         not_anonymous_platform_testimony=True,
         contains_no_private_or_restricted_material=True,
@@ -64,6 +71,53 @@ def _setup(tmp_path: Path, run_id="production-service-009"):
         "logs": tmp_path / "logs", "mb_private": mb_private,
         "mb_public": mb_public, "st_private": st_private, "st_public": st_public,
     }
+
+
+def _publish_command(
+    context,
+    *,
+    sequence: int,
+    command_id: str,
+    issued_at: datetime,
+    expires_at: datetime,
+    action: str = "start_approved",
+    private_key: Path | None = None,
+    relative_path: str | None = None,
+    campaign_sha256: str | None = None,
+):
+    campaign_message = AuthenticatedFactoryMessageV1.model_validate_json(
+        (
+            context["to"] / "campaigns" / context["run_id"]
+            / "production" / "campaign.auth.json"
+        ).read_bytes()
+    )
+    bound_campaign_sha256 = campaign_sha256 or sha256_bytes(
+        canonical_json_bytes(campaign_message.payload)
+    )
+    command = {
+        "schema_version": "factory-command-v1.0",
+        "run_id": context["run_id"],
+        "command_id": command_id,
+        "sequence": sequence,
+        "action": action,
+        "issued_at": issued_at.isoformat(),
+        "expires_at": expires_at.isoformat(),
+        "campaign_sha256": bound_campaign_sha256,
+    }
+    message = sign_factory_message(
+        command,
+        purpose="command",
+        run_id=context["run_id"],
+        message_id=command_id,
+        private_key_path=private_key or context["mb_private"],
+        issued_at=issued_at,
+        expires_at=expires_at,
+    )
+    relative = relative_path or (
+        f"commands/{context['run_id']}/{sequence:06d}-{command_id}.auth.json"
+    )
+    publish_exchange_json(context["to"], relative, message)
+    return message
 
 
 def _worker(context):
@@ -189,6 +243,230 @@ def test_complete_production_shaped_demo_is_idempotent_and_tamper_resistant(tmp_
     assert report["tampered_command_rejected"] is True
     assert report["tampered_result_rejected"] is True
     assert report["expired_command_rejected"] is True
+
+
+def test_expired_sequence_one_is_inactive_and_valid_replacement_runs(tmp_path):
+    context = _setup(tmp_path, run_id="expired-then-replacement", approval_hours=24)
+    _publish_command(
+        context,
+        sequence=2,
+        command_id="production-command-000002-start-replacement",
+        issued_at=NOW + timedelta(minutes=30),
+        expires_at=NOW + timedelta(hours=8),
+    )
+    worker = ProductionCanaryWorker(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], run_id=context["run_id"],
+        command_public_keys=public_key_allowlist((context["mb_public"],)),
+        receipt_signing_private_key=context["st_private"],
+        now=NOW + timedelta(hours=2),
+    )
+    assert worker.run_until_idle() > 0
+    assert all(row["state"] == "succeeded" for row in worker.store.jobs())
+    assert worker.store.get_meta("approved") == "1"
+    assert worker.store.get_meta("last_command_sequence") == "2"
+    applied = worker.store.connection.execute(
+        "SELECT sequence FROM production_messages WHERE purpose='command'"
+    ).fetchall()
+    assert [row["sequence"] for row in applied] == [2]
+    worker.ingest()
+    applied_again = worker.store.connection.execute(
+        "SELECT sequence FROM production_messages WHERE purpose='command'"
+    ).fetchall()
+    assert [row["sequence"] for row in applied_again] == [2]
+    worker.close()
+
+
+def test_expired_only_command_is_authenticated_but_never_applied(tmp_path):
+    context = _setup(tmp_path, run_id="expired-only", approval_hours=24)
+    worker = ProductionCanaryWorker(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], run_id=context["run_id"],
+        command_public_keys=public_key_allowlist((context["mb_public"],)),
+        receipt_signing_private_key=context["st_private"],
+        now=NOW + timedelta(hours=2),
+    )
+    worker.ingest()
+    assert worker.store.get_meta("approved", "0") == "0"
+    assert worker.store.get_meta("last_command_sequence", "0") == "0"
+    assert worker.store.connection.execute(
+        "SELECT COUNT(*) FROM production_messages WHERE purpose='command'"
+    ).fetchone()[0] == 0
+    worker.close()
+
+
+def test_tampered_expired_command_still_fails_closed(tmp_path):
+    context = _setup(tmp_path, run_id="tampered-expired", approval_hours=24)
+    message = _publish_command(
+        context,
+        sequence=2,
+        command_id="production-command-000002-expired",
+        issued_at=NOW + timedelta(minutes=10),
+        expires_at=NOW + timedelta(minutes=20),
+    )
+    tampered = message.model_dump()
+    tampered["envelope"]["signature_b64"] = "A" * 86 + "=="
+    forged = AuthenticatedFactoryMessageV1.model_validate(tampered)
+    relative = (
+        f"commands/{context['run_id']}/000003-"
+        "production-command-000003-tampered.auth.json"
+    )
+    # Keep the payload untouched here: publication under a conflicting path is
+    # independently rejected after signature verification.  The zeroed
+    # signature itself must be the first fail-closed boundary.
+    publish_exchange_json(context["to"], relative, forged)
+    worker = ProductionCanaryWorker(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], run_id=context["run_id"],
+        command_public_keys=public_key_allowlist((context["mb_public"],)),
+        receipt_signing_private_key=context["st_private"],
+        now=NOW + timedelta(hours=2),
+    )
+    with pytest.raises(FactoryAuthenticationError, match="signature is invalid"):
+        worker.ingest()
+    worker.close()
+
+
+def test_untrusted_expired_command_still_fails_closed(tmp_path):
+    context = _setup(tmp_path, run_id="untrusted-expired", approval_hours=24)
+    other_private = tmp_path / "other.private.pem"
+    other_public = tmp_path / "other.public.pem"
+    generate_keypair(other_private, other_public)
+    _publish_command(
+        context,
+        sequence=2,
+        command_id="production-command-000002-untrusted",
+        issued_at=NOW + timedelta(minutes=10),
+        expires_at=NOW + timedelta(minutes=20),
+        private_key=other_private,
+    )
+    worker = ProductionCanaryWorker(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], run_id=context["run_id"],
+        command_public_keys=public_key_allowlist((context["mb_public"],)),
+        receipt_signing_private_key=context["st_private"],
+        now=NOW + timedelta(hours=2),
+    )
+    with pytest.raises(FactoryAuthenticationError, match="key is not trusted"):
+        worker.ingest()
+    worker.close()
+
+
+@pytest.mark.parametrize("defect", ["purpose", "run", "campaign", "filename"])
+def test_expired_command_identity_and_campaign_defects_fail_closed(tmp_path, defect):
+    context = _setup(tmp_path, run_id=f"expired-{defect}", approval_hours=24)
+    sequence = 2
+    command_id = f"production-command-000002-{defect}"
+    issued_at = NOW + timedelta(minutes=10)
+    expires_at = NOW + timedelta(minutes=20)
+    if defect == "campaign":
+        _publish_command(
+            context, sequence=sequence, command_id=command_id,
+            issued_at=issued_at, expires_at=expires_at,
+            campaign_sha256="f" * 64,
+        )
+    elif defect == "filename":
+        _publish_command(
+            context, sequence=sequence, command_id=command_id,
+            issued_at=issued_at, expires_at=expires_at,
+            relative_path=(
+                f"commands/{context['run_id']}/000003-{command_id}.auth.json"
+            ),
+        )
+    else:
+        campaign_message = AuthenticatedFactoryMessageV1.model_validate_json(
+            (
+                context["to"] / "campaigns" / context["run_id"]
+                / "production" / "campaign.auth.json"
+            ).read_bytes()
+        )
+        command = {
+            "schema_version": "factory-command-v1.0",
+            "run_id": context["run_id"],
+            "command_id": command_id,
+            "sequence": sequence,
+            "action": "start_approved",
+            "issued_at": issued_at.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "campaign_sha256": sha256_bytes(
+                canonical_json_bytes(campaign_message.payload)
+            ),
+        }
+        message = sign_factory_message(
+            command,
+            purpose=("receipt" if defect == "purpose" else "command"),
+            run_id=("another-run" if defect == "run" else context["run_id"]),
+            message_id=command_id,
+            private_key_path=context["mb_private"],
+            issued_at=issued_at,
+            expires_at=expires_at,
+        )
+        publish_exchange_json(
+            context["to"],
+            f"commands/{context['run_id']}/{sequence:06d}-{command_id}.auth.json",
+            message,
+        )
+    worker = ProductionCanaryWorker(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], run_id=context["run_id"],
+        command_public_keys=public_key_allowlist((context["mb_public"],)),
+        receipt_signing_private_key=context["st_private"],
+        now=NOW + timedelta(hours=2),
+    )
+    with pytest.raises((FactoryAuthenticationError, ValueError), match="mismatch"):
+        worker.ingest()
+    worker.close()
+
+
+@pytest.mark.parametrize("defect", ["message_id", "time"])
+def test_expired_command_envelope_binding_defects_fail_closed(tmp_path, defect):
+    context = _setup(tmp_path, run_id=f"expired-binding-{defect}", approval_hours=24)
+    sequence = 2
+    command_id = f"production-command-000002-{defect}"
+    issued_at = NOW + timedelta(minutes=10)
+    expires_at = NOW + timedelta(minutes=20)
+    campaign_message = AuthenticatedFactoryMessageV1.model_validate_json(
+        (
+            context["to"] / "campaigns" / context["run_id"]
+            / "production" / "campaign.auth.json"
+        ).read_bytes()
+    )
+    command = {
+        "schema_version": "factory-command-v1.0",
+        "run_id": context["run_id"],
+        "command_id": command_id,
+        "sequence": sequence,
+        "action": "start_approved",
+        "issued_at": issued_at.isoformat(),
+        "expires_at": expires_at.isoformat(),
+        "campaign_sha256": sha256_bytes(
+            canonical_json_bytes(campaign_message.payload)
+        ),
+    }
+    message = sign_factory_message(
+        command,
+        purpose="command",
+        run_id=context["run_id"],
+        message_id=("different-message-id" if defect == "message_id" else command_id),
+        private_key_path=context["mb_private"],
+        issued_at=(issued_at + timedelta(minutes=1) if defect == "time" else issued_at),
+        expires_at=expires_at,
+    )
+    publish_exchange_json(
+        context["to"],
+        f"commands/{context['run_id']}/{sequence:06d}-{command_id}.auth.json",
+        message,
+    )
+    worker = ProductionCanaryWorker(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], run_id=context["run_id"],
+        command_public_keys=public_key_allowlist((context["mb_public"],)),
+        receipt_signing_private_key=context["st_private"],
+        now=NOW + timedelta(hours=2),
+    )
+    with pytest.raises(FactoryAuthenticationError, match="mismatch"):
+        worker.ingest()
+    worker.close()
 
 
 def test_unsigned_production_command_and_replayed_sequence_fail_closed(tmp_path):
