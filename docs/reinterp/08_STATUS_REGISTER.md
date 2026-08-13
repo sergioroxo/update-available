@@ -767,3 +767,64 @@ resolved roll at ~0°. No tool in this session rotated an iPad. Sérgio must pho
 rest in portrait and in both landscape directions, including the q₂ source/value, raw α/β/γ,
 camera roll, and both event counters. Correct = q₂ changes to the needed cardinal and camera roll
 settles near 0°; broken = q₂ stays `unknown`/the old cardinal or camera roll stays near ±90°.
+
+
+---
+
+## §19 — S84 TABLET PASS: BUILT, MEASURED, STILL UNVERIFIED ON HARDWARE (2026-08-13)
+
+The E2 record still had a second positional authority: `cluster.ts`'s `setPlaneZ` ran on era shifts
+after `migrateTerminal(false)` had restored the authored spine pose. That is the documented Session
+27 failure mechanism, even though the current 3.60/3.62 values did not reproduce an occlusion in a
+desktop browser. The override and its lerp are removed; non-E4 eras now use only
+`cluster.json.witnessTerminal`, while E4 keeps its explicit Room-3 migration. A cold `?era=2` review
+jump with an empty ledger still renders the intentionally dormant black `· · ·` surface. After a kit
+filing and the real 21 s E1→E2 transition, the intake record rendered both before and after this
+change. **The photographed iPad case was not reproduced; the mechanism was removed, not claimed as
+hardware-verified.**
+
+The duck was genuinely misplaced, not merely misclassified. The retired box shelf ended at y1.560;
+the rendered bookcase's top board spans y1.558–1.615, so the duck's base sat 5.5 cm inside it, and its
+z footprint overhung the model's front by 4 cm. It now sits at `[1.98, 1.655, 0.50]` (and
+`[1.98, 1.655, 3.05]` after the bookcase moves): base exactly y1.615, full footprint inside. The
+teddy remains correct: base y0.703 exactly equals its shelf top. Both are 84.2° right of Room 1's
+authored forward bearing. Room audit is now **62 findings**: r1 12, r2 9, r3 21, r4 20; the duck is
+gone from all four, and `w_cardigan`/`e_hoodie` are the only FLOATING findings (intentional drapes).
+
+The E2 tape report was **not reproduced**. In r2, `tapeA`, `tapeB`, all three in-slot tapes and the
+boombox are removed by design. `mixtape` remains; its rendered base is y0.703 exactly on the shelf,
+and its x/z footprint is inside the bookcase. No tape coordinates changed. If the device still reads
+one as floating, the next evidence is a photograph with the E2 chip and the suspect shelf in frame.
+
+The entrance pointer skip now uses S80's existing 10 px / 1.2 s release test. A 100 px browser drag
+kept the 12 s descent running; a quick stationary tap landed the seat. The camera path and duration
+are byte-unchanged. The existing 1.2 s hold + 1.8 s light ramp is centred on the descent midpoint;
+the room visibly lit while the browser camera was still airborne, and boot still waits for landing.
+
+The menu now conditionally shows Enter/Exit fullscreen only when the standard API is available. A
+manifest, 180/192/512 icons and iOS standalone meta tags add the better exhibition path: Add to Home
+Screen. The debug map now has its one-line key and every content control is marked `⏵ ENTRY`, `JUMP`
+or `ACTION`; the E3 device controls say `not armed yet` outside E3. C6 remains 63/63.
+
+S83 orientation code was inspected and left unchanged. No concrete defect was found: unknown stays
+null, gravity resolves aspect's left/right ambiguity, q₂'s PlayCanvas −Z/+angle form is algebraically
+the research spec's +Z/−angle, and per-frame polling does not depend on either rotation listener.
+No other render path forces portrait/landscape or treats `?flat=1` as a fallback; canvas sizing and
+camera projection follow the current viewport.
+
+**⚑ UNVERIFIED ON HARDWARE — exact close-out photographs:** (1) E2 after the ordinary update, turned
+to a legible intake record; (2) Room-1 shelf after an ~84° right turn, with duck and teddy visible;
+(3) any tape that still reads as floating, with the E2 chip; (4) one mid-descent frame after a drag,
+with the room lighting while still airborne; (5) the open menu showing Fullscreen, plus the installed
+Home Screen launch without Safari chrome; (6) the open debug map with its key and an E3 control read
+outside E3 as `not armed yet`; (7) the S83 diagnostic in portrait and both landscape directions,
+with the q₂ SOURCE/value and camera roll visible.
+
+**One-line iPad instruction:** open
+`https://sergioroxo.github.io/update-available/?reinterp=1&debug=1`; correct = the q₂ source/value
+changes on rotation and camera roll settles near 0°, broken = SOURCE stays `unknown`/stale or roll
+stays near ±90° — photograph the full readout.
+
+Acceptance: `npx tsc --noEmit`, `npm test`, and `npm run build` green; 1024×768 debug render,
+ordinary Log in/tap/drag, mid-flight light, conditional fullscreen row, real E1→E2 transition and
+post-transition record checked in a desktop browser. No iPad, iPhone or headset was used.

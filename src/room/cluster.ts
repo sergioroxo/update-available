@@ -244,16 +244,12 @@ const CASCADE_BASE_SECONDS = 6.5; // CASCADE + PROP_DUR in clusterMorph.ts
 /** space-state index per era (reinterp_deltas.json fold: r1 → r2 → r3 → r4).
  *  Each era now has its OWN state, so the three rooms age era-to-era. */
 const STATE_FOR_ERA: Record<EraKey, number> = { e1: 0, e2: 1, e3: 2, e4: 3 };
-/** the witness record plane's z on the spine (E1 vs open). At E4 it leaves the
- *  spine entirely and migrates beside Room 3 — see migrateTerminal(). Session
- *  27 (R28-0c, item 12): these used to be 3.685/3.865 — BOTH already deeper
- *  than the physical opening-board cork frame's own near face (measured live
- *  AABB: ~3.649), so the flat plane fell fully BEHIND that fixed 3D prop the
- *  instant any era transition ran, reading as a bare cork board with random
- *  floating sticky notes and nothing behind them (the frame's own baked
- *  decoration, unmasked). Pulled both values in front of that face with a
- *  safety margin so the record plane is never occluded by the frame prop. */
-const PLANE_Z: [number, number] = [3.60, 3.62];
+/** HISTORICAL WRONG MECHANISM: the record plane used to "ride z" on every era
+ *  transition (first 3.685/3.865, later 3.60/3.62). That duplicated the
+ *  canonical spine placement in cluster.json and twice allowed an era shift
+ *  to put the live record behind a mount. S84 removes that second authority:
+ *  migrateTerminal(false) restores the one authored spine pose; only E4's
+ *  explicit migration is allowed to move the surface. */
 /** E4: the record shares Room 3's wall beside Maya's desk (east). The person
  *  and the record finally share a wall — the TURN's promise, unified. */
 const TERMINAL_E4 = { pos: [5.66, 1.5, 1.75] as [number, number, number], yaw: 270 };
@@ -493,17 +489,8 @@ export function buildClusterShell(
     else lampLight.setLocalPosition(lampHome.x, lampHome.y, lampHome.z);
   }
 
-  // the witness record plane rides the spine (app owns the entity; we steer z).
-  // At E4 it MIGRATES off the spine to Room 3's wall beside Maya's desk — the
-  // person and the record share a wall (the TURN's promise, unified).
-  let planeLerp: { from: number; to: number; t: number; dur: number } | null = null;
-  function setPlaneZ(z: number): void {
-    const e = app.root.findByName('witness-screen');
-    if (e instanceof pc.Entity) {
-      const p = e.getLocalPosition();
-      e.setLocalPosition(p.x, p.y, z);
-    }
-  }
+  // The witness record has one spine pose. At E4 it MIGRATES off the spine to
+  // Room 3's wall beside Maya's desk — the person and record share a wall.
   /**
    * ⚑ SESSION 61 — THE RECORD LEAVES THE WALL AT E3 (Sérgio: *"the witness
    * panel is still visible in Room 2"*). The record plane hangs on the SPINE
@@ -716,7 +703,6 @@ export function buildClusterShell(
           // snap — an un-eased jump straight to the 'hold' rig hit the CRT's own
           // screenGlow light (E2's 0.38 → hold's 0.1) in a single frame, right as
           // the update notice appeared, reading as a lighting glitch on the monitor.
-          planeLerp = { from: PLANE_Z[0], to: PLANE_Z[1], t: -R, dur: cascade };
           events.push(
             { t: R, fn: () => setLight('roomFill', 0.55) },      // ballast: clunk
             { t: R + 0.18, fn: () => setLight('roomFill', 0.05) },
@@ -734,8 +720,6 @@ export function buildClusterShell(
           // daylight is the single strongest time cue the piece has), so it
           // crossfades inside the leg rather than at the seam — you watch the
           // light change from above instead of arriving to find it changed.
-          if (toEra !== 'e4') setPlaneZ(PLANE_Z[toIdx >= 1 ? 1 : 0]);
-          planeLerp = null;
           events.push(
             { t: R + rigAt, fn: () => applyRig(toEra, true) },
             { t: R + cascade, fn: () => applyLayout() }
@@ -759,12 +743,6 @@ export function buildClusterShell(
       }
       applyRig(toEra, animate);
       state = toIdx >= 1 ? 'open' : 'sealed';
-      // S67: NOT at E4 — migrateTerminal() has just put the record on Room 3's
-      // wall at z 1.75, and setPlaneZ would drag it straight back to the spine's
-      // z 3.62, i.e. outside Room 3 entirely, behind its east wall. Pre-existing
-      // since the E4 migration landed; caught while generalising this path.
-      if (toEra !== 'e4') setPlaneZ(PLANE_Z[toIdx >= 1 ? 1 : 0]);
-      planeLerp = null;
       const table = eraTable();
       niche.setFacet((table?.default ?? 'none') as FacetState);
       applyLayout(); // X: re-assert the open back arm after the fold
@@ -778,15 +756,13 @@ export function buildClusterShell(
     settleNow(): void {
       timeline = [];
       timelineT = 0;
-      planeLerp = null;
       clearSettled();
       morph.goToState(STATE_FOR_ERA[era], false); // snap, deterministic
       applyRig(era, false);
       state = STATE_FOR_ERA[era] >= 1 ? 'open' : 'sealed';
-      // S67: see morphToEra's note — at E4 the record lives on Room 3's wall
-      // and the spine z would put it outside the room.
-      if (era !== 'e4') setPlaneZ(PLANE_Z[STATE_FOR_ERA[era] >= 1 ? 1 : 0]);
-      else migrateTerminal(true);
+      // morph.goToState does not own this app-level surface. Reassert its one
+      // legal pose after a skipped relocation or a debug settle.
+      migrateTerminal(era === 'e4');
       setTerminalVisible(era !== 'e3');
       niche.setFacet((eraTable()?.default ?? 'none') as FacetState);
       applyLayout();
@@ -806,13 +782,6 @@ export function buildClusterShell(
         pendingSettledRebatch = false;
         applyLayout();
         rebuildSettled();
-      }
-      if (planeLerp) {
-        planeLerp.t += dt;
-        const k = Math.max(0, Math.min(1, planeLerp.t / planeLerp.dur));
-        const s = k * k * (3 - 2 * k);
-        setPlaneZ(planeLerp.from + (planeLerp.to - planeLerp.from) * s);
-        if (k >= 1) planeLerp = null;
       }
       if (rigT < 1) {
         rigT = Math.min(1, rigT + dt / rigFadeSeconds);

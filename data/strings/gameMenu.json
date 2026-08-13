@@ -10,6 +10,8 @@
   "leave": "Leave",
   "back": "Back",
   "recentre": "Recentre the view",
+  "fullscreenEnter": "Enter fullscreen",
+  "fullscreenExit": "Exit fullscreen",
   "unvoicedNameOff": "The old name on the record: spoken and shown",
   "unvoicedNameOn": "The old name on the record: shown, never spoken",
   "unvoicedNameNote": "Later on, a system says a name the person it is speaking to does not use. With this on you still read what the system did — you just do not hear the name.",
@@ -25,6 +27,7 @@
     "Click a marker to move.",
     "Click to interact.",
     "Recentre the view puts forward back where the room's front is.",
+    "Fullscreen is available from this menu when the browser supports it.",
     "Esc — or this menu's corner button — pauses."
   ],
   "motionEnable": "Look with your device",

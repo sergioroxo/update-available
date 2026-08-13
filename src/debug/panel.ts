@@ -10,7 +10,7 @@ import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'S83 · iPad horizon diagnostic';
+const BUILD_TAG = 'S84 · iPad findings pass';
 
 interface MotionDiagnostic {
   state: string;
@@ -130,7 +130,7 @@ const OS_BEATS: BeatRow[] = [
   // the video offer → Watch → the New You Program. Verified end-to-end with
   // real clicks in Session 49; the label says so, so a reviewer never has to
   // infer it from the button order.
-  { label: 'S2R.0 · silence — ⏵ LINEAR ENTRY (play from here)', id: 'e2Silence' },
+  { label: 'S2R.0 · silence (play from here)', id: 'e2Silence' },
   // Session 60: the arrival is four beats now, not two — the machine boots at
   // its new version (with its jingle), Lamby introduces HIMSELF, then presents
   // the program he is the face of, then the check-in. Each has its own button
@@ -177,7 +177,7 @@ const OS_BEATS: BeatRow[] = [
   // L speaks, the chips appear, you answer, it goes on by itself. Every button
   // below lands on one unit with the record filled in as if the ones before it
   // had played; none of them is reachable in play, and none of them is needed.
-  { label: 'S4R.1 · L introduces itself — ⏵ LINEAR ENTRY (play from here)', id: 'e4L' },
+  { label: 'S4R.1 · L introduces itself (play from here)', id: 'e4L' },
   { label: 'S4R.2 · the room rewrites (L captions her things)', id: 'e4Captions' },
   { label: '⚑ the captions RUN OUT (wrong, wrong, an offer, then nothing)', id: 'e4Unplaced' },
   { label: '⚑⚑ THE DEADNAME · first instance (it lands as paperwork)', id: 'e4Deadname' },
@@ -195,7 +195,7 @@ const OS_BEATS: BeatRow[] = [
   // clicking, with nothing to press but the memories undo and the careful
   // pause. Every button under it lands on one beat with L already finished,
   // which is where L is whenever the offers are on screen in play.
-  { label: '⏵ LINEAR ENTRY — L\'s last chip hands over (play from here)', id: 'e4Offers' },
+  { label: 'L\'s last chip hands over (play from here)', id: 'e4Offers' },
   { label: '⚑⚑ THE MEMORIES · "two years ago today" (already enhanced)', id: 'e4Memory' },
   { label: '↳ ⚑ the SAME card, un-enhanced (A/B the two photographs)', id: 'e4MemoryAB' },
   { label: '↳ the second memory — already enhanced, whatever you did', id: 'e4Memory2' },
@@ -275,6 +275,13 @@ const OS_BEAT_EXCLUSIONS: string[] = [
   // (none — see the comment above OS_BEATS)
 ];
 
+type DebugButtonMark = '⏵ ENTRY' | 'JUMP' | 'ACTION';
+/** These are the few desktop states deliberately safe to start cold and then
+ * play forward. Every other debugJump is honestly a mid-thread JUMP. */
+const OS_ENTRY_IDS = new Set([
+  'off', 'update2', 'e2Silence', 'update3', 'update4', 'e4L', 'e4Offers'
+]);
+
 /** eras with the room + identity + year they now lead (Round 24 model) */
 const ERAS: Array<['e1' | 'e2' | 'e3' | 'e4', string]> = [
   ['e1', 'E1 1997 · Room 1 (gay teen)'],
@@ -325,7 +332,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     background: 'rgba(16,18,26,0.94)', color: '#cdd3df',
     font: '11px/1.4 monospace', padding: '8px', borderRadius: '6px',
     border: '1px solid #3a4154', maxHeight: '94vh', overflowY: 'auto',
-    width: '188px', userSelect: 'none', boxShadow: '0 2px 12px #0008'
+    width: '238px', userSelect: 'none', boxShadow: '0 2px 12px #0008'
   } as CSSStyleDeclaration);
 
   const pill = document.createElement('button');
@@ -364,6 +371,11 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   build.textContent = 'build: ' + BUILD_TAG;
   build.style.cssText = 'color:#ffd48f;font-size:10px;margin-bottom:4px';
   panel.appendChild(build);
+
+  const key = document.createElement('div');
+  key.textContent = '⏵ ENTRY safe cold · JUMP may need prior state · ACTION only while its beat is live';
+  key.style.cssText = 'color:#cdd3df;font-size:9px;line-height:1.35;margin:0 0 6px;padding:4px;border:1px solid #39405270';
+  panel.appendChild(key);
 
   // live "you are here": era + room, polled from the app (?debug=1)
   const now = document.createElement('div');
@@ -439,9 +451,19 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     }
   }, 250);
 
-  const mkBtn = (parent: HTMLElement, label: string, fn: () => void): HTMLButtonElement => {
+  const availabilityPainters: Array<() => void> = [];
+  const mkBtn = (parent: HTMLElement, label: string, fn: () => void,
+    mark: DebugButtonMark = 'ACTION', armed?: () => boolean): HTMLButtonElement => {
     const b = document.createElement('button');
-    b.textContent = label;
+    b.dataset.mark = mark;
+    b.dataset.baseLabel = label;
+    const paint = (): void => {
+      const unavailable = armed && !armed();
+      b.textContent = `${b.dataset.mark} · ${b.dataset.baseLabel}${unavailable ? ' — not armed yet' : ''}`;
+      b.style.opacity = unavailable ? '0.66' : '1';
+    };
+    paint();
+    if (armed) availabilityPainters.push(paint);
     Object.assign(b.style, {
       display: 'block', width: '100%', textAlign: 'left', margin: '2px 0',
       background: '#222838', color: '#cdd3df', border: '1px solid #39405270',
@@ -449,7 +471,10 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     } as CSSStyleDeclaration);
     b.addEventListener('mouseenter', () => { b.style.background = '#313a52'; });
     b.addEventListener('mouseleave', () => { b.style.background = '#222838'; });
-    b.addEventListener('click', () => fn());
+    b.addEventListener('click', () => {
+      if (armed && !armed()) { paint(); return; }
+      fn();
+    });
     parent.appendChild(b);
     return b;
   };
@@ -529,13 +554,13 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   const navigate = section('NAVIGATE', 'time · room · witness', true);
   if (opts.onEra || opts.onReveal || opts.onClose) {
     heading(navigate, 'TIME — the rooms age');
-    if (opts.onReveal) mkBtn(navigate, 'O7 · first-filing reveal', opts.onReveal);
-    if (opts.onEra) for (const [era, label] of ERAS) mkBtn(navigate, label, () => opts.onEra?.(era));
-    if (opts.onClose) mkBtn(navigate, 'Close · point cloud', opts.onClose);
+    if (opts.onReveal) mkBtn(navigate, 'O7 · first-filing reveal', opts.onReveal, 'JUMP');
+    if (opts.onEra) for (const [era, label] of ERAS) mkBtn(navigate, label, () => opts.onEra?.(era), 'JUMP');
+    if (opts.onClose) mkBtn(navigate, 'Close · point cloud', opts.onClose, 'JUMP');
   }
   if (opts.onCamProbe) {
     heading(navigate, 'PLACE — desk seats');
-    for (const [label, yaw] of ROOMS) mkBtn(navigate, label, () => opts.onCamProbe?.(yaw, 0));
+    for (const [label, yaw] of ROOMS) mkBtn(navigate, label, () => opts.onCamProbe?.(yaw, 0), 'JUMP');
     // ⚑ Session 66 — the two DEVICE seats. They are real marker moves, not
     // camera probes, because the whole point of them now is the side effect:
     // taking one lifts that screen off the furniture into the hand (THE HELD
@@ -550,7 +575,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     ] as const) {
       mkBtn(navigate, label, () => {
         (window as { __requestMove?: (id: string) => void }).__requestMove?.(node);
-      });
+      }, 'JUMP');
     }
   }
   // ⚑ THE BUILDING (S67) — the four beats of the relocation grammar, each
@@ -569,7 +594,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
         ['2 · E2→E3 — the walls come off (29.5s)', 'e2', 'e3'],
         ['3 · E3→E4 — routine now (42.5s)', 'e3', 'e4']
       ] as const) {
-        mkBtn(building, label, () => opts.onRelocate?.(from, to));
+        mkBtn(building, label, () => opts.onRelocate?.(from, to), '⏵ ENTRY');
       }
     }
   }
@@ -599,7 +624,8 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
       let simOn = false;
       const b = mkBtn(look, '▶ simulate a device turn', () => {
         simOn = opts.onMotionSim?.(!simOn) ?? false;
-        b.textContent = simOn ? '■ stop the device turn' : '▶ simulate a device turn';
+        b.dataset.baseLabel = simOn ? '■ stop the device turn' : '▶ simulate a device turn';
+        b.textContent = `${b.dataset.mark} · ${b.dataset.baseLabel}`;
       });
     }
     if (opts.onRecentre) mkBtn(look, 'recentre the view (menu row)', opts.onRecentre);
@@ -627,7 +653,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
       const short = { offered: 'offer', visited: 'visit', declined: 'decline' } as const;
       for (const outcome of ['offered', 'visited', 'declined'] as const) {
         const b = document.createElement('button');
-        b.textContent = short[outcome];
+        b.textContent = `ACTION · ${short[outcome]}`;
         Object.assign(b.style, {
           flex: '1', background: '#222838', color: '#cdd3df',
           border: '1px solid #39405270', font: '9px monospace',
@@ -651,7 +677,8 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
       continue;
     }
     if (excluded.has(row.id)) continue; // documented exclusion wins if ever double-listed
-    if (beats) mkBtn(beats, row.label, () => os.debugJump(row.id));
+    if (beats) mkBtn(beats, row.label, () => os.debugJump(row.id),
+      OS_ENTRY_IDS.has(row.id) ? '⏵ ENTRY' : 'JUMP');
   }
 
   // ── E3 DEVICE BEATS: Room 2's own screens (see E3_DEVICE_BEATS above) ──
@@ -660,12 +687,19 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   dnote.style.cssText = 'color:#7f8aa3;font-size:9px;line-height:1.4;margin:0 0 3px';
   dnote.textContent = 'needs E3 + Room 2 (era button above, then the laptop/phone seats).';
   devices.appendChild(dnote);
+  const deviceArmed = (): boolean => {
+    const here = (window as { __reinterpNow?: string }).__reinterpNow;
+    return here?.startsWith('E3') === true &&
+      !!(window as { __graceQueue?: () => unknown }).__graceQueue?.();
+  };
   for (const [label, beat] of E3_DEVICE_BEATS) {
     mkBtn(devices, label, () => {
       const probe = (window as { __graceQueue?: () => { debugBeat(b: string): void } | null }).__graceQueue;
       probe?.()?.debugBeat(beat);
-    });
+    }, beat === 'apply' || beat === 'skip' || beat === 'light' || beat === 'lightOff'
+      ? 'ACTION' : 'JUMP', deviceArmed);
   }
+  window.setInterval(() => availabilityPainters.forEach(paint => paint()), 250);
 
   // ── LINKS: every review URL as a clickable link (Sérgio's ask) ──
   const links = section('REVIEW LINKS', 'open a known state in a fresh URL');

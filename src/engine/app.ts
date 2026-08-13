@@ -66,9 +66,9 @@ const WAKE_DARK_SECONDS = 1.2;
 const WAKE_RAMP_SECONDS = 1.8;
 // ── THE OPENING DESCENT (S48, rebuilt in S53 from Sérgio's second playthrough)
 // Entry begins INSIDE the room, up near the door corner in the dark, and drifts
-// in along ONE curve until it is sitting at the desk. It ADDS to the wake —
-// arrive → the light comes up → the machine boots — it does not replace it, and
-// it asks nothing of the player.
+// in along ONE curve until it is sitting at the desk. HISTORICAL TIMING:
+// "arrive → the light comes up → the machine boots." S84 keeps the same wake
+// and boot hand-off but centres the light swell in flight: light → arrive → boot.
 //
 // S53 (his words): "the zoom in to place should be more in a curve, it can start
 // a bit down in the room, not centered with the chair, that way we 'enter' the
@@ -100,7 +100,9 @@ const WAKE_RAMP_SECONDS = 1.8;
 // Smootherstep throughout: zero velocity AND zero acceleration at both ends, no
 // start jolt, no mid-move speed change, no arrival bump. Yaw takes the shortest
 // signed path, so it cannot wind the long way round. No roll, ever, and no
-// field-of-view games. Any input (click, drag, key) lands you in the seat at once.
+// field-of-view games. HISTORICAL WRONG CLAIM: "Any input (click, drag, key)
+// lands you in the seat at once." S84 routes pointers through S80's tap test:
+// a deliberate tap or key skips; a travelling press is a look and keeps flying.
 // ⚑ VR IS STILL THE RISK CASE: in a headset this remains the one piece of
 // artificial locomotion in a work whose entire bodily law is "you never walk".
 // It MUST be judged in the A11 in-headset pass; `?descent=0` turns it off for
@@ -132,6 +134,10 @@ const DESCENT_VIA = { x: 1.03, y: 2.45, z: 1.03 };
  *  DESCENT_FROM/VIA or the seat would erase. Sérgio took 12.0 for real margin.
  *  Re-measure with `node tools/shots.mjs comfort` after touching any of those. */
 const DESCENT_SECONDS = 12.0;
+/** Centre the existing 1.8 s light swell on the 12 s entrance's midpoint.
+ *  Negative wake time is only a scheduled hold: no camera timing changes. */
+const WAKE_DURING_DESCENT_DELAY =
+  DESCENT_SECONDS / 2 - (WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS / 2);
 // ── ⚑ THE RELOCATION (S61; every era change from S67) — the piece lifts you ──
 // Sérgio, after playing it: *"the transition needs explaining… the fly over
 // needs to be slower and let you see the room being built so you understand
@@ -1364,11 +1370,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return k * k * (3 - 2 * k);
   }
 
-  /** land in the seat and hand over to the wake — called both when the arc
-   *  finishes on its own and as the SKIP: any input at all calls this, so the
-   *  descent can never trap or nauseate anyone. Snapping to the exact seat pose
-   *  is a no-op at the natural end (the arc resolves there) and the whole point
-   *  of the skip. */
+  /** Land in the seat. The lights already own their independent clock during
+   *  the flight; an early deliberate skip continues the same ramp from at
+   *  least its old post-arrival start, while a natural landing boots only after
+   *  both the light and camera have finished. */
   function endDescent(): void {
     if (!descentActive) return;
     descentActive = false;
@@ -1378,8 +1383,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camYaw = 0;
     cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
-    wakeActive = true;   // …and only now does the room wake (decision doc §3)
-    wakeT = 0;
+    wakeActive = true;
+    wakeT = Math.max(0, wakeT);
+    if (wakeT >= WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS) finishWake();
   }
 
   /** the end of the wake: the room is lit and the machine boots ITSELF —
@@ -2176,7 +2182,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const TAP_SLOP_PX = 10;
   const TAP_MS = 1200;
   /** the live press, or null. `moved` is accumulated path length in CSS px. */
-  let press: { id: number; t: number; moved: number } | null = null;
+  let press: { id: number; t: number; moved: number; opening: boolean } | null = null;
   /** every pointer currently down, for the two-finger pinch below */
   const pointers = new Map<number, { x: number; y: number }>();
 
@@ -2327,15 +2333,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       pinch = pointerSpread();
       return;
     }
-    // S48: the descent is SKIPPABLE, always and by anything. The first press
-    // lands you in the seat and does nothing else — it is a way out of the
-    // move, not a click on the room underneath it. (It stays on PRESS, not
-    // release: a scripted move must yield to the first touch, not to the lift.)
-    if (descentActive) { endDescent(); return; }
+    // S84: the entrance stays skippable, but a tablet press is not yet a tap.
+    // Record it through S80's same 10 px / 1.2 s release test: travelling is a
+    // LOOK and must not destroy the opening. This branch also avoids
+    // nudgeCamera(), which would cancel the conducted entrance arc itself.
+    if (descentActive) {
+      press = { id: e.pointerId, t: performance.now(), moved: 0, opening: true };
+      drag = { x: e.clientX, y: e.clientY };
+      try { canvasEl.setPointerCapture(e.pointerId); } catch { /* synthetic pointers */ }
+      return;
+    }
     // S61: and so is the relocation, for the same reason and by the same
     // gesture — it is the longest scripted move in the piece.
     if (relocLeg) { endRelocation(); return; }
-    press = { id: e.pointerId, t: performance.now(), moved: 0 };
+    press = { id: e.pointerId, t: performance.now(), moved: 0, opening: false };
     drag = { x: e.clientX, y: e.clientY };
     tween = null; // grabbing the view cancels the assist
     nudgeCamera(); // …and a non-conducted O2/reset move
@@ -2386,6 +2397,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!p || p.id !== e.pointerId) return;
     if (p.moved > TAP_SLOP_PX) return;                 // it travelled: a look
     if (performance.now() - p.t > TAP_MS) return;      // it lingered: not a tap
+    if (p.opening) {
+      if (descentActive) endDescent();
+      return; // never let an opening press fall through onto the landed room
+    }
     resolveTap(e);
   });
   canvasEl.addEventListener('pointercancel', (e) => {
@@ -2517,14 +2532,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
     // ── cluster / ceiling / Close + the O7 choreography (reinterp only) ──
     if (options.reinterp) {
-      // THE WAKE (decision doc §3): the light comes up on its own, then the
-      // machine boots on its own. The player may drag-to-look throughout —
-      // the wake owns the lights, never the camera, so entering a room and
-      // looking around it are the same motion.
+      // THE WAKE (S84): its existing dark hold + ramp now runs independently
+      // during the entrance so the room becomes visible in mid-flight. It may
+      // reach full light before landing, but the machine still waits for the
+      // camera: light timing changed; the 12 s path and boot hand-off did not.
       if (wakeActive) {
         wakeT += dt;
         applyRoomLight(wakeLightK(wakeT));
-        if (wakeT >= WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS) finishWake();
+        if (!descentActive && wakeT >= WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS) finishWake();
       }
       if (revealReturn > 0) {
         revealReturn -= dt;
@@ -2847,8 +2862,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else {
       // fresh load (past the interim log-in panel): the room is already there,
-      // dark, and you come DOWN into it (S48) — then it WAKES on its own
-      // (decision doc §3). No board-look gate, no power button, no teaching
+      // dark, and you come DOWN into it (S48) while it WAKES on its own
+      // (S84, adopting Sérgio's device-pass call). No board-look gate, no power button, no teaching
       // window; nothing to press at any point.
       applyRoomLight(0);
       camYaw = 0;
@@ -2860,6 +2875,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         camPitch = DESCENT_FROM.pitch;
         camYaw = DESCENT_FROM.yaw;
         descentActive = true;
+        wakeActive = true;
+        wakeT = -WAKE_DURING_DESCENT_DELAY;
         startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 },
           DESCENT_SECONDS, true, DESCENT_VIA);
       } else {

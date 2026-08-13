@@ -4605,3 +4605,31 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
 
   **BLOCKED: none.** Waiting on Sérgio: the three doorplate lines (voice pass), and one judgement
   call — whether E3→E4's 42.5 s reads as routine or as boring. **A11 remains unrun.**
+
+- 2026-08-13 — **S84 tablet pass (Codex).** Removed the reintroduced era-shift `setPlaneZ`/lerp so
+  the record has one canonical spine pose plus E4's explicit migration. The desktop browser did
+  **not** reproduce the photographed occlusion: a cold E2 jump with no filing is intentionally
+  black, while a kit filing followed by the real 21 s E1→E2 transition renders the intake record.
+  This is reported as mechanism removed, hardware symptom unconfirmed. Measured the duck against
+  the real bookcase mesh: old base y1.560 was 5.5 cm inside the y1.558–1.615 board and its z footprint
+  overhung 4 cm; corrected to y1.655/z0.50 (r3 z3.05). Teddy is already exact at base/shelf y0.703.
+  Both sit 84.2° right of Room 1 forward. E2 tapes are clean: A/B, slot tapes and boombox are absent
+  by design; mixtape base/shelf y0.703, full footprint inside. Room audit: r1 12, r2 9, r3 21, r4
+  20 = **62**, duck absent; only the two intentional drapes remain FLOATING.
+
+  Entrance skip now shares S80's 10 px / 1.2 s release test (100 px browser drag kept flying;
+  stationary tap landed). The 12.0 s path is unchanged; the existing light ramp is centred on its
+  midpoint and boot still waits for landing. Game menu fullscreen hides when unsupported; manifest,
+  iOS standalone tags and 180/192/512 icons add Add to Home Screen. Debug map controls are marked
+  `⏵ ENTRY`/`JUMP`/`ACTION`, with E3 device controls visibly `not armed yet` outside E3; C6 63/63.
+  S83 orientation was verified by reasoning and left unchanged; no other viewport-shape assumption
+  was found.
+
+  **⚑ UNVERIFIED ON HARDWARE. No iPad/iPhone/Quest was used. Sérgio must photograph:** E2's record
+  after the ordinary update; duck+teddy after an ~84° right turn; any allegedly floating tape with
+  E2 chip; mid-descent lighting after a drag; the fullscreen menu and Home Screen launch; the debug
+  key plus a `not armed yet` control; and the complete gyro diagnostic in portrait and both
+  landscapes, especially q₂ SOURCE/value and camera roll. Open
+  `https://sergioroxo.github.io/update-available/?reinterp=1&debug=1`; correct orientation means the
+  source/value changes and roll settles near 0°, broken means SOURCE is unknown/stale or roll stays
+  near ±90°. `npx tsc --noEmit`, `npm test`, `npm run build` green; 1024×768 browser checks green.

@@ -55,6 +55,8 @@ const GLYPH_Z = 999;
 export function mountGameMenu(): GameMenu {
   let view: View = 'main';
   let destroyed = false;
+  const canFullscreen = (): boolean =>
+    document.fullscreenEnabled && typeof document.documentElement.requestFullscreen === 'function';
 
   // ── the persistent pause glyph (VR/no-keyboard parity, per CLAUDE.md's
   // "input" amendment: click/tap + the movement press + Esc/pause — this is
@@ -152,6 +154,19 @@ export function mountGameMenu(): GameMenu {
       if (gameMenuBus.recentreView) {
         row(copy.recentre, () => { gameMenuBus.recentreView?.(); gameMenuBus.close(); });
       }
+      // S84 — frame-level display control. iPad Safari exposes the standard
+      // API; iPhone Safari may not. Absence is a fact, so the row is omitted
+      // rather than presented as a dead promise. Add to Home Screen remains
+      // the more complete iOS exhibition path via index.html + the manifest.
+      if (canFullscreen()) {
+        row(document.fullscreenElement ? copy.fullscreenExit : copy.fullscreenEnter, () => {
+          const request = document.fullscreenElement
+            ? document.exitFullscreen()
+            : document.documentElement.requestFullscreen();
+          void request.catch(() => { /* browser kept its current display mode */ });
+          gameMenuBus.close();
+        });
+      }
       // ⚑ S77 — THE UNVOICED OPT-OUT, and it lives HERE for the reason the
       // whole beat depends on: an opt-out the apparatus offers you is not an
       // opt-out. Accessibility belongs to the frame (Sérgio, 2026-08-06: "if it
@@ -243,6 +258,10 @@ export function mountGameMenu(): GameMenu {
   }
 
   const unsubscribe = gameMenuBus.onChange(setOpenVisual);
+  const onFullscreenChange = (): void => {
+    if (gameMenuBus.isOpen && view === 'main') render();
+  };
+  document.addEventListener('fullscreenchange', onFullscreenChange);
 
   // ── Esc, from EVERY state (CLAUDE.md REINTERP AMENDMENTS §3/§4) ──
   // Registered on `window` with `capture: true`: capture-phase listeners on
@@ -269,6 +288,7 @@ export function mountGameMenu(): GameMenu {
       if (destroyed) return;
       destroyed = true;
       unsubscribe();
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
       window.removeEventListener('keydown', onKeydown, { capture: true });
       glyph.remove();
       root.remove();

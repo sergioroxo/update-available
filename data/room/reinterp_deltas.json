@@ -18,6 +18,14 @@
           0.5
         ]
       },
+      "rainbowDuck": {
+        "_doc": "Session 84: measured against the rendered bookcaseOpen.glb, not the retired box shelf. era1.json put the duck base at y1.560, which was the OLD shelfBoard3 top; the real model's top board spans y1.558–1.615, so that base sat 5.5 cm inside the board. Its z footprint was 0.33–0.43 against the model's 0.37 front edge, overhanging by 4 cm; that partial footprint is also why room-audit could not classify the bookcase AABB as support and reported the floor instead. y1.655 puts the 0.04 m half-height exactly on y1.615; z0.50 keeps the full 0.10 m depth inside the shelf with 8 cm of front margin. From the Room-1 seat it shares teddyBox's bearing: 84.2° right of the authored forward direction, one deliberate right turn.",
+        "pos": [
+          1.98,
+          1.655,
+          0.5
+        ]
+      },
       "mixtape": {
         "_doc": "Session 49 (finding 2): moved CLEAR of the cassette player and onto its shelf surface (full story on tapeA's own _doc below). Session 54: gave it `model: cassetteTape` too — a FIRST for a `props` override (every other model prop up to now was introduced via `add`, since Session 32's boombox override silently dropped `model`). Fixed properly this time, at the root: clusterMorph.ts's `foldTargets` now also copies `o.model` out of a `props` override, and `ClusterMorph.snapTo` re-spawns an EXISTING baseline id as the real mesh the first time its fold asks for one (mixtape was spawned as a box by era1room.ts's initial pass, long before this fold ever runs, so `spawnTarget`'s normal 'first spawn places itself' path never sees it). Kept as an override rather than a remove+add (the tapeA/tapeB pattern) on purpose: mixtape is both a belongings.json-eligible KEEPSAKE (its id must stay literally 'mixtape' for the ledger/kept-glow/click geometry) and a prop that RELOCATES at r3 (see that state's own props.mixtape) — a remove+add-new-id there would have raced the belongings 'kept freeze' (which re-asserts the r1 target under the ORIGINAL id) into showing two tapes at once, and tools/check-rooms.mjs's double-add check rejects remove+add of the SAME id within one state outright. `applyTarget`'s model branch now also re-applies position on every fold (previously model props were position-frozen after spawn), which is what lets r3's override actually move it. Session 55: `model` swapped `cassetteTape`→`cassetteTapeShelf` (data/room/models.json) — standing upright instead of lying flat, so it reads as a thing to pick up rather than a chip of debris. `pos` ALSO moved this round (x1.74→1.86, z1.09→1.07): the boombox's own Session 55 re-rotation changed its footprint from a thin vertical tower (x~1.78-1.94, barely into the shelf's z-run) to a wide landscape box (same x-depth, but z0.42-0.82) — at the tapes' old x1.74 they sat shallower than (visually 'in front of') the now-much-wider boombox instead of beside it; matching x1.86 puts every shelf object at the same depth, and mixtape's z nudges from 1.09 to 1.07 to keep clear of tapeB's new z0.97 slot (see tapeA/tapeB's own _doc for the full re-layout). Session 56: y0.766→0.709 — see boomboxModel's _doc, this whole shelf's `y0.76` was measured against the wrong surface; the real one is 0.057 lower. `yaw: 8` added too (same as tapeA/tapeB — a small turn toward the seat, see tapeA's _doc), which needed `clusterMorph.ts`'s `foldTargets` to also copy `yaw` out of a `props` override — the same silent-drop gap `model` had until Session 55, this time for a different field.",
         "pos": [
@@ -436,10 +444,11 @@
         ]
       },
       "rainbowDuck": {
+        "_doc": "Session 84: r3 must carry the corrected r1 shelf relationship, not the retired era1.json placement. Same x/y as r1 and the moved bookcase's exact +2.55 z.",
         "pos": [
           1.98,
-          1.6,
-          2.93
+          1.655,
+          3.05
         ]
       }
     },

@@ -1310,8 +1310,9 @@ readout looks like versus a broken one.
 ---
 
 # S84 — THE TABLET PASS: every device-facing defect in one session · **Codex GPT 5.6, high effort**
-**⚑ PROMPT STATUS: QUEUED — dispatch to Codex. ⚑ RUN BEFORE S79 AND NEVER ALONGSIDE IT** — their
-fences overlap on `src/debug/panel.ts`, `src/room/cluster.ts` and `src/state/ledger.ts`.
+**⚑ PROMPT STATUS: SHIPPED 2026-08-13 — automated checks and iPad-sized browser reasoning green;
+UNVERIFIED ON HARDWARE. ⚑ RUN BEFORE S79 AND NEVER ALONGSIDE IT** — their fences overlap on
+`src/debug/panel.ts`, `src/room/cluster.ts` and `src/state/ledger.ts`.
 *Sérgio, 2026-08-12, after two real iPad passes: **"tablet will be the most used method (for the
 exhibition at least)."** So these are not polish. They are the primary target. Findings and diagnoses:
 `docs/REINTERP_DEVICE_FINDINGS_2026-08-12.md` §§1–7.*

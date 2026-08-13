@@ -1,4 +1,5 @@
 STATUS: live
+S84 STATUS: SHIPPED 2026-08-13; every device-facing result remains UNVERIFIED ON HARDWARE
 
 # THE FIRST DEVICE SESSION — findings, and what still needs testing
 *Sérgio's first pass on a real iPad, 2026-08-12, over the deployed Pages build. ⚑ Written while S83
