@@ -758,6 +758,12 @@ The region line goes past you the first time. And the era ends handing something
 # S79 — TRANSCENDANCE · Opus, high effort · **here, not Codex**
 **⚑ PROMPT STATUS: QUEUED — UNBLOCKED 2026-08-12 because S78 shipped. Historical wrong claim:
 ~~BLOCKED — on S78.~~ Stage 3: the ball, and the only thing in the era that is not work.**
+**⚑ RUN AFTER S84, AND NEVER ALONGSIDE IT.** Their fences overlap on `src/debug/panel.ts`,
+`src/room/cluster.ts` and `src/state/ledger.ts`, and two sessions in this worktree share one git
+index. S84 is a Codex tablet pass; this one is here, not Codex — it is register and ethics work.
+⚑ **When you start, re-read `docs/REINTERP_DEVICE_FINDINGS_2026-08-12.md` §7 and 08 §§17–18** — S84
+will have changed the debug panel's labelling and possibly the witness panel, both of which this
+session touches.
 
 ⚑ SHARED PREAMBLE — every E4 session reads these, in this order:
   CLAUDE.md · docs/ETHICS_CONSTRAINTS.md ·
@@ -1299,4 +1305,127 @@ DONE WHEN: tsc + npm test + npm run build green; the diagnostic renders under ?d
 viewport; the session log states exactly what is unverified and what Sérgio should photograph.
 ⚑ AND WRITE THE ONE-LINE INSTRUCTION HE NEEDS: which URL to open on the iPad, and what a correct
 readout looks like versus a broken one.
+```
+
+---
+
+# S84 — THE TABLET PASS: every device-facing defect in one session · **Codex GPT 5.6, high effort**
+**⚑ PROMPT STATUS: QUEUED — dispatch to Codex. ⚑ RUN BEFORE S79 AND NEVER ALONGSIDE IT** — their
+fences overlap on `src/debug/panel.ts`, `src/room/cluster.ts` and `src/state/ledger.ts`.
+*Sérgio, 2026-08-12, after two real iPad passes: **"tablet will be the most used method (for the
+exhibition at least)."** So these are not polish. They are the primary target. Findings and diagnoses:
+`docs/REINTERP_DEVICE_FINDINGS_2026-08-12.md` §§1–7.*
+
+```
+Bug-fix session, reinterp worktree (/Users/sergiogalvaoroxo/update-available-reinterp, branch
+reinterp). Read CLAUDE.md (⚑ the THREE look-modes; `?flat=1` is a REVIEW TOOL, not a fallback),
+⚑ docs/REINTERP_DEVICE_FINDINGS_2026-08-12.md IN FULL — it carries the diagnosis for every item
+below and you should not re-derive them — then docs/reinterp/08_STATUS_REGISTER.md §§11–18,
+docs/REINTERP_MODE3_ASSESSMENT_2026-08-06.md, and the code: src/engine/app.ts, src/debug/panel.ts,
+src/desktop/orientingCard.ts, src/room/cluster.ts, src/room/era1room.ts, data/room/*.json,
+tools/room-audit.mjs, index.html.
+
+⚑ YOU CANNOT VERIFY ON A DEVICE, and every item here is device-facing. Your acceptance is `tsc`,
+`npm test`, `npm run build` plus reasoning you can show. **For each item, say what Sérgio must look
+at on the iPad to confirm it.** A fix he cannot check is worth less than a fix plus an instruction.
+
+──────────────────────────────────────────────────────────────
+1 · ⚑ THE BLACK BOARD IN E2 — and there is a precedent, so DIAGNOSE BEFORE YOU MOVE ANYTHING
+The large black rectangle on the wall is `witnessPanelFrame` — `[0, 1.5, 3.52]`, 1.8 × 1.4 × 0.1,
+`#1a1a24`, on `wallSouth` at z 3.72. What Sérgio photographed is **the frame with nothing drawn on
+it.**
+⚑ THIS EXACT FAILURE HAS HAPPENED BEFORE. Session 27: the record plane's z was 3.685/3.865, **both
+deeper than the frame's own near face (~3.649)**, so the plane fell BEHIND the frame the instant an
+era transition ran and the surface read as a bare board. It was corrected once. It is black again,
+at E2, after a transition.
+**FIND WHAT RE-BROKE IT before touching any z.** If a later session re-introduced a `setPlaneZ`-style
+override that runs on era shift, that is the bug — not the number. Report the mechanism, then fix it.
+
+2 · ⚑ THE DUCK — MEASURE, DO NOT NUDGE
+`node tools/room-audit.mjs` flags it in EVERY state, not only E3:
+  `FLOATING  rainbowDuck  1.560 m of air under it (base y 1.560, nearest support below y 0)`
+S71 fixed the r3 case; the original placement was never right.
+  rainbowDuck  pos [1.98, 1.60, 0.38]  size 0.09 × 0.08 × 0.10
+  shelfBoard3  pos [1.98, 1.54, 0.75]  size 0.28 × 0.04 × 0.85
+Taken as centres, the duck's base is 1.56 and the board's top is 1.56 — they should touch, yet the
+audit finds the FLOOR as nearest support. ⚑ Note the duck is at **z 0.38** while the board spans
+**z 0.325–1.175**: it sits on the front lip, 5 cm from falling off. **Work out whether the audit has
+a false negative on the support or the prop is genuinely misplaced, and say which.**
+⚑ THE REAL TEST IS NOT THE AUDIT NUMBER: Sérgio cannot SEE the duck on the device. Fixing the number
+without him then finding it has fixed nothing. Report where it should be visible from, in degrees off
+the Room-1 seat bearing.
+⚑ Do the same check for `teddyBox`, which shares its shelf and its history.
+
+3 · THE FLOATING TAPE IN E2 — ⚑ NOT REPRODUCED, so investigate rather than assume
+`room-audit` flags only `rainbowDuck`, `w_cardigan` and `e_hoodie`. **The last two are drapes** —
+a cardigan over a chair back has nothing beneath it by design; that is an accepted pattern, not a
+bug. **No tape is flagged in any state.** So either a tape's support is real and it only READS as
+floating from that angle, or the audit misses a class. Check every tape prop (`tapeA`, `tapeB`,
+`mixtape`, the shelf tapes) against its support in E2 specifically. ⚑ If they are all supported, SAY
+SO — a clean result is a finding, and it tells Sérgio to send a framing rather than a bug.
+
+4 · THE ENTRANCE — one regression and one design change
+4a. ⚑ TAPPING MUST NOT SKIP THE ENTRANCE. `app.ts`'s pointer handler opens with
+    `if (descentActive) { endDescent(); return; }` — firing on PRESS, ahead of S80's tap-versus-drag
+    threshold. On a mouse this was deliberate and good (S48: the descent is skippable by anything, as
+    a way OUT of a move). **On a tablet it is a trap: the first thing anyone does is touch the screen,
+    and touching it to LOOK AROUND destroys the opening.** Route the skip through the same
+    10 px / 1.2 s discrimination S80 already built — a press that travels is a look, a press that
+    stays is a tap. Keep it skippable; make it deliberate.
+4b. THE LIGHTS COME UP MID-FLIGHT (Sérgio's call, adopted). The room currently wakes on arrival; it
+    should wake DURING the descent, so the player watches the room become itself rather than finding
+    it already awake. ⚑ Do NOT change `DESCENT_SECONDS` (12.0, set deliberately — 08 §10) or any
+    camera path; this is the light rig's timing only.
+
+5 · FULLSCREEN, AND THE BETTER ANSWER BESIDE IT
+⚑ iPadOS Safari supports the Fullscreen API; **iPhone Safari historically does not** — so the button
+must HIDE ITSELF when unavailable rather than sit there dead. Put it in the game menu
+(`src/desktop/gameMenu.ts`), which is frame-voice and already carries Restart and Recentre.
+⚑ AND ADD THE WEB-APP MANIFEST + iOS meta tags, because on iOS "Add to Home Screen" gives MORE screen
+than fullscreen does — no tab bar, no address bar — and it survives reloads. Both are small. Say in
+your report which one you would recommend to an exhibition visitor.
+
+6 · THE DEBUG PANEL — a labelling job, not a rewrite
+Sérgio: *"too long, with no clear instructions of what to play around; some don't do anything."*
+⚑ THE SECOND HALF IS A REAL KNOWN CLASS (S49 finding 6): many buttons jump INTO the middle of a
+thread, and a beat whose prerequisites were never met **renders as nothing happening**. That is why
+one button already reads "⏵ LINEAR ENTRY (play from here)".
+**Give every button one of three marks, and put a one-line key at the top of the panel:**
+  ⏵ ENTRY  — safe to press cold; plays forward from here
+  JUMP     — lands mid-thread; may need state that is not set
+  ACTION   — does something only while its beat is already live
+⚑ Where you can cheaply tell that a beat is not armed, say so on the button ("not armed yet") rather
+than letting it look broken. **Do not remove buttons and do not rename ids** — C6 fails, and it is
+Sérgio's map of the piece.
+
+7 · ⚑ ORIENTATION — VERIFY, DO NOT REDO
+S83 fixed `screenAngle()` so it distinguishes "unknown" from a real 0, reconciles against gravity,
+and polls rotation every gyro frame. **IT IS UNVERIFIED ON HARDWARE, WHICH IS NOT THE SAME AS
+KNOWN-WRONG.** ⚑ DO NOT re-fix it. Read it, confirm the reasoning holds, and if you find an actual
+defect say so with the line number. Otherwise leave it alone and note that Sérgio's photograph of the
+`?debug=1` readout — specifically the SOURCE line — is what closes it.
+While you are there: check nothing ELSE in the render path assumes a viewport shape.
+
+──────────────────────────────────────────────────────────────
+LAWS: no runtime network calls · no storage — everything in the in-memory ledger · input stays
+click/tap + the movement press + Esc; the gyro is a LOOK and never selects · palette ratchet 33 ·
+C6 panel completeness (src/debug/panel.ts IS IN THE FENCE) · C8 flip this block to SHIPPED · Quest
+≤75k tris, ≤75 draw calls · ⚑ `npm run audit` exits 1 on the s2/s3/s4 send legs — DO NOT fix, do not
+raise, do not un-exclude; that is a separate decision and it is Sérgio's (08 §17).
+⚑ DO NOT change comfort timings, the movement law, narrative text, register calls or tone.
+
+FILE FENCE: src/engine/app.ts, src/debug/panel.ts, src/desktop/orientingCard.ts,
+src/desktop/gameMenu.ts, src/room/cluster.ts, src/room/era1room.ts, src/state/ledger.ts,
+data/room/*.json, data/strings/*.json, index.html, public/ (the manifest + icons),
+docs/REINTERP_DEVICE_FINDINGS_2026-08-12.md (status only),
+docs/reinterp/{BUILD_QUEUE_LIVE.md,01_SESSION_LOG.md,08_STATUS_REGISTER.md}, BUILD_LOG.md.
+Git: EXPLICIT PATHSPECS only — never `git add -A`. ⚑ COMMIT YOUR WORK; the last two sessions left it
+uncommitted and someone else had to verify and commit it for them.
+
+DONE WHEN: tsc + npm test + npm run build green; `node tools/room-audit.mjs` re-run and its numbers
+reported; the era still plays by ordinary clicking; ⚑ AND A SHORT LIST FOR SÉRGIO — one line per item
+saying exactly what to look at on the iPad to confirm it.
+
+⚑ REPORT FAITHFULLY. Anything you could not diagnose, say so plainly rather than shipping a guess as
+a fix. "I could not reproduce this" is a result.
 ```
