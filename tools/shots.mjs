@@ -1086,17 +1086,18 @@ function reportComfort(legs) {
   }
   if (legs.some((L) => /scripted send/.test(L.name) && L.sustainedMps > COMFORT_MPS)) {
     console.log('\n   ⚑ ON THE SEND LEGS, because it changes the urgency without excusing them:');
-    console.log('   no beat fires the send seam in this worktree yet (app.ts: "the trigger beats ride');
-    console.log('   the content-merge lane"), so these are LATENT — armed, unreachable in play today,');
-    console.log('   and shipped the moment a content session wires a beat to onSendResolve. The');
+    console.log('   HISTORICAL WRONG CLAIM: no beat fires this seam, so every leg is latent.');
+    console.log('   S82 static trace: s2 is ordinary-path reachable in E2; s3/s4 remain inaccessible');
+    console.log('   on Daniel\'s black E3 CRT. Their audit exclusions are retained by instruction. The');
     console.log('   dolly is seat→seat through one 2.4 s arc, and Room 2 → Room 3 is 8.8 m of it.');
   }
 }
 
 function reportDraw(peaks) {
   if (!peaks.length) { skipped.push('DRAW CALLS — nothing recorded'); return; }
-  // ⚑ the ratchet tracks REACHABLE legs; the latent send seam is reported in
-  // full below but cannot nag, because no beat fires it (see DRAW_CALL_LATENT).
+  // ⚑ S82: this historical exclusion groups all send measurements, but s2 is
+  // ordinary-path reachable in E2; s3/s4 remain inaccessible on the E3 CRT.
+  // Retained by explicit audit instruction; whoever owns sends must re-scope it.
   const reachable = peaks.filter((p) => !DRAW_CALL_LATENT.test(p.what));
   const peak = Math.max(...(reachable.length ? reachable : peaks).map((p) => p.peak));
   console.log(`\n━━ 2 · DRAW-CALL CEILING (Quest budget ≤${DRAW_CALL_BUDGET}; ratchet at ${DRAW_CALL_BASELINE}) ━━`);

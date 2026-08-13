@@ -59,7 +59,7 @@ const edges = nodes.reduce((sum, n) => sum + n.cited.length, 0);
 const netPath = join(ROOT, 'data/strings/close_network.json');
 const authored = existsSync(netPath) ? (JSON.parse(readFileSync(netPath, 'utf8')).labels ?? []) : [];
 
-const LABEL_CAP = 28; // src/room/pointCloud.ts: labels.slice(0, 28)
+const LABEL_CAP = 32; // src/room/pointCloud.ts: labels.slice(0, 32)
 const total = nodes.length + authored.length;
 
 console.log(`
