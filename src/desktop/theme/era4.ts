@@ -785,3 +785,39 @@ export function cyclorama(ctx: CanvasRenderingContext2D, W: number, H: number, k
     px(ctx, sx, Math.round((H - sh) / 2), sw, sh, i % 3 === 0 ? ERA4.glow : ERA4.rule);
   }
 }
+
+/**
+ * ⚑ THE BALL (S79) — and it is the smallest block in this file on purpose.
+ *
+ * TRANSCENDANCE has NO SCREEN (`REINTERP_E4_THE_DEVICE_2026-08-05.md`, Stage 0
+ * §"And TRANSCENDANCE has no screen at all"). Four eras have been surfaces — a
+ * CRT, a program, three device screens, a visor — and the last thing in the era
+ * is a ROOM: sound and light in geometry that already exists. So this block
+ * draws NOTHING. It holds two light colours the room borrows and one ink the
+ * frame's own subtitle borrows, and that is the entire visual budget of the
+ * scene, because the whole contrast is that **the apparatus can only ever show
+ * you a picture of a room, and this is a room.**
+ *
+ * COLOR LAW, same as every block above: both light colours are lifted verbatim
+ * from `data/room/era1.json` by way of `PLACE` — `sun` and `rugHi`. The warm
+ * light at the end of thirty years is the same warm light 1997 was lit with,
+ * which is not thrift, it is the argument.
+ *
+ * ⚑ `attention` IS THE INVERSE OF THE HOUSE LOOK. E3's correction 13 applies a
+ * grading preset — "one lamp for the whole room, so that no face is lit
+ * differently from another" (`Household` 1:5, `data/dialog/s3_queue.json`).
+ * This is one lamp that MOVES, lighting one person at a time, differently.
+ * Nothing in the piece ever remarks on that, and nothing ever should.
+ */
+export const BALL = {
+  /** the attention: the light that walks the building, one person at a time */
+  attention: PLACE.sun,
+  /** the room the attention is in — warm, low, and never sharp */
+  room: PLACE.rugHi,
+  /** ⚑ frame-voice subtitle ink for the ball's own sound. NOT a screen and not
+   *  the fiction's UI: plain DOM chrome in the idiom `src/engine/app.ts`'s tape
+   *  captions already established for audio that plays IN THE ROOM. It is the
+   *  era's warmest legible ink because a subtitle's one job is to be read. */
+  captionInk: ERA4.textHi,
+  captionField: 'rgba(10,10,14,0.78)'
+} as const;

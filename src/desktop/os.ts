@@ -2253,6 +2253,21 @@ export class DesktopOS {
       case 'e4Glitch': this.e4Offer('glitch'); break;
       case 'e4Cyclorama': this.e4Offer('cyclorama'); break;
       case 'e4Panels': this.e4Offer('panels'); break;
+      // ⚑ S79 — THE BALL. `e4Ball` is the LINEAR ENTRY: it puts the beat where
+      // `E4Offers.onBreak` puts it in play (the careful pause has just ended,
+      // L has stopped talking, and something is coming in from the other side
+      // of the building) and everything else runs forward on its own from
+      // there, with nothing to press until the categories are over.
+      // ⚑ The ROOM's light follows these; the visor does not, because the ball
+      // is not on the visor and never will be.
+      case 'e4Ball': this.e4BallJump('arrival'); break;
+      case 'e4NoCategory': this.e4BallJump('noCategory'); break;
+      case 'e4BallOpen': this.e4BallJump('ball'); break;
+      case 'e4BallCat1': this.e4BallJump('category', 0); break;
+      case 'e4BallCat2': this.e4BallJump('category', 1); break;
+      case 'e4BallCat3': this.e4BallJump('category', 2); break;
+      case 'e4BallCat4': this.e4BallJump('category', 3); break;
+      case 'e4BallAfter': this.e4BallJump('after'); break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
       case 'send-s1': this.setPhase('desktop'); this.offerSend('s1'); break;
       case 'send-s2': this.setPhase('desktop'); this.offerSend('s2'); break;
@@ -2275,6 +2290,20 @@ export class DesktopOS {
     this.debugJump('e4Place');
     this.e4?.voice.debugFinish();
     this.e4?.offers.debugJumpTo(stage);
+  }
+
+  /**
+   * ⚑ S79 review helper: the device on, L finished, and the offers parked at
+   * the BREAK — which is exactly where they are when the ball runs in play, and
+   * which matters for more than tidiness: the ball hands back by calling
+   * `resumeAfterBreak()`, so a review jump that skipped the hold would end the
+   * ball into nothing and the era's finale would never play. Never in play.
+   */
+  private e4BallJump(where: 'arrival' | 'noCategory' | 'ball' | 'category' | 'after', index = 0): void {
+    this.debugJump('e4Place');
+    this.e4?.voice.debugFinish();
+    this.e4?.offers.debugHoldForBreak();
+    this.e4?.ball.debugJumpTo(where, index);
   }
 
   // ── input ──────────────────────────────────────────────────────────────

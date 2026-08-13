@@ -4633,3 +4633,116 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   `https://sergioroxo.github.io/update-available/?reinterp=1&debug=1`; correct orientation means the
   source/value changes and roll settles near 0°, broken means SOURCE is unknown/stale or roll stays
   near ±90°. `npx tsc --noEmit`, `npm test`, `npm run build` green; 1024×768 browser checks green.
+
+- 2026-08-13 — **S79 TRANSCENDANCE: the ball, and the turn that works** (Opus, from
+  `BUILD_QUEUE_LIVE.md`'s S79 block). Era 4's last beat is built. It has no screen in it.
+
+  ### 1. WHAT IT IS
+  The careful pause ends, L stops talking, and the machine hears something from the other side of a
+  building whose walls came down in 2016. Its label field — the instrument that captioned her shoes,
+  her sketchbook and a hoodie she had re-sewn — works on it for thirty-four seconds and returns
+  **`NO CATEGORY FOUND`**. Then the picture ends, the device is off her face, and the ball is simply
+  around her: three minutes of light and sound in geometry that already exists, four categories
+  announced and taken and celebrated, and nothing to press. When the categories run out nothing
+  happens. The light stays. The player sits there for as long as they like.
+
+  ⚑ **The whole era is built on one contrast and this is its other half:** the apparatus can only
+  ever show you a picture of a room. This is a room.
+
+  ### 2. ⚑ THE TURN WORKS, AND IT COST NO ROOM CODE
+  S76's turn does not work because `src/room/era3Devices.ts` pins the visor plane to the camera every
+  frame **while the shell says `worn`** — and eases it back to its stand when it stops. So the whole
+  mechanism is a third stage on `E4Shell`: in `ball`, `worn` is false. Measured at the moment the
+  arrival ends: the plane goes from scale 0.28 in front of the camera to 0.088 at (5.36, 0.87, 0.30),
+  its authored rest pose on the headset stand. Not one line of the room's code changed.
+  **`S79_turn_e4_before.png` / `S79_turn_e4_ball.png` are the same 180° turn from Maya's seat, before
+  and during** — the near-dark room the E4 rig leaves you in, and then the building, lit, with the
+  attention at the far end of it.
+
+  ### 3. THE CATEGORIES ARE THE APPARATUS'S OWN WORDS
+  The provenance pass (`docs/research/BALLROOM_PROVENANCE_2026-08-06.md` §3) is explicit that realness
+  categories re-perform categories the world already imposes rather than escaping them, and that what
+  was seized back is **who declares, performs and judges**. So all four titles are quoted from this
+  piece's own machine, in order, 1997 → tonight:
+
+  | | title | where it is from |
+  |---|---|---|
+  | 1 | THE WAY YOU WALK, TALK AND SIT | E1's intake form, question 4, verbatim — asked of a 16-year-old |
+  | 2 | STEADY. STRUGGLING. GRATEFUL. TIRED. | E2's four check-in chips: the whole range of feeling Restorify allowed |
+  | 3 | REMOVE THE UNRESOLVED | E3's correction rule 2, under *Household* 4:3 |
+  | 4 | CONDITION: IN REPAIR | L's second wrong caption on the mended hoodie, tonight |
+
+  ⚑ **Nothing anywhere points at any of this**, and the fourth is the answer to the hoodie without
+  repeating its line: the machine's middle guess, worn on purpose, and the MC's last words on it are
+  *"Nothing on her is new, and nothing on her is broken."*
+  ⚑ **And one word is left to do its own work.** `walk` is ballroom's verb for taking a category, so
+  the MC never says it — he says *has it*, *is up*, *takes the floor*. It appears only where this
+  piece's apparatus already put it: E1 asked whether he corrected how he **walks**, and E2 asked *How
+  is your walk today?* every morning for years. The word arrives at the ball from inside the machine.
+  Same discipline as `Household` / house, and equally unglossed.
+
+  ### 4. `NO CATEGORY FOUND` — SEVEN STATES, AND NOBODY EXPLAINS IT
+  L does not speak once from the moment the sound arrives (deep pass §3.2: it has nothing to do, so it
+  stops — not silenced, unnecessary). Only its instrument keeps twitching: *live · not in your
+  library* → *forty-one present · no host listed* → an unrequested *sensitive content · hidden by
+  default* → *performance · unrated* → ⚑ **TERMS: all matched · none new** → ⚑ **SCORING: not
+  available to this account** → **NO CATEGORY FOUND**. It recognises every word and cannot occupy the
+  role. The hoodie got *no category — held for review*; this gets no review to be held for.
+  `S79_no_category_found.png`.
+
+  ### 5. HOW THIS WAS VERIFIED — real presses, and one bug they found
+  Driven at `?reinterp=1&debug=1&era=4`, frames stepped at a fixed 16.67 ms (the sandboxed pane
+  suspends rAF for a hidden document), and the pointer work done with real `pointerdown`/`pointerup`
+  pairs projected onto the visor plane from Maya's seat.
+  - ⚑ **THE BUG:** `era3Devices.handleLaptopPointer` calls `shell.wear()` **directly**, never through
+    `handleClick` — so the first version could be ended by a press on the headset in the middle of the
+    ball. Measured, not reasoned. The guard moved into `wear()` itself, the one door every route
+    passes through; the wearing moved to a private `putOn()`. Re-measured: a press mid-ball now
+    changes nothing at all, and the same press after the categories run out wears the device, ends the
+    ball, and hands the era to its finale (`glitch` → `cyclorama` → `panels` → handed off → the spine
+    arms the final restart). The ball's light goes down over the cluster's own seven seconds **while
+    the finale plays**, so the room is still going on behind the last thing the apparatus says.
+  - **The ledger:** `__ledger()` across the entire beat holds exactly `device: worn — one touch` and
+    `session: handed over` — both from beats either side of it. The ball files nothing, the turn
+    inside it files nothing, and the second wearing is deliberately not filed.
+  - **The light hands back clean:** ambient returns to the e4 rig's exact 0.050 afterwards.
+  - **Draw calls, on the app's own loop:** 66 facing the desk with and without the ball; 177 turned
+    without it and 176 with it. ⚑ **The two lights are free — and 177 at a settled reachable pose is
+    2.4× the ≤75 budget, which no audit run has ever sampled.** Pre-existing, not root-caused here,
+    written up in 08 §20 with the metric caveat that cost an hour to find.
+  - `?flat=1&reinterp=1&debug=1` boots clean with no console errors. ⚑ It cannot reach this beat:
+    flat publishes no `__os`, so there is no review jump there — a pre-existing limitation, named.
+  - `npm run audit`: entrance 68 / E1→E2 39 / E2→E3 57 / E3→E4 62 / sends 78, all unchanged; blank
+    frames improved to 0; console asserts 0; the three send-leg comfort failures are the pre-existing
+    ones the brief said not to touch. `npx tsc --noEmit`, `npm test` (palette 33/33, C6 71/71, C7
+    10/10) and `npm run build` green.
+
+  ### 6. THE CREDIT, AND IT IS RENDERED RATHER THAN FILED
+  A Dossier card (`data/provotypes/e4_ball.json`, six sourced entries) and an attributions entry that
+  **names the lineage** — Crystal and Lottie LaBeija, the House of LaBeija (1972), the 1967 pageant —
+  because crediting "ballroom culture" in the abstract is the extraction pattern restated politely
+  (provenance §5). ⚑ Three files outside the stated fence were touched to make that credit actually
+  appear rather than sit in a JSON nobody renders: `docs/reinterp/ATTRIBUTIONS.md` (the source of
+  truth for the generated file that WAS in the fence), `tools/gen_attributions.mjs` (an `influences`
+  block, since a CC-BY table cannot hold an homage), and three lines in `src/desktop/gameMenu.ts`'s
+  credits view. Verified on screen in the running menu. The card states the three traps the pass names
+  as avoided: no claim of independence from imposed norms, *Paris Is Burning* only beside bell hooks's
+  1992 critique, and **no implied ballroom↔SOGICE-survivor link** — the supported claim is the broader
+  one about family and religious rejection.
+
+  ### 7. WAITING ON SÉRGIO — and one of these is a gate, not a review note
+  1. ⚑ **The reader pass is still shut.** The 2026-08-05 lift was a lift on BUILDING. Every MC line,
+     house name and walker name here is a draft written to be replaced, and ethics #16 + deep pass
+     §5.3 still ask for a reader from ballroom or Black queer community before this is shown.
+  2. ⚑ **The MC must never be voiced by TTS** — `data/audio/tts_manifest.json` now carries that
+     refusal in writing, with the reason. The clips wait on real recordings.
+  3. **Two reversible calls of mine**, both in 08 §20: a press ends the ball only after the categories
+     run out, and the device shows no standby until then.
+  4. **A composition item:** L's label field clips the third offer card's heading during the arrival.
+     S77 authored that position; I did not move it.
+  5. **A judgement call:** the movement markers stay live through the ball, so a player can walk into
+     the light and back. No dead end (checked). Left as it is.
+
+  **BLOCKED: none.** ⚑ **A11 REMAINS UNRUN, and this beat needs it more than most:** the ball is
+  subtitled in DOM chrome, which does not render inside an immersive WebXR session — so in a headset
+  it is currently light and sound with no captions. Same gap as E1's tapes, named rather than fixed.

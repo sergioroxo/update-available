@@ -27,6 +27,9 @@ import nicheData from '../../data/room/fluid_niche.json';
 import belongingsData from '../../data/room/belongings.json';
 import type { FluidNiche, FacetState } from './fluidNiche';
 import type { CeilingWitness } from './ceilingWitness';
+// ⚑ S79: the ball borrows two colours and adds no palette of its own — the
+// colour law's one home is the theme, and both of these are era1.json's own.
+import { BALL } from '../desktop/theme/era4';
 
 export type EraKey = 'e1' | 'e2' | 'e3' | 'e4';
 export type ClusterState = 'sealed' | 'dim' | 'open';
@@ -125,6 +128,77 @@ let e3LiftHook: ((on: boolean) => void) | null = null;
 export function setEra3Lift(on: boolean): void {
   e3LiftHook?.(on);
 }
+
+/**
+ * ⚑ THE BALL'S LIGHT (S79) — TRANSCENDANCE, and it is the whole of what the
+ * scene costs this file. `docs/REINTERP_E4_DEEP_PASS_2026-08-05.md` §1.3 and
+ * `REINTERP_E4_THE_DEVICE_2026-08-05.md`'s Stage 0 close: **the ball has no
+ * screen at all** — no stage, no mesh, no geometry of any kind is added for it.
+ * It is sound, and it is this: light moving through a building that has been
+ * standing since 1997 and had its walls taken down in 2016.
+ *
+ * ⚑ ONE LIGHT THAT MOVES, AND IT IS THE INVERSE OF E3's HOUSE LOOK. Correction
+ * 13 on the 2016 list applies a grading preset under `Household` 1:5 — *"one
+ * lamp for the whole room, so that no face is lit differently from another."*
+ * This is one lamp that travels and lights one person at a time, differently,
+ * because that is what a room full of attention pointed at one person looks
+ * like. ⚑ Nothing in the piece ever remarks on the pair, and nothing may.
+ *
+ * ⚑ IT NEVER REACHES THE PLAYER. Station 4 stops 2.2 m short of Room 3's seat:
+ * at the ball nothing is addressed to you and nobody is selling — you are not
+ * the customer, which is the exact difference between this room and the one the
+ * headset was showing thirty seconds earlier (THE_SPACE §3). The attention is
+ * always somebody else's, and it is always given rather than taken.
+ *
+ * Two omni lights, no shadows, no meshes, no draw calls of their own; both sit
+ * at intensity 0 whenever the ball is not running, which is every frame of the
+ * other twenty-nine years. Module-level hook for the same reason `setEra3Lift`
+ * is one: the beat that drives it lives on the OS side of a file fence
+ * (`src/desktop/apps/ball.ts`) and holds no `ClusterShell`. A no-op with no
+ * shell, which is correct rather than defensive — under `?flat=1` there is no
+ * room, so there is no light to put in it, and the captions still run.
+ */
+export interface BallLightState {
+  /** 0…1 — how full the building is */
+  level: number;
+  /** float index into BALL_STATIONS: 1 is the far west end, 4 the nearest the
+   *  attention ever comes. Fractional values are mid-walk. */
+  station: number;
+  /** 0…1 — the room answering a landing. Brief, warm, never a strobe. */
+  flare: number;
+}
+/**
+ * Where the attention can be. Geometry, so it lives in code (00_START_HERE) —
+ * and it is authored against the OPEN building, which is what E3 left behind:
+ * Room 2 at x −4.4, Room 1 at 0, Room 3 (the seat) at +4.4, the spine at z 3.6.
+ * ⚑ Every station is BEHIND the E4 seat, whose facing is +x. The room the piece
+ * has been asking you to turn away from for thirty years is where the ball is.
+ */
+const BALL_STATIONS: [number, number, number][] = [
+  [0.00, 1.70, 3.10],   // 0 · the spine door — where the sound comes in
+  [-6.10, 1.55, 0.70],  // 1 · the far west end
+  [-4.40, 1.55, 0.70],  // 2 · Room 2
+  [0.00, 1.55, 0.70],   // 3 · Room 1, the open middle
+  [2.20, 1.55, 0.70]    // 4 · as near as it ever comes, and it stops there
+];
+/** seconds for the building to fill, and to empty. Slow enough to be a room
+ *  filling rather than a cut — the same instinct as E3_LIFT_SECONDS. */
+const BALL_FADE_SECONDS = 7.0;
+/** the attention's own easing constant, in seconds. It is a person crossing a
+ *  floor, so it drifts toward its mark and never snaps to it. */
+const BALL_WALK_TAU = 2.4;
+const BALL_FLARE_SECONDS = 1.8;
+/** peak intensities, and the ambient the full room adds over the era's rig */
+const BALL_ATTENTION_I = 2.4;
+const BALL_ROOM_I = 0.85;
+const BALL_AMBIENT = [0.16, 0.13, 0.09];
+
+let ballHook: ((s: BallLightState | null) => void) | null = null;
+/** `null` ends the beat and takes the light back down over BALL_FADE_SECONDS */
+export function setBallLight(s: BallLightState | null): void {
+  ballHook?.(s);
+}
+
 /**
  * ⚑ THE RELOCATION (Session 61; GENERALISED to every era change in Session 67)
  *
@@ -453,6 +527,13 @@ export function buildClusterShell(
   const mayaGlow = mkLight('light-mayaGlow', [4.4, 1.35, 0.7], '#8899BB', 3.0); // Room 3 interface light (E4)
   void mayaGlow; // rig-driven by id
 
+  // ── ⚑ THE BALL (S79) — see BallLightState above. Deliberately NOT pushed into
+  // `zoneLights` and deliberately not named after any rig key: no era rig may
+  // reach these, so the one warm thing in 2026 cannot be dimmed by the light
+  // arc that is busy losing to the cold everywhere else. Both idle at 0. ──
+  const ballAttention = mkLight('light-ballAttention', BALL_STATIONS[3], BALL.attention, 6.5);
+  const ballRoom = mkLight('light-ballRoom', [-1.0, 2.3, 0.9], BALL.room, 12.0);
+
   // ── the O7 light-leak seams: thin pale strips at the base of the walls —
   // the first admission that there is anything beyond them ──
   const seamMat = new pc.StandardMaterial();
@@ -552,6 +633,11 @@ export function buildClusterShell(
   let rigFades: LightFade[] = [];
   let ambFrom = new pc.Color(0, 0, 0);
   let ambTo = new pc.Color(0, 0, 0);
+  /** ⚑ S79: what the RIG wants the ambient to be this frame, kept separately so
+   *  the ball can add warmth ON TOP of a crossfade instead of fighting it. The
+   *  two systems never write the same value: the rig owns `ambNow`, the ball
+   *  owns everything after it. */
+  let ambNow = app.scene.ambientLight.clone();
   let rigT = 1;
   /** the current crossfade's duration — RIG_FADE_SECONDS for every ordinary rig
    *  change, E3_LIFT_SECONDS for the lift (which must read as a room changing,
@@ -597,9 +683,10 @@ export function buildClusterShell(
     }
     ambTo = new pc.Color(rig.ambient[0], rig.ambient[1], rig.ambient[2]);
     if (animate) {
-      ambFrom = app.scene.ambientLight.clone();
+      ambFrom = ambNow.clone();
       rigT = 0;
     } else {
+      ambNow = ambTo.clone();
       app.scene.ambientLight = ambTo;
       rigT = 1;
     }
@@ -632,6 +719,85 @@ export function buildClusterShell(
     }, true);
   }
   e3LiftHook = liftE3;
+
+  // ── ⚑ THE BALL'S LIGHT — see BallLightState at the top of this file ────────
+  /** what the beat has asked for; `null` = it is over and the room empties */
+  let ballWant: BallLightState | null = null;
+  /** what the room is actually doing, eased toward it */
+  let ballLevel = 0;
+  let ballStation = 3;
+  let ballFlare = 0;
+  /** true from the first request until the light has finished going back down —
+   *  every frame outside that window this whole system costs one comparison. */
+  let ballLive = false;
+  const ballAmb = new pc.Color(0, 0, 0);
+  const ballPos = new pc.Vec3();
+
+  function ballLightState(s: BallLightState | null): void {
+    ballWant = s;
+    if (s) {
+      ballLive = true;
+      // the first request also places the attention, so the light does not
+      // travel across the building on its way to where it starts
+      if (ballLevel <= 0) ballStation = s.station;
+    }
+  }
+  ballHook = ballLightState;
+
+  /** the attention's world position, lerped between the two stations it is
+   *  between — a person crossing a floor, not a light jumping between marks. */
+  function stationAt(f: number): pc.Vec3 {
+    const n = BALL_STATIONS.length;
+    const c = Math.max(0, Math.min(n - 1, f));
+    const i = Math.min(n - 2, Math.floor(c));
+    const k = c - i;
+    const a = BALL_STATIONS[i];
+    const b = BALL_STATIONS[i + 1];
+    return ballPos.set(
+      a[0] + (b[0] - a[0]) * k,
+      a[1] + (b[1] - a[1]) * k,
+      a[2] + (b[2] - a[2]) * k
+    );
+  }
+
+  function updateBall(dt: number): void {
+    if (!ballLive) return;
+    const wantLevel = ballWant ? Math.max(0, Math.min(1, ballWant.level)) : 0;
+    const rate = dt / BALL_FADE_SECONDS;
+    ballLevel = wantLevel > ballLevel
+      ? Math.min(wantLevel, ballLevel + rate)
+      : Math.max(wantLevel, ballLevel - rate);
+    if (ballWant) {
+      const k = Math.min(1, dt / BALL_WALK_TAU);
+      ballStation += (ballWant.station - ballStation) * k;
+      const wantFlare = Math.max(0, Math.min(1, ballWant.flare));
+      ballFlare = wantFlare > ballFlare
+        ? wantFlare
+        : Math.max(wantFlare, ballFlare - dt / BALL_FLARE_SECONDS);
+    } else {
+      ballFlare = Math.max(0, ballFlare - dt / BALL_FLARE_SECONDS);
+    }
+
+    const p = stationAt(ballStation);
+    ballAttention.setLocalPosition(p.x, p.y, p.z);
+    if (ballAttention.light) {
+      ballAttention.light.intensity = BALL_ATTENTION_I * ballLevel * (1 + ballFlare * 0.55);
+    }
+    if (ballRoom.light) ballRoom.light.intensity = BALL_ROOM_I * ballLevel;
+    ballAmb.set(
+      ambNow.r + BALL_AMBIENT[0] * ballLevel,
+      ambNow.g + BALL_AMBIENT[1] * ballLevel,
+      ambNow.b + BALL_AMBIENT[2] * ballLevel
+    );
+    app.scene.ambientLight = ballAmb;
+
+    // …and when the room has finished emptying, hand the ambient back to the
+    // rig exactly as it was, so nothing downstream can tell the ball happened.
+    if (!ballWant && ballLevel <= 0 && ballFlare <= 0) {
+      ballLive = false;
+      app.scene.ambientLight = ambNow;
+    }
+  }
 
   function eraTable(): NicheEraTable | undefined {
     return (nicheData.eras as unknown as Record<string, NicheEraTable | undefined>)[era];
@@ -795,12 +961,17 @@ export function buildClusterShell(
             f.fc.b + (f.tc.b - f.fc.b) * k
           );
         }
-        app.scene.ambientLight = new pc.Color(
+        ambNow = new pc.Color(
           ambFrom.r + (ambTo.r - ambFrom.r) * k,
           ambFrom.g + (ambTo.g - ambFrom.g) * k,
           ambFrom.b + (ambTo.b - ambFrom.b) * k
         );
+        app.scene.ambientLight = ambNow;
       }
+      // ⚑ LAST, and after the rig on purpose: the ball adds warmth on top of
+      // whatever the era's light is doing rather than replacing it, so a
+      // crossfade and a ball can run in the same frame without a fight.
+      updateBall(dt);
     }
   };
 }

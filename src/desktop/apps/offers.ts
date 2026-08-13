@@ -537,6 +537,23 @@ export class E4Offers {
     this.enterStage(s);
   }
 
+  /**
+   * ⚑ S79 review helper: park at the BREAK, the state the offers are actually
+   * in for the whole three minutes the ball runs. `debugJumpTo` refuses `held`
+   * on purpose (it is not a beat you can land on and play forward), but the
+   * ball's own review jumps need it, because the ball hands back by calling
+   * `resumeAfterBreak()` and only a held beat can be resumed.
+   */
+  debugHoldForBreak(): void {
+    this.wallUp = script.wall.cards.length;
+    this.queue = [];
+    this.cur = null;
+    this.waiting = false;
+    this.pendingAdvance = false;
+    this.stage = 'held';
+    this.version++;
+  }
+
   /** review: skip the careful pause's lines and sit on its chips */
   debugToChips(): void {
     if (this.stage !== 'pause') this.debugJumpTo('pause');

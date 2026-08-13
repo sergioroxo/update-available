@@ -60,12 +60,13 @@
  * spends the update's one "I Agree" and the ONE TOUCH on the headset. There is
  * nothing else to press here, and adding a "continue" would break the rule.
  */
-import { homeEnvironment, standby, visorEdge, ERA4, PLACE } from '../theme/era4';
+import { homeEnvironment, standby, visorField, visorEdge, ERA4, PLACE } from '../theme/era4';
 import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import space from '../../../data/dialog/s4_space.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
+import { E4Ball } from './ball';
 import type { UpdateApp } from './update';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
@@ -80,8 +81,21 @@ const TURN_FILED_DEG = 45;
 /** the standby light breathes on a five-second cycle, in six steps */
 const PULSE_SECONDS = 5;
 const PULSE_STEPS = 6;
+/** ⚑ where L's label field sits, kept in step with `lVoice.ts`'s own LABEL:
+ *  the ball's arrival draws the machine's failures in the SAME instrument, in
+ *  the same place, because it is the same instrument doing the same job on a
+ *  room instead of a pair of shoes. */
+const LABEL = { x: 262, y: 44, w: 234 } as const;
 
-type Stage = 'closed' | 'worn';
+/**
+ * ⚑ `ball` IS THE THIRD STAGE, ADDED BY S79, and it is not a cosmetic state:
+ * `worn` is false in it, which is the entire mechanism of the era's last beat.
+ * `src/room/era3Devices.ts` pins the visor plane to the camera every frame
+ * while the shell says `worn`, and eases it back to its stand when it stops —
+ * so dropping out of `worn` is what takes the picture off the player's face,
+ * and the turn works again without one line of that file changing.
+ */
+type Stage = 'closed' | 'worn' | 'ball';
 
 /**
  * The era's shell. One instance, made by `DesktopOS` when the era becomes `e4`
@@ -111,6 +125,16 @@ export class E4Shell {
   private offersVersion = 0;
   /** L's last chip fired its hand-off; the offers begin when L stops talking */
   private offersPending = false;
+  /** ⚑ S79 — THE BALL. Made with the shell for the same reason the two above
+   *  are (a `?debug=1` jump must reach it before the device is even worn), and
+   *  started only by `E4Offers.onBreak` — the seam S78 left named and empty. */
+  readonly ball = new E4Ball();
+  private ballVersion = 0;
+  /** ⚑ the record files the wearing ONCE. She puts the device back on after the
+   *  ball to let the era finish, and that second act is not filed: an identical
+   *  second line in the witness record would read as the ball having been filed,
+   *  and the ball files nothing (`data/dialog/s4_ball.json`'s `witness` block). */
+  private wornFiled = false;
   /** bumped on any change to what this surface DRAWS; the room compares it to
    *  decide when to re-upload the visor texture (dirty discipline, the law
    *  era3Devices' three screens already obey). */
@@ -126,6 +150,16 @@ export class E4Shell {
     // unchanged.
     this.voice.onHandOff = () => { this.offersPending = true; };
     this.offers.onHandOff = () => this.handOff();
+    // ⚑ S79 TAKES THE BREAK. `onBreak` returning true holds the offers at
+    // `held` — the finale does not follow the careful pause any more; the ball
+    // does, and the finale waits for `resumeAfterBreak()`. The chain is
+    // unchanged either side of it, exactly as S78 designed the seam.
+    this.offers.onBreak = () => { this.ball.begin(); return true; };
+    // the device leaves her face. Nothing narrates it, and nothing needs to:
+    // the picture ends and the room is there. ⚑ The turn works from here.
+    this.ball.onDeviceOff = () => { this.stageNow = 'ball'; this.version++; };
+    // …and she puts it back on, which is the only way the ball ends.
+    this.ball.onOver = () => { this.putOn(); this.offers.resumeAfterBreak(); };
   }
 
   get stage(): Stage { return this.stageNow; }
@@ -160,6 +194,15 @@ export class E4Shell {
       this.offersVersion = this.offers.version;
       this.version++;
     }
+    // ⚑ S79 — THE BALL, on the same clock and the same dirty-only discipline.
+    // It draws almost nothing (the machine's own failures, on a stand across
+    // the room), so this bumps the visor's version a handful of times in three
+    // minutes — the light and the sound are not on this surface at all.
+    this.ball.update(dt);
+    if (this.ball.version !== this.ballVersion) {
+      this.ballVersion = this.ball.version;
+      this.version++;
+    }
   }
 
   /**
@@ -167,13 +210,33 @@ export class E4Shell {
    * no need to make the movement to put it on."* So there is no donning
    * animation and no second confirmation — the device is touched and it is on.
    * Files once, like every other act in the piece.
+   *
+   * ⚑ AND IT IS THE ONE DOOR, WHICH S79 FOUND OUT THE HARD WAY. The ROOM's own
+   * picking (`src/room/era3Devices.ts`'s `handleLaptopPointer`) calls this
+   * DIRECTLY when the shell is not worn — it does not go through
+   * `handleClick` — so a guard placed on the canvas path alone would have left
+   * a press on the headset able to put the device back on in the middle of the
+   * ball, which is the one thing the beat must not allow. Measured with a real
+   * pointer press from Maya's seat before it was fixed. The guard lives here,
+   * at the door every route passes through, and the actual wearing moved into
+   * `putOn` below so the ball's own hand-back does not come back through it.
    */
   wear(): void {
+    if (this.stageNow === 'ball') { this.ball.handleClick(); return; }
+    this.putOn();
+  }
+
+  private putOn(): void {
     if (this.stageNow === 'worn') return;
     this.stageNow = 'worn';
     this.t = 0;
     this.version++;
-    ledger.e4Space.push({ id: 'headset', outcome: 'worn', witness: space.witness.worn });
+    // ⚑ ONCE, and see `wornFiled`: the second wearing is the player putting it
+    // back on after the ball, and the ball files nothing.
+    if (!this.wornFiled) {
+      this.wornFiled = true;
+      ledger.e4Space.push({ id: 'headset', outcome: 'worn', witness: space.witness.worn });
+    }
     // ⚑ and L is already talking. No greeting screen, no onboarding, no
     // application to open: the OS IS the assistant from here on.
     this.voice.begin();
@@ -216,6 +279,27 @@ export class E4Shell {
   }
 
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    // ⚑ THE BALL HAS NO SCREEN IN IT. The device is on its stand across the
+    // room and this is all that is on it: dark glass, the standby light it has
+    // always shown when it is not being worn, and — occasionally, and only if
+    // the player turns back to look — the machine still trying to caption what
+    // it can hear. Nothing of the ball is drawn anywhere, ever.
+    // ⚑ AND THE STANDBY WAITS FOR THE CATEGORIES TO BE OVER. While the ball is
+    // running the device is simply dark: a lit "Ready to wear" across the room
+    // is the closest thing this beat could have to a prompt, and the press it
+    // advertises does nothing until the ball has run out anyway. So the
+    // affordance and its availability arrive together, and until then there is
+    // nothing in the room that wants anything.
+    if (this.stageNow === 'ball') {
+      if (this.ball.returnable) {
+        const pulse = Math.abs(this.pulseStep / (PULSE_STEPS - 1) - 0.5) * 2;
+        standby(ctx, W, H, pulse, space.standbyLabel);
+      } else {
+        visorField(ctx, W, H);
+      }
+      this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
+      return;
+    }
     if (!this.worn) {
       // ⚑ drawn LARGE and simple: this same canvas is textured onto a 9 cm
       // visor across the room, and it is also the whole of `?flat=1`'s screen.
@@ -256,6 +340,10 @@ export class E4Shell {
     // are things the place is showing her, so they sit inside the visor's edge
     // exactly as the captions do.
     this.offers.draw(ctx, W, H);
+    // ⚑ S79's arrival: the machine hears the ball and starts labelling it, in
+    // its own label field, while L itself says nothing at all from here to the
+    // end of the era. This is the last thing this surface ever shows her.
+    this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
     visorEdge(ctx, W, H);
   }
 
@@ -270,6 +358,12 @@ export class E4Shell {
    * dismiss anywhere in this era.
    */
   handleClick(x: number, y: number): boolean {
+    // ⚑ THE BALL TAKES NO INPUT AT ALL until its categories have run out, and
+    // then it takes exactly one: the same one touch on the same device that
+    // began the era. A press before that is consumed and does nothing, so a
+    // stray click cannot cut the piece's only respite short — and nothing
+    // announces the difference, because nothing in this era ever does.
+    if (this.stageNow === 'ball') return this.ball.handleClick();
     if (this.worn) {
       // ⚑ the offers get first refusal, because by the time they are on screen L
       // has finished and its chips are gone. Two of the era's three presses land

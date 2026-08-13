@@ -1,6 +1,8 @@
 {
   "_doc": "Build-time TTS manifest, read by tools/tts/render.py. Each entry is one committed WAV. `source.fields` are dotted paths into the named JSON file (a trailing `[]` joins an array field with spaces) — text is resolved AT RENDER TIME from the narrative data, never copy-pasted here, so the spoken line can never drift from the authored text. `register` MUST be \"apparatus\" — render.py refuses anything else; see its header for the ethics boundary (synthesize the machine, never the person; no TTS on `felt` survivor-side lines).",
 
+  "_docNoBall": "⚑ S79 — THE BALL HAS NO ENTRY HERE, AND THAT IS A DECISION RATHER THAN AN OMISSION. data/dialog/s4_ball.json names audio for every MC line and for the room's own bed and landing, and NOT ONE of them may ever be rendered by this pipeline. render.py's own boundary is `register` must be \"apparatus\" — synthesize the machine, never the person — and TRANSCENDANCE is people: an MC announcing, a room answering, applause. Synthesizing them would make the piece's one respite the only scene in it performed by the apparatus, which is the exact inversion of what the beat is for. ⚑ Those clips wait on real recordings, made with rather than merely about the people this scene is indebted to (ethics #16's reader protocol; docs/research/BALLROOM_PROVENANCE_2026-08-06.md §5). Until they exist, src/audio/tapeAudio.ts's registry law means every name in that file is silently never requested and the captions carry the beat — which is what captions are for. ⚑ If a later session is tempted to add a `ball_*` entry below to hear the timing, do not: render it to a scratch file outside this manifest, and delete it.",
+
   "entries": [
     {
       "id": "lamby_puremail_apology",

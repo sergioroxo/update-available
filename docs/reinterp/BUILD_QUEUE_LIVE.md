@@ -18,11 +18,11 @@ not live.***
 | — | ~~S76 — the update, the space, and no desktop~~ (E4 Stage 2a) | ↓ below, in this file | **SHIPPED 2026-08-08** |
 | — | ~~S77 — L, and the room rewrites~~ (E4 Stage 2b) | ↓ below, in this file | ✅ **SHIPPED 2026-08-09.** ⚑ The deadname beat is built and is **BLOCKED-ON-READER-PASS** — a gate, not a review step |
 | — | ~~S78 — the offers, and the hand-off~~ (2c) | ↓ below | **SHIPPED + VERIFIED 2026-08-06** — nine-beat pass and A/B captures recorded; no phone-viewport pass |
-| **1** | **S79 — TRANSCENDANCE** (Stage 3) | ↓ below | **UNBLOCKED by S78**; its ball-reader gate is explicitly lifted, ethics laws still apply |
+| — | ~~S79 — TRANSCENDANCE~~ (Stage 3) | ↓ below | ✅ **SHIPPED 2026-08-13.** The ball is built, the turn works, the record stays blank. ⚑ The BUILD gate was lifted; the **reader pass is still shut**, every MC line is a draft, and the MC may never be voiced by TTS |
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
 | — | ~~S80 — fix picking, then the gyro look-mode~~ | ↓ at the tail of this file | ✅ **SHIPPED 2026-08-09.** Its picking fix is closed; S77 and S78 subsequently shipped |
-| **2** | **S81 — the visibility audit, read as broken interactions** | *not yet written — `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §4* | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too |
+| **1** | **S81 — the visibility audit, read as broken interactions** | *not yet written — `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §4* | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too. ⚑ **S79 ADDS ONE MEASUREMENT TO ITS SCOPE:** the settled E4 seat, turned 180°, renders **177 draw calls** against a ≤75 budget, and no audit run has ever sampled a turned seat (08 §20) |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
 
 ~~**⚑ S73 IS QUEUED**~~ **⚑ CORRECTED 2026-08-12: S73 is RETIRED; S79 is the next
@@ -756,8 +756,13 @@ The region line goes past you the first time. And the era ends handing something
 ---
 
 # S79 — TRANSCENDANCE · Opus, high effort · **here, not Codex**
-**⚑ PROMPT STATUS: QUEUED — UNBLOCKED 2026-08-12 because S78 shipped. Historical wrong claim:
-~~BLOCKED — on S78.~~ Stage 3: the ball, and the only thing in the era that is not work.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-13 — the ball is built and verified; the number is retired, do not
+dispatch. See BUILD_LOG.md, `01_SESSION_LOG.md` and `08_STATUS_REGISTER.md` §20. ⚑ WHAT IS STILL OPEN
+IS NOT THE BUILD: the reader pass (ethics #16 + deep pass §5.3) remains a GATE before this scene is
+shown, every MC line is a draft written to be replaced, the MC's audio must never be TTS, and A11 has
+not run — the ball's captions are DOM chrome and do not render inside an immersive WebXR session.**
+*Historical: ~~QUEUED — UNBLOCKED 2026-08-12 because S78 shipped.~~ ~~BLOCKED — on S78.~~ Stage 3:
+the ball, and the only thing in the era that is not work.*
 **⚑ RUN AFTER S84, AND NEVER ALONGSIDE IT.** Their fences overlap on `src/debug/panel.ts`,
 `src/room/cluster.ts` and `src/state/ledger.ts`, and two sessions in this worktree share one git
 index. S84 is a Codex tablet pass; this one is here, not Codex — it is register and ethics work.

@@ -213,6 +213,14 @@ export function mountGameMenu(): GameMenu {
           paragraph(`${e.asset} — ${e.creator}. ${e.license}. Used as: ${e.usedAs}.`);
         }
       }
+      // ⚑ S79 — CULTURAL INFLUENCE, below the licensed assets and in the same
+      // undecorated type. A licence covers a model file; it does not cover an
+      // homage to a living culture, and the provenance pass
+      // (docs/research/BALLROOM_PROVENANCE_2026-08-06.md §5) is explicit that
+      // crediting such a culture in the abstract repeats the extraction pattern
+      // rather than correcting it — so this paragraph names the lineage. Source
+      // of truth is docs/reinterp/ATTRIBUTIONS.md, baked by gen_attributions.
+      for (const line of attributions.influences ?? []) paragraph(line);
       backRow();
     }
   }

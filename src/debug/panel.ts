@@ -203,6 +203,26 @@ const OS_BEATS: BeatRow[] = [
   { label: '⚑ the curation · what was chosen, and what was taken away', id: 'e4Curation' },
   { label: '⚑ the careful pause (two doors, and it waits forever)', id: 'e4Pause' },
   { label: '↳ skip its lines and sit on its chips', id: 'e4PauseChips' },
+  { heading: 'E4 · ⚑ TRANSCENDANCE — the ball (S79). NO SCREEN: it is in the room' },
+  // ⚑ S79. `e4Ball` is the LINEAR ENTRY and it is the break itself: the careful
+  // pause has just ended, L has stopped talking for good, and the machine is
+  // about to hear something it has no category for. Everything below it runs
+  // forward on its own — there is nothing to press until the categories are
+  // over, and then the one press is the device on the desk behind you.
+  // ⚑ WATCH THE ROOM, NOT THE CANVAS. The ball is light and sound in the
+  // building; the visor is on its stand showing standby and the occasional
+  // failed caption. Under `?flat=1` there is no room, so these buttons show the
+  // captions and the machine only — which is the era's own argument, not a bug.
+  { label: '⚑⚑ THE BALL (play from here — the break, then the room)', id: 'e4Ball' },
+  { label: '↳ ⚑ NO CATEGORY FOUND (the machine\'s last output, alone)', id: 'e4NoCategory' },
+  { label: '↳ the device comes off — the light, and the turn works', id: 'e4BallOpen' },
+  { label: '↳ category 1 · THE WAY YOU WALK, TALK AND SIT (1997)', id: 'e4BallCat1' },
+  { label: '↳ category 2 · STEADY. STRUGGLING. GRATEFUL. TIRED. (2003)', id: 'e4BallCat2' },
+  { label: '↳ category 3 · REMOVE THE UNRESOLVED (2016)', id: 'e4BallCat3' },
+  { label: '↳ category 4 · CONDITION: IN REPAIR (tonight)', id: 'e4BallCat4' },
+  { label: '↳ ⚑ after · nothing happens, forever (press the device to go on)', id: 'e4BallAfter' },
+
+  { heading: 'E4 · the finale, after the ball (S78)' },
   { label: 'FINALE 1/3 · the glitch', id: 'e4Glitch' },
   { label: 'FINALE 2/3 · the cyclorama (the building\'s own image)', id: 'e4Cyclorama' },
   { label: 'FINALE 3/3 · four panels → hand off (⚑ releases the spine)', id: 'e4Panels' },
@@ -279,7 +299,7 @@ type DebugButtonMark = '⏵ ENTRY' | 'JUMP' | 'ACTION';
 /** These are the few desktop states deliberately safe to start cold and then
  * play forward. Every other debugJump is honestly a mid-thread JUMP. */
 const OS_ENTRY_IDS = new Set([
-  'off', 'update2', 'e2Silence', 'update3', 'update4', 'e4L', 'e4Offers'
+  'off', 'update2', 'e2Silence', 'update3', 'update4', 'e4L', 'e4Offers', 'e4Ball'
 ]);
 
 /** eras with the room + identity + year they now lead (Round 24 model) */

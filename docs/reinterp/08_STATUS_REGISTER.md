@@ -828,3 +828,83 @@ stays near ±90° — photograph the full readout.
 Acceptance: `npx tsc --noEmit`, `npm test`, and `npm run build` green; 1024×768 debug render,
 ordinary Log in/tap/drag, mid-flight light, conditional fullscreen row, real E1→E2 transition and
 post-transition record checked in a desktop browser. No iPad, iPhone or headset was used.
+
+---
+
+## §20 — S79: THE BALL IS BUILT, AND WHAT IT COST (2026-08-13)
+
+**The mechanism, stated first because it is the surprise.** The turn works again because the shell
+stops being `worn`, and nothing else. `src/room/era3Devices.ts` pins the visor plane to the camera
+every frame while `E4Shell.worn` is true and eases it back to its stand when it is false — so a third
+stage on the shell (`ball`) takes the picture off the player's face, and the era's one bodily law
+comes back with **no change to the room code at all**. Measured: at the moment the arrival ends, the
+visor goes from scale 0.28 at the camera to scale 0.088 at (5.36, 0.87, 0.30), its authored rest pose.
+
+**The light is two omni lights and no geometry.** `src/room/cluster.ts` gains `setBallLight()` — the
+same module-hook idiom as `setEra3Lift`, for the same reason (the beat lives on the OS side of a file
+fence) — plus five authored stations, all of them BEHIND the E4 seat. One light travels between them;
+one lights the open floor; a warm ambient rides on top of whatever the era's rig is doing, and is
+handed back exactly as it was when the beat ends (verified: ambient returns to the e4 rig's 0.050).
+No mesh, no stage, no new material, no canvas.
+
+**⚑ DRAW CALLS: THE BALL COSTS ZERO, AND IT EXPOSED A NUMBER NOBODY HAD MEASURED.** On the real frame
+loop, at Maya's seat: 66 facing the desk with and without the ball; **177 turned 180° without the
+ball and 176 with it.** The two lights are free. But 177 at a settled, ordinary, reachable pose is
+**2.4× the ≤75 budget**, and `npm run audit` never sees it — the audit samples the relocation flights
+and the authored seats, and the turned E4 seat is not among them. That figure predates this session
+(the turn at E4 has existed since S67), but the ball is the first beat that gives a player a reason to
+hold that facing for three minutes. **Not root-caused here; not this session's fence.**
+⚑ And a second finding for whoever measures next: `app.stats.drawCalls.total` read under a manual
+`app.fire('update')` stepper is **not a usable metric** — it produced 242/308/375/528 for the same
+scene. Use `window.__drawCalls` on the app's own loop, which is what `tools/shots.mjs` already does.
+
+**⚑ THE ROOM'S PICKING CALLS `wear()` DIRECTLY, and a guard on the canvas path alone was not enough.**
+`era3Devices.handleLaptopPointer` calls `shell.wear()` without going through `handleClick`, so the
+first version of this beat could be ended by a press on the headset in the middle of the ball. Found
+with a real pointer press from Maya's seat, not by reading. The guard now sits in `wear()` itself —
+the one door every route passes through — and the actual wearing moved to a private `putOn()`.
+**Class:** the same one §12 names. A second entry point to a state machine, discovered by pressing.
+
+**The ledger, verified rather than asserted.** `__ledger()` across the whole beat — arrival, four
+categories, the after, the return press, the finale — holds exactly two lines, `device: worn — one
+touch` and `session: handed over`, both belonging to beats either side of the ball. The ball itself
+files nothing, the turn inside it files nothing, and the second wearing is deliberately not filed
+(an identical second line would read as the ball having been filed). `src/desktop/apps/ball.ts`
+imports no ledger.
+
+**What is drafted and waits on Sérgio:** every MC line, the four category titles, the four invented
+house names, the three walkers' names, and the machine's seven arrival labels. Marked
+PLACEHOLDER-draft in `data/dialog/s4_ball.json`, with the source of each category title recorded in a
+`_source` key beside it.
+
+**⚑ GATES THAT ARE STILL SHUT, and neither was closed by the build gate being lifted:**
+1. **The reader pass.** Ethics #16 requires a reader protocol for TransJesus content and the deep pass
+   §5.3 recommends it include someone from ballroom or Black queer community specifically. The
+   2026-08-05 lift was a lift on BUILDING, not a finding that the reader is unnecessary before the
+   piece is shown. The drafted lines are written to be replaced.
+2. **The MC has no voice and must never be given a synthetic one.** `data/audio/tts_manifest.json`
+   now says so in its own `_docNoBall`: render.py's boundary is `register: apparatus`, and the ball is
+   people. The clips wait on real recordings.
+
+**⚑ AND ONE GAP THAT IS THE BEAT'S OWN:** the ball is sound in the room, so it is subtitled in plain
+DOM chrome (the idiom `src/engine/app.ts`'s tape captions established). **DOM does not render inside
+an immersive WebXR session**, so in a headset this beat is currently light and sound with no captions
+at all. That is the same gap E1's tapes already have; it is an A11/§13 item, it was not fixed here,
+and it is not claimed as fixed.
+
+**Two decisions taken here that are Sérgio's to reverse, both reversible in one line:**
+- **A press ends the ball only after the categories have run out** (`E4Ball.returnable`). A stray
+  press must not be able to cut the piece's only respite. Nothing announces the difference; a player
+  who presses early finds nothing happens, which is what the whole era has been like.
+- **The device shows no standby while the ball runs** — dark glass, and the "Ready to wear" light
+  comes back only in the after, so the affordance and its availability arrive together. A lit device
+  during the ball was the closest thing the beat could have to a prompt.
+
+**Observed and deliberately not changed:** the movement markers stay live through the ball, so a
+player may jump into Room 1 or Room 2 — into the light — and back again (`r3-desk` is offered from
+both, so there is no dead end; checked). A marker is the piece's standing grammar and does not ask
+for anything, so it stays. Flagged because it is a composition call, not a bug.
+
+**Also observed:** L's label field sits over the offers wall during the arrival, clipping the third
+card's heading. The field's position is S77's authored one and was not moved; it is a composition
+item for the voice pass, in `S79_no_category_found.png`.

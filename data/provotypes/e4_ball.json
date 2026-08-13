@@ -1,0 +1,143 @@
+{
+  "_doc": "PLACEHOLDER-draft — ⚑ THE BALL'S DOSSIER CARD (S79). Why it lives in data/provotypes/: check-spec's C1 is the only mechanical enforcement in this repo of CLAUDE.md's dossier law (`status: documentary | contested | speculative`, build fails without it) and it validates exactly this directory. The scene this card answers for is the piece's one homage to a living culture that is not the project's own, so its provenance belongs where a missing status is a build failure rather than an oversight. ⚑ LIKE data/provotypes/e4_offers.json, THE VIGNETTE HALF IS A RECORD OF WHAT WAS BUILT, NOT A SECOND SURFACE: `states` describes the beat as src/desktop/apps/ball.ts actually plays it; this file is not sequenced by data/paths.json, is not rendered by src/desktop/apps/provotype.ts, and Era 4 has no desktop to open it on. Its reading surface is the Close.",
+
+  "_docCredit": "⚑ CREDIT, NOT EXTRACTION — the whole reason this card exists. The provenance pass (docs/research/BALLROOM_PROVENANCE_2026-08-06.md §5) records what practitioners and scholars ask of outside engagement: credit named originators and the community rather than 'ballroom culture' in the abstract, do not present its categories or vernacular as the borrower's invention, be explicit about one's own position as an outsider rather than adopting an insider voice, and treat the culture as living and currently led rather than frozen at its documentary-era image. Crediting it in general terms is the extraction pattern restated politely. So this card names the lineage: Crystal and Lottie LaBeija, the House of LaBeija (1972), and the 1967 pageant that preceded the break.",
+
+  "_docTraps": "⚑ THE THREE TRAPS THE PROVENANCE PASS NAMES, and how this card avoids each. (1) It does NOT claim ballroom's categories are free of the world's imposed ones — the opposite is the scene's whole design, and source 3 says so. (2) It does NOT cite Paris Is Burning as a reference without bell hooks's 1992 critique; the film is `contested` and hooks's essay sits beside it. (3) It does NOT imply a documented link between ballroom and SOGICE survivors, because none exists in the record — source 5 states the supported claim instead, which is broader and is about family and religious rejection generally.",
+
+  "_docVerify": "⚑ NOT ONE SOURCE BELOW HAS BEEN VERIFIED BY THE PROJECT LEAD, so every one of them carries the sourcing law's marker in its `_verify` key rather than in its player-visible `text` — the same mechanical accommodation data/provotypes/e4_offers.json documents, and not a downgrade of the law. They are transcribed from the 2026-08-06 provenance pass, which cites each inline.",
+
+  "_docReader": "⚑ AND THE READER GATE. Ethics #16 already requires a reader protocol for TransJesus content; the deep pass §5.3 recommends that reader include someone from ballroom or Black queer community specifically, because a general queer reader pass is not the same competence. The project lead lifted the gate for the BUILD on 2026-08-05 ('the ball reader is symbolic… this is interpretive. Read from the culture and infer'), and that lift is what made this session possible — it is not a finding that the reader pass is unnecessary before the piece is shown. The MC's drafted lines in data/dialog/s4_ball.json are written to be replaced.",
+
+  "id": "e4_ball",
+  "era": "era4",
+  "register": "respite",
+  "failure": "silence",
+  "cuts": ["full", "festival"],
+
+  "invitation": {
+    "_doc": "⚑ NO `from`. Every other provotype in this piece is offered by something — a fellowship, a program, an assistant. Nothing offers this one: the sound is already happening in a building whose walls came down ten years earlier, and nobody in it is addressing her. That absence is the register change, and it is also why C2 has nothing to catch here.",
+    "lines": [
+      "Something is happening on the other side of the building.",
+      "Nobody sent it, and it is not for you in particular."
+    ],
+    "accept": "(there is nothing to accept)"
+  },
+
+  "frame": {
+    "_doc": "At most two sentences, per the schema. Plain, and it says what the scene is rather than what it means.",
+    "text": "The last beat of the era has no screen in it. It is sound and light in a room, and the only thing to do is look.",
+    "continue": "Continue"
+  },
+
+  "states": [
+    {
+      "_doc": "⚑ A RECORD OF THE BUILT BEAT, not a vignette to play. The arrival, as src/desktop/apps/ball.ts runs it.",
+      "prompt": "The assistant stops speaking and its label field keeps working: live, not in your library · forty-one present, no host listed · sensitive content, hidden by default · terms all matched, none new · scoring not available to this account.",
+      "buttons": [],
+      "response": "NO CATEGORY FOUND",
+      "felt": "It recognises every word."
+    },
+    {
+      "_doc": "The device comes off. Nothing narrates it, and the room is there.",
+      "prompt": "The picture ends. The light in the building comes up behind the seat, and the turn works for the first time in the era.",
+      "buttons": [],
+      "response": "orientation: changed — the view changes"
+    },
+    {
+      "_doc": "The four categories. Each title is quoted from this piece's own apparatus — see data/dialog/s4_ball.json's `_source` keys — and each is announced, taken and celebrated by the people it was imposed on.",
+      "prompt": "Four categories, an invented house on each, and one light that moves and lights one person at a time.",
+      "buttons": [],
+      "response": "the room judges, out loud, and declines to rank the second one"
+    },
+    {
+      "_doc": "⚑ AND NOTHING ASKS YOU TO LEAVE. No timer, no prompt, no marker, no score.",
+      "prompt": "The categories run out. The music stays on and the light stays where it is, for as long as the player sits there.",
+      "buttons": [],
+      "response": "(nothing is filed — see `ledgerTags` below)"
+    }
+  ],
+
+  "close": {
+    "_doc": "Near-wordless, like the offers card's close.",
+    "lines": ["Nothing here was recorded, and nobody was assessed."],
+    "continue": "Continue"
+  },
+
+  "debrief": {
+    "_doc": "⚑ THE CREDIT. Real people and real organisations are named HERE and ONLY here — the fiction uses invented houses, invented categories and invented names, per CLAUDE.md. Source 1 is the attribution paragraph the provenance pass drafted, adapted.",
+    "body": [
+      "The closing scene draws structural and visual influence from ballroom culture, and invents everything it shows: the houses, the categories, the names and the announcements are ours, and no real ball, house or person is depicted. The categories are quoted from this piece's own apparatus rather than from ballroom's, because the borrowed words are the part that is not ours to use.",
+      "This is an outsider's homage made in a Norwegian university project. The culture it is indebted to is living and currently led by its own practitioners, and the reading below is where to start rather than where to stop."
+    ],
+    "sources": [
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Ball culture is a Black and Latino LGBTQ+ subculture, built principally by Black and Latina trans women, gender-nonconforming people and gay men. Its modern house-and-ball form dates to Harlem in the early 1970s: after objecting on camera to racist judging at the 1967 Miss All-America Camp Beauty Pageant, Crystal LaBeija and Lottie LaBeija staged their own ball and founded the House of LaBeija in 1972 — the first documented use of \"house\" as the organising unit of a ball community.",
+        "urls": [
+          "https://en.wikipedia.org/wiki/House_of_LaBeija",
+          "https://en.wikipedia.org/wiki/Crystal_LaBeija",
+          "https://www.history.com/articles/drag-balls-house-ballroom-voguing"
+        ]
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "A house is a chosen-family structure led by a mother and/or father who take in and mentor children, and the kinship is not metaphorical: housing, food, money, health information and care have all passed through it. Houses that followed LaBeija include the House of Xtravaganza (1982, founded by Hector Xtravaganza, with Angie Xtravaganza as a formative house mother) and the House of Ninja (1982, Willi Ninja).",
+        "urls": [
+          "https://press.umich.edu/Books/B/Butch-Queens-Up-in-Pumps2",
+          "https://en.wikipedia.org/wiki/House_of_Xtravaganza",
+          "https://peabodyballroom.library.jhu.edu/home/ballroom-history/"
+        ]
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Ballroom's signature \"realness\" categories are not inventions unrelated to the outside world — they are skilled, high-stakes re-performances of categories the dominant culture already enforces against the same people daily. Marlon M. Bailey's scholarship and José Esteban Muñoz's concept of disidentification both describe this as working on and against dominant categorisation from within it rather than escaping categorisation. What was seized back is who declares, who performs and who judges.",
+        "urls": [
+          "https://www.researchgate.net/publication/291919133_GenderRacial_Realness_Theorizing_the_Gender_System_in_Ballroom_Culture",
+          "https://www.upress.umn.edu/9780816630158/disidentifications/"
+        ]
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "contested",
+        "confidence": "medium",
+        "text": "The most-cited documentary about this culture, Paris Is Burning (1990), was made by a white filmmaker from outside it, and bell hooks's 1992 essay \"Is Paris Burning?\" is the standard critique of exactly that: it argues the film centres its director's gaze, leaves her own position unexamined, and is insufficiently accountable for the power difference between her and her subjects. The extraction of ballroom's dance, language and aesthetics into mainstream culture without credit or benefit to their originators is extensively documented; community opinion on individual cases is recorded as genuinely split rather than uniform.",
+        "urls": [
+          "https://en.wikipedia.org/wiki/Paris_Is_Burning_(film)",
+          "https://thequietus.com/opinion-and-essays/black-sky-thinking/vogue-ballroom-cultural-appropriation-niallist/"
+        ]
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "No source establishes a specific documented link between ballroom and survivors of conversion practices, and this piece does not claim one. The supported claim is broader: family and religious rejection of queer and trans people drives housing precarity, and houses have functioned since the 1970s as one chosen-family response to it. Twiggy Pucci Garçon, a house mother and ballroom leader, is Chief Program Officer at True Colors United, which works on LGBTQ+ youth homelessness.",
+        "urls": [
+          "https://www.pbs.org/wnet/chasing-the-dream/2020/02/twiggy-garcon-on-lgbtq-youth-homelessness/",
+          "http://www.kikimovie.com/synopsis"
+        ]
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Where to read further, from within the culture and about it: Ricky Tucker's And the Category Is... (Beacon Press, 2022), built from interviews with named community members; Marlon M. Bailey's Butch Queens Up in Pumps (University of Michigan Press, 2013), the standard ethnography; and the Peabody Ballroom Experience at Johns Hopkins, an oral-history and archive project co-authored with Baltimore ballroom leaders rather than merely about them.",
+        "urls": [
+          "https://www.beacon.org/And-the-Category-Is-P1738.aspx",
+          "https://press.umich.edu/Books/B/Butch-Queens-Up-in-Pumps2",
+          "https://peabodyballroom.library.jhu.edu/home/ballroom-history/"
+        ]
+      }
+    ],
+    "close": "Return"
+  },
+
+  "ledgerTags": [],
+  "_docLedgerTags": "⚑ EMPTY, AND IT IS THE ONLY EMPTY ONE IN THE PIECE. Every other beat in thirty years files something. The ball files NOTHING — same doctrine as Tape C and Malta: the apparatus did not ask for this and was not there. src/desktop/apps/ball.ts imports no ledger and has no way to write to one, and a player who turns to the record afterwards finds it blank for the first time since 1997."
+}
