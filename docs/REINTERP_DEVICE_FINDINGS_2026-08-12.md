@@ -204,3 +204,67 @@ evidential rather than taste:**
 
 **My read: cut it, or give it a reason.** Sérgio's call, and either answer is defensible — but
 "it has no `_doc`" is the honest reason it feels wrong, and it is his own instinct being right.
+
+
+---
+
+# 8 · THIRD iPAD PASS (2026-08-13) — ⚑ THE ORIENTATION IS CONFIRMED FIXED, and a pattern emerges
+
+## 8.1 · ⚑ THE DIAGNOSTIC ANSWERED IT, EXACTLY AS HOPED
+From the live readout, iPad in landscape:
+```
+q₂ 90.0° · derived (API said 0.0°)
+events legacy 0 · screen 0
+```
+**Two facts, both decisive:**
+1. **`screen.orientation.angle` returned 0.0° while the device was physically in landscape.** The
+   §18 hypothesis was right — and the old code's silent `return 0` fallback was therefore returning
+   *the API's own wrong answer*, not just a default.
+2. **`events legacy 0 · screen 0` — NEITHER orientation event fired, ever.** So S83's decision to
+   **poll** rather than listen was not belt-and-braces; **it is the only reason this works at all.**
+
+⚑ **Both of S83's defences are load-bearing. Remove either and it is broken again.** Sérgio: *"now
+the image is no longer sideways, great."* **§18 is closed.**
+
+*(One number to keep an eye on: the same readout showed `pitch 173° roll −176°`. Those sit near ±180
+rather than near 0, and the acceptance line said roll should settle near 0°. He reports the picture as
+upright, so this is most likely a reporting convention rather than a fault — but it is worth one look
+at whether the readout's own angles are being printed in the frame it claims.)*
+
+## 8.2 · ⚑⚑ THE PATTERN: three "bugs" are debug-jump artifacts, not defects
+His own words give it away — *"The tape on E2 is still there **if i jump from the debug mode**."*
+
+**S84 could not reproduce the tape, the black board, or a duck fault on the ORDINARY path, and it was
+telling the truth.** The artifacts appear when a debug button drops the world into a state the played
+path never produces: a cold E2 has no filed record (so the board is legitimately black), and a cold
+jump leaves props in a fold the era would never have reached.
+
+> **This is the same class as "some buttons don't do anything" — now producing VISUAL artifacts that
+> read as defects.** S84 labelled the buttons ⏵ ENTRY / JUMP / ACTION, which helps; **it did not warn
+> that a JUMP can also leave the ROOM in an unreachable state.**
+
+⚑ **The next session should make that explicit** — a jump is a review tool, and what it shows is not
+evidence about the piece. Until then: **anything found immediately after a debug jump needs
+re-checking on the played path before it is treated as a bug.**
+
+## 8.3 · Still open, and needing a re-check on the CURRENT build
+Sérgio tested before re-running the deploy, so these may be stale-build results:
+| | |
+|---|---|
+| **The duck** | *"still no duck; are you sure the changes were even committed?"* ⚑ Fair challenge — they were (`c8e82bd`, verified). But it is at **84.2° right of Room-1 forward**, so it needs a real turn. Re-check on the current build, turning right until the shelf is centred |
+| **Tapping skips the entrance** | S84 says a drag no longer skips and a ≤10 px / 1.2 s tap still does. He reports it still jumping. Re-check on the current build |
+
+## 8.4 · ⚑ NEW, and both are real
+1. **THE SNAPSHOT BUTTON BREAKS THE EXPERIENCE.** S63 fixed it producing black images; it now does
+   something worse on a tablet. **Needs diagnosing, and it may be simplest to hide it on touch
+   devices** — it is a desktop review affordance and there is no reason it must exist on an iPad.
+2. **⚑ ALL CAMERA MOVES ARE STILL SKIPPABLE, not just the entrance.** Sérgio: *"when jumping from era
+   to era, you should be able to look around if you need, but tapping should not jump ahead."*
+   S84 fixed the **entrance**; the **relocation legs** (the choreography — rise, build, descend) still
+   end on any press. **The same tap-versus-drag rule must apply to `endRelocation()` as to
+   `endDescent()`**: dragging to look during a transition is welcome, tapping should not cut it short.
+   ⚑ That is his design intent stated plainly, and it is the stronger reading — **the choreography is
+   the piece's argument about the building, and losing it to an accidental thumb is a real loss.**
+
+## 8.5 · ✅ CONFIRMED WORKING
+Fullscreen opens · the debug panel's ⏵ ENTRY / JUMP marks are legible and useful · the horizon holds.
