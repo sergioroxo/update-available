@@ -23,7 +23,7 @@ not live.***
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
 | — | ~~S80 — fix picking, then the gyro look-mode~~ | ↓ at the tail of this file | ✅ **SHIPPED 2026-08-09.** Its picking fix is closed; S77 and S78 subsequently shipped |
 | **1** | **S85 — the third device pass** (relocation skip · the `📷 shot` button exits the piece on iOS · re-verify duck + entrance tap · warn that a debug jump's aftermath is not evidence) | ↓ at the tail of this file | ⚑ **QUEUED 2026-08-13, dispatchable now.** Both faults READ FROM SOURCE, not guessed: `app.ts:2348` still ends the relocation on pointerdown, and `panel.ts:543` uses `a.download`, **which iOS Safari ignores — it navigates to the blob and wipes the run** |
-| **2** | **S81 — the visibility audit, read as broken interactions** | *not yet written — `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §4* | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too. ⚑ **S79 ADDS ONE MEASUREMENT TO ITS SCOPE:** the settled E4 seat, turned 180°, renders **177 draw calls** against a ≤75 budget, and no audit run has ever sampled a turned seat (08 §20) |
+| **2** | **S81 — the visibility audit, read as broken interactions** | ↓ at the tail of this file | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too. ⚑ **S79 ADDS ONE MEASUREMENT TO ITS SCOPE:** the settled E4 seat, turned 180°, renders **177 draw calls** against a ≤75 budget, and no audit run has ever sampled a turned seat (08 §20) |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
 
 ~~**⚑ S73 IS QUEUED**~~ **⚑ CORRECTED 2026-08-12: S73 is RETIRED; S79 is the next
@@ -1526,3 +1526,104 @@ sessions and an afternoon of device testing.
   have moved. **If it has, say so; do not quietly re-baseline.**
 - One BUILD_LOG line; session log entry; commit on `reinterp`. **⚑ The deploy is now automatic on
   push** — so a push puts this on Sérgio's iPad. Do not push a build you have not tested.
+
+---
+
+# S81 — THE VISIBILITY AUDIT, READ AS BROKEN INTERACTIONS
+**⚑ PROMPT STATUS: QUEUED 2026-08-13 · Codex · dispatchable after S85 (they share `01`/`08`/BUILD_LOG).**
+*Fence: `tools/shots.mjs`, `tools/room-audit.mjs`, `docs/reinterp/01_SESSION_LOG.md`,
+`docs/reinterp/08_STATUS_REGISTER.md`, `BUILD_LOG.md`, and ONE new doc,
+`docs/REINTERP_VISIBILITY_AUDIT_2026-08-13.md`. ⚑ **Change no `src/` file except to fix a fault this
+audit proves**, and if you do, say which measurement forced it.*
+
+## ⚑⚑ READ THIS FIRST — the guardrail, and it is the whole risk of this session
+**Turning IS the mechanic.** R28 §1: the player never walks; rotation is the exploration; the turn is
+the piece's signature bodily ask. **So a prop being out of the default frame is NOT a defect — it is
+very often the design working.** S71's P3 desks sit 41–51° below a 21° half-FOV and that was left as
+a framing call, deliberately, and is carried in `OFF_FRAME_BASELINE = 6` so it is re-surfaced by
+measurement rather than re-argued by hand.
+
+> ### ⚑ THE FAILURE MODE TO AVOID IS "FIXING" THIS BY RE-AIMING THINGS INTO THE FRAME.
+> That would flatten the piece into a picture of a room and delete the one gesture it is built on.
+> **You are producing a MAP OF WHAT TURNING COSTS, not a list of things to move.**
+
+**The distinction that makes this session worth running** — and it is the phrase in its own title:
+
+| | |
+|---|---|
+| **Scenery out of frame** | **composition.** Measure it, print the bearing, leave it. Sérgio's call, and mostly he will say keep it |
+| **⚑ An interaction the piece ASKS FOR, out of frame** | **a broken interaction.** The system offers, the player is asked to act, and nothing actionable is in front of them. **This is a bug and it is what you are hunting** |
+
+**The known case, and your worked example:** at E1's belongings window (`Remind me later` on the first
+update) the piece asks the player to choose what to keep — and **not one of the eight eligible props
+was in the default frame**: mixtape 69.9°, duck 80.8°, cdStack 95.8°. That is the shape of the fault.
+An offer with an empty frame reads as a broken window, not as an invitation to turn.
+
+## THE FOUR MEASUREMENTS
+The rig already has `framing()`, `toCameraSpace()`, `subjectsInFrame()` and the draw-call peaks.
+**Extend it; do not rewrite it.** `tools/shots.mjs` has been thrown away and rebuilt three times in
+this project's history and S72 consolidated it deliberately.
+
+### 1 · REACHABILITY, as a bearing — not a boolean
+For **every clickable prop in every era** (not one authored subject per seat — that is the existing
+check and it stays), report the **yaw offset from the seat's authored forward at which it enters
+frame**, and its elevation. **A bearing is information; `false` is not.** Sort the report by bearing,
+because the ordering *is* the finding: it shows what the piece asks you to turn for, and how far.
+
+⚑ **Flag separately, and loudly, any prop that is offered by a live beat while out of frame** — join
+against the offer/belongings data rather than eyeballing it. That join is the session's core output.
+
+### 2 · PORTRAIT — the viewport nobody has ever audited
+Every sweep in this project has run landscape. **A phone in the hand is portrait**, and portrait is
+not a crop of landscape: the horizontal FOV is far narrower, so things comfortably framed in landscape
+leave frame entirely. **Run the whole framing pass at a portrait aspect as well and report both
+columns side by side.** ⚑ Expect this to be the ugliest number in the report. Do not soften it.
+
+### 3 · HIT SIZE — because a thumb is not a mouse
+Project each clickable prop's hit rect (`window.__os.*.hits` — see the recall note in
+`reinterp-real-click-verification`) and report its size **in CSS pixels at both viewports**.
+**Apple's own HIG floor is 44×44 pt.** Anything under it is not reliably hittable with a thumb, and
+S80's 10 px / 1.2 s tap threshold is a *desktop-measured* number sitting on top of it.
+**Report; do not resize anything.** Several of these are small on purpose.
+
+### 4 · ⚑⚑ DRAW CALLS AT TURNED SEATS — the number S79 surfaced
+> **The settled E4 seat, turned 180°, renders 177 draw calls against a ≤75 budget** (`08 §20`).
+
+**No audit run has ever sampled a turned seat except `r1-turned`.** So sample every seat at its
+authored forward **and** at 180°, in every era, and print the matrix.
+
+**Two things to hold while you do it:**
+- **The ball is not the cause.** S79 measured it at **zero** draw calls — two omni lights and an
+  ambient, no mesh, no stage, no canvas. It was 177 with and without. **The turn has cost this since
+  S67.** Do not go looking for the ball.
+- **⚑ It matters NOW because the ball is the first beat that gives a player a reason to hold that
+  facing for three minutes.** A peak you pass through is not a sustained load at 72 Hz. **Root-cause
+  it as far as the numbers go** — which meshes, which room, whether it is Room 3's belongings again
+  (Session 74 traced the sends' +18 to exactly that) — and **write the diagnosis down even if the fix
+  is a separate session.** A named cause is the deliverable; a fix is a bonus.
+
+## THE RATCHET LAW — it applies to you
+`BLANK_BASELINE`, `OFF_FRAME_BASELINE = 6`, `ASSERT_BASELINE = 0` and the draw ratchet all exist to
+**fail on growth and nag downward**. **You may not raise a baseline to make a run pass.** If a number
+has moved, that is the finding — report it and say what moved it. ⚑ **S84 changed the entrance
+lighting and did not run `npm run audit`, so the blank-frame assertion may legitimately have shifted;
+if it has, diagnose it rather than absorbing it.**
+
+Any NEW baseline you add (portrait framing, hit size) starts at **the measured value with the fault
+count named in a comment**, exactly as `OFF_FRAME_BASELINE`'s comment names S71's three desks. **A
+baseline whose comment does not say what is in it is a number nobody can ever lower.**
+
+## ACCEPTANCE
+- `npm run audit` runs all four measurements and prints them as **one report with one exit code**.
+- The reachability table is sorted by bearing and **names every offered-but-unframed interaction**.
+- Portrait and landscape appear **side by side**, not in separate runs.
+- The turned-seat draw-call matrix is printed, and **177 has a named cause** — or a written account of
+  how far the numbers got and what would close it.
+- `docs/REINTERP_VISIBILITY_AUDIT_2026-08-13.md` carries the findings **separated into COMPOSITION
+  (Sérgio's call) and BROKEN INTERACTION (a bug)**. ⚑ **That separation is the deliverable.** A flat
+  list of "things not in frame" is the failure mode of this session — it would read as an indictment
+  of the piece's central gesture.
+- No baseline raised. `npx tsc --noEmit`, `npm test`, `npm run build` green.
+- One BUILD_LOG line; session log entry; `08` section. Commit on `reinterp`.
+  ⚑ **The deploy is automatic on push** — if you touch only `tools/` and `docs/`, the published build
+  is unchanged, which is the expected outcome here.
