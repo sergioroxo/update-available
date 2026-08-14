@@ -682,6 +682,37 @@ class ProductionCanaryWorker:
         # represented by the separately emitted document events.
         return str(row["station_id"])
 
+    def _finish_station(self, station_id: str) -> bool:
+        rows = [
+            row for row in self.store.jobs() if row["station_id"] == station_id
+        ]
+        terminal_states = {"succeeded", "held", "cancelled"}
+        if not rows or any(row["state"] not in terminal_states for row in rows):
+            return False
+        if any(
+            self.store.has_transition(
+                entity_kind="station", entity_id=station_id,
+                station_id=station_id, to_state=state,
+            )
+            for state in terminal_states
+        ):
+            return False
+        if any(row["state"] == "held" for row in rows):
+            terminal = "held"
+        elif any(row["state"] == "cancelled" for row in rows):
+            terminal = "cancelled"
+        else:
+            terminal = "succeeded"
+        running = self.store.has_transition(
+            entity_kind="station", entity_id=station_id,
+            station_id=station_id, to_state="running",
+        )
+        self._emit(
+            entity_kind="station", entity_id=station_id, station_id=station_id,
+            from_state=("running" if running else "pending"), to_state=terminal,
+        )
+        return True
+
     def _build_material(self, row: sqlite3.Row) -> StationMaterial:
         assert self.approval is not None and self.campaign is not None
         job = self._job_contract(row)
@@ -775,10 +806,7 @@ class ProductionCanaryWorker:
                     from_state="running", to_state="succeeded", attempt=row["attempt"] or 1,
                     output_sha256=output_hash,
                 )
-                self._emit(
-                    entity_kind="station", entity_id=self._station_entity_id(row), station_id=row["station_id"],
-                    from_state="running", to_state="succeeded",
-                )
+                self._finish_station(row["station_id"])
                 progressed = True
         if progressed:
             self.publish_pending()
@@ -787,13 +815,21 @@ class ProductionCanaryWorker:
     def _finish_campaign(self) -> bool:
         assert self.campaign is not None
         rows = self.store.jobs()
+        station_progressed = False
+        for station_id in PRODUCTION_CANARY_STATIONS:
+            if self._finish_station(station_id):
+                station_progressed = True
         if any(row["state"] not in {"succeeded", "held", "cancelled"} for row in rows):
-            return False
+            if station_progressed:
+                self.publish_pending()
+            return station_progressed
         terminal = "succeeded" if all(row["state"] == "succeeded" for row in rows) else "held"
         if self.store.has_transition(
             entity_kind="campaign", entity_id=self.run_id, station_id="", to_state=terminal,
         ):
-            return False
+            if station_progressed:
+                self.publish_pending()
+            return station_progressed
         self._emit(
             entity_kind="campaign", entity_id=self.run_id,
             from_state="running", to_state=terminal,
@@ -866,16 +902,21 @@ class ProductionCanaryWorker:
                 from_state="running", to_state="succeeded", attempt=row["attempt"],
                 output_sha256=material.manifest_sha256,
             )
-            self._emit(
-                entity_kind="station", entity_id=self._station_entity_id(row), station_id=row["station_id"],
-                from_state="running", to_state="succeeded",
-            )
+            self._finish_station(row["station_id"])
             self.publish_pending()
             self._finish_campaign()
             return True
         except ProductionWorkerCrash:
             raise
         except DeterministicStationHold as exc:
+            descendants = [
+                descendant for descendant in self.store.jobs()
+                if (
+                    descendant["document_id"] == row["document_id"]
+                    and descendant["station_sequence"] > row["station_sequence"]
+                    and descendant["state"] in {"pending", "ready"}
+                )
+            ]
             state = self.store.fail(
                 row, token, self.now, exc.reason_code, retryable=False,
             )
@@ -886,10 +927,18 @@ class ProductionCanaryWorker:
                 from_state="running", to_state=state, attempt=row["attempt"],
                 error_class=exc.reason_code,
             )
-            self._emit(
-                entity_kind="station", entity_id=self._station_entity_id(row), station_id=row["station_id"],
-                from_state="running", to_state="held", error_class=exc.reason_code,
-            )
+            for descendant in descendants:
+                self._emit(
+                    entity_kind="document", entity_id=descendant["document_id"],
+                    document_id=descendant["document_id"],
+                    station_id=descendant["station_id"],
+                    from_state=descendant["state"], to_state="held",
+                    attempt=descendant["attempt"],
+                    error_class="predecessor_held",
+                )
+            self._finish_station(row["station_id"])
+            for descendant in descendants:
+                self._finish_station(descendant["station_id"])
             self.publish_pending()
             self._finish_campaign()
             return True
@@ -909,6 +958,8 @@ class ProductionCanaryWorker:
                     document_id=row["document_id"], station_id=row["station_id"],
                     from_state="failed", to_state="ready", attempt=row["attempt"],
                 )
+            else:
+                self._finish_station(row["station_id"])
             self.publish_pending()
             return True
 

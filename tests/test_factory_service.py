@@ -7,9 +7,10 @@ from pathlib import Path
 import pytest
 
 from runner.models.reprocessing import (
-    CANARY_CONFIRMATION_TEXT,
+    CANARY_CONFIRMATION_TEXT, PILOT_CONFIRMATION_TEXT,
     PRODUCTION_CANARY_STATIONS,
-    CopiedTextCanaryApprovalV1,
+    CopiedTextCanaryApprovalV1, CopiedTextPilotApprovalV1,
+    CopiedTextPilotArtifactV1,
 )
 from runner.pipeline.factory_auth import (
     AuthenticatedFactoryMessageV1,
@@ -20,15 +21,18 @@ from runner.pipeline.factory_auth import (
 )
 from runner.pipeline.factory_controller import (
     demo_production_canary, publish_production_canary_release,
+    publish_production_pilot_release,
 )
 from runner.pipeline.factory_messages import canonical_json_bytes, sha256_bytes
 from runner.pipeline.factory_messages import publish_checksum_bound_json
 from runner.pipeline.factory_service import (
     FactoryServiceLock, ProductionCanaryWorker, ProductionLeaseRejected,
-    ProductionWorkerCrash, run_service_once,
+    ProductionWorkerCrash, run_service_once, run_service_scan_once,
 )
+from runner.pipeline.factory_station_adapters import DeterministicStationHold
 from runner.pipeline.syncthing_exchange import (
-    assert_clean_transfer_tree, observe_authenticated_receipts,
+    assert_clean_transfer_tree, load_authenticated_factory_receipts,
+    observe_authenticated_receipts,
     publish_exchange_json, verify_authenticated_result_bundle,
 )
 
@@ -128,6 +132,67 @@ def _worker(context):
         receipt_signing_private_key=context["st_private"],
         now=NOW + timedelta(seconds=2),
     )
+
+
+def _pilot_setup(tmp_path: Path, run_id: str) -> dict:
+    keys = tmp_path / "pilot-keys"
+    keys.mkdir()
+    mb_private, mb_public = keys / "mb.private.pem", keys / "mb.public.pem"
+    st_private, st_public = keys / "st.private.pem", keys / "st.public.pem"
+    generate_keypair(mb_private, mb_public)
+    generate_keypair(st_private, st_public)
+    source_root = tmp_path / "pilot-sources"
+    source_root.mkdir()
+    artifacts = []
+    source_paths = {}
+    for index in range(6):
+        document_id = f"pilot-doc-{index + 1:02d}"
+        source = source_root / f"fixture-{index + 1:02d}.txt"
+        data = f"Run-013 synthetic pilot fixture {index + 1}.\n".encode()
+        source.write_bytes(data)
+        source_paths[document_id] = source
+        artifacts.append(CopiedTextPilotArtifactV1(
+            document_id=document_id,
+            source_sha256=sha256_bytes(data),
+            source_bytes=len(data),
+            source_characters=len(data.decode()),
+            safe_display_filename=source.name,
+            media_type="text/plain",
+            public_title=f"Run-013 synthetic fixture {index + 1}",
+            public_provenance_label="Run-013 temporary synthetic test",
+            source_is_public=True,
+            source_is_non_sensitive=True,
+            not_anonymous_platform_testimony=True,
+            contains_no_private_or_restricted_material=True,
+            copied_local_bytes_only=True,
+        ))
+    approval = CopiedTextPilotApprovalV1(
+        approval_id=f"approval-{run_id}",
+        run_id=run_id,
+        approved_at=NOW,
+        expires_at=NOW + timedelta(hours=24),
+        researcher_id="researcher-synthetic",
+        artifacts=tuple(artifacts),
+        authorized_station_ids=PRODUCTION_CANARY_STATIONS,
+        macbook_code_identity_sha256="a" * 64,
+        macbook_worktree_identity_sha256="b" * 64,
+        storage_preflight_identity_sha256="c" * 64,
+        researcher_confirmation_text=PILOT_CONFIRMATION_TEXT,
+    )
+    to_studio = tmp_path / "pilot-exchange" / "to"
+    from_studio = tmp_path / "pilot-exchange" / "from"
+    publish_production_pilot_release(
+        to_studio=to_studio,
+        source_paths=source_paths,
+        approval=approval,
+        command_signing_private_key=mb_private,
+        now=NOW,
+    )
+    return {
+        "run_id": run_id, "to": to_studio, "from": from_studio,
+        "state": tmp_path / "pilot-state", "logs": tmp_path / "pilot-logs",
+        "mb_public": mb_public, "st_private": st_private, "st_public": st_public,
+    }
 
 
 def test_real_service_runs_three_ordered_stations_and_receipt_only_observer(tmp_path):
@@ -517,3 +582,103 @@ def test_extra_or_missing_returned_artifact_is_rejected(tmp_path):
             station_id="source_verify", allowed_public_keys=allowed,
             now=NOW + timedelta(minutes=10),
         )
+
+
+def test_six_document_worker_emits_one_aggregate_chain_per_station_and_restarts_idle(
+    tmp_path,
+):
+    context = _pilot_setup(tmp_path, "corrected-six-doc-013")
+    common = dict(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], log_root=context["logs"],
+        command_public_key_paths=(context["mb_public"],),
+        receipt_signing_private_key=context["st_private"],
+        host_role="synthetic",
+    )
+    first = run_service_scan_once(now=NOW + timedelta(seconds=2), **common)
+    allowed = public_key_allowlist((context["st_public"],))
+    receipts = load_authenticated_factory_receipts(
+        context["from"], run_id=context["run_id"],
+        allowed_public_keys=allowed, now=NOW + timedelta(minutes=10),
+    )
+    projection = observe_authenticated_receipts(
+        context["from"], run_id=context["run_id"],
+        allowed_public_keys=allowed, now=NOW + timedelta(minutes=10),
+    )
+    station_events = [
+        receipt.event for receipt in receipts
+        if receipt.event.entity_kind == "station"
+    ]
+    assert first["runs"][0]["status"] == "succeeded"
+    assert projection.schema_version == "factory-state-projection-v1.2"
+    assert projection.valid is True
+    assert len(receipts) == 44
+    assert len(projection.documents) == 18
+    assert len([
+        event for event in station_events if event.to_state == "running"
+    ]) == 3
+    assert len([
+        event for event in station_events
+        if event.to_state in {"succeeded", "held", "cancelled"}
+    ]) == 3
+    assert {row.state for row in projection.stations} == {"succeeded"}
+
+    restarted = run_service_scan_once(now=NOW + timedelta(seconds=3), **common)
+    repeated_receipts = load_authenticated_factory_receipts(
+        context["from"], run_id=context["run_id"],
+        allowed_public_keys=allowed, now=NOW + timedelta(minutes=10),
+    )
+    repeated_projection = observe_authenticated_receipts(
+        context["from"], run_id=context["run_id"],
+        allowed_public_keys=allowed, now=NOW + timedelta(minutes=10),
+    )
+    assert restarted["runs"][0]["steps"] == 0
+    assert repeated_receipts == receipts
+    assert repeated_projection == projection
+
+
+def test_six_document_hold_isolated_with_descendants_and_aggregate_held(
+    tmp_path, monkeypatch,
+):
+    context = _pilot_setup(tmp_path, "corrected-held-013")
+    original = ProductionCanaryWorker._build_material
+
+    def hold_one(self, row):
+        if row["document_id"] == "pilot-doc-03" and row["station_id"] == "source_verify":
+            raise DeterministicStationHold("synthetic_document_hold")
+        return original(self, row)
+
+    monkeypatch.setattr(ProductionCanaryWorker, "_build_material", hold_one)
+    result = run_service_scan_once(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], log_root=context["logs"],
+        command_public_key_paths=(context["mb_public"],),
+        receipt_signing_private_key=context["st_private"],
+        host_role="synthetic", now=NOW + timedelta(seconds=2),
+    )
+    allowed = public_key_allowlist((context["st_public"],))
+    projection = observe_authenticated_receipts(
+        context["from"], run_id=context["run_id"],
+        allowed_public_keys=allowed, now=NOW + timedelta(minutes=10),
+    )
+    assert result["runs"][0]["status"] == "held"
+    assert projection.valid is True
+    assert projection.campaign.state == "held"
+    assert {row.state for row in projection.stations} == {"held"}
+    held = [
+        row for row in projection.documents if row.entity_id == "pilot-doc-03"
+    ]
+    siblings = [
+        row for row in projection.documents if row.entity_id != "pilot-doc-03"
+    ]
+    assert len(held) == 3 and {row.state for row in held} == {"held"}
+    assert len(siblings) == 15 and {row.state for row in siblings} == {"succeeded"}
+    assert all(row.attempt == 1 for row in siblings)
+    for document_id in (
+        "pilot-doc-01", "pilot-doc-02", "pilot-doc-04",
+        "pilot-doc-05", "pilot-doc-06",
+    ):
+        assert (
+            context["state"] / context["run_id"] / "results" / document_id
+            / "complete_units_v2" / "artifact_manifest.json"
+        ).is_file()
