@@ -22,7 +22,8 @@ not live.***
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
 | — | ~~S80 — fix picking, then the gyro look-mode~~ | ↓ at the tail of this file | ✅ **SHIPPED 2026-08-09.** Its picking fix is closed; S77 and S78 subsequently shipped |
-| **1** | **S81 — the visibility audit, read as broken interactions** | *not yet written — `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §4* | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too. ⚑ **S79 ADDS ONE MEASUREMENT TO ITS SCOPE:** the settled E4 seat, turned 180°, renders **177 draw calls** against a ≤75 budget, and no audit run has ever sampled a turned seat (08 §20) |
+| **1** | **S85 — the third device pass** (relocation skip · the `📷 shot` button exits the piece on iOS · re-verify duck + entrance tap · warn that a debug jump's aftermath is not evidence) | ↓ at the tail of this file | ⚑ **QUEUED 2026-08-13, dispatchable now.** Both faults READ FROM SOURCE, not guessed: `app.ts:2348` still ends the relocation on pointerdown, and `panel.ts:543` uses `a.download`, **which iOS Safari ignores — it navigates to the blob and wipes the run** |
+| **2** | **S81 — the visibility audit, read as broken interactions** | *not yet written — `REINTERP_MODE3_ASSESSMENT_2026-08-06.md` §4* | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too. ⚑ **S79 ADDS ONE MEASUREMENT TO ITS SCOPE:** the settled E4 seat, turned 180°, renders **177 draw calls** against a ≤75 budget, and no audit run has ever sampled a turned seat (08 §20) |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
 
 ~~**⚑ S73 IS QUEUED**~~ **⚑ CORRECTED 2026-08-12: S73 is RETIRED; S79 is the next
@@ -1435,3 +1436,93 @@ saying exactly what to look at on the iPad to confirm it.
 ⚑ REPORT FAITHFULLY. Anything you could not diagnose, say so plainly rather than shipping a guess as
 a fix. "I could not reproduce this" is a result.
 ```
+
+---
+
+# S85 — THE THIRD DEVICE PASS: the choreography, and the button that exits the piece
+**⚑ PROMPT STATUS: QUEUED 2026-08-13 · Codex · dispatchable now.**
+*Fence: `src/engine/app.ts`, `src/debug/panel.ts`, `BUILD_LOG.md`, `docs/reinterp/01_SESSION_LOG.md`,
+`docs/reinterp/08_STATUS_REGISTER.md`. ⚑ Do NOT enter `src/room/`, `src/desktop/apps/` or `data/` —
+S79 has just landed there and its texture is fresh.*
+
+Sérgio ran the deployed build on an iPad on 2026-08-13. **The orientation fix is confirmed working**
+and §18 is closed — his readout said `q₂ 90.0° · derived (API said 0.0°)` with `events legacy 0 ·
+screen 0`, which proves both of S83's defences are load-bearing. **Do not touch that code.**
+
+He found three things. **Two are diagnosed below and you should trust the diagnosis over your own
+first guess — both were read from the source, not from behaviour.**
+
+## 1 · ⚑ THE RELOCATION IS STILL SKIPPABLE — S84 fixed one of the two paths
+> Sérgio: *"When jumping from era to era, you should be able to look around if you need, but tapping
+> should not jump ahead."* … *"all the camera movements are still skippable."*
+
+**He is exactly right, and `app.ts:2348` is why.** S84 rebuilt the descent to defer to S80's release
+test, and left the line below it on the old immediate path:
+```js
+if (descentActive) { press = {…, opening: true}; …; return; }   // S84: deferred to release ✅
+if (relocLeg) { endRelocation(); return; }                       // ⚑ still fires on POINTERDOWN
+```
+**Make the relocation behave exactly like the descent.** Same `opening: true` press record, same
+10 px / 1.2 s release test, same "never fall through onto the landed room". The `pointerup` handler's
+`if (p.opening)` branch must end **whichever** move is live:
+```js
+if (p.opening) { if (descentActive) endDescent(); else if (relocLeg) endRelocation(); return; }
+```
+⚑ **Leave the `keydown` path (2416–2417) alone** — a key is unambiguous and always was.
+
+**Why this matters more than it looks:** the relocation is the longest scripted move in the piece and
+it is *the argument about the building* — that these rooms are one building, and you are being moved
+through it. **Losing that to an accidental thumb is not a UI annoyance; it is the thesis going by
+unseen.** A drag to look around during the move is welcome and must keep working.
+
+## 2 · ⚑⚑ THE `📷 shot` BUTTON EXITS THE PIECE ON iOS — diagnosed, cause certain
+> Sérgio: *"the snapshot button breaks the experience."*
+
+`panel.ts:543`'s handler ends with `a.download = …; a.click();`.
+**iOS Safari does not implement the `download` attribute. It ignores it and NAVIGATES to the blob
+URL** — so the page is replaced, the run ends, and **the in-memory ledger is wiped** (it is the only
+store there is; nothing persists by law). That is the whole of "breaks the experience".
+
+**Two further faults in the same eight lines, both real:**
+- `URL.revokeObjectURL(url)` fires **synchronously after `a.click()`**, which can revoke the blob
+  before anything has read it. Race, not a certainty — but wrong on every platform.
+- The out-of-band `app.render()` renders a frame outside the engine's own loop.
+
+> ### ⚑ THE FIX IS TO HIDE IT, NOT TO REPAIR IT
+> **`📷 shot` is a desktop review affordance and `tools/shots.mjs` is the real capture path.** There
+> is no reason for it to exist on a tablet. Gate the button on a non-touch pointer
+> (`matchMedia('(pointer: fine)')`) and **omit it entirely otherwise** — do not render it disabled,
+> which invites the press. Keep it working unchanged on desktop.
+>
+> ⚑ **This is the same shape as the fullscreen row S84 built: capability-gated, absent when useless.**
+> Follow that precedent rather than inventing a second pattern.
+
+## 3 · The duck and the entrance tap — RE-VERIFY, do not re-fix
+He reported both still broken, **but he was testing a stale build** — the deploy was manual until
+2026-08-13 and the fixes had landed without publishing. **Confirm on the current tree before changing
+anything.** The duck is at **84.2° right of Room-1 forward**; a review pose facing forward will not
+see it and that is the design. **If both check out, say so plainly and change nothing** — a fix
+applied twice to a working thing is how the E2 `setPlaneZ` authority came back.
+
+## 4 · ⚑ AND ONE THING TO WRITE DOWN, NOT TO FIX
+Three of his findings carried the same qualifier — *"if i jump from the debug mode."* **S84 could not
+reproduce the tape, the board or a duck fault on the ordinary path and was telling the truth:** a cold
+E2 has no filed record, so the board is *correctly* black, and a cold jump leaves props in a fold the
+era never reaches.
+
+S84 labelled the buttons **⏵ ENTRY / JUMP / ACTION**, which helps. **It did not warn that a JUMP can
+also leave the ROOM in a state the played path never produces.** Add that to the panel's own header,
+in one line, where the labels already are: *what you see right after a jump is not evidence about the
+piece.* ⚑ **This is the highest-value thing in the session** — it is why three non-bugs cost two
+sessions and an afternoon of device testing.
+
+## Acceptance
+- A **drag** during a relocation looks around and the move continues; a **tap** ends it; a key ends it.
+- `📷 shot` is absent on a touch device and unchanged on desktop.
+- Duck and entrance tap re-verified on the current tree, with the result stated either way.
+- The debug panel says, in its own header, that a jump's aftermath is not evidence.
+- `npx tsc --noEmit`, `npm test`, `npm run build` green. **⚑ Run `npm run audit` and report the
+  numbers** — S84 changed the entrance lighting and did not run it, so the blank-frame assertion may
+  have moved. **If it has, say so; do not quietly re-baseline.**
+- One BUILD_LOG line; session log entry; commit on `reinterp`. **⚑ The deploy is now automatic on
+  push** — so a push puts this on Sérgio's iPad. Do not push a build you have not tested.
