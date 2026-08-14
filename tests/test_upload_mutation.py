@@ -1,7 +1,7 @@
 import json
 
-import click
 import pytest
+import typer
 
 from runner.clients.sanity import _build_sanity_document
 from runner.models.document import (
@@ -373,16 +373,18 @@ def test_testimony_gate_blocks_withdrawn_consent(tmp_path):
     intake = _make_intake(tmp_path)
     intake.testimony_consent = "withdrawn"
 
-    with pytest.raises(click.exceptions.Exit):
+    with pytest.raises(typer.Exit) as exc_info:
         _enforce_testimony_upload_gate(intake, _testimony_analysis())
+    assert exc_info.value.exit_code == 1
 
 
 def test_testimony_gate_blocks_refused_consent(tmp_path):
     intake = _make_intake(tmp_path)
     intake.testimony_consent = "refused"
 
-    with pytest.raises(click.exceptions.Exit):
+    with pytest.raises(typer.Exit) as exc_info:
         _enforce_testimony_upload_gate(intake, _testimony_analysis())
+    assert exc_info.value.exit_code == 1
 
 
 def test_testimony_consent_reconciliation_blocks_if_either_record_withdraws(tmp_path):
@@ -396,10 +398,11 @@ def test_testimony_consent_reconciliation_blocks_if_either_record_withdraws(tmp_
     assert archive_upload_disposition_for_testimony(
         intake, _testimony_analysis(), testimony_review=review
     ) == "blocked_refused_or_withdrawn"
-    with pytest.raises(click.exceptions.Exit):
+    with pytest.raises(typer.Exit) as exc_info:
         _enforce_testimony_upload_gate(
             intake, _testimony_analysis(), testimony_review=review
         )
+    assert exc_info.value.exit_code == 1
 
 
 def test_testimony_consent_nonterminal_disagreement_is_pending(tmp_path):
