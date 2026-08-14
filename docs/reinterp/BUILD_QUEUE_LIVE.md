@@ -1475,6 +1475,25 @@ it is *the argument about the building* — that these rooms are one building, a
 through it. **Losing that to an accidental thumb is not a UI annoyance; it is the thesis going by
 unseen.** A drag to look around during the move is welcome and must keep working.
 
+### ⚑ AND THERE IS A SECOND HALF TO THIS, MEASURED S85a — "keep working" is not the state today
+**A drag during ANY driven camera leg does not look. It moves one frame and snaps back.**
+`app.ts:2515–2516` rewrites `camPitch`/`camYaw` from the curve every frame, so the deltas
+`pointermove` accumulates at `:2369–2370` are discarded on the next tick. Measured live on the
+entrance, 2 s in: a 100 px drag took yaw **42.44° → 26.44°**, and the following frame put it back at
+**42.40°** — a 16° jerk that returns, which is worse than inert.
+
+> ⚑ **So fixing only the skip delivers a transition that ignores the hand entirely** — the tap no
+> longer cuts it, and the drag still does nothing. Sérgio's sentence asks for both halves: *"you
+> should be able to look around if you need, but tapping should not jump ahead."*
+>
+> **The shape of the fix (yours to design, this is the constraint, not the code):** carry the drag as
+> an OFFSET applied on top of the curve's prescribed yaw/pitch, not as a write to `camYaw` the curve
+> then overwrites — the same layering `applyMotionLook()` already uses for the gyro, which is exactly
+> why the gyro DOES compose during the descent today and the drag does not. ⚑ Do NOT change
+> `DESCENT_SECONDS`, the relocation leg durations, or any authored pose; the curve's own path must
+> arrive where it always arrived. And the offset must not survive the landing — `endDescent()` /
+> `endRelocation()` both commit an authored seat pose, and a leftover offset would tilt it.
+
 ## 2 · ⚑⚑ THE `📷 shot` BUTTON EXITS THE PIECE ON iOS — diagnosed, cause certain
 > Sérgio: *"the snapshot button breaks the experience."*
 
@@ -1498,6 +1517,14 @@ store there is; nothing persists by law). That is the whole of "breaks the exper
 > Follow that precedent rather than inventing a second pattern.
 
 ## 3 · The duck and the entrance tap — RE-VERIFY, do not re-fix
+> ⚑ **DONE 2026-08-14 by S85a (08 §21) — both check out; change nothing.** The duck's base is
+> **y 1.615**, exactly the bookcase's top board, footprint fully inside with 8 cm of front margin;
+> `teddyBox` base **y 0.703** = its shelf top. The entrance was exercised live: a 100 px drag left
+> `descent: true`, a stationary press+release landed the seat. **The E2 tape and the black board were
+> re-derived too** — no tape floats in r2 by measurement, and the black board is
+> `intake.ts:89–106`'s `drawDormant()` on an empty ledger, 12.5 cm IN FRONT of `terminalFrame`, so
+> occlusion is arithmetically impossible. Read §21 before re-opening any of them.
+
 He reported both still broken, **but he was testing a stale build** — the deploy was manual until
 2026-08-13 and the fixes had landed without publishing. **Confirm on the current tree before changing
 anything.** The duck is at **84.2° right of Room-1 forward**; a review pose facing forward will not
@@ -1505,6 +1532,10 @@ see it and that is the design. **If both check out, say so plainly and change no
 applied twice to a working thing is how the E2 `setPlaneZ` authority came back.
 
 ## 4 · ⚑ AND ONE THING TO WRITE DOWN, NOT TO FIX
+> ⚑ **DONE 2026-08-14 by S85a.** The panel header now carries a second, amber line:
+> *"⚑ a JUMP also leaves the ROOM mid-fold — a blank wall or a missing prop after one is not
+> evidence. Re-check it on the played path."* Verified rendering. Nothing left here.
+
 Three of his findings carried the same qualifier — *"if i jump from the debug mode."* **S84 could not
 reproduce the tape, the board or a duck fault on the ordinary path and was telling the truth:** a cold
 E2 has no filed record, so the board is *correctly* black, and a cold jump leaves props in a fold the
@@ -1521,9 +1552,12 @@ sessions and an afternoon of device testing.
 - `📷 shot` is absent on a touch device and unchanged on desktop.
 - Duck and entrance tap re-verified on the current tree, with the result stated either way.
 - The debug panel says, in its own header, that a jump's aftermath is not evidence.
-- `npx tsc --noEmit`, `npm test`, `npm run build` green. **⚑ Run `npm run audit` and report the
+- `npx tsc --noEmit`, `npm test`, `npm run build` green. ~~**⚑ Run `npm run audit` and report the
   numbers** — S84 changed the entrance lighting and did not run it, so the blank-frame assertion may
-  have moved. **If it has, say so; do not quietly re-baseline.**
+  have moved.~~ ⚑ **RUN 2026-08-14 (S85a):** legs 68 / 39 / 57 / 62 / 78 unchanged, console asserts
+  0, and **the blank-frame count IMPROVED to 0 against a baseline of 1** — the entrance lighting did
+  not cost a frame. The only failures are the three retained send legs. **Still run it yourself and
+  report; do not quietly re-baseline anything that moves.**
 - One BUILD_LOG line; session log entry; commit on `reinterp`. **⚑ The deploy is now automatic on
   push** — so a push puts this on Sérgio's iPad. Do not push a build you have not tested.
 

@@ -908,3 +908,65 @@ for anything, so it stays. Flagged because it is a composition call, not a bug.
 **Also observed:** L's label field sits over the offers wall during the arrival, clipping the third
 card's heading. The field's position is S77's authored one and was not moved; it is a composition
 item for the voice pass, in `S79_no_category_found.png`.
+
+
+---
+
+## §21 — S85a: THE S84 BRIEF WAS RE-DISPATCHED, SO IT WAS RUN AS A VERIFICATION PASS (2026-08-14)
+
+**The brief this session received was S84's, word for word, and S84 shipped on 2026-08-13**
+(`c2fd97e`, `c8e82bd`; §19). Rather than rebuild seven fixes that were already in the tree, every
+item was re-derived independently against the running engine. **Six of seven hold. One is a real
+gap that S84 did not claim and nobody has stated.**
+
+### ✅ RE-VERIFIED, with the evidence rather than the assertion
+| item | how it was checked this session | result |
+|---|---|---|
+| **1 · the black board** | `setPlaneZ` is gone from the tree; live probe of the running app across a real `onEraShift` to E2 shows `witness-screen` still at the authored **z 3.565**, scale 1.5 × 1.125 | ✅ the second positional authority is gone and does not come back at an era shift |
+| **1 · can it occlude at all?** | `terminalFrame` measured live at **z 3.705**, 1.26 × 0.98 — near face 3.690, so the plane is **12.5 cm IN FRONT** of it and larger on both axes | ✅ **occlusion is geometrically impossible.** The S27 mechanism cannot recur at these numbers |
+| **1 · so what IS the black board?** | ⚑ **reproduced in the browser** on a debug jump to E2 and traced to `src/witness/intake.ts:89–106`: with `openingProfile.active` false and an empty ledger, no wake condition matches and `drawDormant()` runs | ✅ **it is the dormant surface drawing correctly.** Not a z fault, not a fold fault |
+| **2 · the duck** | `room-audit --boxes`: base **y 1.615** = the bookcase's top board top exactly; z 0.450–0.550 fully inside the model's 0.370–1.130, 8 cm of front margin | ✅ correct. `teddyBox` base y 0.703 = its shelf top exactly |
+| **2 · was the audit at fault?** | the FLOATING test's `inside` clause (`room-audit.mjs:439–441`) requires the FULL x/z footprint inside the supporter. The old duck overhung the front by 4 cm, so it failed that test and fell through to the floor | ✅ **not a false negative.** The prop was genuinely misplaced AND that misplacement is what the audit was reporting |
+| **3 · the E2 tape** | `mixtape` in r2 measured base **y 0.703** = shelf top, footprint inside the bookcase; `tapeA`/`tapeB`/the in-slot tapes/the boombox are removed at r2 by design | ✅ **still not reproduced.** No tape floats in E2 by measurement |
+| **4a · the entrance skip** | live, on the real listeners: a 100 px drag left `descent: true`; a stationary press+release landed the seat (y 2.22 → 1.16) | ✅ holds |
+| **4b · lights mid-flight** | live: light ramp `k` 0 → 0.5 at t≈6 s → 1.0 at t≈7 s while `descent: true` and the camera still airborne at y 2.06 → 1.87; landing at t≈12 s | ✅ holds, and `WAKE_DURING_DESCENT_DELAY` resolves to exactly 3.9 s, centring the ramp on the descent midpoint |
+| **5 · fullscreen + manifest** | the menu row is behind `document.fullscreenEnabled`; `dist/` carries `manifest.webmanifest` + the three icons + the iOS meta tags | ✅ holds |
+| **6 · the debug marks** | live: **every** panel button carries `⏵ ENTRY` / `JUMP` / `ACTION`, and all 30 E3 device controls read `— not armed yet` while the piece is at E1 | ✅ holds |
+| **7 · orientation** | read line by line against §18's acceptance. Absence stays `null`; `qDevice` is composed BEFORE `screenAngle()` reads it; the tie-break reads the PREVIOUS frame's cardinal, which is correct hysteresis; the 45° reconciliation margin selects `derived` on exactly the iPad case Sérgio photographed | ✅ **no defect found. Left untouched, as instructed** |
+
+### ⚑ THE ONE REAL GAP, AND IT IS S85's
+**A drag during a driven camera move does not look. It moves one frame and snaps back.**
+
+S84 made the entrance skip deliberate, which is right, and the rationale everywhere is *"a press that
+travels is a look."* **During the descent it is not a look — it is nothing**, because
+`app.ts:2515–2516` rewrites `camPitch`/`camYaw` from the curve on the very next frame.
+
+Measured live, 2 s into the descent: a 100 px drag took yaw **42.44° → 26.44°**, and the next frame
+put it back at **42.40°**.
+
+⚑ **So it is slightly worse than inert: the view jerks 16° and returns within one frame.** Nothing
+was changed here — a drag offset during a driven leg is a camera-path change, and **§8.4 of the
+device findings already assigns exactly this to S85** ("you should be able to look around if you
+need"). S85 must fix BOTH halves: stop the tap cutting the leg (`app.ts:2348`) **and** let the drag
+actually turn the view while it flies. Fixing only the first delivers a transition that ignores the
+hand entirely.
+
+### One cosmetic note, not worth a session on its own
+`terminalFrame` is **smaller** than the plane it is supposed to surround (1.26 × 0.98 against
+1.5 × 1.125) and sits behind it, so it is never visible while the plane is enabled. Harmless; it
+means the prop currently earns nothing except the `SURFACE terminalFrame 0.020 m into spineWall`
+finding the audit reports in r1/r2/r3.
+
+### ⚑ WHAT THIS SESSION COULD NOT CLOSE, STATED PLAINLY
+**The ordinary-path E2 record was NOT re-verified here.** Filing a record needs real clicks on the
+offscreen desktop canvas, and the preview tab runs hidden (`innerWidth` 0, rAF frozen), so the frame
+loop had to be stepped by hand and no coordinate-space click was possible. §19 reports S84 did run
+the kit filing and the real 21 s E1→E2 transition and saw the record render; **that claim is
+inherited, not re-derived.** ⚑ It is also the fourth session in a row that would have been closed by
+**assertion 6, reachability on the ordinary path**, which is still not built.
+
+### What changed in the tree
+One edit, `src/debug/panel.ts`: the key line gained the second half §8.2 asked for — **a JUMP also
+leaves the ROOM mid-fold, so a blank wall or a missing prop right after one is not evidence.** That
+sentence is the label for the class that produced items 1, 2 and 3 of this very brief, and until now
+the panel warned about beats and said nothing about the room.

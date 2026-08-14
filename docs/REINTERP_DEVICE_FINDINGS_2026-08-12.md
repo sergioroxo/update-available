@@ -1,5 +1,9 @@
 STATUS: live
 S84 STATUS: SHIPPED 2026-08-13; every device-facing result remains UNVERIFIED ON HARDWARE
+S85a STATUS: RE-VERIFIED 2026-08-14 in the running engine — §§7.1, 7.2, 7.3, 5.1, 5.2, 3, 4 all hold
+(evidence and measurements in docs/reinterp/08_STATUS_REGISTER.md §21). ⚑ ONE NEW GAP, and it is
+S85's: a drag during a driven camera leg moves one frame and snaps back, so "look while it flies"
+does not actually work yet. ⚑ STILL UNVERIFIED ON HARDWARE — no iPad, iPhone or headset was used.
 
 # THE FIRST DEVICE SESSION — findings, and what still needs testing
 *Sérgio's first pass on a real iPad, 2026-08-12, over the deployed Pages build. ⚑ Written while S83

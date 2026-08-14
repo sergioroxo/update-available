@@ -151,6 +151,57 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-14 · Session 85a — **THE VERIFICATION PASS: S84's BRIEF, RE-DISPATCHED AFTER S84 SHIPPED.**
+Touched: `src/debug/panel.ts` (one edit), `08_STATUS_REGISTER.md` §21, `BUILD_QUEUE_LIVE.md` (S85's
+block), `REINTERP_DEVICE_FINDINGS_2026-08-12.md` (status only), this log, `BUILD_LOG.md`. No
+narrative, geometry, comfort, pacing, movement, orientation or send code changed.)*
+
+**THE SESSION'S FIRST FINDING WAS ABOUT ITSELF.** The brief received was S84's, verbatim, and S84
+shipped on 2026-08-13 (`c2fd97e`, `c8e82bd`). Rebuilding seven landed fixes would have been the exact
+fault the brief warns about in its own item 1 — *"a fix applied twice to a working thing is how the
+E2 `setPlaneZ` authority came back"* — so every item was re-derived independently against the running
+engine instead, and the result is measurements rather than assertions. **Six of seven hold; the
+seventh is a real gap nobody had stated.**
+
+**WHAT WAS MEASURED, not read off a previous report.** The witness plane sits at the authored
+z 3.565 before AND after a real `onEraShift` to E2, and `terminalFrame` measures z 3.705 × 1.26 ×
+0.98 — near face 3.690, so the plane is **12.5 cm in front of it and larger on both axes**, and the
+Session-27 occlusion cannot recur at these numbers. ⚑ **The black board was then reproduced in the
+browser** on a debug jump to E2 and traced to `src/witness/intake.ts:89–106`: with no filed record,
+no wake condition matches and `drawDormant()` runs. It is the surface working. The duck's base is
+**y 1.615**, exactly the bookcase's top board, with 8 cm of front margin; `teddyBox` is y 0.703 on
+its shelf; and the audit's old FLOATING report was the correct consequence of the 4 cm front
+overhang failing `room-audit.mjs:439`'s footprint test — **not a false negative.** `mixtape` in r2
+measures y 0.703 on the shelf and no tape floats in E2. On the entrance, a 100 px drag left
+`descent: true` and a stationary press+release landed the seat; the light ramp hit k=1 at t≈7 s with
+the camera still at y 1.87. Every panel button carries its mark and all 30 E3 controls read
+"not armed yet" at E1. S83's orientation code was read line by line — `qDevice` is composed before
+`screenAngle()` reads it, the tie-break correctly consults the previous frame's cardinal, and the 45°
+margin selects `derived` on exactly the case Sérgio photographed. **No defect. Left untouched.**
+
+**⚑ THE ONE REAL GAP, AND IT BELONGS TO S85.** *"A press that travels is a look"* is true of the
+skip and false of the looking: during a driven camera leg the curve rewrites `camYaw` every frame
+(`app.ts:2515–2516`), so a drag is discarded. Measured 2 s into the descent: **42.44° → 26.44° →
+42.40° in one frame** — a 16° jerk that returns, which is worse than inert. Nothing was changed
+(a drag offset on a driven leg is a camera-path change), and S85's block now carries the number and
+the constraint: it must fix both halves, or it ships a transition that ignores the hand entirely.
+
+**ONE CODE CHANGE.** The panel header gained the amber line §8.2 asked for — *a JUMP also leaves the
+ROOM mid-fold; a blank wall or a missing prop after one is not evidence.* S84 labelled the beats and
+said nothing about the room, and the room is what cost three reports and an afternoon of device
+testing.
+
+**⚑ WHAT WAS NOT CLOSED, said plainly.** The ordinary-path E2 record after a real filing was **not**
+re-derived here: filing needs real clicks on the offscreen desktop canvas, and the preview tab runs
+hidden (`innerWidth` 0, rAF frozen), so the frame loop had to be stepped by hand. §19's claim that
+S84 ran the kit filing and the real 21 s transition is **inherited, not re-verified.** That is the
+fourth fault in a row that **assertion 6, reachability on the ordinary path**, would have closed, and
+it is still not built. `npx tsc --noEmit`, `npm test` (palette 33/33, C6 71/71) and `npm run build`
+green; `npm run audit` legs 68/39/57/62/78 unchanged, console asserts 0, blank frames improved to 0
+against a baseline of 1, and only the three retained send legs fail. `node tools/room-audit.mjs`:
+**62 findings — r1 12, r2 9, r3 21, r4 20**, the duck absent from all four, `w_cardigan`/`e_hoodie`
+the only FLOATING findings and both intentional drapes. **⚑ NO iPAD, iPHONE OR HEADSET WAS USED.**
+
 *(2026-08-12 · Session 83 — **THE iPAD HORIZON FIX + THE DEVICE DIAGNOSTIC.** Touched:
 `src/engine/app.ts`, `src/debug/panel.ts`, `src/state/ledger.ts`, `BUILD_QUEUE_LIVE.md`, this log,
 `08_STATUS_REGISTER.md`, `BUILD_LOG.md`. No narrative, geometry, comfort, pacing, movement or send

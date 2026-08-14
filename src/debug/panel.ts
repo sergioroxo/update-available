@@ -10,7 +10,7 @@ import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'S84 · iPad findings pass';
+const BUILD_TAG = 'S85a · tablet verification pass';
 
 interface MotionDiagnostic {
   state: string;
@@ -392,10 +392,22 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   build.style.cssText = 'color:#ffd48f;font-size:10px;margin-bottom:4px';
   panel.appendChild(build);
 
+  // ⚑ S85 adds the SECOND half of this key, and it is the half that cost three
+  // sessions. S84's marks explain why a button can look like it "does nothing"
+  // (a beat whose prerequisites were never met renders as nothing happening).
+  // They do not explain the same fault's OTHER symptom: the device findings'
+  // §8.2 traced the black board, the floating tape and the missing duck to a
+  // jump dropping the ROOM into a fold the played path never reaches — a cold
+  // E2 has no filed record, so its wall is legitimately blank. Three reports
+  // read as defects because nothing on screen said the state was synthetic.
   const key = document.createElement('div');
   key.textContent = '⏵ ENTRY safe cold · JUMP may need prior state · ACTION only while its beat is live';
-  key.style.cssText = 'color:#cdd3df;font-size:9px;line-height:1.35;margin:0 0 6px;padding:4px;border:1px solid #39405270';
+  key.style.cssText = 'color:#cdd3df;font-size:9px;line-height:1.35;margin:0 0 3px;padding:4px;border:1px solid #39405270';
   panel.appendChild(key);
+  const warn = document.createElement('div');
+  warn.textContent = '⚑ a JUMP also leaves the ROOM mid-fold — a blank wall or a missing prop after one is not evidence. Re-check it on the played path.';
+  warn.style.cssText = 'color:#ffd48f;font-size:9px;line-height:1.35;margin:0 0 6px;padding:4px;border:1px solid #5a4a2a';
+  panel.appendChild(warn);
 
   // live "you are here": era + room, polled from the app (?debug=1)
   const now = document.createElement('div');
