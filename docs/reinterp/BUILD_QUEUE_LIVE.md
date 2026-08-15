@@ -1731,6 +1731,16 @@ and it is the same one as the duck and the provotypes:**
 > ⚑ **Treat that as the session's thesis.** Every fix below is an instance of it. If you find a
 > seventh, it belongs here too.
 
+**A0 · ⚑ ROOT CAUSE, TRACED 2026-08-15 — you do not need to find it, only to fix it**
+`provotype.ts:85` fixes `WIN.h = 336`, with a comment admitting it was sized *"for the pillow's
+4-source debrief"*. `drawDebrief()` (`provotype.ts:376–406`) has **no scroll and no height clamp** —
+`y` just accumulates through every source's wrapped text. `drawFixedRow()` is then called
+**unconditionally** at line 187 and paints the button row at a fixed `ROW_Y`.
+**`origin_intake_e1.json` has four sources of 300–380 characters each**, which wrap far past the ~279 px
+of content height. **That is Sérgio's "mess of text" exactly, and it strands two real citations** —
+the Flentje/Heck/Cochran entry and the APA/UK-MoU entry — underneath the buttons.
+⚑ **A window sized to one card's content is the bug. Make the body scroll inside the frame.**
+
 **A · ⚑ THE DOSSIER OVERFLOWS ITS OWN WINDOW** *("what is this mess of text on the Family form??")*
 His screenshot shows `About this` with the body text **running past the frame and underneath the
 Leave / Pause / Return row.** ⚑ **This is the worst one in the list and not because it is the ugliest:
@@ -1745,6 +1755,14 @@ the button row pinned and always reachable. Check the LONGEST card, not a typica
 strip and neither knows about the other. ⚑ **The subtitle must always win** — it is the accessibility
 surface, and S79 already recorded that captions are load-bearing for the ball. Move the chrome, not
 the caption. **And check the same strip at a portrait viewport**, where there is less room to share.
+
+**C0 · ⚑ THE SAME SHAPE, TRACED AND WORSE: THE TWO E1 PROVOTYPES VANISH AT THE ERA CHANGE.**
+`pillow.json` ("Session") and `origin_intake_e1.json` ("Family Form") draw from an icon block inside
+`if (this.desktopEra === 'e1')` (`os.ts:1426–1440`) **with no equivalent for e2+**. And Era 1 ends
+**automatically** — `diary-glitch` → spine arms T1 after 1.2 s (`spine.ts:31, 99–107`) → the era
+shifts. **The player never chooses to leave, and nothing signals that two authored surfaces are about
+to disappear for good.** ⚑ **These are the provotypes Sérgio could not find.** They were reachable;
+the window had already closed. Either carry them forward or make the closing legible.
 
 **C · "TODAY'S LESSON" IS REACHABLE ONLY BEFORE THE FLOPPY.** *"If I didn't go back I would never
 find it… so they only exist before you press the floppy."* Content behind a door that closes
@@ -1833,3 +1851,72 @@ the exhibition's primary method.
 - `npx tsc --noEmit`, `npm test`, `npm run build`, `npm run audit` green; no baseline raised.
 - BUILD_LOG line, session log, `08` section, commit. ⚑ **Push deploys automatically** — push when the
   twenty minutes plays better than it does today, and say what still doesn't.
+
+---
+
+# S87 — THE STRANDED SURFACES: two sends that cannot draw, two dossiers never imported
+**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Codex · dispatchable in parallel with S86** *(S86 works E1–E2;
+this is E3–E4 and the Close. Fence: `src/desktop/os.ts` is SHARED — **coordinate, or run after S86**.)*
+*Found by the delivery-path trace, **each verified independently** before being written here.*
+
+## 1 · ⚑⚑ THE E3 SENDS CANNOT DRAW, AND THE REASON IS A REVIEW TOOL
+`spine.ts:139–146` fires `offerSend('s3')` and `offerSend('s4')` on the **ordinary** E3 path.
+`offerSend` sets state and a toast — both painted inside `drawDesktop()`. But:
+```js
+if (this.desktopEra === 'e3' && (roomIsMounted() || !this.updateApp)) { black; return; }  // os.ts:1420
+…
+this.drawSendOffer(W, H);                                                                 // os.ts:1472
+```
+**The early return fires first, every time.** `roomIsMounted()` is set permanently true the moment
+`buildEra3Devices()` runs (`era3Devices.ts:415`), which is every non-flat reinterp session. **So
+`drawSendOffer()` never executes at E3, no hit rect is ever pushed, and there is no click path even
+for someone who knows the coordinates.** `ledger.sends` never receives s3/s4 either way.
+
+> ### ⚑ AND READ THE BLACKOUT'S OWN COMMENT
+> It justifies itself: blacking the monitor avoids *"[making] Era 4 unreachable in the **canvas-only
+> review tool**."* **That is `?flat=1` shaping shipped behaviour** — precisely what CLAUDE.md's
+> correction forbids: *"it is not an audience target and no design decision should be justified by
+> it."* **The review tool has been steering the piece, and it cost two authored sends.**
+
+**Fix the real build first.** Either give Room 2/3 a live surface for the offer — the technique the
+laptop, tablet and phone already use — or move the offer draw off Daniel's dead monitor entirely.
+**Whatever `?flat=1` then needs, it gets second.**
+
+⚑ **Sequencing note:** S82 found s2 flies at **6.874 m/s against a 0.43 envelope** (`08 §17`). **Do
+not make s3/s4 reachable and leave that unfixed** — you would be handing a player two more of the
+same. **Decide the dolly-versus-blink-cut question (Sérgio's call) in the same session, or land the
+draw fix behind a decline-only path until he rules.**
+
+## 2 · TWO FULL DOSSIER CARDS ARE REFERENCED ONLY IN COMMENTS
+`data/provotypes/e4_ball.json` (6 sourced entries + the credit paragraph) and
+`data/provotypes/e4_offers.json` (4 sourced entries). **Neither is ever imported.** Each appears once,
+inside a comment — `ball.ts:49`, `offers.ts:29`. Grep confirms zero references in `pointCloud.ts`,
+`ceilingWitness.ts` or `close_network.json`, so **the "reading surface is the Close" that
+`e4_ball.json`'s own `_doc` promises does not exist.**
+
+**⚑ Be precise about what this does and does not mean, because it is easy to overstate:**
+- ✅ **The NAMED ballroom credit renders.** `data/strings/attributions.json` is imported at
+  `gameMenu.ts:41` and painted at 208–212, naming Crystal and Lottie LaBeija, the House of LaBeija and
+  the 1967 pageant. **The obligation the provenance pass sets — credit the lineage, never "ballroom
+  culture" in the abstract — is met, and it reaches the player.**
+- ❌ **The SOURCED apparatus does not.** The citations, the contested *Paris Is Burning* / bell hooks
+  entry, the housing-precarity finding, the further reading — all stranded.
+
+**So this is not a credit failure; it is a scholarship failure.** For a piece whose dossier is what
+makes it research rather than assertion, ten sourced entries that no one can open is the same
+condition as everything else on this list: **content that exists and cannot be met.**
+
+## 3 · THE CLOSE IS THINNER THAN EVERYTHING AROUND IT
+`enterClose()` disables every room and screen and shows a procedural constellation with **no authored
+continuity text**, and the finale lines `s4_offers.json:18` promises are not built. **Scope this
+session to naming what the Close needs; do not build it here** — it is its own session and the
+knowledge-graph question (`close-constellation-as-knowledge-graph`) is unresolved.
+
+## ACCEPTANCE
+- s3 and s4 draw, take a click, and file to `ledger.sends` on both branches — **or** are deliberately
+  held with the reason written down and the comfort decision named.
+- Both E4 dossier cards have a reading surface a player can open, with the route stated in player terms.
+- One paragraph on what the Close is missing. No Close build.
+- The `?flat=1` justification is **removed from the blackout comment** — the review tool does not get
+  to explain shipped behaviour.
+- `tsc`, `npm test`, `npm run build`, `npm run audit` green; no baseline raised. Log, register, commit.
