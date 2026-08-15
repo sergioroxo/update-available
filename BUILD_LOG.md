@@ -21,6 +21,33 @@
   Session 86, not a retirement bug (tapeA/tapeB/boombox all confirmed correctly retired). Full write-up:
   `docs/reinterp/08_STATUS_REGISTER.md` §27. tsc/test/build green throughout, four commits.
 
+- 2026-08-15 — S88: the first real playthrough of Era 4, and what it actually found. Entered the
+  ordinary way (`?era=3&debug=1`'s own opening, all 13 GracePlatform corrections, the real Update-now →
+  EULA → install → E3→E4 relocation), then drove every beat — the one-touch headset, all ten of L's
+  conversation units, the offers wall, the memory curation, the careful pause, the break, all four ball
+  categories (~176s), the return press, the finale — with real clicks projected through the engine's own
+  ray math, frames advanced by a synchronous `app.tick()` stepper (this sandboxed pane suspends real
+  rAF). Found and fixed two real, high-severity bugs: (1) the Close's "Restart as you are." card was
+  compositing over the finale's own four-year panels forever, because `E4Offers.ownsField` never expires
+  once `stage === 'done'` and `E4Shell.draw()` kept painting them under the update's small bare modal —
+  `theme/era4.ts`'s own `_docFinale` forbids exactly this; fixed by having the shell paint a plain
+  `ERA4.field` once handed off, reproduced and re-verified live; (2) the ⟲ turn-assist button targeted a
+  hardcoded global 0°/180° heading instead of the seat's own forward — confirmed live at Maya's seat
+  (270°), the button only turned 90° instead of the ~180° the ball's respite is built on (§16 CLASS 4,
+  predicted 2026-08-12, never fixed); made `isBackYaw()`/`doFlip()` seat-relative in `src/engine/app.ts`,
+  byte-identical at seatYaw 0 (E1/E2), verified live at Maya's seat (270° → 90°). Measured draw calls at
+  the E4 seat: 31 forward, **141 turned** against the ≤75 budget (not re-baselined; down from S79's 177,
+  a remeasurement not a fix) — real GPU cost on the exact facing the ball holds a player on for three
+  minutes, root-caused to unbatched GLB furniture across all three simultaneously-open rooms, confirmed
+  architecture-level and out of this session's safe fence, same as §20 already judged. The four r4
+  OVERLAP findings room-audit reports are confirmed NOT Era-4-specific (byte-identical in r1–r3 too,
+  shared base-template geometry) and were not touched, per the E1–E3 prop fence. The deadname beat is
+  unchanged, still `BLOCKED-ON-READER-PASS`. A Vision-Pro-style headset restyle (Sérgio's design note) was
+  judged not cheap and written up as a scoped follow-up rather than half-built. Full write-up, the
+  numbered list, and the fps/draw-call table: `docs/reinterp/08_STATUS_REGISTER.md` §28. tsc/test/build
+  green; `npm run audit` unaffected (no batching/draw-call code touched). Zero console errors across the
+  whole playthrough.
+
 - 2026-08-15 — S87 (own worktree, reinterp branch reset to tip): the two E4 dossier cards get a reading surface — the game menu's Credits view gained "The ball — sources" / "Era 4's offers — sources" sub-panels reading `e4_ball.json`/`e4_offers.json`'s `debrief` only (route: Esc/pause, any era, → Credits & attributions → the new row), 10 sourced entries now player-reachable where before they existed only inside a comment. The E3 sends (s3/s4) now draw: Daniel's monitor stays dead through E3 by design (S61), so the offer composites onto Vera's laptop instead — same `RITUAL_OFFSET` technique already used for the u4 ritual, wired through the E4 bridge (`sendOfferActive`/`drawSendOfferExternal`/`handleSendOfferExternalClick`), and the same exemption now also covers `?flat=1` (which has no laptop either). SAFETY: the "go" button and its hit rect are withheld for s3/s4 only — decline-only, per 08 §17's unresolved s2-dolly-vs-blink-cut comfort finding (6.874 m/s against 0.43 m/s) — verified live via `__os`/`__era3Devices` that no coordinate on the s3/s4 dialog can produce a `visited` ledger outcome while s1 (unrestricted) correctly resolves `visited` at the same button geometry; declining still draws, takes a click, and files to `ledger.sends`. The `?flat=1` justification is removed from the blackout comment. New check-spec.mjs C9 (content reachability, RATCHET baseline 0): every `data/**.json` must be referenced from `src/` with comments stripped first — not merely named inside one, which is exactly how both dossier cards hid — skipping `_`-prefixed fixtures/schema/archive, `data/audio/tts_manifest.json` (build-time only) and `data/paths.json` (C7's own documented non-player-facing exception); regression-tested by reverting the gameMenu.ts import and confirming C9 fails loud. tsc/test/build green (one pre-existing, out-of-fence `tsc` error in `src/engine/app.ts:2940` confirmed via `git stash` to predate this session — not fixed, S86's likely-live file); `npm run audit` runs, its browser-dependent half skips cleanly (puppeteer-core not installed here, exit 0).
 
 - 2026-07-30 — S64: the Close's 32 labels now billboard in place inside their single merged mesh; draw calls remain 5 and a human must confirm forward-reading text from several angles.

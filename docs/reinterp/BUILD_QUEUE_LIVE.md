@@ -1931,7 +1931,10 @@ knowledge-graph question (`close-constellation-as-knowledge-graph`) is unresolve
 ---
 
 # S88 — ERA 4 IS UNPLAYABLE: play it, enumerate it, fix it
-**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Opus · dispatchable now.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-15 · Opus.** Played end to end on the ordinary path (E3 correction
+list → real relocation → headset → L → offers → curation → pause → break → ball → finale → restart
+prompt), the numbered list and every fix verified live. Full write-up:
+`docs/reinterp/08_STATUS_REGISTER.md` §28, `01_SESSION_LOG.md`'s S88 entry.
 *Fence: everything Era-4 — `src/desktop/apps/space.ts`, `ball.ts`, `offers.ts`, `lVoice.ts`,
 `src/room/` E4 paths, `data/dialog/s4_*.json`, E4 rows of `data/room/*.json`. ⚑ **Do NOT touch E1/E2/E3
 props, `data/audio/`, or `src/narrative/tapes.ts`** — S89 owns those, in parallel.*

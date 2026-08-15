@@ -1393,3 +1393,157 @@ its own BOUNDS regression, no commit needed for items 6–8 — triage/verificat
 half re-run manually after each data change (not via the harness, which has no server of its own in
 this worktree) — draw-call/comfort baselines untouched, no ratchet raised.
 
+---
+
+## §28 — S88: THE FIRST REAL PLAYTHROUGH OF ERA 4, AND WHAT IT ACTUALLY FOUND (2026-08-15)
+
+**The brief:** Sérgio played the deployed build and reported *"So many mistakes on ERA-4, crazy amount.
+Era-4 is completely unplayable, collision, the system is not functioning well."* Nobody had ever played
+Era 4 end to end with a pointer and written down what happened. This session did that first, then fixed
+in severity order. **Entered the ordinary way**: `?era=3&debug=1` (E3's own opening, not an E4 jump),
+signed in, applied/skipped all 13 GracePlatform corrections across Renata/Noa/Deb M., let the 6 s quiet
+gap arm the notice, Update-now → 4-page EULA → install → **a genuine `os.onEraShift` E3→E4 relocation**
+(camera measured mid-flight, `desktopEra` flips before the camera lands, exactly S86's centrepiece
+mechanism) → landed at Maya's authored seat. Every beat from there — the one-touch headset, all ten of
+L's conversation units, the offers wall, the memory curation, the careful pause, the break, all four
+ball categories, the return press, the finale — was driven by real `left_click`s projected through the
+same camera/ray math the engine's own picking uses (the sandboxed pane suspends `requestAnimationFrame`
+for a hidden document, so frames were advanced with `app.tick()` called directly at a fixed 16.67 ms —
+the same synchronous-stepper technique prior sessions used, not a shortcut around real interaction).
+
+### THE NUMBERED LIST — what was actually wrong
+
+1. **⚑⚑ HIGH, FIXED — the Close's restart card composited over the finale's own imagery.**
+   Photographed live by Sérgio: the finale's four year-panels (1997/2003/2016/2026) with **"Restart as
+   you are." / Restart** drawn on top of them, in the same frame. `data/dialog/s4_offers.json`'s and
+   `theme/era4.ts`'s own `_docFinale` forbid this in as many words — *"IT SETS THE CLOSE UP AND SPENDS
+   NONE OF IT: no survivors, no title card, no `Restart as you are.` Those are the Close's and they are
+   not this session's."* **Root cause, traced and reproduced before fixing:** `E4Offers.ownsField`
+   stays `true` forever once `stage === 'done'`, so `E4Shell.draw()` (`src/desktop/apps/space.ts`) kept
+   painting the finale's panels every frame with no expiry. The instant `handOff()` fires (end of
+   `finaleClock()`), `os.ts`'s `e4HoldsTheSpine` releases and the spine arms the `close` update on
+   spine.ts's own 22 s clock (already elapsed by then) — and `os.ts` draws that update **on the exact
+   same canvas, immediately after** `e4.draw()`, in the same frame (`if (this.updateApp?.open)
+   this.updateApp.draw(this.ctx)` right after `this.e4.draw(this.ctx, W, H)`). The `close` key's own
+   modal is deliberately small and bare (`update.ts`'s `notify`/`bare` branch — a 320×110 box, not a
+   full-screen takeover), so the panels showed everywhere the small box didn't cover it. **Fixed**:
+   `E4Shell.draw()` now returns a plain `ERA4.field` fill (the cyclorama's own base colour) the instant
+   `handedOff` is true, before reaching any of its own content branches. Reproduced the exact bug live
+   (forced `handedOff`/`armUpdate('close')` on a worn shell — panels visible under the restart card),
+   confirmed the fix live on the identical repro (plain field, no panels, restart card alone). Fixes
+   nothing about the finale itself — it still plays exactly as authored; it just stops outliving itself.
+   `src/desktop/apps/space.ts`.
+
+2. **⚑⚑ HIGH, FIXED — the turn-assist button turns the wrong amount at both side-room seats.**
+   §16 CLASS 4 predicted this in 2026-08-12 and it was never fixed. Confirmed live at Maya's E4 seat
+   (authored forward yaw **270°**): pressing ⟲ (or F2) tweened the camera to yaw **180°** — a 90° swing
+   into a diagonal, not the ~180° "turn around" the ball's whole three-minute respite is built to reward.
+   **Root cause:** `isBackYaw()`'s desktop branch and `doFlip()`'s target were both hardcoded to the
+   world hemisphere (`n > 90 && n < 270`, `target = facingBack ? 0 : 180`), correct only at `seatYaw 0`
+   (E1/E2). **Fixed**, made seat-relative: `isBackYaw()` now tests `(camYaw − seatYaw)`'s hemisphere;
+   `doFlip()` now targets `seatYaw` / `seatYaw + 180`. At `seatYaw 0` both are byte-identical to the old
+   formula (verified algebraically). Verified live at Maya's seat: before 270°, after one flip-button
+   click 90° — exactly the "look behind you" the design calls for. **Not fixed, flagged instead**: the
+   XR/gyro branch (`camera.forward.z > 0`) is the same class of bug and almost certainly wrong at the
+   same two seats, but neither XR nor device-motion can be driven or verified in this sandboxed browser
+   (no headset, no real sensor) — the fix was left alone rather than guessed, with a comment naming it
+   for whoever next has hardware. `src/engine/app.ts`.
+
+3. **⚑ MEDIUM — draw calls at the turned E4 seat are real, reachable, and over budget; not root-caused
+   here, and not newly broken by this era.** Measured at the exact facing the ball's respite holds a
+   player on for ~3 minutes: **31 draw calls facing the desk, 141 turned 180°**, against the ≤75 budget
+   — 1.9× over. (§20/S79 measured **177** turned here in 2026-08-13 and called it pre-existing since S67
+   and out of that session's fence; 141 is a real, independently-remeasured number on the current tree,
+   **not a re-baseline** — nothing in this session touched batching, and the drop is most likely later
+   engine/content changes, not a fix.) This is the strongest candidate for *"the system is not
+   functioning well"*: it is real GPU cost on the exact facing the piece asks a player to hold, and a
+   real browser/headset (unlike this sandboxed pane, which cannot report meaningful fps — see below)
+   would very plausibly feel it as stutter. **Root cause, confirmed by walking the scene graph**:
+   `src/room/batching.ts`'s static batcher explicitly skips any prop carrying a real `.model` (`if (!h
+   || h.model || ...) continue`), and turning at Maya's seat brings all **three** rooms' unbatched GLB
+   bedroom furniture into frame at once (desk/chair/bed/bookcase/nightstand/rug/plant × 3, ~30 of the
+   101 unbatched render entities counted live). **Not fixed**: this is shared batching/model-rendering
+   code that also renders E1–E3 furniture, and a correct fix (grouping same-model-type furniture by its
+   real *texture*, not the box-batcher's diffuse-colour key, which would incorrectly merge differently-
+   textured GLBs) is an architecture change outside this session's safe fence, exactly as §20 already
+   judged. **Also confirmed, and worth naming for whoever takes this next**: `app.stats.drawCalls.total`
+   read through a manual stepper is unstable across camera moves mid-batch (one stray 141 appeared in an
+   otherwise-31 sample immediately after a same-frame camera jump); `window.__drawCalls`, sampled over
+   ≥60 settled frames, is the number above and is stable to the frame.
+
+4. **⚑ LOW, confirmed NOT Era-4-specific, not touched.** `tools/room-audit.mjs`'s four r4 OVERLAP
+   findings — `deskModel ∩ chairModel`, `e_chair ∩ e_hoodie`, `w_chair ∩ w_cardigan`, `w_desk ∩ w_chair`
+   — are literal prop interpenetration, which could be what "collision" meant. **But they are
+   byte-identical in earlier rooms too**: `deskModel ∩ chairModel` is reported in **r1, r2, r3 and r4**
+   with the exact same 0.048 m/z figure (shared base-template geometry, not an E4 delta), and the three
+   wardrobe overlaps are reported identically in **r3 and r4** (props S89 just shipped in belong to E3's
+   own fence, not E4's). Fixing any of them means editing props this session's fence explicitly closes
+   (*"Stay out of Era 1–3 props… S89 just shipped there"*). Documented, not fixed. The two FLOATING
+   findings at r3/r4 (`w_cardigan`/`e_hoodie`) are S89's own confirmed-intentional drapes (§27), not a
+   new report.
+
+5. **Known, unchanged, correctly routed around.** The deadname beat still speaks the ledger's prefilled
+   `"Daniel"` at both its instances (u4/u6) — confirmed live, exactly as §22 already recorded.
+   `BLOCKED-ON-READER-PASS`; wording and the `{name}` field were not touched, per this session's
+   instruction and the standing gate.
+
+6. **Verified working, not a fault** — recorded because six sessions have now separately claimed E4 was
+   broken and none had played it: the one-touch headset guard (`wear()` routes a mid-ball press to
+   `ball.handleClick()`, confirmed live — it does **not** re-wear the shell); all four `gone: true`
+   foreclosure chips render greyed and unpressable, confirmed by attempting a click on one (no ledger
+   entry, no screen change) and by measured colour difference on the ones that render live; the offers
+   wall's four cards are deliberately non-interactive (`offers.ts`'s own stage machine — the wall
+   auto-advances on a timer, "nobody takes it down"), not a bug that clicks do nothing; the memory
+   curation's "See original" genuinely swaps to a different, less-warm image; the ball's 4 categories +
+   opening + closing total 167.8 s of authored `hold` time (+34 s arrival, +2.6 s off ≈ 204 s), matching
+   the brief's "hold that facing for three minutes"; `ledger.e4Space`/`e4Offers`/`l` filed exactly what
+   each file's own `_doc` promises, the ball itself filed **nothing**, and the second wearing filed
+   nothing either (§20's law, re-verified). **Zero console errors across the entire run.**
+
+### fps and draw calls at the E4 seat, forward and turned
+
+`app.stats.drawCalls.total` via `window.__drawCalls`, sampled to a stable value over ≥60 settled frames
+at Maya's authored seat (`4.4, 1.16, 0.7`):
+
+| facing | draw calls | budget |
+|---|---|---|
+| forward (yaw 270, desk) | **31** | ≤75 |
+| turned 180° (yaw 90) | **141** | ≤75 — **1.9× over** |
+
+**fps could not be measured meaningfully.** This sandboxed pane suspends real `requestAnimationFrame`
+for a hidden document (§ "Verifying the build in the sandboxed browser," memory), so every frame here
+was driven by calling `app.tick()` directly rather than by the browser's own frame pacing — timing those
+calls (`performance.now()` deltas) measures this machine's software-render throughput, not anything a
+player's GPU/vsync would produce, and produced implausible four-digit "fps" readings that would mislead
+if reported as real. Draw calls is a device-independent proxy and is the number above; **item 3 explains
+why 141 at this exact facing is the leading suspect for felt lag on real hardware**, unmeasured here.
+
+### The design note, recorded but not built
+
+Sérgio, after a Vision Pro screenshot: *"the look for the HMD it should be more in tune with current
+systems like the Apple Vision Pro no?"* — floating translucent panels, soft depth, rounded corners,
+light glassy chrome, content in space rather than in a bezel. E4's headset is the era's one deliberate
+touch and currently reads as older-generation hardware than the era it depicts. **Judged not cheap**: a
+correct pass touches the visor's chrome/frame rendering in `theme/era4.ts` across every beat that draws
+on it (standby, L's conversation, the offers wall, the curation cards, the finale), needs new palette
+tokens sourced from `src/desktop/theme/` (no invented colours, per the aesthetic laws) kept inside
+`FILTER_NEAREST`/pixel discipline, and needs visual review across all of it — a half-restyled headset
+that looks Vision-Pro-ish in one beat and bezelled in the next is worse than the current consistent one.
+**Not attempted.** Scoped follow-up for its own session: reference the Vision Pro screenshot for
+silhouette/depth/rounding only, translate into this piece's flat, `FILTER_NEAREST`, palette-locked
+2D-canvas-on-a-3D-plane grammar (it is drawn, not shaded — no real glass/blur is available), and review
+every beat that draws on the visor in the same pass so nothing is left half-changed.
+
+### Acceptance
+
+**Era 4 plays end to end on the ordinary path, with the ball intact** — verified in one continuous real
+playthrough this session, landing cleanly at the `close` update's restart prompt with the finale bug
+fixed. `npx tsc --noEmit`, `npm test`, `npm run build` green. `npm run audit` unaffected by this
+session's changes (no batching, no draw-call-relevant code touched by either fix) — **not re-baselined**;
+item 3's 141 is a measurement, not a ratchet change, and is not enforced by the audit tool today (§20
+already noted the turned E4 seat is not among the audit's sampled poses).
+
+**What remains, named for whoever picks it up:** item 3 (the draw-call architecture — GLB furniture
+batching across the three simultaneously-open rooms), the XR/gyro half of item 2, and the Vision-Pro
+headset restyle. None of these block "Era 4 is playable."
+

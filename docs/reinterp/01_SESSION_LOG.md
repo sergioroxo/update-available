@@ -5122,3 +5122,83 @@ mistake)?
 audit`'s browser half re-run manually (headless Chrome + puppeteer-core, both present in this worktree)
 after each data change rather than via the harness (no dev server auto-managed here); draw-call/comfort
 baselines untouched, no ratchet raised. `BUILD_QUEUE_LIVE.md`'s S89 block flipped to SHIPPED.
+
+---
+
+## S88 (2026-08-15) SHIPPED — THE FIRST REAL PLAYTHROUGH OF ERA 4
+
+*Fence: everything Era-4 — `src/desktop/apps/space.ts`, `ball.ts`, `offers.ts`, `lVoice.ts`,
+`src/room/` E4 paths, `data/dialog/s4_*.json`, E4 rows of `data/room/*.json`, plus `src/engine/app.ts`'s
+shared turn-assist logic. Did not touch E1/E2/E3 props, `data/audio/`, or `src/narrative/tapes.ts`
+(S89's, in parallel). Did not touch `s4_l.json`'s deadname wording or `{name}` field.*
+
+**The brief:** *"So many mistakes on ERA-4, crazy amount. Era-4 is completely unplayable, collision, the
+system is not functioning well."* — Sérgio, after playing the deployed build. No prior session had ever
+played Era 4 end to end with a pointer and written down what happened. This session's first job was
+discovery; the numbered list is in `docs/reinterp/08_STATUS_REGISTER.md` §28.
+
+### How it was played
+Entered the ordinary way: `?era=3&debug=1` (E3's own opening — a debug jump to the ERA, never to E4
+itself), signed in, applied/skipped all 13 corrections across Renata/Noa/Deb M., let the 6s quiet gap
+arm the notice, Update-now → 4-page EULA → I Agree → install → a genuine `os.onEraShift` E3→E4
+relocation (verified mid-flight: `desktopEra` flips before the camera lands, S86's centrepiece
+mechanism), landing at Maya's authored seat. Every beat from there — the one-touch headset, all ten of
+L's conversation units, the offers wall, the memory curation A/B, the careful pause, the break, all four
+ball categories plus opening/closing (~176s authored), the return press, the finale — was driven by real
+`left_click`s projected through the engine's own camera/ray math. The sandboxed pane suspends real
+`requestAnimationFrame` for a hidden document, so frames were advanced with `app.tick()` called directly
+at a fixed 16.67ms — the established technique for this environment (memory: "reinterp-real-click-
+verification"), not a shortcut around real interaction.
+
+### THE NUMBERED LIST (full detail in 08 §28)
+1. **⚑⚑ HIGH, FIXED** — the Close's "Restart as you are." card composited over the finale's own four
+   year-panels forever, because `E4Offers.ownsField` never expires once `stage === 'done'` and
+   `E4Shell.draw()` kept painting the panels every frame under the update's small bare modal. This is
+   the exact composite `theme/era4.ts`'s own `_docFinale` forbids in as many words. Reproduced live
+   (forced `handedOff`/`armUpdate('close')` on a worn shell), fixed by having the shell paint a plain
+   `ERA4.field` once handed off, re-verified live on the identical repro. `src/desktop/apps/space.ts`.
+2. **⚑⚑ HIGH, FIXED** — the ⟲ turn-assist button (and F2) targeted a hardcoded global 0°/180° heading
+   instead of the seat's own authored forward. Confirmed live at Maya's seat (270°): the button only
+   turned the camera to 90° short of a real ~180° "look behind you" — 08 §16 CLASS 4 predicted this
+   2026-08-12 and it was never fixed. Made `isBackYaw()`/`doFlip()` seat-relative in `src/engine/app.ts`
+   (byte-identical at seatYaw 0, i.e. E1/E2, verified algebraically); verified live at Maya's seat, 270°
+   → 90° after one click. The XR/gyro branch is the same class of bug and was NOT touched — neither can
+   be driven or verified in this sandboxed browser, and S88 will not guess a rotation sign it cannot
+   test. Flagged in a comment for whoever next has hardware.
+3. **⚑ MEDIUM, measured, not fixed** — draw calls at Maya's seat: **31 forward, 141 turned** against the
+   ≤75 budget, at the exact facing the ball's respite holds a player on for ~3 minutes. Root-caused to
+   `src/room/batching.ts`'s static batcher explicitly excluding any prop with a real `.model`, so turning
+   brings all three simultaneously-open rooms' unbatched GLB furniture into frame at once. This is real,
+   reachable, and the strongest candidate for "not functioning well" on real hardware (fps could not be
+   measured meaningfully in this sandboxed pane — see §28). Confirmed pre-existing and architecture-level
+   (S79/§20 measured 177 here in 2026-08-13 and named the same root cause out of that session's fence);
+   the 141 figure is a remeasurement, not a fix, and is **not re-baselined**.
+4. **⚑ LOW, confirmed NOT Era-4-specific, not touched** — room-audit's four r4 OVERLAP findings are
+   byte-identical in r1–r3 too (`deskModel ∩ chairModel` in all four rooms; the wardrobe overlaps
+   identical in r3 and r4). Shared base-template geometry, not an E4 delta; fixing them means editing
+   props this session's fence closes.
+5. **Known, unchanged** — the deadname beat still speaks "Daniel" at both instances, exactly as §22
+   already recorded. `BLOCKED-ON-READER-PASS`; wording and `{name}` untouched.
+6. **Verified working, not a fault** — the headset guard, all four `gone: true` foreclosure chips, the
+   offers wall's deliberate non-interactivity, the memory curation's real A/B, the ball's ~176s of
+   authored content, the return-press guard (a mid-ball headset press ends the ball, does not re-wear
+   it), and every ledger filing matching its file's own `_doc`. **Zero console errors across the whole
+   run.**
+
+### The design note (recorded, not built)
+Sérgio, after a Vision Pro screenshot: the HMD should look more like current hardware — floating
+translucent panels, soft depth, rounded corners, glassy chrome. Judged not cheap (touches the visor's
+chrome across every beat that draws on it, needs new palette-locked tokens kept inside `FILTER_NEAREST`,
+needs full-beat review) — a half-restyled headset is worse than the current consistent one. Written up
+as a scoped follow-up in 08 §28 rather than half-attempted.
+
+### Acceptance
+**Era 4 plays end to end on the ordinary path, with the ball intact** — verified in one continuous real
+playthrough, landing cleanly at the `close` update's restart prompt with the finale-compositing bug
+fixed. `npx tsc --noEmit`, `npm test`, `npm run build` green. `npm run audit` unaffected by this
+session's changes. Two commits (space.ts, app.ts), plus this documentation. `BUILD_QUEUE_LIVE.md`'s S88
+block flipped to SHIPPED.
+
+**What remains, named for whoever picks it up:** the draw-call architecture (GLB furniture batching
+across the three simultaneously-open rooms), the XR/gyro half of the turn-assist fix, and the
+Vision-Pro headset restyle. None of these block "Era 4 is playable."
