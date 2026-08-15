@@ -15,5 +15,9 @@
     "close": "Today's session",
     "debrief": "About this"
   },
+  "_docS86Paging": "⚑ Session 86 — THE DOSSIER OVERFLOWED ITS OWN WINDOW. Sérgio, on an iPad: \"what is this mess of text on the Family form??\" — the 'About this' body ran past the frame and underneath the Leave / Pause / Return row, stranding two real citations (the Flentje/Heck/Cochran entry and the APA / UK MoU entry) under the buttons. The window is sized 440×336 for the pillow's four-source debrief and drawDebrief() simply accumulated y with no clamp; origin_intake_e1's four 300–380-character sources wrap far past the ~271 px of content height. The dossier is the piece's evidence surface — where documentary | contested | speculative, the confidence ratings and the [VERIFY SOURCE] marks live — so text spilling over its own buttons makes the citations look unmaintained, which is the one impression this piece cannot afford. The body now PAGES inside the frame with the care row pinned, using the EULA's own already-taught idiom (Read on → the close label) rather than a scrollbar, because the piece is click/tap only by law. These three strings are PLACEHOLDER-draft for Sérgio's voice pass; `pageOf` takes {n} and {total}.",
+  "readOn": "Read on",
+  "backPage": "Back",
+  "pageOf": "{n} / {total}",
   "debriefHeading": "Where this comes from"
 }
