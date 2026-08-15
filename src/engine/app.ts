@@ -1345,6 +1345,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** last `tapes.inserted` the props were synced to — the loop watches this so
    *  a tape that ends by itself still returns to the shelf visually (S86). */
   let tapesLastInserted: TapeId | null = null;
+  /** ⚑ S89 — the shelf tape currently under the pointer (hover or an in-
+   *  progress press), or null. Read by the per-frame loop to show its label
+   *  in the tapeCaption strip before anything plays — see testTapeHover(). */
+  let hoveredTapeId: TapeId | null = null;
   function syncTapeProps(): void {
     if (!tapes) return;
     tapesLastInserted = tapes.inserted;
@@ -2309,6 +2313,28 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
 
+  /**
+   * ⚑ S89 — TAPE IDENTITY. Sérgio, 2026-08-15: "how does it label each of the
+   * tapes so we know which one to play?" Before this there was no answer —
+   * the three cassettes on the shelf differ only by a raw hex tint
+   * (data/room/reinterp_deltas.json), which says nothing about WHAT is on
+   * them. This is the read: a shelf tape (not yet inserted) under the
+   * pointer, tested the same way the click itself is (rayHitsPoint against
+   * TAPE_SHELF), so the label always names the exact tape a press would
+   * insert next. Read on both a genuine mouse hover (pointermove, no button
+   * down) AND on pointerdown itself — the label appears the instant a finger
+   * lands, and `resolveTap` (the actual insert) still only fires on RELEASE,
+   * so a touch press always shows the name before the tape plays, never after.
+   */
+  function testTapeHover(e: MouseEvent): TapeId | null {
+    if (!tapes || !os.inDesktop || os.era !== 'e1') return null;
+    for (const id of Object.keys(TAPE_SHELF) as TapeId[]) {
+      if (tapes.inserted === id) continue;
+      if (rayHitsPoint(e, TAPE_SHELF[id], TAPE_HIT_RADIUS)) return id;
+    }
+    return null;
+  }
+
   /** the interaction resolution — everything that used to run on pointerdown */
   function resolveTap(e: PointerEvent): void {
     {
@@ -2497,6 +2523,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     drag = { x: e.clientX, y: e.clientY };
     tween = null; // grabbing the view cancels the assist
     nudgeCamera(); // …and a non-conducted O2/reset move
+    hoveredTapeId = testTapeHover(e); // S89: name the tape the instant a finger lands, before release inserts it
     try { canvasEl.setPointerCapture(e.pointerId); } catch { /* synthetic pointers */ }
   });
   canvasEl.addEventListener('pointermove', (e) => {
@@ -2533,9 +2560,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // monitor plane `toDesktop()` simply returns null (S80: no yaw gate).
     const p = toDesktop(e);
     if (p) os.handleMove(p.x, p.y);
+    else hoveredTapeId = testTapeHover(e); // S89: a genuine mouse hover over the shelf, no press
   });
   canvasEl.addEventListener('pointerup', (e) => {
     pointers.delete(e.pointerId);
+    hoveredTapeId = null; // S89: the press-preview ends at release either way (insert, if any, takes over the caption)
     if (pinch !== null) {
       if (pointers.size < 2) pinch = null;
       drag = null;
@@ -2589,6 +2618,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     pointers.delete(e.pointerId);
     press = null;
     drag = null;
+    hoveredTapeId = null;
     if (pointers.size < 2) pinch = null;
   });
   window.addEventListener('keydown', (e) => {
@@ -2807,8 +2837,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         tapeAudio?.setGamePaused(os.paused);
         if (tapeCaption) {
           const cap = tapes.activeCaption;
-          tapeCaption.textContent = cap ?? '';
-          tapeCaption.style.opacity = cap ? '1' : '0';
+          // ⚑ S89 — TAPE IDENTITY. No tape playing (nothing to caption) and the
+          // pointer is over/holding a shelf tape: name it, so "which one is
+          // this" is answered before a press commits to playing it, not after.
+          const hoverText = !cap && !tapes.inserted && hoveredTapeId
+            ? `◈ ${tapes.def(hoveredTapeId).shelfLabel}` : null;
+          const text = cap ?? hoverText;
+          tapeCaption.textContent = text ?? '';
+          tapeCaption.style.opacity = text ? '1' : '0';
         }
         if (tapeMuteBtn) {
           const show = !!tapes.inserted;

@@ -40,6 +40,12 @@ export interface TapeSegment {
 export interface TapeDef {
   id: TapeId;
   label: string;
+  /** ⚑ S89 — TAPE IDENTITY. Sérgio: "how does it label each of the tapes so
+   *  we know which one to play?" Shown by src/engine/app.ts in the tapeCaption
+   *  strip on hover/press, BEFORE the tape is inserted — `label` above is the
+   *  short internal name used in witness strings ("tape: companion —
+   *  played through") and was never player-facing on its own. PLACEHOLDER-draft. */
+  shelfLabel: string;
   witness: { playedThrough: string; stoppedMidway: string } | null;
   segments: TapeSegment[];
   /** ⚑ S89 — real, ffprobe'd duration (seconds) of this tape's bundled real
