@@ -1239,3 +1239,46 @@ before trusting a "reused" server, or start its own on a private port.**
 only on the pre-existing error above; `vite build` itself is clean. `npm run audit` runs; its
 browser-dependent half skips (no `puppeteer-core` in this worktree, exit 0), unaffected by this
 session's changes.
+
+---
+
+## §25 — THE `?flat=1` CONTAMINATION WAS ONE INSTANCE, NOT A PATTERN (2026-08-15)
+S87 found shipped behaviour justified by the review tool — the E3 monitor blackout's comment reasoned
+that lighting it *"would make Era 4 unreachable in the canvas-only review tool"*, which is exactly what
+CLAUDE.md's 2026-08-06 correction forbids. **Worth knowing whether that was the tip of something.**
+
+**Swept the whole of `src/` for `flat` gates. It was not.** What remains:
+| | |
+|---|---|
+| `src/main.ts:54` | the entry point — `?flat=1` starts the review tool. **Correct; this is the switch itself** |
+| `src/flat/flat.ts` | the review tool's own module |
+| `src/debug/panel.ts:606–609` | the panel's 3D↔flat toggle button. **A review tool's own control** |
+| `era3Devices.ts:76`, `ceilingWitness.ts:7` | comments noting the canvas is shared. **Descriptive, not justifying** |
+
+⚑ **No shipped behaviour is shaped by the review tool any more.** Recording the negative result so
+nobody re-runs this sweep: **the blackout was the only case, and S87 removed it.**
+
+---
+
+## §26 — WHY THE DRAW-CALL RATCHET IS FLAKY (68 vs 76 ON AN IDENTICAL TREE)
+S86 reported the entrance figure at **68 on one run and 76 on an immediate re-run of the same tree**,
+consistent with S71 P5's batch-rebake timing note. **Diagnosed, not yet fixed.**
+
+**Cause:** `tools/shots.mjs:873` takes the metric as
+```js
+drawPeaks.push({ what: 'entrance', peak: Math.max(0, ...rec.map((r) => r[8])) });
+```
+— **the maximum over every sampled frame, warm-up included.** Batching rebakes asynchronously during
+the entrance, so whether a pre-rebake frame lands inside the sample window is a race. A
+peak-of-all-samples metric turns that race into the reported number.
+
+> ⚑ **This matters beyond tidiness: a ratchet that varies by 8 on identical code will eventually fail
+> a build for no reason, and the first person it happens to will raise the baseline to make it pass.**
+> That is precisely the move every ratchet comment in this project forbids.
+
+**Fix (deferred deliberately):** discard warm-up frames before taking the peak — or take a high
+percentile rather than the max — and say in the comment which, and why.
+**⚑ NOT DONE NOW because S88 and S89 are both running and both measure with this tool.** Changing the
+metric underneath them would make their reported numbers incomparable with each other and with §20's
+177. **Do it in the first session after both land.**
+
