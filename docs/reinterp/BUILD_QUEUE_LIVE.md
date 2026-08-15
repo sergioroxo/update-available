@@ -22,7 +22,7 @@ not live.***
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
 | — | ~~S80 — fix picking, then the gyro look-mode~~ | ↓ at the tail of this file | ✅ **SHIPPED 2026-08-09.** Its picking fix is closed; S77 and S78 subsequently shipped |
-| **1** | **S85 — the third device pass** (relocation skip · the `📷 shot` button exits the piece on iOS · re-verify duck + entrance tap · warn that a debug jump's aftermath is not evidence) | ↓ at the tail of this file | ⚑ **QUEUED 2026-08-13, dispatchable now.** Both faults READ FROM SOURCE, not guessed: `app.ts:2348` still ends the relocation on pointerdown, and `panel.ts:543` uses `a.download`, **which iOS Safari ignores — it navigates to the blob and wipes the run** |
+| **1** | **S85 — the third device pass** (relocation skip · the `📷 shot` button exits the piece on iOS · re-verify duck + entrance tap · warn that a debug jump's aftermath is not evidence) | ↓ at the tail of this file | ⚑ **SHIPPED 2026-08-15 (S85).** Both faults were read from source and both held: the relocation now defers to the release test AND a drag rides driven legs as an offset; `📷 shot` is omitted behind `(pointer: fine)`. Duck + entrance re-verified, unchanged. Retired — do not dispatch |
 | **2** | **S81 — the visibility audit, read as broken interactions** | ↓ at the tail of this file | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too. ⚑ **S79 ADDS ONE MEASUREMENT TO ITS SCOPE:** the settled E4 seat, turned 180°, renders **177 draw calls** against a ≤75 budget, and no audit run has ever sampled a turned seat (08 §20) |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
 
@@ -1440,7 +1440,10 @@ a fix. "I could not reproduce this" is a result.
 ---
 
 # S85 — THE THIRD DEVICE PASS: the choreography, and the button that exits the piece
-**⚑ PROMPT STATUS: QUEUED 2026-08-13 · Codex · dispatchable now.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-15 (Session 85) — both halves of item 1 built and measured, item 2
+gated off touch, items 3 and 4 re-verified and left alone. Do not dispatch; the number is retired
+(see BUILD_LOG.md, 01_SESSION_LOG.md and 08 §22). ⚑ UNVERIFIED ON HARDWARE: what remains is one real
+finger on the iPad — drag during an era change, then a still tap, then look for the absent `📷 shot`.**
 *Fence: `src/engine/app.ts`, `src/debug/panel.ts`, `BUILD_LOG.md`, `docs/reinterp/01_SESSION_LOG.md`,
 `docs/reinterp/08_STATUS_REGISTER.md`. ⚑ Do NOT enter `src/room/`, `src/desktop/apps/` or `data/` —
 S79 has just landed there and its texture is fresh.*

@@ -970,3 +970,82 @@ One edit, `src/debug/panel.ts`: the key line gained the second half §8.2 asked 
 leaves the ROOM mid-fold, so a blank wall or a missing prop right after one is not evidence.** That
 sentence is the label for the class that produced items 1, 2 and 3 of this very brief, and until now
 the panel warned about beats and said nothing about the room.
+
+---
+
+## §22 — S85: THE DRIVEN LEG NOW HAS TWO CHANNELS, AND ONE BUTTON LEFT THE TABLET (2026-08-15)
+STATUS: live
+
+*The decisions S85 made that are not derivable from the diff, and the one class the pair of them
+names. Written for the session that asks "why is the drag an offset and not a write?".*
+
+### §22.1 — THE DECISION: a driven leg is a CURVE plus an OFFSET, and they never mix
+`camMove` owns `camPitch`/`camYaw` outright for the length of a leg — it rewrites both every frame
+from its own interpolation. Anything the hand puts there is erased before it is drawn, which is why
+a drag during the descent measured as a **16° jerk that returns** (S85a, §21) rather than as nothing.
+
+**So the hand stopped writing those two while a curve owns them.** `lookOffYaw`/`lookOffPitch`
+accumulate at the same rate the free drag uses, and the rig is posed at
+`camPitch + lookOffPitch, camYaw + lookOffYaw`. Three consequences worth stating, because each is a
+constraint on anyone editing this next:
+
+1. **The curve's own path is untouched, by construction.** It starts where it started and arrives
+   where it arrived; `__camPose`'s `pitch`/`yaw` still report the PRESCRIBED pose, deliberately, so
+   the comfort assertion keeps measuring the leg and never a player's wrist. The look is reported
+   separately as `lookYaw`/`lookPitch`.
+2. **The clamp is on the SUM.** `lookOffPitch` is solved against the live `camPitch` so the composed
+   pitch stays inside `DRAG_PITCH_MAX`. A look during a move can never point further than a look
+   standing still.
+3. **The offset may never survive a landing.** `endDescent()`, `seatCut()` and `performSeatCut()`
+   each commit an AUTHORED pose, and each clears it — a leftover offset would tilt the seat the room
+   was composed for. When a leg ends with nothing taking over, the offset is FOLDED into
+   `camYaw`/`camPitch` instead. Across a relocation's three legs `camMove` is never null at the
+   handover, so the ride carries unbroken rather than snapping back at each boundary.
+
+⚑ **This is the gyro's own layering, one level down.** `applyMotionLook()` poses the CHILD camera
+after the rig is posed, which is exactly why turning a tablet composed during the descent while
+dragging did not. The general lesson: **in this engine, anything the player does during a scripted
+move has to ride on top of the move, never inside it.**
+
+### §22.2 — WHY THE RELOCATION SKIP WAS WORSE THAN A UI ANNOYANCE
+S84 moved the descent onto S80's release test and left `app.ts:2348` — the relocation — firing on
+POINTERDOWN. The relocation is the longest scripted move in the piece and it is the argument about
+the building: that these rooms are one building and you are being carried through it. **An
+accidental thumb was not skipping a transition; it was skipping the thesis.** Both moves now record
+the same `opening: true` press and `pointerup` ends whichever is live. The `keydown` path is
+unchanged and should stay unchanged: a key is unambiguous and always was.
+
+### §22.3 — ⚑ A CLASS: A DESKTOP AFFORDANCE ON A TABLET CAN END THE RUN, NOT JUST MISBEHAVE
+`📷 shot` used `a.download`, which **iOS Safari does not implement**. It is ignored and the blob URL
+is NAVIGATED to: the page is replaced, the piece stops, and the in-memory ledger — the only store
+there is, by law — is wiped. A review button was a **run-ending** button on the device Sérgio tests on.
+
+The fix is the fullscreen row's precedent: **capability-gated and ABSENT when useless**, never
+rendered disabled, because a greyed button invites the press that teaches nothing.
+`(pointer: fine)` is the honest question — not "is this iOS" but "is there a mouse", which is also
+the condition under which download-and-inspect means anything. `tools/shots.mjs` is the real capture
+path and always was.
+
+⚑ **The generalisation, for the next surface that gets built:** every affordance whose payoff is a
+FILE, a new window, or an OS handoff should be assumed run-ending on iOS until proven otherwise —
+the piece has exactly one process and no persistence, so anything that replaces the page destroys
+the run. Two more faults lived in the same eight lines: a synchronous `URL.revokeObjectURL` that
+could kill the blob before it was read (now deferred; a real race everywhere), and the out-of-band
+`app.render()`, which is **kept deliberately** — WebGL clears its back buffer after presentation, so
+that render is what makes the capture non-empty, and it can now only happen on a desktop.
+
+### §22.4 — RE-VERIFIED, NOT RE-FIXED (and the reason that mattered)
+The duck and the entrance tap were re-derived on the current tree and **both hold**, matching §21's
+numbers: `rainbowDuck` base y 1.615 with its footprint x 1.935–2.025 / z 3.000–3.100 fully inside
+`bookcaseMoved`, 8 cm of front margin, and no FLOATING finding for it in the room audit (only the two
+pre-existing soft props). The entrance was exercised live. **Sérgio was testing a stale build** — the
+deploy was manual until 2026-08-13 — and nothing was changed. The panel-header line from §21 renders
+on both desktop and an emulated iPad.
+
+### §22.5 — WHAT S85 DID NOT CLOSE
+- ⚑ **Hardware.** Every measurement is headless Chrome with synthetic `PointerEvent`s. What the iPad
+  owes back is one real finger: a drag during an era change, then a still tap, then the panel.
+- **Assertion 6, reachability on the ordinary path**, is STILL not built — the fifth session in a row
+  it would have closed something for (§21).
+- The three retained send legs still fail comfort (s2 6.874 m/s, s3/s4 4.420 m/s), by instruction.
+- Audit unchanged and NOT re-baselined: 68 / 39 / 57 / 62 / 78, asserts 0, blank frames 0 vs 1.

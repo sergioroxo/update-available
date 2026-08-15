@@ -552,26 +552,46 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   const actions = document.createElement('div');
   actions.style.cssText = 'display:flex;gap:4px;margin:4px 0 2px';
   panel.appendChild(actions);
-  const shotBtn = mkBtn(actions, '📷 shot', () => {
-    const app = opts.app;
-    if (!app) return;
-    // WebGL clears its back buffer after presentation. Render and read the
-    // PlayCanvas canvas in this same synchronous click path; preserveDrawingBuffer
-    // would retain it at a performance cost on every 72 Hz frame.
-    app.render();
-    const cv = app.graphicsDevice.canvas;
-    if (!cv) return;
-    cv.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `uhf_reinterp_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
+  /**
+   * ⚑ S85 — `📷 shot` IS DESKTOP-ONLY NOW, and it is omitted rather than
+   * disabled (the fullscreen row's precedent: capability-gated, absent when
+   * useless — a greyed button only invites the press).
+   *
+   * On Sérgio's iPad this button ENDED THE RUN. `a.download` is not implemented
+   * in iOS Safari: it is ignored and the blob URL is NAVIGATED to instead, so
+   * the page is replaced, the piece stops, and the in-memory ledger — the only
+   * store there is, by law — goes with it. There is nothing here worth
+   * repairing for a tablet: this is a review affordance, and `tools/shots.mjs`
+   * is the real capture path. `(pointer: fine)` is the honest question — not
+   * "is this iOS", but "is there a mouse", which is also what makes a
+   * download-and-inspect workflow mean anything.
+   */
+  const canDownload = window.matchMedia?.('(pointer: fine)').matches ?? true;
+  if (canDownload) {
+    const shotBtn = mkBtn(actions, '📷 shot', () => {
+      const app = opts.app;
+      if (!app) return;
+      // WebGL clears its back buffer after presentation. Render and read the
+      // PlayCanvas canvas in this same synchronous click path; preserveDrawingBuffer
+      // would retain it at a performance cost on every 72 Hz frame.
+      app.render();
+      const cv = app.graphicsDevice.canvas;
+      if (!cv) return;
+      cv.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `uhf_reinterp_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.png`;
+        a.click();
+        // ⚑ S85: NOT synchronous. The old revoke fired the instant `click()`
+        // returned, which can kill the blob before the browser has read it —
+        // a race on every platform, not just the one that broke.
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      });
     });
-  });
-  shotBtn.style.cssText += ';color:#8fffc0;flex:1';
+    shotBtn.style.cssText += ';color:#8fffc0;flex:1';
+  }
 
   const isFlat = new URLSearchParams(window.location.search).get('flat') === '1';
   const modeBtn = mkBtn(actions, isFlat ? '🖥 3D' : '▭ flat', () => {
@@ -618,7 +638,10 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     const building = section('THE BUILDING', 'the rise at every era change');
     const bnote = document.createElement('div');
     bnote.style.cssText = 'color:#7f8aa3;font-size:9px;line-height:1.4;margin:0 0 3px';
-    bnote.textContent = 'each seats you in the FROM era first, then flies it. Any click lands you.';
+    // ⚑ S85: "any click lands you" stopped being true this session — the press
+    // now has to STAY to land it, because a press that travels is a look and
+    // the whole point of these 21–42 s moves is that you can look while they fly.
+    bnote.textContent = 'each seats you in the FROM era first, then flies it. Drag to look; a still press or a key lands you.';
     building.appendChild(bnote);
     if (opts.onRelocate) {
       for (const [label, from, to] of [

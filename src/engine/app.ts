@@ -702,7 +702,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // the app's own dt, so d(position)/d(t) is the velocity the curve
       // PRESCRIBES — what a player at a steady frame rate actually receives.
       t: camMove?.t ?? 0,
-      leg: relocLeg, reloc: relocKey, descent: descentActive
+      leg: relocLeg, reloc: relocKey, descent: descentActive,
+      // ⚑ S85: the player's own look, reported SEPARATELY and deliberately so.
+      // pitch/yaw above stay the curve's PRESCRIBED pose, which is the thing
+      // the comfort law is about — folding a hand-drag into them would make
+      // the audit report the player's wrist as leg velocity.
+      lookYaw: lookOffYaw, lookPitch: lookOffPitch
     });
     // THE WAKE probe (read-only, like __guide; replaces S40's __preBoot):
     // the wake has no desktop-canvas surface to eyeball (the monitor is dark
@@ -953,6 +958,41 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // ── camera state: one free yaw; the flip is a tween on it ──
   let camYaw = 0;
   let camPitch = 0;
+  /**
+   * ⚑ S85 — THE LOOK DURING A DRIVEN MOVE, and why it is an OFFSET.
+   *
+   * S85a measured it: a drag while the entrance arc flies moved the view one
+   * frame and snapped back — yaw 42.44° → 26.44°, and the next tick put it at
+   * 42.40°. Not inert: a 16° jerk that returns, which is worse. The cause is
+   * that a curve WRITES `camPitch`/`camYaw` every frame from its own
+   * interpolation, so anything `pointermove` puts there is overwritten before
+   * it is ever drawn.
+   *
+   * So the drag stops writing those two while a curve owns them, and layers on
+   * top instead — exactly how the gyro already composes (`applyMotionLook()`
+   * poses the CHILD camera after the rig is posed, which is why turning a
+   * tablet DOES look during the descent and dragging did not). The curve's own
+   * path is untouched: it still starts where it started and arrives where it
+   * arrived, and the offset rides it.
+   *
+   * The offset is never allowed to survive a landing. `endDescent()`,
+   * `seatCut()` and `performSeatCut()` all commit an AUTHORED pose, and a
+   * leftover offset would tilt the seat the room was composed for; each clears
+   * it. When a leg simply ends with nothing taking over, the offset is folded
+   * into `camYaw`/`camPitch` instead — the look the player did during the move
+   * is the look they keep.
+   */
+  let lookOffYaw = 0;
+  let lookOffPitch = 0;
+  /** an authored pose is being committed: the drag that rode the leg ends here */
+  function clearLookOffset(): void { lookOffYaw = 0; lookOffPitch = 0; }
+  /** the leg ended free: fold the ride into the free camera and carry on */
+  function commitLookOffset(): void {
+    if (lookOffYaw === 0 && lookOffPitch === 0) return;
+    camYaw += lookOffYaw;
+    camPitch = Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, camPitch + lookOffPitch));
+    clearLookOffset();
+  }
   let tween: number | null = null; // yaw target while the ⟲ swing runs
   let facingBack = false;
   /**
@@ -1378,6 +1418,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!descentActive) return;
     descentActive = false;
     camMove = null; // drop the arc wherever it had got to
+    clearLookOffset(); // …and any look that rode it: the seat is authored
     camPos.set(EYE.x, EYE.y, EYE.z);
     camPitch = 0;
     camYaw = 0;
@@ -1459,6 +1500,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function seatCut(yaw: number): void {
     seatYaw = yaw;
     seatNodeId = null; // a base room seat: seatPose(yaw) IS its authored pose
+    clearLookOffset(); // S85: an authored pose, so nothing rides in on top of it
     const sp = seatPose(yaw);
     camPos.set(sp.x, sp.y, sp.z);
     camPitch = sp.pitch;
@@ -1540,6 +1582,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
     camMove = null;
     tween = null;
+    clearLookOffset(); // S85: same law as seatCut — an authored pose lands clean
 
     // ⚑ THE HELD READ (Session 66) — see era3Devices.ts's note. Taking the
     // tablet or phone seat lifts that screen off the furniture into the hand;
@@ -2345,7 +2388,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     // S61: and so is the relocation, for the same reason and by the same
     // gesture — it is the longest scripted move in the piece.
-    if (relocLeg) { endRelocation(); return; }
+    // ⚑ S85 — AND THAT IS EXACTLY WHY IT MAY NOT END ON POINTERDOWN. S84 moved
+    // the descent onto S80's release test and left this line on the old
+    // immediate path, so the one move that argues the rooms are ONE BUILDING,
+    // and that you are being carried through it, was still being thrown away by
+    // any thumb that touched the glass. Same record, same 10 px / 1.2 s test:
+    // a press that travels is a look (and now genuinely looks — see the
+    // offset), a press that stays ends the move.
+    if (relocLeg) {
+      press = { id: e.pointerId, t: performance.now(), moved: 0, opening: true };
+      drag = { x: e.clientX, y: e.clientY };
+      try { canvasEl.setPointerCapture(e.pointerId); } catch { /* synthetic pointers */ }
+      return;
+    }
     press = { id: e.pointerId, t: performance.now(), moved: 0, opening: false };
     drag = { x: e.clientX, y: e.clientY };
     tween = null; // grabbing the view cancels the assist
@@ -2366,8 +2421,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const dx = e.clientX - drag.x;
       const dy = e.clientY - drag.y;
       if (press) press.moved += Math.hypot(dx, dy); // path length, not displacement
-      camYaw -= dx * 0.16;
-      camPitch = Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, camPitch - dy * 0.12));
+      if (camMove) {
+        // ⚑ S85: a curve owns camYaw/camPitch this frame, so writing them here
+        // is erased before it is drawn. Ride on top of it at the same rate and
+        // with the same clamp — but the clamp is on the SUM, so a look during a
+        // move can never point further than a look standing still.
+        lookOffYaw -= dx * 0.16;
+        const pitch = camPitch + lookOffPitch - dy * 0.12;
+        lookOffPitch = Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, pitch)) - camPitch;
+      } else {
+        camYaw -= dx * 0.16;
+        camPitch = Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, camPitch - dy * 0.12));
+      }
       drag = { x: e.clientX, y: e.clientY };
       return;
     }
@@ -2398,7 +2463,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (p.moved > TAP_SLOP_PX) return;                 // it travelled: a look
     if (performance.now() - p.t > TAP_MS) return;      // it lingered: not a tap
     if (p.opening) {
+      // whichever driven move armed this press is the one it ends (S85: the
+      // relocation joins the descent here; they never overlap — beginRelocation
+      // clears descentActive outright)
       if (descentActive) endDescent();
+      else if (relocLeg) endRelocation();
       return; // never let an opening press fall through onto the landed room
     }
     resolveTap(e);
@@ -2522,9 +2591,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (descentActive && !camMove) endDescent();
       // …and the relocation's legs hand over to each other the same way
       if (relocLeg && !camMove) advanceRelocation();
+      // ⚑ S85: a driven leg has ended and nothing took it over, so a look taken
+      // during it becomes simply the look you are holding. (A landing never
+      // reaches here with an offset — endDescent/seatCut clear it — and a
+      // relocation's handover leaves camMove set, so the ride carries unbroken
+      // across all three legs rather than snapping back at each boundary.)
+      if (!camMove) commitLookOffset();
       cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
-    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+    cameraRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
     // ⚑ S80: …and then the head, if the player is turning a device. The rig is
     // the seat; this is the look. Nothing above it changes, in any era.
     applyMotionLook();

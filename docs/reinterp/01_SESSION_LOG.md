@@ -151,6 +151,76 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-15 · Session 85 — **THE THIRD DEVICE PASS: THE MOVE NOW TAKES THE HAND, AND THE BUTTON
+THAT ENDED THE RUN IS GONE FROM THE DEVICE IT ENDED IT ON.** Touched: `src/engine/app.ts`,
+`src/debug/panel.ts`, `08_STATUS_REGISTER.md` §22, this log, `BUILD_LOG.md`. No narrative, no
+geometry, no authored pose, no leg duration, no orientation code.)*
+
+**THE TWO HALVES ARE ONE SENTENCE OF SÉRGIO'S**, and S85a was right that fixing either alone is
+worse than useless: *"you should be able to look around if you need, but tapping should not jump
+ahead."* Half one, `app.ts:2348`: S84 moved the descent onto S80's release test and left the
+relocation on the old immediate path, so **the longest scripted move in the piece — the one that
+argues these rooms are one building and that you are being carried through it — was still being
+thrown away by any thumb that touched the glass.** It now records the same `opening: true` press,
+runs the same 10 px / 1.2 s test, and `pointerup` ends whichever move is live. The key path is
+untouched: a key is unambiguous and always was.
+
+**Half two is why half one alone would have been a transition that ignores the hand entirely.** A
+drag during ANY driven leg wrote `camYaw`/`camPitch`, which the curve overwrites on the next tick —
+S85a measured 42.44° → 26.44° → 42.40°, a 16° jerk that returns. ⚑ **The drag is now an OFFSET
+layered on the curve's prescribed pose, not a write the curve erases** — the same layering
+`applyMotionLook()` already uses, which is exactly why the gyro composed during the descent and the
+drag did not. The curve's own path is untouched (no `DESCENT_SECONDS`, no leg duration, no authored
+pose moved), the clamp is on the SUM so a look during a move can never point further than a look
+standing still, and **the offset never survives a landing**: `endDescent`, `seatCut` and
+`performSeatCut` all commit an authored pose and all clear it. When a leg ends with nothing taking
+over, the offset folds into the free camera instead — the look you took is the look you keep. Across
+a relocation's three legs `camMove` is never null at the handover, so the ride carries unbroken
+rather than snapping back at each boundary.
+
+**MEASURED LIVE, headless Chrome, real `PointerEvent`s on the canvas.** Entrance, 2 s in: a 100 px
+drag took the composed camera yaw **42.30° → 58.20°** and it HELD (58.18 / 58.16 / 58.14 — the
+residual is the curve's own yaw still converging; the offset stayed exactly 16.0°), with
+`descent: true` throughout. A stationary press+release then landed the seat. Relocation E1→E2, 4 s
+into the rise: the same drag took **0° → 16.00°**, held it across three frames while `leg: 'rise'`
+continued and the leg clock advanced 4.00 s → 4.68 s, and a stationary press+release landed the seat
+at (0, 1.16, 0.7) with the offset back at zero. A key still ends it outright. ⚑ And the **natural**
+landing was checked separately, because that is the one that could have tilted an authored seat: a
+120 px drag mid-descent, left to fly to its own end, lands at composed yaw 0.00 / pitch 0.00.
+
+**`📷 shot` IS OMITTED ON A TOUCH DEVICE, not disabled** — the fullscreen row's precedent, and a
+greyed button only invites the press. On Sérgio's iPad this button **ended the run**: `a.download` is
+not implemented in iOS Safari, so the blob URL is NAVIGATED to, the page is replaced, and the
+in-memory ledger — the only store there is, by law — goes with it. `(pointer: fine)` is the honest
+question: not "is this iOS" but "is there a mouse", which is also what makes download-and-inspect
+mean anything. Verified both ways in one run: desktop shows `ACTION · 📷 shot` enabled; an emulated
+iPad (`pointer: coarse`) shows **no such button at all**, with the `▭ flat` button still in its row.
+The synchronous `URL.revokeObjectURL` that could kill the blob before anything read it is now
+deferred — a real race on every platform, not just the one that broke. ⚑ The out-of-band
+`app.render()` is KEPT deliberately: WebGL clears its back buffer after presentation, so it is what
+makes the capture non-empty, and it can now only happen on a desktop review machine.
+
+**RE-VERIFIED ON THE CURRENT TREE, and both check out — nothing changed.** The duck: `rainbowDuck`
+base **y 1.615**, footprint x 1.935–2.025 and z 3.000–3.100 fully inside `bookcaseMoved`
+(1.623–2.098 × 2.92–3.68), 8 cm of front margin, and the room audit reports no FLOATING for it —
+only the two pre-existing soft props (`w_cardigan`, `e_hoodie`). The entrance tap: exercised live
+above. This matches §21 exactly. **Sérgio was testing a stale build; a fix applied twice is how the
+E2 `setPlaneZ` authority came back.** The panel-header line (item 4) was already in the tree at
+`panel.ts:408` and renders on both desktop and tablet — confirmed, not rewritten.
+
+**One line of panel copy went stale this session and was corrected with it:** THE BUILDING's note
+said *"Any click lands you"*, which stopped being true the moment the press had to stay.
+
+**`npm run audit`, run and reported rather than inherited:** entrance 68 / E1→E2 39 / E2→E3 57 /
+E3→E4 62 / sends 78 — every leg unchanged. Console asserts 0. Blank frames 0 against a baseline of 1
+(improved, and **not re-baselined**). The only failures are the three retained send legs (s2 6.874,
+s3/s4 4.420 m/s), untouched by instruction. `npx tsc --noEmit`, `npm test` and `npm run build` green.
+
+⚑ **UNVERIFIED ON HARDWARE.** Every measurement above is headless Chrome with synthetic pointers.
+The deploy is automatic on push, so this reaches Sérgio's iPad — what it needs from him is one real
+finger: drag during an era change (does the room turn under your thumb, and does the move continue?),
+then a still tap (does it land?), and a look at the debug panel for the absence of `📷 shot`.
+
 *(2026-08-14 · Session 85a — **THE VERIFICATION PASS: S84's BRIEF, RE-DISPATCHED AFTER S84 SHIPPED.**
 Touched: `src/debug/panel.ts` (one edit), `08_STATUS_REGISTER.md` §21, `BUILD_QUEUE_LIVE.md` (S85's
 block), `REINTERP_DEVICE_FINDINGS_2026-08-12.md` (status only), this log, `BUILD_LOG.md`. No
