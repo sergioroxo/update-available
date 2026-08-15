@@ -1,11 +1,22 @@
-# ⚑ MANUAL ONLY, ON PURPOSE. This never fires on a push.
-# Publishing is an outward-facing act and this piece has ethics gates that are not closed
-# (the Era-4 deadname beat is BLOCKED-ON-READER-PASS, and every string is PLACEHOLDER-draft),
-# so it publishes when Sérgio says so and not when a build session happens to land.
-# See docs/DEPLOY_PAGES.md before the first run.
+# ⚑ AUTO ON PUSH TO `reinterp`, plus manual dispatch for any branch.
+#
+# It was manual-only until 2026-08-13, on the grounds that publishing is
+# outward-facing and this piece has open ethics gates. Sérgio has since settled
+# that question (the trial link may be public while the repo stays private), and
+# the manual gate then cost him a real afternoon: he tested the DUCK and the
+# ENTRANCE TAP on a stale build, because a session had landed a fix that was
+# never deployed. His note: "which should be automatically done by you or codex".
+#
+# ⚑ The gate that actually matters is unchanged and is BELOW, not here: this
+# workflow runs `npm test` before it publishes anything, so a build that breaks
+# its own invariants still cannot reach a device. And the ethics gates are
+# tracked where they belong — 08 §14's BLOCKED-ON-READER-PASS — not by making a
+# deploy inconvenient. See docs/DEPLOY_PAGES.md.
 name: pages
 
 on:
+  push:
+    branches: [reinterp]
   workflow_dispatch:
     inputs:
       ref:
@@ -29,7 +40,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          # ⚑ `inputs.ref` exists only on workflow_dispatch; on a push it is
+          #  empty and this falls through to the pushed commit, which is what
+          #  you want. Do not "simplify" this to inputs.ref alone.
+          ref: ${{ inputs.ref || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
