@@ -1718,6 +1718,48 @@ wait); keep the comfort envelope; and the existing `endDescent`/`seatCut`/offset
 must keep working — **a drag during the ascent should still look around, and a tap should still not
 skip it.**
 
+## ⚑⚑ SECOND PASS, 2026-08-15 — AND IT NAMES THE CONDITION
+Sérgio played again and found six more. **Five of the six are ONE fault wearing different clothes,
+and it is the same one as the duck and the provotypes:**
+
+> ### CONTENT THAT EXISTS AND CANNOT BE MET.
+> The lesson · the duck · the provotypes · the subtitle · the dossier's own citations. **The piece has
+> been built as data and surfaces, and nobody has ever walked the DELIVERY path.** `check-spec`
+> counts files. `room-audit` checks folds. **Neither has ever asked: can a person standing in this
+> room, on this device, actually receive this?**
+>
+> ⚑ **Treat that as the session's thesis.** Every fix below is an instance of it. If you find a
+> seventh, it belongs here too.
+
+**A · ⚑ THE DOSSIER OVERFLOWS ITS OWN WINDOW** *("what is this mess of text on the Family form??")*
+His screenshot shows `About this` with the body text **running past the frame and underneath the
+Leave / Pause / Return row.** ⚑ **This is the worst one in the list and not because it is the ugliest:
+the dossier is where `documentary | contested | speculative`, the confidence ratings and the
+`[VERIFY SOURCE]` marks live.** It is the piece's evidence surface — the thing that makes it research
+rather than assertion. **Text spilling over its own buttons makes the citations look unmaintained**,
+which is precisely the impression this piece cannot afford. Make the body scroll inside its frame with
+the button row pinned and always reachable. Check the LONGEST card, not a typical one.
+
+**B · ⚑ THE "LOOK WITH YOUR DEVICE" BUTTON SITS ON TOP OF THE SUBTITLES.** His second screenshot:
+*"Welcome. You are not alone tonight."* is **behind the button.** Two systems own the bottom-centre
+strip and neither knows about the other. ⚑ **The subtitle must always win** — it is the accessibility
+surface, and S79 already recorded that captions are load-bearing for the ball. Move the chrome, not
+the caption. **And check the same strip at a portrait viewport**, where there is less room to share.
+
+**C · "TODAY'S LESSON" IS REACHABLE ONLY BEFORE THE FLOPPY.** *"If I didn't go back I would never
+find it… so they only exist before you press the floppy."* Content behind a door that closes
+permanently, with nothing telling the player it is closing. **Either make it reachable after, or make
+the closing legible.** ⚑ Sérgio's read — that he only found it by accident — is the finding.
+
+**D · THE TAPE NEEDS TWO PRESSES.** *"When I press the tape it should start the tape, no? Why would I
+need to press twice — especially if I don't have that info?"* **One press plays.** Combine with item 3
+below: one press plays, one press stops, and **stopping puts it back on the shelf.**
+
+**E · The duck, a third time.** *"No duck, no nothing."* See item 5 — **go and look, do not measure.**
+
+**F · The entrance still skips** — S85b's fix is committed but Sérgio has not been able to test it on a
+deployed build. **Re-confirm on device before touching that code.**
+
 ## THE WALKTHROUGH — in his order
 **1 · Enter fullscreen on the deliberate press.** He wants the piece to start fullscreen. Browsers
 require a transient gesture — **the orienting card's own start button is that gesture.** Request it
