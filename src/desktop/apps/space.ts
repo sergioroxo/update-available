@@ -279,6 +279,23 @@ export class E4Shell {
   }
 
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    // ⚑ S88 — ONCE HANDED OFF, THIS SURFACE GOES QUIET. `handOff()` fires only
+    // after the finale's own panels/cyclorama sequence has fully played
+    // (`E4Offers.finaleClock`), and the instant it does, `os.ts` un-gates the
+    // spine (`e4HoldsTheSpine`) and arms the `close` update on the SAME frame
+    // if its 22s hold has already elapsed — which it always has by here. That
+    // update's "Restart as you are." card is deliberately a SMALL bare modal
+    // (`update.ts`'s `notify`/`bare` branch), not a full-screen takeover, and
+    // `os.ts` draws it on this exact canvas immediately after this method
+    // returns. Without this guard, `this.offers.ownsField` stays true forever
+    // (`stage === 'done'` included), so every frame kept painting the four
+    // year-panels UNDER the restart card — precisely the composite
+    // `theme/era4.ts`'s `eraPanels()` doc forbids in so many words ("no
+    // `Restart as you are.`... not this session's"). A plain field is the
+    // honest state once the era has nothing left to say: `ERA4.field` is the
+    // same base the cyclorama itself fills, so the restart card still lands
+    // on the finale's own palette, just without its imagery.
+    if (this.handedOff) { px(ctx, 0, 0, W, H, ERA4.field); return; }
     // ⚑ THE BALL HAS NO SCREEN IN IT. The device is on its stand across the
     // room and this is all that is on it: dark glass, the standby light it has
     // always shown when it is not being worn, and — occasionally, and only if
