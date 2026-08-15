@@ -218,6 +218,82 @@ pointers and debug-panel jumps. The deploy is automatic on push; this session di
 
 ⚑ **A11 STILL UNRUN** — unchanged from prior sessions, named rather than re-litigated.
 
+*(2026-08-15 · Session 87 — **THE STRANDED SURFACES: two sends that cannot draw, two dossiers never
+imported, and the check that would have caught both.** Own worktree (reset to reinterp tip 497111f —
+the assigned worktree had been branched from `main`, missing this whole branch's history). Touched:
+`src/desktop/gameMenu.ts`, `data/strings/gameMenu.json`, `src/desktop/os.ts`, `src/desktop/apps/space.ts`,
+`src/room/era3Devices.ts`, `tools/check-spec.mjs`, `08_STATUS_REGISTER.md` §24, this log, `BUILD_LOG.md`,
+`BUILD_QUEUE_LIVE.md` (S87 → SHIPPED).)*
+
+**1 · THE TWO E4 DOSSIER CARDS NOW HAVE A READING SURFACE.** `data/provotypes/e4_ball.json` (6 sourced
+entries + a credit paragraph) and `data/provotypes/e4_offers.json` (4 sourced entries) were each
+referenced exactly once, inside a comment. Both are full `Provotype`-shaped records of a BUILT beat, not
+a vignette to play (their own `_doc`s say so, and E4 has no desktop to open one on — THE_SPACE §6), so
+only their `debrief` (the sourced apparatus) needed a surface, not the whole schema. **Route, in player
+terms: any era, press Esc or the corner menu glyph → Credits & attributions → "The ball — sources &
+further reading" / "Era 4's offers — sources & further reading".** `src/desktop/gameMenu.ts` gained two
+sub-views (`ballSources`/`offersSources`) reading each card's `debrief.body` + `debrief.sources`, in the
+same plain-paragraph idiom the existing licensed-asset and cultural-influence rows already use — reading
+reference material, not gameplay, so it doesn't touch the file's own "frame never plays" assertion.
+⚑ Caught mid-build and fixed: `e4_offers.json`'s `confidence` field holds full phrases ("none — this is
+our extrapolation"), not `e4_ball.json`'s bare labels ("high"/"medium") — the first render appended the
+word "confidence" onto an already-complete phrase; the format is now `[status · confidence] text`,
+correct for both files without editing either's authored copy. Verified live in the browser (own dev
+server, `?reinterp=1&debug=1`): all 6 ball sources and the offers' memories card render with the fix
+applied, Back returns to Credits, both new rows visible.
+
+**2 · THE E3 SENDS (s3/s4) NOW DRAW, DECLINE-ONLY, PENDING SÉRGIO'S DOLLY DECISION.**
+`spine.ts` fires `offerSend('s3')`/`offerSend('s4')` on the ordinary E3 path; `os.ts:1420`'s own
+blackout returned black for all of E3 before `drawSendOffer()` ever ran, because Daniel's monitor is
+dead through E3 by design (S61) and nothing gave the offer anywhere else to draw. **Fix: the offer now
+composites onto Vera's laptop**, exactly the technique `era3Devices.ts` already uses for the u4 ritual
+(same `RITUAL_OFFSET`, same `drawLaptop`/`handleLaptopPointer` seam), wired through the existing E4
+bridge with four new methods (`sendOfferActive`, `sendOfferVersion`, `drawSendOfferExternal`,
+`handleSendOfferExternalClick`) rather than a new one. `?flat=1`'s parallel gap (the offer was *also*
+unreachable there — `!this.updateApp` blacked it out whenever no ritual was running, which is always,
+before a send resolves) is fixed by the same condition change, since flat has no laptop either.
+⚑⚑ **SAFETY, verified live, not just reasoned about:** 08 §17 measured the s2 dolly at 6.874 m/s
+against a 0.43 m/s comfort envelope, unresolved, and s3/s4 share the machinery. `drawSendOfferInto`
+withholds the "go" button and its hit rect for exactly `id === 's3' || id === 's4'` — decline only. In
+the browser, driving `window.__os`/`window.__era3Devices()` directly: clicking the EXACT pixel position
+where s1's (unrestricted) "go" button lives resolves s1 as `visited` and files it correctly, but the
+same click against an open s3 dialog lands on the widened decline button instead and can only ever
+resolve `declined` — `ledger.sends` across the whole test run never once recorded a `visited` outcome
+for s3 or s4. **The dolly-vs-blink-cut choice (08 §17: lengthen to ~38s, or make it a blink cut per
+R28's own movement law) is Sérgio's and is not made here** — this session only stops handing a player
+two more instances of the unresolved one. The blackout comment's `?flat=1` justification (*"blacking it
+out would make Era 4 unreachable in the canvas-only review tool"*) is removed, per CLAUDE.md's own
+correction that the review tool does not get to explain shipped behaviour.
+
+**3 · C9 — CONTENT REACHABILITY, THE CHECK THAT WOULD HAVE CAUGHT BOTH OF THE ABOVE.** Added to
+`tools/check-spec.mjs`: every `data/**.json` must have its basename appear in `src/**.ts` with comments
+stripped first — not merely named inside one, which is exactly how both dossier cards hid from a plain
+grep. RATCHET baseline **0**, named rather than merely counted: after item 1's fix, nothing in `data/`
+is left unreferenced. Skipped, and named exactly: `_`-prefixed fixture/schema/archive files and dirs
+(already this project's convention); `data/audio/tts_manifest.json` (a build-time manifest for
+`tools/tts/render.py`, never `src/`); `data/paths.json` (a planning ledger C7's own comment already
+documents as narrative-but-not-player-facing and never runtime-imported by design). Regression-tested
+by temporarily commenting out item 1's own `e4Ball` import and confirming C9 fails loud, naming the
+file, before restoring it.
+
+`npx tsc --noEmit` and `npm test` green. `npm run build`: `vite build` itself succeeds cleanly (1269
+modules, confirmed directly with `npx vite build`); the `tsc --noEmit` pre-check fails on ONE
+pre-existing, out-of-fence error (`src/engine/app.ts:2940`, an unused `beginEraRelocation`) — confirmed
+via `git stash` to already exist at the reinterp branch tip before this session touched anything, most
+likely S86's live file in the parallel main-tree session. Not fixed here. `npm run audit` runs; its
+browser-dependent half (`shots.mjs`) skips cleanly (`puppeteer-core` not installed in this worktree,
+exit 0) — `room-audit.mjs`'s SCALE/OVERLAP/FLOATING findings are pre-existing asset-placement notes,
+unrelated to this session's three items.
+
+⚑ **NOT DONE, named rather than hidden:** item 3 of the BUILD_QUEUE_LIVE.md brief ("The Close is thinner than
+everything around it") was explicitly scoped OUT — "do not build the Close here." One paragraph, as
+asked: `enterClose()` shows a procedural constellation with no authored continuity text, and the finale
+lines `s4_offers.json:18` promises are not built; it needs its own session and the knowledge-graph
+question (`close-constellation-as-knowledge-graph`) is unresolved. Also not investigated: whether
+`spine.ts`'s own `e3_s3`/`e3_s4` steps can ever advance now that s3/s4 resolve (`sendResolved()` checks
+`visited`/`declined`, and decline alone satisfies it) — likely yes, but era3Devices.ts's independent
+`armFinal()` trigger (correction-list exhaustion) already arms u4/E4 regardless of the spine's own step,
+so this was not chased further; named as an open thread, not a known bug.
 *(2026-08-15 · Session 85 — **THE THIRD DEVICE PASS: THE MOVE NOW TAKES THE HAND, AND THE BUTTON
 THAT ENDED THE RUN IS GONE FROM THE DEVICE IT ENDED IT ON.** Touched: `src/engine/app.ts`,
 `src/debug/panel.ts`, `08_STATUS_REGISTER.md` §22, this log, `BUILD_LOG.md`. No narrative, no

@@ -34,13 +34,40 @@
  *     forbidden outright by the hard invariants. Setting an accessibility
  *     preference is not filing, and this row never touches anything the record
  *     can see.
+ *
+ * ⚑ S87 — CREDITS NOW ALSO SURFACES THE E4 DOSSIER CARDS' SOURCED APPARATUS
+ * (two new rows, two new views: `ballSources`/`offersSources`). This is
+ * reference material — citations, confidence ratings, further reading — read
+ * the same way the licensed-asset and cultural-influence rows already are; it
+ * is not gameplay and files nothing, so it does not touch the "frame never
+ * plays" assertion above. See the import comment below for what these two
+ * files are and why only their `debrief` half is ever read here.
  */
 import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import copy from '../../data/strings/gameMenu.json';
 import attributions from '../../data/strings/attributions.json';
+// ⚑ S87 — THE TWO STRANDED E4 DOSSIER CARDS. `data/provotypes/e4_ball.json`
+// (6 sourced entries + the credit paragraph) and `data/provotypes/e4_offers.json`
+// (4 sourced entries) were never imported anywhere — each appeared exactly once,
+// inside a comment (the old `src/desktop/apps/ball.ts:49` / `offers.ts:29`).
+// Both files' own `states`/`invitation`/`frame` are explicitly "a record of the
+// built beat, not a vignette to play" (their own `_doc`s) — E4 has no desktop
+// and no provotype surface (THE_SPACE §6), so this file only ever reads their
+// `debrief` (the sourced apparatus: citations, the contested Paris Is Burning /
+// bell hooks entry, the housing-precarity finding, further reading). This is
+// the same surface that already renders `attributions.json`'s named ballroom
+// credit (below) — the credit obligation was always met; this is what was
+// stranded on top of it. `e4_ball.json`'s own `_doc` says its reading surface
+// "is the Close", which does not exist yet (see BUILD_QUEUE_LIVE.md S87 §3) —
+// this attaches it to a surface that exists today instead.
+import e4Ball from '../../data/provotypes/e4_ball.json';
+import e4Offers from '../../data/provotypes/e4_offers.json';
 
-type View = 'main' | 'controls' | 'credits' | 'restartConfirm';
+type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'restartConfirm';
+
+interface DossierSource { status: string; confidence: string; text: string }
+interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
 
 export interface GameMenu {
   destroy(): void;
@@ -134,8 +161,31 @@ export function mountGameMenu(): GameMenu {
     panel.appendChild(b);
   }
 
-  function backRow(): void {
-    row(copy.back, () => { view = 'main'; render(); });
+  function backRow(target: View = 'main'): void {
+    row(copy.back, () => { view = target; render(); });
+  }
+
+  /** ⚑ S87 — one line per source, same status/confidence/text grouping
+   *  `src/desktop/apps/provotype.ts`'s canvas debrief already uses, in this
+   *  file's own plain-paragraph idiom (no color coding here — frame voice is
+   *  undecorated). Only `debrief` is ever read; see the import comment above
+   *  for why the rest of these files' schema-shaped content is not.
+   *
+   *  ⚑ `confidence` is NOT appended with the word "confidence" the way
+   *  `provotype.ts`'s canvas debrief does it (`"high confidence"`) — that
+   *  reads fine for `e4_ball.json`'s bare labels ("high", "medium") but
+   *  breaks for `e4_offers.json`'s, which are full phrases ("none — this is
+   *  our extrapolation", "medium — sourced once, not yet its own pass") and
+   *  would render as "…extrapolation confidence". Bracketing status and
+   *  confidence together instead reads correctly for both files without
+   *  editing either's already-authored copy. */
+  function sourcesView(card: DossierCard, title: string): void {
+    heading(title);
+    for (const line of card.debrief.body) paragraph(line);
+    for (const s of card.debrief.sources) {
+      paragraph(`[${s.status} · ${s.confidence}] ${s.text}`);
+    }
+    backRow('credits');
   }
 
   function render(): void {
@@ -221,7 +271,23 @@ export function mountGameMenu(): GameMenu {
       // rather than correcting it — so this paragraph names the lineage. Source
       // of truth is docs/reinterp/ATTRIBUTIONS.md, baked by gen_attributions.
       for (const line of attributions.influences ?? []) paragraph(line);
+      // ⚑ S87 — THE SOURCED APPARATUS, below the named credit above. The row
+      // above names Crystal and Lottie LaBeija and the House of LaBeija — the
+      // credit obligation was always met. These two rows are the citations
+      // that back it: the contested Paris Is Burning / bell hooks entry, the
+      // housing-precarity finding, further reading, and (offers) the four
+      // sources behind Era 4's most speculative and most documented beats.
+      row(copy.creditsBallSources, () => { view = 'ballSources'; render(); });
+      row(copy.creditsOffersSources, () => { view = 'offersSources'; render(); });
       backRow();
+      return;
+    }
+    if (view === 'ballSources') {
+      sourcesView(e4Ball as unknown as DossierCard, copy.ballSourcesTitle);
+      return;
+    }
+    if (view === 'offersSources') {
+      sourcesView(e4Offers as unknown as DossierCard, copy.offersSourcesTitle);
     }
   }
 

@@ -1173,3 +1173,69 @@ note that `beginMorphedStateBatch()` clears the settled batch for the whole casc
 sampled peak sensitive to exactly when a frame lands mid-rebake. Not root-caused this session; next
 session should treat "entrance" draw-calls as a range (68–76+), not a point value, until that capture
 is made deterministic.
+
+---
+
+## §24 — S87: THE STRANDED SURFACES CLOSED, AND THE CHECK THAT WOULD HAVE CAUGHT THEM (2026-08-15)
+**Run in an isolated worktree that had been branched from `main`, not `reinterp` — missing this
+branch's entire history (`docs/reinterp/`, `data/provotypes/`, all of it). Reset the worktree's own
+branch to `reinterp`'s tip (497111f) before starting; the branch was otherwise a clean copy of `main`
+two commits ahead with nothing reinterp-specific, so nothing was lost.**
+
+### ✅ CLOSED
+1. **Both E4 dossier cards have a reading surface.** `src/desktop/gameMenu.ts`'s Credits view gained
+   two rows → `ballSources`/`offersSources` sub-views, reading each card's `debrief` only (not the
+   whole `Provotype` shape — both files' own `_doc`s say their `states`/`invitation`/`frame` are "a
+   record of the built beat, not a vignette to play", and E4 has no desktop to open one on, THE_SPACE
+   §6). Route: **Esc/pause (any era) → Credits & attributions → the new row.** 10 sourced entries,
+   previously reachable only inside a comment, now render — verified live in a real browser session
+   against this worktree's own dev server (not the shared one; see the note below).
+2. **s3/s4 draw, decline-only.** Daniel's monitor stays dead through E3 by design (S61); the offer now
+   composites onto Vera's laptop, the exact technique already used for the u4 ritual (`RITUAL_OFFSET`),
+   wired through four new E4-bridge methods. `?flat=1`'s matching gap (the offer was unreachable there
+   too, whenever no update ritual was running — i.e. always, before a send resolves) is fixed by the
+   same blackout-condition change. **SAFETY: the "go" hit is withheld for exactly s3/s4** — verified
+   LIVE via `window.__os`/`window.__era3Devices()`, not just read off the code: clicking the identical
+   pixel position that resolves s1 (unrestricted) as `visited` lands on s3's widened decline button
+   instead and only ever produces `declined`; `ledger.sends` recorded zero `visited` outcomes for s3/s4
+   across the whole test. **The dolly-vs-blink-cut fix itself is Sérgio's call (§17) and is untouched.**
+3. **C9 shipped.** `tools/check-spec.mjs` now asserts every `data/**.json` is referenced from `src/**.ts`
+   with comments stripped first — RATCHET baseline **0** (both dossier cards' own fix took it there).
+   Skip list, named exactly in the tool's own comment: `_`-prefixed fixture/schema/archive files/dirs;
+   `data/audio/tts_manifest.json` (build-time-only, `tools/tts/render.py`); `data/paths.json` (already
+   documented by C7's own comment as narrative-but-not-player-facing, never runtime-imported by
+   design). Regression-tested: reverting the ball-card import made C9 fail loud, naming the file.
+
+### ⚑ A TOOLING NOTE, in case the next session hits the same thing
+This session's browser-verification pass initially ran against `preview_start`'s REUSED dev server —
+its `cwd` turned out to be `/Users/sergiogalvaoroxo/update-available-reinterp` (the OTHER worktree,
+almost certainly S86's live main tree), not this session's own isolated copy. Its HMR log showed
+reloads for files this session never touched (`app.ts`, `orientingCard.ts`, `update.ts`,
+`reinterp_deltas.json`) — the tell. Caught before anything was driven meaningfully against it; verified
+by checking `preview_list`'s reported `cwd` directly. Fix: started a second `vite` process from Bash on
+a distinct port (5199), confirmed via a plain `window.__os` method probe that it served THIS worktree's
+build, and drove all live verification against that instead. **`preview_start`'s server reuse is keyed
+by config name, not by cwd/worktree — a session in a worktree should check `preview_list`'s `cwd`
+before trusting a "reused" server, or start its own on a private port.**
+
+### NOT DONE (named, not hidden)
+- **The Close** (BUILD_QUEUE_LIVE.md's item 3) — explicitly out of scope. `enterClose()` shows a
+  procedural constellation with no authored continuity text; `s4_offers.json:18`'s promised finale
+  lines are not built. Needs its own session; the knowledge-graph question
+  (`close-constellation-as-knowledge-graph`) is unresolved.
+- **`spine.ts`'s own `e3_s3`/`e3_s4` steps** were not traced end-to-end for whether they now advance
+  (`sendResolved()` accepts `declined`, so they likely do) — not chased, because `era3Devices.ts`'s
+  independent `armFinal()` trigger (correction-list exhaustion) already arms u4/E4 regardless of the
+  spine's own step and always has. Named as an open thread, not a known defect.
+- **One pre-existing, out-of-fence build break**, confirmed NOT this session's: `npx tsc --noEmit`
+  fails on `src/engine/app.ts:2940` (`beginEraRelocation` declared, never read) — `git stash` against
+  this worktree at its starting commit (497111f, the reinterp tip) reproduces the identical error, so
+  it predates this session and most likely belongs to S86's still-running main-tree session. Not fixed
+  here — touching a live parallel session's file for something outside this session's three items was
+  judged riskier than leaving it named. `npx vite build` alone (skipping the `tsc` gate) succeeds
+  cleanly, so the bundle itself is sound.
+
+`npx tsc --noEmit` and `npm test` green (content reachability 0/0). `npm run build`'s `tsc` step fails
+only on the pre-existing error above; `vite build` itself is clean. `npm run audit` runs; its
+browser-dependent half skips (no `puppeteer-core` in this worktree, exit 0), unaffected by this
+session's changes.
