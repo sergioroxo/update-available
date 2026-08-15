@@ -1049,3 +1049,85 @@ on both desktop and an emulated iPad.
   it would have closed something for (§21).
 - The three retained send legs still fail comfort (s2 6.874 m/s, s3/s4 4.420 m/s), by instruction.
 - Audit unchanged and NOT re-baselined: 68 / 39 / 57 / 62 / 78, asserts 0, blank frames 0 vs 1.
+
+---
+
+## §22 — ⚑⚑ THE DEADNAME BEAT RENDERS "DANIEL", AND TWO DESIGN DOCUMENTS DISAGREE ABOUT WHY (2026-08-15)
+*Found by the narrative-continuity pass; **independently verified line by line** before recording.*
+
+### The mechanism, confirmed
+| | |
+|---|---|
+| `data/strings/opening.json:93` | `"o3_prefilled_name": "Daniel"` |
+| `src/desktop/os.ts:286, 326` | `ledger.name = opening.o3_prefilled_name` |
+| `data/dialog/s4_l.json:124` | *"The pharmacy record still lists you as **{name}**"* |
+
+**So Era 4's deadname beat currently speaks the name "Daniel".**
+
+### ⚑ IT IS NOT AN ACCIDENT — and that is what makes it hard
+`s4_l.json`'s own `_docDeadname` states the intent outright: *the name comes from ONE place… this
+branch PREFILLS it as 'Daniel' at the opening under "we filled this in for you"… **so the record is
+holding the name IT ASSIGNED thirty years ago***. Registered as §8 decisions 9/10/11. **The beat was
+built this way deliberately.**
+
+### THE COLLISION — two documents, both canon, mutually exclusive
+> **That design reads only if Maya and Daniel are the same person.** A record "holding the name it
+> assigned thirty years ago" requires one continuous subject.
+
+But the spatial plan says the opposite, and says it plainly:
+- `REINTERP_E4_BUILD_PLAN_2026-08-05.md:25` — **"Room 1 = Daniel, Eras 1 AND 2 · Room 2 = Vera, Era 3
+  · Room 3 = Maya, Era 4."** Three rooms, **three people.**
+- `data/strings/orientingCard.json:5` — the piece's own promise to the player: *"You will follow
+  **different lives** through thirty years of one machine."*
+
+**And the other two protagonists do not do this.** Vera's greeting is hardcoded
+(`s3_queue.json:9`, `"Welcome back, Vera."`); Maya's own display name is hardcoded
+(`s4_l.json:19`, `"personName": "Maya"`). ⚑ **Only the deadname — the single most sensitive line in
+the piece — reaches for Daniel's global field.**
+
+**So the piece currently tells the player two incompatible things and stages neither:**
+1. **If Maya IS Daniel** — that is an enormous reveal that no line anywhere delivers, and it breaks the
+   orienting card's explicit promise.
+2. **If Maya is NOT Daniel** — the pharmacy record holds another character's name, and it reads as a
+   continuity error at the worst possible moment.
+
+### ⚑⚑ WHY THIS IS URGENT RATHER THAN MERELY OPEN
+**The beat is `BLOCKED-ON-READER-PASS` (§14) and that pass has not happened.** If the trans reader
+reviews this wording while it sits on an unexamined identity conflation, **they are reviewing the
+wrong question, and it likely costs a second pass.** Reader passes are scarce and you do not get to
+ask twice casually.
+
+> **The plumbing fix — give Maya's former name its own field, independent of `ledger.name` — costs
+> almost nothing and does NOT require the reader pass.** The narrative question (are these one life or
+> three?) is Sérgio's and is not blocked by the plumbing.
+>
+> ⚑ **RECOMMENDATION: separate the field before the reader pass is booked. Decide the narrative
+> question on its own timeline.**
+
+**FOR SÉRGIO. No ethics call has been made here** — this is recorded as a factual conflict between two
+canon documents, not a judgement about the beat.
+
+---
+
+## §23 — THE RESIDENTIAL PROGRAM HAS TWO NAMES, AND CALEB USES THE OTHER ONE (2026-08-15)
+Verified in the data:
+
+| where | name | who sees it |
+|---|---|---|
+| `data/dialog/s1_end.json:47` — the packet | **"The Turning" residential** | the player, at the Era-1 climax |
+| `data/dialog/s2_caleb.json:86` — Caleb, line c05 | **"New Morning"** | the player, in the `felt` scene |
+| `data/provotypes/origin_intake_e1.json` | **"New Morning"** | the player, on the intake form |
+
+⚑ **`s1_end.json`'s OWN `_doc` (line 2) says "TriedPath Fellowship / 'New Morning' residential"** —
+**the file's documentation contradicts its own display text.** `origin_intake_e1.json` calls New
+Morning "the established canon". Three sources say New Morning; one line of built text says The
+Turning. **The packet line is the outlier and is near-certainly a stray edit rather than a rename.**
+
+**Why it is not cosmetic:** this is the name of the place where Daniel and Caleb met and were
+separated — *"i keep thinking about New Morning. the last night. you know the one."* A player meets
+"The Turning" once and then "New Morning" twice, in the era's most emotionally central scene, with
+nothing linking them.
+
+⚑ **NOT FIXED — direction is Sérgio's.** One command either way; a proper noun in a narrative work is
+his. **Default recommendation: change the packet to "New Morning"**, since three files and one `_doc`
+already agree on it.
