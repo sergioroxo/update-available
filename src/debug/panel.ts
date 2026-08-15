@@ -10,7 +10,17 @@ import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 
 /** bump this each build so the panel says which version is on screen */
-const BUILD_TAG = 'S85a · tablet verification pass';
+/**
+ * ⚑ DERIVED AT BUILD TIME, NOT TYPED. Vite substitutes `__BUILD_TAG__` from the
+ * live git HEAD (vite.config.ts). S86 and S87 both shipped without touching this
+ * constant, so the panel kept announcing "S85a · tablet verification pass" while
+ * running their code — and Sérgio and I both spent time unable to tell which
+ * build a device was on, which is the exact confusion the Pages cache had
+ * already cost three sessions. A version stamp a human has to remember to update
+ * is a version stamp that lies. Now it cannot.
+ */
+declare const __BUILD_TAG__: string;
+const BUILD_TAG = typeof __BUILD_TAG__ === 'string' ? __BUILD_TAG__ : 'dev';
 
 interface MotionDiagnostic {
   state: string;

@@ -12,7 +12,15 @@
          contexts, so the canvas also needs `touch-action: none` + preventDefault on
          the multi-touch path. That half is S86's. viewport-fit=cover lets the room
          reach the edges on notched devices. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- ⚑ REGRESSION, MINE, FIXED 2026-08-15. I briefly added `maximum-scale=1,
+         user-scalable=no` here to stop Safari's page zoom fighting the iPad's
+         two-finger FOV pinch. It worked — and it also killed BROWSER ZOOM ON
+         DESKTOP, which Sérgio hit within the hour ("why can't I zoom inside the
+         browser version on a laptop?"). A viewport lock is global; the problem
+         was not. S86's `touch-action: none` + preventDefault on the canvas's
+         multi-touch path is the correct, SCOPED fix: it claims the gesture only
+         where the gesture happens. Do not put the lock back. -->
 
     <!-- ⚑⚑ THE STALE-BUILD BUG, and it cost more device sessions than any code fault.
          GitHub Pages serves index.html with `cache-control: max-age=600` and offers no
