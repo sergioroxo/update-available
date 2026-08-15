@@ -492,21 +492,37 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    * moves once per frame while a ritual is up — the dirty-upload law's own
    * exception for "a beat that is genuinely animating" (the changelog types on,
    * the progress bar stutters), and it stops the instant the ritual is over.
+   *
+   * ⚑ S87 — AND THE E3 SEND OFFER (s3/s4), same offset, same reason: Daniel's
+   * monitor is dead through the whole of E3 (S61), so the offer that used to
+   * have nowhere to draw (`os.ts`'s own blackout, see that condition's own
+   * comment) composites here instead — icon first, then its dialog once
+   * opened, never both at once with the ritual (the ritual and a send offer
+   * are never live at the same moment; `sendOfferPending` holds the spine's
+   * breath while a summons is up, same law the felt window and E4 already use).
    */
   let ritualTick = 0;
   function drawLaptop(ctx: CanvasRenderingContext2D, w: number, h: number): void {
     graceQueueLite.draw(ctx, w, h);
     const ritual = e4Bridge()?.update();
-    if (!ritual?.open) return;
-    if (ritual.fullScreen) px(ctx, 0, 0, w, h, ERA1.black);
-    ctx.save();
-    ctx.translate(RITUAL_OFFSET.x, RITUAL_OFFSET.y);
-    ritual.draw(ctx);
-    ctx.restore();
+    if (ritual?.open) {
+      if (ritual.fullScreen) px(ctx, 0, 0, w, h, ERA1.black);
+      ctx.save();
+      ctx.translate(RITUAL_OFFSET.x, RITUAL_OFFSET.y);
+      ritual.draw(ctx);
+      ctx.restore();
+      return;
+    }
+    if (e4Bridge()?.sendOfferActive()) {
+      ctx.save();
+      ctx.translate(RITUAL_OFFSET.x, RITUAL_OFFSET.y);
+      e4Bridge()?.drawSendOfferExternal(ctx);
+      ctx.restore();
+    }
   }
 
   add('laptop', LOGICAL.laptop, drawLaptop,
-    { versionOf: () => graceQueueLite.version + ritualTick });
+    { versionOf: () => graceQueueLite.version + ritualTick + (e4Bridge()?.sendOfferVersion() ?? 0) });
   // Session 70: the tablet takes its OWN version, exactly as the phone did in
   // S64 — it now has state the laptop knows nothing about (an open thread, a
   // selected comment, arrivals landing on their own schedule), and a comment
@@ -784,6 +800,14 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       if (ritual?.open && ritual.visible && onLaptop) {
         ritual.handleClick(onLaptop.x - RITUAL_OFFSET.x, onLaptop.y - RITUAL_OFFSET.y);
         return true;
+      }
+      // ⚑ S87 — THE E3 SEND OFFER, same laptop, same offset, checked only once
+      // no ritual owns the screen (the two are never live together — see
+      // `drawLaptop`'s own comment).
+      if (onLaptop && e4Bridge()?.sendOfferActive()) {
+        if (e4Bridge()?.handleSendOfferExternalClick(onLaptop.x - RITUAL_OFFSET.x, onLaptop.y - RITUAL_OFFSET.y)) {
+          return true;
+        }
       }
       if (onLaptop) { graceQueueLite.handleClick(onLaptop.x, onLaptop.y); return true; }
       // Session 64: the PHONE is pressable now (the Malta notification, then

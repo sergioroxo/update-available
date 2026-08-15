@@ -233,6 +233,16 @@ export class DesktopOS {
   private desktopReturnAt = -1;
   /** a live send OFFER (master script §4) — icon + summons window on the desktop */
   private sendOffer: { id: string; open: boolean } | null = null;
+  /** ⚑ S87 — hit rects from the last `drawSendOfferExternal` call (era3Devices.ts's
+   *  laptop composite; see that method's own comment for why it exists). Kept
+   *  separate from `this.hits`, which stays Daniel's own (dead, in E3) click
+   *  table, so the two draw paths can never cross-hit each other. */
+  private externalSendHits: Hit[] = [];
+  /** ⚑ S87 — bumped whenever `sendOffer` changes, so era3Devices.ts's laptop
+   *  screen knows to redraw+reupload (its dirty-upload law needs a version
+   *  number, and the send offer is not on the laptop's own `graceQueueLite`
+   *  clock). Static content otherwise — no per-frame animation to track. */
+  private sendOfferVersion = 0;
   /** engine listens: the update restart landed — morph the space to `era` */
   onEraShift?: (era: string) => void;
   /** engine listens: the player answered a summons (visit dollies the camera) */
@@ -292,7 +302,13 @@ export class DesktopOS {
         canvas: () => this.canvas,
         update: () => this.updateApp,
         shell: () => this.e4,
-        armFinal: () => this.armUpdate('u4')
+        armFinal: () => this.armUpdate('u4'),
+        // ⚑ S87 — the era-3 send offer's own laptop composite; see
+        // `drawSendOfferExternal`'s comment and the blackout condition above.
+        sendOfferActive: () => this.sendOfferActive,
+        sendOfferVersion: () => this.sendOfferVersionNum,
+        drawSendOfferExternal: (ctx) => this.drawSendOfferExternal(ctx),
+        handleSendOfferExternalClick: (x, y) => this.handleSendOfferExternalClick(x, y)
       });
     }
   }
@@ -999,6 +1015,7 @@ export class DesktopOS {
     this.sendOffer = { id, open: false };
     this.toast = { text: def.offer.icon, t: 6 };
     this.dirty = true;
+    this.sendOfferVersion++;
   }
 
   /** The spine reads this as "hold your breath" (src/narrative/spine.ts). It
@@ -1034,29 +1051,96 @@ export class DesktopOS {
     const id = this.sendOffer.id;
     this.sendOffer = null;
     this.dirty = true;
+    this.sendOfferVersion++;
     this.onSendResolve?.(id, outcome);
   }
 
   private drawSendOffer(W: number, H: number): void {
+    this.drawSendOfferInto(this.ctx, this.hits, W, H);
+  }
+
+  /**
+   * ⚑ S87 — THE SEND OFFER'S GEOMETRY, factored out so it can be drawn into
+   * ANY context/hit table — Daniel's own (the ordinary call above, unchanged
+   * pixels) or `drawSendOfferExternal` below, which era3Devices.ts's laptop
+   * uses. Daniel's monitor is dead for the whole of E3 (S61) and stays that
+   * way; the offer needs a live screen to draw on at all, so it draws on
+   * Vera's laptop instead, exactly the technique already used for the u4
+   * ritual (`era3Devices.ts`'s `RITUAL_OFFSET`/`drawLaptop`).
+   *
+   * ⚑⚑ SAFETY (08_STATUS_REGISTER §17), NOT COSMETIC: s3/s4 share the send
+   * machinery that measured the s2 dolly at 6.874 m/s against a 0.43 m/s
+   * comfort envelope — sixteen times over, and s2 is unfixed. Sérgio has not
+   * yet chosen the fix (lengthen the dolly to ~38s, or make it a blink cut —
+   * his call, argued in §17). Until he does, `allowVisit` withholds the "go"
+   * button and its hit rect for exactly s3/s4: the offer draws, can be read,
+   * and can be DECLINED — which files a real outcome to `ledger.sends` and
+   * lets `sendResolved()` see it — but it cannot be accepted into the move
+   * that is not yet safe. s1/s2 are unaffected and keep both buttons.
+   */
+  private drawSendOfferInto(ctx: CanvasRenderingContext2D, hits: Hit[], W: number, H: number): void {
     if (!this.sendOffer) return;
     const def = (sendsData as unknown as {
       sends: { id: string; offer: { icon: string; lines: string[]; go: string; decline: string } }[];
     }).sends.find(s => s.id === this.sendOffer?.id);
     if (!def) return;
     if (!this.sendOffer.open) {
-      this.drawIcon(10, 200, def.offer.icon, true, 'icon-send');
+      this.drawIconInto(ctx, hits, 10, 200, def.offer.icon, 'icon-send');
       return;
     }
     const dw = 300; const dh = 150;
     const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
-    const c = ui.windowFrame(this.ctx, dx, dy, dw, dh, def.offer.icon, true);
-    ui.setFont(this.ctx, 9);
-    this.ctx.fillStyle = ERA1.black;
-    def.offer.lines.forEach((line, i) => this.ctx.fillText(line, c.x + 10, c.y + 6 + i * 12));
-    ui.button(this.ctx, c.x + c.w - 110, c.y + c.h - 26, 102, 18, def.offer.go, {});
-    ui.button(this.ctx, c.x + 8, c.y + c.h - 26, 70, 18, def.offer.decline, {});
-    this.hits.push({ x: c.x + c.w - 110, y: c.y + c.h - 26, w: 102, h: 18, id: 'send-go' });
-    this.hits.push({ x: c.x + 8, y: c.y + c.h - 26, w: 70, h: 18, id: 'send-decline' });
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, def.offer.icon, true);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA1.black;
+    def.offer.lines.forEach((line, i) => ctx.fillText(line, c.x + 10, c.y + 6 + i * 12));
+    const allowVisit = this.sendOffer.id !== 's3' && this.sendOffer.id !== 's4';
+    if (allowVisit) {
+      ui.button(ctx, c.x + c.w - 110, c.y + c.h - 26, 102, 18, def.offer.go, {});
+      hits.push({ x: c.x + c.w - 110, y: c.y + c.h - 26, w: 102, h: 18, id: 'send-go' });
+    }
+    const declineW = allowVisit ? 70 : dw - 16;
+    ui.button(ctx, c.x + 8, c.y + c.h - 26, declineW, 18, def.offer.decline, {});
+    hits.push({ x: c.x + 8, y: c.y + c.h - 26, w: declineW, h: 18, id: 'send-decline' });
+  }
+
+  /** ⚑ S87 — the laptop composite (era3Devices.ts, via the E4 bridge; see the
+   *  DesktopOS constructor's `setE4Bridge` call). `W`/`H` are always
+   *  `ERA1_CANVAS`'s own — the same logical surface the u4 ritual draws at,
+   *  which is why the caller can reuse `RITUAL_OFFSET` for both. */
+  drawSendOfferExternal(ctx: CanvasRenderingContext2D): void {
+    this.externalSendHits = [];
+    this.drawSendOfferInto(ctx, this.externalSendHits, ERA1_CANVAS.width, ERA1_CANVAS.height);
+  }
+
+  /** ⚑ S87 — whether the laptop has anything to composite this frame. */
+  get sendOfferActive(): boolean {
+    return this.sendOffer !== null;
+  }
+
+  /** ⚑ S87 — bumped on every `sendOffer` change; era3Devices.ts folds it into
+   *  the laptop screen's own dirty-upload version so a real change (offered,
+   *  opened, resolved) re-uploads the texture without polling every frame. */
+  get sendOfferVersionNum(): number {
+    return this.sendOfferVersion;
+  }
+
+  /** ⚑ S87 — resolves a click against the geometry `drawSendOfferExternal`
+   *  just drew. era3Devices.ts owns the laptop's own ray→logical-canvas
+   *  conversion (its plane orientation differs from the desktop monitor's),
+   *  so this takes already-local coordinates rather than a world ray. Returns
+   *  whether the click landed on anything, exactly like the room's other
+   *  device-screen handlers (`handleLaptopPointer`'s own callees). */
+  handleSendOfferExternalClick(x: number, y: number): boolean {
+    const hit = this.externalSendHits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    if (!hit) return false;
+    if (hit.id === 'icon-send') {
+      if (this.sendOffer) { this.sendOffer.open = true; this.toast = null; this.sendOfferVersion++; }
+      return true;
+    }
+    if (hit.id === 'send-go') { this.resolveSend('visited'); return true; }
+    if (hit.id === 'send-decline') { this.resolveSend('declined'); return true; }
+    return false;
   }
 
   private setPhase(p: Phase): void {
@@ -1414,10 +1498,31 @@ export class DesktopOS {
     // is actually looking at. The last update no longer comes back to this dead
     // CRT: u4 lands on VERA'S LAPTOP (src/room/era3Devices.ts composites it
     // there), so Daniel's machine stays off from E3 to the end, with no
-    // exception at all. The one carve-out is `?flat=1`, which has no room and
-    // no laptop — there the ritual has nowhere else to go, and blacking it out
-    // would make Era 4 unreachable in the canvas-only review tool.
-    if (this.desktopEra === 'e3' && (roomIsMounted() || !this.updateApp)) {
+    // exception at all. `?flat=1` has no room and no laptop to composite
+    // anything onto, so the one canvas this file owns is the only screen it
+    // has — the condition below draws there for exactly that reason, a fact
+    // about `?flat=1`'s own geometry, not a decision made FOR shipped
+    // behaviour by a review tool (CLAUDE.md: `?flat=1` is not an audience
+    // target and no design decision should be justified by it).
+    //
+    // ⚑ S87 — AND THE SEND OFFER (s3/s4) GETS THE SAME TREATMENT AS u4, for
+    // the same reason. This blackout used to be the whole of the send offer's
+    // problem: `spine.ts` called `offerSend('s3')`/`offerSend('s4')` on the
+    // ordinary E3 path, `offerSend` set state and a toast, and then this
+    // early return fired first, every time — `drawSendOffer()` was never
+    // reached, no hit rect was ever pushed, and `ledger.sends` never heard
+    // about either send. IN THE ROOM it now draws on Vera's laptop instead
+    // (`drawSendOfferExternal`/`handleSendOfferExternalClick`, wired through
+    // the same E4-bridge seam as `update()`/`armFinal()` — see the
+    // constructor's `setE4Bridge` call), so Daniel's monitor stays exactly as
+    // dead as S61 left it. UNDER `?flat=1` there is no laptop either, so the
+    // condition below now also lets a live send offer through — the same
+    // exemption `!this.updateApp` already carves out for u4, extended to the
+    // offer that precedes it. ⚑⚑ SAFETY: see `drawSendOfferInto`'s own
+    // comment for the s3/s4 gate — the "go" button is withheld until Sérgio
+    // picks the s2 dolly fix (08 §17); decline still draws, takes a click,
+    // and files.
+    if (this.desktopEra === 'e3' && (roomIsMounted() || (!this.updateApp && !this.sendOffer))) {
       ui.px(ctx, 0, 0, W, H, ERA1.black);
       return;
     }
@@ -1653,7 +1758,17 @@ export class DesktopOS {
   private drawIcon(
     x: number, y: number, label: string, enabled: boolean, id: string, unread = false
   ): void {
-    const { ctx } = this;
+    this.drawIconInto(this.ctx, this.hits, x, y, label, id, enabled, unread);
+  }
+
+  /** ⚑ S87 — `drawIcon`'s geometry, into any context/hit table; see
+   *  `drawSendOfferInto`'s comment for why this exists. Label-width fitting
+   *  still measures against `this.ctx` (font state, not pixels, is what
+   *  matters there, and both contexts share the same `ui.setFont` scale). */
+  private drawIconInto(
+    ctx: CanvasRenderingContext2D, hits: Hit[],
+    x: number, y: number, label: string, id: string, enabled = true, unread = false
+  ): void {
     ui.px(ctx, x + 8, y, 20, 16, enabled ? ERA1.beige : ERA1.tealDark);
     ui.px(ctx, x + 8, y, 20, 4, enabled ? ERA1.navy : ERA1.tealDark);
     // the unread mark (finding B8): a pip, not a number in the label — the
@@ -1662,11 +1777,12 @@ export class DesktopOS {
     // message from Caleb is precisely one.
     if (unread) ui.px(ctx, x + 25, y - 3, 6, 6, ERA1.warn);
     ui.setFont(ctx, 9);
+    ui.setFont(this.ctx, 9); // fitIconLabel measures against this.ctx — keep it in sync
     ctx.fillStyle = enabled ? ERA1.white : ERA1.tealDark;
     const fitted = this.fitIconLabel(label, 62);
     const tw = ctx.measureText(fitted).width;
     ctx.fillText(fitted, Math.round(x + 18 - tw / 2), y + 20);
-    if (enabled) this.hits.push({ x, y, w: 38, h: 32, id });
+    if (enabled) hits.push({ x, y, w: 38, h: 32, id });
   }
 
   private fitIconLabel(label: string, maxWidth: number): string {
@@ -2416,7 +2532,9 @@ export class DesktopOS {
         case 'icon-era-0':
         case 'icon-era-1': this.toast = { text: this.eraSkin().status, t: 5 }; break;
         case 'icon-restorify': this.openRestorify(); break;
-        case 'icon-send': if (this.sendOffer) { this.sendOffer.open = true; this.toast = null; } break;
+        case 'icon-send':
+          if (this.sendOffer) { this.sendOffer.open = true; this.toast = null; this.sendOfferVersion++; }
+          break;
         case 'send-go': this.resolveSend('visited'); break;
         case 'send-decline': this.resolveSend('declined'); break;
       }

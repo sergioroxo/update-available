@@ -407,6 +407,15 @@ export interface E4Bridge {
    *  a ritual is already running or the era has moved on. Never the player's
    *  press: the notice is the system reporting a failure of its own. */
   armFinal(): void;
+  /** ⚑ S87 — the era-3 send offer (s3/s4). Daniel's monitor is dead for the
+   *  whole of E3 (S61) and stays that way, so the offer needs a live screen
+   *  to draw on at all; the laptop composites it exactly the way it already
+   *  composites `update()`. See `DesktopOS.drawSendOfferExternal`'s own
+   *  comment for the s3/s4 comfort-safety gate (08_STATUS_REGISTER §17). */
+  sendOfferActive(): boolean;
+  sendOfferVersion(): number;
+  drawSendOfferExternal(ctx: CanvasRenderingContext2D): void;
+  handleSendOfferExternalClick(x: number, y: number): boolean;
 }
 
 let bridge: E4Bridge | null = null;
