@@ -8,7 +8,7 @@
  * data/provotypes/ at all. A law that is documented as enforced and isn't is
  * worse than an unwritten one: it buys confidence nobody paid for.
  *
- * Seven checks, each defending a law that is GREEN today (this locks the
+ * Nine checks, each defending a law that is GREEN today (this locks the
  * current state, it does not ask for new work):
  *   C1 dossier/provotype schema — every source carries a status + confidence
  *   C2 felt-scene purity — no assistant offers a `felt` scene (tone laws)
@@ -19,6 +19,11 @@
  *      button or a documented exclusion
  *   C7 authoring-marker leak detector — player-visible strings in data/
  *      carrying a note-to-self, as a RATCHET (see below)
+ *   C8 prompt-block lifecycle — no dispatchable session prompt sits inside a
+ *      superseded doc, and every prompt block states SHIPPED/QUEUED/BLOCKED/DRAFT
+ *   C9 content reachability — every data/**.json actually referenced from
+ *      src/ (import or runtime load), not just mentioned inside a comment, as
+ *      a RATCHET (see below)
  *
  * C4 ratchets rather than fails outright: ~157 literals predate the law's
  * enforcement. Failing on all of them would get this file deleted by Friday.
@@ -496,6 +501,114 @@ for (const b of promptBlocks) {
   }
 }
 
+// ── C9: content reachability (RATCHET — see the file header) ─────────────────
+/**
+ * C9 (added S87, docs/reinterp/BUILD_QUEUE_LIVE.md "S87 — THE STRANDED
+ * SURFACES"). Every check above verifies that content FILES EXIST (C1 counts
+ * provotypes) or that rooms FOLD (check-rooms.mjs) — none of them verify a
+ * player can ever RECEIVE the content. `data/provotypes/e4_ball.json` (6
+ * sourced entries + a credit paragraph) and `data/provotypes/e4_offers.json`
+ * (4 sourced entries) sat unimported for two sessions, each referenced
+ * exactly once — inside a comment (the old `src/desktop/apps/ball.ts:49`,
+ * `offers.ts:29`) — while every check in this file stayed green. Sérgio,
+ * playing on the device this piece will be exhibited on, kept finding content
+ * he could not reach and named the condition himself: "content that exists
+ * and cannot be met."
+ *
+ * C9 walks data/**.json and asserts every file's basename appears somewhere
+ * in src/**.ts with COMMENTS STRIPPED FIRST — stripping is the entire point
+ * of the check: a filename inside a `/*` `*​/` block or a `//` line is exactly
+ * how e4_ball.json and e4_offers.json hid from a plain grep. A basename match
+ * against the stripped source, rather than a resolved import graph, is
+ * deliberate: every import in this codebase is a relative literal ending in
+ * the real filename (`import x from '../../data/provotypes/e4_ball.json'`),
+ * so the basename is sufficient and the check needs no bundler/resolver. The
+ * comment stripper is a plain regex, not a tokenizer — a `//` inside a string
+ * literal earlier on the same line as a real import could in principle eat
+ * that import too; no such case exists in this codebase today (imports sit on
+ * their own lines), and this is named rather than hidden.
+ *
+ * SKIPPED, and exactly this list:
+ *   - any file or directory whose name starts with `_` — this project's own
+ *     fixture/schema/archive convention, already `isDataKey`'s exclusion
+ *     above and C7's own file-level exemption: `_schema.json`, `_dummy.json`,
+ *     `_close_network.schema.json`, and the `_archive` room-delta directory
+ *     (`data/room/_archive/reinterp_deltas.radial-hexagon.json`);
+ *   - `data/audio/tts_manifest.json` — a build-time manifest consumed by
+ *     `tools/tts/render.py`, never by `src/`; the player-facing STRINGS it
+ *     points at live in `data/dialog/**.json`, which this check does cover;
+ *   - `data/paths.json` — a beat/build-status planning ledger, already
+ *     documented in C7's own comment above as "narrative content, per
+ *     CLAUDE.md, but not player-facing" and never imported by runtime code
+ *     BY DESIGN — `src/narrative/spine.ts` hardcodes the beat sequence
+ *     instead of reading it, a fact C7 already relies on for its own baseline.
+ *
+ * RATCHET BASELINE: 0, named rather than merely counted — after this
+ * session's own item-1 fix (both e4 cards are now imported by
+ * `src/desktop/gameMenu.ts`, which reads their `debrief` for two new Credits
+ * sub-views), nothing in data/ is left unreferenced. Lowering from here is
+ * not possible; never raise it without naming the new file and why it
+ * genuinely cannot be reached yet (a stub with a TODO is still a reference).
+ */
+const UNREACHED_BASELINE = 0;
+/** absolute paths, matched exactly — see the comment above for why each one
+ *  is not player-facing content in the sense this check cares about. */
+const UNREACHED_SKIP = new Set([
+  join(ROOT, 'data/audio/tts_manifest.json'),
+  join(ROOT, 'data/paths.json')
+]);
+
+let strippedSrcCache = null;
+function strippedSrc() {
+  if (strippedSrcCache !== null) return strippedSrcCache;
+  const parts = [];
+  (function walkTsForStrip(dir) {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) { walkTsForStrip(p); continue; }
+      if (!/\.ts$/.test(name)) continue;
+      // block comments, then line comments — same two-pass idiom as C7's own
+      // reasoning about what a "comment" is in this codebase.
+      const src = readFileSync(p, 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\/\/.*$/gm, '');
+      parts.push(src);
+    }
+  })(join(ROOT, 'src'));
+  strippedSrcCache = parts.join('\n');
+  return strippedSrcCache;
+}
+
+let unreachedCount = 0;
+const unreachedDetails = [];
+(function walkDataForReach(dir) {
+  if (!existsSync(dir)) return;
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) {
+      if (name.startsWith('_')) continue; // fixture/schema/archive convention
+      walkDataForReach(p);
+      continue;
+    }
+    if (!name.endsWith('.json') || name.startsWith('_')) continue;
+    if (UNREACHED_SKIP.has(p)) continue;
+    if (!strippedSrc().includes(name)) {
+      unreachedCount++;
+      unreachedDetails.push(rel(p));
+    }
+  }
+})(join(ROOT, 'data'));
+
+if (unreachedCount > UNREACHED_BASELINE) {
+  errors.push(`content reachability: ${unreachedCount} data/**.json file(s) never referenced from src/ outside ` +
+    `a comment, baseline is ${UNREACHED_BASELINE} (C9). A file that exists but is never imported is content a ` +
+    `player cannot reach — the exact fault e4_ball.json/e4_offers.json shipped with for two sessions. ` +
+    `Unreached:\n    ` + unreachedDetails.join('\n    '));
+} else if (unreachedCount < UNREACHED_BASELINE) {
+  notes.push(`content reachability improved: ${unreachedCount} < baseline ${UNREACHED_BASELINE} — ` +
+    `tighten UNREACHED_BASELINE to ${unreachedCount} in tools/check-spec.mjs`);
+}
+
 // ── report ───────────────────────────────────────────────────────────────────
 if (errors.length) {
   console.error('spec-law check FAILED:');
@@ -510,5 +623,6 @@ console.log(
   `${killsClaims.length} KILLS assertion(s) all clear; ` +
   `debug panel covers all ${osIds.size} debugJump ids (${exclusionIds.size} excluded); ` +
   `authoring-marker leaks ${leaksFound}/${AUTHORING_MARKER_BASELINE} across ${stringsChecked} data/**.json strings; ` +
-  `${promptBlocks.length} prompt block(s) all lifecycle-marked`
+  `${promptBlocks.length} prompt block(s) all lifecycle-marked; ` +
+  `content reachability: ${unreachedCount}/${UNREACHED_BASELINE} data/**.json files unreferenced from src/`
 );

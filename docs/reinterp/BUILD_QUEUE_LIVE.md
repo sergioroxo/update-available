@@ -1855,8 +1855,12 @@ the exhibition's primary method.
 ---
 
 # S87 — THE STRANDED SURFACES: two sends that cannot draw, two dossiers never imported
-**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Codex · dispatchable in parallel with S86** *(S86 works E1–E2;
-this is E3–E4 and the Close. Fence: `src/desktop/os.ts` is SHARED — **coordinate, or run after S86**.)*
+**⚑ PROMPT STATUS: SHIPPED 2026-08-15** — both dossier cards read from Credits & attributions
+(`src/desktop/gameMenu.ts`); s3/s4 draw on Vera's laptop, decline-only pending Sérgio's dolly-vs-blink-cut
+call (08 §17); check-spec C9 (content reachability, baseline 0) ships. The Close (item 3) intentionally
+NOT built — see `01_SESSION_LOG.md` Session 87 and `08_STATUS_REGISTER.md` §24.
+~~**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Codex · dispatchable in parallel with S86** *(S86 works E1–E2;
+this is E3–E4 and the Close. Fence: `src/desktop/os.ts` is SHARED — **coordinate, or run after S86**.)*~~
 *Found by the delivery-path trace, **each verified independently** before being written here.*
 
 ## 1 · ⚑⚑ THE E3 SENDS CANNOT DRAW, AND THE REASON IS A REVIEW TOOL
