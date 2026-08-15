@@ -22,7 +22,8 @@ not live.***
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
 | — | ~~S80 — fix picking, then the gyro look-mode~~ | ↓ at the tail of this file | ✅ **SHIPPED 2026-08-09.** Its picking fix is closed; S77 and S78 subsequently shipped |
-| **1** | **S85 — the third device pass** (relocation skip · the `📷 shot` button exits the piece on iOS · re-verify duck + entrance tap · warn that a debug jump's aftermath is not evidence) | ↓ at the tail of this file | ⚑ **SHIPPED 2026-08-15 (S85).** Both faults were read from source and both held: the relocation now defers to the release test AND a drag rides driven legs as an offset; `📷 shot` is omitted behind `(pointer: fine)`. Duck + entrance re-verified, unchanged. Retired — do not dispatch |
+| **1** | **S86 — THE FIRST TWENTY MINUTES, PLAYED** (the ascent moves onto the Install press so the room ages under you · fullscreen + pinch · the tape that sticks · the belongings nobody can find · the provotypes nobody can reach) | ↓ at the tail of this file | ⚑ **QUEUED 2026-08-15.** Sérgio's iPad pass, in the order he hit it. **Not a defect list — one continuous stretch, made better.** The last three sessions verified and none improved the piece; this one may not report "N of M already hold" |
+| — | ~~S85 — the third device pass~~ (relocation skip · the `📷 shot` button exits the piece on iOS · re-verify duck + entrance tap · warn that a debug jump's aftermath is not evidence) | ↓ at the tail of this file | ⚑ **SHIPPED 2026-08-15 (S85).** Both faults were read from source and both held: the relocation now defers to the release test AND a drag rides driven legs as an offset; `📷 shot` is omitted behind `(pointer: fine)`. Duck + entrance re-verified, unchanged. Retired — do not dispatch |
 | **2** | **S81 — the visibility audit, read as broken interactions** | ↓ at the tail of this file | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too. ⚑ **S79 ADDS ONE MEASUREMENT TO ITS SCOPE:** the settled E4 seat, turned 180°, renders **177 draw calls** against a ≤75 budget, and no audit run has ever sampled a turned seat (08 §20) |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
 
@@ -1664,3 +1665,129 @@ baseline whose comment does not say what is in it is a number nobody can ever lo
 - One BUILD_LOG line; session log entry; `08` section. Commit on `reinterp`.
   ⚑ **The deploy is automatic on push** — if you touch only `tools/` and `docs/`, the published build
   is unchanged, which is the expected outcome here.
+
+---
+
+# S86 — THE FIRST TWENTY MINUTES, PLAYED
+**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Opus, high effort · here, not Codex.**
+*Fence: `src/engine/app.ts`, `src/room/`, `src/desktop/`, `src/witness/intake.ts`, `src/narrative/`,
+`data/`, `index.html`, the logs. Wide on purpose — see below.*
+
+## ⚑⚑ READ THIS BEFORE THE ITEM LIST — it is why this session exists
+**The last three sessions verified. None of them made the experience better.** S84 ran the tablet
+pass; S85a was handed S84's brief verbatim and reported *six of seven already hold*; S85b finally
+built. Meanwhile Sérgio played it on an iPad and hit **eight things wrong with the piece itself** that
+no session had ever been pointed at.
+
+That is a prompt failure, not a session failure. My prompts had become armour against the previous
+mistake — *re-verify don't re-fix, don't raise the baseline, the guardrail is* — so sessions did what
+they were told and **came back with audits when the piece needed making.**
+
+> ### THIS SESSION IS NOT A DEFECT LIST. IT IS ONE CONTINUOUS STRETCH OF THE PIECE.
+> **Play from cold boot to the middle of Era 2 as a player plays it, and make that stretch right.**
+> The items below are what Sérgio hit *in the order he hit them* — treat them as a walkthrough with
+> faults in it, not as tickets. **If you find something between two items that is also wrong, fix it;
+> you are the first session in four with permission to.**
+>
+> ⚑ **You may not close this session with "N of M already hold."** If an item is already correct, say
+> so in one line and spend the time on the next one. The deliverable is a better twenty minutes.
+
+## THE CENTREPIECE — Sérgio's reorder, and it is the best idea in the list
+> *"When we press update shouldn't we ascend? Doesn't make sense to do it after the update is done,
+> because that way we can see the room updating as well in sync. So when we get down the computer
+> should say 'welcome back Daniel'."*
+
+**He is right and this is dramaturgy, not staging.** The piece's whole thesis is **era transitions ARE
+software updates** (SCRIPT_UPDATE_v0.5 §1). Right now the update completes and *then* the body moves,
+so the two are sequential and **the player never sees the room change** — the one moment where the
+argument is literally visible happens off-camera while a progress bar finishes.
+
+**Rebuild the beat as one movement:**
+1. The player presses **I Agree / Install** — and the **ascent begins on that press.**
+2. **The room ages underneath them while they are up there.** The install and the morph are the same
+   event. This is the shot the piece has been missing.
+3. They **descend into the changed room**, and the machine says **"Welcome back, Daniel."**
+
+⚑ **That line is `operable` register and the machine's own voice — warm, administrative, and wrong.**
+It greets him by the name the system holds, in a room that changed while he was not in it. Draft it,
+mark it PLACEHOLDER-draft, and **flag it for Sérgio's voice pass** — the greeting is the beat's whole
+sting and his edit wins.
+
+**Constraints:** the morph must not outrun the ascent (a room that finishes early makes the descent a
+wait); keep the comfort envelope; and the existing `endDescent`/`seatCut`/offset machinery S85b built
+must keep working — **a drag during the ascent should still look around, and a tap should still not
+skip it.**
+
+## THE WALKTHROUGH — in his order
+**1 · Enter fullscreen on the deliberate press.** He wants the piece to start fullscreen. Browsers
+require a transient gesture — **the orienting card's own start button is that gesture.** Request it
+there, and **never on load** (it will throw). Fail soft where unsupported.
+
+**2 · ⚑ PINCH DROPS OUT OF FULLSCREEN — a real bug and the cause is ours.** Our pinch handler reads
+the spread and sets FOV, but **does not `preventDefault()`, so iOS Safari's own page zoom fires
+underneath it** and takes the page out of fullscreen. Fix on the canvas: `touch-action: none`,
+`preventDefault` on the multi-touch path, and a viewport meta that refuses user scaling. **Pinch must
+change FOV 30°–80° and nothing else** — the room never leaves.
+
+**3 · ⚑ THE TAPE STICKS IN THE MACHINE — the worst item here, because it is an interaction that
+strands the player.** Touch the yellow tape: it plays, then lodges in the boombox "awkwardly, like
+there's a window on top of the buttons." Touch again to stop: **it stays stuck instead of returning to
+the shelf.** Two faults — the seated pose is wrong, and **stop has no return.** A tape that leaves the
+shelf must come back to it. ⚑ **Play this one repeatedly before and after; it is a hands beat and
+arithmetic will not tell you when it looks right.**
+
+**4 · THE HOVER GLOW.** *"A glow that appears just in some areas when playing with a mouse, maybe it
+is selecting the screen."* Almost certainly a hit-rect highlight on a surface that should not offer
+one — likely the screen plane's rect. **Find what owns it. A highlight is a promise that something is
+clickable, and a false one teaches the player to distrust the real ones.**
+
+**5 · E1 IS MISSING ITS BELONGINGS.** *"No sight of ducky or teddy bear, nothing."* Two sessions have
+now measured the duck as correctly placed at y 1.615 — **and he still cannot find it.** ⚑ **Stop
+re-measuring and go look with a camera at the seat, at the yaw a player actually turns to.** Either it
+is occluded, or it is dark, or 84° right is simply further than anyone turns. **Whichever it is, that
+is the finding — and "the geometry is correct" is not an acceptable answer to "I can't see it."**
+
+**6 · E2 STILL CARRIES E1's THINGS.** The pamphlet is still on the desk; the tape is still on the
+shelf. **Era 2 should not be wearing Era 1's props.** Check the r2 fold for everything that should
+have aged out, not just these two.
+
+**7 · ⚑ THE WITNESS BOARD — a design question, answer it in writing before touching code.**
+*"Didn't we remove the witness board already?"* **Fact: no.** S40 retired the *startup-options panel*
+in `intake.ts`; `03_COORDINATION.md:46` says the cork board's **witness-lineage role and O3 profile
+survive.** The board he photographed is working — the dormant black state is an empty ledger
+(`intake.ts:89`), and the filed state shows Daniel's record correctly.
+**But "the panel died, the board lived" is a distinction nobody can hold in their head**, and it has
+now cost three reports. ⚑ **Write one paragraph in `08` naming what the board is, why it survived
+S40, and what the black state means — then put that answer where a player-tester meets it.** Do not
+remove the board; it is load-bearing witness lineage. **Do rename it if the name is the confusion.**
+
+**8 · ⚑⚑ WHERE ARE THE PROVOTYPES?** *"Also where are the provotypes here?"* — and this is the
+sharpest question in the list. `data/provotypes/` holds five, check-spec counts five, and **Sérgio,
+playing the piece on the device it will be exhibited on, could not find one.**
+> **The check has been proving the FILES exist. It has never proved a PLAYER can reach them.**
+> Trace each one to the beat that surfaces it and **report the route in player terms** — what era,
+> what facing, what press. `origin_intake_e1` and `pillow` should both be reachable in the stretch you
+> are playing. **If a route is missing, build it. If one exists but is unreachable in practice, say
+> where it dies.** ⚑ This is the same class as item 5 and as the belongings window S81 is queued for:
+> **content that exists and cannot be met.**
+
+## HOW TO WORK
+**Play it. In a browser, with a pointer, repeatedly.** The headless rig is for numbers, and every item
+above is a judgement the rig cannot make. Use `tools/shots.mjs` to *prove* a fix, never to *find* one.
+
+**Test at a tablet viewport** (1408×806 landscape — his actual device) as well as desktop. Tablet is
+the exhibition's primary method.
+
+## ACCEPTANCE — in the only terms that matter
+- Press Install → **you rise, the room ages under you, you come down into it, and it welcomes you back
+  by name.** One movement.
+- Fullscreen starts on the button and **survives a pinch**; pinch moves FOV only.
+- The tape plays, seats properly, and **goes home when you stop it.**
+- No glow on anything that is not clickable.
+- **From the E1 seat, you can find the duck and the teddy** — and the report says how far you turned.
+- E2 carries no E1 props.
+- The board's status is written down in one paragraph a person can repeat.
+- **Every provotype has a stated route a player can walk.**
+- `npx tsc --noEmit`, `npm test`, `npm run build`, `npm run audit` green; no baseline raised.
+- BUILD_LOG line, session log, `08` section, commit. ⚑ **Push deploys automatically** — push when the
+  twenty minutes plays better than it does today, and say what still doesn't.
