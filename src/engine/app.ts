@@ -901,10 +901,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // desktop-canvas UI this session, so segment captions (subtitle-style,
     // for the tapes playing in the room) and a small global mute toggle live
     // here as fixed DOM, exactly like moveHint, never on the monitor texture.
+    // ⚑ S86 — THE BOTTOM-CENTRE STRIP IS RESERVED. This element owns it, and
+    // nothing else in the build may be positioned into it (see motionBtn
+    // below, which was and is no longer). zIndex 11 puts it over any chrome
+    // that ends up near it anyway: when two surfaces collide the caption is the
+    // one that must remain readable.
     tapeCaption = document.createElement('div');
     Object.assign(tapeCaption.style, {
       position: 'fixed', left: '50%', bottom: '4%', transform: 'translateX(-50%)',
-      zIndex: '9', background: 'rgba(10,10,14,0.78)', color: '#e8dcc0',
+      zIndex: '11', background: 'rgba(10,10,14,0.78)', color: '#e8dcc0',
       font: 'italic 12px monospace', padding: '5px 12px', borderRadius: '4px',
       maxWidth: '70%', textAlign: 'center',
       opacity: '0', pointerEvents: 'none', transition: 'opacity 0.3s'
@@ -934,10 +939,38 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // page load at all — iOS requires a real user gesture, so the gesture has
     // to be something a person chooses to make. Reuses HINT_CHROME so no new
     // colour enters the build (check-spec C4's palette ratchet).
+    // ⚑ S86 — AND IT DOES NOT LIVE IN THE BOTTOM-CENTRE STRIP ANY MORE.
+    // Sérgio's iPad screenshot: *"Welcome. You are not alone tonight."* — Tape
+    // A's first caption — printed BEHIND this button. Two systems owned the
+    // same strip and neither knew about the other: `tapeCaption` sits at
+    // bottom 4 %, this sat at bottom 3 %, both centred on left 50 %.
+    //
+    // ⚑ THE STRIP IS THE CAPTION'S AND NOTHING ELSE MAY BE PUT THERE. It is
+    // the accessibility surface — the only way the tapes' and the ball's words
+    // reach a player who cannot hear them (S79 recorded captions as
+    // load-bearing for the ball) — so the chrome moves and the caption does
+    // not. This button joins the frame-chrome column in the bottom-LEFT, above
+    // the pause button (gameMenu's own corner, 14 px in, 34 px tall), which is
+    // also where a thumb already expects frame controls on a phone.
+    // `translateX` is dropped with the centring, or the button would sit half
+    // off the left edge — and `paintMotionBtn` no longer puts it back.
+    //
+    // ⚑ AND THE HEIGHT IS `calc(4% + 72px)`, NOT A FIXED 60 px, BECAUSE A
+    // LEFT-HAND COLUMN IS NOT BY ITSELF OUT OF THE WAY. Measured live at
+    // Sérgio's own viewport ROTATED (806×1408 portrait), the button at 60 px
+    // and the longest real tape caption — s1_tapes.json's *"Fold my hands the
+    // way you showed me, keep my eyes upon the floor;"*, which wraps to two
+    // lines there — cleared each other by TEN PIXELS. A ten-pixel miss is the
+    // same bug waiting for a longer line, and the caption is the surface that
+    // may never be gambled with. The offset tracks the caption's own `bottom:
+    // 4%` and then clears the wrapped strip above it, so the two cannot share a
+    // band at either orientation. Measured live with that same longest caption:
+    // 34 px of vertical air at 806×1408 portrait (where it wraps to two lines)
+    // and 48 px at 1408×806 landscape (where it does not).
     motionBtn = document.createElement('button');
     Object.assign(motionBtn.style, {
-      ...HINT_CHROME, left: '50%', bottom: '3%', border: '1px solid #444',
-      cursor: 'pointer', display: 'none'
+      ...HINT_CHROME, left: '14px', bottom: 'calc(4% + 72px)', transform: 'none',
+      border: '1px solid #444', cursor: 'pointer', display: 'none'
     } as CSSStyleDeclaration);
     motionBtn.style.opacity = '1';
     motionBtn.style.pointerEvents = 'auto';
@@ -1947,7 +1980,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     motionBtn.textContent = label[motionState];
     motionBtn.title = motionState === 'idle' ? copy.motionEnableHint : label[motionState];
     motionBtn.style.display = motionState === 'unsupported' ? 'none' : 'block';
-    motionBtn.style.transform = 'translateX(-50%)';
+    // ⚑ S86: NO `translateX(-50%)` HERE ANY MORE. This line used to re-centre
+    // the button on every repaint, which is how it kept landing back on top of
+    // the caption strip; with the button now anchored at left:14px it would
+    // also have pulled it half off the left edge. The button's position is set
+    // once at creation and this function only ever changes its words.
   }
 
   /**
