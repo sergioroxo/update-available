@@ -7,6 +7,11 @@
  * WHETHER it is playing, and WHAT the current caption is, and files the
  * witness-symmetry outcomes described in data/dialog/s1_tapes.json's `_doc`.
  *
+ * ⚑ THE GESTURE (S86, Sérgio's iPad pass): PRESS A TAPE AND IT PLAYS; PRESS THE
+ * MACHINE AND IT STOPS AND GOES BACK ON THE SHELF. It used to take two presses
+ * (load, then find and press the boombox) and stopping stranded the cassette in
+ * the deck forever. One object, one press, and it can always be put back.
+ *
  * WITNESS SYMMETRY (binding, ERA_MINING FIND #4): Tape A/B file exactly once,
  * the first decisive outcome reached — 'playedThrough' (elapsed reaches the
  * tail after the last segment) or 'stoppedMidway' (stopped/ejected/era-
@@ -92,13 +97,25 @@ export class TapeSystem {
     return this.activeSegment?.caption ?? null;
   }
 
-  /** click a tape on the shelf: loads it, ejecting whatever was inserted */
+  /**
+   * ⚑ S86 — ONE PRESS PLAYS. Click a tape on the shelf and it loads AND starts,
+   * ejecting whatever was inserted.
+   *
+   * Sérgio, 2026-08-15: *"When I press the tape it should start the tape, no?
+   * Why would I need to press twice — especially if I don't have that info?"*
+   * He is right and the old two-step was a mechanism, not a gesture: the piece
+   * never taught "now press the machine", the boombox's own play zone is not
+   * labelled, and a player who pressed a tape and heard nothing had every
+   * reason to conclude the tape did nothing. Picking up a cassette and putting
+   * it on is ONE act in the world; it is one act here now.
+   */
   insert(id: TapeId): void {
     if (this.insertedId === id) return; // already loaded — no separate re-insert gesture
     this.stopAndFile();
     this.insertedId = id;
     this.elapsed = 0;
     this.playing = false;
+    this.start();
   }
 
   eject(): void {
@@ -108,10 +125,20 @@ export class TapeSystem {
     this.elapsed = 0;
   }
 
-  /** click the boombox: play if stopped, stop if playing. No-op if empty. */
+  /**
+   * Click the boombox: stop if playing, play if stopped. No-op if empty.
+   *
+   * ⚑ S86 — AND STOPPING PUTS IT BACK ON THE SHELF. Sérgio's report was that a
+   * tape "stays stuck instead of returning to the shelf", and the fault was
+   * real: `stopAndFile()` left `insertedId` set forever, so the object was out
+   * of the world's only place for it with no gesture anywhere that could put it
+   * back — the shelf spot had no entity left to click and the boombox's own
+   * press only toggled a boolean. A thing you take out must be returnable, and
+   * since there is no separate eject control in the room, STOP is the eject.
+   */
   togglePlay(): void {
     if (!this.insertedId) return;
-    if (this.playing) this.stopAndFile();
+    if (this.playing) this.eject();
     else this.start();
   }
 
@@ -153,6 +180,11 @@ export class TapeSystem {
     if (this.elapsed >= this.totalSeconds(this.insertedId)) {
       this.fileOutcome(this.insertedId, 'playedThrough');
       this.playing = false;
+      // ⚑ S86: it played out, so it comes home — same law as STOP above. The
+      // filing has already happened, so this cannot be mistaken for an eject
+      // outcome; `stopAndFile` guards on `playing` and `filed` in any case.
+      this.insertedId = null;
+      this.elapsed = 0;
     }
   }
 

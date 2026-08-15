@@ -1331,8 +1331,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // cluster.ts's own note); insert/eject is expressed the SAME way the kit
   // floppy already hides itself — toggling `.enabled` on a pre-placed pair
   // (the shelf box vs. its own "docked" marker at the boombox).
+  /** last `tapes.inserted` the props were synced to — the loop watches this so
+   *  a tape that ends by itself still returns to the shelf visually (S86). */
+  let tapesLastInserted: TapeId | null = null;
   function syncTapeProps(): void {
     if (!tapes) return;
+    tapesLastInserted = tapes.inserted;
     const cur = tapes.inserted;
     (Object.keys(TAPE_SHELF) as TapeId[]).forEach((id) => {
       const shelfH = room.props.get(TAPE_SHELF_PROP[id]);
@@ -2351,6 +2355,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (tapeHandled) return;
         if (rayHitsPoint(e, BOOMBOX_HIT, BOOMBOX_HIT_RADIUS)) {
           tapes.togglePlay();
+          // ⚑ S86: STOP IS NOW AN EJECT (tapes.ts), so this press changes which
+          // props exist and must re-sync them HERE. The loop watcher below is
+          // for the tape that ends by ITSELF; leaving this press to the watcher
+          // too would put the cassette back on the shelf one frame late — a
+          // hand's gesture answered on the next tick instead of on the press.
+          syncTapeProps();
           syncTapeAudio();
           return;
         }
