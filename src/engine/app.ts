@@ -2111,9 +2111,23 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S80: and gyro-look is the same situation as XR — the rig's yaw is the
     // seat, not the facing — so it is answered the same way, by the camera's
     // own world forward.
+    // ⚑ S88 — this `camera.forward.z > 0` test is the SAME hardcoded global
+    // hemisphere §16 CLASS 4 named (assumes the seat's own forward is world
+    // -Z, true only at seatYaw 0). The desktop branch below is now fixed
+    // relative to `seatYaw`; this one is left exactly as found because
+    // neither XR nor gyro-look can be driven or verified in this sandboxed
+    // browser (no headset, no real device motion) — S88 will not guess a
+    // rotation sign it cannot test. Flagging for whoever next has hardware:
+    // at Maya's (270°) or Vera's (90°) seat this most likely reports the
+    // wrong hemisphere in-headset too, the same way the flip button did here.
     if (heldDevice) return false;
     if (xr?.active || motionState === 'live') return camera.forward.z > 0;
-    const n = ((camYaw % 360) + 360) % 360;
+    // ⚑ S88 fix — was `((camYaw % 360) + 360) % 360` (i.e. hardcoded to a
+    // seatYaw-0 forward), so at Maya's (270°) or Vera's (90°) seat "back" was
+    // measured from the wrong zero point. Made seat-relative: back is now
+    // >90°/<270° AWAY FROM THIS SEAT'S OWN authored forward, not from world
+    // yaw 0. At seatYaw 0 this is byte-identical to the old test.
+    const n = ((((camYaw - seatYaw) % 360) + 360) % 360);
     return n > 90 && n < 270;
   };
 
@@ -2145,7 +2159,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function doFlip(): void {
     if (!os.inDesktop || os.paused) return;
     const n = ((camYaw % 360) + 360) % 360;
-    const target = facingBack ? 0 : 180;
+    // ⚑ S88 fix — was `facingBack ? 0 : 180`, always targeting the WORLD
+    // hemisphere. Confirmed live at Maya's E4 seat (authored forward 270°):
+    // the button turned the camera only to yaw 180 — a 90° swing, not the
+    // ~180° "turn around" the ball's respite is built on. Made seat-relative:
+    // the assist now targets this seat's own forward/back (seatYaw /
+    // seatYaw+180). At seatYaw 0 (E1/E2) this is byte-identical to before.
+    const target = facingBack ? seatYaw : (seatYaw + 180) % 360;
     const delta = ((target - n + 540) % 360) - 180;
     tween = camYaw + delta;
     flipBtn.style.color = '#667';
