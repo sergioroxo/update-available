@@ -1538,10 +1538,24 @@ every beat that draws on the visor in the same pass so nothing is left half-chan
 
 **Era 4 plays end to end on the ordinary path, with the ball intact** — verified in one continuous real
 playthrough this session, landing cleanly at the `close` update's restart prompt with the finale bug
-fixed. `npx tsc --noEmit`, `npm test`, `npm run build` green. `npm run audit` unaffected by this
-session's changes (no batching, no draw-call-relevant code touched by either fix) — **not re-baselined**;
-item 3's 141 is a measurement, not a ratchet change, and is not enforced by the audit tool today (§20
-already noted the turned E4 seat is not among the audit's sampled poses).
+fixed. `npx tsc --noEmit`, `npm test` (fails only on the pre-existing, out-of-fence authoring-marker
+drift below — confirmed via `git stash` to predate this session), `npm run build` green.
+
+`node tools/shots.mjs audit` **run to completion this session** (`npm run audit`'s own chain never
+reaches it — it is gated behind `npm test`, which the pre-existing marker-leak drift above fails first).
+Its FAILs are the same pre-existing ones prior sessions already named and none are new: the three
+scripted-send comfort violations (§17, 10–16× the envelope, unrelated to E4), and the entrance/sends
+draw-call ratchet (§26's already-flagged flakiness, 76/78 against 68). **Zero console asserts. Blank
+frames improved, 0 against a baseline of 1 — not a regression.** Confirms **§20's own note**: the audit's
+sampled poses (`e2 36 · e3 52 · e4 52` settled draw calls) do **not** include the turned E4 seat, so
+item 3's 141 was never going to surface there — this session's manual measurement was the only way to
+see it. **Not re-baselined**; item 3's 141 is a measurement, not a ratchet change.
+
+**One drift confirmed pre-existing and out of this session's fence**: `npm test`'s `check-spec.mjs`
+reports 12 player-visible authoring-marker leaks against a baseline of 10, all in
+`data/paths.json`/`data/provotypes/*.json`/`data/strings/attributions.json`/`opening.json` — none of
+them Era-4 content, none touched by S88, and reproduced identically with this session's two commits
+stashed out (`git stash` against the pre-S88 tip). Not fixed here; named for whoever owns those files.
 
 **What remains, named for whoever picks it up:** item 3 (the draw-call architecture — GLB furniture
 batching across the three simultaneously-open rooms), the XR/gyro half of item 2, and the Vision-Pro
