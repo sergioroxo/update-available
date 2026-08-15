@@ -132,29 +132,38 @@ def run(
     config: Config,
     *,
     _audit: dict | None = None,
+    _frozen_lexicon_terms: list[dict] | None = None,
+    _frozen_lexicon_sha256: str = "",
 ) -> AnalysisResult:
     _started = time.perf_counter()
+    frozen_kwargs = (
+        {
+            "_frozen_lexicon_terms": _frozen_lexicon_terms,
+            "_frozen_lexicon_sha256": _frozen_lexicon_sha256,
+        }
+        if _frozen_lexicon_terms is not None else {}
+    )
     if _audit is not None:
         _audit["llm_flag"] = llm
         _audit.setdefault("errors", [])
         _audit["git_commit"] = current_git_commit()
     try:
         if llm == "claude":
-            return _analyze_with_claude(preprocess, config, _audit=_audit)
+            return _analyze_with_claude(preprocess, config, _audit=_audit, **frozen_kwargs)
         if llm == "local":
-            return _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit)
+            return _analyze_with_ollama(preprocess, config, config.local_analysis_model, _audit=_audit, **frozen_kwargs)
         if llm == "local-heavy":
-            return _analyze_with_ollama(preprocess, config, config.local_analysis_model_heavy, _audit=_audit)
+            return _analyze_with_ollama(preprocess, config, config.local_analysis_model_heavy, _audit=_audit, **frozen_kwargs)
         if llm == "local-reasoning":
-            return _analyze_with_ollama(preprocess, config, config.local_analysis_model_reasoning, _audit=_audit)
+            return _analyze_with_ollama(preprocess, config, config.local_analysis_model_reasoning, _audit=_audit, **frozen_kwargs)
         if llm == "litelm":
-            return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model, _audit=_audit)
+            return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model, _audit=_audit, **frozen_kwargs)
         if llm == "litelm-heavy":
-            return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_heavy, _audit=_audit)
+            return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_heavy, _audit=_audit, **frozen_kwargs)
         if llm == "litelm-reasoning":
-            return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_reasoning, _audit=_audit)
+            return _analyze_with_litelm(preprocess, config, config.litelm_analysis_model_reasoning, _audit=_audit, **frozen_kwargs)
         if llm == "openrouter":
-            return _analyze_with_openrouter(preprocess, config, _audit=_audit)
+            return _analyze_with_openrouter(preprocess, config, _audit=_audit, **frozen_kwargs)
         if llm == "both":
             comparison_audit: dict | None = {} if _audit is not None else None
             claude_result = _analyze_with_claude(preprocess, config, _audit=_audit)
@@ -227,11 +236,13 @@ def _postprocess_analysis(result: AnalysisResult, preprocess: PreprocessResult) 
     return result
 
 
-def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None) -> AnalysisResult:
+def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None, _frozen_lexicon_terms: list[dict] | None = None, _frozen_lexicon_sha256: str = "") -> AnalysisResult:
     import anthropic
     client = anthropic.Anthropic(api_key=config.anthropic_api_key)
     static_prompt, dynamic_prompt = _build_system_prompt_with_lexicon(
-        config, split_for_claude=True, _audit=_audit
+        config, split_for_claude=True, _audit=_audit,
+        _frozen_lexicon_terms=_frozen_lexicon_terms,
+        _frozen_lexicon_sha256=_frozen_lexicon_sha256,
     )
     user_message  = _build_user_message(preprocess)
 
@@ -271,9 +282,9 @@ def _analyze_with_claude(preprocess: PreprocessResult, config: Config, *, _audit
     return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
-def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None) -> AnalysisResult:
+def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None, _frozen_lexicon_terms: list[dict] | None = None, _frozen_lexicon_sha256: str = "") -> AnalysisResult:
     import httpx
-    system_prompt = _build_system_prompt_with_lexicon(config, _audit=_audit)
+    system_prompt = _build_system_prompt_with_lexicon(config, _audit=_audit, _frozen_lexicon_terms=_frozen_lexicon_terms, _frozen_lexicon_sha256=_frozen_lexicon_sha256)
     user_message  = _build_user_message(preprocess)
 
     if _audit is not None:
@@ -329,9 +340,9 @@ def _analyze_with_ollama(preprocess: PreprocessResult, config: Config, model: st
     return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
-def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None) -> AnalysisResult:
+def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: str, *, _audit: dict | None = None, _frozen_lexicon_terms: list[dict] | None = None, _frozen_lexicon_sha256: str = "") -> AnalysisResult:
     import httpx
-    system_prompt = _build_system_prompt_with_lexicon(config, _audit=_audit)
+    system_prompt = _build_system_prompt_with_lexicon(config, _audit=_audit, _frozen_lexicon_terms=_frozen_lexicon_terms, _frozen_lexicon_sha256=_frozen_lexicon_sha256)
     user_message  = _build_user_message(preprocess)
 
     if _audit is not None:
@@ -374,14 +385,14 @@ def _analyze_with_litelm(preprocess: PreprocessResult, config: Config, model: st
     return _postprocess_analysis(_validate_response(raw_json, _audit=_audit), preprocess)
 
 
-def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None) -> AnalysisResult:
+def _analyze_with_openrouter(preprocess: PreprocessResult, config: Config, *, _audit: dict | None = None, _frozen_lexicon_terms: list[dict] | None = None, _frozen_lexicon_sha256: str = "") -> AnalysisResult:
     import httpx
     if not config.openrouter_api_key:
         raise EnvironmentError(
             "OPENROUTER_API_KEY is not set in runner/.env\n"
             "Get a free key at https://openrouter.ai — no credit card required."
         )
-    system_prompt = _build_system_prompt_with_lexicon(config, _audit=_audit)
+    system_prompt = _build_system_prompt_with_lexicon(config, _audit=_audit, _frozen_lexicon_terms=_frozen_lexicon_terms, _frozen_lexicon_sha256=_frozen_lexicon_sha256)
     user_message  = _build_user_message(preprocess)
 
     if _audit is not None:
@@ -429,12 +440,19 @@ def _build_system_prompt_with_lexicon(
     split_for_claude: bool = False,
     *,
     _audit: dict | None = None,
+    _frozen_lexicon_terms: list[dict] | None = None,
+    _frozen_lexicon_sha256: str = "",
 ) -> str | tuple[str, str]:
     base = _load_system_prompt()
-    try:
-        terms = _fetch_active_lexicon_terms(config)
-    except Exception:
-        terms = []
+    if _frozen_lexicon_terms is not None:
+        if not re.fullmatch(r"[0-9a-f]{64}", _frozen_lexicon_sha256):
+            raise ValueError("frozen Analysis lexicon identity is missing")
+        terms = [dict(row) for row in _frozen_lexicon_terms]
+    else:
+        try:
+            terms = _fetch_active_lexicon_terms(config)
+        except Exception:
+            terms = []
 
     _LEXICON_INJECTION_CAP = 200
     terms_available = len(terms)
@@ -448,7 +466,13 @@ def _build_system_prompt_with_lexicon(
             }
             for term in terms
         ]
-        _audit["lexicon_fingerprint"] = canonical_fingerprint(identity_rows)
+        _audit["lexicon_fingerprint"] = (
+            _frozen_lexicon_sha256 if _frozen_lexicon_terms is not None
+            else canonical_fingerprint(identity_rows)
+        )
+        _audit["lexicon_source"] = (
+            "frozen_snapshot" if _frozen_lexicon_terms is not None else "live_legacy"
+        )
         _audit["tag_registry_fingerprint"] = canonical_fingerprint({
             "used": False, "reason": "tag registry is not an Analysis input"
         })

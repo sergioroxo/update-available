@@ -899,6 +899,10 @@ class PreprocessResult:
     tool_used: str                         # "docling" | "unstructured" | "trafilatura" | "whisper" | "manual"
     quality: Literal["high", "medium", "low", "blocked"]
     text: str                              # clean extracted text (primary context for LLM)
+    # Additive v2 distinction: canonical_text is complete persisted evidence;
+    # text remains the explicitly bounded value supplied to legacy model routes.
+    canonical_text: Optional[str] = None
+    model_input_receipt: dict = field(default_factory=dict)
     markdown: Optional[str] = None        # structure-preserving markdown (Docling output)
     ocr_images: list[dict] = field(default_factory=list)
     char_count: int = 0

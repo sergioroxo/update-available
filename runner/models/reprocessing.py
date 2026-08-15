@@ -5,6 +5,8 @@ fields, coercion, machine-absolute paths, and ambiguous source identities.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from datetime import datetime, timedelta
 from pathlib import PurePosixPath
@@ -689,7 +691,8 @@ class CopiedTextCanaryApprovalV1(StrictContract):
 
 
 ProductionStationId = Literal[
-    "source_verify", "canonical_text_prepare", "complete_units_v2"
+    "source_verify", "canonical_text_prepare", "complete_units_v2",
+    "independent_analysis",
 ]
 
 
@@ -1164,3 +1167,378 @@ class ImmutableArtifactManifestV1(StrictContract):
             if row.canonical_text_sha256 != self.canonical_text_sha256:
                 raise ValueError("artifact canonical identity contradicts manifest")
         return self
+
+
+# Additive Phase-2D contracts.  The accepted three-station approval and job
+# contracts above deliberately continue to validate against
+# PRODUCTION_CANARY_STATIONS; adding the fourth station here does not broaden
+# their authority.
+RESEARCH_PASS_A_STATIONS = (
+    "source_verify",
+    "canonical_text_prepare",
+    "complete_units_v2",
+    "independent_analysis",
+)
+
+
+def _canonical_contract_sha256(value: BaseModel, *, omit: set[str] | None = None) -> str:
+    payload = value.model_dump(mode="json", exclude=omit or set())
+    encoded = json.dumps(
+        payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+class AnalysisLexiconVariantV1(StrictContract):
+    language: str = Field(min_length=2, max_length=35)
+    value: str = Field(min_length=1, max_length=200)
+
+    @model_validator(mode="after")
+    def _canonical_variant(self) -> "AnalysisLexiconVariantV1":
+        if self.language != self.language.strip().lower() or self.value != self.value.strip():
+            raise ValueError("lexicon variant is not canonical")
+        if "\n" in self.value or "\x00" in self.value:
+            raise ValueError("lexicon variant contains forbidden characters")
+        return self
+
+
+class AnalysisLexiconTermV1(StrictContract):
+    term_id: str
+    preferred_term: str = Field(min_length=1, max_length=200)
+    definition: str = Field(min_length=1, max_length=1000)
+    status: Literal["trusted"] = "trusted"
+    variants: tuple[AnalysisLexiconVariantV1, ...] = ()
+
+    @field_validator("term_id")
+    @classmethod
+    def _term_id(cls, value: str) -> str:
+        return require_safe_id(value, field="term_id")
+
+    @model_validator(mode="after")
+    def _canonical_term(self) -> "AnalysisLexiconTermV1":
+        if self.preferred_term != self.preferred_term.strip():
+            raise ValueError("preferred term is not canonical")
+        ordered = tuple((row.language, row.value) for row in self.variants)
+        if ordered != tuple(sorted(set(ordered))):
+            raise ValueError("lexicon variants must be sorted and unique")
+        return self
+
+
+class AnalysisLexiconSnapshotV1(StrictContract):
+    schema_version: Literal["analysis-lexicon-snapshot-v1.0"] = (
+        "analysis-lexicon-snapshot-v1.0"
+    )
+    snapshot_id: str
+    source_version: str
+    creation_policy: Literal["trusted_orientation_terms_only"] = (
+        "trusted_orientation_terms_only"
+    )
+    created_at: datetime
+    terms: tuple[AnalysisLexiconTermV1, ...]
+    canonical_sha256: str
+
+    @field_validator("snapshot_id", "source_version")
+    @classmethod
+    def _snapshot_ids(cls, value: str, info) -> str:
+        return require_safe_id(value, field=info.field_name)
+
+    @field_validator("created_at")
+    @classmethod
+    def _snapshot_time(cls, value: datetime) -> datetime:
+        return _require_timezone(value, field="created_at")
+
+    @field_validator("canonical_sha256")
+    @classmethod
+    def _snapshot_hash(cls, value: str) -> str:
+        return require_sha256(value, field="canonical_sha256")
+
+    @model_validator(mode="after")
+    def _snapshot_invariants(self) -> "AnalysisLexiconSnapshotV1":
+        ids = tuple(row.term_id for row in self.terms)
+        if ids != tuple(sorted(set(ids))):
+            raise ValueError("lexicon terms must be sorted and unique")
+        expected = _canonical_contract_sha256(self, omit={"canonical_sha256"})
+        if self.canonical_sha256 != expected:
+            raise ValueError("lexicon snapshot canonical hash mismatch")
+        return self
+
+
+class ResearchPassADocumentV1(StrictContract):
+    document_id: str
+    source_sha256: str
+    source_bytes: int = Field(ge=1)
+    canonical_text_sha256: str = ""
+    source_is_public: Literal[True]
+    source_is_non_sensitive: Literal[True]
+    not_testimony: Literal[True]
+    contains_no_private_or_restricted_material: Literal[True]
+    not_consent_gated: Literal[True]
+
+    @field_validator("document_id")
+    @classmethod
+    def _document_id(cls, value: str) -> str:
+        return require_safe_id(value, field="document_id")
+
+    @field_validator("source_sha256", "canonical_text_sha256")
+    @classmethod
+    def _document_hashes(cls, value: str, info) -> str:
+        if value or info.field_name == "source_sha256":
+            return require_sha256(value, field=info.field_name)
+        return value
+
+
+class ResearchPassAApprovalV1(StrictContract):
+    schema_version: Literal["research-pass-a-approval-v1.0"] = (
+        "research-pass-a-approval-v1.0"
+    )
+    approval_id: str
+    run_id: str
+    documents: tuple[ResearchPassADocumentV1, ...]
+    authorized_station_ids: tuple[str, ...]
+    analysis_route: str
+    prompt_version: Literal["ingestion-v3.3"] = "ingestion-v3.3"
+    lexicon_snapshot_sha256: str
+    researcher_id: str
+    researcher_approval_text: str = Field(min_length=1, max_length=1000)
+    issued_at: datetime
+    expiry_policy: Literal["expires", "non_expiring_research_approval"]
+    expires_at: datetime | None = None
+    fingerprint_sha256: str
+
+    @field_validator("approval_id", "run_id", "analysis_route", "researcher_id")
+    @classmethod
+    def _approval_ids(cls, value: str, info) -> str:
+        return require_safe_id(value, field=info.field_name)
+
+    @field_validator("lexicon_snapshot_sha256", "fingerprint_sha256")
+    @classmethod
+    def _approval_hashes(cls, value: str, info) -> str:
+        return require_sha256(value, field=info.field_name)
+
+    @field_validator("issued_at", "expires_at")
+    @classmethod
+    def _approval_times(cls, value: datetime | None, info):
+        return None if value is None else _require_timezone(value, field=info.field_name)
+
+    @model_validator(mode="after")
+    def _approval_invariants(self) -> "ResearchPassAApprovalV1":
+        if self.authorized_station_ids != RESEARCH_PASS_A_STATIONS:
+            raise ValueError("Pass A requires exactly four ordered stations")
+        ids = tuple(row.document_id for row in self.documents)
+        if not ids or ids != tuple(sorted(set(ids))):
+            raise ValueError("approval documents must be sorted and unique")
+        if self.expiry_policy == "expires":
+            if self.expires_at is None or self.expires_at <= self.issued_at:
+                raise ValueError("expiring approval requires a future expiry")
+        elif self.expires_at is not None:
+            raise ValueError("non-expiring approval cannot declare expires_at")
+        expected = _canonical_contract_sha256(self, omit={"fingerprint_sha256"})
+        if self.fingerprint_sha256 != expected:
+            raise ValueError("approval fingerprint mismatch")
+        return self
+
+    def assert_current(self, now: datetime) -> None:
+        _require_timezone(now, field="now")
+        if now < self.issued_at or (self.expires_at is not None and now >= self.expires_at):
+            raise ValueError("Pass A approval is not currently valid")
+
+
+class ResearchPassAJobV1(StrictContract):
+    schema_version: Literal["research-pass-a-job-v1.0"] = "research-pass-a-job-v1.0"
+    run_id: str
+    package_id: str
+    document_id: str
+    station_id: ProductionStationId
+    station_sequence: int = Field(ge=1, le=4)
+    source_reference: CampaignSourceReferenceV1
+    input_fingerprint: str
+    maximum_attempts: int = Field(default=2, ge=1, le=3)
+
+    @field_validator("run_id", "package_id", "document_id")
+    @classmethod
+    def _job_ids(cls, value: str, info) -> str:
+        return require_safe_id(value, field=info.field_name)
+
+    @field_validator("input_fingerprint")
+    @classmethod
+    def _job_hash(cls, value: str) -> str:
+        return require_sha256(value, field="input_fingerprint")
+
+    @model_validator(mode="after")
+    def _job_invariants(self) -> "ResearchPassAJobV1":
+        if self.station_id not in RESEARCH_PASS_A_STATIONS:
+            raise ValueError("job station is not authorized for Pass A")
+        if self.station_sequence != RESEARCH_PASS_A_STATIONS.index(self.station_id) + 1:
+            raise ValueError("job station sequence is not canonical")
+        if self.source_reference.doc_id != self.document_id:
+            raise ValueError("job source/document identity mismatch")
+        return self
+
+
+class ResearchPassACampaignV1(StrictContract):
+    schema_version: Literal["research-pass-a-campaign-v1.0"] = (
+        "research-pass-a-campaign-v1.0"
+    )
+    run_id: str
+    campaign_id: str
+    approval_fingerprint_sha256: str
+    station_sequence: tuple[str, ...]
+    execution_policy: Literal["station_major"] = "station_major"
+    package_ids: tuple[str, ...]
+    document_ids: tuple[str, ...]
+    source_references: tuple[CampaignSourceReferenceV1, ...]
+    prompt_version: Literal["ingestion-v3.3"] = "ingestion-v3.3"
+    analysis_output_schema_version: str
+    analysis_route: str
+    lexicon_snapshot_sha256: str
+    maximum_attempts: int = Field(default=2, ge=1, le=3)
+    model_lifecycle_policy: Literal["one_lifecycle_per_analysis_station"] = (
+        "one_lifecycle_per_analysis_station"
+    )
+    remote_writes: Literal[False] = False
+    corpus_import: Literal[False] = False
+    publication: Literal[False] = False
+    expected_output_contracts: tuple[str, ...]
+    predecessor_campaign_ids: tuple[str, ...] = ()
+    campaign_sha256: str
+
+    @field_validator("run_id", "campaign_id", "analysis_route", "analysis_output_schema_version")
+    @classmethod
+    def _pass_a_ids(cls, value: str, info) -> str:
+        return require_safe_id(value, field=info.field_name)
+
+    @field_validator("approval_fingerprint_sha256", "lexicon_snapshot_sha256", "campaign_sha256")
+    @classmethod
+    def _pass_a_hashes(cls, value: str, info) -> str:
+        return require_sha256(value, field=info.field_name)
+
+    @model_validator(mode="after")
+    def _campaign_invariants(self) -> "ResearchPassACampaignV1":
+        if self.station_sequence != RESEARCH_PASS_A_STATIONS:
+            raise ValueError("Pass A campaign requires exactly four ordered stations")
+        if self.document_ids != tuple(sorted(set(self.document_ids))) or not self.document_ids:
+            raise ValueError("campaign document IDs must be sorted and unique")
+        if self.package_ids != tuple(sorted(set(self.package_ids))) or not self.package_ids:
+            raise ValueError("campaign package IDs must be sorted and unique")
+        if tuple(row.doc_id for row in self.source_references) != self.document_ids:
+            raise ValueError("campaign source references must bind every ordered document")
+        expected_outputs = (
+            "analysis.json", "analysis_audit.json", "resolved_input_receipt.json",
+            "model_stage_result.json", "result_manifest.json",
+        )
+        if self.expected_output_contracts != expected_outputs:
+            raise ValueError("Pass A expected output contracts are not canonical")
+        if self.predecessor_campaign_ids != tuple(sorted(set(self.predecessor_campaign_ids))):
+            raise ValueError("predecessor campaigns must be sorted and unique")
+        expected = _canonical_contract_sha256(self, omit={"campaign_sha256"})
+        if self.campaign_sha256 != expected:
+            raise ValueError("campaign canonical hash mismatch")
+        return self
+
+
+class ModelStageResultV1(StrictContract):
+    schema_version: Literal["model-stage-result-v1.0"] = "model-stage-result-v1.0"
+    run_id: str
+    stage_job_id: str
+    document_id: str
+    stage_id: Literal["independent_analysis"] = "independent_analysis"
+    attempt: int = Field(ge=1)
+    input_artifact_hashes: tuple[str, ...]
+    system_input_sha256: str
+    user_input_sha256: str
+    requested_model: str
+    provider_resolved_model: str
+    model_parameters: dict[str, int | float | str | bool]
+    prompt_version: Literal["ingestion-v3.3"] = "ingestion-v3.3"
+    output_schema_version: str
+    lexicon_snapshot_sha256: str
+    index_version: Literal[""] = ""
+    retrieval_context_sha256: Literal[""] = ""
+    started_at: datetime
+    completed_at: datetime
+    duration_ms: int = Field(ge=0)
+    validation_status: Literal["passed", "held"]
+    output_sha256: str
+    superseded_output_sha256: str = ""
+
+    @field_validator("run_id", "stage_job_id", "document_id", "output_schema_version")
+    @classmethod
+    def _stage_ids(cls, value: str, info) -> str:
+        return require_safe_id(value, field=info.field_name)
+
+    @field_validator("requested_model", "provider_resolved_model")
+    @classmethod
+    def _model_identities(cls, value: str, info) -> str:
+        if not value or value != value.strip() or len(value) > 300 or any(
+            char in value for char in ("\n", "\r", "\x00")
+        ):
+            raise ValueError(f"{info.field_name} is malformed")
+        return value
+
+    @field_validator(
+        "system_input_sha256", "user_input_sha256", "lexicon_snapshot_sha256",
+        "output_sha256", "superseded_output_sha256",
+    )
+    @classmethod
+    def _stage_hashes(cls, value: str, info) -> str:
+        if value or info.field_name != "superseded_output_sha256":
+            return require_sha256(value, field=info.field_name)
+        return value
+
+    @field_validator("input_artifact_hashes")
+    @classmethod
+    def _input_hashes(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if not value or value != tuple(sorted(set(value))):
+            raise ValueError("input artifact hashes must be sorted and unique")
+        for digest in value:
+            require_sha256(digest, field="input_artifact_hashes")
+        return value
+
+    @field_validator("started_at", "completed_at")
+    @classmethod
+    def _stage_times(cls, value: datetime, info) -> datetime:
+        return _require_timezone(value, field=info.field_name)
+
+    @model_validator(mode="after")
+    def _stage_invariants(self) -> "ModelStageResultV1":
+        if self.completed_at < self.started_at:
+            raise ValueError("model stage completion precedes start")
+        elapsed = int((self.completed_at - self.started_at).total_seconds() * 1000)
+        if self.duration_ms != elapsed:
+            raise ValueError("model stage duration mismatch")
+        return self
+
+
+class AnalysisObserverMetadataV1(StrictContract):
+    schema_version: Literal["analysis-observer-metadata-v1.0"] = (
+        "analysis-observer-metadata-v1.0"
+    )
+    run_id: str
+    document_id: str
+    attempt: int = Field(ge=1)
+    requested_route: str
+    provider_resolved_model: str
+    output_sha256: str
+    lexicon_snapshot_sha256: str
+    prompt_version: Literal["ingestion-v3.3"] = "ingestion-v3.3"
+    validation_status: Literal["passed", "held"]
+    reason_code: str = ""
+
+    @field_validator("run_id", "document_id", "requested_route")
+    @classmethod
+    def _observer_ids(cls, value: str, info) -> str:
+        return require_safe_id(value, field=info.field_name)
+
+    @field_validator("provider_resolved_model")
+    @classmethod
+    def _observer_model(cls, value: str) -> str:
+        if not value or value != value.strip() or len(value) > 300 or any(
+            char in value for char in ("\n", "\r", "\x00")
+        ):
+            raise ValueError("provider_resolved_model is malformed")
+        return value
+
+    @field_validator("output_sha256", "lexicon_snapshot_sha256")
+    @classmethod
+    def _observer_hashes(cls, value: str, info) -> str:
+        return require_sha256(value, field=info.field_name)

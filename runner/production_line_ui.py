@@ -25,6 +25,44 @@ from runner.pipeline.syncthing_exchange import (
 CONFIRMATION = "I understand this authorizes synthetic local processing only."
 PROHIBITED = "No models, RAG, remote writes, publication, or research data"
 CANARY_STATIONS_LABEL = "Verify source → Prepare complete text → Build complete V2 units"
+PASS_A_STATIONS_LABEL = CANARY_STATIONS_LABEL + " → Independent Analysis"
+
+
+def pass_a_readiness_model() -> dict:
+    """Content-free, disabled Run-018 presentation model."""
+    return {
+        "released": False,
+        "campaign_identity": "Not released",
+        "document_count": 0,
+        "station_sequence": PASS_A_STATIONS_LABEL,
+        "current_station": "Not started",
+        "requested_route": "Requires separate Studio validation",
+        "lexicon_snapshot": "Requires frozen approved snapshot",
+        "prompt_version": "ingestion-v3.3",
+        "counts": {"complete": 0, "held": 0, "retryable": 0, "pending": 0},
+        "model_lifecycle": "Not loaded",
+        "analysis_validation": "Not executed",
+        "warning": "Analysis is an interpretation layer, not source evidence for RAG.",
+        "disabled_operations": (
+            "Real Analysis release", "Embeddings", "RAG", "Enrichment",
+            "Corpus import", "Publication",
+        ),
+    }
+
+
+def _render_pass_a_foundation() -> None:
+    model = pass_a_readiness_model()
+    st.subheader("Independent Analysis — foundation only")
+    st.warning("Not released for real documents or model calls.")
+    st.write(f"**Planned steps:** {model['station_sequence']}")
+    st.write(f"**Prompt:** {model['prompt_version']} · **Model lifecycle:** {model['model_lifecycle']}")
+    st.write(f"**Frozen research vocabulary:** {model['lexicon_snapshot']}")
+    st.info(model["warning"])
+    st.caption(
+        "Embeddings, RAG, Enrichment, imports, and publication are not enabled. "
+        "A separate physical Mac Studio validation and one-document approval are required."
+    )
+    st.button("Release independent Analysis", disabled=True, key="pass-a-release-disabled")
 
 
 def copied_canary_preview(
@@ -201,6 +239,8 @@ def render_production_line(config: FactoryConfig | None = None) -> None:
     config = config or load_factory_config()
     st.title("🏭 Production Line")
     st.info("Dry run only — synthetic local processing. Research sources and models are unavailable here.")
+    _render_pass_a_foundation()
+    st.divider()
     st.subheader("Copied-text canary — not yet released")
     readiness = production_readiness_model(config)
     st.warning("Not yet released — Run-009 prepares the production foundation. A real copied file cannot be released here.")
@@ -314,6 +354,8 @@ def render_factory_console(config: FactoryConfig | None = None) -> None:
     config = config or load_factory_config()
     st.header("Factory campaigns")
     st.info("Dry run only — no models, uploads, publication, or research sources.")
+    _render_pass_a_foundation()
+    st.divider()
     st.subheader("Production service readiness — service not installed")
     readiness = production_readiness_model(config)
     fingerprints = configured_key_fingerprints(config)
