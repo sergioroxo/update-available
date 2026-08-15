@@ -1,5 +1,26 @@
 # BUILD_LOG
 
+- 2026-08-15 — S89 (own worktree, parallel with S88): the audio pass and the props that are not where
+  they look, all five items verified live rather than by manifest. The prayer WAS wired to a real
+  `play()` call all along — the fault was 60 silent seconds of intro captions before it started, closed
+  to 18s (`data/dialog/s1_tapes.json`). The jingle's `--wrap` dial-tuning scratch removed, per "we
+  already decided on that." A systemic bug in `tapes.ts`'s `totalSeconds()` was pausing real audio clips
+  before their natural end whenever hand-paced captions undershot the file — fixed with a
+  `realDurationSec` floor, verified Tape B now runs to completion. Tapes now show a `shelfLabel` on
+  hover/press before playing, answering "how does it label each of the tapes" (`src/engine/app.ts`'s
+  `testTapeHover`). The E3 bookcase's `yaw:90` (tuned for E1's wallEast) was wrong for its new neighbour
+  wallSouth — rotated to `yaw:0` live-verified in-engine before being written to data, every riding
+  prop (books/teddy/duck/cdStack/mixtape) remapped by the same 90°, and the rotation's own BOUNDS
+  overshoot (0.12m past the room's floor) caught by `room-audit.mjs` and fixed before commit. Occlusion
+  findings triaged against the E1 baseline and by eye, not just by count. The duck and teddy: confirmed
+  visible and unoccluded from the real authored seat (a fourth, real screenshot, this time actually
+  looked at) — but neither carries any duck/teddy visual form, still the project's original flat-colour
+  placeholder boxes with no `.glb` model, which is the actual reason four sessions of coordinate
+  verification never satisfied Sérgio. The E2 "tape still on the shelf" reproduced via a real (non-
+  debug-jump) Update-Now→EULA→install→restart transition — it is `mixtape`, documented canon since
+  Session 86, not a retirement bug (tapeA/tapeB/boombox all confirmed correctly retired). Full write-up:
+  `docs/reinterp/08_STATUS_REGISTER.md` §27. tsc/test/build green throughout, four commits.
+
 - 2026-08-15 — S87 (own worktree, reinterp branch reset to tip): the two E4 dossier cards get a reading surface — the game menu's Credits view gained "The ball — sources" / "Era 4's offers — sources" sub-panels reading `e4_ball.json`/`e4_offers.json`'s `debrief` only (route: Esc/pause, any era, → Credits & attributions → the new row), 10 sourced entries now player-reachable where before they existed only inside a comment. The E3 sends (s3/s4) now draw: Daniel's monitor stays dead through E3 by design (S61), so the offer composites onto Vera's laptop instead — same `RITUAL_OFFSET` technique already used for the u4 ritual, wired through the E4 bridge (`sendOfferActive`/`drawSendOfferExternal`/`handleSendOfferExternalClick`), and the same exemption now also covers `?flat=1` (which has no laptop either). SAFETY: the "go" button and its hit rect are withheld for s3/s4 only — decline-only, per 08 §17's unresolved s2-dolly-vs-blink-cut comfort finding (6.874 m/s against 0.43 m/s) — verified live via `__os`/`__era3Devices` that no coordinate on the s3/s4 dialog can produce a `visited` ledger outcome while s1 (unrestricted) correctly resolves `visited` at the same button geometry; declining still draws, takes a click, and files to `ledger.sends`. The `?flat=1` justification is removed from the blackout comment. New check-spec.mjs C9 (content reachability, RATCHET baseline 0): every `data/**.json` must be referenced from `src/` with comments stripped first — not merely named inside one, which is exactly how both dossier cards hid — skipping `_`-prefixed fixtures/schema/archive, `data/audio/tts_manifest.json` (build-time only) and `data/paths.json` (C7's own documented non-player-facing exception); regression-tested by reverting the gameMenu.ts import and confirming C9 fails loud. tsc/test/build green (one pre-existing, out-of-fence `tsc` error in `src/engine/app.ts:2940` confirmed via `git stash` to predate this session — not fixed, S86's likely-live file); `npm run audit` runs, its browser-dependent half skips cleanly (puppeteer-core not installed here, exit 0).
 
 - 2026-07-30 — S64: the Close's 32 labels now billboard in place inside their single merged mesh; draw calls remain 5 and a human must confirm forward-reading text from several angles.

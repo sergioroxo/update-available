@@ -5010,3 +5010,115 @@ after rerunning with filesystem access for Vite's worktree writes; preview retur
   **BLOCKED: none.** ⚑ **A11 REMAINS UNRUN, and this beat needs it more than most:** the ball is
   subtitled in DOM chrome, which does not render inside an immersive WebXR session — so in a headset
   it is currently light and sound with no captions. Same gap as E1's tapes, named rather than fixed.
+
+---
+
+## S89 (2026-08-15) SHIPPED — THE AUDIO PASS, AND THE PROPS THAT ARE NOT WHERE THEY LOOK
+*Own worktree, parallel with S88 (Era 4). Fence: `data/audio/`, `src/narrative/tapes.ts`,
+`src/desktop/os.ts` tape UI, `data/room/*.json` for E1/E2/E3, `src/room/` E1–E3 paths. Never entered
+Era 4.*
+
+Five items, all Sérgio's, from a real 2026-08-15 playtest. **Every one verified live** — a real
+headless-Chrome session, `window.Audio` wrapped to prove a `play()` call actually fires, real pointer
+drags computed through the same camera math the engine's own click handler uses, and a real
+Update-Now→EULA→install→restart transition (not a debug jump) for the E2 claim. Full technical
+write-up: `docs/reinterp/08_STATUS_REGISTER.md` §27. Four commits, one per item (E3's got a follow-up
+fix-of-its-own-regression).
+
+### 1 · The audio (commit "S89·1")
+- **"The prayer does not play at all."** Traced, not re-wired blind: `fold_my_hands_tape97.mp3` WAS
+  correctly wired to a real `play()` call the whole time — confirmed live, constructs and plays on
+  schedule, zero errors. The real fault was pacing: the four intro captions before it ran 0/14/30/46s
+  with only tape hiss under them, so the sung prayer never started until **60 real seconds** after
+  pressing play — long enough that a real listener reasonably concludes the tape is broken and clicks
+  away, meaning the prayer genuinely never sounds for that player. Closed the runway: intro captions now
+  land at 0/5/10/14, the song starts at **18s**, every `a-prayer-*` timestamp shifted the same 42s
+  earlier. Words unchanged.
+- **The jingle's scratch, removed** — "we already decided on that." Regenerated
+  `discover_the_new_you_tape97_radio.mp3` as the plain `--tape97` degrade (no `--wrap` dial-tuning
+  burst); captions de-offset to the file's own raw LRC times.
+- **"New you" cut off in its last seconds — a systemic bug, not Tape-B-specific.**
+  `src/narrative/tapes.ts`'s `totalSeconds()` ended a tape purely on `lastCaption.at + 3s`, with no
+  floor against the real clip's actual duration. Whenever hand-paced captions undershoot the file (Tape
+  A's own `_doc` had already logged a "~7s undershoot" as a mere sync-polish note, never connected to
+  playback), `syncTapeAudio()` answers the tape ending by calling `tapeAudio.stop()`, which **pauses the
+  real `<audio>` element mid-playback**. Added `TapeDef.realDurationSec` as a floor on `totalSeconds()`;
+  set from ffprobe'd real durations (Tape A 157.12s, Tape B 30.83s). Verified live: Tape B now plays to
+  its natural end instead of stopping 2.6–5.9s early.
+
+### 2 · Tape identity (commit "S89·2")
+Confirmed, not a fault: every track already binds to the tape the fiction names it as (tapeA
+"companion" = the prayer, per `s1_kit.json`'s own "Tape one — a prayer for the journey"; tapeB
+"broadcast" = the jingle; tapeC "mixtape" = Daniel's own song). The real fault was legibility: nothing
+told a player which tape was which before pressing one. Added `TapeDef.shelfLabel`
+(PLACEHOLDER-draft text) and a hover/press affordance (`testTapeHover`, wired to both `pointerdown` and
+`pointermove` in `src/engine/app.ts`) that names the tape in the existing `tapeCaption` strip BEFORE it
+plays — works for a genuine mouse hover AND a touch press, since the actual insert only fires on
+`pointerup`. Verified live on both paths (a held press shows the label while `tapes.inserted` is still
+`null`; release then plays).
+
+### 3 · The E3 shelf and the floating books (commits "S89·3", "S89·3b")
+Root cause, found by seating the camera at the REAL E3 seat — `cluster.homeYaw` for era `e3` is **90**
+(Room 2/west, x=−4.4), not the Room-3/east guess a naive reading of the seat table suggests —
+`bookcaseMoved` kept E1's `yaw:90` (tuned for wallEast, an X-facing wall) when it relocated near
+wallSouth (a Z-facing wall) at r3: wrong axis presented to the wall, and its wide run ran parallel to
+the seat instead of facing it, reading as a thin floating plank rather than a bookcase. Fixed **live
+before writing a number to data** — rotated a test entity in the running engine, screenshotted, watched
+a book land cleanly on the shelf board, only then committed `yaw:0` + a wall-flush `pos.z`, with every
+riding prop (book1/2/3, teddyBox, rainbowDuck, cdStack, mixtape) carrying the same 90° offset remap (the
+old x/z offset from the bookcase's old centre, rotated by the same −90° the bookcase itself took — not
+re-guessed by eye). `tools/room-audit.mjs` then caught a regression this same fix introduced: the
+rotation swapped which axis carries the shelf's 0.76m width, pushing it 0.12m past Room 1's own floor
+plate on +x. Fixed with a second commit, shifting the whole assembly's x by −0.17. A close-up screenshot
+now reads as the same bookcase as the Era-1 reference — wide face square to the camera, books standing
+side by side, nothing floating.
+
+### 4 · Occlusion (verification only, no code change beyond the BOUNDS fix above)
+Ran `tools/room-audit.mjs`. Triaged every remaining finding against the E1 baseline (unchanged this
+session) or by eye, not just by count:
+- **JOINERY** (window frame/CRT bezel/lamp parts, sneaker pair) — the tool's own documented rule for
+  parts of one assembly, not occlusion.
+- **CONTAINED** (books/teddy/cdStack/mixtape "inside" their bookcase) — identical on E1's own untouched
+  reference; a book on an open shelf is always inside the shelf's outer box. Benign.
+- **SCALE** (rendered mesh vs. authored fallback-box size, every model) — a fallback-box documentation
+  staleness, not a visual bug; the real mesh is what renders. Systemic, pre-existing, out of scope.
+- **SURFACE** `terminalFrame` 2cm into `spineWall` — identical across every era, at the tolerance edge,
+  reads as a flush-mounted recess.
+- **OVERLAP** desk∩chair (both rooms), chair∩garment — normal furniture composition.
+- **FLOATING** `w_cardigan`/`e_hoodie` — **checked by eye**, screenshotted close: both clearly read as a
+  garment draped over a chair back, which the tool's straight-down support raycast doesn't recognise.
+  Judged a tool false-positive.
+
+No further fixes needed; the two real findings this session's own E3 fix produced (BOUNDS) were already
+fixed in item 3.
+
+### 5 · The duck and the teddy — a real finding, not a fifth confirmation
+Per the brief's rule, did not re-measure coordinates. Put the camera at the exact authored Room-1 seat
+(`seatPose(0)`), turned to the live bearings (duck 84.2° right, teddy 94.3° right — computed via the
+rotation formula this session had to re-derive and verify by round-trip, since an early wrong sign put
+both props off-screen at first), screenshotted, and **looked**. Both ARE visible and unoccluded — three
+prior sessions' coordinate work holds up. **That is not the finding.** Neither prop carries any
+duck-like or teddy-like visual FORM: `data/room/models.json` has no `rainbowDuck`/`teddyBox` entry —
+unlike the bookcase/desk/boombox/tapes (all given real `.glb` meshes), these two are still the
+project's original flat-colour placeholder boxes (`#FFD24C`, `#C9A8A0`), sitting among book1/book2/
+cdStack, themselves plain boxes of similar size and warm tone. A correctly-placed, unoccluded box that
+looks exactly like every other box on the shelf gives a viewer no signal that "this one is a duck" —
+which is the actual reason four sessions of coordinate verification never satisfied Sérgio. ⚑ **FOR
+SÉRGIO**, an aesthetic call, not decided here: give them real models (the same treatment
+tapeA/tapeB/mixtape already got) or accept them as abstract dressing and say so.
+
+**The E2 tape**, also asked about: drove a REAL, ordinary Update-Now → EULA (both real pages) → install
+(7.5s) → restart (2.2s) transition, genuine waits, no debug jump, landing at a confirmed live
+`era:'e2'`. Queried the entities directly: `tapeA`/`tapeB`/`boomboxModel`/all three `*InSlot` markers
+are correctly `enabled:false` — retirement holds, matching S84/S85's prior findings. `mixtape` is
+`enabled:true`, and a close-up screenshot shows exactly one cassette alone on the shelf. This is
+documented canon (Session 86's `_doc`: mixtape "NOT REMOVED, deliberately… the one Era-1 object the
+piece has already decided survives"), not a retirement bug — which is why S84 and S85 could never
+reproduce a bug that was never there. ⚑ **FOR SÉRGIO**: is the mixtape's deliberate persistence still
+wanted, given he's reporting it in the same register as "the pamphlet is still on the desk" (i.e., as a
+mistake)?
+
+**Verification:** `npx tsc --noEmit`, `npm test`, `npm run build` green after every commit. `npm run
+audit`'s browser half re-run manually (headless Chrome + puppeteer-core, both present in this worktree)
+after each data change rather than via the harness (no dev server auto-managed here); draw-call/comfort
+baselines untouched, no ratchet raised. `BUILD_QUEUE_LIVE.md`'s S89 block flipped to SHIPPED.

@@ -1975,7 +1975,9 @@ severity order, committing after each.** A session killed partway must leave fin
 ---
 
 # S89 — THE AUDIO PASS, AND THE PROPS THAT ARE NOT WHERE THEY LOOK
-**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Sonnet · dispatchable now, in a WORKTREE (parallel with S88).**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-15 · Sonnet.** All five items done, each verified live in a real
+headless-Chrome run (not by reading a manifest or trusting a comment) and committed separately. Full
+write-up: `docs/reinterp/08_STATUS_REGISTER.md` §27, `01_SESSION_LOG.md`'s S89 entry.
 *Fence: `data/audio/`, `src/narrative/tapes.ts`, `src/desktop/os.ts` tape UI, `data/room/*.json` for
 E1/E2/E3, `src/room/` E1–E3 paths. ⚑ **Do NOT enter Era 4** — S88 owns it.*
 
