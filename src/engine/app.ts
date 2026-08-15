@@ -2556,12 +2556,32 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (p.moved > TAP_SLOP_PX) return;                 // it travelled: a look
     if (performance.now() - p.t > TAP_MS) return;      // it lingered: not a tap
     if (p.opening) {
-      // whichever driven move armed this press is the one it ends (S85: the
-      // relocation joins the descent here; they never overlap — beginRelocation
-      // clears descentActive outright)
-      if (descentActive) endDescent();
-      else if (relocLeg) endRelocation();
-      return; // never let an opening press fall through onto the landed room
+      // ⚑⚑ THE DRIVEN MOVES ARE NOT SKIPPABLE BY POINTER. FIXED 2026-08-15.
+      //
+      // S48 made the descent skippable by anything, and that was right for a
+      // mouse-only build. S80/S84/S85 then narrowed it to "a drag is a look, a
+      // deliberate tap still skips" — and shipped that three times, because the
+      // BRIEFS said so. They were wrong. Sérgio asked for the opposite, four
+      // times, in plain words: *"tapping should not jump ahead"* · *"it should
+      // be fixed even if the mode is free handling"* · *"all the camera
+      // movements are still skippable"* · *"the clicking on the mouse jumps
+      // ahead the travellings still."*
+      //
+      // He is right on the merits, not merely by authority. The descent and the
+      // relocation are the piece's argument that these rooms are ONE BUILDING
+      // and that you are being MOVED through it — the only bodily claim it
+      // makes. A stray click during it is not an instruction to leave; on a
+      // touch screen the first thing anyone does is touch the picture, and on a
+      // laptop a click is how you check whether a thing is alive. Losing the
+      // shot to either is a loss with no upside: the move is 12 s, it is
+      // authored, and nothing waits behind it.
+      //
+      // So the press is SWALLOWED: it never ends the move, and it never falls
+      // through onto the landed room. Dragging still looks around (S85b layers
+      // the offset onto the curve). ESCAPE HATCH: the keydown path at ~2578
+      // still ends either move, deliberately — a key is unambiguous and the
+      // review sessions need a way out. That is the ONE way to cut a leg short.
+      return;
     }
     resolveTap(e);
   });
