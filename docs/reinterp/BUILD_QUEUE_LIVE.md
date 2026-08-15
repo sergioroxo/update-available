@@ -1927,3 +1927,116 @@ knowledge-graph question (`close-constellation-as-knowledge-graph`) is unresolve
 - The `?flat=1` justification is **removed from the blackout comment** — the review tool does not get
   to explain shipped behaviour.
 - `tsc`, `npm test`, `npm run build`, `npm run audit` green; no baseline raised. Log, register, commit.
+
+---
+
+# S88 — ERA 4 IS UNPLAYABLE: play it, enumerate it, fix it
+**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Opus · dispatchable now.**
+*Fence: everything Era-4 — `src/desktop/apps/space.ts`, `ball.ts`, `offers.ts`, `lVoice.ts`,
+`src/room/` E4 paths, `data/dialog/s4_*.json`, E4 rows of `data/room/*.json`. ⚑ **Do NOT touch E1/E2/E3
+props, `data/audio/`, or `src/narrative/tapes.ts`** — S89 owns those, in parallel.*
+
+## THE BRIEF
+Sérgio, 2026-08-15, after playing the deployed build: **"So many mistakes on ERA-4, crazy amount.
+Era-4 is completely unplayable, collision, the system is not functioning well."**
+
+**That is all the detail there is, and it is enough.** He is the project lead, he played it, and it
+did not work. ⚑ **Your first job is therefore DISCOVERY, and it is the one session in this queue where
+that is the right first move** — everywhere else the faults were named and re-measuring them was the
+failure. Here nobody has ever played Era 4 end to end with a pointer and written down what happens.
+
+**So: play it. Cold, forward, ordinary path, no debug jumps** (a jump leaves the room mid-fold and its
+aftermath is not evidence — `08 §19`). Enter Era 4 the way a player does, from the E3 correction list.
+Then **enumerate every fault** — what you clicked, what you expected, what happened — and **fix in
+severity order, committing after each.** A session killed partway must leave finished work behind.
+
+**Known and load-bearing before you start:**
+- E4's one deliberate touch is the **headset** → L's voice → offers → break → **the ball** → device
+  back on → the era ends (`space.ts:143–163`). **The ball is the piece's respite and its answer to
+  itself** — if anything in your list breaks the ball, that is the top of the severity order.
+- **"Collision" may be literal.** Check the E4 seat's props for interpenetration and the turn for
+  geometry the camera passes through. `tools/room-audit.mjs` reports 20 findings at r4 — read them.
+- **⚑ 177 draw calls at the settled E4 seat turned 180°**, against a ≤75 budget (`08 §20`). The ball
+  costs zero; the room costs that. It is the first beat giving a player a reason to hold that facing
+  for three minutes. **If "not functioning well" is partly framerate, this is why** — measure fps at
+  that facing before assuming it is logic.
+- **The ledger must stay blank across the ball** (S79 verified this; do not regress it).
+- ⚑ **`s4_l.json`'s deadname beat is `BLOCKED-ON-READER-PASS` (`08 §14`, `§22`) — do not edit its
+  wording, and do not "fix" the `{name}` field.** §22 records an open narrative question that is
+  Sérgio's. Route around it.
+
+## ACCEPTANCE
+- **A written, numbered list of what was actually wrong** — the thing that does not exist today.
+- Era 4 is playable end to end on the ordinary path, with the ball intact.
+- fps and draw calls reported at the E4 seat, forward and turned.
+- `tsc`, `npm test`, `npm run build`, `npm run audit` green; no baseline raised. Logs, register, commit.
+  ⚑ **Do not push.**
+
+---
+
+# S89 — THE AUDIO PASS, AND THE PROPS THAT ARE NOT WHERE THEY LOOK
+**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Sonnet · dispatchable now, in a WORKTREE (parallel with S88).**
+*Fence: `data/audio/`, `src/narrative/tapes.ts`, `src/desktop/os.ts` tape UI, `data/room/*.json` for
+E1/E2/E3, `src/room/` E1–E3 paths. ⚑ **Do NOT enter Era 4** — S88 owns it.*
+
+Every item below is Sérgio's, verbatim or near, from the 2026-08-15 pass. **These are named faults, so
+this is execution, not discovery. Do not re-derive them; fix them.**
+
+## 1 · THE AUDIO — three concrete faults
+- **The prayer does not play at all.** Find out why and make it play.
+- **The jingle has a scratching sound at the start.** ⚑ *"We already decided on that"* — **remove it.**
+  It is a decision already taken, not a question to reopen.
+- **"New you" is cut off in its last seconds.** Restore the tail.
+⚑ **Verify by LISTENING** — decode/inspect the actual audio files and confirm duration and leading
+silence. A manifest entry is not evidence that a sound plays.
+
+## 2 · THE TAPES DO NOT SAY WHAT THEY ARE
+> *"Does the prayer match the tapes, and how does it label each of the tapes so we know which one to
+> play?"*
+
+**Two questions and both are real.** (a) Confirm each audio track is bound to the tape the fiction
+says it is — a mismatch here is a continuity error nobody would catch by reading. (b) **A player
+cannot tell the tapes apart.** They are physical objects on a shelf; give them legible identity —
+label, colour, or a hover/press affordance that names the tape before it plays. ⚑ **Sérgio's own
+framing is the test: "so we know which one to play."**
+
+## 3 · ⚑⚑ THE DUCK AND THE TEDDY — FOURTH REPORT. DO NOT MEASURE THEM.
+Three sessions have now reported these as correctly placed. **He still sees nothing.** S86 said it
+fixed a genuine occlusion and verified by eye; he looked again and reported *"no sign of duck, teddy
+bear, nothing."*
+
+> ### THE ONLY ACCEPTABLE EVIDENCE IS A PICTURE OF WHAT A PLAYER SEES.
+> Put the camera at the **authored Room-1 seat**, turn to the prop's bearing (the duck is ~84° right
+> of forward), **screenshot it, and look at the screenshot.** If the prop is not plainly visible in
+> that frame, it is not reachable, whatever the coordinates say.
+>
+> ⚑ **"The geometry is correct" is not an answer to "I can't see it."** If they cannot be made
+> visible from the seat without breaking the composition, **say so plainly and propose where they
+> should live instead** — that is a real finding and a better outcome than a fourth confirmation.
+
+Also check whether the **E2 tape** Sérgio keeps seeing is genuinely present on the played path; S84 and
+S85 both failed to reproduce it, so photograph the shelf on an ordinary E1→E2 transition either way.
+
+## 4 · THE E3 SHELF AND THE FLOATING BOOKS
+> *"The shelf in Era 3 is still not against the wall, it should rotate so the wider side we can see
+> it, like in Era-1, and the books are floating."*
+
+**Rotate it to present its wide face, seat it against the wall, and land the books on their shelves.**
+E1's bookcase is the reference — match its relationship to the wall and the camera. ⚑ Screenshot both
+rooms side by side to confirm they read as the same object aging, which is the whole spatial premise.
+
+## 5 · OCCLUSION ERRORS
+He reports these generally across rooms. **Run `tools/room-audit.mjs`, read the r1/r2/r3 findings
+(12 / 9 / 21 at last count), and fix the ones that are real** — props inside boards, overhanging
+lips, geometry the camera clips. Report which findings you judged to be intentional and why.
+
+## ACCEPTANCE
+- The prayer plays; the jingle has no scratch; "New you" runs to its end. **Stated as verified by
+  listening to the files, not by reading the manifest.**
+- Every tape is identifiable before it is played, and each is bound to the right track.
+- **A screenshot from the seat showing the duck and the teddy** — or a written finding that they
+  cannot be seen from there and a proposal for where they go.
+- The E3 shelf presents its wide face against the wall; no floating books.
+- Room-audit findings triaged, with the intentional ones named.
+- `tsc`, `npm test`, `npm run build`, `npm run audit` green; no baseline raised. Logs, register,
+  commit after each item. ⚑ **Do not push.**
