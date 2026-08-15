@@ -838,6 +838,53 @@ async function sheet(browser, frames, outFile, scale = 1) {
 // ═══ L4 · THE ASSERTIONS ═══════════════════════════════════════════════════
 
 /**
+ * ⚑ S81 · THE RATCHET FIX (08 §26). `Math.max(0, ...rec.map(r => r[8]))` took
+ * the peak over EVERY sampled frame, warm-up included — S86 measured the
+ * entrance at 68 on one run and 76 on an immediate re-run of the same tree,
+ * consistent with §26's theory: batching rebakes asynchronously very early in
+ * a recording, and whether a pre-rebake frame lands in the sample window is a
+ * race, so that race became the reported number.
+ *
+ * Diagnosed by hand this session before picking a fix: `DUMP_DRAWS=1 node
+ * tools/shots.mjs comfort` dumps the raw per-frame [t, drawCalls] trace, and
+ * two clean re-runs here both show the entrance's early frames sitting on a
+ * SUSTAINED plateau (76, ~1.7 s, ~190 consecutive frames both times) before
+ * the ease-in curve visibly starts moving the camera — not one outlier frame,
+ * which rules out "a single racy frame" as the whole story.
+ *
+ * ⚑ THE CHOICE: a high percentile, not a fixed-time warm-up discard. A
+ * time-based cutoff has to be re-tuned per leg — the entrance runs ~16 s of
+ * recording, a scripted send only ~4 s — or a cutoff sized for the entrance
+ * eats an entire short leg outright. A percentile scales with however many
+ * frames a leg actually produced, and this file already trusts the same
+ * shape of fix for the identical class of problem: `differentiate()`'s own
+ * `smooth()` prefers a WINDOWED value to a raw instantaneous one for exactly
+ * the reason stated there — "a single long frame... reads as a spike no eye
+ * ever saw." `robustDrawPeak()` below discards the top `DRAW_PEAK_TRIM`
+ * fraction of sampled frames (minimum 1, and only once there are enough
+ * samples for a fraction to mean anything) before taking the max of what
+ * remains — enough to absorb a handful of racy frames, not enough to erase a
+ * genuinely SUSTAINED peak.
+ *
+ * ⚑ HONEST RESULT, not oversold: this could not be validated against an
+ * actual 68-vs-76 split on this machine — this environment reproduced 76
+ * every time, pre- and post-fix, across three separate full runs (see 08
+ * §26's update for the numbers). What this fix guarantees is that a SHORT
+ * race (a handful of frames, the mechanism §26 names) can no longer move the
+ * reported number. If the flakiness persists on another machine despite
+ * this, the plateau's LEVEL itself is racy, not just its edges — a deeper
+ * problem this fix does not address, and whoever next reproduces the 68 side
+ * should say so rather than re-widening the trim to chase it.
+ */
+const DRAW_PEAK_TRIM = 0.02;
+function robustDrawPeak(samples) {
+  if (!samples.length) return 0;
+  const sorted = [...samples].sort((a, b) => b - a);
+  const drop = sorted.length >= 50 ? Math.max(1, Math.round(sorted.length * DRAW_PEAK_TRIM)) : 0;
+  return sorted[drop] ?? sorted[sorted.length - 1];
+}
+
+/**
  * 1 · THE COMFORT ENVELOPE, and 2 · the draw-call peak, from one recording.
  * Every driven leg: the entrance descent, all three choreography transitions
  * (three legs each), and the scripted-send dolly.
@@ -870,7 +917,7 @@ async function comfort(browser, asserts) {
     await wait(16000);
     const rec = await page.evaluate(() => { window.__recOn = false; return window.__rec; });
     for (const L of differentiate(rec)) legs.push({ ...L, name: 'entrance descent' });
-    drawPeaks.push({ what: 'entrance', peak: Math.max(0, ...rec.map((r) => r[8])) });
+    drawPeaks.push({ what: 'entrance', peak: robustDrawPeak(rec.map((r) => r[8])) });
     await page.close();
   }
 
@@ -889,7 +936,7 @@ async function comfort(browser, asserts) {
     const found3 = differentiate(rec);
     const legNames = ['rise', 'build', 'descend'];
     found3.forEach((L, i) => legs.push({ ...L, name: `${name} · ${legNames[i] ?? 'leg ' + (i + 1)}` }));
-    drawPeaks.push({ what: name, peak: Math.max(0, ...rec.map((r) => r[8])) });
+    drawPeaks.push({ what: name, peak: robustDrawPeak(rec.map((r) => r[8])) });
     await page.close();
   }
 
@@ -903,7 +950,7 @@ async function comfort(browser, asserts) {
       await page.evaluate((s) => window.__os?.onSendResolve?.(s, 'visited'), id);
       await wait(4000);
       const rec = await page.evaluate(() => { window.__recOn = false; return window.__rec; });
-      peak = Math.max(peak, ...rec.map((r) => r[8]));
+      peak = Math.max(peak, robustDrawPeak(rec.map((r) => r[8])));
       // a send that resolves to the seat you are already in is a no-op, not a
       // leg (dollyTo returns early) — those simply produce nothing to measure
       for (const L of differentiate(rec)) legs.push({ ...L, name: `scripted send ${id} · dolly` });
