@@ -37,7 +37,24 @@
     <link rel="apple-touch-icon" href="./app-icon-180.png" />
     <title>YOUR UPDATE HAS FAILED</title>
     <style>
-      html, body { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
+      /* ⚑ S86 — THE FALSE "HOVER GLOW". Sérgio, playing with a mouse: "A glow
+         that appears just in some areas... maybe it is selecting the screen."
+         He had it right the first time: it IS selection. The orienting card
+         (orientingCard.ts) and the game menu (gameMenu.ts) are both plain DOM
+         text with no `user-select` rule, so an ordinary drag — the exact
+         gesture this piece asks for everywhere else (drag-to-look) — paints
+         the browser's native blue highlight across whatever paragraph it
+         crosses. It reads as an unexplained glow because nothing in the
+         piece's own voice offers a highlight like it; a real one only ever
+         marks a floor disc or a button. Verified live: before this rule, a
+         drag across the orienting card's body text left a visible selection;
+         after, the same drag leaves none. `user-select: text` stays available
+         to anything that opts back in (the debug panel's diagnostic readout
+         already does, panel.ts:437, and is unaffected). */
+      html, body {
+        margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden;
+        user-select: none; -webkit-user-select: none;
+      }
       #app { width: 100%; height: 100%; display: block; }
     </style>
   </head>
