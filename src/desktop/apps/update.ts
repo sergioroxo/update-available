@@ -112,6 +112,25 @@ export class UpdateApp {
   /** fires ONLY when "Update now" is pressed on the FIRST notify screen,
    *  i.e. remind-later was never used — the gathering window never opened. */
   onUpdateNowDirect?: () => void;
+  /**
+   * ⚑ S86 — THE PRESS THAT LIFTS YOU. Fires the instant the install begins,
+   * i.e. on the live "I Agree" (or on "Update now" for a ritual with no terms).
+   *
+   * Sérgio, 2026-08-15: *"When we press update shouldn't we ascend? Doesn't
+   * make sense to do it after the update is done, because that way we can see
+   * the room updating as well in sync."* He is right, and it is dramaturgy
+   * rather than staging: the piece's whole thesis is that era transitions ARE
+   * software updates. Until now `onComplete` fired the room's change AFTER the
+   * progress bar and the restart, so the install and the aging were two
+   * sequential events and **the player never saw the room change** — the one
+   * moment where the argument is literally visible happened off-camera.
+   *
+   * With this hook the engine starts the relocation HERE, so the ascent and the
+   * install are one movement: you rise while the changelog types, the room ages
+   * underneath you while the machine is dark, and `onComplete` brings the new
+   * era's desktop up on the monitor you are descending back toward.
+   */
+  onInstallBegin?: (toEra: string) => void;
 
   constructor(key: UpdateKey) {
     this.key = key;
@@ -165,6 +184,7 @@ export class UpdateApp {
     // the bare final restart has no changelog — straight to the dark beat
     this.phase = this.s.changelog ? 'install' : 'restart';
     this.t = 0;
+    this.onInstallBegin?.(this.s.toEra); // ⚑ S86 — the ascent starts on THIS press
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -352,8 +372,7 @@ export class UpdateApp {
    *  terms and land on the install screen, where the dispersal plays. Never
    *  reachable in play — the ritual's own clicks are the only way through it. */
   debugSkipToInstall(): void {
-    this.phase = this.s.changelog ? 'install' : 'restart';
-    this.t = 0;
+    this.beginInstall(); // S86: the review path must fire the SAME beat, ascent included
   }
 
   /** click routing — logical canvas coordinates (mirrors the draw geometry) */

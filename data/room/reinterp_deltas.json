@@ -11,18 +11,18 @@
         ]
       },
       "teddyBox": {
-        "_doc": "Session 55: same bug as cdStack above, same fix. era1.json's y0.71 (half-height 0.06) targets the OLD box-shelf's top (base 0.65); the real bookcaseModel shelf surface is y0.76. New y0.82 puts the base back at 0.76. Session 56: y0.76 itself was wrong — see boomboxModel's _doc for the real bookcaseOpen.glb shelf-board measurement (this compartment's floor is 0.703, not 0.76). y0.82→0.763.",
+        "_doc": "Session 55: same bug as cdStack above, same fix. era1.json's y0.71 (half-height 0.06) targets the OLD box-shelf's top (base 0.65); the real bookcaseModel shelf surface is y0.76. New y0.82 puts the base back at 0.76. Session 56: y0.76 itself was wrong — see boomboxModel's _doc for the real bookcaseOpen.glb shelf-board measurement (this compartment's floor is 0.703, not 0.76). y0.82→0.763. Session 86: (1.98,0.763,0.5) → (1.98,1.16,0.85). Sérgio: \"No sight of ducky or teddy bear, nothing.\" The teddy was on the SAME shelf as the boombox and BEHIND it — boombox AABB x[1.785,1.936] z[0.416,0.823], teddy at x1.98 z0.5, i.e. deeper into the shelf and inside the boombox's z-span, so from the seat (x0) the machine stood exactly in front of it. Moved up one board, onto the book shelf (that board's top is 1.10, so the 0.06 half-height puts the base there) and out to z0.85, clear of book1/book2 at z0.55/0.65. y1.16 is the seated eye height, so it now reads at a level look. BELONGINGS_HIT in src/engine/app.ts moved to match — that is the click geometry and it must stay in step.",
         "pos": [
           1.98,
-          0.763,
-          0.5
+          1.16,
+          0.85
         ]
       },
       "rainbowDuck": {
-        "_doc": "Session 84: measured against the rendered bookcaseOpen.glb, not the retired box shelf. era1.json put the duck base at y1.560, which was the OLD shelfBoard3 top; the real model's top board spans y1.558–1.615, so that base sat 5.5 cm inside the board. Its z footprint was 0.33–0.43 against the model's 0.37 front edge, overhanging by 4 cm; that partial footprint is also why room-audit could not classify the bookcase AABB as support and reported the floor instead. y1.655 puts the 0.04 m half-height exactly on y1.615; z0.50 keeps the full 0.10 m depth inside the shelf with 8 cm of front margin. From the Room-1 seat it shares teddyBox's bearing: 84.2° right of the authored forward direction, one deliberate right turn.",
+        "_doc": "Session 84: measured against the rendered bookcaseOpen.glb, not the retired box shelf. era1.json put the duck base at y1.560, which was the OLD shelfBoard3 top; the real model's top board spans y1.558–1.615, so that base sat 5.5 cm inside the board. Its z footprint was 0.33–0.43 against the model's 0.37 front edge, overhanging by 4 cm; that partial footprint is also why room-audit could not classify the bookcase AABB as support and reported the floor instead. y1.655 puts the 0.04 m half-height exactly on y1.615; z0.50 keeps the full 0.10 m depth inside the shelf with 8 cm of front margin. From the Room-1 seat it shares teddyBox's bearing: 84.2° right of the authored forward direction, one deliberate right turn. Session 86: y1.655 → 1.712, and this is the third session to touch it because the first two MEASURED and never LOOKED. Disabling the duck live, from the Room-1 seat at its own bearing, changed nothing at all on screen — it was not merely hard to see, it was invisible. The live bookcaseOpen.glb AABB tops out at y1.672, not the y1.615 S84 measured, so a 0.08 m duck based at 1.615 was buried 5.7 cm inside the top board with 2.3 cm showing behind the board's own front lip. 1.712 puts the 0.04 m half-height exactly on the real 1.672 surface. Verified by eye at the seat, at pitch 0 and pitched up, before and after.",
         "pos": [
           1.98,
-          1.655,
+          1.712,
           0.5
         ]
       },
@@ -383,6 +383,7 @@
         "color": "#D4D0C8"
       }
     },
+    "_docS86": "⚑ Session 86 — E2 WAS STILL WEARING E1'S CLOTHES. Sérgio, playing the deployed build: \"The pamphlet is still on the desk; the tape is still on the shelf. Era 2 should not be wearing Era 1's props.\" He was right on both counts, and the r2 fold was the thinnest in the file: it retired the boombox, tapeA/tapeB and their docked twins, and the moon, and nothing else — six years of this room's life were one recoloured window pane. Everything added below is an object that dates itself to 1997 and that a returning adult would not still have out. THE KIT (kitBrochure + its two folds, the cover band/title/motif, the three text blocks, the pocket flap and the floppy with its shutter and label) is the Family Design Solutions sales packet: its floppy has already been put into a machine that has since been updated twice, and the brochure lying open on the desk in 2003 reads as a set-dressing oversight rather than as a life. homeworkPile is a teenager's homework. sodaCan is the one judgement call in the list and is flagged for Sérgio — a can on a desk is not era-specific, and it is kept ONLY because removing it costs nothing to re-add if he disagrees. ⚑ NOT REMOVED, deliberately: mixtape (Tape C). It is belongings-eligible and the r3 fold relocates it onto bookcaseMoved with the duck and the teddy, so it is the one Era-1 object the piece has already decided survives — retiring it here would silently kill that payoff. FOR SÉRGIO: if the mixtape should also go, the honest place is the belongings beat (kept → frozen on the shelf; not kept → gone at r2), which would finally give that choice a visible consequence; it currently has none.",
     "remove": [
       "moon",
       "tapeA",
@@ -390,7 +391,22 @@
       "tapeAInSlot",
       "tapeBInSlot",
       "tapeCInSlot",
-      "boomboxModel"
+      "boomboxModel",
+      "kitBrochure",
+      "kitBrochureFold1",
+      "kitBrochureFold2",
+      "kitCoverBand",
+      "kitCoverTitle",
+      "kitCoverMotif",
+      "kitTextA",
+      "kitTextB",
+      "kitTextC",
+      "kitPocketFlap",
+      "kitFloppy",
+      "kitFloppyShutter",
+      "kitFloppyLabel",
+      "homeworkPile",
+      "sodaCan"
     ],
     "add": []
   },
@@ -439,15 +455,15 @@
         "_doc": "Session 71: LEFT BEHIND. r3 moves the bookcase from z 0.75 to 3.3 and gives book1/book3/cdStack matching overrides — teddyBox and rainbowDuck never got one, so from E3 on they hung in mid-air in the middle of the vacated room (measured: 0.683 m and 1.540 m of clear air beneath them, tools/room-audit.mjs FLOATING). Both now carry the shelf's own +2.55 z, which preserves each prop's exact relationship to its compartment rather than re-placing it by eye.",
         "pos": [
           1.98,
-          0.763,
-          3.05
+          1.16,
+          3.4
         ]
       },
       "rainbowDuck": {
         "_doc": "Session 84: r3 must carry the corrected r1 shelf relationship, not the retired era1.json placement. Same x/y as r1 and the moved bookcase's exact +2.55 z.",
         "pos": [
           1.98,
-          1.655,
+          1.712,
           3.05
         ]
       }

@@ -414,8 +414,13 @@ const BELONGINGS_HIT: Record<string, { p: { x: number; y: number; z: number }; r
   poster1: { p: { x: 0.95, y: 1.62, z: -0.695 }, r: 0.22 },
   // D33 (Session 34): two small new shelf props, added to the eligible set —
   // positions match their era1.json prop entries exactly.
-  teddyBox: { p: { x: 1.98, y: 0.71, z: 0.5 }, r: 0.14 },
-  rainbowDuck: { p: { x: 1.98, y: 1.6, z: 0.38 }, r: 0.12 }
+  // ⚑ S86: both of these were stale against reinterp_deltas.json's r1 — teddyBox
+  // by 5 cm (Session 56's shelf correction never reached this table) and
+  // rainbowDuck by 12 cm in z, so its 0.12 m radius was centred on empty shelf.
+  // They are now the props' actual r1 points, and BOTH props moved this session
+  // because neither could be SEEN from the seat (see their _doc entries).
+  teddyBox: { p: { x: 1.98, y: 1.16, z: 0.85 }, r: 0.14 },
+  rainbowDuck: { p: { x: 1.98, y: 1.712, z: 0.5 }, r: 0.12 }
 };
 
 interface AppOptions {
@@ -738,6 +743,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (era === 'close') return; // the spine's onClose owns the constellation
       driveMorph(era as EraKey);
       spine?.onEra(era);
+    };
+    // ⚑ S86: I Agree / Install pressed — the ascent starts here, not at the
+    // restart. `close` has no room to age into; it takes the constellation.
+    os.onEraRelocate = (era) => {
+      if (era === 'close') return;
+      beginEraRelocation(era);
     };
     os.onSendResolve = (id, outcome) => {
       sendRt?.fire(id, outcome);
@@ -2412,6 +2423,39 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // and neither pointer stream ever reaches the code above.
   canvasEl.style.touchAction = 'none';
 
+  /**
+   * ⚑⚑ S86 — AND `touch-action` IS NOT ENOUGH ON iOS, WHICH IS WHY SÉRGIO'S
+   * iPAD KEPT FALLING OUT OF FULLSCREEN MID-SCENE.
+   *
+   * The pinch is a BOUND CAMERA CONTROL in this piece (FOV 30°–80°, CLAUDE.md)
+   * and Safari's own page zoom was firing underneath it and taking the page —
+   * and fullscreen with it — along for the ride. Three layers are needed and
+   * only the first was ever built:
+   *   1. `touch-action: none` (above) — stops panning and double-tap zoom.
+   *   2. the viewport meta (index.html) — `user-scalable=no, maximum-scale=1`.
+   *   3. ⚑ THIS: WebKit's non-standard `gesturestart/change/end`, which is the
+   *      event iOS Safari actually uses for a two-finger page zoom and which
+   *      neither of the other two suppresses. It is dispatched on the DOCUMENT
+   *      as well as the target, so both are bound; `preventDefault()` on it is
+   *      the documented way to keep the page's own scale.
+   * Plus `touchmove` with two fingers, registered non-passive so the call is
+   * not ignored — some WebKit builds rubber-band the document from touchmove
+   * even under `touch-action: none`.
+   *
+   * None of this changes what the gesture DOES: the FOV handler in
+   * `pointermove` below is untouched. It only stops the browser doing a second,
+   * uninvited thing with the same fingers. Desktop is unaffected — no browser
+   * fires `gesture*` for a mouse.
+   */
+  const killGesture = (e: Event): void => { e.preventDefault(); };
+  for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+    canvasEl.addEventListener(type, killGesture, { passive: false });
+    document.addEventListener(type, killGesture, { passive: false });
+  }
+  canvasEl.addEventListener('touchmove', (e) => {
+    if (e.touches.length >= 2) e.preventDefault();
+  }, { passive: false });
+
   canvasEl.addEventListener('pointerdown', (e) => {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     // a second finger is a PINCH: not a look, not a tap. Both are cancelled
@@ -2421,6 +2465,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       press = null;
       drag = null;
       pinch = pointerSpread();
+      e.preventDefault(); // S86: the second finger belongs to the camera, not the page
       return;
     }
     // S84: the entrance stays skippable, but a tablet press is not yet a tap.
@@ -2457,6 +2502,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   canvasEl.addEventListener('pointermove', (e) => {
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch !== null) {
+      e.preventDefault(); // S86: see the gesture block above — the FOV is ours
       if (pointers.size < 2 || !camera.camera) return;
       const d = pointerSpread();
       camera.camera.fov = Math.max(FOV_MIN, Math.min(FOV_MAX,
@@ -2926,15 +2972,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let earlyRelocEra: EraKey | null = null;
 
   /**
-   * ⚑ Which updates lift you on the press. u2 and u3 are the two rituals that
-   * play on DANIEL'S MONITOR, which is the screen the rise recedes from — they
-   * take it. u4 renders composited on Vera's laptop (updates.json's
-   * `_docWhere`) and E3/E4 are another session's fence this week, so it is
-   * deliberately held on the old timing rather than changed unwatched. The
-   * shape is identical when someone comes to enable it; add 'e4' and delete
-   * this note.
+   * ⚑ Which updates lift you on the press. u2 (e1→e2) is the ritual this
+   * session's walkthrough actually plays and verifies — "cold boot to the
+   * middle of Era 2." u3 plays on the same monitor and would take the same
+   * code path, but E3/E4 are S87's fence this week and this session neither
+   * enters nor tests them, so u3's timing is deliberately left on the OLD
+   * path (morph starts at `onEraShift`, restart-end) rather than changed
+   * unwatched. The shape is identical when someone verifies it in-scope;
+   * add 'e3' back and delete this note.
    */
-  const EARLY_ASCENT_ERAS: ReadonlySet<string> = new Set(['e2', 'e3']);
+  const EARLY_ASCENT_ERAS: ReadonlySet<string> = new Set(['e2']);
 
   /** the press half: start the room's change and the camera's ride, now. */
   function beginEraRelocation(era: string): void {

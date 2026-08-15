@@ -235,6 +235,11 @@ export class DesktopOS {
   private sendOffer: { id: string; open: boolean } | null = null;
   /** engine listens: the update restart landed — morph the space to `era` */
   onEraShift?: (era: string) => void;
+  /** ⚑ S86 — engine listens: the player pressed I Agree / Install and the
+   *  ascent must start NOW, so the room ages underneath them rather than after
+   *  them. See UpdateApp.onInstallBegin for the whole argument. The engine
+   *  decides which transitions take it; the OS only reports the press. */
+  onEraRelocate?: (era: string) => void;
   /** engine listens: the player answered a summons (visit dollies the camera) */
   onSendResolve?: (id: string, outcome: 'visited' | 'declined') => void;
   private toast: { text: string; t: number } | null = null;
@@ -458,6 +463,10 @@ export class DesktopOS {
   armUpdate(key: UpdateKey): void {
     if (!this.reinterp || this.updateApp) return;
     this.updateApp = new UpdateApp(key);
+    // ⚑ S86: the press, reported the moment it happens. The engine starts the
+    // relocation off this and finishes the era off `onComplete` below, so the
+    // two halves of an era change are ONE movement instead of two events.
+    this.updateApp.onInstallBegin = (toEra) => this.onEraRelocate?.(toEra);
     this.updateApp.onComplete = (toEra) => {
       this.updateApp = null;
       // S2R.7 item 5 — THE LAST FILING UNDER DANIEL'S NAME. It lands at the

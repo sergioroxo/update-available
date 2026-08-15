@@ -280,8 +280,41 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
   };
   const armTimer = window.setTimeout(arm, ARM_DELAY_MS);
 
+  /**
+   * ⚑ S86 — FULLSCREEN ON THE DELIBERATE PRESS (Sérgio: he wants the piece to
+   * start fullscreen). A browser will only grant it inside a transient user
+   * activation, and it can never be asked for on load — it would simply throw.
+   * The orienting card's own start button IS that gesture, and it is the ONLY
+   * place in the piece with one before the room appears.
+   *
+   * Fails soft everywhere it is not available: iOS *phone* Safari has no
+   * Element.requestFullscreen at all (iPadOS does), some embeds forbid it, and
+   * a user can leave it at any time. Nothing downstream may depend on it — the
+   * room is composed for the viewport it is given, and this only removes the
+   * browser's own furniture where the browser allows that.
+   *
+   * ⚑ The promise rejection must be swallowed: an unhandled rejection here
+   * would surface as a console error on every phone that lacks the API, and
+   * `npm run audit` counts console errors.
+   */
+  const goFullscreen = (): void => {
+    const el = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+    try {
+      if (document.fullscreenElement) return;
+      const req = el.requestFullscreen?.bind(el) ?? el.webkitRequestFullscreen?.bind(el);
+      if (!req) return; // iPhone Safari: no API. Not an error, just not offered.
+      const r = req();
+      if (r && typeof (r as Promise<void>).catch === 'function') {
+        (r as Promise<void>).catch(() => { /* denied or unsupported — play windowed */ });
+      }
+    } catch { /* same */ }
+  };
+
   enter.addEventListener('click', () => {
     if (!armed || destroyed) return;
+    goFullscreen(); // must happen INSIDE the click stack, before any await
     onContinue();
   });
 
