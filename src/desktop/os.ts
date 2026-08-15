@@ -1440,6 +1440,49 @@ export class DesktopOS {
       }
     } else {
       this.drawEraDesktopChrome(W, skin, colors);
+      /**
+       * ⚑⚑ S86 — THE TWO E1 PROVOTYPES USED TO VANISH AT THE ERA CHANGE, AND
+       * NOBODY EVER CHOSE TO LEAVE THEM.
+       *
+       * Sérgio, after finding "Today's lesson" late: *"If I didn't go back I
+       * would never find it… so they only exist before you press the floppy."*
+       * And, playing the deployed build: *"Also where are the provotypes
+       * here?"* — `data/provotypes/` holds five, check-spec counts five, and
+       * the project lead, on the device this will be exhibited on, could not
+       * reach one. **The check has been proving the FILES exist; it has never
+       * proved a PLAYER can meet them.**
+       *
+       * The mechanism was exact: both launchers drew inside the `e1` branch
+       * above with no equivalent for any later era, and Era 1 does not end by
+       * a player's choice — the diary glitch files, spine.ts arms T1 1.2 s
+       * later, and the era turns. Two authored surfaces closed for good on a
+       * timer, with nothing anywhere saying they were closing.
+       *
+       * They are carried forward to E2 instead, on the FOUND FILE'S OWN LAW
+       * (`desktopIdle()`, Session 60): never during a felt scene, never over a
+       * window, never announced, never rewarded — there for the player who
+       * looks. The fiction was already carrying them: E2's own boot crawl says
+       * JOURNEY FILE … MIGRATED and *"Your file was kept while you were
+       * away."* A session and an intake form kept on the new desktop is the
+       * piece's own thesis about what a migration keeps.
+       *
+       * A SECOND COLUMN, not the era's shelf: `drawEraDesktopChrome` owns
+       * x 12 (its icons run y 92, 140) and the Messenger and the found file
+       * take y 236 and 296 below them. x 100 clears the first column's widest
+       * label (centred on x+18, clipped at 62 px, so it ends by x 61) and
+       * reads as what it is — files that came with you, beside the ones the
+       * new software brought.
+       *
+       * ⚑ FOR SÉRGIO — a composition call, not a bug fix, and yours to
+       * overrule: it is E2 ONLY. E3 leaves Daniel's monitor dead by law (S61)
+       * and E4 is ambient, so "carry them forward" cannot mean "forever" here
+       * without answering where an OS surface lives after Room 1, which is
+       * S76's question and another session's fence.
+       */
+      if (this.reinterp && this.desktopEra === 'e2' && this.desktopIdle()) {
+        this.drawIcon(100, 92, reinterpStrings.launcherIcon, true, 'icon-provotype');
+        this.drawIcon(100, 140, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
+      }
     }
     // THE FOUND FILE (Session 60) — the renamed dossier, in every era, on the
     // same terms as lamby_rig.exe: only on an otherwise-idle desktop (so it is
@@ -1541,7 +1584,19 @@ export class DesktopOS {
       }
     }
     // toast
-    if (this.toast) {
+    // ⚑ S86 — NOT OVER THE PROVOTYPE'S CARE ROW. Seen with my own eyes the
+    // moment the two E1 launchers were carried onto the E2 desktop (above) and
+    // the Family Form opened there for the first time: the era-status well
+    // ("journey file migrated · accountability online") paints a box at
+    // y H-42…H-26, and the provotype's FIXED Leave/Pause/primary row sits at
+    // y 332…352 — so the toast ate the bottom third of the card's own primary
+    // button. Clicks were never affected, but this is the same impression the
+    // dossier overflow made: an evidence surface that looks unmaintained.
+    // The provotype is the one modal whose care row reaches these rows, and
+    // that row is load-bearing by its own law (Leave and Pause live from frame
+    // one, at a fixed position, every phase) — so an ambient system remark
+    // yields to it and comes back when the card closes.
+    if (this.toast && !this.provotype?.open) {
       ui.setFont(ctx, 9);
       const tw = ctx.measureText(this.toast.text).width + 12;
       ui.px(ctx, W - tw - 6, H - 42, tw, 16, ERA1.tooltip);
