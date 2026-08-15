@@ -2720,6 +2720,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (tapes) {
         tapes.update(dt, os.paused);
         syncTapeAudio();
+        // ⚑ S86: a tape that runs to its end now GOES HOME on its own (see
+        // tapes.ts), and that is a prop change nobody clicked — so the shelf/
+        // slot pair has to be re-synced from the loop, not only from the tap.
+        // Cheap: syncTapeProps only toggles three `.enabled` flags.
+        if (tapes.inserted !== tapesLastInserted) {
+          tapesLastInserted = tapes.inserted;
+          syncTapeProps();
+        }
         tapeAudio?.setGamePaused(os.paused);
         if (tapeCaption) {
           const cap = tapes.activeCaption;
@@ -2868,7 +2876,80 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * years of rooms", which a yaw dolly does not do. Both are now the same
    * three legs E2→E3 has flown since S61, whose numbers are untouched.
    */
+  /**
+   * ⚑⚑ S86 — THE ASCENT NOW BEGINS ON THE PRESS, AND THAT IS THE WHOLE BEAT.
+   *
+   * Sérgio, 2026-08-15: *"When we press update shouldn't we ascend? Doesn't
+   * make sense to do it after the update is done, because that way we can see
+   * the room updating as well in sync. So when we get down the computer should
+   * say 'welcome back Daniel'."*
+   *
+   * WHAT IT WAS: `os.onEraShift` fired at the END of the restart, so the order
+   * was install (7.5 s) → restart (2.2 s) → *then* rise/build/descend (21 s).
+   * The room aged while the player was up there, but they had already watched
+   * the machine finish and go dark; the update and the aging were two
+   * sequential events, and the argument that they are the SAME event was
+   * nowhere on screen.
+   *
+   * WHAT IT IS NOW, on one clock (u2, e1→e2, 7/7/7):
+   *   t 0.0  I Agree → the rise starts, the changelog types on the monitor
+   *          receding below you
+   *   t 7.0  the rise lands at the hold pose; the space cascade begins — E1's
+   *          lamp-lit night crossfading to 2003 daylight *while you watch*
+   *   t 9.7  the ritual's own restart completes: `onEraShift` → the desktop
+   *          becomes E2 and the monitor comes back up reading
+   *          "Welcome back, Daniel." — from above, small, in a changed room
+   *   t 14.0 the descent begins, toward that line
+   *   t 21.0 you are in the chair and the machine is greeting you by the name
+   *          it holds.
+   *
+   * The two halves are split so this can happen: `driveMorphSpace()` is the
+   * ROOM's half (tapes, kept freeze, the cluster morph, the relocation legs)
+   * and may run early; `driveMorph()` keeps owning the DESKTOP's half and is
+   * still what `os.onEraShift` calls. `earlyRelocEra` is the handshake — when
+   * the press already started the space, the restart must not start it again.
+   *
+   * ⚑ Nothing about the legs, the easing, the comfort envelope or the skip
+   * changed: `beginRelocation`/`endRelocation` are untouched, so a drag during
+   * the ascent still looks around (S85's offset) and a still tap still ends it.
+   */
+  let earlyRelocEra: EraKey | null = null;
+
+  /**
+   * ⚑ Which updates lift you on the press. u2 and u3 are the two rituals that
+   * play on DANIEL'S MONITOR, which is the screen the rise recedes from — they
+   * take it. u4 renders composited on Vera's laptop (updates.json's
+   * `_docWhere`) and E3/E4 are another session's fence this week, so it is
+   * deliberately held on the old timing rather than changed unwatched. The
+   * shape is identical when someone comes to enable it; add 'e4' and delete
+   * this note.
+   */
+  const EARLY_ASCENT_ERAS: ReadonlySet<string> = new Set(['e2', 'e3']);
+
+  /** the press half: start the room's change and the camera's ride, now. */
+  function beginEraRelocation(era: string): void {
+    if (!cluster || !drivenMoves) return;
+    if (!EARLY_ASCENT_ERAS.has(era)) return;
+    if (earlyRelocEra) return;                          // one ascent per ritual
+    if (!relocationFor(cluster.era, era as EraKey)) return; // no plan → old path
+    earlyRelocEra = era as EraKey;
+    driveMorphSpace(era as EraKey);
+  }
+
   function driveMorph(era: EraKey): void {
+    if (!cluster) return;
+    if (earlyRelocEra === era) {
+      // the press already lifted us and the room is already aging; all that is
+      // left for the restart to do is the desktop, which os.ts has just done.
+      earlyRelocEra = null;
+      return;
+    }
+    earlyRelocEra = null;
+    os.setDesktopEra(era);
+    driveMorphSpace(era);
+  }
+
+  function driveMorphSpace(era: EraKey): void {
     if (!cluster) return;
     // R28-2b: every era shift resets the tape system BEFORE the morph removes
     // the physical props — an in-flight play is an abrupt stop (filed like
@@ -2886,7 +2967,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // props age/retire exactly as reinterp_deltas.json already dictates.
     if (os.belongings) cluster.setKeptIds(os.belongings.kept);
     const fromEra = cluster.era; // read BEFORE morphToEra reassigns it
-    os.setDesktopEra(era);
     era3Devices?.setEra(era); // Session 37: the three device screens, e3+ only
     // S2R.0a: cluster.morphToEra() below calls applyRig(era, animate), which
     // owns the E2 daylight cue (data/room/cluster.json's `e2` rig) in the
