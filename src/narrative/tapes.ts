@@ -42,6 +42,13 @@ export interface TapeDef {
   label: string;
   witness: { playedThrough: string; stoppedMidway: string } | null;
   segments: TapeSegment[];
+  /** ⚑ S89 — real, ffprobe'd duration (seconds) of this tape's bundled real
+   *  audio clip, measured from the world-clock moment it actually starts
+   *  playing (its first segment naming a real `audio` filename), not from
+   *  tape-insert. Optional: only tapes carrying real recorded audio need it.
+   *  See totalSeconds()'s doc for why this exists — it is a bug fix, not
+   *  decoration. */
+  realDurationSec?: number;
   _doc?: string;
 }
 
@@ -75,9 +82,27 @@ export class TapeSystem {
     return this.tapes.get(id)!;
   }
 
+  /**
+   * ⚑ S89 BUG FIX — this used to be JUST `lastSegment.at + TAIL_SECONDS`, which
+   * silently truncates the real bundled clip whenever the last CAPTION lands
+   * before the real AUDIO does (captions are hand-paced against lyric sheets,
+   * not against a track's own tail instrumental — Tape A's own `_doc` even
+   * flagged a "~7s undershoot" as a known approximation). The undershoot isn't
+   * cosmetic: once `elapsed` crosses this value, `update()` marks the tape
+   * `playedThrough` and stops it, and `syncTapeAudio()` (src/engine/app.ts)
+   * answers a stopped tape by calling `tapeAudio.stop()`, which PAUSES the
+   * `<audio>` element outright — so the real clip was being cut dead mid-tail,
+   * every time, on every tape carrying real audio. This is what Sérgio heard
+   * as "'New you' is cut off in its last seconds" (Tape B undershot by ~2.2s
+   * even before S89's other fix; Tape A's prayer undershoots by ~7s the same
+   * way). Folding `realDurationSec` in as a floor means the state machine can
+   * never end a tape before its own bundled clip has actually finished.
+   */
   private totalSeconds(id: TapeId): number {
-    const segs = this.def(id).segments;
-    return segs.length ? segs[segs.length - 1].at + TAIL_SECONDS : 0;
+    const def = this.def(id);
+    const segs = def.segments;
+    const byCaptions = segs.length ? segs[segs.length - 1].at + TAIL_SECONDS : 0;
+    return def.realDurationSec !== undefined ? Math.max(byCaptions, def.realDurationSec) : byCaptions;
   }
 
   /** the segment whose `at` has most recently passed, or null before the first */

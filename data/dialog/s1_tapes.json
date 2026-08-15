@@ -6,7 +6,8 @@
     {
       "id": "tapeA",
       "label": "companion",
-      "_doc": "PLACEHOLDER for segments 1-4 (Sérgio voice pass pending). Segments 5-18 (the prayer) now carry Sérgio's delivered 'Fold My Hands' (Trials Songs/Prayer/Fold My Hands.mp3, degraded via tools/degrade_audio.sh --tape97 to fold_my_hands_tape97.mp3) — HIS canon draft lyrics per the Session 32 brief, not a G1-gated placeholder anymore; his own listen/voice pass over the exact wording is still pending. Filed both ways (played-through/stopped-midway) — this IS the guide thread's `tape` side-message satisfied (s1_guide.json's `tapePlayed`).",
+      "_doc": "PLACEHOLDER for segments 1-4 (Sérgio voice pass pending). Segments 5-18 (the prayer) now carry Sérgio's delivered 'Fold My Hands' (Trials Songs/Prayer/Fold My Hands.mp3, degraded via tools/degrade_audio.sh --tape97 to fold_my_hands_tape97.mp3) — HIS canon draft lyrics per the Session 32 brief, not a G1-gated placeholder anymore; his own listen/voice pass over the exact wording is still pending. Filed both ways (played-through/stopped-midway) — this IS the guide thread's `tape` side-message satisfied (s1_guide.json's `tapePlayed`). ⚑ S89 — 'THE PRAYER DOES NOT PLAY AT ALL' (Sérgio, 2026-08-15). Traced: the real audio WAS wired to a real play() call all along (confirmed live — pressing tapeA does construct+play `fold_my_hands_tape97.mp3` exactly on schedule, zero errors). The fault is that schedule: the four intro captions used to gate 60 SILENT seconds (only faint tape hiss, no voice) before the sung prayer ever started, which in practice nobody sits through without concluding the tape is broken and clicking away — the tape system then files 'stoppedMidway' and the prayer genuinely never sounds for that player, exactly matching the report. Fixed by closing that runway: the same four captions now land at 0/5/10/14 instead of 0/14/30/46, and the prayer begins at 18s instead of 60s (all `a-prayer-*` `at` values shifted the same 42s earlier) — the words are unchanged, only the wait is shorter. `realDurationSec` (below) is the OTHER S89 fix: the real clip runs 18s→157.12s, and the tape system used to end the tape (and PAUSE the clip) at the last caption's `at`+3s tail regardless of the real file's length — a second, independent cause of audio cutting off before its natural end (src/narrative/tapes.ts's totalSeconds(), fixed there this session).",
+      "realDurationSec": 157.12,
       "witness": {
         "playedThrough": "tape: companion — played through",
         "stoppedMidway": "tape: companion — stopped midway"
@@ -22,39 +23,39 @@
         },
         {
           "id": "a-instruction-1",
-          "at": 14,
+          "at": 5,
           "kind": "instruction",
           "caption": "Listen for your name when the roll of testimonies is read.",
           "audio": null,
-          "_doc": "PLACEHOLDER — Sérgio voice pass pending."
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending. S89: moved 14→5 (see tape-level _doc — closing the silent runway to the prayer)."
         },
         {
           "id": "a-instruction-2",
-          "at": 30,
+          "at": 10,
           "kind": "instruction",
           "caption": "Repeat the covenant quietly to yourself as it is read.",
           "audio": null,
-          "_doc": "PLACEHOLDER — Sérgio voice pass pending."
+          "_doc": "PLACEHOLDER — Sérgio voice pass pending. S89: moved 30→10."
         },
         {
           "id": "a-turn",
-          "at": 46,
+          "at": 14,
           "kind": "transition",
           "caption": "Side one ends here. Turn the tape for the closing prayer.",
           "audio": null,
-          "_doc": "PLACEHOLDER — period cassette detail (side-turn), Sérgio voice pass pending."
+          "_doc": "PLACEHOLDER — period cassette detail (side-turn), Sérgio voice pass pending. S89: moved 46→14."
         },
         {
           "id": "a-prayer-01",
-          "at": 60,
+          "at": 18,
           "kind": "verse1",
           "caption": "Fold my hands the way you showed me, keep my eyes upon the floor;",
           "audio": "fold_my_hands_tape97.mp3",
-          "_doc": "Sérgio's delivered lyrics ('Fold My Hands', Verse 1 line 1) — his canon draft, voice pass pending. Real audio (fold_my_hands_tape97.mp3, degraded ffprobe duration 139.12s) begins here; captions 01-14 are evenly distributed across that duration (no internal timestamps exist in the source lyric sheet) — approximate sync, flagged as a polish-pass item in the session log."
+          "_doc": "Sérgio's delivered lyrics ('Fold My Hands', Verse 1 line 1) — his canon draft, voice pass pending. Real audio (fold_my_hands_tape97.mp3, degraded ffprobe duration 139.12s) begins here; captions 01-14 are evenly distributed across that duration (no internal timestamps exist in the source lyric sheet) — approximate sync, flagged as a polish-pass item in the session log. S89: moved 60→18 (all a-prayer-* shifted 42s earlier the same way) — see tape-level _doc, 'the prayer does not play at all'."
         },
         {
           "id": "a-prayer-02",
-          "at": 70,
+          "at": 28,
           "kind": "verse1",
           "caption": "all the songs I used to sing — I don't sing them anymore.",
           "audio": "fold_my_hands_tape97.mp3",
@@ -62,7 +63,7 @@
         },
         {
           "id": "a-prayer-03",
-          "at": 80,
+          "at": 38,
           "kind": "chorus",
           "caption": "Make me new, make me right,",
           "audio": "fold_my_hands_tape97.mp3",
@@ -70,7 +71,7 @@
         },
         {
           "id": "a-prayer-04",
-          "at": 90,
+          "at": 48,
           "kind": "chorus",
           "caption": "take the wrong of me tonight.",
           "audio": "fold_my_hands_tape97.mp3",
@@ -78,7 +79,7 @@
         },
         {
           "id": "a-prayer-05",
-          "at": 100,
+          "at": 58,
           "kind": "chorus",
           "caption": "I'll be still, I'll be clean,",
           "audio": "fold_my_hands_tape97.mp3",
@@ -86,7 +87,7 @@
         },
         {
           "id": "a-prayer-06",
-          "at": 110,
+          "at": 68,
           "kind": "chorus",
           "caption": "I'll be anyone but me.",
           "audio": "fold_my_hands_tape97.mp3",
@@ -94,7 +95,7 @@
         },
         {
           "id": "a-prayer-07",
-          "at": 119,
+          "at": 77,
           "kind": "verse2",
           "caption": "Wash the part of me that wanders till it's white as any wool;",
           "audio": "fold_my_hands_tape97.mp3",
@@ -102,7 +103,7 @@
         },
         {
           "id": "a-prayer-08",
-          "at": 129,
+          "at": 87,
           "kind": "verse2",
           "caption": "if I empty out my pockets you can fill me till I'm full.",
           "audio": "fold_my_hands_tape97.mp3",
@@ -110,7 +111,7 @@
         },
         {
           "id": "a-prayer-09",
-          "at": 139,
+          "at": 97,
           "kind": "bridge",
           "caption": "Shepherd, count me with the others, let me match, let me belong —",
           "audio": "fold_my_hands_tape97.mp3",
@@ -118,7 +119,7 @@
         },
         {
           "id": "a-prayer-10",
-          "at": 149,
+          "at": 107,
           "kind": "bridge",
           "caption": "if I'm quiet, if I'm careful, no one has to know I'm wrong.",
           "audio": "fold_my_hands_tape97.mp3",
@@ -126,7 +127,7 @@
         },
         {
           "id": "a-prayer-11",
-          "at": 159,
+          "at": 117,
           "kind": "finalchorus",
           "caption": "Make me new, make me right,",
           "audio": "fold_my_hands_tape97.mp3",
@@ -134,7 +135,7 @@
         },
         {
           "id": "a-prayer-12",
-          "at": 169,
+          "at": 127,
           "kind": "finalchorus",
           "caption": "take the wrong of me tonight.",
           "audio": "fold_my_hands_tape97.mp3",
@@ -142,7 +143,7 @@
         },
         {
           "id": "a-prayer-13",
-          "at": 179,
+          "at": 137,
           "kind": "finalchorus",
           "caption": "I'll be still, I'll be clean…",
           "audio": "fold_my_hands_tape97.mp3",
@@ -150,18 +151,19 @@
         },
         {
           "id": "a-prayer-14",
-          "at": 189,
+          "at": 147,
           "kind": "finalchorus",
           "caption": "I'll be anyone but me.",
           "audio": "fold_my_hands_tape97.mp3",
-          "_doc": "Sérgio's delivered lyrics, Final Chorus line 4, the closing line. Real audio runs to ~199s (60s offset + 139.12s duration); the last caption + TAIL_SECONDS(3) lands at 192s — a ~7s undershoot against the real tail, acceptable per the brief's 'approximate is fine' allowance, flagged for a fine-sync pass."
+          "_doc": "Sérgio's delivered lyrics, Final Chorus line 4, the closing line. Real audio runs to ~157.12s (18s offset + 139.12s duration) — the tape-level `realDurationSec` now floors totalSeconds() at that figure (S89), so the state machine can no longer end/pause the tape before this clip's own natural end the way it silently did before."
         }
       ]
     },
     {
       "id": "tapeB",
       "label": "broadcast",
-      "_doc": "SWAPPABLE CANDIDATE (Session 32) — Sérgio is producing alternate versions of this broadcast jingle; the CURRENT candidate is 'Discover The New You' (Pc_Simulation/Sources/Jingle_Brand New/Discover_The_New_You.mp3), degraded + bookended with tuning/static via `tools/degrade_audio.sh --tape97 ... --wrap` (head offset 1.3s, tail static 1.0s) so it reads as a captured '97 AM-radio broadcast, not a clean song — registered as discover_the_new_you_tape97_radio.mp3 in src/audio/tapeAudio.ts. Swapping in a new version requires: (1) run the degrade tool on the new source, (2) add one REGISTRY line in tapeAudio.ts, (3) point every segment's `audio` field below at the new filename — nothing else changes. Captions below are the ACTUAL SONG LYRICS (from discover_the_new_you.txt's word-level LRC), timed against its real ~28.63s duration + the 1.3s head offset the wrap adds — this SUPERSEDES the previous session's ad-copy-style captions (period-shifted from data/dialog/s2_media.json's Pastor Dale/Announcer/testimony lines), since honest captions must match what's actually audible on the real recording; the earlier ad-copy framing is preserved in `01_SESSION_LOG.md` history but not reproduced here. Filed both ways — also satisfies the guide's `tape` message like Tape A.",
+      "_doc": "SWAPPABLE CANDIDATE (Session 32) — Sérgio is producing alternate versions of this broadcast jingle; the CURRENT candidate is 'Discover The New You' (Pc_Simulation/Sources/Jingle_Brand New/Discover_The_New_You.mp3), degraded via `tools/degrade_audio.sh --tape97` — registered as discover_the_new_you_tape97_radio.mp3 in src/audio/tapeAudio.ts. Swapping in a new version requires: (1) run the degrade tool on the new source, (2) add one REGISTRY line in tapeAudio.ts, (3) point every segment's `audio` field below at the new filename — nothing else changes. Captions below are the ACTUAL SONG LYRICS (from discover_the_new_you.txt's word-level LRC), timed against its real ~28.63s duration — this SUPERSEDES the previous session's ad-copy-style captions (period-shifted from data/dialog/s2_media.json's Pastor Dale/Announcer/testimony lines), since honest captions must match what's actually audible on the real recording; the earlier ad-copy framing is preserved in `01_SESSION_LOG.md` history but not reproduced here. Filed both ways — also satisfies the guide's `tape` message like Tape A. ⚑ S89: the `--wrap` dial-tuning burst that used to bookend this file is REMOVED — Sérgio, 2026-08-15: the jingle has a scratching sound at the start, 'we already decided on that', remove it (a decision already taken, not reopened here). The file is now the plain --tape97 degrade with no head/tail static, so every caption `at` below drops the wrap's old 1.3s head offset and uses the song's own raw LRC timing. The old wrap-static bracket captions (`b-tuning-in`/`b-tuning-out`) also carried a SECOND, separate bug: `b-tuning-out`'s `audio:null` sat BEFORE the real clip's natural end, so `syncTapeAudio()` (src/engine/app.ts) tore the clip down (`setClip(null)`) the instant that segment went active — the tail of 'the new you' was being cut off mid-instrumental, which is Sérgio's separately-reported 'New you is cut off in its last seconds' fault. Both faults shared one cause (the wrap) and are fixed together: `b-tuning-out` is dropped, AND `realDurationSec` (below) floors the tape's own totalSeconds() at the real clip's actual end (2.2s start + 28.63s duration = 30.83s) — TAIL_SECONDS(3) alone would still have ended the tape at 26.05s (23.05 + 3), 2.6s before the clip finishes, so both fixes were needed, not just dropping the segment.",
+      "realDurationSec": 30.83,
       "witness": {
         "playedThrough": "tape: broadcast — played through",
         "stoppedMidway": "tape: broadcast — stopped midway"
@@ -173,63 +175,55 @@
           "kind": "static",
           "caption": "(the dial catches a signal, mid-broadcast.)",
           "audio": null,
-          "_doc": "PLACEHOLDER — the wrap's own tuning-static burst (1.3s, generated by tools/degrade_audio.sh --wrap) plays under this caption; no separate audio needed since it's baked into the wrapped file itself."
+          "_doc": "PLACEHOLDER-draft — the fiction (a caught radio broadcast) stays; S89 only removed the harsh tuning-static SFX that used to play under this caption (Sérgio: remove the scratch, a decision already taken). Ambient hiss plays alone here, same as Tape A's own silent-audio intro segments."
         },
         {
           "id": "b-lyric-1",
-          "at": 3.5,
+          "at": 2.2,
           "kind": "lyric",
           "caption": "Feeling lost and incomplete inside —",
           "audio": "discover_the_new_you_tape97_radio.mp3",
-          "_doc": "Sérgio's delivered lyrics (discover_the_new_you.txt line 1, LRC timestamp 00:02.20 + the wrap's 1.3s head offset)."
+          "_doc": "Sérgio's delivered lyrics (discover_the_new_you.txt line 1, LRC timestamp 00:02.20 — S89: wrap removed, so this is the file's own raw time, no head offset)."
         },
         {
           "id": "b-lyric-2",
-          "at": 7.7,
+          "at": 6.38,
           "kind": "lyric",
           "caption": "let go of everything you hide.",
           "audio": "discover_the_new_you_tape97_radio.mp3",
-          "_doc": "Sérgio's delivered lyrics, line 2 (LRC 00:06.38 + 1.3s offset)."
+          "_doc": "Sérgio's delivered lyrics, line 2 (LRC 00:06.38)."
         },
         {
           "id": "b-lyric-3",
-          "at": 11.8,
+          "at": 10.5,
           "kind": "lyric",
           "caption": "Discover the new you today —",
           "audio": "discover_the_new_you_tape97_radio.mp3",
-          "_doc": "Sérgio's delivered lyrics, line 3 (LRC 00:10.50 + 1.3s offset)."
+          "_doc": "Sérgio's delivered lyrics, line 3 (LRC 00:10.50)."
         },
         {
           "id": "b-lyric-4",
-          "at": 16.1,
+          "at": 14.8,
           "kind": "lyric",
           "caption": "it's a brighter, lighter way.",
           "audio": "discover_the_new_you_tape97_radio.mp3",
-          "_doc": "Sérgio's delivered lyrics, line 4 (LRC 00:14.80 + 1.3s offset)."
+          "_doc": "Sérgio's delivered lyrics, line 4 (LRC 00:14.80)."
         },
         {
           "id": "b-lyric-5",
-          "at": 20.2,
+          "at": 18.91,
           "kind": "lyric",
           "caption": "Yes, discover the new you —",
           "audio": "discover_the_new_you_tape97_radio.mp3",
-          "_doc": "Sérgio's delivered lyrics, line 5 (LRC 00:18.91 + 1.3s offset)."
+          "_doc": "Sérgio's delivered lyrics, line 5 (LRC 00:18.91)."
         },
         {
           "id": "b-lyric-6",
-          "at": 24.35,
+          "at": 23.05,
           "kind": "lyric",
           "caption": "the new you.",
           "audio": "discover_the_new_you_tape97_radio.mp3",
-          "_doc": "Sérgio's delivered lyrics, line 6/final tag (LRC 00:23.05 + 1.3s offset)."
-        },
-        {
-          "id": "b-tuning-out",
-          "at": 29.9,
-          "kind": "static",
-          "caption": "(static swallows the signal.)",
-          "audio": null,
-          "_doc": "PLACEHOLDER — the wrap's own tail static (1.0s) plays under this caption; real wrapped file ends ~30.93s, TAIL_SECONDS(3) lands the tape's own close at ~32.9s."
+          "_doc": "Sérgio's delivered lyrics, line 6/final tag (LRC 00:23.05) — the LAST segment now (S89 dropped the wrap-static `b-tuning-out` bracket that used to follow this and cut the clip's own tail off early); the real file (28.63s) keeps playing its instrumental tail to its own natural end, TAIL_SECONDS(3) then closes the tape at 26.05s of caption-clock, well inside it."
         }
       ]
     },
