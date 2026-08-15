@@ -416,57 +416,57 @@
         "color": "#D4D0C8"
       },
       "book1": {
-        "_doc": "S89 — Sérgio: 'the shelf in Era 3 is still not against the wall, it should rotate so the wider side we can see it, like in Era-1, and the books are floating.' Both were the same root cause: bookcaseMoved (below) kept E1's yaw:90 (tuned for E1's wallEast, an X-facing wall) when it relocated to sit near wallSouth (a Z-facing wall) — wrong axis touching the wall, and its WIDE run facing along Z instead of toward the Room-2 seat. Rotating it 90° (yaw 90→0) swaps which world axis is 'along the shelf' and which is 'depth', so every prop riding on it needs the SAME 90° remap or it lands off the new shelf entirely — this is not a re-guess by eye, it is the old (x,z) offset from the bookcase's old centre rotated by the same -90° the bookcase itself just took (verified live: placing a test prop at the rotated offset landed it cleanly on the new shelf board, screenshot-confirmed, before this value was written here). Old offset from old centre (1.87,3.3) was (0.11,-0.2); rotated offset from the new centre (1.87,3.44) is (0.2,0.11).",
+        "_doc": "S89 — Sérgio: 'the shelf in Era 3 is still not against the wall, it should rotate so the wider side we can see it, like in Era-1, and the books are floating.' Both were the same root cause: bookcaseMoved (below) kept E1's yaw:90 (tuned for E1's wallEast, an X-facing wall) when it relocated to sit near wallSouth (a Z-facing wall) — wrong axis touching the wall, and its WIDE run facing along Z instead of toward the Room-2 seat. Rotating it 90° (yaw 90→0) swaps which world axis is 'along the shelf' and which is 'depth', so every prop riding on it needs the SAME 90° remap or it lands off the new shelf entirely — this is not a re-guess by eye, it is the old (x,z) offset from the bookcase's old centre rotated by the same -90° the bookcase itself just took (verified live: placing a test prop at the rotated offset landed it cleanly on the new shelf board, screenshot-confirmed, before this value was written here). Old offset from old centre (1.87,3.3) was (0.11,-0.2); rotated offset from the (pre-BOUNDS-fix) centre (1.87,3.44) was (0.2,0.11) → x2.07. The bookcase's own centre then moved 1.87→1.70 (its own _doc) to clear a BOUNDS overshoot the rotation introduced, carrying every rider the same -0.17 in x.",
         "pos": [
-          2.07,
+          1.9,
           1.21,
           3.55
         ]
       },
       "book2": {
-        "_doc": "S89 — same remap as book1 (see its _doc). Old offset from old centre (0.11,-0.1) → new offset from new centre (0.1,0.11).",
+        "_doc": "S89 — same remap as book1 (see its _doc), including the -0.17 x carry from the bookcase's own BOUNDS fix. Old offset from old centre (0.11,-0.1) → new offset from new centre (0.1,0.11) → x1.97 → x1.80.",
         "pos": [
-          1.97,
+          1.8,
           1.2,
           3.55
         ]
       },
       "book3": {
-        "_doc": "S89 — same remap as book1 (see its _doc). Old offset (0.11,-0.15) → new offset (0.15,0.11).",
+        "_doc": "S89 — same remap as book1 (see its _doc), including the -0.17 x carry. Old offset (0.11,-0.15) → new offset (0.15,0.11) → x2.02 → x1.85.",
         "pos": [
-          2.02,
+          1.85,
           1.67,
           3.55
         ]
       },
       "cdStack": {
-        "_doc": "Session 71: this override said [1.98, 0.71, 3.45] — era1.json's ORIGINAL x and y plus 2.55 z. But r1 already corrects this prop to (2.02, 0.773) for two measured reasons (see r1's own _doc: the y put its base 0.063 m INSIDE the shelf board, and the x/z moved it off the tape run), and a later override replaces `pos` wholesale, so r3 silently reverted both. The fold's own hazard: an override further down the chain is not a delta, it is a replacement. Now r1's corrected position plus the shelf's +2.55 z. S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too — old offset from old centre (0.15,-0.13) → new offset from new centre (0.13,0.15).",
+        "_doc": "Session 71: this override said [1.98, 0.71, 3.45] — era1.json's ORIGINAL x and y plus 2.55 z. But r1 already corrects this prop to (2.02, 0.773) for two measured reasons (see r1's own _doc: the y put its base 0.063 m INSIDE the shelf board, and the x/z moved it off the tape run), and a later override replaces `pos` wholesale, so r3 silently reverted both. The fold's own hazard: an override further down the chain is not a delta, it is a replacement. Now r1's corrected position plus the shelf's +2.55 z. S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too, including its -0.17 x carry — old offset from old centre (0.15,-0.13) → new offset from new centre (0.13,0.15) → x2.00 → x1.83.",
         "pos": [
-          2.0,
+          1.83,
           0.773,
           3.59
         ]
       },
       "mixtape": {
-        "_doc": "S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too — old offset from old centre (0.11,0.08) → new offset from new centre (-0.08,0.11).",
+        "_doc": "S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too, including its -0.17 x carry — old offset from old centre (0.11,0.08) → new offset from new centre (-0.08,0.11) → x1.79 → x1.62.",
         "pos": [
-          1.79,
+          1.62,
           1.16,
           3.55
         ]
       },
       "teddyBox": {
-        "_doc": "Session 71: LEFT BEHIND. r3 moves the bookcase from z 0.75 to 3.3 and gives book1/book3/cdStack matching overrides — teddyBox and rainbowDuck never got one, so from E3 on they hung in mid-air in the middle of the vacated room (measured: 0.683 m and 1.540 m of clear air beneath them, tools/room-audit.mjs FLOATING). Both now carry the shelf's own +2.55 z, which preserves each prop's exact relationship to its compartment rather than re-placing it by eye. S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too — old offset from old centre (0.11,0.1) → new offset from new centre (-0.1,0.11).",
+        "_doc": "Session 71: LEFT BEHIND. r3 moves the bookcase from z 0.75 to 3.3 and gives book1/book3/cdStack matching overrides — teddyBox and rainbowDuck never got one, so from E3 on they hung in mid-air in the middle of the vacated room (measured: 0.683 m and 1.540 m of clear air beneath them, tools/room-audit.mjs FLOATING). Both now carry the shelf's own +2.55 z, which preserves each prop's exact relationship to its compartment rather than re-placing it by eye. S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too, including its -0.17 x carry — old offset from old centre (0.11,0.1) → new offset from new centre (-0.1,0.11) → x1.77 → x1.60.",
         "pos": [
-          1.77,
+          1.6,
           1.16,
           3.55
         ]
       },
       "rainbowDuck": {
-        "_doc": "Session 84: r3 must carry the corrected r1 shelf relationship, not the retired era1.json placement. Same x/y as r1 and the moved bookcase's exact +2.55 z. S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too — old offset from old centre (0.11,-0.25) → new offset from new centre (0.25,0.11).",
+        "_doc": "Session 84: r3 must carry the corrected r1 shelf relationship, not the retired era1.json placement. Same x/y as r1 and the moved bookcase's exact +2.55 z. S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too, including its -0.17 x carry — old offset from old centre (0.11,-0.25) → new offset from new centre (0.25,0.11) → x2.12 → x1.95 (this also clears rainbowDuck's own BOUNDS overshoot, which was the other +x finding the rotation introduced).",
         "pos": [
-          2.12,
+          1.95,
           1.712,
           3.55
         ]
@@ -1664,9 +1664,9 @@
       },
       {
         "id": "bookcaseMoved",
-        "_doc": "S89 — Sérgio, 2026-08-15: 'the shelf in Era 3 is still not against the wall, it should rotate so the wider side we can see it, like in Era-1, and the books are floating.' `yaw: 90` was carried over unchanged from E1's bookcaseModel (which correctly hugs wallEast, an X-facing wall, at x1.87 — the SAME x this prop kept). But r3 removes wallEast entirely (see this state's own `remove`) and this prop's own z-move (0.75→3.3) put it near wallSouth instead — a Z-facing wall — so yaw:90 was now presenting the shelf's NARROW depth face to wallSouth and its WIDE run parallel to it, i.e. sideways to the room, which reads as a thin floating plank from the Room-2 seat (verified live: at yaw90 near wallSouth the rendered world AABB is x[1.623,2.098] (0.475 wide) z[2.92,3.68] (0.76 wide) — the WIDE dimension was running along Z, away from the seat, not toward it). yaw:0 swaps that (live-verified world AABB at yaw0: x[1.49,2.25] (0.76 wide) z[3.072,3.547] (0.475 deep)) — matching E1's own relationship to ITS wall exactly, just rotated a quarter-turn to face a Z-wall instead of an X-wall. `pos.z` 3.3→3.44 seats the (now-correctly-oriented) back face flush against wallSouth (z3.72, thickness 0.04) with the same ~1.2cm clearance E1's copy keeps against wallEast, rather than floating 15cm short of it. Every prop riding this shelf (book1/2/3, teddyBox, rainbowDuck, cdStack, mixtape) got the matching 90° offset remap — see book1's own _doc for the maths and the live verification.",
+        "_doc": "S89 — Sérgio, 2026-08-15: 'the shelf in Era 3 is still not against the wall, it should rotate so the wider side we can see it, like in Era-1, and the books are floating.' `yaw: 90` was carried over unchanged from E1's bookcaseModel (which correctly hugs wallEast, an X-facing wall, at x1.87 — the SAME x this prop kept). But r3 removes wallEast entirely (see this state's own `remove`) and this prop's own z-move (0.75→3.3) put it near wallSouth instead — a Z-facing wall — so yaw:90 was now presenting the shelf's NARROW depth face to wallSouth and its WIDE run parallel to it, i.e. sideways to the room, which reads as a thin floating plank from the Room-2 seat (verified live: at yaw90 near wallSouth the rendered world AABB is x[1.623,2.098] (0.475 wide) z[2.92,3.68] (0.76 wide) — the WIDE dimension was running along Z, away from the seat, not toward it). yaw:0 swaps that (live-verified world AABB at yaw0: x[1.49,2.25] (0.76 wide) z[3.072,3.547] (0.475 deep)) — matching E1's own relationship to ITS wall exactly, just rotated a quarter-turn to face a Z-wall instead of an X-wall. `pos.z` 3.3→3.44 seats the (now-correctly-oriented) back face flush against wallSouth (z3.72, thickness 0.04) with the same ~1.2cm clearance E1's copy keeps against wallEast, rather than floating 15cm short of it. `pos.x` 1.87→1.70: the quarter-turn also swapped which axis carries the WIDTH (0.76 m) — at yaw0 that's now x, and the unchanged x1.87 pushed the shelf 0.12 m past the room's own floor plate on +x (`tools/room-audit.mjs`'s BOUNDS check, floor x-range [-2.13,2.13]), a regression this same fix introduced and caught before commit. x1.70 (half-width 0.38) sits it at x[1.32,2.08], back inside the floor with room to spare. Every prop riding this shelf (book1/2/3, teddyBox, rainbowDuck, cdStack, mixtape) got the matching 90° offset remap AND this same x-shift — see book1's own _doc for the maths and the live verification.",
         "pos": [
-          1.87,
+          1.70,
           0,
           3.44
         ],
