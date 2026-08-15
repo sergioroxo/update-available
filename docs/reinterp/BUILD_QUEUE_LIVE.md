@@ -22,7 +22,7 @@ not live.***
 | — | ~~S73 — Era 4 exists (one giant Stage 2)~~ | superseded | ⚑ **RETIRED 2026-08-06** — the space reframe split it into S76–S79 |
 | — | ~~S75~~ | never written as a block | ⚑ **RETIRED 2026-08-06** — the number the STOPPED run used for itself; its one artefact (`src/desktop/theme/era4.ts`) is salvaged |
 | — | ~~S80 — fix picking, then the gyro look-mode~~ | ↓ at the tail of this file | ✅ **SHIPPED 2026-08-09.** Its picking fix is closed; S77 and S78 subsequently shipped |
-| **1** | **S86 — THE FIRST TWENTY MINUTES, PLAYED** (the ascent moves onto the Install press so the room ages under you · fullscreen + pinch · the tape that sticks · the belongings nobody can find · the provotypes nobody can reach) | ↓ at the tail of this file | ⚑ **QUEUED 2026-08-15.** Sérgio's iPad pass, in the order he hit it. **Not a defect list — one continuous stretch, made better.** The last three sessions verified and none improved the piece; this one may not report "N of M already hold" |
+| — | ~~S86 — THE FIRST TWENTY MINUTES, PLAYED~~ (the ascent moves onto the Install press so the room ages under you · fullscreen + pinch · the tape that sticks · the belongings nobody can find · the provotypes nobody can reach) | ↓ at the tail of this file | ⚑ **SHIPPED 2026-08-15.** The centrepiece landed and was verified live (era flips mid-ascent, camera still airborne): press → ascend → room ages → descend → "Welcome back, Daniel." Also: dossier/provotype paging, caption-vs-device-button, pinch/fullscreen (all three layers), one-press tape, the E1 provotypes carried onto E2, the toast/primary-button collision, the duck+teddy made reachable, E2 no longer wearing E1's props, and the false hover glow (real text-selection, `user-select: none`). u3's ascent left for S87 on purpose. Retired — do not dispatch |
 | — | ~~S85 — the third device pass~~ (relocation skip · the `📷 shot` button exits the piece on iOS · re-verify duck + entrance tap · warn that a debug jump's aftermath is not evidence) | ↓ at the tail of this file | ⚑ **SHIPPED 2026-08-15 (S85).** Both faults were read from source and both held: the relocation now defers to the release test AND a drag rides driven legs as an offset; `📷 shot` is omitted behind `(pointer: fine)`. Duck + entrance re-verified, unchanged. Retired — do not dispatch |
 | **2** | **S81 — the visibility audit, read as broken interactions** | ↓ at the tail of this file | ⚑ **UNBLOCKED by S80** — its numbers mean something now, and it must run at a PORTRAIT viewport too. ⚑ **S79 ADDS ONE MEASUREMENT TO ITS SCOPE:** the settled E4 seat, turned 180°, renders **177 draw calls** against a ≤75 budget, and no audit run has ever sampled a turned seat (08 §20) |
 | — | ~~S68 — gyroscope look-around on iPad~~ | never written | ⚑ **RETIRED 2026-08-05, and that retirement was WRONG** — reinstated as S80, new number per the reuse rule |
@@ -1669,7 +1669,10 @@ baseline whose comment does not say what is in it is a number nobody can ever lo
 ---
 
 # S86 — THE FIRST TWENTY MINUTES, PLAYED
-**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Opus, high effort · here, not Codex.**
+**⚑ PROMPT STATUS: SHIPPED 2026-08-15 — the ascent landed and was verified live; see
+`01_SESSION_LOG.md`'s Session 86 entry and `08_STATUS_REGISTER.md` §24. Do not dispatch; the number
+is retired.**
+~~QUEUED 2026-08-15 · Opus, high effort · here, not Codex.~~
 *Fence: `src/engine/app.ts`, `src/room/`, `src/desktop/`, `src/witness/intake.ts`, `src/narrative/`,
 `data/`, `index.html`, the logs. Wide on purpose — see below.*
 

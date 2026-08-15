@@ -1131,3 +1131,45 @@ nothing linking them.
 ⚑ **NOT FIXED — direction is Sérgio's.** One command either way; a proper noun in a narrative work is
 his. **Default recommendation: change the packet to "New Morning"**, since three files and one `_doc`
 already agree on it.
+
+## §24 — S86: THE ASCENT MOVES TO THE PRESS, AND THREE TRACED FAULTS CLOSE (2026-08-15)
+**THE CENTREPIECE.** Era transitions used to complete (install → restart) and only THEN move the
+camera — so the room's own aging, the piece's central visible argument, happened off-camera while a
+progress bar finished. `UpdateApp.onInstallBegin` (new hook, fires on the live "I Agree" / "Update
+now" press) → `os.onEraRelocate` → `app.ts`'s `beginEraRelocation` now starts the SAME morph the
+restart used to trigger, immediately, split from the restart-triggered `driveMorph` via an
+`earlyRelocEra` handshake so `onEraShift` doesn't re-fire it. **Verified live** by polling
+`window.__camPose().leg` against `os.desktopEra` every 500 ms across a full run: `desktopEra` flips
+`e1`→`e2` at t≈10.0s while `leg` is still `'build'` and `driven: true` (the camera has not landed),
+then `leg: 'descend'` runs t≈14.5–21.5s, settling with "Welcome back, Daniel." on the monitor.
+**Scoped to u2 (E1→E2) only** — `EARLY_ASCENT_ERAS = Set(['e2'])`. u3 (E2→E3) is deliberately left on
+the pre-S86 timing; the constant and its comment name why (S87's fence, untested this session), so
+enabling it is a one-line, deliberate act for whoever owns that transition next, not an accident of a
+shared set.
+
+**THE PROVOTYPE CARRY-FORWARD (closes brief items C/C0).** The two E1 provotype launchers now draw on
+the E2 desktop too, under the found file's own `desktopIdle()` law (S60) — same idle-desktop-only,
+never-over-a-window, never-announced terms. E2 only, by design (§9's E3 dead-monitor law and E3/E4's
+different desktop grammar make "forever" a separate, unmade decision). A draft system-notice string
+("Sessions from this version will not carry over") was written earlier in the same uncommitted tree
+and DROPPED before this landed — once the launchers are actually carried forward, a notice claiming
+they are not would have been a narrative continuity bug, not an authored irony, so the simpler and
+more complete fix (carry-forward) superseded the announcement rather than shipping alongside it.
+
+**THE FALSE HOVER GLOW — root cause was native text selection, not a highlight.** `orientingCard.ts`
+and `gameMenu.ts` are plain DOM paragraphs with no `user-select` rule; an ordinary drag (the piece's
+own look-around gesture) paints the browser's native selection highlight across whatever text it
+crosses. Fixed with one CSS rule (`user-select: none` on `html, body`, `index.html`). Verified by
+reproducing the highlight before the fix (a scripted drag over the orienting card's body text left a
+visible blue selection) and its absence after, on the identical drag.
+
+**AUDIT STATE, FOR THE RECORD.** `npm run audit` fails on this tree, and also fails identically on a
+clean HEAD checkout with every uncommitted S86 change stashed — confirmed by running it both ways.
+The three failing send-leg comfort violations are §17's, unchanged. The draw-call "entrance" figure
+read 68 (at ratchet) on one run and 76 (over) on an immediate rerun of the SAME tree — not something
+this session's diff can explain (E1→E2's own comfort/draw-call numbers are stable and clean across
+every run: rise 0.395 m/s, build 0.121 m/s, descend 0.381 m/s), and consistent with §7/S71 P5's known
+note that `beginMorphedStateBatch()` clears the settled batch for the whole cascade, making the
+sampled peak sensitive to exactly when a frame lands mid-rebake. Not root-caused this session; next
+session should treat "entrance" draw-calls as a range (68–76+), not a point value, until that capture
+is made deterministic.

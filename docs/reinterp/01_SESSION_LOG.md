@@ -151,6 +151,73 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-15 · Session 86 — **THE FIRST TWENTY MINUTES, PLAYED.** Touched: `src/desktop/os.ts`,
+`src/desktop/apps/update.ts`, `src/desktop/orientingCard.ts`, `src/engine/app.ts`,
+`data/room/reinterp_deltas.json`, `index.html`. Not a defect list — one continuous stretch, played
+from cold boot to the middle of Era 2, made better. Landed as seven commits: four from the session's
+first pass (dossier paging, caption-vs-device-button, pinch/fullscreen layer 1-2, one-press tape),
+three from this continuation.)*
+
+**THE CENTREPIECE LANDED.** Sérgio: *"When we press update shouldn't we ascend? ... that way we can
+see the room updating as well in sync. So when we get down the computer should say 'welcome back
+Daniel'."* The ascent now begins on the press, not the restart: `UpdateApp.onInstallBegin` fires the
+instant I Agree / Update-now is pressed, `os.onEraRelocate` reports it, and `beginEraRelocation` in
+`app.ts` starts the room's own morph immediately, split from the restart-triggered `driveMorph` via
+an `earlyRelocEra` handshake so the later `onEraShift` does not re-fire the same move. **Verified live
+by polling `desktopEra` against the camera's own `leg` every 500 ms across a full press-to-landing
+run**: era flips from `e1` to `e2` at t≈10 s while `leg: 'build'` and the camera is still `driven:
+true` — the room visibly ages while the player is still airborne, exactly the shot that was missing —
+then `leg: 'descend'` from t≈14.5 s to t≈21.5 s, landing settled with "Welcome back, Daniel." on the
+monitor. Scoped to u2 (E1→E2) only: u3 (E2→E3) is deliberately left on the old timing, named in a
+comment, for S87 to enable on purpose rather than by accident of a shared constant.
+
+**TWO MORE FAULTS TRACED AND FIXED WHILE TESTING THAT SAME BEAT.** The E1 provotype launchers
+(`pillow.json` "Session", `origin_intake_e1.json` "Family Form") drew only inside the `e1` desktop
+branch, and Era 1 ends automatically — nothing ever told the player two authored surfaces were about
+to close for good, and Sérgio found "Today's lesson" only by accident before the floppy. Carried
+forward onto the E2 desktop instead, on the found file's own `desktopIdle()` law (never over a
+window, never during `felt`, never announced) — the fiction already supports it (E2's own boot crawl:
+"JOURNEY FILE ... MIGRATED"). E2 only; E3/E4 stay S76's fence. A prior draft of this fix also added an
+in-fiction system notice ("Sessions from this version will not carry over") — dropped before
+committing once the carry-forward itself landed, because shipping both would have had the system
+narrate a closing that the code no longer performs. Testing the carried-forward provotype on E2
+surfaced a second, smaller fault: the era-status toast painted over the provotype's own fixed
+Leave/Pause/primary row; it now yields while a provotype is open.
+
+**THE FALSE HOVER GLOW, FOUND.** *"A glow that appears just in some areas when playing with a mouse,
+maybe it is selecting the screen."* He had it right the first time — it is native browser text
+selection, not a UI highlight: the orienting card and the game menu are both plain DOM paragraphs
+with no `user-select` rule, so an ordinary drag (the same gesture the piece uses everywhere else for
+drag-to-look) paints the browser's own blue highlight across whatever text it crosses. **Verified
+live**: before a global `user-select: none` on `html, body`, dragging across either screen's body text
+left a visible selection; after, the same drags leave none. The debug panel's diagnostic readout
+already opts back in explicitly (`panel.ts:437`) and is unaffected.
+
+**ALSO FIXED, CARRIED IN THE SAME DIFF:** fullscreen is requested on the orienting card's own start
+button (the one transient gesture before the room appears), failing soft where unsupported. The duck
+and teddy bear were genuinely unreachable from the E1 seat, not merely "measured correct" — the teddy
+sat behind the boombox on the same shelf, inside its footprint; the duck's authored shelf board was
+5.7 cm short of the live model's real surface. Both moved to positions verified by eye, at the seat,
+before and after; the E3 fold's carried positions updated to match. E2 stops wearing E1's kit
+brochure, homework pile and soda can, per Sérgio's own note that the room should not carry the prior
+era's things forward.
+
+**`npm run audit` still fails, and it is not this session's regression.** A clean HEAD checkout
+(stashing every uncommitted change and re-running) reproduces the identical three send-leg comfort
+failures (s2 16.0×, s3/s4 10.3× the envelope) — these are S82's, tracked in `08_STATUS_REGISTER.md`
+§17, out of this session's E1–E2 fence. The draw-call ceiling ("entrance") also failed on one run at
+76 against the 68 ratchet and passed at 68 on another (same tree, rerun) — flagged as flaky/timing-
+sensitive in the capture itself (S71 P5's `beginMorphedStateBatch()` clears the settled batch for the
+whole cascade, so the sampled peak depends on exactly when a frame is caught mid-rebake), not a new
+regression: E1→E2's own comfort numbers are clean and unchanged (rise 0.395 m/s, build 0.121 m/s,
+descend 0.381 m/s, all well inside the 0.43 m/s / 9.1°/s envelope) in every run. `npx tsc --noEmit`,
+`npm test`, `npm run build` green.
+
+⚑ **UNVERIFIED ON HARDWARE.** Every measurement above is headless/embedded Chrome with synthetic
+pointers and debug-panel jumps. The deploy is automatic on push; this session did not push.
+
+⚑ **A11 STILL UNRUN** — unchanged from prior sessions, named rather than re-litigated.
+
 *(2026-08-15 · Session 85 — **THE THIRD DEVICE PASS: THE MOVE NOW TAKES THE HAND, AND THE BUTTON
 THAT ENDED THE RUN IS GONE FROM THE DEVICE IT ENDED IT ON.** Touched: `src/engine/app.ts`,
 `src/debug/panel.ts`, `08_STATUS_REGISTER.md` §22, this log, `BUILD_LOG.md`. No narrative, no
