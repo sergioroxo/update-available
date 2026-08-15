@@ -121,6 +121,32 @@ does rotating the device keep the horizon level.
 project's history** · whether 75 draw calls is right · whether the 12-second entrance reads as
 comfortable or merely slow · whether E3→E4's 42.5-second crossing reads as routine or as boring.
 
+## ⚑⚑⚑ IF THE DEVICE SHOWS OLD BEHAVIOUR, IT IS THE CACHE — NOT THE DEPLOY
+**Verified 2026-08-15, after three device sessions were spent on this.** The Actions runs were green,
+the push trigger had been working since Aug 13, and the live bundle provably contained the newest
+code — and the iPad kept showing the previous build.
+
+**The mechanism:** GitHub Pages serves `index.html` with `cache-control: max-age=600` and gives no way
+to change it. **Vite content-hashes every asset except `index.html`.** So a cached `index.html` points
+at the cached bundle, and Safari serves **the entire previous app — coherently.** Nothing errors,
+nothing looks broken; it is simply last week's piece. ⚑ **That is why it reads as "the deploy didn't
+work" when the deploy worked perfectly.**
+
+### THE TEST THAT IS ALWAYS RIGHT: **a Private tab.**
+A Private tab has its own empty cache. **One tap, no settings, no clearing.** Use it for every device
+check you intend to trust.
+
+| | |
+|---|---|
+| ✅ **Private tab** | the reliable check. Do this |
+| ✅ **Change the query** — `…?reinterp=1&v=2`, then `v=3` | forces a fresh `index.html` |
+| ⚠️ **Pull-to-refresh** | often reuses the cached `index.html`. Not a real reload |
+| ⚑ **Add to Home Screen** | **caches HARDER.** Excellent for exhibition, **bad for testing** — do not test that way |
+
+**We cannot fix this at runtime.** A version check would be a network call after asset load, and *no
+runtime network calls* is a hard CI-enforced invariant. `index.html` now carries `no-store` meta tags,
+which help and are not a guarantee — **the Private tab is the guarantee.**
+
 ## ⚑⚑ THE BARE URL SHOWS THE OLD PIECE — AND THAT IS CORRECT
 **This caught Sérgio on the first deploy and it will catch every device tester after him.**
 

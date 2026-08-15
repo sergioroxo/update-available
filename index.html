@@ -2,7 +2,32 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- ⚑ user-scalable=no / maximum-scale=1 are NOT a casual accessibility trade.
+         The two-finger pinch is a BOUND CAMERA CONTROL in this piece (FOV 30°-80°,
+         CLAUDE.md), and Safari's own page zoom was firing underneath it — which is
+         what dropped Sérgio's iPad out of fullscreen mid-scene on 2026-08-15. The
+         piece owns the gesture; the browser must not also claim it. Text legibility
+         is the piece's own job, not the browser zoom's.
+         ⚑ This meta is necessary but NOT sufficient: iOS Safari ignores it in some
+         contexts, so the canvas also needs `touch-action: none` + preventDefault on
+         the multi-touch path. That half is S86's. viewport-fit=cover lets the room
+         reach the edges on notched devices. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- ⚑⚑ THE STALE-BUILD BUG, and it cost more device sessions than any code fault.
+         GitHub Pages serves index.html with `cache-control: max-age=600` and offers no
+         way to change that. Vite content-hashes every asset but NOT index.html, so a
+         cached index.html points at the cached bundle and Safari serves the ENTIRE
+         previous app — coherently, with nothing looking broken. Sérgio spent three
+         device sessions testing fixes that were live on the server and invisible on
+         his iPad, and twice concluded, reasonably, that the deploy was broken. It
+         never was.
+         These are a request, not a guarantee. ⚑ THE RELIABLE TEST IS A PRIVATE TAB —
+         see docs/DEPLOY_PAGES.md. We cannot poll for a version: no runtime network
+         calls after asset load is a hard invariant. -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <meta name="robots" content="noindex" />
     <meta name="theme-color" content="#101014" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
