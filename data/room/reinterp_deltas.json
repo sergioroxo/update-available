@@ -19,12 +19,13 @@
         ]
       },
       "rainbowDuck": {
-        "_doc": "Session 84: measured against the rendered bookcaseOpen.glb, not the retired box shelf. era1.json put the duck base at y1.560, which was the OLD shelfBoard3 top; the real model's top board spans y1.558–1.615, so that base sat 5.5 cm inside the board. Its z footprint was 0.33–0.43 against the model's 0.37 front edge, overhanging by 4 cm; that partial footprint is also why room-audit could not classify the bookcase AABB as support and reported the floor instead. y1.655 puts the 0.04 m half-height exactly on y1.615; z0.50 keeps the full 0.10 m depth inside the shelf with 8 cm of front margin. From the Room-1 seat it shares teddyBox's bearing: 84.2° right of the authored forward direction, one deliberate right turn. Session 86: y1.655 → 1.712, and this is the third session to touch it because the first two MEASURED and never LOOKED. Disabling the duck live, from the Room-1 seat at its own bearing, changed nothing at all on screen — it was not merely hard to see, it was invisible. The live bookcaseOpen.glb AABB tops out at y1.672, not the y1.615 S84 measured, so a 0.08 m duck based at 1.615 was buried 5.7 cm inside the top board with 2.3 cm showing behind the board's own front lip. 1.712 puts the 0.04 m half-height exactly on the real 1.672 surface. Verified by eye at the seat, at pitch 0 and pitched up, before and after.",
+        "_doc": "Session 84: measured against the rendered bookcaseOpen.glb, not the retired box shelf. era1.json put the duck base at y1.560, which was the OLD shelfBoard3 top; the real model's top board spans y1.558–1.615, so that base sat 5.5 cm inside the board. Its z footprint was 0.33–0.43 against the model's 0.37 front edge, overhanging by 4 cm; that partial footprint is also why room-audit could not classify the bookcase AABB as support and reported the floor instead. y1.655 puts the 0.04 m half-height exactly on y1.615; z0.50 keeps the full 0.10 m depth inside the shelf with 8 cm of front margin. From the Room-1 seat it shares teddyBox's bearing: 84.2° right of the authored forward direction, one deliberate right turn. Session 86: y1.655 → 1.712, and this is the third session to touch it because the first two MEASURED and never LOOKED. Disabling the duck live, from the Room-1 seat at its own bearing, changed nothing at all on screen — it was not merely hard to see, it was invisible. The live bookcaseOpen.glb AABB tops out at y1.672, not the y1.615 S84 measured, so a 0.08 m duck based at 1.615 was buried 5.7 cm inside the top board with 2.3 cm showing behind the board's own front lip. 1.712 puts the 0.04 m half-height exactly on the real 1.672 surface. Verified by eye at the seat, at pitch 0 and pitched up, before and after. S90: `model: rubberDuck` added — the actual fix for the finding above ('it was never a duck'), not a fourth coordinate pass. This flips the placement convention: a BOX prop's `pos.y` is its CENTRE (era1.json's own doc, 'pos = center of the box'), so S86's 1.712 was built as 1.672 (the shelf surface) + 0.04 (half the box's own height). A MODEL prop's `pos.y` is instead the world height of the model's OWN measured base (`assets.ts spawnModel`: the wrapper is placed at `pos`, and the model is pre-shifted by `-baseY*scale` so its native base lands at the wrapper's local origin) — `rubberDuck`'s manifest entry (data/room/models.json) has `baseY: 0` (already resting on its own base), so feeding it the old box-centre y1.712 would float the duck 4cm above the real shelf. y1.712 → 1.672, putting the model's own base exactly on the live-measured shelf surface, no half-height math left to do. Verified live: camera at the Room-1 seat, turned to the duck's own ~84° bearing, screenshotted — a real duck, resting on the shelf board with no gap and no overhang.",
         "pos": [
           1.98,
-          1.712,
+          1.672,
           0.5
-        ]
+        ],
+        "model": "rubberDuck"
       },
       "mixtape": {
         "_doc": "Session 49 (finding 2): moved CLEAR of the cassette player and onto its shelf surface (full story on tapeA's own _doc below). Session 54: gave it `model: cassetteTape` too — a FIRST for a `props` override (every other model prop up to now was introduced via `add`, since Session 32's boombox override silently dropped `model`). Fixed properly this time, at the root: clusterMorph.ts's `foldTargets` now also copies `o.model` out of a `props` override, and `ClusterMorph.snapTo` re-spawns an EXISTING baseline id as the real mesh the first time its fold asks for one (mixtape was spawned as a box by era1room.ts's initial pass, long before this fold ever runs, so `spawnTarget`'s normal 'first spawn places itself' path never sees it). Kept as an override rather than a remove+add (the tapeA/tapeB pattern) on purpose: mixtape is both a belongings.json-eligible KEEPSAKE (its id must stay literally 'mixtape' for the ledger/kept-glow/click geometry) and a prop that RELOCATES at r3 (see that state's own props.mixtape) — a remove+add-new-id there would have raced the belongings 'kept freeze' (which re-asserts the r1 target under the ORIGINAL id) into showing two tapes at once, and tools/check-rooms.mjs's double-add check rejects remove+add of the SAME id within one state outright. `applyTarget`'s model branch now also re-applies position on every fold (previously model props were position-frozen after spawn), which is what lets r3's override actually move it. Session 55: `model` swapped `cassetteTape`→`cassetteTapeShelf` (data/room/models.json) — standing upright instead of lying flat, so it reads as a thing to pick up rather than a chip of debris. `pos` ALSO moved this round (x1.74→1.86, z1.09→1.07): the boombox's own Session 55 re-rotation changed its footprint from a thin vertical tower (x~1.78-1.94, barely into the shelf's z-run) to a wide landscape box (same x-depth, but z0.42-0.82) — at the tapes' old x1.74 they sat shallower than (visually 'in front of') the now-much-wider boombox instead of beside it; matching x1.86 puts every shelf object at the same depth, and mixtape's z nudges from 1.09 to 1.07 to keep clear of tapeB's new z0.97 slot (see tapeA/tapeB's own _doc for the full re-layout). Session 56: y0.766→0.709 — see boomboxModel's _doc, this whole shelf's `y0.76` was measured against the wrong surface; the real one is 0.057 lower. `yaw: 8` added too (same as tapeA/tapeB — a small turn toward the seat, see tapeA's _doc), which needed `clusterMorph.ts`'s `foldTargets` to also copy `yaw` out of a `props` override — the same silent-drop gap `model` had until Session 55, this time for a different field.",
@@ -263,6 +264,40 @@
         "model": "plant"
       },
       {
+        "id": "monkeyToyModel",
+        "_doc": "S90: a NEW Room-1 prop (Sérgio's own Poly Pizza pick, see data/room/models.json's `monkeyToy` entry for the source/merge/measurement story). Placed on the bare floor just past the foot of the bed (bedModel's own rendered AABB, per tools/room-audit.mjs --boxes, ends at z2.214 and x-0.987 — this sits at z2.4, clear of it by 0.19m on the z axis alone, so it never overlaps the bed regardless of x) and past the rug's own south edge (z1.724, also clear) — reads as a toy that fell, or was dropped, off the end of the bed onto open floor, not staged mid-air over either. `color` #A07B52 reuses `bedFrame`'s own existing warm-brown hex (era1.json) — no new hex, per the palette-reuse law; a plausible worn-toy tone. `size` is the fallback box, matching the model's own measured scaled footprint (0.125 × 0.125 × 0.114) so a failed GLB load still occupies the right footprint. `yaw` 0 — a small toy figure has no single 'correct' facing worth asserting.",
+        "pos": [
+          -1.2,
+          0,
+          2.4
+        ],
+        "size": [
+          0.125,
+          0.125,
+          0.114
+        ],
+        "color": "#A07B52",
+        "model": "monkeyToy",
+        "yaw": 0
+      },
+      {
+        "id": "tennisRacketModel",
+        "_doc": "S90: a NEW Room-1 prop (Sérgio's own Poly Pizza pick, see data/room/models.json's `tennisRacket` entry for the source/43-mesh-merge/measurement story). Placed on the bare floor south of the bed's own foot and monkeyToyModel, at z3.0 — clear of the bed's rendered AABB (z-max 2.214) by 0.79m and of monkeyToyModel's own 0.125m footprint (centred z2.4) by a wide margin, and short of the spine wall (z3.7, per r1's own `remove`/`add` of the south wall) by 0.35m even at the racket's own longest reach after `yaw`. Reads as a racket left on the floor near the end of the bed, the ordinary place a teenager drops one — not staged mid-room. No `tilt`: the native mesh is already authored lying flat (its thin axis is already native Y, see the model manifest's own doc), so this prop only needs `yaw` to choose which way it points. `color` #44464F reuses `boombox`'s own existing dark-grey hex (era1.json) — no new hex. `size` is the fallback box in the prop's OWN pre-yaw frame (width × thickness × length = 0.26 × 0.037 × 0.66), matching the model's measured scaled footprint.",
+        "pos": [
+          -1.6,
+          0,
+          3.0
+        ],
+        "size": [
+          0.26,
+          0.037,
+          0.66
+        ],
+        "color": "#44464F",
+        "model": "tennisRacket",
+        "yaw": 25
+      },
+      {
         "id": "tapeA",
         "pos": [
           1.86,
@@ -464,10 +499,10 @@
         ]
       },
       "rainbowDuck": {
-        "_doc": "Session 84: r3 must carry the corrected r1 shelf relationship, not the retired era1.json placement. Same x/y as r1 and the moved bookcase's exact +2.55 z. S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too, including its -0.17 x carry — old offset from old centre (0.11,-0.25) → new offset from new centre (0.25,0.11) → x2.12 → x1.95 (this also clears rainbowDuck's own BOUNDS overshoot, which was the other +x finding the rotation introduced).",
+        "_doc": "Session 84: r3 must carry the corrected r1 shelf relationship, not the retired era1.json placement. Same x/y as r1 and the moved bookcase's exact +2.55 z. S89: bookcaseMoved's yaw 90→0 remap (see book1's _doc) applies here too, including its -0.17 x carry — old offset from old centre (0.11,-0.25) → new offset from new centre (0.25,0.11) → x2.12 → x1.95 (this also clears rainbowDuck's own BOUNDS overshoot, which was the other +x finding the rotation introduced). S90: y1.712→1.672, same box-centre→model-base fix as the r1 override above (see its _doc) — the shelf's own Y placement is unchanged by the x/z move or the yaw remap (a pure Y-axis rotation of the bookcase doesn't move its shelf boards' height), so the real surface is the same 1.672 measured at r1.",
         "pos": [
           1.95,
-          1.712,
+          1.672,
           3.55
         ]
       }
