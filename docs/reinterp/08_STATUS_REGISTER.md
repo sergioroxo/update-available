@@ -1282,6 +1282,37 @@ percentile rather than the max — and say in the comment which, and why.
 metric underneath them would make their reported numbers incomparable with each other and with §20's
 177. **Do it in the first session after both land.**
 
+### ⚑ S81 — FIXED, AND THE HONEST RESULT (2026-08-16)
+Both were now unblocked (S88/S89 landed). Chose **the percentile**, not a fixed-time warm-up discard,
+and said why in `tools/shots.mjs`'s own comment above `robustDrawPeak()`: a time cutoff has to be
+re-tuned per leg (the entrance records ~16 s, a scripted send only ~4 s) or it eats a short leg
+outright; a percentile scales with however many frames a leg produced, and this file already trusts
+the identical shape of fix for the identical class of problem (`differentiate()`'s own `smooth()`,
+windowed rather than instantaneous, for "a single long frame... reads as a spike no eye ever saw").
+`DRAW_PEAK_TRIM = 0.02` discards the top 2% of sampled frames (minimum 1, only once there are ≥50
+samples) before taking the max of what remains.
+
+**Diagnosed by hand before picking the fix**, not guessed: `DUMP_DRAWS=1 node tools/shots.mjs comfort`
+dumped the raw per-frame `[t, drawCalls]` trace. Two clean re-runs both showed the entrance's early
+frames on a SUSTAINED plateau — 76, ~1.7 s, ~190 consecutive frames both times — before the ease-in
+curve visibly starts moving the camera. Not one outlier frame; a real, if transient, elevated state.
+
+**⚑ HONEST RESULT, not oversold:** three full runs on this machine (pre-fix ×2, post-fix ×1, plus a
+second post-fix confirmation) all read **entrance 76** — this environment never reproduced the 68 side
+of S86's split, pre- or post-fix, so the fix could not be validated against an actual flip here. What
+it guarantees: a SHORT race (a handful of frames, the mechanism this section names) can no longer move
+the number, because the trim only removes ~2% of the sample and a genuinely sustained plateau (like the
+one measured here both times) survives it unchanged. **If the flakiness resurfaces on a machine that
+can reproduce the 68 side, the plateau's LEVEL is racy, not just its edges — a deeper problem this fix
+does not claim to solve, and it should be named rather than papered over by widening the trim.**
+
+**Also surfaced, not fixed, and NOT a ratchet change:** the entrance's stably-measured peak (76) sits
+above both the ratchet (68) and even the hard `DRAW_CALL_BUDGET` (75) — a 1-draw-call overage that
+predates this session's fix (the RAW max was already 76 on this machine before the trim existed) and is
+therefore a possible real content regression since the 68 baseline was set, not a raciness artifact.
+**Baseline NOT raised** (the ratchet law forbids it); left failing/flagged in the report for whoever
+next has budget to trace what changed the entrance's true peak since S74.
+
 ---
 
 ## §27 — S89: THE AUDIO PASS, AND THE PROPS THAT ARE NOT WHERE THEY LOOK (2026-08-15)
