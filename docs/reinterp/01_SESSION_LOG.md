@@ -151,6 +151,26 @@ STATUS: live
   what VR will need is an orienting-card equivalent — rides the A11/VR validation pass).)*
 
 ## DONE
+*(2026-08-17 · Session 91 — **THE FAULT LIST FIRST, THEN A REAL OCCLUSION FIX.** Touched:
+`data/room/reinterp_deltas.json`, plus this session's own fault-list doc
+(`S91_FAULT_LIST_2026-08-17.md`). Played E1 cold boot → profile setup → desktop with real interaction
+in the sandboxed pane (manual `app.tick(timestamp)` stepper, real drag-to-look computed against the
+engine's own 0.16 deg/px sensitivity). Wrote and committed the fault list BEFORE any fix, per the
+session's own budget instruction. Confirmed the duck fix (S90) holds and reads as a duck from the seat
+— and caught a false positive before writing it up: a "lighting blowout" at that bearing was a leftover
+test artifact of the session's own making (a direct camera-node rotation composing with the drag rig),
+not a bug. Found and fixed a real one: `monkeyToy`/`tennisRacket` (S90's new floor props) were occluded
+by the bed's own frame from the seat — clear of the bed's authored BOX but not of the seat's line of
+sight — moved to the seat's own side of the bed, re-verified live as plainly legible, and
+`room-audit.mjs` used to catch (and fix) a second-order clipping issue the first move introduced against
+the bed's REAL rendered AABB (larger than its authored fallback box). `teddyBox` reconfirmed still a
+placeholder box, not re-sourced. **Named a real coverage gap rather than papering over it**: puppeteer
+did not work against this session's long-lived dev server (root-caused after the fact to accumulated
+Vite HMR reloads from live file edits — a fresh server did not have the problem), so E2/E3/E4/the Close
+were not personally re-played this session; said so plainly, leaning on S88's last full playthrough
+(§28) and `npm run audit`'s own successful four-era capture sweep as partial, not equivalent, evidence.
+Full write-up: `08_STATUS_REGISTER.md` §29, `S91_FAULT_LIST_2026-08-17.md`.)*
+
 *(2026-08-15 · Session 86 — **THE FIRST TWENTY MINUTES, PLAYED.** Touched: `src/desktop/os.ts`,
 `src/desktop/apps/update.ts`, `src/desktop/orientingCard.ts`, `src/engine/app.ts`,
 `data/room/reinterp_deltas.json`, `index.html`. Not a defect list — one continuous stretch, played

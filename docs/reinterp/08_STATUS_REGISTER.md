@@ -1592,3 +1592,94 @@ stashed out (`git stash` against the pre-S88 tip). Not fixed here; named for who
 batching across the three simultaneously-open rooms), the XR/gyro half of item 2, and the Vision-Pro
 headset restyle. None of these block "Era 4 is playable."
 
+
+## §29 — S91: THE FAULT LIST FIRST, THEN A REAL OCCLUSION FIX (2026-08-17)
+
+**The brief:** *"deploy audit with screenshots to check stuff and errors etc, do stuff to make this
+experience playable and better."* Play the whole piece cold, forward, write and commit the fault list
+before fixing anything (this project's own budget rule — eight prior sessions were killed mid-run by a
+spend cap, and the ones that banked work committed after every item).
+
+**Played E1 cold boot → profile setup → desktop with real interaction** in the sandboxed Claude Browser
+pane. That pane suspends `requestAnimationFrame` for a hidden document (a previously-documented quirk
+of this tool); frames were advanced with `window.__app.tick(timestamp)`, a manually-incremented REAL
+timestamp passed as the argument PlayCanvas's own `tick()` accepts — not the zero-argument form, which
+was tried first, read a captured `performance.now` reference, and produced near-zero `dt` per call
+(caught before trusting anything downstream of it). Camera drag-to-look was driven with real
+`left_click_drag`, computed against the engine's own documented sensitivity (`camYaw -= dx*0.16`,
+`src/engine/app.ts`) for exact target bearings, cross-checked against `window.__camPose()` after every
+move — the same "hits off `__os.*.hits`, rAF stepper" technique this project's memory already names.
+
+**1 · Confirmed FIXED — the duck.** At the live-measured bearing to `rainbowDuck` (yaw -84.32°, pitch
+~0°), the top bookcase shelf shows a small rounded yellow shape distinctly different in silhouette from
+the rectangular book beside it. S90's `rubberDuck.glb` genuinely reads as a duck from the seat, not a
+fourth coordinate confirmation of an invisible box. **Also caught and corrected a false positive before
+writing it up**: at this same bearing a first pass saw an enormous blown-out glow filling the frame and
+nearly reported it as a lighting bug. It was a leftover test artifact — an earlier diagnostic had called
+`setLocalEulerAngles` directly on the CHILD `camera` node (the gyro-only node CLAUDE.md documents)
+instead of the drag-controlled rig, so the injected rotation was silently composing with the rig's own
+rotation every frame. Caught by reading the entity's actual `getEulerAngles()` (nonzero roll — drag-look
+never introduces roll) against `__camPose()`, which read the rig alone and looked fine while the visible
+camera was wrong. Resetting the child's local euler to identity made the blowout vanish. Recorded as a
+"verify against running code" example for whoever next photographs this bearing.
+
+**2 · ⚑⚑ NEW, FIXED — `monkeyToy`/`tennisRacket` were occluded by the bed from the seat.** Both are S90's
+new floor props, placed "past the foot of the bed" and checked clear of the bed's AABB on Z alone. Live
+at their own bearings (yaw 144.78°/145.18°, pitch -27.86°/-22.14°, both easily inside the camera
+frustum per `worldToScreen`), the frame was dominated by the bed's own near-field frame geometry at both
+the authored 42° FOV and a tightened 12° FOV — at most a single pixel of `monkeyToy` visible through a
+rail gap, nothing of `tennisRacket` at all, on a dark grey prop that should contrast against the warm
+floor if unoccluded. The old placement was clear of the bed's BOX but not of the seat's LINE OF SIGHT —
+the bed sits between the seat and both props along that bearing (bed x-max ≈ -0.987, both props authored
+at more-negative x, i.e. on the bed's own side). **Fixed**: moved both onto the seat's own side of the
+bed (`monkeyToyModel` -0.55,1.95 → still past the rug's z-run; `tennisRacketModel` -0.9,2.35, tightened
+to -0.65,2.6 after `room-audit.mjs` caught the racket's own rotated (`yaw:25`) AABB clipping 3.7cm into
+the bed's REAL rendered mesh — which is 39%/42%/10% larger than the authored fallback box the first move
+was checked against, a second occlusion-adjacent gotcha in the same finding). Re-verified live at both
+new bearings: the monkey's limbs and the racket's strung head/handle are both plainly legible on open
+floor, and `room-audit.mjs` reports zero new OVERLAP/FLOATING/BOUNDS findings for either prop.
+`data/room/reinterp_deltas.json`.
+
+**3 · Confirmed still true, not re-sourced.** `teddyBox` remains the original flat-colour placeholder
+box, indistinguishable from the book-boxes beside it except by tint. No asset sourced this session, per
+the brief's own instruction not to.
+
+**4 · ⚑ A real coverage gap, named rather than papered over.** Puppeteer — this project's usual path for
+persisted, on-disk screenshots — did not work against the long-lived dev server this session inherited:
+`window.__app` never appeared after `Log in`, no console error, no pageerror, all 98 requests resolved.
+**Root cause, found AFTER most of this session's play was already done live-only**: the dev server had
+absorbed many Vite HMR full-reloads from file edits made WHILE a page was connected (this project's
+default `vite.config.ts` watches the whole tree with no ignore list), and a fresh `npm run audit` run
+against a **freshly-started** dev server worked without incident — 18 room frames + 6 device canvases
+captured, draw calls e2 36 / e3 52 / e4 52. So this session's own manual-tick interactive pass (finding
+1-2 above) never had persisted screenshots, but the automated capture path does still work and produced
+its own. **E2, E3, E4 and the Close were not personally re-played this session** — S88 (2026-08-15) has
+the last full real playthrough on record (§28); nothing in S89/S90/this session touched E2-E4 code, but
+"nothing touched it" is not the same claim as "re-verified," and this document says so plainly rather
+than asserting eras it did not personally drive. `npm run audit`'s own capture sweep did render all four
+eras without erroring, which is a real (if partial) signal that nothing new broke there.
+
+**141 draw calls at Maya's turned E4 seat (§28) — NOT re-measured this session.** A11 — still untested,
+as every prior session has said.
+
+Full write-up with the "how this was played" methodology: `docs/reinterp/S91_FAULT_LIST_2026-08-17.md`,
+written and committed BEFORE any fix, per this session's own budget instruction.
+
+`tsc`, `npm test`, `npm run build` green. `npm run audit` — the send-leg comfort sampling window was
+tied to the send duration THIS MORNING (`9fccf8b`, 39s legs, sampled in full both directions), so this
+session's audit run is the first since that change and took noticeably longer than any prior session's
+number in this log; result recorded once it completed, not truncated to make the deadline. **`npm run
+audit` FAILS**: entrance draw-call peak **81** against the ratchet's own **68**, over even S81's freshly-
+stabilised **76** for this machine — the same class of finding §26/S81 already named (a sustained
+plateau in the entrance's early frames, sensitive to batch-rebake timing, not a single racy frame).
+**Measured, not assumed, whether item 2's fix contributed**: re-ran the same manual `app.tick()` peak
+sampler used to confirm the occlusion fix, once with `reinterp_deltas.json` stashed back to S90's
+positions (peak **79**) and once with this session's moved positions (peak **81**) — a real but small
+**+2** from the props now being genuinely in the camera's frustum during part of the entrance sweep
+instead of hidden behind the bed the whole time. But **79 on S90's own unmodified tip is itself already
+3 over S81's claimed-stable 76** — so most of the number (79 of the 81) is pre-existing drift this
+session did not cause, and only the last 2 are this session's own. **Not fixed** — the architecture (static batching excludes any prop carrying a real `.model`,
+named as out-of-fence architecture work in §20/§28) is explicitly out of this session's scope, and the
+budget's own instruction is to measure it, not attempt it. **Ratchet NOT raised**; 81 is reported as a
+finding, not folded into a new baseline. The `sends` leg (78, unchanged) was already over budget before
+this session and is not touched by it.

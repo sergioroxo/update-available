@@ -1,5 +1,23 @@
 # BUILD_LOG
 
+- 2026-08-17 — S91: the fault list written and committed BEFORE any fix, per this project's own budget
+  rule. Played E1 cold boot → profile setup → desktop with real interaction in the sandboxed pane
+  (manual `app.tick(timestamp)` stepper, real drag-to-look against the engine's own 0.16 deg/px
+  sensitivity, cross-checked live against `__camPose()`). Confirmed the duck (S90) genuinely reads as a
+  duck from the seat, and caught a false positive before writing it up — a "lighting blowout" at that
+  bearing was the session's own leftover test artifact (a direct camera-node rotation composing with the
+  drag rig), not a bug. Found and fixed a real one: `monkeyToy`/`tennisRacket` (S90's new floor props)
+  were occluded by the bed's own frame from the seat — clear of the bed's authored box but not the
+  seat's line of sight — moved to the seat's own side of the bed, re-verified live as plainly legible,
+  with `room-audit.mjs` catching a second-order clip against the bed's REAL (larger-than-authored)
+  rendered AABB before it shipped. `teddyBox` reconfirmed still a placeholder box, not sourced. Named a
+  real gap rather than hiding it: puppeteer did not work against this session's long-lived, HMR-battered
+  dev server (root-caused after the fact; a fresh server did not have the problem), so E2/E3/E4/the
+  Close were not personally re-played this session — leaning on S88's last full playthrough and
+  `npm run audit`'s own successful four-era capture as partial, not equivalent, evidence. tsc/test/build
+  green; `npm run audit` run to completion (send-leg sampling now ties to this morning's 39s send
+  duration, so this run took noticeably longer than any prior session's number in this log). Full
+  write-up: `docs/reinterp/S91_FAULT_LIST_2026-08-17.md`, `08_STATUS_REGISTER.md` §29.
 - 2026-08-15 — S89 (own worktree, parallel with S88): the audio pass and the props that are not where
   they look, all five items verified live rather than by manifest. The prayer WAS wired to a real
   `play()` call all along — the fault was 60 silent seconds of intro captions before it started, closed

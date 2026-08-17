@@ -2045,3 +2045,44 @@ lips, geometry the camera clips. Report which findings you judged to be intentio
 - Room-audit findings triaged, with the intentional ones named.
 - `tsc`, `npm test`, `npm run build`, `npm run audit` green; no baseline raised. Logs, register,
   commit after each item. ⚑ **Do not push.**
+
+---
+
+# S91 — THE FAULT LIST FIRST, THEN A REAL OCCLUSION FIX
+**⚑ PROMPT STATUS: SHIPPED 2026-08-17 · Sonnet.** Played E1 cold boot → profile setup → desktop with
+real interaction, wrote and committed the fault list BEFORE any fix (this project's own budget rule),
+then fixed the one concrete finding in severity order. Full write-up:
+`docs/reinterp/S91_FAULT_LIST_2026-08-17.md`, `08_STATUS_REGISTER.md` §29, `01_SESSION_LOG.md`'s S91
+entry.
+
+**What it found and fixed:**
+- Confirmed the duck (S90) genuinely reads as a duck from the seat — not re-verified, LOOKED AT, per
+  the standing rule for this exact bearing. Caught and corrected a false positive first: an apparent
+  "lighting blowout" at that bearing was the session's own leftover test artifact, not a bug.
+- **`monkeyToy`/`tennisRacket` (S90's new floor props) were occluded by the bed's own frame from the
+  seat** — clear of the bed's authored box but not the seat's line of sight. Moved to the seat's own
+  side of the bed; re-verified live as plainly legible; `room-audit.mjs` caught a second-order clip
+  against the bed's REAL rendered AABB (larger than its authored fallback box) before it shipped.
+  `data/room/reinterp_deltas.json`.
+- `teddyBox` reconfirmed still a placeholder box; not sourced, per the brief.
+- **A real coverage gap named rather than hidden**: puppeteer did not work against this session's
+  long-lived dev server (root-caused after the fact to accumulated Vite HMR reloads; a fresh server
+  did not have the problem), so E2/E3/E4/the Close were not personally re-played this session — leaning
+  on S88's last full playthrough and `npm run audit`'s own successful four-era capture as partial
+  evidence, not equivalent to a fresh playthrough.
+- **`npm run audit` FAILS on the entrance draw-call ratchet (81 vs 68)**, and this session measured its
+  own contribution rather than assuming it: +2 from the occlusion fix (props now genuinely in-frustum
+  during part of the entrance sweep), the other ~3 pre-existing drift on S90's own tip. Not fixed — the
+  batching architecture is out of fence (§20/§28); ratchet NOT raised.
+
+`tsc`, `npm test`, `npm run build` green throughout. `npm run audit`'s comfort envelope now passes in
+full (this morning's `9fccf8b` closed the last of the send-leg comfort findings); only the draw-call
+ratchet fails, and it is a finding, not a regression this session invented from nothing.
+
+## ACCEPTANCE
+- A written, numbered fault list, committed before any fix — the thing eight prior sessions were killed
+  before producing.
+- At least one concrete fault fixed in severity order, verified live, not by manifest.
+- Coverage gaps stated honestly where real (puppeteer, E2-E4 re-play) rather than papered over.
+- `tsc`, `npm test`, `npm run build` green; `npm run audit`'s new failure (if any) measured and
+  attributed, not silently absorbed into a raised baseline.
