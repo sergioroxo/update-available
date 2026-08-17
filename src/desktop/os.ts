@@ -1077,15 +1077,24 @@ export class DesktopOS {
    * Vera's laptop instead, exactly the technique already used for the u4
    * ritual (`era3Devices.ts`'s `RITUAL_OFFSET`/`drawLaptop`).
    *
-   * ⚑⚑ SAFETY (08_STATUS_REGISTER §17), NOT COSMETIC: s3/s4 share the send
-   * machinery that measured the s2 dolly at 6.874 m/s against a 0.43 m/s
-   * comfort envelope — sixteen times over, and s2 is unfixed. Sérgio has not
-   * yet chosen the fix (lengthen the dolly to ~38s, or make it a blink cut —
-   * his call, argued in §17). Until he does, `allowVisit` withholds the "go"
-   * button and its hit rect for exactly s3/s4: the offer draws, can be read,
-   * and can be DECLINED — which files a real outcome to `ledger.sends` and
-   * lets `sendResolved()` see it — but it cannot be accepted into the move
-   * that is not yet safe. s1/s2 are unaffected and keep both buttons.
+   * ⚑ THE DECLINE-ONLY GATE IS LIFTED — 2026-08-17, on measurement, not on
+   * mood. S87 built it because s3/s4 share the machinery that flew the s2
+   * dolly at 6.874 m/s against a 0.43 m/s envelope, sixteen times over. Sérgio
+   * has since chosen the fix (checklist D-B: lengthen, don't blink-cut) and
+   * `CAMERA_POSES.dollySeconds` is now 39 s, wired to the real call site.
+   *
+   * ⚑ THE NUMBERS THAT LIFTED IT, from `node tools/shots.mjs comfort` with a
+   * sampling window long enough to watch the whole leg: s3 and s4 fly 4.65 m
+   * and measure **0.279 m/s** — comfortably inside on the linear axis and
+   * inside on the rotational one too. s2's 8.87 m is the long leg and the one
+   * that set 39.
+   *
+   * ⚑ WHAT IS STILL TRUE, and belongs to whoever reads this next: the 0.43 m/s
+   * envelope is DESKTOP-MEASURED and **A11, the in-headset pass, has never run
+   * in this project's history**. These legs are inside a threshold nobody has
+   * validated in stereo. That is a far better position than sixteen times over
+   * it — but it is not the same as proven comfortable, and the first person
+   * into a headset should watch this seam specifically.
    */
   private drawSendOfferInto(ctx: CanvasRenderingContext2D, hits: Hit[], W: number, H: number): void {
     if (!this.sendOffer) return;
@@ -1103,7 +1112,7 @@ export class DesktopOS {
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.black;
     def.offer.lines.forEach((line, i) => ctx.fillText(line, c.x + 10, c.y + 6 + i * 12));
-    const allowVisit = this.sendOffer.id !== 's3' && this.sendOffer.id !== 's4';
+    const allowVisit = true; // gate lifted on measurement — see the note above
     if (allowVisit) {
       ui.button(ctx, c.x + c.w - 110, c.y + c.h - 26, 102, 18, def.offer.go, {});
       hits.push({ x: c.x + c.w - 110, y: c.y + c.h - 26, w: 102, h: 18, id: 'send-go' });

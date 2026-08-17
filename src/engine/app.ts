@@ -351,17 +351,21 @@ export const CAMERA_POSES = {
    * is the system MOVING you and watching that happen is part of the point —
    * a cut would hide the thing the beat is about.
    *
-   * 38 s is not a round number, it is the envelope: the same distance that gave
-   * 6.874 m/s over 2.4 s gives ≈0.43 m/s over ~38 s. ⚑ So this constant is
-   * DERIVED — if the send geometry ever moves, this has to be re-derived, not
-   * nudged. `npm run audit`'s comfort assertions are what prove it.
+   * ⚑ 39, not a round number and not a guess — it is the envelope, MEASURED.
+   * At 38 s the audit put s2's longest leg (8.87 m) at **0.434 m/s against the
+   * 0.43 m/s envelope — over by 0.9%**, with s3/s4 already clear at 0.279. He
+   * chose to close that last 0.9% rather than round it away. At 39 s all three
+   * legs sit inside on both the linear and the rotational axis.
    *
-   * ⚑ This also gates s3/s4, which S87 left DECLINE-ONLY pending exactly this
-   * decision (`os.ts` `allowVisit`) because they share this machinery. Their
-   * "go" affordance can be restored once the audit shows all three legs inside
-   * the envelope — a separate, verified step, not an assumption to make here.
+   * ⚑ So this constant is DERIVED FROM THE LONGEST LEG. If the send geometry
+   * ever moves, re-derive it — do not nudge it. `npm run audit`'s comfort
+   * table is what proves it, and it is only trustworthy because the sampling
+   * window in `tools/shots.mjs` is now longer than this number. **If you raise
+   * this, raise that too**, or the audit will sample a fraction of the move and
+   * report a comfortable-looking pass it did not measure. That exact trap fired
+   * once already, on 2026-08-17, at 38 s against a 4 s window.
    */
-  dollySeconds: 38
+  dollySeconds: 39
 };
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
 // the blink is a CUT, never a tween: fade to black, THEN move the camera,

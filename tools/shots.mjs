@@ -956,8 +956,8 @@ async function comfort(browser, asserts) {
       // it was the tool no longer watching. ⚑ A sampling window shorter than the
       // move it measures does not report a small number — it reports a WRONG
       // one, and this one would have cleared the very legs it exists to guard.
-      // 41 s = the dolly plus slack. If the dolly changes again, this changes.
-      await wait(41000);
+      // 42 s = the 39 s dolly plus slack. If the dolly changes again, so does this.
+      await wait(42000);
       const rec = await page.evaluate(() => { window.__recOn = false; return window.__rec; });
       peak = Math.max(peak, robustDrawPeak(rec.map((r) => r[8])));
       // a send that resolves to the seat you are already in is a no-op, not a
