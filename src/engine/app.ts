@@ -777,7 +777,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const yaw = sendRt?.targetYaw(id);
         // the summons resolves as a TURN — the dolly carries you to the
         // named room (takeable: not conducted; the player keeps the camera)
-        if (yaw !== null && yaw !== undefined) dollyTo(yaw, 2.4, false);
+        // ⚑ 2026-08-17: this literal was 2.4 and CAMERA_POSES.dollySeconds — the
+        // constant whose own comment says "how long a scripted send's dolly
+        // takes (app.ts's onSendResolve)" — was DEAD CONFIG, appearing exactly
+        // once in all of src/: its own definition. Sérgio's D-B decision was
+        // applied to that constant first and changed nothing a player would
+        // feel, which is the whole reason this line now READS it. A tuning knob
+        // wired to nothing is worse than no knob: it invites a fix that lands
+        // nowhere and reports success.
+        if (yaw !== null && yaw !== undefined) dollyTo(yaw, CAMERA_POSES.dollySeconds, false);
       }
     };
     if (new URLSearchParams(window.location.search).get('debug') === '1') {

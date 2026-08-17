@@ -948,7 +948,16 @@ async function comfort(browser, asserts) {
     for (const id of ['s1', 's2', 's3', 's4']) {
       await page.evaluate(RECORDER);
       await page.evaluate((s) => window.__os?.onSendResolve?.(s, 'visited'), id);
-      await wait(4000);
+      // ⚑ 2026-08-17: was 4000 — sized for the 2.4 s dolly this seam used to
+      // fly. Sérgio's D-B decision took it to 38 s (CAMERA_POSES.dollySeconds),
+      // and a 4 s window then sampled the first 1% of the move: the chord
+      // collapsed 8.87 m → 0.09 m and every velocity came back comfortably
+      // inside the envelope, which read exactly like a PASS. It was not a pass;
+      // it was the tool no longer watching. ⚑ A sampling window shorter than the
+      // move it measures does not report a small number — it reports a WRONG
+      // one, and this one would have cleared the very legs it exists to guard.
+      // 41 s = the dolly plus slack. If the dolly changes again, this changes.
+      await wait(41000);
       const rec = await page.evaluate(() => { window.__recOn = false; return window.__rec; });
       peak = Math.max(peak, robustDrawPeak(rec.map((r) => r[8])));
       // a send that resolves to the seat you are already in is a no-op, not a
