@@ -228,7 +228,7 @@ const SEAT_SUBJECTS = {
 const ERA_STATE = { 2: 'r2', 3: 'r3', 4: 'r4' };
 /** which seats exist per era — E2 keeps the walls up, E3 opens Rooms 1+2,
  *  E4 adds Room 3 (cluster.ts's own gating; the sweep mirrors it) */
-const ERA_SEATS = { 2: ['r1', 'r1-turned'], 3: ['r1', 'r1-turned', 'r2'], 4: ['r1', 'r1-turned', 'r2', 'r3'] };
+const ERA_SEATS = { 1: ['r1', 'r1-turned'], 2: ['r1', 'r1-turned'], 3: ['r1', 'r1-turned', 'r2'], 4: ['r1', 'r1-turned', 'r2', 'r3'] };
 
 // ═══ CLI ═══════════════════════════════════════════════════════════════════
 
@@ -507,6 +507,25 @@ async function openPage(browser, query, asserts = []) {
   });
   page.on('pageerror', (e) => asserts.push('PAGEERROR ' + String(e).slice(0, 160)));
   await page.goto(`http://localhost:${PORT}/${query}`, { waitUntil: 'networkidle2', timeout: 60000 });
+  // ⚑ ERA 1 HAS A FRONT DOOR AND THE SWEEP COULD NOT OPEN IT. `__poses` only
+  // exists once the room is built, and at E1 the room is not built until the
+  // player logs in past the pre-fiction panel — so `sweep` timed out on era 1
+  // and era 1 was simply left out of the list, which is how the piece's OPENING
+  // room came to be the one room no review frame has ever shown. (The comfort
+  // pass already knew this; it clicks the same button. The two paths just never
+  // shared the knowledge.) Later eras enter past the panel and no-op here.
+  // ⚑ Test for the button's EXISTENCE, not for it being enabled: the panel holds
+  // it disabled for the 4 s ethics delay, so an enabled-check run immediately
+  // after goto is always false and falls straight through to a 30 s timeout.
+  // The delay is a deliberate part of the piece, and the tool has to wait it out
+  // exactly as a person does.
+  const doorBtn = await page.$$eval('button', (bs) =>
+    bs.some((b) => (b.textContent || '').includes('Log in'))).catch(() => false);
+  if (doorBtn) {
+    await page.waitForFunction(() => [...document.querySelectorAll('button')]
+      .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});
+    await clickPanel(page, 'Log in');
+  }
   await page.waitForFunction(() => window.__poses !== undefined, { timeout: 30000 });
   await wait(6000); // models, batching, the first settled frames
   return page;
@@ -647,7 +666,20 @@ async function sweep(browser, asserts, outDir) {
   const frames = [];
   let poses = null;
   const perf = [];
-  for (const era of [2, 3, 4]) {
+  // ⚑ [1, 2, 3, 4] — era 1 was MISSING from this sweep until 2026-08-17, and it
+  // is the room the piece's problems keep coming from. Every prop Sérgio has
+  // reported over five device sessions lives in Room 1 at E1: the duck, the
+  // teddy, the tapes, and now the monkey and racket. The sweep photographed
+  // Room 1 only as it appears at ERA 2 and later (`e2_look-A-room1`), i.e.
+  // already aged, already partly emptied — so the opening room, the first thing
+  // every player sees, was never in a review frame at all.
+  //
+  // ⚑ Same blind-spot class as S88's finding that no sampled pose was ever a
+  // TURNED E4 seat (08 §28): the audit was not wrong about what it measured, it
+  // simply never looked where the faults were. An audit's coverage list is
+  // itself a claim about where bugs can be, and this one quietly asserted that
+  // Era 1 could not have any.
+  for (const era of [1, 2, 3, 4]) {
     const page = await openPage(browser, `?reinterp=1&era=${era}&debug=1&descent=0`, asserts);
     const p = await page.evaluate(() => window.__poses());
     poses = p; // identical every era; kept for the offline framing pass
