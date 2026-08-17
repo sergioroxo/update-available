@@ -797,7 +797,19 @@ reading as pure invented content (no real-world claim to source), superseding D2
 
 ---
 
-# ⚑ OPEN DECISIONS — 2026-08-17, waiting on Sérgio
+# ✅ DECIDED — 2026-08-17, all four answered and applied
+*Kept rather than deleted: the reasoning is the record of why the piece is the way it is.*
+
+| | His answer | Applied as |
+|---|---|---|
+| **D-A** duck licence | **CC0, CreativeTrio** (poly.pizza/m/oH3dEdlDpB) | No row in `ATTRIBUTIONS.md` — CC0 owes no credit and padding a CC-BY table hides the obligations. Recorded in `assets/LICENSES.md` |
+| **D-B** the s2 send | **"keep the 38s for now"** | `app.ts` `dollySeconds: 2.4 → 38`. ⚑ Derived, not chosen: the distance that gave 6.874 m/s over 2.4 s gives ≈0.43 m/s over ~38 s. **s3/s4 stay decline-only until the audit proves all three legs inside the envelope** |
+| **D-C** Maya's deadname | **"its just MAYA no Daniela"** | `personFormerName` in `s4_l.json`, resolved by a new `{formerName}` token. **Maya's record no longer speaks Daniel's name.** ⚑ The name itself is a PLACEHOLDER-draft and the reader gate is untouched |
+| **D-D** the programme | **New Morning** | `s1_end.json:47`. Now agrees with Caleb, the intake form, and the file's own `_doc` |
+
+---
+
+# ⚑ THE ORIGINAL DECISION BLOCK — 2026-08-17 (answered above, kept for the reasoning)
 *Added because he asked "where are these?" and the honest answer was: scattered across three register
 sections and one attributions row, in a file last updated 27 July. **This block is now the one place
 to look.** Each says what the question is, what the evidence is, what happens either way, and my

@@ -246,14 +246,30 @@ export class LVoice {
 
   /**
    * The caption text for a line: the unvoiced variant when the opt-out is on,
-   * and `{name}` resolved from `ledger.name` — the ONE place the name comes
-   * from. This branch prefills it at the opening ("we filled this in for you"),
-   * so the record is holding the name it assigned thirty years ago and the
-   * player never gambled anything to get here.
+   * then the two name tokens resolved.
+   *
+   * ⚑ THERE ARE TWO NAMES HERE AND THEY MUST NEVER BE THE SAME FIELD.
+   * Decision D-C, Sérgio, 2026-08-17: *"its just MAYA no Daniela."*
+   *
+   * `{name}` still resolves from `ledger.name` — the opening prefills it
+   * ("we filled this in for you") and it is Daniel's, Era 1's protagonist.
+   *
+   * `{formerName}` is Maya's own, and it comes from the DATA (`s4_l.json`'s
+   * `personFormerName`), never from the ledger. Until today the deadname beat
+   * used `{name}`, so Era 4's most sensitive line spoke Era 1's name — which
+   * only reads if Maya and Daniel are one person, while the build plan and the
+   * orienting card both say they are not (`08 §22`). Room 3 is Maya's; her
+   * record holds her own wrong name, not somebody else's.
+   *
+   * ⚑ The GATE is untouched: the beat is still BLOCKED-ON-READER-PASS
+   * (`08 §14`). This only means the reader reviews Maya's beat rather than an
+   * unexamined identity conflation.
    */
   private caption(l: LLine): string {
     const raw = l.deadname && ledger.view.unvoicedName && l.textUnvoiced ? l.textUnvoiced : l.text;
-    return raw.replace('{name}', ledger.name);
+    return raw
+      .replace('{name}', ledger.name)
+      .replace('{formerName}', script.personFormerName);
   }
 
   // ── the surface ──────────────────────────────────────────────────────────

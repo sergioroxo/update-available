@@ -108,3 +108,18 @@ model manifest already uses).
   — **CC0** — 120+ interior fills; convert to GLB.
 - Era-2 PC (Sérgio liked): 410prod "Retro Monitor & PC Tower" (PSX-style) —
   **CC-BY** (needs colophon credit).
+
+## rubberDuck.glb — CC0, added 2026-08-17 (S90 / decision D-A)
+| | |
+|---|---|
+| **Asset** | "Rubber Duck" |
+| **Creator** | CreativeTrio |
+| **Source** | https://poly.pizza/m/oH3dEdlDpB |
+| **Licence** | **Public Domain (CC0 1.0)** — no attribution required |
+| **Used as** | Room 1 shelf 3 `rainbowDuck`, replacing the primitive box. reinterp only |
+
+⚑ Shipped with its baseColorTexture **stripped** (`@gltf-transform`, geometry-only re-export,
+56,764 → 38,160 bytes, geometry byte-identical) per the no-textures law — same treatment and same
+reasoning as `cassetteTape`. No row in `docs/reinterp/ATTRIBUTIONS.md`: that file is for CC-BY assets
+that owe credit, and CC0 owes none.
+

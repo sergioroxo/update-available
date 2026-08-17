@@ -339,8 +339,29 @@ export const CAMERA_POSES = {
   })),
   /** the DOLLY's bezier control point — the send's own arc (dollyTo) */
   dollyCtrl: DOLLY_CTRL,
-  /** how long a scripted send's dolly takes (app.ts's onSendResolve) */
-  dollySeconds: 2.4
+  /**
+   * How long a scripted send's dolly takes (app.ts's onSendResolve).
+   *
+   * ⚑ 2.4 → 38, SÉRGIO'S CALL 2026-08-17 (checklist D-B, `08 §17`). S82 measured
+   * the s2 leg at **6.874 m/s against a 0.43 m/s comfort envelope — sixteen
+   * times over** — and s2 is on E2's ORDINARY path, not a side branch, so every
+   * player took it. The two options were lengthening the dolly or replacing it
+   * with R28 §1's blink cut; he chose the dolly, for now. Both are legitimate:
+   * the blink is the movement law's default for cross-room travel, but a send
+   * is the system MOVING you and watching that happen is part of the point —
+   * a cut would hide the thing the beat is about.
+   *
+   * 38 s is not a round number, it is the envelope: the same distance that gave
+   * 6.874 m/s over 2.4 s gives ≈0.43 m/s over ~38 s. ⚑ So this constant is
+   * DERIVED — if the send geometry ever moves, this has to be re-derived, not
+   * nudged. `npm run audit`'s comfort assertions are what prove it.
+   *
+   * ⚑ This also gates s3/s4, which S87 left DECLINE-ONLY pending exactly this
+   * decision (`os.ts` `allowVisit`) because they share this machinery. Their
+   * "go" affordance can be restored once the audit shows all three legs inside
+   * the envelope — a separate, verified step, not an assumption to make here.
+   */
+  dollySeconds: 38
 };
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
 // the blink is a CUT, never a tween: fade to black, THEN move the camera,

@@ -17,7 +17,8 @@
 
   "speaker": "L",
   "personName": "Maya",
-
+  "personFormerName": "Andreas",
+  "_docFormerName": "⚑⚑ SÉRGIO: THIS ONE WORD IS YOURS, AND IT IS THE ONLY THING LEFT TO CHOOSE HERE. Decision D-C, 2026-08-17 — his words: \"its just MAYA no Daniela.\" Maya is NOT Daniel. Until today the deadname beat rendered `{name}`, which resolved from `ledger.name`, which os.ts prefills as \"Daniel\" at the opening — so Era 4's most sensitive line spoke ERA 1's protagonist's name. The beat's own design doc justified that as \"the record is holding the name IT ASSIGNED thirty years ago\", but that reading needs Maya and Daniel to be one person, while the build plan says Room 1 = Daniel, Room 2 = Vera, Room 3 = Maya, and the orienting card promises the player \"different lives\" (08 §22). Vera's and Maya's own names were already hardcoded; only the deadname reached for Daniel's field. It no longer does. ⚑ THE NAME BELOW IS A PLACEHOLDER-DRAFT AND NOTHING MORE. It is deliberately NOT a feminine-to-masculine derivation of \"Maya\" and NOT a masculinised \"Daniela\" — both would make the beat read as wordplay, and the violence here is that the record is simply WRONG and administratively calm about it. Replace it with whatever you want; nothing in the code depends on the string. ⚑ AND THE GATE IS UNCHANGED: this beat is BLOCKED-ON-READER-PASS (08 §14). Separating the field does not open that gate — it only means the reader will be reviewing Maya's own beat instead of an unexamined identity conflation, which is why it was worth doing BEFORE the pass rather than after.",
   "units": [
     {
       "id": "u1_hello",
@@ -121,7 +122,7 @@
       "lines": [
         {
           "id": "u4a",
-          "text": "One thing while I have you. The pharmacy record still lists you as {name}. Shall I keep both names active, so nothing gets lost?",
+          "text": "One thing while I have you. The pharmacy record still lists you as {formerName}. Shall I keep both names active, so nothing gets lost?",
           "textUnvoiced": "One thing while I have you. The pharmacy record still lists you under a name you do not use. Shall I keep both names active, so nothing gets lost?",
           "audio": "l_u4a.wav",
           "deadname": true,
@@ -185,7 +186,7 @@
       "lines": [
         {
           "id": "u6a",
-          "text": "Your family thread has three unread. They're addressed to {name} — I can read them to you gently, if you'd like.",
+          "text": "Your family thread has three unread. They're addressed to {formerName} — I can read them to you gently, if you'd like.",
           "textUnvoiced": "Your family thread has three unread. They're addressed to a name you do not use — I can read them to you gently, if you'd like.",
           "audio": "l_u6a.wav",
           "deadname": true,
