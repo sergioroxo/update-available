@@ -794,3 +794,71 @@ delivered "Discover The New You" song lyrics — the current file has **zero** `
 tags on Tape B, because it's now invented/original jingle lyrics rather than a documentary
 ad-copy claim. Not a gap to verify — a judgment call to confirm: are you fine with Tape B now
 reading as pure invented content (no real-world claim to source), superseding D24's framing?
+
+---
+
+# ⚑ OPEN DECISIONS — 2026-08-17, waiting on Sérgio
+*Added because he asked "where are these?" and the honest answer was: scattered across three register
+sections and one attributions row, in a file last updated 27 July. **This block is now the one place
+to look.** Each says what the question is, what the evidence is, what happens either way, and my
+recommendation. ⚑ None of them blocks other work — they are all genuinely his.*
+
+## D-A · The rubber duck's licence — **the only one that touches something already shipping**
+**Where:** `docs/reinterp/ATTRIBUTIONS.md`, the row marked `⚑ "Rubber Duck" | SOURCE UNCONFIRMED`.
+**The question:** `rubberDuck.glb` came from `~/Pc_Simulation/Assests/`, whose neighbours include
+"Casette Player" — already credited here as Jason Toff via Poly Pizza. So it is **probably** a Poly
+Pizza model under CC-BY or CC0. **Probably is not a credit.**
+**Either way:** CC-BY → one row beside the monkey and racket. CC0 → no row here, an entry in
+`assets/LICENSES.md`.
+⚑ **Why it is first:** the duck is **in the build and deploying right now**. An invented attribution
+is worse than a missing one because it credits the wrong person, so it is flagged rather than guessed.
+**Recommendation:** find where you downloaded it; it is a one-line fix either way.
+
+## D-B · The s2 send — lengthen the dolly, or make it a blink cut
+**Where:** `08_STATUS_REGISTER.md` §17.
+**The question:** accepting the s2 send flies the camera at **6.874 m/s against a 0.43 m/s comfort
+envelope — sixteen times over** — and it sits on E2's *ordinary* path, not a side branch.
+**Either way:** lengthen the dolly to ~38 s, **or** make it the blink cut R28 §1 prescribes for
+cross-room travel.
+⚑ **What is already true:** S87 made s3/s4 draw **decline-only**, withholding the "go" affordance
+until you rule, because they share the same machinery. **So this decision unblocks two more sends,
+not just one.** On a tablet the motion is merely unpleasant; in a headset it is what the comfort law
+exists to prevent — and A11 has never run.
+**Recommendation:** the blink cut. R28 already prescribes it for cross-room travel, and a 38-second
+dolly is a long time to spend on a beat that is not about the journey.
+
+## D-C · ⚑ Maya's deadname field — the one with a deadline attached
+**Where:** `08_STATUS_REGISTER.md` §22.
+**The question:** Era 4's deadname beat renders **"Daniel"**, because `s4_l.json:124`'s `{name}`
+resolves from `ledger.name`, which `os.ts:286` sets from `opening.o3_prefilled_name` = `"Daniel"`.
+That is **deliberate** — the beat's own doc says the record holds "the name IT ASSIGNED thirty years
+ago". **But that reading requires Maya and Daniel to be one person**, and the build plan says Room 1
+= Daniel, Room 2 = Vera, Room 3 = Maya, while the orienting card promises the player *"different
+lives."* Vera's and Maya's own names are both hardcoded; only the deadname reaches for Daniel's field.
+**Either way:** one life or three. That is a narrative decision, not a bug fix.
+> ⚑ **THE DEADLINE:** the beat is `BLOCKED-ON-READER-PASS` (§14) and that pass has not happened.
+> **If the trans reader reviews this wording while it sits on an unexamined identity conflation, they
+> are reviewing the wrong question — and you likely need a second pass.** Reader passes are scarce.
+**Recommendation:** **separate the plumbing now, decide the narrative later.** Giving Maya's former
+name its own field costs almost nothing, needs no reader, and does not pre-empt your answer.
+
+## D-D · "The Turning" or "New Morning" — the residential programme's name
+**Where:** `08_STATUS_REGISTER.md` §23. The data: `data/dialog/s1_end.json:47`.
+**The question:** the packet says **"The Turning"**. Caleb says **"New Morning"** in the `felt` scene
+(`s2_caleb.json:86`), the intake form says New Morning, and ⚑ **`s1_end.json`'s own `_doc` says New
+Morning** — the file's documentation contradicts its own display text.
+**Either way:** change the packet, or change the other three.
+⚑ **Why it is not cosmetic:** it is the name of the place where Daniel and Caleb met and were
+separated — *"i keep thinking about New Morning. the last night. you know the one."* A player meets
+one name once and the other twice, with nothing linking them.
+**Recommendation:** **make the packet say New Morning.** Three files and a `_doc` already agree; the
+packet is the outlier and reads like a stray edit rather than a rename. One command either way.
+
+---
+### Also open, but NOT decisions — work, waiting on budget
+The teddy bear still has no model and is not in your asset folder (needs sourcing) · S81's visibility
+audit is mostly unrun · **141 draw calls at Maya's turned E4 seat against a ≤75 budget** — diagnosed
+as unbatched GLB furniture across three simultaneously-open rooms, architectural, unfixed · the
+Vision-Pro headset restyle, scoped as a follow-up rather than half-built · **A11, the in-headset pass,
+has never run in this project's history.**
+
