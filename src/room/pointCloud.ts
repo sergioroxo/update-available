@@ -1,23 +1,44 @@
 /**
  * The point-cloud Close — the piece's last image (R1 confirmed; reference:
- * Gephi-style network, Round 2; Round-18 revisions from Sérgio's review).
+ * Gephi-style network, Round 2; Round-18 revisions from Sérgio's review;
+ * S92 — THE TWO VISUAL TIERS, REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md §3).
+ *
  * After "Restart as you are." the room gives way to an interconnected
- * data-mesh constellation: WARM nodes (the lamp's temperature at network
- * scale — the warm light winning after all) on a COOL blue link-web, against
- * a NIGHT-BLUE backdrop (Round 18: never black — the space must stay
- * readable). The HUB nodes carry LABELS: the network of knowledge the piece
- * itself is built from (data/strings/close_network.json, PLACEHOLDER until
- * Sérgio's pass — documentary anchors, research passes, the PhD frame).
+ * data-mesh constellation, and the piece's own aesthetic law — *the witness
+ * side is the sharp side; surveillance is high-definition, life is soft* —
+ * is made literal in what it draws:
+ *
+ *   APPARATUS nodes — one per entry in data/strings/close_network.json (the
+ *   instruments, campaigns, curricula, sources the piece is built from) —
+ *   render COOL (data/room/cluster.json's own `link` hue — already the
+ *   piece's witness-blue: witnessCold, moonlight — no new hue), sharp,
+ *   full-opacity, LABELLED, and linked ONLY
+ *   to each other in a guaranteed-connected chain plus a few cross-links:
+ *   traceable end to end, by construction (never a random maybe).
+ *
+ *   PERSON nodes — the dense core + scattered satellites, the same
+ *   populations the single-tier build always drew — render WARM (the lamp
+ *   pool: the warm light winning after all, at network scale), at a capped,
+ *   softer opacity, and carry NO label and NO link to anything: not to the
+ *   apparatus, not to each other. The system documents people; the piece
+ *   refuses to. A player can trace the apparatus end to end and cannot trace
+ *   a single person — there is no line to follow, on that side, at all.
+ *
+ * Backdrop stays NIGHT-BLUE (Round 18: never black — the space must stay
+ * readable), never a new hue.
  *
  * Budget: nodes of one tone share ONE merged mesh (tiny cubes — 90°
- * discipline), links are ONE line mesh, all labels ONE textured quad mesh →
- * 5 draw calls total. Round-18 clipping fixes: links are TRIMMED back to the
- * node surfaces (no lines stabbing through cubes) and any link whose segment
- * would cross the player's clear bubble is rejected. Geometry topology and
- * label atlas are generated once at build (seeded, deterministic); label
- * positions are rewritten in their one dynamic vertex buffer so every quad
- * billboards toward the camera. All scratch storage is preallocated: nothing
- * allocates per frame. Parameters in data/room/cluster.json. ?reinterp=1 only.
+ * discipline); the apparatus tier is its own single mesh + its own single
+ * link mesh; labels are ONE textured quad mesh. Total draw calls = person
+ * tone meshes (≤3) + 1 apparatus mesh + 1 apparatus link mesh + 1 label mesh
+ * — measured and reported in the session log, not assumed. Round-18 clipping
+ * fixes carry forward: links are TRIMMED back to the node surfaces (no lines
+ * stabbing through cubes) and any link whose segment would cross the
+ * player's clear bubble is rejected. Geometry topology and label atlas are
+ * generated once at build (seeded, deterministic); label positions are
+ * rewritten in their one dynamic vertex buffer so every quad billboards
+ * toward the camera. All scratch storage is preallocated: nothing allocates
+ * per frame. Parameters in data/room/cluster.json. ?reinterp=1 only.
  */
 import * as pc from 'playcanvas';
 import clusterData from '../../data/room/cluster.json';
@@ -93,8 +114,12 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   const rng = makeRng(19970704);
   const [ox, oy, oz] = P.center as number[];
 
-  // ── node positions: dense gaussian-ish core + scattered satellites ──
-  const nodes: number[][] = [];
+  // ── PERSON nodes: dense gaussian-ish core + scattered satellites. Soft,
+  // warm, unlabelled, unlinked — no names, no stories, no count a player can
+  // read off. This is the exact population the single-tier build always
+  // drew; only its material treatment (below) and its total silence (no
+  // label, no link) are new. ──
+  const personNodes: number[][] = [];
   for (let i = 0; i < P.coreCount; i++) {
     // sum of 3 uniforms ≈ gaussian; core hugs the center — but a clear bubble
     // stays around the seated player so no node looms against the near clip
@@ -103,58 +128,91 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     const ph = Math.acos(2 * rng() - 1);
     // positions are RELATIVE to the root (placed at P.center below) so the
     // drift rotation spins the constellation about its own center
-    nodes.push([
+    personNodes.push([
       r * Math.sin(ph) * Math.cos(th),
       r * Math.cos(ph) * 0.75, // slightly flattened — a sky, not a ball
       r * Math.sin(ph) * Math.sin(th),
-      0.7 + rng() * (rng() < 0.12 ? 2.6 : 0.9) // a few hubs render larger
+      P.personScaleMin + rng() * (P.personScaleMax - P.personScaleMin) // gentle, uniform — no competing "hubs"
     ]);
   }
   for (let i = 0; i < P.satelliteCount; i++) {
     const r = P.coreRadius + (P.outerRadius - P.coreRadius) * Math.pow(rng(), 0.6);
     const th = rng() * Math.PI * 2;
     const ph = Math.acos(2 * rng() - 1);
-    nodes.push([
+    personNodes.push([
       r * Math.sin(ph) * Math.cos(th),
       r * Math.cos(ph) * 0.6,
       r * Math.sin(ph) * Math.sin(th),
-      0.6 + rng() * 0.7 // satellites stay small
+      P.personScaleMin + rng() * ((P.personScaleMax - P.personScaleMin) * 0.6) // satellites stay a touch smaller
     ]);
   }
 
-  // ── links: each node reaches toward a few near neighbours (the web) ──
-  // Round-18 fixes: ends TRIM back to the node surfaces, and a link whose
-  // segment would cross the player's clear bubble is rejected outright.
-  const linkPositions: number[] = [];
-  const surface = (n: number[]): number => (P.nodeSize / 2) * (n[3] ?? 1) * 1.9;
-  const reach = (i: number, count: number): void => {
-    const a = nodes[i];
-    let picked = 0;
-    for (let tries = 0; tries < 24 && picked < count; tries++) {
-      const j = Math.floor(rng() * nodes.length);
-      if (j === i) continue;
-      const b = nodes[j];
-      const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
-      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      if (d > 0.8 || d < 1e-4) continue;
-      if (segmentDistToOrigin(a, b) < P.innerClear * 0.85) continue; // never through the player
-      const ta = surface(a) / d, tb = 1 - surface(b) / d;
-      if (tb <= ta) continue;
-      linkPositions.push(
-        a[0] + dx * ta, a[1] + dy * ta, a[2] + dz * ta,
-        a[0] + dx * tb, a[1] + dy * tb, a[2] + dz * tb
-      );
-      picked++;
-    }
-  };
-  for (let i = 0; i < nodes.length; i++) reach(i, i < P.coreCount ? 2 : 1);
+  // ── APPARATUS nodes: exactly one per close_network.json label, on a
+  // structured shell (a Fibonacci/golden-angle spread, not gaussian noise —
+  // "sharp" reads as intentional, not scattered) so every label has room to
+  // be read and no two crowd each other. ──
+  const labels = (network.labels as string[]).slice(0, 32);
+  const apparatusNodes: number[][] = labels.map((_label, i) => {
+    const n = labels.length;
+    const y = n > 1 ? 1 - (2 * i) / (n - 1) : 0; // -1..1, even spread
+    const golden = Math.PI * (3 - Math.sqrt(5)); // the golden angle
+    const th = i * golden;
+    const rXZ = Math.sqrt(Math.max(0, 1 - y * y));
+    const jitter = 1 + (rng() - 0.5) * P.apparatusRadiusJitter;
+    const r = P.apparatusRadius * jitter;
+    return [
+      r * rXZ * Math.cos(th),
+      r * y * 0.6, // flattened the same way the person sky is — one grammar
+      r * rXZ * Math.sin(th),
+      1
+    ];
+  });
 
-  // ── build: one mesh per warm tone + one line mesh ──
+  // ── links ──
+  // Round-18 fixes carry forward: ends TRIM back to the node surfaces, and a
+  // link whose segment would cross the player's clear bubble is rejected.
+  const surface = (baseHalf: number, n: number[]): number => baseHalf * (n[3] ?? 1) * 1.9;
+  const personHalf = P.nodeSize / 2;
+  const apparatusHalf = P.apparatusNodeSize / 2;
+
+  // APPARATUS ONLY: a guaranteed-connected chain (node i → i+1, by
+  // construction — never a "maybe" like the old proximity search) plus a
+  // handful of deterministic cross-links for a richer, still fully-traceable
+  // web. PERSON nodes get no link mesh at all: there is no line to follow
+  // from one soft room to another, which is the asymmetry in one picture.
+  const apparatusLinkPositions: number[] = [];
+  function tryLink(a: number[], b: number[]): void {
+    const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (d < 1e-4) return;
+    if (segmentDistToOrigin(a, b) < P.innerClear * 0.85) return; // never through the player
+    const ta = surface(apparatusHalf, a) / d, tb = 1 - surface(apparatusHalf, b) / d;
+    if (tb <= ta) return;
+    apparatusLinkPositions.push(
+      a[0] + dx * ta, a[1] + dy * ta, a[2] + dz * ta,
+      a[0] + dx * tb, a[1] + dy * tb, a[2] + dz * tb
+    );
+  }
+  for (let i = 0; i < apparatusNodes.length - 1; i++) {
+    tryLink(apparatusNodes[i], apparatusNodes[i + 1]); // the spine — guarantees end-to-end traceability
+  }
+  for (let i = 0; i < apparatusNodes.length; i++) {
+    // a few extra cross-links so it reads as a network, not a necklace
+    const reachCount = i % 3 === 0 ? 2 : 1;
+    for (let k = 1; k <= reachCount; k++) {
+      const j = Math.floor(rng() * apparatusNodes.length);
+      if (j === i || Math.abs(j - i) <= 1) continue;
+      tryLink(apparatusNodes[i], apparatusNodes[j]);
+    }
+  }
+
+  // ── build: one mesh per warm (person) tone + the apparatus mesh + the
+  // apparatus link mesh ──
   const root = new pc.Entity('point-cloud');
   const warmMats: pc.StandardMaterial[] = [];
   const tones = P.warm as string[];
   const byTone: number[][][] = tones.map(() => []);
-  nodes.forEach((nPos, i) => {
+  personNodes.forEach((nPos, i) => {
     // core skews to the first (lamp-pool) tone; satellites vary more
     const t = i < P.coreCount ? (rng() < 0.7 ? 0 : 1) : Math.floor(rng() * tones.length);
     byTone[t].push(nPos);
@@ -169,15 +227,30 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     mat.opacity = 0;
     mat.update();
     warmMats.push(mat);
-    const e = new pc.Entity(`cloud-nodes-${t}`);
+    const e = new pc.Entity(`cloud-person-${t}`);
     e.addComponent('render', {
-      meshInstances: [new pc.MeshInstance(cubesMesh(app.graphicsDevice, byTone[t], P.nodeSize / 2), mat)]
+      meshInstances: [new pc.MeshInstance(cubesMesh(app.graphicsDevice, byTone[t], personHalf), mat)]
     });
     root.addChild(e);
   });
 
+  // the apparatus's own material — cool, sharp, full-opacity: the witness
+  // side of the aesthetic law, at network scale
+  const apparatusMat = new pc.StandardMaterial();
+  apparatusMat.useLighting = false;
+  apparatusMat.diffuse = new pc.Color(0, 0, 0);
+  apparatusMat.emissive = new pc.Color(0, 0, 0);
+  apparatusMat.blendType = pc.BLEND_NORMAL;
+  apparatusMat.opacity = 0;
+  apparatusMat.update();
+  const apparatusEnt = new pc.Entity('cloud-apparatus');
+  apparatusEnt.addComponent('render', {
+    meshInstances: [new pc.MeshInstance(cubesMesh(app.graphicsDevice, apparatusNodes, apparatusHalf), apparatusMat)]
+  });
+  root.addChild(apparatusEnt);
+
   const linkMesh = new pc.Mesh(app.graphicsDevice);
-  linkMesh.setPositions(linkPositions);
+  linkMesh.setPositions(apparatusLinkPositions);
   linkMesh.update(pc.PRIMITIVE_LINES);
   const linkMat = new pc.StandardMaterial();
   linkMat.useLighting = false;
@@ -191,15 +264,12 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   links.addComponent('render', { meshInstances: [new pc.MeshInstance(linkMesh, linkMat)] });
   root.addChild(links);
 
-  // ── the knowledge-network labels, on the hub nodes (one atlas, one mesh) ──
-  // Text drawn once into a canvas atlas in the label colour; the material's
-  // grayscale emissive + opacity carry the fade. PLACEHOLDER wording —
-  // Sérgio's pass owns every line (close_network.json).
-  const labels = (network.labels as string[]).slice(0, 32);
-  const hubOrder = nodes
-    .map((n, i) => ({ i, s: n[3] ?? 1, core: i < P.coreCount }))
-    .sort((a, b) => (Number(b.core) - Number(a.core)) || (b.s - a.s))
-    .slice(0, labels.length);
+  // ── the knowledge-network labels, one per apparatus node, 1:1 (no more
+  // "whichever rendered largest" — every apparatus node IS a label; that is
+  // what makes the apparatus readable end to end). Text drawn once into a
+  // canvas atlas in the label colour; the material's grayscale emissive +
+  // opacity carry the fade. Wording owned by Sérgio's pass
+  // (close_network.json). ──
   const labelCenters = new Float32Array(labels.length * 3);
   const labelWidths = new Float32Array(labels.length);
   let labelMesh: pc.Mesh | null = null;
@@ -213,7 +283,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   atlas.height = ATLAS;
   const actx = atlas.getContext('2d');
   const labelMat = new pc.StandardMaterial();
-  if (actx) {
+  if (actx && labels.length > 0) {
     actx.clearRect(0, 0, ATLAS, ATLAS);
     actx.font = 'bold 26px monospace';
     actx.textBaseline = 'middle';
@@ -247,15 +317,14 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     const nrm = new pc.Vec3();
     const right = new pc.Vec3();
     const upv = new pc.Vec3();
-    hubOrder.forEach((h, li) => {
-      const n = nodes[h.i];
+    apparatusNodes.forEach((n, li) => {
       nrm.set(-n[0], -n[1], -n[2]).normalize(); // faces the player at the center
       right.cross(up, nrm);
       if (right.length() < 1e-3) right.set(1, 0, 0); else right.normalize();
       upv.cross(nrm, right).normalize();
       const hgt = P.labelHeight;
       const wid = (widths[li] / ROW) * hgt;
-      const lift = surface(n) + hgt * 0.85; // sits just above its node
+      const lift = surface(apparatusHalf, n) + hgt * 0.85; // sits just above its node
       const cxp = n[0] + upv.x * lift, cyp = n[1] + upv.y * lift, czp = n[2] + upv.z * lift;
       labelCenters[li * 3] = cxp;
       labelCenters[li * 3 + 1] = cyp;
@@ -285,8 +354,8 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     lmesh.setUvs(0, luv);
     lmesh.setIndices(lidx);
     lmesh.update(pc.PRIMITIVE_TRIANGLES);
-    let labelExtent = P.outerRadius;
-    for (const width of labelWidths) labelExtent = Math.max(labelExtent, P.outerRadius + width / 2);
+    let labelExtent = P.apparatusRadius;
+    for (const width of labelWidths) labelExtent = Math.max(labelExtent, P.apparatusRadius + width / 2);
     lmesh.aabb = new pc.BoundingBox(
       new pc.Vec3(),
       new pc.Vec3(labelExtent, labelExtent, labelExtent)
@@ -308,7 +377,8 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   app.root.addChild(root);
 
   const warmColors = tones.map(hex);
-  const linkColor = hex(P.link);
+  const apparatusColor = hex(P.link); // the piece's own witness-blue, reused
+  const linkColor = apparatusColor;
   let level = 0;
   let visible = false;
   let yaw = 0;
@@ -390,15 +460,22 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   }
 
   function applyFade(): void {
+    // PERSON tier: soft — opacity never reaches 1, even at full fade. This is
+    // the whole visual argument: the apparatus gets to be sharp, the rooms
+    // where people are do not, on purpose.
     warmMats.forEach((m, t) => {
       const c = warmColors[t];
       const boost = level * 1.2; // the lamp temperature has to WIN against the sky
       m.emissive.set(c.r * boost, c.g * boost, c.b * boost);
-      m.opacity = level;
+      m.opacity = level * P.personOpacityCap;
       m.update();
     });
-    // emissive carries full colour; opacity alone does the blending (a
-    // double-dim here washed the web out against the night-blue sky)
+    // APPARATUS tier: sharp — full opacity, a brighter boost. Lit, not glowing.
+    const aBoost = level * P.apparatusOpacityBoost;
+    apparatusMat.emissive.set(apparatusColor.r * aBoost, apparatusColor.g * aBoost, apparatusColor.b * aBoost);
+    apparatusMat.opacity = level;
+    apparatusMat.update();
+    // the apparatus's own link web — crisp, traceable
     linkMat.emissive.set(linkColor.r * level, linkColor.g * level, linkColor.b * level);
     linkMat.opacity = level * P.linkOpacity;
     linkMat.update();

@@ -286,7 +286,7 @@
   }
  },
  "pointCloud": {
-  "_note": "The Close's constellation (R1 confirmed; Gephi-style reference, Round 2): warm orange/yellow NODES on a cool blue LINK-WEB against a NIGHT-BLUE backdrop (Round 18: not black — 'we can't see'), dense center + scattered satellites, and LABELS on the hub nodes carrying the project's knowledge network (data/strings/close_network.json, PLACEHOLDER until Sérgio's pass). The inversion: warm nodes / cool web = the lamp's temperature at network scale. Hues = the lamp pool (#F7C775/#EFA13F), the moon face (#F3EAD8), the moonlight blue (#6C7BA8); backdrop = windowPane night #2C3A5C scaled down in code (a light level, not a new hue). Links are trimmed to node surfaces and never cross the player's clear bubble (the Round-18 clipping fix).",
+  "_note": "S92 — THE TWO VISUAL TIERS (REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md §3, the piece's aesthetic law made literal: the witness side is the sharp side, surveillance is high-definition, life is soft). TWO populations, not one: APPARATUS nodes (data/strings/close_network.json's labels, one node per label, exactly) render COOL/#8899BB — already the piece's own witness-blue (witnessCold/moonlight), no new hue — sharp, full-opacity, LABELLED, and linked ONLY to each other in a guaranteed-connected chain (+ a few cross-links): traceable end to end, by construction. PERSON nodes (the dense core+satellite population, unchanged in count from the old single-tier build) render WARM (the lamp pool) at a capped, softer opacity, carry NO label and NO link to anything — not to the apparatus, not to each other. The system documents people; the piece refuses to: there is no line a player can follow from one soft node to another, and no line from a soft node to a labelled one. Backdrop stays night-blue (Round 18: never black).",
   "center": [
    0,
    1.45,
@@ -298,13 +298,20 @@
   "coreCount": 230,
   "satelliteCount": 90,
   "nodeSize": 0.016,
+  "personOpacityCap": 0.55,
+  "personScaleMin": 0.55,
+  "personScaleMax": 1.3,
   "warm": [
    "#F7C775",
    "#EFA13F",
    "#F3EAD8"
   ],
   "link": "#8899BB",
-  "linkOpacity": 0.75,
+  "linkOpacity": 0.85,
+  "apparatusNodeSize": 0.034,
+  "apparatusRadius": 2.55,
+  "apparatusRadiusJitter": 0.32,
+  "apparatusOpacityBoost": 1.4,
   "backdrop": "#2C3A5C",
   "backdropLevel": 0.4,
   "labelColor": "#E8C9A0",
