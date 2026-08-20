@@ -128,9 +128,21 @@ triggered by documented system failures, never by the player.
 - Definition of done: `npm run dev` works; `npm test` passes; README current;
   one line appended to BUILD_LOG.md; in-headset note for XR-touching changes.
 - Sources: anything uncited carries `[VERIFY SOURCE]` until Sérgio checks it.
-- Sérgio (project lead, non-coder) directs. **Survivor-adjacent and felt text is
-  CO-CREATED (revised 2026-07-24): Claude drafts (marked PLACEHOLDER-draft),
-  Sérgio reviews, rewrites, and co-creates — his edit wins.** He still owns final
-  wording, dossier phrasing, and every ethics judgment call. The change is that
-  felt/poetic beats get a real draft to react to, not a blank "Sérgio writes
-  this" — drafting-then-reviewing is also how the flow gets tested.
+- Sérgio (project lead, non-coder) directs. **⚑ THE WRITING IS CLAUDE'S — revised
+  2026-08-17, superseding the 2026-07-24 co-creation norm.** His words: *"I am not
+  going to write it, is your work here."* So: **Claude writes the display text,
+  including survivor-adjacent and felt beats, and finishes it** — no more
+  PLACEHOLDER-draft parked awaiting a pass that is not coming. He reviews when he
+  wants to and his edit still wins, but **nothing waits on him to write it.**
+  ⚑ What did NOT move: he owns ethics judgment calls, dossier phrasing, and every
+  `_s`-marked line (his own verbatim wording, never overwritten).
+  ⚑ **And the responsibility moves with the work.** Text nobody else is going to
+  write is text nobody else is going to catch — so felt and survivor-adjacent
+  material gets MORE care now, not less: no invented deadnames, no borrowed
+  testimony, no beat that speaks *for* people rather than about the system.
+- **⚑ THE TRANS READER PASS IS RETIRED AS A GATE (2026-08-17, Sérgio: "its not
+  going to happen").** It blocked Era 4's deadname beat. That beat no longer
+  contains a deadname — the record now misfiles Maya ("under the old file")
+  rather than misnaming her — which removes most of what the gate existed to
+  review. **Nothing in the piece is BLOCKED-ON-READER-PASS any more.** If an
+  outside reader ever becomes available the offer stands, but no work waits.

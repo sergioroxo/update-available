@@ -267,9 +267,10 @@ export class LVoice {
    */
   private caption(l: LLine): string {
     const raw = l.deadname && ledger.view.unvoicedName && l.textUnvoiced ? l.textUnvoiced : l.text;
-    return raw
-      .replace('{name}', ledger.name)
-      .replace('{formerName}', script.personFormerName);
+    // ⚑ `{formerName}` is gone — the beat no longer names her wrongly, it FILES
+    // her wrongly ('under the old file'). See s4_l.json's `_docNoFormerName`.
+    // `{name}` remains for the lines that legitimately use the prefilled name.
+    return raw.replace('{name}', ledger.name);
   }
 
   // ── the surface ──────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@
     { "id": "book1", "label": "a paperback" },
     { "id": "book2", "label": "a schoolbook" },
     { "id": "poster1", "label": "the poster" },
-    { "id": "teddyBox", "label": "the teddy bear" },
+    { "id": "teddyBox", "label": "the monkey" },
     { "id": "rainbowDuck", "label": "the rainbow duck" }
   ],
   "keptTemplate": "kept: {label}",

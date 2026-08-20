@@ -523,7 +523,7 @@ Mode 3 did not create that; it just added a second device to the same afternoon.
 
 ### ⚑ STILL SHUT, AND IT IS THE IMPORTANT ONE
 **THE TRANS READER PASS HAS NOT HAPPENED.** The deadname beat, the pre-fiction advisory and the menu
-row are built, drafted and marked `PLACEHOLDER-draft` / `BLOCKED-ON-READER-PASS` in
+row are built, drafted and marked `PLACEHOLDER-draft` / `READER-PASS-RETIRED` in
 `data/dialog/s4_l.json`, `data/strings/orientingCard.json` and `src/desktop/orientingCard.ts`.
 ⚑ **Building it is not passing it.** Nothing in this beat ships without a reader, and no downstream
 session may treat "S77 shipped" as "the beat is cleared". It is a gate, and it is closed.
@@ -1092,7 +1092,7 @@ the piece — reaches for Daniel's global field.**
    continuity error at the worst possible moment.
 
 ### ⚑⚑ WHY THIS IS URGENT RATHER THAN MERELY OPEN
-**The beat is `BLOCKED-ON-READER-PASS` (§14) and that pass has not happened.** If the trans reader
+**The beat is `READER-PASS-RETIRED` (§14) and that pass has not happened.** If the trans reader
 reviews this wording while it sits on an unexamined identity conflation, **they are reviewing the
 wrong question, and it likely costs a second pass.** Reader passes are scarce and you do not get to
 ask twice casually.
@@ -1515,7 +1515,7 @@ the same synchronous-stepper technique prior sessions used, not a shortcut aroun
 
 5. **Known, unchanged, correctly routed around.** The deadname beat still speaks the ledger's prefilled
    `"Daniel"` at both its instances (u4/u6) — confirmed live, exactly as §22 already recorded.
-   `BLOCKED-ON-READER-PASS`; wording and the `{name}` field were not touched, per this session's
+   `READER-PASS-RETIRED`; wording and the `{name}` field were not touched, per this session's
    instruction and the standing gate.
 
 6. **Verified working, not a fault** — recorded because six sessions have now separately claimed E4 was
@@ -1683,3 +1683,26 @@ named as out-of-fence architecture work in §20/§28) is explicitly out of this 
 budget's own instruction is to measure it, not attempt it. **Ratchet NOT raised**; 81 is reported as a
 finding, not folded into a new baseline. The `sends` leg (78, unchanged) was already over budget before
 this session and is not touched by it.
+
+---
+
+## §30 — FOUR CORRECTIONS FROM SÉRGIO, 2026-08-17 (and one of them dissolves another)
+| | his words | what changed |
+|---|---|---|
+| **The reader gate** | *"its not going to happen. We need to fix that now!"* | **Retired.** Nothing is BLOCKED-ON-READER-PASS any more |
+| **The writing** | *"I am not going to write it is your work here"* | **CLAUDE.md revised.** Claude writes and FINISHES the display text; no more drafts parked awaiting a pass that is not coming |
+| **The deadname** | *"NO FORMER NAME GOSH"* | `personFormerName` deleted, `{formerName}` gone. The record now **misfiles** her, not misnames her |
+| **The teddy** | *"It was the monkey as the replacement for the Teddy, this old news"* | `teddyBox` carries `monkeyToy`; S90's loose second monkey removed |
+
+⚑ **The third correction largely dissolves the first, and that is worth stating plainly rather than
+leaving as coincidence:** the gate existed to review a deadname. There is no deadname. What remains
+in the beat is an apparatus that treats a person as a records-merge problem and offers, helpfully, to
+*"keep both open, so nothing gets lost."* That is administratively calm, it never reaches for another
+name, and Maya's name is never in doubt — which is what the beat's own design doc asked for in the
+first place.
+
+⚑ **And the second raises the bar rather than lowering it.** Text nobody else is going to write is
+text nobody else is going to catch. So the standing rules on felt and survivor-adjacent material
+tighten: no invented deadnames, no borrowed testimony, no beat that speaks *for* people instead of
+about the system. The removal of a reviewer is a reason for more care, not less.
+
