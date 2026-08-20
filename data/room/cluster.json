@@ -299,7 +299,9 @@
   "satelliteCount": 90,
   "nodeSize": 0.016,
   "personOpacityCap": 0.55,
-  "personScaleMin": 0.55,
+  "personSlotAspect": 3.6,
+    "_docPersonSlotAspect": "⚑ A PERSON NODE IS A ROOM SEEN EDGE-ON, NOT A DOT. The piece has one grammar for `many rooms` — vertical lit slots in a dark field — used by the relocation choreography's building and the E4 finale's cyclorama (REINTERP_THE_BUILDING_2026-08-02.md). S92 built the Close's two tiers correctly and left every node a uniform cube, having verified that no SECOND visual language was invented without applying the FIRST; a cube field is a generic point cloud, and the whole point of the Close is that the player recognises this image from inside the piece. 3.6 is a window's proportion, not a tower's. ⚑ The APPARATUS tier stays square on purpose: it is an instrument, not a dwelling, and the shape difference does the same work as the colour and the labels — one tier is a place someone lives, the other is a thing that was built to sort them.",
+    "personScaleMin": 0.55,
   "personScaleMax": 1.3,
   "warm": [
    "#F7C775",

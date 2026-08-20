@@ -68,7 +68,18 @@ export function closeBackdropColor(): pc.Color {
 
 /** one merged mesh of axis-aligned cubes at the given centers — the 4th
  *  component of each entry scales the node (hub nodes render larger) */
-function cubesMesh(device: pc.GraphicsDevice, centers: number[][], half: number): pc.Mesh {
+/**
+ * ⚑ `aspect` MAKES A NODE A SLOT RATHER THAN A CUBE, and that is not decoration.
+ * The piece has ONE grammar for *many rooms* — the relocation choreography's
+ * building and the E4 finale's cyclorama both draw it as **vertical lit slots in
+ * a dark field, rooms seen edge-on** (`REINTERP_THE_BUILDING_2026-08-02.md`).
+ * The Close is that same image, and S92 built the two tiers correctly but left
+ * every node a uniform cube: it verified that no SECOND visual language had been
+ * invented without ever applying the FIRST. A cube field is a generic point
+ * cloud; a slot field is this piece's building. Same mesh, same draw call, one
+ * axis.
+ */
+function cubesMesh(device: pc.GraphicsDevice, centers: number[][], half: number, aspect = 1): pc.Mesh {
   const positions: number[] = [];
   const indices: number[] = [];
   // 8 corners / 12 tris per cube, flat-shaded by unlit material (no normals needed)
@@ -83,7 +94,8 @@ function cubesMesh(device: pc.GraphicsDevice, centers: number[][], half: number)
   centers.forEach(([x, y, z, scale], n) => {
     const base = n * 8;
     const h = half * (scale ?? 1);
-    for (const [cx, cy, cz] of C) positions.push(x + cx * h, y + cy * h, z + cz * h);
+    const hy = h * aspect; // the slot's height — its width and depth stay square
+    for (const [cx, cy, cz] of C) positions.push(x + cx * h, y + cy * hy, z + cz * h);
     for (const face of F) for (const i of face) indices.push(base + i);
   });
   const mesh = new pc.Mesh(device);
@@ -229,7 +241,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     warmMats.push(mat);
     const e = new pc.Entity(`cloud-person-${t}`);
     e.addComponent('render', {
-      meshInstances: [new pc.MeshInstance(cubesMesh(app.graphicsDevice, byTone[t], personHalf), mat)]
+      meshInstances: [new pc.MeshInstance(cubesMesh(app.graphicsDevice, byTone[t], personHalf, P.personSlotAspect), mat)]
     });
     root.addChild(e);
   });
