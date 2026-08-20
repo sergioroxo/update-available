@@ -263,6 +263,7 @@
     "installedLine": "Installed. Your file arrived first."
   },
   "close": {
+    "_doc": "S92 — THE CLOSE's two lines (REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md §1/§5). `notify`'s 'Restart as you are.' is the person's restart, already bare, unchanged. `restarting` — rendered on the SAME dark 2.2s beat every era's own 'Restarting…' already uses (update.ts's `restart` phase), the one moment the desktop canvas still has the screen before enterClose() takes the room — carries the title itself: the machine's flat administrative report of its own defeat. Do not decorate it, do not explain it, no music sting; it is the one sentence in the piece that means the opposite of what it says.",
     "toEra": "close",
     "notifyTitle": " ",
     "notify": [
@@ -273,6 +274,6 @@
     "remindLater": null,
     "eula": null,
     "changelog": null,
-    "restarting": ""
+    "restarting": "Your update has failed."
   }
 }
