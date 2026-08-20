@@ -75,7 +75,7 @@
       ]
     },
     { "id": "c03", "from": "them", "text": "they gave us computers at the new place. you're the first thing i typed." },
-    { "id": "c04", "from": "them", "text": "do you still know the whole pledge by heart? i can't get it out of my head." },
+    { "id": "c04", "from": "them", "text": "do you still say the pledge? i catch myself doing it in the shower. out loud." },
     {
       "id": "r02",
       "chips": [
@@ -83,7 +83,7 @@
         { "id": "try-not-to", "label": "I try not to.", "say": "I try not to.", "ledgerTag": "recall: pledge avoided — retention incomplete" }
       ]
     },
-    { "id": "c05", "from": "them", "text": "i keep thinking about New Morning. the last night. you know the one." },
+    { "id": "c05", "from": "them", "text": "New Morning keeps coming back. the last night. you know the one." },
     { "id": "c06", "from": "them", "text": "btw i'm now two towns over. i could get a bus?" },
     {
       "id": "r03",
@@ -193,8 +193,8 @@
     "_doc": "FELT. The block LIFTS — the redaction runs in reverse, the same component undone in front of you — and Caleb arrives. Sérgio's revision moves him from waiting to TRAVELLING: the person the system severed does not merely survive, he comes. Lamby cannot speak here: felt, and the god is gone.",
     "lines": [
       "daniel. are you seeing this?",
-      "they'll shut it down. the whole thing. it's over.",
-      "they are saying none of us were ever broken. they just needed us to believe we were.",
+      "theyre shutting it down. all of it.",
+      "its in the letter. they say it never worked. not on anyone. not once.",
       "just checked, the bus still runs. i'm coming to you."
     ]
   },
