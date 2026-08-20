@@ -28,6 +28,28 @@ CANARY_STATIONS_LABEL = "Verify source → Prepare complete text → Build compl
 PASS_A_STATIONS_LABEL = CANARY_STATIONS_LABEL + " → Independent Analysis"
 
 
+def semantic_vertical_readiness_model(evidence: dict | None = None) -> dict:
+    """Content-free Run-019 section/RAG/Enrichment presentation model."""
+    evidence = evidence or {}
+    return {
+        "status": "Synthetic foundation only",
+        "sections": int(evidence.get("section_count", 0)),
+        "prompt_jobs": int(evidence.get("prompt_job_count", 0)),
+        "parallel_route": "Bounded small/MoE batches",
+        "compiler": "Larger-model boundary; not loaded",
+        "index": (
+            f"Frozen source-only · {evidence.get('embedding_dimension', 4096)} dimensions"
+        ),
+        "retrieval": "SQLite lexical + exact semantic fusion",
+        "enrichment": "Requires one immutable verified evidence pack",
+        "held_reasons": tuple(evidence.get("held_reasons", ())),
+        "research_boundary": (
+            "Analysis and generated summaries never become source evidence."
+        ),
+        "enabled": False,
+    }
+
+
 def pass_a_readiness_model() -> dict:
     """Content-free, disabled Run-018 presentation model."""
     return {
@@ -63,6 +85,18 @@ def _render_pass_a_foundation() -> None:
         "A separate physical Mac Studio validation and one-document approval are required."
     )
     st.button("Release independent Analysis", disabled=True, key="pass-a-release-disabled")
+
+
+def _render_semantic_vertical_foundation() -> None:
+    model = semantic_vertical_readiness_model()
+    st.subheader("Parallel Analysis and evidence retrieval — synthetic foundation")
+    st.write(f"**Section work:** {model['parallel_route']}")
+    st.write(f"**Document compiler:** {model['compiler']}")
+    st.write(f"**Source index:** {model['index']}")
+    st.write(f"**Retrieval:** {model['retrieval']}")
+    st.info(model["research_boundary"])
+    st.caption("No research model, corpus index, or grounded Enrichment campaign has been run.")
+    st.button("Start semantic campaign", disabled=True, key="semantic-release-disabled")
 
 
 def copied_canary_preview(
@@ -240,6 +274,7 @@ def render_production_line(config: FactoryConfig | None = None) -> None:
     st.title("🏭 Production Line")
     st.info("Dry run only — synthetic local processing. Research sources and models are unavailable here.")
     _render_pass_a_foundation()
+    _render_semantic_vertical_foundation()
     st.divider()
     st.subheader("Copied-text canary — not yet released")
     readiness = production_readiness_model(config)

@@ -20,6 +20,7 @@ pytesseract>=0.3
 
 # Embeddings + local LLM
 ollama>=0.3
+numpy>=2.0,<3
 
 # LLM APIs
 anthropic>=0.28
