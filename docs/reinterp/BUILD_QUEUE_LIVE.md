@@ -2086,3 +2086,34 @@ ratchet fails, and it is a finding, not a regression this session invented from 
 - Coverage gaps stated honestly where real (puppeteer, E2-E4 re-play) rather than papered over.
 - `tsc`, `npm test`, `npm run build` green; `npm run audit`'s new failure (if any) measured and
   attributed, not silently absorbed into a raised baseline.
+
+---
+
+# S92 — BUILD THE CLOSE
+**⚑ PROMPT STATUS: SHIPPED 2026-08-20 · Sonnet.** Built `REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md`
+in its own build order, committing after each item. Full write-up: `08_STATUS_REGISTER.md` §31,
+`01_SESSION_LOG.md`'s S92 entry.
+
+**What it built:**
+- **The two visual tiers** (`1ce8c8f`) — `pointCloud.ts` rewritten so the apparatus (one node per
+  `close_network.json` label, cool, full-opacity, labelled, linked only to each other in a
+  guaranteed-connected chain) and the person field (the same 320-node core+satellite population,
+  warm, opacity-capped, no label, no link to anything) are genuinely two populations, not one tinted
+  by size. A player can trace the apparatus end to end and cannot trace a single person. No new hex
+  literals; palette ratchet held at 33/33. 6 draw calls measured live against the ≤75 budget.
+- **The image is the building** — verified as already satisfied by the existing point-cloud grammar;
+  no second visual language invented for the ending.
+- **The three lines** (`aa2d25b`) — `close.restarting` (previously blank) now carries
+  `"Your update has failed."`, landing on the update ritual's own existing dark restart beat.
+  `"Restart as you are."` verified unchanged.
+- **The last press does not loop** — verified live (not a code change; the mechanism was already
+  correct): armed the `close` ritual through its real code path, pressed the real button handler,
+  confirmed no re-arm, no era change, stable draw calls, zero console errors across ~10s of further
+  ticks and a stray click.
+
+`npx tsc --noEmit`, `npm test`, `npm run build` green. `npm run audit` run; see `BUILD_LOG.md`.
+`00_WHERE_THINGS_STAND.md`'s ending row flipped from "Not built" to built.
+
+**Deliberately not touched:** the exhibition idle-reset (already built, outside this session's fence)
+and the knowledge graph's real topology (still procedural — `close-graph-report.mjs`'s own diagnosis
+stands unchanged). Neither blocks "the Close is built."

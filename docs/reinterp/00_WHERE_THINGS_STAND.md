@@ -23,7 +23,7 @@ Everything else is maintenance.
 | | state | whose |
 |---|---|---|
 | **1 · The writing** | **917 readable lines; most are drafts.** `docs/VOICE_PASS.md` lists every one in play order. ⚑ **As of 2026-08-17 this is CLAUDE's job to finish, not Sérgio's to write** | Claude |
-| **2 · The ending** | The Close is 23 labels and a procedural point cloud. Treatment drafted: `REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md`. **Not built** | Claude |
+| **2 · The ending** | **Built (S92).** The Close has two visual tiers: apparatus nodes (one per `close_network.json` label — cool, sharp, labelled, linked only to each other in a guaranteed chain) and person nodes (the same dense field as before — warm, soft, capped opacity, no label, no link to anything). `Your update has failed.` lands on the update ritual's own dark restart beat; `Restart as you are.` verified unchanged; the last press does not loop (verified live). 6 draw calls. `08_STATUS_REGISTER.md` §31 | Claude |
 | **3 · The exhibition** | **Nobody has designed for a stranger.** No attract state, no return-to-start after someone walks away, no visitor with zero context in mind. The ledger already wipes on idle — that part is done | Claude |
 
 ## Known and not fixed

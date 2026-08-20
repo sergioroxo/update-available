@@ -1706,3 +1706,85 @@ text nobody else is going to catch. So the standing rules on felt and survivor-a
 tighten: no invented deadnames, no borrowed testimony, no beat that speaks *for* people instead of
 about the system. The removal of a reviewer is a reason for more care, not less.
 
+---
+
+## §31 — S92: THE CLOSE, BUILT (2026-08-20)
+
+**The brief:** `REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md` — the Close was 23 (24) labels in a
+procedural point cloud, `00_WHERE_THINGS_STAND.md` named it one of the three things that decide
+whether the piece is good, and it was **not built**. Fence: `src/room/pointCloud.ts`,
+`data/strings/close_network.json`, `data/strings/updates.json`'s `close` key, `src/engine/app.ts`'s
+`enterClose` path, and the logs — explicitly staying clear of a parallel session's `data/dialog/` work.
+
+**1 · The two visual tiers (committed `1ce8c8f`).** `pointCloud.ts` rewritten so APPARATUS and PERSON
+are two genuinely different populations, not one tinted by proximity:
+- **Apparatus** — exactly one node per `close_network.json` label (24, unsliced), placed on a
+  golden-angle shell (structured, not gaussian — "sharp" reads as intentional), rendered in the
+  piece's existing witness-blue (`cluster.json`'s own `link` hue — no new colour), full opacity, a
+  brighter emissive boost, and linked **only to each other** in a chain (node i → i+1, guaranteed
+  connected by construction — never a "maybe" the way the old proximity search was) plus a few
+  deterministic cross-links. Every apparatus node carries its label; there is no more "whichever
+  rendered largest" hub selection.
+- **Person** — the same core+satellite populations the single-tier build always drew (320 nodes),
+  rendered warm (the lamp-pool tones, unchanged), opacity capped below 1 even at full fade
+  (`personOpacityCap: 0.55`), no label, **no link mesh at all** — not to the apparatus, not to each
+  other. There is no line a player can follow from one soft room to another.
+
+The asymmetry this buys: a player can trace the apparatus end to end (the chain guarantees it) and
+cannot trace a single person (there is no edge to trace). New `cluster.json` params:
+`personOpacityCap/personScaleMin/personScaleMax`, `apparatusNodeSize/apparatusRadius/`
+`apparatusRadiusJitter/apparatusOpacityBoost`; `linkOpacity` raised 0.75→0.85 (apparatus-only now, so
+it reads crisp rather than diffuse). No new hex literals in code — the one hex mentioned in
+`pointCloud.ts`'s own header comment tripped the C4 palette ratchet (34 vs baseline 33) and was
+rewritten to name the JSON field instead; ratchet holds at 33/33.
+
+**Measured live** (real WebGL readback, not assumed): **6 draw calls** at the Close
+(`window.__drawCalls`, both via `?reinterp=1&close=1` and via a real debug-panel button press),
+against the ≤75 budget — the room is fully disabled, so this was always going to be cheap, and now it
+is confirmed cheap. Screenshot: `docs/reinterp/S92_shots/close_two_tiers.png` (not committed — a
+review artifact, same convention as the empty `S91_shots/`).
+
+**2 · The image is the building, not a new idea — verified, not built.** The treatment's own "what
+this costs" section scopes the actual work to splitting `pointCloud.ts`'s *existing* node-graph tiers,
+not swapping in the finale's cyclorama-slot grammar — that grammar stays the finale's
+(`theme/era4.ts`'s `cyclorama`/`eraPanels`, untouched, out of fence). Confirmed no second visual
+language was invented: the Close still draws the same cubes/lines/billboarded-label system it always
+did; only the tiering inside it changed. The dense node "sky" and the building's "countless rooms" are
+already the same thesis in two authored forms — a field of light thicker than anything else on screen
+— and nothing here needed to make them literally the same asset.
+
+**3 · The three lines (committed `aa2d25b`).** `close.notify`'s `"Restart as you are."` verified live,
+unchanged. `close.restarting` — previously `""` — is now `"Your update has failed."`, landing on the
+**existing** dark 2.2s `restart` phase every other update's `"Restarting…"` already uses
+(`update.ts`, untouched — the field was simply blank before). No new code path: confirmed by reading
+`draw()`'s `restart` branch, which paints `this.s.restarting` unconditionally, and by arming the ritual
+live (`os.armUpdate('close')`) and reading `updateApp.s.restarting` at runtime.
+
+**4 · The last press does not loop — verified, not built.** Read `app.ts`'s `os.onEraShift`/
+`os.onEraRelocate` wiring (both explicitly `if (era === 'close') return;`, S86-era code, already
+correct) and `spine.ts`'s `e4_armed` step (fires `opts.onClose()` — i.e. `enterClose()` — exactly
+once, guarded by a local `closed` flag, then the spine's own `update()` short-circuits forever on
+`step === 'done'`). **Verified live, not just read**: seeded the spine at `e4` (`?era=4&debug=1`),
+manually ticked the app (`app.tick(ts)` with incrementing timestamps — real `requestAnimationFrame` is
+suspended for this hidden-tab sandboxed pane, the established workaround, memory: "reinterp-real-click-
+verification"), armed the `close` ritual directly (`os.armUpdate('close')` — the exact function
+`spine.arm()` itself calls), and pressed the SAME `handleClick(x,y)` the real pointer pipeline calls
+(not `beginInstall()` directly) at the bare notify button's real hit rect. Phase walked
+`notify → restart → (complete)`; after completion `os.updateApp` is `null`, `os.era`/`os.desktopEra`
+stayed `'e4'` (no morph attempted for `'close'`), and 600 further ticks (~10s) plus a stray canvas
+click produced **no further state change**: no update re-arms, draw calls held at 6, zero console
+errors throughout. This mechanism was already built correctly (S86/S67's "the seam is clean" claim
+holds); nothing needed changing.
+
+**What was NOT touched, and why:** the exhibition's idle-reset (`00_WHERE_THINGS_STAND.md`: "the ledger
+already wipes on idle — that part is done") lives outside this session's four fenced files and outside
+this session's four scoped items — item 4 is about the PLAYER's last press, not the attract-state reset,
+and the treatment is explicit that the reset must stay invisible and after-the-fact. The knowledge
+graph's topology (`tools/close-graph-report.mjs`, memory: "close-constellation-as-knowledge-graph") is
+still fake — this session split VISUAL tiers, it did not derive real apparatus edges from
+`data/provotypes/*.json` sources. Both are correctly out of scope for a session titled "build the
+treatment," not oversights.
+
+`npx tsc --noEmit`, `npm test`, `npm run build` green throughout (palette ratchet 33/33 unmoved).
+`npm run audit` run and reported separately in `BUILD_LOG.md`/the queue block below.
+

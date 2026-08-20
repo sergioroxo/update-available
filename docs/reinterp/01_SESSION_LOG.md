@@ -5222,3 +5222,72 @@ block flipped to SHIPPED.
 **What remains, named for whoever picks it up:** the draw-call architecture (GLB furniture batching
 across the three simultaneously-open rooms), the XR/gyro half of the turn-assist fix, and the
 Vision-Pro headset restyle. None of these block "Era 4 is playable."
+
+---
+
+## S92 (2026-08-20) SHIPPED — THE CLOSE, BUILT
+
+*Fence: `src/room/pointCloud.ts`, `data/strings/close_network.json`, `data/strings/updates.json`'s
+`close` key, `src/engine/app.ts`'s `enterClose` path, and the logs. Explicitly out of a parallel
+session's `data/dialog/` work.*
+
+**The brief:** the Close — the last thing a visitor sees — was 23(24) labels in a procedural point
+cloud and `00_WHERE_THINGS_STAND.md` named it one of the three things that decide whether the piece is
+good. `REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md` specced four items in build order, each committed
+separately. Full detail: `08_STATUS_REGISTER.md` §31.
+
+### 1 · The two visual tiers (`1ce8c8f`)
+The piece's own aesthetic law — *the witness side is the sharp side; surveillance is high-definition,
+life is soft* — made literal in `pointCloud.ts`. **Apparatus**: exactly one node per
+`close_network.json` label, on a golden-angle shell, cool (the piece's existing witness-blue, no new
+hex), full opacity, brighter, and linked ONLY to each other — a chain (i → i+1, connected by
+construction) plus a few cross-links, so the network is traceable end to end by guarantee, not by luck.
+Every apparatus node is labelled; there is no more "whichever rendered largest" hub selection. **Person**:
+the same 320-node core+satellite field the single-tier build always drew, warm, opacity capped below 1
+even at full fade, **no label, no link mesh at all** — not to the apparatus, not to each other. A player
+can trace the apparatus end to end and cannot trace a single person, because there is no edge to trace.
+
+Measured live (real WebGL readback via `window.__drawCalls`, both `?close=1` and a real debug-panel
+button press): **6 draw calls** against the ≤75 budget. Screenshot:
+`docs/reinterp/S92_shots/close_two_tiers.png` (not committed, review artifact only).
+
+### 2 · The image is the building — verified, not rebuilt
+The treatment's own scope note says the actual work is splitting `pointCloud.ts`'s existing node-graph,
+not swapping in the finale's cyclorama-slot grammar (`theme/era4.ts`, untouched, out of fence).
+Confirmed: no second visual language was invented for the ending.
+
+### 3 · The three lines (`aa2d25b`)
+`close.notify`'s `"Restart as you are."` verified unchanged. `close.restarting` — previously `""` — is
+now `"Your update has failed."`, landing on the **existing** dark 2.2s `restart` phase every other
+update's `"Restarting…"` already uses; `update.ts` itself was not touched, the field was simply blank.
+Verified live by arming the ritual (`os.armUpdate('close')`) and reading the runtime strings.
+
+### 4 · The last press does not loop — verified, not built
+Read `app.ts`'s `os.onEraShift`/`os.onEraRelocate` (both already `if (era === 'close') return;`) and
+`spine.ts`'s `e4_armed` step (fires `enterClose()` exactly once, then the spine's own `update()`
+short-circuits forever on `step === 'done'`) — already correct, S86/S67's "the seam is clean" claim
+holds. Verified live, not just read: seeded the spine at `e4`, manually ticked the app (real
+`requestAnimationFrame` is suspended in this sandboxed hidden-tab pane — `app.tick(ts)` with
+incrementing timestamps is the established workaround), armed `close` via the exact function
+`spine.arm()` itself calls, pressed the same `handleClick(x,y)` the real pointer pipeline calls at the
+bare notify button's real hit rect. Phase walked `notify → restart → complete`; afterward
+`os.updateApp` is `null`, `os.era`/`os.desktopEra` held at `'e4'`, and 600 further ticks (~10s) plus a
+stray canvas click produced no further state change — no re-armed update, draw calls held at 6, zero
+console errors.
+
+**Not touched, correctly out of scope:** the exhibition's idle-reset (already built, per
+`00_WHERE_THINGS_STAND.md`) and the knowledge graph's real topology (`close-graph-report.mjs` — still
+procedural, not derived from `data/provotypes/*.json`) — both outside this session's fence and this
+session's four scoped items.
+
+### Acceptance
+`npx tsc --noEmit`, `npm test` (palette ratchet unmoved, 33/33), `npm run build` green throughout.
+`npm run audit` run; see `BUILD_LOG.md` for its numbers. Two commits (`pointCloud.ts`+`cluster.json`+
+`close_network.json`; `updates.json`), plus this documentation. `00_WHERE_THINGS_STAND.md`'s ending row
+flipped from "Not built" to built, and `BUILD_QUEUE_LIVE.md` carries the S92 block marked SHIPPED.
+
+**What remains, named for whoever picks it up:** the knowledge graph's real topology (deriving
+apparatus edges from `data/provotypes/*.json` sources instead of the authored chain), and the Close as
+a fourth room / the rise choreography inheriting the E1→E4 grammar (`REINTERP_THE_BUILDING_2026-08-02.md`
+§"the fourth room" — explicitly deferred there, still deferred here). Neither blocks "the Close is
+built."
