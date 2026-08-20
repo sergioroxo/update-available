@@ -15,8 +15,8 @@ from runner.pipeline.factory_semantic_canary import (
 
 def _model_info():
     return {"data": [
-        {"model_name": "core-qwen", "litellm_params": {"model": "ollama/qwen3.6:35b-a3b"}},
-        {"model_name": "core-gemma", "litellm_params": {"model": "ollama/gemma4:31b-it"}},
+        {"model_name": "core-qwen", "litellm_params": {"model": "ollama_chat/qwen3.6:35b-mlx"}},
+        {"model_name": "core-gemma", "litellm_params": {"model": "ollama_chat/gemma4:31b-mlx"}},
         {"model_name": "research-embedding", "litellm_params": {"model": "ollama/qwen3-embedding:8b"}},
     ]}
 

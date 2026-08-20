@@ -27,16 +27,19 @@ def _routes(include_shadow=True):
     rows = [
         LocalModelRouteV1(
             route_id="mapper", purpose="section_mapper", requested_model="core-qwen",
-            expected_resolved_fragments=("qwen3.6", "35b-a3b"), maximum_output_tokens=2048,
+            expected_resolved_models=("ollama_chat/qwen3.6:35b-mlx",),
+            maximum_output_tokens=2048,
         ),
         LocalModelRouteV1(
             route_id="compiler", purpose="document_compiler", requested_model="core-gemma",
-            expected_resolved_fragments=("gemma4", "31b"), maximum_output_tokens=4096,
+            expected_resolved_models=("ollama_chat/gemma4:31b-mlx",),
+            maximum_output_tokens=4096,
         ),
         LocalModelRouteV1(
             route_id="embedding", purpose="qwen_embedding",
             requested_model="research-embedding",
-            expected_resolved_fragments=("qwen3-embedding", "8b"), expected_dimension=4096,
+            expected_resolved_models=("ollama/qwen3-embedding:8b",),
+            expected_dimension=4096,
         ),
     ]
     if include_shadow:
@@ -56,8 +59,8 @@ def _config(**overrides):
 def _model_info():
     return {
         "data": [
-            {"model_name": "core-qwen", "litellm_params": {"model": "ollama/qwen3.6:35b-a3b"}},
-            {"model_name": "core-gemma", "litellm_params": {"model": "ollama/gemma4:31b-it"}},
+            {"model_name": "core-qwen", "litellm_params": {"model": "ollama_chat/qwen3.6:35b-mlx"}},
+            {"model_name": "core-gemma", "litellm_params": {"model": "ollama_chat/gemma4:31b-mlx"}},
             {"model_name": "research-embedding", "litellm_params": {"model": "ollama/qwen3-embedding:8b"}},
             {"model_name": "bge-m3-shadow", "litellm_params": {"model": "ollama/bge-m3"}},
         ]
@@ -77,9 +80,40 @@ def test_preflight_requires_explicit_alias_to_local_model_binding():
 
     client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
     bindings = client.preflight()
-    assert bindings["mapper"] == "ollama/qwen3.6:35b-a3b"
-    assert bindings["compiler"] == "ollama/gemma4:31b-it"
+    assert bindings["mapper"] == "ollama_chat/qwen3.6:35b-mlx"
+    assert bindings["compiler"] == "ollama_chat/gemma4:31b-mlx"
     client.close()
+
+
+@pytest.mark.parametrize("resolved", [
+    "ollama_chat/qwen3.6:35b-a3b",
+    "ollama/qwen3.6:35b-mlx",
+    "ollama_chat/qwen3.6:27b-mlx",
+    "ollama_chat/qwen3.6:35b-mlx-shadow",
+    "core-qwen",
+    "openai/qwen3.6:35b-mlx",
+])
+def test_preflight_rejects_every_nonidentical_mapper_route(resolved):
+    payload = _model_info()
+    payload["data"][0]["litellm_params"]["model"] = resolved
+    client = OpenAICompatibleLocalClient(
+        _config(),
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json=payload),
+        ),
+    )
+    with pytest.raises(SemanticAdapterError, match="identity_mismatch"):
+        client.preflight()
+    client.close()
+
+
+def test_baseline_route_contract_forbids_fragment_only_acceptance():
+    with pytest.raises(ValidationError, match="one exact"):
+        LocalModelRouteV1(
+            route_id="mapper", purpose="section_mapper",
+            requested_model="core-qwen",
+            expected_resolved_fragments=("qwen3.6", "35b"),
+        )
 
     bad = _model_info()
     bad["data"][0]["litellm_params"]["model"] = "openai/gpt-5"

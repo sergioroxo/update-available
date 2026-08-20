@@ -98,16 +98,19 @@ def default_endpoint_config(
     routes = [
         LocalModelRouteV1(
             route_id="mapper", purpose="section_mapper", requested_model="core-qwen",
-            expected_resolved_fragments=("qwen3.6", "35b-a3b"), maximum_output_tokens=4096,
+            expected_resolved_models=("ollama_chat/qwen3.6:35b-mlx",),
+            maximum_output_tokens=4096,
         ),
         LocalModelRouteV1(
             route_id="compiler", purpose="document_compiler", requested_model="core-gemma",
-            expected_resolved_fragments=("gemma4", "31b"), maximum_output_tokens=8192,
+            expected_resolved_models=("ollama_chat/gemma4:31b-mlx",),
+            maximum_output_tokens=8192,
         ),
         LocalModelRouteV1(
             route_id="embedding", purpose="qwen_embedding",
             requested_model="research-embedding",
-            expected_resolved_fragments=("qwen3-embedding", "8b"), expected_dimension=4096,
+            expected_resolved_models=("ollama/qwen3-embedding:8b",),
+            expected_dimension=4096,
         ),
     ]
     if bge_shadow_alias:

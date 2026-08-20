@@ -53,7 +53,8 @@ class LocalModelRouteV1(_Strict):
         "qwen_embedding", "bge_shadow",
     ]
     requested_model: str
-    expected_resolved_fragments: tuple[str, ...]
+    expected_resolved_models: tuple[str, ...] = ()
+    expected_resolved_fragments: tuple[str, ...] = ()
     expected_dimension: int | None = Field(default=None, ge=1, le=8192)
     maximum_output_tokens: int = Field(default=4096, ge=128, le=32768)
 
@@ -61,6 +62,19 @@ class LocalModelRouteV1(_Strict):
     @classmethod
     def _ids(cls, value: str, info) -> str:
         return require_safe_id(value, field=info.field_name)
+
+    @field_validator("expected_resolved_models")
+    @classmethod
+    def _resolved_models(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if len(value) != len(set(value)):
+            raise ValueError("resolved-model identities must be unique")
+        for row in value:
+            if (
+                not row or row != row.strip() or len(row) > 300
+                or any(char in row for char in ("\n", "\r", "\x00"))
+            ):
+                raise ValueError("resolved-model identity is malformed")
+        return value
 
     @field_validator("expected_resolved_fragments")
     @classmethod
@@ -79,6 +93,12 @@ class LocalModelRouteV1(_Strict):
             raise ValueError("embedding route dimension is not canonical")
         if self.purpose not in required and self.expected_dimension is not None:
             raise ValueError("chat route cannot declare an embedding dimension")
+        baseline = {"section_mapper", "document_compiler", "qwen_embedding"}
+        if self.purpose in baseline:
+            if len(self.expected_resolved_models) != 1 or self.expected_resolved_fragments:
+                raise ValueError("baseline route requires one exact resolved-model identity")
+        elif bool(self.expected_resolved_models) == bool(self.expected_resolved_fragments):
+            raise ValueError("optional route requires exactly one identity policy")
         return self
 
 
@@ -261,7 +281,10 @@ class OpenAICompatibleLocalClient:
     @staticmethod
     def _validate_resolved(route: LocalModelRouteV1, resolved: str) -> str:
         folded = resolved.casefold()
-        if not all(fragment in folded for fragment in route.expected_resolved_fragments):
+        if route.expected_resolved_models:
+            if resolved not in route.expected_resolved_models:
+                raise SemanticAdapterError("local_model_route_identity_mismatch")
+        elif not all(fragment in folded for fragment in route.expected_resolved_fragments):
             raise SemanticAdapterError("local_model_route_identity_mismatch")
         if any(marker in folded for marker in ("openai/", "anthropic/", "azure/", "bedrock/")):
             raise SemanticAdapterError("cloud_model_route_forbidden")
