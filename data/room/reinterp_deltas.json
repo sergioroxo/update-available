@@ -1824,7 +1824,7 @@
         "id": "bedDustSheet",
         "pos": [
           -1.485,
-          0.74,
+          0.525,
           2.63
         ],
         "size": [
@@ -1928,7 +1928,7 @@
         "id": "w_cardigan",
         "pos": [
           -4.6,
-          0.8,
+          0.71,
           0.95
         ],
         "size": [
@@ -2463,7 +2463,7 @@
       {
         "id": "e_hoodie",
         "_doc": "Session 74: the chair — same drape-over-the-back logic as w_cardigan (Session 66), a different garment and a different colour so the two rooms don't read as the same person twice.",
-        "pos": [4.48, 0.8, 0.95],
+        "pos": [4.48, 0.71, 0.95],
         "size": [0.1, 0.32, 0.36],
         "color": "#9FB4C0",
         "yaw": 270
@@ -2471,14 +2471,14 @@
       {
         "id": "e_pillow2",
         "_doc": "Session 74: the bed — a second pillow toward the nightstand end, a folded throw at the foot.",
-        "pos": [3.35, 0.62, 1.85],
+        "pos": [3.35, 0.545, 1.85],
         "size": [0.45, 0.09, 0.28],
         "color": "#F5EDDC",
         "yaw": 270
       },
       {
         "id": "e_throw",
-        "pos": [4.1, 0.745, 2.2],
+        "pos": [4.1, 0.53, 2.2],
         "size": [0.35, 0.06, 0.9],
         "color": "#A8B49A",
         "yaw": 270
