@@ -186,7 +186,7 @@
         ],
         "color": "#8A5A3B",
         "model": "desk"
-      },
+      , "modelScale": [2.0419, 1.9521, 1.785]},
       {
         "id": "chairModel",
         "pos": [
@@ -201,7 +201,7 @@
         ],
         "color": "#8A5A3B",
         "model": "chair"
-      },
+      , "modelScale": [1.4925, 1.2346, 1.5904]},
       {
         "id": "bedModel",
         "pos": [
@@ -216,7 +216,7 @@
         ],
         "color": "#A07B52",
         "model": "bed"
-      },
+      , "modelScale": [1.3659, 1.3342, 1.7337]},
       {
         "id": "bookcaseModel",
         "pos": [
@@ -247,7 +247,7 @@
         ],
         "color": "#B98563",
         "model": "rug"
-      },
+      , "modelScale": [0.9553, 1.9999, 1.1957]},
       {
         "id": "plantModel",
         "pos": [
@@ -262,7 +262,7 @@
         ],
         "color": "#A8B49A",
         "model": "plant"
-      },
+      , "modelScale": [2.0795, 0.9179, 1.8253]},
       {
         "id": "tennisRacketModel",
         "_doc": "S90: a NEW Room-1 prop (Sérgio's own Poly Pizza pick, see data/room/models.json's `tennisRacket` entry for the source/43-mesh-merge/measurement story). No `tilt`: the native mesh is already authored lying flat (its thin axis is already native Y, see the model manifest's own doc), so this prop only needs `yaw` to choose which way it points. `color` #44464F reuses `boombox`'s own existing dark-grey hex (era1.json) — no new hex. `size` is the fallback box in the prop's OWN pre-yaw frame (width × thickness × length = 0.26 × 0.037 × 0.66), matching the model's measured scaled footprint. S91: S90's original placement (x-1.6, z3.0, 'clear of the bed's AABB by 0.79m on z') was clear of the bed's BOX but, like `monkeyToyModel` right above, sat behind the bed's own frame from the seat's actual line of sight — live-verified at the prop's bearing (yaw145.18°/pitch-22.14°): no racket-coloured pixel visible at all, despite the dark grey (#44464F) that should contrast against the warm floor if unoccluded. Moved to (-0.9, 0, 2.35): clear of the bed's x-extent (AABB tops out at x-0.987; this sits at x-0.9, on the seat's own side) and past `rug`'s z-run (era1.json's rug ends z1.4), close enough to `monkeyToyModel`'s new spot to still read as 'things dropped near the foot of the bed' (0.53m apart, no overlap — checked against both props' own footprints). Re-verified live at the new bearing: the racket's strung head and handle are both plainly legible on open floor. `tools/room-audit.mjs` then caught a real regression this move introduced: at x-0.9 the racket's own rotated (`yaw:25`) AABB — its long axis swinging toward the bed — clipped 3.7cm into the bed's REAL rendered AABB (larger than the authored fallback box the first S91 move was checked against: SCALE finding shows bedModel renders +39%/+42%/+10% over its authored size). x-0.9 → -0.65 (0.25m more clearance from the bed on the axis that matters) clears it; re-run confirmed zero new OVERLAP/FLOATING/BOUNDS findings for either prop.",
@@ -946,7 +946,7 @@
         "color": "#8A5A3B",
         "yaw": 90,
         "model": "chair"
-      },
+      , "modelScale": [1.4925, 1.2346, 1.5904]},
       {
         "id": "w_bed",
         "pos": [
@@ -978,7 +978,7 @@
         "color": "#A07B52",
         "yaw": 90,
         "model": "nightstand"
-      },
+      , "modelScale": [0.7489, 1.3, 1.8182]},
       {
         "id": "w_bookcase",
         "pos": [
@@ -1479,7 +1479,7 @@
         "color": "#8A5A3B",
         "yaw": 270,
         "model": "chair"
-      },
+      , "modelScale": [1.4925, 1.2346, 1.5904]},
       {
         "id": "e_bed",
         "pos": [
@@ -1495,7 +1495,7 @@
         "color": "#E8B7C8",
         "yaw": 270,
         "model": "bed"
-      },
+      , "modelScale": [1.8386, 1.3342, 1.8227]},
       {
         "id": "e_nightstand",
         "pos": [
@@ -1511,7 +1511,7 @@
         "color": "#A07B52",
         "yaw": 270,
         "model": "nightstand"
-      },
+      , "modelScale": [0.7489, 1.3, 1.8182]},
       {
         "id": "e_bookcase",
         "pos": [
@@ -1543,7 +1543,7 @@
         "color": "#D4A0A0",
         "yaw": 270,
         "model": "rug"
-      },
+      , "modelScale": [1.0192, 1.9999, 1.6304]},
       {
         "id": "e_crtBody",
         "pos": [
@@ -1679,7 +1679,7 @@
         ],
         "color": "#A07B52",
         "model": "bed"
-      },
+      , "modelScale": [1.3659, 1.3342, 1.3781]},
       {
         "id": "bookcaseMoved",
         "_doc": "S89 — Sérgio, 2026-08-15: 'the shelf in Era 3 is still not against the wall, it should rotate so the wider side we can see it, like in Era-1, and the books are floating.' `yaw: 90` was carried over unchanged from E1's bookcaseModel (which correctly hugs wallEast, an X-facing wall, at x1.87 — the SAME x this prop kept). But r3 removes wallEast entirely (see this state's own `remove`) and this prop's own z-move (0.75→3.3) put it near wallSouth instead — a Z-facing wall — so yaw:90 was now presenting the shelf's NARROW depth face to wallSouth and its WIDE run parallel to it, i.e. sideways to the room, which reads as a thin floating plank from the Room-2 seat (verified live: at yaw90 near wallSouth the rendered world AABB is x[1.623,2.098] (0.475 wide) z[2.92,3.68] (0.76 wide) — the WIDE dimension was running along Z, away from the seat, not toward it). yaw:0 swaps that (live-verified world AABB at yaw0: x[1.49,2.25] (0.76 wide) z[3.072,3.547] (0.475 deep)) — matching E1's own relationship to ITS wall exactly, just rotated a quarter-turn to face a Z-wall instead of an X-wall. `pos.z` 3.3→3.44 seats the (now-correctly-oriented) back face flush against wallSouth (z3.72, thickness 0.04) with the same ~1.2cm clearance E1's copy keeps against wallEast, rather than floating 15cm short of it. `pos.x` 1.87→1.70: the quarter-turn also swapped which axis carries the WIDTH (0.76 m) — at yaw0 that's now x, and the unchanged x1.87 pushed the shelf 0.12 m past the room's own floor plate on +x (`tools/room-audit.mjs`'s BOUNDS check, floor x-range [-2.13,2.13]), a regression this same fix introduced and caught before commit. x1.70 (half-width 0.38) sits it at x[1.32,2.08], back inside the floor with room to spare. Every prop riding this shelf (book1/2/3, teddyBox, rainbowDuck, cdStack, mixtape) got the matching 90° offset remap AND this same x-shift — see book1's own _doc for the maths and the live verification.",
