@@ -29,6 +29,10 @@ import type { DesktopOS } from '../desktop/os';
 import type { UpdateKey } from '../desktop/apps/update';
 
 const T1_DELAY = 1.2;   // s after DIARY.TXT's breakout hold before the notice
+/** How many corrections Vera has resolved — applied or skipped, both count,
+ *  because the record is symmetric and so is the interruption. */
+function correctionsDone(): number { return ledger.graceQueue.length; }
+
 const SEND_DELAY = 9;   // s into an era before its first summons
 const SEND_GAP = 6;     // s after one send resolves before the next
 const UPDATE_GAP = 8;   // s after an era's beats exhaust before its failure
@@ -136,11 +140,26 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
           if (t >= RESIDUE_GAP) arm('u3', 'e3');
           break;
 
+        // ⚑ ERA 3 WAITS FOR THE PLAYER, NOT FOR A STOPWATCH. Fixed 2026-08-21.
+        //
+        // These fired on `t >= SEND_DELAY` — nine seconds after the era begins,
+        // whatever the player happened to be doing. Sérgio met the first offer
+        // ON TOP OF the "Welcome back, Vera" sign-in, and the second across
+        // Renata's testimony while he was still reading it: *"I had to press the
+        // source file because it was in front of the text."* A summons that
+        // interrupts the task it is about reads as a bug, not as pressure, and
+        // it cost him the era.
+        //
+        // ⚑ The signal already existed and nothing used it: `ledger.graceQueue`
+        // gets an entry every time a correction is applied OR skipped. So the
+        // offers now wait until Vera is genuinely AT WORK — which is also when
+        // an interruption means something, because there is something to
+        // interrupt. Elapsed time is kept only as a floor, never as the trigger.
         case 'e3':
-          if (t >= SEND_DELAY) offer('s3', 'e3_s3');
+          if (t >= SEND_DELAY && correctionsDone() >= 2) offer('s3', 'e3_s3');
           break;
         case 'e3_s3':
-          if (sendResolved('s3') && t >= SEND_GAP) offer('s4', 'e3_s4');
+          if (sendResolved('s3') && t >= SEND_GAP && correctionsDone() >= 5) offer('s4', 'e3_s4');
           break;
         case 'e3_s4':
           if (sendResolved('s4') && t >= UPDATE_GAP) arm('u4', 'e4');

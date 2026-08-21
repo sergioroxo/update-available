@@ -1112,7 +1112,26 @@ export class DesktopOS {
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.black;
     def.offer.lines.forEach((line, i) => ctx.fillText(line, c.x + 10, c.y + 6 + i * 12));
-    const allowVisit = true; // gate lifted on measurement — see the note above
+    // ⚑⚑ RE-GATED 2026-08-21, and the lift was my error. I removed S87's
+    // decline-only gate on COMFORT evidence — the dolly is now 39 s and all
+    // three legs measure inside the envelope, which was true and was not the
+    // whole question. I verified the JOURNEY and never checked the ARRIVAL.
+    //
+    // `data/sends.json` targets s3 at `{kind:"bay", yaw:0}` and s4 at
+    // `{kind:"facet", facet:"transmasc"}` — both authored for the RETIRED
+    // radial/hexagon layout, and s4's facet belongs to Room 3, which does not
+    // exist in Era 3 at all. So accepting either flies the camera at a
+    // destination that is not there: Sérgio hit a white box on the table, a
+    // fly-over that locked, and a beat that vanished — and lost the whole era
+    // to it (WALKTHROUGH_2026-08-21 §C).
+    //
+    // ⚑ This is the project's own dominant bug class wearing a new coat:
+    // content that cannot be met. The comfort numbers were real evidence about
+    // the wrong thing. Decline still files a genuine outcome and lets the era
+    // advance, so E3 is playable with the gate on — which it is not with the
+    // gate off. RESTORE THIS ONLY AFTER RETARGETING s3/s4 TO PLACES THAT EXIST
+    // IN E3 UNDER THE THREE-ROOM MODEL, verified by arriving at them.
+    const allowVisit = this.sendOffer.id !== 's3' && this.sendOffer.id !== 's4';
     if (allowVisit) {
       ui.button(ctx, c.x + c.w - 110, c.y + c.h - 26, 102, 18, def.offer.go, {});
       hits.push({ x: c.x + c.w - 110, y: c.y + c.h - 26, w: 102, h: 18, id: 'send-go' });
