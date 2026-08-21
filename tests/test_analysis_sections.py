@@ -221,7 +221,7 @@ def test_targeted_resume_requeues_only_exact_legacy_held_job(tmp_path):
     class LegacyExecutor:
         def execute(self, job, section, attempt):
             if job.job_id == held_id:
-                raise ValueError("legacy terminal model-output failure")
+                raise SectionAnalysisError("invalid_or_terminal_executor_failure")
             return _result(job, section, attempt=attempt)
 
     store = SectionAnalysisStore(tmp_path / "legacy.sqlite")
@@ -241,6 +241,15 @@ def test_targeted_resume_requeues_only_exact_legacy_held_job(tmp_path):
             "terminal_reason": "invalid_or_terminal_executor_failure",
             "has_lease": False,
         }
+        assert store.failure_evidence() == ({
+            "job_id": held_id,
+            "attempt": 1,
+            "stage": "executor_contract",
+            "error_code": "invalid_or_terminal_executor_failure",
+            "http_status_category": "",
+            "pydantic_diagnostics": [],
+            "requested_alias": "core-qwen",
+        },)
         assert store.requeue_legacy_held_contract_jobs((held_id,)) == 1
         resumed = next(
             row for row in store.targeted_resume_snapshot()
@@ -269,6 +278,34 @@ def test_stale_lease_commit_is_fenced(tmp_path):
     with pytest.raises(SectionAnalysisError, match="stale"):
         store.commit(result, token, now + timedelta(seconds=2))
     store.close()
+
+
+def test_final_result_validation_failure_is_distinct_and_content_free(tmp_path):
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020d", units=_units(), small_model_route="core-qwen",
+        target_chars=5000, maximum_prompts_per_section=2,
+    )
+
+    class InvalidCitationExecutor:
+        def execute(self, job, section, attempt):
+            return _result(job, section, attempt=attempt, unit_id="unknown-unit")
+
+    store = SectionAnalysisStore(tmp_path / "final-validation.sqlite")
+    try:
+        store.seed(plan)
+        assert run_parallel_jobs(
+            store=store, plan=plan, executor=InvalidCitationExecutor(), max_workers=1,
+        ) == ()
+        evidence = store.failure_evidence()
+        assert len(evidence) == len(plan.jobs)
+        assert {row["stage"] for row in evidence} == {"final_result_validation"}
+        assert {row["error_code"] for row in evidence} == {
+            "finding_unknown_source_citation",
+        }
+        assert {row["requested_alias"] for row in evidence} == {"core-qwen"}
+        assert all(row["pydantic_diagnostics"] == [] for row in evidence)
+    finally:
+        store.close()
 
 
 def test_compiler_packet_contains_exact_excerpts_and_rejects_unknown_claim_citation():

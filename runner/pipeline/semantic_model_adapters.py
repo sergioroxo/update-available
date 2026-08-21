@@ -48,9 +48,17 @@ from runner.pipeline.analysis_sections import (
 class SemanticAdapterError(ValueError):
     """Terminal content-free adapter failure."""
 
+    def __init__(self, error_code: str):
+        super().__init__(error_code)
+        self.error_code = error_code
+
 
 class RetryableSemanticAdapterError(RuntimeError):
     """Retryable content-free local transport failure."""
+
+    def __init__(self, error_code: str):
+        super().__init__(error_code)
+        self.error_code = error_code
 
 
 class _Strict(BaseModel):
@@ -75,6 +83,23 @@ class _MapperResponsePayloadV1(_Strict):
     findings: list[_MapperFindingPayloadV1]
 
 
+class _CompilerClaimPayloadV1(_Strict):
+    statement: str = Field(min_length=1, max_length=1000)
+    citation_unit_ids: list[str]
+    support_status: Literal["supported", "unsupported"]
+
+    @field_validator("statement")
+    @classmethod
+    def _nonblank_statement(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("compiler statement must contain non-whitespace text")
+        return value
+
+
+class _CompilerResponsePayloadV1(_Strict):
+    claims: list[_CompilerClaimPayloadV1]
+
+
 class MapperValidationIssueV1(_Strict):
     location: str = Field(min_length=1, max_length=200, pattern=r"^[A-Za-z0-9_.*-]+$")
     type_code: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9_.-]+$")
@@ -83,24 +108,32 @@ class MapperValidationIssueV1(_Strict):
 class MapperSchemaRetryableError(RetryableSectionError):
     """Stable mapper failure carrying only bounded Pydantic locations/types."""
 
-    def __init__(self, issues: tuple[MapperValidationIssueV1, ...]):
-        super().__init__(MAPPER_SCHEMA_RETRY_REASON)
-        self.issues = issues
+    def __init__(
+        self, issues: tuple[MapperValidationIssueV1, ...], *, requested_alias: str = "",
+    ):
+        super().__init__(
+            MAPPER_SCHEMA_RETRY_REASON, stage="pydantic_validation",
+            issues=issues, requested_alias=requested_alias,
+        )
 
 
 class MapperOutputContractRetryableError(RetryableSectionError):
     """Known job-bound output violation eligible for the one repair route."""
 
-    def __init__(self, issues: tuple[MapperValidationIssueV1, ...]):
-        super().__init__(MAPPER_OUTPUT_RETRY_REASON)
-        self.issues = issues
+    def __init__(
+        self, issues: tuple[MapperValidationIssueV1, ...], *, requested_alias: str = "",
+    ):
+        super().__init__(
+            MAPPER_OUTPUT_RETRY_REASON, stage="job_output_validation",
+            issues=issues, requested_alias=requested_alias,
+        )
 
 
 def mapper_response_json_schema(
     job: SectionPromptJobV1 | None = None,
     section: ProcessingSectionV1 | None = None,
 ) -> dict[str, Any]:
-    """Derive the strict schema and optionally bind it to one exact job."""
+    """Return the proven base structural grammar after optional job binding checks."""
     if (job is None) != (section is None):
         raise SectionAnalysisError("mapper_schema_requires_job_and_section")
     schema = _MapperResponsePayloadV1.model_json_schema()
@@ -112,25 +145,12 @@ def mapper_response_json_schema(
         or job.unit_ids != section.unit_ids
     ):
         raise SectionAnalysisError("mapper_schema_job_section_mismatch")
-    findings_schema = schema["properties"]["findings"]
-    findings_schema["maxItems"] = job.maximum_output_items
-    finding_schema = schema["$defs"]["_MapperFindingPayloadV1"]
-    citations_schema = finding_schema["properties"]["citation_unit_ids"]
-    citations_schema["items"] = {
-        "enum": list(section.unit_ids),
-        "type": "string",
-    }
-    citations_schema["uniqueItems"] = True
-    finding_schema["allOf"] = [{
-        "if": {
-            "properties": {"evidence_state": {"const": "supported"}},
-            "required": ["evidence_state"],
-        },
-        "then": {
-            "properties": {"citation_unit_ids": {"minItems": 1}},
-        },
-    }]
     return schema
+
+
+def compiler_response_json_schema() -> dict[str, Any]:
+    """Return the strict base structural grammar for compiler output."""
+    return _CompilerResponsePayloadV1.model_json_schema()
 
 
 def _mapper_validation_issues(
@@ -336,10 +356,19 @@ def _receipt(
 
 
 def _json_object(text: str) -> dict[str, Any]:
+    if not isinstance(text, str):
+        raise SemanticAdapterError("local_model_response_content_not_string")
+    stripped = text.strip()
+    if not stripped:
+        raise SemanticAdapterError("local_model_response_json_empty")
+    if not stripped.startswith("{"):
+        raise SemanticAdapterError("local_model_response_json_not_object_prefixed")
+    if not stripped.endswith("}"):
+        raise SemanticAdapterError("local_model_response_json_incomplete")
     try:
-        payload = json.loads(text)
+        payload = json.loads(stripped)
     except (TypeError, json.JSONDecodeError) as exc:
-        raise SemanticAdapterError("local_model_response_not_valid_json") from exc
+        raise SemanticAdapterError("local_model_response_json_malformed") from exc
     if not isinstance(payload, dict):
         raise SemanticAdapterError("local_model_response_not_object")
     return payload
@@ -456,7 +485,11 @@ class OpenAICompatibleLocalClient:
                 {
                     "type": "json_schema",
                     "json_schema": {
-                        "name": "mapper_response_v1",
+                        "name": (
+                            "mapper_response_v1"
+                            if route.purpose in {"section_mapper", "qwen38_mapper_repair"}
+                            else "compiler_response_v1"
+                        ),
                         "strict": True,
                         "schema": response_schema,
                     },
@@ -465,30 +498,72 @@ class OpenAICompatibleLocalClient:
                 else {"type": "json_object"}
             ),
         }
+        if route.purpose in {"qwen38_mapper_repair", "qwen38_compiler_candidate"}:
+            request["reasoning_effort"] = "none"
         started = time.perf_counter()
         try:
             response = self.client.post("/v1/chat/completions", json=request)
         except (httpx.TimeoutException, httpx.NetworkError) as exc:
-            raise RetryableSectionError("local_chat_transport_retryable") from exc
+            raise RetryableSectionError(
+                "local_chat_transport_retryable", stage="http_transport",
+                requested_alias=route.requested_model,
+            ) from exc
         duration_ms = int((time.perf_counter() - started) * 1000)
         if response.status_code == 429 or response.status_code >= 500:
-            raise RetryableSectionError("local_chat_status_retryable")
+            raise RetryableSectionError(
+                "local_chat_status_retryable", stage="http_status",
+                http_status_category=f"{response.status_code // 100}xx",
+                requested_alias=route.requested_model,
+            )
         if response.status_code != 200:
-            raise SectionAnalysisError("local_chat_status_terminal")
+            raise SectionAnalysisError(
+                "local_chat_status_terminal", stage="http_status",
+                http_status_category=f"{response.status_code // 100}xx",
+                requested_alias=route.requested_model,
+            )
         try:
             envelope = response.json()
-            content = envelope["choices"][0]["message"]["content"]
+            choice = envelope["choices"][0]
+            content = choice["message"]["content"]
+            finish_reason = choice.get("finish_reason")
         except (ValueError, KeyError, IndexError, TypeError) as exc:
-            raise SectionAnalysisError("local_chat_envelope_malformed") from exc
+            raise SectionAnalysisError(
+                "local_chat_envelope_malformed", stage="response_envelope",
+                requested_alias=route.requested_model,
+            ) from exc
         response_model = str(envelope.get("model") or route.requested_model)
         if response_model != route.requested_model:
-            self._validate_resolved(route, response_model)
-        payload = _json_object(content)
-        receipt = _receipt(
-            route=route, resolved=resolved, request=request, response=payload,
-            input_count=1, output_count=1, duration_ms=duration_ms,
-            concurrency_level=concurrency_level,
-        )
+            try:
+                self._validate_resolved(route, response_model)
+            except SemanticAdapterError as exc:
+                raise SectionAnalysisError(
+                    exc.error_code, stage="route_identity",
+                    requested_alias=route.requested_model,
+                ) from None
+        try:
+            payload = _json_object(content)
+        except SemanticAdapterError as exc:
+            error_code = (
+                "local_model_response_truncated_json"
+                if finish_reason == "length"
+                else exc.error_code
+            )
+            raise SectionAnalysisError(
+                error_code, stage="response_json",
+                requested_alias=route.requested_model,
+            ) from None
+        try:
+            receipt = _receipt(
+                route=route, resolved=resolved, request=request, response=payload,
+                input_count=1, output_count=1, duration_ms=duration_ms,
+                concurrency_level=concurrency_level,
+            )
+        except ValidationError as exc:
+            raise SectionAnalysisError(
+                "local_chat_receipt_construction_failed", stage="internal_consistency",
+                issues=_mapper_validation_issues(exc),
+                requested_alias=route.requested_model,
+            ) from None
         self._record(receipt)
         return payload, receipt
 
@@ -629,34 +704,46 @@ class LocalSectionExecutor:
         except ValidationError as exc:
             raise MapperSchemaRetryableError(
                 _mapper_validation_issues(exc),
+                requested_alias=selected_route.requested_model,
             ) from None
         output_issues = _mapper_output_issues(
             validated_payload, job=job, section=section,
         )
         if output_issues:
-            raise MapperOutputContractRetryableError(output_issues)
+            raise MapperOutputContractRetryableError(
+                output_issues, requested_alias=selected_route.requested_model,
+            )
         raw_findings = validated_payload.findings
-        findings = []
-        for index, row in enumerate(raw_findings):
-            findings.append(SectionFindingV1(
-                finding_id=f"{job.job_id}-finding-{index + 1:03d}",
-                prompt_id=job.prompt_id, statement=row.statement,
-                evidence_state=row.evidence_state,
-                citation_unit_ids=tuple(row.citation_unit_ids),
-                confidence=row.confidence,
-            ))
-        values = dict(
-            schema_version="section-pass-result-v1.0", job_id=job.job_id,
-            job_sha256=job.job_sha256, document_id=job.document_id,
-            section_id=job.section_id, prompt_id=job.prompt_id,
-            requested_model=selected_route.requested_model,
-            provider_resolved_model=receipt.provider_resolved_model,
-            attempt=attempt, repair_error_code=repair_error_code,
-            findings=tuple(findings), output_sha256="0" * 64,
-        )
-        draft = SectionPassResultV1.model_construct(**values)
-        values["output_sha256"] = canonical_contract_sha256(draft, omit={"output_sha256"})
-        return SectionPassResultV1.model_validate(values)
+        try:
+            findings = []
+            for index, row in enumerate(raw_findings):
+                findings.append(SectionFindingV1(
+                    finding_id=f"{job.job_id}-finding-{index + 1:03d}",
+                    prompt_id=job.prompt_id, statement=row.statement,
+                    evidence_state=row.evidence_state,
+                    citation_unit_ids=tuple(row.citation_unit_ids),
+                    confidence=row.confidence,
+                ))
+            values = dict(
+                schema_version="section-pass-result-v1.0", job_id=job.job_id,
+                job_sha256=job.job_sha256, document_id=job.document_id,
+                section_id=job.section_id, prompt_id=job.prompt_id,
+                requested_model=selected_route.requested_model,
+                provider_resolved_model=receipt.provider_resolved_model,
+                attempt=attempt, repair_error_code=repair_error_code,
+                findings=tuple(findings), output_sha256="0" * 64,
+            )
+            draft = SectionPassResultV1.model_construct(**values)
+            values["output_sha256"] = canonical_contract_sha256(
+                draft, omit={"output_sha256"},
+            )
+            return SectionPassResultV1.model_validate(values)
+        except ValidationError as exc:
+            raise SectionAnalysisError(
+                "section_mapper_result_construction_failed",
+                stage="result_construction", issues=_mapper_validation_issues(exc),
+                requested_alias=selected_route.requested_model,
+            ) from None
 
 
 class LocalDocumentCompilerExecutor:
@@ -674,33 +761,54 @@ class LocalDocumentCompilerExecutor:
             "Compile a document-level research interpretation from the supplied "
             "structured findings and exact source excerpts. Return a JSON object "
             "with claims. A supported claim must cite only supplied unit IDs. "
-            "Unsupported material must remain explicitly unsupported."
+            "Unsupported material must remain explicitly unsupported. Return at "
+            "most 12 concise claims, with each statement at most 1000 characters. "
+            "Return the JSON object only: begin with { and end with }; do not emit "
+            "Markdown, code fences, commentary, or reasoning. Canonical response "
+            "JSON Schema: "
+            + _canonical_bytes(compiler_response_json_schema()).decode("utf-8")
         )
         user = _canonical_bytes(packet.model_dump(mode="json")).decode()
         payload, receipt = self.client.chat(
             self.route, system=system, user=user, concurrency_level=1,
+            response_schema=compiler_response_json_schema(),
         )
-        raw_claims = payload.get("claims")
-        if not isinstance(raw_claims, list) or len(raw_claims) > 100:
+        try:
+            validated_payload = _CompilerResponsePayloadV1.model_validate(payload)
+        except ValidationError as exc:
+            raise SectionAnalysisError(
+                "document_compiler_schema_validation_failed",
+                stage="pydantic_validation", issues=_mapper_validation_issues(exc),
+                requested_alias=self.route.requested_model,
+            ) from None
+        raw_claims = validated_payload.claims
+        if len(raw_claims) > 12:
             raise SectionAnalysisError("document_compiler_claims_contract_mismatch")
-        claims = tuple(CompilerClaimV1(
-            claim_id=f"{packet.document_id}-claim-{index + 1:03d}",
-            statement=str(row.get("statement") or ""),
-            citation_unit_ids=tuple(row.get("citation_unit_ids") or ()),
-            support_status=row.get("support_status"),
-        ) for index, row in enumerate(raw_claims) if isinstance(row, dict))
-        if len(claims) != len(raw_claims):
-            raise SectionAnalysisError("document_compiler_claim_not_object")
-        values = dict(
-            schema_version="document-compilation-v1.0", document_id=packet.document_id,
-            packet_sha256=packet.packet_sha256,
-            requested_model=self.route.requested_model,
-            provider_resolved_model=receipt.provider_resolved_model,
-            claims=claims, output_sha256="0" * 64,
-        )
-        draft = DocumentCompilationV1.model_construct(**values)
-        values["output_sha256"] = canonical_contract_sha256(draft, omit={"output_sha256"})
-        return DocumentCompilationV1.model_validate(values)
+        try:
+            claims = tuple(CompilerClaimV1(
+                claim_id=f"{packet.document_id}-claim-{index + 1:03d}",
+                statement=row.statement,
+                citation_unit_ids=tuple(row.citation_unit_ids),
+                support_status=row.support_status,
+            ) for index, row in enumerate(raw_claims))
+            values = dict(
+                schema_version="document-compilation-v1.0", document_id=packet.document_id,
+                packet_sha256=packet.packet_sha256,
+                requested_model=self.route.requested_model,
+                provider_resolved_model=receipt.provider_resolved_model,
+                claims=claims, output_sha256="0" * 64,
+            )
+            draft = DocumentCompilationV1.model_construct(**values)
+            values["output_sha256"] = canonical_contract_sha256(
+                draft, omit={"output_sha256"},
+            )
+            return DocumentCompilationV1.model_validate(values)
+        except ValidationError as exc:
+            raise SectionAnalysisError(
+                "document_compiler_result_construction_failed",
+                stage="result_construction", issues=_mapper_validation_issues(exc),
+                requested_alias=self.route.requested_model,
+            ) from None
 
 
 @dataclass

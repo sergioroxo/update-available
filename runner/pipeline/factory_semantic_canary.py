@@ -28,6 +28,7 @@ from runner.pipeline.analysis_sections import (
     SectionAnalysisStore,
     build_adaptive_analysis_plan,
     build_compiler_packet,
+    content_free_section_failure,
     execute_document_compiler,
     run_parallel_jobs,
     validate_section_result,
@@ -48,8 +49,6 @@ from runner.pipeline.semantic_model_adapters import (
     LocalEmbeddingProvider,
     LocalModelRouteV1,
     LocalSectionExecutor,
-    MapperOutputContractRetryableError,
-    MapperSchemaRetryableError,
     OpenAICompatibleLocalClient,
     SemanticAdapterError,
     SemanticEndpointConfigV1,
@@ -295,7 +294,7 @@ def _benchmark_concurrency(
 
     class BenchmarkRetryFailure(Exception):
         def __init__(self, error, diagnostics):
-            super().__init__(str(error))
+            super().__init__("benchmark_mapper_failure")
             self.error = error
             self.diagnostics = diagnostics
 
@@ -305,6 +304,11 @@ def _benchmark_concurrency(
         retry_error_code = ""
         diagnostics = []
         for attempt in range(1, job.maximum_attempts + 1):
+            requested_alias = (
+                job.repair_model_route
+                if retry_error_code in MAPPER_REPAIRABLE_REASONS and job.repair_model_route
+                else job.model_route
+            )
             try:
                 result = (
                     executor.execute_with_retry_context(
@@ -317,19 +321,24 @@ def _benchmark_concurrency(
                 validate_section_result(job, section, result)
                 return result, retry_count, schema_retry_count, diagnostics
             except RetryableSectionError as exc:
-                if isinstance(exc, (MapperSchemaRetryableError, MapperOutputContractRetryableError)):
-                    diagnostics.append({
-                        "attempt": attempt,
-                        "issues": [row.model_dump(mode="json") for row in exc.issues],
-                    })
+                evidence = content_free_section_failure(
+                    exc, requested_alias=requested_alias, attempt=attempt,
+                )
+                diagnostics.append(evidence.model_dump(mode="json"))
                 if attempt >= job.maximum_attempts:
                     raise BenchmarkRetryFailure(exc, diagnostics) from None
                 retry_count += 1
-                if str(exc) in MAPPER_REPAIRABLE_REASONS:
+                if evidence.error_code in MAPPER_REPAIRABLE_REASONS:
                     schema_retry_count += 1
-                    retry_error_code = str(exc)
+                    retry_error_code = evidence.error_code
                 else:
                     retry_error_code = ""
+            except Exception as exc:
+                evidence = content_free_section_failure(
+                    exc, requested_alias=requested_alias, attempt=attempt,
+                )
+                diagnostics.append(evidence.model_dump(mode="json"))
+                raise BenchmarkRetryFailure(exc, diagnostics) from None
         raise PhysicalCanaryError("semantic_mapper_retry_loop_exhausted")
 
     for level in (1, 2, 4):
@@ -360,10 +369,7 @@ def _benchmark_concurrency(
             if isinstance(exc, BenchmarkRetryFailure):
                 schema_diagnostics.extend(exc.diagnostics)
             error = type(underlying).__name__
-            error_code = (
-                str(underlying) if isinstance(underlying, RetryableSectionError)
-                else "terminal_or_unexpected_validation_failure"
-            )
+            error_code = schema_diagnostics[-1]["error_code"]
         completed = datetime.now(timezone.utc)
         receipts = client.receipts[started_receipts:]
         route_counts: dict[str, int] = {}
@@ -394,15 +400,43 @@ def _benchmark_concurrency(
     return report
 
 
+def _persist_canary_failure(path: Path, evidence) -> None:
+    payload = {
+        "schema_version": "physical-semantic-failure-log-v1.0",
+        "failures": [],
+    }
+    if path.exists():
+        existing = json.loads(path.read_text(encoding="utf-8"))
+        if existing.get("schema_version") != payload["schema_version"]:
+            raise PhysicalCanaryError("semantic_failure_log_schema_mismatch")
+        payload = existing
+    row = evidence.model_dump(mode="json")
+    if row not in payload["failures"]:
+        payload["failures"].append(row)
+    atomic_write_bytes(
+        path, json.dumps(payload, indent=2, sort_keys=True).encode() + b"\n",
+    )
+
+
 def _load_or_compile(
     *, path: Path, packet, executor: LocalDocumentCompilerExecutor,
+    failure_log: Path,
 ) -> DocumentCompilationV1:
-    if path.exists():
-        output = DocumentCompilationV1.model_validate_json(path.read_bytes())
-        from runner.pipeline.analysis_sections import validate_compilation
-        validate_compilation(packet, output)
-        return output
-    output = execute_document_compiler(packet, executor)
+    try:
+        if path.exists():
+            output = DocumentCompilationV1.model_validate_json(path.read_bytes())
+            from runner.pipeline.analysis_sections import validate_compilation
+            validate_compilation(packet, output)
+            return output
+        output = execute_document_compiler(packet, executor)
+    except Exception as exc:
+        _persist_canary_failure(
+            failure_log,
+            content_free_section_failure(
+                exc, requested_alias=executor.route.requested_model, attempt=1,
+            ),
+        )
+        raise
     atomic_write_bytes(
         path, json.dumps(output.model_dump(mode="json"), sort_keys=True, separators=(",", ":")).encode(),
     )
@@ -504,6 +538,7 @@ def run_physical_canary(
             doc: _load_or_compile(
                 path=workspace / "compilations" / f"{doc}.json",
                 packet=packet, executor=compiler,
+                failure_log=workspace / "state" / "canary_failures.json",
             )
             for doc, packet in packets.items()
         }
@@ -598,6 +633,7 @@ def run_physical_canary(
                 executor=LocalDocumentCompilerExecutor(
                     client, purpose="qwen38_compiler_candidate",
                 ),
+                failure_log=workspace / "state" / "canary_failures.json",
             )
             qwen38 = {"status": "passed", "output_sha256": candidate.output_sha256}
 

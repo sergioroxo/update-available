@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -35,13 +35,90 @@ MAPPER_REPAIRABLE_REASONS = frozenset({
 class SectionAnalysisError(ValueError):
     """Deterministic, content-free section hold."""
 
+    def __init__(
+        self, error_code: str, *, stage: str = "executor_contract",
+        http_status_category: str = "", issues: tuple[object, ...] = (),
+        requested_alias: str = "",
+    ):
+        super().__init__(error_code)
+        self.error_code = error_code
+        self.stage = stage
+        self.http_status_category = http_status_category
+        self.issues = issues
+        self.requested_alias = requested_alias
+
 
 class RetryableSectionError(RuntimeError):
     """Transient execution failure eligible for bounded retry."""
 
+    def __init__(
+        self, error_code: str, *, stage: str = "executor",
+        http_status_category: str = "", issues: tuple[object, ...] = (),
+        requested_alias: str = "",
+    ):
+        super().__init__(error_code)
+        self.error_code = error_code
+        self.stage = stage
+        self.http_status_category = http_status_category
+        self.issues = issues
+        self.requested_alias = requested_alias
+
 
 class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+
+class SectionFailureIssueV1(_Strict):
+    location: str = Field(min_length=1, max_length=200, pattern=r"^[A-Za-z0-9_.*-]+$")
+    type_code: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9_.-]+$")
+
+
+class SectionFailureEvidenceV1(_Strict):
+    stage: str = Field(min_length=1, max_length=100, pattern=r"^[a-z0-9_]+$")
+    error_code: str = Field(min_length=1, max_length=160, pattern=r"^[a-z0-9_]+$")
+    http_status_category: Literal["", "3xx", "4xx", "5xx"] = ""
+    pydantic_diagnostics: tuple[SectionFailureIssueV1, ...] = ()
+    requested_alias: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9_.-]+$")
+    attempt: int = Field(ge=1, le=3)
+
+
+def content_free_section_failure(
+    error: BaseException, *, requested_alias: str, attempt: int,
+    stage: str | None = None, error_code: str | None = None,
+) -> SectionFailureEvidenceV1:
+    """Classify one execution boundary without retaining exception values or content."""
+    known = isinstance(error, (SectionAnalysisError, RetryableSectionError))
+    candidate_code = error_code or (getattr(error, "error_code", "") if known else "")
+    if not isinstance(candidate_code, str) or not candidate_code.replace("_", "").isalnum():
+        candidate_code = "unexpected_executor_failure"
+    candidate_stage = stage or (getattr(error, "stage", "") if known else "")
+    if not isinstance(candidate_stage, str) or not candidate_stage.replace("_", "").isalnum():
+        candidate_stage = "executor"
+    category = getattr(error, "http_status_category", "") if known else ""
+    if category not in {"", "3xx", "4xx", "5xx"}:
+        category = ""
+    alias = getattr(error, "requested_alias", "") if known else ""
+    if not isinstance(alias, str) or not alias:
+        alias = requested_alias
+    diagnostics: list[SectionFailureIssueV1] = []
+    raw_issues: Any = getattr(error, "issues", ()) if known else ()
+    for issue in tuple(raw_issues)[:32]:
+        if isinstance(issue, BaseModel):
+            values = issue.model_dump(mode="python")
+        elif isinstance(issue, dict):
+            values = issue
+        else:
+            values = {
+                "location": getattr(issue, "location", "response"),
+                "type_code": getattr(issue, "type_code", "validation_error"),
+            }
+        diagnostics.append(SectionFailureIssueV1.model_validate(values))
+    return SectionFailureEvidenceV1(
+        stage=candidate_stage, error_code=candidate_code,
+        http_status_category=category,
+        pydantic_diagnostics=tuple(diagnostics), requested_alias=alias,
+        attempt=attempt,
+    )
 
 
 class PromptSpecV1(_Strict):
@@ -539,6 +616,17 @@ class SectionAnalysisStore:
                 terminal_reason TEXT NOT NULL DEFAULT ''
             )
         """)
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS section_job_failures (
+                job_id TEXT NOT NULL, attempt INTEGER NOT NULL,
+                stage TEXT NOT NULL, error_code TEXT NOT NULL,
+                http_status_category TEXT NOT NULL DEFAULT '',
+                pydantic_diagnostics_json TEXT NOT NULL DEFAULT '[]',
+                requested_alias TEXT NOT NULL,
+                PRIMARY KEY(job_id, attempt, stage, error_code),
+                FOREIGN KEY(job_id) REFERENCES section_jobs(job_id)
+            )
+        """)
         self.connection.commit()
 
     def close(self) -> None:
@@ -606,7 +694,10 @@ class SectionAnalysisStore:
             if cursor.rowcount != 1:
                 raise SectionAnalysisError("stale_section_lease_commit")
 
-    def fail(self, job: SectionPromptJobV1, token: str, *, retryable: bool, reason: str) -> None:
+    def fail(
+        self, job: SectionPromptJobV1, token: str, *, retryable: bool,
+        reason: str, evidence: SectionFailureEvidenceV1,
+    ) -> None:
         row = self.connection.execute(
             "SELECT attempt FROM section_jobs WHERE job_id=? AND state='running' AND lease_token=?",
             (job.job_id, token),
@@ -616,9 +707,39 @@ class SectionAnalysisStore:
         next_state = "pending" if retryable and int(row["attempt"]) < job.maximum_attempts else "held"
         with self.connection:
             self.connection.execute(
+                "INSERT OR REPLACE INTO section_job_failures("
+                "job_id,attempt,stage,error_code,http_status_category,"
+                "pydantic_diagnostics_json,requested_alias) VALUES(?,?,?,?,?,?,?)",
+                (
+                    job.job_id, evidence.attempt, evidence.stage,
+                    evidence.error_code, evidence.http_status_category,
+                    json.dumps(
+                        [row.model_dump(mode="json") for row in evidence.pydantic_diagnostics],
+                        sort_keys=True, separators=(",", ":"),
+                    ),
+                    evidence.requested_alias,
+                ),
+            )
+            self.connection.execute(
                 "UPDATE section_jobs SET state=?,terminal_reason=?,lease_token=NULL,lease_expires_at=NULL WHERE job_id=?",
                 (next_state, reason, job.job_id),
             )
+
+    def failure_evidence(self) -> tuple[dict[str, object], ...]:
+        rows = self.connection.execute(
+            "SELECT job_id,attempt,stage,error_code,http_status_category,"
+            "pydantic_diagnostics_json,requested_alias FROM section_job_failures "
+            "ORDER BY job_id,attempt,stage,error_code"
+        ).fetchall()
+        return tuple({
+            "job_id": str(row["job_id"]),
+            "attempt": int(row["attempt"]),
+            "stage": str(row["stage"]),
+            "error_code": str(row["error_code"]),
+            "http_status_category": str(row["http_status_category"]),
+            "pydantic_diagnostics": json.loads(row["pydantic_diagnostics_json"]),
+            "requested_alias": str(row["requested_alias"]),
+        } for row in rows)
 
     def results(self) -> tuple[SectionPassResultV1, ...]:
         rows = self.connection.execute(
@@ -683,17 +804,19 @@ class SectionAnalysisStore:
 
 def run_parallel_jobs(
     *, store: SectionAnalysisStore, plan: AdaptiveAnalysisPlanV1,
-    executor: SectionExecutor, max_workers: int = 4,
+    executor: SectionExecutor, max_workers: int = 4, lease_seconds: int = 900,
 ) -> tuple[SectionPassResultV1, ...]:
     if max_workers < 1 or max_workers > 16:
         raise ValueError("parallel worker limit is invalid")
+    if lease_seconds < 60 or lease_seconds > 3600:
+        raise ValueError("section model lease is outside the bounded range")
     sections = {row.section_id: row for row in plan.sections}
     while True:
         claimed = []
         now = datetime.now(timezone.utc)
         store.recover_expired(now)
         for _ in range(max_workers):
-            row = store.claim(now)
+            row = store.claim(now, lease_seconds=lease_seconds)
             if row is None:
                 break
             job, token, attempt = row
@@ -715,23 +838,70 @@ def run_parallel_jobs(
                 return executor.execute(job, sections[job.section_id], attempt)
 
             futures = {
-                pool.submit(execute_claim, job, attempt, retry_context): (job, token, attempt)
+                pool.submit(execute_claim, job, attempt, retry_context): (
+                    job, token, attempt, retry_context,
+                )
                 for job, token, attempt, retry_context in claimed
             }
             for future in as_completed(futures):
-                job, token, _attempt = futures[future]
+                job, token, attempt, retry_context = futures[future]
+                requested_alias = (
+                    job.repair_model_route
+                    if retry_context in MAPPER_REPAIRABLE_REASONS and job.repair_model_route
+                    else job.model_route
+                )
                 try:
                     result = future.result()
-                    validate_section_result(job, sections[job.section_id], result)
-                    store.commit(result, token, datetime.now(timezone.utc))
                 except RetryableSectionError as exc:
-                    reason = (
-                        str(exc) if str(exc) in MAPPER_REPAIRABLE_REASONS
-                        else "retryable_executor_failure"
+                    evidence = content_free_section_failure(
+                        exc, requested_alias=requested_alias, attempt=attempt,
                     )
-                    store.fail(job, token, retryable=True, reason=reason)
-                except Exception:
-                    store.fail(job, token, retryable=False, reason="invalid_or_terminal_executor_failure")
+                    store.fail(
+                        job, token, retryable=True, reason=evidence.error_code,
+                        evidence=evidence,
+                    )
+                except Exception as exc:
+                    evidence = content_free_section_failure(
+                        exc, requested_alias=requested_alias, attempt=attempt,
+                    )
+                    store.fail(
+                        job, token, retryable=False, reason=evidence.error_code,
+                        evidence=evidence,
+                    )
+                else:
+                    try:
+                        validate_section_result(job, sections[job.section_id], result)
+                    except Exception as exc:
+                        evidence = content_free_section_failure(
+                            exc, requested_alias=requested_alias, attempt=attempt,
+                            stage="final_result_validation",
+                            error_code=(
+                                getattr(exc, "error_code", "")
+                                if isinstance(exc, SectionAnalysisError)
+                                else "section_result_validation_failed"
+                            ),
+                        )
+                        store.fail(
+                            job, token, retryable=False, reason=evidence.error_code,
+                            evidence=evidence,
+                        )
+                    else:
+                        try:
+                            store.commit(result, token, datetime.now(timezone.utc))
+                        except Exception as exc:
+                            evidence = content_free_section_failure(
+                                exc, requested_alias=requested_alias, attempt=attempt,
+                                stage="result_commit",
+                                error_code=(
+                                    getattr(exc, "error_code", "")
+                                    if isinstance(exc, SectionAnalysisError)
+                                    else "section_result_commit_failed"
+                                ),
+                            )
+                            store.fail(
+                                job, token, retryable=False,
+                                reason=evidence.error_code, evidence=evidence,
+                            )
     return store.results()
 
 

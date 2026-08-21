@@ -16,6 +16,7 @@ from runner.pipeline.factory_semantic_canary import (
 )
 from runner.models.retrieval import canonical_contract_sha256
 from runner.pipeline.analysis_sections import (
+    SectionAnalysisError,
     SectionAnalysisStore,
     SectionFindingV1,
     SectionPassResultV1,
@@ -40,6 +41,8 @@ def _handler(counter):
         if request.url.path == "/model/info":
             return httpx.Response(200, json=_model_info())
         body = json.loads(request.content)
+        if body["model"] == "compiler-qwen38":
+            assert body["reasoning_effort"] == "none"
         counter[body["model"]] = counter.get(body["model"], 0) + 1
         if request.url.path == "/v1/embeddings":
             rows = []
@@ -136,6 +139,41 @@ def test_canary_report_is_content_free(tmp_path):
     assert "api_key" not in serialized
 
 
+def test_compiler_json_failure_persists_only_content_free_boundary(tmp_path):
+    valid_handler = _handler({})
+
+    def handler(request):
+        if request.url.path == "/v1/chat/completions":
+            body = json.loads(request.content)
+            if body["model"] == "core-gemma":
+                return httpx.Response(200, json={
+                    "model": body["model"],
+                    "choices": [{"message": {"content": "FORBIDDEN-RAW-CONTENT"}}],
+                })
+        return valid_handler(request)
+
+    workspace = tmp_path / "compiler-failure"
+    with pytest.raises(SectionAnalysisError, match="json_not_object_prefixed"):
+        run_physical_canary(
+            workspace=workspace,
+            endpoint_config=default_endpoint_config(
+                base_url="http://127.0.0.1:4000",
+            ),
+            host_role="mac-studio", transport=httpx.MockTransport(handler),
+            minimum_free_bytes=0,
+        )
+    serialized = (workspace / "state" / "canary_failures.json").read_text()
+    assert "FORBIDDEN-RAW-CONTENT" not in serialized
+    assert json.loads(serialized)["failures"] == [{
+        "attempt": 1,
+        "error_code": "local_model_response_json_not_object_prefixed",
+        "http_status_category": "",
+        "pydantic_diagnostics": [],
+        "requested_alias": "core-gemma",
+        "stage": "response_json",
+    }]
+
+
 def test_concurrency_one_schema_retry_succeeds_and_is_recorded(tmp_path):
     counter = {}
     valid_handler = _handler(counter)
@@ -180,10 +218,14 @@ def test_concurrency_one_schema_retry_succeeds_and_is_recorded(tmp_path):
     }
     assert benchmark["levels"][0]["schema_diagnostics"] == [{
         "attempt": 1,
-        "issues": [{
+        "error_code": "section_mapper_schema_validation_retryable",
+        "http_status_category": "",
+        "pydantic_diagnostics": [{
             "location": "findings.*.statement",
             "type_code": "string_too_short",
         }],
+        "requested_alias": "core-qwen",
+        "stage": "pydantic_validation",
     }]
 
 
@@ -225,6 +267,12 @@ def test_repeated_schema_failure_persists_content_free_benchmark(tmp_path):
     assert level["error_code"] == "section_mapper_schema_validation_retryable"
     assert level["requested_model_counts"] == {
         "compiler-qwen38": 1, "core-qwen": 1,
+    }
+    assert [row["requested_alias"] for row in level["schema_diagnostics"]] == [
+        "core-qwen", "compiler-qwen38",
+    ]
+    assert {row["stage"] for row in level["schema_diagnostics"]} == {
+        "pydantic_validation",
     }
     assert source_marker not in serialized
     assert "source_text" not in serialized
@@ -275,7 +323,7 @@ def test_targeted_run020c_resume_preserves_successes_and_skips_benchmark_probe(t
     class LegacyExecutor:
         def execute(self, job, section, attempt):
             if job.job_id in held_ids:
-                raise ValueError("legacy model-output contract failure")
+                raise SectionAnalysisError("invalid_or_terminal_executor_failure")
             return result_for(job, section, attempt)
 
     store = SectionAnalysisStore(workspace / "state" / "synthetic-policy.sqlite")

@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from runner.pipeline.analysis_sections import (
     RetryableSectionError,
+    SectionAnalysisError,
     SectionAnalysisStore,
     build_adaptive_analysis_plan,
     build_compiler_packet,
@@ -25,6 +26,7 @@ from runner.pipeline.semantic_model_adapters import (
     OpenAICompatibleLocalClient,
     SemanticAdapterError,
     SemanticEndpointConfigV1,
+    compiler_response_json_schema,
     mapper_response_json_schema,
 )
 
@@ -202,11 +204,13 @@ def test_section_and_compiler_adapters_preserve_exact_citation_boundary():
     )
     section = plan.sections[0]
     job = plan.jobs[0]
+    requests = []
 
     def handler(request):
         if request.url.path == "/model/info":
             return httpx.Response(200, json=_model_info())
         body = json.loads(request.content)
+        requests.append(body)
         if body["model"] == "core-qwen":
             payload = {"findings": [{
                 "statement": "The section contains policy evidence.",
@@ -235,6 +239,10 @@ def test_section_and_compiler_adapters_preserve_exact_citation_boundary():
     compiled = LocalDocumentCompilerExecutor(client).execute(packet)
     validate_compilation(packet, compiled)
     assert compiled.claims[0].citation_unit_ids == (section.unit_ids[0],)
+    compiler_format = requests[-1]["response_format"]
+    assert compiler_format["type"] == "json_schema"
+    assert compiler_format["json_schema"]["name"] == "compiler_response_v1"
+    assert compiler_format["json_schema"]["schema"] == compiler_response_json_schema()
     assert [row.purpose for row in client.receipts] == ["section_mapper", "document_compiler"]
     assert all("source_text" not in row.model_dump_json() for row in client.receipts)
     client.close()
@@ -270,8 +278,9 @@ def test_mapper_rejects_unknown_source_citation_and_malformed_json():
         mapper.execute(plan.jobs[0], plan.sections[0], 1)
     assert caught.value.issues[0].type_code == "enum"
     response_content["value"] = "not-json"
-    with pytest.raises(SemanticAdapterError, match="valid_json"):
+    with pytest.raises(SectionAnalysisError, match="json_not_object_prefixed") as malformed:
         mapper.execute(plan.jobs[0], plan.sections[0], 1)
+    assert malformed.value.stage == "response_json"
     client.close()
 
 
@@ -371,7 +380,7 @@ def test_mapper_schema_is_strict_and_derived_from_contract():
     assert finding["properties"]["confidence"]["maximum"] == 1
 
 
-def test_mapper_schema_is_bound_to_exact_job_citations_and_output_limit():
+def test_mapper_provider_schema_stays_base_structural_for_exact_job():
     units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
     plan = build_adaptive_analysis_plan(
         run_id="run-020d", units=units, small_model_route="core-qwen",
@@ -379,12 +388,13 @@ def test_mapper_schema_is_bound_to_exact_job_citations_and_output_limit():
     )
     job, section = plan.jobs[0], plan.sections[0]
     schema = mapper_response_json_schema(job, section)
+    assert schema == mapper_response_json_schema()
     finding = schema["$defs"]["_MapperFindingPayloadV1"]
     citations = finding["properties"]["citation_unit_ids"]
-    assert citations["items"]["enum"] == list(section.unit_ids)
-    assert citations["uniqueItems"] is True
-    assert schema["properties"]["findings"]["maxItems"] == job.maximum_output_items
-    assert finding["allOf"][0]["then"]["properties"]["citation_unit_ids"]["minItems"] == 1
+    assert citations["items"] == {"type": "string"}
+    assert "uniqueItems" not in citations
+    assert "maxItems" not in schema["properties"]["findings"]
+    assert "allOf" not in finding
 
 
 @pytest.mark.parametrize(("citations", "evidence_state", "expected_type"), [
@@ -554,12 +564,14 @@ def test_declared_schema_repair_uses_qwen38_and_binds_actual_provenance(tmp_path
         maximum_prompts_per_section=2, maximum_attempts=2,
     )
     calls = []
+    reasoning = []
 
     def handler(request):
         if request.url.path == "/model/info":
             return httpx.Response(200, json=_model_info())
         body = json.loads(request.content)
         calls.append(body["model"])
+        reasoning.append(body.get("reasoning_effort"))
         job = plan.jobs[0]
         payload = {"findings": [{
             "statement": "" if body["model"] == "core-qwen" else "Repaired finding.",
@@ -582,6 +594,7 @@ def test_declared_schema_repair_uses_qwen38_and_binds_actual_provenance(tmp_path
         retry_error_code="section_mapper_schema_validation_retryable",
     )
     assert calls == ["core-qwen", "compiler-qwen38"]
+    assert reasoning == [None, "none"]
     assert result.requested_model == "compiler-qwen38"
     assert result.provider_resolved_model == "ollama_chat/qwen3.8:27b-mlx"
     assert result.repair_error_code == "section_mapper_schema_validation_retryable"
@@ -677,6 +690,13 @@ def test_transport_retry_stays_on_primary_route(tmp_path):
         assert calls[:2] == ["core-qwen", "core-qwen"]
         assert "compiler-qwen38" not in calls
         assert all(row.repair_error_code is None for row in results)
+        failures = store.failure_evidence()
+        assert len(failures) == 1
+        assert failures[0]["stage"] == "http_status"
+        assert failures[0]["error_code"] == "local_chat_status_retryable"
+        assert failures[0]["http_status_category"] == "5xx"
+        assert failures[0]["requested_alias"] == "core-qwen"
+        assert failures[0]["attempt"] == 1
     finally:
         store.close()
         client.close()
