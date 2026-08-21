@@ -20,6 +20,7 @@ from runner.pipeline.semantic_model_adapters import (
     LocalEmbeddingProvider,
     LocalModelRouteV1,
     LocalSectionExecutor,
+    MapperOutputContractRetryableError,
     MapperSchemaRetryableError,
     OpenAICompatibleLocalClient,
     SemanticAdapterError,
@@ -262,10 +263,12 @@ def test_mapper_rejects_unknown_source_citation_and_malformed_json():
     client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
     client.preflight()
     mapper = LocalSectionExecutor(client, concurrency_level=1)
-    result = mapper.execute(plan.jobs[0], plan.sections[0], 1)
-    from runner.pipeline.analysis_sections import validate_section_result
-    with pytest.raises(Exception, match="unknown_source"):
-        validate_section_result(plan.jobs[0], plan.sections[0], result)
+    with pytest.raises(
+        MapperOutputContractRetryableError,
+        match="output_contract_retryable",
+    ) as caught:
+        mapper.execute(plan.jobs[0], plan.sections[0], 1)
+    assert caught.value.issues[0].type_code == "enum"
     response_content["value"] = "not-json"
     with pytest.raises(SemanticAdapterError, match="valid_json"):
         mapper.execute(plan.jobs[0], plan.sections[0], 1)
@@ -346,7 +349,7 @@ def test_mapper_empty_findings_is_valid_and_prompt_forbids_blank_statement():
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     schema = response_format["json_schema"]["schema"]
-    assert schema == mapper_response_json_schema()
+    assert schema == mapper_response_json_schema(plan.jobs[0], plan.sections[0])
     assert json.dumps(schema, sort_keys=True, separators=(",", ":")) in system_prompt
     client.close()
 
@@ -366,6 +369,96 @@ def test_mapper_schema_is_strict_and_derived_from_contract():
     ]
     assert finding["properties"]["confidence"]["minimum"] == 0
     assert finding["properties"]["confidence"]["maximum"] == 1
+
+
+def test_mapper_schema_is_bound_to_exact_job_citations_and_output_limit():
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020d", units=units, small_model_route="core-qwen",
+        target_chars=3000, maximum_prompts_per_section=2,
+    )
+    job, section = plan.jobs[0], plan.sections[0]
+    schema = mapper_response_json_schema(job, section)
+    finding = schema["$defs"]["_MapperFindingPayloadV1"]
+    citations = finding["properties"]["citation_unit_ids"]
+    assert citations["items"]["enum"] == list(section.unit_ids)
+    assert citations["uniqueItems"] is True
+    assert schema["properties"]["findings"]["maxItems"] == job.maximum_output_items
+    assert finding["allOf"][0]["then"]["properties"]["citation_unit_ids"]["minItems"] == 1
+
+
+@pytest.mark.parametrize(("citations", "evidence_state", "expected_type"), [
+    ([], "supported", "supported_citation_required"),
+    (["duplicate", "duplicate"], "hypothesis", "unique_items"),
+    (["unknown"], "unsupported", "enum"),
+])
+def test_job_bound_output_contract_failures_are_retryable_and_sanitized(
+    citations, evidence_state, expected_type,
+):
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020d", units=units, small_model_route="core-qwen",
+        target_chars=3000, maximum_prompts_per_section=2,
+    )
+    job, section = plan.jobs[0], plan.sections[0]
+    if citations == ["duplicate", "duplicate"]:
+        citations = [section.unit_ids[0], section.unit_ids[0]]
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        payload = {"findings": [{
+            "statement": "Synthetic finding.", "evidence_state": evidence_state,
+            "citation_unit_ids": citations, "confidence": 0.8,
+        }]}
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps(payload)}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    try:
+        with pytest.raises(MapperOutputContractRetryableError) as caught:
+            LocalSectionExecutor(client, concurrency_level=1).execute(job, section, 1)
+        assert [row.type_code for row in caught.value.issues] == [expected_type]
+        assert set(caught.value.issues[0].model_dump()) == {"location", "type_code"}
+    finally:
+        client.close()
+
+
+def test_job_bound_finding_limit_is_retryable():
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020d", units=units, small_model_route="core-qwen",
+        target_chars=3000, maximum_prompts_per_section=2,
+    )
+    job, section = plan.jobs[0], plan.sections[0]
+    finding = {
+        "statement": "Synthetic finding.", "evidence_state": "supported",
+        "citation_unit_ids": [section.unit_ids[0]], "confidence": 0.8,
+    }
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps({
+                "findings": [finding] * (job.maximum_output_items + 1),
+            })}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    try:
+        with pytest.raises(MapperOutputContractRetryableError) as caught:
+            LocalSectionExecutor(client, concurrency_level=1).execute(job, section, 1)
+        assert caught.value.issues[0].type_code == "too_long"
+    finally:
+        client.close()
 
 
 @pytest.mark.parametrize(("finding", "expected_type"), [
@@ -496,6 +589,53 @@ def test_declared_schema_repair_uses_qwen38_and_binds_actual_provenance(tmp_path
         "section_mapper", "qwen38_mapper_repair",
     ]
     client.close()
+
+
+def test_declared_output_contract_repair_uses_qwen38_once():
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020d", units=units, small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=3000,
+        maximum_prompts_per_section=2, maximum_attempts=2,
+    )
+    job, section = plan.jobs[0], plan.sections[0]
+    calls = []
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        calls.append(body["model"])
+        payload = {"findings": [{
+            "statement": "Synthetic repaired finding.",
+            "evidence_state": "supported",
+            "citation_unit_ids": (
+                ["unknown-unit"] if body["model"] == "core-qwen"
+                else [section.unit_ids[0]]
+            ),
+            "confidence": 0.8,
+        }]}
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps(payload)}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    executor = LocalSectionExecutor(client, concurrency_level=1)
+    try:
+        with pytest.raises(MapperOutputContractRetryableError):
+            executor.execute(job, section, 1)
+        result = executor.execute_with_retry_context(
+            job, section, 2,
+            retry_error_code="section_mapper_output_contract_retryable",
+        )
+        assert calls == ["core-qwen", "compiler-qwen38"]
+        assert result.attempt == 2
+        assert result.repair_error_code == "section_mapper_output_contract_retryable"
+        assert result.requested_model == "compiler-qwen38"
+    finally:
+        client.close()
 
 
 def test_transport_retry_stays_on_primary_route(tmp_path):

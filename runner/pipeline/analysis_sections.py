@@ -24,6 +24,12 @@ from runner.pipeline.citation_units_v2 import CitationUnitsV2, EvidenceSpanV2
 
 REGISTRY_VERSION = "analysis-prompt-registry-v1.0"
 PLAN_POLICY_VERSION = "adaptive-section-plan-v1.0"
+MAPPER_SCHEMA_RETRY_REASON = "section_mapper_schema_validation_retryable"
+MAPPER_OUTPUT_RETRY_REASON = "section_mapper_output_contract_retryable"
+MAPPER_REPAIRABLE_REASONS = frozenset({
+    MAPPER_SCHEMA_RETRY_REASON,
+    MAPPER_OUTPUT_RETRY_REASON,
+})
 
 
 class SectionAnalysisError(ValueError):
@@ -272,7 +278,10 @@ class SectionPassResultV1(_Strict):
     requested_model: str
     provider_resolved_model: str
     attempt: int = Field(ge=1)
-    repair_error_code: Literal["section_mapper_schema_validation_retryable"] | None = None
+    repair_error_code: Literal[
+        "section_mapper_schema_validation_retryable",
+        "section_mapper_output_contract_retryable",
+    ] | None = None
     findings: tuple[SectionFindingV1, ...]
     output_sha256: str
 
@@ -490,6 +499,8 @@ def validate_section_result(
         expected_route = job.repair_model_route
     if result.prompt_id != job.prompt_id or result.requested_model != expected_route:
         raise SectionAnalysisError("section_result_route_or_prompt_mismatch")
+    if len(result.findings) > job.maximum_output_items:
+        raise SectionAnalysisError("section_mapper_findings_contract_mismatch")
     allowed = set(section.unit_ids)
     for finding in result.findings:
         if finding.prompt_id != job.prompt_id:
@@ -636,6 +647,39 @@ class SectionAnalysisStore:
             raise SectionAnalysisError("stale_section_retry_context")
         return str(row["terminal_reason"] or "")
 
+    def targeted_resume_snapshot(self) -> tuple[dict[str, object], ...]:
+        """Return content-free durable state used by the synthetic resume gate."""
+        rows = self.connection.execute(
+            "SELECT job_id,state,attempt,result_json,terminal_reason,lease_token,lease_expires_at "
+            "FROM section_jobs ORDER BY job_id"
+        ).fetchall()
+        return tuple({
+            "job_id": str(row["job_id"]),
+            "state": str(row["state"]),
+            "attempt": int(row["attempt"]),
+            "has_result": row["result_json"] is not None,
+            "terminal_reason": str(row["terminal_reason"] or ""),
+            "has_lease": bool(row["lease_token"] or row["lease_expires_at"]),
+        } for row in rows)
+
+    def requeue_legacy_held_contract_jobs(self, job_ids: tuple[str, ...]) -> int:
+        """Requeue only prevalidated Run-020C legacy holds without erasing attempts."""
+        if not job_ids or len(job_ids) != len(set(job_ids)):
+            raise SectionAnalysisError("targeted_resume_job_ids_invalid")
+        placeholders = ",".join("?" for _ in job_ids)
+        with self.connection:
+            cursor = self.connection.execute(
+                "UPDATE section_jobs SET state='pending',terminal_reason=?,"
+                "lease_token=NULL,lease_expires_at=NULL "
+                f"WHERE job_id IN ({placeholders}) AND state='held' AND attempt=1 "
+                "AND result_json IS NULL AND terminal_reason='invalid_or_terminal_executor_failure' "
+                "AND lease_token IS NULL AND lease_expires_at IS NULL",
+                (MAPPER_OUTPUT_RETRY_REASON, *job_ids),
+            )
+            if cursor.rowcount != len(job_ids):
+                raise SectionAnalysisError("targeted_resume_state_changed")
+        return cursor.rowcount
+
 
 def run_parallel_jobs(
     *, store: SectionAnalysisStore, plan: AdaptiveAnalysisPlanV1,
@@ -660,7 +704,7 @@ def run_parallel_jobs(
             def execute_claim(job, attempt, retry_context):
                 contextual = getattr(executor, "execute_with_retry_context", None)
                 if (
-                    retry_context == "section_mapper_schema_validation_retryable"
+                    retry_context in MAPPER_REPAIRABLE_REASONS
                     and job.repair_model_route is not None
                     and callable(contextual)
                 ):
@@ -682,8 +726,7 @@ def run_parallel_jobs(
                     store.commit(result, token, datetime.now(timezone.utc))
                 except RetryableSectionError as exc:
                     reason = (
-                        "section_mapper_schema_validation_retryable"
-                        if str(exc) == "section_mapper_schema_validation_retryable"
+                        str(exc) if str(exc) in MAPPER_REPAIRABLE_REASONS
                         else "retryable_executor_failure"
                     )
                     store.fail(job, token, retryable=True, reason=reason)

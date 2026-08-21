@@ -23,6 +23,7 @@ from pydantic import SecretStr
 from runner.models.retrieval import SourceUnitRowV1
 from runner.pipeline.analysis_sections import (
     DocumentCompilationV1,
+    MAPPER_REPAIRABLE_REASONS,
     RetryableSectionError,
     SectionAnalysisStore,
     build_adaptive_analysis_plan,
@@ -47,6 +48,7 @@ from runner.pipeline.semantic_model_adapters import (
     LocalEmbeddingProvider,
     LocalModelRouteV1,
     LocalSectionExecutor,
+    MapperOutputContractRetryableError,
     MapperSchemaRetryableError,
     OpenAICompatibleLocalClient,
     SemanticAdapterError,
@@ -58,10 +60,106 @@ RUN_ID = "physical-synthetic-semantic-020"
 MINIMUM_FREE_BYTES = 40 * 1024**3
 FIXTURE_VERSION = "physical-semantic-synthetic-fixtures-v1.0"
 POLICY_SHA = hashlib.sha256(b"physical-semantic-policy-v1.0").hexdigest()
+RUN020C_HELD_DOCUMENT_ID = "synthetic-policy"
+RUN020C_EXPECTED_SUCCEEDED = 8
+RUN020C_EXPECTED_HELD = 2
+RUN020C_VALIDATED_MODELS = {
+    "section_mapper": "ollama_chat/qwen3.6:35b-mlx",
+    "document_compiler": "ollama_chat/gemma4:31b-mlx",
+    "qwen_embedding": "ollama/qwen3-embedding:8b",
+    "qwen38_mapper_repair": "ollama_chat/qwen3.8:27b-mlx",
+    "qwen38_compiler_candidate": "ollama_chat/qwen3.8:27b-mlx",
+    "bge_shadow": "ollama/bge-m3:latest",
+}
 
 
 class PhysicalCanaryError(ValueError):
     """Content-free physical canary preflight or validation failure."""
+
+
+def _reuse_run020c_validated_bindings(
+    client: OpenAICompatibleLocalClient,
+) -> dict[str, str]:
+    expected_aliases = {
+        "section_mapper": "core-qwen",
+        "document_compiler": "core-gemma",
+        "qwen_embedding": "research-embedding",
+        "qwen38_mapper_repair": "compiler-qwen38",
+        "qwen38_compiler_candidate": "compiler-qwen38",
+        "bge_shadow": "bge-m3-shadow",
+    }
+    purposes = {route.purpose for route in client.config.routes}
+    if purposes != set(RUN020C_VALIDATED_MODELS):
+        raise PhysicalCanaryError("run020c_prevalidated_routes_changed")
+    bindings: dict[str, str] = {}
+    for route in client.config.routes:
+        if route.requested_model != expected_aliases[route.purpose]:
+            raise PhysicalCanaryError("run020c_prevalidated_alias_changed")
+        bindings[route.route_id] = RUN020C_VALIDATED_MODELS[route.purpose]
+    return client.reuse_prevalidated_bindings(bindings)
+
+
+def _targeted_resume_run020c_held_jobs(
+    *, workspace: Path, plans: dict, benchmark: dict,
+) -> tuple[str, ...]:
+    if not isinstance(benchmark, dict):
+        raise PhysicalCanaryError("run020c_benchmark_not_reusable")
+    levels = benchmark.get("levels")
+    if (
+        benchmark.get("maximum_safe_concurrency") != 4
+        or not isinstance(levels, list)
+        or [row.get("concurrency") for row in levels] != [1, 2, 4]
+        or any(row.get("status") != "passed" for row in levels)
+    ):
+        raise PhysicalCanaryError("run020c_benchmark_not_reusable")
+    if (workspace / "physical_semantic_canary_report.json").exists():
+        raise PhysicalCanaryError("run020c_resume_report_already_exists")
+    state_root = workspace / "state"
+    existing_databases = sorted(state_root.glob("*.sqlite")) if state_root.exists() else []
+    expected_database = state_root / f"{RUN020C_HELD_DOCUMENT_ID}.sqlite"
+    if existing_databases != [expected_database]:
+        raise PhysicalCanaryError("run020c_resume_database_set_mismatch")
+    plan = plans.get(RUN020C_HELD_DOCUMENT_ID)
+    if plan is None or len(plan.jobs) != RUN020C_EXPECTED_SUCCEEDED + RUN020C_EXPECTED_HELD:
+        raise PhysicalCanaryError("run020c_resume_plan_mismatch")
+    store = SectionAnalysisStore(expected_database)
+    try:
+        store.seed(plan)
+        rows = store.targeted_resume_snapshot()
+        succeeded = [row for row in rows if row["state"] == "succeeded"]
+        held = [row for row in rows if row["state"] == "held"]
+        if (
+            len(rows) != len(plan.jobs)
+            or len(succeeded) != RUN020C_EXPECTED_SUCCEEDED
+            or len(held) != RUN020C_EXPECTED_HELD
+            or any(row["state"] not in {"succeeded", "held"} for row in rows)
+        ):
+            raise PhysicalCanaryError("run020c_resume_terminal_counts_mismatch")
+        if any(
+            row["attempt"] != 1 or not row["has_result"]
+            or row["terminal_reason"] or row["has_lease"]
+            for row in succeeded
+        ):
+            raise PhysicalCanaryError("run020c_resume_success_state_mismatch")
+        if any(
+            row["attempt"] != 1 or row["has_result"]
+            or row["terminal_reason"] != "invalid_or_terminal_executor_failure"
+            or row["has_lease"]
+            for row in held
+        ):
+            raise PhysicalCanaryError("run020c_resume_held_state_mismatch")
+        job_map = {job.job_id: job for job in plan.jobs}
+        held_ids = tuple(sorted(str(row["job_id"]) for row in held))
+        if any(
+            job_map[job_id].repair_model_route != "compiler-qwen38"
+            or job_map[job_id].maximum_attempts != 2
+            for job_id in held_ids
+        ):
+            raise PhysicalCanaryError("run020c_resume_repair_route_mismatch")
+        store.requeue_legacy_held_contract_jobs(held_ids)
+        return held_ids
+    finally:
+        store.close()
 
 
 def _inside(path: Path, root: Path) -> bool:
@@ -219,7 +317,7 @@ def _benchmark_concurrency(
                 validate_section_result(job, section, result)
                 return result, retry_count, schema_retry_count, diagnostics
             except RetryableSectionError as exc:
-                if isinstance(exc, MapperSchemaRetryableError):
+                if isinstance(exc, (MapperSchemaRetryableError, MapperOutputContractRetryableError)):
                     diagnostics.append({
                         "attempt": attempt,
                         "issues": [row.model_dump(mode="json") for row in exc.issues],
@@ -227,7 +325,7 @@ def _benchmark_concurrency(
                 if attempt >= job.maximum_attempts:
                     raise BenchmarkRetryFailure(exc, diagnostics) from None
                 retry_count += 1
-                if str(exc) == "section_mapper_schema_validation_retryable":
+                if str(exc) in MAPPER_REPAIRABLE_REASONS:
                     schema_retry_count += 1
                     retry_error_code = str(exc)
                 else:
@@ -331,6 +429,8 @@ def run_physical_canary(
     *, workspace: Path, endpoint_config: SemanticEndpointConfigV1,
     host_role: str, shared_roots: tuple[Path, ...] = (), transport=None,
     minimum_free_bytes: int = MINIMUM_FREE_BYTES,
+    resume_run020c_held_jobs: bool = False,
+    reuse_run020c_validated_environment: bool = False,
 ) -> dict:
     host = verify_physical_canary_host(
         workspace=workspace, host_role=host_role, shared_roots=shared_roots,
@@ -338,9 +438,15 @@ def run_physical_canary(
     )
     workspace = Path(workspace).resolve(strict=False)
     workspace.mkdir(parents=True, exist_ok=True)
+    if resume_run020c_held_jobs and not reuse_run020c_validated_environment:
+        raise PhysicalCanaryError("run020c_resume_requires_prevalidated_environment_reuse")
     client = OpenAICompatibleLocalClient(endpoint_config, transport=transport)
     try:
-        bindings = client.preflight()
+        bindings = (
+            _reuse_run020c_validated_bindings(client)
+            if reuse_run020c_validated_environment
+            else client.preflight()
+        )
         texts = _fixture_texts()
         units_by_doc = {
             doc: build_citation_units_v2(text, doc_id=doc)
@@ -360,10 +466,18 @@ def run_physical_canary(
             )
             for doc, units in units_by_doc.items()
         }
+        benchmark_path = workspace / "concurrency_benchmark.json"
+        benchmark_reused = benchmark_path.exists()
         benchmark = _benchmark_concurrency(
-            path=workspace / "concurrency_benchmark.json", client=client, plans=plans,
+            path=benchmark_path, client=client, plans=plans,
         )
         max_workers = benchmark["maximum_safe_concurrency"]
+        resumed_job_ids = (
+            _targeted_resume_run020c_held_jobs(
+                workspace=workspace, plans=plans, benchmark=benchmark,
+            )
+            if resume_run020c_held_jobs else ()
+        )
         results = {}
         for doc, plan in plans.items():
             store = SectionAnalysisStore(workspace / "state" / f"{doc}.sqlite")
@@ -508,6 +622,8 @@ def run_physical_canary(
             "section_count": sum(len(row.sections) for row in plans.values()),
             "prompt_job_count": sum(len(row.jobs) for row in plans.values()),
             "maximum_safe_mapper_concurrency": max_workers,
+            "benchmark_reused": benchmark_reused,
+            "targeted_resume_job_ids": list(resumed_job_ids),
             "new_model_call_count": len(receipts),
             "model_call_receipt_sha256s": [row.receipt_sha256 for row in receipts],
             "model_call_duration_ms": sum(row.duration_ms for row in receipts),
@@ -537,6 +653,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--base-url", default=os.environ.get("SOGICE_SEMANTIC_BASE_URL", "http://127.0.0.1:4000"))
     parser.add_argument("--bge-shadow-alias", default=os.environ.get("SOGICE_BGE_SHADOW_ALIAS") or None)
     parser.add_argument("--qwen38-alias", default=os.environ.get("SOGICE_QWEN38_ALIAS") or None)
+    parser.add_argument("--resume-run020c-held-jobs", action="store_true")
+    parser.add_argument("--reuse-run020c-validated-environment", action="store_true")
     args = parser.parse_args(argv)
     host_role = os.environ.get("SOGICE_FACTORY_HOST_ROLE", "")
     shared_roots = tuple(
@@ -556,6 +674,8 @@ def main(argv: list[str] | None = None) -> int:
     report = run_physical_canary(
         workspace=args.workspace, endpoint_config=config,
         host_role=host_role, shared_roots=shared_roots,
+        resume_run020c_held_jobs=args.resume_run020c_held_jobs,
+        reuse_run020c_validated_environment=args.reuse_run020c_validated_environment,
     )
     print(json.dumps(report, sort_keys=True))
     return 0

@@ -127,6 +127,11 @@ def test_result_accepts_only_declared_attempt_two_schema_repair():
         repair_error_code="section_mapper_schema_validation_retryable",
     )
     validate_section_result(job, section, repaired)
+    output_repaired = _result(
+        job, section, attempt=2, requested_model="compiler-qwen38",
+        repair_error_code="section_mapper_output_contract_retryable",
+    )
+    validate_section_result(job, section, output_repaired)
 
     attempt_one = repaired.model_copy(update={"attempt": 1})
     with pytest.raises(SectionAnalysisError, match="undeclared_repair"):
@@ -203,6 +208,51 @@ def test_durable_parallel_retry_restart_and_no_successful_reexecution(tmp_path):
     reopened.close()
     assert second == first
     assert second_executor.calls == {}
+
+
+def test_targeted_resume_requeues_only_exact_legacy_held_job(tmp_path):
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020d", units=_units(), small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=4000,
+        maximum_prompts_per_section=2,
+    )
+    held_id = plan.jobs[0].job_id
+
+    class LegacyExecutor:
+        def execute(self, job, section, attempt):
+            if job.job_id == held_id:
+                raise ValueError("legacy terminal model-output failure")
+            return _result(job, section, attempt=attempt)
+
+    store = SectionAnalysisStore(tmp_path / "legacy.sqlite")
+    try:
+        store.seed(plan)
+        results = run_parallel_jobs(
+            store=store, plan=plan, executor=LegacyExecutor(), max_workers=2,
+        )
+        assert len(results) == len(plan.jobs) - 1
+        snapshot = store.targeted_resume_snapshot()
+        held = next(row for row in snapshot if row["job_id"] == held_id)
+        assert held == {
+            "job_id": held_id,
+            "state": "held",
+            "attempt": 1,
+            "has_result": False,
+            "terminal_reason": "invalid_or_terminal_executor_failure",
+            "has_lease": False,
+        }
+        assert store.requeue_legacy_held_contract_jobs((held_id,)) == 1
+        resumed = next(
+            row for row in store.targeted_resume_snapshot()
+            if row["job_id"] == held_id
+        )
+        assert resumed["state"] == "pending"
+        assert resumed["attempt"] == 1
+        assert resumed["terminal_reason"] == "section_mapper_output_contract_retryable"
+        with pytest.raises(SectionAnalysisError, match="state_changed"):
+            store.requeue_legacy_held_contract_jobs((held_id,))
+    finally:
+        store.close()
 
 
 def test_stale_lease_commit_is_fenced(tmp_path):

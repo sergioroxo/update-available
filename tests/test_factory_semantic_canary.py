@@ -1,16 +1,28 @@
 from __future__ import annotations
 
 import json
+import hashlib
 
 import httpx
 import pytest
 
 from runner.pipeline.factory_semantic_canary import (
     PhysicalCanaryError,
+    RUN_ID,
+    _fixture_texts,
     default_endpoint_config,
     run_physical_canary,
     verify_physical_canary_host,
 )
+from runner.models.retrieval import canonical_contract_sha256
+from runner.pipeline.analysis_sections import (
+    SectionAnalysisStore,
+    SectionFindingV1,
+    SectionPassResultV1,
+    build_adaptive_analysis_plan,
+    run_parallel_jobs,
+)
+from runner.pipeline.citation_units_v2 import build_citation_units_v2
 
 
 def _model_info():
@@ -31,9 +43,10 @@ def _handler(counter):
         counter[body["model"]] = counter.get(body["model"], 0) + 1
         if request.url.path == "/v1/embeddings":
             rows = []
+            dimension = 1024 if body["model"] == "bge-m3-shadow" else 4096
             for index, text in enumerate(body["input"]):
-                vector = [0.0] * 4096
-                vector[hash(text) % 4096] = 1.0
+                vector = [0.0] * dimension
+                vector[hash(text) % dimension] = 1.0
                 rows.append({"index": index, "embedding": vector})
             return httpx.Response(200, json={"model": body["model"], "data": rows})
         user = json.loads(body["messages"][1]["content"])
@@ -217,3 +230,150 @@ def test_repeated_schema_failure_persists_content_free_benchmark(tmp_path):
     assert "source_text" not in serialized
     assert '"statement": ""' not in serialized
     assert "citation_unit_ids" not in serialized
+
+
+def test_targeted_run020c_resume_preserves_successes_and_skips_benchmark_probe(tmp_path):
+    workspace = tmp_path / "resume-canary"
+    texts = _fixture_texts()
+    units_by_doc = {
+        doc: build_citation_units_v2(text, doc_id=doc)
+        for doc, text in texts.items()
+    }
+    plans = {
+        doc: build_adaptive_analysis_plan(
+            run_id=RUN_ID, units=units, small_model_route="core-qwen",
+            repair_model_route="compiler-qwen38", target_chars=5000,
+            overlap_units=1, maximum_prompts_per_section=6,
+        )
+        for doc, units in units_by_doc.items()
+    }
+    policy_plan = plans["synthetic-policy"]
+    held_ids = {row.job_id for row in policy_plan.jobs[-2:]}
+
+    def result_for(job, section, attempt):
+        finding = SectionFindingV1(
+            finding_id=f"finding-{hashlib.sha256(job.job_id.encode()).hexdigest()[:16]}",
+            prompt_id=job.prompt_id, statement="Synthetic supported finding.",
+            evidence_state="supported", citation_unit_ids=(section.unit_ids[0],),
+            confidence=0.8,
+        )
+        values = dict(
+            schema_version="section-pass-result-v1.0", job_id=job.job_id,
+            job_sha256=job.job_sha256, document_id=job.document_id,
+            section_id=job.section_id, prompt_id=job.prompt_id,
+            requested_model=job.model_route,
+            provider_resolved_model="ollama_chat/qwen3.6:35b-mlx",
+            attempt=attempt, repair_error_code=None, findings=(finding,),
+            output_sha256="0" * 64,
+        )
+        draft = SectionPassResultV1.model_construct(**values)
+        values["output_sha256"] = canonical_contract_sha256(
+            draft, omit={"output_sha256"},
+        )
+        return SectionPassResultV1.model_validate(values)
+
+    class LegacyExecutor:
+        def execute(self, job, section, attempt):
+            if job.job_id in held_ids:
+                raise ValueError("legacy model-output contract failure")
+            return result_for(job, section, attempt)
+
+    store = SectionAnalysisStore(workspace / "state" / "synthetic-policy.sqlite")
+    try:
+        store.seed(policy_plan)
+        assert len(run_parallel_jobs(
+            store=store, plan=policy_plan, executor=LegacyExecutor(), max_workers=4,
+        )) == 8
+    finally:
+        store.close()
+    benchmark = {
+        "schema_version": "semantic-concurrency-benchmark-v1.0",
+        "maximum_safe_concurrency": 4,
+        "levels": [
+            {"concurrency": level, "status": "passed"}
+            for level in (1, 2, 4)
+        ],
+    }
+    workspace.mkdir(parents=True, exist_ok=True)
+    (workspace / "concurrency_benchmark.json").write_text(
+        json.dumps(benchmark), encoding="utf-8",
+    )
+
+    counter = {"model_info": 0, "mapper_core": 0, "mapper_repair": 0}
+    model_counter = {}
+    valid_handler = _handler(model_counter)
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            counter["model_info"] += 1
+            raise AssertionError("Run-020C validated environment must be reused")
+        if request.url.path == "/v1/chat/completions":
+            body = json.loads(request.content)
+            user = json.loads(body["messages"][1]["content"])
+            if "allowed_unit_ids" in user:
+                key = "mapper_repair" if body["model"] == "compiler-qwen38" else "mapper_core"
+                counter[key] += 1
+        return valid_handler(request)
+
+    config = default_endpoint_config(
+        base_url="http://127.0.0.1:4000",
+        qwen38_alias="compiler-qwen38", bge_shadow_alias="bge-m3-shadow",
+    )
+    first = run_physical_canary(
+        workspace=workspace, endpoint_config=config, host_role="mac-studio",
+        transport=httpx.MockTransport(handler), minimum_free_bytes=0,
+        resume_run020c_held_jobs=True,
+        reuse_run020c_validated_environment=True,
+    )
+    assert first["benchmark_reused"] is True
+    assert set(first["targeted_resume_job_ids"]) == held_ids
+    assert counter["model_info"] == 0
+    assert counter["mapper_repair"] == 2
+    assert counter["mapper_core"] == 18
+    reopened = SectionAnalysisStore(workspace / "state" / "synthetic-policy.sqlite")
+    try:
+        attempts = reopened.attempts()
+    finally:
+        reopened.close()
+    assert {attempts[job_id] for job_id in held_ids} == {2}
+    assert all(attempts[job_id] == 1 for job_id in attempts if job_id not in held_ids)
+
+    for key in counter:
+        counter[key] = 0
+    model_counter.clear()
+    second = run_physical_canary(
+        workspace=workspace, endpoint_config=config, host_role="mac-studio",
+        transport=httpx.MockTransport(handler), minimum_free_bytes=0,
+        reuse_run020c_validated_environment=True,
+    )
+    assert counter == {"model_info": 0, "mapper_core": 0, "mapper_repair": 0}
+    assert model_counter == {}
+    assert second["new_model_call_count"] == 0
+    assert second["projection_sha256"] == first["projection_sha256"]
+
+
+def test_targeted_run020c_resume_rejects_wrong_held_count_before_model_call(tmp_path):
+    workspace = tmp_path / "bad-resume"
+    workspace.mkdir()
+    (workspace / "concurrency_benchmark.json").write_text(json.dumps({
+        "maximum_safe_concurrency": 4,
+        "levels": [{"concurrency": level, "status": "passed"} for level in (1, 2, 4)],
+    }), encoding="utf-8")
+    counter = {"calls": 0}
+
+    def handler(request):
+        counter["calls"] += 1
+        raise AssertionError("resume mismatch must stop before endpoint access")
+
+    with pytest.raises(PhysicalCanaryError, match="database_set_mismatch"):
+        run_physical_canary(
+            workspace=workspace,
+            endpoint_config=default_endpoint_config(
+                base_url="http://127.0.0.1:4000",
+                qwen38_alias="compiler-qwen38", bge_shadow_alias="bge-m3-shadow",
+            ),
+            host_role="mac-studio", transport=httpx.MockTransport(handler),
+            minimum_free_bytes=0, resume_run020c_held_jobs=True,
+            reuse_run020c_validated_environment=True,
+        )
+    assert counter["calls"] == 0

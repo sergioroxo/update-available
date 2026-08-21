@@ -32,6 +32,9 @@ from runner.pipeline.analysis_sections import (
     CompilerClaimV1,
     DocumentCompilationV1,
     DocumentCompilerPacketV1,
+    MAPPER_OUTPUT_RETRY_REASON,
+    MAPPER_REPAIRABLE_REASONS,
+    MAPPER_SCHEMA_RETRY_REASON,
     ProcessingSectionV1,
     PROMPT_REGISTRY,
     RetryableSectionError,
@@ -81,13 +84,53 @@ class MapperSchemaRetryableError(RetryableSectionError):
     """Stable mapper failure carrying only bounded Pydantic locations/types."""
 
     def __init__(self, issues: tuple[MapperValidationIssueV1, ...]):
-        super().__init__("section_mapper_schema_validation_retryable")
+        super().__init__(MAPPER_SCHEMA_RETRY_REASON)
         self.issues = issues
 
 
-def mapper_response_json_schema() -> dict[str, Any]:
-    """Return the single provider/local-validation mapper response schema."""
-    return _MapperResponsePayloadV1.model_json_schema()
+class MapperOutputContractRetryableError(RetryableSectionError):
+    """Known job-bound output violation eligible for the one repair route."""
+
+    def __init__(self, issues: tuple[MapperValidationIssueV1, ...]):
+        super().__init__(MAPPER_OUTPUT_RETRY_REASON)
+        self.issues = issues
+
+
+def mapper_response_json_schema(
+    job: SectionPromptJobV1 | None = None,
+    section: ProcessingSectionV1 | None = None,
+) -> dict[str, Any]:
+    """Derive the strict schema and optionally bind it to one exact job."""
+    if (job is None) != (section is None):
+        raise SectionAnalysisError("mapper_schema_requires_job_and_section")
+    schema = _MapperResponsePayloadV1.model_json_schema()
+    if job is None:
+        return schema
+    if (
+        job.section_id != section.section_id
+        or job.document_id != section.document_id
+        or job.unit_ids != section.unit_ids
+    ):
+        raise SectionAnalysisError("mapper_schema_job_section_mismatch")
+    findings_schema = schema["properties"]["findings"]
+    findings_schema["maxItems"] = job.maximum_output_items
+    finding_schema = schema["$defs"]["_MapperFindingPayloadV1"]
+    citations_schema = finding_schema["properties"]["citation_unit_ids"]
+    citations_schema["items"] = {
+        "enum": list(section.unit_ids),
+        "type": "string",
+    }
+    citations_schema["uniqueItems"] = True
+    finding_schema["allOf"] = [{
+        "if": {
+            "properties": {"evidence_state": {"const": "supported"}},
+            "required": ["evidence_state"],
+        },
+        "then": {
+            "properties": {"citation_unit_ids": {"minItems": 1}},
+        },
+    }]
+    return schema
 
 
 def _mapper_validation_issues(
@@ -103,6 +146,29 @@ def _mapper_validation_issues(
         ) or "response"
         type_code = str(issue.get("type") or "validation_error")
         rows.add((location[:200], type_code[:100]))
+    return tuple(
+        MapperValidationIssueV1(location=location, type_code=type_code)
+        for location, type_code in sorted(rows)
+    )
+
+
+def _mapper_output_issues(
+    payload: _MapperResponsePayloadV1,
+    *, job: SectionPromptJobV1,
+    section: ProcessingSectionV1,
+) -> tuple[MapperValidationIssueV1, ...]:
+    rows: set[tuple[str, str]] = set()
+    if len(payload.findings) > job.maximum_output_items:
+        rows.add(("findings", "too_long"))
+    allowed = set(section.unit_ids)
+    for index, finding in enumerate(payload.findings):
+        prefix = f"findings.{index}.citation_unit_ids"
+        if finding.evidence_state == "supported" and not finding.citation_unit_ids:
+            rows.add((prefix, "supported_citation_required"))
+        if len(finding.citation_unit_ids) != len(set(finding.citation_unit_ids)):
+            rows.add((prefix, "unique_items"))
+        if any(unit_id not in allowed for unit_id in finding.citation_unit_ids):
+            rows.add((prefix, "enum"))
     return tuple(
         MapperValidationIssueV1(location=location, type_code=type_code)
         for location, type_code in sorted(rows)
@@ -341,6 +407,20 @@ class OpenAICompatibleLocalClient:
             self._bindings[route.route_id] = resolved
         return dict(self._bindings)
 
+    def reuse_prevalidated_bindings(self, bindings: dict[str, str]) -> dict[str, str]:
+        """Reuse explicit prior host evidence without another endpoint probe."""
+        expected = {route.route_id for route in self.config.routes}
+        if set(bindings) != expected:
+            raise SemanticAdapterError("prevalidated_model_bindings_incomplete")
+        validated: dict[str, str] = {}
+        for route in self.config.routes:
+            resolved = bindings.get(route.route_id)
+            if not isinstance(resolved, str):
+                raise SemanticAdapterError("prevalidated_model_binding_malformed")
+            validated[route.route_id] = self._validate_resolved(route, resolved)
+        self._bindings = validated
+        return dict(self._bindings)
+
     @staticmethod
     def _validate_resolved(route: LocalModelRouteV1, resolved: str) -> str:
         folded = resolved.casefold()
@@ -505,7 +585,7 @@ class LocalSectionExecutor:
         selected_route = self.route
         if retry_error_code:
             if (
-                retry_error_code != "section_mapper_schema_validation_retryable"
+                retry_error_code not in MAPPER_REPAIRABLE_REASONS
                 or attempt != 2
                 or job.repair_model_route is None
                 or self.repair_route is None
@@ -513,9 +593,9 @@ class LocalSectionExecutor:
             ):
                 raise SectionAnalysisError("section_mapper_repair_context_mismatch")
             selected_route = self.repair_route
-            repair_error_code = "section_mapper_schema_validation_retryable"
+            repair_error_code = retry_error_code
         spec = PROMPT_REGISTRY[job.prompt_id]
-        response_schema = mapper_response_json_schema()
+        response_schema = mapper_response_json_schema(job, section)
         system = (
             "You are a bounded research extraction stage. Return one JSON object "
             "with exactly one key named findings. findings must be an array of objects "
@@ -550,9 +630,12 @@ class LocalSectionExecutor:
             raise MapperSchemaRetryableError(
                 _mapper_validation_issues(exc),
             ) from None
+        output_issues = _mapper_output_issues(
+            validated_payload, job=job, section=section,
+        )
+        if output_issues:
+            raise MapperOutputContractRetryableError(output_issues)
         raw_findings = validated_payload.findings
-        if len(raw_findings) > job.maximum_output_items:
-            raise SectionAnalysisError("section_mapper_findings_contract_mismatch")
         findings = []
         for index, row in enumerate(raw_findings):
             findings.append(SectionFindingV1(
