@@ -1074,11 +1074,29 @@ export class GraceQueueLite {
     const announce = item.chip && !item.quiet ? item.chip
       : item.partner ? item.partner.note
         : item.grade ? item.grade.note : '';
-    setFont(ctx, 10);
+    // ⚑ MEASURE IN THE FONT YOU DRAW IN. This block wrapped and sized the card
+    // at 10px/11px line-height while the text below is drawn at 11px/12px —
+    // which I introduced when I raised the type, and it is two bugs, not one:
+    // the wrap fits more characters per line than will actually render (so the
+    // verse runs past the card's width), and the height is short by a pixel per
+    // line (so the last line lands under the Apply/Skip row, which is pinned to
+    // `y + h - 36`).
+    //
+    // ⚑ The constants are now named and shared by the measure and the draw, so
+    // the two cannot drift apart again. Changing BODY_PX here changes both.
+    const BODY_PX = 11, LINE_H = 12;
+    setFont(ctx, BODY_PX);
     const why = wrapText(ctx, item.why, w).slice(0, 2);
-    const refs = [item.manual, item.verse].map(r => wrapText(ctx, r, w).slice(0, 2));
-    const h = 18 + why.length * 11 + 5
-      + refs[0].length * 11 + 3 + refs[1].length * 11
+    // ⚑ 3 lines, not 2. The manual reference always fits in one; the VERSE is
+    // the long one, and at 2 lines Household 2:11 rendered as "…so the young
+    // could" and stopped. A scripture that trails off mid-phrase reads as a
+    // broken string, not as a design — and the verse is the whole point of the
+    // doubling: a style guide and a holy book, set identically, doing the same
+    // job. Half a verse cannot do that job. The height formula above counts
+    // `refs[i].length`, so the card grows to fit rather than clipping.
+    const refs = [item.manual, item.verse].map(r => wrapText(ctx, r, w).slice(0, 3));
+    const h = 18 + why.length * LINE_H + 5
+      + refs[0].length * LINE_H + 3 + refs[1].length * LINE_H
       + (announce ? 13 : 0) + 40;
     px(ctx, x - 6, y - 6, w + 12, h, ERA3.glassHi);
     px(ctx, x - 6, y - 6, w + 12, 1, ERA3.glassEdge);
@@ -1091,14 +1109,27 @@ export class GraceQueueLite {
     // only badge on this item, and it is on the TOOL, never on her.
     if (item.grade) aero.tag(ctx, x + ctx.measureText(item.rule).width + 8, ry + 2, item.grade.preset, ERA3.white, ERA3.lambTag);
     ry += 18;
-    setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
-    why.forEach((ln, i) => ctx.fillText(ln, x, ry + i * 11));
-    ry += why.length * 11 + 5;
+    // ⚑ 10 → 11px, and `grey` → `greyDk` for the refs. NOT a change to the
+    // doubling — a rescue of it. The rationale and BOTH references are the best
+    // writing in this era ("a sentence that does not land leaves the reader
+    // standing"; "one lamp for the whole room, so that no face is lit
+    // differently from another") and they were the smallest, faintest text in
+    // the interface, on a 512×384 canvas, read at arm's length off a tablet.
+    // Undifferentiated from EACH OTHER is the law; undifferentiated from the
+    // background is just unreadable, and a player who cannot read the verse
+    // never meets the doubling at all.
+    setFont(ctx, BODY_PX); ctx.fillStyle = ERA3.greyDk;
+    why.forEach((ln, i) => ctx.fillText(ln, x, ry + i * LINE_H));
+    ry += why.length * LINE_H + 5;
     // ⚑ THE DOUBLING. Same colour, same size, same shape. Neither emphasised.
-    setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
+    // The manual and the scripture must stay pixel-identical in treatment: the
+    // era's claim is that a style guide and a holy book are doing the same job
+    // here, and the moment one is set larger or darker than the other, the
+    // interface has taken a side the piece refuses to take.
+    setFont(ctx, BODY_PX); ctx.fillStyle = ERA3.greyDk;
     refs.forEach((ref, ri) => {
-      ref.forEach((ln, i) => ctx.fillText(ln, x, ry + i * 11));
-      ry += ref.length * 11 + (ri === 0 ? 3 : 0);
+      ref.forEach((ln, i) => ctx.fillText(ln, x, ry + i * LINE_H));
+      ry += ref.length * LINE_H + (ri === 0 ? 3 : 0);
     });
     // items 3–6 announce the channel they attach; item 7 does not announce
     // that it sends a person. That asymmetry is the beat.
