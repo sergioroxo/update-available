@@ -18,6 +18,8 @@ def _model_info():
         {"model_name": "core-qwen", "litellm_params": {"model": "ollama_chat/qwen3.6:35b-mlx"}},
         {"model_name": "core-gemma", "litellm_params": {"model": "ollama_chat/gemma4:31b-mlx"}},
         {"model_name": "research-embedding", "litellm_params": {"model": "ollama/qwen3-embedding:8b"}},
+        {"model_name": "compiler-qwen38", "litellm_params": {"model": "ollama_chat/qwen3.8:27b-mlx"}},
+        {"model_name": "bge-m3-shadow", "litellm_params": {"model": "ollama/bge-m3:latest"}},
     ]}
 
 
@@ -35,7 +37,7 @@ def _handler(counter):
                 rows.append({"index": index, "embedding": vector})
             return httpx.Response(200, json={"model": body["model"], "data": rows})
         user = json.loads(body["messages"][1]["content"])
-        if body["model"] == "core-qwen":
+        if "allowed_unit_ids" in user:
             payload = {"findings": [{
                 "statement": "Synthetic source-attested finding.",
                 "evidence_state": "supported",
@@ -147,7 +149,10 @@ def test_concurrency_one_schema_retry_succeeds_and_is_recorded(tmp_path):
     workspace = tmp_path / "retry-canary"
     report = run_physical_canary(
         workspace=workspace,
-        endpoint_config=default_endpoint_config(base_url="http://127.0.0.1:4000"),
+        endpoint_config=default_endpoint_config(
+            base_url="http://127.0.0.1:4000",
+            qwen38_alias="compiler-qwen38",
+        ),
         host_role="mac-studio", transport=httpx.MockTransport(handler),
         minimum_free_bytes=0,
     )
@@ -157,6 +162,16 @@ def test_concurrency_one_schema_retry_succeeds_and_is_recorded(tmp_path):
     assert benchmark["levels"][0]["retry_count"] == 1
     assert benchmark["levels"][0]["model_call_count"] == 2
     assert benchmark["levels"][0]["completed_jobs"] == 1
+    assert benchmark["levels"][0]["requested_model_counts"] == {
+        "compiler-qwen38": 1, "core-qwen": 1,
+    }
+    assert benchmark["levels"][0]["schema_diagnostics"] == [{
+        "attempt": 1,
+        "issues": [{
+            "location": "findings.*.statement",
+            "type_code": "string_too_short",
+        }],
+    }]
 
 
 def test_repeated_schema_failure_persists_content_free_benchmark(tmp_path):
@@ -180,7 +195,10 @@ def test_repeated_schema_failure_persists_content_free_benchmark(tmp_path):
     with pytest.raises(PhysicalCanaryError, match="concurrency_one_failed"):
         run_physical_canary(
             workspace=workspace,
-            endpoint_config=default_endpoint_config(base_url="http://127.0.0.1:4000"),
+            endpoint_config=default_endpoint_config(
+                base_url="http://127.0.0.1:4000",
+                qwen38_alias="compiler-qwen38",
+            ),
             host_role="mac-studio", transport=httpx.MockTransport(handler),
             minimum_free_bytes=0,
         )
@@ -192,6 +210,10 @@ def test_repeated_schema_failure_persists_content_free_benchmark(tmp_path):
     assert level["status"] == "failed"
     assert level["model_call_count"] == 2
     assert level["error_code"] == "section_mapper_schema_validation_retryable"
+    assert level["requested_model_counts"] == {
+        "compiler-qwen38": 1, "core-qwen": 1,
+    }
     assert source_marker not in serialized
     assert "source_text" not in serialized
-    assert "findings" not in serialized
+    assert '"statement": ""' not in serialized
+    assert "citation_unit_ids" not in serialized

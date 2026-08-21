@@ -35,7 +35,10 @@ def _units(doc_id="doc-a"):
     return build_citation_units_v2(text, doc_id=doc_id, target_chars=500, hard_max_chars=700)
 
 
-def _result(job, section, *, attempt=1, unit_id=None):
+def _result(
+    job, section, *, attempt=1, unit_id=None, requested_model=None,
+    repair_error_code=None,
+):
     finding = SectionFindingV1(
         finding_id=f"finding-{hashlib.sha256(job.job_id.encode()).hexdigest()[:16]}",
         prompt_id=job.prompt_id, statement="Synthetic supported finding.",
@@ -46,8 +49,10 @@ def _result(job, section, *, attempt=1, unit_id=None):
         schema_version="section-pass-result-v1.0", job_id=job.job_id,
         job_sha256=job.job_sha256, document_id=job.document_id,
         section_id=job.section_id, prompt_id=job.prompt_id,
-        requested_model=job.model_route, provider_resolved_model="synthetic-model",
-        attempt=attempt, findings=(finding,), output_sha256="0" * 64,
+        requested_model=requested_model or job.model_route,
+        provider_resolved_model="synthetic-model", attempt=attempt,
+        repair_error_code=repair_error_code,
+        findings=(finding,), output_sha256="0" * 64,
     )
     draft = SectionPassResultV1.model_construct(**values)
     values["output_sha256"] = canonical_contract_sha256(draft, omit={"output_sha256"})
@@ -90,6 +95,65 @@ def test_unknown_prompt_and_unbounded_plan_are_rejected():
     payload["maximum_prompts_per_section"] = 1
     with pytest.raises(ValidationError):
         type(plan).model_validate(payload)
+
+
+def test_declared_repair_route_is_hash_bound_and_attempt_limited():
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020c", units=_units(), small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=1800,
+        maximum_attempts=2,
+    )
+    assert {job.repair_model_route for job in plan.jobs} == {"compiler-qwen38"}
+    bad = plan.jobs[0].model_dump(mode="python")
+    bad["repair_model_route"] = "other-repair"
+    with pytest.raises(ValidationError, match="hash mismatch"):
+        SectionPromptJobV1.model_validate(bad)
+    bad = plan.jobs[0].model_dump(mode="python")
+    bad["maximum_attempts"] = 3
+    with pytest.raises(ValidationError, match="exactly two"):
+        SectionPromptJobV1.model_validate(bad)
+
+
+def test_result_accepts_only_declared_attempt_two_schema_repair():
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020c", units=_units(), small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=1800,
+        maximum_attempts=2,
+    )
+    job = plan.jobs[0]
+    section = next(row for row in plan.sections if row.section_id == job.section_id)
+    repaired = _result(
+        job, section, attempt=2, requested_model="compiler-qwen38",
+        repair_error_code="section_mapper_schema_validation_retryable",
+    )
+    validate_section_result(job, section, repaired)
+
+    attempt_one = repaired.model_copy(update={"attempt": 1})
+    with pytest.raises(SectionAnalysisError, match="undeclared_repair"):
+        validate_section_result(job, section, attempt_one)
+    wrong_route = repaired.model_copy(update={"requested_model": "other-repair"})
+    with pytest.raises(SectionAnalysisError, match="route_or_prompt"):
+        validate_section_result(job, section, wrong_route)
+    third = repaired.model_copy(update={"attempt": 3})
+    with pytest.raises(SectionAnalysisError, match="attempt_exceeds"):
+        validate_section_result(job, section, third)
+
+    no_repair_plan = build_adaptive_analysis_plan(
+        run_id="run-020c", units=_units(), small_model_route="core-qwen",
+        target_chars=1800,
+    )
+    no_repair_job = no_repair_plan.jobs[0]
+    no_repair_section = next(
+        row for row in no_repair_plan.sections
+        if row.section_id == no_repair_job.section_id
+    )
+    forged = _result(
+        no_repair_job, no_repair_section, attempt=2,
+        requested_model="compiler-qwen38",
+        repair_error_code="section_mapper_schema_validation_retryable",
+    )
+    with pytest.raises(SectionAnalysisError, match="undeclared_repair"):
+        validate_section_result(no_repair_job, no_repair_section, forged)
 
 
 def test_result_rejects_unknown_unit_and_compiler_rejects_generated_citation():

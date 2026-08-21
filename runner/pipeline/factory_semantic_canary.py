@@ -47,6 +47,7 @@ from runner.pipeline.semantic_model_adapters import (
     LocalEmbeddingProvider,
     LocalModelRouteV1,
     LocalSectionExecutor,
+    MapperSchemaRetryableError,
     OpenAICompatibleLocalClient,
     SemanticAdapterError,
     SemanticEndpointConfigV1,
@@ -121,6 +122,12 @@ def default_endpoint_config(
         ))
     if qwen38_alias:
         routes.append(LocalModelRouteV1(
+            route_id="qwen38-mapper-repair", purpose="qwen38_mapper_repair",
+            requested_model=qwen38_alias,
+            expected_resolved_fragments=("qwen3.8", "27b"),
+            maximum_output_tokens=4096,
+        ))
+        routes.append(LocalModelRouteV1(
             route_id="qwen38-compiler", purpose="qwen38_compiler_candidate",
             requested_model=qwen38_alias,
             expected_resolved_fragments=("qwen3.8", "27b"), maximum_output_tokens=8192,
@@ -188,20 +195,43 @@ def _benchmark_concurrency(
     levels = []
     maximum_safe = 0
 
+    class BenchmarkRetryFailure(Exception):
+        def __init__(self, error, diagnostics):
+            super().__init__(str(error))
+            self.error = error
+            self.diagnostics = diagnostics
+
     def execute_with_retry(executor, job, section):
         retry_count = 0
         schema_retry_count = 0
+        retry_error_code = ""
+        diagnostics = []
         for attempt in range(1, job.maximum_attempts + 1):
             try:
-                result = executor.execute(job, section, attempt)
+                result = (
+                    executor.execute_with_retry_context(
+                        job, section, attempt,
+                        retry_error_code=retry_error_code,
+                    )
+                    if retry_error_code and job.repair_model_route is not None
+                    else executor.execute(job, section, attempt)
+                )
                 validate_section_result(job, section, result)
-                return result, retry_count, schema_retry_count
+                return result, retry_count, schema_retry_count, diagnostics
             except RetryableSectionError as exc:
+                if isinstance(exc, MapperSchemaRetryableError):
+                    diagnostics.append({
+                        "attempt": attempt,
+                        "issues": [row.model_dump(mode="json") for row in exc.issues],
+                    })
                 if attempt >= job.maximum_attempts:
-                    raise
+                    raise BenchmarkRetryFailure(exc, diagnostics) from None
                 retry_count += 1
                 if str(exc) == "section_mapper_schema_validation_retryable":
                     schema_retry_count += 1
+                    retry_error_code = str(exc)
+                else:
+                    retry_error_code = ""
         raise PhysicalCanaryError("semantic_mapper_retry_loop_exhausted")
 
     for level in (1, 2, 4):
@@ -213,6 +243,7 @@ def _benchmark_concurrency(
         completed_jobs = 0
         retry_count = 0
         schema_retry_count = 0
+        schema_diagnostics = []
         try:
             with ThreadPoolExecutor(max_workers=level) as pool:
                 futures = {
@@ -220,24 +251,36 @@ def _benchmark_concurrency(
                     for job, section in jobs[:level]
                 }
                 for future in as_completed(futures):
-                    _result, retries, schema_retries = future.result()
+                    _result, retries, schema_retries, diagnostics = future.result()
                     completed_jobs += 1
                     retry_count += retries
                     schema_retry_count += schema_retries
+                    schema_diagnostics.extend(diagnostics)
             maximum_safe = level
         except Exception as exc:
-            error = type(exc).__name__
+            underlying = exc.error if isinstance(exc, BenchmarkRetryFailure) else exc
+            if isinstance(exc, BenchmarkRetryFailure):
+                schema_diagnostics.extend(exc.diagnostics)
+            error = type(underlying).__name__
             error_code = (
-                str(exc) if isinstance(exc, RetryableSectionError)
+                str(underlying) if isinstance(underlying, RetryableSectionError)
                 else "terminal_or_unexpected_validation_failure"
             )
         completed = datetime.now(timezone.utc)
         receipts = client.receipts[started_receipts:]
+        route_counts: dict[str, int] = {}
+        provider_models: set[str] = set()
+        for receipt in receipts:
+            route_counts[receipt.requested_model] = route_counts.get(receipt.requested_model, 0) + 1
+            provider_models.add(receipt.provider_resolved_model)
         levels.append({
             "concurrency": level, "status": "passed" if not error else "failed",
             "duration_ms": int((completed - started).total_seconds() * 1000),
             "completed_jobs": completed_jobs, "model_call_count": len(receipts),
             "retry_count": retry_count, "schema_retry_count": schema_retry_count,
+            "schema_diagnostics": schema_diagnostics,
+            "requested_model_counts": dict(sorted(route_counts.items())),
+            "provider_resolved_models": sorted(provider_models),
             "receipt_sha256s": [row.receipt_sha256 for row in receipts],
             "error_type": error, "error_code": error_code,
         })
@@ -304,10 +347,15 @@ def run_physical_canary(
             for doc, text in texts.items()
         }
         mapper_alias = endpoint_config.route("section_mapper").requested_model
+        try:
+            mapper_repair_alias = endpoint_config.route("qwen38_mapper_repair").requested_model
+        except SemanticAdapterError:
+            mapper_repair_alias = None
         compiler_alias = endpoint_config.route("document_compiler").requested_model
         plans = {
             doc: build_adaptive_analysis_plan(
                 run_id=RUN_ID, units=units, small_model_route=mapper_alias,
+                repair_model_route=mapper_repair_alias,
                 target_chars=5000, overlap_units=1, maximum_prompts_per_section=6,
             )
             for doc, units in units_by_doc.items()

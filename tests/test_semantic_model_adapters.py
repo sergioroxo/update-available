@@ -20,9 +20,11 @@ from runner.pipeline.semantic_model_adapters import (
     LocalEmbeddingProvider,
     LocalModelRouteV1,
     LocalSectionExecutor,
+    MapperSchemaRetryableError,
     OpenAICompatibleLocalClient,
     SemanticAdapterError,
     SemanticEndpointConfigV1,
+    mapper_response_json_schema,
 )
 
 
@@ -37,6 +39,12 @@ def _routes(include_shadow=True):
             route_id="compiler", purpose="document_compiler", requested_model="core-gemma",
             expected_resolved_models=("ollama_chat/gemma4:31b-mlx",),
             maximum_output_tokens=4096,
+        ),
+        LocalModelRouteV1(
+            route_id="repair", purpose="qwen38_mapper_repair",
+            requested_model="compiler-qwen38",
+            expected_resolved_fragments=("qwen3.8", "27b"),
+            maximum_output_tokens=2048,
         ),
         LocalModelRouteV1(
             route_id="embedding", purpose="qwen_embedding",
@@ -66,6 +74,7 @@ def _model_info():
             {"model_name": "core-gemma", "litellm_params": {"model": "ollama_chat/gemma4:31b-mlx"}},
             {"model_name": "research-embedding", "litellm_params": {"model": "ollama/qwen3-embedding:8b"}},
             {"model_name": "bge-m3-shadow", "litellm_params": {"model": "ollama/bge-m3"}},
+            {"model_name": "compiler-qwen38", "litellm_params": {"model": "ollama_chat/qwen3.8:27b-mlx"}},
         ]
     }
 
@@ -312,13 +321,13 @@ def test_mapper_empty_findings_is_valid_and_prompt_forbids_blank_statement():
         run_id="run-020b", units=units, small_model_route="core-qwen",
         target_chars=3000, maximum_prompts_per_section=2,
     )
-    system_prompts = []
+    requests = []
 
     def handler(request):
         if request.url.path == "/model/info":
             return httpx.Response(200, json=_model_info())
         body = json.loads(request.content)
-        system_prompts.append(body["messages"][0]["content"])
+        requests.append(body)
         return httpx.Response(200, json={
             "model": body["model"],
             "choices": [{"message": {"content": json.dumps({"findings": []})}}],
@@ -330,8 +339,75 @@ def test_mapper_empty_findings_is_valid_and_prompt_forbids_blank_statement():
         plan.jobs[0], plan.sections[0], 1,
     )
     assert result.findings == ()
-    assert '{"findings":[]}' in system_prompts[0]
-    assert "never emit a placeholder or a blank statement" in system_prompts[0]
+    system_prompt = requests[0]["messages"][0]["content"]
+    assert '{"findings":[]}' in system_prompt
+    assert "never emit a placeholder or a blank statement" in system_prompt
+    response_format = requests[0]["response_format"]
+    assert response_format["type"] == "json_schema"
+    assert response_format["json_schema"]["strict"] is True
+    schema = response_format["json_schema"]["schema"]
+    assert schema == mapper_response_json_schema()
+    assert json.dumps(schema, sort_keys=True, separators=(",", ":")) in system_prompt
+    client.close()
+
+
+def test_mapper_schema_is_strict_and_derived_from_contract():
+    schema = mapper_response_json_schema()
+    assert schema["additionalProperties"] is False
+    assert schema["required"] == ["findings"]
+    finding = schema["$defs"]["_MapperFindingPayloadV1"]
+    assert finding["additionalProperties"] is False
+    assert set(finding["required"]) == {
+        "statement", "evidence_state", "citation_unit_ids", "confidence",
+    }
+    assert finding["properties"]["statement"]["minLength"] == 1
+    assert finding["properties"]["evidence_state"]["enum"] == [
+        "supported", "hypothesis", "unsupported",
+    ]
+    assert finding["properties"]["confidence"]["minimum"] == 0
+    assert finding["properties"]["confidence"]["maximum"] == 1
+
+
+@pytest.mark.parametrize(("finding", "expected_type"), [
+    ({"evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 0.8}, "missing"),
+    ({"statement": "", "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 0.8}, "string_too_short"),
+    ({"statement": "   ", "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 0.8}, "value_error"),
+    ({"statement": 7, "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 0.8}, "string_type"),
+    ({"statement": "Valid", "evidence_state": "invented", "citation_unit_ids": ["unit"], "confidence": 0.8}, "literal_error"),
+    ({"statement": "Valid", "evidence_state": "supported", "citation_unit_ids": "unit", "confidence": 0.8}, "list_type"),
+    ({"statement": "Valid", "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 2.0}, "less_than_equal"),
+    ({"statement": "Valid", "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 0.8, "forbidden": "SECRET-VALUE"}, "extra_forbidden"),
+])
+def test_mapper_diagnostic_contains_only_location_and_type(finding, expected_type):
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020c", units=units, small_model_route="core-qwen",
+        target_chars=3000, maximum_prompts_per_section=2,
+    )
+    finding = dict(finding)
+    if isinstance(finding.get("citation_unit_ids"), list):
+        finding["citation_unit_ids"] = [plan.sections[0].unit_ids[0]]
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps({"findings": [finding]})}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    with pytest.raises(MapperSchemaRetryableError) as caught:
+        LocalSectionExecutor(client, concurrency_level=1).execute(
+            plan.jobs[0], plan.sections[0], 1,
+        )
+    serialized = json.dumps([row.model_dump() for row in caught.value.issues])
+    assert expected_type in serialized
+    assert "SECRET-VALUE" not in serialized
+    assert "Synthetic evidence" not in serialized
+    assert set(caught.value.issues[0].model_dump()) == {"location", "type_code"}
     client.close()
 
 
@@ -372,6 +448,95 @@ def test_durable_mapper_job_retries_once_then_succeeds(tmp_path):
         assert max(row.attempt for row in results) == 2
         assert max(store.attempts().values()) == 2
         assert calls["count"] == len(plan.jobs) + 1
+    finally:
+        store.close()
+        client.close()
+
+
+def test_declared_schema_repair_uses_qwen38_and_binds_actual_provenance(tmp_path):
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020c", units=units, small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=3000,
+        maximum_prompts_per_section=2, maximum_attempts=2,
+    )
+    calls = []
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        calls.append(body["model"])
+        job = plan.jobs[0]
+        payload = {"findings": [{
+            "statement": "" if body["model"] == "core-qwen" else "Repaired finding.",
+            "evidence_state": "supported",
+            "citation_unit_ids": [job.unit_ids[0]], "confidence": 0.8,
+        }]}
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps(payload)}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    mapper = LocalSectionExecutor(client, concurrency_level=1)
+    job, section = plan.jobs[0], plan.sections[0]
+    with pytest.raises(MapperSchemaRetryableError):
+        mapper.execute(job, section, 1)
+    result = mapper.execute_with_retry_context(
+        job, section, 2,
+        retry_error_code="section_mapper_schema_validation_retryable",
+    )
+    assert calls == ["core-qwen", "compiler-qwen38"]
+    assert result.requested_model == "compiler-qwen38"
+    assert result.provider_resolved_model == "ollama_chat/qwen3.8:27b-mlx"
+    assert result.repair_error_code == "section_mapper_schema_validation_retryable"
+    assert [row.purpose for row in client.receipts] == [
+        "section_mapper", "qwen38_mapper_repair",
+    ]
+    client.close()
+
+
+def test_transport_retry_stays_on_primary_route(tmp_path):
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020c", units=units, small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=3000,
+        maximum_prompts_per_section=2, maximum_attempts=2,
+    )
+    calls = []
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        calls.append(body["model"])
+        if len(calls) == 1:
+            return httpx.Response(503)
+        user = json.loads(body["messages"][1]["content"])
+        payload = {"findings": [{
+            "statement": "Primary route recovered.", "evidence_state": "supported",
+            "citation_unit_ids": [user["allowed_unit_ids"][0]], "confidence": 0.8,
+        }]}
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps(payload)}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    store = SectionAnalysisStore(tmp_path / "transport.sqlite")
+    try:
+        store.seed(plan)
+        results = run_parallel_jobs(
+            store=store, plan=plan,
+            executor=LocalSectionExecutor(client, concurrency_level=1), max_workers=1,
+        )
+        assert len(results) == len(plan.jobs)
+        assert calls[:2] == ["core-qwen", "core-qwen"]
+        assert "compiler-qwen38" not in calls
+        assert all(row.repair_error_code is None for row in results)
     finally:
         store.close()
         client.close()

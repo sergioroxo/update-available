@@ -72,11 +72,48 @@ class _MapperResponsePayloadV1(_Strict):
     findings: list[_MapperFindingPayloadV1]
 
 
+class MapperValidationIssueV1(_Strict):
+    location: str = Field(min_length=1, max_length=200, pattern=r"^[A-Za-z0-9_.*-]+$")
+    type_code: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9_.-]+$")
+
+
+class MapperSchemaRetryableError(RetryableSectionError):
+    """Stable mapper failure carrying only bounded Pydantic locations/types."""
+
+    def __init__(self, issues: tuple[MapperValidationIssueV1, ...]):
+        super().__init__("section_mapper_schema_validation_retryable")
+        self.issues = issues
+
+
+def mapper_response_json_schema() -> dict[str, Any]:
+    """Return the single provider/local-validation mapper response schema."""
+    return _MapperResponsePayloadV1.model_json_schema()
+
+
+def _mapper_validation_issues(
+    error: ValidationError,
+) -> tuple[MapperValidationIssueV1, ...]:
+    rows: set[tuple[str, str]] = set()
+    for issue in error.errors(
+        include_url=False, include_context=False, include_input=False,
+    )[:32]:
+        location = ".".join(
+            "*" if isinstance(part, int) else str(part)
+            for part in issue.get("loc", ())
+        ) or "response"
+        type_code = str(issue.get("type") or "validation_error")
+        rows.add((location[:200], type_code[:100]))
+    return tuple(
+        MapperValidationIssueV1(location=location, type_code=type_code)
+        for location, type_code in sorted(rows)
+    )
+
+
 class LocalModelRouteV1(_Strict):
     route_id: str
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
-        "qwen_embedding", "bge_shadow",
+        "qwen38_mapper_repair", "qwen_embedding", "bge_shadow",
     ]
     requested_model: str
     expected_resolved_models: tuple[str, ...] = ()
@@ -172,7 +209,7 @@ class ModelCallReceiptV1(_Strict):
     schema_version: Literal["local-model-call-receipt-v1.0"] = "local-model-call-receipt-v1.0"
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
-        "qwen_embedding", "bge_shadow",
+        "qwen38_mapper_repair", "qwen_embedding", "bge_shadow",
     ]
     requested_model: str
     provider_resolved_model: str
@@ -324,7 +361,7 @@ class OpenAICompatibleLocalClient:
 
     def chat(
         self, route: LocalModelRouteV1, *, system: str, user: str,
-        concurrency_level: int,
+        concurrency_level: int, response_schema: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], ModelCallReceiptV1]:
         resolved = self.binding(route)
         request = {
@@ -335,7 +372,18 @@ class OpenAICompatibleLocalClient:
             ],
             "temperature": 0,
             "max_tokens": route.maximum_output_tokens,
-            "response_format": {"type": "json_object"},
+            "response_format": (
+                {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "mapper_response_v1",
+                        "strict": True,
+                        "schema": response_schema,
+                    },
+                }
+                if response_schema is not None
+                else {"type": "json_object"}
+            ),
         }
         started = time.perf_counter()
         try:
@@ -424,14 +472,50 @@ class LocalSectionExecutor:
     def __init__(self, client: OpenAICompatibleLocalClient, *, concurrency_level: int):
         self.client = client
         self.route = client.config.route("section_mapper")
+        try:
+            self.repair_route = client.config.route("qwen38_mapper_repair")
+        except SemanticAdapterError:
+            self.repair_route = None
         self.concurrency_level = concurrency_level
 
     def execute(
         self, job: SectionPromptJobV1, section: ProcessingSectionV1, attempt: int,
     ) -> SectionPassResultV1:
+        return self._execute(
+            job, section, attempt, retry_error_code="",
+        )
+
+    def execute_with_retry_context(
+        self, job: SectionPromptJobV1, section: ProcessingSectionV1, attempt: int,
+        *, retry_error_code: str,
+    ) -> SectionPassResultV1:
+        return self._execute(
+            job, section, attempt, retry_error_code=retry_error_code,
+        )
+
+    def _execute(
+        self, job: SectionPromptJobV1, section: ProcessingSectionV1, attempt: int,
+        *, retry_error_code: str,
+    ) -> SectionPassResultV1:
         if job.model_route != self.route.requested_model:
             raise SectionAnalysisError("section_mapper_route_mismatch")
+        if attempt < 1 or attempt > job.maximum_attempts:
+            raise SectionAnalysisError("section_mapper_attempt_out_of_range")
+        repair_error_code = None
+        selected_route = self.route
+        if retry_error_code:
+            if (
+                retry_error_code != "section_mapper_schema_validation_retryable"
+                or attempt != 2
+                or job.repair_model_route is None
+                or self.repair_route is None
+                or job.repair_model_route != self.repair_route.requested_model
+            ):
+                raise SectionAnalysisError("section_mapper_repair_context_mismatch")
+            selected_route = self.repair_route
+            repair_error_code = "section_mapper_schema_validation_retryable"
         spec = PROMPT_REGISTRY[job.prompt_id]
+        response_schema = mapper_response_json_schema()
         system = (
             "You are a bounded research extraction stage. Return one JSON object "
             "with exactly one key named findings. findings must be an array of objects "
@@ -442,10 +526,13 @@ class LocalSectionExecutor:
             "Use evidence_state supported only for source-attested statements; use "
             "hypothesis or unsupported otherwise. "
             + (
-                "This is the single schema-repair attempt. Follow the response contract exactly. "
-                if attempt > 1 else ""
+                "This is the single cross-model schema-repair attempt. The prior "
+                "response failed strict validation; no prior response content is supplied. "
+                if repair_error_code else ""
             )
             + spec.instruction
+            + " Canonical response JSON Schema: "
+            + _canonical_bytes(response_schema).decode("utf-8")
         )
         user = _canonical_bytes({
             "document_id": job.document_id, "section_id": section.section_id,
@@ -453,14 +540,15 @@ class LocalSectionExecutor:
             "source_text": section.text,
         }).decode()
         payload, receipt = self.client.chat(
-            self.route, system=system, user=user,
+            selected_route, system=system, user=user,
             concurrency_level=self.concurrency_level,
+            response_schema=response_schema,
         )
         try:
             validated_payload = _MapperResponsePayloadV1.model_validate(payload)
-        except ValidationError:
-            raise RetryableSectionError(
-                "section_mapper_schema_validation_retryable",
+        except ValidationError as exc:
+            raise MapperSchemaRetryableError(
+                _mapper_validation_issues(exc),
             ) from None
         raw_findings = validated_payload.findings
         if len(raw_findings) > job.maximum_output_items:
@@ -478,9 +566,10 @@ class LocalSectionExecutor:
             schema_version="section-pass-result-v1.0", job_id=job.job_id,
             job_sha256=job.job_sha256, document_id=job.document_id,
             section_id=job.section_id, prompt_id=job.prompt_id,
-            requested_model=job.model_route,
+            requested_model=selected_route.requested_model,
             provider_resolved_model=receipt.provider_resolved_model,
-            attempt=attempt, findings=tuple(findings), output_sha256="0" * 64,
+            attempt=attempt, repair_error_code=repair_error_code,
+            findings=tuple(findings), output_sha256="0" * 64,
         )
         draft = SectionPassResultV1.model_construct(**values)
         values["output_sha256"] = canonical_contract_sha256(draft, omit={"output_sha256"})

@@ -139,6 +139,7 @@ class SectionPromptJobV1(_Strict):
     prompt_version: str
     registry_version: Literal["analysis-prompt-registry-v1.0"] = REGISTRY_VERSION
     model_route: str
+    repair_model_route: str | None = None
     input_sha256: str
     unit_ids: tuple[str, ...]
     maximum_attempts: int = Field(default=2, ge=1, le=3)
@@ -149,6 +150,13 @@ class SectionPromptJobV1(_Strict):
     @classmethod
     def _ids(cls, value: str, info) -> str:
         return require_safe_id(value, field=info.field_name)
+
+    @field_validator("repair_model_route")
+    @classmethod
+    def _optional_repair_route(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return require_safe_id(value, field="repair_model_route")
 
     @field_validator("input_sha256", "job_sha256")
     @classmethod
@@ -162,7 +170,18 @@ class SectionPromptJobV1(_Strict):
             raise ValueError("unknown or mismatched prompt registry entry")
         if not self.unit_ids or len(set(self.unit_ids)) != len(self.unit_ids):
             raise ValueError("job unit IDs must be non-empty and unique")
-        if self.job_sha256 != canonical_contract_sha256(self, omit={"job_sha256"}):
+        if self.repair_model_route is not None:
+            if self.repair_model_route == self.model_route:
+                raise ValueError("repair model route must differ from primary route")
+            if self.maximum_attempts != 2:
+                raise ValueError("repair model route requires exactly two attempts")
+        hashes = {canonical_contract_sha256(self, omit={"job_sha256"})}
+        if self.repair_model_route is None:
+            # Read historical v1.0 jobs whose hash predates the additive null field.
+            hashes.add(canonical_contract_sha256(
+                self, omit={"job_sha256", "repair_model_route"},
+            ))
+        if self.job_sha256 not in hashes:
             raise ValueError("section job hash mismatch")
         return self
 
@@ -208,7 +227,15 @@ class AdaptiveAnalysisPlanV1(_Strict):
             counts[job.section_id] = counts.get(job.section_id, 0) + 1
         if any(count > self.maximum_prompts_per_section for count in counts.values()):
             raise ValueError("analysis plan exceeds prompt budget")
-        if self.plan_sha256 != canonical_contract_sha256(self, omit={"plan_sha256"}):
+        hashes = {canonical_contract_sha256(self, omit={"plan_sha256"})}
+        if all(job.repair_model_route is None for job in self.jobs):
+            legacy = self.model_dump(mode="json", exclude={"plan_sha256"})
+            for job in legacy["jobs"]:
+                job.pop("repair_model_route", None)
+            hashes.add(hashlib.sha256(json.dumps(
+                legacy, sort_keys=True, ensure_ascii=False, separators=(",", ":"),
+            ).encode()).hexdigest())
+        if self.plan_sha256 not in hashes:
             raise ValueError("analysis plan hash mismatch")
         return self
 
@@ -245,6 +272,7 @@ class SectionPassResultV1(_Strict):
     requested_model: str
     provider_resolved_model: str
     attempt: int = Field(ge=1)
+    repair_error_code: Literal["section_mapper_schema_validation_retryable"] | None = None
     findings: tuple[SectionFindingV1, ...]
     output_sha256: str
 
@@ -272,7 +300,13 @@ class SectionPassResultV1(_Strict):
     def _result_hash(self) -> "SectionPassResultV1":
         if len({row.finding_id for row in self.findings}) != len(self.findings):
             raise ValueError("duplicate finding identity")
-        if self.output_sha256 != canonical_contract_sha256(self, omit={"output_sha256"}):
+        hashes = {canonical_contract_sha256(self, omit={"output_sha256"})}
+        if self.repair_error_code is None:
+            # Read historical v1.0 results whose hash predates the additive null field.
+            hashes.add(canonical_contract_sha256(
+                self, omit={"output_sha256", "repair_error_code"},
+            ))
+        if self.output_sha256 not in hashes:
             raise ValueError("section result hash mismatch")
         return self
 
@@ -407,6 +441,7 @@ def select_prompt_ids(text: str, *, maximum: int = 6) -> tuple[str, ...]:
 
 def build_adaptive_analysis_plan(
     *, run_id: str, units: CitationUnitsV2, small_model_route: str,
+    repair_model_route: str | None = None,
     target_chars: int = 6000, overlap_units: int = 1,
     maximum_prompts_per_section: int = 6, maximum_attempts: int = 2,
 ) -> AdaptiveAnalysisPlanV1:
@@ -422,7 +457,8 @@ def build_adaptive_analysis_plan(
                 document_id=units.doc_id, section_id=section.section_id,
                 job_id=f"{section.section_id}-{prompt_id}", prompt_id=prompt_id,
                 prompt_version=spec.prompt_version, registry_version=REGISTRY_VERSION,
-                model_route=small_model_route, input_sha256=section.text_sha256,
+                model_route=small_model_route, repair_model_route=repair_model_route,
+                input_sha256=section.text_sha256,
                 unit_ids=section.unit_ids, maximum_attempts=maximum_attempts,
                 maximum_output_items=20, job_sha256="0" * 64,
             )
@@ -444,7 +480,15 @@ def validate_section_result(
         raise SectionAnalysisError("section_result_job_mismatch")
     if result.document_id != job.document_id or result.section_id != section.section_id:
         raise SectionAnalysisError("section_result_identity_mismatch")
-    if result.prompt_id != job.prompt_id or result.requested_model != job.model_route:
+    if result.attempt > job.maximum_attempts:
+        raise SectionAnalysisError("section_result_attempt_exceeds_job_limit")
+    if result.repair_error_code is None:
+        expected_route = job.model_route
+    else:
+        if result.attempt != 2 or job.repair_model_route is None:
+            raise SectionAnalysisError("section_result_undeclared_repair")
+        expected_route = job.repair_model_route
+    if result.prompt_id != job.prompt_id or result.requested_model != expected_route:
         raise SectionAnalysisError("section_result_route_or_prompt_mismatch")
     allowed = set(section.unit_ids)
     for finding in result.findings:
@@ -492,7 +536,10 @@ class SectionAnalysisStore:
     def seed(self, plan: AdaptiveAnalysisPlanV1) -> None:
         with self.connection:
             for job in plan.jobs:
-                payload = json.dumps(job.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+                payload = json.dumps(
+                    job.model_dump(mode="json", exclude_none=True),
+                    sort_keys=True, separators=(",", ":"),
+                )
                 existing = self.connection.execute(
                     "SELECT payload_json FROM section_jobs WHERE job_id=?", (job.job_id,),
                 ).fetchone()
@@ -535,10 +582,13 @@ class SectionAnalysisStore:
             raise
 
     def commit(self, result: SectionPassResultV1, token: str, now: datetime) -> None:
-        payload = json.dumps(result.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+        payload = json.dumps(
+            result.model_dump(mode="json", exclude_none=True),
+            sort_keys=True, separators=(",", ":"),
+        )
         with self.connection:
             cursor = self.connection.execute(
-                "UPDATE section_jobs SET state='succeeded',result_json=?,lease_token=NULL,lease_expires_at=NULL "
+                "UPDATE section_jobs SET state='succeeded',result_json=?,terminal_reason='',lease_token=NULL,lease_expires_at=NULL "
                 "WHERE job_id=? AND state='running' AND lease_token=? AND lease_expires_at>?",
                 (payload, result.job_id, token, now.isoformat()),
             )
@@ -576,6 +626,16 @@ class SectionAnalysisStore:
             "SELECT job_id,attempt FROM section_jobs ORDER BY job_id"
         )}
 
+    def retry_context(self, job_id: str, token: str) -> str:
+        row = self.connection.execute(
+            "SELECT terminal_reason FROM section_jobs "
+            "WHERE job_id=? AND state='running' AND lease_token=?",
+            (job_id, token),
+        ).fetchone()
+        if row is None:
+            raise SectionAnalysisError("stale_section_retry_context")
+        return str(row["terminal_reason"] or "")
+
 
 def run_parallel_jobs(
     *, store: SectionAnalysisStore, plan: AdaptiveAnalysisPlanV1,
@@ -592,13 +652,27 @@ def run_parallel_jobs(
             row = store.claim(now)
             if row is None:
                 break
-            claimed.append(row)
+            job, token, attempt = row
+            claimed.append((job, token, attempt, store.retry_context(job.job_id, token)))
         if not claimed:
             break
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            def execute_claim(job, attempt, retry_context):
+                contextual = getattr(executor, "execute_with_retry_context", None)
+                if (
+                    retry_context == "section_mapper_schema_validation_retryable"
+                    and job.repair_model_route is not None
+                    and callable(contextual)
+                ):
+                    return contextual(
+                        job, sections[job.section_id], attempt,
+                        retry_error_code=retry_context,
+                    )
+                return executor.execute(job, sections[job.section_id], attempt)
+
             futures = {
-                pool.submit(executor.execute, job, sections[job.section_id], attempt): (job, token, attempt)
-                for job, token, attempt in claimed
+                pool.submit(execute_claim, job, attempt, retry_context): (job, token, attempt)
+                for job, token, attempt, retry_context in claimed
             }
             for future in as_completed(futures):
                 job, token, _attempt = futures[future]
@@ -606,8 +680,13 @@ def run_parallel_jobs(
                     result = future.result()
                     validate_section_result(job, sections[job.section_id], result)
                     store.commit(result, token, datetime.now(timezone.utc))
-                except RetryableSectionError:
-                    store.fail(job, token, retryable=True, reason="retryable_executor_failure")
+                except RetryableSectionError as exc:
+                    reason = (
+                        "section_mapper_schema_validation_retryable"
+                        if str(exc) == "section_mapper_schema_validation_retryable"
+                        else "retryable_executor_failure"
+                    )
+                    store.fail(job, token, retryable=True, reason=reason)
                 except Exception:
                     store.fail(job, token, retryable=False, reason="invalid_or_terminal_executor_failure")
     return store.results()
