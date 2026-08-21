@@ -119,3 +119,79 @@ def test_canary_report_is_content_free(tmp_path):
     assert "Synthetic source-attested finding" not in serialized
     assert "Policy" not in serialized
     assert "api_key" not in serialized
+
+
+def test_concurrency_one_schema_retry_succeeds_and_is_recorded(tmp_path):
+    counter = {}
+    valid_handler = _handler(counter)
+    state = {"mapper_calls": 0}
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return valid_handler(request)
+        body = json.loads(request.content)
+        if request.url.path == "/v1/chat/completions" and body["model"] == "core-qwen":
+            state["mapper_calls"] += 1
+            if state["mapper_calls"] == 1:
+                return httpx.Response(200, json={
+                    "model": body["model"],
+                    "choices": [{"finish_reason": "stop", "message": {
+                        "content": json.dumps({"findings": [{
+                            "statement": "", "evidence_state": "supported",
+                            "citation_unit_ids": ["unused"], "confidence": 0.8,
+                        }]})
+                    }}],
+                })
+        return valid_handler(request)
+
+    workspace = tmp_path / "retry-canary"
+    report = run_physical_canary(
+        workspace=workspace,
+        endpoint_config=default_endpoint_config(base_url="http://127.0.0.1:4000"),
+        host_role="mac-studio", transport=httpx.MockTransport(handler),
+        minimum_free_bytes=0,
+    )
+    benchmark = json.loads((workspace / "concurrency_benchmark.json").read_text())
+    assert report["maximum_safe_mapper_concurrency"] == 4
+    assert benchmark["levels"][0]["schema_retry_count"] == 1
+    assert benchmark["levels"][0]["retry_count"] == 1
+    assert benchmark["levels"][0]["model_call_count"] == 2
+    assert benchmark["levels"][0]["completed_jobs"] == 1
+
+
+def test_repeated_schema_failure_persists_content_free_benchmark(tmp_path):
+    source_marker = "FORBIDDEN-SYNTHETIC-SOURCE-CONTENT"
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"finish_reason": "stop", "message": {
+                "content": json.dumps({"findings": [{
+                    "statement": "", "evidence_state": "supported",
+                    "citation_unit_ids": [source_marker], "confidence": 0.8,
+                }]})
+            }}],
+        })
+
+    workspace = tmp_path / "held-canary"
+    with pytest.raises(PhysicalCanaryError, match="concurrency_one_failed"):
+        run_physical_canary(
+            workspace=workspace,
+            endpoint_config=default_endpoint_config(base_url="http://127.0.0.1:4000"),
+            host_role="mac-studio", transport=httpx.MockTransport(handler),
+            minimum_free_bytes=0,
+        )
+    benchmark_path = workspace / "concurrency_benchmark.json"
+    assert benchmark_path.exists()
+    serialized = benchmark_path.read_text()
+    payload = json.loads(serialized)
+    level = payload["levels"][0]
+    assert level["status"] == "failed"
+    assert level["model_call_count"] == 2
+    assert level["error_code"] == "section_mapper_schema_validation_retryable"
+    assert source_marker not in serialized
+    assert "source_text" not in serialized
+    assert "findings" not in serialized

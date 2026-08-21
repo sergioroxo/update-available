@@ -23,6 +23,7 @@ from pydantic import SecretStr
 from runner.models.retrieval import SourceUnitRowV1
 from runner.pipeline.analysis_sections import (
     DocumentCompilationV1,
+    RetryableSectionError,
     SectionAnalysisStore,
     build_adaptive_analysis_plan,
     build_compiler_packet,
@@ -186,40 +187,69 @@ def _benchmark_concurrency(
     ]
     levels = []
     maximum_safe = 0
+
+    def execute_with_retry(executor, job, section):
+        retry_count = 0
+        schema_retry_count = 0
+        for attempt in range(1, job.maximum_attempts + 1):
+            try:
+                result = executor.execute(job, section, attempt)
+                validate_section_result(job, section, result)
+                return result, retry_count, schema_retry_count
+            except RetryableSectionError as exc:
+                if attempt >= job.maximum_attempts:
+                    raise
+                retry_count += 1
+                if str(exc) == "section_mapper_schema_validation_retryable":
+                    schema_retry_count += 1
+        raise PhysicalCanaryError("semantic_mapper_retry_loop_exhausted")
+
     for level in (1, 2, 4):
         executor = LocalSectionExecutor(client, concurrency_level=level)
         started_receipts = len(client.receipts)
         started = datetime.now(timezone.utc)
         error = ""
+        error_code = ""
+        completed_jobs = 0
+        retry_count = 0
+        schema_retry_count = 0
         try:
             with ThreadPoolExecutor(max_workers=level) as pool:
                 futures = {
-                    pool.submit(executor.execute, job, section, 1): (job, section)
+                    pool.submit(execute_with_retry, executor, job, section): (job, section)
                     for job, section in jobs[:level]
                 }
                 for future in as_completed(futures):
-                    job, section = futures[future]
-                    validate_section_result(job, section, future.result())
+                    _result, retries, schema_retries = future.result()
+                    completed_jobs += 1
+                    retry_count += retries
+                    schema_retry_count += schema_retries
             maximum_safe = level
         except Exception as exc:
             error = type(exc).__name__
+            error_code = (
+                str(exc) if isinstance(exc, RetryableSectionError)
+                else "terminal_or_unexpected_validation_failure"
+            )
         completed = datetime.now(timezone.utc)
         receipts = client.receipts[started_receipts:]
         levels.append({
             "concurrency": level, "status": "passed" if not error else "failed",
             "duration_ms": int((completed - started).total_seconds() * 1000),
-            "completed_jobs": len(receipts), "receipt_sha256s": [row.receipt_sha256 for row in receipts],
-            "error_type": error,
+            "completed_jobs": completed_jobs, "model_call_count": len(receipts),
+            "retry_count": retry_count, "schema_retry_count": schema_retry_count,
+            "receipt_sha256s": [row.receipt_sha256 for row in receipts],
+            "error_type": error, "error_code": error_code,
         })
         if error:
             break
-    if maximum_safe < 1:
-        raise PhysicalCanaryError("semantic_mapper_concurrency_one_failed")
     report = {
         "schema_version": "semantic-concurrency-benchmark-v1.0",
         "levels": levels, "maximum_safe_concurrency": maximum_safe,
     }
     atomic_write_bytes(path, json.dumps(report, indent=2, sort_keys=True).encode() + b"\n")
+    if maximum_safe < 1:
+        raise PhysicalCanaryError("semantic_mapper_concurrency_one_failed")
     return report
 
 

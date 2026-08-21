@@ -16,7 +16,15 @@ from urllib.parse import urlparse
 
 import httpx
 import numpy as np
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from runner.models.reprocessing import require_safe_id, require_sha256
 from runner.models.retrieval import canonical_contract_sha256
@@ -44,6 +52,24 @@ class RetryableSemanticAdapterError(RuntimeError):
 
 class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+
+class _MapperFindingPayloadV1(_Strict):
+    statement: str = Field(min_length=1, max_length=4000)
+    evidence_state: Literal["supported", "hypothesis", "unsupported"]
+    citation_unit_ids: list[str]
+    confidence: float = Field(ge=0, le=1)
+
+    @field_validator("statement")
+    @classmethod
+    def _nonblank_statement(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("mapper statement must contain non-whitespace text")
+        return value
+
+
+class _MapperResponsePayloadV1(_Strict):
+    findings: list[_MapperFindingPayloadV1]
 
 
 class LocalModelRouteV1(_Strict):
@@ -408,9 +434,18 @@ class LocalSectionExecutor:
         spec = PROMPT_REGISTRY[job.prompt_id]
         system = (
             "You are a bounded research extraction stage. Return one JSON object "
-            "with a findings array. Never cite a unit ID outside the supplied list. "
+            "with exactly one key named findings. findings must be an array of objects "
+            "with exactly statement, evidence_state, citation_unit_ids, and confidence. "
+            "statement must be a non-empty string containing substantive text. If no "
+            "relevant finding exists, return exactly {\"findings\":[]}; never emit a "
+            "placeholder or a blank statement. Never cite a unit ID outside the supplied list. "
             "Use evidence_state supported only for source-attested statements; use "
-            "hypothesis or unsupported otherwise. " + spec.instruction
+            "hypothesis or unsupported otherwise. "
+            + (
+                "This is the single schema-repair attempt. Follow the response contract exactly. "
+                if attempt > 1 else ""
+            )
+            + spec.instruction
         )
         user = _canonical_bytes({
             "document_id": job.document_id, "section_id": section.section_id,
@@ -421,19 +456,23 @@ class LocalSectionExecutor:
             self.route, system=system, user=user,
             concurrency_level=self.concurrency_level,
         )
-        raw_findings = payload.get("findings")
-        if not isinstance(raw_findings, list) or len(raw_findings) > job.maximum_output_items:
+        try:
+            validated_payload = _MapperResponsePayloadV1.model_validate(payload)
+        except ValidationError:
+            raise RetryableSectionError(
+                "section_mapper_schema_validation_retryable",
+            ) from None
+        raw_findings = validated_payload.findings
+        if len(raw_findings) > job.maximum_output_items:
             raise SectionAnalysisError("section_mapper_findings_contract_mismatch")
         findings = []
         for index, row in enumerate(raw_findings):
-            if not isinstance(row, dict):
-                raise SectionAnalysisError("section_mapper_finding_not_object")
             findings.append(SectionFindingV1(
                 finding_id=f"{job.job_id}-finding-{index + 1:03d}",
-                prompt_id=job.prompt_id, statement=str(row.get("statement") or ""),
-                evidence_state=row.get("evidence_state"),
-                citation_unit_ids=tuple(row.get("citation_unit_ids") or ()),
-                confidence=float(row.get("confidence", 0)),
+                prompt_id=job.prompt_id, statement=row.statement,
+                evidence_state=row.evidence_state,
+                citation_unit_ids=tuple(row.citation_unit_ids),
+                confidence=row.confidence,
             ))
         values = dict(
             schema_version="section-pass-result-v1.0", job_id=job.job_id,

@@ -7,8 +7,11 @@ import pytest
 from pydantic import ValidationError
 
 from runner.pipeline.analysis_sections import (
+    RetryableSectionError,
+    SectionAnalysisStore,
     build_adaptive_analysis_plan,
     build_compiler_packet,
+    run_parallel_jobs,
     validate_compilation,
 )
 from runner.pipeline.citation_units_v2 import build_citation_units_v2
@@ -267,3 +270,144 @@ def test_optional_shadow_route_may_be_absent_without_weakening_baseline():
     assert config.route("qwen_embedding").expected_dimension == 4096
     with pytest.raises(SemanticAdapterError, match="not_configured"):
         config.route("bge_shadow")
+
+
+@pytest.mark.parametrize("finding", [
+    {"statement": "", "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 0.8},
+    {"statement": "   ", "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 0.8},
+    {"statement": 7, "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 0.8},
+    {"statement": "Valid", "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": "0.8"},
+    {"statement": "Valid", "evidence_state": "supported", "citation_unit_ids": ["unit"], "confidence": 0.8, "extra": True},
+])
+def test_mapper_schema_rejects_blank_coerced_and_unknown_fields(finding):
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020b", units=units, small_model_route="core-qwen",
+        target_chars=3000, maximum_prompts_per_section=2,
+    )
+    finding = dict(finding)
+    finding["citation_unit_ids"] = [plan.sections[0].unit_ids[0]]
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps({"findings": [finding]})}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    mapper = LocalSectionExecutor(client, concurrency_level=1)
+    with pytest.raises(RetryableSectionError, match="schema_validation_retryable"):
+        mapper.execute(plan.jobs[0], plan.sections[0], 1)
+    assert "Synthetic evidence" not in str(mapper)
+    client.close()
+
+
+def test_mapper_empty_findings_is_valid_and_prompt_forbids_blank_statement():
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020b", units=units, small_model_route="core-qwen",
+        target_chars=3000, maximum_prompts_per_section=2,
+    )
+    system_prompts = []
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        system_prompts.append(body["messages"][0]["content"])
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps({"findings": []})}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    result = LocalSectionExecutor(client, concurrency_level=1).execute(
+        plan.jobs[0], plan.sections[0], 1,
+    )
+    assert result.findings == ()
+    assert '{"findings":[]}' in system_prompts[0]
+    assert "never emit a placeholder or a blank statement" in system_prompts[0]
+    client.close()
+
+
+def test_durable_mapper_job_retries_once_then_succeeds(tmp_path):
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020b", units=units, small_model_route="core-qwen",
+        target_chars=3000, maximum_prompts_per_section=2, maximum_attempts=2,
+    )
+    calls = {"count": 0}
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        calls["count"] += 1
+        job = plan.jobs[0]
+        statement = "" if calls["count"] == 1 else "Synthetic supported finding."
+        payload = {"findings": [{
+            "statement": statement, "evidence_state": "supported",
+            "citation_unit_ids": [job.unit_ids[0]], "confidence": 0.8,
+        }]}
+        body = json.loads(request.content)
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps(payload)}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    store = SectionAnalysisStore(tmp_path / "jobs.sqlite")
+    try:
+        store.seed(plan)
+        results = run_parallel_jobs(
+            store=store, plan=plan,
+            executor=LocalSectionExecutor(client, concurrency_level=1), max_workers=1,
+        )
+        assert len(results) == len(plan.jobs)
+        assert max(row.attempt for row in results) == 2
+        assert max(store.attempts().values()) == 2
+        assert calls["count"] == len(plan.jobs) + 1
+    finally:
+        store.close()
+        client.close()
+
+
+def test_two_invalid_mapper_responses_become_held(tmp_path):
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="doc-a")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020b", units=units, small_model_route="core-qwen",
+        target_chars=3000, maximum_prompts_per_section=2, maximum_attempts=2,
+    )
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        payload = {"findings": [{
+            "statement": "", "evidence_state": "supported",
+            "citation_unit_ids": [plan.jobs[0].unit_ids[0]], "confidence": 0.8,
+        }]}
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps(payload)}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    store = SectionAnalysisStore(tmp_path / "held.sqlite")
+    try:
+        store.seed(plan)
+        assert run_parallel_jobs(
+            store=store, plan=plan,
+            executor=LocalSectionExecutor(client, concurrency_level=1), max_workers=1,
+        ) == ()
+        assert store.counts() == {"held": len(plan.jobs)}
+        assert set(store.attempts().values()) == {2}
+    finally:
+        store.close()
+        client.close()
