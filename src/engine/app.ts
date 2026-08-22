@@ -1229,7 +1229,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // gone from the room, so pointing at them lifted nothing that existed.
   const EMPHASIS_PROPS: Record<string, string[]> = {
     floppy: ['kitFloppy', 'kitFloppyLabel', 'kitFloppyShutter'],
-    boombox: ['boomboxModel']
+    // ⚑ THE TAPES LIFT WITH THE PLAYER — 2026-08-21. The guidance for this beat
+    // reads "a companion tape is included. the player is on the shelf", and only
+    // the PLAYER was lifted, so the sentence pointed at two things and the room
+    // answered for one. Sérgio, walking it: *"On the shelf we should be able to
+    // see which tape you'd want to be played, because the user doesn't know —
+    // also it would help with the glow, because then the person knows what to
+    // click."* Both halves of the sentence now light.
+    //
+    // ⚑ All three tapes lift, not one. The piece does not tell you which tape to
+    // choose — choosing is the beat — it only tells you that these objects are
+    // the ones you may touch. Singling one out would conduct the player past a
+    // decision instead of into it.
+    boombox: ['boomboxModel', 'tapeA', 'tapeB', 'mixtape']
   };
   // of the prop's own diffuse — never a new light. Session 49 raised this from
   // 0.32: measured on the shelf, 0.32 of a ~0.27 diffuse added ~0.09 emissive

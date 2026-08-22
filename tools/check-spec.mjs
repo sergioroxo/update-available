@@ -116,6 +116,7 @@ const MAX_HERO_PER_SCENE = 3; // CLAUDE.md: "<=3 hero objects per scene on Quest
 const HEX_BASELINE = 33;
 
 const errors = [];
+let conductKeys = 0, conductProps = 0;
 const notes = [];
 
 /** Comment convention in this project's data: _doc/_note/_state are prose, not data. */
@@ -626,6 +627,63 @@ if (unreachedCount > UNREACHED_BASELINE) {
  * learns to ignore its own alarms. So it fails on GROWTH and nags downward — and
  * every file the pipeline delivers lowers the number automatically.
  */
+
+/**
+ * ⚑ C11 · CONDUCTING REACHABILITY — a hint that points at nothing.
+ *
+ * The guide's side-messages carry an `emphasis` key naming what the room should
+ * light while that hint is up, and `app.ts`'s EMPHASIS_PROPS resolves it to prop
+ * ids. Both halves can drift, silently, and both HAVE:
+ *
+ *   - Session 49 found `boombox` naming four props that no longer existed, so
+ *     the guidance said "the player is on the shelf" and nothing on the shelf
+ *     changed. The code comment recording that is still there.
+ *   - Only two of eight side-messages ever carried an emphasis at all.
+ *
+ * ⚑ This is the project's signature failure — content that cannot be met —
+ * wearing its smallest coat: the hint renders, the player reads it, and the room
+ * does not answer. Nothing crashes and no test noticed for months.
+ *
+ * Checks both directions: every `emphasis` value in the guide data resolves to
+ * an EMPHASIS_PROPS key, and every prop id that key names exists in the room.
+ */
+{
+  const appSrc = readFileSync(join(ROOT, 'src/engine/app.ts'), 'utf8');
+  const block = appSrc.match(/const EMPHASIS_PROPS[^=]*=\s*\{([\s\S]*?)\n  \};/);
+  const keys = new Map();
+  if (block) {
+    for (const m of block[1].matchAll(/^\s*([a-zA-Z]+):\s*\[([^\]]*)\]/gm)) {
+      keys.set(m[1], [...m[2].matchAll(/'([^']+)'/g)].map((x) => x[1]));
+    }
+  }
+  // every prop id the room can ever hold, across era1 + every delta `add`
+  const roomIds = new Set();
+  const collect = (n) => {
+    if (Array.isArray(n)) n.forEach(collect);
+    else if (n && typeof n === 'object') {
+      if (typeof n.id === 'string') roomIds.add(n.id);
+      Object.values(n).forEach(collect);
+    }
+  };
+  collect(readJson(join(ROOT, 'data/room/era1.json')));
+  collect(readJson(join(ROOT, 'data/room/reinterp_deltas.json')));
+
+  for (const [key, ids] of keys) {
+    for (const id of ids) {
+      if (!roomIds.has(id)) errors.push(`conducting: EMPHASIS_PROPS.${key} names prop "${id}", which no room state contains — the hint would light nothing (C11).`);
+    }
+  }
+  walkJson(join(ROOT, 'data/dialog'), (file, data) => {
+    for (const msg of data.sideMessages ?? []) {
+      if (msg.emphasis && !keys.has(msg.emphasis)) {
+        errors.push(`conducting: ${relative(ROOT, file)} message "${msg.id}" has emphasis "${msg.emphasis}" with no EMPHASIS_PROPS entry — the room cannot answer this hint (C11).`);
+      }
+    }
+  });
+  conductKeys = keys.size;
+  conductProps = [...keys.values()].reduce((a, b) => a + b.length, 0);
+}
+
 const AUDIO_BASELINE = 48;   // 86 minus the 38 refused ball_* names
 let audioMissing = 0, audioRefs = 0;
 {
@@ -678,6 +736,7 @@ console.log(
   `docs headerless ${headerlessCount}/${HEADERLESS_BASELINE}, ${supersededTargets.length} supersession links, ` +
   `${killsClaims.length} KILLS assertion(s) all clear; ` +
   `audio on disk ${audioRefs - audioMissing}/${audioRefs} (${audioMissing} missing, baseline ${AUDIO_BASELINE}); ` +
+  `conducting ${conductKeys} emphasis key(s) → ${conductProps} props, all resolvable; ` +
   `debug panel covers all ${osIds.size} debugJump ids (${exclusionIds.size} excluded); ` +
   `authoring-marker leaks ${leaksFound}/${AUTHORING_MARKER_BASELINE} across ${stringsChecked} data/**.json strings; ` +
   `${promptBlocks.length} prompt block(s) all lifecycle-marked; ` +
