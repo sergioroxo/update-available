@@ -609,6 +609,48 @@ if (unreachedCount > UNREACHED_BASELINE) {
     `tighten UNREACHED_BASELINE to ${unreachedCount} in tools/check-spec.mjs`);
 }
 
+
+/**
+ * ⚑ C10 · ASSET REACHABILITY — every media file the DATA names must exist on disk.
+ *
+ * Added 2026-08-21 after two independent audits ranked "the piece is nearly
+ * silent where it was designed as sound" as the single biggest gap in the work
+ * — and after a one-line script found **86 of 92 referenced audio files absent**.
+ * Nobody knew the number because nothing had ever counted. C9 proved a data file
+ * is referenced from code; this proves the file that data POINTS AT is really
+ * there.
+ *
+ * ⚑ Why a ratchet and not a hard zero: most of the 86 are build-time TTS output
+ * (the ball's MC lines, L's voice) from a pipeline that has not landed. Failing
+ * the build on those would just get the check disabled, which is how a project
+ * learns to ignore its own alarms. So it fails on GROWTH and nags downward — and
+ * every file the pipeline delivers lowers the number automatically.
+ */
+const AUDIO_BASELINE = 86;
+let audioMissing = 0, audioRefs = 0;
+{
+  const refs = new Set();
+  // walkJson hands us PARSED json, so scan every string value in the tree
+  const scan = (n) => {
+    if (typeof n === 'string') { if (/^[A-Za-z0-9_./-]+\.(mp3|wav|ogg)$/.test(n)) refs.add(n); }
+    else if (Array.isArray(n)) n.forEach(scan);
+    else if (n && typeof n === 'object') Object.values(n).forEach(scan);
+  };
+  walkJson(join(ROOT, 'data'), (_file, data) => scan(data));
+  const bases = ['', 'public/', 'public/assets/audio/', 'data/audio/'];
+  const missing = [...refs].filter((r) => {
+    const leaf = r.split('/').pop();
+    return !bases.some((b) => existsSync(join(ROOT, b.endsWith('audio/') ? b + leaf : b + r)));
+  });
+  if (missing.length > AUDIO_BASELINE) {
+    errors.push(`asset reachability: ${missing.length} referenced media files do not exist, baseline is ${AUDIO_BASELINE}. ` +
+      `New: ${missing.slice(0, 3).join(', ')}. Data must not point at files that are not there (C10).`);
+  } else if (missing.length < AUDIO_BASELINE) {
+    notes.push(`asset reachability improved: ${missing.length} < baseline ${AUDIO_BASELINE} — tighten AUDIO_BASELINE in tools/check-spec.mjs`);
+  }
+  audioMissing = missing.length; audioRefs = refs.size;
+}
+
 // ── report ───────────────────────────────────────────────────────────────────
 if (errors.length) {
   console.error('spec-law check FAILED:');
@@ -621,6 +663,7 @@ console.log(
   `${heroScenes} scenes within the ${MAX_HERO_PER_SCENE}-hero budget; palette ${hexCount}/${HEX_BASELINE}; ` +
   `docs headerless ${headerlessCount}/${HEADERLESS_BASELINE}, ${supersededTargets.length} supersession links, ` +
   `${killsClaims.length} KILLS assertion(s) all clear; ` +
+  `audio on disk ${audioRefs - audioMissing}/${audioRefs} (${audioMissing} missing, baseline ${AUDIO_BASELINE}); ` +
   `debug panel covers all ${osIds.size} debugJump ids (${exclusionIds.size} excluded); ` +
   `authoring-marker leaks ${leaksFound}/${AUTHORING_MARKER_BASELINE} across ${stringsChecked} data/**.json strings; ` +
   `${promptBlocks.length} prompt block(s) all lifecycle-marked; ` +
