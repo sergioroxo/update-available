@@ -626,7 +626,7 @@ if (unreachedCount > UNREACHED_BASELINE) {
  * learns to ignore its own alarms. So it fails on GROWTH and nags downward — and
  * every file the pipeline delivers lowers the number automatically.
  */
-const AUDIO_BASELINE = 86;
+const AUDIO_BASELINE = 48;   // 86 minus the 38 refused ball_* names
 let audioMissing = 0, audioRefs = 0;
 {
   const refs = new Set();
@@ -637,8 +637,22 @@ let audioMissing = 0, audioRefs = 0;
     else if (n && typeof n === 'object') Object.values(n).forEach(scan);
   };
   walkJson(join(ROOT, 'data'), (_file, data) => scan(data));
-  const bases = ['', 'public/', 'public/assets/audio/', 'data/audio/'];
+  // ⚑⚑ NAMES-ONLY AUDIO IS NOT MISSING AUDIO, AND CONFLATING THEM IS DANGEROUS.
+  // s4_ball.json states the law: "NOT ONE LINE HERE IS VOICED, AND NONE OF THEM
+  // MAY BE SYNTHESIZED… build-time TTS renders the APPARATUS and never a person;
+  // the MC is a person and the room is people. So the `audio` names below are
+  // names only." Those 38 `ball_*` entries are an ETHICAL REFUSAL that S79 made
+  // deliberately and wrote down.
+  //
+  // ⚑ A ratchet that counted them would nag downward toward zero — i.e. it would
+  // pressure a future session into synthesising the MC's voice to make a check
+  // go green. A check that pushes someone to break the piece's own ethics law is
+  // worse than no check. They are excluded by name, and the exclusion is the
+  // point rather than an oversight.
+  const NAMES_ONLY = /^ball_/;
+  const bases = ['', 'public/', 'public/assets/audio/', 'data/audio/', 'assets/audio/'];
   const missing = [...refs].filter((r) => {
+    if (NAMES_ONLY.test(r.split('/').pop())) return false;
     const leaf = r.split('/').pop();
     return !bases.some((b) => existsSync(join(ROOT, b.endsWith('audio/') ? b + leaf : b + r)));
   });

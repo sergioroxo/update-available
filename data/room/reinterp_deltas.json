@@ -2633,7 +2633,17 @@
       }
     },
     "remove": [
-      "terminalFrame"
+      "terminalFrame",
+      "crtBody",
+      "crtBezelTop",
+      "crtBezelBottom",
+      "crtBezelLeft",
+      "crtBezelRight",
+      "crtNeck",
+      "crtFoot",
+      "crtPowerButton",
+      "crtPowerLed",
+      "keyboard"
     ],
     "add": [
       {
