@@ -85,8 +85,20 @@ from a doc comment at `ledger.ts:6` describing an *intended* "idle reset" that w
 - **There is no deadname.** The E4 record misfiles Maya ("under the old file"); it never misnames her.
 - **`?flat=1` is a review tool, not a fallback.** No design decision may cite it.
 - **The monkey is the teddy's mesh**, not a second prop.
-- ⚑ **Four silent supersessions need a written ruling** — beats dropped by practice with no document
-  retiring them. Listed in the audit reports.
+- ⚑ **THE FOUR SILENT SUPERSESSIONS — RULED BY SÉRGIO, 2026-08-21.** They are no longer open:
+  - **Zap! / JUST CHANGE™ ad-games — RETIRED.** *"We had some game done on Era-3, the FloppySheep,
+    so then we don't need the Just Change ads or game there on Era-1."* The playable-ad idea is
+    discharged by FloppySheep; v0.5 §6 and the E1 floppy game are both closed. **Do not rebuild them.**
+  - **TransJesus — SUPERSEDED BY THE BALL, conditionally.** *"TransJesus is now the Ball, it would be
+    back if the ball fails."* ⚑ So the E2/E3 discovery beats stay retired **while the ball works**.
+    If the ball is ever cut or fails to land, this is the beat that returns in its place — the only
+    supersession here carrying a live fallback.
+  - **SOGICEfy player / the dual life — RETIRED.** *"No longer here anymore, too complex to fix now."*
+    E1's tapes carry "your music"; the witness-side corrected library is closed.
+  - **The locked subtitle ("Nothing to update. Change has failed.") — REWORK.** Not restored as
+    written. ⚑ It now collides with the Close's `Your update has failed.`, which S92 built as the
+    piece's title finally being spoken. **Two lines that close on the same words cannot both land**;
+    the rework has to decide which one owns the sentence.
 
 # THE TRAPS THIS PROJECT HAS PAID FOR
 1. **A comment is not evidence.** Six sessions repeated a stale header claim; a decision was applied to
