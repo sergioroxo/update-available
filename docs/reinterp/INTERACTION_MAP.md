@@ -45,9 +45,14 @@ scaffolding thins as the eras go on, and nobody decided that.**
 | **⚑ `pillow` provotype** | E1 desktop icon | **the racket in Room 1 is its instrument** — and nothing connects them |
 | **⚑ `origin_intake_e1` provotype** | E1 desktop icon | the Family Form |
 
-⚑ **BOTH PROVOTYPES VANISH AT THE ERA TURN, UNSIGNALLED.** They draw only inside the `e1` branch, and
-Era 1 ends automatically 1.2 s after the diary glitch. **This is the single largest optional-content
-loss in the piece** and it is why Sérgio said *"they only exist before you press the floppy."*
+⚑ **CORRECTED 2026-08-21 — S86 ALREADY FIXED THIS AND I REPORTED IT AS BROKEN.** Both launchers are
+carried onto the **E2** desktop under the found file's own law (`desktopIdle()`): never during a felt
+scene, never over a window, never announced. The fiction was already carrying them — E2's boot crawl
+says *JOURNEY FILE … MIGRATED*.
+**What remains open is E3/E4, and S86 flagged it as a composition call rather than a bug:** E3 leaves
+Daniel's monitor dead by law and E4 has no desktop, so "carry forward" cannot mean "forever" without
+answering where an OS surface lives after Room 1. ⚑ **I wrote this section from the audit rather than
+from the code — the exact failure this map exists to prevent.**
 
 # 3 · SECRET — currently, almost none
 The framework's category is real and the piece has **one** genuine instance:

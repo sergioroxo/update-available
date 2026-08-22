@@ -428,6 +428,20 @@ export class DesktopOS {
   }
 
   /** open a reinterpretation provotype (diegetic invitation lives inside it) */
+  /**
+   * ⚑ THE ROOM'S ONE DOOR INTO A SCREEN BEAT — the racket opens the session it
+   * is the instrument of. Same guard as the found file and lamby_rig.exe: only
+   * on an otherwise-idle desktop, so it can never fire over a window or during
+   * a felt scene, and never while a provotype is already open.
+   */
+  openPillowFromRoom(): void {
+    if (this.provotype || !this.desktopIdle()) return;
+    this.openProvotype(pillowProvotypeData as unknown as Provotype);
+  }
+
+  /** the room asks before it offers the racket — same law, exposed */
+  desktopIdleForProps(): boolean { return this.desktopIdle(); }
+
   private openProvotype(data: Provotype): void {
     if (!this.reinterp || this.provotype) return;
     this.provotype = new ProvotypeApp(data);

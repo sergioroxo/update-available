@@ -417,6 +417,10 @@ const TAPE_HIT_RADIUS = 0.045; // stays under half the 0.10m shelf spacing (Sess
 /** the boombox's measured AABB (Session 56, post-rotation + shelf-height fix):
  *  x[1.785,1.936] y[0.703,0.885] z[0.417,0.824]; this sits at its centre so
  *  the whole object is clickable */
+/** the tennis racket on the Room-1 floor (data/room/reinterp_deltas.json r1);
+ *  a generous radius because it lies flat and low, and a floor object read at
+ *  a seated angle is a small target. */
+const RACKET_HIT = { x: -0.65, y: 0.12, z: 2.6 };
 const BOOMBOX_HIT = { x: 1.86, y: 0.793, z: 0.62 };
 const BOOMBOX_HIT_RADIUS = 0.21;
 /** the visual "docked" spot, just in front of the boombox's own deck plate */
@@ -1241,7 +1245,31 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // choose — choosing is the beat — it only tells you that these objects are
     // the ones you may touch. Singling one out would conduct the player past a
     // decision instead of into it.
-    boombox: ['boomboxModel', 'tapeA', 'tapeB', 'mixtape']
+    boombox: ['boomboxModel', 'tapeA', 'tapeB', 'mixtape'],
+    // ⚑ THE RACKET IS THE PILLOW PROVOTYPE'S INSTRUMENT, not set dressing.
+    // Sérgio: *"Isn't the Racket a provotype of the pillow?"* — and he is
+    // right; `data/provotypes/pillow.json`'s own states read "Raise the
+    // racket." / "Use a full exhale. Address the person linked to the injury."
+    // It is the object of a documented practice (a racket struck against a
+    // pillow while addressing a parent), and it had no hit, no emphasis and no
+    // link to the beat it belongs to — the room held the instrument and the
+    // screen held the session, and nothing joined them.
+    pillow: ['tennisRacketModel'],
+    // ⚑ THE GATHERING WINDOW — the hint that most needed a room and had none.
+    // Sérgio: *"the plant, the two books, the poster, the duck, and the monkey
+    // (they aren't clickable at all), no glow around like a pressable area
+    // feedback."* He was right in the way that matters: those props are
+    // clickable ONLY while the belongings window is open, and outside it they
+    // are inert with no feedback — so "clickable" was true of a beat a player
+    // may never open, which is indistinguishable from untrue.
+    //
+    // ⚑ The window is also the one beat in the piece where the room IS the
+    // interface: the guidance says keep what you can carry, and the answer is
+    // not on the screen. Every eligible object lifting for exactly as long as
+    // the window is open is the conducting layer doing its whole job — it says
+    // THESE, and it says NOW, and it stops saying it when the moment passes.
+    belongings: ['mixtape', 'tapeA', 'tapeB', 'plantModel', 'book1', 'book2',
+      'poster1', 'teddyBox', 'rainbowDuck', 'tennisRacketModel']
   };
   // of the prop's own diffuse — never a new light. Session 49 raised this from
   // 0.32: measured on the shelf, 0.32 of a ~0.27 diffuse added ~0.09 emissive
@@ -2405,6 +2433,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     {
       if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
+        return;
+      }
+      // ⚑ THE RACKET → THE SESSION. The only room prop that opens a screen
+      //   beat, and it is the right one: the provotype IS this object being
+      //   used. Guarded on `inDesktop` so it never fires over a window or a
+      //   felt scene, and on `reinterp` because the provotypes are ours.
+      if (options.reinterp && os.inDesktop && os.desktopIdleForProps?.() &&
+          rayHitsPoint(e, RACKET_HIT, 0.34)) {
+        os.openPillowFromRoom?.();
         return;
       }
       if (os.inDesktop && !os.kit && rayHitsPoint(e, KIT_FLOPPY, 0.13)) {
