@@ -5,6 +5,25 @@
 
   "entries": [
     {
+      "id": "tapeA_side_one_intro",
+      "_doc": "⚑ TAPE A'S SPOKEN SIDE ONE — the eighteen seconds Sérgio heard as a fault. data/dialog/s1_tapes.json's tapeA opens with four captions carrying NO audio (segments a-welcome / a-instruction-1 / a-instruction-2 / a-turn, at 0/5/10/14) and the song's file only begins at segment 5, so pressing the prayer gave eighteen seconds of tape hiss under subtitles for a recording that does not exist: 'I press the prayer and it is very slow to start playing, can only hear the noise.' The captions are not wrong — a devotional cassette of this period WOULD open with an institutional welcome before the hymn — they were simply never voiced. REGISTER: apparatus, unambiguously. This is the organisation addressing a room of people through a tape it produced; it is the fellowship's own institutional voice, not a person's, and it is exactly the class this tool exists to render. ⚑ It is also the voice the piece has least of: the apparatus is everywhere in TEXT and almost nowhere in SOUND, so these four lines do more than close a gap — they let a player HEAR the thing that is being kind to them. Voice F1 to sit apart from Lamby's F2: the same organisation, an older recording, a different room. Speed 0.94 because a welcome read at conversational pace is a person talking, and a welcome read slightly slow is a broadcast — the difference is the whole register.",
+      "register": "apparatus",
+      "voice": "F1",
+      "lang": "en",
+      "speed": 0.94,
+      "steps": 10,
+      "outFile": "public/assets/audio/tapeA_side_one_intro.wav",
+      "source": {
+        "file": "data/dialog/s1_tapes.json",
+        "fields": [
+          "tapes[tapeA].segments[a-welcome].caption",
+          "tapes[tapeA].segments[a-instruction-1].caption",
+          "tapes[tapeA].segments[a-instruction-2].caption",
+          "tapes[tapeA].segments[a-turn].caption"
+        ]
+      }
+    },
+    {
       "id": "lamby_puremail_apology",
       "_doc": "S2R.5 (docs/REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md) — the PureMail apology, read aloud in LAMBY'S VOICE: the apparatus reading its own death notice in the cheerful assistant timbre. Text is data/dialog/s2_caleb.json's pureMail block (heading + lines + closing), PORTED VERBATIM there from the shipped build per that file's own doc comment — do not rewrite it here or there.",
       "register": "apparatus",

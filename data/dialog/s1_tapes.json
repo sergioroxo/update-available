@@ -20,7 +20,7 @@
           "kind": "welcome",
           "caption": "Welcome. You are not alone tonight.",
           "audio": null,
-          "_doc": "PLACEHOLDER — Sérgio voice pass pending."
+          "_doc": "⚑ AFTER RENDERING, SET THIS SEGMENT'S `audio` TO \"tapeA_side_one_intro.wav\". Tape A opens with four spoken captions and NO recording, so pressing the prayer gives eighteen seconds of hiss under subtitles — Sérgio: 'very slow to start playing, can only hear the noise'. The lines are declared in data/audio/tts_manifest.json as `tapeA_side_one_intro` (register: apparatus — the fellowship's own institutional voice on a tape it produced, which is exactly what that tool exists to render). ⚑ The reference is deliberately NOT wired yet: check-spec C10 counts what data/dialog claims the piece will play, and pointing at a file nobody has rendered is the same fault as every other content-that-cannot-be-met in this project. Render first — `python3 tools/tts/render.py tapeA_side_one_intro` — then wire it, and C10 goes green on its own. PLACEHOLDER — Sérgio voice pass pending on the caption wording itself."
         },
         {
           "id": "a-instruction-1",

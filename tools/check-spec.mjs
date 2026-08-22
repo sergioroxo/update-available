@@ -694,7 +694,16 @@ let audioMissing = 0, audioRefs = 0;
     else if (Array.isArray(n)) n.forEach(scan);
     else if (n && typeof n === 'object') Object.values(n).forEach(scan);
   };
-  walkJson(join(ROOT, 'data'), (_file, data) => scan(data));
+  // ⚑ The TTS manifest is a WORK QUEUE, not a set of promises the app relies
+  // on: its `outFile` paths name files a human has not rendered YET, and that
+  // is the point of the file. Counting them would make declaring work fail the
+  // build, which would teach the next person to declare less — the opposite of
+  // what this check is for. What IS counted is `data/dialog`'s own `audio`
+  // names, because those are what the running piece tries to play.
+  walkJson(join(ROOT, 'data'), (file, data) => {
+    if (file.endsWith('tts_manifest.json')) return;
+    scan(data);
+  });
   // ⚑⚑ NAMES-ONLY AUDIO IS NOT MISSING AUDIO, AND CONFLATING THEM IS DANGEROUS.
   // s4_ball.json states the law: "NOT ONE LINE HERE IS VOICED, AND NONE OF THEM
   // MAY BE SYNTHESIZED… build-time TTS renders the APPARATUS and never a person;
