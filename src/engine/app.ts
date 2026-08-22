@@ -1222,6 +1222,56 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let moveHintT = -1;
   const HINT_SECONDS = 7;
 
+  /**
+   * ⚑⚑ THE DEMONSTRATION — the room performs the instruction the screen gives.
+   *
+   * Sérgio's, from a walk: *"when we have the moment of the racket, it should
+   * move in front of us like a visualizer, as if exemplifying IRL, not like in
+   * first person, but as if it was a tutorial in the screen but also in the
+   * space. We should apply this language of making more moments happen."*
+   *
+   * The screen half already existed — `provotype.ts`'s drawFigure has drawn
+   * lift / exhale / strike since the beat was built. The real racket lay on the
+   * floor doing nothing while a diagram of it performed on the monitor. This is
+   * the other half, and it is the CONDUCTING LAYER'S NEXT RUNG: emphasis says
+   * "this object"; a demonstration says "like this".
+   *
+   * ⚑ IT OBEYS drawFigure'S OWN LAW, and that law is the whole ethics of the
+   * beat: "a few blocky positions, no rhythm, no impact lines, no screen shake…
+   * administrative, not kinaesthetic. It must NOT feel like a satisfying swing."
+   * A racket that swung WELL would make the practice feel good, and the practice
+   * is the subject. So: three still positions, a hard cut between them, no
+   * easing, no follow-through, no sound. It moves the way an instruction manual
+   * moves — and the apparatus rehearsing a bodily violence in a calm diagram,
+   * using your own object, is more frightening than any animation of it.
+   *
+   * ⚑ AND IT NEVER TOUCHES THE PLAYER'S BODY. R28 §1: the only bodily ask is
+   * the turn. The object demonstrates; the person is not asked to swing, mime,
+   * or aim. Watching the system show you the gesture is the beat.
+   */
+  const RACKET_REST = { yaw: 25, pitch: 0, y: 0 };
+  const RACKET_POSES: Record<string, { yaw: number; pitch: number; y: number }> = {
+    // raised and held, tilted back — the diagram's arm at its top position
+    lift:   { yaw: 10, pitch: -68, y: 0.62 },
+    // held there. the exhale is the person's, not the object's: it does NOT
+    // move, because a prop that moved on a breath would be acting
+    exhale: { yaw: 10, pitch: -62, y: 0.60 },
+    // down. one position, not a swing — no arc is drawn between these
+    strike: { yaw: 14, pitch: -8,  y: 0.16 }
+  };
+  let racketPose: string | null = null;
+  function syncRacketDemo(): void {
+    const want = (os.provotype?.roomPose ?? null) as string | null;
+    if (want === racketPose) return;
+    racketPose = want;
+    const h = room.props.get('tennisRacketModel');
+    if (!h) return;
+    const p = want ? RACKET_POSES[want] : null;
+    const base = RACKET_HIT;
+    h.entity.setLocalPosition(base.x, (p ? p.y : RACKET_REST.y), base.z);
+    h.entity.setLocalEulerAngles(p ? p.pitch : RACKET_REST.pitch, p ? p.yaw : RACKET_REST.yaw, 0);
+  }
+
   // R28-2a: prop emphasis follows the ACTIVE side-message (data key
   // `emphasis`, resolved to prop ids here — geometry stays in .ts). This
   // generalizes R28-0c item 10's floppy lift: a STATIC brightness lift (no
@@ -3030,6 +3080,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
 
     os.update(dt);
+    syncRacketDemo(); // the room mirrors the diagram's pose (see its doc)
     if (os.dirty) { frontTex.upload(); os.dirty = false; }
     witness.update(dt);
     if (witness.dirty) { backTex.upload(); witness.dirty = false; }

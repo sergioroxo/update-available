@@ -347,6 +347,28 @@ export class ProvotypeApp {
    * blocky positions, no rhythm, no impact lines, no screen shake. It must
    * NOT feel like a satisfying swing — administrative, not kinaesthetic.
    */
+  /**
+   * ⚑ THE POSE THE DIAGRAM IS HOLDING, for the ROOM to mirror.
+   *
+   * Sérgio, 2026-08-21: *"when we have the moment of the racket, it should move
+   * in front of us like a visualizer, as if exemplifying IRL… as if it was a
+   * tutorial in the screen but also in the space."* The screen half of that
+   * already existed — drawFigure has drawn lift/exhale/strike since the beat was
+   * built. What was missing is the object: the real racket lies on the Room-1
+   * floor and does nothing while a diagram of it performs on the monitor.
+   *
+   * ⚑ The room mirror obeys drawFigure's own law, which is the important part:
+   * "a few blocky positions, no rhythm, no impact lines… administrative, not
+   * kinaesthetic. It must NOT feel like a satisfying swing." A racket that
+   * swung well would make the practice feel good, and the practice is the
+   * subject. It moves the way an instruction manual moves.
+   */
+  get roomPose(): 'lift' | 'exhale' | 'strike' | null {
+    if (!this.hasAnim) return null;
+    const st = this.data.states[this.stateIndex];
+    return (this.showResponse ? st.animPose : undefined) ?? null;
+  }
+
   private drawFigure(ctx: CanvasRenderingContext2D, x: number, top: number): void {
     const st = this.data.states[this.stateIndex];
     const pose = this.showResponse ? st.animPose : undefined;
