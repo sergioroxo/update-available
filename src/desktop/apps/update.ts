@@ -19,10 +19,28 @@ import { ledger } from '../../state/ledger';
 import { drawLambyChar } from './lambyChar';
 
 export type UpdateKey = 'u2' | 'u3' | 'u4' | 'close';
-type UpdatePhase = 'notify' | 'reminded' | 'eula' | 'install' | 'restart';
+type UpdatePhase = 'cascade' | 'notify' | 'reminded' | 'eula' | 'install' | 'restart';
 
 interface UpdateStrings {
   toEra: string;
+  /**
+   * ⚑ THE ERROR CASCADE — the beat that runs BEFORE the notice, restored
+   * 2026-08-21. It was authored in `s1_end.json`'s `ritual` block and nothing in
+   * `src/` ever read it, so it existed as text and never as a beat; Sérgio named
+   * it from memory as the loss he could feel. Its own design note calls it
+   * "replicating the Error-999 stack".
+   *
+   * ⚑ It is a STACK, not a dialog. `count` windows arrive `everyMs` apart, each
+   * offset from the last, until the screen is a pile of the same refusal — the
+   * machine failing loudly and repeatedly at the exact moment the diary proved
+   * it could not overwrite a person. Retry and Cancel BOTH lead to the notice:
+   * the era's law is register-not-branch, and an error you can genuinely dismiss
+   * is not this system.
+   *
+   * Optional. Only u2 declares one today; omit it and the ritual opens on
+   * `notify` exactly as before.
+   */
+  cascade?: { title: string; line: string; retry: string; cancel: string; count: number; everyMs: number } | null;
   notifyTitle: string;
   notify: string[];
   updateNow: string;
@@ -97,7 +115,12 @@ export class UpdateApp {
 
   readonly key: UpdateKey;
   private readonly s: UpdateStrings;
+  // ⚑ An update that declares a cascade OPENS on it; every other update opens
+  //   on the notice exactly as before. Set in the constructor once `this.s` is
+  //   bound — see below.
   private phase: UpdatePhase = 'notify';
+  /** how many error windows have landed so far (drives the stack + the clock) */
+  private cascadeShown = 0;
   private t = 0;
   private page = 0;
   private remindUsed = false;
@@ -137,6 +160,9 @@ export class UpdateApp {
     this.s = (updates as unknown as Record<string, UpdateStrings>)[key];
     this.ledgerEntry = { toEra: ERA_NUM[this.s.toEra] ?? 0, remindLaterCount: 0, eulaScrollPct: 0 };
     ledger.updates.push(this.ledgerEntry);
+    // ⚑ an update that declares a cascade opens on the pile of errors; every
+    //   other one opens on its notice, exactly as before.
+    if (this.s.cascade) this.phase = 'cascade';
   }
 
   /** the notification is withdrawn while reminded; it returns once */
@@ -163,6 +189,13 @@ export class UpdateApp {
     // normal 60fps frame; it only changes behavior after a real stall/gap.
     const MAX_DT = 0.1;
     this.t += Math.min(dt, MAX_DT);
+    // ⚑ the stack builds on its own clock — one window every `everyMs` until
+    //   `count` are up. Nothing is required of the player while it fills.
+    const casc = this.s.cascade;
+    if (this.phase === 'cascade' && casc) {
+      const due = Math.min(casc.count, Math.floor((this.t * 1000) / casc.everyMs) + 1);
+      this.cascadeShown = due;
+    }
     if (this.phase === 'reminded' && this.t >= REMIND_SECONDS) {
       this.phase = 'notify'; // it returns — and this time there is no later
       this.t = 0;
@@ -210,6 +243,27 @@ export class UpdateApp {
       return;
     }
 
+    if (this.phase === 'cascade' && this.s.cascade) {
+      const cs = this.s.cascade;
+      const dw = 232; const dh = 92;
+      // each window steps down-right from the last, so the pile reads as one
+      // failure repeating rather than several different problems
+      for (let i = 0; i < this.cascadeShown; i++) {
+        const dx = Math.round((W - dw) / 2) - 46 + i * 15;
+        const dy = Math.round((H - dh) / 2) - 34 + i * 13;
+        const c = ui.windowFrame(ctx, dx, dy, dw, dh, cs.title, true);
+        ui.setFont(ctx, 9);
+        ctx.fillStyle = ERA1.warnDark;
+        ctx.fillText(cs.line, c.x + 10, c.y + 10);
+        // ⚑ only the TOP window carries live buttons — a pile of clickable
+        //   Retrys would invite the player to fight it, and the beat is that
+        //   there is nothing to fight.
+        const live = i === this.cascadeShown - 1;
+        ui.button(ctx, c.x + c.w - 150, c.y + c.h - 26, 66, 18, cs.retry, { disabled: !live });
+        ui.button(ctx, c.x + c.w - 76, c.y + c.h - 26, 66, 18, cs.cancel, { disabled: !live });
+      }
+      return;
+    }
     if (this.phase === 'notify') {
       const bare = this.key === 'close';
       const dw = 320; const dh = bare ? 110 : 150;
@@ -380,6 +434,15 @@ export class UpdateApp {
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
 
+    // ⚑ RETRY AND CANCEL BOTH LEAD ONWARD, and that is the beat. The era's law
+    //   is register-not-branch: a press records HOW you met the machine and
+    //   never what it does next. An error dialog you can genuinely dismiss is
+    //   not this system — the update was never conditional on your agreement.
+    //   Either press ends the pile and opens the notice.
+    if (this.phase === 'cascade' && this.s.cascade) {
+      if (this.cascadeShown >= 1) { this.phase = 'notify'; this.t = 0; }
+      return;
+    }
     if (this.phase === 'notify') {
       const bare = this.key === 'close';
       const dw = 320; const dh = bare ? 110 : 150;

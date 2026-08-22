@@ -2,6 +2,15 @@
   "_doc": "PLACEHOLDER — Sérgio voice pass pending on EVERY string. The era transitions as SOFTWARE UPDATES (SCRIPT_UPDATE v0.5 §1, CLAUDE.md): notification ('Remind me later' works ONCE) → EULA (read through, one live 'I Agree') → install (changelog-as-thesis + glitch) → restart. Updates are triggered by documented system failures, never by the player. The register is operable — the system's confident cheer — and the changelog is the thesis in four lines: same instrument, new casing. The FINAL restart (close) is deliberately different: no terms, no changelog, bare — the person's restart, not the system's.",
   "u2": {
     "toEra": "e2",
+    "_docCascade": "⚑ THE ERROR CASCADE — restored 2026-08-21. It was authored in data/dialog/s1_end.json's `ritual` block (error / errorRetry / errorCancel / loading) and NOTHING IN src/ EVER READ IT: that whole block is orphaned, so the beat existed only as text. Sérgio named this loss from memory in his 2026-08-21 walkthrough — 'the transition from Era 1 to Era 2 is missing the cascade of windows that we talked about previously and the glitching effects' — and he was right. The copy below is that authored copy, moved to the file the live code actually reads. Its own design note: 'Runs straight off the diary glitch, replicating the Error-999 stack.' ⚑ IT IS A STACK, NOT A DIALOG: the windows arrive one after another, each offset from the last, until the screen is a pile of the same refusal. Retry and Cancel BOTH lead onward — the era's own law is register-not-branch, and an error you can genuinely dismiss is not this system. Set `cascade: null` on any update that should not have one; only u2 does today.",
+    "cascade": {
+      "title": "PHASE/2 95",
+      "line": "a new update is needed",
+      "retry": "Retry",
+      "cancel": "Cancel",
+      "count": 7,
+      "everyMs": 420
+    },
     "notifyTitle": "TriedPath Un-Walk — System Notice",
     "notify": [
       "Un-Walk has detected an object it",
