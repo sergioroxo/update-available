@@ -62,15 +62,30 @@ def load_json(path: Path):
 
 def resolve_field(doc, dotted: str):
     """'pureMail.heading' -> doc['pureMail']['heading'];
-    'pureMail.lines[]' -> ' '.join(doc['pureMail']['lines'])."""
-    parts = dotted.split(".")
+    'pureMail.lines[]'    -> ' '.join(doc['pureMail']['lines']);
+    'tapes[tapeA].segments[a-welcome].caption'
+                          -> the list item whose own 'id' is tapeA / a-welcome.
+
+    The third form exists because the tape captions live in a LIST keyed by id,
+    not a dict, and the alternative was pasting the text into the manifest. That
+    would have frozen a copy: these captions are PLACEHOLDER pending Sérgio's
+    voice pass, so a manifest copy would go stale the moment he rewrites a line
+    and the rendered audio would quietly stop matching the subtitle under it.
+    ⚑ The manifest names WHERE the words live; it must never hold the words."""
+    parts = re.findall(r"[^.\[\]]+(?:\[[^\]]*\])?", dotted)
     cur = doc
     for part in parts:
-        is_array = part.endswith("[]")
-        key = part[:-2] if is_array else part
+        m = re.match(r"^([^\[]+)(?:\[([^\]]*)\])?$", part)
+        key, sel = m.group(1), m.group(2)
         cur = cur[key]
-        if is_array:
+        if sel is None:
+            continue
+        if sel == "":
             return " ".join(str(x) for x in cur)
+        match = next((x for x in cur if isinstance(x, dict) and x.get("id") == sel), None)
+        if match is None:
+            raise KeyError(f"no item with id '{sel}' in '{key}' (field: {dotted})")
+        cur = match
     return cur
 
 
