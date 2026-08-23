@@ -125,6 +125,13 @@ nothing is filed either way. ⚑ **If a player never touches the inbox, that is 
 timeline the piece deliberately does not fix, and would invite arithmetic nobody should be doing. A day
 and a month is enough for a coupon to arrive.
 
+**⚑ HER BIRTHDAY IS 14 MARCH** (Sérgio: "you create a date"; day and month only, no year — the piece
+does not fix her age and should not invite the arithmetic). **March is chosen deliberately: Renata's
+testimony, the one Vera edits first, contains the line "My roommate laughed at something in March and
+I laughed too and for one whole minute I forgot to monitor myself" — the sentence the system marks for
+the conference clip.** Nobody in the piece connects those two things and nobody should. It is simply
+the same month, in two women's lives, and one of them is being cut for a keynote.
+
 **The Butch bar's happy-birthday coupon arrives while she is working.** Unprompted, purely kind,
 addressed to a woman the rest of the era is engaged in editing out. **Nothing files. Nobody mentions
 it.** It is the only thing in Era 3 that wants nothing from her.
