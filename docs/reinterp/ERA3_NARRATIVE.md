@@ -1,142 +1,126 @@
 STATUS: live
-SUPERSEDES: the 2026-08-21 first draft of this file (linear queue, optional Phase 4) — retired same day by Sérgio's review.
+SUPERSEDES: this file's two earlier 2026-08-21 drafts (the linear queue; then the pool without an ending) — both retired the same day by Sérgio's reviews.
 
 # ERA 3 — THE JOB
-*2016 · Room 2 · Vera. **Rewritten 2026-08-21 from Sérgio's beat-by-beat review.** Two devices only:
-the DESKTOP and the PHONE. The tablet is removed.*
+*2016 · Room 2 · Vera. **Third draft, 2026-08-21, from Sérgio's second review — which supplied the
+ending the era did not have.** Two devices: the DESKTOP and the PHONE. The tablet is removed.*
 
 ---
 
-# 0 · WHERE THE ERA LIVES — his line, and everything below serves it
-> **"Not about portraying the side of perpetrators that believes in doing harm, but the one that is on
-> the limit of not agreeing with what it is doing. It is in that doubt that we want to live in the
-> character."**
+# 0 · THE TWO SENTENCES THE ERA RESTS ON
+> **"It is in that doubt that we want to live in the character."**
+> ⚑ **"The system collapses if everyone no longer performs it."**
 
-⚑ **Vera is not a believer, and she is not a hypocrite. She is someone who has not yet decided.** She is
-a perpetrator of a shame she is also a victim of. **The era's job is to make the player feel the
-pressure that produces an act against yourself** — not to explain it, and never to excuse it.
+Vera is a perpetrator of a shame she is also a victim of, and she has **not yet decided**. And the era
+does not end because she becomes brave. **It ends because enough people stopped doing the work.**
 
-**This kills the version I wrote yesterday.** A tidy style-guide queue makes her competent and the
-player a spectator. The era has to be **something she is being made to do while doubting it**.
+⚑ **That second line is the most important design decision in this era and possibly in the piece.** It
+refuses the redemption arc — no heroine, no moment of courage, no one person saving anyone. Sérgio:
+*"the more people fight for their rights, the more chances we have for truthful transformation and
+acceptance."* **The apparatus is not defeated by a protagonist. It runs out of hands.**
 
-# 1 · THE TWO DEVICES — and what the phone is FOR
-| **THE DESKTOP** | **THE PHONE** |
-|---|---|
-| the system | ⚑ **the thing that releases her** |
-| asks her to comply | **asks her to question herself** |
-| Lambient lives here | Bea lives here |
-| she performs | she is a person |
+# 1 · THE LESBIAN SPECIFICITY — his correction, and it changes the content
+> *"In this era there must be some sort of connection to the Lesbian aspect. So the content we have to
+> do can be more focused on that."*
 
-⚑ **Sérgio's framing, and it is the design:** *"the computer being the system and the phone being the
-aspect that releases her. What the phone asks of her is to get in touch with her own self."*
-**The phone is not a second screen. It is the only place in the era she is not working.**
+Era 3 is Vera's era and the material must be *hers* — not generic testimony. **The submissions she
+edits, the comments she deletes, the course she builds and the group she belongs to are all about
+women who were told what they were is a phase, a wound, or a misunderstanding.**
+⚑ **And the group is the sharpest instrument here:** she is not isolated. She is in a room full of
+women doing the same work on themselves.
 
-# 2 · ⚑ THE STRUCTURE CHANGES: A TASK POOL, NOT A QUEUE
-> *"a list of 6/7 different tasks that the user can choose, and after 2/3 it activates the possibility
-> of the next steps… a mix of actions opens a further action, doesn't matter the order, makes the user
-> more part of the system and decides how many they want to play."*
+# 2 · ⚑ "MAIDEN-TO-BE" — the group chat (Sérgio's name and idea)
+A WhatsApp-shaped group of **ex-lesbians**, on her phone. It is:
+- **where Bea is** — not a lone friend texting, a person *inside the same apparatus*;
+- **the only place in the era where other people exist as people**;
+- ⚑ **and the mechanism of the ending** — see §5.
 
-**This is the single biggest change and it fixes his own question — *"where is the action part for the
-user? we just comply with the system?"***
+**Invented mark, per CLAUDE.md.** The group is fictional; the *form* is documented (peer accountability
+groups are a real and central instrument of these networks). ⚑ **It must never be satirised.** These
+are women trying to survive something, in each other's company, and the piece's whole position is that
+they are not stupid for being there.
 
-**THE POOL — 6–7 tasks, presented at once, any order:**
-| task | the act | ⚑ what makes it cost something |
+# 3 · THE POOL — the day's tasks, as a board
+> *"you'll have a panel of tasks with thumbnails, they get greyed out — like a list of tasks for the
+> day on Trello or Slack."*
+
+**Six or seven tasks. Any order. Doing 2–3 opens the next stage. Completed ones grey out.**
+⚑ The greying is the whole visual argument: **the interface treats deleting a woman's supportive reply
+and cutting a promo clip as the same kind of item, and both go grey the same way.**
+
+| task | the act | ⚑ why it costs her |
 |---|---|---|
 | **Correct a testimony** | apply / skip a rule | the rule removes the only living sentence in it |
-| **Clear the comments** | ⚑ **delete affirming replies** | they are the kind ones. That is why they are flagged |
-| **Return the family calls** | mark a parent's message handled | a mother asking where her daughter is |
+| **Clear the comments** | delete affirming replies | ⚑ the kind ones are the flagged ones |
+| **Return the family calls** | mark a mother's message handled | she is asking where her daughter is |
 | **Cut the Story** | tap where the forty seconds starts | the clip that performs is never the true part |
 | **Order the podcast** | drag three clips into a running order | other people's worst minutes, arranged well |
-| **Build the course module** | set the module list — **and the price** | the funnel stops being a metaphor at the number |
+| **Build the course module** | set the modules — **and the price** | the funnel stops being a metaphor at the number |
 | **Approve the house look** | one grade for every face | *"no face is lit differently from another"* |
 
-**⚑ THE RULES OF THE POOL:**
-1. **You choose which, and how many.** Doing **2–3** opens the next stage. Nobody says which ones.
-2. **Order never matters.** There is no correct path, which is the point: *the system does not care
-   which of these you do, only that you do some.*
-3. ⚑ **The outcome never changes.** Skip everything and it publishes anyway. **You cannot change the
-   result — only what the record says about you** (register-not-branch; it is already the piece's law).
-4. **Nothing is scored, nothing is congratulated, no progress bar.** The frame never plays.
+⚑ **The media architecture is INSIDE the pool** (his note): the Story, podcast and course are not a
+later phase — they are tasks you may or may not choose, which means **the machine's reproduction is
+something the player elects to perform.**
 
-⚑ **Why this is better than a queue:** a queue is done *to* the player. A pool is *chosen* by them —
-and choosing which of seven harms to perform is exactly the complicity the era is about.
+**Unchanged laws:** the outcome never changes; nothing is scored; no progress bar; the frame never plays.
 
-# 3 · LAMBIENT — the figure of the oppression
-> *"Lets use Lambient as the guidance system, the figurative aspect of oppression."*
+# 4 · ⚑ LAMBIENT CAPTURES YOU EITHER WAY — the era's thesis as a mechanic
+> *"if you press the link Lambient will know and try to capture you, and if you ignore, Lambient does
+> the same, because the system is always there to capture you even if you didn't misbehave."*
 
-⚑ Lamby was a helper in E2. **Lambient is what a helper becomes when it works for your employer.** It
-is the guidance layer of this era, and its guidance is pressure: it suggests, it notices, it is warm,
-and it does not stop. **It never scolds** — that would let the player off. It stays kind.
+**This is the best mechanic in the era and it should be protected from simplification.**
 
-⚑ **And it escalates.** See Phase 4: *"later Lambient appears to try and take control of your system."*
+| you | Lambient |
+|---|---|
+| **open the link** | knows, and moves to block it |
+| **ignore the link** | comes anyway |
 
-# 4 · THE FIVE PHASES, REWRITTEN
+⚑ **There is no compliant path.** Surveillance is not a punishment for wrongdoing; it is the weather.
+A player who behaves perfectly gets the same visit as one who does not — **and learning that is what
+makes the ending land, because it removes "just keep your head down" as an option.**
 
-## PHASE 1 · INTRODUCE — you cannot change the outcome
-**Purpose:** teach the verb, and teach its uselessness.
-**Mandatory:** sign in. Do one task from the pool.
-⚑ **The lesson is the disappointment:** whatever you choose, it publishes. The first task should be one
-where compliance is obviously wrong and obviously irrelevant — **deleting an affirming comment** is the
-sharpest candidate, because the player will not want to and it will happen anyway.
-**Guidance:** Lambient, direct and pleasant.
+# 5 · THE ENDING — the system fails, and not because of her
+**Sérgio's sequence, kept in his order:**
 
-## PHASE 2 · REINFORCE — the same rule, a different person
-**Mandatory:** a second and third task, player's choice.
-**⚑ SECRET (Sérgio: "yes i like the secret"):** skip everything. The record notices the absence of
-compliance and files it in the same flat voice it files everything else.
+1. **Introduction** → sign in, Lambient welcomes her.
+2. **2–3 tasks**, her choice, from the board.
+3. ⚑ **Bea messages the group: the Malta law is about to be approved.**
+4. **The player chooses** — and every branch converges, which is the point:
+   - **ignore it** → back to the tasks → *Lambient comes anyway*
+   - **open it** → *Lambient blocks the site* → **the group starts sharing more**
+   - **go back to the desktop** → the work is still there
+5. **More group messages** — the law is **approved**.
+6. **FloppySheep is playable at any point**, throughout. Nobody asks her to.
+7. ⚑ **You are drawn to open the link. Lambient blocks it again.** And then **a cascade of group
+   messages** — the members sharing it, over and over, faster than the block can work.
+8. ⚑ **The computer and the phone break**, on the fact that **the system has failed.**
+9. **Glitch → update → Era 4.**
 
-## PHASE 3 · COMPLICATE — the phone rings, and it is not work
-> *"after 2/3 actions of the Job the phone rings… asking her to check the news, and we can decide or
-> not to open the link right away. And we simulate a phone we can minimally interact with, with
-> FloppySheep there."*
+⚑ **Read step 7 again, because it is the thesis:** the block does not fail because Vera defeats it. It
+fails because **it is being asked to suppress the same thing from too many people at once.** One woman
+ignoring a pop-up is nothing. **A room of them is the end of the software.**
 
-**The pool has opened the next stage. The phone lights.** ⚑ **It is the first thing in the era that is
-not the job**, and the player may **ignore it** — which is a real choice with a real cost, because it
-is the only moment Vera is being offered herself.
+⚑ **And it completes the piece's own title-line rhyme:** Era 1 ends with the system reporting *"Change
+has failed."* Era 3 ends with the system failing. The Close says *"Your update has failed."* **Same
+sentence, three times, and only the last one is good news.**
 
-**On the phone:** the message · the link · **FloppySheep** · the livestream, already running.
-**Malta is what the link leads to.** ⚑ **Nothing here files to the ledger** — the one beat the system
-does not record.
+# 6 · THE PHONE'S OTHER LIFE — the unread backlog
+> *"unread SMS messages… people asking her to come back, that her family will accept her as she is,
+> old friends, the Butch bar sends a happy birthday coupon."*
 
-**⚑ FOR SÉRGIO — a name to settle:** his note says *"the phone rings with Noa"*, but **Noa is a
-submission author** whose testimony Vera edits, and the phone contact is currently **Bea**. Those are
-different beats: a friend texting is release; **the person you just edited texting you is something
-much worse and possibly better.** *This needs your ruling and I have not guessed.*
+⚑ **This is the era's respite and its cruelty in one inbox**, and it needs no commentary at all. A
+coupon from a bar, unopened. A message saying *we would take you back as you are*, unopened. **Vera has
+not deleted them and has not read them** — which says more about the doubt than any line of dialogue.
 
-## PHASE 4 · COMBINE — ⚑ NOT OPTIONAL. The media architecture.
-> *"Phase 4 is not optional. The importance of this era is the media architecture of the whole SOGICE
-> system, something we have missing."*
+**Design law: the piece never makes her open them.** They can be read, all of them, at any time, and
+nothing is filed either way. ⚑ **If a player never touches the inbox, that is also true of her.**
 
-**He is right, and this corrects yesterday's draft.** The queue is not the machine — **the machine is
-the Story, the podcast, the course, the stream and the game**, which is how the network reproduces
-itself. An era that shows only the editing shows the smallest part of it.
-
-**The sequence he sketched, kept:**
-1. You open the link and read it.
-2. ⚑ **A pop-up of the game appears** — FloppySheep, on her own phone, the same publisher.
-3. **You can ignore it.**
-4. ⚑ **Later Lambient appears and tries to take control of your system.**
-
-**That is gamified correction and coercion, which is his phrase and the right one:** the cheerful
-product and the controlling one are the same company, and the game is how the pressure arrives
-pretending to be a break. *(He notes this "needs more" — see §6.)*
-
-## PHASE 5 · TRUST — the queue empties
-**"You're caught up. No new stories waiting right now."**
-⚑ Nothing congratulates her, nothing accuses her. **She simply finished, and the doubt is unresolved** —
-which is the era's ending, not a failure of one.
-
-# 5 · NARRATIVE LAYERS, RESTATED
-**SPINE:** sign in → 2–3 tasks of your choosing → the phone → the media architecture → the queue empties.
-**BRANCHES:** the other four or five tasks; the verses; the livestream; the comments thread.
-⚑ **The pool blurs spine and branch on purpose** — you must do *some*, never *these*.
-**SECRETS:** skip everything · open the same testimony twice and find your edit already published ·
-do nothing for a long time and be asked, kindly, if you are alright.
-
-# 6 · ⚑ WHAT IS STILL OPEN — for the next pass
-1. **Noa or Bea on the phone.** §3. His ruling.
-2. **"It needs more" — Phase 4's ending.** Lambient taking control of her system is the strongest image
-   in the review and it is one line long. **What does it DO, and what does she do back?**
-3. **How many tasks unlock the next stage** — 2 or 3, and whether the number is ever visible.
-4. **Do the family calls exist yet?** They are new here, they are the sharpest item in the pool, and
-   nothing in `data/` carries them.
+# 7 · WHAT IS STILL OPEN
+1. **The birthday coupon's date.** If it can land *during* the era, the phone has a second unprompted
+   interruption that is purely kind. **Worth deciding: does the era know her birthday?**
+2. **How the break renders.** Both screens failing at once is a big visual moment and there is no
+   spec for it yet. It must not be a glitch effect for its own sake — E1's law is that the person
+   cannot be overwritten; **here it is the SYSTEM that cannot keep up.**
+3. **The dossier line.** Malta's Act LV of 2016 is documented and already cited. ⚑ **"The system
+   collapses when people stop performing it" is a THESIS, not a finding** — it belongs in the piece,
+   and the dossier card must mark it `speculative` rather than dress it as history.
