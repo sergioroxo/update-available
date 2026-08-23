@@ -103,7 +103,12 @@ const PLACEMENT = {
     // Session 66: the desk was measured and re-placed (it rendered 0.9 m deep
     // against an authored 0.6), taking the flat panel with it — this plane
     // rides the panel's new face at x ≈ -5.24.
-    pos: { x: -5.22, y: 1.1, z: 0.7 },
+    // ⚑ y 1.1 → 0.97, 2026-08-21. The monitor stopped being four floating boxes
+    //   and became a Kenney mesh that SITS ON THE DESK (y 0.75, 0.383 tall), so
+    //   the plane that used to ride a box hovering at 1.1 now rides a real
+    //   screen face. A plane left at the old height reads as a display detached
+    //   from its own monitor — which is exactly how it rendered before this fix.
+    pos: { x: -5.22, y: 0.97, z: 0.7 },
     size: { w: 0.52, h: 0.3 },
     euler: { x: 90, y: 90, z: 0 } // verified in-browser (Session 37): normal (+1,0,0), faces the chair
   },

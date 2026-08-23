@@ -185,12 +185,17 @@
     {
       "key": "phone",
       "file": "phone.glb",
-      "_doc": "⚑ ERA 3'S PHONE — Quaternius, CC0 (https://poly.pizza/m/k2kgBepoMU). Sérgio's pick. Measured native bbox 0.0021 × 0.0003 × 0.0046 m — the source is authored at roughly 1/33 scale, so `scale` 33 brings it to ~0.069 × 0.010 × 0.152 m, which is a 2016 phone. The proportions survive a UNIFORM scale (native 1 : 0.14 : 2.2 against a real handset's 1 : 0.11 : 2.07), so no axis is distorted. cx/cz are the bbox centre and baseY is its MINIMUM y — S90 established that `baseY` is the base and not a centre, against this file's own header prose, which describes cx/cz correctly and baseY loosely. 1 mesh, 0 textures, 13KB. ⚑ NOT PLACED YET: placement is the room stage and depends on the tablet's removal and the seat collapse (ERA3_BUILD_PLAN §6).",
-      "scale": 33.0,
+      "_doc": "⚑ ERA 3'S PHONE — Quaternius, CC0 (https://poly.pizza/m/k2kgBepoMU). ⚑ MEASURE THE NODE TRANSFORM, NOT JUST THE ACCESSOR. Its POSITION accessor reports a bbox of 0.0021 x 0.0003 x 0.0046 m, and I registered scale 33 off that — but node 1 ('Phone') carries scale 198.943, so the model's TRUE size is ~0.42 x 0.90 x 0.06 m and it rendered fourteen metres tall, passing clean through the floor and the ceiling. Accessor min/max is MESH-LOCAL; a node transform makes it lie, and the room audit reads the real thing. The other two models here have identity transforms, which is the only reason their numbers were right. ⚑ AND IT IS MODELLED UPRIGHT. 0.90 is its LENGTH, standing on end. scale 0.167 brings it to 0.071 x 0.152 x 0.010 — a 71 x 152 x 10 mm handset — and tilt [90,0,0] lays it flat, screen up, the way a phone sits on a desk beside a keyboard. Same tilt grammar as cassetteTape.",
+      "scale": 0.167,
       "yaw": 0,
-      "cx": 0.0,
-      "cz": 0.0,
-      "baseY": -0.0002
+      "cx": 0,
+      "cz": 0,
+      "baseY": 0,
+      "tilt": [
+        90,
+        0,
+        0
+      ]
     },
     {
       "key": "computerScreen",

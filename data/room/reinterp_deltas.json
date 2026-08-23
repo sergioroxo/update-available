@@ -1083,12 +1083,11 @@
       },
       { "id": "w_flatPanelBody", "model": "computerScreen", "pos": [-5.29, 0.75, 0.7], "size": [0.51, 0.38, 0.135], "yaw": 90, "color": "#2E3238", "_doc": "⚑ ERA 3'S MONITOR IS NOW A MODEL — Kenney, CC0, 2026-08-21 (ERA3_BUILD_PLAN stage 2). It was four primitive boxes (body, screen, stand, foot) and is now one mesh that includes its own stand, so w_flatPanelStand and w_flatPanelFoot are removed with it. Net -2 props and -2 draw calls on an era that shares a budget with Rooms 1 and 3. ⚑ It SITS ON THE DESK (y 0.75, the desk top) rather than floating at the old body's y 1.1: the model's baseY is its bbox minimum, so it stands on its own foot the way a monitor does. Size is the model's LOCAL dims (0.51 wide x 0.38 tall x 0.135 deep) and yaw 90 turns the width onto z at render — authoring the size pre-rotated reports a +278%/-73% SCALE fault, which is how I first wrote it. w_flatPanelScreen and era3Devices' PLACEMENT.laptop plane move down to meet its face; if this prop is ever repositioned they must follow." },
         { "id": "w_keyboard", "model": "computerKeyboard", "pos": [-4.98, 0.75, 0.7], "size": [0.42, 0.041, 0.177], "yaw": 90, "color": "#3A3E44", "_doc": "⚑ ERA 3'S KEYBOARD — Kenney, CC0, 2026-08-21. In front of the monitor and nearer the seat (the r2 camera is at x -4.4 looking along -x), so the desk reads chair → keyboard → screen. Size is the model's LOCAL dims; yaw 90 turns the 0.42 width onto z. ⚑ NON-INTERACTIVE ON PURPOSE and it must never be given a hit rect: the piece has no free-text input by law (CLAUDE.md), so a keyboard you could press would promise something the work does not do. Honest set dressing beats a broken affordance — and this era already has a device that answers, in her hand." },
-        { "id": "w_phoneDevice", "model": "phone", "pos": [-5.02, 0.75, 1.16], "size": [0.069, 0.010, 0.152], "yaw": 90, "color": "#1C1E22", "_doc": "⚑ ERA 3'S PHONE — Quaternius, CC0, 2026-08-21. ⚑ IT LIES ON THE DESK, and that placement is the era's thesis in a coordinate: the tablet used to live across the room and be reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, and both are at arm's length — which is what makes ignoring it a real choice rather than a walk. Set to the seat's side (z 1.16, toward the room) so it reads from the seat without occluding the monitor. Face-up, screen toward the ceiling. Its screen surface is era3Devices' PLACEMENT.phone and is untouched by this placement." },
       {
         "id": "w_flatPanelScreen",
         "pos": [
           -5.25,
-          1.1,
+          0.97,
           0.7
         ],
         "size": [
@@ -1713,26 +1712,7 @@
         "color": "#A8B49A",
         "yaw": 90
       },
-      {
-        "id": "w_phoneDevice",
-        "_doc": "Session 74: THE PHONE GETS A REAL MODEL (build plan fixture list, item 4) — was a single untextured box, the exact fault the plan measured ('No `model` field on either. They are untextured boxes.'). No CC0 phone-shaped GLB exists in the local kit (assets/LICENSES.md) and this session had no way to fetch one, so it is built the CRT's own way — a real multi-part assembly, primitives not a mesh — using the new `parts` composite (era1room.ts/clusterMorph.ts): a dark glass body + a camera bump, under ONE id/entity so `app.ts`'s held-read toggle (`w_phoneDevice`, seat poses only in this session's file fence) keeps working unmodified — the whole assembly hides together when the phone comes to hand. `parts` positions are LOCAL offsets in this prop's own pre-yaw frame, same frame as `size`.",
-        "pos": [
-          -2.42,
-          0.51,
-          -0.72
-        ],
-        "size": [
-          0.07,
-          0.012,
-          0.14
-        ],
-        "color": "#15151F",
-        "parts": [
-          { "pos": [0, 0, 0], "size": [0.07, 0.012, 0.14], "color": "#15151F" },
-          { "pos": [0, 0.006, 0.058], "size": [0.014, 0.004, 0.014], "color": "#9AA0A6" }
-        ],
-        "yaw": 90
-      },
+      { "id": "w_phoneDevice", "model": "phone", "pos": [-5.02, 0.75, 1.16], "size": [0.071, 0.010, 0.152], "yaw": 90, "color": "#15151F", "_doc": "⚑ ERA 3'S PHONE — one mesh, ON THE DESK, 2026-08-21. It was a parts-built box on the nightstand at (-2.42, 0.51, -0.72). ⚑ The move is the era's thesis in a coordinate: the tablet lived across the room and was reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, both at arm's length — which is what makes ignoring it a real CHOICE rather than a walk she declines to take. Its two hand-built parts (body + earpiece) are gone; the mesh carries them. ⚑ A note for the next prop added here: I first declared a SECOND w_phoneDevice rather than editing this one, and a duplicate id does not error — the later declaration silently wins and the earlier becomes invisible. Check for the id first." },
       {
         "id": "e_folders",
         "pos": [

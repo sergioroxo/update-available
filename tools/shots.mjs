@@ -197,7 +197,7 @@ const ASSERT_BASELINE = 0;
  * of the two code-resident planes (the live monitor and the witness wall),
  * which are not props at all.
  *
- * The DEVICE seats (r2-tablet, r2-phone) declare nothing on purpose: the held
+ * The DEVICE seat (r2-phone) declares nothing on purpose: the held
  * screen is placed relative to the camera by construction (era3Devices'
  * holdDevice takes the seat pose as its argument), so it cannot fall out of
  * frame, and asserting on it would test arithmetic rather than composition.
@@ -697,7 +697,7 @@ async function sweep(browser, asserts, outDir) {
     }
     // the device seats: a real move, so the screen comes off the furniture
     if (era >= 3) {
-      for (const node of ['r2-tablet', 'r2-phone']) {
+      for (const node of ['r2-phone']) {
         await page.evaluate((n) => window.__requestMove(n), node);
         await wait(2500);
         const file = path.join(outDir, `e${era}_seat-${node}.png`);
@@ -815,7 +815,7 @@ async function devices(browser, asserts, outDir) {
     return { era: 3, name: `dev-${name}`, file, pose: null };
   };
   const out = [];
-  await page.evaluate(() => window.__requestMove('r2-tablet'));
+
   await wait(3000);
   for (const [b, name] of [['list', 'laptop_list'], ['thread', 'thread'], ['threadRoute', 'route'], ['threadEcho', 'propagation']]) {
     await beat(b); await wait(900);
