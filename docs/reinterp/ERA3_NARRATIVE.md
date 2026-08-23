@@ -115,12 +115,69 @@ not deleted them and has not read them** — which says more about the doubt tha
 **Design law: the piece never makes her open them.** They can be read, all of them, at any time, and
 nothing is filed either way. ⚑ **If a player never touches the inbox, that is also true of her.**
 
-# 7 · WHAT IS STILL OPEN
-1. **The birthday coupon's date.** If it can land *during* the era, the phone has a second unprompted
-   interruption that is purely kind. **Worth deciding: does the era know her birthday?**
-2. **How the break renders.** Both screens failing at once is a big visual moment and there is no
-   spec for it yet. It must not be a glitch effect for its own sake — E1's law is that the person
-   cannot be overwritten; **here it is the SYSTEM that cannot keep up.**
-3. **The dossier line.** Malta's Act LV of 2016 is documented and already cited. ⚑ **"The system
-   collapses when people stop performing it" is a THESIS, not a finding** — it belongs in the piece,
-   and the dossier card must mark it `speculative` rather than dress it as history.
+# 7 · CLOSED BY SÉRGIO, 2026-08-21
+
+## 7.1 · Her birthday lands DURING the era — day and month, no year
+> *"Yes, her birthday is during the era; it doesn't need a specific year, it can be just day and
+> month; this is just storytelling."*
+
+⚑ **No year is not a shortcut, it is the correct amount of fiction.** A year would date her against a
+timeline the piece deliberately does not fix, and would invite arithmetic nobody should be doing. A day
+and a month is enough for a coupon to arrive.
+
+**The Butch bar's happy-birthday coupon arrives while she is working.** Unprompted, purely kind,
+addressed to a woman the rest of the era is engaged in editing out. **Nothing files. Nobody mentions
+it.** It is the only thing in Era 3 that wants nothing from her.
+
+## 7.2 · The break — the system cannot contain it
+> *"It resonates with the fact that it cannot contain the truth coming out, and is a symbolic cascade
+> effect when stuff stops making sense and you can't unsee it anymore."*
+
+⚑ **So it is not a failure animation — it is a containment failure**, and those look different. The
+block keeps *working*, correctly, on message after message, and there are simply more messages than
+blocks. **The software is not broken. It is outnumbered.**
+
+**Design consequences, binding:**
+- **No error state, no crash screen, no corruption glyphs.** Lambient stays polite to the end.
+- **The cascade is other people's messages**, not effects — the visual is *volume*, not damage.
+- ⚑ **"You can't unsee it" is the beat's real ending.** Once the room has said it, the correction list
+  cannot be looked at the same way — so the tasks should still be *there*, still working, still
+  greyable, and now unusable in a way nothing enforces.
+
+## 7.3 · Malta is a CONNECTION POINT, and it arrives as a pretend newspaper
+> *"The Malta act only serves here as the connection point — first message is the about-to-be-finalised,
+> and the second link is the it-will-be-enacted. Pretend newspaper, with real information. Not a
+> finding, never claimed it as being one."*
+
+**Two messages, two states, one law:**
+| | Bea's message | the state |
+|---|---|---|
+| **first** | the law is about to be finalised | ⚑ *it might happen* |
+| **second** | it will be enacted | ⚑ *it happened somewhere* |
+
+⚑ **"Pretend newspaper with real information" is exactly CLAUDE.md's own rule** and worth stating as
+the pattern for the whole piece: **an INVENTED masthead carrying DOCUMENTED facts.** Act LV of 2016 is
+real and already cited; the publication reporting it is ours. That way the piece never puts words in a
+real outlet's mouth and never invents the law.
+
+*(And his correction stands: he never claimed the collapse thesis as a finding. The dossier still needs
+to carry the distinction for a reader who has not had this conversation.)*
+
+---
+
+# 8 · ⚑ LINEAGE — `Turn For Me` (Just-Change), and the one thing Era 3 changes
+Sérgio: *"there are some resemblances with this project."* There are, and they are structural:
+
+| `Turn For Me` | Era 3 |
+|---|---|
+| *"PHASE 4: Contextual Archive Prompt — App tells you to cut off Alex"* | the pool's **family calls** and **affirming comments** |
+| *"PHASE 5: UI Degradation — Visual takeover after compliance"* | **Lambient taking her system** |
+| *"Track how many times user refuses to archive"* | the record filing refusal in the same flat voice |
+
+⚑ **THE DIFFERENCE IS THE WHOLE ADVANCE, AND IT SHOULD BE PROTECTED.** In `Turn For Me` the takeover
+follows **compliance** — you did what it asked, and then it took more. In Era 3, **capture happens
+either way**: open the link and Lambient knows; ignore it and Lambient comes anyway.
+
+**That is a harder and truer claim.** A system that punishes compliance can still be escaped by
+refusing. **A system that arrives regardless cannot** — which is why this era's ending has to be
+collective, and why "keep your head down" is not available to the player as a strategy.
