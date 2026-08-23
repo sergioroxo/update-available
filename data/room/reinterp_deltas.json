@@ -1081,21 +1081,9 @@
         "color": "#8A5A3B",
         "yaw": 90
       },
-      {
-        "id": "w_flatPanelBody",
-        "pos": [
-          -5.28,
-          1.1,
-          0.7
-        ],
-        "size": [
-          0.62,
-          0.38,
-          0.035
-        ],
-        "color": "#2C2C34",
-        "yaw": 90
-      },
+      { "id": "w_flatPanelBody", "model": "computerScreen", "pos": [-5.29, 0.75, 0.7], "size": [0.51, 0.38, 0.135], "yaw": 90, "color": "#2E3238", "_doc": "⚑ ERA 3'S MONITOR IS NOW A MODEL — Kenney, CC0, 2026-08-21 (ERA3_BUILD_PLAN stage 2). It was four primitive boxes (body, screen, stand, foot) and is now one mesh that includes its own stand, so w_flatPanelStand and w_flatPanelFoot are removed with it. Net -2 props and -2 draw calls on an era that shares a budget with Rooms 1 and 3. ⚑ It SITS ON THE DESK (y 0.75, the desk top) rather than floating at the old body's y 1.1: the model's baseY is its bbox minimum, so it stands on its own foot the way a monitor does. Size is the model's LOCAL dims (0.51 wide x 0.38 tall x 0.135 deep) and yaw 90 turns the width onto z at render — authoring the size pre-rotated reports a +278%/-73% SCALE fault, which is how I first wrote it. w_flatPanelScreen and era3Devices' PLACEMENT.laptop plane move down to meet its face; if this prop is ever repositioned they must follow." },
+        { "id": "w_keyboard", "model": "computerKeyboard", "pos": [-4.98, 0.75, 0.7], "size": [0.42, 0.041, 0.177], "yaw": 90, "color": "#3A3E44", "_doc": "⚑ ERA 3'S KEYBOARD — Kenney, CC0, 2026-08-21. In front of the monitor and nearer the seat (the r2 camera is at x -4.4 looking along -x), so the desk reads chair → keyboard → screen. Size is the model's LOCAL dims; yaw 90 turns the 0.42 width onto z. ⚑ NON-INTERACTIVE ON PURPOSE and it must never be given a hit rect: the piece has no free-text input by law (CLAUDE.md), so a keyboard you could press would promise something the work does not do. Honest set dressing beats a broken affordance — and this era already has a device that answers, in her hand." },
+        { "id": "w_phoneDevice", "model": "phone", "pos": [-5.02, 0.75, 1.16], "size": [0.069, 0.010, 0.152], "yaw": 90, "color": "#1C1E22", "_doc": "⚑ ERA 3'S PHONE — Quaternius, CC0, 2026-08-21. ⚑ IT LIES ON THE DESK, and that placement is the era's thesis in a coordinate: the tablet used to live across the room and be reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, and both are at arm's length — which is what makes ignoring it a real choice rather than a walk. Set to the seat's side (z 1.16, toward the room) so it reads from the seat without occluding the monitor. Face-up, screen toward the ceiling. Its screen surface is era3Devices' PLACEMENT.phone and is untouched by this placement." },
       {
         "id": "w_flatPanelScreen",
         "pos": [
@@ -1107,36 +1095,6 @@
           0.5,
           0.28,
           0.02
-        ],
-        "color": "#2C2C34",
-        "yaw": 90
-      },
-      {
-        "id": "w_flatPanelStand",
-        "pos": [
-          -5.18,
-          0.83,
-          0.7
-        ],
-        "size": [
-          0.14,
-          0.16,
-          0.1
-        ],
-        "color": "#2C2C34",
-        "yaw": 90
-      },
-      {
-        "id": "w_flatPanelFoot",
-        "pos": [
-          -5.13,
-          0.76,
-          0.7
-        ],
-        "size": [
-          0.32,
-          0.03,
-          0.16
         ],
         "color": "#2C2C34",
         "yaw": 90
