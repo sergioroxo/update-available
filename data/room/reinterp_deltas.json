@@ -1756,21 +1756,6 @@
         "yaw": 90
       },
       {
-        "id": "w_tabletDevice",
-        "pos": [
-          -3.7,
-          0.72,
-          -0.1
-        ],
-        "size": [
-          0.16,
-          0.015,
-          0.22
-        ],
-        "color": "#2C2C34",
-        "yaw": 90
-      },
-      {
         "id": "w_phoneDevice",
         "_doc": "Session 74: THE PHONE GETS A REAL MODEL (build plan fixture list, item 4) — was a single untextured box, the exact fault the plan measured ('No `model` field on either. They are untextured boxes.'). No CC0 phone-shaped GLB exists in the local kit (assets/LICENSES.md) and this session had no way to fetch one, so it is built the CRT's own way — a real multi-part assembly, primitives not a mesh — using the new `parts` composite (era1room.ts/clusterMorph.ts): a dark glass body + a camera bump, under ONE id/entity so `app.ts`'s held-read toggle (`w_phoneDevice`, seat poses only in this session's file fence) keeps working unmodified — the whole assembly hides together when the phone comes to hand. `parts` positions are LOCAL offsets in this prop's own pre-yaw frame, same frame as `size`.",
         "pos": [

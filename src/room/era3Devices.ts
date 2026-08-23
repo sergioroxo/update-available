@@ -69,7 +69,6 @@ import queue from '../../data/dialog/s3_queue.json';
  *  (140/0.07 = 280/0.14 = 2000 px/m). */
 const LOGICAL = {
   laptop: { w: 676, h: 390, scale: 3 },
-  tablet: { w: 216, h: 297, scale: 2 },
   phone: { w: 140, h: 280, scale: 2 },
   /** ⚑ THE VISOR (S76) draws no canvas of its own — it is textured with
    *  `DesktopOS.canvas`, the piece's one UI surface, at that canvas's own
@@ -107,13 +106,6 @@ const PLACEMENT = {
     pos: { x: -5.22, y: 1.1, z: 0.7 },
     size: { w: 0.52, h: 0.3 },
     euler: { x: 90, y: 90, z: 0 } // verified in-browser (Session 37): normal (+1,0,0), faces the chair
-  },
-  tablet: {
-    // Session 66: on the bed's new position, and its REST pose only — taking
-    // the tablet seat lifts it to the hand (see THE HELD READ).
-    pos: { x: -3.70, y: 0.72, z: -0.10 },
-    size: { w: 0.16, h: 0.22 },
-    euler: { x: 0, y: 0, z: 0 } // flat, screen-up
   },
   /**
    * ⚑ ROOM 3's VISOR (S76) — the seam S74 left, taken up.
@@ -173,7 +165,6 @@ export const DEVICE_SEAT_POSES = {
   // your face near it. The device is lifted to the hand now (`holdDevice`),
   // so these are ordinary seated poses with a gentle downward gaze, and the
   // held pose is DERIVED from them (a retuned seat brings its device along).
-  'r2-tablet': { x: -3.70, y: 1.16, z: 0.62, pitch: -14, yaw: 180 },
   'r2-phone': { x: -2.42, y: 1.14, z: 0.12, pitch: -16, yaw: 90 }
 } as const;
 
@@ -527,7 +518,18 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   // S64 — it now has state the laptop knows nothing about (an open thread, a
   // selected comment, arrivals landing on their own schedule), and a comment
   // arriving must not re-upload the 676x390 laptop panel beside it.
-  add('tablet', LOGICAL.tablet, (ctx, w, h) => graceQueueLite.drawTablet(ctx, w, h), { versionOf: () => graceQueueLite.tabletVersion });
+  // ⚑ THE TABLET IS GONE — 2026-08-21, Sérgio: Era 3 is DESKTOP + PHONE.
+  //   Its screen, its seat, its movement node and its room prop are all removed.
+  //   ⚑ WHAT THIS ORPHANS, DELIBERATELY AND TEMPORARILY: `comments.ts` drew only
+  //   here, so the comment thread — the recruitment floor, where Vera replies to
+  //   strangers with pinned templates that silently flag accounts — has no
+  //   surface until ERA3_BUILD_PLAN stage 4 rebuilds it as a DESKTOP task
+  //   ("Clear the comments"). That is where it belongs: they are her employer's
+  //   words and they should sit on her employer's screen.
+  //   `graceQueueLite.drawTablet`/`tabletFeed`/`tabletVersion` and comments.ts
+  //   are all LEFT INTACT for that stage. ⚑ Note for whoever wires it: comments
+  //   is authored 216 × 297 logical px — portrait, tablet-shaped — and will need
+  //   reflowing to a landscape window.
   // Session 64: the phone no longer draws once and never again (S37's law) —
   // it carries the era's break, so it takes its OWN version counter. The
   // dirty-upload law is unchanged, only widened: `phoneVersion` moves on a real
@@ -714,7 +716,6 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           s.lastVersion = s.versionOf();
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
           if (s.name === 'laptop') drawLaptop(s.ctx, s.logical.w, s.logical.h);
-          else if (s.name === 'tablet') graceQueueLite.drawTablet(s.ctx, s.logical.w, s.logical.h);
           else graceQueueLite.drawPhone(s.ctx, s.logical.w, s.logical.h);
           s.dirty = true;
         }
@@ -761,7 +762,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       }
     },
     handleLaptopPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
-      const test = (name: 'laptop' | 'tablet' | 'phone'): { x: number; y: number } | null => {
+      const test = (name: 'laptop' | 'phone'): { x: number; y: number } | null => {
         const s = screens.find(sc => sc.name === name);
         if (!s || !s.entity.enabled) return null;
         const place = PLACEMENT[name];
@@ -824,8 +825,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // flat in the room and a ray on its way to something else should not be
       // eaten by it; a press on its glass that hits no target returns false and
       // falls through to the floor markers, exactly as the other two do.
-      const onTablet = test('tablet');
-      if (onTablet) return graceQueueLite.handleTabletClick(onTablet.x, onTablet.y);
+      // (the tablet used to be tested last here — it was the largest plane lying
+      //  flat in the room, so it went after the others to avoid eating rays on
+      //  their way elsewhere. With it gone there is nothing left to fall through
+      //  to but the floor markers, which is what `false` does.)
       return false;
     },
     debugCanvases(): Record<string, HTMLCanvasElement> {

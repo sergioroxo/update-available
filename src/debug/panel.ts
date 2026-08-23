@@ -631,7 +631,6 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     // state this session existed to remove.
     heading(navigate, 'PLACE — Room 2 device seats (held read)');
     for (const [label, node] of [
-      ['→ the tablet · comes to hand', 'r2-tablet'],
       ['→ the phone · comes to hand', 'r2-phone'],
       ['→ back to the laptop', 'r2-desk']
     ] as const) {
