@@ -123,3 +123,19 @@ model manifest already uses).
 reasoning as `cassetteTape`. No row in `docs/reinterp/ATTRIBUTIONS.md`: that file is for CC-BY assets
 that owe credit, and CC0 owes none.
 
+## ERA 3's THREE MODELS — all CC0, added 2026-08-21 (S93, finished in-session)
+| Asset | Creator | Source | Licence | Used as |
+|---|---|---|---|---|
+| Phone | **Quaternius** | https://poly.pizza/m/k2kgBepoMU | **CC0** | Era 3's phone — the device that is hers |
+| Computer Screen | **Kenney** | https://poly.pizza/m/V5Qo141OcB | **CC0** | Era 3's desktop monitor |
+| Computer Keyboard | **Kenney** | https://poly.pizza/m/vsqTUPFSw6 | **CC0** | Era 3's desktop keyboard |
+
+⚑ **No rows in `docs/reinterp/ATTRIBUTIONS.md` — deliberately.** That file is specifically the CC-BY
+assets that owe on-record credit; CC0 owes none, and padding a legal-obligations table with
+public-domain entries makes the required ones harder to find. Same reasoning as the rubber duck's
+entry there. *(Crediting Quaternius and Kenney anyway is courteous and is a choice, not a debt.)*
+
+**The two Kenney assets arrived as OBJ+MTL and were converted** — this pipeline loads GLB containers
+only. All three ship with **1 mesh and 0 textures**, so the no-textures law needed no enforcement here,
+and none of them costs more than one draw call.
+

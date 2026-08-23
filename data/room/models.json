@@ -87,25 +87,47 @@
       "key": "cassettePlayer",
       "file": "cassettePlayer.glb",
       "_doc": "Session 32 (R28-2b-ii): Sérgio's live-playtest fix for the box-built boombox reading misaligned on the Room 1 shelf. 'Casette Player' by Jason Toff, CC-BY via Poly Pizza (assets/LICENSES.md + docs/reinterp/ATTRIBUTIONS.md) — usable per D6. Native GLB bbox measured directly (single mesh, no viewer available): min[-0.378,-0.161,-0.334] max[0.362,0.049,0.157], so cx/cz/baseY below are that box's exact center/base, and `scale` is non-uniform to bring it down to a small period cassette-player footprint on the shelf (NOT a full twin-speaker boombox shape — the source model reads as a handheld deck). Session 54: the model's own +Y face carries the deck/speakers/buttons — the native mesh is authored to lie flat and be operated from above, like a desk dictaphone — so at yaw 0 the control face pointed at the ceiling; `tilt: [0, 0, 90]` (roll only) swung that face to -X but ALSO swapped native X (the model's LENGTH, its widest dimension) onto the vertical axis — the unit stood up as a tower. Session 55 (Sérgio's second pass) laid it back down with a compound rotation, `tilt: [0, 90, 90]`, mapping native X (length) onto world Z (landscape width), native Y (thinnest — the model's own operating face) onto world -X (toward the seat), and native Z (medium) onto world Y (height) — found by exhaustively testing all 64 [pitch,yaw,roll] 90°-multiple combinations live (union of `render.meshInstances[].aabb` for the target extent triple, then `Quat.transformVector` on the native face-normal to confirm facing) rather than hand-deriving Euler order, since this pipeline has no 3D viewer. That FIRST compound rotation put the model's transport buttons at the TOP edge and its deck/speaker face at the bottom — Sérgio's live screenshot review caught it as upside down (an orientation the extent-and-facing check alone can't distinguish: 8 of the 16 candidates matching both the target shape AND the correct facing direction have native Z landing on +Y, the other 8 on -Y, and only one of those two groups reads right-side-up). `tilt: [0, 270, 90]` is the same shape and facing, native Z flipped onto -Y instead of +Y — verified this time by looking, not just measuring: transport buttons now sit along the BOTTOM edge, deck window and speaker area above them. `scale` [0.55, 0.72, 0.37] is Session 32's original (Session 54's 0.55→0.40 cut only existed to shrink the axis that rotation had wrongly made vertical; corrected shape needs no such cut). `tiltOffset` re-centers at the shelf's x1.86/z0.62 and re-seats the base at the shelf surface y0.76 — re-verified live via `render.meshInstances[].aabb` after EVERY rotation change in this session, per the standing rule that a position change invalidates any offset measured before it.",
-      "scale": [0.55, 0.72, 0.37],
+      "scale": [
+        0.55,
+        0.72,
+        0.37
+      ],
       "yaw": 0,
       "cx": -0.0076,
       "cz": -0.0885,
       "baseY": -0.1614,
-      "tilt": [0, 270, 90],
-      "tiltOffset": [0.076, 0.091]
+      "tilt": [
+        0,
+        270,
+        90
+      ],
+      "tiltOffset": [
+        0.076,
+        0.091
+      ]
     },
     {
       "key": "cassetteTape",
       "file": "cassetteTape.glb",
       "_doc": "Session 54: the three Era-1 tapes (tapeA/tapeB/mixtape + their InSlot docked twins) were plain untextured boxes for 17 sessions, per assets/LICENSES.md's C1 asset-review note ('Cassette tape variants — both local copies are CC-BY (Poly by Google); declined, mixtape stays a raw box'). Revisited on Sérgio's direct instruction (mirroring the cassettePlayer precedent: CC-BY, usable per D6 with attribution) now that a real tape shape is worth the license line. Two local copies exist (Pc_Simulation/Assests): 'Cassette tape.glb' (14 meshes, huge unrelated coordinate range — the same bulk/scene-export shape Session 32 already declined once for 'Boom box.glb') and 'Cassete Tape.glb' (ONE clean mesh, 908 verts) — used the latter, same tie-breaker as the boombox. Native GLB bbox measured directly: min[-4.337,0.134,-0.480] max[4.486,5.549,0.470] — length 8.823 (native X), width 5.415 (native Y), thickness 0.951 (native Z). cx/baseY/cz below are that bbox's per-axis CENTER (not an edge — the pivot only needs to be a FIXED point the tilt rotates around; `tiltOffset` does the actual re-seating regardless of where that point sits). The source GLB carries a 2048×2048 baseColorTexture (obj2gltf output) — stripped at import time with `@gltf-transform` (geometry-only re-export, 1.47MB → 25.7KB) rather than shipped and hidden behind `tintModel`'s new diffuseMap strip, since the no-textures law is about what SHIPS, not just what renders; the per-prop `color` (tapeA/tapeB/mixtape each carry their own hex) supplies the flat tint the same way every other model prop does. Attribution recorded in assets/LICENSES.md + docs/reinterp/ATTRIBUTIONS.md. `tilt: [90,0,0]` lays the tape FLAT, length running front-to-back (native X stays on world X under a pure pitch) — the ORIENTATION a cassette actually has sliding into a front-loading deck lengthwise. Session 55 kept THIS entry, at this orientation and scale, for the DOCKED props only (tapeAInSlot/tapeBInSlot/tapeCInSlot) — see `cassetteTapeShelf` below for the shelf-resting tapes, which needed a different orientation AND a bigger scale for legibility; docked, mid-insertion, is not the shape that needed to read as 'pick this up'.",
-      "scale": [0.007933, 0.00831, 0.012618],
+      "scale": [
+        0.007933,
+        0.00831,
+        0.012618
+      ],
       "yaw": 0,
       "cx": 0.0745,
       "cz": -0.005,
       "baseY": 2.8415,
-      "tilt": [90, 0, 0],
-      "tiltOffset": [0, 0]
+      "tilt": [
+        90,
+        0,
+        0
+      ],
+      "tiltOffset": [
+        0,
+        0
+      ]
     },
     {
       "key": "rubberDuck",
@@ -141,13 +163,54 @@
       "key": "cassetteTapeShelf",
       "file": "cassetteTape.glb",
       "_doc": "Session 55 (Sérgio, second pass on Session 54's tapes: 'just floating... need to be understandable that you'll need to touch them... a bit bigger and displayed in a way that would make sense to use them'). Same GLB as `cassetteTape` above (see that entry for the source/license/native-bbox story), a SEPARATE manifest key because the shelf tapes and the one docked tape now want different orientations and sizes, and a model prop's `tilt`/`scale` are fixed per manifest key, not per prop instance. A flat tape lying down (Session 54's `cassetteTape` tilt) shows only its short WIDTH edge to a seated player — its long LENGTH recedes straight into the shelf depth and mostly disappears in perspective, which is exactly why it read as a flat chip of debris rather than an object. Standing it upright instead — `tilt: [90, 180, 270]`, found by exhaustively testing every [pitch,yaw,roll] 90°-multiple combination live for the target extent triple then confirming face direction with `Quat.transformVector` (no 3D viewer, same method as the boombox's own compound tilt) — maps native X (length, 8.823) onto world Y (standing tall), native Y (width, 5.415) onto world Z (so a row of tapes still reads left-to-right along the shelf, unchanged spacing from TAPE_SHELF), and native Z (thickness, 0.951) onto world -X (the tape's WIDE face, not its edge, toward the Room-1 seat) — the same shape language as a cassette shelved spine-out in a rack, each one now presenting its full label face rather than its spine. `scale` grew to match: target footprint 0.018 (depth) × 0.09 (height) × 0.055 (width) — roughly 30% larger than Session 54's flat footprint and close to a real cassette (10×6.3×1.6cm) stood on its short edge, not an invented size. `tiltOffset` re-seats the base at the shelf surface y0.76 (re-verified live against the bookcase geometry, not re-assumed from Session 54's number) — X/Z came out already centered on each prop's own placement point with zero offset needed, since the native bbox's center happens to sit on this compound's rotation axis.",
-      "scale": [0.0102, 0.01016, 0.01893],
+      "scale": [
+        0.0102,
+        0.01016,
+        0.01893
+      ],
       "yaw": 0,
       "cx": 0.0745,
       "cz": -0.005,
       "baseY": 2.8415,
-      "tilt": [90, 180, 270],
-      "tiltOffset": [0, 0.039]
+      "tilt": [
+        90,
+        180,
+        270
+      ],
+      "tiltOffset": [
+        0,
+        0.039
+      ]
+    },
+    {
+      "key": "phone",
+      "file": "phone.glb",
+      "_doc": "⚑ ERA 3'S PHONE — Quaternius, CC0 (https://poly.pizza/m/k2kgBepoMU). Sérgio's pick. Measured native bbox 0.0021 × 0.0003 × 0.0046 m — the source is authored at roughly 1/33 scale, so `scale` 33 brings it to ~0.069 × 0.010 × 0.152 m, which is a 2016 phone. The proportions survive a UNIFORM scale (native 1 : 0.14 : 2.2 against a real handset's 1 : 0.11 : 2.07), so no axis is distorted. cx/cz are the bbox centre and baseY is its MINIMUM y — S90 established that `baseY` is the base and not a centre, against this file's own header prose, which describes cx/cz correctly and baseY loosely. 1 mesh, 0 textures, 13KB. ⚑ NOT PLACED YET: placement is the room stage and depends on the tablet's removal and the seat collapse (ERA3_BUILD_PLAN §6).",
+      "scale": 33.0,
+      "yaw": 0,
+      "cx": 0.0,
+      "cz": 0.0,
+      "baseY": -0.0002
+    },
+    {
+      "key": "computerScreen",
+      "file": "computerScreen.glb",
+      "_doc": "⚑ ERA 3'S MONITOR — Kenney, CC0 (https://poly.pizza/m/V5Qo141OcB). Arrived as OBJ+MTL and was converted; this pipeline loads GLB containers only. Measured native bbox 0.3927 × 0.2943 × 0.1040 m — a small monitor as authored — and `scale` 1.3 brings it to ~0.51 × 0.38 × 0.135 m, which is a 2016 desktop display. cx −0.1963 / cz 0.052 are the bbox centre: the geometry runs from −0.3927 to 0 on x rather than straddling the origin, so a prop placed without this offset would sit a fifth of a metre off its own position. 1 mesh, 0 textures, 5KB.",
+      "scale": 1.3,
+      "yaw": 0,
+      "cx": -0.1963,
+      "cz": 0.052,
+      "baseY": 0.0
+    },
+    {
+      "key": "computerKeyboard",
+      "file": "computerKeyboard.glb",
+      "_doc": "⚑ ERA 3'S KEYBOARD — Kenney, CC0 (https://poly.pizza/m/vsqTUPFSw6). Converted from OBJ+MTL. Measured native bbox 0.2822 × 0.0276 × 0.1182 m; `scale` 1.5 gives ~0.42 × 0.041 × 0.177 m, a full-size board. Same origin offset as the monitor — cx/cz are the measured centre, not zero. 1 mesh, 0 textures, 3KB. ⚑ Every number here is MEASURED, not eyeballed: a model scale unrelated to the prop's authored size box is precisely the fault that produced 72 room-audit findings, because props were placed by one number and rendered at another.",
+      "scale": 1.5,
+      "yaw": 0,
+      "cx": -0.1411,
+      "cz": 0.0591,
+      "baseY": 0.0
     }
   ]
 }
