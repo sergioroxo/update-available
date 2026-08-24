@@ -12,7 +12,14 @@
     "listHeading": "CORRECTIONS",
     "counter": "{n} of {m} applied",
     "doneHeading": "You're caught up.",
-    "doneSub": "No new stories waiting right now."
+    "doneSub": "No new stories waiting right now.",
+    "boardTitle": "GracePlatform \u00b7 Today",
+    "boardHeading": "TODAY",
+    "boardSub": "Start anywhere. The order is yours.",
+    "boardTaskLabel": "Correct a testimony",
+    "boardBack": "Back to today",
+    "boardDoneTag": "done",
+    "taskbarLabel": "GracePlatform"
   },
   "verbs": {
     "apply": "Apply",

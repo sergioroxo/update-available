@@ -263,7 +263,11 @@ const OS_BEATS: BeatRow[] = [
  * needs no new wiring through `src/engine/app.ts`.
  */
 const E3_DEVICE_BEATS: Array<[string, string]> = [
-  ['sign in → the correction list', 'list'],
+  ['⚑ sign in → THE BOARD (the day, as tiles)', 'board'],
+  ['↳ open tile 1 · the correction list', 'list'],
+  ['↳ put the task down (back to today)', 'backToBoard'],
+  ['↳ minimise the window (taskbar restores it)', 'minimise'],
+  ['↳ ⚑ every tile grey — the day finished', 'boardDone'],
   ['⚑ submission 1 · the seven corrections', 'list'],
   ['apply the open correction', 'apply'],
   ['skip it (files; nothing happens)', 'skip'],

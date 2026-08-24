@@ -166,7 +166,10 @@ const SUBMISSIONS = q.submissions as SubmissionDef[];
 const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c]));
 /** the submission after which Malta arrives on the phone (Noa's — the era's
  *  contradiction is complete, and the break lands on the person holding it) */
-const MALTA_AFTER_SUBMISSION = 2;
+/** ⚑ how many BOARD TILES go grey before Bea's first message arrives.
+ *  ERA3_NARRATIVE.md §5 step 2–3: "2–3 tasks, her choice, from the board".
+ *  Kept in step with `spine.ts`'s own E3 gate, which reads the same ledger. */
+const MALTA_AFTER_TASKS = 2;
 
 type Outcome = 'applied' | 'skipped';
 
@@ -193,7 +196,28 @@ type Outcome = 'applied' | 'skipped';
  * reply field's caret), and each bumps only the version of the screen it is
  * actually on — the phone's blink never re-uploads the laptop.
  */
-type Mode = 'dark' | 'boot' | 'install' | 'signin' | 'list' | 'done';
+/**
+ * ⚑ `board` ADDED 2026-08-24 (ERA3_BUILD_PLAN stage 3). The era used to run a
+ * LINEAR QUEUE — sign in, work submission 1, then 2, then 3, then "you're
+ * caught up" — and `ERA3_NARRATIVE.md` §3 retires that shape outright:
+ *
+ *   "you'll have a panel of tasks with thumbnails, they get greyed out — like
+ *    a list of tasks for the day on Trello or Slack."
+ *
+ * ⚑ WHY THE ORDER MATTERS AND IS NOT A CONVENIENCE. A queue tells you what is
+ * next; a board asks you to CHOOSE. The era's whole claim is that Vera has not
+ * decided — so the interface has to be one that lets her pick, and the picking
+ * has to cost nothing, because the point is that no choice on this board is a
+ * good one. Nothing is scored, no progress bar is drawn, no count is shown:
+ * completed tiles simply go grey, and the greying is the argument — the
+ * software treats every item on it as the same kind of item.
+ *
+ * `done` is KEPT and still reachable: when every tile is grey the board itself
+ * carries the caught-up line rather than replacing the screen, because §7.2 is
+ * explicit that after the break "the tasks should still be THERE, still
+ * working, still greyable". A screen that clears itself cannot do that.
+ */
+type Mode = 'dark' | 'boot' | 'install' | 'signin' | 'board' | 'list' | 'done';
 
 const ARRIVAL = (updates as unknown as {
   e3_arrival: {
@@ -281,6 +305,11 @@ export class GraceQueueLite {
   readonly floppy = new FloppySheep();
 
   private mode: Mode = 'dark';
+  /** ⚑ the window is PUT DOWN, not closed. Minimising reveals the desktop the
+   *  maximise covers; the taskbar button always brings it back. Never a trap,
+   *  never a state a player can be stuck in — the same law the Assistant's
+   *  dismissal follows. */
+  private minimised = false;
   private arrivalT = -1;   // < 0 = not running
   private lastTick = -1;
   private subIdx = 0;
@@ -513,11 +542,54 @@ export class GraceQueueLite {
     this.bump();
   }
 
+  /** signing in lands on the BOARD, not on a submission. (The name is kept
+   *  because `handleClick` and `debugBeat` both call it and it is still "the
+   *  press that starts the shift" — what changed is where the shift starts.) */
   beginList(): void {
     if (this.mode !== 'signin') return;
+    this.mode = 'board';
+    this.bump();
+  }
+
+  /** ⚑ THE TILES. One per submission today — the three women whose testimony
+   *  is on her list — because those are the tasks whose surfaces exist. The
+   *  pool in ERA3_NARRATIVE.md §3 has seven kinds, and the other four (clear
+   *  the comments, return the family calls, cut the Story, order the podcast,
+   *  build the course module, approve the house look as its own tile) arrive in
+   *  stages 4 and 7 of the build plan. ⚑ THEY ARE NOT STUBBED HERE. A board of
+   *  tiles that do nothing is the exact fault this project keeps hitting —
+   *  authored content nobody can reach — and a greyed-out "coming soon" tile
+   *  would be the frame playing. The board shows what is real, and grows. */
+  private tasks(): SubmissionDef[] { return SUBMISSIONS; }
+
+  /** every correction on it decided — the tile goes grey */
+  private taskComplete(sub: SubmissionDef): boolean {
+    return this.items(sub).every(c => this.decisions.has(c.id));
+  }
+
+  private completedCount(): number {
+    return this.tasks().filter(t => this.taskComplete(t)).length;
+  }
+
+  /** open a tile. Order is the player's; nothing prefers one over another. */
+  openTask(index: number): void {
+    if (this.mode !== 'board' && this.mode !== 'done') return;
+    if (index < 0 || index >= this.tasks().length) return;
+    this.subIdx = index;
     this.mode = 'list';
     this.bump();
   }
+
+  /** put the open task down. Always available, always works — a task you can
+   *  leave half-done is the only honest version of "any order". */
+  backToBoard(): void {
+    if (this.mode !== 'list') return;
+    this.mode = 'board';
+    this.bump();
+  }
+
+  /** the window goes to the taskbar, and comes back from it. */
+  toggleMinimised(): void { this.minimised = !this.minimised; this.bump(); }
 
   /** APPLY / SKIP — the only two verbs this era has. Both file; neither is
    *  weighted, tinted or answered. The counter only ever counts `applied`,
@@ -539,14 +611,25 @@ export class GraceQueueLite {
   apply(): void { this.decide('applied'); }
   skip(): void { this.decide('skipped'); }
 
+  /** ⚑ a task FINISHES — it no longer loads the next one. Under the board there
+   *  is no "next": the tile goes grey and she is returned to the day, to pick
+   *  again or to pick nothing.
+   *
+   *  ⚑ AND THE GATE MOVED WITH IT. The break used to arm after submission 2
+   *  specifically (`MALTA_AFTER_SUBMISSION`), which is a linear queue's idea of
+   *  "far enough in" and is meaningless once the order is the player's — a
+   *  player who worked Deb and Renata would have reached the end of the day
+   *  without the era's hinge ever firing. It now arms on the COUNT, which is
+   *  what ERA3_NARRATIVE.md §5 actually specifies: "2–3 tasks, her choice, from
+   *  the board", and then Bea's message. `src/narrative/spine.ts` already gates
+   *  E3's sends on the same number (`correctionsDone() >= 2`), so the two agree
+   *  by construction rather than by coincidence.
+   *
+   *  The work does not pause for it: the board returns in the same instant the
+   *  phone lights up. She is still holding the day when it arrives. */
   private nextSubmission(): void {
-    const done = this.submission();
-    this.subIdx++;
-    // ⚑ THE BREAK ARMS ITSELF HERE, and the work does not pause for it: the
-    // next submission loads in the same instant the phone lights up. She is
-    // still holding the list when it arrives, and still holding it after.
-    if (done && done.id === MALTA_AFTER_SUBMISSION) this.armMalta();
-    if (this.subIdx >= SUBMISSIONS.length) this.mode = 'done';
+    if (this.completedCount() >= MALTA_AFTER_TASKS) this.armMalta();
+    this.mode = this.completedCount() >= this.tasks().length ? 'done' : 'board';
   }
 
   // ── the break ────────────────────────────────────────────────────────────
@@ -762,8 +845,18 @@ export class GraceQueueLite {
     // changelog already promised — GracePlatform's "testimony polish queue"
     // (data/strings/updates.json, u3) — so the era names itself consistently
     // from the update that installed it. PLACEHOLDER, Sérgio's call.
-    const title = this.mode === 'signin' ? q.app.shellTitle : q.app.title;
+    // ⚑ PUT DOWN, not closed. Minimised, the window is gone and the desktop the
+    //   maximise covers is what is left — plus a taskbar button that always
+    //   brings it back. This is the one place in Era 3 where the wallpaper is
+    //   the whole picture, and it is worth the beat: the machine has a life
+    //   that is not the shift, and she has put the shift down to look at it.
+    if (this.minimised) { this.drawTaskButton(ctx, H, false); return; }
+    const title = this.mode === 'signin' ? q.app.shellTitle
+      : this.mode === 'board' || this.mode === 'done' ? q.app.boardTitle
+        : q.app.title;
     const c = aero.windowFrame(ctx, 0, 0, winW, winH, title);
+    this.rects.push({ ...c.minBox, id: 'win-min' });
+    this.drawTaskButton(ctx, H, true);
     aero.px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
     // ⚑ The GUTTER the maximise took away. Windowed, the 14 px of wallpaper on
     //   either side was doing the work of page margin — with the window edge to
@@ -774,7 +867,7 @@ export class GraceQueueLite {
     const body = { ...c, x: c.x + GUTTER, w: c.w - GUTTER * 2 };
 
     if (this.mode === 'signin') this.drawSignIn(ctx, body);
-    else if (this.mode === 'done') this.drawDone(ctx, body);
+    else if (this.mode === 'board' || this.mode === 'done') this.drawBoard(ctx, body);
     else this.drawList(ctx, body);
 
     // ⚑ THE LIFT, last of all and over everything: the panel is GRADED, never
@@ -861,14 +954,126 @@ export class GraceQueueLite {
     drawLambMark(ctx, c.x + c.w - 20, c.y + 10, 1.6);
   }
 
-  private drawDone(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
-    const CONTENT_W = Math.min(480, c.w - 48);
-    const cx = c.x + (c.w - CONTENT_W) / 2;
-    setFont(ctx, 22); ctx.fillStyle = ERA3.titleText;
-    ctx.fillText(q.app.doneHeading, cx, c.y + 40);
-    setFont(ctx, 14); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(q.app.doneSub, cx, c.y + 72);
+  /**
+   * ⚑ THE BOARD (stage 3) — the day, as tiles.
+   *
+   * Design rules taken from ERA3_NARRATIVE.md §3 and held to literally:
+   *  · **any order** — no tile is first, none is recommended, none is dimmed
+   *    for being "not yet";
+   *  · **completed tiles grey out** — and that is the ONLY feedback. No count,
+   *    no bar, no score, no congratulation. The frame never plays;
+   *  · ⚑ **legible as a thumbnail before it is legible as text** (Sérgio: "the
+   *    Grace software is so filled with text… we need something more dynamic"),
+   *    so each tile leads with a PICTURE of the thing — a page of her writing,
+   *    or, for Noa, the frame she actually sent.
+   *
+   * The satire is in the header and it is meant to collapse: "Start anywhere.
+   * The order is yours" is a real freedom, offered sincerely, about the one
+   * variable that does not matter. Everything the board can be arranged into
+   * ends the same way.
+   */
+  private drawBoard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+    ctx.fillText(q.app.boardHeading, c.x, c.y + 2);
+    setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
+    ctx.fillText(q.app.boardSub, c.x, c.y + 18);
+    px(ctx, c.x, c.y + 36, c.w, 1, ERA3.glassEdge);
+
+    const tasks = this.tasks();
+    const GAP = 14;
+    const tileW = Math.floor((c.w - GAP * (tasks.length - 1)) / tasks.length);
+    const tileH = 196;
+    const top = c.y + 52;
+    tasks.forEach((sub, i) => {
+      const x = c.x + i * (tileW + GAP);
+      this.drawTile(ctx, x, top, tileW, tileH, sub, i);
+    });
+
+    // ⚑ the caught-up line does NOT replace the board. §7.2: after the break the
+    // tasks are "still there, still working, still greyable" — a screen that
+    // clears itself cannot carry that, and the version of this that wiped the
+    // work away also wiped away the only evidence of what she had done.
+    if (this.mode === 'done') {
+      setFont(ctx, 14); ctx.fillStyle = ERA3.titleText;
+      ctx.fillText(q.app.doneHeading, c.x, top + tileH + 12);
+      setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
+      ctx.fillText(q.app.doneSub, c.x, top + tileH + 30);
+    }
     this.drawLambientLane(ctx, c, this.lambLine);
+    drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+  }
+
+  /** one tile: a picture, a name, the act, and — when it is finished — grey. */
+  private drawTile(
+    ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
+    sub: SubmissionDef, index: number
+  ): void {
+    const done = this.taskComplete(sub);
+    px(ctx, x, y, w, h, ERA3.white);
+    px(ctx, x, y, w, 1, ERA3.glassHi);
+    px(ctx, x, y + h - 1, w, 1, ERA3.glassEdge);
+    px(ctx, x, y, 1, h, ERA3.glassEdge);
+    px(ctx, x + w - 1, y, 1, h, ERA3.glassEdge);
+
+    // the picture. Noa sent a video, so her tile IS the frame she sent —
+    // ⚑ nothing is drawn over it, the same law drawVideo() holds to.
+    const padX = 10; const thumbH = 112;
+    if (sub.video) {
+      const fs = Math.min((w - padX * 2) / NOA_FRAME.w, thumbH / NOA_FRAME.h);
+      const fw = NOA_FRAME.w * fs; const fh = NOA_FRAME.h * fs;
+      drawNoaFrame(ctx, x + (w - fw) / 2, y + 10 + (thumbH - fh) / 2, fs, { graded: this.graded(sub) });
+    } else {
+      this.drawPageThumb(ctx, x + padX, y + 10, w - padX * 2, thumbH, sub);
+    }
+
+    setFont(ctx, 14); ctx.fillStyle = ERA3.titleText;
+    ctx.fillText(sub.author, x + padX, y + thumbH + 20);
+    setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
+    ctx.fillText(q.app.boardTaskLabel, x + padX, y + thumbH + 42);
+
+    if (done) {
+      // ⚑ THE GREYING, and it is the whole visual argument of the era: the
+      // interface has one gesture for "finished" and it does not distinguish
+      // between the kinds of thing it was asked to finish.
+      ctx.save();
+      ctx.globalAlpha = 0.62;
+      px(ctx, x + 1, y + 1, w - 2, h - 2, ERA3.glass);
+      ctx.restore();
+      setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+      ctx.fillText(q.app.boardDoneTag, x + padX, y + h - 20);
+    }
+    this.rects.push({ x, y, w, h, id: 'task-' + index });
+  }
+
+  /** a page of her writing, small enough to read as a SHAPE — the first lines
+   *  at tile scale, so the tile is a picture of a document and not a label. */
+  private drawPageThumb(
+    ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, sub: SubmissionDef
+  ): void {
+    px(ctx, x, y, w, h, ERA3.memberBand);
+    px(ctx, x, y, 3, h, ERA3.memberSpine); // the same spine drawSubmission gives her
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x + 9, y, w - 12, h - 4); ctx.clip();
+    setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+    const lines = wrapText(ctx, sub.text, w - 18);
+    for (let i = 0; i < lines.length && (i + 1) * 11 <= h - 8; i++) {
+      ctx.fillText(lines[i], x + 9, y + 5 + i * 11);
+    }
+    ctx.restore();
+  }
+
+  /** the taskbar's one button. Present whether the window is up or down, and
+   *  pressing it is the only thing that brings a minimised window back. */
+  private drawTaskButton(
+    ctx: CanvasRenderingContext2D, H: number, active: boolean
+  ): void {
+    const bh = 28; const ty = H - bh;
+    const bx = 34; const bw = 150;
+    px(ctx, bx, ty + 4, bw, bh - 8, active ? ERA3.tray : ERA3.taskBot);
+    px(ctx, bx, ty + 4, bw, 1, active ? ERA3.glassEdge : ERA3.tray);
+    setFont(ctx, 11); ctx.fillStyle = ERA3.white;
+    ctx.fillText(q.app.taskbarLabel, bx + 10, ty + 9);
+    this.rects.push({ x: bx, y: ty + 4, w: bw, h: bh - 8, id: 'task-restore' });
   }
 
   /**
@@ -881,8 +1086,19 @@ export class GraceQueueLite {
    * window corner, which is what Lambient is now: a mark, not a mouth.
    */
   private drawList(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    /* eslint-disable-next-line no-param-reassign */
     const sub = this.submission();
     if (!sub) return;
+    // ⚑ THE WAY BACK, and it is unconditional. Under a board, a task you cannot
+    //   put down is not a task you chose — "any order" is only true if leaving
+    //   one half-finished is allowed. Nothing is lost by pressing it: every
+    //   decision already filed to the ledger stays filed, and the tile keeps
+    //   whatever progress it has. Nothing warns her. Nothing asks if she is sure.
+    const backW = 96; const backH = 18;
+    aero.button(ctx, c.x, c.y - 2, backW, backH, q.app.boardBack);
+    this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
+    c = { ...c, y: c.y + backH + 8, h: c.h - backH - 8 };
+
     const GAP = 18;
     const leftW = 350;
     const rightX = c.x + leftW + GAP;
@@ -1185,7 +1401,14 @@ export class GraceQueueLite {
   handleClick(x: number, y: number): void {
     const r = this.rects.find(rr => hit(rr, x, y));
     if (!r) return;
+    // ⚑ the taskbar button is tested FIRST and is the only live control while
+    //   the window is down — a minimised window can never be a dead end.
+    if (r.id === 'task-restore') { if (this.minimised) this.toggleMinimised(); return; }
+    if (this.minimised) return;
+    if (r.id === 'win-min') { this.toggleMinimised(); return; }
     if (r.id === 'signin') { this.beginList(); return; }
+    if (r.id === 'board-back') { this.backToBoard(); return; }
+    if (r.id.startsWith('task-')) { this.openTask(Number(r.id.slice(5))); return; }
     if (r.id === 'apply') { this.apply(); return; }
     if (r.id === 'skip') { this.skip(); return; }
     if (r.id === 'video') { this.togglePlay(); return; }
@@ -1221,19 +1444,28 @@ export class GraceQueueLite {
     };
     switch (beat) {
       case 'signin': this.settleArrival(); break;
-      case 'list': this.settleArrival(); this.beginList(); break;
+      case 'board': this.settleArrival(); this.minimised = false; this.beginList(); break;
+      case 'list': this.debugBeat('board'); this.openTask(0); break;
+      case 'backToBoard': this.debugBeat('list'); this.backToBoard(); break;
+      case 'minimise': this.debugBeat('board'); this.minimised = true; this.bump(); break;
+      case 'boardDone': // every tile grey — the day finished, and still there
+        this.debugBeat('board');
+        for (let i = 0; i < this.tasks().length; i++) {
+          this.openTask(i);
+          for (let g = 0; g < 32 && this.current(); g++) this.apply();
+        }
+        break;
       case 'apply': this.apply(); break;
       case 'skip': this.skip(); break;
       case 'item7': // the hinge: work submission 1 down to its last correction
-        this.debugBeat('list');
+        this.debugBeat('board'); this.openTask(0);
         applyUntil(() => {
           const sub = this.submission();
           return !sub || sub.id !== 1 || this.items(sub).filter(i => !this.decisions.has(i.id)).length <= 1;
         });
         break;
-      case 'noa': // submission 2, both of her corrections open
-        this.debugBeat('list');
-        applyUntil(() => (this.submission()?.id ?? 99) >= 2);
+      case 'noa': // submission 2 — her tile, opened straight from the board
+        this.debugBeat('board'); this.openTask(1);
         break;
       // ⚑ S69 — the video, and the preset. `play` is here because a reviewer
       // needs to be able to see the hands move on demand; in play NOTHING asks
@@ -1245,9 +1477,12 @@ export class GraceQueueLite {
       // what it did, with two corrections still to work.
       case 'gradeApply': this.debugBeat('noa'); this.apply(); break;
       case 'gradeSkip': this.debugBeat('noa'); this.skip(); break;
-      case 'maltaArrive': // through Noa, so the phone lights the way it does in play
-        this.debugBeat('list');
-        applyUntil(() => (this.submission()?.id ?? 99) > MALTA_AFTER_SUBMISSION);
+      case 'maltaArrive': // ⚑ two tiles grey, which is what actually arms it now
+        this.debugBeat('board');
+        for (let i = 0; i < this.tasks().length && this.completedCount() < MALTA_AFTER_TASKS; i++) {
+          this.openTask(i);
+          applyUntil(() => !this.current());
+        }
         break;
       case 'maltaOpen': this.debugBeat('maltaArrive'); this.openMalta(); break;
       case 'reply': this.debugBeat('maltaOpen'); this.pressReply(); break;

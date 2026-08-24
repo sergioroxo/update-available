@@ -118,7 +118,18 @@ export function taskbar(ctx: CanvasRenderingContext2D, W: number, H: number, clo
   ctx.fillText(clock, W - cw + 2, ty + 9);
 }
 
-export interface AeroContent { x: number; y: number; w: number; h: number; closeBox: { x: number; y: number; w: number; h: number } }
+export interface AeroContent {
+  x: number; y: number; w: number; h: number;
+  closeBox: { x: number; y: number; w: number; h: number };
+  /** ⚑ the MINIMISE box, returned 2026-08-24. The caption row has drawn three
+   *  buttons since this file was written and only ever handed back the close
+   *  box, so minimise was painted and dead — Sérgio, twice: "they should have a
+   *  minimise button not just an X so people can know." A window you can put
+   *  down is a window you can come back to, and in Era 3 that is not decoration:
+   *  the board is a shift, and being able to set it aside is part of what makes
+   *  picking it back up mean something. */
+  minBox: { x: number; y: number; w: number; h: number };
+}
 
 /** Aero glass window: light translucent body, soft gradient title bar, dark caption. */
 export function windowFrame(
@@ -140,11 +151,17 @@ export function windowFrame(
   ctx.fillText(title, x + 9, y + 6);
   // caption buttons: min, max, close(red)
   const by = y + 4; const bs = 14;
+  // ⚑ TWO BUTTONS, NOT THREE — 2026-08-24. The restore-down (□) was drawn and
+  // dead, the same fault minimise had until this session, and it is now a lie
+  // as well: Era 3's window is MAXIMISED by decision (Sérgio) and has exactly
+  // two states — up, and put down on the taskbar. A control that cannot do the
+  // thing it depicts is worse than an absent one, because a player who presses
+  // it and gets nothing learns that pressing things here does nothing.
   capBtn(ctx, x + w - 18, by, bs, ERA3.bury, ERA3.rose, 'x');
-  capBtn(ctx, x + w - 36, by, bs, '#cfe0f2', ERA3.glassHi, '□');
-  capBtn(ctx, x + w - 54, by, bs, '#cfe0f2', ERA3.glassHi, '_');
+  capBtn(ctx, x + w - 36, by, bs, '#cfe0f2', ERA3.glassHi, '_');
   const cb = { x: x + w - 18, y: by, w: bs, h: bs };
-  return { x: x + 5, y: y + barH + 5, w: w - 10, h: h - barH - 10, closeBox: cb };
+  const mb = { x: x + w - 36, y: by, w: bs, h: bs };
+  return { x: x + 5, y: y + barH + 5, w: w - 10, h: h - barH - 10, closeBox: cb, minBox: mb };
 }
 
 function capBtn(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, base: string, hi: string, glyph: string): void {
