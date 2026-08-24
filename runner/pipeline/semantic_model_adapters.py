@@ -810,7 +810,10 @@ class OpenAICompatibleLocalClient:
 
 
 class LocalSectionExecutor:
-    def __init__(self, client: OpenAICompatibleLocalClient, *, concurrency_level: int):
+    def __init__(
+        self, client: OpenAICompatibleLocalClient, *, concurrency_level: int,
+        lexicon_snapshot_sha256: str = "", lexicon_terms: Sequence[dict[str, Any]] = (),
+    ):
         self.client = client
         self.route = client.config.route("section_mapper")
         try:
@@ -818,6 +821,8 @@ class LocalSectionExecutor:
         except SemanticAdapterError:
             self.repair_route = None
         self.concurrency_level = concurrency_level
+        self.lexicon_snapshot_sha256 = lexicon_snapshot_sha256
+        self.lexicon_terms = tuple(lexicon_terms)
 
     def execute(
         self, job: SectionPromptJobV1, section: ProcessingSectionV1, attempt: int,
@@ -872,12 +877,21 @@ class LocalSectionExecutor:
                 if repair_error_code else ""
             )
             + spec.instruction
+            + (
+                " The following frozen researcher-trusted vocabulary may guide term "
+                "recognition but is not source evidence and must not be promoted or "
+                "modified in this campaign. Snapshot SHA-256: "
+                + self.lexicon_snapshot_sha256
+                if self.lexicon_terms else ""
+            )
             + " Canonical response JSON Schema: "
             + _canonical_bytes(response_schema).decode("utf-8")
         )
         user = _canonical_bytes({
             "document_id": job.document_id, "section_id": section.section_id,
             "prompt_id": job.prompt_id, "allowed_unit_ids": list(section.unit_ids),
+            "frozen_trusted_lexicon": list(self.lexicon_terms),
+            "lexicon_snapshot_sha256": self.lexicon_snapshot_sha256,
             "source_text": section.text,
         }).decode()
         try:
@@ -1056,6 +1070,8 @@ class LocalGroundedEnrichmentExecutor:
             "document_id": request.document_id,
             "completed_independent_analysis": request.analysis_payload,
             "source_metadata": request.source_metadata,
+            "frozen_trusted_lexicon": list(request.lexicon_terms),
+            "lexicon_snapshot_sha256": request.lexicon_snapshot_sha256,
             "retrieval_context_sha256": context.context_sha256,
             "retrieved_source_units": allowed,
         }).decode()

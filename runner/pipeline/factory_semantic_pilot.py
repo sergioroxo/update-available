@@ -33,6 +33,7 @@ from pydantic import (
 )
 
 from runner.models.reprocessing import require_safe_id, require_sha256
+from runner.models.reprocessing import AnalysisLexiconSnapshotV1
 from runner.models.retrieval import SourceUnitRowV1, canonical_contract_sha256
 from runner.pipeline.analysis_sections import (
     CompilerInputReductionReceiptV1,
@@ -185,6 +186,8 @@ class CopiedSemanticPilotContractV1(_Strict):
     retrieval_limit: int = Field(default=8, ge=1, le=20)
     per_family_cap: int = Field(default=3, ge=1, le=20)
     contradiction_slots: int = Field(default=2, ge=0, le=10)
+    lexicon_snapshot_sha256: str = NO_SNAPSHOT_SHA256
+    lexicon_snapshot_path: str = ""
     remote_writes: Literal[False] = False
     publication: Literal[False] = False
     corpus_import: Literal[False] = False
@@ -197,6 +200,7 @@ class CopiedSemanticPilotContractV1(_Strict):
 
     @field_validator(
         "prompt_body_sha256", "approval_sha256", "selection_sha256", "contract_sha256",
+        "lexicon_snapshot_sha256",
     )
     @classmethod
     def _hashes(cls, value: str, info) -> str:
@@ -241,6 +245,15 @@ class CopiedSemanticPilotContractV1(_Strict):
                 expected_input / row.document_id / "source.txt"
             ):
                 raise ValueError("pilot source path is outside its bound input slot")
+        if self.lexicon_snapshot_sha256 == NO_SNAPSHOT_SHA256:
+            if self.lexicon_snapshot_path:
+                raise ValueError("pilot no-snapshot identity cannot declare a snapshot path")
+        else:
+            snapshot_path = Path(self.lexicon_snapshot_path)
+            if not snapshot_path.is_absolute() or snapshot_path.resolve(strict=False) != (
+                resolved_workspace / "lexicon_snapshot.json"
+            ):
+                raise ValueError("pilot lexicon snapshot is outside its bound workspace slot")
         return self
 
 
@@ -333,6 +346,26 @@ def _verify_sources(
         atomic_write_bytes(evidence_dir / "citation_units_v2.json", canonical_artifact_bytes(units))
         verified[document.document_id] = (text, sections, units)
     return verified
+
+
+def _verified_lexicon_terms(contract: CopiedSemanticPilotContractV1) -> tuple[dict[str, Any], ...]:
+    if contract.lexicon_snapshot_sha256 == NO_SNAPSHOT_SHA256:
+        return ()
+    path = Path(contract.lexicon_snapshot_path)
+    if path.is_symlink() or not path.is_file():
+        raise SemanticPilotError("pilot_lexicon_snapshot_missing")
+    try:
+        snapshot = AnalysisLexiconSnapshotV1.model_validate_json(path.read_bytes())
+    except Exception as exc:
+        raise SemanticPilotError("pilot_lexicon_snapshot_invalid") from exc
+    if snapshot.canonical_sha256 != contract.lexicon_snapshot_sha256:
+        raise SemanticPilotError("pilot_lexicon_snapshot_stale")
+    return tuple({
+        "term_id": row.term_id,
+        "preferred_term": row.preferred_term,
+        "definition": row.definition,
+        "variants": [variant.model_dump(mode="json") for variant in row.variants],
+    } for row in snapshot.terms)
 
 
 def endpoint_config(
@@ -906,6 +939,7 @@ def run_copied_semantic_pilot(
     if recover_local_service not in {"", "1"}:
         raise SemanticPilotError("pilot_local_service_recovery_flag_malformed")
     verified = _verify_sources(contract)
+    lexicon_terms = _verified_lexicon_terms(contract)
     client = OpenAICompatibleLocalClient(endpoint, transport=transport)
     try:
         bindings = reuse_run021_bindings(client)
@@ -942,6 +976,8 @@ def run_copied_semantic_pilot(
                     store=store, plan=plan,
                     executor=LocalSectionExecutor(
                         client, concurrency_level=effective_mapper_concurrency,
+                        lexicon_snapshot_sha256=contract.lexicon_snapshot_sha256,
+                        lexicon_terms=lexicon_terms,
                     ),
                     max_workers=effective_mapper_concurrency,
                 )
@@ -1177,8 +1213,9 @@ def run_copied_semantic_pilot(
                     run_id=contract.run_id, document_id=doc,
                     analysis_payload=analyses[doc],
                     source_metadata=source_metadata[doc], context=context,
-                    lexicon_snapshot_sha256=NO_SNAPSHOT_SHA256,
+                    lexicon_snapshot_sha256=contract.lexicon_snapshot_sha256,
                     entity_snapshot_sha256=NO_SNAPSHOT_SHA256,
+                    lexicon_terms=lexicon_terms,
                     requested_model=endpoint.route("grounded_enrichment").requested_model,
                 )
                 enrichments[doc] = _validate_or_execute_enrichment(

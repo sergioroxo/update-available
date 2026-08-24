@@ -1,0 +1,98 @@
+{
+  "schema_version": "run022-post-run-audit-v1.0",
+  "run_id": "ai-sdlc-20260824-unified-production-line-integration-022",
+  "prompt_id": "unified-production-line-integration-v0.1",
+  "status": "COMPLETED_UNIFIED_PRODUCTION_LINE_INTEGRATION",
+  "branch": "codex/unified-production-line-022",
+  "parent_commit": "3925883f862185ad330abced3eab2577e2131db7",
+  "push_state": "READY_TO_PUSH_UNIFIED_FACTORY_BRANCH",
+  "push_performed": false,
+  "dependency_reuse": {
+    "configuration": ["runner/config.py", "FactoryConfig"],
+    "streamlit": ["runner/production_line_ui.py", "runner/app.py", "runner/mac_studio_worker_app.py"],
+    "authentication_and_commands": ["runner/pipeline/factory_controller.py", "runner/pipeline/factory_auth.py", "runner/pipeline/factory_messages.py"],
+    "publication_and_exchange": ["runner/pipeline/source_depot.py", "runner/pipeline/syncthing_exchange.py", "runner/pipeline/factory_state.py"],
+    "durable_execution": ["runner/pipeline/factory_service.py", "runner/pipeline/factory_supervisor.py", "runner/pipeline/reprocessing_worker.py"],
+    "semantic_runtime": ["runner/pipeline/factory_semantic_pilot.py", "runner/pipeline/analysis_sections.py", "runner/pipeline/semantic_model_adapters.py", "runner/pipeline/retrieval_index.py", "runner/pipeline/retrieval_context.py"],
+    "selection_and_review": ["runner/pipeline/source_queue.py", "runner/app.py"]
+  },
+  "changed_files": [
+    "docs/AI_SDLC_IMPLEMENTATION_PROMPT_AND_RUN_LOG_2026-08-11.md",
+    "docs/run022_preflight_manifest.json",
+    "docs/run022_post_run_audit.json",
+    "docs/screenshots/run022/mac-studio-factory-console.png",
+    "docs/screenshots/run022/mac-studio-memory-and-status.png",
+    "docs/screenshots/run022/macbook-commands-and-run021-review.png",
+    "docs/screenshots/run022/macbook-production-line.png",
+    "docs/screenshots/run022/macbook-review-and-controls.png",
+    "docs/screenshots/run022/run021-compiler-citation-review.png",
+    "docs/screenshots/run022/run021-read-only-review.png",
+    "docs/screenshots/run022/run021-retrieval-grounding-review.png",
+    "runner/models/reprocessing.py",
+    "runner/pipeline/factory_controller.py",
+    "runner/pipeline/factory_review_adapter.py",
+    "runner/pipeline/factory_semantic_campaign.py",
+    "runner/pipeline/factory_semantic_pilot.py",
+    "runner/pipeline/factory_service.py",
+    "runner/pipeline/retrieval_context.py",
+    "runner/pipeline/semantic_model_adapters.py",
+    "runner/production_line_ui.py",
+    "tests/test_factory_review_adapter.py",
+    "tests/test_factory_semantic_campaign.py",
+    "tests/test_production_line_ui.py"
+  ],
+  "run021_evidence": {
+    "bundle_sha256": "1e4bae2c0fe99400a0797c08b3f257324042df1630362e1f927739607f77dfdc",
+    "sealed_results_sha256": "571bbbc255515b4175f10769be94a12385975a66a1f1af68e966bf35bf3dec85",
+    "verified_members": 52,
+    "projection_sha256": "7b6d538b21bbd9a8e27f0b72d32f6e6169cbcc1096b84b4b8141c263119f807f",
+    "sealed_model_receipts": 24,
+    "new_model_calls": 0,
+    "mutations": 0,
+    "review_state": "already_complete_read_only_provisional"
+  },
+  "validation": {
+    "focused": {
+      "command": ".venv/bin/python -m pytest -q tests/test_factory_semantic_campaign.py tests/test_factory_review_adapter.py tests/test_factory_semantic_pilot.py tests/test_analysis_sections.py tests/test_semantic_model_adapters.py tests/test_retrieval.py tests/test_retrieval_index.py tests/test_retrieval_context.py tests/test_factory_auth.py tests/test_factory_messages.py tests/test_factory_controller.py tests/test_factory_service.py tests/test_factory_state.py tests/test_factory_station_adapters.py tests/test_factory_supervisor.py tests/test_syncthing_exchange.py tests/test_source_depot.py tests/test_source_queue.py tests/test_production_line_ui.py tests/test_factory_analysis.py tests/test_citation_units_v2.py tests/test_extraction_quality.py",
+      "passed": 395,
+      "failed": 0,
+      "seconds": 22.0
+    },
+    "complete_suite": {
+      "command": ".venv/bin/python -m pytest -q",
+      "passed": 2647,
+      "failed": 0,
+      "seconds": 85.47
+    },
+    "compileall": "passed",
+    "git_diff_check": "passed",
+    "streamlit_import_navigation": "passed",
+    "rendered_ui": "passed_macbook_and_mac_studio",
+    "no_model_exchange": "passed_with_authenticated_receipts_results_and_zero_duplicate_refresh_mutations",
+    "accepted_runtime_adapter": "passed_with_single_resumable_runner_invocation",
+    "real_model_campaign": false
+  },
+  "safety": {
+    "source_queue_selection_read_only": true,
+    "live_database_path_exposed": false,
+    "corpus_mutation": false,
+    "queue_mutation": false,
+    "remote_write": false,
+    "publication": false,
+    "automatic_promotion": false,
+    "same_run_proposal_contamination": false,
+    "syncthing_api_key_required": false,
+    "mutable_transfer_members": 0,
+    "global_model_lease_required": true,
+    "maximum_resident_models": 1,
+    "route_transition_concurrency": 1,
+    "explicit_unload_required": true
+  },
+  "original_worktree": {
+    "path": "/Users/sergiogalvaoroxo/Documents/surviving-sogice-ingest",
+    "branch": "claude/review-architecture-70CUm",
+    "head": "1b7bddb1b2b0d93a15f466d51f37498a2bccea88",
+    "dirty_user_owned_state_preserved": true
+  },
+  "next_human_gate": "Explicit push authorization, then Studio clone/pull and exact-commit verification before one researcher-approved UI trial."
+}

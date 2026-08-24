@@ -1,0 +1,58 @@
+{
+  "schema_version": "run022-preflight-manifest-v1.0",
+  "run_id": "ai-sdlc-20260824-unified-production-line-integration-022",
+  "prompt_id": "unified-production-line-integration-v0.1",
+  "parent_branch": "codex/direct-copied-semantic-pilot-021",
+  "parent_commit": "3925883f862185ad330abced3eab2577e2131db7",
+  "work_branch": "codex/unified-production-line-022",
+  "worktree": "/private/tmp/sogice-run022",
+  "clean_before_implementation_edits": true,
+  "transferred_bundle": {
+    "path": "/Users/sergiogalvaoroxo/Documents/surviving-sogice-stuff/Run-021/surviving-sogice-direct-copied-semantic-pilot-021.bundle",
+    "sha256": "1e4bae2c0fe99400a0797c08b3f257324042df1630362e1f927739607f77dfdc",
+    "complete_history": true,
+    "verified_ref": "3925883f862185ad330abced3eab2577e2131db7 refs/heads/codex/direct-copied-semantic-pilot-021"
+  },
+  "sealed_results": {
+    "path": "/Users/sergiogalvaoroxo/Documents/surviving-sogice-stuff/Run-021/surviving-sogice-direct-copied-semantic-pilot-021-results.tar.gz",
+    "sha256": "571bbbc255515b4175f10769be94a12385975a66a1f1af68e966bf35bf3dec85",
+    "declared_members": 52,
+    "verified_members": 52,
+    "missing_members": 0,
+    "unexpected_members": 0
+  },
+  "permitted_repository_paths": [
+    "docs/AI_SDLC_IMPLEMENTATION_PROMPT_AND_RUN_LOG_2026-08-11.md",
+    "docs/run022_preflight_manifest.json",
+    "docs/run022_post_run_audit.json",
+    "docs/screenshots/run022/**",
+    "runner/config.py",
+    "runner/models/reprocessing.py",
+    "runner/pipeline/factory_controller.py",
+    "runner/pipeline/factory_messages.py",
+    "runner/pipeline/factory_service.py",
+    "runner/pipeline/factory_semantic_pilot.py",
+    "runner/pipeline/factory_semantic_campaign.py",
+    "runner/pipeline/factory_review_adapter.py",
+    "runner/pipeline/retrieval_context.py",
+    "runner/pipeline/semantic_model_adapters.py",
+    "runner/pipeline/source_queue.py",
+    "runner/production_line_ui.py",
+    "runner/mac_studio_worker_app.py",
+    "runner/app.py",
+    "tests/test_factory_semantic_campaign.py",
+    "tests/test_factory_review_adapter.py",
+    "tests/test_factory_controller.py",
+    "tests/test_factory_service.py",
+    "tests/test_production_line_ui.py"
+  ],
+  "authority": {
+    "remote_writes": false,
+    "corpus_import": false,
+    "publication": false,
+    "automatic_promotion": false,
+    "syncthing_configuration": false,
+    "real_model_campaign": false,
+    "git_push": false
+  }
+}

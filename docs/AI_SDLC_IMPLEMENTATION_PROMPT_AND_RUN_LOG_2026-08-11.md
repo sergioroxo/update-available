@@ -404,3 +404,339 @@ larger campaign automatically.
   no rotated credential, likely secret, or private-key marker was found.
 - Remote writes: `0`. Publication: `false`. Corpus import: `false`.
   Syncthing mutation: `false`.
+
+<!-- PROMPT START: unified-production-line-integration-v0.1 -->
+
+model: gpt-5.6-sol
+reasoning_effort: high
+reasoning_mode: standard
+model_role: macbook-factory-integration-engineer
+
+# SurvivingSOGICE — Run-022 Unified Production Line Integration
+
+## Run identity
+
+- Prompt ID: `unified-production-line-integration-v0.1`
+- Run ID: `ai-sdlc-20260824-unified-production-line-integration-022`
+- Initial host: MacBook control repository
+- Parent: Run-021 independently accepted for functional execution
+- Parent branch: `codex/direct-copied-semantic-pilot-021`
+- Parent commit: `3925883f862185ad330abced3eab2577e2131db7`
+- Scope: integrate existing factory, semantic runtime, Streamlit, Source Queue,
+  lexicon review, and immutable Syncthing exchange into one operational workflow
+- Real campaign expansion and automatic remote writes remain unauthorized
+
+## Independently verified Run-021 evidence
+
+Record the following acceptance without treating model findings as researcher-
+verified truth:
+
+- source bundle SHA-256:
+  `1e4bae2c0fe99400a0797c08b3f257324042df1630362e1f927739607f77dfdc`;
+- sealed results SHA-256:
+  `571bbbc255515b4175f10769be94a12385975a66a1f1af68e966bf35bf3dec85`;
+- complete Git history and exact parent commit verified;
+- all 52 sealed result members matched their declared paths, sizes, and hashes;
+- all six baseline source hashes remained unchanged;
+- focused tests: 73 passed;
+- complete MacBook suite: 2,637 passed;
+- projection matched across both runs:
+  `7b6d538b21bbd9a8e27f0b72d32f6e6169cbcc1096b84b4b8141c263119f807f`;
+- identical rerun made zero model and embedding calls;
+- memory barriers completed with zero resident models;
+- no credential, source payload, raw vector, database, cache, remote write,
+  corpus import, or publication artifact entered the sealed archive.
+
+Run-021 proves functional execution. Its Analysis, compiler comparison,
+retrieval, and Enrichment content remains provisional pending researcher review.
+
+## Objective
+
+Turn the already implemented components into one usable system rather than
+creating another parallel subsystem.
+
+The researcher must be able to use the existing Streamlit application to:
+
+1. verify MacBook/Mac Studio/Syncthing readiness;
+2. select eligible copied artifacts from existing Source Queue and corpus
+   inventories without syncing or opening either live database remotely;
+3. preview and approve a bounded semantic campaign;
+4. freeze the exact trusted lexicon snapshot used by Analysis and Enrichment;
+5. publish authenticated immutable sources, campaign, package, and commands;
+6. observe the independent Mac Studio worker entirely through receipts;
+7. pause, resume, or cancel unstarted work;
+8. inspect document/station progress, model route, retries, memory state,
+   transfer state, and exceptions;
+9. verify and review returned Analysis, compiler comparisons, retrieval evidence,
+   and grounded Enrichment proposals;
+10. route accepted local proposals into the existing lexicon/entity/tactic review
+    queues without automatic canonical promotion or remote write.
+
+Mac Studio must continue to execute independently of Streamlit. Closing the UI
+must not stop the worker.
+
+## Reuse mandate
+
+Do not reimplement capabilities already present. Begin with a concise dependency
+map and reuse these accepted modules:
+
+- configuration: `runner/config.py` and `FactoryConfig`;
+- MacBook/Mac Studio UI: `runner/production_line_ui.py`, `runner/app.py`, and
+  `runner/mac_studio_worker_app.py`;
+- authenticated controller and commands: `factory_controller.py`,
+  `factory_auth.py`, and `factory_messages.py`;
+- content-addressed publication: `source_depot.py`;
+- immutable run-scoped exchange and observation: `syncthing_exchange.py` and
+  `factory_state.py`;
+- durable Studio execution: `factory_service.py`, `factory_supervisor.py`,
+  `reprocessing_worker.py`, and existing LaunchAgent support;
+- station adapters and complete-text foundation: `factory_station_adapters.py`,
+  `extraction_quality.py`, and `citation_units_v2.py`;
+- accepted semantic runtime: `factory_semantic_pilot.py`,
+  `analysis_sections.py`, `semantic_model_adapters.py`, retrieval/index/context
+  modules, and the global one-model lease;
+- Source Queue: existing `source_queue.py` APIs and current Streamlit page;
+- lexicon and proposal review: existing local-proposal, Sanity-lexicon,
+  entity/tactic/practice review helpers in `runner/app.py`;
+- archives: existing deterministic source/result archive primitives.
+
+Do not create a second queue, second campaign protocol, second lexicon UI,
+second result viewer, or second transfer mechanism when an additive adapter is
+sufficient.
+
+Git bundles are release-recovery artifacts, not the operational data transport.
+After consolidation, code should move through GitHub; immutable campaign data
+continues through Syncthing.
+
+## Mandatory governance and clean integration base
+
+1. Append this exact prompt and create a concise Run-022 record.
+2. Verify the transferred Run-021 bundle and manifests again by identity.
+3. Work only in a new clean worktree or clone based on Run-021 commit
+   `3925883f862185ad330abced3eab2577e2131db7`, on branch
+   `codex/unified-production-line-022`.
+4. Do not stage, alter, or clean the existing dirty MacBook worktree. Treat it
+   as user-owned work.
+5. Create one preflight manifest and one post-run audit. Do not create a new
+   release for each ordinary defect.
+6. Do not push, force, merge, or rewrite a remote branch unless the researcher
+   separately gives explicit push authorization after validation.
+
+## Fixed architecture
+
+- MacBook remains authoritative for selection, control, corpus, review, import,
+  and remote-write decisions.
+- Mac Studio owns worker execution and local mutable runtime state.
+- MacBook never opens the Studio worker database. Mac Studio never opens the
+  MacBook Source Queue or corpus database.
+- Syncthing carries only immutable content-addressed sources, manifests,
+  authenticated commands, receipts, sealed results, inventories, and checksum
+  sidecars.
+- No SQLite/WAL/journal, PID, lock, key, secret, model cache, mutable index, or
+  live log enters Syncthing.
+- Do not expose or require the Syncthing API key. Do not automatically configure
+  Syncthing devices or share the whole PDF/corpus folder. Use the already shared
+  configured factory roots and validate them from filesystem evidence.
+- Preserve ordinary ingestion, legacy source packages, manual archive import,
+  and existing Source Queue workflows as fallbacks.
+- The one-model global lease, sequential route phases, explicit unload barriers,
+  and swap/memory guards from Run-021 are mandatory for every semantic campaign.
+
+## Required implementation
+
+### 1. Consolidate semantic campaign contracts with the existing factory
+
+Add a strict authenticated semantic campaign contract as an additive production
+campaign type. It must bind:
+
+- campaign/run ID and researcher approval;
+- selected document/source identities and content hashes;
+- complete-text and unit schema versions;
+- frozen trusted lexicon snapshot identity and SHA-256;
+- Analysis prompt/policy versions;
+- mapper, repair, primary compiler, comparison compiler, primary embedding,
+  shadow embedding, and grounded Enrichment route purposes;
+- stage barriers and per-document retry limits;
+- model-memory policy: one global model, concurrency one at route transitions,
+  explicit unload, and bounded swap growth;
+- remote writes, corpus import, publication, and automatic promotion fixed false;
+- result allow-list and receipt/signature requirements.
+
+Use the existing authenticated campaign/package/command envelope and run-scoped
+paths. Do not design an incompatible third message family.
+
+### 2. Add semantic stations to the durable Studio service
+
+Integrate the accepted Run-021 runtime behind pluggable station adapters with
+campaign-wide barriers:
+
+`source_verify → canonical_text_prepare → complete_units_v2 → independent_analysis → primary_and_comparison_compilation → unit_embeddings → frozen_index → grounded_enrichment → sealed_results`
+
+Requirements:
+
+- durable jobs, leases, attempts, retries, receipts, and crash/resume use the
+  existing factory service/store;
+- successful documents/stages are never recomputed;
+- Analysis completes for the selected set before index construction;
+- only source units enter the index;
+- the index freezes before any grounded Enrichment;
+- no same-run proposal can modify the current lexicon snapshot or index;
+- one poisoned document remains isolated;
+- the Run-021 global model lease covers every chat and embedding adapter;
+- returned artifacts use existing authenticated result publication and sealed
+  archive verification.
+
+### 3. Replace stale Streamlit placeholders with real controller wiring
+
+The current `🏭 Production Line` page is registered but still states “synthetic
+foundation only,” disables semantic controls, and calls the synthetic campaign
+publisher. Replace those stale placeholders with real, non-technical workflows.
+
+#### MacBook Production Line
+
+Provide these sections:
+
+- **Setup:** host role, configured factory roots, path readiness, storage,
+  signing/verifying key fingerprints, Syncthing-facing readiness, incomplete
+  pairs, forbidden mutable files, and model/service evidence returned by Studio.
+- **Select sources:** read-only selection from existing Source Queue and corpus
+  inventory helpers. Show eligibility, canonical quality, source availability,
+  language/type, bytes, prior Analysis state, and hold reasons. Never expose or
+  synchronize the live Source Queue database.
+- **Plan campaign:** initially enforce 1–12 explicit documents, show estimated
+  work, exact stations, routes, storage, retry policy, one-model scheduling,
+  prohibited operations, and expected review outputs.
+- **Freeze vocabulary:** use existing trusted lexicon retrieval/projection logic,
+  create one immutable local snapshot and hash, show term count/status, and make
+  clear that returned proposals cannot affect the same campaign.
+- **Approve and release:** require exact researcher confirmation; publish through
+  the real authenticated controller and existing source depot. Never launch the
+  Studio worker from the MacBook.
+- **Commands:** authenticated start, pause after current, resume, and cancel
+  unstarted with sequencing, expiry, checksum, and observed effect.
+- **Progress:** receipt-only campaign/station/document state, attempts, model
+  phase, completed/held/pending counts, projection hash, barrier eligibility,
+  last verified update, and exception reasons.
+- **Transfers:** newly published/reused bytes, ready/waiting/returned files,
+  incomplete pairs, and forbidden-file detection.
+- **Review results:** verify authenticated sealed results; display Analysis and
+  Gemma/Qwen3.8 comparison summaries, citations, retrieval contexts, Qwen/BGE
+  ranking comparison, grounded connections, omissions, receipt gaps, and
+  methodological warnings. Do not declare either model correct.
+- **Route proposals:** adapt accepted returned Enrichment proposals into the
+  existing local lexicon/entity/tactic/practice proposal queues for researcher
+  review. No automatic Sanity/Supabase write or canonical promotion.
+
+#### Mac Studio Factory Console
+
+Show checksum/signature-complete semantic campaigns, selected documents and
+barriers, source verification, local service/state paths, command readiness,
+durable worker/service status, model phase, resident model count, memory/swap
+guard, job attempts, receipts/results, and held reasons. Keep legacy/manual
+worker controls available. Do not add direct database editing or remote-write
+controls.
+
+### 4. Source Queue and corpus compatibility
+
+Selection must use existing APIs and stable document IDs. It must be report-only
+until campaign release. Campaign release may publish copies through the existing
+source depot but must not mutate queue status, move corpus files, or overwrite
+artifacts. After verified return, show a separate explicit local-import preview;
+actual corpus or queue mutation requires a later researcher-confirmed action.
+
+### 5. Lexicon compatibility
+
+Reuse existing approved/trusted lexicon selection rules. Freeze the snapshot
+before release. Returned Enrichment remains provisional and enters the existing
+local review queues only after an explicit researcher action. Do not duplicate
+Sanity records, automatically validate terms, or feed same-run proposals into
+same-run Analysis/RAG.
+
+### 6. Syncthing and transfer behavior
+
+Do not build FTP, SSH, or a new transfer daemon. Use current factory roots and
+immutable run-scoped layouts. The UI may create campaign subdirectories through
+the existing publisher, but it must not configure Syncthing devices/folders or
+need its API key. Provide actionable guidance when the Syncthing application is
+not running, while keeping execution state durable and resumable.
+
+### 7. Code distribution
+
+Prepare the consolidated clean branch for GitHub. Do not create another software
+bundle as the routine handoff. After all validation, stop at
+`READY_TO_PUSH_UNIFIED_FACTORY_BRANCH` unless explicit push authorization has
+already been supplied. A later Studio command should clone/pull that exact branch
+and verify its commit rather than receiving selected Python files.
+
+## Validation
+
+Run once, after implementation:
+
+1. focused semantic, factory, controller, service, exchange, Source Queue,
+   lexicon-adapter, and Production Line UI tests;
+2. adversarial tests for cross-run/source injection, stale lexicon snapshots,
+   same-run proposal contamination, live-database path exposure, forged results,
+   duplicate proposal routing, model overlap, and fail-before-mutation behavior;
+3. complete local suite;
+4. compilation and `git diff --check`;
+5. Streamlit import/navigation tests;
+6. a safe local rendered UI using temporary synthetic configuration and visual
+   inspection of MacBook Production Line plus Mac Studio Factory Console;
+7. one end-to-end no-model exchange demonstration through the same semantic
+   campaign UI/controller/service adapters;
+8. import and display the verified Run-021 sealed results as an already-complete
+   read-only campaign, proving review/proposal routing without new model calls;
+9. identical refresh/re-observation with zero duplicated messages or mutations.
+
+Do not run another real model campaign in Run-022. Do not call Sanity, Supabase,
+cloud models, network acquisition, or publication. Use only temporary synthetic
+fixtures and the already verified sealed Run-021 result archive.
+
+## Acceptance
+
+Mark `COMPLETED_UNIFIED_PRODUCTION_LINE_INTEGRATION` only if:
+
+- no existing subsystem was unnecessarily duplicated;
+- the Streamlit page controls the real authenticated factory contracts;
+- Source Queue/corpus selection is read-only and never exposes a live database;
+- lexicon snapshot and returned proposal routing use existing review workflows;
+- the Studio service remains independent of Streamlit;
+- Syncthing remains immutable-message transport with no API key requirement;
+- model overlap is structurally impossible;
+- the Run-021 results render and verify without new model calls;
+- synthetic end-to-end exchange, UI rendering, focused tests, and full suite pass;
+- only authorized files changed;
+- no real-data mutation or remote write occurred.
+
+## Final response
+
+Report the reuse/dependency map, exact changed files, working UI flows, semantic
+station integration, Source Queue and lexicon behavior, Syncthing behavior,
+memory-safety enforcement, Run-021 read-only review evidence, screenshots/render
+evidence, test commands/counts, worktree audit, commit, and push readiness.
+
+The next human gate is explicit authorization to push the consolidated branch to
+GitHub, followed by a Studio pull/verification and one researcher-approved trial
+launched through the UI. Do not start that trial automatically.
+
+<!-- PROMPT END: unified-production-line-integration-v0.1 -->
+
+## Run-022 execution record
+
+- Run ID: `ai-sdlc-20260824-unified-production-line-integration-022`
+- Prompt ID: `unified-production-line-integration-v0.1`
+- Parent: `codex/direct-copied-semantic-pilot-021` at
+  `3925883f862185ad330abced3eab2577e2131db7`.
+- Clean integration branch: `codex/unified-production-line-022` in the isolated
+  clone `/private/tmp/sogice-run022`; the dirty MacBook checkout was not altered.
+- Run-021 source bundle verified as complete history with SHA-256
+  `1e4bae2c0fe99400a0797c08b3f257324042df1630362e1f927739607f77dfdc`.
+- Run-021 sealed result archive verified at SHA-256
+  `571bbbc255515b4175f10769be94a12385975a66a1f1af68e966bf35bf3dec85`;
+  all 52 declared members matched path, size, and hash with no extras.
+- Run-021 Analysis, comparison, retrieval, and Enrichment remain provisional
+  researcher-review material; their presence is not researcher validation.
+- Preflight manifest: `docs/run022_preflight_manifest.json`.
+- Authority remains local-only: no real model campaign, corpus import,
+  publication, automatic promotion, Syncthing configuration, remote write, or
+  Git push is authorized in this run.

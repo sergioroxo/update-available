@@ -49,6 +49,13 @@ from .reprocessing_worker import (
     validate_campaign_packages,
 )
 from .source_depot import SourcePublicationResult, publish_source_object
+from .factory_semantic_campaign import (
+    SEMANTIC_CAMPAIGN_STATIONS,
+    SemanticCampaignApprovalV1,
+    SemanticCampaignJobV1,
+    SemanticCampaignPackageV1,
+    SemanticCampaignV1,
+)
 from .syncthing_exchange import (
     assert_clean_transfer_tree,
     load_factory_receipts,
@@ -66,6 +73,170 @@ FIXTURE_BYTES = {
     "fixture-poison": b"synthetic fixture poison\n",
 }
 FIXED_TIME = datetime(2026, 8, 11, tzinfo=timezone.utc)
+
+
+def _semantic_input_fingerprint(
+    *, approval: SemanticCampaignApprovalV1, document_id: str, station_id: str,
+) -> str:
+    document = next(row for row in approval.documents if row.document_id == document_id)
+    return sha256_bytes(canonical_json_bytes({
+        "run_id": approval.run_id,
+        "document_id": document_id,
+        "source_sha256": document.source_sha256,
+        "station_id": station_id,
+        "lexicon_snapshot_sha256": approval.lexicon_snapshot_sha256,
+        "routes": approval.routes.model_dump(mode="json"),
+        "memory_policy": approval.memory_policy.model_dump(mode="json"),
+        "analysis_prompt_version": approval.analysis_prompt_version,
+        "analysis_policy_version": approval.analysis_policy_version,
+    }))
+
+
+def build_semantic_campaign_package(
+    *, approval: SemanticCampaignApprovalV1,
+    references: tuple,
+) -> SemanticCampaignPackageV1:
+    """Bind the exact approved documents to station-major durable jobs."""
+    by_document = {row.doc_id: row for row in references}
+    document_ids = tuple(row.document_id for row in approval.documents)
+    if tuple(sorted(by_document)) != document_ids:
+        raise ValueError("semantic source references do not match the approval")
+    jobs = []
+    for sequence, station_id in enumerate(SEMANTIC_CAMPAIGN_STATIONS, 1):
+        for document_id in document_ids:
+            jobs.append(SemanticCampaignJobV1(
+                run_id=approval.run_id,
+                package_id="semantic-package-001",
+                document_id=document_id,
+                station_id=station_id,
+                station_sequence=sequence,
+                predecessor_station_id=(
+                    "" if sequence == 1 else SEMANTIC_CAMPAIGN_STATIONS[sequence - 2]
+                ),
+                source_reference=by_document[document_id],
+                input_fingerprint=_semantic_input_fingerprint(
+                    approval=approval, document_id=document_id, station_id=station_id,
+                ),
+                maximum_attempts=approval.maximum_attempts_per_document,
+                barrier_id=f"semantic-barrier-{sequence:02d}-{station_id}",
+            ))
+    return SemanticCampaignPackageV1(
+        run_id=approval.run_id, package_id="semantic-package-001",
+        document_ids=document_ids, jobs=tuple(jobs),
+    )
+
+
+def publish_semantic_campaign_release(
+    *, to_studio: Path, source_paths: Mapping[str, Path],
+    approval: SemanticCampaignApprovalV1, lexicon_snapshot,
+    command_signing_private_key: Path, now: datetime,
+    include_start: bool = False,
+) -> dict[str, Any]:
+    """Publish one immutable authenticated semantic campaign; never launch work."""
+    approval.assert_current(now)
+    if lexicon_snapshot.snapshot_id != approval.lexicon_snapshot_id:
+        raise ValueError("semantic lexicon snapshot identity mismatch")
+    if lexicon_snapshot.canonical_sha256 != approval.lexicon_snapshot_sha256:
+        raise ValueError("semantic lexicon snapshot hash mismatch")
+    approved_ids = tuple(row.document_id for row in approval.documents)
+    if tuple(sorted(source_paths)) != approved_ids:
+        raise ValueError("semantic source paths must match the exact approved selection")
+    publications = []
+    for document in approval.documents:
+        source_path = Path(source_paths[document.document_id])
+        if not source_path.is_absolute() or source_path.is_symlink() or not source_path.is_file():
+            raise ValueError("semantic source must be an explicit regular local file")
+        data = source_path.read_bytes()
+        try:
+            text = data.decode("utf-8", errors="strict")
+        except UnicodeDecodeError as exc:
+            raise ValueError("semantic source is not strict UTF-8") from exc
+        if (
+            len(data) != document.source_bytes
+            or len(text) != document.source_characters
+            or sha256_bytes(data) != document.source_sha256
+            or "\x00" in text
+            or "[TRUNCATED MIDDLE" in text
+        ):
+            raise ValueError("semantic source changed after approval")
+        extension = source_path.suffix.lower().lstrip(".")
+        if extension not in {"txt", "md"}:
+            raise ValueError("semantic source must be plain text or Markdown")
+        publications.append(publish_source_object(
+            source_path, to_studio, doc_id=document.document_id,
+            safe_extension=extension, media_type=document.media_type,
+        ))
+    references = tuple(row.reference for row in publications)
+    package = build_semantic_campaign_package(approval=approval, references=references)
+    snapshot_relative = f"campaigns/{approval.run_id}/semantic/lexicon_snapshot.json"
+    campaign = SemanticCampaignV1(
+        run_id=approval.run_id, campaign_id=approval.run_id, created_at=now,
+        approval_id=approval.approval_id,
+        approval_sha256=sha256_bytes(canonical_json_bytes(approval)),
+        document_ids=approved_ids, source_references=references,
+        package_id=package.package_id,
+        package_manifest_sha256=sha256_bytes(canonical_json_bytes(package)),
+        lexicon_snapshot_id=approval.lexicon_snapshot_id,
+        lexicon_snapshot_sha256=approval.lexicon_snapshot_sha256,
+        lexicon_snapshot_relative_path=snapshot_relative,
+        routes=approval.routes, memory_policy=approval.memory_policy,
+    )
+    root = f"campaigns/{approval.run_id}/semantic"
+    snapshot_result = publish_exchange_json(to_studio, snapshot_relative, lexicon_snapshot)
+    approval_result = publish_exchange_json(to_studio, f"{root}/approval.json", approval)
+    package_result = publish_exchange_json(to_studio, f"{root}/package.json", package)
+    campaign_message = sign_factory_message(
+        campaign, purpose="campaign_release", run_id=campaign.run_id,
+        message_id=f"campaign-release-{campaign.run_id}",
+        private_key_path=command_signing_private_key, issued_at=now,
+        shared_roots=(Path(to_studio),),
+    )
+    campaign_result = publish_exchange_json(
+        to_studio, f"{root}/campaign.auth.json", campaign_message,
+    )
+    command_result: dict[str, Any] | None = None
+    if include_start:
+        command_result = publish_semantic_campaign_command(
+            to_studio=to_studio, campaign=campaign, sequence=1,
+            action="start_approved", command_signing_private_key=command_signing_private_key,
+            issued_at=now,
+        )
+    return {
+        "run_id": campaign.run_id, "campaign": campaign, "package": package,
+        "approval": approval, "command": command_result,
+        "source_published_bytes": sum(row.published_bytes for row in publications),
+        "source_reused_bytes": sum(row.reused_bytes for row in publications),
+        "snapshot_reused": snapshot_result["reused"],
+        "approval_reused": approval_result["reused"],
+        "package_reused": package_result["reused"],
+        "campaign_reused": campaign_result["reused"],
+    }
+
+
+def publish_semantic_campaign_command(
+    *, to_studio: Path, campaign: SemanticCampaignV1, sequence: int,
+    action: str, command_signing_private_key: Path,
+    issued_at: datetime | None = None,
+) -> dict[str, Any]:
+    issued = issued_at or datetime.now(timezone.utc)
+    command_id = f"semantic-command-{sequence:06d}-{action.replace('_', '-')}"
+    command = FactoryCommandV1(
+        run_id=campaign.run_id, command_id=command_id, sequence=sequence,
+        action=action, issued_at=issued, expires_at=issued + timedelta(hours=24),
+        campaign_sha256=sha256_bytes(canonical_json_bytes(campaign)),
+    )
+    message = sign_factory_message(
+        command, purpose="command", run_id=campaign.run_id,
+        message_id=command.command_id, private_key_path=command_signing_private_key,
+        issued_at=issued, expires_at=command.expires_at,
+        shared_roots=(Path(to_studio),),
+    )
+    result = publish_exchange_json(
+        to_studio,
+        f"commands/{campaign.run_id}/{sequence:06d}-{command.command_id}.auth.json",
+        message,
+    )
+    return {**result, "command": command}
 
 
 def _production_input_fingerprint(

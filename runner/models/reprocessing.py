@@ -692,7 +692,8 @@ class CopiedTextCanaryApprovalV1(StrictContract):
 
 ProductionStationId = Literal[
     "source_verify", "canonical_text_prepare", "complete_units_v2",
-    "independent_analysis",
+    "independent_analysis", "primary_and_comparison_compilation",
+    "unit_embeddings", "frozen_index", "grounded_enrichment", "sealed_results",
 ]
 
 

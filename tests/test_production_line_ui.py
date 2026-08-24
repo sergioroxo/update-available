@@ -8,9 +8,9 @@ from streamlit.testing.v1 import AppTest
 
 from runner.config import FactoryConfig, load_factory_config
 from runner.production_line_ui import (
-    CONFIRMATION, create_confirmed_campaign, render_factory_console,
+    CONFIRMATION, SEMANTIC_CONFIRMATION_TEXT, create_confirmed_campaign, render_factory_console,
     copied_canary_preview, production_readiness_model, publish_control,
-    render_production_line, setup_model, status_model,
+    render_production_line, run021_document_review_model, setup_model, status_model,
 )
 from runner.pipeline.syncthing_exchange import scan_factory_commands
 
@@ -75,9 +75,9 @@ def test_page_import_and_disabled_render_make_no_network_call(monkeypatch):
         monkeypatch.delenv(name, raising=False)
     app = AppTest.from_string(
         "from runner.production_line_ui import render_production_line\nrender_production_line()"
-    ).run()
+    ).run(timeout=10)
     assert not app.exception
-    assert any("Dry run only" in value.value for value in app.info)
+    assert any("Authenticated local semantic campaigns" in value.value for value in app.info)
     assert any("Setup required" in value.value for value in app.warning)
 
 
@@ -98,16 +98,16 @@ def test_enabled_macbook_render_has_confirmation_and_no_worker_or_remote_control
         monkeypatch.setenv(key, value)
     app = app.run()
     assert not app.exception
-    assert any(box.label == CONFIRMATION for box in app.checkbox)
     labels = [button.label for button in app.button]
-    assert "Create ready-to-sync campaign" in labels
+    assert "Publish authenticated campaign" in labels
     assert "Run all ready work for this campaign" not in labels
+    assert any(field.label == "Type the exact approval sentence" for field in app.text_input)
     rendered = " ".join(str(item.value) for item in [*app.info, *app.caption, *app.markdown])
-    assert "No models" in rendered
+    assert "one global model" in rendered
     assert "Sanity" not in rendered and "Supabase" not in rendered
 
 
-def test_mac_studio_console_keeps_launch_action_separate(tmp_path, monkeypatch):
+def test_mac_studio_console_observes_service_without_launching_it(tmp_path, monkeypatch):
     config = _config(tmp_path, "mac-studio")
     create = _config(tmp_path, "synthetic")
     create_confirmed_campaign(create, "studio-ui-run", True)
@@ -125,11 +125,9 @@ def test_mac_studio_console_keeps_launch_action_separate(tmp_path, monkeypatch):
     ).run()
     assert not app.exception
     labels = [button.label for button in app.button]
-    assert "Run all ready work for this campaign" in labels
-    assert "Refresh status" in labels
+    assert "Run all ready work for this campaign" not in labels
     rendered = " ".join(str(item.value) for item in [*app.info, *app.markdown])
-    assert "no models" in rendered.lower()
-    assert "publication" in rendered.lower()
+    assert "closing this page does not stop the worker" in rendered.lower()
 
 
 def test_setup_model_never_exposes_secret_values(tmp_path):
@@ -171,7 +169,7 @@ def test_production_readiness_remains_unreleased_and_fail_closed(tmp_path):
     assert "Verify source" in model["station_sequence"]
 
 
-def test_run009_ui_visibly_unreleased_with_no_production_action(tmp_path, monkeypatch):
+def test_unified_ui_replaces_stale_foundation_placeholders(tmp_path, monkeypatch):
     for key, value in {
         "SOGICE_FACTORY_TO_STUDIO": tmp_path / "exchange" / "to",
         "SOGICE_FACTORY_FROM_STUDIO": tmp_path / "exchange" / "from",
@@ -188,7 +186,38 @@ def test_run009_ui_visibly_unreleased_with_no_production_action(tmp_path, monkey
     rendered = " ".join(str(item.value) for item in [
         *app.warning, *app.info, *app.markdown, *app.caption,
     ])
-    assert "not yet released" in rendered.lower()
-    assert "Verify source" in rendered
+    assert "synthetic foundation only" not in rendered.lower()
+    assert "authenticated local semantic campaigns" in rendered.lower()
+    assert "source_verify" in rendered
     labels = [button.label for button in app.button]
+    assert "Publish authenticated campaign" in labels
     assert all("canary" not in label.lower() for label in labels)
+
+
+def test_run021_document_review_projects_citations_rankings_and_receipt_gaps():
+    review = {
+        "analysis": {"doc-a": {"summary": "Provisional", "evidence": ["Evidence"], "candidate_terms": ["term"]}},
+        "enrichment": {"doc-a": {"retrieval_context_sha256": "a" * 64, "corpus_connections": [{"unit_id": "unit-a"}]}},
+        "retrieval": {"doc-a": {"hits": [{"unit_id": "unit-a"}]}},
+        "comparison": {
+            "compiler_comparisons": [{
+                "document_id": "doc-a", "primary_model": "Gemma",
+                "comparison_model": "Qwen3.8", "primary_claims": [{"citation_unit_ids": ["unit-a"]}],
+                "comparison_claims": [], "exact_agreement_count": 0,
+                "primary_only_count": 1, "comparison_only_count": 0,
+                "model_truth_declaration": False,
+            }],
+            "retrieval_rankings": {
+                "qwen_4096": {"doc-a": [{"rank": 1, "unit_id": "unit-a"}]},
+                "bge_m3_1024": {"doc-a": [{"rank": 1, "unit_id": "unit-b"}]},
+            },
+        },
+        "receipt_count": 2, "receipt_gaps": (),
+    }
+    model = run021_document_review_model(review, "doc-a")
+    assert model["primary_claims"][0]["citation_unit_ids"] == ["unit-a"]
+    assert model["qwen_ranking"][0]["unit_id"] == "unit-a"
+    assert model["bge_ranking"][0]["unit_id"] == "unit-b"
+    assert model["grounded_connections"][0]["unit_id"] == "unit-a"
+    assert model["receipt_count"] == 2 and model["receipt_gaps"] == ()
+    assert model["model_truth_declaration"] is False

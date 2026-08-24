@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -109,6 +109,7 @@ class GroundedEnrichmentRequestV1(_Strict):
     analysis_sha256: str
     retrieval_context: RetrievalContextV1
     lexicon_snapshot_sha256: str
+    lexicon_terms: tuple[dict[str, Any], ...] = ()
     entity_snapshot_sha256: str
     requested_model: str
     prompt_version: str
@@ -150,6 +151,7 @@ def build_grounded_enrichment_request(
     source_metadata: dict[str, Any] | None = None,
     context: RetrievalContextV1, lexicon_snapshot_sha256: str,
     entity_snapshot_sha256: str, requested_model: str,
+    lexicon_terms: Sequence[dict[str, Any]] = (),
     prompt_version: str = "enrichment-v1.1-grounded",
 ) -> GroundedEnrichmentRequestV1:
     values = dict(
@@ -158,6 +160,7 @@ def build_grounded_enrichment_request(
         source_metadata=source_metadata,
         analysis_sha256=_canonical_sha(analysis_payload),
         retrieval_context=context, lexicon_snapshot_sha256=lexicon_snapshot_sha256,
+        lexicon_terms=tuple(lexicon_terms),
         entity_snapshot_sha256=entity_snapshot_sha256, requested_model=requested_model,
         prompt_version=prompt_version, request_sha256="0" * 64,
     )
