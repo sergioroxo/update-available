@@ -1,0 +1,104 @@
+{
+  "_doc": "ERA 3, THE PHONE — the group, the backlog, and the ending. Built 2026-08-24 from ERA3_NARRATIVE.md §2, §4, §5, §6 and §7, and written against docs/reinterp/RESEARCH_PULL_E3_2026-08-24.md. Claude's writing under CLAUDE.md's 2026-08-17 amendment; Sérgio owns every ethics call and his edit wins. THE GROUP IS NEVER SATIRISED — the research is explicit that warmth, friendship, vulnerability and surveillance can all be materially genuine at once, and that the caricature to avoid is constant cruelty. These women are good to each other inside a frame that is harming them, and the piece's position is that they are not stupid for being there.",
+  "_docResearch": "WHAT IS SOURCED: a facilitator rather than a leaderless circle (Deirdre); accountability that covers feelings and anticipated risk rather than only acts (Hanne discloses that nothing happened); a lapse met with confession and continuing rather than expulsion; the women's-strand vocabulary (emotional dependency, boundaries, unmet need) used sparingly and never stacked; and progress language that is processual — walking, healing, wholeness. WHAT IS DELIBERATELY ABSENT because it is [VERIFY SOURCE]: any term of direct address (no 'sister', no 'sweet friend' — they use ordinary names), any greeting formula, any emoji convention, any escalation ladder for a reported lapse, any word for a woman who leaves, and any claim that daily group check-ins were a standard ex-lesbian form. The group's name and every member are invented. The record is thin here and the piece writes into that gap openly rather than borrowing authority it does not have.",
+  "_docMalta": "MALTA IS A CONNECTION POINT, NOT A FINDING (§7.3, Sérgio: 'pretend newspaper, with real information — not a finding, never claimed it as one'). The masthead is invented; the law is real. Malta's Affirmation of Sexual Orientation, Gender Identity and Gender Expression Act — Act LV of 2016 — was passed unanimously and made Malta the first country in Europe to ban conversion practices. Bea's two messages are the two states the design asks for: about to be finalised, then enacted. ⚑ THE DATE: the lock screen reads 13 December, which is why the enactment can be days old rather than months. Sérgio set Vera's birthday at 14 March; rather than move a real law nine months to meet it, HER BIRTHDAY COUPON SITS UNREAD IN THE BACKLOG FROM MARCH and the bar writes again today about something else. That is a change to his note ('the coupon arrives while she is working') and it is his to overrule — but a coupon nine months unopened says the thing his note was reaching for more sharply than one that arrives this morning.",
+  "group": {
+    "name": "Maiden-to-be",
+    "meta": "5 members",
+    "unreadLabel": "{n} new",
+    "composerHint": "Type a message",
+    "composerNote": "You have not written anything here in a while."
+  },
+  "_docBefore": "THE GROUP BEFORE ANYTHING HAPPENS. Ordinary Tuesday texture, and it has to be genuinely warm or the ending does not land. Hanne's message is the accountability mechanic rendered as friendship: she discloses a temptation rather than an act, to the group rather than to a leader, and is met with encouragement rather than correction. That is the documented shape and it is also, plainly, four women being kind to somebody having a bad night.",
+  "before": [
+    { "from": "Deirdre", "time": "07:41", "text": "Morning all. Thursday's call moves to eight so Susan can get there after the shop." },
+    { "from": "Susan", "time": "07:52", "text": "thank you. I'd have been sitting in that car park again pretending to be on the phone." },
+    { "from": "Hanne", "time": "08:19", "text": "I had a hard one last night. Nothing happened. I just wanted to put it here first so it isn't only in my own head." },
+    { "from": "Deirdre", "time": "08:24", "text": "That is exactly the right thing to do with it, Hanne. Nothing happened is worth saying out loud as well." },
+    { "from": "Bea", "time": "08:26", "text": "hanne that's brave and I mean it plainly, not as a thing people say" },
+    { "from": "Hanne", "time": "08:31", "text": "ok. thank you. going to go and be extremely normal at work now" }
+  ],
+  "_docMaltaOne": "BEA'S FIRST MESSAGE — 'it might happen'. She is not campaigning. She is a woman inside the same apparatus reading the news on her break, and the reason it matters to her is not political.",
+  "maltaOne": [
+    { "from": "Bea", "time": "11:02", "text": "is anyone else reading about malta" },
+    { "from": "Bea", "time": "11:02", "text": "there's a bill. they're about to make it an offence to try to change somebody. an actual law, with a penalty on it." },
+    { "from": "Bea", "time": "11:04", "text": "i'm not saying anything about us. i just read it four times." }
+  ],
+  "link": {
+    "masthead": "The Continental Wire",
+    "headline": "Malta moves to outlaw conversion practices",
+    "standfirst": "A bill before parliament would make it an offence to carry out or advertise practices intended to change a person's sexual orientation or gender identity, with penalties for practitioners and for anyone commissioning them. A vote is expected within days.",
+    "tapHint": "Tap to open"
+  },
+  "_docMaltaTwo": "AND THE SECOND — 'it happened somewhere'. Short, because it is.",
+  "maltaTwo": [
+    { "from": "Bea", "time": "15:47", "text": "they voted." },
+    { "from": "Bea", "time": "15:47", "text": "unanimous. not one against it." },
+    { "from": "Susan", "time": "15:49", "text": "unanimous" },
+    { "from": "Hanne", "time": "15:50", "text": "read that again susan" }
+  ],
+  "_docBlock": "⚑ CAPTURE EITHER WAY (§4), AND IT IS THE ERA'S THESIS AS A MECHANIC. Open the link and Lambient knows. Ignore it and Lambient comes anyway. The two cards say very nearly the same sentence, and NEITHER IS A PUNISHMENT — no warning, no reprimand, no consequence offered or threatened. It has simply been passed on. A player who behaves perfectly gets the same visit as one who does not, which is what removes 'keep your head down' as a strategy. ⚑ Lambient stays polite to the very end (§7.2) — there is no version of these strings where it becomes hostile.",
+  "block": {
+    "openedTitle": "Not available on your work profile",
+    "openedBody": "This page is outside what GracePlatform allows on a managed device. Nothing you did was wrong.",
+    "openedNote": "I let the team know it was shared in your group.",
+    "ignoredTitle": "Just so you know",
+    "ignoredBody": "Something was shared in one of your groups that is outside what we allow. You do not need to do anything.",
+    "ignoredNote": "It has been passed on.",
+    "dismiss": "Okay",
+    "witnessOpened": "malta: link opened — blocked, group flagged",
+    "witnessIgnored": "malta: link not opened — group flagged anyway"
+  },
+  "_docCascade": "⚑ THE CASCADE IS VOLUME, NOT DAMAGE (§7.2). No crash screen, no corruption, no glitch glyphs, no error state. THE BLOCK KEEPS WORKING, CORRECTLY, ON MESSAGE AFTER MESSAGE — there are simply more messages than blocks. The software is not broken. It is outnumbered. ⚑ AND IT IS NOT VERA WHO DOES IT: she sends nothing here. Deirdre — the woman who runs the group, who moved Thursday's call so Susan could get there — is in the middle of it, and people are being ADDED to the group while it happens. That is 'the system collapses if everyone no longer performs it', and it is why the ending is collective and has no heroine.",
+  "cascade": [
+    { "from": "Susan", "time": "15:51", "kind": "link" },
+    { "from": "Hanne", "time": "15:51", "kind": "link" },
+    { "from": "Bea", "time": "15:52", "text": "putting it in the other group as well" },
+    { "from": "Deirdre", "time": "15:52", "kind": "link" },
+    { "from": "Susan", "time": "15:52", "text": "deirdre" },
+    { "from": "Deirdre", "time": "15:53", "text": "I know." },
+    { "from": "system", "time": "15:53", "text": "Aoife was added" },
+    { "from": "Hanne", "time": "15:53", "kind": "link" },
+    { "from": "Aoife", "time": "15:54", "kind": "link" },
+    { "from": "system", "time": "15:54", "text": "Ruth was added" },
+    { "from": "Bea", "time": "15:54", "kind": "link" },
+    { "from": "Ruth", "time": "15:55", "kind": "link" },
+    { "from": "system", "time": "15:55", "text": "3 people were added" },
+    { "from": "Susan", "time": "15:55", "kind": "link" },
+    { "from": "Aoife", "time": "15:56", "kind": "link" },
+    { "from": "Deirdre", "time": "15:56", "kind": "link" }
+  ],
+  "_docOutnumbered": "⚑ THE ONE LINE THE SOFTWARE SAYS WHEN IT LOSES, and it is administrative rather than dramatic. It does not say it failed. It says it could not get to all of them — which is the same thing, in the voice of something that has never once raised its voice.",
+  "outnumbered": {
+    "counter": "{n} items could not be reviewed",
+    "stillWorking": "Review is still running."
+  },
+  "_docAfter": "⚑ 'YOU CAN'T UNSEE IT' (§7.2) is the beat's real ending, and it is the worst line in the era precisely because it is warm, true, and helpful. The tasks are still there, still working, still greyable, and now unusable in a way NOTHING ENFORCES. No lock, no error, no refusal — the board simply cannot be looked at the same way, and the software has no idea.",
+  "after": {
+    "lambientLine1": "Everything on your board is still there.",
+    "lambientLine2": "Take the time you need with it."
+  },
+  "_docBacklog": "THE ERA'S RESPITE AND ITS CRUELTY IN ONE INBOX (§6), and it needs no commentary at all. DESIGN LAW: the piece never makes her open them. They can be read, all of them, at any time, and NOTHING IS FILED EITHER WAY. If a player never touches this, that is also true of her. ⚑ THE WICK is an invented bar. Its birthday message is dated 14 March — Sérgio's date for her, day and month only, no year — and has been sitting unread for nine months; the second one is from today and is about nothing. ⚑ NONE OF THESE PEOPLE ARGUE WITH HER. Not one of them mentions the programme, asks her a question, or wants anything. That is the whole point of the inbox.",
+  "backlog": [
+    { "from": "Mam", "time": "yesterday", "text": "I made the ham. There's a bit in the freezer with your name on the bag if you want to come for it. No fuss either way." },
+    { "from": "The Wick", "time": "today", "text": "We're doing a carol thing on the 20th. Mulled everything, no singing required, nobody has to talk to anybody. Doors from seven." },
+    { "from": "Orla", "time": "Sunday", "text": "Somebody sent me a photo of you at something. You looked well. That's all it is, I'm not starting anything." },
+    { "from": "Aunt Cliona", "time": "3 weeks", "text": "We would have you back exactly as you are and I am sorry it has taken me this long to write that down where you can see it." },
+    { "from": "The Wick", "time": "14 March", "text": "Happy birthday from all of us here. Your first one's on us any night this month, and the month after that if you're slow about it." },
+    { "from": "Nuala", "time": "May", "text": "I still have your jumper. I'm not holding it hostage, it's just here." }
+  ],
+  "home": {
+    "groupLabel": "Maiden-to-be",
+    "messagesLabel": "Messages",
+    "streamLabel": "Live now",
+    "streamNote": "Restoration Hour · nobody asked you to watch this",
+    "backLabel": "‹ back",
+    "readNote": "Nothing here is filed."
+  },
+  "witness": {
+    "groupOpened": "phone: group opened — Maiden-to-be",
+    "backlogOpened": "phone: unread messages opened",
+    "backlogRead": "phone: read — {who}",
+    "cascadeSeen": "phone: the cascade — the block was outnumbered"
+  }
+}

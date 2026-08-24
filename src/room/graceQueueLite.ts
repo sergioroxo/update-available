@@ -112,11 +112,13 @@ import {
 } from '../desktop/theme/era3';
 import { ledger } from '../state/ledger';
 import { CommentsApp, type TabletFeedItem, type CommentTemplate } from '../desktop/apps/comments';
-import { FloppySheep, drawFloppyIcon, FLOPPY_LABEL } from '../desktop/apps/floppysheep';
+import { FloppySheep } from '../desktop/apps/floppysheep';
 import type { TaskSurface } from '../desktop/apps/taskSurface';
+import { PhoneE3 } from '../desktop/apps/phoneE3';
 import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
 import d from '../../data/strings/era3_devices.json';
+import maiden from '../../data/dialog/s3_maiden.json';
 
 /** re-exported from its Session-64 home so `era3Devices.ts` keeps its import;
  *  the type moved to `desktop/apps/comments.ts` when that module took over the
@@ -237,6 +239,11 @@ const ARRIVAL = (updates as unknown as {
 
 const MALTA = d.phone.malta;
 const LAMBIENT = q.lambient as unknown as Record<string, string>;
+/** ⚑ "YOU CAN'T UNSEE IT" (§7.2) — the two lines Lambient says once the block
+ *  has been outnumbered, and they are the worst lines in the era precisely
+ *  because they are warm, true and helpful. The board is still there. */
+const LAMBIENT_AFTER1 = (maiden as { after: { lambientLine1: string; lambientLine2: string } }).after.lambientLine1;
+const LAMBIENT_AFTER2 = (maiden as { after: { lambientLine1: string; lambientLine2: string } }).after.lambientLine2;
 
 const DARK_SECONDS = 1.6;      // a dead screen, long enough to read as dead
 const BOOT_LINE_SECONDS = 1.1; // each service line
@@ -309,11 +316,20 @@ export class GraceQueueLite {
    *  never re-uploads either of the other two. Summing two monotonic counters
    *  stays monotonic, which is all era3Devices' `versionOf` contract asks for. */
   get tabletVersion(): number { return this.version + this.comments.version; }
-  get phoneVersion(): number { return this.phoneV + this.floppy.version; }
+  get phoneVersion(): number { return this.phoneV + this.floppy.version + this.phone.version; }
 
   /** the comment thread (the tablet) and the mascot game (the phone) */
   readonly comments = new CommentsApp();
   readonly floppy = new FloppySheep();
+  /** ⚑ ERA 3'S PHONE (2026-08-24) — the group, the backlog and the end of the
+   *  era, in its own module. What used to live here was one notification, two
+   *  lines and a reply field; the phone is now where the era finishes, and that
+   *  is far too much to keep in this class. It gets the LIFT as a callback
+   *  because the room's light is this class's wire, not the phone's. */
+  readonly phone = new PhoneE3({
+    onLift: () => { if (!this.liftFired) this.liftT = 0; },
+    floppyOpen: () => this.floppy.open
+  });
 
   private mode: Mode = 'dark';
   /** ⚑ the window is PUT DOWN, not closed. Minimising reveals the desktop the
@@ -339,12 +355,12 @@ export class GraceQueueLite {
   private wakeWord = false;
   private seenBoard = false;
   private seenTask = false;
+  private afterSaid = false;
   private arrivalT = -1;   // < 0 = not running
   private lastTick = -1;
   private subIdx = 0;
   private decisions = new Map<number, Outcome>();
   private rects: Rect[] = [];
-  private phoneRects: Rect[] = [];
   private lambLine: string;
   /** the two-line beat, when a beat has two (see drawLambientLane) */
   private lambLines: string[] | null = null;
@@ -397,6 +413,14 @@ export class GraceQueueLite {
   /** called every frame by era3Devices.tick — see the class header on why this
    *  does not break the dirty-upload law */
   update(dt: number): void {
+    this.phone.tick(dt); // ⚑ the cascade's own clock, and the only one on the phone
+    // ⚑ and when it has been outnumbered, Lambient says the thing about the
+    //   board. Once, on the frame the phone reports `broken`.
+    if (this.phone.broken && !this.afterSaid) {
+      this.afterSaid = true;
+      this.lambLines = [LAMBIENT_AFTER1, LAMBIENT_AFTER2];
+      this.bump();
+    }
     if (this.arrivalT >= 0) {
       this.arrivalT += dt;
       const want: Mode = this.arrivalT < this.bootSeconds ? (this.arrivalT < DARK_SECONDS ? 'dark' : 'boot')
@@ -769,6 +793,7 @@ export class GraceQueueLite {
   armMalta(): void {
     if (this.maltaArrived) return;
     this.maltaArrived = true;
+    this.phone.arm();
     this.phoneV++;
   }
 
@@ -817,81 +842,11 @@ export class GraceQueueLite {
    * message and the reply field, and the reply field does nothing.
    */
   drawPhone(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.phoneRects = [];
-    // ⚑ S70 — the game is the whole screen while it is open, and it owns its
-    // own way out. Nothing of the work is visible behind it and nothing of the
-    // work interrupts it.
+    // ⚑ S70's law, unchanged: the game is the whole screen while it is open,
+    //   nothing of the work is visible behind it and nothing of the work
+    //   interrupts it. Everything else on this device now belongs to PhoneE3.
     if (this.floppy.open) { this.floppy.draw(ctx, W, H); return; }
-    px(ctx, 0, 0, W, H, ERA3.phoneBg);
-    if (this.maltaOpen) { this.drawMalta(ctx, W, H); return; }
-
-    setFont(ctx, 20);
-    ctx.fillStyle = ERA3.white;
-    ctx.fillText(d.phone.lockClock, Math.round((W - ctx.measureText(d.phone.lockClock).width) / 2), 30);
-    setFont(ctx, 9);
-    ctx.fillStyle = ERA3.phoneDim;
-    ctx.fillText(d.phone.lockDate, Math.round((W - ctx.measureText(d.phone.lockDate).width) / 2), 56);
-
-    // ⚑ THE ONE APP ON HER PHONE, and it is the publisher's mascot game.
-    // S64's law here was "before Malta the lock screen is EMPTY — the phone in
-    // this era is quiet, which is what makes one notification an event", and
-    // that law is UNCHANGED: there are still no notifications until Malta. What
-    // has been added is not a notification. It is the thing she has on her
-    // phone, and the joke of it is entirely on the brand: the same lamb still
-    // ships delight while the serious arm of it has become a workflow. It files
-    // nothing, it is never suggested, and nothing anywhere remarks on it.
-    const s = 44; const ix = Math.round((W - s) / 2); const iy = 104;
-    drawFloppyIcon(ctx, ix, iy, s);
-    setFont(ctx, 9);
-    ctx.fillStyle = ERA3.phoneText;
-    ctx.fillText(FLOPPY_LABEL, Math.round((W - ctx.measureText(FLOPPY_LABEL).width) / 2), iy + s + 6);
-    this.phoneRects.push({ x: ix - 8, y: iy - 6, w: s + 16, h: s + 26, id: 'floppy' });
-
-    if (!this.maltaArrived) return;
-
-    const ny = H - 96; const nw = W - 16;
-    px(ctx, 8, ny, nw, 80, ERA3.phonePanel);
-    setFont(ctx, 10);
-    ctx.fillStyle = ERA3.phoneMeta;
-    ctx.fillText(d.phone.notificationApp, 15, ny + 8);
-    ctx.fillText(d.phone.notificationTime, W - 15 - ctx.measureText(d.phone.notificationTime).width, ny + 8);
-    setFont(ctx, 12);
-    ctx.fillStyle = ERA3.white;
-    ctx.fillText(MALTA.contact, 15, ny + 24);
-    setFont(ctx, 11);
-    ctx.fillStyle = ERA3.phoneText;
-    wrapText(ctx, MALTA.preview, nw - 22).slice(0, 3).forEach((ln, i) => ctx.fillText(ln, 15, ny + 42 + i * 13));
-    this.phoneRects.push({ x: 8, y: ny, w: nw, h: 80, id: 'notification' });
-  }
-
-  /** two lines from someone doing the same job in another country, and a reply
-   *  field that will never be used. No commentary anywhere on this screen. */
-  private drawMalta(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    setFont(ctx, 13);
-    ctx.fillStyle = ERA3.white;
-    ctx.fillText(MALTA.contact, 10, 10);
-    setFont(ctx, 9);
-    ctx.fillStyle = ERA3.phoneMeta;
-    ctx.fillText(MALTA.time, W - 10 - ctx.measureText(MALTA.time).width, 13);
-    px(ctx, 0, 30, W, 1, ERA3.phonePanel);
-
-    setFont(ctx, 11);
-    let y = 46;
-    for (const line of MALTA.lines) {
-      const lines = wrapText(ctx, line, W - 42);
-      const h = lines.length * 13 + 12;
-      px(ctx, 10, y, W - 30, h, ERA3.phonePanel);
-      ctx.fillStyle = ERA3.phoneText;
-      lines.forEach((ln, i) => ctx.fillText(ln, 16, y + 6 + i * 13));
-      y += h + 10;
-    }
-
-    // the reply field: active, blinking, empty. Pressing it holds the cursor.
-    const fy = H - 40; const fw = W - 20;
-    px(ctx, 10, fy, fw, 28, ERA3.phonePanel);
-    px(ctx, 10, fy, fw, 1, ERA3.phoneDim);
-    if (this.caretOn) px(ctx, 18, fy + 7, 1, 14, ERA3.phoneText);
-    this.phoneRects.push({ x: 10, y: fy, w: fw, h: 28, id: 'reply' });
+    this.phone.draw(ctx, W, H);
   }
 
   /** the tablet's consequence surface: a submission appears in the feed once
@@ -1711,12 +1666,10 @@ export class GraceQueueLite {
   handlePhoneClick(x: number, y: number): boolean {
     // the game takes the whole screen and the whole thumb while it is open
     if (this.floppy.open) return this.floppy.tap(x, y);
-    const r = this.phoneRects.find(rr => hit(rr, x, y));
-    if (!r) return false;
-    if (r.id === 'notification') { this.openMalta(); return true; }
-    if (r.id === 'reply') { this.pressReply(); return true; }
-    if (r.id === 'floppy') { this.floppy.openGame(); return true; }
-    return false;
+    // ⚑ the game is still the era's, not the phone's — the phone reports the
+    //   press and this class opens it, so FloppySheep keeps one owner.
+    if (this.phone.isFloppyPress(x, y)) { this.floppy.openGame(); return true; }
+    return this.phone.press(x, y);
   }
 
   /**
@@ -1822,6 +1775,20 @@ export class GraceQueueLite {
         this.comments.debugBeat(beat, (t, id) => this.fileReply(t, id)); break;
       // ⚑ S70 — THE PHONE. In play the only way in is the icon on her home
       // screen, which nothing points at.
+      // ⚑ THE PHONE, and the end of the era. `phone:*` reaches PhoneE3's own
+      //   beats; each lands on a screen a reviewer can see.
+      case 'phoneHome': this.phone.debugBeat('home'); this.phoneV++; break;
+      case 'phoneGroup': this.phone.debugBeat('group'); this.phoneV++; break;
+      case 'phoneInbox': this.phone.debugBeat('inbox'); this.phoneV++; break;
+      case 'phoneBlocked': this.phone.debugBeat('blocked'); this.phoneV++; break;
+      case 'phoneIgnored': this.phone.debugBeat('ignored'); this.phoneV++; break;
+      case 'phoneVoted': this.phone.debugBeat('voted'); this.phoneV++; break;
+      case 'phoneCascade': this.phone.debugBeat('cascade'); this.phoneV++; break;
+      case 'phoneAfter':
+        this.phone.debugBeat('after');
+        this.lambLines = [LAMBIENT_AFTER1, LAMBIENT_AFTER2];
+        this.phoneV++; this.bump();
+        break;
       case 'floppy': case 'floppyPlay': case 'floppyOver':
         this.floppy.debugBeat(beat); break;
     }

@@ -322,6 +322,17 @@ const E3_DEVICE_BEATS: Array<[string, string]> = [
   ['↳ priced at the platform pick', 'course:priced'],
   ['↳ ⚑ no charge (real, and unremarked)', 'course:free'],
   ['↳ published', 'course:published'],
+  // ⚑⚑ THE PHONE AND THE END OF THE ERA (2026-08-24). Era 3 could not end at
+  // all before today — its only exit ran through two retired sends — and it now
+  // ends on the cascade, which is what §5 always said it should.
+  ['⚑ the phone · home screen', 'phoneHome'],
+  ['↳ the group · Maiden-to-be', 'phoneGroup'],
+  ['↳ ⚑ the unread backlog (nothing files)', 'phoneInbox'],
+  ['↳ open the link → Lambient blocks it', 'phoneBlocked'],
+  ['↳ ⚑ IGNORE it → Lambient comes anyway', 'phoneIgnored'],
+  ['↳ the law is enacted', 'phoneVoted'],
+  ['↳ ⚑⚑ THE CASCADE — it starts', 'phoneCascade'],
+  ['↳ ⚑⚑ outnumbered, and the board is still there', 'phoneAfter'],
   ['⚑ the phone · FloppySheep (home screen icon)', 'floppy'],
   ['↳ FloppySheep · running', 'floppyPlay'],
   ['↳ FloppySheep · the oh-no card', 'floppyOver']

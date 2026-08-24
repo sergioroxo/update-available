@@ -32,6 +32,12 @@ const T1_DELAY = 1.2;   // s after DIARY.TXT's breakout hold before the notice
 /** How many corrections Vera has resolved — applied or skipped, both count,
  *  because the record is symmetric and so is the interruption. */
 function correctionsDone(): number { return ledger.graceQueue.length; }
+/** ⚑ the block was outnumbered — filed by `phoneE3` when the last cascade
+ *  message lands. The ledger is where the piece records what happened, so it is
+ *  also where the spine asks; nothing keeps a second copy of this. */
+function cascadeSeen(): boolean {
+  return ledger.checkins.some(c => c.id === 'e3_cascade');
+}
 
 const SEND_DELAY = 9;   // s into an era before its first summons
 const SEND_GAP = 6;     // s after one send resolves before the next
@@ -95,7 +101,24 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
 
     update(dt: number): void {
       // while a ritual or summons is live, the spine holds its breath
-      if (step === 'done' || !os.inDesktop || os.updateArmed || os.sendOfferPending) return;
+      if (step === 'done' || os.updateArmed || os.sendOfferPending) return;
+      // ⚑ `os.inDesktop` IS THE WRONG GATE FROM ERA 3 ON, and it was silently
+      //   switching the conductor off for half the piece. `os` is Room 1's
+      //   monitor; from E3 the UI lives on Vera's laptop and from E4 on Maya's
+      //   visor, and Room 1's machine is left dead BY DESIGN — so `inDesktop`
+      //   is false for the whole of both eras and this `update` returned on its
+      //   first line every frame. Measured 2026-08-24 at the E3 seat:
+      //   `phase: 'r_profile', inDesktop: false, step: 'e3'` — the conductor
+      //   sitting at the right beat, never ticking.
+      //
+      //   That is why E3's two sends were "latent, no beat fires that seam" and
+      //   why the era had no exit at all: not one condition in `case 'e3'` was
+      //   ever evaluated. The gate is kept for the eras whose surface really is
+      //   that monitor, and lifted for the eras whose surface is elsewhere.
+      const monitorIsTheSurface = step === 'e1' || step === 'e1_armed'
+        || step === 'e2' || step === 'e2_s1' || step === 'e2_s2'
+        || step === 'e2_residue' || step === 'e2_armed';
+      if (monitorIsTheSurface && !os.inDesktop) return;
       t += dt;
 
       switch (step) {
@@ -155,13 +178,38 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
         // offers now wait until Vera is genuinely AT WORK — which is also when
         // an interruption means something, because there is something to
         // interrupt. Elapsed time is kept only as a floor, never as the trigger.
+        // ⚑ AND ERA 3 CAN NOW END — 2026-08-24, and until today it could not.
+        //
+        // The only route from `e3` to the update that opens Era 4 ran
+        // `e3 → offer s3 → offer s4 → arm u4`, and s3/s4 are the two sends
+        // ERA3_BUILD_PLAN §0 RETIRES in as many words: "already gated off, their
+        // targets point at the retired radial layout — do not restore them in
+        // this rebuild". So the era's exit was gated behind two beats that are
+        // never meant to fire again. Every static check was green. This is the
+        // dominant bug class in this project — authored content nobody can
+        // reach — arriving at the largest possible scale: a whole ERA with no
+        // way out of it.
+        //
+        // ⚑ THE FIX IS THE NARRATIVE, NOT A PATCH. §5: the era does not end
+        // because Vera becomes brave, it ends because enough people stopped
+        // doing the work. So the update is armed by THE CASCADE — the phone's
+        // group outnumbering Lambient's block — and the trigger is read from
+        // the ledger, where the piece already records what happened, rather
+        // than from a second copy of the state kept in here.
         case 'e3':
+          if (cascadeSeen()) { arm('u4', 'e4'); break; }
           if (t >= SEND_DELAY && correctionsDone() >= 2) offer('s3', 'e3_s3');
           break;
+        // ⚑ the two send legs are LEFT INTACT and unreachable-by-default rather
+        //   than deleted: they are the shipped build's own beats, they still
+        //   work if a review drives them, and the cascade check above runs
+        //   first from `e3` regardless. Removing them is a separate decision.
         case 'e3_s3':
+          if (cascadeSeen()) { arm('u4', 'e4'); break; }
           if (sendResolved('s3') && t >= SEND_GAP && correctionsDone() >= 5) offer('s4', 'e3_s4');
           break;
         case 'e3_s4':
+          if (cascadeSeen()) { arm('u4', 'e4'); break; }
           if (sendResolved('s4') && t >= UPDATE_GAP) arm('u4', 'e4');
           break;
 

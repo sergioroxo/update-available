@@ -74,7 +74,11 @@ import queue from '../../data/dialog/s3_queue.json';
  *  (140/0.07 = 280/0.14 = 2000 px/m). */
 const LOGICAL = {
   laptop: { w: 676, h: 390, scale: 3 },
-  phone: { w: 140, h: 280, scale: 2 },
+  // ⚑ 140 × 280 → 180 × 360, 2026-08-24. The phone stopped being one
+  //   notification and became the place the era ends — a group thread, an
+  //   inbox and a cascade — and a 140 px column cannot carry a conversation.
+  //   Same physical prop, same plane, more pixels on it.
+  phone: { w: 180, h: 360, scale: 2 },
   /** ⚑ THE VISOR (S76) draws no canvas of its own — it is textured with
    *  `DesktopOS.canvas`, the piece's one UI surface, at that canvas's own
    *  logical size. Same canvas, same FILTER_NEAREST, same `?flat=1`: only the
