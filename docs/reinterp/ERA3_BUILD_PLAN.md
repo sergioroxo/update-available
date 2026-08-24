@@ -101,7 +101,24 @@ No count is shown, no progress bar, nothing is scored. ⚑ **The frame never pla
 ⚑ **Steps 1–3 are safe to parallelise. Steps 5–6 are one job** — the phone and the ending are the same
 beat and splitting them will produce a phone nobody has a reason to look at.
 
-# 7 · RESEARCH TO PULL BEFORE §4 IS WRITTEN
+# 7 · ⚑ RESEARCH — PULLED 2026-08-24, AND IT MOVED THE DESIGN
+**Evidence, verbatim:** `RESEARCH_PULL_E3_2026-08-24.md`. **What it changed:**
+`RESEARCH_PULL_E3_CONSEQUENCES.md`. The brief that produced it: `RESEARCH_BRIEF_E3.md`.
+
+⚑ **Two consequences bind the build and are not optional:**
+1. **"Return the family calls" is a queue about MOTHERS, not about daughters.** The record does not
+   support a worker holding an adult child's file, and says so twice. The mother is the client; the
+   daughter has no record on this screen; **the asymmetry is the scene.** §3's row below is superseded
+   by `RESEARCH_PULL_E3_CONSEQUENCES.md` §1.
+2. **The women's strand has its own vocabulary — emotional dependency, boundaries, femininity,
+   relational wounds** — and must never be men's reparative language with the pronouns swapped.
+
+⚑ **And a list of things that may NOT be claimed** (all `[VERIFY SOURCE]`): daily group check-ins as a
+standard form, terms of direct address, greeting formulas, WhatsApp as a movement norm, any escalation
+ladder, any word for a woman who leaves. The writing invents these **openly**, and the Dossier says so.
+
+## the original brief, kept for the record
+
 The group chat and the family calls are the two new pieces of writing, and both touch documented
 practice. **Before drafting either**, pull what the knowledge base has on: peer accountability groups
 in ex-gay/ex-lesbian networks (form, tone, how members address each other), and family-contact
