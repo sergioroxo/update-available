@@ -37,9 +37,9 @@
 
 import {
   PHONE, phoneFont, phoneWrap, roundRect, statusBar, appBar, bubble, avatar,
-  appTile, wallpaper, sheet, pill
+  appTile, wallpaper, sheet, pill, furnitureTile, dock, pageDots, dateWidget
 } from '../theme/phone';
-import { FLOPPY_LABEL } from './floppysheep';
+import { drawFloppyIcon } from './floppysheep';
 import { ledger } from '../../state/ledger';
 import m from '../../../data/dialog/s3_maiden.json';
 import d from '../../../data/strings/era3_devices.json';
@@ -53,6 +53,7 @@ const MALTA_TWO = m.maltaTwo as Msg[];
 const CASCADE = m.cascade as Msg[];
 const BACKLOG = m.backlog as { from: string; time: string; text: string }[];
 const UNLOCK_HINT = (m.home as unknown as Record<string, string>).unlockHint;
+const HOME = m.home as unknown as Record<string, string>;
 
 /** ⚑ how far the era has got. `quiet` is the phone S64 built — a lock screen
  *  with one game on it and no notifications at all, which is what makes ONE
@@ -234,37 +235,84 @@ export class PhoneE3 {
     wallpaper(ctx, W, H);
     statusBar(ctx, W, d.phone.lockClock);
 
+    // ⚑ the at-a-glance card, and it is quietly the worst line on the device:
+    //   "No events today", on the day the era ends.
+    dateWidget(ctx, 10, 24, W - 20, HOME.widgetWeekday, HOME.widgetDate, HOME.widgetNote);
+
     const unread = this.stage === 'first' ? MALTA_ONE.length
       : this.stage === 'voted' ? MALTA_TWO.length
         : this.stage === 'cascade' || this.stage === 'after' ? this.cascadeN : 0;
-
-    const s = 46; const gap = Math.round((W - s * 2) / 3);
-    const col = (i: number): number => gap + i * (s + gap);
-    const rowY = 56;
-
-    appTile(ctx, col(0), rowY, s, PHONE.tileGroup, 'chat', m.home.groupLabel,
-      unread ? String(unread) : '');
-    this.rects.push({ x: col(0), y: rowY, w: s, h: s + 14, id: 'group' });
-
     const unreadMail = BACKLOG.length - this.readMessages.size;
-    appTile(ctx, col(1), rowY, s, PHONE.tileMail, 'mail', m.home.messagesLabel,
+
+    // ⚑ FOUR COLUMNS AT PHONE DENSITY, not a 2×2 of billboards. The four apps
+    //   that matter sit in the first row and everything under them is set
+    //   dressing — a phone is mostly things you are not opening right now, and
+    //   that is what makes the four legible rather than what buries them.
+    const s = 32;
+    const gap = Math.round((W - s * 4) / 5);
+    const col = (i: number): number => gap + i * (s + gap);
+    const rowY = (r: number): number => 84 + r * (s + 22);
+
+    appTile(ctx, col(0), rowY(0), s, PHONE.tileGroup, 'chat', HOME.shortGroup,
+      unread ? String(unread) : '');
+    this.rects.push({ x: col(0), y: rowY(0), w: s, h: s + 12, id: 'group' });
+
+    appTile(ctx, col(1), rowY(0), s, PHONE.tileMail, 'mail', m.home.messagesLabel,
       unreadMail ? String(unreadMail) : '');
-    this.rects.push({ x: col(1), y: rowY, w: s, h: s + 14, id: 'inbox' });
+    this.rects.push({ x: col(1), y: rowY(0), w: s, h: s + 12, id: 'inbox' });
 
-    appTile(ctx, col(0), rowY + s + 30, s, PHONE.tileGame, 'game', FLOPPY_LABEL, '');
-    this.rects.push({ x: col(0), y: rowY + s + 30, w: s, h: s + 14, id: 'floppy' });
-
-    appTile(ctx, col(1), rowY + s + 30, s, PHONE.tileLive, 'live', m.home.streamLabel, '');
-    this.rects.push({ x: col(1), y: rowY + s + 30, w: s, h: s + 14, id: 'stream' });
-
-    // ⚑ the stream's note sits UNDER the grid rather than on the tile: it is the
-    //   piece observing, not the phone labelling, and it never becomes a verb.
-    phoneFont(ctx, 9);
+    // ⚑ FloppySheep gets its OWN icon — the sheep on its hill under its sky,
+    //   which has existed in `floppysheep.ts` since S70 and which the first
+    //   home screen replaced with a generic gamepad for no reason at all.
+    //   Clipped into the plate's rounded corners so it reads as an app.
+    ctx.save();
+    // ⚑ clipped to the ROUNDED path, not to a square: a square clip left the
+    //   sheep's sky with hard corners inside a rounded plate, which is the one
+    //   detail that makes an icon look pasted on rather than made.
+    const fx = col(2); const fy = rowY(0); const fr = Math.round(s * 0.24);
+    ctx.beginPath();
+    ctx.moveTo(fx + fr, fy);
+    ctx.arcTo(fx + s, fy, fx + s, fy + s, fr);
+    ctx.arcTo(fx + s, fy + s, fx, fy + s, fr);
+    ctx.arcTo(fx, fy + s, fx, fy, fr);
+    ctx.arcTo(fx, fy, fx + s, fy, fr);
+    ctx.closePath();
+    ctx.clip();
+    drawFloppyIcon(ctx, fx, fy, s);
+    ctx.restore();
+    phoneFont(ctx, 8);
     ctx.fillStyle = PHONE.surface;
-    ctx.globalAlpha = 0.8;
-    phoneWrap(ctx, m.home.streamNote, W - 24).slice(0, 2)
-      .forEach((ln, i) => ctx.fillText(ln, 12, rowY + s * 2 + 62 + i * 12));
-    ctx.globalAlpha = 1;
+    // ⚑ the SHORT label. "FloppySheep" at a 32 px column ran into Messages on
+    //   one side and Live on the other — a home screen truncates, it does not
+    //   overlap, and the full name is on the game's own screen anyway.
+    const flabel = HOME.shortFloppy;
+    const fw = ctx.measureText(flabel).width;
+    ctx.fillText(flabel, fx + (s - fw) / 2, fy + s + 3);
+    this.rects.push({ x: col(2), y: rowY(0), w: s, h: s + 12, id: 'floppy' });
+
+    // ⚑ the stream has no caption any more. "Nobody asked you to watch this"
+    //   was the piece talking over its own observation; the fact that it is
+    //   running and she never opens it is the observation, and it does not
+    //   need a label. A live dot is all it gets.
+    appTile(ctx, col(3), rowY(0), s, PHONE.tileLive, 'live', HOME.shortStream, '');
+    ctx.fillStyle = PHONE.badge;
+    ctx.beginPath(); ctx.arc(col(3) + s - 5, rowY(0) + 5, 3, 0, Math.PI * 2); ctx.fill();
+    this.rects.push({ x: col(3), y: rowY(0), w: s, h: s + 12, id: 'stream' });
+
+    const furniture = [
+      ['camera', HOME.fCamera], ['clock', HOME.fClock],
+      ['calendar', HOME.fCalendar], ['settings', HOME.fSettings],
+      ['photos', HOME.fPhotos], ['weather', HOME.fWeather],
+      ['notes', HOME.fNotes], ['files', HOME.fFiles]
+    ] as const;
+    furniture.forEach(([kind, label], i) => {
+      furnitureTile(ctx, col(i % 4), rowY(1 + Math.floor(i / 4)), s, kind, label);
+    });
+
+    pageDots(ctx, W, H - 56, 2, 0);
+    const dy = dock(ctx, W, H);
+    ([['phone', 0], ['browser', 1], ['music', 2], ['maps', 3]] as const)
+      .forEach(([kind, i]) => furnitureTile(ctx, col(i), dy + 7, s, kind));
   }
 
   /** ⚑ THE GROUP, as a messaging app — and every bubble is on the LEFT.

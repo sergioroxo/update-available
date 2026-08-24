@@ -255,6 +255,156 @@ export function appTile(
   }
 }
 
+/** ⚑ THE FURNITURE ICONS — a camera, a clock, a calendar, settings, and the
+ *  rest of what is on anybody's phone. Sérgio, on the first home screen: *"it
+ *  looks more like a phone for seniors"* — and he was right, because four huge
+ *  tiles in a 2×2 is a launcher for somebody who has been given a phone, not a
+ *  phone somebody LIVES on. These are set dressing at the density a real home
+ *  screen has, and they carry no verb: a phone is mostly things you are not
+ *  opening right now, and that is what makes the four that matter legible.
+ *  ⚑ Deliberately generic shapes — no real product's icon is reproduced. */
+export type Furniture =
+  | 'camera' | 'clock' | 'calendar' | 'settings'
+  | 'photos' | 'weather' | 'notes' | 'files'
+  | 'phone' | 'browser' | 'music' | 'maps';
+
+export function furnitureTile(
+  ctx: CanvasRenderingContext2D, x: number, y: number, s: number, kind: Furniture, label = ''
+): void {
+  const plate: Record<Furniture, string> = {
+    camera: '#59606e', clock: '#22252c', calendar: '#e8e8ee', settings: '#7b8290',
+    photos: '#f0c04a', weather: '#3aa7e0', notes: '#f2e089', files: '#5aa9d6',
+    phone: '#2fa84a', browser: '#4f8ede', music: '#e3574f', maps: '#57b07a'
+  };
+  const ink: Record<Furniture, string> = {
+    camera: PHONE.surface, clock: PHONE.surface, calendar: '#e0362c', settings: PHONE.surface,
+    photos: PHONE.surface, weather: PHONE.surface, notes: '#6b6540', files: PHONE.surface,
+    phone: PHONE.surface, browser: PHONE.surface, music: PHONE.surface, maps: PHONE.surface
+  };
+  roundRect(ctx, x, y, s, s, Math.round(s * 0.24), plate[kind]);
+  const c = s / 2; const k = ink[kind];
+  ctx.fillStyle = k; ctx.strokeStyle = k; ctx.lineWidth = 1.5;
+  switch (kind) {
+    case 'camera':
+      roundRect(ctx, x + 5, y + 8, s - 10, s - 15, 3, k);
+      ctx.fillStyle = plate[kind];
+      ctx.beginPath(); ctx.arc(x + c, y + c + 1, s * 0.16, 0, Math.PI * 2); ctx.fill();
+      break;
+    case 'clock':
+      ctx.beginPath(); ctx.arc(x + c, y + c, s * 0.34, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + c, y + c); ctx.lineTo(x + c, y + c - s * 0.22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + c, y + c); ctx.lineTo(x + c + s * 0.16, y + c); ctx.stroke();
+      break;
+    case 'calendar':
+      ctx.fillRect(x + 5, y + 6, s - 10, 5);
+      ctx.fillStyle = '#5a5a62';
+      for (let r = 0; r < 2; r++) for (let cN = 0; cN < 3; cN++) {
+        ctx.fillRect(x + 7 + cN * 6, y + 15 + r * 6, 4, 4);
+      }
+      break;
+    case 'settings':
+      ctx.beginPath(); ctx.arc(x + c, y + c, s * 0.26, 0, Math.PI * 2); ctx.stroke();
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        ctx.fillRect(Math.round(x + c + Math.cos(a) * s * 0.34) - 1,
+          Math.round(y + c + Math.sin(a) * s * 0.34) - 1, 3, 3);
+      }
+      break;
+    case 'photos':
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(x + c + Math.cos(a) * s * 0.16, y + c + Math.sin(a) * s * 0.16, s * 0.13, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    case 'weather':
+      ctx.beginPath(); ctx.arc(x + c + 5, y + c - 4, s * 0.15, 0, Math.PI * 2); ctx.fill();
+      roundRect(ctx, x + 6, y + c, s - 14, s * 0.3, 4, k);
+      break;
+    case 'notes':
+      ctx.fillRect(x + 6, y + 7, s - 12, s - 14);
+      ctx.fillStyle = k === PHONE.surface ? '#9a9a9a' : ink.notes;
+      for (let r = 0; r < 3; r++) ctx.fillRect(x + 9, y + 12 + r * 5, s - 18, 1);
+      break;
+    case 'files':
+      ctx.fillRect(x + 6, y + 11, s - 12, s - 18);
+      ctx.fillRect(x + 6, y + 8, Math.round(s * 0.4), 4);
+      break;
+    case 'phone':
+      ctx.save();
+      ctx.translate(x + c, y + c); ctx.rotate(-0.5);
+      roundRect(ctx, -3, -9, 6, 18, 3, k);
+      ctx.restore();
+      break;
+    case 'browser':
+      ctx.beginPath(); ctx.arc(x + c, y + c, s * 0.32, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(x + c, y + c, s * 0.14, s * 0.32, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + c - s * 0.32, y + c); ctx.lineTo(x + c + s * 0.32, y + c); ctx.stroke();
+      break;
+    case 'music':
+      ctx.fillRect(x + c + 2, y + 8, 2, 12);
+      ctx.beginPath(); ctx.arc(x + c, y + 20, 3.5, 0, Math.PI * 2); ctx.fill();
+      break;
+    case 'maps':
+      ctx.beginPath();
+      ctx.moveTo(x + 6, y + s - 7); ctx.lineTo(x + c, y + 7); ctx.lineTo(x + s - 6, y + s - 7);
+      ctx.closePath(); ctx.fill();
+      break;
+  }
+  if (label) {
+    phoneFont(ctx, 8);
+    ctx.fillStyle = PHONE.surface;
+    const lw = ctx.measureText(label).width;
+    ctx.fillText(label, x + (s - lw) / 2, y + s + 3);
+  }
+}
+
+/** ⚑ the DOCK: the strip a phone keeps pinned across every page. Another thing
+ *  that reads as "phone" before a single label is read. */
+export function dock(ctx: CanvasRenderingContext2D, W: number, H: number): number {
+  const h = 46; const y = H - h;
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = PHONE.surface;
+  ctx.fillRect(0, y, W, h);
+  ctx.restore();
+  return y;
+}
+
+/** the page indicator — two dots, one lit. A phone has more than one screen. */
+export function pageDots(ctx: CanvasRenderingContext2D, W: number, y: number, n: number, active: number): void {
+  const gap = 8;
+  const startX = Math.round((W - (n * 4 + (n - 1) * (gap - 4))) / 2);
+  for (let i = 0; i < n; i++) {
+    ctx.save();
+    ctx.globalAlpha = i === active ? 0.95 : 0.4;
+    ctx.fillStyle = PHONE.surface;
+    ctx.beginPath(); ctx.arc(startX + i * gap, y, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/** the at-a-glance card every 2016 home screen had at the top */
+export function dateWidget(
+  ctx: CanvasRenderingContext2D, x: number, y: number, w: number, weekday: string, date: string, note: string
+): void {
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  roundRect(ctx, x, y, w, 46, 6, PHONE.surface);
+  ctx.restore();
+  phoneFont(ctx, 9, 600);
+  ctx.fillStyle = PHONE.dim;
+  ctx.fillText(weekday.toUpperCase(), x + 10, y + 7);
+  phoneFont(ctx, 19, 600);
+  ctx.fillStyle = PHONE.ink;
+  ctx.fillText(date, x + 10, y + 17);
+  phoneFont(ctx, 9);
+  ctx.fillStyle = PHONE.dim;
+  const nw = ctx.measureText(note).width;
+  ctx.fillText(note, x + w - 10 - nw, y + 30);
+}
+
 /** the home screen's wallpaper: three soft bands and a low glow, so the icons
  *  sit on something rather than on a flat plate. */
 export function wallpaper(ctx: CanvasRenderingContext2D, W: number, H: number): void {

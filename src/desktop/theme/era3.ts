@@ -109,14 +109,59 @@ export function taskbar(ctx: CanvasRenderingContext2D, W: number, H: number, clo
   ctx.fillStyle = ERA3.orbC; ctx.beginPath(); ctx.arc(ox, oy, 11, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = ERA3.orbB; ctx.beginPath(); ctx.arc(ox, oy, 9, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = ERA3.orbA; ctx.beginPath(); ctx.arc(ox - 2, oy - 2, 4, 0, Math.PI * 2); ctx.fill();
-  // tray well + clock
-  setFont(ctx, 11);
-  const cw = ctx.measureText(clock).width + 16;
+  // ⚑ PINNED BUTTONS — 2026-08-24, from Sérgio's Windows 7 reference sheets.
+  //   A period taskbar is not an orb and a clock: it is the orb, a row of
+  //   pinned launchers, a notification tray and a TWO-LINE clock. These three
+  //   are inert set dressing, exactly like the phone's furniture icons — a work
+  //   machine has software on it that this shift is not about, and drawing them
+  //   is what makes the one button that IS live read as a running application.
+  const pinX = 190;
+  for (let i = 0; i < 3; i++) {
+    const bx = pinX + i * 34;
+    px(ctx, bx, ty + 4, 30, bh - 8, ERA3.taskMid);
+    px(ctx, bx, ty + 4, 30, 1, ERA3.taskTopB);
+    // a browser ring, a folder, a disc — generic shapes, no real product's mark
+    if (i === 0) {
+      ctx.strokeStyle = ERA3.accentHi; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(bx + 15, oy, 6, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(bx + 15, oy, 2.5, 6, 0, 0, Math.PI * 2); ctx.stroke();
+    } else if (i === 1) {
+      px(ctx, bx + 8, oy - 4, 14, 9, ERA3.amber);
+      px(ctx, bx + 8, oy - 6, 6, 2, ERA3.amber);
+    } else {
+      ctx.fillStyle = ERA3.glassHi;
+      ctx.beginPath(); ctx.arc(bx + 15, oy, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = ERA3.taskMid;
+      ctx.beginPath(); ctx.arc(bx + 15, oy, 2, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // tray: a divider, two small glyphs, then the clock on two lines
+  setFont(ctx, 10);
+  const dateW = ctx.measureText(clock).width;
+  const cw = Math.max(52, dateW + 18);
+  px(ctx, W - cw - 46, ty + 5, 1, bh - 10, ERA3.taskTopB);
+  // a network fan and a speaker, both drawn rather than typed
+  for (let i = 0; i < 3; i++) px(ctx, W - cw - 38 + i * 3, oy + 2 - i * 2, 2, 3 + i * 2, ERA3.glassHi);
+  px(ctx, W - cw - 24, oy - 2, 3, 5, ERA3.glassHi);
+  px(ctx, W - cw - 21, oy - 4, 2, 9, ERA3.glassHi);
   px(ctx, W - cw - 6, ty + 4, cw, bh - 8, ERA3.tray);
   px(ctx, W - cw - 6, ty + 4, cw, 1, '#0a1c30');
   ctx.fillStyle = ERA3.white;
-  ctx.fillText(clock, W - cw + 2, ty + 9);
+  setFont(ctx, 10);
+  const tw2 = ctx.measureText(clock).width;
+  ctx.fillText(clock, W - cw - 6 + Math.round((cw - tw2) / 2), ty + 6);
+  setFont(ctx, 9);
+  ctx.fillStyle = ERA3.phoneMeta;
+  const dw2 = ctx.measureText(TASKBAR_DATE).width;
+  ctx.fillText(TASKBAR_DATE, W - cw - 6 + Math.round((cw - dw2) / 2), ty + 16);
 }
+
+/** ⚑ the date under the clock, the way Windows 7 stacked them. Kept beside the
+ *  taskbar rather than in a data file because it is CHROME, not dialogue — the
+ *  same reason the caption glyphs live here. It matches the phone's own lock
+ *  screen date; the two devices are in the same day. */
+const TASKBAR_DATE = '13/12';
 
 export interface AeroContent {
   x: number; y: number; w: number; h: number;

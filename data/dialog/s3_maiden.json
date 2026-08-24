@@ -94,7 +94,21 @@
     "streamNote": "Restoration Hour · nobody asked you to watch this",
     "backLabel": "‹ back",
     "readNote": "Nothing here is filed.",
-    "unlockHint": "Press to open"
+    "unlockHint": "Press to open",
+    "widgetWeekday": "Tue, Dec",
+    "widgetDate": "Dec 13",
+    "widgetNote": "No events today",
+    "shortGroup": "Maiden",
+    "shortStream": "Live",
+    "shortFloppy": "Floppy",
+    "fCamera": "Camera",
+    "fClock": "Clock",
+    "fCalendar": "Calendar",
+    "fSettings": "Settings",
+    "fPhotos": "Photos",
+    "fWeather": "Weather",
+    "fNotes": "Notes",
+    "fFiles": "Files"
   },
   "witness": {
     "groupOpened": "phone: group opened — Maiden-to-be",
