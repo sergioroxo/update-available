@@ -24,6 +24,10 @@ from runner.pipeline.citation_units_v2 import CitationUnitsV2, EvidenceSpanV2
 
 REGISTRY_VERSION = "analysis-prompt-registry-v1.0"
 PLAN_POLICY_VERSION = "adaptive-section-plan-v1.0"
+COMPILER_MAX_EVIDENCE_ITEMS = 48
+COMPILER_MAX_EXCERPT_CHARACTERS = 50_000
+COMPILER_MAX_PACKET_BYTES = 75_000
+COMPILER_REDUCTION_POLICY_VERSION = "compiler-derived-input-reduction-v1.0"
 MAPPER_SCHEMA_RETRY_REASON = "section_mapper_schema_validation_retryable"
 MAPPER_OUTPUT_RETRY_REASON = "section_mapper_output_contract_retryable"
 MAPPER_REPAIRABLE_REASONS = frozenset({
@@ -434,6 +438,102 @@ class DocumentCompilerPacketV1(_Strict):
         return self
 
 
+class CompilerInputReductionReceiptV1(_Strict):
+    """Content-free audit of the deterministic derived compiler input."""
+
+    schema_version: Literal["compiler-input-reduction-receipt-v1.0"] = (
+        "compiler-input-reduction-receipt-v1.0"
+    )
+    policy_version: Literal["compiler-derived-input-reduction-v1.0"] = (
+        COMPILER_REDUCTION_POLICY_VERSION
+    )
+    document_id: str
+    canonical_text_sha256: str
+    compiler_model_route: str
+    original_packet_sha256: str
+    derived_packet_sha256: str
+    used_packet_sha256: str
+    input_kind: Literal["canonical", "derived"]
+    original_finding_ids: tuple[str, ...]
+    included_finding_ids: tuple[str, ...]
+    omitted_finding_ids: tuple[str, ...]
+    original_finding_count: int = Field(ge=1)
+    included_finding_count: int = Field(ge=1)
+    omitted_finding_count: int = Field(ge=0)
+    original_packet_bytes: int = Field(ge=1)
+    derived_packet_bytes: int = Field(ge=1, le=COMPILER_MAX_PACKET_BYTES)
+    original_excerpt_characters: int = Field(ge=0)
+    included_excerpt_characters: int = Field(
+        ge=0, le=COMPILER_MAX_EXCERPT_CHARACTERS,
+    )
+    original_citation_unit_ids: tuple[str, ...]
+    included_citation_unit_ids: tuple[str, ...]
+    omitted_citation_unit_ids: tuple[str, ...]
+    original_source_excerpt_sha256s: tuple[str, ...]
+    included_source_excerpt_sha256s: tuple[str, ...]
+    maximum_evidence_items: Literal[48] = COMPILER_MAX_EVIDENCE_ITEMS
+    maximum_excerpt_characters: Literal[50000] = COMPILER_MAX_EXCERPT_CHARACTERS
+    maximum_packet_bytes: Literal[75000] = COMPILER_MAX_PACKET_BYTES
+    receipt_sha256: str
+
+    @field_validator(
+        "document_id", "compiler_model_route", "original_finding_ids",
+        "included_finding_ids", "omitted_finding_ids",
+    )
+    @classmethod
+    def _safe_receipt_ids(cls, value, info):
+        if isinstance(value, tuple):
+            for row in value:
+                require_safe_id(row, field=info.field_name)
+            return value
+        return require_safe_id(value, field=info.field_name)
+
+    @field_validator(
+        "canonical_text_sha256", "original_packet_sha256", "derived_packet_sha256",
+        "used_packet_sha256", "original_source_excerpt_sha256s",
+        "included_source_excerpt_sha256s", "receipt_sha256",
+    )
+    @classmethod
+    def _receipt_hashes(cls, value, info):
+        if isinstance(value, tuple):
+            for row in value:
+                require_sha256(row, field=info.field_name)
+            return value
+        return require_sha256(value, field=info.field_name)
+
+    @model_validator(mode="after")
+    def _receipt_invariants(self) -> "CompilerInputReductionReceiptV1":
+        if self.original_finding_count != len(self.original_finding_ids):
+            raise ValueError("compiler receipt original finding count mismatch")
+        if self.included_finding_count != len(self.included_finding_ids):
+            raise ValueError("compiler receipt included finding count mismatch")
+        if self.omitted_finding_count != len(self.omitted_finding_ids):
+            raise ValueError("compiler receipt omitted finding count mismatch")
+        if self.original_finding_ids != self.included_finding_ids + self.omitted_finding_ids:
+            included = set(self.included_finding_ids)
+            expected = tuple(row for row in self.original_finding_ids if row not in included)
+            if expected != self.omitted_finding_ids:
+                raise ValueError("compiler receipt finding ordering mismatch")
+        if not set(self.included_finding_ids).issubset(self.original_finding_ids):
+            raise ValueError("compiler receipt includes unknown finding")
+        if self.used_packet_sha256 not in {
+            self.original_packet_sha256, self.derived_packet_sha256,
+        }:
+            raise ValueError("compiler receipt used packet is unknown")
+        expected_kind = (
+            "canonical"
+            if self.used_packet_sha256 == self.original_packet_sha256
+            else "derived"
+        )
+        if self.input_kind != expected_kind:
+            raise ValueError("compiler receipt input kind mismatch")
+        if self.receipt_sha256 != canonical_contract_sha256(
+            self, omit={"receipt_sha256"},
+        ):
+            raise ValueError("compiler input reduction receipt hash mismatch")
+        return self
+
+
 class CompilerClaimV1(_Strict):
     claim_id: str
     statement: str = Field(min_length=1, max_length=5000)
@@ -613,9 +713,18 @@ class SectionAnalysisStore:
                 job_id TEXT PRIMARY KEY, payload_json TEXT NOT NULL,
                 state TEXT NOT NULL, attempt INTEGER NOT NULL DEFAULT 0,
                 lease_token TEXT, lease_expires_at TEXT, result_json TEXT,
-                terminal_reason TEXT NOT NULL DEFAULT ''
+                terminal_reason TEXT NOT NULL DEFAULT '',
+                transport_retry_count INTEGER NOT NULL DEFAULT 0
             )
         """)
+        columns = {
+            str(row[1]) for row in self.connection.execute("PRAGMA table_info(section_jobs)")
+        }
+        if "transport_retry_count" not in columns:
+            self.connection.execute(
+                "ALTER TABLE section_jobs ADD COLUMN transport_retry_count "
+                "INTEGER NOT NULL DEFAULT 0"
+            )
         self.connection.execute("""
             CREATE TABLE IF NOT EXISTS section_job_failures (
                 job_id TEXT NOT NULL, attempt INTEGER NOT NULL,
@@ -656,6 +765,98 @@ class SectionAnalysisStore:
                 "WHERE state='running' AND lease_expires_at<=?", (now.isoformat(),),
             )
         return cursor.rowcount
+
+    def recover_confirmed_abandoned_runner(self) -> int:
+        """Recover only after the caller has externally confirmed the runner PID is gone."""
+        rows = self.connection.execute(
+            "SELECT job_id,payload_json,attempt,terminal_reason FROM section_jobs "
+            "WHERE state='running' AND lease_token IS NOT NULL AND lease_expires_at IS NOT NULL "
+            "ORDER BY job_id"
+        ).fetchall()
+        if not rows:
+            return 0
+        with self.connection:
+            for row in rows:
+                job = SectionPromptJobV1.model_validate_json(row["payload_json"])
+                attempt = int(row["attempt"])
+                if attempt < 1:
+                    raise SectionAnalysisError("abandoned_runner_attempt_invalid")
+                retry_context = str(row["terminal_reason"] or "")
+                requested_alias = (
+                    job.repair_model_route
+                    if retry_context in MAPPER_REPAIRABLE_REASONS and job.repair_model_route
+                    else job.model_route
+                )
+                self.connection.execute(
+                    "INSERT OR REPLACE INTO section_job_failures("
+                    "job_id,attempt,stage,error_code,http_status_category,"
+                    "pydantic_diagnostics_json,requested_alias) VALUES(?,?,?,?,?,?,?)",
+                    (
+                        job.job_id, attempt, "http_transport",
+                        "runner_abandoned_after_scheduler_recovery", "", "[]",
+                        requested_alias,
+                    ),
+                )
+                self.connection.execute(
+                    "UPDATE section_jobs SET state='pending',attempt=attempt-1,"
+                    "lease_token=NULL,lease_expires_at=NULL WHERE job_id=?",
+                    (job.job_id,),
+                )
+        return len(rows)
+
+    def recover_after_confirmed_local_service_restart(self) -> int:
+        """Requeue only transport-held work after the local service was restarted."""
+        rows = self.connection.execute(
+            "SELECT job_id,payload_json,attempt,terminal_reason,result_json,lease_token,"
+            "lease_expires_at FROM section_jobs WHERE state='held' AND terminal_reason IN "
+            "('local_chat_transport_retryable','local_chat_status_retryable',"
+            "'unexpected_executor_failure') ORDER BY job_id"
+        ).fetchall()
+        recovered = 0
+        with self.connection:
+            for row in rows:
+                if (
+                    row["result_json"] is not None
+                    or row["lease_token"] is not None
+                    or row["lease_expires_at"] is not None
+                ):
+                    continue
+                job = SectionPromptJobV1.model_validate_json(row["payload_json"])
+                prior = self.connection.execute(
+                    "SELECT error_code FROM section_job_failures WHERE job_id=? "
+                    "ORDER BY attempt,stage,error_code",
+                    (job.job_id,),
+                ).fetchall()
+                repair_reason = next(
+                    (
+                        str(value["error_code"])
+                        for value in prior
+                        if str(value["error_code"]) in MAPPER_REPAIRABLE_REASONS
+                    ),
+                    "",
+                )
+                requested_alias = (
+                    job.repair_model_route
+                    if repair_reason and job.repair_model_route
+                    else job.model_route
+                )
+                observed_attempt = max(1, int(row["attempt"]))
+                self.connection.execute(
+                    "INSERT OR REPLACE INTO section_job_failures("
+                    "job_id,attempt,stage,error_code,http_status_category,"
+                    "pydantic_diagnostics_json,requested_alias) VALUES(?,?,?,?,?,?,?)",
+                    (
+                        job.job_id, observed_attempt, "http_transport",
+                        "local_service_restart_recovery", "", "[]", requested_alias,
+                    ),
+                )
+                self.connection.execute(
+                    "UPDATE section_jobs SET state='pending',attempt=?,terminal_reason=?,"
+                    "transport_retry_count=0 WHERE job_id=?",
+                    (1 if repair_reason else 0, repair_reason, job.job_id),
+                )
+                recovered += 1
+        return recovered
 
     def claim(self, now: datetime, *, lease_seconds: int = 60) -> tuple[SectionPromptJobV1, str, int] | None:
         self.connection.execute("BEGIN IMMEDIATE")
@@ -699,12 +900,37 @@ class SectionAnalysisStore:
         reason: str, evidence: SectionFailureEvidenceV1,
     ) -> None:
         row = self.connection.execute(
-            "SELECT attempt FROM section_jobs WHERE job_id=? AND state='running' AND lease_token=?",
+            "SELECT attempt,terminal_reason,transport_retry_count FROM section_jobs "
+            "WHERE job_id=? AND state='running' AND lease_token=?",
             (job.job_id, token),
         ).fetchone()
         if row is None:
             raise SectionAnalysisError("stale_section_lease_failure")
-        next_state = "pending" if retryable and int(row["attempt"]) < job.maximum_attempts else "held"
+        transparent_transport_retry = (
+            retryable
+            and evidence.error_code in {
+                "local_chat_transport_retryable", "local_chat_status_retryable",
+            }
+            and int(row["transport_retry_count"]) < 1
+        )
+        if transparent_transport_retry:
+            next_state = "pending"
+            next_attempt = max(0, int(row["attempt"]) - 1)
+            next_reason = (
+                str(row["terminal_reason"])
+                if str(row["terminal_reason"]) in MAPPER_REPAIRABLE_REASONS
+                else ""
+            )
+            next_transport_retries = int(row["transport_retry_count"]) + 1
+        else:
+            next_state = (
+                "pending"
+                if retryable and int(row["attempt"]) < job.maximum_attempts
+                else "held"
+            )
+            next_attempt = int(row["attempt"])
+            next_reason = reason
+            next_transport_retries = int(row["transport_retry_count"])
         with self.connection:
             self.connection.execute(
                 "INSERT OR REPLACE INTO section_job_failures("
@@ -721,8 +947,12 @@ class SectionAnalysisStore:
                 ),
             )
             self.connection.execute(
-                "UPDATE section_jobs SET state=?,terminal_reason=?,lease_token=NULL,lease_expires_at=NULL WHERE job_id=?",
-                (next_state, reason, job.job_id),
+                "UPDATE section_jobs SET state=?,attempt=?,terminal_reason=?,"
+                "transport_retry_count=?,lease_token=NULL,lease_expires_at=NULL WHERE job_id=?",
+                (
+                    next_state, next_attempt, next_reason,
+                    next_transport_retries, job.job_id,
+                ),
             )
 
     def failure_evidence(self) -> tuple[dict[str, object], ...]:
@@ -800,6 +1030,87 @@ class SectionAnalysisStore:
             if cursor.rowcount != len(job_ids):
                 raise SectionAnalysisError("targeted_resume_state_changed")
         return cursor.rowcount
+
+    def requeue_mapper_json_output_holds(self) -> int:
+        """Migrate only pre-fix mapper JSON holds into their one declared repair."""
+        legacy_reasons = {
+            "local_model_response_json_empty",
+            "local_model_response_json_incomplete",
+            "local_model_response_json_malformed",
+            "local_model_response_json_not_object_prefixed",
+            "local_model_response_not_object",
+            "local_model_response_truncated_json",
+        }
+        rows = self.connection.execute(
+            "SELECT job_id,payload_json,attempt,result_json,terminal_reason,"
+            "lease_token,lease_expires_at FROM section_jobs WHERE state='held' "
+            "ORDER BY job_id"
+        ).fetchall()
+        eligible: list[str] = []
+        for row in rows:
+            job = SectionPromptJobV1.model_validate_json(row["payload_json"])
+            if (
+                str(row["terminal_reason"]) in legacy_reasons
+                and int(row["attempt"]) < job.maximum_attempts
+                and job.repair_model_route is not None
+                and row["result_json"] is None
+                and row["lease_token"] is None
+                and row["lease_expires_at"] is None
+            ):
+                eligible.append(str(row["job_id"]))
+        if not eligible:
+            return 0
+        placeholders = ",".join("?" for _ in eligible)
+        with self.connection:
+            cursor = self.connection.execute(
+                "UPDATE section_jobs SET state='pending',terminal_reason=? "
+                f"WHERE job_id IN ({placeholders}) AND state='held'",
+                (MAPPER_SCHEMA_RETRY_REASON, *eligible),
+            )
+        if cursor.rowcount != len(eligible):
+            raise SectionAnalysisError("mapper_json_hold_migration_raced")
+        return cursor.rowcount
+
+    def migrate_exhausted_transport_holds(self) -> int:
+        """Restore one bounded transport resend without consuming a semantic attempt."""
+        rows = self.connection.execute(
+            "SELECT job_id,attempt,state,terminal_reason,transport_retry_count,result_json,"
+            "lease_token,lease_expires_at FROM section_jobs "
+            "WHERE state IN ('pending','held') AND terminal_reason IN "
+            "('local_chat_transport_retryable','local_chat_status_retryable') "
+            "ORDER BY job_id"
+        ).fetchall()
+        migrated = 0
+        with self.connection:
+            for row in rows:
+                if (
+                    int(row["attempt"]) < 1
+                    or int(row["transport_retry_count"]) >= 1
+                    or row["result_json"] is not None
+                    or row["lease_token"] is not None
+                    or row["lease_expires_at"] is not None
+                ):
+                    continue
+                prior = self.connection.execute(
+                    "SELECT error_code FROM section_job_failures WHERE job_id=? "
+                    "ORDER BY attempt,stage,error_code",
+                    (row["job_id"],),
+                ).fetchall()
+                repair_reason = next(
+                    (
+                        str(value["error_code"])
+                        for value in prior
+                        if str(value["error_code"]) in MAPPER_REPAIRABLE_REASONS
+                    ),
+                    "",
+                )
+                self.connection.execute(
+                    "UPDATE section_jobs SET state='pending',attempt=attempt-1,"
+                    "terminal_reason=?,transport_retry_count=1 WHERE job_id=?",
+                    (repair_reason, row["job_id"]),
+                )
+                migrated += 1
+        return migrated
 
 
 def run_parallel_jobs(
@@ -905,10 +1216,10 @@ def run_parallel_jobs(
     return store.results()
 
 
-def build_compiler_packet(
+def _compiler_evidence(
     *, plan: AdaptiveAnalysisPlanV1, results: tuple[SectionPassResultV1, ...],
-    units: CitationUnitsV2, compiler_model_route: str,
-) -> DocumentCompilerPacketV1:
+    units: CitationUnitsV2,
+) -> tuple[list[CompilerEvidenceV1], tuple[str, ...], tuple[str, ...]]:
     unit_map: dict[str, EvidenceSpanV2] = {row.span_id: row for row in units.spans}
     jobs = {row.job_id: row for row in plan.jobs}
     evidence: list[CompilerEvidenceV1] = []
@@ -934,15 +1245,170 @@ def build_compiler_packet(
     disagreements = tuple(sorted(
         finding_id for ids in statements.values() if len(ids) > 1 for finding_id in ids
     ))
+    return evidence, disagreements, tuple(sorted(unsupported))
+
+
+def _compiler_packet(
+    *, plan: AdaptiveAnalysisPlanV1, compiler_model_route: str,
+    evidence: tuple[CompilerEvidenceV1, ...], disagreement_finding_ids: tuple[str, ...],
+    unsupported_finding_ids: tuple[str, ...],
+) -> DocumentCompilerPacketV1:
     values = dict(
         schema_version="document-compiler-packet-v1.0", document_id=plan.document_id,
         canonical_text_sha256=plan.canonical_text_sha256,
         small_model_route=plan.jobs[0].model_route,
         compiler_model_route=compiler_model_route,
-        evidence=tuple(evidence), disagreement_finding_ids=disagreements,
-        unsupported_finding_ids=tuple(sorted(unsupported)), packet_sha256="0" * 64,
+        evidence=evidence, disagreement_finding_ids=disagreement_finding_ids,
+        unsupported_finding_ids=unsupported_finding_ids, packet_sha256="0" * 64,
     )
     return _draft(DocumentCompilerPacketV1, **values)
+
+
+def _packet_bytes(packet: DocumentCompilerPacketV1) -> int:
+    return len(json.dumps(
+        packet.model_dump(mode="json"), sort_keys=True, ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8"))
+
+
+def build_compiler_packet(
+    *, plan: AdaptiveAnalysisPlanV1, results: tuple[SectionPassResultV1, ...],
+    units: CitationUnitsV2, compiler_model_route: str, apply_bounds: bool = True,
+) -> DocumentCompilerPacketV1:
+    evidence, disagreements, unsupported = _compiler_evidence(
+        plan=plan, results=results, units=units,
+    )
+    if not apply_bounds:
+        return _compiler_packet(
+            plan=plan, compiler_model_route=compiler_model_route,
+            evidence=tuple(evidence), disagreement_finding_ids=disagreements,
+            unsupported_finding_ids=unsupported,
+        )
+    bounded: list[CompilerEvidenceV1] = []
+    excerpt_characters = 0
+    disagreement_set = set(disagreements)
+    unsupported_set = set(unsupported)
+    for row in evidence:
+        if len(bounded) >= COMPILER_MAX_EVIDENCE_ITEMS:
+            break
+        row_characters = sum(len(value) for value in row.exact_source_excerpts)
+        if excerpt_characters + row_characters > COMPILER_MAX_EXCERPT_CHARACTERS:
+            continue
+        candidate = tuple((*bounded, row))
+        candidate_ids = {value.finding_id for value in candidate}
+        packet = _compiler_packet(
+            plan=plan, compiler_model_route=compiler_model_route,
+            evidence=candidate,
+            disagreement_finding_ids=tuple(
+                value for value in disagreements if value in candidate_ids
+            ),
+            unsupported_finding_ids=tuple(
+                value for value in unsupported if value in candidate_ids
+            ),
+        )
+        if _packet_bytes(packet) > COMPILER_MAX_PACKET_BYTES:
+            continue
+        bounded.append(row)
+        excerpt_characters += row_characters
+    if not bounded:
+        raise SectionAnalysisError("compiler_packet_bound_removed_all_evidence")
+    bounded_ids = {row.finding_id for row in bounded}
+    return _compiler_packet(
+        plan=plan, compiler_model_route=compiler_model_route,
+        evidence=tuple(bounded),
+        disagreement_finding_ids=tuple(
+            value for value in disagreements
+            if value in bounded_ids and value in disagreement_set
+        ),
+        unsupported_finding_ids=tuple(
+            value for value in unsupported
+            if value in bounded_ids and value in unsupported_set
+        ),
+    )
+
+
+def build_compiler_input_reduction_receipt(
+    *, plan: AdaptiveAnalysisPlanV1, results: tuple[SectionPassResultV1, ...],
+    units: CitationUnitsV2, compiler_model_route: str,
+    used_packet_sha256: str | None = None,
+) -> tuple[DocumentCompilerPacketV1, DocumentCompilerPacketV1, CompilerInputReductionReceiptV1]:
+    """Build canonical/derived packets and a hash-bound content-free audit receipt."""
+    original = build_compiler_packet(
+        plan=plan, results=results, units=units,
+        compiler_model_route=compiler_model_route, apply_bounds=False,
+    )
+    derived = build_compiler_packet(
+        plan=plan, results=results, units=units,
+        compiler_model_route=compiler_model_route, apply_bounds=True,
+    )
+    used = used_packet_sha256 or derived.packet_sha256
+    original_rows = original.evidence
+    included_rows = derived.evidence
+    included_ids = tuple(row.finding_id for row in included_rows)
+    remaining = list(included_ids)
+    omitted_ids: list[str] = []
+    for row in original_rows:
+        if row.finding_id in remaining:
+            remaining.remove(row.finding_id)
+        else:
+            omitted_ids.append(row.finding_id)
+
+    def ordered_unique(values):
+        seen = set()
+        return tuple(value for value in values if not (value in seen or seen.add(value)))
+
+    original_citations = ordered_unique(
+        unit_id for row in original_rows for unit_id in row.citation_unit_ids
+    )
+    included_citations = ordered_unique(
+        unit_id for row in included_rows for unit_id in row.citation_unit_ids
+    )
+    included_citation_set = set(included_citations)
+    values = dict(
+        schema_version="compiler-input-reduction-receipt-v1.0",
+        policy_version=COMPILER_REDUCTION_POLICY_VERSION,
+        document_id=plan.document_id,
+        canonical_text_sha256=plan.canonical_text_sha256,
+        compiler_model_route=compiler_model_route,
+        original_packet_sha256=original.packet_sha256,
+        derived_packet_sha256=derived.packet_sha256,
+        used_packet_sha256=used,
+        input_kind="canonical" if used == original.packet_sha256 else "derived",
+        original_finding_ids=tuple(row.finding_id for row in original_rows),
+        included_finding_ids=included_ids,
+        omitted_finding_ids=tuple(omitted_ids),
+        original_finding_count=len(original_rows),
+        included_finding_count=len(included_rows),
+        omitted_finding_count=len(omitted_ids),
+        original_packet_bytes=_packet_bytes(original),
+        derived_packet_bytes=_packet_bytes(derived),
+        original_excerpt_characters=sum(
+            len(value) for row in original_rows for value in row.exact_source_excerpts
+        ),
+        included_excerpt_characters=sum(
+            len(value) for row in included_rows for value in row.exact_source_excerpts
+        ),
+        original_citation_unit_ids=original_citations,
+        included_citation_unit_ids=included_citations,
+        omitted_citation_unit_ids=tuple(
+            value for value in original_citations if value not in included_citation_set
+        ),
+        original_source_excerpt_sha256s=tuple(
+            value for row in original_rows for value in row.source_excerpt_sha256s
+        ),
+        included_source_excerpt_sha256s=tuple(
+            value for row in included_rows for value in row.source_excerpt_sha256s
+        ),
+        maximum_evidence_items=COMPILER_MAX_EVIDENCE_ITEMS,
+        maximum_excerpt_characters=COMPILER_MAX_EXCERPT_CHARACTERS,
+        maximum_packet_bytes=COMPILER_MAX_PACKET_BYTES,
+        receipt_sha256="0" * 64,
+    )
+    draft = CompilerInputReductionReceiptV1.model_construct(**values)
+    values["receipt_sha256"] = canonical_contract_sha256(
+        draft, omit={"receipt_sha256"},
+    )
+    return original, derived, CompilerInputReductionReceiptV1.model_validate(values)
 
 
 def validate_compilation(packet: DocumentCompilerPacketV1, output: DocumentCompilationV1) -> None:
@@ -955,6 +1421,8 @@ def validate_compilation(packet: DocumentCompilerPacketV1, output: DocumentCompi
     for claim in output.claims:
         if claim.support_status == "supported" and not claim.citation_unit_ids:
             raise SectionAnalysisError("compiler_supported_claim_missing_citation")
+        if claim.support_status == "unsupported" and claim.citation_unit_ids:
+            raise SectionAnalysisError("compiler_unsupported_claim_has_citation")
         if not set(claim.citation_unit_ids).issubset(allowed):
             raise SectionAnalysisError("compiler_claim_unknown_source_citation")
 

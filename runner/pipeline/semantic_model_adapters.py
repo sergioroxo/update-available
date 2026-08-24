@@ -8,10 +8,13 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+import fcntl
 import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Literal, Sequence
+from pathlib import Path
+from typing import Any, Callable, Literal, Sequence
 from urllib.parse import urlparse
 
 import httpx
@@ -32,7 +35,7 @@ from runner.pipeline.analysis_sections import (
     CompilerClaimV1,
     DocumentCompilationV1,
     DocumentCompilerPacketV1,
-    MAPPER_OUTPUT_RETRY_REASON,
+MAPPER_OUTPUT_RETRY_REASON,
     MAPPER_REPAIRABLE_REASONS,
     MAPPER_SCHEMA_RETRY_REASON,
     ProcessingSectionV1,
@@ -43,6 +46,17 @@ from runner.pipeline.analysis_sections import (
     SectionPassResultV1,
     SectionPromptJobV1,
 )
+from runner.pipeline.retrieval_context import GroundedEnrichmentRequestV1
+
+
+MAPPER_JSON_REPAIRABLE_CODES = frozenset({
+    "local_model_response_json_empty",
+    "local_model_response_json_incomplete",
+    "local_model_response_json_malformed",
+    "local_model_response_json_not_object_prefixed",
+    "local_model_response_not_object",
+    "local_model_response_truncated_json",
+})
 
 
 class SemanticAdapterError(ValueError):
@@ -100,6 +114,20 @@ class _CompilerResponsePayloadV1(_Strict):
     claims: list[_CompilerClaimPayloadV1]
 
 
+class _GroundedConnectionPayloadV1(_Strict):
+    document_id: str = Field(min_length=1, max_length=200)
+    unit_id: str = Field(min_length=1, max_length=300)
+    reason_code: str = Field(
+        min_length=1, max_length=100, pattern=r"^[a-z0-9_]+$",
+    )
+
+
+class _GroundedResponsePayloadV1(_Strict):
+    document_id: str
+    retrieval_context_sha256: str
+    corpus_connections: list[_GroundedConnectionPayloadV1]
+
+
 class MapperValidationIssueV1(_Strict):
     location: str = Field(min_length=1, max_length=200, pattern=r"^[A-Za-z0-9_.*-]+$")
     type_code: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9_.-]+$")
@@ -153,6 +181,11 @@ def compiler_response_json_schema() -> dict[str, Any]:
     return _CompilerResponsePayloadV1.model_json_schema()
 
 
+def grounded_response_json_schema() -> dict[str, Any]:
+    """Return the structural grammar for retrieval-bound local Enrichment."""
+    return _GroundedResponsePayloadV1.model_json_schema()
+
+
 def _mapper_validation_issues(
     error: ValidationError,
 ) -> tuple[MapperValidationIssueV1, ...]:
@@ -200,6 +233,7 @@ class LocalModelRouteV1(_Strict):
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
         "qwen38_mapper_repair", "qwen_embedding", "bge_shadow",
+        "grounded_enrichment",
     ]
     requested_model: str
     expected_resolved_models: tuple[str, ...] = ()
@@ -257,7 +291,19 @@ class SemanticEndpointConfigV1(_Strict):
     api_key: SecretStr = SecretStr("")
     allowed_hosts: tuple[str, ...] = ("127.0.0.1", "localhost", "::1")
     timeout_seconds: float = Field(default=180.0, ge=1, le=1800)
+    global_model_lease_path: str | None = None
+    durable_receipt_path: str | None = None
     routes: tuple[LocalModelRouteV1, ...]
+
+    @field_validator("global_model_lease_path", "durable_receipt_path")
+    @classmethod
+    def _absolute_local_paths(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        path = Path(value)
+        if not path.is_absolute() or "\x00" in value:
+            raise ValueError("semantic runtime path must be absolute")
+        return str(path)
 
     @field_validator("base_url")
     @classmethod
@@ -296,6 +342,7 @@ class ModelCallReceiptV1(_Strict):
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
         "qwen38_mapper_repair", "qwen_embedding", "bge_shadow",
+        "grounded_enrichment",
     ]
     requested_model: str
     provider_resolved_model: str
@@ -361,7 +408,20 @@ def _json_object(text: str) -> dict[str, Any]:
     stripped = text.strip()
     if not stripped:
         raise SemanticAdapterError("local_model_response_json_empty")
+    if stripped.startswith("```json") or stripped.startswith("```JSON"):
+        lines = stripped.splitlines()
+        if (
+            len(lines) < 3
+            or lines[0] not in {"```json", "```JSON"}
+            or lines[-1] != "```"
+        ):
+            raise SemanticAdapterError("local_model_response_json_markdown_fenced")
+        stripped = "\n".join(lines[1:-1]).strip()
     if not stripped.startswith("{"):
+        if stripped.startswith("```"):
+            raise SemanticAdapterError("local_model_response_json_code_fenced")
+        if stripped.startswith("<"):
+            raise SemanticAdapterError("local_model_response_json_markup_prefixed")
         raise SemanticAdapterError("local_model_response_json_not_object_prefixed")
     if not stripped.endswith("}"):
         raise SemanticAdapterError("local_model_response_json_incomplete")
@@ -372,6 +432,77 @@ def _json_object(text: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise SemanticAdapterError("local_model_response_not_object")
     return payload
+
+
+class InterprocessGlobalModelLease:
+    """Hold one model identity across calls until verified explicit unload."""
+
+    def __init__(self, path: str):
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._state_lock = threading.Lock()
+        self._fd: int | None = None
+        self._active_resolved_model: str | None = None
+
+    @property
+    def active_resolved_model(self) -> str | None:
+        with self._state_lock:
+            return self._active_resolved_model
+
+    def activate(self, resolved_model: str) -> None:
+        with self._state_lock:
+            if self._active_resolved_model == resolved_model:
+                return
+            if self._active_resolved_model is not None:
+                raise SemanticAdapterError("model_transition_requires_explicit_unload")
+        flags = os.O_RDWR | os.O_CREAT
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        fd = os.open(self.path, flags, 0o600)
+        os.chmod(self.path, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            with self._state_lock:
+                if self._active_resolved_model is not None:
+                    raise SemanticAdapterError("model_lease_internal_state_conflict")
+                self._write_state(fd, resolved_model)
+                self._fd = fd
+                self._active_resolved_model = resolved_model
+        except Exception:
+            os.close(fd)
+            raise
+
+    def release_after_verified_unload(
+        self, resolved_model: str, *, verify_unloaded: Callable[[], bool],
+    ) -> None:
+        with self._state_lock:
+            if self._active_resolved_model != resolved_model or self._fd is None:
+                raise SemanticAdapterError("model_lease_release_identity_mismatch")
+            if not verify_unloaded():
+                raise SemanticAdapterError("model_lease_unload_not_verified")
+            fd = self._fd
+            self._write_state(fd, None)
+            self._fd = None
+            self._active_resolved_model = None
+            fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+    def require_idle(self) -> None:
+        if self.active_resolved_model is not None:
+            raise SemanticAdapterError("model_lease_release_requires_explicit_unload")
+
+    @staticmethod
+    def _write_state(fd: int, resolved_model: str | None) -> None:
+        payload = json.dumps({
+            "schema_version": "global-model-lease-v1.0",
+            "state": "active" if resolved_model else "idle",
+            "resolved_model": resolved_model,
+            "pid": os.getpid() if resolved_model else None,
+        }, sort_keys=True, separators=(",", ":")).encode()
+        os.lseek(fd, 0, os.SEEK_SET)
+        os.ftruncate(fd, 0)
+        os.write(fd, payload + b"\n")
+        os.fsync(fd)
 
 
 class OpenAICompatibleLocalClient:
@@ -387,6 +518,10 @@ class OpenAICompatibleLocalClient:
         self._bindings: dict[str, str] = {}
         self._receipts: list[ModelCallReceiptV1] = []
         self._lock = threading.Lock()
+        self._model_lease = (
+            InterprocessGlobalModelLease(config.global_model_lease_path)
+            if config.global_model_lease_path else None
+        )
 
     @property
     def receipts(self) -> tuple[ModelCallReceiptV1, ...]:
@@ -394,11 +529,51 @@ class OpenAICompatibleLocalClient:
             return tuple(self._receipts)
 
     def close(self) -> None:
+        if self._model_lease is not None:
+            self._model_lease.require_idle()
         self.client.close()
+
+    @property
+    def active_resolved_model(self) -> str | None:
+        return (
+            self._model_lease.active_resolved_model
+            if self._model_lease is not None else None
+        )
+
+    def release_model_lease_after_verified_unload(
+        self, resolved_model: str, *, verify_unloaded: Callable[[], bool],
+    ) -> None:
+        if self._model_lease is None:
+            return
+        self._model_lease.release_after_verified_unload(
+            resolved_model, verify_unloaded=verify_unloaded,
+        )
 
     def _record(self, receipt: ModelCallReceiptV1) -> None:
         with self._lock:
             self._receipts.append(receipt)
+            if self.config.durable_receipt_path:
+                path = Path(self.config.durable_receipt_path)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                rows: list[dict[str, Any]] = []
+                if path.exists():
+                    payload = json.loads(path.read_text(encoding="utf-8"))
+                    if payload.get("schema_version") != "copied-pilot-model-receipts-v1.0":
+                        raise SemanticAdapterError("durable_receipt_log_schema_mismatch")
+                    rows = list(payload.get("receipts") or [])
+                row = receipt.model_dump(mode="json")
+                if row["receipt_sha256"] not in {
+                    value.get("receipt_sha256") for value in rows
+                }:
+                    rows.append(row)
+                rows.sort(key=lambda value: value["receipt_sha256"])
+                temporary = path.with_name(path.name + ".tmp")
+                temporary.write_bytes(_canonical_bytes({
+                    "schema_version": "copied-pilot-model-receipts-v1.0",
+                    "receipts": rows,
+                }) + b"\n")
+                os.chmod(temporary, 0o600)
+                os.replace(temporary, path)
 
     def preflight(self) -> dict[str, str]:
         """Resolve LiteLLM aliases to underlying local model identities."""
@@ -473,6 +648,8 @@ class OpenAICompatibleLocalClient:
         concurrency_level: int, response_schema: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], ModelCallReceiptV1]:
         resolved = self.binding(route)
+        if self._model_lease is not None:
+            self._model_lease.activate(resolved)
         request = {
             "model": route.requested_model,
             "messages": [
@@ -488,7 +665,11 @@ class OpenAICompatibleLocalClient:
                         "name": (
                             "mapper_response_v1"
                             if route.purpose in {"section_mapper", "qwen38_mapper_repair"}
-                            else "compiler_response_v1"
+                            else (
+                                "grounded_enrichment_response_v1"
+                                if route.purpose == "grounded_enrichment"
+                                else "compiler_response_v1"
+                            )
                         ),
                         "strict": True,
                         "schema": response_schema,
@@ -498,12 +679,15 @@ class OpenAICompatibleLocalClient:
                 else {"type": "json_object"}
             ),
         }
-        if route.purpose in {"qwen38_mapper_repair", "qwen38_compiler_candidate"}:
+        if route.purpose in {
+            "qwen38_mapper_repair", "qwen38_compiler_candidate",
+            "grounded_enrichment",
+        }:
             request["reasoning_effort"] = "none"
         started = time.perf_counter()
         try:
             response = self.client.post("/v1/chat/completions", json=request)
-        except (httpx.TimeoutException, httpx.NetworkError) as exc:
+        except httpx.TransportError as exc:
             raise RetryableSectionError(
                 "local_chat_transport_retryable", stage="http_transport",
                 requested_alias=route.requested_model,
@@ -571,6 +755,8 @@ class OpenAICompatibleLocalClient:
         self, route: LocalModelRouteV1, texts: Sequence[str], *, concurrency_level: int = 1,
     ) -> tuple[list[list[float]], ModelCallReceiptV1]:
         resolved = self.binding(route)
+        if self._model_lease is not None:
+            self._model_lease.activate(resolved)
         if route.expected_dimension is None:
             raise SemanticAdapterError("chat_route_used_for_embeddings")
         if not texts or any(not isinstance(row, str) or not row for row in texts):
@@ -579,7 +765,7 @@ class OpenAICompatibleLocalClient:
         started = time.perf_counter()
         try:
             response = self.client.post("/v1/embeddings", json=request)
-        except (httpx.TimeoutException, httpx.NetworkError) as exc:
+        except httpx.TransportError as exc:
             raise RetryableSemanticAdapterError("local_embedding_transport_retryable") from exc
         duration_ms = int((time.perf_counter() - started) * 1000)
         if response.status_code == 429 or response.status_code >= 500:
@@ -694,11 +880,24 @@ class LocalSectionExecutor:
             "prompt_id": job.prompt_id, "allowed_unit_ids": list(section.unit_ids),
             "source_text": section.text,
         }).decode()
-        payload, receipt = self.client.chat(
-            selected_route, system=system, user=user,
-            concurrency_level=self.concurrency_level,
-            response_schema=response_schema,
-        )
+        try:
+            payload, receipt = self.client.chat(
+                selected_route, system=system, user=user,
+                concurrency_level=self.concurrency_level,
+                response_schema=response_schema,
+            )
+        except SectionAnalysisError as exc:
+            if exc.error_code not in MAPPER_JSON_REPAIRABLE_CODES:
+                raise
+            issue_type = (
+                "json_truncated"
+                if exc.error_code == "local_model_response_truncated_json"
+                else "json_invalid"
+            )
+            raise MapperSchemaRetryableError(
+                (MapperValidationIssueV1(location="response", type_code=issue_type),),
+                requested_alias=selected_route.requested_model,
+            ) from None
         try:
             validated_payload = _MapperResponsePayloadV1.model_validate(payload)
         except ValidationError as exc:
@@ -757,10 +956,18 @@ class LocalDocumentCompilerExecutor:
     def execute(self, packet: DocumentCompilerPacketV1) -> DocumentCompilationV1:
         if packet.compiler_model_route != self.route.requested_model:
             raise SectionAnalysisError("document_compiler_route_mismatch")
+        allowed_supported_citations = sorted({
+            unit_id
+            for row in packet.evidence
+            if row.evidence_state == "supported"
+            for unit_id in row.citation_unit_ids
+        })
         system = (
             "Compile a document-level research interpretation from the supplied "
             "structured findings and exact source excerpts. Return a JSON object "
-            "with claims. A supported claim must cite only supplied unit IDs. "
+            "with claims. A supported claim must cite at least one ID from the exact "
+            "allowed_supported_citation_unit_ids list. Never cite any other ID. "
+            "An unsupported claim must use an empty citation_unit_ids array. "
             "Unsupported material must remain explicitly unsupported. Return at "
             "most 12 concise claims, with each statement at most 1000 characters. "
             "Return the JSON object only: begin with { and end with }; do not emit "
@@ -768,7 +975,9 @@ class LocalDocumentCompilerExecutor:
             "JSON Schema: "
             + _canonical_bytes(compiler_response_json_schema()).decode("utf-8")
         )
-        user = _canonical_bytes(packet.model_dump(mode="json")).decode()
+        user_payload = packet.model_dump(mode="json")
+        user_payload["allowed_supported_citation_unit_ids"] = allowed_supported_citations
+        user = _canonical_bytes(user_payload).decode()
         payload, receipt = self.client.chat(
             self.route, system=system, user=user, concurrency_level=1,
             response_schema=compiler_response_json_schema(),
@@ -809,6 +1018,82 @@ class LocalDocumentCompilerExecutor:
                 stage="result_construction", issues=_mapper_validation_issues(exc),
                 requested_alias=self.route.requested_model,
             ) from None
+
+
+class LocalGroundedEnrichmentExecutor:
+    """Strict local adapter whose evidence universe is one frozen context."""
+
+    def __init__(self, client: OpenAICompatibleLocalClient):
+        self.client = client
+        self.route = client.config.route("grounded_enrichment")
+
+    def execute(self, request: GroundedEnrichmentRequestV1) -> dict[str, Any]:
+        if request.requested_model != self.route.requested_model:
+            raise SectionAnalysisError(
+                "grounded_enrichment_route_mismatch", stage="route_identity",
+                requested_alias=self.route.requested_model,
+            )
+        context = request.retrieval_context
+        allowed = [
+            {
+                "document_id": row.document_id,
+                "unit_id": row.unit_id,
+                "source_text": row.text,
+            }
+            for row in context.selected_hits
+        ]
+        system = (
+            "Produce provisional retrieval-grounded corpus connections. Return one JSON "
+            "object with exactly document_id, retrieval_context_sha256, and "
+            "corpus_connections. Each connection must contain exactly document_id, "
+            "unit_id, and a lowercase underscore reason_code. Use only a supplied "
+            "document/unit pair. Do not quote, promote, or represent generated analysis "
+            "as source evidence. An empty corpus_connections array is valid. Canonical "
+            "response JSON Schema: "
+            + _canonical_bytes(grounded_response_json_schema()).decode("utf-8")
+        )
+        user = _canonical_bytes({
+            "document_id": request.document_id,
+            "completed_independent_analysis": request.analysis_payload,
+            "source_metadata": request.source_metadata,
+            "retrieval_context_sha256": context.context_sha256,
+            "retrieved_source_units": allowed,
+        }).decode()
+        payload, _receipt_value = self.client.chat(
+            self.route, system=system, user=user, concurrency_level=1,
+            response_schema=grounded_response_json_schema(),
+        )
+        try:
+            validated = _GroundedResponsePayloadV1.model_validate(payload)
+        except ValidationError as exc:
+            raise SectionAnalysisError(
+                "grounded_enrichment_schema_validation_failed",
+                stage="pydantic_validation", issues=_mapper_validation_issues(exc),
+                requested_alias=self.route.requested_model,
+            ) from None
+        if validated.document_id != request.document_id:
+            raise SectionAnalysisError(
+                "grounded_enrichment_document_mismatch", stage="job_output_validation",
+                requested_alias=self.route.requested_model,
+            )
+        if validated.retrieval_context_sha256 != context.context_sha256:
+            raise SectionAnalysisError(
+                "grounded_enrichment_context_mismatch", stage="job_output_validation",
+                requested_alias=self.route.requested_model,
+            )
+        pairs = [(row.document_id, row.unit_id) for row in validated.corpus_connections]
+        allowed_pairs = {(row.document_id, row.unit_id) for row in context.selected_hits}
+        if len(pairs) != len(set(pairs)):
+            raise SectionAnalysisError(
+                "grounded_enrichment_duplicate_locator", stage="job_output_validation",
+                requested_alias=self.route.requested_model,
+            )
+        if any(pair not in allowed_pairs for pair in pairs):
+            raise SectionAnalysisError(
+                "grounded_enrichment_invalid_locator", stage="job_output_validation",
+                requested_alias=self.route.requested_model,
+            )
+        return validated.model_dump(mode="json")
 
 
 @dataclass

@@ -8,6 +8,9 @@ from pydantic import ValidationError
 
 from runner.models.retrieval import canonical_contract_sha256
 from runner.pipeline.analysis_sections import (
+    COMPILER_MAX_EVIDENCE_ITEMS,
+    COMPILER_MAX_EXCERPT_CHARACTERS,
+    COMPILER_MAX_PACKET_BYTES,
     PROMPT_REGISTRY,
     DocumentCompilationV1,
     CompilerClaimV1,
@@ -19,6 +22,7 @@ from runner.pipeline.analysis_sections import (
     SectionPromptJobV1,
     build_adaptive_analysis_plan,
     build_compiler_packet,
+    build_compiler_input_reduction_receipt,
     build_processing_sections,
     run_parallel_jobs,
     validate_compilation,
@@ -336,9 +340,206 @@ def test_compiler_packet_contains_exact_excerpts_and_rejects_unknown_claim_citat
     output = DocumentCompilationV1.model_validate(values)
     with pytest.raises(SectionAnalysisError, match="unknown_source"):
         validate_compilation(packet, output)
+    unsupported = output.model_dump(mode="python")
+    unsupported["claims"][0]["support_status"] = "unsupported"
+    unsupported["claims"] = tuple(
+        CompilerClaimV1.model_validate(row) for row in unsupported["claims"]
+    )
+    draft = DocumentCompilationV1.model_construct(**{
+        **unsupported, "output_sha256": "0" * 64,
+    })
+    unsupported["output_sha256"] = canonical_contract_sha256(
+        draft, omit={"output_sha256"},
+    )
+    with pytest.raises(SectionAnalysisError, match="unsupported_claim_has_citation"):
+        validate_compilation(packet, DocumentCompilationV1.model_validate(unsupported))
+
+
+def test_compiler_packet_bounds_repeated_excerpt_expansion_without_source_loss():
+    units = _units()
+    plan = build_adaptive_analysis_plan(
+        run_id="run-bounded-compiler", units=units, small_model_route="small-moe",
+        target_chars=5000, maximum_prompts_per_section=2,
+    )
+    base = tuple(
+        _result(job, next(row for row in plan.sections if row.section_id == job.section_id))
+        for job in plan.jobs
+    )
+    packet = build_compiler_packet(
+        plan=plan, results=base * 30, units=units,
+        compiler_model_route="compiler-27b",
+    )
+    assert 0 < len(packet.evidence) <= COMPILER_MAX_EVIDENCE_ITEMS
+    assert sum(
+        sum(len(value) for value in row.exact_source_excerpts)
+        for row in packet.evidence
+    ) <= COMPILER_MAX_EXCERPT_CHARACTERS
+    legacy = build_compiler_packet(
+        plan=plan, results=base * 30, units=units,
+        compiler_model_route="compiler-27b", apply_bounds=False,
+    )
+    assert len(legacy.evidence) > len(packet.evidence)
+
+
+def test_compiler_reduction_receipt_binds_order_omissions_bytes_and_source_hashes():
+    units = _units("doc-reduction-receipt")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-reduction-receipt", units=units, small_model_route="small-moe",
+        target_chars=5000, maximum_prompts_per_section=2,
+    )
+    base = tuple(
+        _result(job, next(row for row in plan.sections if row.section_id == job.section_id))
+        for job in plan.jobs
+    )
+    original, derived, receipt = build_compiler_input_reduction_receipt(
+        plan=plan, results=base * 30, units=units,
+        compiler_model_route="compiler-27b",
+    )
+    repeated = build_compiler_input_reduction_receipt(
+        plan=plan, results=base * 30, units=units,
+        compiler_model_route="compiler-27b",
+    )[2]
+    assert receipt == repeated
+    assert receipt.original_packet_sha256 == original.packet_sha256
+    assert receipt.derived_packet_sha256 == derived.packet_sha256
+    assert receipt.used_packet_sha256 == derived.packet_sha256
+    assert receipt.input_kind == "derived"
+    assert receipt.original_finding_count == len(original.evidence)
+    assert receipt.included_finding_count == len(derived.evidence)
+    assert receipt.omitted_finding_count > 0
+    assert receipt.derived_packet_bytes <= COMPILER_MAX_PACKET_BYTES
+    assert receipt.included_excerpt_characters <= COMPILER_MAX_EXCERPT_CHARACTERS
+    assert len(derived.evidence) <= COMPILER_MAX_EVIDENCE_ITEMS
+    assert set(receipt.included_source_excerpt_sha256s).issubset(
+        receipt.original_source_excerpt_sha256s
+    )
+    assert set(receipt.included_citation_unit_ids).issubset(
+        receipt.original_citation_unit_ids
+    )
 
 
 def test_store_rejects_transfer_tree_path(tmp_path):
     shared = tmp_path / "to-studio"
     with pytest.raises(ValueError, match="transfer tree"):
         SectionAnalysisStore(shared / "worker.sqlite", forbidden_roots=(shared,))
+
+
+def test_store_requeues_only_legacy_mapper_json_hold_for_declared_repair(tmp_path):
+    units = build_citation_units_v2("Public evidence. " * 20, doc_id="doc-json-hold")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-json-hold", units=units, small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=2000,
+        maximum_prompts_per_section=2,
+    )
+    store = SectionAnalysisStore(tmp_path / "json-hold.sqlite")
+    try:
+        store.seed(plan)
+        job_id = plan.jobs[0].job_id
+        with store.connection:
+            store.connection.execute(
+                "UPDATE section_jobs SET state='held',attempt=1,terminal_reason=? WHERE job_id=?",
+                ("local_model_response_truncated_json", job_id),
+            )
+        assert store.requeue_mapper_json_output_holds() == 1
+        row = store.connection.execute(
+            "SELECT state,attempt,terminal_reason FROM section_jobs WHERE job_id=?", (job_id,),
+        ).fetchone()
+        assert (row["state"], row["attempt"], row["terminal_reason"]) == (
+            "pending", 1, "section_mapper_schema_validation_retryable",
+        )
+        assert store.requeue_mapper_json_output_holds() == 0
+    finally:
+        store.close()
+
+
+def test_store_migrates_one_exhausted_transport_hold_without_new_semantic_attempt(tmp_path):
+    units = build_citation_units_v2("Public evidence. " * 20, doc_id="doc-transport")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-transport", units=units, small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=2000,
+        maximum_prompts_per_section=2,
+    )
+    store = SectionAnalysisStore(tmp_path / "transport-hold.sqlite")
+    try:
+        store.seed(plan)
+        job_id = plan.jobs[0].job_id
+        with store.connection:
+            store.connection.execute(
+                "UPDATE section_jobs SET state='held',attempt=2,terminal_reason=? WHERE job_id=?",
+                ("local_chat_transport_retryable", job_id),
+            )
+            store.connection.execute(
+                "INSERT INTO section_job_failures(job_id,attempt,stage,error_code,"
+                "http_status_category,pydantic_diagnostics_json,requested_alias) "
+                "VALUES(?,?,?,?,?,?,?)",
+                (
+                    job_id, 1, "pydantic_validation",
+                    "section_mapper_schema_validation_retryable", "", "[]", "core-qwen",
+                ),
+            )
+        assert store.migrate_exhausted_transport_holds() == 1
+        row = store.connection.execute(
+            "SELECT state,attempt,terminal_reason,transport_retry_count FROM section_jobs "
+            "WHERE job_id=?", (job_id,),
+        ).fetchone()
+        assert tuple(row) == (
+            "pending", 1, "section_mapper_schema_validation_retryable", 1,
+        )
+        assert store.migrate_exhausted_transport_holds() == 0
+    finally:
+        store.close()
+
+
+def test_confirmed_abandoned_runner_recovery_preserves_attempt_and_diagnostic(tmp_path):
+    units = build_citation_units_v2("Public evidence. " * 20, doc_id="doc-abandoned")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-abandoned", units=units, small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=2000,
+        maximum_prompts_per_section=2,
+    )
+    store = SectionAnalysisStore(tmp_path / "abandoned.sqlite")
+    try:
+        store.seed(plan)
+        now = datetime.now(timezone.utc)
+        job, _token, attempt = store.claim(now, lease_seconds=900)
+        assert attempt == 1
+        assert store.recover_confirmed_abandoned_runner() == 1
+        row = store.connection.execute(
+            "SELECT state,attempt,lease_token,lease_expires_at FROM section_jobs WHERE job_id=?",
+            (job.job_id,),
+        ).fetchone()
+        assert tuple(row) == ("pending", 0, None, None)
+        failure = store.failure_evidence()[0]
+        assert failure["error_code"] == "runner_abandoned_after_scheduler_recovery"
+        assert failure["stage"] == "http_transport"
+        assert failure["attempt"] == 1
+    finally:
+        store.close()
+
+
+def test_local_service_restart_recovers_only_transport_held_rows(tmp_path):
+    units = build_citation_units_v2("Public evidence. " * 20, doc_id="doc-service")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-service", units=units, small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=2000,
+        maximum_prompts_per_section=2,
+    )
+    store = SectionAnalysisStore(tmp_path / "service.sqlite")
+    try:
+        store.seed(plan)
+        job_id = plan.jobs[0].job_id
+        with store.connection:
+            store.connection.execute(
+                "UPDATE section_jobs SET state='held',attempt=2,terminal_reason=?,"
+                "transport_retry_count=1 WHERE job_id=?",
+                ("local_chat_transport_retryable", job_id),
+            )
+        assert store.recover_after_confirmed_local_service_restart() == 1
+        row = store.connection.execute(
+            "SELECT state,attempt,terminal_reason,transport_retry_count FROM section_jobs "
+            "WHERE job_id=?", (job_id,),
+        ).fetchone()
+        assert tuple(row) == ("pending", 0, "", 0)
+        assert store.failure_evidence()[0]["error_code"] == "local_service_restart_recovery"
+    finally:
+        store.close()

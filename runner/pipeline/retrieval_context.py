@@ -104,6 +104,8 @@ class GroundedEnrichmentRequestV1(_Strict):
     )
     run_id: str
     document_id: str
+    analysis_payload: dict[str, Any]
+    source_metadata: dict[str, Any] | None = None
     analysis_sha256: str
     retrieval_context: RetrievalContextV1
     lexicon_snapshot_sha256: str
@@ -131,6 +133,13 @@ class GroundedEnrichmentRequestV1(_Strict):
             raise ValueError("grounded Enrichment document/context mismatch")
         if self.retrieval_context.query.analysis_sha256 != self.analysis_sha256:
             raise ValueError("grounded Enrichment analysis/context mismatch")
+        if _canonical_sha(self.analysis_payload) != self.analysis_sha256:
+            raise ValueError("grounded Enrichment analysis payload hash mismatch")
+        if self.source_metadata is not None and (
+            _canonical_sha(self.source_metadata)
+            != self.retrieval_context.query.source_metadata_sha256
+        ):
+            raise ValueError("grounded Enrichment source metadata hash mismatch")
         if self.request_sha256 != canonical_contract_sha256(self, omit={"request_sha256"}):
             raise ValueError("grounded Enrichment request hash mismatch")
         return self
@@ -138,13 +147,16 @@ class GroundedEnrichmentRequestV1(_Strict):
 
 def build_grounded_enrichment_request(
     *, run_id: str, document_id: str, analysis_payload: dict[str, Any],
+    source_metadata: dict[str, Any] | None = None,
     context: RetrievalContextV1, lexicon_snapshot_sha256: str,
     entity_snapshot_sha256: str, requested_model: str,
     prompt_version: str = "enrichment-v1.1-grounded",
 ) -> GroundedEnrichmentRequestV1:
     values = dict(
         schema_version="grounded-enrichment-request-v1.0", run_id=run_id,
-        document_id=document_id, analysis_sha256=_canonical_sha(analysis_payload),
+        document_id=document_id, analysis_payload=analysis_payload,
+        source_metadata=source_metadata,
+        analysis_sha256=_canonical_sha(analysis_payload),
         retrieval_context=context, lexicon_snapshot_sha256=lexicon_snapshot_sha256,
         entity_snapshot_sha256=entity_snapshot_sha256, requested_model=requested_model,
         prompt_version=prompt_version, request_sha256="0" * 64,

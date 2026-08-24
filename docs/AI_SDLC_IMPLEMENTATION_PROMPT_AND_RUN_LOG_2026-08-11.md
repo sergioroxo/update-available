@@ -1,0 +1,406 @@
+<!-- PROMPT START: direct-copied-semantic-pilot-v0.1 -->
+
+model: gpt-5.6-sol
+reasoning_effort: high
+reasoning_mode: standard
+model_role: mac-studio-direct-semantic-pilot-engineer
+
+# SurvivingSOGICE — Run-021 Direct Six-Document Copied Semantic Pilot
+
+## Run identity
+
+- Prompt ID: `direct-copied-semantic-pilot-v0.1`
+- Run ID: `ai-sdlc-20260822-direct-copied-semantic-pilot-021`
+- Host: physical Mac Studio
+- Parent branch: `codex/semantic-functionalization-direct`
+- Parent commit: `69592f69c057cc074764b96d907d9ec49b37ae72`
+- Parent state: `COMPLETED_DIRECT_MAC_STUDIO_SYNTHETIC_SEMANTIC_FUNCTIONALIZATION`
+- Scope: six exact public copied-text artifacts; local semantic processing only
+
+## Accepted foundation
+
+By executing this prompt, record independent acceptance of the parent for its
+synthetic scope. The MacBook independently verified:
+
+- transferred bundle SHA-256
+  `24cc8fccbcd500e85979cecbb2f982efad89c9edeeb8bba962aefccc3d2b7ad3`;
+- complete Git history, branch, and commit;
+- exact six-file implementation scope;
+- 59 focused tests passed in a clean clone;
+- 2,623 complete-suite tests passed after attaching the host-local virtual
+  environment required by two subprocess tests;
+- compilation and `git diff --check` passed;
+- no credential pattern was found in the changed source/test files.
+
+Do not repeat the synthetic concurrency benchmark, complete suite, broad host
+inventory, embedding-dimension probes, or already successful synthetic model
+work on the Studio.
+
+## Minimal governance before source or research-data work
+
+1. Append this exact prompt to
+   `docs/AI_SDLC_IMPLEMENTATION_PROMPT_AND_RUN_LOG_2026-08-11.md` without
+   rewriting any prior run record.
+2. Hash the canonical UTF-8 prompt body from the first `model:` line through the
+   final `larger campaign automatically.` line, excluding marker lines and the
+   terminating newline, with no normalization. Record its byte count and full
+   SHA-256 in a concise Run-021 record.
+3. Create one fresh dirty-worktree preflight manifest before edits. Record the
+   exact parent commit, permitted source/test/governance paths, and the external
+   Studio-local workspace and output paths. Preserve unrelated work.
+4. Record parent acceptance and the six-artifact approval below before copying
+   or processing any real bytes.
+5. Use one post-run audit after successful execution. Do not create governance
+   checkpoints, replacement prompt versions, or intermediate release records
+   for normal defects corrected within this same run.
+
+## Researcher authorization
+
+By issuing this prompt, the researcher gives this exact approval:
+
+`I approve these six previously verified public, non-sensitive copied text artifacts for local Mac Studio Analysis, Qwen and BGE embedding, frozen pilot retrieval, retrieval-grounded Enrichment, and comparison only. No corpus import, publication, Sanity, Supabase, or other remote write is authorized.`
+
+The six artifacts were previously identity-verified and processed through the
+three non-model stations in Run-012. This prompt expands authority only for
+local semantic processing of these exact copied bytes. It does not authorize
+any other document, URL reacquisition, testimony, private material, live corpus
+scan, Source Queue operation, or remote write.
+
+## Exact selected objects
+
+The authoritative input location on the Studio is the existing read-only
+Syncthing replica:
+
+`/Users/cdn-ai/sogice-transfer/to-mac-studio`
+
+Open only the six exact content-addressed object directories below. Verify the
+payload, `object.json`, and checksum sidecars before copying the payload once to
+the new Studio-local workspace. Do not modify the exchange tree.
+
+1. `pilot011-13c3c42bd635` — FELGTBI+, Spanish
+   - bytes: `6642`; characters: `6485`
+   - SHA-256: `d92ed216d31aec8d1bfeca12425995e1a9b8aaad86edbc269e6109b3ebf879ae`
+   - relative payload:
+     `sources/sha256/d9/d92ed216d31aec8d1bfeca12425995e1a9b8aaad86edbc269e6109b3ebf879ae/source.txt`
+
+2. `pilot011-14174594dc39` — UK Council for Psychotherapy
+   - bytes: `1142`; characters: `1140`
+   - SHA-256: `9b5fea32e250e4c9d98500b13d74a7d346d4dc9cd48b34c2fab2fe90943c0a13`
+   - relative payload:
+     `sources/sha256/9b/9b5fea32e250e4c9d98500b13d74a7d346d4dc9cd48b34c2fab2fe90943c0a13/source.txt`
+
+3. `pilot011-3281c668` — Xtra Magazine
+   - bytes: `9767`; characters: `9641`
+   - SHA-256: `c10e75704829350a2107ff5197d8ad5bd313501859e60434fb7338c57109c5f7`
+   - relative payload:
+     `sources/sha256/c1/c10e75704829350a2107ff5197d8ad5bd313501859e60434fb7338c57109c5f7/source.txt`
+
+4. `pilot011-330e0a29b8eb` — Society for Evidence Based Gender Medicine
+   - bytes: `2244`; characters: `2234`
+   - SHA-256: `e0ae7560c13f84a0161bb27ab5b690eabb44438614ad860f6ee7e1f9f9dab447`
+   - relative payload:
+     `sources/sha256/e0/e0ae7560c13f84a0161bb27ab5b690eabb44438614ad860f6ee7e1f9f9dab447/source.txt`
+
+5. `pilot011-dc0ff39b` — Christian Concern
+   - bytes: `9656`; characters: `9564`
+   - SHA-256: `9437a5dacaf0e032ad6b5e00e06f77071039737c65043de2e4a6085a1bee0272`
+   - relative payload:
+     `sources/sha256/94/9437a5dacaf0e032ad6b5e00e06f77071039737c65043de2e4a6085a1bee0272/source.txt`
+
+6. `pilot011-f5b0822bc6ee` — UN OHCHR
+   - bytes: `6814`; characters: `6756`
+   - SHA-256: `84e47a9f033b4560fdef65baec811587303f4aaebcd904af9461ea504af37056`
+   - relative payload:
+     `sources/sha256/84/84e47a9f033b4560fdef65baec811587303f4aaebcd904af9461ea504af37056/source.txt`
+
+Expected total source bytes: `36,265`.
+
+If an exact object is absent or differs, stop before model work with
+`AWAITING_EXACT_SOURCE_OBJECT_DELIVERY`. Do not substitute or reacquire it.
+
+## Objective
+
+Advance from a generated-synthetic semantic pipeline to one bounded real copied
+pilot using the role-specialized staged intelligence architecture:
+
+`verified complete text → v2 units → independent section Analysis → document compiler → Qwen 4,096d unit embeddings → immutable pilot index → retrieval context → grounded Enrichment → sealed results → model-idle rerun`
+
+The first pass must use real local model calls. The second identical pass must
+use durable successful outputs and make zero new chat or embedding calls.
+
+This is a direct Studio development run. Correct ordinary implementation defects
+in the same worktree and continue until the bounded pilot succeeds. Do not stop
+after the first schema, provider, persistence, or validation defect merely to
+create another diagnostic bundle. Stop only for the mandatory blockers below.
+
+## Efficient operating rules
+
+1. Locate the clean parent clone and verify only its branch, commit, and clean
+   state. Create a new worktree/branch named
+   `codex/direct-copied-semantic-pilot-021`. Never alter prior clones or commits.
+2. Reuse the current healthy LiteLLM process and installed environment. Do not
+   restart LiteLLM, rebuild the virtual environment, repeat concurrency 1/2/4,
+   or repeat dimension probes unless a concrete health failure proves necessary.
+3. Make at most one authenticated `/model/info` request at the start. Require:
+   - `core-qwen` → `ollama_chat/qwen3.6:35b-mlx`;
+   - `core-gemma` → `ollama_chat/gemma4:31b-mlx`;
+   - `compiler-qwen38` → `ollama_chat/qwen3.8:27b-mlx`;
+   - `research-embedding` → `ollama/qwen3-embedding:8b`;
+   - `bge-m3-shadow` → `ollama/bge-m3:latest`.
+4. Use targeted tests and one-document or one-job probes while developing. Do
+   not run the complete suite on the Studio. Do not redo already successful
+   work after a localized failure.
+5. Do not create intermediate release bundles. Commit and bundle once after the
+   complete pilot and zero-call rerun pass.
+
+## Required implementation
+
+### 1. Production-shaped copied semantic pilot contract and CLI
+
+Add the smallest strict, additive runner needed to execute a caller-supplied,
+hash-bound copied-text selection. Do not hard-code poison behavior or silently
+turn the synthetic canary into a real-data mode.
+
+The pilot contract must bind the run ID, approval text/hash, six document IDs,
+source hashes/counts, section/unit versions, route purposes, retry limits,
+retrieval policy, remote writes fixed false, publication fixed false, and local
+workspace. Reject unknown fields, extra documents, unsafe paths, stale hashes,
+and contradictory authority.
+
+Use this Studio-local workspace, outside Syncthing:
+
+`/Users/cdn-ai/Library/Application Support/SurvivingSOGICE/factory/semantic-pilot-run021`
+
+Provide one stable CLI command for the complete pilot and one status/report
+command. The execution must be independent of Streamlit and resumable from its
+local SQLite/cache state.
+
+### 2. Preserve complete evidence
+
+For each copied payload, verify exact bytes and strict UTF-8, then build or
+verify complete canonical text, sections v2, and citation units v2. Require exact
+100% reconstruction, no gaps/overlap/truncation, and no historical truncation
+marker. Never normalize or shorten canonical evidence.
+
+### 3. Independent Analysis cascade
+
+Run Analysis without RAG input:
+
+- parallel section mapping: `core-qwen`, maximum accepted concurrency `4`;
+- bounded repair for only locally classified schema/output failures:
+  `compiler-qwen38`;
+- primary document compiler: `core-gemma`;
+- comparison compiler: `compiler-qwen38`.
+
+Keep provider schema structural and locally enforce exact citation membership,
+uniqueness, supported-citation minimum, output bounds, offsets, and hashes.
+Persist content-free structured failure evidence. Preserve successful jobs on
+retry/resume. Do not expose model reasoning or accept uncited supported claims.
+
+### 4. Embeddings and immutable pilot retrieval
+
+- Create production pilot unit vectors only with `research-embedding`, exactly
+  4,096 finite dimensions, binding source/unit/model hashes.
+- Run `bge-m3-shadow` at 1,024 dimensions as a separate comparison lane. Never
+  mix it into the Qwen namespace or replace the production pilot index.
+- Build a closed, immutable FTS5 plus exact-vector pilot index from source units
+  only. Structurally reject Analysis, compiler, and Enrichment text as index
+  evidence.
+- Verify integrity, manifest hashes, rebuild determinism, and that requesting
+  documents cannot retrieve themselves for grounded Enrichment.
+
+### 5. Real local grounded Enrichment
+
+Replace the generated-synthetic grounded executor for this production-shaped
+pilot with a strict local model adapter. Use `core-gemma` under a distinct
+`grounded_enrichment` purpose and receipt. Its input may contain only the
+document's completed independent Analysis, source metadata, the immutable
+retrieval context, and the approved lexicon snapshot if one is explicitly
+available and hash-bound.
+
+Validate every cited document/unit against the frozen retrieval context. Reject
+invented documents, units, quotes, locators, unsupported promotions, and any
+same-run generated content represented as source evidence. Outputs remain
+provisional local research artifacts and must not be imported or promoted.
+
+### 6. Results and researcher review package
+
+Produce two separate artifacts in `/Users/cdn-ai/Downloads` for manual Tailscale
+transfer:
+
+1. a complete-history source Git bundle plus checksum and manifest;
+2. a sealed pilot-results archive plus checksum and strict manifest.
+
+The results archive may contain only versioned Analysis, compiler comparison,
+embedding/index manifests without raw vector dumps unless required for audit,
+retrieval contexts, grounded Enrichment, receipts, projections, and content-free
+logs for these six documents. It must contain no source bytes, keys, `.env`,
+SQLite/WAL/journal, caches, PIDs, locks, or unrelated research artifacts.
+
+Include a researcher-facing comparison report showing disagreements between the
+Gemma and Qwen3.8 compiler outputs and Qwen-vs-BGE retrieval rankings without
+automatically declaring either model correct. Include an anchor-candidate report
+for later researcher approval; do not invent a truth threshold from model
+confidence.
+
+## Expected implementation scope
+
+Prefer changes limited to:
+
+- `runner/pipeline/semantic_model_adapters.py`;
+- `runner/pipeline/analysis_sections.py` only if a proven production-pilot
+  contract requires it;
+- one additive production runner such as
+  `runner/pipeline/factory_semantic_pilot.py`;
+- `runner/pipeline/retrieval_context.py` only for the real grounded local model
+  executor boundary;
+- directly matching focused tests;
+- the Run-021 governance record and audits.
+
+Do not modify ordinary ingestion, Source Queue, Sanity, Supabase, Streamlit,
+publication, consent, testimony, legal, lexicon-promotion, or existing corpus
+artifacts. Record and justify any direct-dependency deviation before editing it.
+
+## Validation and acceptance
+
+Add focused adversarial tests for the copied-pilot authority, source binding,
+Analysis-without-RAG boundary, source-only index membership, model-route purpose,
+grounded citation validation, resume/idempotency, sealed-result allow-list, and
+zero remote-write behavior.
+
+Run only:
+
+1. the three accepted semantic focused test files plus new directly affected
+   pilot/grounded-executor tests;
+2. imports and byte compilation for changed modules;
+3. `git diff --check` and a changed-file credential scan;
+4. the real six-document pilot;
+5. the identical pilot a second time.
+
+Acceptance requires:
+
+- all six exact source identities pass and remain unchanged;
+- every v2 partition reconstructs its complete source;
+- all Analysis jobs and six primary compilations succeed with validated source
+  citations and no RAG input;
+- Qwen3.8 comparison outputs are retained separately;
+- every production vector is 4,096d and hash-bound;
+- the source-only frozen index passes integrity and deterministic rebuild;
+- BGE shadow results remain a distinct 1,024d comparison lane;
+- every grounded Enrichment citation validates against its frozen context;
+- failures remain isolated and successful work is not repeated;
+- the second identical execution makes zero chat and zero embedding calls and
+  produces the same projection hash;
+- focused validation passes;
+- source and results release manifests verify;
+- no import, publication, cloud call, remote write, or live-data mutation occurs.
+
+Normal local implementation defects are not mandatory blockers. Diagnose them
+with bounded content-free evidence, patch them in this same run, add a regression
+test, and continue. Mandatory blockers are limited to: wrong physical host;
+parent branch/commit mismatch; dirty parent clone that cannot be safely isolated;
+missing or mismatched exact source object; unknown/private/testimony content;
+unavailable required local route with no authorized identity; credential
+exposure; required cloud/remote operation; or inability to keep workspace and
+mutable state outside Syncthing.
+
+Mark `COMPLETED_DIRECT_MAC_STUDIO_REAL_COPIED_SEMANTIC_PILOT` only after all
+acceptance conditions pass. Otherwise report the precise mandatory blocker and
+preserve resumable local state.
+
+## Final response
+
+Report the commit, changed files, exact commands, source identities, Analysis
+job/attempt/call counts, compiler routes and comparison status, embedding counts
+and dimensions, index/retrieval evidence, grounded Enrichment citation results,
+first/second projection hashes, zero-call rerun evidence, focused tests, bundle
+and result-archive paths/hashes, security/mutation audit, and any remaining
+methodological risks. Never include source text, model output text, keys, or raw
+credentials in the chat response.
+
+The next gate is MacBook cryptographic and compatibility verification followed
+by researcher review of the six-document comparison package. Do not start a
+larger campaign automatically.
+
+<!-- PROMPT END: direct-copied-semantic-pilot-v0.1 -->
+
+## Run-021 execution record
+
+- Run ID: `ai-sdlc-20260822-direct-copied-semantic-pilot-021`
+- Prompt ID: `direct-copied-semantic-pilot-v0.1`
+- Canonical prompt body byte count: `15614`
+- Canonical prompt body SHA-256: `d2e8e97f71ea7fb97aee957b98a6d6d65c774fa36e02159eaf4c3b1beec897e8`
+- Canonical hash boundary: first `model:` byte through the last byte of
+  `larger campaign automatically.`, excluding marker lines and the terminating newline,
+  with no normalization.
+- Parent accepted independently for its synthetic scope: branch
+  `codex/semantic-functionalization-direct`, commit
+  `69592f69c057cc074764b96d907d9ec49b37ae72`, transferred bundle SHA-256
+  `24cc8fccbcd500e85979cecbb2f982efad89c9edeeb8bba962aefccc3d2b7ad3`.
+- Researcher authorization recorded verbatim:
+  `I approve these six previously verified public, non-sensitive copied text artifacts for local Mac Studio Analysis, Qwen and BGE embedding, frozen pilot retrieval, retrieval-grounded Enrichment, and comparison only. No corpus import, publication, Sanity, Supabase, or other remote write is authorized.`
+- Exact approved artifact identities:
+  - `pilot011-13c3c42bd635`, `6642` bytes,
+    `d92ed216d31aec8d1bfeca12425995e1a9b8aaad86edbc269e6109b3ebf879ae`
+  - `pilot011-14174594dc39`, `1142` bytes,
+    `9b5fea32e250e4c9d98500b13d74a7d346d4dc9cd48b34c2fab2fe90943c0a13`
+  - `pilot011-3281c668`, `9767` bytes,
+    `c10e75704829350a2107ff5197d8ad5bd313501859e60434fb7338c57109c5f7`
+  - `pilot011-330e0a29b8eb`, `2244` bytes,
+    `e0ae7560c13f84a0161bb27ab5b690eabb44438614ad860f6ee7e1f9f9dab447`
+  - `pilot011-dc0ff39b`, `9656` bytes,
+    `9437a5dacaf0e032ad6b5e00e06f77071039737c65043de2e4a6085a1bee0272`
+  - `pilot011-f5b0822bc6ee`, `6814` bytes,
+    `84e47a9f033b4560fdef65baec811587303f4aaebcd904af9461ea504af37056`
+- Approved total source bytes: `36265`.
+- Remote writes: forbidden. Publication: forbidden. Corpus import: forbidden.
+- Preflight manifest: `docs/run021_dirty_worktree_preflight_manifest.json`.
+
+### Run-021 completion audit — 2026-08-24
+
+- Terminal state: `COMPLETED_DIRECT_MAC_STUDIO_REAL_COPIED_SEMANTIC_PILOT`.
+- Authenticated LiteLLM preflight returned HTTP `200` for both `/v1/models`
+  and `/model/info`; all five approved aliases resolved to their exact local
+  Ollama identities. Credential values and digests were not persisted.
+- The verified `com.ollama.server` LaunchAgent was backed up and configured
+  with `OLLAMA_MAX_LOADED_MODELS=1` and `OLLAMA_NUM_PARALLEL=1`. One listener
+  remained after the duplicate GUI-owned server was stopped.
+- An interprocess global model lease held each model identity beyond request
+  completion until explicit unload was verified. The adversarial focused test
+  proved a second route could not start after the first request completed or
+  after unload verification failed; it proceeded only after verified release.
+- Every remaining request used concurrency `1`. The observed transition audit
+  contains `24` content-free snapshots; minimum free-memory observation was
+  `77%`, maximum swap growth from the resumed-run baseline was `-8388608`
+  bytes, and every phase ended with zero resident models.
+- Deterministic compiler reduction policy
+  `compiler-derived-input-reduction-v1.0` capped provider inputs at `48`
+  findings, `50000` excerpt characters, and `75000` canonical JSON bytes.
+  The two previously uncached oversized primary packets were reduced from
+  `151593` to `69325` bytes and from `110475` to `64024` bytes. Receipts bind
+  complete source hashes, original/included/omitted finding order and counts,
+  citation coverage, character/byte totals, selected packet, and policy.
+- Six primary Gemma compilations and six separate Qwen3.8 comparison
+  compilations passed local citation validation. The resumed portion retained
+  `24` valid model receipts: `2` primary compilers, `6` comparison compilers,
+  `5` Qwen embedding batches covering `33` inputs, `5` BGE batches covering
+  `33` inputs, and `6` grounded Enrichments. Three grounded attempts were
+  strictly rejected before receipt construction for a content-free Markdown
+  JSON wrapper boundary; the final adapter accepts only a complete standalone
+  JSON fence and performs unchanged strict JSON, Pydantic, frozen-context,
+  citation, duplicate-locator, and hash validation.
+- The frozen Qwen index contains `27` source units. Its independent rebuild was
+  deterministic; all six requesting documents excluded themselves from
+  retrieval. BGE-M3 remained a separate `1024`-dimensional shadow lane.
+- All six grounded Enrichments passed with zero invalid citations. No lexicon
+  or entity snapshot was available or inferred.
+- Successful invocation 1 recorded `6` new chat calls and zero new embedding
+  calls because all earlier resumed phases were already durable by that final
+  invocation. Identical invocation 2 recorded zero chat, embedding, and total
+  model calls. Both projected
+  `7b6d538b21bbd9a8e27f0b72d32f6e6169cbcc1096b84b4b8141c263119f807f`.
+- Focused validation: `73 passed in 1.87s`. Imports, byte compilation,
+  `git diff --check`, and the ten-file changed-source credential scan passed;
+  no rotated credential, likely secret, or private-key marker was found.
+- Remote writes: `0`. Publication: `false`. Corpus import: `false`.
+  Syncthing mutation: `false`.

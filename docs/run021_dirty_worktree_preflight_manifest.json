@@ -1,0 +1,39 @@
+{
+  "schema_version": "run021-dirty-worktree-preflight-v1.0",
+  "run_id": "ai-sdlc-20260822-direct-copied-semantic-pilot-021",
+  "parent_branch": "codex/semantic-functionalization-direct",
+  "parent_commit": "69592f69c057cc074764b96d907d9ec49b37ae72",
+  "work_branch": "codex/direct-copied-semantic-pilot-021",
+  "dirty_before_implementation_edits": true,
+  "dirty_paths_at_preflight": [
+    "docs/AI_SDLC_IMPLEMENTATION_PROMPT_AND_RUN_LOG_2026-08-11.md",
+    "docs/run021_dirty_worktree_preflight_manifest.json"
+  ],
+  "permitted_repository_paths": [
+    "runner/pipeline/semantic_model_adapters.py",
+    "runner/pipeline/analysis_sections.py",
+    "runner/pipeline/factory_semantic_pilot.py",
+    "runner/pipeline/retrieval_context.py",
+    "tests/test_semantic_model_adapters.py",
+    "tests/test_analysis_sections.py",
+    "tests/test_factory_semantic_pilot.py",
+    "tests/test_retrieval_context.py",
+    "docs/AI_SDLC_IMPLEMENTATION_PROMPT_AND_RUN_LOG_2026-08-11.md",
+    "docs/run021_dirty_worktree_preflight_manifest.json",
+    "docs/run021_post_run_audit.json"
+  ],
+  "read_only_input_root": "/Users/cdn-ai/sogice-transfer/to-mac-studio",
+  "studio_local_workspace": "/Users/cdn-ai/Library/Application Support/SurvivingSOGICE/factory/semantic-pilot-run021",
+  "output_paths": [
+    "/Users/cdn-ai/Downloads/surviving-sogice-direct-copied-semantic-pilot-021.bundle",
+    "/Users/cdn-ai/Downloads/surviving-sogice-direct-copied-semantic-pilot-021.bundle.sha256",
+    "/Users/cdn-ai/Downloads/surviving-sogice-direct-copied-semantic-pilot-021.manifest.json",
+    "/Users/cdn-ai/Downloads/surviving-sogice-direct-copied-semantic-pilot-021-results.tar.gz",
+    "/Users/cdn-ai/Downloads/surviving-sogice-direct-copied-semantic-pilot-021-results.tar.gz.sha256",
+    "/Users/cdn-ai/Downloads/surviving-sogice-direct-copied-semantic-pilot-021-results.manifest.json"
+  ],
+  "remote_writes": false,
+  "publication": false,
+  "corpus_import": false,
+  "syncthing_mutation": false
+}

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 
 import httpx
 import pytest
@@ -100,6 +102,71 @@ def test_preflight_requires_explicit_alias_to_local_model_binding():
     client.close()
 
 
+def test_global_model_lease_blocks_second_route_until_verified_explicit_unload(tmp_path):
+    second_started = threading.Event()
+    second_finished = threading.Event()
+    errors = []
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        second_started.set()
+        return httpx.Response(200, json={
+            "model": "core-gemma",
+            "choices": [{
+                "message": {"content": json.dumps({"claims": []})},
+                "finish_reason": "stop",
+            }],
+        })
+
+    config = _config(global_model_lease_path=str(tmp_path / "global-model.lease"))
+    first = OpenAICompatibleLocalClient(config, transport=httpx.MockTransport(handler))
+    second = OpenAICompatibleLocalClient(config, transport=httpx.MockTransport(handler))
+    first.preflight()
+    second.preflight()
+    route = config.route("document_compiler")
+    resolved = "ollama_chat/gemma4:31b-mlx"
+    first.chat(
+        route, system="bounded", user="bounded", concurrency_level=1,
+        response_schema=compiler_response_json_schema(),
+    )
+    second_started.clear()
+
+    def run_second():
+        try:
+            second.chat(
+                route, system="bounded", user="bounded", concurrency_level=1,
+                response_schema=compiler_response_json_schema(),
+            )
+        except Exception as exc:  # pragma: no cover - asserted below
+            errors.append(exc)
+        finally:
+            second_finished.set()
+
+    worker = threading.Thread(target=run_second, daemon=True)
+    worker.start()
+    time.sleep(0.1)
+    assert not second_started.is_set()
+    assert not second_finished.is_set()
+    with pytest.raises(SemanticAdapterError, match="unload_not_verified"):
+        first.release_model_lease_after_verified_unload(
+            resolved, verify_unloaded=lambda: False,
+        )
+    time.sleep(0.1)
+    assert not second_started.is_set()
+    first.release_model_lease_after_verified_unload(
+        resolved, verify_unloaded=lambda: True,
+    )
+    worker.join(timeout=2)
+    assert second_started.is_set() and second_finished.is_set()
+    assert errors == []
+    second.release_model_lease_after_verified_unload(
+        resolved, verify_unloaded=lambda: True,
+    )
+    first.close()
+    second.close()
+
+
 @pytest.mark.parametrize("resolved", [
     "ollama_chat/qwen3.6:35b-a3b",
     "ollama/qwen3.6:35b-mlx",
@@ -146,6 +213,35 @@ def test_model_info_is_required_instead_of_trusting_alias_only():
     )
     with pytest.raises(SemanticAdapterError, match="model_info_required"):
         client.preflight()
+    client.close()
+
+
+def test_truncated_mapper_json_is_classified_for_single_schema_repair():
+    units = build_citation_units_v2("Public evidence. " * 20, doc_id="doc-truncated")
+    plan = build_adaptive_analysis_plan(
+        run_id="run-020", units=units, small_model_route="core-qwen",
+        repair_model_route="compiler-qwen38", target_chars=2000,
+        maximum_prompts_per_section=2,
+    )
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        return httpx.Response(200, json={
+            "model": "core-qwen",
+            "choices": [{
+                "message": {"content": '{"findings":['},
+                "finish_reason": "length",
+            }],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    with pytest.raises(MapperSchemaRetryableError) as caught:
+        LocalSectionExecutor(client, concurrency_level=1).execute(
+            plan.jobs[0], plan.sections[0], 1,
+        )
+    assert caught.value.issues[0].type_code == "json_truncated"
     client.close()
 
 
@@ -243,6 +339,8 @@ def test_section_and_compiler_adapters_preserve_exact_citation_boundary():
     assert compiler_format["type"] == "json_schema"
     assert compiler_format["json_schema"]["name"] == "compiler_response_v1"
     assert compiler_format["json_schema"]["schema"] == compiler_response_json_schema()
+    compiler_user = json.loads(requests[-1]["messages"][1]["content"])
+    assert compiler_user["allowed_supported_citation_unit_ids"] == [section.unit_ids[0]]
     assert [row.purpose for row in client.receipts] == ["section_mapper", "document_compiler"]
     assert all("source_text" not in row.model_dump_json() for row in client.receipts)
     client.close()
@@ -278,9 +376,13 @@ def test_mapper_rejects_unknown_source_citation_and_malformed_json():
         mapper.execute(plan.jobs[0], plan.sections[0], 1)
     assert caught.value.issues[0].type_code == "enum"
     response_content["value"] = "not-json"
-    with pytest.raises(SectionAnalysisError, match="json_not_object_prefixed") as malformed:
+    with pytest.raises(
+        MapperSchemaRetryableError, match="schema_validation_retryable",
+    ) as malformed:
         mapper.execute(plan.jobs[0], plan.sections[0], 1)
-    assert malformed.value.stage == "response_json"
+    assert malformed.value.stage == "pydantic_validation"
+    assert malformed.value.requested_alias == "core-qwen"
+    assert malformed.value.issues[0].type_code == "json_invalid"
     client.close()
 
 

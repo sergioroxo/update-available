@@ -1,0 +1,101 @@
+{
+  "schema_version": "run021-post-run-audit-v1.0",
+  "run_id": "ai-sdlc-20260822-direct-copied-semantic-pilot-021",
+  "terminal_state": "COMPLETED_DIRECT_MAC_STUDIO_REAL_COPIED_SEMANTIC_PILOT",
+  "route_preflight": {
+    "v1_models_http_status": 200,
+    "model_info_http_status": 200,
+    "bindings": {
+      "bge-m3-shadow": "ollama/bge-m3:latest",
+      "compiler-qwen38": "ollama_chat/qwen3.8:27b-mlx",
+      "core-gemma": "ollama_chat/gemma4:31b-mlx",
+      "core-qwen": "ollama_chat/qwen3.6:35b-mlx",
+      "research-embedding": "ollama/qwen3-embedding:8b"
+    }
+  },
+  "memory_safety": {
+    "ollama_launch_agent": "com.ollama.server",
+    "maximum_loaded_models": 1,
+    "maximum_parallel_requests": 1,
+    "listener_process_count": 1,
+    "transition_event_count": 24,
+    "minimum_memory_free_percent": 77,
+    "maximum_swap_growth_from_baseline_bytes": -8388608,
+    "terminal_resident_model_count": 0,
+    "global_interprocess_model_lease": true,
+    "explicit_unload_required": true
+  },
+  "compiler_input_policy": {
+    "policy_version": "compiler-derived-input-reduction-v1.0",
+    "maximum_evidence_items": 48,
+    "maximum_excerpt_characters": 50000,
+    "maximum_packet_bytes": 75000,
+    "uncached_primary_reductions": [
+      {
+        "document_id": "pilot011-dc0ff39b",
+        "original_findings": 66,
+        "included_findings": 37,
+        "omitted_findings": 29,
+        "original_packet_bytes": 151593,
+        "derived_packet_bytes": 69325
+      },
+      {
+        "document_id": "pilot011-f5b0822bc6ee",
+        "original_findings": 45,
+        "included_findings": 25,
+        "omitted_findings": 20,
+        "original_packet_bytes": 110475,
+        "derived_packet_bytes": 64024
+      }
+    ]
+  },
+  "execution": {
+    "analysis_job_count": 54,
+    "analysis_attempt_count": 58,
+    "primary_compilation_count": 6,
+    "comparison_compilation_count": 6,
+    "indexed_source_unit_count": 27,
+    "qwen_embedding_dimension": 4096,
+    "bge_shadow_dimension": 1024,
+    "retrieval_context_count": 6,
+    "grounded_enrichment_count": 6,
+    "grounded_invalid_citation_count": 0,
+    "self_retrieval_hit_count": 0,
+    "index_rebuild_deterministic": true,
+    "durable_valid_receipt_count": 24,
+    "durable_valid_receipts_by_purpose": {
+      "bge_shadow": 5,
+      "document_compiler": 2,
+      "grounded_enrichment": 6,
+      "qwen38_compiler_candidate": 6,
+      "qwen_embedding": 5
+    },
+    "content_free_rejected_grounded_wrapper_attempts": 3
+  },
+  "idempotency": {
+    "first_successful_invocation_new_chat_calls": 6,
+    "first_successful_invocation_new_embedding_calls": 0,
+    "first_successful_invocation_projection_sha256": "7b6d538b21bbd9a8e27f0b72d32f6e6169cbcc1096b84b4b8141c263119f807f",
+    "second_invocation_new_chat_calls": 0,
+    "second_invocation_new_embedding_calls": 0,
+    "second_invocation_new_model_calls": 0,
+    "second_invocation_projection_sha256": "7b6d538b21bbd9a8e27f0b72d32f6e6169cbcc1096b84b4b8141c263119f807f"
+  },
+  "validation": {
+    "focused_tests_passed": 73,
+    "focused_tests_failed": 0,
+    "imports_passed": true,
+    "byte_compilation_passed": true,
+    "git_diff_check_passed": true,
+    "changed_file_count_scanned_for_credentials": 11,
+    "exact_rotated_credential_matches": 0,
+    "likely_secret_matches": 0,
+    "private_key_markers": 0
+  },
+  "authority": {
+    "remote_writes": 0,
+    "publication": false,
+    "corpus_import": false,
+    "syncthing_mutation": false
+  }
+}
