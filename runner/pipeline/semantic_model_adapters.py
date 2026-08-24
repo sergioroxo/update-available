@@ -518,6 +518,7 @@ class OpenAICompatibleLocalClient:
         self._bindings: dict[str, str] = {}
         self._receipts: list[ModelCallReceiptV1] = []
         self._lock = threading.Lock()
+        self._before_model_activation: Callable[[str | None, str], None] | None = None
         self._model_lease = (
             InterprocessGlobalModelLease(config.global_model_lease_path)
             if config.global_model_lease_path else None
@@ -548,6 +549,24 @@ class OpenAICompatibleLocalClient:
         self._model_lease.release_after_verified_unload(
             resolved_model, verify_unloaded=verify_unloaded,
         )
+
+    def set_before_model_activation(
+        self, callback: Callable[[str | None, str], None],
+    ) -> None:
+        """Install the host safety transition used by the accepted local runtime."""
+        if self._model_lease is None:
+            raise SemanticAdapterError("model_transition_handler_requires_global_lease")
+        if self._before_model_activation is not None:
+            raise SemanticAdapterError("model_transition_handler_already_configured")
+        self._before_model_activation = callback
+
+    def _activate_model(self, resolved_model: str) -> None:
+        if self._model_lease is None:
+            return
+        current = self._model_lease.active_resolved_model
+        if current != resolved_model and self._before_model_activation is not None:
+            self._before_model_activation(current, resolved_model)
+        self._model_lease.activate(resolved_model)
 
     def _record(self, receipt: ModelCallReceiptV1) -> None:
         with self._lock:
@@ -648,8 +667,7 @@ class OpenAICompatibleLocalClient:
         concurrency_level: int, response_schema: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], ModelCallReceiptV1]:
         resolved = self.binding(route)
-        if self._model_lease is not None:
-            self._model_lease.activate(resolved)
+        self._activate_model(resolved)
         request = {
             "model": route.requested_model,
             "messages": [
@@ -755,8 +773,7 @@ class OpenAICompatibleLocalClient:
         self, route: LocalModelRouteV1, texts: Sequence[str], *, concurrency_level: int = 1,
     ) -> tuple[list[list[float]], ModelCallReceiptV1]:
         resolved = self.binding(route)
-        if self._model_lease is not None:
-            self._model_lease.activate(resolved)
+        self._activate_model(resolved)
         if route.expected_dimension is None:
             raise SemanticAdapterError("chat_route_used_for_embeddings")
         if not texts or any(not isinstance(row, str) or not row for row in texts):

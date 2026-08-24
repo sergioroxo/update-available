@@ -167,6 +167,56 @@ def test_global_model_lease_blocks_second_route_until_verified_explicit_unload(t
     second.close()
 
 
+def test_transition_handler_unloads_before_cross_route_activation(tmp_path):
+    requests = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        requests.append(body["model"])
+        payload = {"findings": []} if body["model"] == "core-qwen" else {"claims": []}
+        return httpx.Response(200, json={
+            "model": body["model"],
+            "choices": [{"message": {"content": json.dumps(payload)}}],
+        })
+
+    config = _config(global_model_lease_path=str(tmp_path / "global-model.lease"))
+    client = OpenAICompatibleLocalClient(config, transport=httpx.MockTransport(handler))
+    client.reuse_prevalidated_bindings({
+        "mapper": "ollama_chat/qwen3.6:35b-mlx",
+        "compiler": "ollama_chat/gemma4:31b-mlx",
+        "repair": "ollama_chat/qwen3.8:27b-mlx",
+        "embedding": "ollama/qwen3-embedding:8b",
+        "shadow": "ollama/bge-m3",
+    })
+    transitions = []
+
+    def before_activation(current, following):
+        transitions.append((current, following))
+        if current is not None:
+            client.release_model_lease_after_verified_unload(
+                current, verify_unloaded=lambda: True,
+            )
+
+    client.set_before_model_activation(before_activation)
+    client.chat(
+        config.route("section_mapper"), system="bounded", user="bounded",
+        concurrency_level=1, response_schema=mapper_response_json_schema(),
+    )
+    client.chat(
+        config.route("document_compiler"), system="bounded", user="bounded",
+        concurrency_level=1, response_schema=compiler_response_json_schema(),
+    )
+    assert requests == ["core-qwen", "core-gemma"]
+    assert transitions == [
+        (None, "ollama_chat/qwen3.6:35b-mlx"),
+        ("ollama_chat/qwen3.6:35b-mlx", "ollama_chat/gemma4:31b-mlx"),
+    ]
+    client.release_model_lease_after_verified_unload(
+        "ollama_chat/gemma4:31b-mlx", verify_unloaded=lambda: True,
+    )
+    client.close()
+
+
 @pytest.mark.parametrize("resolved", [
     "ollama_chat/qwen3.6:35b-a3b",
     "ollama/qwen3.6:35b-mlx",

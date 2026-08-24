@@ -11,7 +11,7 @@ import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Mapping
+from typing import Callable, Mapping
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
@@ -1416,7 +1416,11 @@ def run_service_scan_once(
     }
 
 
-def _main(argv: list[str] | None = None) -> int:
+def _main(
+    argv: list[str] | None = None,
+    *,
+    semantic_runtime_factory: Callable[..., SemanticStationAdapter] | None = None,
+) -> int:
     parser = argparse.ArgumentParser(prog="factory_service")
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run")
@@ -1428,6 +1432,10 @@ def _main(argv: list[str] | None = None) -> int:
     run.add_argument("--command-public-key", required=True, action="append", type=Path)
     run.add_argument("--receipt-private-key", required=True, type=Path)
     run.add_argument("--host-role", required=True)
+    run.add_argument(
+        "--semantic-runtime", choices=("disabled", "accepted-local"),
+        default="disabled",
+    )
     run.add_argument("--once", action="store_true")
     run.add_argument("--poll-seconds", type=float, default=5.0)
     run.add_argument("--validation-now", default="")
@@ -1439,6 +1447,24 @@ def _main(argv: list[str] | None = None) -> int:
         validation_now = datetime.fromisoformat(args.validation_now)
         if validation_now.tzinfo is None or validation_now.utcoffset() is None:
             parser.error("--validation-now must include a timezone")
+    semantic_station_adapter = None
+    if args.semantic_runtime == "accepted-local":
+        try:
+            if semantic_runtime_factory is None:
+                from .factory_semantic_runtime import build_accepted_local_runtime_adapter
+
+                semantic_runtime_factory = build_accepted_local_runtime_adapter
+            semantic_station_adapter = semantic_runtime_factory(
+                to_studio=args.to_studio, from_studio=args.from_studio,
+                state_root=args.state_root, host_role=args.host_role,
+            )
+        except Exception as exc:
+            print(json.dumps({
+                "run_id": args.run_id or "factory-host-service",
+                "status": "fault", "reason": type(exc).__name__,
+                "content_free": True,
+            }, sort_keys=True))
+            return 1
     stop = False
 
     def request_stop(_signum, _frame):
@@ -1454,7 +1480,9 @@ def _main(argv: list[str] | None = None) -> int:
                 state_root=args.state_root, log_root=args.log_root,
                 command_public_key_paths=tuple(args.command_public_key),
                 receipt_signing_private_key=args.receipt_private_key,
-                host_role=args.host_role, now=validation_now,
+                host_role=args.host_role,
+                semantic_station_adapter=semantic_station_adapter,
+                now=validation_now,
             )
             result = (
                 run_service_once(run_id=args.run_id, **common)

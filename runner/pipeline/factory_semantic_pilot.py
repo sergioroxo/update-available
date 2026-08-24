@@ -436,7 +436,7 @@ class LocalModelPhaseGuard:
     """Fail-closed Ollama phase transitions with durable content-free snapshots."""
 
     OLLAMA = "/Applications/Ollama.app/Contents/Resources/ollama"
-    MAX_SWAP_GROWTH_BYTES = 4 * 1024**3
+    MAX_SWAP_GROWTH_BYTES = 2 * 1024**3
 
     def __init__(self, *, workspace: Path, client: OpenAICompatibleLocalClient):
         self.workspace = Path(workspace)
@@ -549,13 +549,28 @@ class LocalModelPhaseGuard:
                 resolved_model, verify_unloaded=lambda: unloaded,
             )
 
+    def before_model_activation(
+        self, current_model: str | None, next_model: str,
+    ) -> None:
+        """Unload and verify every real dense-route transition before activation."""
+        if current_model is not None:
+            self.finish(
+                phase=f"transition-from-{current_model}",
+                resolved_model=current_model,
+            )
+        self.begin(phase=f"activate-{next_model}")
+
+    def finish_active(self) -> None:
+        active = self.client.active_resolved_model
+        if active is not None:
+            self.finish(phase=f"finalize-{active}", resolved_model=active)
+
     @contextmanager
     def phase(self, *, phase: str, resolved_model: str):
-        self.begin(phase=phase)
-        try:
-            yield
-        finally:
-            self.finish(phase=phase, resolved_model=resolved_model)
+        # Per-request activation owns transitions because mapper repair can
+        # cross routes inside the durable section scheduler.
+        del phase, resolved_model
+        yield
 
 
 class PersistentEmbeddingCache:
@@ -941,12 +956,15 @@ def run_copied_semantic_pilot(
     verified = _verify_sources(contract)
     lexicon_terms = _verified_lexicon_terms(contract)
     client = OpenAICompatibleLocalClient(endpoint, transport=transport)
+    phase_guard = None
     try:
         bindings = reuse_run021_bindings(client)
         phase_guard = (
             LocalModelPhaseGuard(workspace=workspace, client=client)
             if endpoint.global_model_lease_path else None
         )
+        if phase_guard is not None:
+            client.set_before_model_activation(phase_guard.before_model_activation)
         mapper_alias = endpoint.route("section_mapper").requested_model
         repair_alias = endpoint.route("qwen38_mapper_repair").requested_model
         units_by_doc = {doc: value[2] for doc, value in verified.items()}
@@ -1340,6 +1358,8 @@ def run_copied_semantic_pilot(
         _write_json(workspace / "pilot_report.json", execution_summary)
         return execution_summary
     finally:
+        if phase_guard is not None:
+            phase_guard.finish_active()
         client.close()
 
 

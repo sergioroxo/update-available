@@ -47,6 +47,7 @@ def render_launch_agent(
     run_id: str,
     command_public_keys: tuple[Path, ...],
     receipt_private_key: Path,
+    semantic_runtime: str = "disabled",
     poll_seconds: float = 5.0,
 ) -> bytes:
     if not label or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-" for character in label):
@@ -68,6 +69,8 @@ def render_launch_agent(
             raise ValueError("LaunchAgent local state, logs, and keys must remain outside shared trees")
     if not 0.1 <= poll_seconds <= 300:
         raise ValueError("LaunchAgent polling interval is invalid")
+    if semantic_runtime not in {"disabled", "accepted-local"}:
+        raise ValueError("LaunchAgent semantic runtime is invalid")
     arguments = [
         str(python_path), "-m", "runner.pipeline.factory_service", "run",
         "--to-studio", str(to_studio),
@@ -76,6 +79,7 @@ def render_launch_agent(
         "--log-root", str(log_root),
         "--receipt-private-key", str(receipt_private_key),
         "--host-role", "mac-studio",
+        "--semantic-runtime", semantic_runtime,
         "--poll-seconds", str(poll_seconds),
     ]
     if run_id:
@@ -115,6 +119,19 @@ def validate_launch_agent(data: bytes) -> dict[str, Any]:
         raise ValueError("LaunchAgent must not use a shell command")
     if "runner.pipeline.factory_service" not in arguments or "--host-role" not in arguments:
         raise ValueError("LaunchAgent does not start the production factory service")
+    runtime_indexes = [
+        index for index, value in enumerate(arguments) if value == "--semantic-runtime"
+    ]
+    if len(runtime_indexes) > 1:
+        raise ValueError("LaunchAgent semantic runtime option is duplicated")
+    semantic_runtime = "disabled"
+    if runtime_indexes:
+        index = runtime_indexes[0]
+        if index + 1 >= len(arguments):
+            raise ValueError("LaunchAgent semantic runtime option has no value")
+        semantic_runtime = arguments[index + 1]
+        if semantic_runtime not in {"disabled", "accepted-local"}:
+            raise ValueError("LaunchAgent semantic runtime option is invalid")
     serialized = json.dumps(payload, sort_keys=True).lower()
     if any(token in serialized for token in ("private key content", "api_key=", "token=")):
         raise ValueError("LaunchAgent contains secret material")
@@ -122,6 +139,7 @@ def validate_launch_agent(data: bytes) -> dict[str, Any]:
         "valid": True,
         "label": payload["Label"],
         "program_arguments": tuple(arguments),
+        "semantic_runtime": semantic_runtime,
         "persistent_installation_performed": False,
     }
 
@@ -316,6 +334,10 @@ def _main(argv: list[str] | None = None) -> int:
     render.add_argument("--command-public-key", required=True, action="append", type=Path)
     render.add_argument("--receipt-private-key", required=True, type=Path)
     render.add_argument("--poll-seconds", type=float, default=5.0)
+    render.add_argument(
+        "--semantic-runtime", choices=("disabled", "accepted-local"),
+        default="disabled",
+    )
     validate = sub.add_parser("validate")
     validate.add_argument("--plist", required=True, type=Path)
     plan = sub.add_parser("installation-plan")
@@ -336,6 +358,7 @@ def _main(argv: list[str] | None = None) -> int:
             run_id=args.run_id,
             command_public_keys=tuple(args.command_public_key),
             receipt_private_key=args.receipt_private_key,
+            semantic_runtime=args.semantic_runtime,
             poll_seconds=args.poll_seconds,
         )
         atomic_write_bytes(args.output, data)

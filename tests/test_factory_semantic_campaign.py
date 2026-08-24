@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -18,7 +19,8 @@ from runner.pipeline.factory_semantic_campaign import (
     source_queue_inventory,
     verify_run021_results,
 )
-from runner.pipeline.factory_service import run_service_scan_once
+from runner.pipeline.factory_service import _main as factory_service_main, run_service_scan_once
+from runner.pipeline.factory_semantic_runtime import prepare_accepted_runtime_contract
 from runner.pipeline.syncthing_exchange import (
     forbidden_mutable_members,
     load_authenticated_factory_receipts,
@@ -257,6 +259,156 @@ def test_accepted_runtime_adapter_is_pluggable_and_invoked_once_per_resumable_ru
             allowed_public_keys=allowed, now=NOW + timedelta(hours=1),
         )
         assert manifest.station_id == station_id
+
+
+def test_authenticated_campaign_converts_to_exact_host_local_runtime_contract(tmp_path):
+    mb_private, mb_public, _st_private, st_public = _keys(tmp_path)
+    config = _config(tmp_path, mb_private, mb_public, st_public)
+    source = tmp_path / "glossary.txt"
+    source.write_text("Complete glossary source.\n", encoding="utf-8")
+    release = create_semantic_campaign(
+        config, run_id="semantic-contract-023", researcher_id="researcher",
+        selected=(_row(source, "doc-a"),), trusted_terms=[{
+            "_id": "term-a", "term": "Approved term", "status": "validated",
+        }], confirmed_text=SEMANTIC_CONFIRMATION, now=NOW,
+    )
+    run_state = config.state_root / "semantic-contract-023"
+    contract = prepare_accepted_runtime_contract(
+        campaign=release["campaign"], approval=release["approval"],
+        to_studio=config.to_studio, from_studio=config.from_studio,
+        run_state=run_state,
+    )
+    workspace = run_state / "semantic-runtime"
+    assert Path(contract.workspace) == workspace
+    assert contract.mapper_maximum_concurrency == 1
+    assert contract.route_aliases.section_mapper == "core-qwen"
+    assert contract.route_aliases.document_compiler == "core-gemma"
+    assert contract.route_aliases.qwen38_mapper_repair == "compiler-qwen38"
+    assert contract.route_aliases.qwen_embedding == "research-embedding"
+    assert contract.route_aliases.bge_shadow == "bge-m3-shadow"
+    assert Path(contract.documents[0].source_path).read_bytes() == source.read_bytes()
+    assert Path(contract.lexicon_snapshot_path).is_file()
+    assert (workspace / "contract.json").is_file()
+    assert not forbidden_mutable_members(config.to_studio)
+    assert not forbidden_mutable_members(config.from_studio)
+
+
+def test_real_cli_explicit_runtime_completes_nine_barriers_and_restarts_idle(tmp_path):
+    root = tmp_path / "enabled"
+    mb_private, mb_public, st_private, st_public = _keys(root)
+    config = _config(root, mb_private, mb_public, st_public)
+    source = root / "source.txt"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("Complete source.\n", encoding="utf-8")
+    run_id = "semantic-cli-023"
+    create_semantic_campaign(
+        config, run_id=run_id, researcher_id="researcher",
+        selected=(_row(source, "doc-a"),), trusted_terms=[],
+        confirmed_text=SEMANTIC_CONFIRMATION, now=NOW,
+    )
+    publish_semantic_control(config, run_id, "start_approved")
+    runner_calls: list[str] = []
+    factory_constructions: list[str] = []
+
+    def fake_runner(**kwargs):
+        runner_calls.append(kwargs["campaign"].run_id)
+        sealed = Path(kwargs["run_state"]) / "synthetic-no-network-sealed"
+        for directory in ("analysis", "compilers", "retrieval", "enrichment"):
+            (sealed / directory).mkdir(parents=True, exist_ok=True)
+        for relative in (
+            "analysis/doc-a.json", "compilers/doc-a-primary.json",
+            "compilers/doc-a-qwen38-comparison.json", "retrieval/doc-a-qwen.json",
+            "enrichment/doc-a.json", "index_manifest.json", "execution_summary.json",
+            "pilot_projection.json", "researcher_comparison_report.json",
+        ):
+            (sealed / relative).write_text("{}\n", encoding="utf-8")
+        return sealed
+
+    def fixture_factory(**kwargs):
+        factory_constructions.append(kwargs["host_role"])
+        return AcceptedSemanticRuntimeAdapter(runtime_runner=fake_runner)
+
+    arguments = [
+        "run", "--to-studio", str(config.to_studio),
+        "--from-studio", str(config.from_studio),
+        "--state-root", str(config.state_root),
+        "--log-root", str(config.service_log_root),
+        "--command-public-key", str(mb_public),
+        "--receipt-private-key", str(st_private),
+        "--host-role", "synthetic", "--semantic-runtime", "accepted-local",
+        "--once", "--validation-now", (NOW + timedelta(minutes=1)).isoformat(),
+    ]
+    assert factory_service_main(
+        arguments, semantic_runtime_factory=fixture_factory,
+    ) == 0
+    allowed = public_key_allowlist((st_public,))
+    receipts = load_authenticated_factory_receipts(
+        config.from_studio, run_id=run_id, allowed_public_keys=allowed,
+        now=NOW + timedelta(hours=1),
+    )
+    projection = observe_authenticated_receipts(
+        config.from_studio, run_id=run_id, allowed_public_keys=allowed,
+        now=NOW + timedelta(hours=1),
+    )
+    assert projection.valid and projection.campaign.state == "succeeded"
+    assert len(projection.stations) == len(SEMANTIC_CAMPAIGN_STATIONS)
+    assert {row.state for row in projection.stations} == {"succeeded"}
+    with sqlite3.connect(config.state_root / run_id / "worker.db") as connection:
+        attempts = connection.execute(
+            "SELECT station_id,attempt FROM production_jobs ORDER BY station_sequence"
+        ).fetchall()
+    assert [row[0] for row in attempts] == list(SEMANTIC_CAMPAIGN_STATIONS)
+    assert {row[1] for row in attempts} == {1}
+    assert runner_calls == [run_id]
+
+    assert factory_service_main(
+        arguments, semantic_runtime_factory=fixture_factory,
+    ) == 0
+    repeated = load_authenticated_factory_receipts(
+        config.from_studio, run_id=run_id, allowed_public_keys=allowed,
+        now=NOW + timedelta(hours=1),
+    )
+    assert factory_constructions == ["synthetic", "synthetic"]
+    assert runner_calls == [run_id]
+    assert repeated == receipts
+    assert not forbidden_mutable_members(config.to_studio)
+    assert not forbidden_mutable_members(config.from_studio)
+
+
+def test_real_cli_disabled_runtime_holds_before_semantic_execution(tmp_path):
+    mb_private, mb_public, st_private, st_public = _keys(tmp_path)
+    config = _config(tmp_path, mb_private, mb_public, st_public)
+    source = tmp_path / "source.txt"
+    source.write_text("Complete source.\n", encoding="utf-8")
+    run_id = "semantic-cli-disabled-023"
+    create_semantic_campaign(
+        config, run_id=run_id, researcher_id="researcher",
+        selected=(_row(source, "doc-a"),), trusted_terms=[],
+        confirmed_text=SEMANTIC_CONFIRMATION, now=NOW,
+    )
+    publish_semantic_control(config, run_id, "start_approved")
+    factory_calls = []
+    result = factory_service_main([
+        "run", "--to-studio", str(config.to_studio),
+        "--from-studio", str(config.from_studio),
+        "--state-root", str(config.state_root),
+        "--log-root", str(config.service_log_root),
+        "--command-public-key", str(mb_public),
+        "--receipt-private-key", str(st_private),
+        "--host-role", "synthetic", "--once", "--validation-now",
+        (NOW + timedelta(minutes=1)).isoformat(),
+    ], semantic_runtime_factory=lambda **kwargs: factory_calls.append(kwargs))
+    assert result == 0 and factory_calls == []
+    projection = observe_authenticated_receipts(
+        config.from_studio, run_id=run_id,
+        allowed_public_keys=public_key_allowlist((st_public,)),
+        now=NOW + timedelta(hours=1),
+    )
+    assert projection.campaign.state == "held"
+    assert not (
+        config.state_root / run_id / "results" / "doc-a"
+        / "independent_analysis" / "artifact_manifest.json"
+    ).exists()
 
 
 def test_run021_read_only_archive_verifies_without_calls_or_mutation():

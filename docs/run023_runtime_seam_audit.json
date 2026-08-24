@@ -1,0 +1,58 @@
+{
+  "schema_version": "run023-runtime-seam-audit-v1.0",
+  "run_id": "ai-sdlc-20260824-unified-production-line-studio-trial-023",
+  "parent_commit": "78a4f1b609e12fe94024f368c3aba1d3a5d7696b",
+  "branch": "codex/unified-production-line-studio-runtime-023",
+  "host": {
+    "role": "mac-studio",
+    "architecture": "arm64",
+    "litelm_loopback_listener_count": 1,
+    "ollama_resident_model_count": 0,
+    "memory_pressure_state": "normal",
+    "preflight_swap_used_bytes": 835253698
+  },
+  "runtime_seam": {
+    "cli_option": "--semantic-runtime accepted-local",
+    "default": "disabled",
+    "workspace_binding": "<state-root>/<run-id>/semantic-runtime",
+    "mapper_concurrency": 1,
+    "maximum_resident_models": 1,
+    "maximum_swap_growth_bytes": 2147483648,
+    "explicit_transition_unload": true,
+    "api_key_serialized": false
+  },
+  "verification": {
+    "focused_passed": 53,
+    "focused_skipped_host_evidence": 1,
+    "complete_suite_initial_passed": 2647,
+    "complete_suite_initial_skipped_host_evidence": 1,
+    "complete_suite_path_harness_failures": 4,
+    "targeted_path_harness_recheck_passed": 4,
+    "compilation_passed": true,
+    "diff_check_passed": true,
+    "credential_path_scan_passed": true,
+    "synthetic_model_calls": 0,
+    "synthetic_embedding_calls": 0,
+    "synthetic_runtime_runner_invocations": 1,
+    "synthetic_restart_runner_invocations": 0,
+    "synthetic_duplicate_receipts": 0
+  },
+  "expected_trial": {
+    "run_id": "semantic-ui-canary-023",
+    "document_id": "c07f879e",
+    "title": "Appendix 1: Glossary",
+    "source_sha256": "75e9d2addeaaef9798c97049b8e9856f6f716fe29a3ecbb4769b2f3bb6acd0c3",
+    "source_bytes": 7595,
+    "media_type": "text/plain",
+    "campaign_arrived": false,
+    "trial_executed": false
+  },
+  "mutations": {
+    "remote_research_writes": 0,
+    "corpus_imports": 0,
+    "publications": 0,
+    "automatic_promotions": 0,
+    "syncthing_forbidden_members": 0
+  },
+  "state": "READY_FOR_MACBOOK_UI_RELEASE"
+}
