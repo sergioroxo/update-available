@@ -68,12 +68,20 @@ def build_retrieval_context(
     *, context_id: str, index_manifest_sha256: str, query: RetrievalQueryV1,
     hits: tuple[RetrievalHitV1, ...], exclusions: tuple[RetrievalExclusionV1, ...],
     per_family_cap: int, contradiction_slots: int,
+    retrieval_scope: Literal[
+        "cross_document_source_grounding",
+        "within_document_source_grounding",
+    ] = "cross_document_source_grounding",
 ) -> RetrievalContextV1:
     if not hits:
         raise RetrievalContextError("retrieval_context_has_no_hits")
     index_id = hits[0].index_id
     audit_sha = hashlib.sha256(json.dumps({
         "index_id": index_id, "query_sha256": query.query_sha256,
+        "retrieval_scope": retrieval_scope,
+        "cross_document_support_present": (
+            retrieval_scope == "cross_document_source_grounding"
+        ),
         "unit_ids": [[row.document_id, row.unit_id] for row in hits],
         "unit_hashes": [row.unit_text_sha256 for row in hits],
     }, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -81,7 +89,12 @@ def build_retrieval_context(
         schema_version="retrieval-context-v1.0", context_id=context_id,
         index_id=index_id, index_manifest_sha256=index_manifest_sha256,
         retrieval_policy_version="hybrid-rrf-source-only-v1.0", query=query,
-        selected_hits=hits, exclusions=exclusions, per_family_cap=per_family_cap,
+        selected_hits=hits, exclusions=exclusions,
+        retrieval_scope=retrieval_scope,
+        cross_document_support_present=(
+            retrieval_scope == "cross_document_source_grounding"
+        ),
+        per_family_cap=per_family_cap,
         contradiction_slots_requested=contradiction_slots,
         contradiction_slots_filled=min(
             contradiction_slots, sum(row.stance == "opposed" for row in hits),

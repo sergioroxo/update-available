@@ -171,6 +171,30 @@ def test_complete_pilot_resumes_with_zero_calls_and_same_projection(tmp_path):
     )
 
 
+def test_single_document_pilot_records_within_document_source_grounding(tmp_path):
+    contract = _contract(tmp_path, ("Public policy evidence.",))
+    result = run_copied_semantic_pilot(
+        contract=contract,
+        endpoint=endpoint_config(base_url="http://localhost:4000", api_key="secret"),
+        host_role="mac-studio",
+        transport=httpx.MockTransport(_transport),
+    )
+    assert result["retrieval_scope"] == {
+        "pilot-doc-1": "within_document_source_grounding",
+    }
+    assert result["cross_document_support_present"] == {"pilot-doc-1": False}
+    assert result["independent_supporting_source_count"] == 0
+    assert result["independent_contradictory_source_count"] == 0
+    context = json.loads(
+        (Path(contract.workspace) / "sealed-results" / "retrieval" /
+         "pilot-doc-1-qwen.json").read_text(encoding="utf-8")
+    )
+    assert context["retrieval_scope"] == "within_document_source_grounding"
+    assert context["cross_document_support_present"] is False
+    assert context["contradiction_slots_requested"] == 0
+    assert context["contradiction_slots_filled"] == 0
+
+
 def test_sealed_allowlist_rejects_state_and_builds_deterministic_archive(tmp_path):
     sealed = tmp_path / "sealed"
     sealed.mkdir()

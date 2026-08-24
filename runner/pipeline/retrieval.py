@@ -49,6 +49,7 @@ def hybrid_retrieve(
     embedder: EmbeddingBatchProvider, limit: int = 20,
     per_family_cap: int = 3, contradiction_slots: int = 2,
     exclude_requesting_document: bool = True,
+    allow_single_document_fallback: bool = False,
 ) -> tuple[tuple[RetrievalHitV1, ...], tuple[RetrievalExclusionV1, ...]]:
     if limit < 1 or limit > 100:
         raise ValueError("retrieval result limit is invalid")
@@ -108,10 +109,30 @@ def hybrid_retrieve(
             continue
         eligible.append((vector_index, scores))
 
+    fallback_used = False
+    if (
+        not eligible
+        and exclude_requesting_document
+        and allow_single_document_fallback
+    ):
+        indexed_documents = {row["document_id"] for row in rows.values()}
+        if (
+            manifest.document_count == 1
+            and indexed_documents == {query.requesting_document_id}
+        ):
+            eligible = [
+                (vector_index, scores)
+                for vector_index, scores in ordered
+                if rows[vector_index]["provenance_kind"] == "source_v2_unit"
+                and rows[vector_index]["document_id"] == query.requesting_document_id
+            ]
+            fallback_used = bool(eligible)
+
     selected: list[tuple[int, dict]] = []
     family_counts: dict[str, int] = {}
+    effective_contradiction_slots = 0 if fallback_used else contradiction_slots
     opposed = [item for item in eligible if rows[item[0]]["stance"] == "opposed"]
-    for item in opposed[:contradiction_slots]:
+    for item in opposed[:effective_contradiction_slots]:
         family = rows[item[0]]["source_family_id"]
         if family_counts.get(family, 0) < per_family_cap:
             selected.append(item)
@@ -136,7 +157,8 @@ def hybrid_retrieve(
         hits.append(RetrievalHitV1(
             index_id=manifest.index_id, document_id=row["document_id"],
             unit_id=row["unit_id"], source_family_id=row["source_family_id"],
-            stance=row["stance"], language=row["language"],
+            stance=("unknown" if fallback_used else row["stance"]),
+            language=row["language"],
             char_start=row["char_start"], char_end=row["char_end"], text=row["text"],
             unit_text_sha256=row["unit_text_sha256"],
             vector_rank=scores.get("vector_rank"), lexical_rank=scores.get("lexical_rank"),

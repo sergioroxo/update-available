@@ -1080,6 +1080,10 @@ class LocalGroundedEnrichmentExecutor:
             "unit_id, and a lowercase underscore reason_code. Use only a supplied "
             "document/unit pair. Do not quote, promote, or represent generated analysis "
             "as source evidence. An empty corpus_connections array is valid. Canonical "
+            "When retrieval_scope is within_document_source_grounding, treat every "
+            "supplied unit only as grounding from the requesting source; it is not "
+            "independent corroboration, cross-document support, or contradiction. "
+            "Canonical "
             "response JSON Schema: "
             + _canonical_bytes(grounded_response_json_schema()).decode("utf-8")
         )
@@ -1090,6 +1094,8 @@ class LocalGroundedEnrichmentExecutor:
             "frozen_trusted_lexicon": list(request.lexicon_terms),
             "lexicon_snapshot_sha256": request.lexicon_snapshot_sha256,
             "retrieval_context_sha256": context.context_sha256,
+            "retrieval_scope": context.retrieval_scope,
+            "cross_document_support_present": context.cross_document_support_present,
             "retrieved_source_units": allowed,
         }).decode()
         payload, _receipt_value = self.client.chat(

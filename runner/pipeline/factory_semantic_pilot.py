@@ -1183,15 +1183,25 @@ def run_copied_semantic_pilot(
                     per_family_cap=contract.per_family_cap,
                     contradiction_slots=contract.contradiction_slots,
                     exclude_requesting_document=True,
+                    allow_single_document_fallback=True,
                 )
-                if any(row.document_id == doc for row in hits):
+                within_document = all(row.document_id == doc for row in hits)
+                if within_document and not (
+                    manifest.document_count == 1
+                    and {row.document_id for row in rows} == {doc}
+                ):
                     raise SemanticPilotError("pilot_retrieval_self_exclusion_failed")
+                retrieval_scope = (
+                    "within_document_source_grounding"
+                    if within_document else "cross_document_source_grounding"
+                )
                 contexts[doc] = build_retrieval_context(
                     context_id=f"context-{doc}",
                     index_manifest_sha256=manifest.manifest_sha256,
                     query=query, hits=hits, exclusions=exclusions,
                     per_family_cap=contract.per_family_cap,
-                    contradiction_slots=contract.contradiction_slots,
+                    contradiction_slots=(0 if within_document else contract.contradiction_slots),
+                    retrieval_scope=retrieval_scope,
                 )
 
         bge_cache = PersistentEmbeddingCache(
@@ -1259,6 +1269,20 @@ def run_copied_semantic_pilot(
                 "qwen_4096": qwen_rankings,
                 "bge_m3_1024": bge["rankings"],
             },
+            "retrieval_scope": {
+                doc: contexts[doc].retrieval_scope for doc in sorted(contexts)
+            },
+            "cross_document_support_present": {
+                doc: contexts[doc].cross_document_support_present for doc in sorted(contexts)
+            },
+            "independent_supporting_source_count": sum(
+                context.cross_document_support_present and row.stance == "supporting"
+                for context in contexts.values() for row in context.selected_hits
+            ),
+            "independent_contradictory_source_count": sum(
+                context.cross_document_support_present and row.stance == "opposed"
+                for context in contexts.values() for row in context.selected_hits
+            ),
             "automatic_winner": None,
             "researcher_review_required": True,
         }
@@ -1335,7 +1359,25 @@ def run_copied_semantic_pilot(
             "index_rebuild_reused": rebuild_reused,
             "index_rebuild_deterministic": True,
             "retrieval_context_count": len(contexts),
-            "self_retrieval_hits": 0,
+            "retrieval_scope": {
+                doc: contexts[doc].retrieval_scope for doc in sorted(contexts)
+            },
+            "cross_document_support_present": {
+                doc: contexts[doc].cross_document_support_present for doc in sorted(contexts)
+            },
+            "self_retrieval_hits": sum(
+                row.document_id == doc
+                for doc, context in contexts.items()
+                for row in context.selected_hits
+            ),
+            "independent_supporting_source_count": sum(
+                context.cross_document_support_present and row.stance == "supporting"
+                for context in contexts.values() for row in context.selected_hits
+            ),
+            "independent_contradictory_source_count": sum(
+                context.cross_document_support_present and row.stance == "opposed"
+                for context in contexts.values() for row in context.selected_hits
+            ),
             "grounded_enrichment_count": len(enrichments),
             "grounded_invalid_citation_count": 0,
             "new_call_counts": invocation,

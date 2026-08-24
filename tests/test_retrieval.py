@@ -52,6 +52,25 @@ def _query():
     )
 
 
+def _single_document_index(path):
+    rows = (
+        _row(
+            "doc-a", "unit-a1", "family-a", "opposed",
+            "Policy evidence government regulation.",
+        ),
+        _row(
+            "doc-a", "unit-a2", "family-a", "supporting",
+            "Further source-grounded policy evidence.",
+        ),
+    )
+    return rows, build_retrieval_index(
+        path, rows=rows, embedder=DeterministicEmbeddingProvider(),
+        index_id="single-index-023", run_id="run-019",
+        sealed_at=datetime(2026, 8, 20, tzinfo=timezone.utc),
+        source_policy_snapshot_sha256=H,
+    )[0]
+
+
 def test_hybrid_retrieval_excludes_requester_caps_family_and_reserves_counterevidence(tmp_path):
     _index(tmp_path / "index")
     hits, exclusions = hybrid_retrieve(
@@ -77,6 +96,40 @@ def test_hybrid_retrieval_is_deterministic(tmp_path):
         limit=5, per_family_cap=2, contradiction_slots=1,
     )
     assert first == second
+
+
+def test_single_document_fallback_is_explicit_source_only_and_zero_contradiction(tmp_path):
+    rows, _manifest = _single_document_index(tmp_path / "index")
+    with pytest.raises(RetrievalIndexError, match="no_eligible_source_units"):
+        hybrid_retrieve(
+            tmp_path / "index", query=_query(),
+            embedder=DeterministicEmbeddingProvider(), contradiction_slots=1,
+        )
+
+    hits, exclusions = hybrid_retrieve(
+        tmp_path / "index", query=_query(),
+        embedder=DeterministicEmbeddingProvider(), contradiction_slots=1,
+        allow_single_document_fallback=True,
+    )
+    verified_source_units = {
+        (row.document_id, row.unit_id)
+        for row in rows if row.provenance_kind == "source_v2_unit"
+    }
+    assert {(row.document_id, row.unit_id) for row in hits} <= verified_source_units
+    assert all(row.document_id == "doc-a" for row in hits)
+    assert all(row.stance == "unknown" for row in hits)
+    assert any(row.reason == "requesting_document" for row in exclusions)
+
+
+def test_multi_document_index_does_not_apply_single_document_fallback(tmp_path):
+    _index(tmp_path / "index")
+    hits, _exclusions = hybrid_retrieve(
+        tmp_path / "index", query=_query(), embedder=DeterministicEmbeddingProvider(),
+        limit=4, per_family_cap=1, contradiction_slots=1,
+        allow_single_document_fallback=True,
+    )
+    assert hits
+    assert all(row.document_id != "doc-a" for row in hits)
 
 
 class _BadQueryEmbedder:

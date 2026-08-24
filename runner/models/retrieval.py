@@ -278,6 +278,11 @@ class RetrievalContextV1(RetrievalContract):
     query: RetrievalQueryV1
     selected_hits: tuple[RetrievalHitV1, ...]
     exclusions: tuple[RetrievalExclusionV1, ...] = ()
+    retrieval_scope: Literal[
+        "cross_document_source_grounding",
+        "within_document_source_grounding",
+    ]
+    cross_document_support_present: bool
     per_family_cap: int = Field(ge=1, le=20)
     contradiction_slots_requested: int = Field(ge=0, le=10)
     contradiction_slots_filled: int = Field(ge=0, le=10)
@@ -309,12 +314,27 @@ class RetrievalContextV1(RetrievalContract):
             raise ValueError("duplicate retrieval unit")
         if self.context_char_count != sum(len(row.text) for row in self.selected_hits):
             raise ValueError("retrieval context character count mismatch")
+        same_document = all(
+            row.document_id == self.query.requesting_document_id
+            for row in self.selected_hits
+        )
+        if self.retrieval_scope == "within_document_source_grounding":
+            if not same_document or self.cross_document_support_present:
+                raise ValueError("within-document retrieval scope mismatch")
+            if any(row.stance in {"supporting", "opposed"} for row in self.selected_hits):
+                raise ValueError("within-document hits cannot claim independent stance")
+            if self.contradiction_slots_requested or self.contradiction_slots_filled:
+                raise ValueError("within-document contradiction budget must be zero")
+        elif same_document or not self.cross_document_support_present:
+            raise ValueError("cross-document retrieval scope mismatch")
         filled = sum(row.stance == "opposed" for row in self.selected_hits)
         if self.contradiction_slots_filled != min(filled, self.contradiction_slots_requested):
             raise ValueError("contradiction slot accounting mismatch")
         expected_audit = hashlib.sha256(json.dumps({
             "index_id": self.index_id,
             "query_sha256": self.query.query_sha256,
+            "retrieval_scope": self.retrieval_scope,
+            "cross_document_support_present": self.cross_document_support_present,
             "unit_ids": [[row.document_id, row.unit_id] for row in self.selected_hits],
             "unit_hashes": [row.unit_text_sha256 for row in self.selected_hits],
         }, sort_keys=True, separators=(",", ":")).encode()).hexdigest()

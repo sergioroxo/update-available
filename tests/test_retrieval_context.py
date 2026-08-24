@@ -69,6 +69,25 @@ def test_context_binds_index_units_and_contradiction_accounting():
         RetrievalContextV1.model_validate(payload)
 
 
+def test_within_document_scope_is_deterministic_and_has_zero_contradiction_slots():
+    hit = _hit("doc-a", "unit-a", "unknown", 1)
+    first = build_retrieval_context(
+        context_id="context-a", index_manifest_sha256=H, query=_query(),
+        hits=(hit,), exclusions=(), per_family_cap=2, contradiction_slots=0,
+        retrieval_scope="within_document_source_grounding",
+    )
+    second = build_retrieval_context(
+        context_id="context-a", index_manifest_sha256=H, query=_query(),
+        hits=(hit,), exclusions=(), per_family_cap=2, contradiction_slots=0,
+        retrieval_scope="within_document_source_grounding",
+    )
+    assert first == second
+    assert first.retrieval_scope == "within_document_source_grounding"
+    assert first.cross_document_support_present is False
+    assert first.contradiction_slots_requested == 0
+    assert first.contradiction_slots_filled == 0
+
+
 def test_grounded_request_rejects_stale_analysis_or_context():
     context = _context()
     request = build_grounded_enrichment_request(
