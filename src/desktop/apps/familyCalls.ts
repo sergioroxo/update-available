@@ -122,20 +122,29 @@ export class FamilyCallsApp implements TaskSurface {
   /** ⚑ a stack of messages with their senders' names — the job read as an
    *  image is "people are waiting", which is exactly what it is. */
   thumb(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    // ⚑ the thumbnail has to survive being SHORT. At six tiles on two rows this
+    //   gets ~55 px for three rows, and the first version wrote a name at +4 and
+    //   a line of her message at +17 regardless, so the names sat on top of the
+    //   words. Below 22 px a row it draws the name alone; the picture degrades
+    //   instead of colliding.
     px(ctx, x, y, w, h, ERA3.sysBand);
-    const rowH = Math.floor((h - 8) / PARENTS.length);
+    const rowH = Math.floor((h - 6) / PARENTS.length);
+    const roomy = rowH >= 22;
     PARENTS.forEach((p, i) => {
-      const ry = y + 4 + i * rowH;
+      const ry = y + 3 + i * rowH;
       const done = this.outcomes.has(p.id);
-      px(ctx, x + 4, ry, w - 8, rowH - 4, ERA3.white);
-      px(ctx, x + 4, ry, 3, rowH - 4, done ? ERA3.grey : ERA3.accent);
-      setFont(ctx, 10);
+      px(ctx, x + 4, ry, w - 8, rowH - 3, ERA3.white);
+      px(ctx, x + 4, ry, 3, rowH - 3, done ? ERA3.grey : ERA3.accent);
+      setFont(ctx, roomy ? 10 : 9);
       ctx.fillStyle = done ? ERA3.grey : ERA3.titleText;
-      ctx.fillText(p.from, x + 12, ry + 4);
+      ctx.fillText(p.from, x + 12, ry + 2);
+      if (!roomy) return;
       setFont(ctx, 8);
       ctx.fillStyle = ERA3.grey;
-      const line = wrapText(ctx, p.body, w - 24)[0] ?? '';
-      ctx.fillText(line, x + 12, ry + 17);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x + 12, ry, w - 20, rowH - 3); ctx.clip();
+      ctx.fillText(wrapText(ctx, p.body, w - 24)[0] ?? '', x + 12, ry + 14);
+      ctx.restore();
     });
   }
 

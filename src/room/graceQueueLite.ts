@@ -708,6 +708,9 @@ export class GraceQueueLite {
    *  leave half-done is the only honest version of "any order". */
   backToBoard(): void {
     if (this.mode !== 'list') return;
+    // ⚑ the job is told it was put down BEFORE it is dropped, so it can file a
+    //   leaving the way it files a finishing. See TaskSurface.onLeave.
+    this.openSurface?.onLeave?.();
     this.openSurface = null;
     this.mode = this.completedCount() >= this.tasks().length ? 'done' : 'board';
     this.bump();
@@ -1120,7 +1123,10 @@ export class GraceQueueLite {
     const COLS = 3;
     const rows = Math.max(1, Math.ceil(tasks.length / COLS));
     const tileW = Math.floor((c.w - GAP * (COLS - 1)) / COLS);
-    const avail = c.h - 52 - 34;
+    // ⚑ the LANE's height is part of the budget. With six tiles on two rows the
+    //   bottom row was running under Lambient's band — reserve it here rather
+    //   than discovering the overlap in a screenshot for the fourth time.
+    const avail = c.h - 52 - 48;
     const tileH = Math.min(196, Math.floor((avail - GAP * (rows - 1)) / rows));
     const top = c.y + 52;
     tasks.forEach((t, i) => {
@@ -1189,16 +1195,26 @@ export class GraceQueueLite {
     px(ctx, x, y, 1, h, ERA3.glassEdge);
     px(ctx, x + w - 1, y, 1, h, ERA3.glassEdge);
 
+    // ⚑ the LABEL BLOCK is a fixed 44 px and the picture takes the rest. It used
+    //   to be the other way round, and at six tiles on two rows that left the
+    //   picture 25 px tall and the names running off the side of the tile into
+    //   the next one. The type also came down (14/11 → 12/10) and both lines are
+    //   now CLIPPED TO THE TILE: a job's name may be long, and a name that
+    //   overflows into its neighbour is worse than a name that ends in a stop.
     const padX = 10;
-    const thumbH = Math.max(40, h - 84);
+    const LABELS = 44;
+    const thumbH = Math.max(24, h - LABELS);
     const mounted = this.surfaces.get(t.id);
-    if (mounted) mounted.thumb(ctx, x + padX, y + 10, w - padX * 2, thumbH);
-    else if (t.surface === 'testimony') this.drawStackThumb(ctx, x + padX, y + 10, w - padX * 2, thumbH);
+    if (mounted) mounted.thumb(ctx, x + padX, y + 8, w - padX * 2, thumbH - 12);
+    else if (t.surface === 'testimony') this.drawStackThumb(ctx, x + padX, y + 8, w - padX * 2, thumbH - 12);
 
-    setFont(ctx, 14); ctx.fillStyle = ERA3.titleText;
-    ctx.fillText(t.label, x + padX, y + thumbH + 20);
-    setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(t.note, x + padX, y + thumbH + 42);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x + padX, y + thumbH, w - padX * 2, LABELS); ctx.clip();
+    setFont(ctx, 12); ctx.fillStyle = ERA3.titleText;
+    ctx.fillText(t.label, x + padX, y + thumbH + 4);
+    setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
+    ctx.fillText(t.note, x + padX, y + thumbH + 22);
+    ctx.restore();
 
     if (done) {
       // ⚑ THE GREYING, and it is the whole visual argument of the era: the
@@ -1208,8 +1224,9 @@ export class GraceQueueLite {
       ctx.globalAlpha = 0.62;
       px(ctx, x + 1, y + 1, w - 2, h - 2, ERA3.glass);
       ctx.restore();
-      setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
-      ctx.fillText(q.app.boardDoneTag, x + padX, y + h - 20);
+      setFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
+      const dw = ctx.measureText(q.app.boardDoneTag).width;
+      ctx.fillText(q.app.boardDoneTag, x + w - padX - dw, y + thumbH + 6);
     }
     this.rects.push({ x, y, w, h, id: 'task-' + index });
   }

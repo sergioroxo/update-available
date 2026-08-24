@@ -194,8 +194,13 @@ export class CourseBuilder implements TaskSurface {
       setFont(ctx, 10); ctx.fillStyle = ERA3.ink;
       ctx.fillText(m.title, x + 6, ry + 2);
       setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
+      // ⚑ an ELLIPSIS when the blurb does not fit. It wraps at a word, so it was
+      //   never cut mid-word — but a sentence that simply stops reads as a
+      //   rendering fault rather than as a preview, and this screen has enough
+      //   real faults in it without inventing an apparent one.
       const descMaxW = Math.max(20, btnX - (x + 6) - 8);
-      const descLine = wrapText(ctx, m.desc, descMaxW)[0] ?? '';
+      const descLines = wrapText(ctx, m.desc, descMaxW);
+      const descLine = (descLines[0] ?? '') + (descLines.length > 1 ? '…' : '');
       ctx.fillText(descLine, x + 6, ry + Math.min(rowH - 10, 14));
 
       button(ctx, btnX, btnY, btnW, btnH, on ? APP.toggleOn : APP.toggleOff,

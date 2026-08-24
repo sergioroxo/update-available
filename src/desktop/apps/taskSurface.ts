@@ -70,6 +70,20 @@ export interface TaskSurface {
   /** a registered rect was pressed. Return true if it was consumed. */
   press(id: string): boolean;
 
+  /** ⚑ SHE PUT IT DOWN. Optional, and it exists because a job could not tell
+   *  the difference between "finished" and "walked away from" — `board-back` is
+   *  resolved by the board before a job's `press` ever sees it, so a surface had
+   *  no lifecycle hook for leaving. That gap was found by the agent building
+   *  `storyCut`, which had a `witness.declined` string it could not reach and
+   *  said so rather than manufacturing a second back button that secretly
+   *  logged something.
+   *
+   *  ⚑ It matters beyond tidiness: ERA3_NARRATIVE §4 is that there is NO
+   *  compliant path, and a record that notices finishing but not leaving would
+   *  quietly contradict that. Leaving is a thing the apparatus notices too.
+   *  Called once per put-down, never on completion. */
+  onLeave?(): void;
+
   /** ⚑ ?debug=1 only — every beat this surface has, reachable without playing
    *  to it. check-spec's C6 exists because three sessions shipped beats Sérgio
    *  could not reach and concluded content was missing when it wasn't. A job
