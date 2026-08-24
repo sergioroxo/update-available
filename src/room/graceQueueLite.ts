@@ -113,6 +113,7 @@ import {
 import { ledger } from '../state/ledger';
 import { CommentsApp, type TabletFeedItem, type CommentTemplate } from '../desktop/apps/comments';
 import { FloppySheep, drawFloppyIcon, FLOPPY_LABEL } from '../desktop/apps/floppysheep';
+import type { TaskSurface } from '../desktop/apps/taskSurface';
 import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
 import d from '../../data/strings/era3_devices.json';
@@ -297,7 +298,8 @@ export class GraceQueueLite {
    *  know when the laptop/tablet screens need a redraw + re-upload (dirty
    *  discipline: never re-dirtied by a ticking clock, only real state, or by
    *  a beat that is genuinely animating). */
-  version = 0;
+  private ownVersion = 0;
+  get version(): number { return this.ownVersion + this.surfaceVersion(); }
   /** the phone's own counter — the caret blink must not re-upload the laptop */
   private phoneV = 0;
 
@@ -327,6 +329,12 @@ export class GraceQueueLite {
    *  law) — and Lambient stays, because §4 of the narrative is that there is no
    *  compliant path. The whole era is in `declineReply`, said kindly, before
    *  anything has happened. */
+  /** ⚑ the day's other jobs, each in its own module (see taskSurface.ts). The
+   *  testimony job is NOT here: it predates the seam and is wired straight into
+   *  this class's own list/draw path, which is where its state lives. Every job
+   *  written after 2026-08-24 arrives through `mountTask` instead. */
+  private readonly surfaces = new Map<string, TaskSurface>();
+  private openSurface: TaskSurface | null = null;
   private consent: 'allowed' | 'declined' | null = null;
   private wakeWord = false;
   private seenBoard = false;
@@ -451,7 +459,7 @@ export class GraceQueueLite {
   }
 
   // ── the list ─────────────────────────────────────────────────────────────
-  private bump(): void { this.version++; }
+  private bump(): void { this.ownVersion++; }
 
   private submission(): SubmissionDef | undefined { return SUBMISSIONS[this.subIdx]; }
 
@@ -616,7 +624,28 @@ export class GraceQueueLite {
    *  tiles that do nothing is the exact fault this project keeps hitting —
    *  authored content nobody can reach — and a greyed-out "coming soon" tile
    *  would be the frame playing. The board shows what is real, and grows. */
-  private tasks(): BoardTask[] { return BOARD.filter(t => t.surface !== null); }
+  /** ⚑ register a job. Called once at construction time by whoever owns the
+   *  era; a job that is never mounted simply has no tile, which is how the
+   *  board grows without ever showing a tile that does nothing. */
+  mountTask(surface: TaskSurface): void {
+    this.surfaces.set(surface.id, surface);
+    this.bump();
+  }
+
+  /** a job's tile is drawn when its row says it has a surface AND that surface
+   *  is actually mounted. Both halves matter: the row is the design's list, the
+   *  map is what exists. */
+  private tasks(): BoardTask[] {
+    return BOARD.filter(t => t.surface === 'testimony' || this.surfaces.has(t.id));
+  }
+
+  /** every mounted job's version, so the board re-uploads when any tile's
+   *  picture or grey state changes — and only then. */
+  private surfaceVersion(): number {
+    let v = 0;
+    for (const s of this.surfaces.values()) v += s.version();
+    return v;
+  }
 
   /** one story worked to its end — every correction on it decided */
   private subComplete(sub: SubmissionDef): boolean {
@@ -626,7 +655,7 @@ export class GraceQueueLite {
   /** the whole job finished — the tile goes grey */
   private taskComplete(t: BoardTask): boolean {
     if (t.surface === 'testimony') return SUBMISSIONS.every(sb => this.subComplete(sb));
-    return false;
+    return this.surfaces.get(t.id)?.complete() ?? false;
   }
 
   /** ⚑ THE UNIT THE BREAK COUNTS, and it is not the tile. ERA3_NARRATIVE §5
@@ -651,7 +680,17 @@ export class GraceQueueLite {
   openTask(index: number): void {
     if (this.mode !== 'board' && this.mode !== 'done') return;
     const t = this.tasks()[index];
-    if (!t || t.surface !== 'testimony') return;
+    if (!t) return;
+    const mounted = this.surfaces.get(t.id);
+    if (mounted) {
+      this.openSurface = mounted;
+      this.mode = 'list';
+      if (!this.seenTask) { this.seenTask = true; this.lambLines = [LAMBIENT.firstTask1, LAMBIENT.firstTask2]; }
+      this.bump();
+      return;
+    }
+    if (t.surface !== 'testimony') return;
+    this.openSurface = null;
     const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
     this.subIdx = next < 0 ? 0 : next;
     this.mode = 'list';
@@ -669,7 +708,8 @@ export class GraceQueueLite {
    *  leave half-done is the only honest version of "any order". */
   backToBoard(): void {
     if (this.mode !== 'list') return;
-    this.mode = 'board';
+    this.openSurface = null;
+    this.mode = this.completedCount() >= this.tasks().length ? 'done' : 'board';
     this.bump();
   }
 
@@ -942,7 +982,8 @@ export class GraceQueueLite {
     if (this.minimised) { this.drawTaskButton(ctx, H, false); return; }
     const title = this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
       : this.mode === 'board' || this.mode === 'done' ? q.app.boardTitle
-        : q.app.title;
+        : this.openSurface ? this.openSurface.windowTitle
+          : q.app.title;
     const c = aero.windowFrame(ctx, 0, 0, winW, winH, title);
     this.rects.push({ ...c.minBox, id: 'win-min' });
     this.drawTaskButton(ctx, H, true);
@@ -958,6 +999,7 @@ export class GraceQueueLite {
     if (this.mode === 'signin') this.drawSignIn(ctx, body);
     else if (this.mode === 'consent') this.drawConsent(ctx, body);
     else if (this.mode === 'board' || this.mode === 'done') this.drawBoard(ctx, body);
+    else if (this.openSurface) this.drawSurface(ctx, body, this.openSurface);
     else this.drawList(ctx, body);
 
     // ⚑ THE LIFT, last of all and over everything: the panel is GRADED, never
@@ -1112,6 +1154,28 @@ export class GraceQueueLite {
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
   }
 
+  /**
+   * ⚑ A MOUNTED JOB, DRAWN. Everything the testimony path gets by hand, a job
+   * gets by contract: the same back button (unconditional, nothing warns her),
+   * the same Lambient lane when a beat is live, the same body rectangle. The
+   * job never sees the window, the taskbar, the era, or the pointer — it draws
+   * inside a rectangle and registers hit rects, and that is the whole of it.
+   */
+  private drawSurface(
+    ctx: CanvasRenderingContext2D, c: aero.AeroContent, surface: TaskSurface
+  ): void {
+    const backW = 96; const backH = 18;
+    aero.button(ctx, c.x, c.y - 2, backW, backH, q.app.boardBack);
+    this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
+    let area = { x: c.x, y: c.y + backH + 8, w: c.w, h: c.h - backH - 8 };
+
+    const lane = this.lambLines;
+    if (lane) { this.drawLambientLane(ctx, c, lane); area = { ...area, h: area.h - 46 }; }
+
+    surface.draw(ctx, area, r => this.rects.push(r));
+    drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+  }
+
   /** one tile: a picture, the job, what is waiting in it, and — when it is
    *  finished — grey. */
   private drawTile(
@@ -1127,7 +1191,9 @@ export class GraceQueueLite {
 
     const padX = 10;
     const thumbH = Math.max(40, h - 84);
-    if (t.surface === 'testimony') this.drawStackThumb(ctx, x + padX, y + 10, w - padX * 2, thumbH);
+    const mounted = this.surfaces.get(t.id);
+    if (mounted) mounted.thumb(ctx, x + padX, y + 10, w - padX * 2, thumbH);
+    else if (t.surface === 'testimony') this.drawStackThumb(ctx, x + padX, y + 10, w - padX * 2, thumbH);
 
     setFont(ctx, 14); ctx.fillStyle = ERA3.titleText;
     ctx.fillText(t.label, x + padX, y + thumbH + 20);
@@ -1619,6 +1685,7 @@ export class GraceQueueLite {
     if (r.id === 'consent-decline') { this.decideConsent(false); return; }
     if (r.id === 'board-back') { this.backToBoard(); return; }
     if (r.id.startsWith('task-')) { this.openTask(Number(r.id.slice(5))); return; }
+    if (this.openSurface && this.openSurface.press(r.id)) { this.bump(); return; }
     if (r.id === 'apply') { this.apply(); return; }
     if (r.id === 'skip') { this.skip(); return; }
     if (r.id === 'video') { this.togglePlay(); return; }
@@ -1652,6 +1719,21 @@ export class GraceQueueLite {
         if (this.current() === before) return; // nothing moved — stop, don't spin
       }
     };
+    // ⚑ a mounted job's own beats, reached as `<jobId>:<beat>` so a job may name
+    //   its beats freely without colliding with anyone else's. The board is
+    //   settled and the job opened first, so the beat lands on a screen a
+    //   reviewer can actually see — which is the whole point of C6.
+    if (beat.includes(':')) {
+      const [jobId, sub] = beat.split(':');
+      const job = this.surfaces.get(jobId);
+      if (!job) return;
+      this.debugBeat('board');
+      const idx = this.tasks().findIndex(t => t.id === jobId);
+      if (idx >= 0) this.openTask(idx);
+      job.debugBeat(sub);
+      this.bump();
+      return;
+    }
     switch (beat) {
       case 'signin': this.settleArrival(); break;
       case 'consent': this.settleArrival(); this.minimised = false; this.beginList(); break;
