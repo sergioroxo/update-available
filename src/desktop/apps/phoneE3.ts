@@ -35,9 +35,11 @@
  * at anyone's expense.
  */
 
-import { px, setFont, wrapText } from '../theme/chrome';
-import { ERA3 } from '../theme/era3';
-import { drawFloppyIcon, FLOPPY_LABEL } from './floppysheep';
+import {
+  PHONE, phoneFont, phoneWrap, roundRect, statusBar, appBar, bubble, avatar,
+  appTile, wallpaper, sheet, pill
+} from '../theme/phone';
+import { FLOPPY_LABEL } from './floppysheep';
 import { ledger } from '../../state/ledger';
 import m from '../../../data/dialog/s3_maiden.json';
 import d from '../../../data/strings/era3_devices.json';
@@ -50,6 +52,7 @@ const MALTA_ONE = m.maltaOne as Msg[];
 const MALTA_TWO = m.maltaTwo as Msg[];
 const CASCADE = m.cascade as Msg[];
 const BACKLOG = m.backlog as { from: string; time: string; text: string }[];
+const UNLOCK_HINT = (m.home as unknown as Record<string, string>).unlockHint;
 
 /** ⚑ how far the era has got. `quiet` is the phone S64 built — a lock screen
  *  with one game on it and no notifications at all, which is what makes ONE
@@ -154,237 +157,311 @@ export class PhoneE3 {
   }
 
   // ── draw ─────────────────────────────────────────────────────────────────
+  /**
+   * ⚑ EVERY SCREEN BELOW IS DRAWN IN THE PHONE'S OWN GRAMMAR, NOT THE ERA'S.
+   * See `src/desktop/theme/phone.ts` for why: a different device by a different
+   * maker, in a proportional sans on a light ground, with a status bar, an app
+   * bar, bubbles and an icon grid. GracePlatform's Aero blue appears nowhere on
+   * this device, and the contrast between the two is the point of having both.
+   */
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.rects = [];
-    px(ctx, 0, 0, W, H, ERA3.phoneBg);
-    if (this.card) { this.drawCard(ctx, W, H); return; }
-    if (this.screen === 'lock') { this.drawLock(ctx, W, H); return; }
-    if (this.screen === 'group') { this.drawGroup(ctx, W, H); return; }
-    if (this.screen === 'inbox') { this.drawInbox(ctx, W, H); return; }
-    this.drawHome(ctx, W);
+    ctx.fillStyle = PHONE.bg;
+    ctx.fillRect(0, 0, W, H);
+    if (this.screen === 'lock') { this.drawLock(ctx, W, H); }
+    else if (this.screen === 'group') { this.drawGroup(ctx, W, H); }
+    else if (this.screen === 'inbox') { this.drawInbox(ctx, W, H); }
+    else { this.drawHome(ctx, W, H); }
+    // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
+    if (this.card) this.drawCard(ctx, W, H);
   }
 
   /** S64's law, unchanged: before anything happens the lock screen is EMPTY.
    *  The phone in this era is quiet, which is what makes one notification an
-   *  event. The game has always been here and nothing ever mentions it. */
+   *  event. ⚑ It is now a real lock screen — wallpaper, a big clock, a date —
+   *  and the notification is a card sitting on the wallpaper rather than a
+   *  panel bolted to the bottom of a black rectangle. */
   private drawLock(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    setFont(ctx, 22); ctx.fillStyle = ERA3.white;
-    ctx.fillText(d.phone.lockClock, Math.round((W - ctx.measureText(d.phone.lockClock).width) / 2), 34);
-    setFont(ctx, 10); ctx.fillStyle = ERA3.phoneDim;
-    ctx.fillText(d.phone.lockDate, Math.round((W - ctx.measureText(d.phone.lockDate).width) / 2), 62);
-
-    const s = 48; const ix = Math.round((W - s) / 2); const iy = 116;
-    drawFloppyIcon(ctx, ix, iy, s);
-    setFont(ctx, 10); ctx.fillStyle = ERA3.phoneText;
-    ctx.fillText(FLOPPY_LABEL, Math.round((W - ctx.measureText(FLOPPY_LABEL).width) / 2), iy + s + 8);
-    this.rects.push({ x: ix - 10, y: iy - 8, w: s + 20, h: s + 30, id: 'floppy' });
+    wallpaper(ctx, W, H);
+    statusBar(ctx, W, d.phone.lockClock);
+    phoneFont(ctx, 40, 400);
+    ctx.fillStyle = PHONE.surface;
+    const cw = ctx.measureText(d.phone.lockClock).width;
+    ctx.fillText(d.phone.lockClock, Math.round((W - cw) / 2), 52);
+    phoneFont(ctx, 11);
+    const dw = ctx.measureText(d.phone.lockDate).width;
+    ctx.fillText(d.phone.lockDate, Math.round((W - dw) / 2), 100);
 
     if (this.stage === 'quiet') {
-      // the whole rest of the phone is behind one press, and nothing says so
-      this.rects.push({ x: 0, y: H - 60, w: W, h: 60, id: 'unlock' });
+      phoneFont(ctx, 10);
+      ctx.fillStyle = PHONE.surface;
+      ctx.globalAlpha = 0.75;
+      const uw = ctx.measureText(UNLOCK_HINT).width;
+      ctx.fillText(UNLOCK_HINT, Math.round((W - uw) / 2), H - 26);
+      ctx.globalAlpha = 1;
+      this.rects.push({ x: 0, y: 130, w: W, h: H - 130, id: 'unlock' });
       return;
     }
 
-    const ny = H - 108; const nw = W - 16;
-    px(ctx, 8, ny, nw, 92, ERA3.phonePanel);
-    setFont(ctx, 10); ctx.fillStyle = ERA3.phoneMeta;
-    ctx.fillText(m.group.name, 15, ny + 8);
-    ctx.fillText(d.phone.notificationTime, W - 15 - ctx.measureText(d.phone.notificationTime).width, ny + 8);
-    setFont(ctx, 12); ctx.fillStyle = ERA3.white;
-    ctx.fillText('Bea', 15, ny + 24);
-    setFont(ctx, 11); ctx.fillStyle = ERA3.phoneText;
-    const preview = this.stage === 'first' ? MALTA_ONE[0].text ?? '' : MALTA_TWO[0].text ?? '';
-    wrapText(ctx, preview, nw - 22).slice(0, 3).forEach((ln, i) => ctx.fillText(ln, 15, ny + 42 + i * 14));
-    this.rects.push({ x: 8, y: ny, w: nw, h: 92, id: 'notification' });
+    // ⚑ the one notification, as a card on the wallpaper
+    const ny = 140; const nx = 10; const nw = W - 20;
+    const lines = (() => { phoneFont(ctx, 11); return phoneWrap(ctx, this.previewText(), nw - 20); })();
+    const nh = 34 + Math.min(3, lines.length) * 14;
+    roundRect(ctx, nx, ny, nw, nh, 10, PHONE.surface);
+    avatar(ctx, nx + 8, ny + 8, 18, 'Bea');
+    phoneFont(ctx, 11, 600);
+    ctx.fillStyle = PHONE.ink;
+    ctx.fillText(m.group.name, nx + 32, ny + 9);
+    phoneFont(ctx, 9);
+    ctx.fillStyle = PHONE.dim;
+    const tw = ctx.measureText(d.phone.notificationTime).width;
+    ctx.fillText(d.phone.notificationTime, nx + nw - 10 - tw, ny + 10);
+    phoneFont(ctx, 11);
+    ctx.fillStyle = PHONE.ink;
+    lines.slice(0, 3).forEach((ln, k) => ctx.fillText(ln, nx + 10, ny + 28 + k * 14));
+    this.rects.push({ x: nx, y: ny, w: nw, h: nh, id: 'notification' });
+    this.rects.push({ x: 0, y: ny + nh, w: W, h: H - ny - nh, id: 'unlock' });
   }
 
-  /** four things, and only one of them wants anything from her */
-  private drawHome(ctx: CanvasRenderingContext2D, W: number): void {
-    setFont(ctx, 11); ctx.fillStyle = ERA3.phoneDim;
-    ctx.fillText(d.phone.lockClock, 10, 8);
-    let y = 30;
-    const row = (id: string, label: string, note: string, badge: string): void => {
-      px(ctx, 8, y, W - 16, 44, ERA3.phonePanel);
-      setFont(ctx, 12); ctx.fillStyle = ERA3.white;
-      ctx.fillText(label, 16, y + 8);
-      setFont(ctx, 9); ctx.fillStyle = ERA3.phoneMeta;
-      wrapText(ctx, note, W - 40).slice(0, 1).forEach(ln => ctx.fillText(ln, 16, y + 26));
-      if (badge) {
-        setFont(ctx, 9); ctx.fillStyle = ERA3.accentHi;
-        ctx.fillText(badge, W - 16 - ctx.measureText(badge).width, y + 8);
-      }
-      this.rects.push({ x: 8, y, w: W - 16, h: 44, id });
-      y += 52;
-    };
+  private previewText(): string {
+    return this.stage === 'first' ? MALTA_ONE[0].text ?? '' : MALTA_TWO[0].text ?? '';
+  }
+
+  /** ⚑ AN ICON GRID ON A WALLPAPER — the single thing that most makes a screen
+   *  read as a phone rather than as a window with rows in it. Four apps, and
+   *  only one of them wants anything from her. */
+  private drawHome(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    wallpaper(ctx, W, H);
+    statusBar(ctx, W, d.phone.lockClock);
 
     const unread = this.stage === 'first' ? MALTA_ONE.length
       : this.stage === 'voted' ? MALTA_TWO.length
-        : this.stage === 'cascade' ? this.cascadeN : 0;
-    row('group', m.home.groupLabel, m.group.meta,
-      unread ? m.group.unreadLabel.replace('{n}', String(unread)) : '');
-    row('inbox', m.home.messagesLabel, m.home.readNote,
-      String(BACKLOG.length - this.readMessages.size));
-    row('floppy', FLOPPY_LABEL, '', '');
-    // ⚑ the stream is running and nobody asked her to watch it. It has no verb
-    //   and never gets one: it is furniture, and that is the observation.
-    row('stream', m.home.streamLabel, m.home.streamNote, '');
+        : this.stage === 'cascade' || this.stage === 'after' ? this.cascadeN : 0;
+
+    const s = 46; const gap = Math.round((W - s * 2) / 3);
+    const col = (i: number): number => gap + i * (s + gap);
+    const rowY = 56;
+
+    appTile(ctx, col(0), rowY, s, PHONE.tileGroup, 'chat', m.home.groupLabel,
+      unread ? String(unread) : '');
+    this.rects.push({ x: col(0), y: rowY, w: s, h: s + 14, id: 'group' });
+
+    const unreadMail = BACKLOG.length - this.readMessages.size;
+    appTile(ctx, col(1), rowY, s, PHONE.tileMail, 'mail', m.home.messagesLabel,
+      unreadMail ? String(unreadMail) : '');
+    this.rects.push({ x: col(1), y: rowY, w: s, h: s + 14, id: 'inbox' });
+
+    appTile(ctx, col(0), rowY + s + 30, s, PHONE.tileGame, 'game', FLOPPY_LABEL, '');
+    this.rects.push({ x: col(0), y: rowY + s + 30, w: s, h: s + 14, id: 'floppy' });
+
+    appTile(ctx, col(1), rowY + s + 30, s, PHONE.tileLive, 'live', m.home.streamLabel, '');
+    this.rects.push({ x: col(1), y: rowY + s + 30, w: s, h: s + 14, id: 'stream' });
+
+    // ⚑ the stream's note sits UNDER the grid rather than on the tile: it is the
+    //   piece observing, not the phone labelling, and it never becomes a verb.
+    phoneFont(ctx, 9);
+    ctx.fillStyle = PHONE.surface;
+    ctx.globalAlpha = 0.8;
+    phoneWrap(ctx, m.home.streamNote, W - 24).slice(0, 2)
+      .forEach((ln, i) => ctx.fillText(ln, 12, rowY + s * 2 + 62 + i * 12));
+    ctx.globalAlpha = 1;
   }
 
-  /** ⚑ THE GROUP. Ordinary Tuesday, then the news, then — at the end — other
-   *  people, arriving faster than the thing that reviews them. */
+  /** ⚑ THE GROUP, as a messaging app — and every bubble is on the LEFT.
+   *
+   *  In any real thread your own words run down the right-hand side. Vera's
+   *  right-hand side is EMPTY, for the whole length of the era, because she
+   *  never writes anything here. The composer sits at the bottom with its
+   *  placeholder showing. Nothing points at this and nothing ever mentions it. */
   private drawGroup(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.header(ctx, W, m.group.name, m.group.meta);
+    ctx.fillStyle = PHONE.bg; ctx.fillRect(0, 0, W, H);
+    const y0 = statusBar(ctx, W, d.phone.lockClock);
+    let top = appBar(ctx, W, y0, m.group.name, m.group.meta);
+
+    const counted = this.stage === 'cascade' || this.stage === 'after';
+    if (counted) {
+      const missed = Math.max(0, this.cascadeN - 2);
+      const label = this.stage === 'after'
+        ? m.outnumbered.counter.replace('{n}', String(missed))
+        : m.outnumbered.stillWorking;
+      ctx.fillStyle = PHONE.surface;
+      ctx.fillRect(0, top, W, 18);
+      ctx.fillStyle = PHONE.hairline;
+      ctx.fillRect(0, top + 17, W, 1);
+      phoneFont(ctx, 9);
+      ctx.fillStyle = PHONE.dim;
+      ctx.fillText(label, 10, top + 4);
+      top += 18;
+    }
+
     const msgs: Msg[] = [...BEFORE];
     if (this.stage !== 'quiet') msgs.push(...MALTA_ONE);
     if (this.stage === 'voted' || this.stage === 'cascade' || this.stage === 'after') msgs.push(...MALTA_TWO);
     if (this.stage === 'cascade' || this.stage === 'after') msgs.push(...CASCADE.slice(0, this.cascadeN));
 
-    // ⚑ the thread is drawn from the BOTTOM UP, so the newest is always in view
-    //   without a scrollbar and without a scroll gesture the input law forbids.
-    //   ⚑ `top` reserves the header AND the outnumbered counter: the first
-    //   version drew the counter over the top message, which read as a
-    //   rendering fault in the one beat that must not look broken.
-    const counted = this.stage === 'cascade' || this.stage === 'after';
-    const top = 24 + (counted ? 18 : 0);
-    const bottom = H - 12;
-    let y = bottom;
+    // the composer, and it is the emptiest thing on the device
+    const cy = H - 30;
+    ctx.fillStyle = PHONE.bar; ctx.fillRect(0, cy, W, 30);
+    ctx.fillStyle = PHONE.hairline; ctx.fillRect(0, cy, W, 1);
+    roundRect(ctx, 10, cy + 6, W - 46, 18, 9, PHONE.surface);
+    phoneFont(ctx, 10);
+    ctx.fillStyle = PHONE.faint;
+    ctx.fillText(m.group.composerHint, 18, cy + 10);
+    roundRect(ctx, W - 30, cy + 6, 20, 18, 9, PHONE.bubbleIn);
+
+    // ⚑ bottom-up fill, and the guard tests the PROSPECTIVE position so the
+    //   topmost bubble can never slide under the bar above it.
+    let y = cy - 8;
     const drawn: { y: number; h: number; msg: Msg }[] = [];
-    // ⚑ the guard tests the PROSPECTIVE position, not the previous one. Testing
-    //   the previous one let the topmost message start above `top` and sit under
-    //   the counter — which is what the counter overlapping the thread actually
-    //   was: not a z-order problem, an off-by-one-message layout bug.
     for (let i = msgs.length - 1; i >= 0; i--) {
       const msg = msgs[i];
       const h = this.msgHeight(ctx, msg, W);
       const ny = y - h - 6;
-      if (ny < top) break;
+      if (ny < top + 4) break;
       y = ny;
       drawn.unshift({ y, h, msg });
     }
-    for (const { y: my, msg } of drawn) this.drawMsg(ctx, msg, my, W);
-
-    if (counted) {
-      // ⚑ the one line the software says when it loses, and it is
-      //   ADMINISTRATIVE rather than dramatic. It does not say it failed. It
-      //   says it could not get to all of them, in the voice of something that
-      //   has never once raised its voice.
-      const missed = Math.max(0, this.cascadeN - 2);
-      const label = this.stage === 'after'
-        ? m.outnumbered.counter.replace('{n}', String(missed))
-        : m.outnumbered.stillWorking;
-      px(ctx, 0, 23, W, 18, ERA3.phonePanel);
-      setFont(ctx, 9); ctx.fillStyle = ERA3.phoneMeta;
-      ctx.fillText(label, 10, 27);
+    let lastFrom = '';
+    for (const { y: my, msg } of drawn) {
+      this.drawMsg(ctx, msg, my, W, msg.from !== lastFrom);
+      lastFrom = msg.from;
     }
   }
 
   private msgHeight(ctx: CanvasRenderingContext2D, msg: Msg, W: number): number {
-    if (msg.from === 'system') { setFont(ctx, 9); return 14; }
-    if (msg.kind === 'link') return 44;
-    setFont(ctx, 10);
-    return 16 + wrapText(ctx, msg.text ?? '', W - 34).length * 13;
+    if (msg.from === 'system') { phoneFont(ctx, 9); return 16; }
+    if (msg.kind === 'link') return 52;
+    phoneFont(ctx, 11);
+    return 14 + phoneWrap(ctx, msg.text ?? '', W - 74).length * 14;
   }
 
-  private drawMsg(ctx: CanvasRenderingContext2D, msg: Msg, y: number, W: number): void {
+  private drawMsg(
+    ctx: CanvasRenderingContext2D, msg: Msg, y: number, W: number, showWho: boolean
+  ): void {
     if (msg.from === 'system') {
-      // ⚑ people being ADDED to the group while it happens. Drawn as the
-      //   platform's own grey note, because that is what it is.
-      setFont(ctx, 9); ctx.fillStyle = ERA3.phoneDim;
+      // people being ADDED while it happens, in the platform's own grey note
+      phoneFont(ctx, 9);
+      ctx.fillStyle = PHONE.dim;
       const tw = ctx.measureText(msg.text ?? '').width;
-      ctx.fillText(msg.text ?? '', Math.round((W - tw) / 2), y);
+      ctx.fillText(msg.text ?? '', Math.round((W - tw) / 2), y + 3);
       return;
     }
-    if (msg.kind === 'link') { this.drawLinkCard(ctx, 10, y, W - 20, msg); return; }
-    setFont(ctx, 10);
-    const lines = wrapText(ctx, msg.text ?? '', W - 34);
-    const h = 16 + lines.length * 13;
-    px(ctx, 10, y, W - 20, h, ERA3.phonePanel);
-    setFont(ctx, 9); ctx.fillStyle = ERA3.accentHi;
-    ctx.fillText(msg.from, 16, y + 3);
-    setFont(ctx, 10); ctx.fillStyle = ERA3.phoneText;
-    lines.forEach((ln, i) => ctx.fillText(ln, 16, y + 15 + i * 13));
+    const bx = 30;
+    if (showWho) avatar(ctx, 6, y + 2, 20, msg.from);
+    if (msg.kind === 'link') { this.drawLinkCard(ctx, bx, y, W - bx - 14, msg); return; }
+    phoneFont(ctx, 11);
+    const lines = phoneWrap(ctx, msg.text ?? '', W - 74);
+    let widest = 0;
+    for (const ln of lines) widest = Math.max(widest, ctx.measureText(ln).width);
+    const bw = Math.min(W - bx - 14, widest + 18);
+    const h = 14 + lines.length * 14;
+    bubble(ctx, bx, y, bw, h, 'in');
+    if (showWho) {
+      phoneFont(ctx, 8, 600);
+      ctx.fillStyle = PHONE.dim;
+      ctx.fillText(msg.from, bx + 2, y - 10);
+    }
+    phoneFont(ctx, 11);
+    ctx.fillStyle = PHONE.ink;
+    lines.forEach((ln, i) => ctx.fillText(ln, bx + 9, y + 7 + i * 14));
   }
 
-  /** ⚑ the pretend newspaper carrying the real law (§7.3). Invented masthead,
-   *  documented act. Tappable only while it is the CURRENT news — a card three
-   *  screens up in the backlog is not a live control. */
+  /** ⚑ the pretend newspaper carrying the real law (§7.3): invented masthead,
+   *  documented act, drawn as the link preview card a messaging app makes. */
   private drawLinkCard(
     ctx: CanvasRenderingContext2D, x: number, y: number, w: number, msg: Msg
   ): void {
-    px(ctx, x, y, w, 40, ERA3.phonePanel);
-    px(ctx, x, y, 2, 40, ERA3.accent);
-    setFont(ctx, 8); ctx.fillStyle = ERA3.phoneMeta;
-    ctx.fillText(m.link.masthead, x + 8, y + 3);
-    setFont(ctx, 9); ctx.fillStyle = ERA3.white;
-    wrapText(ctx, m.link.headline, w - 16).slice(0, 2)
-      .forEach((ln, i) => ctx.fillText(ln, x + 8, y + 14 + i * 11));
-    if (msg.from === 'Bea' || msg.kind === 'link') {
-      this.rects.push({ x, y, w, h: 40, id: 'link' });
+    roundRect(ctx, x, y, w, 48, 9, PHONE.surface);
+    roundRect(ctx, x + 6, y + 6, 36, 36, 5, PHONE.tileLive);
+    phoneFont(ctx, 8);
+    ctx.fillStyle = PHONE.dim;
+    ctx.fillText(m.link.masthead, x + 48, y + 7);
+    phoneFont(ctx, 10, 600);
+    ctx.fillStyle = PHONE.ink;
+    phoneWrap(ctx, m.link.headline, w - 56).slice(0, 2)
+      .forEach((ln, i) => ctx.fillText(ln, x + 48, y + 19 + i * 12));
+    if (msg.kind === 'link' || msg.from === 'Bea') {
+      this.rects.push({ x, y, w, h: 48, id: 'link' });
     }
   }
 
   /** ⚑ read-only, and it files NOTHING. §6's design law: the piece never makes
-   *  her open them, they can be read at any time, and if a player never touches
-   *  this inbox that is also true of her. */
+   *  her open them, and if a player never touches this inbox that is also true
+   *  of her. Drawn as a conversation LIST, with unread dots. */
   private drawInbox(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    // ⚑ the note is NOT in the header — at 180 px it landed on top of the word
-    //   "Messages". It belongs at the foot anyway: it is a statement about the
-    //   whole screen, and the quietest true sentence in the era.
-    this.header(ctx, W, m.home.messagesLabel, '');
-    let y = 36;
+    ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
+    const y0 = statusBar(ctx, W, d.phone.lockClock);
+    let y = appBar(ctx, W, y0, m.home.messagesLabel);
     for (const b of BACKLOG) {
-      setFont(ctx, 10);
       const open = this.readMessages.has(b.from + b.time);
-      const lines = open ? wrapText(ctx, b.text, W - 30) : wrapText(ctx, b.text, W - 30).slice(0, 1);
-      const h = 18 + lines.length * 13;
-      if (y + h > H - 6) break;
-      px(ctx, 8, y, W - 16, h, ERA3.phonePanel);
-      if (!open) px(ctx, 8, y, 2, h, ERA3.accentHi);
-      setFont(ctx, 9); ctx.fillStyle = ERA3.white;
-      ctx.fillText(b.from, 15, y + 3);
-      ctx.fillStyle = ERA3.phoneMeta;
-      ctx.fillText(b.time, W - 15 - ctx.measureText(b.time).width, y + 3);
-      setFont(ctx, 10); ctx.fillStyle = ERA3.phoneText;
-      lines.forEach((ln, i) => ctx.fillText(ln, 15, y + 16 + i * 13));
-      this.rects.push({ x: 8, y, w: W - 16, h, id: 'read-' + b.from + b.time });
-      y += h + 6;
+      phoneFont(ctx, 10);
+      const lines = open
+        ? phoneWrap(ctx, b.text, W - 50)
+        : phoneWrap(ctx, b.text, W - 50).slice(0, 2);
+      const h = 22 + lines.length * 13;
+      if (y + h > H - 16) break;
+      ctx.fillStyle = PHONE.surface; ctx.fillRect(0, y, W, h);
+      if (!open) { ctx.fillStyle = PHONE.tint; ctx.beginPath(); ctx.arc(10, y + 14, 3, 0, Math.PI * 2); ctx.fill(); }
+      avatar(ctx, 18, y + 5, 24, b.from);
+      phoneFont(ctx, 11, 600);
+      ctx.fillStyle = PHONE.ink;
+      ctx.fillText(b.from, 48, y + 5);
+      phoneFont(ctx, 9);
+      ctx.fillStyle = PHONE.dim;
+      const tw = ctx.measureText(b.time).width;
+      ctx.fillText(b.time, W - 10 - tw, y + 6);
+      phoneFont(ctx, 10);
+      ctx.fillStyle = open ? PHONE.ink : PHONE.dim;
+      lines.forEach((ln, i) => ctx.fillText(ln, 48, y + 19 + i * 13));
+      ctx.fillStyle = PHONE.hairline; ctx.fillRect(48, y + h - 1, W - 48, 1);
+      this.rects.push({ x: 0, y, w: W, h, id: 'read-' + b.from + b.time });
+      y += h;
     }
-    setFont(ctx, 9); ctx.fillStyle = ERA3.phoneDim;
-    ctx.fillText(m.home.readNote, 10, Math.min(y + 4, H - 14));
+    phoneFont(ctx, 9);
+    ctx.fillStyle = PHONE.faint;
+    ctx.fillText(m.home.readNote, 12, Math.min(y + 6, H - 14));
   }
 
-  /** ⚑ LAMBIENT'S CARD, and both versions of it are polite. Nothing is
-   *  threatened, nothing is withheld, and the only difference between the two
-   *  is how she got here — which is the point. */
+  /** ⚑ LAMBIENT'S CARD, as a SHEET from the bottom edge — the shape a phone of
+   *  this period used for anything it wanted acknowledged. Both versions are
+   *  polite; nothing is threatened, nothing is withheld, and the only difference
+   *  between them is how she got here. */
   private drawCard(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     const opened = this.card === 'opened';
-    setFont(ctx, 12); ctx.fillStyle = ERA3.white;
     const title = opened ? m.block.openedTitle : m.block.ignoredTitle;
-    wrapText(ctx, title, W - 24).forEach((ln, i) => ctx.fillText(ln, 12, 40 + i * 15));
-    setFont(ctx, 10); ctx.fillStyle = ERA3.phoneText;
     const body = opened ? m.block.openedBody : m.block.ignoredBody;
-    wrapText(ctx, body, W - 24).forEach((ln, i) => ctx.fillText(ln, 12, 86 + i * 13));
-    setFont(ctx, 10); ctx.fillStyle = ERA3.phoneMeta;
     const note = opened ? m.block.openedNote : m.block.ignoredNote;
-    wrapText(ctx, note, W - 24).forEach((ln, i) => ctx.fillText(ln, 12, 170 + i * 13));
+    phoneFont(ctx, 11);
+    const bodyLines = phoneWrap(ctx, body, W - 32);
+    const noteLines = phoneWrap(ctx, note, W - 32);
+    // ⚑ THE SHEET IS SIZED FROM ITS CONTENT AND THE BUTTON SITS UNDER IT. The
+    //   first build pinned the pill to `H - 40` and let the text run behind it,
+    //   which buried the note — and the note is the whole card. "I let the team
+    //   know it was shared in your group" is the capture; a version of this
+    //   screen where it is under a button is a version that does not say it.
+    const h = 118 + (bodyLines.length + noteLines.length) * 14;
+    let y = sheet(ctx, W, H, h);
 
-    const by = H - 46;
-    px(ctx, 12, by, W - 24, 30, ERA3.phonePanel);
-    setFont(ctx, 11); ctx.fillStyle = ERA3.white;
-    const bw = ctx.measureText(m.block.dismiss).width;
-    ctx.fillText(m.block.dismiss, Math.round((W - bw) / 2), by + 9);
-    this.rects.push({ x: 12, y: by, w: W - 24, h: 30, id: 'dismiss' });
-  }
+    // the mark, small and grey — it is not asking to be liked here
+    ctx.fillStyle = PHONE.dim;
+    for (const [dx, dy] of [[0, 0], [6, -4], [-5, 3], [4, 5], [-6, -3]]) {
+      ctx.fillRect(Math.round(W / 2) - 2 + dx * 2, y + 2 + dy * 2, 3, 3);
+    }
+    y += 24;
+    phoneFont(ctx, 13, 600);
+    ctx.fillStyle = PHONE.ink;
+    phoneWrap(ctx, title, W - 32).forEach(ln => { ctx.fillText(ln, 16, y); y += 17; });
+    y += 4;
+    phoneFont(ctx, 11);
+    ctx.fillStyle = PHONE.dim;
+    bodyLines.forEach(ln => { ctx.fillText(ln, 16, y); y += 14; });
+    y += 6;
+    ctx.fillStyle = PHONE.faint;
+    noteLines.forEach(ln => { ctx.fillText(ln, 16, y); y += 14; });
 
-  private header(ctx: CanvasRenderingContext2D, W: number, title: string, note: string): void {
-    setFont(ctx, 11); ctx.fillStyle = ERA3.white;
-    ctx.fillText(title, 26, 6);
-    setFont(ctx, 9); ctx.fillStyle = ERA3.phoneMeta;
-    ctx.fillText(note, W - 10 - ctx.measureText(note).width, 8);
-    setFont(ctx, 12); ctx.fillStyle = ERA3.accentHi;
-    ctx.fillText('‹', 10, 5);
-    px(ctx, 0, 22, W, 1, ERA3.phonePanel);
-    this.rects.push({ x: 0, y: 0, w: 24, h: 22, id: 'back' });
+    const by = Math.min(H - 34, y + 10);
+    pill(ctx, 16, by, W - 32, 26, m.block.dismiss);
+    this.rects.push({ x: 16, y: by, w: W - 32, h: 26, id: 'dismiss' });
   }
 
   // ── press ────────────────────────────────────────────────────────────────
@@ -426,6 +503,7 @@ export class PhoneE3 {
 
   debugBeat(beat: string): void {
     switch (beat) {
+      case 'lock': this.screen = 'lock'; this.bump(); break;
       case 'home': this.screen = 'home'; this.bump(); break;
       case 'group': this.arm(); this.screen = 'group'; this.openGroup(); break;
       case 'inbox': this.screen = 'inbox'; this.bump(); break;

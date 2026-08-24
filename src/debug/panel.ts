@@ -325,6 +325,7 @@ const E3_DEVICE_BEATS: Array<[string, string]> = [
   // ⚑⚑ THE PHONE AND THE END OF THE ERA (2026-08-24). Era 3 could not end at
   // all before today — its only exit ran through two retired sends — and it now
   // ends on the cascade, which is what §5 always said it should.
+  ['⚑ the phone · the lock screen (quiet)', 'phoneLockQuiet'],
   ['⚑ the phone · home screen', 'phoneHome'],
   ['↳ the group · Maiden-to-be', 'phoneGroup'],
   ['↳ ⚑ the unread backlog (nothing files)', 'phoneInbox'],

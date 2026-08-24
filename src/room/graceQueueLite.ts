@@ -1777,6 +1777,7 @@ export class GraceQueueLite {
       // screen, which nothing points at.
       // ⚑ THE PHONE, and the end of the era. `phone:*` reaches PhoneE3's own
       //   beats; each lands on a screen a reviewer can see.
+      case 'phoneLockQuiet': this.phone.debugBeat('lock'); this.phoneV++; break;
       case 'phoneHome': this.phone.debugBeat('home'); this.phoneV++; break;
       case 'phoneGroup': this.phone.debugBeat('group'); this.phoneV++; break;
       case 'phoneInbox': this.phone.debugBeat('inbox'); this.phoneV++; break;
