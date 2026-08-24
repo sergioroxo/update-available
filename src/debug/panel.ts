@@ -263,6 +263,9 @@ const OS_BEATS: BeatRow[] = [
  * needs no new wiring through `src/engine/app.ts`.
  */
 const E3_DEVICE_BEATS: Array<[string, string]> = [
+  ['⚑⚑ sign in → LAMBIENT ASKS (the initiation)', 'consent'],
+  ['↳ Allow — permissions granted', 'consentAllow'],
+  ['↳ ⚑ Not now — and it stays anyway', 'consentDecline'],
   ['⚑ sign in → THE BOARD (the day, as tiles)', 'board'],
   ['↳ open tile 1 · the correction list', 'list'],
   ['↳ put the task down (back to today)', 'backToBoard'],

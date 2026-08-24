@@ -163,6 +163,14 @@ interface SubmissionDef {
 }
 
 const SUBMISSIONS = q.submissions as SubmissionDef[];
+
+/** one job on the day's board. See `_docBoard` in data/dialog/s3_queue.json:
+ *  ⚑ the tiles are TASK KINDS, not submissions (Sérgio, 2026-08-24: "it was 6
+ *  jobs not 3") — correcting the testimonies is ONE job that holds all three
+ *  women, the way a day's work actually divides. `surface: null` means the
+ *  screen for that job is not built yet, and such a tile is NOT DRAWN. */
+type BoardTask = { id: string; surface: string | null; label: string; note: string };
+const BOARD = (q as unknown as { board: BoardTask[] }).board;
 const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c]));
 /** the submission after which Malta arrives on the phone (Noa's — the era's
  *  contradiction is complete, and the break lands on the person holding it) */
@@ -217,7 +225,7 @@ type Outcome = 'applied' | 'skipped';
  * explicit that after the break "the tasks should still be THERE, still
  * working, still greyable". A screen that clears itself cannot do that.
  */
-type Mode = 'dark' | 'boot' | 'install' | 'signin' | 'board' | 'list' | 'done';
+type Mode = 'dark' | 'boot' | 'install' | 'signin' | 'consent' | 'board' | 'list' | 'done';
 
 const ARRIVAL = (updates as unknown as {
   e3_arrival: {
@@ -227,6 +235,7 @@ const ARRIVAL = (updates as unknown as {
 }).e3_arrival;
 
 const MALTA = d.phone.malta;
+const LAMBIENT = q.lambient as unknown as Record<string, string>;
 
 const DARK_SECONDS = 1.6;      // a dead screen, long enough to read as dead
 const BOOT_LINE_SECONDS = 1.1; // each service line
@@ -310,6 +319,18 @@ export class GraceQueueLite {
    *  never a state a player can be stuck in — the same law the Assistant's
    *  dismissal follows. */
   private minimised = false;
+  /** ⚑ THE INITIATION (2026-08-24). Era 2 introduced Lamby with a two-line
+   *  card and a Not-now; Era 3 asks the same question again with thirteen more
+   *  years of appetite behind it, in the shape every assistant of the mid-2010s
+   *  used: a friendly mark, a warm hello, a wall of small print, a wake word,
+   *  decline and accept. ⚑ DECLINING WORKS AND IS LOGGED (CLAUDE.md's dismissal
+   *  law) — and Lambient stays, because §4 of the narrative is that there is no
+   *  compliant path. The whole era is in `declineReply`, said kindly, before
+   *  anything has happened. */
+  private consent: 'allowed' | 'declined' | null = null;
+  private wakeWord = false;
+  private seenBoard = false;
+  private seenTask = false;
   private arrivalT = -1;   // < 0 = not running
   private lastTick = -1;
   private subIdx = 0;
@@ -317,6 +338,8 @@ export class GraceQueueLite {
   private rects: Rect[] = [];
   private phoneRects: Rect[] = [];
   private lambLine: string;
+  /** the two-line beat, when a beat has two (see drawLambientLane) */
+  private lambLines: string[] | null = null;
 
   // the video (S69) — `playT` is seconds into it, `playing` whether it moves.
   // Nobody is asked to press this and nothing files when they do.
@@ -547,7 +570,40 @@ export class GraceQueueLite {
    *  press that starts the shift" — what changed is where the shift starts.) */
   beginList(): void {
     if (this.mode !== 'signin') return;
+    this.mode = this.consent ? 'board' : 'consent';
+    if (this.mode === 'board') this.seenBoard = true;
+    this.bump();
+  }
+
+  /** ⚑ BOTH ANSWERS LAND ON THE SAME SCREEN. That is not a shortcut, it is the
+   *  era's thesis arriving in its first interaction: refusing is real, it is
+   *  filed, Lambient's reply acknowledges it warmly — and the day opens anyway,
+   *  with Lambient still in the lane at the bottom of it. */
+  decideConsent(allow: boolean): void {
+    if (this.mode !== 'consent') return;
+    this.consent = allow ? 'allowed' : 'declined';
+    ledger.lamby.push({
+      id: 'e3_lambient_consent',
+      outcome: allow ? 'begun' : 'dismissed',
+      witness: allow ? LAMBIENT.witnessAllowed : LAMBIENT.witnessDeclined
+    });
+    // ⚑ THE ANSWER AND THE INSTRUCTION, in one two-line beat. The reply must not
+    //   be swallowed by the board's own first-run line — "I'll keep the room
+    //   tidy either way" IS the era, and it only works if she hears it while
+    //   the refusal is still fresh. Both halves are Lambient, one beat, two
+    //   lines, which is the cap.
+    this.lambLines = [allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, LAMBIENT.firstBoard1];
+    this.lambLine = LAMBIENT.greet;
+    this.seenBoard = true;
     this.mode = 'board';
+    this.bump();
+  }
+
+  /** the wake-word opt-in. It changes nothing and files nothing — which is the
+   *  point of it, and is true of the real ones too. */
+  toggleWakeWord(): void {
+    if (this.mode !== 'consent') return;
+    this.wakeWord = !this.wakeWord;
     this.bump();
   }
 
@@ -560,23 +616,52 @@ export class GraceQueueLite {
    *  tiles that do nothing is the exact fault this project keeps hitting —
    *  authored content nobody can reach — and a greyed-out "coming soon" tile
    *  would be the frame playing. The board shows what is real, and grows. */
-  private tasks(): SubmissionDef[] { return SUBMISSIONS; }
+  private tasks(): BoardTask[] { return BOARD.filter(t => t.surface !== null); }
 
-  /** every correction on it decided — the tile goes grey */
-  private taskComplete(sub: SubmissionDef): boolean {
+  /** one story worked to its end — every correction on it decided */
+  private subComplete(sub: SubmissionDef): boolean {
     return this.items(sub).every(c => this.decisions.has(c.id));
+  }
+
+  /** the whole job finished — the tile goes grey */
+  private taskComplete(t: BoardTask): boolean {
+    if (t.surface === 'testimony') return SUBMISSIONS.every(sb => this.subComplete(sb));
+    return false;
+  }
+
+  /** ⚑ THE UNIT THE BREAK COUNTS, and it is not the tile. ERA3_NARRATIVE §5
+   *  arms Bea's first message after "2–3 tasks, her choice"; with only the
+   *  testimony job built, counting TILES would mean the era's hinge never
+   *  fires at all — the exact "content that cannot be met" failure this
+   *  project keeps hitting. So a unit is a piece of work finished: a story
+   *  worked to its end, or any other job completed. As stages 4 and 7 land
+   *  their surfaces, their tiles start counting here without this changing. */
+  private workDone(): number {
+    return SUBMISSIONS.filter(sb => this.subComplete(sb)).length
+      + this.tasks().filter(t => t.surface !== 'testimony' && this.taskComplete(t)).length;
   }
 
   private completedCount(): number {
     return this.tasks().filter(t => this.taskComplete(t)).length;
   }
 
-  /** open a tile. Order is the player's; nothing prefers one over another. */
+  /** open a tile. Order is the player's; nothing prefers one over another.
+   *  Inside the testimony job the stories DO run in order — that is the job,
+   *  and the freedom the board grants is over jobs, not over women. */
   openTask(index: number): void {
     if (this.mode !== 'board' && this.mode !== 'done') return;
-    if (index < 0 || index >= this.tasks().length) return;
-    this.subIdx = index;
+    const t = this.tasks()[index];
+    if (!t || t.surface !== 'testimony') return;
+    const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
+    this.subIdx = next < 0 ? 0 : next;
     this.mode = 'list';
+    // ⚑ the second conduction beat, once only: what the two verbs are, and
+    //   what happens either way. "Either way it's recorded, so you can't get
+    //   it wrong" is meant as reassurance and is the surveillance clause.
+    if (!this.seenTask) {
+      this.seenTask = true;
+      this.lambLines = [LAMBIENT.firstTask1, LAMBIENT.firstTask2];
+    }
     this.bump();
   }
 
@@ -599,6 +684,7 @@ export class GraceQueueLite {
     const item = this.current();
     if (this.mode !== 'list' || !sub || !item) return;
     this.decisions.set(item.id, outcome);
+    this.lambLines = null; // the beat is over the moment she uses either verb
     ledger.graceQueue.push({
       cardId: item.id,
       outcome,
@@ -628,7 +714,10 @@ export class GraceQueueLite {
    *  The work does not pause for it: the board returns in the same instant the
    *  phone lights up. She is still holding the day when it arrives. */
   private nextSubmission(): void {
-    if (this.completedCount() >= MALTA_AFTER_TASKS) this.armMalta();
+    if (this.workDone() >= MALTA_AFTER_TASKS) this.armMalta();
+    // still stories in this job → the next one loads, because that IS the job
+    const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
+    if (next >= 0) { this.subIdx = next; return; }
     this.mode = this.completedCount() >= this.tasks().length ? 'done' : 'board';
   }
 
@@ -851,7 +940,7 @@ export class GraceQueueLite {
     //   the whole picture, and it is worth the beat: the machine has a life
     //   that is not the shift, and she has put the shift down to look at it.
     if (this.minimised) { this.drawTaskButton(ctx, H, false); return; }
-    const title = this.mode === 'signin' ? q.app.shellTitle
+    const title = this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
       : this.mode === 'board' || this.mode === 'done' ? q.app.boardTitle
         : q.app.title;
     const c = aero.windowFrame(ctx, 0, 0, winW, winH, title);
@@ -867,6 +956,7 @@ export class GraceQueueLite {
     const body = { ...c, x: c.x + GUTTER, w: c.w - GUTTER * 2 };
 
     if (this.mode === 'signin') this.drawSignIn(ctx, body);
+    else if (this.mode === 'consent') this.drawConsent(ctx, body);
     else if (this.mode === 'board' || this.mode === 'done') this.drawBoard(ctx, body);
     else this.drawList(ctx, body);
 
@@ -981,12 +1071,20 @@ export class GraceQueueLite {
 
     const tasks = this.tasks();
     const GAP = 14;
-    const tileW = Math.floor((c.w - GAP * (tasks.length - 1)) / tasks.length);
-    const tileH = 196;
+    // ⚑ a THREE-COLUMN grid, sized for the six the pool will hold, even while
+    //   only one job's surface exists. The shape of the day is part of what the
+    //   board says, and a single tile stretched across the window would say
+    //   something false about how much of this there is.
+    const COLS = 3;
+    const rows = Math.max(1, Math.ceil(tasks.length / COLS));
+    const tileW = Math.floor((c.w - GAP * (COLS - 1)) / COLS);
+    const avail = c.h - 52 - 34;
+    const tileH = Math.min(196, Math.floor((avail - GAP * (rows - 1)) / rows));
     const top = c.y + 52;
-    tasks.forEach((sub, i) => {
-      const x = c.x + i * (tileW + GAP);
-      this.drawTile(ctx, x, top, tileW, tileH, sub, i);
+    tasks.forEach((t, i) => {
+      const x = c.x + (i % COLS) * (tileW + GAP);
+      const y = top + Math.floor(i / COLS) * (tileH + GAP);
+      this.drawTile(ctx, x, y, tileW, tileH, t, i);
     });
 
     // ⚑ the caught-up line does NOT replace the board. §7.2: after the break the
@@ -994,42 +1092,47 @@ export class GraceQueueLite {
     // clears itself cannot carry that, and the version of this that wiped the
     // work away also wiped away the only evidence of what she had done.
     if (this.mode === 'done') {
+      const by = top + rows * (tileH + GAP);
       setFont(ctx, 14); ctx.fillStyle = ERA3.titleText;
-      ctx.fillText(q.app.doneHeading, c.x, top + tileH + 12);
+      ctx.fillText(q.app.doneHeading, c.x, by);
       setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
-      ctx.fillText(q.app.doneSub, c.x, top + tileH + 30);
+      ctx.fillText(q.app.doneSub, c.x, by + 18);
     }
-    this.drawLambientLane(ctx, c, this.lambLine);
+    // ⚑ THE CONDUCTION, and it obeys the R28 cap: ≤2 lines per beat, and it is
+    //   the SYSTEM's lane, never a character standing in the room. The first
+    //   time she sees the day, Lambient explains the day; after that it says
+    //   what it always says. "They're all the same size to me" is the greying
+    //   spoken out loud by the surface that does the greying.
+    if (!this.seenBoard) { this.seenBoard = true; this.lambLine = LAMBIENT.firstBoard1; this.lambLines = null; }
+    // ⚑ and the beat closes when she acts: opening a job replaces it with the
+    //   task beat, and by the time she is back here Lambient is down to its one
+    //   standing line. Nothing repeats itself at her.
+    if (this.seenTask && this.lambLines) { this.lambLines = null; this.lambLine = LAMBIENT.greet; }
+    this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
   }
 
-  /** one tile: a picture, a name, the act, and — when it is finished — grey. */
+  /** one tile: a picture, the job, what is waiting in it, and — when it is
+   *  finished — grey. */
   private drawTile(
     ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
-    sub: SubmissionDef, index: number
+    t: BoardTask, index: number
   ): void {
-    const done = this.taskComplete(sub);
+    const done = this.taskComplete(t);
     px(ctx, x, y, w, h, ERA3.white);
     px(ctx, x, y, w, 1, ERA3.glassHi);
     px(ctx, x, y + h - 1, w, 1, ERA3.glassEdge);
     px(ctx, x, y, 1, h, ERA3.glassEdge);
     px(ctx, x + w - 1, y, 1, h, ERA3.glassEdge);
 
-    // the picture. Noa sent a video, so her tile IS the frame she sent —
-    // ⚑ nothing is drawn over it, the same law drawVideo() holds to.
-    const padX = 10; const thumbH = 112;
-    if (sub.video) {
-      const fs = Math.min((w - padX * 2) / NOA_FRAME.w, thumbH / NOA_FRAME.h);
-      const fw = NOA_FRAME.w * fs; const fh = NOA_FRAME.h * fs;
-      drawNoaFrame(ctx, x + (w - fw) / 2, y + 10 + (thumbH - fh) / 2, fs, { graded: this.graded(sub) });
-    } else {
-      this.drawPageThumb(ctx, x + padX, y + 10, w - padX * 2, thumbH, sub);
-    }
+    const padX = 10;
+    const thumbH = Math.max(40, h - 84);
+    if (t.surface === 'testimony') this.drawStackThumb(ctx, x + padX, y + 10, w - padX * 2, thumbH);
 
     setFont(ctx, 14); ctx.fillStyle = ERA3.titleText;
-    ctx.fillText(sub.author, x + padX, y + thumbH + 20);
+    ctx.fillText(t.label, x + padX, y + thumbH + 20);
     setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(q.app.boardTaskLabel, x + padX, y + thumbH + 42);
+    ctx.fillText(t.note, x + padX, y + thumbH + 42);
 
     if (done) {
       // ⚑ THE GREYING, and it is the whole visual argument of the era: the
@@ -1043,6 +1146,88 @@ export class GraceQueueLite {
       ctx.fillText(q.app.boardDoneTag, x + padX, y + h - 20);
     }
     this.rects.push({ x, y, w, h, id: 'task-' + index });
+  }
+
+  /** the testimony job's picture: the stories as a STACK, the one she would
+   *  open next on top. Noa's tile is the frame she actually sent — nothing is
+   *  drawn over it, the same law `drawVideo()` holds to. */
+  private drawStackThumb(
+    ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number
+  ): void {
+    const open = SUBMISSIONS.filter(sb => !this.subComplete(sb));
+    const front = open[0] ?? SUBMISSIONS[SUBMISSIONS.length - 1];
+    const behind = Math.min(2, Math.max(0, open.length - 1));
+    for (let i = behind; i > 0; i--) {
+      px(ctx, x + i * 5, y + i * 5, w - i * 5, h - i * 5, ERA3.sysBand);
+      px(ctx, x + i * 5, y + i * 5, w - i * 5, 1, ERA3.glassEdge);
+    }
+    const fw = w - behind * 5; const fh = h - behind * 5;
+    if (front.video) {
+      const fs = Math.min(fw / NOA_FRAME.w, fh / NOA_FRAME.h);
+      drawNoaFrame(ctx, x + (fw - NOA_FRAME.w * fs) / 2, y + (fh - NOA_FRAME.h * fs) / 2, fs,
+        { graded: this.graded(front) });
+    } else {
+      this.drawPageThumb(ctx, x, y, fw, fh, front);
+    }
+  }
+
+  /**
+   * ⚑ THE INITIATION — Lambient asks, and the day starts either way.
+   *
+   * The FORM is the assistant-onboarding card everyone met once in the middle
+   * of the 2010s: the mark, the two friendly lines, the wall of small print,
+   * the wake-word opt-in, decline and accept. ⚑ No real product's wording is
+   * reused and no real assistant is named or depicted — CLAUDE.md's
+   * invented-marks law — and the small print is written fresh, in a genuine
+   * disclosure register, out of things this era actually goes on to use. That
+   * is where the satire is, and it collapses the second a player recognises an
+   * item on the list.
+   *
+   * ⚑ AND IT IS THE SEQUEL TO ERA 2's CARD. `s2_lamby.json` has
+   * `introTitle / introLine1 / introLine2 / introAccept / introDismiss` — the
+   * same card, thirteen years earlier, asking for almost nothing. Reading them
+   * side by side is the whole argument about what happened in between.
+   */
+  private drawConsent(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const cw = Math.min(560, c.w - 40);
+    const cx = c.x + Math.round((c.w - cw) / 2);
+
+    setFont(ctx, 22); ctx.fillStyle = ERA3.titleText;
+    ctx.fillText(LAMBIENT.consentTitle, cx, c.y + 6);
+    setFont(ctx, 12); ctx.fillStyle = ERA3.grey;
+    ctx.fillText(LAMBIENT.consentHello1, cx, c.y + 38);
+    ctx.fillText(LAMBIENT.consentHello2, cx, c.y + 56);
+
+    // ⚑ the mark at HERO size, where the friendly ring used to go — and left in
+    //   the era's own grey rather than lit up. Lambient's mark is a scattered
+    //   thing, not a glowing orb, and a bright bouncing circle here would be
+    //   the piece playing along more eagerly than the piece should. The warmth
+    //   on this card is in the words; the picture is allowed to be honest.
+    drawLambMark(ctx, cx + Math.round(cw / 2), c.y + 120, 9);
+
+    // ⚑ the small print, at small-print size, unabridged. It is not decoration
+    //   and it is not a joke: every clause is a thing the era uses later.
+    setFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
+    const body = wrapText(ctx, LAMBIENT.consentSmallPrint, cw);
+    body.slice(0, 7).forEach((ln, i) => ctx.fillText(ln, cx, c.y + 186 + i * 11));
+
+    const wy = c.y + 186 + Math.min(7, body.length) * 11 + 10;
+    const bs = 12;
+    px(ctx, cx, wy, bs, bs, ERA3.field);
+    px(ctx, cx, wy, bs, 1, ERA3.fieldEdge);
+    px(ctx, cx, wy, 1, bs, ERA3.fieldEdge);
+    if (this.wakeWord) { setFont(ctx, 10); ctx.fillStyle = ERA3.accent; ctx.fillText('x', cx + 3, wy + 1); }
+    setFont(ctx, 11); ctx.fillStyle = ERA3.greyDk;
+    ctx.fillText(LAMBIENT.consentWakeWord, cx + bs + 8, wy + 1);
+    this.rects.push({ x: cx, y: wy - 3, w: cw, h: bs + 6, id: 'consent-wake' });
+
+    // ⚑ two answers, the same size, neither preferred. Decline is not smaller,
+    //   not greyed, not slower: it is a real button that really works.
+    const bw = 120; const bh = 26; const by = c.y + c.h - bh - 8;
+    aero.button(ctx, cx + cw - bw * 2 - 12, by, bw, bh, LAMBIENT.consentDecline);
+    aero.button(ctx, cx + cw - bw, by, bw, bh, LAMBIENT.consentAllow, { primary: true });
+    this.rects.push({ x: cx + cw - bw * 2 - 12, y: by, w: bw, h: bh, id: 'consent-decline' });
+    this.rects.push({ x: cx + cw - bw, y: by, w: bw, h: bh, id: 'consent-allow' });
   }
 
   /** a page of her writing, small enough to read as a SHAPE — the first lines
@@ -1098,6 +1283,18 @@ export class GraceQueueLite {
     aero.button(ctx, c.x, c.y - 2, backW, backH, q.app.boardBack);
     this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
     c = { ...c, y: c.y + backH + 8, h: c.h - backH - 8 };
+
+    // ⚑ THE LANE ONLY APPEARS WHEN LAMBIENT IS ACTUALLY SAYING SOMETHING. The
+    //   task screen has never carried it, and it should not carry it always —
+    //   a permanent assistant strip under a woman's testimony is the assistant
+    //   commenting on her, which the register laws forbid. It opens for the
+    //   one-off conduction beat and closes again, and the columns shorten for
+    //   it rather than being drawn over.
+    const lane = this.lambLines;
+    if (lane) {
+      this.drawLambientLane(ctx, c, lane);
+      c = { ...c, h: c.h - 46 };
+    }
 
     const GAP = 18;
     const leftW = 350;
@@ -1379,14 +1576,24 @@ export class GraceQueueLite {
     return y + h + 4;
   }
 
-  private drawLambientLane(ctx: CanvasRenderingContext2D, c: aero.AeroContent, line: string): void {
-    const h = 30; const y = c.y + c.h - h;
+  /** ⚑ up to TWO lines, never more — R28 amendment 2 caps a conduction beat at
+   *  two and the lane is where every one of them lands. The band grows for the
+   *  second line rather than shrinking the type: this is the surface that tells
+   *  a player what to do, and a squinted instruction is not an instruction. */
+  private drawLambientLane(
+    ctx: CanvasRenderingContext2D, c: aero.AeroContent, line: string | string[]
+  ): void {
+    const raw = Array.isArray(line) ? line : [line];
+    setFont(ctx, 11);
+    const tagW = 22 + 60;
+    const lines = raw.flatMap(l => wrapText(ctx, l, c.w - tagW - 12)).slice(0, 2);
+    const h = lines.length > 1 ? 42 : 30; const y = c.y + c.h - h;
     px(ctx, c.x, y, c.w, h, ERA3.lambBand);
     px(ctx, c.x, y, c.w, 1, ERA3.lambTag);
     this.lambBadge(ctx, c.x + 8, y + 9);
     const tx = aero.tag(ctx, c.x + 22, y + 9, 'LAMBIENT', ERA3.white, ERA3.lambTag);
     setFont(ctx, 11); ctx.fillStyle = ERA3.greyDk;
-    wrapText(ctx, line, c.w - (tx - c.x) - 8).slice(0, 1).forEach(ln => ctx.fillText(ln, tx, y + 9));
+    lines.forEach((ln, i) => ctx.fillText(ln, i === 0 ? tx : c.x + 22, y + 9 + i * 15));
   }
 
   private lambBadge(ctx: CanvasRenderingContext2D, x: number, y: number): void {
@@ -1407,6 +1614,9 @@ export class GraceQueueLite {
     if (this.minimised) return;
     if (r.id === 'win-min') { this.toggleMinimised(); return; }
     if (r.id === 'signin') { this.beginList(); return; }
+    if (r.id === 'consent-wake') { this.toggleWakeWord(); return; }
+    if (r.id === 'consent-allow') { this.decideConsent(true); return; }
+    if (r.id === 'consent-decline') { this.decideConsent(false); return; }
     if (r.id === 'board-back') { this.backToBoard(); return; }
     if (r.id.startsWith('task-')) { this.openTask(Number(r.id.slice(5))); return; }
     if (r.id === 'apply') { this.apply(); return; }
@@ -1444,7 +1654,14 @@ export class GraceQueueLite {
     };
     switch (beat) {
       case 'signin': this.settleArrival(); break;
-      case 'board': this.settleArrival(); this.minimised = false; this.beginList(); break;
+      case 'consent': this.settleArrival(); this.minimised = false; this.beginList(); break;
+      case 'consentAllow': this.debugBeat('consent'); this.decideConsent(true); break;
+      case 'consentDecline': this.debugBeat('consent'); this.decideConsent(false); break;
+      case 'board':
+        this.settleArrival(); this.minimised = false;
+        this.beginList();
+        if (this.mode === 'consent') this.decideConsent(true);
+        break;
       case 'list': this.debugBeat('board'); this.openTask(0); break;
       case 'backToBoard': this.debugBeat('list'); this.backToBoard(); break;
       case 'minimise': this.debugBeat('board'); this.minimised = true; this.bump(); break;
