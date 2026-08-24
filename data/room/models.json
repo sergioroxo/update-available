@@ -200,9 +200,9 @@
     {
       "key": "computerScreen",
       "file": "computerScreen.glb",
-      "_doc": "⚑ ERA 3'S MONITOR — Kenney, CC0 (https://poly.pizza/m/V5Qo141OcB). Arrived as OBJ+MTL and was converted; this pipeline loads GLB containers only. Measured native bbox 0.3927 × 0.2943 × 0.1040 m — a small monitor as authored — ⚑ `scale` 2.0 (1.3 → 1.65 → 2.0, raised 2026-08-21 on Sérgio's screenshot: 'the computer screen is too small for the size of the area of the desktop'). 1.3 gave 0.51 × 0.38 m, which is physically honest for a 2016 display and TOO SMALL FOR THIS PIECE — the whole era is read off that panel, and a monitor sized for realism made the correction list a squint. 1.65 gives ~0.65 × 0.49 × 0.172 m: a large desk monitor, still a monitor, and the difference is legibility rather than spectacle. ⚑ The displays ride its face, so PLACEMENT.laptop and w_flatPanelScreen must be re-fitted whenever this number moves. cx −0.1963 / cz 0.052 are the bbox centre: the geometry runs from −0.3927 to 0 on x rather than straddling the origin, so a prop placed without this offset would sit a fifth of a metre off its own position. 1 mesh, 0 textures, 5KB.",
-      "scale": 2.0,
-      "yaw": 0,
+      "_doc": "⚑ ERA 3'S MONITOR — Kenney, CC0 (https://poly.pizza/m/V5Qo141OcB). Arrived as OBJ+MTL and was converted; this pipeline loads GLB containers only. Measured native bbox 0.3927 × 0.2943 × 0.1040 m — a small monitor as authored — ⚑ `scale` 1.72, arrived at by overshooting (1.3 → 1.65 → 2.0 → 1.72, raised 2026-08-21 on Sérgio's screenshot: 'the computer screen is too small for the size of the area of the desktop'). 1.3 gave 0.51 × 0.38 m, which is physically honest for a 2016 display and TOO SMALL FOR THIS PIECE — the whole era is read off that panel, and a monitor sized for realism made the correction list a squint. 1.65 gives ~0.65 × 0.49 × 0.172 m: a large desk monitor, still a monitor, and the difference is legibility rather than spectacle. ⚑ The displays ride its face, so PLACEMENT.laptop and w_flatPanelScreen must be re-fitted whenever this number moves. cx −0.1963 / cz 0.052 are the bbox centre: the geometry runs from −0.3927 to 0 on x rather than straddling the origin, so a prop placed without this offset would sit a fifth of a metre off its own position. 1 mesh, 0 textures, 5KB. ⚑ MODEL YAW 180 — the mesh's native front is -Z, so a prop authored at yaw 90 (which is how Room 2's desk furniture is authored) pointed it AT THE WALL. Sérgio, on a screenshot: 'the keyboard and the monitor are turned the wrong way, they are facing the wall and not the user.' The correction lives HERE rather than on the prop so every future placement inherits it — a per-prop yaw would fix this desk and quietly break the next one. The screen PLANE was always right (era3Devices' euler y 90, verified in-browser at Session 37), which is why the display looked correct while the monitor around it did not.",
+      "scale": 1.72,
+      "yaw": 180,
       "cx": -0.1963,
       "cz": 0.052,
       "baseY": 0.0
@@ -210,9 +210,9 @@
     {
       "key": "computerKeyboard",
       "file": "computerKeyboard.glb",
-      "_doc": "⚑ ERA 3'S KEYBOARD — Kenney, CC0 (https://poly.pizza/m/vsqTUPFSw6). Converted from OBJ+MTL. Measured native bbox 0.2822 × 0.0276 × 0.1182 m; `scale` 1.5 gives ~0.42 × 0.041 × 0.177 m, a full-size board. Same origin offset as the monitor — cx/cz are the measured centre, not zero. 1 mesh, 0 textures, 3KB. ⚑ Every number here is MEASURED, not eyeballed: a model scale unrelated to the prop's authored size box is precisely the fault that produced 72 room-audit findings, because props were placed by one number and rendered at another.",
+      "_doc": "⚑ ERA 3'S KEYBOARD — Kenney, CC0 (https://poly.pizza/m/vsqTUPFSw6). Converted from OBJ+MTL. Measured native bbox 0.2822 × 0.0276 × 0.1182 m; `scale` 1.5 gives ~0.42 × 0.041 × 0.177 m, a full-size board. Same origin offset as the monitor — cx/cz are the measured centre, not zero. 1 mesh, 0 textures, 3KB. ⚑ Every number here is MEASURED, not eyeballed: a model scale unrelated to the prop's authored size box is precisely the fault that produced 72 room-audit findings, because props were placed by one number and rendered at another. ⚑ MODEL YAW 180 — the mesh's native front is -Z, so a prop authored at yaw 90 (which is how Room 2's desk furniture is authored) pointed it AT THE WALL. Sérgio, on a screenshot: 'the keyboard and the monitor are turned the wrong way, they are facing the wall and not the user.' The correction lives HERE rather than on the prop so every future placement inherits it — a per-prop yaw would fix this desk and quietly break the next one. The screen PLANE was always right (era3Devices' euler y 90, verified in-browser at Session 37), which is why the display looked correct while the monitor around it did not.",
       "scale": 1.5,
-      "yaw": 0,
+      "yaw": 180,
       "cx": -0.1411,
       "cz": 0.0591,
       "baseY": 0.0
