@@ -297,6 +297,15 @@ const E3_DEVICE_BEATS: Array<[string, string]> = [
   ['↳ ⚑ the commenter there is no template for', 'threadTrouble'],
   // ⚑ S70 — THE PHONE: FloppySheep. In play the only way in is the icon on her
   // home screen, which nothing points at and nothing ever mentions.
+  // ⚑ THE DAY'S OTHER JOBS (stage 4+). Namespaced `<jobId>:<beat>` so a job can
+  // name its beats freely; graceQueueLite settles the board and opens the tile
+  // before handing the beat on, so each of these lands on a screen a reviewer
+  // can actually see — which is the whole reason C6 exists.
+  ['⚑ the family line · open it', 'family:open'],
+  ['↳ ⚑⚑ the mother no template answers', 'family:quiet'],
+  ['↳ send her one anyway', 'family:replied'],
+  ['↳ mark her handled without replying', 'family:handled'],
+  ['↳ the whole line cleared', 'family:done'],
   ['⚑ the phone · FloppySheep (home screen icon)', 'floppy'],
   ['↳ FloppySheep · running', 'floppyPlay'],
   ['↳ FloppySheep · the oh-no card', 'floppyOver']

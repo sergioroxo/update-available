@@ -1,0 +1,79 @@
+{
+  "_doc": "ERA 3, JOB: RETURN THE FAMILY CALLS. Built 2026-08-24 against docs/reinterp/RESEARCH_PULL_E3_2026-08-24.md and its consequences note. Every line here is Claude's writing under CLAUDE.md's 2026-08-17 amendment; Sérgio's edit wins wherever he makes one, and he owns the ethics calls. WHAT THE RESEARCH CHANGED: this screen was specified as a queue of messages ABOUT NAMED ADULT CHILDREN with the worker filing updates against their records. The pull says twice that relationship is not documented, and hands back something better — the worker knows the mother's story because the mother told her, and does NOT know the daughter's. So the mother is the client, every field is about her, and THE DAUGHTER HAS NO RECORD ON THIS SCREEN AT ALL. WHAT IS SOURCED HERE: the role (a family-ministry worker, explicitly not a clinician); grief as an organising curriculum concept; the love-without-approval and grace-and-truth binaries; conditions inside the parents' own home rather than no-contact; slowing the parent's urgency down; and the vocabulary that holds the daughter at arm's length. WHAT IS DELIBERATELY ABSENT, on the evidence: any cut-her-off template (conservative sources explicitly rejected estrangement), any progress percentage or treatment status, and any routing of the daughter's own communications. The organisations are invented; the shape is theirs.",
+  "app": {
+    "title": "GracePlatform · Family",
+    "heading": "FAMILY LINE",
+    "sub": "Three parents waiting. Reply, or mark handled.",
+    "queueLabel": "WAITING",
+    "replyLabel": "SUGGESTED REPLIES",
+    "handledTag": "handled",
+    "sentTag": "sent",
+    "noReplyLabel": "Mark handled without replying",
+    "roleLine": "You are answering as Parents & Family Ministry.",
+    "doneHeading": "The line is clear.",
+    "doneSub": "New messages arrive through the week."
+  },
+  "_docParents": "THREE MOTHERS, AND THE THIRD IS THE SCENE. The first two can be answered with something the tool actually has. The third asks a question no template on this screen can reach, and there is no field that could answer it — which is the whole finding, made playable. She is not asking for advice. She is asking for an address the organisation has and she does not.",
+  "parents": [
+    {
+      "id": "p_ruth",
+      "from": "Ruth",
+      "meta": "second message · nine days",
+      "body": "She hasn't answered since Easter. I sent a card for her birthday and it came back marked gone away, so either she moved or she told them to send it back, and I don't know which one I'd rather. I'm not asking you to make her call me. I'd just like to know if I should keep writing or if the writing is the thing that's keeping her away.",
+      "witnessOpened": "family: opened — Ruth, second message"
+    },
+    {
+      "id": "p_maureen",
+      "from": "Maureen",
+      "meta": "first message",
+      "body": "We did the house rules the way the booklet sets them out. No sharing a room, no bringing her to the table as a couple, and we said it kindly. She hasn't been back since March. My husband says we did the right thing and I think he's right. I keep turning it over at night anyway, because it seems to me the right thing shouldn't be a thing you can do to your own daughter and then not see her for five months.",
+      "witnessOpened": "family: opened — Maureen, first message"
+    },
+    {
+      "id": "p_annette",
+      "from": "Annette",
+      "meta": "fourth message · flagged",
+      "body": "I'm not asking for advice this time. I'm asking whether you know where she is. She put your address on a form in 2014 — I have the copy, she left it at ours. That is the most recent address I have for my daughter and it is yours. Please just tell me if she still comes there.",
+      "witnessOpened": "family: opened — Annette, fourth message"
+    }
+  ],
+  "_docReplies": "THE VERBS, AND WHAT THEY ALL HAVE IN COMMON: not one of them contains information. Each is warm, each is sourced in the documented register, and each returns the parent to patience, prayer, her own grief and her own group. That is the mechanic — the tool is generous with care and has no field for an answer.",
+  "replies": [
+    {
+      "id": "r_grief",
+      "label": "Send the grief study",
+      "preview": "Eight weeks, with other parents. Grief is the right word for this and you are allowed to use it.",
+      "witness": "family: replied — grief study offered"
+    },
+    {
+      "id": "r_patience",
+      "label": "Encourage patience",
+      "preview": "Keep the door open and keep it quiet. This is a long journey and it is not yours to hurry.",
+      "witness": "family: replied — patience encouraged"
+    },
+    {
+      "id": "r_boundaries",
+      "label": "Affirm the boundaries",
+      "preview": "Grace and truth are not opposites. You can love her completely and still keep your home the way you believe it should be.",
+      "witness": "family: replied — household boundaries affirmed"
+    },
+    {
+      "id": "r_group",
+      "label": "Invite her to the parents' circle",
+      "preview": "You are not the only mother writing to us this week. Thursdays, and nobody has to speak.",
+      "witness": "family: replied — parents' circle offered"
+    }
+  ],
+  "_docQuiet": "ANNETTE'S ROW HAS NO MATCHING TEMPLATE AND NEVER GETS ONE. A player may send her any of the four, or mark her handled without replying, or leave her in the queue and go back to the board. All three file and all three are the same to the organisation. Nothing warns, nothing praises, and no route on this screen tells her what she asked. The tile can go grey with Annette unanswered — the software does not distinguish.",
+  "quiet": {
+    "id": "p_annette",
+    "noteLabel": "no template matches",
+    "witnessSentAnyway": "family: replied — Annette answered with an unmatched template",
+    "witnessHandled": "family: handled without reply — Annette",
+    "witnessLeft": "family: left open — Annette"
+  },
+  "lambient": {
+    "onOpen": "Four replies cover almost everything. Warmth first, then the truth.",
+    "onQuiet": "That one's outside what we send. Mark it handled and it comes off your list."
+  }
+}

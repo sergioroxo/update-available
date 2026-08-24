@@ -38,6 +38,7 @@ import * as pc from 'playcanvas';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import { ledger } from '../state/ledger';
 import { setEra3Lift, type EraKey } from './cluster';
+import { FamilyCallsApp } from '../desktop/apps/familyCalls';
 import { GraceQueueLite } from './graceQueueLite';
 import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
 import { ERA1, ERA1_CANVAS } from '../desktop/theme/era1';
@@ -505,6 +506,12 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   // cluster.ts's module-level hook, because app.ts (which owns both halves) is
   // outside this session's file fence. See cluster.ts's E3_LIFT.
   const graceQueueLite = new GraceQueueLite({ onLight: setEra3Lift });
+  // ⚑ THE DAY'S OTHER JOBS (ERA3_BUILD_PLAN stage 4). Each is a self-contained
+  //   `TaskSurface` in src/desktop/apps/; mounting one gives it a tile on the
+  //   board and nothing else in this file has to know it exists. A job that is
+  //   not mounted has no tile, which is how the board grows without ever
+  //   showing a tile that does nothing.
+  graceQueueLite.mountTask(new FamilyCallsApp());
 
   function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);
