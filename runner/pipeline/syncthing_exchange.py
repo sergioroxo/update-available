@@ -23,7 +23,7 @@ from .factory_messages import (
     validate_transfer_member,
     verify_checksum_pair,
 )
-from .factory_state import FactoryProjection, project_factory_receipts
+from .factory_state import FactoryProjection, ProjectionPolicy, project_factory_receipts
 
 
 MUTABLE_SUFFIXES = (
@@ -162,6 +162,7 @@ def observe_authenticated_receipts(
     run_id: str,
     allowed_public_keys: dict[str, Ed25519PublicKey],
     now: datetime,
+    projection_policy: ProjectionPolicy = "auto",
 ) -> FactoryProjection:
     return project_factory_receipts(
         load_authenticated_factory_receipts(
@@ -171,6 +172,7 @@ def observe_authenticated_receipts(
             now=now,
         ),
         run_id=run_id,
+        projection_policy=projection_policy,
     )
 
 

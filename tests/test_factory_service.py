@@ -10,7 +10,7 @@ from runner.models.reprocessing import (
     CANARY_CONFIRMATION_TEXT, PILOT_CONFIRMATION_TEXT,
     PRODUCTION_CANARY_STATIONS,
     CopiedTextCanaryApprovalV1, CopiedTextPilotApprovalV1,
-    CopiedTextPilotArtifactV1,
+    CopiedTextPilotArtifactV1, FactoryReceiptV1,
 )
 from runner.pipeline.factory_auth import (
     AuthenticatedFactoryMessageV1,
@@ -278,6 +278,64 @@ def test_expired_lease_late_commit_and_changed_predecessor_are_rejected(tmp_path
             row, row["lease_token"], NOW + timedelta(seconds=2), "f" * 64,
         )
     worker.close()
+
+
+def test_expired_lease_recovery_publishes_idempotent_append_only_chain(tmp_path):
+    context = _setup(tmp_path, run_id="lease-recovery-chain")
+    worker = _worker(context)
+    worker.run_once()  # campaign running
+    with pytest.raises(ProductionWorkerCrash, match="after_lease_claim"):
+        worker.run_once(crash_point="after_lease_claim:source_verify")
+    worker.store.expire_lease_for_test("source_verify", worker.now)
+    assert worker.store.recover_expired(worker.now) == 1
+    recovery = worker.store.pending_recoveries()[0]
+    worker._emit(
+        entity_kind="document", entity_id=recovery["document_id"],
+        document_id=recovery["document_id"], station_id=recovery["station_id"],
+        from_state="running", to_state="failed", attempt=recovery["attempt"],
+        error_class="lease_expired_recovery",
+    )
+    worker.publish_pending()
+    worker.close()
+
+    restarted = _worker(context)
+    # Restart resumes the durable ledger after the first recovery receipt.
+    assert restarted.run_once() is True
+    recovery_events = [
+        FactoryReceiptV1.model_validate_json(
+            canonical_json_bytes(message.payload)
+        ).event
+        for message in restarted.store.receipts()
+        if FactoryReceiptV1.model_validate_json(
+            canonical_json_bytes(message.payload)
+        ).event.error_class == "lease_expired_recovery"
+    ]
+    assert [
+        (event.from_state, event.to_state, event.attempt)
+        for event in recovery_events
+    ] == [("running", "failed", 1), ("failed", "ready", 1)]
+    receipt_count = len(restarted.store.receipts())
+    restarted.close()
+
+    redelivered = _worker(context)
+    redelivered.ingest()
+    assert redelivered._publish_expired_recoveries() is False
+    assert len(redelivered.store.receipts()) == receipt_count
+    with pytest.raises(ProductionWorkerCrash, match="after_lease_claim"):
+        redelivered.run_once(crash_point="after_lease_claim:source_verify")
+    projection = redelivered.projection()
+    assert projection.valid is True
+    source = next(
+        row for row in projection.documents if row.station_id == "source_verify"
+    )
+    assert (source.state, source.attempt) == ("running", 2)
+    assert len([
+        message for message in redelivered.store.receipts()
+        if FactoryReceiptV1.model_validate_json(
+            canonical_json_bytes(message.payload)
+        ).event.error_class == "lease_expired_recovery"
+    ]) == 2
+    redelivered.close()
 
 
 def test_service_single_instance_lock_and_host_role_gate(tmp_path):

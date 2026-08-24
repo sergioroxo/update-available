@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from runner.models.reprocessing import FactoryReceiptV1, FactoryState, require_sha256
 from .factory_messages import sha256_bytes
@@ -35,9 +35,42 @@ class EntityProjection(_StrictModel):
     last_sequence: int = Field(ge=0)
 
 
+class RecoveryInferenceV1(_StrictModel):
+    schema_version: Literal["factory-recovery-inference-v1.0"] = (
+        "factory-recovery-inference-v1.0"
+    )
+    run_id: str
+    entity_key: str
+    document_id: str
+    station_id: str
+    prior_attempt: int = Field(ge=1)
+    resumed_attempt: int = Field(ge=2)
+    prior_running_sequence: int = Field(ge=1)
+    resumed_running_sequence: int = Field(ge=2)
+    reason: Literal["implicit_interrupted_lease_recovery"] = (
+        "implicit_interrupted_lease_recovery"
+    )
+    inference_sha256: str
+
+    @model_validator(mode="after")
+    def _inference_invariants(self) -> "RecoveryInferenceV1":
+        if self.resumed_attempt != self.prior_attempt + 1:
+            raise ValueError("recovery inference attempt mismatch")
+        if self.resumed_running_sequence <= self.prior_running_sequence:
+            raise ValueError("recovery inference sequence mismatch")
+        payload = self.model_dump(mode="json", exclude={"inference_sha256"})
+        expected = sha256_bytes(json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+        ).encode("utf-8"))
+        if self.inference_sha256 != expected:
+            raise ValueError("recovery inference hash mismatch")
+        return self
+
+
 class FactoryProjection(_StrictModel):
     schema_version: Literal[
         "factory-state-projection-v1.1", "factory-state-projection-v1.2",
+        "factory-state-projection-v1.3",
     ] = (
         "factory-state-projection-v1.1"
     )
@@ -46,9 +79,17 @@ class FactoryProjection(_StrictModel):
     stations: tuple[EntityProjection, ...]
     documents: tuple[EntityProjection, ...]
     issues: tuple[ProjectionIssue, ...]
+    recovery_inferences: tuple[RecoveryInferenceV1, ...] = ()
     last_sequence: int = Field(ge=0)
     valid: bool
     projection_sha256: str
+
+    @model_serializer(mode="wrap")
+    def _versioned_projection_fields(self, handler):
+        payload = handler(self)
+        if self.schema_version != "factory-state-projection-v1.3":
+            payload.pop("recovery_inferences", None)
+        return payload
 
 
 _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
@@ -67,6 +108,7 @@ _DOCUMENT_TERMINAL_STATES = {"succeeded", "held", "held_storage", "cancelled"}
 _STATION_TERMINAL_STATES = {"succeeded", "held", "held_storage", "cancelled"}
 ProjectionPolicy = Literal[
     "auto", "strict_v1_1", "multidoc_aggregate_v1_2",
+    "recovery_aware_v1_3",
 ]
 
 
@@ -123,6 +165,77 @@ def _apply_strict_event(
     return True
 
 
+def _recovery_inference(
+    *, run_id: str, key: str, current: EntityProjection,
+    receipt: FactoryReceiptV1,
+) -> RecoveryInferenceV1:
+    event = receipt.event
+    values = {
+        "schema_version": "factory-recovery-inference-v1.0",
+        "run_id": run_id,
+        "entity_key": key,
+        "document_id": event.document_id,
+        "station_id": event.station_id,
+        "prior_attempt": current.attempt,
+        "resumed_attempt": event.attempt,
+        "prior_running_sequence": current.last_sequence,
+        "resumed_running_sequence": event.sequence,
+        "reason": "implicit_interrupted_lease_recovery",
+    }
+    values["inference_sha256"] = sha256_bytes(json.dumps(
+        values, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+    ).encode("utf-8"))
+    return RecoveryInferenceV1.model_validate(values)
+
+
+def _apply_recovery_aware_event(
+    *,
+    states: dict[str, EntityProjection],
+    receipt: FactoryReceiptV1,
+    issues: list[ProjectionIssue],
+    recovery_inferences: list[RecoveryInferenceV1],
+    terminal_sequences: dict[str, tuple[int, ...]],
+    blocked_sequences: set[int],
+    run_id: str,
+) -> bool:
+    event = receipt.event
+    key = _entity_key(receipt)
+    current = states.get(key)
+    if current is None or current.state == event.from_state:
+        return _apply_strict_event(states=states, receipt=receipt, issues=issues)
+    intervening_terminal = any(
+        current.last_sequence < sequence < event.sequence
+        for sequence in terminal_sequences.get(key, ())
+    )
+    eligible = (
+        event.entity_kind == "document"
+        and current.entity_kind == "document"
+        and current.entity_id == event.document_id == event.entity_id
+        and current.station_id == event.station_id
+        and current.state == "running"
+        and event.from_state == "ready"
+        and event.to_state == "running"
+        and current.attempt >= 1
+        and event.attempt == current.attempt + 1
+        and event.sequence not in blocked_sequences
+        and not intervening_terminal
+    )
+    if not eligible:
+        return _apply_strict_event(states=states, receipt=receipt, issues=issues)
+    recovery_inferences.append(_recovery_inference(
+        run_id=run_id, key=key, current=current, receipt=receipt,
+    ))
+    states[key] = EntityProjection(
+        entity_kind=event.entity_kind,
+        entity_id=event.entity_id,
+        station_id=event.station_id,
+        state="running",
+        attempt=event.attempt,
+        last_sequence=event.sequence,
+    )
+    return True
+
+
 def _station_terminal_for_documents(states: tuple[str, ...]) -> str:
     if any(state in {"held", "held_storage"} for state in states):
         return "held"
@@ -135,6 +248,7 @@ def _build_projection(
     *,
     schema_version: Literal[
         "factory-state-projection-v1.1", "factory-state-projection-v1.2",
+        "factory-state-projection-v1.3",
     ],
     run_id: str,
     campaign: EntityProjection,
@@ -142,6 +256,7 @@ def _build_projection(
     documents: tuple[EntityProjection, ...],
     issues: list[ProjectionIssue],
     last_sequence: int,
+    recovery_inferences: tuple[RecoveryInferenceV1, ...] = (),
 ) -> FactoryProjection:
     ordered_issues = tuple(sorted(
         issues, key=lambda row: (row.sequence, row.code, row.entity_key, row.detail),
@@ -156,6 +271,10 @@ def _build_projection(
         "last_sequence": last_sequence,
         "valid": not ordered_issues,
     }
+    if schema_version == "factory-state-projection-v1.3":
+        stable["recovery_inferences"] = [
+            row.model_dump(mode="json") for row in recovery_inferences
+        ]
     digest = sha256_bytes(json.dumps(
         stable, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8"))
@@ -167,6 +286,7 @@ def _build_projection(
         stations=stations,
         documents=documents,
         issues=ordered_issues,
+        recovery_inferences=recovery_inferences,
         last_sequence=last_sequence,
         valid=not ordered_issues,
         projection_sha256=digest,
@@ -417,6 +537,7 @@ def project_factory_receipts(
         raise ValueError("receipts from different runs cannot share a projection")
 
     issues: list[ProjectionIssue] = []
+    blocked_sequences: set[int] = set()
     by_receipt: dict[str, FactoryReceiptV1] = {}
     by_event: dict[str, FactoryReceiptV1] = {}
     for receipt in receipts:
@@ -429,6 +550,7 @@ def project_factory_receipts(
                     code="conflicting_receipt_id", sequence=receipt.event.sequence,
                     detail=f"receipt_id {receipt.receipt_id} has conflicting payloads",
                 ))
+                blocked_sequences.update((existing.event.sequence, receipt.event.sequence))
             continue
         existing_event = by_event.get(receipt.event.event_id)
         if existing_event is not None:
@@ -439,6 +561,7 @@ def project_factory_receipts(
                     code="conflicting_event_id", sequence=receipt.event.sequence,
                     detail=f"event_id {receipt.event.event_id} has conflicting payloads",
                 ))
+                blocked_sequences.update((existing_event.event.sequence, receipt.event.sequence))
             continue
         by_receipt[receipt.receipt_id] = receipt
         by_event[receipt.event.event_id] = receipt
@@ -454,6 +577,7 @@ def project_factory_receipts(
                 code="conflicting_sequence", sequence=sequence,
                 detail="more than one distinct receipt claims this sequence",
             ))
+            blocked_sequences.add(sequence)
         ordered.append(rows[0])
 
     sequences = sorted(by_sequence)
@@ -482,6 +606,49 @@ def project_factory_receipts(
             ordered=tuple(ordered), run_id=resolved_run, issues=issues,
             last_sequence=max(sequences, default=0),
             document_ids=document_ids,
+        )
+
+    if projection_policy == "recovery_aware_v1_3":
+        terminal_sequences: dict[str, tuple[int, ...]] = {}
+        for receipt in ordered:
+            if receipt.event.to_state not in _DOCUMENT_TERMINAL_STATES:
+                continue
+            key = _entity_key(receipt)
+            terminal_sequences[key] = tuple(sorted({
+                *terminal_sequences.get(key, ()), receipt.event.sequence,
+            }))
+        states: dict[str, EntityProjection] = {
+            f"campaign:{resolved_run}": EntityProjection(
+                entity_kind="campaign", entity_id=resolved_run,
+                state="pending", attempt=0, last_sequence=0,
+            )
+        }
+        recovery_inferences: list[RecoveryInferenceV1] = []
+        for receipt in ordered:
+            _apply_recovery_aware_event(
+                states=states, receipt=receipt, issues=issues,
+                recovery_inferences=recovery_inferences,
+                terminal_sequences=terminal_sequences,
+                blocked_sequences=blocked_sequences, run_id=resolved_run,
+            )
+        campaign = states[f"campaign:{resolved_run}"]
+        stations = tuple(sorted(
+            (row for row in states.values() if row.entity_kind == "station"),
+            key=lambda row: row.entity_id,
+        ))
+        documents = tuple(sorted(
+            (row for row in states.values() if row.entity_kind == "document"),
+            key=lambda row: (row.entity_id, row.station_id),
+        ))
+        return _build_projection(
+            schema_version="factory-state-projection-v1.3",
+            run_id=resolved_run,
+            campaign=campaign,
+            stations=stations,
+            documents=documents,
+            issues=issues,
+            recovery_inferences=tuple(recovery_inferences),
+            last_sequence=max(sequences, default=0),
         )
 
     states: dict[str, EntityProjection] = {

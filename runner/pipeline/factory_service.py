@@ -67,7 +67,9 @@ from .factory_semantic_campaign import (
 )
 
 
-PRODUCTION_DB_SCHEMA = "production-canary-worker-db-v1.0"
+PRODUCTION_DB_SCHEMA = "production-canary-worker-db-v1.1"
+LEGACY_PRODUCTION_DB_SCHEMA = "production-canary-worker-db-v1.0"
+LEASE_RECOVERY_REASON = "lease_expired_recovery"
 
 
 class ProductionLeaseRejected(RuntimeError):
@@ -137,6 +139,13 @@ class ProductionWorkerStore:
           to_state TEXT NOT NULL, authenticated_json TEXT NOT NULL,
           published INTEGER NOT NULL DEFAULT 0
         );
+        CREATE TABLE IF NOT EXISTS production_recoveries (
+          run_id TEXT NOT NULL, package_id TEXT NOT NULL,
+          document_id TEXT NOT NULL, station_id TEXT NOT NULL,
+          attempt INTEGER NOT NULL, reason TEXT NOT NULL,
+          completed INTEGER NOT NULL DEFAULT 0,
+          PRIMARY KEY(run_id,package_id,document_id,station_id,attempt)
+        );
         """)
         columns = {
             row[1] for row in self.connection.execute("PRAGMA table_info(production_jobs)")
@@ -147,7 +156,9 @@ class ProductionWorkerStore:
                 "bound_predecessor_output_sha256 TEXT NOT NULL DEFAULT ''"
             )
         existing = self.get_meta("schema_version")
-        if existing and existing != PRODUCTION_DB_SCHEMA:
+        if existing and existing not in {
+            LEGACY_PRODUCTION_DB_SCHEMA, PRODUCTION_DB_SCHEMA,
+        }:
             raise ValueError("production worker database requires an explicit migration")
         self.set_meta("schema_version", PRODUCTION_DB_SCHEMA)
 
@@ -280,16 +291,72 @@ class ProductionWorkerStore:
         return row
 
     def recover_expired(self, now: datetime) -> int:
+        rows = tuple(self.connection.execute(
+            "SELECT * FROM production_jobs WHERE state='running' "
+            "AND output_sha256='' AND lease_expiry<=? "
+            "ORDER BY package_id,document_id,station_sequence",
+            (now.isoformat(),),
+        ).fetchall())
         with self.connection:
-            cursor = self.connection.execute(
-                "UPDATE production_jobs SET state='ready',lease_token=NULL,lease_expiry=NULL,heartbeat_time=NULL "
-                "WHERE state='running' AND output_sha256='' AND lease_expiry<=?",
-                (now.isoformat(),),
+            for row in rows:
+                self.connection.execute(
+                    "INSERT OR IGNORE INTO production_recoveries("
+                    "run_id,package_id,document_id,station_id,attempt,reason"
+                    ") VALUES(?,?,?,?,?,?)",
+                    (
+                        row["run_id"], row["package_id"], row["document_id"],
+                        row["station_id"], row["attempt"], LEASE_RECOVERY_REASON,
+                    ),
+                )
+                self.connection.execute(
+                    "UPDATE production_jobs SET state='ready',terminal_reason=?,"
+                    "lease_token=NULL,lease_expiry=NULL,heartbeat_time=NULL "
+                    "WHERE run_id=? AND package_id=? AND document_id=? "
+                    "AND station_id=? AND state='running' AND attempt=?",
+                    (
+                        LEASE_RECOVERY_REASON, row["run_id"], row["package_id"],
+                        row["document_id"], row["station_id"], row["attempt"],
+                    ),
+                )
+        return len(rows)
+
+    def pending_recoveries(self) -> tuple[sqlite3.Row, ...]:
+        return tuple(self.connection.execute(
+            "SELECT * FROM production_recoveries WHERE completed=0 "
+            "ORDER BY package_id,document_id,station_id,attempt"
+        ).fetchall())
+
+    def complete_recovery(self, row: sqlite3.Row) -> None:
+        with self.connection:
+            self.connection.execute(
+                "UPDATE production_recoveries SET completed=1 WHERE run_id=? "
+                "AND package_id=? AND document_id=? AND station_id=? AND attempt=?",
+                (
+                    row["run_id"], row["package_id"], row["document_id"],
+                    row["station_id"], row["attempt"],
+                ),
             )
-        return cursor.rowcount
+
+    def has_exact_transition(
+        self, *, document_id: str, station_id: str,
+        from_state: str, to_state: str, attempt: int,
+    ) -> bool:
+        for message in self.receipts():
+            event = FactoryReceiptV1.model_validate_json(
+                canonical_json_bytes(message.payload)
+            ).event
+            if (
+                event.entity_kind == "document"
+                and event.document_id == document_id
+                and event.station_id == station_id
+                and event.from_state == from_state
+                and event.to_state == to_state
+                and event.attempt == attempt
+            ):
+                return True
+        return False
 
     def claim(self, now: datetime, lease_seconds: int = 60) -> sqlite3.Row | None:
-        self.recover_expired(now)
         if self.get_meta("approved") != "1" or self.get_meta("paused") == "1":
             return None
         if self.get_meta("cancelled") == "1":
@@ -984,6 +1051,45 @@ class ProductionCanaryWorker:
         self.publish_pending()
         return True
 
+    def _publish_expired_recoveries(self) -> bool:
+        progressed = self.store.recover_expired(self.now) > 0
+        for recovery in self.store.pending_recoveries():
+            identity = {
+                "document_id": recovery["document_id"],
+                "station_id": recovery["station_id"],
+                "attempt": int(recovery["attempt"]),
+            }
+            if not self.store.has_exact_transition(
+                **identity, from_state="running", to_state="failed",
+            ):
+                self._emit(
+                    entity_kind="document",
+                    entity_id=recovery["document_id"],
+                    document_id=recovery["document_id"],
+                    station_id=recovery["station_id"],
+                    from_state="running", to_state="failed",
+                    attempt=int(recovery["attempt"]),
+                    error_class=recovery["reason"],
+                )
+                progressed = True
+            if not self.store.has_exact_transition(
+                **identity, from_state="failed", to_state="ready",
+            ):
+                self._emit(
+                    entity_kind="document",
+                    entity_id=recovery["document_id"],
+                    document_id=recovery["document_id"],
+                    station_id=recovery["station_id"],
+                    from_state="failed", to_state="ready",
+                    attempt=int(recovery["attempt"]),
+                    error_class=recovery["reason"],
+                )
+                progressed = True
+            self.store.complete_recovery(recovery)
+        if progressed:
+            self.publish_pending()
+        return progressed
+
     def run_once(self, *, crash_point: str = "") -> bool:
         self.ingest()
         self.publish_pending()
@@ -1000,6 +1106,8 @@ class ProductionCanaryWorker:
                 from_state="pending", to_state="running",
             )
             self.publish_pending()
+            return True
+        if self._publish_expired_recoveries():
             return True
         row = self.store.claim(self.now)
         if row is None:
@@ -1021,6 +1129,8 @@ class ProductionCanaryWorker:
         )
         self.publish_pending()
         try:
+            if crash_point == f"after_lease_claim:{row['station_id']}":
+                raise ProductionWorkerCrash("after_lease_claim")
             material = self._build_material(row)
             predicted = ""
             if row["station_sequence"] < len(self.station_ids):
