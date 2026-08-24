@@ -108,8 +108,15 @@ const PLACEMENT = {
     //   the plane that used to ride a box hovering at 1.1 now rides a real
     //   screen face. A plane left at the old height reads as a display detached
     //   from its own monitor — which is exactly how it rendered before this fix.
-    pos: { x: -5.22, y: 0.97, z: 0.7 },
-    size: { w: 0.52, h: 0.3 },
+    pos: { x: -5.22, y: 1.02, z: 0.7 },
+    // ⚑ 0.52 × 0.30 → 0.60 × 0.35, 2026-08-21. Sérgio, on a screenshot: "the
+    //   computer screen is too small for the size of the area of the desktop."
+    //   The whole of Era 3 is read off this panel — a testimony, a rule, a
+    //   rationale, a manual reference and a verse, all at once — and a monitor
+    //   sized for physical realism made that a squint. The model grew with it
+    //   (models.json computerScreen, scale 1.3 → 1.65); this plane must always
+    //   be re-fitted when that number moves, or the display floats off its face.
+    size: { w: 0.60, h: 0.35 },
     euler: { x: 90, y: 90, z: 0 } // verified in-browser (Session 37): normal (+1,0,0), faces the chair
   },
   /**
