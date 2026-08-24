@@ -118,7 +118,26 @@ const PLACEMENT = {
     //   ⚑ THE LESSON, since this is the fourth refit: the model knows where its
     //   screen is. Ask it (`meshInstances[].aabb`) instead of estimating from the
     //   prop's outer box, which includes bezel, chin and stand.
-    pos: { x: -5.30, y: 1.045, z: 0.7 },
+    // ⚑ THE PANEL IS RAKED 8°, AND THIS PLANE NOW SHARES THE RAKE — 2026-08-24.
+    //   Sérgio, sending the model in Preview: "the screen has a natural angle."
+    //   It does, and it is IN THE MESH: computerScreen.glb's second primitive
+    //   (material `metal`) is a single quad — the glass — with normal
+    //   (0, 0.139, -0.99), i.e. 8.0° off vertical, top leaning away. Read from
+    //   the GLB rather than the runtime AABB, because an AABB cannot express a
+    //   rake: it reported the panel as 0.652 × 0.398 when the face is really
+    //   0.652 × 0.402 tipped back, and fitting to that box is what left an
+    //   upright plane crossing an angled screen — flush at the bottom edge,
+    //   ~56 mm proud at the top.
+    // ⚑ The world numbers, derived not eyeballed: model quad spans local
+    //   x -0.3859…-0.0068, y 0.0556…0.2870, z 0.0358…0.0683; × scale 1.72,
+    //   pivot-shifted by (-cx, -baseY, -cz), turned by propYaw 90 + model yaw
+    //   180 = 270, dropped at the prop's (-5.33, 0.75, 0.7). That puts the
+    //   glass centre at (-5.3301, 1.0446, 0.6999) with world normal
+    //   (0.990, 0.139, 0). This plane sits 3 mm proud ALONG THAT NORMAL, so it
+    //   clears the glass by the same 3 mm everywhere instead of only at one
+    //   edge. If the monitor's scale, yaw or position moves, re-derive — the
+    //   arithmetic is in this comment, so it can be redone rather than guessed.
+    pos: { x: -5.327, y: 1.045, z: 0.7 },
     // ⚑ 0.52 × 0.30 → 0.60 × 0.35, 2026-08-21. Sérgio, on a screenshot: "the
     //   computer screen is too small for the size of the area of the desktop."
     //   The whole of Era 3 is read off this panel — a testimony, a rule, a
@@ -126,8 +145,27 @@ const PLACEMENT = {
     //   sized for physical realism made that a squint. The model grew with it
     //   (models.json computerScreen, scale 1.3 → 1.65); this plane must always
     //   be re-fitted when that number moves, or the display floats off its face.
-    size: { w: 0.585, h: 0.355 },  // ~90% of the measured panel — inside its bezel
-    euler: { x: 90, y: 90, z: 0 } // verified in-browser (Session 37): normal (+1,0,0), faces the chair
+    // ⚑ 0.585 × 0.355 → 0.645 × 0.372, 2026-08-24. Sérgio drew pink corners on a
+    //   screenshot to mark where the limits are, and the display was sitting
+    //   well inside them. It now spans 98.9% of the glass width. The HEIGHT is
+    //   not 98.9% of the glass, on purpose: the laptop canvas is 676 × 390
+    //   (1.733) and the glass is 1.623, so filling both axes would squash every
+    //   glyph 6% horizontally — on a FILTER_NEAREST pixel surface that is
+    //   visible. Instead the canvas aspect is preserved and ~15 mm of bare glass
+    //   is left above and below. It does not read as a letterbox: the monitor
+    //   prop carries a dark tint (its `color` in reinterp_deltas.json), so
+    //   uncovered glass is the same near-black as the bezel around it.
+    size: { w: 0.645, h: 0.372 },
+    // ⚑ x 90 → 82: the 8° rake. 90 gave normal (1, 0, 0) — verified in-browser at
+    //   Session 37, and correct for a plane that had no screen behind it. 82
+    //   gives (0.990, 0.139, 0), which IS the mesh quad's normal. Sign checked
+    //   against PlayCanvas's own euler→quat rather than assumed: 98 tips the
+    //   wrong way (0.990, -0.139, 0), i.e. top toward the player.
+    //   `hitPlane` needs no change — it reads the entity's world transform
+    //   columns, so the rake arrives in the ray test for free, and the local
+    //   Z basis stays predominantly -Y (0.139, -0.990, 0), which is what
+    //   Session 38's `v = 0.5 + lz/hWorld` calibration depends on.
+    euler: { x: 82, y: 90, z: 0 } // faces the chair, raked back like the glass
   },
   /**
    * ⚑ ROOM 3's VISOR (S76) — the seam S74 left, taken up.

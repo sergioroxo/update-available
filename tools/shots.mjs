@@ -215,7 +215,16 @@ const SEAT_SUBJECTS = {
     { what: 'the witness record wall', kind: 'plane', at: [0, 1.5, 3.4] }
   ],
   r2: [
-    { what: "Vera's laptop screen", kind: 'prop', id: 'w_flatPanelScreen' },
+    // ⚑ WAS `prop: w_flatPanelScreen`, WHICH NO LONGER EXISTS — 2026-08-24.
+    // That prop was a 2 cm box left over from the four-box monitor; once the
+    // display plane was fitted to the real mesh it occupied the same space and
+    // blacked the content out, so it was deleted. This check then reported
+    // MISSING at both E3 and E4 and counted the subject as out of frame, which
+    // is how a removal quietly cost the ratchet two. Pointed at the display's
+    // own world centre instead — the same `plane` form Room 1's monitor uses,
+    // and the thing that actually has to be in frame. Keep it in step with
+    // era3Devices' PLACEMENT.laptop.pos.
+    { what: "Vera's laptop screen", kind: 'plane', at: [-5.327, 1.045, 0.7] },
     { what: "Vera's desk", kind: 'prop', id: 'w_desk', required: false }
   ],
   r3: [
@@ -816,14 +825,30 @@ async function devices(browser, asserts, outDir) {
   };
   const out = [];
 
+  // ⚑ THE TABLET IS GONE and this pass photographed it — 2026-08-24. Stage 2a
+  // removed Era 3's tablet (Sérgio: the era is DESKTOP + PHONE), which deleted
+  // `__era3Devices().tablet`, and every frame here was grabbed off that canvas.
+  // `grab` therefore died on `undefined.toDataURL` — i.e. THE WHOLE SHOTS AUDIT
+  // HAS BEEN CRASHING since that stage, and it went unnoticed because
+  // `npm run audit` had also been finding a DIFFERENT project's dev server
+  // already listening on the default port and timing out before reaching here.
+  // Two independent failures, both silent, on the one tool built to catch what
+  // the static checks cannot see. Run it with `--port <the real one>`.
+  // ⚑ The `thread*` beats still EXIST (graceQueueLite delegates them to
+  // comments.ts) — they simply have no surface to draw on until ERA3_BUILD_PLAN
+  // stage 4 rebuilds the comment thread as a desktop task. Photograph them
+  // again then; do not photograph them now, or this crashes the same way.
   await wait(3000);
-  for (const [b, name] of [['list', 'laptop_list'], ['thread', 'thread'], ['threadRoute', 'route'], ['threadEcho', 'propagation']]) {
+  for (const [b, name] of [
+    ['list', 'laptop_list'], ['item7', 'laptop_last_item'],
+    ['noa', 'laptop_noa'], ['maltaArrive', 'laptop_malta']
+  ]) {
     await beat(b); await wait(900);
-    out.push(await grab('tablet', name));
+    out.push(await grab('laptop', name));
   }
-  await page.evaluate(() => window.__requestMove('r2-phone'));
-  await wait(3000);
-  for (const [b, name] of [['floppy', 'floppy_home'], ['floppyPlay', 'floppy_running']]) {
+  for (const [b, name] of [
+    ['maltaArrive', 'phone_malta'], ['floppy', 'floppy_home'], ['floppyPlay', 'floppy_running']
+  ]) {
     await beat(b); await wait(900);
     out.push(await grab('phone', name));
   }
