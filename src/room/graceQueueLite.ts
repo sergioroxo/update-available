@@ -744,8 +744,17 @@ export class GraceQueueLite {
     if (this.mode === 'install') { this.drawInstall(ctx, W, H); return; }
     aero.wallpaper(ctx, W, H);
     aero.taskbar(ctx, W, H, '9:41'); // period placeholder clock, matches the phone's lock-screen clock
-    const MARGIN = 14; const TASKBAR_H = 28;
-    const winW = W - MARGIN * 2; const winH = H - TASKBAR_H - MARGIN - 8;
+    // ⚑ MAXIMISED, NOT WINDOWED — 2026-08-24, Sérgio: "It should be maximized."
+    //   It used to float with a 14 px margin all round and the wallpaper showing
+    //   through, which is how a machine looks when someone is BROWSING. This is
+    //   a shift at a job: the work application owns the screen, edge to edge,
+    //   with only the taskbar under it. Nothing else about the frame moved —
+    //   `windowFrame` still draws its own caption row, so the minimise button
+    //   is still where a person can reach it. The wallpaper is still painted
+    //   underneath: it is what the cascade will eventually uncover, and drawing
+    //   the window over it costs nothing.
+    const TASKBAR_H = 28;
+    const winW = W; const winH = H - TASKBAR_H;
     // the OS shell (SisterSignal) is what you sign INTO; the polish tool is
     // the app you land in — the window's own title reflects which. The title
     // is no longer "GraceQueue": that was the moderation app's name, and there
@@ -754,12 +763,19 @@ export class GraceQueueLite {
     // (data/strings/updates.json, u3) — so the era names itself consistently
     // from the update that installed it. PLACEHOLDER, Sérgio's call.
     const title = this.mode === 'signin' ? q.app.shellTitle : q.app.title;
-    const c = aero.windowFrame(ctx, MARGIN, 8, winW, winH, title);
+    const c = aero.windowFrame(ctx, 0, 0, winW, winH, title);
     aero.px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
+    // ⚑ The GUTTER the maximise took away. Windowed, the 14 px of wallpaper on
+    //   either side was doing the work of page margin — with the window edge to
+    //   edge, right-aligned text (the `n of m applied` counter) ended flush
+    //   against the frame and read as clipped. The body still FILLS; only the
+    //   layout is inset, which is what a maximised window does anyway.
+    const GUTTER = 9;
+    const body = { ...c, x: c.x + GUTTER, w: c.w - GUTTER * 2 };
 
-    if (this.mode === 'signin') this.drawSignIn(ctx, c);
-    else if (this.mode === 'done') this.drawDone(ctx, c);
-    else this.drawList(ctx, c);
+    if (this.mode === 'signin') this.drawSignIn(ctx, body);
+    else if (this.mode === 'done') this.drawDone(ctx, body);
+    else this.drawList(ctx, body);
 
     // ⚑ THE LIFT, last of all and over everything: the panel is GRADED, never
     // redrawn. Every pixel above is exactly where and what it was.
