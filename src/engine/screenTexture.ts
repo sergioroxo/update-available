@@ -1,6 +1,6 @@
 /**
  * The screen-texture pipeline — extracted from app.ts (Session 37, E3-i) so
- * the three-screen room's new laptop/tablet/phone surfaces can REUSE the
+ * the three-screen room's new workstation/tablet/phone surfaces can REUSE the
  * exact same offscreen-canvas-onto-a-plane technique the desktop monitor and
  * witness wall already use, instead of duplicating it. Pure functions, no
  * closures over app state — safe to import from any room/device module.

@@ -212,7 +212,7 @@ export class E4Shell {
    * Files once, like every other act in the piece.
    *
    * ⚑ AND IT IS THE ONE DOOR, WHICH S79 FOUND OUT THE HARD WAY. The ROOM's own
-   * picking (`src/room/era3Devices.ts`'s `handleLaptopPointer`) calls this
+   * picking (`src/room/era3Devices.ts`'s `handleWorkstationPointer`) calls this
    * DIRECTLY when the shell is not worn — it does not go through
    * `handleClick` — so a guard placed on the canvas path alone would have left
    * a press on the headset able to put the device back on in the middle of the
@@ -399,7 +399,7 @@ export class E4Shell {
  *
  * Two things in this era live in the ROOM but are owned by the OS: the visor
  * plane (which draws `DesktopOS`'s canvas, mounted on the headset instead of a
- * monitor) and the last update ritual (which lands on Vera's laptop, because
+ * monitor) and the last update ritual (which lands on Vera's workstation, because
  * that is the screen the player is actually looking at when E3 ends — see
  * `data/dialog/s4_update.json`'s `_docWhere`). `src/engine/app.ts` builds
  * `era3Devices` BEFORE it builds the OS and was outside this session's file
@@ -415,7 +415,7 @@ export interface E4Bridge {
    *  `?flat=1`. Only the mount point changed, which is exactly the argument the
    *  piece has been making since 1997: same machine, new casing. */
   canvas(): HTMLCanvasElement;
-  /** the update ritual currently armed, if any (u4 draws on the laptop) */
+  /** the update ritual currently armed, if any (u4 draws on the workstation) */
   update(): UpdateApp | null;
   /** the era's shell — null until the era is `e4` */
   shell(): E4Shell | null;
@@ -426,7 +426,7 @@ export interface E4Bridge {
   armFinal(): void;
   /** ⚑ S87 — the era-3 send offer (s3/s4). Daniel's monitor is dead for the
    *  whole of E3 (S61) and stays that way, so the offer needs a live screen
-   *  to draw on at all; the laptop composites it exactly the way it already
+   *  to draw on at all; the workstation composites it exactly the way it already
    *  composites `update()`. See `DesktopOS.drawSendOfferExternal`'s own
    *  comment for the s3/s4 comfort-safety gate (08_STATUS_REGISTER §17). */
   sendOfferActive(): boolean;
@@ -443,10 +443,10 @@ export function e4Bridge(): E4Bridge | null { return bridge; }
 /**
  * ⚑ IS THERE A ROOM? `src/room/era3Devices.ts` claims this when it builds, so
  * it is true in the 3D engine and false under `?flat=1`, which has no room and
- * no laptop to composite anything onto.
+ * no workstation to composite anything onto.
  *
  * One thing turns on it: WHERE THE LAST UPDATE DRAWS. In the room it draws on
- * Vera's laptop, and Daniel's Era-3 monitor stays dead exactly as S61 left it.
+ * Vera's workstation, and Daniel's Era-3 monitor stays dead exactly as S61 left it.
  * In flat there is only the one canvas, so the ritual draws there — otherwise
  * `?flat=1` would black out the notice and Era 4 would be unreachable in the
  * canvas-only review route, which is the one thing that review route exists to prevent.

@@ -67,7 +67,7 @@ type Card = null | 'opened' | 'ignored';
 /** the cascade's own clock. Messages land ~0.45 s apart — fast enough to read
  *  as more-than-one-person, slow enough that a player can watch names arrive.
  *  ⚑ This is the ONE clocked beat in this module and it bumps only the phone's
- *  version, so it never re-uploads the laptop panel beside it. */
+ *  version, so it never re-uploads the workstation panel beside it. */
 const CASCADE_STEP = 0.45;
 
 export class PhoneE3 {
@@ -99,7 +99,7 @@ export class PhoneE3 {
   }
 
   /** ⚑ IGNORING IS NOT A WAY OUT, and this is where that is enforced. Called
-   *  when the player finishes another piece of work on the laptop without
+   *  when the player finishes another piece of work on the workstation without
    *  having opened the link: Lambient arrives anyway, with the same news, in
    *  the same voice. No timer does this — her own next action does. */
   onWorkDone(): void {

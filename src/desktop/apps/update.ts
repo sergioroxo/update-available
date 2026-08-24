@@ -171,7 +171,7 @@ export class UpdateApp {
   }
 
   /** S76: the last two stages paint the whole surface rather than a dialog.
-   *  The room needs to know, because u4 is composited onto a laptop screen that
+   *  The room needs to know, because u4 is composited onto a workstation screen that
    *  is wider than this canvas — a full-bleed install must black the whole
    *  panel out, not sit in the middle of somebody's still-open work. */
   get fullScreen(): boolean {

@@ -28,7 +28,7 @@
  * while it is RUNNING this screen redraws and re-uploads at up to `TICK` (30/s)
  * and stops the instant the game is closed or the sheep stops. The cost is
  * bounded by the surface — the phone canvas is 140x280 at scale 2, ~0.31 MP a
- * frame against the laptop's 2.4 MP, so this is by far the cheapest screen in
+ * frame against the workstation's 2.4 MP, so this is by far the cheapest screen in
  * the room to animate, and it is the only one that ever needs to be.
  *
  * NO STORAGE, NO NETWORK: the run lives in these fields and dies with them.

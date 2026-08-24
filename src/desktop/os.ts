@@ -234,13 +234,13 @@ export class DesktopOS {
   /** a live send OFFER (master script §4) — icon + summons window on the desktop */
   private sendOffer: { id: string; open: boolean } | null = null;
   /** ⚑ S87 — hit rects from the last `drawSendOfferExternal` call (era3Devices.ts's
-   *  laptop composite; see that method's own comment for why it exists). Kept
+   *  workstation composite; see that method's own comment for why it exists). Kept
    *  separate from `this.hits`, which stays Daniel's own (dead, in E3) click
    *  table, so the two draw paths can never cross-hit each other. */
   private externalSendHits: Hit[] = [];
-  /** ⚑ S87 — bumped whenever `sendOffer` changes, so era3Devices.ts's laptop
+  /** ⚑ S87 — bumped whenever `sendOffer` changes, so era3Devices.ts's workstation
    *  screen knows to redraw+reupload (its dirty-upload law needs a version
-   *  number, and the send offer is not on the laptop's own `graceQueueLite`
+   *  number, and the send offer is not on the workstation's own `graceQueueLite`
    *  clock). Static content otherwise — no per-frame animation to track. */
   private sendOfferVersion = 0;
   /** engine listens: the update restart landed — morph the space to `era` */
@@ -308,7 +308,7 @@ export class DesktopOS {
         update: () => this.updateApp,
         shell: () => this.e4,
         armFinal: () => this.armUpdate('u4'),
-        // ⚑ S87 — the era-3 send offer's own laptop composite; see
+        // ⚑ S87 — the era-3 send offer's own workstation composite; see
         // `drawSendOfferExternal`'s comment and the blackout condition above.
         sendOfferActive: () => this.sendOfferActive,
         sendOfferVersion: () => this.sendOfferVersionNum,
@@ -1085,11 +1085,11 @@ export class DesktopOS {
   /**
    * ⚑ S87 — THE SEND OFFER'S GEOMETRY, factored out so it can be drawn into
    * ANY context/hit table — Daniel's own (the ordinary call above, unchanged
-   * pixels) or `drawSendOfferExternal` below, which era3Devices.ts's laptop
+   * pixels) or `drawSendOfferExternal` below, which era3Devices.ts's workstation
    * uses. Daniel's monitor is dead for the whole of E3 (S61) and stays that
    * way; the offer needs a live screen to draw on at all, so it draws on
-   * Vera's laptop instead, exactly the technique already used for the u4
-   * ritual (`era3Devices.ts`'s `RITUAL_OFFSET`/`drawLaptop`).
+   * Vera's workstation instead, exactly the technique already used for the u4
+   * ritual (`era3Devices.ts`'s `RITUAL_OFFSET`/`drawWorkstation`).
    *
    * ⚑ THE DECLINE-ONLY GATE IS LIFTED — 2026-08-17, on measurement, not on
    * mood. S87 built it because s3/s4 share the machinery that flew the s2
@@ -1155,7 +1155,7 @@ export class DesktopOS {
     hits.push({ x: c.x + 8, y: c.y + c.h - 26, w: declineW, h: 18, id: 'send-decline' });
   }
 
-  /** ⚑ S87 — the laptop composite (era3Devices.ts, via the E4 bridge; see the
+  /** ⚑ S87 — the workstation composite (era3Devices.ts, via the E4 bridge; see the
    *  DesktopOS constructor's `setE4Bridge` call). `W`/`H` are always
    *  `ERA1_CANVAS`'s own — the same logical surface the u4 ritual draws at,
    *  which is why the caller can reuse `RITUAL_OFFSET` for both. */
@@ -1164,24 +1164,24 @@ export class DesktopOS {
     this.drawSendOfferInto(ctx, this.externalSendHits, ERA1_CANVAS.width, ERA1_CANVAS.height);
   }
 
-  /** ⚑ S87 — whether the laptop has anything to composite this frame. */
+  /** ⚑ S87 — whether the workstation has anything to composite this frame. */
   get sendOfferActive(): boolean {
     return this.sendOffer !== null;
   }
 
   /** ⚑ S87 — bumped on every `sendOffer` change; era3Devices.ts folds it into
-   *  the laptop screen's own dirty-upload version so a real change (offered,
+   *  the workstation screen's own dirty-upload version so a real change (offered,
    *  opened, resolved) re-uploads the texture without polling every frame. */
   get sendOfferVersionNum(): number {
     return this.sendOfferVersion;
   }
 
   /** ⚑ S87 — resolves a click against the geometry `drawSendOfferExternal`
-   *  just drew. era3Devices.ts owns the laptop's own ray→logical-canvas
+   *  just drew. era3Devices.ts owns the workstation's own ray→logical-canvas
    *  conversion (its plane orientation differs from the desktop monitor's),
    *  so this takes already-local coordinates rather than a world ray. Returns
    *  whether the click landed on anything, exactly like the room's other
-   *  device-screen handlers (`handleLaptopPointer`'s own callees). */
+   *  device-screen handlers (`handleWorkstationPointer`'s own callees). */
   handleSendOfferExternalClick(x: number, y: number): boolean {
     const hit = this.externalSendHits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit) return false;
@@ -1291,7 +1291,7 @@ export class DesktopOS {
     // ⚑ S76: the ritual and the era's shell tick regardless of the phase, and
     // the two other phase gates around them are gone. Every other window here
     // is a window ON this canvas, so gating them on `desktop` is right; these
-    // two are not — u4 draws on Vera's laptop and the shell draws on the visor,
+    // two are not — u4 draws on Vera's workstation and the shell draws on the visor,
     // both in the room, and a canvas that happens to be dark must not stop a
     // ritual the player is watching somewhere else. (It also makes the review
     // jumps honest: `?era=3` + the update4 button now actually runs.)
@@ -1522,7 +1522,7 @@ export class DesktopOS {
     // and nothing frames it: no taskbar, no icons, no clock, no era toast. In
     // the room this same canvas is textured onto the VISOR rather than a
     // monitor (src/room/era3Devices.ts), and under `?flat=1` it is the screen.
-    // The update ritual is deliberately NOT excluded: u4 runs on Vera's laptop
+    // The update ritual is deliberately NOT excluded: u4 runs on Vera's workstation
     // and is over before this era begins, and any later ritual (the bare final
     // restart) is the frame's business, not the era's.
     if (this.desktopEra === 'e4' && this.e4) {
@@ -1541,7 +1541,7 @@ export class DesktopOS {
     // been transferred, and glowing THROUGH the whole relocation as the
     // camera flies over it. That is the other half of Sérgio's *"it installs
     // on the Era-2 session — a design that makes no sense"*: the arrival now
-    // happens on Vera's laptop (src/room/graceQueueLite.ts), so this machine
+    // happens on Vera's workstation (src/room/graceQueueLite.ts), so this machine
     // has nothing left to show. It ran its removal, it restarted, and it is
     // an empty computer in a closed room.
     // ⚑ S76 CLOSES S61's OPEN QUESTION — *"where the OS surface should LIVE once
@@ -1549,7 +1549,7 @@ export class DesktopOS {
     // is actually looking at. The last update no longer comes back to this dead
     // CRT: u4 lands on VERA'S LAPTOP (src/room/era3Devices.ts composites it
     // there), so Daniel's machine stays off from E3 to the end, with no
-    // exception at all. `?flat=1` has no room and no laptop to composite
+    // exception at all. `?flat=1` has no room and no workstation to composite
     // anything onto, so the one canvas this file owns is the only screen it
     // has — the condition below draws there for exactly that reason, a fact
     // about `?flat=1`'s own geometry, not a decision made FOR shipped
@@ -1562,11 +1562,11 @@ export class DesktopOS {
     // ordinary E3 path, `offerSend` set state and a toast, and then this
     // early return fired first, every time — `drawSendOffer()` was never
     // reached, no hit rect was ever pushed, and `ledger.sends` never heard
-    // about either send. IN THE ROOM it now draws on Vera's laptop instead
+    // about either send. IN THE ROOM it now draws on Vera's workstation instead
     // (`drawSendOfferExternal`/`handleSendOfferExternalClick`, wired through
     // the same E4-bridge seam as `update()`/`armFinal()` — see the
     // constructor's `setE4Bridge` call), so Daniel's monitor stays exactly as
-    // dead as S61 left it. UNDER `?flat=1` there is no laptop either, so the
+    // dead as S61 left it. UNDER `?flat=1` there is no workstation either, so the
     // condition below now also lets a live send offer through — the same
     // exemption `!this.updateApp` already carves out for u4, extended to the
     // offer that precedes it. ⚑⚑ SAFETY: see `drawSendOfferInto`'s own

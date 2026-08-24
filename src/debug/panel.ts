@@ -175,7 +175,7 @@ const OS_BEATS: BeatRow[] = [
   // ⚑ S76. In PLAY the ritual arms itself when the correction list is
   // exhausted, and it draws on VERA'S LAPTOP — so this button wants the room at
   // E3 (the era jumps above) or there is nothing on screen to run it on.
-  { label: 'T3 ritual · update → E4 (⚑ runs on Vera\'s laptop)', id: 'update4' },
+  { label: 'T3 ritual · update → E4 (⚑ runs on Vera\'s workstation)', id: 'update4' },
   // …and the era's own two states. Neither moves the room: use the E4 era jump
   // first to land in Maya's seat, then these to set what the visor is showing.
   { label: 'E4 · the headset, waiting (standby — one touch to wear)', id: 'e4Standby' },
@@ -676,7 +676,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     heading(navigate, 'PLACE — Room 2 device seats (held read)');
     for (const [label, node] of [
       ['→ the phone · comes to hand', 'r2-phone'],
-      ['→ back to the laptop', 'r2-desk']
+      ['→ back to the workstation', 'r2-desk']
     ] as const) {
       mkBtn(navigate, label, () => {
         (window as { __requestMove?: (id: string) => void }).__requestMove?.(node);
@@ -790,10 +790,10 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   }
 
   // ── E3 DEVICE BEATS: Room 2's own screens (see E3_DEVICE_BEATS above) ──
-  const devices = section('E3 · THE CORRECTION LIST', 'laptop · phone · the light');
+  const devices = section('E3 · THE CORRECTION LIST', 'workstation · phone · the light');
   const dnote = document.createElement('div');
   dnote.style.cssText = 'color:#7f8aa3;font-size:9px;line-height:1.4;margin:0 0 3px';
-  dnote.textContent = 'needs E3 + Room 2 (era button above, then the laptop/phone seats).';
+  dnote.textContent = 'needs E3 + Room 2 (era button above, then the workstation/phone seats).';
   devices.appendChild(dnote);
   const deviceArmed = (): boolean => {
     const here = (window as { __reinterpNow?: string }).__reinterpNow;

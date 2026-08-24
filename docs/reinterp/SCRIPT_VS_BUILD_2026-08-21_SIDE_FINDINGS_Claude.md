@@ -34,7 +34,7 @@ misleads another cold session.
 
 ## 4 · Stale trigger comment in `era3Devices.ts`
 `src/room/era3Devices.ts:274–280` still says the spine "waits at `e3_s3` forever" and the sends are
-latent with "nowhere to draw." Since S87 the offers draw on Vera's laptop and since 2026-08-21 the
+latent with "nowhere to draw." Since S87 the offers draw on Vera's workstation and since 2026-08-21 the
 spine's E3 path gates on `ledger.graceQueue` and does advance. The armFinal fallback is still the
 right mechanism, but the comment describes a dead world; the note "when the sends land, the spine
 should take this trigger back" is the actual open task and deserves to be the headline.

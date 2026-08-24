@@ -244,7 +244,7 @@ per-correction checklist. Do not keep the old verbs alongside the new ones; repl
 the retirement in the file header the way this codebase already does.
 
 SCOPE:
-1. THE CORRECTION LIST (laptop). One submission at a time, big type, no crowding — keep S37's
+1. THE CORRECTION LIST (workstation). One submission at a time, big type, no crowding — keep S37's
    maximized-UI lesson. Beside it, the seven corrections from the spec's rev-4 table, each an item
    with: the rule, a one-line rationale, a proof-text line, and APPLY / SKIP. Every item is skippable
    and skipping is filed to the ledger. The header reads `3 of 7 applied` and NOTHING ELSE happens —
@@ -272,7 +272,7 @@ SCOPE:
    PLACEHOLDER-draft. The reply field below it is active and blinking; pressing it does nothing but
    hold the cursor in an empty field. There is no keyboard in this piece and there is no reply.
 7. ⚑ AND THEN THE LIGHT — the one inversion. Every glitch in this piece so far is DEGRADATION. This
-   one BRIGHTENS: the room's ambient lifts and the laptop's grade warms, using cluster.ts's existing
+   one BRIGHTENS: the room's ambient lifts and the workstation's grade warms, using cluster.ts's existing
    ambientLight machinery. Nothing in the software changes. Not one character of the correction list
    changes. It is simply lit well enough to be read as what it is. Get this beat right or the era
    has no ending — it is the whole point of the pass.

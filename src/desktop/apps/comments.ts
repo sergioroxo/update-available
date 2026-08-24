@@ -145,7 +145,7 @@ const SENT_SECONDS = 2.2;
 
 export class CommentsApp {
   /** bumped on every state change the tablet must be redrawn for. era3Devices
-   *  compares it exactly the way it compares the laptop's — dirty discipline:
+   *  compares it exactly the way it compares the workstation's — dirty discipline:
    *  a comment ARRIVING is a discrete event, so this surface has a clock but
    *  never a per-frame redraw. */
   version = 0;
@@ -328,7 +328,7 @@ export class CommentsApp {
   }
 
   /** the tablet as it was (Session 38/64/69): the network's own feed, with the
-   *  results of the laptop's corrections in it — plus, at the top, the post
+   *  results of the workstation's corrections in it — plus, at the top, the post
    *  everybody is commenting under. */
   private drawFeed(ctx: CanvasRenderingContext2D, W: number, H: number, feed: TabletFeedItem[]): void {
     px(ctx, 0, 0, W, HEADER_H, ERA3.accent);
@@ -382,7 +382,7 @@ export class CommentsApp {
     return y + h;
   }
 
-  /** one published submission in the feed — the laptop's consequence surface,
+  /** one published submission in the feed — the workstation's consequence surface,
    *  unchanged from Session 64/69 in every respect but its home. */
   private drawFeedItem(ctx: CanvasRenderingContext2D, W: number, y: number, post: TabletFeedItem): number {
     setFont(ctx, 9);

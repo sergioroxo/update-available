@@ -1,27 +1,27 @@
 /**
  * THE THREE-SCREEN ROOM (Session 37, E3-i foundation; Session 38, E3-ii wires
- * the laptop + tablet). docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's
+ * the workstation + tablet). docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's
  * R29-b DEEP REVISION: "between 2003 and 2016 the machine stopped being a
  * place you sit. It became every screen you own." Room 2 (Vera, 2016) gets
- * three device screens — the laptop (desk), the tablet (bed), the phone
+ * three device screens — the workstation (desk), the tablet (bed), the phone
  * (nightstand) — each its own offscreen canvas textured onto its own plane,
  * the SAME technique src/engine/screenTexture.ts already gives the desktop
  * monitor and the witness wall (never duplicated, only reused at smaller
  * sizes for the tablet/phone per the spec's production note).
  *
- * SESSION 38 (E3-ii, the GraceQueue pattern strip + card set): the laptop now
+ * SESSION 38 (E3-ii, the GraceQueue pattern strip + card set): the workstation now
  * runs src/room/graceQueueLite.ts behind its "Sign in" — the reinterp-built
  * moderation loop (ONE card at a time, big type, no crowding, per Session
  * 37's own maximized-UI lesson), NOT a straight port of the shipped
  * (non-reinterp) build's dense graceQueue.ts, though it borrows that file's
  * documented lane grammar (member/system/Lambient bands) verbatim per the
  * brief. The tablet is now DATA-DRIVEN from the same data/dialog/s3_queue.json
- * the laptop reads: approved cards appear with hearts + lamb-badges; cards
+ * the workstation reads: approved cards appear with hearts + lamb-badges; cards
  * sent to review are simply ABSENT; Mira's card, if let stand, pins to the
  * top with a one-line comments teaser. The phone is UNCHANGED (still Session
  * 37's static lock/notification shell — Noa's ask per S3R.4 arrives E3-v).
  *
- * DIRTY DISCIPLINE (Quest budget law): the laptop/tablet no longer draw only
+ * DIRTY DISCIPLINE (Quest budget law): the workstation/tablet no longer draw only
  * once — they redraw+re-upload exactly when `graceQueueLite.version` changes
  * (a real state change: sign-in, approve, move-to-review, let-it-stand),
  * never on a ticking clock or per-frame. The phone still draws once and never
@@ -55,7 +55,7 @@ import queue from '../../data/dialog/s3_queue.json';
  *  logical-px-per-metre density on both axes — no non-uniform stretch is
  *  possible when w/h here equals PLACEMENT[name].size.w/h exactly).
  *
- *  laptop: PLACEMENT.laptop.size = 0.52 × 0.30m → 26:15 (~1.733:1, the 2016
+ *  workstation: PLACEMENT.workstation.size = 0.52 × 0.30m → 26:15 (~1.733:1, the 2016
  *  flat panel's real widescreen shape). Session 37 left this at the OLD
  *  CRT-era 512×384 (4:3) — a canvas built for a squarer screen, enlarged
  *  onto the new wide plane, so every pixel was stretched ~30% wider than
@@ -73,7 +73,7 @@ import queue from '../../data/dialog/s3_queue.json';
  *  matched (0.07 × 2000px/m); only height was wrong. Fixed at 140×280
  *  (140/0.07 = 280/0.14 = 2000 px/m). */
 const LOGICAL = {
-  laptop: { w: 676, h: 390, scale: 3 },
+  workstation: { w: 676, h: 390, scale: 3 },
   // ⚑ 140 × 280 → 180 × 360, 2026-08-24. The phone stopped being one
   //   notification and became the place the era ends — a group thread, an
   //   inbox and a cascade — and a 140 px column cannot carry a conversation.
@@ -92,9 +92,9 @@ const LOGICAL = {
  *  then eyeballed/screenshot-verified in the browser this session — spatial
  *  FEEL, not a measured fact; a later session may retune any of these.
  *
- *  laptop: sits in the existing desk CRT's screen gap (the room's generic
- *  "computer" assembly from the template IS repurposed as 2016's laptop —
- *  no new geometry; a real hinged laptop body is a later polish pass, not a
+ *  workstation: sits in the existing desk CRT's screen gap (the room's generic
+ *  "computer" assembly from the template IS repurposed as 2016's workstation —
+ *  no new geometry; a real hinged workstation body is a later polish pass, not a
  *  foundation blocker), so its plane must face the SAME direction the
  *  chair already looks (world +X, per seatPose(90)'s chair sitting at less-
  *  negative x than the desk) — vertical, like the desktop monitor.
@@ -102,7 +102,7 @@ const LOGICAL = {
  *  default 'plane' primitive already faces +Y.
  *  phone: lies flat on the nightstand (screen up) — same, no rotation. */
 const PLACEMENT = {
-  laptop: {
+  workstation: {
     // Sérgio's live readability note (Session 37): the shipped-shell CRT
     // screen read too small — swapped for a period-correct 2016 FLAT PANEL
     // (tools/gen_rooms.mjs's `flatPanel`, Room 2 only) and pulled ~0.19m
@@ -157,7 +157,7 @@ const PLACEMENT = {
     // ⚑ 0.585 × 0.355 → 0.645 × 0.372, 2026-08-24. Sérgio drew pink corners on a
     //   screenshot to mark where the limits are, and the display was sitting
     //   well inside them. It now spans 98.9% of the glass width. The HEIGHT is
-    //   not 98.9% of the glass, on purpose: the laptop canvas is 676 × 390
+    //   not 98.9% of the glass, on purpose: the workstation canvas is 676 × 390
     //   (1.733) and the glass is 1.623, so filling both axes would squash every
     //   glyph 6% horizontally — on a FILTER_NEAREST pixel surface that is
     //   visible. Instead the canvas aspect is preserved and ~15 mm of bare glass
@@ -189,7 +189,7 @@ const PLACEMENT = {
    * the box's 0.16 m extent into its DEPTH, so the face the player sees is
    * 0.09 wide × 0.09 tall at x ≈ 5.37. The plane is 4:3 to match the canvas —
    * 88 × 66 mm, inside that face — and faces −X (euler y 270, the mirror of the
-   * laptop's 90). Measured off the authored box, not eyeballed.
+   * workstation's 90). Measured off the authored box, not eyeballed.
    */
   visor: {
     /** ⚑ z 0.30, not 0.05 (2026-08-06). S76 measured the headset at 33.9° off
@@ -224,7 +224,7 @@ const PLACEMENT = {
     //   the other must follow, every time.
     // ⚑ MOVED INTO THE FRAME — 2026-08-24, and this was the worst reachability
     //   fault in the piece: THE WHOLE ENDING OF ERA 3 IS ON THIS DEVICE and it
-    //   projected to (-230, 1214) on a 1280x900 viewport from the laptop seat.
+    //   projected to (-230, 1214) on a 1280x900 viewport from the workstation seat.
     //   Off the left edge AND below the bottom. Measured at five pitches from 0°
     //   to -40°: looking down raised it (y 1214 → 308) and NEVER brought it back
     //   on screen horizontally (x stayed -90 to -230), because at z 1.16 it sat
@@ -280,7 +280,7 @@ function makeCanvas(logicalW: number, logicalH: number, scale: number): { canvas
 // Session 70: `drawTabletShell` is GONE from this file, and so are the theme,
 // wrapText and s3_queue imports it needed. The tablet stopped being a static
 // consequence surface the moment it grew a job — it now carries the comment
-// thread, the template picker and its own hit rects, exactly as the laptop and
+// thread, the template picker and its own hit rects, exactly as the workstation and
 // (since S64) the phone do. Its drawing moved to `src/desktop/apps/comments.ts`
 // and is reached through `graceQueueLite.drawTablet()`, the same shape S64 used
 // when the phone's shell moved out. The feed itself is UNCHANGED in every
@@ -289,7 +289,7 @@ function makeCanvas(logicalW: number, logicalH: number, scale: number): { canvas
 
 // Session 64: `drawPhoneShell` is GONE, and so is its private `wrapPlain`. The
 // phone stopped being a static shell the moment it started carrying the era's
-// break — it now owns state, a clock and hit rects exactly as the laptop does,
+// break — it now owns state, a clock and hit rects exactly as the workstation does,
 // so its drawing moved to `graceQueueLite.drawPhone()` beside them. Its five
 // invented colours moved too, into `src/desktop/theme/era3.ts` (`phoneBg`,
 // `phonePanel`, `phoneDim`, `phoneMeta`, `phoneText`) — unchanged in value, and
@@ -335,23 +335,23 @@ export type HeldDevice = 'tablet' | 'phone' | null;
  * unchanged and still owned by `DesktopOS` — the OS runs its clock, files its
  * ledger entry and decides when it is over. This module only decides WHERE it
  * appears, and the answer is the screen the player is actually looking at when
- * Era 3 ends: Vera's laptop, the machine that gave her the work.
+ * Era 3 ends: Vera's workstation, the machine that gave her the work.
  *
  * The canvas offsets centre the ritual's own 512 × 384 logical surface on the
- * laptop's 676 × 390 panel. ⚑ The dialogs keep their 1997 chrome, deliberately:
+ * workstation's 676 × 390 panel. ⚑ The dialogs keep their 1997 chrome, deliberately:
  * every update in this piece has looked like this, and the acceptance criterion
  * for the era's opening is that the last one feels like all the others.
  */
 const RITUAL_OFFSET = {
-  x: Math.round((LOGICAL.laptop.w - ERA1_CANVAS.width) / 2),
-  y: Math.round((LOGICAL.laptop.h - ERA1_CANVAS.height) / 2)
+  x: Math.round((LOGICAL.workstation.w - ERA1_CANVAS.width) / 2),
+  y: Math.round((LOGICAL.workstation.h - ERA1_CANVAS.height) / 2)
 } as const;
 
 /**
  * ⚑ THE TRIGGER FOR IT, and it is the system's own failure, never the player
  * (CLAUDE.md; Ethics #11). E3's argument is that a person corrects testimony by
  * hand, one item at a time; the update retires the person. So it arms when the
- * correction list is EXHAUSTED — counted from the same data the laptop reads,
+ * correction list is EXHAUSTED — counted from the same data the workstation reads,
  * against the record's own filings, so the two cannot drift apart.
  *
  * ⚑ WHY NOT THE SPINE, which is where every other update is armed: `spine.ts`'s
@@ -388,14 +388,14 @@ const HOLD_SECONDS = 0.45;
 export interface Era3Devices {
   /** call once a frame — uploads any screen whose content just changed. The
    *  phone still draws/uploads exactly ONCE (Session 37's original law,
-   *  unchanged); the laptop/tablet now re-check `graceQueueLite.version`
+   *  unchanged); the workstation/tablet now re-check `graceQueueLite.version`
    *  each tick and redraw+re-upload ONLY when it has actually moved (a real
    *  queue action) — never on a ticking clock, per Quest budget discipline. */
   tick(dt: number): void;
   /** era-gate the three screens (and fire the once-only arrival witness
    *  line the first time era reaches e3+). Call from driveMorph() and the
    *  ?era= review-jump path alongside the room's own era toggles.
-   *  S61 `settled`: a review jump wants the laptop already signed-in-ready,
+   *  S61 `settled`: a review jump wants the workstation already signed-in-ready,
    *  not the arrival narrative (dark → boot → install) — the same distinction
    *  os.ts's `setDesktopEra(era, settled)` draws for the E2 arrival. */
   setEra(era: EraKey, settled?: boolean): void;
@@ -412,21 +412,21 @@ export interface Era3Devices {
   /** the phone is lifted off the desk right now */
   readonly phoneInHand: boolean;
   holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
-  /** screen px → world ray (from app.ts's own screenRay()) → the laptop
+  /** screen px → world ray (from app.ts's own screenRay()) → the workstation
    *  plane's logical canvas coords, generalized for ANY plane orientation
-   *  (the laptop's vertical euler differs from the tablet/phone's flat
+   *  (the workstation's vertical euler differs from the tablet/phone's flat
    *  screen-up planes, so this can't reuse app.ts's toDesktop()'s
-   *  fixed-axis shortcut). Returns null if the ray misses the laptop
-   *  entirely, or the laptop screen isn't visible/enabled this era. Routes
-   *  straight into GraceQueueLite's own handleClick — the laptop is the
+   *  fixed-axis shortcut). Returns null if the ray misses the workstation
+   *  entirely, or the workstation screen isn't visible/enabled this era. Routes
+   *  straight into GraceQueueLite's own handleClick — the workstation is the
    *  ONLY device with verbs this session (tablet/phone have none yet). */
-  handleLaptopPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean;
+  handleWorkstationPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean;
   /** ?debug=1 review aid only (like __os/__tapes) — the raw offscreen
    *  canvases, for pixel-probing the shell content/lamb-marks without
    *  screenshot-chasing the 3D projection. */
   debugCanvases(): Record<string, HTMLCanvasElement>;
   /** ?debug=1 review aid only (like __os) — the live GraceQueueLite
-   *  instance, so a review can drive/inspect the queue in logical laptop-
+   *  instance, so a review can drive/inspect the queue in logical workstation-
    *  canvas coordinates without the world→screen projection dance. */
   debugQueue(): GraceQueueLite;
 }
@@ -464,13 +464,13 @@ function hitPlane(entity: pc.Entity, wWorld: number, hWorld: number, logicalW: n
   const lz = (ddx * heightX + ddy * heightY + ddz * heightZ) / heightLen; // world-length along local Z, in [-h/2, h/2]
 
   const u = lx / wWorld + 0.5;
-  // v: empirically calibrated in-browser (Session 38) against the laptop's
+  // v: empirically calibrated in-browser (Session 38) against the workstation's
   // real screen — a real click on the visually-lower "Sign in" button
   // resolved to a logical y in the canvas's TOP half with `0.5 - lz/hWorld`,
   // so the sign here is `+`, not the `-` a naive mirror-of-toWitness() guess
   // would suggest. Session 37's own euler-facing note flagged exactly this:
   // "probing... rather than guessing" when a plane's orientation isn't a
-  // simple shared-room yaw. Re-verify if PLACEMENT.laptop's euler ever changes.
+  // simple shared-room yaw. Re-verify if PLACEMENT.workstation's euler ever changes.
   const v = 0.5 + lz / hWorld;
   if (u < 0 || u > 1 || v < 0 || v > 1) return null;
   return { x: u * logicalW, y: v * logicalH };
@@ -496,7 +496,7 @@ function rayNear(
 }
 
 export function buildEra3Devices(app: pc.Application): Era3Devices {
-  // S76: there IS a room, so the last update draws on the laptop and Daniel's
+  // S76: there IS a room, so the last update draws on the workstation and Daniel's
   // Era-3 monitor stays off. `?flat=1` never reaches this line — see
   // src/desktop/apps/space.ts's `roomIsMounted`.
   claimRoomMount();
@@ -534,7 +534,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    *  branches on it, and putting it down is always available. */
   let phoneHeld = false;
   let lastSeat: { x: number; y: number; z: number; pitch: number; yaw: number } | null = null;
-  // ⚑ THE LIFT's one wire: the laptop's break reaches the ROOM's light through
+  // ⚑ THE LIFT's one wire: the workstation's break reaches the ROOM's light through
   // cluster.ts's module-level hook, because app.ts (which owns both halves) is
   // outside this session's file fence. See cluster.ts's E3_LIFT.
   const graceQueueLite = new GraceQueueLite({ onLight: setEra3Lift });
@@ -574,7 +574,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    * a retuned seat drags its held device with it and cannot leave it behind.
    *
    * The plane primitive faces +Y, which is why the euler is (90 + pitch, yaw,
-   * 0) rather than the camera's own angles: PLACEMENT.laptop already uses the
+   * 0) rather than the camera's own angles: PLACEMENT.workstation already uses the
    * same +90 convention to stand a screen upright, and the pitch term tilts the
    * device to meet a downward gaze the way a held object actually does.
    */
@@ -590,7 +590,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   }
 
   /**
-   * The laptop's own draw, plus the ritual composited over it. `ritualTick`
+   * The workstation's own draw, plus the ritual composited over it. `ritualTick`
    * moves once per frame while a ritual is up — the dirty-upload law's own
    * exception for "a beat that is genuinely animating" (the changelog types on,
    * the progress bar stutters), and it stops the instant the ritual is over.
@@ -604,7 +604,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    * breath while a summons is up, same law the felt window and E4 already use).
    */
   let ritualTick = 0;
-  function drawLaptop(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  function drawWorkstation(ctx: CanvasRenderingContext2D, w: number, h: number): void {
     graceQueueLite.draw(ctx, w, h);
     const ritual = e4Bridge()?.update();
     if (ritual?.open) {
@@ -623,12 +623,12 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     }
   }
 
-  add('laptop', LOGICAL.laptop, drawLaptop,
+  add('workstation', LOGICAL.workstation, drawWorkstation,
     { versionOf: () => graceQueueLite.version + ritualTick + (e4Bridge()?.sendOfferVersion() ?? 0) });
   // Session 70: the tablet takes its OWN version, exactly as the phone did in
-  // S64 — it now has state the laptop knows nothing about (an open thread, a
+  // S64 — it now has state the workstation knows nothing about (an open thread, a
   // selected comment, arrivals landing on their own schedule), and a comment
-  // arriving must not re-upload the 676x390 laptop panel beside it.
+  // arriving must not re-upload the 676x390 workstation panel beside it.
   // ⚑ THE TABLET IS GONE — 2026-08-21, Sérgio: Era 3 is DESKTOP + PHONE.
   //   Its screen, its seat, its movement node and its room prop are all removed.
   //   ⚑ WHAT THIS ORPHANS, DELIBERATELY AND TEMPORARILY: `comments.ts` drew only
@@ -645,7 +645,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   // it carries the era's break, so it takes its OWN version counter. The
   // dirty-upload law is unchanged, only widened: `phoneVersion` moves on a real
   // change (the message arriving, the message opening, the caret) and the
-  // caret's blink therefore never re-uploads the laptop or the tablet.
+  // caret's blink therefore never re-uploads the workstation or the tablet.
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
 
   let arrived = false;
@@ -776,7 +776,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
 
   return {
     tick(dt: number): void {
-      // S76: the last update's own frames — see `drawLaptop`
+      // S76: the last update's own frames — see `drawWorkstation`
       if (e4Bridge()?.update()?.open) ritualTick++;
       // ⚑ E3 ENDS WHEN THE WORK DOES. Counted off the record, not off any
       // screen's private state: every correction decided, then a beat of quiet,
@@ -826,7 +826,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
           s.lastVersion = s.versionOf();
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
-          if (s.name === 'laptop') drawLaptop(s.ctx, s.logical.w, s.logical.h);
+          if (s.name === 'workstation') drawWorkstation(s.ctx, s.logical.w, s.logical.h);
           else graceQueueLite.drawPhone(s.ctx, s.logical.w, s.logical.h);
           s.dirty = true;
         }
@@ -846,7 +846,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         s.entity.enabled = s.name === 'visor' ? era === 'e4' : visible;
       }
       // S61: a settled review jump lands on sign-in; a real transition leaves
-      // the laptop dark until endRelocation() calls beginArrival(). E4 also
+      // the workstation dark until endRelocation() calls beginArrival(). E4 also
       // settles — by then the machine has long since been on.
       if (visible && (settled || era === 'e4')) graceQueueLite.settleArrival();
       if (visible && !arrived) {
@@ -875,7 +875,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       lastSeat = seat;
       phoneHeld = which === 'phone';
       for (const s of screens) {
-        if (s.name === 'laptop') continue; // the laptop is already at reading distance
+        if (s.name === 'workstation') continue; // the workstation is already at reading distance
         if (s.name === which) {
           const hp = heldPoseFor(s.name, seat);
           s.heldPos = hp.pos;
@@ -886,8 +886,8 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         }
       }
     },
-    handleLaptopPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
-      const test = (name: 'laptop' | 'phone'): { x: number; y: number } | null => {
+    handleWorkstationPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
+      const test = (name: 'workstation' | 'phone'): { x: number; y: number } | null => {
         const s = screens.find(sc => sc.name === name);
         if (!s || !s.entity.enabled) return null;
         const place = PLACEMENT[name];
@@ -920,7 +920,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       }
       // ⚑ WHILE IT IS IN HER HAND IT IS IN FRONT OF EVERYTHING, and it is tested
       //   first for exactly that reason: the held phone sits between the eye and
-      //   the laptop, so testing the laptop first let a press go THROUGH the
+      //   the workstation, so testing the workstation first let a press go THROUGH the
       //   phone and work the board behind it. A press that lands on the glass
       //   goes to the phone; a press past it PUTS THE PHONE DOWN and is
       //   consumed, so setting it down can never also press something else.
@@ -933,31 +933,31 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         return true;
       }
 
-      // ⚑ THE LAST UPDATE, on Vera's laptop. System-modal over that screen only
+      // ⚑ THE LAST UPDATE, on Vera's workstation. System-modal over that screen only
       // (a press on the phone or the tablet still reaches them — the ritual owns
       // the surface it is drawn on, not the room).
       const ritual = e4Bridge()?.update();
-      const onLaptop = test('laptop');
-      if (ritual?.open && ritual.visible && onLaptop) {
-        ritual.handleClick(onLaptop.x - RITUAL_OFFSET.x, onLaptop.y - RITUAL_OFFSET.y);
+      const onWorkstation = test('workstation');
+      if (ritual?.open && ritual.visible && onWorkstation) {
+        ritual.handleClick(onWorkstation.x - RITUAL_OFFSET.x, onWorkstation.y - RITUAL_OFFSET.y);
         return true;
       }
-      // ⚑ S87 — THE E3 SEND OFFER, same laptop, same offset, checked only once
+      // ⚑ S87 — THE E3 SEND OFFER, same workstation, same offset, checked only once
       // no ritual owns the screen (the two are never live together — see
-      // `drawLaptop`'s own comment).
-      if (onLaptop && e4Bridge()?.sendOfferActive()) {
-        if (e4Bridge()?.handleSendOfferExternalClick(onLaptop.x - RITUAL_OFFSET.x, onLaptop.y - RITUAL_OFFSET.y)) {
+      // `drawWorkstation`'s own comment).
+      if (onWorkstation && e4Bridge()?.sendOfferActive()) {
+        if (e4Bridge()?.handleSendOfferExternalClick(onWorkstation.x - RITUAL_OFFSET.x, onWorkstation.y - RITUAL_OFFSET.y)) {
           return true;
         }
       }
-      if (onLaptop) { graceQueueLite.handleClick(onLaptop.x, onLaptop.y); return true; }
+      if (onWorkstation) { graceQueueLite.handleClick(onWorkstation.x, onWorkstation.y); return true; }
       // Session 64: the PHONE is pressable now (the Malta notification, then
       // the reply field). The method keeps its Session-38 name because its only
       // call site is `src/engine/app.ts`'s pointerdown, which is outside this
       // session's file fence — it routes any Era-3 device screen that has
       // verbs. A press that lands on the phone's glass but on no target
       // returns false and falls through to the floor markers, exactly as a
-      // miss on the laptop always has.
+      // miss on the workstation always has.
       // ⚑ PRESS TO PICK IT UP — the resting phone, lying flat on the desk where
       //   it is deliberately not readable. This replaces the `r2-phone` SEAT,
       //   which the build plan retires and whose floor marker still stood 2.6 m

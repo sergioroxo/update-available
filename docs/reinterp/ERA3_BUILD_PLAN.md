@@ -23,7 +23,7 @@ GracePlatform… be careful on what you re-use — there are elements that will 
 | | why it goes |
 |---|---|
 | **The tablet** | Sérgio, 2026-08-21. Two devices only. Its seat, pose and draw path all go |
-| **The three-seat room model** (laptop / tablet / phone seats) | with the tablet gone and the phone in her hand, "jump to a device" is no longer the movement. **One desk seat; the phone is held** |
+| **The three-seat room model** (workstation / tablet / phone seats) | with the tablet gone and the phone in her hand, "jump to a device" is no longer the movement. **One desk seat; the phone is held** |
 | **The comments as a TABLET surface** | the beat survives — it becomes **a task on the board** (clear the comments), on the desktop, where her employer's words belong |
 | **s3 / s4 sends** | already gated off: their targets point at the retired radial layout. ⚑ **Do not "restore" them in this rebuild** — the era now has its own interruption (the phone) and does not need a summons |
 | **The linear queue** | replaced by the board. `n of m applied` and the "You're caught up" screen are re-authored, not ported |

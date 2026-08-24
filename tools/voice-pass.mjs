@@ -33,7 +33,7 @@ const ORDER = [
   ['s2_caleb.json',      'ERA 2 · 2003', '⚑ the Caleb thread — the most emotionally central scene'],
   ['s3_queue.json',      'ERA 3 · 2016', 'the correction list'],
   ['s3_comments.json',   'ERA 3 · 2016', 'the live thread'],
-  ['s3_floppysheep.json','ERA 3 · 2016', 'the game on the laptop'],
+  ['s3_floppysheep.json','ERA 3 · 2016', 'the game on the workstation'],
   ['s4_update.json',     'ERA 4 · now',  'the last update'],
   ['s4_space.json',      'ERA 4 · now',  'the room, and the headset'],
   ['s4_l.json',          'ERA 4 · now',  '⚑ L — includes the deadname beat (READER-GATED: do not ship unreviewed)'],

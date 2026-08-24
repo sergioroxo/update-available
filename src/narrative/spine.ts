@@ -104,7 +104,7 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
       if (step === 'done' || os.updateArmed || os.sendOfferPending) return;
       // ⚑ `os.inDesktop` IS THE WRONG GATE FROM ERA 3 ON, and it was silently
       //   switching the conductor off for half the piece. `os` is Room 1's
-      //   monitor; from E3 the UI lives on Vera's laptop and from E4 on Maya's
+      //   monitor; from E3 the UI lives on Vera's workstation and from E4 on Maya's
       //   visor, and Room 1's machine is left dead BY DESIGN — so `inDesktop`
       //   is false for the whole of both eras and this `update` returned on its
       //   first line every frame. Measured 2026-08-24 at the E3 seat:

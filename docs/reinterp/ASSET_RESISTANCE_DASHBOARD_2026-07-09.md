@@ -19,7 +19,7 @@ or wording-bearing still goes through FABLE ROUND.
 
 ### Era Tech / Media
 - `Radio.glb` — Quaternius. Strong low-poly object for a period desk or respite shelf.
-- `electronic.undefined-glb/Boombox.glb`, `Headphones.glb`, `Speakers.glb`, `Laptop.glb`, `Pc.glb`, `Computer.glb` — useful for device-aging passes.
+- `electronic.undefined-glb/Boombox.glb`, `Headphones.glb`, `Speakers.glb`, `Workstation.glb`, `Pc.glb`, `Computer.glb` — useful for device-aging passes.
 - `Monitor.glb`, `Computer 90s` license entry — useful only after attribution/license handling.
 - Newly added media/tech candidates seen after the follow-up asset drop: `VHS Tape Basic.glb`, `VHS Tape.glb`, `Cassette tape.glb`, `Cassete Tape.glb`, `Casette Player.glb`, `CD.glb`, `DVD.glb`, `DVD Case.glb`, `CD with case.glb`, `MP3 player.glb`, `Thumb drive.glb`, `smartPhone.glb`, `Flat Monitor modern.glb`, `Computer Screen.glb`, `Hifi stereo.glb`, `Boom box.glb`.
 

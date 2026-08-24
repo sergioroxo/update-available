@@ -209,7 +209,7 @@ that coexist as live guidance.
 
 ### Era 4 and Close
 
-- **Present:** last update on Vera's laptop, Maya's room/headset/place, L units, offers/memories/
+- **Present:** last update on Vera's workstation, Maya's room/headset/place, L units, offers/memories/
   curation/finale, handoff seam, bare restart and procedural constellation.
 - **Documented but absent:** TRANSCENDANCE/the ball is not built; the Close's authored continuity
   conclusions are not implemented. `enterClose()` disables every room/screen and shows the cloud

@@ -223,8 +223,8 @@ const SEAT_SUBJECTS = {
     // is how a removal quietly cost the ratchet two. Pointed at the display's
     // own world centre instead — the same `plane` form Room 1's monitor uses,
     // and the thing that actually has to be in frame. Keep it in step with
-    // era3Devices' PLACEMENT.laptop.pos.
-    { what: "Vera's laptop screen", kind: 'plane', at: [-5.327, 1.045, 0.7] },
+    // era3Devices' PLACEMENT.workstation.pos.
+    { what: "Vera's workstation screen", kind: 'plane', at: [-5.327, 1.045, 0.7] },
     { what: "Vera's desk", kind: 'prop', id: 'w_desk', required: false }
   ],
   r3: [
@@ -840,11 +840,11 @@ async function devices(browser, asserts, outDir) {
   // again then; do not photograph them now, or this crashes the same way.
   await wait(3000);
   for (const [b, name] of [
-    ['list', 'laptop_list'], ['item7', 'laptop_last_item'],
-    ['noa', 'laptop_noa'], ['maltaArrive', 'laptop_malta']
+    ['list', 'workstation_list'], ['item7', 'workstation_last_item'],
+    ['noa', 'workstation_noa'], ['maltaArrive', 'workstation_malta']
   ]) {
     await beat(b); await wait(900);
-    out.push(await grab('laptop', name));
+    out.push(await grab('workstation', name));
   }
   for (const [b, name] of [
     ['maltaArrive', 'phone_malta'], ['floppy', 'floppy_home'], ['floppyPlay', 'floppy_running']

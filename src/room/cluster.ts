@@ -118,7 +118,7 @@ const E3_LIFT = {
 
 /**
  * The lift's one call-in, module-level ON PURPOSE. The beat that fires it lives
- * on the laptop (`src/room/graceQueueLite.ts` → `src/room/era3Devices.ts`), and
+ * on the workstation (`src/room/graceQueueLite.ts` → `src/room/era3Devices.ts`), and
  * neither of those holds a `ClusterShell` — `src/engine/app.ts` owns both halves
  * and is outside this session's file fence. A no-op when no shell exists (flat
  * mode, tests), which is the correct behaviour rather than a guard: with no room
@@ -491,7 +491,7 @@ export function buildClusterShell(
    * which is why it photographs as brown mud.
    *
    * The source it should have had is the one already on the desk. This is the
-   * laptop's own spill, cool and short-range, sitting at the panel: at night,
+   * workstation's own spill, cool and short-range, sitting at the panel: at night,
    * in 2016, the screen IS the lamp. It also puts the piece's light doctrine
    * on the right side of the room — the warm lamp is Daniel's, and Vera's
    * light comes out of the work. The lift then does the rest of the argument
@@ -511,7 +511,7 @@ export function buildClusterShell(
   zoneLights.push(r2Screen);
   /**
    * ⚑ VERA'S LAMP (Session 66) — the other half of the same fix, and the more
-   * important half. S65 gave Room 2 the laptop's cold spill; a room lit only by
+   * important half. S65 gave Room 2 the workstation's cold spill; a room lit only by
    * the thing that is doing this to her is a thesis, not a home. The style
    * direction's governing idea is that **the warm light is life** and it needs
    * a visible source: Room 1's lamp is canon's one constant object precisely

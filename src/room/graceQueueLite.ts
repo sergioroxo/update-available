@@ -1,5 +1,5 @@
 /**
- * THE CORRECTION LIST — the laptop, Era 3 (Session 64, E3-iii).
+ * THE CORRECTION LIST — the workstation, Era 3 (Session 64, E3-iii).
  * Spec: `docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` (revision 4).
  * Evidence: `docs/REINTERP_E3_REVAMP_BRIEF_2026-07-30.md` (revision 3).
  *
@@ -84,12 +84,12 @@
  *   · TRACKED CHANGES, FOR AN IMAGE. Applying the preset leaves the ungraded
  *     frame beside it, small and labelled, the way a cut sentence stays struck
  *     through on the page — and the TABLET publishes the graded still alone,
- *     with no before beside it and no way for a reader to know. The laptop
+ *     with no before beside it and no way for a reader to know. The workstation
  *     remembers; the tablet publishes clean. It is the same disagreement
  *     between the two screens that `runs(sub, tracked)` already draws for text.
  *
  * ⚑ SESSION 70 — THE OTHER TWO SCREENS GET A JOB, and this class becomes the
- * desk rather than the laptop. E3's reframe (`REINTERP_E3_THE_JOB_2026-08-03`)
+ * desk rather than the workstation. E3's reframe (`REINTERP_E3_THE_JOB_2026-08-03`)
  * is that Vera is a social-media manager and the correction list is her MORNING
  * QUEUE, not her whole day. So:
  *   · THE TABLET now runs `src/desktop/apps/comments.ts` — the network's feed
@@ -193,7 +193,7 @@ type Outcome = 'applied' | 'skipped';
  * without the boot up on the computer."* The era's ritual used to run its
  * entire install on Daniel's 2003 CRT — a screen reading "Installing
  * GracePlatform 2016" in a room that was about to stop existing — and then
- * you simply appeared at a laptop already sitting at a sign-in prompt. So the
+ * you simply appeared at a workstation already sitting at a sign-in prompt. So the
  * install crossed the relocation with you: Daniel's machine now runs the
  * REMOVAL (data/strings/updates.json u3), and everything below runs HERE,
  * after the camera lands, on the machine being installed onto.
@@ -205,7 +205,7 @@ type Outcome = 'applied' | 'skipped';
  * then goes back to redrawing on real state changes alone. The same quantum
  * governs the two clocked beats added this session (the lift ramp and the
  * reply field's caret), and each bumps only the version of the screen it is
- * actually on — the phone's blink never re-uploads the laptop.
+ * actually on — the phone's blink never re-uploads the workstation.
  */
 /**
  * ⚑ `board` ADDED 2026-08-24 (ERA3_BUILD_PLAN stage 3). The era used to run a
@@ -260,7 +260,7 @@ const LIFT_SECONDS = 5.0;
 const CARET_SECONDS = 0.53;
 
 /** ⚑ THE PLAYER (S69). `PLAYER_S` device pixels per frame unit → a 176×100
- *  picture on the laptop's 676×390 panel; the small "as sent" frame beside it
+ *  picture on the workstation's 676×390 panel; the small "as sent" frame beside it
  *  is the same picture at half that. `TRANSPORT_H` is reserved whether or not
  *  the preset has been applied, so applying it never shoves her card down the
  *  screen — only the lane fills. */
@@ -302,17 +302,17 @@ export type PhoneView = {
 
 export class GraceQueueLite {
   /** bumped on every state-changing action — era3Devices compares this to
-   *  know when the laptop/tablet screens need a redraw + re-upload (dirty
+   *  know when the workstation/tablet screens need a redraw + re-upload (dirty
    *  discipline: never re-dirtied by a ticking clock, only real state, or by
    *  a beat that is genuinely animating). */
   private ownVersion = 0;
   get version(): number { return this.ownVersion + this.surfaceVersion(); }
-  /** the phone's own counter — the caret blink must not re-upload the laptop */
+  /** the phone's own counter — the caret blink must not re-upload the workstation */
   private phoneV = 0;
 
   /** ⚑ S70 — the tablet and the phone are no longer this screen's dependants.
    *  Each takes the version of everything that can change it and NOTHING else,
-   *  so a comment arriving never re-uploads the laptop and a sheep in mid-air
+   *  so a comment arriving never re-uploads the workstation and a sheep in mid-air
    *  never re-uploads either of the other two. Summing two monotonic counters
    *  stays monotonic, which is all era3Devices' `versionOf` contract asks for. */
   get tabletVersion(): number { return this.version + this.comments.version; }
@@ -450,7 +450,7 @@ export class GraceQueueLite {
     }
 
     // ⚑ the break's two clocks. The caret is the phone's; the lift is the
-    // room's and the laptop's. Both stop of their own accord.
+    // room's and the workstation's. Both stop of their own accord.
     if (this.maltaOpen) {
       this.caretT += dt;
       const on = this.replyHeld || Math.floor(this.caretT / CARET_SECONDS) % 2 === 0;
@@ -470,12 +470,12 @@ export class GraceQueueLite {
     // ⚑ S70 — the other two screens' clocks, each bumping only its own version.
     // The thread's is discrete (an arrival lands, and that is an event); the
     // game's is the one genuine animation in the room, and it stops itself the
-    // moment the sheep does. Neither can ever re-upload the laptop.
+    // moment the sheep does. Neither can ever re-upload the workstation.
     this.comments.update(dt);
     this.floppy.update(dt);
   }
 
-  /** 0 → 1: how far the laptop's grade has warmed. Never resets once lit. */
+  /** 0 → 1: how far the workstation's grade has warmed. Never resets once lit. */
   private get liftK(): number {
     if (!this.liftFired) return 0;
     if (this.liftT < 0) return 1;
@@ -789,7 +789,7 @@ export class GraceQueueLite {
   }
 
   // ── the break ────────────────────────────────────────────────────────────
-  /** the phone lights on the nightstand. Nothing on the laptop reacts. */
+  /** the phone lights on the nightstand. Nothing on the workstation reacts. */
   armMalta(): void {
     if (this.maltaArrived) return;
     this.maltaArrived = true;
@@ -833,7 +833,7 @@ export class GraceQueueLite {
   /**
    * ⚑ THE PHONE — `felt`, and moved here from era3Devices.ts's static shell
    * this session because it stopped being dressing: it holds the era's break,
-   * its own hit rects, and its own clock, exactly as the laptop does.
+   * its own hit rects, and its own clock, exactly as the workstation does.
    *
    * BARE, and the omissions are the design. No Lambient badge (S37 put its
    * mark on all three screens; the mark comes off this one — the phone is the
@@ -873,7 +873,7 @@ export class GraceQueueLite {
    * ⚑ THE TABLET (S70) — the feed, and the comment thread under one published
    * testimony. Everything about it lives in `src/desktop/apps/comments.ts`;
    * this is only the seam, and the seam is where the two halves of her job meet:
-   * the same surface that publishes what the laptop corrected is the one where
+   * the same surface that publishes what the workstation corrected is the one where
    * the people underneath it are answered.
    */
   drawTablet(ctx: CanvasRenderingContext2D, W: number, H: number): void {

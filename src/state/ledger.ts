@@ -133,13 +133,13 @@ export interface Ledger {
   era3Arrival: { witness: string }[];
   /**
    * THE CORRECTION LIST (Session 64, E3-iii — docs/REINTERP_E3_THE_CORRECTION_
-   * LIST_2026-07-30.md): one line per correction DECIDED on the laptop, filed
+   * LIST_2026-07-30.md): one line per correction DECIDED on the workstation, filed
    * witness-symmetrically — applying files, and so does skipping, because a
    * skip is an act and the record never leaves an act silent. `cardId` is the
    * correction's own id in data/dialog/s3_queue.json, where `witness` also
    * lives; nothing here is composed in TS. No scores, streaks or progress
    * counts are ever derived from this array (CLAUDE.md law) — the only number
-   * the player ever sees is the in-fiction `n of m applied` on the laptop, and
+   * the player ever sees is the in-fiction `n of m applied` on the workstation, and
    * it is computed from the list, not from here.
    *
    * ⚑ NOT filed here, deliberately: anything in the Malta beat. See

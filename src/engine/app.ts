@@ -653,7 +653,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     movementNodes = buildMovementNodes(app);
     tapes = new TapeSystem();
     tapeAudio = new TapeAudioBus();
-    // Session 37 (E3-i): THE THREE-SCREEN ROOM foundation — Room 2's laptop/
+    // Session 37 (E3-i): THE THREE-SCREEN ROOM foundation — Room 2's workstation/
     // tablet/phone screens. Era-gated (setEra() below, alongside the room's
     // own era toggles); the movement nodes above (r2-tablet/r2-phone,
     // data/room/nodes.json) share this module's DEVICE_SEAT_POSES as their
@@ -689,13 +689,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       era3Devices ? era3Devices.debugCanvases() : null;
     // Session 38 (E3-ii) GraceQueue probe (review aid, like __os): the live
     // instance, so a review can drive its handleClick(x,y) in logical
-    // laptop-canvas coordinates directly, without the world→screen
+    // workstation-canvas coordinates directly, without the world→screen
     // projection dance — mirrors __os's own established convention exactly.
     (window as { __graceQueue?: () => unknown }).__graceQueue = () =>
       era3Devices ? era3Devices.debugQueue() : null;
     // S61 FREE-CAMERA probe (?debug=1 only, write-only review aid — the
     // companion to __camProbe, which can only land on the three SEAT poses).
-    // Room 2's seat sits 0.57 m from the laptop, so every prop-dressing review
+    // Room 2's seat sits 0.57 m from the workstation, so every prop-dressing review
     // in that room was being done through a screen that fills the frame, or by
     // dragging the view a few degrees at a time. This puts the camera anywhere
     // (and reads it back), which is how S61 surveyed Room 2's dressing and how
@@ -1090,7 +1090,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * record: `os.markWitnessSeen()` fired, the cold-creep stopped, and — the
    * part that actually bites — `pointerdown`'s whole prop/screen block is
    * guarded by `if (!facingBack)`, so every press on that screen was discarded
-   * before it reached `era3Devices.handleLaptopPointer`. Harmless while the
+   * before it reached `era3Devices.handleWorkstationPointer`. Harmless while the
    * tablet was a read-only feed; fatal the moment it grew verbs.
    *
    * THE FIX, and why it is this one: a device in your hands is not a direction.
@@ -1664,7 +1664,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camMove = null;
     cluster?.settleNow(); // the space finishes wherever the cascade had got to
     seatCut(seat);
-    // ⚑ and only NOW does Vera's laptop start: the era's machine boots in
+    // ⚑ and only NOW does Vera's workstation start: the era's machine boots in
     // front of you, in the seat, the way E1's did (Sérgio: "we shouldn't
     // start without the boot up on the computer"). E3's arrival only — E1→E2
     // and E3→E4 have no device boot of their own to hold back.
@@ -2569,18 +2569,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         os.handleClick(p.x, p.y);
         return;
       }
-      // Session 38 (E3-ii): the laptop's own screen (Room 2's era3Devices
+      // Session 38 (E3-ii): the workstation's own screen (Room 2's era3Devices
       // plane, a DIFFERENT plane from the shared Room-1 monitor above) —
       // same precedence rule as the monitor check just above it: a screen
       // click must win over a marker click before markers are even tested.
-      // handleLaptopPointer does its own generalized plane-ray hit test
-      // (the laptop's vertical euler isn't the fixed axis toDesktop()
+      // handleWorkstationPointer does its own generalized plane-ray hit test
+      // (the workstation's vertical euler isn't the fixed axis toDesktop()
       // assumes) and returns false (never consumed) when the ray misses the
       // plane or the screen isn't visible this era, so this never steals a
       // click meant for a movement marker on the floor.
       if (era3Devices) {
         const ray = screenRay(e);
-        if (ray && era3Devices.handleLaptopPointer(ray)) return;
+        if (ray && era3Devices.handleWorkstationPointer(ray)) return;
       }
       // R28-1: click-to-move, NEVER gaze-to-move — this pointerdown ray/hit
       // test is the ONLY thing that can arm a marker; looking at one (however
@@ -2757,7 +2757,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // and that you are being MOVED through it — the only bodily claim it
       // makes. A stray click during it is not an instruction to leave; on a
       // touch screen the first thing anyone does is touch the picture, and on a
-      // laptop a click is how you check whether a thing is alive. Losing the
+      // workstation a click is how you check whether a thing is alive. Losing the
       // shot to either is a loss with no upside: the move is 12 s, it is
       // authored, and nothing waits behind it.
       //
@@ -3285,7 +3285,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       'desktop-screen',
       'witness-screen',
       'movement-nodes',
-      'era3-device-laptop',
+      'era3-device-workstation',
       'era3-device-tablet',
       'era3-device-phone'
     ]) {

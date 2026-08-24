@@ -115,7 +115,7 @@ const room3 = place('e', template(maya), 3.88, 0.7, 270);
 // FLAT PANEL, not the shared template's small period-1997/2003 CRT — this is
 // both period-correct (SisterSignal/GraceQueue is a 2016 desktop, not a CRT
 // terminal) and a legibility fix (a wider, closer screen for era3Devices.ts's
-// laptop shell to render onto). Room 1/3 keep the shared CRT unchanged (out
+// workstation shell to render onto). Room 1/3 keep the shared CRT unchanged (out
 // of this session's scope). Dark bezel reuses '#2C2C34' (already approved
 // this session for the tablet/phone devices) instead of the CRT's beige
 // plastic — visually distinct AND no new hex. Pulled ~0.4m closer to the
@@ -162,9 +162,9 @@ const veraPlant = place('w', [
 // where src/room/era3Devices.ts's PLACEMENT puts its matching screen plane
 // (a hair above, e.g. local y 0.55 vs the plane's 0.565, so the plane reads
 // as the device's lit face and never z-fights the body underneath). The
-// laptop needs no new prop: it reuses the template's existing crtBody/
+// workstation needs no new prop: it reuses the template's existing crtBody/
 // crtBezel/crtScreen/crtFoot/keyboard/mouse assembly already on the desk
-// (era3Devices.ts's laptop screen plane sits in that same crtScreen gap).
+// (era3Devices.ts's workstation screen plane sits in that same crtScreen gap).
 const veraTablet = place('w', [
   ['tabletDevice', [1.0, 0.55, 0.3], [0.16, 0.015, 0.22], '#2C2C34']
 ], -3.88, 0.7, 90);

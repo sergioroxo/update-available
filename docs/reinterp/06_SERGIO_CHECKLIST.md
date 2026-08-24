@@ -213,16 +213,16 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 - **D44 (2026-07-16, Session 37)** — **THE THREE-SCREEN ROOM foundation
   shipped** (E3-i, per the R29-b deep revision you adopted: "I really like
   the 3 device"). Room 2 (Vera, 2016) now has three working device seats —
-  laptop (the desk), tablet (on the bed), phone (on the nightstand) — each
+  workstation (the desk), tablet (on the bed), phone (on the nightstand) — each
   its own screen, reached by clicking its floor marker (the same
   click-to-move seam as the cross-room jumps). Content this session is a
-  SHELL only: the laptop shows a SisterSignal login screen (no GraceQueue
+  SHELL only: the workstation shows a SisterSignal login screen (no GraceQueue
   yet — that's next, gated on the trans-masc reader per the adaptation
   spec), the tablet a static True Daughters feed (4 placeholder posts), the
   phone a lock screen with one notification. Lambient's mark (the same
   scatter from the E2 dispersal) appears small on all three. All copy
   PLACEHOLDER. **MID-SESSION FIX (same day, your live note from a
-  screenshot — "THE SCREEN READS TOO SMALL"):** the laptop's monitor was
+  screenshot — "THE SCREEN READS TOO SMALL"):** the workstation's monitor was
   originally the room's shared 1997/2003-scale CRT (no new geometry) — this
   is now REPLACED, Room 2 only, with a period-correct 2016 flat panel (dark
   bezel, wider screen, pulled ~0.19m closer); the SisterSignal window now
@@ -239,7 +239,7 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   by design.**
 - **D45 (2026-07-16, Session 38)** — **THE GRACEQUEUE PATTERN STRIP + CARD SET
   shipped** (E3-ii; your drafted cards are now playable). Sign in on Vera's
-  laptop → the moderation queue: one card at a time, big type; the strip runs
+  workstation → the moderation queue: one card at a time, big type; the strip runs
   1→5→2→6→3→7→4 so on-script and off-script alternate (the training curve);
   the system auto-flags the three warm cards (tone review / doctrinal
   question / contact risk) and the two buttons are honest about power —
@@ -267,11 +267,11 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   placeholder copy, not from your draft.**
 - **D46 (2026-07-17, Session 39)** — **E3 SCREENS RE-LAID-OUT FOR THEIR REAL
   FORMATS — your readability re-check.** Your report was exact: after the
-  Session 37 flat-panel swap, the laptop's image had only been ENLARGED — the
+  Session 37 flat-panel swap, the workstation's image had only been ENLARGED — the
   canvas still composed for the old squarer CRT shape and was stretched onto
   the wide panel (every pixel ~30% wider than tall). Fixed at the root: each
   device's offscreen canvas now matches its panel's real shape natively —
-  laptop widescreen (26:15, the 2016 panel), tablet ~3:4, phone exactly 1:2 —
+  workstation widescreen (26:15, the 2016 panel), tablet ~3:4, phone exactly 1:2 —
   square pixels everywhere, nothing stretched. And the GraceQueue/SisterSignal
   screens are now COMPOSED for widescreen: the card, the system band, and the
   verbs sit in one centered reading column (~50-char testimony lines) with
@@ -280,7 +280,7 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   not one word of card copy or data changed, Mira's gate and the tablet
   consequences verified intact, the whole strip re-driven with real clicks
   after the change. **Your checks: (1) the acceptance test is yours again —
-  a look at the laptop card view on your screen: does it now read as
+  a look at the workstation card view on your screen: does it now read as
   DESIGNED for the wide panel (not zoomed)?; (2) type sizes after the
   re-grid — the queue's card text should feel the same size as Session 38
   tuned it; if not, one number per device changes it (flagged in the session

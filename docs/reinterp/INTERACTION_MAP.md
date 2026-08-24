@@ -39,7 +39,7 @@ scaffolding thins as the eras go on, and nobody decided that.**
 | **Tape C · the mixtape** | Room 1 shelf | plays; ⚑ files **nothing** to the record — the one tape the system does not take |
 | **`lamby_rig.exe`** | E1 desktop icon | opens the rig lab |
 | **The found file** | any era, idle desktop | silent icon, never advertised |
-| **FloppySheep** | E3 laptop | one tap, no timer, nothing to beat |
+| **FloppySheep** | E3 workstation | one tap, no timer, nothing to beat |
 | **The comments thread** | E3 tablet | reply with pinned templates |
 | **The Close's dossier cards** | game menu → Credits | 10 sourced entries, reachable since S87 |
 | **⚑ `pillow` provotype** | E1 desktop icon | **the racket in Room 1 is its instrument** — and nothing connects them |

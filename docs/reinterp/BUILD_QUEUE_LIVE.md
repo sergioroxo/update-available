@@ -162,7 +162,7 @@ time instead of writing it out." THERE IS NO VIDEO. The player corrects a record
 watched. That was a template shortcut; make it DELIBERATE.
 
 SCOPE:
-1. BUILD THE VIDEO. Pre-authored pixel frames on the laptop, drawn from what she actually says: her
+1. BUILD THE VIDEO. Pre-authored pixel frames on the workstation, drawn from what she actually says: her
    hands ("my hands don't know where to go"), the brother's flannel. ⚑ FACELESS, per the law. It must
    be TENDER — it is `felt`, bare, no chrome over her, no Lambient. ⚑ NO camera, NO file input, ever
    — same law as the Restoration Filter: it is a sprite, and the piece never requests a permission.
@@ -466,7 +466,7 @@ could not build. A skipped check named plainly is worth more than a check that a
 
 # S76 — THE UPDATE, THE SPACE, AND NO DESKTOP · Opus, high effort · **here, not Codex**
 **⚑ PROMPT STATUS: SHIPPED — 2026-08-08 (Session 76). E4 Stage 2a: the era's shell.**
-*Built: the last update on Vera's laptop, arming itself when E3's correction list runs out (so Era 4
+*Built: the last update on Vera's workstation, arming itself when E3's correction list runs out (so Era 4
 is reachable by ordinary clicking — the spine's own path is gated on the latent sends); the EULA
 carrying the source pass in supplier boilerplate; L INSTALLED in the install report; the one touch on
 the headset; THE PLACE drawn on the canvas; ⚑ the turn that does not work; and no desktop from `e4`
@@ -1221,7 +1221,7 @@ more than a long one that pads.
 # S83 — THE HORIZON IS LOPSIDED ON A REAL iPAD · **Codex GPT 5.6, high effort**
 **⚑ PROMPT STATUS: SHIPPED 2026-08-12 — fix + always-visible `?debug=1` hardware diagnostic landed; UNVERIFIED ON HARDWARE until Sérgio photographs the iPad readout in portrait and both landscape directions.**
 *Sérgio, 2026-08-12, on an iPad in landscape, over the deployed Pages build: the world is rolled
-about 90° — the room is tilted and the laptop screen's text runs vertically. **Gyro is otherwise
+about 90° — the room is tilted and the workstation screen's text runs vertically. **Gyro is otherwise
 working**: the permission was granted, `Stop device look` is on screen, E3 loaded.*
 
 ## ⚑ THE SHAPE OF THIS JOB, and why it is a Codex job with one condition
@@ -1859,7 +1859,7 @@ the exhibition's primary method.
 
 # S87 — THE STRANDED SURFACES: two sends that cannot draw, two dossiers never imported
 **⚑ PROMPT STATUS: SHIPPED 2026-08-15** — both dossier cards read from Credits & attributions
-(`src/desktop/gameMenu.ts`); s3/s4 draw on Vera's laptop, decline-only pending Sérgio's dolly-vs-blink-cut
+(`src/desktop/gameMenu.ts`); s3/s4 draw on Vera's workstation, decline-only pending Sérgio's dolly-vs-blink-cut
 call (08 §17); check-spec C9 (content reachability, baseline 0) ships. The Close (item 3) intentionally
 NOT built — see `01_SESSION_LOG.md` Session 87 and `08_STATUS_REGISTER.md` §24.
 ~~**⚑ PROMPT STATUS: QUEUED 2026-08-15 · Codex · dispatchable in parallel with S86** *(S86 works E1–E2;
@@ -1886,7 +1886,7 @@ for someone who knows the coordinates.** `ledger.sends` never receives s3/s4 eit
 > it."* **The review tool has been steering the piece, and it cost two authored sends.**
 
 **Fix the real build first.** Either give Room 2/3 a live surface for the offer — the technique the
-laptop, tablet and phone already use — or move the offer draw off Daniel's dead monitor entirely.
+workstation, tablet and phone already use — or move the offer draw off Daniel's dead monitor entirely.
 **Whatever `?flat=1` then needs, it gets second.**
 
 ⚑ **Sequencing note:** S82 found s2 flies at **6.874 m/s against a 0.43 envelope** (`08 §17`). **Do

@@ -5,7 +5,7 @@
  * "import era palettes from src/desktop/theme/, never invent colors" is
  * satisfied by porting the era's own theme file, the same way era1/era2's
  * palettes were established). Used this session by `src/room/era3Devices.ts`
- * for the laptop's SisterSignal login/desktop shell only — GraceQueue itself
+ * for the workstation's SisterSignal login/desktop shell only — GraceQueue itself
  * (the full moderation app below, also shipped) is NOT wired in yet; that is
  * E3-iii+ per docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's build lanes.
  *
@@ -75,7 +75,7 @@ export const ERA3 = {
   // Session 64 — these five values were invented at the call site in
   // src/room/era3Devices.ts, which is exactly what the palette law forbids;
   // they are unchanged in value, only rehomed). A phone in 2016 is the one
-  // dark screen in a bright era: the laptop is glass and daylight, and this
+  // dark screen in a bright era: the workstation is glass and daylight, and this
   // is a lit rectangle in a dark room, held close.
   phoneBg: '#0a0f18',      // the lock screen at night
   phonePanel: '#1f2a3a',   // a notification / a message field
@@ -288,7 +288,7 @@ export function drawLambMark(ctx: CanvasRenderingContext2D, x: number, y: number
 }
 
 /**
- * ⚑ THE LIFT, screen side (Session 64) — the laptop's grade warms while the
+ * ⚑ THE LIFT, screen side (Session 64) — the workstation's grade warms while the
  * software on it does not change at all. `k` runs 0 (as you found it) → 1.
  *
  * Lives here, in the theme, for the reason the theme exists: the wash must be
@@ -327,7 +327,7 @@ export function warmGrade(ctx: CanvasRenderingContext2D, W: number, H: number, k
  * deliberate, and the frames below are it.
  *
  * ⚑ FACELESS, and by an in-world reason rather than a crop that hides a head:
- * she propped the laptop badly. What is in shot is her lap — the brother's
+ * she propped the workstation badly. What is in shot is her lap — the brother's
  * flannel over her knees, both sleeves coming in from the sides, her hands
  * meeting in the middle, and past them a dim room with one lamp in it. Someone
  * who says *"I'm not good on camera"* frames it exactly this wrong, and it
@@ -373,7 +373,7 @@ export const NOA = {
   flannelDp: '#74492F',   // era1 deskLeg — where two checks cross
   flannelPale: '#C9A8A0', // era1 book — the pale thread in the weave
   // ⚑ her hands are the brightest thing in the frame, and the reason is in the
-  // room: the laptop she is recording into is the only light on them. It is the
+  // room: the workstation she is recording into is the only light on them. It is the
   // same fact Room 2 is built on — in 2016 the screen is the lamp.
   skinHi: '#E6D2BC',      // era1 wall — where the screen catches them
   skin: '#C9A07A',        // era1 floor
@@ -488,7 +488,7 @@ export function drawNoaFrame(
 
   // ── her lap: two knees, stepped column by column ────────────────────────
   const breath = Math.sin(t * 1.3) > 0 ? 0 : 1;   // she is breathing. That is all.
-  /** how much of the screen's light reaches this column — the laptop is right
+  /** how much of the screen's light reaches this column — the workstation is right
    *  in front of her, so the middle of the frame is the lit part, and the fall-
    *  off is FOUR ragged steps rather than three clean ones (three read as three
    *  painted panels, which is the opposite of what light does). */
