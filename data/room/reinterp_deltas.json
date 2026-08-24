@@ -1034,8 +1034,7 @@
           0.14
         ],
         "color": "#C9BFA6",
-        "yaw": 90
-      },
+        "yaw": 90, "model": "computerKeyboard", "_doc": "⚑ THE MESH GOES ON THE EXISTING PROP — 2026-08-21. Room 2 already had a w_keyboard box here and I added a SECOND declaration with the same id rather than editing this one. That is the third time in this build; a duplicate id does not error, the later declaration silently wins, and the earlier becomes invisible. CHECK FOR THE ID BEFORE ADDING A PROP. Kenney, CC0. Non-interactive and it must never be given a hit rect: the piece has no free-text input by law, so a pressable keyboard would promise something the work does not do." },
       {
         "id": "w_mouse",
         "pos": [
@@ -1081,13 +1080,12 @@
         "color": "#8A5A3B",
         "yaw": 90
       },
-      { "id": "w_flatPanelBody", "model": "computerScreen", "pos": [-5.31, 0.75, 0.7], "size": [0.648, 0.486, 0.172], "yaw": 90, "color": "#2E3238", "_doc": "⚑ ERA 3'S MONITOR IS NOW A MODEL — Kenney, CC0, 2026-08-21 (ERA3_BUILD_PLAN stage 2). It was four primitive boxes (body, screen, stand, foot) and is now one mesh that includes its own stand, so w_flatPanelStand and w_flatPanelFoot are removed with it. Net -2 props and -2 draw calls on an era that shares a budget with Rooms 1 and 3. ⚑ It SITS ON THE DESK (y 0.75, the desk top) rather than floating at the old body's y 1.1: the model's baseY is its bbox minimum, so it stands on its own foot the way a monitor does. Size is the model's LOCAL dims (0.51 wide x 0.38 tall x 0.135 deep) and yaw 90 turns the width onto z at render — authoring the size pre-rotated reports a +278%/-73% SCALE fault, which is how I first wrote it. w_flatPanelScreen and era3Devices' PLACEMENT.laptop plane move down to meet its face; if this prop is ever repositioned they must follow." },
-        { "id": "w_keyboard", "model": "computerKeyboard", "pos": [-4.98, 0.75, 0.7], "size": [0.42, 0.041, 0.177], "yaw": 90, "color": "#3A3E44", "_doc": "⚑ ERA 3'S KEYBOARD — Kenney, CC0, 2026-08-21. In front of the monitor and nearer the seat (the r2 camera is at x -4.4 looking along -x), so the desk reads chair → keyboard → screen. Size is the model's LOCAL dims; yaw 90 turns the 0.42 width onto z. ⚑ NON-INTERACTIVE ON PURPOSE and it must never be given a hit rect: the piece has no free-text input by law (CLAUDE.md), so a keyboard you could press would promise something the work does not do. Honest set dressing beats a broken affordance — and this era already has a device that answers, in her hand." },
+      { "id": "w_flatPanelBody", "model": "computerScreen", "pos": [-5.33, 0.75, 0.7], "size": [0.785, 0.589, 0.208], "yaw": 90, "color": "#2E3238", "_doc": "⚑ ERA 3'S MONITOR IS NOW A MODEL — Kenney, CC0, 2026-08-21 (ERA3_BUILD_PLAN stage 2). It was four primitive boxes (body, screen, stand, foot) and is now one mesh that includes its own stand, so w_flatPanelStand and w_flatPanelFoot are removed with it. Net -2 props and -2 draw calls on an era that shares a budget with Rooms 1 and 3. ⚑ It SITS ON THE DESK (y 0.75, the desk top) rather than floating at the old body's y 1.1: the model's baseY is its bbox minimum, so it stands on its own foot the way a monitor does. Size is the model's LOCAL dims (0.51 wide x 0.38 tall x 0.135 deep) and yaw 90 turns the width onto z at render — authoring the size pre-rotated reports a +278%/-73% SCALE fault, which is how I first wrote it. w_flatPanelScreen and era3Devices' PLACEMENT.laptop plane move down to meet its face; if this prop is ever repositioned they must follow." },
       {
         "id": "w_flatPanelScreen",
         "pos": [
           -5.25,
-          1.02,
+          1.10,
           0.7
         ],
         "size": [

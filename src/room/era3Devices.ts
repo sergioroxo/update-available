@@ -108,7 +108,7 @@ const PLACEMENT = {
     //   the plane that used to ride a box hovering at 1.1 now rides a real
     //   screen face. A plane left at the old height reads as a display detached
     //   from its own monitor — which is exactly how it rendered before this fix.
-    pos: { x: -5.22, y: 1.02, z: 0.7 },
+    pos: { x: -5.20, y: 1.10, z: 0.7 },
     // ⚑ 0.52 × 0.30 → 0.60 × 0.35, 2026-08-21. Sérgio, on a screenshot: "the
     //   computer screen is too small for the size of the area of the desktop."
     //   The whole of Era 3 is read off this panel — a testimony, a rule, a
@@ -116,7 +116,7 @@ const PLACEMENT = {
     //   sized for physical realism made that a squint. The model grew with it
     //   (models.json computerScreen, scale 1.3 → 1.65); this plane must always
     //   be re-fitted when that number moves, or the display floats off its face.
-    size: { w: 0.60, h: 0.35 },
+    size: { w: 0.73, h: 0.43 },
     euler: { x: 90, y: 90, z: 0 } // verified in-browser (Session 37): normal (+1,0,0), faces the chair
   },
   /**
@@ -157,9 +157,17 @@ const PLACEMENT = {
     // on the floor". data/room/models.json now scales it to its authored box
     // (measured top 0.500), so the phone comes down with the surface it lies on.
     // Session 66: on the nightstand's new position; REST pose only.
-    pos: { x: -2.42, y: 0.51, z: -0.72 },
-    size: { w: 0.07, h: 0.14 },
-    euler: { x: 0, y: 0, z: 0 } // flat, screen-up
+    // ⚑ MOVED TO THE DESK, 2026-08-21 — and I moved the PROP here first and left
+    //   this behind, which is precisely the mistake I had just written a warning
+    //   about for the monitor. Sérgio, on a screenshot: "there is no Phone on the
+    //   table, just some boxes… the area of the phone still exists and is not
+    //   inside of a phone." A lit portrait rectangle hung in mid-air over the
+    //   nightstand showing 9:41 and FloppySheep, with nothing under it.
+    //   ⚑ A SCREEN AND ITS DEVICE ARE ONE OBJECT IN TWO FILES. Move either and
+    //   the other must follow, every time.
+    pos: { x: -5.02, y: 0.756, z: 1.16 },
+    size: { w: 0.071, h: 0.152 },
+    euler: { x: 90, y: 90, z: 0 } // flat on the desk, screen up, long axis along z
   }
 } as const;
 
