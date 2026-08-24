@@ -222,9 +222,24 @@ const PLACEMENT = {
     //   nightstand showing 9:41 and FloppySheep, with nothing under it.
     //   ⚑ A SCREEN AND ITS DEVICE ARE ONE OBJECT IN TWO FILES. Move either and
     //   the other must follow, every time.
-    pos: { x: -5.02, y: 0.756, z: 1.16 },
+    // ⚑ MOVED INTO THE FRAME — 2026-08-24, and this was the worst reachability
+    //   fault in the piece: THE WHOLE ENDING OF ERA 3 IS ON THIS DEVICE and it
+    //   projected to (-230, 1214) on a 1280x900 viewport from the laptop seat.
+    //   Off the left edge AND below the bottom. Measured at five pitches from 0°
+    //   to -40°: looking down raised it (y 1214 → 308) and NEVER brought it back
+    //   on screen horizontally (x stayed -90 to -230), because at z 1.16 it sat
+    //   36.5° off the view axis against a 29.7° horizontal half-FOV. No amount
+    //   of looking could reach it. ⚑ Now at z 0.95 / x -5.10: 19.7° off axis,
+    //   comfortably inside, and 28.5° down — which a modest downward look
+    //   covers, the way you look down at a phone on a desk.
+    pos: { x: -5.10, y: 0.756, z: 0.95 },
     size: { w: 0.071, h: 0.152 },
-    euler: { x: 90, y: 90, z: 0 } // flat on the desk, screen up, long axis along z
+    // ⚑ FLAT, screen up — the plane primitive already faces +Y, so x 0 is the
+    //   lying-down pose the old comment claimed while the euler said otherwise
+    //   (x 90 stood it upright like the monitor). It is not READABLE lying flat
+    //   at a grazing angle and it is not supposed to be: it is a phone on a
+    //   desk. Pressing it brings it to the hand, which is where it is read.
+    euler: { x: 0, y: 90, z: 0 }
   }
 } as const;
 
@@ -392,6 +407,10 @@ export interface Era3Devices {
   /** ⚑ raise a device to the hand (or `null` to put everything back) — see the
    *  HELD READ note above. `seat` is the camera pose being cut to; the held
    *  pose is computed from it, so the two can never disagree. */
+  /** note the seat without moving anything — see the implementation's comment */
+  noteSeat(seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
+  /** the phone is lifted off the desk right now */
+  readonly phoneInHand: boolean;
   holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
   /** screen px → world ray (from app.ts's own screenRay()) → the laptop
    *  plane's logical canvas coords, generalized for ANY plane orientation
@@ -510,6 +529,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     holdTo: number;     // the target for holdK
   };
   const screens: Screen[] = [];
+  /** ⚑ the phone is IN HER HAND — the one piece of state that decides whether a
+   *  press on it means "pick it up" or "use it". Nothing else in the era
+   *  branches on it, and putting it down is always available. */
+  let phoneHeld = false;
+  let lastSeat: { x: number; y: number; z: number; pitch: number; yaw: number } | null = null;
   // ⚑ THE LIFT's one wire: the laptop's break reaches the ROOM's light through
   // cluster.ts's module-level hook, because app.ts (which owns both halves) is
   // outside this session's file fence. See cluster.ts's E3_LIFT.
@@ -835,7 +859,21 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     beginArrival(): void {
       graceQueueLite.beginArrival();
     },
+    /** ⚑ the seat the player is actually at, noted on every seat cut, so the
+     *  phone can be PICKED UP by pressing it rather than by taking a seat.
+     *  ERA3_BUILD_PLAN §0 retires the device seats — "with the tablet gone and
+     *  the phone in her hand, 'jump to a device' is no longer the movement" —
+     *  and `heldPoseFor` needs a seat to compute "in front of the eye" from. */
+    noteSeat(seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void {
+      lastSeat = seat;
+    },
+    /** ⚑ is the phone in her hand right now — so the caller can hide the
+     *  RESTING prop and keep the object out of two places at once. app.ts did
+     *  this on seat cuts already; the press path needs the same guard. */
+    get phoneInHand(): boolean { return phoneHeld; },
     holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void {
+      lastSeat = seat;
+      phoneHeld = which === 'phone';
       for (const s of screens) {
         if (s.name === 'laptop') continue; // the laptop is already at reading distance
         if (s.name === which) {
@@ -880,6 +918,21 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         );
         if (onVisor) { shell.handleClick(onVisor.x, onVisor.y); return true; }
       }
+      // ⚑ WHILE IT IS IN HER HAND IT IS IN FRONT OF EVERYTHING, and it is tested
+      //   first for exactly that reason: the held phone sits between the eye and
+      //   the laptop, so testing the laptop first let a press go THROUGH the
+      //   phone and work the board behind it. A press that lands on the glass
+      //   goes to the phone; a press past it PUTS THE PHONE DOWN and is
+      //   consumed, so setting it down can never also press something else.
+      //   Putting it down is always available and never announced — the same law
+      //   the assistant's dismissal follows.
+      if (phoneHeld && lastSeat) {
+        const held = test('phone');
+        if (held) return graceQueueLite.handlePhoneClick(held.x, held.y);
+        this.holdDevice(null, lastSeat);
+        return true;
+      }
+
       // ⚑ THE LAST UPDATE, on Vera's laptop. System-modal over that screen only
       // (a press on the phone or the tablet still reaches them — the ritual owns
       // the surface it is drawn on, not the room).
@@ -905,8 +958,14 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // verbs. A press that lands on the phone's glass but on no target
       // returns false and falls through to the floor markers, exactly as a
       // miss on the laptop always has.
-      const onPhone = test('phone');
-      if (onPhone) return graceQueueLite.handlePhoneClick(onPhone.x, onPhone.y);
+      // ⚑ PRESS TO PICK IT UP — the resting phone, lying flat on the desk where
+      //   it is deliberately not readable. This replaces the `r2-phone` SEAT,
+      //   which the build plan retires and whose floor marker still stood 2.6 m
+      //   away at the nightstand the phone left in stage 2.
+      if (!phoneHeld && test('phone') && lastSeat) {
+        this.holdDevice('phone', lastSeat);
+        return true;
+      }
       // Session 70: and the TABLET has verbs now — the comment thread and its
       // template picker. Tested last only because it is the largest plane lying
       // flat in the room and a ray on its way to something else should not be

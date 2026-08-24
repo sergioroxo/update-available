@@ -42,29 +42,9 @@
       "eras": [
         "e4"
       ]
-    },
-    {
-      "id": "r2-phone",
-      "seatYaw": 92,
-      "label": "the phone",
-      "marker": [
-        -2.42,
-        0.03,
-        0.12
-      ],
-      "pose": {
-        "x": -2.42,
-        "y": 1.14,
-        "z": 0.12,
-        "pitch": -16,
-        "yaw": 90
-      },
-      "eras": [
-        "e3",
-        "e4"
-      ]
     }
   ],
   "_docHeld": "Session 66 — the device seats no longer CRANE. They used to sit 0.6-0.8 m from a screen lying flat on furniture, pitched -37/-38 deg, which is how a 7 cm phone ended up carrying the era's break unreadably. The device now comes to the hand instead (src/room/era3Devices.ts, holdDevice), so these poses are ordinary seated ones: a gentle downward gaze at a thing held in front of you. `pose` still overrides seatPose() exactly as before; only the numbers changed, and the held pose is DERIVED from them, so retuning a seat moves its device with it. PLACEHOLDER-draft framing, Sérgio's to retune by feel.",
+  "_docPhoneSeatRemoved": "\u26d1 r2-phone REMOVED 2026-08-24. ERA3_BUILD_PLAN \u00a70 retires the device seats \u2014 \"with the tablet gone and the phone in her hand, jump-to-a-device is no longer the movement; one desk seat, the phone is held\" \u2014 and this node had become a live WRONG AFFORDANCE: its floor marker still stood at (-2.42, 0.03, 0.12), 2.6 m from where the phone actually lies since stage 2 moved it to the desk, so a player clicking a marker labelled \"the phone\" was teleported across the room to an empty patch of floor. The phone is now PICKED UP BY PRESSING IT (src/room/era3Devices.ts, handleLaptopPointer) and put down by pressing past it. DEVICE_SEAT_POSES and app.ts's r2-phone branch are left in place and inert; removing them is a separate cut.",
   "_docTabletRemoved": "⚑ r2-tablet REMOVED 2026-08-21 (Sérgio: Era 3 is DESKTOP + PHONE, the tablet goes). _doc2 above still describes the three-device-seat model and its 'machine is everywhere you sit' thesis — that thesis now rests on TWO devices, and it is not weakened by the cut: the desk is where she is employed and the phone is where she is a person, which is a sharper split than three surfaces of the same work. The r2-phone node stays. See docs/reinterp/ERA3_BUILD_PLAN.md §0."
 }

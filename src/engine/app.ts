@@ -1766,6 +1766,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const held: 'tablet' | 'phone' | null =
       nodeId === 'r2-tablet' ? 'tablet' : nodeId === 'r2-phone' ? 'phone' : null;
     heldDevice = held;
+    // ⚑ the seat is noted on EVERY cut, because from 2026-08-24 the phone is
+    //   picked up by pressing it rather than by taking a seat, and the held
+    //   pose is still derived from wherever she is actually sitting.
+    era3Devices?.noteSeat(sp);
     era3Devices?.holdDevice(held, sp);
     for (const [prop, name] of [['w_tabletDevice', 'tablet'], ['w_phoneDevice', 'phone']] as const) {
       const h = room?.props.get(prop);
@@ -3084,6 +3088,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (os.dirty) { frontTex.upload(); os.dirty = false; }
     witness.update(dt);
     if (witness.dirty) { backTex.upload(); witness.dirty = false; }
+    // ⚑ the LIVE camera pose, every frame — so pressing the phone can lift it to
+    //   the hand from wherever she is actually looking, without depending on a
+    //   seat cut having happened first. The held pose is still computed ONCE, at
+    //   the moment of pick-up, so the phone stays where it was raised.
+    era3Devices?.noteSeat({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw });
+    // ⚑ the RESTING prop hides while its screen is in the hand, so the object is
+    //   never in two places at once. `performSeatCut` already did this for the
+    //   seat path; the press path needs the same guard, and doing it here covers
+    //   both without either having to know about the other.
+    if (era3Devices) {
+      const restPhone = room?.props.get('w_phoneDevice');
+      if (restPhone) restPhone.entity.enabled = !era3Devices.phoneInHand;
+    }
     era3Devices?.tick(dt); // Session 37: uploads each device screen once, the first dirty frame
 
     if (os.inDesktop) flipBtn.style.display = 'block';
