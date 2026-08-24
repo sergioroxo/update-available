@@ -1,0 +1,64 @@
+{
+  "_doc": "ERA 3, JOB: ORDER THE PODCAST (src/desktop/apps/podcastOrder.ts). Built 2026-08-24 against taskSurface.ts's seam (ERA3_BUILD_PLAN stage 4), ERA3_NARRATIVE.md §3 ('Order the podcast — drag three clips into a running order — other people's worst minutes, arranged well') and §1 (the lesbian specificity), and docs/reinterp/RESEARCH_PULL_E3_CONSEQUENCES.md §2 (the women's-strand vocabulary — emotional dependency, enmeshment, relational wounds, boundaries, femininity, unmet emotional need, healthy relationships — never the men's father-wound material with the pronouns swapped). Every line below is Claude's writing under CLAUDE.md's 2026-08-17 amendment ('the writing is Claude's... nothing waits on him to write it'); Sérgio's edit wins wherever he makes one and he owns the ethics calls and every _s-marked line, of which there are none here yet. THIS FILE'S COPY — the three women, their titles and their one-line quotations — is Claude's first pass and is flagged for the lead's review under the felt-text drafting norm: nothing here waits on that review to ship, but nothing here should be mistaken for settled either.",
+  "_docWomen": "THE THREE WOMEN ARE INVENTED AND DISTINCT FROM s3_queue.json's Renata, Noa and Deb M. — this is a different job on the board (an audio production pass, not the testimony-correction queue) and reuses no character across screens, so a player who works both jobs meets six women, not three doing double duty. No real person, no borrowed survivor testimony, no verbatim quotation from anything real. The register match is s3_queue.json's submissions: plain, specific, unresolved, never a slogan, never a symptom reciting a checklist. The vocabulary (unmet emotional need, enmeshment, boundaries) is used the way a real woman in one of these groups would actually reach for it — once, load-bearing, in her own sentence — never stacked into a diagnostic list.",
+  "_docRegister": "Register split, same law as s3_queue.json: the SCREEN — the row layout, the role tags ('opens strongest' etc.), the recommended marker, 'Lock the order' — is `operable`. It may be tidy, cheerful, product-manager-competent, and the satire lives entirely there: real broadcast-production vocabulary (cold open, the turn, the close, an asset's 'role') laid directly over three women's worst minutes, meant sincerely by the tool and never commented on by it. The three `quote` strings are `felt`: bare, sincere, never the joke, never satirised, never scored. THE POINT OF THE SCENE (brief, verbatim): other people's worst minutes, arranged well — the craft is real and the horror is entirely in the competence, so nothing here ever tells the player which order is better. Every order is displayed identically; the screen approves nothing and objects to nothing.",
+  "_docWitness": "`witness` is keyed clipId → final position ('1'|'2'|'3'), filed once, at the lock press, in src/desktop/apps/podcastOrder.ts's `publish()`. Every one of the six possible full running orders produces a different set of three lines on the record — the mechanism the brief asks for ('different orders file different witnesses; the outcome never changes') — while nothing on screen ever shows the player the record they are building.",
+  "app": {
+    "title": "GracePlatform · The Ordering, Aloud",
+    "heading": "Running order.",
+    "sub": "Three clips. Tap the arrows to move one.",
+    "listLabel": "SEGMENTS",
+    "recommendedTag": "recommended",
+    "publishButton": "Lock the order",
+    "publishedHeading": "Locked.",
+    "publishedSub": "It goes out with this week's episode.",
+    "moveUp": "^",
+    "moveDown": "v"
+  },
+  "clips": [
+    {
+      "id": "coldOpen",
+      "title": "Cold Open",
+      "author": "Cheryl",
+      "duration": "0:38",
+      "role": "opens strongest",
+      "systemRank": 1,
+      "quote": "My sponsor says I have an unmet emotional need and I let a woman meet it instead of God, and some days that still sounds true to me."
+    },
+    {
+      "id": "turn",
+      "title": "The Turn",
+      "author": "Priya",
+      "duration": "1:04",
+      "role": "holds attention",
+      "systemRank": 2,
+      "quote": "They call it enmeshment. I called it the only person who noticed when I was tired."
+    },
+    {
+      "id": "close",
+      "title": "The Close",
+      "author": "Bex",
+      "duration": "0:52",
+      "role": "sends them onward",
+      "systemRank": 3,
+      "quote": "I practiced my boundaries script in the mirror before I used it on her, and I still couldn't finish it."
+    }
+  ],
+  "witness": {
+    "coldOpen": {
+      "1": "podcast: published — cheryl, position 1 of 3 (cold open)",
+      "2": "podcast: published — cheryl, position 2 of 3 (cold open)",
+      "3": "podcast: published — cheryl, position 3 of 3 (cold open)"
+    },
+    "turn": {
+      "1": "podcast: published — priya, position 1 of 3 (the turn)",
+      "2": "podcast: published — priya, position 2 of 3 (the turn)",
+      "3": "podcast: published — priya, position 3 of 3 (the turn)"
+    },
+    "close": {
+      "1": "podcast: published — bex, position 1 of 3 (the close)",
+      "2": "podcast: published — bex, position 2 of 3 (the close)",
+      "3": "podcast: published — bex, position 3 of 3 (the close)"
+    }
+  }
+}

@@ -301,11 +301,19 @@ const E3_DEVICE_BEATS: Array<[string, string]> = [
   // name its beats freely; graceQueueLite settles the board and opens the tile
   // before handing the beat on, so each of these lands on a screen a reviewer
   // can actually see — which is the whole reason C6 exists.
+  ['⚑⚑ clear the comments · the flagged queue', 'comments:open'],
+  ['↳ remove the first kind one', 'comments:removed'],
+  ['↳ leave it up instead (files the same)', 'comments:left'],
+  ['↳ ⚑ the March reply, last in the queue', 'comments:march'],
+  ['↳ the whole queue cleared', 'comments:done'],
   ['⚑ the family line · open it', 'family:open'],
   ['↳ ⚑⚑ the mother no template answers', 'family:quiet'],
   ['↳ send her one anyway', 'family:replied'],
   ['↳ mark her handled without replying', 'family:handled'],
   ['↳ the whole line cleared', 'family:done'],
+  ['the podcast · the suggested running order', 'podcast:open'],
+  ['↳ moved off the suggestion', 'podcast:reordered'],
+  ['↳ locked', 'podcast:published'],
   ['⚑ the phone · FloppySheep (home screen icon)', 'floppy'],
   ['↳ FloppySheep · running', 'floppyPlay'],
   ['↳ FloppySheep · the oh-no card', 'floppyOver']

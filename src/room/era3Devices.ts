@@ -38,6 +38,8 @@ import * as pc from 'playcanvas';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import { ledger } from '../state/ledger';
 import { setEra3Lift, type EraKey } from './cluster';
+import { ClearCommentsApp } from '../desktop/apps/clearComments';
+import { PodcastOrderApp } from '../desktop/apps/podcastOrder';
 import { FamilyCallsApp } from '../desktop/apps/familyCalls';
 import { GraceQueueLite } from './graceQueueLite';
 import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
@@ -511,7 +513,9 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   //   board and nothing else in this file has to know it exists. A job that is
   //   not mounted has no tile, which is how the board grows without ever
   //   showing a tile that does nothing.
+  graceQueueLite.mountTask(new ClearCommentsApp());
   graceQueueLite.mountTask(new FamilyCallsApp());
+  graceQueueLite.mountTask(new PodcastOrderApp());
 
   function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);

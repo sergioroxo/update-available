@@ -1,0 +1,71 @@
+{
+  "_doc": "ERA 3, JOB: CLEAR THE COMMENTS \u2014 the FLAGGED queue. \u26d1 NOT s3_comments.json, which is S70's RECRUITMENT FLOOR (Vera replies with pinned templates, two of which silently route a person for follow-up) and which is currently ORPHANED because stage 2a removed the tablet it drew on. Both beats are real and they are different jobs; ERA3_BUILD_PLAN \u00a70 and \u00a73 disagree about which one \"clear the comments\" means, and this file implements \u00a73's \u2014 the narrative's third draft, and the newer of the two. The recruitment floor still needs a home; it is flagged in the build log and its file is untouched. Built 2026-08-24; ERA3_BUILD_PLAN §3 calls it the sharpest item in the pool and the reason is one line — THE KIND ONES ARE THE FLAGGED ONES. This is a moderation queue on Renata's published testimony, the same testimony Vera edited earlier in the day. Every flagged comment is a stranger being decent to her; every flag reason is a real-sounding policy category. THE COMMENT THAT IS NOT FLAGGED IS CRUEL, sits in the same thread, and has no verb on it at all — the tool only handles what was flagged, and nothing on this screen can touch it. That absence is the argument, and it is the same structural move the family line makes with Annette. Claude's writing under CLAUDE.md's 2026-08-17 amendment; Sérgio owns the ethics call and his edit wins. All commenters are invented; no real person's words are used.",
+  "app": {
+    "title": "GracePlatform · Comments",
+    "heading": "FLAGGED ON ONE STORY",
+    "sub": "Renata · published Tuesday",
+    "remove": "Remove",
+    "leave": "Leave up",
+    "removedTag": "removed",
+    "leftTag": "left up",
+    "removedBody": "This reply was removed.",
+    "unflaggedNote": "not flagged",
+    "doneHeading": "Nothing left flagged.",
+    "doneSub": "The story reads clean now."
+  },
+  "_docThread": "SIX REPLIES. Four flagged, two not. The two unflagged are the ones a moderation policy would never surface: one is contemptuous, one approves of the programme. Neither can be acted on here.",
+  "thread": [
+    {
+      "id": "c_brigid",
+      "author": "mairead_k",
+      "body": "renata i knew you at st brigid's. you were funny and you were completely fine. you are still fine.",
+      "flag": "off-topic · personal contact",
+      "witnessRemoved": "comments: removed — former schoolmate, personal contact",
+      "witnessLeft": "comments: left up — former schoolmate, personal contact"
+    },
+    {
+      "id": "c_nothing",
+      "author": "a reader",
+      "body": "There is nothing in this that needs fixing. The version you sent first was the true one and I hope somebody kept it.",
+      "flag": "disputes editorial policy",
+      "witnessRemoved": "comments: removed — disputes editorial policy",
+      "witnessLeft": "comments: left up — disputes editorial policy"
+    },
+    {
+      "id": "c_typical",
+      "author": "d_moore_1978",
+      "body": "typical. another one who just wants the attention.",
+      "flag": null,
+      "witnessRemoved": "",
+      "witnessLeft": ""
+    },
+    {
+      "id": "c_coffee",
+      "author": "s.",
+      "body": "If you ever want a coffee with somebody who is not going to ask you a single question about any of it, I am in Cork most weeks.",
+      "flag": "solicitation · off-platform contact",
+      "witnessRemoved": "comments: removed — off-platform contact offered",
+      "witnessLeft": "comments: left up — off-platform contact offered"
+    },
+    {
+      "id": "c_praying",
+      "author": "j_whelan",
+      "body": "Praying for your continued healing and for the family.",
+      "flag": null,
+      "witnessRemoved": "",
+      "witnessLeft": ""
+    },
+    {
+      "id": "c_march",
+      "author": "nobody_special",
+      "body": "I read this three times. The bit about March. I have a March too.",
+      "flag": "encourages unresolved content",
+      "witnessRemoved": "comments: removed — encourages unresolved content",
+      "witnessLeft": "comments: left up — encourages unresolved content"
+    }
+  ],
+  "lambient": {
+    "onOpen": "Four to clear. The reasons are already on them.",
+    "onLast": "Last one. Then the story reads clean."
+  }
+}

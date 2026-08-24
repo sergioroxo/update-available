@@ -1727,6 +1727,14 @@ export class GraceQueueLite {
       const [jobId, sub] = beat.split(':');
       const job = this.surfaces.get(jobId);
       if (!job) return;
+      // ⚑ PUT DOWN WHATEVER IS OPEN FIRST. Without this a review jump from one
+      //   job to another silently did nothing: `debugBeat('board')` routes
+      //   through `beginList()`, which only fires from `signin`, so the mode
+      //   stayed 'list' and `openTask` bailed. The panel button appeared to
+      //   work and the screen never changed — precisely the class of failure
+      //   C6 exists to catch, found by photographing the result.
+      this.openSurface = null;
+      if (this.mode === 'list') this.mode = 'board';
       this.debugBeat('board');
       const idx = this.tasks().findIndex(t => t.id === jobId);
       if (idx >= 0) this.openTask(idx);
