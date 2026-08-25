@@ -603,6 +603,50 @@ export function buildClusterShell(
     if (f) f.enabled = visible;
   }
 
+  /**
+   * ⚑ ROOM 3 IS NOT HERS YET IN 2016 — 2026-08-24, and it closes the question
+   * Sérgio raised before any space renewal: *"does it make sense to have Room 3
+   * visible on Era-3? maybe we could not show, and this would be more
+   * gradual."*
+   *
+   * ⚑ MEASURED FIRST (§33): from Vera's seat, at yaw 270 — THE TURN, the piece's
+   * one bodily ask — **62 of Maya's 68 props were in frame**, furnished and lit,
+   * ten years early. Every other bearing showed none. So one turn from the 2016
+   * desk was spending the whole of Era 4's arrival.
+   *
+   * ⚑ AND THE REAL FAULT WAS NOT VISIBILITY, IT WAS TIME. The piece's premise is
+   * three rooms that AGE across thirty years; Room 3 was showing its **2026**
+   * dressing in 2016 (r3 adds 68 east props, r4 adds only 6 more). The future
+   * was leaking backwards. Hiding the room outright would have been the other
+   * error — a room that pops into existence contradicts one continuous space —
+   * so what is hidden is the PERSON, not the place.
+   *
+   * **What stays in 2016:** the shell, the window, the door, the curtains, and
+   * the furniture a household keeps in a spare room — bed, desk, chair,
+   * bookcase, nightstand, rug. It reads as a room nobody is living in.
+   * **What waits for 2026:** everything of Maya's — her machine, her headset,
+   * her posters, her sketchbook, her sneakers, her mug, her plant. Fifty
+   * objects, and every one of them is a person arriving.
+   *
+   * Same mechanism as `setTerminalVisible` (S61's precedent) rather than a data
+   * restructure: the props keep one definition, and the era decides who is home.
+   */
+  const ROOM3_KEPT_IN_2016 = new Set([
+    'e_floor', 'e_ceil', 'e_wallDesk', 'e_wallL', 'e_wallR', 'e_lintel',
+    'e_winPane', 'e_winTop', 'e_winBot', 'e_winL', 'e_winR',
+    'e_winMullionV', 'e_winMullionH', 'e_doorPanel', 'e_doorKnob',
+    'e_curtL', 'e_curtR', 'e_curtRod',
+    'e_bed', 'e_desk', 'e_chair', 'e_bookcase', 'e_nightstand', 'e_rug'
+  ]);
+
+  /** `dressed` = Maya's things are in the room. False for E3, true from E4. */
+  function setRoom3Dressed(dressed: boolean): void {
+    for (const [id, prop] of room.props) {
+      if (!id.startsWith('e_') || ROOM3_KEPT_IN_2016.has(id)) continue;
+      prop.entity.enabled = dressed;
+    }
+  }
+
   function migrateTerminal(toRoom3: boolean): void {
     const e = app.root.findByName('witness-screen');
     if (!(e instanceof pc.Entity)) return;
@@ -837,7 +881,7 @@ export function buildClusterShell(
       // S61 — see setTerminalVisible's note. On a WALL-OPENING relocation this
       // is deferred into the timeline below so the panel leaves WITH the walls
       // rather than blinking out three seconds before them.
-      if (!reloc?.opensWalls) setTerminalVisible(toEra !== 'e3');
+      if (!reloc?.opensWalls) { setTerminalVisible(toEra !== 'e3'); setRoom3Dressed(toEra !== 'e3'); }
 
       // ⚑ THE RELOCATION's space half (choreography doc §T1's staged timeline,
       // moved here from the E1→E2 transition Session 27/R28-0c per Sérgio's
@@ -859,9 +903,10 @@ export function buildClusterShell(
           { t: R, fn: () => {                                  // the space begins to change
             beginMorphedStateBatch();
             morph.goToState(toIdx, true, pace);
+            setRoom3Dressed(toEra !== 'e3'); // the fold owns `enabled`; assert after it
             // S61: the record leaves the spine WITH the walls (see
             // setTerminalVisible) — one change, one moment, not two.
-            if (reloc.opensWalls) setTerminalVisible(toEra !== 'e3');
+            if (reloc.opensWalls) { setTerminalVisible(toEra !== 'e3'); setRoom3Dressed(toEra !== 'e3'); }
           } }
         ];
         if (reloc.opensWalls) {
@@ -905,6 +950,11 @@ export function buildClusterShell(
         if (willAnimate) beginMorphedStateBatch();
         else clearSettled();
         morph.goToState(toIdx, willAnimate);
+        // ⚑ AFTER the fold, always. Setting this at the top of `morphToEra` was
+        //   silently undone by `goToState` a few lines later — the first version
+        //   measured as having changed nothing, with 62 of Maya's props still in
+        //   frame. The fold owns `enabled`; presence decisions land after it.
+        setRoom3Dressed(toEra !== 'e3');
         rebuildAfterLayout = !willAnimate;
       }
       applyRig(toEra, animate);
@@ -930,6 +980,7 @@ export function buildClusterShell(
       // legal pose after a skipped relocation or a debug settle.
       migrateTerminal(era === 'e4');
       setTerminalVisible(era !== 'e3');
+      setRoom3Dressed(era !== 'e3');
       niche.setFacet((eraTable()?.default ?? 'none') as FacetState);
       applyLayout();
       rebuildSettled();
