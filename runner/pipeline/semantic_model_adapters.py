@@ -233,6 +233,7 @@ class LocalModelRouteV1(_Strict):
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
         "qwen38_mapper_repair", "triage_mapper_repair",
+        "memory_safe_comparison_fallback",
         "qwen_embedding", "bge_shadow",
         "grounded_enrichment",
     ]
@@ -241,6 +242,9 @@ class LocalModelRouteV1(_Strict):
     expected_resolved_fragments: tuple[str, ...] = ()
     expected_dimension: int | None = Field(default=None, ge=1, le=8192)
     maximum_output_tokens: int = Field(default=4096, ge=128, le=32768)
+    fallback_reason: Literal[
+        "qwen38_current_residency_swap_growth_exceeded"
+    ] | None = None
 
     @field_validator("route_id", "requested_model")
     @classmethod
@@ -269,6 +273,11 @@ class LocalModelRouteV1(_Strict):
 
     @model_validator(mode="after")
     def _route_invariants(self) -> "LocalModelRouteV1":
+        if self.purpose == "memory_safe_comparison_fallback":
+            if self.fallback_reason is None:
+                raise ValueError("memory-safe comparison fallback requires a reason")
+        elif self.fallback_reason is not None:
+            raise ValueError("fallback reason is forbidden for ordinary routes")
         required = {
             "qwen_embedding": 4096,
             "bge_shadow": 1024,
@@ -343,6 +352,7 @@ class ModelCallReceiptV1(_Strict):
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
         "qwen38_mapper_repair", "triage_mapper_repair",
+        "memory_safe_comparison_fallback",
         "qwen_embedding", "bge_shadow",
         "grounded_enrichment",
     ]
@@ -355,6 +365,9 @@ class ModelCallReceiptV1(_Strict):
     duration_ms: int = Field(ge=0)
     concurrency_level: int = Field(ge=1, le=4)
     dimension: int | None = Field(default=None, ge=1, le=8192)
+    fallback_reason: Literal[
+        "qwen38_current_residency_swap_growth_exceeded"
+    ] | None = None
     receipt_sha256: str
 
     @field_validator("requested_model", "provider_resolved_model")
@@ -374,7 +387,16 @@ class ModelCallReceiptV1(_Strict):
 
     @model_validator(mode="after")
     def _receipt_hash(self) -> "ModelCallReceiptV1":
-        if self.receipt_sha256 != canonical_contract_sha256(self, omit={"receipt_sha256"}):
+        if self.purpose == "memory_safe_comparison_fallback":
+            if self.fallback_reason is None:
+                raise ValueError("memory-safe comparison receipt requires a reason")
+        elif self.fallback_reason is not None:
+            raise ValueError("fallback reason is forbidden for ordinary receipts")
+        expected = canonical_contract_sha256(self, omit={"receipt_sha256"})
+        legacy = canonical_contract_sha256(
+            self, omit={"receipt_sha256", "fallback_reason"},
+        )
+        if self.receipt_sha256 not in {expected, legacy}:
             raise ValueError("local model call receipt hash mismatch")
         return self
 
@@ -397,10 +419,14 @@ def _receipt(
         response_sha256=hashlib.sha256(_canonical_bytes(response)).hexdigest(),
         input_item_count=input_count, output_item_count=output_count,
         duration_ms=duration_ms, concurrency_level=concurrency_level,
-        dimension=dimension, receipt_sha256="0" * 64,
+        dimension=dimension, fallback_reason=route.fallback_reason,
+        receipt_sha256="0" * 64,
     )
     draft = ModelCallReceiptV1.model_construct(**values)
-    values["receipt_sha256"] = canonical_contract_sha256(draft, omit={"receipt_sha256"})
+    omitted = {"receipt_sha256"}
+    if route.fallback_reason is None:
+        omitted.add("fallback_reason")
+    values["receipt_sha256"] = canonical_contract_sha256(draft, omit=omitted)
     return ModelCallReceiptV1.model_validate(values)
 
 
@@ -582,7 +608,7 @@ class OpenAICompatibleLocalClient:
                     if payload.get("schema_version") != "copied-pilot-model-receipts-v1.0":
                         raise SemanticAdapterError("durable_receipt_log_schema_mismatch")
                     rows = list(payload.get("receipts") or [])
-                row = receipt.model_dump(mode="json")
+                row = receipt.model_dump(mode="json", exclude_none=True)
                 if row["receipt_sha256"] not in {
                     value.get("receipt_sha256") for value in rows
                 }:
@@ -705,6 +731,7 @@ class OpenAICompatibleLocalClient:
         if route.purpose in {
             "qwen38_mapper_repair", "triage_mapper_repair",
             "qwen38_compiler_candidate",
+            "memory_safe_comparison_fallback",
             "grounded_enrichment",
         }:
             request["reasoning_effort"] = "none"
@@ -988,7 +1015,10 @@ class LocalSectionExecutor:
 class LocalDocumentCompilerExecutor:
     def __init__(
         self, client: OpenAICompatibleLocalClient,
-        *, purpose: Literal["document_compiler", "qwen38_compiler_candidate"] = "document_compiler",
+        *, purpose: Literal[
+            "document_compiler", "qwen38_compiler_candidate",
+            "memory_safe_comparison_fallback",
+        ] = "document_compiler",
     ):
         self.client = client
         self.route = client.config.route(purpose)

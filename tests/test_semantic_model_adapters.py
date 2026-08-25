@@ -98,6 +98,53 @@ def test_endpoint_rejects_cloud_and_unapproved_hosts():
         _config(base_url="http://secret@127.0.0.1:4000")
 
 
+def test_memory_safe_comparison_route_and_reason_are_receipt_bound():
+    fallback = LocalModelRouteV1(
+        route_id="memory-safe-comparison-fallback",
+        purpose="memory_safe_comparison_fallback", requested_model="triage",
+        expected_resolved_models=("ollama_chat/gemma4:12b-mlx",),
+        maximum_output_tokens=8192,
+        fallback_reason="qwen38_current_residency_swap_growth_exceeded",
+    )
+    config = SemanticEndpointConfigV1(
+        base_url="http://127.0.0.1:4000",
+        routes=_routes(include_shadow=False) + (fallback,),
+    )
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        assert body["model"] == "triage"
+        assert body["response_format"]["json_schema"]["name"] == (
+            "compiler_response_v1"
+        )
+        return httpx.Response(200, json={
+            "model": "triage",
+            "choices": [{"message": {"content": json.dumps({"claims": []})}}],
+        })
+
+    client = OpenAICompatibleLocalClient(
+        config, transport=httpx.MockTransport(handler),
+    )
+    client.preflight()
+    _payload, receipt = client.chat(
+        fallback, system="strict compiler", user="{}", concurrency_level=1,
+        response_schema=compiler_response_json_schema(),
+    )
+    assert receipt.purpose == "memory_safe_comparison_fallback"
+    assert receipt.requested_model == "triage"
+    assert receipt.provider_resolved_model == "ollama_chat/gemma4:12b-mlx"
+    assert receipt.fallback_reason == (
+        "qwen38_current_residency_swap_growth_exceeded"
+    )
+    tampered = receipt.model_dump(mode="json")
+    tampered["fallback_reason"] = None
+    with pytest.raises(ValidationError, match="requires a reason"):
+        type(receipt).model_validate(tampered)
+    client.close()
+
+
 def test_preflight_requires_explicit_alias_to_local_model_binding():
     def handler(request):
         return httpx.Response(200, json=_model_info())

@@ -9,13 +9,20 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+from runner.models.retrieval import canonical_contract_sha256
+from runner.pipeline.analysis_sections import DocumentCompilationV1
 from runner.pipeline.factory_semantic_pilot import (
     LocalModelPhaseGuard,
+    RUN021_VALIDATED_MODELS,
+    RUN024_COMPARISON_DOCUMENTS,
+    RUN024_MEMORY_SAFE_COMPARISON_DOCUMENT,
+    RUN024_TARGETED_REPAIR_RUN_ID,
     SemanticPilotError,
     build_contract,
     build_results_archive,
     endpoint_config,
     run_copied_semantic_pilot,
+    select_comparison_purposes,
     validate_sealed_results,
 )
 
@@ -57,6 +64,85 @@ def _snapshot(*, swap, resident=0, free=95):
         "swap_used_bytes": swap,
         "swap_growth_from_baseline_bytes": swap - 100,
     }
+
+
+def _comparison(
+    directory: Path, document_id: str, *, requested_model: str,
+    provider_resolved_model: str,
+) -> None:
+    values = {
+        "schema_version": "document-compilation-v1.0",
+        "document_id": document_id,
+        "packet_sha256": hashlib.sha256(document_id.encode()).hexdigest(),
+        "requested_model": requested_model,
+        "provider_resolved_model": provider_resolved_model,
+        "claims": (),
+        "output_sha256": "0" * 64,
+    }
+    draft = DocumentCompilationV1.model_construct(**values)
+    values["output_sha256"] = canonical_contract_sha256(
+        draft, omit={"output_sha256"},
+    )
+    output = DocumentCompilationV1.model_validate(values)
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / f"{document_id}-qwen38.json").write_text(
+        output.model_dump_json(), encoding="utf-8",
+    )
+
+
+def _run024_comparison_directory(tmp_path: Path) -> Path:
+    directory = tmp_path / "compilers"
+    for document_id in RUN024_COMPARISON_DOCUMENTS[:2]:
+        _comparison(
+            directory, document_id, requested_model="compiler-qwen38",
+            provider_resolved_model=RUN021_VALIDATED_MODELS[
+                "qwen38_compiler_candidate"
+            ],
+        )
+    return directory
+
+
+def test_memory_safe_comparison_exception_is_run024_only(tmp_path):
+    directory = _run024_comparison_directory(tmp_path)
+    with pytest.raises(SemanticPilotError, match="scope_mismatch"):
+        select_comparison_purposes(
+            run_id="semantic-multidocument-canary-025",
+            document_ids=RUN024_COMPARISON_DOCUMENTS,
+            comparison_directory=directory, memory_safe_fallback=True,
+        )
+
+
+def test_memory_safe_comparison_retargets_only_the_missing_result(tmp_path):
+    directory = _run024_comparison_directory(tmp_path)
+    purposes = select_comparison_purposes(
+        run_id=RUN024_TARGETED_REPAIR_RUN_ID,
+        document_ids=RUN024_COMPARISON_DOCUMENTS,
+        comparison_directory=directory, memory_safe_fallback=True,
+    )
+    assert purposes[RUN024_MEMORY_SAFE_COMPARISON_DOCUMENT] == (
+        "memory_safe_comparison_fallback"
+    )
+    assert {
+        purpose for doc, purpose in purposes.items()
+        if doc != RUN024_MEMORY_SAFE_COMPARISON_DOCUMENT
+    } == {"qwen38_compiler_candidate"}
+
+
+def test_memory_safe_comparison_cannot_replace_completed_qwen38_result(tmp_path):
+    directory = _run024_comparison_directory(tmp_path)
+    _comparison(
+        directory, RUN024_MEMORY_SAFE_COMPARISON_DOCUMENT,
+        requested_model="compiler-qwen38",
+        provider_resolved_model=RUN021_VALIDATED_MODELS[
+            "qwen38_compiler_candidate"
+        ],
+    )
+    with pytest.raises(SemanticPilotError, match="identity_mismatch"):
+        select_comparison_purposes(
+            run_id=RUN024_TARGETED_REPAIR_RUN_ID,
+            document_ids=RUN024_COMPARISON_DOCUMENTS,
+            comparison_directory=directory, memory_safe_fallback=True,
+        )
 
 
 def test_model_guard_rejects_overlapping_dense_residency_before_load(tmp_path):

@@ -88,6 +88,7 @@ RUN021_VALIDATED_MODELS = {
     "qwen38_mapper_repair": "ollama_chat/qwen3.8:27b-mlx",
     "triage_mapper_repair": "ollama_chat/gemma4:12b-mlx",
     "qwen38_compiler_candidate": "ollama_chat/qwen3.8:27b-mlx",
+    "memory_safe_comparison_fallback": "ollama_chat/gemma4:12b-mlx",
     "qwen_embedding": "ollama/qwen3-embedding:8b",
     "bge_shadow": "ollama/bge-m3:latest",
     "grounded_enrichment": "ollama_chat/gemma4:31b-mlx",
@@ -95,6 +96,16 @@ RUN021_VALIDATED_MODELS = {
 RUN024_TARGETED_REPAIR_RUN_ID = "semantic-multidocument-canary-024"
 RUN024_TARGETED_REPAIR_JOB_ID = (
     "dc0ff39b-section-00003-c19387e8ce59-policy-legal"
+)
+RUN024_COMPARISON_DOCUMENTS = (
+    "13c3c42bd635", "14174594dc39", "dc0ff39b",
+)
+RUN024_QWEN38_COMPARISON_DOCUMENTS = (
+    "13c3c42bd635", "14174594dc39",
+)
+RUN024_MEMORY_SAFE_COMPARISON_DOCUMENT = "dc0ff39b"
+RUN024_MEMORY_SAFE_COMPARISON_REASON = (
+    "qwen38_current_residency_swap_growth_exceeded"
 )
 TRUNCATION_MARKER = "[TRUNCATED MIDDLE"
 NO_SNAPSHOT_SHA256 = hashlib.sha256(b"no-approved-snapshot-v1.0").hexdigest()
@@ -409,6 +420,15 @@ def endpoint_config(
             maximum_output_tokens=8192,
         ),
         LocalModelRouteV1(
+            route_id="memory-safe-comparison-fallback",
+            purpose="memory_safe_comparison_fallback", requested_model="triage",
+            expected_resolved_models=(
+                RUN021_VALIDATED_MODELS["memory_safe_comparison_fallback"],
+            ),
+            maximum_output_tokens=8192,
+            fallback_reason=RUN024_MEMORY_SAFE_COMPARISON_REASON,
+        ),
+        LocalModelRouteV1(
             route_id="qwen-embedding", purpose="qwen_embedding",
             requested_model="research-embedding",
             expected_resolved_models=(RUN021_VALIDATED_MODELS["qwen_embedding"],),
@@ -525,6 +545,11 @@ class LocalModelPhaseGuard:
             and snapshot["memory_free_percent"] < self.MINIMUM_FREE_PERCENT_BEFORE_LOAD
         ):
             return "available_memory_before_load_inadequate"
+        if (
+            not before_load
+            and snapshot["memory_free_percent"] < self.MINIMUM_FREE_PERCENT_BEFORE_LOAD
+        ):
+            return "available_memory_during_residency_inadequate"
         if (
             not before_load
             and snapshot["current_interval_swap_growth_bytes"]
@@ -714,6 +739,51 @@ def _load_or_compile(
         raise
 
 
+def select_comparison_purposes(
+    *, run_id: str, document_ids: Sequence[str], comparison_directory: Path,
+    memory_safe_fallback: bool,
+) -> dict[str, str]:
+    """Select the one authorized Run-024 comparison exception, fail closed."""
+    documents = tuple(sorted(document_ids))
+    if not memory_safe_fallback:
+        return {doc: "qwen38_compiler_candidate" for doc in documents}
+    if (
+        run_id != RUN024_TARGETED_REPAIR_RUN_ID
+        or documents != tuple(sorted(RUN024_COMPARISON_DOCUMENTS))
+    ):
+        raise SemanticPilotError("pilot_memory_safe_comparison_scope_mismatch")
+    for doc in RUN024_QWEN38_COMPARISON_DOCUMENTS:
+        path = comparison_directory / f"{doc}-qwen38.json"
+        if not path.exists():
+            raise SemanticPilotError("pilot_completed_qwen38_comparison_missing")
+        output = DocumentCompilationV1.model_validate_json(path.read_bytes())
+        if (
+            output.requested_model != "compiler-qwen38"
+            or output.provider_resolved_model
+            != RUN021_VALIDATED_MODELS["qwen38_compiler_candidate"]
+        ):
+            raise SemanticPilotError("pilot_completed_qwen38_comparison_identity_mismatch")
+    fallback_path = comparison_directory / (
+        f"{RUN024_MEMORY_SAFE_COMPARISON_DOCUMENT}-qwen38.json"
+    )
+    if fallback_path.exists():
+        output = DocumentCompilationV1.model_validate_json(fallback_path.read_bytes())
+        if (
+            output.requested_model != "triage"
+            or output.provider_resolved_model
+            != RUN021_VALIDATED_MODELS["memory_safe_comparison_fallback"]
+        ):
+            raise SemanticPilotError("pilot_memory_safe_comparison_identity_mismatch")
+    return {
+        doc: (
+            "memory_safe_comparison_fallback"
+            if doc == RUN024_MEMORY_SAFE_COMPARISON_DOCUMENT
+            else "qwen38_compiler_candidate"
+        )
+        for doc in documents
+    }
+
+
 def _analysis_payload(results) -> dict[str, Any]:
     findings = [
         finding
@@ -823,7 +893,7 @@ def _merge_receipts(path: Path, receipts: Sequence[ModelCallReceiptV1]) -> list[
         existing = list(payload.get("receipts") or [])
     known = {row["receipt_sha256"] for row in existing}
     for receipt in receipts:
-        row = receipt.model_dump(mode="json")
+        row = receipt.model_dump(mode="json", exclude_none=True)
         if row["receipt_sha256"] not in known:
             existing.append(row)
             known.add(row["receipt_sha256"])
@@ -1007,6 +1077,12 @@ def run_copied_semantic_pilot(
     ):
         raise SemanticPilotError("pilot_targeted_repair_scope_mismatch")
     targeted_repair = bool(targeted_repair_job_id)
+    memory_safe_comparison_flag = os.environ.get(
+        "SOGICE_SEMANTIC_PILOT_RUN024_MEMORY_SAFE_COMPARISON", "",
+    )
+    if memory_safe_comparison_flag not in {"", "1"}:
+        raise SemanticPilotError("pilot_memory_safe_comparison_flag_malformed")
+    memory_safe_comparison = memory_safe_comparison_flag == "1"
     verified = _verify_sources(contract)
     lexicon_terms = _verified_lexicon_terms(contract)
     client = OpenAICompatibleLocalClient(endpoint, transport=transport)
@@ -1094,6 +1170,12 @@ def run_copied_semantic_pilot(
         comparison_packets = {}
         compiler_input_receipts: dict[str, CompilerInputReductionReceiptV1] = {}
         compiler_receipt_dir = workspace / "outputs" / "compiler-input-receipts"
+        comparison_directory = workspace / "outputs" / "compilers"
+        comparison_purposes = select_comparison_purposes(
+            run_id=contract.run_id, document_ids=tuple(plans),
+            comparison_directory=comparison_directory,
+            memory_safe_fallback=memory_safe_comparison,
+        )
         for doc in sorted(plans):
             primary_path = workspace / "outputs" / "compilers" / f"{doc}-primary.json"
             original, derived, receipt = build_compiler_input_reduction_receipt(
@@ -1122,7 +1204,7 @@ def run_copied_semantic_pilot(
                 build_compiler_input_reduction_receipt(
                     plan=plans[doc], results=results[doc], units=units_by_doc[doc],
                     compiler_model_route=endpoint.route(
-                        "qwen38_compiler_candidate"
+                        comparison_purposes[doc]
                     ).requested_model,
                 )
             )
@@ -1136,7 +1218,7 @@ def run_copied_semantic_pilot(
                         build_compiler_input_reduction_receipt(
                             plan=plans[doc], results=results[doc], units=units_by_doc[doc],
                             compiler_model_route=endpoint.route(
-                                "qwen38_compiler_candidate"
+                                comparison_purposes[doc]
                             ).requested_model,
                             used_packet_sha256=used,
                         )
@@ -1149,9 +1231,6 @@ def run_copied_semantic_pilot(
             )
         failure_log = workspace / "state" / "pilot_failures.json"
         primary_executor = LocalDocumentCompilerExecutor(client)
-        comparison_executor = LocalDocumentCompilerExecutor(
-            client, purpose="qwen38_compiler_candidate",
-        )
         primary_needs_calls = any(
             not (workspace / "outputs" / "compilers" / f"{doc}-primary.json").exists()
             for doc in plans
@@ -1170,23 +1249,28 @@ def run_copied_semantic_pilot(
                 failure_log=failure_log, legacy_packet=primary_legacy_packets[doc],
             ) for doc in sorted(plans)}
 
-        comparison_needs_calls = any(
-            not (workspace / "outputs" / "compilers" / f"{doc}-qwen38.json").exists()
-            for doc in plans
-        )
-        comparison_phase = (
-            phase_guard.phase(
-                phase="qwen38-comparison-compilation",
-                resolved_model=RUN021_VALIDATED_MODELS["qwen38_compiler_candidate"],
+        comparison = {}
+        for doc in sorted(plans):
+            comparison_path = comparison_directory / f"{doc}-qwen38.json"
+            purpose = comparison_purposes[doc]
+            executor = LocalDocumentCompilerExecutor(client, purpose=purpose)
+            comparison_phase = (
+                phase_guard.phase(
+                    phase=(
+                        "run024-memory-safe-comparison-fallback"
+                        if purpose == "memory_safe_comparison_fallback"
+                        else "qwen38-comparison-compilation"
+                    ),
+                    resolved_model=RUN021_VALIDATED_MODELS[purpose],
+                )
+                if phase_guard is not None and not comparison_path.exists()
+                else nullcontext()
             )
-            if phase_guard is not None and comparison_needs_calls else nullcontext()
-        )
-        with comparison_phase:
-            comparison = {doc: _load_or_compile(
-                path=workspace / "outputs" / "compilers" / f"{doc}-qwen38.json",
-                packet=comparison_packets[doc], executor=comparison_executor,
-                failure_log=failure_log,
-            ) for doc in sorted(plans)}
+            with comparison_phase:
+                comparison[doc] = _load_or_compile(
+                    path=comparison_path, packet=comparison_packets[doc],
+                    executor=executor, failure_log=failure_log,
+                )
 
         documents = {row.document_id: row for row in contract.documents}
         rows: list[SourceUnitRowV1] = []
@@ -1345,9 +1429,23 @@ def run_copied_semantic_pilot(
             "unit_id": row.unit_id,
             "score": row.fused_score,
         } for row in contexts[doc].selected_hits] for doc in sorted(contexts)}
+        comparison_provenance = {
+            doc: {
+                "purpose": comparison_purposes[doc],
+                "requested_model": comparison[doc].requested_model,
+                "provider_resolved_model": comparison[doc].provider_resolved_model,
+                "fallback_reason": (
+                    RUN024_MEMORY_SAFE_COMPARISON_REASON
+                    if comparison_purposes[doc] == "memory_safe_comparison_fallback"
+                    else None
+                ),
+            }
+            for doc in sorted(comparison)
+        }
         comparison_report = {
             "schema_version": "copied-pilot-researcher-comparison-v1.0",
             "compiler_comparisons": comparison_rows,
+            "comparison_provenance": comparison_provenance,
             "retrieval_rankings": {
                 "qwen_4096": qwen_rankings,
                 "bge_m3_1024": bge["rankings"],
@@ -1435,6 +1533,7 @@ def run_copied_semantic_pilot(
             ),
             "primary_compilation_count": len(primary),
             "comparison_compilation_count": len(comparison),
+            "comparison_provenance": comparison_provenance,
             "indexed_unit_count": manifest.unit_count,
             "qwen_dimension": 4096,
             "bge_dimension": 1024,
