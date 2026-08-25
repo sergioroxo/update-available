@@ -1,0 +1,153 @@
+{
+  "_doc": "⚑ ERA 3'S PROVENANCE, and it is the first card set the piece has written FROM A REAL EVIDENCE PULL rather than from what a session happened to remember. Source: docs/reinterp/RESEARCH_PULL_E3_2026-08-24.md, run by Sérgio against docs/reinterp/RESEARCH_BRIEF_E3.md, with the consequences note beside it. ⚑ WHY IT IS IN data/provotypes/: that directory is the ONLY place check-spec's C1 enforces CLAUDE.md's dossier law (`status: documentary | contested | speculative`, build fails without it), so a beat's provenance lives here in the schema's own grammar, where a missing status is a build failure rather than an oversight. ⚑ THIS IS A RECORD OF BUILT BEATS, NOT A SECOND SURFACE: `states` describes Era 3's day as it actually plays across src/room/graceQueueLite.ts, src/desktop/apps/*.ts and src/desktop/apps/phoneE3.ts. It is NOT sequenced by data/paths.json and NOT rendered by provotype.ts. The reading surface for these cards is the Close.",
+  "_docPhrasing": "⚑ THE PHRASING IS SÉRGIO'S AND IS NOT DONE. CLAUDE.md's 2026-08-17 amendment moved the display writing to Claude but kept THREE things with him — ethics judgment calls, DOSSIER PHRASING, and every `_s`-marked line. So what is finished here is the STRUCTURE and the SOURCING: each claim carries the status the pull gave it, at the confidence the pull gave it, and no claim has been promoted. What is NOT finished is how any of it is worded for a reader. Nothing below should ship in a Dossier as written.",
+  "_docVerify": "⚑ EVERY SOURCE BELOW COMES FROM THE PULL AND CARRIES THE PULL'S OWN GRADING, but the pull is a model's research and NOT ONE CITATION HAS BEEN CHECKED BY THE PROJECT LEAD. They keep [VERIFY SOURCE] until he does. ⚑ AND THE PULL'S OWN [VERIFY SOURCE] MARKS ARE HONOURED AS ABSENCES: there is deliberately no card here claiming daily group check-ins were a standard ex-lesbian form, no card on terms of address, none on WhatsApp as a 2016 movement norm, and none on a lapse-escalation ladder — the pull could not source any of them, so the fiction invents them openly and the Dossier says the record is thin rather than implying a corpus that does not exist.",
+  "id": "e3_theday",
+  "era": "era3",
+  "register": "operable",
+  "failure": "the block is outnumbered",
+  "cuts": ["full", "festival"],
+  "invitation": {
+    "_doc": "⚑ The day is not offered — it is ASSIGNED. Era 3 opens on a shift that is already hers, and the only thing that greets her is the assistant asking for permissions she can refuse without effect. That is why `from` names Lambient rather than a fellowship or a programme: nothing in this era invites her to anything, it schedules her.",
+    "from": "Lambient",
+    "text": "Let Lambient work alongside you?"
+  },
+  "frame": {
+    "_doc": "At most two sentences, per the schema. Plain, and it says what the scene is rather than what it means.",
+    "text": "A shift at a desk in 2016, editing other women's testimony for an organisation that says it is helping them. The day ends because other people, somewhere else, stop doing the same work."
+  },
+  "states": [
+    {
+      "_doc": "⚑ THE BOARD. The greying is the era's whole visual argument and it is not commentary — the software genuinely has one gesture for 'finished' and genuinely does not distinguish between the kinds of thing it was asked to finish.",
+      "prompt": "Six jobs. Start anywhere, the order is yours.",
+      "buttons": ["Correct a testimony", "Clear the comments", "Return the family calls"],
+      "response": "This is today. Open anything — they're all the same size to me.",
+      "felt": "The freedom offered is over the order, and the order is the one thing that does not matter."
+    },
+    {
+      "_doc": "⚑ THE FLAGGED QUEUE, and the sharpest item in the pool. Four replies are flagged with real-sounding policy categories and every one of the four is a stranger being kind to her. The two that are NOT flagged — one contemptuous, one approving of the programme — have no control on them at all.",
+      "prompt": "Four replies flagged on one story.",
+      "buttons": ["Remove", "Leave up"],
+      "response": "This reply was removed.",
+      "felt": "There is no button anywhere on the screen for the cruel one, because moderating it was never what the queue was for."
+    },
+    {
+      "_doc": "⚑ THE FAMILY LINE, rebuilt from the pull. The worker is a family-ministry worker and NOT a clinician; she knows the mother's story because the mother told her, and does not know the daughter's. The third mother asks for an address the organisation has and she does not, and no template on the screen can reach it.",
+      "prompt": "Three parents waiting. Reply, or mark handled.",
+      "buttons": ["Send the grief study", "Encourage patience", "Mark handled without replying"],
+      "response": "Grace and truth are not opposites.",
+      "felt": "Every reply is warm and not one of them contains information."
+    },
+    {
+      "_doc": "⚑ THE END OF THE ERA, and it is collective. Vera sends nothing; the facilitator who moved Thursday's call so a member could get there after work is in the middle of the flood, and people are being ADDED to the group while it happens.",
+      "prompt": "they voted. unanimous. not one against it.",
+      "buttons": ["Okay"],
+      "response": "14 items could not be reviewed",
+      "felt": "The software is not broken. It is outnumbered."
+    }
+  ],
+  "close": {
+    "_doc": "What the era leaves behind, for the Close to read.",
+    "text": "Everything on your board is still there."
+  },
+  "debrief": {
+    "body": [
+      "Era 3 dramatises a shift of ordinary content work inside an organisation that runs conversion practices: editing testimony, moderating replies, answering families, cutting promotional media and pricing a course. The organisations, the platform, the assistant, the course, the group and every person in the era are INVENTED. The practices they perform are drawn from a documented record, and the cards below say for each claim how well documented it is.",
+      "⚑ One fact in the era is real and is not ours: Malta's Affirmation of Sexual Orientation, Gender Identity and Gender Expression Act — Act LV of 2016 — was passed unanimously and made Malta the first country in Europe to ban conversion practices. The newspaper reporting it in the piece is invented. The law is not.",
+      "⚑ And one thing the record does NOT show is itself a finding, stated here rather than papered over: there is little published evidence of the ordinary message traffic of private ex-lesbian accountability groups around 2016. The group in this era is written into that gap openly — invented name, invented members, invented sentences, documented shape."
+    ],
+    "sources": [
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Peer accountability groups are a real and central instrument of ex-gay ministry rather than an invented device: closed membership justified by confidentiality, embedded inside a structured programme, and facilitated — coordinators, small-group leaders, assistant leaders and pastoral overseers are named roles, and leaders are trained. The group in the piece has a facilitator for this reason and is not a leaderless circle."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Accountability covers far more than sexual acts. Programme material asks about feelings, romantic and sexual thought life, emotional dependency, codependency, identity and family hurts; adjacent purity-technology material interrogates temptation, 'second glances', known triggers and potentially compromising situations. A member disclosing a hard night on which nothing happened is the documented shape, not a softening of it."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "A reported lapse is framed as something to confess, pray through and continue working on — honesty, confession, forgiveness, healing prayer, boundaries — rather than as grounds for expulsion. ⚑ No source was found for a formal escalation ladder (warning, sponsor call, removal), and the piece therefore contains none."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "The women's strand of ex-gay ministry developed its own explanatory vocabulary, distinct from the masculinised 'gender deficit' literature written for men: EMOTIONAL DEPENDENCY above all, alongside enmeshment, relational wounds, boundaries, unmet emotional need and a femininity to be recovered. Robinson and Spivey's peer-reviewed discourse analysis (Social Sciences 4(3), 2015) identifies 'emotional dependency' as a characteristic euphemism for female homosexuality. Every line of the era's course, group and podcast copy is written from this register."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Movement material characteristically separates the person from the sexual identity — 'same-sex attracted', 'struggling with homosexuality', 'lesbian-identified', a person 'affected by' lesbianism — rather than accepting 'lesbian' as a stable category. ⚑ The first correction the player is asked to apply in the era replaces 'lesbian' with 'same-sex attracted'. That beat was written before this research and turns out to be the documented move."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "contested",
+        "confidence": "medium",
+        "text": "Father and mother 'wounds', disrupted gender development and relational brokenness are taught by these ministries as causal or formative explanations for same-sex attraction. ⚑ THESE ETIOLOGICAL CLAIMS ARE NOT ESTABLISHED PSYCHOLOGICAL SCIENCE. The piece renders them ONLY in the organisation's own voice — a course module, a correction's rationale — and nothing in the piece's own voice endorses them."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "medium",
+        "text": "By the middle of the period, evangelical sexual-accountability infrastructure had moved onto smartphones, transmitting browsing and activity reports to selected 'accountability partners' — advertised with unlimited partners, and turning episodic self-report into persistent observation another person could later question. ⚑ This is ADJACENT evidence from the purity-technology ecology, not proof that an ex-lesbian organisation used such a tool; the piece's assistant is invented and this material informs its affordances only."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "⚑ SURVEILLANCE IN THIS WORLD IS MADE LEGIBLE AS CARE, and that is the era's governing register rather than a stylistic choice. A person is asked how she is because somebody cares; hard questions are 'accountability'; scrutiny is help identifying temptation. Automated behavioural reporting was marketed as a means of starting a trusted conversation. Nothing in Era 3 is ever supposed to SOUND like surveillance."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Families are treated as a distinct ministry constituency with their own groups, appointments and curriculum — 'Parents and Family Ministry' is an actual organisational label — and the worker is not required to be a licensed clinician. Grief is an explicit organising concept in that curriculum. Parents are told to preserve the relationship, not to affirm the identity: 'love without approval', grace and truth, and boundaries inside the parents' own home."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "⚑ THE ABSENCE IS EVIDENCE. Influential conservative sources explicitly REJECTED advising parents to break off contact, and no organisational document was found instructing families to withdraw support or to route an adult child's communications through the organisation. The era's family screen therefore contains no such template. The harm it dramatises is an indefinite holding pattern of patience and prayer that never answers the question a mother actually asked."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Confidentiality runs the other way too: family programmes are parallel support for families, not a window into another adult's disclosures, and no basis was found for a worker reporting an enrolled adult's progress to a relative. ⚑ The piece builds its family screen ON that asymmetry — the worker knows the mother's story because the mother told her, and the daughter has no record on the screen at all."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "contested",
+        "confidence": "low — testimony about providers, not providers' protocols",
+        "text": "Survivor and interview evidence, including a UK government-commissioned qualitative study, records people undergoing change efforts being advised to distance themselves from LGBT friends and discouraged from disclosing their sexuality, and losing faith-community support after accepting an LGBT identity. ⚑ These are reported experiences rather than written organisational policy, and the piece must not present them as the latter."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "Malta's Affirmation of Sexual Orientation, Gender Identity and Gender Expression Act (Act LV of 2016) was passed unanimously, making Malta the first country in Europe to prohibit conversion practices, with penalties for practitioners. ⚑ The masthead reporting it in the piece is INVENTED; the law is real and is never dramatised beyond what it did."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "speculative",
+        "confidence": "none — this is our extrapolation",
+        "text": "⚑ THE ERA'S ENDING IS OURS AND IS NOT A FINDING. That a coordinated refusal by enough participants can outrun an organisation's capacity to suppress it is the piece's argument, dramatised as a group sharing a link faster than a block can process it. No source claims this, the project lead has never claimed it as a finding, and the Dossier must carry the distinction for a reader who has not had that conversation."
+      },
+      {
+        "_verify": "[VERIFY SOURCE]",
+        "status": "speculative",
+        "confidence": "none — the record is thin and the fiction fills it openly",
+        "text": "⚑ WHAT COULD NOT BE SOURCED, listed so the piece is not read as claiming it: that daily phone-group check-ins were a standard ex-lesbian form; any terms of direct address between members; greeting formulas, emoji conventions, response-time or screenshot norms; a movement-wide word for a woman who leaves; and any particular messaging platform as a 2016 norm. The group's name, members and every sentence in it are invented. Its SHAPE is documented; its texture is ours."
+      }
+    ]
+  },
+  "ledgerTags": []
+}

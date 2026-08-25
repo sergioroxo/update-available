@@ -63,8 +63,14 @@ import attributions from '../../data/strings/attributions.json';
 // this attaches it to a surface that exists today instead.
 import e4Ball from '../../data/provotypes/e4_ball.json';
 import e4Offers from '../../data/provotypes/e4_offers.json';
+// ⚑ ERA 3's CARD (2026-08-24) — and it was written unreached. `check-spec`'s C9
+// failed the very first run: a provotype file that exists and is never imported
+// is content a player cannot reach, which is the exact fault e4_ball/e4_offers
+// shipped with for two sessions. The check caught it in under a minute; the
+// wiring below is what makes the card real rather than filed.
+import e3Day from '../../data/provotypes/e3_theday.json';
 
-type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'restartConfirm';
+type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'restartConfirm';
 
 interface DossierSource { status: string; confidence: string; text: string }
 interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
@@ -279,11 +285,16 @@ export function mountGameMenu(): GameMenu {
       // sources behind Era 4's most speculative and most documented beats.
       row(copy.creditsBallSources, () => { view = 'ballSources'; render(); });
       row(copy.creditsOffersSources, () => { view = 'offersSources'; render(); });
+      row(copy.creditsDaySources, () => { view = 'daySources'; render(); });
       backRow();
       return;
     }
     if (view === 'ballSources') {
       sourcesView(e4Ball as unknown as DossierCard, copy.ballSourcesTitle);
+      return;
+    }
+    if (view === 'daySources') {
+      sourcesView(e3Day as unknown as DossierCard, copy.daySourcesTitle);
       return;
     }
     if (view === 'offersSources') {
