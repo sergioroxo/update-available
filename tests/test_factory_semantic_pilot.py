@@ -3,12 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import httpx
 import pytest
 from pydantic import ValidationError
 
 from runner.pipeline.factory_semantic_pilot import (
+    LocalModelPhaseGuard,
     SemanticPilotError,
     build_contract,
     build_results_archive,
@@ -16,6 +18,90 @@ from runner.pipeline.factory_semantic_pilot import (
     run_copied_semantic_pilot,
     validate_sealed_results,
 )
+
+
+class _GuardClient:
+    def __init__(self):
+        self.active_resolved_model = "ollama_chat/gemma4:12b-mlx"
+        self.released = []
+
+    def release_model_lease_after_verified_unload(
+        self, resolved_model, *, verify_unloaded,
+    ):
+        assert verify_unloaded()
+        self.released.append(resolved_model)
+        self.active_resolved_model = None
+
+
+def _guard(tmp_path: Path):
+    state = tmp_path / "state"
+    state.mkdir(parents=True)
+    (state / "memory_safety_baseline.json").write_text(json.dumps({
+        "schema_version": "semantic-runtime-memory-baseline-v1.0",
+        "content_free": True,
+        "swap_used_bytes": 100,
+        "maximum_swap_growth_bytes": 2 * 1024**3,
+    }))
+    client = _GuardClient()
+    guard = LocalModelPhaseGuard(workspace=tmp_path, client=client)
+    guard._run = lambda *_args, **_kwargs: SimpleNamespace(returncode=0)
+    return guard, client
+
+
+def _snapshot(*, swap, resident=0, free=95):
+    return {
+        "resident_model_count": resident,
+        "resident_models": tuple(f"model-{index}" for index in range(resident)),
+        "memory_free_percent": free,
+        "memory_pressure_state": "normal" if free >= 10 else "warning",
+        "swap_used_bytes": swap,
+        "swap_growth_from_baseline_bytes": swap - 100,
+    }
+
+
+def test_model_guard_rejects_overlapping_dense_residency_before_load(tmp_path):
+    guard, _client = _guard(tmp_path)
+    guard._snapshot = lambda: _snapshot(swap=3 * 1024**3, resident=2)
+    with pytest.raises(SemanticPilotError, match="multiple_models_resident"):
+        guard.begin(phase="activate-triage")
+    guard, _client = _guard(tmp_path / "low-memory")
+    guard._snapshot = lambda: _snapshot(swap=3 * 1024**3, free=19)
+    with pytest.raises(SemanticPilotError, match="available_memory_before_load_inadequate"):
+        guard.begin(phase="activate-triage")
+
+
+def test_model_guard_uses_current_interval_swap_and_unloads_before_raising(tmp_path):
+    guard, client = _guard(tmp_path)
+    samples = iter((
+        _snapshot(swap=3 * 1024**3),
+        _snapshot(swap=3 * 1024**3 + 512 * 1024**2),
+        _snapshot(swap=3 * 1024**3 + 512 * 1024**2),
+    ))
+    guard._snapshot = lambda: next(samples)
+    guard.begin(phase="activate-triage")
+    guard.finish(
+        phase="finalize-triage", resolved_model="ollama_chat/gemma4:12b-mlx",
+    )
+    assert client.released == ["ollama_chat/gemma4:12b-mlx"]
+    events = json.loads((tmp_path / "state" / "model_transition_audit.json").read_text())[
+        "events"
+    ]
+    assert events[0]["snapshot"]["current_interval_swap_growth_bytes"] == 0
+    assert events[-1]["snapshot"]["current_interval_swap_growth_bytes"] == 512 * 1024**2
+
+    guard, client = _guard(tmp_path / "excess")
+    samples = iter((
+        _snapshot(swap=3 * 1024**3),
+        _snapshot(swap=5 * 1024**3 + 1),
+        _snapshot(swap=5 * 1024**3 + 1),
+    ))
+    guard._snapshot = lambda: next(samples)
+    guard.begin(phase="activate-triage")
+    with pytest.raises(SemanticPilotError, match="interval_swap_growth_exceeded"):
+        guard.finish(
+            phase="finalize-triage", resolved_model="ollama_chat/gemma4:12b-mlx",
+        )
+    assert client.released == ["ollama_chat/gemma4:12b-mlx"]
 
 
 def _contract(tmp_path: Path, texts: tuple[str, ...] = ("Public policy evidence.", "Contrary public evidence.")):

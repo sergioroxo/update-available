@@ -659,6 +659,36 @@ def build_adaptive_analysis_plan(
     return _draft(AdaptiveAnalysisPlanV1, **values)
 
 
+def retarget_single_repair_route(
+    plan: AdaptiveAnalysisPlanV1, *, job_id: str, repair_model_route: str,
+) -> AdaptiveAnalysisPlanV1:
+    """Hash-bind one explicitly selected job to a replacement repair route."""
+    require_safe_id(job_id, field="job_id")
+    require_safe_id(repair_model_route, field="repair_model_route")
+    matches = [row for row in plan.jobs if row.job_id == job_id]
+    if len(matches) != 1:
+        raise SectionAnalysisError("targeted_repair_job_not_unique")
+    original = matches[0]
+    if original.maximum_attempts != 2 or original.repair_model_route is None:
+        raise SectionAnalysisError("targeted_repair_job_not_eligible")
+    values = original.model_dump(mode="python")
+    values.update(repair_model_route=repair_model_route, job_sha256="0" * 64)
+    replacement = _draft(SectionPromptJobV1, **values)
+    plan_values = dict(
+        schema_version=plan.schema_version, run_id=plan.run_id,
+        document_id=plan.document_id,
+        canonical_text_sha256=plan.canonical_text_sha256,
+        registry_version=plan.registry_version, policy_version=plan.policy_version,
+        maximum_prompts_per_section=plan.maximum_prompts_per_section,
+        sections=plan.sections,
+        jobs=tuple(
+            replacement if row.job_id == job_id else row for row in plan.jobs
+        ),
+        plan_sha256="0" * 64,
+    )
+    return _draft(AdaptiveAnalysisPlanV1, **plan_values)
+
+
 def validate_section_result(
     job: SectionPromptJobV1, section: ProcessingSectionV1, result: SectionPassResultV1,
 ) -> None:
@@ -757,6 +787,70 @@ class SectionAnalysisStore:
                     "INSERT OR IGNORE INTO section_jobs(job_id,payload_json,state) VALUES(?,?,'pending')",
                     (job.job_id, payload),
                 )
+
+    def requeue_targeted_held_repair(
+        self, *, original_job: SectionPromptJobV1,
+        replacement_job: SectionPromptJobV1,
+    ) -> int:
+        """Retarget exactly one content-free held attempt without replaying attempt one."""
+        if (
+            original_job.job_id != replacement_job.job_id
+            or original_job.repair_model_route == replacement_job.repair_model_route
+            or replacement_job.maximum_attempts != 2
+        ):
+            raise SectionAnalysisError("targeted_repair_identity_mismatch")
+        original_values = original_job.model_dump(mode="python")
+        replacement_values = replacement_job.model_dump(mode="python")
+        for field in original_values:
+            if field in {"repair_model_route", "job_sha256"}:
+                continue
+            if original_values[field] != replacement_values[field]:
+                raise SectionAnalysisError("targeted_repair_scope_mismatch")
+        row = self.connection.execute(
+            "SELECT * FROM section_jobs WHERE job_id=?", (original_job.job_id,),
+        ).fetchone()
+        if row is None:
+            raise SectionAnalysisError("targeted_repair_job_missing")
+        stored = SectionPromptJobV1.model_validate_json(row["payload_json"])
+        if stored == replacement_job:
+            if row["state"] == "succeeded" and int(row["attempt"]) == 2:
+                return 0
+            raise SectionAnalysisError("targeted_repair_state_changed")
+        if (
+            stored != original_job
+            or row["state"] != "held"
+            or int(row["attempt"]) != 1
+            or row["result_json"] is not None
+            or row["lease_token"] is not None
+            or row["lease_expires_at"] is not None
+            or row["terminal_reason"] != "unexpected_executor_failure"
+        ):
+            raise SectionAnalysisError("targeted_repair_state_changed")
+        payload = json.dumps(
+            replacement_job.model_dump(mode="json", exclude_none=True),
+            sort_keys=True, separators=(",", ":"),
+        )
+        with self.connection:
+            self.connection.execute(
+                "INSERT OR IGNORE INTO section_job_failures("
+                "job_id,attempt,stage,error_code,http_status_category,"
+                "pydantic_diagnostics_json,requested_alias) VALUES(?,?,?,?,?,?,?)",
+                (
+                    original_job.job_id, 1, "recovery_policy",
+                    "targeted_memory_safe_repair", "", "[]",
+                    replacement_job.repair_model_route,
+                ),
+            )
+            cursor = self.connection.execute(
+                "UPDATE section_jobs SET payload_json=?,state='pending',terminal_reason=?,"
+                "transport_retry_count=0 WHERE job_id=? AND state='held' AND attempt=1",
+                (
+                    payload, MAPPER_SCHEMA_RETRY_REASON, original_job.job_id,
+                ),
+            )
+        if cursor.rowcount != 1:
+            raise SectionAnalysisError("targeted_repair_state_changed")
+        return 1
 
     def recover_expired(self, now: datetime) -> int:
         with self.connection:

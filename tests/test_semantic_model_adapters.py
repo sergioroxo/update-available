@@ -52,6 +52,12 @@ def _routes(include_shadow=True):
             maximum_output_tokens=2048,
         ),
         LocalModelRouteV1(
+            route_id="triage-repair", purpose="triage_mapper_repair",
+            requested_model="triage",
+            expected_resolved_models=("ollama_chat/gemma4:12b-mlx",),
+            maximum_output_tokens=2048,
+        ),
+        LocalModelRouteV1(
             route_id="embedding", purpose="qwen_embedding",
             requested_model="research-embedding",
             expected_resolved_models=("ollama/qwen3-embedding:8b",),
@@ -80,6 +86,7 @@ def _model_info():
             {"model_name": "research-embedding", "litellm_params": {"model": "ollama/qwen3-embedding:8b"}},
             {"model_name": "bge-m3-shadow", "litellm_params": {"model": "ollama/bge-m3"}},
             {"model_name": "compiler-qwen38", "litellm_params": {"model": "ollama_chat/qwen3.8:27b-mlx"}},
+            {"model_name": "triage", "litellm_params": {"model": "ollama_chat/gemma4:12b-mlx"}},
         ]
     }
 
@@ -754,6 +761,52 @@ def test_declared_schema_repair_uses_qwen38_and_binds_actual_provenance(tmp_path
         "section_mapper", "qwen38_mapper_repair",
     ]
     client.close()
+
+
+def test_targeted_mapper_repair_uses_triage_with_strict_structured_output():
+    units = build_citation_units_v2("Synthetic evidence. " * 80, doc_id="dc0ff39b")
+    plan = build_adaptive_analysis_plan(
+        run_id="semantic-multidocument-canary-024", units=units,
+        small_model_route="core-qwen", repair_model_route="triage",
+        target_chars=3000, maximum_prompts_per_section=2, maximum_attempts=2,
+    )
+    job, section = plan.jobs[0], plan.sections[0]
+    captured = []
+
+    def handler(request):
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        body = json.loads(request.content)
+        captured.append(body)
+        payload = {"findings": [{
+            "statement": "Memory-safe repaired finding.",
+            "evidence_state": "supported",
+            "citation_unit_ids": [section.unit_ids[0]], "confidence": 0.8,
+        }]}
+        return httpx.Response(200, json={
+            "model": "triage",
+            "choices": [{"message": {"content": json.dumps(payload)}}],
+        })
+
+    client = OpenAICompatibleLocalClient(_config(), transport=httpx.MockTransport(handler))
+    client.preflight()
+    executor = LocalSectionExecutor(
+        client, concurrency_level=1, repair_purpose="triage_mapper_repair",
+    )
+    try:
+        result = executor.execute_with_retry_context(
+            job, section, 2,
+            retry_error_code="section_mapper_schema_validation_retryable",
+        )
+        assert captured[0]["model"] == "triage"
+        assert captured[0]["response_format"]["type"] == "json_schema"
+        assert captured[0]["response_format"]["json_schema"]["strict"] is True
+        assert captured[0]["reasoning_effort"] == "none"
+        assert result.requested_model == "triage"
+        assert result.provider_resolved_model == "ollama_chat/gemma4:12b-mlx"
+        assert [row.purpose for row in client.receipts] == ["triage_mapper_repair"]
+    finally:
+        client.close()
 
 
 def test_declared_output_contract_repair_uses_qwen38_once():

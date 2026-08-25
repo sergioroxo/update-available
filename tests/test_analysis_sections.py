@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -24,6 +25,7 @@ from runner.pipeline.analysis_sections import (
     build_compiler_packet,
     build_compiler_input_reduction_receipt,
     build_processing_sections,
+    retarget_single_repair_route,
     run_parallel_jobs,
     validate_compilation,
     validate_section_result,
@@ -163,6 +165,81 @@ def test_result_accepts_only_declared_attempt_two_schema_repair():
     )
     with pytest.raises(SectionAnalysisError, match="undeclared_repair"):
         validate_section_result(no_repair_job, no_repair_section, forged)
+
+
+def test_targeted_held_job_retargets_only_once_and_reuses_successes(tmp_path):
+    original = build_adaptive_analysis_plan(
+        run_id="semantic-multidocument-canary-024", units=_units("dc0ff39b"),
+        small_model_route="core-qwen", repair_model_route="compiler-qwen38",
+        target_chars=5000, maximum_prompts_per_section=6, maximum_attempts=2,
+    )
+    target = next(row for row in original.jobs if row.prompt_id == "policy-legal")
+    repaired = retarget_single_repair_route(
+        original, job_id=target.job_id, repair_model_route="triage",
+    )
+    replacement = next(row for row in repaired.jobs if row.job_id == target.job_id)
+    assert replacement.repair_model_route == "triage"
+    assert all(
+        left == right
+        for left, right in zip(original.jobs, repaired.jobs)
+        if left.job_id != target.job_id
+    )
+
+    store = SectionAnalysisStore(tmp_path / "targeted.sqlite")
+    try:
+        store.seed(original)
+        sections = {row.section_id: row for row in original.sections}
+        with store.connection:
+            for job in original.jobs:
+                if job.job_id == target.job_id:
+                    store.connection.execute(
+                        "UPDATE section_jobs SET state='held',attempt=1,terminal_reason=? "
+                        "WHERE job_id=?",
+                        ("unexpected_executor_failure", job.job_id),
+                    )
+                    continue
+                result = _result(job, sections[job.section_id])
+                store.connection.execute(
+                    "UPDATE section_jobs SET state='succeeded',attempt=1,result_json=? "
+                    "WHERE job_id=?",
+                    (
+                        json.dumps(result.model_dump(mode="json"), sort_keys=True),
+                        job.job_id,
+                    ),
+                )
+        assert store.requeue_targeted_held_repair(
+            original_job=target, replacement_job=replacement,
+        ) == 1
+        store.seed(repaired)
+
+        calls = []
+
+        class _TargetedExecutor:
+            def execute(self, *_args):
+                raise AssertionError("attempt-one primary work must not repeat")
+
+            def execute_with_retry_context(
+                self, job, section, attempt, *, retry_error_code,
+            ):
+                calls.append((job.job_id, attempt, retry_error_code, job.repair_model_route))
+                return _result(
+                    job, section, attempt=attempt, requested_model="triage",
+                    repair_error_code=retry_error_code,
+                )
+
+        results = run_parallel_jobs(
+            store=store, plan=repaired, executor=_TargetedExecutor(), max_workers=1,
+        )
+        assert len(results) == len(repaired.jobs)
+        assert calls == [(
+            target.job_id, 2, "section_mapper_schema_validation_retryable", "triage",
+        )]
+        assert store.attempts()[target.job_id] == 2
+        assert store.requeue_targeted_held_repair(
+            original_job=target, replacement_job=replacement,
+        ) == 0
+    finally:
+        store.close()
 
 
 def test_result_rejects_unknown_unit_and_compiler_rejects_generated_citation():

@@ -44,6 +44,7 @@ from runner.pipeline.analysis_sections import (
     build_compiler_input_reduction_receipt,
     content_free_section_failure,
     execute_document_compiler,
+    retarget_single_repair_route,
     run_parallel_jobs,
     validate_compilation,
 )
@@ -85,11 +86,16 @@ RUN021_VALIDATED_MODELS = {
     "section_mapper": "ollama_chat/qwen3.6:35b-mlx",
     "document_compiler": "ollama_chat/gemma4:31b-mlx",
     "qwen38_mapper_repair": "ollama_chat/qwen3.8:27b-mlx",
+    "triage_mapper_repair": "ollama_chat/gemma4:12b-mlx",
     "qwen38_compiler_candidate": "ollama_chat/qwen3.8:27b-mlx",
     "qwen_embedding": "ollama/qwen3-embedding:8b",
     "bge_shadow": "ollama/bge-m3:latest",
     "grounded_enrichment": "ollama_chat/gemma4:31b-mlx",
 }
+RUN024_TARGETED_REPAIR_RUN_ID = "semantic-multidocument-canary-024"
+RUN024_TARGETED_REPAIR_JOB_ID = (
+    "dc0ff39b-section-00003-c19387e8ce59-policy-legal"
+)
 TRUNCATION_MARKER = "[TRUNCATED MIDDLE"
 NO_SNAPSHOT_SHA256 = hashlib.sha256(b"no-approved-snapshot-v1.0").hexdigest()
 SEALED_ROOT_FILES = frozenset({
@@ -391,6 +397,12 @@ def endpoint_config(
             maximum_output_tokens=4096,
         ),
         LocalModelRouteV1(
+            route_id="mapper-repair-triage", purpose="triage_mapper_repair",
+            requested_model="triage",
+            expected_resolved_models=(RUN021_VALIDATED_MODELS["triage_mapper_repair"],),
+            maximum_output_tokens=4096,
+        ),
+        LocalModelRouteV1(
             route_id="comparison-compiler", purpose="qwen38_compiler_candidate",
             requested_model="compiler-qwen38",
             expected_resolved_models=(RUN021_VALIDATED_MODELS["qwen38_compiler_candidate"],),
@@ -437,6 +449,7 @@ class LocalModelPhaseGuard:
 
     OLLAMA = "/Applications/Ollama.app/Contents/Resources/ollama"
     MAX_SWAP_GROWTH_BYTES = 2 * 1024**3
+    MINIMUM_FREE_PERCENT_BEFORE_LOAD = 20
 
     def __init__(self, *, workspace: Path, client: OpenAICompatibleLocalClient):
         self.workspace = Path(workspace)
@@ -449,6 +462,7 @@ class LocalModelPhaseGuard:
         if not isinstance(swap, int) or swap < 0:
             raise SemanticPilotError("memory_safety_baseline_malformed")
         self.baseline_swap_bytes = swap
+        self.interval_baseline_swap_bytes: int | None = None
         self.audit_path = self.workspace / "state" / "model_transition_audit.json"
 
     @staticmethod
@@ -489,13 +503,35 @@ class LocalModelPhaseGuard:
             "swap_growth_from_baseline_bytes": int(swap_used) - self.baseline_swap_bytes,
         }
 
-    def _check_snapshot(self, snapshot: dict[str, Any]) -> None:
+    def _with_interval(self, snapshot: dict[str, Any]) -> dict[str, Any]:
+        enriched = dict(snapshot)
+        baseline = self.interval_baseline_swap_bytes
+        enriched["interval_baseline_swap_used_bytes"] = baseline
+        enriched["current_interval_swap_growth_bytes"] = (
+            max(0, int(enriched["swap_used_bytes"]) - baseline)
+            if baseline is not None else 0
+        )
+        return enriched
+
+    def _safety_error(
+        self, snapshot: dict[str, Any], *, before_load: bool,
+    ) -> str | None:
         if snapshot["resident_model_count"] > 1:
-            raise SemanticPilotError("memory_safety_multiple_models_resident")
+            return "memory_safety_multiple_models_resident"
         if snapshot["memory_pressure_state"] != "normal":
-            raise SemanticPilotError("memory_pressure_not_normal")
-        if snapshot["swap_growth_from_baseline_bytes"] > self.MAX_SWAP_GROWTH_BYTES:
-            raise SemanticPilotError("memory_safety_swap_growth_exceeded")
+            return "memory_pressure_not_normal"
+        if (
+            before_load
+            and snapshot["memory_free_percent"] < self.MINIMUM_FREE_PERCENT_BEFORE_LOAD
+        ):
+            return "available_memory_before_load_inadequate"
+        if (
+            not before_load
+            and snapshot["current_interval_swap_growth_bytes"]
+            > self.MAX_SWAP_GROWTH_BYTES
+        ):
+            return "memory_safety_interval_swap_growth_exceeded"
+        return None
 
     def _record(self, *, phase: str, event: str, snapshot: dict[str, Any]) -> None:
         payload = {
@@ -516,16 +552,22 @@ class LocalModelPhaseGuard:
         _write_json(self.audit_path, payload)
 
     def begin(self, *, phase: str) -> None:
-        snapshot = self._snapshot()
+        raw = self._snapshot()
+        self.interval_baseline_swap_bytes = int(raw["swap_used_bytes"])
+        snapshot = self._with_interval(raw)
         self._record(phase=phase, event="before_load", snapshot=snapshot)
-        self._check_snapshot(snapshot)
+        error = self._safety_error(snapshot, before_load=True)
+        if error is not None:
+            self.interval_baseline_swap_bytes = None
+            raise SemanticPilotError(error)
         if snapshot["resident_model_count"] != 0:
+            self.interval_baseline_swap_bytes = None
             raise SemanticPilotError("model_phase_requires_empty_ollama_state")
 
     def finish(self, *, phase: str, resolved_model: str) -> None:
-        before = self._snapshot()
+        before = self._with_interval(self._snapshot())
         self._record(phase=phase, event="before_unload", snapshot=before)
-        self._check_snapshot(before)
+        safety_error = self._safety_error(before, before_load=False)
         active = self.client.active_resolved_model
         model_name = resolved_model.split("/", 1)[-1]
         if active is not None:
@@ -534,13 +576,13 @@ class LocalModelPhaseGuard:
                 raise SemanticPilotError("ollama_explicit_unload_failed")
         after = None
         for _ in range(60):
-            after = self._snapshot()
+            after = self._with_interval(self._snapshot())
             if after["resident_model_count"] == 0:
                 break
             time.sleep(1)
         assert after is not None
         self._record(phase=phase, event="after_unload", snapshot=after)
-        self._check_snapshot(after)
+        safety_error = safety_error or self._safety_error(after, before_load=False)
         unloaded = after["resident_model_count"] == 0
         if not unloaded:
             raise SemanticPilotError("ollama_model_remained_loaded")
@@ -548,6 +590,9 @@ class LocalModelPhaseGuard:
             self.client.release_model_lease_after_verified_unload(
                 resolved_model, verify_unloaded=lambda: unloaded,
             )
+        self.interval_baseline_swap_bytes = None
+        if safety_error is not None:
+            raise SemanticPilotError(safety_error)
 
     def before_model_activation(
         self, current_model: str | None, next_model: str,
@@ -953,6 +998,15 @@ def run_copied_semantic_pilot(
     )
     if recover_local_service not in {"", "1"}:
         raise SemanticPilotError("pilot_local_service_recovery_flag_malformed")
+    targeted_repair_job_id = os.environ.get(
+        "SOGICE_SEMANTIC_PILOT_TARGETED_REPAIR_JOB_ID", "",
+    )
+    if targeted_repair_job_id and (
+        contract.run_id != RUN024_TARGETED_REPAIR_RUN_ID
+        or targeted_repair_job_id != RUN024_TARGETED_REPAIR_JOB_ID
+    ):
+        raise SemanticPilotError("pilot_targeted_repair_scope_mismatch")
+    targeted_repair = bool(targeted_repair_job_id)
     verified = _verify_sources(contract)
     lexicon_terms = _verified_lexicon_terms(contract)
     client = OpenAICompatibleLocalClient(endpoint, transport=transport)
@@ -967,13 +1021,24 @@ def run_copied_semantic_pilot(
             client.set_before_model_activation(phase_guard.before_model_activation)
         mapper_alias = endpoint.route("section_mapper").requested_model
         repair_alias = endpoint.route("qwen38_mapper_repair").requested_model
+        targeted_repair_alias = endpoint.route("triage_mapper_repair").requested_model
         units_by_doc = {doc: value[2] for doc, value in verified.items()}
-        plans = {doc: build_adaptive_analysis_plan(
+        original_plans = {doc: build_adaptive_analysis_plan(
             run_id=contract.run_id, units=units, small_model_route=mapper_alias,
             repair_model_route=repair_alias, target_chars=5000, overlap_units=1,
             maximum_prompts_per_section=6,
             maximum_attempts=contract.mapper_maximum_attempts,
         ) for doc, units in units_by_doc.items()}
+        plans = dict(original_plans)
+        if targeted_repair:
+            target_document_id = targeted_repair_job_id.split("-section-", 1)[0]
+            target_plan = plans.get(target_document_id)
+            if target_plan is None:
+                raise SemanticPilotError("pilot_targeted_repair_document_missing")
+            plans[target_document_id] = retarget_single_repair_route(
+                target_plan, job_id=targeted_repair_job_id,
+                repair_model_route=targeted_repair_alias,
+            )
         results: dict[str, Any] = {}
         analyses: dict[str, Any] = {}
         for doc, plan in sorted(plans.items()):
@@ -982,6 +1047,20 @@ def run_copied_semantic_pilot(
                 forbidden_roots=tuple(Path(row) for row in contract.forbidden_roots),
             )
             try:
+                if targeted_repair and any(
+                    row.job_id == targeted_repair_job_id for row in plan.jobs
+                ):
+                    original_job = next(
+                        row for row in original_plans[doc].jobs
+                        if row.job_id == targeted_repair_job_id
+                    )
+                    replacement_job = next(
+                        row for row in plan.jobs if row.job_id == targeted_repair_job_id
+                    )
+                    store.requeue_targeted_held_repair(
+                        original_job=original_job,
+                        replacement_job=replacement_job,
+                    )
                 store.seed(plan)
                 if recover_abandoned_runner == "1":
                     store.recover_confirmed_abandoned_runner()
@@ -996,6 +1075,10 @@ def run_copied_semantic_pilot(
                         client, concurrency_level=effective_mapper_concurrency,
                         lexicon_snapshot_sha256=contract.lexicon_snapshot_sha256,
                         lexicon_terms=lexicon_terms,
+                        repair_purpose=(
+                            "triage_mapper_repair"
+                            if targeted_repair else "qwen38_mapper_repair"
+                        ),
                     ),
                     max_workers=effective_mapper_concurrency,
                 )

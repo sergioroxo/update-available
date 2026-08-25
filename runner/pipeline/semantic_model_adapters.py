@@ -232,7 +232,8 @@ class LocalModelRouteV1(_Strict):
     route_id: str
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
-        "qwen38_mapper_repair", "qwen_embedding", "bge_shadow",
+        "qwen38_mapper_repair", "triage_mapper_repair",
+        "qwen_embedding", "bge_shadow",
         "grounded_enrichment",
     ]
     requested_model: str
@@ -341,7 +342,8 @@ class ModelCallReceiptV1(_Strict):
     schema_version: Literal["local-model-call-receipt-v1.0"] = "local-model-call-receipt-v1.0"
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
-        "qwen38_mapper_repair", "qwen_embedding", "bge_shadow",
+        "qwen38_mapper_repair", "triage_mapper_repair",
+        "qwen_embedding", "bge_shadow",
         "grounded_enrichment",
     ]
     requested_model: str
@@ -682,7 +684,10 @@ class OpenAICompatibleLocalClient:
                     "json_schema": {
                         "name": (
                             "mapper_response_v1"
-                            if route.purpose in {"section_mapper", "qwen38_mapper_repair"}
+                            if route.purpose in {
+                                "section_mapper", "qwen38_mapper_repair",
+                                "triage_mapper_repair",
+                            }
                             else (
                                 "grounded_enrichment_response_v1"
                                 if route.purpose == "grounded_enrichment"
@@ -698,7 +703,8 @@ class OpenAICompatibleLocalClient:
             ),
         }
         if route.purpose in {
-            "qwen38_mapper_repair", "qwen38_compiler_candidate",
+            "qwen38_mapper_repair", "triage_mapper_repair",
+            "qwen38_compiler_candidate",
             "grounded_enrichment",
         }:
             request["reasoning_effort"] = "none"
@@ -830,11 +836,14 @@ class LocalSectionExecutor:
     def __init__(
         self, client: OpenAICompatibleLocalClient, *, concurrency_level: int,
         lexicon_snapshot_sha256: str = "", lexicon_terms: Sequence[dict[str, Any]] = (),
+        repair_purpose: Literal[
+            "qwen38_mapper_repair", "triage_mapper_repair",
+        ] = "qwen38_mapper_repair",
     ):
         self.client = client
         self.route = client.config.route("section_mapper")
         try:
-            self.repair_route = client.config.route("qwen38_mapper_repair")
+            self.repair_route = client.config.route(repair_purpose)
         except SemanticAdapterError:
             self.repair_route = None
         self.concurrency_level = concurrency_level
