@@ -30,6 +30,23 @@ const facet = FACET_CODES[query.get('facet') as keyof typeof FACET_CODES];
 // ?close=1 = the point-cloud Close.
 const ERA_CODES = { '2': 'e2', '3': 'e3', '4': 'e4' } as const;
 const era = ERA_CODES[query.get('era') as keyof typeof ERA_CODES];
+/** ⚑ AN UNRECOGNISED `?era=` USED TO FAIL IN SILENCE, 2026-08-24. The codes are
+ *  NUMERIC — `?era=3` — and `?era=e3` (which is what the era is called
+ *  everywhere else in this codebase, and what several review scripts and at
+ *  least one agent brief used all day) simply resolves to `undefined`, so the
+ *  pre-seated review branch never runs and the piece boots to the entrance as
+ *  if no parameter had been given. Nothing said so. Reviews then either lost an
+ *  hour or, worse, believed they were measuring an era they were not in.
+ *  ⚑ Review params are frame-voice diagnostics, never the piece's voice, so a
+ *  console line is the right register: a player never passes this and a
+ *  reviewer always reads the console. */
+const eraParam = query.get('era');
+if (eraParam !== null && era === undefined) {
+  console.warn(
+    `[reinterp] ?era=${eraParam} is not a recognised era. Use ?era=2 | 3 | 4 ` +
+    `(numeric, not "e3"). Booting to the entrance instead.`
+  );
+}
 const morphDemo = ERA_CODES[query.get('morph') as keyof typeof ERA_CODES];
 const close = query.get('close') === '1';
 const reveal = query.get('reveal') === '1';
