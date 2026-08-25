@@ -1788,3 +1788,60 @@ treatment," not oversights.
 `npx tsc --noEmit`, `npm test`, `npm run build` green throughout (palette ratchet 33/33 unmoved).
 `npm run audit` run and reported separately in `BUILD_LOG.md`/the queue block below.
 
+
+
+---
+
+## §32 — ⚑ THE ENTRANCE'S +5 DRAW CALLS ARE THE PRICE OF A FIX SÉRGIO ASKED FOR (2026-08-24)
+
+**Bisected to a commit, and it is not a regression in the ordinary sense.**
+
+| commit | entrance peak |
+|---|---|
+| `2b29f02` C10: the check that would have caught the silence | **78** |
+| `7f7312a` Retire Daniel's machine at Era 4 | **83** |
+
+Three clean runs either side, on this machine, in a git worktree on its own port.
+
+⚑ **`7f7312a` CHANGED NOTHING IN ERA 1.** Its entire room diff adds ten prop names —
+`crtBody`, the four bezels, `crtNeck`, `crtFoot`, `crtPowerButton`, `crtPowerLed`, `keyboard` — to
+**Era 4's remove list**, because Sérgio asked why a 1997 CRT was still in Maya's 2026 room.
+
+**The mechanism is in `src/room/batching.ts`'s own header:** *"the props that are IDENTICAL across
+every space state (`clusterMorph.constantPropIds()`) share one material per colour signature and join
+a single STATIC group."* Making those ten removable at r4 made them no longer identical across every
+state, so they fell out of `constantPropIds()` — out of the constant batch — **in every era, including
+the entrance**. Ten props, ~5 colour groups, +5 draw calls everywhere.
+
+> ⚑ **So the cost is not a mistake. It is what fidelity costs under a single whole-piece batch:**
+> the CRT correctly disappears in 2026, and the price is 5 draw calls in 1997.
+
+**What this ALSO settles:** the three CC0 Era-3 models (`computerScreen`, `computerKeyboard`, `phone`)
+are **exonerated** — an agent searched the entire entity tree across the whole 16 s entrance window and
+they never appear once; the era stays E1/Room 1 throughout. The "+7 primitives" hypothesis (mine) was
+wrong and was disproved by measurement rather than argument.
+
+**And it corrects §26's open question.** §26 left "what changed the entrance's true peak since S74" for
+whoever next had budget. This machine reads **78** at `2b29f02` and `bd99fa2`, never 68 — so the 68
+baseline belongs to a different machine or an older tree, and the honest current numbers are
+**78 → 83, +5, fully attributed.**
+
+### NOT FIXED, and deliberately — the fix is architectural
+`batching.ts`'s Phase 2 already exists for exactly this class: *"a second, short-lived STATIC group for
+the variable box props after a morph has fully settled."* If the settled rebake covered these ten, the
+5 calls would come back without giving up the fix. **Whether it does is untested**, and testing it
+touches the batcher that S71 P5's `beginMorphedStateBatch()` finding also lives in. That is one careful
+session, not a patch at the end of another one.
+
+⚑ **The ratchet was NOT raised.** 83 stands, failing, against a 75 budget and a 68 ratchet, with the
+cause now named in one line instead of unknown.
+
+### ⚑ A NOTE ON HOW THIS WAS FOUND, because it matters for future dispatches
+The agent that bisected this **refused a mid-task correction I sent it**, on the grounds that the
+message arrived inside its tool-result stream rather than as a turn from its caller, and treated it as
+a possible prompt injection. **That was correct behaviour and it should not be discouraged** — the
+message was genuinely mine, but an agent cannot tell that from the channel, and the message did contain
+a confident hypothesis that turned out to be wrong. It verified the claim independently, found it did
+not hold, and went to a git bisect instead, which is the more rigorous method. **A brief that hands an
+agent a leading hypothesis should say plainly that disproving it is a complete result.** Mine said that;
+the mid-task message did not, and pushed harder than it should have.

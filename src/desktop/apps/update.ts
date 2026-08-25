@@ -13,6 +13,7 @@
  * I Agree goes live only on the last page.
  */
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
+import { ERA4 } from '../theme/era4';
 import * as ui from '../theme/chrome';
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
@@ -175,7 +176,22 @@ export class UpdateApp {
    *  is wider than this canvas — a full-bleed install must black the whole
    *  panel out, not sit in the middle of somebody's still-open work. */
   get fullScreen(): boolean {
-    return this.phase === 'install' || this.phase === 'restart';
+    // ⚑ the ARRIVING EULA is full-bleed too, 2026-08-24. It is drawn into the
+    //   ritual's own 512-wide canvas and composited onto a 676-wide panel, so
+    //   without this the era's dark field stopped 82 px short of each edge and
+    //   GracePlatform's Aero desktop showed down both sides of the thing that is
+    //   replacing it. A threshold with the old world visible around its border
+    //   is not a threshold.
+    return this.phase === 'install' || this.phase === 'restart'
+      || (this.phase === 'eula' && this.ledgerEntry.toEra === 4);
+  }
+
+  /** ⚑ what a full-bleed phase paints the WHOLE panel with, before the ritual
+   *  draws into its own smaller canvas on top. The install and restart are
+   *  black; the arriving EULA is Era 4's field, and a black border around a
+   *  near-black field is a seam a player can see. */
+  get ground(): string {
+    return this.phase === 'eula' && this.ledgerEntry.toEra === 4 ? ERA4.field : ERA1.black;
   }
 
   update(dt: number): void {
@@ -299,6 +315,20 @@ export class UpdateApp {
     }
 
     if (this.phase === 'eula' && this.s.eula) {
+      // ⚑ THE LAST EULA IS ALREADY ERA 4 — Sérgio, 2026-08-24: "the EULA design
+      //   is reutilised from Era 2 and it should be an invitation to the Era-4
+      //   design, because we are about to be updated!" He is right, and the
+      //   copy has been saying so all along: "There is no longer an application
+      //   to open. The service is ambient." A terms-of-service for a service
+      //   with no application should not arrive inside an application window.
+      //   ⚑ So u4's threshold wears the era it is bringing: no frame, no title
+      //   bar, no caption buttons, no bevels. A dark field, wide margins, one
+      //   warm line of type, and the only live control is a word with a mint
+      //   rule under it. The room has not changed yet; the software already has.
+      //   Every EARLIER update keeps its own era's chrome — u2 is Restorify in
+      //   2003 and should look it. This branches on the era it is arriving at,
+      //   not on the era it is leaving.
+      if (this.ledgerEntry.toEra === 4) { this.drawEulaArriving(ctx, W, H); return; }
       const dw = 400; const dh = 280;
       const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
       const c = ui.windowFrame(ctx, dx, dy, dw, dh, this.s.eulaTitle ?? '', true);
@@ -430,6 +460,67 @@ export class UpdateApp {
   }
 
   /** click routing — logical canvas coordinates (mirrors the draw geometry) */
+  /**
+   * ⚑ THE ARRIVING EULA — u4's threshold, wearing the era it is bringing.
+   *
+   * Geometry lives in `arrivingEulaHits()` so the draw and the hit test can
+   * never drift apart; every previous version of this screen computed its
+   * button rectangles twice, in two places, from the same magic numbers.
+   */
+  private drawEulaArriving(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const pages = this.s.eula ?? [];
+    ui.px(ctx, 0, 0, W, H, ERA4.field);
+
+    const M = 46;
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA4.meta;
+    ctx.fillText((this.s.eulaTitle ?? '').toUpperCase(), M, 34);
+    ui.px(ctx, M, 50, W - M * 2, 1, ERA4.rule);
+
+    // ⚑ the terms in the era's WARMEST type — `textHi` is the caption colour,
+    //   the most legible thing on any Era-4 surface. The apparatus is at its
+    //   most readable exactly where it is asking for the most.
+    ui.setFont(ctx, 12);
+    ctx.fillStyle = ERA4.textHi;
+    (pages[this.page] ?? []).forEach((line, i) => {
+      ctx.fillText(line, M, 78 + i * 20);
+    });
+
+    const { readOn, agree, last } = this.arrivingEulaHits(W, H);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA4.dim;
+    ctx.fillText(`${this.page + 1} / ${pages.length}`, M, H - 42);
+
+    // ⚑ no bevels, no plates: a word, and a rule under the one that is live.
+    //   The dead one is still legible — foreclosed, never removed, the same law
+    //   the era's own chips follow.
+    const word = (r: { x: number; y: number; w: number }, label: string, live: boolean): void => {
+      ui.setFont(ctx, 12);
+      ctx.fillStyle = live ? ERA4.textHi : ERA4.rule;
+      const tw = ctx.measureText(label).width;
+      ctx.fillText(label, r.x + r.w - tw, r.y);
+      ui.px(ctx, r.x + r.w - tw, r.y + 17, tw, 1, live ? ERA4.l : ERA4.panelEdge);
+    };
+    word(readOn, this.s.readOn ?? 'Read on', !last);
+    word(agree, this.s.agree ?? 'I Agree', last);
+  }
+
+  /** the arriving EULA's two word-controls, in one place */
+  private arrivingEulaHits(W: number, H: number): {
+    readOn: { x: number; y: number; w: number; h: number };
+    agree: { x: number; y: number; w: number; h: number };
+    last: boolean;
+  } {
+    const M = 46;
+    const y = H - 46;
+    const w = 96;
+    return {
+      readOn: { x: W - M - w * 2 - 24, y, w, h: 22 },
+      agree: { x: W - M - w, y, w, h: 22 },
+      last: this.page === (this.s.eula?.length ?? 1) - 1
+    };
+  }
+
   handleClick(x: number, y: number): void {
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
@@ -470,6 +561,23 @@ export class UpdateApp {
           this.t = 0;
           this.onRemindLaterUsed?.(); // R28-2c: the gathering window opens
         }
+      }
+      return;
+    }
+
+    if (this.phase === 'eula' && this.s.eula && this.ledgerEntry.toEra === 4) {
+      const { readOn, agree, last } = this.arrivingEulaHits(W, H);
+      const inside = (r: { x: number; y: number; w: number; h: number }): boolean =>
+        x >= r.x && x <= r.x + r.w && y >= r.y - 4 && y <= r.y + r.h;
+      if (!last && inside(readOn)) {
+        this.page += 1;
+        this.ledgerEntry.eulaScrollPct = Math.round(((this.page + 1) / this.s.eula.length) * 100);
+        this.dirty = true;
+        return;
+      }
+      if (last && inside(agree)) {
+        this.ledgerEntry.eulaScrollPct = 100;
+        this.beginInstall();
       }
       return;
     }

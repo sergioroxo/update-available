@@ -45,7 +45,7 @@ import { CourseBuilder } from '../desktop/apps/courseBuilder';
 import { FamilyCallsApp } from '../desktop/apps/familyCalls';
 import { GraceQueueLite } from './graceQueueLite';
 import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
-import { ERA1, ERA1_CANVAS } from '../desktop/theme/era1';
+import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { px } from '../desktop/theme/chrome';
 import d from '../../data/strings/era3_devices.json';
 import queue from '../../data/dialog/s3_queue.json';
@@ -608,7 +608,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     graceQueueLite.draw(ctx, w, h);
     const ritual = e4Bridge()?.update();
     if (ritual?.open) {
-      if (ritual.fullScreen) px(ctx, 0, 0, w, h, ERA1.black);
+      // ⚑ the ritual names its own ground — the install and restart are black,
+      //   the arriving EULA is Era 4's field. Hardcoding black here left a
+      //   visible seam around the one screen that is meant to be seamless.
+      if (ritual.fullScreen) px(ctx, 0, 0, w, h, ritual.ground);
       ctx.save();
       ctx.translate(RITUAL_OFFSET.x, RITUAL_OFFSET.y);
       ritual.draw(ctx);
