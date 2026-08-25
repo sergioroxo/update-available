@@ -492,7 +492,6 @@
     },
     "remove": [
       "wallWest",
-      "wallEast",
       "bedModel",
       "bookcaseModel"
     ],
@@ -2543,6 +2542,7 @@
       }
     },
     "remove": [
+      "wallEast",
       "intakeRack",
       "intakeLed",
       "terminalFrame",

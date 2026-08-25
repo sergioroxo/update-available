@@ -1888,4 +1888,19 @@ ten years early.
 **Second payoff:** those 62 in-frame props are also the obvious first candidate for the draw-call work
 in §32 — the cost and the spoiler are the same objects.
 
-**AWAITING SÉRGIO.** Nothing has been changed; this section records what is true and what is proposed.
+**SETTLED 2026-08-24 — AND NOT AS PROPOSED.** Sérgio rejected both the openness and my spare-room
+fix, on the screenshot: *"you can continue to see Maya's room while in Era-3… I don't think it is
+possible to showcase the past of all rooms while the narrative develops. **Each room appears in
+sequence and is frozen in time when we jump to another time.**"*
+
+⚑ **The cause was ONE DATA LINE.** `r3`'s remove list took down `wallWest` AND `wallEast` in the same
+fold, so 2016 opened onto 1997 and 2026 at once. `wallEast` now comes off at `r4` instead. Verified by
+looking: hiding EVERY `e_*` prop at E3 changes the rendered frame not at all — the wall fully occludes
+Room 3, and the shelf still visible on the right is Room 1's own.
+
+⚑ **AND MY MEASUREMENT WAS MEASURING THE WRONG THING.** The "62 of 68 in frame" figure counted
+PROJECTION, not visibility — a prop behind a wall still projects into the frustum. I built a fifty-prop
+visibility hack on the back of it. **Sérgio caught it by looking at the picture.** The hack is removed:
+one line of data beats fifty entity toggles, and the wall was always in the room's own grammar — it was
+simply being taken down an era early. The era transitions already mean "the walls come off"; now they
+come off ONE AT A TIME, which is what the sequence was always for.
