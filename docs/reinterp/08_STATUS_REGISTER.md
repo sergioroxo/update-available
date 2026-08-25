@@ -1845,3 +1845,47 @@ a confident hypothesis that turned out to be wrong. It verified the claim indepe
 not hold, and went to a git bisect instead, which is the more rigorous method. **A brief that hands an
 agent a leading hypothesis should say plainly that disproving it is a complete result.** Mine said that;
 the mid-task message did not, and pushed harder than it should have.
+
+
+---
+
+## §33 — ⚑ WHAT ERA 3's OPEN ROOM ACTUALLY SHOWS, MEASURED (2026-08-24)
+
+Sérgio asked, before any Era-3 space renewal: *"how was it settled with the opening up of the room in
+Era 3 — do we see past the Era 1/2 room into Era 4, or a closed wall with just the intake record?"*
+**Measured rather than recalled, at Vera's seat, sweeping the yaw a player can actually turn through:**
+
+| bearing from Vera's seat | Maya's 2026 props in frame | Vera's own |
+|---|---|---|
+| 90° (at the workstation) | 0 | 1 |
+| 180° | 0 | 21 |
+| **270° — THE TURN** | **62 of 68** | 1 |
+| every other bearing | 0 | ≤6 |
+
+**And the state of the three surfaces at E3:** all 68 east props (Maya, 2026) ENABLED; all 71 west props
+(Vera, 2016) ENABLED; **`witness-screen` DISABLED and `terminalFrame` DISABLED.**
+
+⚑ **So it was settled as FULLY OPEN, and further than the question assumes.** It is not a closed wall,
+and it is not the intake record — the record is not in Era 3's space at all. `cluster.ts` records why,
+on Sérgio's own S61 note (*"the witness panel is still visible in Room 2"*): 2016 is where the apparatus
+*"stopped being a place you go to"* and moved into the infrastructure already in use, so a cold record
+mounted on a wall is E1/E2 grammar. Nothing stops being filed; the plane returns at E4 beside Maya's
+desk, which is the migration the piece already scripts.
+
+**The consequence nobody had measured: ONE TURN FROM THE 2016 DESK SHOWS YOU THE WHOLE REST OF THE
+PIECE.** Daniel's room across the open floor, and Maya's 2026 room behind it — furnished, lit, legible,
+ten years early.
+
+### ⚑ THE OPEN DECISION, and it gates the space renewal
+**Recommendation: keep the walls off, keep the record out, and take away 2026's LEGIBILITY until 2026.**
+
+- **Do not restore a wall** — it contradicts the era's thesis and would undo S61.
+- **Do not put the record back** — same, and it was Sérgio's own call.
+- ⚑ **Do darken Room 3 at E3.** Present as unlit volume — "there is more room than this" — rather than
+  as a bedroom you can read. Then Era 4's arrival is the lights coming up in a place you had already
+  sensed, instead of a room you have been staring at for an era.
+
+**Second payoff:** those 62 in-frame props are also the obvious first candidate for the draw-call work
+in §32 — the cost and the spoiler are the same objects.
+
+**AWAITING SÉRGIO.** Nothing has been changed; this section records what is true and what is proposed.
