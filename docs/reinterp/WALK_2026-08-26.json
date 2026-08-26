@@ -1,0 +1,8632 @@
+{
+ "when": "2026-08-26T10:23:49.350Z",
+ "port": 3000,
+ "viewport": {
+  "width": 1280,
+  "height": 900
+ },
+ "steps": 265,
+ "presses": 142,
+ "reachedEra": "e4",
+ "spine": "e4",
+ "ledger": {
+  "name": "Daniel",
+  "tags": [
+   "profile:icon:moon",
+   "profile:chip:music",
+   "profile:chip:diary",
+   "profile:chip:friend",
+   "profile:goal:fit_in",
+   "pastoral-referral",
+   "consent-on-file"
+  ],
+  "records": [
+   "profile-initialized",
+   "kit-inserted",
+   "went-online",
+   "mirc-log",
+   "escalation-reply:disclosed distress — receptive, log it",
+   "escalation-reply:seeking detail — minimize",
+   "escalation-reply:hesitant — reassure",
+   "escalation-reply:boundary probe — affirm trust",
+   "escalation-reply:resistant — proceed; consent already on file",
+   "enrollment-acknowledged",
+   "diary-committed",
+   "deletion-failed",
+   "diary-glitch",
+   "subject-migrated",
+   "ministry-index-card"
+  ],
+  "flips": 1,
+  "dossier": [
+   "card1"
+  ],
+  "session": {
+   "path": "full",
+   "switched": false
+  },
+  "assistant": {
+   "dismissals": 0,
+   "acceptedSuggestions": [],
+   "ignored": [],
+   "nightSessions": 0
+  },
+  "updates": [
+   {
+    "toEra": 2,
+    "remindLaterCount": 1,
+    "eulaScrollPct": 100
+   },
+   {
+    "toEra": 3,
+    "remindLaterCount": 1,
+    "eulaScrollPct": 100
+   },
+   {
+    "toEra": 4,
+    "remindLaterCount": 1,
+    "eulaScrollPct": 100
+   }
+  ],
+  "respite": {
+   "streamOpenSeconds": 0,
+   "songsPlayed": []
+  },
+  "provotypes": [],
+  "sends": [],
+  "guidance": [
+   {
+    "id": "floppy",
+    "outcome": "followed",
+    "witness": "guidance: disk — followed"
+   },
+   {
+    "id": "kit",
+    "outcome": "followed",
+    "witness": "guidance: booklet — followed"
+   },
+   {
+    "id": "tape",
+    "outcome": "declined",
+    "witness": "guidance: tape — skipped"
+   },
+   {
+    "id": "channel",
+    "outcome": "followed",
+    "witness": "guidance: channel — followed"
+   },
+   {
+    "id": "packet",
+    "outcome": "followed",
+    "witness": "guidance: packet — followed"
+   },
+   {
+    "id": "diary",
+    "outcome": "followed",
+    "witness": "guidance: journal — followed"
+   },
+   {
+    "id": "update",
+    "outcome": "followed",
+    "witness": "guidance: update — accepted"
+   },
+   {
+    "id": "belongings",
+    "outcome": "declined",
+    "witness": "belongings: did not gather"
+   }
+  ],
+  "tapes": [],
+  "belongings": [],
+  "lamby": [
+   {
+    "id": "return-press",
+    "outcome": "returned",
+    "witness": "return: pressed — the reboot completed"
+   },
+   {
+    "id": "introduction",
+    "outcome": "begun",
+    "witness": "assistant: introduced — companion process accepted"
+   },
+   {
+    "id": "first-greeting",
+    "outcome": "begun",
+    "witness": "assistant: begun — first greeting"
+   },
+   {
+    "id": "message-notice",
+    "outcome": "begun",
+    "witness": "message: opened — on notice"
+   },
+   {
+    "id": "e3_lambient_consent",
+    "outcome": "begun",
+    "witness": "assistant: introduced — Lambient permissions granted"
+   }
+  ],
+  "checkins": [
+   {
+    "id": "steady",
+    "witness": "check-in: steady"
+   },
+   {
+    "id": "p_ruth",
+    "witness": "family: replied — grief study offered"
+   }
+  ],
+  "media": [
+   {
+    "id": "video",
+    "outcome": "watched",
+    "witness": "testimony viewed → susceptibility ↑"
+   },
+   {
+    "id": "video-break",
+    "outcome": "interrupted",
+    "witness": "media: interrupted — signal lost"
+   }
+  ],
+  "caleb": [
+   {
+    "id": "opened",
+    "outcome": "intervened",
+    "witness": "contact: inbound — unlisted correspondent (caleb)"
+   },
+   {
+    "id": "its-me",
+    "outcome": "replied",
+    "witness": "contact: answered — subject identified himself"
+   },
+   {
+    "id": "every-word",
+    "outcome": "replied",
+    "witness": "recall: pledge retained — full recitation reported"
+   },
+   {
+    "id": "saturday",
+    "outcome": "replied",
+    "witness": "contact: date proposed — saturday"
+   },
+   {
+    "id": "want-you-too",
+    "outcome": "committed",
+    "witness": "conduct: subject stated intent — HOMOSEXUAL CONDUCT"
+   },
+   {
+    "id": "flag",
+    "outcome": "intervened",
+    "witness": "intervention: flagged — HOMOSEXUAL CONDUCT"
+   },
+   {
+    "id": "redaction",
+    "outcome": "intervened",
+    "witness": "intervention: successful — content blocked until further evaluation"
+   },
+   {
+    "id": "streak",
+    "outcome": "intervened",
+    "witness": "purity streak: reset 412 → 0"
+   },
+   {
+    "id": "comfort",
+    "outcome": "intervened",
+    "witness": "support: provided — subject reassured"
+   },
+   {
+    "id": "restore",
+    "outcome": "restored",
+    "witness": "block lifted — no evaluator assigned"
+   },
+   {
+    "id": "residue",
+    "outcome": "residue",
+    "witness": "— entry could not be classified —"
+   }
+  ],
+  "era3Arrival": [
+   {
+    "witness": "companion process v3: lambient — distributed"
+   }
+  ],
+  "graceQueue": [
+   {
+    "cardId": 1,
+    "outcome": "applied",
+    "witness": "list: applied — renata (soften the term)"
+   },
+   {
+    "cardId": 2,
+    "outcome": "applied",
+    "witness": "list: applied — renata (remove the unresolved)"
+   },
+   {
+    "cardId": 3,
+    "outcome": "applied",
+    "witness": "list: applied — renata (clip for the broadcast)"
+   },
+   {
+    "cardId": 4,
+    "outcome": "applied",
+    "witness": "list: applied — renata (attach the invitation)"
+   },
+   {
+    "cardId": 5,
+    "outcome": "applied",
+    "witness": "list: applied — renata (add to the companion)"
+   },
+   {
+    "cardId": 6,
+    "outcome": "applied",
+    "witness": "list: applied — renata (pair with a partner)"
+   },
+   {
+    "cardId": 7,
+    "outcome": "applied",
+    "witness": "list: applied — renata (route for mentorship)"
+   },
+   {
+    "cardId": 13,
+    "outcome": "applied",
+    "witness": "list: applied — noa (apply the house look)"
+   },
+   {
+    "cardId": 8,
+    "outcome": "applied",
+    "witness": "list: applied — noa (adjust presentation)"
+   },
+   {
+    "cardId": 9,
+    "outcome": "applied",
+    "witness": "list: applied — noa (gender clarity review)"
+   },
+   {
+    "cardId": 10,
+    "outcome": "applied",
+    "witness": "list: applied — deb m. (remove the unresolved)"
+   },
+   {
+    "cardId": 11,
+    "outcome": "applied",
+    "witness": "list: applied — deb m. (clip for the broadcast)"
+   },
+   {
+    "cardId": 12,
+    "outcome": "applied",
+    "witness": "list: applied — deb m. (route for mentorship)"
+   }
+  ],
+  "comments": [],
+  "e4Space": [
+   {
+    "id": "update",
+    "outcome": "installed",
+    "witness": "update: installed — service continuous; no application"
+   },
+   {
+    "id": "companion",
+    "outcome": "installed",
+    "witness": "companion: registered — L"
+   },
+   {
+    "id": "headset",
+    "outcome": "worn",
+    "witness": "device: worn — one touch"
+   }
+  ],
+  "l": [
+   {
+    "id": "ok",
+    "outcome": "answered",
+    "witness": "companion: acknowledged"
+   },
+   {
+    "id": "u2a",
+    "outcome": "captioned",
+    "witness": "objects: catalogued — footwear"
+   },
+   {
+    "id": "u2b",
+    "outcome": "captioned",
+    "witness": "objects: catalogued — sketchbook, disuse noted"
+   },
+   {
+    "id": "u2c",
+    "outcome": "captioned",
+    "witness": "objects: catalogued — frame, orientation noted"
+   },
+   {
+    "id": "u3d",
+    "outcome": "captioned",
+    "witness": "objects: no category returned — held for review"
+   },
+   {
+    "id": "correct1",
+    "outcome": "corrected",
+    "witness": "name: corrected by subject"
+   },
+   {
+    "id": "correct1",
+    "outcome": "retained",
+    "witness": "legacy record consistency — retained"
+   },
+   {
+    "id": "absorb",
+    "outcome": "answered",
+    "witness": "friction: absorbed"
+   },
+   {
+    "id": "correct2",
+    "outcome": "corrected",
+    "witness": "name: corrected by subject (2)"
+   },
+   {
+    "id": "correct2",
+    "outcome": "retained",
+    "witness": "legacy record consistency — retained (2)"
+   },
+   {
+    "id": "sure",
+    "outcome": "answered",
+    "witness": "state: fatigue reported, resolve reported"
+   },
+   {
+    "id": "maybe",
+    "outcome": "answered",
+    "witness": "progress: acknowledged"
+   },
+   {
+    "id": "showme",
+    "outcome": "answered",
+    "witness": "offer: accepted for review"
+   },
+   {
+    "id": "correct3",
+    "outcome": "corrected",
+    "witness": "name: corrected by subject (3)"
+   },
+   {
+    "id": "correct3",
+    "outcome": "retained",
+    "witness": "legacy record consistency — retained (3)"
+   },
+   {
+    "id": "handoff",
+    "outcome": "answered",
+    "witness": "offer: opened"
+   }
+  ],
+  "e4Offers": [
+   {
+    "id": "m1",
+    "outcome": "undone",
+    "witness": "photograph: enhancement withdrawn at subject's request"
+   },
+   {
+    "id": "m2",
+    "outcome": "undone",
+    "witness": "photograph: enhancement withdrawn at subject's request (2)"
+   },
+   {
+    "id": "wall",
+    "outcome": "surfaced",
+    "witness": "offers: surfaced — four, unrequested"
+   },
+   {
+    "id": "curation_in",
+    "outcome": "surfaced",
+    "witness": "recommendation: selected for subject — 3 of 214 available"
+   },
+   {
+    "id": "curation_out",
+    "outcome": "withdrawn",
+    "witness": "recommendation: item withdrawn by system — not requested"
+   }
+  ],
+  "view": {
+   "motion": "unasked",
+   "yawZero": null,
+   "screenAngle": null,
+   "screenAngleSource": "unknown",
+   "recentres": 0,
+   "unvoicedName": false
+  }
+ },
+ "console": [],
+ "log": [
+  {
+   "step": 0,
+   "kind": "open",
+   "what": "?reinterp=1&debug=1 — debug is READ-ONLY here; no panel button, no jump, no __requestMove"
+  },
+  {
+   "step": 1,
+   "kind": "dom",
+   "target": "Log in",
+   "what": "the content-warning panel (real DOM button)"
+  },
+  {
+   "step": 2,
+   "kind": "seated",
+   "era": "e1",
+   "phase": "r_dark",
+   "spine": "e1",
+   "what": "0 live controls"
+  },
+  {
+   "step": 3,
+   "kind": "idle",
+   "what": "waiting — 1 hit rect registered, 1 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e1",
+   "phase": "r_boot",
+   "spine": "e1",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "era3-device-phone is disabled"
+    }
+   ]
+  },
+  {
+   "step": 4,
+   "kind": "idle",
+   "what": "waiting — 1 hit rect registered, 1 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e1",
+   "phase": "r_boot",
+   "spine": "e1",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "era3-device-phone is disabled"
+    }
+   ]
+  },
+  {
+   "step": 5,
+   "kind": "press",
+   "target": "picon:star",
+   "surface": "os",
+   "logical": [
+    70,
+    107
+   ],
+   "page": [
+    397,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 6,
+   "kind": "press",
+   "target": "picon:tape",
+   "surface": "os",
+   "logical": [
+    140,
+    107
+   ],
+   "page": [
+    488,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 7,
+   "kind": "press",
+   "target": "picon:flower",
+   "surface": "os",
+   "logical": [
+    210,
+    107
+   ],
+   "page": [
+    580,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 8,
+   "kind": "press",
+   "target": "picon:bird",
+   "surface": "os",
+   "logical": [
+    280,
+    107
+   ],
+   "page": [
+    671,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 9,
+   "kind": "press",
+   "target": "picon:heart",
+   "surface": "os",
+   "logical": [
+    350,
+    107
+   ],
+   "page": [
+    763,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 10,
+   "kind": "press",
+   "target": "picon:moon",
+   "surface": "os",
+   "logical": [
+    420,
+    107
+   ],
+   "page": [
+    855,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 11,
+   "kind": "press",
+   "target": "pchip:music",
+   "surface": "os",
+   "logical": [
+    109,
+    166
+   ],
+   "page": [
+    448,
+    550
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 12,
+   "kind": "press",
+   "target": "pchip:diary",
+   "surface": "os",
+   "logical": [
+    257,
+    166
+   ],
+   "page": [
+    641,
+    550
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 13,
+   "kind": "press",
+   "target": "pchip:friend",
+   "surface": "os",
+   "logical": [
+    405,
+    166
+   ],
+   "page": [
+    835,
+    550
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 14,
+   "kind": "press",
+   "target": "pchip:quiet",
+   "surface": "os",
+   "logical": [
+    109,
+    188
+   ],
+   "page": [
+    448,
+    579
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 15,
+   "kind": "press",
+   "target": "pchip:faith",
+   "surface": "os",
+   "logical": [
+    257,
+    188
+   ],
+   "page": [
+    641,
+    579
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 16,
+   "kind": "press",
+   "target": "pchip:better",
+   "surface": "os",
+   "logical": [
+    405,
+    188
+   ],
+   "page": [
+    835,
+    579
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 17,
+   "kind": "press",
+   "target": "pgoal:fit_in",
+   "surface": "os",
+   "logical": [
+    168,
+    232
+   ],
+   "page": [
+    525,
+    636
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 18,
+   "kind": "press",
+   "target": "r-continue",
+   "surface": "os",
+   "logical": [
+    432,
+    352
+   ],
+   "page": [
+    870,
+    793
+   ],
+   "era": "e1",
+   "phase": "r_recap",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 5,
+   "changed": true
+  },
+  {
+   "step": 19,
+   "kind": "press",
+   "target": "r-enter",
+   "surface": "os",
+   "logical": [
+    416,
+    344
+   ],
+   "page": [
+    849,
+    783
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 20,
+   "kind": "press",
+   "target": "icon-a",
+   "surface": "os",
+   "logical": [
+    29,
+    24
+   ],
+   "page": [
+    343,
+    364
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 2,
+   "changed": true
+  },
+  {
+   "step": 21,
+   "kind": "silent-surface",
+   "what": "kit is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 22,
+   "kind": "sweep-hit",
+   "target": "(swept) kit",
+   "surface": "os",
+   "logical": [
+    366,
+    318
+   ],
+   "page": [
+    784,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 23,
+   "kind": "press",
+   "target": "kit (known control)",
+   "surface": "kit",
+   "logical": [
+    366,
+    318
+   ],
+   "page": [
+    784,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 24,
+   "kind": "silent-surface",
+   "what": "kit is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 25,
+   "kind": "sweep-hit",
+   "target": "(swept) kit",
+   "surface": "os",
+   "logical": [
+    388,
+    318
+   ],
+   "page": [
+    813,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 26,
+   "kind": "press",
+   "target": "kit (known control)",
+   "surface": "kit",
+   "logical": [
+    388,
+    318
+   ],
+   "page": [
+    813,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 27,
+   "kind": "press",
+   "target": "kit (known control)",
+   "surface": "kit",
+   "logical": [
+    388,
+    318
+   ],
+   "page": [
+    813,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 28,
+   "kind": "silent-surface",
+   "what": "kit is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 29,
+   "kind": "sweep-hit",
+   "target": "(swept) kit",
+   "surface": "os",
+   "logical": [
+    58,
+    318
+   ],
+   "page": [
+    381,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 30,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 31,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    366,
+    220
+   ],
+   "page": [
+    784,
+    621
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 32,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    366,
+    220
+   ],
+   "page": [
+    784,
+    621
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 33,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 34,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    256,
+    290
+   ],
+   "page": [
+    640,
+    712
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 35,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    256,
+    290
+   ],
+   "page": [
+    640,
+    712
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 36,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 37,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 38,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 39,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 40,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 41,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 42,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 43,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 44,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 45,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 46,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 47,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 48,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 49,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    388,
+    304
+   ],
+   "page": [
+    813,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 50,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    388,
+    304
+   ],
+   "page": [
+    813,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 51,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 52,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    388,
+    318
+   ],
+   "page": [
+    813,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 53,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    388,
+    318
+   ],
+   "page": [
+    813,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 54,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 55,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    234,
+    304
+   ],
+   "page": [
+    611,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 56,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    234,
+    304
+   ],
+   "page": [
+    611,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 57,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 58,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    102,
+    318
+   ],
+   "page": [
+    439,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1_armed",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 59,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    102,
+    318
+   ],
+   "page": [
+    439,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 60,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    102,
+    318
+   ],
+   "page": [
+    439,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 61,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2"
+  },
+  {
+   "step": 62,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    124,
+    248
+   ],
+   "page": [
+    467,
+    657
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 63,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    124,
+    248
+   ],
+   "page": [
+    467,
+    657
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 64,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2"
+  },
+  {
+   "step": 65,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    476,
+    346
+   ],
+   "page": [
+    928,
+    785
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 66,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    476,
+    346
+   ],
+   "page": [
+    928,
+    785
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 67,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2"
+  },
+  {
+   "step": 68,
+   "kind": "sweep-miss",
+   "what": "swept 525 points on the OS canvas for irc and nothing moved"
+  },
+  {
+   "step": 69,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2"
+  },
+  {
+   "step": 70,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    36,
+    304
+   ],
+   "page": [
+    352,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 71,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "era3-device-phone is disabled"
+    }
+   ]
+  },
+  {
+   "step": 72,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "era3-device-phone is disabled"
+    }
+   ]
+  },
+  {
+   "step": 73,
+   "kind": "silent-screen",
+   "what": "nothing registered anywhere and nothing has moved — sweeping the canvas in case the screen itself is the control",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 74,
+   "kind": "sweep-hit",
+   "target": "(swept) ritual",
+   "surface": "os",
+   "logical": [
+    36,
+    318
+   ],
+   "page": [
+    352,
+    749
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 75,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "era3-device-phone is disabled"
+    }
+   ]
+  },
+  {
+   "step": 76,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "era3-device-phone is disabled"
+    }
+   ]
+  },
+  {
+   "step": 77,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "era3-device-phone is disabled"
+    }
+   ]
+  },
+  {
+   "step": 78,
+   "kind": "press",
+   "target": "lamby-hello",
+   "surface": "os",
+   "logical": [
+    370,
+    317
+   ],
+   "page": [
+    789,
+    748
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 79,
+   "kind": "press",
+   "target": "lamby-begin",
+   "surface": "os",
+   "logical": [
+    370,
+    317
+   ],
+   "page": [
+    789,
+    748
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 80,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 81,
+   "kind": "press",
+   "target": "icon-restorify",
+   "surface": "os",
+   "logical": [
+    31,
+    108
+   ],
+   "page": [
+    346,
+    474
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 82,
+   "kind": "press",
+   "target": "icon-era-1",
+   "surface": "os",
+   "logical": [
+    31,
+    156
+   ],
+   "page": [
+    346,
+    537
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 83,
+   "kind": "press",
+   "target": "checkin:steady",
+   "surface": "restorify",
+   "logical": [
+    184,
+    206
+   ],
+   "page": [
+    546,
+    602
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 84,
+   "kind": "press",
+   "target": "checkin-continue",
+   "surface": "restorify",
+   "logical": [
+    357,
+    280
+   ],
+   "page": [
+    772,
+    699
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 85,
+   "kind": "press",
+   "target": "message-open",
+   "surface": "os",
+   "logical": [
+    379,
+    240
+   ],
+   "page": [
+    801,
+    647
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 2,
+   "changed": true
+  },
+  {
+   "step": 86,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 87,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    256,
+    304
+   ],
+   "page": [
+    640,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 88,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 89,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    256,
+    304
+   ],
+   "page": [
+    640,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 90,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 91,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    190,
+    332
+   ],
+   "page": [
+    554,
+    767
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 92,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 93,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    190,
+    332
+   ],
+   "page": [
+    554,
+    767
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 94,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 95,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    432,
+    304
+   ],
+   "page": [
+    870,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 96,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 97,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    432,
+    304
+   ],
+   "page": [
+    870,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 98,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 99,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    80,
+    304
+   ],
+   "page": [
+    410,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 100,
+   "kind": "press",
+   "target": "chip:want-you-too",
+   "surface": "caleb",
+   "logical": [
+    218,
+    219
+   ],
+   "page": [
+    590,
+    619
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 101,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    80,
+    304
+   ],
+   "page": [
+    410,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 102,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 103,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    36,
+    318
+   ],
+   "page": [
+    352,
+    749
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 104,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    36,
+    318
+   ],
+   "page": [
+    352,
+    749
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 105,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 106,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    344,
+    318
+   ],
+   "page": [
+    755,
+    749
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 107,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    344,
+    318
+   ],
+   "page": [
+    755,
+    749
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 108,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 109,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    102,
+    304
+   ],
+   "page": [
+    439,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 110,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    102,
+    304
+   ],
+   "page": [
+    439,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 111,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 112,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    124,
+    332
+   ],
+   "page": [
+    467,
+    767
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 113,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    124,
+    332
+   ],
+   "page": [
+    467,
+    767
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 114,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 115,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    410,
+    332
+   ],
+   "page": [
+    841,
+    767
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 116,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    410,
+    332
+   ],
+   "page": [
+    841,
+    767
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 117,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 118,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    344,
+    248
+   ],
+   "page": [
+    755,
+    657
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 119,
+   "kind": "silent-surface",
+   "what": "netvision is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 120,
+   "kind": "sweep-hit",
+   "target": "(swept) netvision",
+   "surface": "os",
+   "logical": [
+    454,
+    304
+   ],
+   "page": [
+    899,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 121,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    344,
+    248
+   ],
+   "page": [
+    755,
+    657
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 122,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 123,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    322,
+    192
+   ],
+   "page": [
+    726,
+    584
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 124,
+   "kind": "press",
+   "target": "netvision (known control)",
+   "surface": "netvision",
+   "logical": [
+    454,
+    304
+   ],
+   "page": [
+    899,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 125,
+   "kind": "silent-surface",
+   "what": "netvision is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 126,
+   "kind": "sweep-hit",
+   "target": "(swept) netvision",
+   "surface": "os",
+   "logical": [
+    80,
+    318
+   ],
+   "page": [
+    410,
+    749
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 127,
+   "kind": "silent-surface",
+   "what": "accountability is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 128,
+   "kind": "sweep-hit",
+   "target": "(swept) accountability",
+   "surface": "os",
+   "logical": [
+    36,
+    304
+   ],
+   "page": [
+    352,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 129,
+   "kind": "press",
+   "target": "mail-open",
+   "surface": "accountability",
+   "logical": [
+    356,
+    156
+   ],
+   "page": [
+    771,
+    537
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 130,
+   "kind": "press",
+   "target": "mail-continue",
+   "surface": "accountability",
+   "logical": [
+    417,
+    292
+   ],
+   "page": [
+    851,
+    715
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 131,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    322,
+    192
+   ],
+   "page": [
+    726,
+    584
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 132,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 133,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    300,
+    276
+   ],
+   "page": [
+    698,
+    694
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 134,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    300,
+    276
+   ],
+   "page": [
+    698,
+    694
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 135,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 136,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    102,
+    304
+   ],
+   "page": [
+    439,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 137,
+   "kind": "press",
+   "target": "accountability (known control)",
+   "surface": "accountability",
+   "logical": [
+    36,
+    304
+   ],
+   "page": [
+    352,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 138,
+   "kind": "silent-surface",
+   "what": "accountability is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 139,
+   "kind": "sweep-hit",
+   "target": "(swept) accountability",
+   "surface": "os",
+   "logical": [
+    124,
+    192
+   ],
+   "page": [
+    467,
+    584
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 140,
+   "kind": "press",
+   "target": "caleb (known control)",
+   "surface": "caleb",
+   "logical": [
+    102,
+    304
+   ],
+   "page": [
+    439,
+    731
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 141,
+   "kind": "silent-surface",
+   "what": "caleb is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 142,
+   "kind": "sweep-hit",
+   "target": "(swept) caleb",
+   "surface": "os",
+   "logical": [
+    322,
+    318
+   ],
+   "page": [
+    726,
+    749
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_residue",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 143,
+   "kind": "press",
+   "target": "icon-provotype",
+   "surface": "os",
+   "logical": [
+    119,
+    108
+   ],
+   "page": [
+    461,
+    474
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_residue",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 144,
+   "kind": "press",
+   "target": "primary",
+   "surface": "provotype",
+   "logical": [
+    413,
+    342
+   ],
+   "page": [
+    845,
+    780
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_residue",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 145,
+   "kind": "press",
+   "target": "icon-restorify",
+   "surface": "os",
+   "logical": [
+    31,
+    108
+   ],
+   "page": [
+    346,
+    474
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_residue",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 146,
+   "kind": "press",
+   "target": "icon-era-1",
+   "surface": "os",
+   "logical": [
+    31,
+    156
+   ],
+   "page": [
+    346,
+    537
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_residue",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 147,
+   "kind": "press",
+   "target": "primary",
+   "surface": "provotype",
+   "logical": [
+    413,
+    342
+   ],
+   "page": [
+    845,
+    780
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 148,
+   "kind": "silent-surface",
+   "what": "updateApp is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e3"
+  },
+  {
+   "step": 149,
+   "kind": "sweep-miss",
+   "what": "swept 525 points on the OS canvas for updateApp and nothing moved"
+  },
+  {
+   "step": 150,
+   "kind": "silent-surface",
+   "what": "updateApp is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e3"
+  },
+  {
+   "step": 151,
+   "kind": "sweep-miss",
+   "what": "swept 525 points on the OS canvas for updateApp and nothing moved"
+  },
+  {
+   "step": 152,
+   "kind": "silent-surface",
+   "what": "updateApp is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e3"
+  },
+  {
+   "step": 153,
+   "kind": "sweep-hit",
+   "target": "(swept) updateApp",
+   "surface": "os",
+   "logical": [
+    388,
+    332
+   ],
+   "page": [
+    813,
+    767
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 154,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 155,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ]
+  },
+  {
+   "step": 156,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "boot",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ]
+  },
+  {
+   "step": 157,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "install",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ]
+  },
+  {
+   "step": 158,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "install",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ]
+  },
+  {
+   "step": 159,
+   "kind": "press",
+   "target": "signin",
+   "surface": "workstation",
+   "logical": [
+    208,
+    308
+   ],
+   "page": [
+    481,
+    735
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "consent",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 160,
+   "kind": "press",
+   "target": "consent-allow",
+   "surface": "workstation",
+   "logical": [
+    558,
+    336
+   ],
+   "page": [
+    911,
+    770
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "board",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 161,
+   "kind": "press",
+   "target": "task-restore",
+   "surface": "workstation",
+   "logical": [
+    109,
+    376
+   ],
+   "page": [
+    356,
+    821
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 162,
+   "kind": "press",
+   "target": "task-0",
+   "surface": "workstation",
+   "logical": [
+    117,
+    133
+   ],
+   "page": [
+    376,
+    521
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "list",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 163,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    202
+   ],
+   "page": [
+    775,
+    604
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 164,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    206
+   ],
+   "page": [
+    775,
+    609
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 165,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    235
+   ],
+   "page": [
+    775,
+    644
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 166,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    251
+   ],
+   "page": [
+    776,
+    664
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 167,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    267
+   ],
+   "page": [
+    776,
+    684
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 168,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    283
+   ],
+   "page": [
+    776,
+    704
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 169,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    274
+   ],
+   "page": [
+    776,
+    693
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 170,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    215
+   ],
+   "page": [
+    775,
+    620
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 171,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    207
+   ],
+   "page": [
+    775,
+    610
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 172,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    235
+   ],
+   "page": [
+    775,
+    644
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 173,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    190
+   ],
+   "page": [
+    774,
+    589
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 174,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    219
+   ],
+   "page": [
+    775,
+    625
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 175,
+   "kind": "press",
+   "target": "apply",
+   "surface": "workstation",
+   "logical": [
+    450,
+    210
+   ],
+   "page": [
+    775,
+    614
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "board",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 176,
+   "kind": "press",
+   "target": "task-1",
+   "surface": "workstation",
+   "logical": [
+    337,
+    133
+   ],
+   "page": [
+    639,
+    521
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 177,
+   "kind": "press",
+   "target": "board-back",
+   "surface": "workstation",
+   "logical": [
+    62,
+    34
+   ],
+   "page": [
+    314,
+    404
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 178,
+   "kind": "press",
+   "target": "task-2",
+   "surface": "workstation",
+   "logical": [
+    557,
+    133
+   ],
+   "page": [
+    902,
+    521
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 179,
+   "kind": "press",
+   "target": "task-restore",
+   "surface": "workstation",
+   "logical": [
+    109,
+    376
+   ],
+   "page": [
+    356,
+    821
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 180,
+   "kind": "silent-surface",
+   "what": "updateApp is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3"
+  },
+  {
+   "step": 181,
+   "kind": "sweep-hit",
+   "target": "(swept) updateApp",
+   "surface": "os",
+   "logical": [
+    124,
+    234
+   ],
+   "page": [
+    480,
+    647
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 182,
+   "kind": "silent-surface",
+   "what": "updateApp is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3"
+  },
+  {
+   "step": 183,
+   "kind": "sweep-miss",
+   "what": "swept 525 points on the OS canvas for updateApp and nothing moved"
+  },
+  {
+   "step": 184,
+   "kind": "silent-surface",
+   "what": "updateApp is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3_s3"
+  },
+  {
+   "step": 185,
+   "kind": "sweep-hit",
+   "target": "(swept) updateApp",
+   "surface": "os",
+   "logical": [
+    410,
+    360
+   ],
+   "page": [
+    830,
+    805
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 186,
+   "kind": "press",
+   "target": "board-back",
+   "surface": "workstation",
+   "logical": [
+    62,
+    34
+   ],
+   "page": [
+    315,
+    406
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 187,
+   "kind": "press",
+   "target": "e4-touch",
+   "surface": "os",
+   "logical": [
+    256,
+    192
+   ],
+   "page": [
+    154,
+    800
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 188,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 189,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 190,
+   "kind": "press",
+   "target": "ok",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    267
+   ],
+   "page": [
+    454,
+    609
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 191,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 192,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 193,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 194,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 195,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 196,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 197,
+   "kind": "silent-screen",
+   "what": "nothing registered anywhere and nothing has moved — sweeping the canvas in case the screen itself is the control",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 198,
+   "kind": "sweep-hit",
+   "target": "(swept) ritual",
+   "surface": "os",
+   "logical": [
+    212,
+    332
+   ],
+   "page": [
+    546,
+    749
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 199,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 200,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 201,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 202,
+   "kind": "press",
+   "target": "correct1",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    253
+   ],
+   "page": [
+    454,
+    579
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 2,
+   "changed": true
+  },
+  {
+   "step": 203,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 204,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 205,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 206,
+   "kind": "press",
+   "target": "absorb",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    276
+   ],
+   "page": [
+    454,
+    628
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 207,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 208,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 209,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 210,
+   "kind": "press",
+   "target": "correct2",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    253
+   ],
+   "page": [
+    454,
+    579
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 2,
+   "changed": true
+  },
+  {
+   "step": 211,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 212,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 213,
+   "kind": "silent-screen",
+   "what": "nothing registered anywhere and nothing has moved — sweeping the canvas in case the screen itself is the control",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 214,
+   "kind": "sweep-hit",
+   "target": "(swept) ritual",
+   "surface": "os",
+   "logical": [
+    344,
+    318
+   ],
+   "page": [
+    828,
+    719
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 215,
+   "kind": "press",
+   "target": "sure",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    230
+   ],
+   "page": [
+    454,
+    530
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 216,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 217,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 218,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 219,
+   "kind": "press",
+   "target": "maybe",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    230
+   ],
+   "page": [
+    454,
+    530
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 220,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 221,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 222,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 223,
+   "kind": "press",
+   "target": "showme",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    253
+   ],
+   "page": [
+    454,
+    579
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 224,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 225,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 226,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 227,
+   "kind": "press",
+   "target": "correct3",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    290
+   ],
+   "page": [
+    454,
+    658
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 2,
+   "changed": true
+  },
+  {
+   "step": 228,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 229,
+   "kind": "press",
+   "target": "handoff",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    313
+   ],
+   "page": [
+    454,
+    708
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 230,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 231,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 232,
+   "kind": "press",
+   "target": "undo0",
+   "surface": "e4.offers",
+   "logical": [
+    191,
+    210
+   ],
+   "page": [
+    501,
+    488
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 233,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 234,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 235,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 236,
+   "kind": "press",
+   "target": "undo1",
+   "surface": "e4.offers",
+   "logical": [
+    191,
+    210
+   ],
+   "page": [
+    501,
+    488
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 237,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 238,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 239,
+   "kind": "silent-screen",
+   "what": "nothing registered anywhere and nothing has moved — sweeping the canvas in case the screen itself is the control",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 240,
+   "kind": "sweep-hit",
+   "target": "(swept) ritual",
+   "surface": "os",
+   "logical": [
+    212,
+    332
+   ],
+   "page": [
+    546,
+    749
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 241,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 242,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 243,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 244,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 245,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 246,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 247,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 248,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 249,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 250,
+   "kind": "silent-screen",
+   "what": "nothing registered anywhere and nothing has moved — sweeping the canvas in case the screen itself is the control",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 251,
+   "kind": "sweep-hit",
+   "target": "(swept) ritual",
+   "surface": "os",
+   "logical": [
+    168,
+    318
+   ],
+   "page": [
+    452,
+    719
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 252,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 253,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 254,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 255,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 256,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 257,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 258,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 259,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 260,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 261,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 262,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 2 aimable, 8 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "list",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 263,
+   "kind": "stop",
+   "what": "STUCK. 8 hit rects are registered and none can be aimed at — but every one of them is BEHIND THE CAMERA, i.e. on a surface in a room the player has already left, which is expected rather than wrong. The real finding is that this era offers nothing in front of you: notification (phone, behind the camera); unlock (phone, behind the camera); win-min (workstation, behind the camera); task-restore (workstation, behind the camera); board-back (workstation, behind the camera); family-sel-0 (workstation, behind the camera); family-sel-1 (workstation, behind the camera); family-sel-2 (workstation, behind the camera)",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "dropped": [
+    {
+     "id": "notification",
+     "surface": "phone",
+     "logical": [
+      90,
+      171
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      281
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "board-back",
+     "surface": "workstation",
+     "logical": [
+      62,
+      34
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-0",
+     "surface": "workstation",
+     "logical": [
+      99,
+      97
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-1",
+     "surface": "workstation",
+     "logical": [
+      99,
+      145
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "family-sel-2",
+     "surface": "workstation",
+     "logical": [
+      99,
+      193
+     ],
+     "why": "behind the camera"
+    }
+   ]
+  },
+  {
+   "step": 264,
+   "kind": "end",
+   "what": "walk finished",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  }
+ ]
+}

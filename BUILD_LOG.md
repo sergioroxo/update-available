@@ -354,3 +354,44 @@
 - 2026-08-24 — ⚑ THE LAST EULA IS ALREADY ERA 4 (Sérgio: "the EULA design is reutilised from Era 2 and it should be an invitation to the Era-4 design, because we are about to be updated!"). He is right and the COPY HAS BEEN SAYING SO ALL ALONG — "There is no longer an application to open. The service is ambient." A terms-of-service for a service with no application should not arrive inside an application window, and `update.ts` was drawing every EULA in the piece with `ui.windowFrame` + `ERA1.paper`: one 1997 dialog for u2, u3 and u4 alike. u4's threshold now wears the era it is bringing — `ERA4.field`, no frame, no title bar, no caption buttons, no bevels; wide margins; the terms in `ERA4.textHi`, which is the era's CAPTION colour and the warmest, most legible thing on any Era-4 surface (the apparatus is at its most readable exactly where it asks for the most); the page count small in `dim`; and the two controls are WORDS with a mint rule under the live one, the foreclosed one still legible rather than removed — the same law the era's own chips follow. ⚑ It branches on the era it is ARRIVING AT, not the one it is leaving, so u2 keeps Restorify's 2003 chrome, which is correct. ⚑ AND IT IS FULL-BLEED: the ritual draws into its own 512-wide canvas composited onto a 676-wide panel, so the first build stopped 82 px short of each edge and GracePlatform's Aero desktop showed down both sides of the thing replacing it — a threshold with the old world visible around its border is not a threshold. `fullScreen` now includes it, and the ritual NAMES ITS OWN GROUND (`ground`) because a black border around a near-black field is a seam a player can see. Geometry lives in one `arrivingEulaHits()` used by both the draw and the hit test; every previous version of this screen computed its button rectangles twice from the same magic numbers. ⚑ Re-verified end to end with real presses: Remind me later → notice returns at 39 s → Update now → 50/75/100 → I Agree → install → `desktopEra: e4`, `e4Space: 2`, camera landing at Room 3's seat.
 - 2026-08-24 — ⚑ TWO SPACE DECISIONS SETTLED, BOTH SÉRGIO'S, BOTH MEASURED. (1) THE INTAKE IS TRANSFORMED, NOT HIDDEN — his standing requirement, which I had been violating: "if the intake system is present on Era-1 it has to be transformed into something new on Era-3." S61 simply HID the record at E3 (witness-screen and terminalFrame both disabled) on the correct reasoning that 2016 is where the apparatus stopped being a place you go to — but hiding is not transforming, and a piece whose subject is an apparatus that changes form must never answer "what happened to it" with "it is gone". `intakeRack` + `intakeLed` now stand on the spine where the terminal was: in 1997 the record is a screen you turn around and READ; in 2016 it is a cabinet in the same place with a light on it. The turn still lands on it. There is nothing to read. Same bearing, same gesture, no text — the era's thesis as an object rather than as an absence. Exists at r3 only; removed at r4, where the record migrates to Room 3's wall and becomes readable again beside Maya, which only lands if it was somewhere else in between. (2) ROOM 3 IS NOT HERS YET IN 2016 — his question, "does it make sense to have Room 3 visible on Era-3? maybe we could not show, and this would be more gradual." ⚑ MEASURED FIRST: from Vera's seat at yaw 270 — THE TURN — 62 of Maya's 68 props were in frame, furnished and lit, ten years early; every other bearing showed none. ⚑ AND THE REAL FAULT WAS TIME, NOT VISIBILITY: the piece's premise is three rooms that AGE, and Room 3 was showing its 2026 dressing in 2016 (r3 adds 68 east props, r4 adds only 6 more) — the future leaking backwards. Hiding the room outright would have been the other error, because a room that pops into existence contradicts one continuous space. So what is hidden is THE PERSON, NOT THE PLACE: the shell, window, door, curtains and the furniture a household keeps in a spare room stay; Maya's fifty things — her machine, her headset, her posters, her sketchbook, her sneakers, her mug, her plant — wait for 2026. The turn now shows 18 props instead of 62. ⚑ AND THE FIRST VERSION OF THIS MEASURED AS HAVING DONE NOTHING: I set presence at the top of `morphToEra`, and `goToState` a few lines later silently undid it — the fold owns `enabled`, so presence decisions have to land AFTER it. Caught by re-running the same sweep rather than by reading the diff. Era 4 verified unchanged: 74/74 east props enabled, record plane and frame both back. tsc/test/build green; room audit 36, unchanged.
 - 2026-08-24 — ⚑ EACH ROOM APPEARS WITH ITS OWN ERA, AND THE FIX WAS ONE DATA LINE. Sérgio, on a screenshot: "you can continue to see Maya's room while in Era-3… I don't think it is possible to showcase the past of all rooms while the narrative develops. Each room appears in sequence and is frozen in time when we jump to another time." ⚑ THE CAUSE: `r3`'s remove list took down `wallWest` AND `wallEast` in the same fold, so 2016 opened onto 1997 AND 2026 simultaneously. `wallEast` moves to `r4`. Verified by LOOKING: hiding every single `e_*` prop at E3 changes the rendered frame not at all, which means the wall fully occludes Room 3 — and the shelf still visible on the right is Room 1's own furniture, not Maya's. ⚑ AND I HAD MIS-MEASURED THE WHOLE THING. My "62 of Maya's 68 props in frame" counted PROJECTION, not visibility: a prop behind a wall still projects into the frustum. On that number I built a fifty-prop runtime visibility hack (`setRoom3Dressed`) that hid her belongings and kept the shell, which solved a spoiler that a wall was already solving and left the architecture lying — a room with no wall in front of it, pretending to be empty. The hack is removed. **One line of data beat fifty entity toggles**, and it is the room's own grammar rather than a special case: the era transitions already mean "the walls come off", and now they come off ONE AT A TIME, which is what the sequence was always for. ⚑ THE LESSON, and it is the same one as the phone: a frustum test is not an occlusion test, and Sérgio found this by looking at a picture while I was reading numbers. Era 4 verified: 74/74 east props, both walls down, record and frame restored. tsc/test/build green; room audit 36, unchanged.
+
+## S92 (2026-08-26) — THE WALK: the piece, clicked from the entrance, and written down
+
+Built `tools/walk.mjs`. It opens `?reinterp=1`, presses the real DOM Log in, and
+from there uses ONLY real `mouse.move/down/~70 ms/up` presses — no `?era=`, no
+`debugJump`, no `debugBeat`, no `__requestMove`. `&debug=1` is used to READ probes
+and never to press. It reads the live hit rects each surface registered for itself
+and projects a rect's centre through that surface's own world transform (the exact
+inverse of `era3Devices.ts`'s `hitPlane()`, `v` sign included), so it aims at real
+controls rather than guessed page pixels.
+
+**Result: 142 presses, entrance → Era 4, clean console.** `docs/reinterp/WALK_2026-08-26.{json,md}`
+carries every press — the control's id, where it sits on its surface, where that
+landed on screen, and the ledger delta — which is the Narrative/interaction map
+generated from a playthrough instead of hand-written from the code.
+
+⚑ C6 proves every beat has a DEBUG BUTTON. Nothing here has ever proved a beat is
+reachable WITHOUT one, and that gap cost this project an era with no exit, a
+conductor switched off for half the piece, and an ending on an off-screen device —
+all green under every check. `tools/shots.mjs`'s assertion 6 was specified for this
+and never built. This is it.
+
+**What the walk found, none of it by reading code:**
+- **Six surfaces publish no hit rects at all** — `kit` (Era 1's booklet, the spine
+  of the era), `irc`, `caleb`, `netvision`, `accountability`, `updateApp` (every
+  era transition). They own the screen while open and compute their button
+  geometry inline inside `handleClick`, so their controls cannot be verified
+  reachable by anything, and the geometry is duplicated between draw and click
+  where drift produces a drawn-but-dead button. The walker finds them by sweeping;
+  the coordinates it found are in the report.
+- **Era 2 opens on a screen that is entirely the button** (`e2Stage: 'silence'`) and
+  registers nothing, by design. Told apart from a dead end only by sweeping.
+- **Era 4 offers nothing in front of you.** The 8 live rects there are Era 3's
+  workstation and phone, behind the camera in the room you left — expected. The
+  walk ends at `e4`/`spine e4` with nothing pressable ahead.
+
+Six failed runs shaped the walker, and each failure is documented at its fix in the
+file: it quit the piece in ten seconds by pressing Leave; pressed one profile icon
+74 times; took a provotype's repeat branch 70 times; abandoned apps on page two
+because two screens shared a button set; and wore a groove in two optional
+provotypes while the spine never moved.
