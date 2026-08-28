@@ -239,6 +239,7 @@ def test_transition_handler_unloads_before_cross_route_activation(tmp_path):
         "mapper": "ollama_chat/qwen3.6:35b-mlx",
         "compiler": "ollama_chat/gemma4:31b-mlx",
         "repair": "ollama_chat/qwen3.8:27b-mlx",
+        "triage-repair": "ollama_chat/gemma4:12b-mlx",
         "embedding": "ollama/qwen3-embedding:8b",
         "shadow": "ollama/bge-m3",
     })

@@ -37,7 +37,11 @@ from runner.pipeline.factory_semantic_campaign import SourceInventoryRow
 from runner.pipeline.source_queue import add_item, open_db, update_source_file_attachment
 
 
-NOW = datetime(2026, 8, 24, 12, 0, tzinfo=timezone.utc)
+# Commands published through the UI helper use the live clock. Keep this
+# synthetic fixture aligned with that clock so authenticated messages cannot
+# become "not yet valid" merely because the calendar moved past the original
+# fixed test date.
+NOW = datetime.now(timezone.utc).replace(microsecond=0)
 
 
 def _keys(tmp_path: Path):
