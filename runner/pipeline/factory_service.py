@@ -33,7 +33,9 @@ from runner.models.reprocessing import (
 from .factory_auth import (
     AuthenticatedFactoryMessageV1,
     FactoryAuthenticationError,
+    load_private_key,
     public_key_allowlist,
+    public_key_id,
     sign_factory_message,
     verify_factory_message,
 )
@@ -585,6 +587,31 @@ class ProductionCanaryWorker:
     def close(self) -> None:
         self.store.close()
 
+    def _verified_existing_projection(self) -> FactoryProjection | None:
+        """Verify durable receipts before accepting a historical terminal state."""
+        messages = self.store.receipts()
+        if not messages:
+            return None
+        public_key = load_private_key(
+            self.receipt_signing_private_key,
+            shared_roots=(self.to_studio, self.from_studio),
+        ).public_key()
+        allowed = {public_key_id(public_key): public_key}
+        receipts = tuple(
+            FactoryReceiptV1.model_validate_json(canonical_json_bytes(
+                verify_factory_message(
+                    message,
+                    expected_purpose="receipt",
+                    expected_run_id=self.run_id,
+                    allowed_public_keys=allowed,
+                    now=self.now,
+                )
+            ))
+            for message in messages
+        )
+        projection = project_factory_receipts(receipts, run_id=self.run_id)
+        return projection if projection.valid else None
+
     def ingest(self) -> None:
         semantic_path = (
             self.to_studio / "campaigns" / self.run_id / "semantic" / "campaign.auth.json"
@@ -630,7 +657,6 @@ class ProductionCanaryWorker:
         verify_checksum_pair(package_path, relative_path=package_relative)
         approval = approval_model.model_validate_json(approval_path.read_bytes())
         package = package_model.model_validate_json(package_path.read_bytes())
-        approval.assert_current(self.now)
         if sha256_bytes(canonical_json_bytes(approval)) != campaign.approval_sha256:
             raise ValueError("campaign approval hash mismatch")
         if sha256_bytes(canonical_json_bytes(package)) != campaign.package_manifest_sha256:
@@ -678,6 +704,12 @@ class ProductionCanaryWorker:
             snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
             if snapshot.get("canonical_sha256") != campaign.lexicon_snapshot_sha256:
                 raise ValueError("semantic campaign lexicon snapshot changed")
+        try:
+            approval.assert_current(self.now)
+        except ValueError:
+            existing = self._verified_existing_projection()
+            if existing is None or existing.campaign.state != "succeeded":
+                raise
         self.campaign, self.package, self.approval = campaign, package, approval
         self.campaign_sha256 = sha256_bytes(canonical_json_bytes(campaign))
         self.store.initialize_jobs(campaign, package)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -203,3 +204,47 @@ def test_cross_run_signed_payload_injection_is_held(tmp_path):
     result = _scan(context)
     assert result["runs"][0]["status"] == "held"
     assert result["runs"][0]["reason"] == "FactoryAuthenticationError"
+
+
+def test_expired_approval_does_not_hold_verified_succeeded_campaign(tmp_path):
+    context = _pilot(tmp_path, "expired-terminal-success")
+    first = _scan(context)
+    assert first["status"] == "ready"
+    assert first["runs"][0]["status"] == "succeeded"
+    marker = context["state"] / "host-health-state.json"
+    marker.write_text(
+        json.dumps({"status": "held", "updated_at": NOW.isoformat()}),
+        encoding="utf-8",
+    )
+
+    after_expiry = _scan(context, NOW + timedelta(days=2))
+    assert after_expiry["status"] == "ready"
+    assert after_expiry["runs"][0]["status"] == "succeeded"
+    assert after_expiry["runs"][0]["steps"] == 0
+    assert after_expiry["health_published"] is True
+    assert json.loads(marker.read_text(encoding="utf-8"))["status"] == "ready"
+
+
+def test_expired_approval_exemption_rejects_tampered_durable_receipt(tmp_path):
+    context = _pilot(tmp_path, "expired-terminal-tamper")
+    assert _scan(context)["runs"][0]["status"] == "succeeded"
+    database = context["state"] / context["run_id"] / "worker.db"
+    with sqlite3.connect(database) as connection:
+        raw = connection.execute(
+            "SELECT authenticated_json FROM production_receipts "
+            "ORDER BY sequence LIMIT 1"
+        ).fetchone()[0]
+        message = json.loads(raw)
+        signature = message["envelope"]["signature_b64"]
+        message["envelope"]["signature_b64"] = (
+            ("A" if signature[0] != "A" else "B") + signature[1:]
+        )
+        connection.execute(
+            "UPDATE production_receipts SET authenticated_json=? WHERE sequence=1",
+            (json.dumps(message, sort_keys=True, separators=(",", ":")),),
+        )
+
+    after_expiry = _scan(context, NOW + timedelta(days=2))
+    assert after_expiry["status"] == "held"
+    assert after_expiry["runs"][0]["status"] == "held"
+    assert after_expiry["runs"][0]["reason"] == "FactoryAuthenticationError"
