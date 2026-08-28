@@ -4,9 +4,14 @@ from __future__ import annotations
 import json
 import os
 import re
+import stat
 import subprocess
 from pathlib import Path
 from typing import Mapping
+from urllib.parse import urlsplit
+
+import yaml
+from pydantic import SecretStr
 
 from runner.models.reprocessing import AnalysisLexiconSnapshotV1
 
@@ -28,12 +33,107 @@ from .factory_semantic_pilot import (
 SEMANTIC_BASE_URL_ENV = "SOGICE_SEMANTIC_BASE_URL"
 SEMANTIC_API_KEY_ENV = "SOGICE_SEMANTIC_API_KEY"
 ACCEPTED_SWAP_GROWTH_BYTES = 2 * 1024**3
+MAXIMUM_SEMANTIC_CREDENTIAL_FILE_BYTES = 1024 * 1024
 
 
 def _inside(path: Path, root: Path) -> bool:
     path = path.resolve(strict=False)
     root = root.resolve(strict=False)
     return path == root or root in path.parents
+
+
+def validate_loopback_semantic_base_url(value: str) -> str:
+    """Return one normalized, credential-free loopback LiteLLM base URL."""
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise ValueError("semantic runtime base URL is invalid")
+    parsed = urlsplit(value)
+    if (
+        parsed.scheme != "http"
+        or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}
+        or parsed.port is None
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.query
+        or parsed.fragment
+        or parsed.path not in {"", "/"}
+    ):
+        raise ValueError("semantic runtime base URL must be credential-free loopback HTTP")
+    return value.rstrip("/")
+
+
+def validate_semantic_credential_file_metadata(
+    path: Path, *, shared_roots: tuple[Path, ...],
+) -> Path:
+    """Validate a host-local credential file without reading its contents."""
+    candidate = Path(path)
+    if not candidate.is_absolute():
+        raise ValueError("semantic credential path must be absolute")
+    if candidate.is_symlink():
+        raise ValueError("semantic credential file must not be a symlink")
+    try:
+        resolved = candidate.resolve(strict=True)
+        metadata = candidate.lstat()
+    except OSError as exc:
+        raise ValueError("semantic credential file is unavailable") from exc
+    if resolved != candidate:
+        raise ValueError("semantic credential path must not traverse symlinks")
+    if not stat.S_ISREG(metadata.st_mode):
+        raise ValueError("semantic credential file must be regular")
+    if metadata.st_uid != os.getuid():
+        raise PermissionError("semantic credential file owner is invalid")
+    if stat.S_IMODE(metadata.st_mode) != 0o600:
+        raise PermissionError("semantic credential file mode must be 0600")
+    if not 0 < metadata.st_size <= MAXIMUM_SEMANTIC_CREDENTIAL_FILE_BYTES:
+        raise ValueError("semantic credential file size is invalid")
+    if any(_inside(resolved, Path(root)) for root in shared_roots):
+        raise ValueError("semantic credential file must remain outside shared trees")
+    return resolved
+
+
+def load_process_local_semantic_api_key(
+    path: Path, *, shared_roots: tuple[Path, ...],
+) -> SecretStr:
+    """Read only LiteLLM's master key from a verified host-local YAML file."""
+    resolved = validate_semantic_credential_file_metadata(
+        path, shared_roots=shared_roots,
+    )
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(resolved, flags)
+        try:
+            metadata = os.fstat(descriptor)
+            if (
+                not stat.S_ISREG(metadata.st_mode)
+                or metadata.st_uid != os.getuid()
+                or stat.S_IMODE(metadata.st_mode) != 0o600
+                or not 0 < metadata.st_size <= MAXIMUM_SEMANTIC_CREDENTIAL_FILE_BYTES
+            ):
+                raise PermissionError("semantic credential file identity changed")
+            data = os.read(descriptor, MAXIMUM_SEMANTIC_CREDENTIAL_FILE_BYTES + 1)
+        finally:
+            os.close(descriptor)
+    except OSError as exc:
+        raise ValueError("semantic credential file could not be read safely") from exc
+    if len(data) != metadata.st_size:
+        raise ValueError("semantic credential file changed while reading")
+    try:
+        decoded = data.decode("utf-8", errors="strict")
+        payload = yaml.safe_load(decoded)
+    except (UnicodeDecodeError, yaml.YAMLError) as exc:
+        raise ValueError("semantic credential configuration is malformed") from exc
+    general = payload.get("general_settings") if isinstance(payload, dict) else None
+    value = general.get("master_key") if isinstance(general, dict) else None
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or len(value) > 4096
+        or "\x00" in value
+        or "\n" in value
+        or "\r" in value
+    ):
+        raise ValueError("semantic credential configuration has no valid master key")
+    return SecretStr(value)
 
 
 def _write_immutable(path: Path, data: bytes, *, mode: int = 0o600) -> None:
@@ -247,6 +347,7 @@ def build_accepted_local_runtime_adapter(
         raise RuntimeError("semantic runtime base URL is not configured")
     if not api_key:
         raise RuntimeError("semantic runtime API key is not configured")
+    base_url = validate_loopback_semantic_base_url(base_url)
     # Validate the endpoint and route set before a campaign can be leased.
     endpoint_config(base_url=base_url, api_key=api_key)
     state_root = Path(state_root).resolve(strict=False)

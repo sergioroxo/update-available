@@ -33,6 +33,7 @@ supabase>=2.4
 
 # Config
 python-dotenv>=1.0
+PyYAML>=6.0
 
 # Streamlit UI
 streamlit>=1.35

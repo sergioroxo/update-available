@@ -1546,6 +1546,8 @@ def _main(
         "--semantic-runtime", choices=("disabled", "accepted-local"),
         default="disabled",
     )
+    run.add_argument("--semantic-base-url", default="")
+    run.add_argument("--semantic-api-key-file", type=Path)
     run.add_argument("--once", action="store_true")
     run.add_argument("--poll-seconds", type=float, default=5.0)
     run.add_argument("--validation-now", default="")
@@ -1561,13 +1563,35 @@ def _main(
     if args.semantic_runtime == "accepted-local":
         try:
             if semantic_runtime_factory is None:
-                from .factory_semantic_runtime import build_accepted_local_runtime_adapter
+                from .factory_semantic_runtime import (
+                    SEMANTIC_API_KEY_ENV,
+                    SEMANTIC_BASE_URL_ENV,
+                    build_accepted_local_runtime_adapter,
+                    load_process_local_semantic_api_key,
+                    validate_loopback_semantic_base_url,
+                )
 
-                semantic_runtime_factory = build_accepted_local_runtime_adapter
-            semantic_station_adapter = semantic_runtime_factory(
-                to_studio=args.to_studio, from_studio=args.from_studio,
-                state_root=args.state_root, host_role=args.host_role,
-            )
+                if args.semantic_api_key_file is None:
+                    raise RuntimeError("process-local semantic credential is not configured")
+                base_url = validate_loopback_semantic_base_url(args.semantic_base_url)
+                api_key = load_process_local_semantic_api_key(
+                    args.semantic_api_key_file,
+                    shared_roots=(args.to_studio, args.from_studio),
+                )
+                private_environment = {
+                    SEMANTIC_BASE_URL_ENV: base_url,
+                    SEMANTIC_API_KEY_ENV: api_key.get_secret_value(),
+                }
+                semantic_station_adapter = build_accepted_local_runtime_adapter(
+                    to_studio=args.to_studio, from_studio=args.from_studio,
+                    state_root=args.state_root, host_role=args.host_role,
+                    environment=private_environment,
+                )
+            else:
+                semantic_station_adapter = semantic_runtime_factory(
+                    to_studio=args.to_studio, from_studio=args.from_studio,
+                    state_root=args.state_root, host_role=args.host_role,
+                )
         except Exception as exc:
             print(json.dumps({
                 "run_id": args.run_id or "factory-host-service",

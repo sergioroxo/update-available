@@ -12,6 +12,10 @@ from typing import Any
 
 from runner.models.reprocessing import require_safe_id
 from .atomic_io import atomic_write_bytes
+from .factory_semantic_runtime import (
+    validate_loopback_semantic_base_url,
+    validate_semantic_credential_file_metadata,
+)
 
 
 FACTORY_LAUNCH_AGENT_LABEL = "org.survivingsogice.factory-service"
@@ -48,6 +52,8 @@ def render_launch_agent(
     command_public_keys: tuple[Path, ...],
     receipt_private_key: Path,
     semantic_runtime: str = "disabled",
+    semantic_base_url: str = "",
+    semantic_api_key_file: Path | None = None,
     poll_seconds: float = 5.0,
 ) -> bytes:
     if not label or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-" for character in label):
@@ -71,6 +77,16 @@ def render_launch_agent(
         raise ValueError("LaunchAgent polling interval is invalid")
     if semantic_runtime not in {"disabled", "accepted-local"}:
         raise ValueError("LaunchAgent semantic runtime is invalid")
+    credential_path = None
+    if semantic_runtime == "accepted-local":
+        semantic_base_url = validate_loopback_semantic_base_url(semantic_base_url)
+        if semantic_api_key_file is None:
+            raise ValueError("LaunchAgent process-local semantic credential is required")
+        credential_path = validate_semantic_credential_file_metadata(
+            semantic_api_key_file, shared_roots=(to_studio, from_studio),
+        )
+    elif semantic_base_url or semantic_api_key_file is not None:
+        raise ValueError("LaunchAgent semantic credential options require accepted-local")
     arguments = [
         str(python_path), "-m", "runner.pipeline.factory_service", "run",
         "--to-studio", str(to_studio),
@@ -82,6 +98,11 @@ def render_launch_agent(
         "--semantic-runtime", semantic_runtime,
         "--poll-seconds", str(poll_seconds),
     ]
+    if credential_path is not None:
+        arguments.extend((
+            "--semantic-base-url", semantic_base_url,
+            "--semantic-api-key-file", str(credential_path),
+        ))
     if run_id:
         arguments.extend(("--run-id", run_id))
     for key in public_keys:
@@ -99,7 +120,9 @@ def render_launch_agent(
     return plistlib.dumps(payload, fmt=plistlib.FMT_XML, sort_keys=True)
 
 
-def validate_launch_agent(data: bytes) -> dict[str, Any]:
+def validate_launch_agent(
+    data: bytes, *, allow_legacy_credentialless: bool = False,
+) -> dict[str, Any]:
     try:
         payload = plistlib.loads(data)
     except Exception as exc:
@@ -132,6 +155,31 @@ def validate_launch_agent(data: bytes) -> dict[str, Any]:
         semantic_runtime = arguments[index + 1]
         if semantic_runtime not in {"disabled", "accepted-local"}:
             raise ValueError("LaunchAgent semantic runtime option is invalid")
+    option_values: dict[str, str] = {}
+    for option in ("--semantic-base-url", "--semantic-api-key-file"):
+        indexes = [index for index, value in enumerate(arguments) if value == option]
+        if len(indexes) > 1:
+            raise ValueError(f"LaunchAgent {option} option is duplicated")
+        if indexes:
+            index = indexes[0]
+            if index + 1 >= len(arguments):
+                raise ValueError(f"LaunchAgent {option} option has no value")
+            option_values[option] = arguments[index + 1]
+    if semantic_runtime == "accepted-local":
+        expected = {"--semantic-base-url", "--semantic-api-key-file"}
+        if not option_values and allow_legacy_credentialless:
+            process_local_credential_configured = False
+        elif set(option_values) != expected:
+            raise ValueError("LaunchAgent accepted-local credential options are incomplete")
+        else:
+            validate_loopback_semantic_base_url(option_values["--semantic-base-url"])
+            if not Path(option_values["--semantic-api-key-file"]).is_absolute():
+                raise ValueError("LaunchAgent semantic credential path must be absolute")
+            process_local_credential_configured = True
+    elif option_values:
+        raise ValueError("LaunchAgent disabled runtime contains semantic credential options")
+    else:
+        process_local_credential_configured = False
     serialized = json.dumps(payload, sort_keys=True).lower()
     if any(token in serialized for token in ("private key content", "api_key=", "token=")):
         raise ValueError("LaunchAgent contains secret material")
@@ -140,6 +188,7 @@ def validate_launch_agent(data: bytes) -> dict[str, Any]:
         "label": payload["Label"],
         "program_arguments": tuple(arguments),
         "semantic_runtime": semantic_runtime,
+        "process_local_credential_configured": process_local_credential_configured,
         "persistent_installation_performed": False,
     }
 
@@ -202,7 +251,9 @@ def install_validated_launch_agent(
         if target.is_symlink() or not target.is_file():
             raise ValueError("refusing to overwrite an unsafe LaunchAgent target")
         previous = target.read_bytes()
-        previous_validated = validate_launch_agent(previous)
+        previous_validated = validate_launch_agent(
+            previous, allow_legacy_credentialless=True,
+        )
         if previous_validated["label"] != label:
             raise ValueError("refusing to overwrite an unrelated LaunchAgent")
         previous_sha = hashlib.sha256(previous).hexdigest()
@@ -288,7 +339,9 @@ def uninstall_identity_matched_launch_agent(
     if target.is_symlink() or not target.is_file():
         return {"label": label, "removed": False, "reason": "not_installed"}
     data = target.read_bytes()
-    if validate_launch_agent(data)["label"] != label:
+    if validate_launch_agent(
+        data, allow_legacy_credentialless=True,
+    )["label"] != label:
         raise ValueError("refusing to remove an unrelated LaunchAgent")
     actual = hashlib.sha256(data).hexdigest()
     if actual != installed_sha256:
@@ -309,7 +362,9 @@ def restore_launch_agent_backup(
     actual = hashlib.sha256(data).hexdigest()
     if actual != expected_backup_sha256:
         raise ValueError("LaunchAgent backup identity changed")
-    if validate_launch_agent(data)["label"] != label:
+    if validate_launch_agent(
+        data, allow_legacy_credentialless=True,
+    )["label"] != label:
         raise ValueError("LaunchAgent backup label mismatch")
     if target.exists():
         raise ValueError("rollback target must be absent before restoration")
@@ -338,6 +393,8 @@ def _main(argv: list[str] | None = None) -> int:
         "--semantic-runtime", choices=("disabled", "accepted-local"),
         default="disabled",
     )
+    render.add_argument("--semantic-base-url", default="")
+    render.add_argument("--semantic-api-key-file", type=Path)
     validate = sub.add_parser("validate")
     validate.add_argument("--plist", required=True, type=Path)
     plan = sub.add_parser("installation-plan")
@@ -359,6 +416,8 @@ def _main(argv: list[str] | None = None) -> int:
             command_public_keys=tuple(args.command_public_key),
             receipt_private_key=args.receipt_private_key,
             semantic_runtime=args.semantic_runtime,
+            semantic_base_url=args.semantic_base_url,
+            semantic_api_key_file=args.semantic_api_key_file,
             poll_seconds=args.poll_seconds,
         )
         atomic_write_bytes(args.output, data)
