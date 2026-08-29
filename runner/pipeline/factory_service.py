@@ -610,7 +610,21 @@ class ProductionCanaryWorker:
             for message in messages
         )
         projection = project_factory_receipts(receipts, run_id=self.run_id)
-        return projection if projection.valid else None
+        if projection.valid:
+            return projection
+        document_ids = {
+            receipt.event.document_id
+            for receipt in receipts
+            if receipt.event.entity_kind == "document"
+        }
+        if len(document_ids) != 1:
+            return None
+        recovered = project_factory_receipts(
+            receipts,
+            run_id=self.run_id,
+            projection_policy="recovery_aware_v1_3",
+        )
+        return recovered if recovered.valid else None
 
     def ingest(self) -> None:
         semantic_path = (

@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import pytest
 
 from runner.models.reprocessing import FactoryEventV1, FactoryReceiptV1
 from runner.pipeline.factory_auth import (
+    AuthenticatedFactoryMessageV1,
     generate_keypair,
     public_key_allowlist,
     sign_factory_message,
 )
 from runner.pipeline.factory_state import project_factory_receipts
+from runner.pipeline.factory_service import ProductionCanaryWorker
 from runner.pipeline.syncthing_exchange import (
     observe_authenticated_receipts,
     publish_exchange_json,
@@ -150,6 +153,63 @@ def test_run023_historical_pattern_requires_explicit_recovery_policy(tmp_path):
     inference = recovered.recovery_inferences[0]
     assert inference.entity_key == f"document:{DOCUMENT_ID}:{STATION_ID}"
     assert (inference.prior_attempt, inference.resumed_attempt) == (1, 2)
+
+
+def test_service_terminal_history_uses_narrow_run023_recovery_fallback(tmp_path):
+    receipts = _historical_stream()
+    exchange, _public = _publish_authenticated(tmp_path, receipts)
+    paths = sorted((exchange / "campaigns" / RUN_ID / "authenticated-receipts").glob(
+        "*.auth.json"
+    ))
+    messages = tuple(
+        AuthenticatedFactoryMessageV1.model_validate_json(path.read_bytes())
+        for path in paths
+    )
+    worker = ProductionCanaryWorker.__new__(ProductionCanaryWorker)
+    worker.store = SimpleNamespace(receipts=lambda: messages)
+    worker.receipt_signing_private_key = tmp_path / "keys" / "receipt-private.pem"
+    worker.to_studio = tmp_path / "to-studio"
+    worker.from_studio = exchange
+    worker.run_id = RUN_ID
+    worker.now = NOW + timedelta(hours=1)
+
+    recovered = worker._verified_existing_projection()
+    assert recovered is not None
+    assert recovered.valid is True
+    assert recovered.schema_version == "factory-state-projection-v1.3"
+    assert recovered.campaign.state == "succeeded"
+    assert len(recovered.recovery_inferences) == 1
+
+
+def test_service_recovery_fallback_never_applies_to_multidocument_history(tmp_path):
+    receipts = _historical_stream()
+    receipts.append(_receipt(
+        8,
+        kind="document",
+        entity_id="other-document",
+        document_id="other-document",
+        station_id=STATION_ID,
+        from_state="pending",
+        to_state="running",
+        attempt=1,
+    ))
+    exchange, _public = _publish_authenticated(tmp_path, receipts)
+    paths = sorted((exchange / "campaigns" / RUN_ID / "authenticated-receipts").glob(
+        "*.auth.json"
+    ))
+    messages = tuple(
+        AuthenticatedFactoryMessageV1.model_validate_json(path.read_bytes())
+        for path in paths
+    )
+    worker = ProductionCanaryWorker.__new__(ProductionCanaryWorker)
+    worker.store = SimpleNamespace(receipts=lambda: messages)
+    worker.receipt_signing_private_key = tmp_path / "keys" / "receipt-private.pem"
+    worker.to_studio = tmp_path / "to-studio"
+    worker.from_studio = exchange
+    worker.run_id = RUN_ID
+    worker.now = NOW + timedelta(hours=1)
+
+    assert worker._verified_existing_projection() is None
 
 
 @pytest.mark.parametrize(
