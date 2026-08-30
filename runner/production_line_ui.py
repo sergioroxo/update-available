@@ -295,7 +295,9 @@ def unified_setup_model(config: FactoryConfig) -> dict[str, Any]:
                 config.macbook_receipt_public_keys, shared_roots=roots,
             )
             for _relative, payload in verified_json_messages(config.from_studio, "service/host"):
-                message = AuthenticatedFactoryMessageV1.model_validate(payload)
+                message = AuthenticatedFactoryMessageV1.model_validate_json(
+                    canonical_json_bytes(payload)
+                )
                 verified = verify_factory_message(
                     message, expected_purpose="service_status",
                     expected_run_id="factory-host-service",

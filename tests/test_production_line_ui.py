@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import socket
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -11,7 +12,10 @@ from runner.production_line_ui import (
     CONFIRMATION, SEMANTIC_CONFIRMATION_TEXT, create_confirmed_campaign, render_factory_console,
     copied_canary_preview, production_readiness_model, publish_control,
     render_production_line, run021_document_review_model, setup_model, status_model,
+    unified_setup_model,
 )
+from runner.pipeline.factory_auth import generate_keypair, sign_factory_message
+from runner.pipeline.syncthing_exchange import publish_exchange_json
 from runner.pipeline.syncthing_exchange import scan_factory_commands
 
 
@@ -133,6 +137,41 @@ def test_mac_studio_console_observes_service_without_launching_it(tmp_path, monk
 def test_setup_model_never_exposes_secret_values(tmp_path):
     model = setup_model(_config(tmp_path))
     assert set(model) == {"enabled", "host_role", "dry_run_only", "paths", "problems"}
+
+
+def test_unified_setup_verifies_serialized_signed_host_health(tmp_path):
+    private = tmp_path / "keys" / "receipt-private.pem"
+    public = tmp_path / "keys" / "receipt-public.pem"
+    generate_keypair(private, public)
+    config = FactoryConfig(
+        to_studio=tmp_path / "exchange" / "to",
+        from_studio=tmp_path / "exchange" / "from",
+        state_root=tmp_path / "state", job_root=tmp_path / "jobs",
+        host_role="macbook", dry_run_only=False, enabled=True, problems=(),
+        production_canary_enabled=True,
+        macbook_receipt_public_keys=(public,), production_ready=True,
+    )
+    issued = datetime.now(timezone.utc)
+    message = sign_factory_message(
+        {
+            "schema_version": "factory-host-health-v1.0",
+            "run_id": "factory-host-service",
+            "status": "ready", "content_free": True,
+            "issued_at": issued.isoformat(),
+        },
+        purpose="service_status", run_id="factory-host-service",
+        message_id="host-service-ready-test", private_key_path=private,
+        issued_at=issued,
+        shared_roots=(config.to_studio, config.from_studio),
+    )
+    publish_exchange_json(
+        config.from_studio, "service/host/ready.auth.json", message,
+    )
+
+    evidence = unified_setup_model(config)["studio_service_evidence"]
+    assert evidence["verified"] is True
+    assert evidence["status"] == "ready"
+    assert evidence["issued_at"] == issued.isoformat()
 
 
 def test_legacy_mac_studio_manual_controls_remain_registered():
