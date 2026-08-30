@@ -17,6 +17,7 @@ from runner.pipeline.factory_semantic_pilot import (
     RUN024_COMPARISON_DOCUMENTS,
     RUN024_MEMORY_SAFE_COMPARISON_DOCUMENT,
     RUN024_TARGETED_REPAIR_RUN_ID,
+    RUN025_RUN_ID,
     SemanticPilotError,
     build_contract,
     build_results_archive,
@@ -109,6 +110,31 @@ def test_memory_safe_comparison_exception_is_run024_only(tmp_path):
             run_id="semantic-multidocument-canary-025",
             document_ids=RUN024_COMPARISON_DOCUMENTS,
             comparison_directory=directory, memory_safe_fallback=True,
+        )
+
+
+def test_run025_comparison_sample_is_deterministic_and_selective(tmp_path):
+    documents = tuple(f"approved-doc-{index:02d}" for index in range(10))
+    first = select_comparison_purposes(
+        run_id=RUN025_RUN_ID, document_ids=documents,
+        comparison_directory=tmp_path, memory_safe_fallback=False,
+    )
+    repeated = select_comparison_purposes(
+        run_id=RUN025_RUN_ID, document_ids=tuple(reversed(documents)),
+        comparison_directory=tmp_path, memory_safe_fallback=False,
+    )
+
+    assert first == repeated
+    assert list(first) == sorted(documents)
+    assert sum(value == "qwen38_compiler_candidate" for value in first.values()) == 2
+    assert sum(value == "selective_comparison_baseline" for value in first.values()) == 8
+
+
+def test_run025_selective_comparison_requires_pilot_size(tmp_path):
+    with pytest.raises(SemanticPilotError, match="scope_mismatch"):
+        select_comparison_purposes(
+            run_id=RUN025_RUN_ID, document_ids=("one", "two"),
+            comparison_directory=tmp_path, memory_safe_fallback=False,
         )
 
 

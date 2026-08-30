@@ -233,7 +233,7 @@ class LocalModelRouteV1(_Strict):
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
         "qwen38_mapper_repair", "triage_mapper_repair",
-        "memory_safe_comparison_fallback",
+        "memory_safe_comparison_fallback", "selective_comparison_baseline",
         "qwen_embedding", "bge_shadow",
         "grounded_enrichment",
     ]
@@ -352,7 +352,7 @@ class ModelCallReceiptV1(_Strict):
     purpose: Literal[
         "section_mapper", "document_compiler", "qwen38_compiler_candidate",
         "qwen38_mapper_repair", "triage_mapper_repair",
-        "memory_safe_comparison_fallback",
+        "memory_safe_comparison_fallback", "selective_comparison_baseline",
         "qwen_embedding", "bge_shadow",
         "grounded_enrichment",
     ]
@@ -731,7 +731,7 @@ class OpenAICompatibleLocalClient:
         if route.purpose in {
             "qwen38_mapper_repair", "triage_mapper_repair",
             "qwen38_compiler_candidate",
-            "memory_safe_comparison_fallback",
+            "memory_safe_comparison_fallback", "selective_comparison_baseline",
             "grounded_enrichment",
         }:
             request["reasoning_effort"] = "none"
@@ -1017,7 +1017,7 @@ class LocalDocumentCompilerExecutor:
         self, client: OpenAICompatibleLocalClient,
         *, purpose: Literal[
             "document_compiler", "qwen38_compiler_candidate",
-            "memory_safe_comparison_fallback",
+            "memory_safe_comparison_fallback", "selective_comparison_baseline",
         ] = "document_compiler",
     ):
         self.client = client

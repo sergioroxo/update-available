@@ -89,6 +89,7 @@ RUN021_VALIDATED_MODELS = {
     "triage_mapper_repair": "ollama_chat/gemma4:12b-mlx",
     "qwen38_compiler_candidate": "ollama_chat/qwen3.8:27b-mlx",
     "memory_safe_comparison_fallback": "ollama_chat/gemma4:12b-mlx",
+    "selective_comparison_baseline": "ollama_chat/gemma4:12b-mlx",
     "qwen_embedding": "ollama/qwen3-embedding:8b",
     "bge_shadow": "ollama/bge-m3:latest",
     "grounded_enrichment": "ollama_chat/gemma4:31b-mlx",
@@ -107,6 +108,8 @@ RUN024_MEMORY_SAFE_COMPARISON_DOCUMENT = "dc0ff39b"
 RUN024_MEMORY_SAFE_COMPARISON_REASON = (
     "qwen38_current_residency_swap_growth_exceeded"
 )
+RUN025_RUN_ID = "ai-sdlc-20260828-autonomous-multidocument-pilot-025"
+RUN025_QWEN38_SAMPLE_SIZE = 2
 TRUNCATION_MARKER = "[TRUNCATED MIDDLE"
 NO_SNAPSHOT_SHA256 = hashlib.sha256(b"no-approved-snapshot-v1.0").hexdigest()
 SEALED_ROOT_FILES = frozenset({
@@ -429,6 +432,14 @@ def endpoint_config(
             fallback_reason=RUN024_MEMORY_SAFE_COMPARISON_REASON,
         ),
         LocalModelRouteV1(
+            route_id="selective-comparison-baseline",
+            purpose="selective_comparison_baseline", requested_model="triage",
+            expected_resolved_models=(
+                RUN021_VALIDATED_MODELS["selective_comparison_baseline"],
+            ),
+            maximum_output_tokens=8192,
+        ),
+        LocalModelRouteV1(
             route_id="qwen-embedding", purpose="qwen_embedding",
             requested_model="research-embedding",
             expected_resolved_models=(RUN021_VALIDATED_MODELS["qwen_embedding"],),
@@ -745,6 +756,24 @@ def select_comparison_purposes(
 ) -> dict[str, str]:
     """Select the one authorized Run-024 comparison exception, fail closed."""
     documents = tuple(sorted(document_ids))
+    if run_id == RUN025_RUN_ID:
+        if memory_safe_fallback or not 10 <= len(documents) <= 12:
+            raise SemanticPilotError("run025_selective_comparison_scope_mismatch")
+        ranked = sorted(
+            documents,
+            key=lambda document_id: hashlib.sha256(
+                f"{run_id}:{document_id}".encode("utf-8")
+            ).hexdigest(),
+        )
+        qwen38_sample = frozenset(ranked[:RUN025_QWEN38_SAMPLE_SIZE])
+        return {
+            document_id: (
+                "qwen38_compiler_candidate"
+                if document_id in qwen38_sample
+                else "selective_comparison_baseline"
+            )
+            for document_id in documents
+        }
     if not memory_safe_fallback:
         return {doc: "qwen38_compiler_candidate" for doc in documents}
     if (
@@ -1250,27 +1279,42 @@ def run_copied_semantic_pilot(
             ) for doc in sorted(plans)}
 
         comparison = {}
-        for doc in sorted(plans):
-            comparison_path = comparison_directory / f"{doc}-qwen38.json"
-            purpose = comparison_purposes[doc]
-            executor = LocalDocumentCompilerExecutor(client, purpose=purpose)
+        phase_names = {
+            "qwen38_compiler_candidate": "qwen38-comparison-compilation",
+            "memory_safe_comparison_fallback": "run024-memory-safe-comparison-fallback",
+            "selective_comparison_baseline": "run025-selective-triage-comparison",
+        }
+        purpose_order = (
+            "selective_comparison_baseline",
+            "memory_safe_comparison_fallback",
+            "qwen38_compiler_candidate",
+        )
+        for purpose in purpose_order:
+            purpose_documents = tuple(
+                doc for doc in sorted(plans) if comparison_purposes[doc] == purpose
+            )
+            if not purpose_documents:
+                continue
+            needs_calls = any(
+                not (comparison_directory / f"{doc}-qwen38.json").exists()
+                for doc in purpose_documents
+            )
             comparison_phase = (
                 phase_guard.phase(
-                    phase=(
-                        "run024-memory-safe-comparison-fallback"
-                        if purpose == "memory_safe_comparison_fallback"
-                        else "qwen38-comparison-compilation"
-                    ),
+                    phase=phase_names[purpose],
                     resolved_model=RUN021_VALIDATED_MODELS[purpose],
                 )
-                if phase_guard is not None and not comparison_path.exists()
+                if phase_guard is not None and needs_calls
                 else nullcontext()
             )
+            executor = LocalDocumentCompilerExecutor(client, purpose=purpose)
             with comparison_phase:
-                comparison[doc] = _load_or_compile(
-                    path=comparison_path, packet=comparison_packets[doc],
-                    executor=executor, failure_log=failure_log,
-                )
+                for doc in purpose_documents:
+                    comparison_path = comparison_directory / f"{doc}-qwen38.json"
+                    comparison[doc] = _load_or_compile(
+                        path=comparison_path, packet=comparison_packets[doc],
+                        executor=executor, failure_log=failure_log,
+                    )
 
         documents = {row.document_id: row for row in contract.documents}
         rows: list[SourceUnitRowV1] = []

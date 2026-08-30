@@ -47,8 +47,10 @@ SEMANTIC_CAMPAIGN_STATIONS = (
 SEMANTIC_ROUTE_PURPOSES = (
     "section_mapper",
     "qwen38_mapper_repair",
+    "triage_mapper_repair",
     "document_compiler",
     "qwen38_compiler_candidate",
+    "selective_comparison_baseline",
     "qwen_embedding",
     "bge_shadow",
     "grounded_enrichment",
@@ -72,6 +74,11 @@ SEMANTIC_RESULT_ALLOW_LIST = (
 SEMANTIC_CONFIRMATION = (
     "I approve this exact frozen semantic campaign for local Mac Studio processing only."
 )
+RUN025_CONFIRMATION = (
+    "I approve these copied, public, non-sensitive documents for the autonomous "
+    "Run-025 local semantic pilot only."
+)
+RUN025_RUN_ID = "ai-sdlc-20260828-autonomous-multidocument-pilot-025"
 
 
 class _Strict(BaseModel):
@@ -147,7 +154,8 @@ class SemanticCampaignApprovalV1(_Strict):
     run_id: str
     researcher_id: str
     researcher_confirmation_text: Literal[
-        "I approve this exact frozen semantic campaign for local Mac Studio processing only."
+        "I approve this exact frozen semantic campaign for local Mac Studio processing only.",
+        "I approve these copied, public, non-sensitive documents for the autonomous Run-025 local semantic pilot only.",
     ]
     approved_at: datetime
     expires_at: datetime
@@ -185,6 +193,13 @@ class SemanticCampaignApprovalV1(_Strict):
     def _invariants(self) -> "SemanticCampaignApprovalV1":
         if not 1 <= len(self.documents) <= 12:
             raise ValueError("semantic campaign requires 1–12 explicit documents")
+        if self.run_id == RUN025_RUN_ID:
+            if self.researcher_confirmation_text != RUN025_CONFIRMATION:
+                raise ValueError("Run-025 researcher confirmation is invalid")
+            if len(self.documents) < 10:
+                raise ValueError("Run-025 requires 10–12 explicit documents")
+        elif self.researcher_confirmation_text == RUN025_CONFIRMATION:
+            raise ValueError("Run-025 confirmation is bound to Run-025")
         ids = tuple(row.document_id for row in self.documents)
         if ids != tuple(sorted(set(ids))):
             raise ValueError("semantic campaign documents must be sorted and unique")
@@ -431,7 +446,9 @@ class SourceInventoryRow:
             "language": self.language,
             "type": self.media_type,
             "bytes": self.byte_count,
+            "characters": self.source_characters,
             "source_sha256": self.source_sha256,
+            "source_family": f"family-{self.document_id}",
             "source_available": self.source_path is not None,
             "canonical_quality": "complete" if self.eligible else "held",
             "prior_analysis": self.prior_analysis,

@@ -10,6 +10,8 @@ import pytest
 from runner.config import FactoryConfig
 from runner.pipeline.factory_auth import generate_keypair, public_key_allowlist
 from runner.pipeline.factory_semantic_campaign import (
+    RUN025_CONFIRMATION,
+    RUN025_RUN_ID,
     SEMANTIC_CAMPAIGN_STATIONS,
     SEMANTIC_CONFIRMATION,
     AcceptedSemanticRuntimeAdapter,
@@ -123,6 +125,42 @@ def test_corpus_inventory_holds_empty_canonical_text(tmp_path):
     assert len(rows) == 1
     assert rows[0].eligible is False
     assert rows[0].hold_reason == "source_empty"
+
+
+def test_run025_requires_its_exact_researcher_confirmation(tmp_path):
+    mb_private, mb_public, _st_private, st_public = _keys(tmp_path)
+    config = _config(tmp_path, mb_private, mb_public, st_public)
+    sources = []
+    for index in range(10):
+        path = tmp_path / "sources" / f"document-{index:02d}.txt"
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(f"Approved public fixture {index}.\n", encoding="utf-8")
+        sources.append(_row(path, f"approved-doc-{index:02d}"))
+
+    plan = semantic_plan_model(sources, run_id=RUN025_RUN_ID)
+    assert plan["ready"] is True
+    assert plan["expected_unit_count"] == 10
+    assert plan["embedding_inputs_per_lane"] == 10
+    assert plan["analysis_model_calls"] == 20
+    assert plan["qwen38_sample_calls"] == 2
+    assert plan["triage_comparison_calls"] == 8
+    assert plan["estimated_model_calls"] == 70
+    assert plan["estimated_local_bytes"] == 224 * 1024**2
+
+    with pytest.raises(PermissionError, match="autonomous Run-025"):
+        create_semantic_campaign(
+            config, run_id=RUN025_RUN_ID, researcher_id="researcher",
+            selected=sources, trusted_terms=[],
+            confirmed_text=SEMANTIC_CONFIRMATION, now=NOW,
+        )
+
+    released = create_semantic_campaign(
+        config, run_id=RUN025_RUN_ID, researcher_id="researcher",
+        selected=sources, trusted_terms=[],
+        confirmed_text=RUN025_CONFIRMATION, now=NOW,
+    )
+    assert released["campaign"].run_id == RUN025_RUN_ID
+    assert released["command"] is None
 
 
 def test_no_model_semantic_exchange_uses_existing_controller_service_and_is_idempotent(tmp_path):

@@ -174,6 +174,14 @@ def test_unified_setup_verifies_serialized_signed_host_health(tmp_path):
     assert evidence["issued_at"] == issued.isoformat()
 
 
+def test_run025_start_requires_separate_exact_authorization():
+    from runner.production_line_ui import RUN025_START_CONFIRMATION
+
+    assert RUN025_START_CONFIRMATION == (
+        "Run-025 is delivered. Authorize start_approved."
+    )
+
+
 def test_legacy_mac_studio_manual_controls_remain_registered():
     import inspect
     from runner.app import page_mac_studio_worker

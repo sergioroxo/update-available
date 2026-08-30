@@ -16,6 +16,8 @@ from runner.pipeline.factory_controller import (
     publish_synthetic_campaign,
     publish_semantic_campaign_command, publish_semantic_campaign_release,
 )
+from runner.pipeline.analysis_sections import build_adaptive_analysis_plan
+from runner.pipeline.citation_units_v2 import build_citation_units_v2
 from runner.pipeline.factory_messages import canonical_json_bytes, scan_checksum_pairs, verify_checksum_pair
 from runner.pipeline.factory_messages import sha256_bytes
 from runner.pipeline.factory_auth import (
@@ -29,7 +31,8 @@ from runner.pipeline.factory_review_adapter import (
     preview_returned_proposals, route_returned_proposals,
 )
 from runner.pipeline.factory_semantic_campaign import (
-    SEMANTIC_CAMPAIGN_STATIONS, SEMANTIC_CONFIRMATION, SEMANTIC_ROUTE_PURPOSES,
+    RUN025_CONFIRMATION, RUN025_RUN_ID, SEMANTIC_CAMPAIGN_STATIONS,
+    SEMANTIC_CONFIRMATION, SEMANTIC_ROUTE_PURPOSES,
     SemanticCampaignV1, SemanticDocumentV1, SourceInventoryRow,
     build_semantic_approval, corpus_inventory, freeze_trusted_lexicon_snapshot,
     source_queue_inventory, verify_run021_results,
@@ -47,6 +50,7 @@ PASS_A_STATIONS_LABEL = CANARY_STATIONS_LABEL + " → Independent Analysis"
 SEMANTIC_CONFIRMATION_TEXT = SEMANTIC_CONFIRMATION
 SEMANTIC_STATIONS_LABEL = " → ".join(SEMANTIC_CAMPAIGN_STATIONS)
 RUN021_ARCHIVE_SHA256 = "571bbbc255515b4175f10769be94a12385975a66a1f1af68e966bf35bf3dec85"
+RUN025_START_CONFIRMATION = "Run-025 is delivered. Authorize start_approved."
 
 
 def semantic_vertical_readiness_model(evidence: dict | None = None) -> dict:
@@ -354,18 +358,66 @@ def selection_inventory(
     return tuple(sorted(deduped.values(), key=lambda row: (row.document_id, row.origin)))
 
 
-def semantic_plan_model(rows: Iterable[SourceInventoryRow]) -> dict[str, Any]:
+def semantic_plan_model(
+    rows: Iterable[SourceInventoryRow], *, run_id: str | None = None,
+) -> dict[str, Any]:
     selected = tuple(rows)
     reasons = []
-    if not 1 <= len(selected) <= 12:
+    if run_id == RUN025_RUN_ID and not 10 <= len(selected) <= 12:
+        reasons.append("Run-025 requires 10–12 explicit documents.")
+    elif run_id != RUN025_RUN_ID and not 1 <= len(selected) <= 12:
         reasons.append("Select between 1 and 12 explicit documents.")
     if any(not row.eligible or row.source_path is None for row in selected):
         reasons.append("Every selected source must be complete, available, and eligible.")
+    unit_count = 0
+    analysis_calls = 0
+    if not reasons:
+        for row in selected:
+            try:
+                text = Path(row.source_path).read_text(encoding="utf-8", errors="strict")
+                units = build_citation_units_v2(text, doc_id=row.document_id)
+                analysis = build_adaptive_analysis_plan(
+                    run_id=run_id or RUN025_RUN_ID, units=units,
+                    small_model_route="core-qwen",
+                    repair_model_route="compiler-qwen38",
+                    target_chars=5000, overlap_units=1,
+                    maximum_prompts_per_section=6, maximum_attempts=2,
+                )
+            except (OSError, UnicodeError, ValueError):
+                reasons.append(
+                    f"{row.document_id} could not be deterministically planned."
+                )
+                continue
+            unit_count += len(units.spans)
+            analysis_calls += len(analysis.jobs)
+    document_count = len(selected)
+    source_bytes = sum(row.byte_count for row in selected)
+    estimated_local_bytes = (
+        max(
+            source_bytes * 12,
+            (64 * 1024**2) + (document_count * 16 * 1024**2),
+        )
+        if document_count else 0
+    )
+    qwen38_sample_count = (
+        2 if run_id == RUN025_RUN_ID and 10 <= document_count <= 12
+        else (document_count if run_id != RUN025_RUN_ID else 0)
+    )
     return {
         "ready": not reasons,
-        "document_count": len(selected),
-        "source_bytes": sum(row.byte_count for row in selected),
-        "estimated_local_bytes": sum(row.byte_count for row in selected) * 12,
+        "document_count": document_count,
+        "source_bytes": source_bytes,
+        "estimated_local_bytes": estimated_local_bytes,
+        "expected_unit_count": unit_count,
+        "embedding_inputs_per_lane": unit_count,
+        "embedding_calls_per_lane": document_count,
+        "analysis_model_calls": analysis_calls,
+        "primary_compiler_calls": document_count,
+        "comparison_calls": document_count,
+        "qwen38_sample_calls": qwen38_sample_count,
+        "triage_comparison_calls": max(0, document_count - qwen38_sample_count),
+        "grounded_enrichment_calls": document_count,
+        "estimated_model_calls": analysis_calls + (5 * document_count),
         "stations": SEMANTIC_CAMPAIGN_STATIONS,
         "route_purposes": SEMANTIC_ROUTE_PURPOSES,
         "maximum_attempts": 2,
@@ -381,12 +433,15 @@ def create_semantic_campaign(
 ) -> dict[str, Any]:
     if config.host_role not in {"macbook", "synthetic"} or not config.production_ready:
         raise PermissionError("Authenticated semantic campaign release is not ready on this machine.")
-    if confirmed_text != SEMANTIC_CONFIRMATION_TEXT:
-        raise PermissionError(SEMANTIC_CONFIRMATION_TEXT)
+    required_confirmation = (
+        RUN025_CONFIRMATION if run_id == RUN025_RUN_ID else SEMANTIC_CONFIRMATION_TEXT
+    )
+    if confirmed_text != required_confirmation:
+        raise PermissionError(required_confirmation)
     if not config.to_studio or not config.macbook_signing_private_key:
         raise PermissionError("The authenticated controller is not configured.")
     rows = tuple(selected)
-    plan = semantic_plan_model(rows)
+    plan = semantic_plan_model(rows, run_id=run_id)
     if not plan["ready"]:
         raise ValueError(" ".join(plan["reasons"]))
     issued = now or datetime.now(timezone.utc)
@@ -601,13 +656,24 @@ def render_production_line(config: FactoryConfig | None = None) -> None:
         st.caption("No copied artifacts are visible in the local read-only inventories.")
     eligible = [row for row in inventory if row.eligible]
     labels = [f"{row.document_id} · {row.title}" for row in eligible]
-    chosen = st.multiselect("Choose 1–12 explicit documents", labels, max_selections=12)
+    chosen = st.multiselect("Choose 10–12 explicit documents", labels, max_selections=12)
     chosen_ids = {value.split(" · ", 1)[0] for value in chosen}
     selected = tuple(row for row in eligible if row.document_id in chosen_ids)
 
     st.subheader("Plan campaign")
-    plan = semantic_plan_model(selected)
+    run_id = st.text_input("Campaign ID", value=RUN025_RUN_ID)
+    plan = semantic_plan_model(selected, run_id=run_id)
     st.write(f"**{plan['document_count']} documents** · {plan['source_bytes']:,} source bytes · about {plan['estimated_local_bytes']:,} local working bytes")
+    st.write(
+        f"**Expected evidence:** {plan['expected_unit_count']:,} V2 units · "
+        f"{plan['embedding_inputs_per_lane']:,} embedding inputs per lane"
+    )
+    st.write(
+        f"**Estimated model calls:** {plan['estimated_model_calls']:,} baseline · "
+        f"{plan['analysis_model_calls']:,} Analysis · "
+        f"{plan['qwen38_sample_calls']} Qwen3.8 sample · "
+        f"{plan['triage_comparison_calls']} triage comparisons"
+    )
     st.caption(SEMANTIC_STATIONS_LABEL)
     st.write("**Routes:** " + ", ".join(plan["route_purposes"]))
     st.write("**Scheduling:** one global model, concurrency one at route transitions, explicit verified unload")
@@ -631,10 +697,14 @@ def render_production_line(config: FactoryConfig | None = None) -> None:
     st.caption("Returned proposals cannot alter this snapshot or the same campaign index.")
 
     st.subheader("Approve and release")
-    run_id = st.text_input("Campaign ID", value="semantic-campaign-022")
-    researcher_id = st.text_input("Researcher ID", value="researcher")
+    researcher_id = st.text_input(
+        "Researcher ID", value="researcher-sergio-galvao-roxo"
+    )
+    required_confirmation = (
+        RUN025_CONFIRMATION if run_id == RUN025_RUN_ID else SEMANTIC_CONFIRMATION_TEXT
+    )
     confirmation = st.text_input("Type the exact approval sentence", value="")
-    can_release = bool(plan["ready"] and confirmation == SEMANTIC_CONFIRMATION_TEXT and config.production_ready)
+    can_release = bool(plan["ready"] and confirmation == required_confirmation and config.production_ready)
     if st.button("Publish authenticated campaign", disabled=not can_release):
         result = create_semantic_campaign(
             config, run_id=run_id, researcher_id=researcher_id,
@@ -650,13 +720,24 @@ def render_production_line(config: FactoryConfig | None = None) -> None:
     if runs:
         selected_run = st.selectbox("Released campaign", runs)
         st.subheader("Commands")
+        start_confirmation = ""
+        if selected_run == RUN025_RUN_ID:
+            start_confirmation = st.text_input(
+                "Type the separate Run-025 start authorization", value="",
+            )
         for label, action in (
             ("Start approved work", "start_approved"),
             ("Pause after current", "pause_after_current"),
             ("Resume", "resume"),
             ("Cancel unstarted work", "cancel_unstarted"),
         ):
-            if st.button(label, key=f"semantic-command-{action}"):
+            start_disabled = (
+                action == "start_approved" and selected_run == RUN025_RUN_ID
+                and start_confirmation != RUN025_START_CONFIRMATION
+            )
+            if st.button(
+                label, key=f"semantic-command-{action}", disabled=start_disabled,
+            ):
                 result = publish_semantic_control(config, selected_run, action)
                 st.success(f"Authenticated command {result['command'].sequence} · checksum {result['sha256'][:12]}…")
         st.subheader("Progress")
