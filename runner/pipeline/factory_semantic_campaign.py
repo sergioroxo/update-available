@@ -458,6 +458,8 @@ def _inventory_file(
             len(data), sha256_bytes(data), 0, prior_analysis, False, "not_strict_utf8",
         )
     reason = hold_reason
+    if not text:
+        reason = reason or "source_empty"
     if "\x00" in text:
         reason = reason or "source_contains_nul"
     if "[TRUNCATED MIDDLE" in text:

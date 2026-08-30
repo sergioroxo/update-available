@@ -15,6 +15,7 @@ from runner.pipeline.factory_semantic_campaign import (
     AcceptedSemanticRuntimeAdapter,
     DeterministicNoModelSemanticAdapter,
     build_semantic_approval,
+    corpus_inventory,
     freeze_trusted_lexicon_snapshot,
     source_queue_inventory,
     verify_run021_results,
@@ -110,6 +111,18 @@ def test_semantic_contract_and_frozen_trust_rule_are_strict():
     tampered["lexicon_snapshot_sha256"] = "b" * 64
     with pytest.raises(ValueError, match="approval hash mismatch"):
         type(approval).model_validate(tampered)
+
+
+def test_corpus_inventory_holds_empty_canonical_text(tmp_path):
+    document = tmp_path / "empty-document"
+    document.mkdir()
+    (document / "extracted.txt").write_bytes(b"")
+
+    rows = corpus_inventory(tmp_path)
+
+    assert len(rows) == 1
+    assert rows[0].eligible is False
+    assert rows[0].hold_reason == "source_empty"
 
 
 def test_no_model_semantic_exchange_uses_existing_controller_service_and_is_idempotent(tmp_path):
