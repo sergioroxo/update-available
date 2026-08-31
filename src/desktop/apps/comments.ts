@@ -1,4 +1,20 @@
 /**
+ * ⚑ STATUS 2026-08-28 — PARTLY SUPERSEDED, DELIBERATELY NOT DELETED.
+ * Sérgio ruled "combine the comments into one tile", and the combining is done:
+ * this module's SIX PINNED TEMPLATES — their lines, their `follow` flags and
+ * their witness strings — now run inside `clearComments.ts`, the board's one
+ * comments tile, alongside that tile's own flagged queue. The two arguments sit
+ * on one screen at last: the kind ones are the flagged ones, AND the answer that
+ * sounds kindest is the one that sends somebody to a stranger's door.
+ *
+ * ⚑ WHAT IS NOT CARRIED OVER, and why this file stays: the LIVE THREAD. Comments
+ * arriving while earlier ones are still open, the thread that does not empty, and
+ * the `echo` — a later commenter repeating the reply she just sent, in their own
+ * words, having acted on it. None of that is rebuilt, and deleting the file would
+ * throw away authored design for a mechanic nobody has replaced. It is
+ * unreachable in the build today; `data/dialog/s3_comments.json` is reached
+ * through the tile, and this class is not mounted anywhere.
+ *
  * ⚑ THE COMMENTS — the recruitment floor, live (Session 70, E3).
  * Design: `docs/REINTERP_E3_THE_JOB_2026-08-03.md` §1. Content + every string:
  * `data/dialog/s3_comments.json`, whose `_doc` blocks are the ethics gates on

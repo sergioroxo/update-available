@@ -37,6 +37,11 @@ import { ERA3 } from '../theme/era3';
 import { ledger } from '../../state/ledger';
 import type { TaskSurface, TaskArea, TaskHit } from './taskSurface';
 import cm from '../../../data/dialog/s3_flagged.json';
+// ⚑ THE OTHER HALF OF THE COMBINED TILE (Sérgio, 2026-08-28: "combine the
+//   comments into one tile"). The templates, their lines, their `follow` flags
+//   and their witness strings come from here UNCHANGED — this file re-authors
+//   none of them. See `_docReply` in s3_flagged.json for the whole argument.
+import cmv from '../../../data/dialog/s3_comments.json';
 
 type CommentDef = {
   id: string; author: string; body: string; flag: string | null;
@@ -46,15 +51,23 @@ type CommentDef = {
 const THREAD = cm.thread as CommentDef[];
 const FLAGGED = THREAD.filter(c => c.flag !== null);
 
-type Outcome = 'removed' | 'left';
+type Outcome = 'removed' | 'left' | 'replied';
+
+/** one pinned answer, from s3_comments.json */
+type TemplateDef = { id: string; name: string; line: string; follow: boolean; witness: string };
+const TEMPLATES = cmv.templates as TemplateDef[];
 
 export class ClearCommentsApp implements TaskSurface {
   readonly id = 'comments';
   readonly windowTitle = cm.app.title;
-  readonly beats = ['open', 'removed', 'left', 'march', 'done'] as const;
+  readonly beats = ['open', 'removed', 'left', 'march', 'picker', 'replied', 'routed', 'done'] as const;
 
   private v = 0;
   private decisions = new Map<string, Outcome>();
+  /** which reply she picked, for the ones she answered */
+  private replies = new Map<string, TemplateDef>();
+  /** the comment whose template picker is open, if any */
+  private picking: string | null = null;
 
   version(): number { return this.v; }
   private bump(): void { this.v++; }
@@ -75,6 +88,34 @@ export class ClearCommentsApp implements TaskSurface {
       templateId: outcome,
       follow: false,
       witness: outcome === 'removed' ? c.witnessRemoved : c.witnessLeft
+    });
+    this.bump();
+  }
+
+  /**
+   * ⚑ ANSWERING IS THE THIRD THING SHE CAN DO, and it is the one that carries
+   * the era's quietest move. She writes nothing: she picks one of six pinned
+   * lines. Two of the six set `follow`, and NOTHING in the picker says which —
+   * same pill, same size, same warm name, same order (s3_comments.json's
+   * `_docFollow`, which governs this and is not to be softened). The only trace
+   * is one small grey line under the posted reply, in the same grey as
+   * everything else on the row.
+   *
+   * ⚑ A reply LEAVES THE COMMENT UP. It is not a third way of moderating; it is
+   * what the tool is actually for, and the flag is simply spent either way.
+   */
+  private reply(commentId: string, templateId: string): void {
+    const c = FLAGGED.find(cc => cc.id === commentId);
+    const t = TEMPLATES.find(tt => tt.id === templateId);
+    if (!c || !t || this.decisions.has(commentId)) return;
+    this.decisions.set(commentId, 'replied');
+    this.replies.set(commentId, t);
+    this.picking = null;
+    ledger.comments.push({
+      commentId: c.id,
+      templateId: t.id,
+      follow: t.follow,
+      witness: t.witness
     });
     this.bump();
   }
@@ -109,8 +150,10 @@ export class ClearCommentsApp implements TaskSurface {
     ctx.fillText(cm.app.sub, area.x + area.w - subW, area.y);
     px(ctx, area.x, area.y + 14, area.w, 1, ERA3.glassEdge);
 
-    const btnW = 74; const btnH = 18;
-    const bodyW = area.w - btnW * 2 - 24;
+    // three verbs now, so each is narrower — see the reply block below
+    const btnW = 58; const btnH = 18; const gap = 6;
+    const verbsW = btnW * 3 + gap * 2;
+    const bodyW = area.w - verbsW - 24;
     let ry = area.y + 22;
 
     for (const c of THREAD) {
@@ -120,7 +163,13 @@ export class ClearCommentsApp implements TaskSurface {
 
       setFont(ctx, 11);
       const lines = gone ? [cm.app.removedBody] : wrapText(ctx, c.body, bodyW).slice(0, 2);
-      const rowH = 16 + lines.length * 14;
+      const answered = this.replies.get(c.id);
+      const picking = this.picking === c.id;
+      // the posted reply sits under the comment it answers; the picker, when
+      // open, takes two rows of pills beneath the row it belongs to
+      const replyH = answered ? 16 + (answered.follow ? 12 : 0) : 0;
+      const pickH = picking ? 58 : 0;   // 12 hint + two rows of (btnH + 4), + a little air
+      const rowH = 16 + lines.length * 14 + replyH + pickH;
 
       // ⚑ an unflagged row is drawn PLAINER, not darker. It is not being
       //   accused of anything; it simply is not the tool's business.
@@ -149,19 +198,52 @@ export class ClearCommentsApp implements TaskSurface {
       //   at all — not disabled ones, NONE. A greyed-out button would still be
       //   a promise that the tool could act if it wanted to, and it cannot.
       if (flagged) {
-        const bx = area.x + area.w - btnW * 2 - 8;
-        const by = ry + Math.round((rowH - btnH) / 2);
+        const bx = area.x + area.w - verbsW;
+        const by = ry + 16;
         if (!decided) {
           aero.button(ctx, bx, by, btnW, btnH, cm.app.remove, { size: 10 });
-          aero.button(ctx, bx + btnW + 8, by, btnW, btnH, cm.app.leave, { size: 10 });
+          aero.button(ctx, bx + btnW + gap, by, btnW, btnH, cm.app.leave, { size: 10 });
+          aero.button(ctx, bx + (btnW + gap) * 2, by, btnW, btnH, cm.app.reply, { size: 10 });
           hit({ x: bx, y: by, w: btnW, h: btnH, id: 'cm-remove-' + c.id });
-          hit({ x: bx + btnW + 8, y: by, w: btnW, h: btnH, id: 'cm-leave-' + c.id });
+          hit({ x: bx + btnW + gap, y: by, w: btnW, h: btnH, id: 'cm-leave-' + c.id });
+          hit({ x: bx + (btnW + gap) * 2, y: by, w: btnW, h: btnH, id: 'cm-pick-' + c.id });
         } else {
           setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
-          const tag = decided === 'removed' ? cm.app.removedTag : cm.app.leftTag;
+          const tag = decided === 'removed' ? cm.app.removedTag
+            : decided === 'replied' ? cm.app.repliedTag : cm.app.leftTag;
           const tw = ctx.measureText(tag).width;
           ctx.fillText(tag, area.x + area.w - tw, by + 4);
         }
+      }
+
+      // ── the answer she posted, under the comment it answers ──
+      if (answered) {
+        const ay = ry + 16 + lines.length * 14;
+        setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+        ctx.fillText(cmv.app.replyAs + ' · ' + answered.line, area.x + 22, ay);
+        // ⚑ THE ONLY TRACE, and it is deliberately no louder than a timestamp.
+        //   s3_comments.json's `_docFollow` governs this line: same grey, no
+        //   emphasis of any kind, no icon, no colour. Do not make it legible-er.
+        if (answered.follow) {
+          setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+          ctx.fillText(cmv.app.followNote, area.x + 22, ay + 13);
+        }
+      }
+
+      // ── the picker: six pinned lines, and nothing tells them apart ──
+      if (picking) {
+        const py = ry + 16 + lines.length * 14;
+        setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+        ctx.fillText(cmv.app.dockHeading.replace('{who}', c.author) + ' — ' + cmv.app.dockHint,
+          area.x + 10, py);
+        const pw = Math.floor((area.w - 20 - gap * 2) / 3);
+        TEMPLATES.forEach((t, i) => {
+          const col = i % 3; const row = Math.floor(i / 3);
+          const tx = area.x + 10 + col * (pw + gap);
+          const ty = py + 12 + row * (btnH + 4);
+          aero.button(ctx, tx, ty, pw, btnH, t.name, { size: 9 });
+          hit({ x: tx, y: ty, w: pw, h: btnH, id: 'cm-tpl-' + c.id + '-' + t.id });
+        });
       }
 
       ry += rowH + 3;
@@ -176,6 +258,20 @@ export class ClearCommentsApp implements TaskSurface {
   press(id: string): boolean {
     if (id.startsWith('cm-remove-')) { this.decide(id.slice(10), 'removed'); return true; }
     if (id.startsWith('cm-leave-')) { this.decide(id.slice(9), 'left'); return true; }
+    if (id.startsWith('cm-pick-')) {
+      const c = id.slice(8);
+      this.picking = this.picking === c ? null : c;   // pressing Reply again closes it
+      this.bump();
+      return true;
+    }
+    if (id.startsWith('cm-tpl-')) {
+      // id is `cm-tpl-<commentId>-<templateId>`; template ids carry no dashes,
+      // so the LAST dash splits them and a comment id may contain its own
+      const rest = id.slice(7);
+      const cut = rest.lastIndexOf('-');
+      if (cut > 0) this.reply(rest.slice(0, cut), rest.slice(cut + 1));
+      return true;
+    }
     return false;
   }
 
@@ -188,6 +284,11 @@ export class ClearCommentsApp implements TaskSurface {
         FLAGGED.slice(0, -1).forEach(c => this.decide(c.id, 'removed'));
         break;
       case 'done': FLAGGED.forEach(c => this.decide(c.id, 'removed')); break;
+      case 'picker': this.picking = FLAGGED[0].id; this.bump(); break;
+      case 'replied': this.reply(FLAGGED[0].id, 'welcome'); break;
+      // ⚑ the routed one, reachable for review on its own: the reply that
+      //   sounds like the kindest of the six is the one that sends somebody
+      case 'routed': this.reply(FLAGGED[0].id, 'neighbour'); break;
     }
   }
 }

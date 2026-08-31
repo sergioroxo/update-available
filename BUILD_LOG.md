@@ -483,3 +483,46 @@ merely waiting, and IRC's escalation is timed at 13 characters a second.
 
 ⚑ Still owed: the run ends in Era 4 during one of L's speaking gaps rather than
 on her last chip, so the Close is still not proven reachable end-to-end.
+
+## S95 (2026-08-31) — Sérgio's three decisions
+
+**1 · Room 1 goes dark past its own era** (his words: *"The room should go dark"*).
+Under the frozen-in-time model each room keeps the era it was left in, which put
+Daniel's lit 1997 desk in 2026. Now you see the shape of the room and not its
+objects: E4's `roomFill` (range 5 at [0,1.9,0.9] — his centre room) and
+`screenGlow` (the glow of a monitor that is switched off by E4 anyway) both go to
+zero. ⚑ They could not simply be dropped: `roomFill` had been widened to range 8
+and recoloured cold in E4, so it was doubling as the cluster-wide wash and
+zeroing it alone took Room 3 down with Room 1. The wash moved into the per-room
+accents instead — `zoneFill` 0.28 → 0.52, `mayaGlow` 1.35 → 1.55. The travelling
+lamp is untouched: by E4 it has already moved to Maya's desk, so it is Room 3's
+warmth, not Room 1's. Verified by looking: Room 1 dark, Rooms 2 and 3 still read.
+
+**2 · The slab is gone.** `bedDustSheet` was a 1.0 × 0.05 × 2.0 box — a 5 cm grey
+slab, not cloth — and it read wrong in every screenshot it appeared in. Removed
+from r3's add list. `check-rooms` now folds 196 props at E4, down from 197.
+
+**3 · The comments are one tile** (*"combine the comments into one tile"*). The era
+had TWO comment surfaces: the board's flagged queue (`clearComments.ts`) and a
+live recruitment floor written for a tablet that no longer exists
+(`comments.ts`) — 674 lines of authored, ethics-gated content nobody could reach.
+The orphan's argument is the one the tile was missing: **she writes nothing, she
+picks a pinned template, and two of the six silently route a stranger to
+somebody's door.** So the tile gained a third verb. Remove / Leave up / **Reply**,
+and Reply opens the six templates from `s3_comments.json` unchanged — same lines,
+same `follow` flags, same witness strings.
+
+⚑ Both arguments now sit on one screen, which is why combining them was worth
+doing rather than just deleting one: *the kind ones are the flagged ones*, and
+*the answer that sounds kindest is the one that sends somebody round*. Mairead's
+"you were funny and you were completely fine" is flagged `off-topic · personal
+contact`; answer it with "Find Them a Neighbour" and `follow-up assigned` appears
+underneath in the same grey as a timestamp. `s3_comments.json`'s `_docFollow`
+governs that line and nothing in the picker distinguishes the two that route —
+same pill, same size, same warm name, same order.
+
+⚑ `comments.ts` is NOT deleted. Its live thread — comments arriving while earlier
+ones are open, the thread that does not empty, and the `echo` where a later
+commenter repeats the reply she just sent — is not rebuilt, and throwing away
+authored design for an unreplaced mechanic would be worse than leaving it marked.
+Its header now says exactly what was carried over and what was not.

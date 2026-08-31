@@ -203,16 +203,17 @@
     }
    }
   },
+  "_docE4RoomOneDark": "\u26d1 ROOM 1 GOES DARK PAST ITS OWN ERA (S\u00e9rgio, 2026-08-28: 'The room should go dark'). Under the frozen-in-time model each room keeps the era it was left in, which would have put Daniel's lit 1997 desk in 2026; his ruling is that you see the SHAPE of the room and not its objects. So Room 1's own two lights are off here: `roomFill` sits at [0,1.9,0.9] with range 5, which is Daniel's centre room, and `screenGlow` is the glow of a monitor that is switched off by E4 anyway (era3Devices: the last update draws on the workstation and Daniel's Era-3 monitor stays off) \u2014 it was lighting an empty room from a dead screen. \u26d1 WHAT REPLACES IT, and why the numbers moved rather than just dropping: `roomFill` had been widened to range 8 and recoloured cold in E4, so it was doing double duty as the cluster-wide wash. Zeroing it alone would have taken Room 3 down with Room 1. The wash moves to the per-room accents instead \u2014 `zoneFill` 0.28 \u2192 0.52 (light-zoneE/W at x=\u00b13.88) and `mayaGlow` 1.35 \u2192 1.55 \u2014 which light Rooms 2 and 3 from inside themselves and leave the centre unlit. \u26d1 The travelling lamp is NOT touched: by E4 it has already moved to Maya's desk (cluster.ts: 'the lamp lives in Room 1 for E1-E3; at E4 its props move'), so it is Room 3's warmth here, not Room 1's.",
   "e4": {
    "ambient": [
     0.05,
     0.05,
     0.07
    ],
-   "zoneFill": 0.28,
+   "zoneFill": 0.52,
    "lights": {
     "roomFill": {
-     "intensity": 0.1,
+     "intensity": 0.0,
      "color": "#8899BB",
      "range": 8.0
     },
@@ -221,7 +222,7 @@
      "range": 1.5
     },
     "screenGlow": {
-     "intensity": 0.35,
+     "intensity": 0.0,
      "color": "#8899BB"
     },
     "moonlight": {
@@ -232,7 +233,7 @@
      "range": 4.6
     },
     "mayaGlow": {
-     "intensity": 1.35
+     "intensity": 1.55
     },
     "r2Lamp": {
      "intensity": 0.55,
