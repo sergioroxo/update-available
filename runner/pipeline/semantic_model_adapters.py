@@ -303,9 +303,12 @@ class SemanticEndpointConfigV1(_Strict):
     timeout_seconds: float = Field(default=180.0, ge=1, le=1800)
     global_model_lease_path: str | None = None
     durable_receipt_path: str | None = None
+    durable_response_path: str | None = None
     routes: tuple[LocalModelRouteV1, ...]
 
-    @field_validator("global_model_lease_path", "durable_receipt_path")
+    @field_validator(
+        "global_model_lease_path", "durable_receipt_path", "durable_response_path",
+    )
     @classmethod
     def _absolute_local_paths(cls, value: str | None) -> str | None:
         if value is None:
@@ -622,6 +625,84 @@ class OpenAICompatibleLocalClient:
                 os.chmod(temporary, 0o600)
                 os.replace(temporary, path)
 
+    def _durable_receipt_for_request(
+        self, *, request_sha256: str, route: LocalModelRouteV1, resolved: str,
+    ) -> ModelCallReceiptV1 | None:
+        if not self.config.durable_receipt_path:
+            return None
+        path = Path(self.config.durable_receipt_path)
+        if not path.is_file():
+            return None
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if payload.get("schema_version") != "copied-pilot-model-receipts-v1.0":
+            raise SemanticAdapterError("durable_receipt_log_schema_mismatch")
+        matches = []
+        for value in payload.get("receipts") or []:
+            receipt = ModelCallReceiptV1.model_validate(value)
+            if (
+                receipt.request_sha256 == request_sha256
+                and receipt.purpose == route.purpose
+                and receipt.requested_model == route.requested_model
+                and receipt.provider_resolved_model == resolved
+            ):
+                matches.append(receipt)
+        if len({row.response_sha256 for row in matches}) > 1:
+            raise SemanticAdapterError("durable_request_has_conflicting_responses")
+        return matches[0] if matches else None
+
+    def _reuse_durable_response(
+        self, *, request_sha256: str, route: LocalModelRouteV1, resolved: str,
+    ) -> tuple[dict[str, Any], ModelCallReceiptV1] | None:
+        receipt = self._durable_receipt_for_request(
+            request_sha256=request_sha256, route=route, resolved=resolved,
+        )
+        if receipt is None:
+            return None
+        if not self.config.durable_response_path:
+            raise SemanticAdapterError("durable_response_body_unavailable")
+        path = Path(self.config.durable_response_path)
+        if not path.is_file():
+            raise SemanticAdapterError("durable_response_body_unavailable")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if payload.get("schema_version") != "semantic-response-cache-v1.0":
+            raise SemanticAdapterError("durable_response_cache_schema_mismatch")
+        row = (payload.get("responses") or {}).get(request_sha256)
+        if not isinstance(row, dict) or not isinstance(row.get("response"), dict):
+            raise SemanticAdapterError("durable_response_body_unavailable")
+        response = row["response"]
+        if hashlib.sha256(_canonical_bytes(response)).hexdigest() != receipt.response_sha256:
+            raise SemanticAdapterError("durable_response_cache_hash_mismatch")
+        return response, receipt
+
+    def _cache_response(self, *, request_sha256: str, response: dict[str, Any]) -> None:
+        if not self.config.durable_response_path:
+            return
+        path = Path(self.config.durable_response_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload: dict[str, Any] = {
+            "schema_version": "semantic-response-cache-v1.0", "responses": {},
+        }
+        if path.exists():
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if payload.get("schema_version") != "semantic-response-cache-v1.0":
+                raise SemanticAdapterError("durable_response_cache_schema_mismatch")
+        responses = dict(payload.get("responses") or {})
+        existing = responses.get(request_sha256)
+        row = {
+            "response_sha256": hashlib.sha256(_canonical_bytes(response)).hexdigest(),
+            "response": response,
+        }
+        if existing is not None and existing != row:
+            raise SemanticAdapterError("durable_response_cache_conflict")
+        responses[request_sha256] = row
+        temporary = path.with_name(path.name + ".tmp")
+        temporary.write_bytes(_canonical_bytes({
+            "schema_version": "semantic-response-cache-v1.0",
+            "responses": responses,
+        }) + b"\n")
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, path)
+
     def preflight(self) -> dict[str, str]:
         """Resolve LiteLLM aliases to underlying local model identities."""
         try:
@@ -695,7 +776,6 @@ class OpenAICompatibleLocalClient:
         concurrency_level: int, response_schema: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], ModelCallReceiptV1]:
         resolved = self.binding(route)
-        self._activate_model(resolved)
         request = {
             "model": route.requested_model,
             "messages": [
@@ -735,6 +815,13 @@ class OpenAICompatibleLocalClient:
             "grounded_enrichment",
         }:
             request["reasoning_effort"] = "none"
+        request_sha256 = hashlib.sha256(_canonical_bytes(request)).hexdigest()
+        reused = self._reuse_durable_response(
+            request_sha256=request_sha256, route=route, resolved=resolved,
+        )
+        if reused is not None:
+            return reused
+        self._activate_model(resolved)
         started = time.perf_counter()
         try:
             response = self.client.post("/v1/chat/completions", json=request)
@@ -799,6 +886,7 @@ class OpenAICompatibleLocalClient:
                 issues=_mapper_validation_issues(exc),
                 requested_alias=route.requested_model,
             ) from None
+        self._cache_response(request_sha256=request_sha256, response=payload)
         self._record(receipt)
         return payload, receipt
 
@@ -1097,7 +1185,10 @@ class LocalGroundedEnrichmentExecutor:
         self.client = client
         self.route = client.config.route("grounded_enrichment")
 
-    def execute(self, request: GroundedEnrichmentRequestV1) -> dict[str, Any]:
+    def execute(
+        self, request: GroundedEnrichmentRequestV1, *,
+        repair_error_code: str = "",
+    ) -> dict[str, Any]:
         if request.requested_model != self.route.requested_model:
             raise SectionAnalysisError(
                 "grounded_enrichment_route_mismatch", stage="route_identity",
@@ -1126,6 +1217,14 @@ class LocalGroundedEnrichmentExecutor:
             "response JSON Schema: "
             + _canonical_bytes(grounded_response_json_schema()).decode("utf-8")
         )
+        if repair_error_code:
+            if repair_error_code != "grounded_enrichment_schema_validation_failed":
+                raise SectionAnalysisError("grounded_enrichment_repair_scope_mismatch")
+            system += (
+                " This is the single bounded schema repair. The prior response used "
+                "an invalid reason_code. Every reason_code must match ^[a-z0-9_]+$ "
+                "exactly; use a short lowercase underscore token or return no connection."
+            )
         user = _canonical_bytes({
             "document_id": request.document_id,
             "completed_independent_analysis": request.analysis_payload,

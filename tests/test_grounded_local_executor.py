@@ -8,7 +8,11 @@ import pytest
 
 from runner.models.retrieval import RetrievalHitV1
 from runner.pipeline.analysis_sections import SectionAnalysisError
-from runner.pipeline.factory_semantic_pilot import endpoint_config, reuse_run021_bindings
+from runner.pipeline.factory_semantic_pilot import (
+    _validate_or_execute_enrichment,
+    endpoint_config,
+    reuse_run021_bindings,
+)
 from runner.pipeline.retrieval_context import (
     build_grounded_enrichment_request,
     build_retrieval_context,
@@ -120,3 +124,42 @@ def test_grounded_local_adapter_rejects_invented_and_duplicate_locators():
     with pytest.raises(SectionAnalysisError, match="duplicate_locator"):
         LocalGroundedEnrichmentExecutor(client).execute(request_value)
     client.close()
+
+
+def test_grounded_schema_failure_uses_one_distinct_bounded_repair(tmp_path):
+    request_value = _request()
+    calls = []
+
+    def handler(request: httpx.Request):
+        body = json.loads(request.content)
+        calls.append(body["messages"][0]["content"])
+        invalid = len(calls) == 1
+        return httpx.Response(200, json={
+            "model": "core-gemma",
+            "choices": [{"message": {"content": json.dumps({
+                "document_id": request_value.document_id,
+                "retrieval_context_sha256": request_value.retrieval_context.context_sha256,
+                "corpus_connections": [{
+                    "document_id": "doc-b", "unit_id": "unit-b",
+                    "reason_code": "Invalid reason" if invalid else "schema_repaired",
+                }],
+            })}, "finish_reason": "stop"}],
+        })
+
+    client = OpenAICompatibleLocalClient(
+        endpoint_config(base_url="http://localhost:4000", api_key=""),
+        transport=httpx.MockTransport(handler),
+    )
+    reuse_run021_bindings(client)
+    try:
+        output = _validate_or_execute_enrichment(
+            path=tmp_path / "enrichment.json", request=request_value,
+            executor=LocalGroundedEnrichmentExecutor(client),
+            failure_log=tmp_path / "failures.json",
+        )
+        assert output["corpus_connections"][0]["reason_code"] == "schema_repaired"
+        assert len(calls) == 2
+        assert "single bounded schema repair" not in calls[0]
+        assert "single bounded schema repair" in calls[1]
+    finally:
+        client.close()

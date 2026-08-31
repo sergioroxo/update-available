@@ -99,7 +99,7 @@ _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "paused": {"running", "cancelled"},
     "held": {"ready", "cancelled"},
     "held_storage": {"ready", "cancelled"},
-    "failed": {"ready", "cancelled"},
+    "failed": {"ready", "held", "cancelled"},
     "succeeded": set(),
     "cancelled": set(),
 }

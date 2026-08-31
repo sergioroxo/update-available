@@ -7,6 +7,7 @@ import json
 import os
 import signal
 import sqlite3
+import threading
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -67,11 +68,19 @@ from .factory_semantic_campaign import (
     SemanticCampaignV1,
     SemanticStationAdapter,
 )
+from .analysis_sections import RetryableSectionError, SectionAnalysisError
+from .semantic_model_adapters import (
+    RetryableSemanticAdapterError,
+    SemanticAdapterError,
+)
+from .factory_semantic_pilot import SemanticPilotError
 
 
-PRODUCTION_DB_SCHEMA = "production-canary-worker-db-v1.1"
+PRODUCTION_DB_SCHEMA = "production-canary-worker-db-v1.2"
 LEGACY_PRODUCTION_DB_SCHEMA = "production-canary-worker-db-v1.0"
+INTERMEDIATE_PRODUCTION_DB_SCHEMA = "production-canary-worker-db-v1.1"
 LEASE_RECOVERY_REASON = "lease_expired_recovery"
+LEASE_ATTEMPT_LIMIT_REASON = "lease_expired_attempt_limit"
 
 
 class ProductionLeaseRejected(RuntimeError):
@@ -80,6 +89,78 @@ class ProductionLeaseRejected(RuntimeError):
 
 class ProductionWorkerCrash(RuntimeError):
     pass
+
+
+class ProductionStationCancelled(RuntimeError):
+    pass
+
+
+class ProductionLeaseHeartbeat:
+    """Refresh one fenced lease from a dedicated non-model database thread."""
+
+    def __init__(
+        self, *, database_path: Path, row: sqlite3.Row, token: str,
+        clock: Callable[[], datetime], interval_seconds: float = 15.0,
+        lease_seconds: float = 60.0, shutdown_event: threading.Event | None = None,
+    ):
+        self.database_path = Path(database_path)
+        self.identity = tuple(row[name] for name in (
+            "run_id", "package_id", "document_id", "station_id",
+        ))
+        self.token = token
+        self.clock = clock
+        self.interval_seconds = interval_seconds
+        self.lease_seconds = lease_seconds
+        self.shutdown_event = shutdown_event
+        self._stop = threading.Event()
+        self._failure: BaseException | None = None
+        self._thread = threading.Thread(
+            target=self._run,
+            name=f"production-lease-heartbeat-{row['document_id']}-{row['station_id']}",
+            daemon=True,
+        )
+
+    def start(self) -> "ProductionLeaseHeartbeat":
+        self._thread.start()
+        return self
+
+    def _run(self) -> None:
+        connection: sqlite3.Connection | None = None
+        try:
+            connection = sqlite3.connect(self.database_path, timeout=5)
+            while not self._stop.wait(self.interval_seconds):
+                if self.shutdown_event is not None and self.shutdown_event.is_set():
+                    return
+                current = self.clock()
+                expiry = current + timedelta(seconds=self.lease_seconds)
+                with connection:
+                    cursor = connection.execute(
+                        "UPDATE production_jobs SET heartbeat_time=?,lease_expiry=? "
+                        "WHERE run_id=? AND package_id=? AND document_id=? AND station_id=? "
+                        "AND state='running' AND lease_token=?",
+                        (current.isoformat(), expiry.isoformat(), *self.identity, self.token),
+                    )
+                if cursor.rowcount != 1:
+                    raise ProductionLeaseRejected("heartbeat lost production lease")
+        except BaseException as exc:
+            self._failure = exc
+        finally:
+            if connection is not None:
+                connection.close()
+
+    def stop(self) -> None:
+        self._stop.set()
+        self._thread.join(timeout=max(2.0, self.interval_seconds + 1.0))
+        if self._thread.is_alive():
+            raise RuntimeError("production lease heartbeat did not terminate")
+        if self._failure is not None:
+            raise self._failure
+
+    def __enter__(self) -> "ProductionLeaseHeartbeat":
+        return self.start()
+
+    def __exit__(self, _type, _value, _traceback) -> None:
+        self.stop()
 
 
 def _inside(path: Path, root: Path) -> bool:
@@ -126,6 +207,9 @@ class ProductionWorkerStore:
           input_fingerprint TEXT NOT NULL, executor_version TEXT NOT NULL,
           policy_version TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending',
           attempt INTEGER NOT NULL DEFAULT 0, maximum_attempts INTEGER NOT NULL,
+          effective_attempt INTEGER NOT NULL DEFAULT 0,
+          effective_maximum_attempts INTEGER NOT NULL DEFAULT 0,
+          repair_generation INTEGER NOT NULL DEFAULT 0,
           retry_classification TEXT NOT NULL, lease_token TEXT, lease_expiry TEXT,
           heartbeat_time TEXT, output_sha256 TEXT NOT NULL DEFAULT '',
           terminal_reason TEXT NOT NULL DEFAULT '',
@@ -148,6 +232,23 @@ class ProductionWorkerStore:
           completed INTEGER NOT NULL DEFAULT 0,
           PRIMARY KEY(run_id,package_id,document_id,station_id,attempt)
         );
+        CREATE TABLE IF NOT EXISTS production_repair_generations (
+          run_id TEXT NOT NULL, generation INTEGER NOT NULL,
+          manifest_sha256 TEXT NOT NULL, applied_at TEXT NOT NULL,
+          reason TEXT NOT NULL,
+          PRIMARY KEY(run_id,generation)
+        );
+        CREATE TABLE IF NOT EXISTS production_job_repairs (
+          run_id TEXT NOT NULL, generation INTEGER NOT NULL,
+          package_id TEXT NOT NULL, document_id TEXT NOT NULL,
+          station_id TEXT NOT NULL, original_state TEXT NOT NULL,
+          original_attempt INTEGER NOT NULL,
+          original_effective_attempt INTEGER NOT NULL,
+          original_lease_token_sha256 TEXT NOT NULL,
+          repaired_effective_attempt INTEGER NOT NULL,
+          PRIMARY KEY(run_id,generation,package_id,document_id,station_id),
+          FOREIGN KEY(run_id,generation) REFERENCES production_repair_generations(run_id,generation)
+        );
         """)
         columns = {
             row[1] for row in self.connection.execute("PRAGMA table_info(production_jobs)")
@@ -157,9 +258,31 @@ class ProductionWorkerStore:
                 "ALTER TABLE production_jobs ADD COLUMN "
                 "bound_predecessor_output_sha256 TEXT NOT NULL DEFAULT ''"
             )
+        if "effective_attempt" not in columns:
+            self.connection.execute(
+                "ALTER TABLE production_jobs ADD COLUMN "
+                "effective_attempt INTEGER NOT NULL DEFAULT 0"
+            )
+            self.connection.execute(
+                "UPDATE production_jobs SET effective_attempt=attempt"
+            )
+        if "effective_maximum_attempts" not in columns:
+            self.connection.execute(
+                "ALTER TABLE production_jobs ADD COLUMN "
+                "effective_maximum_attempts INTEGER NOT NULL DEFAULT 0"
+            )
+            self.connection.execute(
+                "UPDATE production_jobs SET effective_maximum_attempts=maximum_attempts"
+            )
+        if "repair_generation" not in columns:
+            self.connection.execute(
+                "ALTER TABLE production_jobs ADD COLUMN "
+                "repair_generation INTEGER NOT NULL DEFAULT 0"
+            )
         existing = self.get_meta("schema_version")
         if existing and existing not in {
-            LEGACY_PRODUCTION_DB_SCHEMA, PRODUCTION_DB_SCHEMA,
+            LEGACY_PRODUCTION_DB_SCHEMA, INTERMEDIATE_PRODUCTION_DB_SCHEMA,
+            PRODUCTION_DB_SCHEMA,
         }:
             raise ValueError("production worker database requires an explicit migration")
         self.set_meta("schema_version", PRODUCTION_DB_SCHEMA)
@@ -180,6 +303,94 @@ class ProductionWorkerStore:
             "SELECT value FROM production_meta WHERE key=?", (key,),
         ).fetchone()
         return str(row[0]) if row else default
+
+    def apply_repair_generation(
+        self, *, run_id: str, generation: int, manifest_sha256: str,
+        applied_at: datetime, reason: str,
+        effective_attempts: Mapping[tuple[str, str], int],
+    ) -> None:
+        """Supersede lease-loop claims without rewriting historical attempts."""
+        if generation < 1 or len(manifest_sha256) != 64:
+            raise ValueError("repair generation identity is malformed")
+        if not effective_attempts:
+            raise ValueError("repair generation has no jobs")
+        with self.connection:
+            existing = self.connection.execute(
+                "SELECT manifest_sha256 FROM production_repair_generations "
+                "WHERE run_id=? AND generation=?", (run_id, generation),
+            ).fetchone()
+            if existing is not None:
+                if existing["manifest_sha256"] != manifest_sha256:
+                    raise ValueError("repair generation identity changed")
+                return
+            self.connection.execute(
+                "INSERT INTO production_repair_generations("
+                "run_id,generation,manifest_sha256,applied_at,reason) VALUES(?,?,?,?,?)",
+                (run_id, generation, manifest_sha256, applied_at.isoformat(), reason),
+            )
+            for (document_id, station_id), effective_attempt in sorted(
+                effective_attempts.items()
+            ):
+                row = self.connection.execute(
+                    "SELECT * FROM production_jobs WHERE run_id=? AND document_id=? "
+                    "AND station_id=?", (run_id, document_id, station_id),
+                ).fetchone()
+                if row is None:
+                    raise ValueError("repair generation references an unknown job")
+                if int(row["repair_generation"]) >= generation:
+                    raise ValueError("repair generation is not monotonic")
+                maximum = int(row["maximum_attempts"])
+                if effective_attempt < 0 or effective_attempt >= maximum:
+                    raise ValueError("repair effective attempt is outside retry budget")
+                token_hash = (
+                    sha256_bytes(str(row["lease_token"]).encode("utf-8"))
+                    if row["lease_token"] else ""
+                )
+                self.connection.execute(
+                    "INSERT INTO production_job_repairs("
+                    "run_id,generation,package_id,document_id,station_id,"
+                    "original_state,original_attempt,original_effective_attempt,"
+                    "original_lease_token_sha256,repaired_effective_attempt"
+                    ") VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    (
+                        run_id, generation, row["package_id"], document_id,
+                        station_id, row["state"], row["attempt"],
+                        row["effective_attempt"], token_hash, effective_attempt,
+                    ),
+                )
+                self.connection.execute(
+                    "UPDATE production_jobs SET effective_attempt=?,"
+                    "effective_maximum_attempts=maximum_attempts,repair_generation=? "
+                    "WHERE run_id=? AND package_id=? AND document_id=? AND station_id=?",
+                    (
+                        effective_attempt, generation, run_id, row["package_id"],
+                        document_id, station_id,
+                    ),
+                )
+
+    def requeue_repaired_hold(
+        self, *, run_id: str, generation: int, document_id: str, station_id: str,
+    ) -> bool:
+        """Requeue only a hold explicitly superseded by an audited generation."""
+        repair = self.connection.execute(
+            "SELECT 1 FROM production_job_repairs WHERE run_id=? AND generation=? "
+            "AND document_id=? AND station_id=?",
+            (run_id, generation, document_id, station_id),
+        ).fetchone()
+        if repair is None:
+            raise ValueError("repair hold has no audited generation")
+        with self.connection:
+            cursor = self.connection.execute(
+                "UPDATE production_jobs SET state='ready',terminal_reason=? "
+                "WHERE run_id=? AND document_id=? AND station_id=? AND state='held' "
+                "AND repair_generation=? "
+                "AND effective_attempt<effective_maximum_attempts",
+                (
+                    f"repair_generation_{generation}", run_id, document_id,
+                    station_id, generation,
+                ),
+            )
+        return cursor.rowcount == 1
 
     def initialize_jobs(
         self,
@@ -206,14 +417,15 @@ class ProductionWorkerStore:
                   predecessor_station_id,predecessor_output_sha256,source_sha256,
                   source_relative_path,input_fingerprint,executor_version,
                   policy_version,maximum_attempts,retry_classification
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                  ,effective_maximum_attempts
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """, (
                     job.run_id, job.package_id, job.document_id, job.station_id,
                     job.station_sequence, job.predecessor_station_id,
                     job.predecessor_output_sha256, job.source_reference.source_sha256,
                     job.source_reference.relative_object_path, job.input_fingerprint,
                     job.executor_version, job.policy_version, job.maximum_attempts,
-                    job.retry_classification,
+                    job.retry_classification, job.maximum_attempts,
                 ))
         self.set_meta("run_id", campaign.run_id)
 
@@ -300,27 +512,39 @@ class ProductionWorkerStore:
             (now.isoformat(),),
         ).fetchall())
         with self.connection:
+            recovered = 0
             for row in rows:
-                self.connection.execute(
+                at_limit = (
+                    int(row["effective_attempt"])
+                    >= int(row["effective_maximum_attempts"])
+                )
+                reason = LEASE_ATTEMPT_LIMIT_REASON if at_limit else LEASE_RECOVERY_REASON
+                inserted = self.connection.execute(
                     "INSERT OR IGNORE INTO production_recoveries("
                     "run_id,package_id,document_id,station_id,attempt,reason"
                     ") VALUES(?,?,?,?,?,?)",
                     (
                         row["run_id"], row["package_id"], row["document_id"],
-                        row["station_id"], row["attempt"], LEASE_RECOVERY_REASON,
+                        row["station_id"], row["attempt"], reason,
                     ),
                 )
-                self.connection.execute(
-                    "UPDATE production_jobs SET state='ready',terminal_reason=?,"
+                if inserted.rowcount != 1:
+                    continue
+                target = "held" if at_limit else "ready"
+                updated = self.connection.execute(
+                    "UPDATE production_jobs SET state=?,terminal_reason=?,"
                     "lease_token=NULL,lease_expiry=NULL,heartbeat_time=NULL "
                     "WHERE run_id=? AND package_id=? AND document_id=? "
                     "AND station_id=? AND state='running' AND attempt=?",
                     (
-                        LEASE_RECOVERY_REASON, row["run_id"], row["package_id"],
+                        target, reason, row["run_id"], row["package_id"],
                         row["document_id"], row["station_id"], row["attempt"],
                     ),
                 )
-        return len(rows)
+                if updated.rowcount != 1:
+                    raise ProductionLeaseRejected("expired recovery lost production lease")
+                recovered += 1
+        return recovered
 
     def pending_recoveries(self) -> tuple[sqlite3.Row, ...]:
         return tuple(self.connection.execute(
@@ -366,7 +590,11 @@ class ProductionWorkerStore:
         jobs = self.jobs()
         active_sequences = [
             int(row["station_sequence"]) for row in jobs
-            if row["state"] in {"pending", "ready", "running"}
+            if row["state"] == "running" or (
+                row["state"] in {"pending", "ready"}
+                and int(row["effective_attempt"])
+                < int(row["effective_maximum_attempts"])
+            )
         ]
         if not active_sequences:
             return None
@@ -375,6 +603,8 @@ class ProductionWorkerStore:
             if int(row["station_sequence"]) != barrier_sequence:
                 continue
             if row["state"] not in {"pending", "ready"}:
+                continue
+            if int(row["effective_attempt"]) >= int(row["effective_maximum_attempts"]):
                 continue
             predecessor = row["predecessor_station_id"]
             if predecessor:
@@ -395,8 +625,11 @@ class ProductionWorkerStore:
             expiry = (now + timedelta(seconds=lease_seconds)).isoformat()
             with self.connection:
                 cursor = self.connection.execute(
-                    "UPDATE production_jobs SET state='running',attempt=attempt+1,lease_token=?,lease_expiry=?,heartbeat_time=? "
-                    "WHERE run_id=? AND package_id=? AND document_id=? AND station_id=? AND state IN ('pending','ready')",
+                    "UPDATE production_jobs SET state='running',attempt=attempt+1,"
+                    "effective_attempt=effective_attempt+1,lease_token=?,lease_expiry=?,heartbeat_time=? "
+                    "WHERE run_id=? AND package_id=? AND document_id=? AND station_id=? "
+                    "AND state IN ('pending','ready') "
+                    "AND effective_attempt<effective_maximum_attempts",
                     (token, expiry, now.isoformat(), row["run_id"], row["package_id"], row["document_id"], row["station_id"]),
                 )
             if cursor.rowcount != 1:
@@ -411,12 +644,14 @@ class ProductionWorkerStore:
         if not current["lease_expiry"] or datetime.fromisoformat(current["lease_expiry"]) <= now:
             raise ProductionLeaseRejected("expired production lease")
 
-    def heartbeat(self, row: sqlite3.Row, token: str, now: datetime) -> None:
+    def heartbeat(
+        self, row: sqlite3.Row, token: str, now: datetime, lease_seconds: float = 60,
+    ) -> None:
         self._lease(row, token, now)
         with self.connection:
             self.connection.execute(
                 "UPDATE production_jobs SET heartbeat_time=?,lease_expiry=? WHERE station_id=? AND document_id=?",
-                (now.isoformat(), (now + timedelta(seconds=60)).isoformat(), row["station_id"], row["document_id"]),
+                (now.isoformat(), (now + timedelta(seconds=lease_seconds)).isoformat(), row["station_id"], row["document_id"]),
             )
 
     def succeed(self, row: sqlite3.Row, token: str, now: datetime, output_sha256: str) -> None:
@@ -456,10 +691,16 @@ class ProductionWorkerStore:
 
     def fail(self, row: sqlite3.Row, token: str, now: datetime, reason: str, *, retryable: bool) -> str:
         self._lease(row, token, now)
-        state = "ready" if retryable and row["attempt"] < row["maximum_attempts"] else "held"
+        current = self.job(row["station_id"], row["document_id"])
+        state = (
+            "ready"
+            if retryable and int(current["effective_attempt"]) < int(current["effective_maximum_attempts"])
+            else "held"
+        )
         with self.connection:
             self.connection.execute(
-                "UPDATE production_jobs SET state=?,terminal_reason=?,lease_token=NULL,lease_expiry=NULL "
+                "UPDATE production_jobs SET state=?,terminal_reason=?,lease_token=NULL,"
+                "lease_expiry=NULL,heartbeat_time=NULL "
                 "WHERE station_id=? AND document_id=?",
                 (state, reason, row["station_id"], row["document_id"]),
             )
@@ -557,6 +798,9 @@ class ProductionCanaryWorker:
         receipt_signing_private_key: Path,
         semantic_station_adapter: SemanticStationAdapter | None = None,
         now: datetime | None = None,
+        shutdown_event: threading.Event | None = None,
+        heartbeat_interval_seconds: float = 15.0,
+        lease_seconds: float = 60.0,
     ):
         self.to_studio = Path(to_studio)
         self.from_studio = Path(from_studio)
@@ -565,7 +809,12 @@ class ProductionCanaryWorker:
         self.command_public_keys = dict(command_public_keys)
         self.receipt_signing_private_key = Path(receipt_signing_private_key)
         self.semantic_station_adapter = semantic_station_adapter
-        self.now = now or datetime.now(timezone.utc)
+        self._clock = (
+            (lambda: now) if now is not None else (lambda: datetime.now(timezone.utc))
+        )
+        self.shutdown_event = shutdown_event
+        self.heartbeat_interval_seconds = heartbeat_interval_seconds
+        self.lease_seconds = lease_seconds
         self.run_state = self.state_root / self.run_id
         self.store = ProductionWorkerStore(
             self.run_state / "worker.db",
@@ -575,6 +824,22 @@ class ProductionCanaryWorker:
         self.package: ProductionRecoveryUnitV1 | ProductionPilotPackageV1 | SemanticCampaignPackageV1 | None = None
         self.approval: CopiedTextCanaryApprovalV1 | CopiedTextPilotApprovalV1 | SemanticCampaignApprovalV1 | None = None
         self.campaign_sha256 = ""
+
+    @property
+    def now(self) -> datetime:
+        current = self._clock()
+        if current.tzinfo is None or current.utcoffset() is None:
+            raise ValueError("production wall clock must be timezone-aware")
+        return current.astimezone(timezone.utc)
+
+    def _lease_heartbeat(
+        self, row: sqlite3.Row, token: str,
+    ) -> ProductionLeaseHeartbeat:
+        return ProductionLeaseHeartbeat(
+            database_path=self.store.path, row=row, token=token,
+            clock=self._clock, interval_seconds=self.heartbeat_interval_seconds,
+            lease_seconds=self.lease_seconds, shutdown_event=self.shutdown_event,
+        )
 
     @property
     def station_ids(self) -> tuple[str, ...]:
@@ -853,7 +1118,7 @@ class ProductionCanaryWorker:
     ) -> FactoryReceiptV1:
         assert self.campaign is not None
         sequence = self.store.next_sequence()
-        occurred = self.campaign.created_at + timedelta(seconds=100 + sequence)
+        occurred = self.now
         event = FactoryEventV1(
             run_id=self.run_id,
             event_id=f"production-event-{sequence:06d}",
@@ -1118,15 +1383,19 @@ class ProductionCanaryWorker:
                     error_class=recovery["reason"],
                 )
                 progressed = True
+            job = self.store.job(
+                recovery["station_id"], recovery["document_id"],
+            )
+            target = "held" if job["state"] == "held" else "ready"
             if not self.store.has_exact_transition(
-                **identity, from_state="failed", to_state="ready",
+                **identity, from_state="failed", to_state=target,
             ):
                 self._emit(
                     entity_kind="document",
                     entity_id=recovery["document_id"],
                     document_id=recovery["document_id"],
                     station_id=recovery["station_id"],
-                    from_state="failed", to_state="ready",
+                    from_state="failed", to_state=target,
                     attempt=int(recovery["attempt"]),
                     error_class=recovery["reason"],
                 )
@@ -1155,7 +1424,9 @@ class ProductionCanaryWorker:
             return True
         if self._publish_expired_recoveries():
             return True
-        row = self.store.claim(self.now)
+        if self.shutdown_event is not None and self.shutdown_event.is_set():
+            return False
+        row = self.store.claim(self.now, lease_seconds=self.lease_seconds)
         if row is None:
             return self._finish_campaign()
         token = str(row["lease_token"])
@@ -1175,27 +1446,30 @@ class ProductionCanaryWorker:
         )
         self.publish_pending()
         try:
-            if crash_point == f"after_lease_claim:{row['station_id']}":
-                raise ProductionWorkerCrash("after_lease_claim")
-            material = self._build_material(row)
-            predicted = ""
-            if row["station_sequence"] < len(self.station_ids):
-                next_station = self.station_ids[row["station_sequence"]]
-                predicted = self.store.job(
-                    next_station, row["document_id"]
-                )["predecessor_output_sha256"]
-            if predicted and predicted != material.manifest_sha256:
-                raise DeterministicStationHold("predicted_output_mismatch")
-            attempt_dir = (
-                self.run_state / "attempts" / row["document_id"] / row["station_id"]
-                / f"attempt-{row['attempt']:03d}-{token}"
-            )
-            write_attempt_material(attempt_dir, material)
-            final_dir = self._local_final_dir(row["station_id"], row["document_id"])
-            finalize_attempt_material(attempt_dir, final_dir)
-            if crash_point == f"after_result_write:{row['station_id']}":
-                raise ProductionWorkerCrash("after_result_write")
-            self._publish_material(row, material)
+            with self._lease_heartbeat(row, token):
+                if crash_point == f"after_lease_claim:{row['station_id']}":
+                    raise ProductionWorkerCrash("after_lease_claim")
+                material = self._build_material(row)
+                if self.shutdown_event is not None and self.shutdown_event.is_set():
+                    raise ProductionStationCancelled("service_shutdown")
+                predicted = ""
+                if row["station_sequence"] < len(self.station_ids):
+                    next_station = self.station_ids[row["station_sequence"]]
+                    predicted = self.store.job(
+                        next_station, row["document_id"]
+                    )["predecessor_output_sha256"]
+                if predicted and predicted != material.manifest_sha256:
+                    raise DeterministicStationHold("predicted_output_mismatch")
+                attempt_dir = (
+                    self.run_state / "attempts" / row["document_id"] / row["station_id"]
+                    / f"attempt-{row['attempt']:03d}-{token}"
+                )
+                write_attempt_material(attempt_dir, material)
+                final_dir = self._local_final_dir(row["station_id"], row["document_id"])
+                finalize_attempt_material(attempt_dir, final_dir)
+                if crash_point == f"after_result_write:{row['station_id']}":
+                    raise ProductionWorkerCrash("after_result_write")
+                self._publish_material(row, material)
             self.store.succeed(row, token, self.now, material.manifest_sha256)
             if crash_point == f"after_database_commit:{row['station_id']}":
                 raise ProductionWorkerCrash("after_database_commit")
@@ -1211,6 +1485,41 @@ class ProductionCanaryWorker:
             return True
         except ProductionWorkerCrash:
             raise
+        except (
+            SectionAnalysisError, RetryableSectionError,
+            SemanticAdapterError, SemanticPilotError,
+            RetryableSemanticAdapterError, ProductionStationCancelled,
+        ) as exc:
+            reason = str(
+                getattr(exc, "reason_code", None)
+                or getattr(exc, "error_code", None)
+                or type(exc).__name__
+            )
+            retryable = isinstance(
+                exc, (RetryableSectionError, RetryableSemanticAdapterError,
+                      ProductionStationCancelled),
+            )
+            state = self.store.fail(
+                row, token, self.now, reason, retryable=retryable,
+            )
+            self._emit(
+                entity_kind="document", entity_id=row["document_id"],
+                document_id=row["document_id"], station_id=row["station_id"],
+                from_state="running", to_state=("failed" if state == "ready" else "held"),
+                attempt=row["attempt"], error_class=reason,
+            )
+            if state == "ready":
+                self._emit(
+                    entity_kind="document", entity_id=row["document_id"],
+                    document_id=row["document_id"], station_id=row["station_id"],
+                    from_state="failed", to_state="ready", attempt=row["attempt"],
+                    error_class=reason,
+                )
+            else:
+                self._finish_station(row["station_id"])
+            self.publish_pending()
+            self._finish_campaign()
+            return True
         except DeterministicStationHold as exc:
             descendants = [
                 descendant for descendant in self.store.jobs()
@@ -1450,13 +1759,16 @@ def _run_worker_unlocked(
     receipt_signing_private_key: Path,
     current: datetime,
     emit_run_status: bool,
+    worker_now: datetime | None = None,
     semantic_station_adapter: SemanticStationAdapter | None = None,
+    shutdown_event: threading.Event | None = None,
 ) -> dict:
     worker = ProductionCanaryWorker(
         to_studio=to_studio, from_studio=from_studio, state_root=state_root,
         run_id=run_id, command_public_keys=keys,
         receipt_signing_private_key=receipt_signing_private_key,
-        semantic_station_adapter=semantic_station_adapter, now=current,
+        semantic_station_adapter=semantic_station_adapter, now=worker_now,
+        shutdown_event=shutdown_event,
     )
     try:
         if emit_run_status:
@@ -1495,6 +1807,7 @@ def run_service_once(
     host_role: str,
     semantic_station_adapter: SemanticStationAdapter | None = None,
     now: datetime | None = None,
+    shutdown_event: threading.Event | None = None,
 ) -> dict:
     if host_role not in {"mac-studio", "synthetic"}:
         raise PermissionError("production factory service requires the Mac Studio host role")
@@ -1511,7 +1824,9 @@ def run_service_once(
             state_root=state_root, run_id=run_id, keys=keys,
             receipt_signing_private_key=receipt_signing_private_key,
             current=current, emit_run_status=True,
+            worker_now=now,
             semantic_station_adapter=semantic_station_adapter,
+            shutdown_event=shutdown_event,
         )
 
 
@@ -1526,6 +1841,7 @@ def run_service_scan_once(
     host_role: str,
     semantic_station_adapter: SemanticStationAdapter | None = None,
     now: datetime | None = None,
+    shutdown_event: threading.Event | None = None,
 ) -> dict:
     """Host-level deterministic discovery with per-run fault isolation."""
     if host_role not in {"mac-studio", "synthetic"}:
@@ -1547,7 +1863,9 @@ def run_service_scan_once(
                     state_root=state_root, run_id=run_id, keys=keys,
                     receipt_signing_private_key=receipt_signing_private_key,
                     current=current, emit_run_status=False,
+                    worker_now=now,
                     semantic_station_adapter=semantic_station_adapter,
+                    shutdown_event=shutdown_event,
                 ))
             except Exception as exc:
                 results.append({
@@ -1645,11 +1963,10 @@ def _main(
                 "content_free": True,
             }, sort_keys=True))
             return 1
-    stop = False
+    stop_event = threading.Event()
 
     def request_stop(_signum, _frame):
-        nonlocal stop
-        stop = True
+        stop_event.set()
 
     signal.signal(signal.SIGTERM, request_stop)
     signal.signal(signal.SIGINT, request_stop)
@@ -1663,6 +1980,7 @@ def _main(
                 host_role=args.host_role,
                 semantic_station_adapter=semantic_station_adapter,
                 now=validation_now,
+                shutdown_event=stop_event,
             )
             result = (
                 run_service_once(run_id=args.run_id, **common)
@@ -1677,9 +1995,9 @@ def _main(
                 "content_free": True,
             }, sort_keys=True))
             return 1
-        if args.once or stop:
+        if args.once or stop_event.is_set():
             return 0
-        time.sleep(max(0.1, min(args.poll_seconds, 300.0)))
+        stop_event.wait(max(0.1, min(args.poll_seconds, 300.0)))
 
 
 if __name__ == "__main__":

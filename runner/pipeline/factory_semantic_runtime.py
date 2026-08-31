@@ -317,6 +317,7 @@ def run_accepted_local_semantic_runtime(
         base_url=base_url, api_key=api_key,
         global_model_lease_path=str(workspace / "state" / "global_model.lease"),
         durable_receipt_path=str(workspace / "state" / "model_receipts.json"),
+        durable_response_path=str(workspace / "state" / "model_responses.json"),
     )
     report = run_copied_semantic_pilot(
         contract=contract, endpoint=endpoint, host_role="mac-studio",

@@ -78,6 +78,7 @@ from runner.pipeline.semantic_model_adapters import (
     LocalSectionExecutor,
     ModelCallReceiptV1,
     OpenAICompatibleLocalClient,
+    SemanticAdapterError,
     SemanticEndpointConfigV1,
 )
 
@@ -392,6 +393,7 @@ def endpoint_config(
     *, base_url: str, api_key: str,
     global_model_lease_path: str | None = None,
     durable_receipt_path: str | None = None,
+    durable_response_path: str | None = None,
 ) -> SemanticEndpointConfigV1:
     routes = (
         LocalModelRouteV1(
@@ -462,6 +464,7 @@ def endpoint_config(
         base_url=base_url, api_key=SecretStr(api_key), timeout_seconds=600,
         global_model_lease_path=global_model_lease_path,
         durable_receipt_path=durable_receipt_path,
+        durable_response_path=durable_response_path,
         routes=routes,
     )
 
@@ -707,7 +710,9 @@ def _persist_failure(
         error, requested_alias=requested_alias, attempt=attempt, stage=stage,
         error_code=(
             getattr(error, "error_code", "")
-            if isinstance(error, (SectionAnalysisError, SemanticPilotError))
+            if isinstance(error, (
+                SectionAnalysisError, SemanticPilotError, SemanticAdapterError,
+            ))
             else "unexpected_pilot_boundary_failure"
         ),
     )
@@ -902,7 +907,24 @@ def _validate_or_execute_enrichment(
             if validated["output_sha256"] != expected:
                 raise SemanticPilotError("pilot_grounded_output_hash_mismatch")
             return validated
-        output = execute_grounded_enrichment(request, executor)
+        try:
+            output = execute_grounded_enrichment(request, executor)
+        except (SectionAnalysisError, SemanticAdapterError) as exc:
+            error_code = getattr(exc, "error_code", "")
+            if error_code not in {
+                "grounded_enrichment_schema_validation_failed",
+                "durable_response_body_unavailable",
+            }:
+                raise
+            _persist_failure(
+                failure_log, exc, stage="grounded_enrichment",
+                requested_alias=executor.route.requested_model,
+            )
+            repaired = executor.execute(
+                request,
+                repair_error_code="grounded_enrichment_schema_validation_failed",
+            )
+            output = validate_grounded_enrichment_output(request, repaired)
         _write_json(path, output)
         return output
     except Exception as exc:
@@ -1697,6 +1719,9 @@ def main(argv: list[str] | None = None) -> int:
             ),
             durable_receipt_path=str(
                 Path(contract.workspace) / "state" / "model_receipts.json"
+            ),
+            durable_response_path=str(
+                Path(contract.workspace) / "state" / "model_responses.json"
             ),
         ),
         host_role=os.environ.get("SOGICE_FACTORY_HOST_ROLE", ""),

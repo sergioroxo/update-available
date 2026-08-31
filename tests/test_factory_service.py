@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -26,7 +28,8 @@ from runner.pipeline.factory_controller import (
 from runner.pipeline.factory_messages import canonical_json_bytes, sha256_bytes
 from runner.pipeline.factory_messages import publish_checksum_bound_json
 from runner.pipeline.factory_service import (
-    FactoryServiceLock, ProductionCanaryWorker, ProductionLeaseRejected,
+    FactoryServiceLock, ProductionCanaryWorker, ProductionLeaseHeartbeat,
+    ProductionLeaseRejected,
     ProductionWorkerCrash, run_service_once, run_service_scan_once,
 )
 from runner.pipeline.factory_station_adapters import DeterministicStationHold
@@ -280,7 +283,7 @@ def test_expired_lease_late_commit_and_changed_predecessor_are_rejected(tmp_path
     worker.close()
 
 
-def test_expired_lease_recovery_publishes_idempotent_append_only_chain(tmp_path):
+def test_expired_lease_at_limit_terminalizes_once_and_restart_is_receipt_idempotent(tmp_path):
     context = _setup(tmp_path, run_id="lease-recovery-chain")
     worker = _worker(context)
     worker.run_once()  # campaign running
@@ -308,12 +311,12 @@ def test_expired_lease_recovery_publishes_idempotent_append_only_chain(tmp_path)
         for message in restarted.store.receipts()
         if FactoryReceiptV1.model_validate_json(
             canonical_json_bytes(message.payload)
-        ).event.error_class == "lease_expired_recovery"
+        ).event.error_class in {"lease_expired_recovery", "lease_expired_attempt_limit"}
     ]
     assert [
         (event.from_state, event.to_state, event.attempt)
         for event in recovery_events
-    ] == [("running", "failed", 1), ("failed", "ready", 1)]
+    ] == [("running", "failed", 1), ("failed", "held", 1)]
     receipt_count = len(restarted.store.receipts())
     restarted.close()
 
@@ -321,21 +324,133 @@ def test_expired_lease_recovery_publishes_idempotent_append_only_chain(tmp_path)
     redelivered.ingest()
     assert redelivered._publish_expired_recoveries() is False
     assert len(redelivered.store.receipts()) == receipt_count
-    with pytest.raises(ProductionWorkerCrash, match="after_lease_claim"):
-        redelivered.run_once(crash_point="after_lease_claim:source_verify")
+    assert redelivered.store.claim(redelivered.now) is None
     projection = redelivered.projection()
     assert projection.valid is True
     source = next(
         row for row in projection.documents if row.station_id == "source_verify"
     )
-    assert (source.state, source.attempt) == ("running", 2)
+    assert (source.state, source.attempt) == ("held", 1)
     assert len([
         message for message in redelivered.store.receipts()
         if FactoryReceiptV1.model_validate_json(
             canonical_json_bytes(message.payload)
-        ).event.error_class == "lease_expired_recovery"
+        ).event.error_class in {"lease_expired_recovery", "lease_expired_attempt_limit"}
     ]) == 2
     redelivered.close()
+
+
+def test_section_exception_terminalizes_lease_at_station_boundary(tmp_path, monkeypatch):
+    from runner.pipeline.analysis_sections import SectionAnalysisError
+
+    context = _setup(tmp_path, run_id="semantic-boundary-hold")
+    worker = _worker(context)
+    worker.run_once()
+    monkeypatch.setattr(
+        worker, "_build_material",
+        lambda _row: (_ for _ in ()).throw(SectionAnalysisError("bounded_semantic_failure")),
+    )
+    assert worker.run_once() is True
+    row = worker.store.job("source_verify", "copied-doc-009")
+    assert (row["state"], row["lease_token"], row["lease_expiry"]) == (
+        "held", None, None,
+    )
+    worker.close()
+
+
+def test_database_heartbeat_prevents_expiry_and_cleans_up_on_all_paths(tmp_path):
+    context = _setup(tmp_path, run_id="database-heartbeat")
+    worker = _worker(context)
+    worker.ingest()
+    current = datetime.now(timezone.utc)
+    row = worker.store.claim(current, lease_seconds=0.08)
+    assert row is not None
+
+    with ProductionLeaseHeartbeat(
+        database_path=worker.store.path, row=row, token=row["lease_token"],
+        clock=lambda: datetime.now(timezone.utc), interval_seconds=0.01,
+        lease_seconds=0.08,
+    ):
+        time.sleep(0.16)
+        assert worker.store.recover_expired(datetime.now(timezone.utc)) == 0
+    assert not any(
+        thread.name.startswith("production-lease-heartbeat-")
+        for thread in threading.enumerate()
+    )
+
+    shutdown = threading.Event()
+    with pytest.raises(RuntimeError, match="simulated executor failure"):
+        with ProductionLeaseHeartbeat(
+            database_path=worker.store.path, row=row, token=row["lease_token"],
+            clock=lambda: datetime.now(timezone.utc), interval_seconds=0.01,
+            lease_seconds=0.08, shutdown_event=shutdown,
+        ):
+            shutdown.set()
+            raise RuntimeError("simulated executor failure")
+    assert not any(
+        thread.name.startswith("production-lease-heartbeat-")
+        for thread in threading.enumerate()
+    )
+    worker.close()
+
+
+def test_claim_rejects_effective_attempt_at_declared_limit(tmp_path):
+    context = _setup(tmp_path, run_id="claim-limit")
+    worker = _worker(context)
+    worker.ingest()
+    with worker.store.connection:
+        worker.store.connection.execute(
+            "UPDATE production_jobs SET effective_attempt=effective_maximum_attempts "
+            "WHERE station_id='source_verify'"
+        )
+    assert worker.store.claim(worker.now) is None
+    worker.close()
+
+
+def test_repair_generation_preserves_historical_attempt_and_sets_bounded_budget(tmp_path):
+    context = _setup(tmp_path, run_id="versioned-repair")
+    worker = _worker(context)
+    worker.ingest()
+    with worker.store.connection:
+        worker.store.connection.execute(
+            "UPDATE production_jobs SET state='held',attempt=789,effective_attempt=789 "
+            "WHERE station_id='source_verify'"
+        )
+    worker.store.apply_repair_generation(
+        run_id=context["run_id"], generation=1, manifest_sha256="a" * 64,
+        applied_at=worker.now, reason="lease_claim_loop_superseded",
+        effective_attempts={("copied-doc-009", "source_verify"): 0},
+    )
+    row = worker.store.job("source_verify", "copied-doc-009")
+    assert (row["attempt"], row["effective_attempt"], row["repair_generation"]) == (
+        789, 0, 1,
+    )
+    assert worker.store.requeue_repaired_hold(
+        run_id=context["run_id"], generation=1,
+        document_id="copied-doc-009", station_id="source_verify",
+    ) is True
+    repaired = worker.store.claim(worker.now)
+    assert (repaired["attempt"], repaired["effective_attempt"]) == (790, 1)
+    worker.close()
+
+
+def test_receipt_uses_injected_wall_clock_not_campaign_timestamp(tmp_path):
+    context = _setup(tmp_path, run_id="receipt-wall-clock")
+    wall = NOW + timedelta(minutes=30, microseconds=321)
+    worker = ProductionCanaryWorker(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], run_id=context["run_id"],
+        command_public_keys=public_key_allowlist((context["mb_public"],)),
+        receipt_signing_private_key=context["st_private"], now=wall,
+    )
+    worker.ingest()
+    receipt = worker._emit(
+        entity_kind="campaign", entity_id=context["run_id"],
+        from_state="pending", to_state="running",
+    )
+    assert receipt.event.occurred_at == wall
+    assert receipt.received_at == wall
+    worker.close()
 
 
 def test_service_single_instance_lock_and_host_role_gate(tmp_path):

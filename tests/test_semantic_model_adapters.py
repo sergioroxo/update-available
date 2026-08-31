@@ -312,6 +312,55 @@ def test_baseline_route_contract_forbids_fragment_only_acceptance():
     client.close()
 
 
+def test_valid_durable_chat_response_is_reused_with_zero_model_calls(tmp_path):
+    calls = []
+
+    def handler(request):
+        calls.append(request.url.path)
+        if request.url.path == "/model/info":
+            return httpx.Response(200, json=_model_info())
+        return httpx.Response(200, json={
+            "model": "core-gemma",
+            "choices": [{
+                "message": {"content": json.dumps({"claims": []})},
+                "finish_reason": "stop",
+            }],
+        })
+
+    config = _config(
+        durable_receipt_path=str(tmp_path / "model_receipts.json"),
+        durable_response_path=str(tmp_path / "model_responses.json"),
+    )
+    first = OpenAICompatibleLocalClient(
+        config, transport=httpx.MockTransport(handler),
+    )
+    bindings = first.preflight()
+    expected, original_receipt = first.chat(
+        config.route("document_compiler"), system="bounded", user="same",
+        concurrency_level=1, response_schema=compiler_response_json_schema(),
+    )
+    first.close()
+    model_calls_before_reuse = calls.count("/v1/chat/completions")
+
+    second = OpenAICompatibleLocalClient(
+        config,
+        transport=httpx.MockTransport(
+            lambda _request: pytest.fail("durable request must make zero HTTP calls")
+        ),
+    )
+    second.reuse_prevalidated_bindings(bindings)
+    reused, reused_receipt = second.chat(
+        config.route("document_compiler"), system="bounded", user="same",
+        concurrency_level=1, response_schema=compiler_response_json_schema(),
+    )
+    assert reused == expected
+    assert reused_receipt.receipt_sha256 == original_receipt.receipt_sha256
+    assert original_receipt.concurrency_level == reused_receipt.concurrency_level == 1
+    assert calls.count("/v1/chat/completions") == model_calls_before_reuse == 1
+    assert second.receipts == ()
+    second.close()
+
+
 def test_model_info_is_required_instead_of_trusting_alias_only():
     client = OpenAICompatibleLocalClient(
         _config(), transport=httpx.MockTransport(lambda request: httpx.Response(404)),
