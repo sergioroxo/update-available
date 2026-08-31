@@ -526,3 +526,52 @@ ones are open, the thread that does not empty, and the `echo` where a later
 commenter repeats the reply she just sent — is not rebuilt, and throwing away
 authored design for an unreplaced mechanic would be worse than leaving it marked.
 Its header now says exactly what was carried over and what was not.
+
+## S96 (2026-09-01) — Room 3's PC: what it actually was
+
+Sérgio: *"the Room 3 PC is lost."* Investigated from the seat rather than from the
+data, and it is **not** what it looked like.
+
+⚑ **THE CRT IS AUTHORED AND I NEARLY DELETED IT.** Room 3's beige CRT looks like an
+anachronism in a 2026 room, and the archived radial-hexagon layout really did have
+a `mayaScreen` — a 0.62 × 0.36 × 0.03 emissive panel, a slim glowing monitor — that
+the three-room rebuild replaced with a copy of Daniel's machine. I had already
+written the swap when `check-rooms` failed: *r4.props recolors "e_crtScreen" but it
+isn't in the room here.* That recolor's own note is the answer — **"THE CRT GOES
+DARK AND STAYS … Not deleted, not moved: the same machine across thirty years,
+finally off, still in the room."** The machine is deliberate. Reverted; the check
+earned its keep, and this is the second time this session a data check has caught
+me acting on a plausible reading of a screenshot.
+
+⚑ **WHAT "LOST" ACTUALLY MEANS: the seat.** From the authored `r3` pose (x 4.4,
+yaw 270, pitch 0) you sit **0.75 m from a 0.5 m-wide monitor** at a 42° FOV.
+Measured on 1280 × 900: `e_crtScreen` → (496, 641), filling the frame;
+`e_headsetVisor` → (193, 774), small and cornered; the desk → y 1995, far below the
+viewport. The machine has not gone missing — **it has swallowed the view.** Rooms 1
+and 2 sit equally close and are right to, because there the monitor IS the
+interface; Room 3 inherited that framing but at E4 its machine is dead and the
+interface is on your face. The framing outlived its reason.
+
+⚑ **SÉRGIO'S RULING: KEEP IT CLOSE.** Shown the measured alternative (x 3.85 with a
+6° pitch, where the whole desk reads) he chose the close framing deliberately —
+thirty years on, the machine is still in your face and it is off. **Recorded as
+intended, not a defect.** No seat change.
+
+**What did change: the headset reads as a headset** (his second answer). It was a
+9 cm dark cube on a dark desk with a 3 cm bar behind it, and it read as a small
+tower with an LED — the era's ONE interaction was the least legible object in the
+room. Now: the visor widened 0.16 → 0.195 on z and shallowed, and the single dark
+bar became a pale three-part strap loop (`#D4D0C8`, already used 10× here) whose
+sides sit just OUTSIDE the visor's z extent and reach forward past its face.
+⚑ The first pass put the loop tidily BEHIND the body, where the seat cannot see one
+millimetre of it — from that seat you look at the visor's front-left corner, so the
+loop has to break the silhouette to do any work at all. It does now.
+⚑ NOT MOVED: z stays 0.30 and the front face stays at x ≈ 5.398. S76 measured the
+headset at 33.9° off the seat bearing against a 29.7° half-FOV — outside the frame
+— and z 0.30 is that fix; `PLACEMENT.visor`'s screen plane at x 5.365 sits proud of
+this face and the two move together or the visor detaches from its own prop.
+
+⚑ **HONEST LIMIT:** it reads better than a cube, but the visor body is still dark
+on a dark desk from the seat. Separating it further needs either a lighter body
+colour or the screen plane lit before it is worn — both design calls, neither
+guessed at here.
