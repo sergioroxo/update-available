@@ -11,6 +11,10 @@ import kit from '../../../data/dialog/s1_kit.json';
 
 type KitPhase = 'autorun' | 'pages' | 'dialing';
 
+/** same shape every other surface in the build publishes (provotype.ts, os.ts,
+ *  graceQueueLite.ts, phoneE3.ts) — see `hits` below for why this one now does too */
+interface Hit { x: number; y: number; w: number; h: number; id: string }
+
 const AUTORUN_SECONDS = 2.6;
 const DIAL_SECONDS = 3.2;
 
@@ -24,6 +28,21 @@ export class KitApp {
   private t = 0;
   private page = 0;
   private connected = false;
+  /**
+   * ⚑ THE BUTTON IS REGISTERED WHERE IT IS DRAWN, and until 2026-08-28 it was
+   * not. `handleClick` used to recompute the dialog's geometry from scratch —
+   * the same numbers, written a second time — and the two copies had already
+   * drifted: NEXT is drawn 60 px wide on every page but the last, while the
+   * click test accepted 100 px, so **40 px of blank paper to the right of the
+   * button silently turned the page.** Nobody saw it, because nothing in this
+   * repo could see it: a surface that publishes no rects cannot be audited by
+   * `tools/walk.mjs` or by any check, which is precisely how this project has
+   * repeatedly shipped content a player could not reach.
+   *
+   * So: built while drawing, tested on click, one source of truth. Same
+   * contract as every other surface here.
+   */
+  private hits: Hit[] = [];
 
   // read-only state for the R28-2a guide-thread conditions (narrative/guide.ts)
   get reading(): boolean { return this.phase === 'pages'; }
@@ -69,6 +88,7 @@ export class KitApp {
 
   draw(ctx: CanvasRenderingContext2D): void {
     const W = ERA1_CANVAS.width;
+    this.hits = [];   // the dial and the autorun crawl register nothing: they return below
 
     if (this.phase === 'dialing') {
       // a bare terminal: the connection is an event, not a transition
@@ -125,31 +145,20 @@ export class KitApp {
     ui.button(ctx, c.x + c.w - 180, c.y + c.h - 28, 60, 20, 'BACK', {
       disabled: true, hover: false
     });
-    if (last) {
-      const label = 'connect' in p && typeof p.connect === 'string' ? p.connect : 'NEXT';
-      ui.button(ctx, c.x + c.w - 112, c.y + c.h - 28, 100, 20, label, { hover: false });
-    } else {
-      ui.button(ctx, c.x + c.w - 112, c.y + c.h - 28, 60, 20, 'NEXT', { hover: false });
-    }
+    // ⚑ BACK GETS NO HIT RECT, deliberately — it is drawn dead so the affordance
+    // of return is SHOWN to be dead rather than hidden (R26, Sérgio). Same
+    // convention as the greyed "not now" in os.ts's Netvision offer.
+    const bw = last ? 100 : 60;
+    const label = last && 'connect' in p && typeof p.connect === 'string' ? p.connect : 'NEXT';
+    ui.button(ctx, c.x + c.w - 112, c.y + c.h - 28, bw, 20, label, { hover: false });
+    this.hits.push({ x: c.x + c.w - 112, y: c.y + c.h - 28, w: bw, h: 20, id: 'next' });
   }
 
-  /** click routing — logical canvas coordinates */
+  /** click routing — logical canvas coordinates, against the rects `draw` registered */
   handleClick(x: number, y: number): void {
     if (this.phase !== 'pages') return;
-    const W = ERA1_CANVAS.width;
-    const dw = 430; const dh = 330;
-    const dx = Math.round((W - dw) / 2);
-    const dy = 18;
-    // content rect mirrors windowFrame's geometry exactly (chrome.ts:55)
-    const cx = dx + 4; const cy = dy + 21;
-    const cw = dw - 8; const ch = dh - 25;
-    const by = cy + ch - 28;
-    if (y >= by && y <= by + 20) {
-      // BACK is dead (no going back, R26) — only NEXT/connect advances
-      if (x >= cx + cw - 112 && x <= cx + cw - 12) {
-        this.advance();
-        return;
-      }
-    }
+    const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    // BACK is dead (no going back, R26) and registers nothing — only NEXT/connect advances
+    if (hit?.id === 'next') this.advance();
   }
 }

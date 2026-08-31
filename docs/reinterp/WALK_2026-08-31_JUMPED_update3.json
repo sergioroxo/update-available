@@ -1,0 +1,530 @@
+{
+ "when": "2026-08-31T13:04:38.046Z",
+ "port": 3000,
+ "viewport": {
+  "width": 1280,
+  "height": 900
+ },
+ "jumpedTo": "update3",
+ "isReachabilityProof": false,
+ "steps": 26,
+ "presses": 5,
+ "reachedEra": "e3",
+ "spine": "e3",
+ "ledger": {
+  "name": "Daniel",
+  "tags": [],
+  "records": [
+   "subject-migrated"
+  ],
+  "flips": 0,
+  "dossier": [],
+  "session": {
+   "path": "full",
+   "switched": false
+  },
+  "assistant": {
+   "dismissals": 0,
+   "acceptedSuggestions": [],
+   "ignored": [],
+   "nightSessions": 0
+  },
+  "updates": [
+   {
+    "toEra": 3,
+    "remindLaterCount": 0,
+    "eulaScrollPct": 100
+   }
+  ],
+  "respite": {
+   "streamOpenSeconds": 0,
+   "songsPlayed": []
+  },
+  "provotypes": [],
+  "sends": [],
+  "guidance": [],
+  "tapes": [],
+  "belongings": [
+   {
+    "id": "_processed",
+    "outcome": "processed",
+    "witness": "belongings: processed at migration"
+   }
+  ],
+  "lamby": [],
+  "checkins": [],
+  "media": [],
+  "caleb": [],
+  "era3Arrival": [
+   {
+    "witness": "companion process v3: lambient — distributed"
+   }
+  ],
+  "graceQueue": [],
+  "comments": [],
+  "e4Space": [],
+  "l": [],
+  "e4Offers": [],
+  "view": {
+   "motion": "unasked",
+   "yawZero": null,
+   "screenAngle": null,
+   "screenAngleSource": "unknown",
+   "recentres": 0,
+   "unvoicedName": false
+  }
+ },
+ "console": [],
+ "log": [
+  {
+   "step": 0,
+   "kind": "open",
+   "what": "?reinterp=1&debug=1 — debug is READ-ONLY here; no panel button, no jump, no __requestMove"
+  },
+  {
+   "step": 1,
+   "kind": "dom",
+   "target": "Log in",
+   "what": "the content-warning panel (real DOM button)"
+  },
+  {
+   "step": 2,
+   "kind": "JUMPED",
+   "what": "debugJump(\"update3\") — DIAGNOSTIC ONLY. This run proves nothing about whether a player can reach this beat; everything after this point is still ordinary clicking, but the way in was a crutch."
+  },
+  {
+   "step": 3,
+   "kind": "seated",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "what": "6 live controls"
+  },
+  {
+   "step": 4,
+   "kind": "press",
+   "target": "update-now",
+   "surface": "updateApp",
+   "logical": [
+    360,
+    246
+   ],
+   "page": [
+    776,
+    655
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 5,
+   "kind": "press",
+   "target": "eula-readon",
+   "surface": "updateApp",
+   "logical": [
+    300,
+    311
+   ],
+   "page": [
+    698,
+    740
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 6,
+   "kind": "press",
+   "target": "eula-agree",
+   "surface": "updateApp",
+   "logical": [
+    400,
+    311
+   ],
+   "page": [
+    828,
+    740
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 7,
+   "kind": "press",
+   "target": "icon-a",
+   "surface": "os",
+   "logical": [
+    29,
+    24
+   ],
+   "page": [
+    343,
+    364
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 8,
+   "kind": "sweep-hit",
+   "target": "(swept) ritual",
+   "surface": "os",
+   "logical": [
+    344,
+    304
+   ],
+   "page": [
+    755,
+    731
+   ],
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 9,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 10,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 11,
+   "kind": "silent-screen",
+   "what": "nothing registered anywhere and nothing has moved — sweeping the canvas in case the screen itself is the control",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3"
+  },
+  {
+   "step": 12,
+   "kind": "sweep-miss",
+   "what": "swept 525 points on the OS canvas for the ritual and nothing moved"
+  },
+  {
+   "step": 13,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 14,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 15,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 16,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 17,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 18,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 19,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 20,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 21,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 22,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 23,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 24,
+   "kind": "stop",
+   "what": "STUCK. 1 hit rect is registered and none can be aimed at — unlock (phone, off-screen at 204,1154)",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "off-screen at 204,1154"
+    }
+   ]
+  },
+  {
+   "step": 25,
+   "kind": "end",
+   "what": "walk finished",
+   "era": "e3",
+   "phase": "desktop",
+   "spine": "e3"
+  }
+ ]
+}

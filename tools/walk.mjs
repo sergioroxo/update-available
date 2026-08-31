@@ -40,12 +40,22 @@
  *    you already expected. This one reads the live state each step and chooses,
  *    so it walks into content nobody remembered was there.
  *
- * ⚑ THE ONE SURFACE THAT PUBLISHES NOTHING is the update ritual (`UpdateApp`
- * computes its rects inline inside `handleClick`). Rather than copy that
- * geometry here — a duplicate that would rot silently, which is the failure mode
- * this whole tool exists to catch — the walker SWEEPS: it presses a coarse grid
- * until the state moves, and records the point that worked. That is also how a
- * person finds a button, and the sweep's result is itself a reportable finding.
+ * ⚑ THE SWEEP, and what it found. Two surfaces used to publish no hit rects at
+ * all — `KitApp` (Era 1's booklet) and `UpdateApp` (every era transition in the
+ * piece) — computing their button geometry a second time inside `handleClick`.
+ * Rather than copy that geometry here, which would be a third copy rotting
+ * quietly, the walker SWEEPS: it presses a coarse grid until the state moves,
+ * and records the point that worked. That is also how a person finds a button.
+ *
+ * ⚑ Both were fixed on 2026-08-28 (they now register their rects while drawing,
+ * like every other surface), and the kit's two copies HAD already drifted: NEXT
+ * was drawn 60 px wide but click-tested at 100, so 40 px of blank paper turned
+ * the page. The sweep stays, because it is what tells "no control here" apart
+ * from "a control nothing can see", and the next such surface will not announce
+ * itself either. Beware the softer case it also has to handle: a surface can be
+ * momentarily EMPTY and perfectly healthy — Caleb between beats, L while she is
+ * speaking — and an early version of this tool wrongly reported four of those
+ * as broken.
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -58,6 +68,18 @@ const flag = (name, dflt) => {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : dflt;
 };
 const PORT = Number(flag('port', 3000));
+/**
+ * ⚑ `--jump <beat>` IS FOR DIAGNOSING THIS TOOL, NEVER FOR PROVING REACHABILITY.
+ * A full walk takes ~25 minutes, which is far too slow a loop when the question
+ * is "why did the walker not see Era 4's chips". So this jumps once, with
+ * `debugJump`, and then walks forward from there by ordinary clicking.
+ *
+ * A jumped run PROVES NOTHING about whether a player can get to that beat — the
+ * jump is exactly the crutch this whole tool exists to do without. So a jumped
+ * run stamps itself, in the log, in the JSON and at the top of the report, and
+ * writes to a different filename so it can never be mistaken for the real thing.
+ */
+const JUMP = flag('jump', '');
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
 const OUT_DIR = join(ROOT, 'docs/reinterp');
@@ -147,6 +169,16 @@ async function main() {
   note('dom', { target: 'Log in', what: 'the content-warning panel (real DOM button)' });
   await page.waitForFunction(() => !!window.__os && !!window.__app, { timeout: 45000 });
   await wait(7000);
+
+  if (JUMP) {
+    await page.evaluate((b) => window.__os.debugJump(b), JUMP);
+    await wait(5000);
+    note('JUMPED', {
+      what: 'debugJump("' + JUMP + '") — DIAGNOSTIC ONLY. This run proves nothing about ' +
+        'whether a player can reach this beat; everything after this point is still ' +
+        'ordinary clicking, but the way in was a crutch.'
+    });
+  }
 
   /**
    * ⚑ ONE READ PER STEP, and it does the projection in-page.
@@ -253,13 +285,19 @@ async function main() {
      * of {x,y,w,h,id} is a surface, whatever it is called and whenever it was
      * added.
      */
+    // ⚑ NOT EVERY SURFACE CALLS IT `hits`. IRC keeps its answers in `replyRects`,
+    // and a matcher that only knew the two commonest names reported IRC as a
+    // surface publishing nothing — which was wrong, and which I had already
+    // told Sérgio. Match the shape of the NAME, not a list of names.
+    // Declared out here because the structural silent/quiet test below uses it too.
+    const RECTS_KEY = /(^|[a-z])(hits?|rects?)$/i;
+    const looksLikeRects = (v) => Array.isArray(v) && v.length > 0 && v.every((r) =>
+      r && typeof r === 'object' &&
+      typeof r.x === 'number' && typeof r.y === 'number' &&
+      typeof r.w === 'number' && typeof r.h === 'number' && typeof r.id === 'string');
     const collect = (rootObj, maxDepth) => {
       const found = [];
       const seen = new Set();
-      const looksLikeRects = (v) => Array.isArray(v) && v.length > 0 && v.every((r) =>
-        r && typeof r === 'object' &&
-        typeof r.x === 'number' && typeof r.y === 'number' &&
-        typeof r.w === 'number' && typeof r.h === 'number' && typeof r.id === 'string');
       const visit = (obj, depth, path) => {
         if (!obj || typeof obj !== 'object' || depth > maxDepth || seen.has(obj)) return;
         seen.add(obj);
@@ -269,7 +307,7 @@ async function main() {
         for (const k of Object.keys(obj)) {
           let v;
           try { v = obj[k]; } catch { continue; }
-          if ((k === 'hits' || k === 'rects') && looksLikeRects(v)) {
+          if (RECTS_KEY.test(k) && looksLikeRects(v)) {
             found.push({ path: path || 'os', rects: v });
           } else if (v && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Element)) {
             visit(v, depth + 1, path ? path + '.' + k : k);
@@ -285,16 +323,45 @@ async function main() {
     for (const grp of osGroups)
       for (const h of grp.rects)
         add(h.id, grp.path === 'os' ? 'os' : grp.path, h, osPoint(h.x + h.w / 2, h.y + h.h / 2));
-    // ⚑ the modal sub-apps that own the screen but publish NO rects — the kit
-    // (Era 1's booklet, the whole spine of the era) and the update ritual both
-    // compute their button geometry inline inside `handleClick`. Naming them
-    // here is not a list to maintain: it is a report of which live thing the
-    // walker is about to have to find by sweeping.
+    /**
+     * ⚑ TWO VERY DIFFERENT THINGS, AND I CONFLATED THEM ONCE ALREADY.
+     *
+     * A surface with no rects RIGHT NOW is usually just quiet: `caleb`,
+     * `netvision`, `accountability` and L's voice all register their controls
+     * only in the phase that offers them, so between beats they are legitimately
+     * empty. That is the piece working.
+     *
+     * A surface with NO RECT FIELD AT ALL is the real problem: it computes its
+     * button geometry inline inside `handleClick`, so the geometry exists twice
+     * and nothing can check the copies agree. `kit` and `updateApp` were both
+     * such surfaces until 2026-08-28, and the kit's two copies HAD drifted, by
+     * 40 px. Both now register while drawing; this test stays because the next
+     * such surface will not announce itself either.
+     *
+     * The first report from this tool called all six silent and was wrong about
+     * four of them. So the test is now structural — does the object own a
+     * rect-shaped field at all? — and the two states are named differently.
+     */
     const silent = [];
+    const quiet = [];
     for (const k of Object.keys(os)) {
       let v; try { v = os[k]; } catch { continue; }
-      if (v && typeof v === 'object' && v.open === true && typeof v.handleClick === 'function'
-        && !osGroups.some((g) => g.path === k)) silent.push(k);
+      if (!v || typeof v !== 'object' || v.open !== true || typeof v.handleClick !== 'function') continue;
+      if (osGroups.some((g) => g.path === k || g.path.indexOf(k + '.') === 0)) continue;
+      /**
+       * ⚑ A THIRD STATE, AND IT SWALLOWED A WHOLE ERA. IRC keeps `replyRects`,
+       * so the structural test above called it healthy — but those rects carried
+       * no `id`, so `looksLikeRects` refused them and nothing was collected
+       * either. Not collected, and not swept because it "had a rect field": the
+       * walker went blind in front of the IRC exchange and never left Era 1.
+       * A populated rect field that yields nothing aimable is its own defect and
+       * is treated as silent, so this gap cannot quietly eat a surface again.
+       */
+      const fields = Object.keys(v).filter((kk) => RECTS_KEY.test(kk) && Array.isArray(v[kk]));
+      const populated = fields.filter((kk) => v[kk].length > 0);
+      if (!fields.length) silent.push(k);
+      else if (populated.length && !populated.some((kk) => looksLikeRects(v[kk]))) silent.push(k);
+      else quiet.push(k);
     }
 
     if (q) {
@@ -369,7 +436,7 @@ async function main() {
       qMode: q ? q.mode : null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
-      screenHash, surfaces, silent,
+      screenHash, surfaces, silent, quiet,
       targets, dropped, moves, ledCount, ledger: led
     };
   }, { VW: VIEW.width, VH: VIEW.height });
@@ -490,14 +557,35 @@ async function main() {
    * caller must then WAIT, because that is what a player does while a scripted,
    * unpressable beat runs.
    */
-  const pick = (targets, tried, seen) => {
+  const pick = (targets, tried, seen, barren) => {
     const live = targets.filter((t) =>
       t.surface !== 'prop' && !FORBIDDEN.test(t.id) && !tried.has(t.surface + ':' + t.id));
     if (!live.length) return null;
+    /**
+     * ⚑ A CONTROL THAT NEVER LEADS SOMEWHERE NEW GOES TO THE BACK.
+     * Era 2's desktop carries three icons that reopen apps you have already
+     * read — send, Restorify, the era badge — while what actually moves the era
+     * is Lamby's conduction, which ARRIVES ON ITS OWN. A walker ranking only by
+     * novelty presses those three forever: run 16 spent 427 presses, forty-five
+     * consecutively with nothing moving.
+     *
+     * ⚑ BUT "LEADS SOMEWHERE NEW" HAD TO BE MEASURED PROPERLY. Judging it by
+     * the coarse state — era, phase, spine, queue mode, ledger — was run 17, and
+     * it was worse: turning a page of Era 1's booklet moves none of those, so
+     * the kit's NEXT was written off as dead after two presses and the era could
+     * not be finished at all. The honest test is whether the press produced a
+     * SCREEN THE WALK HAS NEVER SEEN. A booklet page is new every time; an icon
+     * reopening a window you have already read is not.
+     */
+    const isBarren = (t) => {
+      const b = barren.get(t.id);
+      return b && b.tries >= 2 && b.wins === 0;
+    };
     const tier = (t) => {
-      if (LAST_RESORT.test(t.id)) return 90;
-      const i = PREFER.findIndex((rx) => rx.test(t.id));
-      return i >= 0 ? i : 50;
+      const base = LAST_RESORT.test(t.id) ? 90
+        : (PREFER.findIndex((rx) => rx.test(t.id)) >= 0
+          ? PREFER.findIndex((rx) => rx.test(t.id)) : 50);
+      return base + (isBarren(t) ? 100 : 0);
     };
     // ⚑ BREADTH FIRST, and it is what finally got the walk out of Era 1's
     // desktop. Two optional provotypes sit there beside the narrative's own
@@ -532,6 +620,18 @@ async function main() {
   let sinceProgress = 0;
   /** how many times each control has been pressed in the whole run */
   const seen = new Map();
+  /** per control: how often pressed, and how often it opened a screen never seen before */
+  const barren = new Map();
+  /** every screen signature this walk has ever landed on (the opening screen is
+   *  seeded so arriving where you already are never counts as a discovery) */
+  const knownSigs = new Set([screenOf(s)]);
+  const allBarren = (targets) => {
+    const live = targets.filter((t) => t.surface !== 'prop' && !FORBIDDEN.test(t.id));
+    return live.length > 0 && live.every((t) => {
+      const b = barren.get(t.id);
+      return b && b.tries >= 2 && b.wins === 0;
+    });
+  };
   const memory = (sig) => {
     if (!history.has(sig)) history.set(sig, new Set());
     return history.get(sig);
@@ -588,7 +688,8 @@ async function main() {
         }
       }
       note('silent-surface', {
-        what: name + ' is live, modal and publishes no hit rects — sweeping for its controls',
+        what: name + ' is live and owns no rect field at all — its button geometry lives ' +
+          'inline in handleClick, so it must be found by sweeping',
         era: s.era, phase: s.phase, spine: s.spine
       });
       s = await sweep(s, name);
@@ -597,20 +698,40 @@ async function main() {
     if (s.silent.length) continue;
 
     const tried = memory(sig);
-    let t = pick(s.targets, tried, seen);
+    // everything on offer is known-dead: wait for the timed content instead
+    if (allBarren(s.targets) && stalls < 8) {
+      stalls += 1;
+      note('waiting-out', {
+        what: 'every control here has been tried twice and never advanced anything — ' +
+          'waiting for the piece to speak rather than pressing dead icons',
+        era: s.era, phase: s.phase, spine: s.spine
+      });
+      const was = s.screenHash;
+      await wait(5000);
+      s = await probe();
+      if (s.screenHash !== was) stalls = 0;
+      continue;
+    }
+    let t = pick(s.targets, tried, seen, barren);
     // every option on this screen has been taken before: it is a genuine cycle,
     // so start the screen over rather than standing still
     if (!t && s.targets.some((x) => !FORBIDDEN.test(x.id))) {
       tried.clear();
       note('recycle', { what: 'every control on this screen has been pressed before — starting it over',
         era: s.era, phase: s.phase, spine: s.spine });
-      t = pick(s.targets, tried, seen);
+      t = pick(s.targets, tried, seen, barren);
     }
     if (t) {
       stalls = 0;
       tried.add(t.surface + ':' + t.id);
       seen.set(t.id, (seen.get(t.id) || 0) + 1);
       const after = await press(t, s);
+      const b = barren.get(t.id) || { tries: 0, wins: 0 };
+      b.tries += 1;
+      const landed = screenOf(after);
+      if (!knownSigs.has(landed)) b.wins += 1;   // it opened something genuinely new
+      knownSigs.add(landed);
+      barren.set(t.id, b);
       // a press that moved nothing is a finding, not a retry cue — but it may
       // still have moved something this probe cannot see (a chip selected, an
       // icon chosen), so the memory above is what keeps the walk moving on.
@@ -668,7 +789,9 @@ async function main() {
           ' registered, ' + s.targets.length + ' aimable, ' + s.dropped.length + ' unaimable, ' +
           memory(screenOf(s)).size + ' already tried, ' + s.moves.length + ' markers',
         era: s.era, phase: s.phase, spine: s.spine, qMode: s.qMode,
-        dropped: s.dropped
+        dropped: s.dropped,
+        offered: s.targets.map((t) => t.surface + ':' + t.id),
+        surfaces: s.surfaces
       });
       if (stalls >= 14) {
         note('stop', {
@@ -689,9 +812,19 @@ async function main() {
         break;
       }
       await wait(4000);
-      const before = screenOf(s);
+      const before = s.screenHash;
       s = await probe();
-      if (screenOf(s) !== before) stalls = 0;   // it moved on its own; keep going
+      /**
+       * ⚑ A SCREEN THAT IS STILL CHANGING IS NOT A STALL, and Era 4 is why.
+       * L speaks, and her chips exist ONLY while the voice is `waiting` — so the
+       * era legitimately offers nothing to press for ten or fifteen seconds at a
+       * time, several times over. Run 11 called that a dead end and reported an
+       * era with no way onward, when what it had actually found was somebody
+       * talking. Comparing the drawn pixels rather than the whole signature
+       * means any movement at all — a caption arriving, a picture easing —
+       * resets the patience, and only a genuinely FROZEN screen runs it out.
+       */
+      if (s.screenHash !== before) stalls = 0;
     }
   }
 
@@ -700,7 +833,7 @@ async function main() {
   await page.screenshot({ path: join(SHOT_DIR, 'walk_end.png') });
 
   // ── the deliverable ──
-  const stamp = new Date().toISOString().slice(0, 10);
+  const stamp = new Date().toISOString().slice(0, 10) + (JUMP ? '_JUMPED_' + JUMP : '');
   const presses = log.filter((l) => l.kind === 'press' || l.kind === 'sweep-hit' || l.kind === 'move');
   const dead = presses.filter((p) => p.changed === false);
   const silentFound = [...new Set(log.filter((l) => l.kind === 'silent-surface')
@@ -714,6 +847,8 @@ async function main() {
 
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.json'), JSON.stringify({
     when: new Date().toISOString(), port: PORT, viewport: VIEW,
+    jumpedTo: JUMP || null,
+    isReachabilityProof: !JUMP,
     steps: log.length, presses: presses.length,
     reachedEra: final.era, spine: final.spine,
     ledger: final.ledger, console: noise, log
@@ -722,8 +857,15 @@ async function main() {
   const md = [
     'STATUS: live', '',
     '# THE WALK — ' + stamp, '',
-    '*Generated by `tools/walk.mjs`: click-only from the entrance. No `?era=`, no debug jump,',
-    'no `debugBeat`, no `__requestMove`. `&debug=1` is used to READ probes and never to press.*', '',
+    JUMP
+      ? '> ⚑ **DIAGNOSTIC RUN, NOT A REACHABILITY PROOF.** This walk began with\n' +
+        '> `debugJump("' + JUMP + '")` and therefore says NOTHING about whether a player can\n' +
+        '> reach that beat by playing. Everything after the jump is ordinary clicking, but\n' +
+        '> the way in was the very crutch this tool exists to do without. Only an unjumped\n' +
+        '> run is evidence.\n'
+      : '*Generated by `tools/walk.mjs`: click-only from the entrance. No `?era=`, no debug jump,\n' +
+        'no `debugBeat`, no `__requestMove`. `&debug=1` is used to READ probes and never to press.*',
+    '',
     '**Reached** `' + (final.era || '—') + '` · spine `' + (final.spine || '—') + '` · ' +
     '**' + presses.length + ' presses** over ' + log.length + ' steps · ' +
     dead.length + ' press' + (dead.length === 1 ? '' : 'es') + ' changed nothing', '',
@@ -743,11 +885,13 @@ async function main() {
       ? dead.map((p) => '- step ' + p.step + ': `' + p.target + '` on ' + p.surface).join('\n')
       : '- none: every press moved something this walk can see',
     '',
-    '## SURFACES THAT PUBLISH NO HIT RECTS', '',
-    '*Found by the walk, not by reading the code.* These own the screen while they are open and',
-    'compute their button geometry inline inside `handleClick`, so nothing — not this tool, not',
-    'any future check — can confirm their controls are reachable. The walker had to find each one',
-    'by sweeping the canvas, and the coordinate it found is the one recorded below.', '',
+    '## SURFACES THAT OWN NO HIT RECTS AT ALL', '',
+    '*Structural, not a snapshot.* These own the screen while open and hold no rect field of any',
+    'kind — their button geometry is computed a second time inside `handleClick`, so the numbers',
+    'exist twice and nothing can check the copies agree. `kit`\'s two copies had already drifted by',
+    '40 px. A surface that is merely EMPTY right now (Caleb between beats, L while she speaks) is',
+    'not listed here — that is the piece working, and an earlier version of this report wrongly',
+    'conflated the two. The walker finds these by sweeping; the coordinate it found is below.', '',
     silentFound.length
       ? silentFound.map((n) => '- `' + n + '`' +
         (sweptAt[n] ? ' — its control was at ' + sweptAt[n].join(', ') + ' on the OS canvas' : '')).join('\n')

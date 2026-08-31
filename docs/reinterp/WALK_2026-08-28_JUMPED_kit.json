@@ -1,0 +1,904 @@
+{
+ "when": "2026-08-28T12:34:53.048Z",
+ "port": 3000,
+ "viewport": {
+  "width": 1280,
+  "height": 900
+ },
+ "jumpedTo": "kit",
+ "isReachabilityProof": false,
+ "steps": 53,
+ "presses": 32,
+ "reachedEra": "e1",
+ "spine": "e2",
+ "ledger": {
+  "name": "Daniel",
+  "tags": [
+   "pastoral-referral",
+   "consent-on-file"
+  ],
+  "records": [
+   "kit-inserted",
+   "went-online",
+   "mirc-log",
+   "escalation-reply:disclosed distress — receptive, log it",
+   "escalation-reply:seeking detail — minimize",
+   "escalation-reply:hesitant — reassure",
+   "escalation-reply:boundary probe — affirm trust",
+   "escalation-reply:resistant — proceed; consent already on file",
+   "enrollment-acknowledged",
+   "diary-committed",
+   "deletion-failed",
+   "diary-glitch"
+  ],
+  "flips": 0,
+  "dossier": [],
+  "session": {
+   "path": "full",
+   "switched": false
+  },
+  "assistant": {
+   "dismissals": 0,
+   "acceptedSuggestions": [],
+   "ignored": [],
+   "nightSessions": 0
+  },
+  "updates": [
+   {
+    "toEra": 2,
+    "remindLaterCount": 1,
+    "eulaScrollPct": 100
+   }
+  ],
+  "respite": {
+   "streamOpenSeconds": 0,
+   "songsPlayed": []
+  },
+  "provotypes": [],
+  "sends": [],
+  "guidance": [
+   {
+    "id": "kit",
+    "outcome": "followed",
+    "witness": "guidance: booklet — followed"
+   },
+   {
+    "id": "tape",
+    "outcome": "declined",
+    "witness": "guidance: tape — skipped"
+   },
+   {
+    "id": "channel",
+    "outcome": "followed",
+    "witness": "guidance: channel — followed"
+   },
+   {
+    "id": "packet",
+    "outcome": "followed",
+    "witness": "guidance: packet — followed"
+   },
+   {
+    "id": "diary",
+    "outcome": "followed",
+    "witness": "guidance: journal — followed"
+   },
+   {
+    "id": "update",
+    "outcome": "followed",
+    "witness": "guidance: update — accepted"
+   },
+   {
+    "id": "belongings",
+    "outcome": "declined",
+    "witness": "belongings: did not gather"
+   }
+  ],
+  "tapes": [],
+  "belongings": [],
+  "lamby": [],
+  "checkins": [],
+  "media": [],
+  "caleb": [],
+  "era3Arrival": [],
+  "graceQueue": [],
+  "comments": [],
+  "e4Space": [],
+  "l": [],
+  "e4Offers": [],
+  "view": {
+   "motion": "unasked",
+   "yawZero": null,
+   "screenAngle": null,
+   "screenAngleSource": "unknown",
+   "recentres": 0,
+   "unvoicedName": false
+  }
+ },
+ "console": [],
+ "log": [
+  {
+   "step": 0,
+   "kind": "open",
+   "what": "?reinterp=1&debug=1 — debug is READ-ONLY here; no panel button, no jump, no __requestMove"
+  },
+  {
+   "step": 1,
+   "kind": "dom",
+   "target": "Log in",
+   "what": "the content-warning panel (real DOM button)"
+  },
+  {
+   "step": 2,
+   "kind": "JUMPED",
+   "what": "debugJump(\"kit\") — DIAGNOSTIC ONLY. This run proves nothing about whether a player can reach this beat; everything after this point is still ordinary clicking, but the way in was a crutch."
+  },
+  {
+   "step": 3,
+   "kind": "seated",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "what": "3 live controls"
+  },
+  {
+   "step": 4,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 5,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 6,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 7,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 8,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    405,
+    326
+   ],
+   "page": [
+    835,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 9,
+   "kind": "silent-surface",
+   "what": "kit is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 10,
+   "kind": "sweep-hit",
+   "target": "(swept) kit",
+   "surface": "os",
+   "logical": [
+    146,
+    318
+   ],
+   "page": [
+    496,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 11,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 12,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    366,
+    220
+   ],
+   "page": [
+    784,
+    621
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 13,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    366,
+    220
+   ],
+   "page": [
+    784,
+    621
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 14,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 15,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    234,
+    290
+   ],
+   "page": [
+    611,
+    712
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 16,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    234,
+    290
+   ],
+   "page": [
+    611,
+    712
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 17,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 18,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 19,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 20,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 21,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 22,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 23,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 24,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 25,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 26,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 27,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 28,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    190,
+    304
+   ],
+   "page": [
+    554,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 29,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 30,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    388,
+    304
+   ],
+   "page": [
+    813,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 31,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    388,
+    304
+   ],
+   "page": [
+    813,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 32,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 33,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    388,
+    318
+   ],
+   "page": [
+    813,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 34,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    388,
+    318
+   ],
+   "page": [
+    813,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 35,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 36,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    234,
+    304
+   ],
+   "page": [
+    611,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 37,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    234,
+    304
+   ],
+   "page": [
+    611,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 38,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 39,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    102,
+    318
+   ],
+   "page": [
+    439,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1_armed",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 40,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    102,
+    318
+   ],
+   "page": [
+    439,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 41,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    102,
+    318
+   ],
+   "page": [
+    439,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 42,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2"
+  },
+  {
+   "step": 43,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    124,
+    248
+   ],
+   "page": [
+    467,
+    657
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 44,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    124,
+    248
+   ],
+   "page": [
+    467,
+    657
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 45,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2"
+  },
+  {
+   "step": 46,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    476,
+    346
+   ],
+   "page": [
+    928,
+    785
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 47,
+   "kind": "press",
+   "target": "irc (known control)",
+   "surface": "irc",
+   "logical": [
+    476,
+    346
+   ],
+   "page": [
+    928,
+    785
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 48,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2"
+  },
+  {
+   "step": 49,
+   "kind": "sweep-miss",
+   "what": "swept 525 points on the OS canvas for irc and nothing moved"
+  },
+  {
+   "step": 50,
+   "kind": "silent-surface",
+   "what": "irc is live, modal and publishes no hit rects — sweeping for its controls",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2"
+  },
+  {
+   "step": 51,
+   "kind": "sweep-hit",
+   "target": "(swept) irc",
+   "surface": "os",
+   "logical": [
+    36,
+    304
+   ],
+   "page": [
+    352,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 52,
+   "kind": "end",
+   "what": "walk finished",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e2"
+  }
+ ]
+}

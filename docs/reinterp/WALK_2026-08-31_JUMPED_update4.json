@@ -1,0 +1,1080 @@
+{
+ "when": "2026-08-31T13:07:01.528Z",
+ "port": 3000,
+ "viewport": {
+  "width": 1280,
+  "height": 900
+ },
+ "jumpedTo": "update4",
+ "isReachabilityProof": false,
+ "steps": 32,
+ "presses": 12,
+ "reachedEra": "e4",
+ "spine": "e4",
+ "ledger": {
+  "name": "Daniel",
+  "tags": [],
+  "records": [],
+  "flips": 0,
+  "dossier": [],
+  "session": {
+   "path": "full",
+   "switched": false
+  },
+  "assistant": {
+   "dismissals": 0,
+   "acceptedSuggestions": [],
+   "ignored": [],
+   "nightSessions": 0
+  },
+  "updates": [
+   {
+    "toEra": 4,
+    "remindLaterCount": 0,
+    "eulaScrollPct": 100
+   }
+  ],
+  "respite": {
+   "streamOpenSeconds": 0,
+   "songsPlayed": []
+  },
+  "provotypes": [],
+  "sends": [],
+  "guidance": [],
+  "tapes": [],
+  "belongings": [],
+  "lamby": [],
+  "checkins": [],
+  "media": [],
+  "caleb": [],
+  "era3Arrival": [
+   {
+    "witness": "companion process v3: lambient — distributed"
+   }
+  ],
+  "graceQueue": [],
+  "comments": [],
+  "e4Space": [
+   {
+    "id": "update",
+    "outcome": "installed",
+    "witness": "update: installed — service continuous; no application"
+   },
+   {
+    "id": "companion",
+    "outcome": "installed",
+    "witness": "companion: registered — L"
+   },
+   {
+    "id": "headset",
+    "outcome": "worn",
+    "witness": "device: worn — one touch"
+   }
+  ],
+  "l": [
+   {
+    "id": "who",
+    "outcome": "answered",
+    "witness": "companion: questioned"
+   },
+   {
+    "id": "u2a",
+    "outcome": "captioned",
+    "witness": "objects: catalogued — footwear"
+   },
+   {
+    "id": "u2b",
+    "outcome": "captioned",
+    "witness": "objects: catalogued — sketchbook, disuse noted"
+   },
+   {
+    "id": "u2c",
+    "outcome": "captioned",
+    "witness": "objects: catalogued — frame, orientation noted"
+   },
+   {
+    "id": "u3d",
+    "outcome": "captioned",
+    "witness": "objects: no category returned — held for review"
+   }
+  ],
+  "e4Offers": [],
+  "view": {
+   "motion": "unasked",
+   "yawZero": null,
+   "screenAngle": null,
+   "screenAngleSource": "unknown",
+   "recentres": 0,
+   "unvoicedName": false
+  }
+ },
+ "console": [],
+ "log": [
+  {
+   "step": 0,
+   "kind": "open",
+   "what": "?reinterp=1&debug=1 — debug is READ-ONLY here; no panel button, no jump, no __requestMove"
+  },
+  {
+   "step": 1,
+   "kind": "dom",
+   "target": "Log in",
+   "what": "the content-warning panel (real DOM button)"
+  },
+  {
+   "step": 2,
+   "kind": "JUMPED",
+   "what": "debugJump(\"update4\") — DIAGNOSTIC ONLY. This run proves nothing about whether a player can reach this beat; everything after this point is still ordinary clicking, but the way in was a crutch."
+  },
+  {
+   "step": 3,
+   "kind": "seated",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "what": "6 live controls"
+  },
+  {
+   "step": 4,
+   "kind": "press",
+   "target": "update-now",
+   "surface": "updateApp",
+   "logical": [
+    360,
+    246
+   ],
+   "page": [
+    776,
+    655
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 5,
+   "kind": "press",
+   "target": "eula-readon",
+   "surface": "updateApp",
+   "logical": [
+    298,
+    349
+   ],
+   "page": [
+    695,
+    789
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 6,
+   "kind": "sweep-hit",
+   "target": "(swept) ritual",
+   "surface": "os",
+   "logical": [
+    278,
+    346
+   ],
+   "page": [
+    669,
+    785
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 7,
+   "kind": "press",
+   "target": "eula-agree",
+   "surface": "updateApp",
+   "logical": [
+    418,
+    349
+   ],
+   "page": [
+    852,
+    789
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 8,
+   "kind": "press",
+   "target": "icon-a",
+   "surface": "os",
+   "logical": [
+    29,
+    24
+   ],
+   "page": [
+    343,
+    364
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 9,
+   "kind": "sweep-hit",
+   "target": "(swept) ritual",
+   "surface": "os",
+   "logical": [
+    366,
+    304
+   ],
+   "page": [
+    784,
+    731
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "ledgerDelta": 4,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 10,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 11,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 12,
+   "kind": "press",
+   "target": "ok",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    267
+   ],
+   "page": [
+    454,
+    609
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 13,
+   "kind": "press",
+   "target": "who",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    290
+   ],
+   "page": [
+    454,
+    658
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 14,
+   "kind": "press",
+   "target": "silent",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    313
+   ],
+   "page": [
+    454,
+    708
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 15,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 16,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 17,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 18,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 19,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 20,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 21,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 22,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 23,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 24,
+   "kind": "silent-screen",
+   "what": "nothing registered anywhere and nothing has moved — sweeping the canvas in case the screen itself is the control",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 25,
+   "kind": "sweep-hit",
+   "target": "(swept) ritual",
+   "surface": "os",
+   "logical": [
+    124,
+    304
+   ],
+   "page": [
+    467,
+    731
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 26,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 27,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 28,
+   "kind": "idle",
+   "what": "waiting — 0 hit rects registered, 0 aimable, 4 unaimable, 0 already tried, 0 markers",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "win-min",
+     "surface": "workstation",
+     "logical": [
+      647,
+      11
+     ],
+     "why": "off-screen at -20638,216"
+    },
+    {
+     "id": "task-restore",
+     "surface": "workstation",
+     "logical": [
+      109,
+      376
+     ],
+     "why": "behind the camera"
+    },
+    {
+     "id": "signin",
+     "surface": "workstation",
+     "logical": [
+      208,
+      308
+     ],
+     "why": "behind the camera"
+    }
+   ],
+   "offered": [],
+   "surfaces": []
+  },
+  {
+   "step": 29,
+   "kind": "press",
+   "target": "correct1",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    253
+   ],
+   "page": [
+    454,
+    579
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 30,
+   "kind": "press",
+   "target": "why1",
+   "surface": "e4.voice",
+   "logical": [
+    169,
+    276
+   ],
+   "page": [
+    454,
+    628
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "signin",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 31,
+   "kind": "end",
+   "what": "walk finished",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  }
+ ]
+}

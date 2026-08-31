@@ -88,7 +88,16 @@ export class IrcApp {
   private escDone = false;         // all turns spoken
   private escEndAt = Infinity;     // a beat after the last reply, then the packet
   private escFired = false;
-  private replyRects: Array<{ x: number; y: number; w: number; h: number }> = [];
+  /**
+   * ⚑ The reply tray's live controls. `replyGeometry` has always been the one
+   * source of truth for both the draw and the hit test, so these never drifted
+   * the way `kit.ts`'s did — but they carried no `id`, which left them in a gap:
+   * an audit walking the object graph could see a rect field here and so not
+   * flag the surface as unauditable, yet could not name or aim at a single
+   * control in it. Ids added 2026-08-28, and the array is cleared whenever the
+   * tray is not drawn, so what is published is only ever what is really live.
+   */
+  private replyRects: Array<{ x: number; y: number; w: number; h: number; id: string }> = [];
   onEscalationDone?: () => void;
 
   private fill(text: string): string {
@@ -289,6 +298,7 @@ export class IrcApp {
         (f) => (f === ledger.name ? ERA1.navy : ERA1.warnDark), ERA1.black, caretOn).slice(-9);
       this.renderRows(ctx, dmRows, d.x + 4, d.y + 4);
       if (this.escAwaitingReply) this.drawReplyTray(ctx, d.x, d.y + d.h - 20, d.w);
+      else this.replyRects = [];   // nothing to answer: publish nothing
     }
   }
 
@@ -307,11 +317,11 @@ export class IrcApp {
 
   private replyGeometry(
     n: number, x: number, y: number, w: number
-  ): Array<{ x: number; y: number; w: number; h: number }> {
+  ): Array<{ x: number; y: number; w: number; h: number; id: string }> {
     const h = 18;
-    if (n <= 1) return [{ x, y, w, h }];
+    if (n <= 1) return [{ x, y, w, h, id: 'reply:0' }];
     const gap = 6; const cw = (w - gap * (n - 1)) / n;
-    return Array.from({ length: n }, (_, i) => ({ x: x + i * (cw + gap), y, w: cw, h }));
+    return Array.from({ length: n }, (_, i) => ({ x: x + i * (cw + gap), y, w: cw, h, id: `reply:${i}` }));
   }
 
   handleClick(x: number, y: number): void {

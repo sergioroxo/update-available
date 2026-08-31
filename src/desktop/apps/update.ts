@@ -108,6 +108,10 @@ const LAMBY_AT = { x: 150, y: 248 }; // under the report, clear of the progress 
 
 const ERA_NUM: Record<string, number> = { e2: 2, e3: 3, e4: 4, close: 5 };
 
+/** same shape every other surface in the build publishes (kit.ts, provotype.ts,
+ *  caleb.ts, netvision.ts, accountability.ts, os.ts) */
+interface Hit { x: number; y: number; w: number; h: number; id: string }
+
 export class UpdateApp {
   open = true;
   dirty = true;
@@ -236,9 +240,25 @@ export class UpdateApp {
     this.onInstallBegin?.(this.s.toEra); // ⚑ S86 — the ascent starts on THIS press
   }
 
+  /**
+   * ⚑ THE RITUAL'S CONTROLS, REGISTERED WHERE THEY ARE DRAWN (2026-08-28).
+   * Until now this class computed its button geometry a second time inside
+   * `handleClick` — the same dialog measured twice, in two places, with nothing
+   * checking the copies agreed. They happened to agree; `kit.ts`'s did not, and
+   * had drifted by 40 px without anyone noticing, because a surface that
+   * publishes no rects cannot be audited by `tools/walk.mjs` or by any check.
+   *
+   * That matters most here of all: this class is EVERY era transition in the
+   * piece. Notification, EULA, install, restart — all four updates run through
+   * it, so it was the single surface whose reachability nothing could verify.
+   */
+  private hits: Hit[] = [];
+
   draw(ctx: CanvasRenderingContext2D): void {
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
+    // install, restart and the dispersal register nothing: they are not asks
+    this.hits = [];
 
     // ⚑ S61 — THE DEFERRAL IS NOT SILENT ANY MORE (Sérgio: *"Remind me later —
     // what does it do?"*). The notice withdraws, exactly as the law says, but
@@ -277,6 +297,14 @@ export class UpdateApp {
         const live = i === this.cascadeShown - 1;
         ui.button(ctx, c.x + c.w - 150, c.y + c.h - 26, 66, 18, cs.retry, { disabled: !live });
         ui.button(ctx, c.x + c.w - 76, c.y + c.h - 26, 66, 18, cs.cancel, { disabled: !live });
+        // ⚑ RETRY AND CANCEL BOTH LEAD ONWARD and always did — the beat is that
+        // there is nothing to fight — so both register, and only on the live
+        // (top) window. Registering them does not make them a choice; it makes
+        // the choice that was already there visible to an audit.
+        if (live) {
+          this.hits.push({ x: c.x + c.w - 150, y: c.y + c.h - 26, w: 66, h: 18, id: 'cascade-retry' });
+          this.hits.push({ x: c.x + c.w - 76, y: c.y + c.h - 26, w: 66, h: 18, id: 'cascade-cancel' });
+        }
       }
       return;
     }
@@ -291,6 +319,9 @@ export class UpdateApp {
         ctx.fillStyle = ERA1.silver;
         this.s.notify.forEach((line, i) => ctx.fillText(line, dx + 24, dy + 22 + i * 16));
         ui.button(ctx, dx + Math.round(dw / 2) - 50, dy + dh - 34, 100, 20, this.s.updateNow, {});
+        this.hits.push({
+          x: dx + Math.round(dw / 2) - 50, y: dy + dh - 34, w: 100, h: 20, id: 'update-now'
+        });
         return;
       }
       const c = ui.windowFrame(ctx, dx, dy, dw, dh, this.s.notifyTitle, true);
@@ -300,6 +331,7 @@ export class UpdateApp {
         ctx.fillText(line, c.x + 10, c.y + 6 + i * 12);
       });
       ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.updateNow, {});
+      this.hits.push({ x: c.x + c.w - 96, y: c.y + c.h - 26, w: 88, h: 18, id: 'update-now' });
       // ⚑ S61 — a SPENT deferral is drawn, not deleted. It used to vanish, so
       // the notice's second appearance looked like a different dialog and the
       // once-only rule was invisible. Greyed is the honest render (S60's
@@ -310,6 +342,11 @@ export class UpdateApp {
       if (this.s.remindLater) {
         ui.button(ctx, c.x + 8, c.y + c.h - 26, 120, 18,
           this.remindUsed ? REMIND_SPENT : this.s.remindLater, { disabled: this.remindUsed });
+        // a SPENT deferral is drawn and registers nothing — the option is still
+        // displayed and is no longer one (S61). Once only, exactly as before.
+        if (!this.remindUsed) {
+          this.hits.push({ x: c.x + 8, y: c.y + c.h - 26, w: 120, h: 18, id: 'remind-later' });
+        }
       }
       return;
     }
@@ -345,6 +382,10 @@ export class UpdateApp {
       // one live I Agree — armed only on the last page (v0.5 §1)
       ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.agree ?? 'I Agree', { disabled: !last });
       ui.button(ctx, c.x + c.w - 196, c.y + c.h - 26, 88, 18, this.s.readOn ?? 'Read on', { disabled: last });
+      // only the armed one registers: one live "I Agree", on the last page (v0.5 §1)
+      this.hits.push(last
+        ? { x: c.x + c.w - 96, y: c.y + c.h - 26, w: 88, h: 18, id: 'eula-agree' }
+        : { x: c.x + c.w - 196, y: c.y + c.h - 26, w: 88, h: 18, id: 'eula-readon' });
       return;
     }
 
@@ -503,6 +544,10 @@ export class UpdateApp {
     };
     word(readOn, this.s.readOn ?? 'Read on', !last);
     word(agree, this.s.agree ?? 'I Agree', last);
+    // the live word registers; the foreclosed one stays legible and dead
+    this.hits.push(last
+      ? { ...agree, id: 'eula-agree' }
+      : { ...readOn, id: 'eula-readon' });
   }
 
   /** the arriving EULA's two word-controls, in one place */
@@ -522,84 +567,61 @@ export class UpdateApp {
   }
 
   handleClick(x: number, y: number): void {
-    const W = ERA1_CANVAS.width;
-    const H = ERA1_CANVAS.height;
+    // ⚑ ONE LOOKUP, against the rects `draw` registered — see `hits` above for
+    //   why the geometry is no longer written out a second time here.
+    const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y - 4 && y <= h.y + h.h);
+    const id = hit?.id ?? '';
 
     // ⚑ RETRY AND CANCEL BOTH LEAD ONWARD, and that is the beat. The era's law
     //   is register-not-branch: a press records HOW you met the machine and
     //   never what it does next. An error dialog you can genuinely dismiss is
     //   not this system — the update was never conditional on your agreement.
     //   Either press ends the pile and opens the notice.
+    //   So the cascade still takes ANY press, exactly as it always has — the
+    //   two rects it registers are there to be found by an audit, not to become
+    //   a choice the player has to make correctly.
     if (this.phase === 'cascade' && this.s.cascade) {
       if (this.cascadeShown >= 1) { this.phase = 'notify'; this.t = 0; }
       return;
     }
     if (this.phase === 'notify') {
-      const bare = this.key === 'close';
-      const dw = 320; const dh = bare ? 110 : 150;
-      const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
-      if (bare) {
-        const bx = dx + Math.round(dw / 2) - 50; const by = dy + dh - 34;
-        if (x >= bx && x <= bx + 100 && y >= by && y <= by + 20) this.beginInstall();
-        return;
-      }
-      const cx = dx + 4; const cy = dy + 21; const cw = dw - 8; const ch = dh - 25;
-      const by = cy + ch - 26;
-      if (y >= by && y <= by + 18) {
-        if (x >= cx + cw - 96 && x <= cx + cw - 8) {
+      switch (id) {
+        case 'update-now':
           // R28-2c: "Update now" pressed while remind-later was NEVER used
           // this instance = the gathering window never opened at all (the
           // short path, spec §4). Fires before the phase changes.
           if (!this.remindUsed) this.onUpdateNowDirect?.();
           if (this.s.eula) { this.phase = 'eula'; this.t = 0; } else { this.beginInstall(); }
           return;
-        }
-        if (this.s.remindLater && !this.remindUsed && x >= cx + 8 && x <= cx + 128) {
-          this.remindUsed = true;              // works exactly once (v0.5 §1)
+        case 'remind-later':
+          // registered only while unspent, so this still works exactly once (v0.5 §1)
+          this.remindUsed = true;
           this.ledgerEntry.remindLaterCount += 1;
           this.phase = 'reminded';
           this.t = 0;
           this.onRemindLaterUsed?.(); // R28-2c: the gathering window opens
-        }
+          return;
+        default: return;
       }
-      return;
     }
 
-    if (this.phase === 'eula' && this.s.eula && this.ledgerEntry.toEra === 4) {
-      const { readOn, agree, last } = this.arrivingEulaHits(W, H);
-      const inside = (r: { x: number; y: number; w: number; h: number }): boolean =>
-        x >= r.x && x <= r.x + r.w && y >= r.y - 4 && y <= r.y + r.h;
-      if (!last && inside(readOn)) {
+    if (this.phase === 'eula' && this.s.eula) {
+      if (id === 'eula-readon') {
         this.page += 1;
         this.ledgerEntry.eulaScrollPct = Math.round(((this.page + 1) / this.s.eula.length) * 100);
         this.dirty = true;
         return;
       }
-      if (last && inside(agree)) {
+      if (id === 'eula-agree') {
         this.ledgerEntry.eulaScrollPct = 100;
         this.beginInstall();
       }
       return;
     }
 
-    if (this.phase === 'eula' && this.s.eula) {
-      const dw = 400; const dh = 280;
-      const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
-      const cx = dx + 4; const cy = dy + 21; const cw = dw - 8; const ch = dh - 25;
-      const by = cy + ch - 26;
-      const last = this.page === this.s.eula.length - 1;
-      if (y >= by && y <= by + 18) {
-        if (!last && x >= cx + cw - 196 && x <= cx + cw - 108) {
-          this.page += 1;
-          this.ledgerEntry.eulaScrollPct = Math.round(((this.page + 1) / this.s.eula.length) * 100);
-          this.dirty = true;
-          return;
-        }
-        if (last && x >= cx + cw - 96 && x <= cx + cw - 8) {
-          this.ledgerEntry.eulaScrollPct = 100;
-          this.beginInstall();
-        }
-      }
-    }
+    // ⚑ the framed EULA used to be handled by a SECOND copy of this logic here,
+    //   measuring the 400x280 dialog all over again. Both EULAs — the framed one
+    //   and Era 4's arriving one — now answer the same two registered ids above,
+    //   so the branch that used to live here is gone rather than kept in step.
   }
 }

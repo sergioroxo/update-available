@@ -1,0 +1,358 @@
+{
+ "when": "2026-08-31T12:59:58.064Z",
+ "port": 3000,
+ "viewport": {
+  "width": 1280,
+  "height": 900
+ },
+ "jumpedTo": "update2",
+ "isReachabilityProof": false,
+ "steps": 18,
+ "presses": 11,
+ "reachedEra": "e2",
+ "spine": "e2_s1",
+ "ledger": {
+  "name": "Daniel",
+  "tags": [],
+  "records": [],
+  "flips": 0,
+  "dossier": [],
+  "session": {
+   "path": "full",
+   "switched": false
+  },
+  "assistant": {
+   "dismissals": 0,
+   "acceptedSuggestions": [],
+   "ignored": [],
+   "nightSessions": 0
+  },
+  "updates": [
+   {
+    "toEra": 2,
+    "remindLaterCount": 0,
+    "eulaScrollPct": 100
+   }
+  ],
+  "respite": {
+   "streamOpenSeconds": 0,
+   "songsPlayed": []
+  },
+  "provotypes": [],
+  "sends": [],
+  "guidance": [],
+  "tapes": [],
+  "belongings": [
+   {
+    "id": "_processed",
+    "outcome": "processed",
+    "witness": "belongings: processed"
+   }
+  ],
+  "lamby": [
+   {
+    "id": "return-press",
+    "outcome": "returned",
+    "witness": "return: pressed — the reboot completed"
+   },
+   {
+    "id": "introduction",
+    "outcome": "begun",
+    "witness": "assistant: introduced — companion process accepted"
+   },
+   {
+    "id": "first-greeting",
+    "outcome": "begun",
+    "witness": "assistant: begun — first greeting"
+   }
+  ],
+  "checkins": [],
+  "media": [],
+  "caleb": [],
+  "era3Arrival": [],
+  "graceQueue": [],
+  "comments": [],
+  "e4Space": [],
+  "l": [],
+  "e4Offers": [],
+  "view": {
+   "motion": "unasked",
+   "yawZero": null,
+   "screenAngle": null,
+   "screenAngleSource": "unknown",
+   "recentres": 0,
+   "unvoicedName": false
+  }
+ },
+ "console": [],
+ "log": [
+  {
+   "step": 0,
+   "kind": "open",
+   "what": "?reinterp=1&debug=1 — debug is READ-ONLY here; no panel button, no jump, no __requestMove"
+  },
+  {
+   "step": 1,
+   "kind": "dom",
+   "target": "Log in",
+   "what": "the content-warning panel (real DOM button)"
+  },
+  {
+   "step": 2,
+   "kind": "JUMPED",
+   "what": "debugJump(\"update2\") — DIAGNOSTIC ONLY. This run proves nothing about whether a player can reach this beat; everything after this point is still ordinary clicking, but the way in was a crutch."
+  },
+  {
+   "step": 3,
+   "kind": "seated",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "what": "6 live controls"
+  },
+  {
+   "step": 4,
+   "kind": "press",
+   "target": "icon-a",
+   "surface": "os",
+   "logical": [
+    29,
+    24
+   ],
+   "page": [
+    343,
+    364
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 5,
+   "kind": "press",
+   "target": "update-now",
+   "surface": "updateApp",
+   "logical": [
+    360,
+    246
+   ],
+   "page": [
+    776,
+    655
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 6,
+   "kind": "press",
+   "target": "eula-readon",
+   "surface": "updateApp",
+   "logical": [
+    300,
+    311
+   ],
+   "page": [
+    698,
+    740
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 7,
+   "kind": "press",
+   "target": "eula-agree",
+   "surface": "updateApp",
+   "logical": [
+    400,
+    311
+   ],
+   "page": [
+    828,
+    740
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 8,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 9,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 10,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 11,
+   "kind": "recycle",
+   "what": "every control on this screen has been pressed before — starting it over",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 12,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 13,
+   "kind": "recycle",
+   "what": "every control on this screen has been pressed before — starting it over",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 14,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 15,
+   "kind": "press",
+   "target": "lamby-hello",
+   "surface": "os",
+   "logical": [
+    370,
+    317
+   ],
+   "page": [
+    789,
+    748
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 16,
+   "kind": "press",
+   "target": "lamby-begin",
+   "surface": "os",
+   "logical": [
+    370,
+    317
+   ],
+   "page": [
+    789,
+    748
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 17,
+   "kind": "end",
+   "what": "walk finished",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  }
+ ]
+}

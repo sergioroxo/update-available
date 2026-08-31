@@ -395,3 +395,49 @@ file: it quit the piece in ten seconds by pressing Leave; pressed one profile ic
 74 times; took a provotype's repeat branch 70 times; abandoned apps on page two
 because two screens shared a button set; and wore a groove in two optional
 provotypes while the spine never moved.
+
+## S93 (2026-08-28) — Every control registered where it is drawn
+
+⚑ **FIRST, A CORRECTION TO S92.** That entry reported six surfaces publishing no
+hit rects. **Four of those were wrong.** `caleb`, `netvision` and `accountability`
+all keep proper `hits` arrays, and `irc` keeps `replyRects`; the walker had flagged
+them because their rects were EMPTY at the instant it looked, and those surfaces
+register controls only in the phase that offers them. "Nothing right now" is not
+"nothing ever", and conflating the two produced a finding that overstated the
+problem by a factor of three. The tool now tests structurally — does the object own
+a rect field at all — and names the two states differently.
+
+**Genuinely silent, and now fixed: `kit` and `updateApp`.** Both computed their
+button geometry a second time inside `handleClick`.
+
+- **`kit.ts` — and its two copies HAD drifted.** NEXT is drawn 60 px wide on every
+  page but the last; the click test accepted 100 px. So ~40 px of blank paper to
+  the right of the button silently turned the page. Nobody saw it because nothing
+  could: a surface publishing no rects is invisible to `tools/walk.mjs` and to
+  every check. Now registered where drawn; BACK still registers nothing, since it
+  is drawn dead on purpose (R26).
+- **`updateApp.ts` — every era transition in the piece.** Notification, both EULAs
+  (framed and Era 4's arriving one), the cascade. The two copies agreed, but this
+  was the single surface whose reachability nothing could verify. The framed EULA's
+  duplicate click branch is deleted rather than kept in step.
+- **`irc.ts`** kept geometry-only rects with no `id`, which put it in a gap: an
+  audit could see a rect field and call it healthy, yet could not name or aim at
+  one control. Ids added; the array is cleared when the tray is not drawn.
+
+**Verified with real clicks, not by reading.** `--jump update2|update3|update4`
+each walk `update-now → eula-readon → eula-agree` and land in e2 / e3 / e4; Era 4
+then takes L's chips (`ok`, `who`, `silent`). `--jump kit` turns all five booklet
+pages pressing the registered `next`. `npm test` and `tsc` clean.
+
+**Also corrected in the walker:** Era 4 was reported in S92 as offering nothing.
+It does — L speaks, and her chips exist only while the voice is `waiting`, so the
+era legitimately has nothing pressable for ten or fifteen seconds at a time. The
+walker called that a dead end. Patience now resets on any change to the drawn
+pixels, so only a genuinely frozen screen runs it out.
+
+⚑ **KNOWN LIMITATION, not fixed.** The walk still does not complete unjumped in
+one pass: it explores Era 2's optional desktop icons instead of waiting for
+Lamby's conduction, and stops itself with "going nowhere". The stop is correct
+behaviour; the exploration policy is what needs work. Era 3 and Era 4 are proven
+reachable by the pre-refactor run (`WALK_2026-08-26`, 142 presses to e4) and by the
+jumped ritual walks above, but a single clean end-to-end run is still owed.

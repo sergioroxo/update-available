@@ -1,0 +1,1870 @@
+{
+ "when": "2026-08-31T12:36:55.921Z",
+ "port": 3000,
+ "viewport": {
+  "width": 1280,
+  "height": 900
+ },
+ "jumpedTo": null,
+ "isReachabilityProof": true,
+ "steps": 145,
+ "presses": 45,
+ "reachedEra": "e1",
+ "spine": "e1",
+ "ledger": {
+  "name": "Daniel",
+  "tags": [
+   "profile:icon:moon",
+   "profile:chip:music",
+   "profile:chip:diary",
+   "profile:chip:friend",
+   "profile:goal:fit_in",
+   "pastoral-referral",
+   "consent-on-file"
+  ],
+  "records": [
+   "profile-initialized",
+   "kit-inserted",
+   "went-online",
+   "mirc-log",
+   "escalation-reply:disclosed distress — receptive, log it",
+   "escalation-reply:seeking detail — minimize",
+   "escalation-reply:hesitant — reassure",
+   "escalation-reply:boundary probe — affirm trust",
+   "escalation-reply:resistant — proceed; consent already on file",
+   "enrollment-acknowledged",
+   "diary-committed"
+  ],
+  "flips": 0,
+  "dossier": [],
+  "session": {
+   "path": "full",
+   "switched": false
+  },
+  "assistant": {
+   "dismissals": 0,
+   "acceptedSuggestions": [],
+   "ignored": [],
+   "nightSessions": 0
+  },
+  "updates": [],
+  "respite": {
+   "streamOpenSeconds": 0,
+   "songsPlayed": []
+  },
+  "provotypes": [
+   {
+    "id": "pillow",
+    "outcome": "abandoned",
+    "witness": "session: left mid-cycle · flagged",
+    "reps": 0
+   },
+   {
+    "id": "origin_intake_e1",
+    "outcome": "abandoned",
+    "witness": "intake: incomplete · flagged",
+    "reps": 0
+   },
+   {
+    "id": "pillow",
+    "outcome": "abandoned",
+    "witness": "session: left mid-cycle · flagged",
+    "reps": 0
+   },
+   {
+    "id": "origin_intake_e1",
+    "outcome": "abandoned",
+    "witness": "intake: incomplete · flagged",
+    "reps": 0
+   },
+   {
+    "id": "pillow",
+    "outcome": "abandoned",
+    "witness": "session: left mid-cycle · flagged",
+    "reps": 0
+   }
+  ],
+  "sends": [],
+  "guidance": [
+   {
+    "id": "floppy",
+    "outcome": "followed",
+    "witness": "guidance: disk — followed"
+   },
+   {
+    "id": "kit",
+    "outcome": "followed",
+    "witness": "guidance: booklet — followed"
+   },
+   {
+    "id": "tape",
+    "outcome": "declined",
+    "witness": "guidance: tape — skipped"
+   },
+   {
+    "id": "channel",
+    "outcome": "followed",
+    "witness": "guidance: channel — followed"
+   },
+   {
+    "id": "packet",
+    "outcome": "followed",
+    "witness": "guidance: packet — followed"
+   }
+  ],
+  "tapes": [],
+  "belongings": [],
+  "lamby": [],
+  "checkins": [],
+  "media": [],
+  "caleb": [],
+  "era3Arrival": [],
+  "graceQueue": [],
+  "comments": [],
+  "e4Space": [],
+  "l": [],
+  "e4Offers": [],
+  "view": {
+   "motion": "unasked",
+   "yawZero": null,
+   "screenAngle": null,
+   "screenAngleSource": "unknown",
+   "recentres": 0,
+   "unvoicedName": false
+  }
+ },
+ "console": [],
+ "log": [
+  {
+   "step": 0,
+   "kind": "open",
+   "what": "?reinterp=1&debug=1 — debug is READ-ONLY here; no panel button, no jump, no __requestMove"
+  },
+  {
+   "step": 1,
+   "kind": "dom",
+   "target": "Log in",
+   "what": "the content-warning panel (real DOM button)"
+  },
+  {
+   "step": 2,
+   "kind": "seated",
+   "era": "e1",
+   "phase": "r_dark",
+   "spine": "e1",
+   "what": "0 live controls"
+  },
+  {
+   "step": 3,
+   "kind": "idle",
+   "what": "waiting — 1 hit rect registered, 1 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e1",
+   "phase": "r_boot",
+   "spine": "e1",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "era3-device-phone is disabled"
+    }
+   ],
+   "offered": [
+    "os:r-leave"
+   ],
+   "surfaces": [
+    "os(1)"
+   ]
+  },
+  {
+   "step": 4,
+   "kind": "idle",
+   "what": "waiting — 1 hit rect registered, 1 aimable, 1 unaimable, 0 already tried, 0 markers",
+   "era": "e1",
+   "phase": "r_boot",
+   "spine": "e1",
+   "qMode": "dark",
+   "dropped": [
+    {
+     "id": "unlock",
+     "surface": "phone",
+     "logical": [
+      90,
+      245
+     ],
+     "why": "era3-device-phone is disabled"
+    }
+   ],
+   "offered": [
+    "os:r-leave"
+   ],
+   "surfaces": [
+    "os(1)"
+   ]
+  },
+  {
+   "step": 5,
+   "kind": "press",
+   "target": "picon:star",
+   "surface": "os",
+   "logical": [
+    70,
+    107
+   ],
+   "page": [
+    397,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 6,
+   "kind": "press",
+   "target": "picon:tape",
+   "surface": "os",
+   "logical": [
+    140,
+    107
+   ],
+   "page": [
+    488,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 7,
+   "kind": "press",
+   "target": "picon:flower",
+   "surface": "os",
+   "logical": [
+    210,
+    107
+   ],
+   "page": [
+    580,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 8,
+   "kind": "press",
+   "target": "picon:bird",
+   "surface": "os",
+   "logical": [
+    280,
+    107
+   ],
+   "page": [
+    671,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 9,
+   "kind": "press",
+   "target": "picon:heart",
+   "surface": "os",
+   "logical": [
+    350,
+    107
+   ],
+   "page": [
+    763,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 10,
+   "kind": "press",
+   "target": "picon:moon",
+   "surface": "os",
+   "logical": [
+    420,
+    107
+   ],
+   "page": [
+    855,
+    473
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 11,
+   "kind": "press",
+   "target": "pchip:music",
+   "surface": "os",
+   "logical": [
+    109,
+    166
+   ],
+   "page": [
+    448,
+    550
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 12,
+   "kind": "press",
+   "target": "pchip:diary",
+   "surface": "os",
+   "logical": [
+    257,
+    166
+   ],
+   "page": [
+    641,
+    550
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 13,
+   "kind": "press",
+   "target": "pchip:friend",
+   "surface": "os",
+   "logical": [
+    405,
+    166
+   ],
+   "page": [
+    835,
+    550
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 14,
+   "kind": "press",
+   "target": "pchip:quiet",
+   "surface": "os",
+   "logical": [
+    109,
+    188
+   ],
+   "page": [
+    448,
+    579
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 15,
+   "kind": "press",
+   "target": "pchip:faith",
+   "surface": "os",
+   "logical": [
+    257,
+    188
+   ],
+   "page": [
+    641,
+    579
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 16,
+   "kind": "press",
+   "target": "pchip:better",
+   "surface": "os",
+   "logical": [
+    405,
+    188
+   ],
+   "page": [
+    835,
+    579
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 17,
+   "kind": "press",
+   "target": "pgoal:fit_in",
+   "surface": "os",
+   "logical": [
+    168,
+    232
+   ],
+   "page": [
+    525,
+    636
+   ],
+   "era": "e1",
+   "phase": "r_profile",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 18,
+   "kind": "press",
+   "target": "r-continue",
+   "surface": "os",
+   "logical": [
+    432,
+    352
+   ],
+   "page": [
+    870,
+    793
+   ],
+   "era": "e1",
+   "phase": "r_recap",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 5,
+   "changed": true
+  },
+  {
+   "step": 19,
+   "kind": "press",
+   "target": "r-enter",
+   "surface": "os",
+   "logical": [
+    416,
+    344
+   ],
+   "page": [
+    849,
+    783
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 20,
+   "kind": "press",
+   "target": "icon-a",
+   "surface": "os",
+   "logical": [
+    29,
+    24
+   ],
+   "page": [
+    343,
+    364
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 2,
+   "changed": true
+  },
+  {
+   "step": 21,
+   "kind": "press",
+   "target": "icon-provotype",
+   "surface": "os",
+   "logical": [
+    29,
+    120
+   ],
+   "page": [
+    343,
+    490
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 22,
+   "kind": "press",
+   "target": "primary",
+   "surface": "provotype",
+   "logical": [
+    413,
+    342
+   ],
+   "page": [
+    845,
+    780
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 23,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 24,
+   "kind": "press",
+   "target": "primary",
+   "surface": "provotype",
+   "logical": [
+    413,
+    342
+   ],
+   "page": [
+    845,
+    780
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 25,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 26,
+   "kind": "press",
+   "target": "choice:0",
+   "surface": "provotype",
+   "logical": [
+    132,
+    104
+   ],
+   "page": [
+    478,
+    469
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 27,
+   "kind": "press",
+   "target": "leave",
+   "surface": "provotype",
+   "logical": [
+    79,
+    342
+   ],
+   "page": [
+    408,
+    780
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 28,
+   "kind": "press",
+   "target": "icon-provotype-intake",
+   "surface": "os",
+   "logical": [
+    29,
+    168
+   ],
+   "page": [
+    343,
+    553
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 29,
+   "kind": "press",
+   "target": "leave",
+   "surface": "provotype",
+   "logical": [
+    79,
+    342
+   ],
+   "page": [
+    408,
+    780
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 30,
+   "kind": "press",
+   "target": "icon-provotype",
+   "surface": "os",
+   "logical": [
+    29,
+    120
+   ],
+   "page": [
+    343,
+    490
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 31,
+   "kind": "press",
+   "target": "leave",
+   "surface": "provotype",
+   "logical": [
+    79,
+    342
+   ],
+   "page": [
+    408,
+    780
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 32,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 33,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 34,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 35,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    385,
+    326
+   ],
+   "page": [
+    809,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 36,
+   "kind": "press",
+   "target": "next",
+   "surface": "kit",
+   "logical": [
+    405,
+    326
+   ],
+   "page": [
+    835,
+    759
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 37,
+   "kind": "press",
+   "target": "icon-provotype-intake",
+   "surface": "os",
+   "logical": [
+    29,
+    168
+   ],
+   "page": [
+    343,
+    553
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 38,
+   "kind": "press",
+   "target": "leave",
+   "surface": "provotype",
+   "logical": [
+    79,
+    342
+   ],
+   "page": [
+    408,
+    780
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 2,
+   "changed": true
+  },
+  {
+   "step": 39,
+   "kind": "press",
+   "target": "icon-irc",
+   "surface": "os",
+   "logical": [
+    29,
+    24
+   ],
+   "page": [
+    343,
+    364
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 40,
+   "kind": "press",
+   "target": "icon-provotype",
+   "surface": "os",
+   "logical": [
+    29,
+    120
+   ],
+   "page": [
+    343,
+    490
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": true
+  },
+  {
+   "step": 41,
+   "kind": "press",
+   "target": "icon-irc",
+   "surface": "os",
+   "logical": [
+    29,
+    24
+   ],
+   "page": [
+    343,
+    364
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 42,
+   "kind": "press",
+   "target": "leave",
+   "surface": "provotype",
+   "logical": [
+    79,
+    342
+   ],
+   "page": [
+    408,
+    780
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 43,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 44,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 45,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 46,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 47,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 48,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 49,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 50,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 51,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 52,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 53,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 54,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 55,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 56,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 57,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 58,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 59,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 60,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 61,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 62,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 63,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 64,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 65,
+   "kind": "press",
+   "target": "reply:0",
+   "surface": "irc",
+   "logical": [
+    320,
+    295
+   ],
+   "page": [
+    724,
+    719
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 2,
+   "changed": true
+  },
+  {
+   "step": 66,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 67,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 68,
+   "kind": "press",
+   "target": "reply:0",
+   "surface": "irc",
+   "logical": [
+    320,
+    295
+   ],
+   "page": [
+    724,
+    719
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 69,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 70,
+   "kind": "press",
+   "target": "reply:0",
+   "surface": "irc",
+   "logical": [
+    320,
+    295
+   ],
+   "page": [
+    724,
+    719
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 71,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 72,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 73,
+   "kind": "press",
+   "target": "reply:0",
+   "surface": "irc",
+   "logical": [
+    320,
+    295
+   ],
+   "page": [
+    724,
+    719
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 74,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 75,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 76,
+   "kind": "press",
+   "target": "reply:0",
+   "surface": "irc",
+   "logical": [
+    320,
+    295
+   ],
+   "page": [
+    724,
+    719
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "changed": true
+  },
+  {
+   "step": 77,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 78,
+   "kind": "silent-surface",
+   "what": "packet is live and owns no rect field at all — its button geometry lives inline in handleClick, so it must be found by sweeping",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 79,
+   "kind": "sweep-hit",
+   "target": "(swept) packet",
+   "surface": "os",
+   "logical": [
+    388,
+    304
+   ],
+   "page": [
+    813,
+    731
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 2,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 80,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 81,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 82,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 83,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 84,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 85,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 86,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 87,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 88,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 89,
+   "kind": "press",
+   "target": "icon-irc",
+   "surface": "os",
+   "logical": [
+    29,
+    24
+   ],
+   "page": [
+    343,
+    364
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "changed": false
+  },
+  {
+   "step": 90,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 91,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 92,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 93,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 94,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 95,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 96,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 97,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 98,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 99,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 100,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 101,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 102,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 103,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 104,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 105,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 106,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 107,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 108,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 109,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 110,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 111,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 112,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 113,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 114,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 115,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 116,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 117,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 118,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 119,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 120,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 121,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 122,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 123,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 124,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 125,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 126,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 127,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 128,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 129,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 130,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 131,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 132,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 133,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 134,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 135,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 136,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 137,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 138,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 139,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 140,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 141,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 142,
+   "kind": "waiting-out",
+   "what": "every control here has been tried twice and never advanced anything — waiting for the piece to speak rather than pressing dead icons",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 143,
+   "kind": "stop",
+   "what": "THE WALK IS LOOPING: this same screen has come round 25 times and every control on it has been pressed — there is no way onward from here",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 144,
+   "kind": "end",
+   "what": "walk finished",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  }
+ ]
+}
