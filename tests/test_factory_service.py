@@ -533,6 +533,32 @@ def test_expired_only_command_is_authenticated_but_never_applied(tmp_path):
     worker.close()
 
 
+def test_consumed_start_authorization_remains_durable_after_later_expiry(tmp_path):
+    context = _setup(tmp_path, run_id="consumed-start-durable", approval_hours=1)
+    initial = _worker(context)
+    initial.ingest()
+    assert initial.store.get_meta("approved") == "1"
+    consumed = initial.store.connection.execute(
+        "SELECT COUNT(*) FROM production_messages WHERE purpose='command'"
+    ).fetchone()[0]
+    assert consumed == 1
+    initial.close()
+
+    restarted = ProductionCanaryWorker(
+        to_studio=context["to"], from_studio=context["from"],
+        state_root=context["state"], run_id=context["run_id"],
+        command_public_keys=public_key_allowlist((context["mb_public"],)),
+        receipt_signing_private_key=context["st_private"],
+        now=NOW + timedelta(hours=2),
+    )
+    restarted.ingest()
+    assert restarted.store.get_meta("approved") == "1"
+    assert restarted.store.connection.execute(
+        "SELECT COUNT(*) FROM production_messages WHERE purpose='command'"
+    ).fetchone()[0] == consumed
+    restarted.close()
+
+
 def test_tampered_expired_command_still_fails_closed(tmp_path):
     context = _setup(tmp_path, run_id="tampered-expired", approval_hours=24)
     message = _publish_command(

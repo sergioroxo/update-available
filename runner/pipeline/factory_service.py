@@ -482,6 +482,17 @@ class ProductionWorkerStore:
                 )
         return True
 
+    def has_consumed_command(
+        self, *, message_id: str, payload_sha256: str, sequence: int,
+    ) -> bool:
+        row = self.connection.execute(
+            "SELECT purpose,payload_sha256,sequence FROM production_messages "
+            "WHERE message_id=?", (message_id,),
+        ).fetchone()
+        return row is not None and tuple(row) == (
+            "command", payload_sha256, sequence,
+        )
+
     def jobs(self) -> tuple[sqlite3.Row, ...]:
         return tuple(self.connection.execute(
             "SELECT * FROM production_jobs ORDER BY package_id,document_id,station_sequence"
@@ -983,16 +994,15 @@ class ProductionCanaryWorker:
             snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
             if snapshot.get("canonical_sha256") != campaign.lexicon_snapshot_sha256:
                 raise ValueError("semantic campaign lexicon snapshot changed")
+        approval_error: ValueError | None = None
         try:
             approval.assert_current(self.now)
-        except ValueError:
-            existing = self._verified_existing_projection()
-            if existing is None or existing.campaign.state != "succeeded":
-                raise
+        except ValueError as exc:
+            approval_error = exc
         self.campaign, self.package, self.approval = campaign, package, approval
         self.campaign_sha256 = sha256_bytes(canonical_json_bytes(campaign))
-        self.store.initialize_jobs(campaign, package)
         commands = verified_json_messages(self.to_studio, f"commands/{self.run_id}")
+        verified_commands = []
         for relative, raw in commands:
             if not relative.endswith(".auth.json"):
                 raise FactoryAuthenticationError("unsigned production command is forbidden")
@@ -1041,6 +1051,27 @@ class ProductionCanaryWorker:
                 raise FactoryAuthenticationError(
                     "authenticated command campaign mismatch"
                 )
+            verified_commands.append((command, command_message, expired))
+        if approval_error is not None:
+            existing = self._verified_existing_projection()
+            terminal = existing is not None and existing.campaign.state == "succeeded"
+            durable_start = (
+                self.store.get_meta("run_id") == self.run_id
+                and self.store.get_meta("approved") == "1"
+                and any(
+                    command.action in {"start_approved", "resume"}
+                    and self.store.has_consumed_command(
+                        message_id=command_message.envelope.message_id,
+                        payload_sha256=command_message.envelope.payload_sha256,
+                        sequence=command.sequence,
+                    )
+                    for command, command_message, _expired in verified_commands
+                )
+            )
+            if not terminal and not durable_start:
+                raise approval_error
+        self.store.initialize_jobs(campaign, package)
+        for command, command_message, expired in verified_commands:
             if expired:
                 continue
             self.store.apply_command(
