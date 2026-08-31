@@ -12,6 +12,9 @@ import end from '../../../data/dialog/s1_end.json';
 
 const DW = 396; const DH = 300;
 
+/** same shape every other surface in the build publishes */
+interface Hit { x: number; y: number; w: number; h: number; id: string }
+
 export class PacketApp {
   open = true;
   dirty = true;
@@ -19,6 +22,7 @@ export class PacketApp {
   onAck?: () => void;
 
   private deadPressT = 0; // a tiny shudder when the dead button is pressed
+  private hits: Hit[] = [];
   private acked = false;
 
   private get geom() {
@@ -55,18 +59,30 @@ export class PacketApp {
     const by = c.y + c.h - 26;
     ui.button(ctx, c.x + 10, by, 110, 20, end.packet.deadButton, { disabled: true });
     ui.button(ctx, c.x + c.w - 70, by, 60, 20, end.packet.ok, {});
+    // ⚑ THE DEAD BUTTON REGISTERS TOO, and deliberately. It is drawn disabled
+    //   and leads nowhere, but it is not inert: pressing it shudders, which is
+    //   the beat — you cannot ask. A control that answers is a control an audit
+    //   should be able to see, whatever it does or refuses to do.
+    this.hits = [
+      { x: c.x + 10, y: by, w: 110, h: 20, id: 'dead' },
+      { x: c.x + c.w - 70, y: by, w: 60, h: 20, id: 'ok' }
+    ];
   }
 
+  /**
+   * ⚑ Registered where drawn (2026-08-28). This used to measure the dialog a
+   * second time here — the same numbers as `draw`, with nothing checking the
+   * copies agreed. They did agree; `kit.ts`'s did not, and had drifted by 40 px
+   * unnoticed, because a surface publishing no rects is invisible to
+   * `tools/walk.mjs` and to every check. The packet is the beat Era 1 ends on.
+   */
   handleClick(x: number, y: number): void {
     if (this.acked) return;
-    const { dx, dy } = this.geom;
-    const c = { x: dx + 4, y: dy + 21, w: DW - 8, h: DH - 25 };
-    const by = c.y + c.h - 26;
-    if (y < by || y > by + 20) return;
+    const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     // the dead button: a small shudder, then nothing — you cannot ask
-    if (x >= c.x + 10 && x <= c.x + 120) { this.deadPressT = 0.25; this.dirty = true; return; }
+    if (hit?.id === 'dead') { this.deadPressT = 0.25; this.dirty = true; return; }
     // OK — the only way out, and it is forward
-    if (x >= c.x + c.w - 70 && x <= c.x + c.w - 10) {
+    if (hit?.id === 'ok') {
       this.acked = true;
       this.open = false;
       if (!ledger.records.includes('enrollment-acknowledged')) ledger.records.push('enrollment-acknowledged');

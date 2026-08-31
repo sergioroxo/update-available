@@ -441,3 +441,45 @@ Lamby's conduction, and stops itself with "going nowhere". The stop is correct
 behaviour; the exploration policy is what needs work. Era 3 and Era 4 are proven
 reachable by the pre-refactor run (`WALK_2026-08-26`, 142 presses to e4) and by the
 jumped ritual walks above, but a single clean end-to-end run is still owed.
+
+## S94 (2026-08-31) — The walk completes: entrance to Era 4, clicking only
+
+⚑ **THE THING S93 OWED IS DONE.** `node tools/walk.mjs` now runs the whole piece
+from the entrance to Era 4 with nothing but real presses — no `?era=`, no
+`debugJump`, no `debugBeat` — in **153 presses**, and writes the run to
+`docs/reinterp/WALK_2026-08-31.{json,md}`. The piece is completable by clicking,
+and that is now demonstrated rather than assumed.
+
+**Two more surfaces published their rects**, both found by the walk stalling on them:
+- **`packet.ts`** — the placement packet, the beat Era 1 ends on. Its dead button
+  registers too, deliberately: it is drawn disabled and leads nowhere, but it
+  answers with a shudder, and a control that answers is one an audit should see.
+- **`diary.ts`** could not be fixed the same way and should not be: it takes ANY
+  click anywhere via `press()`, with no coordinates at all. It is correctly
+  reported as the one remaining surface that owns no rects, alongside Era 2's
+  `silence` screen — both are "the whole screen is the button", which is design,
+  not defect.
+
+**⚑ A NEW FINDING, and it is the same old class.** While a modal is open,
+`os.handleClick` delegates every click to it and returns — but the surfaces
+underneath **go on registering their hit rects**. The kit's NEXT, IRC's replies
+and the desktop icons are all published as live while being physically
+unreachable. The walk pressed that unreachable NEXT forty-five times before the
+tool learned to notice. Nothing is broken for a player, who has no reason to open
+a provotype mid-conversation — but the piece is advertising controls it will not
+accept, and the honest fix is for a covered surface to publish nothing. NOT DONE:
+it needs `os.handleClick`'s precedence chain to become one source of truth, which
+is a bigger change than this session should make unilaterally.
+
+**What the walker learned, each rule bought with a failed run** (7 more this
+session, 29 total): memory keyed on the STABLE screen rather than the pixels;
+a cap counting only FRUITLESS presses, forgiven by any one-way advance (era,
+phase, spine, queue mode — never the ledger, which the provotypes farm); a press
+that changes literally nothing marked inert and scoped to the screen it happened
+on; dismissal never rationed; the open sub-app finished before any desktop icon
+is touched; and — the one that finally got past Rob — DO NOT INTERRUPT THE MACHINE
+MID-SENTENCE: two probes a second apart tell a screen drawing itself from a screen
+merely waiting, and IRC's escalation is timed at 13 characters a second.
+
+⚑ Still owed: the run ends in Era 4 during one of L's speaking gaps rather than
+on her last chip, so the Close is still not proven reachable end-to-end.

@@ -346,7 +346,12 @@ async function main() {
     const quiet = [];
     for (const k of Object.keys(os)) {
       let v; try { v = os[k]; } catch { continue; }
-      if (!v || typeof v !== 'object' || v.open !== true || typeof v.handleClick !== 'function') continue;
+      // ⚑ `press` as well as `handleClick`: the diary takes ANY click on the
+      //   whole screen and has no coordinates and no rects at all, so a detector
+      //   looking only for `handleClick` walked straight past it — and then
+      //   pressed desktop icons the diary was silently swallowing.
+      if (!v || typeof v !== 'object' || v.open !== true) continue;
+      if (typeof v.handleClick !== 'function' && typeof v.press !== 'function') continue;
       if (osGroups.some((g) => g.path === k || g.path.indexOf(k + '.') === 0)) continue;
       /**
        * ⚑ A THIRD STATE, AND IT SWALLOWED A WHOLE ERA. IRC keeps `replyRects`,
@@ -410,11 +415,15 @@ async function main() {
      */
     const hashOf = (c) => {
       if (!c || !c.width) return '';
+      // ⚑ 48x36, not 24x18. At the coarser size a selected profile chip — a few
+      //   pixels of highlight on a 512x384 canvas — averaged away to nothing, so
+      //   legitimate selections were being judged inert. Fine enough to see a
+      //   chip, coarse enough to ignore a caret blinking.
       const t = document.createElement('canvas');
-      t.width = 24; t.height = 18;
+      t.width = 48; t.height = 36;
       const tx = t.getContext('2d');
-      tx.drawImage(c, 0, 0, 24, 18);
-      const d = tx.getImageData(0, 0, 24, 18).data;
+      tx.drawImage(c, 0, 0, 48, 36);
+      const d = tx.getImageData(0, 0, 48, 36).data;
       let h = 2166136261;
       for (let i = 0; i < d.length; i += 4)
         h = Math.imul(h ^ (d[i] + d[i + 1] * 3 + d[i + 2] * 7), 16777619) >>> 0;
@@ -557,10 +566,30 @@ async function main() {
    * caller must then WAIT, because that is what a player does while a scripted,
    * unpressable beat runs.
    */
-  const pick = (targets, tried, seen, barren) => {
+  const pick = (targets, sig, seen, dismissFirst) => {
     const live = targets.filter((t) =>
-      t.surface !== 'prop' && !FORBIDDEN.test(t.id) && !tried.has(t.surface + ':' + t.id));
+      t.surface !== 'prop' && !FORBIDDEN.test(t.id) && !capped(sig, t));
     if (!live.length) return null;
+    /**
+     * ⚑ IF SOMETHING IS IN THE WAY, CLOSE IT — the one move a person makes
+     * without thinking and the walker had no way to reach. When a press lands
+     * on a control that is registered but swallowed, the cause is a modal above
+     * it, and the answer is not to try the other controls on that modal: it is
+     * to shut the modal. Without this the walk sat in Era 1 opening provotypes
+     * over a booklet it could see and could not touch, because `leave` is a
+     * last resort everywhere else and never came up.
+     */
+    if (dismissFirst) {
+      // ⚑ searched over ALL targets, ignoring the press cap. Getting out of the
+      //   way is always legitimate and must never be rationed: once `leave` had
+      //   been spent on its cap the walker could no longer dismiss anything, so
+      //   a provotype opened mid-conversation swallowed the rest of IRC's
+      //   escalation and the walk stranded there with every other control dead.
+      const out = targets.find((t) =>
+        t.surface !== 'prop' && !FORBIDDEN.test(t.id) &&
+        /^leave$|^close$|^dismiss$|^okay?$/i.test(t.id));
+      if (out) return out;
+    }
     /**
      * ⚑ A CONTROL THAT NEVER LEADS SOMEWHERE NEW GOES TO THE BACK.
      * Era 2's desktop carries three icons that reopen apps you have already
@@ -577,16 +606,27 @@ async function main() {
      * SCREEN THE WALK HAS NEVER SEEN. A booklet page is new every time; an icon
      * reopening a window you have already read is not.
      */
-    const isBarren = (t) => {
-      const b = barren.get(t.id);
-      return b && b.tries >= 2 && b.wins === 0;
-    };
+    /**
+     * ⚑ FINISH WHAT IS IN FRONT OF YOU BEFORE OPENING ANYTHING ELSE.
+     * Era 1's desktop keeps two OPTIONAL provotype icons registered underneath
+     * whatever is running — the booklet, Rob's DM, the escalation — and opening
+     * one puts a modal on top that swallows every click meant for the thing it
+     * covers. The walker did that repeatedly, mid-conversation, and stranded
+     * itself: the replies it still owed IRC became unreachable, and the icons
+     * it had used to get there were spent. A person does not open a second
+     * window in the middle of being talked to. So while any sub-app surface is
+     * offering controls, the desktop's own icons are not candidates.
+     */
+    const inApp = live.some((t) => t.surface !== 'os');
+    const scoped = inApp ? live.filter((t) => t.surface !== 'os') : live;
     const tier = (t) => {
-      const base = LAST_RESORT.test(t.id) ? 90
-        : (PREFER.findIndex((rx) => rx.test(t.id)) >= 0
-          ? PREFER.findIndex((rx) => rx.test(t.id)) : 50);
-      return base + (isBarren(t) ? 100 : 0);
+      if (LAST_RESORT.test(t.id)) return 90;
+      const i = PREFER.findIndex((rx) => rx.test(t.id));
+      return i >= 0 ? i : 50;
     };
+    // ⚑ least-pressed first WITHIN a tier, so a control already spent on this
+    //   screen yields to one that has not been tried yet
+    const here = (t) => pressed.get(keyOf(sig, t)) || 0;
     // ⚑ BREADTH FIRST, and it is what finally got the walk out of Era 1's
     // desktop. Two optional provotypes sit there beside the narrative's own
     // icons, and a walker choosing by preference alone re-entered the same two
@@ -594,58 +634,136 @@ async function main() {
     // often a control has been pressed ACROSS THE WHOLE RUN means anything
     // untouched outranks anything already explored — so the walk spreads out
     // through the room's content instead of wearing a groove in one corner.
-    return live.slice().sort((a, b) =>
+    return scoped.slice().sort((a, b) =>
       tier(a) - tier(b) ||
-      (seen.get(a.id) || 0) - (seen.get(b.id) || 0))[0];
+      here(a) - here(b) ||
+      (seen.get(a.id) || 0) - (seen.get(b.id) || 0))[0] || null;
   };
-  /** the screen's identity: what is drawn, plus what can be pressed on it */
+  /** the screen's identity including what is DRAWN — used for loop detection and
+   *  for deciding whether the piece is still moving while the walker waits */
   const screenOf = (st) =>
     st.era + '|' + st.phase + '|' + st.qMode + '|' + st.screenHash + '|' +
     st.targets.map((t) => t.surface + ':' + t.id).join();
+  /**
+   * ⚑ THE STABLE SIGNATURE — the same screen regardless of what is animating on
+   * it. Everything the walker REMEMBERS is keyed on this rather than on the
+   * pixels, and that distinction is the whole fix for Era 2.
+   *
+   * Keying memory on the pixel hash meant a blinking caret or a moving Lamby
+   * counted as a new screen, so the walker's memory reset constantly, every
+   * press looked like a discovery, and nothing could ever be judged useless. It
+   * pressed the same three optional desktop icons 45 times in a row while the
+   * era waited for a conduction beat that arrives on its own.
+   */
+  const stableOf = (st) =>
+    st.era + '|' + st.phase + '|' + st.qMode + '|' +
+    st.targets.map((t) => t.surface + ':' + t.id).sort().join();
   /** ⚑ real forward motion, as opposed to merely a different picture. The
    *  pixel hash makes signatures plentiful, so loop detection cannot rely on
    *  them alone — this is the coarse thing that must eventually move, and a
    *  long run of presses without it moving is the walk going nowhere. */
   const progressOf = (st) =>
     st.era + '|' + st.phase + '|' + st.spine + '|' + st.qMode + '|' + st.ledCount;
+  /**
+   * ⚑ ADVANCE, AS DISTINCT FROM ACTIVITY — and the difference is the ledger.
+   * `progressOf` counts ledger entries, which is right for "is anything
+   * happening at all". It is wrong for "did that press get me anywhere",
+   * because the provotypes are BUILT to repeat and file a tag every time round:
+   * run 21 pressed `primary` 72 times and `icon-irc` 69, and every one of them
+   * looked like progress because the ledger kept growing. This is the one-way
+   * measure — the era, the phase, the spine step, the queue mode. None of them
+   * cycles, so nothing can farm it.
+   */
+  const advanceOf = (st) =>
+    st.era + '|' + st.phase + '|' + st.spine + '|' + st.qMode;
 
   // ── the walk ──
   let s = await probe();
   note('seated', { era: s.era, phase: s.phase, spine: s.spine, what: s.targets.length + ' live controls' });
   let stalls = 0;
-  /** screen signature -> the ids already pressed there, kept for the whole run */
-  const history = new Map();
   const visits = new Map();
   let progress = progressOf(s);
   let sinceProgress = 0;
   /** how many times each control has been pressed in the whole run */
   const seen = new Map();
-  /** per control: how often pressed, and how often it opened a screen never seen before */
-  const barren = new Map();
-  /** every screen signature this walk has ever landed on (the opening screen is
-   *  seeded so arriving where you already are never counts as a discovery) */
-  const knownSigs = new Set([screenOf(s)]);
-  const allBarren = (targets) => {
-    const live = targets.filter((t) => t.surface !== 'prop' && !FORBIDDEN.test(t.id));
-    return live.length > 0 && live.every((t) => {
-      const b = barren.get(t.id);
-      return b && b.tries >= 2 && b.wins === 0;
-    });
-  };
-  const memory = (sig) => {
-    if (!history.has(sig)) history.set(sig, new Set());
-    return history.get(sig);
+  /**
+   * ⚑ ONE CONTROL, ONE SCREEN, AT MOST `PRESS_CAP` TIMES — and this replaces
+   * three earlier attempts at the same problem, each of which broke something.
+   *
+   * A flat "press each control once per screen" cannot turn Era 1's booklet:
+   * five pages share one stable signature and one control, so NEXT must be
+   * pressable repeatedly. Judging a control by whether it moved the coarse
+   * state wrote NEXT off as dead, because a page turn moves none of it.
+   * Judging it by whether it reached a never-seen screen let Era 2's icons pass
+   * forever, because animation made every screen look new.
+   *
+   * A cap needs none of that judgement — but a FLAT cap is still wrong, because
+   * the piece legitimately asks for the same control many times over: IRC's
+   * escalation answers turn after turn on the same two reply ids, and Era 3's
+   * correction list takes thirteen APPLYs. Capping those at six stranded the
+   * walk in Era 1.
+   *
+   * ⚑ So the cap counts INEFFECTIVE presses only, and any genuine advance —
+   * the era, phase, spine step, queue mode or ledger moving — forgives every
+   * counter at once. A control keeps working for as long as it keeps working.
+   * What it cannot do is be pressed twelve times in a row while nothing happens,
+   * which is precisely Era 2's three optional icons and nothing else in the
+   * piece. Screens are finite and each allows only twelve fruitless presses, so
+   * the walk still cannot loop forever by construction. Twelve clears the
+   * longest real repetition in the piece by a wide margin: Era 1's booklet is
+   * five pages and IRC's escalation is five turns.
+   */
+  const PRESS_CAP = 12;
+  /** controls that were published as live but whose press did literally nothing */
+  const inert = [];
+  /** set when a press was swallowed: next choice should shut whatever is on top */
+  let dismissWanted = false;
+  /** consecutive holds spent watching the screen draw itself */
+  const TALK_WAIT_MAX = 40;
+  let talkWaits = 0;
+  const pressed = new Map();
+  /**
+   * ⚑ KEYED ON THE COARSE STATE, NOT ON THE FULL CONTROL SET, and run 22 is why.
+   * A provotype sitting modally on top of the booklet changes its own chip ids
+   * from state to state, so the SCREEN signature changed constantly — and with
+   * the cap keyed on that, the booklet's NEXT got a fresh allowance every time
+   * the thing covering it changed a caption. It was pressed forty-five times
+   * into a modal that was swallowing every click. Keying on era/phase/queue-mode
+   * plus the control's own id means a control accumulates its fruitless presses
+   * no matter what else happens to be on screen beside it.
+   */
+  const keyOf = (sig, t) =>
+    sig.split('|').slice(0, 3).join('|') + '\u0000' + t.surface + ':' + t.id;
+  /**
+   * ⚑ AN INERT MARK IS SCOPED TO THE SCREEN IT HAPPENED ON, and that scoping is
+   * the whole point. The kit's NEXT is inert only WHILE a provotype covers it;
+   * once that closes, the set of live controls changes, the stable signature
+   * changes with it, and NEXT is pressable again. Marking it against the coarse
+   * state instead made the booklet permanently unreachable for the rest of the
+   * era — the walk got stuck one press into Era 1 having correctly diagnosed
+   * the problem and then over-applied its own finding.
+   */
+  const inertMarks = new Set();
+  const inertKey = (sig, t) => sig + '\u0000' + t.surface + ':' + t.id;
+  const capped = (sig, t) =>
+    (pressed.get(keyOf(sig, t)) || 0) >= PRESS_CAP || inertMarks.has(inertKey(sig, t));
+  /** every live control here has been pressed to its cap: the screen is spent */
+  const spent = (st, sig) => {
+    const live = st.targets.filter((t) => t.surface !== 'prop' && !FORBIDDEN.test(t.id));
+    return live.length > 0 && live.every((t) => capped(sig, t));
   };
 
   for (let i = 0; i < MAX_STEPS; i++) {
     if (s.driven) { await wait(1600); s = await probe(); continue; }   // a travelling is playing
 
-    const sig = screenOf(s);
+    const sig = stableOf(s);
     visits.set(sig, (visits.get(sig) || 0) + 1);
-    if (visits.get(sig) > 25) {
+    // a pure backstop: the press cap already bounds this, so reaching it means
+    // something is returning here without any press of ours being responsible
+    if (visits.get(sig) > 80) {
       note('stop', {
-        what: 'THE WALK IS LOOPING: this same screen has come round 25 times and ' +
-          'every control on it has been pressed — there is no way onward from here',
+        what: 'THE WALK IS LOOPING: this same screen has come round 80 times with every ' +
+          'control on it pressed to its cap — there is no way onward from here',
         era: s.era, phase: s.phase, spine: s.spine
       });
       await page.screenshot({ path: join(SHOT_DIR, 'walk_looping.png') });
@@ -697,13 +815,19 @@ async function main() {
     }
     if (s.silent.length) continue;
 
-    const tried = memory(sig);
-    // everything on offer is known-dead: wait for the timed content instead
-    if (allBarren(s.targets) && stalls < 8) {
+    /**
+     * ⚑ WHEN THE SCREEN IS SPENT, WAIT — DO NOT KEEP PRESSING.
+     * Era 2's desktop offers three optional icons and nothing else, while what
+     * actually moves the era is Lamby's conduction, WHICH ARRIVES ON ITS OWN.
+     * Once every control here has had its six presses there is nothing useful
+     * left to do but let the machine finish talking, which is also exactly what
+     * a person does. The wait ends the moment anything on screen changes.
+     */
+    if (spent(s, sig) && stalls < 14) {
       stalls += 1;
       note('waiting-out', {
-        what: 'every control here has been tried twice and never advanced anything — ' +
-          'waiting for the piece to speak rather than pressing dead icons',
+        what: 'every control on this screen has been pressed to its cap — waiting for the ' +
+          'piece to speak rather than pressing spent controls',
         era: s.era, phase: s.phase, spine: s.spine
       });
       const was = s.screenHash;
@@ -712,30 +836,79 @@ async function main() {
       if (s.screenHash !== was) stalls = 0;
       continue;
     }
-    let t = pick(s.targets, tried, seen, barren);
-    // every option on this screen has been taken before: it is a genuine cycle,
-    // so start the screen over rather than standing still
-    if (!t && s.targets.some((x) => !FORBIDDEN.test(x.id))) {
-      tried.clear();
-      note('recycle', { what: 'every control on this screen has been pressed before — starting it over',
-        era: s.era, phase: s.phase, spine: s.spine });
-      t = pick(s.targets, tried, seen, barren);
+    /**
+     * ⚑ DO NOT INTERRUPT THE MACHINE MID-SENTENCE. IRC's escalation is TIMED —
+     * Rob types at thirteen characters a second with a three-and-a-half second
+     * hold after each line — so it can be a full minute before the reply tray
+     * appears. The walker had optional provotypes available the whole time and
+     * so never once sat still to watch: it opened and closed them for seventy
+     * presses while the conversation it was supposed to be having played out
+     * unattended. Two probes a second apart tell a screen that is drawing
+     * itself from a screen that is merely waiting, and a person watching text
+     * type does not go and click something else.
+     *
+     * Bounded, because some screens animate forever (a caret, Lamby idling):
+     * after `TALK_WAIT_MAX` consecutive holds the walker presses anyway.
+     */
+    if (talkWaits < TALK_WAIT_MAX) {
+      const before = s.screenHash;
+      await wait(900);
+      const now = await probe();
+      if (now.screenHash !== before) {
+        s = now;
+        talkWaits += 1;
+        if (talkWaits === 1 || talkWaits % 6 === 0) {
+          note('listening', {
+            what: 'the screen is still drawing itself — holding rather than clicking over it',
+            era: s.era, phase: s.phase, spine: s.spine
+          });
+        }
+        continue;
+      }
+      s = now;
     }
+    talkWaits = 0;
+
+    let t = pick(s.targets, sig, seen, dismissWanted);
+    dismissWanted = false;
     if (t) {
       stalls = 0;
-      tried.add(t.surface + ':' + t.id);
+      const wasAdvance = advanceOf(s);
+      pressed.set(keyOf(sig, t), (pressed.get(keyOf(sig, t)) || 0) + 1);
       seen.set(t.id, (seen.get(t.id) || 0) + 1);
       const after = await press(t, s);
-      const b = barren.get(t.id) || { tries: 0, wins: 0 };
-      b.tries += 1;
-      const landed = screenOf(after);
-      if (!knownSigs.has(landed)) b.wins += 1;   // it opened something genuinely new
-      knownSigs.add(landed);
-      barren.set(t.id, b);
+      /**
+       * ⚑ A PRESS THAT CHANGES NOTHING AT ALL — not one pixel, not one field —
+       * did not reach anything, and the control is spent here immediately
+       * rather than after twelve tries.
+       *
+       * This is not a nicety; it is the walker's only defence against a control
+       * that the piece ADVERTISES AS LIVE BUT SWALLOWS. While a provotype is
+       * modally open, `os.handleClick` delegates every click to it and returns —
+       * yet the kit underneath goes on registering its NEXT rect, and IRC its
+       * replies. Run 22 pressed that unreachable NEXT forty-five times. Note
+       * the distinction from a quiet-looking but real press: selecting a chip
+       * or turning a page moves the drawn pixels, so only a press that moves
+       * literally nothing is judged inert.
+       */
+      if (after.screenHash === s.screenHash && advanceOf(after) === advanceOf(s)) {
+        inertMarks.add(inertKey(sig, t));
+        dismissWanted = true;
+        inert.push({ id: t.id, surface: t.surface, era: s.era, phase: s.phase });
+        note('inert', {
+          target: t.id, surface: t.surface, era: s.era, phase: s.phase, spine: s.spine,
+          what: 'registered as live but the press changed nothing at all — most likely ' +
+            'swallowed by a modal above it; not pressed again here'
+        });
+      }
       // a press that moved nothing is a finding, not a retry cue — but it may
       // still have moved something this probe cannot see (a chip selected, an
       // icon chosen), so the memory above is what keeps the walk moving on.
       s = (!moved(s, after) && s.ritualOpen) ? await sweep(after, null) : after;
+      // ⚑ a real advance forgives every fruitless-press counter: the situation
+      //   has genuinely changed, so nothing learned before it still applies.
+      //   Deliberately NOT the ledger — see advanceOf.
+      if (advanceOf(s) !== wasAdvance) pressed.clear();
       const p = progressOf(s);
       if (p !== progress) { progress = p; sinceProgress = 0; } else sinceProgress += 1;
       if (sinceProgress >= 45) {
@@ -787,7 +960,7 @@ async function main() {
       note('idle', {
         what: 'waiting — ' + s.rawOsHits + ' hit rect' + (s.rawOsHits === 1 ? '' : 's') +
           ' registered, ' + s.targets.length + ' aimable, ' + s.dropped.length + ' unaimable, ' +
-          memory(screenOf(s)).size + ' already tried, ' + s.moves.length + ' markers',
+          s.moves.length + ' markers',
         era: s.era, phase: s.phase, spine: s.spine, qMode: s.qMode,
         dropped: s.dropped,
         offered: s.targets.map((t) => t.surface + ':' + t.id),
@@ -884,6 +1057,17 @@ async function main() {
     dead.length
       ? dead.map((p) => '- step ' + p.step + ': `' + p.target + '` on ' + p.surface).join('\n')
       : '- none: every press moved something this walk can see',
+    '',
+    '## CONTROLS PUBLISHED AS LIVE THAT DID NOTHING', '',
+    '*Pressed, and not one pixel or field changed.* The usual cause is a modal above them: while',
+    'a provotype is open `os.handleClick` delegates every click to it and returns, yet the kit',
+    'underneath goes on registering its NEXT rect and IRC its replies. Those controls are',
+    'advertised as reachable while being physically unreachable — the same class as a button',
+    'drawn where nothing can press it.', '',
+    inert.length
+      ? [...new Map(inert.map((d) => [d.surface + ':' + d.id, d])).values()]
+        .map((d) => '- `' + d.id + '` on ' + d.surface + ' (' + d.era + '/' + d.phase + ')').join('\n')
+      : '- none: every published control did something',
     '',
     '## SURFACES THAT OWN NO HIT RECTS AT ALL', '',
     '*Structural, not a snapshot.* These own the screen while open and hold no rect field of any',
