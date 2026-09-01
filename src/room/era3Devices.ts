@@ -229,9 +229,7 @@ const PLACEMENT = {
    * her to the headset. Measured off the placed model's live AABB, not guessed:
    * at yaw 180 `e_laptop` spans x 5.117–5.363, y 0.75–0.979, z 0.44–0.78 — 0.246
    * deep on x by 0.34 wide on z — with its lid at the +x end leaning back, so the
-   * screen faces −x, toward the seat. The lid runs from about (5.30, 0.80) to
-   * (5.363, 0.975): a 70° lean, normal (−0.94, +0.34), and this plane sits proud
-   * of it along that normal.
+   * screen faces −x, toward the seat.
    * ⚑ y 270, NOT 90. `makeScreenEntity`'s plane is single-sided with its normal
    * on +Y, so a yaw of 90 pointed the screen at the wall and the seat saw its
    * back — invisible, while still perfectly hittable, which is exactly how it
@@ -241,18 +239,23 @@ const PLACEMENT = {
    * ⚑ Keep in step with `e_laptop` in data/room/reinterp_deltas.json — the visor
    * detached from its own prop the moment that prop changed and this one will do
    * exactly the same.
-   * ⚑ The lid runs from about (5.33, 0.79) to (5.41, 0.979) — a 23° lean off
-   * vertical, so 67° from horizontal, not the 74 first tried — and the plane has
-   * to sit PROUD of that surface or it renders inside the lid. It was hittable
-   * there (the presses landed and the beat advanced) and completely invisible,
-   * which is the same class of fault as a control nothing can see, only inverted.
-   * ⚑ Proud along the lid's own normal (−0.92, +0.39), by enough to clear it:
-   * flush was not enough and z-fighting hid it inside the mesh both times.
+   * ⚑ MEASURED FROM THE MESH ITSELF, not eyeballed off renders. The GLB carries a
+   * material named `Screen`, and glTF accessors carry exact min/max, so the real
+   * screen rectangle is readable without guessing: local (−0.6808, 0.0791, −0.6882)
+   * to (−0.6027, 0.9064, 0.6363). Through the manifest's scale 0.245, its cx/baseY
+   * recentre and the prop's yaw 180, that lands at world x 5.3378 (a 19 mm slab),
+   * y 0.7684–0.9711, z 0.4477–0.7722 — 0.3245 wide by 0.2027 tall, centred on
+   * (0.8697, 0.610), and this plane sits 4 mm proud of that face.
+   * ⚑ TWO THINGS I HAD WRONG BY EYE. The lid is VERTICAL — the slab is only 19 mm
+   * deep in x — so the euler is 90, not the 67/70/74 I kept trying off renders.
+   * And the aspect is 1.601, which `LOGICAL.laptop`'s 224×140 (1.600) already
+   * matches, so nothing is stretched. Earlier passes had the plane inside the lid:
+   * hittable, advancing the beat, and invisible.
    */
   laptop: {
-    pos: { x: 5.319, y: 0.892, z: 0.61 },
-    size: { w: 0.28, h: 0.175 },
-    euler: { x: 70, y: 270, z: 0 }
+    pos: { x: 5.334, y: 0.8697, z: 0.61 },
+    size: { w: 0.3245, h: 0.2027 },
+    euler: { x: 90, y: 270, z: 0 }
   },
   phone: {
     // y verified in-browser (Session 37): the nightstand's REAL model AABB
@@ -736,12 +739,22 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    */
   add('laptop', LOGICAL.laptop, (ctx, w, h) => {
     const sh = e4Bridge()?.shell();
+    if (!sh) return;
+    // ⚑ THE MIRROR STOPS AT THE HAND-OFF, and checking this first is the whole
+    //   beat. `worn` stays true after the shell hands the piece to the Close, so
+    //   the mirror branch kept winning and the laptop showed a live session that
+    //   had ended — an empty "Headset — mirroring" field, which is worse than
+    //   either state on its own. The machine is still on; it is not still
+    //   watching. `drawLaptop` owns what a stopped machine shows.
+    if (sh.handedOffToClose) { sh.drawLaptop(ctx, w, h); return; }
     const src = e4Bridge()?.canvas();
-    if (sh?.worn && src) { sh.drawLaptopMirror(ctx, w, h, src); return; }
-    sh?.drawLaptop(ctx, w, h);
+    if (sh.worn && src) { sh.drawLaptopMirror(ctx, w, h, src); return; }
+    sh.drawLaptop(ctx, w, h);
   },
     { versionOf: () => {
       const sh = e4Bridge()?.shell();
+      // `version` is included from `worn` on so the mirror follows the picture,
+      // and `handOff()` bumps it too, which is what repaints the stopped state
       return sh ? 1 + sh.laptopVersion + (sh.worn ? sh.version : 0) : 0;
     } });
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });

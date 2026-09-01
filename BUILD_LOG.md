@@ -668,3 +668,37 @@ is left running on the desk.
 Also: controller scaled 0.16 → 0.10 (too big), headset 0.14 → 0.20 and moved left,
 and the visor plane is no longer a legible screen but the lit glass of a device
 saying it is ready — the reading surface moved to the laptop.
+
+## S99 (2026-09-01) — The screen fits, and the Close's laptop
+
+**The screen area, measured from the mesh.** Sérgio sent Poly Pizza's own GLB
+downloads — they are byte-identical to this session's `obj2gltf` output (same
+sha256), so nothing was swapped, but the file itself answered the question. The
+laptop GLB carries a material named **`Screen`**, and glTF accessors carry exact
+min/max, so the real screen rectangle is readable without guessing: local
+(−0.6808, 0.0791, −0.6882) → (−0.6027, 0.9064, 0.6363). Through the manifest's
+scale, its recentre and the prop's yaw that lands at world **x 5.3378, y
+0.7684–0.9711, z 0.4477–0.7722 — 0.3245 × 0.2027**, centred (0.8697, 0.610).
+
+⚑ **Two things I had wrong by eye and fixed by measurement.** The lid is
+**vertical** — the screen slab is 19 mm deep in x — so the plane's euler is 90,
+not the 67/70/74 I kept trying off renders. And the aspect is **1.601**, which
+`LOGICAL.laptop`'s 224×140 (1.600) already matched, so nothing was ever stretched.
+The plane now sits 4 mm proud of the measured face and fills the model's own
+bezel exactly.
+
+**The Close's laptop now renders.** It did not before: `worn` stays true after
+`handOff()`, so the mirror branch kept winning and the lid showed an empty
+"Headset — mirroring" field — a live session that had ended, which is worse than
+either state alone. The hand-off is now checked FIRST, and the lid shows
+"L is still here. / this session did not end".
+
+⚑ **BUT IT IS NOT REACHABLE YET, and this is a design question for Sérgio.**
+`handOff()` does not drop `worn`, so at the moment the corrupt state appears the
+player is still inside the headset and the visor fills the view — the laptop is
+behind it. The state is correct and verified by dumping the canvas; a player
+cannot currently see it. Dropping `worn` at the hand-off would show it, but the
+Close's own "Restart as you are." card draws on that same canvas and would end up
+on a 15 cm plane across the room instead of in front of the face. So the real
+question is WHEN THE DEVICE COMES OFF, which is a Close-sequence decision and not
+one to make unilaterally. Written down rather than guessed.
