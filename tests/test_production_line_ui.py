@@ -11,7 +11,7 @@ from runner.config import FactoryConfig, load_factory_config
 from runner.production_line_ui import (
     CONFIRMATION, SEMANTIC_CONFIRMATION_TEXT, create_confirmed_campaign, render_factory_console,
     copied_canary_preview, production_readiness_model, publish_control,
-    render_production_line, run021_document_review_model, setup_model, status_model,
+    render_production_line, sealed_document_review_model, setup_model, status_model,
     unified_setup_model,
 )
 from runner.pipeline.factory_auth import generate_keypair, sign_factory_message
@@ -94,6 +94,7 @@ def test_enabled_macbook_render_has_confirmation_and_no_worker_or_remote_control
         "SOGICE_FACTORY_STATE_ROOT": str(tmp_path / "studio-local"),
         "SOGICE_FACTORY_JOB_ROOT": str(tmp_path / "jobs"),
         "SOGICE_FACTORY_HOST_ROLE": "macbook", "SOGICE_FACTORY_DRY_RUN_ONLY": "true",
+        "SOGICE_SEALED_RESULTS_ROOTS": str(tmp_path / "sealed-results"),
     }
     app = AppTest.from_string(
         "from runner.production_line_ui import render_production_line\nrender_production_line()"
@@ -224,6 +225,7 @@ def test_unified_ui_replaces_stale_foundation_placeholders(tmp_path, monkeypatch
         "SOGICE_FACTORY_JOB_ROOT": tmp_path / "jobs",
         "SOGICE_FACTORY_HOST_ROLE": "macbook",
         "SOGICE_FACTORY_DRY_RUN_ONLY": "true",
+        "SOGICE_SEALED_RESULTS_ROOTS": tmp_path / "sealed-results",
     }.items():
         monkeypatch.setenv(key, str(value))
     app = AppTest.from_string(
@@ -239,10 +241,126 @@ def test_unified_ui_replaces_stale_foundation_placeholders(tmp_path, monkeypatch
     labels = [button.label for button in app.button]
     assert "Publish authenticated campaign" in labels
     assert all("canary" not in label.lower() for label in labels)
+    import inspect
+    import runner.production_line_ui as production_line
+
+    source = inspect.getsource(production_line)
+    assert "run021" not in source.casefold()
+    assert "SOGICE_RUN021_RESULTS_ROOT" not in source
+    assert "route_returned_proposals" not in source
 
 
-def test_run021_document_review_projects_citations_rankings_and_receipt_gaps():
+def test_sealed_review_ui_shows_verification_decisions_proposals_and_preview(
+    tmp_path, monkeypatch,
+):
+    import runner.production_line_ui as production_line
+
     review = {
+        "schema_version": "semantic-sealed-review-v2.0",
+        "run_id": "sealed-ui-fixture-025",
+        "campaign_state": "already_complete_read_only",
+        "verification_status": "verified_against_accepted_evidence",
+        "archive_sha256": "a" * 64,
+        "member_count": 9,
+        "document_count": 1,
+        "projection_sha256": "b" * 64,
+        "model_calls": 0,
+        "embedding_calls": 0,
+        "mutation_count": 0,
+        "receipt_count": 1,
+        "receipt_gaps": (),
+        "source_documents": {"doc-a": {
+            "document_id": "doc-a", "source_sha256": "c" * 64,
+            "source_bytes": 100, "unit_count": 1,
+        }},
+        "analysis": {"doc-a": {
+            "summary": "Provisional fixture summary.",
+            "evidence": ["Fixture evidence."],
+            "candidate_terms": ["candidate"],
+        }},
+        "enrichment": {"doc-a": {
+            "document_id": "doc-a", "retrieval_context_sha256": "d" * 64,
+            "corpus_connections": [{"document_id": "doc-b", "unit_id": "unit-b"}],
+            "lexicon_proposals": [{
+                "term": "Candidate vocabulary", "exact_quote": "Fixture evidence.",
+            }],
+        }},
+        "retrieval": {"doc-a": {
+            "query": {"requesting_document_id": "doc-a"},
+            "selected_hits": [{
+                "final_rank": 1, "document_id": "doc-b", "unit_id": "unit-b",
+                "fused_score": 0.5, "text": "Retrieved evidence.",
+            }],
+            "exclusions": [],
+        }},
+        "comparison": {
+            "compiler_comparisons": [{
+                "document_id": "doc-a", "primary_model": "primary",
+                "comparison_model": "comparison",
+                "primary_claims": [{
+                    "claim_id": "claim-a", "support_status": "supported",
+                    "citation_unit_ids": ["unit-b"], "statement_sha256": "e" * 64,
+                }],
+                "comparison_claims": [], "exact_agreement_count": 0,
+                "primary_only_count": 1, "comparison_only_count": 0,
+                "model_truth_declaration": False,
+            }],
+            "comparison_provenance": {"doc-a": {
+                "purpose": "memory_safe_comparison_fallback",
+                "provider_resolved_model": "fallback-model",
+                "fallback_reason": "memory_guard",
+            }},
+            "retrieval_rankings": {
+                "qwen_4096": {"doc-a": [{"rank": 1, "unit_id": "unit-b"}]},
+                "bge_m3_1024": {"doc-a": [{"rank": 1, "unit_id": "unit-c"}]},
+            },
+        },
+        "execution": {"run_id": "sealed-ui-fixture-025"},
+        "route_provenance": {"bindings": {}, "remote_routes": 0},
+        "methodological_warnings": (
+            "Fixture results remain provisional.",
+            "Review does not authorize import.",
+        ),
+    }
+    monkeypatch.setattr(production_line, "sealed_review_catalog_model", lambda: ({
+        "run_id": review["run_id"], "status": "verified_sealed",
+        "verification_status": review["verification_status"],
+        "document_count": 1, "receipt_count": 1,
+        "projection_sha256": review["projection_sha256"], "review": review,
+    },))
+    for key, value in {
+        "SOGICE_FACTORY_TO_STUDIO": tmp_path / "exchange" / "to",
+        "SOGICE_FACTORY_FROM_STUDIO": tmp_path / "exchange" / "from",
+        "SOGICE_FACTORY_STATE_ROOT": tmp_path / "state",
+        "SOGICE_FACTORY_JOB_ROOT": tmp_path / "jobs",
+        "SOGICE_FACTORY_HOST_ROLE": "macbook",
+        "SOGICE_FACTORY_DRY_RUN_ONLY": "true",
+        "SOGICE_SEALED_REVIEW_STATE_ROOT": tmp_path / "review-state",
+    }.items():
+        monkeypatch.setenv(key, str(value))
+    app = AppTest.from_string(
+        "from runner.production_line_ui import render_production_line\nrender_production_line()"
+    ).run(timeout=20)
+    assert not app.exception
+    headings = [item.value for item in app.subheader]
+    assert "Review sealed results" in headings
+    assert "Researcher decision" in headings
+    assert "Provisional vocabulary review" in headings
+    assert "Corpus and Source Queue reconciliation preview" in headings
+    labels = [button.label for button in app.button]
+    assert "Record document decision" in labels
+    assert "Record vocabulary decision" in labels
+    assert all("route" not in label.casefold() for label in labels)
+
+
+def test_sealed_document_review_projects_citations_rankings_and_receipt_gaps():
+    review = {
+        "campaign_state": "already_complete_read_only",
+        "verification_status": "verified_manifest_and_members",
+        "source_documents": {"doc-a": {
+            "document_id": "doc-a", "source_sha256": "b" * 64,
+            "source_bytes": 1, "unit_count": 1,
+        }},
         "analysis": {"doc-a": {"summary": "Provisional", "evidence": ["Evidence"], "candidate_terms": ["term"]}},
         "enrichment": {"doc-a": {"retrieval_context_sha256": "a" * 64, "corpus_connections": [{"unit_id": "unit-a"}]}},
         "retrieval": {"doc-a": {"hits": [{"unit_id": "unit-a"}]}},
@@ -261,7 +379,7 @@ def test_run021_document_review_projects_citations_rankings_and_receipt_gaps():
         },
         "receipt_count": 2, "receipt_gaps": (),
     }
-    model = run021_document_review_model(review, "doc-a")
+    model = sealed_document_review_model(review, "doc-a")
     assert model["primary_claims"][0]["citation_unit_ids"] == ["unit-a"]
     assert model["qwen_ranking"][0]["unit_id"] == "unit-a"
     assert model["bge_ranking"][0]["unit_id"] == "unit-b"

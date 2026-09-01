@@ -807,3 +807,247 @@ launched through the UI. Do not start that trial automatically.
   `codex/run025c-lease-safe-recovery`. No factory/LaunchAgent start, further
   campaign, model or embedding work, import, promotion, publication, or other
   remote write was authorized or performed.
+
+<!-- PROMPT START: sealed-result-review-controlled-reconciliation-v1.0 -->
+
+model: gpt-5.6-sol
+reasoning_effort: high
+reasoning_mode: standard
+model_role: macbook-sealed-result-review-and-reconciliation-engineer
+
+# SurvivingSOGICE — Run-026 Sealed-Result Review and Controlled Reconciliation
+
+## Run identity
+
+- Prompt ID: `sealed-result-review-controlled-reconciliation-v1.0`
+- Run ID: `ai-sdlc-20260901-sealed-result-review-reconciliation-026`
+- Host: physical MacBook
+- Parent branch: `codex/run025c-macbook-governance-record`
+- Parent commit: `aaff31487e344a2d8428929f030776642327a135`
+- Implementation branch: `codex/run026-sealed-result-review-reconciliation`
+- Scope: read-only sealed-result verification and review plus preview-only local
+  reconciliation planning
+
+## Accepted foundation
+
+Run-025 is technically accepted at exact source commit
+`d6b1ec934af5c07631a03924df81b347d36e007e` with governance acceptance commit
+`aaff31487e344a2d8428929f030776642327a135`. The accepted content-free evidence
+records Run-025 succeeded with 90/90 jobs, no active leases, 5,605 verified
+receipt rows/files/sidecars, a valid factory projection, and an unchanged
+zero-work invocation. The accepted Run-025 result identities may be inspected
+and reused, but no model, embedding, factory, campaign, or publication work may
+be repeated.
+
+## Researcher authorization
+
+The researcher authorizes this exact bounded work:
+
+`I authorize Run-026 to verify and review already sealed Run-023 through Run-025 results on the MacBook, record explicit local review dispositions, and build additive reversible corpus and Source Queue reconciliation previews only. I do not authorize any factory or model execution, import, mutation of research artifacts, promotion, publication, Sanity or Supabase write, or other remote research write.`
+
+This prompt also carries the separately completed authorization to push only
+governance commit `aaff31487e344a2d8428929f030776642327a135` to its matching
+GitHub branch. It does not authorize a Run-026 push.
+
+## Objective
+
+Replace the Run-021-specific Production Line result viewer with one generic,
+strict, non-technical MacBook workflow that discovers locally available sealed
+semantic campaigns, verifies every archive and declared member before display,
+binds Run-023 through Run-025 results to accepted content-free projection
+evidence, and keeps all reconciliation work preview-only until a later separate
+researcher authorization.
+
+## Required implementation
+
+### 1. Generic accepted-evidence and sealed-result discovery
+
+- Discover configured read-only result roots without assuming a fixed run
+  number, filename, document count, or archive hash.
+- Recognize accepted Run-023, Run-024, and Run-025 content-free evidence by
+  schema and run identity, not directory name alone.
+- Discover result manifest/archive pairs generically. Reject symlinks, unsafe
+  paths, duplicate members, undeclared members, malformed JSON, byte/hash
+  mismatches, source payloads, raw vectors, credentials, databases, and mutable
+  runtime state.
+- Require the archive, execution summary, projection, comparison report,
+  receipt log, analyses, enrichments, retrieval contexts, and source partition
+  manifest to agree on campaign and document identity.
+- Bind a sealed campaign to accepted evidence when available and fail closed on
+  projection or terminal-state disagreement.
+- Distinguish clearly among verified sealed results, accepted evidence whose
+  sealed archive is not present on the MacBook, and rejected/incomplete
+  candidates. Never represent content-free evidence as document-level results.
+- Preserve generic compatibility with the accepted Run-021 archive without any
+  Run-021 constant, function name, environment variable, filename, or UI label.
+
+### 2. Non-technical document review
+
+For each verified sealed campaign, display:
+
+- campaign identity, verification status, archive and projection identity,
+  member/document/receipt coverage, and methodological warnings;
+- per-document Analysis summary, source-attested evidence, candidate terms, and
+  source partition identity;
+- primary and comparison model identities, agreement and omission counts,
+  claims, support state, and citation-unit references;
+- retrieval evidence, selected source units, ranking comparisons, exclusions,
+  grounded connections, and context hashes;
+- route and fallback provenance, including the Run-024 memory-safe fallback and
+  Run-025 selective-comparison purpose when present;
+- no automatic declaration that a model, comparison route, ranking, claim, or
+  proposal is correct.
+
+### 3. Explicit local researcher dispositions
+
+- Support explicit per-document dispositions: undecided, accept for later
+  reconciliation, hold for follow-up, and exclude from reconciliation.
+- Record decisions in a dedicated append-only local review ledger bound to the
+  verified archive hash, campaign ID, document ID, researcher ID, timestamp,
+  prior disposition, and an optional bounded note.
+- Make decisions reversible by appending a later disposition; never rewrite or
+  delete prior events and never alter the sealed archive.
+- Validate the complete ledger before every append and fail before writing on
+  malformed history, forged identities, or unknown documents.
+
+### 4. Lexicon-proposal review
+
+- Reuse the established semantic proposal identity and review projection.
+- Display provisional lexicon proposals with their exact document and archive
+  provenance.
+- Allow explicit accept-for-later-routing, reject, hold, or undecided review
+  dispositions in the same append-only local review ledger.
+- Do not route proposals into corpus enrichment files, promote vocabulary, or
+  write to Sanity/Supabase in Run-026.
+
+### 5. Additive reversible reconciliation preview
+
+- Compare verified sealed source identities against read-only corpus and Source
+  Queue inventories by stable document ID and source SHA-256.
+- Produce deterministic preview rows for exact links, hash aliases, missing
+  local sources, and identity/hash conflicts.
+- Every proposed future action must be additive, explicitly reversible, and
+  content-preserving. Never propose overwrite, delete, move, status rewrite, or
+  replacement of an existing research artifact.
+- Include rollback intent, prerequisites, conflict/hold reasons, and the exact
+  later authorization gate for both corpus and Source Queue targets.
+- Preview generation must perform zero imports, queue updates, corpus writes,
+  proposal routing, promotions, publications, or remote writes.
+
+### 6. Production Line workflow
+
+- Replace the Run-021-specific review section with campaign discovery,
+  verification-status cards, campaign and document selectors, the detailed
+  review surfaces above, explicit local dispositions, lexicon-proposal review,
+  and reconciliation preview.
+- Keep language non-technical and make the unavailable-versus-rejected
+  distinction understandable.
+- Keep campaign release and control behavior unchanged; Run-026 must not
+  auto-select, start, retry, resume, or otherwise operate a campaign.
+- The page must remain useful when no sealed archive is present and must never
+  expose local absolute paths, secret values, or database paths.
+
+## Validation
+
+Run exactly once after implementation stabilization:
+
+1. focused sealed-review, Production Line, proposal-review, and reconciliation
+   tests using temporary synthetic archives and read-only inventories;
+2. adversarial tests for archive traversal, undeclared/duplicate members,
+   manifest/hash mismatch, accepted-projection mismatch, cross-campaign or
+   cross-document injection, forged disposition history, unsafe inventory
+   identity, and fail-before-mutation behavior;
+3. one consolidated complete local test suite;
+4. compilation and `git diff --check`;
+5. one local Streamlit render using temporary content-free fixtures, followed
+   by visual inspection of campaign status, document evidence, comparison,
+   retrieval, disposition, proposal, and reconciliation surfaces.
+
+Do not rerun the complete suite after the consolidated complete-suite pass.
+Correct any ordinary defects with targeted tests only. Do not use real sealed
+results to exercise write controls.
+
+## Non-authorization and preservation boundaries
+
+- Do not start or load the factory service, LaunchAgent, campaign, model,
+  embedding runtime, or semantic worker.
+- Do not import into or mutate the corpus or Source Queue.
+- Do not route or promote proposals; do not write to Sanity, Supabase, or any
+  publication surface.
+- Do not make remote research writes or reacquire source material.
+- Treat all existing research artifacts, result archives, databases, receipts,
+  source text, caches, keys, logs, and unrelated dirty work as read-only and
+  user-owned.
+- Use temporary synthetic fixtures for validation and visual inspection. The
+  only durable Run-026 writes are source/tests/docs, the preflight/post-run
+  governance records, visual evidence, and explicit local review decisions
+  made later by the researcher through the completed UI.
+
+## Acceptance
+
+Mark `COMPLETED_RUN026_SEALED_REVIEW_AND_PREVIEW_ONLY_RECONCILIATION` only when:
+
+- Run-021 hard-coding is absent from the Production Line review workflow;
+- sealed campaigns are discovered and verified generically and accepted
+  Run-023 through Run-025 evidence is represented accurately;
+- document results, comparisons, retrieval evidence, citations, fallback
+  provenance, and verification state are visible without new model work;
+- document and lexicon-proposal dispositions are explicit, append-only, local,
+  archive-bound, and reversible;
+- corpus and Source Queue reconciliation is deterministic, additive,
+  reversible, and preview-only;
+- all mutation/import/promotion/publication/remote-write paths remain behind a
+  later separate authorization;
+- focused tests, one complete suite, compilation, diff checks, and visual UI
+  inspection pass;
+- no existing research artifact or unrelated work changed.
+
+## Final response
+
+Report discovered versus unavailable accepted campaigns, verification and
+review behavior, disposition ledger behavior, lexicon-proposal handling,
+reconciliation preview rules, visual evidence, focused and complete-suite test
+counts, changed files, commit, remaining authorization gate, and confirmation
+that no prohibited runtime or research write occurred.
+
+<!-- PROMPT END: sealed-result-review-controlled-reconciliation-v1.0 -->
+
+## Run-026 execution record
+
+- Prompt ID: `sealed-result-review-controlled-reconciliation-v1.0`.
+- Canonical prompt body: 10,276 bytes; SHA-256
+  `bec7b2ef0eb728dcecf6f03145c1e188fc21dd5ab120c86013c80356bb16840e`.
+- Parent: `codex/run025c-macbook-governance-record` at
+  `aaff31487e344a2d8428929f030776642327a135`.
+- Clean implementation branch: `codex/run026-sealed-result-review-reconciliation`.
+- Preflight manifest: `docs/run026_preflight_manifest.json`.
+- Authority is review and preview only. No Run-026 push, factory/model work,
+  import, research-artifact mutation, promotion, publication, Sanity/Supabase
+  write, or remote research write is authorized.
+- Implementation result: the generic sealed-result verifier, non-technical
+  Production Line review, append-only archive-bound dispositions, lexicon
+  proposal review, and deterministic zero-write reconciliation preview are
+  implemented on the local Run-026 branch. Local discovery verified the
+  available six-document Run-021 archive; Run-023, Run-024, and Run-025 are
+  accurately represented as accepted completion evidence whose sealed
+  document archives are not present on this MacBook.
+- Focused validation ran once and passed 31/31 tests. Compilation and
+  `git diff --check` passed. Visual inspection with a temporary content-free
+  archive passed for verification, evidence, comparison/citations/fallback,
+  retrieval, dispositions, vocabulary, and reconciliation surfaces; no review
+  control was activated and the temporary Streamlit server was stopped.
+- The one consolidated complete suite ran once and was not rerun: 2,714 tests
+  passed and four unchanged tests failed. Two hard-code a worktree-local
+  `.venv/bin/python` that is absent in this isolated worktree; two assign to the
+  existing read-only `ProductionCanaryWorker.now` property. These files were
+  outside Run-026 and were not changed. Creating a worktree-local environment
+  to make the supervisor test launch a worker would also cross this run's
+  explicit no-service/no-campaign boundary.
+- Therefore the prompt's canonical completion marker is intentionally not
+  issued. The implementation is complete, but technical acceptance remains
+  held on those pre-existing/environmental complete-suite failures. Detailed
+  evidence is recorded in `docs/run026_post_run_audit.json`.
+- Confirmed zero model/embedding calls, imports, corpus or Source Queue
+  mutations, proposal routes, promotions, Sanity/Supabase writes,
+  publications, remote research writes, and Run-026 pushes. A later separate
+  authorization remains mandatory before any mutation or import.

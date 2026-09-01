@@ -31,7 +31,6 @@ from runner.pipeline.syncthing_exchange import (
     verify_authenticated_result_bundle,
 )
 from runner.production_line_ui import (
-    RUN021_ARCHIVE_SHA256,
     create_semantic_campaign,
     publish_semantic_control,
     semantic_plan_model,
@@ -473,7 +472,10 @@ def test_run021_read_only_archive_verifies_without_calls_or_mutation():
     review = verify_run021_results(
         root / "surviving-sogice-direct-copied-semantic-pilot-021-results.tar.gz",
         root / "surviving-sogice-direct-copied-semantic-pilot-021-results.manifest.json",
-        expected_archive_sha256=RUN021_ARCHIVE_SHA256,
+        expected_archive_sha256=json.loads(
+            (root / "surviving-sogice-direct-copied-semantic-pilot-021-results.manifest.json")
+            .read_text(encoding="utf-8")
+        )["archive_sha256"],
     )
     assert review["member_count"] == 52
     assert review["projection_sha256"] == "7b6d538b21bbd9a8e27f0b72d32f6e6169cbcc1096b84b4b8141c263119f807f"

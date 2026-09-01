@@ -76,6 +76,29 @@ The normal daily path is:
 The detailed operational sequence is in
 [docs/INGESTION_OPERATIONS_RUNBOOK.md](docs/INGESTION_OPERATIONS_RUNBOOK.md).
 
+## Review sealed semantic campaigns
+
+The MacBook **Production Line → Review sealed results** workflow discovers
+result archive/manifest pairs under the configured read-only roots, verifies
+the archive and every declared JSON member, and distinguishes verified sealed
+results from accepted completion evidence whose document-level archive has not
+yet been transferred.
+
+Set `SOGICE_SEALED_RESULTS_ROOTS` to an operating-system-path-separated list of
+read-only result roots when they are not under the default
+`Documents/surviving-sogice-stuff` folder. Set
+`SOGICE_SEALED_REVIEW_STATE_ROOT` to a dedicated local folder only when the
+researcher is ready to record explicit review decisions. Those decisions are
+stored as immutable append-only event files bound to the exact archive,
+campaign, document or vocabulary proposal, researcher, and time.
+
+The workflow displays Analysis evidence, comparisons, citation references,
+retrieval context, fallback provenance, and verification state. Its corpus and
+Source Queue reconciliation is a deterministic preview: it does not extract
+source payloads, import or overwrite artifacts, update queue records, route or
+promote vocabulary, publish, or make a remote write. Any such change requires
+a later separate researcher authorization.
+
 ## Research safeguards and workload tools
 
 These commands are deterministic and local. They do not call a model, approve

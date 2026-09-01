@@ -27,15 +27,19 @@ from runner.pipeline.factory_auth import (
 from runner.pipeline.factory_supervisor import worker_status
 from runner.pipeline.factory_service import discover_production_runs
 from runner.pipeline.factory_state import project_factory_receipts
-from runner.pipeline.factory_review_adapter import (
-    preview_returned_proposals, route_returned_proposals,
-)
+from runner.pipeline.factory_review_adapter import preview_returned_proposals
 from runner.pipeline.factory_semantic_campaign import (
     RUN025_CONFIRMATION, RUN025_RUN_ID, SEMANTIC_CAMPAIGN_STATIONS,
     SEMANTIC_CONFIRMATION, SEMANTIC_ROUTE_PURPOSES,
     SemanticCampaignV1, SemanticDocumentV1, SourceInventoryRow,
     build_semantic_approval, corpus_inventory, freeze_trusted_lexicon_snapshot,
-    source_queue_inventory, verify_run021_results,
+    source_queue_inventory,
+)
+from runner.pipeline.factory_sealed_review import (
+    DOCUMENT_DISPOSITIONS, PROPOSAL_DISPOSITIONS,
+    append_review_disposition, build_reconciliation_preview,
+    configured_review_roots, discover_sealed_campaigns,
+    review_disposition_projection, sealed_document_review_model,
 )
 from runner.pipeline.syncthing_exchange import (
     forbidden_mutable_members, load_factory_receipts,
@@ -49,7 +53,6 @@ CANARY_STATIONS_LABEL = "Verify source → Prepare complete text → Build compl
 PASS_A_STATIONS_LABEL = CANARY_STATIONS_LABEL + " → Independent Analysis"
 SEMANTIC_CONFIRMATION_TEXT = SEMANTIC_CONFIRMATION
 SEMANTIC_STATIONS_LABEL = " → ".join(SEMANTIC_CAMPAIGN_STATIONS)
-RUN021_ARCHIVE_SHA256 = "571bbbc255515b4175f10769be94a12385975a66a1f1af68e966bf35bf3dec85"
 RUN025_START_CONFIRMATION = "Run-025 is delivered. Authorize start_approved."
 
 
@@ -551,56 +554,39 @@ def semantic_status_model(config: FactoryConfig, run_id: str) -> dict[str, Any]:
     }
 
 
-def _run021_review() -> dict[str, Any] | None:
-    root = Path(os.environ.get(
-        "SOGICE_RUN021_RESULTS_ROOT",
-        "/Users/sergiogalvaoroxo/Documents/surviving-sogice-stuff/Run-021",
-    ))
-    archive = root / "surviving-sogice-direct-copied-semantic-pilot-021-results.tar.gz"
-    manifest = root / "surviving-sogice-direct-copied-semantic-pilot-021-results.manifest.json"
-    if not archive.is_file() or not manifest.is_file():
-        return None
-    return verify_run021_results(
-        archive, manifest, expected_archive_sha256=RUN021_ARCHIVE_SHA256,
+def sealed_review_catalog_model(
+    roots: Iterable[Path] | None = None,
+) -> tuple[dict[str, Any], ...]:
+    """Discover all configured sealed campaigns and accepted evidence read-only."""
+    selected_roots = tuple(roots) if roots is not None else configured_review_roots()
+    return discover_sealed_campaigns(
+        selected_roots, evidence_roots=selected_roots,
     )
 
 
-def run021_document_review_model(
-    review: dict[str, Any], document_id: str,
-) -> dict[str, Any]:
-    """Project one sealed document for non-technical, read-only inspection."""
-    if document_id not in review["analysis"] or document_id not in review["enrichment"]:
-        raise ValueError("review document is outside the verified sealed campaign")
-    compiler = next((
-        row for row in review["comparison"].get("compiler_comparisons", ())
-        if row.get("document_id") == document_id
-    ), None)
-    if compiler is None:
-        raise ValueError("verified compiler comparison is missing")
-    rankings = review["comparison"].get("retrieval_rankings") or {}
-    analysis = review["analysis"][document_id]
-    enrichment = review["enrichment"][document_id]
-    return {
-        "document_id": document_id,
-        "analysis_summary": analysis.get("summary", ""),
-        "analysis_evidence": tuple(analysis.get("evidence") or ()),
-        "candidate_terms": tuple(analysis.get("candidate_terms") or ()),
-        "primary_model": compiler.get("primary_model", ""),
-        "comparison_model": compiler.get("comparison_model", ""),
-        "primary_claims": tuple(compiler.get("primary_claims") or ()),
-        "comparison_claims": tuple(compiler.get("comparison_claims") or ()),
-        "exact_agreement_count": compiler.get("exact_agreement_count", 0),
-        "primary_only_count": compiler.get("primary_only_count", 0),
-        "comparison_only_count": compiler.get("comparison_only_count", 0),
-        "qwen_ranking": tuple((rankings.get("qwen_4096") or {}).get(document_id, ())),
-        "bge_ranking": tuple((rankings.get("bge_m3_1024") or {}).get(document_id, ())),
-        "retrieval_context": review.get("retrieval", {}).get(document_id, {}),
-        "grounded_connections": tuple(enrichment.get("corpus_connections") or ()),
-        "retrieval_context_sha256": enrichment.get("retrieval_context_sha256", ""),
-        "receipt_count": review.get("receipt_count", 0),
-        "receipt_gaps": tuple(review.get("receipt_gaps") or ()),
-        "model_truth_declaration": compiler.get("model_truth_declaration", False),
-    }
+def _review_ledger_root() -> Path | None:
+    configured = str(os.environ.get("SOGICE_SEALED_REVIEW_STATE_ROOT") or "").strip()
+    return Path(configured).expanduser() / "events" if configured else None
+
+
+def _review_inventories(
+    *, corpus_root: Path | None, queue_path: Path | None,
+) -> tuple[tuple[SourceInventoryRow, ...], tuple[SourceInventoryRow, ...], tuple[str, ...]]:
+    problems = []
+    try:
+        corpus_rows = corpus_inventory(corpus_root) if corpus_root else ()
+    except (OSError, ValueError) as exc:
+        corpus_rows = ()
+        problems.append(f"Corpus inventory is unavailable: {type(exc).__name__}")
+    try:
+        queue_rows = (
+            source_queue_inventory(queue_path)
+            if queue_path and queue_path.is_file() else ()
+        )
+    except (OSError, ValueError) as exc:
+        queue_rows = ()
+        problems.append(f"Source Queue inventory is unavailable: {type(exc).__name__}")
+    return tuple(corpus_rows), tuple(queue_rows), tuple(problems)
 
 
 def _render_unified_setup(config: FactoryConfig) -> None:
@@ -759,84 +745,276 @@ def render_production_line(config: FactoryConfig | None = None) -> None:
         if transfer["forbidden"]:
             st.error("Forbidden mutable transfer members detected.")
 
-    st.subheader("Review results")
-    review = _run021_review()
-    if review:
-        st.success(f"Run-021 verified read-only: {review['member_count']} members · projection {review['projection_sha256']}")
-        st.warning("Analysis, comparisons, retrieval, and grounded Enrichment remain provisional.")
-        st.write(f"**Analysis documents:** {len(review['analysis'])}")
-        st.write("**Compiler comparison:** Gemma primary and Qwen3.8 comparison; no automatic winner")
-        rankings = review["comparison"].get("retrieval_rankings") or {}
-        st.write(f"**Retrieval comparison:** {', '.join(rankings) or 'sealed report available'}")
-        st.write(f"**Grounded Enrichment:** {len(review['enrichment'])} documents · new model calls: {review['model_calls']}")
-        st.write(
-            f"**Receipt coverage:** {review['receipt_count']} sealed model receipts · "
-            f"{len(review['receipt_gaps'])} identified gaps"
-        )
-        review_document = st.selectbox(
-            "Inspect one verified document",
-            sorted(review["analysis"]), key="run021-review-document",
-        )
-        detail = run021_document_review_model(review, review_document)
-        with st.expander("Analysis evidence and candidate vocabulary"):
-            st.write(detail["analysis_summary"])
-            st.dataframe(
-                [{"Source-attested evidence": value} for value in detail["analysis_evidence"]],
-                hide_index=True, width="stretch",
-            )
-            st.caption("Candidate vocabulary: " + ", ".join(detail["candidate_terms"]))
-        with st.expander("Gemma and Qwen3.8 compiler comparison"):
-            st.write(
-                f"{detail['primary_model']} primary · {detail['comparison_model']} comparison · "
-                f"exact agreement {detail['exact_agreement_count']} · "
-                f"primary-only {detail['primary_only_count']} · "
-                f"comparison-only {detail['comparison_only_count']}"
-            )
-            st.dataframe([
-                {
-                    "route": route,
-                    "claim": row.get("claim_id", ""),
-                    "support": row.get("support_status", ""),
-                    "citations": ", ".join(row.get("citation_unit_ids") or ()),
-                    "statement_sha256": row.get("statement_sha256", ""),
-                }
-                for route, claims in (
-                    ("primary", detail["primary_claims"]),
-                    ("comparison", detail["comparison_claims"]),
-                ) for row in claims
-            ], hide_index=True, width="stretch")
-            st.caption("Neither route is declared correct; omitted/different claim counts require researcher review.")
-        with st.expander("Retrieval rankings, context, and grounded connections"):
-            st.dataframe([
-                {"embedding": route, **row}
-                for route, rows in (
-                    ("Qwen 4096", detail["qwen_ranking"]),
-                    ("BGE-M3 1024", detail["bge_ranking"]),
-                ) for row in rows
-            ], hide_index=True, width="stretch")
-            st.write({
-                "retrieval_context_sha256": detail["retrieval_context_sha256"],
-                "grounded_connections": detail["grounded_connections"],
-                "receipt_gaps": detail["receipt_gaps"],
-            })
-        with st.expander("Methodological warnings"):
-            for warning in review["methodological_warnings"]:
-                st.write(f"• {warning}")
-        st.subheader("Route proposals")
-        candidates = preview_returned_proposals(review)
-        if not candidates:
-            st.caption("Run-021 contains grounded connections but no lexicon/entity/tactic/practice proposals to route.")
-        elif corpus_root:
-            choices = st.multiselect("Accept provisional proposals into existing local review queues", [row["proposal_id"] for row in candidates])
-            if st.button("Route selected proposals for local review", disabled=not choices):
-                result = route_returned_proposals(
-                    corpus_root=corpus_root, review=review,
-                    accepted_proposal_ids=choices,
+    st.subheader("Review sealed results")
+    try:
+        catalog = sealed_review_catalog_model()
+    except (OSError, ValueError) as exc:
+        catalog = ()
+        st.error(f"Sealed-result discovery stopped safely: {type(exc).__name__}")
+    if catalog:
+        st.dataframe([
+            {
+                "Campaign": row["run_id"],
+                "Result availability": {
+                    "verified_sealed": "Verified sealed results",
+                    "accepted_evidence_only": "Accepted; sealed results not on this MacBook",
+                    "rejected": "Rejected or incomplete",
+                }[row["status"]],
+                "Verification": row["verification_status"].replace("_", " "),
+                "Documents": row.get("document_count", 0),
+                "Receipts": row.get("receipt_count", 0),
+                "Projection": row.get("projection_sha256", "")[:16],
+            }
+            for row in catalog
+        ], hide_index=True, width="stretch")
+        for row in catalog:
+            if row["status"] == "accepted_evidence_only":
+                st.caption(
+                    f"{row['run_id']}: completion evidence is accepted, but document-level "
+                    "results remain unavailable until its sealed archive is transferred."
                 )
-                st.success(f"{len(result['routed'])} routed; {len(result['duplicates'])} already present. No remote write occurred.")
-        st.caption("Local import is preview-only; corpus or Source Queue mutation requires a later confirmed action.")
+            elif row["status"] == "rejected":
+                st.warning(
+                    f"One candidate was rejected before display: {row.get('reason', 'verification failed')}."
+                )
+    verified = [row for row in catalog if row["status"] == "verified_sealed"]
+    if not verified:
+        st.caption("No locally available sealed archive has passed document-level verification.")
+        return
+
+    selected_campaign = st.selectbox(
+        "Verified campaign",
+        [row["run_id"] for row in verified],
+        key="sealed-review-campaign",
+    )
+    selected_entry = next(row for row in verified if row["run_id"] == selected_campaign)
+    review = selected_entry["review"]
+    st.success(
+        f"Verified read-only · {review['document_count']} documents · "
+        f"{review['member_count']} sealed members · projection {review['projection_sha256'][:16]}…"
+    )
+    st.write(
+        f"**Verification:** {review['verification_status'].replace('_', ' ')} · "
+        f"**Receipts:** {review['receipt_count']} with {len(review['receipt_gaps'])} identified gaps · "
+        "**New model or embedding calls:** 0"
+    )
+    for warning in review["methodological_warnings"]:
+        st.caption(f"• {warning}")
+
+    review_document = st.selectbox(
+        "Inspect a verified document",
+        sorted(review["source_documents"]),
+        key=f"sealed-review-document-{selected_campaign}",
+    )
+    detail = sealed_document_review_model(review, review_document)
+    source = detail["source_partition"]
+    st.write(
+        f"**Source identity:** {source['source_sha256'][:16]}… · "
+        f"{source.get('source_bytes', 0):,} bytes · "
+        f"{source.get('unit_count', 0)} citation units · exact reconstruction"
+    )
+
+    with st.expander("Analysis evidence and candidate vocabulary", expanded=True):
+        st.write(detail["analysis_summary"])
+        st.dataframe(
+            [{"Source-attested evidence": value} for value in detail["analysis_evidence"]],
+            hide_index=True, width="stretch",
+        )
+        st.caption("Candidate vocabulary: " + (
+            ", ".join(detail["candidate_terms"]) or "none recorded"
+        ))
+
+    with st.expander("Model comparison, citations, and fallback provenance", expanded=True):
+        provenance = detail["comparison_provenance"]
+        st.write(
+            f"{detail['primary_model']} primary · {detail['comparison_model']} comparison · "
+            f"exact agreement {detail['exact_agreement_count']} · "
+            f"primary-only {detail['primary_only_count']} · "
+            f"comparison-only {detail['comparison_only_count']}"
+        )
+        st.write(
+            "**Comparison route:** "
+            f"{str(provenance.get('purpose') or 'not recorded').replace('_', ' ')} · "
+            f"resolved model {provenance.get('provider_resolved_model') or detail['comparison_model']}"
+        )
+        if provenance.get("fallback_reason"):
+            st.warning(
+                "Fallback provenance: "
+                + str(provenance["fallback_reason"]).replace("_", " ")
+            )
+        st.dataframe([
+            {
+                "Route": route,
+                "Claim": row.get("claim_id", ""),
+                "Support": row.get("support_status", ""),
+                "Citation units": ", ".join(row.get("citation_unit_ids") or ()),
+                "Statement identity": str(row.get("statement_sha256", ""))[:16],
+            }
+            for route, claims in (
+                ("Primary", detail["primary_claims"]),
+                ("Comparison", detail["comparison_claims"]),
+            ) for row in claims
+        ], hide_index=True, width="stretch")
+        st.caption("Neither route is declared correct; omissions and differences require researcher review.")
+
+    with st.expander("Retrieval evidence and grounded connections", expanded=True):
+        st.dataframe([
+            {
+                "Rank": row.get("final_rank") or row.get("rank"),
+                "Source document": row.get("document_id", ""),
+                "Citation unit": row.get("unit_id", ""),
+                "Score": row.get("fused_score") or row.get("score"),
+                "Evidence excerpt": str(row.get("text") or "")[:280],
+            }
+            for row in detail["retrieval_hits"]
+        ], hide_index=True, width="stretch")
+        st.write("**Ranking comparison**")
+        st.dataframe([
+            {"Embedding route": route, **row}
+            for route, rows in (
+                ("Qwen 4096", detail["qwen_ranking"]),
+                ("BGE-M3 1024", detail["bge_ranking"]),
+            ) for row in rows
+        ], hide_index=True, width="stretch")
+        st.write({
+            "context_sha256": detail["retrieval_context_sha256"],
+            "grounded_connections": detail["grounded_connections"],
+            "retrieval_exclusions": detail["retrieval_exclusions"],
+        })
+
+    st.subheader("Researcher decision")
+    ledger_root = _review_ledger_root()
+    decisions: dict[str, dict[str, Any]] = {}
+    if ledger_root is None:
+        st.info("A dedicated local review folder must be configured before decisions can be recorded.")
     else:
-        st.caption("No verified sealed result archive is configured for read-only review.")
+        try:
+            decisions = review_disposition_projection(ledger_root, review)
+        except ValueError as exc:
+            st.error(f"The local review history failed validation: {type(exc).__name__}")
+    current_document = decisions.get(f"document:{review_document}", {}).get(
+        "action", "undecided",
+    )
+    document_labels = {
+        "undecided": "Undecided",
+        "accept_for_later_reconciliation": "Accept for later reconciliation",
+        "hold_for_follow_up": "Hold for follow-up",
+        "exclude_from_reconciliation": "Exclude from reconciliation",
+    }
+    researcher_id = st.text_input(
+        "Researcher recording this decision",
+        value="researcher-sergio-galvao-roxo",
+        key=f"sealed-review-researcher-{selected_campaign}",
+    )
+    document_action = st.selectbox(
+        "Document disposition",
+        DOCUMENT_DISPOSITIONS,
+        index=DOCUMENT_DISPOSITIONS.index(current_document),
+        format_func=document_labels.get,
+        key=f"sealed-document-action-{selected_campaign}-{review_document}",
+    )
+    document_note = st.text_input(
+        "Optional decision note",
+        value="",
+        key=f"sealed-document-note-{selected_campaign}-{review_document}",
+    )
+    if st.button(
+        "Record document decision",
+        disabled=ledger_root is None or not researcher_id.strip(),
+        key=f"sealed-document-save-{selected_campaign}-{review_document}",
+    ):
+        event = append_review_disposition(
+            ledger_root, review, subject_kind="document", subject_id=review_document,
+            action=document_action, researcher_id=researcher_id.strip(),
+            note=document_note, decided_at=datetime.now(timezone.utc),
+        )
+        st.success(f"Decision recorded locally as event {event['sequence']}; sealed results were unchanged.")
+
+    st.subheader("Provisional vocabulary review")
+    lexicon_candidates = [
+        row for row in preview_returned_proposals(review)
+        if row["family"] == "lexicon_proposals"
+    ]
+    if not lexicon_candidates:
+        st.caption("This verified campaign contains no provisional lexicon proposals.")
+    else:
+        proposal_id = st.selectbox(
+            "Vocabulary proposal",
+            [row["proposal_id"] for row in lexicon_candidates],
+            format_func=lambda value: next(
+                str(row["proposal"].get("term") or value)
+                for row in lexicon_candidates if row["proposal_id"] == value
+            ),
+            key=f"sealed-lexicon-proposal-{selected_campaign}",
+        )
+        candidate = next(row for row in lexicon_candidates if row["proposal_id"] == proposal_id)
+        st.write({
+            "term": candidate["proposal"].get("term", ""),
+            "source_document": candidate["document_id"],
+            "source_attested_evidence": candidate["proposal"].get("exact_quote", ""),
+            "provisional": True,
+            "automatic_promotion": False,
+        })
+        current_proposal = decisions.get(f"lexicon_proposal:{proposal_id}", {}).get(
+            "action", "undecided",
+        )
+        proposal_labels = {
+            "undecided": "Undecided",
+            "accept_for_later_routing": "Accept for later routing",
+            "reject": "Reject",
+            "hold_for_follow_up": "Hold for follow-up",
+        }
+        proposal_action = st.selectbox(
+            "Vocabulary disposition",
+            PROPOSAL_DISPOSITIONS,
+            index=PROPOSAL_DISPOSITIONS.index(current_proposal),
+            format_func=proposal_labels.get,
+            key=f"sealed-proposal-action-{selected_campaign}-{proposal_id}",
+        )
+        proposal_note = st.text_input(
+            "Optional vocabulary note",
+            value="",
+            key=f"sealed-proposal-note-{selected_campaign}-{proposal_id}",
+        )
+        if st.button(
+            "Record vocabulary decision",
+            disabled=ledger_root is None or not researcher_id.strip(),
+            key=f"sealed-proposal-save-{selected_campaign}-{proposal_id}",
+        ):
+            event = append_review_disposition(
+                ledger_root, review, subject_kind="lexicon_proposal",
+                subject_id=proposal_id, action=proposal_action,
+                researcher_id=researcher_id.strip(), note=proposal_note,
+                decided_at=datetime.now(timezone.utc),
+            )
+            st.success(f"Vocabulary decision recorded locally as event {event['sequence']}; nothing was routed or promoted.")
+
+    st.subheader("Corpus and Source Queue reconciliation preview")
+    corpus_rows, queue_rows, inventory_problems = _review_inventories(
+        corpus_root=corpus_root, queue_path=queue_path,
+    )
+    for problem in inventory_problems:
+        st.warning(problem)
+    preview = build_reconciliation_preview(
+        review, corpus_rows=corpus_rows, source_queue_rows=queue_rows,
+        dispositions=decisions,
+    )
+    st.dataframe([
+        {
+            "Document": row["document_id"],
+            "Decision": row["disposition"].replace("_", " "),
+            "Destination": target["target"].replace("_", " "),
+            "Preview": target["action"].replace("_", " "),
+            "Reason": target["reason"],
+            "Planned": "Yes" if target["planned"] else "No",
+            "Reversible": "Yes",
+        }
+        for row in preview["rows"] for target in row["targets"]
+    ], hide_index=True, width="stretch")
+    st.caption(
+        f"Preview {preview['preview_sha256'][:16]}… · zero imports and zero mutations. "
+        "A later separate researcher authorization is required before any corpus or Source Queue change."
+    )
 
 
 def render_factory_console(config: FactoryConfig | None = None) -> None:

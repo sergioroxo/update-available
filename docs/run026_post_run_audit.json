@@ -1,0 +1,142 @@
+{
+  "schema_version": "run026-post-run-audit-v1.0",
+  "created_at": "2026-09-01T16:20:31+02:00",
+  "run_id": "ai-sdlc-20260901-sealed-result-review-reconciliation-026",
+  "prompt_id": "sealed-result-review-controlled-reconciliation-v1.0",
+  "parent_commit": "aaff31487e344a2d8428929f030776642327a135",
+  "implementation_branch": "codex/run026-sealed-result-review-reconciliation",
+  "governance_push": {
+    "branch": "codex/run025c-macbook-governance-record",
+    "commit": "aaff31487e344a2d8428929f030776642327a135",
+    "verified_remote_ref": true
+  },
+  "local_result_discovery": [
+    {
+      "run_id": "ai-sdlc-20260822-direct-copied-semantic-pilot-021",
+      "status": "verified_sealed",
+      "verification_status": "verified_manifest_and_members",
+      "document_count": 6,
+      "receipt_count": 24,
+      "projection_sha256": "7b6d538b21bbd9a8e27f0b72d32f6e6169cbcc1096b84b4b8141c263119f807f"
+    },
+    {
+      "run_id": "semantic-ui-canary-023",
+      "status": "accepted_evidence_only",
+      "verification_status": "sealed_results_not_present_on_macbook",
+      "document_count": 0,
+      "receipt_count": 39,
+      "projection_sha256": "12bdc6b845b53579e9a0666cf1e7605385870958ac0ff6ce4cd08341e3a99384"
+    },
+    {
+      "run_id": "semantic-multidocument-canary-024",
+      "status": "accepted_evidence_only",
+      "verification_status": "sealed_results_not_present_on_macbook",
+      "document_count": 0,
+      "receipt_count": 80,
+      "projection_sha256": "c4e509214137689b0c79fa09425b3a938312ac7bf59c5915e6673b91f805cfad"
+    },
+    {
+      "run_id": "ai-sdlc-20260828-autonomous-multidocument-pilot-025",
+      "status": "accepted_evidence_only",
+      "verification_status": "sealed_results_not_present_on_macbook",
+      "document_count": 0,
+      "receipt_count": 5605,
+      "projection_sha256": "d0a2b4c5f25202a03abb3049b09335142803fc0692902dfc783ca0c50af0dae6"
+    }
+  ],
+  "validation": {
+    "compilation": "passed",
+    "git_diff_check": "passed",
+    "focused_test_run": {
+      "status": "passed",
+      "passed": 31,
+      "failed": 0,
+      "duration_seconds": 6.76,
+      "run_count": 1
+    },
+    "complete_suite_run": {
+      "status": "baseline_and_environment_failures",
+      "passed": 2714,
+      "failed": 4,
+      "duration_seconds": 75.42,
+      "run_count": 1,
+      "rerun": false,
+      "failures": [
+        {
+          "test": "tests/test_factory_controller.py::test_real_command_line_simulation_runs_twice_in_a_separate_process",
+          "classification": "isolated_worktree_has_no_local_.venv_and_the_test_hard-codes_.venv/bin/python"
+        },
+        {
+          "test": "tests/test_factory_supervisor.py::test_real_supervisor_launch_survives_launcher_scope_and_records_completion",
+          "classification": "isolated_worktree_has_no_local_.venv_and_the_test_constructs_that_path"
+        },
+        {
+          "test": "tests/test_factory_recovery_projection.py::test_service_terminal_history_uses_narrow_run023_recovery_fallback",
+          "classification": "unchanged_test_assigns_to_the_existing_read-only_ProductionCanaryWorker.now_property"
+        },
+        {
+          "test": "tests/test_factory_recovery_projection.py::test_service_recovery_fallback_never_applies_to_multidocument_history",
+          "classification": "unchanged_test_assigns_to_the_existing_read-only_ProductionCanaryWorker.now_property"
+        }
+      ]
+    },
+    "visual_streamlit_review": {
+      "status": "passed",
+      "fixture": "temporary_content-free_sealed_archive",
+      "decision_buttons_activated": false,
+      "server_stopped": true,
+      "verified_surfaces": [
+        "campaign_verification_and_coverage",
+        "analysis_evidence_and_candidate_vocabulary",
+        "model_comparison_citations_and_fallback_provenance",
+        "retrieval_evidence_rankings_and_grounded_connections",
+        "researcher_document_disposition",
+        "lexicon_proposal_disposition",
+        "corpus_and_source_queue_reconciliation_preview",
+        "later_separate_authorization_gate"
+      ],
+      "screenshots": [
+        {
+          "path": "docs/screenshots/run026/sealed-review-evidence.png",
+          "sha256": "42484afb4d331fee266ec6b9179b0ab149ca7d5dd6d7533ebb9c55de72bcdcab"
+        },
+        {
+          "path": "docs/screenshots/run026/sealed-review-decisions.png",
+          "sha256": "99e40411337795af505905e5c7eff664c884f64fe6e2d0df4ad368f0de4d7ad1"
+        },
+        {
+          "path": "docs/screenshots/run026/sealed-review-reconciliation.png",
+          "sha256": "ec4cb7d67540c2c95b05edc24ab1778d8e1ba753e8e96d268a9ddba96e8c7947"
+        }
+      ]
+    }
+  },
+  "preservation": {
+    "external_research_artifacts_changed": 0,
+    "unrelated_dirty_work_changed": 0,
+    "sealed_archives_extracted": 0,
+    "sealed_archives_changed": 0,
+    "local_review_events_recorded": 0
+  },
+  "prohibited_actions": {
+    "factory_service_started": false,
+    "launch_agent_loaded": false,
+    "campaign_started": false,
+    "models_started": false,
+    "model_calls": 0,
+    "embedding_calls": 0,
+    "imports": 0,
+    "corpus_mutations": 0,
+    "source_queue_mutations": 0,
+    "proposal_routes": 0,
+    "promotions": 0,
+    "sanity_writes": 0,
+    "supabase_writes": 0,
+    "publications": 0,
+    "remote_research_writes": 0,
+    "run026_pushes": 0
+  },
+  "authorization_gate": "A later separate researcher authorization is required before any import, corpus or Source Queue mutation, proposal routing, promotion, publication, Sanity/Supabase write, or remote research write.",
+  "acceptance_marker": null,
+  "acceptance_status": "held_because_the_single_complete_suite_had_four_unchanged_baseline_or_isolated-worktree_environment_failures"
+}
