@@ -1581,22 +1581,6 @@
     ]
    },
    {
-    "id": "e_bookcase",
-    "pos": [
-     4.28,
-     0,
-     -0.64
-    ],
-    "size": [
-     0.75,
-     1.7,
-     0.5
-    ],
-    "color": "#8A5A3B",
-    "yaw": 270,
-    "model": "bookcase"
-   },
-   {
     "id": "e_rug",
     "pos": [
      4.03,
@@ -1631,6 +1615,97 @@
      0.42
     ],
     "color": "#8A5A3B",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfPlank2",
+    "_doc": "⛑ 2026-09-01, Sérgio: 'maybe we can remove the book case and just keep some shelving just to change it up.' The bookcase went with it — a closed case in a room whose whole subject is a person's things being sorted and kept read as storage; open planks read as a life on display. This lower plank carries the books the case used to hold, at a height the seat meets rather than looks down into.",
+    "pos": [
+     4.85,
+     0.8,
+     -0.81
+    ],
+    "size": [
+     0.62,
+     0.04,
+     0.42
+    ],
+    "color": "#8A5A3B",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfBook0",
+    "pos": [
+     4.66,
+     0.92,
+     -0.86
+    ],
+    "size": [
+     0.16,
+     0.2,
+     0.036
+    ],
+    "color": "#C98F8F",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfBook1",
+    "pos": [
+     4.712,
+     0.925,
+     -0.86
+    ],
+    "size": [
+     0.16,
+     0.21,
+     0.04
+    ],
+    "color": "#9FB4C0",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfBook2",
+    "pos": [
+     4.764,
+     0.93,
+     -0.86
+    ],
+    "size": [
+     0.16,
+     0.22,
+     0.038
+    ],
+    "color": "#A8B49A",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfBook3",
+    "pos": [
+     4.816,
+     0.922,
+     -0.86
+    ],
+    "size": [
+     0.16,
+     0.205,
+     0.042
+    ],
+    "color": "#C8B8D0",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfBook4",
+    "pos": [
+     4.868,
+     0.919,
+     -0.86
+    ],
+    "size": [
+     0.16,
+     0.198,
+     0.05
+    ],
+    "color": "#C9BFA6",
     "yaw": 270
    },
    {
@@ -2378,82 +2453,6 @@
     "yaw": 90
    },
    {
-    "id": "e_bookRow0_0",
-    "_doc": "Session 74 — MAYA'S THINGS (the E4 room pass, build plan Stage 1 / S66's contract applied to her, per docs/reinterp/BUILD_QUEUE_LIVE.md and the session log). Present from r3 (E3) on, same convention as Vera's own belongings above: the three rooms are ONE building that ages 30 years in parallel, so Maya already lives here while the piece's attention is on Vera — the room does not become hers only when the story reaches E4. ~32 items, a scale not a quota (S66's own phrase); every colour reused from era1.json's family or already approved in this file, nothing invented. She is not Vera re-coloured: a different mix (a sketchbook and pens rather than a notepad; sneakers and a backpack by the door rather than slippers and a laundry basket; a floor cushion, not a throw pillow chair) and a different palette lean (mint/rose/tan rather than lavender/sage). Placement iterated in-engine against `node tools/room-audit.mjs` (see this session's log for before/after numbers).",
-    "pos": [
-     4.15,
-     0.52,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.2,
-     0.036
-    ],
-    "color": "#C9A8A0",
-    "yaw": 270
-   },
-   {
-    "id": "e_bookRow0_1",
-    "pos": [
-     4.2,
-     0.52,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.21,
-     0.04
-    ],
-    "color": "#9FB4C0",
-    "yaw": 270
-   },
-   {
-    "id": "e_bookRow0_2",
-    "pos": [
-     4.245,
-     0.525,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.22,
-     0.038
-    ],
-    "color": "#A8B49A",
-    "yaw": 270
-   },
-   {
-    "id": "e_bookRow0_3",
-    "pos": [
-     4.29,
-     0.522,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.205,
-     0.042
-    ],
-    "color": "#C8B8D0",
-    "yaw": 270
-   },
-   {
-    "id": "e_bookRow0_4",
-    "pos": [
-     4.335,
-     0.518,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.198,
-     0.05
-    ],
-    "color": "#B98563",
-    "yaw": 270
-   },
-   {
     "id": "e_tin",
     "_doc": "Session 74: an empty third shelf keeps a pencil tin rather than a third row of books — the point of a bookcase not entirely full of books (this is fog-tier per era1room.ts's classifyProp, the same recede-into-background treatment as homeworkPile).",
     "pos": [
@@ -2881,85 +2880,6 @@
     "yaw": 270
    },
    {
-    "id": "e_headsetStand",
-    "_doc": "Session 74: THE HEADSET (fixture list item 1) — a hero object (era1room.ts's classifyProp, alongside the CRT: Room 3's two heroes, inside the ≤3 budget), on the desk's own free front strip, within reach of the seat (seatPose(270): eye at x4.4,z0.7, facing the desk — the stand sits at x5.40-5.50, well inside arm's reach, clear of the CRT/keyboard/folders cluster which all sit at z>=0.36 after this session's desk-shift fix). A small charging dock, not furniture: this is where she puts it down.",
-    "pos": [
-     5.46,
-     0.7875,
-     0.3
-    ],
-    "size": [
-     0.075,
-     0.075,
-     0.13
-    ],
-    "color": "#2C2C34",
-    "yaw": 270
-   },
-   {
-    "id": "e_headsetVisor",
-    "_doc": "Session 74: the visor. ⚑ THE SEAM for Stage 2 — this is where the 2D canvas mounts as the era's screen surface (per REINTERP_E4_THE_DEVICE_2026-08-05.md: 'the visor is the screen surface'). Left CLEAN on purpose: no emissive, no render-texture, no screen behaviour — that is explicitly not this session's build. ⛑ 2026-09-01 (Sérgio: 'make it read as a headset'): widened on z 0.16 → 0.195 and shallowed on x/y, and the single strap bar became a pale three-part LOOP below. It was a 9cm dark cube on a dark desk and read as a small tower with an LED — the era's one interaction was the least legible object in the room. ⛑ NOT MOVED: z stays 0.30 and the front face stays at x≈5.398. S76 measured the headset at 33.9° off the seat bearing against a 29.7° half-FOV — outside the frame — and z 0.30 is that fix; PLACEMENT.visor's screen plane sits at x 5.365, proud of this face, and the two move together or the visor detaches from its own prop.",
-    "pos": [
-     5.44,
-     0.868,
-     0.3
-    ],
-    "size": [
-     0.085,
-     0.082,
-     0.195
-    ],
-    "color": "#3A3A44",
-    "yaw": 270
-   },
-   {
-    "id": "e_headsetStrap",
-    "pos": [
-     5.549,
-     0.884,
-     0.3
-    ],
-    "size": [
-     0.022,
-     0.022,
-     0.178
-    ],
-    "color": "#D4D0C8",
-    "yaw": 270,
-    "_doc": "Session 74's single dark bar, now the BACK of a loop. A dark block alone is a box; a dark block with a pale strap arcing behind it is unmistakably something you put on your face, and that silhouette is doing more work here than any amount of detail on the visor itself would."
-   },
-   {
-    "id": "e_headsetStrapL",
-    "pos": [
-     5.512,
-     0.884,
-     0.224
-    ],
-    "size": [
-     0.075,
-     0.022,
-     0.022
-    ],
-    "color": "#D4D0C8",
-    "yaw": 270,
-    "_doc": "⛑ Third shape, and the two before it are why. Behind the body: invisible from the seat. Long and outboard of the body: it read as a horizontal spar skewering the visor, because from this bearing the arms' length in x projects as pure horizontal spread. Short, tucked inside the visor's z span and running back from its rear face: the loop shows in three-quarter view, where a person actually sees it, and never silhouettes as a crossbar."
-   },
-   {
-    "id": "e_headsetStrapR",
-    "pos": [
-     5.512,
-     0.884,
-     0.376
-    ],
-    "size": [
-     0.075,
-     0.022,
-     0.022
-    ],
-    "color": "#D4D0C8",
-    "yaw": 270
-   },
-   {
     "id": "e_glasses",
     "_doc": "Session 74: THE HONEST DETAIL (fixture list — 'whatever she moves to put it on... one small honest detail; the body is in the room'). Her glasses, set down beside the stand — the ordinary human gesture of taking them off before the headset goes on.",
     "pos": [
@@ -2973,6 +2893,57 @@
      0.13
     ],
     "color": "#2C2C34",
+    "yaw": 270
+   },
+   {
+    "id": "e_headset",
+    "_doc": "⛑ THE REAL HEADSET (2026-09-01, Sérgio supplied the model). Replaces the five-box assembly this session spent three passes trying to make read as a headset — a shape problem that a shape solves. ⛑ z 0.30 IS KEPT: S76 measured the box at 33.9 degrees off the seat bearing against a 29.7 degree half-FOV, outside the frame, and 0.30 is that fix. PLACEMENT.visor's screen plane must stay in step with this prop or the visor detaches from itself.",
+    "pos": [
+     5.44,
+     0.75,
+     0.3
+    ],
+    "size": [
+     0.2,
+     0.1,
+     0.16
+    ],
+    "color": "#3A3A44",
+    "model": "vr_headset",
+    "yaw": 90
+   },
+   {
+    "id": "e_controller",
+    "_doc": "Set down beside the headset. Not interactive — the era spends its presses on the laptop and the visor; this is the other half of the kit lying where she left it. ⛑ z 0.50 -> 0.10: at 0.50 it stood inside the laptop's own footprint, behind its screen.",
+    "pos": [
+     5.46,
+     0.75,
+     0.1
+    ],
+    "size": [
+     0.12,
+     0.17,
+     0.13
+    ],
+    "color": "#3A3A44",
+    "model": "vr_controller",
+    "yaw": 90
+   },
+   {
+    "id": "e_laptop",
+    "_doc": "⛑ MAYA'S 2026 MACHINE (Sérgio: 'maybe yeah we should have a Laptop in 2026, and that can start as our starting point of interaction for ERA-4 and L will tell us to move to VR'). It sits where the CRT used to, square in front of the seat: the era now OPENS here and is sent from here to the headset. ⛑ yaw 90 -> 270: at 90 the seat saw the lid's OUTSIDE, i.e. the machine was open away from her.",
+    "pos": [
+     5.24,
+     0.75,
+     0.61
+    ],
+    "size": [
+     0.25,
+     0.23,
+     0.34
+    ],
+    "color": "#C9BFA6",
+    "model": "laptop",
     "yaw": 270
    }
   ]

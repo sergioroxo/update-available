@@ -198,10 +198,17 @@ const PLACEMENT = {
      *  find it. S76 named the fix and could not apply it (the prop data was
      *  outside its fence). +0.25 m brings the bearing to ~20.8°, comfortably
      *  inside, and still clears the CRT/keyboard/folders cluster at z>=0.36.
-     *  ⚑ Keep this in step with `e_headsetStand/Visor/Strap` and `e_glasses`
-     *  in data/room/reinterp_deltas.json — they move together or the visor
-     *  detaches from its own prop. */
-    pos: { x: 5.365, y: 0.872, z: 0.30 },
+     *  ⚑ Keep this in step with `e_headset` and `e_glasses` in
+     *  data/room/reinterp_deltas.json — they move together or the visor
+     *  detaches from its own prop, which is precisely what happened when the
+     *  box assembly was replaced by the model and this was left where it was. */
+    /** ⚑ 2026-09-01: y 0.872 → 0.800, x 5.365 → 5.352, when the five-box headset
+     *  became J-Toastie's real model. Measured: the model spans y 0.75–0.845 with
+     *  its face at x 5.358, so the old plane sat ABOVE the thing it belongs to and
+     *  floated in front of it — exactly the detachment this comment warns about,
+     *  arriving the moment the prop changed. Measured against the live mesh AABB,
+     *  not re-derived from the box that is gone. */
+    pos: { x: 5.352, y: 0.800, z: 0.30 },
     size: { w: 0.088, h: 0.066 },
     euler: { x: 90, y: 270, z: 0 }
   },

@@ -129,6 +129,9 @@ that owe credit, and CC0 owes none.
 | Phone | **Quaternius** | https://poly.pizza/m/k2kgBepoMU | **CC0** | Era 3's phone — the device that is hers |
 | Computer Screen | **Kenney** | https://poly.pizza/m/V5Qo141OcB | **CC0** | Era 3's desktop monitor |
 | Computer Keyboard | **Kenney** | https://poly.pizza/m/vsqTUPFSw6 | **CC0** | Era 3's desktop keyboard |
+| vr_headset | vrHeadset.glb | Poly Pizza — "VR Headset" by J-Toastie (https://poly.pizza/m/raCB2tOkk3) | CC-BY 3.0 | **YES** — credited in the colophon | converted OBJ→GLB with obj2gltf; geometry only, recolored flat in code |
+| vr_controller | vrController.glb | Poly Pizza — "VR Controller" by J-Toastie (https://poly.pizza/m/z76Vm9mH2f) | CC-BY 3.0 | **YES** — credited in the colophon | as above |
+| laptop | laptop.glb | Poly Pizza — "Laptop" by J-Toastie (https://poly.pizza/m/UGOWjMUC5U) | CC-BY 3.0 | **YES** — credited in the colophon | as above |
 
 ⚑ **No rows in `docs/reinterp/ATTRIBUTIONS.md` — deliberately.** That file is specifically the CC-BY
 assets that owe on-record credit; CC0 owes none, and padding a legal-obligations table with
