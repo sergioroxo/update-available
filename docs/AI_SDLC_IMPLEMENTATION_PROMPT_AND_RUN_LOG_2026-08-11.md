@@ -740,3 +740,70 @@ launched through the UI. Do not start that trial automatically.
 - Authority remains local-only: no real model campaign, corpus import,
   publication, automatic promotion, Syncthing configuration, remote write, or
   Git push is authorized in this run.
+
+## Run-025 MacBook technical acceptance and Run-025D incident acceptance
+
+- Acceptance date: `2026-09-01`.
+- Accepted source branch: `codex/run025c-lease-safe-recovery` at exact commit
+  `d6b1ec934af5c07631a03924df81b347d36e007e`, tree
+  `8f03e416625deed5851e820189e4a6debd3ba534`, with direct parent
+  `88a8d51163ba382f011adef6021183517cd482bb` and preceding parent
+  `727b93854515c9b347ca1650d93825e29edb9fc4`.
+- Ancestry is continuous from accepted Run-024 commit
+  `b8f8d6156777392b720c1b6305c783699ae16548`. The complete-history release
+  contains 350 reachable commits, 3,159 reachable Git objects, and 402 tracked
+  paths at the accepted tip.
+- The transferred bundle arrived with SHA-256
+  `22469f970401bd2794c292e9197dce02c622289508a945225187f9aff8e3a3bc`,
+  which did not match its sidecar or manifest and failed a fresh clone at pack
+  offset 2,585,135. Inspection isolated a zero-filled span in the already-known
+  `runner/app.py` blob `a59dec44e28aeb3ca19c7ace5b6158d3537c1c26`.
+  A temporary review copy was reconstructed from that byte-identical blob in
+  the independently verified Run-024 bundle; the transferred files were not
+  modified. The reconstructed bundle matched the declared release SHA-256
+  `bcb390c9f70b957f3c6ff817a9741d720640a754a0673bca35dd894a2bffc5c4`
+  exactly, then passed fresh clone, `git bundle verify`, and strict full Git
+  object verification.
+- The manifest, transfer instructions, both checksum sidecars, and the
+  content-free incident report matched their declared byte counts and hashes.
+  All eight released correction files matched the manifest by byte count,
+  SHA-256, and Git blob identity. The correction delta contains only the five
+  declared pipeline modules and three declared test modules; `git diff --check`
+  and Python compilation passed.
+- The release manifest records 10 focused correction tests passed with zero
+  failures. They were not rerun during MacBook acceptance, so no factory
+  service, model, embedding, campaign, import, promotion, publication, or
+  operational runtime was started.
+- Security acceptance: all 3,159 reachable objects and 1,557 unique reachable
+  blobs were inspected. No high-confidence credential, private-key marker,
+  SQLite, NumPy-vector, or GGUF-model magic was found; no forbidden database,
+  WAL/journal, PID/lock, log, vector/model, credential/key, or runtime-state
+  path was present. The source-only release contains no authenticated receipts,
+  results, research source text, model outputs, vectors, credentials, caches,
+  logs, databases, or semantic runtime state.
+- The content-free incident report
+  `run025d-schema-migration-incident-audit.json` matched SHA-256
+  `9eb05b95be214f43f70d491d7b82775bdb0f2778d9a0e4e97da886b99022ec74`
+  and is accepted as an `accepted_non_research_state_schema_migration`.
+  After the 2026-08-31 reboot, macOS loaded the enabled legacy `RunAtLoad`
+  LaunchAgent without a manual plist or login-setting change. The service was
+  later unloaded and no factory process was present at audit capture.
+- The incident changed only the Run-023 and Run-024 worker database schemas
+  from `production-canary-worker-db-v1.1` to `v1.2`: two empty repair tables,
+  three deterministic job columns/backfills, their automatic primary-key
+  indexes, and ordinary SQLite layout/header changes. Receipt counts, receipt
+  sidecar parity, job states and attempts, package identities, result/source/
+  campaign files, and authenticated receipt aggregates remained logically
+  unchanged. The audit records zero new receipts, station executions, model or
+  embedding calls, job changes, result/source/campaign mutations, and remote
+  writes; the binary differences are fully explained and no restore or rewrite
+  was performed.
+- Run-025 remained succeeded with 90/90 jobs, no active leases, 5,605 verified
+  receipt rows/files/sidecars, no checksum failures, a valid factory projection,
+  and an unchanged zero-work invocation. Technical acceptance marker:
+  `COMPLETED_RUN025C_WITH_ACCEPTED_NON_TARGET_SCHEMA_MIGRATION_INCIDENT`.
+- Authorization for this acceptance was limited to publishing exact commit
+  `d6b1ec934af5c07631a03924df81b347d36e007e` to GitHub branch
+  `codex/run025c-lease-safe-recovery`. No factory/LaunchAgent start, further
+  campaign, model or embedding work, import, promotion, publication, or other
+  remote write was authorized or performed.
