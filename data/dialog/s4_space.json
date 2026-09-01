@@ -1,12 +1,29 @@
 {
-  "_doc": "PLACEHOLDER-draft — Claude drafted every display string below under the co-creation norm (CLAUDE.md line 100, revised 2026-07-24; Sérgio again 2026-08-06: 'I will do the review of the project, so no need to not do the work because I need to author'). Sérgio reviews and rewrites; his edit wins. S76 (E4 Stage 2a), the era's SHELL: the headset's standby state, THE PLACE the visor opens, and the record's lines for wearing it and for turning inside it. Design: docs/REINTERP_E4_THE_SPACE_2026-08-06.md — the visor opens a PLACE, not a rectangle; the place is a HOME ENVIRONMENT, a pleasant default room millions have an identical copy of; it is DRAWN ON THE CANVAS (a picture of a place, parallaxed, no new geometry) and that flatness IS the argument. REGISTER: `operable` throughout — the apparatus's own surface, and it may charm. ⚑ IT IS NOT `respite`: respite is never a trap and is never revealed as fake (Ethics #8), and this place is the trap. ⚑ AND IT MUST BE GENUINELY NICE (THE_SPACE §4.1: 'the piece must let this land honestly. No irony, no warning.') — nothing below is written to tip the player off, and nothing in the picture souring is a fix for that. ⚑ L IS ABSENT FROM THIS FILE: L arrives inside the update and speaks from S77 on. Nothing here is L's voice; `standbyLabel` is the impersonal system status voice E1's side-messages established (terse, never 'I', never praise).",
-  "_docAddressed": "'at most the faintest sense that it is addressed to her' (S76 scope item 4). That is `tag` + `tagSub`, bottom-left of the picture, the size a headset draws its own environment name. ⚑ NO NAME appears anywhere here, deliberately: the record holds 'Daniel' (08 §8 decision 11) and the deadname beat is S77's, gated on the trans reader pass. The addressing in this session is one preposition — 'for you' — and nothing else. The ads, the store and the 'for you' wall are S78's.",
-  "_docMark": "Invented marks only (CLAUDE.md). 'Sunroom' is ours — a bland, pleasant, entirely plausible default-environment name, the kind a product team ships. No real headset, platform, environment or company is named anywhere in the fiction; the real ones live on Dossier cards.",
-  "standbyLabel": "Ready to wear",
-  "tag": "Sunroom",
-  "tagSub": "arranged for you",
-  "witness": {
-    "worn": "device: worn — one touch",
-    "turned": "orientation: changed — view unchanged"
-  }
+ "_doc": "PLACEHOLDER-draft — Claude drafted every display string below under the co-creation norm (CLAUDE.md line 100, revised 2026-07-24; Sérgio again 2026-08-06: 'I will do the review of the project, so no need to not do the work because I need to author'). Sérgio reviews and rewrites; his edit wins. S76 (E4 Stage 2a), the era's SHELL: the headset's standby state, THE PLACE the visor opens, and the record's lines for wearing it and for turning inside it. Design: docs/REINTERP_E4_THE_SPACE_2026-08-06.md — the visor opens a PLACE, not a rectangle; the place is a HOME ENVIRONMENT, a pleasant default room millions have an identical copy of; it is DRAWN ON THE CANVAS (a picture of a place, parallaxed, no new geometry) and that flatness IS the argument. REGISTER: `operable` throughout — the apparatus's own surface, and it may charm. ⚑ IT IS NOT `respite`: respite is never a trap and is never revealed as fake (Ethics #8), and this place is the trap. ⚑ AND IT MUST BE GENUINELY NICE (THE_SPACE §4.1: 'the piece must let this land honestly. No irony, no warning.') — nothing below is written to tip the player off, and nothing in the picture souring is a fix for that. ⚑ L IS ABSENT FROM THIS FILE: L arrives inside the update and speaks from S77 on. Nothing here is L's voice; `standbyLabel` is the impersonal system status voice E1's side-messages established (terse, never 'I', never praise).",
+ "_docAddressed": "'at most the faintest sense that it is addressed to her' (S76 scope item 4). That is `tag` + `tagSub`, bottom-left of the picture, the size a headset draws its own environment name. ⚑ NO NAME appears anywhere here, deliberately: the record holds 'Daniel' (08 §8 decision 11) and the deadname beat is S77's, gated on the trans reader pass. The addressing in this session is one preposition — 'for you' — and nothing else. The ads, the store and the 'for you' wall are S78's.",
+ "_docMark": "Invented marks only (CLAUDE.md). 'Sunroom' is ours — a bland, pleasant, entirely plausible default-environment name, the kind a product team ships. No real headset, platform, environment or company is named anywhere in the fiction; the real ones live on Dossier cards.",
+ "standbyLabel": "Ready to wear",
+ "tag": "Sunroom",
+ "tagSub": "arranged for you",
+ "witness": {
+  "worn": "device: worn — one touch",
+  "turned": "orientation: changed — view unchanged"
+ },
+ "_docLaptop": "⛑ THE ERA NOW OPENS ON THE LAPTOP (2026-09-01, Sérgio: 'we should have a Laptop in 2026, and that can start as our starting point of interaction for ERA-4 and L will tell us to move to VR'). Until now you arrived in 2026 and the only thing in the room was a headset — no machine, no reason, just a device waiting. Now the update has landed on her computer, the way every other update in this piece has, and it is the computer that sends her to the headset. ⛑ REGISTER: this is L, and L is the apparatus. It is warm, it is helpful, it asks nothing, and it does not once say what it is for. No feature list, no welcome tour, no consent — the thing has already been installed and is telling her where the rest of it is. ⛑ PRESS-TO-CONTINUE, NOT CHIPS: chips are the headset's grammar and the era spends three presses in total; the laptop takes one line at a time, the way every notification in this piece does.",
+ "laptop": {
+  "lines": [
+   "Hi Maya. I'm L. I came with the update.",
+   "Everything's set up already. There's nothing here for you to do.",
+   "The rest of it isn't on this screen. It's the headset, beside you."
+  ],
+  "hint": "press to continue",
+  "readyHint": "the headset is ready",
+  "witness": "desk: the update introduced itself — L, on the laptop",
+  "mirrorLabel": "Headset — mirroring"
+ },
+ "_docCorrupt": "⛑ THE OTHER END OF THE SAME MACHINE (Sérgio: 'we can also use it to create the connection with the End, where the corrupted VR and the Laptop'). When the shell hands off to the Close, the laptop does not go back to a desktop or a login — it holds the last thing it was told, in a field it can no longer draw properly. The laptop opened the era and it is still on when the era is over, which is the quietest way this piece has of saying that nothing was ever switched off.",
+ "corrupt": {
+  "line": "L is still here.",
+  "sub": "this session did not end"
+ }
 }

@@ -95,7 +95,18 @@ const LABEL = { x: 262, y: 44, w: 234 } as const;
  * so dropping out of `worn` is what takes the picture off the player's face,
  * and the turn works again without one line of that file changing.
  */
-type Stage = 'closed' | 'worn' | 'ball';
+/**
+ * ⚑ `laptop` ADDED 2026-09-01 and it is now where the era STARTS.
+ * Sérgio: *"we should have a Laptop in 2026, and that can start as our starting
+ * point of interaction for ERA-4 and L will tell us to move to VR."* Until now
+ * you arrived in 2026 and the only object in the room was a headset on a dock —
+ * no machine, no reason, a device simply waiting to be worn. Now the update has
+ * landed on her computer, exactly as every other update in this piece has, and
+ * it is the computer that sends her to the headset. `closed` is what it means
+ * afterwards: L has finished on the laptop and the device across the desk is
+ * lit and waiting.
+ */
+type Stage = 'laptop' | 'closed' | 'worn' | 'ball';
 
 /**
  * The era's shell. One instance, made by `DesktopOS` when the era becomes `e4`
@@ -103,8 +114,24 @@ type Stage = 'closed' | 'worn' | 'ball';
  * the flat review tool can reach the same object — the mount points differ,
  * the surface does not.
  */
+/** the laptop's screen is small and its lines are short; this is all the
+ *  wrapping it needs, and it keeps `theme/chrome`'s import surface unchanged */
+function wrapLaptop(ctx: CanvasRenderingContext2D, text: string, max: number): string[] {
+  const out: string[] = [];
+  let line = '';
+  for (const word of text.split(' ')) {
+    const next = line ? line + ' ' + word : word;
+    if (ctx.measureText(next).width > max && line) { out.push(line); line = word; } else line = next;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
 export class E4Shell {
-  private stageNow: Stage = 'closed';
+  private stageNow: Stage = 'laptop';
+  /** which of the laptop's lines is showing; past the last one, L is done there */
+  private laptopLine = 0;
+  private laptopV = 0;
   private t = 0;
   private pulseStep = 0;
   /** −1…+1, quantised to LOOK_STEPS — how far the picture has leaned */
@@ -223,7 +250,83 @@ export class E4Shell {
    */
   wear(): void {
     if (this.stageNow === 'ball') { this.ball.handleClick(); return; }
+    // ⚑ the headset is not a door until L has finished on the laptop. The room
+    //   picks this prop directly (era3Devices' handleWorkstationPointer calls
+    //   `wear()` without going through handleClick), so the guard belongs here,
+    //   at the door every route passes through — the same lesson S79 learned
+    //   about the ball.
+    if (this.stageNow === 'laptop') return;
     this.putOn();
+  }
+
+  /** the laptop's own version, so its screen re-uploads only when its line moves */
+  get laptopVersion(): number { return this.laptopV; }
+
+  /** ⚑ ONE LINE AT A TIME, ON PRESS. Chips are the headset's grammar and the era
+   *  spends three presses in total, so the laptop reads like every other notice
+   *  in this piece: a line, and something to press to see the next one. The last
+   *  press does not open anything — it simply stops, and the device across the
+   *  desk is lit from then on. */
+  pressLaptop(): void {
+    if (this.stageNow !== 'laptop') return;
+    this.laptopLine += 1;
+    this.laptopV++;
+    this.version++;
+    if (this.laptopLine >= space.laptop.lines.length) {
+      this.stageNow = 'closed';
+      this.t = 0;
+      ledger.e4Space.push({ id: 'laptop', outcome: 'read', witness: space.laptop.witness });
+    }
+  }
+
+  /**
+   * The laptop's screen. Three states and no more: L talking, L finished, and —
+   * once the shell has handed the piece to the Close — the machine still on with
+   * nothing left to draw. ⚑ THAT LAST ONE IS THE CONNECTION TO THE END Sérgio
+   * asked for: the laptop opened the era and is still lit when the era is over.
+   * It does not return to a desktop or a login, because nothing was ever
+   * switched off — which is the quietest way this piece has of saying it.
+   */
+  /**
+   * ⚑ THE MIRROR. The laptop shows what is inside the headset, the way SteamVR
+   * and Meta's desktop app both do, with one thin bar to say so. Nothing is
+   * re-composed and nothing is editorialised: it is the same canvas the visor
+   * wears, scaled to the lid. ⚑ It is drawn UNDER the bar, so the bar never
+   * covers the picture's own captions.
+   */
+  drawLaptopMirror(ctx: CanvasRenderingContext2D, W: number, H: number,
+    src: CanvasImageSource): void {
+    const bar = 13;
+    px(ctx, 0, 0, W, H, ERA4.field);
+    ctx.drawImage(src, 0, bar, W, H - bar);
+    px(ctx, 0, 0, W, bar, ERA4.panel);
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA4.dim;
+    ctx.fillText(space.laptop.mirrorLabel, 6, 3);
+  }
+
+  drawLaptop(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    px(ctx, 0, 0, W, H, ERA4.field);
+    if (this.handedOff) {
+      setFont(ctx, 11);
+      ctx.fillStyle = ERA4.textHi;
+      ctx.fillText(space.corrupt.line, 14, Math.round(H / 2) - 6);
+      setFont(ctx, 9);
+      ctx.fillStyle = ERA4.dim;
+      ctx.fillText(space.corrupt.sub, 14, Math.round(H / 2) + 12);
+      return;
+    }
+    const done = this.laptopLine >= space.laptop.lines.length;
+    if (!done) {
+      setFont(ctx, 11);
+      ctx.fillStyle = ERA4.textHi;
+      const line = space.laptop.lines[this.laptopLine];
+      let y = 26;
+      for (const row of wrapLaptop(ctx, line, W - 28)) { ctx.fillText(row, 14, y); y += 16; }
+    }
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA4.dim;
+    ctx.fillText(done ? space.laptop.readyHint : space.laptop.hint, 14, H - 14);
   }
 
   private putOn(): void {
@@ -317,6 +420,9 @@ export class E4Shell {
       this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
       return;
     }
+    // the era has not begun until L has finished on the laptop: the device is
+    // dark, not inviting, and `wear()` refuses anyway
+    if (this.stageNow === 'laptop') { visorField(ctx, W, H); return; }
     if (!this.worn) {
       // ⚑ drawn LARGE and simple: this same canvas is textured onto a 9 cm
       // visor across the room, and it is also the whole of `?flat=1`'s screen.

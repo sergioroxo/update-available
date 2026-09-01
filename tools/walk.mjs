@@ -385,13 +385,32 @@ async function main() {
       }
     }
 
-    // the phone as an OBJECT — it is picked up, not squinted at (S79)
-    const phoneEnt = root.findByName('era3-device-phone');
-    if (phoneEnt && phoneEnt.enabled) {
-      const c = phoneEnt.getPosition();
+    /**
+     * ⚑ A SCREEN THAT PUBLISHES NOTHING IS ITSELF THE BUTTON, and the walker had
+     * no way to press one. Era 4 now opens on Maya's laptop: a screen plane in
+     * the room, drawn by the shell, with no hit rects of its own — you press the
+     * machine, not a control on it. The same is true of the phone (picked up,
+     * not squinted at) and of the visor. The OS canvas has the sweep for this
+     * case; a plane in the room had nothing, so the walk stalled in front of a
+     * laptop it could see and could not touch.
+     *
+     * So: any live screen plane that contributed no rects this frame is offered
+     * as a press at its own centre. Discovered from the scene graph rather than
+     * listed, for the same reason the rect search is.
+     */
+    const surfaced = new Set(targets.map((t) => t.surface));
+    root.forEach((e) => {
+      const n = e.name || '';
+      if (!/^era3-device-|^era4-visor$/.test(n)) return;
+      let p2 = e; let on = true;
+      while (p2) { if (!p2.enabled) { on = false; break; } p2 = p2.parent; }
+      if (!on) return;
+      const key = n.replace('era3-device-', '');
+      if (surfaced.has(key) || surfaced.has('workstation:' + key)) return;
+      const c = e.getPosition();
       const pt = toPage(c.x, c.y, c.z);
-      if (pt) targets.push({ id: '(pick up the phone)', surface: 'prop', logical: null, pt });
-    }
+      if (pt) targets.push({ id: '(press) ' + key, surface: 'plane', logical: null, pt });
+    });
 
     // floor markers — the only non-scripted way to change seats
     const moves = [];
@@ -569,6 +588,7 @@ async function main() {
   const pick = (targets, sig, seen, dismissFirst) => {
     const live = targets.filter((t) =>
       t.surface !== 'prop' && !FORBIDDEN.test(t.id) && !capped(sig, t));
+    // a bare plane is a last-resort press: prefer any real control that exists
     if (!live.length) return null;
     /**
      * ⚑ IF SOMETHING IS IN THE WAY, CLOSE IT — the one move a person makes
@@ -617,8 +637,10 @@ async function main() {
      * window in the middle of being talked to. So while any sub-app surface is
      * offering controls, the desktop's own icons are not candidates.
      */
-    const inApp = live.some((t) => t.surface !== 'os');
-    const scoped = inApp ? live.filter((t) => t.surface !== 'os') : live;
+    const withRects = live.filter((t) => t.surface !== 'plane');
+    const pool = withRects.length ? withRects : live;
+    const inApp = pool.some((t) => t.surface !== 'os');
+    const scoped = inApp ? pool.filter((t) => t.surface !== 'os') : pool;
     const tier = (t) => {
       if (LAST_RESORT.test(t.id)) return 90;
       const i = PREFER.findIndex((rx) => rx.test(t.id));

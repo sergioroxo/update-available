@@ -1527,7 +1527,16 @@ export class DesktopOS {
     // restart) is the frame's business, not the era's.
     if (this.desktopEra === 'e4' && this.e4) {
       this.e4.draw(this.ctx, W, H);
-      if (!this.e4.worn) this.hits.push({ x: 0, y: 0, w: W, h: H, id: 'e4-touch' });
+      // ⚑ NOT WHILE L IS STILL ON THE LAPTOP (2026-09-01). This full-screen rect
+      //   IS the one touch — the OS canvas is textured onto the visor in E4, so
+      //   pressing it is pressing the headset. Era 4 now opens on the laptop and
+      //   `E4Shell.wear()` refuses until that is done, which left this rect
+      //   registered and dead: a control the piece advertises as live and then
+      //   ignores. `tools/walk.mjs` found it by pressing it and watching nothing
+      //   move, which is the entire reason that check exists.
+      if (!this.e4.worn && this.e4.stage !== 'laptop') {
+        this.hits.push({ x: 0, y: 0, w: W, h: H, id: 'e4-touch' });
+      }
       if (this.updateApp?.open) this.updateApp.draw(this.ctx);
       return;
     }

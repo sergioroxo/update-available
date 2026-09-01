@@ -83,7 +83,10 @@ const LOGICAL = {
    *  `DesktopOS.canvas`, the piece's one UI surface, at that canvas's own
    *  logical size. Same canvas, same FILTER_NEAREST, same `?flat=1`: only the
    *  mount point changed, from a monitor to a thing on your face. */
-  visor: { w: ERA1_CANVAS.width, h: ERA1_CANVAS.height, scale: 1 }
+  visor: { w: ERA1_CANVAS.width, h: ERA1_CANVAS.height, scale: 1 },
+  /** ⚑ the laptop (2026-09-01): a small screen carrying two short lines and a
+   *  hint, so it needs pixels for text and nothing else. */
+  laptop: { w: 224, h: 140, scale: 3 }
 } as const;
 
 /** Room 2 (Vera, west) world placements — Session 37 FABLE/SÉRGIO CHECK:
@@ -208,9 +211,48 @@ const PLACEMENT = {
      *  floated in front of it — exactly the detachment this comment warns about,
      *  arriving the moment the prop changed. Measured against the live mesh AABB,
      *  not re-derived from the box that is gone. */
-    pos: { x: 5.352, y: 0.800, z: 0.30 },
-    size: { w: 0.088, h: 0.066 },
+    /** ⚑ 2026-09-01 again, with the headset moved left and enlarged (Sérgio).
+     *  Measured: `e_headset` now spans x 5.303–5.537, y 0.75–0.885, z 0.015–0.305,
+     *  so its face is at x 5.413 centred (0.818, 0.25) — ~24° off the seat bearing,
+     *  inside the ~28.6° horizontal half-FOV. ⚑ The first move put it at z 0.16 and
+     *  this plane projected to (−44, 762): off-screen left, i.e. the exact fault
+     *  S76 measured and fixed, reintroduced by moving the prop without re-measuring
+     *  from the seat. Bigger with it — this is
+     *  no longer a legible screen you read across the room, it is the LIT GLASS of
+     *  a device saying it is ready, and the reading surface moved to the laptop. */
+    pos: { x: 5.405, y: 0.818, z: 0.25 },
+    size: { w: 0.15, h: 0.075 },
     euler: { x: 90, y: 270, z: 0 }
+  },
+  /**
+   * ⚑ THE LAPTOP (2026-09-01) — Era 4's opening surface, and the one that sends
+   * her to the headset. Measured off the placed model's live AABB, not guessed:
+   * at yaw 180 `e_laptop` spans x 5.117–5.363, y 0.75–0.979, z 0.44–0.78 — 0.246
+   * deep on x by 0.34 wide on z — with its lid at the +x end leaning back, so the
+   * screen faces −x, toward the seat. The lid runs from about (5.30, 0.80) to
+   * (5.363, 0.975): a 70° lean, normal (−0.94, +0.34), and this plane sits proud
+   * of it along that normal.
+   * ⚑ y 270, NOT 90. `makeScreenEntity`'s plane is single-sided with its normal
+   * on +Y, so a yaw of 90 pointed the screen at the wall and the seat saw its
+   * back — invisible, while still perfectly hittable, which is exactly how it
+   * read: presses advancing a beat nobody could see. The visor next to it uses
+   * 270 for the same reason; the workstation uses 90 because it faces the other
+   * way across the room.
+   * ⚑ Keep in step with `e_laptop` in data/room/reinterp_deltas.json — the visor
+   * detached from its own prop the moment that prop changed and this one will do
+   * exactly the same.
+   * ⚑ The lid runs from about (5.33, 0.79) to (5.41, 0.979) — a 23° lean off
+   * vertical, so 67° from horizontal, not the 74 first tried — and the plane has
+   * to sit PROUD of that surface or it renders inside the lid. It was hittable
+   * there (the presses landed and the beat advanced) and completely invisible,
+   * which is the same class of fault as a control nothing can see, only inverted.
+   * ⚑ Proud along the lid's own normal (−0.92, +0.39), by enough to clear it:
+   * flush was not enough and z-fighting hid it inside the mesh both times.
+   */
+  laptop: {
+    pos: { x: 5.319, y: 0.892, z: 0.61 },
+    size: { w: 0.28, h: 0.175 },
+    euler: { x: 70, y: 270, z: 0 }
   },
   phone: {
     // y verified in-browser (Session 37): the nightstand's REAL model AABB
@@ -520,6 +562,15 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
      *  context, because the piece has ONE UI surface and this is a second
      *  mount of it, not a second copy. */
     external?: boolean;
+    /** ⚑ HOW THIS SCREEN REDRAWS ITSELF, and it exists because the redraw loop
+     *  used to hardcode `if (workstation) … else drawPhone(…)`. `add()` has
+     *  always taken a draw callback and the loop has always ignored it, so every
+     *  screen that was not the workstation got the PHONE's picture. That was
+     *  invisible while there were only two of them; the moment Era 4's laptop
+     *  arrived it rendered a phone lock screen on a laptop lid, hittable and
+     *  correct in every other respect. The callback the caller passed is now the
+     *  one that runs. */
+    draw?: (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
     /** if present, checked each tick; the screen redraws+re-uploads ONLY
      *  when this value has changed since the last tick (dirty discipline —
      *  never a bare per-frame redraw). Screens without one (the phone) draw
@@ -567,7 +618,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     entity.enabled = false; // setEra() decides visibility
     app.root.addChild(entity);
     screens.push({
-      name, canvas, ctx, tex, entity, dirty: true, logical: { w: logical.w, h: logical.h },
+      name, canvas, ctx, tex, entity, dirty: true, draw, logical: { w: logical.w, h: logical.h },
       versionOf: opts.versionOf, lastVersion: opts.versionOf ? opts.versionOf() : undefined,
       restPos: new pc.Vec3(place.pos.x, place.pos.y, place.pos.z),
       restEuler: new pc.Vec3(place.euler.x, place.euler.y, place.euler.z),
@@ -656,6 +707,43 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   // dirty-upload law is unchanged, only widened: `phoneVersion` moves on a real
   // change (the message arriving, the message opening, the caret) and the
   // caret's blink therefore never re-uploads the workstation or the tablet.
+  // ⚑ Era 4 opens here now. Drawn by the shell (same arrangement the visor uses:
+  //   the room owns WHERE it appears, `space.ts` owns what is on it), and it
+  //   re-uploads only when its own line moves.
+  // ⚑ `+ 1` ONCE THE SHELL EXISTS, and without it this screen is blank forever.
+  //   `add()` draws once at build time, when Era 4's shell does not exist yet, so
+  //   the first paint is empty; the redraw only happens when `versionOf` MOVES,
+  //   and `laptopVersion` sits at 0 until the first press. The canvas therefore
+  //   stayed white through the whole beat it is supposed to be carrying — visible,
+  //   hittable, and empty. Stepping the version when the shell arrives is what
+  //   makes the era's opening line actually appear on the machine.
+  /**
+   * ⚑ THE LAPTOP IS THE HEADSET'S MIRROR once the device is on — Sérgio's own
+   * idea, and it is the right one: *"we can simulate the PCVR setup, so in a way
+   * the screen of the laptop can be replicating the image we seen inside of the
+   * headset. Like if it was the Meta Desktop functionality or the SteamVR."*
+   *
+   * That is exactly what those runtimes do, and it does three things at once for
+   * this piece. It gives the laptop a reason to still be on. It means the room
+   * can SEE what is being shown to her, from outside her head, which is the
+   * era's whole argument about being watched while being cared for. And it is the
+   * connection to the End Sérgio asked for: when the shell hands off, the mirror
+   * is what is left running on the desk.
+   *
+   * The image is the shell's own canvas, drawn straight in — the same surface the
+   * visor is textured with, which is what makes it a mirror rather than a second
+   * screen with its own opinions.
+   */
+  add('laptop', LOGICAL.laptop, (ctx, w, h) => {
+    const sh = e4Bridge()?.shell();
+    const src = e4Bridge()?.canvas();
+    if (sh?.worn && src) { sh.drawLaptopMirror(ctx, w, h, src); return; }
+    sh?.drawLaptop(ctx, w, h);
+  },
+    { versionOf: () => {
+      const sh = e4Bridge()?.shell();
+      return sh ? 1 + sh.laptopVersion + (sh.worn ? sh.version : 0) : 0;
+    } });
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
 
   let arrived = false;
@@ -836,8 +924,8 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
           s.lastVersion = s.versionOf();
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
-          if (s.name === 'workstation') drawWorkstation(s.ctx, s.logical.w, s.logical.h);
-          else graceQueueLite.drawPhone(s.ctx, s.logical.w, s.logical.h);
+          // the callback this screen was registered with — see `draw` on Screen
+          if (s.draw) s.draw(s.ctx, s.logical.w, s.logical.h);
           s.dirty = true;
         }
         if (s.dirty) { s.tex.upload(); s.dirty = false; }
@@ -853,7 +941,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // era transition before the last one gains a single draw call from it.
       if (era === 'e4') ensureVisor();
       for (const s of screens) {
-        s.entity.enabled = s.name === 'visor' ? era === 'e4' : visible;
+        s.entity.enabled = (s.name === 'visor' || s.name === 'laptop') ? era === 'e4' : visible;
       }
       // S61: a settled review jump lands on sign-in; a real transition leaves
       // the workstation dark until endRelocation() calls beginArrival(). E4 also
@@ -897,7 +985,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       }
     },
     handleWorkstationPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
-      const test = (name: 'workstation' | 'phone'): { x: number; y: number } | null => {
+      const test = (name: 'workstation' | 'phone' | 'laptop'): { x: number; y: number } | null => {
         const s = screens.find(sc => sc.name === name);
         if (!s || !s.entity.enabled) return null;
         const place = PLACEMENT[name];
@@ -911,6 +999,19 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // button. There is no second confirmation and no donning animation: it is
       // touched and it is on.
       const shell = e4Bridge()?.shell();
+      // ⚑ AND BEFORE ANY OF THAT, THE LAPTOP. Era 4 now opens on her own machine
+      //   and is SENT from it to the headset, so while L is still talking there
+      //   the laptop is the only live thing in the room — `wear()` refuses on its
+      //   own, but the press has to reach the laptop or nothing moves at all.
+      //   Same two ways in as the headset: the screen plane, or a sphere around
+      //   the machine, because what you are pressing is a laptop and not a button.
+      if (shell && shell.stage === 'laptop') {
+        const lap = screens.find(sc => sc.name === 'laptop');
+        if (lap?.entity.enabled) {
+          const onLaptop = test('laptop');
+          if (onLaptop || rayNear(ray, PLACEMENT.laptop.pos, 0.22)) { shell.pressLaptop(); return true; }
+        }
+      }
       if (visor?.entity.enabled && shell && !shell.worn) {
         const onVisor = hitPlane(
           visor.entity, PLACEMENT.visor.size.w, PLACEMENT.visor.size.h,

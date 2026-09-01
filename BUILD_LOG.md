@@ -619,3 +619,52 @@ from its rear face: reads as a strap in three-quarter view, never as a crossbar.
 ⚑ **Open, and deliberately not invented:** Maya's desk now has no computer on it at
 all. The headset is her machine, which is coherent — but whether 2026 wants a thin
 panel or a laptop there is a design call, and I have not guessed one.
+
+## S98 (2026-09-01) — Era 4 opens on the laptop, and the laptop mirrors the headset
+
+**The models** (Sérgio supplied three CC-BY meshes by J-Toastie, Poly Pizza). OBJ+MTL,
+converted to GLB with a one-off `obj2gltf` (`--no-save`, not a dependency).
+Attribution first, because CC-BY makes it an obligation: rows in
+`assets/LICENSES.md`, entries in `data/strings/attributions.json`, which the game
+menu's credits already render. Scales measured live at scale 1, never guessed.
+
+**The narrative moved.** Era 4 used to begin with a headset on a dock and nothing
+else — no machine, no reason. It now begins on Maya's own laptop: L introduces
+itself there ("Hi Maya. I'm L. I came with the update."), says there is nothing
+for her to do, and tells her the rest is in the headset beside her. Three presses,
+one line each — chips are the headset's grammar and the era spends three presses
+in total. `E4Shell` gains a `laptop` stage before `closed`; `wear()` refuses until
+L has finished; the record files `laptop:read` before `headset:worn`.
+⚑ u1a is revised from "Hi Maya. I'm L. I came with the update." to "There you are.
+Same me — I just move around with it." Hearing the introduction twice would have
+made the headset a second door instead of the same room.
+
+**⚑ THE LAPTOP MIRRORS THE HEADSET** — Sérgio's idea, and the right one: *"we can
+simulate the PCVR setup… like if it was the Meta Desktop functionality or the
+SteamVR."* Once the device is on, the lid shows the shell's own canvas under one
+thin "Headset — mirroring" bar. It gives the laptop a reason to still be on, it
+lets the ROOM see what is being shown to her from outside her head, and it is the
+connection to the End he asked for: when the shell hands off, the mirror is what
+is left running on the desk.
+
+**Four faults found by looking, not by reading:**
+1. ⚑ **The redraw loop hardcoded `if (workstation) … else drawPhone(…)`.** `add()`
+   has always taken a draw callback and the loop has always ignored it, so every
+   screen that was not the workstation got the PHONE's picture. Invisible while
+   there were two; the moment the laptop arrived it rendered a phone lock screen
+   on a laptop lid — hittable, correct in every other respect, and completely
+   wrong. The callback the caller passed now runs.
+2. The laptop's canvas was blank because `add()` paints once at build, before the
+   Era-4 shell exists, and its version does not move until a press.
+3. `e4-touch` — the full-screen "touch the headset" rect — stayed registered
+   during the laptop beat while `wear()` refused it. A live control that did
+   nothing; `tools/walk.mjs` found it by pressing it and watching nothing move.
+4. ⚑ **"Further left" is bounded by the frame.** Moving the headset to z 0.16 put
+   the visor plane at **(−44, 762)** — off the left edge, reintroducing the exact
+   fault S76 measured and fixed. Horizontal half-FOV is ~28.6°, so how far left
+   the headset can sit depends on how far BACK it is: at x 5.53 it reaches z 0.25
+   at ~24°. Further left than that is a seat problem, not a placement one.
+
+Also: controller scaled 0.16 → 0.10 (too big), headset 0.14 → 0.20 and moved left,
+and the visor plane is no longer a legible screen but the lit glass of a device
+saying it is ready — the reading surface moved to the laptop.

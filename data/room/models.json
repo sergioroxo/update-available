@@ -220,22 +220,22 @@
   {
    "key": "vr_headset",
    "file": "vrHeadset.glb",
-   "scale": 0.14,
+   "scale": 0.2,
    "yaw": 0,
    "cx": -0.152,
    "cz": 0.0,
    "baseY": -0.106,
-   "_scaleDoc": "Native mesh measured 1.448 x 0.677 x 1.170. 0.14 gives 0.203 x 0.095 x 0.164 m — a headset the size of a headset. Measured live, not guessed: sideTable.glb's own _scaleDoc is what happens when a blanket scale is copied between models."
+   "_scaleDoc": "Native mesh measured 1.448 x 0.677 x 1.170. 0.14 gives 0.203 x 0.095 x 0.164 m — a headset the size of a headset. Measured live, not guessed: sideTable.glb's own _scaleDoc is what happens when a blanket scale is copied between models. ⛑ 0.14 -> 0.20 (Sérgio: 'the VR headset should be on our left side and be bigger'). 0.29 x 0.135 x 0.234 — reads as the era's hero object from the seat rather than as another thing on the desk."
   },
   {
    "key": "vr_controller",
    "file": "vrController.glb",
-   "scale": 0.16,
+   "scale": 0.1,
    "yaw": 0,
    "cx": 0.0,
    "cz": -0.042,
    "baseY": -0.031,
-   "_scaleDoc": "Native 0.758 x 1.034 x 0.840 (it stands upright, so y is its long axis). 0.16 gives 0.121 x 0.165 x 0.134 — a controller with its tracking ring."
+   "_scaleDoc": "Native 0.758 x 1.034 x 0.840 (it stands upright, so y is its long axis). 0.16 gives 0.121 x 0.165 x 0.134 — a controller with its tracking ring. ⛑ 0.16 -> 0.10 (Sérgio: 'the VR controller is too big'). 0.076 x 0.103 x 0.084 — it sits beside the headset instead of competing with it."
   },
   {
    "key": "laptop",

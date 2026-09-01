@@ -2897,16 +2897,16 @@
    },
    {
     "id": "e_headset",
-    "_doc": "⛑ THE REAL HEADSET (2026-09-01, Sérgio supplied the model). Replaces the five-box assembly this session spent three passes trying to make read as a headset — a shape problem that a shape solves. ⛑ z 0.30 IS KEPT: S76 measured the box at 33.9 degrees off the seat bearing against a 29.7 degree half-FOV, outside the frame, and 0.30 is that fix. PLACEMENT.visor's screen plane must stay in step with this prop or the visor detaches from itself.",
+    "_doc": "⛑ THE REAL HEADSET (2026-09-01, Sérgio supplied the model). Replaces the five-box assembly this session spent three passes trying to make read as a headset — a shape problem that a shape solves. ⛑ z 0.30 IS KEPT: S76 measured the box at 33.9 degrees off the seat bearing against a 29.7 degree half-FOV, outside the frame, and 0.30 is that fix. PLACEMENT.visor's screen plane must stay in step with this prop or the visor detaches from itself. ⛑ 2026-09-01, LEFT AND BIGGER (Sérgio) — but left is BOUNDED, and the first attempt proved it. At z 0.16 the visor plane projected to (-44, 762) from the seat: off the left edge entirely, undoing the very fix S76 made when it measured the headset at 33.9 degrees off-bearing. Horizontal half-FOV here is ~28.6 degrees, so how far left this can go depends on how far BACK it sits: pushed to x 5.53 it can reach z 0.25 at ~24 degrees and stay in frame. Further left than that is not a placement problem, it is a seat problem.",
     "pos": [
-     5.44,
+     5.53,
      0.75,
-     0.3
+     0.25
     ],
     "size": [
-     0.2,
-     0.1,
-     0.16
+     0.29,
+     0.135,
+     0.234
     ],
     "color": "#3A3A44",
     "model": "vr_headset",
@@ -2916,14 +2916,14 @@
     "id": "e_controller",
     "_doc": "Set down beside the headset. Not interactive — the era spends its presses on the laptop and the visor; this is the other half of the kit lying where she left it. ⛑ z 0.50 -> 0.10: at 0.50 it stood inside the laptop's own footprint, behind its screen.",
     "pos": [
-     5.46,
+     5.5,
      0.75,
-     0.1
+     0.44
     ],
     "size": [
-     0.12,
-     0.17,
-     0.13
+     0.08,
+     0.1,
+     0.09
     ],
     "color": "#3A3A44",
     "model": "vr_controller",
@@ -2931,7 +2931,7 @@
    },
    {
     "id": "e_laptop",
-    "_doc": "⛑ MAYA'S 2026 MACHINE (Sérgio: 'maybe yeah we should have a Laptop in 2026, and that can start as our starting point of interaction for ERA-4 and L will tell us to move to VR'). It sits where the CRT used to, square in front of the seat: the era now OPENS here and is sent from here to the headset. ⛑ yaw 90 -> 270: at 90 the seat saw the lid's OUTSIDE, i.e. the machine was open away from her.",
+    "_doc": "⛑ MAYA'S 2026 MACHINE (Sérgio: 'maybe yeah we should have a Laptop in 2026, and that can start as our starting point of interaction for ERA-4 and L will tell us to move to VR'). It sits where the CRT used to, square in front of the seat: the era now OPENS here and is sent from here to the headset. ⛑ yaw 180, and the two wrong answers before it are worth keeping. The model's DEPTH runs along its own z, so at yaw 90/270 the machine faced sideways down the desk and no amount of flipping 90<->270 could ever point it at the seat — I was rotating in the wrong axis and reading each render as if the choice were front-versus-back. Measured: at yaw 0/180 the AABB is 0.246 deep on x by 0.34 wide on z, which is a laptop facing the seat.",
     "pos": [
      5.24,
      0.75,
@@ -2944,7 +2944,7 @@
     ],
     "color": "#C9BFA6",
     "model": "laptop",
-    "yaw": 270
+    "yaw": 180
    }
   ]
  }

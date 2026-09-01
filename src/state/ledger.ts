@@ -192,7 +192,10 @@ export interface Ledger {
    * `witness` resolved from data/dialog/s4_space.json and s4_update.json at
    * file time, never composed in TS. In-memory only, like everything here.
    */
-  e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned'; witness: string }[];
+  /** ⚑ `read` added 2026-09-01 with the laptop: Era 4 now opens on her own
+   *  machine and is SENT from it to the headset, so the first thing the record
+   *  files in this era is having read what the update said, not having worn it. */
+  e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned' | 'read'; witness: string }[];
   /**
    * ⚑ L, ERA 4's CONVERSATION (Session 77 — `data/dialog/s4_l.json`,
    * `src/desktop/apps/lVoice.ts`). Witness-symmetric in both directions, which
