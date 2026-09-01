@@ -575,3 +575,47 @@ this face and the two move together or the visor detaches from its own prop.
 on a dark desk from the seat. Separating it further needs either a lighter body
 colour or the screen plane lit before it is worn — both design calls, neither
 guessed at here.
+
+## S97 (2026-09-01) — The CRT comes off the desk
+
+⚑ **SÉRGIO OVERRULES S74, and the data backs him.** *"The computer doesn't make the
+most of sense to be here, maybe it could live on the shelf as a remembrance to the
+past, but it doesn't make sense to come from a wide computer to CRT."* Room 2's
+Era-3 machine is a **645 × 372 mm widescreen**, so the piece ran 1997 CRT → 2016
+widescreen → **2026 CRT** — time going backwards on the one surface a player reads
+eras from. And Room 3 is only ever seen in E4 (`wallEast` lifts at r4), so that
+2026 desk had a nineties monitor on it and nothing else to explain why.
+
+S74's ruling — *"not deleted, not moved: the same machine across thirty years,
+finally off, still in the room"* — is **superseded in its placement only**. The
+machine still is exactly that, and r4 still puts its screen out. It is now KEPT
+rather than USED.
+
+**Where it went, and it took three tries because every one was measured after the
+fact rather than before:**
+1. **Top of the bookcase** (measured AABB top y 1.672). Fits, looks natural — and
+   from the seated eye at 1.16 it sits ~31° up, outside a 21° half-FOV. Invisible
+   at rest. A remembrance nobody finds is not one.
+2. **Inside the bookcase.** Its GLB is a single merged mesh, so shelf planes cannot
+   be read from AABBs; inferred from the book rows, the compartments measure ~0.24 m
+   and a 0.42 m monitor straddles them. The render showed a shelf plank passing
+   straight through it.
+3. **Its own plank on the north wall at y 1.12**, clear of the bookcase in x and the
+   desk in z. The machine spans roughly −0.4° to +14° from the seated eye — whole,
+   uncropped, at rest. You turn, and it is there.
+
+**And the desk is cleared.** `e_keyboard` and `e_mouse` removed: they were that
+machine's peripherals, and wired to nothing they were just clutter in front of the
+thing the era is actually about (Sérgio: *"we can[not] really see it with all the
+clutter here"*). What stays is hers and not the apparatus's — the folders, her
+glasses, the headset on its dock, which is now unmistakably the desk's hero.
+
+⚑ **The strap took three shapes too, and the middle one is the lesson.** Behind the
+body: invisible from the seat. Long and outboard: it silhouetted as a horizontal
+spar skewering the visor, because from that bearing the arms' length in x projects
+as pure horizontal spread. Short, tucked inside the visor's z span and running back
+from its rear face: reads as a strap in three-quarter view, never as a crossbar.
+
+⚑ **Open, and deliberately not invented:** Maya's desk now has no computer on it at
+all. The headset is her machine, which is coherent — but whether 2026 wants a thin
+panel or a laptop there is a design call, and I have not guessed one.

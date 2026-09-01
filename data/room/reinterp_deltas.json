@@ -1618,95 +1618,67 @@
     ]
    },
    {
-    "id": "e_crtBody",
+    "id": "e_shelfPlank",
+    "_doc": "⛑ 2026-09-01: the CRT needed a shelf and the bookcase could not give it one. Its GLB is a single merged mesh whose compartments measure ~0.24m between planks — a 0.42m monitor straddles them, which is exactly what the first attempt rendered. Its TOP (y 1.672) does fit, but from the seat's eye at 1.16 that is ~31 degrees up, outside a 21 degree half-FOV: invisible at rest, and a remembrance nobody finds is not one. So: a plain plank on the north wall at 1.12, clear of the bookcase in x and the desk in z, putting the machine ~7 degrees above the eye — you turn, and it is there. ⛑ 1.25 -> 1.12 after looking: at 1.25 the monitor's top clipped the frame edge at rest. At 1.12 the whole machine spans roughly -0.4 to +14 degrees from the seated eye — entirely inside the half-FOV, nothing cropped.",
     "pos": [
-     5.37,
-     1.04,
-     0.61
+     4.85,
+     1.12,
+     -0.81
     ],
     "size": [
-     0.5,
+     0.62,
+     0.04,
+     0.42
+    ],
+    "color": "#8A5A3B",
+    "yaw": 270
+   },
+   {
+    "id": "e_crtBody",
+    "pos": [
+     4.85,
+     1.35,
+     -0.81
+    ],
+    "size": [
+     0.46,
      0.42,
      0.4
     ],
     "color": "#D8CDB4",
-    "yaw": 270
+    "yaw": 180,
+    "_doc": "⛑ OFF THE DESK AND ONTO THE BOOKCASE, 2026-09-01. Sérgio: 'the computer doesnt make the most of sense to be here, maybe it could live on the shelf as a rememberance to the past, but it doesnt make sense to come from a wide computer to CRT.' He is right and the data agrees: Room 2's Era-3 machine is a 645x372mm WIDESCREEN, so the piece ran 1997 CRT -> 2016 widescreen -> 2026 CRT, which is time going backwards on the one surface a player reads eras from. ⛑ Room 3 is only ever seen in E4 (wallEast lifts at r4), so this desk WAS 2026's desk with a nineties monitor on it. ⛑ THIS SUPERSEDES S74's 'not deleted, not moved: the same machine across thirty years, finally off, still in the room' — the machine still is exactly that, and r4 still puts its screen out. It is simply kept rather than used: on top of the bookcase, turned to face the seat, the way people actually store the computer they cannot throw away. Placed against the measured model AABB (top y 1.672, x 4.052-4.527), not guessed. ⛑ ON THE SHELF, NOT ON TOP OF IT — measured, not guessed. The bookcase top is y 1.672, which from the seat's eye at 1.16 sits ~31 degrees up: outside a 21 degree half-FOV, so at rest you could not see it at all and a remembrance you cannot find is not one. The row-1 shelf puts it at eye level (pitch -2.6 degrees from the seat) where turning finds it. Its width is trimmed 0.50 -> 0.46 so it sits inside the case's measured 0.475 interior instead of clipping the side panels; the foot is dropped, because a monitor kept on a shelf is not standing on its tilt stand."
    },
    {
     "id": "e_crtBezel",
     "pos": [
-     5.15,
-     1.04,
-     0.61
+     4.85,
+     1.35,
+     -0.59
     ],
     "size": [
-     0.46,
+     0.42,
      0.38,
      0.03
     ],
     "color": "#2C2C34",
-    "yaw": 270
+    "yaw": 180
    },
    {
     "id": "e_crtScreen",
     "pos": [
-     5.135,
-     1.04,
-     0.61
+     4.85,
+     1.35,
+     -0.575
     ],
     "size": [
-     0.34,
+     0.32,
      0.28,
      0.02
     ],
     "color": "#8FC4E0",
     "emissive": true,
-    "yaw": 270
-   },
-   {
-    "id": "e_crtFoot",
-    "pos": [
-     5.32,
-     0.8,
-     0.61
-    ],
-    "size": [
-     0.3,
-     0.06,
-     0.3
-    ],
-    "color": "#CFC4AA",
-    "yaw": 270
-   },
-   {
-    "id": "e_keyboard",
-    "pos": [
-     5.1,
-     0.755,
-     0.61
-    ],
-    "size": [
-     0.42,
-     0.03,
-     0.14
-    ],
-    "color": "#C9BFA6",
-    "yaw": 270
-   },
-   {
-    "id": "e_mouse",
-    "pos": [
-     5.1,
-     0.755,
-     0.95
-    ],
-    "size": [
-     0.06,
-     0.02,
-     0.09
-    ],
-    "color": "#C9BFA6",
-    "yaw": 270
+    "yaw": 180
    },
    {
     "id": "e_doorPanel",
@@ -2482,81 +2454,6 @@
     "yaw": 270
    },
    {
-    "id": "e_bookRow1_0",
-    "pos": [
-     4.15,
-     0.98,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.165,
-     0.045
-    ],
-    "color": "#C98F8F",
-    "yaw": 270
-   },
-   {
-    "id": "e_bookRow1_1",
-    "pos": [
-     4.195,
-     0.98,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.175,
-     0.04
-    ],
-    "color": "#C9A8A0",
-    "yaw": 270
-   },
-   {
-    "id": "e_bookRow1_2",
-    "pos": [
-     4.24,
-     0.985,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.18,
-     0.042
-    ],
-    "color": "#9FB4C0",
-    "yaw": 270
-   },
-   {
-    "id": "e_bookRow1_3",
-    "pos": [
-     4.285,
-     0.99,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.19,
-     0.048
-    ],
-    "color": "#A8B49A",
-    "yaw": 270
-   },
-   {
-    "id": "e_bookRow1_4",
-    "pos": [
-     4.335,
-     0.985,
-     -0.55
-    ],
-    "size": [
-     0.16,
-     0.185,
-     0.038
-    ],
-    "color": "#D4D0C8",
-    "yaw": 270
-   },
-   {
     "id": "e_tin",
     "_doc": "Session 74: an empty third shelf keeps a pencil tin rather than a third row of books — the point of a bookcase not entirely full of books (this is fog-tier per era1room.ts's classifyProp, the same recede-into-background treatment as homeworkPile).",
     "pos": [
@@ -2895,7 +2792,8 @@
     "color": "#8A5A3B",
     "yaw": 270
    }
-  ]
+  ],
+  "_docDeskCleared": "⛑ e_keyboard and e_mouse REMOVED 2026-09-01 with the CRT's move (Sérgio: 'we can[not] really see it with all the clutter here' — 'it' being the headset, the era's ONE interaction and until now the least legible object on the desk). They were that machine's peripherals; wired to nothing they are just clutter in front of the thing the era is actually about. What stays is hers and not the apparatus's: the folders, her glasses, and the headset on its dock."
  },
  "r4": {
   "props": {
@@ -3017,14 +2915,14 @@
    {
     "id": "e_headsetStrap",
     "pos": [
-     5.5605,
+     5.549,
      0.884,
      0.3
     ],
     "size": [
-     0.026,
-     0.026,
-     0.238
+     0.022,
+     0.022,
+     0.178
     ],
     "color": "#D4D0C8",
     "yaw": 270,
@@ -3033,30 +2931,30 @@
    {
     "id": "e_headsetStrapL",
     "pos": [
-     5.475,
+     5.512,
      0.884,
-     0.194
+     0.224
     ],
     "size": [
-     0.155,
-     0.026,
-     0.026
+     0.075,
+     0.022,
+     0.022
     ],
     "color": "#D4D0C8",
     "yaw": 270,
-    "_doc": "⛑ The sides sit just OUTSIDE the visor's z extent (0.2025-0.3975) and reach forward past its face, because the first pass put the whole loop BEHIND the body where the seat cannot see any of it. From the seat you look at the visor's front-left corner, so the loop has to break the silhouette to do its job."
+    "_doc": "⛑ Third shape, and the two before it are why. Behind the body: invisible from the seat. Long and outboard of the body: it read as a horizontal spar skewering the visor, because from this bearing the arms' length in x projects as pure horizontal spread. Short, tucked inside the visor's z span and running back from its rear face: the loop shows in three-quarter view, where a person actually sees it, and never silhouettes as a crossbar."
    },
    {
     "id": "e_headsetStrapR",
     "pos": [
-     5.475,
+     5.512,
      0.884,
-     0.406
+     0.376
     ],
     "size": [
-     0.155,
-     0.026,
-     0.026
+     0.075,
+     0.022,
+     0.022
     ],
     "color": "#D4D0C8",
     "yaw": 270
