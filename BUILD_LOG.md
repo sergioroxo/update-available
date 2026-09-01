@@ -739,3 +739,46 @@ covers ~95% of the lid, so drawing it at full size bled onto the bezel.
 
 Verified by clicking: after the hand-off `worn: false`, and a real press on the
 laptop's button arms `key: 'close'`.
+
+## S101 (2026-09-01) — The laptop reads as a machine, the headset stops being a screen
+
+**The laptop has chrome now.** One status bar — `GraceOS` on the left, the state on
+the right — carried across all three of its states (L's arrival, the headset
+mirror, the Close), so the lid reads as one machine doing three things rather than
+three unrelated screens. The Close's ask sits on a card.
+
+⚑ **The button's text was cut off because I invented its label.** The close update
+already has its own words in `data/strings/updates.json`: `notify[1]` is "Restart
+as you are." and `updateNow` is "Restart". I had used the whole sentence AS the
+button, which both duplicated the message and ran off the end of it. The card now
+carries the sentence and the button carries the word, and the rect is sized to
+that word rather than to a guess — the same fault `kit.ts` had, in reverse.
+
+⚑ **THE BLACK SCREEN IS OFF THE HEADSET** (Sérgio: *"there is still a black screen
+on top of the VR headset"*). The visor plane is a LIT surface, and a lit surface
+with nothing to say is a black rectangle stuck to a headset's face. It now exists
+only when the device has something to say — worn (it is the picture) or ready (it
+glows). While L is on the laptop, and again once the device has stopped, the
+headset is only the model.
+⚑ And READY IS A GLOW, not a screen: the old standby was a legible waiting card
+rendered onto a face a few centimetres across at a metre away, where text is noise.
+What reads at that size is light. The words moved to the laptop.
+⚑ The gate went into `setEra` first, which was wrong — that runs on era CHANGES,
+so a condition reading the shell's stage never updated and the headset could not
+be pressed at all. It reads where the frames are now.
+
+**Stage 4 · THE GLITCH is inscribed in `docs/REINTERP_E4_BUILD_PLAN_2026-08-05.md`**
+at Sérgio's instruction, spec-first: where it plays (the visor, nowhere else),
+when (inside `handOff()`, before `worn` drops), and the register — **the picture
+fails while the voice does not**. Not L breaking; the Sunroom coming apart while
+the apparatus keeps working, which is E3's cascade argument again. Tone ≤ +1, no
+alarm, and never readable as the player's fault. Two things left open for him:
+duration, and whether L says anything at all during it.
+
+⚑ **A CORRECTION TO MY OWN PROBE.** I first measured Era 4's chain as stopping
+dead after L's tenth unit — "the offers never start". **That was my probe, not the
+piece.** `u10_returns` offers two chips, `correct3` and `handoff`; mine always
+pressed the first, which loops back by design, so I sat in her last beat forever.
+Pressing `handoff`: L reaches `done`, the offers begin and run through `curation`
+into `pause`. Exactly the mistake `tools/walk.mjs` made in Era 1 with `choice:0`,
+made again by hand.

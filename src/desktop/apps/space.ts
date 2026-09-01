@@ -129,6 +129,7 @@ function wrapLaptop(ctx: CanvasRenderingContext2D, text: string, max: number): s
 
 /** the laptop screen's logical size — kept in step with `LOGICAL.laptop` in
  *  era3Devices.ts, which is where the canvas is actually made */
+const LAPTOP_BAR = 13;
 const LAPTOP_W = 224;
 const LAPTOP_H = 140;
 
@@ -267,8 +268,10 @@ export class E4Shell {
   /** where the restart sits on the laptop's canvas; one place, so the draw and
    *  the hit test cannot drift apart the way `kit.ts`'s did */
   private closeButtonRect(W: number, H: number): { x: number; y: number; w: number; h: number } {
-    const w = 104; const h = 20;
-    return { x: Math.round((W - w) / 2), y: H - h - 16, w, h };
+    // ⚑ sized to the LABEL, not to a guess. The first pass hardcoded 104 px for a
+    //   string that did not fit it, and the text ran off the end of its own button.
+    const w = 78; const h = 20;
+    return { x: W - w - 12, y: H - h - 10, w, h };
   }
 
   /** the laptop's own version, so its screen re-uploads only when its line moves */
@@ -317,49 +320,66 @@ export class E4Shell {
    */
   drawLaptopMirror(ctx: CanvasRenderingContext2D, W: number, H: number,
     src: CanvasImageSource): void {
-    const bar = 13;
     px(ctx, 0, 0, W, H, ERA4.field);
-    ctx.drawImage(src, 0, bar, W, H - bar);
-    px(ctx, 0, 0, W, bar, ERA4.panel);
+    ctx.drawImage(src, 0, LAPTOP_BAR, W, H - LAPTOP_BAR);
+    this.laptopBar(ctx, W, space.laptop.mirrorLabel);
+  }
+
+  /** ⚑ ONE BAR, THREE STATES. The lid carries L's arrival, the headset mirror and
+   *  the Close, and without a shared piece of chrome those read as three unrelated
+   *  screens rather than one machine doing three things. A status strip is all a
+   *  224 × 140 surface can afford, and all it needs. */
+  private laptopBar(ctx: CanvasRenderingContext2D, W: number, right: string): void {
+    px(ctx, 0, 0, W, LAPTOP_BAR, ERA4.panel);
+    px(ctx, 0, LAPTOP_BAR, W, 1, ERA4.rule);
     setFont(ctx, 8);
     ctx.fillStyle = ERA4.dim;
-    ctx.fillText(space.laptop.mirrorLabel, 6, 3);
+    ctx.fillText(space.laptop.bar, 6, 3);
+    const rw = ctx.measureText(right).width;
+    ctx.fillText(right, W - rw - 6, 3);
   }
 
   drawLaptop(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     px(ctx, 0, 0, W, H, ERA4.field);
     if (this.handedOff) {
+      this.laptopBar(ctx, W, space.corrupt.sub);
       setFont(ctx, 11);
       ctx.fillStyle = ERA4.textHi;
-      ctx.fillText(space.corrupt.line, 14, 30);
+      ctx.fillText(space.corrupt.line, 12, LAPTOP_BAR + 12);
       setFont(ctx, 9);
       ctx.fillStyle = ERA4.dim;
-      ctx.fillText(space.corrupt.sub, 14, 48);
-      // wrapped, like L's own lines — the note ran off the lid at full width
-      let ny = 68;
-      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 28)) { ctx.fillText(row, 14, ny); ny += 13; }
-      // ⚑ ONE BUTTON, IN THE PIECE'S OWN UPDATE GRAMMAR — a notice on her machine
-      //   with a single thing to press, exactly like the four updates before it.
+      let ny = LAPTOP_BAR + 32;
+      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 24)) { ctx.fillText(row, 12, ny); ny += 12; }
+      // ⚑ THE ASK, IN THE CLOSE UPDATE'S OWN WORDS, on a card — a notice on her
+      //   machine with a single thing to press, exactly like the four before it.
       const r = this.closeButtonRect(W, H);
-      px(ctx, r.x, r.y, r.w, r.h, ERA4.panel);
-      px(ctx, r.x, r.y, r.w, 1, ERA4.rule);
+      px(ctx, 8, r.y - 12, W - 16, r.h + 22, ERA4.panel);
+      px(ctx, 8, r.y - 12, W - 16, 1, ERA4.rule);
       setFont(ctx, 10);
       ctx.fillStyle = ERA4.textHi;
+      ctx.fillText(space.corrupt.ask, 14, r.y - 6);
+      px(ctx, r.x, r.y, r.w, r.h, ERA4.field);
+      px(ctx, r.x, r.y, r.w, 1, ERA4.l);
       const tw = ctx.measureText(space.corrupt.button).width;
       ctx.fillText(space.corrupt.button, r.x + Math.round((r.w - tw) / 2), r.y + 6);
       return;
     }
     const done = this.laptopLine >= space.laptop.lines.length;
+    this.laptopBar(ctx, W, done ? space.laptop.readyHint : '');
     if (!done) {
       setFont(ctx, 11);
       ctx.fillStyle = ERA4.textHi;
       const line = space.laptop.lines[this.laptopLine];
-      let y = 26;
-      for (const row of wrapLaptop(ctx, line, W - 28)) { ctx.fillText(row, 14, y); y += 16; }
+      let y = LAPTOP_BAR + 18;
+      for (const row of wrapLaptop(ctx, line, W - 24)) { ctx.fillText(row, 12, y); y += 16; }
     }
-    setFont(ctx, 9);
-    ctx.fillStyle = ERA4.dim;
-    ctx.fillText(done ? space.laptop.readyHint : space.laptop.hint, 14, H - 14);
+    // the bar already carries the ready state; saying it twice on one small
+    // screen read as a stutter rather than as emphasis
+    if (!done) {
+      setFont(ctx, 9);
+      ctx.fillStyle = ERA4.dim;
+      ctx.fillText(space.laptop.hint, 12, H - 12);
+    }
   }
 
   private putOn(): void {
@@ -473,11 +493,23 @@ export class E4Shell {
     // dark, not inviting, and `wear()` refuses anyway
     if (this.stageNow === 'laptop') { visorField(ctx, W, H); return; }
     if (!this.worn) {
-      // ⚑ drawn LARGE and simple: this same canvas is textured onto a 9 cm
-      // visor across the room, and it is also the whole of `?flat=1`'s screen.
-      // The grammar is S2R.0's waiting screen — dark glass, one dim line.
+      /**
+       * ⚑ READY = A GLOW, NOT A SCREEN. Sérgio asked to "make the VR headset
+       * glow", and the reason the old standby could not is that it was a legible
+       * waiting screen — dark glass with a line of text — rendered onto a face
+       * a few centimetres across at a metre away. At that size text is noise and
+       * dark glass is a black rectangle stuck to a headset. What reads at that
+       * size is LIGHT: the lens lit and breathing, and the words moved to the
+       * laptop, which is where the era does its reading now.
+       * ⚑ The plane is disabled entirely except when worn or ready (era3Devices'
+       * setEra), so this is only ever drawn when the device is actually waiting.
+       */
       const pulse = Math.abs(this.pulseStep / (PULSE_STEPS - 1) - 0.5) * 2;
-      standby(ctx, W, H, pulse, space.standbyLabel);
+      px(ctx, 0, 0, W, H, ERA4.field);
+      const inset = Math.round(Math.min(W, H) * 0.06);
+      px(ctx, inset, inset, W - inset * 2, H - inset * 2, ERA4.panel);
+      const glow = Math.round(Math.min(W, H) * (0.16 + 0.05 * pulse));
+      px(ctx, Math.round(W / 2 - glow), Math.round(H / 2 - glow / 2), glow * 2, glow, ERA4.l);
       return;
     }
     // ⚑ THE FINALE TAKES THE FIELD. Everywhere else the offers draw OVER the

@@ -165,3 +165,66 @@ this time the room is stage one instead of a follow-up that never came.
   to maintain** — it costs an art pass on a shipped era, and it should be judged on that basis rather
   than as a free through-line. Parked as a proposal, not folded into any stage.
 - ✅ **`Household` / house stays unglossed.**
+
+---
+
+# ⚑ Stage 4 · THE GLITCH — added 2026-09-01, and it is SPEC, not built
+
+**Why it is written here instead of tried.** Sérgio, 2026-09-01: *"regarding the
+needs of the glitch. This needs to be inscribed to the ERA_4 building plan so it
+can be built before being tried."* He is right, and this era in particular has
+form: S76/S77/S79 each left a seam named and empty, and the two that got built by
+improvisation (the headset's read, the visor's own screen) each took three passes
+and a measurement to undo. The glitch is a *register* decision before it is a
+visual one, so it gets specified first.
+
+## What already exists around it
+
+The staging Sérgio set is BUILT and verified by clicking (S100):
+
+- `E4Shell.handOff()` drops `worn`, so the visor eases back to its rest pose on
+  the desk on its own.
+- The visor plane is disabled unless the device is worn or waiting, so the
+  headset is only the model once it has stopped.
+- The laptop carries the Close as an update — *"L is still here. / this session
+  did not end / The headset stopped responding and returned to standby."* and one
+  **Restart** button, which arms the `close` update through the ordinary door.
+
+**What is missing is the moment between**: right now the picture simply ends and
+the device is back on the desk. There is no glitch.
+
+## The spec
+
+**Where it plays.** On the VISOR, and nowhere else. Not on the laptop (which is
+calm throughout — it is the machine that survives), not on the room, not on the
+frame. `theme/era4.ts` already has `glitchBands(ctx, W, H, k)`, written for the
+install and unused here.
+
+**When.** Inside `handOff()`, before `worn` drops: a `glitching` stage of ~1.2 s,
+then the visor goes dark, then the plane disables and the device is on the desk.
+The Close's laptop card arrives after it, not during.
+
+**⚑ THE REGISTER, and this is the part to get right.** L stays polite to the very
+end — that is the era's law (`s4_l.json`'s `_docVoice`, and E3's own `_docBlock`
+before it). So the glitch is NOT violence and NOT horror:
+
+- **It is not L breaking.** L does not distort, stutter, or turn menacing. If L
+  speaks at all here it is one ordinary line, at ordinary volume.
+- **It is the PICTURE failing while the voice does not.** The Sunroom is what
+  comes apart — the room that was "arranged for you" — and the thing that keeps
+  working is the apparatus. That is the same move the E3 cascade makes: the
+  software is not broken, it is outnumbered.
+- **Tone dial ≤ +1.** No red, no alarm, no error glyphs, no sound of damage.
+  `ERA4`'s own palette only.
+- **It must not read as the player's fault.** Nothing the player pressed caused
+  it; the era's law is that updates are triggered by documented system failures,
+  never by the player (CLAUDE.md).
+
+**Acceptance, checkable by feel:** you are inside a room that was made for you, it
+stops being able to hold itself together, the voice that made it says nothing
+unkind, and then you are looking at your own desk with the headset on it and your
+laptop asking you to restart. Nobody took the device off you.
+
+**Open for Sérgio:** how long, and whether L says anything at all during it. My
+read is ~1.2 s and silence — she has already said everything, and a line here
+would be the piece explaining its own ending.

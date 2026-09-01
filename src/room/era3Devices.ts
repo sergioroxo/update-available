@@ -934,12 +934,46 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         if (s.external) {
           // the visor: another module owns those pixels. Upload when the shell
           // says they changed, and never draw a stroke on them here.
-          if (s.versionOf && s.lastVersion !== s.versionOf()) {
+          /**
+         * ⚑ THE VISOR PLANE IS NOT ALWAYS THERE, and this is per-FRAME on purpose.
+         * Sérgio: *"there is still a black screen on top of the VR headset."* It is
+         * a lit surface, and a lit surface with nothing to say is just a black
+         * rectangle stuck to a headset's face. It exists only when the device has
+         * something to say — WORN (it is the picture) or READY (it glows, waiting).
+         * While L is still on the laptop, and again once the device has stopped,
+         * the headset is only the model.
+         * ⚑ Put in `setEra` first, which was wrong: that runs on era CHANGES, so a
+         * condition reading the shell's stage never updated and the headset could
+         * not be pressed at all. The stage moves between era shifts, so the gate
+         * has to be read where the frames are.
+         */
+        if (s.name === 'visor' && eraNow === 'e4') {
+          const sh = e4Bridge()?.shell();
+          s.entity.enabled = !!sh && !sh.handedOffToClose && (sh.worn || sh.stage === 'closed');
+        }
+        if (s.versionOf && s.lastVersion !== s.versionOf()) {
             s.lastVersion = s.versionOf();
             s.dirty = true;
           }
           if (s.dirty && s.entity.enabled) { s.tex.upload(); s.dirty = false; }
           continue;
+        }
+        /**
+         * ⚑ THE VISOR PLANE IS NOT ALWAYS THERE, and this is per-FRAME on purpose.
+         * Sérgio: *"there is still a black screen on top of the VR headset."* It is
+         * a lit surface, and a lit surface with nothing to say is just a black
+         * rectangle stuck to a headset's face. It exists only when the device has
+         * something to say — WORN (it is the picture) or READY (it glows, waiting).
+         * While L is still on the laptop, and again once the device has stopped,
+         * the headset is only the model.
+         * ⚑ Put in `setEra` first, which was wrong: that runs on era CHANGES, so a
+         * condition reading the shell's stage never updated and the headset could
+         * not be pressed at all. The stage moves between era shifts, so the gate
+         * has to be read where the frames are.
+         */
+        if (s.name === 'visor' && eraNow === 'e4') {
+          const sh = e4Bridge()?.shell();
+          s.entity.enabled = !!sh && !sh.handedOffToClose && (sh.worn || sh.stage === 'closed');
         }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
           s.lastVersion = s.versionOf();

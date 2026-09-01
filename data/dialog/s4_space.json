@@ -19,14 +19,18 @@
   "hint": "press to continue",
   "readyHint": "the headset is ready",
   "witness": "desk: the update introduced itself — L, on the laptop",
-  "mirrorLabel": "Headset — mirroring"
+  "mirrorLabel": "Headset — mirroring",
+  "bar": "GraceOS",
+  "_docBar": "⛑ The laptop needs to look like a machine, not a text file. One thin status bar carrying the system's name is enough at 224x140 — the same bar the headset mirror uses, so the lid reads as one surface in three states rather than three different screens."
  },
  "_docCorrupt": "⛑ THE END, AS SÉRGIO STAGED IT (2026-09-01): *\"the glitch happening on the VR headset, the headset would go back to the desk automagically and the screen on the Laptop would have a message there and a button to start the close as if it was an update.\"* ⛑ THE DEVICE COMES OFF BY ITSELF, and that is the beat: every other act in this era is hers — the one press on the laptop, the one touch on the headset, the turn — and the last one is not. Nobody takes it off. It stops. ⛑ AND THE CLOSE ARRIVES AS AN UPDATE, on her own machine, in the same grammar as the four that came before it: a notice, and a button. The piece has spent thirty years teaching that a thing which announces itself and offers you one button is not a choice, and it collects on that here.",
  "corrupt": {
   "line": "L is still here.",
   "sub": "this session did not end",
   "note": "The headset stopped responding and returned to standby.",
-  "button": "Restart as you are",
-  "witness": "desk: the device stopped — the laptop offered a restart"
+  "button": "Restart",
+  "witness": "desk: the device stopped — the laptop offered a restart",
+  "ask": "Restart as you are.",
+  "_docWords": "⛑ THE CLOSE'S OWN WORDS, not new ones. `ask` and `button` are lifted from data/strings/updates.json's `close` block (notify[1] and updateNow) so the card on the laptop speaks with the same voice as the update it arms — and because the first pass invented 'Restart as you are' as a BUTTON label, which both duplicated the message and ran off the end of the button."
  }
 }
