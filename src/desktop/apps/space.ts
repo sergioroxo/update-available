@@ -127,6 +127,11 @@ function wrapLaptop(ctx: CanvasRenderingContext2D, text: string, max: number): s
   return out;
 }
 
+/** the laptop screen's logical size — kept in step with `LOGICAL.laptop` in
+ *  era3Devices.ts, which is where the canvas is actually made */
+const LAPTOP_W = 224;
+const LAPTOP_H = 140;
+
 export class E4Shell {
   private stageNow: Stage = 'laptop';
   /** which of the laptop's lines is showing; past the last one, L is done there */
@@ -259,6 +264,13 @@ export class E4Shell {
     this.putOn();
   }
 
+  /** where the restart sits on the laptop's canvas; one place, so the draw and
+   *  the hit test cannot drift apart the way `kit.ts`'s did */
+  private closeButtonRect(W: number, H: number): { x: number; y: number; w: number; h: number } {
+    const w = 104; const h = 20;
+    return { x: Math.round((W - w) / 2), y: H - h - 16, w, h };
+  }
+
   /** the laptop's own version, so its screen re-uploads only when its line moves */
   get laptopVersion(): number { return this.laptopV; }
 
@@ -267,7 +279,16 @@ export class E4Shell {
    *  in this piece: a line, and something to press to see the next one. The last
    *  press does not open anything — it simply stops, and the device across the
    *  desk is lit from then on. */
-  pressLaptop(): void {
+  pressLaptop(x?: number, y?: number): void {
+    // ⚑ after the hand-off the laptop is the CLOSE's surface, not L's
+    if (this.handedOff) {
+      if (x === undefined || y === undefined) return;
+      const r = this.closeButtonRect(LAPTOP_W, LAPTOP_H);
+      if (x < r.x || x > r.x + r.w || y < r.y - 4 || y > r.y + r.h) return;
+      ledger.e4Space.push({ id: 'laptop', outcome: 'read', witness: space.corrupt.witness });
+      this.onCloseRequest?.();
+      return;
+    }
     if (this.stageNow !== 'laptop') return;
     this.laptopLine += 1;
     this.laptopV++;
@@ -310,10 +331,22 @@ export class E4Shell {
     if (this.handedOff) {
       setFont(ctx, 11);
       ctx.fillStyle = ERA4.textHi;
-      ctx.fillText(space.corrupt.line, 14, Math.round(H / 2) - 6);
+      ctx.fillText(space.corrupt.line, 14, 30);
       setFont(ctx, 9);
       ctx.fillStyle = ERA4.dim;
-      ctx.fillText(space.corrupt.sub, 14, Math.round(H / 2) + 12);
+      ctx.fillText(space.corrupt.sub, 14, 48);
+      // wrapped, like L's own lines — the note ran off the lid at full width
+      let ny = 68;
+      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 28)) { ctx.fillText(row, 14, ny); ny += 13; }
+      // ⚑ ONE BUTTON, IN THE PIECE'S OWN UPDATE GRAMMAR — a notice on her machine
+      //   with a single thing to press, exactly like the four updates before it.
+      const r = this.closeButtonRect(W, H);
+      px(ctx, r.x, r.y, r.w, r.h, ERA4.panel);
+      px(ctx, r.x, r.y, r.w, 1, ERA4.rule);
+      setFont(ctx, 10);
+      ctx.fillStyle = ERA4.textHi;
+      const tw = ctx.measureText(space.corrupt.button).width;
+      ctx.fillText(space.corrupt.button, r.x + Math.round((r.w - tw) / 2), r.y + 6);
       return;
     }
     const done = this.laptopLine >= space.laptop.lines.length;
@@ -375,9 +408,25 @@ export class E4Shell {
    * had no end. ⚑ S79's ball goes BEFORE the finale, in `E4Offers.onBreak`, so
    * nothing here has to change when it lands.
    */
+  /** the laptop's restart button asks for the Close; `os.ts` wires it */
+  onCloseRequest?: () => void;
+
   handOff(): void {
     if (this.handedOff) return;
     this.handedOff = true;
+    /**
+     * ⚑ THE DEVICE COMES OFF BY ITSELF (Sérgio, 2026-09-01: "the headset would go
+     * back to the desk automagically"). Dropping `worn` here is what does it —
+     * `era3Devices` eases the visor back to its rest pose on the desk the moment
+     * this is false, so the picture leaves her face and the room comes back with
+     * the laptop still lit in it.
+     *
+     * ⚑ And that is the beat, not a convenience. Every other act in this era is
+     * hers: the press on the laptop, the touch on the headset, the turn. The last
+     * one is not. Nobody takes it off — it stops.
+     */
+    this.stageNow = 'closed';
+    this.laptopV++;
     this.version++;
   }
 

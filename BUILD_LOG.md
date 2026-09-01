@@ -702,3 +702,40 @@ Close's own "Restart as you are." card draws on that same canvas and would end u
 on a 15 cm plane across the room instead of in front of the face. So the real
 question is WHEN THE DEVICE COMES OFF, which is a Close-sequence decision and not
 one to make unilaterally. Written down rather than guessed.
+
+## S100 (2026-09-01) — The device stops, and the Close arrives as an update
+
+⚑ **SÉRGIO STAGED THE ENDING** and it answers the question S99 left open:
+*"the glitch happening on the VR headset, the headset would go back to the desk
+automagically and the screen on the Laptop would have a message there and a button
+to start the close as if it was an update."*
+
+**The device comes off by itself.** `handOff()` now drops `worn`, and
+`era3Devices` eases the visor back to its rest pose on the desk the moment that is
+false — the picture leaves her face and the room comes back with the laptop still
+lit in it. ⚑ That is the beat, not a convenience: every other act in this era is
+hers (the press on the laptop, the touch on the headset, the turn) and the last
+one is not. Nobody takes it off. It stops.
+
+**The Close arrives as an update, on her own machine.** The laptop shows "L is
+still here. / this session did not end / The headset stopped responding and
+returned to standby." and one button, *Restart as you are*. Pressing it arms the
+`close` update through exactly the same door the other four use — nothing bespoke
+about the ending. The piece has spent thirty years teaching that a thing which
+announces itself and offers you one button is not a choice, and it collects here.
+
+⚑ **This also fixes what S99 could only write down.** The restart card used to
+draw on the OS canvas, which in Era 4 is the visor — so with the headset still on
+it was in front of her face, and with it off it would have been a 15 cm plane
+across the room. Moving the ask to the laptop makes it readable in both.
+
+**The screen fits properly now, and the normal is why.** The bounding box alone
+said "vertical"; `Screen`'s normal (0.9956, 0.0940, 0) says the lid leans 5.39°,
+so the euler is 84.6 — not the 90 the 19 mm slab implied, nor the 67/70/74 I tried
+off renders. An axis-aligned box around a tilted plane also UNDER-reports height:
+0.8273 is the projection, 0.8310 is the height. And the plane is now inset to
+0.300 × 0.188 (aspect 1.596 vs the canvas's 1.600) because the mesh's `Screen`
+covers ~95% of the lid, so drawing it at full size bled onto the bezel.
+
+Verified by clicking: after the hand-off `worn: false`, and a real press on the
+laptop's button arms `key: 'close'`.

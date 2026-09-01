@@ -558,7 +558,13 @@ export class DesktopOS {
     // arrives as a device that is already on and already waiting, so the shell
     // takes the whole surface and no chrome is drawn around it ever again.
     if (era === 'e4') {
-      if (!this.e4) this.e4 = new E4Shell();
+      if (!this.e4) {
+        this.e4 = new E4Shell();
+        // ⚑ THE CLOSE ARRIVES AS AN UPDATE, on her own machine (Sérgio, 2026-09-01).
+        //   The laptop's one button asks for it, and it is armed through exactly the
+        //   same door the other four updates use — nothing bespoke about the ending.
+        this.e4.onCloseRequest = () => this.armUpdate('close');
+      }
       // A `?era=4` REVIEW JUMP never plays the opening, so this canvas can
       // still be sitting in `r_dark` — which was harmless while E3/E4 drew a
       // dead monitor and is not harmless now that the visor is textured with

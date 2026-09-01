@@ -246,16 +246,23 @@ const PLACEMENT = {
    * recentre and the prop's yaw 180, that lands at world x 5.3378 (a 19 mm slab),
    * y 0.7684–0.9711, z 0.4477–0.7722 — 0.3245 wide by 0.2027 tall, centred on
    * (0.8697, 0.610), and this plane sits 4 mm proud of that face.
-   * ⚑ TWO THINGS I HAD WRONG BY EYE. The lid is VERTICAL — the slab is only 19 mm
-   * deep in x — so the euler is 90, not the 67/70/74 I kept trying off renders.
-   * And the aspect is 1.601, which `LOGICAL.laptop`'s 224×140 (1.600) already
-   * matches, so nothing is stretched. Earlier passes had the plane inside the lid:
-   * hittable, advancing the beat, and invisible.
+   * ⚑ AND THE NORMAL SETTLES THE LEAN, which the bounding box alone cannot.
+   * `Screen`'s normal is (0.9956, 0.0940, 0) — 5.39° off vertical — so the lid
+   * leans back very slightly and the euler is 84.6, not the 90 the 19 mm-thin slab
+   * implied nor the 67/70/74 I kept trying off renders. An axis-aligned box around
+   * a tilted plane also UNDER-reports its height: 0.8273 is the projection, and the
+   * true height is 0.8273/cos(5.39°) = 0.8310 local.
+   * ⚑ INSET, DELIBERATELY: the mesh's `Screen` runs 0.3245 × 0.2036 world, which is
+   * ~95% of the lid, so a plane at exactly that size bleeds onto the bezel edge and
+   * reads as a screen too big for its own frame. 0.300 × 0.188 sits inside the
+   * model's own border. Aspect 1.596 against `LOGICAL.laptop`'s 1.600 — nothing
+   * stretched. Earlier passes had the plane inside the lid: hittable, advancing the
+   * beat, and invisible.
    */
   laptop: {
-    pos: { x: 5.334, y: 0.8697, z: 0.61 },
-    size: { w: 0.3245, h: 0.2027 },
-    euler: { x: 90, y: 270, z: 0 }
+    pos: { x: 5.3348, y: 0.8700, z: 0.61 },
+    size: { w: 0.300, h: 0.188 },
+    euler: { x: 84.6, y: 270, z: 0 }
   },
   phone: {
     // y verified in-browser (Session 37): the nightstand's REAL model AABB
@@ -1018,11 +1025,22 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       //   own, but the press has to reach the laptop or nothing moves at all.
       //   Same two ways in as the headset: the screen plane, or a sphere around
       //   the machine, because what you are pressing is a laptop and not a button.
+      // ⚑ …and AFTER the hand-off it is the Close's surface. The device has come
+      //   off by itself by then, so the laptop is the only lit thing left in the
+      //   room and its one button is the restart. Coordinates matter here (the
+      //   button is a rect, not the whole lid), so the plane hit is required.
+      if (shell?.handedOffToClose) {
+        const onLaptop = test('laptop');
+        if (onLaptop) { shell.pressLaptop(onLaptop.x, onLaptop.y); return true; }
+      }
       if (shell && shell.stage === 'laptop') {
         const lap = screens.find(sc => sc.name === 'laptop');
         if (lap?.entity.enabled) {
           const onLaptop = test('laptop');
-          if (onLaptop || rayNear(ray, PLACEMENT.laptop.pos, 0.22)) { shell.pressLaptop(); return true; }
+          if (onLaptop || rayNear(ray, PLACEMENT.laptop.pos, 0.22)) {
+            shell.pressLaptop(onLaptop?.x, onLaptop?.y);
+            return true;
+          }
         }
       }
       if (visor?.entity.enabled && shell && !shell.worn) {

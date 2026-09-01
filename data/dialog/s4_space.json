@@ -21,9 +21,12 @@
   "witness": "desk: the update introduced itself — L, on the laptop",
   "mirrorLabel": "Headset — mirroring"
  },
- "_docCorrupt": "⛑ THE OTHER END OF THE SAME MACHINE (Sérgio: 'we can also use it to create the connection with the End, where the corrupted VR and the Laptop'). When the shell hands off to the Close, the laptop does not go back to a desktop or a login — it holds the last thing it was told, in a field it can no longer draw properly. The laptop opened the era and it is still on when the era is over, which is the quietest way this piece has of saying that nothing was ever switched off.",
+ "_docCorrupt": "⛑ THE END, AS SÉRGIO STAGED IT (2026-09-01): *\"the glitch happening on the VR headset, the headset would go back to the desk automagically and the screen on the Laptop would have a message there and a button to start the close as if it was an update.\"* ⛑ THE DEVICE COMES OFF BY ITSELF, and that is the beat: every other act in this era is hers — the one press on the laptop, the one touch on the headset, the turn — and the last one is not. Nobody takes it off. It stops. ⛑ AND THE CLOSE ARRIVES AS AN UPDATE, on her own machine, in the same grammar as the four that came before it: a notice, and a button. The piece has spent thirty years teaching that a thing which announces itself and offers you one button is not a choice, and it collects on that here.",
  "corrupt": {
   "line": "L is still here.",
-  "sub": "this session did not end"
+  "sub": "this session did not end",
+  "note": "The headset stopped responding and returned to standby.",
+  "button": "Restart as you are",
+  "witness": "desk: the device stopped — the laptop offered a restart"
  }
 }
