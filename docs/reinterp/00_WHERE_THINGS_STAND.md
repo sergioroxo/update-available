@@ -75,8 +75,12 @@ from a doc comment at `ledger.ts:6` describing an *intended* "idle reset" that w
 - **141 draw calls at Maya's turned E4 seat** vs a ≤75 budget — architectural (unbatched GLB furniture
   across three open rooms), diagnosed, unfixed (`08 §28`).
 - **A11 — the in-headset pass — has never run.** Every comfort figure in this project is desktop-measured.
-- Era 4 room faults from the walkthrough: a CRT in 2026 *(audit says this is a documented decision —
-  needs a paper ruling)*, the intake panel clipping the wall, a blue box on the armchair.
+- ~~Era 4 room faults: a CRT in 2026~~ — **RULED AND FIXED 2026-09-01.** Sérgio: *"it doesn't make
+  sense to come from a wide computer to CRT."* He is right and the data agreed: Room 2's Era-3 machine
+  is a 645 × 372 mm widescreen, so the piece ran 1997 CRT → 2016 widescreen → **2026 CRT**. The machine
+  is now KEPT rather than USED — on its own wall shelf as a remembrance — and Maya's desk has a real
+  laptop. Still open from that walkthrough: the intake panel clipping the wall, a blue box on the
+  armchair.
 - Room audit: **72 findings → 34** after the scale fix. The rest are mostly a tool blind spot
   (a garment draped over a chair back has nothing directly beneath it).
 
@@ -100,6 +104,39 @@ from a doc comment at `ledger.ts:6` describing an *intended* "idle reset" that w
     piece's title finally being spoken. **Two lines that close on the same words cannot both land**;
     the rework has to decide which one owns the sentence.
 
+---
+
+# ⚑ WHERE ERA 4 STANDS — 2026-09-01, and this is the live front
+
+**The opening moved onto the laptop.** Era 4 used to begin with a headset on a dock and no reason for
+it. It now begins on Maya's own machine: L introduces itself there, says there is nothing for her to
+do, and sends her to the headset. Three presses, one line each. `laptop:read` is filed before
+`headset:worn`. Verified by clicking, not by reading.
+
+**The laptop mirrors the headset** once it is on — Sérgio's own idea, the SteamVR/Meta-desktop move —
+so the room can see what is being shown to her from outside her head.
+
+**The ending is staged as Sérgio set it:** the device stops and returns to the desk BY ITSELF (nobody
+takes it off her), and the Close arrives on the laptop as an update — one notice, one **Restart**
+button, armed through the same door the other four updates use.
+
+**Reachability, measured this session rather than assumed:**
+- ✅ All ten of L's units play, in order.
+- ✅ Her last unit's `handoff` chip starts the offers; they run `curation → pause`.
+- ✅ The laptop beat, the wear, the hand-off and the Restart press all work under real pointer presses.
+- ❓ **Not observed:** the offers past `pause` — the finale and the hand-off completing under their own
+  clock. Not known broken; not seen to finish.
+
+## The three things Era 4 still needs
+1. **THE GLITCH — spec'd, not built.** `docs/REINTERP_E4_BUILD_PLAN_2026-08-05.md` **Stage 4**, written
+   spec-first at Sérgio's instruction. The register is the hard part and is decided there: *the picture
+   fails while the voice does not.* ⚑ Open for Sérgio: how long, and whether L speaks during it.
+2. **L HAS NO VOICE.** `check-spec` reports audio 44/92 on disk, 48 missing. Ten written units, captions
+   only.
+3. **The tail past `pause`** needs one patient watch to prove the finale reaches the hand-off.
+
+---
+
 # THE TRAPS THIS PROJECT HAS PAID FOR
 1. **A comment is not evidence.** Six sessions repeated a stale header claim; a decision was applied to
    a config constant nothing read; **and this file made the same mistake about the idle wipe.**
@@ -110,6 +147,15 @@ from a doc comment at `ledger.ts:6` describing an *intended* "idle reset" that w
 6. **Never raise a ratchet baseline to make a run pass.**
 7. ⚑ **Placement and rendering were two different numbers.** Props were positioned by an authored box
    and drawn at an unrelated model scale. One fix, 72 findings → 34.
+8. ⚑ **MEASURE THE MESH, NOT THE RENDER (2026-09-01).** Fitting a screen plane to the laptop lid took
+   four wrong passes off screenshots — 67°, 70°, 74°, 90°, and twice the plane ended up INSIDE the mesh:
+   hittable, advancing the beat, invisible. The GLB had the answer all along: materials are NAMED
+   (`Screen`) and glTF accessors carry exact min/max, so `node -e` on the file gives the true rectangle
+   and its normal in one read. The normal is what settled a 5.39° lean no bounding box could express.
+9. ⚑ **A PROBE THAT ALWAYS PRESSES THE FIRST OPTION MEASURES ITS OWN POLICY.** `tools/walk.mjs` took a
+   provotype's repeat branch 70 times in Era 1; a hand-written probe then took L's `correct3` loop
+   forever and I nearly reported "Era 4's offers never start". Both times the content was fine. When a
+   beat appears not to advance, check which branch is being taken before believing the finding.
 
 # THE AUDITS THEMSELVES
 `SCRIPT_VS_BUILD_2026-08-21.md` (Qwen) · `..._Claude.md` + `..._SIDE_FINDINGS_Claude.md` (Fable).
