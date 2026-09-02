@@ -4,7 +4,8 @@ STATUS: live
 *Written 2026-09-02 by the build session, on top of [`REVIEW_R1_2026-09-02.md`](REVIEW_R1_2026-09-02.md)
 §3. R1's board (S103–S109) is correct and unchanged; this file adds what it stopped short of — the
 dependency order, which sessions a decision actually blocks, and four more paste-ready prompts
-(S110–S113) for work the review identified and did not schedule.*
+(S110–S114) for work the review identified and did not schedule. ⚑ Sérgio answered every gate
+the same day — see the table below; nothing here is blocked.*
 
 ---
 
@@ -16,28 +17,32 @@ S103  walker's blind spots ────┐                       (no gate)
 S107  audit hygiene ───────────┘                │
                                                 ├──> S108  the batch at the turn
 S105  dirty-only uploads   (no gate, parallel by file)
-S106  the record ages      ← R1-5 (your wording; buildable with a placeholder stamp)
-S109  sound plumbing       (no gate — needs no assets)
-S110  the two pacing fixes (no gate)              ⟵ NEW
-S111  the writing round    (no gate; ethics gates are per-line, not per-session)  ⟵ NEW
-S112  sound assets         ← R1-1 (the ball) + R1-3 (the rituals)   ⟵ NEW
-S113  Lamby's voice        ← R1-4                                    ⟵ NEW
-S114  the Close panels     ← the two standing items (panel wording, panel 4 status) ⟵ NEW
+S106  the record ages      (builds with a placeholder stamp; his wording lands later)
+S109  sound plumbing       (needs no assets)
+S110  the two pacing fixes                                          ⟵ NEW
+S111  the writing round    (ethics gates are per-line, not per-session)   ⟵ NEW
+S112  sound assets         ✅ R1-1 + R1-3 answered                    ⟵ NEW
+S113  Lamby's voice        ✅ R1-4 answered                           ⟵ NEW
+S114  the Close panels     (runs, then he reviews the text in place)  ⟵ NEW
 ```
 
 **Run first, in this order:** S103 → S104. Everything else is genuinely parallel *by file*, but never
 two sessions in this worktree at once — one git index, and that collision has already cost a session.
 
-**What each decision unblocks, precisely:**
+## ⚑ ANSWERED 2026-09-02 — every gate in this file is open
 
-| decision | blocks | what stalls without it |
+| decision | answer | what it released |
 |---|---|---|
-| **R1-1** the ball's room | S112's largest item, and the Close's only possible sound | the piece's one respite stays 3½ minutes of silent captions, one of which says *"Music stays on."* |
-| **R1-3** sound on the rituals | S112's ritual family | four transitions stay mute; the Close's silence stays undecided rather than chosen |
-| **R1-4** Lamby's voice | S113 entirely | the conductor lineage stays E1 none → E2 none → E3 silent → E4 clean, which is not the arc |
-| **R1-5** the Era-4 card stamp | nothing — S106 builds with a placeholder and you overwrite the string | — |
-| **R1-2** Room 3's seat | nothing — it is a measurement, not a blocker (see §3) | — |
-| **R1-6** S104 before S108 | nothing — the recommendation is obvious and taken | — |
+| **R1-1** the ball's room | **a found recording, *and* audition Suno beside it** — "just need prompt" | S112 item 1 + the Close's one possible sound. Lane D's objection to Suno for this scene is recorded and overruled as an experiment; see §6 for both routes and the one production note that decides between them |
+| **R1-3** sound on the rituals | **as Lane D wrote it** — the four gestures re-voiced per decade, the Close silent | S112's ritual rows |
+| **R1-4** Lamby's voice | **yes, 2003-treated** | S113 entirely |
+| **R1-5** the Era-4 card stamp | his, and nothing waits on it — S106 builds with a placeholder | — |
+| **R1-2** Room 3's seat | not a decision; a measurement folded into S107 (§3) | — |
+| **R1-6** S104 before S108 | taken | — |
+| **the Close's panels** | **"send them to me when I need to review them, we will adjust it while building"** | S114 is neither parked nor settled: the draft ships, and that session surfaces the text and panel 4's `status` for review *when it runs* |
+
+**So nothing in the queue below is gated any more.** The order in §1 is now purely dependency and
+judgement: S103 → S104 first, everything else parallel by file, never two sessions in this worktree.
 
 ---
 
@@ -120,15 +125,17 @@ review counted **96 `PLACEHOLDER` + 35 `PLACEHOLDER-draft` markers across 34 dat
 authoring-marker leak check stays at its baseline; a fresh `voice-pass` run reads as one voice per
 register when read end to end. ⚑ Report what you left for him and why.
 
-### S112 · Sonnet 5 + Sérgio — the sound assets. **GATED on R1-1 and R1-3.**
+### S112 · Sonnet 5 + Sérgio — the sound assets. **UNGATED — R1-1 and R1-3 answered.**
 Fence: `assets/audio/`, `public/assets/audio/`, `src/audio/tapeAudio.ts` (registry lines only),
 `data/dialog/s2_media.json` + `s2_caleb.json` (the broken-jingle hook), `assets/LICENSES.md`,
 `docs/reinterp/ATTRIBUTIONS.md`.
 
 Work the commissions in `REVIEW_R1_2026-09-02_LANE_D_SOUND.md` in this order, because each one's
 absence costs the piece more than the next:
-1. **The ball's room** (D-3/§5) — *only after R1-1*. Whichever route he rules for: one file, three
-   states (through-wall `lowpass=f=320`, the landing unfiltered, the Close's clean pass).
+1. **The ball's room** (D-3/§5) — **two candidates auditioned side by side** (§6): a CC0
+   through-the-wall field recording, and a Suno generation. Either way it is ONE file in three states
+   (through-wall `lowpass=f=320` in E4, the landing unfiltered, the Close's clean pass). ⚑ **Judge the
+   candidates UNFILTERED** — the wall hides everything, and the landing and the Close play clean.
 2. **The three passages** (D-7) — one CC0 building-ventilation drone; 42.5 s of silent travel is the
    longest dead air in the work.
 3. **Room tone, four beds** (D-4) — assembled from CC0 sources with `amix`/`afade`, loop-checked.
@@ -146,7 +153,7 @@ is public and this goes to festivals).
 **Acceptance, observed:** a `window.Audio`-wrapped run per era showing one bed alive, the crossfade at
 each passage, and the ball's bed under its captions; `npm run gen-attributions` clean.
 
-### S113 · Sonnet 5 — Lamby's voice (Lane D D-8). **GATED on R1-4.**
+### S113 · Sonnet 5 — Lamby's voice (Lane D D-8). **UNGATED — R1-4 answered: yes, 2003-treated.**
 Fence: `data/audio/tts_manifest.json`, `tools/tts/`, `src/desktop/apps/lambyChar.ts` (or whichever
 surface draws Lamby's lines), `src/audio/tapeAudio.ts`, `data/dialog/s2_lamby.json`.
 
@@ -163,7 +170,9 @@ authored against silence too. Whatever surface draws its lines must dwell on
 **Acceptance, observed:** a wrapped run through Era 2 showing every Lamby clip played to its full
 duration, none overlapping, all 200; and the E2 surface's captions still leading the audio.
 
-### S114 · Sonnet 5 — the Close's panels. **GATED on Sérgio's wording + panel 4's `status`.**
+### S114 · Sonnet 5 — the Close's panels. **NOT gated and NOT settled** — Sérgio, 2026-09-02: *"send
+them to me when I need to review them, we will adjust it while building."* Run the session, then put
+the four panels' text and panel 4's `status` in front of him and adjust in place.
 Fence: `data/strings/close_network.json` only.
 Apply his text verbatim to the four `panels[].lines`, set `panels[3].status`, and drop the
 "open for Sérgio" flags in `_panelsDoc` and in `REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md` §6.
@@ -182,3 +191,53 @@ Apply his text verbatim to the four `panels[].lines`, set `panels[3].status`, an
   whoever next dresses Room 3, and Room 3's dressing has never had its own session.
 - **The 45 `room-audit` findings** (garment floats, the 2 cm `terminalFrame` seam, model-scale drift)
   are unchanged and unranked. They want one dressing session with Sérgio's eye, not a fix list.
+
+
+---
+
+## §6 · THE BALL'S ROOM — both routes, as he asked for them
+
+Sérgio, 2026-09-02: *"Found Recording and we can try Suno (just need prompt)."* So both, auditioned
+against each other rather than argued about.
+
+### Route C — the found recording (Lane D's recommendation)
+Freesound, filter **License: Creative Commons 0** first, **Attribution** second. Sort by rating,
+download the WAV/FLAC (never the preview mp3), and write the row into `assets/LICENSES.md` at the
+moment of download.
+
+Search terms, best first: `party through wall` · `club neighbours bass` · `house party ambience` ·
+`crowd cheering indoor` · `nightclub ambience distant`.
+**Reject anything with an identifiable track in it** — a recognisable song through a wall is still a
+real song.
+
+### Route A — Suno, as an audition candidate
+```
+instrumental, underground house, 124 bpm, late-night, hand-clap and crash accents on the downbeat,
+warm sub bass, a small crowd whooping and clapping between phrases, recorded in a hall with a long
+room, slightly distorted PA, live not produced, no vocals, no lyrics, loopable, 90 seconds
+```
+Lyrics field: `[Instrumental]`. Generate four; keep the one whose crowd sounds like people rather
+than a texture, and whose loop point is invisible.
+
+### ⚑ The one production note that will decide it for you
+The same file plays **three** times and only one of them is through a wall:
+
+| where | treatment |
+|---|---|
+| E4, the ball, heard from the room | `lowpass=f=320` — the wall |
+| the landing | the file, unfiltered |
+| the Close (if R1-3's exception is ever taken) | the same file again, clean |
+
+**So audition both candidates UNFILTERED.** Through 320 Hz almost anything sounds like a party
+downstairs; the landing is where a generated track has nowhere to hide. If the Suno take survives
+being heard clean next to the field recording, it has earned the scene. If it only works behind the
+wall, that is the wall doing the work, not the music.
+
+```
+ffmpeg -i <candidate>.wav -af "lowpass=f=320,volume=0.8" ball_room_bed.wav
+ffmpeg -i <candidate>.wav -af "loudnorm=I=-18:TP=-1.5"   ball_room_landing.wav
+```
+
+⚑ Lane D's objection to Suno for this scene is on the record and stands as a *criterion*, not a veto:
+the beat exists to be made **with** rather than **about** the people it is indebted to. If both takes
+work, that is the tiebreak.

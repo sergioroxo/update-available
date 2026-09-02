@@ -619,16 +619,28 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
 # ⚑ REVIEW ROUND 1 — 2026-09-02 · six decisions, in the order they unblock things
 *Full argument in [`REVIEW_R1_2026-09-02.md`](REVIEW_R1_2026-09-02.md) §6 and
 [`REVIEW_R1_2026-09-02_LANE_D_SOUND.md`](REVIEW_R1_2026-09-02_LANE_D_SOUND.md) §5. Strike = approved.*
-- **R1-1 · The ball's room: music heard, not music played?** REC: a found CC0 through-the-wall
-  recording now (wall filter off at the landing; clean at the Close), a commissioned producer later;
-  never Suno for this scene. Unblocks S109's assets.
-- **R1-2 · Room 3's seat, now that the desk holds a laptop.** REC: re-measure from the seat; your S96
-  "keep it close" was ruled for a CRT that has since moved to the shelf.
-- **R1-3 · Sound on the four rituals; silence on the Close.** REC: as written in Lane D D-6.
-- **R1-4 · A voice for Lamby (E2)**: Supertonic, apparatus register, 2003-treated. REC: yes.
-- **R1-5 · The record's Era-4 card wording** (S106): the stamp is yours; the misfile line stays
-  *under the old file*.
-- **R1-6 · S104 (Era 4's door) before S108 (the batch).** REC: the door first.
+- ✅ **R1-1 · The ball's room — ANSWERED 2026-09-02: "Found Recording and we can try Suno (just need
+  prompt)."** Route C is the primary and Suno is a candidate to audition beside it. Both delivered;
+  the comparison is his ear. ⚑ Lane D's objection to Suno for this scene is recorded and overruled as
+  an experiment, not as a ruling — and one production note goes with it: the same file plays CLEAN at
+  the landing and again at the Close, which is where a generated house track is most exposed. Judge it
+  unfiltered, not through the wall. **Unblocks S112 item 1 and the Close's one possible sound.**
+- ✅ **R1-2 · Room 3's seat — NOT A DECISION, it is a measurement.** Folded into S107 as a
+  proposal-only step; the ruling on the number stays his.
+- ✅ **R1-3 · Sound on the four rituals, silence on the Close — ANSWERED: as Lane D wrote it.** The
+  four gestures re-voiced per decade, getting quieter as the machine gets better; the Close carries no
+  sound at all. **Unblocks S112's ritual rows.**
+- ✅ **R1-4 · A voice for Lamby (E2) — ANSWERED: yes, 2003-treated.** Supertonic, apparatus register,
+  a voice slot that is not L's F3, then the period chain so 2003 does not sound like 2026. Scope stays
+  the conduction lines and the check-in — never Caleb, never the residue, never a `felt` window.
+  **Unblocks S113.**
+- **R1-5 · The record's Era-4 card wording** (S106): the stamp is his; the misfile line stays *under
+  the old file*. S106 builds with a placeholder stamp and he overwrites the string — nothing waits.
+- ✅ **R1-6 · S104 before S108 — taken.** The door before the frame rate.
+- ✅ **The Close's four panels — ANSWERED: "send them to me when I need to review them, we will adjust
+  it while building."** So they are NOT parked and NOT settled: the draft stands and ships, and S114
+  surfaces the four panels' text and panel 4's `status` for review *at the moment that session runs*,
+  not before. The treatment doc keeps saying the wording is his, because it is.
 
 ## B. CHECKS OWED BY SÉRGIO (your queue — orders it however you like)
 
