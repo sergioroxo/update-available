@@ -21,6 +21,7 @@ because a hand-maintained register is just one more thing that drifts.*
 | Doc | Note |
 |---|---|
 | `CLAUDE.md` (repo root) + `docs/ETHICS_CONSTRAINTS.md` | the laws + binding gates |
+| `reinterp/REVIEW_R1_2026-09-02.md` (+ `_LANE_B`, `_LANE_C`, `_LANE_D_SOUND`) | **live** — the first full review round (2026-09-02): ranked defects, dispatch board S103–S109, Lane D's sound commissions. Supersedes nothing; feeds 03_COORDINATION's board |
 | `REINTERP_MASTER_PLAN_v2_2026-07-12.md` | PLAN OF RECORD; §9 queue now superseded by §3 below — fold at next consolidation |
 | `REINTERP_RESTRUCTURE_R28_2026-07-10.md` | R28 record; **§4 layer 3 still unbuilt** (see §3); §4's "Lamby teaches" wording is amended by CLAUDE.md amendment 2 (E1 teacher = impersonal side-messages) |
 | `REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md` | partially executed; Caleb sections gated |

@@ -166,6 +166,21 @@ three crossings); and four panels — one per era, one per bearing — carry the
 
 ---
 
+
+# ⚑ REVIEW ROUND 1 — 2026-09-02, and where it moves this file
+Read [`REVIEW_R1_2026-09-02.md`](REVIEW_R1_2026-09-02.md). In one paragraph: the piece is clickable from
+the entrance to Era 4 in 135 presses; **the headset works on the played path** — the two runs that could not wear it had pressed Era 2's
+`icon-send` rect, still registered on the visor in Era 4, whose projection lands on the frame's pause
+button (A-1, resolved by spies; two real defects: a stale rect, and chrome over the headset — S104);
+the Close's Restart button publishes no hit rect (A-2); the OS and witness textures upload every
+frame (B-1); the record still says *Daniel · era 1* in 2026 (A-3, observed on the played path); the
+"ready" visor is a black slab again (A-4); Maya's turn draws **197**, not 141 (C-1); the audit's
+"Maya's screen" FAIL is a stale line (C-2); the ball is mute and its bed has no code path (A-6); the
+three passages are silent (A-7). **Corrections to this file:** the comfort envelope is clean on all 13
+legs (retire the hazard); the blue box and the clipping panel are resolved; Era 2's monitor is not
+blank on the played path; the walker has three blind spots that inflated the last two walk reports.
+The three things that decide whether it is good are now ranked audio → the door → the writing.
+
 # THE TRAPS THIS PROJECT HAS PAID FOR
 1. **A comment is not evidence.** Six sessions repeated a stale header claim; a decision was applied to
    a config constant nothing read; **and this file made the same mistake about the idle wipe.**

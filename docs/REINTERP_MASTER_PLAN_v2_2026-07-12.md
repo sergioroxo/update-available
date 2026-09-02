@@ -251,3 +251,14 @@ shipped line), ERA4_LOGIC_v1. The shipped build's era docs remain REFERENCE for 
 (mined; not plans for this branch).
 **Standing unresolved (tracked in the checklist/open-questions):** D8 prop-library policy ·
 D13→resolved · the A11 gate · the R8-2… all resolved · x.b3 · the trans-man alcove (G1).
+
+## §11 REVIEW ROUND 1 — 2026-09-02 (the first sit-through; nothing built)
+The piece was played from the entrance with real presses and watched with audio and captions measured.
+Report: [`reinterp/REVIEW_R1_2026-09-02.md`](reinterp/REVIEW_R1_2026-09-02.md) (defects ranked, dispatch
+board S103–S109, suggestions, decisions); lanes B/C/D in their own files beside it. **What it changes in
+this plan:** §9's queue is superseded by 03_COORDINATION's board (S103–S109); §7's audio state gains
+Lane D's inventory (54 playing · 38 refused by law · 3 awaiting sound design · *Chase The Clouds*
+delivered and orphaned) and eight fiction-derived commissions; §5's Era 4's door is confirmed working on the played path; what S104 closes is a stale Era-2 rect on the
+visor and the frame's pause button sitting over the headset.
+Retired by observation: the Era-2 blank monitor (jump artefact), the blue box on the armchair, the intake
+panel clipping, the comfort-envelope hazards. Still open and now measured: 197 draw calls at Maya's turn.

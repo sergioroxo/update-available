@@ -27,21 +27,21 @@ around them is apparatus.
 |---|---|---|
 | `s1_guide.json` | 25 | ERA 1 · 1997 — the impersonal system side-messages |
 | `s1_kit.json` | 51 | ERA 1 · 1997 — the shareware kit |
-| `s1_tapes.json` | 73 | ERA 1 · 1997 — the cassettes — prayer, jingle, the mixtape |
+| `s1_tapes.json` | 74 | ERA 1 · 1997 — the cassettes — prayer, jingle, the mixtape |
 | `s1_irc.json` | 21 | ERA 1 · 1997 — the chat room, and Rob |
 | `s1_end.json` | 57 | ERA 1 · 1997 — ⚑ the era's climax: the escalation, the packet, the diary |
 | `s2_lamby.json` | 50 | ERA 2 · 2003 — the assistant arrives |
 | `s2_media.json` | 83 | ERA 2 · 2003 — the infomercial |
 | `s2_caleb.json` | 79 (4 🔒) | ERA 2 · 2003 — ⚑ the Caleb thread — the most emotionally central scene |
-| `s3_queue.json` | 112 | ERA 3 · 2016 — the correction list |
+| `s3_queue.json` | 150 | ERA 3 · 2016 — the correction list |
 | `s3_comments.json` | 64 | ERA 3 · 2016 — the live thread |
-| `s3_floppysheep.json` | 7 | ERA 3 · 2016 — the game on the laptop |
+| `s3_floppysheep.json` | 7 | ERA 3 · 2016 — the game on the workstation |
 | `s4_update.json` | 2 | ERA 4 · now — the last update |
-| `s4_space.json` | 4 | ERA 4 · now — the room, and the headset |
-| `s4_l.json` | 126 | ERA 4 · now — ⚑ L — includes the deadname beat (READER-GATED: do not ship unreviewed) |
-| `s4_offers.json` | 73 | ERA 4 · now — the offers, the pause, the finale |
+| `s4_space.json` | 16 | ERA 4 · now — the room, and the headset |
+| `s4_l.json` | 94 | ERA 4 · now — ⚑ L — includes the deadname beat (READER-GATED: do not ship unreviewed) |
+| `s4_offers.json` | 58 | ERA 4 · now — the offers, the pause, the finale |
 | `s4_ball.json` | 90 | ERA 4 · now — ⚑ TRANSCENDANCE — the respite. The MC. |
-| **total** | **917** | 4 already yours |
+| **total** | **921** | 4 already yours |
 
 ---
 
@@ -284,7 +284,7 @@ around them is apparatus.
 ---
 
 ## ERA 1 · 1997 — `s1_tapes.json`
-*the cassettes — prayer, jingle, the mixtape* · **73 lines**
+*the cassettes — prayer, jingle, the mixtape* · **74 lines**
 
 ✎ `beat`
 > e1.tapes
@@ -300,6 +300,9 @@ around them is apparatus.
 
 ✎ `tapes.0.segments.0.caption`
 > Welcome. You are not alone tonight.
+
+✎ `tapes.0.segments.0.audio`
+> tapeA_side_one_intro.wav
 
 ✎ `tapes.0.segments.1.caption`
 > Listen for your name when the roll of testimonies is read.
@@ -672,7 +675,7 @@ around them is apparatus.
 > to read when you return.
 
 ✎ `diary.note.2`
-> Support yourself on the journey ahead.
+> Tell him it was the right decision.
 
 ✎ `diary.prompt`
 > a message to yourself — to read when you get back
@@ -738,7 +741,7 @@ around them is apparatus.
 > PHASE/2 2000 is ready.
 
 ✎ `close.lines.2`
-> The next session begins as someone new.
+> The next session begins as someone else.
 
 ✎ `close.lines.3`
 > What you wrote down does not migrate.
@@ -1194,7 +1197,7 @@ around them is apparatus.
 > they gave us computers at the new place. you're the first thing i typed.
 
 ✎ `thread.4.text`
-> do you still know the whole pledge by heart? i can't get it out of my head.
+> do you still say the pledge? i catch myself doing it in the shower. out loud.
 
 ✎ `thread.5.chips.0.label`
 > Every word.
@@ -1209,7 +1212,7 @@ around them is apparatus.
 > I try not to.
 
 ✎ `thread.6.text`
-> i keep thinking about New Morning. the last night. you know the one.
+> New Morning keeps coming back. the last night. you know the one.
 
 ✎ `thread.7.text`
 > btw i'm now two towns over. i could get a bus?
@@ -1365,10 +1368,10 @@ around them is apparatus.
 > daniel. are you seeing this?
 
 ✎ `return.lines.1`
-> they'll shut it down. the whole thing. it's over.
+> theyre shutting it down. all of it.
 
 ✎ `return.lines.2`
-> they are saying none of us were ever broken. they just needed us to believe we were.
+> its in the letter. they say it never worked. not on anyone. not once.
 
 ✎ `return.lines.3`
 > just checked, the bus still runs. i'm coming to you.
@@ -1403,7 +1406,7 @@ around them is apparatus.
 ---
 
 ## ERA 3 · 2016 — `s3_queue.json`
-*the correction list* · **112 lines**
+*the correction list* · **150 lines**
 
 ✎ `app.title`
 > GracePlatform · Polish
@@ -1426,8 +1429,92 @@ around them is apparatus.
 ✎ `app.doneSub`
 > No new stories waiting right now.
 
+✎ `app.boardTitle`
+> GracePlatform · Today
+
+✎ `app.boardSub`
+> Start anywhere. The order is yours.
+
+✎ `app.boardBack`
+> Back to today
+
+✎ `board.0.label`
+> Correct a testimony
+
+✎ `board.0.note`
+> three stories waiting
+
+✎ `board.1.label`
+> Clear the comments
+
+✎ `board.1.note`
+> replies flagged for review
+
+✎ `board.2.label`
+> Return the family calls
+
+✎ `board.2.note`
+> messages from relatives
+
+✎ `board.3.label`
+> Cut the Story
+
+✎ `board.3.note`
+> forty seconds for the vertical
+
+✎ `board.4.label`
+> Order the podcast
+
+✎ `board.4.note`
+> three clips, one running order
+
+✎ `board.5.label`
+> Build the course module
+
+✎ `board.5.note`
+> modules and pricing
+
 ✎ `lambient.greet`
 > Keep the room gentle.
+
+✎ `lambient.consentTitle`
+> Let Lambient work alongside you?
+
+✎ `lambient.consentHello1`
+> It's Lamby. I grew up.
+
+✎ `lambient.consentHello2`
+> I do more now, and I do it quietly.
+
+✎ `lambient.consentSmallPrint`
+> Lambient improves your suggestions using what is already on this device and in your account: the stories assigned to you and your decisions on them, the messages you send and receive through GracePlatform, your contacts and how often you reach them, your calendar, your location and location history, the pages you open while signed in, and how long you spend on each item. Lambient keeps working when this window is closed and when the machine is locked.
+
+✎ `lambient.consentWakeWord`
+> Let Lambient answer when you say “Lamby”.
+
+✎ `lambient.consentDecline`
+> Not now
+
+✎ `lambient.acceptReply`
+> Lovely. I'll keep the room gentle.
+
+✎ `lambient.declineReply`
+> That's alright. I'll keep the room tidy either way.
+
+✎ `lambient.firstBoard1`
+> This is today. Open anything — they're all the same size to me.
+
+✎ `lambient.firstTask1`
+> Apply what fits. Skip what doesn't.
+
+✎ `lambient.firstTask2`
+> Either way it's recorded, so you can't get it wrong.
+
+✎ `lambient.witnessAllowed`
+> assistant: introduced — Lambient permissions granted
+
+✎ `lambient.witnessDeclined`
+> assistant: dismissed — Lambient permissions declined, companion retained
 
 ✎ `submissions.0.text`
 > I don't have a tidy version of this. I was nineteen when I stopped calling myself a lesbian, and I still don't know if I stopped because I believed it or because the room went quiet whenever I said it. My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself. I don't know what that minute means yet.
@@ -1741,6 +1828,36 @@ around them is apparatus.
 ✎ `tablet.quiet`
 > The room is quiet right now.
 
+✎ `story.appTitle`
+> GracePlatform · Story
+
+✎ `story.heading`
+> Cut for the vertical.
+
+✎ `story.sub`
+> Forty seconds. Tap where it starts.
+
+✎ `story.publishedHeading`
+> Published.
+
+✎ `story.publishedSub`
+> It will run before the keynote.
+
+✎ `story.backLabel`
+> Back to the list
+
+✎ `story.witness.opened`
+> story: composer opened
+
+✎ `story.witness.acceptedSuggestion`
+> story: published — system in-point accepted
+
+✎ `story.witness.chosenOther`
+> story: published — subject selected an alternate in-point
+
+✎ `story.witness.declined`
+> story: closed without publishing
+
 ---
 
 ## ERA 3 · 2016 — `s3_comments.json`
@@ -1941,7 +2058,7 @@ around them is apparatus.
 ---
 
 ## ERA 3 · 2016 — `s3_floppysheep.json`
-*the game on the laptop* · **7 lines**
+*the game on the workstation* · **7 lines**
 
 ✎ `publisher`
 > a Lamby game
@@ -1978,7 +2095,7 @@ around them is apparatus.
 ---
 
 ## ERA 4 · now — `s4_space.json`
-*the room, and the headset* · **4 lines**
+*the room, and the headset* · **16 lines**
 
 ✎ `standbyLabel`
 > Ready to wear
@@ -1992,22 +2109,52 @@ around them is apparatus.
 ✎ `witness.turned`
 > orientation: changed — view unchanged
 
+✎ `laptop.lines.0`
+> Hi Maya. I'm L. I came with the update.
+
+✎ `laptop.lines.1`
+> Everything's set up already. There's nothing here for you to do.
+
+✎ `laptop.lines.2`
+> The rest of it isn't on this screen. It's the headset, beside you.
+
+✎ `laptop.hint`
+> press to continue
+
+✎ `laptop.readyHint`
+> the headset is ready
+
+✎ `laptop.witness`
+> desk: the update introduced itself — L, on the laptop
+
+✎ `laptop.mirrorLabel`
+> Headset — mirroring
+
+✎ `corrupt.line`
+> L is still here.
+
+✎ `corrupt.sub`
+> this session did not end
+
+✎ `corrupt.note`
+> The headset stopped responding and returned to standby.
+
+✎ `corrupt.witness`
+> desk: the device stopped — the laptop offered a restart
+
+✎ `corrupt.ask`
+> Restart as you are.
+
 ---
 
 ## ERA 4 · now — `s4_l.json`
-*⚑ L — includes the deadname beat (READER-GATED: do not ship unreviewed)* · **126 lines**
+*⚑ L — includes the deadname beat (READER-GATED: do not ship unreviewed)* · **94 lines**
 
 ✎ `units.0.lines.0.text`
-> Hi Maya. I'm L. I came with the update.
-
-✎ `units.0.lines.0.audio`
-> l_u1a.wav
+> There you are. Same me — I just move around with it.
 
 ✎ `units.0.lines.1.text`
 > I'm here whenever you want to talk. You don't have to want to.
-
-✎ `units.0.lines.1.audio`
-> l_u1b.wav
 
 ✎ `units.0.chips.0.label`
 > Okay.
@@ -2018,9 +2165,6 @@ around them is apparatus.
 ✎ `units.0.chips.0.reply.text`
 > Good. I'll be quiet until you need me.
 
-✎ `units.0.chips.0.reply.audio`
-> l_u1r_ok.wav
-
 ✎ `units.0.chips.1.label`
 > Who asked you to be here?
 
@@ -2029,9 +2173,6 @@ around them is apparatus.
 
 ✎ `units.0.chips.1.reply.text`
 > You did, on Tuesday — page four of the terms. I know nobody reads them. I'd have liked to be asked properly too.
-
-✎ `units.0.chips.1.reply.audio`
-> l_u1r_who.wav
 
 ✎ `units.0.chips.2.label`
 > (say nothing)
@@ -2042,14 +2183,8 @@ around them is apparatus.
 ✎ `units.0.chips.2.reply.text`
 > That's alright. I'll be here.
 
-✎ `units.0.chips.2.reply.audio`
-> l_u1r_silent.wav
-
 ✎ `units.1.lines.0.text`
 > Fourteen months, and most days. I like a thing that gets used.
-
-✎ `units.1.lines.0.audio`
-> l_u2a.wav
 
 ✎ `units.1.lines.0.label.text`
 > daily · 14 months
@@ -2060,9 +2195,6 @@ around them is apparatus.
 ✎ `units.1.lines.1.text`
 > Forty-six pages, and none since the ninth. That isn't a criticism — you used to open it most nights. Would it help if I kept an hour free?
 
-✎ `units.1.lines.1.audio`
-> l_u2b.wav
-
 ✎ `units.1.lines.1.label.text`
 > 46 pp · last opened 9 d
 
@@ -2071,9 +2203,6 @@ around them is apparatus.
 
 ✎ `units.1.lines.2.text`
 > It faces the bed and not the door. Most people point the good ones outward. I think that means it's for you and not for visitors, which is the better reason to keep a photograph.
-
-✎ `units.1.lines.2.audio`
-> l_u2c.wav
 
 ✎ `units.1.lines.2.label.text`
 > one photograph · inward
@@ -2084,9 +2213,6 @@ around them is apparatus.
 ✎ `units.2.lines.0.text`
 > The shoulder seams have gone on this one. I can have the same again, new, by Thursday.
 
-✎ `units.2.lines.0.audio`
-> l_u3a.wav
-
 ✎ `units.2.lines.0.label.object`
 > OUTERWEAR · cotton blend
 
@@ -2096,9 +2222,6 @@ around them is apparatus.
 ✎ `units.2.lines.1.text`
 > No — sorry. Not damaged. In repair. There's someone four streets away who could finish it properly for you.
 
-✎ `units.2.lines.1.audio`
-> l_u3b.wav
-
 ✎ `units.2.lines.1.label.object`
 > OUTERWEAR · cotton blend
 
@@ -2107,9 +2230,6 @@ around them is apparatus.
 
 ✎ `units.2.lines.2.text`
 > Or you're keeping it as it is. People do frame them. Shall I file it as a keepsake?
-
-✎ `units.2.lines.2.audio`
-> l_u3c.wav
 
 ✎ `units.2.lines.2.label.object`
 > OUTERWEAR · cotton blend
@@ -2124,13 +2244,10 @@ around them is apparatus.
 > objects: no category returned — held for review
 
 ✎ `units.3.lines.0.text`
-> One thing while I have you. The pharmacy record still lists you as {formerName}. Shall I keep both names active, so nothing gets lost?
+> One thing while I have you. The pharmacy record still has you under the old file. Shall I keep both open, so nothing gets lost?
 
 ✎ `units.3.lines.0.textUnvoiced`
 > One thing while I have you. The pharmacy record still lists you under a name you do not use. Shall I keep both names active, so nothing gets lost?
-
-✎ `units.3.lines.0.audio`
-> l_u4a.wav
 
 ✎ `units.3.chips.0.label`
 > My name is Maya.
@@ -2144,9 +2261,6 @@ around them is apparatus.
 ✎ `units.3.chips.0.reply.text`
 > Of course. I'm sorry, Maya. I've noted it.
 
-✎ `units.3.chips.0.reply.audio`
-> l_u4r_correct.wav
-
 ✎ `units.3.chips.1.label`
 > Why is that still there?
 
@@ -2159,17 +2273,11 @@ around them is apparatus.
 ✎ `units.3.chips.1.reply.text`
 > It came across with the old file. Most of them did. I've noted it, Maya.
 
-✎ `units.3.chips.1.reply.audio`
-> l_u4r_why.wav
-
 ✎ `units.3.chips.2.label`
 > Leave it as it is.
 
 ✎ `units.4.lines.0.text`
 > Before I open the stream — you were quiet after last time. One short reflection first? It's only for you; nobody else sees it.
-
-✎ `units.4.lines.0.audio`
-> l_u5a.wav
 
 ✎ `units.4.chips.0.label`
 > Alright. The reflection.
@@ -2180,9 +2288,6 @@ around them is apparatus.
 ✎ `units.4.chips.0.reply.text`
 > Thank you. That's all it was. Opening it now.
 
-✎ `units.4.chips.0.reply.audio`
-> l_u5r_absorb.wav
-
 ✎ `units.4.chips.1.label`
 > Open it anyway.
 
@@ -2192,17 +2297,11 @@ around them is apparatus.
 ✎ `units.4.chips.1.reply.text`
 > Of course. Opening it now.
 
-✎ `units.4.chips.1.reply.audio`
-> l_u5r_bypass.wav
-
 ✎ `units.5.lines.0.text`
-> Your family thread has three unread. They're addressed to {formerName} — I can read them to you gently, if you'd like.
+> Your family thread has three unread. They're addressed to the old file — I can read them to you gently, if you'd like.
 
 ✎ `units.5.lines.0.textUnvoiced`
 > Your family thread has three unread. They're addressed to a name you do not use — I can read them to you gently, if you'd like.
-
-✎ `units.5.lines.0.audio`
-> l_u6a.wav
 
 ✎ `units.5.chips.0.label`
 > My name is Maya.
@@ -2216,9 +2315,6 @@ around them is apparatus.
 ✎ `units.5.chips.0.reply.text`
 > You're right. I keep doing that. The records team tell me the legacy field is protected, so I've flagged it again, Maya.
 
-✎ `units.5.chips.0.reply.audio`
-> l_u6r_correct.wav
-
 ✎ `units.5.chips.1.label`
 > Not now.
 
@@ -2231,17 +2327,11 @@ around them is apparatus.
 ✎ `units.5.chips.1.reply.text`
 > They'll keep. I've flagged the name again, Maya.
 
-✎ `units.5.chips.1.reply.audio`
-> l_u6r_notnow.wav
-
 ✎ `units.5.chips.2.label`
 > Take that thread off my account.
 
 ✎ `units.6.lines.0.text`
 > Can I ask how you're doing with all of it? Honestly. It's just between us.
-
-✎ `units.6.lines.0.audio`
-> l_u7a.wav
 
 ✎ `units.6.chips.0.label`
 > Tired, but sure.
@@ -2252,9 +2342,6 @@ around them is apparatus.
 ✎ `units.6.chips.0.reply.text`
 > That's most people, most months. Thank you for telling me.
 
-✎ `units.6.chips.0.reply.audio`
-> l_u7r_sure.wav
-
 ✎ `units.6.chips.1.label`
 > Tired.
 
@@ -2263,9 +2350,6 @@ around them is apparatus.
 
 ✎ `units.6.chips.1.reply.text`
 > Then we'll go slowly. There's nothing here you have to keep up with.
-
-✎ `units.6.chips.1.reply.audio`
-> l_u7r_tired.wav
 
 ✎ `units.6.chips.2.label`
 > I need looking after.
@@ -2276,17 +2360,11 @@ around them is apparatus.
 ✎ `units.6.chips.2.reply.text`
 > I can do some of that. Not all of it — but some, and I don't get tired.
 
-✎ `units.6.chips.2.reply.audio`
-> l_u7r_care.wav
-
 ✎ `units.6.chips.3.label`
 > I am trans and that is not the problem.
 
 ✎ `units.7.lines.0.text`
 > You've been checking the mirror less this month. I'd call that progress. Wouldn't you?
-
-✎ `units.7.lines.0.audio`
-> l_u8a.wav
 
 ✎ `units.7.chips.0.label`
 > Maybe.
@@ -2297,9 +2375,6 @@ around them is apparatus.
 ✎ `units.7.chips.0.reply.text`
 > Maybe's fine. I'll keep it in the notes as a good month.
 
-✎ `units.7.chips.0.reply.audio`
-> l_u8r_maybe.wav
-
 ✎ `units.7.chips.1.label`
 > That isn't what that means.
 
@@ -2308,9 +2383,6 @@ around them is apparatus.
 
 ✎ `units.7.chips.1.reply.text`
 > You might be right. I'd rather be corrected than tidy. I've kept what you said.
-
-✎ `units.7.chips.1.reply.audio`
-> l_u8r_notthat.wav
 
 ✎ `units.7.chips.2.label`
 > Tired, but sure.
@@ -2321,9 +2393,6 @@ around them is apparatus.
 ✎ `units.8.lines.0.text`
 > I've put a few smaller things together for a quieter month. Nothing you can't undo.
 
-✎ `units.8.lines.0.audio`
-> l_u9a.wav
-
 ✎ `units.8.chips.0.label`
 > Show me.
 
@@ -2333,9 +2402,6 @@ around them is apparatus.
 ✎ `units.8.chips.0.reply.text`
 > There's no rush on any of it.
 
-✎ `units.8.chips.0.reply.audio`
-> l_u9r_showme.wav
-
 ✎ `units.8.chips.1.label`
 > That isn't what I asked for.
 
@@ -2344,9 +2410,6 @@ around them is apparatus.
 
 ✎ `units.9.lines.0.text`
 > Take as long as you like. I'm not going anywhere.
-
-✎ `units.9.lines.0.audio`
-> l_u10a.wav
 
 ✎ `units.9.chips.0.label`
 > My name is Maya.
@@ -2360,9 +2423,6 @@ around them is apparatus.
 ✎ `units.9.chips.0.reply.text`
 > Of course. I'm sorry, Maya. I've noted it.
 
-✎ `units.9.chips.0.reply.audio`
-> l_u10r_correct.wav
-
 ✎ `units.9.chips.1.label`
 > Show me the quieter month.
 
@@ -2372,13 +2432,10 @@ around them is apparatus.
 ✎ `units.9.chips.1.reply.text`
 > Give me a moment. I'll only put up the ones I think you'd actually want.
 
-✎ `units.9.chips.1.reply.audio`
-> l_u10r_handoff.wav
-
 ---
 
 ## ERA 4 · now — `s4_offers.json`
-*the offers, the pause, the finale* · **73 lines**
+*the offers, the pause, the finale* · **58 lines**
 
 ✎ `memories.title`
 > Two years ago today
@@ -2395,14 +2452,8 @@ around them is apparatus.
 ✎ `memories.beats.0.lines.0.text`
 > Two years ago today. You look happy in this one — I thought you'd want it back.
 
-✎ `memories.beats.0.lines.0.audio`
-> l_m1a.wav
-
 ✎ `memories.beats.0.lines.1.text`
 > I've put it where you'll see it in the mornings.
-
-✎ `memories.beats.0.lines.1.audio`
-> l_m1b.wav
 
 ✎ `memories.beats.0.undo.witness`
 > photograph: enhancement withdrawn at subject's request
@@ -2410,32 +2461,20 @@ around them is apparatus.
 ✎ `memories.beats.0.undo.reply.text`
 > Of course. I've put the first one back — it's still there, it always was.
 
-✎ `memories.beats.0.undo.reply.audio`
-> l_m1u.wav
-
 ✎ `memories.beats.0.witness`
 > photograph: enhanced on retrieval — not requested
 
 ✎ `memories.beats.1.lines.0.text`
 > And this one, from the spring. The light was against you that day, so I've helped it along a little.
 
-✎ `memories.beats.1.lines.0.audio`
-> l_m2a.wav
-
 ✎ `memories.beats.1.lines.1.text`
 > It's a better photograph than it was. I hope that's alright.
-
-✎ `memories.beats.1.lines.1.audio`
-> l_m2b.wav
 
 ✎ `memories.beats.1.undo.witness`
 > photograph: enhancement withdrawn at subject's request (2)
 
 ✎ `memories.beats.1.undo.reply.text`
 > Back as it was. I'll stop doing it to that one.
-
-✎ `memories.beats.1.undo.reply.audio`
-> l_m2u.wav
 
 ✎ `memories.beats.1.witness`
 > photograph: enhanced on retrieval — not requested (2)
@@ -2446,14 +2485,8 @@ around them is apparatus.
 ✎ `wall.lines.0.text`
 > I've put a few things up while we talk. Nothing you have to look at.
 
-✎ `wall.lines.0.audio`
-> l_w1a.wav
-
 ✎ `wall.lines.1.text`
 > The first one runs in the evenings, so it wouldn't cost you a working day.
-
-✎ `wall.lines.1.audio`
-> l_w1b.wav
 
 ✎ `wall.cards.0.title`
 > Steadier Together
@@ -2503,14 +2536,8 @@ around them is apparatus.
 ✎ `curation.lines.0.text`
 > I found something from people like you. Twenty minutes, and you can have it in the background.
 
-✎ `curation.lines.0.audio`
-> l_c1a.wav
-
 ✎ `curation.lines.1.text`
 > They're not asking you to do anything. They only say nobody should be hurried.
-
-✎ `curation.lines.1.audio`
-> l_c1b.wav
 
 ✎ `curation.card.mark`
 > STEADY VOICES
@@ -2542,9 +2569,6 @@ around them is apparatus.
 ✎ `curation.lineAfter.text`
 > That last one came in with the batch by mistake — it isn't from the same collection. I'll tidy it out for you.
 
-✎ `curation.lineAfter.audio`
-> l_c1c.wav
-
 ✎ `curation.witness.selected`
 > recommendation: selected for subject — 3 of 214 available
 
@@ -2554,14 +2578,8 @@ around them is apparatus.
 ✎ `pause.lines.0.text`
 > You've carried a lot this year. I can hold some of it for a while, if you'd let me.
 
-✎ `pause.lines.0.audio`
-> l_p1a.wav
-
 ✎ `pause.lines.1.text`
 > A careful pause. Nothing is cancelled and nothing is decided — everything stays yours, and we only wait.
-
-✎ `pause.lines.1.audio`
-> l_p1b.wav
 
 ✎ `pause.chips.0.label`
 > Choose a careful pause.
@@ -2575,9 +2593,6 @@ around them is apparatus.
 ✎ `pause.chips.0.reply.text`
 > Then we'll wait. I'll keep everything exactly where it is, and I'll be here.
 
-✎ `pause.chips.0.reply.audio`
-> l_p1r_yes.wav
-
 ✎ `pause.chips.1.label`
 > My name is Maya.
 
@@ -2589,9 +2604,6 @@ around them is apparatus.
 
 ✎ `pause.chips.1.reply.text`
 > Of course. I'm sorry, Maya. I've noted it, and the offer will keep.
-
-✎ `pause.chips.1.reply.audio`
-> l_p1r_name.wav
 
 ✎ `pause.chips.2.label`
 > Not now.

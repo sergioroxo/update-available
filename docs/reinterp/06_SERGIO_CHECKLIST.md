@@ -615,6 +615,21 @@ as he clears them. This file is the source for the eventual pre-ship checklist.*
   screenshot judgment, not yet foreground-reviewed by you). Full detail in
   `01_SESSION_LOG.md`'s Session 32 entry.
 
+
+# ⚑ REVIEW ROUND 1 — 2026-09-02 · six decisions, in the order they unblock things
+*Full argument in [`REVIEW_R1_2026-09-02.md`](REVIEW_R1_2026-09-02.md) §6 and
+[`REVIEW_R1_2026-09-02_LANE_D_SOUND.md`](REVIEW_R1_2026-09-02_LANE_D_SOUND.md) §5. Strike = approved.*
+- **R1-1 · The ball's room: music heard, not music played?** REC: a found CC0 through-the-wall
+  recording now (wall filter off at the landing; clean at the Close), a commissioned producer later;
+  never Suno for this scene. Unblocks S109's assets.
+- **R1-2 · Room 3's seat, now that the desk holds a laptop.** REC: re-measure from the seat; your S96
+  "keep it close" was ruled for a CRT that has since moved to the shelf.
+- **R1-3 · Sound on the four rituals; silence on the Close.** REC: as written in Lane D D-6.
+- **R1-4 · A voice for Lamby (E2)**: Supertonic, apparatus register, 2003-treated. REC: yes.
+- **R1-5 · The record's Era-4 card wording** (S106): the stamp is yours; the misfile line stays
+  *under the old file*.
+- **R1-6 · S104 (Era 4's door) before S108 (the batch).** REC: the door first.
+
 ## B. CHECKS OWED BY SÉRGIO (your queue — orders it however you like)
 
 - [ ] **C3 voice-pass read of the full Era-1 chain** (kit → IRC → escalation →
