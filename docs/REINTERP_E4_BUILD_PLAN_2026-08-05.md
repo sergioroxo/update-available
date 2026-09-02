@@ -228,3 +228,41 @@ laptop asking you to restart. Nobody took the device off you.
 **Open for Sérgio:** how long, and whether L says anything at all during it. My
 read is ~1.2 s and silence — she has already said everything, and a line here
 would be the piece explaining its own ending.
+
+## ⚑ BUILT 2026-09-02 (S101) — and both open questions were decided, not dodged
+
+Sérgio said *"please see that your plan is done. We need to continue"*, so both
+were taken as mine under the autonomous norm, and both are one-line changes if he
+disagrees:
+
+- **1.2 s** (`GLITCH_SECONDS` in `src/desktop/apps/space.ts`), quantised into 12
+  steps so a failing picture costs twelve texture uploads, not one per frame.
+- **Silence.** L says nothing and does not distort.
+
+What was built, exactly as specified: a `glitch` stage between the finale and the
+desk; the band-tear over the finale's own field with the light going out of it;
+`E4Shell.pinned` so the room keeps the plane on her face through it and eases the
+device back to its stand only afterwards; and `handOff()` split so nothing —
+neither the spine nor the laptop's card — moves until the picture has finished
+failing.
+
+### ⚑ AND THE BEAT AFTER IT WAS BROKEN, WHICH THE SPEC DID NOT KNOW
+
+Writing the glitch made the next surface visible, and the next surface was not
+there. Two faults, both fixed in the same session, both of the *"content that
+cannot be met"* class this project keeps paying for:
+
+1. **The Close's restart notice was drawn on the visor.** `UpdateApp` draws on the
+   OS canvas; in E4 that canvas IS the visor plane; the hand-off switches that
+   plane off. So the bare `Restart as you are.` card and then `Your update has
+   failed.` — the sentence the work is named after — were rendering onto a
+   surface that had left the room. The laptop's own card is the notice now
+   (`UpdateApp.acceptNow`), and from the dark beat on the lid mirrors the ritual.
+2. **The ending never arrived.** The conductor holds its breath for the whole of
+   Era 4 (`os.sendOfferPending`), so its own 22 s hold had not begun, let alone
+   elapsed; the ritual completed and nothing was listening. `Spine.onEra('close')`
+   is an ENDING now, not an arrival.
+
+**Measured end to end, twice** — the tail on its own clock (7½ min: headset on →
+ten L units → offers → pause → ball → finale → glitch → the lid's card) and the
+card → the title → the constellation.

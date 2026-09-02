@@ -782,3 +782,20 @@ pressed the first, which loops back by design, so I sat in her last beat forever
 Pressing `handoff`: L reaches `done`, the offers begin and run through `curation`
 into `pause`. Exactly the mistake `tools/walk.mjs` made in Era 1 with `choice:0`,
 made again by hand.
+
+S101 (2026-09-02) — THE GLITCH, THE ENDING, AND THE CEILING. Built Era 4's glitch
+to its own spec (1.2 s, silent, on the visor, the band-tear over the finale's
+field; both open questions decided as mine and logged). Writing it exposed that
+the beat AFTER it was drawn on a surface the hand-off had just switched off: the
+Close's restart notice, and with it "Your update has failed.", was rendering on
+the disabled visor plane, and the conductor — which holds its breath for the whole
+era — was never listening for the ritual it had not armed. The laptop carries the
+notice now and mirrors the dark beat; `Spine.onEra('close')` is an ending rather
+than an arrival. Then the Close itself: the ceiling's glow-stars are a real merged
+mesh the constellation opens OUT of, every network anchor carries the era it
+grounds so the mesh's topology means something at last, and four panels — one per
+era, one per bearing — carry the why/how/what. Labels went screen-aligned (the old
+frame smeared anything you looked straight up at, which is where the project's own
+nodes hang). Measured end to end twice: the 7½-minute tail on its own clock, and
+the card → the title → the constellation. Draw calls 83 → 84 (the stickers);
+the Close scene renders in 8.

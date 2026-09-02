@@ -124,16 +124,36 @@ button, armed through the same door the other four updates use.
 - ✅ All ten of L's units play, in order.
 - ✅ Her last unit's `handoff` chip starts the offers; they run `curation → pause`.
 - ✅ The laptop beat, the wear, the hand-off and the Restart press all work under real pointer presses.
-- ❓ **Not observed:** the offers past `pause` — the finale and the hand-off completing under their own
-  clock. Not known broken; not seen to finish.
+- ✅ **The tail past `pause` — WATCHED, 2026-09-02.** One run on its own clock, 7½ minutes, no review
+  params past the era jump: `pause → held → the ball (arrival · off · ball · after) → the press →
+  cyclorama → the four year-panels → the glitch → the lid's card`. It finishes.
 
-## The three things Era 4 still needs
-1. **THE GLITCH — spec'd, not built.** `docs/REINTERP_E4_BUILD_PLAN_2026-08-05.md` **Stage 4**, written
-   spec-first at Sérgio's instruction. The register is the hard part and is decided there: *the picture
-   fails while the voice does not.* ⚑ Open for Sérgio: how long, and whether L speaks during it.
-2. **L HAS NO VOICE.** `check-spec` reports audio 44/92 on disk, 48 missing. Ten written units, captions
-   only.
-3. **The tail past `pause`** needs one patient watch to prove the finale reaches the hand-off.
+## ⚑ UPDATED 2026-09-02 (S101) — the three above are now one
+
+1. ~~**THE GLITCH**~~ **BUILT.** 1.2 s, silent, on the visor only, the band-tear over the finale's own
+   field with the light going out of it; the device stays on her face through it and eases back to the
+   desk afterwards. Both open questions (length, whether L speaks) were decided as mine under the
+   autonomous norm and are one-line changes — see the build plan's Stage 4.
+2. **L HAS NO VOICE.** Unchanged: `check-spec` reports audio 44/92 on disk, 48 missing. Ten written
+   units, captions only. **This is now the only thing Era 4 is missing.**
+3. ~~**The tail past `pause`**~~ watched — see above.
+
+### ⚑ AND TWO FAULTS THE GLITCH UNCOVERED, both fixed the same day
+Writing the beat made the NEXT surface visible, and the next surface was not there:
+- **The Close's restart notice was drawn on the visor** — a plane the hand-off switches off — so
+  `Restart as you are.` and then **`Your update has failed.`**, the sentence the work is named after,
+  were rendering where nobody could see or press them. The laptop's own card is the notice now, and
+  from the dark beat on the lid mirrors the ritual.
+- **The ending never arrived.** The conductor holds its breath for the whole era, so its own 22 s hold
+  had not begun; the ritual completed and nothing was listening. `Spine.onEra('close')` is an ending
+  now, not an arrival. Measured: card → title → constellation.
+
+### ⚑ AND THE CLOSE ITSELF (Sérgio's 2026-09-02 ask, built)
+The ceiling's glow-stars are a real merged mesh the constellation OPENS OUT OF; every network anchor
+carries the era of the piece it grounds, so the mesh has a topology at last (frame overhead, four arcs,
+three crossings); and four panels — one per era, one per bearing — carry the why/how/what.
+`docs/REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md` §6. **Open for him: the panel wording, and era 4's
+`status`, which I set to `contested`.**
 
 ---
 

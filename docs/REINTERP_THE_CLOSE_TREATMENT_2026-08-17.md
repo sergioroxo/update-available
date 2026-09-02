@@ -89,3 +89,61 @@ three lines above, and make the last press terminal rather than looping.**
 
 ⚑ **Nothing here needs new technology, and that is deliberate** — the ending should be the cheapest
 thing in the piece to build and the most expensive to have gotten wrong.
+
+
+---
+
+# ⚑ 6 · THE CEILING, AND THE FOUR PANELS — added 2026-09-02 (S101), built
+
+Sérgio: *"I would still want to keep the idea of the Stars in the ceiling becoming
+the network of the data used to create this project with the 4 panels with the
+information."* Both halves are in the build now.
+
+## The stars are a real object, not an effect at the ending
+Glow-in-the-dark star stickers over the seat — the reference his own constellation
+brief names — as ONE merged mesh on the ceiling, warm, unlabelled, never pointed
+at, **up there for the whole piece**. At the Close the constellation opens out of
+exactly that patch: one root, lerped from the ceiling anchor at a third of its size
+to the sky's own centre over 2.8 s, while the stickers fade under it.
+
+⚑ And the room is no longer cut on the same frame. The rig snaps the lights out,
+which leaves the stars as the only lit thing in the ceiling, and the room's
+entities go once the sky is already opening. **You have to see them ON a ceiling
+for them to become anything** — cutting first threw away the entire reason they
+are up there.
+
+## The network finally has a topology
+`08_STATUS_REGISTER.md` §2 (decision Q4) has flagged the Close's topology as
+decorative since Round 18, and it was: seeded-random positions, links by proximity.
+Every anchor in `close_network.json` now carries **the era of the piece it
+grounds**, and the geometry follows —
+
+| | |
+|---|---|
+| **era 0** — the project's own frame and its research passes | a small cap **directly overhead, where the ceiling was.** The piece puts its own workings above its head, not in a corner — his 2026-07-24 note about disclosing the production prominently |
+| **eras 1–4** | one arc each, at four bearings 90° apart, in order. **Turning right walks you forward through thirty years** |
+
+Links run along each era (so each is traceable on its own, which is what its panel
+claims) and then **across, exactly three times** — one crossing per hand-over.
+Three lines carry *the demand never changed, only the disguise*, and because there
+are only three they can actually be followed.
+
+## The four panels
+One per era, hanging over its own arc, stating what the apparatus DID in the
+Dossier's flat register — his own 2026-06-29 framing (*"four panels, one per era,
+giving the audience the why/how/what"*) in the place it belongs. They do **not**
+billboard: the panel is where it is, and you turn to read it. Copy in
+`close_network.json`'s `panels`, each with a `status`.
+
+⚑ They carry **no** title beat and **no** `Restart as you are.` Those belong to the
+update that brought you here (§1, §5) and saying them twice would explain the
+ending. And §3's law is untouched: the panels describe the apparatus. Nothing on
+them describes a person.
+
+⚑ **Open for Sérgio (both his by right):** the panel wording, and era 4's `status`,
+which I set to `contested` — the mesh and the funnel are documented, but *"the
+demand is never stated"* is the piece's reading of them, not a source's.
+
+## What it cost
+One draw call everywhere (the stickers). The Close scene renders in 8. The panels
+are one atlas, one mesh, one material.
