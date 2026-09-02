@@ -684,7 +684,14 @@ if (unreachedCount > UNREACHED_BASELINE) {
   conductProps = [...keys.values()].reduce((a, b) => a + b.length, 0);
 }
 
-const AUDIO_BASELINE = 48;   // 86 minus the 38 refused ball_* names
+// ⚑ 48 → 1 (S102, 2026-09-02). The 47 were L's: Era 4's entire voice, named
+// correctly in the data and rendered by nobody. They are on disk now, in one
+// sitting, and REGISTERED (src/audio/tapeAudio.ts — a rendered file whose name
+// is not in that registry is never requested, which looks exactly like silence).
+// ⚑ The ONE that remains is `lambyos_2003_boot.mp3`, and it is not a TTS job:
+// it is the E2 boot JINGLE, a piece of sound design that has never been made.
+// It stays declared and unregistered on purpose — see tapeAudio.ts's own note.
+const AUDIO_BASELINE = 1;
 let audioMissing = 0, audioRefs = 0;
 {
   const refs = new Set();

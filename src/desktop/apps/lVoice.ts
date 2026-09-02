@@ -40,11 +40,15 @@
  * a `felt` beat is a beat L is ABSENT from. When S78/S79 build one, L does not
  * enter it.
  *
- * ⚑ NO LINE IS VOICED. `playOnce` is wired and every line names a file, but no
- * clip has been rendered: audio comes after Sérgio's voice pass, in one batch
- * (`data/audio/tts_manifest.json`'s `l_era4_voice`). Until then the audio
- * registry's own law (`src/audio/tapeAudio.ts`) means an unregistered name is
- * never requested — no console error, no 404, silent captions.
+ * ⚑ EVERY LINE IS VOICED — 2026-09-02, and this comment used to say the
+ * opposite. All 47 of L's clips (the ten units here and the fifteen offer lines
+ * that follow them) were rendered in ONE sitting from
+ * `data/audio/tts_manifest.json`'s `l_era4_voice`, Supertonic F3, register
+ * `apparatus`. ⚑ Two things had to be true for a rendered file to be audible at
+ * all, and only one of them was: the name must be in `src/audio/tapeAudio.ts`'s
+ * REGISTRY, because an unregistered name is never requested — silently, with no
+ * console error and no 404, which looks exactly like the bug it hides. All 47
+ * are registered. The second is `speak()` below.
  */
 import { captionBand, chip, labelField } from '../theme/era4';
 import { setFont, wrapText } from '../theme/chrome';
@@ -61,6 +65,9 @@ const UNIT_GAP = 1.2;
 /** how long a chip's own reply sits before the conversation moves on, on top of
  *  the reply line's authored `hold`. */
 const REPLY_TAIL = 0.4;
+/** ⚑ S102 — the beat of air after a spoken line finishes, before the caption
+ *  moves on. Without it the next caption lands on the last syllable. */
+const CLIP_TAIL = 0.45;
 
 const CAPTION_WRAP = 458;   // inside captionBand's 22 px left inset at font 11
 const CAPTION_MAX_ROWS = 4;
@@ -165,7 +172,10 @@ export class LVoice {
     // ⚑ the caption is already on screen; the clip follows it. Never the other
     // way round, and never in the same frame.
     if (!this.spoke && before < CAPTION_LEAD && this.t >= CAPTION_LEAD) this.speak(cur);
-    const dwell = cur.hold + (this.phase === 'replying' ? REPLY_TAIL : 0);
+    const dwell = Math.max(
+      cur.hold + (this.phase === 'replying' ? REPLY_TAIL : 0),
+      this.clipDwell
+    );
     if (this.t < dwell) return;
     if (this.phase === 'replying') { this.afterReply(); return; }
     this.advanceLine();
@@ -237,11 +247,47 @@ export class LVoice {
    * MENU, never in the fiction: an opt-out the system grants you is not an
    * opt-out (08 §8 decision 10, Sérgio).
    */
+  /**
+   * ⚑ S102 — L NOW HAS A VOICE, AND THE CAPTIONS FOLLOW IT.
+   *
+   * Every `hold` in `s4_l.json` was authored against SILENCE — a reading time
+   * for a subtitle, written before a single clip existed. Measured against the
+   * rendered batch, 22 of the 47 lines are LONGER than the hold written for
+   * them, one of them by 3.9 s. Left alone, the caption would move on mid-word
+   * and `playOnce` would start the next clip over the top of the one still
+   * running: two Ls talking at once, in an era whose entire premise is a voice
+   * that never varies.
+   *
+   * So the dwell is the LONGER of the two — the authored reading time, or the
+   * clip's own length plus its lead and a beat of air. Not the clip alone:
+   * where the audio is shorter than the hold, the hold is a reading time and
+   * still owns the beat. ⚑ Read off the element rather than copied into the
+   * data, so a re-render at a different speed cannot leave the two disagreeing
+   * — the fault this exists to fix, in its other direction.
+   */
+  private clip: HTMLAudioElement | null = null;
+  /** seconds this line needs for its clip, 0 when there is no clip */
+  private clipDwell = 0;
+
   private speak(l: LLine): void {
     this.spoke = true;
+    this.clipDwell = 0;
+    // whatever was still playing belongs to the last line — it is over
+    this.clip?.pause();
+    this.clip = null;
     if (!l.audio || !l.text) return;
+    // the deadname opt-out: the caption still shows what the system did, and
+    // nothing is spoken — so nothing is waited for either.
     if (l.deadname && ledger.view.unvoicedName) return;
-    playOnce(l.audio);
+    const a = playOnce(l.audio);
+    if (!a) return;
+    this.clip = a;
+    const measure = (): void => {
+      if (this.clip !== a) return;
+      if (Number.isFinite(a.duration)) this.clipDwell = CAPTION_LEAD + a.duration + CLIP_TAIL;
+    };
+    if (a.readyState >= 1) measure();
+    else a.addEventListener('loadedmetadata', measure, { once: true });
   }
 
   /**

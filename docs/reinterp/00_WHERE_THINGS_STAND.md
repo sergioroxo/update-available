@@ -134,8 +134,17 @@ button, armed through the same door the other four updates use.
    field with the light going out of it; the device stays on her face through it and eases back to the
    desk afterwards. Both open questions (length, whether L speaks) were decided as mine under the
    autonomous norm and are one-line changes — see the build plan's Stage 4.
-2. **L HAS NO VOICE.** Unchanged: `check-spec` reports audio 44/92 on disk, 48 missing. Ten written
-   units, captions only. **This is now the only thing Era 4 is missing.**
+2. ~~**L HAS NO VOICE.**~~ **SHE HAS ONE — 2026-09-02.** All 47 clips rendered in one sitting
+   (Supertonic F3, `register: apparatus`), **registered** one name at a time in `tapeAudio.ts` — the
+   step the data's own note warned about, because an unregistered name is never requested and that
+   silence looks exactly like having rendered nothing — and the captions now dwell for whichever is
+   longer, the authored reading time or the clip. 22 of the 47 clips ran longer than the hold written
+   for them; before this the beat advanced mid-word and started the next line over the top of it.
+   Measured in the browser: 34 clips constructed, every one played to its full duration, no overlaps,
+   all HTTP 200. `check-spec` audio 91/92, baseline tightened 48 → 1.
+   ⚑ **The one that remains is not a TTS job:** `lambyos_2003_boot.mp3`, the E2 boot jingle, a piece of
+   sound design nobody has made. It stays declared and unregistered on purpose.
+   ⚑ **Era 4 has nothing missing now.** The next thing is Sérgio's ear, not more building.
 3. ~~**The tail past `pause`**~~ watched — see above.
 
 ### ⚑ AND TWO FAULTS THE GLITCH UNCOVERED, both fixed the same day

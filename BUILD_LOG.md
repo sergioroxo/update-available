@@ -799,3 +799,18 @@ frame smeared anything you looked straight up at, which is where the project's o
 nodes hang). Measured end to end twice: the 7½-minute tail on its own clock, and
 the card → the title → the constellation. Draw calls 83 → 84 (the stickers);
 the Close scene renders in 8.
+
+S102 (2026-09-02) — L GETS HER VOICE, AND THE CAPTIONS LEARN TO WAIT FOR IT. Rendered
+all 47 of Era 4's lines in one sitting (Supertonic F3, register apparatus) — the ten
+conversation units AND the fifteen offer lines, which the batch had never included, so a
+render would have voiced half a continuous scene and left the other half as captions.
+Two gates the render alone would not have passed: every name is now REGISTERED in
+tapeAudio.ts (an unregistered name is never requested, silently, which is
+indistinguishable from having rendered nothing — the data's own note warned about exactly
+this), and the batch gained a per-line `audioPrefix` gate so a future non-L line in one of
+those files is skipped and reported rather than quietly synthesized. Then the pacing: 22
+of the 47 clips run longer than the `hold` authored for them against silence, one by
+3.9 s, so lVoice and offers now dwell for whichever is longer, read off the element rather
+than copied into the data. Measured in the browser with window.Audio wrapped: 34 clips,
+every one played to its full duration, no overlaps, all 200. AUDIO_BASELINE 48 → 1; the
+one left is the E2 boot jingle, which is sound design and not speech.

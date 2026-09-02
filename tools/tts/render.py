@@ -180,13 +180,39 @@ def synth_batch(entry: dict) -> None:
     check_register(entry)
     spec = entry["batch"]
     requires = spec.get("requires", ["text", "audio"])
-    doc = load_json(ROOT / spec["file"])
-    lines = collect_batch(doc, requires, [])
-    if not lines:
-        raise SystemExit(f"batch '{entry['id']}' matched no lines in {spec['file']}.")
     text_field = spec.get("textField", "text")
     audio_field = spec.get("audioField", "audio")
     out_dir = spec.get("outDir", "public/assets/audio/")
+    # ⚑ SEVERAL FILES, STILL ONE SITTING (S102). L does not only speak in
+    #   s4_l.json: the offers (`s4_offers.json`) are the same machine in the same
+    #   conversation, fifteen lines of it, and they were outside the batch — so a
+    #   render would have voiced the first half of a continuous scene and left the
+    #   second half as captions, which is a worse fault than silence because it
+    #   sounds like two different systems. `files` is the list; `file` still works
+    #   and means a list of one.
+    files = spec.get("files") or [spec["file"]]
+    lines = []
+    for rel in files:
+        found = collect_batch(load_json(ROOT / rel), requires, [])
+        if not found:
+            raise SystemExit(f"batch '{entry['id']}' matched no lines in {rel}.")
+        lines.extend(found)
+    # ⚑ AND A SECOND ETHICS GATE, NARROWER THAN `register` (S102). `register`
+    #   vouches for the ENTRY; this vouches for each LINE. A batch walks whole
+    #   narrative files, so the day somebody adds a voiced line that is NOT this
+    #   machine — a person, a clip, anything — to a file already in the batch, it
+    #   would be synthesized silently and nobody would be asked. `audioPrefix`
+    #   makes the batch name whose voice it is claiming to be, and a line outside
+    #   that claim is skipped and REPORTED rather than quietly rendered.
+    prefix = spec.get("audioPrefix")
+    if prefix:
+        kept = [l for l in lines if str(l.get(audio_field, "")).startswith(prefix)]
+        for skipped in [l for l in lines if l not in kept]:
+            print(f"[{entry['id']}] SKIPPED (not '{prefix}*'): {skipped.get(audio_field)} "
+                  f"— outside this batch's voice; render it deliberately or not at all")
+        lines = kept
+    if not lines:
+        raise SystemExit(f"batch '{entry['id']}' matched no lines.")
     print(f"[{entry['id']}] {len(lines)} line(s), one voice ({entry.get('voice', 'F1')}), one sitting")
     tts = load_tts()
     for line in lines:

@@ -56,7 +56,64 @@ const REGISTRY: Record<string, string> = {
   //   means an UNREGISTERED name is never requested, silently and with no
   //   console error — so a rendered file, correctly named in the data, would
   //   still have played nothing and looked exactly like the bug it was fixing.
-  'tapeA_side_one_intro.wav': `${AUDIO_BASE}tapeA_side_one_intro.wav`
+  'tapeA_side_one_intro.wav': `${AUDIO_BASE}tapeA_side_one_intro.wav`,
+  // ⚑ L, ERA 4's VOICE — 47 clips, rendered 2026-09-02 in ONE sitting
+  //   (tools/tts/render.py, Supertonic F3, register: apparatus). Ten
+  //   conversation units from data/dialog/s4_l.json and the fifteen offer
+  //   lines that follow them from s4_offers.json — the same machine in the
+  //   same conversation, so the same batch and the same voice style.
+  //   ⚑ AND THEY ARE LISTED ONE BY ONE ON PURPOSE. A prefix rule would have
+  //   been shorter and would have given back exactly the 404s this law exists
+  //   to prevent: an unregistered name is never requested, and that guarantee
+  //   only holds while the registry names real files. Era 4 was silent for
+  //   three sessions with every one of these correctly named in the data.
+  'l_u1a.wav': `${AUDIO_BASE}l_u1a.wav`,
+  'l_u1b.wav': `${AUDIO_BASE}l_u1b.wav`,
+  'l_u1r_ok.wav': `${AUDIO_BASE}l_u1r_ok.wav`,
+  'l_u1r_who.wav': `${AUDIO_BASE}l_u1r_who.wav`,
+  'l_u1r_silent.wav': `${AUDIO_BASE}l_u1r_silent.wav`,
+  'l_u2a.wav': `${AUDIO_BASE}l_u2a.wav`,
+  'l_u2b.wav': `${AUDIO_BASE}l_u2b.wav`,
+  'l_u2c.wav': `${AUDIO_BASE}l_u2c.wav`,
+  'l_u3a.wav': `${AUDIO_BASE}l_u3a.wav`,
+  'l_u3b.wav': `${AUDIO_BASE}l_u3b.wav`,
+  'l_u3c.wav': `${AUDIO_BASE}l_u3c.wav`,
+  'l_u4a.wav': `${AUDIO_BASE}l_u4a.wav`,
+  'l_u4r_correct.wav': `${AUDIO_BASE}l_u4r_correct.wav`,
+  'l_u4r_why.wav': `${AUDIO_BASE}l_u4r_why.wav`,
+  'l_u5a.wav': `${AUDIO_BASE}l_u5a.wav`,
+  'l_u5r_absorb.wav': `${AUDIO_BASE}l_u5r_absorb.wav`,
+  'l_u5r_bypass.wav': `${AUDIO_BASE}l_u5r_bypass.wav`,
+  'l_u6a.wav': `${AUDIO_BASE}l_u6a.wav`,
+  'l_u6r_correct.wav': `${AUDIO_BASE}l_u6r_correct.wav`,
+  'l_u6r_notnow.wav': `${AUDIO_BASE}l_u6r_notnow.wav`,
+  'l_u7a.wav': `${AUDIO_BASE}l_u7a.wav`,
+  'l_u7r_sure.wav': `${AUDIO_BASE}l_u7r_sure.wav`,
+  'l_u7r_tired.wav': `${AUDIO_BASE}l_u7r_tired.wav`,
+  'l_u7r_care.wav': `${AUDIO_BASE}l_u7r_care.wav`,
+  'l_u8a.wav': `${AUDIO_BASE}l_u8a.wav`,
+  'l_u8r_maybe.wav': `${AUDIO_BASE}l_u8r_maybe.wav`,
+  'l_u8r_notthat.wav': `${AUDIO_BASE}l_u8r_notthat.wav`,
+  'l_u9a.wav': `${AUDIO_BASE}l_u9a.wav`,
+  'l_u9r_showme.wav': `${AUDIO_BASE}l_u9r_showme.wav`,
+  'l_u10a.wav': `${AUDIO_BASE}l_u10a.wav`,
+  'l_u10r_correct.wav': `${AUDIO_BASE}l_u10r_correct.wav`,
+  'l_u10r_handoff.wav': `${AUDIO_BASE}l_u10r_handoff.wav`,
+  'l_m1a.wav': `${AUDIO_BASE}l_m1a.wav`,
+  'l_m1b.wav': `${AUDIO_BASE}l_m1b.wav`,
+  'l_m1u.wav': `${AUDIO_BASE}l_m1u.wav`,
+  'l_m2a.wav': `${AUDIO_BASE}l_m2a.wav`,
+  'l_m2b.wav': `${AUDIO_BASE}l_m2b.wav`,
+  'l_m2u.wav': `${AUDIO_BASE}l_m2u.wav`,
+  'l_w1a.wav': `${AUDIO_BASE}l_w1a.wav`,
+  'l_w1b.wav': `${AUDIO_BASE}l_w1b.wav`,
+  'l_c1a.wav': `${AUDIO_BASE}l_c1a.wav`,
+  'l_c1b.wav': `${AUDIO_BASE}l_c1b.wav`,
+  'l_c1c.wav': `${AUDIO_BASE}l_c1c.wav`,
+  'l_p1a.wav': `${AUDIO_BASE}l_p1a.wav`,
+  'l_p1b.wav': `${AUDIO_BASE}l_p1b.wav`,
+  'l_p1r_yes.wav': `${AUDIO_BASE}l_p1r_yes.wav`,
+  'l_p1r_name.wav': `${AUDIO_BASE}l_p1r_name.wav`,
   // S60 — THE E2 BOOT JINGLE, HOOKED AND NOT YET REGISTERED. The LambyOS 2003
   // boot (src/desktop/os.ts's `startE2Boot`) already asks for the name in
   // data/dialog/s2_lamby.json's `osBootTrack` — 'lambyos_2003_boot.mp3'.

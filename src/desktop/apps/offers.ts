@@ -81,6 +81,9 @@ import script from '../../../data/dialog/s4_offers.json';
 /** the caption's head start on the clip, in seconds — the same safety measure
  *  `lVoice.ts` keeps, for the same reason, and NOT a pacing choice. */
 const CAPTION_LEAD = 0.5;
+/** ⚑ S102 — a beat of air after a clip ends; `lVoice.ts`'s own CLIP_TAIL, and
+ *  the same reason: the next caption must not land on the last syllable. */
+const CLIP_TAIL = 0.45;
 const CAPTION_WRAP = 458;
 const CAPTION_MAX_ROWS = 3;
 const CHIP = { x: 16, w: 306, h: 19, gap: 4 } as const;
@@ -206,7 +209,14 @@ export class E4Offers {
       const before = this.lineT;
       this.lineT += dt;
       if (!this.spoke && before < CAPTION_LEAD && this.lineT >= CAPTION_LEAD) this.speak(this.cur);
-      if (this.lineT >= this.cur.hold) this.nextLine();
+      // ⚑ S102 — THE CAPTION WAITS FOR THE VOICE. Every `hold` in
+      //   s4_offers.json was authored against silence; measured against the
+      //   rendered batch, several of these lines run longer than the hold
+      //   written for them, so without this the beat advanced mid-word and the
+      //   next clip started over the top of the one still playing. The dwell is
+      //   the longer of the authored reading time and the clip's own length.
+      //   Same rule, same tail and same reasons as `lVoice.ts`.
+      if (this.lineT >= Math.max(this.cur.hold, this.clipDwell)) this.nextLine();
     } else if (this.queue.length > 0) {
       this.nextLine();
     }
@@ -236,6 +246,7 @@ export class E4Offers {
     this.cur = this.queue.shift() ?? null;
     this.lineT = 0;
     this.spoke = false;
+    this.clipDwell = 0;
     this.version++;
   }
 
@@ -363,10 +374,25 @@ export class E4Offers {
   }
 
   // ── the voice ────────────────────────────────────────────────────────────
+  /** the clip in the air, and how long this line needs for it — see `speak` */
+  private clip: HTMLAudioElement | null = null;
+  private clipDwell = 0;
+
   private speak(l: OLine): void {
     this.spoke = true;
+    this.clipDwell = 0;
+    this.clip?.pause();   // whatever was still playing belongs to the last line
+    this.clip = null;
     if (!l.audio || !l.text) return;
-    playOnce(l.audio);
+    const a = playOnce(l.audio);
+    if (!a) return;
+    this.clip = a;
+    const measure = (): void => {
+      if (this.clip !== a) return;
+      if (Number.isFinite(a.duration)) this.clipDwell = CAPTION_LEAD + a.duration + CLIP_TAIL;
+    };
+    if (a.readyState >= 1) measure();
+    else a.addEventListener('loadedmetadata', measure, { once: true });
   }
 
   private file(id: string, outcome: LedgerOutcome, witness: string): void {

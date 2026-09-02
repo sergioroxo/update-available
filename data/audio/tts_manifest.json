@@ -48,7 +48,12 @@
       "speed": 0.96,
       "steps": 12,
       "batch": {
-        "file": "data/dialog/s4_l.json",
+        "files": [
+    "data/dialog/s4_l.json",
+    "data/dialog/s4_offers.json"
+   ],
+   "audioPrefix": "l_",
+   "_docFiles": "\u2691 S102 \u2014 BOTH HALVES OF THE SAME CONVERSATION. This batch named only s4_l.json, so the ten conversation units would have been voiced and the fifteen lines of the OFFERS that follow them \u2014 the memories, the wall, the curation, the careful pause \u2014 would have stayed as captions. They are the same machine, in the same sitting, with nothing in between: rendering one and not the other would sound like two different systems, which is worse than silence. \u2691 `audioPrefix` is the per-LINE ethics gate a multi-file walk needs: `register` vouches for this ENTRY, the prefix vouches for each LINE, and anything in these files that is not L is skipped and reported rather than quietly synthesized.",
         "requires": ["text", "audio"],
         "textField": "text",
         "audioField": "audio",

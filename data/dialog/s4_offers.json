@@ -19,7 +19,7 @@
 
   "_docMarks": "Invented marks only (CLAUDE.md), and every one below is already on that list: HopeRestored, Sift, Compass, Pastor.AI. No real product, platform, company, organisation or person is named anywhere in this file. The real ones — the export network, the lobbying campaign, the detransition-AI service — live on dossier cards with their statuses and citations, in data/provotypes/e4_offers.json.",
 
-  "_docAudio": "⚑ NO LINE IN THIS FILE IS VOICED, exactly as in s4_l.json. Every `audio` name is a NAME ONLY; clips are generated after the voice pass, in ONE batch, one voice, one sitting. Until then the audio registry's own law (src/audio/tapeAudio.ts) means an unregistered name is never requested: no console error, no 404, silent captions. The captions are the whole surface today and they are drawn BEFORE any clip is asked for, which is the safety measure and not a pacing choice.",
+  "_docAudio": "⚑ EVERY LINE IN THIS FILE IS VOICED — rendered 2026-09-02 (S102), in the SAME batch and the same sitting as s4_l.json's ten units, because this is the same machine still talking: the batch in data/audio/tts_manifest.json names both files. Registered, one name at a time, in src/audio/tapeAudio.ts — an unregistered name is never requested, and that silence is indistinguishable from having rendered nothing. ⚑ The `hold` values here were authored against silence too; offers.ts dwells for whichever is longer, the authored reading time or the clip, so a beat can no longer advance mid-word and start the next line over the top of it. The captions are still drawn BEFORE the clip, never with it.",
 
   "speaker": "L",
 
