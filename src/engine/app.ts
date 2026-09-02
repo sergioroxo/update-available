@@ -2928,6 +2928,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       cluster?.update(dt);
       ceiling?.update(dt);
       cloud?.update(dt);
+      // ⚑ S101 — the room goes once the sky is on its way (see `enterClose`).
+      if (closeRoomPending && cloud && cloud.open >= 0.45) {
+        for (const id of closeRoomPending) {
+          const e = app.root.findByName(id);
+          if (e instanceof pc.Entity) e.enabled = false;
+        }
+        closeRoomPending = null;
+      }
       spine?.update(dt);
 
       // R28-1 movement prototype: the blink timer + marker visibility. The
@@ -3274,10 +3282,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   /** the Close: the room goes dark and gives way to the constellation —
    *  shared by the ?close=1 review param and the debug panel's button */
+  /** ⚑ S101 — the room is NOT switched off on the same frame any more; see
+   *  `enterClose`. These are the ids waiting to go, and the cloud's own opening
+   *  is the clock. */
+  let closeRoomPending: string[] | null = null;
+
   function enterClose(): void {
     if (!cluster || !cloud || cloud.visible) return;
     cluster.applyRig('close', false);
-    for (const id of [
+    /**
+     * ⚑ AND THE ROOM STAYS FOR A BEAT (S101). The rig snaps the lights out on
+     * this frame, so what is left is a dark room with the glow-stars over the
+     * seat still lit — they are emissive, and they are the only thing in the
+     * ceiling that ever was. The constellation opens out of exactly that patch,
+     * and only once it is under way does the room itself go. Cutting the room on
+     * the same frame (which is what this did) threw away the entire reason the
+     * stars are up there: you have to see them ON a ceiling for them to become
+     * anything.
+     */
+    closeRoomPending = [
       'era1-room',
       'fluid-niche',
       'cluster-shell',
@@ -3296,10 +3319,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   here too means the Close does not depend on that gate still running.
       'era3-device-laptop',
       'era4-visor'
-    ]) {
-      const e = app.root.findByName(id);
-      if (e instanceof pc.Entity) e.enabled = false;
-    }
+    ];
     // Round 18: never black — the constellation sits in a night-blue sky
     if (camera.camera) camera.camera.clearColor = closeBackdropColor();
     cloud.show();

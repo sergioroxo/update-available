@@ -1,29 +1,84 @@
 {
-  "_doc": "PLACEHOLDER — the Close constellation's knowledge-network labels (Sérgio, Round 18: the point cloud 'should be with the data and information of what was used to create this project'). S92: each entry is now exactly ONE apparatus node (src/room/pointCloud.ts) — cool, sharp, full-opacity, linked to the others in a guaranteed-connected chain — the network of documentary anchors, research passes, and the PhD frame behind the piece, traceable end to end. This is the apparatus side of the Close's two-tier law (REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md §3); the piece's soft/warm person nodes carry no label at all, by design. Every entry names material already in the project's knowledge base / research docs; Sérgio's pass owns final wording and may cut, rephrase, or extend. Cap: 32 (the label atlas's own row budget). No survivor names, no real individuals — sources and structures only.",
+  "_doc": "The Close constellation — the network of the material this piece is built from, and the four panels that read it. Sérgio, 2026-09-02: \"I would still want to keep the idea of the Stars in the ceiling becoming the network of the data used to create this project with the 4 panels with the information.\" S101 keeps both halves: the stars over the seat open out into this network (src/room/pointCloud.ts), and each of the four eras gets ONE panel hanging over its own arc of anchors. ⚑ WHAT CHANGED IN THE SHAPE: every entry used to be a bare string on a golden-angle spread, so the mesh's topology said nothing. Each entry now carries the ERA OF THE PIECE IT GROUNDS — 0 for the project's own frame, which hangs overhead where the ceiling was, and 1-4 for the rooms — and the geometry follows it: one arc per era, at one bearing per era, so the player TURNS through 1997 → 2003 → 2016 → now, and the links run along each era and then across to the next. The cross-era links are the piece's own thesis and there are exactly three of them. ⚑ Era is the era each anchor GROUNDS IN THE PIECE, not the anchor's own date (Love Won Out ran from 1998; it grounds 2003's curricula). Cap: 32 (the label atlas's own row budget). No survivor names, no real individuals — sources and structures only. ⚑ Panel copy is Claude's draft under the 2026-08-17 norm; Sérgio owns dossier phrasing and every status, and his edit wins.",
   "labels": [
-    "SurvivingSOGICE — UiB / CDN",
-    "ethics constraints v1",
-    "production script v0.3",
-    "Exodus referral map 1996",
-    "Truth in Love campaign 1998",
-    "Love Won Out curricula",
-    "van den Aardweg questionnaire 1997",
-    "ex-gay discourse boards 1997",
-    "NARTH position 2006",
-    "Exodus women's initiative 2008",
-    "APA task force review 2009",
-    "RHN HOPE conference 2016",
-    "Sides A/B/X/Y chart 2016",
-    "youth therapy project 3/2016",
-    "SEGM-Genspect-GETA mesh",
-    "GETA clinical guide 2022",
-    "Genspect parent survey",
-    "detransition cohort study (Fenway)",
-    "SPLC detrans reporting",
-    "butch/FTM borderland (Halberstam/Hale)",
-    "cross-cluster infrastructures research",
-    "nine rooms research pass",
-    "provotype research pass",
-    "survivor-adjacent sourcing rules"
+    { "text": "SurvivingSOGICE — UiB / CDN", "era": 0 },
+    { "text": "ethics constraints v1", "era": 0 },
+    { "text": "production script v0.3", "era": 0 },
+    { "text": "cross-cluster infrastructures research", "era": 0 },
+    { "text": "nine rooms research pass", "era": 0 },
+    { "text": "provotype research pass", "era": 0 },
+    { "text": "survivor-adjacent sourcing rules", "era": 0 },
+
+    { "text": "Exodus referral map 1996", "era": 1 },
+    { "text": "van den Aardweg questionnaire 1997", "era": 1 },
+    { "text": "ex-gay discourse boards 1997", "era": 1 },
+    { "text": "Truth in Love campaign 1998", "era": 1 },
+
+    { "text": "Love Won Out curricula", "era": 2 },
+    { "text": "NARTH position 2006", "era": 2 },
+    { "text": "Exodus women's initiative 2008", "era": 2 },
+    { "text": "APA task force review 2009", "era": 2 },
+
+    { "text": "RHN HOPE conference 2016", "era": 3 },
+    { "text": "Sides A/B/X/Y chart 2016", "era": 3 },
+    { "text": "youth therapy project 3/2016", "era": 3 },
+    { "text": "butch/FTM borderland (Halberstam/Hale)", "era": 3 },
+
+    { "text": "SEGM-Genspect-GETA mesh", "era": 4 },
+    { "text": "GETA clinical guide 2022", "era": 4 },
+    { "text": "Genspect parent survey", "era": 4 },
+    { "text": "detransition cohort study (Fenway)", "era": 4 },
+    { "text": "SPLC detrans reporting", "era": 4 }
+  ],
+  "_panelsDoc": "⚑ FOUR PANELS, ONE PER ERA, and they are the only prose in the Close. They state what the apparatus DID in each era, in the flat register the Dossier uses — never what anybody felt, and never a number of people. `status` is the dossier law's own vocabulary (CLAUDE.md) and applies to the panel's claims as a whole; each panel names only structures already anchored by the labels hanging under it. ⚑ They do NOT carry the title beat or `Restart as you are.` — those are the update's (data/strings/updates.json's `close`) and stealing them here would explain the ending twice.",
+  "panels": [
+    {
+      "era": 1,
+      "years": "1997",
+      "title": "RECRUIT",
+      "lines": [
+        "The apparatus goes where the question is asked:",
+        "a board, a mailing list, a leaflet with an address.",
+        "It offers a name for what you are and a way out of it.",
+        "The demand is said out loud — become someone else."
+      ],
+      "status": "documentary"
+    },
+    {
+      "era": 2,
+      "years": "2003",
+      "title": "AUDIT",
+      "lines": [
+        "The work is handed to the person it is done to.",
+        "Curricula, accountability partners, a log of your",
+        "own thoughts, read back to you weekly.",
+        "The demand has not changed. You enforce it now."
+      ],
+      "status": "documentary"
+    },
+    {
+      "era": 3,
+      "years": "2016",
+      "title": "GOVERN",
+      "lines": [
+        "The practice is banned, and rebrands as gentleness:",
+        "conferences, testimony platforms, a moderation queue,",
+        "a chart that sorts people into sides.",
+        "The demand is renamed care, and is now infrastructure."
+      ],
+      "status": "documentary"
+    },
+    {
+      "era": 4,
+      "years": "now",
+      "title": "RESURGENCE",
+      "lines": [
+        "The target moves to gender; the method moves to the feed.",
+        "Clinical-sounding networks, parent groups, recommendation,",
+        "and an assistant that is unfailingly kind to you.",
+        "The demand is never stated. Nothing is asked of you at all."
+      ],
+      "status": "contested"
+    }
   ]
 }

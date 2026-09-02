@@ -318,7 +318,39 @@
   "backdrop": "#2C3A5C",
   "backdropLevel": 0.4,
   "labelColor": "#E8C9A0",
-  "labelHeight": 0.07,
+  "labelHeight": 0.058,
+  "_docTheOpening": "⚑ S101 — THE STARS ON THE CEILING BECOME THE NETWORK (Sérgio, 2026-09-02). The constellation no longer cuts in at full size: it starts as the small dense patch of glow-stars over the seat — `ceiling`, below, which is a real merged mesh sitting on the room's ceiling for the whole piece — and opens out around the player over `openSeconds`. Nothing is spawned and nothing is swapped: it is ONE root, lerped from the ceiling anchor at a small uniform scale to the sky's own centre at full size, so the stars a child put up are literally the nodes the network is made of. Uniform scale on purpose — the labels are quads on this root and a squashed axis would squash the text.",
+  "openSeconds": 2.8,
+  "ceilingAnchor": [
+   0,
+   2.62,
+   0.7
+  ],
+  "openFromScale": 0.30,
+  "ceiling": {
+   "_doc": "The glow-in-the-dark stars on the room's ceiling, over the seat — the object the Close's whole image is built on, and the reference Sérgio's own constellation brief names (\"real glow-in-the-dark star stickers\"). ONE merged mesh, one draw call, the person tier's own warm palette at a low level: they are a kid's, they are unlabelled, and nothing in the piece ever points at them. They fade out as the constellation opens from exactly their place.",
+   "y": 2.62,
+   "radius": 1.0,
+   "count": 34,
+   "size": 0.022,
+   "opacity": 0.6
+  },
+  "_docTheArcs": "⚑ S101 — ONE ARC PER ERA, AT ONE BEARING PER ERA. The apparatus nodes were a golden-angle spread, which is to say the network's shape said nothing at all; each anchor in data/strings/close_network.json now carries the era of the piece it grounds, and the geometry follows. Era 0 (the project's own frame) stays overhead where the ceiling was — the piece is looking at itself from underneath. Eras 1-4 hang at four bearings 90° apart, so reading the ending is the piece's one bodily gesture, the turn, spent one last time.",
+  "eraBearingDeg": [
+   0,
+   90,
+   180,
+   270
+  ],
+  "arcSpreadDeg": 41,
+  "frameCapRadius": 0.62,
+  "panel": {
+   "_doc": "The four information panels, one per era, hanging over each era's own arc — one atlas, one mesh, one draw call. They face the centre and do NOT billboard: the panel is where it is, and you turn to read it. Sizes are metres at `radius` from the seat; a 1.62 m card at 2.95 m is about 31° of the frame, which is a page held at reading distance.",
+   "radius": 3.05,
+   "y": 0.46,
+   "w": 1.62,
+   "h": 0.81
+  },
   "driftDegPerSec": 0.9,
   "fadeSeconds": 2.2
  }
