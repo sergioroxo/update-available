@@ -92,6 +92,20 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
     get step(): SpineStep { return step; },
 
     onEra(era: string): void {
+      /**
+       * ⚑ `close` IS AN ENDING, NOT AN ARRIVAL (S101). The close ritual is armed
+       * from Era 4's LAPTOP now — the headset's plane is switched off by then, so
+       * this conductor's own `case 'e4'` arm would have put the notice on a
+       * surface that is no longer in the room. Whoever armed it, its completion
+       * is the end of the piece, and it lands here: the step goes to `done` (so
+       * nothing arms a second one) and the constellation is asked for once.
+       * `closed` still guards it, so the older path through `e4_armed` — which
+       * is intact and still works if a review drives it — cannot double-fire.
+       */
+      if (era === 'close') {
+        if (!closed) { closed = true; step = 'done'; opts.onClose(); }
+        return;
+      }
       // arrival resets the clock; the era's own beats begin
       if (era === 'e2') step = 'e2';
       else if (era === 'e3') step = 'e3';

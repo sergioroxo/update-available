@@ -367,6 +367,17 @@ export class E4Shell {
     this.laptopBar(ctx, W, space.laptop.mirrorLabel);
   }
 
+  /** ⚑ THE SAME MIRROR, AFTER THE DEVICE HAS STOPPED (S101). The close ritual is
+   *  drawn on the OS canvas and the visor plane is gone by then, so the lid shows
+   *  it — but the bar must not still say the headset is mirroring, because the
+   *  headset is on the desk and that is the whole point of the beat. */
+  drawCloseMirror(ctx: CanvasRenderingContext2D, W: number, H: number,
+    src: CanvasImageSource): void {
+    px(ctx, 0, 0, W, H, ERA4.field);
+    ctx.drawImage(src, 0, LAPTOP_BAR, W, H - LAPTOP_BAR);
+    this.laptopBar(ctx, W, space.corrupt.sub);
+  }
+
   /** ⚑ ONE BAR, THREE STATES. The lid carries L's arrival, the headset mirror and
    *  the Close, and without a shared piece of chrome those read as three unrelated
    *  screens rather than one machine doing three things. A status strip is all a

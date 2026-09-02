@@ -233,6 +233,23 @@ export class UpdateApp {
     this.dirty = true;
   }
 
+  /**
+   * ⚑ THE CLOSE'S NOTICE IS RENDERED SOMEWHERE ELSE (S101), so the ritual is
+   * accepted from there. Era 4 ends with the headset back on the desk and its
+   * plane switched off, which means this class's own notify card — drawn on the
+   * OS canvas, and in E4 that canvas is the VISOR — had nowhere to appear and no
+   * way to be pressed: the last press in the piece was on a surface that is not
+   * there any more. The laptop carries the notice now, in its own words
+   * (`data/dialog/s4_space.json`'s `corrupt` block, which already says `Restart
+   * as you are.` over a `Restart` button), and this is what that press reaches.
+   * From here the ritual is unchanged: the dark beat, the title, `onComplete`.
+   * ⚑ It skips the notify SCREEN, never the notify STEP — the player still
+   * chose, on a card, in the machine's own vocabulary.
+   */
+  acceptNow(): void {
+    if (this.phase === 'notify') this.beginInstall();
+  }
+
   private beginInstall(): void {
     // the bare final restart has no changelog — straight to the dark beat
     this.phase = this.s.changelog ? 'install' : 'restart';

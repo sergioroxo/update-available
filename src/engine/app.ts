@@ -769,7 +769,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // silently lacking one.
     spine = createSpine(os, { onClose: () => enterClose() });
     os.onEraShift = (era) => {
-      if (era === 'close') return; // the spine's onClose owns the constellation
+      // ⚑ the spine's onClose still owns the constellation — it is TOLD now
+      //   (S101), rather than left to notice on its own clock 22 s later that a
+      //   ritual it did not arm has finished. See `Spine.onEra`.
+      if (era === 'close') { spine?.onEra('close'); return; }
       driveMorph(era as EraKey);
       spine?.onEra(era);
     };

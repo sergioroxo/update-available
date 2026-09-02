@@ -753,7 +753,30 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     //   had ended — an empty "Headset — mirroring" field, which is worse than
     //   either state on its own. The machine is still on; it is not still
     //   watching. `drawLaptop` owns what a stopped machine shows.
-    if (sh.handedOffToClose) { sh.drawLaptop(ctx, w, h); return; }
+    if (sh.handedOffToClose) {
+      /**
+       * ⚑ AND THE LAST BEAT OF THE PIECE PLAYS HERE (S101). Once the close
+       * ritual is under way the lid mirrors the OS canvas again — the same
+       * `drawImage` the worn mirror uses — because that canvas is where the
+       * ritual is drawn and, in Era 4, that canvas is the VISOR: a plane this
+       * module has deliberately switched off by now. Without this the dark beat
+       * and `Your update has failed.` — the sentence the whole work is named
+       * after — rendered onto a surface that is not in the room any more.
+       * The machine that survives is the one that says it.
+       */
+      // ⚑ …and only from the DARK BEAT on (`fullScreen` = install|restart). The
+      //   spine arms the close ritual the instant the shell hands off, so its
+      //   own notify card is already open while the laptop is still showing "L
+      //   is still here." — mirroring it then would replace the lid's own card
+      //   with a scaled copy of a dialog whose button is somewhere else, and the
+      //   press would land on nothing. The lid keeps its card until the card is
+      //   pressed; what follows is the ritual, and that is what gets mirrored.
+      const ritual = e4Bridge()?.update();
+      const os = e4Bridge()?.canvas();
+      if (ritual?.open && ritual.fullScreen && os) { sh.drawCloseMirror(ctx, w, h, os); return; }
+      sh.drawLaptop(ctx, w, h);
+      return;
+    }
     const src = e4Bridge()?.canvas();
     if (sh.worn && src) { sh.drawLaptopMirror(ctx, w, h, src); return; }
     sh.drawLaptop(ctx, w, h);
@@ -761,8 +784,13 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     { versionOf: () => {
       const sh = e4Bridge()?.shell();
       // `version` is included from `worn` on so the mirror follows the picture,
-      // and `handOff()` bumps it too, which is what repaints the stopped state
-      return sh ? 1 + sh.laptopVersion + (sh.worn ? sh.version : 0) : 0;
+      // and `handOff()` bumps it too, which is what repaints the stopped state.
+      // ⚑ …and `ritualTick` while the close ritual runs, for the same reason the
+      // workstation's own version does it: the dark beat is an animation, and a
+      // mirror that only repaints on a press would hold a still frame through it.
+      const ritual = e4Bridge()?.update();
+      return sh ? 1 + sh.laptopVersion + (sh.worn ? sh.version : 0)
+        + (ritual?.open && ritual.fullScreen ? ritualTick : 0) : 0;
     } });
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
 
