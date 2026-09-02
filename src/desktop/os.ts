@@ -1267,13 +1267,13 @@ export class DesktopOS {
 
     if (this.phase === 'boot') {
       const next = Math.min(Math.floor(this.phaseT / BOOT_CPS), this.bootTotal);
-      if (next !== this.bootChars) this.bootChars = next;
+      if (next !== this.bootChars) { this.bootChars = next; this.dirty = true; }
       if (this.bootChars >= this.bootTotal && this.phaseT > BOOT_HOLD) this.setPhase('splash');
     }
     if (this.phase === 'splash' && this.phaseT >= SPLASH_SECONDS) this.setPhase('name');
     if (this.phase === 'r_boot') {
       const next = Math.min(Math.floor(this.phaseT / BOOT_CPS), this.rBootTotal);
-      if (next !== this.rBootChars) this.rBootChars = next;
+      if (next !== this.rBootChars) { this.rBootChars = next; this.dirty = true; }
       if (this.rBootChars >= this.rBootTotal && this.phaseT > R_BOOT_HOLD) this.setPhase('r_profile');
     }
     if (this.phase === 'name' && this.greeting && this.phaseT > 2.8) {
@@ -1286,6 +1286,7 @@ export class DesktopOS {
         && !this.reinterp) {
       this.kitToastShown = true;
       this.toast = { text: strings.desktop.kitToast, t: 8 };
+      this.dirty = true;
     }
     if (this.phase === 'desktop' && this.kit) this.kit.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
@@ -1308,6 +1309,8 @@ export class DesktopOS {
     if (this.updateApp) this.updateApp.update(dt);
     // the era's shell keeps its own slow clock (the standby light, quantised —
     // see space.ts). It runs whether or not the device has been touched.
+    // S105: its `version` is read below, the way era3Devices reads it for the visor.
+    const e4VersionBefore = this.e4?.version ?? 0;
     if (this.e4) this.e4.update(dt);
     if (this.phase === 'desktop' && this.netvision) this.netvision.update(dt);
     // S2R.3–S2R.6: the person's window and the apparatus's answer to it
@@ -1330,6 +1333,9 @@ export class DesktopOS {
     // frame. Era-1-only (CLAUDE.md R28 amendment 2: Lamby conducts from E2 —
     // the guide thread must not go on evaluating/filing once the era has
     // moved past it, even though its rendering was already E1-gated below).
+    // S105: its one taskbar line is compared before/after, so a guide that
+    // evaluates every frame but says nothing new costs no upload.
+    const guideTextBefore = this.guide?.activeText ?? null;
     if (this.phase === 'desktop' && this.desktopEra === 'e1' && this.guide) this.guide.update();
     // S2R.0/S2R.1: the E2 arrival's own transient beats. 'silence' holds until
     // pressed (no timer — click-only, rail); 'lambyBoot' is a brief system
@@ -1339,7 +1345,8 @@ export class DesktopOS {
       this.e2StageT += dt;
       if (this.e2Stage === 'osBoot') {
         const next = Math.min(Math.floor(this.e2StageT / BOOT_CPS), this.e2BootTotal);
-        if (next > this.e2BootChars) this.e2BootChars = next; // never walk back a click-completed crawl
+        // never walk back a click-completed crawl
+        if (next > this.e2BootChars) { this.e2BootChars = next; this.dirty = true; }
         if (this.e2BootChars >= this.e2BootTotal && this.e2BootDoneAt === Infinity) {
           this.e2BootDoneAt = this.e2StageT;
         }
@@ -1364,12 +1371,82 @@ export class DesktopOS {
     if (!this.behindToastShown && this.t >= this.behindToastAt) {
       this.behindToastShown = true;
       this.toast = { text: strings.desktop.behindToast, t: 7 };
+      this.dirty = true;
     }
     if (this.toast) {
       this.toast.t -= dt;
-      if (this.toast.t <= 0) this.toast = null;
+      // the text does not animate; only its arrival and its going matter
+      if (this.toast.t <= 0) { this.toast = null; this.dirty = true; }
     }
-    this.dirty = true; // caret blink etc.; dirty-rect optimization comes later
+
+    /**
+     * ⚑ S105 — DIRTY ONLY WHEN SOMETHING DRAWN CHANGED (review R1, finding B-1).
+     *
+     * This block replaces one line — `this.dirty = true; // caret blink etc.;
+     * dirty-rect optimization comes later` — which cost the piece a measured
+     * ~240 texture uploads per second, FLAT, idle or animating, in every era,
+     * on the two busiest surfaces in the work. CLAUDE.md's Quest budget says
+     * "render-texture uploads on dirty only"; that line was the law's only
+     * standing exception and nothing about it was ever an optimization
+     * question — the surface was simply never asked whether it had changed.
+     *
+     * Two things make the answer cheap, and neither needed a new field:
+     *
+     * 1. **The windows already keep their own flags.** `kit.dirty`,
+     *    `irc.dirty`, `diary.dirty`, `caleb.dirty`, `netvision.dirty`,
+     *    `packet.dirty`, `provotype.dirty`, `restorify.dirty`,
+     *    `accountability.dirty`, `updateApp.dirty` all exist and are
+     *    maintained carefully (caleb's own comment: "the dissolve, the line's
+     *    fade-in and the commit cross-fade all need every frame; nothing else
+     *    in this beat does"). **Nothing in the repository read a single one of
+     *    them** — os.ts flagged itself every frame instead, so all that care
+     *    was dead code. `consume` below reads and clears them, which is also
+     *    what makes hover changes inside those windows keep arriving: their
+     *    `handleMove` returns early without touching this class, and their own
+     *    flag is the only signal that anything moved.
+     * 2. **Time-driven changes are QUANTISED and compared against the frame
+     *    before**, the pattern `space.ts` and `era3Devices.ts` already use
+     *    (`version++` on a step change). The caret genuinely blinks and must
+     *    keep blinking — but it changes 4.4 times a second, not 120, so the
+     *    step is what is compared, not the clock. `this.t - dt` is last
+     *    frame's clock, so no previous-step field has to be stored anywhere.
+     *
+     * What stays per-frame is what genuinely moves per frame: the splash bar's
+     * travelling bands, the fade up out of the residue, Lamby's continuous
+     * sway, and the rig file's panel (the one window on this canvas with a
+     * clock and no flag of its own).
+     */
+    const consume = (w: { dirty: boolean } | null | undefined): void => {
+      if (w?.dirty) { w.dirty = false; this.dirty = true; }
+    };
+    consume(this.kit); consume(this.irc); consume(this.packet); consume(this.diary);
+    consume(this.provotype); consume(this.restorify); consume(this.netvision);
+    consume(this.caleb); consume(this.accountability); consume(this.updateApp);
+    // the era's shell keeps a real version counter instead of a flag (space.ts) —
+    // it was read against `lastVersion` for the visor and never for this canvas.
+    if (this.e4 && this.e4.version !== e4VersionBefore) this.dirty = true;
+    // the guide's line is condition-driven: it changes when it changes.
+    if (guideTextBefore !== (this.guide?.activeText ?? null)) this.dirty = true;
+
+    // the caret — 2.2 Hz, and only where one is actually drawn
+    const caretDrawn = this.phase === 'boot' || this.phase === 'name' || this.phase === 'r_boot'
+      || (this.phase === 'desktop'
+          && (this.irc?.open === true
+              || (this.desktopEra === 'e2' && this.e2Stage === 'osBoot')));
+    if (caretDrawn && Math.floor(this.t * 2.2) !== Math.floor((this.t - dt) * 2.2)) {
+      this.dirty = true;
+    }
+    // the one-shot arming of the warning's Continue button
+    if (this.phase === 'warning'
+        && this.phaseT >= WARNING_ARM_DELAY && this.phaseT - dt < WARNING_ARM_DELAY) {
+      this.dirty = true;
+    }
+    // and the genuinely continuous handful
+    if (this.phase === 'splash') this.dirty = true;                       // the loading bands travel
+    if (this.desktopReturnAt >= 0) this.dirty = true;                     // the fade back up out of black
+    if (this.phase === 'desktop' && this.lambyOnScreen) this.dirty = true; // his sway is a sine, not a step
+    if (this.phase === 'desktop' && this.lambyRigFile?.open) this.dirty = true; // panel on a bare clock
+
     this.draw();
   }
 

@@ -72,9 +72,40 @@ export class WitnessCanvas {
   }
 
   update(dt: number): void {
+    const was = this.t;
     this.t += dt;
-    this.dirty = true;
-    if (this.hardenT < HARDEN_SECONDS) this.hardenT = Math.min(HARDEN_SECONDS, this.hardenT + dt);
+    /**
+     * ⚑ S105 — THE RECORD RE-UPLOADS ON ITS OWN PULSE, NOT EVERY FRAME
+     * (review R1, finding B-1). This line used to read `this.dirty = true;`
+     * with nothing guarding it, and Lane B measured the result: ~240 texture
+     * uploads a second across this surface and the OS canvas together, flat,
+     * whether the piece was idle or animating, in every era — against
+     * CLAUDE.md's own "render-texture uploads on dirty only".
+     *
+     * What this wall actually draws that MOVES is two pulses and one wake:
+     * the dormant wall's slow breath (`floor(t * 0.8) % 2`), the record's
+     * footer hint (`floor(t * 1.5) % 2`), and the 2.2 s hardening bands. So
+     * the flag follows the same quantised-step comparison `space.ts` and
+     * `era3Devices.ts` use for their screens — the STEP is compared, not the
+     * clock, against the step one frame ago, so nothing has to be stored.
+     * At rest that is ~2.3 uploads a second instead of ~120.
+     *
+     * ⚑ AND THE CONTENT RIDES THE PULSE, deliberately. Everything else here
+     * is computed live from `ledger`, which this class is never told about —
+     * it has no hook, and a filing can land from anywhere in the piece. The
+     * pulse is therefore also the record's refresh: a new line appears within
+     * ~0.7 s of being filed, on a cold wall that is BEHIND the seat and takes
+     * the piece's one bodily ask to look at. The two paths that must not wait
+     * do not: `setOpeningProfile` flags directly, and the wake it starts is
+     * drawn every frame below.
+     */
+    const stepped = (rate: number): boolean =>
+      Math.floor(this.t * rate) !== Math.floor(was * rate);
+    if (stepped(0.8) || stepped(1.5)) this.dirty = true;
+    if (this.hardenT < HARDEN_SECONDS) {
+      this.hardenT = Math.min(HARDEN_SECONDS, this.hardenT + dt);
+      this.dirty = true; // the wake: bands land over 2.2 s and the line warms through
+    }
     const profileLines = this.profileRecaptionLines();
     // The witness lineage's warm→cold arc, as of the opening decision
     // (docs/REINTERP_OPENING_DECISION_2026-07-24.md §1/§5, Sérgio): the cork

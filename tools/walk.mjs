@@ -138,6 +138,50 @@ async function main() {
     defaultViewport: { ...VIEW, deviceScaleFactor: 1 }
   });
   const page = await browser.newPage();
+
+  /**
+   * ⚑ SOUND IS ACTIVITY, AND THE WALKER WAS DEAF (review round 1, A-5).
+   * The walker's whole notion of "is anything still happening" was a canvas
+   * diff. Era 4's tail is 7½ minutes in which the change is very often neither
+   * on a canvas nor in the DOM but IN THE AIR: a caption's clip playing out,
+   * L's voice running longer than the hold written for it. A deaf walker reads
+   * that as a frozen screen, runs out its fourteen stalls in under a minute and
+   * files STUCK against a piece that is talking to it. Two walk reports said
+   * "stuck at Era 4" partly because of this.
+   *
+   * So: wrap `Audio` before any of the piece's own script runs, and count both
+   * the clips STARTED (a monotonic pulse — a new clip is unambiguous news) and
+   * the clips PLAYING RIGHT NOW (so a single long clip still reads as activity
+   * for its whole duration). Read-only: the wrapper constructs the real element
+   * and hands it back untouched, so the piece cannot tell it is being listened
+   * to. Lane A of the review used exactly this to watch the tail.
+   */
+  await page.evaluateOnNewDocument(() => {
+    const w = window;
+    const Native = w.Audio;
+    if (!Native) return;
+    const state = { started: 0, live: [] };
+    const Wrapped = function (...args) {
+      const el = new Native(...args);
+      // bounded: finished elements are dropped, so a long run cannot grow this
+      if (state.live.length > 240) state.live = state.live.filter((a) => !a.paused && !a.ended);
+      state.live.push(el);
+      const play = el.play.bind(el);
+      el.play = function (...a) { state.started += 1; return play(...a); };
+      return el;
+    };
+    Wrapped.prototype = Native.prototype;
+    w.Audio = Wrapped;
+    w.__walkAudio = () => {
+      const live = state.live.filter((a) => !a.paused && !a.ended && a.currentTime > 0);
+      return {
+        started: state.started,
+        playing: live.length,
+        now: live.map((a) => String(a.currentSrc || '').split('/').pop()).join(',')
+      };
+    };
+  });
+
   const noise = [];
   page.on('pageerror', (e) => noise.push(`PAGEERROR ${String(e).slice(0, 180)}`));
   page.on('console', (m) => {
@@ -448,13 +492,57 @@ async function main() {
         h = Math.imul(h ^ (d[i] + d[i + 1] * 3 + d[i + 2] * 7), 16777619) >>> 0;
       return h.toString(36);
     };
+    /**
+     * ⚑ EVERY DEVICE SCREEN, NOT THE THREE I HAPPENED TO REMEMBER (A-5.1).
+     * This hash used to name `workstation` and `phone` by hand — and Era 4
+     * opens on a FOURTH, Maya's laptop, added in S97. So the era's first three
+     * presses, whose entire visible effect is one line of L's arriving on that
+     * lid, changed nothing this walker could see: the press was marked inert on
+     * the spot, never repeated, and `laptop:read` was never filed. Two walk
+     * reports concluded Era 4 had no door.
+     *
+     * The lesson is the one this whole tool keeps re-learning: do not keep a
+     * hand-written copy of the architecture. `debugCanvases()` returns every
+     * screen the room owns, keyed by name; hash all of them, in a stable order,
+     * and the next surface somebody adds is hashed the day it appears.
+     */
     const canvases = window.__era3Devices ? window.__era3Devices() : {};
     const screenHash = hashOf(os.canvas) + '/' +
-      hashOf(canvases.workstation) + '/' + hashOf(canvases.phone);
+      Object.keys(canvases).sort().map((k) => k + ':' + hashOf(canvases[k])).join('/');
+
+    /**
+     * ⚑ AND SOME OF THIS PIECE DOES NOT SPEAK IN PIXELS AT ALL (A-5.3).
+     * The ball's 46 lines are a DOM caption strip (`ball.ts`'s own header says
+     * so, and calls it a gap for the headset). Three and a half minutes of the
+     * piece's one respite therefore move no canvas whatsoever. Read the overlay
+     * text as well, so a caption arriving counts as the piece speaking.
+     */
+    const domText = [...document.querySelectorAll('[id^="reinterp-"]')]
+      .filter((el) => el.id !== 'reinterp-game-menu' && el.id !== 'reinterp-menu-glyph')
+      .map((el) => el.id + '=' + (el.textContent || '').trim().slice(0, 120))
+      .join('|');
+
+    const audio = window.__walkAudio ? window.__walkAudio() : { started: 0, playing: 0, now: '' };
 
     const led = window.__ledger ? window.__ledger() : null;
     const ledCount = led ? Object.keys(led).reduce(
       (n, k) => n + (Array.isArray(led[k]) ? led[k].length : 0), 0) : 0;
+    /**
+     * ⚑ WHAT WAS FILED, NOT MERELY HOW MANY. A count told the report that a
+     * press moved the ledger; it could never say `laptop:read`, which is the
+     * only thing that proves Era 4's opening actually completed. Names cost
+     * nothing and they are what the map is for.
+     */
+    const ledList = [];
+    if (led) {
+      for (const k of Object.keys(led)) {
+        const v = led[k];
+        if (!Array.isArray(v)) continue;
+        v.forEach((e, i) => ledList.push(k + ':' + (
+          typeof e === 'string' ? e
+            : (e && e.id ? e.id + (e.outcome ? ':' + e.outcome : '') : '#' + i))));
+      }
+    }
     const pose = window.__camPose ? window.__camPose() : null;
 
     return {
@@ -464,8 +552,8 @@ async function main() {
       qMode: q ? q.mode : null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
-      screenHash, surfaces, silent, quiet,
-      targets, dropped, moves, ledCount, ledger: led
+      screenHash, domText, audio, surfaces, silent, quiet,
+      targets, dropped, moves, ledCount, ledList, ledger: led
     };
   }, { VW: VIEW.width, VH: VIEW.height });
 
@@ -484,6 +572,37 @@ async function main() {
     a.targets.length !== b.targets.length ||
     a.targets.map((t) => t.id).join() !== b.targets.map((t) => t.id).join();
 
+  /**
+   * ⚑ THE PULSE — "is the piece doing anything at all", on all three of its
+   * channels. Until review round 1 this was one channel, the drawn pixels, and
+   * the two it was missing are exactly the two Era 4's tail runs on: a DOM
+   * caption (the ball's 46 lines) and a clip playing (L, and every voiced hold
+   * that outlasts its written one). A walker with one ear and one eye called a
+   * talking piece frozen.
+   *
+   * ⚑ Deliberately NOT used by `moved()`, and the distinction matters. `moved`
+   * decides whether a PRESS did something, and the sweep leans on it to decide
+   * that a blind point on the canvas was a button; if ambient sound counted
+   * there, the sweep would "find" a control wherever a clip happened to start.
+   * The pulse answers a different and softer question — whether to keep
+   * waiting — and being generous is the right failure direction for that one.
+   */
+  const pulseOf = (st) =>
+    st.screenHash + ' \u241F ' + st.domText + ' \u241F ' +
+    st.audio.started + ' \u241F ' + (st.audio.playing > 0 ? 'A' : '-');
+
+  /** what arrived in the ledger between two probes, by name */
+  const ledgerNew = (before, after) => {
+    const had = new Map();
+    for (const e of before.ledList) had.set(e, (had.get(e) || 0) + 1);
+    const out = [];
+    for (const e of after.ledList) {
+      const n = had.get(e) || 0;
+      if (n > 0) had.set(e, n - 1); else out.push(e);
+    }
+    return out;
+  };
+
   const press = async (t, before) => {
     await doPress(t.pt);
     const after = await probe();
@@ -492,6 +611,7 @@ async function main() {
       page: [Math.round(t.pt[0]), Math.round(t.pt[1])],
       era: after.era, phase: after.phase, spine: after.spine, qMode: after.qMode,
       ledgerDelta: after.ledCount - before.ledCount,
+      ledgerNew: ledgerNew(before, after),
       changed: moved(before, after)
     });
     return after;
@@ -743,6 +863,23 @@ async function main() {
   /** consecutive holds spent watching the screen draw itself */
   const TALK_WAIT_MAX = 40;
   let talkWaits = 0;
+  /**
+   * ⚑ HOW LONG TO SIT STILL BEFORE CALLING IT STUCK — AND IT CANNOT BE ONE
+   * NUMBER (A-5.3). Fourteen stalls at four seconds is fifty-six seconds, which
+   * is a generous pause anywhere in Eras 1–3 and nowhere near enough for Era 4.
+   * That era ends in a stretch that is SUPPOSED to be sat through: the offers'
+   * own clock, then the ball — 46 lines over about three and a half minutes,
+   * with nothing to press by design and long silences between them. Fifty-six
+   * seconds into that, the old walker filed STUCK against a piece that was
+   * midway through its one respite, and the report said Era 4 had no exit.
+   *
+   * ⚑ THIS IS PATIENCE, NOT BLINDNESS. The pulse still resets the counter the
+   * instant anything moves on any channel, so a run that is genuinely frozen
+   * still stops — it just takes eleven minutes to give up on Era 4 instead of
+   * one. And a slow STUCK late in Era 4 is a real finding (A-8's dead hand-back
+   * is exactly that); what was worthless was a fast one during the ball.
+   */
+  const stallCap = (st) => (st.era === 'e4' ? 160 : 14);
   const pressed = new Map();
   /**
    * ⚑ KEYED ON THE COARSE STATE, NOT ON THE FULL CONTROL SET, and run 22 is why.
@@ -845,17 +982,17 @@ async function main() {
      * left to do but let the machine finish talking, which is also exactly what
      * a person does. The wait ends the moment anything on screen changes.
      */
-    if (spent(s, sig) && stalls < 14) {
+    if (spent(s, sig) && stalls < stallCap(s)) {
       stalls += 1;
       note('waiting-out', {
         what: 'every control on this screen has been pressed to its cap — waiting for the ' +
           'piece to speak rather than pressing spent controls',
         era: s.era, phase: s.phase, spine: s.spine
       });
-      const was = s.screenHash;
+      const was = pulseOf(s);
       await wait(5000);
       s = await probe();
-      if (s.screenHash !== was) stalls = 0;
+      if (pulseOf(s) !== was) stalls = 0;
       continue;
     }
     /**
@@ -873,10 +1010,10 @@ async function main() {
      * after `TALK_WAIT_MAX` consecutive holds the walker presses anyway.
      */
     if (talkWaits < TALK_WAIT_MAX) {
-      const before = s.screenHash;
+      const before = pulseOf(s);
       await wait(900);
       const now = await probe();
-      if (now.screenHash !== before) {
+      if (pulseOf(now) !== before) {
         s = now;
         talkWaits += 1;
         if (talkWaits === 1 || talkWaits % 6 === 0) {
@@ -912,8 +1049,18 @@ async function main() {
        * the distinction from a quiet-looking but real press: selecting a chip
        * or turning a page moves the drawn pixels, so only a press that moves
        * literally nothing is judged inert.
+       *
+       * ⚑ AND "NOTHING AT ALL" MEANS ON EVERY CHANNEL — the pulse, not the OS
+       * canvas alone (A-5.1). Era 4's opening is three presses on Maya's
+       * laptop, whose entire visible effect is one line arriving on a screen
+       * this hash did not cover; the first press was therefore judged inert on
+       * the spot, marked never-again, and the era's own door went unopened for
+       * two whole review rounds. The failure direction here is asymmetric and
+       * worth naming: judging a live control inert STOPS the walk dead, while
+       * judging an inert one live costs at most `PRESS_CAP` wasted presses on
+       * one screen. Be generous, and let the cap do the bounding.
        */
-      if (after.screenHash === s.screenHash && advanceOf(after) === advanceOf(s)) {
+      if (pulseOf(after) === pulseOf(s) && advanceOf(after) === advanceOf(s)) {
         inertMarks.add(inertKey(sig, t));
         dismissWanted = true;
         inert.push({ id: t.id, surface: t.surface, era: s.era, phase: s.phase });
@@ -986,9 +1133,11 @@ async function main() {
         era: s.era, phase: s.phase, spine: s.spine, qMode: s.qMode,
         dropped: s.dropped,
         offered: s.targets.map((t) => t.surface + ':' + t.id),
-        surfaces: s.surfaces
+        surfaces: s.surfaces,
+        waited: stalls + '/' + stallCap(s),
+        audio: s.audio.playing ? s.audio.now : ''
       });
-      if (stalls >= 14) {
+      if (stalls >= stallCap(s)) {
         note('stop', {
           what: s.dropped.length
             ? 'STUCK. ' + s.dropped.length + ' hit rect' + (s.dropped.length === 1 ? ' is' : 's are') +
@@ -1007,7 +1156,7 @@ async function main() {
         break;
       }
       await wait(4000);
-      const before = s.screenHash;
+      const before = pulseOf(s);
       s = await probe();
       /**
        * ⚑ A SCREEN THAT IS STILL CHANGING IS NOT A STALL, and Era 4 is why.
@@ -1018,8 +1167,14 @@ async function main() {
        * talking. Comparing the drawn pixels rather than the whole signature
        * means any movement at all — a caption arriving, a picture easing —
        * resets the patience, and only a genuinely FROZEN screen runs it out.
+       *
+       * ⚑ AND "MOVEMENT" NOW INCLUDES THE TWO CHANNELS THIS TEST COULD NOT SEE
+       * (A-5.3): the ball's DOM captions and any clip in the air. The pixels
+       * alone were not enough — the ball's three and a half minutes move no
+       * canvas at all, so the old test read the piece's one respite as a frozen
+       * screen and abandoned the run in the middle of it.
        */
-      if (s.screenHash !== before) stalls = 0;
+      if (pulseOf(s) !== before) stalls = 0;
     }
   }
 
@@ -1065,11 +1220,24 @@ async function main() {
     '**' + presses.length + ' presses** over ' + log.length + ' steps · ' +
     dead.length + ' press' + (dead.length === 1 ? '' : 'es') + ' changed nothing', '',
     '## THE PATH', '',
-    '| # | control | surface | on surface | on screen | era | phase | ledger |',
+    // ⚑ the ledger column names what was FILED, not just how many. A count can
+    //   say a press mattered; only the name can say WHICH beat completed, and
+    //   `laptop:read` is how Era 4's opening proves itself.
+    '| # | control | surface | on surface | on screen | era | phase | filed |',
     '|---|---|---|---|---|---|---|---|',
     ...presses.map((p) => '| ' + p.step + ' | `' + p.target + '` | ' + (p.surface || '') + ' | ' +
       (p.logical ? p.logical.join(', ') : '—') + ' | ' + (p.page ? p.page.join(', ') : '—') + ' | ' +
-      (p.era || '') + ' | ' + (p.phase || '') + ' | ' + (p.ledgerDelta > 0 ? '+' + p.ledgerDelta : '') + ' |'),
+      (p.era || '') + ' | ' + (p.phase || '') + ' | ' +
+      ((p.ledgerNew && p.ledgerNew.length)
+        ? '`' + p.ledgerNew.join('` `') + '`'
+        : (p.ledgerDelta > 0 ? '+' + p.ledgerDelta : '')) + ' |'),
+    '',
+    '## WHAT THE LEDGER HOLDS AT THE END', '',
+    '*Every entry filed over the run, in the order the ledger keeps them. This is the record the',
+    'piece itself would show, and it is the honest answer to "did that beat actually happen".*', '',
+    final.ledList.length
+      ? final.ledList.map((e) => '- `' + e + '`').join('\n')
+      : '- empty',
     '',
     '## PRESSES WITH NO OBSERVABLE EFFECT', '',
     '*Not the same as a dead control.* This walk can see the era, the phase, the spine step, the',

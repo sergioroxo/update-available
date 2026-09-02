@@ -688,10 +688,12 @@ if (unreachedCount > UNREACHED_BASELINE) {
 // correctly in the data and rendered by nobody. They are on disk now, in one
 // sitting, and REGISTERED (src/audio/tapeAudio.ts — a rendered file whose name
 // is not in that registry is never requested, which looks exactly like silence).
-// ⚑ The ONE that remains is `lambyos_2003_boot.mp3`, and it is not a TTS job:
-// it is the E2 boot JINGLE, a piece of sound design that has never been made.
-// It stays declared and unregistered on purpose — see tapeAudio.ts's own note.
-const AUDIO_BASELINE = 1;
+// ⚑ 1 → 0 (2026-09-02). The last one was `lambyos_2003_boot.mp3`, the E2 boot
+// jingle, hooked since S60 and never made. It is a 6.5 s cut of the era's own
+// `Chase_The_Clouds`, and with it **every audio name this piece declares now
+// exists**: 92/92. The floor is zero from here — a new declared name that has no
+// file fails this check on the session that declares it, which is the point.
+const AUDIO_BASELINE = 0;
 let audioMissing = 0, audioRefs = 0;
 {
   const refs = new Set();

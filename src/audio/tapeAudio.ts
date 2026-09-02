@@ -121,15 +121,56 @@ const REGISTRY: Record<string, string> = {
   'l_p1b.mp3': `${AUDIO_BASE}l_p1b.mp3`,
   'l_p1r_yes.mp3': `${AUDIO_BASE}l_p1r_yes.mp3`,
   'l_p1r_name.mp3': `${AUDIO_BASE}l_p1r_name.mp3`,
-  // S60 — THE E2 BOOT JINGLE, HOOKED AND NOT YET REGISTERED. The LambyOS 2003
-  // boot (src/desktop/os.ts's `startE2Boot`) already asks for the name in
-  // data/dialog/s2_lamby.json's `osBootTrack` — 'lambyos_2003_boot.mp3'.
-  // No asset was invented for it, so there is deliberately NO entry above:
-  // the registry law means the request is simply never issued, silently and
-  // with no console error, until a real file exists. When one does, drop it in
-  // public/assets/audio/ and add ONE line here — the boot then sings, and
-  // nothing else changes. APPARATUS audio: clean, never through
-  // tools/degrade_audio.sh (that pass is for HUMAN/TAPE audio only).
+  // ⚑ S103b — THE E2 BOOT JINGLE, MADE AND REGISTERED (2026-09-02). It was
+  //   hooked and unmade for three sessions: `data/dialog/s2_lamby.json`'s
+  //   `osBootTrack` has asked for this name since S60 and the registry law meant
+  //   the request was simply never issued. It is a 6.5 s cut of Sérgio's own
+  //   `Chase_The_Clouds` — the jingle the era already owns — so the BOOT is the
+  //   mark's first appearance and the infomercial its second: the ear learns it
+  //   before the mouth sells it. Three candidate cuts sit in
+  //   `assets/audio/candidates/`; A ships and swapping is one `cp`.
+  'lambyos_2003_boot.mp3': `${AUDIO_BASE}lambyos_2003_boot.mp3`,
+  // ⚑ E2's AUDIO SPINE, both halves. The master plan has called the sweet/broken
+  //   jingle pair that since Round 2 and neither had ever been in the repo: the
+  //   file lived on Sérgio's disk and the collapse beat's "the jingle returns
+  //   broken — slow, detuned, dying music box" had no audio hook at all. The
+  //   broken one is a TREATMENT of the real file (pitch down ~3½ semitones,
+  //   slowed, wobbled, band-limited, dying at 20 s) — the same instinct as the
+  //   tape97/tape03 chains: degrade what is real rather than synthesize what is
+  //   fake. `tools/make_tones.sh` holds the exact chain.
+  'chase_the_clouds.mp3': `${AUDIO_BASE}chase_the_clouds.mp3`,
+  'chase_the_clouds_broken.mp3': `${AUDIO_BASE}chase_the_clouds_broken.mp3`,
+  /**
+   * ⚑ THE SOUNDS THE PIECE MAKES ITSELF (2026-09-02, `tools/make_tones.sh`).
+   *
+   * Every one of these is a sine pair or filtered noise whose exact chain is in
+   * that script. Nothing is sourced, so nothing needs a licence row, nothing can
+   * be relicensed under us, and — the part that matters — **no real OS sound is
+   * quoted.** Microsoft's chords and Apple's chime are copyrighted works, and an
+   * "error ding" is exactly the sort of thing that gets lifted by accident.
+   *
+   * ⚑ REGISTERED AHEAD OF THEIR HOOKS, ON PURPOSE. Most of these have no caller
+   * yet — the bus needs `setBed()` and the cascade needs a `playOnce` per window
+   * (S109). Registering now means that session adds the CODE PATH and nothing
+   * else, instead of adding a code path and then discovering that the files it
+   * plays were never registered. That discovery has cost this project two
+   * sessions already. A registered name with no caller is inert; an unregistered
+   * name with a caller is a silence nobody can explain.
+   */
+  'post_beep_1997.mp3': `${AUDIO_BASE}post_beep_1997.mp3`,
+  'err_ding_1997.mp3': `${AUDIO_BASE}err_ding_1997.mp3`,
+  'chime_2003.mp3': `${AUDIO_BASE}chime_2003.mp3`,
+  'alert_2003.mp3': `${AUDIO_BASE}alert_2003.mp3`,
+  'ting_2016.mp3': `${AUDIO_BASE}ting_2016.mp3`,
+  'tick_task.mp3': `${AUDIO_BASE}tick_task.mp3`,
+  'ready_e4.mp3': `${AUDIO_BASE}ready_e4.mp3`,
+  'set_down_e4.mp3': `${AUDIO_BASE}set_down_e4.mp3`,
+  // the four floors and the building between them (D-4, D-7)
+  'bed_1997.mp3': `${AUDIO_BASE}bed_1997.mp3`,
+  'bed_2003.mp3': `${AUDIO_BASE}bed_2003.mp3`,
+  'bed_2016.mp3': `${AUDIO_BASE}bed_2016.mp3`,
+  'bed_2026.mp3': `${AUDIO_BASE}bed_2026.mp3`,
+  'passage_building.mp3': `${AUDIO_BASE}passage_building.mp3`
 };
 
 const HISS_FILE = 'tape-hiss.mp3';
