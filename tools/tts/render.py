@@ -40,6 +40,18 @@ USAGE
   Or via the npm alias:
   npm run tts -- --id lamby_puremail_apology
 
+⚑ AND THEN PUBLISH IT. This script writes lossless WAV on purpose — it is the
+master. What ships is MP3, because every one of these clips is fetched ON
+DEMAND, mid-scene, while a caption is already up waiting for it:
+
+  bash tools/tts/publish_mp3.sh 'l_*'
+
+That encodes to public/assets/audio/ at 96 kbps mono and moves the WAV to
+assets/audio/ (this repo's masters directory). Then repoint the `audio` names in
+data/dialog/ AND src/audio/tapeAudio.ts's REGISTRY to .mp3 — a name that is not
+in that registry is never requested, silently, which is indistinguishable from
+having rendered nothing.
+
 Voice presets are Supertonic's stock styles (F1-F5, M1-M5); pick per entry
 in the manifest, not here. Expression tags (<laugh>, <breath>, <sigh>, …)
 can be inlined directly into a manifest entry's source text upstream if a

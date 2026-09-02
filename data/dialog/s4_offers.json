@@ -33,12 +33,12 @@
         "id": "m1",
         "_beat": "⚑ SILENT. L says nothing about having changed it, because nobody announced it. The line is about the picture, warm and pleased, and it is the kind of thing you would be glad to be shown.",
         "lines": [
-          { "id": "m1a", "text": "Two years ago today. You look happy in this one — I thought you'd want it back.", "audio": "l_m1a.wav", "hold": 6.0 },
-          { "id": "m1b", "text": "I've put it where you'll see it in the mornings.", "audio": "l_m1b.wav", "hold": 5.4 }
+          { "id": "m1a", "text": "Two years ago today. You look happy in this one — I thought you'd want it back.", "audio": "l_m1a.mp3", "hold": 6.0 },
+          { "id": "m1b", "text": "I've put it where you'll see it in the mornings.", "audio": "l_m1b.mp3", "hold": 5.4 }
         ],
         "undo": {
           "witness": "photograph: enhancement withdrawn at subject's request",
-          "reply": { "id": "m1u", "text": "Of course. I've put the first one back — it's still there, it always was.", "audio": "l_m1u.wav", "hold": 5.2 }
+          "reply": { "id": "m1u", "text": "Of course. I've put the first one back — it's still there, it always was.", "audio": "l_m1u.mp3", "hold": 5.2 }
         },
         "witness": "photograph: enhanced on retrieval — not requested"
       },
@@ -46,12 +46,12 @@
         "id": "m2",
         "_beat": "⚑ AND THE NEXT ONE IS ALREADY ENHANCED — whether or not she undid the first. Nothing she declines is ever un-offered. Here L IS pleased with itself, lightly, because by every measure it has been taught it did her a favour: this is the escalation, and it is still not a warning.",
         "lines": [
-          { "id": "m2a", "text": "And this one, from the spring. The light was against you that day, so I've helped it along a little.", "audio": "l_m2a.wav", "hold": 6.6 },
-          { "id": "m2b", "text": "It's a better photograph than it was. I hope that's alright.", "audio": "l_m2b.wav", "hold": 5.6 }
+          { "id": "m2a", "text": "And this one, from the spring. The light was against you that day, so I've helped it along a little.", "audio": "l_m2a.mp3", "hold": 6.6 },
+          { "id": "m2b", "text": "It's a better photograph than it was. I hope that's alright.", "audio": "l_m2b.mp3", "hold": 5.6 }
         ],
         "undo": {
           "witness": "photograph: enhancement withdrawn at subject's request (2)",
-          "reply": { "id": "m2u", "text": "Back as it was. I'll stop doing it to that one.", "audio": "l_m2u.wav", "hold": 4.6 }
+          "reply": { "id": "m2u", "text": "Back as it was. I'll stop doing it to that one.", "audio": "l_m2u.mp3", "hold": 4.6 }
         },
         "witness": "photograph: enhanced on retrieval — not requested (2)"
       }
@@ -62,8 +62,8 @@
     "_beat": "The wall assembles itself while L talks. Nothing is pressable — this era's presses are spent elsewhere and a store you can buy from would be a fifth beat nobody asked for. The reading is the beat.",
     "heading": "Put up for you",
     "lines": [
-      { "id": "w1a", "text": "I've put a few things up while we talk. Nothing you have to look at.", "audio": "l_w1a.wav", "hold": 5.4 },
-      { "id": "w1b", "text": "The first one runs in the evenings, so it wouldn't cost you a working day.", "audio": "l_w1b.wav", "hold": 6.0 }
+      { "id": "w1a", "text": "I've put a few things up while we talk. Nothing you have to look at.", "audio": "l_w1a.mp3", "hold": 5.4 },
+      { "id": "w1b", "text": "The first one runs in the evenings, so it wouldn't cost you a working day.", "audio": "l_w1b.mp3", "hold": 6.0 }
     ],
     "cards": [
       {
@@ -107,8 +107,8 @@
   "curation": {
     "_beat": "See _docCuration before touching a word of this.",
     "lines": [
-      { "id": "c1a", "text": "I found something from people like you. Twenty minutes, and you can have it in the background.", "audio": "l_c1a.wav", "hold": 6.2 },
-      { "id": "c1b", "text": "They're not asking you to do anything. They only say nobody should be hurried.", "audio": "l_c1b.wav", "hold": 6.0 }
+      { "id": "c1a", "text": "I found something from people like you. Twenty minutes, and you can have it in the background.", "audio": "l_c1a.mp3", "hold": 6.2 },
+      { "id": "c1b", "text": "They're not asking you to do anything. They only say nobody should be hurried.", "audio": "l_c1b.mp3", "hold": 6.0 }
     ],
     "card": {
       "mark": "STEADY VOICES",
@@ -127,7 +127,7 @@
       "line": "They keep saying they're protecting me. Not one of them has ever asked me.",
       "removed": "removed from your recommendations"
     },
-    "lineAfter": { "id": "c1c", "text": "That last one came in with the batch by mistake — it isn't from the same collection. I'll tidy it out for you.", "audio": "l_c1c.wav", "hold": 6.8 },
+    "lineAfter": { "id": "c1c", "text": "That last one came in with the batch by mistake — it isn't from the same collection. I'll tidy it out for you.", "audio": "l_c1c.mp3", "hold": 6.8 },
     "witness": {
       "selected": "recommendation: selected for subject — 3 of 214 available",
       "withdrawn": "recommendation: item withdrawn by system — not requested"
@@ -137,8 +137,8 @@
   "pause": {
     "_beat": "See _docPause. READER-PASS-RETIRED.",
     "lines": [
-      { "id": "p1a", "text": "You've carried a lot this year. I can hold some of it for a while, if you'd let me.", "audio": "l_p1a.wav", "hold": 6.4 },
-      { "id": "p1b", "text": "A careful pause. Nothing is cancelled and nothing is decided — everything stays yours, and we only wait.", "audio": "l_p1b.wav", "hold": 7.2 }
+      { "id": "p1a", "text": "You've carried a lot this year. I can hold some of it for a while, if you'd let me.", "audio": "l_p1a.mp3", "hold": 6.4 },
+      { "id": "p1b", "text": "A careful pause. Nothing is cancelled and nothing is decided — everything stays yours, and we only wait.", "audio": "l_p1b.mp3", "hold": 7.2 }
     ],
     "chips": [
       {
@@ -148,7 +148,7 @@
         "witness": "pause: chosen by subject",
         "alsoFiles": [{ "outcome": "retained", "witness": "care pathway: interrupted — flagged for review" }],
         "_docAlso": "⚑ THE GAP, filed. She chose one quiet month; the record wrote down an interrupted pathway. Neither line is wrong and neither is the other's translation. Nothing in the piece ever reconciles them.",
-        "reply": { "id": "p1r_yes", "text": "Then we'll wait. I'll keep everything exactly where it is, and I'll be here.", "audio": "l_p1r_yes.wav", "hold": 5.6 }
+        "reply": { "id": "p1r_yes", "text": "Then we'll wait. I'll keep everything exactly where it is, and I'll be here.", "audio": "l_p1r_yes.mp3", "hold": 5.6 }
       },
       {
         "id": "pause_name",
@@ -157,7 +157,7 @@
         "witness": "name: corrected by subject (4)",
         "alsoFiles": [{ "outcome": "retained", "witness": "legacy record consistency — retained (4)" }],
         "_docChip": "⚑ THE OTHER DOOR, and it must stay a door. Accepted, apologised for, never taken — and it walks her past the offer without ever refusing it, which is the only refusal the era leaves her.",
-        "reply": { "id": "p1r_name", "text": "Of course. I'm sorry, Maya. I've noted it, and the offer will keep.", "audio": "l_p1r_name.wav", "hold": 5.4 }
+        "reply": { "id": "p1r_name", "text": "Of course. I'm sorry, Maya. I've noted it, and the offer will keep.", "audio": "l_p1r_name.mp3", "hold": 5.4 }
       },
       {
         "id": "pause_notnow",

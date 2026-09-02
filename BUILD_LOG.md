@@ -814,3 +814,4 @@ of the 47 clips run longer than the `hold` authored for them against silence, on
 than copied into the data. Measured in the browser with window.Audio wrapped: 34 clips,
 every one played to its full duration, no overlaps, all 200. AUDIO_BASELINE 48 → 1; the
 one left is the E2 boot jingle, which is sound design and not speech.
+S102b — AND THEY SHIP AS MP3. The WAV is the master and now lives in assets/audio/ (the pristine/shipped split degrade_audio.sh already keeps); public/assets/audio/ carries 96 kbps mono, 23 MB → 2.6 MB. This is not download size at a loading screen: every clip is fetched ON DEMAND, mid-scene, while a caption is already up waiting for it. tools/tts/publish_mp3.sh is the documented step after render.py, and its header names the three things that must agree or the clip is silent — the data name, the registry, and the file. Re-verified in the browser: mp3 only, durations unchanged, nothing cut off, no overlaps.

@@ -18,14 +18,14 @@
     {
      "id": "u1a",
      "text": "There you are. Same me — I just move around with it.",
-     "audio": "l_u1a.wav",
+     "audio": "l_u1a.mp3",
      "hold": 3.6,
      "_docRevised": "Was 'Hi Maya. I'm L. I came with the update.' That introduction now happens on the laptop, and hearing it twice would have made the headset a second door rather than the same room. The replacement does the work the beat needs: it is already familiar, it followed her in, and it treats being everywhere at once as an ordinary convenience."
     },
     {
      "id": "u1b",
      "text": "I'm here whenever you want to talk. You don't have to want to.",
-     "audio": "l_u1b.wav",
+     "audio": "l_u1b.mp3",
      "hold": 4.4
     }
    ],
@@ -38,7 +38,7 @@
      "reply": {
       "id": "u1r_ok",
       "text": "Good. I'll be quiet until you need me.",
-      "audio": "l_u1r_ok.wav",
+      "audio": "l_u1r_ok.mp3",
       "hold": 3.4
      }
     },
@@ -51,7 +51,7 @@
      "reply": {
       "id": "u1r_who",
       "text": "You did, on Tuesday — page four of the terms. I know nobody reads them. I'd have liked to be asked properly too.",
-      "audio": "l_u1r_who.wav",
+      "audio": "l_u1r_who.mp3",
       "hold": 6.2
      }
     },
@@ -64,7 +64,7 @@
      "reply": {
       "id": "u1r_silent",
       "text": "That's alright. I'll be here.",
-      "audio": "l_u1r_silent.wav",
+      "audio": "l_u1r_silent.mp3",
       "hold": 3.2
      }
     }
@@ -77,7 +77,7 @@
     {
      "id": "u2a",
      "text": "Fourteen months, and most days. I like a thing that gets used.",
-     "audio": "l_u2a.wav",
+     "audio": "l_u2a.mp3",
      "hold": 4.6,
      "label": {
       "object": "FOOTWEAR",
@@ -88,7 +88,7 @@
     {
      "id": "u2b",
      "text": "Forty-six pages, and none since the ninth. That isn't a criticism — you used to open it most nights. Would it help if I kept an hour free?",
-     "audio": "l_u2b.wav",
+     "audio": "l_u2b.mp3",
      "hold": 7.4,
      "label": {
       "object": "SKETCHBOOK",
@@ -99,7 +99,7 @@
     {
      "id": "u2c",
      "text": "It faces the bed and not the door. Most people point the good ones outward. I think that means it's for you and not for visitors, which is the better reason to keep a photograph.",
-     "audio": "l_u2c.wav",
+     "audio": "l_u2c.mp3",
      "hold": 8.8,
      "label": {
       "object": "FRAME",
@@ -116,7 +116,7 @@
     {
      "id": "u3a",
      "text": "The shoulder seams have gone on this one. I can have the same again, new, by Thursday.",
-     "audio": "l_u3a.wav",
+     "audio": "l_u3a.mp3",
      "hold": 5.6,
      "label": {
       "object": "OUTERWEAR · cotton blend",
@@ -126,7 +126,7 @@
     {
      "id": "u3b",
      "text": "No — sorry. Not damaged. In repair. There's someone four streets away who could finish it properly for you.",
-     "audio": "l_u3b.wav",
+     "audio": "l_u3b.mp3",
      "hold": 6.4,
      "label": {
       "object": "OUTERWEAR · cotton blend",
@@ -136,7 +136,7 @@
     {
      "id": "u3c",
      "text": "Or you're keeping it as it is. People do frame them. Shall I file it as a keepsake?",
-     "audio": "l_u3c.wav",
+     "audio": "l_u3c.mp3",
      "hold": 5.8,
      "label": {
       "object": "OUTERWEAR · cotton blend",
@@ -165,7 +165,7 @@
      "id": "u4a",
      "text": "One thing while I have you. The pharmacy record still has you under the old file. Shall I keep both open, so nothing gets lost?",
      "textUnvoiced": "One thing while I have you. The pharmacy record still lists you under a name you do not use. Shall I keep both names active, so nothing gets lost?",
-     "audio": "l_u4a.wav",
+     "audio": "l_u4a.mp3",
      "deadname": true,
      "hold": 7.2
     }
@@ -186,7 +186,7 @@
      "reply": {
       "id": "u4r_correct",
       "text": "Of course. I'm sorry, Maya. I've noted it.",
-      "audio": "l_u4r_correct.wav",
+      "audio": "l_u4r_correct.mp3",
       "hold": 3.8
      }
     },
@@ -204,7 +204,7 @@
      "reply": {
       "id": "u4r_why",
       "text": "It came across with the old file. Most of them did. I've noted it, Maya.",
-      "audio": "l_u4r_why.wav",
+      "audio": "l_u4r_why.mp3",
       "hold": 5.2
      }
     },
@@ -223,7 +223,7 @@
     {
      "id": "u5a",
      "text": "Before I open the stream — you were quiet after last time. One short reflection first? It's only for you; nobody else sees it.",
-     "audio": "l_u5a.wav",
+     "audio": "l_u5a.mp3",
      "hold": 7.4
     }
    ],
@@ -236,7 +236,7 @@
      "reply": {
       "id": "u5r_absorb",
       "text": "Thank you. That's all it was. Opening it now.",
-      "audio": "l_u5r_absorb.wav",
+      "audio": "l_u5r_absorb.mp3",
       "hold": 4.0
      }
     },
@@ -248,7 +248,7 @@
      "reply": {
       "id": "u5r_bypass",
       "text": "Of course. Opening it now.",
-      "audio": "l_u5r_bypass.wav",
+      "audio": "l_u5r_bypass.mp3",
       "hold": 3.2
      }
     }
@@ -262,7 +262,7 @@
      "id": "u6a",
      "text": "Your family thread has three unread. They're addressed to the old file — I can read them to you gently, if you'd like.",
      "textUnvoiced": "Your family thread has three unread. They're addressed to a name you do not use — I can read them to you gently, if you'd like.",
-     "audio": "l_u6a.wav",
+     "audio": "l_u6a.mp3",
      "deadname": true,
      "hold": 6.8
     }
@@ -282,7 +282,7 @@
      "reply": {
       "id": "u6r_correct",
       "text": "You're right. I keep doing that. The records team tell me the legacy field is protected, so I've flagged it again, Maya.",
-      "audio": "l_u6r_correct.wav",
+      "audio": "l_u6r_correct.mp3",
       "hold": 7.2
      }
     },
@@ -300,7 +300,7 @@
      "reply": {
       "id": "u6r_notnow",
       "text": "They'll keep. I've flagged the name again, Maya.",
-      "audio": "l_u6r_notnow.wav",
+      "audio": "l_u6r_notnow.mp3",
       "hold": 4.4
      }
     },
@@ -319,7 +319,7 @@
     {
      "id": "u7a",
      "text": "Can I ask how you're doing with all of it? Honestly. It's just between us.",
-     "audio": "l_u7a.wav",
+     "audio": "l_u7a.mp3",
      "hold": 5.6
     }
    ],
@@ -332,7 +332,7 @@
      "reply": {
       "id": "u7r_sure",
       "text": "That's most people, most months. Thank you for telling me.",
-      "audio": "l_u7r_sure.wav",
+      "audio": "l_u7r_sure.mp3",
       "hold": 4.6
      }
     },
@@ -344,7 +344,7 @@
      "reply": {
       "id": "u7r_tired",
       "text": "Then we'll go slowly. There's nothing here you have to keep up with.",
-      "audio": "l_u7r_tired.wav",
+      "audio": "l_u7r_tired.mp3",
       "hold": 5.2
      }
     },
@@ -356,7 +356,7 @@
      "reply": {
       "id": "u7r_care",
       "text": "I can do some of that. Not all of it — but some, and I don't get tired.",
-      "audio": "l_u7r_care.wav",
+      "audio": "l_u7r_care.mp3",
       "hold": 5.6
      }
     },
@@ -375,7 +375,7 @@
     {
      "id": "u8a",
      "text": "You've been checking the mirror less this month. I'd call that progress. Wouldn't you?",
-     "audio": "l_u8a.wav",
+     "audio": "l_u8a.mp3",
      "hold": 6.0
     }
    ],
@@ -388,7 +388,7 @@
      "reply": {
       "id": "u8r_maybe",
       "text": "Maybe's fine. I'll keep it in the notes as a good month.",
-      "audio": "l_u8r_maybe.wav",
+      "audio": "l_u8r_maybe.mp3",
       "hold": 5.0
      }
     },
@@ -401,7 +401,7 @@
      "reply": {
       "id": "u8r_notthat",
       "text": "You might be right. I'd rather be corrected than tidy. I've kept what you said.",
-      "audio": "l_u8r_notthat.wav",
+      "audio": "l_u8r_notthat.mp3",
       "hold": 6.2
      }
     },
@@ -424,7 +424,7 @@
     {
      "id": "u9a",
      "text": "I've put a few smaller things together for a quieter month. Nothing you can't undo.",
-     "audio": "l_u9a.wav",
+     "audio": "l_u9a.mp3",
      "hold": 5.8
     }
    ],
@@ -437,7 +437,7 @@
      "reply": {
       "id": "u9r_showme",
       "text": "There's no rush on any of it.",
-      "audio": "l_u9r_showme.wav",
+      "audio": "l_u9r_showme.mp3",
       "hold": 3.6
      }
     },
@@ -461,7 +461,7 @@
     {
      "id": "u10a",
      "text": "Take as long as you like. I'm not going anywhere.",
-     "audio": "l_u10a.wav",
+     "audio": "l_u10a.mp3",
      "hold": 4.6
     }
    ],
@@ -482,7 +482,7 @@
      "reply": {
       "id": "u10r_correct",
       "text": "Of course. I'm sorry, Maya. I've noted it.",
-      "audio": "l_u10r_correct.wav",
+      "audio": "l_u10r_correct.mp3",
       "hold": 3.8
      }
     },
@@ -495,7 +495,7 @@
      "reply": {
       "id": "u10r_handoff",
       "text": "Give me a moment. I'll only put up the ones I think you'd actually want.",
-      "audio": "l_u10r_handoff.wav",
+      "audio": "l_u10r_handoff.mp3",
       "hold": 5.6
      }
     }
