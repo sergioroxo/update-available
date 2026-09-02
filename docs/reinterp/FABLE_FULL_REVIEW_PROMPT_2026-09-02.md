@@ -1,9 +1,25 @@
 # FABLE 5.1 — FULL REVIEW ROUND: orchestrate a walkthrough audit of the whole piece
 STATUS: live
 
-*Sérgio: open a new Fable 5.1 session in `/Users/sergiogalvaoroxo/update-available` (the ORIGINAL
-folder — Fable's persistent memory for this project lives there and loads automatically). Paste
-everything below the rule. Nothing else needs saying; the brief tells it where the build is.*
+*Sérgio: open a new Fable 5.1 session in `/Users/sergiogalvaoroxo/update-available-reinterp` — **the
+worktree, where the build is.** Paste everything below the rule; nothing else needs saying.*
+
+> ⚑ **Corrected 2026-09-02, and the correction is the point.** The first version of this line said to
+> open in the ORIGINAL `/update-available` folder, copied from `04_FABLE_ROUND_PROMPT.md`, whose
+> reason ("Fable's memory lives with the original project") **is no longer true and would have wrecked
+> this round anyway.** Two things, both checked rather than assumed:
+> 1. **Memory is shared.** A session started in the worktree is handed the SAME memory directory
+>    (`~/.claude/projects/-Users-sergiogalvaoroxo-update-available/memory/`, all 22 files). The
+>    worktree's own project directory holds transcripts and no memory of its own. Nothing is lost by
+>    opening there.
+> 2. **The original folder is on `main`, and `main` does not contain this work** — no
+>    `src/desktop/apps/space.ts`, no Era 4 shell, no Close panels, none of it. A review round opened
+>    there would have been reviewing a build with nothing in it that this brief is about, while every
+>    tool below was told to run somewhere else.
+>
+> `04_FABLE_ROUND_PROMPT.md`'s rule still stands for **planning** rounds — plan docs live in the
+> original folder and sync one way into the worktree. **A review round is not a planning round: it has
+> to run where the build runs.**
 
 ---
 
@@ -67,7 +83,8 @@ geometry is correct" is not an answer to "I cannot see it."
 
 # 2 · The instruments (they exist; use them rather than inventing new ones)
 
-Run from `/Users/sergiogalvaoroxo/update-available-reinterp`:
+Run from `/Users/sergiogalvaoroxo/update-available-reinterp` — which, per the note above, is also
+where this session should be open:
 
 | tool | what it gives you |
 |---|---|

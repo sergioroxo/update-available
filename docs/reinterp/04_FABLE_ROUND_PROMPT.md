@@ -2,8 +2,21 @@
 STATUS: live
 
 *Sérgio: open a new Fable 5 session in `/Users/sergiogalvaoroxo/update-available` (the ORIGINAL folder —
-Fable's persistent memory lives with this project and loads automatically). Paste the block below, then
-append your ROUND REPORT (run results, decision answers, new ideas — raw is fine) under the marked line.*
+plan docs live here and sync one way into the worktree). Paste the block below, then append your ROUND
+REPORT (run results, decision answers, new ideas — raw is fine) under the marked line.*
+
+> ⚑ **TWO CORRECTIONS, 2026-09-02, checked rather than assumed.**
+> 1. **The parenthesis used to say "Fable's persistent memory lives with this project", and that is no
+>    longer a reason for anything.** A session opened in the WORKTREE is handed the same memory
+>    directory (`~/.claude/projects/-Users-sergiogalvaoroxo-update-available/memory/`); the worktree's
+>    own project directory holds transcripts and no memory of its own. Nothing is lost by opening
+>    there. The real reason to open here is the one now in the line above: this is where the plan docs
+>    are.
+> 2. **⚑ A REVIEW ROUND MUST NOT BE OPENED HERE.** This folder is on `main`, which does not contain the
+>    reinterp build at all — no Era 4 shell, no Close panels, no room work. Any round that has to LOOK
+>    at the build opens in `/Users/sergiogalvaoroxo/update-available-reinterp`. See
+>    `FABLE_FULL_REVIEW_PROMPT_2026-09-02.md`, which was written with this exact mistake in it and
+>    caught by Sérgio before it was pasted.
 
 ---
 
