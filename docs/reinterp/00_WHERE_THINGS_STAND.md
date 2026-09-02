@@ -172,7 +172,7 @@ Read [`REVIEW_R1_2026-09-02.md`](REVIEW_R1_2026-09-02.md). In one paragraph: the
 the entrance to Era 4 in 135 presses; **the headset works on the played path** — the two runs that could not wear it had pressed Era 2's
 `icon-send` rect, still registered on the visor in Era 4, whose projection lands on the frame's pause
 button (A-1, resolved by spies; two real defects: a stale rect, and chrome over the headset — S104);
-the Close's Restart button publishes no hit rect (A-2); the OS and witness textures upload every
+**after the ball nothing can be pressed — the tail to the Close is unreachable by the ordinary route** (A-8, the visor plane is disabled during the ball and the press route sits behind it); the Close's Restart button publishes no hit rect (A-2); the OS and witness textures upload every
 frame (B-1); the record still says *Daniel · era 1* in 2026 (A-3, observed on the played path); the
 "ready" visor is a black slab again (A-4); Maya's turn draws **197**, not 141 (C-1); the audit's
 "Maya's screen" FAIL is a stale line (C-2); the ball is mute and its bed has no code path (A-6); the

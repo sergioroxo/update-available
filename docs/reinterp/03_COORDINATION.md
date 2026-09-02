@@ -46,7 +46,7 @@ table is the order. One session at a time in the worktree (two share one git ind
 | # | Who | Task | Status |
 |---|---|---|---|
 | S103 | Sonnet 5 | **the walker's three blind spots** (laptop canvas in the screen hash; DOM/audio as activity; `--jump update3`) — so A-1 can be judged by a tool that can see | READY — run first |
-| S104 | Opus 4.8 | **Era 4's door**: Era 2's `icon-send` rect still live on the visor in Era 4 and the pause button sitting over the headset (A-1, resolved — the piece's door works, the walker opened the menu on itself), the Close's Restart button gets a hit rect (A-2), ready = glow not a black slab (A-4) | READY after S103 |
+| S104 | Opus 4.8 | **Era 4's door**: Era 2's `icon-send` rect still live on the visor in Era 4 and the pause button sitting over the headset (A-1, resolved — the piece's door works, the walker opened the menu on itself), **the hand-back after the ball is unreachable on desktop (A-8)**, the Close's Restart button gets a hit rect (A-2), ready = glow not a black slab (A-4) | READY after S103 |
 | S105 | Sonnet 5 | **dirty-only uploads** in `os.ts`/`intake.ts` (B-1: 240 uploads/s flat) | READY — parallel-safe by file, not by worktree |
 | S106 | Sonnet 5 | **the record ages** (`intake.ts:266` literal "era 1"; clip the panel) | READY |
 | S107 | Sonnet 5 | **audit hygiene**: `SEAT_SUBJECTS.r3` → `e_laptop`; add `r3-turned`; record 197 and the clean envelope | READY — 20 min |
