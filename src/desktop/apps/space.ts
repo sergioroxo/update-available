@@ -60,7 +60,7 @@
  * spends the update's one "I Agree" and the ONE TOUCH on the headset. There is
  * nothing else to press here, and adding a "continue" would break the rule.
  */
-import { homeEnvironment, standby, visorField, visorEdge, ERA4, PLACE } from '../theme/era4';
+import { homeEnvironment, standby, visorField, visorEdge, glitchBands, ERA4, PLACE } from '../theme/era4';
 import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import space from '../../../data/dialog/s4_space.json';
@@ -86,6 +86,27 @@ const PULSE_STEPS = 6;
  *  the same place, because it is the same instrument doing the same job on a
  *  room instead of a pair of shoes. */
 const LABEL = { x: 262, y: 44, w: 234 } as const;
+/**
+ * ⚑ THE GLITCH (Stage 4 of `docs/REINTERP_E4_BUILD_PLAN_2026-08-05.md`, spec'd
+ * 2026-09-01 and built 2026-09-02). Sérgio: *"i would envision the glitch
+ * happening on the VR headset, the headset would go back to the desk
+ * automagically and the screen on the Laptop would have a message there."*
+ *
+ * ⚑ IT IS THE PICTURE FAILING, NOT L. L does not distort, stutter or turn
+ * menacing — the era's law is that the voice stays polite to the very end, and
+ * a voice that breaks here would let the apparatus off by making it sound
+ * damaged. What comes apart is the ROOM THAT WAS ARRANGED FOR YOU. The
+ * instrument keeps working; it is simply no longer showing you anywhere.
+ *
+ * ⚑ Length and silence are MY call, logged for Sérgio to overrule (the spec
+ * left both open): 1.2 s, and L says nothing. She has already said everything,
+ * and a line here would be the piece explaining its own ending.
+ *
+ * Quantised like every other moving thing on this surface, so a failing picture
+ * costs twelve texture uploads and not one per frame.
+ */
+const GLITCH_SECONDS = 1.2;
+const GLITCH_STEPS = 12;
 
 /**
  * ⚑ `ball` IS THE THIRD STAGE, ADDED BY S79, and it is not a cosmetic state:
@@ -106,7 +127,7 @@ const LABEL = { x: 262, y: 44, w: 234 } as const;
  * afterwards: L has finished on the laptop and the device across the desk is
  * lit and waiting.
  */
-type Stage = 'laptop' | 'closed' | 'worn' | 'ball';
+type Stage = 'laptop' | 'closed' | 'worn' | 'ball' | 'glitch';
 
 /**
  * The era's shell. One instance, made by `DesktopOS` when the era becomes `e4`
@@ -168,6 +189,9 @@ export class E4Shell {
    *  second line in the witness record would read as the ball having been filed,
    *  and the ball files nothing (`data/dialog/s4_ball.json`'s `witness` block). */
   private wornFiled = false;
+  /** the glitch's own clock and its quantised step; see GLITCH_SECONDS */
+  private glitchT = 0;
+  private glitchStep = -1;
   /** bumped on any change to what this surface DRAWS; the room compares it to
    *  decide when to re-upload the visor texture (dirty discipline, the law
    *  era3Devices' three screens already obey). */
@@ -197,6 +221,10 @@ export class E4Shell {
 
   get stage(): Stage { return this.stageNow; }
   get worn(): boolean { return this.stageNow === 'worn'; }
+  /** ⚑ still ON HER FACE, worn or failing. The room pins the visor plane to the
+   *  camera while this is true, so the glitch plays where the picture was and
+   *  the device eases back to the desk only once it is over. */
+  get pinned(): boolean { return this.stageNow === 'worn' || this.stageNow === 'glitch'; }
   /** the spine holds its breath while this is false — see os.ts's
    *  `sendOfferPending`. S79's ball is what eventually sets it. */
   get handedOffToClose(): boolean { return this.handedOff; }
@@ -205,6 +233,17 @@ export class E4Shell {
     this.t += dt;
     const step = Math.floor(((this.t % PULSE_SECONDS) / PULSE_SECONDS) * PULSE_STEPS);
     if (step !== this.pulseStep) { this.pulseStep = step; this.version++; }
+    // ⚑ THE GLITCH RUNS ALONE. Nothing else on this surface updates while the
+    // picture is failing — L has finished, the offers have finished, and the
+    // ball is long over — so the clock below is the only thing moving, and when
+    // it runs out the device stops being worn.
+    if (this.stageNow === 'glitch') {
+      this.glitchT += dt;
+      const g = Math.min(GLITCH_STEPS, Math.floor((this.glitchT / GLITCH_SECONDS) * GLITCH_STEPS));
+      if (g !== this.glitchStep) { this.glitchStep = g; this.version++; }
+      if (this.glitchT >= GLITCH_SECONDS) this.finishHandOff();
+      return;
+    }
     // L keeps its own version so the caption band's changes reach the visor
     // texture through the SAME dirty-only upload discipline the three E3
     // screens obey — a talking assistant must not become a per-frame upload.
@@ -262,6 +301,9 @@ export class E4Shell {
     //   at the door every route passes through — the same lesson S79 learned
     //   about the ball.
     if (this.stageNow === 'laptop') return;
+    // ⚑ and it is not a door while it is failing, either. Nothing the player
+    //   does causes the glitch and nothing they do interrupts it.
+    if (this.stageNow === 'glitch') return;
     this.putOn();
   }
 
@@ -432,6 +474,22 @@ export class E4Shell {
   onCloseRequest?: () => void;
 
   handOff(): void {
+    if (this.handedOff || this.stageNow === 'glitch') return;
+    /**
+     * ⚑ THE GLITCH GOES HERE, BETWEEN THE FINALE AND THE DESK (build plan
+     * Stage 4). Until now the picture simply ended and the headset was back on
+     * its stand; the moment between was the thing Sérgio asked for and the
+     * thing that was missing. The device stays on her face for GLITCH_SECONDS
+     * while the place comes apart, and only then does `worn` drop.
+     */
+    this.stageNow = 'glitch';
+    this.glitchT = 0;
+    this.glitchStep = -1;
+    this.version++;
+  }
+
+  /** the far side of the glitch: the device stops, and the laptop takes over */
+  private finishHandOff(): void {
     if (this.handedOff) return;
     this.handedOff = true;
     /**
@@ -468,6 +526,32 @@ export class E4Shell {
     // same base the cyclorama itself fills, so the restart card still lands
     // on the finale's own palette, just without its imagery.
     if (this.handedOff) { px(ctx, 0, 0, W, H, ERA4.field); return; }
+    /**
+     * ⚑ THE GLITCH — the place coming apart while the voice does not.
+     *
+     * It draws the picture that was there a moment ago and then fails it: the
+     * install's own band-tear (`theme/era4.ts`'s `glitchBands`, written for the
+     * transitions and never used here) over the finale's field, and the light
+     * going out of it. There is no red, no alarm, no error glyph and no sound
+     * of damage — tone dial ≤ +1, ERA4's own palette, exactly as the build plan
+     * specifies. ⚑ Nothing captions it. The player is not told what happened,
+     * because the apparatus never once told her the truth about what it was
+     * doing and it is not going to start on the way out.
+     */
+    if (this.stageNow === 'glitch') {
+      const k = Math.max(0, Math.min(1, (this.glitchStep + 1) / GLITCH_STEPS));
+      if (this.offers.ownsField) this.offers.draw(ctx, W, H);
+      else homeEnvironment(ctx, W, H, this.look);
+      glitchBands(ctx, W, H, k);
+      // the light leaving, in the field's own colour — a picture stopping, not
+      // a screen breaking
+      const was = ctx.globalAlpha;
+      ctx.globalAlpha = k * k;
+      px(ctx, 0, 0, W, H, ERA4.field);
+      ctx.globalAlpha = was;
+      visorEdge(ctx, W, H);
+      return;
+    }
     // ⚑ THE BALL HAS NO SCREEN IN IT. The device is on its stand across the
     // room and this is all that is on it: dark glass, the standby light it has
     // always shown when it is not being worn, and — occasionally, and only if

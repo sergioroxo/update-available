@@ -852,6 +852,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     if (!visor || !shell) return;
     const cam = camera();
     const worn = shell.worn;
+    // ⚑ the glitch plays ON HER FACE (S101). `worn` is false for the whole of
+    //   it — the shell has left that stage — so the pose target is taken from
+    //   `pinned` instead, and the device eases back to its stand only once the
+    //   picture has finished failing.
+    const pinned = shell.pinned;
     /** the direction the camera is looking, as a compass bearing in degrees.
      *  Taken from the forward vector, which is unambiguous; see TIP's note. */
     const bearing = (): number => {
@@ -860,7 +865,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     };
     if (worn && !wasWorn && cam) { wornYaw = bearing(); }
     wasWorn = worn;
-    const target = worn ? 1 : 0;
+    const target = pinned ? 1 : 0;
     if (visorK !== target) {
       const step = dt / WEAR_SECONDS;
       visorK = target > visorK ? Math.min(1, visorK + step) : Math.max(0, visorK - step);
@@ -949,7 +954,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
          */
         if (s.name === 'visor' && eraNow === 'e4') {
           const sh = e4Bridge()?.shell();
-          s.entity.enabled = !!sh && !sh.handedOffToClose && (sh.worn || sh.stage === 'closed');
+          s.entity.enabled = !!sh && !sh.handedOffToClose && (sh.pinned || sh.stage === 'closed');
         }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
             s.lastVersion = s.versionOf();
@@ -973,7 +978,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
          */
         if (s.name === 'visor' && eraNow === 'e4') {
           const sh = e4Bridge()?.shell();
-          s.entity.enabled = !!sh && !sh.handedOffToClose && (sh.worn || sh.stage === 'closed');
+          s.entity.enabled = !!sh && !sh.handedOffToClose && (sh.pinned || sh.stage === 'closed');
         }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
           s.lastVersion = s.versionOf();

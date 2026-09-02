@@ -3287,7 +3287,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       'movement-nodes',
       'era3-device-workstation',
       'era3-device-tablet',
-      'era3-device-phone'
+      'era3-device-phone',
+      // ⚑ AND ERA 4's TWO SURFACES (S101). They were missing, and the laptop's
+      //   lid is enabled for the whole of `e4` — so the era that ACTUALLY
+      //   reaches this function left a lit screen plane hanging in the
+      //   constellation after the room around it had gone. The visor's
+      //   per-frame gate already switches it off at the hand-off; naming it
+      //   here too means the Close does not depend on that gate still running.
+      'era3-device-laptop',
+      'era4-visor'
     ]) {
       const e = app.root.findByName(id);
       if (e instanceof pc.Entity) e.enabled = false;
