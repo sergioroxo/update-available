@@ -6,3 +6,6 @@ update-available/
 # review artifacts — rendered video (tools/render-video.mjs), regenerable, 12MB+
 out/
 .render-tmp/
+
+# freesound previews — lossy auditions, never assets
+.audition/
