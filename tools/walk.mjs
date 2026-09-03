@@ -150,7 +150,28 @@ const PREFER = [
   /apply|send|confirm|done|finish|accept|update.?now|sign.?in|signin|allow|unlock/i,
   /^task-|^tile-|^consent|^board|^group$|^inbox$|^link$|^notification$/i
 ];
-const FORBIDDEN = /^r-leave$|quit|^exit$|restart|decline|pause|mute/i;
+/**
+ * ⚑ ANCHORED, AND THE TWO WORDS THAT WERE NOT COST THE WHOLE TAIL (S103).
+ *
+ * This read `…|restart|…|pause|…` — bare substrings — and the piece names two
+ * of its own controls with those words:
+ *
+ *   · `pause_yes` / `pause_name` / `pause_notnow` — THE CAREFUL PAUSE, Era 4's
+ *     last real choice. The walker refused all three for an entire run, so it
+ *     could never take the pause, never reach the ball behind it, and never see
+ *     the glitch, the device returning, the Restart card or the Close. Review
+ *     round 1 noticed the refusal; the run this file just made stopped in
+ *     exactly that place, 80 rounds of "every control pressed to its cap".
+ *   · `close-restart` — THE LAST PRESS IN THE PIECE. The intent behind the word
+ *     was "Restart loops it", which is true of the era rituals' own restart and
+ *     the exact opposite of this one: the Close's restart is where the work
+ *     ENDS. A walker that refuses it can never finish.
+ *
+ * ⚑ The frame's controls are still refused, by exact id. `^pause$` is the game
+ * menu's; `pause_yes` is the era's, and the difference between them is the
+ * difference between quitting the piece and playing it.
+ */
+const FORBIDDEN = /^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$/i;
 const LAST_RESORT = /^leave$|not.?now|remind|skip|cancel|^back|^dismiss$|^close$/i;
 
 async function main() {
@@ -512,31 +533,29 @@ async function main() {
     /**
      * ⚑ DID THE ROOM FOLLOW THE DESKTOP? (A-5.2, the general case.)
      * The named refusal above stops the one broken jump we know about. This is
-     * the net under it, and it needs no list: an era whose own screens are all
-     * unaimable is an era the player is not sitting in. Eras 3 and 4 each own
-     * screens that the seat is authored to face — the workstation and the phone
-     * in Room 2, the laptop and the visor in Room 3 — so if the desktop says e3
-     * or e4 and not one of those can be aimed at, the space did not come along.
-     * That is never true of the played path and always true of an OS-only jump,
-     * which is why the walk trusts it only when it was jumped into.
+     * the net under it, and two wrong versions of it are worth recording because
+     * both looked obviously right:
+     *
+     *  · **"can the era's screen be aimed at?"** — the jumped run sailed past
+     *    it. The three rooms are ONE SPACE THAT AGES, not three places, so from
+     *    the first chair the Era-3 workstation is perfectly visible: small, dark
+     *    and inert, but on screen. Visible is not seated.
+     *  · **"is the camera nearer Room 1's monitor than the era's own screen?"**
+     *    — same reason. The machines occupy nearly the same corner of the same
+     *    room across thirty years; there is no distance to measure.
+     *
+     * What actually differs is the MACHINE'S OWN STATE, and the piece publishes
+     * it. Era 3's workstation wakes through `beginArrival`/`settleArrival`,
+     * which app.ts calls on the real e2→e3 leg and an OS-only jump never
+     * reaches — so the queue sits in `dark` for ever, publishing no rects, while
+     * the desktop insists it is Era 3. On the played path the queue leaves
+     * `dark` within seconds of the era landing. That is the difference between
+     * an era you are in and an era you were dropped beside.
      */
-    const eraPlanes = os.desktopEra === 'e4' ? ['era3-device-laptop', 'era4-visor']
-      : os.desktopEra === 'e3' ? ['era3-device-workstation', 'era3-device-phone'] : [];
     let roomDesync = null;
-    if (eraPlanes.length) {
-      const why = [];
-      let aimable = false;
-      for (const n of eraPlanes) {
-        const e = root.findByName(n);
-        if (!e) { why.push(n + ' does not exist'); continue; }
-        let on = true, up = e;
-        while (up) { if (!up.enabled) { on = false; break; } up = up.parent; }
-        if (!on) { why.push(n + ' is disabled'); continue; }
-        const c = e.getPosition();
-        if (toPage(c.x, c.y, c.z)) { aimable = true; break; }
-        why.push(n + ' is ' + (lastWhy || 'unaimable'));
-      }
-      if (!aimable) roomDesync = 'the desktop is at ' + os.desktopEra + ' but ' + why.join(', ');
+    if (os.desktopEra === 'e3' && q && q.mode === 'dark') {
+      roomDesync = 'the desktop is at e3 but the workstation queue is still `dark` — the ' +
+        'machine was never woken, so it publishes nothing and no press on it can land';
     }
 
     /**
@@ -1002,7 +1021,10 @@ async function main() {
      */
     if (JUMP && s.roomDesync) {
       desyncRuns += 1;
-      if (desyncRuns >= 8) {
+      // ⚑ ~40 s. A real arrival is dark for a few seconds while the machine
+      //   comes up, so this must outlast that and still fire long before the
+      //   stall counter turns the same situation into a misleading STUCK.
+      if (desyncRuns >= 25) {
         note('stop', {
           what: 'THE ROOM DID NOT FOLLOW: ' + s.roomDesync + '. `debugJump` moves the desktop ' +
             'and never the space, so this run is sitting in one room reading an era that is ' +

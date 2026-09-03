@@ -869,3 +869,18 @@ texture instance, and counts exactly what CLAUDE.md's law names — our screens 
 re-sent to the GPU — exposed as `window.__uploads` beside `__drawCalls`. Measured at rest:
 E2 2.6/s, E3 2.6/s, E4 3.6/s, against ~240/s flat before. The law was broken for months
 with every check green because nothing in the repo could see an upload happen.
+
+S103 (2026-09-03) — THE WALKER CAN SEE ERA 4, AND THEN COULD NOT PRESS ITS WAY OUT. Three
+blind spots closed: the laptop canvas is in the screen hash (three presses, `laptop:read`
+filed, step 233), DOM captions and live audio count as activity so the walker waits
+through beats that change nothing on a canvas, and `--jump update3` now REFUSES with the
+real reason — the desktop says e3 while the workstation queue is still `dark`, because a
+jump never runs `beginArrival`, so the machine was never woken and publishes no rects.
+Two earlier versions of that check are recorded in the file because both looked obviously
+right and both failed for the same reason: the three rooms are one space that ages, so
+Era 3's workstation is visible from the first chair, and visible is not seated. ⚑ The full
+run then found the thing no static reading would have: `FORBIDDEN` matched `restart` and
+`pause` as bare substrings, so the walker refused `pause_yes/name/notnow` (Era 4's careful
+pause, the door to the ball) and `close-restart` (the last press in the piece). Anchored.
+The frame's own controls are still refused by exact id — `^pause$` is the menu's,
+`pause_yes` is the era's.
