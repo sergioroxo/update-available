@@ -342,6 +342,138 @@ export class TapeAudioBus {
 }
 
 /**
+ * ⚑ S109 — THE ROOM BED. One looping sound under everything, per era, crossfaded.
+ *
+ * ⚑ WHY IT IS NOT THE BOOMBOX'S HISS. `TapeAudioBus` is a PROP: Daniel's tape
+ * player, in Room 1, with a hiss that belongs to a cassette and ducks under a
+ * clip because that clip has its own hiss baked in. This is a different object —
+ * the ROOM, in every era, whether or not anything is playing. Layering the two
+ * concepts onto one class would have made the boombox's rules (ducking, clip
+ * slots, `releaseBus`) apply to a building's ventilation, which is nonsense.
+ *
+ * ⚑ WHY A CROSSFADE AND NOT A SWAP. The eras are not cuts, they are journeys:
+ * 21 s, 29.5 s and 42.5 s of camera travel between rooms, which review round 1
+ * measured as the longest dead air in the piece. The passage plays the BUILDING
+ * (`passage_building`) — the same in every era, because the building never
+ * changed, only the tenants did — and the destination's bed arrives underneath
+ * it. That is the three-rooms-that-age thesis, heard rather than argued.
+ *
+ * ⚑ TWO ELEMENTS, PING-PONGED. A single element cannot crossfade with itself.
+ * The outgoing one is paused only once it is silent, so a bed swap never clicks.
+ *
+ * ⚑ AND IT OBEYS THE SAME TWO LAWS THE BUS DOES: a global mute, and the game's
+ * Esc/pause — paused audio actually pauses rather than playing silently behind
+ * the menu, which is "the frame never plays" in the one place it would be
+ * easiest to cheat.
+ */
+class RoomBed {
+  private a: HTMLAudioElement | null = null;
+  private b: HTMLAudioElement | null = null;
+  private useA = true;
+  private name: string | null = null;
+  private target = 0;          // the level the incoming bed is heading for
+  private fade = 0;            // seconds remaining in the crossfade
+  private fadeSeconds = 2.5;
+  private muted = false;
+  private paused = false;
+
+  /** the bed's own quiet level — the floor the whole mix sits on. Deliberately
+   *  the hiss bed's number: this is ambient presence, never a voice. */
+  private static readonly LEVEL = 0.12;
+
+  private get live(): HTMLAudioElement | null { return this.useA ? this.a : this.b; }
+  private get dying(): HTMLAudioElement | null { return this.useA ? this.b : this.a; }
+
+  /** which bed is playing, or null — read by probes and by `check-spec`'s C12 */
+  get current(): string | null { return this.name; }
+
+  /**
+   * Ask for a bed by name. Unregistered names are simply never requested — the
+   * registry law — so a bed that has not been made yet is silence and not a 404.
+   * Asking for the bed that is already playing does nothing at all.
+   */
+  set(name: string | null, crossfadeSeconds = 2.5): void {
+    if (name === this.name) return;
+    if (name !== null && !isAudioAvailable(name)) {
+      // ⚑ not an error, and not silent-with-a-shrug either: the name is recorded
+      //   so `current` tells the truth about what the piece ASKED for, while the
+      //   audio stays silent. The two questions "is there a bed here?" and "did
+      //   somebody make it?" must not collapse into one answer.
+      this.name = name;
+      this.stopAll();
+      return;
+    }
+    this.name = name;
+    this.fadeSeconds = Math.max(0.01, crossfadeSeconds);
+    this.fade = this.fadeSeconds;
+    // whatever was live becomes the dying one; the incoming takes the other slot
+    this.useA = !this.useA;
+    /**
+     * ⚑ AN INTERRUPTED CROSSFADE MUST NOT ORPHAN AN ELEMENT, and it did.
+     *
+     * Two `set()` calls land back to back at every era change — the relocation
+     * asks for the building, then the arrival asks for the destination's bed —
+     * so the second swap reaches this line while the first is still fading. With
+     * only a slot reassignment here, whatever was still dying in that slot was
+     * dropped on the floor: still playing, still looping, unreachable and
+     * unstoppable. Measured before this fix: **three beds alive at once by Era 4**,
+     * including two copies of the building. A room bed that accumulates is worse
+     * than no room bed, because it is a mix nobody chose that gets thicker the
+     * longer you play.
+     */
+    const occupant = this.useA ? this.a : this.b;
+    occupant?.pause();
+    const incoming = name === null ? null : new Audio(REGISTRY[name]);
+    if (this.useA) this.a = incoming; else this.b = incoming;
+    if (incoming) {
+      incoming.loop = true;
+      incoming.muted = this.muted;
+      incoming.volume = 0;
+      if (!this.paused) incoming.play().catch(() => { /* autoplay policy or a headless harness */ });
+    }
+    this.target = incoming ? RoomBed.LEVEL : 0;
+  }
+
+  /** driven from the engine's own frame loop, like everything else here */
+  update(dt: number): void {
+    if (this.fade <= 0) return;
+    this.fade = Math.max(0, this.fade - dt);
+    const k = 1 - this.fade / this.fadeSeconds;   // 0 → 1 across the crossfade
+    if (this.live) this.live.volume = this.target * k;
+    if (this.dying) {
+      this.dying.volume = RoomBed.LEVEL * (1 - k);
+      // ⚑ paused only once it is actually silent, or the swap clicks
+      if (this.fade === 0) { this.dying.pause(); if (this.useA) this.b = null; else this.a = null; }
+    }
+  }
+
+  setMuted(muted: boolean): void {
+    this.muted = muted;
+    if (this.a) this.a.muted = muted;
+    if (this.b) this.b.muted = muted;
+  }
+
+  setGamePaused(paused: boolean): void {
+    if (paused === this.paused) return;
+    this.paused = paused;
+    for (const el of [this.a, this.b]) {
+      if (!el) continue;
+      if (paused) el.pause();
+      else el.play().catch(() => { /* see set() */ });
+    }
+  }
+
+  private stopAll(): void {
+    this.a?.pause(); this.b?.pause();
+    this.a = null; this.b = null;
+    this.fade = 0; this.target = 0;
+  }
+}
+
+/** the one room bed — there is only ever one room being stood in */
+export const roomBed = new RoomBed();
+
+/**
  * One-shot playback for a single named clip, outside any boombox bus — e.g.
  * a "read aloud" button (S46: data/dialog/s2_caleb.json's `pureMail.readAloudTrack`
  * hook). Same missing-file-safe pattern as everywhere else in this module: an

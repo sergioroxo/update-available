@@ -25,7 +25,7 @@ import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
-import { TapeAudioBus } from '../audio/tapeAudio';
+import { TapeAudioBus, roomBed } from '../audio/tapeAudio';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity } from './screenTexture';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
@@ -773,6 +773,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   (S101), rather than left to notice on its own clock 22 s later that a
       //   ritual it did not arm has finished. See `Spine.onEra`.
       if (era === 'close') { spine?.onEra('close'); return; }
+      /**
+       * ⚑ S109 — the destination's bed is REMEMBERED here and arrives when the
+       * flight lands (`endRelocation`), not now.
+       *
+       * The era's restart completes MID-FLIGHT — S86 moved the ascent to the
+       * "I Agree" press deliberately, so the update and the aging are one
+       * movement — which means this fires while the camera is still travelling.
+       * Setting the bed here made the destination's room arrive before the
+       * player did, and (measured) left the building's drone as the thing still
+       * playing once they got there: both halves backwards. The passage plays
+       * the building; the room arrives with the room.
+       */
+      pendingBed = BED_FOR[era] ?? null;
+      if (!relocPlan) { roomBed.set(pendingBed, 3.0); pendingBed = undefined; }
       driveMorph(era as EraKey);
       spine?.onEra(era);
     };
@@ -980,6 +994,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       e.stopPropagation();
       if (!tapeAudio || !tapeMuteBtn) return;
       tapeAudio.setMuted(!tapeAudio.isMuted);
+      roomBed.setMuted(tapeAudio.isMuted);   // ⚑ S109 — one mute, every source
       tapeMuteBtn.textContent = tapeAudio.isMuted ? 'unmute' : 'mute';
     });
 
@@ -1619,7 +1634,27 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // ── THE RELOCATION's three legs (see RELOC_POSES + cluster.ts RELOCATIONS) ──
   /** start the whole move. Called from driveMorph on an era shift that has a
    *  plan — never on a snap/settled jump, and never under ?descent=0. */
+  /**
+   * ⚑ S109 — ONE BED PER ERA, and `passage_building` between them.
+   *
+   * The beds are Lane D's argument made concrete: a room that sounds like a
+   * year. The PASSAGE is the better half of the idea — the same drone in every
+   * transition, because the building has stood since 1997 and only the tenants
+   * changed. Review round 1 measured 21 s, 29.5 s and 42.5 s of camera travel
+   * with nothing to hear; that is the longest dead air in the work and this is
+   * what goes in it.
+   */
+  const BED_FOR: Record<string, string> = {
+    e1: 'bed_1997.mp3', e2: 'bed_2003.mp3', e3: 'bed_2016.mp3', e4: 'bed_2026.mp3'
+  };
+  const PASSAGE_BED = 'passage_building.mp3';
+  /** set when an era lands mid-flight; consumed by `endRelocation` */
+  let pendingBed: string | null | undefined;
+
   function beginRelocation(key: string, plan: RelocationPlan): void {
+    // ⚑ the building, for the length of the flight. `onEraShift` brings the
+    //   destination's own bed up when the era actually lands.
+    roomBed.set(PASSAGE_BED, 2.0);
     const poses = RELOC_POSES[key];
     if (!poses) return;
     // ⚑ A relocation owns the camera outright, so the front door cannot still
@@ -1658,6 +1693,21 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  length can never trap anyone or make them sit through motion they don't
    *  want. It is also the whole ?descent=0 path (seatCut below). */
   function endRelocation(): void {
+    /**
+     * ⚑ S109 — YOU ARRIVE, AND THE ROOM IS THERE. The building's drone has been
+     * under the whole flight; this is where it gives way to the year you landed
+     * in. 3.5 s, so it settles rather than cuts.
+     *
+     * ⚑ READ OFF `os.era` RATHER THAN A REMEMBERED VALUE, and that is the whole
+     * lesson of the hour. The restart lands mid-flight, so the order of
+     * `onEraRelocate` / `onEraShift` / this depends on which beat fired when —
+     * and a probe that drives one of them by hand produces a fourth order that
+     * never happens in play. Rather than encode an order, ask the only question
+     * that is always answerable HERE: what era am I standing in now? The bed
+     * follows the room, whatever route the piece took to it.
+     */
+    pendingBed = undefined;
+    roomBed.set(BED_FOR[os.era] ?? null, 3.5);
     if (!relocLeg) return;
     const key = relocKey;
     const seat = relocPlan?.seat ?? 0;
@@ -2641,6 +2691,26 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (e.touches.length >= 2) e.preventDefault();
   }, { passive: false });
 
+  /**
+   * ⚑ S109 — ERA 1'S BED STARTS ON THE FIRST TOUCH, and it has to.
+   *
+   * Two reasons, and only the second is obvious. (1) `onEraShift` fires on era
+   * CHANGES, and Era 1 is not a change — it is where the piece begins, so
+   * nothing would ever ask for its bed. (2) Browsers refuse to start audio
+   * before a real user gesture; a bed asked for at load would be rejected and
+   * the era would be silent for the rest of the run with nothing in any log to
+   * say why. The piece's first gesture is a press, so that is where it goes.
+   * Once, then never again.
+   */
+  let bedStarted = false;
+  const startFirstBed = (): void => {
+    if (bedStarted) return;
+    bedStarted = true;
+    roomBed.set(BED_FOR[os.era] ?? BED_FOR.e1, 1.5);
+  };
+  canvasEl.addEventListener('pointerdown', startFirstBed);
+  document.addEventListener('pointerdown', startFirstBed);
+
   canvasEl.addEventListener('pointerdown', (e) => {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     // a second finger is a PINCH: not a look, not a tap. Both are cancelled
@@ -3002,6 +3072,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           syncTapeProps();
         }
         tapeAudio?.setGamePaused(os.paused);
+        // ⚑ S109 — the room bed on the same frame clock, and under the same two
+        //   laws: the mute button and Esc/pause. Audio behind the menu does not
+        //   keep playing silently; it stops. ("The frame never plays.")
+        roomBed.setGamePaused(os.paused);
+        roomBed.update(dt);
         if (tapeCaption) {
           const cap = tapes.activeCaption;
           // ⚑ S89 — TAPE IDENTITY. No tape playing (nothing to caption) and the

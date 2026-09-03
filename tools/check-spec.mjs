@@ -688,12 +688,20 @@ if (unreachedCount > UNREACHED_BASELINE) {
 // correctly in the data and rendered by nobody. They are on disk now, in one
 // sitting, and REGISTERED (src/audio/tapeAudio.ts — a rendered file whose name
 // is not in that registry is never requested, which looks exactly like silence).
-// ⚑ 1 → 0 (2026-09-02). The last one was `lambyos_2003_boot.mp3`, the E2 boot
-// jingle, hooked since S60 and never made. It is a 6.5 s cut of the era's own
-// `Chase_The_Clouds`, and with it **every audio name this piece declares now
-// exists**: 92/92. The floor is zero from here — a new declared name that has no
-// file fails this check on the session that declares it, which is the point.
-const AUDIO_BASELINE = 0;
+// ⚑ 0 → 2 (S109), and this is NOT the thing the "never raise a baseline" law
+// forbids. That law is about weakening a ratchet to make a failure go away. This
+// is the opposite: the exemption above was NARROWED, from every `ball_*` name to
+// the 38 voices alone, and the two files that had been sheltering under it —
+// `ball_room_bed` and `ball_room_landing`, the ball's ROOM, not anybody's
+// speech — became visible for the first time. Nothing got worse; a blind spot
+// was removed and the number now tells the truth about what is missing.
+//
+// ⚑ The two are Sérgio's live decision (R1-1: a found through-the-wall recording,
+// with a Suno take auditioned beside it), so they exist as a choice being made
+// rather than as work nobody has started. **This baseline goes back to 0 the day
+// that file lands** — it is the only number in this file that is expected to
+// fall, and if it is still 2 in a month, the ball is still silent.
+const AUDIO_BASELINE = 2;
 let audioMissing = 0, audioRefs = 0;
 {
   const refs = new Set();
@@ -725,7 +733,22 @@ let audioMissing = 0, audioRefs = 0;
   // go green. A check that pushes someone to break the piece's own ethics law is
   // worse than no check. They are excluded by name, and the exclusion is the
   // point rather than an oversight.
-  const NAMES_ONLY = /^ball_/;
+  // ⚑ S109 — NARROWED FROM /^ball_/ TO THE 38 VOICES ALONE.
+  //
+  // The old rule exempted every name beginning `ball_`, and the refusal it was
+  // protecting is specifically the MC's and the room's SPEECH: 38 lines that
+  // must never be synthesized, written down as an ethical decision in
+  // `s4_ball.json`'s `_docVoice`. But `ball_room_bed` and `ball_room_landing`
+  // are not speech — they are the ROOM, a bed and a landing — and they were
+  // sheltering under the same prefix. So the check could not see that the
+  // piece's one respite had no sound at all, and `ball.ts` never played them
+  // even in principle. Both facts survived three sessions inside one regex.
+  //
+  // ⚑ The exemption stays absolute for the voices. A check that nagged toward
+  // rendering those would be pressuring a future session into breaking the
+  // piece's own ethics, which is worse than no check. The room is different,
+  // and now it is counted like any other missing asset.
+  const NAMES_ONLY = /^ball_(?!room_)/;
   const bases = ['', 'public/', 'public/assets/audio/', 'data/audio/', 'assets/audio/'];
   const missing = [...refs].filter((r) => {
     if (NAMES_ONLY.test(r.split('/').pop())) return false;

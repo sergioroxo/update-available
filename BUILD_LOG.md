@@ -838,3 +838,23 @@ the CRT and left r3-turned declaring nothing. ⚑ And it found that Era 4's open
 instruction, "press to continue", sits 1.7° below the frame at the seat the era is played
 from. Photographed both ways in one page load. Fixed by moving the text up the lid rather
 than tilting the camera: a rig pitch is a world tilt in XR and gyro.
+
+S109 (2026-09-02) — THE ROOM BED, AND THE ERAS BECOME AUDIBLE. `roomBed` is a new object,
+not a widening of the boombox bus: the bus is a PROP (Daniel's tape player, with a hiss
+that ducks under a clip) and this is the ROOM, in every era, whether anything is playing
+or not. Two elements ping-ponged for a real crossfade; one mute, one pause, both shared
+with the bus. Era 1's bed starts on the first touch, because `onEraShift` fires on era
+CHANGES and Era 1 is not a change, and because a browser refuses audio before a gesture —
+a bed asked for at load would have been rejected and the era silent for the run with
+nothing in any log to say why. The passages play `passage_building` — the same drone in
+every transition, because the building has stood since 1997 and only the tenants changed —
+and the destination's bed arrives at `endRelocation`, read off `os.era` rather than a
+remembered value, because the restart lands mid-flight and no fixed order of
+onEraRelocate/onEraShift/endRelocation is true in every route. Two faults found by
+measuring: an interrupted crossfade orphaned its dying element (three beds alive at once
+by Era 4, two of them the building), and my own probe drove `onEraShift` by hand and
+produced a fourth ordering that never happens in play. The ball plays its own room at last
+— through the wall on arrival, unfiltered when the device comes off — which its data has
+named since S79 and no code has ever played. And `check-spec`'s names-only rule narrowed
+from every `ball_*` to the 38 voices alone, so the room could stop hiding behind the
+refusal that protects the MC.

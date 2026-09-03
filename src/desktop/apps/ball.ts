@@ -62,7 +62,7 @@
  */
 import { labelField, BALL } from '../theme/era4';
 import { setBallLight } from '../../room/cluster';
-import { playOnce } from '../../audio/tapeAudio';
+import { playOnce, roomBed } from '../../audio/tapeAudio';
 import script from '../../../data/dialog/s4_ball.json';
 
 /** how long the machine's last failure sits on screen before the device comes
@@ -151,6 +151,24 @@ export class E4Ball {
     this.nextLabel();
     // the room begins to warm behind the picture, low, while the machine works
     this.light(ARRIVAL_LEVEL, 1, 0);
+    /**
+     * ⚑ S109 — AND THE ROOM IS FINALLY AUDIBLE. `s4_ball.json`'s `room` block has
+     * named these two files since S79 and **nothing in this class ever played
+     * them** — only `lines[].audio` went through `playOnce` — so the piece's one
+     * respite was 46 silent captions over three and a half minutes, with the MC
+     * saying *"Music stays on"* over nothing. Review round 1 called it the
+     * biggest single gap in what a player feels, and it was right.
+     *
+     * ⚑ THROUGH A WALL FIRST. The bed arrives while the device is still on her
+     * face and the ball is somewhere else in the building — muffled, structured,
+     * unmistakably a room full of people. The `landing` below is the same
+     * recording with the wall taken away.
+     *
+     * ⚑ AND THE 38 VOICES STAY UNVOICED. This is the ROOM, not the MC: a bed and
+     * a landing, no speech, no synthesis of anybody's words. That refusal
+     * (`_docVoice`, `_docNoBall`) is untouched and must stay untouched.
+     */
+    roomBed.set(script.room.bed, 4.0);
   }
 
   update(dt: number): void {
@@ -176,6 +194,9 @@ export class E4Ball {
         this.onDeviceOff?.();
         this.phase = 'ball';
         this.ballT = 0;
+        // ⚑ THE WALL COMES DOWN with the device. The same recording, unfiltered:
+        //   she is not hearing it from somewhere else any more.
+        roomBed.set(script.room.landing, 2.5);
         this.queue = [...BALL_LINES];
         this.nextLine();
       }
