@@ -817,3 +817,24 @@ one left is the E2 boot jingle, which is sound design and not speech.
 S102b — AND THEY SHIP AS MP3. The WAV is the master and now lives in assets/audio/ (the pristine/shipped split degrade_audio.sh already keeps); public/assets/audio/ carries 96 kbps mono, 23 MB → 2.6 MB. This is not download size at a loading screen: every clip is fetched ON DEMAND, mid-scene, while a caption is already up waiting for it. tools/tts/publish_mp3.sh is the documented step after render.py, and its header names the three things that must agree or the clip is silent — the data name, the registry, and the file. Re-verified in the browser: mp3 only, durations unchanged, nothing cut off, no overlaps.
 
 S-REVIEW-1 (2026-09-02) — THE FIRST FULL REVIEW ROUND, nothing built. Played from the entrance with real presses (135 to Era 4), audited, and watched with audio and captions measured; four lanes (walkthrough/timing, code/state, rooms, sound commissions). Report docs/reinterp/REVIEW_R1_2026-09-02.md and its three lane files; dispatch board S103–S109 in 03_COORDINATION. Headline: the piece is clickable to Era 4 and the door into Era 4 works — the two runs that could not wear the headset had pressed a stale Era-2 icon rect that projects onto the frame's pause button; the Close's Restart button publishes no hit rect; the OS and witness textures upload every frame; Maya's turn draws 197; the record still says era 1 in 2026; the ball is mute and its bed has no code path. Lane D commissions every sound the fiction asks for. Three walker blind spots found and written down.
+
+S104 (2026-09-02) — ERA 4'S DOOR, AND THE TAIL NOBODY COULD REACH. The hand-back after
+the ball sat behind the visor plane's enabled flag, which S101 had gated off during the
+ball — so the glitch, the device returning, the Restart card and the Close were all
+unreachable, and my own "watched the tail" probe had gone through shell.handleClick(),
+a door a player does not have. Fixed and verified through the room's own ray routing.
+Review round 1 blamed os.hits for the stale Era-2 rect and os.hits was innocent: the
+carrier was externalSendHits, refilled on every draw and emptied by nothing, so it kept
+Era 2's send icon forever. The Close's Restart button is published. The ready visor is
+alpha-blended and no longer a black slab, though whether its glow reads from the seat is
+NOT confirmed.
+
+S107 (2026-09-02, Sonnet 5) — AUDIT HYGIENE, and a measurement worth more than the fix.
+Both SUBJECT-IN-FRAME failures gone with the ratchet untouched; the record corrected to
+197 draw calls at the turned E4 seat and the comfort envelope recorded clean on all 13
+legs. ⚑ It also declined the brief's own instruction on evidence: r3+180 does NOT show
+the CRT (+109.4° horiz) — S97 put it on the north wall at +90° — so it added r3-shelf for
+the CRT and left r3-turned declaring nothing. ⚑ And it found that Era 4's opening
+instruction, "press to continue", sits 1.7° below the frame at the seat the era is played
+from. Photographed both ways in one page load. Fixed by moving the text up the lid rather
+than tilting the camera: a rig pitch is a world tilt in XR and gyro.

@@ -447,13 +447,29 @@ export class E4Shell {
       const line = space.laptop.lines[this.laptopLine];
       let y = LAPTOP_BAR + 18;
       for (const row of wrapLaptop(ctx, line, W - 24)) { ctx.fillText(row, 12, y); y += 16; }
-    }
-    // the bar already carries the ready state; saying it twice on one small
-    // screen read as a stutter rather than as emphasis
-    if (!done) {
+      /**
+       * ⚑ THE PROMPT SITS UNDER THE LINE, NOT AT THE BOTTOM OF THE LID (S107).
+       *
+       * It was drawn at `H - 12` — twelve pixels off the bottom edge — and S107
+       * measured what that means from the seat the era is played from: the
+       * laptop's readable panel runs to −22.7° against a 21° half-frame, so its
+       * bottom **1.7° is outside the view**. Photographed both ways in one page
+       * load: at rest the lid shows *"Hi Maya. I'm L. I came with the update."*
+       * and nothing else. **Era 4's only instruction was off-screen at Era 4's
+       * seat**, which is this project's oldest bug wearing a new hat — content
+       * that exists and cannot be reached.
+       *
+       * ⚑ Moving the text is the fix that costs nothing else. The alternatives
+       * S107 measured all move the CAMERA — and a rig pitch is a world tilt in
+       * XR and gyro, where the rig holds the authored pose and the head turns
+       * the child camera. Tilting the horizon of a headset build by 3° to make
+       * a caption fit is the wrong end of the problem. The seat is still worth
+       * re-measuring (it is Sérgio's ruling, and S107 put the numbers in front
+       * of him), but the era does not have to stay unplayable while he decides.
+       */
       setFont(ctx, 9);
       ctx.fillStyle = ERA4.dim;
-      ctx.fillText(space.laptop.hint, 12, H - 12);
+      ctx.fillText(space.laptop.hint, 12, y + 6);
     }
   }
 
