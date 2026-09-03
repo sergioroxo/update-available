@@ -27,7 +27,7 @@ import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
 import { TapeAudioBus, roomBed } from '../audio/tapeAudio';
 import { mountDebugPanel } from '../debug/panel';
-import { makeScreenTexture, makeScreenEntity } from './screenTexture';
+import { makeScreenTexture, makeScreenEntity, screenUploads } from './screenTexture';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
@@ -1170,6 +1170,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // the Quest budget, live (WEBXR_PERFORMANCE_NOTES: ~50–100): last frame's
     // draw-call total, for the panel readout + batching A/B (?nobatch=1)
     (window as { __drawCalls?: number }).__drawCalls = app.stats.drawCalls.total;
+    // ⚑ S105 — the companion number, and the one CLAUDE.md's law is actually
+    //   about: how often a screen is re-sent to the GPU. See screenTexture.ts.
+    (window as { __uploads?: number }).__uploads = screenUploads;
   }
 
   // reinterp only: camera POSITION + a smoothstep move for the O2 desk pan and

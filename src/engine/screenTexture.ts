@@ -19,8 +19,26 @@ export function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement
     addressV: pc.ADDRESS_CLAMP_TO_EDGE
   });
   tex.setSource(source);
+  /**
+   * ⚑ S105 — EVERY SCREEN UPLOAD IS COUNTED, so the law can be checked instead
+   * of believed. CLAUDE.md's Quest budget says "render-texture uploads on dirty
+   * only", and for months the piece broke it on its two busiest surfaces at
+   * ~240 uploads/s while every check stayed green — because nothing in the
+   * repository could see an upload happen.
+   *
+   * This wraps the instance (not the engine, not WebGL: patching
+   * `WebGLRenderingContext.prototype.texImage2D` from a probe stops PlayCanvas
+   * initialising at all, which is how this counter came to live here instead).
+   * It counts exactly what the law is about — OUR screens being re-sent to the
+   * GPU — and nothing else. Read it as `window.__uploads` under `?debug=1`.
+   */
+  const raw = tex.upload.bind(tex);
+  tex.upload = (): void => { screenUploads++; raw(); };
   return tex;
 }
+
+/** ⚑ S105 — total screen-texture uploads since load; see `makeScreenTexture`. */
+export let screenUploads = 0;
 
 export function makeScreenEntity(name: string, tex: pc.Texture, w: number, h: number, transparent = false): pc.Entity {
   const material = new pc.StandardMaterial();

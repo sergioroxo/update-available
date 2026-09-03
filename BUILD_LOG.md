@@ -858,3 +858,14 @@ produced a fourth ordering that never happens in play. The ball plays its own ro
 named since S79 and no code has ever played. And `check-spec`'s names-only rule narrowed
 from every `ball_*` to the 38 voices alone, so the room could stop hiding behind the
 refusal that protects the MC.
+
+S105 (2026-09-02) — DIRTY-ONLY UPLOADS, AND A COUNTER SO THE LAW CAN BE CHECKED. os.ts and
+intake.ts stopped flagging themselves every frame; the windows' own `dirty` flags — ten of
+them, carefully maintained and read by nothing — are consumed instead, and time-driven
+changes are quantised and compared with the frame before, the pattern space.ts already
+used. ⚑ The verification needed its own instrument: patching WebGL's texImage2D from a
+probe stops PlayCanvas initialising, so the count lives in screenTexture.ts, wraps the
+texture instance, and counts exactly what CLAUDE.md's law names — our screens being
+re-sent to the GPU — exposed as `window.__uploads` beside `__drawCalls`. Measured at rest:
+E2 2.6/s, E3 2.6/s, E4 3.6/s, against ~240/s flat before. The law was broken for months
+with every check green because nothing in the repo could see an upload happen.
