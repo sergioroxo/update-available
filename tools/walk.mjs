@@ -80,6 +80,38 @@ const PORT = Number(flag('port', 3000));
  * writes to a different filename so it can never be mistaken for the real thing.
  */
 const JUMP = flag('jump', '');
+/**
+ * ⚑ A REVIEW ROUTE THAT LIES IS WORSE THAN NO REVIEW ROUTE (A-5.2).
+ * `--jump update3` arms the u3 ritual through `__os.debugJump`, and the OS half
+ * works: the notice, the terms and the install all play on Room 1's monitor and
+ * the desktop duly becomes `e3`. The ROOM's half does not. `debugJump` never
+ * moves the space — its own comment says so ("the ROOM does not follow these") —
+ * so the ritual finishes with `cluster.era` still at `e1`, and app.ts's
+ * `driveMorphSpace` finds no `relocationFor('e1','e3')` plan, takes neither the
+ * relocation branch nor the `seatCut` fallback, and leaves the camera sitting in
+ * Room 1. Era 3's devices are switched on correctly — in a room the player is
+ * not in. Every rect the workstation publishes then projects behind the camera,
+ * the walk stalls in front of an era it appears to have reached, and the report
+ * reads as a fault in the piece. It is a fault in the way in.
+ *
+ * The honest options were to seed the room the way the real transition does, or
+ * to refuse. Seeding means this tool keeping its own copy of which era each
+ * ritual belongs to and driving `onEraShift` by hand — a second copy of the
+ * architecture, which is the exact habit this file's other notes were written to
+ * break. So it refuses, by name and with the reason, and `--allow-broken-jump`
+ * is there so the day somebody fixes the route they can prove it in one command
+ * rather than deleting this list on faith.
+ */
+const BROKEN_JUMPS = {
+  update3:
+    'it arms the u3 ritual but never moves the room. The ritual completes, the desktop\n' +
+    '  becomes e3, and the camera is still in Room 1 — so Era 3\'s workstation is enabled\n' +
+    '  two rooms away and everything on it projects behind the camera. A walk from here\n' +
+    '  reports an inert Era 3 that is not inert.',
+  u3Dispersal:
+    'it goes through update3 (see above) and inherits the same unmoved room.'
+};
+const ALLOW_BROKEN_JUMP = process.argv.includes('--allow-broken-jump');
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
 const OUT_DIR = join(ROOT, 'docs/reinterp');
@@ -122,6 +154,17 @@ const FORBIDDEN = /^r-leave$|quit|^exit$|restart|decline|pause|mute/i;
 const LAST_RESORT = /^leave$|not.?now|remind|skip|cancel|^back|^dismiss$|^close$/i;
 
 async function main() {
+  if (JUMP && BROKEN_JUMPS[JUMP] && !ALLOW_BROKEN_JUMP) {
+    console.error(
+      '\nREFUSED: --jump ' + JUMP + ' is a review route that lies.\n\n  ' +
+      BROKEN_JUMPS[JUMP] + '\n\n' +
+      'Nothing is run, because a run from here would produce a report about the piece that\n' +
+      'is really a report about this flag. To watch Era 3 for real, walk to it:\n' +
+      '  node tools/walk.mjs --port <port>\n' +
+      'To prove the route has been repaired, re-run with --allow-broken-jump and check the\n' +
+      'walk does not stop with "THE ROOM DID NOT FOLLOW".\n');
+    process.exit(2);
+  }
   let puppeteer;
   try {
     puppeteer = (await import(join(ROOT, 'node_modules/puppeteer-core/lib/esm/puppeteer/puppeteer-core.js'))).default;
@@ -467,6 +510,36 @@ async function main() {
     }
 
     /**
+     * ⚑ DID THE ROOM FOLLOW THE DESKTOP? (A-5.2, the general case.)
+     * The named refusal above stops the one broken jump we know about. This is
+     * the net under it, and it needs no list: an era whose own screens are all
+     * unaimable is an era the player is not sitting in. Eras 3 and 4 each own
+     * screens that the seat is authored to face — the workstation and the phone
+     * in Room 2, the laptop and the visor in Room 3 — so if the desktop says e3
+     * or e4 and not one of those can be aimed at, the space did not come along.
+     * That is never true of the played path and always true of an OS-only jump,
+     * which is why the walk trusts it only when it was jumped into.
+     */
+    const eraPlanes = os.desktopEra === 'e4' ? ['era3-device-laptop', 'era4-visor']
+      : os.desktopEra === 'e3' ? ['era3-device-workstation', 'era3-device-phone'] : [];
+    let roomDesync = null;
+    if (eraPlanes.length) {
+      const why = [];
+      let aimable = false;
+      for (const n of eraPlanes) {
+        const e = root.findByName(n);
+        if (!e) { why.push(n + ' does not exist'); continue; }
+        let on = true, up = e;
+        while (up) { if (!up.enabled) { on = false; break; } up = up.parent; }
+        if (!on) { why.push(n + ' is disabled'); continue; }
+        const c = e.getPosition();
+        if (toPage(c.x, c.y, c.z)) { aimable = true; break; }
+        why.push(n + ' is ' + (lastWhy || 'unaimable'));
+      }
+      if (!aimable) roomDesync = 'the desktop is at ' + os.desktopEra + ' but ' + why.join(', ');
+    }
+
+    /**
      * ⚑ THE SCREEN'S IDENTITY IS WHAT IS DRAWN ON IT, not the set of buttons.
      * Run 6 proved why: a provotype's "invitation" and "frame" screens carry
      * the SAME three controls at the SAME coordinates in the same phase, so a
@@ -552,7 +625,7 @@ async function main() {
       qMode: q ? q.mode : null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
-      screenHash, domText, audio, surfaces, silent, quiet,
+      screenHash, domText, audio, surfaces, silent, quiet, roomDesync,
       targets, dropped, moves, ledCount, ledList, ledger: led
     };
   }, { VW: VIEW.width, VH: VIEW.height });
@@ -912,8 +985,39 @@ async function main() {
     return live.length > 0 && live.every((t) => capped(sig, t));
   };
 
+  /**
+   * ⚑ consecutive probes in which the room has not followed the desktop. A
+   * transition is allowed to be mid-flight — the morph and the seat cut do not
+   * land on the same frame — so this must persist before it means anything.
+   */
+  let desyncRuns = 0;
+
   for (let i = 0; i < MAX_STEPS; i++) {
     if (s.driven) { await wait(1600); s = await probe(); continue; }   // a travelling is playing
+
+    /**
+     * ⚑ ONLY A JUMPED RUN CAN GET HERE, and the walk stops rather than
+     * describing the room it was dropped into. See BROKEN_JUMPS: everything
+     * after this point would be a report about the flag, not the piece.
+     */
+    if (JUMP && s.roomDesync) {
+      desyncRuns += 1;
+      if (desyncRuns >= 8) {
+        note('stop', {
+          what: 'THE ROOM DID NOT FOLLOW: ' + s.roomDesync + '. `debugJump` moves the desktop ' +
+            'and never the space, so this run is sitting in one room reading an era that is ' +
+            'staged in another. Nothing measured past here would be about the piece. Walk to ' +
+            'this era instead of jumping to it.',
+          era: s.era, phase: s.phase, spine: s.spine
+        });
+        await page.screenshot({ path: join(SHOT_DIR, 'walk_room_desync.png') });
+        break;
+      }
+      await wait(1500);
+      s = await probe();
+      continue;
+    }
+    desyncRuns = 0;
 
     const sig = stableOf(s);
     visits.set(sig, (visits.get(sig) || 0) + 1);

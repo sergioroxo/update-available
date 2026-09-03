@@ -826,7 +826,13 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     if (!source) return;
     const place = PLACEMENT.visor;
     const tex = makeScreenTexture(app, source);
-    const entity = makeScreenEntity('era4-visor', tex, place.size.w, place.size.h);
+    // ⚑ S104 — TRANSPARENT, so the ready state can be a GLOW and not a slab.
+    //   The plane's alpha now comes from the canvas: where the shell draws
+    //   nothing, there is nothing on the headset's face. See `E4Shell.draw`'s
+    //   ready branch — S101 ruled "ready is a glow, not a screen" and then kept
+    //   painting an opaque field under it, which is precisely the black
+    //   rectangle Sérgio has complained about twice.
+    const entity = makeScreenEntity('era4-visor', tex, place.size.w, place.size.h, true);
     entity.setLocalPosition(place.pos.x, place.pos.y, place.pos.z);
     entity.setLocalEulerAngles(place.euler.x, place.euler.y, place.euler.z);
     entity.enabled = false;
@@ -1109,6 +1115,36 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
             return true;
           }
         }
+      }
+      /**
+       * ⚑ S104 — THE HAND-BACK AFTER THE BALL, AND IT MUST NOT DEPEND ON A PLANE
+       * THAT IS SWITCHED OFF. This is the fault that made the whole tail of the
+       * piece unreachable — the glitch, the device returning, the Restart card
+       * and the Close — and it was mine, from S101.
+       *
+       * The only route to `ball.handleClick()` is `shell.wear()`, and every route
+       * to `wear()` sat inside the guard below, which begins `visor?.entity.enabled`.
+       * S101 then gated that plane to `pinned || stage === 'closed'` — correct,
+       * because a lit rectangle with nothing to say is just a black slab stuck to
+       * a headset — but during the ball the stage is `ball`, so the plane is off,
+       * so the guard is false, so the sphere inside it is never tested, so the
+       * press that hands the device back can never land. The ball plays its 46
+       * captions and the piece stops.
+       *
+       * ⚑ AND MY OWN "I WATCHED THE TAIL" PROBE MISSED IT because it called
+       * `shell.handleClick()` directly — through a door a player does not have.
+       * A probe that reaches past the room's own pointer routing is not watching
+       * the piece; it is watching itself. (`00_WHERE_THINGS_STAND` trap 9, which
+       * I wrote, in the sentence before I did it again.)
+       *
+       * So the ball's device is reachable by the SPHERE ALONE, whatever the plane
+       * is doing: what you are pressing is a headset on a stand, not a screen.
+       * The ball itself still consumes presses until its categories run out
+       * (`E4Ball.handleClick` returns early unless `returnable`), so this cannot
+       * cut the piece's only respite short.
+       */
+      if (shell && shell.stage === 'ball') {
+        if (rayNear(ray, PLACEMENT.visor.pos, 0.22)) { shell.wear(); return true; }
       }
       if (visor?.entity.enabled && shell && !shell.worn) {
         const onVisor = hitPlane(

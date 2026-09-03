@@ -176,7 +176,15 @@ const BLANK_BASELINE = 1;
  * — and any NEW subject leaving frame fails.
  *
  * 6 = three desks counted once per era they are seated in (Daniel's at E2/E3/E4,
- * Vera's at E3/E4, Maya's at E4). Measured S72; this run puts them at 44.5°,
+ * Vera's at E3/E4, Maya's at E4).
+ * ⚑ S107: it was reading 7, and the seventh was not a subject that had drifted
+ * out of frame — it was `SEAT_SUBJECTS.r3` still naming a CRT that moved to a
+ * shelf in S97 (R1 C-2). Re-declared, not re-baselined: the count is 6 again
+ * because the stale line is gone, and the ratchet was NOT raised to meet it.
+ * The lesson the number now carries: a declaration going stale and a subject
+ * leaving frame are indistinguishable from here, so read the named rows before
+ * concluding the piece moved.
+ * Measured S72; this run puts them at 44.5°,
  * 48.0° and 41.5° below a 21° half-FOV, which corroborates S71's 45.7–50.9°
  * from a different method (S71 measured to the desk SURFACE, this to the box
  * centre — the centre sits lower, and the two bracket each other as they should).
@@ -228,16 +236,80 @@ const SEAT_SUBJECTS = {
     { what: "Vera's desk", kind: 'prop', id: 'w_desk', required: false }
   ],
   r3: [
-    { what: "Maya's screen", kind: 'prop', id: 'e_crtScreen' },
+    // ⚑ WAS `e_crtScreen`, AND THAT CRT LEFT THE DESK — S107, 2026-09-03 (R1
+    // finding C-2). S97 moved the machine off Maya's desk and onto the north
+    // wall's shelf ("a remembrance to the past"), and S98/S99 put her 2026
+    // laptop where it used to sit. This line went on naming the CRT, so the
+    // audit measured the seat's resting bearing against an object that is no
+    // longer on that bearing: −70.6° horiz off a 29.7° half-FOV. That ONE stale
+    // line produced BOTH of the run's subject-in-frame failures (a REQUIRED
+    // subject out of frame, and 7 against a ratchet of 6). Nothing had moved
+    // wrongly; the declaration had gone stale, exactly the failure mode the
+    // `w_flatPanelScreen` note above records for Room 2.
+    // ⚑ The CRT is not dropped — it is re-declared at `r3-shelf` below, on the
+    // bearing S97 actually placed it for.
+    { what: "Maya's laptop", kind: 'prop', id: 'e_laptop' },
     { what: "Maya's desk", kind: 'prop', id: 'e_desk', required: false }
-  ]
+  ],
+  /**
+   * ⚑ THE QUARTER TURN, where the CRT went (S107). S97's own placement note
+   * says it plainly — "the row-1 shelf puts it at eye level where turning finds
+   * it" — and the shelf is on Room 3's NORTH wall, i.e. 90° off the seat's
+   * resting bearing, not 180°. Measured from the seat: +8.5° vert, +19.4°
+   * horiz, 1.27 m. So the seat's subject and the turn's subject are two
+   * declarations, not one, and this is the second.
+   */
+  'r3-shelf': [
+    { what: "the CRT kept on the shelf", kind: 'prop', id: 'e_crtScreen' }
+  ],
+  /**
+   * ⚑ `r3-turned` DECLARES NOTHING, and that is the point of adding it. The
+   * 180° turn at Maya's seat is the piece's one bodily ask performed in the era
+   * that ends it: it shows all three rooms and the ceiling's stars at once, and
+   * R1's finding C-1 measured it at 197 draw calls (not the 141 on record).
+   * This file's own §"S88" note complains that no sampled pose was ever a
+   * TURNED E4 seat — so the pose is swept here, to be LOOKED at and to have its
+   * draw calls read, while declaring no subject: a vista is not a subject, and
+   * asserting one would be inventing intent the piece has not stated.
+   */
+  'r3-turned': []
 };
+
+/**
+ * ⚑ THE DERIVED BEARINGS — the only poses in this file the engine does not
+ * publish, and they are derivations rather than numbers. `app.ts`'s
+ * CAMERA_POSES has one seat per room plus `r1-turned`; Room 3 has no turned
+ * entry, and this file may not add one to the engine. So a turn is expressed
+ * the only way that cannot rot: as a yaw offset from the published seat. Move
+ * the r3 seat in app.ts and both of these move with it.
+ * ⚑ Not new geometry, not a camera number — an offset in degrees.
+ */
+const DERIVED_SEATS = {
+  'r3-shelf': { from: 'r3', yawOffset: 90 },   // the quarter turn, to the shelf
+  'r3-turned': { from: 'r3', yawOffset: 180 }  // the turn, to the three-room vista
+};
+
+/** add the derived bearings to a published pose table, in place and idempotently */
+function withDerivedSeats(poses) {
+  if (!poses?.seats) return poses;
+  for (const [id, d] of Object.entries(DERIVED_SEATS)) {
+    const base = poses.seats[d.from];
+    if (!base || poses.seats[id]) continue;
+    poses.seats[id] = { ...base, yaw: base.yaw + d.yawOffset };
+  }
+  return poses;
+}
 
 /** which room-audit space state each era folds to */
 const ERA_STATE = { 2: 'r2', 3: 'r3', 4: 'r4' };
 /** which seats exist per era — E2 keeps the walls up, E3 opens Rooms 1+2,
  *  E4 adds Room 3 (cluster.ts's own gating; the sweep mirrors it) */
-const ERA_SEATS = { 1: ['r1', 'r1-turned'], 2: ['r1', 'r1-turned'], 3: ['r1', 'r1-turned', 'r2'], 4: ['r1', 'r1-turned', 'r2', 'r3'] };
+const ERA_SEATS = {
+  1: ['r1', 'r1-turned'],
+  2: ['r1', 'r1-turned'],
+  3: ['r1', 'r1-turned', 'r2'],
+  4: ['r1', 'r1-turned', 'r2', 'r3', 'r3-shelf', 'r3-turned']
+};
 
 // ═══ CLI ═══════════════════════════════════════════════════════════════════
 
@@ -690,7 +762,7 @@ async function sweep(browser, asserts, outDir) {
   // Era 1 could not have any.
   for (const era of [1, 2, 3, 4]) {
     const page = await openPage(browser, `?reinterp=1&era=${era}&debug=1&descent=0`, asserts);
-    const p = await page.evaluate(() => window.__poses());
+    const p = withDerivedSeats(await page.evaluate(() => window.__poses()));
     poses = p; // identical every era; kept for the offline framing pass
     const shots = [
       ...ERA_SEATS[era].map((k) => [`seat-${k}`, p.seats[k]]),
@@ -1040,6 +1112,7 @@ async function assertSweep(browser, asserts) {
 
 /** 4 · SUBJECT-IN-FRAME — offline, from the published poses + measured boxes */
 function subjectsInFrame(poses) {
+  withDerivedSeats(poses); // also for `framing` re-scoring a sweep saved before S107
   const aspect = VIEWPORT.width / VIEWPORT.height;
   const rows = [];
   for (const [era, state] of Object.entries(ERA_STATE)) {

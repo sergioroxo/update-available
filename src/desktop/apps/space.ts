@@ -192,6 +192,20 @@ export class E4Shell {
   /** the glitch's own clock and its quantised step; see GLITCH_SECONDS */
   private glitchT = 0;
   private glitchStep = -1;
+  /**
+   * ⚑ S104 — THE LAST PRESS IN THE PIECE, PUBLISHED. The Close's Restart button
+   * was computed inline in `closeButtonRect` and registered nowhere, so no
+   * click-only run could ever finish the work: `tools/walk.mjs` presses planes at
+   * their centre, and the centre of this lid is not the button. An unpublished
+   * rect is also an unauditable one — it is exactly how `kit.ts` drew NEXT 60 px
+   * wide and click-tested it at 100 for months.
+   *
+   * Named `laptopHits` and not `hits` on purpose: these are in the LAPTOP's
+   * logical space (224 × 140), not the visor's 512 × 384, and a reader that
+   * confuses the two would aim confidently at the wrong surface — which is the
+   * whole story of A-1.
+   */
+  laptopHits: { x: number; y: number; w: number; h: number; id: string }[] = [];
   /** bumped on any change to what this surface DRAWS; the room compares it to
    *  decide when to re-upload the visor texture (dirty discipline, the law
    *  era3Devices' three screens already obey). */
@@ -394,6 +408,7 @@ export class E4Shell {
 
   drawLaptop(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     px(ctx, 0, 0, W, H, ERA4.field);
+    this.laptopHits = [];
     if (this.handedOff) {
       this.laptopBar(ctx, W, space.corrupt.sub);
       setFont(ctx, 11);
@@ -415,9 +430,16 @@ export class E4Shell {
       px(ctx, r.x, r.y, r.w, 1, ERA4.l);
       const tw = ctx.measureText(space.corrupt.button).width;
       ctx.fillText(space.corrupt.button, r.x + Math.round((r.w - tw) / 2), r.y + 6);
+      // ⚑ registered where it is DRAWN, from the same rect the hit test uses, so
+      //   the two cannot drift apart the way kit.ts's did.
+      this.laptopHits.push({ ...r, id: 'close-restart' });
       return;
     }
     const done = this.laptopLine >= space.laptop.lines.length;
+    // ⚑ while L is still talking on the lid, the whole lid is the control — three
+    //   presses, one per line. Publishing it is what let a click-only run find
+    //   Era 4's opening at all (A-5: the walker could not see this surface).
+    if (!done) this.laptopHits.push({ x: 0, y: 0, w: W, h: H, id: 'laptop-next' });
     this.laptopBar(ctx, W, done ? space.laptop.readyHint : '');
     if (!done) {
       setFont(ctx, 11);
@@ -599,12 +621,38 @@ export class E4Shell {
        * ⚑ The plane is disabled entirely except when worn or ready (era3Devices'
        * setEra), so this is only ever drawn when the device is actually waiting.
        */
+      /**
+       * ⚑ S104 — AND NOW IT IS ACTUALLY A GLOW. S101 ruled "ready is a glow, not
+       * a screen" and then painted `ERA4.field` across the whole canvas with a
+       * lit rectangle on top — which, on a plane nine centimetres across at a
+       * metre, is a BLACK SLAB with a green pill on it. That is the "black screen
+       * on top of the VR headset" Sérgio has now reported twice, surviving a fix
+       * that was aimed at the words rather than at the darkness.
+       *
+       * The plane is alpha-blended from this canvas (`makeScreenEntity`'s
+       * `transparent`), so clearing it means there is NOTHING on the headset's
+       * face — and the only thing drawn is light, breathing, falling off at the
+       * edges. The device is a model with a lit lens, which is what it is.
+       */
       const pulse = Math.abs(this.pulseStep / (PULSE_STEPS - 1) - 0.5) * 2;
-      px(ctx, 0, 0, W, H, ERA4.field);
-      const inset = Math.round(Math.min(W, H) * 0.06);
-      px(ctx, inset, inset, W - inset * 2, H - inset * 2, ERA4.panel);
-      const glow = Math.round(Math.min(W, H) * (0.16 + 0.05 * pulse));
-      px(ctx, Math.round(W / 2 - glow), Math.round(H / 2 - glow / 2), glow * 2, glow, ERA4.l);
+      ctx.clearRect(0, 0, W, H);
+      const cx = W / 2;
+      const cy = H / 2;
+      const rw = Math.min(W, H) * (0.34 + 0.05 * pulse);
+      const rh = rw * 0.46;
+      // six nested bands, brightest in the middle: a soft falloff in a palette
+      // that has no gradients — the same trick the era's own theme uses
+      const was = ctx.globalAlpha;
+      for (let i = 6; i >= 1; i--) {
+        // ⚑ the first pass of this was 0.10 and read as NOTHING at a metre — the
+        //   opposite failure to the black slab and just as useless. A lens that
+        //   is lit has to be legible as lit from where the player is sitting.
+        ctx.globalAlpha = (0.34 + 0.16 * pulse) * (1 - (i - 1) / 7);
+        const k = i / 6;
+        px(ctx, Math.round(cx - rw * k), Math.round(cy - rh * k),
+           Math.round(rw * 2 * k), Math.round(rh * 2 * k), ERA4.l);
+      }
+      ctx.globalAlpha = was;
       return;
     }
     // ⚑ THE FINALE TAKES THE FIELD. Everywhere else the offers draw OVER the

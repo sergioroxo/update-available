@@ -550,6 +550,11 @@ export class DesktopOS {
    *  the real S2R.0/S2R.1 beats to play. */
   setDesktopEra(era: string, settled = false): void {
     if (era !== 'e2' && era !== 'e3' && era !== 'e4') return;
+    // ⚑ S104 — and the era's own surfaces stop publishing controls when the era
+    //   does. See `clearExternalSendHits`: this is the belt to that brace, and it
+    //   catches the case the retirement points cannot — an era ending while an
+    //   offer is still live.
+    this.clearExternalSendHits();
     const entering = this.desktopEra !== era;
     this.desktopEra = era;
     this.retireEra1Windows();
@@ -597,6 +602,7 @@ export class DesktopOS {
     this.provotype = null;
     this.lambyRigFile = null; // S55 — E1-only scope; the file has no E2+ existence
     this.sendOffer = null;
+    this.clearExternalSendHits();
     this.dossierOpen = false;
     this.kitToastShown = true;
     this.behindToastShown = true;
@@ -791,6 +797,7 @@ export class DesktopOS {
       //   2. the desktop goes quiet. No toast, no assistant, no chrome event:
       //      the era says nothing else in its own voice after the residue.
       this.sendOffer = null;
+    this.clearExternalSendHits();
       this.toast = null;
       this.dirty = true;
     };
@@ -1083,6 +1090,7 @@ export class DesktopOS {
     if (!this.sendOffer) return;
     const id = this.sendOffer.id;
     this.sendOffer = null;
+    this.clearExternalSendHits();
     this.dirty = true;
     this.sendOfferVersion++;
     this.onSendResolve?.(id, outcome);
@@ -1172,6 +1180,30 @@ export class DesktopOS {
   drawSendOfferExternal(ctx: CanvasRenderingContext2D): void {
     this.externalSendHits = [];
     this.drawSendOfferInto(ctx, this.externalSendHits, ERA1_CANVAS.width, ERA1_CANVAS.height);
+  }
+
+  /**
+   * ⚑ S104 — AND IT HAS TO BE EMPTIED WHEN NOBODY IS DRAWING IT.
+   *
+   * `drawSendOfferExternal` clears and refills this list every time it runs, so
+   * it is correct for exactly as long as it keeps being called. The moment Era 3
+   * ends it stops being called and the list keeps its last contents **forever** —
+   * a control published as live on a surface that is not in the room any more.
+   *
+   * Review round 1 blamed `os.hits` for this and `os.hits` is innocent: `draw()`
+   * clears it on its first line and the Era-4 branch pushes only `e4-touch`
+   * before returning. It was THIS list, and it was found the way these always
+   * are — `tools/walk.mjs` collects rects reflectively from any field whose name
+   * ends in `hits`/`rects`, aimed at Era 2's `icon-send` in Era 4, projected it
+   * through the visor plane, and pressed the frame's pause button instead. Three
+   * runs and two sessions were spent concluding the piece was stuck.
+   *
+   * ⚑ The fix is not "make the walker smarter". A rect list that outlives its
+   * surface is wrong for any reader — a probe, a check, or a person reasoning
+   * about the code. Empty it.
+   */
+  private clearExternalSendHits(): void {
+    if (this.externalSendHits.length) this.externalSendHits = [];
   }
 
   /** ⚑ S87 — whether the workstation has anything to composite this frame. */

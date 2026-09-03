@@ -72,9 +72,22 @@ from a doc comment at `ledger.ts:6` describing an *intended* "idle reset" that w
 | **3 · The exhibition** | **No attract state, no idle wipe, no design for a stranger arriving.** Not started | Claude |
 
 # KNOWN AND NOT FIXED
-- **141 draw calls at Maya's turned E4 seat** vs a ≤75 budget — architectural (unbatched GLB furniture
-  across three open rooms), diagnosed, unfixed (`08 §28`).
-- **A11 — the in-headset pass — has never run.** Every comfort figure in this project is desktop-measured.
+- **197 draw calls at Maya's turned E4 seat** vs a ≤75 budget — architectural (unbatched GLB furniture
+  across three open rooms), diagnosed, unfixed (`08 §28`). ⚑ **197, not the 141 this line carried until
+  2026-09-03** — Lane C re-measured it settled, 5 samples over 5 s, at `yaw = r3.yaw + 180` from the
+  authored seat (R1 C-1). The number drifted upward with real geometry added to that seat since 141 was
+  taken (S98's laptop, S96/S97's headset mesh and strap, S101's chrome bar), and the turn is the piece's
+  one bodily ask — **not a latent leg like the scripted sends.** S107 added the pose to
+  `tools/shots.mjs`'s sweep (`r3-turned`) so it is photographed every run instead of being reached by
+  hand; S108 owns the batching fix, and **the ratchet is not to be raised to meet it** (trap 6).
+- ~~The comfort envelope's historic hazards (3.667 m/s on E3→E4, 6.87 m/s on the send legs)~~ —
+  **MEASURED CLEAN 2026-09-02.** R1 Lane C ran the full envelope: **all 13 driven legs sit inside the
+  0.43 m/s / 9.1 °/s law**, sustained figures included (worst: 0.423 m/s and 8.87 °/s, both on the
+  scripted-send dolly). Neither historic violation reproduces — whatever fixed them holds. ⚑ This
+  retires the hazard, **not** the check: the envelope is the one assertion in `shots.mjs` that is a law
+  rather than a ratchet, and it stays that way.
+- **A11 — the in-headset pass — has never run.** Every comfort figure in this project is desktop-measured,
+  the clean envelope above included.
 - ~~Era 4 room faults: a CRT in 2026~~ — **RULED AND FIXED 2026-09-01.** Sérgio: *"it doesn't make
   sense to come from a wide computer to CRT."* He is right and the data agreed: Room 2's Era-3 machine
   is a 645 × 372 mm widescreen, so the piece ran 1997 CRT → 2016 widescreen → **2026 CRT**. The machine
@@ -175,9 +188,12 @@ button (A-1, resolved by spies; two real defects: a stale rect, and chrome over 
 **after the ball nothing can be pressed — the tail to the Close is unreachable by the ordinary route** (A-8, the visor plane is disabled during the ball and the press route sits behind it); the Close's Restart button publishes no hit rect (A-2); the OS and witness textures upload every
 frame (B-1); the record still says *Daniel · era 1* in 2026 (A-3, observed on the played path); the
 "ready" visor is a black slab again (A-4); Maya's turn draws **197**, not 141 (C-1); the audit's
-"Maya's screen" FAIL is a stale line (C-2); the ball is mute and its bed has no code path (A-6); the
+"Maya's screen" FAIL is a stale line (C-2 — **fixed S107, 2026-09-03:** the seat declares `e_laptop`,
+the CRT is re-declared on the quarter turn that S97 placed it for, and both subject-in-frame failures
+are gone with the ratchet untouched); the ball is mute and its bed has no code path (A-6); the
 three passages are silent (A-7). **Corrections to this file:** the comfort envelope is clean on all 13
-legs (retire the hazard); the blue box and the clipping panel are resolved; Era 2's monitor is not
+legs (retire the hazard — **applied above, S107**); the draw calls at Maya's turned seat are 197, not
+141 (**applied above, S107**); the blue box and the clipping panel are resolved; Era 2's monitor is not
 blank on the played path; the walker has three blind spots that inflated the last two walk reports.
 The three things that decide whether it is good are now ranked audio → the door → the writing.
 

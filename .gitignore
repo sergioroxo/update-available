@@ -9,3 +9,5 @@ out/
 
 # freesound previews — lossy auditions, never assets
 .audition/
+# freesound originals — large, re-downloadable, never committed
+.originals/
