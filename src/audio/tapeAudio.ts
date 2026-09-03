@@ -170,7 +170,44 @@ const REGISTRY: Record<string, string> = {
   'bed_2003.mp3': `${AUDIO_BASE}bed_2003.mp3`,
   'bed_2016.mp3': `${AUDIO_BASE}bed_2016.mp3`,
   'bed_2026.mp3': `${AUDIO_BASE}bed_2026.mp3`,
-  'passage_building.mp3': `${AUDIO_BASE}passage_building.mp3`
+  'passage_building.mp3': `${AUDIO_BASE}passage_building.mp3`,
+  /**
+   * ⚑ SÉRGIO'S OWN SOURCING PASS (2026-09-02) — first tranche, 13 of 60.
+   *
+   * He listened through Freesound and sent a list with an intended beat against
+   * each one. **60 of the 61 are CC0**, which is close to unheard-of for a list
+   * that size and means this section carries no attribution debt at all; the one
+   * that was not (a CC-BY-NC startup sound) is recorded as rejected in
+   * `data/audio/sound_candidates.tsv` rather than quietly dropped, so nobody
+   * re-adds it in six months.
+   *
+   * ⚑ EVERY ONE IS TRIMMED AND RE-LEVELLED, and that is not fussiness. Measured:
+   * most of these files are mostly silence (a 5.0 s "alert" with 1.08 s of sound
+   * in it; a chalice that does not begin until 0.63 s), several PEAK ABOVE
+   * 0 dBFS, and untrimmed they range over 30 dB — so dropped in as-is, half would
+   * be inaudible under a room tone and half would be the loudest thing in the
+   * piece. `data/audio/ingest.tsv` holds the trim window and target level for
+   * each, and `tools/ingest_sounds.sh` applies them; every master now peaks at or
+   * below -3 dBFS.
+   *
+   * ⚑ PROVISIONAL, and the reason is worth keeping: a Freesound API token gives
+   * only the lossy ~128 kbps preview. These are cut from previews. When the
+   * originals are downloaded to `.originals/<id>.<ext>` the same script and the
+   * same manifest produce the shipping masters — one command, no re-decisions.
+   */
+  'err_cascade_1997.mp3': `${AUDIO_BASE}err_cascade_1997.mp3`,
+  'boot_1997_machine.mp3': `${AUDIO_BASE}boot_1997_machine.mp3`,
+  'notify_2003.mp3': `${AUDIO_BASE}notify_2003.mp3`,
+  'glitch_e2.mp3': `${AUDIO_BASE}glitch_e2.mp3`,
+  'login_2016.mp3': `${AUDIO_BASE}login_2016.mp3`,
+  'phone_msg_2016.mp3': `${AUDIO_BASE}phone_msg_2016.mp3`,
+  'phone_ping_2016.mp3': `${AUDIO_BASE}phone_ping_2016.mp3`,
+  'click_floppysheep.mp3': `${AUDIO_BASE}click_floppysheep.mp3`,
+  'fail_floppysheep.mp3': `${AUDIO_BASE}fail_floppysheep.mp3`,
+  'ui_press.mp3': `${AUDIO_BASE}ui_press.mp3`,
+  'ui_refuse.mp3': `${AUDIO_BASE}ui_refuse.mp3`,
+  'l_arrives_2026.mp3': `${AUDIO_BASE}l_arrives_2026.mp3`,
+  'glitch_e4_end.mp3': `${AUDIO_BASE}glitch_e4_end.mp3`
 };
 
 const HISS_FILE = 'tape-hiss.mp3';

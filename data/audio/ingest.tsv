@@ -1,0 +1,14 @@
+# id	out_name	trim_start	trim_dur	target_rms_db	extra_filters	the beat it serves
+619839	err_cascade_1997	0.00	1.13	-19	lowpass=f=5200	u2's seven error windows, 420 ms apart — they OVERLAP on purpose and pile up
+351879	notify_2003	0.10	0.60	-22	-	E2 · Caleb's messenger pings; the accountability alert reuses it pitched down
+589353	phone_msg_2016	0.00	0.30	-21	-	E3 · one per message in the phone cascade (CASCADE_STEP = 0.45 s)
+589362	phone_ping_2016	0.00	0.32	-23	-	E3 · the single notification, distinct from the cascade's
+218043	click_floppysheep	0.00	0.40	-24	highpass=f=300	E3 · FloppySheep's click
+173859	fail_floppysheep	0.00	1.03	-22	-	E3 · FloppySheep, when it goes wrong
+619835	ui_press	0.00	0.85	-25	-	the apparatus's own surfaces — a press that lands
+619836	ui_refuse	0.00	1.10	-25	-	the same surfaces — a press that does not
+841814	boot_1997_machine	0.00	4.20	-20	highpass=f=60	E1 · the room wakes and the machine starts (r_boot)
+332776	glitch_e2	0.00	4.00	-20	-	E2 · the collapse
+467407	glitch_e4_end	1.20	2.60	-21	-	E4 · the picture finishing
+789040	login_2016	0.00	1.70	-23	-	E3 · Vera signs in
+827123	l_arrives_2026	0.00	3.45	-24	-	E4 · L introduces itself

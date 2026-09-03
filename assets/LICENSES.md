@@ -168,3 +168,19 @@ the ball, real cassette-deck mechanics, and any real-world room-tone detail (a b
 photocopier). Those must be **CC0 or CC-BY 4.0** — never NonCommercial, since this repo is public and
 the work goes to festivals — and each one gets its row **at the moment of download**. The rubber
 duck's row went unconfirmed for a month; that is the failure mode this sentence exists to prevent.
+
+### Sérgio's Freesound pass — 2026-09-02
+
+Sixty-one candidates, checked against the Freesound API (`node tools/freesound.mjs verify`) rather
+than read off a page. **Sixty are CC0** — public domain, no attribution owed, nothing that can be
+relicensed under us. The thirteen adopted in tranche 1 are listed in
+`docs/reinterp/SOUND_MAP_2026-09-02.md` §4 with their source ids; the full list with Sérgio's intent
+against each is `data/audio/sound_candidates.tsv`.
+
+**CC0 owes no credit and this table does not pad itself with public-domain rows** — same reasoning as
+the rubber duck's entry above. Crediting the uploaders anyway is courteous and is a choice, not a debt;
+`node tools/freesound.mjs licenses <id...>` prints the rows if we decide to.
+
+| ⚑ rejected | why |
+|---|---|
+| freesound **#643257** "Startup 2" (sonically_sound) | **CC-BY-NC 4.0.** This repo is public and the work is exhibited, so NonCommercial is unusable rather than merely awkward. Recorded here so it is not re-added by someone who only sees the title. |

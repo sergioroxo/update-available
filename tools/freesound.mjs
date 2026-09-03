@@ -79,9 +79,29 @@ const NAME = {
   'https://creativecommons.org/licenses/by/4.0/': 'CC-BY 4.0'
 };
 
+/** ⚑ 60 requests a minute, and the API says so by refusing. A verify pass over
+ *  ~60 candidates went straight through that ceiling and reported the last one
+ *  as an ERROR — which, in a licence-checking tool, is the worst possible way to
+ *  fail: it looks exactly like an unusable sound. Throttle, and retry a 429
+ *  rather than reporting it. */
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const GAP_MS = 1150; // 52/min, comfortably under the stated 60
+let lastCall = 0;
+async function api(url, key) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const wait = GAP_MS - (Date.now() - lastCall);
+    if (wait > 0) await sleep(wait);
+    lastCall = Date.now();
+    const res = await fetch(url, { headers: { Authorization: `Token ${key}` } });
+    if (res.status === 429) { await sleep(8000 * (attempt + 1)); continue; }
+    return res;
+  }
+  throw new Error('throttled four times — wait a minute and re-run');
+}
+
 async function fetchSound(id, key) {
   const url = `https://freesound.org/apiv2/sounds/${encodeURIComponent(id)}/`;
-  const res = await fetch(url, { headers: { Authorization: `Token ${key}` } });
+  const res = await api(url, key);
   if (!res.ok) {
     throw new Error(redact(`sound ${id}: HTTP ${res.status} ${await res.text()}`, key));
   }
@@ -133,7 +153,7 @@ for (const id of ids) {
   if (cmd === 'audition' && OK_LICENCE.test(s.license || '')) {
     const prev = s.previews?.['preview-hq-mp3'];
     if (!prev) { console.log('        (no preview available)'); continue; }
-    const r = await fetch(prev, { headers: { Authorization: `Token ${key}` } });
+    const r = await api(prev, key);
     if (!r.ok) { console.log(`        (preview HTTP ${r.status})`); continue; }
     mkdirSync(AUDITION, { recursive: true });
     const out = join(AUDITION, `${s.id}_${(s.name || 'sound').replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 40)}.mp3`);
