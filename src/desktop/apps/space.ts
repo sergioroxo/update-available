@@ -239,6 +239,30 @@ export class E4Shell {
    *  camera while this is true, so the glitch plays where the picture was and
    *  the device eases back to the desk only once it is over. */
   get pinned(): boolean { return this.stageNow === 'worn' || this.stageNow === 'glitch'; }
+
+  /**
+   * ⚑ THE DEVICE IS ASKING TO BE PICKED UP (S103b), and until now nobody could
+   * tell — including the player.
+   *
+   * `draw()`'s ball branch has always put a lit "Ready to wear" on the visor the
+   * moment the categories run out: the comment there says the affordance and its
+   * availability arrive together, which is exactly right. But S101's per-frame
+   * plane gate switched the plane off for the whole of stage `ball`, so that
+   * standby has never been drawn onto anything. The one prompt this beat has was
+   * invisible for its entire existence.
+   *
+   * ⚑ And the same invisibility is what stopped the click-only walk. S104 made
+   * the hand-back reachable by a proximity SPHERE around the headset prop, which
+   * is right for a person — you press a headset on a stand, not a rectangle —
+   * but a sphere publishes no target, the plane was off, and `walk.mjs` excludes
+   * props. So the press that ends the piece could not be found by the only tool
+   * that can prove the piece ends. Turning the plane back on when it has
+   * something to say fixes the player's problem and the auditor's with one
+   * condition, which is the right shape: the affordance IS the target.
+   */
+  get deviceReturnable(): boolean {
+    return this.stageNow === 'ball' && this.ball.returnable;
+  }
   /** the spine holds its breath while this is false — see os.ts's
    *  `sendOfferPending`. S79's ball is what eventually sets it. */
   get handedOffToClose(): boolean { return this.handedOff; }
