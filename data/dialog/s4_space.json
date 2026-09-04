@@ -27,7 +27,7 @@
  "corrupt": {
   "line": "L is still here.",
   "sub": "this session did not end",
-  "note": "The headset stopped responding and returned to standby.",
+  "note": "The headset stopped responding.",
   "button": "Restart",
   "witness": "desk: the device stopped — the laptop offered a restart",
   "ask": "Restart as you are.",

@@ -350,8 +350,29 @@ export class E4Shell {
   private closeButtonRect(W: number, H: number): { x: number; y: number; w: number; h: number } {
     // ⚑ sized to the LABEL, not to a guess. The first pass hardcoded 104 px for a
     //   string that did not fit it, and the text ran off the end of its own button.
-    const w = 78; const h = 20;
-    return { x: W - w - 12, y: H - h - 10, w, h };
+    const w = 78; const h = 16;
+    /**
+     * ⚑ AND IT LIVES IN THE TOP HALF OF THE LID, BECAUSE THAT IS ALL THERE IS.
+     *
+     * This used to sit at `H - h - 10` — pinned to the bottom edge, the obvious
+     * place for a dialog's button and, here, off the bottom of the world. S107
+     * measured the lid from the seat this era is played from: **only the top
+     * ~51% of it is inside the frame**, the rest falls past the edge. The walk
+     * then measured the consequence, eight runs in a row, and named it exactly:
+     *
+     *     laptop:close-restart — off-screen at 630,901   (frame is 860 tall)
+     *
+     * Forty-one pixels below the bottom of the screen. **The last press in the
+     * piece could not be reached by a player**, and the four runs that stalled
+     * in front of it were right to.
+     *
+     * ⚑ It is the same fault S107 found one beat earlier with "press to
+     * continue", in this same method's file, which I fixed by moving the text up
+     * — while adding this button at the bottom edge in the same session. A
+     * measurement about a surface applies to everything drawn on it, not just to
+     * the thing that prompted the measurement.
+     */
+    return { x: W - w - 12, y: Math.round(H * 0.36), w, h };
   }
 
   /** the laptop's own version, so its screen re-uploads only when its line moves */
@@ -437,23 +458,25 @@ export class E4Shell {
       this.laptopBar(ctx, W, space.corrupt.sub);
       setFont(ctx, 11);
       ctx.fillStyle = ERA4.textHi;
-      ctx.fillText(space.corrupt.line, 12, LAPTOP_BAR + 12);
-      setFont(ctx, 9);
+      ctx.fillText(space.corrupt.line, 12, LAPTOP_BAR + 5);
+      // ⚑ 8 px, not 9, and tighter rows: everything on this card has to clear
+      //   the button above, which has to clear the frame's own bottom edge.
+      setFont(ctx, 8);
       ctx.fillStyle = ERA4.dim;
-      let ny = LAPTOP_BAR + 32;
-      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 24)) { ctx.fillText(row, 12, ny); ny += 12; }
+      let ny = LAPTOP_BAR + 20;
+      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 24)) { ctx.fillText(row, 12, ny); ny += 10; }
       // ⚑ THE ASK, IN THE CLOSE UPDATE'S OWN WORDS, on a card — a notice on her
       //   machine with a single thing to press, exactly like the four before it.
       const r = this.closeButtonRect(W, H);
-      px(ctx, 8, r.y - 12, W - 16, r.h + 22, ERA4.panel);
-      px(ctx, 8, r.y - 12, W - 16, 1, ERA4.rule);
+      px(ctx, 8, r.y - 6, W - 16, r.h + 12, ERA4.panel);
+      px(ctx, 8, r.y - 6, W - 16, 1, ERA4.rule);
       setFont(ctx, 10);
       ctx.fillStyle = ERA4.textHi;
-      ctx.fillText(space.corrupt.ask, 14, r.y - 6);
+      ctx.fillText(space.corrupt.ask, 14, r.y + 3);
       px(ctx, r.x, r.y, r.w, r.h, ERA4.field);
       px(ctx, r.x, r.y, r.w, 1, ERA4.l);
       const tw = ctx.measureText(space.corrupt.button).width;
-      ctx.fillText(space.corrupt.button, r.x + Math.round((r.w - tw) / 2), r.y + 6);
+      ctx.fillText(space.corrupt.button, r.x + Math.round((r.w - tw) / 2), r.y + 4);
       // ⚑ registered where it is DRAWN, from the same rect the hit test uses, so
       //   the two cannot drift apart the way kit.ts's did.
       this.laptopHits.push({ ...r, id: 'close-restart' });
