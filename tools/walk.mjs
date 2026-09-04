@@ -915,6 +915,8 @@ async function main() {
   let s = await probe();
   note('seated', { era: s.era, phase: s.phase, spine: s.spine, what: s.targets.length + ' live controls' });
   let stalls = 0;
+  /** the last state in which the piece was seen to MOVE — see the loop detector */
+  let lastMoving = '';
   const visits = new Map();
   let progress = progressOf(s);
   let sinceProgress = 0;
@@ -1042,6 +1044,27 @@ async function main() {
     desyncRuns = 0;
 
     const sig = stableOf(s);
+    /**
+     * ⚑ A BEAT THAT IS DELIBERATELY DOING NOTHING IS NOT A DEAD END (S103b).
+     *
+     * `stableOf` is the same screen regardless of what animates on it — exactly
+     * right for remembering presses, and exactly wrong as the sole input to a
+     * loop detector, because this piece HAS a beat with no controls that lasts
+     * three and a half minutes. The ball is the one place the work asks nothing
+     * of you: no rects, no canvas change the hash can see, and its captions on
+     * the DOM. To this counter that was indistinguishable from a wall, and it
+     * called the walk looping at 80 visits — about a minute short of the press
+     * that ends the piece.
+     *
+     * So the count resets whenever the piece VISIBLY MOVES: the drawn screen or
+     * the DOM caption strip differs from the step before. Audio is deliberately
+     * NOT counted here — a looping bed plays forever and would disable the
+     * backstop entirely. The stall cap still bounds the waiting either way; this
+     * only stops the walker concluding "no way onward" about a beat that is
+     * mid-sentence.
+     */
+    const moving = screenOf(s) + '\u241F' + (s.domText || '');
+    if (moving !== lastMoving) { lastMoving = moving; visits.set(sig, 0); }
     visits.set(sig, (visits.get(sig) || 0) + 1);
     // a pure backstop: the press cap already bounds this, so reaching it means
     // something is returning here without any press of ours being responsible
