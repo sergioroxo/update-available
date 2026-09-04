@@ -170,6 +170,27 @@ Writing the beat made the NEXT surface visible, and the next surface was not the
   had not begun; the ritual completed and nothing was listening. `Spine.onEra('close')` is an ending
   now, not an arrival. Measured: card → title → constellation.
 
+### ⚑ 2026-09-03/04 — THE FIX ROUND LANDED, AND THE PIECE IS AUDIBLE
+S103 · S104 · S105 · S107 · S109 are all in, each verified by observation:
+
+- **The ending is reachable.** The hand-back after the ball sat behind the visor plane's enabled flag,
+  which S101 had switched off during that beat — so the glitch, the device returning, the Restart card
+  and the Close were all unreachable. Proven fixed through the room's own ray routing.
+- **Era 4's opening instruction was off the bottom of the frame.** S107 measured it: the laptop's
+  readable panel runs 1.7° past a 21° half-frame from the seat the era is played from, so *"press to
+  continue"* was never on screen. Moved up the lid rather than tilting the camera — a rig pitch is a
+  world tilt in XR and gyro.
+- **The device's "Ready to wear" prompt had never once been drawn.** Same plane gate. Fixed so that the
+  affordance IS the auditor's target.
+- **~240 texture uploads/s → 2.6–3.6/s**, and `window.__uploads` now exists so the law can be checked
+  rather than believed. It had been broken for months with every check green because nothing in the
+  repo could see an upload happen.
+- **Every era has a room bed**, crossfaded, with the building's drone under the three passages; the
+  ball plays its own room. **92 audio names declared, 90 on disk** — the two outstanding are the
+  ball's bed and landing, waiting on Sérgio's recording.
+- **60 candidate sounds licence-checked** against the Freesound API (59 CC0, 1 rejected CC-BY-NC),
+  13 ingested; 13 more synthesized outright (`tools/make_tones.sh`).
+
 ### ⚑ AND THE CLOSE ITSELF (Sérgio's 2026-09-02 ask, built)
 The ceiling's glow-stars are a real merged mesh the constellation OPENS OUT OF; every network anchor
 carries the era of the piece it grounds, so the mesh has a topology at last (frame overhead, four arcs,
@@ -198,6 +219,21 @@ blank on the played path; the walker has three blind spots that inflated the las
 The three things that decide whether it is good are now ranked audio → the door → the writing.
 
 # THE TRAPS THIS PROJECT HAS PAID FOR
+0. ⚑ **A fix can open the hole it is closing.** S104 made Era 4's hand-back reachable by a proximity
+   sphere — right for a person, who presses a headset and not a rectangle — and thereby made the last
+   press in the work invisible to the only tool that can prove the work ends. **If a player and an
+   auditor are looking for different objects, one of them will rot silently.** Here the player's
+   version had been invisible for its whole existence and nobody had noticed, because nothing was
+   looking at it either.
+0b. ⚑ **Stillness is not a dead end.** The walker's loop backstop called the ball — three and a half
+   minutes with no controls, ON PURPOSE, the one place the piece asks nothing of you — a loop, and quit
+   a minute short of the ending. Any "nothing is happening" heuristic must outlast the work's slowest
+   intentional beat, and this work's slowest beat is its most important one.
+0c. ⚑ **A refusal list must be anchored.** `tools/walk.mjs` refused `pause_yes` and `close-restart`
+   because its FORBIDDEN pattern matched `pause` and `restart` as bare substrings. It could never
+   finish the piece. `^pause$` is the frame's control; `pause_yes` is the era's, and the difference is
+   the difference between quitting the work and playing it.
+
 1. **A comment is not evidence.** Six sessions repeated a stale header claim; a decision was applied to
    a config constant nothing read; **and this file made the same mistake about the idle wipe.**
 2. **Content that exists cannot always be met.** C9 now fails the build on unreferenced data files.
