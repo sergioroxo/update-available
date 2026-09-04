@@ -884,3 +884,15 @@ run then found the thing no static reading would have: `FORBIDDEN` matched `rest
 pause, the door to the ball) and `close-restart` (the last press in the piece). Anchored.
 The frame's own controls are still refused by exact id — `^pause$` is the menu's,
 `pause_yes` is the era's.
+
+S103d (2026-09-04) — THE REACHABILITY NET. `tools/walk.mjs` hardcoded the macOS Chrome
+path, so the tool that proves the piece is reachable could itself only be run on one
+machine — the same defect class it exists to find, one level up. It resolves Chrome the
+way shots.mjs does now, and `--require-close` turns the run into a gate that asserts ONE
+thing: `spine: done`, which is set only through the conductor's onClose() and which only
+the Close's own restart can reach. `.github/workflows/walk.yml` runs it weekly and on
+demand, never on push — it takes ~30 minutes and its value is catching slow rot, not
+gating a commit. It deliberately does not assert timing: a shared runner rendering through
+swiftshader cannot honestly judge beats measured in minutes, and a check that cried wolf
+would be switched off. The report uploads as an artifact whether the run passes or fails,
+because a failed run's "PUBLISHED BUT UNREACHABLE" section names the control that broke.

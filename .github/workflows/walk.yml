@@ -1,0 +1,76 @@
+# ⚑ THE REACHABILITY NET — can the piece still be played to its end?
+#
+# This asserts ONE thing, on purpose: that a click-only run reaches the Close.
+# Not timing, not frame rate, not how anything looks. A scheduled job on a
+# shared cloud machine renders through swiftshader on contended hardware, and
+# this work has beats measured in minutes — a check that failed on drift would
+# cry wolf until somebody switched it off. `npm run audit`'s browser assertions
+# stay LOCAL for exactly that reason (`tools/shots.mjs` skips cleanly without
+# Chrome so `npm test` never needs one), and this does not change that policy.
+#
+# ⚑ WHAT IT DOES CATCH is the fault this project keeps making and cannot see:
+# a beat quietly becoming unreachable while every other check stays green. That
+# has happened with a page-turn button, an era's ending, a screen plane inside a
+# mesh, forty-seven audio files, a restart card on a disabled surface, and — the
+# week this file was written — the last press in the piece sitting forty-one
+# pixels below the bottom of the frame. Each was found by clicking, none by a
+# unit test, and several survived multiple green CI runs.
+#
+# `spine: done` is set only through the conductor's `onClose()`, which only the
+# Close's own restart reaches. Nothing else in the piece can produce it.
+#
+# ⚑ It runs WEEKLY and on demand, never on push: it takes ~30 minutes and its
+# value is catching slow rot, not gating a commit.
+name: walk
+
+on:
+  schedule:
+    # Mondays, 05:00 UTC — a report waiting at the start of the week
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+jobs:
+  reachability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      # puppeteer-core is deliberately an OPTIONAL devDependency and no browser
+      # is vendored, so the runner brings its own.
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+        with:
+          chrome-version: stable
+
+      - name: Serve the build
+        run: |
+          npx vite --port 5173 --strictPort &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:5173/ && break; sleep 1; done
+          curl -sf -o /dev/null http://localhost:5173/ || { echo "dev server never answered"; exit 1; }
+
+      - name: Walk it, entrance to the Close
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
+        # --max 2000: waiting consumes steps, and the ball alone is ~3½ minutes
+        # of them. A cap that is too small reads as "the walk stopped in Era 2",
+        # which cost this project a day of chasing a regression that was a flag.
+        run: node tools/walk.mjs --port 5173 --max 2000 --require-close
+
+      # ⚑ The report is the point, and it is worth having whether the run passed
+      # or failed — a failed run's "PUBLISHED BUT UNREACHABLE" section names the
+      # control that broke and why it could not be aimed at.
+      - name: Keep the interaction map
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: walk-report
+          path: |
+            docs/reinterp/WALK_*.md
+            docs/reinterp/WALK_*.json
+          retention-days: 90

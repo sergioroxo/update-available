@@ -58,7 +58,7 @@
  * as broken.
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -172,6 +172,27 @@ const PREFER = [
  * difference between quitting the piece and playing it.
  */
 const FORBIDDEN = /^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$/i;
+
+/** ⚑ see the launch below — order: --chrome, the environment, the platform */
+function resolveChrome() {
+  const explicit = flag('chrome') ?? process.env.CHROME ?? process.env.CHROME_PATH
+    ?? process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (typeof explicit === 'string' && explicit) {
+    return existsSync(explicit) ? explicit : null;
+  }
+  const candidates = process.platform === 'darwin' ? [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+  ] : process.platform === 'win32' ? [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+  ] : [
+    '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium', '/usr/bin/chromium-browser', '/snap/bin/chromium'
+  ];
+  return candidates.find((c) => existsSync(c)) ?? null;
+}
 const LAST_RESORT = /^leave$|not.?now|remind|skip|cancel|^back|^dismiss$|^close$/i;
 
 async function main() {
@@ -195,8 +216,21 @@ async function main() {
   }
   mkdirSync(SHOT_DIR, { recursive: true });
 
+  /**
+   * ⚑ PORTABLE CHROME (S103d). This was a hardcoded macOS path, so the tool that
+   * proves the piece is reachable could itself only be run on one machine — the
+   * same defect class it exists to find, one level up. `shots.mjs` already had
+   * the answer; this is its `resolveChrome`, verbatim in spirit: an explicit
+   * flag, then the environment, then the platform's usual places. Nothing is
+   * downloaded and nothing installed; if none is found, say so and skip.
+   */
+  const chrome = resolveChrome();
+  if (!chrome) {
+    console.log('no Chrome found — pass --chrome <path> or set $CHROME. Skipping.');
+    process.exit(0);
+  }
   const browser = await puppeteer.launch({
-    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    executablePath: chrome,
     headless: true,
     args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--no-sandbox'],
     defaultViewport: { ...VIEW, deviceScaleFactor: 1 }
@@ -1488,6 +1522,35 @@ const LAP = { w: 224, h: 140 };
   console.log('\nwrote docs/reinterp/WALK_' + stamp + '.{json,md} — ' +
     presses.length + ' presses, reached ' + final.era);
   await browser.close();
+
+  /**
+   * ⚑ `--require-close` — THE REGRESSION GATE (S103d), and it deliberately
+   * asserts ONE thing.
+   *
+   * A scheduled run on a shared cloud machine cannot honestly assert timing:
+   * this piece has beats measured in minutes, rendered through swiftshader on
+   * contended hardware, and a check that failed on drift would cry wolf until
+   * somebody disabled it. What such a machine CAN answer is the question this
+   * project keeps getting wrong and cannot see: **is the ending still
+   * reachable by pressing things?**
+   *
+   * `spine: done` is the honest signal — it is set only through the conductor's
+   * `onClose()`, which only the Close's own restart can reach. Nothing else in
+   * the piece can fake it.
+   */
+  if (flag('require-close') !== undefined || process.argv.includes('--require-close')) {
+    if (final.spine === 'done') {
+      console.log('✓ reachability: the walk reached the Close (spine: done).');
+    } else {
+      console.error(
+        '\n⚑ REACHABILITY REGRESSION: the walk did NOT reach the Close.\n' +
+        '  final era ' + final.era + ' / spine ' + final.spine + ' after ' +
+        presses.length + ' presses.\n' +
+        '  Read the report\'s "PUBLISHED BUT UNREACHABLE" section first — it names\n' +
+        '  every control the piece registered that could not be aimed at, and why.\n');
+      process.exit(1);
+    }
+  }
 }
 
 main().catch((e) => { console.error('walk failed:', e); process.exit(1); });
