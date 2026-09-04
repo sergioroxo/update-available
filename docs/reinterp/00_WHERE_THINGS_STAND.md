@@ -256,6 +256,20 @@ That is S108's, not the data's.
 `os.era` every frame rather than being pushed it, because two independent paths set the room's decade
 and this project's history says a surface wired to one of them is wrong on the other.
 
+⚑ **S117/S118 · the ending was reachable by 57 pixels, and now it is not luck.** The pitch −3 seat
+did not break Era 4 — it revealed that the frame's *"Look with your device"* button
+([14, 726]–[192, 754]) had been clearing the headset's projected plane (138, 811) by 57 px, and 3°
+was enough to put the button on top of it. `elementFromPoint` returns the BUTTON, so the DOM took the
+press, `wear()` never ran, and a walk stopped in Era 4 at 197 presses with every other check green.
+The button moved to the mute button's line; **`tools/walk.mjs` now refuses to press any control that
+frame chrome covers and names the element**; and the headset itself moved out of the corner — Sérgio,
+*"You can put the VR headset closer to the user, ive asked for that already before"* — onto a stand,
+0.72 m from the eye instead of 1.15, 50%/59% of the way to the frame's edges instead of 81%/75%.
+⚑ **Verified: `WALK_2026-09-05` reaches the Close, `spine: done`, 201 presses, zero chrome
+collisions.** And the walker now stamps its report with the LOCAL date: `toISOString()` is UTC, and
+for two hours a day that wrote a run over the previous day's file — which has now happened twice to
+the one file that proves this piece can be played to its end.
+
 **S116 · the boot sequences.** E2: Restorify's own 23.7 s CD-ROM splash over the FULL jingle
 (`chase_the_clouds.mp3`, already in the repo, already registered), every beat on a measured phrase
 onset, handing off to the LambyOS crawl under a 1.2 s dissolve so the crawl's last line —

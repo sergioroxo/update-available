@@ -1437,7 +1437,22 @@ const LAP = { w: 224, h: 140 };
   await page.screenshot({ path: join(SHOT_DIR, 'walk_end.png') });
 
   // ── the deliverable ──
-  const stamp = new Date().toISOString().slice(0, 10) + (JUMP ? '_JUMPED_' + JUMP : '');
+  /**
+   * ⚑ LOCAL DATE, NOT UTC (2026-09-05). `toISOString()` is UTC, and for the two
+   * hours a day when the author's clock is a day ahead of it, this stamped
+   * YESTERDAY — which meant a run made on the 5th wrote itself over the report
+   * from the 4th instead of beside it. That has now happened to the same file
+   * twice: once to a `--max 12` gate test, and once to a full traversal. Both
+   * times the file that was overwritten was the ONLY evidence that this piece
+   * can be played to its end.
+   *
+   * A report is named for the day the person ran it, because that is the day
+   * they will look for it under.
+   */
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+    + (JUMP ? '_JUMPED_' + JUMP : '');
   const presses = log.filter((l) => l.kind === 'press' || l.kind === 'sweep-hit' || l.kind === 'move');
   const dead = presses.filter((p) => p.changed === false);
   const silentFound = [...new Set(log.filter((l) => l.kind === 'silent-surface')
