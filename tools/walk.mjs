@@ -1029,6 +1029,16 @@ const LAP = { w: 224, h: 140 };
    */
   const inertMarks = new Set();
   let inertHash = '';
+  /**
+   * ⚑ WHAT IT COULD NOT AIM AT, AND WHY (S103c). `probe()` has always computed a
+   * reason for every target it drops — "off-screen at 527,880", "behind the
+   * camera", "…is disabled" — and thrown it away at the end of the step. So a
+   * control that exists, is published, and simply cannot be reached from the
+   * seat looked identical, in every report, to a control that does not exist.
+   * That is the project's oldest defect class showing up in the instrument built
+   * to find it. Now it is aggregated and printed.
+   */
+  const unaimed = new Map();
   const inertKey = (sig, t) => sig + '\u0000' + t.surface + ':' + t.id;
   const capped = (sig, t) =>
     (pressed.get(keyOf(sig, t)) || 0) >= PRESS_CAP || inertMarks.has(inertKey(sig, t));
@@ -1095,6 +1105,10 @@ const LAP = { w: 224, h: 140 };
      * only stops the walker concluding "no way onward" about a beat that is
      * mid-sentence.
      */
+    for (const d of (s.dropped || [])) {
+      const k = d.surface + ':' + d.id + ' \u2014 ' + d.why;
+      unaimed.set(k, (unaimed.get(k) || 0) + 1);
+    }
     if (s.screenHash !== inertHash) { inertHash = s.screenHash; inertMarks.clear(); }
     const moving = screenOf(s) + '\u241F' + (s.domText || '');
     if (moving !== lastMoving) { lastMoving = moving; visits.set(sig, 0); }
@@ -1420,6 +1434,14 @@ const LAP = { w: 224, h: 140 };
     final.ledList.length
       ? final.ledList.map((e) => '- `' + e + '`').join('\n')
       : '- empty',
+    '',
+    '## ⚑ PUBLISHED BUT UNREACHABLE — what could not be aimed at, and why', '',
+    '*A control the piece registers and the walker cannot reach from the seat. This is not the',
+    'tool failing to find it: the rect was found, projected, and landed outside the frame or',
+    'behind the camera. Every line here is a control a PLAYER in this pose cannot press either.*', '',
+    ...(unaimed.size === 0 ? ['- none.'] :
+      [...unaimed.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30)
+        .map(([k, n]) => '- `' + k + '` — ' + n + ' step(s)')),
     '',
     '## PRESSES WITH NO OBSERVABLE EFFECT', '',
     '*Not the same as a dead control.* This walk can see the era, the phase, the spine step, the',
