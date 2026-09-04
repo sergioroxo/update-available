@@ -1046,9 +1046,43 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // band at either orientation. Measured live with that same longest caption:
     // 34 px of vertical air at 806×1408 portrait (where it wraps to two lines)
     // and 48 px at 1408×806 landscape (where it does not).
+    /**
+     * ⚑ S117 — AND IT DOES NOT LIVE IN THE BOTTOM-LEFT EITHER. This is S86's
+     * fault, one corner over, and it cost the piece its ending.
+     *
+     * Era 4's ONE TOUCH is the headset, deliberately placed ~24° off the seat
+     * bearing so it is inside the frame — which puts it in the bottom-left of
+     * the view. This button was 14 px in from the left, 28 px tall, at
+     * `bottom: calc(4% + 72px)`: at 1280 × 860 that is [14, 726]–[192, 754].
+     * The visor's own plane projected to (138, 811) — **57 px below the
+     * button's lower edge.** Sérgio's ruling that Room 3's seat sits at pitch
+     * −3 moved that projection to (146, 747), i.e. INSIDE the button, and
+     * `document.elementFromPoint` then returns the BUTTON: the DOM eats the
+     * press, the canvas never sees it, `wear()` never runs, L never speaks and
+     * the walk stops in Era 4 with 197 presses and no ending.
+     *
+     * ⚑ The 3° did not cause this — it revealed it. Two systems owned the same
+     * corner and neither knew about the other, and they cleared each other by
+     * 57 px, which is the same ten-pixel miss S86's own comment above warns
+     * about, waiting for a different reason.
+     *
+     * THE TOP BAND IS THE ONE STRIP NO ERA PUTS ANYTHING INTERACTIVE IN: every
+     * era's surfaces sit on a desk, at or below eye level (E1/E2's monitor
+     * centres near y 480, E3's workstation likewise, E4's laptop at y 780 and
+     * its headset at y 750; L's chips, worn, run y 530–710). So the button
+     * joins the MUTE button's line instead of the pause button's column — same
+     * 3 % inset, one row down so it clears the review build's era pill — and
+     * the caption strip it was moved here to protect in the first place is
+     * untouched, because it is nowhere near it any more.
+     *
+     * ⚑ `tools/walk.mjs` now refuses to press any control whose projected point
+     * is covered by frame chrome, and names the element in its report. A
+     * measurement, not a memory: the next time something is put in a corner the
+     * era already owns, the walk says so instead of quietly not finishing.
+     */
     motionBtn = document.createElement('button');
     Object.assign(motionBtn.style, {
-      ...HINT_CHROME, left: '14px', bottom: 'calc(4% + 72px)', transform: 'none',
+      ...HINT_CHROME, left: '3%', top: 'calc(3% + 30px)', bottom: 'auto', transform: 'none',
       border: '1px solid #444', cursor: 'pointer', display: 'none'
     } as CSSStyleDeclaration);
     motionBtn.style.opacity = '1';

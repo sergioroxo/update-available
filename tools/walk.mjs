@@ -348,6 +348,30 @@ async function main() {
         lastWhy = 'off-screen at ' + Math.round(p.x) + ',' + Math.round(p.y);
         return null;
       }
+      /**
+       * ⚑ AND IS ANYTHING SITTING ON TOP OF IT? (2026-09-04, S117.) A control
+       * can be in frame, correctly projected, and still unpressable because a
+       * piece of FRAME CHROME is over it — the DOM takes the pointer and the
+       * canvas never hears about it. That is not a hypothetical: Era 4's one
+       * touch, the headset, projected to (138, 811) and the "Look with your
+       * device" button occupied [14, 726]–[192, 754]. They cleared each other
+       * by 57 px until the Room 3 seat moved 3° and did not, and the piece then
+       * had no ending — a walk that stopped at 197 presses with every check
+       * green.
+       *
+       * `elementFromPoint` returns the topmost HIT-TESTABLE element, so the
+       * build's `pointer-events: none` hints and washes are skipped for free and
+       * only chrome that would really eat the press is reported. Naming the
+       * element matters more than the count: "covered by BUTTON 'Look with your
+       * device'" is a fix, "unreachable" is a mystery.
+       */
+      const el = document.elementFromPoint(p.x, p.y);
+      if (el && el.tagName !== 'CANVAS') {
+        const label = (el.textContent || '').trim().slice(0, 28);
+        lastWhy = 'covered by ' + el.tagName + (label ? ' "' + label + '"' : '')
+          + ' at ' + Math.round(p.x) + ',' + Math.round(p.y);
+        return null;
+      }
       return [p.x, p.y];
     };
 
