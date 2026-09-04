@@ -344,6 +344,8 @@ async function main() {
     const OS = { w: 512, h: 384 };
     const WS = { w: 676, h: 390 };
     const PH = { w: 180, h: 360 };
+/** ⚑ Era 4's laptop lid, kept in step with LOGICAL.laptop in era3Devices.ts */
+const LAP = { w: 224, h: 140 };
     const RITUAL = { x: Math.round((WS.w - OS.w) / 2), y: Math.round((WS.h - OS.h) / 2) };
 
     /**
@@ -506,6 +508,22 @@ async function main() {
      * as a press at its own centre. Discovered from the scene graph rather than
      * listed, for the same reason the rect search is.
      */
+    /**
+     * ⚑ THE LAPTOP PUBLISHES RECTS NOW, AND THE LAST PRESS IN THE PIECE IS ONE
+     * OF THEM (S103c). The block above offers a rect-less plane as a press at
+     * its own CENTRE, which is right for "you press the machine, not a control
+     * on it" — and wrong the moment the machine grows a control. After Era 4's
+     * hand-off the lid carries the Close's card with a single `Restart` at its
+     * bottom-right, so a centre press lands on empty screen forever: measured,
+     * four full runs, each stopping ~90 steps after the finale had already been
+     * handed over. Same shape as the workstation's own rects, same helper.
+     */
+    const e4 = os && os.e4;
+    const lapRects = e4 && Array.isArray(e4.laptopHits) ? e4.laptopHits : [];
+    for (const r of lapRects) {
+      add(r.id, 'laptop', r, onPlane('era3-device-laptop', r.x + r.w / 2, r.y + r.h / 2, LAP.w, LAP.h));
+    }
+
     const surfaced = new Set(targets.map((t) => t.surface));
     root.forEach((e) => {
       const n = e.name || '';
@@ -996,7 +1014,21 @@ async function main() {
    * era — the walk got stuck one press into Era 1 having correctly diagnosed
    * the problem and then over-applied its own finding.
    */
+  /**
+   * ⚑ AND AN INERT JUDGEMENT MUST NOT OUTLIVE THE PICTURE IT WAS MADE ABOUT
+   * (S103c). `inertKey` is built from the STABLE signature, which is constant
+   * for a whole era — so one fruitless press early in Era 4 blacklisted a
+   * surface for the rest of it. Measured: the laptop was pressed at step 325
+   * while L had finished with it, judged inert, and was therefore still
+   * blacklisted ninety steps later when the SAME lid became the Close's card
+   * with the last press in the work on it.
+   *
+   * A surface that starts drawing something new is not the surface that was
+   * inert. When the drawn screen changes, the marks go. `PRESS_CAP` still
+   * bounds anything genuinely dead, so this cannot become a loop.
+   */
   const inertMarks = new Set();
+  let inertHash = '';
   const inertKey = (sig, t) => sig + '\u0000' + t.surface + ':' + t.id;
   const capped = (sig, t) =>
     (pressed.get(keyOf(sig, t)) || 0) >= PRESS_CAP || inertMarks.has(inertKey(sig, t));
@@ -1063,6 +1095,7 @@ async function main() {
      * only stops the walker concluding "no way onward" about a beat that is
      * mid-sentence.
      */
+    if (s.screenHash !== inertHash) { inertHash = s.screenHash; inertMarks.clear(); }
     const moving = screenOf(s) + '\u241F' + (s.domText || '');
     if (moving !== lastMoving) { lastMoving = moving; visits.set(sig, 0); }
     visits.set(sig, (visits.get(sig) || 0) + 1);
