@@ -110,6 +110,7 @@ import * as aero from '../desktop/theme/era3';
 import {
   ERA3, drawLambMark, warmGrade, drawNoaFrame, honestLight, NOA_FRAME, NOA_SECONDS
 } from '../desktop/theme/era3';
+import { drawE3Idle, drawSpinner, e3SpinnerStep } from '../desktop/apps/bootSplash';
 import { ledger } from '../state/ledger';
 import { CommentsApp, type TabletFeedItem, type CommentTemplate } from '../desktop/apps/comments';
 import { FloppySheep } from '../desktop/apps/floppysheep';
@@ -331,6 +332,15 @@ export class GraceQueueLite {
     floppyOpen: () => this.floppy.open
   });
 
+  /**
+   * ⚑ S116 — the idle clock, and it is the ONLY thing in this class that runs
+   * on a wall clock rather than on state. It exists for the twenty-eight
+   * seconds review R1 measured between this screen turning on (mid-flight, at
+   * the era shift) and the boot starting (at the landing), and it stops the
+   * instant `mode` leaves 'dark'. Six steps a second on one small canvas, for
+   * one bounded window, in exchange for the worst dead air in the piece.
+   */
+  private idleT = 0;
   private mode: Mode = 'dark';
   /** ⚑ the window is PUT DOWN, not closed. Minimising reveals the desktop the
    *  maximise covers; the taskbar button always brings it back. Never a trap,
@@ -413,6 +423,11 @@ export class GraceQueueLite {
   /** called every frame by era3Devices.tick — see the class header on why this
    *  does not break the dirty-upload law */
   update(dt: number): void {
+    if (this.mode === 'dark') {
+      const before = this.idleT;
+      this.idleT += dt;
+      if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
+    }
     this.phone.tick(dt); // ⚑ the cascade's own clock, and the only one on the phone
     // ⚑ and when it has been outnumbered, Lambient says the thing about the
     //   board. Once, on the frame the phone reports `broken`.
@@ -909,7 +924,7 @@ export class GraceQueueLite {
     // window chrome. A machine that is off or booting has no desktop yet, and
     // drawing one behind the boot text is the exact "already running" lie this
     // beat exists to remove.
-    if (this.mode === 'dark') { px(ctx, 0, 0, W, H, ERA3.taskBot); return; }
+    if (this.mode === 'dark') { drawE3Idle(ctx, W, H, this.idleT); return; }
     if (this.mode === 'boot') { this.drawBoot(ctx, W, H); return; }
     if (this.mode === 'install') { this.drawInstall(ctx, W, H); return; }
     aero.wallpaper(ctx, W, H);
@@ -991,6 +1006,10 @@ export class GraceQueueLite {
         Math.round(H * 0.46) + ARRIVAL.bootLines.length * 22 + 8);
     }
     this.progressBar(ctx, W, H, Math.min(1, Math.max(0, age / (this.bootSeconds - DARK_SECONDS))));
+    // the same ring that was turning while you were still in the air, brighter:
+    // the machine did not start, it woke (Sérgio: "i like the spinner idea for E3")
+    drawSpinner(ctx, cx, Math.round(H * 0.80) + 34, 12, this.arrivalT,
+      ERA3.accentHi, ERA3.accent, ERA3.greyDk);
   }
 
   /** ⚑ GracePlatform installing ON VERA'S MACHINE — the changelog-as-thesis
@@ -1713,6 +1732,20 @@ export class GraceQueueLite {
       return;
     }
     switch (beat) {
+      /**
+       * ⚑ S116 — the arrival had no review route at all. `settleArrival` skips
+       * it, `?era=3` calls `settleArrival`, and `beginArrival` fires only from
+       * a real E2→E3 relocation — so the boot, the changelog and (now) the idle
+       * spinner could be looked at exactly once per playthrough, thirty seconds
+       * into a flight. That is the same shape as every beat C6 exists to catch.
+       */
+      case 'idle':
+        this.mode = 'dark'; this.arrivalT = -1; this.idleT = 0; this.bump();
+        break;
+      case 'arrival':
+        this.mode = 'dark'; this.arrivalT = -1; this.idleT = 0;
+        this.beginArrival();
+        break;
       case 'signin': this.settleArrival(); break;
       case 'consent': this.settleArrival(); this.minimised = false; this.beginList(); break;
       case 'consentAllow': this.debugBeat('consent'); this.decideConsent(true); break;

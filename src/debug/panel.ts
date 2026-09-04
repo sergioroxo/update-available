@@ -146,7 +146,8 @@ const OS_BEATS: BeatRow[] = [
   // the program he is the face of, then the check-in. Each has its own button
   // so a reviewer can land on the one they mean; `e2Silence` above still plays
   // the whole chain forward by ordinary clicking.
-  { label: 'S2R.0b · LambyOS 2003 boot (+ jingle hook)', id: 'e2Boot' },
+  { label: 'S2R.0b · Restorify splash + LambyOS boot (30 s, the jingle)', id: 'e2Boot' },
+  { label: 'S2R.0b · the boot CRAWL alone (skips the splash)', id: 'e2Crawl' },
   { label: 'S2R.1 · ⚑ Lamby introduces himself', id: 'e2Lamby' },
   { label: 'S2R.1b · Lamby presents Restorify', id: 'e2Program' },
   { label: 'S2R.2 · Restorify check-in', id: 'e2Restorify' },
@@ -263,6 +264,8 @@ const OS_BEATS: BeatRow[] = [
  * needs no new wiring through `src/engine/app.ts`.
  */
 const E3_DEVICE_BEATS: Array<[string, string]> = [
+  ['⚑ the arrival · the IDLE screen (what it does while you fly)', 'idle'],
+  ['⚑ the arrival · wake → boot → install GracePlatform', 'arrival'],
   ['⚑⚑ sign in → LAMBIENT ASKS (the initiation)', 'consent'],
   ['↳ Allow — permissions granted', 'consentAllow'],
   ['↳ ⚑ Not now — and it stays anyway', 'consentDecline'],

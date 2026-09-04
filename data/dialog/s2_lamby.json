@@ -3,7 +3,7 @@
   "returnLine1": "Welcome back, Daniel.",
   "returnLine2": "Press to continue with reboot.",
 
-  "_osBootDoc": "S2R.0b — THE BOOT. E1 boots with a BIOS crawl and a LambyOS crawl; the E2 version change used to pass unmarked (finding A2). The machine has been UPDATED and the boot is where it says so: a version line that names what it replaced, the profile coming back out of storage, and the companion process starting for the first time. `osBootTrack` is the jingle hook — no asset is committed yet, and src/audio/tapeAudio.ts's registry law means an unregistered name is simply never requested (no 404, no console error). Drop the file in public/assets/audio/, add one line to that registry, and the boot sings.",
+  "_osBootDoc": "S2R.0b — THE BOOT. E1 boots with a BIOS crawl and a LambyOS crawl; the E2 version change used to pass unmarked (finding A2). The machine has been UPDATED and the boot is where it says so: a version line that names what it replaced, the profile coming back out of storage, and the companion process starting for the first time. `osBootTrack` is the jingle hook — no asset is committed yet, and src/audio/tapeAudio.ts's registry law means an unregistered name is simply never requested (no 404, no console error). Drop the file in public/assets/audio/, add one line to that registry, and the boot sings. \u26d1 2026-09-04, S\u00e9rgio: the hook now names `chase_the_clouds.mp3` \u2014 the FULL 30.77 s jingle, his own file, already in the repo and already registered. `lambyos_2003_boot.mp3` was a 6.5 s cut of it and he rejected all three cuts (\"None of them, the 6 second doesnt fit\"): the boot is not a startup sting, it is a CD-ROM splash, and a cut has no phrases left for the animation to land on. The 6.5 s file stays on disk \u2014 re-cutting is cheap and a short version is useful for review \u2014 but nothing points at it.",
   "osBootLines": [
     "LambyOS 2003",
     "build 5.1.2 — replaces 4.0.7 (1997)",
@@ -16,7 +16,7 @@
     "RESTORIFY IS NOW PART OF THIS COMPUTER."
   ],
   "osBootFooter": "Your file was kept while you were away.",
-  "osBootTrack": "lambyos_2003_boot.mp3",
+  "osBootTrack": "chase_the_clouds.mp3",
   "installingLine": "Restorify — finishing installation…",
 
   "introTitle": "Restorify",

@@ -27,6 +27,7 @@ import { E4Shell, setE4Bridge, roomIsMounted } from './apps/space';
 // not the little blocky mark this file used to carry: a conductor introducing
 // himself by name should be the same creature the rest of the era shows.
 import { drawLambyChar, type LambyAction } from './apps/lambyChar';
+import { E2_SPLASH, drawE2Splash, e2SplashVersion } from './apps/bootSplash';
 // the boot jingle hook — an unregistered name is never requested (registry law
 // in that module's header), so this is silent and error-free until an asset lands
 import { playOnce, isAudioAvailable } from '../audio/tapeAudio';
@@ -71,7 +72,7 @@ import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.js
  * Dismissal works at BOTH beats and files at both; dismissing the
  * introduction skips the program beat entirely (the era does not chase).
  */
-type E2Stage = 'silence' | 'osBoot' | 'lambyBoot' | 'lambyIntro' | 'lambyProgram' | 'active';
+type E2Stage = 'silence' | 'splash' | 'osBoot' | 'lambyBoot' | 'lambyIntro' | 'lambyProgram' | 'active';
 const E2_BOOT_HOLD = 2.2;   // s — hold the completed LambyOS 2003 crawl before the installer line
 const LAMBY_BOOT_HOLD = 1.6; // s — the "finishing installation…" beat's hold
 /** S2R.5: s of ordinary desktop between the video beat ending and the
@@ -182,6 +183,14 @@ export class DesktopOS {
   /** the LambyOS 2003 crawl's typed-character counter (same grammar as the
    *  BIOS and O2 crawls above — this machine boots the way it always has, at
    *  a new version number) */
+  /**
+   * ⚑ S116 — the splash's own clock and its dissolve. `e2StageT` is reset when
+   * the stage turns over, so the splash needs a second counter to keep
+   * dissolving OVER the crawl that has already started typing underneath it.
+   * That overlap is the whole of Sérgio's note: *"not skipable but we can have
+   * the system appearing as the song still plays."*
+   */
+  private e2SplashFade = 0;
   private e2BootChars = 0;
   private e2BootDoneAt = Infinity; // e2StageT at which the crawl completed (typed OR click-completed)
   private readonly e2BootTotal = (lambyStrings.osBootLines as string[])
@@ -630,9 +639,19 @@ export class DesktopOS {
       // any press on the dark glass advances it, same grammar as S1.0's
       // power press. Files once, immediately.
       this.fileLambyRecord('returned', 'return-press', lambyStrings.witness.returnPressed);
-      this.startE2Boot();
+      this.startE2Splash();
       return;
     }
+    /**
+     * ⚑ NOT SKIPPABLE (Sérgio, 2026-09-04: *"not skipable"*). A press during
+     * the splash does nothing at all — and that is the beat, not an oversight:
+     * a program that holds you for half a minute before it will let you touch
+     * anything is the era performing its own self-regard. The FRAME's escape
+     * is untouched (Esc/pause opens the game menu throughout, CLAUDE.md's
+     * amendment 4), so the accessibility floor is intact while the fiction's
+     * own surface refuses you.
+     */
+    if (this.e2Stage === 'splash') return;
     if (this.e2Stage === 'osBoot') {
       // same courtesy the O2 crawl gives: a press completes the typing. It
       // does NOT skip the beat — the boot still holds and resolves on its own.
@@ -670,12 +689,28 @@ export class DesktopOS {
    *  is the machine coming back up at a new version, saying so, with its
    *  jingle. `playOnce` is silent (and never requests anything) until a real
    *  asset is registered — see data/dialog/s2_lamby.json's `_osBootDoc`. */
+  /**
+   * ⚑ S116 — THE SPLASH COMES FIRST. Restorify's own CD-ROM animation runs for
+   * 23.7 s over the era's jingle, and the machine's boot text starts typing
+   * underneath its dissolve while the last 7 s of the track plays. The order is
+   * the one every disc-based product of that decade used — the publisher's
+   * animation, then the machine's own boot, then the program — except that here
+   * a bundled program has taken over the machine's boot entirely, which is what
+   * the crawl's last line says out loud.
+   */
+  private startE2Splash(): void {
+    this.e2Stage = 'splash';
+    this.e2StageT = 0;
+    this.e2SplashFade = 0;
+    playOnce(lambyStrings.osBootTrack);
+    this.dirty = true;
+  }
+
   private startE2Boot(): void {
     this.e2Stage = 'osBoot';
     this.e2StageT = 0;
     this.e2BootChars = 0;
     this.e2BootDoneAt = Infinity;
-    playOnce(lambyStrings.osBootTrack);
     this.dirty = true;
   }
 
@@ -1374,7 +1409,20 @@ export class DesktopOS {
     // beat ("Restorify — finishing installation…") that resolves on its own,
     // same pacing family as the BIOS/LambyOS boot holds above.
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
+      const e2Before = this.e2StageT;
       this.e2StageT += dt;
+      if (this.e2Stage === 'splash') {
+        // the surface only re-uploads when something on it has actually moved
+        if (e2SplashVersion(this.e2StageT) !== e2SplashVersion(e2Before)) this.dirty = true;
+        if (this.e2StageT >= E2_SPLASH.handoff) {
+          // ⚑ the handoff: the crawl starts NOW and the splash dissolves over it
+          this.e2SplashFade = E2_SPLASH.fade;
+          this.startE2Boot();
+        }
+      } else if (this.e2SplashFade > 0) {
+        this.e2SplashFade = Math.max(0, this.e2SplashFade - dt);
+        this.dirty = true;
+      }
       if (this.e2Stage === 'osBoot') {
         const next = Math.min(Math.floor(this.e2StageT / BOOT_CPS), this.e2BootTotal);
         // never walk back a click-completed crawl
@@ -1944,7 +1992,16 @@ export class DesktopOS {
       ctx.fillText(lambyStrings.returnLine2, 30, Math.round(H / 2) + 8);
       return;
     }
-    if (this.e2Stage === 'osBoot') { this.drawE2Boot(H); return; }
+    if (this.e2Stage === 'splash') { drawE2Splash(ctx, this.e2StageT); return; }
+    if (this.e2Stage === 'osBoot') {
+      this.drawE2Boot(H);
+      // the dissolve: the splash is still on top of the crawl for 1.2 s, which
+      // is what makes the handoff read as one movement rather than a cut
+      if (this.e2SplashFade > 0) {
+        drawE2Splash(ctx, E2_SPLASH.handoff, this.e2SplashFade / E2_SPLASH.fade);
+      }
+      return;
+    }
     if (this.e2Stage === 'lambyBoot') {
       ui.setFont(ctx, 11);
       ctx.fillStyle = ERA1.silver;
@@ -2410,6 +2467,14 @@ export class DesktopOS {
         this.dirty = true;
         break;
       case 'e2Boot':
+        // ⚑ S116: this is the WHOLE arrival now — Restorify's 23.7 s splash over
+        // the jingle, then the crawl typing under its dissolve. `e2Crawl` below
+        // is the short way in when only the boot text is under review.
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.startE2Splash();
+        break;
+      case 'e2Crawl':
         this.setPhase('desktop');
         this.setDesktopEra('e2');
         this.startE2Boot();
