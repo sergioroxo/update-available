@@ -1904,7 +1904,7 @@
     "pos": [
      5.16,
      0.79,
-     0.97
+     1.17
     ],
     "size": [
      0.3,
@@ -1912,14 +1912,15 @@
      0.22
     ],
     "color": "#F5F4ED",
-    "yaw": 270
+    "yaw": 270,
+    "_doc": "S118: +0.20 on z, clear of the laptop's new footprint and still on the desk (which runs to z 1.30)."
    },
    {
     "id": "e_folderAskew",
     "pos": [
      5.14,
      0.85,
-     1.01
+     1.15
     ],
     "size": [
      0.28,
@@ -3409,11 +3410,11 @@
    },
    {
     "id": "e_headset",
-    "_doc": "⛑ THE REAL HEADSET (2026-09-01, Sérgio supplied the model). Replaces the five-box assembly this session spent three passes trying to make read as a headset — a shape problem that a shape solves. ⛑ z 0.30 IS KEPT: S76 measured the box at 33.9 degrees off the seat bearing against a 29.7 degree half-FOV, outside the frame, and 0.30 is that fix. PLACEMENT.visor's screen plane must stay in step with this prop or the visor detaches from itself. ⛑ 2026-09-01, LEFT AND BIGGER (Sérgio) — but left is BOUNDED, and the first attempt proved it. At z 0.16 the visor plane projected to (-44, 762) from the seat: off the left edge entirely, undoing the very fix S76 made when it measured the headset at 33.9 degrees off-bearing. Horizontal half-FOV here is ~28.6 degrees, so how far left this can go depends on how far BACK it sits: pushed to x 5.53 it can reach z 0.25 at ~24 degrees and stay in frame. Further left than that is not a placement problem, it is a seat problem.",
+    "_doc": "⚑ S118 — THE HEADSET COMES TO THE PLAYER (Sérgio, 2026-09-04: \"You can put the VR headset closer to the user, ive asked for that already before, it needs a better placing, and maybe it can help with 'The Walk'?\"). He is right on all three counts, and the third one is the sharpest. MEASURED from the r3 seat (4.4, 1.16, 0.7) at pitch −3, against a 29.7° horizontal and 21° vertical half-FOV: the old pose (5.53, 0.75, 0.25) put this 24.1° off the seat bearing and 15.8° below the view centre — **81% and 75% of the way to the frame's own edges.** That is not 'a bit left', it is the corner, and the corner is where the frame keeps its chrome: S117 is the whole story of a chrome button landing on top of it and taking the era's one touch with it. A control at the corner of the frame is a control one small change away from being unreachable. ⚑ AND IT COULD NOT COME CLOSER WHILE IT SAT ON THE DESK: eye 1.16, desk 0.75, so anything on that surface drops 0.41 m, and closing the distance only steepens the angle — at 0.80 m it would sit 23° down, 96% of the half-FOV, effectively off the bottom. So it goes UP, onto a stand, which is what every comment in era3Devices.ts has called it for months (\"what you are pressing is a headset on a stand, not a button\") while no stand existed. New pose: 9.9° off the bearing, 10.7° below centre — 33% and 51% — and 0.83 m from the eye instead of 1.15 m.",
     "pos": [
-     5.53,
-     0.75,
-     0.25
+     5.2,
+     0.9,
+     0.52
     ],
     "size": [
      0.29,
@@ -3443,11 +3444,11 @@
    },
    {
     "id": "e_laptop",
-    "_doc": "⛑ MAYA'S 2026 MACHINE (Sérgio: 'maybe yeah we should have a Laptop in 2026, and that can start as our starting point of interaction for ERA-4 and L will tell us to move to VR'). It sits where the CRT used to, square in front of the seat: the era now OPENS here and is sent from here to the headset. ⛑ yaw 180, and the two wrong answers before it are worth keeping. The model's DEPTH runs along its own z, so at yaw 90/270 the machine faced sideways down the desk and no amount of flipping 90<->270 could ever point it at the seat — I was rotating in the wrong axis and reading each render as if the choice were front-versus-back. Measured: at yaw 0/180 the AABB is 0.246 deep on x by 0.34 wide on z, which is a laptop facing the seat.",
+    "_doc": "⚑ S118: +0.25 on z, to hand the desk's sweet spot to the headset. The laptop is read ONCE, at the very start of the era, for three short lines, and then L moves to the visor and it is never used again; the headset is the era's one touch and the thing the whole tail depends on. The reading surface can sit 11° right of the bearing. PLACEMENT.laptop in era3Devices.ts moves by the same +0.25 — a pure translation, so every measurement in that block's long comment still holds without being re-derived.",
     "pos": [
      5.24,
      0.75,
-     0.61
+     0.86
     ],
     "size": [
      0.25,
@@ -3457,6 +3458,22 @@
     "color": "#C9BFA6",
     "model": "laptop",
     "yaw": 180
+   },
+   {
+    "id": "e_headsetStand",
+    "_doc": "S118: the stand the code has been describing for months. Desk top 0.75 to 0.90, and the headset's own base sits on it. A charging stand is what a 2026 headset lives on when it is not on your face — and it is the only reason 'closer to the player' and 'inside the frame' can both be true at once.",
+    "pos": [
+     5.2,
+     0.825,
+     0.52
+    ],
+    "size": [
+     0.22,
+     0.15,
+     0.18
+    ],
+    "color": "#2C2C34",
+    "yaw": 270
    }
   ]
  }

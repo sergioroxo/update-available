@@ -220,7 +220,18 @@ const PLACEMENT = {
      *  from the seat. Bigger with it — this is
      *  no longer a legible screen you read across the room, it is the LIT GLASS of
      *  a device saying it is ready, and the reading surface moved to the laptop. */
-    pos: { x: 5.405, y: 0.818, z: 0.25 },
+    /**
+     * ⚑ 2026-09-04 (S118) — TRANSLATED WITH ITS PROP, not re-derived. `e_headset`
+     * moved (5.53, 0.75, 0.25) → (5.20, 0.90, 0.52), so this plane moves by the
+     * same Δ (−0.33, +0.15, +0.27). Every measurement in the notes above — the
+     * 5 mm proud of the model's face, the size, the euler — is preserved exactly,
+     * because a pure translation cannot break any of them. The header's own
+     * warning is the reason this is written as a delta and not as new numbers:
+     * "they move together or the visor detaches from its own prop, which is
+     * precisely what happened when the box assembly was replaced by the model
+     * and this was left where it was."
+     */
+    pos: { x: 5.075, y: 0.968, z: 0.52 },
     size: { w: 0.15, h: 0.075 },
     euler: { x: 90, y: 270, z: 0 }
   },
@@ -260,7 +271,10 @@ const PLACEMENT = {
    * beat, and invisible.
    */
   laptop: {
-    pos: { x: 5.3348, y: 0.8700, z: 0.61 },
+    /** ⚑ 2026-09-04 (S118): z 0.61 → 0.86, the same +0.25 `e_laptop` took when it
+     *  gave the desk's sweet spot to the headset. x and y are untouched, so the
+     *  mesh-measured slab above still describes this plane exactly. */
+    pos: { x: 5.3348, y: 0.8700, z: 0.86 },
     size: { w: 0.300, h: 0.188 },
     euler: { x: 84.6, y: 270, z: 0 }
   },
