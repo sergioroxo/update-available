@@ -1439,23 +1439,24 @@
     "id": "e_poster",
     "pos": [
      5.67,
-     1.6,
-     1.62
+     1.4,
+     0.88
     ],
     "size": [
      0.5,
      0.6,
      0.02
     ],
-    "color": "#9FB4C0",
-    "yaw": 270
+    "color": "#2C3A5C",
+    "yaw": 270,
+    "_doc": "⚑ S115 — MOVED (was z 1.62) and RE-INKED. Two reasons, and the second is the bigger one. (1) The migrated intake record hung at z 1.0–2.5 and covered this poster COMPLETELY plus a third of the photo beside it — Sérgio, 2026-09-04, off the seat renders: \"the Intake blackboard is still showing on the wall\". (2) At z 1.62 it sat outside the seat's own frame (the seat sees roughly z −0.04…1.44), so the resting view of the era was bare wall while both of her pictures hung past its right edge. Moved to z 0.88 they are the first things the frame holds. The ground colour changed from #9FB4C0 to #2C3A5C so the three ink bands read against it — a poster, not a blank rectangle."
    },
    {
     "id": "e_posterFrame",
     "pos": [
      5.675,
-     1.6,
-     1.62
+     1.4,
+     0.88
     ],
     "size": [
      0.56,
@@ -1469,8 +1470,8 @@
     "id": "e_sign",
     "pos": [
      5.67,
-     1.6,
-     1.06
+     2.0,
+     0.88
     ],
     "size": [
      0.4,
@@ -1478,14 +1479,15 @@
      0.03
     ],
     "color": "#9FB4C0",
-    "yaw": 270
+    "yaw": 270,
+    "_doc": "⚑ S115 — MOVED and STACKED ABOVE the poster (was z 1.06, y 1.6). The wall's right half is the record's now; her two framed things share one column instead of a row, which is also how pictures actually accumulate on a wall. Given a mat and two figures so it reads as a photograph of two people rather than a light grey rectangle."
    },
    {
     "id": "e_signFrame",
     "pos": [
      5.675,
-     1.6,
-     1.06
+     2.0,
+     0.88
     ],
     "size": [
      0.46,
@@ -2777,11 +2779,11 @@
    },
    {
     "id": "e_frame",
-    "_doc": "Session 74: the bookcase's own top edge — a small framed photo (the same idea as w_frame, leaning against the case rather than hung, per the live measurement that showed w_frame does the same).",
+    "_doc": "Session 74: the bookcase's own top edge — a small framed photo (the same idea as w_frame, leaning against the case rather than hung, per the live measurement that showed w_frame does the same). ⚑ S115: it was not leaning against anything — pos [4.45,1.45,-0.35] floated it 0.31 m above the shelf plank (top y 1.14) and 0.30 m out into the room, and from Maya's seat it read as a small brown sliver hanging in mid-air. Re-based on the plank at z −0.72, clear of the CRT (x 4.62–5.08).",
     "pos": [
      4.45,
-     1.45,
-     -0.35
+     1.21,
+     -0.72
     ],
     "size": [
      0.11,
@@ -2789,6 +2791,516 @@
      0.02
     ],
     "color": "#8A5A3B",
+    "yaw": 270
+   },
+   {
+    "id": "e_posterInkA",
+    "_doc": "S115: the poster's pale field. Flat colour bands only — era1room.ts's law is 'flat color faces, no textures; pixel art lives on screens'.",
+    "pos": [
+     5.658,
+     1.52,
+     0.88
+    ],
+    "size": [
+     0.42,
+     0.22,
+     0.006
+    ],
+    "color": "#F5EDDC",
+    "yaw": 270
+   },
+   {
+    "id": "e_posterInkB",
+    "pos": [
+     5.658,
+     1.26,
+     0.88
+    ],
+    "size": [
+     0.42,
+     0.06,
+     0.006
+    ],
+    "color": "#EFA13F",
+    "yaw": 270
+   },
+   {
+    "id": "e_posterInkC",
+    "pos": [
+     5.658,
+     1.165,
+     0.82
+    ],
+    "size": [
+     0.3,
+     0.05,
+     0.006
+    ],
+    "color": "#2C2C34",
+    "yaw": 270
+   },
+   {
+    "id": "e_signMat",
+    "pos": [
+     5.658,
+     2.0,
+     0.88
+    ],
+    "size": [
+     0.32,
+     0.18,
+     0.006
+    ],
+    "color": "#F5F4ED",
+    "yaw": 270
+   },
+   {
+    "id": "e_signFigA",
+    "_doc": "S115: two figures in her photograph, blocked in. Nobody is named and nobody is rendered in any detail — at 6 cm they are two warm shapes standing together, which is all the room has to say about them.",
+    "pos": [
+     5.652,
+     1.99,
+     0.845
+    ],
+    "size": [
+     0.055,
+     0.1,
+     0.006
+    ],
+    "color": "#C9A8A0",
+    "yaw": 270
+   },
+   {
+    "id": "e_signFigB",
+    "pos": [
+     5.652,
+     1.995,
+     0.925
+    ],
+    "size": [
+     0.06,
+     0.11,
+     0.006
+    ],
+    "color": "#8A5A3B",
+    "yaw": 270
+   },
+   {
+    "id": "e_recordMount",
+    "_doc": "⚑ S115: the intake record's surround on Maya's wall. The plane that migrates here at E4 is a code-resident screen entity (cluster.ts TERMINAL_E4), and without a mount it read as a hole cut in the wall — the same fault S61 found on the spine when the plane was hidden and its frame was not. Cold grey, not her wood: this is the one thing on this wall that is not hers.",
+    "pos": [
+     5.672,
+     1.52,
+     1.86
+    ],
+    "size": [
+     1.16,
+     0.88,
+     0.014
+    ],
+    "color": "#3A3A44",
+    "yaw": 270
+   },
+   {
+    "id": "e_ledCord",
+    "_doc": "S115: the cord the lights hang on. Warm points against a room whose windows have gone dark for good — the counter-light to the cold side, and hers.",
+    "pos": [
+     5.655,
+     2.34,
+     0.9
+    ],
+    "size": [
+     3.0,
+     0.012,
+     0.012
+    ],
+    "color": "#A8917B",
+    "yaw": 270
+   },
+   {
+    "id": "e_led1",
+    "pos": [
+     5.655,
+     2.3,
+     -0.55
+    ],
+    "size": [
+     0.05,
+     0.05,
+     0.05
+    ],
+    "color": "#FFD24C",
+    "emissive": true,
+    "yaw": 270
+   },
+   {
+    "id": "e_led2",
+    "pos": [
+     5.655,
+     2.3,
+     -0.05
+    ],
+    "size": [
+     0.05,
+     0.05,
+     0.05
+    ],
+    "color": "#FFD24C",
+    "emissive": true,
+    "yaw": 270
+   },
+   {
+    "id": "e_led3",
+    "pos": [
+     5.655,
+     2.3,
+     0.45
+    ],
+    "size": [
+     0.05,
+     0.05,
+     0.05
+    ],
+    "color": "#FFD24C",
+    "emissive": true,
+    "yaw": 270
+   },
+   {
+    "id": "e_led4",
+    "pos": [
+     5.655,
+     2.3,
+     0.95
+    ],
+    "size": [
+     0.05,
+     0.05,
+     0.05
+    ],
+    "color": "#FFD24C",
+    "emissive": true,
+    "yaw": 270
+   },
+   {
+    "id": "e_led5",
+    "pos": [
+     5.655,
+     2.3,
+     1.45
+    ],
+    "size": [
+     0.05,
+     0.05,
+     0.05
+    ],
+    "color": "#FFD24C",
+    "emissive": true,
+    "yaw": 270
+   },
+   {
+    "id": "e_led6",
+    "pos": [
+     5.655,
+     2.3,
+     1.95
+    ],
+    "size": [
+     0.05,
+     0.05,
+     0.05
+    ],
+    "color": "#FFD24C",
+    "emissive": true,
+    "yaw": 270
+   },
+   {
+    "id": "e_led7",
+    "pos": [
+     5.655,
+     2.3,
+     2.3
+    ],
+    "size": [
+     0.05,
+     0.05,
+     0.05
+    ],
+    "color": "#FFD24C",
+    "emissive": true,
+    "yaw": 270
+   },
+   {
+    "id": "e_pinboard",
+    "_doc": "S115: cork, on the only blank panel Room 3 had left (x 3.4–4.6, between the door jamb and the bookcase). It is to the player's LEFT at the seat, not in the resting frame — a wall you find by turning, which is this piece's one bodily ask.",
+    "pos": [
+     3.95,
+     2.0,
+     -1.014
+    ],
+    "size": [
+     0.014,
+     0.56,
+     0.8
+    ],
+    "color": "#B98563",
+    "yaw": 270
+   },
+   {
+    "id": "e_pinNoteA",
+    "pos": [
+     3.68,
+     2.1,
+     -1.006
+    ],
+    "size": [
+     0.008,
+     0.2,
+     0.16
+    ],
+    "color": "#F5F4ED",
+    "yaw": 270
+   },
+   {
+    "id": "e_pinNoteB",
+    "pos": [
+     3.88,
+     2.16,
+     -1.006
+    ],
+    "size": [
+     0.008,
+     0.14,
+     0.14
+    ],
+    "color": "#E8D48A",
+    "yaw": 270
+   },
+   {
+    "id": "e_pinPhotoA",
+    "pos": [
+     4.06,
+     2.08,
+     -1.006
+    ],
+    "size": [
+     0.008,
+     0.16,
+     0.12
+    ],
+    "color": "#C9A8A0",
+    "yaw": 270
+   },
+   {
+    "id": "e_pinNoteC",
+    "pos": [
+     3.78,
+     1.86,
+     -1.006
+    ],
+    "size": [
+     0.008,
+     0.12,
+     0.18
+    ],
+    "color": "#B8D0C8",
+    "yaw": 270
+   },
+   {
+    "id": "e_pinPhotoB",
+    "pos": [
+     4.12,
+     1.84,
+     -1.006
+    ],
+    "size": [
+     0.008,
+     0.1,
+     0.13
+    ],
+    "color": "#9FB4C0",
+    "yaw": 270
+   },
+   {
+    "id": "e_flagA",
+    "_doc": "⚑ S115 — THE FLAG, and it is a judgement call Sérgio can strike in one line. Five flat bands from the room's own palette (#8FC4E0 / #E8B7C8 / #F5F4ED), hung small and low on a side wall among ordinary things — a pinboard above it, sneakers under it. It is NOT centred, NOT lit, and nothing in the piece points at it. The reasoning: the E4 build plan's own contract for this room is that somebody LIVES here and 'she is not the story — she is who the story is happening to'. The apparatus's file hangs on the other wall. Neither comments on the other, and that is the whole arrangement.",
+    "pos": [
+     3.9,
+     1.56,
+     -1.012
+    ],
+    "size": [
+     0.012,
+     0.08,
+     0.7
+    ],
+    "color": "#8FC4E0",
+    "yaw": 270
+   },
+   {
+    "id": "e_flagB",
+    "pos": [
+     3.9,
+     1.48,
+     -1.012
+    ],
+    "size": [
+     0.012,
+     0.08,
+     0.7
+    ],
+    "color": "#E8B7C8",
+    "yaw": 270
+   },
+   {
+    "id": "e_flagC",
+    "pos": [
+     3.9,
+     1.4,
+     -1.012
+    ],
+    "size": [
+     0.012,
+     0.08,
+     0.7
+    ],
+    "color": "#F5F4ED",
+    "yaw": 270
+   },
+   {
+    "id": "e_flagD",
+    "pos": [
+     3.9,
+     1.32,
+     -1.012
+    ],
+    "size": [
+     0.012,
+     0.08,
+     0.7
+    ],
+    "color": "#E8B7C8",
+    "yaw": 270
+   },
+   {
+    "id": "e_flagE",
+    "pos": [
+     3.9,
+     1.24,
+     -1.012
+    ],
+    "size": [
+     0.012,
+     0.08,
+     0.7
+    ],
+    "color": "#8FC4E0",
+    "yaw": 270
+   },
+   {
+    "id": "e_wallShelf",
+    "_doc": "⚑ S115: a shelf over the desk, and it is doing structural work as well as dressing. The strip of wall between the desk's back edge (y 0.75) and anything hung on the wall was the single largest empty region in the seat's own frame — the thing Sérgio was looking at. A shelf is what goes there in a real room, and it gives five small objects somewhere to be at eye level instead of on the floor. ⚑ Shortened to z 0.55–1.26: at its first length it ran under e_curtL (z 0.23–0.49, hanging to y 1.12) and the audit caught a book standing inside the curtain. ⚑ Draw calls, measured: this dressing costs +14 at the r3 seat (63 → 77) and +4 at the turn (197 → 201). All 32 props DO join the settled batch (verified live: none carries batchGroupId −1), and consolidating five near-identical hexes into ones the seat already rendered changed the number by zero — so the cost is not the palette and cannot be tuned away from the data side. It belongs to S108, which owns the turn's 197 and whose Phase-2 rebake is the only thing that moves either number.",
+    "pos": [
+     5.61,
+     1.0,
+     0.905
+    ],
+    "size": [
+     0.71,
+     0.03,
+     0.14
+    ],
+    "color": "#8A5A3B",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfJar",
+    "pos": [
+     5.62,
+     1.052,
+     0.72
+    ],
+    "size": [
+     0.075,
+     0.075,
+     0.075
+    ],
+    "color": "#9FD8CB",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfBookA",
+    "pos": [
+     5.625,
+     1.095,
+     0.86
+    ],
+    "size": [
+     0.035,
+     0.155,
+     0.1
+    ],
+    "color": "#C8B8D0",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfBookB",
+    "pos": [
+     5.625,
+     1.088,
+     0.905
+    ],
+    "size": [
+     0.035,
+     0.14,
+     0.1
+    ],
+    "color": "#C8B8D0",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfFig",
+    "pos": [
+     5.62,
+     1.062,
+     1.19
+    ],
+    "size": [
+     0.055,
+     0.095,
+     0.055
+    ],
+    "color": "#E8B7C8",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfCard",
+    "pos": [
+     5.648,
+     1.063,
+     0.61
+    ],
+    "size": [
+     0.115,
+     0.085,
+     0.008
+    ],
+    "color": "#F5F4ED",
+    "yaw": 270
+   },
+   {
+    "id": "e_shelfStack",
+    "_doc": "S115: two things lying flat — a shelf where everything stands upright is a display, not a shelf.",
+    "pos": [
+     5.615,
+     1.031,
+     1.06
+    ],
+    "size": [
+     0.17,
+     0.028,
+     0.12
+    ],
+    "color": "#C9BFA6",
     "yaw": 270
    }
   ],

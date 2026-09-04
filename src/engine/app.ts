@@ -267,7 +267,19 @@ export interface CameraPose { x: number; y: number; z: number; pitch: number; ya
 export function seatPose(yaw: number): CameraPose {
   switch (((yaw % 360) + 360) % 360) {
     case 90:  return { x: -4.4, y: EYE.y, z: 0.7, pitch: 0, yaw: 90 };  // Room 2 (west)
-    case 270: return { x: 4.4, y: EYE.y, z: 0.7, pitch: 0, yaw: 270 };  // Room 3 (east)
+    /**
+     * ⚑ ROOM 3 SITS THREE DEGREES DOWN — Sérgio, 2026-09-04, off the seat
+     * renders. Every other seat is level because every other seat's subject is
+     * a screen at eye height on a desk you are pulled up to. Room 3's is not:
+     * Maya's laptop lid tops out at y≈0.98 and her desk surface carries the
+     * era's whole vocabulary (the headset, the controller, the sketchbook), all
+     * of it below the horizon. At pitch 0 the laptop's bottom edge fell 1.7°
+     * outside the frame and 42% of the view was bare wall above her window.
+     * Three degrees is the smallest correction that brings the desk whole into
+     * frame; it is a FRAMING fix, and the wall behind it is a separate one
+     * (S115, the dressing).
+     */
+    case 270: return { x: 4.4, y: EYE.y, z: 0.7, pitch: -3, yaw: 270 };  // Room 3 (east)
     case 180: return { x: EYE.x, y: EYE.y, z: 0.7, pitch: 0, yaw: 180 }; // spine (door + record) — review only
     default:  return { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }; // Room 1 (front)
   }
@@ -3175,6 +3187,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     os.update(dt);
     syncRacketDemo(); // the room mirrors the diagram's pose (see its doc)
     if (os.dirty) { frontTex.upload(); os.dirty = false; }
+    /**
+     * ⚑ S106 — the record READS the era rather than being told it. Two
+     * independent paths set the room's decade (the played `driveMorphSpace`
+     * and the `?era=` review jump), and this project's own history says a
+     * surface wired to one of two paths is a surface that is wrong on the
+     * other. `setEra` early-returns when nothing moved, so this is a pointer
+     * compare per frame and never a redraw.
+     */
+    witness.setEra(os.era);
     witness.update(dt);
     if (witness.dirty) { backTex.upload(); witness.dirty = false; }
     // ⚑ the LIVE camera pose, every frame — so pressing the phone can lift it to

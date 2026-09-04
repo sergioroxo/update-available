@@ -45,6 +45,17 @@ export class WitnessCanvas {
     filed: false
   };
   private hardenT = HARDEN_SECONDS;
+  /**
+   * ⚑ S106 — WHICH DECADE THE RECORD THINKS IT IS IN (review R1, finding A-3).
+   * This class is deliberately told almost nothing (everything else it draws is
+   * computed live from `ledger`), and the era is the one exception it cannot
+   * compute: the ledger records what was DONE, never when the room around the
+   * panel last changed. `app.ts` sets it from the same era shift that moves the
+   * plane onto Maya's wall, so the surface and its wording migrate together.
+   * Defaults to 'e1' so a build that never calls the setter reads exactly as it
+   * did before this session.
+   */
+  private era: 'e1' | 'e2' | 'e3' | 'e4' = 'e1';
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -55,6 +66,33 @@ export class WitnessCanvas {
     this.ctx = ctx;
     this.ctx.imageSmoothingEnabled = false;
     this.ctx.scale(RENDER_SCALE, RENDER_SCALE); // layout stays logical
+  }
+
+  /** the era shift's one word to this surface — see `era` above */
+  setEra(era: 'e1' | 'e2' | 'e3' | 'e4'): void {
+    if (era === this.era) return;
+    this.era = era;
+    this.dirty = true;
+  }
+
+  /** the era's own stamps, falling back to the flat era-1 wording */
+  private eraStrings(): {
+    subheader: string; sourceValue: string; statusValue: string; card: string;
+    trustedAssigned?: string; notOnline?: string;
+  } {
+    const s = strings.witness;
+    const table = (s as unknown as {
+      eras?: Record<string, {
+        subheader: string; sourceValue: string; statusValue: string; card: string;
+        trustedAssigned?: string; notOnline?: string;
+      }>
+    }).eras;
+    return table?.[this.era] ?? {
+      subheader: s.subheader,
+      sourceValue: s.sourceValue,
+      statusValue: s.statusValue,
+      card: 'index · era 1 · drawer 12'
+    };
   }
 
   setOpeningProfile(profile: OpeningProfileSnapshot): void {
@@ -130,6 +168,16 @@ export class WitnessCanvas {
       // but the record must never sleep through a filing it has made — and
       // a review that enters at E2 is exactly the case that proves it.
       || ledger.records.includes('subject-migrated')
+      /**
+       * ⚑ S106 — AND THE RECORD IS NEVER ASLEEP IN 2026. Every clause above
+       * asks "has this session filed anything yet"; in era 4 the answer is
+       * thirty years old and does not depend on the session. Without this the
+       * panel migrates onto Maya's wall and renders DORMANT — a 1.5 m black
+       * slab with three grey dots — for anyone who enters the era directly,
+       * which is every review pass and every screenshot ever taken of that
+       * seat. The room's most defined object was drawing "not a system yet".
+       */
+      || this.era === 'e4'
     ) {
       this.draw();
     } else {
@@ -251,6 +299,8 @@ export class WitnessCanvas {
     const H = ERA1_CANVAS.height;
     const s = strings.witness;
 
+    const era = this.eraStrings();
+
     px(ctx, 0, 0, W, H, RECORD.voidBg);
     // header
     px(ctx, 0, 0, W, 24, PANEL);
@@ -260,14 +310,33 @@ export class WitnessCanvas {
     ctx.fillText(s.header, 16, 5);
     setFont(ctx, 8);
     ctx.fillStyle = DIM;
-    ctx.fillText(s.subheader, W - 190, 8);
+    ctx.fillText(era.subheader, W - 190, 8);
 
-    // computed fields — only things the player actually did
-    this.field(s.subject, ledger.name, 40);
-    this.field(s.source, s.sourceValue, 62);
+    /**
+     * ⚑ S106 — THE SUBJECT ROW, AND THE ONE PLACE THE TWO NAMES SIT APART.
+     *
+     * For eras 1–2 this is the file's registered subject: the name the player
+     * typed in 1997, which is also the name the opening PREFILLED for them.
+     * At era 4 the panel is hanging in Maya's room and the row carries HER
+     * name, in amber, with `under the old file` beside it — the misfile the
+     * whole era is built on (L says the same sentence about her pharmacy
+     * record). ⚑ It is never a deadname: no name that is not Maya's is
+     * rendered on this surface, ever. The 1997 name stays where a filing
+     * system would keep it — on the index card below, which is the drawer's
+     * label, not the person's.
+     */
+    const misfiled = this.era === 'e4';
+    if (misfiled) {
+      const person = (s as unknown as { personE4?: string }).personE4 ?? '';
+      const note = (s as unknown as { misfile?: string }).misfile ?? '';
+      this.field(s.subject, note ? `${person} — ${note}` : person, 40, FLAG);
+    } else {
+      this.field(s.subject, ledger.name, 40);
+    }
+    this.field(s.source, era.sourceValue, 62);
     this.field(
       s.trustedContact,
-      ledger.tags.includes('pastoral-referral') ? s.trustedMade : s.trustedAssigned,
+      ledger.tags.includes('pastoral-referral') ? s.trustedMade : (era.trustedAssigned ?? s.trustedAssigned),
       84,
       ledger.tags.includes('pastoral-referral') ? FLAG : INK
     );
@@ -275,11 +344,11 @@ export class WitnessCanvas {
       s.channelLog,
       ledger.records.includes('went-online')
         ? s.messagesLogged.replace('{n}', String(this.messagesOnFile))
-        : s.notOnline,
+        : (era.notOnline ?? s.notOnline),
       106
     );
     this.field(s.tags, this.tagsValue(), 128, ledger.tags.length ? FLAG : INK);
-    this.field(s.status, s.statusValue, 150, FLAG);
+    this.field(s.status, era.statusValue, 150, FLAG);
 
     // the index card — the name copied into the era's filing artifact
     const cx = 28; const cy = 190; const cw = 200; const ch = 64;
@@ -294,7 +363,7 @@ export class WitnessCanvas {
     ctx.fillText(ledger.name, cx + 10, cy + 16);
     setFont(ctx, 8);
     ctx.fillStyle = DIM;
-    ctx.fillText('index · era 1 · drawer 12', cx + 10, cy + 44);
+    ctx.fillText(era.card, cx + 10, cy + 44);
 
     // dead FILE button — no raised bevel; it looks inert because it is
     const bx = W - 140; const by = 212;
