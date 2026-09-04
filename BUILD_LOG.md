@@ -896,3 +896,33 @@ gating a commit. It deliberately does not assert timing: a shared runner renderi
 swiftshader cannot honestly judge beats measured in minutes, and a check that cried wolf
 would be switched off. The report uploads as an artifact whether the run passes or fails,
 because a failed run's "PUBLISHED BUT UNREACHABLE" section names the control that broke.
+
+## 2026-09-04 — S115/S106/S116 · Maya's wall, and two boot sequences
+Sérgio, off the Room 3 seat renders: *"dress Room 3 and set the seat to pitch -3. Also
+check what information you have on the wall because the Intake blackboard is still
+showing on the wall."*
+
+**What was on the wall.** The intake record, migrated to Room 3 at E4 on purpose but
+authored when the room was bare architecture: 1.5 × 1.125 m on a wall that ends 5 cm
+short of it, hung in front of BOTH of Maya's pictures, and drawing DORMANT because every
+wake clause in `intake.ts` asks whether *this session* has filed anything. Re-hung at the
+wall's far end at 1.10 × 0.825 with a cold grey mount, still legible (≈0.7° per line) but
+at the edge of the resting view: you turn your head to read it, which is the E1 grammar
+returning in the last era. S106 makes it age — per-era subheader, source, status and card
+stamp in `data/strings/slice.json`, the era-4 SUBJECT row carrying Maya's own name with
+*under the old file* in amber while the index card keeps the file's registered 1997 name.
+
+**The dressing:** 32 flat-box props in the room's own palette — a shelf over the desk with
+six things on it, ink bands on the poster, a mat and two figures in the photograph, string
+lights, and on the left wall a pinboard and a flag. `e_frame` was floating 0.31 m above
+its shelf; re-based. Room audit: zero findings against any new prop, r4 18 → 17. Seat
+pitch −3. Cost, measured: +14 draw calls at the seat, +4 at the turn — S108's, not the
+data's.
+
+**The boots.** E2 opens with Restorify's own 23.7 s CD-ROM splash over the FULL jingle,
+every beat on a measured phrase onset, handing off under a 1.2 s dissolve so the crawl's
+last line lands 0.5 s before the track ends. Not skippable, by his ruling; Esc/pause
+untouched. Restorify's mark designed and drawn in code: a house with one lit window.
+E3's 28 s of dead air at the arrival became an idle — a wordmark and a turning ring — on
+the argument that a 2016 machine is never off, and the arrival gained review routes it had
+never had.

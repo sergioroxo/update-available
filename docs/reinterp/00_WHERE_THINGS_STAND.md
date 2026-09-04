@@ -44,8 +44,11 @@ signature failure and it is why "it's in the data" has never meant "a player see
    MASTER_PLAN, retired by no document.
 6. **⚑ No idle wipe and no attract state.** See the correction below.
 7. **The graying task** (glitch #1) — zero code.
-8. **The intake record never ages** (`intake.ts:266`) — Sérgio hit this: *"on Era 2 it should change
-   styles and content… it still says era-1."*
+8. ~~**The intake record never ages**~~ — ⚑ **CLOSED 2026-09-04 (S106).** `witness.eras` in
+   `data/strings/slice.json` carries the subheader, source, status and card stamp per era; the
+   era-4 panel misfiles Maya *under the old file* while the index card keeps the file's registered
+   1997 name. Sérgio's original: *"on Era 2 it should change styles and content… it still says
+   era-1."*
 9. **The trans-masc thread is thinned.**
 10. **E3's felt anchors are orphaned** — the Sides chart, the convergence triptych.
 
@@ -218,19 +221,49 @@ legs (retire the hazard — **applied above, S107**); the draw calls at Maya's t
 blank on the played path; the walker has three blind spots that inflated the last two walk reports.
 The three things that decide whether it is good are now ranked audio → the door → the writing.
 
-# ⚑ WAITING ON SÉRGIO — 2026-09-04, and neither blocks anything
-1. **Room 3's seat.** Images rendered from the authored r3 seat at pitch 0, pitch −3 and eye 1.10
-   (`scratchpad/seat_r3_*.png`, sent 2026-09-04). ⚑ **Looking at them changes the question.** S107's
-   numbers said the laptop's bottom was 1.7° outside the frame; the pictures say the resting view of
-   the era is **most of a bare wall** with everything that matters crammed along the bottom edge.
-   Pitch −3 frames the objects properly. It does not fill the wall — and the wall is empty because
-   **Room 3 has never been dressed** (`REINTERP_E4_BUILD_PLAN` §Stage 1: 37 props, almost all
-   architecture, zero belongings). The seat is a ruling; the wall is a session.
-2. **The E2 boot jingle.** All three 6.5 s cuts rejected by ear. His counter-proposal — the full 30 s
-   track under a CD-ROM-style animated splash — is spec'd at
-   `E2_BOOT_SEQUENCE_SPEC_2026-09-04.md` with three open questions in its §5.
+# ⚑ WAITING ON SÉRGIO — 2026-09-04
+1. ~~**Room 3's seat.**~~ **RULED and BUILT (S115).** Pitch −3, and the wall was a session, and the
+   session happened: 32 props, `seatPose(270)` now returns `pitch: -3`. See below.
+2. ~~**The E2 boot jingle.**~~ **RULED and BUILT (S116).** *"not skipable but we can have the system
+   appearing as the song still plays… I dont find Restorify usages so you can design the aesthetics of
+   it. Yeah i like the spinner idea for E3."* All three questions in the spec's §5 answered by that
+   sentence; the spec is now a record rather than a proposal.
 3. **The ball's recording** (R1-1), which is the only thing holding `AUDIO_BASELINE` at 2.
 4. **The Close's four panels** — reviewed in place when S114 runs, per his own instruction.
+5. ⚑ **NEW — the flag on Maya's wall.** `e_flagA`'s `_doc` in `reinterp_deltas.json` carries the
+   reasoning and it is one line to strike. Five flat bands from the room's own palette, hung small and
+   low on a side wall among ordinary things, nothing pointing at it. His call, not a build question.
+6. ⚑ **NEW — the record's era-4 wording** (03_COORDINATION #5, still his). It now reads SUBJECT
+   `Maya — under the old file` in amber, STATUS `RETAINED`, subheader `RETAINED FOR CONTINUITY OF
+   CARE`, card `index · era 4 · drawer 12 · migrated ×3`. All PLACEHOLDER-draft, all in
+   `data/strings/slice.json` under `witness.eras`, all overwritable without touching code.
+
+## ⚑ WHAT LANDED 2026-09-04, AFTER THE SEAT RENDERS
+**S115 · Room 3, and the thing the pictures actually showed.** The migrated intake record — authored
+at `TERMINAL_E4` when Room 3 was bare architecture and never moved once it was furnished — hung
+1–2 cm in front of BOTH of Maya's pictures, covering her poster outright and clipping her photograph,
+while itself drawing DORMANT (a black slab with three grey dots, because every wake clause asks "has
+this session filed anything" and a review entering at era 4 has filed nothing). Re-hung at the wall's
+far end, 1.10 × 0.825, with a cold grey mount; her pictures moved into one column at z 0.88, which
+also brings them inside the seat's frame for the first time. Then the dressing: a shelf over the desk
+with six things on it, three ink bands on the poster, a mat and two figures in the photograph, string
+lights across the top, and on the 1.2 m of left wall nobody had used, a pinboard and the flag.
+⚑ Costs, measured: **+14 draw calls at the r3 seat (63 → 77), +4 at the turn (197 → 201)** — all 32
+props DO join the settled batch, and consolidating five near-identical hexes moved the number by zero.
+That is S108's, not the data's.
+
+**S106 · the record ages** (was item 8 of THE TEN, below — now closed). ⚑ And it reads its era from
+`os.era` every frame rather than being pushed it, because two independent paths set the room's decade
+and this project's history says a surface wired to one of them is wrong on the other.
+
+**S116 · the boot sequences.** E2: Restorify's own 23.7 s CD-ROM splash over the FULL jingle
+(`chase_the_clouds.mp3`, already in the repo, already registered), every beat on a measured phrase
+onset, handing off to the LambyOS crawl under a 1.2 s dissolve so the crawl's last line —
+`RESTORIFY IS NOW PART OF THIS COMPUTER.` — completes at 30.23 s against a track that ends at 30.77.
+Not skippable, by his ruling; Esc/pause untouched. Restorify's mark designed: a house with one lit
+window, drawn in code from the era palette. E3: the 28 s of dead air at the arrival is now an IDLE —
+a wordmark and a turning ring — on the argument that a 2016 machine is never off, and the arrival
+finally has review routes (`idle`, `arrival`).
 
 # THE TRAPS THIS PROJECT HAS PAID FOR
 0. ⚑ **A fix can open the hole it is closing.** S104 made Era 4's hand-back reachable by a proximity

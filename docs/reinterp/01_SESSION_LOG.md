@@ -5291,3 +5291,97 @@ apparatus edges from `data/provotypes/*.json` sources instead of the authored ch
 a fourth room / the rise choreography inheriting the E1→E4 grammar (`REINTERP_THE_BUILDING_2026-08-02.md`
 §"the fourth room" — explicitly deferred there, still deferred here). Neither blocks "the Close is
 built."
+
+
+---
+
+## S115 / S106 / S116 — 2026-09-04 · Maya's wall, the record's decade, and two boot sequences
+*Sérgio, off the Room 3 seat renders sent the same day:* **"dress Room 3 and set the seat to pitch -3.
+Also check what information you have on the wall because the Intake blackboard is still showing on the
+wall."** *And, on the boot:* **"not skipable but we can have the system appearing as the song still
+plays, we cna also have som creative freedom. I dont find Restorify usages so you can design the
+aesthetics of it. Yeah i like the spinner idea for E3, it should already have a boot up sequence so
+yeah."**
+
+### ⚑ What was on the wall, and why "still showing" was the right word
+The blackboard is the **intake record**, migrated onto Room 3's wall at E4 by
+`cluster.ts`'s `migrateTerminal` — an authored beat (*"the person and the record finally share a wall
+— the TURN's promise, unified"*), not a leftover. But the pose was written when Room 3 was bare
+architecture and it never moved when the room was furnished. Measured live at era 4:
+
+- **1.5 × 1.125 m centred on z 1.75** → spans z 1.00–2.50 on a wall that ends at **2.45**.
+- **`e_poster` (z 1.37–1.87) covered outright** and **`e_sign` (z 0.86–1.26) clipped** — the plane
+  sits at x 5.655, 1–2 cm in FRONT of both. Two of the three things on Maya's wall that were hers were
+  behind the apparatus's file.
+- And it was drawing **DORMANT** — `voidBg` with three grey `· · ·` — because every wake clause in
+  `intake.ts` asks *"has this session filed anything"*, and a review that enters at era 4 has filed
+  nothing. The room's most defined object was rendering **"not a system yet"** in 2026.
+
+**This is the project's signature fault in a new costume:** a judgement about a surface outliving the
+surface's content. The migration was correct when it was written and became wrong when the room around
+it changed, and nothing was watching the pair.
+
+### S106 — the record ages (review R1, finding A-3; the queue's own item 8)
+`witness.eras` in `data/strings/slice.json` carries `subheader` / `sourceValue` / `statusValue` /
+`card` per era, plus two FALLBACK overrides for the fields whose 1997 wording reads as nonsense thirty
+years on (a contact *"awaiting first contact"*, a subject *"not yet online"*) — overrides that apply
+only where the ledger has nothing of its own to say, because *"only things the player actually did"* is
+this surface's oldest law. Era 4 renders SUBJECT `Maya — under the old file` in amber; the index card
+keeps `ledger.name`, the file's registered 1997 name, because that is what a card in a drawer carries.
+⚑ **The gap between those two rows IS the beat** — the system knows who she is and files her under
+someone else anyway — and no name that is not Maya's is ever rendered (CLAUDE.md; `s4_l.json`'s
+`_docFormerName`).
+⚑ **And the era is READ, not pushed.** `witness.setEra(os.era)` runs in the render loop and
+early-returns when nothing moved. Two independent paths set the room's decade (`driveMorphSpace` and
+the `?era=` review jump) and this project's history says a surface wired to one of them is wrong on the
+other.
+
+### S115 — the wall, and then the room
+Her two pictures move to **one column at z 0.88**, which also brings them inside the seat's own frame
+for the first time (the seat sees roughly z −0.04…1.44 — both used to hang past its right edge). The
+record takes the wall's far end at **1.10 × 0.825** with a cold grey mount, ≈0.7° of arc per line, at
+the **edge** of the resting view rather than through the middle of it. **You turn your head to read it:
+the E1 grammar returning in the last era, over a bed.**
+
+Then 32 flat-box props, palette-legal, no textures (`era1room.ts`: *"flat color faces, no textures;
+pixel art lives on screens"*): a shelf over the desk with six things on it (which closes the largest
+empty region in the frame, and whose tall books cross the poster's bottom edge, which is depth); three
+ink bands on the poster; a mat and two blocked-in figures in the photograph; string lights along the
+top; and on the 1.2 m of left wall nobody had used, a pinboard with five pinned things and a flag.
+⚑ **The flag is a judgement call and its `_doc` says so** — one line to strike.
+
+Also `e_frame` was floating **0.31 m above its shelf and 0.30 m out into the room**, reading as a brown
+sliver in mid-air. Re-based on the plank.
+
+**Measured, not tuned away:** +14 draw calls at the r3 seat (63 → 77) and +4 at the turn (197 → 201).
+All 32 props DO join the settled batch (verified live — none carries `batchGroupId` −1), and
+consolidating five near-identical hexes into ones the seat already rendered moved the number **by
+zero**. So the cost is not the palette and cannot be tuned from the data side; it is S108's. Room audit
+finds **zero** against any new prop and r4 drops 18 → 17.
+
+### S116 — the boots
+**E2.** A new `'splash'` stage before `'osBoot'`. `osBootTrack` now names `chase_the_clouds.mp3` — the
+full 30.77 s file, his own, already in the repo and already registered; the three 6.5 s cuts are
+withdrawn. Every beat lands on a **measured phrase onset** (0.12 / 3.34 / 5.20 / 9.64 / 20.71 / 23.66 s
+at 64.6 BPM), which is the entire reason the full track beats a cut of it: a cut has no phrases left to
+land on. The handoff at 23.66 s dissolves the splash over 1.2 s **while the crawl types underneath**,
+and the arithmetic is not a coincidence — 219 characters at 0.030 s puts
+`RESTORIFY IS NOW PART OF THIS COMPUTER.` at 30.23 s against a track ending at 30.77. **The jingle
+finishes on that sentence.** Not skippable, by his ruling; a press during the splash does nothing and
+Esc/pause is untouched, so the accessibility floor holds while the fiction's own surface refuses you.
+
+**The mark.** A house with one lit window, drawn in code from the ERA1 sixteen colours — the only warm
+value in that palette is the pale yellow, so the lit window really is the single warm thing on the
+screen. The tagline is *"Restoration, one day at a time."*, and the very next surface is Restorify's
+own Purity Streak reading `412 days` with `includes supervised period` under it: **the marketing and
+the mechanism disagree on the same screen, six seconds apart, and nobody points at it.**
+
+**E3.** He was right that it already boots. What it lacked was anything to show for the **28 s** review
+R1 measured between this screen turning on (mid-flight, at the era shift) and the boot starting (at the
+landing) — the longest dead air on a lit surface in the piece, at an arrival. ⚑ The fix is not to start
+the boot earlier: **a 2016 machine is never off.** It idles with a wordmark and a turning ring, then
+you land and it wakes and takes an update. 2003's machine had to be restarted and sang at you for half
+a minute; 2016's was never off and shows you a spinner. The same ring, brighter, now turns under the
+boot's own progress bar. And the arrival had **no review route at all** — `settleArrival` skips it,
+`?era=3` calls `settleArrival`, `beginArrival` fires only from a real relocation — so two device beats
+(`idle`, `arrival`) were added with panel buttons, for exactly C6's reason.

@@ -1,6 +1,26 @@
 STATUS: live
 
 # THE LAMBYOS 2003 BOOT — a 30-second splash, spec'd before it is tried
+
+> ⚑ **BUILT 2026-09-04 (S116), the same day.** Sérgio answered all three of §5's open questions in one
+> sentence — *"not skipable but we can have the system appearing as the song still plays, we cna also
+> have som creative freedom. I dont find Restorify usages so you can design the aesthetics of it. Yeah
+> i like the spinner idea for E3, it should already have a boot up sequence so yeah."* — so this file
+> is now a RECORD of the reasoning, not a proposal. What shipped, and where it differs:
+>
+> - **`src/desktop/apps/bootSplash.ts`** holds it. The E2 stage machine gained `'splash'` before
+>   `'osBoot'` (`src/desktop/os.ts`); `data/dialog/s2_lamby.json`'s `osBootTrack` now names
+>   `chase_the_clouds.mp3` — the full 30.77 s file, already in the repo and registered.
+> - **The handoff is 23.66 s, not 30.8.** §4 had the crawl start after the track; his note asked for
+>   overlap, and the overlap turned out to be the better arithmetic: the crawl's last line lands at
+>   30.23 s against a track ending at 30.77.
+> - **The mark exists now** (§5 q2 answered "you can design the aesthetics of it"): a house with one
+>   lit window. §3's "a bevelled logo, a shine sweep, a tagline that arrives letter by letter" is
+>   built as written, plus an eleven-second loading bar the spec did not think of — which is what
+>   actually fills §4's dead stretch between 9.64 and 20.71.
+> - **E3 got the aged version** (§5 q3), but not as a two-second wordmark before the boot: as an IDLE
+>   under the flight. A 2016 machine is never off, and that reading is stronger than the one here.
+> - **§5 q1 (skippable) is NO**, by his ruling.
 *Sérgio, 2026-09-04, having listened to all three 6.5 s cuts: **"None of them, the 6 second doesn't
 fit. Would it make sense for the full 30 sec jingle? we can do some like animation like to old disney
 game cd-rom?"** His ear, and it settles the cuts — they are withdrawn. This is the alternative,
