@@ -218,6 +218,20 @@ legs (retire the hazard — **applied above, S107**); the draw calls at Maya's t
 blank on the played path; the walker has three blind spots that inflated the last two walk reports.
 The three things that decide whether it is good are now ranked audio → the door → the writing.
 
+# ⚑ WAITING ON SÉRGIO — 2026-09-04, and neither blocks anything
+1. **Room 3's seat.** Images rendered from the authored r3 seat at pitch 0, pitch −3 and eye 1.10
+   (`scratchpad/seat_r3_*.png`, sent 2026-09-04). ⚑ **Looking at them changes the question.** S107's
+   numbers said the laptop's bottom was 1.7° outside the frame; the pictures say the resting view of
+   the era is **most of a bare wall** with everything that matters crammed along the bottom edge.
+   Pitch −3 frames the objects properly. It does not fill the wall — and the wall is empty because
+   **Room 3 has never been dressed** (`REINTERP_E4_BUILD_PLAN` §Stage 1: 37 props, almost all
+   architecture, zero belongings). The seat is a ruling; the wall is a session.
+2. **The E2 boot jingle.** All three 6.5 s cuts rejected by ear. His counter-proposal — the full 30 s
+   track under a CD-ROM-style animated splash — is spec'd at
+   `E2_BOOT_SEQUENCE_SPEC_2026-09-04.md` with three open questions in its §5.
+3. **The ball's recording** (R1-1), which is the only thing holding `AUDIO_BASELINE` at 2.
+4. **The Close's four panels** — reviewed in place when S114 runs, per his own instruction.
+
 # THE TRAPS THIS PROJECT HAS PAID FOR
 0. ⚑ **A fix can open the hole it is closing.** S104 made Era 4's hand-back reachable by a proximity
    sphere — right for a person, who presses a headset and not a rectangle — and thereby made the last
