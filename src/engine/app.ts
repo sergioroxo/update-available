@@ -25,7 +25,7 @@ import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
-import { TapeAudioBus, roomBed } from '../audio/tapeAudio';
+import { TapeAudioBus, roomBed, setOneShotsMuted } from '../audio/tapeAudio';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity, screenUploads } from './screenTexture';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
@@ -1007,6 +1007,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (!tapeAudio || !tapeMuteBtn) return;
       tapeAudio.setMuted(!tapeAudio.isMuted);
       roomBed.setMuted(tapeAudio.isMuted);   // ⚑ S109 — one mute, every source
+      setOneShotsMuted(tapeAudio.isMuted);   // ⚑ S116 — …and it now actually is
       tapeMuteBtn.textContent = tapeAudio.isMuted ? 'unmute' : 'mute';
     });
 

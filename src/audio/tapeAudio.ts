@@ -482,6 +482,35 @@ export const roomBed = new RoomBed();
 export function playOnce(name: string | null | undefined): HTMLAudioElement | null {
   if (!isAudioAvailable(name)) return null;
   const audio = new Audio(REGISTRY[name as string]);
+  audio.muted = oneShotsMuted;
+  liveOneShots.add(audio);
+  const forget = (): void => { liveOneShots.delete(audio); };
+  audio.addEventListener('ended', forget);
+  audio.addEventListener('error', forget);
   audio.play().catch(() => { /* autoplay policy or a headless harness — never a thrown error */ });
   return audio;
+}
+
+/**
+ * ⚑ THE MUTE BUTTON DID NOT REACH THE ONE-SHOTS, and S116 is what made that
+ * visible rather than theoretical.
+ *
+ * `app.ts`'s mute handler says "one mute, every source" and walks `tapeAudio`
+ * and `roomBed` — but `playOnce` hands back a bare element that nothing tracks,
+ * so every clip started through it kept playing at full level through a mute.
+ * With a 6.5 s boot sting nobody would ever catch it. The E2 boot is now a
+ * **30.77 s** track, L's units are seconds each and the ball's landing is
+ * longer still, so "mute" could mean "the loudest thing on screen carries on
+ * for half a minute". A control the frame advertises and does not honour is the
+ * same class of fault as a control the piece publishes and does not wire.
+ *
+ * The set holds only what is actually playing: elements remove themselves on
+ * `ended` and on `error`, so nothing accumulates across a session.
+ */
+const liveOneShots = new Set<HTMLAudioElement>();
+let oneShotsMuted = false;
+
+export function setOneShotsMuted(muted: boolean): void {
+  oneShotsMuted = muted;
+  for (const a of liveOneShots) a.muted = muted;
 }
