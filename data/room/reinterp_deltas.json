@@ -2600,134 +2600,6 @@
     "yaw": 270
    },
    {
-    "id": "e_ledCord",
-    "_doc": "S115: the cord the lights hang on. Warm points against a room whose windows have gone dark for good — the counter-light to the cold side, and hers.",
-    "pos": [
-     5.655,
-     2.34,
-     0.9
-    ],
-    "size": [
-     3.0,
-     0.012,
-     0.012
-    ],
-    "color": "#A8917B",
-    "yaw": 270
-   },
-   {
-    "id": "e_led1",
-    "pos": [
-     5.655,
-     2.3,
-     -0.55
-    ],
-    "size": [
-     0.05,
-     0.05,
-     0.05
-    ],
-    "color": "#FFD24C",
-    "emissive": true,
-    "yaw": 270
-   },
-   {
-    "id": "e_led2",
-    "pos": [
-     5.655,
-     2.3,
-     -0.05
-    ],
-    "size": [
-     0.05,
-     0.05,
-     0.05
-    ],
-    "color": "#FFD24C",
-    "emissive": true,
-    "yaw": 270
-   },
-   {
-    "id": "e_led3",
-    "pos": [
-     5.655,
-     2.3,
-     0.45
-    ],
-    "size": [
-     0.05,
-     0.05,
-     0.05
-    ],
-    "color": "#FFD24C",
-    "emissive": true,
-    "yaw": 270
-   },
-   {
-    "id": "e_led4",
-    "pos": [
-     5.655,
-     2.3,
-     0.95
-    ],
-    "size": [
-     0.05,
-     0.05,
-     0.05
-    ],
-    "color": "#FFD24C",
-    "emissive": true,
-    "yaw": 270
-   },
-   {
-    "id": "e_led5",
-    "pos": [
-     5.655,
-     2.3,
-     1.45
-    ],
-    "size": [
-     0.05,
-     0.05,
-     0.05
-    ],
-    "color": "#FFD24C",
-    "emissive": true,
-    "yaw": 270
-   },
-   {
-    "id": "e_led6",
-    "pos": [
-     5.655,
-     2.3,
-     1.95
-    ],
-    "size": [
-     0.05,
-     0.05,
-     0.05
-    ],
-    "color": "#FFD24C",
-    "emissive": true,
-    "yaw": 270
-   },
-   {
-    "id": "e_led7",
-    "pos": [
-     5.655,
-     2.3,
-     2.3
-    ],
-    "size": [
-     0.05,
-     0.05,
-     0.05
-    ],
-    "color": "#FFD24C",
-    "emissive": true,
-    "yaw": 270
-   },
-   {
     "id": "e_pinboard",
     "_doc": "S115: cork, on the only blank panel Room 3 had left (x 3.4–4.6, between the door jamb and the bookcase). It is to the player's LEFT at the seat, not in the resting frame — a wall you find by turning, which is this piece's one bodily ask.",
     "pos": [
@@ -3102,7 +2974,10 @@
    "crtFoot",
    "crtPowerButton",
    "crtPowerLed",
-   "keyboard"
+   "keyboard",
+   "w_flatPanelBody",
+   "w_keyboard",
+   "w_mouse"
   ],
   "add": [
    {
@@ -3219,6 +3094,7 @@
     "color": "#2C2C34",
     "yaw": 270
    }
-  ]
+  ],
+  "_docE4Emptying": "⚑ 2026-09-05 — VERA'S COMPUTER LEAVES WITH HER ERA. Sérgio: *\"since we no longer can go to the other rooms, maybe we can remove the computers from the room 1 and 2 when we are at ERA-4, is that an option?\"* It is, and HALF OF IT WAS ALREADY TRUE: this same remove list has taken Daniel's CRT and keyboard out at r4 since the fold was written — Room 1's computer has been gone at E4 all along and nobody noticed, because nobody had measured what was left. Room 2's workstation had not gone anywhere. It does now, with its keyboard and mouse; `era3Devices.setEra` stops enabling the workstation and phone SCREENS at e4 in the same move, or a lit plane would be left hanging where the monitor used to be — which is exactly the fault S61 found on the spine and the one a removal always has. ⚑ This is the first, smallest increment of the emptied-rooms idea (NEXT_ROOM_PASS §5/§6): the rooms the piece has left stop being fully dressed. It is worth measuring against §6's table — Room 2's contents are 27 of the turn's 139 and Room 1's are 78."
  }
 }

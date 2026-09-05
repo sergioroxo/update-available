@@ -1050,7 +1050,19 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // era transition before the last one gains a single draw call from it.
       if (era === 'e4') ensureVisor();
       for (const s of screens) {
-        s.entity.enabled = (s.name === 'visor' || s.name === 'laptop') ? era === 'e4' : visible;
+        /**
+         * ⚑ 2026-09-05 — AND VERA'S SCREENS GO OFF AT E4. Sérgio: *"since we no
+         * longer can go to the other rooms, maybe we can remove the computers
+         * from the room 1 and 2 when we are at ERA-4."* Room 1's CRT has been
+         * removed at the r4 fold since it was written; Room 2's workstation had
+         * not. Its physical props go in the same fold, and these planes have to
+         * go with them or a lit rectangle is left hanging where the monitor was
+         * — the fault S61 found on the spine, and the one a removal always has.
+         */
+        const roomTwoScreen = s.name === 'workstation' || s.name === 'phone';
+        s.entity.enabled = (s.name === 'visor' || s.name === 'laptop') ? era === 'e4'
+          : roomTwoScreen ? era === 'e3'
+          : visible;
       }
       // S61: a settled review jump lands on sign-in; a real transition leaves
       // the workstation dark until endRelocation() calls beginArrival(). E4 also
