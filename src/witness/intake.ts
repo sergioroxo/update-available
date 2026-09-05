@@ -168,16 +168,6 @@ export class WitnessCanvas {
       // but the record must never sleep through a filing it has made — and
       // a review that enters at E2 is exactly the case that proves it.
       || ledger.records.includes('subject-migrated')
-      /**
-       * ⚑ S106 — AND THE RECORD IS NEVER ASLEEP IN 2026. Every clause above
-       * asks "has this session filed anything yet"; in era 4 the answer is
-       * thirty years old and does not depend on the session. Without this the
-       * panel migrates onto Maya's wall and renders DORMANT — a 1.5 m black
-       * slab with three grey dots — for anyone who enters the era directly,
-       * which is every review pass and every screenshot ever taken of that
-       * seat. The room's most defined object was drawing "not a system yet".
-       */
-      || this.era === 'e4'
     ) {
       this.draw();
     } else {
@@ -313,26 +303,20 @@ export class WitnessCanvas {
     ctx.fillText(era.subheader, W - 190, 8);
 
     /**
-     * ⚑ S106 — THE SUBJECT ROW, AND THE ONE PLACE THE TWO NAMES SIT APART.
+     * ⚑ 2026-09-05 — THE ERA-4 MISFILE IS GONE, WITH THE MIGRATION THAT NEEDED IT.
      *
-     * For eras 1–2 this is the file's registered subject: the name the player
-     * typed in 1997, which is also the name the opening PREFILLED for them.
-     * At era 4 the panel is hanging in Maya's room and the row carries HER
-     * name, in amber, with `under the old file` beside it — the misfile the
-     * whole era is built on (L says the same sentence about her pharmacy
-     * record). ⚑ It is never a deadname: no name that is not Maya's is
-     * rendered on this surface, ever. The 1997 name stays where a filing
-     * system would keep it — on the index card below, which is the drawer's
-     * label, not the person's.
+     * S106 gave this row an era-4 branch reading `Maya — under the old file`,
+     * because the plane it draws on had been hung in Maya's room. Sérgio retired
+     * that link (`cluster.ts`, same day) — the two are not one file — so the row
+     * goes back to what it has always honestly been: the subject of THIS record,
+     * which is the name the player typed in 1997 and nobody else's.
+     *
+     * ⚑ What survives is the half of S106 that was never about Maya: the record
+     * still AGES within Daniel's own six years (`witness.eras`, e1/e2). That was
+     * review R1's finding A-3 and his own complaint — *"on Era 2 it should change
+     * styles and content… it still says era-1"* — and it stands.
      */
-    const misfiled = this.era === 'e4';
-    if (misfiled) {
-      const person = (s as unknown as { personE4?: string }).personE4 ?? '';
-      const note = (s as unknown as { misfile?: string }).misfile ?? '';
-      this.field(s.subject, note ? `${person} — ${note}` : person, 40, FLAG);
-    } else {
-      this.field(s.subject, ledger.name, 40);
-    }
+    this.field(s.subject, ledger.name, 40);
     this.field(s.source, era.sourceValue, 62);
     this.field(
       s.trustedContact,
@@ -359,30 +343,15 @@ export class WitnessCanvas {
     px(ctx, cx + cw - 1, cy, 1, ch, LINE);
     for (let i = 1; i < 4; i++) px(ctx, cx + 8, cy + 14 + i * 12, cw - 16, 1, RECORD.pulseOff);
     /**
-     * ⚑ 2026-09-05 — SÉRGIO: *"Please prepare for the 'Daniel' from the Intake,
-     * that is not okay."* And he is right, and my reasoning for putting it there
-     * was too clever by half.
-     *
-     * S106 rendered the file's REGISTERED 1997 name on the index card in era 4,
-     * on the argument that a card in a drawer carries the name the drawer was
-     * labelled with, and that the gap between that and the SUBJECT row above
-     * ("Maya — under the old file") WAS the beat. The gap is real. But the thing
-     * it costs is that a name belonging to someone else is printed, in 2026, on
-     * a panel hanging in Maya's bedroom — and a viewer has no way to know it is
-     * a different person's rather than hers. The piece has one absolute rule
-     * about this surface (CLAUDE.md; s4_l.json's `_docFormerName`): **no name
-     * that is not Maya's is ever rendered here.** "It is Daniel's, not a
-     * deadname" is an argument the screen cannot make.
-     *
-     * The misfile still reads, and reads better: the SUBJECT row carries the
-     * amber `under the old file`, and the card carries HER name under an era-4
-     * stamp that says `migrated ×3`. The file moved three times and never got
-     * re-registered — which is the same sentence, told without borrowing anyone.
+     * ⚑ The card carries the file's own registered name, and in this build that
+     * is the only name it ever carries. Sérgio, 2026-09-05: *"Please prepare for
+     * the 'Daniel' from the Intake, that is not okay."* — struck the same hour,
+     * and then the migration that had put this panel in her room at all was
+     * retired behind it, so the question cannot arise again.
      */
     setFont(ctx, 10);
     ctx.fillStyle = INK;
-    ctx.fillText(misfiled ? ((s as unknown as { personE4?: string }).personE4 ?? ledger.name) : ledger.name,
-      cx + 10, cy + 16);
+    ctx.fillText(ledger.name, cx + 10, cy + 16);
     setFont(ctx, 8);
     ctx.fillStyle = DIM;
     ctx.fillText(era.card, cx + 10, cy + 44);

@@ -325,44 +325,30 @@ const STATE_FOR_ERA: Record<EraKey, number> = { e1: 0, e2: 1, e3: 2, e4: 3 };
  *  migrateTerminal(false) restores the one authored spine pose; only E4's
  *  explicit migration is allowed to move the surface. */
 /**
- * E4: the record shares Room 3's wall beside Maya's desk (east). The person
- * and the record finally share a wall — the TURN's promise, unified.
+ * ⚑ 2026-09-05 — THE RECORD DOES NOT FOLLOW HER, and that beat is RETIRED.
  *
- * ⚑ S115 — RE-HUNG, AND THE BEAT SURVIVED THE MEASUREMENT (Sérgio, 2026-09-04,
- * on the seat renders: *"check what information you have on the wall because
- * the Intake blackboard is still showing on the wall"*).
+ * Sérgio: *"The whole narrative of Daniel and Maya was not working, so it needs
+ * to be cleared out"* — scoped, on the same day, to **the link between them**:
+ * both people stay, they stop being the same file.
  *
- * WHAT WAS WRONG. The pose above was authored when Room 3 was bare
- * architecture, and it never moved when the room was furnished. At 1.5 × 1.125
- * m centred on z 1.75 the plane spanned z 1.00–2.50 on a wall that ENDS at
- * 2.45 — so it poked through the corner — and it hung 1–2 cm in front of
- * `e_poster` (z 1.37–1.87) and `e_sign` (z 0.86–1.26), covering her poster
- * completely and clipping her photograph. Two of the three things on Maya's
- * wall that were hers were behind the apparatus's file, and the file itself
- * rendered as a black slab because it was drawing DORMANT (fixed separately in
- * `intake.ts` — the record is never asleep in 2026).
+ * What used to be here was `TERMINAL_E4` and a `migrateTerminal()` that carried
+ * the intake plane off the spine and hung it on Maya's wall at E4, under the
+ * heading "the person and the record finally share a wall — the TURN's promise,
+ * unified." It is the single mechanism that made Daniel's 1997 file into the
+ * thing describing Maya in 2026, and once he struck the name off it (the same
+ * morning) there was nothing left in it that was true: a file cannot follow
+ * someone it was never about.
  *
- * WHAT THIS IS. Her two pictures move to one column at z 0.88 (the r3 delta),
- * which also brings them INSIDE the seat's own frame for the first time; the
- * record takes the wall's far end, at 1.10 × 0.825. It is smaller than it was
- * and still legible — 512 logical px over 1.10 m is ~0.7° of arc for a 10 px
- * line from the seat, about 21 screen px at this viewport — but it now sits at
- * the RIGHT EDGE of the resting view rather than through the middle of it. You
- * turn your head to read it. That is the E1 grammar returning in the last era,
- * and it costs nothing: the thing you turn to is the same file you turned to in
- * 1997, thirty years and three migrations later, hanging over a bed.
- *
- * ⚑ The scale is applied HERE now, not left at whatever `restoreWitnessSurface`
- * last set. That was a live bug in waiting: the two placements disagreed about
- * who owned the plane's size, and only one of them ever wrote it.
+ * ⚑ It also removes the fault it kept producing. That plane covered her poster
+ * and clipped her photograph until yesterday; it drew DORMANT for anyone
+ * entering the era directly; it needed a mount prop, an era-4 vocabulary, a
+ * misfile line and a never-asleep clause to be defensible at all. Four fixes to
+ * hold up one connection. The record now behaves the way it does at E3 and for
+ * the same reason: **by 2016 the apparatus stopped being a place you go to, and
+ * by 2026 a cold panel bolted to a bedroom wall is 1997's object.** The file's
+ * final form is the Close's constellation, which is where the piece already
+ * puts it.
  */
-const TERMINAL_E4 = {
-  pos: [5.655, 1.52, 1.86] as [number, number, number],
-  yaw: 270,
-  w: 1.10,
-  h: 0.825
-};
-const TERMINAL_SPINE_YAW = 180;
 
 /**
  * ⚑ THE DOORPLATES ARE CUT (Session 71, Sérgio: *"the doorplates aren't
@@ -683,20 +669,6 @@ export function buildClusterShell(
    * case.** The era transitions already mean "the walls come off" — now they
    * come off ONE AT A TIME, which is what the sequence was always for.
    */
-  function migrateTerminal(toRoom3: boolean): void {
-    const e = app.root.findByName('witness-screen');
-    if (!(e instanceof pc.Entity)) return;
-    if (toRoom3) {
-      e.setLocalPosition(TERMINAL_E4.pos[0], TERMINAL_E4.pos[1], TERMINAL_E4.pos[2]);
-      e.setLocalEulerAngles(90, TERMINAL_E4.yaw, 0); // face -x, into Room 3
-      e.setLocalScale(TERMINAL_E4.w, 1, TERMINAL_E4.h); // a bedroom wall, not a spine
-    } else {
-      const t = clusterData.witnessTerminal;
-      e.setLocalPosition(t.pos[0], t.pos[1], t.pos[2]);
-      e.setLocalEulerAngles(90, TERMINAL_SPINE_YAW, 0); // back to the spine
-      e.setLocalScale(t.w, 1, t.h);
-    }
-  }
 
   // ── the choreography timeline (T1's staged arrival) ──
   let timeline: { t: number; fn: () => void }[] = [];
@@ -919,11 +891,10 @@ export function buildClusterShell(
         : undefined;
       seamsOff();
       carryLampLight(toEra === 'e4');
-      migrateTerminal(toEra === 'e4');
       // S61 — see setTerminalVisible's note. On a WALL-OPENING relocation this
       // is deferred into the timeline below so the panel leaves WITH the walls
       // rather than blinking out three seconds before them.
-      if (!reloc?.opensWalls) setTerminalVisible(toEra !== 'e3');
+      if (!reloc?.opensWalls) setTerminalVisible(toEra !== 'e3' && toEra !== 'e4');
 
       // ⚑ THE RELOCATION's space half (choreography doc §T1's staged timeline,
       // moved here from the E1→E2 transition Session 27/R28-0c per Sérgio's
@@ -947,7 +918,7 @@ export function buildClusterShell(
             morph.goToState(toIdx, true, pace);
             // S61: the record leaves the spine WITH the walls (see
             // setTerminalVisible) — one change, one moment, not two.
-            if (reloc.opensWalls) setTerminalVisible(toEra !== 'e3');
+            if (reloc.opensWalls) setTerminalVisible(toEra !== 'e3' && toEra !== 'e4');
           } }
         ];
         if (reloc.opensWalls) {
@@ -1014,8 +985,7 @@ export function buildClusterShell(
       state = STATE_FOR_ERA[era] >= 1 ? 'open' : 'sealed';
       // morph.goToState does not own this app-level surface. Reassert its one
       // legal pose after a skipped relocation or a debug settle.
-      migrateTerminal(era === 'e4');
-      setTerminalVisible(era !== 'e3');
+      setTerminalVisible(era !== 'e3' && era !== 'e4');
       niche.setFacet((eraTable()?.default ?? 'none') as FacetState);
       applyLayout();
       rebuildSettled();

@@ -2889,22 +2889,6 @@
     "yaw": 270
    },
    {
-    "id": "e_recordMount",
-    "_doc": "⚑ S115: the intake record's surround on Maya's wall. The plane that migrates here at E4 is a code-resident screen entity (cluster.ts TERMINAL_E4), and without a mount it read as a hole cut in the wall — the same fault S61 found on the spine when the plane was hidden and its frame was not. Cold grey, not her wood: this is the one thing on this wall that is not hers.",
-    "pos": [
-     5.672,
-     1.52,
-     1.86
-    ],
-    "size": [
-     1.16,
-     0.88,
-     0.014
-    ],
-    "color": "#3A3A44",
-    "yaw": 270
-   },
-   {
     "id": "e_ledCord",
     "_doc": "S115: the cord the lights hang on. Warm points against a room whose windows have gone dark for good — the counter-light to the cold side, and hers.",
     "pos": [

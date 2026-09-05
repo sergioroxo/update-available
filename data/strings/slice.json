@@ -110,7 +110,7 @@
     "hint": "press the flip control to return",
     "_docEras": "⚑ S106 — THE RECORD AGES. One file, four decades, and until now every word on it was 1997's: the panel that migrates onto Maya's wall in 2026 still read SUBJECT Daniel / index · era 1 · drawer 12. The fields in `eras` are the ONLY ones that move, and they move because a filing system running for thirty years would have re-stamped exactly these — where the record came from, what it now calls the subject, and the stamp on the card. Everything else (the header, the dead FILE button, the footer's READ ONLY) is deliberately unchanged, because the point is that it did not have to change. ⚑ THE MISFILE, NOT A DEADNAME (CLAUDE.md; s4_l.json's _docFormerName): at era 4 the SUBJECT row carries Maya's OWN name and the amber note `under the old file`. No name that is not Maya's is ever rendered here. The index card underneath keeps the file's REGISTERED name — the one the player typed in 1997 — because that is what an index card in a drawer carries, and the gap between the two rows IS the beat: the system knows who she is and files her under someone else anyway. PLACEHOLDER-draft wording; Sérgio's stamp to overwrite (03_COORDINATION #5).",
     "eras": {
-      "_note": "keys are era ids; a missing key falls back to the flat era-1 wording above. era 3 is absent on purpose — the record is off the wall for 2016 (cluster.ts setTerminalVisible).",
+      "_note": "keys are era ids; a missing key falls back to the flat era-1 wording above. ⚑ Eras 3 AND 4 are absent on purpose: the record is off the wall for 2016, and as of 2026-09-05 it is off for 2026 too — Sérgio retired the migration that used to carry it onto Maya's wall, so this panel now lives and ages entirely inside Daniel's own six years. See cluster.ts setTerminalVisible.",
       "e1": {
         "subheader": "CLASSIFIED — INTERNAL USE ONLY",
         "sourceValue": "starter kit v1.2 — postal placement",
@@ -122,19 +122,8 @@
         "sourceValue": "starter kit v1.2 — postal placement",
         "statusValue": "ENROLLED",
         "card": "index · era 2 · drawer 12 · scanned"
-      },
-      "e4": {
-        "subheader": "RETAINED FOR CONTINUITY OF CARE",
-        "sourceValue": "carried forward — no origin on file",
-        "statusValue": "RETAINED",
-        "card": "index · era 4 · drawer 12 · migrated ×3",
-        "_docFallbacks": "⚑ These two override the FALLBACK wording only — the value a field shows when the ledger has nothing to say about it. Where the player actually did something (a pastoral referral, messages on file) the computed value still wins, because 'only things the player actually did' is this surface's oldest law. What they replace are two sentences that are 1997's and read as nonsense thirty years on: a contact 'awaiting first contact' and a subject 'not yet online'. In 2026 the trusted contact is the assistant, resident, and nobody is offline.",
-        "trustedAssigned": "companion process — resident",
-        "notOnline": "continuous — no session boundary"
       }
     },
-    "misfile": "under the old file",
-    "personE4": "Maya",
     "sessionLog": "ASSIGNED SESSIONS",
     "endingRecords": {
       "_doc": "PLACEHOLDER — cold witness lines for the Era-1 packet/diary/glitch merge. These are administrative labels only; Sérgio voice/ethics pass before final copy.",

@@ -60,6 +60,21 @@ carries the whole event read as leftover geometry. Both now documented.
 ⚑ **Open, small:** if they stay they should read as moving boxes rather than as two plain cubes — a
 taped seam, a label. Noted for the Room 1 pass.
 
+## §3b · ⚑ THE LINK IS CUT — and Maya's wall now has a gap
+> *"The whole narrative of Daniel and Maya was not working, so it needs to be cleared out"* — scoped by
+> him, same day, to **the link between them**: both people stay, they stop being the same file.
+
+Done (`cluster.ts`, `intake.ts`, `slice.json`, `reinterp_deltas.json`). `TERMINAL_E4` and
+`migrateTerminal()` are retired, the record is now hidden at E4 exactly as it is at E3, the era-4
+misfile vocabulary is gone with it, and `e_recordMount` — which existed only to frame the migrated
+plane — is deleted. The record lives and ages entirely inside Daniel's own six years now.
+
+⚑ **What it leaves:** Room 3's desk wall is bare from z 1.31 to 2.42 — the 1.1 m the record occupied,
+above the head of the bed. Her shelf, poster, photograph and lights all sit at z ≤ 1.26, so the
+resting view is unchanged; it is the turn to the right that now finds nothing. **Do not just refill
+it** — §4's note ("there are details we can remove") applies here first: a bed with bare wall over it
+is ordinary, and Room 3 gained 32 props from me the day before.
+
 ## §4 · ROOM 2's WALL — remove, don't add
 > *"The wall on the Room2 has too many erros still like 3 postes all close toghter, you can remove the
 > bookshelf in Room 2 and the books there. They have no use. So there are details we can remove."*
