@@ -255,3 +255,28 @@ and this harness — swiftshader, capped at 60 fps — cannot see fragment cost 
 light off when its intensity reaches zero is free and obviously correct and may well help on device,
 and **I have no measurement that says it does.** Recorded as a plausible on-device saving, not a
 result. It wants a headset and `tools/shots.mjs comfort`, not another desktop run.
+
+
+---
+
+# ⚑ §7 · VERIFIED — the walk still reaches the Close after all of it
+`WALK_2026-09-05` (second run of the day, superseding the 201-press one at
+`79ed0da`): **`spine: done`, 205 presses over 509 steps, exit 0.**
+
+That traversal is the only thing that could tell us whether a day of Era-4 surgery left the piece
+playable, and it did: the record's migration retired, the headset moved onto a stand, Vera's computer
+and screens gone at E4, Daniel's tower/drive/racket/boxes gone, twenty-seven props struck across two
+rooms, the lighting rewritten twice, and the batching rebuilt underneath all of it.
+
+⚑ **Zero "covered by frame chrome" findings** — the check added in S117 stays silent, which is the
+number that matters: the previous 197-press stall was exactly that fault and the report could not say
+so at the time.
+
+⚑ **And the removals show up in the report as they should**: `era3-device-workstation is disabled` and
+`era3-device-phone is disabled` now appear in PUBLISHED BUT UNREACHABLE for 220 and 611 steps. That is
+the walker correctly reporting *controls that exist in the code and are deliberately switched off in
+this era* — not a defect, and worth knowing it reads that way, because the same line would appear if
+they were switched off by accident.
+
+**Draw calls across the session, at the E4 turn:** 201 → 140 (S108's batching) → 139 → 133 (Vera's
+computer) → **125** (the two rooms' diet). At Maya's seat: 77 → **51**. The entrance seat: 57 → **40**.
