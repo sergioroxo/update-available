@@ -75,7 +75,25 @@ from a doc comment at `ledger.ts:6` describing an *intended* "idle reset" that w
 | **3 · The exhibition** | **No attract state, no idle wipe, no design for a stranger arriving.** Not started | Claude |
 
 # KNOWN AND NOT FIXED
-- **197 draw calls at Maya's turned E4 seat** vs a ≤75 budget — architectural (unbatched GLB furniture
+- ⚑ **S108 LANDED 2026-09-05 — 201 → 140 at the turn, 77 → 51 at Maya's seat, 57 → 40 at Room 1's.**
+  ⚑ **The cause was the ENGINE, not the room.** `Application` registers
+  `once('prerender', this._firstBatch)`, and `_firstBatch()` calls `batcher.generate()` in its BARE
+  form, whose `groupIds` defaults to `Object.keys(this._batchGroups)` — **strings** — and which then
+  decides what to destroy with `groupIds.indexOf(batch.batchGroupId)` against a **number**. Nothing
+  matches, nothing is destroyed, and the call appends a second copy of every batch that exists.
+  Traced live: our `generate([0])` → 49 batches · `generate([1])` → 40 · `generate([2])` → 109 · then
+  `generate()` bare: **109 → 218**. That listener is now removed (it is redundant — `updateAll()`
+  regenerates dirty groups every frame). On top of it: one batch group instead of two, materials
+  shared by exact colour signature, and **the GLB furniture batched for the first time** — three beds,
+  three desks, three chairs collapsing instead of costing thirty draw calls. Verified visually
+  identical at the r3 seat, before and after.
+  ⚑ **Still 140 at the TURN**, against ≤75. That gap is structural, not a batching failure: the turn
+  is the piece's one view holding three furnished rooms — ~109 distinct materials in a single frustum
+  — so closing it further means reducing the PALETTE, which is an aesthetic call and Sérgio's.
+  ⚑ **And it surfaced a latent bug, now closed:** the guide's `emphasis` prop-lift writes `emissive` on
+  a prop's materials, and those props were already batched and sharing — so lifting one lit every prop
+  of the same colour. They are on a never-batch list now, beside the belongings props.
+- ~~**197 draw calls at Maya's turned E4 seat**~~ vs a ≤75 budget — architectural (unbatched GLB furniture
   across three open rooms), diagnosed, unfixed (`08 §28`). ⚑ **197, not the 141 this line carried until
   2026-09-03** — Lane C re-measured it settled, 5 samples over 5 s, at `yaw = r3.yaw + 180` from the
   authored seat (R1 C-1). The number drifted upward with real geometry added to that seat since 141 was

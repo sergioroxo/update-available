@@ -654,6 +654,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     niche.setFacet(options.facet ?? 'none');
     ceiling = buildCeilingWitness(app);
     cluster = buildClusterShell(app, room, niche, ceiling, layout, options.nobatch !== true);
+    // ⚑ S108: see ClusterShell.setNeverBatch — handed over below, once
+    //   EMPHASIS_PROPS is in scope (`applyNeverBatch()`).
+
     cloud = buildPointCloud(app);
     // the SEND seam (master script §4). HISTORICAL WRONG CLAIM: "no beat fires
     // it". S82 corrected that by inspection: the spine offers s1/s2 on E2's
@@ -1439,6 +1442,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
     }
   }
+
+  /**
+   * ⚑ S108 — the props the lift above can reach must not share a material with
+   * anything, or lifting one lights every prop of the same colour in the batch.
+   * Handed to the cluster here rather than at construction because this table is
+   * declared after the shell is built; `ClusterShell.setNeverBatch` carries the
+   * full reasoning.
+   */
+  cluster?.setNeverBatch(Object.values(EMPHASIS_PROPS).flat());
 
   // R28-2c: the belongings beat's visual mark — a PERSISTENT warm lift on a
   // kept prop, distinct from setPropEmphasis above in both mechanism-detail

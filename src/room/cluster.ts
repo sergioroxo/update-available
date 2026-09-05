@@ -20,8 +20,8 @@
  */
 import * as pc from 'playcanvas';
 import type { RoomHandles } from './era1room';
-import { ClusterMorph, constantPropIds } from './clusterMorph';
-import { batchStaticProps, batchSettledProps, clearSettledBatch, type SettledBatchHandle } from './batching';
+import { ClusterMorph } from './clusterMorph';
+import { bakeBatch, clearBatch, type BatchHandle } from './batching';
 import clusterData from '../../data/room/cluster.json';
 import nicheData from '../../data/room/fluid_niche.json';
 import belongingsData from '../../data/room/belongings.json';
@@ -47,7 +47,7 @@ interface RigLight { intensity: number; range?: number; color?: string }
 interface Rig { ambient: number[]; zoneFill: number; lights: Record<string, RigLight> }
 
 /** R28-2c (the belongings beat): props the player may KEEP are excluded from
- *  BOTH batching groups below (not just the morph's own STATIC_IDS check) —
+ *  the batch below (not just the morph's own STATIC_IDS check) —
  *  a shared-material batch would cross-contaminate the per-item "kept" warm
  *  lift onto any OTHER prop of the identical colour signature (a real risk
  *  here: book2 and tapeB share `#9FB4C0`, tapeA/cdStack/modem share
@@ -391,6 +391,20 @@ function hex(c: string): pc.Color {
 }
 
 export interface ClusterShell {
+  /**
+   * ⚑ S108 — tell the batch which props must never share a material, and rebake.
+   *
+   * This is a setter and not a constructor argument for one dull reason that is
+   * worth writing down rather than rediscovering: the set app.ts wants to pass
+   * is the union of its own `EMPHASIS_PROPS`, which is declared ~700 lines AFTER
+   * the call that builds this shell. Reaching it from the constructor is a
+   * temporal-dead-zone crash, and moving the table would break `check-spec`'s
+   * C11, which parses it out of app.ts by its exact indentation. So the shell is
+   * built, the table comes into scope, and the caller hands it over — one extra
+   * bake at boot, which costs nothing and is measurable if it ever stops
+   * happening (`window.__batchedProps`).
+   */
+  setNeverBatch(ids: Iterable<string>): void;
   readonly state: ClusterState;
   readonly era: EraKey;
   /** the home facing: 0° (Room 1) until E4, then 270° — Room 3, Maya's room
@@ -430,7 +444,10 @@ export function buildClusterShell(
   niche: FluidNiche,
   _ceiling: CeilingWitness,
   layout: 'x' | 't' = 't',
-  batch = true
+  batch = true,
+  /** ⚑ S108: props whose materials something writes to at runtime — they never
+   *  join the batch and never share. app.ts passes its EMPHASIS_PROPS union. */
+  neverBatch: ReadonlySet<string> = new Set()
 ): ClusterShell {
   const root = new pc.Entity('cluster-shell');
 
@@ -449,7 +466,10 @@ export function buildClusterShell(
   }
 
   // ── the space morph (ported shipped effect) — start in the r1 state ──
-  const staticIds = constantPropIds();
+  // ⚑ S108: this file no longer needs `constantPropIds()`. It existed here only
+  //   to keep the constant props out of the settled batch group, and there is
+  //   one group now; `clusterMorph` computes the same set for itself (its own
+  //   `STATIC_IDS`) and that contract is untouched.
   const morph = new ClusterMorph(room);
   morph.snapTo(0);
   applyLayout();
@@ -469,29 +489,36 @@ export function buildClusterShell(
   // ── the Quest draw-call chore: constants bake once; variable box props bake
   // only after a state settles, then unbake before the next morph so live
   // transforms/materials remain truthful. ?nobatch=1 = the A/B escape. ──
-  let staticJoined = 0;
-  let settledBatch: SettledBatchHandle | null = null;
+  let roomBatch: BatchHandle | null = null;
   let settledJoined = 0;
   let pendingSettledRebatch = false;
+  /**
+   * ⚑ S108: the props that may never share a material with anything, because
+   * something writes to theirs at runtime and a shared write is a write to every
+   * prop carrying it. `BELONGINGS_IDS` is the R28-2c set (the "kept" warm lift);
+   * `UNBATCHED_IDS` is the S71 toggle; `neverBatch` is whatever the caller adds,
+   * which app.ts fills with the union of its own EMPHASIS_PROPS — the guide's
+   * prop-lift reaches those and nothing else. `staticIds` is NOT in this set any
+   * more: the static/settled split was the thing producing 61 duplicate batches,
+   * and one group with one numeric id is what replaced it.
+   */
+  const excluded = new Set([...BELONGINGS_IDS, ...UNBATCHED_IDS, ...neverBatch]);
   function publishBatchStats(): void {
     const w = window as { __batchedProps?: number; __staticBatchedProps?: number; __settledBatchedProps?: number };
-    w.__staticBatchedProps = staticJoined;
+    w.__staticBatchedProps = 0; // one group now — kept so old probes read 0, not stale
     w.__settledBatchedProps = settledJoined;
-    w.__batchedProps = staticJoined + settledJoined;
+    w.__batchedProps = settledJoined;
   }
   function clearSettled(): void {
-    settledBatch = clearSettledBatch(app, room, settledBatch);
+    roomBatch = clearBatch(app, room, roomBatch);
     settledJoined = 0;
     publishBatchStats();
   }
   function rebuildSettled(): void {
     if (!batch) return;
     clearSettled();
-    // R28-2c: belongings-eligible props are ALSO excluded here (reusing the
-    // "staticIds" skip check inside batchSettledProps), never joining the
-    // settled group regardless of kept state — see BELONGINGS_IDS above.
-    settledBatch = batchSettledProps(app, room, new Set([...staticIds, ...BELONGINGS_IDS, ...UNBATCHED_IDS]));
-    settledJoined = settledBatch?.joined ?? 0;
+    roomBatch = bakeBatch(app, room, excluded);
+    settledJoined = roomBatch?.joined ?? 0;
     publishBatchStats();
   }
   function beginMorphedStateBatch(): void {
@@ -499,12 +526,7 @@ export function buildClusterShell(
     clearSettled();
     pendingSettledRebatch = true;
   }
-  if (batch) {
-    // R28-2c: belongings-eligible props never join the permanent static
-    // group either, even if their fold happens to be identical everywhere.
-    staticJoined = batchStaticProps(app, room, new Set([...staticIds].filter((id) => !BELONGINGS_IDS.has(id) && !UNBATCHED_IDS.has(id))));
-    rebuildSettled();
-  }
+  if (batch) rebuildSettled();
 
   // ── zone accent lights (rig-driven; the two rooms' own temperatures) ──
   const zoneLights: pc.Entity[] = [];
@@ -866,6 +888,10 @@ export function buildClusterShell(
   function seamsOff(): void { for (const s of seams) s.enabled = false; }
 
   return {
+    setNeverBatch(ids: Iterable<string>): void {
+      for (const id of ids) excluded.add(id);
+      rebuildSettled();
+    },
     get state(): ClusterState { return state; },
     get era(): EraKey { return era; },
     get homeYaw(): number { return era === 'e4' ? 270 : era === 'e3' ? 90 : 0; },
