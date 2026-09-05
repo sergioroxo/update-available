@@ -358,9 +358,31 @@ export class WitnessCanvas {
     px(ctx, cx, cy + ch - 1, cw, 1, LINE);
     px(ctx, cx + cw - 1, cy, 1, ch, LINE);
     for (let i = 1; i < 4; i++) px(ctx, cx + 8, cy + 14 + i * 12, cw - 16, 1, RECORD.pulseOff);
+    /**
+     * ⚑ 2026-09-05 — SÉRGIO: *"Please prepare for the 'Daniel' from the Intake,
+     * that is not okay."* And he is right, and my reasoning for putting it there
+     * was too clever by half.
+     *
+     * S106 rendered the file's REGISTERED 1997 name on the index card in era 4,
+     * on the argument that a card in a drawer carries the name the drawer was
+     * labelled with, and that the gap between that and the SUBJECT row above
+     * ("Maya — under the old file") WAS the beat. The gap is real. But the thing
+     * it costs is that a name belonging to someone else is printed, in 2026, on
+     * a panel hanging in Maya's bedroom — and a viewer has no way to know it is
+     * a different person's rather than hers. The piece has one absolute rule
+     * about this surface (CLAUDE.md; s4_l.json's `_docFormerName`): **no name
+     * that is not Maya's is ever rendered here.** "It is Daniel's, not a
+     * deadname" is an argument the screen cannot make.
+     *
+     * The misfile still reads, and reads better: the SUBJECT row carries the
+     * amber `under the old file`, and the card carries HER name under an era-4
+     * stamp that says `migrated ×3`. The file moved three times and never got
+     * re-registered — which is the same sentence, told without borrowing anyone.
+     */
     setFont(ctx, 10);
     ctx.fillStyle = INK;
-    ctx.fillText(ledger.name, cx + 10, cy + 16);
+    ctx.fillText(misfiled ? ((s as unknown as { personE4?: string }).personE4 ?? ledger.name) : ledger.name,
+      cx + 10, cy + 16);
     setFont(ctx, 8);
     ctx.fillStyle = DIM;
     ctx.fillText(era.card, cx + 10, cy + 44);

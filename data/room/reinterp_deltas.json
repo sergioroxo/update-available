@@ -1836,7 +1836,8 @@
      0.4,
      0.5
     ],
-    "color": "#B89B7E"
+    "color": "#B89B7E",
+    "_doc": "⚑ Sérgio, 2026-09-05, off the E4 turn: *\"The boxes on the floor are supposed to be there?\"* — YES, and the fact that he had to ask is this entry's fault, not the room's. They arrive at the r3 fold, which is the same fold whose own doc says Room 1 closes because Daniel is \"transferred\": these are his room being packed. They had no `_doc` at all, so the one prop in that room that carries the whole event read as leftover geometry. ⚑ If they stay they should probably be MORE legible as moving boxes (a taped seam, a label) rather than two plain cubes — noted for the Room 1 pass, not done here."
    },
    {
     "id": "movingBox2",
@@ -1850,7 +1851,8 @@
      0.3,
      0.4
     ],
-    "color": "#A8917B"
+    "color": "#A8917B",
+    "_doc": "See movingBox1 — Daniel's room, packed at the transfer."
    },
    {
     "id": "w_plant_pot",
