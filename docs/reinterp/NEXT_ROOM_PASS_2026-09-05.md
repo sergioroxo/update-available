@@ -116,3 +116,66 @@ should be the one to say which rather than defend the lot.
    the remaining gap is the number of distinct colours in one frustum, not the batching. §4's removals
    push in the right direction on their own — which is the first time "fewer things" and "cheaper"
    have pointed the same way in this project.
+
+---
+
+# ⚑ §5 · THE ROOMS THAT EMPTY BEHIND YOU — Sérgio's idea, 2026-09-05, and it is the real answer
+> *"what you mean with this is having the rooms all opened that it creates issues when you turn around
+> to see them right? so maybe we can remove stuff from the other two rooms to help out and if needed we
+> can make a new state to the rooms after we've been in them so they can have a fuller state when we
+> visit, but when we move away they become bare — maybe we can even make it into an element of choice,
+> as a symbol of the trying to erasure the person, or maybe even of hope, that they got out of the
+> cycle of capture of SOGICE (maybe we can do this)"*
+
+**He has read the problem exactly right, and then solved it in the piece's own language rather than in
+the renderer's.** Recording it in full because it is the strongest structural idea to arrive in weeks
+and it must not be reconstructed from memory.
+
+## §5.1 · The diagnosis is confirmed, and the diet is NOT the fix
+Yes: the cost is that all three rooms are open and furnished at once, so the turn holds the whole
+building. **And I can now prove that removing props is not the lever.** Striking Room 2's bookcase and
+its eighteen books — 19 props — moved the E3 turn from **146 to 146** and the E4 turn from 140 to
+**139**. Nothing. Once `batching.ts` shares materials by colour signature, a prop whose colour is worn
+by anything else in the building costs **zero** extra draw calls, so deleting it saves zero. The draw
+call count at the turn is, almost exactly, *the number of distinct colours in view*.
+
+⚑ So the diet is worth doing for legibility — he is right that few specific things beat many
+meaningless ones — but it will never buy the frame back. **His second idea will.**
+
+## §5.2 · The mechanism: rooms are FULL when occupied and BARE when left
+A per-room state on top of the existing era fold: a room is dressed while the era lives in it, and
+strips back to its shell once the piece moves on. From Room 3's seat in 2026 the turn would then hold
+one furnished room and two emptied ones — which is where the draw calls go, because the emptied rooms
+carry a handful of colours instead of a hundred.
+
+⚑ **The machinery already exists and is nearly free.** `clusterMorph` folds prop deltas per state and
+`batching.ts` rebakes on settle; an "emptied" pass is another delta, not a new system. The honest cost
+is authoring which props survive in each room, and that is a design pass, not an engineering one.
+
+## §5.3 · What it MEANS, which is his real point and the part I must not flatten
+He offers two readings and they are not the same:
+
+- **Erasure** — the room is emptied because the person was processed out of it. Room 1 already says
+  this: `movingBox1/2` arrive at the fold where Daniel is *transferred*, and the room closes. Extending
+  that to every room makes the building an argument: *this is what the apparatus does to a life, and it
+  does it three times.*
+- **Hope** — the room is emptied because they LEFT. They got out of the cycle. Same geometry, opposite
+  sentence.
+
+⚑ **The piece cannot assert both, and it must not hedge.** But it can decline to say which — an empty
+room is genuinely ambiguous, and this work's whole method is to show the apparatus's traces and let the
+viewer read the person. My reading, offered and not decided: **let the room empty without commentary,
+and let ONE object stay.** Which object it is carries the whole sentence — a packed box says processed,
+a bare hook where the flag was says erased, and the drained flag left behind on the wall says something
+worse and truer than either.
+
+⚑ And his *"maybe we can even make it into an element of choice"* is the sharpest version and the one
+that needs his ethics call before a line is written: if the PLAYER decides what stays, the piece is
+asking them to author somebody's ending. That is either the most honest thing in the work or the most
+presumptuous, depending entirely on what the choice is phrased as, and it is not mine to phrase.
+
+## §5.4 · What it would cost, honestly
+An emptied delta per room (data), a fourth fold state or a per-room flag (`clusterMorph`), and the
+authoring pass above. The draw-call win is large and structural rather than incremental. **Nothing
+about it is urgent** — the piece plays end to end today — and it should not be started until §5.3 is
+answered, because the mechanism is cheap and the meaning is everything.
