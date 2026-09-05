@@ -732,7 +732,19 @@ export function buildClusterShell(
       const e = app.root.findByName(`light-${id}`);
       if (e instanceof pc.Entity && e.light) fadeLight(e.light, target);
     }
+    /**
+     * ⚑ 2026-09-05 — A RIG THAT NAMES A ZONE LIGHT NOW WINS, and until today it
+     * did not. This loop ran AFTER the named pass above and overwrote every
+     * zone light with `zoneFill` — so `r2Screen`, which is both a zone light and
+     * a rig key, had its authored e4 value of 0.4 silently replaced by 0.52 on
+     * every era shift. A number in `cluster.json` that the code overwrites two
+     * lines later is worse than no number: it reads as a decision and is a
+     * comment. Naming a zone light in a rig is now the way to say "not this
+     * one", which is what Room 2 going dark needs.
+     */
     for (const zl of zoneLights) {
+      const key = zl.name.replace(/^light-/, '');
+      if (rig.lights[key] !== undefined) continue; // the rig spoke for this one
       if (zl.light) fadeLight(zl.light, { intensity: rig.zoneFill });
     }
     ambTo = new pc.Color(rig.ambient[0], rig.ambient[1], rig.ambient[2]);
