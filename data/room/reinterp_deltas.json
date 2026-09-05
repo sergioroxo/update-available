@@ -1014,27 +1014,6 @@
     ]
    },
    {
-    "id": "w_bookcase",
-    "pos": [
-     -4.28,
-     0,
-     2.045
-    ],
-    "size": [
-     0.75,
-     1.7,
-     0.5
-    ],
-    "color": "#8A5A3B",
-    "yaw": 90,
-    "model": "bookcase",
-    "modelScale": [
-     1.875,
-     1.932,
-     2.0
-    ]
-   },
-   {
     "id": "w_rug",
     "pos": [
      -4.1,
@@ -2100,9 +2079,9 @@
    {
     "id": "w_radio",
     "pos": [
-     -4.44,
-     1.02,
-     1.93
+     -5.26,
+     0.8,
+     0.28
     ],
     "size": [
      0.18,
@@ -2110,14 +2089,15 @@
      0.1
     ],
     "color": "#D4D0C8",
-    "yaw": 90
+    "yaw": 90,
+    "_doc": "⚑ 2026-09-05: re-based on w_desk, for the same reason as w_frame. It stood on w_bookcase, which was struck with its eighteen books — and a removal's real cost is never the props it removes, it is the ones that were resting on them. room-audit caught this one (0.95 m of air) after I had already hand-fixed the other; the tool saw what the scan I ran by eye did not."
    },
    {
     "id": "w_frame",
     "pos": [
-     -4.14,
-     1.45,
-     2.1
+     -5.32,
+     0.82,
+     1.15
     ],
     "size": [
      0.11,
@@ -2125,7 +2105,8 @@
      0.02
     ],
     "color": "#8A5A3B",
-    "yaw": 90
+    "yaw": 90,
+    "_doc": "⚑ 2026-09-05: re-based on w_desk. It used to lean on w_bookcase, which Sérgio struck along with its eighteen book props (*\"you can remove the bookshelf in Room 2 and the books there. They have no use\"*) — so it would have been left hanging in the air, which is the failure mode a removal always has and a removal's own commit is the only place to catch it."
    },
    {
     "id": "w_calendar",
@@ -2183,276 +2164,6 @@
      0.3,
      0.1,
      0.3
-    ],
-    "color": "#C8B8D0",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow0_0",
-    "pos": [
-     -4.424,
-     0.518,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.195,
-     0.032
-    ],
-    "color": "#C9A8A0",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow0_1",
-    "pos": [
-     -4.386,
-     0.518,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.196,
-     0.036
-    ],
-    "color": "#9FB4C0",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow0_2",
-    "pos": [
-     -4.346,
-     0.527,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.214,
-     0.036
-    ],
-    "color": "#A8B49A",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow0_3",
-    "pos": [
-     -4.302,
-     0.525,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.209,
-     0.044
-    ],
-    "color": "#C8B8D0",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow0_4",
-    "pos": [
-     -4.25,
-     0.519,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.198,
-     0.053
-    ],
-    "color": "#B98563",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow0_5",
-    "pos": [
-     -4.198,
-     0.511,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.182,
-     0.042
-    ],
-    "color": "#D4D0C8",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow1_0",
-    "pos": [
-     -4.475,
-     0.972,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.163,
-     0.05
-    ],
-    "color": "#C98F8F",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow1_1",
-    "pos": [
-     -4.426,
-     0.974,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.167,
-     0.039
-    ],
-    "color": "#C9A8A0",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow1_2",
-    "pos": [
-     -4.379,
-     0.979,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.178,
-     0.048
-    ],
-    "color": "#9FB4C0",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow1_3",
-    "pos": [
-     -4.33,
-     0.981,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.181,
-     0.043
-    ],
-    "color": "#A8B49A",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow1_4",
-    "pos": [
-     -4.279,
-     0.99,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.199,
-     0.051
-    ],
-    "color": "#C8B8D0",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow1_5",
-    "pos": [
-     -4.23,
-     0.988,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.195,
-     0.039
-    ],
-    "color": "#B98563",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow2_0",
-    "pos": [
-     -4.436,
-     1.429,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.197,
-     0.048
-    ],
-    "color": "#D4D0C8",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow2_1",
-    "pos": [
-     -4.381,
-     1.419,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.177,
-     0.054
-    ],
-    "color": "#C98F8F",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow2_2",
-    "pos": [
-     -4.331,
-     1.424,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.188,
-     0.038
-    ],
-    "color": "#C9A8A0",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow2_3",
-    "pos": [
-     -4.289,
-     1.42,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.18,
-     0.038
-    ],
-    "color": "#9FB4C0",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow2_4",
-    "pos": [
-     -4.249,
-     1.433,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.207,
-     0.035
-    ],
-    "color": "#A8B49A",
-    "yaw": 90
-   },
-   {
-    "id": "w_bookRow2_5",
-    "pos": [
-     -4.2,
-     1.433,
-     2.18
-    ],
-    "size": [
-     0.16,
-     0.205,
-     0.054
     ],
     "color": "#C8B8D0",
     "yaw": 90
@@ -3109,7 +2820,7 @@
    },
    {
     "id": "e_flagA",
-    "_doc": "⚑ S115 — THE FLAG, and it is a judgement call Sérgio can strike in one line. Five flat bands from the room's own palette (#8FC4E0 / #E8B7C8 / #F5F4ED), hung small and low on a side wall among ordinary things — a pinboard above it, sneakers under it. It is NOT centred, NOT lit, and nothing in the piece points at it. The reasoning: the E4 build plan's own contract for this room is that somebody LIVES here and 'she is not the story — she is who the story is happening to'. The apparatus's file hangs on the other wall. Neither comments on the other, and that is the whole arrangement.",
+    "_doc": "⚑ 2026-09-05 — THE FLAG IS IN GREYSCALE, AND THE APPARATUS HAS THE COLOURS. Sérgio, choosing between four readings: *\"I really like this — the colours as the APPARATUS's, a Restorify/GracePlatform 'ally' badge, pride-branded, in the software's own voice — and we can add to that by having the flag with just a greyscale, so it symbolizes the erasure.\"* ⚑ These five bands are the EXACT desaturations of the three colours that were here (#8FC4E0 → #9AA0A6, #E8B7C8 → #D4D0C8, #F5F4ED unchanged, being already white): the same flag with the colour taken out of it, not a different grey object. Two metres away on the same wall, `e_allyBadge` carries those colours BRIGHT, and it belongs to the software. ⚑ That is the whole argument my first version could not make. A flag on a wall is a declaration and the declaration was the WORK's; this is a depiction — the person's own mark drained, the system's copy of it glossy — and nothing in the piece points at either. It is the only version of this that satirises without speaking for her.",
     "pos": [
      3.9,
      1.56,
@@ -3120,7 +2831,7 @@
      0.08,
      0.7
     ],
-    "color": "#8FC4E0",
+    "color": "#9AA0A6",
     "yaw": 270
    },
    {
@@ -3135,7 +2846,7 @@
      0.08,
      0.7
     ],
-    "color": "#E8B7C8",
+    "color": "#D4D0C8",
     "yaw": 270
    },
    {
@@ -3165,7 +2876,7 @@
      0.08,
      0.7
     ],
-    "color": "#E8B7C8",
+    "color": "#D4D0C8",
     "yaw": 270
    },
    {
@@ -3180,7 +2891,7 @@
      0.08,
      0.7
     ],
-    "color": "#8FC4E0",
+    "color": "#9AA0A6",
     "yaw": 270
    },
    {
@@ -3289,6 +3000,52 @@
     ],
     "color": "#C9BFA6",
     "yaw": 270
+   },
+   {
+    "id": "e_allyBadge",
+    "_doc": "⚑ 2026-09-05: the apparatus wearing the colours. A glossy little pride-branded 'ally' badge in the software's own voice, on the wall two metres from a flag it has drained (see e_flagA). It is the ONE bright thing on this wall and it is not hers. No mark is drawn on it — textures are forbidden here and a legible logo would be the piece naming a product; at this size it reads as a badge, which is all it has to do.",
+    "pos": [
+     4.45,
+     1.45,
+     -1.01
+    ],
+    "size": [
+     0.008,
+     0.14,
+     0.14
+    ],
+    "color": "#F5F4ED",
+    "yaw": 270
+   },
+   {
+    "id": "e_allyStripeA",
+    "pos": [
+     4.45,
+     1.475,
+     -1.004
+    ],
+    "size": [
+     0.006,
+     0.032,
+     0.1
+    ],
+    "color": "#8FC4E0",
+    "yaw": 270
+   },
+   {
+    "id": "e_allyStripeB",
+    "pos": [
+     4.45,
+     1.435,
+     -1.004
+    ],
+    "size": [
+     0.006,
+     0.032,
+     0.1
+    ],
+    "color": "#E8B7C8",
+    "yaw": 270
    }
   ],
   "_docDeskCleared": "⛑ e_keyboard and e_mouse REMOVED 2026-09-01 with the CRT's move (Sérgio: 'we can[not] really see it with all the clutter here' — 'it' being the headset, the era's ONE interaction and until now the least legible object on the desk). They were that machine's peripherals; wired to nothing they are just clutter in front of the thing the era is actually about. What stays is hers and not the apparatus's: the folders, her glasses, and the headset on its dock."
@@ -3310,23 +3067,24 @@
    },
    "lampFoot": {
     "pos": [
-     5.15,
+     5.45,
      0.78,
-     1.5
-    ]
+     1.2
+    ],
+    "_doc": "⚑ Sérgio, 2026-09-05: *\"check that you had at least a lamp floating above the bed at least in earlier images.\"* He is right and it is measurable: r4 patched the lamp to z 1.50, and `e_desk` (pos z 0.61, 1.40 deep) ENDS at z 1.31. The lamp had been standing 0.19 m past the edge of the desk and 0.27 m above the bed, held up by nothing. It arrived there when the lamp was 'carried to Maya's desk' at E4 without anyone measuring the desk. Moved to (5.45, 1.20): on the desk's far corner, clear of the folders (x 5.05–5.27) and of e_wallShelf (x 5.54+). cluster.ts's carryLampLight moves with it."
    },
    "lampPole": {
     "pos": [
-     5.15,
+     5.45,
      0.9,
-     1.5
+     1.2
     ]
    },
    "lampShade": {
     "pos": [
-     5.15,
+     5.45,
      1.02,
-     1.5
+     1.2
     ]
    }
   },
