@@ -41,13 +41,16 @@ in 2026, on a panel in Maya's bedroom, and a viewer has no way to know it is a d
 rather than hers.** The piece has one absolute rule about this surface — *no name that is not Maya's
 is ever rendered here* — and "it is Daniel's, not a deadname" is an argument the screen cannot make.
 
-The card now carries **her** name under the era-4 stamp. The misfile still reads, and reads better:
-`under the old file` in amber above, `migrated ×3` below. The file moved three times and was never
-re-registered — the same sentence, told without borrowing anyone.
+The card first carried **her** name instead, with the misfile still reading above it. ⚑ **Then §3b
+superseded that an hour later** — the whole migration went, so there is no era-4 panel for either name
+to appear on, and the record carries the file's own registered name and nothing else. Both steps are
+in the history and the second one makes the first moot; this section is kept because the RULE it
+states is the one that will matter again: *no name that is not Maya's is ever rendered on that
+surface*, and "it belongs to a different character" is an argument the screen cannot make.
 
-⚑ **"The rest seems okay"** — so the era-4 wording (`RETAINED FOR CONTINUITY OF CARE`,
-`carried forward — no origin on file`, `RETAINED`) is approved as it stands. Removing it from the
-waiting list.
+⚑ **"The rest seems okay"** approved the era-4 wording as it stood — and then that wording was retired
+with the link it described. What survives of S106 is the record ageing inside Daniel's own six years
+(`witness.eras` e1/e2), which is what R1's A-3 actually asked for.
 
 ## §3 · THE BOXES ON THE FLOOR — ⚑ answered: yes, and it was my documentation that failed
 > *"The boxes on the floor are supposed to be there?"*
