@@ -213,7 +213,7 @@
    "zoneFill": 0.52,
    "lights": {
     "roomFill": {
-     "intensity": 0.16
+     "intensity": 0.34
     },
     "lamp": {
      "intensity": 0.95,
@@ -234,13 +234,13 @@
      "intensity": 1.55
     },
     "r2Lamp": {
-     "intensity": 0.2
+     "intensity": 0.46
     },
     "r2Screen": {
      "intensity": 0.0
     },
     "zoneW": {
-     "intensity": 0.14
+     "intensity": 0.28
     }
    }
   },
@@ -283,7 +283,7 @@
    }
   },
   "_docE4RoomTwoDark": "⛑ 2026-09-05 — AND ROOM 2 GOES DARK TOO, which is the same ruling one room over and four sessions late. Sérgio, on a screenshot of the E4 turn: *\"the light is still on Vera, and it is supposed to be not.\"* `_docE4RoomOneDark` above records his 2026-08-28 decision that a room you have left shows its SHAPE and not its objects, and set Daniel's roomFill and screenGlow to 0 at e4 — and then nobody carried it to Vera, whose r2Lamp (0.55), r2Screen (0.4) and zoneW (0.52 via zoneFill) all stayed lit into 2026. ⚑ r2Screen was lighting a monitor that no longer exists there: the same day's fold removes w_flatPanelBody at r4. A glow with nothing to glow from. All three are 0 at e4 now. ⚑ `zoneW` is named here on purpose — see cluster.ts's zone loop, which used to overwrite every zone light with zoneFill AFTER the named pass, so r2Screen's authored 0.4 was never once the value it got.",
-  "_docE4RoomsHeldNotDark": "⛑ 2026-09-05, SÉRGIO REVISING HIS OWN 2026-08-28 RULING, and he is right twice: *\"To be totally honest we need some light source on the Vera and Daniel room, like a symbolic element of the existence, i fear that it looks like a scary movie being so dark, my bad.\"* Taking those rooms to 0 obeyed the letter of `_docE4RoomOneDark` and broke a LAW: CLAUDE.md's Soft Lo-Fi doctrine says rooms are cozy and \"NOT horror-dark\", with extremes forbidden. A room at zero is an extreme, and an emptied room at zero reads as a haunted house — which is a genre this work must never borrow, because the horror here is administrative and well-lit. ⚑ So each left room keeps ONE light on, low: roomFill 0.16 in Daniel's, r2Lamp 0.20 in Vera's, zoneW at 0.14 under it. Not a compromise between his two rulings — the SECOND one, executed. You still see the shape rather than the objects (Maya's room runs 0.95 lamp / 1.55 mayaGlow / 0.52 zoneE, three to five times brighter), and the meaning is better than darkness: a lamp left on is what a room has when someone left in a hurry, and this piece already says so — carryLampLight's own note is that nobody turned Daniel's off in thirty years. ⚑ r2Screen stays at 0: the monitor it glowed from was removed at r4 the same day, and a glow with no source is a lie, not an ember."
+  "_docE4RoomsHeldNotDark": "⛑ 2026-09-05, SÉRGIO REVISING HIS OWN 2026-08-28 RULING, and he is right twice: *\"To be totally honest we need some light source on the Vera and Daniel room, like a symbolic element of the existence, i fear that it looks like a scary movie being so dark, my bad.\"* Taking those rooms to 0 obeyed the letter of `_docE4RoomOneDark` and broke a LAW: CLAUDE.md's Soft Lo-Fi doctrine says rooms are cozy and \"NOT horror-dark\", with extremes forbidden. A room at zero is an extreme, and an emptied room at zero reads as a haunted house — which is a genre this work must never borrow, because the horror here is administrative and well-lit. ⚑ So each left room keeps ONE light on, low: roomFill 0.16 in Daniel's, r2Lamp 0.20 in Vera's, zoneW at 0.14 under it. Not a compromise between his two rulings — the SECOND one, executed. You still see the shape rather than the objects (Maya's room runs 0.95 lamp / 1.55 mayaGlow / 0.52 zoneE, three to five times brighter), and the meaning is better than darkness: a lamp left on is what a room has when someone left in a hurry, and this piece already says so — carryLampLight's own note is that nobody turned Daniel's off in thirty years. ⚑ r2Screen stays at 0: the monitor it glowed from was removed at r4 the same day, and a glow with no source is a lie, not an ember. ⚑ RAISED AGAIN 2026-09-05 (*\"It should have more intensity the light, sorry\"*): 0.16/0.20/0.14 → 0.34/0.46/0.28. My first pass at 'an ember' was still reading as a blackout with a candle in it. Maya's room still leads by roughly 2×, which is the ratio that matters — the left rooms should be quieter than hers, not invisible."
  },
  "pointCloud": {
   "_note": "S92 — THE TWO VISUAL TIERS (REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md §3, the piece's aesthetic law made literal: the witness side is the sharp side, surveillance is high-definition, life is soft). TWO populations, not one: APPARATUS nodes (data/strings/close_network.json's labels, one node per label, exactly) render COOL/#8899BB — already the piece's own witness-blue (witnessCold/moonlight), no new hue — sharp, full-opacity, LABELLED, and linked ONLY to each other in a guaranteed-connected chain (+ a few cross-links): traceable end to end, by construction. PERSON nodes (the dense core+satellite population, unchanged in count from the old single-tier build) render WARM (the lamp pool) at a capped, softer opacity, carry NO label and NO link to anything — not to the apparatus, not to each other. The system documents people; the piece refuses to: there is no line a player can follow from one soft node to another, and no line from a soft node to a labelled one. Backdrop stays night-blue (Round 18: never black).",

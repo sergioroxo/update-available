@@ -878,7 +878,7 @@
     "id": "w_poster",
     "pos": [
      -5.67,
-     1.6,
+     1.45,
      -0.22
     ],
     "size": [
@@ -887,13 +887,14 @@
      0.02
     ],
     "color": "#B8D0C8",
-    "yaw": 90
+    "yaw": 90,
+    "_doc": "⚑ 2026-09-05 — THE THREE BUNCHED THINGS, and Sérgio circled them twice before I moved them. `w_poster` (z −0.47…0.03), `w_sign` (0.14…0.54) and `w_calendar` (≈0.30) all sat inside 1.0 m of the same wall at the same height, reading as *\"3 postes all close toghter\"*. S115 broke exactly this arrangement in Room 3 by stacking her two into one column and never carried the fix west. Poster and sign are now one column at z −0.22 (y 1.45 and 2.03); the calendar moves to z 0.78, its own stretch of wall, which is also where a calendar belongs — next to the desk you read it from."
    },
    {
     "id": "w_posterFrame",
     "pos": [
      -5.675,
-     1.6,
+     1.45,
      -0.22
     ],
     "size": [
@@ -908,8 +909,8 @@
     "id": "w_sign",
     "pos": [
      -5.67,
-     1.6,
-     0.34
+     2.03,
+     -0.22
     ],
     "size": [
      0.4,
@@ -923,8 +924,8 @@
     "id": "w_signFrame",
     "pos": [
      -5.675,
-     1.6,
-     0.34
+     2.03,
+     -0.22
     ],
     "size": [
      0.46,
@@ -1834,36 +1835,6 @@
     "_doc": "See movingBox1 — Daniel's room, packed at the transfer."
    },
    {
-    "id": "w_plant_pot",
-    "pos": [
-     -2.7,
-     0.28,
-     0.6
-    ],
-    "size": [
-     0.22,
-     0.26,
-     0.22
-    ],
-    "color": "#74492F",
-    "yaw": 90
-   },
-   {
-    "id": "w_plant_top",
-    "pos": [
-     -2.7,
-     0.55,
-     0.6
-    ],
-    "size": [
-     0.32,
-     0.3,
-     0.32
-    ],
-    "color": "#A8B49A",
-    "yaw": 90
-   },
-   {
     "id": "w_phoneDevice",
     "model": "phone",
     "pos": [
@@ -2002,51 +1973,6 @@
     "yaw": 90
    },
    {
-    "id": "w_cardigan",
-    "pos": [
-     -4.6,
-     0.71,
-     0.95
-    ],
-    "size": [
-     0.1,
-     0.3,
-     0.34
-    ],
-    "color": "#C8B8D0",
-    "yaw": 90
-   },
-   {
-    "id": "w_pillow",
-    "pos": [
-     -4.52,
-     0.745,
-     -0.46
-    ],
-    "size": [
-     0.5,
-     0.09,
-     0.32
-    ],
-    "color": "#F5EDDC",
-    "yaw": 90
-   },
-   {
-    "id": "w_throw",
-    "pos": [
-     -3.05,
-     0.735,
-     -0.46
-    ],
-    "size": [
-     0.55,
-     0.06,
-     0.95
-    ],
-    "color": "#C98F8F",
-    "yaw": 90
-   },
-   {
     "id": "w_slippers",
     "pos": [
      -3.6,
@@ -2059,21 +1985,6 @@
      0.22
     ],
     "color": "#A07B52",
-    "yaw": 90
-   },
-   {
-    "id": "w_glass",
-    "pos": [
-     -2.34,
-     0.555,
-     -0.6
-    ],
-    "size": [
-     0.06,
-     0.11,
-     0.06
-    ],
-    "color": "#D4D0C8",
     "yaw": 90
    },
    {
@@ -2113,7 +2024,7 @@
     "pos": [
      -5.66,
      1.72,
-     0.3
+     0.78
     ],
     "size": [
      0.3,
@@ -2128,7 +2039,7 @@
     "pos": [
      -5.645,
      1.68,
-     0.3
+     0.78
     ],
     "size": [
      0.26,
@@ -2136,36 +2047,6 @@
      0.01
     ],
     "color": "#F5F4ED",
-    "yaw": 90
-   },
-   {
-    "id": "w_laundry",
-    "pos": [
-     -2.62,
-     0.16,
-     1.86
-    ],
-    "size": [
-     0.34,
-     0.32,
-     0.34
-    ],
-    "color": "#C9BFA6",
-    "yaw": 90
-   },
-   {
-    "id": "w_laundryPile",
-    "pos": [
-     -2.62,
-     0.35,
-     1.86
-    ],
-    "size": [
-     0.3,
-     0.1,
-     0.3
-    ],
-    "color": "#C8B8D0",
     "yaw": 90
    },
    {
@@ -2232,10 +2113,10 @@
    },
    {
     "id": "e_hoodie",
-    "_doc": "Session 74: the chair — same drape-over-the-back logic as w_cardigan (Session 66), a different garment and a different colour so the two rooms don't read as the same person twice.",
+    "_doc": "⚑ 2026-09-05: re-based onto e_chair (top y 0.75). room-audit had it FLOATING in 0.53 m of air, which is the same defect Sérgio named one room over — *\"box on top of the bed one next to arm rest\"* — and the reason Vera's cardigan was struck rather than fixed. This one is kept because Room 3 is the room somebody still lives in; it just has to touch the chair it is draped over.",
     "pos": [
      4.48,
-     0.71,
+     0.91,
      0.95
     ],
     "size": [
@@ -2977,7 +2858,14 @@
    "keyboard",
    "w_flatPanelBody",
    "w_keyboard",
-   "w_mouse"
+   "w_mouse",
+   "tower",
+   "towerFloppySlot",
+   "modem",
+   "modemLed",
+   "tennisRacketModel",
+   "movingBox1",
+   "movingBox2"
   ],
   "add": [
    {
@@ -3095,6 +2983,6 @@
     "yaw": 270
    }
   ],
-  "_docE4Emptying": "⚑ 2026-09-05 — VERA'S COMPUTER LEAVES WITH HER ERA. Sérgio: *\"since we no longer can go to the other rooms, maybe we can remove the computers from the room 1 and 2 when we are at ERA-4, is that an option?\"* It is, and HALF OF IT WAS ALREADY TRUE: this same remove list has taken Daniel's CRT and keyboard out at r4 since the fold was written — Room 1's computer has been gone at E4 all along and nobody noticed, because nobody had measured what was left. Room 2's workstation had not gone anywhere. It does now, with its keyboard and mouse; `era3Devices.setEra` stops enabling the workstation and phone SCREENS at e4 in the same move, or a lit plane would be left hanging where the monitor used to be — which is exactly the fault S61 found on the spine and the one a removal always has. ⚑ This is the first, smallest increment of the emptied-rooms idea (NEXT_ROOM_PASS §5/§6): the rooms the piece has left stop being fully dressed. It is worth measuring against §6's table — Room 2's contents are 27 of the turn's 139 and Room 1's are 78."
+  "_docE4Emptying": "⚑ 2026-09-05 — VERA'S COMPUTER LEAVES WITH HER ERA. Sérgio: *\"since we no longer can go to the other rooms, maybe we can remove the computers from the room 1 and 2 when we are at ERA-4, is that an option?\"* It is, and HALF OF IT WAS ALREADY TRUE: this same remove list has taken Daniel's CRT and keyboard out at r4 since the fold was written — Room 1's computer has been gone at E4 all along and nobody noticed, because nobody had measured what was left. Room 2's workstation had not gone anywhere. It does now, with its keyboard and mouse; `era3Devices.setEra` stops enabling the workstation and phone SCREENS at e4 in the same move, or a lit plane would be left hanging where the monitor used to be — which is exactly the fault S61 found on the spine and the one a removal always has. ⚑ This is the first, smallest increment of the emptied-rooms idea (NEXT_ROOM_PASS §5/§6): the rooms the piece has left stop being fully dressed. It is worth measuring against §6's table — Room 2's contents are 27 of the turn's 139 and Room 1's are 78. ⚑ EXTENDED 2026-09-05: *\"When we are at Era-4 there is no need to see the tower of Daniel desktop and the disk drive, or even the tenis racket and the moving boxes are still here.\"* So the r4 fold now also takes `tower`, `towerFloppySlot`, `modem`, `modemLed`, `tennisRacketModel` and `movingBox1/2`. ⚑ The boxes are the interesting one and he is right about them too: they arrive at r3 to say the room was PACKED, and a packed room does not still have its boxes in it ten years later — leaving them was me keeping a beat past the moment it finished. What stays in 2026 is the shape of a room and a light nobody turned off."
  }
 }
