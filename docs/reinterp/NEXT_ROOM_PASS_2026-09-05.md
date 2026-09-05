@@ -199,3 +199,59 @@ An emptied delta per room (data), a fourth fold state or a per-room flag (`clust
 authoring pass above. The draw-call win is large and structural rather than incremental. **Nothing
 about it is urgent** — the piece plays end to end today — and it should not be started until §5.3 is
 answered, because the mechanism is cheap and the meaning is everything.
+
+
+---
+
+# ⚑ §6 · THE TURN, DECOMPOSED — measured 2026-09-05, and it names the room
+*Sérgio: "So we probably can also clean some elements on Room 3 with Maya, to help reduce the draw
+calls." — a fair thing to ask after §5, and the measurement says **no, and here is where to go
+instead.***
+
+Each row hides one more layer and re-reads `window.__drawCalls` at the E4 turn (4.4, 1.16, 0.7,
+yaw 90), which is the pose the ≤75 budget is about:
+
+| what is in the frame | draw calls |
+|---|---|
+| everything, as it ships today | **139** |
+| minus the 32 props S115 added to Room 3 | 135 |
+| minus **all of Room 3** | 124 |
+| minus Rooms 2 **and** 3 | 97 |
+| the bare shell alone — walls, floors, ceilings, doors, lintels | **19** |
+
+**So, per room, at the turn:** Room 1's contents **78** · Room 2's **27** · Room 3's **15** · shell 19.
+
+## §6.1 · Cleaning Room 3 is not the lever, and the number is blunt about it
+⚑ **You could delete Maya's room entirely — all 67 props — and the turn would still draw 124.**
+Removing everything S115 added buys **4**. And her own seat is **52**, already comfortably inside the
+budget. There is a craft case for thinning Room 3 (fewer specific things beat many vague ones, and it
+is his standing note), but there is **no performance case at all**, and cutting her belongings for a
+frame rate they do not affect would be the worst of both.
+
+## §6.2 · ⚑ ROOM 1 IS THE 78, AND IT IS ALSO THE ROOM THE PIECE HAS ALREADY LEFT
+Daniel's room carries **more than half of the turn's cost on its own** — 107 props, most of the
+building's GLB furniture, all still fully dressed in 2026, four eras after anyone lived in it.
+
+**And it is the room with the strongest narrative reason to be empty.** `movingBox1/2` already arrive
+at the fold where he is *transferred* and the room closes; the piece has already said this room got
+packed. It is currently packed in dialogue and furnished in geometry.
+
+⚑ **So §5's emptied-room state, applied to Room 1 FIRST, is worth about 78 draw calls** — and taking
+Room 2 with it lands the turn near **34** (19 shell + 15 Room 3), which is not "closer to 75", it is
+half of it. The idea he proposed as a symbol turns out to be the entire performance answer as well,
+and it wants doing in the order the story already implies: Room 1, then Room 2, and leave Maya's alone.
+
+## §6.3 · What Meta's own guidance adds (fetched 2026-09-05)
+`developers.meta.com/horizon/.../webxr-perf-bp` gives **no numeric draw-call budget** — it is explicit
+that measurement beats prescription, which is the same position `tools/shots.mjs` already takes. The
+one directly applicable line is about LIGHTS: *"You typically want to limit yourself to one directional
+light or one point light if you're making heavy use of PBR materials."* This scene has **sixteen**, of
+which ten are enabled and **six of those sit at intensity 0** (screenGlow, roomFill, moonlight,
+witnessWash, ballAttention, ballRoom).
+
+⚑ **Measured honestly: switching all six off changes the draw calls by ZERO** (52/139 before and
+after). Under clustered lighting a light is not a draw call. Meta's warning is about *fragment* cost,
+and this harness — swiftshader, capped at 60 fps — cannot see fragment cost at all. So: switching a
+light off when its intensity reaches zero is free and obviously correct and may well help on device,
+and **I have no measurement that says it does.** Recorded as a plausible on-device saving, not a
+result. It wants a headset and `tools/shots.mjs comfort`, not another desktop run.
