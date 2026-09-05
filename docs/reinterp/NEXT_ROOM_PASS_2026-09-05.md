@@ -131,16 +131,36 @@ should be the one to say which rather than defend the lot.
 the renderer's.** Recording it in full because it is the strongest structural idea to arrive in weeks
 and it must not be reconstructed from memory.
 
-## §5.1 · The diagnosis is confirmed, and the diet is NOT the fix
+## §5.1 · The diagnosis is confirmed — and my first evidence for it was junk
 Yes: the cost is that all three rooms are open and furnished at once, so the turn holds the whole
-building. **And I can now prove that removing props is not the lever.** Striking Room 2's bookcase and
-its eighteen books — 19 props — moved the E3 turn from **146 to 146** and the E4 turn from 140 to
-**139**. Nothing. Once `batching.ts` shares materials by colour signature, a prop whose colour is worn
-by anything else in the building costs **zero** extra draw calls, so deleting it saves zero. The draw
-call count at the turn is, almost exactly, *the number of distinct colours in view*.
+building.
 
-⚑ So the diet is worth doing for legibility — he is right that few specific things beat many
-meaningless ones — but it will never buy the frame back. **His second idea will.**
+⚑ **BUT THE MEASUREMENT I FIRST OFFERED WAS INVALID, AND HE CAUGHT IT.** I reported that striking Room
+2's bookcase and its eighteen books moved "the E3 turn from 146 to 146" and concluded that deleting a
+prop which shares a colour saves nothing, anywhere. Sérgio: *"You have to check the way then this
+happened."* He was right to. **That pose never contained the props.** Projected from it, the
+bookcase's own position lands at (13195, 3324) with depth 0 — behind the camera. I had measured a view
+that could not have changed and reported the non-change as a finding.
+
+**The real A/B**, same build, four poses, before and after the removal:
+
+| pose | before | after | |
+|---|---|---|---|
+| Room 2, facing where the bookcase stood | 32 | **27** | −5 |
+| Room 2's own seat | 34 | **30** | −4 |
+| **the E4 turn** | 139 | **139** | **0** |
+| Room 2 turned away (the pose I wrongly used) | 168 | 168 | 0 — it faces the other way |
+
+So: **removing props DOES cut draw calls where you are standing near them** — 16% in Room 2 — and it
+does **nothing** at the turn, which is the pose the budget is about. My conclusion about the turn
+survives; the sweeping version of it ("deleting a shared-colour prop saves nothing") does not, and I
+should not have generalised from one pose without checking the prop was in it.
+
+⚑ **Why the turn is unmoved is the thing that matters, and it points at his idea harder than my wrong
+version did.** A batch's bounding box spans the whole building, so once a colour is alive anywhere it
+is in the turn's frustum from everywhere. Thinning ONE room cannot remove a colour the other two still
+wear. **Emptying a room can.** That is the difference between a diet and his proposal, and it is why
+the diet is worth doing for legibility while only §5.2 buys the frame back.
 
 ## §5.2 · The mechanism: rooms are FULL when occupied and BARE when left
 A per-room state on top of the existing era fold: a room is dressed while the era lives in it, and
