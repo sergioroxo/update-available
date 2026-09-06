@@ -70,11 +70,10 @@
  * name is silently never requested — no console error, no 404, silent captions.
  */
 import {
-  WALL, captionBand, chip, memoryCard, offerCard, mediaCard, counterCard,
-  glitchBands, cyclorama, eraPanels, type Rect
+  WALL, captionBand, chip, counterCard, cyclorama, eraPanels, filingStrip, glitchBands, mediaCard, memoryCard, offerCard, photograph, type Rect
 } from '../theme/era4';
-import { setFont, wrapText } from '../theme/chrome';
-import { ledger } from '../../state/ledger';
+import { px, setFont, wrapText } from '../theme/chrome';
+import { e4Filings, ledger } from '../../state/ledger';
 import { playOnce } from '../../audio/tapeAudio';
 import script from '../../../data/dialog/s4_offers.json';
 
@@ -91,6 +90,20 @@ const CHIP = { x: 16, w: 306, h: 19, gap: 4 } as const;
 /** where the memory card sits: high enough to clear the caption band, wide
  *  enough that the photograph is a photograph and not a thumbnail. */
 const MEM = { x: 146, y: 52, w: 220 } as const;
+/**
+ * ⚑ S119 — the session file. It sits BELOW the memory card, not beside it: the
+ * left gutter the card leaves (0..146) is 132 px wide and the longest witness
+ * line in the data is about 205, so the first version painted
+ * `legacy record consistency — retained` straight across her photograph. The
+ * card runs y 52..228, the caption band starts around 322, and 236..291 is the
+ * clear band between them.
+ *
+ * Under the careful pause the wall is up instead (cards at y 58..180) and the
+ * chips come up from the band to about y 243, so the strip moves to 186 and
+ * takes two rows rather than three.
+ */
+const FILED = { x: 8, y: 236, w: 340, rows: 3, pauseY: 186, pauseRows: 2 } as const;
+const FILED_HEADING = 'session file';
 /** the wall: four offers across the top of the place, put up while L talks */
 const CARD = { y: 58, w: 120, h: 122, gap: 6 } as const;
 const MEDIA = { x: 20, y: 100, w: 306, h: 124 } as const;
@@ -100,7 +113,12 @@ const COUNTER = { x: 20, y: 232, w: 306, h: 48 } as const;
  *  derived, because a beat is a length of time and not a sum of holds — the
  *  quiet after the last line is part of it (ARGUMENT §5.3: silence is a texture
  *  in this era, not an absence). */
-const BEAT_SECONDS = { m1: 14.4, m2: 14.6, wall: 14.0, curation: 25.0, pause: Infinity } as const;
+/** ⚑ `ballshots` (S119) runs 16 s against 11 s of caption, so the small grey
+ *  control under the picture has real time to be found and pressed. It
+ *  auto-advances like every other memory beat: after 3½ minutes of the ball,
+ *  holding the player on a card until they press would be the worst possible
+ *  place in the piece to start demanding presses. */
+const BEAT_SECONDS = { m1: 14.4, m2: 14.6, wall: 14.0, curation: 25.0, ballshots: 16.0, pause: Infinity } as const;
 /** the curation's own schedule, in seconds from the top of the beat */
 const CUR = { excerpt0: 2.0, excerptGap: 3.2, counter: 13.0, after: 16.0, fade: 17.6, fadeStep: 0.5 } as const;
 /** the wall goes up one card at a time while L is still talking */
@@ -126,7 +144,7 @@ interface OChip {
 
 type Stage =
   | 'idle' | 'm1' | 'm2' | 'wall' | 'curation' | 'pause'
-  | 'held' | 'glitch' | 'cyclorama' | 'panels' | 'done';
+  | 'held' | 'glitch' | 'cyclorama' | 'panels' | 'done' | 'ballshots';
 
 type LedgerOutcome = 'surfaced' | 'undone' | 'answered' | 'corrected' | 'retained' | 'withdrawn' | 'handed';
 
@@ -136,6 +154,9 @@ const MEMS = script.memories.beats as unknown as Array<{
   id: string; lines: OLine[]; undo: { witness: string; reply: OLine }; witness: string;
 }>;
 const PAUSE_CHIPS = script.pause.chips as unknown as OChip[];
+const AFTER_BALL = script.afterBall as unknown as {
+  title: string; control: string; unavailable: string; lines: OLine[];
+};
 
 export class E4Offers {
   /** bumped on every change to what this surface DRAWS; `E4Shell` folds it into
@@ -171,6 +192,9 @@ export class E4Offers {
    *  first, and that is the beat. */
   private enhanced = [true, true];
   private undone = [false, false];
+  /** ⚑ one-way, and it is the only state this beat has: once she has asked, the
+   *  control reports instead of offering. There is nothing to toggle back to. */
+  private ballShotPressed = false;
   private wallUp = 0;
   private excerpts = 0;
   private counterShown = false;
@@ -297,6 +321,7 @@ export class E4Offers {
     switch (s) {
       case 'm1': this.queue = [...MEMS[0].lines]; break;
       case 'm2': this.queue = [...MEMS[1].lines]; break;
+      case 'ballshots': this.queue = [...AFTER_BALL.lines]; break;
       case 'wall': this.queue = [...(script.wall.lines as unknown as OLine[])]; break;
       case 'curation':
         this.queue = [...(script.curation.lines as unknown as OLine[])];
@@ -335,6 +360,16 @@ export class E4Offers {
       case 'pause':
         this.takeTheBreak();
         return;
+      case 'ballshots':
+        // ⚑ AND IT FILES NOTHING. Every other case in this switch files the
+        // system's own act when she did not respond to it — that is the witness
+        // symmetry Ethics #10 asks for. This one does not, and the omission is
+        // the beat: `s4_ball.json`'s witness block states that the ball is the
+        // one thing in thirty years that enters no record, and a LOGGED FAILURE
+        // to process it would still be a record of the evening. Do not add a
+        // `this.file(...)` here without reading that block first.
+        this.enterStage('glitch');
+        return;
       default:
         return;
     }
@@ -353,7 +388,10 @@ export class E4Offers {
   /** S79 calls this when the ball is over. */
   resumeAfterBreak(): void {
     if (this.stage !== 'held') return;
-    this.enterStage('glitch');
+    // ⚑ S119 — L COMES BACK, AND THE FIRST THING IT DOES IS FAIL. The ball is
+    // the only stretch of the era without its voice; this is the voice
+    // returning to material it cannot process. Then the finale, unchanged.
+    this.enterStage('ballshots');
   }
 
   private finaleClock(): void {
@@ -423,7 +461,24 @@ export class E4Offers {
     // a time — and the wall is back underneath the careful pause.
     if (this.wallUp > 0 && this.stage !== 'curation') this.drawWall(ctx, W);
     if (this.stage === 'm1' || this.stage === 'm2') this.drawMemory(ctx);
+    if (this.stage === 'ballshots') this.drawBallShot(ctx);
     if (this.stage === 'curation') this.drawCuration(ctx);
+
+    // ⚑ S119 — THE SAME FILE L'S OWN SURFACE SHOWS, and it must be the same or
+    // it is worse than nothing: it reads `ledger.l` + `ledger.e4Offers` through
+    // the one selector, so the strip cannot drift from what was actually filed.
+    //
+    // ⚑ WHY ONLY THESE THREE STAGES. `wall` and `curation` fill the screen —
+    // four 120 px cards across a 512 px canvas, and a media card at 20..326 —
+    // and this file's own note says why that is right: *a feed shows you one
+    // thing at a time.* The machine's notes are not on screen while it is
+    // selling. The three stages that keep it are the three where something is
+    // being FILED ABOUT HER and she is looking straight at it.
+    if (this.stage === 'm1' || this.stage === 'm2' || this.stage === 'ballshots') {
+      filingStrip(ctx, FILED.x, FILED.y, FILED.w, FILED_HEADING, e4Filings(FILED.rows));
+    } else if (this.stage === 'pause') {
+      filingStrip(ctx, FILED.x, FILED.pauseY, FILED.w, FILED_HEADING, e4Filings(FILED.pauseRows));
+    }
 
     const rows = this.captionRows(ctx);
     if (rows.length > 0) captionBand(ctx, W, H, script.speaker, rows);
@@ -447,9 +502,63 @@ export class E4Offers {
   private drawMemory(ctx: CanvasRenderingContext2D): void {
     const i = this.stage === 'm1' ? 0 : 1;
     const s = script.memories;
-    const label = this.enhanced[i] ? s.original : s.restored;
+    // ⚑ S119 — three labels, not two. Before she has ever pressed it the line
+    // is the one every photo product in the world puts there (`See original`).
+    // Once she has, it becomes a plain two-way toggle, and the way BACK names
+    // what the system is holding: `See the version we kept`.
+    const label = !this.undone[i] ? s.original : this.enhanced[i] ? s.original : s.kept;
     const r = memoryCard(ctx, MEM.x, MEM.y, MEM.w, i === 0 ? s.title : s.titleTwo, label, this.enhanced[i], i);
-    if (this.enhanced[i]) this.hits.push({ ...r, id: `undo${i}` });
+    // ⚑ AND IT IS ALWAYS PRESSABLE NOW. It used to disappear the moment it was
+    // used, which made the one act in this beat a thing you could spend but not
+    // hold. The flip costs nothing, is never refused, and never changes what is
+    // filed — she can look at her own photograph for as long as she likes and
+    // it is still not the one the system keeps.
+    this.hits.push({ ...r, id: `undo${i}` });
+  }
+
+  /**
+   * ⚑ THE BALL'S PHOTOGRAPH (S119). Same card, same geometry, same small grey
+   * line in the same place as her own two memories — because the whole beat
+   * depends on it being the SAME GESTURE. A player who has flipped her window
+   * portrait back and forth four times reaches for this one out of habit.
+   *
+   * `memoryCard` is not reused: it hard-codes `photograph(..., enhanced,
+   * variant)` for the memories' own two variants and returns their control
+   * rect. This draws variant 2 and its own control line, and the label is the
+   * one thing that ever changes.
+   */
+  private drawBallShot(ctx: CanvasRenderingContext2D): void {
+    const pad = 12;
+    const pw = MEM.w - pad * 2;
+    const ph = Math.round(pw * 0.62);
+    const h = pad + 14 + ph + 10 + 12 + pad - 6;
+    const x = MEM.x, y = MEM.y;
+    px(ctx, x, y, MEM.w, h, WALL.card);
+    px(ctx, x, y, MEM.w, 1, WALL.cardHi);
+    px(ctx, x, y + h - 1, MEM.w, 1, WALL.cardEdge);
+    px(ctx, x, y, 1, h, WALL.cardEdge);
+    px(ctx, x + MEM.w - 1, y, 1, h, WALL.cardEdge);
+
+    setFont(ctx, 9);
+    ctx.fillStyle = WALL.meta;
+    ctx.fillText(AFTER_BALL.title, x + pad, y + pad - 3);
+
+    // ⚑ the flag is passed and the picture ignores it. Both calls are identical
+    // on purpose: there is no "before" here for the system to have improved on.
+    photograph(ctx, x + pad, y + pad + 12, pw, ph, !this.ballShotPressed, 2);
+
+    const label = this.ballShotPressed ? AFTER_BALL.unavailable : AFTER_BALL.control;
+    const cy = y + pad + 12 + ph + 8;
+    setFont(ctx, 9);
+    // ⚑ and it is set in the DIMMEST type on the card either way. The failure is
+    // not a warning, not an error and not coloured — it is the machine being
+    // unremarkable about the one thing in thirty years it could not process.
+    ctx.fillStyle = WALL.fine;
+    ctx.fillText(label, x + pad, cy);
+    if (!this.ballShotPressed) {
+      const cw = Math.ceil(ctx.measureText(label).width);
+      this.hits.push({ x: x + pad - 4, y: cy - 4, w: cw + 8, h: 16, id: 'ballshot' });
+    }
   }
 
   private drawWall(ctx: CanvasRenderingContext2D, W: number): void {
@@ -497,8 +606,11 @@ export class E4Offers {
   handleClick(x: number, y: number): boolean {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit) return false;
-    if (hit.id === 'undo0') { this.undo(0); return true; }
-    if (hit.id === 'undo1') { this.undo(1); return true; }
+    if (hit.id === 'undo0') { this.flip(0); return true; }
+    if (hit.id === 'undo1') { this.flip(1); return true; }
+    // ⚑ the ball's photograph takes the press and does nothing with it — see
+    // `ballShotPressed`. It is not a refusal and it is not a bug.
+    if (hit.id === 'ballshot') { this.pressBallShot(); return true; }
     const c = PAUSE_CHIPS.find(k => k.id === hit.id);
     if (!c || c.gone === true) return false;
     this.pressChip(c);
@@ -511,8 +623,33 @@ export class E4Offers {
    * next memory is already enhanced — the act always works, and it never once
    * changes what the system will do next.
    */
-  private undo(i: number): void {
-    if (!this.enhanced[i]) return;
+  /**
+   * ⚑ THE PRESS THAT DOES NOTHING, AND IT IS NOT A BUG.
+   *
+   * She presses the same small grey line that worked twice on her own
+   * photographs. The picture does not change, because `photograph()`'s
+   * variant 2 does not read `enhanced` at all — there is no branch anywhere
+   * that says "refuse". The pass simply has nothing to take hold of.
+   *
+   * The only thing that moves is the control's own label, which stops offering
+   * and starts reporting: `no enhancement available`. Bland, in the machine's
+   * flattest register, exactly as §2 specified. **L does not speak here** —
+   * a line would be the piece explaining its own best beat.
+   */
+  private pressBallShot(): void {
+    if (this.ballShotPressed) return;
+    this.ballShotPressed = true;
+    this.version++;
+  }
+
+  private flip(i: number): void {
+    // ⚑ S119 — EVERY PRESS AFTER THE FIRST IS FREE, AND FILES NOTHING.
+    // The first one is the ACT: the picture goes back to hers, the record says
+    // she asked, and L answers. Every press after it is a person looking at
+    // their own photograph twice, which is not a decision and must not be
+    // recorded as one — filing it would make the strip say she withdrew the
+    // enhancement nine times, which is a lie about what she did.
+    if (this.undone[i]) { this.enhanced[i] = !this.enhanced[i]; this.version++; return; }
     this.enhanced[i] = false;
     this.undone[i] = true;
     this.file(MEMS[i].id, 'undone', MEMS[i].undo.witness);
@@ -560,6 +697,7 @@ export class E4Offers {
     this.pendingAdvance = false;
     this.enhanced = [true, true];
     this.undone = [false, false];
+    this.ballShotPressed = false;
     this.enterStage(s);
   }
 

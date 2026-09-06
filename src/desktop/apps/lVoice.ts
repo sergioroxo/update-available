@@ -50,9 +50,9 @@
  * console error and no 404, which looks exactly like the bug it hides. All 47
  * are registered. The second is `speak()` below.
  */
-import { captionBand, chip, labelField } from '../theme/era4';
+import { captionBand, chip, filingStrip, labelField } from '../theme/era4';
 import { setFont, wrapText } from '../theme/chrome';
-import { ledger } from '../../state/ledger';
+import { e4Filings, ledger } from '../../state/ledger';
 import { playOnce } from '../../audio/tapeAudio';
 import script from '../../../data/dialog/s4_l.json';
 
@@ -72,6 +72,15 @@ const CLIP_TAIL = 0.45;
 const CAPTION_WRAP = 458;   // inside captionBand's 22 px left inset at font 11
 const CAPTION_MAX_ROWS = 4;
 const LABEL = { x: 262, y: 44, w: 234 } as const;
+/** ⚑ S119 — the machine's own notes, directly under its label field and in the
+ *  same column, because they are the same instrument seen from its other side.
+ *  `filingStrip`'s header carries the whole argument for why nothing here is
+ *  emphasised. Four rows: the visor is 512 x 384 and the chips need the bottom. */
+const FILED = { x: 262, y: 82, w: 234, rows: 4 } as const;
+/** ⚑ one clerical word, in the system's own voice — never "your", never a
+ *  sentence, and never an explanation. E1's side-message register: terse, and
+ *  it never says "I". */
+const FILED_HEADING = 'session file';
 const CHIP = { x: 16, w: 306, h: 19, gap: 4 } as const;
 
 interface LLabel { object: string; text: string; uncertain?: boolean; witness?: string }
@@ -327,6 +336,14 @@ export class LVoice {
     if (this.label) {
       labelField(ctx, LABEL.x, LABEL.y, LABEL.w, this.label.object, this.label.text, this.label.uncertain === true);
     }
+
+    // ⚑ S119 — WHAT IT WRITES DOWN WHILE IT APOLOGISES. Read straight off the
+    // ledger, so this surface cannot drift from what was actually filed: if a
+    // line is here, it is in the record, and if it is in the record it is here.
+    // Drawn every frame the era is live, including the units with no chips —
+    // the file does not appear when she is asked something and vanish when she
+    // is not. It is always on, which is the point.
+    filingStrip(ctx, FILED.x, FILED.y, FILED.w, FILED_HEADING, e4Filings(FILED.rows));
 
     // ⚑ THE CAPTION STAYS UP WHILE THE CHIPS DO. Found by looking at it: the
     // band used to clear the moment a unit started waiting, so the player was

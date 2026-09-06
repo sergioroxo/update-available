@@ -2631,6 +2631,11 @@ export class DesktopOS {
       case 'e4Place':
         this.setPhase('desktop');
         this.setDesktopEra('e4');
+        // ⚑ S119 — the laptop opening (2026-09-01) made `wear()` refuse until
+        // L has finished on the machine, and this route was never updated, so
+        // for five days EVERY E4 panel button landed on the closed laptop. See
+        // `space.ts debugSkipLaptop`.
+        this.e4?.debugSkipLaptop();
         this.e4?.wear();
         break;
       // ⚑ S77 — L'S CONVERSATION, one button per beat (C6: three sessions have
@@ -2664,6 +2669,10 @@ export class DesktopOS {
       case 'e4Wall': this.e4Offer('wall'); break;
       case 'e4Curation': this.e4Offer('curation'); break;
       case 'e4Pause': this.e4Offer('pause'); break;
+      // ⚑ S119 — the beat after the ball: L comes back and cannot process what
+      // it just heard. Reached in play only by sitting through the whole ball,
+      // so it needs a route of its own or nobody will ever look at it.
+      case 'e4BallShots': this.e4Offer('ballshots'); break;
       case 'e4PauseChips': this.e4Offer('pause'); this.e4?.offers.debugToChips(); break;
       case 'e4Glitch': this.e4Offer('glitch'); break;
       case 'e4Cyclorama': this.e4Offer('cyclorama'); break;

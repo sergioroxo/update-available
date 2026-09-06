@@ -232,6 +232,10 @@ const OS_BEATS: BeatRow[] = [
   { label: '↳ category 3 · REMOVE THE UNRESOLVED (2016)', id: 'e4BallCat3' },
   { label: '↳ category 4 · CONDITION: IN REPAIR (tonight)', id: 'e4BallCat4' },
   { label: '↳ ⚑ after · nothing happens, forever (press the device to go on)', id: 'e4BallAfter' },
+  // ⚑ S119 — the photo editor's OTHER half, designed 2026-08-05 and built now.
+  // Press the small grey line under the picture: it is the same control that
+  // worked twice on her own photographs, and here it returns nothing.
+  { label: '↳ ⚑⚑ after the ball · L tries to enhance it and cannot', id: 'e4BallShots' },
 
   { heading: 'E4 · the finale, after the ball (S78)' },
   { label: 'FINALE 1/3 · the glitch', id: 'e4Glitch' },

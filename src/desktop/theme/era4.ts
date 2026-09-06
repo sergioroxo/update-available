@@ -399,6 +399,80 @@ export function labelField(
 }
 
 /**
+ * ⚑ THE FILING STRIP (S119) — WHAT THE MACHINE WRITES DOWN, WHILE IT APOLOGISES.
+ *
+ * Era 4's spine is a name-correction arc in four states, and its antagonist is
+ * the second line filed underneath every apology:
+ * `legacy record consistency — retained`. The apology is the surface, the
+ * retention is the truth, and the beat is the gap between them.
+ *
+ * ⚑ UNTIL NOW THAT GAP WAS INVISIBLE. `ledger.l` was written by every chip in
+ * the era and read by NOTHING — verified by grep, zero consumers — and the one
+ * surface built to show it, the intake record, is switched off for the whole of
+ * Era 4 (`cluster.ts setTerminalVisible(era !== 'e3' && era !== 'e4')`). So what
+ * a player actually met was a kind machine apologising five times and meaning
+ * it, which is not the beat: that is L winning.
+ *
+ * THE RULES THIS SURFACE OBEYS, and each one is load-bearing:
+ *
+ * 1. ⚑ **EVERY LINE LOOKS THE SAME.** The retention is not coloured, boxed,
+ *    delayed or emphasised. `name: corrected by subject` and `legacy record
+ *    consistency — retained` are drawn at identical weight, because that is
+ *    exactly how a record treats them — as two facts of equal standing. The
+ *    moment this surface points at one of them, the piece is narrating instead
+ *    of showing, and the era already has too much of that.
+ * 2. **Nothing announces it.** No heading that explains, no "note", no alert.
+ *    One clerical word in the machine's own meta type.
+ * 3. **It is not pressable and never will be.** It is the instrument's notes,
+ *    not a panel she is being offered. She cannot edit it. That is the era.
+ * 4. **Newest at the top, and the older ones dim** rather than scrolling away —
+ *    the file gets longer, and nothing ever leaves it.
+ *
+ * SELECTIVE FIDELITY (CLAUDE.md): the system's instruments are the most defined
+ * objects in the piece, so this shares `labelField`'s bracket — it reads as the
+ * same instrument, seen from its other side.
+ */
+export function filingStrip(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number,
+  heading: string,
+  entries: string[]
+): void {
+  if (entries.length === 0) return;
+  const rowH = 12;
+  const top = 13;
+  const h = top + entries.length * rowH + 6;
+  px(ctx, x, y, w, h, ERA4.fieldLo);
+  px(ctx, x, y, w, 1, ERA4.rule);
+  // the same two hard corners the label field brackets itself with
+  px(ctx, x, y, 7, 1, ERA4.lDim);
+  px(ctx, x + w - 7, y, 7, 1, ERA4.lDim);
+
+  setFont(ctx, 9);
+  ctx.fillStyle = ERA4.dim;
+  ctx.fillText(heading, x + 10, y + 3);
+
+  // ⚑ CLIPPED TO ITS OWN BOX, and this is not belt-and-braces. The witness
+  // lines are authored in `data/` and nothing constrains their length — the
+  // longest today is `legacy record consistency — retained` at ~205 px — so a
+  // strip placed in a narrow gutter silently painted them straight across the
+  // memory card beside it. Found by looking at a render, which is the only way
+  // this class of fault is ever found in this project.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  for (let i = 0; i < entries.length; i++) {
+    // ⚑ the ONLY thing that varies between rows is age, and age is not emphasis.
+    // The newest line is legible and the ones under it recede, the way a log
+    // reads. Nothing here knows what any of these lines mean.
+    ctx.fillStyle = i === 0 ? ERA4.text : i === 1 ? ERA4.meta : ERA4.dim;
+    ctx.fillText(entries[i], x + 10, y + top + i * rowH);
+  }
+  ctx.restore();
+}
+
+/**
  * ⚑ THE PHOTOGRAPH (S4R.4, the memories feature). Pre-authored pixel art —
  * there is NO camera input and NO file input in this piece, ever, and there
  * never will be (CLAUDE.md hard invariant; the same law the E1 Restoration
@@ -419,6 +493,24 @@ export function labelField(
  * (nothing you decline is ever un-offered), and that reads as a system habit
  * only if it is visibly a different photograph. 0 = the window portrait,
  * 1 = outdoors in the spring.
+ *
+ * ⚑ S119 ADDED `variant 2` — THE BALL, AND `enhanced` DOES NOTHING TO IT.
+ * `REINTERP_E4_DEEP_PASS_2026-08-05.md` §2 designed this and it was never
+ * built: *"The ball photographs cannot be enhanced. L tries — the same
+ * automatic pass it ran on everything else — and returns them unchanged…
+ * Not because it refuses. Because it cannot tell what it is looking at."*
+ *
+ * So the flag is accepted, ignored, and the picture is identical either way.
+ * ⚑ THE MECHANISM IS EXPRESSED IN THE RENDERER RATHER THAN NARRATED: there is
+ * no branch here that says "and if it is the ball, refuse". The enhancement
+ * pass simply has nothing to take hold of. Same tilt, same grain, same figures,
+ * both times.
+ *
+ * ⚑ AND IT IS NOT SOURED, DIMMED OR GLITCHED. Register law is absolute at the
+ * ball: *respite is never a trap and is never revealed as fake; the system
+ * targets AROUND it, never through it.* This picture is warm and crowded and
+ * the machine's failure is the machine's, not the room's. Faceless, like every
+ * other figure in this piece.
  */
 export function photograph(
   ctx: CanvasRenderingContext2D,
@@ -443,6 +535,75 @@ export function photograph(
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
+
+  if (variant === 2) {
+    // ⚑ THE BALL, AND NOTHING BELOW READS `enhanced`.
+    // A dark warm room seen from inside it: the back wall in shadow, a crowd in
+    // silhouette against it, a pool of light on the floor, and one person
+    // standing in the pool with the room's attention on them.
+    // ⚑ COLOUR NOTE, and it cost a render to find: `ERA4.photoHair` and
+    // `PLACE.ink` are the SAME hex (#74492F). The first pass used one for the
+    // wall and the other for the crowd, so the room and the people in it were
+    // literally the same colour and the picture read as mud. Three warm values
+    // apart, darkest to lightest: photoFrame < ink < floorLo.
+    const horizon = y + Math.round(h * 0.62);
+    px(ctx, x, y, w, h, PLACE.ink);                          // the room, warm
+    px(ctx, x, y, w, Math.round(h * 0.18), ERA4.photoFrame); // the ceiling, dark
+    px(ctx, x, horizon, w, h, PLACE.floorLo);                // the floor
+
+    // ⚑ the light that walks the building, one person at a time: a pool on the
+    // floor and a soft column above it. Never a spotlight cone — the room is
+    // not a stage set, it is a room.
+    const cx = x + Math.round(w * 0.50);
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    px(ctx, cx - Math.round(w * 0.17), horizon, Math.round(w * 0.34), h, PLACE.rugHi);
+    ctx.globalAlpha = 0.10;
+    px(ctx, cx - Math.round(w * 0.13), y, Math.round(w * 0.26), horizon - y, BALL.attention);
+    ctx.restore();
+
+    // THE CROWD — silhouettes, irregular, overlapping, and no faces ever. The
+    // spacing is deliberately uneven: a row of evenly pitched shapes reads as
+    // bottles on a shelf, which is what the first pass of this drew.
+    const gap = [0, 9, 17, 23, 34, 41, 55, 63, 70, 82, 91, 99, 112, 120];
+    for (let i = 0; i < gap.length; i++) {
+      const bx = x + 2 + Math.round((gap[i] / 128) * (w - 10));
+      const bh = 30 + ((i * 13) % 14);
+      const bw = 8 + (i % 3);
+      // the ones nearer the light are a shade warmer; the rest are the wall
+      // silhouettes: DARK against the warm wall, and the ones standing in the
+      // light are a shade lifted rather than a different colour.
+      const near = Math.abs(bx - cx) < w * 0.20;
+      const ink = near ? PLACE.floorLo : ERA4.photoFrame;
+      px(ctx, bx, horizon - bh, bw, bh + 5, ink);
+      px(ctx, bx + 1, horizon - bh - 7, bw - 2, 7, ink);   // head and shoulders
+    }
+
+    // ⚑ THE ONE PERSON WITH THE FLOOR. Warm-lit, faceless, and NOT larger than
+    // the crowd — the ball's own politics: the room turns toward somebody who
+    // is the same size as everybody in it.
+    const wy = horizon - 40;
+    px(ctx, cx - 6, wy + 12, 13, 30, PLACE.textileHi);      // what she is wearing
+    px(ctx, cx - 8, wy + 12, 2, 26, PLACE.sun);             // the rim of the light
+    px(ctx, cx - 4, wy, 9, 11, ERA4.photoSkinHi);           // head, no features
+    px(ctx, cx - 6, wy - 3, 13, 5, ERA4.photoHair);
+    px(ctx, cx - 12, wy + 15, 7, 3, PLACE.textileHi);       // an arm, out
+    px(ctx, cx + 7, wy + 9, 8, 3, PLACE.textileHi);         // and the other, up
+
+    // grain, and it stays whether or not the pass was asked for
+    ctx.save();
+    ctx.globalAlpha = 0.10;
+    for (let i = 0; i < 90; i++) {
+      px(ctx, x + ((i * 37) % w), y + ((i * 53) % h), 1, 1, ERA4.textHi);
+    }
+    ctx.restore();
+    ctx.restore();   // the crop
+    px(ctx, x - 1, y - 1, w + 2, 1, ERA4.photoFrame);
+    px(ctx, x - 1, y + h, w + 2, 1, ERA4.photoFrame);
+    px(ctx, x - 1, y - 1, 1, h + 2, ERA4.photoFrame);
+    px(ctx, x + w, y - 1, 1, h + 2, ERA4.photoFrame);
+    return;
+  }
 
   if (variant === 1) {
     // outdoors: a horizon, something green, and light the system found for it

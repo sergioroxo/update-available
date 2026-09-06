@@ -520,6 +520,37 @@ export class E4Shell {
     }
   }
 
+  /**
+   * ⚑ S119 REVIEW ROUTE — AND IT CLOSED A BUG THAT HAD BROKEN EVERY E4 BUTTON.
+   *
+   * `os.ts`'s `e4Place` calls `wear()`, and on 2026-09-01 the era gained its
+   * laptop opening — after which `wear()` correctly refuses while
+   * `stageNow === 'laptop'`, because the headset is not a door until L has
+   * finished on the machine. **The debug route was never updated**, so from
+   * that day every one of the twenty-odd E4 panel buttons landed on the laptop
+   * and sat there: the voice never ticked, the offers never drew, and a
+   * reviewer pressing "THE DEADNAME" got Maya's closed laptop.
+   *
+   * ⚑ Trap 0 in `00_WHERE_THINGS_STAND` exactly — *a fix can open the hole it
+   * is closing* — and trap "content that exists cannot be met": nothing caught
+   * it, because `tools/walk.mjs` plays the era LINEARLY and therefore reads the
+   * three laptop lines the way a player does. Only the panel was broken, and
+   * the panel is the only surface with no automated reader.
+   *
+   * This is the laptop beat consumed as read, which is what every jump past it
+   * means: it files exactly what pressing through the three lines files, so a
+   * jumped review and a played one leave the same record.
+   */
+  debugSkipLaptop(): void {
+    if (this.stageNow !== 'laptop') return;
+    this.laptopLine = space.laptop.lines.length;
+    this.laptopV++;
+    this.stageNow = 'closed';
+    this.t = 0;
+    ledger.e4Space.push({ id: 'laptop', outcome: 'read', witness: space.laptop.witness });
+    this.version++;
+  }
+
   private putOn(): void {
     if (this.stageNow === 'worn') return;
     this.stageNow = 'worn';

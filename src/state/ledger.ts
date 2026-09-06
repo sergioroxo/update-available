@@ -356,3 +356,33 @@ export function wipeLedger(): void {
 
 // The wipe is a hard guarantee, not a courtesy.
 window.addEventListener('beforeunload', wipeLedger);
+
+/**
+ * ⚑ ERA 4'S FILE, READ BACK — S119, and it closes a hole this project had
+ * carried since the era was built.
+ *
+ * `l` and `e4Offers` were WRITTEN by every chip in Era 4 and READ BY NOTHING.
+ * The one surface built to show them — the intake record on Maya's wall — is
+ * switched off for the whole era (`cluster.ts`, `setTerminalVisible(era !==
+ * 'e3' && era !== 'e4')`), and the migration that used to carry it there was
+ * retired on 2026-09-05. So the era's spine — an apology on top, a retention
+ * underneath — had a top and no underneath.
+ *
+ * This is the underneath. It is a READ, and deliberately nothing else: no new
+ * field, no persistence, no ordering key. The two lists are concatenated in the
+ * order the era plays them (L's ten units, then the offers), which is already
+ * chronological because nothing in Era 4 runs them the other way round.
+ *
+ * ⚑ NEWEST FIRST, and capped — a strip, not an archive. The cap is a layout
+ * fact (the visor is 512 x 384 and the label field is above it), not an
+ * editorial one: nothing is ever DELETED from the file, it only stops being on
+ * screen, which is the difference the era is about.
+ */
+export function e4Filings(limit = 4): string[] {
+  const all = [...ledger.l, ...ledger.e4Offers];
+  const out: string[] = [];
+  for (let i = all.length - 1; i >= 0 && out.length < limit; i--) {
+    out.push(all[i].witness);
+  }
+  return out;
+}

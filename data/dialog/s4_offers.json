@@ -28,6 +28,8 @@
     "titleTwo": "Four years ago this week",
     "original": "See original",
     "restored": "Original restored",
+    "_docKept": "\u2691 S119 \u2014 THE FLIP IS FREE, AND THAT IS THE POINT. Until now `See original` was a ONE-WAY undo: press it once and the control was gone. It is now a toggle she can work as many times as she likes, forever, at no cost and with nothing refused. \u2691 The FIRST press is still the act \u2014 it files `enhancement withdrawn at subject's request` and L answers it \u2014 and every press after it is free and files nothing, because a person looking at their own photograph twice is not a decision. `kept` is the label going the other way, and it is the only new string here: the machine, matter-of-factly, in its own cheerful register, naming which of the two versions is the one it holds. It is not a warning and must never be styled as one. Nothing announces the enhancement before she presses; after she has, the system has no reason to be coy about its own filing, and being plain about it is more chilling than hiding it.",
+    "kept": "See the version we kept",
     "beats": [
       {
         "id": "m1",
@@ -58,6 +60,25 @@
     ]
   },
 
+  "_docAfterBall": "\u2691 S119 \u2014 THE SECOND HALF OF THE PHOTO EDITOR, designed 2026-08-05 and never built until now. `docs/REINTERP_E4_DEEP_PASS_2026-08-05.md` \u00a72, verbatim: *\"The ball photographs cannot be enhanced. L tries \u2014 the same automatic pass it ran on everything else \u2014 and returns them unchanged, with something bland: no enhancement available. Not because it refuses. Because it cannot tell what it is looking at. NO CATEGORY FOUND, in the image pipeline, silently.\"* \u2691 IT PLAYS AFTER THE BALL AND BEFORE THE FINALE, which is the one window that exists for it: L is absent for the whole ball by design (\u00a73.2, 'L has nothing to do, and stops talking'), and this is it coming back and failing at its job. \u2691 REGISTER: the ball is `respite` and the law is absolute \u2014 respite is never a trap and never revealed as fake, and the system targets AROUND it, never through it. So L does not sour, doubt, warn about or comment on the evening. It treats the pictures as ordinary material and cannot process them, and THAT is the whole beat. Nothing anywhere explains it. \u2691 AND IT FILES NOTHING. `s4_ball.json`'s own witness block states the doctrine \u2014 the ball is the one thing in thirty years that enters no record \u2014 and a logged FAILURE to process would still be a record of the evening. So the press adds no line to the session file, and with the filing strip now on screen (S119) the player can watch the file not grow. That is the first time since 1997 that anything she does is not written down.",
+  "afterBall": {
+    "title": "Last night",
+    "control": "See original",
+    "unavailable": "no enhancement available",
+    "lines": [
+      {
+        "id": "b1a",
+        "text": "You were out last night. I've put the pictures with the others.",
+        "hold": 5.4
+      },
+      {
+        "id": "b1b",
+        "_docEcho": "\u2691 'as it is' is LIFTED FROM u3c \u2014 the hoodie: 'Or you're keeping it as it is.' It is the machine's one gesture for a thing it has no category for, and it now appears twice: once on a mended jumper and once on a whole room of people. Nothing points at the repetition and nothing may.",
+        "text": "This one didn't take the usual pass. I've left it as it is.",
+        "hold": 5.6
+      }
+    ]
+  },
   "wall": {
     "_beat": "The wall assembles itself while L talks. Nothing is pressable — this era's presses are spent elsewhere and a store you can buy from would be a fifth beat nobody asked for. The reading is the beat.",
     "heading": "Put up for you",
